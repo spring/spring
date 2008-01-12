@@ -164,7 +164,10 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
 
+	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
+
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, cfgFolder);
 	ai->LOGGER = new std::ofstream(this->c);
 
 	CREX_SC_LOAD(KAIK, ifs);
@@ -231,11 +234,14 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
 
+	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
+
 	// initialize class wrapper struct
 	ai = new AIClasses;
 	ai->cb = callback->GetAICallback();
 	ai->cheat = callback->GetCheatInterface();
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, cfgFolder);
 
 	MyUnits.reserve(MAX_UNITS);
 	ai->MyUnits.reserve(MAX_UNITS);

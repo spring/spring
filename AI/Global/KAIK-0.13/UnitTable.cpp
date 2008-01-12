@@ -143,6 +143,44 @@ int CUnitTable::ReadTeamSides() {
 	}
 }
 
+// called at the end of Init()
+void CUnitTable::ReadUnitCostMultipliers() {
+	const char* modName = ai->cb->GetModName();
+	char configFileName[1024] = {0};
+	snprintf(configFileName, 1023, "%s%s.cfg", CFGFOLDER, modName);
+
+	FILE* f = fopen(configFileName, "r");
+
+	if (f) {
+		char str[1024];
+		char name[512];
+		float value = 1.0f;
+
+		while (fgets(str, 1024, f) != 0x0) {
+			sscanf(str, "%s %f", name, &value);
+			printf("costMultiplier for %s: %f\n", name, value);
+			const UnitDef* udef = ai->cb->GetUnitDef(name);
+
+			if (udef) {
+				unitTypes[udef->id].costMultiplier = value;
+			}
+		}
+
+		fclose(f);
+	} else {
+		// write a new file with default values
+		// for each UnitType in unitTypes array
+		f = fopen(configFileName, "w");
+
+		for (int i = 1; i <= numOfUnits; i++) {
+			fprintf(f, "%s %f\n", unitTypes[i].def->name.c_str(), 1.0f);
+		}
+
+		fclose(f);
+	}
+}
+
+
 
 int CUnitTable::GetSide(int unitID) {
 	int team = ai->cb->GetUnitTeam(unitID);
@@ -163,17 +201,21 @@ int CUnitTable::GetCategory(int unit) {
 
 
 
-// used to update threat-map
+// used to update threat-map, should probably
+// use cost multipliers too (NOTE: only then
+// non-squad units like Flashes could become
+// artifically overrated by a massive amount)
 float CUnitTable::GetDPS(const UnitDef* unit) {
 	if (unit) {
 		float totaldps = 0.0f;
 
 		for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 			float dps = 0.0f;
+
 			if (!i->def->paralyzer) {
+				float reloadtime = i->def->reload;
 				int numberofdamages;
 				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
-				float reloadtime = i->def->reload;
 
 				for (int k = 0; k < numberofdamages; k++) {
 					dps += i->def->damages[k];
@@ -201,7 +243,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 		bool canhit = false;
 		string targetcat;
 		int armortype = victim->armorType;
-		int numberofdamages;
+		int numberofdamages = 0;
 		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
 
 		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
@@ -561,6 +603,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 			benefit = 0.0f;
 	}
 
+	benefit *= unitTypes[udef->id].costMultiplier;
 	// return (benefit / (CurrentIncome + Cost));
 	// return ((benefit / Cost) * CurrentIncome);
 	return ((CurrentIncome / Cost) * benefit);
@@ -568,7 +611,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 
 
-// operates in terms of GetScore()
+// operates in terms of GetScore() (which is recursive for factories)
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	vector<int>* tempList = 0;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
@@ -794,6 +837,7 @@ void CUnitTable::Init() {
 		}
 	}
 
+	ReadUnitCostMultipliers();
 	// dump generated unit table to file
 	DebugPrint();
 }
@@ -816,6 +860,7 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 // determines sides of unitTypes by recursion
 void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 	UnitType* utype = &unitTypes[unitDefID];
+	utype->costMultiplier = 1.0f;
 
 	// go through all possible build options and set side if necessary
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {

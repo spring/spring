@@ -54,6 +54,7 @@ struct UnitType {
 	int category;
 	bool isHub;
 	int techLevel;
+	float costMultiplier;
 
 	// which sides can build this UnitType (usually only
 	// one, needed for types that are shared among sides

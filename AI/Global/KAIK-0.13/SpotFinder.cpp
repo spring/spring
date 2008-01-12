@@ -1,7 +1,5 @@
 #include "SpotFinder.h"
 
-//using namespace std;
-
 CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width) {
 	this->ai = ai;
 	//MinMetalForSpot = 50;	// from 0-255, the minimum percentage of metal a spot needs to have
@@ -25,11 +23,9 @@ CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width) {
 	//MexArrayC = new unsigned char [TotalCells]; //used for drawing the TGA, not really needed with a couple of changes
 	TempAverage = new float [TotalCells];
 	xend = new int[height + width];
-	//Stopme = false;
 	haveTheBestSpotReady = false;
 	isValid = false;
 	radius = 0;
-	//L("SpotFinder class");
 }
 
 CSpotFinder::~CSpotFinder() {
@@ -62,18 +58,13 @@ to get correct data.
 */
 float* CSpotFinder::GetSumMap()
 {
-	if(!isValid)
-	{
+	if (!isValid) {
 		MakeSumMap();
 		MakeCachePoints();
-	}
-	else
+	} else {
 		UpdateSumMap();
-	
-	// Super temp:
-	
-	
-	
+	}
+
 	return TempAverage;
 }
 
@@ -87,8 +78,7 @@ Radius have the same resolution as the map given to SpotFinder.
 */
 void CSpotFinder::SetRadius(int radius)
 {
-	if(this->radius != radius)
-	{
+	if (this->radius != radius) {
 		this->radius = radius;
 		haveTheBestSpotReady = false;
 		isValid = false;
@@ -96,34 +86,26 @@ void CSpotFinder::SetRadius(int radius)
 		int DoubleRadius = radius * 2;
 		int SquareRadius = radius * radius; //used to speed up loops so no recalculation needed
 		
-		if(MapHeight + MapWidth < DoubleRadius + 1)
-		{
-			delete [] xend;
-			xend = new int[DoubleRadius+1]; 
+		if (MapHeight + MapWidth < DoubleRadius + 1) {
+			delete[] xend;
+			xend = new int[DoubleRadius + 1];
 		}
 		
-		// TODO: make the edges smoth:
-		for (int a=0;a<DoubleRadius+1;a++){ 
-			float z=a-radius;
+		// TODO: make the edges smooth
+		for (int a = 0; a < DoubleRadius + 1; a++) {
+			float z = a - radius;
 			float floatsqrradius = SquareRadius;
-			xend[a]=int(sqrtf(floatsqrradius-z*z));
+			xend[a] = int(sqrtf(floatsqrradius - z * z));
 		}
 		
 	}
 }
 
-/*
-This is a temp/test only
-
-*/
+// This is a temp/test only
 void CSpotFinder::MakeCachePoints()
 {
-//	float currentBest = FLT_MIN;
-//	int currentBestX = 0;
-//	int currentBestY = 0;
-	
-	for (int y = 0; y < MapHeight / CACHEFACTOR; y++){
-		for (int x = 0; x < MapWidth / CACHEFACTOR; x++){
+	for (int y = 0; y < MapHeight / CACHEFACTOR; y++) {
+		for (int x = 0; x < MapWidth / CACHEFACTOR; x++) {
 			int cacheIndex = y * MapWidth/CACHEFACTOR + x;
 			cachePoints[cacheIndex].maxValueInBox = FLT_MIN;
 			cachePoints[cacheIndex].isValid = true;
@@ -131,7 +113,7 @@ void CSpotFinder::MakeCachePoints()
 	}
 	
 	for (int y = 0; y < MapHeight; y++){
-		// Find the cache line:
+		// find the cache line
 		int cacheY = y / CACHEFACTOR;
 		
 		for (int x = 0; x < MapWidth; x++){
@@ -139,15 +121,11 @@ void CSpotFinder::MakeCachePoints()
 			float sum = TempAverage[y * MapWidth + x];
 			
 			int cacheIndex = cacheY * MapWidth/CACHEFACTOR + cacheX;
-			////L("cacheIndex: " << cacheIndex << ", maxValueInBox: " << cachePoints[cacheIndex].maxValueInBox << ", sum: " << sum << ", x: " << x << ", y: " << y);
-			
-			if(cachePoints[cacheIndex].maxValueInBox < sum)
-			{
+			if (cachePoints[cacheIndex].maxValueInBox < sum) {
 				// Found a better spot for this cache element
 				cachePoints[cacheIndex].maxValueInBox = sum;
 				cachePoints[cacheIndex].x = x;
 				cachePoints[cacheIndex].y = y;
-				////L("cacheIndex: " << cacheIndex << ", sum: " << sum << ", x: " << x << ", y: " << y);
 			}
 		}
 	}
@@ -169,127 +147,129 @@ CachePoint * CSpotFinder::GetBestCachePoint(int x, int y)
 
 
 /*
-Internal function:
-Makes the array with the sumes of all points inside the radius of that point.
-
-*/
+ * Makes the array with the sums of all
+ * points inside the radius of that point.
+ */
 float* CSpotFinder::MakeSumMap()
 {
-	//L("Starting MakeSumMap");
 	isValid = true;
 	int XtractorRadius = radius;
-//	int DoubleRadius = XtractorRadius * 2;
-	//int SquareRadius = XtractorRadius * XtractorRadius; //used to speed up loops so no recalculation needed
-	//int DoubleSquareRadius = DoubleRadius * DoubleRadius; // same as above
-	
-	// Time stuff:
+
+	// time stuff
 	ai->math->TimerStart();
-	
-	double MaxValue = 0;
+
+	double MaxValue = 0.0;
+
 	// Now work out how much metal each spot can make by adding up the metal from nearby spots
-	for (int y = 0; y < MapHeight; y++){
-		for (int x = 0; x < MapWidth; x++){
-			//double TotalMetal = 0;
-			float TotalMetal = 0;
-			if(x == 0 && y == 0) // First Spot needs full calculation
-			for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-				if (sy >= 0 && sy < MapHeight){
-					for (int sx=x-xend[a];sx<=x+xend[a];sx++){ 
-						if (sx >= 0 && sx < MapWidth){
-							TotalMetal += MexArrayA[sy * MapWidth + sx]; //get the metal from all pixels around the extractor radius  
+	for (int y = 0; y < MapHeight; y++) {
+		for (int x = 0; x < MapWidth; x++) {
+			float TotalMetal = 0.0f;
+
+			if (x == 0 && y == 0) {
+				// first spot needs full calculation
+				for (int sy = y - XtractorRadius, a = 0; sy <= y + XtractorRadius; sy++, a++) {
+					if (sy >= 0 && sy < MapHeight) {
+						for (int sx = x - xend[a]; sx <= x + xend[a]; sx++) {
+							if (sx >= 0 && sx < MapWidth) {
+								// get the metal from all pixels around the extractor radius
+								TotalMetal += MexArrayA[sy * MapWidth + sx];
+							}
 						}
 					}
 				}
 			}
-			// Quick calc test:		
-			if(x > 0)
-			{
-				TotalMetal = TempAverage[y * MapWidth + x -1];
-				for (int sy=y-XtractorRadius,a=0;sy<=y+XtractorRadius;sy++,a++){
-					if (sy >= 0 && sy < MapHeight){
-						int addX = x+xend[a];
-						int remX = x-xend[a] -1;
-						if(addX < MapWidth)
+			// quick calc test
+			if (x > 0) {
+				TotalMetal = TempAverage[y * MapWidth + x - 1];
+				for (int sy = y - XtractorRadius, a = 0; sy <= y + XtractorRadius; sy++, a++) {
+					if (sy >= 0 && sy < MapHeight) {
+						int addX = x + xend[a];
+						int remX = x - xend[a] - 1;
+						if (addX < MapWidth)
 							TotalMetal += MexArrayA[sy * MapWidth + addX];
-						if(remX >= 0)
+						if (remX >= 0)
 							TotalMetal -= MexArrayA[sy * MapWidth + remX];
 					}
 				}
-			} else if(y > 0){
+			} else if (y > 0) {
 				// x == 0 here
-				TotalMetal = TempAverage[(y-1) * MapWidth];
-				// Remove the top half:
+				TotalMetal = TempAverage[(y - 1) * MapWidth];
 				int a = XtractorRadius;
-				for (int sx=0;sx<=XtractorRadius;sx++,a++){
-					if (sx < MapWidth){
-						int remY = y-xend[a] -1;
-						if(remY >= 0)
+
+				// remove the top half
+				for (int sx = 0; sx <= XtractorRadius; sx++, a++) {
+					if (sx < MapWidth) {
+						int remY = y-xend[a] - 1;
+						if (remY >= 0)
 							TotalMetal -= MexArrayA[remY * MapWidth + sx];
 					}
 				}
-				// Add the bottom half:
+
+				// add the bottom half
 				a = XtractorRadius;
-				for (int sx=0;sx<=XtractorRadius;sx++,a++){
-					if (sx < MapWidth){
-						int addY = y+xend[a];
-						if(addY < MapHeight)
+				for (int sx = 0; sx <= XtractorRadius; sx++, a++) {
+					if (sx < MapWidth) {
+						int addY = y + xend[a];
+						if (addY < MapHeight)
 							TotalMetal += MexArrayA[addY * MapWidth + sx];
 					}
 				}
-
-				TotalMetal = TotalMetal; // Comment out for debug
 			}
-			TempAverage[y * MapWidth + x] = TotalMetal; //set that spots metal making ability (divide by cells to values are small)
-			if (MaxValue < TotalMetal)
-			{
-				MaxValue = TotalMetal;  //find the spot with the highest metal to set as the map's max
-				// This is also the best spot on the map, remember it ?
+
+			// set that spots metal making ability (divide by cells to values are small)
+			TempAverage[y * MapWidth + x] = TotalMetal;
+			if (MaxValue < TotalMetal) {
+				MaxValue = TotalMetal;
+				// find the spot with the highest metal to set as the map's max
+				// (this is also the best spot on the map, remember it?)
 				haveTheBestSpotReady = true;
 				bestSpotX = x;
 				bestSpotY = y;
 			}
 		}
 	}
-	// Done
+
 	return TempAverage;
 }
 
 
 /*
-Invalidates the given spot and all around it.
-Radius have the same resolution as the map given to SpotFinder.
-Dont affect the current radius of SumMap.
-The update is delayed until needed, so that the cost of calling this function is low.
-
-*/
+ * Invalidates the given spot and all around it.
+ * Radius has the same resolution as the map given to SpotFinder.
+ * Does not affect the current radius of SumMap.
+ * The update is delayed until needed, so that the cost of calling this function is low.
+ */
 void CSpotFinder::InvalidateSumMap(int coordx, int coordy, int clearRadius)
 {
-	if(!isValid)
+	if (!isValid)
 		return;
-	
-	int clearRealRadius = clearRadius + radius +1;
-	
+
+	int clearRealRadius = clearRadius + radius + 1;
 	int cacheY_Start = (coordy - clearRealRadius) / CACHEFACTOR;
-	if(cacheY_Start < 0)
+
+	if (cacheY_Start < 0)
 		cacheY_Start = 0;
+
 	int cacheX_Start = (coordx - clearRealRadius) / CACHEFACTOR;
-	if(cacheX_Start < 0)
+
+	if (cacheX_Start < 0)
 		cacheX_Start = 0;
-	
-	int cacheY_End = (coordy + clearRealRadius) / CACHEFACTOR +1;
-	if(cacheY_End >= MapHeight /CACHEFACTOR )
-		cacheY_End = MapHeight /CACHEFACTOR -1;
-	
-	int cacheX_End = (coordx + clearRealRadius) / CACHEFACTOR +1;
-	if(cacheX_End >= MapWidth /CACHEFACTOR )
-		cacheX_End = MapWidth /CACHEFACTOR -1;	
-		
+
+	int cacheY_End = (coordy + clearRealRadius) / CACHEFACTOR + 1;
+
+	if (cacheY_End >= MapHeight / CACHEFACTOR)
+		cacheY_End = MapHeight / CACHEFACTOR - 1;
+
+	int cacheX_End = (coordx + clearRealRadius) / CACHEFACTOR + 1;
+
+	if (cacheX_End >= MapWidth / CACHEFACTOR)
+		cacheX_End = MapWidth / CACHEFACTOR - 1;
+
 	int CacheMapWidth = MapWidth/CACHEFACTOR;
+
 	// TODO: make this use the real radius, and not a box
-	for (int y = cacheY_Start; y <= cacheY_End; y++)
-	{
-		for (int x = cacheX_Start; x <= cacheX_End; x++)
-		{
+	for (int y = cacheY_Start; y <= cacheY_End; y++) {
+		for (int x = cacheX_Start; x <= cacheX_End; x++) {
 			cachePoints[y * CacheMapWidth + x].isValid = false;
 		}
 	}
@@ -297,18 +277,17 @@ void CSpotFinder::InvalidateSumMap(int coordx, int coordy, int clearRadius)
 
 
 /*
-Internal function for updating/creating both the cachePoint and SumMap at
-all invalid cachePoints.
-
-*/
+ * Internal function for updating/creating both the
+ * cachePoint and SumMap at all invalid cachePoints.
+ */
 void CSpotFinder::UpdateSumMap()
 {
 	int cacheMapHeight = MapHeight / CACHEFACTOR;
 	int cacheMapWidth = MapWidth / CACHEFACTOR;
-	for (int y = 0; y < cacheMapHeight; y++){
-		for (int x = 0; x < cacheMapWidth; x++){
+	for (int y = 0; y < cacheMapHeight; y++) {
+		for (int x = 0; x < cacheMapWidth; x++) {
 			int cacheIndex = y * cacheMapWidth + x;
-			if(!cachePoints[cacheIndex].isValid)
+			if (!cachePoints[cacheIndex].isValid)
 				UpdateSumMapArea(x, y);
 		}
 	}

@@ -2,7 +2,7 @@
 #define DEFINES_H
 
 #define AI_NAME			"KAIK 0.13 Unofficial"
-#define AI_DATE			"20/12/2007"
+#define AI_DATE			"12/01/2007"
 #define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
 #define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 
@@ -29,6 +29,7 @@
 #define LOGFOLDER		ROOTFOLDER"Logs/"
 #define METALFOLDER		ROOTFOLDER"Metal/"
 #define TGAFOLDER		ROOTFOLDER"TGAs/"
+#define CFGFOLDER		ROOTFOLDER"CFGs/"
 
 // Error outputs
 #define ZEROVECTOR		float3( 0, 0, 0)
