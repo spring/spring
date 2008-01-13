@@ -1385,6 +1385,10 @@ void CUnit::ChangeLos(int l,int airlos)
 
 bool CUnit::ChangeTeam(int newteam, ChangeType type)
 {
+	if (isDead) {
+		return false;
+	}
+
 	// do not allow unit count violations due to team swapping
 	// (this includes unit captures)
 	if (uh->unitsByDefs[newteam][unitDef->id].size() >= unitDef->maxThisUnit) {
@@ -1869,38 +1873,43 @@ static void CUnitKilledCB(int retCode, void* p1, void* p2)
 
 void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 {
-	if(isDead)
+	if (isDead) {
 		return;
-	if(dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt){
-		if(!selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f){
+	}
+
+	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt){
+		if (!selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f) {
 			((CAirMoveType*)moveType)->SetState(CAirMoveType::AIRCRAFT_CRASHING);
-			health=maxHealth*0.5f;
+			health = maxHealth * 0.5f;
 			return;
 		}
 	}
-	isDead=true;
+
+	isDead = true;
 
 	luaCallIns.UnitDestroyed(this, attacker);
 	globalAI->UnitDestroyed(this, attacker);
 
-	blockHeightChanges=false;
-	if(unitDef->isCommander)
+	blockHeightChanges = false;
+	if (unitDef->isCommander) {
 		gs->Team(team)->CommanderDied(this);
+	}
 	gs->Team(this->lineage)->LeftLineage(this);
 
 	if (!reclaimed && !beingBuilt) {
 		string exp;
-		if (selfDestruct)
+		if (selfDestruct) {
 			exp = unitDef->selfDExplosion;
-		else
+		} else {
 			exp = unitDef->deathExplosion;
+		}
 
 		if (!exp.empty()) {
 			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
-					wd->explosionSpeed, this, true, wd->damages[0] > 500? 1: 2,
+					wd->explosionSpeed, this, true, wd->damages[0] > 500 ? 1 : 2,
 					false, wd->explosionGenerator, 0, ZeroVector, wd->id
 				);
 
@@ -1909,13 +1918,14 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
 					float volume = wd->soundhit.getVolume(0);
-					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1)? 5.0f: volume);
+					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 5.0f : volume);
 				}
 			}
 		}
 
-		if (selfDestruct)
+		if (selfDestruct) {
 			recentDamage += maxHealth * 2;
+		}
 
 		vector<int> args;
 		args.push_back((int) (recentDamage / maxHealth * 100));
@@ -1925,18 +1935,22 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 		UnBlock();
 		delayedWreckLevel = args[1];
 //		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
-	} else {
+	}
+	else {
 		deathScriptFinished=true;
 	}
-	if(beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed)
+
+	if (beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed) {
 		uh->DeleteUnit(this);
-	else{
-		speed=ZeroVector;
-		deathCountdown=5;
-		stunned=true;
-		paralyzeDamage=1000000;
-		if(health<0)
-			health=0;
+	}
+	else {
+		speed = ZeroVector;
+		deathCountdown = 5;
+		stunned = true;
+		paralyzeDamage = 1000000;
+		if (health < 0.0f) {
+			health = 0.0f;
+		}
 	}
 }
 
