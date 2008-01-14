@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    weapondefs_post.lua
---  brief:   weaponDef post processing
+--  file:    featuredefs_post.lua
+--  brief:   featureDef post processing
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2008.
@@ -11,8 +11,10 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  Per-unitDef weaponDefs
+--  Per-unitDef featureDefs
 --
+
+--------------------------------------------------------------------------------
 
 local function isbool(x)   return (type(x) == 'boolean') end
 local function istable(x)  return (type(x) == 'table')   end
@@ -24,36 +26,38 @@ local function isstring(x) return (type(x) == 'string')  end
 
 local function ProcessUnitDef(udName, ud)
 
-  local wds = ud.weapondefs
-  if (not istable(wds)) then
+  local fds = ud.featuredefs
+  if (not istable(fds)) then
     return
   end
 
-  -- add this unitDef's weaponDefs
-  for wdName, wd in pairs(wds) do
-    if (isstring(wdName) and istable(wd)) then
-      local fullName = udName .. '_' .. wdName
-      WeaponDefs[fullName] = wd
-      wd.filename = ud.filename
+  -- add this unitDef's featureDefs
+  for fdName, fd in pairs(fds) do
+    if (isstring(fdName) and istable(fd)) then
+      local fullName = udName .. '_' .. fdName
+      FeatureDefs[fullName] = fd
+      fd.filename = ud.filename
     end
   end
 
-  -- convert the weapon names
-  local weapons = ud.weapons
-  if (istable(weapons)) then
-    for i = 1, 16 do
-      local w = weapons[i]
-      if (istable(w)) then
-        if (isstring(w.def)) then
-          local ldef = string.lower(w.def)
-          local fullName = udName .. '_' .. ldef
-          local wd = WeaponDefs[fullName]
-          if (istable(wd)) then
-            w.name = fullName
-          end
+  -- FeatureDead name changes
+  for fdName, fd in pairs(fds) do
+    if (isstring(fdName) and istable(fd)) then
+      if (isstring(fd.featuredead)) then
+        local fullName = udName .. '_' .. fd.featuredead:lower()
+        if (FeatureDefs[fullName]) then
+          fd.featuredead = fullName
         end
-        w.def = nil
       end
+    end
+  end
+
+  -- convert the unit corpse name
+  if (isstring(ud.corpse)) then
+    local fullName = udName .. '_' .. ud.corpse:lower()
+    local fd = FeatureDefs[fullName]
+    if (fd) then
+      ud.corpse = fullName
     end
   end
 end
