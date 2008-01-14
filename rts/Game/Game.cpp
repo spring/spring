@@ -3697,9 +3697,7 @@ static void SetBoolArg(bool& value, const std::string& str, const char* cmd)
 void CGame::HandleChatMsg(std::string s, int player)
 {
 	// Player chat messages
-	if (!noSpectatorChat || !gs->players[player]->spectator || !gu->spectating) {
-		LogNetMsg(s, player);
-	}
+	LogNetMsg(s, player);
 
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
@@ -4215,11 +4213,20 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 
 	s.substr(0, 255);
 
-	if (!s.empty()) {
+	/*
+	- If you're spectating you always see all chat messages.
+	- If you're playing you see:
+	  - "a:"-prefixed messages sent by allied players,
+	  - "s:"-prefixed messages sent by yourself,
+	  - unprefixed messages from players,
+	  - unprefixed messages from spectators only if noSpectatorChat is off!
+	*/
+
+	 if (!s.empty()) {
 		if (allyMsg) {
 			const int msgAllyTeam = gs->AllyTeam(player->team);
 			const bool allied = gs->Ally(msgAllyTeam, gu->myAllyTeam);
-			if ((allied && !player->spectator) || gu->spectating) {
+			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
 				sound->PlaySample(chatSound, 5);
 			}
@@ -4231,8 +4238,10 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 			}
 		}
 		else {
-			logOutput.Print(label + s);
-			sound->PlaySample(chatSound, 5);
+			if (gu->spectating || !noSpectatorChat || !player->spectator) {
+				logOutput.Print(label + s);
+				sound->PlaySample(chatSound, 5);
+			}
 		}
 	}
 }
