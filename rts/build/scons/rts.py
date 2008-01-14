@@ -133,7 +133,7 @@ def generate(env):
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)
 
-	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 5) or env.GetOption('clean')):
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 6) or env.GetOption('clean')):
 		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
@@ -168,7 +168,7 @@ def generate(env):
 
 		args = makeHashTable(sys.argv)
 
-		env['is_configured'] = 5
+		env['is_configured'] = 6
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
@@ -385,7 +385,7 @@ def generate(env):
 		stringarray_opt('libpath', [])
 
 		include_path = env['cpppath'] + ['rts', 'rts/System']
-		include_path += ['rts/lib/luabind', 'rts/lib/lua/include']
+		include_path += ['rts/lib/luabind', 'rts/lib/lua/include', 'rts/lib/streflop']
 		lib_path = env['libpath'] + ['rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':

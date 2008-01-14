@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 //SPRING#include <math.h>
-#include "float3.h"
+#include "streflop_cond.h"
 
 #define lmathlib_c
 #define LUA_LIB

@@ -7,13 +7,7 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
-#if defined STREFLOP_X87 || defined STREFLOP_SSE
- #include "lib/streflop/streflop.h"
- using namespace streflop;
-#else
- #include <math.h>
-#endif
-
+#include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
 
 /**
@@ -33,7 +27,7 @@ public:
 */
 	/**
 	 * @brief Constructor
-	 * 
+	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
 	inline float3() : x(0), y(0), z(0) {};
@@ -43,14 +37,14 @@ public:
 	 * @param x float x
 	 * @param y float y
 	 * @param z float z
-	 * 
+	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
 	inline float3(const float x,const float y,const float z) : x(x),y(y),z(z) {}
 
 	/**
 	 * @brief Destructor
-	 * 
+	 *
 	 * Does nothing
 	 */
 	inline ~float3(){};
@@ -59,7 +53,7 @@ public:
 	 * @brief operator +
 	 * @param f float3 reference to add.
 	 * @return sum of float3s
-	 * 
+	 *
 	 * When adding another float3, will
 	 * calculate the sum of the positions in
 	 * space (adds the x/y/z components individually)
@@ -72,7 +66,7 @@ public:
 	 * @brief operator +
 	 * @return sum of float3+float
 	 * @param f single float to add
-	 * 
+	 *
 	 * When adding just a float, the point is
 	 * increased in all directions by that float.
 	 */
@@ -83,7 +77,7 @@ public:
 	/**
 	 * @brief operator +=
 	 * @param float3
-	 * 
+	 *
 	 * Just like adding a float3, but updates this
 	 * float with the new sum.
 	 */
@@ -97,7 +91,7 @@ public:
 	 * @brief operator -
 	 * @param f float3 to subtract
 	 * @return difference of float3s
-	 * 
+	 *
 	 * Decreases the float3 by another float3,
 	 * subtracting each x/y/z component individually.
 	 */
@@ -108,7 +102,7 @@ public:
 	/**
 	 * @brief operator -
 	 * @return inverted float3
-	 * 
+	 *
 	 * When negating the float3, inverts all three
 	 * x/y/z components.
 	 */
@@ -120,7 +114,7 @@ public:
 	 * @brief operator -
 	 * @return difference of float3 and float
 	 * @param f float to subtract
-	 * 
+	 *
 	 * When subtracting a single fixed float,
 	 * decreases all three x/y/z components by that amount.
 	 */
@@ -131,7 +125,7 @@ public:
 	/**
 	 * @brief operator -=
 	 * @param f float3 to subtract
-	 * 
+	 *
 	 * Same as subtracting a float3, but stores
 	 * the new float3 inside this one.
 	 */
@@ -145,7 +139,7 @@ public:
 	 * @brief operator *
 	 * @param f float3 to multiply
 	 * @return product of float3s
-	 * 
+	 *
 	 * When multiplying by another float3,
 	 * multiplies each x/y/z component individually.
 	 */
@@ -157,7 +151,7 @@ public:
 	 * @brief operator *
 	 * @param f float to multiply
 	 * @return product of float3 and float
-	 * 
+	 *
 	 * When multiplying by a single float, multiplies
 	 * each x/y/z component by that float.
 	 */
@@ -168,7 +162,7 @@ public:
 	/**
 	 * @brief operator *=
 	 * @param f float3 to multiply
-	 * 
+	 *
 	 * Same as multiplying a float3, but stores
 	 * the new float3 inside this one.
 	 */
@@ -181,7 +175,7 @@ public:
 	/**
 	 * @brief operator *=
 	 * @param f float to multiply
-	 * 
+	 *
 	 * Same as multiplying a float, but stores
 	 * the new float3 inside this one.
 	 */
@@ -195,7 +189,7 @@ public:
 	 * @brief operator /
 	 * @param f float3 to divide
 	 * @return divided float3
-	 * 
+	 *
 	 * When dividing by a float3, divides
 	 * each x/y/z component individually.
 	 */
@@ -207,7 +201,7 @@ public:
 	 * @brief operator /
 	 * @param f float to divide
 	 * @return float3 divided by float
-	 * 
+	 *
 	 * When dividing by a single float, divides
 	 * each x/y/z component by that float.
 	 */
@@ -219,7 +213,7 @@ public:
 	/**
 	 * @brief operator /=
 	 * @param f float3 to divide
-	 * 
+	 *
 	 * Same as dividing by a float3, but stores
 	 * the new values inside this float3.
 	 */
@@ -232,7 +226,7 @@ public:
 	/**
 	 * @brief operator /=
 	 * @param f float to divide
-	 * 
+	 *
 	 * Same as dividing by a single float, but stores
 	 * the new values inside this float3.
 	 */
@@ -247,7 +241,7 @@ public:
 	 * @brief operator ==
 	 * @param f float3 to test
 	 * @return whether float3s are equal
-	 * 
+	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
@@ -259,7 +253,7 @@ public:
 	 * @brief operator !=
 	 * @param f float3 to test
 	 * @return whether float3s are not equal
-	 * 
+	 *
 	 * Tests if this float3 is not equal to another, by
 	 * checking each x/y/z component individually.
 	 */
@@ -271,7 +265,7 @@ public:
 	 * @brief operator[]
 	 * @param t index in xyz array
 	 * @return float component at index
-	 * 
+	 *
 	 * Array access for x/y/z components
 	 * (index 0 is x, index 1 is y, index 2 is z)
 	 */
@@ -283,7 +277,7 @@ public:
 	 * @brief operator [] const
 	 * @param t index in xyz array
 	 * @return const float component at index
-	 * 
+	 *
 	 * Same as plain [] operator but used in
 	 * a const context
 	 */
@@ -295,7 +289,7 @@ public:
 	 * @brief dot product
 	 * @param f float3 to use
 	 * @return dot product of float3s
-	 * 
+	 *
 	 * Calculates the dot product of this and
 	 * another float3 (sums the products of each
 	 * x/y/z component).
@@ -308,7 +302,7 @@ public:
 	 * @brief cross product
 	 * @param f float3 to use
 	 * @return cross product of two float3s
-	 * 
+	 *
 	 * Calculates the cross product of this and
 	 * another float3 (y1*z2-z1*y2,z1*x2-x1*z2,x1*y2-y1*x2)
 	 */
@@ -322,7 +316,7 @@ public:
 	 * @brief distance between float3s
 	 * @param f float3 to compare against
 	 * @return float distance between float3s
-	 * 
+	 *
 	 * Calculates the distance between this float3
 	 * and another float3 (sums the differences in each
 	 * x/y/z component, square root for pythagorean theorem)
@@ -338,7 +332,7 @@ public:
 	 * @brief distance2D between float3s (only x and z)
 	 * @param f float3 to compare against
 	 * @return 2D distance between float3s
-	 * 
+	 *
 	 * Calculates the distance between this float3
 	 * and another float3 2-dimensionally (that is,
 	 * only using the x and z components).  Sums the
@@ -354,7 +348,7 @@ public:
 	/**
 	 * @brief Length of this vector
 	 * @return float length of vector
-	 * 
+	 *
 	 * Returns the length of this vector
 	 * (squares and sums each x/y/z component,
 	 * square root for pythagorean theorem)
@@ -366,7 +360,7 @@ public:
 	/**
 	 * @brief 2-dimensional length of this vector
 	 * @return 2D float length of vector
-	 * 
+	 *
 	 * Returns the 2-dimensional length of this vector
 	 * (squares and sums only the x and z components,
 	 * square root for pythagorean theorem)
@@ -378,7 +372,7 @@ public:
 	/**
 	 * @brief normalizes the vector
 	 * @return pointer to self
-	 * 
+	 *
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
@@ -397,7 +391,7 @@ public:
 	/**
 	 * @brief length squared
 	 * @return length squared
-	 * 
+	 *
 	 * Returns the length of this vector squared.
 	 */
 	inline float SqLength() const{
@@ -407,7 +401,7 @@ public:
 	/**
 	 * @brief 2-dimensional length squared
 	 * @return 2D length squared
-	 * 
+	 *
 	 * Returns the 2-dimensional length of this
 	 * vector squared.
 	 */
@@ -421,7 +415,7 @@ public:
 
 	/**
 	 * @brief max x pos
-	 * 
+	 *
 	 * Static value containing the maximum
 	 * x position
 	 * @note maxxpos is set after loading the map.
@@ -430,7 +424,7 @@ public:
 
 	/**
 	 * @brief max z pos
-	 * 
+	 *
 	 * Static value containing the maximum
 	 * z position
 	 * @note maxzpos is set after loading the map.

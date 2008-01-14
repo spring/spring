@@ -19,7 +19,7 @@
 */
 
 //SPRING#include <math.h>
-#include "float3.h"
+#include "streflop_cond.h"
 #include <string.h>
 
 #define ltable_c
