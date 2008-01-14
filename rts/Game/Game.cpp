@@ -3737,7 +3737,6 @@ void CGame::HandleChatMsg(std::string s, int player)
 		unitDefHandler->noCost=true;
 		logOutput.Print("Everything is for free!");
 	}
-#ifdef DEBUG
 	else if (s.find(".crash") == 0 && gs->cheatEnabled) {
 		int *a=0;
 		*a=0;
@@ -3749,6 +3748,7 @@ void CGame::HandleChatMsg(std::string s, int player)
 		float a = 0;
 		logOutput.Print("Result: %f", 1.0f/a);
 	}
+#ifdef DEBUG
 	else if ((s.find(".desync") == 0) && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
