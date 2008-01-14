@@ -312,7 +312,7 @@ void CEndGameBox::Draw()
 		for (int a = 0; a < 5; ++a) {
 			font->glPrintAt(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, "%s",
 			                FloatToSmallString(maxy * 0.25f * a).c_str());
-			font->glPrintAt(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, "%i:%2i",
+			font->glPrintAt(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, "%02i:%02i",
 			                int(a * 0.25f * numPoints * CTeam::statsPeriod / 60),
 			                int(a * 0.25f * (numPoints - 1) * CTeam::statsPeriod) % 60);
 		}
