@@ -532,7 +532,7 @@
 */
 #if defined(LUA_CORE)
 //SPRING#include <math.h>
-#include "float3.h"
+#include "streflop_cond.h"
 #define luai_numadd(a,b)	((a)+(b))
 #define luai_numsub(a,b)	((a)-(b))
 #define luai_nummul(a,b)	((a)*(b))
