@@ -343,7 +343,9 @@ static int VisualsTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "alphaDecay",  v.alphaDecay);
 	HSTR_PUSH_NUMBER(L, "separation",  v.separation);
 	HSTR_PUSH_BOOL  (L, "noGap",       v.noGap);
-	HSTR_PUSH_BOOL  (L, "alwaysVisible",v.alwaysVisible);
+
+	HSTR_PUSH_BOOL  (L, "alwaysVisible", v.alwaysVisible);
+
 	return 1;
 //	CColorMap *colorMap;
 //	AtlasedTexture *texture1;
@@ -447,7 +449,7 @@ static bool InitParamMap()
 	ADD_INT("tdfId", wd.tdfId);
 
 	ADD_STRING("name",        wd.name);
-	ADD_STRING("filename",    wd.type);
+	ADD_STRING("filename",    wd.filename);
 	ADD_STRING("description", wd.description);
 	ADD_STRING("cegTag",      wd.cegTag);
 
