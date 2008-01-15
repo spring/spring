@@ -31,7 +31,7 @@
 #endif
 
 // Virtual destructor support (across DLL/SO interface)
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 	// MSVC chokes on (pure) virtual destructors across DLL boundaries,
 	// just dont define/declare any.
 	// MinGW crashes on pure virtual destructors and doesn't link non

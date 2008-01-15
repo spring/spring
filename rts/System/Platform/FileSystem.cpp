@@ -16,11 +16,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "FileSystem.h"
+
 #ifdef WIN32
-#include "Win/WinFileSystemHandler.h"
+#	include "Win/WinFileSystemHandler.h"
+#elif defined(__APPLE__)
+#	include "Mac/MacFileSystemHandler.h"
 #else
-#include "Linux/UnixFileSystemHandler.h"
+#	include "Linux/UnixFileSystemHandler.h"
 #endif
+
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "LogOutput.h"
@@ -56,6 +60,8 @@ void FileSystemHandler::Initialize(bool verbose)
 	if (!instance) {
 #ifdef WIN32
 		instance = new WinFileSystemHandler(verbose);
+#elif defined(__APPLE__)
+		instance = new MacFileSystemHandler(verbose);
 #else
 		instance = new UnixFileSystemHandler(verbose);
 #endif

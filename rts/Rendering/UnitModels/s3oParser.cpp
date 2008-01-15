@@ -80,6 +80,7 @@ S3DOModel* CS3OParser::LoadS3O(string name,float scale,int side)
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
+	header.swap();
 
 	S3DOModel *model = SAFE_NEW S3DOModel;
 	model->numobjects=0;
@@ -205,6 +206,7 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 	SS3O* piece=SAFE_NEW SS3O;
 
 	Piece* fp=(Piece*)&buf[offset];
+	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
 	piece->offset.x=fp->xoffset;
 	piece->offset.y=fp->yoffset;
@@ -214,6 +216,7 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 
 	int vertexPointer=fp->vertices;
 	for(int a=0;a<fp->numVertices;++a){
+		((Vertex*)&buf[vertexPointer])->swap();  // Does it matter we mess with the original buffer here?
 		piece->vertices.push_back(*(SS3OVertex*)&buf[vertexPointer]);
 /*		piece->vertices.back().normal.x=piece->vertices.back().pos.x;
 		piece->vertices.back().normal.y=piece->vertices.back().pos.y;
@@ -223,20 +226,20 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 	}
 	int vertexTablePointer=fp->vertexTable;
 	for(int a=0;a<fp->vertexTableSize;++a){
-		int num=*(int*)&buf[vertexTablePointer];
+		int num=swabdword(*(int*)&buf[vertexTablePointer]);
 		piece->vertexDrawOrder.push_back(num);
 		vertexTablePointer+=sizeof(int);
 
 		if(num==-1 && a!=fp->vertexTableSize-1){		//for triangle strips
 			piece->vertexDrawOrder.push_back(num);
 
-			num=*(int*)&buf[vertexTablePointer];
+			num=swabdword(*(int*)&buf[vertexTablePointer]);
 			piece->vertexDrawOrder.push_back(num);
 		}
 	}
 	int childPointer=fp->childs;
 	for(int a=0;a<fp->numChilds;++a){
-		piece->childs.push_back(LoadPiece(buf,*(int*)&buf[childPointer],model));
+		piece->childs.push_back(LoadPiece(buf,swabdword(*(int*)&buf[childPointer]),model));
 		childPointer+=sizeof(int);
 	}
 	return piece;

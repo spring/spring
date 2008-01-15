@@ -18,7 +18,7 @@ static int    gArgc;
 static char  **gArgv;
 static BOOL   gFinderLaunch;
 
-static NSAutoreleasePool *pool = 0;
+extern NSAutoreleasePool *pool;
 void PreInitMac();
 
 #if SDL_USE_NIB_FILE
@@ -280,10 +280,4 @@ int main (int argc, char **argv)
     return 0;
 }
 
-/* Provides a way for anything in spring that uses cocoa */
-void PreInitMac()
-{
-	if (!pool) {
-		pool = [[NSAutoreleasePool alloc] init];
-	}
-}
+

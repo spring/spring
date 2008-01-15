@@ -24,7 +24,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~UnixFileSystemHandler();
-		UnixFileSystemHandler(bool verbose);
+		UnixFileSystemHandler(bool verbose, bool initialize = true);
 
 		virtual bool mkdir(const std::string& dir) const;
 
@@ -33,7 +33,7 @@ class UnixFileSystemHandler : public FileSystemHandler
 		virtual std::string LocateFile(const std::string& file) const;
 		virtual std::vector<std::string> GetDataDirectories() const;
 
-	private:
+	protected:
 
 		struct DataDir
 		{
