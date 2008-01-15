@@ -14,8 +14,8 @@
 #include <SDL.h>
 #ifdef _WIN32
 #include <windows.h>
-#else
-#include <iostream>
+#elif defined(__APPLE__)
+#include "Mac/MacUtils.h"
 #endif
 
 // from X_MessageBox.cpp:
@@ -40,8 +40,7 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
 
 #elif defined(__APPLE__)
-	// Need a Mac-like dialog here
-	std::cout << caption << " " << msg << std::endl;
+	MacMessageBox(msg, caption, flags);
 #else
 	// X implementation
 

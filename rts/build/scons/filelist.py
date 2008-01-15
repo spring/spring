@@ -87,6 +87,7 @@ def get_spring_source(env):
 		'rts/lib/libhpi',
 		'rts/lib/streflop', # streflop is compiled with it's own Makefiles
 		'rts/System/Platform/BackgroundReader.cpp',
+		'rts/System/Platform/Mac', # Mac build uses XCode
 		'rts/System/Platform/Linux/UnixFileSystemHandler.cpp', # see SConstruct
 	]
 	# we may be called before we were configured (e.g. when cleaning)

@@ -252,17 +252,19 @@ void UnixFileSystemHandler::InitVFS() const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler(bool verbose)
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool initialize)
 {
-	LocateDataDirs();
-	InitVFS();
+	if(initialize){
+		LocateDataDirs();
+		InitVFS();
 
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		if (d->readable) {
-			if (d->writable)
-				logOutput.Print("Using read-write data directory: %s", d->path.c_str());
-			else
-				logOutput.Print("Using read-only  data directory: %s", d->path.c_str());
+		for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+			if (d->readable) {
+				if (d->writable)
+					logOutput.Print("Using read-write data directory: %s", d->path.c_str());
+				else
+					logOutput.Print("Using read-only  data directory: %s", d->path.c_str());
+			}
 		}
 	}
 }
