@@ -22,5 +22,6 @@
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_EVOLUTION} "Evolution RTS is a dynamic strategy game which merges fluidity and simplicity, where the outcome of each battle impacts the advancement of the factions and the direction of the story. (38.7MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_S44} "Spring: 1944 (S44) is a reproduction of the Second World War which balances the demands of realism, historical accuracy and gameplay to produce a fast-paced, aggressive game of strategy. (33.7MB Download)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_SIMBASE} "Simbase focuses on base-building and resource production. It allows players to take their time and enjoy the game, while constructing a base and an army to destroy their opponents. (3.5MB Download)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_CA} "Complete Annihilation. Impressive visuals. Friendly interface. Bleeding edge technology like unit morphing and terraforming. Cute little robots. (393KB, downloader only)"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
