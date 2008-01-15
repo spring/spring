@@ -17,9 +17,16 @@ Lua-5.1.2 source code modifications:
      #define LUA_COMPAT_GETN
 
      //SPRING#define LUA_NUMBER_DOUBLE
-     //SPRING#define LUA_NUMBER  double
      #undef LUA_NUMBER_DOUBLE
+
+     //SPRING#define LUA_NUMBER  double
      #define LUA_NUMBER  float                                               
+
+     //SPRING#define LUAI_UACNUMBER	double
+     #define LUAI_UACNUMBER	float
+
+     //SPRING#define LUA_NUMBER_SCAN "%lf"
+     #define LUA_NUMBER_SCAN "%f"
 
   5. Moved the *.c files to *.cpp for C++ compilation
 

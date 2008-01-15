@@ -19,4 +19,15 @@ inline bool lua_israwstring(lua_State* L, int index)
 }
 
 
+inline int lua_checkgeti(lua_State* L, int idx, int n)
+{
+  lua_rawgeti(L, idx, n);
+  if (lua_isnoneornil(L, -1)) {
+    lua_pop(L, 1);
+    return 1;
+  }
+  return 0;
+}
+
+
 #endif // SPRING_LUA_INCLUDE
