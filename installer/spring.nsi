@@ -9,6 +9,8 @@ SetCompressor lzma
 !include "springsettings.nsh"
 !include "LogicLib.nsh"
 !include "Sections.nsh"
+!include "WordFunc.nsh"
+!insertmacro VersionCompare
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
@@ -128,41 +130,72 @@ Function .onInit
   !insertmacro UnselectSection 12 ; unselect EvolutionRTS section (12) by default
   !insertmacro UnselectSection 13 ; unselect Spring:1944 section (13) by default
   !insertmacro UnselectSection 14 ; unselect Simbase section (14) by default
+  !insertmacro UnselectSection 15 ; unselect CA section (15) by default
 FunctionEnd
 
-; Only allow installation if spring.exe is from version 0.75
-;Function CheckVersion
-  ;ClearErrors
-  ;FileOpen $0 "$INSTDIR\spring.exe" r
-  ;IfErrors Fail
-  ;FileSeek $0 0 END $1
-;  IntCmp $1 2637824 Done             ; 0.60b1
-;  IntCmp $1 2650112 Done             ; 0.61b1
-;  IntCmp $1 2670592 Done             ; 0.61b2
-;  IntCmp $1 2678784 Done             ; 0.62b1
-;  IntCmp $1 2682880 Done             ; 0.63b1 & 0.63b2
-;  IntCmp $1 2703360 Done             ; 0.64b1
-;  IntCmp $1 3006464 Done             ; 0.65b1
-;  IntCmp $1 3014656 Done             ; 0.65b2
-;  IntCmp $1 3031040 Done             ; 0.66b1
-;  IntCmp $1 3035136 Done             ; 0.67b1 & 0.67b2 & 0.67b3
-;  IntCmp $1 2633728 Done             ; 0.70b1
-;  IntCmp $1 2650112 Done             ; 0.70b2
-;  IntCmp $1 2707456 Done             ; 0.70b3
-;  IntCmp $1 5438464 Done             ; 0.74b1
-;  IntCmp $1 5487104 Done             ; 0.74b2
-;  IntCmp $1 5478912 Done             ; 0.74b3
-  ;IntCmp $1 7470080 Done              ; 0.75b1
-  ;IntCmp $1 7471104 Done              ; 0.75b2
-;Fail:
-  ;MessageBox MB_ICONSTOP|MB_OK "This installer can only be used to upgrade a full installation of Spring 0.75. Your current folder does not contain a spring.exe from that version, so the installation will be aborted.. Please download the full installer instead and try again."
-  ;Abort "Unable to upgrade, version 0.75b1 or 0.75b2 not found.."
-  ;Goto done
+; For CA: BEGIN
 
-;Done:
-  ;FileClose $0
+Var CA
 
-;FunctionEnd
+Function  .onGUIEnd
+${If} $CA == 'true'
+  Call LaunchUpdater
+${EndIf}
+FunctionEnd
+
+Function GetDotNETVersion
+  Push $0 ; Create variable 0 (version number).
+  Push $1 ; Create variable 1 (error).
+  
+  ; Request the version number from the Microsoft .NET Runtime Execution Engine DLL
+  System::Call "mscoree::GetCORVersion(w .r0, i ${NSIS_MAX_STRLEN}, *i) i .r1 ?u"
+ 
+ ; If error, set "not found" as the top element of the stack. Otherwise, set the version number.
+  StrCmp $1 "error" 0 +2 ; If variable 1 is equal to "error", continue, otherwise skip the next couple of lines.
+  StrCpy $0 "not found"
+  Pop $1 ; Remove variable 1 (error).
+  Exch $0 ; Place variable  0 (version number) on top of the stack.
+FunctionEnd
+
+Function NoDotNet
+  MessageBox MB_YESNO \
+  "The .NET runtime library is not installed. v2.0 or newer is required for the Complete Annihilation automatic updates. Do you wish to download and install it?" \
+  IDYES true IDNO false
+true:
+    inetc::get "http://installer.clan-sy.com/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
+    ExecWait "$INSTDIR\dotnetfx.exe"
+    Delete   "$INSTDIR\dotnetfx.exe"
+  Goto next
+false:
+next:  
+FunctionEnd
+
+Function OldDotNet
+  MessageBox MB_YESNO \
+  ".NET runtime library v2.0 or newer is required for Complete Annihilation automatic updates. You have $0. Do you wish to download and install it?" \
+    IDYES true IDNO false
+true:
+    inetc::get \
+             "http://installer.clan-sy.com/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
+    ExecWait "$INSTDIR\dotnetfx.exe"
+    Delete   "$INSTDIR\dotnetfx.exe"
+  Goto next
+false:
+next:
+FunctionEnd
+
+Function LaunchUpdater
+  MessageBox MB_YESNO \
+  "Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
+  IDYES true IDNO false
+true:
+  Exec '"$INSTDIR\CaDownloader.exe"'
+  Goto next
+false:
+  next:
+FunctionEnd
+
+; For CA: END
 
 ;Three functions which check to make sure OTA Content is installed before installing Mods that depend on it.
 Function CheckTATextures
@@ -275,7 +308,7 @@ SectionGroup "Mods"
 	!include "sections\xta.nsh"
 	!undef INSTALL
 	SectionEnd
-
+ 
 	Section "Gundam" SEC_GUNDAM
 	!define INSTALL
 	AddSize 51000
@@ -310,6 +343,16 @@ SectionGroup "Mods"
 	!include "sections\simbase.nsh"
 	!undef INSTALL
 	SectionEnd
+
+  	Section "CA" SEC_CA
+	!define INSTALL
+        Call CheckTATextures
+        Call CheckOTAContent
+        Call CheckTAContent
+        AddSize 393
+	!include "sections\ca.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 Section "Start menu shortcuts" SEC_START
@@ -322,6 +365,10 @@ Section "Desktop shortcut" SEC_DESKTOP
 ${If} ${SectionIsSelected} ${SEC_BATTLEROOM}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
+${EndIf}
+${If} ${SectionIsSelected} ${SEC_CA}
+  SetOutPath "$INSTDIR"
+  CreateShortCut "$DESKTOP\${PRODUCT_NAME} Update CA.lnk" "$INSTDIR\CaDownloader.exe"
 ${EndIf}
 SectionEnd
 
@@ -399,8 +446,10 @@ Section Uninstall
   !include "sections\evolution.nsh"
   !include "sections\s44.nsh"
   !include "sections\simbase.nsh"
+  !include "sections\CA.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
+  Delete "$DESKTOP\${PRODUCT_NAME} Update CA.lnk"
 
   ; All done
   RMDir "$INSTDIR"
