@@ -22,9 +22,6 @@ Lua-5.1.2 source code modifications:
      //SPRING#define LUA_NUMBER  double
      #define LUA_NUMBER  float                                               
 
-     //SPRING#define LUAI_UACNUMBER	double
-     #define LUAI_UACNUMBER	float
-
      //SPRING#define LUA_NUMBER_SCAN "%lf"
      #define LUA_NUMBER_SCAN "%f"
 
