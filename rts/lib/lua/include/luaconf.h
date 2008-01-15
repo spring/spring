@@ -510,8 +510,7 @@
 @@ LUAI_UACNUMBER is the result of an 'usual argument conversion'
 @* over a number.
 */
-//SPRING#define LUAI_UACNUMBER	double
-#define LUAI_UACNUMBER	float
+#define LUAI_UACNUMBER	double
 
 
 /*
