@@ -56,6 +56,20 @@ local function ProcessUnitDef(udName, ud)
       end
     end
   end
+
+  -- convert the death explosions
+  if (isstring(ud.explodeas)) then
+    local fullName = udName .. '_' .. ud.explodeas
+    if (WeaponDefs[fullName]) then
+      ud.explodeas = fullName
+    end
+  end
+  if (isstring(ud.selfdestructas)) then
+    local fullName = udName .. '_' .. ud.selfdestructas
+    if (WeaponDefs[fullName]) then
+      ud.selfdestructas = fullName
+    end
+  end
 end
 
 
