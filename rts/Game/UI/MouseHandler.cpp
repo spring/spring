@@ -528,7 +528,6 @@ void CMouseHandler::Draw()
 		glEnd();
 		glLineWidth(1.0f);
 
-
 		glPopAttrib();
 	}
 }

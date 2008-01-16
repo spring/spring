@@ -84,7 +84,6 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 
 	cd.id=CMD_TEXT_ALERT;
 	cd.type=CMDTYPE_ICON_MODE;
-	cd.hotkey="t";
 	if(alertText)
 	{
 		cd.params.push_back("1");
@@ -101,13 +100,9 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.params.clear();
 	cd.id=CMD_MINIMAP_ALERT;
 	cd.type=CMDTYPE_ICON_MODE;
-	cd.hotkey="m";
-	if(alertMinimap)
-	{
+	if (alertMinimap) {
 		cd.params.push_back("1");
-	}
-	else
-	{
+	} else {
 		cd.params.push_back("0");
 	}
 	cd.params.push_back("Minimap off");
@@ -118,13 +113,9 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.params.clear();
 	cd.id=CMD_SHOW_GHOSTS;
 	cd.type=CMDTYPE_ICON_MODE;
-	cd.hotkey="g";
-	if(showGhosts)
-	{
+	if (showGhosts) {
 		cd.params.push_back("1");
-	}
-	else
-	{
+	} else {
 		cd.params.push_back("0");
 	}
 	cd.params.push_back("Ghosts off");

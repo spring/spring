@@ -12,9 +12,11 @@
 #include "LuaUI.h"
 #include "Rendering/glFont.h"
 
-GameSetupDrawer* GameSetupDrawer::instance = 0;
-
 extern Uint8 *keys;
+
+
+GameSetupDrawer* GameSetupDrawer::instance = NULL;
+
 
 void GameSetupDrawer::Enable()
 {
@@ -24,6 +26,7 @@ void GameSetupDrawer::Enable()
 	instance = new GameSetupDrawer();
 }
 
+
 void GameSetupDrawer::Disable()
 {
 	if (instance)
@@ -32,6 +35,7 @@ void GameSetupDrawer::Disable()
 		instance = 0;
 	}
 }
+
 
 GameSetupDrawer::GameSetupDrawer()
 {
@@ -44,6 +48,7 @@ GameSetupDrawer::GameSetupDrawer()
 GameSetupDrawer::~GameSetupDrawer()
 {
 }
+
 
 void GameSetupDrawer::Draw()
 {
@@ -98,11 +103,11 @@ void GameSetupDrawer::Draw()
 
 	for (int a = 0; a <= gameSetup->numPlayers; a++) {
 		const float* color;
-		const float red[4]    = { 1.0f ,0.2f, 0.2f, 1.0f };
-		const float green[4]  = { 0.2f, 1.0f, 0.2f, 1.0f };
+		const float    red[4] = { 1.0f, 0.2f, 0.2f, 1.0f };
+		const float  green[4] = { 0.2f, 1.0f, 0.2f, 1.0f };
 		const float yellow[4] = { 0.8f, 0.8f, 0.2f, 1.0f };
-		const float dark[4]   = { 0.2f, 0.2f, 0.2f, 0.8f };
-		const float white[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+		const float  white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		const float   dark[4] = { 0.2f, 0.2f, 0.2f, 0.8f };
 		if (a == gameSetup->numPlayers) {
 			color = white; //blue;
 		} else if (!gs->players[a]->readyToStart) {
@@ -117,12 +122,12 @@ void GameSetupDrawer::Draw()
 		if (a == gameSetup->numPlayers) {
 			name = "Players:";
 		} else {
-			name  = gs->players[a]->playerName.c_str();
+			name = gs->players[a]->playerName.c_str();
 		}
 		const float yScale = 0.028f;
 		const float xScale = yScale / gu->aspectRatio;
-		const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-		const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
+		const float xPixel = 1.0f / (xScale * (float)gu->viewSizeX);
+		const float yPixel = 1.0f / (yScale * (float)gu->viewSizeY);
 		const float yPos = 0.5f - (0.5f * yScale * gameSetup->numPlayers) + (yScale * (float)a);
 		const float xPos = xScale;
 		glPushMatrix();
@@ -133,10 +138,12 @@ void GameSetupDrawer::Draw()
 	}
 }
 
+
 bool GameSetupDrawer::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (keys[SDLK_LCTRL] && key == SDLK_RETURN)
+	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN)) {
 		gameSetup->forceReady = true;
+	}
 	return false;
 }
 

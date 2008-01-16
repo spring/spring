@@ -63,7 +63,7 @@ unsigned ProtocolDef::IsComplete(const unsigned char* const buf, const unsigned 
 	{
 		if (HasFixedLength(buf[0]))
 		{
-			if (bufLength >= (unsigned)GetLength(buf[0]))
+			if (bufLength >= (unsigned int)GetLength(buf[0]))
 				return GetLength(buf[0]);
 			else
 				return 0;
@@ -83,10 +83,10 @@ unsigned ProtocolDef::IsComplete(const unsigned char* const buf, const unsigned 
 				if (bufLength <= 2)
 					return 0;
 				
-				var = *(unsigned int*)(buf+1);
+				var = *((unsigned short*)(buf + 1));
 			}
 			
-			if (bufLength >= (unsigned)var)
+			if (bufLength >= (unsigned int)var)
 				return var;
 			else
 				return 0;
@@ -94,4 +94,4 @@ unsigned ProtocolDef::IsComplete(const unsigned char* const buf, const unsigned 
 	}
 }
 
-}
+} // namespace netcode

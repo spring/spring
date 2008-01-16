@@ -794,7 +794,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 				const string unitName = action.command.substr(10);
 				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
 				if (unitDef) {
-					comment = "  // " + unitDef->humanName + " :: " + unitDef->tooltip;
+					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
 				}
 			}
 			if (comment.empty()) {

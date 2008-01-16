@@ -88,6 +88,7 @@ class LuaSyncedRead {
 		static int GetUnitLineage(lua_State* L);
 		static int GetUnitNeutral(lua_State* L);
 		static int GetUnitHealth(lua_State* L);
+		static int GetUnitIsDead(lua_State* L);
 		static int GetUnitIsStunned(lua_State* L);
 		static int GetUnitResources(lua_State* L);
 		static int GetUnitExperience(lua_State* L);
@@ -159,6 +160,7 @@ class LuaSyncedRead {
 		static int GetPositionLosState(lua_State* L);
 		static int GetClosestValidPosition(lua_State* L);
 
+		static int GetUnitPieceMap(lua_State* L);
 		static int GetUnitPieceList(lua_State* L);
 		static int GetUnitPieceInfo(lua_State* L);
 		static int GetUnitPiecePosition(lua_State* L);

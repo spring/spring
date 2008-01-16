@@ -10,7 +10,7 @@
 
 #include "LuaInclude.h"
 
-#include "LuaCob.h" // for MAX_LUA_COB_ARGS
+#include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
 #include "LuaHashString.h"
 #include "LuaSyncedMoveCtrl.h"
@@ -1152,37 +1152,42 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	int weapon = (int)luaL_checknumber(L,2);
-	if (weapon < 0 || weapon >= unit->weapons.size()) {
+
+	const int weaponNum = (int)luaL_checknumber(L,2);
+	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
+	CWeapon* weapon = unit->weapons[weaponNum];
+
 	if (lua_istable(L,3)) {
 		const int table = 3;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
 				const float value = (float)lua_tonumber(L, -1);
+				// FIXME: KDR -- missing checks and updates?
 				if (key == "reloadstate") {
-					unit->weapons[weapon]->reloadStatus = (int)value;
+					weapon->reloadStatus = (int)value;
 				}
 				else if (key == "reloadtime") {
-					unit->weapons[weapon]->reloadTime = (int)(value*GAME_SPEED);
+					weapon->reloadTime = (int)(value * GAME_SPEED);
 				}
 				else if (key == "accuracy") {
-					unit->weapons[weapon]->accuracy = value;
+					weapon->accuracy = value;
 				}
 				else if (key == "sprayangle") {
-					unit->weapons[weapon]->sprayangle = value;
+					weapon->sprayangle = value;
 				}
 				else if (key == "range") {
-					unit->weapons[weapon]->range = value;
+					weapon->range = value;
 				}
 				else if (key == "projectilespeed") {
-					unit->weapons[weapon]->projectileSpeed = value;
+					weapon->projectileSpeed = value;
 				}
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -1448,27 +1453,17 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L);
-	if (args >= 4) {
-		float radius = 0.0f;
-		float speed = unit->maxSpeed * 2.0f;
-		const float3 pos((float)luaL_checknumber(L, 2),
-		                 (float)luaL_checknumber(L, 3),
-		                 (float)luaL_checknumber(L, 4));
-		if (args >= 5) {
-			radius = (float)luaL_checknumber(L, 5);
-		}
-		if (args >= 6) {
-			speed = (float)luaL_checknumber(L, 6);
-		}
-
-		if (unit->moveType == NULL) return 0; //dropped quietly so the user doesn't have to check for buildings
-
-		unit->moveType->StartMoving(pos, radius, speed);
+	if (unit->moveType == NULL) {
+		return 0;
 	}
-	else {
-		luaL_error(L, "Too few arguments to SetUnitMoveGoal(unit, posx, posy, posz[, radius[, speed]])");
-	}
+	const float3 pos((float)luaL_checknumber(L, 2),
+									 (float)luaL_checknumber(L, 3),
+									 (float)luaL_checknumber(L, 4));
+	const float radius = (float)luaL_optnumber(L, 5, 0.0f);
+	const float speed  = (float)luaL_optnumber(L, 6, unit->maxSpeed * 2.0f);
+
+	unit->moveType->StartMoving(pos, radius, speed);
+
 	return 0;
 }
 

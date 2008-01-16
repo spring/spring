@@ -314,20 +314,21 @@ void CUnit::UnitInit (const UnitDef* def, int Team, const float3& position)
 	unitDef = def;
 	unitDefName = unitDef->name;
 
-	localmodel=NULL;
+	localmodel = NULL;
 	SetRadius(1.2f);
-	mapSquare=ground->GetSquare(pos);
+	mapSquare = ground->GetSquare(pos);
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
-	oldRadarPos.x=-1;
+	oldRadarPos.x = -1;
 
-	for(int a=0;a<MAX_TEAMS;++a)
-		losStatus[a]=0;
+	for (int a = 0; a < MAX_TEAMS; ++a) {
+		losStatus[a] = 0;
+	}
 
-	losStatus[allyteam]=LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
-	posErrorVector=gs->randVector();
-	posErrorVector.y*=0.2f;
+	posErrorVector = gs->randVector();
+	posErrorVector.y *= 0.2f;
 #ifdef TRACE_SYNC
 	tracefile << "New unit: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
@@ -484,6 +485,58 @@ void CUnit::UpdateResources()
 }
 
 
+inline void CUnit::UpdateLosStatus(int at)
+{
+	const int prevLosStatus = losStatus[at];
+	if ((prevLosStatus & LOS_INTEAM) != 0) {
+		return; // allied -- no need to update
+	}
+
+	if (loshandler->InLos(this, at)) {
+		if ((prevLosStatus & LOS_INLOS) == 0) {
+
+			if (beingBuilt) {
+				losStatus[at] |= (LOS_INLOS | LOS_INRADAR);
+			} else {
+				losStatus[at] |= (LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
+			}
+
+			if ((prevLosStatus & LOS_INRADAR) == 0) {
+				luaCallIns.UnitEnteredRadar(this, at);
+				globalAI->UnitEnteredRadar(this, at);
+			}
+			luaCallIns.UnitEnteredLos(this, at);
+			globalAI->UnitEnteredLos(this, at);
+		}
+	}
+	else if (radarhandler->InRadar(this, at)) {
+		if ((prevLosStatus & LOS_INLOS) != 0) {
+			losStatus[at] &= ~LOS_INLOS;
+			luaCallIns.UnitLeftLos(this, at);
+			globalAI->UnitLeftLos(this, at);
+		}
+		else if ((prevLosStatus & LOS_INRADAR) == 0) {
+			losStatus[at] |= LOS_INRADAR;
+			luaCallIns.UnitEnteredRadar(this, at);
+			globalAI->UnitEnteredRadar(this, at);
+		}
+	}
+	else {
+		if ((prevLosStatus & LOS_INRADAR) != 0) {
+			losStatus[at] &= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
+			if ((prevLosStatus & LOS_INLOS) != 0) {
+				luaCallIns.UnitLeftLos(this, at);
+				luaCallIns.UnitLeftRadar(this, at);
+				globalAI->UnitLeftLos(this, at);
+				globalAI->UnitLeftRadar(this, at);
+			} else {
+				luaCallIns.UnitLeftRadar(this, at);
+				globalAI->UnitLeftRadar(this, at);
+			}
+		}
+	}
+}
+
 
 void CUnit::SlowUpdate()
 {
@@ -498,54 +551,8 @@ void CUnit::SlowUpdate()
 		nextPosErrorUpdate = 16;
 	}
 
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
-		const int prevLosStatus = losStatus[a];
-		if (prevLosStatus & LOS_INTEAM) {
-			continue; // allied, no need to update
-		}
-		else if (loshandler->InLos(this, a)) {
-			if (!(prevLosStatus & LOS_INLOS)) {
-
-				if (beingBuilt) {
-					losStatus[a] |= (LOS_INLOS | LOS_INRADAR);
-				} else {
-					losStatus[a] |= (LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
-				}
-
-				if (!(prevLosStatus & LOS_INRADAR)) {
-					luaCallIns.UnitEnteredRadar(this, a);
-					globalAI->UnitEnteredRadar(this, a);
-				}
-				luaCallIns.UnitEnteredLos(this, a);
-				globalAI->UnitEnteredLos(this, a);
-			}
-		}
-		else if (radarhandler->InRadar(this, a)) {
-			if ((prevLosStatus & LOS_INLOS)) {
-				luaCallIns.UnitLeftLos(this, a);
-				globalAI->UnitLeftLos(this, a);
-				losStatus[a] &= ~LOS_INLOS;
-			}
-			else if (!(prevLosStatus & LOS_INRADAR)) {
-				luaCallIns.UnitEnteredRadar(this, a);
-				globalAI->UnitEnteredRadar(this, a);
-				losStatus[a] |= LOS_INRADAR;
-			}
-		}
-		else {
-			if ((prevLosStatus & LOS_INRADAR)) {
-				if ((prevLosStatus & LOS_INLOS)) {
-					luaCallIns.UnitLeftLos(this, a);
-					luaCallIns.UnitLeftRadar(this, a);
-					globalAI->UnitLeftLos(this, a);
-					globalAI->UnitLeftRadar(this, a);
-				} else {
-					luaCallIns.UnitLeftRadar(this, a);
-					globalAI->UnitLeftRadar(this, a);
-				}
-				losStatus[a] &= ~(LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR);
-			}
-		}
+	for (int at = 0; at < gs->activeAllyTeams; ++at) {
+		UpdateLosStatus(at);
 	}
 	
 	repairAmount=0.0f;

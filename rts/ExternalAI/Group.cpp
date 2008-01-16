@@ -274,7 +274,6 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 			c.id   = i->id;
 			c.type = i->type;
 			c.action    = i->action.c_str();
-			c.hotkey    = i->hotkey.c_str();
 			c.name      = i->name.c_str();
 			c.iconname  = i->iconname.c_str();
 			c.mouseicon = i->mouseicon.c_str();
@@ -294,7 +293,6 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	c.name="Select AI";
 	c.tooltip="Select the AI to use for this group from the available AIs";
 	c.showUnique=true;
-	c.hotkey="Ctrl+q";
 
 	char t[50];
 	sprintf(t,"%i",currentAiNum+1);

@@ -81,7 +81,6 @@ void CWordCompletion::Reset()
 	words[".give "] = sl;
 	words[".kick "] = sl;
 	words[".kickbynum "] = sl;
-	words[".luacob "] = sl;
 	words[".luagaia "] = sl;
 	words[".luarules "] = sl;
 	words[".nocost"] = sl;

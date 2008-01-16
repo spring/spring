@@ -13,7 +13,6 @@ using namespace std;
 
 #include "LuaHandle.h"
 #include "Game/UI/LuaUI.h"
-#include "LuaCob.h"
 #include "LuaGaia.h"
 #include "LuaRules.h"
 #include "LuaHashString.h"
@@ -107,7 +106,6 @@ static int PushCallHandler(lua_State* L, CLuaHandle** addr, const string& name)
 
 bool LuaUnsyncedCall::PushEntries(lua_State* L)
 {
-	PushCallHandler(L, (CLuaHandle**) &luaCob,   "LuaCob");
 	PushCallHandler(L, (CLuaHandle**) &luaGaia,  "LuaGaia");
 	PushCallHandler(L, (CLuaHandle**) &luaRules, "LuaRules");
 	PushCallHandler(L, (CLuaHandle**) &luaUI,    "LuaUI");

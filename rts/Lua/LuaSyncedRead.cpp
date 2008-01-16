@@ -171,6 +171,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitLineage);
 	REGISTER_LUA_CFUNC(GetUnitNeutral);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
+	REGISTER_LUA_CFUNC(GetUnitIsDead);
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
@@ -239,6 +240,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPositionLosState);
 	REGISTER_LUA_CFUNC(GetClosestValidPosition);
 
+	REGISTER_LUA_CFUNC(GetUnitPieceMap);
 	REGISTER_LUA_CFUNC(GetUnitPieceList);
 	REGISTER_LUA_CFUNC(GetUnitPieceInfo);
 	REGISTER_LUA_CFUNC(GetUnitPiecePosition);
@@ -2425,6 +2427,17 @@ int LuaSyncedRead::GetUnitHealth(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitIsDead(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->isDead);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitIsStunned(lua_State* L)
 {
 	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
@@ -3842,20 +3855,20 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	bool radar    = false;
 	if (allyTeamID >= 0) {
 		inLos    = loshandler->InLos(pos, allyTeamID);
-		inAirLos = loshandler->InAirLos(pos, allyTeamID);
 		radar    = radarhandler->InRadar(pos, allyTeamID);
+		inAirLos = loshandler->InAirLos(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < gs->activeAllyTeams; at++) {
 			inLos    = inLos    || loshandler->InLos(pos, at);
-			inAirLos = inAirLos || loshandler->InAirLos(pos, at);
 			radar    = radar    || radarhandler->InRadar(pos, at);
+			inAirLos = inAirLos || loshandler->InAirLos(pos, at);
 		}
 	}
 	lua_pushboolean(L, inLos || radar);
 	lua_pushboolean(L, inLos);
-	lua_pushboolean(L, inAirLos);
 	lua_pushboolean(L, radar);
+	lua_pushboolean(L, inAirLos);
 
 	return 4;
 }
@@ -3876,6 +3889,24 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const LocalS3DOModel* localModel = unit->localmodel;
+	lua_newtable(L);
+	for (int i = 0; i < localModel->numpieces; i++) {
+		const LocalS3DO& lp = localModel->pieces[i];
+		lua_pushstring(L, lp.name.c_str());
+		lua_pushnumber(L, i + 1);
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
 
 int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 {

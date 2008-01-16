@@ -63,7 +63,6 @@ end
 
 
 function widget:Initialize()
-  widgetHandler:AddAction("doline",  RunCmd)  -- backwards compatible
   widgetHandler:AddAction("run",     RunCmd)
   widgetHandler:AddAction("echolua", EchoCmd, nil)
   widgetHandler:AddAction("echo",    EchoCmd, nil, "t") -- text only

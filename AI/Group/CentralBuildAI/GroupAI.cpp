@@ -257,7 +257,6 @@ void CGroupAI::UpdateAvailableCommands(void)
 	cd.id=CMD_STOP;
 	cd.name="Stop";
 	cd.action="stop";
-	cd.hotkey="s";
 	commands.push_back(cd);			//should always have a stop command since it is the default
 
 	set<int> alreadyFound;

@@ -83,7 +83,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	if(owner->unitDef->canRepair){
 		c.id=CMD_REPAIR;
 		c.action="repair";
-		c.hotkey="r";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Repair";
 		c.mouseicon=c.name;
@@ -92,7 +91,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	} else if(owner->unitDef->canAssist){
 		c.id=CMD_REPAIR;
 		c.action="assist";
-		c.hotkey="r";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Assist";
 		c.mouseicon=c.name;
@@ -103,7 +101,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	if(owner->unitDef->canReclaim){
 		c.id=CMD_RECLAIM;
 		c.action="reclaim";
-		c.hotkey="e";
 		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 		c.name="Reclaim";
 		c.mouseicon=c.name;
@@ -114,7 +111,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	if(owner->unitDef->canRestore){
 		c.id=CMD_RESTORE;
 		c.action="restore";
-		c.hotkey="";
 		c.type=CMDTYPE_ICON_AREA;
 		c.name="Restore";
 		c.mouseicon=c.name;
@@ -127,7 +123,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	if(owner->unitDef->canResurrect){
 		c.id=CMD_RESURRECT;
 		c.action="resurrect";
-		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
 		c.name="Resurrect";
 		c.mouseicon=c.name;
@@ -137,7 +132,6 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	if(owner->unitDef->canCapture){
 		c.id=CMD_CAPTURE;
 		c.action="capture";
-		c.hotkey="";
 		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 		c.name="Capture";
 		c.mouseicon=c.name;

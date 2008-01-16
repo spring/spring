@@ -13,7 +13,7 @@
 
 
 function PrintInCommand()
-  cmdIndex, cmdId, cmdType, name = Spring.GetActiveCommand()
+  local cmdIndex, cmdId, cmdType, name = Spring.GetActiveCommand()
   print("InCommand: ", cmdIndex, cmdId, cmdType, name)
 end
 
@@ -30,8 +30,8 @@ end
 
 
 function PrintSelection()
-  udTable       = Spring.GetSelectedUnitsSorted()
-  selectedGroup = Spring.GetSelectedGroup()
+  local udTable       = Spring.GetSelectedUnitsSorted()
+  local selectedGroup = Spring.GetSelectedGroup()
   print("Selected Group = " .. selectedGroup)
   print("Selected: " .. udTable.n .. " types")
   udTable.n = nil
@@ -39,7 +39,7 @@ function PrintSelection()
      print('  ' .. udid .. '=' .. UnitDefs[udid].name .. ' count ' .. uTable.n)
     uTable.n = nil
     for _,uid in ipairs(uTable) do
-    	health, maxHealth, paralyze, capture, build = Spring.GetUnitHealth(uid)
+      local health, maxHealth, paralyze, capture, build = Spring.GetUnitHealth(uid)
       print('  ', uid, health, maxHealth, paralyze, capture, build)
       PrintCommandQueue(uid)
     end
@@ -54,13 +54,13 @@ end
 
 
 function PrintCommandQueue(uid)
-  queue = Spring.GetCommandQueue(uid)
+  local queue = Spring.GetCommandQueue(uid)
   if (queue ~= nil) then
-    msg = ''
-    count = 0
+    local msg = ''
+    local count = 0
     for i,cmd in pairs(queue) do
       if (cmd ~= CMD.SET_WANTED_MAX_SPEED) then
-        name = CommandNames[cmd]
+        local name = CommandNames[cmd]
         if (name ~= nil) then
           count = count + 1
           msg = msg .. '  ' .. CommandNames[cmd] .. ','
@@ -76,17 +76,17 @@ end
 
 
 function PrintGroups()
-  groupList, count = Spring.GetGroupList()
+  local groupList, count = Spring.GetGroupList()
   print("GetGroupList: " .. tostring(count))
   for i, v in pairs(groupList) do
-  	local groupName = Spring.GetGroupAIName(i)
-  	if (groupName == nil) then groupName = "" end
+    local groupName = Spring.GetGroupAIName(i)
+    if (groupName == nil) then groupName = "" end
     print('  ' .. i .. '\t' .. v .. '\t' .. groupName)
   end
 
   for g, c in pairs(groupList) do
     print("Units in Group " .. g)
-    udTable = Spring.GetGroupUnitsSorted(g)
+    local udTable = Spring.GetGroupUnitsSorted(g)
     print("  MyTeamUnits: " .. udTable.n .. " types")
     udTable.n = nil
     for udid,uTable in pairs(udTable) do
@@ -119,8 +119,8 @@ end
 
 
 function PrintTeamUnitsCounts(team)
-	print("Team Units Count:" .. team)
-  countTable = Spring.GetTeamUnitsCounts(team)
+  print("Team Units Count:" .. team)
+  local countTable = Spring.GetTeamUnitsCounts(team)
   if (countTable == nil) then
     return
   end
@@ -132,7 +132,7 @@ end
 
 
 function PrintAlliedUnits()
-  teamTable = Spring.GetTeamList(Spring.GetMyAllyTeamID())
+  local teamTable = Spring.GetTeamList(Spring.GetMyAllyTeamID())
 --  print("AlliedUnits: " .. teamTable.n .. " teams")
   teamTable.n = nil
   for n,tid in pairs(teamTable) do
@@ -142,11 +142,11 @@ end
 
 
 function PrintAllyTeamList()
-  allyTeamTable = Spring.GetAllyTeamList()
-	local msg = "AllyTeams(" .. allyTeamTable.n .. ")"
+  local allyTeamTable = Spring.GetAllyTeamList()
+  local msg = "AllyTeams(" .. allyTeamTable.n .. ")"
   allyTeamTable.n = nil
   for n,atid in pairs(allyTeamTable) do
-  	msg = msg .. " " .. atid
+    msg = msg .. " " .. atid
   end
   print(msg)
 end
@@ -163,10 +163,10 @@ function PrintTeamList(allyTeam)
     return
   end
 
-	local msg = "Teams(" .. teamTable.n .. ")"
+  local msg = "Teams(" .. teamTable.n .. ")"
   teamTable.n = nil
   for n,tid in pairs(teamTable) do
-  	msg = msg .. " " .. tid
+    msg = msg .. " " .. tid
   end
   print(msg)
 end
@@ -183,10 +183,10 @@ function PrintPlayerList(team)
     return
   end
 
-	local msg = "Players(" .. playerTable.n .. ")"
+  local msg = "Players(" .. playerTable.n .. ")"
   playerTable.n = nil
   for n,pid in pairs(playerTable) do
-  	msg = msg .. " " .. pid
+    msg = msg .. " " .. pid
   end
   print(msg)
 end
@@ -198,34 +198,32 @@ function PrintPlayerTree()
     print('Ally team: ' .. atid)
     local tTable = Spring.GetTeamList(atid)
     for tn,tid in ipairs(tTable) do
-	    print('  Team: ' .. tid)
-	    local pTable = Spring.GetPlayerList(tid)
+      print('  Team: ' .. tid)
+      local pTable = Spring.GetPlayerList(tid)
       for pn,pid in ipairs(pTable) do
-      	local pname, active = Spring.GetPlayerInfo(pid)
-      	if (active) then
-	  	    print('    Player: ' .. pid .. " " .. pname)
-	  	  end
-  	  end
+        local pname, active = Spring.GetPlayerInfo(pid)
+        if (active) then
+          print('    Player: ' .. pid .. " " .. pname)
+        end
+      end
     end
   end
 end
 
 
 function PrintTeamInfo(teamID)
-  c = {}
-  num, leader, active, dead, isAI, side, c[0], c[1], c[2], c[3] = Spring.GetTeamInfo(teamID)
+  local num, leader, dead, isAI, side, allyTeam = Spring.GetTeamInfo(teamID)
   print('Team number: ' .. num)
   print('     leader: ' .. leader)
-  print('     active: ' .. tostring(active))
   print('       dead: ' .. tostring(dead))
   print('       isAI: ' .. tostring(isAI))
   print('       side: ' .. side)
-  print('      color: ' .. c[0]..' '..c[1]..' '..c[2]..' '..c[3])
+  print('   allyTeam: ' .. allyTeam)
 end
 
 
 function PrintTeamResources(teamID, type)
-  current, storage, pull, income, expense,
+  local current, storage, pull, income, expense,
     share, sent, received = Spring.GetTeamResources(teamID, type)
   if (current ~= nil) then
     print('Team number: ' .. teamID)
@@ -242,8 +240,8 @@ end
 
 
 function PrintTeamUnitStats(teamID)
-	kills, deaths, caps, losses, recv, sent = Spring.GetTeamUnitStats(teamID)
-	if (kills ~= nil) then
+  local kills, deaths, caps, losses, recv, sent = Spring.GetTeamUnitStats(teamID)
+  if (kills ~= nil) then
     print('Team number: ' .. teamID)
     print('  kills:  ' .. kills)
     print('  deaths: ' .. deaths)
@@ -251,12 +249,12 @@ function PrintTeamUnitStats(teamID)
     print('  losses: ' .. losses)
     print('  recv:   ' .. recv)
     print('  sent:   ' .. sent)
-	end
+  end
 end
 
 
 function PrintPlayerInfo(playerID)
-  name, active, spectator, team, allyteam, ping, cpuUsage = 
+  local name, active, spectator, team, allyteam, ping, cpuUsage = 
     Spring.GetPlayerInfo(playerID)
   print('   name:     '..name)
   print('   id:       '..playerID)
@@ -313,6 +311,8 @@ function Debug()
   print("Game.windMax               = " .. Game.windMax)
   print("Game.mapX                  = " .. Game.mapX)
   print("Game.mapY                  = " .. Game.mapY)
+  print("Game.mapSizeX              = " .. Game.mapSizeX)
+  print("Game.mapSizeZ              = " .. Game.mapSizeZ)
   print("Game.mapName               = " .. Game.mapName)
   print("Game.modName               = " .. Game.modName)
   print("Game.limitDGun             = " .. tostring(Game.limitDGun))

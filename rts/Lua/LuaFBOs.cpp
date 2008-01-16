@@ -336,19 +336,14 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 		const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
 		int i = 1;
 		for (lua_rawgeti(L, table, i);
-				 lua_isnumber(L, -1);
+				 lua_israwnumber(L, -1);
 				 lua_pop(L, 1), i++, lua_rawgeti(L, table, i)) {
 			const GLenum buffer = (GLenum)lua_tonumber(L, -1);
 			buffers.push_back(buffer);
 		}
 		lua_pop(L, 1);
 
-		GLenum* bufs = SAFE_NEW GLenum[buffers.size()];
-		for (int b = 0; b < buffers.size(); b++) {
-			bufs[b] = buffers[b];
-		}
-		glDrawBuffersARB(buffers.size(), bufs);
-		delete[] bufs;
+		glDrawBuffersARB(buffers.size(), buffers.data());
 
 		return true;
 	}

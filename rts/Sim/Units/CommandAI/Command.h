@@ -124,7 +124,6 @@ struct CommandDescription {
 
 	std::string name;       // command name
 	std::string action;     // the associated command action binding name
-	std::string hotkey;     // suggested hotkey  (not currently used?)
 	std::string iconname;   // button texture
 	std::string mouseicon;  // mouse cursor
 	std::string tooltip;    // tooltip text

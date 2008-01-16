@@ -215,7 +215,6 @@ class CLuaUI : public CLuaHandle {
 		static int GiveOrderArrayToUnitArray(lua_State* L);
 
 		static int SendLuaUIMsg(lua_State* L);
-		static int SendLuaCobMsg(lua_State* L);
 		static int SendLuaGaiaMsg(lua_State* L);
 		static int SendLuaRulesMsg(lua_State* L);
 

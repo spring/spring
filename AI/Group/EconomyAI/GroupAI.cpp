@@ -154,7 +154,6 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.type=CMDTYPE_ICON_AREA;
 	cd.name="Set area";
 	cd.action="repair";
-	cd.hotkey="r";
 	cd.tooltip="Set area: define an area where the Economy AI can build";
 	commands.push_back(cd);
 
@@ -163,7 +162,6 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.type=CMDTYPE_ICON;
 	cd.name="Stop";
 	cd.action="stop";
-	cd.hotkey="s";
 	cd.tooltip="Stop all units and remove all buildings sites";
 	commands.push_back(cd);
 
@@ -172,7 +170,6 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.type=CMDTYPE_ICON;
 	cd.name="Start";
 	cd.action="onoff";
-	cd.hotkey="x";
 	cd.tooltip="Begin building resources on the current building sites";
 	commands.push_back(cd);
 
@@ -181,7 +178,6 @@ const vector<CommandDescription>& CGroupAI::GetPossibleCommands()
 	cd.type=CMDTYPE_ICON_MODE;
 	cd.name="Max resource usage";
 	cd.action="reclaim";
-	cd.hotkey="e";
 	int stateInt = int((1.0f - maxResourcePercentage) / 0.25f);
 	char stateChar[1];
 	sprintf(stateChar,"%i",stateInt);

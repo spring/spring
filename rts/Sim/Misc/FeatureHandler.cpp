@@ -291,7 +291,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->burnable = 0;
 			fd->destructable = 0;
 			fd->reclaimable = false;
-			fd->geoThermal = 1;
+			fd->geoThermal = true;
 			fd->drawType = DRAWTYPE_NONE;	//geos are drawn into the ground texture and emit smoke to be visible
 			fd->modelType = 0;
 			fd->energy = 0;

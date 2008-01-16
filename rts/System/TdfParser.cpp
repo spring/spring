@@ -138,7 +138,7 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
       it !=e ; ++it ){
     std::string temp = boost::trim_copy( *it );
     if( ! temp.empty( ) ) {
-      ::logOutput.Print( "Junk in "+ filename +  " :" + temp );
+      ::logOutput.Print( "TdfParser: Junk in "+ filename +  ": " + temp );
     }
   }
 

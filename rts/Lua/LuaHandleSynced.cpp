@@ -410,7 +410,7 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(const char* funcName)
 	unsyncedStr.GetRegistry(L);
 	if (!lua_istable(L, -1)) {
 		lua_settop(L, 0);
-		logOutput.Print("ERROR: missing UNSYNCED table for %s", name.c_str());
+//FIXME		logOutput.Print("ERROR: missing UNSYNCED table for %s", name.c_str());
 		return false;
 	}
 	const int unsynced = lua_gettop(L);

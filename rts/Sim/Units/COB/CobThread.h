@@ -4,7 +4,7 @@
 #include <vector>
 #include "Object.h"
 #include "CobInstance.h"
-#include "Lua/LuaCob.h"
+#include "Lua/LuaRules.h"
 #include "LogOutput.h"
 
 class CCobFile;

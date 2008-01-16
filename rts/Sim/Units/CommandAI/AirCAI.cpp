@@ -48,7 +48,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
 	c.mouseicon=c.name;
-	c.hotkey="m";
 	c.tooltip="Move: Commands the aircraft to fly to the location";
 	possibleCommands.push_back(c);
 
@@ -58,7 +57,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="Patrol";
 		c.mouseicon=c.name;
-		c.hotkey="p";
 		c.tooltip="Patrol: Sets the aircraft to patrol a path to one or more waypoints";
 		possibleCommands.push_back(c);
 	}
@@ -69,7 +67,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.type = CMDTYPE_ICON_MAP;
 		c.name = "Fight";
 		c.mouseicon=c.name;
-		c.hotkey = "f";
 		c.tooltip = "Fight: Order the aircraft to take action while moving to a position";
 		possibleCommands.push_back(c);
 	}*/
@@ -80,7 +77,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_AREA;
 		c.name="Area attack";
 		c.mouseicon=c.name;
-		c.hotkey="a";
 		c.tooltip="Sets the aircraft to attack enemy units within a circle";
 		possibleCommands.push_back(c);
 	}/*
@@ -91,7 +87,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_UNIT;
 		c.name="Guard";
 		c.mouseicon=c.name;
-		c.hotkey="g";
 		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}*/
@@ -108,7 +103,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 	c.params.push_back("LandAt 50");
 	c.params.push_back("LandAt 80");
 	c.tooltip="Repair level: Sets at which health level an aircraft will try to find a repair pad";
-	c.hotkey="";
 	possibleCommands.push_back(c);
 	nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
 */
@@ -123,7 +117,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.params.push_back("Normal");
 		c.params.push_back("Loopback");
 		c.tooltip="Loopback attack: Sets if the aircraft should loopback after an attack instead of overflying target";
-		c.hotkey="";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_LOOPBACKATTACK);
 	}

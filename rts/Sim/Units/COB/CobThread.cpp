@@ -4,7 +4,7 @@
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobEngine.h"
-#include "Lua/LuaCob.h"
+#include "Lua/LuaRules.h"
 
 #include "LogOutput.h"
 #include "mmgr.h"
@@ -938,7 +938,7 @@ void CCobThread::LuaCall()
 		stack.resize(size - r2);
 	}
 
-	if (!luaCob) {
+	if (!luaRules) {
 		luaArgs[0] = 0; // failure
 		return;
 	}
@@ -952,12 +952,12 @@ void CCobThread::LuaCall()
 
 #if COB_DEBUG > 0
 	if (COB_DEBUG_FILTER) {
-		logOutput.Print("Calling LuaCob %s", hs.GetString().c_str());
+		logOutput.Print("Cob2Lua %s", hs.GetString().c_str());
 	}
 #endif
 
 	int argsCount = argCount;
-	luaCob->CallFunction(hs, owner->GetUnit(), argsCount, luaArgs);
+	luaRules->Cob2Lua(hs, owner->GetUnit(), argsCount, luaArgs);
 	retCode = luaArgs[0];
 }
 

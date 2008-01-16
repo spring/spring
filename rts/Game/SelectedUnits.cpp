@@ -80,7 +80,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		c.type=CMDTYPE_ICON;
 		c.name="Clear group";
 		c.tooltip="Removes the units from any group they belong to";
-		c.hotkey="Shift+q";
 		ac.commands.push_back(c);
 
 		return ac;
@@ -123,7 +122,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 				c.type    = CMDTYPE_COMBO_BOX;
 				c.name    = "Select AI";
 				c.tooltip = "Create a new group using the selected units and with the ai selected";
-				c.hotkey  = "Ctrl+q";
 
 				c.params.push_back("0");
 				c.params.push_back("None");
@@ -142,7 +140,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			c.type=CMDTYPE_ICON;
 			c.name="Add to group";
 			c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
-			c.hotkey="q";
 			groupCommands.push_back(c);
 		}
 
@@ -155,7 +152,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			c.type=CMDTYPE_ICON;
 			c.name="Select group";
 			c.tooltip="Select the group that these units belong to";
-			c.hotkey="q";
 			groupCommands.push_back(c);
 		}
 
@@ -168,7 +164,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 			c.type=CMDTYPE_ICON;
 			c.name="Clear group";
 			c.tooltip="Removes the units from any group they belong to";
-			c.hotkey="Shift+q";
 			groupCommands.push_back(c);
 		}
 	} // end if (!gs->noHelperAIs)

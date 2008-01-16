@@ -11,18 +11,18 @@ using std::string;
 using std::vector;
 using std::set;
 
+//FIXME#include "LuaArrays.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
-//FIXME-BO: #include "LuaVBOs.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
+//FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 
 
 #define LUA_HANDLE_ORDER_RULES 0
-#define LUA_HANDLE_ORDER_COB   1
-#define LUA_HANDLE_ORDER_GAIA  2
-#define LUA_HANDLE_ORDER_UI    3
+#define LUA_HANDLE_ORDER_GAIA  1
+#define LUA_HANDLE_ORDER_UI    2
 
 
 class CUnit;
@@ -78,9 +78,10 @@ class CLuaHandle {
 
 		const LuaCobCallback  GetCallback() { return cobCallback; }
 
+//FIXME		LuaArrays& GetArrays() { return arrays; }
 		LuaShaders& GetShaders() { return shaders; }
 		LuaTextures& GetTextures() { return textures; }
-//FIXME-BO: 		LuaVBOs& GetVBOs() { return vbos; }
+//FIXME		LuaVBOs& GetVBOs() { return vbos; }
 		LuaFBOs& GetFBOs() { return fbos; }
 		LuaRBOs& GetRBOs() { return rbos; }
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
@@ -197,9 +198,10 @@ class CLuaHandle {
 
 		LuaCobCallback cobCallback;
 
+//FIXME		LuaArrays arrays;
 		LuaShaders shaders;
 		LuaTextures textures;
-//FIXME-BO: 		LuaVBOs vbos;
+//FIXME		LuaVBOs vbos;
 		LuaFBOs fbos;
 		LuaRBOs rbos;
 		CLuaDisplayLists displayLists;
@@ -247,9 +249,10 @@ class CLuaHandle {
 		static const LuaCobCallback GetActiveCallback() {
 			return activeHandle->cobCallback;
 		}
+//FIXME		static LuaArrays&   GetActiveArrays()   { return activeHandle->arrays; }
 		static LuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
 		static LuaTextures& GetActiveTextures() { return activeHandle->textures; }
-//FIXME-BO: 		static LuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
+//FIXME		static LuaVBOs&     GetActiveVBOs()     { return activeHandle->vbos; }
 		static LuaFBOs&     GetActiveFBOs()     { return activeHandle->fbos; }
 		static LuaRBOs&     GetActiveRBOs()     { return activeHandle->rbos; }
 		static CLuaDisplayLists& GetActiveDisplayLists() {
