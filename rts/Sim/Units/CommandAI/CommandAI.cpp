@@ -101,7 +101,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type=CMDTYPE_ICON;
 	c.name="Stop";
 	c.mouseicon=c.name;
-	c.hotkey="s";
 	c.tooltip="Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
@@ -111,7 +110,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
 		c.name="Attack";
 		c.mouseicon=c.name;
-		c.hotkey="a";
 		c.tooltip="Attack: Attacks an unit or a position on the ground";
 		possibleCommands.push_back(c);
 	}
@@ -122,7 +120,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="DGun";
 		c.mouseicon=c.name;
-		c.hotkey="d";
 		c.tooltip="DGun: Attacks using the units special weapon";
 		possibleCommands.push_back(c);
 	}
@@ -132,7 +129,6 @@ CCommandAI::CCommandAI(CUnit* owner)
  	c.type=CMDTYPE_ICON;
  	c.name="Wait";
  	c.mouseicon=c.name;
- 	c.hotkey="w";
  	c.onlyKey=true;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
@@ -143,7 +139,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_NUMBER;
 	c.name = "TimeWait";
 	c.mouseicon=c.name;
-	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "TimeWait: Wait for a period of time before continuing";
 	c.params.push_back("1");  // min
@@ -157,7 +152,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 	c.name = "DeathWait";
 	c.mouseicon=c.name;
-	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "DeathWait: Wait until units die before continuing";
 	possibleCommands.push_back(c);
@@ -167,7 +161,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_NUMBER;
 	c.name = "SquadWait";
 	c.mouseicon=c.name;
-	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
 	c.params.push_back("2");   // min
@@ -180,7 +173,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_ICON;
 	c.name = "GatherWait";
 	c.mouseicon=c.name;
-	c.hotkey = "";
 	c.onlyKey = true;
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
 	possibleCommands.push_back(c);
@@ -191,7 +183,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type = CMDTYPE_ICON;
 		c.name = "SelfD";
 		c.mouseicon = c.name;
-		c.hotkey = "Ctrl+d";
 		c.onlyKey = true;
 		c.tooltip = "SelfD: Tells the unit to self destruct";
 		possibleCommands.push_back(c);
@@ -199,7 +190,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 //	nonQueingCommands.insert(CMD_SELFD);
 
 	c.onlyKey=false;
-	c.hotkey="";
 
 	if (!owner->unitDef->noAutoFire) {
 		if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
@@ -276,7 +266,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Active state";
 		c.mouseicon=c.name;
-		c.hotkey="x";
 
 		if (owner->unitDef->activateWhenBuilt) {
 			c.params.push_back("1");
@@ -290,7 +279,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.tooltip="Active State: Sets the active state of the unit to on or off";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_ONOFF);
-		c.hotkey="";
 	}
 
 	if (owner->unitDef->canCloak) {
@@ -300,7 +288,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_MODE;
 		c.name="Cloak state";
 		c.mouseicon=c.name;
-		c.hotkey="k";
 
 		if (owner->unitDef->startCloaked) {
 			c.params.push_back("1");
@@ -314,7 +301,6 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.tooltip="Cloak State: Sets wheter the unit is cloaked or not";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_CLOAK);
-		c.hotkey="";
 	}
 }
 
@@ -620,9 +606,11 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 
 	if (c.id == CMD_PATROL) {
 		CCommandQueue::iterator ci = commandQue.begin();
-		for(; ci != commandQue.end() && ci->id!=CMD_PATROL; ci++);
-		if(ci==commandQue.end()){
-			if(commandQue.empty()){
+		for (; ci != commandQue.end() && ci->id != CMD_PATROL; ci++) {
+			// just increment
+		}
+		if (ci == commandQue.end()) {
+			if (commandQue.empty()) {
 				Command c2;
 				c2.id = CMD_PATROL;
 				c2.params.push_back(owner->pos.x);
@@ -630,17 +618,18 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 				c2.params.push_back(owner->pos.z);
 				c2.options = c.options;
 				commandQue.push_back(c2);
-			} else {
+			}
+			else {
 				do {
 					ci--;
-					if(ci->params.size() >=3){
+					if (ci->params.size() >= 3) {
 						Command c2;
 						c2.id = CMD_PATROL;
 						c2.params = ci->params;
 						c2.options = c.options;
 						commandQue.push_back(c2);
 						break;
-					} else if(ci==commandQue.begin()){
+					} else if (ci == commandQue.begin()) {
 						Command c2;
 						c2.id = CMD_PATROL;
 						c2.params.push_back(owner->pos.x);
@@ -650,7 +639,8 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 						commandQue.push_back(c2);
 						break;
 					}
-				} while(ci!=commandQue.begin());
+				}
+				while (ci != commandQue.begin());
 			}
 		}
 	}
@@ -1368,7 +1358,6 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	CommandDescription c;
 	c.id=CMD_STOCKPILE;
 	c.action="stockpile";
-	c.hotkey="";
 	c.type=CMDTYPE_ICON;
 	c.name="0/0";
 	c.tooltip="Stockpile: Queue up ammunition for later use";

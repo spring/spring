@@ -22,8 +22,10 @@ for _,ud in pairs(UnitDefs) do
   ud.canParalyze    = false
   ud.canStockpile   = false
   ud.canAttackWater = false
-  for _,wt in ipairs(ud.weapons) do
+  ud.wDefs = {}
+  for i, wt in ipairs(ud.weapons) do
     local wd = WeaponDefs[wt.weaponDef]
+    ud.wDefs[i] = wd
     if (wd) then
       if (wd.isShield)    then ud.hasShield      = true end
       if (wd.paralyzer)   then ud.canParalyze    = true end

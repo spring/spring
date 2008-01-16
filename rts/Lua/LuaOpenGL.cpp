@@ -25,7 +25,7 @@
 #include "LuaHashString.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
-//FIXME-BO: #include "LuaVBOs.h"
+//FIXME#include "LuaVBOs.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
@@ -276,7 +276,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	 	LuaRBOs::PushEntries(L);
 	}
 
-//FIXME-BO: 	LuaVBOs::PushEntries(L);
+//FIXME		LuaVBOs::PushEntries(L);
 
 	return true;
 }
@@ -2401,7 +2401,7 @@ int LuaOpenGL::Material(lua_State* L)
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2)) { // the key
 			logOutput.Print("gl.Material: bad state type\n");
-			break;
+			return 0;;
 		}
 		const string key = lua_tostring(L, -2);
 

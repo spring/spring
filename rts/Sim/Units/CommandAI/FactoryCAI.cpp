@@ -62,7 +62,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	c.type=CMDTYPE_ICON_MAP;
 	c.name="Move";
 	c.mouseicon=c.name;
-	c.hotkey="m";
 	c.tooltip="Move: Order ready built units to move to a position";
 	possibleCommands.push_back(c);
 
@@ -72,7 +71,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_MAP;
 		c.name="Patrol";
 		c.mouseicon=c.name;
-		c.hotkey="p";
 		c.tooltip="Patrol: Order ready built units to patrol to one or more waypoints";
 		possibleCommands.push_back(c);
 	}
@@ -83,7 +81,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.type = CMDTYPE_ICON_MAP;
 		c.name = "Fight";
 		c.mouseicon=c.name;
-		c.hotkey = "f";
 		c.tooltip = "Fight: Order ready built units to take action while moving to a position";
 		possibleCommands.push_back(c);
 	}
@@ -94,7 +91,6 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		c.type=CMDTYPE_ICON_UNIT;
 		c.name="Guard";
 		c.mouseicon=c.name;
-		c.hotkey="g";
 		c.tooltip="Guard: Order ready built units to guard another unit and attack units attacking it";
 		possibleCommands.push_back(c);
 	}

@@ -179,7 +179,9 @@ public:
 	float terraformLeft;            //how much terraforming is left to do
 	int realLosRadius;				//set los to this when finished building
 	int realAirLosRadius;
+
 	int losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
+
 	bool inBuildStance;				//used by constructing unigs
 	bool stunned;							//if we are stunned by a weapon or for other reason
 	bool useHighTrajectory;		//tells weapons that support it to try to use a high trajectory
@@ -375,6 +377,7 @@ public:
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
+	void UpdateLosStatus(int allyTeam);
 
 public:
 	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker);

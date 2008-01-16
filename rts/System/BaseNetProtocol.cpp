@@ -5,6 +5,10 @@
 
 CBaseNetProtocol::CBaseNetProtocol()
 {
+  // RegisterMessage() length parameter:
+  //   > 0:  if its fixed length
+  //   < 0:  means the next x bytes represent the length
+
 	RegisterMessage(NETMSG_QUIT, 1);
 	RegisterMessage(NETMSG_NEWFRAME, 5);
 	RegisterMessage(NETMSG_STARTPLAYING, 1);
@@ -29,7 +33,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_SHARE, 12);
 	RegisterMessage(NETMSG_SETSHARE, 11);
 	RegisterMessage(NETMSG_SENDPLAYERSTAT, 1);
-	RegisterMessage(NETMSG_PLAYERSTAT, 2+sizeof(CPlayer::Statistics));
+	RegisterMessage(NETMSG_PLAYERSTAT, 2 + sizeof(CPlayer::Statistics));
 	RegisterMessage(NETMSG_GAMEOVER, 1);
 	RegisterMessage(NETMSG_MAPDRAW, -1);
 	RegisterMessage(NETMSG_SYNCREQUEST, 5);

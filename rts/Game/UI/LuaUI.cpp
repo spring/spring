@@ -319,7 +319,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
 
 	REGISTER_LUA_CFUNC(SendLuaUIMsg);
-	REGISTER_LUA_CFUNC(SendLuaCobMsg);
 	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
 	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
 
@@ -2962,14 +2961,6 @@ int CLuaUI::SendLuaUIMsg(lua_State* L)
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
 	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, msg);
-	return 0;
-}
-
-
-int CLuaUI::SendLuaCobMsg(lua_State* L)
-{
-	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_COB, 0, msg);
 	return 0;
 }
 

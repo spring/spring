@@ -34,9 +34,12 @@ if (not success) then
 end
 
 
+local showPanelLabel = false
+
+
 -- for DefaultHandler
 local FrameTex   = "bitmaps/icons/frame_slate_128x96.png"
-local FrameScale     = "&0.099x0.132&"
+local FrameScale = "&0.099x0.132&"
 local PageNumTex = "bitmaps/circularthingy.tga"
 
 
@@ -90,10 +93,13 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
   local iconList = {}
 
   local cmdsFirst = (commands[1].id >= 0)
-  if (cmdsFirst) then
-    menuName =   RedStr .. 'Commands'
-  else
-    menuName = GreenStr .. 'Build Orders'
+
+  if (showPanelLabel) then
+    if (cmdsFirst) then
+      menuName =   RedStr .. 'Commands'
+    else
+      menuName = GreenStr .. 'Build Orders'
+    end
   end
 
   local ipp = (xIcons * yIcons)  -- iconsPerPage
@@ -153,7 +159,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
       iconList[pos] = cmdSlot
       pos = pos + 1
 
-      local cmdTex = cmd.texture or "" -- FIXME 0.75b2 compatibility
+      local cmdTex = cmd.texture
       if (#cmdTex > 0) then
         if (cmdTex:byte(1) ~= 38) then  --  '&' == 38
           reTexCmds[cmdSlot] = FrameScale..cmdTex..'&'..FrameTex

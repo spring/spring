@@ -44,7 +44,6 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	cd.type=CMDTYPE_ICON;
 	cd.name="Stop";
 	cd.action="stop";
-	cd.hotkey="s";
 	commands.push_back(cd);
 
 	cd.id=CMD_MOVE;
@@ -52,7 +51,6 @@ void CGroupAI::InitAi(IGroupAICallback* callback)
 	cd.name="Move";
 	cd.params.push_back("2000");
 	cd.action="move";
-	cd.hotkey="m";
 	cd.tooltip="Move: Click on the goal and hold mouse button while drawing out a front to form behind";
 	char c[40];
 	SNPRINTF(c,10,"%d",(int)columnDist);

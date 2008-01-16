@@ -69,7 +69,6 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 	c.type=CMDTYPE_ICON_UNIT_OR_AREA;
 	c.name="Load units";
 	c.mouseicon=c.name;
-	c.hotkey="l";
 	c.tooltip="Sets the transport to load a unit or units within an area";
 	possibleCommands.push_back(c);
 
@@ -78,7 +77,6 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 	c.type=CMDTYPE_ICON_AREA;
 	c.name="Unload units";
 	c.mouseicon=c.name;
-	c.hotkey="u";
 	c.tooltip="Sets the transport to unload units in an area";
 	possibleCommands.push_back(c);
 }

@@ -7,7 +7,6 @@
 #include <string>
 
 #include "Game/UI/LuaUI.h"
-#include "Lua/LuaCob.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 
@@ -744,11 +743,6 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 			}
 		}
 	}
-	else if (script == LUA_HANDLE_ORDER_COB) {
-		if (luaCob) {
-			luaCob->RecvLuaMsg(msg, playerID);
-		}
-	}
 	else if (script == LUA_HANDLE_ORDER_GAIA) {
 		if (luaGaia) {
 			luaGaia->RecvLuaMsg(msg, playerID);
@@ -1028,6 +1022,7 @@ bool CLuaHandle::AddBasicCalls()
 		// special team constants
 		HSTR_PUSH_NUMBER(L, "NO_ACCESS_TEAM",  NoAccessTeam);
 		HSTR_PUSH_NUMBER(L, "ALL_ACCESS_TEAM", AllAccessTeam);
+//FIXME		LuaArrays::PushEntries(L);
 	}
 	lua_rawset(L, -3);
 

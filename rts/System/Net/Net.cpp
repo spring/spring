@@ -152,7 +152,7 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 {
 #ifdef DEBUG
 	{
-		unsigned msglength = 0;
+		unsigned int msglength = 0;
 		unsigned char msgid = data[0];
 		ProtocolDef* proto = ProtocolDef::instance();
 		if (proto->HasFixedLength(msgid))
@@ -164,7 +164,7 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 			int length_t = proto->GetLength(msgid);
 			if (length_t == -1)
 			{
-				msglength = (unsigned)data[1];
+				msglength = (unsigned int)data[1];
 			}
 			else if (length_t == -2)
 			{
@@ -174,7 +174,7 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 		
 		if (length != msglength || length == 0)
 		{
-			throw network_error( str( boost::format("Message length error (ID %1% with length %2% should be %3%) while sending (CNet::SendData(char*, unsigned))") % (unsigned)data[0] % length % msglength ) );
+			throw network_error( str( boost::format("Message length error (ID %1% with length %2% should be %3%) while sending (CNet::SendData(char*, unsigned))") % (unsigned int)data[0] % length % msglength ) );
 		}
 	}
 #endif

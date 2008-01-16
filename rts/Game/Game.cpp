@@ -73,7 +73,6 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaCallInHandler.h"
-#include "Lua/LuaCob.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
@@ -407,8 +406,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	globalAI = SAFE_NEW CGlobalAIHandler();
 
-	PrintLoadMsg("Loading LuaCOB");
-	CLuaCob::LoadHandler();
 	if (gs->useLuaRules) {
 		PrintLoadMsg("Loading LuaRules");
 		CLuaRules::LoadHandler();
@@ -511,7 +508,6 @@ CGame::~CGame()
 	tracefile << "End game\n";
 #endif
 
-	CLuaCob::FreeHandler();
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
@@ -2066,7 +2062,6 @@ bool CGame::Draw()
 	lastUpdateRaw = SDL_GetTicks();
 
  	if (luaUI)    { luaUI->CheckStack(); }
-	if (luaCob)   { luaCob->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
@@ -2489,7 +2484,6 @@ void CGame::SimFrame()
 	script->Update();
 
 	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
-	if (luaCob)   { luaCob->GameFrame(gs->frameNum); }
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
 
@@ -4125,39 +4119,6 @@ void CGame::HandleChatMsg(std::string s, int player)
 			}
 		}
 	}
-	else if ((s.find(".luacob") == 0) && (gs->frameNum > 1)) {
-		if (s ==  ".luacob reload") {
-			if (player != 0) {
-				logOutput.Print("Only the host player can reload synced scripts\n");
-			} else if (!gs->cheatEnabled) {
-				logOutput.Print("Cheating required to reload synced scripts\n");
-			} else {
-				CLuaCob::FreeHandler();
-				CLuaCob::LoadHandler();
-				if (luaCob) {
-					logOutput.Print("LuaCob reloaded\n");
-				} else {
-					logOutput.Print("LuaCob reload failed\n");
-				}
-			}
-		}
-		else if (s == ".luacob disable") {
-			if (player != 0) {
-				logOutput.Print("Only the host player can disable synced scripts\n");
-			} else if (!gs->cheatEnabled) {
-				logOutput.Print("Cheating required to disable synced scripts\n");
-			} else {
-				CLuaCob::FreeHandler();
-				logOutput.Print("LuaCob disabled\n");
-			}
-		}
-		else if (luaCob) {
-			luaCob->GotChatMsg(s.substr(strlen(".luacob")), player);
-		}
-		else {
-			logOutput.Print("LuaCob is not enabled\n");
-		}
-	}
 	else if (s.find(".save ") == 0) {//.save [-y ]<savename>
 		if (filesystem.CreateDirectory("Saves")) {
 			bool saveoverride = s.find(" -y ") == 0;
@@ -4177,7 +4138,6 @@ void CGame::HandleChatMsg(std::string s, int player)
 	else if ((s[0] == '.') && (gs->frameNum > 1)) {
 		if (luaRules && luaRules->SyncedActionFallback(s, player)) { return; }
 		if (luaGaia  && luaGaia->SyncedActionFallback(s, player))  { return; }
-		if (luaCob   && luaCob->SyncedActionFallback(s, player))   { return; }
 	}
 }
 

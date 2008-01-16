@@ -14,6 +14,9 @@ using std::map;
 #include "LuaHandleSynced.h"
 
 
+#define MAX_LUA_COB_ARGS 10
+
+
 class CUnit;
 class CFeature;
 struct UnitDef;
@@ -56,6 +59,9 @@ class CLuaRules : public CLuaHandleSynced
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 
+		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
+		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
+
 		// unsynced
 		bool DrawUnit(int unitID);
 		const char* AICallIn(const char* data, int inSize, int* outSize);
@@ -67,6 +73,8 @@ class CLuaRules : public CLuaHandleSynced
 	protected:
 		bool AddSyncedCode();
 		bool AddUnsyncedCode();
+
+		int UnpackCobArg(lua_State* L);
 
 		static void SetRulesParam(lua_State* L, const char* caller, int offset,
 		                          vector<float>& params,
@@ -115,6 +123,7 @@ class CLuaRules : public CLuaHandleSynced
 		static string configString;
 		static vector<float>    gameParams;
 		static map<string, int> gameParamsMap;
+		static const int* currentCobArgs;
 };
 
 

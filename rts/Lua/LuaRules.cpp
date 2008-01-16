@@ -31,6 +31,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/COB/CobInstance.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
@@ -42,6 +43,8 @@ string CLuaRules::configString;
 
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
+
+const int* CLuaRules::currentCobArgs = NULL;
 
 vector<float>    CLuaRules::gameParams;
 map<string, int> CLuaRules::gameParamsMap;
@@ -105,19 +108,19 @@ CLuaRules::CLuaRules()
 		return;
 	}
 
-	haveCommandFallback        = HasCallIn("CommandFallback");
-	haveBuilderTerraformComplete=HasCallIn("BuilderTerraformComplete");
-	haveAllowCommand           = HasCallIn("AllowCommand");
-	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
-	haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
-	haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
-	haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
-	haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
-	haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
-	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
-	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
-	haveDrawUnit               = HasCallIn("DrawUnit");
-	haveAICallIn               = HasCallIn("AICallIn");
+	haveCommandFallback          = HasCallIn("CommandFallback");
+	haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
+	haveAllowCommand             = HasCallIn("AllowCommand");
+	haveAllowUnitCreation        = HasCallIn("AllowUnitCreation");
+	haveAllowUnitTransfer        = HasCallIn("AllowUnitTransfer");
+	haveAllowUnitBuildStep       = HasCallIn("AllowUnitBuildStep");
+	haveAllowFeatureCreation     = HasCallIn("AllowFeatureCreation");
+	haveAllowFeatureBuildStep    = HasCallIn("AllowFeatureBuildStep");
+	haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
+	haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
+	haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+	haveDrawUnit                 = HasCallIn("DrawUnit");
+	haveAICallIn                 = HasCallIn("AICallIn");
 
 	SetupUnsyncedFunction("DrawUnit");
 	SetupUnsyncedFunction("AICallIn");
@@ -395,7 +398,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
-   	lua_pushboolean(L, fromSynced);
+	lua_pushboolean(L, fromSynced);
 
 	// call the function
 	if (!RunCallIn(cmdStr, 7, 1)) {
@@ -793,6 +796,109 @@ const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 	lua_pop(L, 1);
 	
 	return outData;	
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int CLuaRules::UnpackCobArg(lua_State* L)
+{
+	if (currentCobArgs == NULL) {
+		luaL_error(L, "Error in UnpackCobArg(), no current args");
+	}
+	const int arg = (int)luaL_checknumber(L, 1) - 1;
+	if ((arg < 0) || (arg >= MAX_LUA_COB_ARGS)) {
+		luaL_error(L, "Error in UnpackCobArg(), bad index");
+	}
+	const int value = currentCobArgs[arg];
+	lua_pushnumber(L, UNPACKX(value));
+	lua_pushnumber(L, UNPACKZ(value));
+	return 2;
+}
+
+
+void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
+                        int& argsCount, int args[MAX_LUA_COB_ARGS])
+{
+	static int callDepth = 0;
+	if (callDepth >= 16) {
+		logOutput.Print("CLuaRules::Cob2Lua() call overflow: %s\n",
+		                name.GetString().c_str());
+		args[0] = 0; // failure
+		return;
+	}
+
+	const int top = lua_gettop(L);
+
+	if (!lua_checkstack(L, top + argsCount + 4)) {
+		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
+		                name.GetString().c_str());
+		args[0] = 0; // failure
+		return;
+	}
+
+	if (!name.GetGlobalFunc(L)) {
+		logOutput.Print("CLuaRules::Cob2Lua() missing function: %s\n",
+		                name.GetString().c_str());
+		args[0] = 0; // failure
+		lua_settop(L, top);
+		return;
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	for (int a = 0; a < argsCount; a++) {
+		lua_pushnumber(L, args[a]);
+	}
+
+	// call the routine
+	callDepth++;
+	const int* oldArgs = currentCobArgs;
+	currentCobArgs = args;
+
+	const bool error = !RunCallIn(name, 3 + argsCount, LUA_MULTRET);
+
+	currentCobArgs = oldArgs;
+	callDepth--;
+
+	// bail on error
+	if (error) {
+		args[0] = 0; // failure
+		lua_settop(L, top);
+		return;
+	}
+
+	// get the results
+	const int retArgs = min(lua_gettop(L) - top, (MAX_LUA_COB_ARGS - 1));
+	for (int a = 1; a <= retArgs; a++) {
+		if (lua_isnumber(L, a)) {
+			args[a] = (int)lua_tonumber(L, a);
+		}
+		else if (lua_isboolean(L, a)) {
+			args[a] = lua_toboolean(L, a) ? 1 : 0;
+		}
+		else if (lua_istable(L, a)) {
+			lua_rawgeti(L, a, 1);
+			lua_rawgeti(L, a, 2);
+			if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {
+				const int x = (int)lua_tonumber(L, -2);
+				const int z = (int)lua_tonumber(L, -1);
+				args[a] = PACKXZ(x, z);
+			} else {
+				args[a] = 0;
+			}
+			lua_pop(L, 2);
+		}
+		else {
+			args[a] = 0;
+		}
+	}
+
+	args[0] = 1; // success
+	lua_settop(L, top);
+	return;
 }
 
 

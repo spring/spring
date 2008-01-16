@@ -93,7 +93,7 @@ class LuaSyncedCtrl {
 		static int AdjustHeightMap(lua_State* L);
 		static int RevertHeightMap(lua_State* L);
 
-		// LuaCob and LuaRules  (fullCtrl)
+		// LuaRules  (fullCtrl)
 		static int EditUnitCmdDesc(lua_State* L);
 		static int InsertUnitCmdDesc(lua_State* L);
 		static int RemoveUnitCmdDesc(lua_State* L);

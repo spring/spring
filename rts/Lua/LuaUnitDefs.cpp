@@ -817,8 +817,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
 
-	ADD_BOOL("reclaimable",           ud.reclaimable);
-	ADD_BOOL("capturable",            ud.capturable);
+	ADD_BOOL("reclaimable", ud.reclaimable);
+	ADD_BOOL("capturable",  ud.capturable);
 
 	ADD_BOOL("canDGun",               ud.canDGun);
 	ADD_BOOL("canCloak",              ud.canCloak);
@@ -868,8 +868,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxElevator", ud.maxElevator);
 	ADD_FLOAT("maxRudder",   ud.maxRudder);
 
-	ADD_FLOAT("maxFuel", ud.maxFuel);
+	ADD_FLOAT("maxFuel",    ud.maxFuel);
 	ADD_FLOAT("refuelTime", ud.refuelTime);
+
 	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
 
 //	MoveData* movedata;
@@ -902,15 +903,15 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL( "decloakSpherical", ud.decloakSpherical);
 	ADD_BOOL( "decloakOnFire",    ud.decloakOnFire);
 
-	ADD_BOOL( "canKamikaze",   ud.canKamikaze);
+	ADD_BOOL( "canKamikaze",  ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
 
-	ADD_BOOL("targfac",        ud.targfac);
+	ADD_BOOL("targfac", ud.targfac);
 
-	ADD_BOOL("needGeo",        ud.needGeo);
-	ADD_BOOL("isFeature",      ud.isFeature);
+	ADD_BOOL("needGeo",   ud.needGeo);
+	ADD_BOOL("isFeature", ud.isFeature);
 
-	ADD_BOOL("isCommander",    ud.isCommander);
+	ADD_BOOL("isCommander", ud.isCommander);
 
 	ADD_BOOL("hideDamage",     ud.hideDamage);
 	ADD_BOOL("showPlayerName", ud.showPlayerName);
@@ -936,6 +937,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT(  "flareSalvoDelay",  ud.flareSalvoDelay);
 
 	ADD_BOOL("smoothAnim", ud.smoothAnim);
+
 	ADD_BOOL("levelGround", ud.levelGround);
 
 	ADD_BOOL( "useBuildingGroundDecal",  ud.useBuildingGroundDecal);
@@ -951,8 +953,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
 //	std::vector<CExplosionGenerator*>  sfxExplGens;
-	ADD_STRING("pieceTrailCEGTag", ud.pieceTrailCEGTag);
-	ADD_INT("pieceTrailCEGRange", ud.pieceTrailCEGRange);
+	ADD_STRING("pieceTrailCEGTag",   ud.pieceTrailCEGTag);
+	ADD_INT(   "pieceTrailCEGRange", ud.pieceTrailCEGRange);
 
 	return true;
 }
