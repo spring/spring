@@ -140,17 +140,15 @@ void CUnitDefHandler::CleanBuildOptions()
 	for (int i = 1; i <= numUnitDefs; i++) {
 		UnitDef& ud = unitDefs[i];
 		map<int, string>& bo = ud.buildOptions;
-		if (!bo.empty()) {
-			map<int, string>::iterator it = bo.begin();
-			while (it != bo.end()) {
-				const UnitDef* bd = GetUnitByName(it->second);
-				if ((bd != NULL) && (bd->maxThisUnit > 0)) {
-					it++;
-				} else {
-					map<int, string>::iterator tmp = it;
-					it++;
-					bo.erase(tmp);
-				}
+		map<int, string>::iterator it = bo.begin();
+		while (it != bo.end()) {
+			const UnitDef* bd = GetUnitByName(it->second);
+			if ((bd != NULL) && (bd->maxThisUnit > 0)) {
+				it++;
+			} else {
+				map<int, string>::iterator tmp = it;
+				it++;
+				bo.erase(tmp);
 			}
 		}
 	}
