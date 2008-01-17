@@ -3100,7 +3100,8 @@ void CGuiHandler::DrawButtons()
 		if (highlight) {
 			if (icon.commandsID == inCommand) {
 				glColor4f(1.0f, 1.0f, 0.0f, 0.75f);
-			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed) {
+			} else if (mouse->buttons[SDL_BUTTON_LEFT].pressed ||
+			           mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 				glColor4f(1.0f, 0.0f, 0.0f, 0.50f);
 			} else {
 				glColor4f(1.0f, 1.0f, 1.0f, 0.50f);
