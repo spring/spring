@@ -49,6 +49,8 @@ protected:
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
 	void LoadSound(GuiSoundSet&, const std::string& fileName, float volume);
 
+	void CleanBuildOptions();
+
 	void FindCommanders();
 
 	void AssignTechLevel(UnitDef& ud, int level);
