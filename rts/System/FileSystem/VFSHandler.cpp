@@ -2,6 +2,7 @@
 #include "VFSHandler.h"
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
+#include "ArchiveDir.h" // for FileData::dynamic
 #include <algorithm>
 #include <set>
 #include "Platform/FileSystem.h"
@@ -19,8 +20,9 @@ bool CVFSHandler::AddArchive(string arName, bool override)
 	CArchiveBase* ar = archives[arName];
 	if (!ar) {
 		ar = CArchiveFactory::OpenArchive(arName);
-		if (!ar)
+		if (!ar) {
 			return false;
+		}
 		archives[arName] = ar;
 	}
 
@@ -30,12 +32,14 @@ bool CVFSHandler::AddArchive(string arName, bool override)
 
 	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
 		StringToLowerInPlace(name);
-		if ((!override) && (files.find(name) != files.end()))
+		if ((!override) && (files.find(name) != files.end())) {
 			continue;
+		}
 
 		FileData d;
 		d.ar = ar;
 		d.size = size;
+		d.dynamic = !!dynamic_cast<CArchiveDir*>(ar);
 		files[name] = d;
 	}
 	return true;
@@ -52,27 +56,50 @@ int CVFSHandler::LoadFile(string name, void* buffer)
 {
 	StringToLowerInPlace(name);
 	filesystem.ForwardSlashes(name);
-	FileData fd = files[name];
+
+	map<string, FileData>::iterator fi = files.find(name);
+	if (fi == files.end()) {
+		return -1;
+	}
+	FileData& fd = fi->second;
 
 	int fh = fd.ar->OpenFile(name);
-	if (!fh)
+	if (!fh) {
 		return -1;
-	fd.ar->ReadFile(fh, buffer, fd.size);
+	}
+	const int fsize = fd.dynamic ? fd.ar->FileSize(fh) : fd.size;
+
+	fd.ar->ReadFile(fh, buffer, fsize);
 	fd.ar->CloseFile(fh);
 
-	return fd.size;
+	return fsize;
 }
 
 int CVFSHandler::GetFileSize(string name)
 {
 	StringToLowerInPlace(name);
 	filesystem.ForwardSlashes(name);
-	map<string, FileData>::iterator f = files.find(name);
 
-	if (f == files.end())
+	map<string, FileData>::iterator fi = files.find(name);
+	if (fi == files.end()) {
 		return -1;
-	else
-		return f->second.size;
+	}
+	FileData& fd = fi->second;
+
+	if (!fd.dynamic) {
+		return fd.size;
+	}
+	else {
+		const int fh = fd.ar->OpenFile(name);
+		if (fh == 0) {
+			return -1;
+		} else {
+			const int fsize = fd.ar->FileSize(fh);
+			fd.ar->CloseFile(fh);
+			return fsize;
+		}
+	}
+	return -1;
 }
 
 // Returns all the files in the given (virtual) directory without the preceeding pathname
