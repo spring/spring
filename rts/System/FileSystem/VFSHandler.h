@@ -15,6 +15,7 @@ protected:
 	struct FileData{
 		CArchiveBase *ar;
 		int size;
+		bool dynamic;
 	};
 	map<string, FileData> files; 
 	map<string, CArchiveBase*> archives;
