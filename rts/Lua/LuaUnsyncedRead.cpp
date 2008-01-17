@@ -738,6 +738,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	if (!onlyCoords) {
 		if (udist > fdist) {
 			unit = NULL;
+		} else {
+			feature = NULL;
 		}
 
 		if (unit != NULL) {
