@@ -106,6 +106,8 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	// set the real number of unitdefs
 	numUnitDefs = (id - 1);
 
+	CleanBuildOptions();
+
 	FindCommanders();
 
 	ProcessDecoys();
@@ -129,6 +131,29 @@ CUnitDefHandler::~CUnitDefHandler(void)
 	}
 	delete[] unitDefs;
 	delete weaponDefHandler;
+}
+
+
+void CUnitDefHandler::CleanBuildOptions()
+{
+	// remove invalid unitDef's from build options
+	for (int i = 1; i <= numUnitDefs; i++) {
+		UnitDef& ud = unitDefs[i];
+		map<int, string>& bo = ud.buildOptions;
+		if (!bo.empty()) {
+			map<int, string>::iterator it = bo.begin();
+			while (it != bo.end()) {
+				const UnitDef* bd = GetUnitByName(it->second);
+				if ((bd != NULL) && (bd->maxThisUnit > 0)) {
+					it++;
+				} else {
+					map<int, string>::iterator tmp = it;
+					it++;
+					bo.erase(tmp);
+				}
+			}
+		}
+	}
 }
 
 
@@ -159,7 +184,7 @@ void CUnitDefHandler::FindCommanders()
 	// get the commander UnitDef IDs
 	commanderIDs.clear();
 	std::vector<std::string> sides = tdfparser.GetSectionList("");
-	for (unsigned int i=0; i<sides.size(); i++){
+	for (unsigned int i = 0; i < sides.size(); i++){
 		const std::string& section = sides[i];
 		if ((section.find("side") == 0) &&
 		    (section.find_first_not_of("0123456789", 4) == std::string::npos)) {
