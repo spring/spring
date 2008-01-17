@@ -143,12 +143,22 @@ void CUnitDefHandler::CleanBuildOptions()
 		map<int, string>::iterator it = bo.begin();
 		while (it != bo.end()) {
 			const UnitDef* bd = GetUnitByName(it->second);
-			if ((bd != NULL) && (bd->maxThisUnit > 0)) {
-				it++;
-			} else {
+			bool erase = false;
+			if (bd == NULL) {
+				logOutput.Print("WARNING: removed the \"" + it->second +
+				                "\" entry from the \"" + ud.name + "\" build menu");
+				erase = true;
+			}
+			else if (bd->maxThisUnit <= 0) {
+				erase = true; // silent removal
+			}
+			
+			if (erase) {
 				map<int, string>::iterator tmp = it;
 				it++;
 				bo.erase(tmp);
+			} else {
+				it++;
 			}
 		}
 	}
