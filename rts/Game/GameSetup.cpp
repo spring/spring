@@ -22,12 +22,16 @@
 #include "Platform/ConfigHandler.h"
 #include "Rendering/Textures/TAPalette.h"
 
-CGameSetup* gameSetup=0;
 
 using namespace std;
+
 extern Uint8 *keys;
 
 extern string stupidGlobalMapname;
+
+
+CGameSetup* gameSetup = NULL;
+
 
 CGameSetup::CGameSetup()
 {
@@ -404,8 +408,12 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(numAllyTeams, "2", "GAME\\NumAllyTeams");
 
 	// Read the map & mod options
-	mapOptions = file.GetAllValues("GAME\\MapOptions");
-	modOptions = file.GetAllValues("GAME\\ModOptions");
+	if (file.SectionExist("GAME\\MapOptions")) {
+		mapOptions = file.GetAllValues("GAME\\MapOptions");
+	}
+	if (file.SectionExist("GAME\\ModOptions")) {
+		modOptions = file.GetAllValues("GAME\\ModOptions");
+	}
 
 	// Read startPosType (with clamping)
 	int startPosTypeInt;
