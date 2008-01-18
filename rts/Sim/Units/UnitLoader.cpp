@@ -25,7 +25,7 @@
 #include "Platform/errorhandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/groundmovetype.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/bombdropper.h"

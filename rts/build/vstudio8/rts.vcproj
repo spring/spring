@@ -2595,11 +2595,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\groundmovetype.cpp"
+					RelativePath="..\..\Sim\MoveTypes\GroundMoveType.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\groundmovetype.h"
+					RelativePath="..\..\Sim\MoveTypes\GroundMoveType.h"
 					>
 				</File>
 				<File
