@@ -339,7 +339,7 @@ void CUnit::UnitInit (const UnitDef* def, int Team, const float3& position)
 void CUnit::ForcedMove(const float3& newPos)
 {
 	// hack to make mines not block ground
-	const bool blocking = !unitDef->canKamikaze || (unitDef->type != "Building");
+	const bool blocking = !unitDef->canKamikaze || (unitDef->type == "Building" || unitDef->type == "Factory");
 	if (blocking) {
 		UnBlock();
 	}
@@ -1655,7 +1655,7 @@ void CUnit::Init(const CUnit* builder)
 	if(pos.y+model->height<1)	//some torp launchers etc is exactly in the surface and should be considered uw anyway
 		isUnderWater=true;
 
-	if(!unitDef->canKamikaze || unitDef->type!="Building")	//semi hack to make mines not block ground
+	if(!unitDef->canKamikaze || unitDef->type=="Building" || unitDef->type=="Factory")	//semi hack to make mines not block ground
 		Block();
 
 	UpdateTerrainType();

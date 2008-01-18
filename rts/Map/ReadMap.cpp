@@ -389,7 +389,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object)
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 }
 
-void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yardMap)
+void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yardMap, unsigned char mask)
 {
 	object->isMarkedOnBlockingMap=true;
 	object->mapPos=object->GetMapPos();
@@ -408,7 +408,7 @@ void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yard
 	for(int z = 0; minZSqr + z < maxZSqr; z++) {
 		for(int x = 0; minXSqr + x < maxXSqr; x++) {
 			if(!groundBlockingObjectMap[minXSqr + x + (minZSqr + z)*gs->mapx]){
-				if(yardMap[x + z*object->xsize]) {
+				if(yardMap[x + z*object->xsize] & mask) {
 					groundBlockingObjectMap[minXSqr + x + (minZSqr + z)*gs->mapx] = object;
 				}
 			}
@@ -474,7 +474,7 @@ When a factory opens up, for example.
 */
 void CReadMap::OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap) {
 	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard, blockingMap);
+	AddGroundBlockingObject(yard, blockingMap, 2);
 }
 
 
@@ -482,9 +482,9 @@ void CReadMap::OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap) 
 Closes a yard, blocking the area.
 When a factory closes, for example.
 */
-void CReadMap::CloseBlockingYard(CSolidObject *yard) {
+void CReadMap::CloseBlockingYard(CSolidObject *yard, unsigned char *blockingMap) {
 	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard);
+	AddGroundBlockingObject(yard, blockingMap, 1);
 }
 
 

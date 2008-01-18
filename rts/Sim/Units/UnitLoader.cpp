@@ -335,9 +335,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->updir=UpVector;
 	unit->rightdir=unit->frontdir.cross(unit->updir);
 
-	unit->Init(builder);
-
 	unit->yardMap = ud->yardmaps[facing];
+
+	unit->Init(builder);
 
 	if(!build)
 		unit->FinishedBuilding();
