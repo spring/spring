@@ -241,7 +241,7 @@ void CFactory::Update()
 	if (((lastBuild + 200) < gs->frameNum) && !stunned &&
 	    !quedBuild && opening && uh->CanCloseYard(this)) {
 		// close the factory after inactivity
-		readmap->CloseBlockingYard(this);
+		readmap->CloseBlockingYard(this, yardMap);
 		opening = false;
 		cob->Call(COBFN_Deactivate);
 	}

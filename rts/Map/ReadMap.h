@@ -42,11 +42,11 @@ public:
 	void Serialize(creg::ISerializer& s); // creg serialize callback
 
 	void AddGroundBlockingObject(CSolidObject *object);
-	void AddGroundBlockingObject(CSolidObject *object, unsigned char *blockingMap);
+	void AddGroundBlockingObject(CSolidObject *object, unsigned char *blockingMap, unsigned char mask = 255);
 	void RemoveGroundBlockingObject(CSolidObject *object);
 	void MoveGroundBlockingObject(CSolidObject *object, float3 oldPos);
 	void OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
-	void CloseBlockingYard(CSolidObject *yard);
+	void CloseBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
 	CSolidObject* GroundBlocked(float3 pos);
 	CSolidObject* GroundBlocked(int mapSquare);
 	inline CSolidObject* GroundBlockedUnsafe(int mapSquare){return groundBlockingObjectMap[mapSquare];} //simple version of GroundBlocked without error checking

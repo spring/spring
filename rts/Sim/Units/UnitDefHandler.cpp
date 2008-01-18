@@ -874,7 +874,7 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 		def->yardmaps[u] = SAFE_NEW unsigned char[def->xsize * def->ysize];
 
 	unsigned char *originalMap = SAFE_NEW unsigned char[def->xsize * def->ysize / 4];		//TAS resolution is double of TA resolution.
-	memset(originalMap, 1, def->xsize * def->ysize / 4);
+	memset(originalMap, 255, def->xsize * def->ysize / 4);
 
 	if(!yardmapStr.empty()){
 		std::string::iterator si = yardmapStr.begin();
@@ -883,7 +883,9 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 			for(x = 0; x < def->xsize / 2; x++) {
 				if(*si == 'g')
 					def->needGeo=true;
-				if(*si == YARDMAP_CHAR)
+				else if(*si == YARDMAP_CHAR)
+					originalMap[x + y*def->xsize/2] = 1;
+				else if(*si == 'y')
 					originalMap[x + y*def->xsize/2] = 0;
 				do {
 					si++;
