@@ -3,7 +3,7 @@
 #include "Lua/LuaCallInHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/MoveTypes/groundmovetype.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/DamageArray.h"

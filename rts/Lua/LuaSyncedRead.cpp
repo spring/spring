@@ -34,7 +34,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/groundmovetype.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/Unit.h"
