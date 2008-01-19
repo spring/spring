@@ -14,7 +14,8 @@
 
 #include <string>
 #include <vector>
-#include "Platform/FileSystem.h"
+#include "DataDirLocater.h"
+#include "System/Platform/FileSystem.h"
 
 /**
  * @brief Unix file system / data directory handler
@@ -35,23 +36,10 @@ class UnixFileSystemHandler : public FileSystemHandler
 
 	protected:
 
-		struct DataDir
-		{
-			DataDir(const std::string& p);
-			std::string path;
-			bool readable;
-			bool writable;
-		};
-
-		std::string SubstEnvVars(const std::string& in) const;
-		void AddDirs(const std::string& in);
-		void DeterminePermissions(int start_at = 0);
-		void LocateDataDirs();
 		void InitVFS() const;
 		void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
 
-		std::vector<DataDir> datadirs;
-		const DataDir* writedir;
+		DataDirLocater locater;
 };
 
 #endif // !UNIXFILESYSTEMHANDLER_H

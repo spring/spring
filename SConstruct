@@ -53,7 +53,7 @@ datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
 
 if env['platform'] != 'windows':
-	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
+	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
 	spring_files += [ufshcpp]
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
