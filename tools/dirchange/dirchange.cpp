@@ -1,6 +1,7 @@
 
 // Header includes directory change tool
 // By Jelmer Cnossen
+// Ported to Linux by Tobi Vollebregt
 
 // Used to automatically change #include "[somepath/]header" to #include "correctheaderpath"
 // Give the base project directory as argument:
@@ -14,8 +15,13 @@
 #include <list>
 #include <map>
 
+#ifdef WIN32
 #include <io.h>
-#include <stdio.h>
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 using namespace std;
 
@@ -68,6 +74,7 @@ const char *GetFilename (const char *file)
 	return file;
 }
 
+#ifdef WIN32
 void Scan(const string& curPath, const string& storePath)
 {
 	struct _finddata_t files;
@@ -111,6 +118,58 @@ void Scan(const string& curPath, const string& storePath)
 	}
 	_findclose(handle);
 }
+#else
+void Scan(const string& curPath, const string& storePath)
+{
+	DIR *dp;
+	struct dirent *ep;
+
+	dp = opendir(curPath.c_str());
+	if (dp == NULL) {
+		perror((string("opendir: ") + curPath).c_str());
+		return;
+	}
+
+	while( (ep = readdir(dp)) != NULL ) {
+
+		string filepath = curPath + "/" + ep->d_name;
+		struct stat info;
+
+		if (stat(filepath.c_str(), &info) != 0) {
+			perror((string("stat: ") + filepath).c_str());
+			continue;
+		}
+
+		// Is it a directory?
+		if (S_ISDIR(info.st_mode)) {
+
+			// Avoid the special directories
+			if (ep->d_name[0] != '.') {
+				string newPath = filepath;
+				string newStorePath;
+				if (storePath.empty()) newStorePath=ep->d_name;
+				else newStorePath = storePath + "/" + ep->d_name;
+				Scan(newPath, newStorePath);
+			}
+		} else {
+			file_t f;
+			f.name = ep->d_name;
+			f.path = filepath;
+			if(storePath.empty())
+				f.inclpath = ep->d_name;
+			else
+				f.inclpath = storePath + "/" +  ep->d_name;
+			const char *ext=GetExtension (ep->d_name);
+			if (ext)
+				f.ext = ext;
+
+			filelist.push_back (f);
+		}
+	}
+
+	closedir(dp);
+}
+#endif
 
 void SimplifyFilePaths(const set<string>& inclPaths)
 {
@@ -128,7 +187,7 @@ void SimplifyFilePaths(const set<string>& inclPaths)
 
 			p++;
 			path=fi->inclpath.substr (0, p);
-			if (inclPaths.find (path) != inclPaths.end()) {
+			if (inclPaths.find (path) != inclPaths.end())
 				endInclPath = fi->inclpath.substr (p,fi->inclpath.length());
 		}
 
@@ -183,7 +242,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (!searchPath) {
-		printf ("Usage example: dch c:\projects\someproj -\n");
+		printf ("Usage example: dch c:\\projects\\someproj -\n");
 		return -1;
 	}
 
@@ -274,7 +333,7 @@ int main (int argc, char *argv[])
 		FILE *outf = fopen (outfn.c_str(), "wb");
 		if (outf) {
 			fwrite (result.c_str(),result.size(),1,outf);
-			fclose (f);
+			fclose (outf);
 		}
 
 		printf ("Output: %s\n", outfn.c_str());
