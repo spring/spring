@@ -53,8 +53,8 @@ datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
 
 if env['platform'] != 'windows':
-	ufshcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
-	spring_files += [ufshcpp]
+	ddlcpp = env.Object(os.path.join(env['builddir'], 'rts/System/Platform/Linux/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
+	spring_files += [ddlcpp]
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'], LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--output-def,game/spring.def', '-Wl,--kill-at', '--add-stdcall-alias','-Wl,--out-implib,game/spring.a'] )
@@ -110,8 +110,11 @@ if env['platform'] == 'windows':
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
-	ufshcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
-	unitsync_files += [os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'), ufshcpp]
+	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+	unitsync_files += [ ddlcpp,
+		os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'),
+		os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp')
+	]
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
 
 Alias('unitsync', unitsync)
