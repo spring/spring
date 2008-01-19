@@ -17,7 +17,7 @@ end
 
 -- Return the modname this script wants
 function MissionTest:GetModName()
-    return "XTAPE.sdz"
+    return "XTA_Installer_Version.sdz"
 end
 
 -- This function is executed every simulated frame (30 times/sec)
@@ -78,8 +78,8 @@ end
 
 -- Create a bunch of units for this simple mission
 function MissionTest:Setup()
-    AIs.CreateGlobalAI( 0, "AI/Bot-libs/csailoader.dll" )
-    AIs.CreateGlobalAI( 1, "AI/Bot-libs/csailoader.dll" )
+    AIs.CreateGlobalAI( 0, "AI/Bot-libs/TestGlobalAI.dll" )
+    AIs.CreateGlobalAI( 1, "AI/Bot-libs/TestGlobalAI.dll" )
 
     units.Load("ARM_Jeffy", float3(300, 80, 300), 0, false)
     units.Load("ARM_Jeffy", float3(340, 80, 300), 0, false)
