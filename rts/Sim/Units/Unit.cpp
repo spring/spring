@@ -554,7 +554,7 @@ void CUnit::SlowUpdate()
 	for (int at = 0; at < gs->activeAllyTeams; ++at) {
 		UpdateLosStatus(at);
 	}
-	
+
 	repairAmount=0.0f;
 
 	if (paralyzeDamage > 0) {
@@ -1406,6 +1406,14 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	if (luaRules && !luaRules->AllowUnitTransfer(this, newteam, capture)) {
 		return false;
 	}
+
+#ifdef DIRECT_CONTROL_ALLOWED
+	// do not allow old player to keep controlling the unit
+	if(directControl){
+		directControl->myController->StopControllingUnit();
+		directControl=0;
+	}
+#endif
 
 	const int oldteam = team;
 
