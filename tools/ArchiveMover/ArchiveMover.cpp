@@ -131,7 +131,7 @@ enum archive_type {
 	R_OTHER
 };
 
-static int run(int argc, wchar_t** argv);
+static int run(int argc, const wchar_t* const* argv);
 static archive_type read_archive_content_sd7(const fs::wpath& filename);
 static archive_type read_archive_content_sdz(const fs::wpath& filename);
 
@@ -146,11 +146,14 @@ static std::string string_to_lower(const std::string& s){
 
 struct scoped_message : public std::wstringstream{
 	~scoped_message(){
+		std::wstring str = this->str();
+		if (!str.empty()) {
 #ifdef ARCHIVE_MOVER_USE_WIN_API
-		MessageBoxW(NULL, this->str().c_str(), L"Spring - ArchiveMover", MB_APPLMODAL);
+			MessageBoxW(NULL, str.c_str(), L"Spring - ArchiveMover", MB_APPLMODAL);
 #else
-		std::wcout<<this->str()<<endl;
+			std::wcout<<str<<endl;
 #endif
+		}
 	}
 };
 
@@ -247,21 +250,35 @@ int main(int argc, char** argv){
 #endif
 
 
-static int run(int argc, wchar_t** argv){
+static int run(int argc, const wchar_t* const* argv){
 
 	scoped_message message;
 	try{
+		bool show_usage = false;
+		bool quiet = false;
+		const wchar_t* source_file_arg = NULL;
 
-		if(argc == 0){
-			message<<L"Error: Zero arguments."<<endl;
-			return 1;
-		}else if(argc != 2){
-			message<<L"Usage: "<<fs::system_complete(argv[0]).leaf()<<L" <filename>"<<endl<<endl;
+		for (int i = 1; i < argc; ++i) {
+			std::wstring arg = argv[i];
+			if (arg[0] == '-') {
+				if (arg == L"--help" || arg == L"-h")
+					show_usage = true;
+				else if (arg == L"--quiet" || arg == L"-q")
+					quiet = true;
+			} else {
+				// multiple file arguments is erroneous
+				if (source_file_arg != NULL)
+					show_usage = true;
+				source_file_arg = argv[i];
+			}
+		}
+
+		if(show_usage || source_file_arg == NULL){
+			message<<L"Usage: "<<fs::system_complete(argv[0]).leaf()<<L" [--quiet] <filename>"<<endl<<endl;
 			return 1;
 		}
 
-
-		const fs::wpath source_file = fs::system_complete(argv[1]);
+		const fs::wpath source_file = fs::system_complete(source_file_arg);
 		fs::wpath target_dir = fs::system_complete(argv[0]).branch_path();
 
 		if(!fs::exists(source_file)){
@@ -323,19 +340,19 @@ static int run(int argc, wchar_t** argv){
 			fs::rename(target_dir / source_file.leaf(), target_test);
 			message << "File with same name found. It has been moved to " << endl
 				<< target_test << endl << endl;
-		}                
+		}
 
 		target_dir /= source_file.leaf();
 		fs::rename(source_file, target_dir);
 
+		if (!quiet) {
+			message<<L"The "<<(content == R_MAP? L"map '" : L"mod '")<<source_file.leaf()
+			<<L"' has been saved succesfully to '"<<target_dir.branch_path()<<L"'."<<endl
+			<<L"Use the reload mods/maps button in the lobby to make Spring find it."<<endl;
+		}
 
-		message<<L"The "<<(content == R_MAP? L"map '" : L"mod '")<<source_file.leaf()
-		<<L"' has been saved succesfully to '"<<target_dir.branch_path()<<L"'."<<endl
-		<<L"Use the reload mods/maps button in the lobby to make Spring find it."<<endl;
-
-
-	}catch(fs::filesystem_wpath_error& error){
-
+	}
+	catch(fs::filesystem_wpath_error& error) {
 		fs::errno_type error_nr = fs::lookup_errno(error.system_error());
 		message<<L"Cannot move file: ";
 		switch(error_nr){
@@ -367,14 +384,14 @@ static int run(int argc, wchar_t** argv){
 		message<<endl<<endl;
 		message<<L"Source file: "<<error.path1()<<endl; 
 		message<<L"Target folder: "<<error.path2().branch_path()<<endl;
-
-	}catch(fs::filesystem_error& error){
+	}
+	catch(fs::filesystem_error& error) {
 		message<<L"Filesystem error in: "<<error.what()<<endl;
 	}
-	catch(std::exception& error){
+	catch(std::exception& error) {
 		message<<L"Found an exception with: "<<error.what()<<endl;
 	}
-	catch(...){
+	catch(...) {
 		message<<L"Found an unknown exception."<<endl;
 	}
 
