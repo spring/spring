@@ -71,7 +71,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	mapChecksum = archiveScanner->GetMapChecksum(mapName);
 
 	modName = newModName;
-	std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+	const std::string modArchive = archiveScanner->ModNameToModArchive(modName);
 	modChecksum = archiveScanner->GetModChecksum(modArchive);
 
 	scriptName = newScriptName;
@@ -371,6 +371,7 @@ void CGameServer::ServerReadNet()
 			while (!quit && (packet = serverNet->GetData(a)))
 			{
 				const unsigned char* inbuf = packet->data;
+				const unsigned length = packet->length;
 				switch (inbuf[0]){
 					case NETMSG_NEWFRAME:
 						players[a]->ping = serverframenum-*(int*)&inbuf[1];
@@ -607,6 +608,18 @@ void CGameServer::ServerReadNet()
 							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
 						break;
 					}
+					case NETMSG_TEAM:
+					{
+						if (inbuf[1] != a)
+						{
+							SendSystemMsg("Server: Warning got teammsg from %i claiming to be from %i",a,inbuf[1]);
+						}
+						else
+						{
+							serverNet->RawSend(inbuf, length);
+						}
+						break;
+					}
 
 					// CGameServer should never get these messages
 					case NETMSG_GAMEID:
@@ -779,7 +792,7 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 
-	if (numActiveAllyTeams =< 1)
+	if (numActiveAllyTeams <= 1)
 	{
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
@@ -971,7 +984,8 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	}
 	else {
 		serverNet->SendChat(player, msg);
-		if (hostif) {
+		if (hostif && player != SERVER_PLAYER) {
+			// don't echo packets to autohost
 			hostif->SendPlayerChat(player, msg);
 		}
 	}
