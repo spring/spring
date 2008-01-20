@@ -12,7 +12,7 @@ CFartextureHandler* fartextureHandler = NULL;
 
 extern GLfloat LightDiffuseLand[];
 extern GLfloat LightAmbientLand[];
-extern GLfloat FogLand[]; 
+extern GLfloat FogLand[];
 
 CFartextureHandler::CFartextureHandler(void)
 {
@@ -22,7 +22,7 @@ CFartextureHandler::CFartextureHandler(void)
 
 	for(int a=0;a<128*16*4;++a)
 		farTextureMem[a]=0;
-	
+
 	farTexture=0;
 }
 
@@ -35,7 +35,33 @@ CFartextureHandler::~CFartextureHandler(void)
 	texturehandler=0;
 }
 
-void CFartextureHandler::CreateFarTexture(S3DOModel *model)
+/**
+ * @brief Add the model to the queue of units waiting for their fartexture.
+ * On the next CreateFarTextures() call the fartexture for this model will be
+ * created.
+ */
+void CFartextureHandler::CreateFarTexture(S3DOModel* model)
+{
+	pending.push_back(model);
+}
+
+/**
+ * @brief Process the queue of pending fartexture creation requests.
+ * This loops through the queue calling ReallyCreateFarTexture() on each entry,
+ * and empties the queue afterwards.
+ */
+void CFartextureHandler::CreateFarTextures()
+{
+	for(std::vector<S3DOModel*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
+		ReallyCreateFarTexture(*it);
+	}
+	pending.clear();
+}
+
+/**
+ * @brief Really create the far texture for the given model.
+ */
+void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 {
 	//UnitModelGeometry& geometry=*model.geometry;
 	PUSH_CODE_MODE;
@@ -59,7 +85,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 	glViewport(0,0,16,16);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();		
+	glLoadIdentity();
 	glOrtho(-model->radius,model->radius,-model->radius,model->radius,-model->radius*1.5f,model->radius*1.5f);
 	glMatrixMode(GL_MODELVIEW);
 	glClearColor(0.5f,0.5f,0.5f,0);
@@ -105,7 +131,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel *model)
 		glRotatef(45,0,1,0);
 		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);
 	}
-	
+
 	glCullFace(GL_BACK);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_LIGHTING);
