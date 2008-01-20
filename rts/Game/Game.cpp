@@ -2892,13 +2892,13 @@ bool CGame::ClientReadNet()
 
 			case NETMSG_CHAT: {
 				int player=inbuf[2];
-				if(player>=MAX_PLAYERS || player<0){
-					logOutput.Print("Got invalid player num %i in chat msg",player);
-				} else if (player == SERVER_PLAYER){
+				if (player == SERVER_PLAYER) {
 					string s=(char*)(&inbuf[3]);
 					HandleChatMsg(s, player);
 					logOutput.Print(s);
-				} else {
+				} else if (player >= MAX_PLAYERS || player < 0){
+					logOutput.Print("Got invalid player num %i in chat msg",player);
+				} else  {
 					string s=(char*)(&inbuf[3]);
 					HandleChatMsg(s, player);
 					LogNetMsg(s, player);
