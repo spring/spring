@@ -24,13 +24,16 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   
-;!ifndef SP_UPDATE
+  ; Delete Previous settings.exe
   Delete "..\game\settings.exe"
   File "..\game\SelectionEditor.exe"
   ;File "..\game\settingstemplate.xml"
 
 ;New Settings Program
-  File "..\game\settings.exe"
+
+  inetc::get \
+  "http://installer.clan-sy.com/springsettings.exe" "$INSTDIR\springsettings.exe" 
+
   File "..\game\mingwm10.dll"
   File "..\game\wxbase28u_gcc_custom.dll"
   File "..\game\wxbase28u_net_gcc_custom.dll"
@@ -139,7 +142,7 @@ ${EndIf}
   Delete "$INSTDIR\settingstemplate.xml"
 
   ;New Settings Program
-  Delete "$INSTDIR\settings.exe"
+  Delete "$INSTDIR\springsettings.exe"
   Delete "$INSTDIR\mingwm10.dll"
   Delete "$INSTDIR\wxbase28u_gcc_custom.dll"
   Delete "$INSTDIR\wxbase28u_net_gcc_custom.dll"
