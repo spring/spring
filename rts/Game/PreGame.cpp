@@ -139,9 +139,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
 				Default settings: spectating
 				*/
-				gu->spectating           = true;
-				gu->spectatingFullView   = true;
-				gu->spectatingFullSelect = true;
+				gs->players[gu->myPlayerNum]->StartSpectating();
 			}
 			else {
 				userInput=configHandler.GetString("address","");

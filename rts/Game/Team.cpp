@@ -10,6 +10,7 @@
 #include "Game/UI/LuaUI.h"
 #include "Game/GameServer.h"
 #include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
@@ -206,6 +207,74 @@ void CTeam::AddEnergy(float amount)
 	}
 }
 
+void CTeam::SelfDestruct()
+{
+	for(CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui)
+	{
+		if ((*ui) != NULL && (*ui)->unitDef->canSelfD)
+		{
+			if ((*ui)->beingBuilt)
+			{
+				(*ui)->KillUnit(false, true, NULL); // kill units under construction without explosion
+			}
+			else
+			{
+				(*ui)->KillUnit(true, false, NULL);
+			}
+		}
+	}
+	Died();
+}
+
+void CTeam::GiveEverythingTo(const unsigned toTeam)
+{
+	CTeam* target = gs->Team(toTeam);
+
+	if (target)
+	{
+		if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "m", metal))
+		{
+			target->metal += metal;
+			metal = 0;
+		}
+		if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "e", energy))
+		{
+			target->energy += energy;
+			energy = 0;
+		}
+		
+		for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui)
+		{
+			if ((*ui) && (!luaRules || luaRules->AllowUnitTransfer(*ui, toTeam, false))){
+				(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
+			}
+		}
+		Died();
+	}
+	else
+		logOutput.Print("Team %i didn't exists, can't give units");
+}
+
+void CTeam::Died()
+{
+	logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
+	isDead = true;
+	luaCallIns.TeamDied(teamNum);
+	for (int a = 0; a < MAX_PLAYERS; ++a) {
+		if (gs->players[a]->active && gs->players[a]->team == teamNum) {
+			gs->players[a]->StartSpectating();
+			if (gameServer)	{
+				gameServer->PlayerDefeated(a);
+			}
+		}
+	}
+	if (globalAI->ais[teamNum]) {
+		delete globalAI->ais[teamNum];
+		globalAI->ais[teamNum] = 0;
+	}
+	CLuaUI::UpdateTeams();
+}
+
 void CTeam::SlowUpdate()
 {
 	currentStats.metalProduced  += metalIncome;
@@ -351,28 +420,9 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 		}
 	}
 
-	if(units.empty() && !gaia){
-		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
-		isDead=true;
-		luaCallIns.TeamDied(teamNum);
-		for(int a=0;a<MAX_PLAYERS;++a){
-			if(gs->players[a]->active && gs->players[a]->team==teamNum){
-				gs->players[a]->spectator=true;
-				if(a==gu->myPlayerNum){
-					gu->spectating           = true;
-					gu->spectatingFullView   = true;
-					gu->spectatingFullSelect = true;
-					CLuaUI::UpdateTeams();
-				}
-				if (gameServer)	{
-					gameServer->PlayerDefeated(a);
-				}
-			}
-		}
-		if (globalAI->ais[teamNum]) {
-			delete globalAI->ais[teamNum];
-			globalAI->ais[teamNum] = 0;
-		}
+	if(units.empty() && !gaia)
+	{
+		Died();
 	}
 }
 

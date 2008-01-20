@@ -1,6 +1,4 @@
 #include "StdAfx.h"
-#include "Game/Player.h"
-#include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "MouseHandler.h"
@@ -8,7 +6,6 @@
 #include "QuitBox.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Units/Unit.h"
 #include <SDL_keysym.h>
 
 extern bool globalQuit;
@@ -231,35 +228,22 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
-		CUnitSet* tu=&gs->Team(gu->myTeam)->units;
-		//select all units
-		selectedUnits.ClearSelected();
-		for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-			selectedUnits.AddUnit(*ui);
-		}
-		Command c;
 		// give away all units (and resources)
-		if(InBox(mx,my,box+giveAwayBox)){
-			//make sure the units are stopped and that the selection is transmitted
-			c.id=CMD_STOP;
-			selectedUnits.GiveCommand(c,false);
-			net->SendShare(gu->myPlayerNum, shareTeam, true,
-				gs->Team(gu->myTeam)->metal, gs->Team(gu->myTeam)->energy);
-			selectedUnits.ClearSelected();
+		if(InBox(mx,my,box+giveAwayBox)) {
+			net->SendGiveAwayEverything(gu->myPlayerNum, shareTeam);
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
 			sprintf(givenAwayMsg,"%s gave everything to %s.",
 				gs->players[gu->myPlayerNum]->playerName.c_str(),
 				gs->players[gs->Team(shareTeam)->leader]->playerName.c_str());
-			net->SendChat(gu->myPlayerNum, givenAwayMsg);
+			net->SendSystemMessage(gu->myPlayerNum, givenAwayMsg);
 		}
 		// resign, so self-d all units
 		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox)) {
-			c.id=CMD_SELFD;
-			selectedUnits.GiveCommand(c,false);
+			net->SendSelfD(gu->myPlayerNum);
 		}
 		// (resign and) quit, so leave the game
-		if(InBox(mx,my,box+resignQuitBox)){
+		if(InBox(mx,my,box+resignQuitBox)) {
 			logOutput.Print("User exited");
 			globalQuit=true;
 		}

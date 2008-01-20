@@ -40,7 +40,7 @@ enum EVENT
 
 AutohostInterface::AutohostInterface(int localport, int remoteport)
 {
-	autohost = new netcode::UDPHardlink("127.0.0.1", remoteport, localport, 10);
+	autohost = new netcode::UDPHardlink("127.0.0.1", remoteport, localport);
 }
 
 AutohostInterface::~AutohostInterface()

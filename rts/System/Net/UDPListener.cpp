@@ -28,50 +28,44 @@ void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQu
 			++i;
 	}
 
-	do
+	unsigned char buffer[4096];
+	sockaddr_in fromAddr;
+	unsigned recieved;
+	while ((recieved = mySocket->RecvFrom(buffer, 4096, &fromAddr)) >= UDPConnection::hsize)
 	{
-		unsigned char buffer[4096];
-		sockaddr_in fromAddr;
-		unsigned recieved = mySocket->RecvFrom(buffer, 4096, &fromAddr);
-		
-		if (recieved < UDPConnection::hsize)
-		{
-			break;
-		}
-		
 		RawPacket* data = new RawPacket(buffer, recieved);
-		bool interrupt = false;
+
 		for (std::list< boost::weak_ptr<UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 		{
 			boost::shared_ptr<UDPConnection> locked(*i);
 			if (locked->CheckAddress(fromAddr))
 			{
 				locked->ProcessRawPacket(data);
-				interrupt=true;
+				data = 0; // UDPConnection takes ownership of packet
+				break;
 			}
 		}
 		
-		if (interrupt)
-			continue;
-		
-		const int packetNumber = *(int*)(data->data);
-		const int lastInOrder = *(int*)(data->data+4);
-		const unsigned char nak = data->data[8];
-		if (acceptNewConnections && packetNumber == 0 && lastInOrder == -1 && nak == 0)
-		{
-			// new client wants to connect
-			boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr));
-			waitingQueue.push(incoming);
-			conn.push_back(incoming);
-			incoming->ProcessRawPacket(data);
-		}
-		else
-		{
-			// throw it
-			delete data;
-		}
-		
-	} while (true);
+		if (data) // still have the packet (means no connection with the sender's address found)
+		{		
+			const int packetNumber = *(int*)(data->data);
+			const int lastInOrder = *(int*)(data->data+4);
+			const unsigned char nak = data->data[8];
+			if (acceptNewConnections && packetNumber == 0 && lastInOrder == -1 && nak == 0)
+			{
+				// new client wants to connect
+				boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr));
+				waitingQueue.push(incoming);
+				conn.push_back(incoming);
+				incoming->ProcessRawPacket(data);
+			}
+			else
+			{
+				// throw it
+				delete data;
+			}
+		}	
+	}
 	
 	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 	{

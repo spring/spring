@@ -44,6 +44,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_PLAYERLEFT, 3);
 	RegisterMessage(NETMSG_MODNAME, -1);
 	RegisterMessage(NETMSG_LUAMSG, -2);
+	RegisterMessage(NETMSG_TEAM, 4);
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()
@@ -333,7 +334,25 @@ void CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
   data.push_back(script);
   data.push_back(mode);
   data.append(msg);
-  return SendData((const unsigned char*)data.data(), msgLen);    
+  SendData((const unsigned char*)data.data(), msgLen);    
+}
+
+void CBaseNetProtocol::SendSelfD(uchar myPlayerNum)
+{
+	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_SELFD, 0};
+	SendData(msg, 4);
+}
+
+void CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
+{
+	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_GIVEAWAY, giveTo};
+	SendData(msg, 4);
+}
+
+void CBaseNetProtocol::SendResign(uchar myPlayerNum)
+{
+	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_RESIGN, 0};
+	SendData(msg, 4);
 }
 
 /* FIXME: add these:

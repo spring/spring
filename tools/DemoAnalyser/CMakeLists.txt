@@ -1,7 +1,7 @@
 PROJECT(DemoAnalyser)
 SET(CMAKE_CXX_FLAGS "-O1 -Wall -g")
 
-ADD_DEFINITIONS(-DDEBUG -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
+ADD_DEFINITIONS(-DDEBUG -D_DEBUG -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
 
 INCLUDE_DIRECTORIES(/usr/include/SDL/)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
@@ -20,7 +20,7 @@ AUX_SOURCE_DIRECTORY(../../rts/lib/hpiutil2 hpiutil2)
 ADD_LIBRARY(hpiutil2 SHARED  ${hpiutil2})
 
 IF (UNIX)
-SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DotfileHandler)
+SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DotfileHandler ../../rts/System/Platform/Linux/DataDirLocater)
 ELSE (UNIX)
 SET(platformfiles ../../rts/System/Platform/Windows/WinFileSystemHandler ../../rts/System/Platform/Windows/RegHandler)
 ENDIF (UNIX)

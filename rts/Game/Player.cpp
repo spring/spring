@@ -84,6 +84,17 @@ CPlayer::~CPlayer()
 	delete currentStats;
 }
 
+void CPlayer::StartSpectating()
+{
+	spectator=true;
+	if (gs->players[gu->myPlayerNum] == this) //TODO bad hack
+	{
+		gu->spectating           = true;
+		gu->spectatingFullView   = true;
+		gu->spectatingFullSelect = true;
+	}
+}
+
 #ifdef DIRECT_CONTROL_ALLOWED
 void CPlayer::StopControllingUnit()
 {

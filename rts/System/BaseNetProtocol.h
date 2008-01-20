@@ -71,6 +71,17 @@ enum NETMSG {
 #endif // SYNCDEBUG
 
 	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg
+	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
+};
+
+// action to do with NETMSG_TEAM 
+enum TEAMMSG {
+//	TEAMMSG_NAME			= number	   parameter1
+	TEAMMSG_SELFD           = 0,		// not used 
+	TEAMMSG_GIVEAWAY        = 1,		// team to give stuff to
+	TEAMMSG_RESIGN			= 2,		// not used
+//TODO: changing teams (to spectator, from spectator to specific team)
+//TODO: in-game allyteams
 };
 
 /**
@@ -130,6 +141,10 @@ public:
 	void SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	void SendModName(const uint checksum, const std::string& modName);
 	void SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
+	
+	void SendSelfD(uchar myPlayerNum);
+	void SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
+	void SendResign(uchar myPlayerNum);
 
 private:
 };
