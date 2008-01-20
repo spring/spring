@@ -3197,7 +3197,7 @@ bool CGame::ClientReadNet()
 					}
 					case TEAMMSG_RESIGN: {
 						gs->players[player]->StartSpectating();
-						logOutput.Print("Player &i resigned and is now spectating!", player);
+						logOutput.Print("Player %i resigned and is now spectating!", player);
 						break;
 					}
 					default: {
