@@ -19,19 +19,19 @@ namespace netcode {
 
 /**
 @brief Wrapper class over BSD-style UDP-sockets
-Provides easy to use access to network sockets: just construct this with a given portnum and you will have an valid, local bound UDP-Socket where you can sendto / recvfrom. If it gets deleted, the socket is closed automagically for you (this means you are not able to copy this class).
 @author Karl-Robert Ernst
+
+Provides easy to use access to network sockets: just construct this with a given portnum and you will have an valid, local bound UDP-Socket where you can sendto / recvfrom. If it gets deleted, the socket is closed automagically for you (this means you are not able to copy this class).
 */
 class UDPSocket : public boost::noncopyable
 {
 public:
 	/**
 	@brief perform initialisations
-	@param port The port to bind our socket
-	@param maxrange Try $range ports starting with $port
+	@param port The local port to bind our socket (0 means OS-select)
 	@throw network_error When any error occurs, this is thrown
 	*/
-	UDPSocket(int port, unsigned range=0);
+	UDPSocket(const int port);
 	
 	/**
 	@brief Close our socket
@@ -46,7 +46,7 @@ public:
 	@throw network_error when a error occurs
 	@return The amount of bytes read (0 means no data)
 	 */
-	unsigned RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress) const;
+	unsigned RecvFrom(unsigned char* const buf, const unsigned bufLength, sockaddr_in* const fromAddress) const;
 	
 	/**
 	@brief Send data to the socket

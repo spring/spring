@@ -2894,9 +2894,14 @@ bool CGame::ClientReadNet()
 				int player=inbuf[2];
 				if(player>=MAX_PLAYERS || player<0){
 					logOutput.Print("Got invalid player num %i in chat msg",player);
+				} else if (player == SERVER_PLAYER){
+					string s=(char*)(&inbuf[3]);
+					HandleChatMsg(s, player);
+					logOutput.Print(s);
 				} else {
 					string s=(char*)(&inbuf[3]);
 					HandleChatMsg(s, player);
+					LogNetMsg(s, player);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3157,9 +3162,49 @@ bool CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
-			case NETMSG_MAPDRAW:{
+			case NETMSG_MAPDRAW: {
 				inMapDrawer->GotNetMsg(inbuf);
 				AddTraffic(inbuf[2], packetCode, dataLength);
+				break;
+			}
+			case NETMSG_TEAM: {
+				const int player = (int)inbuf[1];
+				const unsigned char action = inbuf[2];
+				const int fromTeam = gs->players[player]->team;
+				
+				unsigned numPlayersInTeam = 0;
+				for (int a=0;a<MAX_PLAYERS;++a)
+					if (gs->players[a]->active && gs->players[a]->team == fromTeam)
+						++numPlayersInTeam;
+				assert(numPlayersInTeam > 0);
+				
+				switch (action)
+				{
+					case TEAMMSG_SELFD: {
+						if (numPlayersInTeam == 1)
+							gs->Team(fromTeam)->SelfDestruct();
+						else
+							gs->players[player]->StartSpectating();
+						break;
+					}
+					case TEAMMSG_GIVEAWAY: {
+						const int toTeam = gs->players[inbuf[3]]->team;
+						if (numPlayersInTeam == 1)
+							gs->Team(fromTeam)->GiveEverythingTo(toTeam);
+						else
+							gs->players[player]->StartSpectating();
+						break;
+					}
+					case TEAMMSG_RESIGN: {
+						gs->players[player]->StartSpectating();
+						logOutput.Print("Player &i resigned and is now spectating!", player);
+						break;
+					}
+					default: {
+						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
+					}
+				}
+				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
@@ -3688,9 +3733,6 @@ static void SetBoolArg(bool& value, const std::string& str, const char* cmd)
 
 void CGame::HandleChatMsg(std::string s, int player)
 {
-	// Player chat messages
-	LogNetMsg(s, player);
-
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
 

@@ -27,6 +27,11 @@ public:
 	bool UseMetal(float amount);
 	bool UseEnergyUpkeep(float amount);
 	bool UseMetalUpkeep(float amount);
+	
+	void SelfDestruct();
+	void GiveEverythingTo(const unsigned toTeam);
+	
+	void Died();
 
 	enum AddType{
 		AddBuilt,

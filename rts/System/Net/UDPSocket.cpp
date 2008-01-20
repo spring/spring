@@ -1,12 +1,11 @@
 #include "UDPSocket.h"
 
-#include <string>
 #ifdef _WIN32
- #include <direct.h>
- #include <io.h>
+	#include <direct.h>
+	#include <io.h>
 #else
- #include <fcntl.h>
- #include <errno.h>
+	#include <fcntl.h>
+	#include <errno.h>
 #endif
 
 #include "Exception.h"
@@ -16,14 +15,14 @@ namespace netcode {
 
 #ifdef _WIN32
 	typedef int socklen_t;
-#define close(x) closesocket(x)
+	inline int close(SOCKET mySocket) { return closesocket(mySocket); };
 #else
 	const int INVALID_SOCKET = -1;
 	const int SOCKET_ERROR = -1;
 #endif
 
 
-UDPSocket::UDPSocket(int port, unsigned range)
+UDPSocket::UDPSocket(const int port)
 {
 #ifdef _WIN32
 	unsigned short wVersionRequested;
@@ -32,7 +31,7 @@ UDPSocket::UDPSocket(int port, unsigned range)
 		
 	wVersionRequested = MAKEWORD( 2, 2 );
 	err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
-		throw network_error("Couldn't initialize winsock");
+		throw network_error("Error initializing winsock: failed to start");
 		return;
 	}
 	/* Confirm that the WinSock DLL supports 2.2.*/
@@ -41,46 +40,39 @@ UDPSocket::UDPSocket(int port, unsigned range)
 	/* 2.2 in wVersion since that is the version we      */
 	/* requested.                                        */
 	if ( LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 2 ) {
-		throw network_error("Wrong WSA version");
+		throw network_error("Error initializing winsock: wrong version");
 		WSACleanup( );
 		return;
 	}
 #endif
 	
-	if ((mySocket= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET ){ /* create socket */
+	mySocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // create socket
+	if (mySocket == INVALID_SOCKET )
+	{
 		throw network_error(std::string("Error initializing socket: ") + GetErrorMsg());
-		exit(0);
 	}
 	
 	myAddr.sin_family = AF_INET;
-	myAddr.sin_addr.s_addr = INADDR_ANY; // Let the OS assign a address
-	
-	do
+	myAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Let the OS assign a address	
+	myAddr.sin_port = htons(port);	   // Use port passed from user
+
+	if (bind(mySocket,(struct sockaddr *)&myAddr,sizeof(struct sockaddr_in)) == SOCKET_ERROR)
 	{
-		myAddr.sin_port = htons(port);	   // Use port passed from user		
-		if (bind(mySocket,(struct sockaddr *)&myAddr,sizeof(struct sockaddr_in)) == SOCKET_ERROR)
-		{
-			if (range == 0)
-			{
-				// last try, error will break through to higher levels
-				throw network_error(std::string("Error binding socket: ") + GetErrorMsg());
-			}
-			--range;
-			++port;
-		}
-		else 
-			break;
-	} while (range > 0);
+		throw network_error(std::string("Error binding socket: ") + GetErrorMsg());
+	}
 	
 	// dont set PATH_MTU yet
 	// int option = IP_PMTUDISC_DO;
 	// setsockopt(mySocket, IPPROTO_IP, IP_MTU_DISCOVER, &option, sizeof(option));
 #ifdef _WIN32
 	u_long u=1;
-	ioctlsocket(mySocket,FIONBIO,&u);
+	if (ioctlsocket(mySocket,FIONBIO,&u) == SOCKET_ERROR)
 #else
-	fcntl(mySocket, F_SETFL, O_NONBLOCK);
+	if (fcntl(mySocket, F_SETFL, O_NONBLOCK) == -1)
 #endif
+	{
+		throw network_error(std::string("Error configuring socket: ") + GetErrorMsg());
+	}
 }
 
 UDPSocket::~UDPSocket()
@@ -91,30 +83,34 @@ UDPSocket::~UDPSocket()
 #endif
 }
 
-unsigned UDPSocket::RecvFrom(unsigned char* buf, const unsigned bufLength, sockaddr_in* fromAddress) const 
+unsigned UDPSocket::RecvFrom(unsigned char* const buf, const unsigned bufLength, sockaddr_in* const fromAddress) const 
 {
 	socklen_t fromsize = sizeof(*fromAddress);
 	const int data =  recvfrom(mySocket,(char*)buf,bufLength,0,(sockaddr*)fromAddress,&fromsize);
-	if (data == SOCKET_ERROR) {
-		if (IsFakeError()) {
+	if (data == SOCKET_ERROR)
+	{
+		if (IsFakeError())
+		{
 			return 0;
-		} else {
+		}
+		else
+		{
 			throw network_error(std::string("Error receiving data from socket: ") + GetErrorMsg());
-    }
+		}
 	}
-
 	return data;
 }
 
 void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const
 {
 	const int error = sendto(mySocket,(const char*)buf,dataLength,0,(const struct sockaddr* const)destination,sizeof(*destination));
-	if (error == SOCKET_ERROR) {
+	if (error == SOCKET_ERROR)
+	{
 		if (IsFakeError()) {
 			return;
 		} else {
 			throw network_error(std::string("Error sending data to socket: ") + GetErrorMsg());
-    }
+    	}
 	}
 }
 

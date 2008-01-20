@@ -1,5 +1,6 @@
 #include "InputReceiver.h"
 
+//TOD add support for resigning without selfdestruction
 class CQuitBox :
 	public CInputReceiver
 {

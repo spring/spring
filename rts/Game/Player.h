@@ -34,6 +34,8 @@ public:
 	CR_DECLARE_SUB(Statistics);
 	CPlayer();
 	~CPlayer();
+	
+	void StartSpectating();
 
 	bool active;
 	std::string playerName;

@@ -21,7 +21,7 @@ public:
 	@param range if $port is blocked, try port +1, +2, ... +range
 	@throw network_error when hostname cannot be resolved
 	*/
-	UDPHardlink(const char* const address, const unsigned remoteport, const int port, const unsigned range=0);
+	UDPHardlink(const char* const address, const unsigned remoteport, const int port);
 
 	/**
 	@brief Send some data

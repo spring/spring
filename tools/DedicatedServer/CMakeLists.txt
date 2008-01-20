@@ -24,7 +24,7 @@ AUX_SOURCE_DIRECTORY(../../rts/lib/hpiutil2 hpiutil2)
 ADD_LIBRARY(hpiutil2 SHARED  ${hpiutil2})
 
 IF (UNIX)
-SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DotfileHandler)
+SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)
 ELSE (UNIX)
 SET(platformfiles ../../rts/System/Platform/Windows/WinFileSystemHandler ../../rts/System/Platform/Windows/RegHandler)
 ENDIF (UNIX)

@@ -21,8 +21,8 @@ namespace netcode
 	const int SOCKET_ERROR = -1;
 #endif
 
-UDPHardlink::UDPHardlink(const char* const server, const unsigned remoteport, const int port, const unsigned range)
-: UDPSocket(port,range)
+UDPHardlink::UDPHardlink(const char* const server, const unsigned remoteport, const int port)
+: UDPSocket(port)
 {
 	LPHOSTENT lpHostEntry;
 	sockaddr_in remoteAddr;
