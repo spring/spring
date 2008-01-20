@@ -332,18 +332,22 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 		return true;
 	}
 	else if (lua_istable(L, index) && GLEW_ARB_draw_buffers) {
-		vector<GLenum> buffers;
 		const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
-		int i = 1;
-		for (lua_rawgeti(L, table, i);
-				 lua_israwnumber(L, -1);
-				 lua_pop(L, 1), i++, lua_rawgeti(L, table, i)) {
-			const GLenum buffer = (GLenum)lua_tonumber(L, -1);
+
+		vector<GLenum> buffers;
+		for (int i = 1; lua_checkgeti(L, table, i) != 0; lua_pop(L, 1), i++) {
+			const GLenum buffer = (GLenum)luaL_checkint(L, -1);
 			buffers.push_back(buffer);
 		}
-		lua_pop(L, 1);
 
-		glDrawBuffersARB(buffers.size(), buffers.data());
+		GLenum* bufArray = new GLenum[buffers.size()];
+		for (int d = 0; d < (int)buffers.size(); d++) {
+			bufArray[d] = buffers[d];
+		}
+
+		glDrawBuffersARB(buffers.size(), bufArray);
+
+		delete[] bufArray;
 
 		return true;
 	}
