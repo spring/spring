@@ -2102,6 +2102,7 @@ bool CGame::Draw()
 	}
 
 	ph->UpdateTextures();
+	fartextureHandler->CreateFarTextures();
 
 	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
 
@@ -3171,13 +3172,13 @@ bool CGame::ClientReadNet()
 				const int player = (int)inbuf[1];
 				const unsigned char action = inbuf[2];
 				const int fromTeam = gs->players[player]->team;
-				
+
 				unsigned numPlayersInTeam = 0;
 				for (int a=0;a<MAX_PLAYERS;++a)
 					if (gs->players[a]->active && gs->players[a]->team == fromTeam)
 						++numPlayersInTeam;
 				assert(numPlayersInTeam > 0);
-				
+
 				switch (action)
 				{
 					case TEAMMSG_SELFD: {

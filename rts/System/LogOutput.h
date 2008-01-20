@@ -6,6 +6,7 @@ LogOutput - global object to write log info to.
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
 
+#include <stdarg.h>
 #include <vector>
 
 // format string error checking
