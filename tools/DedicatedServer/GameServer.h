@@ -147,7 +147,6 @@ private:
 	unsigned int modChecksum;
 	std::string modName;
 
-
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
 	std::deque<int> outstandingSyncFrames;
