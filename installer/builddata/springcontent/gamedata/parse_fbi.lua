@@ -29,7 +29,9 @@ local soundTypes = {}
 
 local soundTypes, err = SND.Parse('gamedata/sound.tdf')
 if (soundTypes == nil) then
-  Spring.Echo('could not load sound data: ' .. err)
+  if (false) then -- sound.tdf is no longer required, do not complain
+    Spring.Echo('could not load sound data: ' .. err)
+  end
   soundTypes = {}
 end
 
