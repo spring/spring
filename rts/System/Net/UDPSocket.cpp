@@ -98,7 +98,7 @@ unsigned UDPSocket::RecvFrom(unsigned char* const buf, const unsigned bufLength,
 			throw network_error(std::string("Error receiving data from socket: ") + GetErrorMsg());
 		}
 	}
-	return data;
+	return (unsigned)data;
 }
 
 void UDPSocket::SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const
