@@ -58,6 +58,18 @@ void UDPHardlink::Send(const unsigned char* const buf, const unsigned dataLength
 unsigned UDPHardlink::Recv(unsigned char* buf, const unsigned bufLength) const
 {
 	const int data = recv(mySocket,(char*)buf,bufLength,0);
+	
+	if (data == SOCKET_ERROR)
+	{
+		if (IsFakeError())
+		{
+			return 0;
+		}
+		else
+		{
+			throw network_error(std::string("Error receiving data from socket: ") + GetErrorMsg());
+		}
+	}
 	return data;
 }
 
