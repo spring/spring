@@ -74,7 +74,7 @@ local a, e = 0, 0
 for teamID, team in pairs(teams) do
   if (team.gaia) then
     teamColors[teamID] = gaiaColor
-  elseif (team.active) then
+  else
     if (teamID == myTeam) then
       teamColors[teamID] = myColor
     elseif (team.allyTeam == myAllyTeam) then
