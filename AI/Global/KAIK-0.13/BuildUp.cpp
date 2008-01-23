@@ -64,6 +64,8 @@ void CBuildUp::Update(int frame) {
 
 
 void CBuildUp::Buildup(int frame) {
+	// KLOOTNOTE: make it emphasize mexes and energy more
+	// during the first two minutes (important for PURE)
 	float mIncome = ai->cb->GetMetalIncome();
 	float eIncome = ai->cb->GetEnergyIncome();
 	float mLevel = ai->cb->GetMetal();
@@ -82,8 +84,8 @@ void CBuildUp::Buildup(int frame) {
 	bool eLevel50 = (eLevel > (eStorage * e1));		// is our current energy level more than 50% of our current energy storage capacity?
 	bool eLevel80 = (eLevel > (eStorage * e2));		// is our current energy level more than 80% of our current energy storage capacity?
 
-	bool mStall = (mIncome < (mUsage * 1.3f));		// are we currently producing less metal than we are currently expending * 1.3?
-	bool eStall = (eIncome < (eUsage * 1.6f));		// are we currently producing less energy than we are currently expending * 1.6?
+	bool mStall = ((frame < 900) || (mIncome < (mUsage * 1.3f)));	// are we currently producing less metal than we are currently expending * 1.3?
+	bool eStall = ((frame < 450) || (eIncome < (eUsage * 1.6f)));	// are we currently producing less energy than we are currently expending * 1.6?
 
 
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
