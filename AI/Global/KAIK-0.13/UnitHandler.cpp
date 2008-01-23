@@ -844,12 +844,12 @@ BuildTask* CUnitHandler::BuildTaskExist(float3 pos, const UnitDef* builtdef) {
 
 
 
-bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
+bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 	assert(category >= 0);
 	assert(category < LASTCATEGORY);
-	assert(builder >= 0);
-	assert(ai->MyUnits[builder] != NULL);
-	BuilderTracker* builderTracker = GetBuilderTracker(builder);
+	assert(builderID >= 0);
+	assert(ai->MyUnits[builderID] != NULL);
+	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
 
 	// make sure this builder is free
 	// KLOOTNOTE: no longer use assertions
@@ -859,41 +859,42 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 	bool b2 = (builderTracker->buildTaskId == 0);
 	bool b3 = (builderTracker->factoryId == 0);
 	bool b4 = (builderTracker->customOrderId == 0);
+	bool b5 = (ai->MyUnits[builderID]->def())->canAssist;
 
-	if (!b1 || !b2 || !b3 || !b4) {
+	if (!b1 || !b2 || !b3 || !b4 || !b5) {
 		return false;
 	}
 
 	// see if there are any BuildTasks that it can join
 	if (BuildTasks[category].size()) {
-		float largestime = 0;
+		float largestime = 0.0f;
 		list<BuildTask>::iterator besttask;
 
 		for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
-			float timebuilding = ai->math->ETT(*i) - ai->math->ETA(builder, ai->cb->GetUnitPos(i->id));
+			float timebuilding = ai->math->ETT(*i) - ai->math->ETA(builderID, ai->cb->GetUnitPos(i->id));
 			if (timebuilding > largestime) {
 				largestime = timebuilding;
 				besttask = i;
 			}
 		}
 
-		if (largestime > 0) {
+		if (largestime > 0.0f) {
 			BuildTaskAddBuilder(&*besttask, builderTracker);
-			ai->MyUnits[builder]->Repair(besttask->id);
+			ai->MyUnits[builderID]->Repair(besttask->id);
 			return true;
 		}
 	}
 
 	if (TaskPlans[category].size()) {
-			float largestime = 0;
+			float largestime = 0.0f;
 			list<TaskPlan>::iterator besttask;
 
 			for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-				float timebuilding = (i->def->buildTime / i->currentBuildPower) - ai->math->ETA(builder, i->pos);
+				float timebuilding = (i->def->buildTime / i->currentBuildPower) - ai->math->ETA(builderID, i->pos);
 
 				// must test if this builder can make this unit/building too
 				if (timebuilding > largestime) {
-					const UnitDef* builderDef = ai->cb->GetUnitDef(builder);
+					const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
 					vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
 					int size = canBuildList->size();
 					int thisBuildingID = i->def->id;
@@ -908,11 +909,11 @@ bool CUnitHandler::BuildTaskAddBuilder(int builder, int category) {
 				}
 			}
 
-			if (largestime > 10) {
-				assert(builder >= 0);
-				assert(ai->MyUnits[builder] !=  NULL);
-				// this is bad, as ai->MyUnits[builder]->Build uses TaskPlanCreate()
-				ai->MyUnits[builder]->Build(besttask->pos, besttask->def, -1);
+			if (largestime > 10.0f) {
+				assert(builderID >= 0);
+				assert(ai->MyUnits[builderID] !=  NULL);
+				// this is bad, as ai->MyUnits[builderID]->Build uses TaskPlanCreate()
+				ai->MyUnits[builderID]->Build(besttask->pos, besttask->def, -1);
 				return true;
 		}
 	}
@@ -1174,9 +1175,10 @@ void CUnitHandler::FactoryRemove(int id) {
 
 
 
-bool CUnitHandler::FactoryBuilderAdd(int builder) {
-	BuilderTracker* builderTracker = GetBuilderTracker(builder);
-	return FactoryBuilderAdd(builderTracker);
+bool CUnitHandler::FactoryBuilderAdd(int builderID) {
+	bool b = (ai->MyUnits[builderID]->def())->canAssist;
+	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
+	return (b && FactoryBuilderAdd(builderTracker));
 }
 
 
@@ -1188,19 +1190,21 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->customOrderId == 0);
 
 	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
-		float totalbuildercost = 0.0f;
+		if ((ai->MyUnits[i->id]->def())->canBeAssisted) {
+			float totalbuildercost = 0.0f;
 
-		// HACK
-		for (list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
-			totalbuildercost += ai->math->GetUnitCost(*j);
-		}
+			// HACK
+			for (list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
+				totalbuildercost += ai->math->GetUnitCost(*j);
+			}
 
-		if (totalbuildercost < ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO) {
-			builderTracker->factoryId = i->id;
-			i->supportbuilders.push_back(builderTracker->builderID);
-			i->supportBuilderTrackers.push_back(builderTracker);
-			ai->MyUnits[builderTracker->builderID]->Guard(i->id);
-			return true;
+			if (totalbuildercost < ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO) {
+				builderTracker->factoryId = i->id;
+				i->supportbuilders.push_back(builderTracker->builderID);
+				i->supportBuilderTrackers.push_back(builderTracker);
+				ai->MyUnits[builderTracker->builderID]->Guard(i->id);
+				return true;
+			}
 		}
 	}
 

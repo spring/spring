@@ -154,29 +154,35 @@ void CUnitTable::ReadUnitCostMultipliers() {
 	if (f) {
 		char str[1024];
 		char name[512];
-		float value = 1.0f;
+		float costMult = 1.0f;
+		int techLvl = -1;
 
 		while (fgets(str, 1024, f) != 0x0) {
-			int i = sscanf(str, "%s %f", name, &value);
+			if (str[0] == '/' && str[1] == '/') {
+				continue;
+			}
+
+			int i = sscanf(str, "%s %f %d", name, &costMult, &techLvl);
 			const UnitDef* udef = ai->cb->GetUnitDef(name);
 
 			if ((i == 2) && udef) {
-				unitTypes[udef->id].costMultiplier = value;
+				unitTypes[udef->id].costMultiplier = costMult;
+				unitTypes[udef->id].techLevel = techLvl;
 			}
 		}
-
-		fclose(f);
 	} else {
 		// write a new file with default values
 		// for each UnitType in unitTypes array
 		f = fopen(configFileName, "w");
+		fprintf(f, "// unitName costMultiplier techLevel\n");
 
 		for (int i = 1; i <= numOfUnits; i++) {
-			fprintf(f, "%s %f\n", unitTypes[i].def->name.c_str(), unitTypes[i].costMultiplier);
+			UnitType* utype = &unitTypes[i];
+			fprintf(f, "%s %f %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel);
 		}
-
-		fclose(f);
 	}
+
+	fclose(f);
 }
 
 
@@ -723,7 +729,6 @@ void CUnitTable::Init() {
 		// set side of start unit (eg. commander) and continue recursively
 		int unitDefID = startUnits[s];
 		unitTypes[unitDefID].sides.insert(s);
-		unitTypes[unitDefID].techLevel = 0;
 
 		CalcBuildTree(unitDefID, s);
 	}
@@ -859,7 +864,10 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 // determines sides of unitTypes by recursion
 void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 	UnitType* utype = &unitTypes[unitDefID];
+
+	// assign default values
 	utype->costMultiplier = 1.0f;
+	utype->techLevel = -1;
 
 	// go through all possible build options and set side if necessary
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
@@ -870,7 +878,7 @@ void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 		// KLOOTNOTE: techLevel will not make much sense if
 		// unit has multiple ancestors at different depths
 		// in tree (eg. Adv. Vehicle Plants in XTA)
-		buildOptionType->techLevel = utype->techLevel;
+		// buildOptionType->techLevel = utype->techLevel;
 		// buildOptionType->techLevel = utype->def->techLevel;
 		// FIXME: causes duplicated entries in PURE
 		// buildOptionType->builtByList.push_back(unitDefID);
