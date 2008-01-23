@@ -165,7 +165,7 @@ void CUnitTable::ReadUnitCostMultipliers() {
 			int i = sscanf(str, "%s %f %d", name, &costMult, &techLvl);
 			const UnitDef* udef = ai->cb->GetUnitDef(name);
 
-			if ((i == 2) && udef) {
+			if ((i == 3) && udef) {
 				unitTypes[udef->id].costMultiplier = costMult;
 				unitTypes[udef->id].techLevel = techLvl;
 			}
