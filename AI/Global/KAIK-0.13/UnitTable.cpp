@@ -152,6 +152,7 @@ void CUnitTable::ReadUnitCostMultipliers() {
 	FILE* f = fopen(configFileName, "r");
 
 	if (f) {
+		// read the mod's .cfg file
 		char str[1024];
 		char name[512];
 		float costMult = 1.0f;
@@ -178,6 +179,9 @@ void CUnitTable::ReadUnitCostMultipliers() {
 
 		for (int i = 1; i <= numOfUnits; i++) {
 			UnitType* utype = &unitTypes[i];
+			// assign default values
+			utype->costMultiplier = 1.0f;
+			utype->techLevel = -1;
 			fprintf(f, "%s %f %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel);
 		}
 	}
@@ -864,10 +868,6 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 // determines sides of unitTypes by recursion
 void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 	UnitType* utype = &unitTypes[unitDefID];
-
-	// assign default values
-	utype->costMultiplier = 1.0f;
-	utype->techLevel = -1;
 
 	// go through all possible build options and set side if necessary
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
