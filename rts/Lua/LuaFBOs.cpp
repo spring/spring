@@ -174,6 +174,16 @@ int LuaFBOs::meta_newindex(lua_State* L)
 			ApplyDrawBuffers(L, 3);
 			glBindFramebufferEXT(fbo->target, currentFBO);
 		}
+		else if (key == "readbuffer") {
+			GLint currentFBO;
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
+			glBindFramebufferEXT(fbo->target, fbo->id);
+			if (lua_isnumber(L, 3)) {
+				const GLenum buffer = (GLenum)lua_tonumber(L, 3);
+				glReadBuffer(buffer);
+			}
+			glBindFramebufferEXT(fbo->target, currentFBO);
+		}
 		else if (key == "target") {
 			return 0;// fbo->target = (GLenum)luaL_checkint(L, 3);
 		}
