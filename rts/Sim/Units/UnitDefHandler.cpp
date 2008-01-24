@@ -136,14 +136,15 @@ CUnitDefHandler::~CUnitDefHandler(void)
 
 void CUnitDefHandler::CleanBuildOptions()
 {
-	// remove invalid unitDef's from build options
+	// remove invalid build options
 	for (int i = 1; i <= numUnitDefs; i++) {
 		UnitDef& ud = unitDefs[i];
 		map<int, string>& bo = ud.buildOptions;
 		map<int, string>::iterator it = bo.begin();
 		while (it != bo.end()) {
-			const UnitDef* bd = GetUnitByName(it->second);
 			bool erase = false;
+
+			const UnitDef* bd = GetUnitByName(it->second);
 			if (bd == NULL) {
 				logOutput.Print("WARNING: removed the \"" + it->second +
 				                "\" entry from the \"" + ud.name + "\" build menu");
@@ -152,7 +153,7 @@ void CUnitDefHandler::CleanBuildOptions()
 			else if (bd->maxThisUnit <= 0) {
 				erase = true; // silent removal
 			}
-			
+
 			if (erase) {
 				map<int, string>::iterator tmp = it;
 				it++;
@@ -932,9 +933,9 @@ unsigned int CUnitDefHandler::GetUnitImage(const UnitDef* unitdef, std::string b
 	}
 	else {
 		if (!LoadBuildPic("unitpics/" + unitdef->name + ".dds", bitmap) &&
-			!LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
-			!LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
-			!LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
 			bitmap.Alloc(1, 1); // last resort
 		}
 	}

@@ -28,7 +28,7 @@ static int HandleXCall(lua_State* L)
 	const int addrIndex = lua_upvalueindex(1);
 	const int nameIndex = lua_upvalueindex(2);
 
-	if (!lua_isuserdata(L, addrIndex) || !lua_isstring(L, nameIndex)) {
+	if (!lua_isuserdata(L, addrIndex) || !lua_israwstring(L, nameIndex)) {
 		luaL_error(L, "Bad function name type");
 	}
 
@@ -47,7 +47,7 @@ static int HandleXCall(lua_State* L)
 static int IndexHook(lua_State* L)
 {
 	CLuaHandle** addr = (CLuaHandle**) lua_touserdata(L, lua_upvalueindex(1));
-	if (!lua_isstring(L, 2)) {
+	if (!lua_israwstring(L, 2)) {
 		return 0; // missing string name for function
 	}
 	lua_pushlightuserdata(L, addr);
@@ -66,7 +66,7 @@ static int CallHook(lua_State* L)
 		lua_pushboolean(L, (*addr != NULL));
 		return 1;
 	}
-	else if ((args >= 2) && lua_isstring(L, 2)) {
+	else if ((args >= 2) && lua_israwstring(L, 2)) {
 		// see if the specified function exists
 		const string funcName = lua_tostring(L, 2);
 		CLuaHandle* lh = *addr;

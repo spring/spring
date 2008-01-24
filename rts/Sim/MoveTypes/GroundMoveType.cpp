@@ -1416,7 +1416,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 				// safe cast (only units can be mobile)
 				CUnit* u = (CUnit*) c;
 
-				if (!u->unitDef->pushResistant) {
+				if (!u->unitDef->pushResistant && !u->usingScriptMoveType) {
 					// push the blocking unit out of the way
 					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					u->pos += dif * (part);
@@ -1478,7 +1478,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 				// safe cast (only units can be mobile)
 				CUnit* u = (CUnit*) c;
 
-				if (!u->unitDef->pushResistant) {
+				if (!u->unitDef->pushResistant && !u->usingScriptMoveType) {
 					// push the blocking unit out of the way
 					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					c->pos += dif * (part);

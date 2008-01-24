@@ -14,13 +14,18 @@
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+if (not VFS.FileExists('gamedata/modrules.tdf')) then
+  return false
+end
+
 local modrules, err = TDF.Parse('gamedata/modrules.tdf')
 if (modrules == nil) then
   error('Error parsing modrules.tdf: ' .. err)
 end
 
-
---------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 return modrules

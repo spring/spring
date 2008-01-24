@@ -2,6 +2,7 @@
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
 #include "BaseGroundDrawer.h"
+#include "HeightMapTexture.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "TimeProfiler.h"
 #include "Sim/Misc/QuadField.h"
@@ -232,7 +233,9 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			relosQue.push_back(rs);
 		}
 	}
+	heightMapTexture.UpdateArea(x1, y1, x2, y2);
 }
+
 
 void CBasicMapDamage::Update(void)
 {

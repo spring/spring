@@ -319,8 +319,7 @@
 ** CHANGE it (define it) if you want exact compatibility with the
 ** behavior of setn/getn in Lua 5.0.
 */
-//SPRING#undef LUA_COMPAT_GETN
-#define LUA_COMPAT_GETN
+#undef LUA_COMPAT_GETN
 
 /*
 @@ LUA_COMPAT_LOADLIB controls compatibility about global loadlib.

@@ -46,11 +46,14 @@ class CScriptMoveType : public CMoveType
 		void CalcDirections();
 		void TrackSlope();
 		void CheckLimits();
+		void CheckNotify();
 
 	public:
 		int tag;
-
+		
 		bool extrapolate;
+
+		float drag;
 
 		float3 vel;     // velocity
 		float3 relVel;  // relative velocity (to current direction)
@@ -89,6 +92,8 @@ class CScriptMoveType : public CMoveType
 		int lastTrackUpdate;
 		float3 oldPos;
 		float3 oldSlowUpdatePos;
+
+		int scriptNotify;
 };
 
 

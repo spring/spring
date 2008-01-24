@@ -158,6 +158,9 @@ class LuaSyncedRead {
 		static int Pos2BuildPos(lua_State* L);
 
 		static int GetPositionLosState(lua_State* L);
+		static int IsPosInLos(lua_State* L);
+		static int IsPosInRadar(lua_State* L);
+		static int IsPosInAirLos(lua_State* L);
 		static int GetClosestValidPosition(lua_State* L);
 
 		static int GetUnitPieceMap(lua_State* L);

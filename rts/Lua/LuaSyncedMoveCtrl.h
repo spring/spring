@@ -42,6 +42,7 @@ class LuaSyncedMoveCtrl {
 		static int SetTrackGround(lua_State* L);
 		static int SetGroundOffset(lua_State* L);
 		static int SetGravity(lua_State* L);
+		static int SetDrag(lua_State* L);
 
 		static int SetWindFactor(lua_State* L);
 

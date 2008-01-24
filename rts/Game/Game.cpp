@@ -51,6 +51,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/HeightMapTexture.h"
 #include "Map/MapDamage.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
@@ -511,6 +512,7 @@ CGame::~CGame()
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
+	heightMapTexture.Kill();
 
 	if (gameServer)delete gameServer;gameServer         = NULL;
 
@@ -2901,8 +2903,8 @@ bool CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in chat msg",player);
 				} else  {
 					string s=(char*)(&inbuf[3]);
-					HandleChatMsg(s, player);
 					LogNetMsg(s, player);
+					HandleChatMsg(s, player);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;

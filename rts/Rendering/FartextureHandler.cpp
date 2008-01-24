@@ -111,7 +111,6 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	for(int a=0;a<8;++a){
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		texturehandler->SetTATexture();
-		//glCallList(model.displist);
 		glPushMatrix();
 		glTranslatef(0,-model->height*0.5f,0);
 		model->DrawStatic();

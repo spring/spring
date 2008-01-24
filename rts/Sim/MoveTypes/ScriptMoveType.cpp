@@ -1,6 +1,7 @@
 
 #include "StdAfx.h"
 #include "ScriptMoveType.h"
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/Wind.h"
@@ -19,6 +20,7 @@ CR_BIND_DERIVED(CScriptMoveType, CMoveType, (NULL));
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
+	CR_MEMBER(drag),
 	CR_MEMBER(vel),
 	CR_MEMBER(relVel),
 	CR_MEMBER(useRelVel),
@@ -46,6 +48,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),
 	CR_MEMBER(oldSlowUpdatePos),
+	CR_MEMBER(scriptNotify),
 	CR_RESERVED(64)
 	));
 
@@ -54,6 +57,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
 : CMoveType(owner),
 	tag(0),
   extrapolate(true),
+	drag(0.0f),
   vel(0.0f, 0.0f, 0.0f),
   relVel(0.0f, 0.0f, 0.0f),
   useRelVel(false),
@@ -78,7 +82,8 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
   maxs(+1.0e9f, +1.0e9f, +1.0e9f),
   lastTrackUpdate(0),
 	oldPos(owner ? owner->pos:float3(0,0,0)),
-	oldSlowUpdatePos(oldPos)
+	oldSlowUpdatePos(oldPos),
+	scriptNotify(0)
 {
 	useHeading = false; // use the transformation matrix instead of heading
 
@@ -115,11 +120,11 @@ inline void CScriptMoveType::CalcMidPos()
 inline void CScriptMoveType::CalcDirections()
 {
 	CMatrix44f matrix;
-	matrix.Translate(-rotOffset); // this doesn't work, Rotate is not a full rotate
+	//matrix.Translate(-rotOffset);
 	matrix.RotateY(-rot.y);
 	matrix.RotateX(-rot.x);
 	matrix.RotateZ(-rot.z);
-	matrix.Translate(rotOffset);
+	//matrix.Translate(rotOffset);
 	owner->rightdir.x = -matrix[ 0];
 	owner->rightdir.y = -matrix[ 1];
 	owner->rightdir.z = -matrix[ 2];
@@ -161,6 +166,17 @@ void CScriptMoveType::SlowUpdate()
 };
 
 
+void CScriptMoveType::CheckNotify()
+{
+	if (scriptNotify) {
+		if (luaRules && luaRules->MoveCtrlNotify(owner, scriptNotify)) {
+			owner->DisableScriptMoveType();
+		}
+		scriptNotify = 0;
+	}
+}
+
+
 void CScriptMoveType::Update()
 {
 	if (useRotVel) {
@@ -170,6 +186,9 @@ void CScriptMoveType::Update()
 
 	owner->speed = vel;
 	if (extrapolate) {
+		if (drag != 0.0f) {
+			vel *= (1.0f - drag); // quadratic drag does not work well here
+		}
 		if (useRelVel) {
 			const float3 rVel = (owner->frontdir *  relVel.z) +
 			                    (owner->updir    *  relVel.y) +
@@ -192,6 +211,7 @@ void CScriptMoveType::Update()
 				vel    = ZeroVector;
 				relVel = ZeroVector;
 				rotVel = ZeroVector;
+				scriptNotify = 1;
 			}
 		}
 	}
@@ -207,8 +227,10 @@ void CScriptMoveType::Update()
 
 	// don't need the rest if the pos hasn't changed
 	if (oldPos == owner->pos) {
+		CheckNotify();
 		return;
 	}
+
 	oldPos = owner->pos;
 
 	if (isBlocking && !noBlocking) {
@@ -222,6 +244,8 @@ void CScriptMoveType::Update()
 		lastTrackUpdate = gs->frameNum;
 		groundDecals->UnitMoved(owner);
 	}
+
+	CheckNotify();
 };
 
 

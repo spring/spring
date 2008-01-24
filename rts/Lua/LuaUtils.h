@@ -35,6 +35,8 @@ class LuaUtils {
 		                             vector<string>& vec);
 
 		static void* GetUserData(lua_State* L, int index, const string& type);
+
+		static void PrintStack(lua_State* L);
 };
 
 

@@ -1346,29 +1346,32 @@ bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-	const bool diffStates = (srcState != L);
-	const int argCount = lua_gettop(srcState);
-	const int top = lua_gettop(L);
-
-	const LuaHashString cmdStr(funcName);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	const LuaHashString funcHash(funcName);
+	if (!funcHash.GetGlobalFunc(L)) {
 		return 0;
 	}
 
+	const int top = lua_gettop(L) - 1; // do not count the function
+
+	const bool diffStates = (srcState != L);
+
 	int retCount;
+
 	if (!diffStates) {
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+		if (!RunCallIn(funcHash, top, LUA_MULTRET)) {
 			return 0;
 		}
-		retCount = lua_gettop(L) - top;
+		retCount = lua_gettop(L);
 	}
 	else {
-		LuaUtils::CopyData(L, srcState, argCount);
+		const int srcCount = lua_gettop(srcState);
+
+		LuaUtils::CopyData(L, srcState, srcCount);
 
 		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+		if (!RunCallIn(funcHash, srcCount, LUA_MULTRET)) {
 			return 0;
 		}
 		retCount = lua_gettop(L) - top;
