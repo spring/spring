@@ -49,6 +49,7 @@ CallInsList = {
   "FeatureCreated",
   "FeatureDestroyed",
 
+  "DrawGenesis",
   "DrawWorld",
   "DrawWorldPreUnit",
   "DrawWorldShadow",
@@ -57,6 +58,7 @@ CallInsList = {
   "DrawScreenEffects",
   "DrawScreen",
   "DrawInMiniMap",
+  "DrawUnit",
 
   "Explosion",
   "ShockFront",

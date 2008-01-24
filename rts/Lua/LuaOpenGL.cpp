@@ -426,6 +426,39 @@ inline void LuaOpenGL::DisableCommon(DrawMode mode)
 
 /******************************************************************************/
 //
+//  Genesis
+//
+
+void LuaOpenGL::EnableDrawGenesis()
+{
+	EnableCommon(DRAW_GENESIS);
+	resetMatrixFunc = ResetGenesisMatrices;
+	ResetGenesisMatrices();
+	SetupWorldLighting();
+}
+
+
+void LuaOpenGL::DisableDrawGenesis()
+{
+	if (safeMode) {
+		ResetGenesisMatrices();
+	}
+	RevertWorldLighting();
+	DisableCommon(DRAW_GENESIS);
+}
+
+
+void LuaOpenGL::ResetDrawGenesis()
+{
+	if (safeMode) {
+		ResetGenesisMatrices();
+		glCallList(resetStateList);
+	}
+}
+
+
+/******************************************************************************/
+//
 //  World
 //
 
@@ -832,6 +865,23 @@ void LuaOpenGL::RevertScreenLighting()
 
 /******************************************************************************/
 /******************************************************************************/
+
+void LuaOpenGL::ResetGenesisMatrices()
+{
+	glMatrixMode(GL_TEXTURE); {
+		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
+		glLoadIdentity();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
+		glLoadIdentity();
+	}
+}
+
 
 void LuaOpenGL::ResetWorldMatrices()
 {

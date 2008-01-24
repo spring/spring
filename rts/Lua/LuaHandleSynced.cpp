@@ -329,6 +329,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 
 	if (!SetupUnsyncedFunction("RecvFromSynced")      ||
 	    !SetupUnsyncedFunction("Update")              ||
+	    !SetupUnsyncedFunction("DrawGenesis")         ||
 	    !SetupUnsyncedFunction("DrawWorld")           ||
 	    !SetupUnsyncedFunction("DrawWorldPreUnit")    ||
 	    !SetupUnsyncedFunction("DrawWorldShadow")     ||

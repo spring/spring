@@ -94,13 +94,16 @@ local callInLists = {
 
   'TextCommand',  -- FIXME ?
   'GotChatMsg',
+  'RecvLuaMsg',
 
   -- Unit CallIns
   'UnitCreated',
   'UnitFinished',
   'UnitFromFactory',
   'UnitDestroyed',
+  'UnitExperience',
   'UnitIdle',
+  'UnitCmdDone',
   'UnitDamaged',
   'UnitTaken',
   'UnitGiven',
@@ -111,6 +114,8 @@ local callInLists = {
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
+  'UnitCloaked',
+  'UnitDecloaked',
   'StockpileChanged',
 
   -- Feature CallIns
@@ -132,6 +137,9 @@ local callInLists = {
   'AllowDirectUnitControl',
   'MoveCtrlNotify',
   'BuilderTerraformComplete',
+  -- unsynced
+  'DrawUnit',
+  'AICallIn',
 
   -- COB CallIn  (FIXME?)
   'CobCallback',
@@ -139,6 +147,7 @@ local callInLists = {
   -- Unsynced CallIns
   'Update',
   'DefaultCommand',
+  'DrawGenesis',
   'DrawWorld',
   'DrawWorldPreUnit',
   'DrawWorldShadow',
@@ -275,6 +284,11 @@ function gadgetHandler:LoadGadget(filename)
   end
   if (err == false) then
     return nil -- gadget asked for a quiet death
+  end
+
+  -- raw access to gadgetHandler
+  if (gadget.GetInfo and gadget:GetInfo().handler) then
+    gadget.gadgetHandler = self
   end
 
   self:FinalizeGadget(gadget, filename, basename)
@@ -920,6 +934,16 @@ function gadgetHandler:GotChatMsg(msg, player)
 end
 
 
+function gadgetHandler:RecvLuaMsg(msg, player)
+  for _,g in ipairs(self.RecvLuaMsgList) do
+    if (g:RecvLuaMsg(msg, player)) then
+      return true
+    end
+  end
+  return false
+end
+
+
 --------------------------------------------------------------------------------
 --
 --  Drawing call-ins
@@ -971,6 +995,26 @@ end
 --
 --  LuaRules Game call-ins
 --
+
+function gadgetHandler:DrawUnit(unitID, drawMode)
+  for _,g in ipairs(self.DrawUnitList) do
+    if (g:DrawUnit(unitID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:AICallIn(dataStr)
+  for _,g in ipairs(self.AICallInList) do
+    local dataRet = g:AICallIn(dataStr)
+    if (dataRet) then
+      return dataRet
+    end
+  end
+end
+
 
 function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
                                        cmdID, cmdParams, cmdOptions)
@@ -1140,12 +1184,31 @@ function gadgetHandler:UnitDestroyed(unitID,     unitDefID,     unitTeam,
 end
 
 
+function gadgetHandler:UnitExperience(unitID,     unitDefID,     unitTeam,
+                                      experience, oldExperience)
+  for _,g in ipairs(self.UnitExperienceList) do
+    g:UnitExperience(unitID,     unitDefID,     unitTeam,
+                    experience, oldExperience)
+  end
+  return
+end
+
+
 function gadgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
   for _,g in ipairs(self.UnitIdleList) do
     g:UnitIdle(unitID, unitDefID, unitTeam)
   end
   return
 end
+
+
+function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+  for _,g in ipairs(self.UnitCmdDoneList) do
+    g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
+  end
+  return
+end
+
 
 function gadgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
                                    damage, paralyzer, weaponID,
@@ -1233,6 +1296,22 @@ function gadgetHandler:UnitUnloaded(x, y, z, strength)
 end
 
 
+function gadgetHandler:UnitCloaked(unitID, unitDefID, unitTeam)
+  for _,g in ipairs(self.UnitCloakedList) do
+    g:UnitCloaked(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitDecloaked(unitID, unitDefID, unitTeam)
+  for _,g in ipairs(self.UnitDecloakedList) do
+    g:UnitDecloaked(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function gadgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
                                         weaponNum, oldCount, newCount)
   for _,g in ipairs(self.StockpileChangedList) do
@@ -1291,12 +1370,20 @@ function gadgetHandler:Update()
 end
 
 
-function gadgetHandler:DefaultCommand()
+function gadgetHandler:DefaultCommand(type, id)
   for _,g in ipairs(self.DefaultCommandList) do
-    local id = g:DefaultCommand()
+    local id = g:DefaultCommand(type, id)
     if (id) then
       return id
     end
+  end
+  return
+end
+
+
+function gadgetHandler:DrawGenesis()
+  for _,g in ipairs(self.DrawWorldList) do
+    g:DrawWorld()
   end
   return
 end

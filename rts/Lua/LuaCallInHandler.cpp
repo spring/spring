@@ -56,6 +56,7 @@ CLuaCallInHandler::CLuaCallInHandler()
 
 	callInMap["DefaultCommand"]      = &listDefaultCommand;
 
+	callInMap["DrawGenesis"]         = &listDrawGenesis;
 	callInMap["DrawWorld"]           = &listDrawWorld;
 	callInMap["DrawWorldPreUnit"]    = &listDrawWorldPreUnit;
 	callInMap["DrawWorldShadow"]     = &listDrawWorldShadow;
@@ -120,6 +121,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 
 	ADDHANDLE(DefaultCommand);
 
+	ADDHANDLE(DrawGenesis);
 	ADDHANDLE(DrawWorld);
 	ADDHANDLE(DrawWorldPreUnit);
 	ADDHANDLE(DrawWorldShadow);
@@ -174,6 +176,7 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listDefaultCommand, lh);
 
+	ListRemove(listDrawGenesis, lh);
 	ListRemove(listDrawWorld, lh);
 	ListRemove(listDrawWorldPreUnit, lh);
 	ListRemove(listDrawWorldShadow, lh);
@@ -198,6 +201,7 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 {
 	if ((ciName == "Update")              ||
 	    (ciName == "DefaultCommand")      ||
+	    (ciName == "DrawGenesis")         ||
 	    (ciName == "DrawWorld")           ||
 	    (ciName == "DrawWorldPreUnit")    ||
 	    (ciName == "DrawWorldShadow")     ||
@@ -325,6 +329,7 @@ void CLuaCallInHandler::Update()
     LuaOpenGL::DisableDraw ## name ();            \
   }
 
+DRAW_CALLIN(Genesis)
 DRAW_CALLIN(World)
 DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
