@@ -130,7 +130,7 @@ local flexCallIns = {
   'UnitDecloaked',
   'RecvLuaMsg',
   'StockpileChanged',
-  'DrawWorld',
+  'DrawGenesis',
   'DrawWorld',
   'DrawWorldPreUnit',
   'DrawWorldShadow',
@@ -1149,6 +1149,14 @@ function widgetHandler:DrawScreen()
     if (self.tweakMode and w.TweakDrawScreen) then
       w:TweakDrawScreen()
     end
+  end
+  return
+end
+
+
+function widgetHandler:DrawGenesis()
+  for _,w in ripairs(self.DrawGenesisList) do
+    w:DrawGenesis()
   end
   return
 end

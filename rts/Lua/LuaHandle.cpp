@@ -841,6 +841,24 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 
 
 
+void CLuaHandle::DrawGenesis()
+{
+	static const LuaHashString cmdStr("DrawGenesis");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return;
+	}
+
+	synced = false;
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+
+	synced = !userMode;
+
+	return;
+}
+
+
 void CLuaHandle::DrawWorld()
 {
 	static const LuaHashString cmdStr("DrawWorld");

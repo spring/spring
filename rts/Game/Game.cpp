@@ -2074,6 +2074,9 @@ bool CGame::Draw()
 	}
 
 	luaCallIns.Update();
+
+	luaCallIns.DrawGenesis();
+
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		// FIXME: trepan -- I want error reports, make this verbose and annoying
@@ -2106,7 +2109,7 @@ bool CGame::Draw()
 	ph->UpdateTextures();
 	fartextureHandler->CreateFarTextures();
 
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
+	glClearColor(FogLand[0], FogLand[1], FogLand[2], 0);
 
 	sky->Update();
 

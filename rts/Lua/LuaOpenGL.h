@@ -14,12 +14,13 @@ class LuaOpenGL {
 	public:
 		enum DrawMode {
 			DRAW_NONE               = 0,
-			DRAW_WORLD              = 1,
-			DRAW_WORLD_SHADOW       = 2,
-			DRAW_WORLD_REFLECTION   = 3,
-			DRAW_WORLD_REFRACTION   = 4,
-			DRAW_SCREEN             = 5,
-			DRAW_MINIMAP            = 6,
+			DRAW_GENESIS            = 1,
+			DRAW_WORLD              = 2,
+			DRAW_WORLD_SHADOW       = 3,
+			DRAW_WORLD_REFLECTION   = 4,
+			DRAW_WORLD_REFRACTION   = 5,
+			DRAW_SCREEN             = 6,
+			DRAW_MINIMAP            = 7,
 			DRAW_LAST_MODE          = DRAW_MINIMAP
 		};
 
@@ -42,6 +43,10 @@ class LuaOpenGL {
 		static void EnableCommon(DrawMode);
 		static void ResetCommon(DrawMode);
 		static void DisableCommon(DrawMode);
+
+		static void EnableDrawGenesis();
+		static void ResetDrawGenesis();
+		static void DisableDrawGenesis();
 
 		static void EnableDrawWorld();
 		static void ResetDrawWorld();
@@ -80,6 +85,7 @@ class LuaOpenGL {
 
 		static void ClearMatrixStack(int);
 
+		static void ResetGenesisMatrices();
 		static void ResetWorldMatrices();
 		static void ResetWorldShadowMatrices();
 		static void ResetScreenMatrices();

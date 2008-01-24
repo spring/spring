@@ -143,6 +143,7 @@ class CLuaHandle {
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
+		void DrawGenesis();
 		void DrawWorld();
 		void DrawWorldPreUnit();
 		void DrawWorldShadow();

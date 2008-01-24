@@ -85,6 +85,7 @@ class CLuaCallInHandler
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
+		void DrawGenesis();
 		void DrawWorld();
 		void DrawWorldPreUnit();
 		void DrawWorldShadow();
@@ -144,6 +145,7 @@ class CLuaCallInHandler
 
 		CallInList listDefaultCommand;
 
+		CallInList listDrawGenesis;
 		CallInList listDrawWorld;
 		CallInList listDrawWorldPreUnit;
 		CallInList listDrawWorldShadow;
