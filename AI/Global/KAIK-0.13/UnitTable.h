@@ -24,7 +24,7 @@ class CUnitTable {
 
 		int BuildModSideMap();
 		int ReadTeamSides();
-		void ReadUnitCostMultipliers();
+		void ReadModConfig();
 
 		// returns side of a unit
 		int GetSide(int unit);
@@ -74,6 +74,9 @@ class CUnitTable {
 		const UnitDef** unitList;
 		UnitType* unitTypes;
 		int numOfUnits;
+
+		int minTechLevel;
+		int maxTechLevel;
 
 	private:
 		// for internal use

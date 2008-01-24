@@ -233,7 +233,7 @@ void CBuildUp::Buildup(int frame) {
 	bool b2 = ((mLevel > (mStorage * m2)) || (mIncome > 100.0f && mUsage < mIncome));
 
 	if (b1 && b2) {
-		FactoryCycle();
+		FactoryCycle(frame);
 	}
 
 	if (buildNukeSilo) {
@@ -244,7 +244,7 @@ void CBuildUp::Buildup(int frame) {
 
 
 
-void CBuildUp::FactoryCycle(void) {
+void CBuildUp::FactoryCycle(int frame) {
 	int numIdleFactories = ai->uh->NumIdleUnits(CAT_FACTORY);
 
 	for (int i = 0; i < numIdleFactories; i++) {
@@ -252,50 +252,62 @@ void CBuildUp::FactoryCycle(void) {
 		int producedCat = 0;
 		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
 		bool isHub = (ai->MyUnits[factoryUnitID]->isHub());
+		const UnitDef* factDef = ai->MyUnits[factoryUnitID]->def();
 
-		if (isHub) {
-			// if we are a hub then we can only construct
-			// factories (and some other types of buildings)
-			producedCat = CAT_FACTORY;
-			builderTimer = 0;
-		}
-		else {
-			if ((builderTimer > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
-				// if we have more than two idle builders
-				// then compensate with an offensive unit
-				producedCat = CAT_G_ATTACK;
+		// assume that factories with tech-level TL > 0 are
+		// useful to keep active and building for (TL * 30)
+		// minutes, but depreciate rapidly after that point
+		// TODO: don't reduce factory build frequency, but
+		// focus more on mobile constructors instead?
+		int tchLvl = ai->ut->unitTypes[factDef->id].techLevel;
+		bool obsolete = ((tchLvl > 0)? ((tchLvl * 30) > (frame / 1800)): false);
+		bool mayBuild = ((obsolete)? (frame % 1800 == 0): true);
 
-				if (builderTimer > 0)
-					builderTimer--;
+		if (mayBuild) {
+			if (isHub) {
+				// if we are a hub then we can only construct
+				// factories (and some other types of buildings)
+				producedCat = CAT_FACTORY;
+				builderTimer = 0;
 			}
-
 			else {
-				const UnitDef* leastBuiltBuilder = GetLeastBuiltBuilder();
-				const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
-
-				if (builderUnit && builderUnit == leastBuiltBuilder) {
-					// if this factory makes the builder that we are short of
-					producedCat = CAT_BUILDER;
-					builderTimer += 4;
-				}
-				else {
-					// build some offensive unit
+				if ((builderTimer > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
+					// if we have more than two idle builders
+					// then compensate with an offensive unit
 					producedCat = CAT_G_ATTACK;
 
 					if (builderTimer > 0)
 						builderTimer--;
 				}
+
+				else {
+					const UnitDef* leastBuiltBuilder = GetLeastBuiltBuilder();
+					const UnitDef* builderUnit = ai->ut->GetUnitByScore(factoryUnitID, CAT_BUILDER);
+
+					if (builderUnit && builderUnit == leastBuiltBuilder) {
+						// if this factory makes the builder that we are short of
+						producedCat = CAT_BUILDER;
+						builderTimer += 4;
+					}
+					else {
+						// build some offensive unit
+						producedCat = CAT_G_ATTACK;
+
+						if (builderTimer > 0)
+							builderTimer--;
+					}
+				}
 			}
-		}
 
-		// get a unit of the category we want this factory to produce
-		const UnitDef* udef = ai->ut->GetUnitByScore(factoryUnitID, producedCat);
+			// get a unit of the category we want this factory to produce
+			const UnitDef* udef = ai->ut->GetUnitByScore(factoryUnitID, producedCat);
 
-		if (udef) {
-			if (isHub) {
-				(ai->MyUnits[factoryUnitID])->HubBuild(udef);
-			} else {
-				(ai->MyUnits[factoryUnitID])->FactoryBuild(udef);
+			if (udef) {
+				if (isHub) {
+					(ai->MyUnits[factoryUnitID])->HubBuild(udef);
+				} else {
+					(ai->MyUnits[factoryUnitID])->FactoryBuild(udef);
+				}
 			}
 		}
 	}
