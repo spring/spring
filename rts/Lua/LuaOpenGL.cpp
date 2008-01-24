@@ -33,6 +33,7 @@
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
 #include "Map/ReadMap.h"
+#include "Map/HeightMapTexture.h"
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
@@ -3025,6 +3026,7 @@ int LuaOpenGL::Texture(lua_State* L)
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map
 	// $reflection  --  reflection cube map
+	// $heightmap   --  ground heightmap
 	// ...          --  named textures
 	//
 
@@ -3123,6 +3125,16 @@ int LuaOpenGL::Texture(lua_State* L)
 		else if (texture == "$reflection") {
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, unitDrawer->boxtex);
 			lua_pushboolean(L, true);
+		}
+		else if (texture == "$heightmap") {
+			const GLuint texID = heightMapTexture.CheckTextureID();
+			if (texID == 0) {
+				lua_pushboolean(L, false);
+			} else {
+				glBindTexture(GL_TEXTURE_2D, texID);
+				glEnable(GL_TEXTURE_2D);
+				lua_pushboolean(L, true);
+			}
 		}
 		else {
 			lua_pushboolean(L, false);
@@ -3344,6 +3356,15 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 			lua_newtable(L);
 			HSTR_PUSH_NUMBER(L, "xsize", unitDrawer->specTexSize);
 			HSTR_PUSH_NUMBER(L, "ysize", unitDrawer->specTexSize);
+		}
+		else if (texture == "$heightmap") {
+			if (!heightMapTexture.CheckTextureID()) {
+				return 0;
+			} else {
+				lua_newtable(L);
+				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture.GetSizeX());
+				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture.GetSizeY());
+			}
 		}
 	}
 	else {

@@ -12,16 +12,16 @@ struct S3DOModel;
 class CFartextureHandler
 {
 public:
-	GLuint farTexture;
-
 	CFartextureHandler(void);
 	~CFartextureHandler(void);
 	void CreateFarTexture(S3DOModel* model);
 	void CreateFarTextures();
+	GLuint GetTextureID() const { return farTexture; }
 
 private:
 	void ReallyCreateFarTexture(S3DOModel* model);
 
+	GLuint farTexture;
 	unsigned char* farTextureMem;
 	int usedFarTextures;
 	std::vector<S3DOModel*> pending;

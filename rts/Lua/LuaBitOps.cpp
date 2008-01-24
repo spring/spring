@@ -30,15 +30,17 @@ bool LuaBitOps::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static inline unsigned int luaL_checkuint(lua_State* L, int index)
+{
+	return (unsigned int)luaL_checkint(L, index);
+}
+
+
 int LuaBitOps::bit_or(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
 	unsigned int result = 0x00000000;
-	for (int i = 1; i <= args; i++) {
-		if (!lua_isnumber(L, i)) {
-			break;
-		}
-		result = result | (unsigned int)lua_tonumber(L, i);
+	for (int i = 1; !lua_isnone(L, i); i++) {
+		result = result | luaL_checkuint(L, i);
 	}
 	lua_pushnumber(L, result & mask);
 	return 1;
@@ -47,16 +49,9 @@ int LuaBitOps::bit_or(lua_State* L)
 
 int LuaBitOps::bit_and(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bit_and()");
-	}
 	unsigned int result = 0xFFFFFFFF;
-	for (int i = 1; i <= args; i++) {
-		if (!lua_isnumber(L, i)) {
-			break;
-		}
-		result = result & (unsigned int)lua_tonumber(L, i);
+	for (int i = 1; !lua_isnone(L, i); i++) {
+		result = result & luaL_checkuint(L, i);
 	}
 	lua_pushnumber(L, result & mask);
 	return 1;
@@ -65,16 +60,9 @@ int LuaBitOps::bit_and(lua_State* L)
 
 int LuaBitOps::bit_xor(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bit_xor()");
-	}
 	unsigned int result = 0x00000000;
-	for (int i = 1; i <= args; i++) {
-		if (!lua_isnumber(L, i)) {
-			break;
-		}
-		result = result ^ (unsigned int)lua_tonumber(L, i);
+	for (int i = 1; !lua_isnone(L, i); i++) {
+		result = result ^ luaL_checkuint(L, i);
 	}
 	lua_pushnumber(L, result & mask);
 	return 1;
@@ -83,25 +71,17 @@ int LuaBitOps::bit_xor(lua_State* L)
 
 int LuaBitOps::bit_inv(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to bit_inv()");
-	}
-	const unsigned int b1 = (unsigned int)lua_tonumber(L, 1);
-	lua_pushnumber(L, (~b1) & mask);
+	const unsigned int result = ~luaL_checkuint(L, 1);
+	lua_pushnumber(L, result & mask);
 	return 1;
 }
 
 
 int LuaBitOps::bit_bits(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
 	unsigned int result = 0x00000000;
-	for (int i = 1; i <= args; i++) {
-		if (!lua_isnumber(L, i)) {
-			break;
-		}
-		const int bit = (unsigned int)lua_tonumber(L, i);
+	for (int i = 1; !lua_isnone(L, i); i++) {
+		const int bit = (unsigned int)luaL_checkint(L, i);
 		result = result | (1 << bit);
 	}
 	lua_pushnumber(L, result & mask);

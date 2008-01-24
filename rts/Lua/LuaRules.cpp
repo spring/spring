@@ -109,7 +109,6 @@ CLuaRules::CLuaRules()
 	}
 
 	haveCommandFallback          = HasCallIn("CommandFallback");
-	haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
 	haveAllowCommand             = HasCallIn("AllowCommand");
 	haveAllowUnitCreation        = HasCallIn("AllowUnitCreation");
 	haveAllowUnitTransfer        = HasCallIn("AllowUnitTransfer");
@@ -119,6 +118,8 @@ CLuaRules::CLuaRules()
 	haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
 	haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
 	haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+	haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
+	haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
 	haveDrawUnit                 = HasCallIn("DrawUnit");
 	haveAICallIn                 = HasCallIn("AICallIn");
 
@@ -221,27 +222,29 @@ const map<string, int>& CLuaRules::GetGameParamsMap()
 bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
 	if (name == "CommandFallback") {
-		haveCommandFallback       = HasCallIn("CommandFallback");
-	} else if (name == "BuilderTerraformComplete") {
-		haveBuilderTerraformComplete=HasCallIn("BuilderTerraformComplete");
+		haveCommandFallback          = HasCallIn("CommandFallback");
 	} else if (name == "AllowCommand") {
-		haveAllowCommand          = HasCallIn("AllowCommand");
+		haveAllowCommand             = HasCallIn("AllowCommand");
 	} else if (name == "AllowUnitCreation") {
-		haveAllowUnitCreation     = HasCallIn("AllowUnitCreation");
+		haveAllowUnitCreation        = HasCallIn("AllowUnitCreation");
 	} else if (name == "AllowUnitTransfer") {
-		haveAllowUnitTransfer     = HasCallIn("AllowUnitTransfer");
+		haveAllowUnitTransfer        = HasCallIn("AllowUnitTransfer");
 	} else if (name == "AllowUnitBuildStep") {
-		haveAllowUnitBuildStep    = HasCallIn("AllowUnitBuildStep");
+		haveAllowUnitBuildStep       = HasCallIn("AllowUnitBuildStep");
 	} else if (name == "AllowFeatureCreation") {
-		haveAllowFeatureCreation  = HasCallIn("AllowFeatureCreation");
+		haveAllowFeatureCreation     = HasCallIn("AllowFeatureCreation");
 	} else if (name == "AllowFeatureBuildStep") {
-		haveAllowFeatureBuildStep = HasCallIn("AllowFeatureBuildStep");
+		haveAllowFeatureBuildStep    = HasCallIn("AllowFeatureBuildStep");
 	} else if (name == "AllowResourceLevel") {
-		haveAllowResourceLevel    = HasCallIn("AllowResourceLevel");
+		haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
 	} else if (name == "AllowResourceTransfer") {
-		haveAllowResourceTransfer = HasCallIn("AllowResourceTransfer");
+		haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
 	} else if (name == "AllowDirectUnitControl") {
-		haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
+		haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+	} else if (name == "MoveCtrlNotify") {
+		haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
+	} else if (name == "BuilderTerraformComplete") {
+		haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
 	} else {
 		return CLuaHandleSynced::SyncedUpdateCallIn(name);
 	}
@@ -309,49 +312,6 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		                cmdStr.GetString().c_str(), args);
 		lua_pop(L, 1);
 		return true;
-	}
-
-	const bool retval = !!lua_toboolean(L, -1);
-	lua_pop(L, 1);
-
-	// return 'true' to remove the command
-	return retval;
-}
-
-
-bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
-{
-	if (!haveBuilderTerraformComplete) {
-		return false; // the call is not defined
-	}
-
-	static const LuaHashString cmdStr("BuilderTerraformComplete");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
-	}
-
-	// push the unit info
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// push the construction info
-	lua_pushnumber(L, build->id);
-	lua_pushnumber(L, build->unitDef->id);
-	lua_pushnumber(L, build->team);
-
-	// call the function
-	if (!RunCallIn(cmdStr, 6, 1)) {
-		return false;
-	}
-
-	// get the results
-	const int args = lua_gettop(L);
-	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
-		lua_pop(L, 1);
-		return false;
 	}
 
 	const bool retval = !!lua_toboolean(L, -1);
@@ -719,6 +679,87 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
+bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
+{
+	if (!haveMoveCtrlNotify) {
+		return false; // the call is not defined
+	}
+
+	static const LuaHashString cmdStr("MoveCtrlNotify");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return false; // the call is not defined
+	}
+
+	// push the unit info
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, data);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 4, 1)) {
+		return false;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
+	return retval;
+}
+
+
+bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
+{
+	if (!haveBuilderTerraformComplete) {
+		return false; // the call is not defined
+	}
+
+	static const LuaHashString cmdStr("BuilderTerraformComplete");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return false; // the call is not defined
+	}
+
+	// push the unit info
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// push the construction info
+	lua_pushnumber(L, build->id);
+	lua_pushnumber(L, build->unitDef->id);
+	lua_pushnumber(L, build->team);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 6, 1)) {
+		return false;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
+	// return 'true' to remove the command
+	return retval;
+}
+
+
 /******************************************************************************/
 
 bool CLuaRules::DrawUnit(int unitID)
@@ -835,6 +876,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
 		                name.GetString().c_str());
 		args[0] = 0; // failure
+		lua_settop(L, top);
 		return;
 	}
 

@@ -24,6 +24,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/TimeProfiler.h"
+#include "System/Platform/ConfigHandler.h"
 #include <GL/glu.h> // after myGL.h
 #include "mmgr.h"
 #include "creg/STL_List.h"
@@ -530,10 +531,10 @@ void CFeatureHandler::Draw()
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-	glAlphaFunc(GL_GREATER,0.8f);
+	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D,fartextureHandler->farTexture);
-	glColor3f(1,1,1);
+	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+	glColor3f(1.0f, 1.0f, 1.0f);
 	glEnable(GL_FOG);
 	for(vector<CFeature*>::iterator usi=drawFar.begin();usi!=drawFar.end();usi++){
 		DrawFar(*usi,va);
@@ -622,9 +623,9 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures)
 {
 	float featureDist=3000;
-	if(!extraSize)
-		featureDist=6000;		//farfeatures wont be drawn for shadowpass anyway
-
+	if (!extraSize) {
+		featureDist=6000; //farfeatures wont be drawn for shadowpass anyway
+	}
 	CFeatureDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.fh = this;
@@ -634,7 +635,7 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	drawer.unitDrawDist=unitDrawer->unitDrawDist;
 	drawer.farFeatures = farFeatures;
 
-	readmap->GridVisibility (camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
+	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
 
 

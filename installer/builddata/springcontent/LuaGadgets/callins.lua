@@ -65,7 +65,6 @@ CallInsList = {
   "CobCallback",
   "AllowCommand",
   "CommandFallback",
-  "BuilderTerraformComplete",
   "AllowUnitCreation",
   "AllowUnitTransfer",
   "AllowUnitBuildStep",
@@ -73,6 +72,8 @@ CallInsList = {
   "AllowFeatureBuildStep",
   "AllowResourceLevel",
   "AllowResourceTransfer",
+  "MoveCtrlNotify",
+  "BuilderTerraformComplete",
 }
 
 

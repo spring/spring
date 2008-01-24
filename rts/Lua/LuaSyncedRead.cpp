@@ -238,6 +238,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
 	REGISTER_LUA_CFUNC(GetPositionLosState);
+	REGISTER_LUA_CFUNC(IsPosInLos);
+	REGISTER_LUA_CFUNC(IsPosInRadar);
+	REGISTER_LUA_CFUNC(IsPosInAirLos);
 	REGISTER_LUA_CFUNC(GetClosestValidPosition);
 
 	REGISTER_LUA_CFUNC(GetUnitPieceMap);
@@ -3815,64 +3818,145 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
+{
+	if (lua_isnoneornil(L, arg)) {
+		return readAllyTeam;
+	}
+	const bool isGaia = (readAllyTeam == gs->gaiaAllyTeamID);
+	if (fullRead || isGaia) {
+		const int at = luaL_checkint(L, arg);
+		if (at >= gs->activeAllyTeams) {
+			luaL_error(L, "Invalid allyTeam");
+		}
+		if (isGaia && (at >= 0) && (at != gs->gaiaAllyTeamID)) {
+			luaL_error(L, "Invalid gaia access");
+		}
+		return at;
+	}
+	else if (readAllyTeam < 0) {
+		luaL_error(L, "Invalid access");
+	}
+	return readAllyTeam;
+}
+
+
 int LuaSyncedRead::GetPositionLosState(lua_State* L)
 {
-	if (!fullRead && (readAllyTeam < 0)) {
-		return 0;
-	}
+	const float3 pos((float)luaL_checknumber(L, 1),
+	                 (float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3));
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to GetPositionLosState()");
-	}
-	const float3 pos((float)lua_tonumber(L, 1),
-	                 (float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3));
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
 
-	int allyTeamID = readAllyTeam;
-	if (args == 3) {
-		if (fullRead) {
-			allyTeamID = -1; // -1 => check all allyTeams
-		}
-	}
-	else if (lua_isnumber(L, 4)) {
-		// special case for LuaGaia
-		if (fullRead || (readAllyTeam == gs->gaiaAllyTeamID)) {
-			allyTeamID = (int)lua_tonumber(L, 4);
-			if (allyTeamID >= gs->activeAllyTeams) {
-				luaL_error(L, "Bad allyTeamID in GetPositionLosState()");
-			}
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to GetPositionLosState()");
-	}
-
-	// send the values
 	bool inLos    = false;
-	bool inAirLos = false;
-	bool radar    = false;
+	bool inRadar  = false;
+
 	if (allyTeamID >= 0) {
-		inLos    = loshandler->InLos(pos, allyTeamID);
-		inAirLos = loshandler->InAirLos(pos, allyTeamID);
-		radar    = radarhandler->InRadar(pos, allyTeamID);
+		inLos   = loshandler->InLos(pos, allyTeamID);
+		inRadar = radarhandler->InRadar(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < gs->activeAllyTeams; at++) {
-			inLos    = inLos    || loshandler->InLos(pos, at);
-			inAirLos = inAirLos || loshandler->InAirLos(pos, at);
-			radar    = radar    || radarhandler->InRadar(pos, at);
+			if (loshandler->InLos(pos, at)) {
+				inLos = true;
+				break;
+			}
+		}
+		for (int at = 0; at < gs->activeAllyTeams; at++) {
+			if (radarhandler->InRadar(pos, at)) {
+				inRadar = true;
+				break;
+			}
 		}
 	}
-	lua_pushboolean(L, inLos || radar);
+	lua_pushboolean(L, inLos || inRadar);
 	lua_pushboolean(L, inLos);
-	lua_pushboolean(L, inAirLos);
-	lua_pushboolean(L, radar);
+	lua_pushboolean(L, inRadar);
 
-	return 4;
+	return 3;
 }
 
+
+int LuaSyncedRead::IsPosInLos(lua_State* L)
+{
+	const float3 pos((float)luaL_checknumber(L, 1),
+	                 (float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3));
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
+
+	bool state = false;
+	if (allyTeamID >= 0) {
+		state = loshandler->InLos(pos, allyTeamID);
+	}
+	else {
+		for (int at = 0; at < gs->activeAllyTeams; at++) {
+			if (loshandler->InLos(pos, at)) {
+				state = true;
+				break;
+			}
+		}
+	}
+	lua_pushboolean(L, state);
+
+	return 1;
+}
+
+
+int LuaSyncedRead::IsPosInRadar(lua_State* L)
+{
+	const float3 pos((float)luaL_checknumber(L, 1),
+	                 (float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3));
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
+
+	bool state = false;
+	if (allyTeamID >= 0) {
+		state = radarhandler->InRadar(pos, allyTeamID);
+	}
+	else {
+		for (int at = 0; at < gs->activeAllyTeams; at++) {
+			if (radarhandler->InRadar(pos, at)) {
+				state = true;
+				break;
+			}
+		}
+	}
+	lua_pushboolean(L, state);
+
+	return 1;
+}
+
+
+int LuaSyncedRead::IsPosInAirLos(lua_State* L)
+{
+	const float3 pos((float)luaL_checknumber(L, 1),
+	                 (float)luaL_checknumber(L, 2),
+	                 (float)luaL_checknumber(L, 3));
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
+
+	bool state = false;
+	if (allyTeamID >= 0) {
+		state = loshandler->InAirLos(pos, allyTeamID);
+	}
+	else {
+		for (int at = 0; at < gs->activeAllyTeams; at++) {
+			if (loshandler->InAirLos(pos, at)) {
+				state = true;
+				break;
+			}
+		}
+	}
+	lua_pushboolean(L, state);
+
+	return 1;
+}
+
+
+/******************************************************************************/
 
 int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 {
@@ -3922,9 +4006,7 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 		lua_pushstring(L, lp.name.c_str());
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, localModel->numpieces);
-	lua_rawset(L, -3);
+	HSTR_PUSH_NUMBER(L, "n", localModel->numpieces);
 	return 1;
 }
 
@@ -3957,9 +4039,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 				lua_pushstring(L, op.childs[c]->name.c_str());
 				lua_rawset(L, -3);
 			}
-			lua_pushstring(L, "n");
-			lua_pushnumber(L, op.childs.size());
-			lua_rawset(L, -3);
+			HSTR_PUSH_NUMBER(L, "n", op.childs.size());
 			lua_rawset(L, -3);
 
 			HSTR_PUSH(L, "isEmpty");
@@ -4004,9 +4084,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 				lua_pushstring(L, op.childs[c]->name.c_str());
 				lua_rawset(L, -3);
 			}
-			lua_pushstring(L, "n");
-			lua_pushnumber(L, op.childs.size());
-			lua_rawset(L, -3);
+			HSTR_PUSH_NUMBER(L, "n", op.childs.size());
 			lua_rawset(L, -3);
 
 			HSTR_PUSH(L, "isEmpty");

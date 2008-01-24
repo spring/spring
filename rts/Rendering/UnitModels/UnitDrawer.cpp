@@ -269,7 +269,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawCloakedS3O.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glFogfv(GL_FOG_COLOR,FogLand);
+	glFogfv(GL_FOG_COLOR, FogLand);
 
 	vector<CUnit*> drawIcon;
 	vector<CUnit*> drawRadarIcon;
@@ -398,7 +398,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	va->Initialize();
 	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, fartextureHandler->farTexture);
+	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 	camNorm = camera->forward;
 	camNorm.y = -0.1f;
 	camNorm.Normalize();
@@ -1446,6 +1446,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	glLoadIdentity();
 	gluPerspective(90, 1, NEAR_PLANE, gu->viewRange);
 	glMatrixMode(GL_MODELVIEW);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	sky->Draw();

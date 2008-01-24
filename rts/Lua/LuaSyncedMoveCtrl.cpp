@@ -61,6 +61,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetTrackGround);
 	REGISTER_LUA_CFUNC(SetGroundOffset);
 	REGISTER_LUA_CFUNC(SetGravity);
+	REGISTER_LUA_CFUNC(SetDrag);
 
 	REGISTER_LUA_CFUNC(SetWindFactor);
 
@@ -439,6 +440,17 @@ int LuaSyncedMoveCtrl::SetGravity(lua_State* L)
 		return 0;
 	}
 	moveType->gravityFactor = (float)luaL_checknumber(L, 2);
+	return 0;
+}
+
+
+int LuaSyncedMoveCtrl::SetDrag(lua_State* L)
+{
+	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		return 0;
+	}
+	moveType->drag = (float)luaL_checknumber(L, 2);
 	return 0;
 }
 

@@ -229,7 +229,7 @@ CUnit::CUnit ()
 	cegDamage(1)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
-	directControl = 0;
+	directControl = NULL;
 #endif
 	activated = false;
 }
@@ -250,9 +250,9 @@ CUnit::~CUnit()
 #endif
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(directControl){
+	if (directControl) {
 		directControl->myController->StopControllingUnit();
-		directControl=0;
+		directControl = NULL;
 	}
 #endif
 
@@ -265,13 +265,14 @@ CUnit::~CUnit()
 	SetEnergyStorage(0);
 //	}
 
-	delete commandAI; commandAI = 0;
-	delete moveType; moveType = 0;
-	delete prevMoveType; prevMoveType = 0;
+	delete commandAI;     commandAI    = NULL;
+	delete moveType;      moveType     = NULL;
+	delete prevMoveType;  prevMoveType = NULL;
 
-	if(group)
+	if (group) {
 		group->RemoveUnit(this);
-	group=0;
+	}
+	group = NULL;
 
 	std::vector<CWeapon*>::iterator wi;
 	for(wi=weapons.begin();wi!=weapons.end();++wi)
@@ -1188,7 +1189,8 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 		interPos = pos + (transporter->speed * gu->timeOffset);
 	}
 
-	if (!beingBuilt && (usingScriptMoveType || ((physicalState == Flying) && unitDef->canmove))) {
+	if (usingScriptMoveType ||
+	    (!beingBuilt && (physicalState == Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		// note: (CAirMoveType) aircraft under construction should not
 		// use this matrix, or their nanoframes won't spin on pad
@@ -1409,9 +1411,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	// do not allow old player to keep controlling the unit
-	if(directControl){
+	if (directControl) {
 		directControl->myController->StopControllingUnit();
-		directControl=0;
+		directControl = NULL;
 	}
 #endif
 

@@ -77,6 +77,8 @@ private:
 	int drawQuadsX;
 	int drawQuadsY;
 
+	float farDist;
+
 	void DrawFar(CFeature* feature, CVertexArray* va);
 
 	void Serialize(creg::ISerializer *s);

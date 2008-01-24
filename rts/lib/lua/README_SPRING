@@ -13,9 +13,6 @@ Lua-5.1.2 source code modifications:
 
   4. Made the following adjustments in luaconf.h:
 
-     //SPRING#undef LUA_COMPAT_GETN
-     #define LUA_COMPAT_GETN
-
      //SPRING#define LUA_NUMBER_DOUBLE
      #undef LUA_NUMBER_DOUBLE
 

@@ -10,8 +10,8 @@
 #include "LuaInclude.h"
 
 
-static int depth = 0;
-static int maxDepth = 256;
+static       int depth = 0;
+static const int maxDepth = 256;
 
 
 /******************************************************************************/
@@ -78,9 +78,11 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index)
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
 	const int srcTop = lua_gettop(src);
+	const int dstTop = lua_gettop(dst);
 	if (srcTop < count) {
 		return 0;
 	}
+	lua_checkstack(dst, dstTop + count); // FIXME: not enough for table chains
 
 	depth = 0;
 
@@ -89,6 +91,7 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 	for (int i = startIndex; i <= endIndex; i++) {
 		CopyPushData(dst, src, i);
 	}
+	lua_settop(dst, dstTop + count);
 
 	return count;
 }
@@ -156,6 +159,28 @@ void* LuaUtils::GetUserData(lua_State* L, int index, const string& type)
 		}
 	}
 	return NULL;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+void LuaUtils::PrintStack(lua_State* L)
+{
+	const int top = lua_gettop(L);
+	for (int i = 1; i <= top; i++) {
+		printf("  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
+		const int type = lua_type(L, i);
+		if (type == LUA_TSTRING) {
+			printf("\t\t%s\n", lua_tostring(L, i));
+		} else if (type == LUA_TNUMBER) {
+			printf("\t\t%f\n", lua_tonumber(L, i));
+		} else if (type == LUA_TBOOLEAN) {
+			printf("\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
+		} else {
+			printf("\n");
+		}
+	}
 }
 
 

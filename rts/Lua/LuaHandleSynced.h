@@ -39,6 +39,7 @@ class CLuaHandleSynced : public CLuaHandle
 	public: // custom call-in
 		bool HasSyncedXCall(const string& funcName);
 		bool HasUnsyncedXCall(const string& funcName);
+		int XCall(lua_State* srcState, const string& funcName);
 		int SyncedXCall(lua_State* srcState, const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 

@@ -230,29 +230,26 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
 	CTeam* target = gs->Team(toTeam);
 
-	if (target)
-	{
-		if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "m", metal))
-		{
-			target->metal += metal;
-			metal = 0;
-		}
-		if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "e", energy))
-		{
-			target->energy += energy;
-			energy = 0;
-		}
-		
-		for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui)
-		{
-			if ((*ui) && (!luaRules || luaRules->AllowUnitTransfer(*ui, toTeam, false))){
-				(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
-			}
-		}
-		Died();
+	if (!target) {
+		logOutput.Print("Team %i didn't exists, can't give units", toTeam);
+		return;
 	}
-	else
-		logOutput.Print("Team %i didn't exists, can't give units");
+
+	if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "m", metal)) {
+		target->metal += metal;
+		metal = 0;
+	}
+	if (!luaRules || luaRules->AllowResourceTransfer(teamNum, toTeam, "e", energy)) {
+		target->energy += energy;
+		energy = 0;
+	}
+	
+	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
+		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
+		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
+	}
+
+	Died();
 }
 
 void CTeam::Died()

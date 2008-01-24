@@ -122,7 +122,6 @@ local callInLists = {
 
   -- LuaRules CallIns
   'CommandFallback',
-  'BuilderTerraformComplete',
   'AllowCommand',
   'AllowUnitCreation',
   'AllowUnitTransfer',
@@ -131,6 +130,8 @@ local callInLists = {
   'AllowResourceLevel',
   'AllowResourceTransfer',
   'AllowDirectUnitControl',
+  'MoveCtrlNotify',
+  'BuilderTerraformComplete',
 
   -- COB CallIn  (FIXME?)
   'CobCallback',
@@ -984,19 +985,6 @@ function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
-                                       buildUnitID, buildUnitDefID, buildUnitTeam)
-  for _,g in ipairs(self.BuilderTerraformCompleteList) do
-    local stop = g:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
-                                       buildUnitID, buildUnitDefID, buildUnitTeam)
-    if (stop) then
-      return true
-    end
-  end
-  return false
-end
-
-
 function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
                                     cmdID, cmdParams, cmdOptions, synced)
   for _,g in ipairs(self.AllowCommandList) do
@@ -1084,6 +1072,30 @@ function gadgetHandler:AllowDirectUnitControl(unitID, unitDefID, unitTeam,
     end
   end
   return true
+end
+
+
+function gadgetHandler:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
+  local state = false
+  for _,g in ipairs(self.MoveCtrlNotifyList) do
+    if (g:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)) then
+      state = true
+    end
+  end
+  return state
+end
+
+
+function gadgetHandler:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+                                       buildUnitID, buildUnitDefID, buildUnitTeam)
+  for _,g in ipairs(self.BuilderTerraformCompleteList) do
+    local stop = g:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+                                       buildUnitID, buildUnitDefID, buildUnitTeam)
+    if (stop) then
+      return true
+    end
+  end
+  return false
 end
 
 

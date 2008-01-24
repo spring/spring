@@ -59,6 +59,8 @@ class CLuaRules : public CLuaHandleSynced
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 
+		bool MoveCtrlNotify(const CUnit* unit, int data);
+
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
@@ -104,7 +106,6 @@ class CLuaRules : public CLuaHandleSynced
 
 	private:
 		bool haveCommandFallback;
-		bool haveBuilderTerraformComplete;
 		bool haveAllowCommand;
 		bool haveAllowUnitCreation;
 		bool haveAllowUnitTransfer;
@@ -114,6 +115,8 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowResourceLevel;
 		bool haveAllowResourceTransfer;
 		bool haveAllowDirectUnitControl;
+		bool haveMoveCtrlNotify;
+		bool haveBuilderTerraformComplete;
 		bool haveDrawUnit;
 		bool haveAICallIn;
 

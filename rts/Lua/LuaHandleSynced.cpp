@@ -817,20 +817,17 @@ bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 }
 
 
-int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
+int CLuaHandleSynced::XCall(lua_State* srcState, const string& funcName)
 {
-	const bool diffStates = (srcState != L);
-	const int argCount = lua_gettop(srcState);
-	const int top = lua_gettop(L);
-
-	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	// expecting an environment table
 	if (!lua_istable(L, -1)) {
 		lua_pop(L, 1);
 		return 0;
 	}
 
-	const LuaHashString cmdStr(funcName);
-	cmdStr.Push(L);    // push the function name
+	// push the function
+	const LuaHashString funcHash(funcName);
+	funcHash.Push(L);  // push the function name
 	lua_rawget(L, -2); // get the function
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, 2);
@@ -838,88 +835,58 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 	}
 	lua_remove(L, -2);
 
+	const int top = lua_gettop(L) - 1; // do not count the function
+
+	const bool diffStates = (srcState != L);
+
 	int retCount;
+
 	if (!diffStates) {
 		lua_insert(L, 1); // move the function to the beginning
 		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+		if (!RunCallIn(funcHash, top, LUA_MULTRET)) {
 			return 0;
 		}
-		retCount = lua_gettop(L) - top;
+		retCount = lua_gettop(L);
 	}
 	else {
-		LuaUtils::CopyData(L, srcState, argCount);
+		const int srcCount = lua_gettop(srcState);
+
+		LuaUtils::CopyData(L, srcState, srcCount);
 
 		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
+		if (!RunCallIn(funcHash, srcCount, LUA_MULTRET)) {
 			return 0;
 		}
 		retCount = lua_gettop(L) - top;
 
-		lua_settop(srcState, 0); // FIXME -- lua_checkstack() ?
+		lua_settop(srcState, 0);
 		if (retCount > 0) {
 			LuaUtils::CopyData(srcState, L, retCount);
 		}
+		lua_settop(L, top);
 	}
+
 	return retCount;
+}
+
+
+int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
+{
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	const int retval = XCall(srcState, funcName);
+	return retval;
 }
 
 
 int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-	const bool diffStates = (srcState != L);
-	const int argCount = lua_gettop(srcState);
-	const int top = lua_gettop(L);
-
-	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
-	if (!lua_istable(L, -1)) {
-		lua_pop(L, 1);
-		return 0;
-	}
-
-	const LuaHashString cmdStr(funcName);
-	cmdStr.Push(L);    // push the function name
-	lua_rawget(L, -2); // get the function
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 2);
-		return 0;
-	}
-	lua_remove(L, -2); 
-
 	const bool prevSynced = synced;
 	synced = false;
-
-	int retCount;
-	if (!diffStates) {
-		lua_insert(L, 1); // move the function to the beginning
-		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			synced = prevSynced;
-			lua_settop(L, top);
-			return 0;
-		}
-		retCount = lua_gettop(L) - top;
-	}
-	else {
-		LuaUtils::CopyData(L, srcState, argCount);
-
-		// call the function
-		if (!RunCallIn(cmdStr, argCount, LUA_MULTRET)) {
-			synced = prevSynced;
-			lua_settop(L, top);
-			return 0;
-		}
-		retCount = lua_gettop(L) - top;
-
-		lua_settop(srcState, 0); // FIXME ? -- lua_checkstack() ?
-		if (retCount > 0) {
-			LuaUtils::CopyData(srcState, L, retCount);
-		}
-	}
-
+	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
+	const int retval = XCall(srcState, funcName);
 	synced = prevSynced;
-
-	return retCount;
+	return retval;
 }
 
 
@@ -989,7 +956,8 @@ int CLuaHandleSynced::SendToUnsynced(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SendToUnsynced()");
 	}
 	for (int i = 1; i <= args; i++) {
-		if (!lua_isnumber(L, i) &&
+		if (!lua_isnil(L, i)    &&
+		    !lua_isnumber(L, i) &&
 		    !lua_isstring(L, i) &&
 		    !lua_isboolean(L, i)) {
 			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %i", i);
