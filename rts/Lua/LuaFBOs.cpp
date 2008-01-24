@@ -340,7 +340,7 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 			buffers.push_back(buffer);
 		}
 
-		GLenum* bufArray = new GLenum[buffers.size()];
+		GLenum* bufArray = SAFE_NEW GLenum[buffers.size()];
 		for (int d = 0; d < (int)buffers.size(); d++) {
 			bufArray[d] = buffers[d];
 		}

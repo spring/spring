@@ -175,6 +175,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(LineStipple);
 	REGISTER_LUA_CFUNC(PolygonMode);
 	REGISTER_LUA_CFUNC(PolygonOffset);
+	REGISTER_LUA_CFUNC(StencilTest);
+	REGISTER_LUA_CFUNC(StencilMask);
+	REGISTER_LUA_CFUNC(StencilFunc);
+	REGISTER_LUA_CFUNC(StencilOp);
 
 	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
@@ -262,6 +266,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Flush);
 	REGISTER_LUA_CFUNC(Finish);
 
+	REGISTER_LUA_CFUNC(ReadPixels);
+
 	REGISTER_LUA_CFUNC(GetGlobalTexNames);
 	REGISTER_LUA_CFUNC(GetGlobalTexCoords);
 	REGISTER_LUA_CFUNC(GetShadowMapParams);
@@ -324,6 +330,8 @@ void LuaOpenGL::ResetGLState()
 	glCullFace(GL_BACK);
 
 	glDisable(GL_SCISSOR_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glStencilMask(~0);
 
 	// FIXME -- multitexturing
 	glDisable(GL_TEXTURE_2D);
@@ -2843,6 +2851,52 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 }
 
 
+int LuaOpenGL::StencilTest(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	if (!lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.StencilTest()");
+	}
+	if (lua_toboolean(L, 1)) {
+		glEnable(GL_STENCIL_TEST);
+	} else {
+		glDisable(GL_STENCIL_TEST);
+	}
+	return 0;
+}
+
+
+int LuaOpenGL::StencilMask(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLuint mask = luaL_checkint(L, 1);
+	glStencilMask(mask);
+	return 0;
+}
+
+
+int LuaOpenGL::StencilFunc(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum func = luaL_checkint(L, 1);
+	const GLint  ref  = luaL_checkint(L, 2);
+	const GLuint mask = luaL_checkint(L, 3);
+	glStencilFunc(func, ref, mask);
+	return 0;
+}
+
+
+int LuaOpenGL::StencilOp(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum fail  = luaL_checkint(L, 1);
+	const GLenum zfail = luaL_checkint(L, 2);
+	const GLenum zpass = luaL_checkint(L, 3);
+	glStencilOp(fail, zfail, zpass);
+	return 0;
+}
+
+
 int LuaOpenGL::LineStipple(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -4251,6 +4305,123 @@ int LuaOpenGL::Finish(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 	glFinish();
 	return 0;
+}
+
+
+/******************************************************************************/
+
+
+static int PixelFormatSize(GLenum f)
+{
+	switch (f) {
+		case GL_COLOR_INDEX:
+		case GL_STENCIL_INDEX:
+		case GL_DEPTH_COMPONENT:
+		case GL_RED:
+		case GL_GREEN:
+		case GL_BLUE:
+		case GL_ALPHA:
+		case GL_LUMINANCE: {
+			return 1;
+		}
+		case GL_LUMINANCE_ALPHA: {
+			return 2;
+		}
+		case GL_RGB:
+		case GL_BGR: {
+			return 3;
+		}
+		case GL_RGBA:
+		case GL_BGRA: {
+			return 4;
+		}
+	}
+	return -1;
+}
+
+
+static void PushPixelData(lua_State* L, int fSize, const float*& data)
+{
+	if (fSize == 1) {
+		lua_pushnumber(L, *data);
+		data++;
+	} else {
+		lua_newtable(L);
+		for (int e = 1; e <= fSize; e++) {
+			lua_pushnumber(L, e);
+			lua_pushnumber(L, *data);
+			lua_rawset(L, -3);
+			data++;
+		}
+	}
+}
+
+
+int LuaOpenGL::ReadPixels(lua_State* L)
+{
+	const GLint x = luaL_checkint(L, 1);
+	const GLint y = luaL_checkint(L, 2);
+	const GLint w = luaL_checkint(L, 3);
+	const GLint h = luaL_checkint(L, 4);
+	const GLenum format = luaL_optint(L, 5, GL_RGBA);
+	if ((w <= 0) || (h <= 0)) {
+		return 0;
+	}
+
+	int fSize = PixelFormatSize(format);
+	if (fSize < 0) {
+		fSize = 4; // good enough?
+	}
+
+	float* data = SAFE_NEW float[(h * w) * fSize * sizeof(float)];
+	glReadPixels(x, y, w, h, format, GL_FLOAT, data);
+
+	int retCount = 0;
+
+	const float* d = data;
+
+	if ((w == 1) && (h == 1)) {
+		for (int e = 1; e <= fSize; e++) {
+			lua_pushnumber(L, data[e]);
+		}
+		retCount = fSize;
+	}
+	else if ((w == 1) && (h > 1)) {
+		lua_newtable(L);
+		for (int i = 1; i <= h; i++) {
+			lua_pushnumber(L, i);
+			PushPixelData(L, fSize, d);
+			lua_rawset(L, -3);
+		}
+		retCount = 1;
+	}
+	else if ((w > 1) && (h == 1)) {
+		lua_newtable(L);
+		for (int i = 1; i <= w; i++) {
+			lua_pushnumber(L, i);
+			PushPixelData(L, fSize, d);
+			lua_rawset(L, -3);
+		}
+		retCount = 1;
+	}
+	else {
+		lua_newtable(L);
+		for (int x = 1; x <= w; x++) {
+			lua_pushnumber(L, x);
+			lua_newtable(L);
+			for (int y = 1; y <= h; y++) {
+				lua_pushnumber(L, y);
+				PushPixelData(L, fSize, d);
+				lua_rawset(L, -3);
+			}
+			lua_rawset(L, -3);
+		}
+		retCount = 1;
+	}
+
+	delete[] data;
+
+	return retCount;
 }
 
 

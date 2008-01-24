@@ -140,7 +140,10 @@ class LuaOpenGL {
 		static int LineStipple(lua_State* L);
 		static int PolygonMode(lua_State* L);
 		static int PolygonOffset(lua_State* L);
-
+		static int StencilTest(lua_State* L);
+		static int StencilMask(lua_State* L);
+		static int StencilFunc(lua_State* L);
+		static int StencilOp(lua_State* L);
 		static int Material(lua_State* L);
 		static int Color(lua_State* L);
 
@@ -231,6 +234,8 @@ class LuaOpenGL {
 
 		static int Flush(lua_State* L);
 		static int Finish(lua_State* L);
+
+		static int ReadPixels(lua_State* L);
 
 		static int GetGlobalTexNames(lua_State* L);
 		static int GetGlobalTexCoords(lua_State* L);
