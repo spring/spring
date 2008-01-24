@@ -15,7 +15,7 @@ class CBuildUp {
 
 	private:
 		void Buildup(int);
-		void FactoryCycle(void);
+		void FactoryCycle(int);
 		void NukeSiloCycle(void);
 		void FallbackBuild(int, int);
 		bool BuildNow(int, int);

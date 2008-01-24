@@ -31,7 +31,7 @@ class CSpotFinder {
 		void UpdateSumMapArea(int cacheX, int cacheY);
 		void UpdateSumMap();
 
-		// Temp
+		// temp
 		void UpdateSumMap(int coordx, int coordy, int clearRadius);
 
 		bool haveTheBestSpotReady;
@@ -48,7 +48,7 @@ class CSpotFinder {
 		int* xend;
 
 		AIClasses* ai;
-		CachePoint* cachePoints;
+		std::vector<CachePoint> cachePoints;
 };
 
 

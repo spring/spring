@@ -144,10 +144,11 @@ int CUnitTable::ReadTeamSides() {
 }
 
 // called at the end of Init()
-void CUnitTable::ReadUnitCostMultipliers() {
+void CUnitTable::ReadModConfig() {
 	const char* modName = ai->cb->GetModName();
 	char configFileName[1024] = {0};
 	snprintf(configFileName, 1023, "%s%s.cfg", CFGFOLDER, modName);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, configFileName);
 
 	FILE* f = fopen(configFileName, "r");
 
@@ -157,32 +158,44 @@ void CUnitTable::ReadUnitCostMultipliers() {
 		char name[512];
 		float costMult = 1.0f;
 		int techLvl = -1;
+		int category = -1;
 
 		while (fgets(str, 1024, f) != 0x0) {
 			if (str[0] == '/' && str[1] == '/') {
 				continue;
 			}
 
-			int i = sscanf(str, "%s %f %d", name, &costMult, &techLvl);
+			int i = sscanf(str, "%s %f %d %d", name, &costMult, &techLvl, &category);
 			const UnitDef* udef = ai->cb->GetUnitDef(name);
 
-			if ((i == 3) && udef) {
+			if ((i == 4) && udef) {
 				unitTypes[udef->id].costMultiplier = costMult;
 				unitTypes[udef->id].techLevel = techLvl;
+
+				if (category >= 0 && category < LASTCATEGORY) {
+					// overwrite the category set in Init()
+					// TODO: also push udef->id onto proper
+					// list (eg. ground_factories if .cfg
+					// category is CAT_FACTORY), but this
+					// requires looking up its side(s)
+					// unitTypes[udef->id].category = category;
+				}
 			}
 		}
 	} else {
 		// write a new file with default values
 		// for each UnitType in unitTypes array
 		f = fopen(configFileName, "w");
-		fprintf(f, "// unitName costMultiplier techLevel\n");
+		fprintf(f, "// unitName costMultiplier techLevel category\n");
 
 		for (int i = 1; i <= numOfUnits; i++) {
 			UnitType* utype = &unitTypes[i];
-			// assign default values
+			// assign and write default values (costMultiplier
+			// and techLevel values are not set in Init(), but
+			// category is)
 			utype->costMultiplier = 1.0f;
 			utype->techLevel = -1;
-			fprintf(f, "%s %f %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel);
+			fprintf(f, "%s %f %d %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel, utype->category);
 		}
 	}
 
@@ -662,18 +675,20 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 			break;
 	}
 
-	// iterate over all units for <side> in tempList (eg. Core ground_defences)
-	for (unsigned int i = 0; i != tempList[side].size(); i++) {
-		int tempUnitDefID = tempList[side][i];
+	if (tempList->size() >= side + 1) {
+		// iterate over all units for <side> in tempList (eg. Core ground_defences)
+		for (unsigned int i = 0; i != tempList[side].size(); i++) {
+			int tempUnitDefID = tempList[side][i];
 
-		// if our builder can build the i-th unit
-		if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
-			// get the unit's heuristic score (based on current income)
-			tempScore = GetScore(unitTypes[tempUnitDefID].def, category);
+			// if our builder can build the i-th unit
+			if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
+				// get the unit's heuristic score (based on current income)
+				tempScore = GetScore(unitTypes[tempUnitDefID].def, category);
 
-			if (tempScore > bestScore) {
-				bestScore = tempScore;
-				tempUnitDef = unitTypes[tempUnitDefID].def;
+				if (tempScore > bestScore) {
+					bestScore = tempScore;
+					tempUnitDef = unitTypes[tempUnitDefID].def;
+				}
 			}
 		}
 	}
@@ -729,6 +744,7 @@ void CUnitTable::Init() {
 
 
 	// now set sides and create buildtree for each
+	// note: this skips Lua commanders completely!
 	for (int s = 0; s < numOfSides; s++) {
 		// set side of start unit (eg. commander) and continue recursively
 		int unitDefID = startUnits[s];
@@ -737,22 +753,31 @@ void CUnitTable::Init() {
 		CalcBuildTree(unitDefID, s);
 	}
 
-
 	// add unit to different groups
 	for (int i = 1; i <= numOfUnits; i++) {
 		UnitType* me = &unitTypes[i];
+
+		// KLOOTNOTE: this is a hack to make KAIK recognize Lua
+		// commanders ((which are unreachable from the starting
+		// units in the mod hierarchy and so will be skipped by
+		// CalcBuildTree(), meaning me->sides stays empty)) as
+		// builders, but the ground_builders[side] list for this
+		// unit might not exist (and ill never actually contain
+		// this unitDef ID)
+		if (/* me->def->isCommander && */ me->def->buildOptions.size() > 0) {
+			me->category = CAT_BUILDER;
+		}
 
 		for (std::set<int>::iterator it = me->sides.begin(); it != me->sides.end(); it++) {
 			int mySide = *it;
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 
 			CSunParser attackerParser(ai);
-			char weaponnumber[10] = "";
-
 			attackerParser.LoadVirtualFile(me->def->filename.c_str());
 			me->TargetCategories.resize(me->def->weapons.size());
 
 			for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
+				char weaponnumber[10] = "";
 				itoa(w, weaponnumber, 10);
 				attackerParser.GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
 			}
@@ -764,8 +789,8 @@ void CUnitTable::Init() {
 				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unitTypes[v].def);
 			}
 
-			if (me->def->speed && me->def->minWaterDepth <= 0) {
-				if (me->def->buildOptions.size()) {
+			if (me->def->speed > 0.0f && me->def->minWaterDepth <= 0) {
+				if (me->def->buildOptions.size() > 0) {
 					ground_builders[mySide].push_back(i);
 					me->category = CAT_BUILDER;
 				}
@@ -845,7 +870,7 @@ void CUnitTable::Init() {
 		}
 	}
 
-	ReadUnitCostMultipliers();
+	ReadModConfig();
 	// dump generated unit table to file
 	DebugPrint();
 }
@@ -857,8 +882,9 @@ void CUnitTable::Init() {
 bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 	// look in build options of builder for unit
 	for (unsigned int i = 0; i != unitTypes[id_builder].canBuildList.size(); i++) {
-		if (unitTypes[id_builder].canBuildList[i] == id_unit)
+		if (unitTypes[id_builder].canBuildList[i] == id_unit) {
 			return true;
+		}
 	}
 
 	// unit not found in builder's buildoptions
@@ -869,7 +895,7 @@ bool CUnitTable::CanBuildUnit(int id_builder, int id_unit) {
 void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 	UnitType* utype = &unitTypes[unitDefID];
 
-	// go through all possible build options and set side if necessary
+	// go through all possible build options
 	for (unsigned int i = 0; i != utype->canBuildList.size(); i++) {
 		// add this unit to target's built-by list
 		int buildOptionIndex = utype->canBuildList[i];
@@ -878,6 +904,7 @@ void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 		// KLOOTNOTE: techLevel will not make much sense if
 		// unit has multiple ancestors at different depths
 		// in tree (eg. Adv. Vehicle Plants in XTA)
+		//
 		// buildOptionType->techLevel = utype->techLevel;
 		// buildOptionType->techLevel = utype->def->techLevel;
 		// FIXME: causes duplicated entries in PURE

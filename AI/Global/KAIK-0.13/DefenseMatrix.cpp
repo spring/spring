@@ -80,11 +80,15 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
 
 	for (int x = 0; x < ai->pather->PathMapXSize / CACHEFACTOR; x++) {
 		for (int y = 0; y < ai->pather->PathMapYSize / CACHEFACTOR; y++) {
-			// KLOOTNOTE: RETURNS UNINITIALIZED CRAP IN CERTAIN MODS?
-			// MAY BE RELARED TO HUGE SIZE OF COMMS (IN EVO-RTS & GUNDAM)
+			// KLOOTNOTE: SOMETIMES RETURNS UNINITIALIZED CRAP?
 			// (gdb) print cachePoint->y   $2 = 219024104
 			// (gdb) print cachePoint->x   $3 = -1215908928
 			CachePoint* cachePoint = spotFinder->GetBestCachePoint(x, y);
+
+			if (!cachePoint) {
+				return ZeroVector;
+			}
+
 			float bestScoreInThisBox = cachePoint->maxValueInBox;
 
 			// guess that this point is as good as posible
