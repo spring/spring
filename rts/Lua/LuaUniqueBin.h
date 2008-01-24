@@ -14,6 +14,7 @@
 //
 
 #include <set>
+#include "StdAfx.h"
 
 
 /******************************************************************************/
@@ -58,7 +59,7 @@ class UniqueBin
 			if (it != dataSet.end()) {
 				return Ref(*it); // already in the set
 			}
-			Data* data = new Data(t);
+			Data* data = SAFE_NEW Data(t);
 			dataSet.insert(data);
 			return Ref(data);
 		}
@@ -87,7 +88,7 @@ class UniqueBin
 
 	private:
 		UniqueBin() {
-			defData = new Data(T::def);
+			defData = SAFE_NEW Data(T::def);
 			defData->Ref(); // make it permanent
 			dataSet.insert(defData);
 		}
