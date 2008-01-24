@@ -330,6 +330,7 @@ void LuaOpenGL::ResetGLState()
 	glCullFace(GL_BACK);
 
 	glDisable(GL_SCISSOR_TEST);
+
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(~0);
 
@@ -4310,7 +4311,6 @@ int LuaOpenGL::Finish(lua_State* L)
 
 /******************************************************************************/
 
-
 static int PixelFormatSize(GLenum f)
 {
 	switch (f) {
@@ -4381,7 +4381,7 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 	const float* d = data;
 
 	if ((w == 1) && (h == 1)) {
-		for (int e = 1; e <= fSize; e++) {
+		for (int e = 0; e < fSize; e++) {
 			lua_pushnumber(L, data[e]);
 		}
 		retCount = fSize;
