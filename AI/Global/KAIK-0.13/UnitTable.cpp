@@ -762,7 +762,7 @@ void CUnitTable::Init() {
 		// units in the mod hierarchy and so will be skipped by
 		// CalcBuildTree(), meaning me->sides stays empty)) as
 		// builders, but the ground_builders[side] list for this
-		// unit might not exist (and ill never actually contain
+		// unit might not exist (and will never actually contain
 		// this unitDef ID)
 		if (/* me->def->isCommander && */ me->def->buildOptions.size() > 0) {
 			me->category = CAT_BUILDER;

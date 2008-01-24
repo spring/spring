@@ -133,7 +133,7 @@ CachePoint* CSpotFinder::GetBestCachePoint(int x, int y)
 	int cacheX = x;		// / CACHEFACTOR;
 	int cacheIndex = cacheY * MapWidth / CACHEFACTOR + cacheX;
 
-	if (cacheIndex < cachePoints.size()) {
+	if (cacheIndex >= 0 && cacheIndex < cachePoints.size()) {
 		if (!cachePoints[cacheIndex].isValid) {
 			MakeCachePoints();
 		}
