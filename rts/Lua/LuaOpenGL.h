@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <set>
 
 
 struct lua_State;
@@ -110,7 +111,7 @@ class LuaOpenGL {
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
-		static unsigned int occlusionQuery;
+		static std::set<unsigned int> occlusionQueries;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -244,8 +245,11 @@ class LuaOpenGL {
 
 		static int ReadPixels(lua_State* L);
 
-		static int OcclusionQuery(lua_State* L);
-
+		static int CreateQuery(lua_State* L);
+		static int DeleteQuery(lua_State* L);
+		static int RunQuery(lua_State* L);
+		static int GetQuery(lua_State* L);
+		
 		static int GetGlobalTexNames(lua_State* L);
 		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);

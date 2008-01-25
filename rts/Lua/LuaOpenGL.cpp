@@ -62,6 +62,7 @@
 using std::max;
 using std::string;
 using std::vector;
+using std::set;
 
 
 static const int MAX_TEXTURE_UNITS = 32;
@@ -78,7 +79,7 @@ extern GLfloat LightAmbientLand[];
 void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
 
 unsigned int LuaOpenGL::resetStateList = 0;
-unsigned int LuaOpenGL::occlusionQuery = 0;
+set<unsigned int> LuaOpenGL::occlusionQueries;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
@@ -113,18 +114,18 @@ void LuaOpenGL::Init()
 	if (haveGL20 && !!configHandler.GetInt("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
-
-	if (haveGL20) {
-		glGenQueries(1, &occlusionQuery);
-	}
 }
 
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
+
 	if (haveGL20) {
-		glDeleteQueries(1, &occlusionQuery);
+		set<unsigned int>::const_iterator it;
+		for (it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
+			glDeleteQueries(1, &(*it));
+		}
 	}
 }
 
@@ -277,7 +278,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ReadPixels);
 
 	if (haveGL20) {
-		REGISTER_LUA_CFUNC(OcclusionQuery);
+		REGISTER_LUA_CFUNC(CreateQuery);
+		REGISTER_LUA_CFUNC(DeleteQuery);
+		REGISTER_LUA_CFUNC(RunQuery);
+		REGISTER_LUA_CFUNC(GetQuery);
 	}
 
 	REGISTER_LUA_CFUNC(GetGlobalTexNames);
@@ -4489,36 +4493,98 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 /******************************************************************************/
 
-int LuaOpenGL::OcclusionQuery(lua_State* L)
+int LuaOpenGL::CreateQuery(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	GLuint q;
+	glGenQueries(1, &q);
+	if (q == 0) {
+		return 0;
+	}
+	occlusionQueries.insert(q);
+	lua_pushlightuserdata(L, (void*)q);
+	return 1;
+}
 
+
+int LuaOpenGL::DeleteQuery(lua_State* L)
+{
+	if (lua_isnil(L, 1)) {
+		return 0;
+	}
+	if (!lua_islightuserdata(L, 1)) {
+		luaL_error(L, "invalid argument");
+	}
+	GLuint q = (unsigned long int)lua_topointer(L, 1);
+	if (occlusionQueries.find(q) != occlusionQueries.end()) {
+		occlusionQueries.erase(q);
+		glDeleteQueries(1, &q);
+	}
+	return 0;
+}
+
+
+int LuaOpenGL::RunQuery(lua_State* L)
+{
+	static bool running = false;
+
+	if (running) {
+		luaL_error(L, "not re-entrant");
+	}
+	if (!lua_islightuserdata(L, 1)) {
+		luaL_error(L, "expecting a query");
+	}
+	GLuint q = (unsigned long int)lua_topointer(L, 1);
+	if (occlusionQueries.find(q) == occlusionQueries.end()) {
+		return 0;
+	}
+	if (!lua_isfunction(L, 2)) {
+		luaL_error(L, "expecting a function");
+	}
 	const int args = lua_gettop(L); // number of arguments
-	if (!lua_isfunction(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.OcclusionQuery(func, ...)");
-	}
 
-	glBeginQuery(GL_SAMPLES_PASSED, occlusionQuery);
-
-	// call the function
-	const int error = lua_pcall(L, (args - 1), 0, 0);
-
+	running = true;
+	glBeginQuery(GL_SAMPLES_PASSED, q);
+	const int error = lua_pcall(L, (args - 2), 0, 0);
 	glEndQuery(GL_SAMPLES_PASSED);
-
-	GLuint ready, count;
-	while (true) {
-		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &ready);
-		if (ready == GL_TRUE) {
-			break;
-		}
-	}
-	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &count);
+	running = false;
 
 	if (error != 0) {
-		logOutput.Print("gl.OcclusionQuery: error(%i) = %s\n",
+		logOutput.Print("gl.RunQuery: error(%i) = %s\n",
 		                error, lua_tostring(L, -1));
 		lua_error(L);
 	}
+
+	return 0;
+}
+
+
+int LuaOpenGL::GetQuery(lua_State* L)
+{
+	if (!lua_islightuserdata(L, 1)) {
+		luaL_error(L, "invalid argument");
+	}
+	GLuint q = (unsigned long int)lua_topointer(L, 1);
+	if (occlusionQueries.find(q) == occlusionQueries.end()) {
+		return 0;
+	}
+
+	GLint currQ = 0;
+	while (false) { // FIXME
+		GLuint ready;
+		glGetQueryObjectuiv(q, GL_QUERY_RESULT_AVAILABLE, &ready);
+		if (ready == GL_TRUE) {
+			break;
+		}
+		if (currQ == 0) {
+			glGetQueryiv(GL_SAMPLES_PASSED, GL_CURRENT_QUERY, &currQ);
+			if (currQ != q) {
+				return 0;
+			}
+		}
+	}
+
+	GLuint count;
+	glGetQueryObjectuiv(q, GL_QUERY_RESULT, &count);
 
 	lua_pushnumber(L, count);
 
