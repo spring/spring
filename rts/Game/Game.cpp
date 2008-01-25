@@ -1,4 +1,4 @@
-// // Game.cpp: implementation of the CGame class.
+// Game.cpp: implementation of the CGame class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1836,6 +1836,7 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 	return 0;
 }
 
+
 bool CGame::Update()
 {
 	good_fpu_control_registers("CGame::Update");
@@ -1935,6 +1936,7 @@ bool CGame::Update()
 	return true;
 }
 
+
 bool CGame::DrawWorld()
 {
 	SCOPED_TIMER("Draw world");
@@ -1978,7 +1980,10 @@ bool CGame::DrawWorld()
 	}
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
-	sky->DrawSun();
+
+	if (drawSky) {
+		sky->DrawSun();
+	}
 
 	luaCallIns.DrawWorld();
 
@@ -2052,6 +2057,7 @@ bool CGame::DrawWorld()
 
 	return true;
 }
+
 
 bool CGame::Draw()
 {
