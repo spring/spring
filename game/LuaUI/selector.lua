@@ -354,6 +354,10 @@ end
 
 
 function widget:MousePress(x, y, button)
+  if (Spring.IsGUIHidden()) then
+    return false
+  end
+
   UpdateList()
 
   if ((x >= minx) and (x <= maxx)) then
