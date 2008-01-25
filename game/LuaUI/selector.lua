@@ -386,6 +386,10 @@ end
 
 
 function widget:MouseRelease(x, y, button)
+  if (Spring.IsGUIHidden()) then
+    return -1
+  end
+
   UpdateList()
   
   local namedata = self:AboveLabel(x, y)
