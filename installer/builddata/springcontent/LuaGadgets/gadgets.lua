@@ -1382,8 +1382,8 @@ end
 
 
 function gadgetHandler:DrawGenesis()
-  for _,g in ipairs(self.DrawWorldList) do
-    g:DrawWorld()
+  for _,g in ipairs(self.DrawGenesisList) do
+    g:DrawGenesis()
   end
   return
 end
