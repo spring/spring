@@ -26,7 +26,8 @@ extern "C" void PreInitMac();
  * Default instantiation of ConfigHandler instance
  * is NULL.
  */
-ConfigHandler* ConfigHandler::instance=0;
+ConfigHandler* ConfigHandler::instance = NULL;
+
 
 /**
  * Returns reference to the current platform's config class.
@@ -41,7 +42,7 @@ ConfigHandler& ConfigHandler::GetInstance()
 		PreInitMac();
 		instance = SAFE_NEW UserDefsHandler(); // Config path is based on bundle id
 #else
-		instance = SAFE_NEW DotfileHandler(DOTCONFIGPATH);
+		instance = SAFE_NEW DotfileHandler(DotfileHandler::GetDefaultConfig());
 #endif
 	}
 	return *instance;

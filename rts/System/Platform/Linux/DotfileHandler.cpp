@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <math.h>
 #include <stdlib.h>
+#include "Game/GameVersion.h"
+
 
 /**
  * @brief POSIX file locking class
@@ -214,3 +216,28 @@ void DotfileHandler::SetInt(const string name, const int value)
 	ss << value;
 	SetString(name, ss.str());
 }
+
+
+/**
+ * @brief Get the name of the default configuration file
+ */
+string DotfileHandler::GetDefaultConfig()
+{
+	const string base = ".springrc";
+	const string home = getenv("HOME");
+
+	const string defCfg = home + "/" + base;
+	const string verCfg = defCfg + "-" + string(VERSION_STRING);
+
+	string cfg;
+
+	struct stat st;
+	if (stat(verCfg.c_str(), &st) == 0) {
+		cfg = verCfg; // use the versionned config file
+	} else {
+		cfg = defCfg; // use the default config file
+	}
+
+	return cfg;
+}
+

@@ -22,8 +22,23 @@
 #include "System/FileSystem/ArchiveScanner.h"
 
 
+extern GLfloat FogLand[];
+
+
 /******************************************************************************/
 /******************************************************************************/
+
+static void LuaPushNamedColor(lua_State* L,
+                              const string& name, const float3& color)
+{
+	lua_pushlstring(L, name.c_str(), name.size());
+	lua_newtable(L);
+	lua_pushnumber(L, color.x); lua_rawseti(L, -2, 1);
+	lua_pushnumber(L, color.y); lua_rawseti(L, -2, 2);
+	lua_pushnumber(L, color.z); lua_rawseti(L, -2, 3);
+	lua_rawset(L, -3);
+}
+
 
 bool LuaConstGame::PushEntries(lua_State* L)
 {
@@ -32,6 +47,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const bool diminishingMMs   = gameSetup ? gameSetup->diminishingMMs   : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
+	const float3 fogColor(FogLand[0], FogLand[1], FogLand[2]);
 
 	LuaPushNamedString(L, "version",       VERSION_STRING);
 
@@ -49,20 +65,27 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
-	LuaPushNamedString(L, "mapName",         readmap->mapName);
-	LuaPushNamedString(L, "mapHumanName",    readmap->mapHumanName);
-	LuaPushNamedNumber(L, "mapX",            readmap->width  / 64);
-	LuaPushNamedNumber(L, "mapY",            readmap->height / 64);
-	LuaPushNamedNumber(L, "mapSizeX",        readmap->width  * SQUARE_SIZE);
-	LuaPushNamedNumber(L, "mapSizeZ",        readmap->height * SQUARE_SIZE);
-	LuaPushNamedBool(L,   "mapDamage",       !mapDamage->disabled);
-	LuaPushNamedBool(L,   "mapWaterVoid",    readmap->voidWater);
-	LuaPushNamedBool(L,   "mapWaterPlane",   readmap->hasWaterPlane);
-	LuaPushNamedNumber(L, "extractorRadius", readmap->extractorRadius);
-	LuaPushNamedNumber(L, "gravity",         gravity);
-	LuaPushNamedNumber(L, "tidal",           readmap->tidalStrength);
-	LuaPushNamedNumber(L, "windMin",         wind.GetMinWind());
-	LuaPushNamedNumber(L, "windMax",         wind.GetMaxWind());
+	LuaPushNamedBool(L,   "mapDamage",         !mapDamage->disabled);
+	LuaPushNamedNumber(L, "gravity",           gravity);
+	LuaPushNamedNumber(L, "windMin",           wind.GetMinWind());
+	LuaPushNamedNumber(L, "windMax",           wind.GetMaxWind());
+	LuaPushNamedString(L, "mapName",           readmap->mapName);
+	LuaPushNamedString(L, "mapHumanName",      readmap->mapHumanName);
+	LuaPushNamedNumber(L, "mapX",              readmap->width  / 64);
+	LuaPushNamedNumber(L, "mapY",              readmap->height / 64);
+	LuaPushNamedNumber(L, "mapSizeX",          readmap->width  * SQUARE_SIZE);
+	LuaPushNamedNumber(L, "mapSizeZ",          readmap->height * SQUARE_SIZE);
+	LuaPushNamedNumber(L, "extractorRadius",   readmap->extractorRadius);
+	LuaPushNamedNumber(L, "tidal",             readmap->tidalStrength);
+	LuaPushNamedString(L, "waterTexture",      readmap->waterTexture);
+	LuaPushNamedBool(L,   "waterVoid",         readmap->voidWater);
+	LuaPushNamedBool(L,   "waterPlane",        readmap->hasWaterPlane);
+	LuaPushNamedColor(L,  "waterAbsorb",       readmap->waterAbsorb);
+	LuaPushNamedColor(L,  "waterBaseColor",    readmap->waterBaseColor);
+	LuaPushNamedColor(L,  "waterMinColor",     readmap->waterMinColor);
+	LuaPushNamedColor(L,  "waterSurfaceColor", readmap->waterSurfaceColor);
+	LuaPushNamedColor(L,  "waterPlaneColor",   readmap->waterPlaneColor);
+	LuaPushNamedColor(L,  "fogColor",          fogColor);
 
 	LuaPushNamedString(L, "modName",         modInfo.humanName);
 	LuaPushNamedString(L, "modShortName",    modInfo.shortName);

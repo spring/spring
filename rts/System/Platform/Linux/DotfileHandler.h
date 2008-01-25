@@ -21,20 +21,6 @@
 using std::string;
 
 /**
- * @brief dotconfig file
- *
- * Defines the name of the configuration file to use
- */
-#define DOTCONFIGFILE ".springrc"
-
-/**
- * @brief dotconfig path
- *
- * Defines the full path to the config file (including dotconfig filename)
- */
-#define DOTCONFIGPATH (string(getenv("HOME")).append("/").append(DOTCONFIGFILE))
-
-/**
  * @brief DotfileHandler
  *
  * Linux dotfile handler config class, derived
@@ -49,6 +35,11 @@ public:
 	 * @param fname path to config file
 	 */
 	DotfileHandler(const std::string& fname);
+
+	/**
+	 * @brief Get the name of the default configuration file
+	 */
+	static string GetDefaultConfig();
 
 	/**
 	 * @brief Destructor
