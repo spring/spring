@@ -4568,21 +4568,6 @@ int LuaOpenGL::GetQuery(lua_State* L)
 		return 0;
 	}
 
-	GLint currQ = 0;
-	while (false) { // FIXME
-		GLuint ready;
-		glGetQueryObjectuiv(q, GL_QUERY_RESULT_AVAILABLE, &ready);
-		if (ready == GL_TRUE) {
-			break;
-		}
-		if (currQ == 0) {
-			glGetQueryiv(GL_SAMPLES_PASSED, GL_CURRENT_QUERY, &currQ);
-			if (currQ != q) {
-				return 0;
-			}
-		}
-	}
-
 	GLuint count;
 	glGetQueryObjectuiv(q, GL_QUERY_RESULT, &count);
 
