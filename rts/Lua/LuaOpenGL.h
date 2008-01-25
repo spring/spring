@@ -110,6 +110,7 @@ class LuaOpenGL {
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
+		static unsigned int occlusionQuery;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -242,6 +243,8 @@ class LuaOpenGL {
 		static int Finish(lua_State* L);
 
 		static int ReadPixels(lua_State* L);
+
+		static int OcclusionQuery(lua_State* L);
 
 		static int GetGlobalTexNames(lua_State* L);
 		static int GetGlobalTexCoords(lua_State* L);

@@ -78,6 +78,7 @@ extern GLfloat LightAmbientLand[];
 void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
 
 unsigned int LuaOpenGL::resetStateList = 0;
+unsigned int LuaOpenGL::occlusionQuery = 0;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
@@ -112,12 +113,19 @@ void LuaOpenGL::Init()
 	if (haveGL20 && !!configHandler.GetInt("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
+
+	if (haveGL20) {
+		glGenQueries(1, &occlusionQuery);
+	}
 }
 
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
+	if (haveGL20) {
+		glDeleteQueries(1, &occlusionQuery);
+	}
 }
 
 
@@ -267,6 +275,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Finish);
 
 	REGISTER_LUA_CFUNC(ReadPixels);
+
+	if (haveGL20) {
+		REGISTER_LUA_CFUNC(OcclusionQuery);
+	}
 
 	REGISTER_LUA_CFUNC(GetGlobalTexNames);
 	REGISTER_LUA_CFUNC(GetGlobalTexCoords);
@@ -4472,6 +4484,45 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 	delete[] data;
 
 	return retCount;
+}
+
+
+/******************************************************************************/
+
+int LuaOpenGL::OcclusionQuery(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const int args = lua_gettop(L); // number of arguments
+	if (!lua_isfunction(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.OcclusionQuery(func, ...)");
+	}
+
+	glBeginQuery(GL_SAMPLES_PASSED, occlusionQuery);
+
+	// call the function
+	const int error = lua_pcall(L, (args - 1), 0, 0);
+
+	glEndQuery(GL_SAMPLES_PASSED);
+
+	GLuint ready, count;
+	while (true) {
+		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &ready);
+		if (ready == GL_TRUE) {
+			break;
+		}
+	}
+	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &count);
+
+	if (error != 0) {
+		logOutput.Print("gl.OcclusionQuery: error(%i) = %s\n",
+		                error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	lua_pushnumber(L, count);
+
+	return 1;
 }
 
 
