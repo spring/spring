@@ -71,6 +71,12 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsUnitInView);
 	REGISTER_LUA_CFUNC(IsUnitVisible);
 	REGISTER_LUA_CFUNC(IsUnitSelected);
+
+	REGISTER_LUA_CFUNC(GetUnitLuaDraw);
+	REGISTER_LUA_CFUNC(GetUnitNoDraw);
+	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
+	REGISTER_LUA_CFUNC(GetUnitNoSelect);
+
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
 
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
@@ -285,6 +291,50 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 	}
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 	lua_pushboolean(L, selUnits.find(unit) != selUnits.end());
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetUnitLuaDraw(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->luaDraw);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->noDraw);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->noMinimap);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, unit->noSelect);
 	return 1;
 }
 

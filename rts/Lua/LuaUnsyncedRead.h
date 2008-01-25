@@ -25,6 +25,12 @@ class LuaUnsyncedRead {
 		static int IsUnitInView(lua_State* L);
 		static int IsUnitVisible(lua_State* L);
 		static int IsUnitSelected(lua_State* L);
+
+		static int GetUnitLuaDraw(lua_State* L);
+		static int GetUnitNoDraw(lua_State* L);
+		static int GetUnitNoMinimap(lua_State* L);
+		static int GetUnitNoSelect(lua_State* L);
+
 		static int GetUnitViewPosition(lua_State* L);
 
 		static int GetVisibleUnits(lua_State* L);
