@@ -169,7 +169,7 @@ char* CSunParser::ParseSection(char* buf, int size, SSection* section) {
 			}
 
 			section->sections[thissection] = newsection;
-			buf = ParseSection(buf, endptr-buf, newsection);
+			buf = ParseSection(buf, endptr - buf, newsection);
 		}
 
 		else if (*buf == '}') {
