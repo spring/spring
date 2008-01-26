@@ -96,7 +96,7 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
 	// using zfail method to avoid doing the inside check
-	if (GLEW_EXT_stencil_two_side && GL_EXT_stencil_wrap) {
+	if (GLEW_EXT_stencil_two_side && GLEW_EXT_stencil_wrap) {
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
 		glActiveStencilFaceEXT(GL_BACK);
