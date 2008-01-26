@@ -27,7 +27,11 @@ CR_REG_METADATA(CUnitHandler, (
 
 CUnitHandler::CUnitHandler(AIClasses* ai) {
 	this->ai = ai;
+
 	taskPlanCounter = 1;
+	lastCapturedUnitFrame = -1;
+	lastCapturedUnitID = -1;
+
 	IdleUnits.resize(LASTCATEGORY);
 	BuildTasks.resize(LASTCATEGORY);
 	TaskPlans.resize(LASTCATEGORY);
