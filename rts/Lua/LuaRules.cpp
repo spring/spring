@@ -872,7 +872,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	const int top = lua_gettop(L);
 
-	if (!lua_checkstack(L, top + argsCount + 4)) {
+	if (!lua_checkstack(L, top + 1 + 3 + argsCount)) {
 		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
 		                name.GetString().c_str());
 		args[0] = 0; // failure
@@ -914,7 +914,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	// get the results
 	const int retArgs = min(lua_gettop(L) - top, (MAX_LUA_COB_ARGS - 1));
-	for (int a = 1; a <= retArgs; a++) {
+	for (int a = (top + 1); a <= (top + retArgs); a++) {
 		if (lua_isnumber(L, a)) {
 			args[a] = (int)lua_tonumber(L, a);
 		}
