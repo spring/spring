@@ -299,9 +299,8 @@ bool SpringApp::Initialize ()
 	ParseCmdLine();
 	FileSystemHandler::Initialize(true);
 
-	if (!InitWindow ("RtsSpring"))
-	{
-		SDL_Quit ();
+	if (!InitWindow(("Spring " + std::string(VERSION_STRING)).c_str())) {
+		SDL_Quit();
 		return false;
 	}
 
@@ -791,7 +790,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 /**
  * Initializes instance of GameSetup
  */
-void SpringApp::CreateGameSetup ()
+void SpringApp::CreateGameSetup()
 {
 	ENTER_SYNCED;
 

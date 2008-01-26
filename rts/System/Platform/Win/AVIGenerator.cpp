@@ -156,7 +156,7 @@ HRESULT CAVIGenerator::InitEngine()
 	cv.lQ=ICQUALITY_DEFAULT;
 
 
-	HWND hWnd = FindWindow(NULL, "RtsSpring");
+	HWND hWnd = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
 
 	if (!ICCompressorChoose_ptr(hWnd, ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME, &m_bih, NULL, &cv, NULL)){
 		return S_FALSE;
