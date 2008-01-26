@@ -237,7 +237,7 @@ void MicroPather::Reset() {
 
 // must only be called once...
 PathNode* MicroPather::AllocatePathNode() {
-	PathNode* result;
+	PathNode* result = 0x0;
 
 	if (availMem == 0) {
 		PathNode* newBlock = (PathNode*) malloc(sizeof(PathNode) * ALLOCATE);
@@ -246,8 +246,6 @@ PathNode* MicroPather::AllocatePathNode() {
 		pathNodeMem = newBlock;
 		// L(" sizeof(PathNode): " << sizeof(PathNode));
 		availMem = BLOCKSIZE;
-
-		// L("availMem == " << (sizeof(PathNode) * ALLOCATE));
 
 		// make all the nodes in one go (step one)
 		for (unsigned i = 0; i < ALLOCATE; i++) {
@@ -259,16 +257,13 @@ PathNode* MicroPather::AllocatePathNode() {
 
 		result = newBlock;
 		heapArrayMem = (PathNode**) malloc(sizeof(PathNode*) * ALLOCATE);
-		// L("heapArrayMem: " << heapArrayMem);
 	}
 	else {
 		// this is bad....
-		bool AllocatePathNodeCalledTwice = false;
-		assert(AllocatePathNodeCalledTwice);
+		// AllocatePathNodeCalledTwice
+		assert(false);
 	}
 
-	// assert( availMem );
-	// L("AllocatePathNode()");
 	return result;
 }
 

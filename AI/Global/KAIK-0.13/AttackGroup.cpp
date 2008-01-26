@@ -87,8 +87,7 @@ void CAttackGroup::AddUnit(int unitID) {
 		this->highestAttackRange = max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
 	}
 	else {
-		bool dead_unit_added_to_group = false;
-		assert(dead_unit_added_to_group);
+		assert(false);
 	}
 }
 

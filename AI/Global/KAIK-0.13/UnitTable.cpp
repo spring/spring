@@ -183,12 +183,12 @@ void CUnitTable::ReadModConfig() {
 					if (category == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
 						// maps unit categories to indices into all_lists
 						// FIXME: hackish, poorly maintainable, bad style
-						int cat2idx[] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
+						int catLstIdx[11] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
 
 						// index of sublist (eg. ground_builders) that ::Init() thinks it belongs to
-						int idx1 = cat2idx[utype->category];
+						int idx1 = catLstIdx[utype->category];
 						// index of sublist (eg. ground_attackers) that mod .cfg says it belongs to
-						int idx2 = cat2idx[category];
+						int idx2 = catLstIdx[category];
 
 						if (idx1 != idx2) {
 							std::vector<int>* lst1 = all_lists[idx1];	// old category list

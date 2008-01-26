@@ -243,7 +243,7 @@ bool CSunParser::GetValue(string &value, ...) {
 	}
 
 	va_start(loc, value);
-	SSection* sectionptr;
+	SSection* sectionptr = 0x0;
 
 	for (int i = 0; i < numargs - 1; i++) {
 		char* arg = va_arg(loc, char*);
