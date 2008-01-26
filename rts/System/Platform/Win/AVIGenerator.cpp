@@ -4,6 +4,7 @@
 
 #include "StdAfx.h"
 #include "AVIGenerator.h"
+#include "Game/GameVersion.h"
 #include <cassert>
 #include "mmgr.h"
 
