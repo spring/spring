@@ -296,16 +296,15 @@ void CGlobalAI::UnitFinished(int unit) {
 	int frame = ai->cb->GetCurrentFrame();
 	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
-	if (GCAT(unit) == CAT_G_ATTACK) {
-		ai->ah->AddUnit(unit);
-	}
-	else if (frame < 20 || (udef && udef->speed <= 0.0f)) {
-		// add commander at beginning of game
-		// and factories when they are built
-		ai->uh->IdleUnitAdd(unit, frame);
-	}
+	if (udef) {
+		if (GCAT(unit) == CAT_G_ATTACK) {
+			ai->ah->AddUnit(unit);
+		} else {
+			ai->uh->IdleUnitAdd(unit, frame);
+		}
 
-	ai->uh->BuildTaskRemove(unit);
+		ai->uh->BuildTaskRemove(unit);
+	}
 }
 
 void CGlobalAI::UnitDestroyed(int unit, int attacker) {
