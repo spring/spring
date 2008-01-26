@@ -139,6 +139,7 @@ class LuaOpenGL {
 		static int ColorMask(lua_State* L);
 		static int DepthMask(lua_State* L);
 		static int DepthTest(lua_State* L);
+		static int DepthClamp(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
 		static int Fog(lua_State* L);
@@ -146,14 +147,19 @@ class LuaOpenGL {
 		static int Smoothing(lua_State* L);
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
+
+		static int Material(lua_State* L);
+		static int Color(lua_State* L);
+
 		static int PolygonMode(lua_State* L);
 		static int PolygonOffset(lua_State* L);
+
 		static int StencilTest(lua_State* L);
 		static int StencilMask(lua_State* L);
 		static int StencilFunc(lua_State* L);
 		static int StencilOp(lua_State* L);
-		static int Material(lua_State* L);
-		static int Color(lua_State* L);
+		static int StencilTwoSide(lua_State* L);
+		static int StencilFace(lua_State* L);
 
 		static int LineWidth(lua_State* L);
 		static int PointSize(lua_State* L);
@@ -235,6 +241,7 @@ class LuaOpenGL {
 
 		static int PushAttrib(lua_State* L);
 		static int PopAttrib(lua_State* L);
+		static int UnsafeState(lua_State* L);
 
 		static int CreateList(lua_State* L);
 		static int CallList(lua_State* L);

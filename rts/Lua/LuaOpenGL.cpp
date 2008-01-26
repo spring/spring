@@ -175,6 +175,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ColorMask);
 	REGISTER_LUA_CFUNC(DepthMask);
 	REGISTER_LUA_CFUNC(DepthTest);
+	if (GLEW_NV_depth_clamp) {
+		REGISTER_LUA_CFUNC(DepthClamp);
+	}
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
 	REGISTER_LUA_CFUNC(Fog);
@@ -182,15 +185,21 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Smoothing);
 	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(LineStipple);
+
+	REGISTER_LUA_CFUNC(Material);
+	REGISTER_LUA_CFUNC(Color);
+
 	REGISTER_LUA_CFUNC(PolygonMode);
 	REGISTER_LUA_CFUNC(PolygonOffset);
+
 	REGISTER_LUA_CFUNC(StencilTest);
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-
-	REGISTER_LUA_CFUNC(Material);
-	REGISTER_LUA_CFUNC(Color);
+	if (GLEW_EXT_stencil_two_side) {
+		REGISTER_LUA_CFUNC(StencilTwoSide);
+		REGISTER_LUA_CFUNC(StencilFace);
+	}
 
 	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(PointSize);
@@ -267,6 +276,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(PushAttrib);
 	REGISTER_LUA_CFUNC(PopAttrib);
+	REGISTER_LUA_CFUNC(UnsafeState);
 
 	REGISTER_LUA_CFUNC(CreateList);
 	REGISTER_LUA_CFUNC(CallList);
@@ -325,6 +335,9 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
+	if (GLEW_NV_depth_clamp) {
+		glDisable(GL_DEPTH_CLAMP_NV);
+	}
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
@@ -349,6 +362,9 @@ void LuaOpenGL::ResetGLState()
 
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(~0);
+	if (GLEW_EXT_stencil_two_side) {
+		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	}
 
 	// FIXME -- multitexturing
 	glDisable(GL_TEXTURE_2D);
@@ -2698,6 +2714,19 @@ int LuaOpenGL::DepthTest(lua_State* L)
 }
 
 
+int LuaOpenGL::DepthClamp(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	luaL_checktype(L, 1, LUA_TBOOLEAN);
+	if (lua_toboolean(L, 1)) {
+		glEnable(GL_DEPTH_CLAMP_NV);
+	} else {
+		glDisable(GL_DEPTH_CLAMP_NV);
+	}
+	return 0;
+}
+
+
 int LuaOpenGL::Culling(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -2918,6 +2947,8 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 }
 
 
+/******************************************************************************/
+
 int LuaOpenGL::StencilTest(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -2963,6 +2994,30 @@ int LuaOpenGL::StencilOp(lua_State* L)
 	return 0;
 }
 
+
+int LuaOpenGL::StencilTwoSide(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	luaL_checktype(L, 1, LUA_TBOOLEAN);
+	if (lua_toboolean(L, 1)) {
+		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	} else {
+		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	}
+	return 0;
+}
+
+
+int LuaOpenGL::StencilFace(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum face = (GLenum)luaL_checkint(L, 1);
+	glActiveStencilFaceEXT(face);
+	return 0;
+}
+
+
+/******************************************************************************/
 
 int LuaOpenGL::LineStipple(lua_State* L)
 {
@@ -4270,6 +4325,33 @@ int LuaOpenGL::PopAttrib(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	glPopAttrib();
+	return 0;
+}
+
+
+int LuaOpenGL::UnsafeState(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum state = (GLenum)luaL_checkint(L, 1);
+	int funcLoc = 2;
+	bool reverse = false;
+	if (lua_isboolean(L, 2)) {
+		funcLoc++;
+		reverse = lua_toboolean(L, 2);
+	}
+	if (!lua_isfunction(L, funcLoc)) {
+		luaL_error(L, "expecting a function");
+	}
+
+	reverse ? glDisable(state) : glEnable(state);
+	const int error = lua_pcall(L, lua_gettop(L) - funcLoc, 0, 0);
+	reverse ? glEnable(state) : glDisable(state);
+
+	if (error != 0) {
+		logOutput.Print("gl.UnsafeState: error(%i) = %s\n",
+		                error, lua_tostring(L, -1));
+		lua_pushnumber(L, 0);
+	}
 	return 0;
 }
 
