@@ -914,16 +914,17 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	// get the results
 	const int retArgs = min(lua_gettop(L) - top, (MAX_LUA_COB_ARGS - 1));
-	for (int a = (top + 1); a <= (top + retArgs); a++) {
-		if (lua_isnumber(L, a)) {
-			args[a] = (int)lua_tonumber(L, a);
+	for (int a = 1; a <= retArgs; a++) {
+		const int index = (a + top);
+		if (lua_isnumber(L, index)) {
+			args[a] = (int)lua_tonumber(L, index);
 		}
-		else if (lua_isboolean(L, a)) {
-			args[a] = lua_toboolean(L, a) ? 1 : 0;
+		else if (lua_isboolean(L, index)) {
+			args[a] = lua_toboolean(L, index) ? 1 : 0;
 		}
-		else if (lua_istable(L, a)) {
-			lua_rawgeti(L, a, 1);
-			lua_rawgeti(L, a, 2);
+		else if (lua_istable(L, index)) {
+			lua_rawgeti(L, index, 1);
+			lua_rawgeti(L, index, 2);
 			if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {
 				const int x = (int)lua_tonumber(L, -2);
 				const int z = (int)lua_tonumber(L, -1);
