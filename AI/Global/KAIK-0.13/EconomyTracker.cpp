@@ -425,7 +425,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	int frame = ai->cb->GetCurrentFrame();
 	bt->economyUnitTracker->buildingTracker = bt;
 	// make the builder list
-	list<int> * builderList;
+	list<int>* builderList = 0;
 
 	if (bt->buildTask) {
 		bool found = false;
@@ -522,7 +522,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		// building has started
 		float minTimeNeeded =  buildTime / maxBuildPower;
 		assert(minTimeNeeded > 0);
-		float currentMaxE_usage = eNeed / minTimeNeeded;
+//		float currentMaxE_usage = eNeed / minTimeNeeded;
 //		float currentMaxM_usage = mNeed / minTimeNeeded;
 
 		// find the delta HP from last frame, note that the first
@@ -554,9 +554,10 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 			}
 		}
 
-		assert(eNeed > 0);
-		assert(mNeed > 0);
-		assert(currentMaxE_usage > 0);
+//		assert(eNeed > 0);
+//		assert(mNeed > 0);
+//		assert(currentMaxE_usage > 0);
+
 		float usedE_ThisFrame = deltaHP / endHp * eNeed;
 		float usedM_ThisFrame = deltaHP / endHp * mNeed;
 //		float calcUsedE_ThisFrame = currentMaxE_usage / 30;
