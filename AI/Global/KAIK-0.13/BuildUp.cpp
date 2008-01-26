@@ -265,9 +265,15 @@ void CBuildUp::FactoryCycle(int frame) {
 
 		if (mayBuild) {
 			if (isHub) {
-				// if we are a hub then we can only construct
-				// factories (and some other types of buildings)
-				producedCat = CAT_FACTORY;
+				// if we are a hub then assume we can only construct
+				// factories and some other types of static buildings
+				// note: not always true, in Evolution the "commander"
+				// (starting factory unit) can construct mobile units!
+				if (factDef->isCommander) {
+					producedCat = CAT_BUILDER;
+				} else {
+					producedCat = CAT_FACTORY;
+				}
 				builderTimer = 0;
 			}
 			else {
