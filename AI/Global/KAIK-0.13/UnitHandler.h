@@ -79,6 +79,9 @@ class CUnitHandler {
 
 		CMetalMaker* metalMaker;
 
+		int lastCapturedUnitFrame;
+		int lastCapturedUnitID;
+
 	private:
 		AIClasses* ai;
 		int taskPlanCounter;

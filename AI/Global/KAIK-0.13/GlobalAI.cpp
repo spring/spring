@@ -320,6 +320,19 @@ void CGlobalAI::UnitDestroyed(int unit, int attacker) {
 }
 
 void CGlobalAI::UnitIdle(int unit) {
+	if (ai->uh->lastCapturedUnitFrame == ai->cb->GetCurrentFrame()) {
+		if (unit == ai->uh->lastCapturedUnitID) {
+			// KLOOTNOTE: for some reason this also gets called when one
+			// of our units is captured (in the same frame as, but after
+			// HandleEvent(AI_EVENT_UNITCAPTURED)), *before* the unit has
+			// actually changed teams (ie. for any unit that is no longer
+			// on our team but still registers as such)
+			ai->uh->lastCapturedUnitFrame = -1;
+			ai->uh->lastCapturedUnitID = -1;
+			return;
+		}
+	}
+
 	// AttackHandler handles cat_g_attack units
 	if (GCAT(unit) == CAT_G_ATTACK && ai->MyUnits.at(unit)->groupID != -1) {
 		// attackHandler->UnitIdle(unit);
@@ -393,6 +406,10 @@ int CGlobalAI::HandleEvent(int msg, const void* data) {
 			if ((cte->oldteam) == (ai->cb->GetMyTeam())) {
 				// lost a unit
 				UnitDestroyed(cte->unit, 0);
+
+				// FIXME: multiple units captured during same frame?
+				ai->uh->lastCapturedUnitFrame = ai->cb->GetCurrentFrame();
+				ai->uh->lastCapturedUnitID = cte->unit;
 			}
 		} break;
 	}

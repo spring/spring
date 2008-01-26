@@ -75,6 +75,7 @@ class CUnitTable {
 		UnitType* unitTypes;
 		int numOfUnits;
 
+		// KLOOTNOTE: unused for now
 		int minTechLevel;
 		int maxTechLevel;
 

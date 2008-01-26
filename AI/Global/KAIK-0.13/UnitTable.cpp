@@ -47,16 +47,16 @@ CUnitTable::CUnitTable(AIClasses* ai) {
 	energy_storages = new vector<int>[numOfSides];
 	nuke_silos = new vector<int>[numOfSides];
 
-	all_lists.push_back(ground_factories);
-	all_lists.push_back(ground_builders);
-	all_lists.push_back(ground_attackers);
-	all_lists.push_back(metal_extractors);
-	all_lists.push_back(metal_makers);
-	all_lists.push_back(ground_energy);
-	all_lists.push_back(ground_defences);
-	all_lists.push_back(metal_storages);
-	all_lists.push_back(energy_storages);
-	all_lists.push_back(nuke_silos);
+	all_lists.push_back(ground_factories);	// CAT_FACTORY  (idx: 0, cat enum:  7)
+	all_lists.push_back(ground_builders);	// CAT_BUILDER  (idx: 1, cat enum:  4)
+	all_lists.push_back(ground_attackers);	// CAT_G_ATTACK (idx: 2, cat enum:  9)
+	all_lists.push_back(metal_extractors);	// CAT_MEX      (idx: 3, cat enum:  2)
+	all_lists.push_back(metal_makers);		// CAT_MMAKER   (idx: 4, cat enum:  3)
+	all_lists.push_back(ground_energy);		// CAT_ENERGY   (idx: 5, cat enum:  1)
+	all_lists.push_back(ground_defences);	// CAT_DEFENCE  (idx: 6, cat enum:  8)
+	all_lists.push_back(metal_storages);	// CAT_MSTOR    (idx: 7, cat enum:  6)
+	all_lists.push_back(energy_storages);	// CAT_ESTOR    (idx: 8, cat enum:  5)
+	all_lists.push_back(nuke_silos);		// CAT_NUKE     (idx: 9, cat enum: 10)
 }
 
 CUnitTable::~CUnitTable() {
@@ -147,6 +147,7 @@ int CUnitTable::ReadTeamSides() {
 void CUnitTable::ReadModConfig() {
 	const char* modName = ai->cb->GetModName();
 	char configFileName[1024] = {0};
+	char logMsg[2048] = {0};
 	snprintf(configFileName, 1023, "%s%s.cfg", CFGFOLDER, modName);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, configFileName);
 
@@ -169,36 +170,68 @@ void CUnitTable::ReadModConfig() {
 			const UnitDef* udef = ai->cb->GetUnitDef(name);
 
 			if ((i == 4) && udef) {
-				unitTypes[udef->id].costMultiplier = costMult;
-				unitTypes[udef->id].techLevel = techLvl;
+				UnitType* utype = &unitTypes[udef->id];
+				utype->costMultiplier = costMult;
+				utype->techLevel = techLvl;
 
+				// TODO: enable, but look for any possible side-effects
+				// that might arise from overriding categories like this
+				/*
 				if (category >= 0 && category < LASTCATEGORY) {
-					// overwrite the category set in Init()
-					// TODO: also push udef->id onto proper
-					// list (eg. ground_factories if .cfg
-					// category is CAT_FACTORY), but this
-					// requires looking up its side(s)
-					// unitTypes[udef->id].category = category;
+					// maps unit categories to indices into all_lists
+					// FIXME: hackish, poorly maintainable, bad style
+					int cat2idx[] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
+
+					// index of sublist (eg. ground_builders) that ::Init() thinks it belongs to
+					int idx1 = cat2idx[utype->category];
+					// index of sublist (eg. ground_attackers) that mod .cfg says it belongs to
+					int idx2 = cat2idx[category];
+
+					if (idx1 != idx2) {
+						std::vector<int>* lst1 = all_lists[idx1];	// old category
+						std::vector<int>* lst2 = all_lists[idx2];	// new category
+						std::set<int>::iterator sit;
+						std::vector<int>::iterator vit;
+
+						for (sit = utype->sides.begin(); sit != utype->sides.end(); sit++) {
+							int side = *sit;
+
+							for (vit = lst1[side].begin(); vit != lst1[side].end(); vit++) {
+								int udefID = *vit;
+
+								if (udefID == udef->id) {
+									lst1[side].erase(vit);
+									lst2[side].push_back(udef->id);
+								}
+							}
+						}
+
+						utype->category = category;
+					}
 				}
+				*/
 			}
 		}
+
+		sprintf(logMsg, "read mod configuration file %s", configFileName);
 	} else {
-		// write a new file with default values
-		// for each UnitType in unitTypes array
+		// write a new .cfg file with default values
 		f = fopen(configFileName, "w");
 		fprintf(f, "// unitName costMultiplier techLevel category\n");
 
 		for (int i = 1; i <= numOfUnits; i++) {
 			UnitType* utype = &unitTypes[i];
-			// assign and write default values (costMultiplier
-			// and techLevel values are not set in Init(), but
-			// category is)
+			// assign and write default values for costMultiplier
+			// and techLevel, category is already set in ::Init()
 			utype->costMultiplier = 1.0f;
 			utype->techLevel = -1;
-			fprintf(f, "%s %f %d %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel, utype->category);
+			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel, utype->category);
 		}
+
+		sprintf(logMsg, "wrote mod configuration file %s", configFileName);
 	}
 
+	ai->cb->SendTextMsg(logMsg, 0);
 	fclose(f);
 }
 
@@ -475,6 +508,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 	float Hitpoints = udef->health;
 	float buildTime = udef->buildTime + 0.1f;
 	float benefit = 0.0f;
+	float aoe = 0.0f;
 	float dps = 0.0f;
 	int unitcounter = 0;
 	bool candevelop = false;
@@ -519,6 +553,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 		case CAT_G_ATTACK: {
 			dps = GetCurrentDamageScore(udef);
+			aoe = ((udef->weapons.size())? ((udef->weapons.front()).def)->areaOfEffect: 0.0f);
 
 			if (udef->canfly && !udef->hoverAttack) {
 				// TODO: improve to set reload-time to the bomber's
@@ -526,7 +561,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 				dps /= 6;
 			}
 
-			benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+			benefit = pow((aoe + 80), 1.5f)
 					* pow(GetMaxRange(udef) + 200, 1.5f)
 					* pow(dps, 1.0f)
 					* pow(udef->speed + 40, 1.0f)
@@ -543,7 +578,8 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 		} break;
 
 		case CAT_DEFENCE: {
-			benefit = pow((udef->weapons.front().def->areaOfEffect + 80), 1.5f)
+			aoe = ((udef->weapons.size())? ((udef->weapons.front()).def)->areaOfEffect: 0.0f);
+			benefit = pow((aoe + 80), 1.5f)
 					* pow(GetMaxRange(udef), 2.0f)
 					* pow(GetCurrentDamageScore(udef), 1.5f)
 					* pow(Hitpoints, 0.5f)
@@ -973,7 +1009,6 @@ void CUnitTable::DebugPrint() {
 			}
 		}
 
-		fprintf(file, "\nTech-Level: %d", utype->techLevel);
 		fprintf(file, "\n\n");
 	}
 
