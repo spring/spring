@@ -174,42 +174,46 @@ void CUnitTable::ReadModConfig() {
 				utype->costMultiplier = costMult;
 				utype->techLevel = techLvl;
 
-				// TODO: enable, but look for any possible side-effects
-				// that might arise from overriding categories like this
-				/*
+				// TODO: look for any possible side-effects that might arise
+				// from overriding categories like this, then enable overrides
+				// other than builder --> attacker
+				// FIXME: SEGV when unarmed CAT_BUILDER units masquerading as
+				// CAT_G_ATTACK'ers want to or are attacked
 				if (category >= 0 && category < LASTCATEGORY) {
-					// maps unit categories to indices into all_lists
-					// FIXME: hackish, poorly maintainable, bad style
-					int cat2idx[] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
+					if (category == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
+						// maps unit categories to indices into all_lists
+						// FIXME: hackish, poorly maintainable, bad style
+						int cat2idx[] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
 
-					// index of sublist (eg. ground_builders) that ::Init() thinks it belongs to
-					int idx1 = cat2idx[utype->category];
-					// index of sublist (eg. ground_attackers) that mod .cfg says it belongs to
-					int idx2 = cat2idx[category];
+						// index of sublist (eg. ground_builders) that ::Init() thinks it belongs to
+						int idx1 = cat2idx[utype->category];
+						// index of sublist (eg. ground_attackers) that mod .cfg says it belongs to
+						int idx2 = cat2idx[category];
 
-					if (idx1 != idx2) {
-						std::vector<int>* lst1 = all_lists[idx1];	// old category
-						std::vector<int>* lst2 = all_lists[idx2];	// new category
-						std::set<int>::iterator sit;
-						std::vector<int>::iterator vit;
+						if (idx1 != idx2) {
+							std::vector<int>* lst1 = all_lists[idx1];	// old category list
+							std::vector<int>* lst2 = all_lists[idx2];	// new category list
+							std::set<int>::iterator sit;
+							std::vector<int>::iterator vit;
 
-						for (sit = utype->sides.begin(); sit != utype->sides.end(); sit++) {
-							int side = *sit;
+							for (sit = utype->sides.begin(); sit != utype->sides.end(); sit++) {
+								int side = *sit;
 
-							for (vit = lst1[side].begin(); vit != lst1[side].end(); vit++) {
-								int udefID = *vit;
+								for (vit = lst1[side].begin(); vit != lst1[side].end(); vit++) {
+									int udefID = *vit;
 
-								if (udefID == udef->id) {
-									lst1[side].erase(vit);
-									lst2[side].push_back(udef->id);
+									if (udefID == udef->id) {
+										lst1[side].erase(vit);
+										lst2[side].push_back(udef->id);
+										vit--;
+									}
 								}
 							}
-						}
 
-						utype->category = category;
+							utype->category = category;
+						}
 					}
 				}
-				*/
 			}
 		}
 
@@ -808,6 +812,7 @@ void CUnitTable::Init() {
 			int mySide = *it;
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
 
+			// KLOOTNOTE: fails parsing on certain CA .lua files
 			CSunParser attackerParser(ai);
 			attackerParser.LoadVirtualFile(me->def->filename.c_str());
 			me->TargetCategories.resize(me->def->weapons.size());
