@@ -191,20 +191,20 @@ void CUnitTable::ReadModConfig() {
 						int idx2 = catLstIdx[category];
 
 						if (idx1 != idx2) {
-							std::vector<int>* lst1 = all_lists[idx1];	// old category list
-							std::vector<int>* lst2 = all_lists[idx2];	// new category list
+							std::vector<int>* oldLst = all_lists[idx1];	// old category list
+							std::vector<int>* newLst = all_lists[idx2];	// new category list
 							std::set<int>::iterator sit;
 							std::vector<int>::iterator vit;
 
 							for (sit = utype->sides.begin(); sit != utype->sides.end(); sit++) {
 								int side = *sit;
 
-								for (vit = lst1[side].begin(); vit != lst1[side].end(); vit++) {
+								for (vit = oldLst[side].begin(); vit != oldLst[side].end(); vit++) {
 									int udefID = *vit;
 
 									if (udefID == udef->id) {
-										lst1[side].erase(vit);
-										lst2[side].push_back(udef->id);
+										oldLst[side].erase(vit);
+										newLst[side].push_back(udef->id);
 										vit--;
 									}
 								}
