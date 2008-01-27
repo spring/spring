@@ -2813,11 +2813,46 @@ int LuaOpenGL::Blending(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
-		luaL_checktype(L, 1, LUA_TBOOLEAN);
-		if (lua_toboolean(L, 1)) {
-			glEnable(GL_BLEND);
-		} else {
-			glDisable(GL_BLEND);
+		if (lua_isboolean(L, 1)) {
+			if (lua_toboolean(L, 1)) {
+				glEnable(GL_BLEND);
+			} else {
+				glDisable(GL_BLEND);
+			}
+		}
+		else if (lua_israwstring(L, 1)) {
+			const string mode = lua_tostring(L, 1);
+			if (mode == "add") {
+				glBlendFunc(GL_ONE, GL_ONE);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "alpha_add") {
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "alpha") {
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "color") {
+				glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "modulate") {
+				glBlendFunc(GL_DST_COLOR, GL_ZERO);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "reset") {
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glEnable(GL_BLEND);
+			}
+			else if (mode == "disable") {
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glDisable(GL_BLEND);
+			}
+		}
+		else {
+			luaL_error(L, "Incorrect argument to gl.Blending()");
 		}
 	}
 	else if (args == 2) {
