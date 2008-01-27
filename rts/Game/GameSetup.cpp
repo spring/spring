@@ -126,6 +126,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
 		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
 		gs->Team(a)->startPos = float3(x, 100, z);
+		startPos[a] = SFloat3(x, 100, z);
 	}
 }
 
@@ -154,7 +155,10 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
 		for (int a = 0; a < numTeams; ++a)
+		{
 			gs->Team(a)->startPos.y = -500;
+			startPos[a].y = -500;
+		}
 	}
 
 	// Load start position from gameSetup script
@@ -165,8 +169,16 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 			string s(section);
 			std::string xpos = file.SGetValueDef("", s + "StartPosX");
 			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
-			if (!xpos.empty()) gs->Team(a)->startPos.x = atoi(xpos.c_str());
-			if (!zpos.empty()) gs->Team(a)->startPos.z = atoi(zpos.c_str());
+			if (!xpos.empty())
+			{
+				gs->Team(a)->startPos.x = atoi(xpos.c_str());
+				startPos[a].x = gs->Team(a)->startPos.x;
+			}
+			if (!zpos.empty())
+			{
+				gs->Team(a)->startPos.z = atoi(zpos.c_str());
+				startPos[a].y = gs->Team(a)->startPos.y;
+			}
 		}
 	}
 }
@@ -196,6 +208,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams
 		gs->players[i]->team = atoi(file.SGetValueDef("0",   s + "team").c_str());
+		playerStartingTeam[i] = unsigned(gs->players[i]->team);
 		gs->players[i]->rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
 		gs->players[i]->playerName  = file.SGetValueDef("no name", s + "name");
 		gs->players[i]->countryCode = file.SGetValueDef("",  s + "countryCode");
@@ -336,6 +349,7 @@ void CGameSetup::RemapTeams()
 		if (teamRemap.find(gs->players[a]->team) == teamRemap.end())
 			throw content_error("invalid Player.Team in GameSetup script");
 		gs->players[a]->team = teamRemap[gs->players[a]->team];
+		playerStartingTeam[a] = teamRemap[playerStartingTeam[a]];
 	}
 }
 
@@ -491,30 +505,3 @@ bool CGameSetup::Init(const char* buf, int size)
 	return true;
 }
 
-bool CGameSetup::Update()
-{
-	bool allReady = true;
-	if (!gameServer) // let the server/host start the game
-		return false;
-	for (int a = numDemoPlayers; a < numPlayers; a++) {
-		if (!gs->players[a]->readyToStart) {
-			allReady = false;
-			break;
-		} else if (!readyTeams[gs->players[a]->team] && !hostDemo)
-		{
-			allReady = false;
-			break;
-		}
-	}
-
-	if (forceReady)
-		allReady = true;
-	if (allReady) {
-		if (readyTime == 0) {
-			int mode = configHandler.GetInt("CamMode", 1);
-			camHandler->SetCameraMode(mode);
-			readyTime = SDL_GetTicks();
-		}
-	}
-	return (readyTime && (SDL_GetTicks() - readyTime) > 3000);
-}

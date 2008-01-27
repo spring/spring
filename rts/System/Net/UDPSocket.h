@@ -11,14 +11,9 @@
 #endif
 
 namespace netcode {
-	
-#ifndef _WIN32
-	typedef int SOCKET;
-#endif
-
 
 /**
-@brief Wrapper class over BSD-style UDP-sockets
+@brief Wrapper class over BSD-style UDP-sockets (non-blocking)
 @author Karl-Robert Ernst
 
 Provides easy to use access to network sockets: just construct this with a given portnum and you will have an valid, local bound UDP-Socket where you can sendto / recvfrom. If it gets deleted, the socket is closed automagically for you (this means you are not able to copy this class).
@@ -62,6 +57,10 @@ protected:
 	std::string GetErrorMsg() const;
 	/// Check if last error is a real error (not EWOULDBLOCK etc.)
 	bool IsFakeError() const;
+
+#ifndef _WIN32
+	typedef int SOCKET;
+#endif
 
 	/// our descriptor
 	SOCKET mySocket;

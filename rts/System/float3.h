@@ -7,6 +7,7 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
+#include "SFloat3.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
 
@@ -17,7 +18,7 @@
  * Usually used to represent a vector in
  * space as x/y/z.
  */
-class float3
+class float3 : public SFloat3
 {
 public:
 	CR_DECLARE_STRUCT(float3);
@@ -30,7 +31,7 @@ public:
 	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
-	inline float3() : x(0), y(0), z(0) {};
+	inline float3() {};
 
 	/**
 	 * @brief Constructor
@@ -40,7 +41,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	inline float3(const float x,const float y,const float z) : x(x),y(y),z(z) {}
+	inline float3(const float x,const float y,const float z) : SFloat3(x,y,z) {}
 
 	/**
 	 * @brief Destructor
@@ -408,10 +409,6 @@ public:
 	inline float SqLength2D() const{
 		return x*x+z*z;
 	}
-
-	float x; ///< x component
-	float y; ///< y component
-	float z; ///< z component
 
 	/**
 	 * @brief max x pos

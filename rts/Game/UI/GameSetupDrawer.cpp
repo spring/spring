@@ -6,6 +6,9 @@
 #include <SDL_timer.h>
 #include <SDL_keysym.h>
 
+#include "NetProtocol.h"
+#include "Platform/ConfigHandler.h"
+#include "../CameraHandler.h"
 #include "../Player.h"
 #include "../GameSetup.h"
 #include "StartPosSelecter.h"
@@ -36,9 +39,22 @@ void GameSetupDrawer::Disable()
 	}
 }
 
+void GameSetupDrawer::StartCountdown(unsigned time)
+{
+	if (instance)
+	{
+		instance->lastTick = SDL_GetTicks();
+		instance->readyCountdown = (int)time;
+		int mode = configHandler.GetInt("CamMode", 1);
+		camHandler->SetCameraMode(mode);
+	}
+}
+
 
 GameSetupDrawer::GameSetupDrawer()
 {
+	readyCountdown = 0;
+	lastTick = 0;
 	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
 		new CStartPosSelecter();
 	}
@@ -52,11 +68,21 @@ GameSetupDrawer::~GameSetupDrawer()
 
 void GameSetupDrawer::Draw()
 {
+	if (readyCountdown > 0)
+	{
+		readyCountdown -= (SDL_GetTicks() - lastTick);
+		lastTick = SDL_GetTicks();
+	}
+	else if (readyCountdown < 0)
+	{
+		GameSetupDrawer::Disable();
+	}
+
 	float xshift = 0.0f;
 	std::string state = "Unknown state.";
-	if (gameSetup->readyTime > 0) {
+	if (readyCountdown > 0) {
 		char buf[64];
-		sprintf(buf, "Starting in %i", 3 - (SDL_GetTicks() - gameSetup->readyTime) / 1000);
+		sprintf(buf, "Starting in %i", readyCountdown / 1000);
 		state = buf;
 	} else if (!gameSetup->readyTeams[gu->myTeam]) {
 		state = "Choose start pos";
@@ -141,8 +167,10 @@ void GameSetupDrawer::Draw()
 
 bool GameSetupDrawer::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN)) {
-		gameSetup->forceReady = true;
+	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN))
+	{
+		// tell the server to force-start the game
+		net->SendStartPlaying(0);
 	}
 	return false;
 }

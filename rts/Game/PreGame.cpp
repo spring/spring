@@ -102,14 +102,10 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			if (hasDemo) {
 				net->localDemoPlayback = true;
 				state = WAIT_CONNECTING;
-				ReadDataFromDemo(demoFile);
+				ReadDataFromDemo(demoFile); // scan for map, mod etc.
 				net->InitLocalClient(0);
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
-					SelectMap(gameSetup->mapName);
-					SelectMod(gameSetup->baseMod);
-					CScriptHandler::SelectScript(gameSetup->scriptName);
-					SelectScript(gameSetup->scriptName);
 				}
 				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 				{
@@ -135,10 +131,6 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 					}
 				}
 
-				/*
-				We want to watch a demo local, so we dont know script, map and mod yet and we have to start a server which should send us the required data
-				Default settings: spectating
-				*/
 				gs->players[gu->myPlayerNum]->StartSpectating();
 			}
 			else {
@@ -347,7 +339,7 @@ bool CPreGame::Update()
 			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
 				int myPort = gameSetup? gameSetup->hostport : 8452;
-				gameServer = new CGameServer(myPort, mapName, modArchive, scriptName, demoFile);
+				gameServer = new CGameServer(myPort, mapName, modName, scriptName, demoFile);
 				int autohostport = configHandler.GetInt("Autohost", 0);
 				if (autohostport > 0)
 					gameServer->AddAutohostInterface(myPort+1, autohostport);
@@ -508,6 +500,33 @@ void CPreGame::UpdateClientNet()
 
 			case NETMSG_SENDPLAYERSTAT: {
 			} break;
+			
+			case NETMSG_TEAM: {
+				const int player = (int)inbuf[1];
+				const unsigned char action = inbuf[2];
+
+				switch (action)
+				{
+					case TEAMMSG_SELFD: {
+						break;
+					}
+					case TEAMMSG_GIVEAWAY: {
+						break;
+					}
+					case TEAMMSG_RESIGN: {
+						break;
+					}
+					case TEAMMSG_JOIN_TEAM: {
+						//TODO is this enought?
+						gs->players[inbuf[3]]->team = int(inbuf[3]);
+						break;
+					}
+					default: {
+						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
+					}
+				}
+				break;
+			}
 
 			case NETMSG_PAUSE: {
 				// these can get into the network stream here -- Kloot
@@ -538,6 +557,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	mapName = "";
 	modName = "";
 	scriptName = "";
+	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
 	while ( (length = scanner.GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, INT_MAX)) > 0 && (mapName.empty() || modName.empty() || scriptName.empty())) {
 		if (demobuffer[0] == NETMSG_MAPNAME)
@@ -637,6 +657,8 @@ void CPreGame::ShowMapList()
 /** Called by the mod-selecting CglList. */
 void CPreGame::SelectMod(std::string s)
 {
+	// make sure s is a modname (because the same mod can be in different archives on different computers)
+	s = archiveScanner->ModArchiveToModName(s);
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
 		const string& modName = pregame->showList->items[index];

@@ -14,7 +14,6 @@ public:
 	CGameSetup();
 	~CGameSetup();
 	bool Init(std::string setupFile);
-	bool Update();
 
 	bool Init(const char* buf, int size);
 

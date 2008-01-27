@@ -189,11 +189,11 @@ CLuaBinder::CLuaBinder(void)
 			.def_readonly("mapx", &CGlobalSyncedStuff::mapx)
 			.def_readonly("mapy", &CGlobalSyncedStuff::mapy),
 
-		class_<float3>("float3")
+		class_<SFloat3>("float3")
 			.def(constructor<const float, const float, const float>())
-			.def_readwrite("x", &float3::x)
-			.def_readwrite("y", &float3::y)
-			.def_readwrite("z", &float3::z)
+			.def_readwrite("x", &SFloat3::x)
+			.def_readwrite("y", &SFloat3::y)
+			.def_readwrite("z", &SFloat3::z)
 			.def("__tostring", &FloatToString),
 
 		class_<CWorldObject>("WorldObject")

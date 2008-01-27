@@ -24,7 +24,7 @@ including `command' and `messageSize'.
 enum NETMSG {
 	NETMSG_QUIT             = 2,  //
 	NETMSG_NEWFRAME         = 3,  // int frameNum;
-	NETMSG_STARTPLAYING     = 4,  //
+	NETMSG_STARTPLAYING     = 4,  // unsigned countdown
 	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
 	NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
@@ -80,6 +80,7 @@ enum TEAMMSG {
 	TEAMMSG_SELFD           = 0,		// not used 
 	TEAMMSG_GIVEAWAY        = 1,		// team to give stuff to
 	TEAMMSG_RESIGN			= 2,		// not used
+	TEAMMSG_JOIN_TEAM		= 3,		// team to join
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
 };
@@ -106,7 +107,7 @@ public:
 	void SendQuit();
 	void SendQuit(unsigned playerNum);
 	void SendNewFrame(int frameNum);
-	void SendStartPlaying();
+	void SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
 	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	void SendChat(uchar myPlayerNum, const std::string& message);
@@ -145,6 +146,7 @@ public:
 	void SendSelfD(uchar myPlayerNum);
 	void SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	void SendResign(uchar myPlayerNum);
+	void SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
 
 private:
 };
