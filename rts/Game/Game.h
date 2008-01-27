@@ -88,7 +88,6 @@ public:
 
 	int skipping;
 	bool playing;
-	bool allReady;
 	bool chatting;
 	bool camMove[8];
 	bool camRot[4];

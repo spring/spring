@@ -15,6 +15,7 @@
 class CBaseNetProtocol;
 class CDemoReader;
 class AutohostInterface;
+class CGameSetupData;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
 
@@ -52,7 +53,7 @@ class CGameServer
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const std::string& demoName = "");
+	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const CGameSetupData* const setup, const std::string& demoName = "");
 	~CGameServer();
 
 	void AddLocalClient(unsigned wantedNumber);
@@ -79,6 +80,9 @@ public:
 	void PlayerDefeated(const int playerNum) const;
 
 	void SetGamePausable(const bool arg);
+	
+	/// Is the server still running?
+	bool HasFinished() const;
 
 #ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
@@ -110,24 +114,17 @@ private:
 	void ServerReadNet();
 	void CheckForGameEnd();
 
-	/// Class for network communication
-	CBaseNetProtocol* serverNet;
-
-	CDemoReader* demoReader;
-
-	/// Inform 3. party programms about events
-	AutohostInterface* hostif;
-
 	void GenerateAndSendGameID();
 	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	/////////////////// game status variables ///////////////////
 
-	bool quitServer;
+	volatile bool quitServer;
 	int serverframenum;
 	int nextserverframenum; //For loading game
 
+	unsigned serverStartTime;
 	unsigned readyTime;
 	unsigned gameStartTime;
 	unsigned gameEndTime;	//Tick when game end was detected
@@ -146,6 +143,7 @@ private:
 	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
 
 	/////////////////// game settings ///////////////////
+	const CGameSetupData* const setup;
 	/// Wheter the game is pausable for others than the host
 	bool gamePausable;
 
@@ -171,6 +169,9 @@ private:
 	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
+	CBaseNetProtocol* serverNet;
+	CDemoReader* demoReader;
+	AutohostInterface* hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::mutex gameServerMutex;

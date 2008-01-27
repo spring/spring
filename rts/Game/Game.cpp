@@ -235,7 +235,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	playing  = false;
 	gameOver = false;
-	allReady = false;
 	skipping = 0;
 
 	drawFpsHUD = true;
@@ -1082,7 +1081,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon() && allReady))) {
+				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon()))) {
 
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
@@ -3212,7 +3211,7 @@ bool CGame::ClientReadNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						//TODO is this enought?
-						gs->players[inbuf[3]]->team = int(inbuf[3]);
+						gs->players[player]->team = int(inbuf[3]);
 						break;
 					}
 					default: {

@@ -339,7 +339,7 @@ bool CPreGame::Update()
 			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
 				int myPort = gameSetup? gameSetup->hostport : 8452;
-				gameServer = new CGameServer(myPort, mapName, modName, scriptName, demoFile);
+				gameServer = new CGameServer(myPort, mapName, modName, scriptName, gameSetup, demoFile);
 				int autohostport = configHandler.GetInt("Autohost", 0);
 				if (autohostport > 0)
 					gameServer->AddAutohostInterface(myPort+1, autohostport);
@@ -518,7 +518,7 @@ void CPreGame::UpdateClientNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						//TODO is this enought?
-						gs->players[inbuf[3]]->team = int(inbuf[3]);
+						gs->players[player]->team = int(inbuf[3]);
 						break;
 					}
 					default: {
