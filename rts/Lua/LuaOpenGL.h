@@ -158,8 +158,9 @@ class LuaOpenGL {
 		static int StencilMask(lua_State* L);
 		static int StencilFunc(lua_State* L);
 		static int StencilOp(lua_State* L);
-		static int StencilTwoSide(lua_State* L);
-		static int StencilFace(lua_State* L);
+		static int StencilMaskSeparate(lua_State* L);
+		static int StencilFuncSeparate(lua_State* L);
+		static int StencilOpSeparate(lua_State* L);
 
 		static int LineWidth(lua_State* L);
 		static int PointSize(lua_State* L);
