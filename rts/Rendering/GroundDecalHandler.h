@@ -32,8 +32,9 @@ struct UnitTrackStruct{
 struct BuildingGroundDecal{
 	CBuilding* owner;
 	CUnitDrawer::GhostBuilding* gbOwner;
-	int posx,posy;
-	int xsize,ysize;
+	int posx, posy;
+	int xsize, ysize;
+	int facing;
 
 	float3 pos;
 	float radius;

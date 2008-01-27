@@ -172,23 +172,66 @@ void CGroundDecalHandler::Draw(void)
 					continue;
 				}
 
-				if (camera->InView(decal->pos,decal->radius) && 
-					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView))
-				{
+				if (camera->InView(decal->pos, decal->radius) &&
+					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView)) {
 					color[3] = int(decal->alpha * 255);
 					float* heightmap = readmap->GetHeightmap();
 					float xts = 1.0f / decal->xsize;
 					float yts = 1.0f / decal->ysize;
 
-					for (int x = 0; x < decal->xsize; ++x) {
-						int x2 = decal->posx + x;
-						for (int z = 0; z < decal->ysize; ++z) {
-							int z2 = decal->posy+z;
-							va->AddVertexTC(float3(x2 * 8,     heightmap[(z2    ) * (gs->mapx + 1) + x2    ] + 0.2f, z2 * 8    ), (x    ) * xts, (z    ) * yts, color);
-							va->AddVertexTC(float3(x2 * 8 + 8, heightmap[(z2    ) * (gs->mapx + 1) + x2 + 1] + 0.2f, z2 * 8    ), (x + 1) * xts, (z    ) * yts, color);
-							va->AddVertexTC(float3(x2 * 8 + 8, heightmap[(z2 + 1) * (gs->mapx + 1) + x2 + 1] + 0.2f, z2 * 8 + 8), (x + 1) * xts, (z + 1) * yts, color);
-							va->AddVertexTC(float3(x2 * 8,     heightmap[(z2 + 1) * (gs->mapx + 1) + x2    ] + 0.2f, z2 * 8 + 8), (x    ) * xts, (z + 1) * yts, color);
-						}
+					const int xMin = 0, xMax = decal->xsize;
+					const int zMin = 0, zMax = decal->ysize;
+					const int tlx = (decal->posx + xMin) * 8;	// x-coor of top-left quad vertex
+					const int trx = (decal->posx + xMax) * 8;	// x-coor of top-right quad vertex
+					const int brx = trx;						// x-coor of bottom-right quad vertex
+					const int blx = tlx;						// x-coor of bottom-left quad vertex
+					const int tlz = (decal->posy + zMin) * 8;	// z-coor of top-left quad vertex
+					const int trz = tlz;						// z-coor of top-right quad vertex
+					const int brz = (decal->posy + zMax) * 8;	// z-coor of bottom-right quad vertex
+					const int blz = brz;						// z-coor of bottom-left quad vertex
+
+					// get the maximum heightmap-value of the four vertices
+					// and draw the quad at that height (after terraforming
+					// the ground can be assumed to be mostly flat directly
+					// below a factory, so this is preferable to splitting
+					// the texture quad up into quadratically many tiles on
+					// every frame just so it follows the terrain slightly
+					// better -- note however that if the height differences
+					// are extreme things do look odd)
+					// TODO: do split the quad, but use VA buffers to draw
+					// them (as with the groundscars)?
+					const float mt = max(heightmap[(tlz / 8) * (gs->mapx + 1) + (tlx / 8)], heightmap[(trz / 8) * (gs->mapx + 1) + (trx / 8)]);
+					const float mb = max(heightmap[(brz / 8) * (gs->mapx + 1) + (brx / 8)], heightmap[(blz / 8) * (gs->mapx + 1) + (blx / 8)]);
+					const float h = max(mt, mb);
+
+					switch (decal->facing) {
+						case 0: { // South (determines our reference texcoors)
+							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+						} break;
+
+						case 1: { // East
+							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+						} break;
+
+						case 2: { // North
+							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMax * xts, zMax * yts,  color); // tc = (1, 1)
+							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMin * xts, zMax * yts,  color); // tc = (0, 1)
+							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMin * xts, zMin * yts,  color); // tc = (0, 0)
+							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMax * xts, zMin * yts,  color); // tc = (1, 0)
+						} break;
+
+						case 3: { // West
+							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+						} break;
 					}
 				}
 				++bi;
@@ -625,32 +668,40 @@ void CGroundDecalHandler::RemoveScar(Scar* scar,bool removeFromScars)
 	delete scar;
 }
 
+
 void CGroundDecalHandler::AddBuilding(CBuilding* building)
 {
-	if(decalLevel==0)
+	if (decalLevel == 0)
 		return;
 
-	BuildingDecalType* type=buildingDecalTypes[building->unitDef->buildingDecalType];
-	BuildingGroundDecal* decal=SAFE_NEW BuildingGroundDecal;
+	BuildingDecalType* type = buildingDecalTypes[building->unitDef->buildingDecalType];
+	BuildingGroundDecal* decal = SAFE_NEW BuildingGroundDecal;
 
-	int posx=int(building->pos.x/8);
-	int posy=int(building->pos.z/8);
-	int sizex=building->unitDef->buildingDecalSizeX;
-	int sizey=building->unitDef->buildingDecalSizeY;
+	int posx = int(building->pos.x / 8);
+	int posy = int(building->pos.z / 8);
+	int sizex = building->unitDef->buildingDecalSizeX;
+	int sizey = building->unitDef->buildingDecalSizeY;
 
-	decal->owner=building;
-	decal->gbOwner=0;
-	decal->posx=max(0,posx-sizex);
-	decal->posy=max(0,posy-sizey);
-	decal->xsize=min(gs->mapx-1 - decal->posx, sizex*2);
-	decal->ysize=min(gs->mapy-1 - decal->posy, sizey*2);
-	decal->AlphaFalloff=building->unitDef->buildingDecalDecaySpeed;
-	decal->alpha=0;
-	decal->pos=building->pos;
-	decal->radius=sqrt((float)(sizex*sizex+sizey*sizey))*8+20;
+	decal->owner = building;
+	decal->gbOwner = 0;
+	decal->posx = max(0, posx - sizex);
+	decal->posy = max(0, posy - sizey);
+	decal->xsize = min(gs->mapx - 1 - decal->posx, sizex * 2);   // sizex * 2; //
+	decal->ysize = min(gs->mapy - 1 - decal->posy, sizey * 2);   // sizey * 2; //
+	decal->AlphaFalloff = building->unitDef->buildingDecalDecaySpeed;
+	decal->alpha = 0;
+	decal->pos = building->pos;
+	decal->radius = sqrt((float) (sizex * sizex + sizey * sizey)) * 8 + 20;
+	decal->facing = building->buildFacing;
 
-	building->buildingDecal=decal;
+	if (building->buildFacing == 1 || building->buildFacing == 3) {
+		// swap xsize and ysize if building faces East or West
+		int tmp = decal->xsize;
+		decal->xsize = decal->ysize;
+		decal->ysize = tmp;
+	}
 
+	building->buildingDecal = decal;
 	type->buildingDecals.insert(decal);
 }
 
@@ -667,28 +718,31 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostB
 
 int CGroundDecalHandler::GetBuildingDecalType(std::string name)
 {
-	if(decalLevel==0)
+	if (decalLevel == 0)
 		return 0;
 
 	StringToLowerInPlace(name);
 
-	int a=0;
-	for(std::vector<BuildingDecalType*>::iterator bi=buildingDecalTypes.begin();bi!=buildingDecalTypes.end();++bi){
-		if((*bi)->name==name){
+	int a = 0;
+	for (std::vector<BuildingDecalType*>::iterator bi = buildingDecalTypes.begin(); bi != buildingDecalTypes.end(); ++bi) {
+		if ((*bi)->name == name) {
 			return a;
 		}
 		++a;
 	}
-	BuildingDecalType* tt=SAFE_NEW BuildingDecalType;
-	tt->name=name;
+
+	BuildingDecalType* tt = SAFE_NEW BuildingDecalType;
+	tt->name = name;
 	CBitmap bm;
 	if (!bm.Load(string("unittextures/") + name))
 		throw content_error("Could not load building decal from file unittextures/" + name);
-	tt->texture=bm.CreateTexture(true);
+
+	tt->texture = bm.CreateTexture(true);
 	buildingDecalTypes.push_back(tt);
 
-	return buildingDecalTypes.size()-1;
+	return (buildingDecalTypes.size() - 1);
 }
+
 
 void CGroundDecalHandler::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
 {
