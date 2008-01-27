@@ -181,10 +181,16 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
 	REGISTER_LUA_CFUNC(Fog);
-	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(Smoothing);
 	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(LineStipple);
+	REGISTER_LUA_CFUNC(Blending);
+	REGISTER_LUA_CFUNC(BlendEquation);
+	REGISTER_LUA_CFUNC(BlendFunc);
+	if (haveGL20) {
+		REGISTER_LUA_CFUNC(BlendEquationSeparate);
+		REGISTER_LUA_CFUNC(BlendFuncSeparate);
+	}
 
 	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
@@ -342,6 +348,7 @@ void LuaOpenGL::ResetGLState()
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_ALPHA_TEST);
@@ -2806,9 +2813,7 @@ int LuaOpenGL::Blending(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
-		if (!lua_isboolean(L, 1)) {
-			luaL_error(L, "Incorrect arguments to gl.Blending()");
-		}
+		luaL_checktype(L, 1, LUA_TBOOLEAN);
 		if (lua_toboolean(L, 1)) {
 			glEnable(GL_BLEND);
 		} else {
@@ -2816,15 +2821,55 @@ int LuaOpenGL::Blending(lua_State* L)
 		}
 	}
 	else if (args == 2) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-			luaL_error(L, "Incorrect arguments to gl.Blending()");
-		}
+		const GLenum src = (GLenum)luaL_checkint(L, 1);
+		const GLenum dst = (GLenum)luaL_checkint(L, 2);
+		glBlendFunc(src, dst);
 		glEnable(GL_BLEND);
-		glBlendFunc((GLenum)lua_tonumber(L, 1), (GLenum)lua_tonumber(L, 2));
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.Blending()");
 	}
+	return 0;
+}
+
+
+int LuaOpenGL::BlendEquation(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum mode = (GLenum)luaL_checkint(L, 1);
+	glBlendEquation(mode);
+	return 0;
+}
+
+
+int LuaOpenGL::BlendFunc(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum src = (GLenum)luaL_checkint(L, 1);
+	const GLenum dst = (GLenum)luaL_checkint(L, 2);
+	glBlendFunc(src, dst);
+	return 0;
+}
+
+
+int LuaOpenGL::BlendEquationSeparate(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum modeRGB   = (GLenum)luaL_checkint(L, 1);
+	const GLenum modeAlpha = (GLenum)luaL_checkint(L, 2);
+	glBlendEquationSeparate(modeRGB, modeAlpha);
+	return 0;
+}
+
+
+int LuaOpenGL::BlendFuncSeparate(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum srcRGB   = (GLenum)luaL_checkint(L, 1);
+	const GLenum dstRGB   = (GLenum)luaL_checkint(L, 2);
+	const GLenum srcAlpha = (GLenum)luaL_checkint(L, 3);
+	const GLenum dstAlpha = (GLenum)luaL_checkint(L, 4);
+	glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
 	return 0;
 }
 
