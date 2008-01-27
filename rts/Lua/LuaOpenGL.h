@@ -143,10 +143,14 @@ class LuaOpenGL {
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
 		static int Fog(lua_State* L);
-		static int Blending(lua_State* L);
 		static int Smoothing(lua_State* L);
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
+		static int Blending(lua_State* L);
+		static int BlendEquation(lua_State* L);
+		static int BlendFunc(lua_State* L);
+		static int BlendEquationSeparate(lua_State* L);
+		static int BlendFuncSeparate(lua_State* L);
 
 		static int Material(lua_State* L);
 		static int Color(lua_State* L);
