@@ -33,6 +33,6 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 ADD_LIBRARY(fileops SHARED  ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
 TARGET_LINK_LIBRARIES(fileops hpiutil2 7zip minizip boost_regex)
 
-ADD_EXECUTABLE(server main GameServer ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol)
+ADD_EXECUTABLE(server main ../../rts/Game/GameServer ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
 TARGET_LINK_LIBRARIES(server SDL boost_thread net fileops)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)

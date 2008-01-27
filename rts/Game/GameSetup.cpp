@@ -2,15 +2,12 @@
 #include <algorithm>
 #include <cctype>
 #include <SDL.h>
-#include "CameraHandler.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "LogOutput.h"
-#include "GameServer.h"
 #include "Player.h"
 #include "TdfParser.h"
 #include "Team.h"
-#include "System/NetProtocol.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
@@ -19,7 +16,6 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
-#include "Platform/ConfigHandler.h"
 #include "Rendering/Textures/TAPalette.h"
 
 
