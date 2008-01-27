@@ -281,6 +281,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
  *
  * @param program_type Only substituted in the message.
  * @param filename Only substituted in the message.
+ * @param program The program text (used to enhance the message)
  */
 static void CheckParseErrors(const char * program_type, const char * filename, const char* program)
 {

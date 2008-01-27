@@ -54,7 +54,7 @@ AviGen.ReleaseEngine();
 
 \par Update history:
 
-- {\bf 22-10-2002} Minor changes in constructors.
+- {\b 22-10-2002} Minor changes in constructors.
 
 \author : Jonathan de Halleux, dehalleux@auto.ucl.ac.be (2001)
 */

@@ -1429,7 +1429,6 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
  * @brief gets the command that keeps the unit close to the path
  * @return a Fight Command with 6 arguments, the first three being where to return to (the current position of the
  *	unit), and the second being the location of the origional command.
- * @param c the command to return to
  **/
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
