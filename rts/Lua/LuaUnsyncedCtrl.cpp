@@ -799,8 +799,6 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 {
 	const int cmdID = (int)luaL_checknumber(L, 1);
 
-	
-
 	int iconID = 0;
 	if (lua_israwnumber(L, 2)) {
 		iconID = (int)lua_tonumber(L, 2);

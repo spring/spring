@@ -196,9 +196,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-	if (GLEW_EXT_stencil_two_side) {
-		REGISTER_LUA_CFUNC(StencilTwoSide);
-		REGISTER_LUA_CFUNC(StencilFace);
+	if (haveGL20) {
+		REGISTER_LUA_CFUNC(StencilMaskSeparate);
+		REGISTER_LUA_CFUNC(StencilFuncSeparate);
+		REGISTER_LUA_CFUNC(StencilOpSeparate);
 	}
 
 	REGISTER_LUA_CFUNC(LineWidth);
@@ -2952,9 +2953,7 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 int LuaOpenGL::StencilTest(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	if (!lua_isboolean(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.StencilTest()");
-	}
+	luaL_checktype(L, 1, LUA_TBOOLEAN);
 	if (lua_toboolean(L, 1)) {
 		glEnable(GL_STENCIL_TEST);
 	} else {
@@ -2995,24 +2994,36 @@ int LuaOpenGL::StencilOp(lua_State* L)
 }
 
 
-int LuaOpenGL::StencilTwoSide(lua_State* L)
+int LuaOpenGL::StencilMaskSeparate(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	luaL_checktype(L, 1, LUA_TBOOLEAN);
-	if (lua_toboolean(L, 1)) {
-		glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-	} else {
-		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-	}
+	const GLenum face = luaL_checkint(L, 1);
+	const GLuint mask = luaL_checkint(L, 2);
+	glStencilMaskSeparate(face, mask);
 	return 0;
 }
 
 
-int LuaOpenGL::StencilFace(lua_State* L)
+int LuaOpenGL::StencilFuncSeparate(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLenum face = (GLenum)luaL_checkint(L, 1);
-	glActiveStencilFaceEXT(face);
+	const GLenum face = luaL_checkint(L, 1);
+	const GLenum func = luaL_checkint(L, 2);
+	const GLint  ref  = luaL_checkint(L, 3);
+	const GLuint mask = luaL_checkint(L, 4);
+	glStencilFuncSeparate(face, func, ref, mask);
+	return 0;
+}
+
+
+int LuaOpenGL::StencilOpSeparate(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum face  = luaL_checkint(L, 1);
+	const GLenum fail  = luaL_checkint(L, 2);
+	const GLenum zfail = luaL_checkint(L, 3);
+	const GLenum zpass = luaL_checkint(L, 4);
+	glStencilOpSeparate(face, fail, zfail, zpass);
 	return 0;
 }
 
