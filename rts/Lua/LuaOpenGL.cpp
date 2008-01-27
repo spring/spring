@@ -2830,7 +2830,8 @@ int LuaOpenGL::Blending(lua_State* L)
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				glEnable(GL_BLEND);
 			}
-			else if (mode == "alpha") {
+			else if ((mode == "alpha") ||
+			         (mode == "reset")) {
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glEnable(GL_BLEND);
 			}
@@ -2840,10 +2841,6 @@ int LuaOpenGL::Blending(lua_State* L)
 			}
 			else if (mode == "modulate") {
 				glBlendFunc(GL_DST_COLOR, GL_ZERO);
-				glEnable(GL_BLEND);
-			}
-			else if (mode == "reset") {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glEnable(GL_BLEND);
 			}
 			else if (mode == "disable") {
