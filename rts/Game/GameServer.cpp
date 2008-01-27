@@ -724,7 +724,7 @@ void CGameServer::CheckForGameStart(bool forced)
 	
 	if (gameSetup)
 	{
-		for (unsigned a = numDemoPlayers; a < gameSetup->numPlayers; a++) {
+		for (unsigned a = numDemoPlayers; a < (unsigned)gameSetup->numPlayers; a++) {
 			if (!players[a] || !players[a]->readyToStart) {
 				allReady = false;
 				break;
@@ -831,6 +831,7 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
+#ifndef DEDICATED
 	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	unsigned numActiveAllyTeams = 0;
@@ -848,6 +849,7 @@ void CGameServer::CheckForGameEnd()
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}
+#endif
 }
 
 void CGameServer::CreateNewFrame(bool fromServerThread)
@@ -942,7 +944,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	}
 
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
-	if (gameSetup && hisNewNumber < gameSetup->numPlayers/* needed for non-hosted demo playback */)
+	if (gameSetup && hisNewNumber < (unsigned)gameSetup->numPlayers/* needed for non-hosted demo playback */)
 	{
 		unsigned hisTeam = gameSetup->playerStartingTeam[hisNewNumber];
 		if (!teams[hisTeam]) // is commsharing
