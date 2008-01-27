@@ -9,6 +9,8 @@
 #include <deque>
 
 #include "System/GlobalStuff.h"
+#include "System/UnsyncedRNG.h"
+#include "SFloat3.h"
 
 class CBaseNetProtocol;
 class CDemoReader;
@@ -26,11 +28,20 @@ public:
 	bool readyToStart;
 	float cpuUsage;
 	int ping;
+	
+	unsigned team;
 
 	bool hasRights;
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
 #endif
+};
+
+class GameTeam
+{
+public:
+	SFloat3 startpos;
+	bool readyToStart;
 };
 
 /**
@@ -91,6 +102,7 @@ private:
 
 	void BindConnection(unsigned wantedNumber, bool grantRights=false);
 
+	void CheckForGameStart(bool forced=false);
 	void StartGame();
 	void UpdateLoop();
 	void Update();
@@ -116,6 +128,8 @@ private:
 	int serverframenum;
 	int nextserverframenum; //For loading game
 
+	unsigned readyTime;
+	unsigned gameStartTime;
 	unsigned gameEndTime;	//Tick when game end was detected
 	bool sentGameOverMsg;
 	unsigned lastTick;
@@ -129,6 +143,7 @@ private:
 	float internalSpeed;
 
 	boost::scoped_ptr<GameParticipant> players[MAX_PLAYERS];
+	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
 
 	/////////////////// game settings ///////////////////
 	/// Wheter the game is pausable for others than the host
@@ -155,6 +170,8 @@ private:
 	int syncWarningFrame;
 	int delayedSyncResponseFrame;
 
+	///////////////// internal stuff //////////////////
+	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::mutex gameServerMutex;
 };

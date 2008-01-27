@@ -56,6 +56,8 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
 			gameSetup = SAFE_NEW CGameSetup();
 			gameSetup->Init(buf, fileHeader.scriptSize);
+			gameSetup->demoName = filename;
+			gameSetup->numDemoPlayers = GetFileHeader().maxPlayerNum+1;
 		}
 #endif
 		delete[] buf;

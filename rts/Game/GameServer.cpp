@@ -20,8 +20,13 @@
 #include "Player.h"
 #include "Team.h"
 
+#ifdef DEDICATED
+#include <iostream>
+#endif
+
 #define SYNCCHECK_TIMEOUT 300 //frames
 #define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
+const unsigned GameStartDelay = 3800; //msecs to wait until the game starts after all players are ready
 
 GameParticipant::GameParticipant(bool willHaveRights)
 : name("unnamed")
@@ -42,6 +47,8 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	lastPlayerInfo = 0;
 	serverframenum=0;
 	timeLeft=0;
+	readyTime = 0;
+	gameStartTime = 0;
 	gameEndTime=0;
 	lastUpdate = SDL_GetTicks();
 	modGameTime = 0.0f;
@@ -60,7 +67,8 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
-
+	rng.Seed(SDL_GetTicks());
+	
 	SendSystemMsg("Starting server on port %i", port);
 	mapName = newMapName;
 	mapChecksum = archiveScanner->GetMapChecksum(mapName);
@@ -319,7 +327,11 @@ void CGameServer::Update()
 
 	ServerReadNet();
 
-	if (serverframenum > 0 && !demoReader)
+	if (!gameStartTime)
+	{
+		CheckForGameStart();
+	}
+	else if (serverframenum > 0 && !demoReader)
 	{
 		CreateNewFrame(true);
 	}
@@ -462,12 +474,23 @@ void CGameServer::ServerReadNet()
 					case NETMSG_STARTPOS:
 						if(inbuf[1] != a){
 							SendSystemMsg("Server: Warning got startpos msg from %i claiming to be from %i",a,inbuf[1]);
-						} else {
-							serverNet->SendStartPos(inbuf[1],inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])); //forward data
+						}
+						else if (gameSetup && gameSetup->startPosType == CGameSetupData::StartPos_ChooseInGame)
+						{
+							unsigned team = (unsigned)inbuf[2];
+							if (teams[team])
+							{
+								teams[team]->startpos = SFloat3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
+							}
+							serverNet->SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])); //forward data
 							if (hostif)
 							{
 								hostif->SendPlayerReady(a, inbuf[3]);
 							}
+						}
+						else
+						{
+							SendSystemMsg("Server: Warning player %i tried to change his startposition",a);
 						}
 						break;
 
@@ -593,8 +616,8 @@ void CGameServer::ServerReadNet()
 
 					case NETMSG_STARTPLAYING:
 					{
-						if (players[a]->hasRights)
-							StartGame();
+						if (players[a]->hasRights && !gameStartTime)
+							CheckForGameStart(true);
 						break;
 					}
 					case NETMSG_RANDSEED:
@@ -663,26 +686,9 @@ void CGameServer::ServerReadNet()
 #endif
 }
 
-// FIXME: move to separate file->make utility class of it and use it in GlobalStuff
-class CRandomNumberGenerator
-{
-public:
-	CRandomNumberGenerator() : randSeed(0) {}
-	void Seed(unsigned seed) { randSeed = seed; }
-	unsigned int operator()() {
-		randSeed = (randSeed * 214013L + 2531011L);
-		return randSeed & 0x7FFF;
-	}
-private:
-	unsigned randSeed;
-};
-
 /** @brief Generate a unique game identifier and sent it to all clients. */
 void CGameServer::GenerateAndSendGameID()
 {
-	CRandomNumberGenerator prand;
-	prand.Seed(SDL_GetTicks());
-
 	// This is where we'll store the ID temporarily.
 	union {
 		unsigned char charArray[16];
@@ -692,7 +698,7 @@ void CGameServer::GenerateAndSendGameID()
 	// First and second dword are time based (current time and load time).
 	gameID.intArray[0] = (unsigned) time(NULL);
 	for (int i = 4; i < 12; ++i)
-		gameID.charArray[i] = prand();
+		gameID.charArray[i] = rng();
 
 	CRC entropy;
 	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
@@ -710,8 +716,56 @@ void CGameServer::GenerateAndSendGameID()
 	serverNet->SendGameID(gameID.charArray);
 }
 
+void CGameServer::CheckForGameStart(bool forced)
+{
+	assert(!gameStartTime);
+	bool allReady = true;
+	unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
+	
+	if (gameSetup)
+	{
+		for (unsigned a = numDemoPlayers; a < gameSetup->numPlayers; a++) {
+			if (!players[a] || !players[a]->readyToStart) {
+				allReady = false;
+				break;
+			} else if (!teams[players[a]->team]->readyToStart && !demoReader)
+			{
+				allReady = false;
+				break;
+			}
+		}
+	}
+	else
+	{
+		allReady = false;
+		// no gameSetup, wait for host to send NETMSG_STARTPLAYING
+		// if this is the case, forced is true...
+		if (forced)
+		{
+			// immediately start
+			readyTime = SDL_GetTicks();
+			rng.Seed(readyTime);
+			StartGame();
+		}
+	}
+
+	if (allReady || forced)
+	{
+		if (readyTime == 0) {
+			readyTime = SDL_GetTicks();
+			rng.Seed(readyTime);
+			serverNet->SendStartPlaying(GameStartDelay);
+		}
+	}
+	if (readyTime && (SDL_GetTicks() - readyTime) > GameStartDelay)
+	{
+		StartGame();
+	}
+}
+
 void CGameServer::StartGame()
 {
+	gameStartTime = SDL_GetTicks();
 	serverNet->Listening(false);
 
 	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
@@ -722,12 +776,12 @@ void CGameServer::StartGame()
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	if(userSpeedFactor>maxUserSpeed)
 	{
-		serverNet->SendUserSpeed(0,maxUserSpeed);
+		serverNet->SendUserSpeed(SERVER_PLAYER, maxUserSpeed);
 		userSpeedFactor = maxUserSpeed;
 	}
 	else if(userSpeedFactor<minUserSpeed)
 	{
-		serverNet->SendUserSpeed(0,minUserSpeed);
+		serverNet->SendUserSpeed(SERVER_PLAYER, minUserSpeed);
 		userSpeedFactor = minUserSpeed;
 	}
 
@@ -740,13 +794,15 @@ void CGameServer::StartGame()
 
 	GenerateAndSendGameID();
 	if (gameSetup) {
-		for (unsigned a = 0; a < gs->activeTeams; ++a)
+		for (unsigned a = 0; a < MAX_TEAMS; ++a)
 		{
-			serverNet->SendStartPos(SERVER_PLAYER, a, 1, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			if (teams[a])
+				serverNet->SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z);
 		}
 	}
 
-	serverNet->SendStartPlaying();
+	serverNet->SendRandSeed(rng());
+	serverNet->SendStartPlaying(0);
 	if (hostif)
 	{
 		hostif->SendStartPlaying();
@@ -854,7 +910,7 @@ bool CGameServer::WaitsOnCon() const
 
 void CGameServer::KickPlayer(const int playerNum)
 {
-	if (playerNum != 0 && players[playerNum]) {
+	if (players[playerNum]) {
 		serverNet->SendPlayerLeft(playerNum, 2);
 		serverNet->SendQuit(playerNum);
 		serverNet->Kill(playerNum);
@@ -867,10 +923,11 @@ void CGameServer::KickPlayer(const int playerNum)
 
 void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 {
+	unsigned hisNewNumber = wantedNumber;
 	if (demoReader) {
-		wantedNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
+		hisNewNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
 	}
-	unsigned hisNewNumber = serverNet->AcceptIncomingConnection(wantedNumber);
+	hisNewNumber = serverNet->AcceptIncomingConnection(hisNewNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 
@@ -884,15 +941,33 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
 
-	if (gameSetup) {
-		for (unsigned a = 0; a < gs->activeTeams; ++a)
+	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
+	if (gameSetup && hisNewNumber < gameSetup->numPlayers/* needed for non-hosted demo playback */)
+	{
+		unsigned hisTeam = gameSetup->playerStartingTeam[hisNewNumber];
+		if (!teams[hisTeam]) // is commsharing
 		{
-			serverNet->SendStartPos(SERVER_PLAYER, a, 2, gs->Team(a)->startPos.x, gs->Team(a)->startPos.y, gs->Team(a)->startPos.z);
+			teams[hisTeam].reset(new GameTeam());
+			teams[hisTeam]->startpos = gameSetup->startPos[hisTeam];
+			teams[hisTeam]->readyToStart = (gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
+		}
+		players[hisNewNumber]->team = hisTeam;
+		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
+		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		{
+			if (teams[a])
+				serverNet->SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z);
 		}
 	}
-
-	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
+	else
+	{
+		unsigned hisTeam = hisNewNumber;
+		teams[hisTeam].reset(new GameTeam());
+		players[hisNewNumber]->team = hisTeam;
+		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
+	}
 	SendSystemMsg("Client connected on slot %i (wanted number was %i)", hisNewNumber, wantedNumber);
+
 	serverNet->FlushNet();
 }
 
@@ -918,6 +993,9 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 
 	std::string msg = text;
 	serverNet->SendSystemMessage((unsigned char)SERVER_PLAYER, msg);
+#ifdef DEDICATED
+	std::cout << msg << std::endl;
+#endif
 }
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)

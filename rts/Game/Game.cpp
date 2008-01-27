@@ -479,7 +479,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
 	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
-		net->SendStartPlaying();
+		net->SendStartPlaying(0);
 
 	lastCpuUsageTime = gu->gameTime + 10;
 }
@@ -1909,28 +1909,23 @@ bool CGame::Update()
 		return false;
 	}
 
-	if(gameSetup && !playing) {
-		allReady=gameSetup->Update();
-		if (allReady && gameSetup->hostDemo)
-			// the NETMSG_STARTPLAYING may arrive later so don't show negative time until start
-			GameSetupDrawer::Disable();
-	} else if( gameServer && gameServer->WaitsOnCon()) {
-		allReady=true;
+	if( gameServer && gameServer->WaitsOnCon() && !gameSetup)
+	{
+		bool allReady = true;
 		for(int a=0;a<gs->activePlayers;a++) {
 			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
 				allReady=false;
 				break;
 			}
 		}
-	}
-
-	if (gameServer && gameServer->WaitsOnCon() && allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer || gameSetup))
-	{
-		chatting = false;
-		userWriting = false;
-		writingPos = 0;
-		net->SendRandSeed(gs->randSeed);
-		net->SendStartPlaying();
+		if (allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer))
+		{
+			chatting = false;
+			userWriting = false;
+			writingPos = 0;
+			net->SendRandSeed(gs->randSeed);
+			net->SendStartPlaying(0);
+		}
 	}
 
 	return true;
@@ -2256,11 +2251,9 @@ bool CGame::Draw()
 		}
 	}
 
-	if( gameServer && gameServer->WaitsOnCon()){
-		if (allReady) {
-			glColor3f(1.0f, 1.0f, 1.0f);
-			font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
-		}
+	if( gameServer && gameServer->WaitsOnCon() &&!gameSetup){
+		glColor3f(1.0f, 1.0f, 1.0f);
+		font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
 	}
 
 	if (userWriting) {
@@ -2758,7 +2751,13 @@ bool CGame::ClientReadNet()
 			}
 
 			case NETMSG_STARTPLAYING: {
-				StartPlaying();
+				unsigned timeToStart = *(unsigned*)(inbuf+1);
+				if (timeToStart > 0)
+				{
+					GameSetupDrawer::StartCountdown(timeToStart);
+				}
+				else
+					StartPlaying();
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3188,7 +3187,6 @@ bool CGame::ClientReadNet()
 				for (int a=0;a<MAX_PLAYERS;++a)
 					if (gs->players[a]->active && gs->players[a]->team == fromTeam)
 						++numPlayersInTeam;
-				assert(numPlayersInTeam > 0);
 
 				switch (action)
 				{
@@ -3200,7 +3198,7 @@ bool CGame::ClientReadNet()
 						break;
 					}
 					case TEAMMSG_GIVEAWAY: {
-						const int toTeam = gs->players[inbuf[3]]->team;
+						const int toTeam = inbuf[3];
 						if (numPlayersInTeam == 1)
 							gs->Team(fromTeam)->GiveEverythingTo(toTeam);
 						else
@@ -3210,6 +3208,11 @@ bool CGame::ClientReadNet()
 					case TEAMMSG_RESIGN: {
 						gs->players[player]->StartSpectating();
 						logOutput.Print("Player %i resigned and is now spectating!", player);
+						break;
+					}
+					case TEAMMSG_JOIN_TEAM: {
+						//TODO is this enought?
+						gs->players[inbuf[3]]->team = int(inbuf[3]);
 						break;
 					}
 					default: {

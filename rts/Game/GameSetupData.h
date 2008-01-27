@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 
+#include "SFloat3.h"
 #include "GlobalStuff.h"
 
 class TdfParser;
@@ -14,10 +15,10 @@ public:
 	enum StartPosType
 	{
 		StartPos_Fixed = 0,
-			StartPos_Random = 1,
-			StartPos_ChooseInGame = 2,
-			StartPos_ChooseBeforeGame = 3,
-			StartPos_Last = 3  // last entry in enum (for user input check)
+		StartPos_Random = 1,
+		StartPos_ChooseInGame = 2,
+		StartPos_ChooseBeforeGame = 3,
+		StartPos_Last = 3  // last entry in enum (for user input check)
 	};
 	
 	CGameSetupData();
@@ -38,13 +39,16 @@ public:
 	int hostport;
 	int sourceport; //the port clients will try to connect from
 	
-	int readyTime;
-	bool forceReady;
-	
 	char* gameSetupText;
 	int gameSetupTextLength;
 	
 	StartPosType startPosType;
+	
+	
+	/// Team the player will start in (read-only)
+	unsigned playerStartingTeam[MAX_PLAYERS];
+	/// Initial startposition (read-only)
+	SFloat3 startPos[MAX_TEAMS];
 	bool readyTeams[MAX_TEAMS];
 	int teamStartNum[MAX_TEAMS];
 	float startRectTop[MAX_TEAMS];

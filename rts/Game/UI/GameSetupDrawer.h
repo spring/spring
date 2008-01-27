@@ -8,6 +8,8 @@ class GameSetupDrawer : public CInputReceiver
 public:
 	static void Enable();
 	static void Disable();
+	
+	static void StartCountdown(unsigned time);
 
 private:
 	GameSetupDrawer();
@@ -18,6 +20,8 @@ private:
 
 	static GameSetupDrawer* instance;
 	bool lctrl_pressed;
+	int readyCountdown;
+	unsigned lastTick;
 };
 
 

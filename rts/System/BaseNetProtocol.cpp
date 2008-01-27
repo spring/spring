@@ -11,7 +11,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 
 	RegisterMessage(NETMSG_QUIT, 1);
 	RegisterMessage(NETMSG_NEWFRAME, 5);
-	RegisterMessage(NETMSG_STARTPLAYING, 1);
+	RegisterMessage(NETMSG_STARTPLAYING, 5);
 	RegisterMessage(NETMSG_SETPLAYERNUM, 2);
 	RegisterMessage(NETMSG_PLAYERNAME, -1);
 	RegisterMessage(NETMSG_CHAT, -1);
@@ -79,9 +79,9 @@ void CBaseNetProtocol::SendNewFrame(int frameNum)
 
 //  NETMSG_STARTPLAYING     = 4,  //
 
-void CBaseNetProtocol::SendStartPlaying()
+void CBaseNetProtocol::SendStartPlaying(unsigned countdown)
 {
-	SendData(NETMSG_STARTPLAYING);
+	SendData<unsigned>(NETMSG_STARTPLAYING, countdown);
 }
 
 //  NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
@@ -352,6 +352,12 @@ void CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
 void CBaseNetProtocol::SendResign(uchar myPlayerNum)
 {
 	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_RESIGN, 0};
+	SendData(msg, 4);
+}
+
+void CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
+{
+	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_JOIN_TEAM, wantedTeamNum};
 	SendData(msg, 4);
 }
 
