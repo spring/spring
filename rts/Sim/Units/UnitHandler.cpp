@@ -601,7 +601,7 @@ bool CUnitHandler::CanCloseYard(CUnit* unit)
 /**
 * returns a build Command that intersects the ray described by pos and dir from the command queues of the
 * units units on team number team
-* @breif returns a build Command that intersects the ray described by pos and dir
+* @brief returns a build Command that intersects the ray described by pos and dir
 * @return the build Command, or 0 if one is not found
 */
 

@@ -77,7 +77,7 @@ public:
 
 	/**
 	 * @brief operator +=
-	 * @param float3
+	 * @param f float3 reference to add.
 	 *
 	 * Just like adding a float3, but updates this
 	 * float with the new sum.

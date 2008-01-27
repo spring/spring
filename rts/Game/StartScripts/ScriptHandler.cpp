@@ -66,7 +66,7 @@ void CScriptHandler::StartLua()
 #endif
 }
 
-/** @Return a reference to the only CScriptHandler instance */
+/** @return a reference to the only CScriptHandler instance */
 CScriptHandler& CScriptHandler::Instance()
 {
 	static bool created = false;
