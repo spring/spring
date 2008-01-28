@@ -533,7 +533,7 @@ int LuaShaders::ActiveShader(lua_State* L)
 	glUseProgram(currentProgram);
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveShader: error(%i) = %s\n",
+		logOutput.Print("gl.ActiveShader: error(%i) = %s",
 		                error, lua_tostring(L, -1));
 		lua_error(L);
 	}

@@ -64,7 +64,7 @@ int LuaScream::meta_gc(lua_State* L)
 	if (lua_isfunction(L, -1)) {
 		const int error = lua_pcall(L, 0, 0, 0);
 		if (error != 0) {
-			logOutput.Print("Scream: error(%i) = %s\n",
+			logOutput.Print("Scream: error(%i) = %s",
 											error, lua_tostring(L, -1));
 			lua_pop(L, 1);
 		}

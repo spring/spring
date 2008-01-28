@@ -9,6 +9,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaCallInCheck.h"
 #include "LuaUtils.h"
 #include "LuaMaterial.h"
 #include "LuaSyncedCtrl.h"
@@ -270,6 +271,8 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("CommandFallback");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -328,6 +331,8 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("AllowCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -386,6 +391,8 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("AllowUnitCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -426,6 +433,8 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -464,6 +473,8 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowUnitBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -502,6 +513,8 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureCreation");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -540,6 +553,8 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("AllowFeatureBuildStep");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -577,6 +592,8 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("AllowResourceLevel");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -613,6 +630,8 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowResourceTransfer");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -649,6 +668,8 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 		return true; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("AllowDirectUnitControl");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -685,6 +706,8 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 		return false; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("MoveCtrlNotify");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
@@ -723,6 +746,8 @@ bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
 		return false; // the call is not defined
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("BuilderTerraformComplete");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
@@ -767,6 +792,9 @@ bool CLuaRules::DrawUnit(int unitID)
 	if (!haveDrawUnit) {
 		return false;
 	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawUnit");
 	if (!cmdStr.GetRegistryFunc(L)) {
 		return false;
@@ -805,6 +833,9 @@ const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 	if (!haveAICallIn) {
 		return NULL;
 	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("AICallIn");
 	if (!cmdStr.GetRegistryFunc(L)) {
 		return NULL;
@@ -869,6 +900,8 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 		args[0] = 0; // failure
 		return;
 	}
+
+	LUA_CALL_IN_CHECK(L);
 
 	const int top = lua_gettop(L);
 
