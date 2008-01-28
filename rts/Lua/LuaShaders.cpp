@@ -19,6 +19,10 @@ using std::vector;
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
+#include "System/LogOutput.h"
+
+
+int LuaShaders::activeShaderDepth = 0;
 
 
 /******************************************************************************/
@@ -34,6 +38,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(CreateShader);
 	REGISTER_LUA_CFUNC(DeleteShader);
 	REGISTER_LUA_CFUNC(UseShader);
+	REGISTER_LUA_CFUNC(ActiveShader);
 
 	REGISTER_LUA_CFUNC(GetActiveUniforms);
 	REGISTER_LUA_CFUNC(GetUniformLocation);
@@ -501,6 +506,42 @@ int LuaShaders::UseShader(lua_State* L)
 }
 
 
+int LuaShaders::ActiveShader(lua_State* L)
+{
+	const int progID = (int)luaL_checkint(L, 1);
+	luaL_checktype(L, 2, LUA_TFUNCTION);
+
+	GLuint progName;
+	if (progID == 0) {
+		progName = 0;
+	}
+	else {
+		LuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		progName = shaders.GetProgramName(progID);
+		if (progName == 0) {
+			return 0;
+		}
+	}
+
+	GLint currentProgram;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+
+	glUseProgram(progName);
+	activeShaderDepth++;
+	const int error = lua_pcall(L, lua_gettop(L) - 2, 0, 0);
+	activeShaderDepth--;
+	glUseProgram(currentProgram);
+
+	if (error != 0) {
+		logOutput.Print("gl.ActiveShader: error(%i) = %s\n",
+		                error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -592,12 +633,13 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 
 
 /******************************************************************************/
-
 /******************************************************************************/
 
 int LuaShaders::Uniform(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	if (activeShaderDepth == 0) {
+		CheckDrawingEnabled(L, __FUNCTION__);
+	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
 	const int values = lua_gettop(L) - 1;
@@ -638,7 +680,9 @@ int LuaShaders::Uniform(lua_State* L)
 
 int LuaShaders::UniformInt(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	if (activeShaderDepth == 0) {
+		CheckDrawingEnabled(L, __FUNCTION__);
+	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
 	const int values = lua_gettop(L) - 1;
@@ -689,7 +733,9 @@ static void UniformMatrix4dv(GLint location, const double dm[16])
 
 int LuaShaders::UniformMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	if (activeShaderDepth == 0) {
+		CheckDrawingEnabled(L, __FUNCTION__);
+	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 
 	const int values = lua_gettop(L) - 1;
