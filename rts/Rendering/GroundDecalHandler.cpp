@@ -151,7 +151,7 @@ void CGroundDecalHandler::Draw(void)
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	// "draw" building decals
+	// create and draw the quads for each building decal
 	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
 		if (!(*bdi)->buildingDecals.empty()) {
 			CVertexArray* va = GetVertexArray();
@@ -194,10 +194,10 @@ void CGroundDecalHandler::Draw(void)
 					// and draw the quad at that height (after terraforming
 					// the ground can be assumed to be mostly flat directly
 					// below a factory, so this is preferable to splitting
-					// the texture quad up into quadratically many tiles on
-					// every frame just so it follows the terrain slightly
-					// better -- note however that if the height differences
-					// are extreme things do look odd)
+					// the texture quad into quadratically many tiles every
+					// frame just so it follows the terrain slightly better
+					// -- note however that if the height differences are
+					// extreme, things do look a bit odd)
 					// TODO: do split the quad, but use VA buffers to draw
 					// them (as with the groundscars)?
 					const float mt = max(heightmap[(tlz / 8) * (gs->mapx + 1) + (tlx / 8)], heightmap[(trz / 8) * (gs->mapx + 1) + (trx / 8)]);
@@ -262,7 +262,7 @@ void CGroundDecalHandler::Draw(void)
 	color2[2] = 255;
 	color2[3] = 255;
 
-	// "draw" unit footprints
+	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		if (!(*tti)->tracks.empty()) {
 			CVertexArray* va = GetVertexArray();
@@ -308,7 +308,7 @@ void CGroundDecalHandler::Draw(void)
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glPolygonOffset(-10, -400);
 
-	// create the 16x16 quads for each ground scar
+	// create and draw the 16x16 quads for each ground scar
 	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
 		Scar* scar = *si;
 
@@ -686,8 +686,8 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	decal->gbOwner = 0;
 	decal->posx = max(0, posx - sizex);
 	decal->posy = max(0, posy - sizey);
-	decal->xsize = min(gs->mapx - 1 - decal->posx, sizex * 2);   // sizex * 2; //
-	decal->ysize = min(gs->mapy - 1 - decal->posy, sizey * 2);   // sizey * 2; //
+	decal->xsize = min(gs->mapx - 1 - decal->posx, sizex * 2);
+	decal->ysize = min(gs->mapy - 1 - decal->posy, sizey * 2);
 	decal->AlphaFalloff = building->unitDef->buildingDecalDecaySpeed;
 	decal->alpha = 0;
 	decal->pos = building->pos;
