@@ -300,15 +300,12 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 		float dps = 0.0f;
 		bool canhit = false;
-		string targetcat;
 		int armortype = victim->armorType;
 		int numberofdamages = 0;
 		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
 
 		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
 			if (!unit->weapons[i].def->paralyzer) {
-				targetcat = unitTypes[unit->id].TargetCategories[i];
-
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// what the weapon can target
 				unsigned int c = unit->weapons[i].onlyTargetCat;			// what the unit accepts as this weapons target
@@ -811,17 +808,24 @@ void CUnitTable::Init() {
 		for (std::set<int>::iterator it = me->sides.begin(); it != me->sides.end(); it++) {
 			int mySide = *it;
 			int UnitCost = int(me->def->metalCost * METAL2ENERGY + me->def->energyCost);
-
-			// KLOOTNOTE: fails parsing on certain CA .lua files
-			CSunParser attackerParser(ai);
-			attackerParser.LoadVirtualFile(me->def->filename.c_str());
 			me->TargetCategories.resize(me->def->weapons.size());
 
-			for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
-				char weaponnumber[10] = "";
-				itoa(w, weaponnumber, 10);
-				attackerParser.GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
+			if (me->def->filename.find(".lua") != std::string::npos) {
+				// can't parse these without a Lua parser
+				for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
+					me->TargetCategories[w] = "";
+				}
+			} else {
+				CSunParser attackerParser(ai);
+				attackerParser.LoadVirtualFile(me->def->filename.c_str());
+
+				for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
+					char weaponnumber[10] = "";
+					itoa(w, weaponnumber, 10);
+					attackerParser.GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
+				}
 			}
+
 
 			me->DPSvsUnit.resize(numOfUnits + 1);
 
