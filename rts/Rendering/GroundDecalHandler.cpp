@@ -179,6 +179,7 @@ void CGroundDecalHandler::Draw(void)
 					float xts = 1.0f / decal->xsize;
 					float yts = 1.0f / decal->ysize;
 
+					const int maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
 					const int xMin = 0, xMax = decal->xsize;
 					const int zMin = 0, zMax = decal->ysize;
 					const int tlx = (decal->posx + xMin) * 8;	// x-coor of top-left quad vertex
@@ -190,6 +191,15 @@ void CGroundDecalHandler::Draw(void)
 					const int brz = (decal->posy + zMax) * 8;	// z-coor of bottom-right quad vertex
 					const int blz = brz;						// z-coor of bottom-left quad vertex
 
+					const int tlhi = (tlz / 8) * (gs->mapx + 1) + (tlx / 8); // height-map index of tl vertex
+					const int trhi = (trz / 8) * (gs->mapx + 1) + (trx / 8); // height-map index of tr vertex
+					const int brhi = (brz / 8) * (gs->mapx + 1) + (brx / 8); // height-map index of br vertex
+					const int blhi = (blz / 8) * (gs->mapx + 1) + (blx / 8); // height-map index of bl vertex
+					const float tlh = (tlhi < 0 || tlhi > maxIdx)? 0.0f: heightmap[tlhi];
+					const float trh = (trhi < 0 || trhi > maxIdx)? 0.0f: heightmap[trhi];
+					const float brh = (brhi < 0 || brhi > maxIdx)? 0.0f: heightmap[brhi];
+					const float blh = (blhi < 0 || blhi > maxIdx)? 0.0f: heightmap[blhi];
+
 					// get the maximum heightmap-value of the four vertices
 					// and draw the quad at that height (after terraforming
 					// the ground can be assumed to be mostly flat directly
@@ -200,8 +210,8 @@ void CGroundDecalHandler::Draw(void)
 					// extreme, things do look a bit odd)
 					// TODO: do split the quad, but use VA buffers to draw
 					// them (as with the groundscars)?
-					const float mt = max(heightmap[(tlz / 8) * (gs->mapx + 1) + (tlx / 8)], heightmap[(trz / 8) * (gs->mapx + 1) + (trx / 8)]);
-					const float mb = max(heightmap[(brz / 8) * (gs->mapx + 1) + (brx / 8)], heightmap[(blz / 8) * (gs->mapx + 1) + (blx / 8)]);
+					const float mt = max(tlh, trh);
+					const float mb = max(brh, blh);
 					const float h = max(mt, mb);
 
 					switch (decal->facing) {
@@ -684,15 +694,14 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 	decal->owner = building;
 	decal->gbOwner = 0;
-	decal->posx = max(0, posx - sizex);
-	decal->posy = max(0, posy - sizey);
-	decal->xsize = min(gs->mapx - 1 - decal->posx, sizex * 2);
-	decal->ysize = min(gs->mapy - 1 - decal->posy, sizey * 2);
 	decal->AlphaFalloff = building->unitDef->buildingDecalDecaySpeed;
 	decal->alpha = 0;
 	decal->pos = building->pos;
 	decal->radius = sqrt((float) (sizex * sizex + sizey * sizey)) * 8 + 20;
 	decal->facing = building->buildFacing;
+
+	decal->xsize = sizex * 2;
+	decal->ysize = sizey * 2;
 
 	if (building->buildFacing == 1 || building->buildFacing == 3) {
 		// swap xsize and ysize if building faces East or West
@@ -701,19 +710,22 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 		decal->ysize = tmp;
 	}
 
+	decal->posx = posx - (decal->xsize / 2);
+	decal->posy = posy - (decal->ysize / 2);
+
 	building->buildingDecal = decal;
 	type->buildingDecals.insert(decal);
 }
 
 void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
 {
-	BuildingGroundDecal* decal=building->buildingDecal;
-	if(!decal)
+	BuildingGroundDecal* decal = building->buildingDecal;
+	if (!decal)
 		return;
 
-	decal->owner=0;
-	decal->gbOwner=gb;
-	building->buildingDecal=0;
+	decal->owner = 0;
+	decal->gbOwner = gb;
+	building->buildingDecal = 0;
 }
 
 int CGroundDecalHandler::GetBuildingDecalType(std::string name)
