@@ -54,6 +54,7 @@ class LuaShaders {
 		static int CreateShader(lua_State* L);
 		static int DeleteShader(lua_State* L);
 		static int UseShader(lua_State* L);
+		static int ActiveShader(lua_State* L);
 
 		static int GetActiveUniforms(lua_State* L);
 		static int GetUniformLocation(lua_State* L);
@@ -62,6 +63,9 @@ class LuaShaders {
 		static int UniformMatrix(lua_State* L);
 
 		static int GetShaderLog(lua_State* L);
+
+	private:
+		static int activeShaderDepth;
 };
 
 
