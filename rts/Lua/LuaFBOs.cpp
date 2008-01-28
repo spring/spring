@@ -532,7 +532,7 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 	glPopAttrib();
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveFBO: error(%i) = %s\n",
+		logOutput.Print("gl.ActiveFBO: error(%i) = %s",
 		                error, lua_tostring(L, -1));
 		lua_error(L);
 	}

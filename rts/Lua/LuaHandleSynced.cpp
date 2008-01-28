@@ -9,6 +9,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaCallInCheck.h"
 #include "LuaCallInHandler.h"
 #include "LuaUtils.h"
 #include "LuaConstGL.h"
@@ -608,6 +609,8 @@ bool CLuaHandleSynced::UnsyncedUpdateCallIn(const string& name)
 
 bool CLuaHandleSynced::Initialize(const string& syncData)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("Initialize");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true;
@@ -635,6 +638,8 @@ string CLuaHandleSynced::GetSyncData()
 {
 	string syncData;
 	
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("GetSyncData");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return syncData;
@@ -665,6 +670,8 @@ string CLuaHandleSynced::GetSyncData()
 
 void CLuaHandleSynced::SendCallbacks()
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	const int count = (int)cobCallbackEntries.size();
 	for (int cb = 0; cb < count; cb++) {
 		static const LuaHashString cmdStr("CobCallback");
@@ -694,11 +701,12 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 		return;
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
 	}
-
 
 	lua_pushnumber(L, frameNumber); // 6 day roll-over
 	
@@ -728,6 +736,8 @@ bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 
 bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("GotChatMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -749,6 +759,7 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 
 void CLuaHandleSynced::RecvFromSynced(int args)
 {
+	//LUA_CALL_IN_CHECK(L); -- not valid here
 	static const LuaHashString cmdStr("RecvFromSynced");
 	if (!cmdStr.GetRegistryFunc(L)) {
 		return; // the call is not defined

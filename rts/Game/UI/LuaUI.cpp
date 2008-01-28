@@ -13,6 +13,7 @@ using namespace std;
 
 #include "LuaInclude.h"
 
+#include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaUtils.h"
 #include "Lua/LuaConstGL.h"
@@ -411,6 +412,8 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 
 void CLuaUI::Shutdown()
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("Shutdown");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -425,6 +428,8 @@ void CLuaUI::Shutdown()
 
 void CLuaUI::GameFrame(int frameNumber)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
@@ -441,6 +446,8 @@ void CLuaUI::GameFrame(int frameNumber)
 
 bool CLuaUI::ConfigCommand(const string& command)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("ConfigureLayout");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -466,6 +473,9 @@ bool CLuaUI::AddConsoleLines()
 	vector<CInfoConsole::RawLine> lines;
 	ic->GetNewRawLines(lines);
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
 	const int count = (int)lines.size();
 	for (int i = 0; i < count; i++) {
 		const CInfoConsole::RawLine& rl = lines[i];
@@ -489,6 +499,8 @@ bool CLuaUI::AddConsoleLines()
 
 bool CLuaUI::CommandNotify(const Command& cmd)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("CommandNotify");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
@@ -534,6 +546,8 @@ bool CLuaUI::CommandNotify(const Command& cmd)
 
 bool CLuaUI::GroupChanged(int groupID)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("GroupChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
@@ -573,6 +587,8 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 		return;
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("ShockFront");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveShockFront = false;
@@ -610,6 +626,8 @@ string CLuaUI::WorldTooltip(const CUnit* unit,
 		return "";
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("WorldTooltip");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveWorldTooltip = false;
@@ -663,6 +681,8 @@ bool CLuaUI::MapDrawCmd(int playerID, int type,
 		return false;
 	}
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("MapDrawCmd");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		haveMapDrawCmd = false;
@@ -724,6 +744,8 @@ bool CLuaUI::MapDrawCmd(int playerID, int type,
 bool CLuaUI::GameSetup(const string& state, bool& ready,
                        const map<int, string>& playerStates)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("GameSetup");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;
@@ -764,6 +786,8 @@ bool CLuaUI::GameSetup(const string& state, bool& ready,
 
 bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("KeyPress");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -800,6 +824,8 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 
 bool CLuaUI::KeyRelease(unsigned short key)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("KeyRelease");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -833,6 +859,8 @@ bool CLuaUI::KeyRelease(unsigned short key)
 
 bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("MouseMove");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -861,6 +889,8 @@ bool CLuaUI::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CLuaUI::MousePress(int x, int y, int button)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("MousePress");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -887,6 +917,8 @@ bool CLuaUI::MousePress(int x, int y, int button)
 
 int CLuaUI::MouseRelease(int x, int y, int button)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("MouseRelease");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -913,6 +945,8 @@ int CLuaUI::MouseRelease(int x, int y, int button)
 
 bool CLuaUI::MouseWheel(bool up, float value)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("MouseWheel");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined, do not take the event
@@ -938,6 +972,8 @@ bool CLuaUI::MouseWheel(bool up, float value)
 
 bool CLuaUI::IsAbove(int x, int y)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("IsAbove");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
@@ -963,6 +999,8 @@ bool CLuaUI::IsAbove(int x, int y)
 
 string CLuaUI::GetTooltip(int x, int y)
 {
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("GetTooltip");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return ""; // the call is not defined
@@ -1020,6 +1058,8 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 	const int top = lua_gettop(L);
 
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;
@@ -1346,6 +1386,7 @@ bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
+	LUA_CALL_IN_CHECK(L);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
 		return 0;
