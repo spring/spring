@@ -42,6 +42,7 @@ public:
 	CLogOutput& operator<<(const float f);
 	CLogOutput& operator<<(const char* c);
 	CLogOutput& operator<<(const float3& f);
+	CLogOutput& operator<<(const std::string &f);	
 
 	void SetLastMsgPos(const float3& pos);
 

@@ -178,3 +178,8 @@ CLogOutput& CLogOutput::operator<< (const char* c)
 	}
 	return *this;
 }
+
+CLogOutput& CLogOutput::operator<< (const std::string &s)
+{
+	return this->operator <<(s.c_str());
+}
