@@ -492,13 +492,18 @@ void CAirCAI::ExecuteFight(Command &c)
 	}
 
 	// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
-	if (owner->unitDef->canAttack && owner->fireState >= 2 && owner->moveState != 0 && owner->maxRange > 0) {
-		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos+owner->speed*10);
-		float testRad=1000*owner->moveState;
-		CUnit* enemy = helper->GetClosestEnemyAircraft(curPosOnLine,testRad,owner->allyteam);
-		if(myPlane->isFighter
-			&& enemy && !enemy->crashing
-			&& (owner->moveState!=1 || LinePointDist(commandPos1,commandPos2,enemy->pos) < 1000))
+	if (owner->unitDef->canAttack && owner->fireState >= 2
+			&& owner->moveState != 0 && owner->maxRange > 0) {
+		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2,
+				owner->pos + owner->speed*10);
+		float testRad = 1000 * owner->moveState;
+		CUnit* enemy = NULL;
+		if(myPlane->isFighter) {
+			enemy = helper->GetClosestEnemyAircraft(curPosOnLine,
+					testRad, owner->allyteam);
+		}
+		if(IsValidTarget(enemy) && (owner->moveState!=1
+				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
 		{
 			Command nc;
 			nc.id=CMD_ATTACK;
@@ -517,10 +522,7 @@ void CAirCAI::ExecuteFight(Command &c)
 				commandPos1, commandPos2, owner->pos + owner->speed * 20);
 			float testRad = 500 * owner->moveState;
 			enemy = helper->GetClosestEnemyUnit(curPosOnLine, testRad, owner->allyteam);
-			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-				&& !enemy->crashing
-				&& (myPlane->isFighter || !enemy->unitDef->canfly))
-			{
+			if(IsValidTarget(enemy)) {
 				Command nc;
 				nc.id = CMD_ATTACK;
 				nc.params.push_back(enemy->id);
@@ -539,7 +541,8 @@ void CAirCAI::ExecuteFight(Command &c)
 	}
 	myPlane->goalPos=goalPos;
 
-	if((owner->pos-goalPos).SqLength2D()<(127*127) || (owner->pos+owner->speed*8-goalPos).SqLength2D()<(127*127)){
+	if((owner->pos - goalPos).SqLength2D() < (127 * 127)
+			|| (owner->pos + owner->speed*8 - goalPos).SqLength2D() < (127 * 127)) {
 		FinishCommand();
 	}
 	return;
@@ -678,9 +681,9 @@ void CAirCAI::ExecuteGuard(Command &c)
 	if (int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
 			&& UpdateTargetLostTimer(int(c.params[0]))) {
 		CUnit* guarded = uh->units[int(c.params[0])];
-		if(owner->unitDef->canAttack && guarded->lastAttacker
-				&& guarded->lastAttack + 40 < gs->frameNum && owner->maxRange > 0
-				&& (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
+		if(owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
+				&& owner->maxRange > 0 && IsValidTarget(guarded->lastAttacker))
+		{
 			Command nc;
 			nc.id = CMD_ATTACK;
 			nc.params.push_back(guarded->lastAttacker->id);
@@ -718,6 +721,11 @@ int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 		}
 	}
 	return CMD_MOVE;
+}
+
+bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
+	return CMobileCAI::IsValidTarget(enemy) && !enemy->crashing
+		&& (((CAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 void CAirCAI::DrawCommands(void)

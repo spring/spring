@@ -63,9 +63,12 @@ protected:
 	int lastCloseInTry;
 	bool slowGuard;
 	bool moveDir;
+	
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
+	
+	virtual bool IsValidTarget(const CUnit* enemy) const;
 };
 
 #define MAX_CLOSE_IN_RETRY_TICKS 30
