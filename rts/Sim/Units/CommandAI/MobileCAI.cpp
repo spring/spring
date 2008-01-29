@@ -466,7 +466,8 @@ void CMobileCAI::ExecuteFight(Command &c)
 				&& !owner->weapons.front()->AttackUnit(orderTarget, false)) {
 			CUnit* newTarget = helper->GetClosestEnemyUnit(
 				owner->pos, owner->maxRange, owner->allyteam);
-			if(owner->weapons.front()->AttackUnit(newTarget, false)) {
+			if(IsValidTarget(newTarget) && !owner->weapons.empty()
+					&& owner->weapons.front()->AttackUnit(newTarget, false)) {
 				c.params[0] = newTarget->id;
 				inCommand = false;
 			} else {
@@ -518,10 +519,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		CUnit* enemy=helper->GetClosestEnemyUnit(
 			curPosOnLine, owner->maxRange + 100 * owner->moveState * owner->moveState,
 			owner->allyteam);
-		if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-				&& !(owner->unitDef->noChaseCategory & enemy->category)
-				&& !owner->weapons.empty()
-				&& !enemy->neutral){
+		if(IsValidTarget(enemy) && !owner->weapons.empty()) {
 			Command c2;
 			c2.id=CMD_FIGHT;
 			c2.options=c.options|INTERNAL_ORDER;
@@ -544,6 +542,12 @@ void CMobileCAI::ExecuteFight(Command &c)
 	return;
 }
 
+bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
+	return enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
+		&& !(owner->unitDef->noChaseCategory & enemy->category)
+		&& !enemy->neutral;
+}
+
 /**
 * @brief Executes the guard command c
 */
@@ -554,9 +558,9 @@ void CMobileCAI::ExecuteGuard(Command &c)
 	if(int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
 			&& UpdateTargetLostTimer(int(c.params[0]))){
 		CUnit* guarded = uh->units[int(c.params[0])];
-		if(owner->unitDef->canAttack && guarded->lastAttacker
-				&& guarded->lastAttack + 40 < gs->frameNum
-				&& (owner->hasUWWeapons || !guarded->lastAttacker->isUnderWater)){
+		if(owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
+				&& IsValidTarget(guarded->lastAttacker))
+		{
 			StopSlowGuard();
 			Command nc;
 			nc.id=CMD_ATTACK;
