@@ -1,6 +1,7 @@
 #include "GameServer.h"
 
 #include <stdarg.h>
+#include <ctime>
 #include <boost/bind.hpp>
 #include <SDL_timer.h>
 
@@ -66,7 +67,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	gamePausable = true;
 	noHelperAIs = false;
 	sentGameOverMsg = false;
-	nextserverframenum = 0;
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
 	rng.Seed(SDL_GetTicks());
@@ -149,8 +149,7 @@ void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	lastTick = newlastTick;
-//	serverframenum = newserverframenum;
-	nextserverframenum = newserverframenum+1;
+	serverframenum = newserverframenum;
 }
 
 void CGameServer::SkipTo(int targetframe)
@@ -335,7 +334,7 @@ void CGameServer::Update()
 	}
 	else if (serverframenum > 0 && !demoReader)
 	{
-		CreateNewFrame(true);
+		CreateNewFrame(true, false);
 	}
 	serverNet->Update();
 
@@ -817,7 +816,7 @@ void CGameServer::StartGame()
 	}
 	timeLeft=0;
 	lastTick = SDL_GetTicks()-1;
-	CreateNewFrame(true);
+	CreateNewFrame(true, false);
 }
 
 void CGameServer::SetGamePausable(const bool arg)
@@ -866,44 +865,44 @@ void CGameServer::CheckForGameEnd()
 #endif
 }
 
-void CGameServer::CreateNewFrame(bool fromServerThread)
+void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	CheckSync();
+	int newFrames = 1;
 
-	// Send out new frame messages.
-	unsigned currentTick = SDL_GetTicks();
-	unsigned timeElapsed = currentTick - lastTick;
-	if (timeElapsed>200) {
-		timeElapsed=200;
-	}
+	if(!fixedFrameTime){
+		unsigned currentTick = SDL_GetTicks();
+		unsigned timeElapsed = currentTick - lastTick;
+		if (timeElapsed>200) {
+			timeElapsed=200;
+		}
 
 #ifdef DEBUG
-	if(gameClientUpdated){
-		gameClientUpdated=false;
+		if(gameClientUpdated){
+			gameClientUpdated=false;
+		}
+#endif
+
+		timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
+		lastTick=currentTick;
+		newFrames = (timeLeft > 0) ? ceil(timeLeft) : 0;
+		timeLeft -= newFrames;
 	}
-#endif
 
-	timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
-	lastTick=currentTick;
-
-	while((timeLeft>0) && !IsPaused)
-	{
 #ifndef NO_AVI
-		if((!game || !game->creatingVideo) || !fromServerThread)
+	if(((!game || !game->creatingVideo) && !IsPaused) || fixedFrameTime){
+#else
+	if(!IsPaused || fixedFrameTime){
 #endif
-		{
-			if (nextserverframenum!=0) {
-				serverframenum = nextserverframenum;
-				nextserverframenum = 0;
-			} else
-				serverframenum++;
+		for(int i=0; i < newFrames; ++i){
+			++serverframenum;
+			//Send out new frame messages.
 			serverNet->SendNewFrame(serverframenum);
 #ifdef SYNCCHECK
 			outstandingSyncFrames.push_back(serverframenum);
 #endif
 		}
-		timeLeft--;
 	}
 }
 

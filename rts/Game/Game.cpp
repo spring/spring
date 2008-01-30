@@ -1132,7 +1132,7 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (cmd == "singlestep") {
 		if (gameServer && gs->paused)
-			gameServer->CreateNewFrame(false);
+			gameServer->CreateNewFrame(false, true);
 	}
 	else if (cmd == "debug") {
 		gu->drawdebug = !gu->drawdebug;
@@ -1900,7 +1900,7 @@ bool CGame::Update()
 #endif
 
 	if(creatingVideo && playing && gameServer){
-		gameServer->CreateNewFrame();
+		gameServer->CreateNewFrame(false, true);
 	}
 
 	if(!ClientReadNet()){
