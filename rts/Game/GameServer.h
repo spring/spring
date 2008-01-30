@@ -73,7 +73,7 @@ public:
 	*/
 	void SkipTo(int targetframe);
 
-	void CreateNewFrame(bool fromServerThread=false);
+	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	bool WaitsOnCon() const;
 
@@ -122,7 +122,6 @@ private:
 
 	volatile bool quitServer;
 	int serverframenum;
-	int nextserverframenum; //For loading game
 
 	unsigned serverStartTime;
 	unsigned readyTime;
