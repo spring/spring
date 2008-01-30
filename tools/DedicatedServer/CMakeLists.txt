@@ -1,6 +1,7 @@
 PROJECT(DedicatedServer)
 SET(CMAKE_CXX_FLAGS "-g -O1 -Wall")
 ADD_DEFINITIONS(-DDEBUG -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
+find_package(SDL REQUIRED)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 ADD_LIBRARY(net SHARED  ${netfiles})
@@ -33,6 +34,9 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 ADD_LIBRARY(fileops SHARED  ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
 TARGET_LINK_LIBRARIES(fileops hpiutil2 7zip minizip boost_regex)
 
-ADD_EXECUTABLE(server main ../../rts/Game/GameServer ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
+ADD_LIBRARY(server SHARED ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
 TARGET_LINK_LIBRARIES(server SDL boost_thread net fileops)
+
+ADD_EXECUTABLE(dedicated main)
+TARGET_LINK_LIBRARIES(dedicated server)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)

@@ -7,6 +7,9 @@
 
 class TdfParser;
 
+/**
+ * @brief just a copy of the original, but removed some unneeded stuff
+ */
 class CGameSetup : public CGameSetupData
 {
 public:
