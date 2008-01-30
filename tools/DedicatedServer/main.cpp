@@ -7,6 +7,8 @@
 
 int main(int argc, char *argv[])
 {
+	std::cout << "BIG FAT WARNING: this server is currently under development. If you find any errors (you most likely will)";
+	std::cout << " report them to mantis or the forums." << std::endl << std::endl;
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
 	
