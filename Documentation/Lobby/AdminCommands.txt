@@ -140,3 +140,9 @@ retrievelatestbanlist
   forces server to update ban entries from the database. Note: you never
   need to call this command manually, it is automatically called by the web
   interface once a ban entry is added.
+generateuserid username
+  will send ACQUIREUSERID command to <username>. No need to ever call this
+  command manually as it is called automatically by the web interface when
+  trying to generate user ID.
+outputdbdriverstatus
+  prints some debug info about database driver to console. Used only for debugging.
