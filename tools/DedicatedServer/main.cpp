@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 	std::cout << " report them to mantis or the forums." << std::endl << std::endl;
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
-	
+
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
 	
@@ -19,16 +19,18 @@ int main(int argc, char *argv[])
 	{
 		std::string script = argv[1];
 		std::cout << "Loading script: " << script << std::endl;
-		gameSetup = new CGameSetup();      
-		gameSetup->Init(script);
+		gameSetup = new CGameSetup();	// to store the gamedata inside      
+		gameSetup->Init(script);	// read the script provided by cmdline
+		
+		// Create the server, it will run in a separate thread
 		server = new CGameServer(gameSetup->hostport, gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName, gameSetup);
 
-		if (argc > 2)
+		if (argc > 2) // add the communication interface
 			server->AddAutohostInterface(8453, atoi(argv[2]));
 		
-		while (!server->HasFinished())
-			sleep(1);
-		delete server;
+		while (!server->HasFinished()) // check if still running
+			sleep(1);	// if so, wait 1  second
+		delete server;	// delete the server after usage
 	}
 	else
 	{
