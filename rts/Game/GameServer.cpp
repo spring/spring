@@ -1015,14 +1015,15 @@ void CGameServer::SendSystemMsg(const char* fmt,...)
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 {
+	bool canDoStuff = (player == SERVER_PLAYER || players[player]->hasRights);
 	//TODO: migrate more stuff from CGame::HandleChatMessage here
-	if ((msg.find(".kickbynum") == 0) && (players[player]->hasRights)) {
+	if ((msg.find(".kickbynum") == 0) && canDoStuff) {
 		if (msg.length() >= 11) {
 			int playerNum = atoi(msg.substr(11, string::npos).c_str());
 			KickPlayer(playerNum);
 		}
 	}
-	else if ((msg.find(".kick") == 0) && (players[player]->hasRights)) {
+	else if ((msg.find(".kick") == 0) && canDoStuff) {
 		if (msg.length() >= 6) {
 			std::string name = msg.substr(6,string::npos);
 			if (!name.empty()){
@@ -1038,15 +1039,15 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".nopause") == 0) && (players[player]->hasRights)) {
+	else if ((msg.find(".nopause") == 0) && canDoStuff) {
 		SetBoolArg(gamePausable, msg, ".nopause");
 	}
-	else if ((msg.find(".nohelp") == 0) && (players[player]->hasRights)) {
+	else if ((msg.find(".nohelp") == 0) && canDoStuff) {
 		SetBoolArg(noHelperAIs, msg, ".nohelp");
 		// sent it because clients have to do stuff when this changes
 		serverNet->SendChat(player, msg);
 	}
-	else if ((msg.find(".setmaxspeed") == 0) && (players[player]->hasRights)) {
+	else if ((msg.find(".setmaxspeed") == 0) && canDoStuff) {
 		maxUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor > maxUserSpeed) {
 			serverNet->SendUserSpeed(player, maxUserSpeed);
@@ -1057,7 +1058,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			}
 		}
 	}
-	else if ((msg.find(".setminspeed") == 0) && (players[player]->hasRights)) {
+	else if ((msg.find(".setminspeed") == 0) && canDoStuff) {
 		minUserSpeed = atof(msg.substr(12).c_str());
 		if (userSpeedFactor < minUserSpeed) {
 			serverNet->SendUserSpeed(player, minUserSpeed);
@@ -1067,6 +1068,10 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 				internalSpeed = userSpeedFactor;
 			}
 		}
+	}
+	else if ((msg.find(".forcestart") == 0) && canDoStuff) {
+		if (!gameStartTime)
+			CheckForGameStart(true);
 	}
 	else {
 		serverNet->SendChat(player, msg);
