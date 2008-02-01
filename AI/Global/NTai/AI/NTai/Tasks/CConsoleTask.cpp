@@ -15,6 +15,11 @@ void CConsoleTask::RecieveMessage(CMessage &message){
 }
 
 bool CConsoleTask::Init(){
+	
+	if(!valid){
+		return false;
+	}
+
 	G->L.iprint(mymessage);
 	End();
 	return true;

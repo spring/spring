@@ -290,6 +290,11 @@ void CKeywordConstructionTask::Build(){
 }
 
 bool CKeywordConstructionTask::Init(){
+	
+	if(!valid){
+		return false;
+	}
+
 	NLOG(("CKeywordConstructionTask::Init"+G->Manufacturer->GetTaskName(type)));
 	G->L.print("CKeywordConstructionTask::Init "+G->Manufacturer->GetTaskName(type));
 
