@@ -18,7 +18,7 @@ bool CDGunBehaviour::Init(){
 
 void CDGunBehaviour::RecieveMessage(CMessage &message){
 	if(message.GetType() == string("update")){
-		if(G->GetCurrentFrame() % (64) == 0){
+		if(message.GetFrame() % (64) == 0){
 			if(!active){
 				active = G->Actions->DGunNearby(uid);
 			}

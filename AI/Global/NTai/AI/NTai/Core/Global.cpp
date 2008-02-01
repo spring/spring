@@ -224,6 +224,38 @@ namespace ntai {
 		if(paused) return;
 		START_EXCEPTION_HANDLING
 
+		if(!handlers.empty()){
+			if(!msgqueue.empty()){
+				int n = 0;
+				for(vector<CMessage>::iterator mi = msgqueue.begin(); mi != msgqueue.end(); ++mi){
+					if(mi->IsDead(GetCurrentFrame())){
+						continue;
+					}
+
+					n++;
+
+					for(set<boost::shared_ptr<IModule> >::iterator k = handlers.begin(); k != handlers.end(); ++k){
+						if((*k)->IsValid()){
+							(*k)->RecieveMessage(*mi);
+						}else{
+							RemoveHandler((*k));
+						}
+					}
+
+					// We dont want to do everything at once if the queue is gigantic
+					if(n >15){
+						// so erase what we've already parsed and exit the loop, we
+						// can do the rest of the queue in the next update call.
+						msgqueue.erase(msgqueue.begin(),mi);
+						break;
+					}
+				}
+
+				msgqueue.erase(msgqueue.begin(),msgqueue.end());
+			}
+
+		}
+
 		if(cb->GetCurrentFrame() == (1 SECOND)){
 			NLOG("STARTUP BANNER IN Global::Update()");
 
@@ -289,8 +321,15 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("Actions->Update()")
 
 		START_EXCEPTION_HANDLING
+
 		CMessage message("update");
+
+		// a lifetime of 15 frames, so there should never be more than
+		// a backlog of 15 valid update messages
+		message.SetLifeTime(15);
+		
 		FireEvent(message);
+
 		END_EXCEPTION_HANDLING("CMessage message(\"update\"); FireEvent(message);")
 
 		//EXCEPTION_HANDLER(Manufacturer->Update(),"Manufacturer->Update()",NA)
@@ -519,6 +558,7 @@ namespace ntai {
 	void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 		NLOG("Global::UnitDamaged");
 
+		if(damage <= 0) return;
 		if(!ValidUnitID(damaged)) return;
 		if(!ValidUnitID(attacker)) return;
 
@@ -529,31 +569,29 @@ namespace ntai {
 		//END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
 
 		//START_EXCEPTION_HANDLING
-		if(!ValidUnitID(attacker)){
-			const UnitDef* uda = GetUnitDef(attacker);
+		const UnitDef* uda = GetUnitDef(attacker);
 
-			if(uda != 0){
-				float e = GetEfficiency(uda->name, uda->power);
-				e += 10000/uda->metalCost;
-				SetEfficiency(uda->name, e);
-			}
-			const UnitDef* udb = GetUnitDef(damaged);
+		if(uda != 0){
+			float e = GetEfficiency(uda->name, uda->power);
+			e += 10000/uda->metalCost;
+			SetEfficiency(uda->name, e);
+		}
+		const UnitDef* udb = GetUnitDef(damaged);
 
-			if(udb != 0){
-				float e = GetEfficiency(udb->name, udb->power);
-				e -= 10000/uda->metalCost;
-				SetEfficiency(udb->name, e);
-				/*if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
-					// if ti isnt currently building something then retreat
-					const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
-					if(uc != 0){
-						//
-						if(uc->front().id >= 0){
-							G->Actions->Retreat(damaged);
-						}
+		if(udb != 0){
+			float e = GetEfficiency(udb->name, udb->power);
+			e -= 10000/uda->metalCost;
+			SetEfficiency(udb->name, e);
+			/*if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
+				// if ti isnt currently building something then retreat
+				const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
+				if(uc != 0){
+					//
+					if(uc->front().id >= 0){
+						G->Actions->Retreat(damaged);
 					}
-				}*/
-			}
+				}
+			}*/
 		}
 		//END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
 
@@ -572,6 +610,7 @@ namespace ntai {
 		FireEvent(message);
 		/*END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
 	}
+
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	void Global::GotChatMsg(const char* msg, int player){
 		L.Message(msg, player);
@@ -1415,15 +1454,9 @@ namespace ntai {
 			return;
 		}
 
-		if(!handlers.empty()){
-			for(set<boost::shared_ptr<IModule> >::iterator k = handlers.begin(); k != handlers.end(); ++k){
-				if((*k)->IsValid()){
-					(*k)->RecieveMessage(message);
-				}else{
-					RemoveHandler((*k));
-				}
-			}
-		}
+		message.SetFrame(GetCurrentFrame());
+
+		msgqueue.push_back(message);
 	}
 
 	void Global::DestroyHandler(boost::shared_ptr<IModule> handler){

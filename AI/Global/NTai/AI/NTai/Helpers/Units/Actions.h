@@ -5,6 +5,7 @@ namespace ntai{
 	class CActions {
 	public:
 		CActions(Global* GL);
+		~CActions();
 
 		void Update(); // check points of interest in LOS and remove accordingly
 
@@ -74,6 +75,8 @@ namespace ntai{
 	private:
 		Global* G;
 		float3 last_attack;
+
+		int* temp;
 	};
 }
 
