@@ -116,11 +116,13 @@ namespace ntai {
 
 		bool HasUnit(int unit);
 		boost::shared_ptr<IModule> GetUnit(int unit);
+
 		// event handling
 		void RegisterMessageHandler(boost::shared_ptr<IModule> handler);
 		void FireEvent(CMessage &message);
 		void DestroyHandler(boost::shared_ptr<IModule> handler);
 		void RemoveHandler(boost::shared_ptr<IModule> handler);
+
 	private:
 		std::set<boost::shared_ptr<IModule> > dead_handlers;
 		std::set<boost::shared_ptr<IModule> > handlers;

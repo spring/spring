@@ -605,15 +605,6 @@ namespace ntai {
 		NLOG("Chaser::Update");
 		NO_GAIA(NA)
 
-		// decrease threat values of all sectors..
-		/*START_EXCEPTION_HANDLING
-		 if(EVERY_(67 FRAMES)){
-		 if(gridmaintainer){
-		 UpdateMatrixFriendlyUnits();
-		 }
-		 }
-		 END_EXCEPTION_HANDLING("Chaser::UpdateMatrixFriendlyUnits()")*/
-
 		// Run the code that handles stockpiled weapons.
 		START_EXCEPTION_HANDLING
 		if(EVERY_((10 SECONDS))){
@@ -629,7 +620,7 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("CGridManager::Update() in Chaser class")
 
 		START_EXCEPTION_HANDLING
-		if(EVERY_((8 FRAMES))){
+		if(EVERY_((9 FRAMES))){
 			UpdateMatrixEnemies();
 		}
 		END_EXCEPTION_HANDLING("Chaser::UpdateMatrixEnemies()")

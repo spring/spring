@@ -11,6 +11,13 @@ CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit,CUnitTypeData*
 	this->unit=unit;
 	this->builder = builder;
 	this->building = building;
+
+	if( builder == 0){
+		valid = false;
+	}else if(building == 0){
+		valid = false;
+	}
+
 	G->L.print("CUnitConstructionTask::CUnitConstructionTask object created | params: building :: "+this->building->GetUnitDef()->name+" using builder::"+ this->builder->GetUnitDef()->name);
 }
 
@@ -19,7 +26,10 @@ CUnitConstructionTask::~CUnitConstructionTask(){
 }
 
 void CUnitConstructionTask::RecieveMessage(CMessage &message){
-	if (!valid) return;
+	if(!valid){
+		return false;
+	}
+
 	NLOG("CUnitConstructionTask::RecieveMessage");
 	if(message.GetType() == string("unitidle")){
 		if(message.GetParameter(0) == unit){

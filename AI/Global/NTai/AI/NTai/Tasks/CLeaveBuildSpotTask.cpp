@@ -7,9 +7,16 @@ namespace ntai {
 		G = GL;
 		this->unit=unit;
 		utd = ud;
+		if(utd == 0){
+			valid = false;
+		}
 	}
 
 	void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
+		if(!valid){
+			return false;
+		}
+
 		if(message.GetType() == string("unitidle")){
 			if(message.GetParameter(0) == unit){
 				End();
@@ -22,6 +29,10 @@ namespace ntai {
 	}
 
 	bool CLeaveBuildSpotTask::Init(){
+		if(!valid){
+			return false;
+		}
+
 		if(utd->IsFactory()){
 			if(!utd->IsMobile()){
 				End();
