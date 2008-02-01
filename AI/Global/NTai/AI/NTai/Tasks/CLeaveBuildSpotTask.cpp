@@ -14,7 +14,7 @@ namespace ntai {
 
 	void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
 		if(!valid){
-			return false;
+			return;
 		}
 
 		if(message.GetType() == string("unitidle")){
