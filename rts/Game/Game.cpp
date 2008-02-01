@@ -3211,7 +3211,10 @@ bool CGame::ClientReadNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						//TODO is this enought?
-						gs->players[player]->team = int(inbuf[3]);
+						int newTeam = int(inbuf[3]);
+						gs->players[player]->team = newTeam;
+						if (gs->Team(newTeam)->leader == -1)
+							gs->Team(newTeam)->leader = player;
 						break;
 					}
 					default: {
@@ -3833,11 +3836,8 @@ void CGame::HandleChatMsg(std::string s, int player)
 	}
 #endif
 	else if ((s == ".spectator") && (gs->cheatEnabled || net->localDemoPlayback)) {
-		gs->players[player]->spectator=true;
+		gs->players[player]->StartSpectating();
 		if (player == gu->myPlayerNum) {
-			gu->spectating           = true;
-			gu->spectatingFullView   = true;
-			gu->spectatingFullSelect = true;
 			selectedUnits.ClearSelected();
 			unitTracker.Disable();
 			CLuaUI::UpdateTeams();

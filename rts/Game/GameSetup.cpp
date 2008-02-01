@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <cctype>
 #include "GameSetup.h"
-#include "GameVersion.h"
-#include "LogOutput.h"
 #include "Player.h"
 #include "TdfParser.h"
 #include "Team.h"
@@ -16,6 +14,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
+#include "System/UnsyncedRNG.h"
 
 
 using namespace std;
@@ -51,17 +50,6 @@ bool CGameSetup::Init(std::string setupFile)
 
 	return ret;
 }
-
-/** @brief random number generator function object for use with std::random_shuffle
- * @todo we could use UnsyncedRNG here 
- * */
-struct UnsyncedRandomNumberGenerator {
-	/** @brief returns a random number in the range [0, n) */
-	int operator()(int n) {
-		// a simple gu->usRandInt() % n isn't random enough
-		return gu->usRandInt() * n / (RANDINT_MAX + 1);
-	}
-};
 
 /**
 @brief Determine if the map is inside an archive, and possibly map needed archives
@@ -141,7 +129,7 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
-		UnsyncedRandomNumberGenerator rng;
+		UnsyncedRNG rng;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
 	}
 
@@ -187,9 +175,6 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 void CGameSetup::LoadPlayers(const TdfParser& file)
 {
 	numDemoPlayers = 0;
-	for (int a = 0; a < MAX_PLAYERS; a++) {
-		gs->players[a]->team = 0; //needed in case one tries to spec a game with only one team
-	}
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {

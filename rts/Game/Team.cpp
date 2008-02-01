@@ -128,7 +128,7 @@ CTeam::CTeam()
 	luaAI(""),
 	startPos(100,100,100),
 	handicap(1),
-	leader(0),
+	leader(-1),
 	lineageRoot(-1),
 	isDead(false),
 	lastStatSave(0),
