@@ -22,7 +22,8 @@
 using std::endl;
 
 
-#define ARCHIVE_MOVER_USE_WIN_API
+// FIXME: put in MSVC project file
+//#define ARCHIVE_MOVER_USE_WIN_API
 
 #ifdef ARCHIVE_MOVER_USE_WIN_API
   #ifndef NOMINMAX
@@ -59,6 +60,41 @@ extern "C" {
 #include "lib/7zip/7zCrc.h"
 #include "lib/7zip/7zExtract.h"
 }
+
+
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+
+	typedef fs::wpath Path;
+	typedef fs::filesystem_wpath_error FilesystemPathError;
+
+	typedef wchar_t Char;
+	typedef std::wstring String;
+	typedef std::wstringstream StringStream;
+	std::wostream& cout = std::wcout;
+
+	// Untested with MSVC (works fine with GCC).
+	#define _(s) L ## s
+	#define fopen _wfopen
+
+#else
+
+	// fs::wpath segfaults on Linux when doing something simple like:
+	//		Path p = fs::current_path<Path>();
+	// (this is used by fs::system_complete() and others ...)
+	typedef fs::path Path;
+	typedef fs::filesystem_path_error FilesystemPathError;
+
+	// And converting stuff back and forth between wide chars and narrow chars
+	// is a PITA so we just define String to normal string too.
+	// (Accented chars are for nubs anyway, in particular in filenames ;-))
+	typedef char Char;
+	typedef std::string String;
+	typedef std::stringstream StringStream;
+	std::ostream& cout = std::cout;
+
+	#define _(s) s
+
+#endif
 
 
 //**************************************************************************************
@@ -125,15 +161,15 @@ SzOutBuffer_ptr SzOutBuffer_p(unsigned char* arg){
 //******************************************************************************
 
 
-enum archive_type {
+enum ArchiveType {
 	R_MOD,
 	R_MAP,
 	R_OTHER
 };
 
-static int run(int argc, const wchar_t* const* argv);
-static archive_type read_archive_content_sd7(const fs::wpath& filename);
-static archive_type read_archive_content_sdz(const fs::wpath& filename);
+static int run(int argc, const Char* const* argv);
+static ArchiveType read_archive_content_sd7(const Path& filename);
+static ArchiveType read_archive_content_sdz(const Path& filename);
 
 
 static std::string string_to_lower(const std::string& s){
@@ -144,14 +180,14 @@ static std::string string_to_lower(const std::string& s){
 }
 
 
-struct scoped_message : public std::wstringstream{
-	~scoped_message(){
-		std::wstring str = this->str();
+struct ScopedMessage : public StringStream{
+	~ScopedMessage(){
+		String str = this->str();
 		if (!str.empty()) {
 #ifdef ARCHIVE_MOVER_USE_WIN_API
-			MessageBoxW(NULL, str.c_str(), L"Spring - ArchiveMover", MB_APPLMODAL);
+			MessageBoxW(NULL, str.c_str(), _("Spring - ArchiveMover"), MB_APPLMODAL);
 #else
-			std::wcout<<str<<endl;
+			cout<<str<<endl;
 #endif
 		}
 	}
@@ -174,8 +210,8 @@ static bool is_mod(const std::string& filename){
 	return false;
 }
 
-static bool is_map_or_mod(const std::string& filename, archive_type& current_filetype){
-	archive_type filetype = R_OTHER;
+static bool is_map_or_mod(const std::string& filename, ArchiveType& current_filetype){
+	ArchiveType filetype = R_OTHER;
 	if(is_map(filename)){
 		filetype = R_MAP;
 	}else if(is_mod(filename)){
@@ -213,11 +249,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	return ret;
 }
 #elif defined(_MSC_VER) && (defined(UNICODE) || defined(_UNICODE))
-int wmain(int argc, wchar_t** argv){
+int wmain(int argc, const wchar_t* const* argv){
 	return run(argc, argv);
 }
 #else
-int main(int argc, char** argv){
+int main(int argc, const char* const* argv){
 /*	//Untested
 	mbstate_t mbstate;
 	memset((void*)&mbstate, 0, sizeof(mbstate));
@@ -246,24 +282,25 @@ int main(int argc, char** argv){
 
 	return ret;
 */
+	return run(argc, argv);
 }
 #endif
 
 
-static int run(int argc, const wchar_t* const* argv){
+static int run(int argc, const Char* const* argv){
 
-	scoped_message message;
+	ScopedMessage message;
 	try{
 		bool show_usage = false;
 		bool quiet = false;
-		const wchar_t* source_file_arg = NULL;
+		const Char* source_file_arg = NULL;
 
 		for (int i = 1; i < argc; ++i) {
-			std::wstring arg = argv[i];
+			String arg = argv[i];
 			if (arg[0] == '-') {
-				if (arg == L"--help" || arg == L"-h")
+				if (arg == _("--help") || arg == _("-h"))
 					show_usage = true;
-				else if (arg == L"--quiet" || arg == L"-q")
+				else if (arg == _("--quiet") || arg == _("-q"))
 					quiet = true;
 			} else {
 				// multiple file arguments is erroneous
@@ -274,34 +311,34 @@ static int run(int argc, const wchar_t* const* argv){
 		}
 
 		if(show_usage || source_file_arg == NULL){
-			message<<L"Usage: "<<fs::system_complete(argv[0]).leaf()<<L" [--quiet] <filename>"<<endl<<endl;
+			message<<_("Usage: ")<<fs::system_complete(argv[0]).leaf()<<_(" [--quiet] <filename>")<<endl<<endl;
 			return 1;
 		}
 
-		const fs::wpath source_file = fs::system_complete(source_file_arg);
-		fs::wpath target_dir = fs::system_complete(argv[0]).branch_path();
+		const Path source_file = fs::system_complete(source_file_arg);
+		Path target_dir = fs::system_complete(argv[0]).branch_path();
 
 		if(!fs::exists(source_file)){
-			message<<source_file<<endl<<L"File not found."<<endl;
+			message<<source_file<<endl<<_("File not found.")<<endl;
 			return 1;
 		}
 
 
-		archive_type content = read_archive_content_sd7(source_file);
+		ArchiveType content = read_archive_content_sd7(source_file);
 		if(content == R_OTHER){
 			content = read_archive_content_sdz(source_file);
 		}
 
 		if(content == R_OTHER){
-			message<<L"'"<<source_file.leaf()<<L"' is not a valid map/mod "
-			L"it may be corrupted, try to redownload it."<<endl;
+			message<<_("'")<<source_file.leaf()<<_("' is not a valid map/mod ")
+			_("it may be corrupted, try to redownload it.")<<endl;
 			return 1;
 		}
 
 
-		//for(fs::wpath test_path = source_file; test_path.has_root_directory(); ){
+		//for(Path test_path = source_file; test_path.has_root_directory(); ){
 		//	if(fs::equivalent(test_path, target_dir)){
-		//		message<<L"'"<<source_file.leaf()<<L"' already exists in the Spring directory."<<endl;
+		//		message<<_("'")<<source_file.leaf()<<_("' already exists in the Spring directory.")<<endl;
 		//		return 1;
 		//	}
 		//	test_path = test_path.branch_path();
@@ -310,29 +347,29 @@ static int run(int argc, const wchar_t* const* argv){
 
 		if(content == R_MAP){
 			//message<<"isMap: "<<filename<<endl;
-			target_dir /= L"maps";
+			target_dir /= _("maps");
 		}else if(content == R_MOD){
 			//message<<"isMod: "<<filename<<endl;
-			target_dir /= L"mods";
+			target_dir /= _("mods");
 		}else{
 			assert(false);
 		}
 
 		if(!fs::exists(target_dir)){
-			message<<L"The target directory '"<<target_dir<<L"' doesn't exist."<<endl;
+			message<<_("The target directory '")<<target_dir<<_("' doesn't exist.")<<endl;
 			return 1;
 		}
 
 		// stash existing files away
 		if (fs::exists(target_dir / source_file.leaf())) {
 			int i = 0;
-			fs::wpath target_test;
+			Path target_test;
 			do {
-				std::wstring stashed = (source_file.leaf() + L".old");
+				String stashed = (source_file.leaf() + _(".old"));
 				if (i > 0) {
-					std::wstringstream tmp;
+					StringStream tmp;
 					tmp << i;
-					stashed += L"."+tmp.str();
+					stashed += _(".")+tmp.str();
 				}
 				target_test = target_dir / stashed;
 				++i;
@@ -346,53 +383,53 @@ static int run(int argc, const wchar_t* const* argv){
 		fs::rename(source_file, target_dir);
 
 		if (!quiet) {
-			message<<L"The "<<(content == R_MAP? L"map '" : L"mod '")<<source_file.leaf()
-			<<L"' has been saved succesfully to '"<<target_dir.branch_path()<<L"'."<<endl
-			<<L"Use the reload mods/maps button in the lobby to make Spring find it."<<endl;
+			message<<_("The ")<<(content == R_MAP? _("map '") : _("mod '"))<<source_file.leaf()
+			<<_("' has been saved succesfully to '")<<target_dir.branch_path()<<_("'.")<<endl
+			<<_("Use the reload mods/maps button in the lobby to make Spring find it.")<<endl;
 		}
 
 	}
-	catch(fs::filesystem_wpath_error& error) {
+	catch(FilesystemPathError& error) {
 		fs::errno_type error_nr = fs::lookup_errno(error.system_error());
-		message<<L"Cannot move file: ";
+		message<<_("Cannot move file: ");
 		switch(error_nr){
 			case EPERM:
 			case EACCES:{
-				message<<L"Permission denied.";
+				message<<_("Permission denied.");
 				break;
 			}
 			case ENOSPC:{
-				message<<L"Not enough free disk space.";
+				message<<_("Not enough free disk space.");
 				break;
 			}
 			case ENOENT:{
-				message<<L"Invalid path.";
+				message<<_("Invalid path.");
 				break;
 			}
 			case EROFS:{
-				message<<L"Target path is read only.";
+				message<<_("Target path is read only.");
 				break;
 			}
 			case EEXIST:{
-				message<<L"Target folder already contains a file named '"<<error.path1().leaf()<<L"'.";
+				message<<_("Target folder already contains a file named '")<<error.path1().leaf()<<_("'.");
 				break;
 			}
 			default:{
-				message<<strerror(error_nr)<<L".";
+				message<<strerror(error_nr)<<_(".");
 			}
 		}
 		message<<endl<<endl;
-		message<<L"Source file: "<<error.path1()<<endl; 
-		message<<L"Target folder: "<<error.path2().branch_path()<<endl;
+		message<<_("Source file: ")<<error.path1()<<endl; 
+		message<<_("Target folder: ")<<error.path2().branch_path()<<endl;
 	}
 	catch(fs::filesystem_error& error) {
-		message<<L"Filesystem error in: "<<error.what()<<endl;
+		message<<_("Filesystem error in: ")<<error.what()<<endl;
 	}
 	catch(std::exception& error) {
-		message<<L"Found an exception with: "<<error.what()<<endl;
+		message<<_("Found an exception with: ")<<error.what()<<endl;
 	}
 	catch(...) {
-		message<<L"Found an unknown exception."<<endl;
+		message<<_("Found an unknown exception.")<<endl;
 	}
 
 	return 0;
@@ -405,26 +442,26 @@ static int run(int argc, const wchar_t* const* argv){
 static voidpf ZCALLBACK sdz_open_file_unicode(voidpf opaque, const char *filename, int mode){
 
 	FILE* file = NULL;
-	const wchar_t* mode_fopen = NULL;
+	const Char* mode_fopen = NULL;
 	if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ){
-		mode_fopen = L"rb";
+		mode_fopen = _("rb");
 	}else if (mode & ZLIB_FILEFUNC_MODE_EXISTING){
-		mode_fopen = L"r+b";
+		mode_fopen = _("r+b");
 	}else if (mode & ZLIB_FILEFUNC_MODE_CREATE){
-		mode_fopen = L"wb";
+		mode_fopen = _("wb");
 	}
 
 	if(filename == NULL && mode_fopen != NULL && opaque != NULL){
-		file = _wfopen(static_cast<const fs::wpath*>(opaque)->string().c_str(), mode_fopen);
+		file = fopen(static_cast<const Path*>(opaque)->string().c_str(), mode_fopen);
 	}
 	return file;
 }
 
-static archive_type read_archive_content_sdz(const fs::wpath& filename){
+static ArchiveType read_archive_content_sdz(const Path& filename){
 
 	zlib_filefunc_def file_api;
 	fill_fopen_filefunc(&file_api);
-	file_api.opaque = &const_cast<fs::wpath&>(filename);
+	file_api.opaque = &const_cast<Path&>(filename);
 	file_api.zopen_file = sdz_open_file_unicode;
 
 	unzFile_ptr sdz = unzOpen2_p(&file_api);
@@ -437,7 +474,7 @@ static archive_type read_archive_content_sdz(const fs::wpath& filename){
 	}
 
 	const int buffer_size = 1024*1024;
-	archive_type content = R_OTHER;
+	ArchiveType content = R_OTHER;
 	boost::scoped_array<char> read_buf(new char[buffer_size]);
 
 
@@ -516,7 +553,7 @@ static SZ_RESULT sd7_seek_file(void *object, CFileSize pos){
 }
 
 
-static archive_type read_archive_content_sd7(const fs::wpath& filename){
+static ArchiveType read_archive_content_sd7(const Path& filename){
 
 	SD7Stream stream;
 	stream.funcs.Read = sd7_read_file;
@@ -549,7 +586,7 @@ static archive_type read_archive_content_sd7(const fs::wpath& filename){
 	unsigned int block_index = 0;
 	SzOutBuffer_ptr out_buffer = SzOutBuffer_p(0);
 	size_t out_buffer_size = 0;
-	archive_type content = R_OTHER;
+	ArchiveType content = R_OTHER;
 
 	for (unsigned int i = 0; i < db->Database.NumFiles; ++i) {
 		CFileItem* fi = db->Database.Files + i;

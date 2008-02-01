@@ -48,29 +48,62 @@ BOOST_STATIC_ASSERT(BOOST_VERSION >= 103400);
 namespace fs = boost::filesystem;
 
 
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+
+	typedef fs::wpath Path;
+
+	typedef wchar_t Char;
+	typedef std::wstring String;
+	typedef std::wstringstream StringStream;
+	std::wostream& cout = std::wcout;
+
+	// Untested with MSVC (works fine with GCC).
+	#define _(s) L ## s
+
+#else
+
+	// fs::wpath segfaults on Linux when doing something simple like:
+	//		Path p = fs::current_path<Path>();
+	// (this is used by fs::system_complete() and others ...)
+	typedef fs::path Path;
+
+	// And converting stuff back and forth between wide chars and narrow chars
+	// is a PITA so we just define String to normal string too.
+	// (Accented chars are for nubs anyway, in particular in filenames ;-))
+	typedef char Char;
+	typedef std::string String;
+	typedef std::stringstream StringStream;
+	std::ostream& cout = std::cout;
+
+	#define _(s) s
+
+#endif
+
+
 /******************************************************************************/
 
-struct scoped_message : public std::wstringstream {
-	~scoped_message(){
+struct ScopedMessage : public StringStream {
+	~ScopedMessage(){
 #ifdef DEMO_DUMPER_USE_WIN_API
-		MessageBoxW(NULL, this->str().c_str(), L"Spring - DemoDumper", MB_APPLMODAL);
+		MessageBoxW(NULL, this->str().c_str(), _("Spring - DemoDumper"), MB_APPLMODAL);
 #else
-		std::wcout<<this->str()<<endl;
+		cout<<this->str()<<endl;
 #endif
 	}
 };
 
 
-struct demofile_exception : public std::exception {
-	fs::wpath filename;
-	std::wstring message;
-	demofile_exception(const fs::wpath& fname, const std::wstring& msg) :
+struct DemofileException : public std::exception {
+	Path filename;
+	String message;
+	DemofileException(const Path& fname, const String& msg) :
 		filename(fname), message(msg) {}
+	~DemofileException() throw() {}
 };
 
 
-static int run(int argc, wchar_t** argv);
-static void read_demofile(scoped_message& message, const fs::wpath& source_file);
+static int run(int argc, const Char* const* argv);
+static void read_demofile(ScopedMessage& message, const Path& source_file);
 
 
 /******************************************************************************/
@@ -92,13 +125,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	return ret;
 }
-#elif defined(_MSC_VER) && (defined(UNICODE) || defined(_UNICODE))
-int wmain(int argc, wchar_t** argv)
+#elif defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+int wmain(int argc, const wchar_t* const* argv)
 {
 	return run(argc, argv);
 }
 #else
-int main(int argc, char** argv){
+int main(int argc, const char* const* argv)
+{
 /*	//Untested
 	mbstate_t mbstate;
 	memset((void*)&mbstate, 0, sizeof(mbstate));
@@ -127,53 +161,53 @@ int main(int argc, char** argv){
 
 	return ret;
 */
+	return run(argc, argv);
 }
 #endif
 
 
-static int run(int argc, wchar_t** argv)
+static int run(int argc, const Char* const* argv)
 {
-	scoped_message message;
+	ScopedMessage message;
 	try{
 		if(argc == 0){
-			message<<L"Error: Zero arguments."<<endl;
+			message<<_("Error: Zero arguments.")<<endl;
 			return 1;
 		}else if(argc != 2){
-			message<<L"Usage: "<<fs::system_complete(argv[0]).leaf()<<L" <filename>"<<endl<<endl;
+			message<<_("Usage: ")<<fs::system_complete(argv[0]).leaf()<<_(" <filename>")<<endl<<endl;
 			return 1;
 		}
 
-
-		const fs::wpath source_file = fs::system_complete(argv[1]);
-		fs::wpath target_dir = fs::system_complete(argv[0]).branch_path();
+		const Path source_file = fs::system_complete(argv[1]);
 
 		if(!fs::exists(source_file)){
-			message<<source_file<<endl<<L"File not found."<<endl;
+			message<<source_file<<endl<<_("File not found.")<<endl;
 			return 1;
 		}
 
 		read_demofile(message, source_file);
 
 	}
-	catch (demofile_exception& error) {
-		message<<"Cannot read demofile: "<<error.filename<<endl;
-		message<<L": "<<error.message<<endl;
+	catch (DemofileException& error) {
+		message<<_("Cannot read demofile: ")<<error.filename;
+		message<<_(": ")<<error.message<<endl;
 	}
 	catch(fs::filesystem_error& error){
-		message<<L"Filesystem error in: "<<error.what()<<endl;
+		message<<_("Filesystem error in: ")<<error.what()<<endl;
 	}
 	catch(std::exception& error){
-		message<<L"Found an exception with: "<<error.what()<<endl;
+		message<<_("Found an exception with: ")<<error.what()<<endl;
 	}
 	catch(...){
-		message<<L"Found an unknown exception."<<endl;
+		message<<_("Found an unknown exception.")<<endl;
 	}
 
 	return 0;
 }
 
 
-struct PlayerStatistics {
+struct PlayerStatistics
+{
 	/// how many pixels the mouse has traversed in total
 	int mousePixels;
 	int mouseClicks;
@@ -206,7 +240,7 @@ struct TeamStatistics
 };
 
 
-std::wstringstream& operator<<(std::wstringstream& str, const DemoFileHeader& header)
+StringStream& operator<<(StringStream& str, const DemoFileHeader& header)
 {
 	char idbuf[128];
 	const unsigned char* p = header.gameID;
@@ -216,65 +250,65 @@ std::wstringstream& operator<<(std::wstringstream& str, const DemoFileHeader& he
 		p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
 		p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
-	str<<L"Magic: "<<header.magic<<endl;
-	str<<L"Version: "<<header.version<<endl;
-	str<<L"HeaderSize: "<<header.headerSize<<endl;
-	str<<L"VersionString: "<<header.versionString<<endl;
-	str<<L"GameID: "<<idbuf<<endl;
-	str<<L"UnixTime: "<<header.unixTime<<endl;
-	str<<L"ScriptSize: "<<header.scriptSize<<endl;
-	str<<L"DemoStreamSize: "<<header.demoStreamSize<<endl;
-	str<<L"GameTime: "<<header.gameTime<<endl;
-	str<<L"WallclockTime: "<<header.wallclockTime<<endl;
-	str<<L"NumPlayers: "<<header.numPlayers<<endl;
-	str<<L"PlayerStatSize: "<<header.playerStatSize<<endl;
-	str<<L"PlayerStatElemSize: "<<header.playerStatElemSize<<endl;
-	str<<L"NumTeams: "<<header.numTeams<<endl;
-	str<<L"TeamStatSize: "<<header.teamStatSize<<endl;
-	str<<L"TeamStatElemSize: "<<header.teamStatElemSize<<endl;
-	str<<L"TeamStatPeriod: "<<header.teamStatPeriod<<endl;
-	str<<L"WinningAllyTeam: "<<header.winningAllyTeam<<endl;
+	str<<_("Magic: ")<<header.magic<<endl;
+	str<<_("Version: ")<<header.version<<endl;
+	str<<_("HeaderSize: ")<<header.headerSize<<endl;
+	str<<_("VersionString: ")<<header.versionString<<endl;
+	str<<_("GameID: ")<<idbuf<<endl;
+	str<<_("UnixTime: ")<<header.unixTime<<endl;
+	str<<_("ScriptSize: ")<<header.scriptSize<<endl;
+	str<<_("DemoStreamSize: ")<<header.demoStreamSize<<endl;
+	str<<_("GameTime: ")<<header.gameTime<<endl;
+	str<<_("WallclockTime: ")<<header.wallclockTime<<endl;
+	str<<_("NumPlayers: ")<<header.numPlayers<<endl;
+	str<<_("PlayerStatSize: ")<<header.playerStatSize<<endl;
+	str<<_("PlayerStatElemSize: ")<<header.playerStatElemSize<<endl;
+	str<<_("NumTeams: ")<<header.numTeams<<endl;
+	str<<_("TeamStatSize: ")<<header.teamStatSize<<endl;
+	str<<_("TeamStatElemSize: ")<<header.teamStatElemSize<<endl;
+	str<<_("TeamStatPeriod: ")<<header.teamStatPeriod<<endl;
+	str<<_("WinningAllyTeam: ")<<header.winningAllyTeam<<endl;
 	return str;
 }
 
 
-std::wstringstream& operator<<(std::wstringstream& str, const PlayerStatistics& header)
+StringStream& operator<<(StringStream& str, const PlayerStatistics& header)
 {
-	str<<L"MousePixels: "<<header.mousePixels<<endl;
-	str<<L"MouseClicks: "<<header.mouseClicks<<endl;
-	str<<L"KeyPresses: "<<header.keyPresses<<endl;
-	str<<L"NumCommands: "<<header.numCommands<<endl;
-	str<<L"UnitCommands: "<<header.unitCommands<<endl;
+	str<<_("MousePixels: ")<<header.mousePixels<<endl;
+	str<<_("MouseClicks: ")<<header.mouseClicks<<endl;
+	str<<_("KeyPresses: ")<<header.keyPresses<<endl;
+	str<<_("NumCommands: ")<<header.numCommands<<endl;
+	str<<_("UnitCommands: ")<<header.unitCommands<<endl;
 	return str;
 }
 
 
-std::wstringstream& operator<<(std::wstringstream& str, const TeamStatistics& header)
+StringStream& operator<<(StringStream& str, const TeamStatistics& header)
 {
-	str<<L"MetalUsed: "<<header.metalUsed<<endl;
-	str<<L"EnergyUsed: "<<header.energyUsed<<endl;
-	str<<L"MetalProduced: "<<header.metalProduced<<endl;
-	str<<L"EnergyProduced: "<<header.energyProduced<<endl;
-	str<<L"MetalExcess: "<<header.metalExcess<<endl;
-	str<<L"EnergyExcess: "<<header.energyExcess<<endl;
-	str<<L"MetalReceived: "<<header.metalReceived<<endl;
-	str<<L"EnergyReceived: "<<header.energyReceived<<endl;
-	str<<L"MetalSent: "<<header.metalSent<<endl;
-	str<<L"EnergySent: "<<header.energySent<<endl;
-	str<<L"DamageDealt: "<<header.damageDealt<<endl;
-	str<<L"DamageReceived: "<<header.damageReceived<<endl;
-	str<<L"UnitsProduced: "<<header.unitsProduced<<endl;
-	str<<L"UnitsDied: "<<header.unitsDied<<endl;
-	str<<L"UnitsReceived: "<<header.unitsReceived<<endl;
-	str<<L"UnitsSent: "<<header.unitsSent<<endl;
-	str<<L"UnitsCaptured: "<<header.unitsCaptured<<endl;
-	str<<L"UnitsOutCaptured: "<<header.unitsOutCaptured<<endl;
-	str<<L"UnitsKilled: "<<header.unitsKilled<<endl;
+	str<<_("MetalUsed: ")<<header.metalUsed<<endl;
+	str<<_("EnergyUsed: ")<<header.energyUsed<<endl;
+	str<<_("MetalProduced: ")<<header.metalProduced<<endl;
+	str<<_("EnergyProduced: ")<<header.energyProduced<<endl;
+	str<<_("MetalExcess: ")<<header.metalExcess<<endl;
+	str<<_("EnergyExcess: ")<<header.energyExcess<<endl;
+	str<<_("MetalReceived: ")<<header.metalReceived<<endl;
+	str<<_("EnergyReceived: ")<<header.energyReceived<<endl;
+	str<<_("MetalSent: ")<<header.metalSent<<endl;
+	str<<_("EnergySent: ")<<header.energySent<<endl;
+	str<<_("DamageDealt: ")<<header.damageDealt<<endl;
+	str<<_("DamageReceived: ")<<header.damageReceived<<endl;
+	str<<_("UnitsProduced: ")<<header.unitsProduced<<endl;
+	str<<_("UnitsDied: ")<<header.unitsDied<<endl;
+	str<<_("UnitsReceived: ")<<header.unitsReceived<<endl;
+	str<<_("UnitsSent: ")<<header.unitsSent<<endl;
+	str<<_("UnitsCaptured: ")<<header.unitsCaptured<<endl;
+	str<<_("UnitsOutCaptured: ")<<header.unitsOutCaptured<<endl;
+	str<<_("UnitsKilled: ")<<header.unitsKilled<<endl;
 	return str;
 }
 
 
-static void read_demofile(scoped_message& message, const fs::wpath& source_file)
+static void read_demofile(ScopedMessage& message, const Path& source_file)
 {
 	// Open the file for binary reading.
 	boost::filesystem::ifstream file(source_file, std::ios_base::binary);
@@ -294,7 +328,7 @@ static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 			fileHeader.headerSize != sizeof(DemoFileHeader) ||
 			fileHeader.playerStatElemSize != sizeof(PlayerStatistics) ||
 			fileHeader.teamStatElemSize != sizeof(TeamStatistics)) {
-		throw demofile_exception(source_file, L"Corrupt demofile.");
+		throw DemofileException(source_file, _("Corrupt demofile."));
 	}
 
 	// Write out the DemoFileHeader.
@@ -306,7 +340,7 @@ static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 	// Loop through all players and read and output the statistics for each.
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		file.read((char*)&playerStats, sizeof(playerStats));
-		message<<L"-- Player statistics for player "<<playerNum<<L" --"<<endl;
+		message<<_("-- Player statistics for player ")<<playerNum<<_(" --")<<endl;
 		message<<playerStats<<endl;
 	}
 
@@ -323,7 +357,7 @@ static void read_demofile(scoped_message& message, const fs::wpath& source_file)
 		int time = 0;
 		for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 			file.read((char*)&teamStats, sizeof(teamStats));
-			message<<L"-- Team statistics for team "<<teamNum<<L", game second "<<time<<L" --"<<endl;
+			message<<_("-- Team statistics for team ")<<teamNum<<_(", game second ")<<time<<_(" --")<<endl;
 			message<<teamStats<<endl;
 			time += fileHeader.teamStatPeriod;
 		}
