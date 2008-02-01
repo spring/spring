@@ -34,6 +34,4 @@ private:
 	void RemapAllyteams();
 };
 
-extern CGameSetup* gameSetup;
-
 #endif // __GAME_SETUP_H__

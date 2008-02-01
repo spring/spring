@@ -518,7 +518,10 @@ void CPreGame::UpdateClientNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						//TODO is this enought?
-						gs->players[player]->team = int(inbuf[3]);
+						int newTeam = int(inbuf[3]);
+						gs->players[player]->team = newTeam;
+						if (gs->Team(newTeam)->leader == -1)
+							gs->Team(newTeam)->leader = player;
 						break;
 					}
 					default: {

@@ -21,12 +21,6 @@
 
 using namespace std;
 
-extern string stupidGlobalMapname;
-
-
-CGameSetup* gameSetup = NULL;
-
-
 CGameSetup::CGameSetup()
 {
 }
@@ -185,7 +179,6 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 void CGameSetup::LoadPlayers(const TdfParser& file)
 {
 	numDemoPlayers = 0;
-
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
@@ -230,9 +223,9 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 			continue;
 
 		// Get default color from palette (based on "color" tag)
-		int colorNum = atoi(file.SGetValueDef("0", s + "color").c_str());
-		colorNum %= palette.NumTeamColors();
-		float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
+		// int colorNum = atoi(file.SGetValueDef("0", s + "color").c_str());
+		// colorNum %= palette.NumTeamColors();
+		// float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
 
 		const string aiDll = file.SGetValueDef("", s + "aidll");
 		if (aiDll.substr(0, 6) == "LuaAI:") {
