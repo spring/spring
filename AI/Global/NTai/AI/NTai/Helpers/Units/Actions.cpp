@@ -6,6 +6,11 @@ using namespace ntai;
 CActions::CActions(Global* GL){
     G = GL;
     last_attack = UpVector;
+	temp = new int[10000];
+}
+
+CActions::~CActions(){
+	delete[] temp;
 }
 
 bool CActions::Attack(int uid, float3 pos){
@@ -994,16 +999,14 @@ bool CActions::AddPoint(float3 pos){
 void CActions::Update(){
     NLOG("CActions::Update");
 
-    if(EVERY_((15 FRAMES))){
+    if(EVERY_((16 FRAMES))){
 
         if(!points.empty()){
             NLOG("CActions::Update points");
 
-            int* ef = new int[10000];
-
             for(vector<float3>::iterator i = points.begin(); i!=points.end(); ++i){
                 if(G->InLOS(*i)==true){
-                    int ecount = G->GetEnemyUnits(ef, *i, 300);
+                    int ecount = G->GetEnemyUnits(temp, *i, 300);
                     if(ecount < 1){
                         points.erase(i);
                         break;
@@ -1011,7 +1014,6 @@ void CActions::Update(){
                 }
             }
 
-            delete [] ef;
 
         }
     }

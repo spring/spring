@@ -185,10 +185,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Tasks\CConsoleTask.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\CEconomy.cpp"
 				>
 			</File>
@@ -205,14 +201,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\CLeaveBuildSpotTask.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Agents\CManufacturer.cpp"
 				>
 			</File>
@@ -226,22 +214,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Engine\COrderRouter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\CUnit.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\CUnitConstructionTask.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Helpers\Units\CUnitDefLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\CUnitTypeData.cpp"
 				>
 			</File>
 			<File
@@ -299,6 +271,18 @@
 			<Filter
 				Name="Units"
 				>
+				<File
+					RelativePath=".\NTai\Units\CUnit.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Helpers\Units\CUnitDefLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Units\CUnitTypeData.cpp"
+					>
+				</File>
 				<Filter
 					Name="Behaviours"
 					>
@@ -331,6 +315,26 @@
 						>
 					</File>
 				</Filter>
+				<Filter
+					Name="Tasks"
+					>
+					<File
+						RelativePath=".\NTai\Tasks\CConsoleTask.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CKeywordConstructionTask.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CLeaveBuildSpotTask.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CUnitConstructionTask.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -343,19 +347,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\SDK\AI.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.h"
 				>
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\CConfigData.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\CConsoleTask.h"
 				>
 			</File>
 			<File
@@ -375,14 +371,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Tasks\CKeywordConstructionTask.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\CLeaveBuildSpotTask.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Agents\CManufacturer.h"
 				>
 			</File>
@@ -391,27 +379,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\CTokenizer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\CUnit.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\CUnitConstructionTask.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Helpers\Units\CUnitDefLoader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Units\CUnitTypeData.h"
 				>
 			</File>
 			<File
@@ -420,18 +388,6 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\DTHandler.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\IModule.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\include.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Tasks\ITask.h"
 				>
 			</File>
 			<File
@@ -463,10 +419,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\resource.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Engine\TCommand.h"
 				>
 			</File>
@@ -485,6 +437,18 @@
 			<Filter
 				Name="units"
 				>
+				<File
+					RelativePath=".\NTai\Units\CUnit.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Helpers\Units\CUnitDefLoader.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Units\CUnitTypeData.h"
+					>
+				</File>
 				<Filter
 					Name="behaviours"
 					>
@@ -505,6 +469,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\NTai\Units\Behaviours\CRetreatBehaviour.h"
+						>
+					</File>
+					<File
 						RelativePath=".\NTai\Units\Behaviours\CStaticDefenceBehaviour.h"
 						>
 					</File>
@@ -517,10 +485,38 @@
 						>
 					</File>
 				</Filter>
+				<Filter
+					Name="tasks"
+					>
+					<File
+						RelativePath=".\NTai\Tasks\CConsoleTask.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CKeywordConstructionTask.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CLeaveBuildSpotTask.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\CUnitConstructionTask.h"
+						>
+					</File>
+					<File
+						RelativePath=".\NTai\Tasks\ITask.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Core"
 				>
+				<File
+					RelativePath=".\NTai\SDK\AI.h"
+					>
+				</File>
 				<File
 					RelativePath=".\NTai\Core\CCached.h"
 					>
@@ -542,7 +538,19 @@
 					>
 				</File>
 				<File
+					RelativePath=".\NTai\Core\IModule.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\include.h"
+					>
+				</File>
+				<File
 					RelativePath=".\NTai\Core\macros.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Core\resource.h"
 					>
 				</File>
 			</Filter>

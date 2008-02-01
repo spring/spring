@@ -39,7 +39,7 @@ namespace ntai {
 		}
 		if(message.GetType()==string("update")){
 			if(G->L.IsVerbose()){
-				if(G->GetCurrentFrame()%35 == 0){
+				if(message.GetFrame()%35 == 0){
 					map<int, boost::shared_ptr<CGridCell> > n = blockingmap.GetGrid();
 					if(!n.empty()){
 						for(map<int, boost::shared_ptr<CGridCell> >::iterator i = n.begin(); i != n.end(); ++i){

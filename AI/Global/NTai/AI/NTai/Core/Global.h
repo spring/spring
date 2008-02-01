@@ -125,6 +125,7 @@ namespace ntai {
 		std::set<boost::shared_ptr<IModule> > dead_handlers;
 		std::set<boost::shared_ptr<IModule> > handlers;
 		std::map<int,boost::shared_ptr<IModule> > units;
+		std::vector<CMessage> msgqueue;
 	};
 
 }
