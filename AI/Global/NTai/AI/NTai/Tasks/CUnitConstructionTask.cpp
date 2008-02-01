@@ -27,7 +27,7 @@ CUnitConstructionTask::~CUnitConstructionTask(){
 
 void CUnitConstructionTask::RecieveMessage(CMessage &message){
 	if(!valid){
-		return false;
+		return;
 	}
 
 	NLOG("CUnitConstructionTask::RecieveMessage");
