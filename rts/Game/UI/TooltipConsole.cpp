@@ -208,7 +208,10 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		s = gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
+		if (gs->Team(unit->team)->leader >= 0)
+			s = gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
+		else
+			s = "Uncontrolled";
 	} else {
 		if (!decoyDef) {
 			s = unit->tooltip;

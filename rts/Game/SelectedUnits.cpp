@@ -683,7 +683,10 @@ std::string CSelectedUnits::GetTooltip(void)
 	} else if (!selectedUnits.empty()) {
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
-			s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
+			if (gs->Team((*selectedUnits.begin())->team)->leader >= 0)
+				s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
+			else
+				s = "Uncontrolled";
 		} else {
 			s = (*selectedUnits.begin())->tooltip;
 		}
