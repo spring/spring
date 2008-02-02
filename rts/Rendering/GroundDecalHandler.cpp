@@ -179,68 +179,106 @@ void CGroundDecalHandler::Draw(void)
 					float xts = 1.0f / decal->xsize;
 					float yts = 1.0f / decal->ysize;
 
-					const int maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
-					const int xMin = 0, xMax = decal->xsize;
-					const int zMin = 0, zMax = decal->ysize;
-					const int tlx = (decal->posx + xMin) * 8;	// x-coor of top-left quad vertex
-					const int trx = (decal->posx + xMax) * 8;	// x-coor of top-right quad vertex
-					const int brx = trx;						// x-coor of bottom-right quad vertex
-					const int blx = tlx;						// x-coor of bottom-left quad vertex
-					const int tlz = (decal->posy + zMin) * 8;	// z-coor of top-left quad vertex
-					const int trz = tlz;						// z-coor of top-right quad vertex
-					const int brz = (decal->posy + zMax) * 8;	// z-coor of bottom-right quad vertex
-					const int blz = brz;						// z-coor of bottom-left quad vertex
-
-					const int tlhi = (tlz / 8) * (gs->mapx + 1) + (tlx / 8); // height-map index of tl vertex
-					const int trhi = (trz / 8) * (gs->mapx + 1) + (trx / 8); // height-map index of tr vertex
-					const int brhi = (brz / 8) * (gs->mapx + 1) + (brx / 8); // height-map index of br vertex
-					const int blhi = (blz / 8) * (gs->mapx + 1) + (blx / 8); // height-map index of bl vertex
-					const float tlh = (tlhi < 0 || tlhi > maxIdx)? 0.0f: heightmap[tlhi];
-					const float trh = (trhi < 0 || trhi > maxIdx)? 0.0f: heightmap[trhi];
-					const float brh = (brhi < 0 || brhi > maxIdx)? 0.0f: heightmap[brhi];
-					const float blh = (blhi < 0 || blhi > maxIdx)? 0.0f: heightmap[blhi];
-
-					// get the maximum heightmap-value of the four vertices
-					// and draw the quad at that height (after terraforming
-					// the ground can be assumed to be mostly flat directly
-					// below a factory, so this is preferable to splitting
-					// the texture quad into quadratically many tiles every
-					// frame just so it follows the terrain slightly better
-					// -- note however that if the height differences are
-					// extreme, things do look a bit odd)
-					// TODO: do split the quad, but use VA buffers to draw
-					// them (as with the groundscars)?
-					const float mt = max(tlh, trh);
-					const float mb = max(brh, blh);
-					const float h = max(mt, mb);
+					int xMin = 0, xMax = decal->xsize;
+					int zMin = 0, zMax = decal->ysize;
+					int tlx = (decal->posx + xMin);			// heightmap x-coor of top-left quad vertex
+					int trx = (decal->posx + xMax);			// heightmap x-coor of top-right quad vertex
+					int brx = trx;							// heightmap x-coor of bottom-right quad vertex
+					int blx = tlx;							// heightmap x-coor of bottom-left quad vertex
+					int tlz = (decal->posy + zMin);			// heightmap z-coor of top-left quad vertex
+					int trz = tlz;							// heightmap z-coor of top-right quad vertex
+					int brz = (decal->posy + zMax);			// heightmap z-coor of bottom-right quad vertex
+					int blz = brz;							// heightmap z-coor of bottom-left quad vertex
 
 					switch (decal->facing) {
 						case 0: { // South (determines our reference texcoors)
-							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
-							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
-							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+							// clip the quad vertices and texcoors against the map boundaries
+							if (tlx <        0) { xMin -= (tlx           );   tlx = (       0);   blx = tlx; }
+							if (trx > gs->mapx) { xMax -= (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
+							if (tlz <        0) { zMin -= (tlz           );   tlz = (       0);   trz = tlz; }
+							if (brz > gs->mapy) { zMax -= (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
+
+							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
+							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
+							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
+							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
+
+							// get the maximum heightmap-value of the four vertices
+							// and draw the quad at that height (after terraforming
+							// the ground can be assumed to be mostly flat directly
+							// below a factory, so this is preferable to splitting
+							// the texture quad into quadratically many tiles every
+							// frame just so it follows the terrain slightly better)
+							// TODO: do split the quad, but use VA buffers to draw
+							// them (as with the groundscars)?
+							const float mt = max(tlh, trh);
+							const float mb = max(brh, blh);
+							const float h = max(mt, mb);
+
+							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
 						} break;
 
 						case 1: { // East
-							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
-							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
-							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+							if (tlx <        0) { zMin -= (tlx           );   tlx = (       0);   blx = tlx; }
+							if (trx > gs->mapx) { zMax -= (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
+							if (tlz <        0) { xMax += (tlz           );   tlz = (0       );   trz = tlz; }
+							if (brz > gs->mapy) { xMin += (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
+
+							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
+							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
+							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
+							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
+							const float mt = max(tlh, trh);
+							const float mb = max(brh, blh);
+							const float h = max(mt, mb);
+
+							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
 						} break;
 
 						case 2: { // North
-							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMax * xts, zMax * yts,  color); // tc = (1, 1)
-							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMin * xts, zMax * yts,  color); // tc = (0, 1)
-							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMin * xts, zMin * yts,  color); // tc = (0, 0)
-							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMax * xts, zMin * yts,  color); // tc = (1, 0)
+							if (tlx <        0) { xMax += (tlx           );   tlx = (       0);   blx = tlx; }
+							if (trx > gs->mapx) { xMin += (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
+							if (tlz <        0) { zMax += (tlz           );   tlz = (       0);   trz = tlz; }
+							if (brz > gs->mapy) { zMin += (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
+
+							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
+							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
+							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
+							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
+							const float mt = max(tlh, trh);
+							const float mb = max(brh, blh);
+							const float h = max(mt, mb);
+
+							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMax * xts, zMax * yts,  color); // tc = (1, 1)
+							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMin * xts, zMax * yts,  color); // tc = (0, 1)
+							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMin * xts, zMin * yts,  color); // tc = (0, 0)
+							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMax * xts, zMin * yts,  color); // tc = (1, 0)
 						} break;
 
 						case 3: { // West
-							va->AddVertexTC(float3(tlx, h + 0.2f, tlz),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
-							va->AddVertexTC(float3(trx, h + 0.2f, trz),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
-							va->AddVertexTC(float3(brx, h + 0.2f, brz),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(blx, h + 0.2f, blz),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
+							if (tlx <        0) { zMax += (tlx           );   tlx = (       0);   blx = tlx; }
+							if (trx > gs->mapx) { zMin += (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
+							if (tlz <        0) { xMin -= (tlz           );   tlz = (       0);   trz = tlz; }
+							if (brz > gs->mapy) { xMax -= (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
+
+							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
+							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
+							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
+							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
+							const float mt = max(tlh, trh);
+							const float mb = max(brh, blh);
+							const float h = max(mt, mb);
+
+							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
+							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
+							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
+							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
 						} break;
 					}
 				}
