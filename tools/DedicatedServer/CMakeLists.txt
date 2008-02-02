@@ -4,9 +4,9 @@ INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 FIND_PACKAGE(Boost REQUIRED)
 
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -O1 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=i686 -msse")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=i686 -msse -DNDEBUG")
 
-ADD_DEFINITIONS(-DDEBUG -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
+ADD_DEFINITIONS( -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 ADD_LIBRARY(net SHARED  ${netfiles})
@@ -21,18 +21,15 @@ IF (UNIX)
 	TARGET_LINK_LIBRARIES(minizip z)
 ELSE (UNIX)
 	ADD_LIBRARY(minizip SHARED  ../../rts/lib/minizip/unzip ../../rts/lib/minizip/zip ../../rts/lib/minizip/iowin32)
-	#TARGET_LINK_LIBRARIES(minizip z)
 ENDIF (UNIX)
-
-
 
 AUX_SOURCE_DIRECTORY(../../rts/lib/hpiutil2 hpiutil2)
 ADD_LIBRARY(hpiutil2 SHARED  ${hpiutil2})
 
 IF (UNIX)
-SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)
+	SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)
 ELSE (UNIX)
-SET(platformfiles ../../rts/System/Platform/Windows/WinFileSystemHandler ../../rts/System/Platform/Windows/RegHandler)
+	SET(platformfiles ../../rts/System/Platform/Windows/WinFileSystemHandler ../../rts/System/Platform/Windows/RegHandler)
 ENDIF (UNIX)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
