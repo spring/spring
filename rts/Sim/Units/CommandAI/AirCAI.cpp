@@ -262,63 +262,13 @@ void CAirCAI::SlowUpdate()
 	CAirMoveType* myPlane=(CAirMoveType*) owner->moveType;
 
 	if(owner->unitDef->maxFuel > 0){
-		if(myPlane->reservedPad){
-			return;
-		}else{
-			if(owner->currentFuel <= 0){
-				owner->userAttackGround=false;
-				owner->userTarget=0;
-				inCommand=false;
-
-				CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
-					owner, owner->unitDef->minAirBasePower);
-				if(lp){
-					myPlane->AddDeathDependence(lp);
-					myPlane->reservedPad = lp;
-					myPlane->padStatus = 0;
-					myPlane->oldGoalPos = myPlane->goalPos;
-					return;
-				}
-				float3 landingPos = airBaseHandler->FindClosestAirBasePos(
-					owner, owner->unitDef->minAirBasePower);
-				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
-					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED
-							&& owner->pos.distance2D(landingPos) > 800) {
-						myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
-					}
-					myPlane->goalPos = landingPos;
-				} else {
-					if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
-						myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
-				}
-				return;
-			}
-			if(owner->currentFuel < myPlane->repairBelowHealth * owner->unitDef->maxFuel){
-				if(commandQue.empty() || commandQue.front().id == CMD_PATROL){
-					CAirBaseHandler::LandingPad* lp =
-						airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-					if(lp){
-						owner->userAttackGround=false;
-						owner->userTarget=0;
-						inCommand=false;
-						myPlane->AddDeathDependence(lp);
-						myPlane->reservedPad=lp;
-						myPlane->padStatus=0;
-						myPlane->oldGoalPos=myPlane->goalPos;
-						if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED){
-							myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
-						}
-						return;
-					}
-				}
-			}
-		}
+		RefuelIfNeeded(myPlane);
 	}
 
 	if(commandQue.empty()){
-		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING
+		if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING
 			&& !owner->unitDef->DontLand() && myPlane->autoLand){
-			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
+			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
 
 		if(owner->unitDef->canAttack && owner->fireState>=2
@@ -327,7 +277,7 @@ void CAirCAI::SlowUpdate()
 				float testRad=1000 * owner->moveState;
 				CUnit* enemy=helper->GetClosestEnemyAircraft(
 					owner->pos + (owner->speed * 10), testRad, owner->allyteam);
-				if(enemy && !enemy->crashing){
+				if(IsValidTarget(enemy)) {
 					Command nc;
 					nc.id = CMD_ATTACK;
 					nc.params.push_back(enemy->id);
@@ -340,9 +290,7 @@ void CAirCAI::SlowUpdate()
 			float testRad = 500 * owner->moveState;
 			CUnit* enemy = helper->GetClosestEnemyUnit(
 				owner->pos + (owner->speed * 20), testRad, owner->allyteam);
-			if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
-					&& !enemy->crashing
-					&& (myPlane->isFighter || !enemy->unitDef->canfly)){
+			if(IsValidTarget(enemy)) {
 				Command nc;
 				nc.id = CMD_ATTACK;
 				nc.params.push_back(enemy->id);
@@ -358,19 +306,19 @@ void CAirCAI::SlowUpdate()
 	Command& c = commandQue.front();
 
 	if (c.id == CMD_WAIT) {
-		if ((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
+		if ((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 		    && !owner->unitDef->DontLand() && myPlane->autoLand) {
-			myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
+			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
 		return;
 	}
 
 	if (c.id != CMD_STOP) {
-		if (myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED) {
-			myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
+		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
+			myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
 		}
-		if (myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDING) {
-			myPlane->SetState(CAirMoveType::AIRCRAFT_FLYING);
+		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
+			myPlane->SetState(AAirMoveType::AIRCRAFT_FLYING);
 		}
 	}
 
@@ -635,7 +583,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 	const float3 pos(c.params[0], c.params[1], c.params[2]);
 	const float radius = c.params[3];
 	if(inCommand){
-		if(myPlane->aircraftState == CAirMoveType::AIRCRAFT_LANDED)
+		if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
 		if(orderTarget && orderTarget->pos.distance2D(pos) > radius){
 			inCommand = false;
@@ -657,7 +605,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 		}
 	} else {
 		owner->commandShotCount = -1;
-		if(myPlane->aircraftState != CAirMoveType::AIRCRAFT_LANDED){
+		if(myPlane->aircraftState != AAirMoveType::AIRCRAFT_LANDED){
 			inCommand = true;
 			std::vector<int> eu;
 			helper->GetEnemyUnits(pos, radius, owner->allyteam, eu);
@@ -804,9 +752,9 @@ void CAirCAI::DrawCommands(void)
 void CAirCAI::StopMove()
 {
 	CAirMoveType* myPlane = (CAirMoveType*)owner->moveType;
-	if((myPlane->aircraftState == CAirMoveType::AIRCRAFT_FLYING)
+	if((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 	   && !owner->unitDef->DontLand() && myPlane->autoLand) {
-		myPlane->SetState(CAirMoveType::AIRCRAFT_LANDING);
+		myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 	}
 }
 
@@ -819,8 +767,8 @@ void CAirCAI::FinishCommand(void)
 void CAirCAI::BuggerOff(float3 pos, float radius)
 {
 	CAirMoveType* myPlane=(CAirMoveType*)owner->moveType;
-	if(myPlane->aircraftState==CAirMoveType::AIRCRAFT_LANDED){
-		myPlane->SetState(CAirMoveType::AIRCRAFT_TAKEOFF);
+	if(myPlane->aircraftState==AAirMoveType::AIRCRAFT_LANDED){
+		myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
 	}
 }
 

@@ -67,7 +67,7 @@ void CAirScript::Update()
 				u=unitLoader.LoadUnit(FindUnit(armfig_name),float3(1650,300,2100+a*150),0,false,0,NULL);
 			u->pos.y=350;
 			u->experience=0.3f;
-			((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
+			((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
 			planes.push_back(u->id);
 			Command c2;
 			c2.id=CMD_MOVE_STATE;
@@ -84,7 +84,7 @@ void CAirScript::Update()
 
 			if(gs->randFloat()<0.5f){
 				u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(3880,300,2100+a*150),1,false,0,NULL);
-				((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
+				((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
 			}else{
 				u=unitLoader.LoadUnit(FindUnit(corape_name),float3(3880,300,2100+a*150),1,false,0,NULL);
 			}
@@ -109,7 +109,7 @@ void CAirScript::Update()
 				u->pos.y=ground->GetHeight(1000+(num&1)*5000,2100+num*120)+350;
 				u->experience=0.3f;
 				u->speed.x=2.8f;
-				((CAirMoveType*)u->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
+				((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				*pi=u->id;
 
 				Command c;
