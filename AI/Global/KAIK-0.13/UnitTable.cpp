@@ -101,6 +101,10 @@ int CUnitTable::BuildModSideMap() {
 			// if this unit exists, the side is valid too
 			startUnits.push_back(udef->id);
 			ai->parser->GetDef(sideName, "-1", sideKey);
+
+			// transform the side string to lower-case
+			StringToLowerInPlace(sideName);
+
 			sideNames.push_back(sideName);
 			modSideMap[sideName] = i;
 			numOfSides = i + 1;
@@ -115,8 +119,8 @@ int CUnitTable::ReadTeamSides() {
 	ai->cb->GetValue(AIVAL_SCRIPT_FILENAME_CSTR, scriptFileName);
 
 	teamSides.resize(MAX_TEAMS, 0);
-	teamSides[0] = 0;	// team 0 defaults to side 0
-	teamSides[1] = 1;	// team 1 defaults to side 1
+	teamSides[0] = 0;	// team 0 defaults to side 0 (in GlobalAI startscript)
+	teamSides[1] = 1;	// team 1 defaults to side 1 (in GlobalAI startscript)
 
 	if (scriptFileName[0] > 0) {
 		// got a GameSetup script
@@ -132,8 +136,12 @@ int CUnitTable::ReadTeamSides() {
 			scriptFileParser.GetDef(sideName, "", sideKey);
 
 			if (sideName[0] > 0) {
+				// transform the side strings to lower-case
+				std::string ssideName(sideName);
+				StringToLowerInPlace(ssideName);
+
 				// FIXME: Gaia-team side?
-				teamSides[i] = modSideMap[std::string(sideName)];
+				teamSides[i] = modSideMap[ssideName];
 			}
 		}
 
@@ -261,7 +269,7 @@ int CUnitTable::GetCategory(int unit) {
 
 
 // used to update threat-map, should probably
-// use cost multipliers too (NOTE: only then
+// use cost multipliers too (but in that case
 // non-squad units like Flashes could become
 // artifically overrated by a massive amount)
 float CUnitTable::GetDPS(const UnitDef* unit) {
@@ -712,7 +720,13 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 			break;
 	}
 
-	if (tempList->size() >= side + 1) {
+	// if we are a builder on side i, then templist must have
+	// at least i + 1 elements (templist[0], ..., templist[i])
+	// but if a mod is not symmetric (eg. no builders for side
+	// 1) this assumption fails; enabling this breaks PURE 0.6
+	// however
+	//
+	// if (tempList->size() >= side + 1) {
 		// iterate over all units for <side> in tempList (eg. Core ground_defences)
 		for (unsigned int i = 0; i != tempList[side].size(); i++) {
 			int tempUnitDefID = tempList[side][i];
@@ -728,7 +742,7 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 				}
 			}
 		}
-	}
+	// }
 
 	// if we didn't find a unit to build with score > 0 (ie.
 	// if builder has no build-option matching this category)
