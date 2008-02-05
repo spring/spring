@@ -4,23 +4,15 @@
 #ifndef __AIR_MOVE_TYPE_H__
 #define __AIR_MOVE_TYPE_H__
 
-#include "MoveType.h"
-#include "Sim/Misc/AirBaseHandler.h"
+#include "AAirMoveType.h"
 
 class CAirMoveType :
-	public CMoveType
+	public AAirMoveType
 {
 	CR_DECLARE(CAirMoveType);
 	CR_DECLARE_SUB(DrawLine);
 	CR_DECLARE_SUB(RudderInfo);
 public:
-	enum AircraftState{
-		AIRCRAFT_LANDED,
-		AIRCRAFT_FLYING,
-		AIRCRAFT_LANDING,
-		AIRCRAFT_CRASHING,
-		AIRCRAFT_TAKEOFF,
-	} aircraftState;
 
 	CAirMoveType(CUnit* owner);
 	~CAirMoveType(void);
@@ -33,7 +25,8 @@ public:
 	void UpdateFlying(float wantedHeight,float engine);
 	void UpdateLanded();
 	void UpdateLanding();
-	void UpdateAirPhysics(float rudder, float aileron, float elevator,float engine,const float3& engineVector);
+	void UpdateAirPhysics(float rudder, float aileron, float elevator,
+			float engine,const float3& engineVector);
 	void SetState(AircraftState state);
 	void UpdateTakeOff(float wantedHeight);
 	void ImpulseAdded(void);
@@ -49,7 +42,6 @@ public:
 
 	bool loopbackAttack;
 	bool isFighter;
-	bool collide;
 
 	float wingDrag;
 	float wingAngle;
@@ -62,26 +54,21 @@ public:
 	float maxPitch;
 	float maxSpeed;
 	float turnRadius;
-	float wantedHeight;
 
 	float maxAcc;
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
 
-	float3 goalPos;
 
 	float inSupply;
 
-	float3 reservedLandingPos;
 
 	float mySide;		//used while landing
 	float crashAileron;
 	float crashElevator;
 	float crashRudder;
 
-	float3 oldpos;
-	float3 oldGoalPos;
 	float3 oldSlowUpdatePos;
 
 	struct DrawLine {
@@ -108,16 +95,7 @@ public:
 	float lastAileronPos;
 	
 	float inefficientAttackTime;
-	float3 exitVector;							//used by fighters to turn away when closing in on ground targets
-
-	CUnit* lastColWarning;		//unit found to be dangerously close to our path
-	int lastColWarningType;		//1=generally forward of us,2=directly in path
-
-	float repairBelowHealth;
-	CAirBaseHandler::LandingPad* reservedPad;
-	int padStatus;						//0 flying toward,1 landing at,2 landed
-
-	bool autoLand;
+	float3 exitVector;	//used by fighters to turn away when closing in on ground targets
 };
 
 #endif // __AIR_MOVE_TYPE_H__

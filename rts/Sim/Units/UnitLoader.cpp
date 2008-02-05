@@ -279,7 +279,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 			mt->maxBank = ud->maxBank;
 			mt->maxPitch = ud->maxPitch;
 			mt->turnRadius = ud->turnRadius;
-			mt->wantedHeight = ud->wantedHeight*1.5f+(gs->randFloat()-0.3f)*15*(mt->isFighter?2:1);;
+			mt->wantedHeight = ud->wantedHeight*1.5f+(gs->randFloat()-0.3f)*15*(mt->isFighter?2:1);
 
 			mt->maxAcc = ud->maxAcc;
 			mt->maxAileron = ud->maxAileron;

@@ -19,7 +19,7 @@
 #include "Sound.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CAirMoveType, CMoveType, (NULL));
+CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );
 CR_BIND(CAirMoveType::RudderInfo, );
 
@@ -31,7 +31,6 @@ CR_REG_METADATA(CAirMoveType, (
 
 		CR_MEMBER(loopbackAttack),
 		CR_MEMBER(isFighter),
-		CR_MEMBER(collide),
 
 		CR_MEMBER(wingDrag),
 		CR_MEMBER(wingAngle),
@@ -44,26 +43,19 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(maxPitch),
 		CR_MEMBER(maxSpeed),
 		CR_MEMBER(turnRadius),
-		CR_MEMBER(wantedHeight),
 
 		CR_MEMBER(maxAcc),
 		CR_MEMBER(maxAileron),
 		CR_MEMBER(maxElevator),
 		CR_MEMBER(maxRudder),
 
-		CR_MEMBER(goalPos),
-
 		CR_MEMBER(inSupply),
-
-		CR_MEMBER(reservedLandingPos),
 
 		CR_MEMBER(mySide),
 		CR_MEMBER(crashAileron),
 		CR_MEMBER(crashElevator),
 		CR_MEMBER(crashRudder),
-
-		CR_MEMBER(oldpos),
-		CR_MEMBER(oldGoalPos),
+		
 		CR_MEMBER(oldSlowUpdatePos),
 
 		CR_MEMBER(lines),
@@ -81,14 +73,7 @@ CR_REG_METADATA(CAirMoveType, (
 
 		CR_MEMBER(inefficientAttackTime),
 		CR_MEMBER(exitVector),
-
-		CR_MEMBER(lastColWarning),
-		CR_MEMBER(lastColWarningType),
-
-		CR_MEMBER(repairBelowHealth),
-		CR_MEMBER(reservedPad),
-		CR_MEMBER(padStatus),
-		CR_MEMBER(autoLand),
+		
 		CR_RESERVED(63)
 		));
 
@@ -100,7 +85,7 @@ CR_REG_METADATA_SUB(CAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
 
 
 CAirMoveType::CAirMoveType(CUnit* owner):
-	CMoveType(owner),
+	AAirMoveType(owner),
 	wingDrag(0.07f),
 	wingAngle(0.1f),
 	frontToSpeed(0.04f),
@@ -111,30 +96,17 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	maxAileron(0.04f),
 	maxElevator(0.02f),
 	maxRudder(0.01f),
-	goalPos(1000,0,1000),
-	wantedHeight(80),
 	invDrag(0.995f),
-	aircraftState(AIRCRAFT_LANDED),
 	inSupply(0),
 	subState(0),
 	myGravity(0.8f),
 	mySide(1),
 	isFighter(false),
-	collide(true),
-	oldpos(0,0,0),
-	oldGoalPos(0,1,0),
 	maneuver(0),
 	maneuverSubState(0),
 	inefficientAttackTime(0),
-	reservedLandingPos(-1,-1,-1),
 	oldSlowUpdatePos(-1,-1,-1),
-	lastColWarning(0),
-	lastColWarningType(0),
-	repairBelowHealth(0.30f),
-	padStatus(0),
-	reservedPad(0),
-	loopbackAttack(false),
-	autoLand(true)
+	loopbackAttack(false)
 {
 	turnRadius=150;
 	if (owner)owner->mapSquare+=1;						//to force los recalculation
@@ -163,12 +135,7 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 }
 
 CAirMoveType::~CAirMoveType(void)
-{
-	if(reservedPad){
-		airBaseHandler->LeaveLandingPad(reservedPad);
-		reservedPad=0;
-	}
-}
+{}
 
 
 
@@ -1038,8 +1005,9 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 #endif
 }
 
-void CAirMoveType::SetState(CAirMoveType::AircraftState state)
+void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 {
+	assert(state != AIRCRAFT_HOVERING);
 	if(aircraftState==AIRCRAFT_CRASHING || state==aircraftState)
 		return;
 

@@ -1,5 +1,10 @@
 Spring change log
 
+0.76b1+
+
+Spring Engine:
+ - Keep units in various situations from deciding to attack units they
+	shoulden't (noChaseCatagory, neutral, under water without water weapons).
 
 0.76b1
 

@@ -1599,11 +1599,11 @@ void CCobInstance::SetUnitVal(int val, int param)
 		case CRASHING: {
 			if(dynamic_cast<CAirMoveType*>(unit->moveType)){
 				if(!!param){
-					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_CRASHING);
+					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 				} else {
 					unit->crashing=false;
-					((CAirMoveType*)unit->moveType)->aircraftState=CAirMoveType::AIRCRAFT_TAKEOFF;
-					((CAirMoveType*)unit->moveType)->SetState(CAirMoveType::AIRCRAFT_FLYING);
+					((CAirMoveType*)unit->moveType)->aircraftState=AAirMoveType::AIRCRAFT_TAKEOFF;
+					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
 			break;

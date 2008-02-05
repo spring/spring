@@ -1,23 +1,13 @@
 #ifndef TAAIRMOVETYPE_H
 #define TAAIRMOVETYPE_H
 
-#include "MoveType.h"
-#include "Sim/Misc/AirBaseHandler.h"
+#include "AAirMoveType.h"
 
 class CTAAirMoveType :
-	public CMoveType
+	public AAirMoveType
 {
 	CR_DECLARE(CTAAirMoveType);
 public:
-	enum AircraftState{
-		AIRCRAFT_LANDED,
-		AIRCRAFT_FLYING,
-		AIRCRAFT_LANDING,
-		AIRCRAFT_CRASHING,
-		AIRCRAFT_TAKEOFF,
-		AIRCRAFT_HOVERING       // this is what happens to aircraft with dontLand=1 in fbi
-	} aircraftState;
-
 	enum FlyState {
 		FLY_CRUISING,
 		FLY_CIRCLING,
@@ -25,15 +15,12 @@ public:
 		FLY_LANDING
 	} flyState;
 
-	bool dontCheckCol;			//needed to get transport close enough to what is going to be transported, better way ?
-	bool collide;             //mods can use this to disable plane collisions
+	//needed to get transport close enough to what is going to be transported.
+	//better way ?
+	bool dontCheckCol;
 
-	float3 goalPos;
-	float3 oldpos;
-	float wantedHeight;
 	float orgWantedHeight;	//to reset altitude back
 	
-	float3 reservedLandingPos;
 	float3 circlingPos;
 	float goalDistance;			//Used when circling something
 	int waitCounter;			//need to pause between circling steps
@@ -63,15 +50,8 @@ public:
 
 	float maxDrift;
 
-	CUnit* lastColWarning;		//unit found to be dangerously close to our path
-	int lastColWarningType;		//1=generally forward of us,2=directly in path
 
-	float repairBelowHealth;
-	CAirBaseHandler::LandingPad* reservedPad;
-	int padStatus;						//0 flying toward,1 landing at,2 landed
-	float3 oldGoalPos;				//goalpos to resume flying to after landing
 
-	bool autoLand;
 
 	CTAAirMoveType(CUnit* owner);
 	~CTAAirMoveType(void);

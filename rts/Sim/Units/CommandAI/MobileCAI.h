@@ -2,6 +2,7 @@
 #define MOBILECAI_H
 
 #include "CommandAI.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 
 class CMobileCAI :
 	public CCommandAI
@@ -29,6 +30,8 @@ public:
 	void ExecuteAttack(Command &c);
 	void ExecuteDGun(Command &c);
 	void ExecuteStop(Command &c);
+	
+	void RefuelIfNeeded(AAirMoveType* myPlane);
 
 	virtual void Execute();
 	virtual void ExecuteGuard(Command &c);

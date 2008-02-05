@@ -17,17 +17,13 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 
-CR_BIND_DERIVED(CTAAirMoveType, CMoveType, (NULL));
+CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
 
 CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(dontCheckCol),
 
-	CR_MEMBER(goalPos),
-	CR_MEMBER(oldpos),
-	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
 
-	CR_MEMBER(reservedLandingPos),
 	CR_MEMBER(circlingPos),
 	CR_MEMBER(goalDistance),
 	CR_MEMBER(waitCounter),
@@ -54,25 +50,12 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(forceHeadingTo),
 
 	CR_MEMBER(maxDrift),
-
-	CR_MEMBER(lastColWarning),
-	CR_MEMBER(lastColWarningType),
-	CR_MEMBER(collide),
-
-	CR_MEMBER(repairBelowHealth),
-	CR_MEMBER(reservedPad),
-	CR_MEMBER(padStatus),
-	CR_MEMBER(oldGoalPos),
-
-	CR_MEMBER(autoLand),
 	CR_RESERVED(63)
 	));
 
 
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
-	CMoveType(owner),
-	aircraftState(AIRCRAFT_LANDED),
-	wantedHeight(80),
+	AAirMoveType(owner),
 	altitudeRate(3.0f),
 	currentBank(0),
 	// we want to take off in direction of factory facing
@@ -81,7 +64,6 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontCheckCol(false),
 	dontLand(false),
-	collide(true),
 	lastMoveRate(0),
 	waitCounter(0),
 	deltaSpeed(ZeroVector),
@@ -92,19 +74,10 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 	forceHeadingTo(wantedHeading),
 	goalDistance(1),
-	goalPos(owner? owner->pos:float3(0, 0, 0)),
-	oldGoalPos(owner? owner->pos:float3(0, 0, 0)),
 	turnRate(1),
 	wantedSpeed(ZeroVector),
-	lastColWarning(0),
-	lastColWarningType(0),
-	reservedLandingPos(-1, -1, -1),
 	maxDrift(1),
-	repairBelowHealth(0.30f),
-	padStatus(0),
-	reservedPad(0),
-	currentPitch(0),
-	autoLand(true)
+	currentPitch(0)
 {
 	if (owner) {
 		owner->dontUseWeapons = true;
@@ -113,10 +86,6 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 
 CTAAirMoveType::~CTAAirMoveType(void)
 {
-	if (reservedPad) {
-		airBaseHandler->LeaveLandingPad(reservedPad);
-		reservedPad = 0;
-	}
 }
 
 void CTAAirMoveType::SetGoal(float3 newPos, float distance)
@@ -226,8 +195,13 @@ void CTAAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 	distance -= 15;
 
 	// Ignore the exact same order
-	if ((aircraftState == AIRCRAFT_FLYING) && (flyState == FLY_CIRCLING || flyState == FLY_ATTACKING) && ((circlingPos - pos).SqLength2D() < 64) && (goalDistance == distance))
+	if ((aircraftState == AIRCRAFT_FLYING)
+			&& (flyState == FLY_CIRCLING || flyState == FLY_ATTACKING)
+			&& ((circlingPos - pos).SqLength2D() < 64)
+			&& (goalDistance == distance))
+	{
 		return;
+	}
 
 	circlingPos = pos;
 	goalDistance = distance;
@@ -326,13 +300,15 @@ void CTAAirMoveType::UpdateTakeoff()
 
 
 
-// Move the unit around a bit.. and when it gets too far away from goal position it switches to normal flying instead
+// Move the unit around a bit.. and when it gets too far away from goal position
+// it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
 	float driftSpeed = owner->unitDef->dlHoverFactor;	
 	float3 dir = goalPos - owner->pos;
 
-	// move towards goal position if it's not immediately behind us when we have more waypoints to get to
+	// move towards goal position if it's not immediately behind us when we have
+	// more waypoints to get to
 	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
 		dir.Length2D() < 120) && (goalPos - owner->pos).Normalize().distance(dir) > 1) {
 		dir = owner->frontdir;
@@ -364,7 +340,8 @@ void CTAAirMoveType::UpdateFlying()
 	}
 
 	// are we there yet?
-	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift) && (fabs(ground->GetHeight(pos.x, pos.z) - pos.y + wantedHeight) < maxDrift);
+	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift)
+			&& (fabs(ground->GetHeight(pos.x, pos.z) - pos.y + wantedHeight) < maxDrift);
 
 	if (flyState == FLY_ATTACKING)
 		closeToGoal = (dir.SqLength2D() < 400);
@@ -373,7 +350,8 @@ void CTAAirMoveType::UpdateFlying()
 		// pretty close
 		switch (flyState) {
 			case FLY_CRUISING:
-				if (dontLand || (++waitCounter < 55 && dynamic_cast<CTransportUnit*>(owner)) || !autoLand) {
+				if (dontLand || (++waitCounter < 55 && dynamic_cast<CTransportUnit*>(owner))
+						|| !autoLand) {
 					// transport aircraft need some time to detect that they can pickup
 					if (dynamic_cast<CTransportUnit*>(owner)) {
 						wantedSpeed = ZeroVector;
@@ -762,7 +740,8 @@ void CTAAirMoveType::Update()
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
 				float3 relPos = unit->localmodel->GetPiecePos(reservedPad->GetPiece());
-				float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+				float3 pos = unit->pos + unit->frontdir * relPos.z
+						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 
 				if (padStatus == 0) {
 					if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
@@ -791,9 +770,12 @@ void CTAAirMoveType::Update()
 
 					owner->pos = pos;
 					owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
-					owner->currentFuel = min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
+					owner->currentFuel = min(owner->unitDef->maxFuel,
+							owner->currentFuel + (owner->unitDef->maxFuel
+									/ (GAME_SPEED * owner->unitDef->refuelTime)));
 
-					if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
+					if (owner->health >= owner->maxHealth - 1
+							&& owner->currentFuel >= owner->unitDef->maxFuel) {
 						airBaseHandler->LeaveLandingPad(reservedPad);
 						reservedPad = 0;
 						padStatus = 0;
@@ -833,7 +815,8 @@ void CTAAirMoveType::Update()
 	// Turn and bank and move
 	UpdateHeading();
 	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);			// updates dirs
-	owner->midPos = pos + frontdir * owner->relMidPos.z + updir * owner->relMidPos.y + rightdir * owner->relMidPos.x;
+	owner->midPos = pos + frontdir * owner->relMidPos.z + updir * owner->relMidPos.y
+			+ rightdir * owner->relMidPos.x;
 
 	// Push other units out of the way
 	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
@@ -856,15 +839,20 @@ void CTAAirMoveType::Update()
 
 					if ((*ui)->mass >= 100000 || (*ui)->immobile) {
 						pos -= dif * (dist - totRad);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z
+								+ owner->updir * owner->relMidPos.y
+								+ owner->rightdir * owner->relMidPos.x;
 						owner->speed *= 0.99f;
 					} else {
 						float part = owner->mass / (owner->mass + (*ui)->mass);
 						pos -= dif * (dist - totRad) * (1 - part);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->midPos = pos + owner->frontdir * owner->relMidPos.z
+								+ owner->updir * owner->relMidPos.y
+								+ owner->rightdir * owner->relMidPos.x;
 						CUnit* u = (CUnit*) (*ui);
 						u->pos += dif * (dist - totRad) * (part);
-						u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+						u->midPos = u->pos + u->frontdir * u->relMidPos.z
+								+ u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
 						float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
 						owner->speed += dif * colSpeed * (1 - part);
 						u->speed -= dif * colSpeed * (part);
@@ -895,8 +883,10 @@ void CTAAirMoveType::SlowUpdate(void)
 	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0)
 		owner->currentFuel = max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
 
-	if (!reservedPad && aircraftState == AIRCRAFT_FLYING && owner->health < owner->maxHealth * repairBelowHealth) {
-		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+	if (!reservedPad && aircraftState == AIRCRAFT_FLYING 
+			&& owner->health < owner->maxHealth * repairBelowHealth) {
+		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
+				owner, owner->unitDef->minAirBasePower);
 
 		if (lp) {
 			AddDeathDependence(lp);
@@ -1003,7 +993,8 @@ void CTAAirMoveType::CheckForCollision(void)
 		if (forwardDif.SqLength() < dist * dist) {
 			float frontLength = forwardDif.Length();
 			float3 ortoDif = dif - forwardDif;
-			// note: the radius is multiplied by two since we rely on aircraft having small spheres (see unitloader)
+			// note: the radius is multiplied by two since we rely on aircraft
+			// having small spheres (see unitloader)
 			float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.05f + 5;
 
 			if (ortoDif.SqLength() < minOrtoDif * minOrtoDif) {

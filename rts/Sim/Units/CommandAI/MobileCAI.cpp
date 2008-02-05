@@ -259,60 +259,69 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
-void CMobileCAI::SlowUpdate()
+void CMobileCAI::RefuelIfNeeded(AAirMoveType* myPlane)
 {
-	if(owner->unitDef->maxFuel>0 && dynamic_cast<CTAAirMoveType*>(owner->moveType)){
-		CTAAirMoveType* myPlane=(CTAAirMoveType*)owner->moveType;
-		if(myPlane->reservedPad){
-			return;
-		} else {
-			if(owner->currentFuel <= 0){
+	if(myPlane->reservedPad){
+		return;
+	} else {
+		if(owner->currentFuel <= 0){
+			StopMove();
+			owner->userAttackGround=false;
+			owner->userTarget=0;
+			inCommand=false;
+			CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
+				owner, owner->unitDef->minAirBasePower);
+			if(lp){
+				myPlane->AddDeathDependence(lp);
+				myPlane->reservedPad = lp;
+				myPlane->padStatus = 0;
+				myPlane->oldGoalPos = myPlane->goalPos;
+				return;
+			}
+			float3 landingPos = airBaseHandler->FindClosestAirBasePos(
+				owner, owner->unitDef->minAirBasePower);
+			if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
+				if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED
+						&& owner->pos.distance2D(landingPos) > 800) {
+					myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
+				}
 				StopMove();
-				owner->userAttackGround=false;
-				owner->userTarget=0;
-				inCommand=false;
-				CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,
-						owner->unitDef->minAirBasePower);
+				SetGoal(landingPos,owner->pos);
+				//myPlane->goalPos = landingPos;
+			} else {
+				if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
+					myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
+			}
+			return;
+		}
+		if(owner->currentFuel < myPlane->repairBelowHealth * owner->unitDef->maxFuel){
+			if(commandQue.empty() || commandQue.front().id == CMD_PATROL){
+				CAirBaseHandler::LandingPad* lp =
+					airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 				if(lp){
+					StopMove();
+					owner->userAttackGround=false;
+					owner->userTarget=0;
+					inCommand=false;
 					myPlane->AddDeathDependence(lp);
 					myPlane->reservedPad=lp;
 					myPlane->padStatus=0;
 					myPlane->oldGoalPos=myPlane->goalPos;
-					return;
-				}
-				float3 landingPos = airBaseHandler->FindClosestAirBasePos(owner,
-						owner->unitDef->minAirBasePower);
-				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
-					inCommand=false;
-					StopMove();
-					SetGoal(landingPos,owner->pos);
-				} else {
-					if(myPlane->aircraftState == CTAAirMoveType::AIRCRAFT_FLYING)
-						myPlane->SetState(CTAAirMoveType::AIRCRAFT_LANDING);
-				}
-				return;
-			}
-			if(owner->currentFuel < myPlane->repairBelowHealth*owner->unitDef->maxFuel){
-				if(commandQue.empty() || commandQue.front().id==CMD_PATROL){
-					CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,
-							owner->unitDef->minAirBasePower);
-					if(lp){
-						StopMove();
-						owner->userAttackGround=false;
-						owner->userTarget=0;
-						inCommand=false;
-						myPlane->AddDeathDependence(lp);
-						myPlane->reservedPad=lp;
-						myPlane->padStatus=0;
-						myPlane->oldGoalPos=myPlane->goalPos;
-						if(myPlane->aircraftState==CTAAirMoveType::AIRCRAFT_LANDED){
-							myPlane->SetState(CTAAirMoveType::AIRCRAFT_TAKEOFF);
-						}
-						return;
+					if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED){
+						myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
 					}
+					return;
 				}
 			}
 		}
+	}
+}
+
+void CMobileCAI::SlowUpdate()
+{
+	if(owner->unitDef->maxFuel>0 && dynamic_cast<AAirMoveType*>(owner->moveType)){
+		AAirMoveType* myPlane=(AAirMoveType*)owner->moveType;
+		RefuelIfNeeded(myPlane);
 	}
 
 	if(!commandQue.empty() && commandQue.front().timeOut < gs->frameNum){
@@ -1028,7 +1037,7 @@ void CMobileCAI::IdleCheck(void)
 	    (!owner->haveTarget || owner->weapons[0]->onlyForward)) {
 		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,
 				owner->maxRange + 150 * owner->moveState * owner->moveState, owner->allyteam);
-		if(u && !(owner->unitDef->noChaseCategory & u->category) && !u->neutral) {
+		if(IsValidTarget(u)) {
 			Command c;
 			c.id=CMD_ATTACK;
 			c.options=INTERNAL_ORDER;
