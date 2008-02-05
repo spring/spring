@@ -4,15 +4,17 @@ AF 2007
 
 class CMessage {
 public:
-	CMessage(string my_type);
-	CMessage(string my_type, vector<float> &myparameters);
+	CMessage(std::string my_type);
+	CMessage(std::string my_type, std::vector<float> &myparameters);
 
-	vector<float> GetParameters();
+	bool IsType(std::string type);
+
+	std::vector<float> GetParameters();
 
 	float GetParameter(int i);
 	void* GetOtherParameters();
 
-	string GetType();
+	std::string GetType();
 	void SetType(string type);
 
 	int GetFrame();
@@ -34,7 +36,7 @@ public:
 private:
 	int frame;
 	int lifetime; // -1 indefinate
-	string message_type;
-	vector<float> parameters;
+	std::string message_type;
+	std::vector<float> parameters;
 	void* otherstuff;
 };

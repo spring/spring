@@ -11,9 +11,14 @@ CMessage::CMessage(string my_type){
 }
 
 CMessage::CMessage(string my_type, vector<float> &myparameters){
+	message_type = my_type;
 	parameters = myparameters;
 	frame = 0;
 	lifetime = -1;
+}
+
+bool CMessage::IsType(std::string type){
+	return (type == message_type);
 }
 
 vector<float> CMessage::GetParameters(){
