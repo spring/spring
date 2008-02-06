@@ -59,6 +59,7 @@ public:
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
 	void UpdateStockpileIcon(void);
+	bool CanChangeFireState();
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;

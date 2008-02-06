@@ -319,6 +319,7 @@ struct UnitDef
 
 	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
+	bool kamikazeFireControl;
 
 	bool targfac;
 	bool canDGun;

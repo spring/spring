@@ -192,7 +192,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.onlyKey=false;
 
 	if (!owner->unitDef->noAutoFire) {
-		if(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"/* || owner->unitDef->canKamikaze*/){
+		if(CanChangeFireState()) {
 			c.id=CMD_FIRE_STATE;
 			c.action="firestate";
 			c.type=CMDTYPE_ICON_MODE;
@@ -417,21 +417,38 @@ bool CCommandAI::AllowedCommand(const Command& c)
 			return false;
 	}
 
-	if (c.id == CMD_FIRE_STATE && (c.params.empty() || ud->noAutoFire || (ud->weapons.empty() && ud->type != "Factory")))
+	if (c.id == CMD_FIRE_STATE
+			&& (c.params.empty() || ud->noAutoFire || !CanChangeFireState()))
+	{
 		return false;
-	if (c.id == CMD_MOVE_STATE && (c.params.empty() || (!ud->canmove && !ud->builder)))
+	}
+	if (c.id == CMD_MOVE_STATE
+			&& (c.params.empty() || (!ud->canmove && !ud->builder)))
+	{
 		return false;
+	}
 	if (c.id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat))
+	{
 		return false;
-	if (c.id == CMD_TRAJECTORY && (c.params.empty() || ud->highTrajectoryType < 2))
+	}
+	if (c.id == CMD_TRAJECTORY
+			&& (c.params.empty() || ud->highTrajectoryType < 2))
+	{
 		return false;
-	if (c.id == CMD_ONOFF && (c.params.empty() || !ud->onoffable || owner->beingBuilt))
+	}
+	if (c.id == CMD_ONOFF
+			&& (c.params.empty() || !ud->onoffable || owner->beingBuilt))
+	{
 		return false;
+	}
 	if (c.id == CMD_CLOAK && (c.params.empty() || !ud->canCloak))
+	{
 		return false;
+	}
 	if (c.id == CMD_STOCKPILE && !stockpileWeapon)
+	{
 		return false;
-
+	}
 	return true;
 }
 
@@ -1497,3 +1514,7 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 	return false;
 }
 
+bool CCommandAI::CanChangeFireState(){
+	return !owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"
+		|| (owner->unitDef->canKamikaze && owner->unitDef->kamikazeFireControl); 
+}

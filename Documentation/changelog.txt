@@ -5,6 +5,8 @@ Spring change log
 Spring Engine:
  - Keep units in various situations from deciding to attack units they
 	shoulden't (noChaseCatagory, neutral, under water without water weapons).
+ - Added kamikazeFireControl fbi tag. Defaults to false. If true, a kamikaze
+	unit, such as a mine, has CMD_FIRE_CONTROL as a valid command.
 
 0.76b1
 

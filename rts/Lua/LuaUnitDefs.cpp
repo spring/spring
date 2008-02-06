@@ -905,6 +905,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL( "canKamikaze",  ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
+	ADD_BOOL( "kamikazeFireControl", ud.kamikazeFireControl);
 
 	ADD_BOOL("targfac", ud.targfac);
 
