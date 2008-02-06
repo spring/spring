@@ -397,6 +397,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.canKamikaze = udTable.GetBool("kamikaze", false);
 	ud.kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
+	ud.kamikazeFireControl = udTable.GetBool("kamikazeFireControl", false);
 
 	ud.showNanoFrame = udTable.GetBool("showNanoFrame", true);
 	ud.showNanoSpray = udTable.GetBool("showNanoSpray", true);
