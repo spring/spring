@@ -2587,6 +2587,14 @@
 				Name="MoveTypes"
 				>
 				<File
+					RelativePath="..\..\Sim\MoveTypes\AAirMoveType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\AAirMoveType.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\MoveTypes\AirMoveType.cpp"
 					>
 				</File>
@@ -3141,6 +3149,46 @@
 			</File>
 			<File
 				RelativePath="..\..\System\TimeProfiler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\UnsyncedRNG.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\UnsyncedRNG.h"
 				>
 			</File>
 			<Filter
@@ -5136,6 +5184,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Map\HeightMapTexture.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Map\HeightMapTexture.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Map\MapDamage.cpp"
 				>
 			</File>
@@ -5353,14 +5409,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaCallInHandler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Lua\LuaCob.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Lua\LuaCob.h"
 				>
 			</File>
 			<File
