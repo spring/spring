@@ -84,8 +84,11 @@ void CBuildUp::Buildup(int frame) {
 	bool eLevel50 = (eLevel > (eStorage * e1));		// is our current energy level more than 50% of our current energy storage capacity?
 	bool eLevel80 = (eLevel > (eStorage * e2));		// is our current energy level more than 80% of our current energy storage capacity?
 
-	bool mStall = ((frame < 1800) || (mIncome < (mUsage * 1.3f)));	// are we currently producing less metal than we are currently expending * 1.3?
-	bool eStall = ((frame <  900) || (eIncome < (eUsage * 1.6f)));	// are we currently producing less energy than we are currently expending * 1.6?
+	// fake a resource crisis during the first
+	// minute to get our economy going quicker
+	// KLOOTNOTE: reverted, has opposite effect
+	bool mStall = (/*(frame < 1800) ||*/ (mIncome < (mUsage * 1.3f)));	// are we currently producing less metal than we are currently expending * 1.3?
+	bool eStall = (/*(frame <  900) ||*/ (eIncome < (eUsage * 1.6f)));	// are we currently producing less energy than we are currently expending * 1.6?
 
 
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
