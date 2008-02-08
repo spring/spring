@@ -679,7 +679,7 @@ void CGameServer::ServerReadNet()
 								}
 								case TEAMMSG_JOIN_TEAM: {
 									unsigned newTeam = inbuf[3];
-									if (setup && !setup->fixedTeams)
+									if ((setup && !setup->fixedTeams) || demoReader)
 									{
 										serverNet->SendJoinTeam(player, newTeam);
 										players[player]->team = newTeam;
