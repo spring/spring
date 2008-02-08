@@ -1031,10 +1031,11 @@ void CMobileCAI::IdleCheck(void)
 			}
 		}
 	}
-	if (owner->unitDef->canAttack && !owner->unitDef->noAutoFire &&
-	    (gs->frameNum >= lastIdleCheck+10) && owner->moveState &&
-	    owner->fireState>=2 && !owner->weapons.empty() &&
-	    (!owner->haveTarget || owner->weapons[0]->onlyForward)) {
+	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck+10)
+			&& owner->moveState && owner->fireState>=2 &&
+			!owner->weapons.empty() &&
+			(!owner->haveTarget || owner->weapons[0]->onlyForward))
+	{
 		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,
 				owner->maxRange + 150 * owner->moveState * owner->moveState, owner->allyteam);
 		if(IsValidTarget(u)) {

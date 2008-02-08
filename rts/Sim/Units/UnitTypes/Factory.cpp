@@ -185,8 +185,9 @@ void CFactory::Update()
 		}
 
 		if (!curBuild->beingBuilt &&
-		    (!unitDef->fullHealthFactory ||
-		     (curBuild->health >= curBuild->maxHealth))) {
+				(!unitDef->fullHealthFactory ||
+						(curBuild->health >= curBuild->maxHealth)))
+		{
 			if (group && curBuild->group == 0) {
 				curBuild->SetGroup(group);
 			}
@@ -199,9 +200,11 @@ void CFactory::Update()
 			curBuild->commandAI->GiveCommand(c);
 			c.params.clear();
 
-			c.id = CMD_FIRE_STATE;
-			c.params.push_back(fireState);
-			curBuild->commandAI->GiveCommand(c);
+			if(curBuild->unitDef->fireState < 0) {
+				c.id = CMD_FIRE_STATE;
+				c.params.push_back(fireState);
+				curBuild->commandAI->GiveCommand(c);
+			}
 
 			bool userOrders = true;
 			if (curBuild->commandAI->commandQue.empty() ||
