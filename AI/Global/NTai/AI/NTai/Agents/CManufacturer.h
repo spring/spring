@@ -7,13 +7,12 @@ namespace ntai {
 	class CBPlan: public boost::noncopyable{ // This is not used for factories building units.
 	public:
 		CBPlan();
-	//	CBPlan();
 		~CBPlan();
 
 		bool IsValid(){
 			return valid;
 		}
-		//bool HasBuilder(int i);
+
 		void AddBuilder(int i);
 		bool HasBuilders();
 		void RemoveBuilder(int i);
@@ -32,8 +31,6 @@ namespace ntai {
 	private:
 		bool valid;
 		int bcount;
-		//boost::mutex plan_mutex;
-		//set<int> builders;				// the builder
 
 	};
 
@@ -62,21 +59,20 @@ namespace ntai {
 		map<string,btype> types;
 		map<btype,string> typenames;
 
-		btype GetTaskType(string s);						// retrieves the associated tasktype
-		string GetTaskName(btype type);						// retrieves the associated taskname
+		// retrieves the associated tasktype
+		btype GetTaskType(string s);
 
-		void RegisterTaskPair(string name, btype type);		// registers this pair so it can be logged and used in the tasklists
+		// retrieves the associated taskname
+		string GetTaskName(btype type);
+
+		// registers this pair so it can be logged and used in the tasklists
+		void RegisterTaskPair(string name, btype type);
+
 		void RegisterTaskTypes();
 
 		bool CanBuild(int uid,const UnitDef* ud, string name);
 
 		deque<CBPlan* >* BPlans;
-
-		//bool WipePlansForBuilder(int unit);
-
-		//int WhatIsUnitBuilding(int builder);
-
-		//bool UnitTargetStartedBuilding(int builder);
 
 		deque<CBPlan* >::iterator OverlappingPlans(float3 pos,const UnitDef* ud);
 

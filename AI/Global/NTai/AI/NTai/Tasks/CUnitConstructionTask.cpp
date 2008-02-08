@@ -31,24 +31,30 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 	}
 
 	NLOG("CUnitConstructionTask::RecieveMessage");
-	if(message.GetType() == string("unitidle")){
+
+	if(message.IsType("unitidle")){
 		if(message.GetParameter(0) == unit){
 			End();
 			return;
 		}
-	} else if(message.GetType() == string("unitdestroyed")){
+
+	} else if(message.IsType("unitdestroyed")){
 		if(message.GetParameter(0) == unit){
 			End();
 			return;
 		}
-	}else if(message.GetType() == string("type?")){
+
+	}else if(message.IsType("type?")){
 		message.SetType(" build:"+building->GetUnitDef()->name);
-	}else if(message.GetType() == string("buildposition")){
+	}else if(message.IsType("buildposition")){
 		// continue construction
 		//
+
 		TCommand tc(unit,"CBuild");
 		tc.ID(-building->GetUnitDef()->id);
+
 		float3 pos = message.GetFloat3();
+		
 		if(!building->IsMobile()){
 			if(pos==UpVector){
 				G->L.print("BuildPlacement returned UpVector or some other nasty position, a build location wasn't found!");

@@ -16,13 +16,11 @@ namespace ntai {
 	map<string, float> builderefficiency;
 	map<string, int> lastbuilderefficiencyupdate;
 
-	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	TdfParser* Global::Get_mod_tdf(){
 		return info->mod_tdf;
 	}
 
-	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void trim(string &str){
 		string::size_type pos = str.find_last_not_of(' ');
@@ -214,14 +212,14 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("CMessage message(\"enemydamaged\"); FireEvent(message);")*/
 	}
 
-	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
 	void Global::Update(){
 		bool paused = false;
 
 		NLOG("Global::Update()");
 		cb->GetValue(AIVAL_GAME_PAUSED, &paused);
-		if(paused) return;
+		if(paused){
+			return;
+		}
 		START_EXCEPTION_HANDLING
 
 		if(!handlers.empty()){
@@ -256,69 +254,7 @@ namespace ntai {
 
 		}
 
-		if(cb->GetCurrentFrame() == (1 SECOND)){
-			NLOG("STARTUP BANNER IN Global::Update()");
-
-			if(L.FirstInstance()){
-				string s = string(":: ") + AI_NAME + string(" by AF");
-				cb->SendTextMsg(s.c_str(), 0);
-				cb->SendTextMsg(":: Copyright (C) 2006 AF", 0);
-				string q = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
-				if(q != string("")){
-					cb->SendTextMsg(q.c_str(), 0);
-				}
-				cb->SendTextMsg("Please check www.darkstars.co.uk for updates", 0);
-			}
-
-			int* ax = new int[10000];
-			int anum =cb->GetFriendlyUnits(ax);
-			
-			ComName = string("");
-	        
-			if(anum !=0){
-				for(int a = 0; a<anum; a++){
-					if(cb->GetUnitTeam(ax[a]) == cb->GetMyTeam()){
-						const UnitDef* ud = GetUnitDef(ax[a]);
-						if(ud!=0){
-							//
-							ComName = ud->name;
-							Cached->comID=ax[a];
-						}
-					}
-				}
-			}
-			delete[] ax;
-		}
-		END_EXCEPTION_HANDLING("Startup Banner and getting commander name")
-
-		START_EXCEPTION_HANDLING
-		OrderRouter->Update();
-		END_EXCEPTION_HANDLING("OrderRouter->Update()")
-
-		//if( EVERY_((2 SECONDS)) && (Cached->cheating == true) ){
-		//	float a = cb->GetEnergyStorage() - cb->GetEnergy();
-		//	if( a > 50) chcb->GiveMeEnergy(a);
-		//	a = cb->GetMetalStorage() - cb->GetMetal();
-		//	if(a > 50) chcb->GiveMeMetal(a);
-		//}
-
-		START_EXCEPTION_HANDLING
-		if(EVERY_((2 MINUTES))){
-			//L.print("saving UnitData");
-			SaveUnitData();
-			/*if(!SaveUnitData()){
-			 L.print("UnitData saved");
-			 }else{
-			 L.print("UnitData not saved");
-			 }*/
-		}
-		END_EXCEPTION_HANDLING("SaveUnitData()")
-
-		//EXCEPTION_HANDLER(Pl->Update(),"Pl->Update()",NA)
-
-		START_EXCEPTION_HANDLING
-		Actions->Update();
-		END_EXCEPTION_HANDLING("Actions->Update()")
+		
 
 		START_EXCEPTION_HANDLING
 
@@ -333,11 +269,10 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("CMessage message(\"update\"); FireEvent(message);")
 
 		//EXCEPTION_HANDLER(Manufacturer->Update(),"Manufacturer->Update()",NA)
-		Ch->Update();
+		
 
 	}
 
-	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::SortSolobuilds(int unit){
 		Cached->enemies.erase(unit);
@@ -396,7 +331,6 @@ namespace ntai {
 
 	}
 
-	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	void Global::EnemyDestroyed(int enemy, int attacker){
 
 		if(ValidUnitID(attacker)){
@@ -932,6 +866,11 @@ namespace ntai {
 
 		Ch->InitAI(this);
 		L.print("Chaser Init'd");
+
+		gproxy = boost::shared_ptr<IModule>(new CGlobalProxy(this));
+		gproxy->Init();
+		RegisterMessageHandler(gproxy);
+
 	}
 
 	int Global::GetCurrentFrame(){
@@ -1326,7 +1265,7 @@ namespace ntai {
 	bool Global::SaveUnitData(){
 		NLOG("Global::SaveUnitData()");
 
-		if(L.FirstInstance() == true){
+		if(L.FirstInstance()){
 			ofstream off;
 
 			string filename = info->datapath;
@@ -1339,9 +1278,13 @@ namespace ntai {
 			off.open(filename.c_str());
 
 			if(off.is_open() == true){
-				off << "[AI]" << endl << "{" << endl << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl << endl;
 
-				off << "    version=XE9.79;" << endl;
+				off << "[AI]" << endl;
+				off << "{" << endl;
+				off << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl;
+				off << endl;
+
+				off << "    version="<< AI_NAME <<";" << endl;
 				off << "    firstload=" << firstload << ";" << endl;
 				off << "    modname=" << G->cb->GetModName() << ";" << endl;
 				off << "    iterations=" << iterations << ";" << endl;
@@ -1350,10 +1293,13 @@ namespace ntai {
 				off << "    [VALUES]" << endl << "    {" << endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					off << "        "<< i->first << "=" << i->second << ";    // " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<<endl;
+					off << "        "<< i->first << "=" << i->second << ";";
+					off << "// " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<<endl;
 				}
+
 				off << "    }" << endl;
-				off << "    [NAMES]" << endl << "    {"<< endl;
+				off << "    [NAMES]" << endl;
+				off << "    {"<< endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
 					off << "        "<< i->first << "=" << unit_names[i->first] << ";" <<endl;
@@ -1361,7 +1307,8 @@ namespace ntai {
 
 				off << "    }" << endl;
 
-				off << "    [DESCRIPTIONS]" << endl << "    {"<< endl;
+				off << "    [DESCRIPTIONS]" << endl;
+				off << "    {"<< endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
 					off << "        "<< i->first << "=" << unit_descriptions[i->first] << ";"<<endl;
@@ -1369,31 +1316,41 @@ namespace ntai {
 
 				off << "    }" << endl;
 				off << "}" << endl;
+
 				off.close();
 
 				saved = true;
 				return true;
+
 			}else{
 				G->L.print("failed to save :" + filename);
 				off.close();
+
 				return false;
 			}
 		}
+
 		return false;
 	}
 
 	float Global::GetTargettingWeight(string unit, string target){
+
 		float tempscore = 0;
 
-		if(info->hardtarget == false){
+		if(!info->hardtarget){
+
 			tempscore = GetEfficiency(target);
+
 		}else{
+
 			string fh = unit + "\\target_weights\\" + target;
 			string fg = unit + "\\target_weights\\undefined";
 
 			float fz = GetEfficiency(target);
 			string tempdef = Get_mod_tdf()->SGetValueDef(to_string(fz), fg.c_str());
-			tempscore = (float)atof(Get_mod_tdf()->SGetValueDef(tempdef, fh).c_str()); // load "unitname\\target_weights\\enemyunitname" to retirieve targetting weights
+			
+			// load "unitname\\target_weights\\enemyunitname" to retirieve targetting weights
+			tempscore = (float)atof(Get_mod_tdf()->SGetValueDef(tempdef, fh).c_str()); 
 		}
 
 		return tempscore;
@@ -1450,7 +1407,7 @@ namespace ntai {
 	}
 
 	void Global::FireEvent(CMessage &message){
-		if(message.GetType() == string("")){
+		if(message.IsType("")){
 			return;
 		}
 
@@ -1474,8 +1431,6 @@ namespace ntai {
 	}
 
 }
-
-// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 /** Random note
 unitdef->type can be one of the following:

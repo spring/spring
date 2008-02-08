@@ -1,3 +1,4 @@
+
 namespace ntai {
 	class CRetreatBehaviour : public IBehaviour{
 	public:

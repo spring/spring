@@ -17,17 +17,20 @@ bool CRetreatBehaviour::Init(){
 }
 
 void CRetreatBehaviour::RecieveMessage(CMessage &message){
-	if(message.GetType() == string("unitdamaged")){
+
+	if(message.IsType("unitdamaged")){
 		if(message.GetParameter(0) == uid){
 			damage += message.GetParameter(2);
 		}
-	}else if(message.GetType() == string("update")){
-		if(G->GetCurrentFrame() % (64) == 0){
+
+	}else if(message.IsType("update")){
+		if(message.GetFrame() % (64) == 0){
 			float d = damage;
 			damage = 0;
 
 			if(!active){
 				float3 dpos = G->GetUnitPos(uid);
+
 				if(G->Map->CheckFloat3(dpos) == false){
 					return;
 				}
@@ -50,14 +53,16 @@ void CRetreatBehaviour::RecieveMessage(CMessage &message){
 				}
 			}
 		}
-	}else if(message.GetType() == string("unitdestroyed")){
+	}else if(message.IsType("unitdestroyed")){
 		if(message.GetParameter(0)== uid){
 			End();
 			return;
 		}
-	}else if(message.GetType() == string("unitidle")){
+
+	}else if(message.IsType("unitidle")){
 		if(message.GetParameter(0)== uid){
 			active=false;
 		}
 	}
+
 }
