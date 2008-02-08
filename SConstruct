@@ -181,7 +181,7 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 # build TestABICAI
-lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['AI/Global/TestABICAI/myaimingw.cpp','game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
+lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
 Alias('TestABICAI', lib)
 Alias('install-TestABICAI', inst)
 if sys.platform == 'win32':

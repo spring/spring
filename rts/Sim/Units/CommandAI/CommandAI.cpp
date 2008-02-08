@@ -191,23 +191,19 @@ CCommandAI::CCommandAI(CUnit* owner)
 
 	c.onlyKey=false;
 
-	if (!owner->unitDef->noAutoFire) {
-		if(CanChangeFireState()) {
-			c.id=CMD_FIRE_STATE;
-			c.action="firestate";
-			c.type=CMDTYPE_ICON_MODE;
-			c.name="Fire state";
-			c.mouseicon=c.name;
-			c.params.push_back("2");
-			c.params.push_back("Hold fire");
-			c.params.push_back("Return fire");
-			c.params.push_back("Fire at will");
-			c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
-			possibleCommands.push_back(c);
-			nonQueingCommands.insert(CMD_FIRE_STATE);
-		}
-	} else {
-		owner->fireState = 0;
+	if(CanChangeFireState()) {
+		c.id=CMD_FIRE_STATE;
+		c.action="firestate";
+		c.type=CMDTYPE_ICON_MODE;
+		c.name="Fire state";
+		c.mouseicon=c.name;
+		c.params.push_back("2");
+		c.params.push_back("Hold fire");
+		c.params.push_back("Return fire");
+		c.params.push_back("Fire at will");
+		c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
+		possibleCommands.push_back(c);
+		nonQueingCommands.insert(CMD_FIRE_STATE);
 	}
 
 	if (owner->unitDef->canmove || owner->unitDef->builder) {
@@ -418,7 +414,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 	}
 
 	if (c.id == CMD_FIRE_STATE
-			&& (c.params.empty() || ud->noAutoFire || !CanChangeFireState()))
+			&& (c.params.empty() || !CanChangeFireState()))
 	{
 		return false;
 	}
@@ -1515,6 +1511,7 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 }
 
 bool CCommandAI::CanChangeFireState(){
-	return !owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory"
-		|| (owner->unitDef->canKamikaze && owner->unitDef->kamikazeFireControl); 
+	return owner->unitDef->canFireControl &&
+		(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" ||
+				owner->unitDef->canKamikaze); 
 }

@@ -1547,8 +1547,7 @@ void CUnit::ChangeTeamReset()
 		c.params.clear();
 	}
 	// reset fire state
-	if (!unitDef->noAutoFire &&
-	    (!unitDef->weapons.empty() || (unitDef->type == "Factory"))) {
+	if (commandAI->CanChangeFireState()) {
 		c.id = CMD_FIRE_STATE;
 		c.params.push_back(2);
 		commandAI->GiveCommand(c);

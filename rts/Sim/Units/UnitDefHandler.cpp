@@ -297,7 +297,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canSubmerge = udTable.GetBool("canSubmerge", false);
 	ud.canfly      = udTable.GetBool("canFly",      false);
 	ud.canmove     = udTable.GetBool("canMove",     false);
-	ud.noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.reclaimable = udTable.GetBool("reclaimable", true);
 	ud.capturable  = udTable.GetBool("capturable",  true);
 	ud.canAttack   = udTable.GetBool("canAttack",   true);
@@ -305,6 +304,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canPatrol   = udTable.GetBool("canPatrol",   true);
 	ud.canGuard    = udTable.GetBool("canGuard",    true);
 	ud.canRepeat   = udTable.GetBool("canRepeat",   true);
+	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
+	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
+	ud.fireState = udTable.GetInt("fireState", ud.canFireControl ? -1 : 0);
 
 	ud.builder = udTable.GetBool("builder", true);
 
@@ -397,7 +399,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.canKamikaze = udTable.GetBool("kamikaze", false);
 	ud.kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
-	ud.kamikazeFireControl = udTable.GetBool("kamikazeFireControl", false);
 
 	ud.showNanoFrame = udTable.GetBool("showNanoFrame", true);
 	ud.showNanoSpray = udTable.GetBool("showNanoSpray", true);

@@ -826,7 +826,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canRepair",             ud.canRepair);
 	ADD_BOOL("canSelfRepair",         ud.canSelfRepair);
 	ADD_BOOL("canReclaim",            ud.canReclaim);
-	ADD_BOOL("noAutoFire",            ud.noAutoFire);
 	ADD_BOOL("canAttack",             ud.canAttack);
 	ADD_BOOL("canPatrol",             ud.canPatrol);
 	ADD_BOOL("canFight",              ud.canFight);
@@ -838,6 +837,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",            ud.canCapture);
 	ADD_BOOL("canResurrect",          ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
+	ADD_BOOL("canFireControl",        ud.canFireControl);
+	ADD_INT( "fireState",             ud.fireState);
 	ADD_BOOL("fullHealthFactory",     ud.fullHealthFactory);
 	ADD_BOOL("factoryHeadingTakeoff", ud.factoryHeadingTakeoff);
 
@@ -905,7 +906,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_BOOL( "canKamikaze",  ud.canKamikaze);
 	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
-	ADD_BOOL( "kamikazeFireControl", ud.kamikazeFireControl);
 
 	ADD_BOOL("targfac", ud.targfac);
 

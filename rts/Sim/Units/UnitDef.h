@@ -251,7 +251,6 @@ struct UnitDef
 	bool canRepair;
 	bool canSelfRepair;
 	bool canReclaim;
-	bool noAutoFire;
 	bool canAttack;
 	bool canPatrol;
 	bool canFight;
@@ -260,6 +259,9 @@ struct UnitDef
 	bool canAssist;
 	bool canBeAssisted;
 	bool canRepeat;
+	bool canFireControl;
+	
+	int fireState;
 
 	//aircraft stuff
 	float wingDrag;
@@ -319,7 +321,6 @@ struct UnitDef
 
 	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
-	bool kamikazeFireControl;
 
 	bool targfac;
 	bool canDGun;

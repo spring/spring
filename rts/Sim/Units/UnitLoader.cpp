@@ -168,8 +168,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	if(ud->highTrajectoryType==1)
 		unit->useHighTrajectory=true;
 
-	if(ud->noAutoFire)
-		unit->fireState=0;
+	if(ud->fireState >= 0)
+		unit->fireState = ud->fireState;
 
 	if(build){
 		unit->ChangeLos(1,1);
