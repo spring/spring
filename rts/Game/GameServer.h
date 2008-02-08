@@ -77,8 +77,6 @@ public:
 
 	bool WaitsOnCon() const;
 
-	void PlayerDefeated(const int playerNum) const;
-
 	void SetGamePausable(const bool arg);
 	
 	/// Is the server still running?

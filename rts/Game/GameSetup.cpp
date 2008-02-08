@@ -400,6 +400,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(numPlayers,   "2", "GAME\\NumPlayers");
 	file.GetDef(numTeams,     "2", "GAME\\NumTeams");
 	file.GetDef(numAllyTeams, "2", "GAME\\NumAllyTeams");
+	file.GetDef(fixedTeams, "1", "GAME\\FixedTeams");
 
 	// Read the map & mod options
 	if (file.SectionExist("GAME\\MapOptions")) {

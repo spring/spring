@@ -8,7 +8,6 @@
 #include "LogOutput.h"
 #include "Player.h"
 #include "Game/UI/LuaUI.h"
-#include "Game/GameServer.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
@@ -20,6 +19,7 @@
 #include "ExternalAI/GlobalAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
+#include "NetProtocol.h"
 
 CR_BIND(CTeam,);
 
@@ -260,12 +260,10 @@ void CTeam::Died()
 		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
 	isDead = true;
 	luaCallIns.TeamDied(teamNum);
+	net->SendTeamDied(gu->myPlayerNum, teamNum);
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		if (gs->players[a]->active && gs->players[a]->team == teamNum) {
 			gs->players[a]->StartSpectating();
-			if (gameServer)	{
-				gameServer->PlayerDefeated(a);
-			}
 		}
 	}
 	if (globalAI->ais[teamNum]) {

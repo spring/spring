@@ -3171,7 +3171,10 @@ bool CGame::ClientReadNet()
 				{
 					case TEAMMSG_SELFD: {
 						if (numPlayersInTeam == 1)
+						{
 							gs->Team(fromTeam)->SelfDestruct();
+							gs->Team(fromTeam)->leader = -1;
+						}
 						else
 							gs->players[player]->StartSpectating();
 						break;
@@ -3179,13 +3182,18 @@ bool CGame::ClientReadNet()
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
 						if (numPlayersInTeam == 1)
+						{
 							gs->Team(fromTeam)->GiveEverythingTo(toTeam);
+							gs->Team(fromTeam)->leader = -1;
+						}
 						else
 							gs->players[player]->StartSpectating();
 						break;
 					}
 					case TEAMMSG_RESIGN: {
 						gs->players[player]->StartSpectating();
+						if (numPlayersInTeam == 1)
+							gs->Team(fromTeam)->leader = -1;
 						logOutput.Print("Player %i resigned and is now spectating!", player);
 						break;
 					}

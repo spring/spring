@@ -81,6 +81,7 @@ enum TEAMMSG {
 	TEAMMSG_GIVEAWAY        = 1,		// team to give stuff to
 	TEAMMSG_RESIGN			= 2,		// not used
 	TEAMMSG_JOIN_TEAM		= 3,		// team to join
+	TEAMMSG_TEAM_DIED		= 4,		// team which had died special note: this is sent by all players to prevent cheating
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
 };
@@ -147,6 +148,9 @@ public:
 	void SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	void SendResign(uchar myPlayerNum);
 	void SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
+	// currently only used to inform the server about its death
+	// it may have some problems when desync because the team may not die on every client
+	void SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 
 private:
 };

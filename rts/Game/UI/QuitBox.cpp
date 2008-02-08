@@ -145,7 +145,11 @@ void CQuitBox::Draw(void)
 			glColor4f(1,1,1,0.4f);
 		}
 
-		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+		std::string teamName;
+		if (gs->Team(actualTeam)->leader >= 0)
+			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+		else
+			teamName = "undefined";
 
 		string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {

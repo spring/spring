@@ -29,6 +29,7 @@ public:
 	int numPlayers; //the expected amount of players
 	int numTeams;
 	int numAllyTeams;
+	bool fixedTeams;
 	std::string mapName;
 	std::string baseMod;
 	std::string scriptName;
