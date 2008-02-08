@@ -135,6 +135,7 @@ private:
 	bool IsPaused;
 	float userSpeedFactor;
 	float internalSpeed;
+	bool cheating;
 
 	boost::scoped_ptr<GameParticipant> players[MAX_PLAYERS];
 	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];

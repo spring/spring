@@ -67,6 +67,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	internalSpeed = 1.0f;
 	gamePausable = true;
 	noHelperAIs = false;
+	cheating = false;
 	sentGameOverMsg = false;
 	serverNet = new CBaseNetProtocol();
 	serverNet->InitServer(port);
@@ -679,7 +680,7 @@ void CGameServer::ServerReadNet()
 								}
 								case TEAMMSG_JOIN_TEAM: {
 									unsigned newTeam = inbuf[3];
-									if ((setup && !setup->fixedTeams) || demoReader)
+									if ((setup && !setup->fixedTeams) || demoReader || cheating)
 									{
 										serverNet->SendJoinTeam(player, newTeam);
 										players[player]->team = newTeam;
@@ -1143,6 +1144,12 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 	else if ((msg.find(".forcestart") == 0) && canDoStuff) {
 		if (!gameStartTime)
 			CheckForGameStart(true);
+	}
+	else if ((msg.find(".cheat") == 0) && canDoStuff) {
+		cheating = !cheating;
+		serverNet->SendChat(player, msg);
+		if (hostif)
+			hostif->SendPlayerChat(player, msg);
 	}
 	else {
 		serverNet->SendChat(player, msg);
