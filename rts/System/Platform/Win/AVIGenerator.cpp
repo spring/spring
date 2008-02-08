@@ -1,72 +1,63 @@
-// AVIGenerator.cpp: implementation of the CAVIGenerator class.
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "StdAfx.h"
 #include "AVIGenerator.h"
 #include "Game/GameVersion.h"
+#include "LogOutput.h"
+
+#include <windows.h>
+#include <GL/gl.h>
+#if defined(_WIN32) && defined(__MINGW32__)
+#include <GL/glext.h>
+#endif
+
+#include <boost/bind.hpp>
 #include <cassert>
 #include "mmgr.h"
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-#pragma message("     _Adding library: vfw32.lib" ) 
+#pragma message("Adding library: vfw32.lib")
 #pragma comment(lib, "vfw32.lib")
 #endif
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 
 
 bool CAVIGenerator::initVFW(){
 #if defined(_WIN32) && defined(__MINGW32__)
 
-	HMODULE hMod = LoadLibrary("msvfw32.dll");
-	if (NULL == hMod){
-		m_sError="LoadLibrary failed.";
+	msvfw32 = LoadLibrary("msvfw32.dll");
+	avifil32 = LoadLibrary("avifil32.dll");
+
+	VideoForWindowsVersion_ptr=(VideoForWindowsVersion_type)GetProcAddress(msvfw32, "VideoForWindowsVersion");
+	ICCompressorChoose_ptr=(ICCompressorChoose_type)GetProcAddress(msvfw32, "ICCompressorChoose");
+	ICCompressorFree_ptr=(ICCompressorFree_type)GetProcAddress(msvfw32, "ICCompressorFree");
+	ICOpen_ptr=(ICOpen_type)GetProcAddress(msvfw32, "ICOpen");
+
+	AVIFileInit_ptr=(AVIFileInit_type)GetProcAddress(avifil32, "AVIFileInit");
+	AVIFileOpenA_ptr=(AVIFileOpenA_type)GetProcAddress(avifil32, "AVIFileOpenA");
+	AVIFileCreateStreamA_ptr=(AVIFileCreateStreamA_type)GetProcAddress(avifil32, "AVIFileCreateStreamA");
+	AVIMakeCompressedStream_ptr=(AVIMakeCompressedStream_type)GetProcAddress(avifil32, "AVIMakeCompressedStream");
+	AVIStreamSetFormat_ptr=(AVIStreamSetFormat_type)GetProcAddress(avifil32, "AVIStreamSetFormat");
+	AVIStreamRelease_ptr=(AVIStreamRelease_type)GetProcAddress(avifil32, "AVIStreamRelease");
+	AVIFileRelease_ptr=(AVIFileRelease_type)GetProcAddress(avifil32, "AVIFileRelease");
+	AVIFileExit_ptr=(AVIFileExit_type)GetProcAddress(avifil32, "AVIFileExit");
+	AVIStreamWrite_ptr=(AVIStreamWrite_type)GetProcAddress(avifil32, "AVIStreamWrite");
+
+
+	if(NULL == msvfw32 || NULL == avifil32){
+		errorMsg="LoadLibrary failed.";
 		return false;
 	}
 
-
-	VideoForWindowsVersion_ptr=(VideoForWindowsVersion_type)GetProcAddress(hMod, "VideoForWindowsVersion");  
-	ICCompressorChoose_ptr=(ICCompressorChoose_type)GetProcAddress(hMod, "ICCompressorChoose");  
-	ICCompressorFree_ptr=(ICCompressorFree_type)GetProcAddress(hMod, "ICCompressorFree");
-
-
-
-	if(!VideoForWindowsVersion_ptr || !ICCompressorChoose_ptr || !ICCompressorFree_ptr){
-		m_sError="initVFW Error.";   
-		return false;                             
-	}                
-
-
-
-	hMod = LoadLibrary("avifil32.dll");
-	if (NULL == hMod){
-		m_sError="LoadLibrary failed.";
-		return false;          
+	if(!VideoForWindowsVersion_ptr || !ICCompressorChoose_ptr || !ICCompressorFree_ptr || !ICOpen_ptr){
+		errorMsg="initVFW Error.";
+		return false;
 	}
 
-
-	AVIFileInit_ptr=(AVIFileInit_type)GetProcAddress(hMod, "AVIFileInit");                  
-	AVIFileOpenA_ptr=(AVIFileOpenA_type)GetProcAddress(hMod, "AVIFileOpenA");                                           
-	AVIFileCreateStreamA_ptr=(AVIFileCreateStreamA_type)GetProcAddress(hMod, "AVIFileCreateStreamA");                                                
-	AVIMakeCompressedStream_ptr=(AVIMakeCompressedStream_type)GetProcAddress(hMod, "AVIMakeCompressedStream");                                                     
-	AVIStreamSetFormat_ptr=(AVIStreamSetFormat_type)GetProcAddress(hMod, "AVIStreamSetFormat");                                                          
-	AVIStreamRelease_ptr=(AVIStreamRelease_type)GetProcAddress(hMod, "AVIStreamRelease");                                                               
-	AVIFileRelease_ptr=(AVIFileRelease_type)GetProcAddress(hMod, "AVIFileRelease");                                                               
-	AVIFileExit_ptr=(AVIFileExit_type)GetProcAddress(hMod, "AVIFileExit");                                                                    
-	AVIStreamWrite_ptr=(AVIStreamWrite_type)GetProcAddress(hMod, "AVIStreamWrite");  
-
-
-	if(!AVIFileInit_ptr || !AVIFileOpenA_ptr || !AVIFileCreateStreamA_ptr || 
+	if(!AVIFileInit_ptr || !AVIFileOpenA_ptr || !AVIFileCreateStreamA_ptr ||
 		!AVIMakeCompressedStream_ptr || !AVIStreamSetFormat_ptr || !AVIStreamRelease_ptr ||
 		!AVIFileRelease_ptr || !AVIFileExit_ptr || !AVIStreamWrite_ptr){
-			m_sError="initVFW Error.";
-			return false;                                   
-	} 
-	return true;   
+			errorMsg="initVFW Error.";
+			return false;
+	}
 #else
 
 	VideoForWindowsVersion_ptr =&VideoForWindowsVersion;
@@ -81,98 +72,160 @@ bool CAVIGenerator::initVFW(){
 	AVIStreamWrite_ptr = &AVIStreamWrite;
 	ICCompressorChoose_ptr = &ICCompressorChoose;
 	ICCompressorFree_ptr = &ICCompressorFree;
-
+	ICOpen_ptr = &ICOpen;
+#endif
 	return true;
-#endif                                                                          
 }
 
 
+CAVIGenerator::CAVIGenerator(const std::string& fileName, int videoSizeX, int videoSizeY, DWORD videoFPS)
+							:
+							fileName(fileName),
+							videoFPS(videoFPS),
+							errorMsg("Ok"),
+							quitAVIgen(false),
+							AVIThread(0),
+							readBuf(0),
+							m_lFrame(0),
+							m_pAVIFile(NULL),
+							m_pStream(NULL),
+							m_pStreamCompressed(NULL){
 
-CAVIGenerator::CAVIGenerator(const std::string & sFileName, LPBITMAPINFOHEADER lpbih, DWORD dwRate)
-: m_sFile(sFileName), m_dwRate(dwRate), pixelDataBuf(0),
-m_pAVIFile(NULL), m_pStream(NULL), m_pStreamCompressed(NULL)
-{
-	MakeExtAvi();
-	SetBitmapHeader(lpbih);
-}
+	assert(videoSizeX % 4 == 0);
+	assert(videoSizeY % 4 == 0);
 
-CAVIGenerator::~CAVIGenerator()
-{
-	// Just checking that all allocated ressources have been released
-	assert(m_pStream==NULL);
-	assert(m_pStreamCompressed==NULL);
-	assert(m_pAVIFile==NULL);
-	assert(pixelDataBuf==NULL);
-}
-
-void CAVIGenerator::SetBitmapHeader(LPBITMAPINFOHEADER lpbih)
-{
-	// checking that bitmap size are multiple of 4
-	assert(lpbih->biWidth%4==0);
-	assert(lpbih->biHeight%4==0);
-	assert(lpbih->biBitCount==24);
-	assert(lpbih->biCompression==BI_RGB);
-	assert(lpbih->biSizeImage==lpbih->biWidth*lpbih->biHeight*3);
-
-	// copying bitmap info structure.
-	// corrected thanks to Lori Gardi
-	memcpy(&m_bih,lpbih, sizeof(BITMAPINFOHEADER));
-}
-
-
-HRESULT CAVIGenerator::InitEngine()
-{
-	AVISTREAMINFO strHdr; // information for a single stream 
-	AVICOMPRESSOPTIONS opts;
-
-	HRESULT hr;
-
-	m_sError= "Ok";
-
+	memset(&bitmapInfo, 0, sizeof(BITMAPINFOHEADER));
+	bitmapInfo.biSize = sizeof(BITMAPINFOHEADER);
+	bitmapInfo.biWidth = videoSizeX;
+	bitmapInfo.biHeight = videoSizeY;
+	bitmapInfo.biPlanes = 1;
+	bitmapInfo.biBitCount = 24;
+	bitmapInfo.biSizeImage = videoSizeX * videoSizeY * 3;
+	bitmapInfo.biCompression = BI_RGB;
 
 	if(!initVFW()){
-		return S_FALSE;
+		quitAVIgen = true;
+	}
+}
+
+
+CAVIGenerator::~CAVIGenerator(){
+
+	if(AVIThread){
+		{
+			boost::mutex::scoped_lock lock(AVIMutex);
+			quitAVIgen = true;
+			AVICondition.notify_all();
+		}
+		AVIThread->join();
+
+		delete AVIThread;
+		AVIThread = 0;
 	}
 
-	triggerCleanup cleaner(this);
+	while(!freeDataPointers.empty()){
+		unsigned char* tmp = freeDataPointers.front();
+		freeDataPointers.pop_front();
+		delete [] tmp;
+	}
+	while(!dataPointers.empty()){
+		unsigned char* tmp = dataPointers.front();
+		dataPointers.pop_front();
+		delete [] tmp;
+	}
 
-	// Step 0 : Let's make sure we are running on 1.1 
+	delete [] readBuf;
+	readBuf = 0;
+
+
+	ReleaseAVICompressionEngine();
+	logOutput.Print(std::string("Finished writing avi file, ") + fileName);
+
+	//Just checking that all allocated ressources have been released.
+	assert(AVIThread == NULL);
+	assert(m_pAVIFile == NULL);
+	assert(m_pStream == NULL);
+	assert(m_pStreamCompressed == NULL);
+	assert(freeDataPointers.empty());
+	assert(dataPointers.empty());
+	assert(readBuf == NULL);
+}
+
+
+void CAVIGenerator::ReleaseAVICompressionEngine(){
+
+	if(m_pStream && AVIStreamRelease_ptr){
+		AVIStreamRelease_ptr(m_pStream);
+		m_pStream=NULL;
+	}
+
+	if(m_pStreamCompressed && AVIStreamRelease_ptr){
+		AVIStreamRelease_ptr(m_pStreamCompressed);
+		m_pStreamCompressed=NULL;
+	}
+
+	if(m_pAVIFile && AVIFileRelease_ptr){
+		AVIFileRelease_ptr(m_pAVIFile);
+		m_pAVIFile=NULL;
+	}
+
+	if(ICCompressorFree_ptr){
+		ICCompressorFree_ptr(&cv);
+	}
+	if(AVIFileExit_ptr){
+		AVIFileExit_ptr();
+	}
+
+	if(msvfw32){
+		FreeLibrary(msvfw32);
+	}
+	if(avifil32){
+		FreeLibrary(avifil32);
+	}
+}
+
+
+HRESULT CAVIGenerator::InitAVICompressionEngine(){
+
+	AVISTREAMINFO strHdr; //Information for a single stream
+	AVICOMPRESSOPTIONS opts;
+	HRESULT hr;
+
+
+	//Let's make sure we are running on 1.1
 	DWORD wVer = HIWORD(VideoForWindowsVersion_ptr());
-	if (wVer < 0x010a)
-	{
-		// oops, we are too old, blow out of here 
-		m_sError="Version of Video for Windows too old. Come on, join the 21th century!";
+	if(wVer < 0x010a){
+		//oops, we are too old, blow out of here
+		errorMsg="Version of Video for Windows too old. Come on, join the 21th century!";
 		return S_FALSE;
 	}
 
-	// Step 1 : initialize AVI engine
+	//Initialize AVI engine
 	AVIFileInit_ptr();
 
 
 	memset(&cv,0,sizeof(COMPVARS));
-
 	cv.cbSize=sizeof(COMPVARS);
 	cv.dwFlags=ICMF_COMPVARS_VALID;
-	cv.fccHandler=mmioFOURCC('W','M','V','3');
+	cv.fccHandler=mmioFOURCC('f','f','d','s');//default video codec
 	cv.lQ=ICQUALITY_DEFAULT;
 
 
 	HWND hWnd = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
-
-	if (!ICCompressorChoose_ptr(hWnd, ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME, &m_bih, NULL, &cv, NULL)){
+	//Set the compression, prompting dialog if necessary
+	if (!ICCompressorChoose_ptr(hWnd, ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME, &bitmapInfo, NULL, &cv, NULL)){
 		return S_FALSE;
 	}
-
 
 	// Fill in the header for the video stream....
 	memset(&strHdr, 0, sizeof(AVISTREAMINFO));
 	strHdr.fccType                = streamtypeVIDEO;	// video stream type
 	strHdr.fccHandler             = cv.fccHandler;
 	strHdr.dwScale                = 1;					// should be one for video
-	strHdr.dwRate                 = m_dwRate;		    // fps
-	strHdr.dwSuggestedBufferSize  = m_bih.biSizeImage;	// Recommended buffer size, in bytes, for the stream.
-	SetRect(&strHdr.rcFrame, 0, 0, (int)m_bih.biWidth, (int)m_bih.biHeight); // rectangle for stream
-	
+	strHdr.dwRate                 = videoFPS;			// fps
+	strHdr.dwSuggestedBufferSize  = bitmapInfo.biSizeImage;	// Recommended buffer size, in bytes, for the stream.
+	SetRect(&strHdr.rcFrame, 0, 0, bitmapInfo.biWidth, bitmapInfo.biHeight);
+	strcpy(strHdr.szName, "Spring video.");
 
 
 	memset(&opts, 0, sizeof(AVICOMPRESSOPTIONS));
@@ -188,145 +241,130 @@ HRESULT CAVIGenerator::InitEngine()
 	opts.cbParms=cv.cbState;
 	opts.dwInterleaveEvery=0;
 
-	// Step 2 : Open the movie file for writing....
+
+
+	//Open the movie file for writing
 	hr = AVIFileOpenA_ptr(&m_pAVIFile,			// Address to contain the new file interface pointer
-		m_sFile.c_str(),				// Null-terminated string containing the name of the file to open
-		OF_WRITE | OF_CREATE | OF_SHARE_EXCLUSIVE,	    // Access mode to use when opening the file. 
+		fileName.c_str(),				// Null-terminated string containing the name of the file to open
+		OF_WRITE | OF_CREATE | OF_SHARE_EXCLUSIVE,	// Access mode to use when opening the file.
 		NULL);						// use handler determined from file extension.
-	// Name your file .avi -> very important
 
 	if (hr != AVIERR_OK)
 	{
-		//_tprintf(szBuffer,"AVI Engine failed to initialize. Check filename %s.",m_sFile);
-		m_sError="AVI Engine failed to initialize. Check filename ";
-		m_sError+=m_sFile;
-		// Check it succeded.
+		errorMsg="AVI Engine failed to initialize. Check filename ";
+		errorMsg+=fileName;
+		//Translate error code
 		switch(hr)
 		{
-		case AVIERR_BADFORMAT: 
-			m_sError+="The file couldn't be read, indicating a corrupt file or an unrecognized format.";
+		case AVIERR_BADFORMAT:
+			errorMsg+="The file couldn't be read, indicating a corrupt file or an unrecognized format.";
 			break;
-		case AVIERR_MEMORY:		
-			m_sError+="The file could not be opened because of insufficient memory."; 
+		case AVIERR_MEMORY:
+			errorMsg+="The file could not be opened because of insufficient memory.";
 			break;
 		case AVIERR_FILEREAD:
-			m_sError+="A disk error occurred while reading the file."; 
+			errorMsg+="A disk error occurred while reading the file.";
 			break;
-		case AVIERR_FILEOPEN:		
-			m_sError+="A disk error occurred while opening the file.";
+		case AVIERR_FILEOPEN:
+			errorMsg+="A disk error occurred while opening the file.";
 			break;
-		case REGDB_E_CLASSNOTREG:		
-			m_sError+="According to the registry, the type of file specified in AVIFileOpen does not have a handler to process it";
+		case REGDB_E_CLASSNOTREG:
+			errorMsg+="According to the registry, the type of file specified in AVIFileOpen does not have a handler to process it";
 			break;
+		default :
+			errorMsg+="Unknown error.";
 		}
 		return hr;
 	}
 
 
-	// Step 3 : Create the stream;
+	//Create the stream
 	hr = AVIFileCreateStreamA_ptr(m_pAVIFile,		    // file pointer
 		&m_pStream,		    // returned stream pointer
 		&strHdr);	    // stream header
 
-	// Check it succeded.
 	if (hr != AVIERR_OK)
 	{
-		m_sError="AVI Stream creation failed. Check Bitmap info.";
+		errorMsg="AVI Stream creation failed. Check Bitmap info.";
 		if (hr==AVIERR_READONLY)
 		{
-			m_sError+=" Read only file.";
+			errorMsg+=" Read only file.";
 		}
 		return hr;
 	}
 
 
-	// Step 5:  Create a compressed stream using codec options.
-	hr = AVIMakeCompressedStream_ptr(&m_pStreamCompressed, 
-		m_pStream, 
-		&opts, 
-		NULL);
-
+	//Create a compressed stream using codec options.
+	hr = AVIMakeCompressedStream_ptr(&m_pStreamCompressed, m_pStream, &opts, NULL);
 	if (hr != AVIERR_OK)
 	{
-		m_sError="AVI Compressed Stream creation failed.";
+		errorMsg="AVI Compressed Stream creation failed.";
 
 		switch(hr)
 		{
 		case AVIERR_NOCOMPRESSOR:
-			m_sError+=" A suitable compressor cannot be found.";
+			errorMsg+=" A suitable compressor cannot be found.";
 			break;
 		case AVIERR_MEMORY:
-			m_sError+=" There is not enough memory to complete the operation.";
-			break; 
-		case AVIERR_UNSUPPORTED:
-			m_sError+="Compression is not supported for this type of data. This error might be returned if you try to compress data that is not audio or video.";
+			errorMsg+=" There is not enough memory to complete the operation.";
 			break;
+		case AVIERR_UNSUPPORTED:
+			errorMsg+="Compression is not supported for this type of data. This error might be returned if you try to compress data that is not audio or video.";
+			break;
+		default :
+			errorMsg+="Unknown error.";
 		}
 		return hr;
 	}
 
 
-	// Step 6 : sets the format of a stream at the specified position
-	hr = AVIStreamSetFormat_ptr(m_pStreamCompressed, 
+	//Sets the format of a stream at the specified position
+	hr = AVIStreamSetFormat_ptr(m_pStreamCompressed,
 		0,			// position
-		&m_bih,	    // stream format
-		m_bih.biSize +   // format size
-		m_bih.biClrUsed * sizeof(RGBQUAD));
+		&bitmapInfo,	    // stream format
+		bitmapInfo.biSize +   // format size
+		bitmapInfo.biClrUsed * sizeof(RGBQUAD));
 
 	if (hr != AVIERR_OK)
 	{
-		m_sError="AVI Compressed Stream format setting failed.";
+		errorMsg="AVI Compressed Stream format setting failed.";
 		return hr;
 	}
-
-	// Step 6 : Initialize step counter
-	m_lFrame=0;
-	pixelDataBuf = SAFE_NEW unsigned char[m_bih.biSizeImage];
-	cleaner.disarm();
 
 	return hr;
 }
 
 
-void CAVIGenerator::ReleaseEngine()
-{
-	if (m_pStream)
-	{
-		AVIStreamRelease_ptr(m_pStream);
-		m_pStream=NULL;
+bool CAVIGenerator::InitEngine(){
+
+	if(quitAVIgen){//error in initVFW
+		return false;
 	}
 
-	if (m_pStreamCompressed)
-	{
-		AVIStreamRelease_ptr(m_pStreamCompressed);
-		m_pStreamCompressed=NULL;
+	HRESULT hr = InitAVICompressionEngine();
+	if(hr != AVIERR_OK){
+		quitAVIgen = true;
+		return false;
 	}
 
-	if (m_pAVIFile)
-	{
-		AVIFileRelease_ptr(m_pAVIFile);
-		m_pAVIFile=NULL;
+	for(int i=0; i<10; i++){
+		unsigned char* tmpBuf = SAFE_NEW unsigned char[bitmapInfo.biSizeImage];
+		freeDataPointers.push_back(tmpBuf);
 	}
 
-	ICCompressorFree_ptr(&cv);
-
-	delete [] pixelDataBuf;
-	pixelDataBuf=0;
-
-	// Close engine
-	AVIFileExit_ptr();
+	AVIThread = SAFE_NEW boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
+	return true;
 }
 
-HRESULT CAVIGenerator::AddFrame(BYTE *bmBits)
-{
-	HRESULT hr;
+
+HRESULT CAVIGenerator::AddFrame(unsigned char* pixelData){
 
 	// compress bitmap
-	hr = AVIStreamWrite_ptr(m_pStreamCompressed,	// stream pointer
-		m_lFrame,						// time of this frame
+	HRESULT hr = AVIStreamWrite_ptr(m_pStreamCompressed,	// stream pointer
+		m_lFrame,				// time of this frame
 		1,						// number to write
-		bmBits,					// image buffer
-		m_bih.biSizeImage,		// size of this frame
+		pixelData,				// image buffer
+		bitmapInfo.biSizeImage,	// size of this frame
 		AVIIF_KEYFRAME,			// flags....
 		NULL,
 		NULL);
@@ -337,10 +375,59 @@ HRESULT CAVIGenerator::AddFrame(BYTE *bmBits)
 	return hr;
 }
 
-void CAVIGenerator::MakeExtAvi(){
 
-	std::size_t pos = m_sFile.find_last_of(".avi");
-	if(pos == std::string::npos || pos + 1 != m_sFile.size()){
-		m_sFile += ".avi";      
+void CAVIGenerator::readOpenglPixelDataThreaded(){
+
+	for(;;){
+		boost::mutex::scoped_lock lock(AVIMutex);
+		if(quitAVIgen){
+			return;
+		}
+		if(readBuf != 0){
+			dataPointers.push_back(readBuf);
+			readBuf = 0;
+			AVICondition.notify_all();
+		}
+		if(freeDataPointers.empty()){
+			AVICondition.wait(lock);
+			continue;
+		}
+		readBuf = freeDataPointers.front();
+		freeDataPointers.pop_front();
+		break;
 	}
+
+	glReadPixels(0, 0, bitmapInfo.biWidth, bitmapInfo.biHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, readBuf);
 }
+
+
+void CAVIGenerator::AVIGeneratorThreadProc(){
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+	unsigned char* localWriteBuf = 0;
+
+	for(;;){
+		{
+			boost::mutex::scoped_lock lock(AVIMutex);
+			if(quitAVIgen){
+				break;
+			}
+			if(localWriteBuf != 0){
+				freeDataPointers.push_back(localWriteBuf);
+				localWriteBuf = 0;
+				AVICondition.notify_all();
+			}
+			if(dataPointers.empty()){
+				AVICondition.wait(lock);
+				continue;
+			}
+			localWriteBuf = dataPointers.front();
+			dataPointers.pop_front();
+		}
+		if(AddFrame(localWriteBuf)){
+			quitAVIgen = true;
+		}
+	}
+	delete [] localWriteBuf;
+}
+
