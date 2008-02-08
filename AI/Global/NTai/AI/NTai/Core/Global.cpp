@@ -371,70 +371,15 @@ namespace ntai {
 
 	void Global::UnitFinished(int unit){
 
-		//START_EXCEPTION_HANDLING
-		CUnitTypeData* u = this->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
-		if(u ==0){
-			return;
-		}
-		const UnitDef* ud = u->GetUnitDef();
-		if(ud!=0){
-			if(ud->isCommander){
-				G->Cached->comID = unit;
-			}
-			max_energy_use += ud->energyUpkeep;
-
-			// prepare unitname
-			string t = u->GetName();
-
-			// solo build cleanup
-
-			// Regardless of wether the unit is subject to this behaviour the value of
-			// solobuildactive will always be false, so why bother running a check?
-			u->SetSoloBuildActive(false);
-
-			if(ud->movedata == 0){
-				if(!ud->canfly){
-					if(!ud->builder){
-						float3 upos = GetUnitPos(unit);
-						if(upos != UpVector){
-							DTHandler->AddRing(upos, 500.0f, float(PI_2) / 6.0f);
-							DTHandler->AddRing(upos, 700.0f, float(-PI_2) / 6.0f);
-						}
-					}
-				}
-			}
-		}
-		//END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
-
-		//START_EXCEPTION_HANDLING
-		Manufacturer->UnitFinished(unit);
-		//END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
-
-		//START_EXCEPTION_HANDLING
-		Ch->UnitFinished(unit);
-		//END_EXCEPTION_HANDLING("Ch->UnitFinished")
-
-		//START_EXCEPTION_HANDLING
 		CMessage message("unitfinished");
 		message.AddParameter(unit);
 		FireEvent(message);
-		//END_EXCEPTION_HANDLING("CMessage message(\"unitfinished\");")
 
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::UnitMoveFailed(int unit){
-
-		/*
-
-		START_EXCEPTION_HANDLING
-		Manufacturer->UnitMoveFailed(unit);
-		END_EXCEPTION_HANDLING("Manufacturer->UnitIdle in UnitMoveFailed")
-
-		START_EXCEPTION_HANDLING
-		Ch->UnitMoveFailed(unit);
-		END_EXCEPTION_HANDLING("Ch->UnitIdle in UnitMoveFailed")*/
 
 		START_EXCEPTION_HANDLING
 		CMessage message("unitmovefailed");
@@ -447,22 +392,22 @@ namespace ntai {
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::UnitIdle(int unit){
+
 		if(!ValidUnitID(unit)){
 			L.print("CManufacturer::UnitIdle negative uid, aborting");
 			return;
 		}
+		
 		if(GetCurrentFrame() < 5 SECONDS){
 			return;
 		}
+
 		START_EXCEPTION_HANDLING
 		CMessage message("unitidle");
 		message.AddParameter(unit);
 		FireEvent(message);
 		END_EXCEPTION_HANDLING("CMessage message(\"unitidle\"); FireEvent(message);")
 
-		//EXCEPTION_HANDLER(Manufacturer->UnitIdle(unit),"Manufacturer->UnitIdle",NA)
-
-		//EXCEPTION_HANDLER(Actions->UnitIdle(unit),"Actions->UnitIdle",NA)
 
 		START_EXCEPTION_HANDLING
 		Ch->UnitIdle(unit);
@@ -492,172 +437,41 @@ namespace ntai {
 	void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 		NLOG("Global::UnitDamaged");
 
-		if(damage <= 0) return;
-		if(!ValidUnitID(damaged)) return;
-		if(!ValidUnitID(attacker)) return;
+		if(damage <= 0){
+			return;
+		}
 
-		//START_EXCEPTION_HANDLING
+		if(!ValidUnitID(damaged)){
+			return;
+		}
+
+		if(!ValidUnitID(attacker)){
+			return;
+		}
+
 		if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)){
 			return;
 		}
-		//END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
 
-		//START_EXCEPTION_HANDLING
-		const UnitDef* uda = GetUnitDef(attacker);
-
-		if(uda != 0){
-			float e = GetEfficiency(uda->name, uda->power);
-			e += 10000/uda->metalCost;
-			SetEfficiency(uda->name, e);
-		}
-		const UnitDef* udb = GetUnitDef(damaged);
-
-		if(udb != 0){
-			float e = GetEfficiency(udb->name, udb->power);
-			e -= 10000/uda->metalCost;
-			SetEfficiency(udb->name, e);
-			/*if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
-				// if ti isnt currently building something then retreat
-				const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
-				if(uc != 0){
-					//
-					if(uc->front().id >= 0){
-						G->Actions->Retreat(damaged);
-					}
-				}
-			}*/
-		}
-		//END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
-
-		//START_EXCEPTION_HANDLING
-		Actions->UnitDamaged(damaged, attacker, damage, dir);
-		//END_EXCEPTION_HANDLING("Actions->UnitDamaged()")
-
-		Ch->UnitDamaged(damaged, attacker, damage, dir);
-
-		/*START_EXCEPTION_HANDLING*/
 		CMessage message("unitdamaged");
+
 		message.AddParameter(damaged);
 		message.AddParameter(attacker);
 		message.AddParameter(damage);
 		message.AddParameter(dir);
+
 		FireEvent(message);
-		/*END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
+
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	void Global::GotChatMsg(const char* msg, int player){
 		L.Message(msg, player);
-		string tmsg = msg;
-		if(tmsg == string(".verbose")){
-			if(L.Verbose()){
-				L.iprint("Verbose turned on");
-			} else L.iprint("Verbose turned off");
-		}else if(tmsg == string(".crash")){
-			Crash();
-		}else if(tmsg == string(".end")){
-			exit(0);
-		}else if(tmsg == string(".break")){
-			if(L.FirstInstance() == true){
-				L.print("The user initiated debugger break");
-			}
-		}else if(tmsg == string(".isfirst")){
-			if(L.FirstInstance() == true) L.iprint(" info :: This is the first NTai instance");
-		}else if(tmsg == string(".save")){
-			if(L.FirstInstance() == true) SaveUnitData();
-		}else if(tmsg == string(".reload")){
-			if(L.FirstInstance() == true) LoadUnitData();
-		}else if(tmsg == string(".flush")){
-			L.Flush();
-		}else if(tmsg == string(".threat")){
-			Ch->MakeTGA();
-		}/*else if(tmsg == string(".gridtest")){
-		 if(Ch->gridmaintainer==false) return;
-		 float cellvalue = 0;
-		 Ch->Grid->SetValuebyIndex(10,299.0f);
-		 cellvalue = Ch->Grid->GetValue(10);
-		 if(cellvalue==299.0f){
-		 G->L.iprint("Test 1 PASSED");
-		 }else{
-		 G->L.iprint("Test1 FAILED");
-		 }
-		 cellvalue=0;
-		 float3 mpos = float3(2048,0,2048);
-		 Ch->Grid->SetValuebyMap(mpos,999.0f);
-		 cellvalue=Ch->Grid->GetValuebyMap(mpos);
-		 if(cellvalue == 999.0f){
-		 L.iprint("Test 2 PASSED");
-		 }else{
-		 G->L.iprint("Test 2 FAILED");
-		 }
-		 if(Ch->Grid->GridtoMap(Ch->Grid->MaptoGrid(mpos)) == mpos){
-		 G->L.iprint("Test 3 PASSED");
-		 }else{
-		 G->L.iprint("Test 3 FAILED");
-		 }
-		 cellvalue=0;
-		 float3 gpos = float3(4,0,4);
-		 Ch->Grid->SetValuebyGrid(gpos,799.0f);
-		 cellvalue=Ch->Grid->GetValuebyGrid(gpos);
-		 if(cellvalue == 799.0f){
-		 L.iprint("Test 4 PASSED");
-		 }else{
-		 G->L.iprint("Test 4 FAILED");
-		 }
-		 if(Ch->Grid->MaptoGrid(Ch->Grid->GridtoMap(gpos)) == gpos){
-		 G->L.iprint("Test 5 PASSED");
-		 }else{
-		 G->L.iprint("Test 5 FAILED");
-		 }
-		 if(Ch->Grid->IndextoGrid(Ch->Grid->GetIndex(gpos)) == gpos){
-		 G->L.iprint("Test 6 PASSED");
-		 }else{
-		 G->L.iprint("Test 6 FAILED");
-		 }
-		 Ch->MakeTGA();
-		 }*/else if(tmsg == string(".aicheat")){
-			 //chcb = G->gcb->GetCheatInterface();
-			 if(Cached->cheating== false){
-				 Cached->cheating = true;
-				 chcb->SetMyHandicap(1000.0f);
-				 if(L.FirstInstance() == true) L.iprint("Make sure you've typed .cheat for full cheating!");
-				 // Spawn 4 commanders around the starting position
-				 CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(ComName);
-				 if(ud != 0){
-					 float3 pos = Map->basepos;
-					 pos = cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000.0f, 0);
-					 int ij = chcb->CreateUnit(ComName.c_str(), pos);
-					 if(ij != 0) Actions->RandomSpiral(ij);
-					 float3 epos = pos;
-					 epos.z -= 1300.0f;
-					 float angle = float(mrand()%320);
-					 pos = G->Map->Rotate(epos, angle, pos);
-					 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 1);
-					 ///float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing);
-					 ij = chcb->CreateUnit(ComName.c_str(), pos);
-					 if(ij != 0) Actions->RandomSpiral(ij);
-					 epos = pos;
-					 epos.z -= 900.0f;
-
-					 angle = float(mrand()%320);
-					 pos = G->Map->Rotate(epos, angle, pos);
-					 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 0);
-					 ///
-					 ij = chcb->CreateUnit(ComName.c_str(), pos);
-					 if(ij != 0){
-						 Actions->RandomSpiral(ij);
-					 }
-				 }
-			 }else if(Cached->cheating == true){
-				 Cached->cheating  = false;
-				 if(L.FirstInstance() == true)L.iprint("cheating is now disabled therefore NTai will no longer cheat");
-			 }
-		 }
-		START_EXCEPTION_HANDLING
-		CMessage message(msg);
+		
+		CMessage message("##"+string(msg));
 		message.AddParameter(player);
 		FireEvent(message);
-		END_EXCEPTION_HANDLING("CMessage message(\"msg gotmsg\"); FireEvent(message);")
+
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
