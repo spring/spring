@@ -35,6 +35,7 @@ GameParticipant::GameParticipant(bool willHaveRights)
 , cpuUsage (0.0f)
 , ping (0)
 , hasRights(willHaveRights)
+, team(0)
 {
 }
 
@@ -635,15 +636,84 @@ void CGameServer::ServerReadNet()
 					}
 					case NETMSG_TEAM:
 					{
-						if (inbuf[1] != a)
+						//TODO update players[] and teams[] and send to hostif
+						const unsigned player = (unsigned)inbuf[1];
+						if (player != a)
 						{
-							SendSystemMsg("Server: Warning got teammsg from %i claiming to be from %i",a,inbuf[1]);
+							SendSystemMsg("Server: Warning got teammsg from %i claiming to be from %i",a,player);
 						}
 						else
 						{
-							serverNet->RawSend(inbuf, length);
+							const unsigned action = inbuf[2];
+							const unsigned fromTeam = players[player]->team;
+							unsigned numPlayersInTeam = 0;
+							for (unsigned a = 0; a < MAX_PLAYERS; ++a)
+								if (players[a] && players[a]->team == fromTeam)
+									++numPlayersInTeam;
+							
+							switch (action)
+							{
+								case TEAMMSG_SELFD: {
+									serverNet->SendSelfD(player);
+									if (numPlayersInTeam <= 1 && teams[fromTeam])
+									{
+										teams[fromTeam].reset();
+									}
+									players[player]->team = 0;
+									break;
+								}
+								case TEAMMSG_GIVEAWAY: {
+									const unsigned toTeam = inbuf[3];
+									serverNet->SendGiveAwayEverything(player, toTeam);
+									if (numPlayersInTeam <= 1 && teams[fromTeam])
+									{
+										teams[fromTeam].reset();
+									}
+									players[player]->team = 0;
+									break;
+								}
+								case TEAMMSG_RESIGN: {
+									serverNet->SendResign(player);
+									players[player]->team = 0;
+									break;
+								}
+								case TEAMMSG_JOIN_TEAM: {
+									unsigned newTeam = inbuf[3];
+									if (setup && !setup->fixedTeams)
+									{
+										serverNet->SendJoinTeam(player, newTeam);
+										players[player]->team = newTeam;
+										if (!teams[newTeam])
+											teams[newTeam].reset(new GameTeam);
+									}
+									else
+									{
+										SendSystemMsg("Player %s tried to change his team.", players[player]->name.c_str());
+									}
+									break;
+								}
+								case TEAMMSG_TEAM_DIED: {
+									// don't send to clients, they don't need it
+									unsigned char team = inbuf[3];
+									if (teams[team])
+									{
+										teams[fromTeam].reset();
+										for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+										{
+											if (players[i] && players[i]->team == team)
+											{
+												players[i]->team = 0;
+											}
+										}
+									}
+									break;
+								}
+								default: {
+									SendSystemMsg("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
+								}
+							}
+							break;
 						}
-						break;
 					}
 
 					// CGameServer should never get these messages
@@ -964,7 +1034,7 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 	if (setup && hisNewNumber < (unsigned)setup->numPlayers/* needed for non-hosted demo playback */)
 	{
 		unsigned hisTeam = setup->playerStartingTeam[hisNewNumber];
-		if (!teams[hisTeam]) // is commsharing
+		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
 			teams[hisTeam]->startpos = setup->startPos[hisTeam];
@@ -984,18 +1054,15 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 		teams[hisTeam].reset(new GameTeam());
 		players[hisNewNumber]->team = hisTeam;
 		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
+		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		{
+			if (teams[a] && a != hisNewNumber)
+				serverNet->SendJoinTeam(a, players[a]->team);
+		}
 	}
 	SendSystemMsg("Client connected on slot %i (wanted number was %i)", hisNewNumber, wantedNumber);
 
 	serverNet->FlushNet();
-}
-
-void CGameServer::PlayerDefeated(const int playerNum) const
-{
-	if (hostif)
-	{
-		hostif->SendPlayerDefeated((unsigned char)playerNum);
-	}
 }
 
 void CGameServer::SendSystemMsg(const char* fmt,...)

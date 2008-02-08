@@ -361,6 +361,12 @@ void CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
 	SendData(msg, 4);
 }
 
+void CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
+{
+	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_TEAM_DIED, whichTeam};
+	SendData(msg, 4);
+}
+
 /* FIXME: add these:
 
 #ifdef SYNCDEBUG
