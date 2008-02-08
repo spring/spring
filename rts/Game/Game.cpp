@@ -3192,6 +3192,11 @@ bool CGame::ClientReadNet()
 					}
 					case TEAMMSG_RESIGN: {
 						gs->players[player]->StartSpectating();
+						if (player == gu->myPlayerNum) {
+							selectedUnits.ClearSelected();
+							unitTracker.Disable();
+							CLuaUI::UpdateTeams();
+						}
 						if (numPlayersInTeam == 1)
 							gs->Team(fromTeam)->leader = -1;
 						logOutput.Print("Player %i resigned and is now spectating!", player);
@@ -3201,6 +3206,17 @@ bool CGame::ClientReadNet()
 						//TODO is this enought?
 						int newTeam = int(inbuf[3]);
 						gs->players[player]->team = newTeam;
+						gs->players[player]->spectator = net->localDemoPlayback;
+						if (player == gu->myPlayerNum) {
+							gu->spectating           = net->localDemoPlayback;
+							gu->spectatingFullView   = net->localDemoPlayback;
+							gu->spectatingFullSelect = net->localDemoPlayback;
+							gu->myTeam = newTeam;
+							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+							selectedUnits.ClearSelected();
+							unitTracker.Disable();
+							CLuaUI::UpdateTeams();
+						}						
 						if (gs->Team(newTeam)->leader == -1)
 							gs->Team(newTeam)->leader = player;
 						break;
@@ -3716,6 +3732,15 @@ void CGame::SendNetChat(const std::string& message)
 		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 		msg += buf;
 	}
+	else if ((msg == ".spectator")) {
+		net->SendResign(gu->myPlayerNum);
+	}
+	else if ((msg.find(".team") == 0) && (gs->cheatEnabled || net->localDemoPlayback)) {
+		int team=atoi(&msg.c_str()[msg.find(" ")]);
+		if ((team >= 0) && (team <gs->activeTeams)) {
+			net->SendJoinTeam(gu->myPlayerNum, team);
+		}
+	}
 	if (msg.size() > 128) {
 		msg.resize(128); // safety
 	}
@@ -3823,31 +3848,6 @@ void CGame::HandleChatMsg(std::string s, int player)
 		logOutput.Print("Resetting sync debugger.");
 	}
 #endif
-	else if ((s == ".spectator") && (gs->cheatEnabled || net->localDemoPlayback)) {
-		gs->players[player]->StartSpectating();
-		if (player == gu->myPlayerNum) {
-			selectedUnits.ClearSelected();
-			unitTracker.Disable();
-			CLuaUI::UpdateTeams();
-		}
-	}
-	else if ((s.find(".team") == 0) && (gs->cheatEnabled || net->localDemoPlayback)) {
-		int team=atoi(&s.c_str()[s.find(" ")]);
-		if ((team >= 0) && (team <gs->activeTeams)) {
-			gs->players[player]->team = team;
-			gs->players[player]->spectator = net->localDemoPlayback;
-			if (player == gu->myPlayerNum) {
-				gu->spectating           = net->localDemoPlayback;
-				gu->spectatingFullView   = net->localDemoPlayback;
-				gu->spectatingFullSelect = net->localDemoPlayback;
-				gu->myTeam = team;
-				gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
-				selectedUnits.ClearSelected();
-				unitTracker.Disable();
-				CLuaUI::UpdateTeams();
-			}
-		}
-	}
 	else if ((s.find(".atm") == 0) && gs->cheatEnabled) {
 		int team = gs->players[player]->team;
 		gs->Team(team)->AddMetal(1000);
