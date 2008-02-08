@@ -61,8 +61,11 @@ namespace ntai {
 		if(!IsValid()){
 			return;
 		}
-		if(message.GetType() == string("update")){
-			if(under_construction) return;
+		if(message.IsType("update")){
+			if(under_construction){
+				return;
+			}
+
 			if(EVERY_((GetAge()%16+17))){
 				if(!tasks.empty()){
 					if(tasks.front()->IsValid()==false){
@@ -76,41 +79,40 @@ namespace ntai {
 					}
 				}
 			}
-			/*if(EVERY_(32)){
-				float3 p = G->GetUnitPos(uid);
-				G->cb->CreateLineFigure(p,p+float3(30,40,30),5,0,32,0);
-				float3 p2 = G->cb->GetMousePos();
-				if(p2.distance2D(p)<30){
-					CMessage m("type?");
-					tasks.front()->RecieveMessage(m);
-					G->cb->SendTextMsg(m.GetType().c_str(),1);
-				}
-			}*/
-		}else if(message.GetType() == string("")){
+
+		}else if(message.IsType("")){
 			return;
-		}else if(message.GetType() == string("unitfinished")){
+		}else if(message.IsType("unitfinished")){
 			if(message.GetParameter(0) == this->uid){
 				under_construction = false;
 				LoadBehaviours();
 			}
-		}else if(message.GetType() == string("unitdestroyed")){
+		}else if(message.IsType("unitdestroyed")){
 			if(message.GetParameter(0) == uid){
+
 				if(!utd->IsMobile()){
 					G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),utd);
 				}
+
 				if(!tasks.empty()){
 					tasks.erase(tasks.begin(),tasks.end());
 					tasks.clear();
 				}
+
 				if(!behaviours.empty()){
 					behaviours.erase(behaviours.begin(),behaviours.end());
 					behaviours.clear();
 				}
+
 				this->End();
 				return;
 			}
 		}
-		if(under_construction) return;
+
+		if(under_construction){
+			return;
+		}
+
 		if(!nolist){
 			if(tasks.empty()){
 				if(LoadTaskList()){
@@ -118,7 +120,7 @@ namespace ntai {
 					t->Init();
 					G->RegisterMessageHandler(t);
 				}
-				//executenext = !tasks.empty();
+
 			}
 		}
 	}
@@ -135,12 +137,12 @@ namespace ntai {
 
 	bool CUnit::operator==(int unit){
 		NLOG("CUnit::operator==");
-		if(valid == false) return false;
-		if(unit == uid){
-			return true;
-		}else{
+
+		if(valid == false){
 			return false;
 		}
+
+		return (unit == uid);
 	}
 
 	int CUnit::GetID(){
@@ -150,12 +152,9 @@ namespace ntai {
 
 	bool CUnit::AddTask(boost::shared_ptr<IModule> &t){
 		NLOG("CBuilder::AddTask");
-		//if(t->IsValid()){
-			//t->AddListener(me);
-			tasks.push_back(t);
-			return true;
-		//}
-		//return false;
+		
+		tasks.push_back(t);
+		return true;
 	}
 
 	bool CUnit::LoadTaskList(){
@@ -175,7 +174,7 @@ namespace ntai {
 		string u = utd->GetName();
 		if(sl != string("")){
 			CTokenizer<CIsComma>::Tokenize(vl, sl, CIsComma());
-			//vl = bds::set_cont(vl,sl.c_str());
+
 			if(vl.empty() == false){
 				int randnum = G->mrand()%vl.size();
 				u = vl.at(min(randnum,max(int(vl.size()-1),1)));
@@ -196,7 +195,6 @@ namespace ntai {
 		vector<string> v;
 
 		CTokenizer<CIsComma>::Tokenize(v, s, CIsComma());
-		//v = bds::set_cont(v,s.c_str());
 
 		if(v.empty() == false){
 			G->L.print("loading contents of  tasklist :: " + u + " :: filling tasklist with #" + to_string(v.size()) + " items");
@@ -221,10 +219,14 @@ namespace ntai {
 					}
 					polate = !polate;
 				}
+
 				string q = *vi;
+
 				trim(q);
 				tolowercase(q);
+
 				CUnitTypeData* b = G->UnitDefLoader->GetUnitTypeDataByName(q);
+
 				if(b != 0){
 					boost::shared_ptr<IModule> t(new CUnitConstructionTask(G,uid,utd,b));
 					AddTask(t);
@@ -258,6 +260,7 @@ namespace ntai {
 					AddTask(t);
 				} else{
 					btype x = G->Manufacturer->GetTaskType(q);
+
 					if( x != B_NA){
 						boost::shared_ptr<IModule> t(new CKeywordConstructionTask(G,this->uid,x));
 						AddTask(t);
@@ -267,6 +270,7 @@ namespace ntai {
 				}
 
 			}
+
 			if(utd->GetUnitDef()->isCommander){
 				G->Map->basepos = G->GetUnitPos(GetID());
 			}

@@ -14,9 +14,12 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 	NLOG("CKeywordConstructionTask::RecieveMessage");
-	if (!valid) return;
+	
+	if (!valid){
+		return;
+	}
 
-	if(message.GetType() == string("unitidle")){
+	if(message.IsType("unitidle")){
 		if(message.GetParameter(0) == unit){
 			if((type == B_GUARDIAN)
 				||(type == B_GUARDIAN_MOBILES)
@@ -27,14 +30,14 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 				return;
 			}
 		}
-	}else if(message.GetType() == string("type?")){
+	}else if(message.IsType("type?")){
 		message.SetType(" keywordtask: "+G->Manufacturer->GetTaskName(this->type));
-	}else	if(message.GetType() == string("unitdestroyed")){
+	}else if(message.IsType("unitdestroyed")){
 		if(message.GetParameter(0) == unit){
 			End();
 			return;
 		}
-	}else	if(message.GetType() == string("buildposition")){
+	}else if(message.IsType("buildposition")){
 		// continue construction
 		//
 

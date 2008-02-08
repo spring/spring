@@ -15,24 +15,29 @@ namespace ntai {
 	void Chaser::InitAI(Global* GLI){
 		G = GLI;
 		NLOG("Chaser::InitAI");
-		enemynum=0;
-		G->Get_mod_tdf()->GetDef(threshold, "5", "AI\\initial_threat_value");
-		G->Get_mod_tdf()->GetDef(thresh_increase, "1", "AI\\increase_threshold_value");
-		G->Get_mod_tdf()->GetDef(thresh_percentage_incr, "1", "AI\\increase_threshold_percentage");
-		G->Get_mod_tdf()->GetDef(max_threshold, "1", "AI\\maximum_attack_group_size");
+		
 
-		float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE);
+		enemynum=0;
+
+		TdfParser* t = G->Get_mod_tdf();
+
+		t->GetDef(threshold, "5", "AI\\initial_threat_value");
+		t->GetDef(thresh_increase, "1", "AI\\increase_threshold_value");
+		t->GetDef(thresh_percentage_incr, "1", "AI\\increase_threshold_percentage");
+		t->GetDef(max_threshold, "1", "AI\\maximum_attack_group_size");
+
+		float3 mapdim = float3((float)G->cb->GetMapWidth()*SQUARE_SIZE, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE);
 		Grid.Initialize(mapdim, float3(1024, 0, 1024), true);
 		Grid.ApplyModifierOnUpdate(0.9f, (15 SECONDS));
 		Grid.SetDefaultGridValue(5.0f);
 		Grid.SetMinimumValue(10.0f);
 
-		CTokenizer<CIsComma>::Tokenize(fire_at_will, G->Get_mod_tdf()->SGetValueMSG("AI\\fire_at_will"), CIsComma());
-		CTokenizer<CIsComma>::Tokenize(return_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\return_fire"), CIsComma());
-		CTokenizer<CIsComma>::Tokenize(hold_fire, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_fire"), CIsComma());
-		CTokenizer<CIsComma>::Tokenize(roam, G->Get_mod_tdf()->SGetValueMSG("AI\\roam"), CIsComma());
-		CTokenizer<CIsComma>::Tokenize(maneouvre, G->Get_mod_tdf()->SGetValueMSG("AI\\maneouvre"), CIsComma());
-		CTokenizer<CIsComma>::Tokenize(hold_pos, G->Get_mod_tdf()->SGetValueMSG("AI\\hold_pos"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(fire_at_will, t->SGetValueMSG("AI\\fire_at_will"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(return_fire, t->SGetValueMSG("AI\\return_fire"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(hold_fire, t->SGetValueMSG("AI\\hold_fire"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(roam, t->SGetValueMSG("AI\\roam"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(maneouvre, t->SGetValueMSG("AI\\maneouvre"), CIsComma());
+		CTokenizer<CIsComma>::Tokenize(hold_pos, t->SGetValueMSG("AI\\hold_pos"), CIsComma());
 
 	}
 

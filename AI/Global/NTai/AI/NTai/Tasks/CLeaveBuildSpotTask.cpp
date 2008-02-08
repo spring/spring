@@ -17,13 +17,13 @@ namespace ntai {
 			return;
 		}
 
-		if(message.GetType() == string("unitidle")){
+		if(message.IsType("unitidle")){
 			if(message.GetParameter(0) == unit){
 				End();
 				//CMessage message2(string("taskfinished"));
 				//FireEventListener(message2);
 			}
-		}else if(message.GetType() == string("type?")){
+		}else if(message.IsType("type?")){
 			message.SetType(" leave buildspot task");
 		}
 	}

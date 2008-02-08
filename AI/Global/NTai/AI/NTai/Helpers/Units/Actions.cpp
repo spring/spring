@@ -381,19 +381,25 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
         delete [] en;
         return false;
     }
+
 }
 
 void CActions::ScheduleIdle(int unit){
     NLOG("CActions::ScheduleIdle");
+
     if(ValidUnitID(unit)){
+
         TCommand tc(unit, "schedule idle unit");
         tc.created = G->cb->GetCurrentFrame();
         tc.ID(CMD_IDLE);
+
         if(G->OrderRouter->GiveOrder(tc, false)== false){
             G->L.print("GiveOrder on scedule idle failed!!");
         }
     }
+
 }
+
 bool CActions::DGun(int uid, int enemy){
     NLOG("CActions::DGun");
 
@@ -403,30 +409,39 @@ bool CActions::DGun(int uid, int enemy){
     tc.c.timeOut = 3 SECONDS+(G->cb->GetCurrentFrame()%300) + G->cb->GetCurrentFrame(); // dont let this command get in the way of the commanders taskqueue with a never ending vendetta that can never be fulfilled
 
     tc.created = G->cb->GetCurrentFrame();
+
     if(G->OrderRouter->GiveOrder(tc, true)==false){
 		// GiveOrder returned an error
         return false; 
+
     }else{
         // Command successful, This unit is now dgunning
         return true;
+
     }
+
 }
+
 bool CActions::Reclaim(int uid, int enemy){
     NLOG("CActions::Reclaim");
+
     TCommand tc(uid, "cmd_recl CActions::Reclaim");
     tc.ID(CMD_RECLAIM);
     tc.Push(enemy);
     tc.created = G->cb->GetCurrentFrame();
+
     return G->OrderRouter->GiveOrder(tc, true);
 }
 
 bool CActions::AreaReclaim(int uid, float3 pos, int radius){
     NLOG("CActions::AreaReclaim");
+
     TCommand tc(uid, "cmd_recl CActions::AreaReclaim");
     tc.ID(CMD_RECLAIM);
     tc.PushFloat3(pos);
     tc.Push(radius);
     tc.created = G->cb->GetCurrentFrame();
+
     return G->OrderRouter->GiveOrder(tc, true);
 }
 
@@ -435,7 +450,7 @@ bool CActions::DGunNearby(int uid){
 	
 	CUnitTypeData* utd = G->UnitDefLoader->GetUnitTypeDataByUnitId(uid);
     
-	if(utd == 0 ){
+	if(utd == 0){
         G->L.print("Dgunning failed, utd == 0");
         return false;
     }
@@ -445,7 +460,8 @@ bool CActions::DGunNearby(int uid){
     }
 
     float3 compos = G->GetUnitPos(uid);
-    if(G->Map->CheckFloat3(compos)==false){
+
+    if(!G->Map->CheckFloat3(compos)){
         return false;
     }
     
@@ -454,6 +470,7 @@ bool CActions::DGunNearby(int uid){
     int e = G->GetEnemyUnits(en, compos, G->cb->GetUnitMaxRange(uid)*1.3f); // get all enemy units within weapons range atm
     
 	if(e>0){
+
         for(int i = 0; i < e; i++){
             
 			if(ValidUnitID(en[i])==false){
