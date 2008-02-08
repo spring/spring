@@ -890,11 +890,15 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		timeLeft -= newFrames;
 	}
 
+	bool rec = false;
 #ifndef NO_AVI
-	if(((!game || !game->creatingVideo) && !IsPaused) || fixedFrameTime){
-#else
-	if(!IsPaused || fixedFrameTime){
+	rec = game && game->creatingVideo;
 #endif
+	bool normalFrame = !IsPaused && !rec;
+	bool videoFrame = !IsPaused && fixedFrameTime;
+	bool singleStep = fixedFrameTime && !rec;
+
+	if(normalFrame || videoFrame || singleStep){
 		for(int i=0; i < newFrames; ++i){
 			++serverframenum;
 			//Send out new frame messages.

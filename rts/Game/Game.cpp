@@ -499,7 +499,6 @@ CGame::~CGame()
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
-		aviGenerator->ReleaseEngine();
 		delete aviGenerator;
 		aviGenerator = NULL;
 	}
@@ -1169,53 +1168,40 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "createvideo") {
 		if(creatingVideo){
 			creatingVideo=false;
-			aviGenerator->ReleaseEngine();
 			delete aviGenerator;
 			aviGenerator=0;
-			//			logOutput.Print("Finished avi");
 		} else {
 			creatingVideo=true;
-			string name;
+			string fileName;
 			for(int a=0;a<999;++a){
 				char t[50];
 				itoa(a,t,10);
-				name=string("video")+t+".avi";
-				CFileHandler ifs(name);
+				fileName=string("video")+t+".avi";
+				CFileHandler ifs(fileName);
 				if(!ifs.FileExists())
 					break;
 			}
 
-			BITMAPINFOHEADER bih;
-			memset(&bih,0, sizeof(BITMAPINFOHEADER));
+			int videoSizeX = (gu->viewSizeX/4)*4;
+			int videoSizeY = (gu->viewSizeY/4)*4;
+			aviGenerator = SAFE_NEW CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
 
-			// filling bitmap info structure.
-			bih.biSize=sizeof(BITMAPINFOHEADER);
-			bih.biWidth=(gu->viewSizeX/4)*4;
-			bih.biHeight=(gu->viewSizeY/4)*4;
-			bih.biPlanes=1;
-			bih.biBitCount=24;
-			bih.biSizeImage=bih.biWidth*bih.biHeight*3;
-			bih.biCompression=BI_RGB;
-
-
-			aviGenerator = SAFE_NEW CAVIGenerator(name, &bih, 30);
 			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
 			SDL_ShowCursor(SDL_ENABLE);
-			HRESULT hr=aviGenerator->InitEngine();
-			SDL_ShowCursor(savedCursorMode);
-			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
-			//Setting it back to 'normal'.
-			streflop_init<streflop::Simple>();
 
-			if(hr!=AVIERR_OK){
+			if(!aviGenerator->InitEngine()){
 				creatingVideo=false;
 				logOutput.Print(aviGenerator->GetLastErrorMessage());
 				delete aviGenerator;
 				aviGenerator=0;
 			} else {
-				logOutput.Print("Recording avi to %s size %li %li", name.c_str(),
-				                bih.biWidth, bih.biHeight);
+				logOutput.Print("Recording avi to %s size %li x %li", fileName.c_str(), videoSizeX, videoSizeY);
 			}
+
+			SDL_ShowCursor(savedCursorMode);
+			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
+			//Setting it back to default state.
+			streflop_init<streflop::Simple>();
 		}
 	}
 #endif
@@ -2372,13 +2358,7 @@ bool CGame::Draw()
 #ifndef NO_AVI
 	if(creatingVideo){
 		gu->lastFrameTime=1.0f/GAME_SPEED;
-		LPBITMAPINFOHEADER ih;
-		ih = aviGenerator->GetBitmapHeader();
-		unsigned char* buf = aviGenerator->GetPixelBuf();
-		glReadPixels(0,0,ih->biWidth, ih->biHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, buf);
-
-		aviGenerator->AddFrame(buf);
-
+		aviGenerator->readOpenglPixelDataThreaded();
 //		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
 	}
 #endif
