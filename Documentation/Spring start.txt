@@ -45,6 +45,7 @@
 	HostIP=xxx.xxx.xxx.xxx;
 	HostPort=xxx;       // usually 8452
 	SourcePort=0;       // set this if you want a different source port (as client)
+	AutohostPort=X		// communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerNum=x;      //only variable that should vary between different players
 

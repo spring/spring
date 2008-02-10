@@ -372,6 +372,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(hostip,     "0", "GAME\\HostIP");
 	file.GetDef(hostport,   "0", "GAME\\HostPort");
 	file.GetDef(sourceport, "0", "GAME\\SourcePort");
+	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
 
 	// Game parameters
 	scriptName  = file.SGetValueDef("Commanders", "GAME\\ScriptName");

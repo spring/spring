@@ -340,9 +340,8 @@ bool CPreGame::Update()
 				good_fpu_control_registers("before CGameServer creation");
 				int myPort = gameSetup? gameSetup->hostport : 8452;
 				gameServer = new CGameServer(myPort, mapName, modName, scriptName, gameSetup, demoFile);
-				int autohostport = configHandler.GetInt("Autohost", 0);
-				if (autohostport > 0)
-					gameServer->AddAutohostInterface(myPort+1, autohostport);
+				if (gameSetup && gameSetup->autohostport > 0)
+					gameServer->AddAutohostInterface(myPort+1, gameSetup->autohostport);
 				gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
 				good_fpu_control_registers("after CGameServer creation");
 			}

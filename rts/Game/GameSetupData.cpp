@@ -6,6 +6,7 @@ CGameSetupData::CGameSetupData()
 	startPosType=StartPos_Fixed;
 	numDemoPlayers=0;
 	hostDemo=false;
+	autohostport = 0;
 }
 
 CGameSetupData::~CGameSetupData()
