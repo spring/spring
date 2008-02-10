@@ -39,6 +39,7 @@ public:
 	std::string hostip;
 	int hostport;
 	int sourceport; //the port clients will try to connect from
+	int autohostport;
 	
 	char* gameSetupText;
 	int gameSetupTextLength;

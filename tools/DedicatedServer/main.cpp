@@ -24,17 +24,22 @@ int main(int argc, char *argv[])
 		
 		// Create the server, it will run in a separate thread
 		server = new CGameServer(gameSetup->hostport, gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName, gameSetup);
-
-		if (argc > 2) // add the communication interface
-			server->AddAutohostInterface(8453, atoi(argv[2]));
 		
+		if (gameSetup->autohostport > 0)
+			server->AddAutohostInterface(8453, gameSetup->autohostport);
+		else
+		{
+			std::cout << "You need to specify an AutohostPort in the script" << std::endl;
+			return 1;
+		}
+
 		while (!server->HasFinished()) // check if still running
 			sleep(1);	// if so, wait 1  second
 		delete server;	// delete the server after usage
 	}
 	else
 	{
-		std::cout << "usage: dedicated <full_path_to_script> <portnumber for AutohostInterface>" << std::endl;
+		std::cout << "usage: dedicated <full_path_to_script>" << std::endl;
 	}
 	
 	FileSystemHandler::Cleanup();
