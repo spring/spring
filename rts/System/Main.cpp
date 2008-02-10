@@ -741,7 +741,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
 	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
-	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/' && argv[i-1][1] == 'q')); i++){
+	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/' && (argv[i-1][1] == 'q' || argv[i-1][1] == 'a'))); i++){
 		offset += strlen(argv[i]);
 		offset = cmdLineStr.find_first_not_of(' ', offset);
 		if(offset == string::npos)
@@ -768,6 +768,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 		}
 	}
 #else
+	// is there a reason for not using this in windows?
 	for (int i = 1; i < argc; i++)
 		if (argv[i][0] != '-')
 		{
@@ -1172,7 +1173,7 @@ int main( int argc, char *argv[ ], char *envp[ ] ) /* envp only on linux/bsd */
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
-	setbuf(stdout, NULL); // unbuffered
+	//setbuf(stdout, NULL); // causes crashes with commandline options
 	win_lpCmdLine = lpCmdLine;
 	return Run (__argc, __argv);
 }
