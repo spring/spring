@@ -802,7 +802,15 @@ void CGameServer::CheckForGameStart(bool forced)
 	
 	if (setup)
 	{
-		for (unsigned a = numDemoPlayers; a < (unsigned)setup->numPlayers; a++) {
+		unsigned start = numDemoPlayers;
+#ifdef DEDICATED
+		// Lobby-protocol doesn't support creating games without players inside
+		// so in dedicated mode there will always be the host-player in the script
+		// which doesn't exist and will never join, so skip it in this case
+		if (setup && setup->myPlayerNum == start)
+			start++;
+#endif
+		for (unsigned a = start; a < (unsigned)setup->numPlayers; a++) {
 			if (!players[a] || !players[a]->readyToStart) {
 				allReady = false;
 				break;
