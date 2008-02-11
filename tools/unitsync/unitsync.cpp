@@ -676,8 +676,8 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 			{
 				int x = 4*(i % ((mipsize+3)/4))+b;
 				int y = 4*(i / ((mipsize+3)/4))+a;
-				bits >>= 2;
 				unsigned char code = bits & 0x3;
+				bits >>= 2;
 
 				if ( color0 > color1 )
 				{
