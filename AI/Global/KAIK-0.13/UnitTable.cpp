@@ -511,6 +511,11 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 		return 0.0f;
 	}
 
+	if (udef->minWaterDepth > 0) {
+		// we can't swim yet
+		return 0.0f;
+	}
+
 	int frame = ai->cb->GetCurrentFrame();
 	float Cost = ((udef->metalCost * METAL2ENERGY) + udef->energyCost) + 0.1f;
 	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + frame / 2;
@@ -848,7 +853,10 @@ void CUnitTable::Init() {
 				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unitTypes[v].def);
 			}
 
-			if (me->def->speed > 0.0f && me->def->minWaterDepth <= 0) {
+			// speed > 0 means we are mobile, minWaterDepth <= 0 means we
+			// are allergic to water and cannot be in it (positive values
+			// are inverted internally)
+			if (me->def->speed > 0.0f /* && me->def->minWaterDepth <= 0 */) {
 				if (me->def->buildOptions.size() > 0) {
 					ground_builders[mySide].push_back(i);
 					me->category = CAT_BUILDER;
@@ -862,7 +870,7 @@ void CUnitTable::Init() {
 
 
 			else if (!me->def->canfly) {
-				if (me->def->minWaterDepth <= 0) {
+				if (true /* me->def->minWaterDepth <= 0 */) {
 					if (me->def->buildOptions.size() >= 1 && me->def->builder) {
 						if ((((me->def)->TEDClassString) == "PLANT") || (((me->def)->speed) > 0.0f)) {
 							me->isHub = false;
@@ -909,7 +917,7 @@ void CUnitTable::Init() {
 							me->category = CAT_MEX;
 						}
 						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
-							if (me->def->minWaterDepth <= 0 && !me->def->needGeo) {
+							if (/* me->def->minWaterDepth <= 0 && */ !me->def->needGeo) {
 								// filter tidals and geothermals
 								ground_energy[mySide].push_back(i);
 								me->category = CAT_ENERGY;
