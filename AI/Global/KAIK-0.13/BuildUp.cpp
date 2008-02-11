@@ -146,7 +146,12 @@ void CBuildUp::Buildup(int frame) {
 
 
 			else if (eLevelMed && mLevelLow) {
-				if (!ai->MyUnits[builder]->ReclaimBestFeature(true)) {
+				// only reclaim features during odd frames so we don't
+				// spend the entire game just chasing after rocks etc.
+				// (problem on Cooper Hill and similar maps)
+				bool reclaimFeature = ((frame & 1) && ai->MyUnits[builder]->ReclaimBestFeature(true));
+
+				if (!reclaimFeature) {
 					bool b = BuildUpgradeExtractor(builder);
 					bool eOverflow = (eStorage / (eIncome + 0.01) < STORAGETIME);
 					bool eExcess = (eIncome > (eUsage * 1.5));
