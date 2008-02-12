@@ -1,10 +1,21 @@
-#include <iostream> // DBG
-
 #include "Sim/Units/Unit.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
 #include "CollisionVolume.h"
+
+
+CR_BIND(CCollisionVolume, );
+CR_REG_METADATA(CCollisionVolume, (
+	CR_MEMBER(axisScales),
+	CR_MEMBER(axisOffsets),
+	CR_MEMBER(volumeBoundingRadius),
+	CR_MEMBER(volumeType),
+	CR_MEMBER(primaryAxis),
+	CR_MEMBER(secondaryAxes),
+	CR_MEMBER(spherical)
+));
+
 
 CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOffsets, int primAxis, int volType)
 {
@@ -13,9 +24,7 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 	axisScales[COLVOL_AXIS_Y] = volScales.y;
 	axisScales[COLVOL_AXIS_Z] = volScales.z;
 
-	// set the axis offsets (these adjust the
-	// position of the volume so that it does
-	// not have to be equal to unit center)
+	// set the axis offsets
 	axisOffsets[COLVOL_AXIS_X] = volOffsets.x;
 	axisOffsets[COLVOL_AXIS_Y] = volOffsets.y;
 	axisOffsets[COLVOL_AXIS_Z] = volOffsets.z;
