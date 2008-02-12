@@ -12,6 +12,7 @@ struct MoveData;
 struct WeaponDef;
 struct S3DOModel;
 struct UnitImage;
+class CCollisionVolume;
 class CExplosionGenerator;
 
 const int MAX_UNITS = 10000;
@@ -98,6 +99,7 @@ struct UnitDef
 	std::string filename;
 	int id;					// unique id for this type of unit
 
+	CCollisionVolume* collisionVolume;
 	const UnitDef* decoyDef;
 
 	int aihint;
@@ -186,6 +188,11 @@ struct UnitDef
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
 	bool useCSOffset;
+
+	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
+	float3 collisionVolumeScales;		// the collision volume's full axis lengths
+	float3 collisionVolumeOffsets;		// relative to the unit's center position
+
 
 	struct UnitDefWeapon {
 		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,

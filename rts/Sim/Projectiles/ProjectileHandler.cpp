@@ -19,6 +19,7 @@
 #include "Map/Ground.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Misc/Feature.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -578,6 +579,8 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 //	toBeAddedProjectile.push(p);
 }
 
+
+
 void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;
@@ -585,72 +588,82 @@ void CProjectileHandler::CheckUnitCol()
 	CUnit* tempUnits[MAX_UNITS];
 	CFeature* tempFeatures[MAX_UNITS];
 
-	for(psi=ps.begin();psi != ps.end();++psi){
-		CProjectile* p=(*psi);
-		if(p->checkCol && !p->deleteMe){
-			float speedf=p->speed.Length();
+	for (psi = ps.begin(); psi != ps.end(); ++psi) {
+		CProjectile* p = (*psi);
+
+		if (p->checkCol && !p->deleteMe) {
+			float speedf = p->speed.Length();
 
 			CUnit** endUnit = tempUnits;
 			CFeature** endFeature = tempFeatures;
 
-			qf->GetUnitsAndFeaturesExact(p->pos, p->radius+speedf, endUnit, endFeature);
+			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
-			for(CUnit** ui=tempUnits;ui!=endUnit;++ui){
-				CUnit* unit=*ui;
-				if(p->owner == unit || ((p->collisionFlags&COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam==p->owner->allyteam)) )
+			for (CUnit** ui = tempUnits; ui != endUnit; ++ui) {
+				CUnit* unit = *ui;
+
+				// if this unit fired this projectile or (this unit is in the
+				// same allyteam as the unit that shot this projectile and we
+				// are ignoring friendly collisions)
+				if (p->owner == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam == p->owner->allyteam)))
 					continue;
 
-				float ispeedf=1.0f/speedf;
-				float3 normSpeed=p->speed*ispeedf;
+				// pretend the projectile is a point-object
+				// when dealing with custom collision volumes
+				const float sqUnitRadius = unit->unitDef->collisionVolume->GetBoundingRadiusSq();
+				const float sqSeparation = (unit->midPos - p->pos).SqLength();
+				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
 
-				float totalRadius=unit->radius+p->radius;
-				float3 dif(unit->midPos-p->pos);
-				float closeTime=dif.dot(normSpeed)*ispeedf;
-				if(closeTime<0)
-					closeTime=0;
-				if(closeTime>1)
-					closeTime=1;
-				float3 closeVect=dif-(p->speed*closeTime);
-				if(closeVect.SqLength() < totalRadius*totalRadius){
+				if (sqSeparation < sqUnitRadius) {
+					// early-out test failed, so the projectile has entered the minimum
+					// bounding sphere of this unit's collision volume (not necessarily
+					// the actual volume itself)
+					if (!vol->IsSphere()) {
+						CMatrix44f m;
+						unit->GetTransformMatrix(m);
+						// if the volume is offset along any of its axes, add that
+						// translation so the projectile pos is transformed properly
+						m.Translate(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 
-					if(unit->isMarkedOnBlockingMap && unit->physicalState != CSolidObject::Flying){
-						float3 closePos(p->pos+p->speed*closeTime);
-						int square=(int)max(0.0f,min((float)(gs->mapSquares-1),closePos.x*(1.0f/8.0f)+int(closePos.z*(1.0f/8.0f))*gs->mapx));
-						if(readmap->groundBlockingObjectMap[square]!=unit)
-							continue;
+						if (vol->Collision(m, p->pos)) {
+							p->Collision(*ui);
+							break;
+						}
+					} else {
+						// already done
+						p->Collision(*ui);
+						break;
 					}
-					//adjust projectile position so explosion happens at the correct position
-					p->pos = p->pos + p->speed*closeTime;
-					p->Collision(*ui);
-					break;
 				}
-				float diflength = dif.Length();
-				float closesqlength = closeVect.SqLength();
-				assert(! ((!(closesqlength < totalRadius*totalRadius)) && (diflength<totalRadius)));
 			}
 
-			if(!(p->collisionFlags&COLLISION_NOFEATURE))
-			{
-				for(CFeature** fi=tempFeatures;fi!=endFeature;++fi){
-					if(!(*fi)->blocking)
+			// TODO: also tie collision volumes to features
+			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
+				for (CFeature** fi = tempFeatures; fi != endFeature; ++fi) {
+					if (!(*fi)->blocking)
 						continue;
-					float ispeedf=1.0f/speedf;
-					float3 normSpeed=p->speed*ispeedf;
-					float totalRadius=(*fi)->radius+p->radius;
-					float3 dif=(*fi)->midPos-p->pos;
-					float closeTime=dif.dot(normSpeed)/speedf;
-					if(closeTime<0)
-						closeTime=0;
-					if(closeTime>1)
-						closeTime=1;
-					float3 closeVect=dif-(p->speed*closeTime);
-					if(dif.SqLength() < totalRadius*totalRadius){
-						if((*fi)->isMarkedOnBlockingMap){
-							float3 closePos(p->pos+p->speed*closeTime);
-							int square=(int)max(0.0f,min((float)(gs->mapSquares-1),closePos.x*(1.0f/8.0f)+int(closePos.z*(1.0f/8.0f))*gs->mapx));
-							if(readmap->groundBlockingObjectMap[square]!=(*fi))
+
+					float ispeedf = 1.0f / speedf;
+					float3 normSpeed = p->speed * ispeedf;
+					float totalRadius = (*fi)->radius + p->radius;
+					float3 dif = (*fi)->midPos - p->pos;
+					float closeTime = dif.dot(normSpeed) / speedf;
+
+					if (closeTime < 0)
+						closeTime = 0;
+					if (closeTime > 1)
+						closeTime = 1;
+
+					float3 closeVect = dif - (p->speed * closeTime);
+					if (dif.SqLength() < totalRadius * totalRadius) {
+						if ((*fi)->isMarkedOnBlockingMap) {
+							float3 closePos(p->pos + p->speed * closeTime);
+							int square = (int) max(0.0f, min((float) (gs->mapSquares - 1), closePos.x * 0.125f + int(closePos.z * 0.125f) * gs->mapx));
+
+							if (readmap->groundBlockingObjectMap[square] != (*fi))
 								continue;
 						}
+
 						p->Collision(*fi);
 						break;
 					}
@@ -659,6 +672,8 @@ void CProjectileHandler::CheckUnitCol()
 		}
 	}
 }
+
+
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {

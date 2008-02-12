@@ -24,6 +24,7 @@
 #include "Map/MapDamage.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -72,20 +73,19 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	SCOPED_TIMER("Unit loader");
 
 	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
-	if(!ud) {
+	if (!ud) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
 	string type = ud->type;
 
-	if(!build){
-		pos.y=ground->GetHeight2(pos.x,pos.z);
-		if(ud->floater && pos.y<0)
+	if (!build) {
+		pos.y = ground->GetHeight2(pos.x, pos.z);
+		if (ud->floater && pos.y < 0)
 			pos.y = -ud->waterline;
 	}
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
-	//unit = SAFE_NEW CUnit(pos, side);
 	if (side < 0) {
 		side = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
 	}
@@ -294,16 +294,53 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	}
 
 	unit->energyTickMake = ud->energyMake;
-	if(ud->tidalGenerator>0)
-		unit->energyTickMake += ud->tidalGenerator*readmap->tidalStrength;
+	if (ud->tidalGenerator > 0)
+		unit->energyTickMake += ud->tidalGenerator * readmap->tidalStrength;
 
 	unit->model = ud->LoadModel(side);
 	unit->SetRadius(unit->model->radius);
 
-	if(ud->floater)
-		unit->pos.y = max(-ud->waterline,ground->GetHeight2(unit->pos.x,unit->pos.z));
+
+
+	// initialize the unit's collision-volume
+	float3 axisScales(unit->model->radius, unit->model->radius, unit->model->radius);
+	float3 axisOffsets(0.0f, 0.0f, 0.0f);
+	int primAxis = COLVOL_AXIS_Z;
+	int volType = COLVOL_TYPE_ELLIPSOID;
+
+	if (ud->collisionVolumeType.size() > 0) {
+		axisScales = ud->collisionVolumeScales;
+		axisOffsets = ud->collisionVolumeOffsets;
+
+		// note: case-sensitivity?
+		if (ud->collisionVolumeType.find("Ell") != std::string::npos) {
+			volType = COLVOL_TYPE_ELLIPSOID;
+		}
+
+		if (ud->collisionVolumeType.find("Cyl") != std::string::npos) {
+			volType = COLVOL_TYPE_CYLINDER;
+
+			if (ud->collisionVolumeType.size() == 4) {
+				if (ud->collisionVolumeType[3] == 'X') { primAxis = COLVOL_AXIS_X; }
+				if (ud->collisionVolumeType[3] == 'Y') { primAxis = COLVOL_AXIS_Y; }
+				if (ud->collisionVolumeType[3] == 'Z') { primAxis = COLVOL_AXIS_Z; }
+			}
+		}
+
+		if (ud->collisionVolumeType.find("Box") != std::string::npos) {
+			volType = COLVOL_TYPE_BOX;
+		}
+	}
+
+	// temporarily remove the const qualifier
+	((UnitDef*) ud)->collisionVolume = SAFE_NEW CCollisionVolume(axisScales, axisOffsets, primAxis, volType);
+
+
+
+	if (ud->floater)
+		unit->pos.y = max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
 	else
-		unit->pos.y=ground->GetHeight2(unit->pos.x,unit->pos.z);
+		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);

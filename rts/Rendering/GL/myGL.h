@@ -43,4 +43,6 @@ void UnloadExtensions();
 class CVertexArray;
 CVertexArray* GetVertexArray();
 
+void gluMyCube(float);
+
 #endif

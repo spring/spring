@@ -18,7 +18,7 @@ class LuaTable;
 #define SPRING_UNIT 2
 
 
-//this class takes care of all the unit defenitions
+//this class takes care of all the unit definitions
 class CUnitDefHandler
 {
 public:
