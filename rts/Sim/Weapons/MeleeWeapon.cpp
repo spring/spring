@@ -49,7 +49,7 @@ void CMeleeWeapon::Fire(void)
 		float3 impulseDir = targetUnit->pos-weaponMuzzlePos;
 		impulseDir.Normalize();
 		// the heavier the unit, the more impulse it does
-		targetUnit->DoDamage(weaponDef->damages, owner, impulseDir * owner->mass, weaponDef->id);
+		targetUnit->DoDamage(weaponDef->damages, owner, impulseDir * owner->mass * weaponDef->damages.impulseFactor, weaponDef->id);
 		if(fireSoundId)
 			sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	}
