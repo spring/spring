@@ -5,6 +5,10 @@
 #include <string>
 #include <iostream>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 int main(int argc, char *argv[])
 {
 	std::cout << "BIG FAT WARNING: this server is currently under development. If you find any errors (you most likely will)";
@@ -34,7 +38,11 @@ int main(int argc, char *argv[])
 		}
 
 		while (!server->HasFinished()) // check if still running
+#ifdef _WIN32
+			Sleep(1000);
+#else
 			sleep(1);	// if so, wait 1  second
+#endif
 		delete server;	// delete the server after usage
 	}
 	else
