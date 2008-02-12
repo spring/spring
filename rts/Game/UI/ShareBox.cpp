@@ -184,8 +184,13 @@ void CShareBox::Draw(void)
 		//if (gs->Team(actualTeam)->gaia) continue;
 
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
+		string teamName;
 
-		string teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+		if (gs->Team(actualTeam)->leader >= 0) {
+			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+		} else {
+			teamName = "Uncontrolled";
+		}
 
 		string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
