@@ -9,6 +9,9 @@ enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
 
 class CCollisionVolume {
 	public:
+		CR_DECLARE(CCollisionVolume)
+
+		CCollisionVolume() {}
 		CCollisionVolume(const float3&, const float3&, int, int);
 		~CCollisionVolume();
 
