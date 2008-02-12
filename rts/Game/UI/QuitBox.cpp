@@ -149,7 +149,7 @@ void CQuitBox::Draw(void)
 		if (gs->Team(actualTeam)->leader >= 0)
 			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
 		else
-			teamName = "undefined";
+			teamName = "uncontrolled";
 
 		string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
