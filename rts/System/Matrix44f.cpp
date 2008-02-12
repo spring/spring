@@ -209,3 +209,52 @@ void CMatrix44f::Rotate(float rad, float3& axis)
 		m[a*4 + 2] = vnew.z;
 	}
 }
+
+// note: assumes this matrix only
+// does translation and rotation
+CMatrix44f& CMatrix44f::InvertInPlace()
+{
+	// transpose the rotation
+	float tmp = 0.0f;
+	tmp = m[1]; m[1] = m[4]; m[4] = tmp;
+	tmp = m[2]; m[2] = m[8]; m[8] = tmp;
+	tmp = m[6]; m[6] = m[9]; m[9] = tmp;
+
+	// get the inverse translation
+	float3 t(-m[12], -m[13], -m[14]);
+
+	// do the actual inversion
+	m[12] = t.x * m[0] + t.y * m[4] + t.z * m[ 8];
+	m[13] = t.x * m[1] + t.y * m[5] + t.z * m[ 9];
+	m[14] = t.x * m[2] + t.y * m[6] + t.z * m[10];
+
+	return *this;
+}
+
+// note: assumes this matrix only
+// does translation and rotation;
+// m.Mul(m.Invert()) is identity
+CMatrix44f CMatrix44f::Invert() const
+{
+	CMatrix44f mInv;
+
+	// copy m
+	mInv[0] = m[0];  mInv[4] = m[4];  mInv[ 8] = m[ 8];  mInv[12] = m[12];
+	mInv[1] = m[1];  mInv[5] = m[5];  mInv[ 9] = m[ 9];  mInv[13] = m[13];
+	mInv[2] = m[2];  mInv[6] = m[6];  mInv[10] = m[10];  mInv[14] = m[14];
+
+	// transpose the rotation
+	mInv[1] = m[4]; mInv[4] = m[1];
+	mInv[2] = m[8]; mInv[8] = m[2];
+	mInv[6] = m[9]; mInv[9] = m[6];
+
+	// get the inverse translation
+	float3 t(-m[12], -m[13], -m[14]);
+
+	// do the actual inversion
+	mInv[12] = t.x * mInv[0] + t.y * mInv[4] + t.z * mInv[ 8];
+	mInv[13] = t.x * mInv[1] + t.y * mInv[5] + t.z * mInv[ 9];
+	mInv[14] = t.x * mInv[2] + t.y * mInv[6] + t.z * mInv[10];
+
+	return mInv;
+}

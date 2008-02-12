@@ -5,8 +5,10 @@
 #include <iostream>
 #include <locale>
 #include <cctype>
+
 #include "UnitDef.h"
 #include "UnitImage.h"
+
 #include "FileSystem/FileHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -18,6 +20,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/ModInfo.h"
@@ -62,7 +65,8 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
 
-	unsigned int id = 1;  // Start at unitdef id 1
+	// start at unitdef id 1
+	unsigned int id = 1;
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string unitName = unitDefNames[a];
@@ -88,6 +92,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
 		unitDefs[id].unitImage  = 0;
+		unitDefs[id].collisionVolume = 0;
 		unitDefs[id].techLevel  = -1;
 		unitDefs[id].decoyDef   = NULL;
 		unitID[unitName] = id;
@@ -107,18 +112,15 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	numUnitDefs = (id - 1);
 
 	CleanBuildOptions();
-
 	FindCommanders();
-
 	ProcessDecoys();
-
 	AssignTechLevels();
 }
 
 
 CUnitDefHandler::~CUnitDefHandler(void)
 {
-	// delete any eventual yeardmaps
+	// delete any eventual yardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
 		for (int u = 0; u < 4; u++)
 			delete[] unitDefs[i].yardmaps[u];
@@ -128,6 +130,8 @@ CUnitDefHandler::~CUnitDefHandler(void)
 			delete unitDefs[i].unitImage;
 			unitDefs[i].unitImage = 0;
 		}
+
+		delete unitDefs[i].collisionVolume;
 	}
 	delete[] unitDefs;
 	delete weaponDefHandler;
@@ -210,6 +214,7 @@ void CUnitDefHandler::FindCommanders()
 }
 
 
+
 void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitName, int id)
 {
 	UnitDef& ud = unitDefs[id];
@@ -218,6 +223,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	GetUnitImage(&unitDefs[id], udTable.GetString("buildPic", ""));
 
 	ud.humanName = udTable.GetString("name", "");
+
 	if (ud.humanName.empty()) {
 		const string errmsg = "missing 'name' parameter for the" + unitName + " unitdef";
 		throw content_error(errmsg);
@@ -708,6 +714,17 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	} else {
 		ud.useCSOffset = false;
 	}
+
+
+	// note: CUnitLoader::LoadUnit() adjusts the scales to
+	// unit->model->radius if none are given in the unitdef
+	// file for backward-compatibility, otherwise these take
+	// precedence over the old sphere tags and unit->radius
+	// (for unit <--> projectile interactions)
+	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
+	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
+	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
+
 
 	ud.seismicRadius    = udTable.GetInt("seismicDistance", 0);
 	ud.seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);

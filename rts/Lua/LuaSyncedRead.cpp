@@ -1950,7 +1950,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	if ((args < 4) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to GetUnitsInCylinder()");
+		luaL_error(L, "Incorrect arguments to GetUnitsInSphere()");
 	}
 	const float x = (float)lua_tonumber(L, 1);
 	const float y = (float)lua_tonumber(L, 2);
