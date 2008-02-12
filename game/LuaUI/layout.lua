@@ -116,6 +116,7 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
   if (xIcons > 2) then
     local color
     if (commands[1].id < 0) then color = GreenStr else color = RedStr end
+    local activePage = activePage or 0
     local pageNum = '' .. (activePage + 1) .. ''
     PageNumCmd.name = color .. '   ' .. pageNum .. '   '
     table.insert(customCmds, PageNumCmd)
