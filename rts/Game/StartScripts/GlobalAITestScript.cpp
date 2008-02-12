@@ -43,7 +43,6 @@ void CGlobalAITestScript::Update(void)
 			TdfParser p("gamedata/sidedata.tdf");
 			string s0 = p.SGetValueDef("armcom", "side0\\commander");
 			string s1 = p.SGetValueDef("corcom", "side1\\commander");
-			/// string s1 = p.SGetValueDef("armcom", "side0\\commander");
 
 			TdfParser p2;
 			CReadMap::OpenTDF(stupidGlobalMapname, p2);
