@@ -207,13 +207,12 @@ HRESULT CAVIGenerator::InitAVICompressionEngine(){
 	memset(&cv,0,sizeof(COMPVARS));
 	cv.cbSize=sizeof(COMPVARS);
 	cv.dwFlags=ICMF_COMPVARS_VALID;
-	cv.fccHandler=mmioFOURCC('f','f','d','s');//default video codec
+	cv.fccHandler=mmioFOURCC('x','v','i','d');//default video codec
 	cv.lQ=ICQUALITY_DEFAULT;
 
 
-	HWND hWnd = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
 	//Set the compression, prompting dialog if necessary
-	if (!ICCompressorChoose_ptr(hWnd, ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME, &bitmapInfo, NULL, &cv, NULL)){
+	if (!ICCompressorChoose_ptr(NULL, ICMF_CHOOSE_DATARATE | ICMF_CHOOSE_KEYFRAME, &bitmapInfo, NULL, &cv, NULL)){
 		return S_FALSE;
 	}
 
@@ -341,19 +340,22 @@ bool CAVIGenerator::InitEngine(){
 		return false;
 	}
 
-	HRESULT hr = InitAVICompressionEngine();
-	if(hr != AVIERR_OK){
-		quitAVIgen = true;
-		return false;
-	}
-
 	for(int i=0; i<10; i++){
 		unsigned char* tmpBuf = SAFE_NEW unsigned char[bitmapInfo.biSizeImage];
 		freeDataPointers.push_back(tmpBuf);
 	}
 
+	HWND mainWindow = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
+	if(fullscreen){
+		ShowWindow(mainWindow, SW_SHOWMINNOACTIVE);
+	}
+	boost::mutex::scoped_lock lock(AVIMutex);
 	AVIThread = SAFE_NEW boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
-	return true;
+	AVICondition.wait(lock);  //Wait until InitAVICompressionEngine() completes.
+	if(fullscreen){
+		ShowWindow(mainWindow, SW_RESTORE);
+	}
+	return !quitAVIgen;
 }
 
 
@@ -403,6 +405,11 @@ void CAVIGenerator::readOpenglPixelDataThreaded(){
 
 void CAVIGenerator::AVIGeneratorThreadProc(){
 
+	//Run init from the encoding thread because custom controls displayed by codecs
+	//sends window messages to the thread it started from, thus deadlocking if
+	//sending to the main thread whilst it is blocking on readOpenglPixelDataThreaded().
+	quitAVIgen = InitAVICompressionEngine() != AVIERR_OK;
+	AVICondition.notify_all();
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 	unsigned char* localWriteBuf = 0;
 
@@ -426,6 +433,16 @@ void CAVIGenerator::AVIGeneratorThreadProc(){
 		}
 		if(AddFrame(localWriteBuf)){
 			quitAVIgen = true;
+		}
+		MSG msg;
+		//Handle all messages the codec sends.
+		while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)){
+			if(GetMessage(&msg, NULL, 0, 0) < 0){
+				quitAVIgen = true;
+				break;
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
 	}
 	delete [] localWriteBuf;
