@@ -5,9 +5,9 @@
 
 #include "QuadField.h"
 
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
-#include "Feature.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
 

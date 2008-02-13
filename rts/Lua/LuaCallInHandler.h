@@ -16,7 +16,7 @@ using std::map;
 
 #include "LuaHandle.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 
 
 class CUnit;

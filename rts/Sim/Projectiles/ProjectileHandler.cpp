@@ -18,7 +18,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/Textures/TextureHandler.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"

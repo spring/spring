@@ -14,7 +14,7 @@
 #include "BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Lua/LuaCallInHandler.h"
 
 #include "mmgr.h"

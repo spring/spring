@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "GeoThermSmokeProjectile.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "mmgr.h"
 

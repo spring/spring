@@ -2,7 +2,7 @@
  *  @brief Defines STL like container wrapper for storing CUnit pointers.
  *  @author Tobi Vollebregt
  *
- *  This file has a strong resemblence to Sim/Misc/FeatureSet.h, if you find a
+ *  This file has a strong resemblence to Sim/Features/FeatureSet.h, if you find a
  *  bug in this one don't forget to update the other too. Or refactor them both
  *  using one set of template code.
  */

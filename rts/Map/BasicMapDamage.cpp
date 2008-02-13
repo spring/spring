@@ -11,7 +11,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "LogOutput.h"
 #include "Sim/Path/PathManager.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"

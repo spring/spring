@@ -13,7 +13,7 @@
 #include "LaserProjectile.h"
 #include "FireBallProjectile.h"
 #include "Matrix44f.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "System/LogOutput.h"

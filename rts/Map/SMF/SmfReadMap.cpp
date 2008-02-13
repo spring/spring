@@ -8,7 +8,7 @@
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
 #include "LogOutput.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "myMath.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/Textures/Bitmap.h"

@@ -22,7 +22,7 @@
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "SelectedUnitsAI.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"

@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "LogOutput.h"

@@ -10,9 +10,9 @@
 #include "LuaFunctions.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Misc/FeatureHandler.h"
-#include "Sim/Misc/Feature.h"
-#include "Sim/Misc/FeatureDef.h"
+#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 
 extern "C"
