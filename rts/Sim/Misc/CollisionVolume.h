@@ -13,8 +13,9 @@ class CCollisionVolume {
 
 		CCollisionVolume() {}
 		CCollisionVolume(const float3&, const float3&, int, int);
-		~CCollisionVolume();
+		~CCollisionVolume() {}
 
+		void SetDefaultScale(const float);
 		bool Collision(const CMatrix44f&, const float3&) const;
 
 		int GetType() const { return volumeType; }

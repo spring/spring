@@ -300,40 +300,11 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->model = ud->LoadModel(side);
 	unit->SetRadius(unit->model->radius);
 
-
-
-	// initialize the unit's collision-volume
-	float3 axisScales(unit->model->radius, unit->model->radius, unit->model->radius);
-	float3 axisOffsets(0.0f, 0.0f, 0.0f);
-	int primAxis = COLVOL_AXIS_Z;
-	int volType = COLVOL_TYPE_ELLIPSOID;
-
-	if (ud->collisionVolumeType.size() > 0) {
-		axisScales = ud->collisionVolumeScales;
-		axisOffsets = ud->collisionVolumeOffsets;
-
-		// note: case-sensitivity?
-		if (ud->collisionVolumeType.find("Ell") != std::string::npos) {
-			volType = COLVOL_TYPE_ELLIPSOID;
-		}
-
-		if (ud->collisionVolumeType.find("Cyl") != std::string::npos) {
-			volType = COLVOL_TYPE_CYLINDER;
-
-			if (ud->collisionVolumeType.size() == 4) {
-				if (ud->collisionVolumeType[3] == 'X') { primAxis = COLVOL_AXIS_X; }
-				if (ud->collisionVolumeType[3] == 'Y') { primAxis = COLVOL_AXIS_Y; }
-				if (ud->collisionVolumeType[3] == 'Z') { primAxis = COLVOL_AXIS_Z; }
-			}
-		}
-
-		if (ud->collisionVolumeType.find("Box") != std::string::npos) {
-			volType = COLVOL_TYPE_BOX;
-		}
+	if (ud->collisionVolume->GetScale(COLVOL_AXIS_X) < 0.01f &&
+		ud->collisionVolume->GetScale(COLVOL_AXIS_Y) < 0.01f &&
+		ud->collisionVolume->GetScale(COLVOL_AXIS_Z) < 0.01f) {
+		ud->collisionVolume->SetDefaultScale(unit->model->radius);
 	}
-
-	// temporarily remove the const qualifier
-	((UnitDef*) ud)->collisionVolume = SAFE_NEW CCollisionVolume(axisScales, axisOffsets, primAxis, volType);
 
 
 
@@ -342,7 +313,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	else
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 
-	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name+".cob"), unit);
+	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
 
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
@@ -354,8 +325,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
 		if ((*i)->reloadTime > relMax)
 			relMax = (*i)->reloadTime;
-		if(dynamic_cast<CBeamLaser*>(*i))
-			relMax=150;
+		if (dynamic_cast<CBeamLaser*>(*i))
+			relMax = 150;
 	}
 	relMax *= 30;		// convert ticks to milliseconds
 
@@ -367,10 +338,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->cob->Call(COBFN_Create);
 	unit->cob->Call("SetMaxReloadTime", relMax);
 
-	unit->heading = facing*16*1024;
-	unit->frontdir=GetVectorFromHeading(unit->heading);
-	unit->updir=UpVector;
-	unit->rightdir=unit->frontdir.cross(unit->updir);
+	unit->heading = facing * 16 * 1024;
+	unit->frontdir = GetVectorFromHeading(unit->heading);
+	unit->updir = UpVector;
+	unit->rightdir = unit->frontdir.cross(unit->updir);
 
 	unit->yardMap = ud->yardmaps[facing];
 
