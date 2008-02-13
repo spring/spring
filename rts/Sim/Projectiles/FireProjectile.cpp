@@ -4,7 +4,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "creg/STL_List.h"

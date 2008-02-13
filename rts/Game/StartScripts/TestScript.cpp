@@ -9,7 +9,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "TdfParser.h"
 #include "Game/Team.h"
 #include "Game/SelectedUnits.h"

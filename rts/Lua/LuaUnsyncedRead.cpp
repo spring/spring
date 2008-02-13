@@ -32,7 +32,7 @@ using namespace std;
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"

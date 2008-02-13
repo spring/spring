@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Lua/LuaCallInHandler.h"
 #include "GL/IFramebuffer.h"
 #include "mmgr.h"

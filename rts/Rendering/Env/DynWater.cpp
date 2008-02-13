@@ -11,7 +11,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Misc/FeatureHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
 #include "Rendering/ShadowHandler.h"

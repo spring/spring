@@ -2,7 +2,7 @@
 #include "GroundMoveMath.h"
 #include "Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
-#include "Sim/Misc/Feature.h"
+#include "Sim/Features/Feature.h"
 
 CR_BIND_DERIVED(CGroundMoveMath, CMoveMath, );
 
