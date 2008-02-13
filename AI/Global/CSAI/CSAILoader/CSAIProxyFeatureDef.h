@@ -29,7 +29,7 @@ using namespace System;
 using namespace System::Collections;
 using namespace System::Runtime::InteropServices;    
 
-#include "Sim/Misc/FeatureDef.h"
+#include "Sim/Features/FeatureDef.h"
 
 #include "AbicFeatureDefWrapper.h"
 

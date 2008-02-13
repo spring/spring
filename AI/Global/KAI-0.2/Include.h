@@ -36,7 +36,7 @@ static inline void itoa(int i, char* buf, int size) {
 // Spring Engine
 #include "./Sim/Units/UnitDef.h"				// Unit Definitions
 #include "Sim/Units/CommandAI/CommandQueue.h"	// Unit Command Queues
-#include "./Sim/Misc/FeatureDef.h"				// Feature Definitions
+#include "./Sim/Features/FeatureDef.h"			// Feature Definitions
 #include "./Sim/MoveTypes/MoveInfo.h"			// Types of Movement units can have
 #include "./Sim/Weapons/WeaponDefHandler.h"		// Weapon Definitions
 

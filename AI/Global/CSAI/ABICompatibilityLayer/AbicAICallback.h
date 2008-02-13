@@ -18,7 +18,7 @@
 	#include "ExternalAI/IGlobalAICallback.h"
 	#include "ExternalAI/IAICallback.h"
 	#include "Sim/Units/UnitDef.h"
-	#include "Sim/Misc/FeatureDef.h"
+	#include "Sim/Features/FeatureDef.h"
 	#include "Sim/MoveTypes/MoveInfo.h" // for MoveData struct
 #endif
 
