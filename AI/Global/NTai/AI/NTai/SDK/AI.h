@@ -32,7 +32,7 @@ typedef unsigned short ushort;
 #include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
 #include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Misc/FeatureDef.h" // Needed for FeatureDef
+#include "Sim/Features/FeatureDef.h" // Needed for FeatureDef
 
 
 /*#include "creg.h" //CREG
