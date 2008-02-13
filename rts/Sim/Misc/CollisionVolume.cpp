@@ -30,16 +30,16 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 	axisOffsets[COLVOL_AXIS_Z] = volOffsets.z;
 
 	// get the half-axis lengths (measured from volume center)
-	const float xScale = axisScales[COLVOL_AXIS_X] * 0.5f;
-	const float yScale = axisScales[COLVOL_AXIS_Y] * 0.5f;
-	const float zScale = axisScales[COLVOL_AXIS_Z] * 0.5f;
+	const float xHScale = axisScales[COLVOL_AXIS_X] * 0.5f;
+	const float yHScale = axisScales[COLVOL_AXIS_Y] * 0.5f;
+	const float zHScale = axisScales[COLVOL_AXIS_Z] * 0.5f;
 
 	// note: primaryAxis is only relevant for cylinders
 	volumeType = volType;
 	primaryAxis = primAxis;
 	spherical = ((volType == COLVOL_TYPE_ELLIPSOID) &&
-				 (fabsf(xScale - yScale) < 0.01f) &&
-				 (fabsf(yScale - zScale) < 0.01f));
+				 (fabsf(xHScale - yHScale) < 0.01f) &&
+				 (fabsf(yHScale - zHScale) < 0.01f));
 
 	switch (primAxis) {
 		case COLVOL_AXIS_X: {
@@ -62,7 +62,7 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 	switch (volType) {
 		case COLVOL_TYPE_BOX: {
 			// would be an over-estimation for cylinders
-			volumeBoundingRadius = xScale * xScale + yScale * yScale + zScale * zScale;
+			volumeBoundingRadius = xHScale * xHScale + yHScale * yHScale + zHScale * zHScale;
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			const float primAxisScale = axisScales[primAxis        ] * 0.5f;
@@ -75,16 +75,22 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 		case COLVOL_TYPE_ELLIPSOID: {
 			if (spherical) {
 				// max(x, y, z) would suffice here too
-				volumeBoundingRadius = xScale;
+				volumeBoundingRadius = xHScale;
 			} else {
-				volumeBoundingRadius = std::max(xScale, std::max(yScale, zScale));
+				volumeBoundingRadius = std::max(xHScale, std::max(yHScale, zHScale));
 			}
 		} break;
 	}
 }
 
-CCollisionVolume::~CCollisionVolume()
+void CCollisionVolume::SetDefaultScale(const float s)
 {
+	axisScales[COLVOL_AXIS_X] = s;
+	axisScales[COLVOL_AXIS_Y] = s;
+	axisScales[COLVOL_AXIS_Z] = s;
+
+	spherical = true;
+	volumeBoundingRadius = s;
 }
 
 
@@ -102,9 +108,9 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& pos) const
 	bool hit = false;
 
 	// get the half-axis lengths (measured from volume center)
-	const float xScale = (axisScales[COLVOL_AXIS_X] * 0.5f);
-	const float yScale = (axisScales[COLVOL_AXIS_Y] * 0.5f);
-	const float zScale = (axisScales[COLVOL_AXIS_Z] * 0.5f);
+	const float xHScale = (axisScales[COLVOL_AXIS_X] * 0.5f);
+	const float yHScale = (axisScales[COLVOL_AXIS_Y] * 0.5f);
+	const float zHScale = (axisScales[COLVOL_AXIS_Z] * 0.5f);
 
 	// NOTE: should be 1.0f for mathematical correctness of the
 	// tests, but suffers too much loss of precision at Spring's
@@ -114,37 +120,37 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& pos) const
 
 	switch (volumeType) {
 		case COLVOL_TYPE_ELLIPSOID: {
-			const float f1 = (iPos.x * iPos.x) / (xScale * xScale);
-			const float f2 = (iPos.y * iPos.y) / (yScale * yScale);
-			const float f3 = (iPos.z * iPos.z) / (zScale * zScale);
+			const float f1 = (iPos.x * iPos.x) / (xHScale * xHScale);
+			const float f2 = (iPos.y * iPos.y) / (yHScale * yHScale);
+			const float f3 = (iPos.z * iPos.z) / (zHScale * zHScale);
 			hit = ((f1 + f2 + f3) <= maxRatio);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			switch (primaryAxis) {
 				case COLVOL_AXIS_X: {
-					const bool xPass = (iPos.x > -xScale && iPos.x < xScale);
-					const float yRat = (iPos.y * iPos.y) / (yScale * yScale);
-					const float zRat = (iPos.z * iPos.z) / (zScale * zScale);
+					const bool xPass = (iPos.x > -xHScale && iPos.x < xHScale);
+					const float yRat = (iPos.y * iPos.y) / (yHScale * yHScale);
+					const float zRat = (iPos.z * iPos.z) / (zHScale * zHScale);
 					hit = (xPass && (yRat + zRat <= maxRatio));
 				} break;
 				case COLVOL_AXIS_Y: {
-					const bool yPass = (iPos.y > -yScale && iPos.y < yScale);
-					const float xRat = (iPos.x * iPos.x) / (xScale * xScale);
-					const float zRat = (iPos.z * iPos.z) / (zScale * zScale);
+					const bool yPass = (iPos.y > -yHScale && iPos.y < yHScale);
+					const float xRat = (iPos.x * iPos.x) / (xHScale * xHScale);
+					const float zRat = (iPos.z * iPos.z) / (zHScale * zHScale);
 					hit = (yPass && (xRat + zRat <= maxRatio));
 				} break;
 				case COLVOL_AXIS_Z: {
-					const bool zPass = (iPos.z > -zScale && iPos.z < zScale);
-					const float xRat = (iPos.x * iPos.x) / (xScale * xScale);
-					const float yRat = (iPos.y * iPos.y) / (yScale * yScale);
+					const bool zPass = (iPos.z > -zHScale && iPos.z < zHScale);
+					const float xRat = (iPos.x * iPos.x) / (xHScale * xHScale);
+					const float yRat = (iPos.y * iPos.y) / (yHScale * yHScale);
 					hit = (zPass && (xRat + yRat <= maxRatio));
 				} break;
 			}
 		} break;
 		case COLVOL_TYPE_BOX: {
-			const bool b1 = (iPos.x > -xScale && iPos.x < xScale);
-			const bool b2 = (iPos.y > -yScale && iPos.y < yScale);
-			const bool b3 = (iPos.z > -zScale && iPos.z < zScale);
+			const bool b1 = (iPos.x > -xHScale && iPos.x < xHScale);
+			const bool b2 = (iPos.y > -yHScale && iPos.y < yHScale);
+			const bool b3 = (iPos.z > -zHScale && iPos.z < zHScale);
 			hit = (b1 && b2 && b3);
 		} break;
 	}
