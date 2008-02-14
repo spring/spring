@@ -6,6 +6,7 @@
 #define DRAWTYPE_NONE -1
 
 struct S3DOModel;
+class CCollisionVolume;
 
 struct FeatureDef
 {
@@ -19,6 +20,7 @@ struct FeatureDef
 		xsize(0), ysize(0), reclaimTime(0) {}
 
 	S3DOModel* LoadModel(int team) const;
+	CCollisionVolume* collisionVolume;
 
 	std::string myName;
 	std::string description;
@@ -36,6 +38,10 @@ struct FeatureDef
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
 	bool useCSOffset;
+
+	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
+	float3 collisionVolumeScales;		// the collision volume's full axis lengths
+	float3 collisionVolumeOffsets;		// relative to the feature's center position
 
 	bool upright;
 	int drawType;

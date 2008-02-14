@@ -1,4 +1,5 @@
-#include "Sim/Units/Unit.h"
+#include <iostream>
+
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
@@ -17,8 +18,33 @@ CR_REG_METADATA(CCollisionVolume, (
 ));
 
 
-CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOffsets, int primAxis, int volType)
+CCollisionVolume::CCollisionVolume(const std::string& volTypeStr, const float3& volScales, const float3& volOffsets)
 {
+	// note: primaryAxis is only relevant for cylinders
+	primaryAxis = COLVOL_AXIS_Z;
+	volumeType = COLVOL_TYPE_ELLIPSOID;
+
+	if (volTypeStr.size() > 0) {
+		// note: case-sensitivity?
+		if (volTypeStr.find("Ell") != std::string::npos) {
+			volumeType = COLVOL_TYPE_ELLIPSOID;
+		}
+
+		if (volTypeStr.find("Cyl") != std::string::npos) {
+			volumeType = COLVOL_TYPE_CYLINDER;
+
+			if (volTypeStr.size() == 4) {
+				if (volTypeStr[3] == 'X') { primaryAxis = COLVOL_AXIS_X; }
+				if (volTypeStr[3] == 'Y') { primaryAxis = COLVOL_AXIS_Y; }
+				if (volTypeStr[3] == 'Z') { primaryAxis = COLVOL_AXIS_Z; }
+			}
+		}
+
+		if (volTypeStr.find("Box") != std::string::npos) {
+			volumeType = COLVOL_TYPE_BOX;
+		}
+	}
+
 	// set the full-axis lengths
 	axisScales[COLVOL_AXIS_X] = volScales.x;
 	axisScales[COLVOL_AXIS_Y] = volScales.y;
@@ -34,14 +60,11 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 	const float yHScale = axisScales[COLVOL_AXIS_Y] * 0.5f;
 	const float zHScale = axisScales[COLVOL_AXIS_Z] * 0.5f;
 
-	// note: primaryAxis is only relevant for cylinders
-	volumeType = volType;
-	primaryAxis = primAxis;
-	spherical = ((volType == COLVOL_TYPE_ELLIPSOID) &&
+	spherical = ((volumeType == COLVOL_TYPE_ELLIPSOID) &&
 				 (fabsf(xHScale - yHScale) < 0.01f) &&
 				 (fabsf(yHScale - zHScale) < 0.01f));
 
-	switch (primAxis) {
+	switch (primaryAxis) {
 		case COLVOL_AXIS_X: {
 			secondaryAxes[0] = COLVOL_AXIS_Y;
 			secondaryAxes[1] = COLVOL_AXIS_Z;
@@ -59,13 +82,13 @@ CCollisionVolume::CCollisionVolume(const float3& volScales, const float3& volOff
 	// set the radius of the minimum bounding sphere
 	// that encompasses this custom collision volume
 	// (for early-out testing)
-	switch (volType) {
+	switch (volumeType) {
 		case COLVOL_TYPE_BOX: {
 			// would be an over-estimation for cylinders
 			volumeBoundingRadius = xHScale * xHScale + yHScale * yHScale + zHScale * zHScale;
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
-			const float primAxisScale = axisScales[primAxis        ] * 0.5f;
+			const float primAxisScale = axisScales[primaryAxis     ] * 0.5f;
 			const float secAxisScaleA = axisScales[secondaryAxes[0]] * 0.5f;
 			const float secAxisScaleB = axisScales[secondaryAxes[1]] * 0.5f;
 			const float maxSecAxisScale = std::max(secAxisScaleA, secAxisScaleB);

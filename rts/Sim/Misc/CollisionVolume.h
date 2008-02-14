@@ -12,7 +12,7 @@ class CCollisionVolume {
 		CR_DECLARE(CCollisionVolume)
 
 		CCollisionVolume() {}
-		CCollisionVolume(const float3&, const float3&, int, int);
+		CCollisionVolume(const std::string&, const float3&, const float3&);
 		~CCollisionVolume() {}
 
 		void SetDefaultScale(const float);
