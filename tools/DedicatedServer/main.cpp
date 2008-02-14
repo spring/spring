@@ -1,6 +1,7 @@
 #include "Game/GameServer.h"
 #include "GameSetup.h"
 #include "System/Platform/FileSystem.h"
+#include "EventPrinter.h"
 
 #include <string>
 #include <iostream>
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
 
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
+	EventPrinter ep;
 	
 	if (argc > 1)
 	{
@@ -28,13 +30,13 @@ int main(int argc, char *argv[])
 		
 		// Create the server, it will run in a separate thread
 		server = new CGameServer(gameSetup->hostport, gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName, gameSetup);
+		server->log.Subscribe((ServerLog*)&ep);
 		
 		if (gameSetup->autohostport > 0)
 			server->AddAutohostInterface(8453, gameSetup->autohostport);
 		else
 		{
-			std::cout << "You need to specify an AutohostPort in the script" << std::endl;
-			return 1;
+			std::cout << "You should specify an AutohostPort in the script" << std::endl;
 		}
 
 		while (!server->HasFinished()) // check if still running

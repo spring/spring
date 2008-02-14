@@ -55,9 +55,10 @@ ENDIF (UNIX)
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(filesystem_files ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
 
-ADD_LIBRARY(server SHARED ${filesystem_files} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
+AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
+ADD_LIBRARY(server SHARED ${filesystem_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameVersion ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
 TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip boost_regex-mt)
 
-ADD_EXECUTABLE(dedicated main)
+ADD_EXECUTABLE(dedicated main EventPrinter)
 TARGET_LINK_LIBRARIES(dedicated server)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)

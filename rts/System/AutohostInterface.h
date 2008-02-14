@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "Game/Server/ServerLog.h"
+
 namespace netcode {
 class UDPHardlink;
 }
@@ -11,7 +13,7 @@ class UDPHardlink;
 @brief Class to communicate with an autohost (or similar) using UDP over loopback
 @author Karl-Robert Ernst
 */
-class AutohostInterface
+class AutohostInterface : public ServerLog
 {
 public:
 	typedef unsigned char uchar;
@@ -22,7 +24,7 @@ public:
 	@param remoteport the port of the autohost
 	*/
 	AutohostInterface(int localport, int remoteport);
-	~AutohostInterface();
+	virtual ~AutohostInterface();
 	
 	void SendStart() const;
 	void SendQuit() const;
@@ -34,6 +36,9 @@ public:
 	void SendPlayerReady(uchar playerNum, uchar readyState) const;
 	void SendPlayerChat(uchar playerNum, const std::string& msg) const;
 	void SendPlayerDefeated(uchar playerNum) const;
+	
+	virtual void Message(const std::string& message);
+	virtual void Warning(const std::string& message);
 	
 	/**
 	@brief Recieve a chat message from the autohost
