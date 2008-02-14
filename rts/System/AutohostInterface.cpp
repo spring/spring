@@ -21,6 +21,12 @@ enum EVENT
 	/// Game has ended ()
 	SERVER_GAMEOVER = 3,
 	
+	/// An information message from server (string message)
+	SERVER_MESSAGE = 4,
+	
+	/// Server gave out a warning (string warningmessage)
+	SERVER_WARNING = 5,
+	
 	/// Player has joined the game (uchar playernumber, string name)
 	PLAYER_JOINED = 10,
  
@@ -110,6 +116,26 @@ void AutohostInterface::SendPlayerDefeated(uchar playerNum) const
 {
 	uchar msg[2] = {PLAYER_READY, playerNum};
 	autohost->Send(msg, 2);
+}
+
+void AutohostInterface::Message(const std::string& message)
+{
+	unsigned msgsize = sizeof(uchar) + message.size();
+	uchar* msg = new uchar[msgsize];
+	msg[0] = SERVER_MESSAGE;
+	strncpy((char*)msg+1, message.c_str(), message.size());
+	autohost->Send(msg, msgsize);
+	delete[] msg;
+}
+
+void AutohostInterface::Warning(const std::string& message)
+{
+	unsigned msgsize = sizeof(uchar) + message.size();
+	uchar* msg = new uchar[msgsize];
+	msg[0] = SERVER_WARNING;
+	strncpy((char*)msg+1, message.c_str(), message.size());
+	autohost->Send(msg, msgsize);
+	delete[] msg;
 }
 
 std::string AutohostInterface::GetChatMessage() const
