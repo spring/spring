@@ -9,6 +9,8 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 
+#define TREE_RADIUS 20
+
 struct FeatureDef;
 class CUnit;
 struct DamageArray;

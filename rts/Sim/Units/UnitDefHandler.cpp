@@ -716,49 +716,14 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	}
 
 
-	// note: CUnitLoader::LoadUnit() adjusts the scales to
-	// unit->model->radius if none are given in the unitdef
-	// file for backward-compatibility, otherwise these take
-	// precedence over the old sphere tags and unit->radius
-	// (for unit <--> projectile interactions)
+	// these take precedence over the old sphere tags and
+	// unit->radius (for unit <--> projectile interactions)
 	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
 	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
 
-	// initialize the (per unitdef) collision-volume
-	float3 axisScales = ZeroVector;
-	float3 axisOffsets = ZeroVector;
-	int primAxis = COLVOL_AXIS_Z;
-	int volType = COLVOL_TYPE_ELLIPSOID;
-
-	if (ud.collisionVolumeType.size() > 0) {
-		axisScales = ud.collisionVolumeScales;
-		axisOffsets = ud.collisionVolumeOffsets;
-
-		// note: case-sensitivity?
-		if (ud.collisionVolumeType.find("Ell") != std::string::npos) {
-			volType = COLVOL_TYPE_ELLIPSOID;
-		}
-
-		if (ud.collisionVolumeType.find("Cyl") != std::string::npos) {
-			volType = COLVOL_TYPE_CYLINDER;
-
-			if (ud.collisionVolumeType.size() == 4) {
-				if (ud.collisionVolumeType[3] == 'X') { primAxis = COLVOL_AXIS_X; }
-				if (ud.collisionVolumeType[3] == 'Y') { primAxis = COLVOL_AXIS_Y; }
-				if (ud.collisionVolumeType[3] == 'Z') { primAxis = COLVOL_AXIS_Z; }
-			}
-		}
-
-		if (ud.collisionVolumeType.find("Box") != std::string::npos) {
-			volType = COLVOL_TYPE_BOX;
-		}
-	}
-
-	ud.collisionVolume = SAFE_NEW CCollisionVolume(axisScales, axisOffsets, primAxis, volType);
-
-
-
+	// initialize the (per-unitdef) collision-volume
+	ud.collisionVolume = SAFE_NEW CCollisionVolume(ud.collisionVolumeType, ud.collisionVolumeScales, ud.collisionVolumeOffsets);
 
 
 

@@ -14,6 +14,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/ModInfo.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
@@ -49,9 +50,6 @@ CR_REG_METADATA(CFeature, (
 				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
-
-
-#define TREE_RADIUS 20
 
 
 CFeature::CFeature()
@@ -163,11 +161,19 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
+
+		// CFeatureHandler left this volume's axis-scales uninitialized
+		if (def->collisionVolume->GetScale(COLVOL_AXIS_X) < 0.01f &&
+			def->collisionVolume->GetScale(COLVOL_AXIS_Y) < 0.01f &&
+			def->collisionVolume->GetScale(COLVOL_AXIS_Z) < 0.01f) {
+			def->collisionVolume->SetDefaultScale(model->radius);
+		}
 	}
 	else if (def->drawType == DRAWTYPE_TREE){
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
+		def->collisionVolume->SetDefaultScale(TREE_RADIUS);
 	}
 	else {
 		SetRadius(0.0f);

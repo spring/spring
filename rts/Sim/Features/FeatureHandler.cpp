@@ -21,6 +21,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/TimeProfiler.h"
@@ -126,15 +127,32 @@ CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 
 CFeatureHandler::~CFeatureHandler()
 {
-	for(CFeatureSet::iterator fi=activeFeatures.begin(); fi != activeFeatures.end(); ++fi)
+	for (CFeatureSet::iterator fi = activeFeatures.begin(); fi != activeFeatures.end(); ++fi) {
+		// unsavory, but better than a memleak
+		FeatureDef* fd = (FeatureDef*) (*fi)->def;
+		if (fd->collisionVolume) {
+			delete fd->collisionVolume;
+			fd->collisionVolume = 0;
+		}
+
 		delete *fi;
+	}
+
 	activeFeatures.clear();
 
-	while(!featureDefs.empty()){
-		std::map<std::string, const FeatureDef*>::iterator fi=featureDefs.begin();
+	while (!featureDefs.empty()) {
+		std::map<std::string, const FeatureDef*>::iterator fi = featureDefs.begin();
+
+		FeatureDef* fd = (FeatureDef*) fi->second;
+		if (fd->collisionVolume) {
+			delete fd->collisionVolume;
+			fd->collisionVolume = 0;
+		}
+
 		delete fi->second;
 		featureDefs.erase(fi);
 	}
+
 	delete treeDrawer;
 }
 
@@ -144,8 +162,8 @@ void CFeatureHandler::Serialize(creg::ISerializer *s)
 
 void CFeatureHandler::PostLoad()
 {
-	drawQuadsX=gs->mapx/DRAW_QUAD_SIZE;
-	drawQuadsY=gs->mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
+	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.clear();
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 
@@ -216,7 +234,18 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->collisionSphereOffset = fdTable.GetFloat3("collisionSphereOffset", ZeroVector);
 	fd->useCSOffset = (fd->collisionSphereOffset != ZeroVector);
 
- 	fd->upright = fdTable.GetBool("upright", false);
+
+	// these take precedence over the old sphere tags as well as
+	// feature->radius (for feature <--> projectile interactions)
+	fd->collisionVolumeType = fdTable.GetString("collisionVolumeType", "");
+	fd->collisionVolumeScales = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
+	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
+
+	// initialize the (per-featuredef) collision-volume
+	fd->collisionVolume = SAFE_NEW CCollisionVolume(fd->collisionVolumeType, fd->collisionVolumeScales, fd->collisionVolumeOffsets);
+
+
+	fd->upright = fdTable.GetBool("upright", false);
 
 	// our resolution is double TA's
 	fd->xsize = fdTable.GetInt("footprintX", 1) * 2;
@@ -284,6 +313,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->myName = name;
 			fd->description = "Tree";
 			fd->mass = 20;
+			// trees by default have spheres of fixed radius (TREE_RADIUS)
+			fd->collisionVolume = SAFE_NEW CCollisionVolume("", ZeroVector, ZeroVector);
 			AddFeatureDef(name, fd);
 		}
 		else if (name.find("geovent") != string::npos) {
@@ -293,7 +324,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->destructable = 0;
 			fd->reclaimable = false;
 			fd->geoThermal = true;
-			fd->drawType = DRAWTYPE_NONE;	//geos are drawn into the ground texture and emit smoke to be visible
+			// geos are drawn into the ground texture and emit smoke to be visible
+			fd->drawType = DRAWTYPE_NONE;
 			fd->modelType = 0;
 			fd->energy = 0;
 			fd->metal = 0;
@@ -303,6 +335,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->ysize = 0;
 			fd->myName = name;
 			fd->mass = 100000;
+			// geothermals have no collision volume at all
+			fd->collisionVolume = 0;
 			AddFeatureDef(name, fd);
 		}
 		else {

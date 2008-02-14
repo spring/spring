@@ -19,6 +19,7 @@
 #include "Map/Ground.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"
@@ -599,6 +600,7 @@ void CProjectileHandler::CheckUnitCol()
 
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
+
 			for (CUnit** ui = tempUnits; ui != endUnit; ++ui) {
 				CUnit* unit = *ui;
 
@@ -610,9 +612,9 @@ void CProjectileHandler::CheckUnitCol()
 
 				// pretend the projectile is a point-object
 				// when dealing with custom collision volumes
-				const float sqUnitRadius = unit->unitDef->collisionVolume->GetBoundingRadiusSq();
-				const float sqSeparation = (unit->midPos - p->pos).SqLength();
 				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
+				const float sqUnitRadius = vol->GetBoundingRadiusSq();
+				const float sqSeparation = (unit->midPos - p->pos).SqLength();
 
 				if (sqSeparation < sqUnitRadius) {
 					// early-out test failed, so the projectile has entered the minimum
@@ -626,46 +628,41 @@ void CProjectileHandler::CheckUnitCol()
 						m.Translate(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 
 						if (vol->Collision(m, p->pos)) {
-							p->Collision(*ui);
+							p->Collision(unit);
 							break;
 						}
 					} else {
 						// already done
-						p->Collision(*ui);
+						p->Collision(unit);
 						break;
 					}
 				}
 			}
 
-			// TODO: also tie collision volumes to features
 			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
 				for (CFeature** fi = tempFeatures; fi != endFeature; ++fi) {
-					if (!(*fi)->blocking)
+					CFeature* feature = *fi;
+					// geothermals do not have a collision volume
+					if (!feature->blocking || feature->def->geoThermal)
 						continue;
 
-					float ispeedf = 1.0f / speedf;
-					float3 normSpeed = p->speed * ispeedf;
-					float totalRadius = (*fi)->radius + p->radius;
-					float3 dif = (*fi)->midPos - p->pos;
-					float closeTime = dif.dot(normSpeed) / speedf;
+					const CCollisionVolume* vol = feature->def->collisionVolume;
+					const float sqFeatureRadius = vol->GetBoundingRadiusSq();
+					const float sqSeparation = (feature->midPos - p->pos).SqLength();
 
-					if (closeTime < 0)
-						closeTime = 0;
-					if (closeTime > 1)
-						closeTime = 1;
+					if (sqSeparation < sqFeatureRadius) {
+						if (!vol->IsSphere()) {
+							CMatrix44f m(feature->transMatrix);
+							m.Translate(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 
-					float3 closeVect = dif - (p->speed * closeTime);
-					if (dif.SqLength() < totalRadius * totalRadius) {
-						if ((*fi)->isMarkedOnBlockingMap) {
-							float3 closePos(p->pos + p->speed * closeTime);
-							int square = (int) max(0.0f, min((float) (gs->mapSquares - 1), closePos.x * 0.125f + int(closePos.z * 0.125f) * gs->mapx));
-
-							if (readmap->groundBlockingObjectMap[square] != (*fi))
-								continue;
+							if (vol->Collision(m, p->pos)) {
+								p->Collision(feature);
+								break;
+							}
+						} else {
+							p->Collision(feature);
+							break;
 						}
-
-						p->Collision(*fi);
-						break;
 					}
 				}
 			}

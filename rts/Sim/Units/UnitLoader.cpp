@@ -289,8 +289,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 			unit->moveType = mt;
 		}
 	} else {
-		unit->moveType=SAFE_NEW CMoveType(unit);
-		unit->upright=true;
+		unit->moveType = SAFE_NEW CMoveType(unit);
+		unit->upright = true;
 	}
 
 	unit->energyTickMake = ud->energyMake;
@@ -300,6 +300,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->model = ud->LoadModel(side);
 	unit->SetRadius(unit->model->radius);
 
+	// CUnitLoader left this volume's axis-scales uninitialized
 	if (ud->collisionVolume->GetScale(COLVOL_AXIS_X) < 0.01f &&
 		ud->collisionVolume->GetScale(COLVOL_AXIS_Y) < 0.01f &&
 		ud->collisionVolume->GetScale(COLVOL_AXIS_Z) < 0.01f) {
