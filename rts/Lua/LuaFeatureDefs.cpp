@@ -465,11 +465,13 @@ static bool InitParamMap()
 	ADD_INT("xsize", fd.xsize);
 	ADD_INT("ysize", fd.ysize);
 
+	/*
 	ADD_FLOAT("hitSphereScale",    fd.collisionSphereScale);
 	ADD_FLOAT("hitSphereOffsetX",  fd.collisionSphereOffset.x);
 	ADD_FLOAT("hitSphereOffsetY",  fd.collisionSphereOffset.y);
 	ADD_FLOAT("hitSphereOffsetZ",  fd.collisionSphereOffset.z);
 	ADD_BOOL("useHitSphereOffset", fd.useCSOffset);
+	*/
 
 	ADD_INT("drawType",     fd.drawType);
 	ADD_INT("modelType",    fd.modelType);

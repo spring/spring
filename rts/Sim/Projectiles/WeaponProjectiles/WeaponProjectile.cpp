@@ -94,7 +94,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
 		if(!weaponDef->visuals.modelName.empty()){
-			S3DOModel* model = modelParser->Load3DO(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
+			S3DOModel* model = modelParser->Load3DModel(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
 			if(model){
 				s3domodel=model;
 				if(s3domodel->rootobject3do)
@@ -352,7 +352,7 @@ void CWeaponProjectile::PostLoad()
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
 	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DO(
+		S3DOModel* model = modelParser->Load3DModel(
 				string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
 		if(model){
 			s3domodel = model;

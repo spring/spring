@@ -85,7 +85,7 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 	SetRadius(0.0f);
 
 	if ((weaponDef) && (!weaponDef->visuals.modelName.empty())) {
-		S3DOModel* model = modelParser->Load3DO(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
+		S3DOModel* model = modelParser->Load3DModel(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
 		if (model) {
 			SetRadius(model->radius);
 		}

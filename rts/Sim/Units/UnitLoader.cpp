@@ -297,6 +297,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	if (ud->tidalGenerator > 0)
 		unit->energyTickMake += ud->tidalGenerator * readmap->tidalStrength;
 
+
 	unit->model = ud->LoadModel(side);
 	unit->SetRadius(unit->model->radius);
 
@@ -304,7 +305,11 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	if (ud->collisionVolume->GetScale(COLVOL_AXIS_X) < 0.01f &&
 		ud->collisionVolume->GetScale(COLVOL_AXIS_Y) < 0.01f &&
 		ud->collisionVolume->GetScale(COLVOL_AXIS_Z) < 0.01f) {
-		ud->collisionVolume->SetDefaultScale(unit->model->radius);
+		// aircraft still get half-size spheres for coldet purposes
+		// if no custom volume is defined (unit->model->radius and
+		// unit->radius themselves are no longer altered)
+		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
+		ud->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 	}
 
 

@@ -35,9 +35,11 @@ struct FeatureDef
 
 	/// used to see if the object can be overrun
 	float mass;
+	/*
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
 	bool useCSOffset;
+	*/
 
 	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths
