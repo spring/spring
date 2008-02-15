@@ -138,10 +138,10 @@
     <qt>
       <used>false</used>
       <version>3</version>
-      <root>/usr/share/qt3</root>
+      <root>/usr/qt/3</root>
       <includestyle>3</includestyle>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
-      <qmake>/usr/bin/qmake-qt3</qmake>
+      <qmake>/usr/qt/3/bin/qmake</qmake>
       <designer>/usr/bin/designer</designer>
       <designerpluginpaths/>
     </qt>
