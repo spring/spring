@@ -703,18 +703,15 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
 	ud.levelGround = udTable.GetBool("levelGround", true);
 
+
 	// aircraft collision sizes default to half their visual size, to
 	// make them less likely to collide or get hit by nontracking weapons
+	/*
 	const float defScale = ud.canfly ? 0.5f : 1.0f;
 	ud.collisionSphereScale = udTable.GetFloat("collisionSphereScale", defScale);
-
 	ud.collisionSphereOffset = udTable.GetFloat3("collisionSphereOffset", ZeroVector);
-	if (ud.collisionSphereOffset != ZeroVector) {
-		ud.useCSOffset = true;
-	} else {
-		ud.useCSOffset = false;
-	}
-
+	ud.useCSOffset = (ud.collisionSphereOffset != ZeroVector);
+	*/
 
 	// these take precedence over the old sphere tags and
 	// unit->radius (for unit <--> projectile interactions)
@@ -1056,6 +1053,9 @@ UnitDef::~UnitDef()
 
 S3DOModel* UnitDef::LoadModel(int team) const
 {
+	return modelParser->Load3DModel(model.modelpath.c_str(), 1.0f, team);
+
+	/*
 	if (!useCSOffset) {
 		return modelParser->Load3DO(model.modelpath.c_str(),
 		                            collisionSphereScale, team);
@@ -1064,4 +1064,5 @@ S3DOModel* UnitDef::LoadModel(int team) const
 		                            collisionSphereScale, team,
 		                            collisionSphereOffset);
 	};
+	*/
 }

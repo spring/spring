@@ -185,9 +185,11 @@ struct UnitDef
 	float  flankingBonusMobilityAdd; // how much the ability of the flanking bonus direction to move builds up each frame
 
 	UnitModelDef model;
+	/*
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
 	bool useCSOffset;
+	*/
 
 	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths

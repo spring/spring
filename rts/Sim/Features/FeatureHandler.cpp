@@ -230,10 +230,12 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 		fd->modelname=string("objects3d/") + fd->modelname;
 	}
 
+
+	/*
 	fd->collisionSphereScale = fdTable.GetFloat("collisionSphereScale", 1.0f);
 	fd->collisionSphereOffset = fdTable.GetFloat3("collisionSphereOffset", ZeroVector);
 	fd->useCSOffset = (fd->collisionSphereOffset != ZeroVector);
-
+	*/
 
 	// these take precedence over the old sphere tags as well as
 	// feature->radius (for feature <--> projectile interactions)
@@ -694,6 +696,9 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 
 S3DOModel* FeatureDef::LoadModel(int team) const
 {
+	return modelParser->Load3DModel(modelname.c_str(), 1.0f, team);
+
+	/*
 	if (!useCSOffset) {
 		return modelParser->Load3DO(modelname.c_str(),
 		                            collisionSphereScale, team);
@@ -702,4 +707,5 @@ S3DOModel* FeatureDef::LoadModel(int team) const
 		                            collisionSphereScale, team,
 		                            collisionSphereOffset);
 	}
+	*/
 }

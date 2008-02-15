@@ -232,7 +232,9 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 
 	CreateLists(object);
 
-	model->radius = model->rootobject3do->radius * scale;		//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	// this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	// note: does not apply anymore, unit <--> projectile coldet no longer depends on model->radius
+	model->radius = model->rootobject3do->radius * scale;
 	model->height = FindHeight(model->rootobject3do,ZeroVector);
 //	logOutput.Print("%s has height %f",name,model->height);
 
@@ -254,6 +256,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 }
 
 
+/*
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& offsets)
 {
 	S3DOModel *model = C3DOParser::Load3DO(name, scale, team);
@@ -264,6 +267,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& of
 
 	return model;
 }
+*/
 
 
 void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)

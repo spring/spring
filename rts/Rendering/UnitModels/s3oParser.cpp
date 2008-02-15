@@ -97,7 +97,9 @@ S3DOModel* CS3OParser::LoadS3O(string name,float scale,int side)
 
 	CreateLists(object);
 
-	model->radius = header.radius*scale;		//this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	// this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
+	// note: does not apply anymore, unit <--> projectile coldet no longer depends on model->radius
+	model->radius = header.radius * scale;
 	model->height = header.height;
 	model->relMidPos.x=header.midx;
 	model->relMidPos.y=header.midy;

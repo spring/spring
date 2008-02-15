@@ -169,13 +169,14 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			def->collisionVolume->SetDefaultScale(model->radius);
 		}
 	}
-	else if (def->drawType == DRAWTYPE_TREE){
+	else if (def->drawType == DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
 		def->collisionVolume->SetDefaultScale(TREE_RADIUS);
 	}
 	else {
+		// geothermal
 		SetRadius(0.0f);
 		midPos = pos;
 	}
