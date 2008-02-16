@@ -123,14 +123,14 @@ CAVIGenerator::~CAVIGenerator(){
 		AVIThread = 0;
 	}
 
-	while(!freeDataPointers.empty()){
-		unsigned char* tmp = freeDataPointers.front();
-		freeDataPointers.pop_front();
+	while(!freeImageBuffers.empty()){
+		unsigned char* tmp = freeImageBuffers.front();
+		freeImageBuffers.pop_front();
 		delete [] tmp;
 	}
-	while(!dataPointers.empty()){
-		unsigned char* tmp = dataPointers.front();
-		dataPointers.pop_front();
+	while(!imageBuffers.empty()){
+		unsigned char* tmp = imageBuffers.front();
+		imageBuffers.pop_front();
 		delete [] tmp;
 	}
 
@@ -146,8 +146,8 @@ CAVIGenerator::~CAVIGenerator(){
 	assert(m_pAVIFile == NULL);
 	assert(m_pStream == NULL);
 	assert(m_pStreamCompressed == NULL);
-	assert(freeDataPointers.empty());
-	assert(dataPointers.empty());
+	assert(freeImageBuffers.empty());
+	assert(imageBuffers.empty());
 	assert(readBuf == NULL);
 }
 
@@ -342,7 +342,7 @@ bool CAVIGenerator::InitEngine(){
 
 	for(int i=0; i<10; i++){
 		unsigned char* tmpBuf = SAFE_NEW unsigned char[bitmapInfo.biSizeImage];
-		freeDataPointers.push_back(tmpBuf);
+		freeImageBuffers.push_back(tmpBuf);
 	}
 
 	HWND mainWindow = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
@@ -378,28 +378,29 @@ HRESULT CAVIGenerator::AddFrame(unsigned char* pixelData){
 }
 
 
-void CAVIGenerator::readOpenglPixelDataThreaded(){
+bool CAVIGenerator::readOpenglPixelDataThreaded(){
 
 	for(;;){
 		boost::mutex::scoped_lock lock(AVIMutex);
 		if(quitAVIgen){
-			return;
+			return false;
 		}
 		if(readBuf != 0){
-			dataPointers.push_back(readBuf);
+			imageBuffers.push_back(readBuf);
 			readBuf = 0;
 			AVICondition.notify_all();
 		}
-		if(freeDataPointers.empty()){
+		if(freeImageBuffers.empty()){
 			AVICondition.wait(lock);
 			continue;
 		}
-		readBuf = freeDataPointers.front();
-		freeDataPointers.pop_front();
+		readBuf = freeImageBuffers.front();
+		freeImageBuffers.pop_front();
 		break;
 	}
 
 	glReadPixels(0, 0, bitmapInfo.biWidth, bitmapInfo.biHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, readBuf);
+	return true;
 }
 
 
@@ -412,33 +413,41 @@ void CAVIGenerator::AVIGeneratorThreadProc(){
 	AVICondition.notify_all();
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 	unsigned char* localWriteBuf = 0;
+	bool encoderError = false;
 
 	for(;;){
 		{
 			boost::mutex::scoped_lock lock(AVIMutex);
+			if(encoderError){
+				logOutput.Print("The avi generator terminated unexpectedly!");
+				quitAVIgen = true;
+				//Do not let the main thread wait, as the encoder will not
+				//process and free the remaining content in imageBuffers.
+				AVICondition.notify_all();
+			}
 			if(quitAVIgen){
 				break;
 			}
 			if(localWriteBuf != 0){
-				freeDataPointers.push_back(localWriteBuf);
+				freeImageBuffers.push_back(localWriteBuf);
 				localWriteBuf = 0;
 				AVICondition.notify_all();
 			}
-			if(dataPointers.empty()){
+			if(imageBuffers.empty()){
 				AVICondition.wait(lock);
 				continue;
 			}
-			localWriteBuf = dataPointers.front();
-			dataPointers.pop_front();
+			localWriteBuf = imageBuffers.front();
+			imageBuffers.pop_front();
 		}
 		if(AddFrame(localWriteBuf)){
-			quitAVIgen = true;
+			encoderError = true;
 		}
 		MSG msg;
 		//Handle all messages the codec sends.
 		while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)){
 			if(GetMessage(&msg, NULL, 0, 0) < 0){
-				quitAVIgen = true;
+				encoderError = true;
 				break;
 			}
 			TranslateMessage(&msg);
