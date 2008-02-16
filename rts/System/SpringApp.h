@@ -122,7 +122,7 @@ extern bool fullscreen;
 /**
  * Win32 only: command line passed to WinMain() (not including exe filename)
  */
-static const char *win_lpCmdLine=0;
+extern char *win_lpCmdLine;
 #endif
 
 #endif
