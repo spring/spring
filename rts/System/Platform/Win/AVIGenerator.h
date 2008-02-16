@@ -25,7 +25,7 @@ public:
 	//Returns last error message
 	std::string GetLastErrorMessage() const	{return errorMsg;}
 
-	void readOpenglPixelDataThreaded();
+	bool readOpenglPixelDataThreaded();
 
 
 private:
@@ -48,8 +48,8 @@ private:
 	boost::condition AVICondition;
 
 
-	std::list<unsigned char*> freeDataPointers;
-	std::list<unsigned char*> dataPointers;
+	std::list<unsigned char*> freeImageBuffers;
+	std::list<unsigned char*> imageBuffers;
 
 	unsigned char* readBuf;
 

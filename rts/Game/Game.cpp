@@ -2358,7 +2358,11 @@ bool CGame::Draw()
 #ifndef NO_AVI
 	if(creatingVideo){
 		gu->lastFrameTime=1.0f/GAME_SPEED;
-		aviGenerator->readOpenglPixelDataThreaded();
+		if(!aviGenerator->readOpenglPixelDataThreaded()){
+			creatingVideo = false;
+			delete aviGenerator;
+			aviGenerator = 0;
+		}
 //		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
 	}
 #endif
