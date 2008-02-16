@@ -51,6 +51,7 @@ CGameController* activeController = 0;
 bool globalQuit = false;
 Uint8 *keys = 0;
 bool fullscreen = true;
+char *win_lpCmdLine = 0;
 
 /**
  * @brief xres default
@@ -315,9 +316,25 @@ bool SpringApp::SetSDLVideoMode ()
 	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+	int bitsPerPixel = configHandler.GetInt("BitsPerPixel", 0);
+	
+	if (bitsPerPixel == 32)
+	{
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
+	}
+	else
+	{
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+		// no alpha in 16bit mode
+
+        if (bitsPerPixel != 16 && bitsPerPixel != 0)
+           bitsPerPixel = 0; // it should be either 0, 16, or 32
+	}
 
 #ifdef __APPLE__
 	const int defaultDepthSize = 32;
@@ -331,7 +348,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	FSAA = MultisampleTest();
 
-	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 0, sdlflags);
+	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, bitsPerPixel, sdlflags);
 	if (!screen) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
@@ -388,6 +405,9 @@ bool SpringApp::SetSDLVideoMode ()
 	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 
+	int bits;
+	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
+	logOutput.Print("Video mode set to  %i x %i / %i bit", screenWidth, screenHeight, bits );
 	VSync.Init();
 
 	return true;
@@ -595,6 +615,8 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 	// If there are any options, they will start before the demo file name.
 
+   if (win_lpCmdLine == 0)
+   logOutput.Print("ERROR");
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
 	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.

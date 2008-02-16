@@ -101,7 +101,6 @@ int main( int argc, char *argv[]) // , char *envp[ ] <- not used
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
-	//setbuf(stdout, NULL); // causes crashes with commandline options
 	win_lpCmdLine = lpCmdLine;
 	return Run (__argc, __argv);
 }
