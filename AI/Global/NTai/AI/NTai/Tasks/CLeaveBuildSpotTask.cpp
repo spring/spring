@@ -10,7 +10,7 @@ namespace ntai {
 		if(utd == 0){
 			valid = false;
 		}
-		succeed = true;
+		succeed = valid;
 	}
 
 	void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
@@ -31,12 +31,14 @@ namespace ntai {
 
 	bool CLeaveBuildSpotTask::Init(){
 		if(!valid){
+			succeed = false;
 			return false;
 		}
 
 		if(utd->IsFactory()){
 			if(!utd->IsMobile()){
 				End();
+				succeed = false;
 				return false;
 			}
 		}
@@ -49,6 +51,7 @@ namespace ntai {
 
 		if(!G->Map->CheckFloat3(pos)){
 			End();
+			succeed = false;
 			return false;
 		}
 
@@ -99,6 +102,7 @@ namespace ntai {
 		if(utd->IsFactory()){
 			End();
 		}
+		succeed = rvalue;
 		return rvalue;
 	}
 
