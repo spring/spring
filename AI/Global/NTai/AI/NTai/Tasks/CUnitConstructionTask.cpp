@@ -61,10 +61,12 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 			if(pos==UpVector){
 				G->L.print("BuildPlacement returned UpVector or some other nasty position, a build location wasn't found!");
 				End();
+				succeed = false;
 				return;
 			} else if (G->cb->CanBuildAt(building->GetUnitDef(),pos,0)==false){
 				G->L.print("CUnitConstructionTask::RecieveMessage BuildPlacement returned a position that cant be built upon");
 				End();
+				succeed = false;
 				return;
 			}
 		}
@@ -100,6 +102,7 @@ void CUnitConstructionTask::RecieveMessage(CMessage &message){
 
 		if(G->OrderRouter->GiveOrder(tc)== false){
 			G->L.print("CUnitConstructionTask::RecieveMessage Failed Order G->OrderRouter->GiveOrder(tc)== false:: " + builder->GetUnitDef()->name);
+			succeed = false;
 			End();
 			return;
 		}else{
@@ -151,7 +154,7 @@ bool CUnitConstructionTask::Init(){
 				if(G->Pl->feasable(building,builder) == false){
 					
 					G->L.print("CUnitConstructionTask::Init  unfeasable " + building->GetUnitDef()->name);
-					
+					succeed = false;
 					End();
 					return false;
 				}else{
@@ -180,6 +183,7 @@ bool CUnitConstructionTask::Init(){
 	if(G->Pl->GetEnergyIncome() > emax){
 		G->L.print("CUnitConstructionTask::Init  emax " + building->GetUnitDef()->name);
 		End();
+		succeed = false;
 		return false;
 	}
 
@@ -194,6 +198,7 @@ bool CUnitConstructionTask::Init(){
 	if(G->Pl->GetEnergyIncome() < emin){
 		G->L.print("CUnitConstructionTask::Init  emin " + building->GetUnitDef()->name);
 		End();
+		succeed = false;
 		return false;
 	}
 
@@ -203,6 +208,7 @@ bool CUnitConstructionTask::Init(){
 	if(building->GetSoloBuildActive()){
 		NLOG("CUnitConstructionTask::Build  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
 		End();
+		succeed = false;
 		return false;
 	}
 
@@ -210,6 +216,7 @@ bool CUnitConstructionTask::Init(){
 	if(building->GetSingleBuildActive()){
 		G->L.print("CUnitConstructionTask::Build  singlebuild " + building->GetUnitDef()->name);
 		End();
+		succeed = false;
 		return true;
 	}
 
@@ -226,6 +233,7 @@ bool CUnitConstructionTask::Init(){
 		if(fk == false){
 			G->L.print("CUnitConstructionTask::Init  unfeasable " + building->GetUnitDef()->name);
 			End();
+			succeed = false;
 			return false;
 		}
 	}
@@ -235,6 +243,7 @@ bool CUnitConstructionTask::Init(){
 	if(G->Map->CheckFloat3(unitpos) == false){
 		NLOG("CUnitConstructionTask::Init  mark 2# bad float exit");
 		End();
+		succeed = false;
 		return false;
 	}
 
@@ -255,6 +264,7 @@ bool CUnitConstructionTask::Init(){
 							NLOG("CUnitConstructionTask::Init  exit on repair");
 							if(!G->Actions->Repair(unit,funits[i])){
 								End();
+								succeed = false;
 								return false;
 							}else{
 								End();
@@ -290,7 +300,8 @@ bool CUnitConstructionTask::Init(){
 							NLOG("CUnitConstructionTask::Init  exit on repair");
 							if(!G->Actions->Repair(unit,kj)){
 								End();
-								return true;
+								succeed = false;
+								return false;
 							}else{
 								End();
 								return true;
@@ -298,6 +309,7 @@ bool CUnitConstructionTask::Init(){
 						}else{
 							NLOG("CUnitConstructionTask::Init  return false");
 							End();
+							succeed = false;
 							return false;
 						}
 					}
