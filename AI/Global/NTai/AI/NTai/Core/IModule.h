@@ -25,6 +25,11 @@ namespace ntai {
 		void DestroyModule();
 
 		void operator()(){}
+
+		bool Succeeded(){
+			return true;
+		}
+
 		Global* G;
 	protected:
 		bool valid;

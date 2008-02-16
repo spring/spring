@@ -9,6 +9,7 @@ namespace ntai {
 		CUnit(){
 			G = 0;
 			valid=false;
+			idle_timer=0;
 		}
 		CUnit(Global* GL);
 		CUnit(Global* GL, int uid);
@@ -33,6 +34,8 @@ namespace ntai {
 		bool doingplan;
 		uint curplan;
 	protected:
+
+		int idle_timer;
 		bool under_construction;
 		list< boost::shared_ptr<IModule> > tasks;
 		list< boost::shared_ptr<IBehaviour> > behaviours;

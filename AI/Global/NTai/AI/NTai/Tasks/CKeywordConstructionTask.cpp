@@ -10,6 +10,7 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 	if(utd == 0){
 		valid = false;
 	}
+	succeed = true;
 }
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){
@@ -521,4 +522,8 @@ void CKeywordConstructionTask::End(){
 	//CMessage message(string("taskfinished"));
 	//FireEventListener(message);
 //	G->RemoveHandler(me);
+}
+
+bool CKeywordConstructionTask::Succeeded(){
+	return succeed;
 }
