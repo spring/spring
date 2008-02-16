@@ -10,6 +10,7 @@ namespace ntai {
 		if(utd == 0){
 			valid = false;
 		}
+		succeed = true;
 	}
 
 	void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
@@ -105,4 +106,9 @@ namespace ntai {
 		NLOG("CLeaveBuildSpotTask::End");
 		valid = false;
 	}
+
+	bool CLeaveBuildSpotTask::Succeeded(){
+		return succeed;
+	}
+
 }

@@ -6,7 +6,10 @@ namespace ntai {
 		void RecieveMessage(CMessage &message);
 		bool Init();
 		void End();
+
+		bool Succeeded();
 	protected:
+		bool succeed;
 		string mymessage;
 		int unit;
 		CUnitTypeData* builder;

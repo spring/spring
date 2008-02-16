@@ -9,4 +9,5 @@ public:
 	virtual bool IsValid()=0;
 	virtual bool SetValid(bool isvalid)=0;
 	virtual btype GetType()=0;
+	virtual bool Succeeded()=0;
 };

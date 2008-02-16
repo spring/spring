@@ -207,6 +207,7 @@ namespace ntai {
 				 // Spawn 4 commanders around the starting position
 				 CUnitTypeData* ud = G->UnitDefLoader->GetUnitTypeDataByName(G->ComName);
 				 if(ud != 0){
+
 					 float3 pos = G->Map->basepos;
 					 pos = G->cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000.0f, 0);
 					 
@@ -245,6 +246,7 @@ namespace ntai {
 
 			 } else if(G->Cached->cheating){
 				 G->Cached->cheating  = false;
+
 				 if(G->L.FirstInstance()){
 					 G->L.iprint("cheating is now disabled therefore NTai will no longer cheat");
 				 }

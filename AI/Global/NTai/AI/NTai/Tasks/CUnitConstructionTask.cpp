@@ -18,6 +18,8 @@ CUnitConstructionTask::CUnitConstructionTask(Global* GL, int unit,CUnitTypeData*
 		valid = false;
 	}
 
+	succeed = true;
+
 	G->L.print("CUnitConstructionTask::CUnitConstructionTask object created | params: building :: "+this->building->GetUnitDef()->name+" using builder::"+ this->builder->GetUnitDef()->name);
 }
 
@@ -312,4 +314,8 @@ bool CUnitConstructionTask::Init(){
 void CUnitConstructionTask::End(){
 	NLOG("CUnitConstructionTask::End");
 	valid = false;
+}
+
+bool CUnitConstructionTask::Succeeded(){
+	return succeed;
 }

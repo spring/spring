@@ -3,6 +3,7 @@
 CConsoleTask::CConsoleTask(Global* GL){
 	//
 	valid = false;
+	succeed = true;
 }
 
 CConsoleTask::CConsoleTask(Global* GL, string message){
@@ -23,4 +24,8 @@ bool CConsoleTask::Init(){
 	G->L.iprint(mymessage);
 	End();
 	return true;
+}
+
+bool CConsoleTask::Succeeded(){
+	return succeed;
 }

@@ -37,6 +37,7 @@ namespace ntai {
 		birth = G->GetCurrentFrame();
 		nolist=false;
 		under_construction = true;
+		idle_timer = 0;
 	}
 
 	CUnit::~CUnit(){
@@ -65,11 +66,25 @@ namespace ntai {
 			if(under_construction){
 				return;
 			}
+			if(idle_timer >0){
+				//
+				idle_timer--;
+				return;
+			}
 
-			if(EVERY_((GetAge()%16+17))){
+			if(EVERY_((GetAge()%32+17))){
 				if(!tasks.empty()){
-					if(tasks.front()->IsValid()==false){
+					IModule* t = tasks.front().get();
+					if(t->IsValid()==false){
+						
 						G->L.print("next task?");
+						
+						if(t->Succeeded()==false){
+							if(idle_timer == 0){
+								idle_timer = 64;
+								return;
+							}
+						}
 						tasks.erase(tasks.begin());
 						if(tasks.empty()==false){
 							boost::shared_ptr<IModule> t = tasks.front();
