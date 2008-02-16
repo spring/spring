@@ -20,7 +20,6 @@
 
 #define FRAME_HISTORY 16
 
-class CNet;
 class CScript;
 class CBaseWater;
 class CAVIGenerator;
