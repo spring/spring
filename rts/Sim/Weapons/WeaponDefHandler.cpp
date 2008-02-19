@@ -109,6 +109,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.vlaunch  = wdTable.GetBool("vlaunch",    false);
 	wd.selfprop = wdTable.GetBool("selfprop",   false);
 	wd.turret   = wdTable.GetBool("turret",     false);
+	wd.highTrajectory = wdTable.GetInt("highTrajectory", 2);;
 	wd.noSelfDamage = wdTable.GetBool("noSelfDamage", false);
 	wd.visuals.modelName = wdTable.GetString("model", "");
 	wd.visuals.smokeTrail = wdTable.GetBool("smokeTrail", false);
