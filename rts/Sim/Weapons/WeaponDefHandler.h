@@ -120,6 +120,7 @@ struct WeaponDef
 
 	bool selfExplode;
 	bool gravityAffected;
+	int highTrajectory;                         //Per-weapon high traj setting, 0=low, 1=high, 2=unit
 	float myGravity;
 	bool twophase;
 	bool guided;

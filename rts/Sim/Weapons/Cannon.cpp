@@ -48,6 +48,7 @@ CCannon::CCannon(CUnit* owner)
 void CCannon::Init(void)
 {
 	gravity = weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity);
+	highTrajectory = weaponDef->highTrajectory == 1;
 	if(highTrajectory){
 		maxPredict=projectileSpeed*2/-gravity;
 		minPredict=projectileSpeed*1.41f/-gravity;
@@ -205,7 +206,7 @@ void CCannon::Fire(void)
 
 void CCannon::SlowUpdate(void)
 {
-	if(owner->useHighTrajectory!=highTrajectory){
+	if(weaponDef->highTrajectory == 2 && owner->useHighTrajectory!=highTrajectory){
 		highTrajectory=owner->useHighTrajectory;
 		if(highTrajectory){
 			maxPredict=projectileSpeed*2/-gravity;

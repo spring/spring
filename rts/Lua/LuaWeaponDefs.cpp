@@ -464,6 +464,7 @@ static bool InitParamMap()
 	ADD_FLOAT("leadLimit", wd.leadLimit);
 	ADD_FLOAT("leadBonus", wd.leadBonus);
 	ADD_FLOAT("predictBoost", wd.predictBoost);
+	ADD_INT("highTrajectory", wd.highTrajectory);
 
 	ADD_BOOL("noSelfDamage", wd.noSelfDamage);
 	ADD_FLOAT("areaOfEffect", wd.areaOfEffect);
