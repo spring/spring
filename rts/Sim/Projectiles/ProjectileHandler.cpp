@@ -612,7 +612,9 @@ void CProjectileHandler::CheckUnitCol()
 
 				// pretend the projectile is a point-object
 				// when dealing with custom collision volumes
+				// TODO: replace by line-segment intersection
 				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
+
 				const float sqUnitRadius = vol->GetBoundingRadiusSq();
 				const float sqSeparation = (unit->midPos - p->pos).SqLength();
 
@@ -621,13 +623,7 @@ void CProjectileHandler::CheckUnitCol()
 					// bounding sphere of this unit's collision volume (not necessarily
 					// the actual volume itself)
 					if (!vol->IsSphere()) {
-						CMatrix44f m;
-						unit->GetTransformMatrix(m);
-						// if the volume is offset along any of its axes, add that
-						// translation so the projectile pos is transformed properly
-						m.Translate(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-
-						if (vol->Collision(m, p->pos)) {
+						if (vol->Collision(unit, p->pos)) {
 							p->Collision(unit);
 							break;
 						}
@@ -652,10 +648,7 @@ void CProjectileHandler::CheckUnitCol()
 
 					if (sqSeparation < sqFeatureRadius) {
 						if (!vol->IsSphere()) {
-							CMatrix44f m(feature->transMatrix);
-							m.Translate(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-
-							if (vol->Collision(m, p->pos)) {
+							if (vol->Collision(feature, p->pos)) {
 								p->Collision(feature);
 								break;
 							}
