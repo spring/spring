@@ -1407,7 +1407,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 				float3 dif = c->pos - owner->pos;
 				float dl = dif.Length();
 				float colDepth = fabs(owner->pos.x - xmove);
-				dif *= colDepth / dl;
+				dif *= dl != 0 ? colDepth / dl : 0;
 
 				// adjust our own position a
 				// bit so we have to turn less
@@ -1469,7 +1469,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 				float3 dif = c->pos - owner->pos;
 				float dl = dif.Length();
 				float colDepth = fabs(owner->pos.z - zmove);
-				dif *= colDepth / dl;
+				dif *= dl != 0 ? colDepth / dl : 0;
 
 				// adjust our own position a
 				// bit so we have to turn less
