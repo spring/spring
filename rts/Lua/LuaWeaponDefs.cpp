@@ -475,6 +475,7 @@ static bool InitParamMap()
 	ADD_FLOAT("collisionSize", wd.collisionSize);
 
 	ADD_INT("salvoSize",    wd.salvosize);
+	ADD_INT("projectiles",  wd.projectilespershot);
 	ADD_FLOAT("salvoDelay", wd.salvodelay);
 	ADD_FLOAT("reload",     wd.reload);
 	ADD_FLOAT("beamtime",   wd.beamtime);
