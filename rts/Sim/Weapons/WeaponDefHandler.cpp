@@ -327,6 +327,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.shieldPower            = shTable.GetFloat("power",            0.0f);
 		wd.shieldPowerRegen       = shTable.GetFloat("powerRegen",       0.0f);
 		wd.shieldPowerRegenEnergy = shTable.GetFloat("powerRegenEnergy", 0.0f);
+		wd.shieldRechargeDelay    = (int)(shTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 		wd.shieldStartingPower    = shTable.GetFloat("startingPower",    0.0f);
 		wd.shieldInterceptType    = shTable.GetInt("interceptType", 0);
 		wd.shieldBadColor         = shTable.GetFloat3("badColor",  shieldBadColor);
@@ -347,6 +348,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.shieldPower            = wdTable.GetFloat("shieldPower",            0.0f);
 		wd.shieldPowerRegen       = wdTable.GetFloat("shieldPowerRegen",       0.0f);
 		wd.shieldPowerRegenEnergy = wdTable.GetFloat("shieldPowerRegenEnergy", 0.0f);
+		wd.shieldRechargeDelay    = (int)(wdTable.GetFloat("shieldRechargeDelay", 0) * GAME_SPEED);
 		wd.shieldStartingPower    = wdTable.GetFloat("shieldStartingPower",    0.0f);
 		wd.shieldInterceptType    = wdTable.GetInt("shieldInterceptType", 0);
 		wd.shieldBadColor  = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);

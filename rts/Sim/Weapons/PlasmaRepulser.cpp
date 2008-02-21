@@ -24,6 +24,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(sqRadius),
 	CR_MEMBER(curPower),
 	CR_MEMBER(hitFrames),
+	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(wasDrawn),
 	CR_MEMBER(incoming),
@@ -45,6 +46,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 	sqRadius(0),
 	curPower(0),
 	hitFrames(0),
+	rechargeDelay(0),
 	isEnabled(true),
 	wasDrawn(true),
 	startShowingShield(true)
@@ -81,7 +83,10 @@ void CPlasmaRepulser::Update(void)
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const bool couldBeVisible = (weaponDef->visibleShield || (defHitFrames > 0));
+	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
+	rechargeDelay -= (rechargeDelay > 0) ? 1 : 0;
+	
 	if (startShowingShield) {
 		startShowingShield = false;
 		if (couldBeVisible) {
@@ -99,7 +104,7 @@ void CPlasmaRepulser::Update(void)
 		}
 	}
 
-	if (isEnabled && (curPower < weaponDef->shieldPower)) {
+	if (isEnabled && (curPower < weaponDef->shieldPower) && rechargeDelay <= 0) {
 		if (owner->UseEnergy(weaponDef->shieldPowerRegenEnergy * (1.0f / 30.0f))) {
 			curPower += weaponDef->shieldPowerRegen * (1.0f / 30.0f);
 		}
@@ -144,6 +149,7 @@ void CPlasmaRepulser::Update(void)
 			const float3 dif = (*pi)->pos-owner->pos;
 			if ((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]) {
 				if (gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
+					rechargeDelay = defRechargeDelay;
 					if (weaponDef->shieldRepulser) {
 					  // bounce the projectile
 						const int type = (*pi)->ShieldRepulse(this, weaponPos,

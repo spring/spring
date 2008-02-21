@@ -33,6 +33,7 @@ public:
 	float sqRadius;
 
 	int hitFrames;
+	int rechargeDelay;
 
 	bool isEnabled;
 	bool wasDrawn;

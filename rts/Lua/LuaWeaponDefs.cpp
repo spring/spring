@@ -555,6 +555,7 @@ static bool InitParamMap()
 	ADD_FLOAT("shieldPower",            wd.shieldPower);
 	ADD_FLOAT("shieldPowerRegen",       wd.shieldPowerRegen);
 	ADD_FLOAT("shieldPowerRegenEnergy", wd.shieldPowerRegenEnergy);
+	ADD_INT(  "shieldRechargeDelay",    wd.shieldRechargeDelay);
 	ADD_FLOAT("shieldGoodColorR",       wd.shieldGoodColor.x);
 	ADD_FLOAT("shieldGoodColorG",       wd.shieldGoodColor.y);
 	ADD_FLOAT("shieldGoodColorB",       wd.shieldGoodColor.z);
