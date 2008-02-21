@@ -2,7 +2,7 @@
 #define NET_H
 
 #include <string>
-#include <queue>
+#include <vector>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -388,11 +388,12 @@ private:
 	*/
 	boost::scoped_ptr<UDPListener> udplistener;
 	
+	connPtr localConnBuf;
+	
 	/**
 	@brief All active connections
 	*/
 	connVec connections;
-	std::queue< connPtr > waitingQueue;
 	
 	struct AssembleBuffer
 	{

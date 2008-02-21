@@ -133,11 +133,10 @@ CGameServer::~CGameServer()
 	}
 }
 
-void CGameServer::AddLocalClient(unsigned wantedNumber)
+void CGameServer::AddLocalClient()
 {
 	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->ServerInitLocalClient();
-	BindConnection(wantedNumber, true);
 }
 
 void CGameServer::AddAutohostInterface(const int usePort, const int remotePort)
@@ -379,7 +378,7 @@ void CGameServer::ServerReadNet()
 	{
 		RawPacket* packet = serverNet->GetData();
 		const unsigned char* inbuf = packet->data;
-
+		
 		if (packet->length >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
 		{
 			const unsigned wantedNumber = inbuf[1];
@@ -1022,6 +1021,11 @@ bool CGameServer::WaitsOnCon() const
 	return serverNet->Listening();
 }
 
+bool CGameServer::GameHasStarted() const
+{
+	return (gameStartTime>0);
+}
+
 void CGameServer::KickPlayer(const int playerNum)
 {
 	if (players[playerNum]) {
@@ -1037,7 +1041,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	}
 }
 
-void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
+void CGameServer::BindConnection(unsigned wantedNumber)
 {
 	unsigned hisNewNumber = wantedNumber;
 	if (demoReader) {
@@ -1057,6 +1061,8 @@ void CGameServer::BindConnection(unsigned wantedNumber, bool grantRights)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
 
+	// is this is the local player (== host) then he can kick, set options etc.
+	bool grantRights = setup ? (hisNewNumber == setup->myPlayerNum) : (wantedNumber == 0);
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
 	if (setup && hisNewNumber < (unsigned)setup->numPlayers/* needed for non-hosted demo playback */)
 	{

@@ -1,6 +1,6 @@
 #include "AutohostInterface.h"
 
-#include "Net/UDPHardlink.h" 
+#include "Net/UDPConnectedSocket.h" 
 
 namespace {
 
@@ -46,7 +46,7 @@ enum EVENT
 
 AutohostInterface::AutohostInterface(int localport, int remoteport)
 {
-	autohost = new netcode::UDPHardlink("127.0.0.1", remoteport, localport);
+	autohost = new netcode::UDPConnectedSocket("127.0.0.1", remoteport, localport);
 }
 
 AutohostInterface::~AutohostInterface()

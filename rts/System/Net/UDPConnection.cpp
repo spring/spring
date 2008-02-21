@@ -29,33 +29,13 @@ const unsigned UDPConnection::hsize = 9;
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
 {
-	addr=MyAddr;
+	addr = MyAddr;
 	Init();
 }
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
 {
-	LPHOSTENT lpHostEntry;
-
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-
-#ifdef _WIN32
-	unsigned long ul;
-	if((ul=inet_addr(address.c_str()))!=INADDR_NONE){
-		addr.sin_addr.S_un.S_addr = 	ul;
-	} else
-#else
-		if(inet_aton(address.c_str(),&(addr.sin_addr))==0)
-#endif
-		{
-			lpHostEntry = gethostbyname(address.c_str());
-			if (lpHostEntry == NULL)
-			{
-				throw network_error("Error looking up server from DNS: "+address);
-			}
-			addr.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
-		}
+	addr = mySocket->ResolveHost(address.c_str(), port);
 	Init();
 }
 

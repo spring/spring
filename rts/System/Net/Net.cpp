@@ -7,6 +7,7 @@
 #include "Net.h"
 
 #include <boost/format.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "Connection.h"
 #include "UDPConnection.h"
@@ -51,7 +52,7 @@ unsigned CNet::InitLocalClient(const unsigned wantedNumber)
 void CNet::ServerInitLocalClient()
 {
 	boost::shared_ptr<CLocalConnection> conn(new CLocalConnection());
-	waitingQueue.push(conn);
+	localConnBuf = conn;
 }
 
 void CNet::RegisterMessage(unsigned char id, int length)
@@ -68,7 +69,7 @@ bool CNet::Listening()
 {
 	if (udplistener)
 	{
-		return udplistener->GetWaitingForConnections();
+		return udplistener->Listen();
 	}
 	else
 	{
@@ -80,7 +81,7 @@ void CNet::Listening(const bool state)
 {
 	if (udplistener)
 	{
-		udplistener->SetWaitingForConnections(state);
+		udplistener->Listen(state);
 	}
 }
 
@@ -213,7 +214,7 @@ void CNet::Update()
 {
 	if (udplistener)
 	{
-		udplistener->Update(waitingQueue);
+		udplistener->Update();
 	}
 	
 	for (connVec::iterator i = connections.begin(); i < connections.end(); ++i)
@@ -263,14 +264,20 @@ unsigned CNet::InitNewConn(const connPtr& newClient, const unsigned wantedNumber
 
 bool CNet::HasIncomingConnection() const
 {
-	return !waitingQueue.empty();
+	return (localConnBuf || (udplistener && udplistener->HasIncomingConnections()));
 }
 
 RawPacket* CNet::GetData()
 {
-	if (HasIncomingConnection())
+	if (localConnBuf)
 	{
-		RawPacket* data = waitingQueue.front()->GetData();
+		RawPacket* data = localConnBuf->GetData();
+		return data;
+	}
+	else if (udplistener && udplistener->HasIncomingConnections())
+	{
+		boost::shared_ptr<UDPConnection> locked(udplistener->PreviewConnection());
+		RawPacket* data = locked->GetData();
 		return data;
 	}
 	else
@@ -281,10 +288,15 @@ RawPacket* CNet::GetData()
 
 unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)
 {
-	if (HasIncomingConnection())
+	if (localConnBuf)
 	{
-		unsigned buffer = InitNewConn(waitingQueue.front(), wantedNumber);
-		waitingQueue.pop();
+		unsigned buffer = InitNewConn(localConnBuf, wantedNumber);
+		localConnBuf.reset();
+		return buffer;
+	}
+	else if (udplistener && udplistener->HasIncomingConnections())
+	{
+		unsigned buffer = InitNewConn(udplistener->AcceptConnection(), wantedNumber);
 		return buffer;
 	}
 	else
@@ -295,9 +307,13 @@ unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)
 
 void CNet::RejectIncomingConnection()
 {
-	if (HasIncomingConnection())
+	if (localConnBuf)
 	{
-		waitingQueue.pop();
+		localConnBuf.reset();
+	}
+	else if (udplistener && udplistener->HasIncomingConnections())
+	{
+		udplistener->RejectConnection();
 	}
 	else
 	{

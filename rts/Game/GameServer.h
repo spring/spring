@@ -58,7 +58,7 @@ public:
 	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const CGameSetupData* const setup, const std::string& demoName = "");
 	~CGameServer();
 
-	void AddLocalClient(unsigned wantedNumber);
+	void AddLocalClient();
 
 	void AddAutohostInterface(const int usePort, const int remotePort);
 
@@ -78,6 +78,7 @@ public:
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	bool WaitsOnCon() const;
+	bool GameHasStarted() const;
 
 	void SetGamePausable(const bool arg);
 	
@@ -104,7 +105,7 @@ private:
 	*/
 	void KickPlayer(const int playerNum);
 
-	void BindConnection(unsigned wantedNumber, bool grantRights=false);
+	void BindConnection(unsigned wantedNumber);
 
 	void CheckForGameStart(bool forced=false);
 	void StartGame();
