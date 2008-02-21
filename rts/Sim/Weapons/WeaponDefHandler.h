@@ -192,6 +192,7 @@ struct WeaponDef
 	float shieldPowerRegen;						// how fast the power regenerates per second
 	float shieldPowerRegenEnergy;				// how much energy is needed to regenerate power per second
 	float shieldStartingPower;					// how much power the shield has when first created
+	int   shieldRechargeDelay;					// number of frames to delay recharging by after each hit
 	float3 shieldGoodColor;						// color when shield at full power
 	float3 shieldBadColor;						// color when shield is empty
 	float shieldAlpha;							// shield alpha value
