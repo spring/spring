@@ -18,7 +18,7 @@ namespace netcode {
 #ifdef _WIN32
 	typedef int socklen_t;
 	inline int close(SOCKET mySocket) { return closesocket(mySocket); };
-	numSockets = 0;
+	unsigned UDPSocket::numSockets = 0;
 #else
 	typedef struct hostent* LPHOSTENT;
 	typedef struct in_addr* LPIN_ADDR;
