@@ -52,6 +52,8 @@ public:
 	 */
 	void SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const;
 	
+	sockaddr_in ResolveHost(const char* const address, const unsigned port) const;
+	
 protected:
 	/// return the last errormessage from the OS
 	std::string GetErrorMsg() const;
@@ -60,6 +62,9 @@ protected:
 
 #ifndef _WIN32
 	typedef int SOCKET;
+#else
+	/// track number of open sockets ()
+	static unsigned numSockets;
 #endif
 
 	/// our descriptor

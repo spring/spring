@@ -1894,7 +1894,7 @@ bool CGame::Update()
 		return false;
 	}
 
-	if( gameServer && gameServer->WaitsOnCon() && !gameSetup)
+	if( gameServer && !gameServer->GameHasStarted() && !gameSetup)
 	{
 		bool allReady = true;
 		for(int a=0;a<gs->activePlayers;a++) {

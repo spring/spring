@@ -1,5 +1,5 @@
-#ifndef _UDPHARDLINK
-#define _UDPHARDLINK
+#ifndef _UDP_CONNECTED_SOCKET
+#define _UDP_CONNECTED_SOCKET
 
 #include "UDPSocket.h"
 
@@ -10,7 +10,7 @@ namespace netcode {
 This is simply a UDPSocket which has been connect()'ed to a specific address and will send / recieve only to / from this address
 @author Karl-Robert Ernst
 */
-class UDPHardlink : private UDPSocket
+class UDPConnectedSocket : private UDPSocket
 {
 public:
 	/**
@@ -21,7 +21,7 @@ public:
 	@param range if $port is blocked, try port +1, +2, ... +range
 	@throw network_error when hostname cannot be resolved
 	*/
-	UDPHardlink(const char* const address, const unsigned remoteport, const int port);
+	UDPConnectedSocket(const char* const address, const unsigned remoteport, const int port);
 
 	/**
 	@brief Send some data
@@ -44,3 +44,4 @@ private:
 #endif
 
 
+ 

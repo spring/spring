@@ -35,7 +35,7 @@ public:
 	@brief Run this from time to time
 	This does: recieve data from the socket and hand it to the associated UDPConnection, or open a new UDPConnection. It also Updates all of its connections
 	*/
-	void Update(std::queue< boost::shared_ptr<CConnection> >& waitingQueue);
+	void Update();
 	
 	/**
 	@brief Initiate a connection
@@ -46,12 +46,14 @@ public:
 	/**
 	@brief Set if we are going to accept new connections or drop all data from unconnected addresses
 	*/
-	void SetWaitingForConnections(const bool state);
+	bool Listen(const bool state);
+	bool Listen() const;
 	
-	/**
-	@brief Are we accepting new connections?
-	*/
-	bool GetWaitingForConnections() const;
+	bool HasIncomingConnections() const;
+	boost::weak_ptr<UDPConnection> PreviewConnection();
+	boost::shared_ptr<UDPConnection> AcceptConnection();
+	void RejectConnection();
+	
 	
 private:
 	/**
@@ -65,6 +67,8 @@ private:
 	
 	/// all connections
 	std::list< boost::weak_ptr< UDPConnection> > conn;
+	
+	std::queue< boost::shared_ptr<UDPConnection> > waiting;
 };
 
 }

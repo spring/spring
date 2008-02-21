@@ -6,7 +6,7 @@
 #include "Game/Server/ServerLog.h"
 
 namespace netcode {
-class UDPHardlink;
+	class UDPConnectedSocket;
 }
 
 /**
@@ -47,7 +47,7 @@ public:
 	std::string GetChatMessage() const;
 	
 private:
-	netcode::UDPHardlink* autohost;
+	netcode::UDPConnectedSocket* autohost;
 };
 
 #endif

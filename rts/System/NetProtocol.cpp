@@ -26,7 +26,7 @@ void CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sour
 {
 	unsigned myNum = CNet::InitClient(server, portnum, sourceport,wantedNumber);
 	Listening(false);
-	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
+	SendAttemptConnect(myNum, NETWORK_VERSION);
 	FlushNet();
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
@@ -47,7 +47,7 @@ void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 	}
 
 	unsigned myNum = CNet::InitLocalClient(wantedNumber);
-	SendAttemptConnect(wantedNumber, NETWORK_VERSION);
+	SendAttemptConnect(myNum, NETWORK_VERSION);
 	serverSlot = myNum;
 }
 

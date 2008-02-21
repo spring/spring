@@ -18,7 +18,7 @@ UDPListener::~UDPListener()
 {
 }
 
-void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQueue)
+void UDPListener::Update()
 {
 	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); )
 	{
@@ -55,7 +55,7 @@ void UDPListener::Update(std::queue< boost::shared_ptr<CConnection> >& waitingQu
 			{
 				// new client wants to connect
 				boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, fromAddr));
-				waitingQueue.push(incoming);
+				waiting.push(incoming);
 				conn.push_back(incoming);
 				incoming->ProcessRawPacket(data);
 			}
@@ -81,14 +81,38 @@ boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string&
 	return temp;
 }
 
-void UDPListener::SetWaitingForConnections(const bool state)
+bool UDPListener::Listen(const bool state)
 {
 	acceptNewConnections = state;
+	return acceptNewConnections;
 }
 
-bool UDPListener::GetWaitingForConnections() const
+bool UDPListener::Listen() const
 {
 	return acceptNewConnections;
+}
+
+bool UDPListener::HasIncomingConnections() const
+{
+	return !waiting.empty();
+}
+
+boost::weak_ptr<UDPConnection> UDPListener::PreviewConnection()
+{
+	return waiting.front();
+}
+
+boost::shared_ptr<UDPConnection> UDPListener::AcceptConnection()
+{
+	boost::shared_ptr<UDPConnection> newConn = waiting.front();
+	waiting.pop();
+	conn.push_back(newConn);
+	return newConn;
+}
+
+void UDPListener::RejectConnection()
+{
+	waiting.pop();
 }
 
 }
