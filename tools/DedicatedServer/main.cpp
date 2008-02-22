@@ -12,22 +12,27 @@
 
 int main(int argc, char *argv[])
 {
+	try {
 	std::cout << "BIG FAT WARNING: this server is currently under development. If you find any errors (you most likely will)";
 	std::cout << " report them to mantis or the forums." << std::endl << std::endl;
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
-
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
 	EventPrinter ep;
-	
+
 	if (argc > 1)
 	{
 		std::string script = argv[1];
 		std::cout << "Loading script: " << script << std::endl;
-		gameSetup = new CGameSetup();	// to store the gamedata inside      
-		gameSetup->Init(script);	// read the script provided by cmdline
+		gameSetup = new CGameSetup();	// to store the gamedata inside
+		if (!gameSetup->Init(script))	// read the script provided by cmdline
+		{
+			std::cout << "Failed to load script" << std::endl;
+			return 1;
+		}
 		
+		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
 		server = new CGameServer(gameSetup->hostport, gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName, gameSetup);
 		server->log.Subscribe((ServerLog*)&ep);
@@ -53,6 +58,10 @@ int main(int argc, char *argv[])
 	}
 	
 	FileSystemHandler::Cleanup();
-	
+	}
+	catch (const std::exception& err)
+	{
+		std::cout << "Exception raised: " << err.what() << std::endl;
+	}
 	return 0;
 }
