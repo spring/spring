@@ -610,28 +610,11 @@ void CProjectileHandler::CheckUnitCol()
 				if (p->owner == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam == p->owner->allyteam)))
 					continue;
 
-				// pretend the projectile is a point-object
-				// when dealing with custom collision volumes
-				// TODO: replace by line-segment intersection
 				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
 
-				const float sqUnitRadius = vol->GetBoundingRadiusSq();
-				const float sqSeparation = (unit->midPos - p->pos).SqLength();
-
-				if (sqSeparation < sqUnitRadius) {
-					// early-out test failed, so the projectile has entered the minimum
-					// bounding sphere of this unit's collision volume (not necessarily
-					// the actual volume itself)
-					if (!vol->IsSphere()) {
-						if (vol->Collision(unit, p->pos)) {
-							p->Collision(unit);
-							break;
-						}
-					} else {
-						// already done
-						p->Collision(unit);
-						break;
-					}
+				if (vol->Intersect(unit, p->pos, p->pos + p->speed)) {
+					p->Collision(unit);
+					break;
 				}
 			}
 
@@ -643,19 +626,10 @@ void CProjectileHandler::CheckUnitCol()
 						continue;
 
 					const CCollisionVolume* vol = feature->def->collisionVolume;
-					const float sqFeatureRadius = vol->GetBoundingRadiusSq();
-					const float sqSeparation = (feature->midPos - p->pos).SqLength();
 
-					if (sqSeparation < sqFeatureRadius) {
-						if (!vol->IsSphere()) {
-							if (vol->Collision(feature, p->pos)) {
-								p->Collision(feature);
-								break;
-							}
-						} else {
-							p->Collision(feature);
-							break;
-						}
+					if (vol->Intersect(feature, p->pos, p->pos + p->speed)) {
+						p->Collision(feature);
+						break;
 					}
 				}
 			}

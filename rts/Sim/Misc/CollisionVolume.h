@@ -38,6 +38,7 @@ class CCollisionVolume {
 	private:
 		bool Collision(const CMatrix44f&, const float3&) const;
 		bool Intersect(const CMatrix44f&, const float3&, const float3&) const;
+		bool IntersectAlt(const CMatrix44f&, const float3&, const float3&) const;
 
 		bool IntersectEllipsoid(const float3&, const float3&) const;
 		bool IntersectCylinder(const float3&, const float3&) const;
@@ -48,6 +49,7 @@ class CCollisionVolume {
 		float3 axisHScalesSq;			// half-length axis scales (squared)
 		float3 axisHIScales;			// half-length axis scales (inverted)
 		float3 axisOffsets;
+
 		float volumeBoundingRadius;
 		float volumeBoundingRadiusSq;
 		int volumeType;
