@@ -44,9 +44,9 @@ enum EVENT
 };
 }
 
-AutohostInterface::AutohostInterface(int localport, int remoteport)
+AutohostInterface::AutohostInterface(int remoteport)
 {
-	autohost = new netcode::UDPConnectedSocket("127.0.0.1", remoteport, localport);
+	autohost = new netcode::UDPConnectedSocket("127.0.0.1", remoteport);
 }
 
 AutohostInterface::~AutohostInterface()

@@ -60,7 +60,7 @@ public:
 
 	void AddLocalClient();
 
-	void AddAutohostInterface(const int usePort, const int remotePort);
+	void AddAutohostInterface(const int remotePort);
 
 	/**
 	@brief Set frame after loading

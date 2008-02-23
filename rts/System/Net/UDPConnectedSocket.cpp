@@ -1,39 +1,38 @@
 #include "UDPConnectedSocket.h"
 
-#include <string>
-
-#ifdef _WIN32
-#else
-#include <sys/socket.h>
-#endif
-
 #include "Exception.h"
 
 namespace netcode
 {
 
-#ifdef _WIN32
-#else
+#ifndef _WIN32
 	const int SOCKET_ERROR = -1;
 #endif
 
-UDPConnectedSocket::UDPConnectedSocket(const char* const server, const unsigned remoteport, const int port)
-: UDPSocket(port)
+UDPConnectedSocket::UDPConnectedSocket(const std::string& server, const unsigned remoteport)
+: Socket(UDP)
 {
 	sockaddr_in remoteAddr = ResolveHost(server, remoteport);
-	connect(mySocket, (sockaddr*)&remoteAddr, sizeof(remoteAddr));
+	if (connect(mySocket, (sockaddr*)&remoteAddr, sizeof(remoteAddr)) == SOCKET_ERROR)
+	{
+		throw network_error(std::string("Error while connecting: ") + GetErrorMsg());
+	}
+	SetBlocking(false);
 }
 
 
 void UDPConnectedSocket::Send(const unsigned char* const buf, const unsigned dataLength) const
 {
-	send(mySocket, (char*)buf, dataLength, 0);
+	int error = send(mySocket, (char*)buf, dataLength, 0);
+	if (error == SOCKET_ERROR && !IsFakeError())
+	{
+		throw network_error(std::string("Error sending data to socket: ") + GetErrorMsg());
+	}
 }
 
 unsigned UDPConnectedSocket::Recv(unsigned char* buf, const unsigned bufLength) const
 {
 	const int data = recv(mySocket,(char*)buf,bufLength,0);
-	
 	if (data == SOCKET_ERROR)
 	{
 		if (IsFakeError())
@@ -45,7 +44,7 @@ unsigned UDPConnectedSocket::Recv(unsigned char* buf, const unsigned bufLength) 
 			throw network_error(std::string("Error receiving data from socket: ") + GetErrorMsg());
 		}
 	}
-	return data;
+	return (unsigned)data;
 }
 
 

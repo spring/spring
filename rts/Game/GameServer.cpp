@@ -139,12 +139,12 @@ void CGameServer::AddLocalClient()
 	serverNet->ServerInitLocalClient();
 }
 
-void CGameServer::AddAutohostInterface(const int usePort, const int remotePort)
+void CGameServer::AddAutohostInterface(const int remotePort)
 {
 	if (hostif == 0)
 	{
 		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-		hostif = new AutohostInterface(usePort, remotePort);
+		hostif = new AutohostInterface(remotePort);
 		hostif->SendStart();
 		log.Subscribe(hostif);
 		log.Message(format(ConnectAutohost) %remotePort);

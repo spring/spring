@@ -23,7 +23,7 @@ public:
 	@param localport port to use by this class
 	@param remoteport the port of the autohost
 	*/
-	AutohostInterface(int localport, int remoteport);
+	AutohostInterface(int remoteport);
 	virtual ~AutohostInterface();
 	
 	void SendStart() const;

@@ -1,14 +1,9 @@
 #ifndef _UDPSOCKET
 #define _UDPSOCKET
 
-#include <boost/noncopyable.hpp>
 #include <string>
 
-#ifdef _WIN32
-#include "Platform/Win/win32.h"
-#else
-#include <netinet/in.h>
-#endif
+#include "Socket.h"
 
 namespace netcode {
 
@@ -18,7 +13,7 @@ namespace netcode {
 
 Provides easy to use access to network sockets: just construct this with a given portnum and you will have an valid, local bound UDP-Socket where you can sendto / recvfrom. If it gets deleted, the socket is closed automagically for you (this means you are not able to copy this class).
 */
-class UDPSocket : public boost::noncopyable
+class UDPSocket : public Socket
 {
 public:
 	/**
@@ -52,23 +47,8 @@ public:
 	 */
 	void SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const;
 	
-	sockaddr_in ResolveHost(const char* const address, const unsigned port) const;
-	
 protected:
-	/// return the last errormessage from the OS
-	std::string GetErrorMsg() const;
-	/// Check if last error is a real error (not EWOULDBLOCK etc.)
-	bool IsFakeError() const;
 
-#ifndef _WIN32
-	typedef int SOCKET;
-#else
-	/// track number of open sockets ()
-	static unsigned numSockets;
-#endif
-
-	/// our descriptor
-	SOCKET mySocket;
 	/// our local address
 	sockaddr_in myAddr;
 };
