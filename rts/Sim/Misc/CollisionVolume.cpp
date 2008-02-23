@@ -8,6 +8,7 @@
 
 #include "CollisionVolume.h"
 
+
 #define MIN(a, b) std::min((a), (b))
 #define MAX(a, b) std::max((a), (b))
 // #define MIN (((a) < (b))? (a): (b))
@@ -153,11 +154,12 @@ void CCollisionVolume::SetDefaultScale(const float s)
 
 bool CCollisionVolume::Collision(const CUnit* u, const float3& p) const
 {
+	// NOTE: we have to translate by relMidPos (which is where
+	// collision volume gets drawn) since GetTransformMatrix()
+	// does not
 	CMatrix44f m;
 	u->GetTransformMatrix(m);
-
-	// if the volume is offset along any of its axes, add that
-	// translation so the projectile pos is transformed properly
+	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
 	return Collision(m, p);
@@ -165,6 +167,7 @@ bool CCollisionVolume::Collision(const CUnit* u, const float3& p) const
 
 bool CCollisionVolume::Collision(const CFeature* f, const float3& p) const
 {
+	// NOTE: CFeature does not have a relMidPos member
 	CMatrix44f m(f->transMatrix);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
@@ -183,18 +186,16 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& p) const
 	float3 pi = mInv.Mul(p);
 	bool hit = false;
 
-	// NOTE: should be 1.0f for mathematical correctness of the
-	// tests, but suffers too much loss of precision at Spring's
-	// framerate (if projectile speeds are high enough) leading
-	// to undetected collisions
-	const float maxRatio = 8.0f;
-
 	switch (volumeType) {
 		case COLVOL_TYPE_ELLIPSOID: {
-			const float f1 = (pi.x * pi.x) / axisHScalesSq.x;
-			const float f2 = (pi.y * pi.y) / axisHScalesSq.y;
-			const float f3 = (pi.z * pi.z) / axisHScalesSq.z;
-			hit = ((f1 + f2 + f3) <= maxRatio);
+			if (spherical) {
+				hit = (pi.dot(pi) <= axisHScalesSq.x);
+			} else {
+				const float f1 = (pi.x * pi.x) / axisHScalesSq.x;
+				const float f2 = (pi.y * pi.y) / axisHScalesSq.y;
+				const float f3 = (pi.z * pi.z) / axisHScalesSq.z;
+				hit = ((f1 + f2 + f3) <= 1.0f);
+			}
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			switch (primaryAxis) {
@@ -202,19 +203,19 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& p) const
 					const bool xPass = (pi.x > -axisHScales.x && pi.x < axisHScales.x);
 					const float yRat = (pi.y * pi.y) / axisHScalesSq.y;
 					const float zRat = (pi.z * pi.z) / axisHScalesSq.z;
-					hit = (xPass && (yRat + zRat <= maxRatio));
+					hit = (xPass && (yRat + zRat <= 1.0f));
 				} break;
 				case COLVOL_AXIS_Y: {
 					const bool yPass = (pi.y > -axisHScales.y && pi.y < axisHScales.y);
 					const float xRat = (pi.x * pi.x) / axisHScalesSq.x;
 					const float zRat = (pi.z * pi.z) / axisHScalesSq.z;
-					hit = (yPass && (xRat + zRat <= maxRatio));
+					hit = (yPass && (xRat + zRat <= 1.0f));
 				} break;
 				case COLVOL_AXIS_Z: {
 					const bool zPass = (pi.z > -axisHScales.z && pi.z < axisHScales.z);
 					const float xRat = (pi.x * pi.x) / axisHScalesSq.x;
 					const float yRat = (pi.y * pi.y) / axisHScalesSq.y;
-					hit = (zPass && (xRat + yRat <= maxRatio));
+					hit = (zPass && (xRat + yRat <= 1.0f));
 				} break;
 			}
 		} break;
@@ -231,55 +232,70 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& p) const
 
 
 
-bool CCollisionVolume::Intersect(const CUnit* u, const float3& p1, const float3& p2) const
+bool CCollisionVolume::Intersect(const CUnit* u, const float3& p0, const float3& p1) const
 {
 	CMatrix44f m;
 	u->GetTransformMatrix(m);
+	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Intersect(m, p1, p2);
+	return Intersect(m, p0, p1);
 }
-bool CCollisionVolume::Intersect(const CFeature* f, const float3& p1, const float3& p2) const
+bool CCollisionVolume::Intersect(const CFeature* f, const float3& p0, const float3& p1) const
 {
 	CMatrix44f m(f->transMatrix);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Intersect(m, p1, p2);
+	return Intersect(m, p0, p1);
 }
 
-// test if ray from <p1> to <p2> (in world-coors) intersects
+bool CCollisionVolume::IntersectAlt(const CMatrix44f& m, const float3& p0, const float3& p1) const
+{
+	// alternative numerical integration method (unused)
+	const float delta = 1.0f;
+	const float length = (p1 - p0).Length();
+	const float3 dir = (p1 - p0).Normalize();
+
+	for (float t = 0.0f; t <= length; t += delta) {
+		if (Collision(m, p0 + dir * t)) return true;
+	}
+
+	return false;
+}
+
+// test if ray from <p0> to <p1> (in world-coors) intersects
 // the volume whose transformation matrix is given by <m>
-bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p1, const float3& p2) const
+bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const float3& p1) const
 {
 	CMatrix44f mInv = m.Invert();
+	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
-	const float3 pi2 = mInv.Mul(p2);
 	bool intersect = false;
 
-
 	// minimum and maximum (x, y, z) coordinates of transformed ray
-	const float rminx = MIN(pi1.x, pi2.x), rminy = MIN(pi1.y, pi2.y), rminz = MIN(pi1.z, pi2.z);
-	const float rmaxx = MAX(pi1.x, pi2.x), rmaxy = MAX(pi1.y, pi2.y), rmaxz = MAX(pi1.z, pi2.z);
+	const float rminx = MIN(pi0.x, pi1.x), rminy = MIN(pi0.y, pi1.y), rminz = MIN(pi0.z, pi1.z);
+	const float rmaxx = MAX(pi0.x, pi1.x), rmaxy = MAX(pi0.y, pi1.y), rmaxz = MAX(pi0.z, pi1.z);
 
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
 	const float vminx = -axisHScales.x, vminy = -axisHScales.y, vminz = -axisHScales.z;
 	const float vmaxx =  axisHScales.x, vmaxy =  axisHScales.y, vmaxz =  axisHScales.z;
 
-	// check if ray misses (bounding box around) volume completely
+	// check if ray segment misses (bounding box around) volume
+	// (if so, then no further intersection tests are necessary)
 	if (rmaxx < vminx || rminx > vmaxx) { return false; }
 	if (rmaxy < vminy || rminy > vmaxy) { return false; }
 	if (rmaxz < vminz || rminz > vmaxz) { return false; }
 
-
 	switch (volumeType) {
 		case COLVOL_TYPE_ELLIPSOID: {
-			intersect = IntersectEllipsoid(pi1, pi2);
+			intersect = IntersectEllipsoid(pi0, pi1);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
-			intersect = IntersectCylinder(pi1, pi2);
+			intersect = IntersectBox(pi0, pi1);
+			// intersect = IntersectCylinder(pi0, pi1);
 		} break;
 		case COLVOL_TYPE_BOX: {
-			intersect = IntersectBox(pi1, pi2);
+			intersect = IntersectBox(pi0, pi1);
 		} break;
 	}
 
@@ -288,55 +304,72 @@ bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p1, const fl
 
 
 
-bool CCollisionVolume::IntersectEllipsoid(const float3& pi1, const float3& pi2) const
+bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) const
 {
-	// NOTE: numerically unreliable for large volumes
-	//
-	// surface = [ (x / a)^2 + (y / b)^2 + (z / c)^2 = 1 ]
-	// line(t) = [ p + dir * t ]
-	//
-	// solves the surface equation for t
-	const float3 dir = (pi2 - pi1).Normalize();
+	// transform the ellipsoid-space points into (unit) sphere-space (fewer
+	// float-ops than solving the surface equation for arbitrary ellipsoids)
+	const float3 pii0 = float3(pi0.x * axisHIScales.x, pi0.y * axisHIScales.y, pi0.z * axisHIScales.z);
+	const float3 pii1 = float3(pi1.x * axisHIScales.x, pi1.y * axisHIScales.y, pi1.z * axisHIScales.z);
+	const float rSq = 1.0f;
 
-	const float mul1 = axisHScalesSq.y * axisHScalesSq.z;
-	const float mul2 = axisHScalesSq.x * axisHScalesSq.z;
-	const float mul3 = axisHScalesSq.x * axisHScalesSq.y;
-	const float div  = axisHScalesSq.x * axisHScalesSq.y * axisHScalesSq.z;
+	// if either the start or the end of the sphere-space ray
+	// segment lies within the unit sphere, terminate early
+	if (pii0.dot(pii0) < 1.0f || pii1.dot(pii1) < 1.0f) {
+		return true;
+	}
 
-	const float a = (pi1.x * pi1.x),        d = (pi1.y * pi1.y),        g = (pi1.z * pi1.z);
-	const float b = (pi1.x * dir.x) * 2.0f, e = (pi1.y * dir.y) * 2.0f, h = (pi1.z * dir.z) * 2.0f;
-	const float c = (dir.x * dir.x),        f = (dir.y * dir.y),        i = (dir.z * dir.z);
+	// get the ray direction in unit-sphere space
+	const float3 dir = (pii1 - pii0).Normalize();
 
-	const float aa = a * mul1, dd = d * mul2, gg = g * mul3;
-	const float bb = b * mul1, ee = e * mul2, hh = h * mul3;
-	const float cc = c * mul1, ff = f * mul2, ii = i * mul3;
+	// solves [ x^2 + y^2 + z^2 == r^2 ] for t
+	// (<a> represents dir.dot(dir), equal to 1
+	// since ray direction already normalized)
+	const float a = 1.0f;
+	const float b = (pii0 * 2.0f).dot(dir);
+	const float c = pii0.dot(pii0) - rSq;
+	const float d = (b * b) - (4.0f * a * c);
 
-	// const float aaa = (aa + dd + gg) - (div);
-	// const float bbb = (bb + ee + hh);
-	// const float ccc = (cc + ff + ii);
-	const float aaa = ((aa + dd + gg) / div) - 1.0f;
-	const float bbb = ((bb + ee + hh) / div);
-	const float ccc = ((cc + ff + ii) / div);
-	const float dis = (bbb * bbb) - (4.0f * aaa * ccc);
-
-	if (dis < -EPS) {
-		// no solution
+	if (d < -EPS) {
 		return false;
 	} else {
-		if (dis < EPS) {
-			// one solution, ray touches volume surface
-			// float t = -bbb / (2.0f * aaa);
-			return true;
+		if (d < EPS) {
+			const float t = -b / (2.0f * a);
+			// get the intersection point in sphere-space
+			const float3 pTmp = pii0 + (dir * t);
+			// get the intersection point in ellipsoid-space
+			const float3 pInt(pTmp.x * axisHScales.x, pTmp.y * axisHScales.y, pTmp.z * axisHScales.z);
+			// get the length of the ray segment
+			const float segLenSq = (pii1 - pii0).SqLength();
+			// get the distance from the start of the segment
+			// to the intersection point in ellipsoid-space
+			// NOTE: should really be pInt - pii0
+			const float diffSq = (pTmp - pii0).SqLength();
+
+			return (t > 0.0f && diffSq <= segLenSq);
 		} else {
-			// two solutions, ray intersects volume
-			// float t0 = (-bbb + sqrt(dis)) / (2.0f * aaa);
-			// float t1 = (-bbb - sqrt(dis)) / (2.0f * aaa);
-			return true;
+			const float rd = sqrt(d);
+			const float t0 = (-b + rd) / (2.0f * a);
+			const float t1 = (-b - rd) / (2.0f * a);
+			// get the intersection points in sphere-space
+			const float3 pTmp0 = pii0 + (dir * t0);
+			const float3 pTmp1 = pii0 + (dir * t1);
+			// get the intersection points in ellipsoid-space
+			const float3 pInt0(pTmp0.x * axisHScales.x, pTmp0.y * axisHScales.y, pTmp0.z * axisHScales.z);
+			const float3 pInt1(pTmp1.x * axisHScales.x, pTmp1.y * axisHScales.y, pTmp1.z * axisHScales.z);
+			// get the length of the ray segment
+			const float segLenSq = (pii1 - pii0).SqLength();
+			// get the distances from the start of the segment
+			// to the intersection points in ellipsoid-space
+			// NOTE: should really be pInt{0, 1} - pii0
+			const float diffSq0 = (pTmp0 - pii0).SqLength();
+			const float diffSq1 = (pTmp1 - pii0).SqLength();
+
+			return ((t0 > 0.0f && diffSq0 <= segLenSq) || (t1 > 0.0f && diffSq1 <= segLenSq));
 		}
 	}
 }
 
-bool CCollisionVolume::IntersectCylinder(const float3& pi1, const float3& pi2) const
+bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1) const
 {
 	// TODO
 	switch (primaryAxis) {
@@ -345,63 +378,93 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi1, const float3& pi2) c
 		case COLVOL_AXIS_Z: {} break;
 	}
 
-	return true;
+	return false;
 }
 
-bool CCollisionVolume::IntersectBox(const float3& pi1, const float3& pi2) const
+bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1) const
 {
-	// get the ray's axis delta's
-	float dx = (pi1.x - pi2.x);
-	float dy = (pi1.y - pi2.y);
-	float dz = (pi1.z - pi2.z);
+	const bool b1 = (pi0.x > -axisHScales.x && pi0.x < axisHScales.x);
+	const bool b2 = (pi0.y > -axisHScales.y && pi0.y < axisHScales.y);
+	const bool b3 = (pi0.z > -axisHScales.z && pi0.z < axisHScales.z);
+	const bool b4 = (pi1.x > -axisHScales.x && pi1.x < axisHScales.x);
+	const bool b5 = (pi1.y > -axisHScales.y && pi1.y < axisHScales.y);
+	const bool b6 = (pi1.z > -axisHScales.z && pi1.z < axisHScales.z);
 
-	// lazily avoid any DIV0's
-	if (dx > -EPS && dx < EPS) { dx = EPS; }
-	if (dy > -EPS && dy < EPS) { dy = EPS; }
-	if (dz > -EPS && dz < EPS) { dz = EPS; }
+	// save some cycles if one point is already inside the box
+	if ((b1 && b2 && b3) || (b4 && b5 && b6)) {
+		return true;
+	}
 
-	const float ddx = 1.0 / dx;
-	const float ddy = 1.0 / dy;
-	const float ddz = 1.0 / dz;
+	float tn = -9999999.9f;
+	float tf =  9999999.9f;
+	float t0 =  0.0f;
+	float t1 =  0.0f;
+	float t2 =  0.0f;
 
-	float txmin = 0.0f, txmax = 0.0f;
-	float tymin = 0.0f, tymax = 0.0f;
-	float tzmin = 0.0f, tzmax = 0.0f;
+	const float3 dir = (pi1 - pi0).Normalize();
 
-	if (ddx >= 0.0f) {
-		txmin = (-axisHScales.x - pi1.x) * ddx;
-		txmax = ( axisHScales.x - pi1.x) * ddx;
+	if (dir.x > -EPS && dir.x < EPS) {
+		if (pi0.x < -axisHScales.x || pi0.x > axisHScales.x) {
+			return false;
+		}
 	} else {
-		txmin = ( axisHScales.x - pi1.x) * ddx;
-		txmax = (-axisHScales.x - pi1.x) * ddx;
+		if (dir.x > 0.0f) {
+			t0 = (-axisHScales.x - pi0.x) / dir.x;
+			t1 = ( axisHScales.x - pi0.x) / dir.x;
+		} else {
+			t1 = (-axisHScales.x - pi0.x) / dir.x;
+			t0 = ( axisHScales.x - pi0.x) / dir.x;
+		}
+		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }
+		if (t0 > tn) { tn = t0; }
+		if (t1 < tf) { tf = t1; }
+		if (tn > tf) { return false; }
+		if (tf < 0.0f) { return false; }
 	}
 
-	if (ddy >= 0.0f) {
-		tymin = (-axisHScales.y - pi1.y) * ddy;
-		tymax = ( axisHScales.y - pi1.y) * ddy;
+	if (dir.y > -EPS && dir.y < EPS) {
+		if (pi0.y < -axisHScales.y || pi0.y > axisHScales.y) {
+			return false;
+		}
 	} else {
-		tymin = ( axisHScales.y - pi1.y) * ddy;
-		tymax = (-axisHScales.y - pi1.y) * ddy;
+		if (dir.y > 0.0f) {
+			t0 = (-axisHScales.y - pi0.y) / dir.y;
+			t1 = ( axisHScales.y - pi0.y) / dir.y;
+		} else {
+			t1 = (-axisHScales.y - pi0.y) / dir.y;
+			t0 = ( axisHScales.y - pi0.y) / dir.y;
+		}
+		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }
+		if (t0 > tn) { tn = t0; }
+		if (t1 < tf) { tf = t1; }
+		if (tn > tf) { return false; }
+		if (tf < 0.0f) { return false; }
 	}
 
-	if ((txmin > tymax) || (tymin > txmax)) {
-		return false;
-	}
-
-	if (tymin > txmin) { txmin = tymin; }
-	if (tymax < txmax) { txmax = tymax; }
-
-	if (ddz >= 0.0f) {
-		tzmin = (-axisHScales.z - pi1.z) * ddz;
-		tzmax = ( axisHScales.z - pi1.z) * ddz;
+	if (dir.z > -EPS && dir.z < EPS) {
+		if (pi0.z < -axisHScales.z || pi0.z > axisHScales.z) {
+			return false;
+		}
 	} else {
-		tzmin = ( axisHScales.z - pi1.z) * ddz;
-		tzmax = (-axisHScales.z - pi1.z) * ddz;
+		if (dir.z > 0.0f) {
+			t0 = (-axisHScales.z - pi0.z) / dir.z;
+			t1 = ( axisHScales.z - pi0.z) / dir.z;
+		} else {
+			t1 = (-axisHScales.z - pi0.z) / dir.z;
+			t0 = ( axisHScales.z - pi0.z) / dir.z;
+		}
+		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }
+		if (t0 > tn) { tn = t0; }
+		if (t1 < tf) { tf = t1; }
+		if (tn > tf) { return false; }
+		if (tf < 0.0f) { return false; }
 	}
 
-	if ((txmin > tzmax) || (tzmin > txmax)) {
-		return false;
-	}
+	const float3 pnt0 = pi0 + (dir * tn);
+	const float3 pnt1 = pi0 + (dir * tf);
+	const float segLenSq = (pi1 - pi0).SqLength();
+	const float diffSq0 = (pnt0 - pi0).SqLength();
+	const float diffSq1 = (pnt1 - pi0).SqLength();
 
-	return true;
+	return (diffSq0 < segLenSq || diffSq1 < segLenSq);
 }

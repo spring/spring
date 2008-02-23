@@ -1034,12 +1034,18 @@ inline void CUnit::DrawDebug()
 		switch (vol->GetType()) {
 			case COLVOL_TYPE_ELLIPSOID: {
 				// scaled sphere: radius, slices, stacks
+				//
+				// NOTE: sphere with radius <r> is drawn
+				// twice as large as box with half-axis
+				// scales <r, r, r> so rescale by factor
+				// 0.5 (since boxes have the proper dims)
 				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-				gluSphere(q, 1.0f, 10, 10);
+				gluSphere(q, 0.5f, 20, 20);
 			} break;
 			case COLVOL_TYPE_CYLINDER: {
 				// scaled cylinder: base-radius, top-radius, height, slices, stacks
+				//
 				// (cylinder base is drawn at unit center by default, so add offset
 				// by half major axis to visually match the mathematical situation)
 				switch (vol->GetPrimaryAxis()) {
@@ -1062,7 +1068,9 @@ inline void CUnit::DrawDebug()
 					} break;
 				}
 
-				gluCylinder(q, 1.0f, 1.0f, 1.0f, 10, 10);
+				// NOTE: this has the same problem as gluSphere(),
+				// x- and y-axes are drawn twice as big by default
+				gluCylinder(q, 0.5f, 0.5f, 1.0f, 20, 20);
 			} break;
 			case COLVOL_TYPE_BOX: {
 				// scaled cube: length, width, height
