@@ -1,0 +1,137 @@
+#include "Socket.h"
+
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#else
+#include <fcntl.h>
+#include <errno.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#endif
+
+#include "Exception.h"
+
+namespace netcode
+{
+
+#ifdef _WIN32
+	inline int close(SOCKET mySocket) { return closesocket(mySocket); };
+	unsigned Socket::numSockets = 0;
+#else
+	typedef struct hostent* LPHOSTENT;
+	typedef struct in_addr* LPIN_ADDR;
+	const int INVALID_SOCKET = -1;
+	const int SOCKET_ERROR = -1;
+#endif
+
+Socket::Socket(const SocketType type)
+{
+#ifdef _WIN32
+	if (numSockets == 0)
+	{
+		unsigned short wVersionRequested;
+		WSADATA wsaData;
+		int err;
+			
+		wVersionRequested = MAKEWORD( 2, 2 );
+		err = WSAStartup( wVersionRequested, &wsaData );if ( err != 0 ) {
+			throw network_error("Error initializing winsock: failed to start");
+			return;
+		}
+		/* Confirm that the WinSock DLL supports 2.2.*/
+		/* Note that if the DLL supports versions greater    */
+		/* than 2.2 in addition to 2.2, it will still return */
+		/* 2.2 in wVersion since that is the version we      */
+		/* requested.                                        */
+		if ( LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 2 ) {
+			throw network_error("Error initializing winsock: wrong version");
+			WSACleanup( );
+			return;
+		}
+	}
+	++numSockets;
+#endif
+	
+	if (type == UDP)
+		mySocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // create UDP socket
+	else if (type == TCP)
+		mySocket = socket(AF_INET, SOCK_STREAM, 0); // create TCP socket
+
+	if (mySocket == INVALID_SOCKET)
+		throw network_error("Error in creating socket: " + GetErrorMsg());
+}
+
+Socket::~Socket()
+{
+	close(mySocket);
+#ifdef _WIN32
+	--numSockets;
+	if (numSockets == 0)
+		WSACleanup();
+#endif
+}
+
+sockaddr_in Socket::ResolveHost(const std::string& address, const unsigned port) const
+{
+	sockaddr_in remoteAddr;
+
+	remoteAddr.sin_family = AF_INET;
+	remoteAddr.sin_port = htons(port);
+
+#ifdef _WIN32
+	unsigned long ul;
+	if((ul=inet_addr(address.c_str())) != INADDR_NONE)
+	{
+		remoteAddr.sin_addr.S_un.S_addr = ul;
+	}
+	else
+#else
+	if (inet_aton(address.c_str(),&(remoteAddr.sin_addr)) == 0)
+#endif
+	{
+		LPHOSTENT lpHostEntry;
+		lpHostEntry = gethostbyname(address.c_str());
+		if (lpHostEntry == NULL)
+		{
+			throw network_error(std::string("Error looking up server from DNS: ")+address);
+		}
+		remoteAddr.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
+	}
+	return remoteAddr;
+}
+
+void Socket::SetBlocking(const bool block) const
+{
+#ifdef _WIN32
+	u_long u = block ? 0 : 1;
+	if (ioctlsocket(mySocket,FIONBIO,&u) == SOCKET_ERROR)
+#else
+	if (fcntl(mySocket, F_SETFL, block ? 0 : O_NONBLOCK) == -1)
+#endif
+	{
+		throw network_error(std::string("Error setting socket I/O mode: ") + GetErrorMsg());
+	}
+}
+
+std::string Socket::GetErrorMsg() const
+{
+#ifdef _WIN32
+	return strerror(WSAGetLastError());
+#else
+	return strerror(errno);
+#endif
+}
+
+bool Socket::IsFakeError() const
+{
+#ifdef _WIN32
+	int err=WSAGetLastError();
+	return err==WSAEWOULDBLOCK || err==WSAECONNRESET || err==WSAEINTR;
+#else
+	return errno==EWOULDBLOCK || errno==ECONNRESET || errno==EINTR;
+#endif
+}
+
+} // namespace netcode
+

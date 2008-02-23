@@ -1,7 +1,7 @@
 #ifndef _UDP_CONNECTED_SOCKET
 #define _UDP_CONNECTED_SOCKET
 
-#include "UDPSocket.h"
+#include "Socket.h"
 
 namespace netcode {
 
@@ -10,18 +10,16 @@ namespace netcode {
 This is simply a UDPSocket which has been connect()'ed to a specific address and will send / recieve only to / from this address
 @author Karl-Robert Ernst
 */
-class UDPConnectedSocket : private UDPSocket
+class UDPConnectedSocket : private Socket
 {
 public:
 	/**
 	@brief Constructor
 	@param address The DNS or IP of the other side
 	@param remoteport the port the other side use
-	@param port The port we will use here
-	@param range if $port is blocked, try port +1, +2, ... +range
 	@throw network_error when hostname cannot be resolved
 	*/
-	UDPConnectedSocket(const char* const address, const unsigned remoteport, const int port);
+	UDPConnectedSocket(const std::string& address, const unsigned remoteport);
 
 	/**
 	@brief Send some data

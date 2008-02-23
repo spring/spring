@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 		server->log.Subscribe((ServerLog*)&ep);
 		
 		if (gameSetup->autohostport > 0)
-			server->AddAutohostInterface(8453, gameSetup->autohostport);
+			server->AddAutohostInterface(gameSetup->autohostport);
 		else
 		{
 			std::cout << "You should specify an AutohostPort in the script" << std::endl;

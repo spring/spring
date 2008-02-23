@@ -35,7 +35,7 @@ UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const socka
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
 {
-	addr = mySocket->ResolveHost(address.c_str(), port);
+	addr = mySocket->ResolveHost(address, port);
 	Init();
 }
 

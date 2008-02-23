@@ -341,7 +341,7 @@ bool CPreGame::Update()
 				int myPort = gameSetup? gameSetup->hostport : 8452;
 				gameServer = new CGameServer(myPort, mapName, modName, scriptName, gameSetup, demoFile);
 				if (gameSetup && gameSetup->autohostport > 0)
-					gameServer->AddAutohostInterface(myPort+1, gameSetup->autohostport);
+					gameServer->AddAutohostInterface(gameSetup->autohostport);
 				gameServer->AddLocalClient();
 				good_fpu_control_registers("after CGameServer creation");
 			}
