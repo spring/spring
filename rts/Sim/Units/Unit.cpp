@@ -1034,43 +1034,37 @@ inline void CUnit::DrawDebug()
 		switch (vol->GetType()) {
 			case COLVOL_TYPE_ELLIPSOID: {
 				// scaled sphere: radius, slices, stacks
-				//
-				// NOTE: sphere with radius <r> is drawn
-				// twice as large as box with half-axis
-				// scales <r, r, r> so rescale by factor
-				// 0.5 (since boxes have the proper dims)
 				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-				gluSphere(q, 0.5f, 20, 20);
+				glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
+				gluSphere(q, 1.0f, 20, 20);
 			} break;
 			case COLVOL_TYPE_CYLINDER: {
 				// scaled cylinder: base-radius, top-radius, height, slices, stacks
 				//
-				// (cylinder base is drawn at unit center by default, so add offset
-				// by half major axis to visually match the mathematical situation)
+				// (cylinder base is drawn at unit center by default so add offset
+				// by half major axis to visually match the mathematical situation,
+				// height of the cylinder equals the unit's full major axis)
 				switch (vol->GetPrimaryAxis()) {
 					case COLVOL_AXIS_X: {
-						glTranslatef(-(vol->GetScale(0)) * 0.5f, 0.0f, 0.0f);
+						glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
 						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+						glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
 						glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
 					} break;
 					case COLVOL_AXIS_Y: {
-						glTranslatef(0.0f, -(vol->GetScale(1)) * 0.5f, 0.0f);
+						glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
 						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+						glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
 						glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 					} break;
 					case COLVOL_AXIS_Z: {
-						glTranslatef(0.0f, 0.0f, -(vol->GetScale(2)) * 0.5f);
+						glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
 						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+						glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
 					} break;
 				}
 
-				// NOTE: this has the same problem as gluSphere(),
-				// x- and y-axes are drawn twice as big by default
-				gluCylinder(q, 0.5f, 0.5f, 1.0f, 20, 20);
+				gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
 			} break;
 			case COLVOL_TYPE_BOX: {
 				// scaled cube: length, width, height
