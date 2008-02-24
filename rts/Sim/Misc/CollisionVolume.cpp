@@ -133,13 +133,15 @@ CCollisionVolume::CCollisionVolume(const std::string& volTypeStr, const float3& 
 // called iif unit or feature defines no custom volume
 void CCollisionVolume::SetDefaultScale(const float s)
 {
-	axisScales.x = s;
-	axisScales.y = s;
-	axisScales.z = s;
+	// <s> is the object's default radius (not its diameter)
+	// so we need to double it to get the full-length scales
+	axisScales.x = s * 2.0f;
+	axisScales.y = s * 2.0f;
+	axisScales.z = s * 2.0f;
 
-	axisHScales.x = s * 0.5f; axisHScalesSq.x = axisHScales.x * axisHScales.x;
-	axisHScales.y = s * 0.5f; axisHScalesSq.y = axisHScales.y * axisHScales.y;
-	axisHScales.z = s * 0.5f; axisHScalesSq.z = axisHScales.z * axisHScales.z;
+	axisHScales.x = s; axisHScalesSq.x = axisHScales.x * axisHScales.x;
+	axisHScales.y = s; axisHScalesSq.y = axisHScales.y * axisHScales.y;
+	axisHScales.z = s; axisHScalesSq.z = axisHScales.z * axisHScales.z;
 
 	axisHIScales.x = 1.0f / axisHScales.x;
 	axisHIScales.y = 1.0f / axisHScales.y;
