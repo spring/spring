@@ -316,7 +316,7 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 
 	// if either the start or the end of the sphere-space ray
 	// segment lies within the unit sphere, terminate early
-	if (pii0.dot(pii0) < 1.0f || pii1.dot(pii1) < 1.0f) {
+	if (pii0.dot(pii0) < rSq || pii1.dot(pii1) < rSq) {
 		return true;
 	}
 
@@ -340,12 +340,11 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 			const float3 pTmp = pii0 + (dir * t);
 			// get the intersection point in ellipsoid-space
 			const float3 pInt(pTmp.x * axisHScales.x, pTmp.y * axisHScales.y, pTmp.z * axisHScales.z);
-			// get the length of the ray segment
-			const float segLenSq = (pii1 - pii0).SqLength();
+			// get the length of the ray segment in ellipsoid-space
+			const float segLenSq = (pi1 - pi0).SqLength();
 			// get the distance from the start of the segment
 			// to the intersection point in ellipsoid-space
-			// NOTE: should really be pInt - pii0
-			const float diffSq = (pTmp - pii0).SqLength();
+			const float diffSq = (pInt - pi0).SqLength();
 
 			return (t > 0.0f && diffSq <= segLenSq);
 		} else {
@@ -358,13 +357,12 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 			// get the intersection points in ellipsoid-space
 			const float3 pInt0(pTmp0.x * axisHScales.x, pTmp0.y * axisHScales.y, pTmp0.z * axisHScales.z);
 			const float3 pInt1(pTmp1.x * axisHScales.x, pTmp1.y * axisHScales.y, pTmp1.z * axisHScales.z);
-			// get the length of the ray segment
-			const float segLenSq = (pii1 - pii0).SqLength();
+			// get the length of the ray segment in ellipsoid-space
+			const float segLenSq = (pi1 - pi0).SqLength();
 			// get the distances from the start of the segment
 			// to the intersection points in ellipsoid-space
-			// NOTE: should really be pInt{0, 1} - pii0
-			const float diffSq0 = (pTmp0 - pii0).SqLength();
-			const float diffSq1 = (pTmp1 - pii0).SqLength();
+			const float diffSq0 = (pInt0 - pi0).SqLength();
+			const float diffSq1 = (pInt1 - pi0).SqLength();
 
 			return ((t0 > 0.0f && diffSq0 <= segLenSq) || (t1 > 0.0f && diffSq1 <= segLenSq));
 		}
