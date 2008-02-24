@@ -156,24 +156,40 @@ void CCollisionVolume::SetDefaultScale(const float s)
 
 bool CCollisionVolume::Collision(const CUnit* u, const float3& p) const
 {
-	// NOTE: we have to translate by relMidPos (which is where
-	// collision volume gets drawn) since GetTransformMatrix()
-	// does not
-	CMatrix44f m;
-	u->GetTransformMatrix(m);
-	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
-	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
+	if ((u->midPos - p).SqLength() > volumeBoundingRadiusSq) {
+		return false;
+	} else {
+		if (spherical) {
+			return true;
+		} else {
+			// NOTE: we have to translate by relMidPos (which is where
+			// collision volume gets drawn) since GetTransformMatrix()
+			// does not
+			CMatrix44f m;
+			u->GetTransformMatrix(m);
+			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
+			m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Collision(m, p);
+			return Collision(m, p);
+		}
+	}
 }
 
 bool CCollisionVolume::Collision(const CFeature* f, const float3& p) const
 {
-	// NOTE: CFeature does not have a relMidPos member
-	CMatrix44f m(f->transMatrix);
-	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
+	if ((f->midPos - p).SqLength() > volumeBoundingRadiusSq) {
+		return false;
+	} else {
+		if (spherical) {
+			return true;
+		} else {
+			// NOTE: CFeature does not have a relMidPos member
+			CMatrix44f m(f->transMatrix);
+			m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Collision(m, p);
+			return Collision(m, p);
+		}
+	}
 }
 
 // test if point <p> (in world-coors) lies inside the
@@ -234,24 +250,25 @@ bool CCollisionVolume::Collision(const CMatrix44f& m, const float3& p) const
 
 
 
-bool CCollisionVolume::Intersect(const CUnit* u, const float3& p0, const float3& p1) const
+bool CCollisionVolume::Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q) const
 {
 	CMatrix44f m;
 	u->GetTransformMatrix(m);
 	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Intersect(m, p0, p1);
+	return Intersect(m, p0, p1, q);
 }
-bool CCollisionVolume::Intersect(const CFeature* f, const float3& p0, const float3& p1) const
+bool CCollisionVolume::Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q) const
 {
 	CMatrix44f m(f->transMatrix);
 	m.Translate(axisOffsets.x, axisOffsets.y, axisOffsets.z);
 
-	return Intersect(m, p0, p1);
+	return Intersect(m, p0, p1, q);
 }
 
-bool CCollisionVolume::IntersectAlt(const CMatrix44f& m, const float3& p0, const float3& p1) const
+/*
+bool CCollisionVolume::IntersectAlt(const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery*) const
 {
 	// alternative numerical integration method (unused)
 	const float delta = 1.0f;
@@ -264,11 +281,16 @@ bool CCollisionVolume::IntersectAlt(const CMatrix44f& m, const float3& p0, const
 
 	return false;
 }
+*/
 
 // test if ray from <p0> to <p1> (in world-coors) intersects
 // the volume whose transformation matrix is given by <m>
-bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const float3& p1) const
+bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q) const
 {
+	if (q) {
+		q->Reset();
+	}
+
 	CMatrix44f mInv = m.Invert();
 	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
@@ -290,14 +312,14 @@ bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const fl
 
 	switch (volumeType) {
 		case COLVOL_TYPE_ELLIPSOID: {
-			intersect = IntersectEllipsoid(pi0, pi1);
+			intersect = IntersectEllipsoid(pi0, pi1, q);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
-			intersect = IntersectBox(pi0, pi1);
-			// intersect = IntersectCylinder(pi0, pi1);
+			intersect = IntersectBox(pi0, pi1, q);
+			// intersect = IntersectCylinder(pi0, pi1, q);
 		} break;
 		case COLVOL_TYPE_BOX: {
-			intersect = IntersectBox(pi0, pi1);
+			intersect = IntersectBox(pi0, pi1, q);
 		} break;
 	}
 
@@ -306,7 +328,7 @@ bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const fl
 
 
 
-bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) const
+bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1, CollisionQuery* q) const
 {
 	// transform the ellipsoid-space points into (unit) sphere-space (fewer
 	// float-ops than solving the surface equation for arbitrary ellipsoids)
@@ -315,10 +337,13 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 	const float rSq = 1.0f;
 
 	// if either the start or the end of the sphere-space ray
-	// segment lies within the unit sphere, terminate early
+	// segment already lies within the unit sphere, terminate
+	// NOTE: disabled since we may want proper collision data
+	/*
 	if (pii0.dot(pii0) < rSq || pii1.dot(pii1) < rSq) {
 		return true;
 	}
+	*/
 
 	// get the ray direction in unit-sphere space
 	const float3 dir = (pii1 - pii0).Normalize();
@@ -345,8 +370,14 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 			// get the distance from the start of the segment
 			// to the intersection point in ellipsoid-space
 			const float diffSq = (pInt - pi0).SqLength();
+			const bool ret = (t > 0.0f && diffSq <= segLenSq);
 
-			return (t > 0.0f && diffSq <= segLenSq);
+			if (q && ret) {
+				q->t0 = t;
+				q->p0 = pInt;
+			}
+
+			return ret;
 		} else {
 			const float rd = sqrt(d);
 			const float t0 = (-b + rd) / (2.0f * a);
@@ -363,13 +394,21 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1) 
 			// to the intersection points in ellipsoid-space
 			const float diffSq0 = (pInt0 - pi0).SqLength();
 			const float diffSq1 = (pInt1 - pi0).SqLength();
+			const bool ret = ((t0 > 0.0f && diffSq0 <= segLenSq) || (t1 > 0.0f && diffSq1 <= segLenSq));
 
-			return ((t0 > 0.0f && diffSq0 <= segLenSq) || (t1 > 0.0f && diffSq1 <= segLenSq));
+			if (q && ret) {
+				q->t0 = t0;
+				q->t1 = t1;
+				q->p0 = pInt0;
+				q->p1 = pInt1;
+			}
+
+			return ret;
 		}
 	}
 }
 
-bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1) const
+bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, CollisionQuery* q) const
 {
 	// TODO
 	switch (primaryAxis) {
@@ -381,8 +420,12 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1) c
 	return false;
 }
 
-bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1) const
+bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1, CollisionQuery* q) const
 {
+	// if either the start or the end of the volume-space ray
+	// segment already lies within the box, terminate directly
+	// NOTE: disabled since we may want proper collision data
+	/*
 	const bool b1 = (pi0.x > -axisHScales.x && pi0.x < axisHScales.x);
 	const bool b2 = (pi0.y > -axisHScales.y && pi0.y < axisHScales.y);
 	const bool b3 = (pi0.z > -axisHScales.z && pi0.z < axisHScales.z);
@@ -390,10 +433,10 @@ bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1) const
 	const bool b5 = (pi1.y > -axisHScales.y && pi1.y < axisHScales.y);
 	const bool b6 = (pi1.z > -axisHScales.z && pi1.z < axisHScales.z);
 
-	// save some cycles if one point is already inside the box
 	if ((b1 && b2 && b3) || (b4 && b5 && b6)) {
 		return true;
 	}
+	*/
 
 	float tn = -9999999.9f;
 	float tf =  9999999.9f;
@@ -460,11 +503,19 @@ bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1) const
 		if (tf < 0.0f) { return false; }
 	}
 
-	const float3 pnt0 = pi0 + (dir * tn);
-	const float3 pnt1 = pi0 + (dir * tf);
+	const float3 pInt0 = pi0 + (dir * tn);
+	const float3 pInt1 = pi0 + (dir * tf);
 	const float segLenSq = (pi1 - pi0).SqLength();
-	const float diffSq0 = (pnt0 - pi0).SqLength();
-	const float diffSq1 = (pnt1 - pi0).SqLength();
+	const float diffSq0 = (pInt0 - pi0).SqLength();
+	const float diffSq1 = (pInt1 - pi0).SqLength();
+	const bool ret = (diffSq0 < segLenSq || diffSq1 < segLenSq);
 
-	return (diffSq0 < segLenSq || diffSq1 < segLenSq);
+	if (q && ret) {
+		q->t0 = tn;
+		q->t1 = tf;
+		q->p0 = pInt0;
+		q->p1 = pInt1;
+	}
+
+	return ret;
 }
