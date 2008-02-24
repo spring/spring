@@ -10,6 +10,17 @@ enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
 class CUnit;
 class CFeature;
 
+struct CollisionQuery {
+	CollisionQuery() {}
+	void Reset() {
+		t0 = 0.0f; p0.x = -1.0f; p0.y = -1.0f; p0.z = -1.0f;
+		t1 = 0.0f; p1.x = -1.0f; p1.y = -1.0f; p1.z = -1.0f;
+	}
+
+	float t0; float3 p0;
+	float t1; float3 p1;
+};
+
 class CCollisionVolume {
 	public:
 		CR_DECLARE(CCollisionVolume)
@@ -22,8 +33,8 @@ class CCollisionVolume {
 
 		bool Collision(const CUnit*, const float3&) const;
 		bool Collision(const CFeature*, const float3&) const;
-		bool Intersect(const CUnit*, const float3& p1, const float3& p2) const;
-		bool Intersect(const CFeature*, const float3& p1, const float3& p2) const;
+		bool Intersect(const CUnit*, const float3& p1, const float3& p2, CollisionQuery* q = 0x0) const;
+		bool Intersect(const CFeature*, const float3& p1, const float3& p2, CollisionQuery* q = 0x0) const;
 
 		int GetType() const { return volumeType; }
 		int GetPrimaryAxis() const { return primaryAxis; }
@@ -37,17 +48,17 @@ class CCollisionVolume {
 
 	private:
 		bool Collision(const CMatrix44f&, const float3&) const;
-		bool Intersect(const CMatrix44f&, const float3&, const float3&) const;
-		bool IntersectAlt(const CMatrix44f&, const float3&, const float3&) const;
+		bool Intersect(const CMatrix44f&, const float3&, const float3&, CollisionQuery* q) const;
+		bool IntersectAlt(const CMatrix44f&, const float3&, const float3&, CollisionQuery* q) const;
 
-		bool IntersectEllipsoid(const float3&, const float3&) const;
-		bool IntersectCylinder(const float3&, const float3&) const;
-		bool IntersectBox(const float3&, const float3&) const;
+		bool IntersectEllipsoid(const float3&, const float3&, CollisionQuery* q) const;
+		bool IntersectCylinder(const float3&, const float3&, CollisionQuery* q) const;
+		bool IntersectBox(const float3&, const float3&, CollisionQuery* q) const;
 
-		float3 axisScales;				// full-length axis scales
-		float3 axisHScales;				// half-length axis scales
-		float3 axisHScalesSq;			// half-length axis scales (squared)
-		float3 axisHIScales;			// half-length axis scales (inverted)
+		float3 axisScales;					// full-length axis scales
+		float3 axisHScales;					// half-length axis scales
+		float3 axisHScalesSq;				// half-length axis scales (squared)
+		float3 axisHIScales;				// half-length axis scales (inverted)
 		float3 axisOffsets;
 
 		float volumeBoundingRadius;
