@@ -313,13 +313,13 @@ void CGameServer::Update()
 		unsigned length = 0;
 
 		while ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 ) {
-			if (demobuffer[0] == NETMSG_NEWFRAME)
+			if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
 			{
 				// we can't use CreateNewFrame() here
 				CheckSync();
 				lastTick = SDL_GetTicks();
 				serverframenum++;
-				if ((serverframenum % 16) == 0)
+				if (demobuffer[0] == NETMSG_KEYFRAME)
 					serverNet->SendKeyFrame(serverframenum);
 				else
 					serverNet->SendNewFrame();
