@@ -4,6 +4,8 @@
 #include "StdAfx.h"
 #include "creg/creg.h"
 
+#define ZVec ZeroVector
+
 enum COLVOL_TYPES {COLVOL_TYPE_ELLIPSOID, COLVOL_TYPE_CYLINDER, COLVOL_TYPE_BOX};
 enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
 
@@ -11,14 +13,17 @@ class CUnit;
 class CFeature;
 
 struct CollisionQuery {
-	CollisionQuery() {}
-	void Reset() {
-		t0 = 0.0f; p0.x = -1.0f; p0.y = -1.0f; p0.z = -1.0f;
-		t1 = 0.0f; p1.x = -1.0f; p1.y = -1.0f; p1.z = -1.0f;
+	CollisionQuery() {
+		// (0, 0, 0) is volume-space center, so
+		// impossible to obtain as actual points
+		// except in the special cases
+		b0 = false; t0 = 0.0f; p0 = ZVec;
+		b1 = false; t1 = 0.0f; p1 = ZVec;
 	}
 
-	float t0; float3 p0;
-	float t1; float3 p1;
+	bool b0, b1;
+	float t0, t1;
+	float3 p0, p1;
 };
 
 class CCollisionVolume {

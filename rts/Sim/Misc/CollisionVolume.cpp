@@ -287,10 +287,6 @@ bool CCollisionVolume::IntersectAlt(const CMatrix44f& m, const float3& p0, const
 // the volume whose transformation matrix is given by <m>
 bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q) const
 {
-	if (q) {
-		q->Reset();
-	}
-
 	CMatrix44f mInv = m.Invert();
 	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
@@ -330,20 +326,23 @@ bool CCollisionVolume::Intersect(const CMatrix44f& m, const float3& p0, const fl
 
 bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1, CollisionQuery* q) const
 {
-	// transform the ellipsoid-space points into (unit) sphere-space (fewer
-	// float-ops than solving the surface equation for arbitrary ellipsoids)
+	// transform the volume-space points into (unit) sphere-space (requires fewer
+	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
 	const float3 pii0 = float3(pi0.x * axisHIScales.x, pi0.y * axisHIScales.y, pi0.z * axisHIScales.z);
 	const float3 pii1 = float3(pi1.x * axisHIScales.x, pi1.y * axisHIScales.y, pi1.z * axisHIScales.z);
 	const float rSq = 1.0f;
 
-	// if either the start or the end of the sphere-space ray
-	// segment already lies within the unit sphere, terminate
-	// NOTE: disabled since we may want proper collision data
-	/*
-	if (pii0.dot(pii0) < rSq || pii1.dot(pii1) < rSq) {
+	// if both the start and the end of the sphere-space ray
+	// segment already lie within the unit sphere, terminate
+	// (special case with shot originating inside volume)
+	if (pii0.dot(pii0) < rSq && pii1.dot(pii1) < rSq) {
+		if (q) {
+			q->b0 = true; q->b1 = true;
+			q->t0 = 0.0f; q->t1 = 0.0f;
+			q->p0 = ZVec; q->p1 = ZVec;
+		}
 		return true;
 	}
-	*/
 
 	// get the ray direction in unit-sphere space
 	const float3 dir = (pii1 - pii0).Normalize();
@@ -363,21 +362,22 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1, 
 			const float t = -b / (2.0f * a);
 			// get the intersection point in sphere-space
 			const float3 pTmp = pii0 + (dir * t);
-			// get the intersection point in ellipsoid-space
-			const float3 pInt(pTmp.x * axisHScales.x, pTmp.y * axisHScales.y, pTmp.z * axisHScales.z);
-			// get the length of the ray segment in ellipsoid-space
+			// get the intersection point in volume-space
+			const float3 p(pTmp.x * axisHScales.x, pTmp.y * axisHScales.y, pTmp.z * axisHScales.z);
+			// get the length of the ray segment in volume-space
 			const float segLenSq = (pi1 - pi0).SqLength();
 			// get the distance from the start of the segment
-			// to the intersection point in ellipsoid-space
-			const float diffSq = (pInt - pi0).SqLength();
-			const bool ret = (t > 0.0f && diffSq <= segLenSq);
+			// to the intersection point in volume-space
+			const float diffSq = (p - pi0).SqLength();
+			const bool r = (t > 0.0f && diffSq <= segLenSq);
 
-			if (q && ret) {
-				q->t0 = t;
-				q->p0 = pInt;
+			if (q) {
+				q->b0 = r; q->b1 = false;
+				q->t0 = t; q->t1 = 0.0f;
+				q->p0 = p; q->p1 = ZVec;
 			}
 
-			return ret;
+			return r;
 		} else {
 			const float rd = sqrt(d);
 			const float t0 = (-b + rd) / (2.0f * a);
@@ -385,25 +385,26 @@ bool CCollisionVolume::IntersectEllipsoid(const float3& pi0, const float3& pi1, 
 			// get the intersection points in sphere-space
 			const float3 pTmp0 = pii0 + (dir * t0);
 			const float3 pTmp1 = pii0 + (dir * t1);
-			// get the intersection points in ellipsoid-space
-			const float3 pInt0(pTmp0.x * axisHScales.x, pTmp0.y * axisHScales.y, pTmp0.z * axisHScales.z);
-			const float3 pInt1(pTmp1.x * axisHScales.x, pTmp1.y * axisHScales.y, pTmp1.z * axisHScales.z);
-			// get the length of the ray segment in ellipsoid-space
+			// get the intersection points in volume-space
+			const float3 p0(pTmp0.x * axisHScales.x, pTmp0.y * axisHScales.y, pTmp0.z * axisHScales.z);
+			const float3 p1(pTmp1.x * axisHScales.x, pTmp1.y * axisHScales.y, pTmp1.z * axisHScales.z);
+			// get the length of the ray segment in volume-space
 			const float segLenSq = (pi1 - pi0).SqLength();
-			// get the distances from the start of the segment
-			// to the intersection points in ellipsoid-space
-			const float diffSq0 = (pInt0 - pi0).SqLength();
-			const float diffSq1 = (pInt1 - pi0).SqLength();
-			const bool ret = ((t0 > 0.0f && diffSq0 <= segLenSq) || (t1 > 0.0f && diffSq1 <= segLenSq));
+			// get the distances from the start of the ray
+			// to the intersection points in volume-space
+			const float diffSq0 = (p0 - pi0).SqLength();
+			const float diffSq1 = (p1 - pi0).SqLength();
+			const bool b0 = (t0 > 0.0f && diffSq0 <= segLenSq);
+			const bool b1 = (t1 > 0.0f && diffSq1 <= segLenSq);
+			const bool r = (b0 || b1);
 
-			if (q && ret) {
-				q->t0 = t0;
-				q->t1 = t1;
-				q->p0 = pInt0;
-				q->p1 = pInt1;
+			if (q) {
+				q->b0 = b0; q->b1 = b1;
+				q->t0 = t0; q->t1 = t1;
+				q->p0 = p0; q->p1 = p1;
 			}
 
-			return ret;
+			return r;
 		}
 	}
 }
@@ -422,21 +423,24 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 
 bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1, CollisionQuery* q) const
 {
-	// if either the start or the end of the volume-space ray
-	// segment already lies within the box, terminate directly
-	// NOTE: disabled since we may want proper collision data
-	/*
-	const bool b1 = (pi0.x > -axisHScales.x && pi0.x < axisHScales.x);
-	const bool b2 = (pi0.y > -axisHScales.y && pi0.y < axisHScales.y);
-	const bool b3 = (pi0.z > -axisHScales.z && pi0.z < axisHScales.z);
-	const bool b4 = (pi1.x > -axisHScales.x && pi1.x < axisHScales.x);
-	const bool b5 = (pi1.y > -axisHScales.y && pi1.y < axisHScales.y);
-	const bool b6 = (pi1.z > -axisHScales.z && pi1.z < axisHScales.z);
+	// if both the start and the end of the volume-space ray
+	// segment already lie within the box, terminate directly
+	// (special case with shot originating inside volume)
+	const bool ba = (pi0.x > -axisHScales.x && pi0.x < axisHScales.x);
+	const bool bb = (pi0.y > -axisHScales.y && pi0.y < axisHScales.y);
+	const bool bc = (pi0.z > -axisHScales.z && pi0.z < axisHScales.z);
+	const bool bd = (pi1.x > -axisHScales.x && pi1.x < axisHScales.x);
+	const bool be = (pi1.y > -axisHScales.y && pi1.y < axisHScales.y);
+	const bool bf = (pi1.z > -axisHScales.z && pi1.z < axisHScales.z);
 
-	if ((b1 && b2 && b3) || (b4 && b5 && b6)) {
+	if ((ba && bb && bc) && (bd && be && bf)) {
+		if (q) {
+			q->b0 = true; q->b1 = true;
+			q->t0 = 0.0f; q->t1 = 0.0f;
+			q->p0 = ZVec; q->p1 = ZVec;
+		}
 		return true;
 	}
-	*/
 
 	float tn = -9999999.9f;
 	float tf =  9999999.9f;
@@ -503,18 +507,23 @@ bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1, Collis
 		if (tf < 0.0f) { return false; }
 	}
 
-	const float3 pInt0 = pi0 + (dir * tn);
-	const float3 pInt1 = pi0 + (dir * tf);
+	// get the intersection points in volume-space
+	const float3 p0 = pi0 + (dir * tn);
+	const float3 p1 = pi0 + (dir * tf);
+	// get the length of the ray segment in volume-space
 	const float segLenSq = (pi1 - pi0).SqLength();
-	const float diffSq0 = (pInt0 - pi0).SqLength();
-	const float diffSq1 = (pInt1 - pi0).SqLength();
-	const bool ret = (diffSq0 < segLenSq || diffSq1 < segLenSq);
+	// get the distances from the start of the ray
+	// to the intersection points in volume-space
+	const float diffSq0 = (p0 - pi0).SqLength();
+	const float diffSq1 = (p1 - pi0).SqLength();
+	const bool b0 = (diffSq0 < segLenSq);
+	const bool b1 = (diffSq1 < segLenSq);
+	const bool ret = (b0 || b1);
 
-	if (q && ret) {
-		q->t0 = tn;
-		q->t1 = tf;
-		q->p0 = pInt0;
-		q->p1 = pInt1;
+	if (q) {
+		q->b0 = b0; q->b1 = b1;
+		q->t0 = tn; q->t1 = tf;
+		q->p0 = p0; q->p1 = p1;
 	}
 
 	return ret;
