@@ -2943,6 +2943,15 @@ bool CGame::ClientReadNet()
 				break;
 			}
 
+			case NETMSG_KEYFRAME: {
+				int serverframenum = *(int*)(inbuf+1);
+				if (gs->frameNum != (serverframenum - 1))
+				{
+					// error
+					logOutput.Print("Error Server framenum %i does not match client framenum %i", serverframenum - 1, gs->frameNum);
+				}
+				// fall through
+			}
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
 				SimFrame();

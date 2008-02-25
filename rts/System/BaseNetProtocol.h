@@ -22,8 +22,9 @@ including `command' and `messageSize'.
 */
 
 enum NETMSG {
-	NETMSG_QUIT             = 2,  //
-	NETMSG_NEWFRAME         = 3,  // int frameNum;
+	NETMSG_KEYFRAME			= 1,  // int framenum
+	NETMSG_NEWFRAME         = 2,  //
+	NETMSG_QUIT             = 3,  //
 	NETMSG_STARTPLAYING     = 4,  // unsigned countdown
 	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
@@ -105,9 +106,10 @@ public:
 	*/
 	void RawSend(const uchar* data,const unsigned length);
 
+	void SendKeyFrame(int frameNum);
+	void SendNewFrame();
 	void SendQuit();
 	void SendQuit(unsigned playerNum);
-	void SendNewFrame(int frameNum);
 	void SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
 	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);

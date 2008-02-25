@@ -9,8 +9,9 @@ CBaseNetProtocol::CBaseNetProtocol()
   //   > 0:  if its fixed length
   //   < 0:  means the next x bytes represent the length
 
+	RegisterMessage(NETMSG_KEYFRAME, 5);
+	RegisterMessage(NETMSG_NEWFRAME, 1);
 	RegisterMessage(NETMSG_QUIT, 1);
-	RegisterMessage(NETMSG_NEWFRAME, 5);
 	RegisterMessage(NETMSG_STARTPLAYING, 5);
 	RegisterMessage(NETMSG_SETPLAYERNUM, 2);
 	RegisterMessage(NETMSG_PLAYERNAME, -1);
@@ -57,7 +58,23 @@ void CBaseNetProtocol::RawSend(const uchar* data,const unsigned length)
 	SendData(data, length);
 }
 
-//  NETMSG_QUIT             = 2,  //
+//  NETMSG_KEYFRAME         = 1,  // int frameNum;
+
+void CBaseNetProtocol::SendKeyFrame(int frameNum)
+{
+	SendData<int>(NETMSG_KEYFRAME, frameNum);
+}
+
+//  NETMSG_NEWFRAME         = 2,  //
+
+void CBaseNetProtocol::SendNewFrame()
+{
+	unsigned char msg = NETMSG_NEWFRAME;
+	SendData(&msg, 1);
+}
+
+
+//  NETMSG_QUIT             = 3,  //
 
 void CBaseNetProtocol::SendQuit()
 {
@@ -68,13 +85,6 @@ void CBaseNetProtocol::SendQuit(unsigned playerNum)
 {
 	unsigned char a = NETMSG_QUIT;
 	SendData(&a, 1, playerNum);
-}
-
-//  NETMSG_NEWFRAME         = 3,  // int frameNum;
-
-void CBaseNetProtocol::SendNewFrame(int frameNum)
-{
-	SendData<int>(NETMSG_NEWFRAME, frameNum);
 }
 
 //  NETMSG_STARTPLAYING     = 4,  //

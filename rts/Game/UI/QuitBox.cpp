@@ -15,12 +15,7 @@ CQuitBox::CQuitBox(void)
 	box.x1 = 0.34f;
 	box.y1 = 0.18f;
 	box.x2 = 0.66f;
-	box.y2 = 0.82f;
-
-	resignQuitBox.x1=0.02f;
-	resignQuitBox.y1=0.57f;
-	resignQuitBox.x2=0.30f;
-	resignQuitBox.y2=0.61f;
+	box.y2 = 0.78f;
 
 	resignBox.x1=0.02f;
 	resignBox.y1=0.53f;
@@ -84,12 +79,6 @@ void CQuitBox::Draw(void)
 	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 	DrawBox(box);
 
-	// resign and quit Box on mouse over
-	if(InBox(mx,my,box+resignQuitBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(box+resignQuitBox);
-	}
-
 	// resign Box on mouse over
 	if(InBox(mx,my,box+resignBox)){
 		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
@@ -119,10 +108,8 @@ void CQuitBox::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,0.4f,0.8f);
-	font->glPrintAt(box.x1+0.045f,box.y1+0.62f,0.7f,"Do you want to ...");
+	font->glPrintAt(box.x1+0.045f,box.y1+0.58f,0.7f,"Do you want to ...");
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1 + resignQuitBox.x1 + 0.025f,
-	                box.y1 + resignQuitBox.y1 + 0.005f, 1, "Quit and resign");
 	font->glPrintAt(box.x1 + resignBox.x1     + 0.025f,
 	                box.y1 + resignBox.y1     + 0.005f, 1, "Resign");
 	font->glPrintAt(box.x1 + giveAwayBox.x1   + 0.025f,
@@ -185,10 +172,8 @@ std::string CQuitBox::GetTooltip(int x, int y)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+resignQuitBox))
-		return "Resign the match, and quit the game. Units will self-destruct";
 	if(InBox(mx,my,box+resignBox))
-		return "Resign the match, remain in the game. Units will self-destruct";
+		return "Resign the match, remain in the game.";
 	if(InBox(mx,my,box+giveAwayBox))
 		return "Give away all units and resources \nto the team specified below";
 	if(InBox(mx,my,box+teamBox))
@@ -208,7 +193,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	float my=MouseY(y);
 	if(InBox(mx,my,box)){
 		moveBox=true;
-		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
+		if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
 			moveBox=false;
 		if(InBox(mx,my,box+teamBox)){
 			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
@@ -231,7 +216,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
+	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox)) {
 			net->SendGiveAwayEverything(gu->myPlayerNum, shareTeam);
@@ -243,13 +228,8 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			net->SendSystemMessage(gu->myPlayerNum, givenAwayMsg);
 		}
 		// resign, so self-d all units
-		if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox)) {
-			net->SendSelfD(gu->myPlayerNum);
-		}
-		// (resign and) quit, so leave the game
-		if(InBox(mx,my,box+resignQuitBox)) {
-			logOutput.Print("User exited");
-			globalQuit=true;
+		if (InBox(mx,my,box+resignBox)) {
+			net->SendResign(gu->myPlayerNum);
 		}
 	}
 	else if(InBox(mx,my,box+quitBox))
@@ -258,7 +238,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		globalQuit=true;
 	}
 	// if we're still in the game, remove the resign box
-	if(InBox(mx,my,box+resignQuitBox) || InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox)){
+	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox)){
 		delete this;
 		return;
 	}

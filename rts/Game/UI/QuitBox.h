@@ -21,7 +21,6 @@ public:
 	ContainerBox box;
 
 	// in order of appereance ...
-	ContainerBox resignQuitBox;
 	ContainerBox resignBox;
 	ContainerBox giveAwayBox;
 	ContainerBox teamBox;
