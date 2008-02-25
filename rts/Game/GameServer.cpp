@@ -319,7 +319,10 @@ void CGameServer::Update()
 				CheckSync();
 				lastTick = SDL_GetTicks();
 				serverframenum++;
-				serverNet->SendNewFrame(serverframenum);
+				if ((serverframenum % 16) == 0)
+					serverNet->SendKeyFrame(serverframenum);
+				else
+					serverNet->SendNewFrame();
 #ifdef SYNCCHECK
 				outstandingSyncFrames.push_back(serverframenum);
 #endif
@@ -351,6 +354,8 @@ void CGameServer::Update()
 	else if (serverframenum > 0 && !demoReader)
 	{
 		CreateNewFrame(true, false);
+		if (!sentGameOverMsg)
+			CheckForGameEnd();
 	}
 	serverNet->Update();
 
@@ -361,8 +366,6 @@ void CGameServer::Update()
 		if (!msg.empty())
 			GotChatMessage(msg, SERVER_PLAYER);
 	}
-	if (!demoReader && !sentGameOverMsg)
-		CheckForGameEnd();
 	
 	if ((SDL_GetTicks() - serverStartTime) > 30000 && serverNet->MaxConnectionID() == -1)
 	{
@@ -944,8 +947,19 @@ void CGameServer::CheckForGameEnd()
 	unsigned numActiveAllyTeams = 0;
 
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
-		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia)
+	{
+		bool hasPlayer = false;
+		for (int b = 0; b < gs->activePlayers; ++b) {
+			if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
+				hasPlayer = true;
+			}
+		}
+		if (!setup || !setup->aiDlls[a].empty())
+			hasPlayer = true;
+
+		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)
 			++numActiveTeams[gs->AllyTeam(a)];
+	}
 
 	for (unsigned a = 0; (int)a < gs->activeAllyTeams; ++a)
 		if (numActiveTeams[a] != 0)
@@ -996,7 +1010,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		for(int i=0; i < newFrames; ++i){
 			++serverframenum;
 			//Send out new frame messages.
-			serverNet->SendNewFrame(serverframenum);
+			if (0 == (serverframenum % 16))
+				serverNet->SendKeyFrame(serverframenum);
+			else
+				serverNet->SendNewFrame();
 #ifdef SYNCCHECK
 			outstandingSyncFrames.push_back(serverframenum);
 #endif
