@@ -1403,6 +1403,94 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Server"
+				>
+				<File
+					RelativePath="..\..\Game\Server\MsgStrings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\ServerLog.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\ServerLog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\ServerLogHandler.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\ServerLogHandler.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Rendering"
@@ -2707,6 +2795,46 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\CollisionVolume.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CollisionVolume.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\DamageArray.cpp"
 					>
 				</File>
@@ -2720,34 +2848,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\DamageArrayHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Feature.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\Feature.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureDef.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureSet.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\FeatureSet.h"
 					>
 				</File>
 				<File
@@ -2804,6 +2904,38 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\Wind.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Features"
+				>
+				<File
+					RelativePath="..\..\Sim\Features\Feature.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\Feature.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureDef.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureSet.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureSet.h"
 					>
 				</File>
 			</Filter>
@@ -3105,6 +3237,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\resource.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\SpringApp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\SpringApp.h"
 				>
 			</File>
 			<File
@@ -4819,6 +4959,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Net\Exception.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Net\LocalConnection.cpp"
 					>
 					<FileConfiguration
@@ -4995,6 +5139,86 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Net\Socket.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\Net\Socket.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Net\UDPConnectedSocket.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\Net\UDPConnectedSocket.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Net\UDPConnection.cpp"
 					>
 					<FileConfiguration
@@ -5032,46 +5256,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPConnection.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\UDPHardlink.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\UDPHardlink.h"
 					>
 				</File>
 				<File
