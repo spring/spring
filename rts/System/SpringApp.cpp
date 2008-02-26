@@ -1,10 +1,10 @@
+#include "StdAfx.h"
 #include "SpringApp.h"
 
 #include <signal.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "StdAfx.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"

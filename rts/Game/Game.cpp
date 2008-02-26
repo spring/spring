@@ -2961,7 +2961,7 @@ bool CGame::ClientReadNet()
 				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
 #else
-				net->SendNewFrame(gs->frameNum);
+				net->SendNewFrame();
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
