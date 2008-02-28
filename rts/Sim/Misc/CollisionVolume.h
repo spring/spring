@@ -8,6 +8,7 @@
 
 enum COLVOL_TYPES {COLVOL_TYPE_ELLIPSOID, COLVOL_TYPE_CYLINDER, COLVOL_TYPE_BOX};
 enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
+enum COLVOL_TESTS {COLVOL_TEST_DISC, COLVOL_TEST_CONT};
 
 class CUnit;
 class CFeature;
@@ -31,17 +32,16 @@ class CCollisionVolume {
 		CR_DECLARE(CCollisionVolume)
 
 		CCollisionVolume() {}
-		CCollisionVolume(const std::string&, const float3&, const float3&);
+		CCollisionVolume(const std::string&, const float3&, const float3&, int);
 		~CCollisionVolume() {}
 
 		void SetDefaultScale(const float);
 
-		bool Collision(const CUnit*, const float3&) const;
-		bool Collision(const CFeature*, const float3&) const;
-		bool Intersect(const CUnit*, const float3& p1, const float3& p2, CollisionQuery* q = 0x0) const;
-		bool Intersect(const CFeature*, const float3& p1, const float3& p2, CollisionQuery* q = 0x0) const;
+		bool DetectHit(const CUnit*, const float3&, const float3&, CollisionQuery* q = 0x0) const;
+		bool DetectHit(const CFeature*, const float3&, const float3&, CollisionQuery* q = 0x0) const;
 
-		int GetType() const { return volumeType; }
+		int GetVolumeType() const { return volumeType; }
+		int GetTestType() const { return testType; }
 		int GetPrimaryAxis() const { return primaryAxis; }
 		float GetBoundingRadius() const { return volumeBoundingRadius; }
 		float GetBoundingRadiusSq() const { return volumeBoundingRadiusSq; }
@@ -52,6 +52,11 @@ class CCollisionVolume {
 		bool IsSphere() const { return spherical; }
 
 	private:
+		bool Collision(const CUnit*, const float3&) const;
+		bool Collision(const CFeature*, const float3&) const;
+		bool Intersect(const CUnit*, const float3& p1, const float3& p2, CollisionQuery* q) const;
+		bool Intersect(const CFeature*, const float3& p1, const float3& p2, CollisionQuery* q) const;
+
 		bool Collision(const CMatrix44f&, const float3&) const;
 		bool Intersect(const CMatrix44f&, const float3&, const float3&, CollisionQuery* q) const;
 		bool IntersectAlt(const CMatrix44f&, const float3&, const float3&, CollisionQuery* q) const;
@@ -66,9 +71,10 @@ class CCollisionVolume {
 		float3 axisHIScales;				// half-length axis scales (inverted)
 		float3 axisOffsets;
 
-		float volumeBoundingRadius;
-		float volumeBoundingRadiusSq;
+		float volumeBoundingRadius;			// radius of minimally-bounding sphere around volume
+		float volumeBoundingRadiusSq;		// squared radius of minimally-bounding sphere
 		int volumeType;
+		int testType;
 		int primaryAxis;
 		int secondaryAxes[2];
 		bool spherical;

@@ -1031,7 +1031,7 @@ inline void CUnit::DrawDebug()
 
 		CCollisionVolume* vol = unitDef->collisionVolume;
 
-		switch (vol->GetType()) {
+		switch (vol->GetVolumeType()) {
 			case COLVOL_TYPE_ELLIPSOID: {
 				// scaled sphere: radius, slices, stacks
 				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));

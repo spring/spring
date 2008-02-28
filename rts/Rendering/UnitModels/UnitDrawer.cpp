@@ -33,6 +33,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "mmgr.h"
 
+
 CUnitDrawer* unitDrawer;
 using namespace std;
 

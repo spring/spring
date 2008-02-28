@@ -612,7 +612,7 @@ void CProjectileHandler::CheckUnitCol()
 
 				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
 
-				if (vol->Intersect(unit, p->pos, p->pos + p->speed)) {
+				if (vol->DetectHit(unit, p->pos, p->pos + p->speed)) {
 					p->Collision(unit);
 					break;
 				}
@@ -627,7 +627,7 @@ void CProjectileHandler::CheckUnitCol()
 
 					const CCollisionVolume* vol = feature->def->collisionVolume;
 
-					if (vol->Intersect(feature, p->pos, p->pos + p->speed)) {
+					if (vol->DetectHit(feature, p->pos, p->pos + p->speed)) {
 						p->Collision(feature);
 						break;
 					}
