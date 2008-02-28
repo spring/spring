@@ -242,9 +242,11 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->collisionVolumeType = fdTable.GetString("collisionVolumeType", "");
 	fd->collisionVolumeScales = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
+	fd->collisionVolumeTest = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
 
 	// initialize the (per-featuredef) collision-volume
-	fd->collisionVolume = SAFE_NEW CCollisionVolume(fd->collisionVolumeType, fd->collisionVolumeScales, fd->collisionVolumeOffsets);
+	fd->collisionVolume = SAFE_NEW CCollisionVolume(fd->collisionVolumeType,
+		fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
 
 
 	fd->upright = fdTable.GetBool("upright", false);
@@ -316,7 +318,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->description = "Tree";
 			fd->mass = 20;
 			// trees by default have spheres of fixed radius (TREE_RADIUS)
-			fd->collisionVolume = SAFE_NEW CCollisionVolume("", ZeroVector, ZeroVector);
+			fd->collisionVolume = SAFE_NEW CCollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
 			AddFeatureDef(name, fd);
 		}
 		else if (name.find("geovent") != string::npos) {

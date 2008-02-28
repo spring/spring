@@ -194,6 +194,7 @@ struct UnitDef
 	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths
 	float3 collisionVolumeOffsets;		// relative to the unit's center position
+	int collisionVolumeTest;			// 0: discrete, 1: continuous
 
 
 	struct UnitDefWeapon {
