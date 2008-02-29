@@ -2329,7 +2329,7 @@ bool CGame::Draw()
 			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 						p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
-						(int)(((p->ping-1) * 1000) / (30 * gs->speedFactor)));
+						(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 			glTranslatef(0.76f, 0.01f + (0.02f * (count - a - 1)), 1.0f);
 			glScalef(xScale, yScale, 1.0f);
 			glColor4fv(color);
