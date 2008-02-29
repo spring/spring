@@ -31,7 +31,6 @@ CGameSetup::~CGameSetup()
 
 bool CGameSetup::Init(std::string setupFile)
 {
-	setupFileName = setupFile;
 	if(setupFile.empty())
 		return false;
 	CFileHandler fh(setupFile);

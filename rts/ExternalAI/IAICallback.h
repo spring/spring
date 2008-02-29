@@ -33,8 +33,6 @@ class CCommandQueue;
 #define AIVAL_GUI_SCREENY                10 // float
 #define AIVAL_GUI_CAMERA_DIR             11 // float3
 #define AIVAL_GUI_CAMERA_POS             12 // float3
-#define AIVAL_SCRIPT_FILENAME_DEPRECATED 13 // std::string, hence unsafe, don't use!
-#define AIVAL_SCRIPT_FILENAME_CSTR       14 // data points to char buffer of sufficient size
 #define AIVAL_LOCATE_FILE_R              15 // char*
 #define AIVAL_LOCATE_FILE_W              16 // char*
 #define AIVAL_UNIT_LIMIT                 17 // int
@@ -105,6 +103,7 @@ public:
 	virtual int GetMyTeam()=0;
 	virtual int GetMyAllyTeam()=0;
 	virtual int GetPlayerTeam(int player) = 0;
+	virtual const char* GetTeamSide(int team) = 0;
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	//set something to !0 to tell other ais that the area is already initialized when they try to create it
 	//the exact internal format of the memory areas is up to the ais to keep consistent

@@ -24,7 +24,6 @@ public:
 	CGameSetupData();
 	~CGameSetupData();
 	
-	std::string setupFileName;
 	int myPlayerNum;
 	int numPlayers; //the expected amount of players
 	int numTeams;
