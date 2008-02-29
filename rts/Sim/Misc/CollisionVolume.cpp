@@ -575,7 +575,8 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 			t0 = (-B + rD) / (2.0f * A); p0 = pi0 + (dir * t0);
 			t1 = (-B - rD) / (2.0f * A); p1 = pi0 + (dir * t1);
 
-			// test the first found intersection point
+			// test the 1st intersection point
+			// along the cylinder's major axis
 			if (p0[pAx] > -axisHScales[pAx] && p0[pAx] < axisHScales[pAx]) {
 				// intersection point <p0> falls between cylinder
 				// caps, check if it also lies on our ray segment
@@ -583,7 +584,8 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 				b0 = (/* t0 > 0.0f && */ dSq0 <= segLenSq);
 			}
 
-			// test the second found intersection point
+			// test the 2nd intersection point
+			// along the cylinder's major axis
 			if (p1[pAx] > -axisHScales[pAx] && p1[pAx] < axisHScales[pAx]) {
 				// intersection point <p1> falls between cylinder
 				// caps, check if it also lies on our ray segment
@@ -592,16 +594,19 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 			}
 
 			if (!b0 && !b1) {
-				// neither p0 nor p1 falls between end-caps but
-				// ray segment might still intersect one, so do
-				// test for intersection against the cap planes
+				// neither p0 nor p1 lies on ray segment (or falls between
+				// the cylinder end-caps) but segment might still intersect
+				// a cap, so do extra test for intersection against the cap
+				// planes
 				// NOTE: DIV0 if normal and dir are orthogonal?
-				t0 = -(n0.dot(pi0) + axisHScales[pAx]) / n0.dot(dir); p0 = pi0 + (dir * t0);
-				t1 = -(n1.dot(pi0) - axisHScales[pAx]) / n1.dot(dir); p1 = pi0 + (dir * t1);
+				t0 = -(n0.dot(pi0) + axisHScales[pAx]) / n0.dot(dir);
+				t1 = -(n1.dot(pi0) - axisHScales[pAx]) / n1.dot(dir);
+				p0 = pi0 + (dir * t0); dSq0 = (p0 - pi0).SqLength();
+				p1 = pi0 + (dir * t1); dSq1 = (p1 - pi0).SqLength();
 				r0 = (((p0[sAx0] * p0[sAx0]) / axisHScalesSq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / axisHScalesSq[sAx1]));
 				r1 = (((p1[sAx0] * p1[sAx0]) / axisHScalesSq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / axisHScalesSq[sAx1]));
-				b0 = (t0 > 0.0f && r0 <= 1.0f);
-				b1 = (t1 > 0.0f && r1 <= 1.0f);
+				b0 = (t0 > 0.0f && r0 <= 1.0f && dSq0 <= segLenSq);
+				b1 = (t1 > 0.0f && r1 <= 1.0f && dSq1 <= segLenSq);
 			}
 		}
 
@@ -711,8 +716,8 @@ bool CCollisionVolume::IntersectBox(const float3& pi0, const float3& pi1, Collis
 	const float dSq1 = (p1 - pi0).SqLength();
 	// if one of the intersection points is closer to p0
 	// than the end of the ray segment, the hit is valid
-	const bool b0 = (dSq0 < segLenSq);
-	const bool b1 = (dSq1 < segLenSq);
+	const bool b0 = (dSq0 <= segLenSq);
+	const bool b1 = (dSq1 <= segLenSq);
 
 	if (q) {
 		q->b0 = b0; q->b1 = b1;
