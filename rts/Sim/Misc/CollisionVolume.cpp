@@ -524,7 +524,6 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 		} break;
 	}
 
-/*
 	if (pass && pii0.dot(pii0) <= 1.0f) {
 		// terminate early in the special case
 		// that shot originated within volume
@@ -535,7 +534,6 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 		}
 		return true;
 	}
-*/
 
 	const int pAx = primaryAxis;
 	const int sAx0 = secondaryAxes[0];
