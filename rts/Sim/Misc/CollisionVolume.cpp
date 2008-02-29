@@ -524,6 +524,7 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 		} break;
 	}
 
+/*
 	if (pass && pii0.dot(pii0) <= 1.0f) {
 		// terminate early in the special case
 		// that shot originated within volume
@@ -534,6 +535,7 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 		}
 		return true;
 	}
+*/
 
 	const int pAx = primaryAxis;
 	const int sAx0 = secondaryAxes[0];
@@ -592,22 +594,22 @@ bool CCollisionVolume::IntersectCylinder(const float3& pi0, const float3& pi1, C
 				dSq1 = (p1 - pi0).SqLength();
 				b1 = (/* t1 > 0.0f && */ dSq1 <= segLenSq);
 			}
+		}
 
-			if (!b0 && !b1) {
-				// neither p0 nor p1 lies on ray segment (or falls between
-				// the cylinder end-caps) but segment might still intersect
-				// a cap, so do extra test for intersection against the cap
-				// planes
-				// NOTE: DIV0 if normal and dir are orthogonal?
-				t0 = -(n0.dot(pi0) + axisHScales[pAx]) / n0.dot(dir);
-				t1 = -(n1.dot(pi0) - axisHScales[pAx]) / n1.dot(dir);
-				p0 = pi0 + (dir * t0); dSq0 = (p0 - pi0).SqLength();
-				p1 = pi0 + (dir * t1); dSq1 = (p1 - pi0).SqLength();
-				r0 = (((p0[sAx0] * p0[sAx0]) / axisHScalesSq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / axisHScalesSq[sAx1]));
-				r1 = (((p1[sAx0] * p1[sAx0]) / axisHScalesSq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / axisHScalesSq[sAx1]));
-				b0 = (t0 > 0.0f && r0 <= 1.0f && dSq0 <= segLenSq);
-				b1 = (t1 > 0.0f && r1 <= 1.0f && dSq1 <= segLenSq);
-			}
+		if (!b0 && !b1) {
+			// neither p0 nor p1 lies on ray segment (or falls between
+			// the cylinder end-caps) but segment might still intersect
+			// a cap, so do extra test for intersection against the cap
+			// planes
+			// NOTE: DIV0 if normal and dir are orthogonal?
+			t0 = -(n0.dot(pi0) + axisHScales[pAx]) / n0.dot(dir);
+			t1 = -(n1.dot(pi0) - axisHScales[pAx]) / n1.dot(dir);
+			p0 = pi0 + (dir * t0); dSq0 = (p0 - pi0).SqLength();
+			p1 = pi0 + (dir * t1); dSq1 = (p1 - pi0).SqLength();
+			r0 = (((p0[sAx0] * p0[sAx0]) / axisHScalesSq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / axisHScalesSq[sAx1]));
+			r1 = (((p1[sAx0] * p1[sAx0]) / axisHScalesSq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / axisHScalesSq[sAx1]));
+			b0 = (t0 > 0.0f && r0 <= 1.0f && dSq0 <= segLenSq);
+			b1 = (t1 > 0.0f && r1 <= 1.0f && dSq1 <= segLenSq);
 		}
 
 		if (q) {
