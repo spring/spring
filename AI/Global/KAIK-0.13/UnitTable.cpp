@@ -115,40 +115,22 @@ int CUnitTable::BuildModSideMap() {
 }
 
 int CUnitTable::ReadTeamSides() {
-	char scriptFileName[1024] = {0};
-	ai->cb->GetValue(AIVAL_SCRIPT_FILENAME_CSTR, scriptFileName);
-
 	teamSides.resize(MAX_TEAMS, 0);
 	teamSides[0] = 0;	// team 0 defaults to side 0 (in GlobalAI startscript)
 	teamSides[1] = 1;	// team 1 defaults to side 1 (in GlobalAI startscript)
 
-	if (scriptFileName[0] > 0) {
-		// got a GameSetup script
-		char sideKey[128] = {0};
-		char sideName[128] = {0};
+	// got a GameSetup script
 
-		CSunParser scriptFileParser(ai);
-		scriptFileParser.LoadRealFile(scriptFileName);
+	for (int i = 0; i < MAX_TEAMS; i++) {
+		const char* sideKey = ai->cb->GetTeamSide(i);
 
-		for (int i = 0; i < MAX_TEAMS; i++) {
-			sideName[0] = 0;
-			snprintf(sideKey, 127, "GAME\\TEAM%d\\Side", i);
-			scriptFileParser.GetDef(sideName, "", sideKey);
-
-			if (sideName[0] > 0) {
-				// transform the side strings to lower-case
-				std::string ssideName(sideName);
-				StringToLowerInPlace(ssideName);
-
-				// FIXME: Gaia-team side?
-				teamSides[i] = modSideMap[ssideName];
-			}
+		if (sideKey) {
+			// FIXME: Gaia-team side?
+			teamSides[i] = modSideMap[sideKey];
 		}
-
-		return teamSides[ai->cb->GetMyTeam()];
-	} else {
-		return teamSides[1];
 	}
+
+	return teamSides[ai->cb->GetMyTeam()];
 }
 
 // called at the end of Init()

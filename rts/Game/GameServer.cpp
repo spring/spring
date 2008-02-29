@@ -27,9 +27,24 @@
 #include <iostream>
 #endif
 
-#define SYNCCHECK_TIMEOUT 300 //frames
-#define SYNCCHECK_MSG_TIMEOUT 400  // used to prevent msg spam
-const unsigned GameStartDelay = 3800; //msecs to wait until the game starts after all players are ready
+/// frames until a syncchech will time out and a warning is given out
+const int SYNCCHECK_TIMEOUT = 300;
+
+/// used to prevent msg spam
+const int SYNCCHECK_MSG_TIMEOUT = 400;
+
+///msecs to wait until the game starts after all players are ready
+const unsigned GameStartDelay = 3800;
+
+/// The time intervall in msec for sending player statistics to each client
+const unsigned playerInfoTime= 2000;
+
+/// msecs to wait until the timeout condition (na active clients) activates
+const unsigned serverTimeout = 30000;
+
+/// every n'th frame will be a keyframe (and contain the server's framenumber)
+const unsigned serverKeyframeIntervall = 16;
+
 using boost::format;
 
 GameParticipant::GameParticipant(bool willHaveRights)
@@ -276,7 +291,7 @@ void CGameServer::Update()
 	}
 	lastUpdate = SDL_GetTicks();
 
-	if(lastPlayerInfo < (SDL_GetTicks() - 2000)){
+	if(lastPlayerInfo < (SDL_GetTicks() - playerInfoTime)){
 		lastPlayerInfo = SDL_GetTicks();
 
 		if (serverframenum > 0) {
@@ -367,7 +382,7 @@ void CGameServer::Update()
 			GotChatMessage(msg, SERVER_PLAYER);
 	}
 	
-	if ((SDL_GetTicks() - serverStartTime) > 30000 && serverNet->MaxConnectionID() == -1)
+	if ((SDL_GetTicks() - serverStartTime) > serverTimeout && serverNet->MaxConnectionID() == -1)
 	{
 		log.Message(NoClientsExit);
 		quitServer = true;
@@ -796,17 +811,16 @@ void CGameServer::GenerateAndSendGameID()
 	for (int i = 4; i < 12; ++i)
 		gameID.charArray[i] = rng();
 
-	CRC entropy;
-	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
-
 	// Third dword is CRC of setupText (if there is a setup)
 	// or pseudo random bytes (if there is no setup)
 	if (setup != NULL) {
 		CRC crc;
-		crc.UpdateFile(setup->setupFileName);
+		crc.UpdateData((const unsigned char*)setup->gameSetupText, setup->gameSetupTextLength);
 		gameID.intArray[2] = crc.GetCRC();
 	}
 
+	CRC entropy;
+	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
 	gameID.intArray[3] = entropy.GetCRC();
 
 	serverNet->SendGameID(gameID.charArray);
@@ -825,7 +839,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		// Lobby-protocol doesn't support creating games without players inside
 		// so in dedicated mode there will always be the host-player in the script
 		// which doesn't exist and will never join, so skip it in this case
-		if (setup && setup->myPlayerNum == start)
+		if (setup && (unsigned)setup->myPlayerNum == start)
 			start++;
 #endif
 		for (unsigned a = start; a < (unsigned)setup->numPlayers; a++) {
@@ -1010,7 +1024,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		for(int i=0; i < newFrames; ++i){
 			++serverframenum;
 			//Send out new frame messages.
-			if (0 == (serverframenum % 16))
+			if (0 == (serverframenum % serverKeyframeIntervall))
 				serverNet->SendKeyFrame(serverframenum);
 			else
 				serverNet->SendNewFrame();
@@ -1079,7 +1093,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	}
 
 	// is this is the local player (== host) then he can kick, set options etc.
-	bool grantRights = setup ? (hisNewNumber == setup->myPlayerNum) : (wantedNumber == 0);
+	bool grantRights = setup ? (hisNewNumber == (unsigned)setup->myPlayerNum) : (wantedNumber == 0);
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
 	if (setup && hisNewNumber < (unsigned)setup->numPlayers/* needed for non-hosted demo playback */)
 	{

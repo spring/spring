@@ -137,6 +137,14 @@ int CAICallback::GetPlayerTeam(int player)
 	return pl->team;
 }
 
+const char* CAICallback::GetTeamSide(int team)
+{
+	if (team < gs->activeTeams)
+		return gs->Team(team)->side.c_str();
+	else
+		return 0;
+}
+
 void* CAICallback::CreateSharedMemArea(char* name, int size)
 {
 	return globalAI->GetAIBuffer(team,name,size);
@@ -1117,15 +1125,6 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
 			*(float3*)data = camCtrl->GetPos();
-			return true;
-		}case AIVAL_SCRIPT_FILENAME_DEPRECATED:{
-			// Passing container objects across DLL boundaries is not safe on windows,
-			// So this AIVAL is deprecated in favour of AIVAL_SCRIPT_FILENAME_CSTR
-// 			if (gameSetup) *((std::string*)data) = gameSetup->setupFileName;
-// 			else *((std::string*)data) = "";
-			return false;
-		}case AIVAL_SCRIPT_FILENAME_CSTR:{
-			strcpy((char*) data, gameSetup ? gameSetup->setupFileName.c_str() : "");
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			std::string f((char*) data);

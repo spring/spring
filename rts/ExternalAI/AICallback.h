@@ -30,6 +30,7 @@ public:
 	int GetMyTeam();
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
+	const char* GetTeamSide(int team);
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	//set something to !0 to tell other ais that the area is already initialized when they try to create it
 	//the exact internal format of the memory areas is up to the ais to keep consistent
