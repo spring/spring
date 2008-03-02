@@ -36,6 +36,7 @@ class CCommandQueue;
 #define AIVAL_LOCATE_FILE_R              15 // char*
 #define AIVAL_LOCATE_FILE_W              16 // char*
 #define AIVAL_UNIT_LIMIT                 17 // int
+#define AIVAL_SCRIPT                     18 // const char* - buffer for pointer to char
 
 struct UnitResourceInfo
 {

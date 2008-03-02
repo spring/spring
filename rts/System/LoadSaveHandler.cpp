@@ -127,7 +127,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 
 		string scriptText;
 		if (gameSetup) {
-			scriptText.insert (scriptText.begin(), gameSetup->gameSetupText, gameSetup->gameSetupText + gameSetup->gameSetupTextLength);
+			scriptText = gameSetup->gameSetupText;
 		}
 
 		WriteString(ofs, scriptText);

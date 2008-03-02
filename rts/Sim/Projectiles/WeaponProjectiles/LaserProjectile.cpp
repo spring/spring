@@ -35,7 +35,7 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	curLength(0),
 	stayTime(0),
 	intensity(intensity),
-	intensityFalloff(intensity*weaponDef->falloffRate)
+	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0)
 {
 	dir=speed;
 	dir.Normalize();

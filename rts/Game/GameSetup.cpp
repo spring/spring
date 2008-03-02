@@ -356,8 +356,9 @@ void CGameSetup::RemapAllyteams()
 bool CGameSetup::Init(const char* buf, int size)
 {
 	// Copy buffer contents
-	gameSetupText = SAFE_NEW char[size];
+	gameSetupText = SAFE_NEW char[size+1];
 	memcpy(gameSetupText, buf, size);
+	gameSetupText[size] = 0;
 	gameSetupTextLength = size;
 
 	// Parse
