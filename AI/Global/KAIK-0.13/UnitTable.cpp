@@ -119,13 +119,13 @@ int CUnitTable::ReadTeamSides() {
 	teamSides[0] = 0;	// team 0 defaults to side 0 (in GlobalAI startscript)
 	teamSides[1] = 1;	// team 1 defaults to side 1 (in GlobalAI startscript)
 
-	// got a GameSetup script
-
 	for (int i = 0; i < MAX_TEAMS; i++) {
 		const char* sideKey = ai->cb->GetTeamSide(i);
 
 		if (sideKey) {
 			// FIXME: Gaia-team side?
+			// team index was valid (and we are in a GameSetup-type
+			// game), override the default side index for this team
 			teamSides[i] = modSideMap[sideKey];
 		}
 	}
