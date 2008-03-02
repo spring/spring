@@ -31,6 +31,7 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -899,6 +900,16 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 					}
 				}
 			}
+			//Checking factories near - factory can open yard for building
+			if (good) for(int z2=max(0,zs-ysize/2-minDist-2);z2<min(gs->mapy,zs+(ysize+1)/2+minDist+2);++z2){
+				for(int x2=max(0,xs-xsize/2-minDist-2);x2<min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
+					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
+					if(so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening){
+						good=false;
+						break;
+					}
+				}
+			}
 			if(good)
 				return bi.pos;
 		}
@@ -1147,6 +1158,10 @@ bool CAICallback::GetValue(int id, void *data)
 		}
 		case AIVAL_UNIT_LIMIT: {
 			*(int*) data = uh->maxUnits;
+			return true;
+		}
+		case AIVAL_SCRIPT: {
+			*(const char**) data = gameSetup ? gameSetup->gameSetupText : "";
 			return true;
 		}
 		default:
