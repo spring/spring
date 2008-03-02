@@ -139,10 +139,18 @@ int CAICallback::GetPlayerTeam(int player)
 
 const char* CAICallback::GetTeamSide(int team)
 {
-	if (team < gs->activeTeams)
+	if (team < gs->activeTeams && gameSetup) {
 		return gs->Team(team)->side.c_str();
-	else
+	} else {
+		// if this is not a GameSetup-type game but a
+		// GlobalAI-test one, the side-strings for all
+		// active teams (0, 1, 2) will always be "arm"
+		// since CGlobalAITestScript does not override
+		// the CTeam defaults (unlike CGameSetup), so
+		// return 0 or AI's that rely on this function
+		// will break in GlobalAI tests
 		return 0;
+	}
 }
 
 void* CAICallback::CreateSharedMemArea(char* name, int size)
