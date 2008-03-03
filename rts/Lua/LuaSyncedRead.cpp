@@ -248,6 +248,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitPieceInfo);
 	REGISTER_LUA_CFUNC(GetUnitPiecePosition);
 	REGISTER_LUA_CFUNC(GetUnitPieceDirection);
+	REGISTER_LUA_CFUNC(GetUnitPiecePosDir);
 	REGISTER_LUA_CFUNC(GetUnitPieceMatrix);
 	REGISTER_LUA_CFUNC(GetUnitScriptPiece);
 	REGISTER_LUA_CFUNC(GetUnitScriptNames);
@@ -4141,6 +4142,39 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
 	return 3;
+}
+
+
+int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const LocalS3DOModel* localModel = unit->localmodel;
+	if (localModel == NULL) {
+		return 0;
+	}
+	const int piece = (int)luaL_checknumber(L, 2) - 1;
+	if ((piece < 0) || (piece >= localModel->numpieces)) {
+		return 0;
+	}
+	float3 dir(0,0,0);
+	float3 pos(0,0,0);
+	localModel->GetRawEmitDirPos(piece,pos,dir);
+	pos = unit->pos + unit->frontdir * pos.z
+	                + unit->updir    * pos.y
+	                + unit->rightdir * pos.x;
+	dir = unit->frontdir * dir.z
+	    + unit->updir    * dir.y
+	    + unit->rightdir * dir.x;
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	lua_pushnumber(L, dir.x);
+	lua_pushnumber(L, dir.y);
+	lua_pushnumber(L, dir.z);
+	return 6;
 }
 
 
