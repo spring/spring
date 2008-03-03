@@ -168,6 +168,7 @@ class LuaSyncedRead {
 		static int GetUnitPieceInfo(lua_State* L);
 		static int GetUnitPiecePosition(lua_State* L);
 		static int GetUnitPieceDirection(lua_State* L);
+		static int GetUnitPiecePosDir(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
