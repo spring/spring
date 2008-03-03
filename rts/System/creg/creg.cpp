@@ -168,31 +168,6 @@ void Class::SetMemberFlag (const char *name, ClassMemberFlag f)
 		}
 }
 
-void Class::SerializeInstance (ISerializer *s, void *ptr)
-{
-	if (base)
-		base->SerializeInstance (s, ptr);
-
-	for (uint a=0;a<members.size();a++)
-	{
-		creg::Class::Member* m = members [a];
-		if (m->flags & CM_NoSerialize)
-			continue;
-
-		void *memberAddr = ((char*)ptr) + m->offset;
-/*		if (s->IsWriting ())
-			printf ("writing %s at %d\n", m->name,  (int)((COutputStreamSerializer *)s)->stream->tellp ());
-		else
-			printf ("reading %s at %d\n", m->name,  (int)((CInputStreamSerializer *)s)->stream->tellg ());*/
-		m->type->Serialize (s, memberAddr);
-	}
-
-	if (serializeProc) {
-		_DummyStruct *obj = (_DummyStruct*)ptr;
-		(obj->*serializeProc)(*s);
-	}
-}
-
 void* Class::CreateInstance()
 {
 	void *inst = ::operator new(binder->size);
@@ -234,4 +209,5 @@ IType::~IType() {
 
 IMemberRegistrator::~IMemberRegistrator() {
 }
+
 

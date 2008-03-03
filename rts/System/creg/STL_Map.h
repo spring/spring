@@ -48,14 +48,14 @@ namespace creg
 			T& ct = *(T*)instance;
 			if (s->IsWriting ()) {
 				int size=ct.size();
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				for (iterator i=ct.begin();i!=ct.end();++i)  {
 					keyType->Serialize (s, (void*) &i->first);
 					mappedType->Serialize (s, &i->second);
 				}
 			} else {
 				int size;
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				for (int a=0;a<size;a++) {
 					typename T::value_type pt;
 					// only allow copying of the key type
