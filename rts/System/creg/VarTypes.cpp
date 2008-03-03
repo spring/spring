@@ -22,7 +22,7 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 #endif
 	case crInt:
 	case crUInt:
-		s->Serialize (inst, 4);
+		s->SerializeInt (inst, 4);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedSshort://FIXME
@@ -30,7 +30,7 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 #endif
 	case crShort:
 	case crUShort:
-		s->Serialize (inst, 2);
+		s->SerializeInt (inst, 2);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedSchar://FIXME

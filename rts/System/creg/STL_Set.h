@@ -24,12 +24,12 @@ namespace creg
 			T& ct = *(T*)instance;
 			if (s->IsWriting ()) {
 				int size=ct.size();
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				for (iterator i=ct.begin();i!=ct.end();++i) 
 					elemType->Serialize (s, (void*) &*i);
 			} else {
 				int size;
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				for (int i=0;i<size;i++) {
 					typename T::value_type v;
 					elemType->Serialize (s, &v);
@@ -67,4 +67,5 @@ namespace creg
 	};
 };
 #endif
+
 

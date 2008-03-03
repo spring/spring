@@ -15,12 +15,12 @@ namespace creg {
 			T& ct = *(T*)inst;
 			if (s->IsWriting ()) {
 				int size = (int)ct.size();
-				s->Serialize (&size,sizeof(int));
+				s->SerializeInt (&size,sizeof(int));
 				for (typename T::iterator it = ct.begin(); it!=ct.end(); ++it)
 					elemType->Serialize (s, &*it);
 			} else {
 				int size;
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				ct.resize (size);
 				for (typename T::iterator it = ct.begin(); it!=ct.end(); ++it)
 					elemType->Serialize (s, &*it);

@@ -130,8 +130,6 @@ namespace creg {
 
 		/// Returns true if this class is equal to or derived from other
 		bool IsSubclassOf (Class* other);
-		/// Serialize all the registered members
-		void SerializeInstance (ISerializer* s, void *instance);
 		void DeleteInstance (void *inst);
 		/// Allocate an instance of the class
 		void* CreateInstance ();
@@ -180,12 +178,12 @@ namespace creg {
 			T& ct = *(T*)inst;
 			if (s->IsWriting ()) {
 				int size = (int)ct.size();
-				s->Serialize (&size,sizeof(int));
+				s->SerializeInt (&size,sizeof(int));
 				for (int a=0;a<size;a++)
 					elemType->Serialize (s, &ct[a]);
 			} else {
 				int size;
-				s->Serialize (&size, sizeof(int));
+				s->SerializeInt (&size, sizeof(int));
 				ct.resize (size);
 				for (int a=0;a<size;a++)
 					elemType->Serialize (s, &ct[a]);

@@ -16,6 +16,16 @@ namespace creg {
 	class COutputStreamSerializer : public ISerializer
 	{
 	protected:
+		struct ObjectMember {
+			creg::Class::Member* member;
+			int memberId;
+			int size;
+		};
+		struct ObjectMemberGroup {
+			creg::Class *membersClass;
+			std::vector<COutputStreamSerializer::ObjectMember> members;
+			int size;
+		};
 		struct ObjectRef {
 			ObjectRef() {
 				ptr = 0;
@@ -31,7 +41,7 @@ namespace creg {
 				this->isEmbedded=isEmbedded;
 				this->class_=class_;
 			}
-			ObjectRef(const ObjectRef&src) {
+			ObjectRef(const ObjectRef&src) :memberGroups(src.memberGroups){
 				ptr=src.ptr;
 				id=src.id;
 				classIndex=src.classIndex;
@@ -42,6 +52,7 @@ namespace creg {
 			int id, classIndex;
 			bool isEmbedded;
 			creg::Class *class_;
+			std::vector<COutputStreamSerializer::ObjectMemberGroup> memberGroups;
 			bool isThisObject(void *objPtr,creg::Class *objClass,bool objEmbedded) const
 			{
 				if (ptr!=objPtr) return false;
@@ -74,6 +85,8 @@ namespace creg {
 
 		ObjectRef* FindObjectRef(void *inst, creg::Class *objClass, bool isEmbedded);
 
+		void SerializeObject (Class *c, void *ptr, ObjectRef *objr);
+
 	public:
 		COutputStreamSerializer ();
 
@@ -96,6 +109,9 @@ namespace creg {
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
+
+		/** @see ISerializer::SerializeInt */
+		void SerializeInt (void *data, int byteSize);
 
 		/** Empty function, only applies to loading */
 		void AddPostLoadCallback (void (*cb)(void *d), void *d) {}
@@ -132,6 +148,7 @@ namespace creg {
 		};
 		std::vector <PostLoadCallback> callbacks;
 
+		void SerializeObject (Class *c, void *ptr);
 	public:
 		CInputStreamSerializer ();
 		~CInputStreamSerializer ();
@@ -147,6 +164,9 @@ namespace creg {
 
 		/** @see ISerializer::Serialize */
 		void Serialize (void *data, int byteSize);
+
+		/** @see ISerializer::SerializeInt */
+		void SerializeInt (void *data, int byteSize);
 
 		/** @see ISerializer::AddPostLoadCallback */
 		void AddPostLoadCallback (void (*cb)(void *userdata), void *userdata);
