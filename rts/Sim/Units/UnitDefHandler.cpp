@@ -718,7 +718,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
 	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	ud.collisionVolumeTest = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
+	ud.collisionVolumeTest = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
 
 	// initialize the (per-unitdef) collision-volume
 	ud.collisionVolume = SAFE_NEW CCollisionVolume(ud.collisionVolumeType,
