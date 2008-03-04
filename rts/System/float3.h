@@ -366,8 +366,44 @@ public:
 	 * (squares and sums only the x and z components,
 	 * square root for pythagorean theorem)
 	 */
-	inline float Length2D() const{
-		return (float)sqrt(x*x+z*z);
+	inline float Length2D() const {
+		return (float) sqrt(x * x + z * z);
+	}
+
+	/**
+	 * @brief
+	 * @return approximate reciprocal of sqrt(x) [ie., 1 / sqrt(x)]
+	 *
+	 * see "The Math Behind The Fast Inverse Square Root Function Code"
+	 * by Charles McEniry [2007] for a mathematical derivation of this
+	 * method (or Chris Lomont's 2003 "Fast Inverse Square Root" paper)
+	 */
+	inline float InvSqrt(float x) {
+		float xh = 0.5f * x;
+		int i = *(int*) &x;
+		i = 0x5f3759d5 - (i >> 1);
+		x = *(float*) &i;
+		x = x * (1.5f - xh * (x * x));
+		x = x * (1.5f - xh * (x * x));
+		return x;
+	}
+
+	/**
+	 * @brief normalizes the vector approximately
+	 * @return pointer to self
+	 *
+	 * Normalizes the vector by dividing each
+	 * x/y/z component by the vector's approx.
+	 * length.
+	 */
+	inline float3& ANormalize() {
+		float invL = InvSqrt(SqLength());
+		if (invL != 0.f) {
+			x *= invL;
+			y *= invL;
+			z *= invL;
+		}
+		return *this;
 	}
 
 	/**
@@ -377,10 +413,9 @@ public:
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& Normalize()
-	{
-		const float L = sqrt(x*x + y*y + z*z);
-		if(L != 0.f){
+	inline float3& Normalize() {
+		const float L = sqrt(x * x + y * y + z * z);
+		if (L != 0.f) {
 			const float invL = (float) 1.f / L;
 			x *= invL;
 			y *= invL;
