@@ -91,9 +91,9 @@ static int MakeStrHash(const char *str)
 	for (const char *pos=str;*pos;pos++) {
 		int rotcnt = *pos%31;
 		result = (result<<rotcnt) | (result>>(32-rotcnt));
-		result*=(0xE66ED34E+*pos);
+		result*=(0xE66ED34E + *pos);
 		result^=0x3D7E5ED5;
-		result+=0x1BF942A-*pos;
+		result+=0x1BF942A - *pos;
 	}
 	return result;
 }
