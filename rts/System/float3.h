@@ -381,10 +381,10 @@ public:
 	inline float InvSqrt(float x) {
 		float xh = 0.5f * x;
 		int i = *(int*) &x;
-		i = 0x5f3759d5 - (i >> 1);
+		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
 		x = x * (1.5f - xh * (x * x));
-		x = x * (1.5f - xh * (x * x));
+		// x = x * (1.5f - xh * (x * x));
 		return x;
 	}
 
