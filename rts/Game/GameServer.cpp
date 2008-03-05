@@ -6,8 +6,6 @@
 #include <boost/format.hpp>
 #include <SDL_timer.h>
 
-#include "FileSystem/ArchiveScanner.h"
-
 #ifndef NO_AVI
 #include "Game.h"
 #endif
@@ -59,7 +57,7 @@ GameParticipant::GameParticipant(bool willHaveRights)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, const std::string& newMapName, const std::string& newModName, const std::string& newScriptName, const CGameSetupData* const mysetup = 0, const std::string& demoName)
+CGameServer::CGameServer(int port, const GameData* const newGameData, const CGameSetupData* const mysetup = 0, const std::string& demoName)
 : setup(mysetup)
 {
 	serverStartTime = SDL_GetTicks();
@@ -92,14 +90,6 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 	rng.Seed(SDL_GetTicks());
 	log.Subscribe(this);
 	log.Message(format(ServerStart) %port);
-	mapName = newMapName;
-	mapChecksum = archiveScanner->GetMapChecksum(mapName);
-
-	modName = newModName;
-	const std::string modArchive = archiveScanner->ModNameToModArchive(modName);
-	modChecksum = archiveScanner->GetModChecksum(modArchive);
-
-	scriptName = newScriptName;
 
 	lastTick = SDL_GetTicks();
 
@@ -114,6 +104,7 @@ CGameServer::CGameServer(int port, const std::string& newMapName, const std::str
 		minUserSpeed=0.3f;
 	}
 
+	gameData.reset(newGameData);
 	if (!demoName.empty())
 	{
 		log.Message(format(PlayingDemo) %demoName);
@@ -342,7 +333,7 @@ void CGameServer::Update()
 				outstandingSyncFrames.push_back(serverframenum);
 #endif
 			}
-			else if (
+			else if ( demobuffer[0] != NETMSG_GAMEDATA &&
 			          demobuffer[0] != NETMSG_SETPLAYERNUM &&
 			          demobuffer[0] != NETMSG_USER_SPEED &&
 			          demobuffer[0] != NETMSG_INTERNAL_SPEED &&
@@ -729,7 +720,7 @@ void CGameServer::ServerReadNet()
 								case TEAMMSG_TEAM_DIED: {
 									// don't send to clients, they don't need it
 									unsigned char team = inbuf[3];
-									if (teams[team])
+									if (teams[team] && players[player]->hasRights) // currently only host is allowed
 									{
 										teams[fromTeam].reset();
 										for (unsigned i = 0; i < MAX_PLAYERS; ++i)
@@ -754,7 +745,7 @@ void CGameServer::ServerReadNet()
 					case NETMSG_GAMEID:
 					case NETMSG_INTERNAL_SPEED:
 					case NETMSG_ATTEMPTCONNECT:
-					case NETMSG_MAPNAME:
+					case NETMSG_GAMEDATA:
 						break;
 					default:
 						{
@@ -1081,11 +1072,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	hisNewNumber = serverNet->AcceptIncomingConnection(hisNewNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
-
-	// send game data (in case he didn't know or for checksumming)
-	serverNet->SendScript(scriptName);
-	serverNet->SendMapName(mapChecksum, mapName);
-	serverNet->SendModName(modChecksum, modName);
+	serverNet->SendData(gameData->Pack(), hisNewNumber);
 
 	for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)

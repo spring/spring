@@ -24,7 +24,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CScriptHandler::CScriptHandler() : chosenScript(0), callback(0)
+ListSelectCallback CScriptHandler::callback = 0;
+
+CScriptHandler::CScriptHandler() : chosenScript(0)
 {
 }
 
@@ -110,6 +112,7 @@ void CScriptHandler::SelectScript(std::string s)
 	CScriptHandler::Instance().chosenScript->ScriptSelected();
 	if (CScriptHandler::Instance().callback)
 		CScriptHandler::Instance().callback(s);
+	callback = 0; // invalidate after selection
 }
 
 /** Generate a CglList with all available scripts. */

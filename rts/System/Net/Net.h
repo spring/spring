@@ -177,6 +177,14 @@ public:
 	void SendData(const unsigned char* data,const unsigned length, const unsigned playerNum);
 	
 	/**
+	@brief Send data to one client in particular
+	@param data the RawPacket I will take care of, DO NOT DELETE IT
+	@throw network_error When playerNum is no valid connection ID
+	@todo there are too much SendData functions here
+	 */
+	void SendData(const RawPacket* data, const unsigned playerNum);
+	
+	/**
 	@brief send all waiting data
 	*/
 	void FlushNet();

@@ -60,6 +60,12 @@ void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 	outgoingLength+=length;
 }
 
+void UDPConnection::SendData(const RawPacket* data)
+{
+	//TODO make UDPConnection completely packet-based
+	SendData(data->data, data->length);
+}
+
 const RawPacket* UDPConnection::Peek(unsigned ahead) const
 {
 	if (ahead < msgQueue.size())

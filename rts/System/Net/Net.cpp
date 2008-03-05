@@ -200,6 +200,18 @@ void CNet::SendData(const unsigned char* data,const unsigned length, const unsig
 	}
 }
 
+void CNet::SendData(const RawPacket* data, const unsigned playerNum)
+{
+	if (int(playerNum) <= MaxConnectionID() && connections[playerNum])
+	{
+		connections[playerNum]->SendData(data);
+	}
+	else
+	{
+		throw network_error("Cant send data (wrong connection number)");
+	}
+}
+
 void CNet::FlushNet()
 {
 	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)

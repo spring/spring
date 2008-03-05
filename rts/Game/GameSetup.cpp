@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
+#include <SDL_timer.h>
 #include "GameSetup.h"
 #include "Player.h"
 #include "TdfParser.h"
@@ -18,8 +19,6 @@
 
 
 using namespace std;
-
-extern string stupidGlobalMapname;
 
 
 CGameSetup* gameSetup = NULL;
@@ -48,26 +47,6 @@ bool CGameSetup::Init(std::string setupFile)
 	delete[] c;
 
 	return ret;
-}
-
-/**
-@brief Determine if the map is inside an archive, and possibly map needed archives
-@pre mapName initialized
-@post map archives (if any) have been mapped into the VFS
- */
-void CGameSetup::LoadMap()
-{
-	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
-	if (!f->FileExists()) {
-		vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-		if (ars.empty())
-			throw content_error("Couldn't find any map archives for map '" + mapName + "'.");
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-			if (!hpiHandler->AddArchive(*i, false))
-				throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
-		}
-	}
-	delete f;
 }
 
 /**
@@ -103,7 +82,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(int a=0;a<numTeams;++a){
 		float x,z;
-		char teamName[50];
+		char teamName[20];
 		sprintf(teamName, "TEAM%i", teamStartNum[a]);
 		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
 		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
@@ -117,9 +96,13 @@ void CGameSetup::LoadStartPositionsFromMap()
 @pre numTeams and startPosType initialized
 @post readyTeams, teamStartNum and team start positions initialized
 @todo don't store in global variables directly
+
+Unlike the other functions, this is not called on Init() , instead we wait for CPreGame to call this. The reason is that the map is not known before CPreGame recieves the gamedata from the server.
  */
-void CGameSetup::LoadStartPositions(const TdfParser& file)
+void CGameSetup::LoadStartPositions()
 {
+	TdfParser file;
+	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
 	for (int a = 0; a < numTeams; ++a) {
 		// Ready up automatically unless startPosType is choose in game
 		readyTeams[a] = (startPosType != StartPos_ChooseInGame);
@@ -129,6 +112,7 @@ void CGameSetup::LoadStartPositions(const TdfParser& file)
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
+		rng.Seed(gameSetupTextLength ^ SDL_GetTicks());
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
 	}
 
@@ -429,9 +413,6 @@ bool CGameSetup::Init(const char* buf, int size)
 	RemapAllyteams();
 
 	LoadUnitRestrictions(file);
-
-	LoadMap();
-	LoadStartPositions(file);
 
 	// Postprocessing
 	baseMod = archiveScanner->ModArchiveToModName(baseMod);

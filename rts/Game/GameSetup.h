@@ -16,11 +16,10 @@ public:
 
 	bool Init(const char* buf, int size);
 
-private:
-	void LoadMap();
-	void LoadStartPositionsFromMap();
+	void LoadStartPositions();
 
-	void LoadStartPositions(const TdfParser& file);
+private:
+	void LoadStartPositionsFromMap();
 	void LoadUnitRestrictions(const TdfParser& file);
 	void LoadPlayers(const TdfParser& file);
 	void LoadTeams(const TdfParser& file);

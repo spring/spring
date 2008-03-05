@@ -33,6 +33,11 @@ public:
 
 	/// use this if you want data to be sent
 	virtual void SendData(const unsigned char *data, const unsigned length);
+	
+	/**
+	@brief Send packet to other instance
+	*/
+	virtual void SendData(const RawPacket* data);
 
 	virtual const RawPacket* Peek(unsigned ahead) const;
 

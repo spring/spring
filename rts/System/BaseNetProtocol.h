@@ -38,9 +38,7 @@ enum NETMSG {
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
 	                              // short unitIDCount;  unitIDCount X short(unitID)
 	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
-	NETMSG_SCRIPT           = 16, // std::string scriptName;
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
-	NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
 	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
@@ -61,7 +59,6 @@ enum NETMSG {
 	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
 	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
 	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
-	NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
 
 #ifdef SYNCDEBUG
 	NETMSG_SD_CHKREQUEST    = 41,
@@ -73,6 +70,7 @@ enum NETMSG {
 
 	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
+	NETMSG_GAMEDATA			= 52, // custom
 };
 
 // action to do with NETMSG_TEAM 
@@ -121,8 +119,6 @@ public:
 	void SendPause(uchar myPlayerNum, uchar bPaused);
 	void SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
 	void SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
-	void SendScript(const std::string& scriptName);
-	void SendMapName(const uint checksum, const std::string& mapName);
 	void SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	void SendInternalSpeed(float internalSpeed);
 	void SendCPUUsage(float cpuUsage);
@@ -143,7 +139,6 @@ public:
 	void SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
 	void SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	void SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	void SendModName(const uint checksum, const std::string& modName);
 	void SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
 	
 	void SendSelfD(uchar myPlayerNum);
