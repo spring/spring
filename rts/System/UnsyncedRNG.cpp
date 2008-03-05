@@ -17,9 +17,13 @@ unsigned UnsyncedRNG::operator()()
 	return randSeed & 0x7FFF;
 }
 
+int UnsyncedRNG::RandInt()
+{
+	randSeed = (randSeed * 214013L + 2531011L);
+	return randSeed & 0x7FFF;
+}
+
 int UnsyncedRNG::operator()(int n)
 {
-	int randint = (*this)();
-	// a simple gu->usRandInt() % n isn't random enough
-	return randint * n / (INT_MAX + 1);
+	return RandInt() * n / ((INT_MAX & 0x7FFF) + 1); // the range of RandInt() is limited to (INT_MAX & 0x7FFF)
 }
