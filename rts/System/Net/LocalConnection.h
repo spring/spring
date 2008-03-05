@@ -28,6 +28,13 @@ public:
 	@brief Send data to other instance
 	*/
 	virtual void SendData(const unsigned char *data, const unsigned length);
+	
+	/**
+	@brief Send packet to other instance
+	
+	Use this, since it doesn't need memcpy'ing
+	 */
+	virtual void SendData(const RawPacket* data);
 
 	virtual const RawPacket* Peek(unsigned ahead) const;
 
@@ -45,7 +52,7 @@ public:
 	virtual std::string Statistics() const;
 
 private:
-	typedef std::deque<RawPacket*> MsgQueue;
+	typedef std::deque<const RawPacket*> MsgQueue;
 
 	static MsgQueue Data[2];
 	static boost::mutex Mutex[2];

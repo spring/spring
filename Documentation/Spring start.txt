@@ -18,6 +18,9 @@
 // At the time of this writing this is: 32/17/17 for players/teams/allyteams
 // respectively.
 
+// From now on, the Gametype, Mapname and the Scriptname-tags are only needed for the gamehost
+// a client will ignore these tags because he recieves everything from the server
+
 [GAME]
 {
 	Mapname=;           //with .smf extension

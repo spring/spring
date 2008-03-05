@@ -18,6 +18,12 @@ RawPacket::RawPacket(const unsigned char* const tdata, const unsigned newLength)
 	}
 }
 
+RawPacket::RawPacket(const unsigned newLength) : length(newLength)
+{
+	if (length > 0)
+		data = new unsigned char[length];
+}
+
 RawPacket::~RawPacket()
 {
 	if (length > 0)

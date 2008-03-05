@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "RawPacket.h"
+
 namespace netcode
 {
 class RawPacket;
@@ -17,6 +19,7 @@ public:
 	virtual ~CConnection();
 	
 	virtual void SendData(const unsigned char *data, const unsigned length)=0;
+	virtual void SendData(const RawPacket* data)=0;
 
 	/**
 	@brief Take a look at the messages that will be returned by GetData().

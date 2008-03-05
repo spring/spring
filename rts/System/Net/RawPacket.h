@@ -20,6 +20,12 @@ public:
 	RawPacket(const unsigned char* const data, const unsigned length);
 	
 	/**
+	@brief create a new packet without data
+	@param length the estimated length of the data (is save even if its 0)
+	 */
+	RawPacket(const unsigned length);
+	
+	/**
 	@brief Free the memory
 	*/
 	~RawPacket();

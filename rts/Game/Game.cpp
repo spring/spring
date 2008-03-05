@@ -3219,11 +3219,7 @@ bool CGame::ClientReadNet()
 						//TODO is this enought?
 						int newTeam = int(inbuf[3]);
 						gs->players[player]->team = newTeam;
-						gs->players[player]->spectator = net->localDemoPlayback;
 						if (player == gu->myPlayerNum) {
-							gu->spectating           = net->localDemoPlayback;
-							gu->spectatingFullView   = net->localDemoPlayback;
-							gu->spectatingFullSelect = net->localDemoPlayback;
 							gu->myTeam = newTeam;
 							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 							selectedUnits.ClearSelected();
@@ -3323,29 +3319,8 @@ bool CGame::ClientReadNet()
 			}
 #endif // DIRECT_CONTROL_ALLOWED
 
-			//TODO CGame should not recieve this (handle in CPreGame)
-			case NETMSG_MAPNAME: {
-				const std::string mapname = std::string((char*) (inbuf + 6));
-				if (mapname != stupidGlobalMapname)
-				{
-					logOutput.Print("Warning: mapname differs from host's");
-				}
-				archiveScanner->CheckMap(mapname, *(unsigned*)(&inbuf[2]));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
-			//TODO same here
-			case NETMSG_MODNAME: {
-				std::string modArchive = archiveScanner->ModNameToModArchive(modInfo.filename);
-				archiveScanner->CheckMod(modArchive, *(unsigned*)(&inbuf[2]));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_SETPLAYERNUM:
-			case NETMSG_ATTEMPTCONNECT:
-			case NETMSG_SCRIPT: {
+			case NETMSG_ATTEMPTCONNECT: {
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}

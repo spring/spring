@@ -23,8 +23,6 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_PAUSE, 3);
 	RegisterMessage(NETMSG_AICOMMAND, -2);
 	RegisterMessage(NETMSG_AICOMMANDS, -2);
-	RegisterMessage(NETMSG_SCRIPT, -1);
-	RegisterMessage(NETMSG_MAPNAME, -1);
 	RegisterMessage(NETMSG_USER_SPEED, 6);
 	RegisterMessage(NETMSG_INTERNAL_SPEED, 5);
 	RegisterMessage(NETMSG_CPU_USAGE, 5);
@@ -43,9 +41,9 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_STARTPOS, 16);
 	RegisterMessage(NETMSG_PLAYERINFO, 10);
 	RegisterMessage(NETMSG_PLAYERLEFT, 3);
-	RegisterMessage(NETMSG_MODNAME, -1);
 	RegisterMessage(NETMSG_LUAMSG, -2);
 	RegisterMessage(NETMSG_TEAM, 4);
+	RegisterMessage(NETMSG_GAMEDATA, -2);
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()
@@ -169,20 +167,6 @@ void CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uc
 void CBaseNetProtocol::SendAICommands(uchar myPlayerNum, short unitIDCount, ...)
 {
 	//FIXME: needs special care; sits in CSelectedUnits::SendCommandsToUnits().
-}
-
-//  NETMSG_SCRIPT           = 16, // std::string scriptName;
-
-void CBaseNetProtocol::SendScript(const std::string& newScriptName)
-{
-	SendSTLData<std::string> (NETMSG_SCRIPT, newScriptName);
-}
-
-//  NETMSG_MAPNAME          = 18, // uint checksum; std::string mapName;   (e.g. `SmallDivide.smf')
-
-void CBaseNetProtocol::SendMapName(const uint checksum, const std::string& newMapName)
-{
-	return SendSTLData<uint, std::string>(NETMSG_MAPNAME, checksum, newMapName);
 }
 
 //  NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
@@ -319,13 +303,6 @@ void CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int pin
 void CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 {
 	SendData<uchar, uchar>(NETMSG_PLAYERLEFT, myPlayerNum, bIntended);
-}
-
-//  NETMSG_MODNAME          = 40, // uint checksum; std::string modName;   (e.g. `XTA v8.1')
-
-void CBaseNetProtocol::SendModName(const uint checksum, const std::string& newModName)
-{
-	return SendSTLData<uint, std::string> (NETMSG_MODNAME, checksum, newModName);
 }
 
 //  NETMSG_LUAMSG          = 50, // uchar myPlayerNum; std::string modName;   (e.g. `custom msg')

@@ -11,6 +11,7 @@
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "NetProtocol.h"
+#include "Net/UnpackPacket.h"
 #include "DemoRecorder.h"
 #include "DemoReader.h"
 #include "LoadSaveHandler.h"
@@ -38,13 +39,16 @@ extern Uint8 *keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 
+CglList* CPreGame::showList = 0;
+
 CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
-: showList(0),
-  server(server),
+: server(server),
   state(UNKNOWN),
   hasDemo(!demo.empty()),
   hasSave(!save.empty()),
-  savefile(NULL)
+  savefile(NULL),
+  gameData(0),
+  serverStartupData(0)
 {
 	demoFile = gameSetup? gameSetup->demoName : demo;
 
@@ -67,6 +71,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 
 	if(server){
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+		serverStartupData = new GameData();
 		if(gameSetup){
 			CScriptHandler::SelectScript(gameSetup->scriptName);
 			SelectScript(gameSetup->scriptName);
@@ -82,27 +87,23 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
 			CScriptHandler::SelectScript("Commanders");
 			SelectScript("Commanders");
-			SelectMap(savefile->mapName);
-			SelectMod(savefile->modName);
+			SelectMap(gameSetup->mapName);
+			SelectMod(gameSetup->baseMod);
 			state = WAIT_CONNECTING;
 		} else {
 			ShowScriptList();
-			state = WAIT_ON_SCRIPT;
+			state = WAIT_ON_USERINPUT;
 		}
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
 			net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayerNum);
-			CScriptHandler::SelectScript(gameSetup->scriptName);
-			SelectScript(gameSetup->scriptName);
-			SelectMap(gameSetup->mapName);
-			SelectMod(gameSetup->baseMod);
 			state = WAIT_CONNECTING;
 		} else {
 			if (hasDemo) {
 				net->localDemoPlayback = true;
 				state = WAIT_CONNECTING;
-				ReadDataFromDemo(demoFile); // scan for map, mod etc.
+				ReadDataFromDemo(demoFile); // scan for GameData
 				net->InitLocalClient(0);
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
@@ -130,8 +131,6 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 						gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
 					}
 				}
-
-				gs->players[gu->myPlayerNum]->StartSpectating();
 			}
 			else {
 				userInput=configHandler.GetString("address","");
@@ -147,6 +146,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 
 CPreGame::~CPreGame()
 {
+	delete gameData;
 	delete infoConsole;
 	infoConsole = 0;
 }
@@ -218,14 +218,8 @@ bool CPreGame::Draw()
 
 	if (!showList) {
 		switch (state) {
-			case WAIT_ON_SCRIPT:
-				PrintLoadMsg("Waiting on script", false);
-				break;
-			case WAIT_ON_MAP:
-				PrintLoadMsg("Waiting on map", false);
-				break;
-			case WAIT_ON_MOD:
-				PrintLoadMsg("Waiting on mod", false);
+			case WAIT_ON_GAMEDATA:
+				PrintLoadMsg("Waiting on game data", false);
 				break;
 			case WAIT_CONNECTING:
 				if ( ((SDL_GetTicks()/1000) % 2) == 0 )
@@ -235,6 +229,7 @@ bool CPreGame::Draw()
 				break;
 			case UNKNOWN:
 			case WAIT_ON_ADDRESS:
+			case WAIT_ON_USERINPUT:
 			case ALL_READY:
 			default:
 				PrintLoadMsg("", false); // just clear screen and set up matrices etc.
@@ -283,7 +278,6 @@ bool CPreGame::Draw()
 	return true;
 }
 
-
 bool CPreGame::Update()
 {
 	good_fpu_control_registers("CPreGame::Update");
@@ -300,46 +294,19 @@ bool CPreGame::Update()
 
 			configHandler.SetString("address",userInput);
 			net->InitClient(userInput.c_str(),8452,0, 0);
-			state = WAIT_ON_SCRIPT;
+			state = WAIT_CONNECTING;
 			// fall trough
 		}
 
-		case WAIT_ON_SCRIPT:
-			if (showList || !server)
-				break;
-
-			mapName = CScriptHandler::Instance().chosenScript->GetMapName();
-			if (mapName == "")
-				ShowMapList();
-			else
-				SelectMap(mapName);
-			state = WAIT_ON_MAP;
-			// fall through
-
-		case WAIT_ON_MAP:
-			if (showList || !server)
-				break;
-
-			modName = CScriptHandler::Instance().chosenScript->GetModName();
-			if (modName == "")
-				ShowModList();
-			else
-				SelectMod(modName);
-			state = WAIT_ON_MOD;
-			// fall through
-
-		case WAIT_ON_MOD:
-			if (showList || !server)
-				break;
-
-			state = WAIT_CONNECTING;
-			// fall through
+		case WAIT_ON_USERINPUT: {
+			break;
+		}
 
 		case WAIT_CONNECTING:
 			if ((server || hasDemo) && !gameServer) {
 				good_fpu_control_registers("before CGameServer creation");
 				int myPort = gameSetup? gameSetup->hostport : 8452;
-				gameServer = new CGameServer(myPort, mapName, modName, scriptName, gameSetup, demoFile);
+				gameServer = new CGameServer(myPort, serverStartupData, gameSetup, demoFile);
 				if (gameSetup && gameSetup->autohostport > 0)
 					gameServer->AddAutohostInterface(gameSetup->autohostport);
 				gameServer->AddLocalClient();
@@ -347,20 +314,27 @@ bool CPreGame::Update()
 			}
 
 			if (net->Connected())
-				state = ALL_READY; // fall through
+				state = WAIT_ON_GAMEDATA; // fall through
 			else
 				break; // abort
 
+		case WAIT_ON_GAMEDATA: {
+			if (gameData) // we recieved tha gameData
+				state = ALL_READY;
+			else
+				break;
+		}
+
 		case ALL_READY: {
 			ENTER_MIXED;
-
 			const int teamID = gs->players[gu->myPlayerNum]->team;
 			const CTeam* team = gs->Team(teamID);
+			assert(team);
 			if (net->localDemoPlayback)
-				gs->players[gu->myPlayerNum]->spectator = true;
+				gs->players[gu->myPlayerNum]->StartSpectating();
 			LoadStartPicture(team->side);
 
-			game = SAFE_NEW CGame(mapName, modArchive, infoConsole);
+			game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole);
 
 			if (savefile) {
 				savefile->LoadGame();
@@ -386,8 +360,6 @@ bool CPreGame::Update()
 	return true;
 }
 
-
-
 void CPreGame::UpdateClientNet()
 {
 	if (!net->IsActiveConnection())
@@ -402,50 +374,11 @@ void CPreGame::UpdateClientNet()
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
-			case NETMSG_SCRIPT: {
-				if (!gameSetup) {
-					CScriptHandler::SelectScript((char*) (inbuf+2));
-					SelectScript((char*) (inbuf+2));
-				}
 
-				if (mapName.empty()) {
-					state = WAIT_ON_MAP;
-				} else if (modName.empty()) {
-					state = WAIT_ON_MOD;
-				} else {
-					state = WAIT_CONNECTING;
-				}
-			} break;
-
-			case NETMSG_MAPNAME: {
-				if (!gameSetup) {
-					SelectMap((char*) (inbuf + 6));
-				}
-				archiveScanner->CheckMap(mapName, *(unsigned*) (inbuf + 2));
-
-				if (!CScriptHandler::Instance().chosenScript) {
-					state = WAIT_ON_SCRIPT;
-				} else if (modName.empty()) {
-					state = WAIT_ON_MOD;
-				} else {
-					state = WAIT_CONNECTING;
-				}
-			} break;
-
-			case NETMSG_MODNAME: {
-				if (!gameSetup) {
-					SelectMod((char*) (inbuf + 6));
-				}
-				archiveScanner->CheckMod(modArchive, *(unsigned*) (inbuf + 2));
-
-				if (!CScriptHandler::Instance().chosenScript) {
-					state = WAIT_ON_SCRIPT;
-				} else if (mapName.empty()) {
-					state = WAIT_ON_MAP;
-				} else {
-					state = WAIT_CONNECTING;
-				}
-			} break;
+			case NETMSG_GAMEDATA: {
+				GameDataRecieved(packet);
+				break;
+			}
 
 			case NETMSG_MAPDRAW: {
 			} break;
@@ -556,42 +489,20 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
 	unsigned length = 0;
-	mapName = "";
-	modName = "";
-	scriptName = "";
 	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
-	while ( (length = scanner.GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, INT_MAX)) > 0 && (mapName.empty() || modName.empty() || scriptName.empty())) {
-		if (demobuffer[0] == NETMSG_MAPNAME)
+	while ( (length = scanner.GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, INT_MAX)) > 0) {
+		if (demobuffer[0] == NETMSG_GAMEDATA)
 		{
-			SelectMap((char*) (demobuffer + 6));
-			archiveScanner->CheckMap(mapName, *(unsigned*) (demobuffer + 2));
+			const RawPacket packet(demobuffer, length);
+			serverStartupData = new GameData((netcode::UnpackPacket*)(&packet));
+			break;
 		}
-		else if (demobuffer[0] == NETMSG_MODNAME)
-		{
-			SelectMod((char*) (demobuffer + 6));
-			archiveScanner->CheckMod(modArchive, *(unsigned*) (demobuffer + 2));
-		}
-		else if (demobuffer[0] == NETMSG_SCRIPT)
-		{
-			CScriptHandler::SelectScript((char*) (demobuffer+2));
-			SelectScript((char*) (demobuffer+2));
-		}
-
 		if (scanner.ReachedEnd())
 		{
-			logOutput.Print("End of demo reached and no data found");
+			throw content_error("End of demo reached and no game data found");
 		}
 	}
-}
-
-/** Called by the script-selecting CglList. */
-void CPreGame::SelectScript(std::string s)
-{
-	delete pregame->showList;
-	pregame->showList = 0;
-	logOutput << "Using script " << s.c_str() << "\n";
-	pregame->scriptName = s;
 }
 
 /** Create a CglList for selecting the script. */
@@ -599,34 +510,6 @@ void CPreGame::ShowScriptList()
 {
 	CglList* list = CScriptHandler::Instance().GenList(SelectScript);
 	showList = list;
-}
-
-/** Called by the map-selecting CglList. */
-void CPreGame::SelectMap(std::string s)
-{
-	if (s == "Random map") {
-		s = pregame->showList->items[1 + gu->usRandInt() % (pregame->showList->items.size() - 1)];
-	}
-	stupidGlobalMapname = pregame->mapName = s;
-	delete pregame->showList;
-	pregame->showList = 0;
-	logOutput << "Map: " << s.c_str() << "\n";
-
-	// Determine if the map is inside an archive, and possibly map needed archives
-	CFileHandler* f = SAFE_NEW CFileHandler("maps/" + s);
-	if (!f->FileExists()) {
-		vector<string> ars = archiveScanner->GetArchivesForMap(s);
-		if (ars.empty())
-			throw content_error("Couldn't find any archives for map '" + s + "'.");
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-			if (!hpiHandler->AddArchive(*i, false))
-				throw content_error("Couldn't load archive '" + *i + "' for map '" + s + "'.");
-		}
-	}
-	delete f;
-
-	if (net && net->GetDemoRecorder())
-		net->GetDemoRecorder()->SetName(s);
 }
 
 /** Create a CglList for selecting the map. */
@@ -656,35 +539,6 @@ void CPreGame::ShowMapList()
 	showList = list;
 }
 
-/** Called by the mod-selecting CglList. */
-void CPreGame::SelectMod(std::string s)
-{
-	// make sure s is a modname (because the same mod can be in different archives on different computers)
-	s = archiveScanner->ModArchiveToModName(s);
-	if (s == "Random mod") {
-		const int index = 1 + (gu->usRandInt() % (pregame->showList->items.size() - 1));
-		const string& modName = pregame->showList->items[index];
-		pregame->modArchive = archiveScanner->ModNameToModArchive(modName);
-	} else {
-		pregame->modArchive = archiveScanner->ModNameToModArchive(s);
-	}
-	delete pregame->showList;
-	pregame->showList = 0;
-	logOutput << "Mod: \"" << s.c_str() << "\" from " << pregame->modArchive.c_str() << "\n";
-	pregame->modName = s;
-
-	// Map all required archives depending on selected mod(s)
-	vector<string> ars = archiveScanner->GetArchives(pregame->modArchive);
-	if (ars.empty())
-		throw content_error("Couldn't find any archives for mod '" + pregame->modArchive + "'");
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		if (!hpiHandler->AddArchive(*i, false))
-			throw content_error("Couldn't load archive '" + *i + "' for mod '" + pregame->modArchive + "'.");
-
-	// always load springcontent.sdz
-	hpiHandler->AddArchive("base/springcontent.sdz", false);
-}
-
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
 {
@@ -706,4 +560,123 @@ void CPreGame::ShowModList()
 		list->AddItem(mit->first.c_str(), mit->second.c_str());
 	}
 	showList = list;
+}
+
+void CPreGame::SelectScript(std::string s)
+{
+	delete showList;
+	showList = 0;
+	assert(pregame->serverStartupData);
+	pregame->serverStartupData->SetScript(s);
+	
+	// if the script specify a map, use this and don't ask the user
+	std::string map = CScriptHandler::Instance().chosenScript->GetMapName();
+	if (map == "")
+		pregame->ShowMapList();
+	else
+		SelectMap(map);
+}
+
+void CPreGame::SelectMap(std::string s)
+{
+	if (s == "Random map") {
+		s = pregame->showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
+	}
+	delete showList;
+	showList = 0;
+	LoadMap(s);
+	if (gameSetup)
+		gameSetup->LoadStartPositions(); // only host needs to do this, because client will recieve startpos msg from server
+	pregame->serverStartupData->SetMap(s, archiveScanner->GetMapChecksum(s));
+	
+	std::string mod = CScriptHandler::Instance().chosenScript->GetModName();
+	if (mod == "")
+		pregame->ShowModList();
+	else
+		SelectMod(mod);
+}
+
+void CPreGame::SelectMod(std::string s)
+{
+	if (s == "Random mod") {
+		const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
+		s = showList->items[index];
+	}
+	delete showList;
+	showList = 0;
+	LoadMod(s);
+	// make sure s is a modname (because the same mod can be in different archives on different computers)
+	s = archiveScanner->ModArchiveToModName(s);
+	std::string modArchive = archiveScanner->ModNameToModArchive(s);
+	pregame->serverStartupData->SetMod(s, archiveScanner->GetModChecksum(modArchive));
+	pregame->state = WAIT_CONNECTING; // last thing to set, so start server now
+}
+
+void CPreGame::LoadMap(const std::string& mapName)
+{
+	static bool alreadyLoaded = false;
+	
+	if (!alreadyLoaded)
+	{
+		CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
+		if (!f->FileExists()) {
+			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
+			if (ars.empty())
+				throw content_error("Couldn't find any archives for map '" + mapName + "'.");
+			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+				if (!hpiHandler->AddArchive(*i, false))
+					throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
+			}
+		}
+		delete f;
+		alreadyLoaded = true;
+	}
+}
+
+void CPreGame::LoadMod(const std::string& modName)
+{
+	static bool alreadyLoaded = false;
+	
+	if (!alreadyLoaded)
+	{
+		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+		// Map all required archives depending on selected mod(s)
+		vector<string> ars = archiveScanner->GetArchives(modArchive);
+		if (ars.empty())
+			throw content_error("Couldn't find any archives for mod '" + modName + "'");
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+			if (!hpiHandler->AddArchive(*i, false))
+				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
+	
+		// always load springcontent.sdz
+		hpiHandler->AddArchive("base/springcontent.sdz", false);
+		alreadyLoaded = true;
+	}
+}
+
+void CPreGame::GameDataRecieved(RawPacket* packet)
+{
+	gameData = new GameData((netcode::UnpackPacket*)packet);
+	logOutput << "Using script " << gameData->GetScript() << "\n";
+	CScriptHandler::SelectScript(gameData->GetScript());
+	
+	logOutput << "Using map " << gameData->GetMap() << "\n";
+	stupidGlobalMapname = gameData->GetMap();
+	
+	if (net && net->GetDemoRecorder())
+		net->GetDemoRecorder()->SetName(gameData->GetMap());
+	LoadMap(gameData->GetMap());
+	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());
+	
+	logOutput << "Using mod " << gameData->GetMod() << "\n";
+	LoadMod(gameData->GetMod());
+	modArchive = archiveScanner->ModNameToModArchive(gameData->GetMod());
+	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
+	
+	if (gameSetup)
+	{
+		gameSetup->scriptName = gameData->GetScript();
+		gameSetup->mapName = gameData->GetMap();
+		gameSetup->baseMod = gameData->GetMod();
+	}
 }

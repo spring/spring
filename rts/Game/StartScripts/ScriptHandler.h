@@ -33,7 +33,7 @@ private:
 #endif
 	std::map<std::string,CScript*> scripts; ///< Maps script names to CScript pointers.
 	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler
-	ListSelectCallback callback;
+	static ListSelectCallback callback;
 	CScriptHandler();
 	CScriptHandler(CScriptHandler const&);
 	CScriptHandler& operator=(CScriptHandler const&);

@@ -1,12 +1,18 @@
 #ifndef PREGAME_H
 #define PREGAME_H
 
-#include "GameController.h"
 #include <string>
+
+#include "GameController.h"
+#include "GameData.h"
 
 class CglList;
 class CInfoConsole;
 class CLoadSaveHandler;
+
+namespace netcode{
+	class RawPacket;
+}
 
 class CPreGame : public CGameController
 {
@@ -30,29 +36,44 @@ private:
 	void ShowScriptList();
 	void ShowMapList();
 	void ShowModList();
-	CglList* showList;
+	static CglList* showList;
+	
+	/// Choose the script we will tell the server to start with
 	static void SelectScript(std::string s);
 	static void SelectMap(std::string s);
 	static void SelectMod(std::string s);
 	
+	/// Load map and dependend archives into archive scanner
+	static void LoadMap(const std::string& mapName);
+	
+	/// Map all required archives depending on selected mod(s)
+	static void LoadMod(const std::string& modName);
+
+	void GameDataRecieved(netcode::RawPacket* packet);
+	
 	const bool server;
 	enum State {
 		UNKNOWN,
-		WAIT_ON_ADDRESS,
-		WAIT_ON_SCRIPT,
-		WAIT_ON_MAP,
-		WAIT_ON_MOD,
-		WAIT_CONNECTING,
-		ALL_READY,
+		WAIT_ON_ADDRESS, // wait for user to write server address
+		WAIT_ON_USERINPUT, // wait for user to set script, map, mod
+		WAIT_CONNECTING, // connecting to server
+		WAIT_ON_GAMEDATA, // wait for the server to send us the GameData
+		ALL_READY, // ready to start
 	};
 	State state;
 
 	const bool hasDemo,hasSave;
 
-	std::string mapName;
-	std::string modName;
+	/**
+	@brief GameData we recieved from server
+	
+	We won't start until we recieved this
+	*/
+	const GameData* gameData;
+	
+	/// all the GameData (script, map, mod and checksums) needed to start the server
+	GameData* serverStartupData;
 	std::string modArchive;
-	std::string scriptName;
 	std::string demoFile;
 	CLoadSaveHandler *savefile;
 };

@@ -8,6 +8,7 @@
 #include <map>
 #include <deque>
 
+#include "GameData.h"
 #include "System/GlobalStuff.h"
 #include "System/UnsyncedRNG.h"
 #include "SFloat3.h"
@@ -55,7 +56,7 @@ class CGameServer : private ServerLog
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(int port, const std::string& mapName, const std::string& modName, const std::string& scriptName, const CGameSetupData* const setup, const std::string& demoName = "");
+	CGameServer(int port, const GameData* const gameData, const CGameSetupData* const setup, const std::string& demoName = "");
 	~CGameServer();
 
 	void AddLocalClient();
@@ -148,6 +149,7 @@ private:
 
 	/////////////////// game settings ///////////////////
 	const CGameSetupData* const setup;
+	boost::scoped_ptr<const GameData> gameData;
 	/// Wheter the game is pausable for others than the host
 	bool gamePausable;
 
@@ -158,11 +160,6 @@ private:
 	float minUserSpeed;
 
 	bool noHelperAIs;
-	std::string scriptName;
-	unsigned int mapChecksum;
-	std::string mapName;
-	unsigned int modChecksum;
-	std::string modName;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
