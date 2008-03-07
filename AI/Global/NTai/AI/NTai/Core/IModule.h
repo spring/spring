@@ -13,20 +13,20 @@ namespace ntai {
 		virtual ~IModule();
 		virtual void RecieveMessage(CMessage &message)=0;
 		virtual bool Init()=0;//boost::shared_ptr<IModule> me
-		void End(){}
-		bool IsValid(){
+		virtual void End(){}
+		virtual bool IsValid(){
 			return valid;
 		}
-		bool SetValid(bool isvalid){
+		virtual bool SetValid(bool isvalid){
 			valid = isvalid;
 			return valid;
 		}
 
-		void DestroyModule();
+		virtual void DestroyModule();
 
-		void operator()(){}
+		virtual void operator()(){}
 
-		bool Succeeded(){
+		virtual bool Succeeded(){
 			return true;
 		}
 
