@@ -512,10 +512,6 @@
 						RelativePath=".\NTai\Tasks\CUnitConstructionTask.h"
 						>
 					</File>
-					<File
-						RelativePath=".\NTai\Tasks\ITask.h"
-						>
-					</File>
 				</Filter>
 			</Filter>
 			<Filter
