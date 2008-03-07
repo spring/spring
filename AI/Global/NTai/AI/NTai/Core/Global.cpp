@@ -33,8 +33,12 @@ namespace ntai {
 	}
 
 	bool ValidUnitID(int id){
-		if(id < 0) return false;
-		if(id > MAX_UNITS+1) return false;
+		if(id < 0){
+			return false;
+		}
+		if(id > MAX_UNITS+1){
+			return false;
+		}
 		return true;
 	}
 
@@ -43,10 +47,12 @@ namespace ntai {
 		gcb = callback;
 		cb = gcb->GetAICallback();
 		if(cb == 0){
-			throw string(" error cb ==0");
+			throw string(" fatal error cb ==0");
 		}
+
 		CLOG("Started Global::Global class constructor");
 		CLOG("Starting CCached initialisation");
+		
 		Cached = new CCached;
 		Cached->comID = 0;
 		Cached->randadd = 0;
@@ -128,9 +134,8 @@ namespace ntai {
 				 triangles.push_back(triangle);
 			 }
 		 }*/
-		//if(L.FirstInstance() == true){
+
 		L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
-		//}
 		UnitDefLoader = new CUnitDefLoader(G);
 		L.print("Unitdef loader constructed");
 
@@ -532,7 +537,7 @@ namespace ntai {
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::InitAI(IAICallback* callback, int team){
-		L.print("Initialisising");
+		L.print("Initializing");
 
 		mrand.seed(uint(time(NULL)*team));
 		string filename = info->datapath + slash + string("NTai.tdf");
@@ -790,53 +795,26 @@ namespace ntai {
 
 	int Global::GetEnemyUnits(int* units, const float3 &pos, float radius){
 		NLOG("Global::GetEnemyUnits :: A");
-		//if(Cached->cheating == true){
 		return chcb->GetEnemyUnits(units, pos, radius);
-		/*}else{
-		 return cb->GetEnemyUnits(units,pos,radius);
-		 }*/
 	}
 
 
 	int Global::GetEnemyUnitsInRadarAndLos(int* units){
 		NLOG("Global::GetEnemyUnitsinradarandLOS :: B");
-		/*if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
-		 if(Cached->cheating == true){
-		 Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
-		 for(uint h = 0; h < Cached->enemy_number; h++){
-		 units[h] = Cached->encache[h];
-		 }
-		 Cached->lastcacheupdate = cb->GetCurrentFrame();
-		 return Cached->enemy_number;
-		 }else{
-		 return cb->GetEnemyUnitsInRadarAndLos(Cached->encache);
-		 }
-		 }
-		 if(Cached->cheating == true){*/
 		return chcb->GetEnemyUnits(units);
-		/*	Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
-		 for(uint h = 0; h < Cached->enemy_number; h++){
-		 units[h] = Cached->encache[h];
-		 }
-		 ///*}else{
-		 Cached->enemy_number = cb->GetEnemyUnitsInRadarAndLos(Cached->encache);
-		 }*/
-		//return Cached->enemy_number;*/
+
 	}
 
 	int Global::GetEnemyUnits(int* units){
 		NLOG("Global::GetEnemyUnits :: B");
-		if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
-			//if(Cached->cheating == true){
+		if(GetCurrentFrame() - Cached->lastcacheupdate > 30){
 			Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
-			/*	}else{
-			 Cached->enemy_number = cb->GetEnemyUnits(Cached->encache);
-			 }
-			 */	Cached->lastcacheupdate = cb->GetCurrentFrame();
+			Cached->lastcacheupdate = cb->GetCurrentFrame();
 		}
 		for(uint h = 0; h < Cached->enemy_number; h++){
 			units[h] = Cached->encache[h];
 		}
+
 		return Cached->enemy_number;
 	}
 
@@ -959,10 +937,14 @@ namespace ntai {
 	}
 
 	bool Global::LoadUnitData(){
+
 		if(G->L.FirstInstance()){
+
 			int unum = cb->GetNumUnitDefs();
+
 			const UnitDef** ulist = new const UnitDef*[unum];
 			cb->GetUnitDefList(ulist);
+
 			for(int i = 0; i < unum; i++){
 				const UnitDef* pud = ulist[i];
 
@@ -984,10 +966,11 @@ namespace ntai {
 				ef *= 2;
 
 				if(pud->weapons.empty() == false){
+
 					for(vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
-						//ef += k->def->
+
 						float av=0;
-						int numTypes;// = cb->getk->def->damages.numTypes;
+						int numTypes;
 						cb->GetValue(AIVAL_NUMDAMAGETYPES, &numTypes);
 						for(int a=0;a<numTypes;++a){
 							if(a == 0){
@@ -1035,7 +1018,7 @@ namespace ntai {
 
 				cq.GetDef(firstload, "1", "AI\\firstload");
 
-				if(firstload == true){
+				if(firstload){
 					L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful of throwing the same units at it over and over again");
 					firstload = false;
 
@@ -1050,6 +1033,7 @@ namespace ntai {
 
 				loaded = true;
 				return true;
+
 			} else{
 
 				for(int i = 0; i < unum; i++){
@@ -1060,9 +1044,12 @@ namespace ntai {
 					}else{
 						ts += 20*ulist[i]->weapons.size();
 					}
+
 					string eu = ulist[i]->name;
+					
 					tolowercase(eu);
 					trim(eu);
+					
 					efficiency[eu] = ts;
 				}
 
