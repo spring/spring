@@ -359,7 +359,9 @@ void CTAAirMoveType::UpdateFlying()
 							wantedHeight = orgWantedHeight;
 						}
 					} else {
-						wantedSpeed = ZeroVector;
+						//wantedSpeed = ZeroVector;
+						if (!owner->commandAI->HasMoreMoveCommands())
+							wantToStop=true;
 						// SetState(AIRCRAFT_HOVERING);
 					}
 				} else {
