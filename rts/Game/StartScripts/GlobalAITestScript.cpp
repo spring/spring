@@ -44,6 +44,15 @@ void CGlobalAITestScript::Update(void)
 			string s0 = p.SGetValueDef("armcom", "side0\\commander");
 			string s1 = p.SGetValueDef("corcom", "side1\\commander");
 
+			// set the sidename strings (not necessarily lower-case,
+			// only CGameSetup turns the strings in script.txt to LC)
+			// KLOOTNOTE: this is called *after* GlobalAI initializes?
+		//	gs->Team(0)->side = p.SGetValueDef("arm", "side0\\name");
+		//	gs->Team(1)->side = p.SGetValueDef("core", "side1\\name");
+		//
+		//	printf("\nCGlobalAITestScript::Update(), team 0 side: %s, team 1 side: %s\n",
+		//		gs->Team(0)->side.c_str(), gs->Team(1)->side.c_str());
+
 			TdfParser p2;
 			CReadMap::OpenTDF(stupidGlobalMapname, p2);
 
