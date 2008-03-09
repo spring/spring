@@ -770,7 +770,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if (((first weapon range minus first weapon length greater than distance to target)
 			// and length of 2D vector from us to target less than 90% of our maximum range)
 			// then we are close enough, but need to move sideways to get a shot.
-			else if (b3 && diffLength2d < (owner->maxRange * 0.9f))
+			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
+			else if (owner->unitDef->strafeToAttack && b3 && diffLength2d < (owner->maxRange * 0.9f))
 			{
 				moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
 				float sin = moveDir ? 3.0/5 : -3.0/5;

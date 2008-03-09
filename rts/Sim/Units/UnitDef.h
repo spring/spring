@@ -163,6 +163,7 @@ struct UnitDef
 	float mass;
 
 	bool pushResistant;
+	bool strafeToAttack;                               //should the unit move sideways when it can't shoot?
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxSlope;
