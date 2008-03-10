@@ -1908,7 +1908,7 @@ bool CGame::Update()
 			chatting = false;
 			userWriting = false;
 			writingPos = 0;
-			net->SendRandSeed(time(0));
+			net->SendRandSeed(gs->randSeed);
 			net->SendStartPlaying(0);
 		}
 	}
