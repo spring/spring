@@ -10,6 +10,7 @@
 #include "Game/UI/CursorIcons.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
+#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
@@ -259,11 +260,9 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
-void CMobileCAI::RefuelIfNeeded(AAirMoveType* myPlane)
+void CMobileCAI::RefuelIfNeeded()
 {
-	if(myPlane->reservedPad){
-		return;
-	} else {
+	if(!owner->moveType->reservedPad) {
 		if(owner->currentFuel <= 0){
 			StopMove();
 			owner->userAttackGround=false;
@@ -272,46 +271,35 @@ void CMobileCAI::RefuelIfNeeded(AAirMoveType* myPlane)
 			CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
 				owner, owner->unitDef->minAirBasePower);
 			if(lp){
-				myPlane->AddDeathDependence(lp);
-				myPlane->reservedPad = lp;
-				myPlane->padStatus = 0;
-				myPlane->oldGoalPos = myPlane->goalPos;
-				return;
-			}
-			float3 landingPos = airBaseHandler->FindClosestAirBasePos(
-				owner, owner->unitDef->minAirBasePower);
-			if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 300){
-				if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED
-						&& owner->pos.distance2D(landingPos) > 800) {
-					myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
-				}
-				StopMove();
-				SetGoal(landingPos,owner->pos);
-				//myPlane->goalPos = landingPos;
+				owner->moveType->ReservePad(lp);
 			} else {
-				if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
-					myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
-			}
-			return;
-		}
-		if(owner->currentFuel < myPlane->repairBelowHealth * owner->unitDef->maxFuel){
-			if(commandQue.empty() || commandQue.front().id == CMD_PATROL){
-				CAirBaseHandler::LandingPad* lp =
-					airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-				if(lp){
-					StopMove();
-					owner->userAttackGround=false;
-					owner->userTarget=0;
-					inCommand=false;
-					myPlane->AddDeathDependence(lp);
-					myPlane->reservedPad=lp;
-					myPlane->padStatus=0;
-					myPlane->oldGoalPos=myPlane->goalPos;
-					if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED){
-						myPlane->SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
-					}
-					return;
+				float3 landingPos = airBaseHandler->FindClosestAirBasePos(
+						owner, owner->unitDef->minAirBasePower);
+				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 800){
+					SetGoal(landingPos,owner->pos);
+					//myPlane->goalPos = landingPos;
+				} else {
+					owner->moveType->StopMoving();
 				}
+			}
+		} else if(owner->currentFuel < 
+				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel)
+				&& commandQue.empty() || commandQue.front().id == CMD_PATROL
+				|| commandQue.front().id == CMD_FIGHT) {
+			CAirBaseHandler::LandingPad* lp =
+				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			if(lp) {
+				StopMove();
+				owner->userAttackGround = false;
+				owner->userTarget = 0;
+				inCommand = false;
+				owner->moveType->ReservePad(lp);
+			}
+		} else if(owner->health < owner->maxHealth*owner->moveType->repairBelowHealth) {
+			CAirBaseHandler::LandingPad* lp =
+				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+			if(lp) {
+				owner->moveType->ReservePad(lp);
 			}
 		}
 	}
@@ -320,8 +308,7 @@ void CMobileCAI::RefuelIfNeeded(AAirMoveType* myPlane)
 void CMobileCAI::SlowUpdate()
 {
 	if(owner->unitDef->maxFuel>0 && dynamic_cast<AAirMoveType*>(owner->moveType)){
-		AAirMoveType* myPlane=(AAirMoveType*)owner->moveType;
-		RefuelIfNeeded(myPlane);
+		RefuelIfNeeded();
 	}
 
 	if(!commandQue.empty() && commandQue.front().timeOut < gs->frameNum){
@@ -401,7 +388,7 @@ void CMobileCAI::ExecuteMove(Command &c)
 		SetGoal(pos, owner->pos);
 	}
 	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
-			owner->moveType->progressState == CMoveType::Failed){
+			owner->moveType->progressState == AMoveType::Failed){
 		FinishCommand();
 	}
 	return;
@@ -436,7 +423,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c){
 	if((owner->pos - goalPos).SqLength2D() < cancelDistance){
 		StopMove();
 	}
-	if(owner->moveType->progressState == CMoveType::Failed){
+	if(owner->moveType->progressState == AMoveType::Failed){
 	}
 	return;
 }
@@ -545,7 +532,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		}
 	}
 	if((owner->pos - goalPos).SqLength2D() < (64 * 64)
-			|| (owner->moveType->progressState == CMoveType::Failed)){
+			|| (owner->moveType->progressState == AMoveType::Failed)){
 		FinishCommand();
 	}
 	return;
@@ -773,7 +760,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
 			else if (owner->unitDef->strafeToAttack && b3 && diffLength2d < (owner->maxRange * 0.9f))
 			{
-				moveDir ^= (owner->moveType->progressState == CMoveType::Failed);
+				moveDir ^= (owner->moveType->progressState == AMoveType::Failed);
 				float sin = moveDir ? 3.0/5 : -3.0/5;
 				float cos = 4.0/5;
 				float3 goalDiff(0, 0, 0);
@@ -891,7 +878,7 @@ void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadi
 void CMobileCAI::StopMove()
 {
 	owner->moveType->StopMoving();
-	goalPos=owner->pos;
+	goalPos = owner->pos;
 }
 
 void CMobileCAI::DrawCommands(void)

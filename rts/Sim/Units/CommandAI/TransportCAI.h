@@ -9,6 +9,8 @@
 #define UNLOAD_LANDFLOOD 2
 #define UNLOAD_CRASHFLOOD 3
 
+class CTransportUnit;
+
 class CTransportCAI :
 	public CMobileCAI
 {

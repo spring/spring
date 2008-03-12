@@ -3,7 +3,7 @@
 
 #include "MoveType.h"
 
-class CScriptMoveType : public CMoveType
+class CScriptMoveType : public AMoveType
 {
 	CR_DECLARE(CScriptMoveType);
 

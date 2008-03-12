@@ -31,7 +31,7 @@ public:
 	void ExecuteDGun(Command &c);
 	void ExecuteStop(Command &c);
 	
-	void RefuelIfNeeded(AAirMoveType* myPlane);
+	void RefuelIfNeeded();
 
 	virtual void Execute();
 	virtual void ExecuteGuard(Command &c);

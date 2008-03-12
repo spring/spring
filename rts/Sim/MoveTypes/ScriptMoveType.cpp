@@ -15,7 +15,7 @@
 #include "System/myMath.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CScriptMoveType, CMoveType, (NULL));
+CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
@@ -54,7 +54,7 @@ CR_REG_METADATA(CScriptMoveType, (
 
 
 CScriptMoveType::CScriptMoveType(CUnit* owner)
-: CMoveType(owner),
+: AMoveType(owner),
 	tag(0),
   extrapolate(true),
 	drag(0.0f),

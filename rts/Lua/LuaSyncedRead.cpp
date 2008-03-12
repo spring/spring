@@ -2236,7 +2236,7 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 	HSTR_PUSH_BOOL  (L, "active",     unit->activated);
 	HSTR_PUSH_BOOL  (L, "trajectory", unit->useHighTrajectory);
 
-	const CMoveType* mt = unit->moveType;
+	const AMoveType* mt = unit->moveType;
 	if (mt) {
 		const CTAAirMoveType* taAirMove = dynamic_cast<const CTAAirMoveType*>(mt);
 		if (taAirMove) {

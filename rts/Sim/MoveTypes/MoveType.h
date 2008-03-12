@@ -2,44 +2,51 @@
 #define MOVETYPE_H
 
 #include "Object.h"
-#include "Sim/Units/Unit.h"
+#include "Sim/Misc/AirBaseHandler.h"
+#include "System/float3.h"
 
-class CMoveType :
+class CUnit;
+
+class AMoveType :
 	public CObject
 {
-	CR_DECLARE(CMoveType);
+	CR_DECLARE(AMoveType);
 public:
-	CMoveType(CUnit* owner);
-	virtual ~CMoveType(void);
+	AMoveType(CUnit* owner);
+	virtual ~AMoveType(void);
 
-	virtual void StartMoving(float3 pos, float goalRadius){};
-	virtual void StartMoving(float3 pos, float goalRadius, float speed){};
-	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) {};
+	virtual void StartMoving(float3 pos, float goalRadius) = 0;
+	virtual void StartMoving(float3 pos, float goalRadius, float speed) = 0;
+	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
-	virtual void StopMoving(){};
-	virtual void Idle(unsigned int frames){};
-	virtual void Idle(){};
-	virtual void DeIdle(){};
+	virtual void StopMoving() = 0;
 	virtual void ImpulseAdded(void);
+	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
 
 //	virtual float GetSpeedMod(int square){return 1;};
 //	virtual float GetSpeedMod(float avrHeight, float maxHeight, float maxDepth, float avrSlope, float maxSlope) {return 1;};
 
-	virtual void SetGoal(float3 pos) {};
+	virtual void SetGoal(float3 pos);
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport(void);
 
-	virtual void Update(){};
+	virtual void Update() = 0;
 	virtual void SlowUpdate();
 
 	int forceTurn;
 	int forceTurnTo;
 
 	CUnit* owner;
+	
+	float3 goalPos;
 
 	float maxSpeed;
 	float maxWantedSpeed;
+	
+	CAirBaseHandler::LandingPad* reservedPad;
+	int padStatus;						//0 moving toward,1 landing at,2 arrived
+	float repairBelowHealth;
 
 	bool useHeading;		//probably should move the code in cunit that reads this into the movementclasses
 
@@ -49,6 +56,21 @@ public:
 		Failed = 2
 	};
 	ProgressState progressState;
+protected:
+	void DependentDied(CObject* o);
+};
+
+class CMoveType : public AMoveType
+{
+	CR_DECLARE(CMoveType);
+public:
+	CMoveType(CUnit* unit) : AMoveType(unit){};
+	virtual void StartMoving(float3 pos, float goalRadius){};
+	virtual void StartMoving(float3 pos, float goalRadius, float speed){};
+	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive){};
+	virtual void StopMoving(){};
+	virtual void Update(){};
+	
 };
 
 

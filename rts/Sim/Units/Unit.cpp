@@ -777,7 +777,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if (moveType->progressState == CMoveType::Active) {
+	if (moveType->progressState == AMoveType::Active) {
 		if (seismicSignature) {
 			DoSeismicPing((int)seismicSignature);
 		}

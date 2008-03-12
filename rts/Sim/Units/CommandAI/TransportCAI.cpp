@@ -131,7 +131,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			} else {
 				Command & currentUnitCommand = unit->commandAI->commandQue[0];
 				if(currentUnitCommand.id == CMD_LOAD_ONTO && currentUnitCommand.params.size() == 1 && int(currentUnitCommand.params[0]) == owner->id){
-					if((unit->moveType->progressState == CMoveType::Failed) && (owner->moveType->progressState == CMoveType::Failed)){
+					if((unit->moveType->progressState == AMoveType::Failed) && (owner->moveType->progressState == AMoveType::Failed)){
 						unit->commandAI->FinishCommand();
 						FinishCommand();
 						return;

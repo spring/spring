@@ -366,16 +366,7 @@ void CAirMoveType::SlowUpdate(void)
 	if(aircraftState!=AIRCRAFT_LANDED && owner->unitDef->maxFuel>0)
 		owner->currentFuel = max (0.f, owner->currentFuel - (16.f/GAME_SPEED));
 
-	if(!reservedPad && aircraftState==AIRCRAFT_FLYING && owner->health<owner->maxHealth*repairBelowHealth && !owner->crashing){
-		CAirBaseHandler::LandingPad* lp=airBaseHandler->FindAirBase(owner,owner->unitDef->minAirBasePower);
-		if(lp){
-			AddDeathDependence(lp);
-			reservedPad=lp;
-			padStatus=0;
-			oldGoalPos=goalPos;
-		}
-	}
-	if(owner->pos!=oldSlowUpdatePos){
+	if(owner->pos!=oldSlowUpdatePos) {
 		oldSlowUpdatePos=owner->pos;
 		if(owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 5 + 100)	//try to handle aircraft getting unlimited height
 			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5  + 100;
@@ -1141,17 +1132,11 @@ void CAirMoveType::CheckForCollision(void)
 
 void CAirMoveType::DependentDied(CObject* o)
 {
-	if(o==reservedPad){
-		reservedPad=0;
-		SetState(AIRCRAFT_FLYING);
-		goalPos=oldGoalPos;
-	}
-
 	if(o==lastColWarning){
 		lastColWarning=0;
 		lastColWarningType=0;
 	}
-	CMoveType::DependentDied(o);
+	AMoveType::DependentDied(o);
 }
 
 void CAirMoveType::SetMaxSpeed(float speed)
@@ -1162,3 +1147,36 @@ void CAirMoveType::SetMaxSpeed(float speed)
 		invDrag = 1-drag;
 	}
 }
+
+
+void CAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive) {
+	
+}
+void CAirMoveType::StartMoving(float3 pos, float goalRadius) {
+	SetGoal(pos);
+}
+void CAirMoveType::StartMoving(float3 pos, float goalRadius, float speed) {
+	SetWantedMaxSpeed(speed);
+	SetGoal(pos);
+}
+void CAirMoveType::StopMoving() {
+	SetGoal(owner->pos);
+	if((aircraftState == AAirMoveType::AIRCRAFT_FLYING)
+	   && !owner->unitDef->DontLand() && autoLand) {
+		SetState(AAirMoveType::AIRCRAFT_LANDING);
+	}
+}
+
+void CAirMoveType::Takeoff() {
+	if(aircraftState==AAirMoveType::AIRCRAFT_LANDED) {
+		SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
+	}
+	if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
+		SetState(AAirMoveType::AIRCRAFT_FLYING);
+	}
+}
+
+bool CAirMoveType::IsFighter() {
+	return isFighter;
+}
+

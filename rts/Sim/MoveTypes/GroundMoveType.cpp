@@ -31,7 +31,7 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CGroundMoveType, CMoveType, (NULL));
+CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
 CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(baseTurnRate),
@@ -48,7 +48,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(flatFrontDir),
 
 		CR_MEMBER(pathId),
-		CR_MEMBER(goal),
 		CR_MEMBER(goalRadius),
 
 		CR_MEMBER(waypoint),
@@ -119,7 +118,7 @@ std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 //////////////////////////////////////////////////////////////////////
 
 CGroundMoveType::CGroundMoveType(CUnit* owner)
-:	CMoveType(owner),
+:	AMoveType(owner),
 	accRate(0.01f),
 	turnRate(0.1f),
 	baseTurnRate(0.1f),
@@ -141,7 +140,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	skidRotPos2(0),
 
 	pathId(0),
-	goal(0,0,0),
 	goalRadius(0),
 	waypoint(0,0,0),
 	nextWaypoint(0,0,0),
@@ -191,7 +189,7 @@ void CGroundMoveType::PostLoad()
 {
 	//HACK:Initializing path after load
 	if (pathId) {
-		pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goal, goalRadius,owner);
+		pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goalPos, goalRadius,owner);
 	}
 }
 
@@ -272,7 +270,7 @@ void CGroundMoveType::Update()
 					logOutput.Print("eta failure %i %i %i %i %i", owner->id, pathId, !atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
 			}
 			if (pathId && !atGoal && gs->frameNum > etaWaypoint2) {
-				if (owner->pos.distance2D(goal) > 200 || CheckGoalFeasability()) {
+				if (owner->pos.distance2D(goalPos) > 200 || CheckGoalFeasability()) {
 					etaWaypoint2 += 100;
 				} else {
 					if (DEBUG_CONTROLLER)
@@ -379,7 +377,7 @@ void CGroundMoveType::SlowUpdate()
 
 	//If got too far away from path, then need to reconsider.
 	if(progressState == Active && etaFailures>8) {
-		if(owner->pos.distance2D(goal)>200 || CheckGoalFeasability()){
+		if(owner->pos.distance2D(goalPos)>200 || CheckGoalFeasability()){
 			if(DEBUG_CONTROLLER)
 				logOutput.Print("Unit eta failure %i",owner->id);
 			StopEngine();
@@ -456,7 +454,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	}
 
 	//Sets the new goal.
-	goal = moveGoalPos;
+	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
 	requestedSpeed = min(speed, maxSpeed*2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
@@ -976,7 +974,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			}
 
 			// now we do the obstacle avoidance proper
-			float currentDistanceToGoal = owner->pos.distance2D(goal);
+			float currentDistanceToGoal = owner->pos.distance2D(goalPos);
 			float3 rightOfPath = desiredDir.cross(float3(0,1,0));
 			float3 rightOfAvoid = rightOfPath;
 			float speedf=owner->speed.Length2D();
@@ -1108,7 +1106,7 @@ void CGroundMoveType::GetNewPath()
 
 	pathManager->DeletePath(pathId);
 
-	pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goal, goalRadius,owner);
+	pathId = pathManager->RequestPath(owner->mobility->moveData, owner->pos, goalPos, goalRadius,owner);
 
 	nextWaypoint=owner->pos;
 	//With new path recived, can't be at waypoint.
@@ -1153,8 +1151,8 @@ void CGroundMoveType::GetNextWaypoint()
 			nextWaypoint=waypoint;
 		}
 		//If the waypoint is very close to the goal, then correct it into the goal.
-		if(waypoint.distance2D(goal) < CPathManager::PATH_RESOLUTION){
-			waypoint = goal;
+		if(waypoint.distance2D(goalPos) < CPathManager::PATH_RESOLUTION){
+			waypoint = goalPos;
 			haveFinalWaypoint=true;
 		}
 	}
@@ -1323,7 +1321,7 @@ void CGroundMoveType::Fail()
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}
 
-		if (!owner->commandAI->unimportantMove && owner->pos.distance(goal) > goalRadius + 150) {
+		if (!owner->commandAI->unimportantMove && owner->pos.distance(goalPos) > goalRadius + 150) {
 			if (gs->frameNum % (GAME_SPEED * 3) == 0) {
 				logOutput << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
 				logOutput.SetLastMsgPos(owner->pos);
@@ -1687,13 +1685,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 
 bool CGroundMoveType::CheckGoalFeasability(void)
 {
-	float goalDist=goal.distance2D(owner->pos);
+	float goalDist=goalPos.distance2D(owner->pos);
 
-	int minx=(int)max(0.f,(goal.x-goalDist)/(SQUARE_SIZE*2));
-	int minz=(int)max(0.f,(goal.z-goalDist)/(SQUARE_SIZE*2));
+	int minx=(int)max(0.f,(goalPos.x-goalDist)/(SQUARE_SIZE*2));
+	int minz=(int)max(0.f,(goalPos.z-goalDist)/(SQUARE_SIZE*2));
 
-	int maxx=(int)min(float(gs->hmapx-1),(goal.x+goalDist)/(SQUARE_SIZE*2));
-	int maxz=(int)min(float(gs->hmapy-1),(goal.z+goalDist)/(SQUARE_SIZE*2));
+	int maxx=(int)min(float(gs->hmapx-1),(goalPos.x+goalDist)/(SQUARE_SIZE*2));
+	int maxz=(int)min(float(gs->hmapy-1),(goalPos.z+goalDist)/(SQUARE_SIZE*2));
 
 	MoveData* md=owner->unitDef->movedata;
 	CMoveMath* mm=md->moveMath;
@@ -1704,7 +1702,7 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 	for(int z=minz;z<=maxz;++z){
 		for(int x=minx;x<=maxx;++x){
 			float3 pos(x*SQUARE_SIZE*2,0,z*SQUARE_SIZE*2);
-			if((pos-goal).SqLength2D()<goalDist*goalDist){
+			if((pos-goalPos).SqLength2D()<goalDist*goalDist){
 				int blockingType=mm->SquareIsBlocked(*md,x*2,z*2);
 				if((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->SpeedMod(*md,x*2,z*2)<0.01f){
 					numBlocked+=0.3f;

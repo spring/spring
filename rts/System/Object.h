@@ -35,7 +35,7 @@ public:
 	CObject* GetNext()     const { return next; }
 	CObject* GetPrevious() const { return prev; }
 	bool IsSynchronized()  const { return prev || next; }
-
+	
 	void DeleteDeathDependence(CObject* o);
 	void AddDeathDependence(CObject* o);
 	virtual void DependentDied(CObject* o);

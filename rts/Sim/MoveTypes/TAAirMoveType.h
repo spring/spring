@@ -88,6 +88,9 @@ public:
 	void SetWantedAltitude(float altitude);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
+	
+	void Takeoff();
+	bool IsFighter();
 };
 
 

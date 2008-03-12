@@ -7,7 +7,7 @@
 struct MoveData;
 
 class CGroundMoveType :
-	public CMoveType
+	public AMoveType
 {
 	CR_DECLARE(CGroundMoveType);
 public:
@@ -49,7 +49,6 @@ public:
 	float3 flatFrontDir;
 
 	unsigned int pathId;
-	float3 goal;
 	float goalRadius;
 
 	float3 waypoint;

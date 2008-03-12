@@ -1036,5 +1036,20 @@ void CTAAirMoveType::DependentDied(CObject* o)
 		lastColWarningType = 0;
 	}
 
-	CMoveType::DependentDied(o);
+	AMoveType::DependentDied(o);
+}
+
+void CTAAirMoveType::Takeoff()
+{
+	if(aircraftState==AAirMoveType::AIRCRAFT_LANDED) {
+		SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
+	}
+	if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
+		SetState(AAirMoveType::AIRCRAFT_FLYING);
+	}
+}
+
+bool CTAAirMoveType::IsFighter()
+{
+	return false;
 }
