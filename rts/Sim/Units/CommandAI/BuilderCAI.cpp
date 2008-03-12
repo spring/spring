@@ -401,7 +401,7 @@ void CBuilderCAI::SlowUpdate()
 						}
 					}
 				} else {
-					if (owner->moveType->progressState == CMoveType::Failed) {
+					if (owner->moveType->progressState == AMoveType::Failed) {
 						if (++buildRetries > 5) {
 							StopMove();
 							FinishCommand();
@@ -753,7 +753,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 					if (f3Dist(goalPos, feature->pos) > 1) {
 						SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
 					} else {
-						if(owner->moveType->progressState==CMoveType::Failed){
+						if(owner->moveType->progressState==AMoveType::Failed){
 							StopMove();
 							FinishCommand();
 						}
@@ -882,9 +882,9 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		FinishCommand();
 		return;
 	}
-	if(owner->haveTarget && owner->moveType->progressState!=CMoveType::Done){
+	if(owner->haveTarget && owner->moveType->progressState!=AMoveType::Done){
 		StopMove();
-	} else if(owner->moveType->progressState!=CMoveType::Active){
+	} else if(owner->moveType->progressState!=AMoveType::Active){
 		owner->moveType->StartMoving(goalPos, 8);
 	}
 	return;
@@ -1055,7 +1055,7 @@ bool CBuilderCAI::ReclaimObject(CSolidObject* object){
 		if (f3Dist(goalPos, object->pos) > 1) {
 			SetGoal(object->pos, owner->pos);
 		} else {
-			if (owner->moveType->progressState == CMoveType::Failed) {
+			if (owner->moveType->progressState == AMoveType::Failed) {
 				return false;
 			}
 		}

@@ -5,6 +5,8 @@
 #define __AIR_MOVE_TYPE_H__
 
 #include "AAirMoveType.h"
+#include <vector>
+
 
 class CAirMoveType :
 	public AAirMoveType
@@ -34,6 +36,14 @@ public:
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
 	void SetMaxSpeed(float speed);
+	
+	void KeepPointingTo(float3 pos, float distance, bool aggressive);
+	void StartMoving(float3 pos, float goalRadius);
+	void StartMoving(float3 pos, float goalRadius, float speed);
+	void StopMoving();
+	
+	void Takeoff();
+	bool IsFighter();
 
 	int subState;
 
@@ -87,7 +97,7 @@ public:
 	RudderInfo elevator;
 	RudderInfo aileronRight;
 	RudderInfo aileronLeft;
-	vector<RudderInfo*> rudders;
+	std::vector<RudderInfo*> rudders;
 
 	float lastRudderUpdate;
 	float lastRudderPos;

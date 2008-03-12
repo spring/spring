@@ -22,7 +22,7 @@ public:
 	void AddUnit(CUnit* unit);
 	void FinishCommand(void);
 	void BuggerOff(float3 pos, float radius);
-	void StopMove();
+//	void StopMove();
 	
 	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	

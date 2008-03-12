@@ -6,7 +6,7 @@
 
 // Supposed to be an abstract class. Do not create an instance of this class.
 // Use either CTAAirMoveType or CAirMoveType instead.
-class AAirMoveType : public CMoveType
+class AAirMoveType : public AMoveType
 {
 	CR_DECLARE(AAirMoveType);
 public:
@@ -23,7 +23,6 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 	
-	float3 goalPos;
 	float3 oldGoalPos;				//goalpos to resume flying to after landing
 	float3 oldpos;
 	float3 reservedLandingPos;
@@ -34,11 +33,14 @@ public:
 	CUnit* lastColWarning;		//unit found to be dangerously close to our path
 	int lastColWarningType;		//1=generally forward of us,2=directly in path
 	
-	float repairBelowHealth;
-	CAirBaseHandler::LandingPad* reservedPad;
-	int padStatus;						//0 flying toward,1 landing at,2 landed
 	bool autoLand;
 
+	virtual bool IsFighter() = 0;
+	virtual void Takeoff() = 0;
+	void ReservePad(CAirBaseHandler::LandingPad* lp);
+	void DependentDied(CObject* o);
+	
+protected:
 	virtual void SetState(AircraftState state) = 0;
 };
 

@@ -2,6 +2,8 @@
 #define AIRBASEHANDLER_H
 
 #include "Object.h"
+#include "System/float3.h"
+#include "System/GlobalStuff.h"
 #include <list>
 #include <boost/noncopyable.hpp>
 

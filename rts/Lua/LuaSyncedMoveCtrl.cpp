@@ -231,19 +231,19 @@ int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
 
 	if (lua_isnumber(L, 2)) {
 		const int state = (int)lua_tonumber(L, 2);
-		if ((state < CMoveType::Done) || (state > CMoveType::Failed)) {
+		if ((state < AMoveType::Done) || (state > AMoveType::Failed)) {
 			luaL_error(L, "SetProgressState(): bad state value (%i)", state);
 		}
-		moveType->progressState = (CMoveType::ProgressState) state;
+		moveType->progressState = (AMoveType::ProgressState) state;
 	}
 	else if (lua_isstring(L, 2)) {
 		const string state = lua_tostring(L, 2);
 		if (state == "done") {
-			moveType->progressState = CMoveType::Done;
+			moveType->progressState = AMoveType::Done;
 		} else if (state == "active") {
-			moveType->progressState = CMoveType::Active;
+			moveType->progressState = AMoveType::Active;
 		} else if (state == "failed") {
-			moveType->progressState = CMoveType::Failed;
+			moveType->progressState = AMoveType::Failed;
 		} else {
 			luaL_error(L, "SetProgressState(): bad state value (%s)", state.c_str());
 		}

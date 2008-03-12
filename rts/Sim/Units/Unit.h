@@ -18,7 +18,7 @@ class CCommandAI;
 class CGroup;
 class CLoadSaveInterface;
 class CMissileProjectile;
-class CMoveType;
+class AMoveType;
 class CUnitAI;
 class CWeapon;
 struct DamageArray;
@@ -232,8 +232,8 @@ public:
 	int2 oldRadarPos;
 	bool stealth;
 
-	CMoveType* moveType;
-	CMoveType* prevMoveType;
+	AMoveType* moveType;
+	AMoveType* prevMoveType;
 	bool usingScriptMoveType;
 
 	CCommandAI* commandAI;

@@ -1,71 +1,109 @@
 #include "StdAfx.h"
 #include "MoveType.h"
 #include "Map/Ground.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
 
-CR_BIND_DERIVED(CMoveType, CObject, (NULL));
+CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
 
-CR_REG_METADATA(CMoveType, (
+CR_REG_METADATA(AMoveType, (
 		CR_MEMBER(forceTurn),
 		CR_MEMBER(forceTurnTo),
 		CR_MEMBER(owner),
 		CR_MEMBER(maxSpeed),
 		CR_MEMBER(maxWantedSpeed),
 		CR_MEMBER(useHeading),
+		CR_MEMBER(goalPos),
+		CR_MEMBER(reservedPad),
+		CR_MEMBER(padStatus),
 		CR_ENUM_MEMBER(progressState),
+		CR_MEMBER(repairBelowHealth),
 		CR_RESERVED(32)
 		));
 
+CR_BIND_DERIVED(CMoveType, AMoveType, (NULL));
 
-CMoveType::CMoveType(CUnit* owner)
+
+CR_REG_METADATA(CMoveType,
+		(
+		CR_RESERVED(63)
+		));
+
+AMoveType::AMoveType(CUnit* owner)
 : owner(owner),
 	forceTurn(0),
 	forceTurnTo(0),
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
 	useHeading(true),
+	goalPos(owner->pos),
+	reservedPad(0),
+	padStatus(0),
+	repairBelowHealth(0),
 	progressState(Done)
 {
 }
 
-CMoveType::~CMoveType(void)
+AMoveType::~AMoveType(void)
 {
 }
 
-void CMoveType::SetMaxSpeed(float speed)
+void AMoveType::SetMaxSpeed(float speed)
 {
 	assert(speed > 0);
-	maxSpeed=speed;
+	maxSpeed = speed;
 }
 
-void CMoveType::SetWantedMaxSpeed(float speed)
+void AMoveType::SetWantedMaxSpeed(float speed)
 {
-	if(speed > maxSpeed)
+	if(speed > maxSpeed) {
 		maxWantedSpeed = maxSpeed;
-	else if(speed < 0.001f)
+	} else if(speed < 0.001f) {
 		maxWantedSpeed = 0;
-	else
+	} else {
 		maxWantedSpeed = speed;
+	}
 }
 
-void CMoveType::ImpulseAdded(void)
+void AMoveType::ImpulseAdded(void)
 {
 }
 
-void CMoveType::SlowUpdate()
+void AMoveType::SlowUpdate()
 {
-	owner->pos.y=ground->GetHeight2(owner->pos.x,owner->pos.z);
-	if(owner->floatOnWater && owner->pos.y<0)
+	owner->pos.y = ground->GetHeight2(owner->pos.x,owner->pos.z);
+	if(owner->floatOnWater && owner->pos.y< -owner->unitDef->waterline) {
 		owner->pos.y = -owner->unitDef->waterline;
+	}
 	owner->midPos.y=owner->pos.y+owner->relMidPos.y;
 };
 
-void CMoveType::LeaveTransport(void)
+void AMoveType::LeaveTransport(void)
 {
 }
 
-void CMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
+void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 {
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
-};
+}
+
+void AMoveType::SetGoal(float3 pos)
+{
+	goalPos = pos;
+}
+
+void AMoveType::DependentDied(CObject* o)
+{
+	if(o == reservedPad){
+		reservedPad=0;
+	}
+}
+
+void AMoveType::ReservePad(CAirBaseHandler::LandingPad* lp)
+{
+	AddDeathDependence(lp);
+	reservedPad = lp;
+	padStatus = 0;
+	SetGoal(lp->GetUnit()->pos);
+}
