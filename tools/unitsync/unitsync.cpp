@@ -725,11 +725,27 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	return (void*)ret;
 }
 
+/**
+ * @brief Retrieves a minimap image for a map.
+ * @param filename The name of the map, including extension.
+ * @param miplevel Which miplevel of the minimap to extract from the file.
+ * Set miplevel to 0 to get the largest, 1024x1024 minimap. Each increment
+ * divides the width and height by 2. The maximum miplevel is 8, resulting in a
+ * 4x4 image.
+ * @return A pointer to a static memory area containing the minimap as a 16 bit
+ * packed RGB-565 (MSB to LSB: 5 bits red, 6 bits green, 5 bits blue) linear
+ * bitmap.
+ *
+ * An example usage would be GetMinimap("SmallDivide.smf", 2).
+ * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
+ *
+ * Be sure you've made a calls to Init prior to using this.
+ */
 DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetMinimap.");
 	ASSERT(filename && *filename, "Don't pass a NULL pointer or an empty string to GetMinimap.");
-	ASSERT(miplevel >= 0 && miplevel <= 10, "Miplevel must be between 0 and 10 (inclusive) in GetMinimap.");
+	ASSERT(miplevel >= 0 && miplevel <= 8, "Miplevel must be between 0 and 8 (inclusive) in GetMinimap.");
 
 	const string mapName = filename;
 	ScopedMapLoader mapLoader(mapName);
@@ -754,7 +770,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 vector<CArchiveScanner::ModData> modData;
 
 
-/*
+/**
  * @brief Retrieves the name of this mod
  * @return int The number of mods
  *
@@ -769,7 +785,7 @@ DLL_EXPORT int __stdcall GetPrimaryModCount()
 }
 
 
-/*
+/**
  * @brief Retrieves the name of this mod
  * @param index in The mods index/id
  * @return const char* The mods name
@@ -786,7 +802,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the shortened name of this mod
  * @param index in The mods index/id
  * @return const char* The mods abbrieviated name
@@ -803,7 +819,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the version string of this mod
  * @param index in The mods index/id
  * @return const char* The mods version string
@@ -820,7 +836,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the mutator name of this mod
  * @param index in The mods index/id
  * @return const char* The mods mutator name
@@ -837,7 +853,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the game name of this mod
  * @param index in The mods index/id
  * @return const char* The mods game
@@ -854,7 +870,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the short game name of this mod
  * @param index in The mods index/id
  * @return const char* The mods abbrieviated game name
@@ -871,7 +887,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
 }
 
 
-/*
+/**
  * @brief Retrieves the description of this mod
  * @param index in The mods index/id
  * @return const char* The mods description
@@ -895,17 +911,18 @@ DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
 	return GetStr(modData[index].dependencies[0]);
 }
 
-/*
- * These two funtions are used to get the entire list of archives that a mod
- * requires. Call ..Count with selected mod first to get number of archives,
- * and then use ..List for 0 to count-1 to get the name of each archive.
- */
+
 vector<string> primaryArchives;
 
-/* @brief Retrieves the number of archives a mod requires
+/**
+ * @brief Retrieves the number of archives a mod requires
  * @param index int The index of the mod
+ * @return the number of archives this mod depends on.
  *
- * Returns the number of archives this mod depends on.
+ * This is used to get the entire list of archives that a mod requires.
+ * Call GetPrimaryModArchiveCount() with selected mod first to get number of
+ * archives, and then use GetPrimaryModArchiveList() for 0 to count-1 to get the
+ * name of each archive.
  */
 DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 {
@@ -915,6 +932,12 @@ DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 	return primaryArchives.size();
 }
 
+/**
+ * @brief Retrieves the name of the current mod's archive.
+ * @param arnr The mod's archive index/id.
+ * @return the name of the archive
+ * @see GetPrimaryModArchiveCount()
+ */
 DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
 {
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetPrimaryModArchiveList.");
