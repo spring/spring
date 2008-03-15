@@ -395,7 +395,12 @@ void CGameServer::ServerReadNet()
 		}
 		else
 		{
-			log.Warning(format(ConnectionReject) %inbuf[0] %inbuf[2] %packet->length);
+			if (packet->length >= 3) {
+				log.Warning(format(ConnectionReject) %inbuf[0] %inbuf[2] %packet->length);
+			}
+			else {
+				log.Warning("Connection attempt rejected: Packet too short");
+			}
 			serverNet->RejectIncomingConnection();
 		}
 		delete packet;
@@ -758,9 +763,9 @@ void CGameServer::ServerReadNet()
 		}
 		else if (players[a])
 		{
+			log.Message(format(PlayerLeft) %players[a]->name %" timeout"); //this must happen BEFORE the reset!
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
-			log.Message(format(PlayerLeft) %players[a]->name %" timeout");
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
@@ -773,9 +778,9 @@ void CGameServer::ServerReadNet()
 		//HACK check if we lost connection to the last player(s)
 		if (players[a])
 		{
+			log.Message(format(PlayerLeft) %players[a]->name %" timeout"); //this must happen BEFORE the reset!
 			players[a].reset();
 			serverNet->SendPlayerLeft(a, 0);
-			log.Message(format(PlayerLeft) %players[a]->name %" timeout");
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
