@@ -19,7 +19,7 @@ namespace ntai {
 	}
 
 	void CBuildingPlacer::RecieveMessage(CMessage &message){
-		/*if(message.GetType()==string("unitcreated")){
+		if(message.GetType()==string("unitcreated")){
 			int uid = (int)message.GetParameter(0);
 			float3 p = G->GetUnitPos(uid);
 			if(this->tempgeo.empty()==false){
@@ -30,32 +30,25 @@ namespace ntai {
 					}
 				}
 			}
-		}else
-		if(message.GetType()==string("unitdestroyed")){
+		}else if(message.GetType()==string("unitdestroyed")){
 			int uid = (int)message.GetParameter(0);
 			tempgeo.erase(uid);
 		}else if(message.GetType()==string("unitidle")){
 			int uid = (int)message.GetParameter(0);
 			tempgeo.erase(uid);
-		} */
-		if(message.IsType("update")){
+		}
+		if(message.GetType()==string("update")){
 			if(G->L.IsVerbose()){
 				if(message.GetFrame()%35 == 0){
-
 					map<int, boost::shared_ptr<CGridCell> > n = blockingmap.GetGrid();
-					
 					if(!n.empty()){
-
 						for(map<int, boost::shared_ptr<CGridCell> >::iterator i = n.begin(); i != n.end(); ++i){
-							
 							boost::shared_ptr<CGridCell> c = i->second;
 							int j = c->GetIndex();
-
 							float3 pos = blockingmap.GridtoMap(blockingmap.IndextoGrid(j));
 							pos.y = G->cb->GetElevation(pos.x, pos.z);
 							//pos.y -= 20; // move it down into the ground so it doesnt obscure low lying units
 							if(G->cb->PosInCamera(pos, 1000)){
-
 								if(G->UnitDefLoader->HasUnit("lttank")!= 0){
 									G->cb->DrawUnit("lttank", pos, 1, 35, 0, true, false, 0);
 								}else if(G->UnitDefLoader->HasUnit("armpw")!= 0){
@@ -67,9 +60,9 @@ namespace ntai {
 								}else if(G->UnitDefLoader->HasUnit("bit")!= 0){
 									G->cb->DrawUnit("bit", pos, 1, 35, 0, true, false, 0);
 								}
-
+								//G->cb->DrawUnit("armpw",pos,1,35,0,false,false,0);
+								//G->cb->DrawUnit("arm_peewee",pos,1,35,0,false,false,0);
 							}
-
 							//int k = G->cb->CreateLineFigure(pos,pos+float3(16,50,0),10,1,10,0);
 							//G->cb->SetFigureColor(k,1,0,0,0.5);
 						}
@@ -80,6 +73,7 @@ namespace ntai {
 	}
 
 	bool CBuildingPlacer::Init(){
+		const float* slope = G->cb->GetSlopeMap();
 		float3 mapdim= float3((float)G->cb->GetMapWidth()*SQUARE_SIZE*2, 0, (float)G->cb->GetMapHeight()*SQUARE_SIZE*2);
 
 		int smaxW = G->cb->GetMapWidth()/16;
@@ -87,15 +81,12 @@ namespace ntai {
 
 		int* f = new int[10000];
 		int fnum = 0;
-
 		fnum = G->cb->GetFeatures(f, 9999);
-
 		if(fnum > 0){
-
+			//
 			for(int i = 0; i < fnum; ++i){
-
+				//
 				const FeatureDef* fd = G->cb->GetFeatureDef(f[i]);
-
 				if(fd != 0){
 					if(fd->geoThermal){
 						float3 fpos = G->cb->GetFeaturePos(f[i]);
@@ -106,22 +97,45 @@ namespace ntai {
 				}
 			}
 		}
+		/*slopemap.Initialize(mapdim,float3(32,0,32),true);
+		 slopemap.SetDefaultGridValue(0);
+		 slopemap.SetMinimumValue(0);
+		 slopemap.UseArray(slope,smaxW*smaxH,smaxH,smaxW);*/
 
-		delete[] f;
+		/*	geomap.Initialize(mapdim,float3(124,0,124),true);
+		 geomap.SetDefaultGridValue(0);
+		 geomap.SetMinimumValue(0);*/
 
-		if(geolist.empty()){
-			//
-			G->L.print("This map does not have identifiablegeothermal vents");
-		}
-		
+		/*const float* heightmaparray = G->cb->GetHeightMap();
+		lowheightmap.Initialize(mapdim, float3(32, 0, 32), true);
+		lowheightmap.SetDefaultGridValue(0);
+		lowheightmap.SetMinimumValue(0);
+		lowheightmap.UseArrayLowValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);
+
+		highheightmap.Initialize(mapdim, float3(32, 0, 32), true);
+		highheightmap.SetDefaultGridValue(0);
+		highheightmap.SetMinimumValue(0);
+		highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);*/
 
 		blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
 		blockingmap.SetDefaultGridValue(0);
 		blockingmap.SetMinimumValue(1);
 
+		/*G->RegisterMessageHandler("unitcreated", me);
+		G->RegisterMessageHandler("unitdestroyed", me);
+		G->RegisterMessageHandler("unitidle", me);
+		G->RegisterMessageHandler("update", me);*/
 		return true;
 	}
 
+	/*float3 CBuildingPlacer::GetBuildPos(float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
+		if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
+			if(G->UnitDefHelper->IsMobile(building)){
+				return builderpos;
+			}
+		}
+		return findfreespace(building, builderpos, freespace, 1000);
+	}*/
 
 	class CBuildAlgorithm : public IModule{
 	public:
@@ -138,22 +152,13 @@ namespace ntai {
 			valid(true),
 			G(G){ }
 
-		void RecieveMessage(CMessage &message){
-		}
-		
-		bool Init(){
-			return true;
-		}
-
+		void RecieveMessage(CMessage &message){}
+		bool Init(){ return true;}
 		void operator()(){
-
-			if(!reciever->IsValid()){
-				return;
-			}
-
+			//boost::mutex::scoped_lock lock(io_mutex[building->id]);
+			if(!reciever->IsValid()) return;
 			float3 bestPosition = UpVector;
 			float bestDistance = 500000.0f;
-
 			if(G->L.IsVerbose()){
 				AIHCAddMapPoint ac;
 				ac.label=new char[11];
@@ -166,10 +171,8 @@ namespace ntai {
 			if(builder->IsHub()){
 				search_radius = builder->GetUnitDef()->buildDistance;
 			}
-
 			CUBuild b;
 			b.Init(G, builder, 0);
-
 			int e=0;
 			vector<float3> cells = blockingmap->GetCellsInRadius(builderpos, search_radius, e);
 
@@ -242,7 +245,6 @@ namespace ntai {
 						// update best position/distance
 						bestPosition = gpos;
 						bestDistance = distance;
-
 					}else{
 						continue;
 					}
@@ -298,8 +300,17 @@ namespace ntai {
 	};
 
 	void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, CUnitTypeData* builder, CUnitTypeData* building, float freespace){
-
-		if(!reciever->IsValid()==false){
+		/*if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
+		 if(G->UnitDefHelper->IsMobile(building)){
+		 CMessage m("buildposition");
+		 m.AddParameter(builderpos);
+		 //if(reciever->IsValid()){
+		 reciever->RecieveMessage(m);
+		 //}
+		 return;
+		 }
+		 }*/
+		if(reciever->IsValid()==false){
 			// oh noes! invalid module
 			CMessage m("buildposition");
 			m.AddParameter(UpVector);
@@ -312,7 +323,6 @@ namespace ntai {
 
 		float3 q = UpVector;
 		if(building->IsMex()){
-
 			q = G->M->getNearestPatch(builderpos, 0.7f, building->GetUnitDef()->extractsMetal, building->GetUnitDef());
 			if((G->Map->CheckFloat3(q) == false)||(builder->IsHub()&&(builder->GetUnitDef()->buildDistance < q.distance2D(builderpos)))){
 				//G->L.print("zero mex co-ordinates intercepted");
@@ -422,18 +432,17 @@ namespace ntai {
 		}else if(building->GetUnitDef()->needGeo){
 
 			NLOG("CBuildingPlacer::GetBuildPosMessage geo");
-			//int* f = new int[20000];
-			//int fnum = 0;
+			int* f = new int[20000];
+			int fnum = 0;
 
-			//if(builder->IsHub()){
-			//	fnum = G->cb->GetFeatures(f, 19999, builderpos, builder->GetUnitDef()->buildDistance);
-			//}else{
-			//	fnum = G->cb->GetFeatures(f, 19999);
-			//}
+			if(builder->IsHub()){
+				fnum = G->cb->GetFeatures(f, 19999, builderpos, builder->GetUnitDef()->buildDistance);
+			}else{
+				fnum = G->cb->GetFeatures(f, 19999);
+			}
 
 			float3 result = UpVector;
 
-			//if(fnum >0){
 			if(!geolist.empty()){
 
 				float gsearchdistance;
@@ -442,30 +451,29 @@ namespace ntai {
 				G->Get_mod_tdf()->GetDef(gsearchdistance, "3000", "AI\\geotherm\\searchdistance");
 				G->Get_mod_tdf()->GetDef(genemydist, "600", "AI\\geotherm\\noenemiesdistance");
 
-				float nearest_dist = 90000000;
+				float nearest_dist = 10000000;
 				int* a = new int[20000];
 
 				for(vector<float3>::iterator it = geolist.begin(); it != geolist.end(); ++it){
-					float3 gpos = *it;
-					float d = gpos.distance2D(builderpos);
+					float d = it->distance2D(builderpos);
 					if(d < nearest_dist){
-						/*if(tempgeo.empty()==false){
+						if(tempgeo.empty()==false){
 							for(map<int, float3>::iterator i = tempgeo.begin(); i != tempgeo.end(); ++i){
-								if(i->second.distance2D(gpos) < 100){
+								if(i->second.distance2D((*it)) < 100){
 									continue;
 								}
 							}
-						}*/
+						}
 
-						if(G->cb->GetFriendlyUnits(a,gpos,100)> 0){
+						if(G->cb->GetFriendlyUnits(a,*it,100)> 0){
 							continue;
 						}
 
 						if(it->distance2D(builderpos) < gsearchdistance){
 
-							if(G->cb->CanBuildAt(building->GetUnitDef(), gpos)&&(G->chcb->GetEnemyUnits(a, gpos, genemydist)<1)){
+							if(G->cb->CanBuildAt(building->GetUnitDef(), *it)&&(G->chcb->GetEnemyUnits(a, *it, genemydist)<1)){
 								nearest_dist = d;
-								result = gpos;
+								result = *it;
 							}
 
 						}
@@ -480,8 +488,8 @@ namespace ntai {
 			CMessage m("buildposition");
 			m.AddParameter(result);
 			reciever->RecieveMessage(m);
-			//tempgeo[builderID] = result;
-			//delete[] f;
+			tempgeo[builderID] = result;
+			delete[] f;
 
 			return;
 		}

@@ -16,11 +16,13 @@ namespace ntai {
 	map<string, float> builderefficiency;
 	map<string, int> lastbuilderefficiencyupdate;
 
+	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	TdfParser* Global::Get_mod_tdf(){
 		return info->mod_tdf;
 	}
 
+	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void trim(string &str){
 		string::size_type pos = str.find_last_not_of(' ');
@@ -33,12 +35,8 @@ namespace ntai {
 	}
 
 	bool ValidUnitID(int id){
-		if(id < 0){
-			return false;
-		}
-		if(id > MAX_UNITS+1){
-			return false;
-		}
+		if(id < 0) return false;
+		if(id > MAX_UNITS+1) return false;
 		return true;
 	}
 
@@ -47,12 +45,10 @@ namespace ntai {
 		gcb = callback;
 		cb = gcb->GetAICallback();
 		if(cb == 0){
-			throw string(" fatal error cb ==0");
+			throw string(" error cb ==0");
 		}
-
 		CLOG("Started Global::Global class constructor");
 		CLOG("Starting CCached initialisation");
-		
 		Cached = new CCached;
 		Cached->comID = 0;
 		Cached->randadd = 0;
@@ -134,8 +130,9 @@ namespace ntai {
 				 triangles.push_back(triangle);
 			 }
 		 }*/
-
+		//if(L.FirstInstance() == true){
 		L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
+		//}
 		UnitDefLoader = new CUnitDefLoader(G);
 		L.print("Unitdef loader constructed");
 
@@ -217,14 +214,14 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("CMessage message(\"enemydamaged\"); FireEvent(message);")*/
 	}
 
+	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
 	void Global::Update(){
 		bool paused = false;
 
 		NLOG("Global::Update()");
 		cb->GetValue(AIVAL_GAME_PAUSED, &paused);
-		if(paused){
-			return;
-		}
+		if(paused) return;
 		START_EXCEPTION_HANDLING
 
 		if(!handlers.empty()){
@@ -259,7 +256,69 @@ namespace ntai {
 
 		}
 
-		
+		if(cb->GetCurrentFrame() == (1 SECOND)){
+			NLOG("STARTUP BANNER IN Global::Update()");
+
+			if(L.FirstInstance()){
+				string s = string(":: ") + AI_NAME + string(" by AF");
+				cb->SendTextMsg(s.c_str(), 0);
+				cb->SendTextMsg(":: Copyright (C) 2006 AF", 0);
+				string q = string(" :: ") + Get_mod_tdf()->SGetValueMSG("AI\\message");
+				if(q != string("")){
+					cb->SendTextMsg(q.c_str(), 0);
+				}
+				cb->SendTextMsg("Please check www.darkstars.co.uk for updates", 0);
+			}
+
+			int* ax = new int[10000];
+			int anum =cb->GetFriendlyUnits(ax);
+			
+			ComName = string("");
+	        
+			if(anum !=0){
+				for(int a = 0; a<anum; a++){
+					if(cb->GetUnitTeam(ax[a]) == cb->GetMyTeam()){
+						const UnitDef* ud = GetUnitDef(ax[a]);
+						if(ud!=0){
+							//
+							ComName = ud->name;
+							Cached->comID=ax[a];
+						}
+					}
+				}
+			}
+			delete[] ax;
+		}
+		END_EXCEPTION_HANDLING("Startup Banner and getting commander name")
+
+		START_EXCEPTION_HANDLING
+		OrderRouter->Update();
+		END_EXCEPTION_HANDLING("OrderRouter->Update()")
+
+		//if( EVERY_((2 SECONDS)) && (Cached->cheating == true) ){
+		//	float a = cb->GetEnergyStorage() - cb->GetEnergy();
+		//	if( a > 50) chcb->GiveMeEnergy(a);
+		//	a = cb->GetMetalStorage() - cb->GetMetal();
+		//	if(a > 50) chcb->GiveMeMetal(a);
+		//}
+
+		START_EXCEPTION_HANDLING
+		if(EVERY_((2 MINUTES))){
+			//L.print("saving UnitData");
+			SaveUnitData();
+			/*if(!SaveUnitData()){
+			 L.print("UnitData saved");
+			 }else{
+			 L.print("UnitData not saved");
+			 }*/
+		}
+		END_EXCEPTION_HANDLING("SaveUnitData()")
+
+		//EXCEPTION_HANDLER(Pl->Update(),"Pl->Update()",NA)
+
+		START_EXCEPTION_HANDLING
+		Actions->Update();
+		END_EXCEPTION_HANDLING("Actions->Update()")
 
 		START_EXCEPTION_HANDLING
 
@@ -274,10 +333,11 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("CMessage message(\"update\"); FireEvent(message);")
 
 		//EXCEPTION_HANDLER(Manufacturer->Update(),"Manufacturer->Update()",NA)
-		
+		Ch->Update();
 
 	}
 
+	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::SortSolobuilds(int unit){
 		Cached->enemies.erase(unit);
@@ -336,6 +396,7 @@ namespace ntai {
 
 	}
 
+	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	void Global::EnemyDestroyed(int enemy, int attacker){
 
 		if(ValidUnitID(attacker)){
@@ -376,15 +437,70 @@ namespace ntai {
 
 	void Global::UnitFinished(int unit){
 
+		//START_EXCEPTION_HANDLING
+		CUnitTypeData* u = this->UnitDefLoader->GetUnitTypeDataByUnitId(unit);
+		if(u ==0){
+			return;
+		}
+		const UnitDef* ud = u->GetUnitDef();
+		if(ud!=0){
+			if(ud->isCommander){
+				G->Cached->comID = unit;
+			}
+			max_energy_use += ud->energyUpkeep;
+
+			// prepare unitname
+			string t = u->GetName();
+
+			// solo build cleanup
+
+			// Regardless of wether the unit is subject to this behaviour the value of
+			// solobuildactive will always be false, so why bother running a check?
+			u->SetSoloBuildActive(false);
+
+			if(ud->movedata == 0){
+				if(!ud->canfly){
+					if(!ud->builder){
+						float3 upos = GetUnitPos(unit);
+						if(upos != UpVector){
+							DTHandler->AddRing(upos, 500.0f, float(PI_2) / 6.0f);
+							DTHandler->AddRing(upos, 700.0f, float(-PI_2) / 6.0f);
+						}
+					}
+				}
+			}
+		}
+		//END_EXCEPTION_HANDLING("Sorting solobuild additions and DT Rings in Global::UnitFinished ")
+
+		//START_EXCEPTION_HANDLING
+		Manufacturer->UnitFinished(unit);
+		//END_EXCEPTION_HANDLING("Manufacturer->UnitFinished")
+
+		//START_EXCEPTION_HANDLING
+		Ch->UnitFinished(unit);
+		//END_EXCEPTION_HANDLING("Ch->UnitFinished")
+
+		//START_EXCEPTION_HANDLING
 		CMessage message("unitfinished");
 		message.AddParameter(unit);
 		FireEvent(message);
+		//END_EXCEPTION_HANDLING("CMessage message(\"unitfinished\");")
 
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::UnitMoveFailed(int unit){
+
+		/*
+
+		START_EXCEPTION_HANDLING
+		Manufacturer->UnitMoveFailed(unit);
+		END_EXCEPTION_HANDLING("Manufacturer->UnitIdle in UnitMoveFailed")
+
+		START_EXCEPTION_HANDLING
+		Ch->UnitMoveFailed(unit);
+		END_EXCEPTION_HANDLING("Ch->UnitIdle in UnitMoveFailed")*/
 
 		START_EXCEPTION_HANDLING
 		CMessage message("unitmovefailed");
@@ -397,22 +513,22 @@ namespace ntai {
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::UnitIdle(int unit){
-
 		if(!ValidUnitID(unit)){
 			L.print("CManufacturer::UnitIdle negative uid, aborting");
 			return;
 		}
-		
 		if(GetCurrentFrame() < 5 SECONDS){
 			return;
 		}
-
 		START_EXCEPTION_HANDLING
 		CMessage message("unitidle");
 		message.AddParameter(unit);
 		FireEvent(message);
 		END_EXCEPTION_HANDLING("CMessage message(\"unitidle\"); FireEvent(message);")
 
+		//EXCEPTION_HANDLER(Manufacturer->UnitIdle(unit),"Manufacturer->UnitIdle",NA)
+
+		//EXCEPTION_HANDLER(Actions->UnitIdle(unit),"Actions->UnitIdle",NA)
 
 		START_EXCEPTION_HANDLING
 		Ch->UnitIdle(unit);
@@ -442,41 +558,172 @@ namespace ntai {
 	void Global::UnitDamaged(int damaged, int attacker, float damage, float3 dir){
 		NLOG("Global::UnitDamaged");
 
-		if(damage <= 0){
-			return;
-		}
+		if(damage <= 0) return;
+		if(!ValidUnitID(damaged)) return;
+		if(!ValidUnitID(attacker)) return;
 
-		if(!ValidUnitID(damaged)){
-			return;
-		}
-
-		if(!ValidUnitID(attacker)){
-			return;
-		}
-
+		//START_EXCEPTION_HANDLING
 		if(cb->GetUnitAllyTeam(attacker) == cb->GetUnitAllyTeam(damaged)){
 			return;
 		}
+		//END_EXCEPTION_HANDLING("Global::UnitDamaged, filtering out bad calls")
 
+		//START_EXCEPTION_HANDLING
+		const UnitDef* uda = GetUnitDef(attacker);
+
+		if(uda != 0){
+			float e = GetEfficiency(uda->name, uda->power);
+			e += 10000/uda->metalCost;
+			SetEfficiency(uda->name, e);
+		}
+		const UnitDef* udb = GetUnitDef(damaged);
+
+		if(udb != 0){
+			float e = GetEfficiency(udb->name, udb->power);
+			e -= 10000/uda->metalCost;
+			SetEfficiency(udb->name, e);
+			/*if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
+				// if ti isnt currently building something then retreat
+				const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
+				if(uc != 0){
+					//
+					if(uc->front().id >= 0){
+						G->Actions->Retreat(damaged);
+					}
+				}
+			}*/
+		}
+		//END_EXCEPTION_HANDLING("Global::UnitDamaged, threat value handling")
+
+		//START_EXCEPTION_HANDLING
+		Actions->UnitDamaged(damaged, attacker, damage, dir);
+		//END_EXCEPTION_HANDLING("Actions->UnitDamaged()")
+
+		Ch->UnitDamaged(damaged, attacker, damage, dir);
+
+		/*START_EXCEPTION_HANDLING*/
 		CMessage message("unitdamaged");
-
 		message.AddParameter(damaged);
 		message.AddParameter(attacker);
 		message.AddParameter(damage);
 		message.AddParameter(dir);
-
 		FireEvent(message);
-
+		/*END_EXCEPTION_HANDLING("CMessage message(\"unitdamaged\"); FireEvent(message);")*/
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	void Global::GotChatMsg(const char* msg, int player){
 		L.Message(msg, player);
-		
-		CMessage message("##"+string(msg));
+		string tmsg = msg;
+		if(tmsg == string(".verbose")){
+			if(L.Verbose()){
+				L.iprint("Verbose turned on");
+			} else L.iprint("Verbose turned off");
+		}else if(tmsg == string(".crash")){
+			Crash();
+		}else if(tmsg == string(".end")){
+			exit(0);
+		}else if(tmsg == string(".break")){
+			if(L.FirstInstance() == true){
+				L.print("The user initiated debugger break");
+			}
+		}else if(tmsg == string(".isfirst")){
+			if(L.FirstInstance() == true) L.iprint(" info :: This is the first NTai instance");
+		}else if(tmsg == string(".save")){
+			if(L.FirstInstance() == true) SaveUnitData();
+		}else if(tmsg == string(".reload")){
+			if(L.FirstInstance() == true) LoadUnitData();
+		}else if(tmsg == string(".flush")){
+			L.Flush();
+		}else if(tmsg == string(".threat")){
+			Ch->MakeTGA();
+		}/*else if(tmsg == string(".gridtest")){
+		 if(Ch->gridmaintainer==false) return;
+		 float cellvalue = 0;
+		 Ch->Grid->SetValuebyIndex(10,299.0f);
+		 cellvalue = Ch->Grid->GetValue(10);
+		 if(cellvalue==299.0f){
+		 G->L.iprint("Test 1 PASSED");
+		 }else{
+		 G->L.iprint("Test1 FAILED");
+		 }
+		 cellvalue=0;
+		 float3 mpos = float3(2048,0,2048);
+		 Ch->Grid->SetValuebyMap(mpos,999.0f);
+		 cellvalue=Ch->Grid->GetValuebyMap(mpos);
+		 if(cellvalue == 999.0f){
+		 L.iprint("Test 2 PASSED");
+		 }else{
+		 G->L.iprint("Test 2 FAILED");
+		 }
+		 if(Ch->Grid->GridtoMap(Ch->Grid->MaptoGrid(mpos)) == mpos){
+		 G->L.iprint("Test 3 PASSED");
+		 }else{
+		 G->L.iprint("Test 3 FAILED");
+		 }
+		 cellvalue=0;
+		 float3 gpos = float3(4,0,4);
+		 Ch->Grid->SetValuebyGrid(gpos,799.0f);
+		 cellvalue=Ch->Grid->GetValuebyGrid(gpos);
+		 if(cellvalue == 799.0f){
+		 L.iprint("Test 4 PASSED");
+		 }else{
+		 G->L.iprint("Test 4 FAILED");
+		 }
+		 if(Ch->Grid->MaptoGrid(Ch->Grid->GridtoMap(gpos)) == gpos){
+		 G->L.iprint("Test 5 PASSED");
+		 }else{
+		 G->L.iprint("Test 5 FAILED");
+		 }
+		 if(Ch->Grid->IndextoGrid(Ch->Grid->GetIndex(gpos)) == gpos){
+		 G->L.iprint("Test 6 PASSED");
+		 }else{
+		 G->L.iprint("Test 6 FAILED");
+		 }
+		 Ch->MakeTGA();
+		 }*/else if(tmsg == string(".aicheat")){
+			 //chcb = G->gcb->GetCheatInterface();
+			 if(Cached->cheating== false){
+				 Cached->cheating = true;
+				 chcb->SetMyHandicap(1000.0f);
+				 if(L.FirstInstance() == true) L.iprint("Make sure you've typed .cheat for full cheating!");
+				 // Spawn 4 commanders around the starting position
+				 CUnitTypeData* ud = this->UnitDefLoader->GetUnitTypeDataByName(ComName);
+				 if(ud != 0){
+					 float3 pos = Map->basepos;
+					 pos = cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000.0f, 0);
+					 int ij = chcb->CreateUnit(ComName.c_str(), pos);
+					 if(ij != 0) Actions->RandomSpiral(ij);
+					 float3 epos = pos;
+					 epos.z -= 1300.0f;
+					 float angle = float(mrand()%320);
+					 pos = G->Map->Rotate(epos, angle, pos);
+					 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 1);
+					 ///float3 ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing);
+					 ij = chcb->CreateUnit(ComName.c_str(), pos);
+					 if(ij != 0) Actions->RandomSpiral(ij);
+					 epos = pos;
+					 epos.z -= 900.0f;
+
+					 angle = float(mrand()%320);
+					 pos = G->Map->Rotate(epos, angle, pos);
+					 pos =  cb->ClosestBuildSite(ud->GetUnitDef(), pos, 1000, 300, 0);
+					 ///
+					 ij = chcb->CreateUnit(ComName.c_str(), pos);
+					 if(ij != 0){
+						 Actions->RandomSpiral(ij);
+					 }
+				 }
+			 }else if(Cached->cheating == true){
+				 Cached->cheating  = false;
+				 if(L.FirstInstance() == true)L.iprint("cheating is now disabled therefore NTai will no longer cheat");
+			 }
+		 }
+		//START_EXCEPTION_HANDLING
+		CMessage message(string("##")+msg);
 		message.AddParameter(player);
 		FireEvent(message);
-
+		//END_EXCEPTION_HANDLING("CMessage message(\"msg gotmsg\"); FireEvent(message);")
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -537,7 +784,7 @@ namespace ntai {
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	void Global::InitAI(IAICallback* callback, int team){
-		L.print("Initializing");
+		L.print("Initialisising");
 
 		mrand.seed(uint(time(NULL)*team));
 		string filename = info->datapath + slash + string("NTai.tdf");
@@ -685,11 +932,6 @@ namespace ntai {
 
 		Ch->InitAI(this);
 		L.print("Chaser Init'd");
-
-		gproxy = boost::shared_ptr<IModule>(new CGlobalProxy(this));
-		gproxy->Init();
-		RegisterMessageHandler(gproxy);
-
 	}
 
 	int Global::GetCurrentFrame(){
@@ -795,26 +1037,53 @@ namespace ntai {
 
 	int Global::GetEnemyUnits(int* units, const float3 &pos, float radius){
 		NLOG("Global::GetEnemyUnits :: A");
+		//if(Cached->cheating == true){
 		return chcb->GetEnemyUnits(units, pos, radius);
+		/*}else{
+		 return cb->GetEnemyUnits(units,pos,radius);
+		 }*/
 	}
 
 
 	int Global::GetEnemyUnitsInRadarAndLos(int* units){
 		NLOG("Global::GetEnemyUnitsinradarandLOS :: B");
+		/*if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
+		 if(Cached->cheating == true){
+		 Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
+		 for(uint h = 0; h < Cached->enemy_number; h++){
+		 units[h] = Cached->encache[h];
+		 }
+		 Cached->lastcacheupdate = cb->GetCurrentFrame();
+		 return Cached->enemy_number;
+		 }else{
+		 return cb->GetEnemyUnitsInRadarAndLos(Cached->encache);
+		 }
+		 }
+		 if(Cached->cheating == true){*/
 		return chcb->GetEnemyUnits(units);
-
+		/*	Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
+		 for(uint h = 0; h < Cached->enemy_number; h++){
+		 units[h] = Cached->encache[h];
+		 }
+		 ///*}else{
+		 Cached->enemy_number = cb->GetEnemyUnitsInRadarAndLos(Cached->encache);
+		 }*/
+		//return Cached->enemy_number;*/
 	}
 
 	int Global::GetEnemyUnits(int* units){
 		NLOG("Global::GetEnemyUnits :: B");
-		if(GetCurrentFrame() - Cached->lastcacheupdate > 30){
+		if(GetCurrentFrame() - Cached->lastcacheupdate>  30){
+			//if(Cached->cheating == true){
 			Cached->enemy_number = chcb->GetEnemyUnits(Cached->encache);
-			Cached->lastcacheupdate = cb->GetCurrentFrame();
+			/*	}else{
+			 Cached->enemy_number = cb->GetEnemyUnits(Cached->encache);
+			 }
+			 */	Cached->lastcacheupdate = cb->GetCurrentFrame();
 		}
 		for(uint h = 0; h < Cached->enemy_number; h++){
 			units[h] = Cached->encache[h];
 		}
-
 		return Cached->enemy_number;
 	}
 
@@ -937,14 +1206,10 @@ namespace ntai {
 	}
 
 	bool Global::LoadUnitData(){
-
 		if(G->L.FirstInstance()){
-
 			int unum = cb->GetNumUnitDefs();
-
 			const UnitDef** ulist = new const UnitDef*[unum];
 			cb->GetUnitDefList(ulist);
-
 			for(int i = 0; i < unum; i++){
 				const UnitDef* pud = ulist[i];
 
@@ -966,11 +1231,10 @@ namespace ntai {
 				ef *= 2;
 
 				if(pud->weapons.empty() == false){
-
 					for(vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
-
+						//ef += k->def->
 						float av=0;
-						int numTypes;
+						int numTypes;// = cb->getk->def->damages.numTypes;
 						cb->GetValue(AIVAL_NUMDAMAGETYPES, &numTypes);
 						for(int a=0;a<numTypes;++a){
 							if(a == 0){
@@ -1018,7 +1282,7 @@ namespace ntai {
 
 				cq.GetDef(firstload, "1", "AI\\firstload");
 
-				if(firstload){
+				if(firstload == true){
 					L.iprint(" This is the first time this mod has been loaded, up. Take this first game to train NTai up, and be careful of throwing the same units at it over and over again");
 					firstload = false;
 
@@ -1033,7 +1297,6 @@ namespace ntai {
 
 				loaded = true;
 				return true;
-
 			} else{
 
 				for(int i = 0; i < unum; i++){
@@ -1044,12 +1307,9 @@ namespace ntai {
 					}else{
 						ts += 20*ulist[i]->weapons.size();
 					}
-
 					string eu = ulist[i]->name;
-					
 					tolowercase(eu);
 					trim(eu);
-					
 					efficiency[eu] = ts;
 				}
 
@@ -1066,7 +1326,7 @@ namespace ntai {
 	bool Global::SaveUnitData(){
 		NLOG("Global::SaveUnitData()");
 
-		if(L.FirstInstance()){
+		if(L.FirstInstance() == true){
 			ofstream off;
 
 			string filename = info->datapath;
@@ -1079,13 +1339,9 @@ namespace ntai {
 			off.open(filename.c_str());
 
 			if(off.is_open() == true){
+				off << "[AI]" << endl << "{" << endl << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl << endl;
 
-				off << "[AI]" << endl;
-				off << "{" << endl;
-				off << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl;
-				off << endl;
-
-				off << "    version="<< AI_NAME <<";" << endl;
+				off << "    version=XE9.79;" << endl;
 				off << "    firstload=" << firstload << ";" << endl;
 				off << "    modname=" << G->cb->GetModName() << ";" << endl;
 				off << "    iterations=" << iterations << ";" << endl;
@@ -1094,13 +1350,10 @@ namespace ntai {
 				off << "    [VALUES]" << endl << "    {" << endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					off << "        "<< i->first << "=" << i->second << ";";
-					off << "// " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<<endl;
+					off << "        "<< i->first << "=" << i->second << ";    // " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<<endl;
 				}
-
 				off << "    }" << endl;
-				off << "    [NAMES]" << endl;
-				off << "    {"<< endl;
+				off << "    [NAMES]" << endl << "    {"<< endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
 					off << "        "<< i->first << "=" << unit_names[i->first] << ";" <<endl;
@@ -1108,8 +1361,7 @@ namespace ntai {
 
 				off << "    }" << endl;
 
-				off << "    [DESCRIPTIONS]" << endl;
-				off << "    {"<< endl;
+				off << "    [DESCRIPTIONS]" << endl << "    {"<< endl;
 
 				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
 					off << "        "<< i->first << "=" << unit_descriptions[i->first] << ";"<<endl;
@@ -1117,41 +1369,31 @@ namespace ntai {
 
 				off << "    }" << endl;
 				off << "}" << endl;
-
 				off.close();
 
 				saved = true;
 				return true;
-
 			}else{
 				G->L.print("failed to save :" + filename);
 				off.close();
-
 				return false;
 			}
 		}
-
 		return false;
 	}
 
 	float Global::GetTargettingWeight(string unit, string target){
-
 		float tempscore = 0;
 
-		if(!info->hardtarget){
-
+		if(info->hardtarget == false){
 			tempscore = GetEfficiency(target);
-
 		}else{
-
 			string fh = unit + "\\target_weights\\" + target;
 			string fg = unit + "\\target_weights\\undefined";
 
 			float fz = GetEfficiency(target);
 			string tempdef = Get_mod_tdf()->SGetValueDef(to_string(fz), fg.c_str());
-			
-			// load "unitname\\target_weights\\enemyunitname" to retirieve targetting weights
-			tempscore = (float)atof(Get_mod_tdf()->SGetValueDef(tempdef, fh).c_str()); 
+			tempscore = (float)atof(Get_mod_tdf()->SGetValueDef(tempdef, fh).c_str()); // load "unitname\\target_weights\\enemyunitname" to retirieve targetting weights
 		}
 
 		return tempscore;
@@ -1208,7 +1450,7 @@ namespace ntai {
 	}
 
 	void Global::FireEvent(CMessage &message){
-		if(message.IsType("")){
+		if(message.GetType() == string("")){
 			return;
 		}
 
@@ -1232,6 +1474,8 @@ namespace ntai {
 	}
 
 }
+
+// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 /** Random note
 unitdef->type can be one of the following:

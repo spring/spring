@@ -6,9 +6,7 @@ namespace ntai {
 		bool Init();
 		void Build();
 		void End();
-		bool Succeeded();
 	protected:
-		bool succeed;
 		int unit;
 		btype type;
 		CUnitTypeData* building;

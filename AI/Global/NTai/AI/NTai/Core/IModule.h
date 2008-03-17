@@ -12,7 +12,7 @@ namespace ntai {
 		IModule(Global* GL);
 		virtual ~IModule();
 		virtual void RecieveMessage(CMessage &message)=0;
-		virtual bool Init()=0;//boost::shared_ptr<IModule> me
+		virtual bool Init()=0;
 		virtual void End(){}
 		virtual bool IsValid(){
 			return valid;
@@ -25,11 +25,6 @@ namespace ntai {
 		virtual void DestroyModule();
 
 		virtual void operator()(){}
-
-		virtual bool Succeeded(){
-			return true;
-		}
-
 		Global* G;
 	protected:
 		bool valid;

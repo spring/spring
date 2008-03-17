@@ -17,18 +17,18 @@ bool CDGunBehaviour::Init(){
 }
 
 void CDGunBehaviour::RecieveMessage(CMessage &message){
-	if(message.IsType("update")){
+	if(message.GetType() == string("update")){
 		if(message.GetFrame() % (64) == 0){
 			if(!active){
 				active = G->Actions->DGunNearby(uid);
 			}
 		}
-	}else if(message.IsType("unitdestroyed")){
+	}else if(message.GetType() == string("unitdestroyed")){
 		if(message.GetParameter(0)== uid){
 			End();
 			return;
 		}
-	}else if(message.IsType("unitidle")){
+	}else if(message.GetType() == string("unitidle")){
 		if(message.GetParameter(0)== uid){
 			active=false;
 		}

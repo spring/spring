@@ -10,17 +10,13 @@ CKeywordConstructionTask::CKeywordConstructionTask(Global* GL, int unit, btype t
 	if(utd == 0){
 		valid = false;
 	}
-	succeed = valid;
 }
 
 void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 	NLOG("CKeywordConstructionTask::RecieveMessage");
-	
-	if (!valid){
-		return;
-	}
+	if (!valid) return;
 
-	if(message.IsType("unitidle")){
+	if(message.GetType() == string("unitidle")){
 		if(message.GetParameter(0) == unit){
 			if((type == B_GUARDIAN)
 				||(type == B_GUARDIAN_MOBILES)
@@ -31,14 +27,14 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 				return;
 			}
 		}
-	}else if(message.IsType("type?")){
+	}else if(message.GetType() == string("type?")){
 		message.SetType(" keywordtask: "+G->Manufacturer->GetTaskName(this->type));
-	}else if(message.IsType("unitdestroyed")){
+	}else	if(message.GetType() == string("unitdestroyed")){
 		if(message.GetParameter(0) == unit){
 			End();
 			return;
 		}
-	}else if(message.IsType("buildposition")){
+	}else	if(message.GetType() == string("buildposition")){
 		// continue construction
 		//
 
@@ -50,12 +46,10 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			if(pos==UpVector){
 				G->L.print("CKeywordConstructionTask::RecieveMessage BuildPlacement returned UpVector or some other nasty position");
 				End();
-				succeed = false;
 				return;
 			}else if (G->cb->CanBuildAt(building->GetUnitDef(),pos,0)==false){
 				G->L.print("CKeywordConstructionTask::RecieveMessage BuildPlacement returned a position that cant eb built upon");
 				End();
-				succeed = false;
 				return;
 			}
 		}
@@ -72,10 +66,9 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 			qi->builders.insert(unit);
 			return false;
 			}
-			}else*/
-			if ((*qi)->utd == building){
-				G->L.print("CKeywordConstructionTask::RecieveMessage overlapping plans that're the same item but not started, moving pos to make it build quicker");
-				pos = (*qi)->pos;
+			}else*/ if ((*qi)->utd == building){
+			G->L.print("CKeywordConstructionTask::RecieveMessage overlapping plans that're the same item but not started, moving pos to make it build quicker");
+			pos = (*qi)->pos;
 			}
 		}
 
@@ -88,7 +81,6 @@ void CKeywordConstructionTask::RecieveMessage(CMessage &message){
 		if(!G->OrderRouter->GiveOrder(tc)){
 			G->L.print("CKeywordConstructionTask::RecieveMessage Failed Order G->OrderRouter->GiveOrder(tc)== false:: " + building->GetUnitDef()->name);
 			End();
-			succeed = false;
 			return;
 
 		}else{
@@ -135,7 +127,6 @@ void CKeywordConstructionTask::Build(){
 				if(!G->Pl->feasable(building,utd)){
 					G->L.print("unfeasable " + building->GetUnitDef()->name);
 					End();
-					succeed = false;
 					return;
 				}else{
 					NLOG("CKeywordConstructionTask::Build  "+building->GetUnitDef()->name+" is feasable");
@@ -183,7 +174,6 @@ void CKeywordConstructionTask::Build(){
 	if(building->GetSoloBuildActive()){
 		NLOG("CKeywordConstructionTask::Build  G->Cached->solobuilds.find(name)!= G->Cached->solobuilds.end()");
 		End();
-		succeed = false;
 		return;
 	}
 
@@ -204,7 +194,6 @@ void CKeywordConstructionTask::Build(){
 		if(!fk){
 			G->L.print("CKeywordConstructionTask::Build  unfeasable " + building->GetUnitDef()->name);
 			End();
-			succeed = false;
 			return;
 		}
 	}
@@ -215,7 +204,6 @@ void CKeywordConstructionTask::Build(){
 	if(G->Map->CheckFloat3(unitpos) == false){
 		NLOG("CKeywordConstructionTask::Build  mark 2# bad float exit");
 		End();
-		succeed = false;
 		return;
 	}
 	
@@ -239,7 +227,7 @@ void CKeywordConstructionTask::Build(){
 						if(G->cb->UnitBeingBuilt(funits[i])==true){
 							delete [] funits;
 							NLOG("CKeywordConstructionTask::Build  exit on repair");
-							succeed = G->Actions->Repair(unit,funits[i]);
+							G->Actions->Repair(unit,funits[i]);
 							End();
 							return;
 						}
@@ -277,13 +265,11 @@ void CKeywordConstructionTask::Build(){
 						if(G->cb->UnitBeingBuilt(kj)==true){
 							NLOG("CKeywordConstructionTask::Build  exit on repair");
 							if(!G->Actions->Repair(unit,kj)){
-								succeed = false;
 								End();
 							}
 							return;
 						}else{
 							NLOG("CKeywordConstructionTask::Build  return false");
-							succeed = false;
 							End();
 							return;
 						}
@@ -324,7 +310,6 @@ bool CKeywordConstructionTask::Init(){
 	if(type == B_RANDMOVE){
 		if(G->Actions->RandomSpiral(unit)==false){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -332,7 +317,6 @@ bool CKeywordConstructionTask::Init(){
 	} else if(type == B_RETREAT){
 		if(!G->Actions->Retreat(unit)){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -340,7 +324,6 @@ bool CKeywordConstructionTask::Init(){
 	} else if(type == B_GUARDIAN){
 		if(!G->Actions->RepairNearby(unit,1200)){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -348,7 +331,6 @@ bool CKeywordConstructionTask::Init(){
 	} else if(type == B_GUARDIAN_MOBILES){
 		if(!G->Actions->RepairNearbyUnfinishedMobileUnits(unit,1200)){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -356,7 +338,6 @@ bool CKeywordConstructionTask::Init(){
 	} else if(type == B_RESURECT){
 		if(!G->Actions->RessurectNearby(unit)){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -366,7 +347,6 @@ bool CKeywordConstructionTask::Init(){
 		type = G->Economy->Get(!(type == B_RULE),!(B_RULE_EXTREME_NOFACT == type));
 		if(type == B_NA){
 			valid = false;
-			succeed = false;
 			End();
 			return false;
 		}
@@ -383,13 +363,11 @@ bool CKeywordConstructionTask::Init(){
 		}else{
 			G->L.print("B_RULE_EXTREME skipped bad return");
 			End();
-			succeed = false;
 			return false;
 		}
 	}else if(type  == B_OFFENSIVE_REPAIR_RETREAT){
 		if(G->Actions->OffensiveRepairRetreat(unit,800)==false){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -399,7 +377,6 @@ bool CKeywordConstructionTask::Init(){
 			if(G->Actions->RepairNearby(unit,1000)==false){
 				if(G->Actions->RepairNearby(unit,2600)==false){
 					End();
-					succeed = false;
 					return false;
 				}else{
 					return true;
@@ -414,7 +391,6 @@ bool CKeywordConstructionTask::Init(){
 	}else if(type  == B_RECLAIM){
 		if(!G->Actions->ReclaimNearby(unit,400)){
 			End();
-			succeed = false;
 			return false;
 		}else{
 			return true;
@@ -423,7 +399,6 @@ bool CKeywordConstructionTask::Init(){
 		float3 upos = G->GetUnitPos(unit);
 		if(G->Map->CheckFloat3(upos)==false){
 			End();
-			succeed = false;
 			return false;
 		}
 		int* funits = new int[6000];
@@ -454,30 +429,27 @@ bool CKeywordConstructionTask::Init(){
 					}
 				}
 			}
-			delete [] funits;
 			if(ValidUnitID(closest)){
+				delete [] funits;
 				if(!G->Actions->Guard(unit,closest)){
 					End();
-					succeed = false;
 					return false;
 				}else{
 					return true;
 				}
 			}else{
+				delete [] funits;
 				End();
-				succeed = false;
 				return false;
 			}
 		}
 		delete [] funits;
 		End();
-		succeed = false;
 		return false;
 	}else if(type  == B_GUARD_LIKE_CON){
 		float3 upos = G->GetUnitPos(unit);
 		if(G->Map->CheckFloat3(upos)==false){
 			End();
-			succeed = false;
 			return false;
 		}
 		int* funits = new int[5005];
@@ -502,19 +474,17 @@ bool CKeywordConstructionTask::Init(){
 					}
 				}
 			}
-			delete [] funits;
-
 			if(ValidUnitID(closest)){
+				delete [] funits;
 				if(!G->Actions->Guard(unit,closest)){
 					End();
-					succeed = false;
 					return false;
 				}else{
 					return true;
 				}
 			}else{
+				delete [] funits;
 				End();
-				succeed = false;
 				return false;
 			}
 		}
@@ -530,7 +500,6 @@ bool CKeywordConstructionTask::Init(){
 		if(targ == string("")){
 			G->L << "if(targ == string(\"\")) for "<< G->Manufacturer->GetTaskName(type)<< endline;
 			End();
-			succeed = false;
 			return false;
 		}else{
 			CUnitTypeData* udk = G->UnitDefLoader->GetUnitTypeDataByName(targ);
@@ -540,7 +509,6 @@ bool CKeywordConstructionTask::Init(){
 		}
 	}
 	End();
-	succeed = false;
 	return false;
 }
 
@@ -550,8 +518,4 @@ void CKeywordConstructionTask::End(){
 	//CMessage message(string("taskfinished"));
 	//FireEventListener(message);
 //	G->RemoveHandler(me);
-}
-
-bool CKeywordConstructionTask::Succeeded(){
-	return succeed;
 }

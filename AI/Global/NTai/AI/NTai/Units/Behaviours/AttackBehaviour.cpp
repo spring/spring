@@ -1,6 +1,7 @@
 #include "../../Core/include.h"
 
 CAttackBehaviour::CAttackBehaviour(Global* GL, int uid){
+	//
 	G = GL;
 	engaged = false;
 	unit = G->GetUnit(uid);
@@ -16,30 +17,25 @@ bool CAttackBehaviour::Init(){
 }
 
 void CAttackBehaviour::RecieveMessage(CMessage &message){
-
-	if(message.IsType("update")){
-		
+	if(message.GetType() == string("update")){
 		if(engaged){
 			return;
 		}
-
-		if(message.GetFrame()%(120 FRAMES) == 0){
+		if(EVERY_(120 FRAMES)){
 			
 			float3 pos = G->GetUnitPos(uid);
-
-			if(!G->Map->CheckFloat3(pos)){
+			if(G->Map->CheckFloat3(pos)==false){
 				return;
 			}
 
 			engaged = G->Actions->AttackNear(uid, 3.5f);
-
 		}
-	}else if(message.IsType("unitdestroyed")){
-		if(message.GetParameter(0) == uid){
+	}else if(message.GetType() == string("unitdestroyed")){
+		if(message.GetParameter(0)== uid){
 			End();
 		}
-	}else if(message.IsType("unitidle")){
-		if(message.GetParameter(0) == uid){
+	}else if(message.GetType() == string("unitidle")){
+		if(message.GetParameter(0)== uid){
 			engaged=false;
 		}
 	}

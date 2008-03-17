@@ -10,35 +10,32 @@ namespace ntai {
 		if(utd == 0){
 			valid = false;
 		}
-		succeed = valid;
 	}
 
 	void CLeaveBuildSpotTask::RecieveMessage(CMessage &message){
 		if(!valid){
-			return;
+			return;// false;
 		}
 
-		if(message.IsType("unitidle")){
+		if(message.GetType() == string("unitidle")){
 			if(message.GetParameter(0) == unit){
 				End();
 				//CMessage message2(string("taskfinished"));
 				//FireEventListener(message2);
 			}
-		}else if(message.IsType("type?")){
+		}else if(message.GetType() == string("type?")){
 			message.SetType(" leave buildspot task");
 		}
 	}
 
 	bool CLeaveBuildSpotTask::Init(){
 		if(!valid){
-			succeed = false;
 			return false;
 		}
 
 		if(utd->IsFactory()){
 			if(!utd->IsMobile()){
 				End();
-				succeed = false;
 				return false;
 			}
 		}
@@ -51,7 +48,6 @@ namespace ntai {
 
 		if(!G->Map->CheckFloat3(pos)){
 			End();
-			succeed = false;
 			return false;
 		}
 
@@ -102,7 +98,6 @@ namespace ntai {
 		if(utd->IsFactory()){
 			End();
 		}
-		succeed = rvalue;
 		return rvalue;
 	}
 
@@ -110,9 +105,4 @@ namespace ntai {
 		NLOG("CLeaveBuildSpotTask::End");
 		valid = false;
 	}
-
-	bool CLeaveBuildSpotTask::Succeeded(){
-		return succeed;
-	}
-
 }
