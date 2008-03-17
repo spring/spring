@@ -415,7 +415,6 @@ void CGameServer::ServerReadNet()
 			while (!quit && (packet = serverNet->GetData(a)))
 			{
 				const unsigned char* inbuf = packet->data;
-				const unsigned length = packet->length;
 				switch (inbuf[0]){
 					case NETMSG_NEWFRAME:
 						players[a]->ping = serverframenum-*(int*)&inbuf[1];

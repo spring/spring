@@ -1889,9 +1889,12 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	if(!ClientReadNet()){
-		logOutput.Print("Client read net wanted quit");
-		return false;
+	ClientReadNet();
+	if(!net->IsActiveConnection() && !gameOver){
+		logOutput.Print("Lost connection to gameserver");
+		gameOver=true;
+		luaCallIns.GameOver();
+		GameEnd();
 	}
 
 	if( gameServer && !gameServer->GameHasStarted() && !gameSetup)
@@ -2631,8 +2634,11 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 }
 
 
-bool CGame::ClientReadNet()
+void CGame::ClientReadNet()
 {
+	if (!net->IsActiveConnection())
+		return; // should not happen
+
 	// quick hack until better netcode is in place
 #ifdef PROFILE_TIME
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
@@ -2643,9 +2649,6 @@ bool CGame::ClientReadNet()
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
-
-	if (!net->IsActiveConnection())
-		return gameOver;
 
 	const RawPacket* packet = NULL;
 
@@ -2689,10 +2692,15 @@ bool CGame::ClientReadNet()
 
 		switch (packetCode) {
 			case NETMSG_QUIT: {
-				logOutput.Print("Server exited");
+				logOutput.Print("Server shutdown");
+				if (!gameOver)
+				{
+					gameOver=true;
+					luaCallIns.GameOver();
+					GameEnd();
+				}
 				POP_CODE_MODE;
 				AddTraffic(-1, packetCode, dataLength);
-				return gameOver;
 			}
 
 			case NETMSG_PLAYERLEFT: {
@@ -2753,38 +2761,7 @@ bool CGame::ClientReadNet()
 					logOutput.Print("Automatical quit enforced from commandline");
 					globalQuit = true;
 				} else {
-					SAFE_NEW CEndGameBox();
-					CDemoRecorder* record = net->GetDemoRecorder();
-					if (record != NULL) {
-					// Write CPlayer::Statistics and CTeam::Statistics to demo
-						int numPlayers;
-					// FIXME: ugh, there should be a better way to figure out number of players ...
-						if (gameSetup != NULL) {
-							numPlayers = gameSetup->numPlayers;
-						} else {
-							numPlayers = 0;
-							while (gs->players[numPlayers]->currentStats->mousePixels != 0)
-								++numPlayers;
-						}
-						int numTeams = gs->activeAllyTeams;
-						if (gs->useLuaGaia)
-							--numTeams;
-					// Figure out who won the game.
-						int winner = -1;
-						for (int i = 0; i < numTeams; ++i) {
-							if (!gs->Team(i)->isDead) {
-								winner = gs->AllyTeam(i);
-								break;
-							}
-						}
-					// Finally pass it on to the CDemoRecorder.
-						record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
-						record->InitializeStats(numPlayers, numTeams, winner);
-						for (int i = 0; i < numPlayers; ++i)
-							record->SetPlayerStats(i, *gs->players[i]->currentStats);
-						for (int i = 0; i < numTeams; ++i)
-							record->SetTeamStats(i, gs->Team(i)->statHistory);
-					}
+					GameEnd();
 				}
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
@@ -2967,7 +2944,7 @@ bool CGame::ClientReadNet()
 
 				if(creatingVideo && net->localDemoPlayback){
 					POP_CODE_MODE;
-					return true;
+					return;
 				}
 				break;
 			}
@@ -3340,7 +3317,7 @@ bool CGame::ClientReadNet()
 	}
 
 	POP_CODE_MODE;
-	return true;
+	return;
 }
 
 
@@ -3693,6 +3670,41 @@ void CGame::DrawDirectControlHud(void)
 #endif
 }
 
+void CGame::GameEnd()
+{
+	SAFE_NEW CEndGameBox();
+	CDemoRecorder* record = net->GetDemoRecorder();
+	if (record != NULL) {
+	// Write CPlayer::Statistics and CTeam::Statistics to demo
+		int numPlayers;
+	// FIXME: ugh, there should be a better way to figure out number of players ...
+		if (gameSetup != NULL) {
+			numPlayers = gameSetup->numPlayers;
+		} else {
+			numPlayers = 0;
+			while (gs->players[numPlayers]->currentStats->mousePixels != 0)
+				++numPlayers;
+		}
+		int numTeams = gs->activeAllyTeams;
+		if (gs->useLuaGaia)
+			--numTeams;
+	// Figure out who won the game.
+		int winner = -1;
+		for (int i = 0; i < numTeams; ++i) {
+			if (!gs->Team(i)->isDead) {
+				winner = gs->AllyTeam(i);
+				break;
+			}
+		}
+	// Finally pass it on to the CDemoRecorder.
+		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+		record->InitializeStats(numPlayers, numTeams, winner);
+		for (int i = 0; i < numPlayers; ++i)
+			record->SetPlayerStats(i, *gs->players[i]->currentStats);
+		for (int i = 0; i < numTeams; ++i)
+			record->SetTeamStats(i, gs->Team(i)->statHistory);
+	}
+}
 
 void CGame::SendNetChat(const std::string& message)
 {

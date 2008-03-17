@@ -34,7 +34,7 @@ class CGame : public CGameController
 public:
 	CR_DECLARE(CGame);			//Don't use CGame pointer in CR_MEMBER()!!!
 	void UpdateUI();
-	bool ClientReadNet();
+	void ClientReadNet();
 	void PostLoad();
 
 	void SimFrame();
@@ -129,6 +129,8 @@ public:
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 protected:
+	/// show GameEnd-window, calculate mouse movement etc.
+	void GameEnd();
 	void SendNetChat(const string& message);
 	void HandleChatMsg(std::string msg, int player);
 
