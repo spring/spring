@@ -1,6 +1,8 @@
 #include "Game/GameServer.h"
 #include "GameSetup.h"
+#include "GameData.h"
 #include "System/Platform/FileSystem.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "EventPrinter.h"
 
 #include <string>
@@ -34,7 +36,13 @@ int main(int argc, char *argv[])
 		
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
-		server = new CGameServer(gameSetup->hostport, gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName, gameSetup);
+		const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->baseMod);
+		GameData* data = new GameData();
+		data->SetMap(gameSetup->mapName, archiveScanner->GetMapChecksum(gameSetup->mapName));
+		data->SetMod(gameSetup->baseMod, archiveScanner->GetModChecksum(modArchive));
+		data->SetScript(gameSetup->scriptName);
+		
+		server = new CGameServer(gameSetup->hostport, data, gameSetup);
 		server->log.Subscribe((ServerLog*)&ep);
 		
 		if (gameSetup->autohostport > 0)
@@ -51,6 +59,7 @@ int main(int argc, char *argv[])
 			sleep(1);	// if so, wait 1  second
 #endif
 		delete server;	// delete the server after usage
+		delete gameSetup;
 	}
 	else
 	{
