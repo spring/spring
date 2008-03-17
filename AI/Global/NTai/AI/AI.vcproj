@@ -189,14 +189,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\CGlobalProxy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NTai\Core\CGlobalProxy.h"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\grid\CGridCell.cpp"
 				>
 			</File>

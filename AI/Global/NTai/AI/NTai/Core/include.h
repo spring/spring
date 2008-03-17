@@ -117,9 +117,8 @@ using namespace std;
 
 // Global classes
 
-
 #include "Global.h"											// (the root object representing the AI itself)
 
 // The name NTAI gives to the spring engine.
-const char AI_NAME[]= {"NTai XE9.8+"};
+const char AI_NAME[]= {"NTai XE9.79+"};
 
