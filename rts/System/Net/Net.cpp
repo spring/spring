@@ -115,9 +115,9 @@ int CNet::MaxConnectionID() const
 bool CNet::IsActiveConnection(const unsigned number) const
 {
 	if (int(number) > MaxConnectionID())
-		throw network_error("Wrong connection ID in CNet::IsActiveConnection()");
-	
-	return connections[number];
+		return false;
+	else
+		return connections[number];
 }
 
 std::string CNet::GetConnectionStatistics(const unsigned number) const
@@ -214,7 +214,7 @@ void CNet::SendData(const RawPacket* data, const unsigned playerNum)
 
 void CNet::FlushNet()
 {
-	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
+	for (connVec::const_iterator i = connections.begin(); i != connections.end(); ++i)
 	{
 		if((*i)){
 			(*i)->Flush(true);
@@ -229,7 +229,7 @@ void CNet::Update()
 		udplistener->Update();
 	}
 	
-	for (connVec::iterator i = connections.begin(); i < connections.end(); ++i)
+	for (connVec::iterator i = connections.begin(); i != connections.end(); ++i)
 	{
 		if((*i) && (*i)->CheckTimeout())
 		{

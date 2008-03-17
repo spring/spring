@@ -19,7 +19,8 @@ CNetProtocol::~CNetProtocol()
 	if (record != 0)
 		delete record;
 	
-	logOutput.Print(GetConnectionStatistics(serverSlot));
+	if (IsActiveConnection())
+		logOutput.Print(GetConnectionStatistics(serverSlot));
 }
 
 void CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
