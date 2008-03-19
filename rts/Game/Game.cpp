@@ -126,6 +126,7 @@
 #include "UI/SelectionKeyHandler.h"
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
+#include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
@@ -1134,7 +1135,16 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			gameServer->CreateNewFrame(false, true);
 	}
 	else if (cmd == "debug") {
-		gu->drawdebug = !gu->drawdebug;
+		if (gu->drawdebug)
+		{
+			ProfileDrawer::Disable();
+			gu->drawdebug = false;
+		}
+		else
+		{
+			ProfileDrawer::Enable();
+			gu->drawdebug = true;
+		}
 	}
 	else if (cmd == "nosound") {
 		soundEnabled = !soundEnabled;
@@ -2491,15 +2501,10 @@ void CGame::SimFrame()
 		sound->NewFrame();
 		treeDrawer->Update();
 		globalAI->Update();
-		for(int a=0;a<MAX_TEAMS;a++)
+		for (int a = 0; a < MAX_TEAMS; a++)
 			grouphandlers[a]->Update();
-
-#ifdef PROFILE_TIME
 		profiler.Update();
-#endif
-
 		unitDrawer->Update();
-
 #ifdef DIRECT_CONTROL_ALLOWED
 		if(gu->directControl){
 			unsigned char status=0;
@@ -2518,21 +2523,24 @@ void CGame::SimFrame()
 				net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
 			}
 		}
-#endif
+#endif	
+		water->Update();
 	}
 
 	ENTER_SYNCED;
-	START_TIME_PROFILE("Sim time")
+	//everything from here is simulation
+	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
 
 	helper->Update();
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
 
-	START_TIME_PROFILE("Collisions");
-	ph->CheckUnitCol();
-	ground->CheckCol(ph);
-	END_TIME_PROFILE("Collisions");
+	{
+		SCOPED_TIMER("Collisions");
+		ph->CheckUnitCol();
+		ground->CheckCol(ph);
+	}
 
 	ph->Update();
 	featureHandler->Update();
@@ -2547,12 +2555,9 @@ void CGame::SimFrame()
 	}
 //	CPathFinder::Instance()->Update();
 
-	END_TIME_PROFILE("Sim time")
-
 	lastUpdate = SDL_GetTicks();
 
 #ifdef DIRECT_CONTROL_ALLOWED
-
 	for(int a=0;a<gs->activePlayers;++a){
 		if(!gs->players[a]->active || !gs->players[a]->playerControlledUnit)
 			continue;
@@ -2605,13 +2610,8 @@ void CGame::SimFrame()
 
 	ENTER_UNSYNCED;
 	if (!skipping) {
-		water->Update();
 	}
 	ENTER_SYNCED;
-
-#ifdef DEBUG
-	//feclearexcept(FPU_Exceptions(FE_INVALID | FE_DIVBYZERO));
-#endif
 }
 
 
@@ -2639,13 +2639,10 @@ void CGame::ClientReadNet()
 	if (!net->IsActiveConnection())
 		return; // should not happen
 
-	// quick hack until better netcode is in place
-#ifdef PROFILE_TIME
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
 		lastCpuUsageTime = gu->gameTime;
 		net->SendCPUUsage(profiler.profile["Sim time"].percent);
 	}
-#endif
 
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
@@ -3076,11 +3073,7 @@ void CGame::ClientReadNet()
 				if(frame!=gs->frameNum){
 					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 				}
-#ifdef PROFILE_TIME
 				net->SendCPUUsage(profiler.profile["Sim time"].percent);
-#else
-				net->SendCPUUsage(0.30f);
-#endif
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
