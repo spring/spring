@@ -1471,14 +1471,18 @@ bool CCommandAI::HasMoreMoveCommands()
 	if (!commandQue.empty()) {
 		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); i++) {
 			const int id = i->id;
+
+			// build commands are no different from reclaim or repair commands
+			// in that they can require a unit to move, so return true when we
+			// have one
 			if (id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
 			 || id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
 			 || id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
-			 || id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS)
+			 || id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS || id < 0)
 			{
 				return true;
 			}
-			else if (id < 0 || id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
+			else if (id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
 				    || id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
 			{
 				return false;
