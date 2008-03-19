@@ -303,8 +303,8 @@ void CGroundMoveType::Update()
 			if (nextDeltaSpeedUpdate <= gs->frameNum) {
 				wantedSpeed = pathId? requestedSpeed: 0;
 				// If arriving at waypoint, then need to slow down, or may pass it.
-				if (!owner->commandAI->HasMoreMoveCommands()
-						&& currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+				if (!owner->commandAI->HasMoreMoveCommands() &&
+					currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
 					wantedSpeed = std::min((float) wantedSpeed, (float) (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 				}
 				wantedSpeed *= max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
@@ -435,14 +435,14 @@ void CGroundMoveType::SlowUpdate()
 Sets unit to start moving against given position with max speed.
 */
 void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, maxSpeed*2);
+	StartMoving(pos, goalRadius, maxSpeed * 2);
 }
 
 
 /*
 Sets owner unit to start moving against given position with requested speed.
 */
-void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float speed)
+void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float speed)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Start moving called: ";
@@ -456,7 +456,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius,  float s
 	//Sets the new goal.
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
-	requestedSpeed = min(speed, maxSpeed*2);
+	requestedSpeed = min(speed, maxSpeed * 2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
@@ -1821,9 +1821,9 @@ void CGroundMoveType::SetMainHeading(){
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	if(requestedSpeed == maxSpeed*2)
-		requestedSpeed = speed*2;	//why the *2 everywhere?
-	maxSpeed=speed;
+	if (requestedSpeed == maxSpeed * 2)
+		requestedSpeed = speed * 2;	//why the *2 everywhere?
+	maxSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope(){
