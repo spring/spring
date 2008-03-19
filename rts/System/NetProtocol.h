@@ -40,8 +40,8 @@ public:
 
 	/**
 	@brief Recieve data from Client
-	@return The amount of data recieved, or -1 if connection did not exists
-	@todo Throw exceptions
+	@return The data packet, or 0 if there is no data
+	@throw network_error If there is no such connection
 	
 	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
