@@ -330,22 +330,24 @@ EndNormalControl:
 				return;
 			}
 		}
-		if(pos.x<0){
-			pos.x+=1.5f;
-			owner->midPos.x+=1.5f;
-		}else if(pos.x>float3::maxxpos){
-			pos.x-=1.5f;
-			owner->midPos.x-=1.5f;
+
+		if (pos.x < 0) {
+			pos.x += 1.5f;
+			owner->midPos.x += 1.5f;
+		} else if (pos.x > float3::maxxpos) {
+			pos.x -= 1.5f;
+			owner->midPos.x -= 1.5f;
 		}
 
-		if(pos.z<0){
-			pos.z+=1.5f;
-			owner->midPos.z+=1.5f;
-		}else if(pos.z>float3::maxzpos){
-			pos.z-=1.5f;
-			owner->midPos.z-=1.5f;
+		if (pos.z < 0) {
+			pos.z += 1.5f;
+			owner->midPos.z += 1.5f;
+		} else if (pos.z > float3::maxzpos) {
+			pos.z -= 1.5f;
+			owner->midPos.z -= 1.5f;
 		}
 	}
+
 #ifdef DEBUG_AIRCRAFT
 	if(lastColWarningType==1){
 		int g=geometricObjects->AddLine(owner->pos,lastColWarning->pos,10,1,1);
@@ -621,19 +623,20 @@ void CAirMoveType::UpdateFighterAttack(void)
 
 void CAirMoveType::UpdateAttack(void)
 {
-/*	std::vector<CWeapon*>::iterator wi;
-	for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi){
-		(*wi)->targetPos=goalPos;
-		if(owner->userTarget){
-			(*wi)->AttackUnit(owner->userTarget,true);
+	/*
+	std::vector<CWeapon*>::iterator wi;
+	for (wi = owner->weapons.begin(); wi != owner->weapons.end(); ++wi) {
+		(*wi)->targetPos = goalPos;
+		if (owner->userTarget) {
+			(*wi)->AttackUnit(owner->userTarget, true);
 		}
 	}
-*/
-	UpdateFlying(wantedHeight,1);
+	*/
+	UpdateFlying(wantedHeight, 1);
 }
 
 
-void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
+void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 {
 	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
@@ -641,77 +644,78 @@ void CAirMoveType::UpdateFlying(float wantedHeight,float engine)
 	SyncedFloat3 &updir = owner->updir;
 	float3 &speed = owner->speed;
 
-	float speedf=speed.Length();
-	float goalLength=(goalPos-pos).Length();
-	float3 goalDir=(goalPos-pos)/goalLength;
+	float speedf = speed.Length();
+	float goalLength = (goalPos - pos).Length() + 0.01f;
+	float3 goalDir = (goalPos - pos) / goalLength;
 	goalDir.Normalize();
 
-	float aileron=0;
-	float rudder=0;
-	float elevator=0;
+	float aileron = 0.0f;
+	float rudder = 0.0f;
+	float elevator = 0.0f;
 
-	float gHeight=ground->GetHeight(pos.x,pos.z);
+	float gHeight = ground->GetHeight(pos.x, pos.z);
 
-	if(!((gs->frameNum+owner->id)&3))
+	if (!((gs->frameNum + owner->id) & 3))
 		CheckForCollision();
 
-	float otherThreat=0;
+	float otherThreat = 0;
 	float3 otherDir;
-	if(lastColWarning){
-		float3 otherDif=lastColWarning->pos-pos;
-		float otherLength=otherDif.Length();
-		otherDir=otherDif/otherLength;
-		otherThreat=max(1200.f,goalLength)/otherLength*0.036f;
+	if (lastColWarning) {
+		float3 otherDif = lastColWarning->pos - pos;
+		float otherLength = otherDif.Length();
+		otherDir = otherDif / (otherLength + 0.01f);
+		otherThreat = max(1200.0f, goalLength) / otherLength * 0.036f;
 	}
 
-	float goalDot=rightdir.dot(goalDir);
-	goalDot/=goalDir.dot(frontdir)*0.5f+0.501f;
-	if(goalDir.dot(frontdir)<-0.1f && goalLength<turnRadius
+	float goalDot = rightdir.dot(goalDir);
+	goalDot /= goalDir.dot(frontdir) * 0.5f + 0.501f;
+	if (goalDir.dot(frontdir) < -0.1f && goalLength < turnRadius
 #ifdef DIRECT_CONTROL_ALLOWED
 		&& (!owner->directControl || owner->directControl->mouse2)
 #endif
 		)
-		goalDot=-goalDot;
-	if(lastColWarning){
-		goalDot-=otherDir.dot(rightdir)*otherThreat;
+		goalDot =- goalDot;
+	if (lastColWarning) {
+		goalDot -= otherDir.dot(rightdir) * otherThreat;
 	}
-	//roll
-	if(speedf>1.5f && pos.y+speed.y*10>gHeight+wantedHeight*0.6f){
-		float goalBankDif=goalDot+rightdir.y*0.5f;
-		if(goalBankDif>maxAileron*speedf*4 && rightdir.y>-maxBank){
-			aileron=1;
-		} else if(goalBankDif<-maxAileron*speedf*4 && rightdir.y<maxBank){
-			aileron=-1;
+
+	// roll
+	if (speedf > 1.5f && pos.y + speed.y * 10 > gHeight + wantedHeight * 0.6f) {
+		float goalBankDif = goalDot + rightdir.y * 0.5f;
+		if (goalBankDif > maxAileron*speedf * 4 && rightdir.y > -maxBank) {
+			aileron = 1;
+		} else if (goalBankDif < -maxAileron * speedf * 4 && rightdir.y < maxBank) {
+			aileron = -1;
 		} else {
-			if(fabs(rightdir.y)<maxBank)
-				aileron=goalBankDif/(maxAileron*speedf*4);
+			if (fabs(rightdir.y) < maxBank)
+				aileron = goalBankDif / (maxAileron * speedf * 4);
 			else {
-				if(rightdir.y<0 && goalBankDif<0)
-					aileron=-1;
-				else if(rightdir.y>0 && goalBankDif>0)
-					aileron=1;
+				if (rightdir.y < 0 && goalBankDif < 0)
+					aileron = -1;
+				else if (rightdir.y > 0 && goalBankDif > 0)
+					aileron = 1;
 			}
 		}
 	} else {
-		if(rightdir.y>0.01f){
-			aileron=1;
-		} else if(rightdir.y<-0.01f){
-			aileron=-1;
+		if (rightdir.y > 0.01f) {
+			aileron = 1;
+		} else if (rightdir.y < -0.01f) {
+			aileron = -1;
 		}
 	}
 
-	//yaw
-	if(pos.y>gHeight+15){
-		if(goalDot<-maxRudder*speedf*2){
-			rudder=-1;;
-		} else if(goalDot>maxRudder*speedf*2){
-			rudder=1;
+	// yaw
+	if (pos.y > gHeight + 15) {
+		if (goalDot < -maxRudder * speedf * 2) {
+			rudder = -1;
+		} else if (goalDot > maxRudder * speedf * 2) {
+			rudder = 1;
 		} else {
-			rudder=goalDot/(maxRudder*speedf*2);
+			rudder = goalDot / (maxRudder * speedf * 2);
 		}
 	}
 
-	//pitch
+	// pitch
 	if (speedf > 0.8f) {
 		bool notColliding = true;
 		if (lastColWarningType == 2) {
@@ -810,6 +814,7 @@ void CAirMoveType::UpdateLanding(void)
 	// find a landing spot if we dont have one
 	if (reservedLandingPos.x < 0) {
 		reservedLandingPos = FindLandingPos();
+
 		if (reservedLandingPos.x > 0) {
 			reservedLandingPos.y += wantedHeight;
 			float3 tp = pos;
@@ -842,7 +847,8 @@ void CAirMoveType::UpdateLanding(void)
 					return;
 				}
 			}
-		}*/
+		}
+		*/
 	}
 
 	// update our speed
@@ -1051,7 +1057,7 @@ float3 CAirMoveType::FindLandingPos(void)
 	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
 	tryPos.y = ground -> GetHeight2(tryPos.x, tryPos.z);
 
-	if ((tryPos.y < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge)) {
+	if ((tryPos.y < 0) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
 		return ret;
 	}
 
@@ -1070,7 +1076,7 @@ float3 CAirMoveType::FindLandingPos(void)
 		}
 	}
 
-	if (ground -> GetSlope(tryPos.x, tryPos.z) > 0.03f)
+	if (ground->GetSlope(tryPos.x, tryPos.z) > 0.03f)
 		return ret;
 
 	return tryPos;
