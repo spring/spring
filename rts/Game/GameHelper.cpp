@@ -771,7 +771,11 @@ void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
 	for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (u != exclude && !u->unitDef->pushResistant && !u->usingScriptMoveType) {
+		const int eAllyTeam = exclude->allyteam;
+		const int uAllyTeam = u->allyteam;
+		const bool allied = (gs->Ally(uAllyTeam, eAllyTeam) || gs->Ally(eAllyTeam, uAllyTeam));
+
+		if (u != exclude && allied && !u->unitDef->pushResistant && !u->usingScriptMoveType) {
 			u->commandAI->BuggerOff(pos, radius + 8);
 		}
 	}
