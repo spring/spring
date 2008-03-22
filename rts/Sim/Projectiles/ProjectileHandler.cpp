@@ -21,6 +21,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -474,28 +475,52 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	unitDrawer->SetupForUnitDrawing();
 	Projectile_List::iterator psi;
 	distlist.clear();
-	for(psi=ps.begin();psi != ps.end();++psi){
-		if(camera->InView((*psi)->pos,(*psi)->drawRadius) && (gu->spectatingFullView || loshandler->InLos(*psi,gu->myAllyTeam) || ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
-			if(drawReflection){
-				if((*psi)->pos.y < -(*psi)->drawRadius)
+
+	for (psi = ps.begin(); psi != ps.end(); ++psi) {
+		CProjectile* pro = *psi;
+
+		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
+			(pro->owner && gs->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
+
+			CUnit* owner = pro->owner;
+			CUnit* trans = owner? (CUnit*) owner->transporter: 0;
+			bool stunned = owner? owner->stunned: false;
+
+			if (owner && trans && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
+				// if the unit that fired this projectile is inside a non-firebase
+				// transport (so stunned) and the projectile forms part of a shield
+				// (ie., the unit has a CPlasmaRepulser weapon but cannot fire it),
+				// prevent the projectile (shield segment) from being drawn at the
+				// unit's pre-pickup position (since CPlasmaRepulser::Update() is
+				// responsible for updating CShieldPartProjectile::centerPos)
+				continue;
+			}
+
+
+			if (drawReflection) {
+				if (pro->pos.y < -pro->drawRadius)
 					continue;
-				float dif=(*psi)->pos.y-camera->pos.y;
-				float3 zeroPos=camera->pos*((*psi)->pos.y/dif) + (*psi)->pos*(-camera->pos.y/dif);
-				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>3+0.5f*(*psi)->drawRadius)
+
+				float dif = pro->pos.y - camera->pos.y;
+				float3 zeroPos = camera->pos*(pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
+
+				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > 3 + 0.5f * pro->drawRadius)
 					continue;
 			}
-			if(drawRefraction && (*psi)->pos.y>(*psi)->drawRadius)
+			if (drawRefraction && pro->pos.y > pro->drawRadius)
 				continue;
-			if((*psi)->s3domodel){
-				if((*psi)->s3domodel->textureType){
-					unitDrawer->QueS3ODraw(*psi,(*psi)->s3domodel->textureType);
+
+			if (pro->s3domodel) {
+				if (pro->s3domodel->textureType) {
+					unitDrawer->QueS3ODraw(*psi, pro->s3domodel->textureType);
 				} else {
-					(*psi)->DrawUnitPart();
+					pro->DrawUnitPart();
 				}
 			}
+
 			struct projdist tmp;
-			tmp.proj=*psi;
-			tmp.dist=(*psi)->pos.dot(camera->forward);
+			tmp.proj = *psi;
+			tmp.dist = pro->pos.dot(camera->forward);
 			distlist.push_back(tmp);
 		}
 	}
