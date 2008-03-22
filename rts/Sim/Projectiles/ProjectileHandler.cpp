@@ -479,7 +479,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* pro = *psi;
 
-		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
+		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
 			(pro->owner && gs->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner;
@@ -502,7 +502,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					continue;
 
 				float dif = pro->pos.y - camera->pos.y;
-				float3 zeroPos = camera->pos*(pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
+				float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
 
 				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > 3 + 0.5f * pro->drawRadius)
 					continue;
@@ -512,14 +512,14 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 			if (pro->s3domodel) {
 				if (pro->s3domodel->textureType) {
-					unitDrawer->QueS3ODraw(*psi, pro->s3domodel->textureType);
+					unitDrawer->QueS3ODraw(pro, pro->s3domodel->textureType);
 				} else {
 					pro->DrawUnitPart();
 				}
 			}
 
 			struct projdist tmp;
-			tmp.proj = *psi;
+			tmp.proj = pro;
 			tmp.dist = pro->pos.dot(camera->forward);
 			distlist.push_back(tmp);
 		}
