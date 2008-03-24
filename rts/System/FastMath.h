@@ -1,3 +1,6 @@
+#ifndef FASTMATH_H
+#define FASTMATH_H
+
 /**
  * @file FastMath.cpp
  * @brief Fast math routines
@@ -168,3 +171,5 @@ namespace fastmath {
 		return sin(x + HALFPI);
 	}
 }
+
+#endif
