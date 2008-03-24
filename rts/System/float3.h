@@ -11,6 +11,8 @@
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
 
+extern float fm_isqrt(float);
+
 /**
  * @brief float3 class
  *
@@ -371,40 +373,18 @@ public:
 	}
 
 	/**
-	 * @brief
-	 * @return approximate reciprocal of sqrt(x) [ie., 1 / sqrt(x)]
-	 *
-	 * see "The Math Behind The Fast Inverse Square Root Function Code"
-	 * by Charles McEniry [2007] for a mathematical derivation of this
-	 * method (or Chris Lomont's 2003 "Fast Inverse Square Root" paper)
-	 */
-	inline float InvSqrt(float x) {
-		float xh = 0.5f * x;
-		int i = *(int*) &x;
-		i = 0x5f375a86 - (i >> 1);
-		x = *(float*) &i;
-		x = x * (1.5f - xh * (x * x));
-		// x = x * (1.5f - xh * (x * x));
-		return x;
-	}
-
-	/**
 	 * @brief normalizes the vector approximately
 	 * @return pointer to self
 	 *
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's approx.
 	 * length.
+	 *
+	 * note: inlining this would require including
+	 * FastMath.h, probably not the best idea since
+	 * float3 is used everywhere (compilation time)
 	 */
-	inline float3& ANormalize() {
-		float invL = InvSqrt(SqLength());
-		if (invL != 0.f) {
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
-		return *this;
-	}
+	float3& ANormalize();
 
 	/**
 	 * @brief normalizes the vector
@@ -431,7 +411,7 @@ public:
 	 * Returns the length of this vector squared.
 	 */
 	inline float SqLength() const{
-		return x*x+y*y+z*z;
+		return x*x + y*y + z*z;
 	}
 
 	/**
@@ -442,7 +422,7 @@ public:
 	 * vector squared.
 	 */
 	inline float SqLength2D() const{
-		return x*x+z*z;
+		return x*x + z*z;
 	}
 
 	/**
