@@ -2698,6 +2698,7 @@ void CGame::ClientReadNet()
 				}
 				POP_CODE_MODE;
 				AddTraffic(-1, packetCode, dataLength);
+				break;
 			}
 
 			case NETMSG_PLAYERLEFT: {
