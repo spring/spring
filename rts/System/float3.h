@@ -11,8 +11,6 @@
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
 
-extern float fm_isqrt(float);
-
 /**
  * @brief float3 class
  *
