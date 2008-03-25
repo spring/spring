@@ -1940,7 +1940,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 	}
 
 	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt){
-		if (!selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f) {
+		if (unitDef->canCrash && !selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f) {
 			((CAirMoveType*)moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 			health = maxHealth * 0.5f;
 			return;

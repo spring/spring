@@ -286,6 +286,7 @@ struct UnitDef
 	float maxPitch;
 	float turnRadius;
 	float wantedHeight;
+	bool canCrash;
 	bool hoverAttack;
 	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot

@@ -701,6 +701,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.smoothAnim = udTable.GetBool("smoothAnim", false);
 	ud.canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
+	ud.canCrash = udTable.GetBool("canCrash", true);
 	ud.levelGround = udTable.GetBool("levelGround", true);
 	ud.strafeToAttack = udTable.GetBool("strafeToAttack", false);
 

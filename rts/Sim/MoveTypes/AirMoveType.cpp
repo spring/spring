@@ -459,7 +459,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	if(!((gs->frameNum+owner->id)&3))
 		CheckForCollision();
 
-	bool groundTarget=!owner->userTarget || !owner->userTarget->unitDef->canfly;
+	bool groundTarget=!owner->userTarget || !owner->userTarget->unitDef->canfly || owner->userTarget->unitDef->hoverAttack;
 	bool airTarget=owner->userTarget && owner->userTarget->unitDef->canfly && !owner->userTarget->unitDef->hoverAttack;	//only "real" aircrafts (non gunship)
 	if(groundTarget){
 		if(frontdir.dot(goalPos-pos)<0 && (pos-goalPos).SqLength()<turnRadius*turnRadius*(loopbackAttack?4:1)){
