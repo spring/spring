@@ -1,15 +1,8 @@
-
-CPPFLAGS := -g -W -Wall -Wshadow -I../../rts/System -I../../rts/Rendering
-
-FT_LIBS   = $(shell freetype-config --libs)
-CPPFLAGS := $(CPPFLAGS) $(shell freetype-config --cflags)
-
-LIBS = -lm -lIL -lILU
-
+CPPFLAGS := -g -W -Wall -Wshadow -I../../rts/System -I../../rts/Rendering -I../../mingwlibs/include/
+LIBS = -L../../mingwlibs/lib -lm -lDevIL -lILU -lfreetype -lboost_thread-mt
 EXEC = fontTexture
-
-ftSRC = ../../rts/Rendering/FontTexture.cpp
-ftOBJ = ../../build/rts/Rendering/FontTexture.o
+ftSRC = ../../rts/Rendering/FontTexture.cpp ../../rts/System/LogOutput.cpp 
+ftOBJ = ../../build/rts/Rendering/FontTexture.o ../../build/rts/System/LogOutput.o 
 
 
 all:	$(EXEC) GNUmakefile
