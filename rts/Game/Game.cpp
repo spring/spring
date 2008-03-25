@@ -2553,7 +2553,6 @@ void CGame::SimFrame()
 			gs->Team(a)->SlowUpdate();
 		}
 	}
-//	CPathFinder::Instance()->Update();
 
 	lastUpdate = SDL_GetTicks();
 
@@ -2605,13 +2604,7 @@ void CGame::SimFrame()
 			}
 		}
 	}
-
 #endif
-
-	ENTER_UNSYNCED;
-	if (!skipping) {
-	}
-	ENTER_SYNCED;
 }
 
 
@@ -2677,7 +2670,7 @@ void CGame::ClientReadNet()
 
 	// make sure ClientReadNet returns at least every 15 game frames
 	// so CGame can process keyboard input, and render etc.
-	if (gameServer || net->localDemoPlayback)
+	if (gameServer)
 		timeLeft = 15.0f;
 
 	// really process the messages
