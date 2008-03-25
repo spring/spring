@@ -40,6 +40,7 @@ private:
 
 class CTimeProfiler
 {
+public:
 	struct TimeRecord{
 		unsigned total;
 		unsigned current;
@@ -48,7 +49,7 @@ class CTimeProfiler
 		SFloat3 color;
 		bool showGraph;
 	};
-public:
+
 	CTimeProfiler();
 	~CTimeProfiler();
 
