@@ -2814,10 +2814,11 @@ void CGame::ClientReadNet()
 			case NETMSG_USER_SPEED: {
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
-				unsigned char playerNum = *(unsigned char*) &inbuf[1];
-				const char* playerName = gs->players[playerNum]->playerName.c_str();
-				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, playerName);
-				AddTraffic(playerNum, packetCode, dataLength);
+				unsigned char pNum = *(unsigned char*) &inbuf[1];
+				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->playerName.c_str();
+
+				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, pName);
+				AddTraffic(pNum, packetCode, dataLength);
 				break;
 			}
 
@@ -2827,7 +2828,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-		// header (1); uchar myPlayerNum (1); float cpuUsage (4); int ping (4): 10
 			case NETMSG_PLAYERINFO: {
 				int player = inbuf[1];
 				if (player >= MAX_PLAYERS || player < 0) {
