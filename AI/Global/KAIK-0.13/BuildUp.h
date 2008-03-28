@@ -22,6 +22,7 @@ class CBuildUp {
 		bool BuildNow(int, int, const UnitDef*);
 		const UnitDef* GetLeastBuiltBuilder(void);
 		bool BuildUpgradeExtractor(int);
+		bool BuildUpgradeReactor(int);
 
 		int factoryTimer;
 		int builderTimer;

@@ -1194,7 +1194,10 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->customOrderId == 0);
 
 	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
-		if ((ai->MyUnits[i->id]->def())->canBeAssisted) {
+		CUNIT* u = ai->MyUnits[i->id];
+
+		// don't assist hubs (or factories that cannot be assisted)
+		if ((u->def())->canBeAssisted && !u->isHub()) {
 			float totalbuildercost = 0.0f;
 
 			// HACK
