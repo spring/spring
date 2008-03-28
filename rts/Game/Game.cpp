@@ -1016,6 +1016,18 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
+	else if (cmd == "team"){
+		if (gs->cheatEnabled || net->localDemoPlayback)
+		{
+			int team=atoi(action.extra.c_str());
+			if ((team >= 0) && (team <gs->activeTeams)) {
+				net->SendJoinTeam(gu->myPlayerNum, team);
+			}
+		}
+	}
+	else if (cmd == "spectator"){
+		net->SendResign(gu->myPlayerNum);
+	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
 		if ((team >= 0) && (team < gs->activeTeams)) {
@@ -3183,9 +3195,11 @@ void CGame::ClientReadNet()
 						//TODO is this enought?
 						int newTeam = int(inbuf[3]);
 						gs->players[player]->team = newTeam;
+						gs->players[player]->spectator = false;
 						if (player == gu->myPlayerNum) {
 							gu->myTeam = newTeam;
 							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+							gu->spectating = false;
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
@@ -3719,15 +3733,7 @@ void CGame::SendNetChat(const std::string& message)
 		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 		msg += buf;
 	}
-	else if ((msg == ".spectator")) {
-		net->SendResign(gu->myPlayerNum);
-	}
-	else if ((msg.find(".team") == 0) && (gs->cheatEnabled || net->localDemoPlayback)) {
-		int team=atoi(&msg.c_str()[msg.find(" ")]);
-		if ((team >= 0) && (team <gs->activeTeams)) {
-			net->SendJoinTeam(gu->myPlayerNum, team);
-		}
-	}
+	
 	if (msg.size() > 128) {
 		msg.resize(128); // safety
 	}
