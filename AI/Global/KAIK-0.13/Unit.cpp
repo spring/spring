@@ -208,9 +208,9 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) {
 	// a hub to stay idle if the area
 	// around it is too crowded
 	int friends[MAX_UNITS];
-	int numFriends = ai->cb->GetFriendlyUnits(friends, hubPos, maxRadius);
+	int numFriends = ai->cb->GetFriendlyUnits(friends, hubPos, maxRadius * 0.5f);
 
-	if (numFriends > 16)
+	if (numFriends > 8)
 		return false;
 
 	// note: this can still go wrong if there is another

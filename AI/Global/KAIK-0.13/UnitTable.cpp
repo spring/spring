@@ -299,7 +299,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// what the weapon can target
 				unsigned int c = unit->weapons[i].onlyTargetCat;			// what the unit accepts as this weapons target
-//				unsigned int d = unit->weapons[i].badTargetCat;				// what the unit thinks this weapon must be used for (hmm ?)
+//				unsigned int d = unit->weapons[i].badTargetCat;				// what the unit thinks this weapon must be used for (?)
 				bool canWeaponTarget = (a & b) > 0;
 				bool canUnitTarget = (a & c) > 0;							// how is this used?
 //				bool badUnitTarget = (a & d) > 0;							// probably means that it has low priority
@@ -521,15 +521,18 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 			benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
 
 			if (udef->windGenerator) {
-				benefit += ai->cb->GetMinWind();
+				if (ai->cb->GetMinWind() > 1.0f) {
+					benefit += (ai->cb->GetMinWind() + ai->cb->GetMaxWind()) / 2.0f;
+				}
 			}
 			if (udef->tidalGenerator) {
 				benefit += ai->cb->GetTidalStrength();
 			}
 
 			// filter geothermals
-			if (udef->needGeo)
+			if (udef->needGeo) {
 				benefit = 0.0f;
+			}
 
 			// KLOOTNOTE: dividing by cost here as well means
 			// benefit is inversely proportional to square of
@@ -667,6 +670,9 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 // operates in terms of GetScore() (which is recursive for factories)
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
+	if (category == LASTCATEGORY)
+		return 0x0;
+
 	vector<int>* tempList = 0;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
 	const UnitDef* tempUnitDef = 0;
@@ -866,7 +872,8 @@ void CUnitTable::Init() {
 					else {
 						const WeaponDef* weapon = (me->def->weapons.empty())? 0: me->def->weapons.begin()->def;
 
-						if (weapon && !weapon->stockpile) {
+						if (weapon && !weapon->stockpile && me->def->extractsMetal == 0.0f) {
+							// we don't want armed extractors to be seen as general-purpose defense
 							if (!weapon->waterweapon) {
 								// filter out depth-charge launchers etc
 								ground_defences[mySide].push_back(i);
@@ -898,7 +905,7 @@ void CUnitTable::Init() {
 							metal_extractors[mySide].push_back(i);
 							me->category = CAT_MEX;
 						}
-						if ((me->def->energyMake - me->def->energyUpkeep) / UnitCost > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
+						if (((me->def->energyMake - me->def->energyUpkeep) / UnitCost) > 0.002 || me->def->tidalGenerator || me->def->windGenerator) {
 							if (/* me->def->minWaterDepth <= 0 && */ !me->def->needGeo) {
 								// filter tidals and geothermals
 								ground_energy[mySide].push_back(i);
