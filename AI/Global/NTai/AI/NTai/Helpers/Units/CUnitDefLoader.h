@@ -8,18 +8,20 @@ namespace ntai {
 		~CUnitDefLoader();
 		void Init();
 		
-		const UnitDef* GetUnitDef(string name);
-		const UnitDef* GetUnitDefByIndex(int i);
+		const UnitDef* GetUnitDef(string name) const;
+		const UnitDef* GetUnitDefByIndex(int i) const;
 		
-		CUnitTypeData* GetUnitTypeDataByUnitId(int uid);
-		CUnitTypeData* GetUnitTypeDataById(int id);
-		CUnitTypeData* GetUnitTypeDataByName(string name);
+		CUnitTypeData* GetUnitTypeDataByUnitId(int uid) const;
+		CUnitTypeData* GetUnitTypeDataById(int id) const;
+		CUnitTypeData* GetUnitTypeDataByName(string name) const;
 		
-		bool HasUnit(string name);
+		bool HasUnit(string name) const;
 	private:
-		int GetIdByName(string name);
+		int GetIdByName(string name) const;
+
 		Global* G;
-		map<string,int> defs;
+
+		std::map<string,int> defs;
 		std::map<int,CUnitTypeData* > type_data;
 
 		const UnitDef** UnitDefList;

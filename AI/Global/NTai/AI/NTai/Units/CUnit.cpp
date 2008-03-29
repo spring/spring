@@ -31,11 +31,11 @@ namespace ntai {
 		if(!utd->IsMobile()){
 			G->BuildingPlacer->Block(G->GetUnitPos(uid),utd);
 		}
-		
+		currentTask = boost::shared_ptr<IModule>();
 		doingplan=false;
 		curplan=0;
 		birth = G->GetCurrentFrame();
-		nolist=false;
+		//nolist=false;
 		under_construction = true;
 	}
 
@@ -48,10 +48,9 @@ namespace ntai {
 		NLOG("CUnit::Init");
 
 		if((G->GetCurrentFrame() > 32)&&utd->IsMobile()){
-			boost::shared_ptr<IModule> t(new CLeaveBuildSpotTask(G,uid,utd));
-			AddTask(t);
-			t->Init();
-			G->RegisterMessageHandler(t);
+			currentTask = boost::shared_ptr<IModule>(new CLeaveBuildSpotTask(G,uid,utd));
+			currentTask->Init();
+			G->RegisterMessageHandler(currentTask);
 		}
 		return true;
 	}
@@ -62,9 +61,32 @@ namespace ntai {
 			return;
 		}
 		if(message.GetType() == string("update")){
-			if(under_construction) return;
+			if(under_construction){
+				return;
+			}
+
 			if(EVERY_((GetAge()%16+17))){
-				if(!tasks.empty()){
+				if(currentTask.get() != 0){
+					if(currentTask->IsValid()==false){
+						//
+						taskManager->TaskFinished();
+						if(taskManager->HasTasks()){
+							currentTask = taskManager->GetNextTask();
+							currentTask->Init();
+							G->RegisterMessageHandler(currentTask);
+						}else{
+							currentTask = boost::shared_ptr<IModule>();
+						}
+					}
+				}else{
+					//
+					if(taskManager->HasTasks()){
+						currentTask = taskManager->GetNextTask();
+						currentTask->Init();
+						G->RegisterMessageHandler(currentTask);
+					}
+				}
+				/*if(!tasks.empty()){
 					if(tasks.front()->IsValid()==false){
 						G->L.print("next task?");
 						tasks.erase(tasks.begin());
@@ -74,7 +96,7 @@ namespace ntai {
 							G->RegisterMessageHandler(t);
 						}
 					}
-				}
+				}*/
 			}
 			/*if(EVERY_(32)){
 				float3 p = G->GetUnitPos(uid);
@@ -98,10 +120,10 @@ namespace ntai {
 				if(!utd->IsMobile()){
 					G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),utd);
 				}
-				if(!tasks.empty()){
+				/*if(!tasks.empty()){
 					tasks.erase(tasks.begin(),tasks.end());
 					tasks.clear();
-				}
+				}*/
 				if(!behaviours.empty()){
 					behaviours.erase(behaviours.begin(),behaviours.end());
 					behaviours.clear();
@@ -111,7 +133,7 @@ namespace ntai {
 			}
 		}
 		if(under_construction) return;
-		if(!nolist){
+		/*if(!nolist){
 			if(tasks.empty()){
 				if(LoadTaskList()){
 					boost::shared_ptr<IModule> t = tasks.front();
@@ -120,7 +142,7 @@ namespace ntai {
 				}
 				//executenext = !tasks.empty();
 			}
-		}
+		}*/
 	}
 
 	int CUnit::GetAge(){
@@ -148,7 +170,7 @@ namespace ntai {
 		return uid;
 	}
 
-	bool CUnit::AddTask(boost::shared_ptr<IModule> &t){
+	/*bool CUnit::AddTask(boost::shared_ptr<IModule> &t){
 		NLOG("CBuilder::AddTask");
 		//if(t->IsValid()){
 			//t->AddListener(me);
@@ -277,7 +299,7 @@ namespace ntai {
 			G->L.print(" error loading contents of  tasklist :: " + u + " :: buffer empty, most likely because of an empty tasklist");
 			return false;
 		}
-	}
+	}*/
 
 	bool CUnit::LoadBehaviours(){
 		string d = G->Get_mod_tdf()->SGetValueDef("auto","AI\\behaviours\\"+utd->GetName());
@@ -409,8 +431,8 @@ namespace ntai {
 						}
 
 					}else{
-						// this unit can't move, if it can fire a weapon though give it
-						// the static defence behaviour
+						/* this unit can't move, if it can fire a weapon though give it
+						   the static defence behaviour*/
 
 						if(utd->GetUnitDef()->weapons.empty()==false){
 							CStaticDefenceBehaviour* a = new CStaticDefenceBehaviour(G, GetID());
@@ -423,13 +445,24 @@ namespace ntai {
 						}
 					}
 
-					// At the moment I can't think of a viable way of testing for the kamakaze
-					// behaviour. It's usually a specialized behaviour though so a modder is
-					// likely to mark it out in toolkit as a kamikaze unit
+					/*At the moment I can't think of a viable way of testing for the kamakaze
+					  behaviour. It's usually a specialized behaviour though so a modder is
+					  likely to mark it out in toolkit as a kamikaze unit
+					*/
 
 				}
 			}
 		}
 		return true;
+	}
+	
+	void CUnit::SetTaskManager(boost::shared_ptr<ITaskManager> taskManager){
+		//
+		this->taskManager = taskManager;
+	}
+
+	boost::shared_ptr<ITaskManager> CUnit::GetTaskManager(){
+		//
+		return taskManager;
 	}
 }
