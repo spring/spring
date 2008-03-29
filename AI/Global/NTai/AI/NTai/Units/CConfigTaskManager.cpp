@@ -43,9 +43,16 @@ namespace ntai {
 
 		return tasks.front();
 	}
+	
+	void CConfigTaskManager::RemoveAllTasks(){
+		//
+		assert(HasTasks());
+
+		tasks.erase(tasks.begin(),tasks.end());
+	}
 
 	bool CConfigTaskManager::LoadTaskList(){
-		NLOG("CUnit::LoadTaskList");
+		NLOG("CConfigTaskManager::LoadTaskList");
 
 		IModule* im = unit.get();
 		CUnit* u = dynamic_cast<CUnit* >(im);
