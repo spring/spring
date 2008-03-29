@@ -71,6 +71,7 @@ enum NETMSG {
 	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
 	NETMSG_GAMEDATA			= 52, // custom
+	NETMSG_ALLIANCE			= 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 };
 
 // action to do with NETMSG_TEAM 
@@ -149,7 +150,7 @@ public:
 	// it may have some problems when desync because the team may not die on every client
 	void SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 
-private:
+	void SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 };
 
 #endif

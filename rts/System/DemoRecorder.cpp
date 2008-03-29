@@ -8,7 +8,6 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
-#include "System/LogOutput.h"
 
 #ifdef __GNUC__
 #define __time64_t time_t

@@ -44,6 +44,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_LUAMSG, -2);
 	RegisterMessage(NETMSG_TEAM, 4);
 	RegisterMessage(NETMSG_GAMEDATA, -2);
+	RegisterMessage(NETMSG_ALLIANCE, 4);
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()
@@ -351,6 +352,12 @@ void CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
 void CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 {
 	unsigned char msg[4] = {NETMSG_TEAM, myPlayerNum, TEAMMSG_TEAM_DIED, whichTeam};
+	SendData(msg, 4);
+}
+
+void CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state)
+{
+	unsigned char msg[4] = {NETMSG_ALLIANCE, myPlayerNum, whichAllyTeam, state};
 	SendData(msg, 4);
 }
 

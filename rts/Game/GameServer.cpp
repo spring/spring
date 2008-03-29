@@ -708,7 +708,7 @@ void CGameServer::ServerReadNet()
 								}
 								case TEAMMSG_JOIN_TEAM: {
 									unsigned newTeam = inbuf[3];
-									if ((setup && !setup->fixedTeams) || demoReader || cheating)
+									if (cheating)
 									{
 										serverNet->SendJoinTeam(player, newTeam);
 										players[player]->team = newTeam;
@@ -742,6 +742,18 @@ void CGameServer::ServerReadNet()
 								}
 							}
 							break;
+						}
+					}
+					case NETMSG_ALLIANCE: {
+						const unsigned char player = inbuf[1];
+						const unsigned char whichAllyTeam = inbuf[2];
+						const unsigned char allied = inbuf[3];
+						if (setup && !setup->fixedAllies)
+						{
+							serverNet->SendSetAllied(player, whichAllyTeam, allied);
+						}
+						else
+						{ // not allowed
 						}
 					}
 
