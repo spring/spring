@@ -438,6 +438,10 @@
 				Name="units"
 				>
 				<File
+					RelativePath=".\NTai\Units\CConfigTaskManager.h"
+					>
+				</File>
+				<File
 					RelativePath=".\NTai\Units\CUnit.h"
 					>
 				</File>
@@ -447,6 +451,14 @@
 				</File>
 				<File
 					RelativePath=".\NTai\Units\CUnitTypeData.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Units\ITaskManager.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NTai\Units\ITaskManagerFactory.h"
 					>
 				</File>
 				<Filter
