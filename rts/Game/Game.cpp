@@ -1933,7 +1933,6 @@ bool CGame::Update()
 			chatting = false;
 			userWriting = false;
 			writingPos = 0;
-			net->SendRandSeed(gs->randSeed);
 			net->SendStartPlaying(0);
 		}
 	}
@@ -2905,7 +2904,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_RANDSEED: {
-				gs->randSeed = (*((unsigned int*)&inbuf[1]));
+				gs->SetRandSeed(*((unsigned int*)&inbuf[1]));
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}

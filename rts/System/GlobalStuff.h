@@ -20,35 +20,28 @@ const float PI = 3.141592654f;
  *
  * Defines the maximum world size as 1000000
  */
-#define MAX_WORLD_SIZE 1000000
+const int MAX_WORLD_SIZE = 1000000;
 
 /**
  * @brief square size
  *
  * Defines the size of 1 square as 8
  */
-#define SQUARE_SIZE 8
+const int  SQUARE_SIZE = 8;
 
 /**
  * @brief game speed
  *
  * Defines the game speed as 30
  */
-#define GAME_SPEED 30
-
-/**
- * @brief randint max
- *
- * Defines the maximum random integer as 0x7fff
- */
-#define RANDINT_MAX 0x7fff
+const int GAME_SPEED = 30;
 
 /**
  * @brief max view range
  *
  * Defines the maximum view range as 8000
  */
-#define MAX_VIEW_RANGE 8000
+const int MAX_VIEW_RANGE = 8000;
 
 /**
  * @brief max teams
@@ -56,21 +49,21 @@ const float PI = 3.141592654f;
  * Defines the maximum number of teams
  * as 17 (16 real teams, and an extra slot for the GAIA team)
  */
-#define MAX_TEAMS 17
+const int MAX_TEAMS = 17;
 
 /**
  * @brief max players
  *
  * Defines the maximum number of players as 32
  */
-#define MAX_PLAYERS 32
+const int MAX_PLAYERS = 32;
 
 /**
  * @brief near plane
  *
  * Defines the near plane as 2.8f
  */
-#define NEAR_PLANE 2.8f
+const float NEAR_PLANE = 2.8f;
 
 #include "float3.h"
 
@@ -151,13 +144,7 @@ public:
 	int randInt();			//!< synced random int
 	float randFloat(); 		//!< synced random float
 	float3 randVector(); 		//!< synced random vector
-
-	/**
-	 * @brief random seed
-	 *
-	 * Holds the synced random seed
-	 */
-	int randSeed;
+	void SetRandSeed(unsigned seed) {randSeed = seed; };
 
 	/**
 	 * @brief frame number
@@ -426,7 +413,14 @@ public:
 	 */
 	void SetAlly(int teamA,int teamB, bool allied) { allies[teamA][teamB]=allied; }
 
-protected:
+private:
+	/**
+	* @brief random seed
+	*
+	* Holds the synced random seed
+	*/
+	int randSeed;
+
 	/**
 	 * @brief allies array
 	 *
@@ -472,13 +466,6 @@ public:
 	 * Does the user want team colored nanospray if the mod allows it?
 	 */
 	bool teamNanospray;
-
-	/**
-	 * @brief rand seed
-	 *
-	 * Stores the unsynced random seed
-	 */
-	int usRandSeed;
 
 	/**
 	 * @brief mod game time
@@ -649,6 +636,14 @@ public:
 	 */
 	CUnit* directControl;
 #endif
+	
+private:
+	/**
+	* @brief rand seed
+	*
+	* Stores the unsynced random seed
+	*/
+	int usRandSeed;
 
 };
 

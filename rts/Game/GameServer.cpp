@@ -204,7 +204,7 @@ void CGameServer::CheckSync()
 		bool bComplete = true;
 		bool bGotCorrectChecksum = false;
 		unsigned correctChecksum = 0;
-		for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
+		for (int a = 0; a < MAX_PLAYERS; ++a) {
 			if (!players[a])
 				continue;
 			std::map<int, unsigned>::iterator it = players[a]->syncResponse.find(*f);
@@ -257,7 +257,7 @@ void CGameServer::CheckSync()
 		if (bComplete) {
 // 			if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
 // 				logOutput.Print("Succesfully purged outstanding sync frame %d from the deque", *f);
-			for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
+			for (int a = 0; a < MAX_PLAYERS; ++a) {
 				if (players[a])
 					players[a]->syncResponse.erase(*f);
 			}
@@ -676,7 +676,7 @@ void CGameServer::ServerReadNet()
 							const unsigned action = inbuf[2];
 							const unsigned fromTeam = players[player]->team;
 							unsigned numPlayersInTeam = 0;
-							for (unsigned a = 0; a < MAX_PLAYERS; ++a)
+							for (int a = 0; a < MAX_PLAYERS; ++a)
 								if (players[a] && players[a]->team == fromTeam)
 									++numPlayersInTeam;
 							
@@ -727,7 +727,7 @@ void CGameServer::ServerReadNet()
 									if (teams[team] && players[player]->hasRights) // currently only host is allowed
 									{
 										teams[fromTeam].reset();
-										for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+										for (int i = 0; i < MAX_PLAYERS; ++i)
 										{
 											if (players[i] && players[i]->team == team)
 											{
@@ -881,7 +881,7 @@ void CGameServer::StartGame()
 	gameStartTime = SDL_GetTicks();
 	serverNet->Listening(false);
 
-	for(unsigned a=0; a < MAX_PLAYERS; ++a) {
+	for(int a=0; a < MAX_PLAYERS; ++a) {
 		if(players[a])
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
@@ -907,7 +907,7 @@ void CGameServer::StartGame()
 
 	GenerateAndSendGameID();
 	if (setup) {
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		for (int a = 0; a < MAX_TEAMS; ++a)
 		{
 			if (teams[a])
 				serverNet->SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z);
@@ -1078,7 +1078,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 	serverNet->SendData(gameData->Pack(), hisNewNumber);
 
-	for (unsigned a = 0; a < MAX_PLAYERS; ++a) {
+	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)
 			serverNet->SendPlayerName(a, players[a]->name);
 	}
@@ -1097,7 +1097,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 		}
 		players[hisNewNumber]->team = hisTeam;
 		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		for (int a = 0; a < MAX_TEAMS; ++a)
 		{
 			if (teams[a])
 				serverNet->SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z);
@@ -1109,9 +1109,9 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 		teams[hisTeam].reset(new GameTeam());
 		players[hisNewNumber]->team = hisTeam;
 		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
-		for (unsigned a = 0; a < MAX_TEAMS; ++a)
+		for (int a = 0; a < MAX_TEAMS; ++a)
 		{
-			if (teams[a] && a != hisNewNumber)
+			if (teams[a] && a != (int)hisNewNumber)
 				serverNet->SendJoinTeam(a, players[a]->team);
 		}
 	}
@@ -1135,7 +1135,7 @@ void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 			std::string name = msg.substr(6,string::npos);
 			if (!name.empty()){
 				StringToLowerInPlace(name);
-				for (unsigned a=1; a < MAX_PLAYERS;++a){
+				for (int a=1; a < MAX_PLAYERS;++a){
 					if (players[a]){
 						std::string playerLower = StringToLower(players[a]->name);
 						if (playerLower.find(name)==0) {               //can kick on substrings of name
