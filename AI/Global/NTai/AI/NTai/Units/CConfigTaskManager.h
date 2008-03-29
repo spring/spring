@@ -16,6 +16,8 @@ namespace ntai {
 		void TaskFinished();
 
 		virtual bool LoadTaskList();
+
+		void RemoveAllTasks();
 	protected:
 		std::list< boost::shared_ptr<IModule> > tasks;
 		bool nolist;

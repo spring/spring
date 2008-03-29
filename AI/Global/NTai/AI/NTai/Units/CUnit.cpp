@@ -120,6 +120,7 @@ namespace ntai {
 				if(!utd->IsMobile()){
 					G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),utd);
 				}
+				taskManager->RemoveAllTasks();
 				/*if(!tasks.empty()){
 					tasks.erase(tasks.begin(),tasks.end());
 					tasks.clear();
