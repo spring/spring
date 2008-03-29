@@ -272,6 +272,10 @@
 				Name="Units"
 				>
 				<File
+					RelativePath=".\NTai\Units\CConfigTaskManager.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\NTai\Units\CUnit.cpp"
 					>
 				</File>

@@ -386,6 +386,8 @@ namespace ntai {
 
 		START_EXCEPTION_HANDLING
 		boost::shared_ptr<CUnit> Unit = boost::shared_ptr<CUnit>(new CUnit(G, unit));
+		boost::shared_ptr<ITaskManager> taskManager(new CConfigTaskManager(G,Unit));
+		Unit->SetTaskManager(taskManager);
 		Unit->Init();
 		units[unit] = Unit;
 		RegisterMessageHandler(Unit);

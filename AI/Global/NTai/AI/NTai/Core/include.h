@@ -71,8 +71,9 @@ typedef boost::mutex::scoped_lock scoped_lock;
 #include "../Core/IModule.h"								// Base class for AI objects
 #include "../Units/IBehaviour.h"							// Behaviour base class
 
-#include "../Units/ITaskManager.h"					// Attack nearby enemies
+#include "../Units/ITaskManager.h"							// Attack nearby enemies
 #include "../Units/ITaskManagerFactory.h"					// Attack nearby enemies
+#include "../Units/CConfigTaskManager.h"							// Attack nearby enemies
 #include "../Units/CUnit.h"
 #include "../Helpers/Log.h"									// Logging class
 #include "../Helpers/Units/CUnitDefLoader.h"				// Loads unitdefs
