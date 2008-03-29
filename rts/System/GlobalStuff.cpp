@@ -30,6 +30,13 @@ CGlobalSyncedStuff* gs;
  */
 CGlobalUnsyncedStuff* gu;
 
+/**
+ * @brief randint max
+ *
+ * Defines the maximum random integer as 0x7fff
+ */
+const int RANDINT_MAX = 0x7fff;
+
 CR_BIND(CGlobalSyncedStuff,);
 
 CR_REG_METADATA(CGlobalSyncedStuff, (
@@ -153,7 +160,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 int CGlobalSyncedStuff::randInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & 0x7FFF;
+	return randSeed & RANDINT_MAX;
 }
 
 /**
@@ -164,7 +171,7 @@ int CGlobalSyncedStuff::randInt()
 float CGlobalSyncedStuff::randFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return float(randSeed & 0x7FFF)/RANDINT_MAX;
+	return float(randSeed & RANDINT_MAX)/RANDINT_MAX;
 }
 
 /**
@@ -232,7 +239,7 @@ CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
 int CGlobalUnsyncedStuff::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return usRandSeed & 0x7FFF;
+	return usRandSeed & RANDINT_MAX;
 }
 
 /**
@@ -243,7 +250,7 @@ int CGlobalUnsyncedStuff::usRandInt()
 float CGlobalUnsyncedStuff::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return float(usRandSeed & 0x7FFF)/RANDINT_MAX;
+	return float(usRandSeed & RANDINT_MAX)/RANDINT_MAX;
 }
 
 /**
