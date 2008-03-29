@@ -38,6 +38,7 @@
 	NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
 	LuaGaia=1;          // Use LuaGaia?
 	LuaRules=1;         // Use LuaRules?
+	FixedAllies=1;		// Are ingame alliances allowed?
 
 	MaxSpeed=3;         // speed limits at game start
 	MinSpeed=0.3;

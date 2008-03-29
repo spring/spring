@@ -1047,6 +1047,22 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		}
 		CLuaUI::UpdateTeams();
 	}
+	else if (cmd == "ally"){
+		if (action.extra.size() > 0)
+		{
+			const int otherAllyTeam = atoi(action.extra.c_str());
+			if (gameSetup && !gameSetup->fixedAllies)
+				net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, 1);
+		}
+	}
+	else if (cmd == "unally"){
+		if (action.extra.size() > 0)
+		{
+			const int otherAllyTeam = atoi(action.extra.c_str());
+			if (gameSetup && !gameSetup->fixedAllies)
+				net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, 0);
+		}
+	}
 	else if (cmd == "group") {
 		const char* c = action.extra.c_str();
 		const int t = c[0];
@@ -2348,7 +2364,12 @@ bool CGame::Draw()
 				color[1] = (float)bColor[1] / 255.0f;
 				color[2] = (float)bColor[2] / 255.0f;
 				color[3] = (float)bColor[3] / 255.0f;
-				prefix = gu->myAllyTeam == gs->AllyTeam(p->team) ? "A|" : "E|";
+				if (gu->myAllyTeam == gs->AllyTeam(p->team))
+					prefix = "A|";	// same AllyTeam
+				else if (gs->AlliedTeams(gu->myTeam, p->team))
+					prefix = "E+|";	// different AllyTeams, but are allied
+				else
+					prefix = "E|";	//no alliance at all
 			}
 			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
@@ -3213,6 +3234,12 @@ void CGame::ClientReadNet()
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
+			}
+			case NETMSG_ALLIANCE: {
+				const int player = inbuf[1];
+				const int whichAllyTeam = inbuf[2];
+				const bool allied = static_cast<bool>(inbuf[3]);
+				gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
 			}
 
 #ifdef DIRECT_CONTROL_ALLOWED
