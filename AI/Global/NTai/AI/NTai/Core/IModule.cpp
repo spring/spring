@@ -1,14 +1,17 @@
 #include "include.h"
 
-IModule::IModule(Global* GL){
-	G=GL;
-	valid=false;
-}
+namespace ntai {
 
-IModule::~IModule(){
-}
+	IModule::IModule(Global* GL){
+		G=GL;
+		valid=false;
+	}
 
-void IModule::DestroyModule(){
-	valid=false;
-	//G->RemoveHandler(me);
+	IModule::~IModule(){
+	}
+
+	void IModule::DestroyModule(){
+		valid=false;
+		//G->RemoveHandler(me);
+	}
 }

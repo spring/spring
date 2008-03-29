@@ -11,11 +11,11 @@ DLL_EXPORT int GetGlobalAiVersion(){
 }
 
 DLL_EXPORT void GetAiName(char* name){
-	strcpy(name,AI_NAME);
+	strcpy(name,ntai::AI_NAME);
 }
 
 DLL_EXPORT IGlobalAI* GetNewAI(){
-	return new CNTai();
+	return new ntai::CNTai();
 }
 
 DLL_EXPORT void ReleaseAI(IGlobalAI* i){

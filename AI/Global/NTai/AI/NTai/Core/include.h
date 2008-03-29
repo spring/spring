@@ -7,13 +7,16 @@
 #endif
 
 namespace ntai{
+	// Prototype the Global class
 	class Global;
+	
+	// The name NTAI gives to the spring engine.
+	const char AI_NAME[]= {"NTai XE9.79+"};
 }
 
-using namespace ntai;
+//using namespace ntai;
 
 // C++ headers
-
 
 // enumerations
 #include "enums.h"
@@ -51,7 +54,7 @@ using namespace ntai;
 typedef boost::mutex mutex;
 typedef boost::mutex::scoped_lock scoped_lock;
 
-using namespace std;
+//using namespace std;
 
 
 // engine includes
@@ -68,6 +71,8 @@ using namespace std;
 #include "../Core/IModule.h"								// Base class for AI objects
 #include "../Units/IBehaviour.h"							// Behaviour base class
 
+#include "../Units/ITaskManager.h"					// Attack nearby enemies
+#include "../Units/ITaskManagerFactory.h"					// Attack nearby enemies
 #include "../Units/CUnit.h"
 #include "../Helpers/Log.h"									// Logging class
 #include "../Helpers/Units/CUnitDefLoader.h"				// Loads unitdefs
@@ -119,6 +124,5 @@ using namespace std;
 
 #include "Global.h"											// (the root object representing the AI itself)
 
-// The name NTAI gives to the spring engine.
-const char AI_NAME[]= {"NTai XE9.79+"};
+	
 

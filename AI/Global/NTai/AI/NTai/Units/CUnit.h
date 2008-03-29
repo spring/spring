@@ -1,5 +1,6 @@
 /*
-AF 2007
+AF 2004+
+LGPL 2
 */
 
 namespace ntai {
