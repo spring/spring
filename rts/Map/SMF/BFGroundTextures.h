@@ -13,21 +13,22 @@ class CSmfReadMap;
 class CBFGroundTextures
 {
 public:
-	CBFGroundTextures(CSmfReadMap *srm);
+	CBFGroundTextures(CSmfReadMap* srm);
 	~CBFGroundTextures(void);
 	void SetTexture(int x, int y);
 	void DrawUpdate(void);
 	void LoadSquare(int x, int y, int level);
 
 protected:
-	CSmfReadMap *map;
+	CSmfReadMap* map;
 
+	int bigSquareSize;
 	int numBigTexX;
 	int numBigTexY;
 
 	int* textureOffsets;
 
-	struct GroundSquare{
+	struct GroundSquare {
 		int texLevel;
 		GLuint texture;
 		int lastUsed;
@@ -35,7 +36,7 @@ protected:
 
 	GroundSquare* squares;
 
-	//variables controlling background reading of textures
+	// variables controlling background reading of textures
 	bool inRead;
 	int readProgress;
 	int readX;
@@ -45,13 +46,15 @@ protected:
 	unsigned char* readBuffer;
 	unsigned char* readTempLine;
 
-	int *tileMap;
+	int* tileMap;
 	int tileSize;
-	char *tiles;
+	char* tiles;
 	int tileMapXSize;
 	int tileMapYSize;
 
 	float anisotropy;
+
+	inline bool TexSquareInView(int, int);
 };
 
 #endif // __BF_GROUND_TEXTURES_H__

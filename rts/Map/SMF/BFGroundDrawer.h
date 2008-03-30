@@ -18,20 +18,21 @@ class CBFGroundDrawer :
 	public CBaseGroundDrawer
 {
 public:
-	CBFGroundDrawer(CSmfReadMap *rm);
+	CBFGroundDrawer(CSmfReadMap* rm);
 	~CBFGroundDrawer(void);
-	void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0);
+	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false, unsigned int overrideVP = 0);
 
 	void IncreaseDetail();
 	void DecreaseDetail();
 
 protected:
 	int viewRadius;
-	CSmfReadMap *map;
-	CBFGroundTextures *textures;
+	CSmfReadMap* map;
+	CBFGroundTextures* textures;
 
 	int numBigTexX;
 	int numBigTexY;
+	int bigSquareSize;
 
 	float* heightData;
 	int heightDataX;
@@ -49,17 +50,20 @@ protected:
 	unsigned int groundVP;
 	unsigned int groundShadowVP;
 	unsigned int groundFPShadow;
+	bool waterDrawn;
 
-	inline void DrawVertexA(int x,int y);
-	inline void DrawVertexA(int x,int y,float height);
+	inline void DrawVertexA(int x, int y);
+	inline void DrawVertexA(int x, int y, float height);
 	inline void EndStrip();
-	void DrawGroundVertexArray();
-	void SetupTextureUnits(bool drawReflection,unsigned int overrideVP);
-	void ResetTextureUnits(bool drawReflection,unsigned int overrideVP);
+	inline void DrawWaterPlane(bool);
+	inline bool BigTexSquareRowVisible(int);
+	inline void DrawGroundVertexArray();
+	void SetupTextureUnits(bool drawReflection, unsigned int overrideVP);
+	void ResetTextureUnits(bool drawReflection, unsigned int overrideVP);
 
 	void AddFrustumRestraint(const float3& side);
 	void UpdateCamRestraints();
-	void Update(){}
+	void Update() {}
 public:
 	void DrawShadowPass();
 };
