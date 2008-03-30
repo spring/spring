@@ -8,7 +8,6 @@
 #include "myMath.h"
 #include "PieceProjectile.h"
 #include "ProjectileHandler.h"
-#include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/UnitModels/3DModelParser.h"

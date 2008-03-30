@@ -8,7 +8,6 @@
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "creg/STL_List.h"
-#include "ProjectileHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
