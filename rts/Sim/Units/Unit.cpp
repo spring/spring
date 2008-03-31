@@ -489,11 +489,7 @@ inline void CUnit::UpdateLosStatus(int at)
 		return; // allied -- no need to update
 	}
 
-	/// KLOOTNOTE: DEBUG MANTIS 706
-	const bool InLOS = !(this->transporter && this->transporter->isCloaked);
-	const bool InRAD = !(this->transporter && this->transporter->stealth);
-
-	if (loshandler->InLos(this, at)   && InLOS) {
+	if (loshandler->InLos(this, at)) {
 		if ((prevLosStatus & LOS_INLOS) == 0) {
 
 			if (beingBuilt) {
@@ -510,7 +506,7 @@ inline void CUnit::UpdateLosStatus(int at)
 			globalAI->UnitEnteredLos(this, at);
 		}
 	}
-	else if (radarhandler->InRadar(this, at)   && InRAD) {
+	else if (radarhandler->InRadar(this, at)) {
 		if ((prevLosStatus & LOS_INLOS) != 0) {
 			losStatus[at] &= ~LOS_INLOS;
 			luaCallIns.UnitLeftLos(this, at);
