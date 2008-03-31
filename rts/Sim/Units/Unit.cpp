@@ -22,16 +22,11 @@
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "Rendering/Env/BaseWater.h"
-#include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
+
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+
 #include "Sim/Misc/AirBaseHandler.h"
-#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -494,7 +489,11 @@ inline void CUnit::UpdateLosStatus(int at)
 		return; // allied -- no need to update
 	}
 
-	if (loshandler->InLos(this, at)) {
+	/// KLOOTNOTE: DEBUG MANTIS 706
+	const bool InLOS = !(this->transporter && this->transporter->isCloaked);
+	const bool InRAD = !(this->transporter && this->transporter->stealth);
+
+	if (loshandler->InLos(this, at)   && InLOS) {
 		if ((prevLosStatus & LOS_INLOS) == 0) {
 
 			if (beingBuilt) {
@@ -511,7 +510,7 @@ inline void CUnit::UpdateLosStatus(int at)
 			globalAI->UnitEnteredLos(this, at);
 		}
 	}
-	else if (radarhandler->InRadar(this, at)) {
+	else if (radarhandler->InRadar(this, at)   && InRAD) {
 		if ((prevLosStatus & LOS_INLOS) != 0) {
 			losStatus[at] &= ~LOS_INLOS;
 			luaCallIns.UnitLeftLos(this, at);
@@ -988,243 +987,9 @@ void CUnit::Kill(float3& impulse) {
 }
 
 
+
 /******************************************************************************/
 /******************************************************************************/
-//
-//  Drawing routines
-//
-
-inline void CUnit::DrawModel()
-{
-	if (luaDraw && luaRules && luaRules->DrawUnit(id)) {
-		return;
-	}
-
-	if (lodCount <= 0) {
-		localmodel->Draw();
-	} else {
-		localmodel->DrawLOD(currentLOD);
-	}
-}
-
-
-void CUnit::DrawRawModel()
-{
-	if (lodCount <= 0) {
-		localmodel->Draw();
-	} else {
-		localmodel->DrawLOD(currentLOD);
-	}
-}
-
-
-inline void CUnit::DrawDebug()
-{
-	// draw the collision volume
-	if (gu->drawdebug) {
-		glPushMatrix();
-		glTranslatef3((frontdir * relMidPos.z) +
-					  (updir    * relMidPos.y) +
-					  (rightdir * relMidPos.x));
-		GLUquadricObj* q = gluNewQuadric();
-		gluQuadricDrawStyle(q, GLU_LINE);
-
-		CCollisionVolume* vol = unitDef->collisionVolume;
-
-		switch (vol->GetVolumeType()) {
-			case COLVOL_TYPE_ELLIPSOID: {
-				// scaled sphere: radius, slices, stacks
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-				gluSphere(q, 1.0f, 20, 20);
-			} break;
-			case COLVOL_TYPE_CYLINDER: {
-				// scaled cylinder: base-radius, top-radius, height, slices, stacks
-				//
-				// (cylinder base is drawn at unit center by default so add offset
-				// by half major axis to visually match the mathematical situation,
-				// height of the cylinder equals the unit's full major axis)
-				switch (vol->GetPrimaryAxis()) {
-					case COLVOL_AXIS_X: {
-						glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
-						glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
-					} break;
-					case COLVOL_AXIS_Y: {
-						glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
-						glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-					} break;
-					case COLVOL_AXIS_Z: {
-						glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
-					} break;
-				}
-
-				gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
-			} break;
-			case COLVOL_TYPE_BOX: {
-				// scaled cube: length, width, height
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-				gluMyCube(1.0f);
-			} break;
-		}
-
-		gluDeleteQuadric(q);
-		glPopMatrix();
-	}
-}
-
-
-void CUnit::Draw()
-{
-	glAlphaFunc(GL_GEQUAL, alphaThreshold);
-
-	glPushMatrix();
-	ApplyTransformMatrix();
-
-	if (!beingBuilt || !unitDef->showNanoFrame) {
-		DrawModel();
-	} else {
-		DrawBeingBuilt();
-	}
-
-	DrawDebug();
-	glPopMatrix();
-}
-
-
-void CUnit::DrawRaw()
-{
-	glPushMatrix();
-	ApplyTransformMatrix();
-	DrawModel();
-	glPopMatrix();
-}
-
-
-void CUnit::DrawWithLists(unsigned int preList, unsigned int postList)
-{
-	glPushMatrix();
-	ApplyTransformMatrix();
-
-	if (preList != 0) {
-		glCallList(preList);
-	}
-
-	if (!beingBuilt || !unitDef->showNanoFrame) {
-		DrawModel();
-	} else {
-		DrawBeingBuilt();
-	}
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
-
-	DrawDebug();
-	glPopMatrix();
-}
-
-
-void CUnit::DrawRawWithLists(unsigned int preList, unsigned int postList)
-{
-	glPushMatrix();
-	ApplyTransformMatrix();
-
-	if (preList != 0) {
-		glCallList(preList);
-	}
-
-	DrawModel();
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
-
-	glPopMatrix();
-}
-
-
-void CUnit::DrawBeingBuilt()
-{
-	if (shadowHandler->inShadowPass) {
-		if (buildProgress > 0.66f) {
-			DrawModel();
-		}
-		return;
-	}
-
-	const float start  = model->miny;
-	const float height = model->height;
-
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-
-	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
-	float3 fc;// fc frame color
-	if (!gu->teamNanospray) {
-		fc = unitDef->nanoColor;
-	}
-	else {
-		const unsigned char* tcol = gs->Team(team)->color;
-		fc = float3(tcol[0] * (1.0f / 255.0f),
-								tcol[1] * (1.0f / 255.0f),
-								tcol[2] * (1.0f / 255.0f));
-	}
-	glColorf3(fc * col);
-
-	unitDrawer->UnitDrawingTexturesOff(model);
-
-	const double plane0[4] = { 0, -1, 0, start + height * buildProgress * 3 };
-	glClipPlane(GL_CLIP_PLANE0, plane0);
-	const double plane1[4] = { 0, 1, 0, -start - height * (buildProgress * 10 - 9) };
-	glClipPlane(GL_CLIP_PLANE1, plane1);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	DrawModel();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	if (buildProgress>0.33f) {
-		glColorf3(fc * (1.5f - col));
-		const double plane0[4] = { 0, -1, 0, start + height * (buildProgress * 3 - 1) };
-		glClipPlane(GL_CLIP_PLANE0, plane0);
-		const double plane1[4] = { 0, 1, 0, -start - height * (buildProgress * 3 - 2) };
-		glClipPlane(GL_CLIP_PLANE1, plane1);
-
-		DrawModel();
-	}
-	glDisable(GL_CLIP_PLANE1);
-
-	unitDrawer->UnitDrawingTexturesOn(model);
-
-	if (buildProgress > 0.66f){
-		const double plane0[4] = { 0, -1, 0 , start + height * (buildProgress * 3 - 2) };
-		glClipPlane(GL_CLIP_PLANE0, plane0);
-		if (shadowHandler->drawShadows && !water->drawReflection) {
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-		}
-		DrawModel();
-		if (shadowHandler->drawShadows && !water->drawReflection) {
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-	}
-	glDisable(GL_CLIP_PLANE0);
-}
-
-
-void CUnit::ApplyTransformMatrix() const
-{
-	CMatrix44f m;
-	GetTransformMatrix(m);
-	glMultMatrixf(&m[0]);
-}
-
 
 void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 {
@@ -1280,97 +1045,10 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
 	}
 }
 
-
-void CUnit::DrawStats()
-{
-	if ((gu->myAllyTeam != allyteam) &&
-	    !gu->spectatingFullView && unitDef->hideDamage) {
-		return;
-	}
-
-	float3 interPos;
-	if (!transporter) {
-		interPos = pos + (speed * gu->timeOffset);
-	} else {
-		interPos = pos + (transporter->speed * gu->timeOffset);
-	}
-	interPos.y += model->height + 5.0f;
-
-	// setup the billboard transformation
-	glPushMatrix();
-	glTranslatef(interPos.x, interPos.y, interPos.z);
-	//glMultMatrixd(camera->billboard);
-	glCallList(CCamera::billboardList);
-
-	// black background for healthbar
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
-
-	// healthbar
-	const float hpp = max(0.0f, health / maxHealth);
-	const float hEnd = hpp * 10.0f;
-	if (stunned) {
-		glColor3f(0.0f, 0.0f, 1.0f);
-	} else {
-		if (hpp > 0.5f) {
-			glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
-		} else {
-			glColor3f(1.0f, hpp * 2.0f, 0.0f);
-		}
-	}
-	glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
-
-	// stun level
-	if (!stunned && (paralyzeDamage > 0.0f)) {
-		const float pEnd = (paralyzeDamage / maxHealth) * 10.0f;
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
-	}
-
-	// skip the rest of the indicators if it isn't a local unit
-	if ((gu->myTeam != team) && !gu->spectatingFullView) {
-		glPopMatrix();
-		return;
-	}
-
-	// experience bar
-	const float eEnd = (limExperience * 0.8f) * 10.0f;
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
-
-	if (beingBuilt) {
-		const float bEnd = (buildProgress * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
-	}
-	else if (stockpileWeapon) {
-		const float sEnd = (stockpileWeapon->buildPercent * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
-	}
-
-	if (group) {
-		const float scale = 10.0f;
-		char buf[32];
-		sprintf(buf, "%i", group->id);
-		const float width = scale * font->CalcTextWidth(buf);
-
-		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glTranslatef(-7.0f - width, 0.0f, 0.0f); // right justified
-		glScalef(scale, scale, scale);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		font->glPrintSuperRaw(buf);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
-	}
-
-	glPopMatrix();
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
+
+
 
 void CUnit::AddExperience(float exp)
 {
@@ -2166,11 +1844,6 @@ void CUnit::ReleaseTempHoldFire(void)
 	dontFire = false;
 }
 
-void CUnit::DrawS3O(void)
-{
-	unitDrawer->SetS3OTeamColour(team);
-	Draw();
-}
 
 void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
 {

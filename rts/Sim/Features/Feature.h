@@ -29,7 +29,7 @@ public:
 	/** Negative amount = reclaim
 	    @return true if reclaimed */
 	bool AddBuildPower(float amount, CUnit* builder);
-	void DoDamage(const DamageArray& damages, CUnit* attacker,const float3& impulse);
+	void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse);
 	void Kill(float3& impulse);
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
@@ -39,7 +39,6 @@ public:
 	float RemainingMetal(void) const;
 	float RemainingEnergy(void) const;
 	int ChunkNumber(float f);
-	void DrawS3O();
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);

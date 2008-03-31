@@ -19,7 +19,6 @@ public:
 
 	void SetRadius(float r);
 	virtual ~CWorldObject();
-	virtual void DrawS3O(){}
 
 	float3 pos;
 	float radius;     //used for collisions

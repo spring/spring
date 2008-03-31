@@ -538,27 +538,14 @@ bool CFeature::Update(void)
 
 void CFeature::StartFire(void)
 {
-	if(fireTime || !def->burnable)
+	if (fireTime || !def->burnable)
 		return;
 
-	fireTime=200+(int)(gs->randFloat()*30);
+	fireTime = 200 + (int)(gs->randFloat() * 30);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire=SAFE_NEW CFireProjectile(midPos,UpVector,0,300,radius*0.8f,70,20);
+	myFire = SAFE_NEW CFireProjectile(midPos, UpVector, 0, 300, radius * 0.8f, 70, 20);
 }
-
-
-void CFeature::DrawS3O()
-{
-	glPushMatrix();
-	glMultMatrixf(transMatrix.m);
-	if (model->textureType) {
-		unitDrawer->SetS3OTeamColour(team);
-	}
-	model->DrawStatic();
-	glPopMatrix();
-}
-
 
 int CFeature::ChunkNumber(float f)
 {

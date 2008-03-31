@@ -10,6 +10,7 @@
 #include "Game/Team.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
+#include "Lua/LuaRules.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -17,6 +18,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
+#include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -24,6 +26,10 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TextureHandler.h"
+
+#include "ExternalAI/Group.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -31,15 +37,13 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "Sim/Weapons/Weapon.h"
 #include "mmgr.h"
 
 
 CUnitDrawer* unitDrawer;
-using namespace std;
-
-
 static bool luaDrawing = false; // FIXME
-
 
 static float GetLODFloat(const string& name, float def)
 {
@@ -60,7 +64,7 @@ CUnitDrawer::CUnitDrawer(void)
 :	showHealthBars(true),
 	updateFace(0)
 {
-	if (texturehandler == 0) { 
+	if (texturehandler == 0) {
 		texturehandler = SAFE_NEW CTextureHandler;
 	}
 
@@ -96,8 +100,7 @@ CUnitDrawer::CUnitDrawer(void)
 		advShading = false;
 	}
 
-	if (advShading)
-	{
+	if (advShading) {
 		unitVP = LoadVertexProgram("unit.vp");
 		unitFP = LoadFragmentProgram("unit.fp");
 		unitS3oVP = LoadVertexProgram("units3o.vp");
@@ -113,19 +116,19 @@ CUnitDrawer::CUnitDrawer(void)
 			unitShadowGenVP = 0;
 		}
 
-		glGenTextures(1,&boxtex);
+		glGenTextures(1, &boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,0,GL_RGBA8,reflTexSize,reflTexSize,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
 
 		glGenTextures(1,&specularTex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
@@ -230,7 +233,7 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 			if (unit->model->textureType) {
 				QueS3ODraw(unit, unit->model->textureType);
 			} else {
-				unit->Draw();
+				DrawUnitNow(unit);
 			}
 		}
 	}
@@ -254,7 +257,7 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 		if (unit->isCloaked) {
 			drawCloaked.push_back(unit);
 		} else {
-			unit->Draw();
+			DrawUnitNow(unit);
 		}
 	}
 }
@@ -425,7 +428,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		}
 		glDisable(GL_TEXTURE_2D);
 		for (ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
-			(*ui)->DrawStats();
+			DrawUnitStats(*ui);
 		}
 	}
 	glDisable(GL_TEXTURE_2D);
@@ -462,8 +465,9 @@ static void DrawBins(LuaMatType type)
 			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
 
 			lodMat->uniforms.Execute(unit);
+			// we are inside a static function, so must invoke on unitDrawer instance
 			unitDrawer->SetS3OTeamColour(unit->team);
-			unit->DrawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
+			unitDrawer->DrawUnitWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 		}
 	}
 
@@ -601,7 +605,7 @@ void CUnitDrawer::DrawShadowPass(void)
 				if (sqDist < realIconLength) {
 					if (!unit->isCloaked) {
 						if (unit->lodCount <= 0) {
-							unit->Draw();
+							DrawUnitNow(unit);
 						} else {
 							LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
 							const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
@@ -611,7 +615,7 @@ void CUnitDrawer::DrawShadowPass(void)
 							if ((lodMat != NULL) && lodMat->IsActive()) {
 								lodMat->AddUnit(unit);
 							} else {
-								unit->Draw();
+								DrawUnitNow(unit);
 							}
 						}
 					}
@@ -839,7 +843,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 				SetBasicS3OTeamColour(unit->team);
 				texturehandler->SetS3oTexture(unit->model->textureType);
 			}
-			unit->Draw();
+			DrawUnitNow(unit);
 		} else {
 			// ghosted enemy units
 			if (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
@@ -1463,7 +1467,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 }
 
 
-void CUnitDrawer::QueS3ODraw(CWorldObject* object,int textureType)
+void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 {
 	while (quedS3Os.size() <= textureType)
 		quedS3Os.push_back(std::vector<CWorldObject*>());
@@ -1476,14 +1480,18 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object,int textureType)
 void CUnitDrawer::DrawQuedS3O(void)
 {
 	SetupForS3ODrawing();
+
 	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
 		const int tex = *uti;
 		texturehandler->SetS3oTexture(tex);
-		for(std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
-			(*ui)->DrawS3O();
+
+		for (std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
+			DrawWorldObjectS3O(*ui);
 		}
+
 		quedS3Os[tex].clear();
 	}
+
 	usedS3OTextures.clear();
 	CleanUpS3ODrawing();
 }
@@ -1497,7 +1505,7 @@ void CUnitDrawer::DrawQuedS3O(void)
  * Note: does all the GL state setting for that one unit, so you might want
  * something else for drawing many units.
  */
-void CUnitDrawer::DrawIndividual(CUnit * unit)
+void CUnitDrawer::DrawIndividual(CUnit* unit)
 {
 	const bool origDebug = gu->drawdebug;
 	gu->drawdebug = false;
@@ -1525,14 +1533,14 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 
 		lodMat->uniforms.Execute(unit);
 		SetS3OTeamColour(unit->team);
-		unit->DrawRawWithLists(lodMat->preDisplayList, lodMat->postDisplayList);
+		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 
 		LuaMaterial::defMat.Execute(mat);
 	}
 	else if (unit->model->textureType == 0){
 		/* 3DO */
 		SetupForUnitDrawing();
-		unit->DrawRaw();
+		DrawUnitRaw(unit);
 		CleanUpUnitDrawing();
 	}
 	else {
@@ -1540,7 +1548,7 @@ void CUnitDrawer::DrawIndividual(CUnit * unit)
 		SetupForS3ODrawing();
 		texturehandler->SetS3oTexture(unit->model->textureType);
 		SetS3OTeamColour(unit->team);
-		unit->DrawRaw();
+		DrawUnitRaw(unit);
 		CleanUpS3ODrawing();
 	}
 
@@ -1677,4 +1685,361 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	}
 
 	glPopAttrib();
+}
+
+
+
+
+
+
+inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
+{
+	// draw the collision volume
+	if (gu->drawdebug) {
+		glPushMatrix();
+		glTranslatef3((unit->frontdir * unit->relMidPos.z) +
+					  (unit->updir    * unit->relMidPos.y) +
+					  (unit->rightdir * unit->relMidPos.x));
+		GLUquadricObj* q = gluNewQuadric();
+		gluQuadricDrawStyle(q, GLU_LINE);
+
+		CCollisionVolume* vol = unit->unitDef->collisionVolume;
+
+		switch (vol->GetVolumeType()) {
+			case COLVOL_TYPE_ELLIPSOID: {
+				// scaled sphere: radius, slices, stacks
+				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+				glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
+				gluSphere(q, 1.0f, 20, 20);
+			} break;
+			case COLVOL_TYPE_CYLINDER: {
+				// scaled cylinder: base-radius, top-radius, height, slices, stacks
+				//
+				// (cylinder base is drawn at unit center by default so add offset
+				// by half major axis to visually match the mathematical situation,
+				// height of the cylinder equals the unit's full major axis)
+				switch (vol->GetPrimaryAxis()) {
+					case COLVOL_AXIS_X: {
+						glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
+						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+						glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
+						glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
+					} break;
+					case COLVOL_AXIS_Y: {
+						glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
+						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+						glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
+						glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+					} break;
+					case COLVOL_AXIS_Z: {
+						glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
+						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+						glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
+					} break;
+				}
+
+				gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
+			} break;
+			case COLVOL_TYPE_BOX: {
+				// scaled cube: length, width, height
+				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+				gluMyCube(1.0f);
+			} break;
+		}
+
+		gluDeleteQuadric(q);
+		glPopMatrix();
+	}
+}
+
+void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
+{
+	if (shadowHandler->inShadowPass) {
+		if (unit->buildProgress > 0.66f) {
+			DrawUnitModel(unit);
+		}
+		return;
+	}
+
+	const float start  = unit->model->miny;
+	const float height = unit->model->height;
+
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+
+	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	float3 fc;// fc frame color
+	if (!gu->teamNanospray) {
+		fc = unit->unitDef->nanoColor;
+	}
+	else {
+		const unsigned char* tcol = gs->Team(unit->team)->color;
+		fc = float3(tcol[0] * (1.0f / 255.0f),
+								tcol[1] * (1.0f / 255.0f),
+								tcol[2] * (1.0f / 255.0f));
+	}
+	glColorf3(fc * col);
+
+	unitDrawer->UnitDrawingTexturesOff(unit->model);
+
+	const double plane0[4] = {0, -1, 0, start + height * unit->buildProgress * 3};
+	glClipPlane(GL_CLIP_PLANE0, plane0);
+	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
+	glClipPlane(GL_CLIP_PLANE1, plane1);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	DrawUnitModel(unit);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	if (unit->buildProgress > 0.33f) {
+		glColorf3(fc * (1.5f - col));
+		const double plane0[4] = {0, -1, 0, start + height * (unit->buildProgress * 3 - 1)};
+		glClipPlane(GL_CLIP_PLANE0, plane0);
+		const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 3 - 2)};
+		glClipPlane(GL_CLIP_PLANE1, plane1);
+
+		DrawUnitModel(unit);
+	}
+
+	glDisable(GL_CLIP_PLANE1);
+	unitDrawer->UnitDrawingTexturesOn(unit->model);
+
+	if (unit->buildProgress > 0.66f) {
+		const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
+		glClipPlane(GL_CLIP_PLANE0, plane0);
+
+		if (shadowHandler->drawShadows && !water->drawReflection) {
+			glPolygonOffset(1.0f, 1.0f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
+		}
+
+		DrawUnitModel(unit);
+
+		if (shadowHandler->drawShadows && !water->drawReflection) {
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
+	}
+
+	glDisable(GL_CLIP_PLANE0);
+}
+
+
+
+void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
+{
+	CMatrix44f m;
+	unit->GetTransformMatrix(m);
+	glMultMatrixf(&m[0]);
+}
+
+inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
+	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit->id)) {
+		return;
+	}
+
+	if (unit->lodCount <= 0) {
+		unit->localmodel->Draw();
+	} else {
+		unit->localmodel->DrawLOD(unit->currentLOD);
+	}
+}
+
+void CUnitDrawer::DrawUnitNow(CUnit* unit)
+{
+	glAlphaFunc(GL_GEQUAL, unit->alphaThreshold);
+
+	glPushMatrix();
+	ApplyUnitTransformMatrix(unit);
+
+	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
+		DrawUnitModel(unit);
+	} else {
+		DrawUnitBeingBuilt(unit);
+	}
+
+	DrawUnitDebug(unit);
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
+{
+	glPushMatrix();
+	ApplyUnitTransformMatrix(unit);
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
+
+	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
+		DrawUnitModel(unit);
+	} else {
+		DrawUnitBeingBuilt(unit);
+	}
+
+	if (postList != 0) {
+		glCallList(postList);
+	}
+
+	DrawUnitDebug(unit);
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawUnitRaw(CUnit* unit)
+{
+	glPushMatrix();
+	ApplyUnitTransformMatrix(unit);
+	DrawUnitModel(unit);
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
+{
+	if (unit->lodCount <= 0) {
+		unit->localmodel->Draw();
+	} else {
+		unit->localmodel->DrawLOD(unit->currentLOD);
+	}
+}
+
+void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
+{
+	glPushMatrix();
+	ApplyUnitTransformMatrix(unit);
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
+
+	DrawUnitModel(unit);
+
+	if (postList != 0) {
+		glCallList(postList);
+	}
+
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawUnitStats(CUnit* unit)
+{
+	if ((gu->myAllyTeam != unit->allyteam) &&
+	    !gu->spectatingFullView && unit->unitDef->hideDamage) {
+		return;
+	}
+
+	float3 interPos;
+
+	if (!unit->transporter) {
+		interPos = unit->pos + (unit->speed * gu->timeOffset);
+	} else {
+		interPos = unit->pos + (unit->transporter->speed * gu->timeOffset);
+	}
+
+	interPos.y += unit->model->height + 5.0f;
+
+	// setup the billboard transformation
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	// glMultMatrixd(camera->billboard);
+	glCallList(CCamera::billboardList);
+
+	// black background for healthbar
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+
+	// healthbar
+	const float hpp = max(0.0f, unit->health / unit->maxHealth);
+	const float hEnd = hpp * 10.0f;
+
+	if (unit->stunned) {
+		glColor3f(0.0f, 0.0f, 1.0f);
+	} else {
+		if (hpp > 0.5f) {
+			glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
+		} else {
+			glColor3f(1.0f, hpp * 2.0f, 0.0f);
+		}
+	}
+
+	glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
+
+	// stun level
+	if (!unit->stunned && (unit->paralyzeDamage > 0.0f)) {
+		const float pEnd = (unit->paralyzeDamage / unit->maxHealth) * 10.0f;
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
+	}
+
+	// skip the rest of the indicators if it isn't a local unit
+	if ((gu->myTeam != unit->team) && !gu->spectatingFullView) {
+		glPopMatrix();
+		return;
+	}
+
+	// experience bar
+	const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
+
+	if (unit->beingBuilt) {
+		const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
+	}
+	else if (unit->stockpileWeapon) {
+		const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
+	}
+
+	if (unit->group) {
+		const float scale = 10.0f;
+		char buf[32];
+		sprintf(buf, "%i", unit->group->id);
+		const float width = scale * font->CalcTextWidth(buf);
+
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glTranslatef(-7.0f - width, 0.0f, 0.0f); // right justified
+		glScalef(scale, scale, scale);
+		glColor3f(1.0f, 1.0f, 1.0f);
+		font->glPrintSuperRaw(buf);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+	}
+
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawUnitS3O(CUnit* unit)
+{
+	SetS3OTeamColour(unit->team);
+	DrawUnitNow(unit);
+}
+
+
+void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
+{
+	glPushMatrix();
+	glMultMatrixf(feature->transMatrix.m);
+	if (feature->model->textureType) {
+		unitDrawer->SetS3OTeamColour(feature->team);
+	}
+	feature->model->DrawStatic();
+	glPopMatrix();
+}
+
+void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* obj)
+{
+	// not as neat as the previous solution (ie. a virtual DrawS3O()
+	// function in CWorldObject implemented by CUnit and CFeature),
+	// but this way the sim-code does not need to be polluted with
+	// OGL stuff
+	if (dynamic_cast<CUnit*>(obj)) {
+		// S3O unit
+		DrawUnitS3O((CUnit*) obj);
+	} else {
+		// S3O feature
+		DrawFeatureS3O((CFeature*) obj);
+	}
 }
