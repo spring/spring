@@ -70,7 +70,6 @@ public:
 	bool AttackGround(const float3&pos,bool dgun);
 	bool AttackUnit(CUnit* unit,bool dgun);
 
-	virtual void DrawStats();
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
 	virtual void Kill(float3& impulse);
@@ -89,15 +88,6 @@ public:
 
 	virtual void SlowUpdate();
 	virtual void Update();
-
-	virtual void Draw();
-	void DrawRaw();
-	void DrawModel();
-	void DrawRawModel();
-	void DrawDebug();
-	void DrawBeingBuilt();
-	void DrawWithLists(unsigned int preList, unsigned int postList);
-	void DrawRawWithLists(unsigned int preList, unsigned int postList);
 
 	void SetDirectionFromHeading();
 
@@ -386,7 +376,6 @@ public:
 	void TempHoldFire(void);
 	void ReleaseTempHoldFire(void);
 	void Drop(float3 parentPos,float3 parentDir,CUnit* parent); //start this unit in freefall from parent unit
-	virtual void DrawS3O(void);
 	void PostLoad();
 	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
 

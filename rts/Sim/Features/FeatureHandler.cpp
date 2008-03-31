@@ -637,20 +637,22 @@ void CFeatureDrawer::DrawQuad (int x,int y)
 					continue;
 				}
 			}
-			if(drawRefraction){
-				if(f->pos.y>0)
+			if (drawRefraction) {
+				if (f->pos.y > 0)
 					continue;
 			}
-			float sqDist=(f->pos-camera->pos).SqLength2D();
-			float farLength=f->sqRadius*unitDrawDist*unitDrawDist;
-			if(sqDist<farLength){
-				if(!f->model->textureType) {
-					f->DrawS3O ();
+
+			float sqDist = (f->pos-camera->pos).SqLength2D();
+			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
+
+			if (sqDist<farLength) {
+				if (!f->model->textureType) {
+					unitDrawer->DrawFeatureS3O(f);
 				} else {
-					unitDrawer->QueS3ODraw(f,f->model->textureType);
+					unitDrawer->QueS3ODraw(f, f->model->textureType);
 				}
 			} else {
-				if(farFeatures)
+				if (farFeatures)
 					farFeatures->push_back(f);
 			}
 		}

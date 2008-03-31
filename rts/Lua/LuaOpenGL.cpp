@@ -1300,11 +1300,11 @@ int LuaOpenGL::Unit(lua_State* L)
 
 	if (rawDraw) {
 		if (useLOD) {
-			unit->DrawRaw();
+			unitDrawer->DrawUnitRaw(unit);
 		} else {
 			const unsigned int origLodCount = unit->lodCount;
 			unit->lodCount = 0;
-			unit->DrawRaw();
+			unitDrawer->DrawUnitRaw(unit);
 			unit->lodCount = origLodCount;
 		}
 	}
@@ -1361,11 +1361,12 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 
 	if (rawDraw) {
 		if (useLOD) {
-			unit->DrawRawModel();
+			unitDrawer->DrawUnitRawModel(unit);
 		} else {
 			const unsigned int origLodCount = unit->lodCount;
 			unit->lodCount = 0;
-			unit->DrawRawModel(); // transformation is not applied
+			// transformation is not applied
+			unitDrawer->DrawUnitRawModel(unit);
 			unit->lodCount = origLodCount;
 		}
 	}
@@ -1420,7 +1421,7 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->ApplyTransformMatrix();
+	unitDrawer->ApplyUnitTransformMatrix(unit);
 	return 0;
 }
 

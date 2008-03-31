@@ -14,7 +14,9 @@ struct S3DOModel;
 struct UnitDef;
 class CWorldObject;
 class CUnit;
+class CFeature;
 struct BuildingGroundDecal;
+
 
 class CUnitDrawer
 {
@@ -23,11 +25,12 @@ public:
 	~CUnitDrawer(void);
 
 	void Update(void);
-	void Draw(bool drawReflection,bool drawRefraction=false);
+
+	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawUnit(CUnit* unit);
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(void);		//cloaked units must be drawn after all others;
+	void DrawCloakedUnits(void);									// cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);
@@ -35,13 +38,28 @@ public:
 	void CleanUpS3ODrawing(void);
 	void CleanUpGhostDrawing();
 	void SetupForGhostDrawing();
-	void SetupForGhostDrawingS3O();//S3DOModel *model, int team);
+	void SetupForGhostDrawingS3O();
 
 	void DrawOpaqueShaderUnits();
 	void DrawCloakedShaderUnits();
 	void DrawShadowShaderUnits();
 
 	inline void DrawFar(CUnit* unit);
+
+	// note: make these static?
+	inline void DrawUnitDebug(CUnit*);								// was CUnit::DrawDebug()
+	void DrawUnitBeingBuilt(CUnit*);								// was CUnit::DrawBeingBuilt()
+	void ApplyUnitTransformMatrix(CUnit*);							// was CUnit::ApplyTransformMatrix()
+	inline void DrawUnitModel(CUnit*);								// was CUnit::DrawModel()
+	void DrawUnitNow(CUnit*);										// was CUnit::Draw()
+	void DrawUnitWithLists(CUnit*, unsigned int, unsigned int);		// was CUnit::DrawWithLists() [CUnitDrawer]
+	void DrawUnitRaw(CUnit*);										// was CUnit::DrawRaw()
+	void DrawUnitRawModel(CUnit*);									// was CUnit::DrawRawModel() [CLuaOpenGL]
+	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);	// was CUnit::DrawRawWithLists()
+	void DrawUnitStats(CUnit*);										// was CUnit::DrawStats()
+	void DrawUnitS3O(CUnit*);										// was CUnit::DrawS3O()
+	void DrawFeatureS3O(CFeature*);									// was CFeature::DrawS3O()
+	void DrawWorldObjectS3O(CWorldObject*);
 
 	std::vector<CUnit*> drawCloaked;
 	std::vector<CUnit*> drawCloakedS3O;
