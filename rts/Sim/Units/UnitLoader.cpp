@@ -150,13 +150,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	                         unit->jammerRadius || unit->sonarJamRadius ||
 	                         unit->seismicRadius;
 	unit->stealth = ud->stealth;
-
-
-	/// KLOOTNOTE: DEBUG MANTIS 706
-	/// unit->stealth = 1;
-	/// if (ud->transportCapacity) { unit->upright = 0; unit->stealth = 1; }
-
-
 	unit->category = ud->category;
 	unit->armorType = ud->armorType;
 	unit->floatOnWater =
