@@ -1050,17 +1050,16 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "ally"){
 		if (action.extra.size() > 0)
 		{
-			const int otherAllyTeam = atoi(action.extra.c_str());
 			if (gameSetup && !gameSetup->fixedAllies)
-				net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, 1);
-		}
-	}
-	else if (cmd == "unally"){
-		if (action.extra.size() > 0)
-		{
-			const int otherAllyTeam = atoi(action.extra.c_str());
-			if (gameSetup && !gameSetup->fixedAllies)
-				net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, 0);
+			{
+				std::istringstream is(action.extra);
+				int otherAllyTeam = -1;
+				is >> otherAllyTeam;
+				int state = -1;
+				is >> state;
+				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
+					net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, state);
+			}
 		}
 	}
 	else if (cmd == "group") {
