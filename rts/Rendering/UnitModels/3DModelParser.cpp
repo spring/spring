@@ -61,7 +61,7 @@ LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, vector<struct
 
 void S3DOModel::DrawStatic()
 {
-	if(rootobject3do)
+	if (rootobject3do)
 		rootobject3do->DrawStatic();
 	else
 		rootobjects3o->DrawStatic();

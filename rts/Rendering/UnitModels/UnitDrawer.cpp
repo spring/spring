@@ -1485,7 +1485,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 		const int tex = *uti;
 		texturehandler->SetS3oTexture(tex);
 
-		for (std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
+		for (std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
 			DrawWorldObjectS3O(*ui);
 		}
 
@@ -2022,9 +2022,11 @@ void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
 {
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
+
 	if (feature->model->textureType) {
 		unitDrawer->SetS3OTeamColour(feature->team);
 	}
+
 	feature->model->DrawStatic();
 	glPopMatrix();
 }
@@ -2035,11 +2037,15 @@ void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* obj)
 	// function in CWorldObject implemented by CUnit and CFeature),
 	// but this way the sim-code does not need to be polluted with
 	// OGL stuff
-	if (dynamic_cast<CUnit*>(obj)) {
-		// S3O unit
-		DrawUnitS3O((CUnit*) obj);
-	} else {
-		// S3O feature
-		DrawFeatureS3O((CFeature*) obj);
+	if (obj) {
+		if (dynamic_cast<CUnit*>(obj)) {
+			// S3O unit
+			DrawUnitS3O((CUnit*) obj);
+		} else {
+			if (dynamic_cast<CFeature*>(obj)) {
+				// S3O feature
+				DrawFeatureS3O((CFeature*) obj);
+			}
+		}
 	}
 }
