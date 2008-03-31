@@ -136,6 +136,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	unit->tooltip = ud->humanName + " - " + ud->tooltip;
 	unit->armoredMultiple = max(0.0001f, ud->armoredMultiple);		//armored multiple of 0 will crash spring
 	unit->wreckName = ud->wreckName;
+
 	unit->realLosRadius = (int) (ud->losRadius);
 	unit->realAirLosRadius = (int) (ud->airLosRadius);
 	unit->upright = ud->upright;
@@ -149,6 +150,13 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	                         unit->jammerRadius || unit->sonarJamRadius ||
 	                         unit->seismicRadius;
 	unit->stealth = ud->stealth;
+
+
+	/// KLOOTNOTE: DEBUG MANTIS 706
+	/// unit->stealth = 1;
+	/// if (ud->transportCapacity) { unit->upright = 0; unit->stealth = 1; }
+
+
 	unit->category = ud->category;
 	unit->armorType = ud->armorType;
 	unit->floatOnWater =
@@ -294,6 +302,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	}
 
 	unit->energyTickMake = ud->energyMake;
+
 	if (ud->tidalGenerator > 0)
 		unit->energyTickMake += ud->tidalGenerator * readmap->tidalStrength;
 

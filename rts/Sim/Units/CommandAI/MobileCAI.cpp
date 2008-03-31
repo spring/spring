@@ -869,7 +869,7 @@ void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadi
 
 void CMobileCAI::SetGoal(const float3 &pos, const float3& curPos, float goalRadius, float speed)
 {
-	if(pos == goalPos)
+	if (pos == goalPos)
 		return;
 	goalPos = pos;
 	owner->moveType->StartMoving(pos, goalRadius, speed);

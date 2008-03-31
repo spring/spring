@@ -354,7 +354,7 @@ void CBuilderCAI::SlowUpdate()
 		if (inCommand) {
 			if (building) {
 				if (f3Dist(build.pos, fac->pos) > fac->buildDistance+radius-8.0f) {
-					owner->moveType->StartMoving(build.pos, fac->buildDistance*0.5f+radius);
+					owner->moveType->StartMoving(build.pos, fac->buildDistance * 0.5f + radius);
 				} else {
 					StopMove();
 					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6f, false);	//needed since above startmoving cancels this

@@ -722,6 +722,21 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
 	ud.collisionVolumeTest = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
 
+	// KLOOTNOTE: DEBUG DEBUG DEBUG THE RAY INTERSECTION CODE
+	if (ud.name == "arm_conqueror") {
+		ud.collisionVolumeScales = float3(60.0f, 60.0f, 150.0f);
+		ud.collisionVolumeType = "CylZ";
+	} else if (ud.name == "arm_millenium") {
+		ud.collisionVolumeScales = float3(60.0f, 60.0f, 150.0f);
+		ud.collisionVolumeType = "Box";
+	} else if (ud.name == "arm_colossus") {
+		ud.collisionVolumeScales = float3(60.0f, 60.0f, 100.0f);
+		ud.collisionVolumeType = "Ell";
+	} else if (ud.name == "arm_bulldog") {
+		ud.collisionVolumeScales = float3(60.0f, 60.0f, 150.0f);
+		ud.collisionVolumeType = "CylZ";
+	}
+
 	// initialize the (per-unitdef) collision-volume
 	ud.collisionVolume = SAFE_NEW CCollisionVolume(ud.collisionVolumeType,
 		ud.collisionVolumeScales, ud.collisionVolumeOffsets, ud.collisionVolumeTest);
