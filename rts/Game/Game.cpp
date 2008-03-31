@@ -3238,7 +3238,10 @@ void CGame::ClientReadNet()
 				const int player = inbuf[1];
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
-				gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
+				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0)
+					gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
+				else
+					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 			}
 
 #ifdef DIRECT_CONTROL_ALLOWED
