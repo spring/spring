@@ -2659,11 +2659,18 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return false;
 	}
+
 	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud != NULL) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
-		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
+
+		if (ud->maxThisUnit <= 0) {
+			glColor4f(0.5f, 0.5f, 0.5f, textureAlpha);
+		} else {
+			glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
+		}
+
 		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
