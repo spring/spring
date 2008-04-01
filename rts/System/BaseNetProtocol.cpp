@@ -45,6 +45,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	RegisterMessage(NETMSG_TEAM, 4);
 	RegisterMessage(NETMSG_GAMEDATA, -2);
 	RegisterMessage(NETMSG_ALLIANCE, 4);
+	RegisterMessage(NETMSG_CCOMMAND, -2);
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()

@@ -811,7 +811,7 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
+	// const int args = lua_gettop(L); unused
 	if (!lua_isboolean(L, -1)) {
 		lua_pop(L, 1);
 		return false;
@@ -1625,7 +1625,7 @@ static int SetActiveCommandByAction(lua_State* L)
 	}
 	const int args = lua_gettop(L); // number of arguments
 	const string text = lua_tostring(L, 1);
-	const CKeyBindings::Action action(text);
+	const Action action(text);
 	CKeySet ks;
 	if (args >= 2) {
 		const string ksText = lua_tostring(L, 2);
@@ -2183,7 +2183,7 @@ int CLuaUI::GetKeyBindings(lua_State* L)
 	const CKeyBindings::ActionList&	actions = keyBindings->GetActionList(ks);
 	lua_newtable(L);
 	for (int i = 0; i < (int)actions.size(); i++) {
-		const CKeyBindings::Action& action = actions[i];
+		const Action& action = actions[i];
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
 		lua_pushstring(L, action.command.c_str());

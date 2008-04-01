@@ -1,13 +1,15 @@
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
 #include <map>
 #include <deque>
+#include <set>
 
+#include "Console.h"
 #include "GameData.h"
 #include "System/GlobalStuff.h"
 #include "System/UnsyncedRNG.h"
@@ -52,7 +54,7 @@ public:
 @brief Server class for game handling
 This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
 */
-class CGameServer : private ServerLog
+class CGameServer : private ServerLog, public CommandReciever
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
@@ -82,7 +84,9 @@ public:
 	bool GameHasStarted() const;
 
 	void SetGamePausable(const bool arg);
-	
+
+	virtual void PushAction(const Action& action);
+
 	/// Is the server still running?
 	bool HasFinished() const;
 
@@ -117,7 +121,6 @@ private:
 	void CheckForGameEnd();
 
 	void GenerateAndSendGameID();
-	void SetBoolArg(bool& value, const std::string& str, const char* cmd);
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 	
 	void Message(const std::string& message);
@@ -170,12 +173,16 @@ private:
 	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
+	void RestrictedAction(const std::string& action);
+	
+	/// If the server recieves a command, it will forward it to clients if it is not in this set
+	std::set<std::string> commandBlacklist;
 	CBaseNetProtocol* serverNet;
 	CDemoReader* demoReader;
 	AutohostInterface* hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;
-	mutable boost::mutex gameServerMutex;
+	mutable boost::recursive_mutex gameServerMutex;
 };
 
 extern CGameServer* gameServer;

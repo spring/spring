@@ -15,8 +15,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Player.h"
 #include "GameController.h"
-#include "UI/KeyBindings.h"
-
 
 #define FRAME_HISTORY 16
 
@@ -28,6 +26,8 @@ class CWordCompletion;
 class CKeySet;
 class CInfoConsole;
 class LuaParser;
+class Action;
+
 
 class CGame : public CGameController
 {
@@ -48,8 +48,8 @@ public:
 	void ResizeEvent();
 	virtual ~CGame();
 
-	bool ActionPressed(const CKeyBindings::Action&, const CKeySet& ks, bool isRepeat);
-	bool ActionReleased(const CKeyBindings::Action&);
+	bool ActionPressed(const Action&, const CKeySet& ks, bool isRepeat);
+	bool ActionReleased(const Action&);
 	
 	bool HasLag() const;
 
@@ -131,20 +131,23 @@ public:
 protected:
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
-	void SendNetChat(const string& message);
+	void SendNetChat(const std::string& message);
 	void HandleChatMsg(std::string msg, int player);
+	
+	/// synced actions (recieved from server) go in here
+	void ActionRecieved(const Action&, int playernum);
 
 	void DrawInputText();
-	void ParseInputTextGeometry(const string& geo);
+	void ParseInputTextGeometry(const std::string& geo);
 
-	void SelectUnits(const string& line);
-	void SelectCycle(const string& command);
+	void SelectUnits(const std::string& line);
+	void SelectCycle(const std::string& command);
 
 	void ReColorTeams();
 
-	void LogNetMsg(const string& msg, int player);
-	void ReloadCOB(const string& msg, int player);
-	void Skip(const string& msg);
+	void LogNetMsg(const std::string& msg, int player);
+	void ReloadCOB(const std::string& msg, int player);
+	void Skip(int targetframe);
 
 	std::string hotBinding;
 	float inputTextPosX;
@@ -170,7 +173,6 @@ protected:
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 private:
-
 	// to smooth out SimFrame calls
 	int leastQue;       ///< Lowest value of que in the past second.
 	float timeLeft;     ///< How many SimFrame() calls we still may do.

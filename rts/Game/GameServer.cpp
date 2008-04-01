@@ -11,6 +11,8 @@
 #endif
 
 #include "GameSetupData.h"
+#include "Action.h"
+#include "CommandMessage.h"
 #include "System/StdAfx.h"
 #include "System/BaseNetProtocol.h"
 #include "System/DemoReader.h"
@@ -54,6 +56,21 @@ GameParticipant::GameParticipant(bool willHaveRights)
 , team(0)
 {
 }
+namespace {
+void SetBoolArg(bool& value, const std::string& str)
+{
+	if (str.empty()) // toggle
+	{
+		value = !value;
+	}
+	else // set
+	{
+		const int num = atoi(str.c_str());
+		value = (num != 0);
+	}
+}
+}
+
 
 CGameServer* gameServer=0;
 
@@ -111,6 +128,24 @@ CGameServer::CGameServer(int port, const GameData* const newGameData, const CGam
 		demoReader = new CDemoReader(demoName, modGameTime+0.1f);
 	}
 
+	RestrictedAction("kick");			RestrictedAction("kickbynum");
+	RestrictedAction("setminspeed");	RestrictedAction("setmaxspeed");
+	RestrictedAction("nopause");
+	RestrictedAction("nohelp");
+	RestrictedAction("cheat"); //TODO register cheats only after cheating is on
+	RestrictedAction("godmode");
+	RestrictedAction("nocost");
+	RestrictedAction("forcestart");
+	RestrictedAction("nospectatorchat");
+	if (demoReader)
+		RegisterAction("skip");
+	commandBlacklist.insert("skip");
+	RestrictedAction("reloadcob");
+	RestrictedAction("devlua");
+	RestrictedAction("editdefs");
+	RestrictedAction("luarules");
+	RestrictedAction("luagaia");
+	RestrictedAction("singlestep");
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -141,7 +176,7 @@ CGameServer::~CGameServer()
 
 void CGameServer::AddLocalClient()
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	serverNet->ServerInitLocalClient();
 }
 
@@ -149,7 +184,7 @@ void CGameServer::AddAutohostInterface(const int remotePort)
 {
 	if (hostif == 0)
 	{
-		boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 		hostif = new AutohostInterface(remotePort);
 		hostif->SendStart();
 		log.Subscribe(hostif);
@@ -159,15 +194,57 @@ void CGameServer::AddAutohostInterface(const int remotePort)
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	lastTick = newlastTick;
 	serverframenum = newserverframenum;
 }
 
 void CGameServer::SkipTo(int targetframe)
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
-	serverframenum = targetframe;
+	if (targetframe > serverframenum && demoReader)
+	{
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+		// fast-read and send demo data
+		while (serverframenum < targetframe)
+		{
+			unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
+			unsigned length = 0;
+	
+			if ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 )
+			{
+				if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
+				{
+					serverframenum++;
+					if (demobuffer[0] == NETMSG_KEYFRAME)
+						serverNet->SendKeyFrame(serverframenum);
+					else
+						serverNet->SendNewFrame();
+	
+				}
+				else if ( demobuffer[0] != NETMSG_GAMEDATA &&
+						demobuffer[0] != NETMSG_SETPLAYERNUM &&
+						demobuffer[0] != NETMSG_USER_SPEED &&
+						demobuffer[0] != NETMSG_INTERNAL_SPEED &&
+						demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+				{
+					serverNet->RawSend(demobuffer, length);
+				}
+			}
+			modGameTime = demoReader->GetNextReadTime()+0.1f; // skip time
+	
+			if (demoReader->ReachedEnd()) {
+				delete demoReader;
+				demoReader = 0;
+				log.Message(DemoEnd);
+				gameEndTime = SDL_GetTicks();
+				break;
+			}
+			if (serverframenum % 10 == 0)
+				serverNet->Update();
+		}
+		lastTick = SDL_GetTicks();
+		serverNet->Update();
+	}
 }
 
 std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
@@ -755,6 +832,29 @@ void CGameServer::ServerReadNet()
 						else
 						{ // not allowed
 						}
+						break;
+					}
+					case NETMSG_CCOMMAND: {
+						CommandMessage msg(static_cast<netcode::UnpackPacket*>(packet));
+						if (msg.player == a)
+						{
+							if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a]->hasRights)
+							{
+								// command is restricted to server but player is allowed to execute it
+								PushAction(msg.action);
+							}
+							else if (commandBlacklist.find(msg.action.command) == commandBlacklist.end())
+							{
+								// command is save
+								serverNet->SendData(msg.Pack());
+							}
+							else
+							{
+								// hack!
+								log.Warning(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str());
+							}
+						}
+						break;
 					}
 
 					// CGameServer should never get these messages
@@ -942,9 +1042,115 @@ void CGameServer::SetGamePausable(const bool arg)
 	gamePausable = arg;
 }
 
+void CGameServer::PushAction(const Action& action)
+{
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	if (action.command == "kickbynum")
+	{
+		if (!action.extra.empty())
+		{
+			const int playerNum = atoi(action.extra.c_str());
+			KickPlayer(playerNum);
+		}
+	}
+	else if (action.command == "kick")
+	{
+		if (!action.extra.empty())
+		{
+			std::string name = action.extra;
+			StringToLowerInPlace(name);
+			for (int a=1; a < MAX_PLAYERS;++a)
+			{
+				if (players[a])
+				{
+					std::string playerLower = StringToLower(players[a]->name);
+					if (playerLower.find(name)==0)
+					{	//can kick on substrings of name
+						KickPlayer(a);
+					}
+				}
+			}
+		}
+	}
+	else if (action.command == "nopause")
+	{
+		SetBoolArg(gamePausable, action.extra);
+	}
+	else if (action.command == "nohelp")
+	{
+		SetBoolArg(noHelperAIs, action.extra);
+		// sent it because clients have to do stuff when this changes
+		CommandMessage msg(action, SERVER_PLAYER);
+		serverNet->SendData(msg.Pack());
+	}
+	else if (action.command == "setmaxspeed")
+	{
+		maxUserSpeed = atof(action.extra.c_str());
+		if (userSpeedFactor > maxUserSpeed) {
+			serverNet->SendUserSpeed(SERVER_PLAYER, maxUserSpeed);
+			userSpeedFactor = maxUserSpeed;
+			if (internalSpeed > maxUserSpeed) {
+				serverNet->SendInternalSpeed(userSpeedFactor);
+				internalSpeed = userSpeedFactor;
+			}
+		}
+	}
+	else if (action.command == "setminspeed")
+	{
+		minUserSpeed = atof(action.extra.c_str());
+		if (userSpeedFactor < minUserSpeed) {
+			serverNet->SendUserSpeed(SERVER_PLAYER, minUserSpeed);
+			userSpeedFactor = minUserSpeed;
+			if (internalSpeed < minUserSpeed) {
+				serverNet->SendInternalSpeed(userSpeedFactor);
+				internalSpeed = userSpeedFactor;
+			}
+		}
+	}
+	else if (action.command == "forcestart")
+	{
+		if (!gameStartTime)
+			CheckForGameStart(true);
+	}
+	else if (action.command == "skip")
+	{
+		if (demoReader && serverframenum > 1)
+		{
+			const std::string timeStr = action.extra;
+			int endFrame;
+			// parse the skip time
+			if (timeStr[0] == 'f') {        // skip to frame
+				endFrame = atoi(timeStr.c_str()) + 1;
+			} else if (timeStr[0] == '+') { // relative time
+				endFrame = serverframenum + (GAME_SPEED * atoi(timeStr.c_str() + 1));
+			} else {                        // absolute time
+				endFrame = GAME_SPEED * atoi(timeStr.c_str());
+			}
+			SkipTo(endFrame);
+		}
+	}
+	else if (action.command == "cheat")
+	{
+		SetBoolArg(cheating, action.extra);
+		CommandMessage msg(action, SERVER_PLAYER);
+		serverNet->SendData(msg.Pack());
+	}
+	else if (action.command == "singlestep")
+	{
+		if (IsPaused && !demoReader)
+			gameServer->CreateNewFrame(true, true);
+	}
+	else
+	{
+		// only forward to players (send over network)
+		CommandMessage msg(action, SERVER_PLAYER);
+		serverNet->SendData(msg.Pack());
+	}
+}
+
 bool CGameServer::HasFinished() const
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
@@ -996,7 +1202,7 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	boost::mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 	CheckSync();
 	int newFrames = 1;
 
@@ -1047,7 +1253,7 @@ void CGameServer::UpdateLoop()
 	while (!quitServer)
 	{
 		{
-			boost::mutex::scoped_lock scoped_lock(gameServerMutex);
+			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 			Update();
 		}
 		SDL_Delay(10);
@@ -1134,87 +1340,16 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 
 void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
 {
-	bool canDoStuff = (player == SERVER_PLAYER || players[player]->hasRights);
-	//TODO: migrate more stuff from CGame::HandleChatMessage here
-	if ((msg.find(".kickbynum") == 0) && canDoStuff) {
-		if (msg.length() >= 11) {
-			int playerNum = atoi(msg.substr(11, string::npos).c_str());
-			KickPlayer(playerNum);
-		}
-	}
-	else if ((msg.find(".kick") == 0) && canDoStuff) {
-		if (msg.length() >= 6) {
-			std::string name = msg.substr(6,string::npos);
-			if (!name.empty()){
-				StringToLowerInPlace(name);
-				for (int a=1; a < MAX_PLAYERS;++a){
-					if (players[a]){
-						std::string playerLower = StringToLower(players[a]->name);
-						if (playerLower.find(name)==0) {               //can kick on substrings of name
-							KickPlayer(a);
-						}
-					}
-				}
-			}
-		}
-	}
-	else if ((msg.find(".nopause") == 0) && canDoStuff) {
-		SetBoolArg(gamePausable, msg, ".nopause");
-	}
-	else if ((msg.find(".nohelp") == 0) && canDoStuff) {
-		SetBoolArg(noHelperAIs, msg, ".nohelp");
-		// sent it because clients have to do stuff when this changes
-		serverNet->SendChat(player, msg);
-	}
-	else if ((msg.find(".setmaxspeed") == 0) && canDoStuff) {
-		maxUserSpeed = atof(msg.substr(12).c_str());
-		if (userSpeedFactor > maxUserSpeed) {
-			serverNet->SendUserSpeed(player, maxUserSpeed);
-			userSpeedFactor = maxUserSpeed;
-			if (internalSpeed > maxUserSpeed) {
-				serverNet->SendInternalSpeed(userSpeedFactor);
-				internalSpeed = userSpeedFactor;
-			}
-		}
-	}
-	else if ((msg.find(".setminspeed") == 0) && canDoStuff) {
-		minUserSpeed = atof(msg.substr(12).c_str());
-		if (userSpeedFactor < minUserSpeed) {
-			serverNet->SendUserSpeed(player, minUserSpeed);
-			userSpeedFactor = minUserSpeed;
-			if (internalSpeed < minUserSpeed) {
-				serverNet->SendInternalSpeed(userSpeedFactor);
-				internalSpeed = userSpeedFactor;
-			}
-		}
-	}
-	else if ((msg.find(".forcestart") == 0) && canDoStuff) {
-		if (!gameStartTime)
-			CheckForGameStart(true);
-	}
-	else if ((msg.find(".cheat") == 0) && canDoStuff) {
-		cheating = !cheating;
-		serverNet->SendChat(player, msg);
-		if (hostif)
-			hostif->SendPlayerChat(player, msg);
-	}
-	else {
-		serverNet->SendChat(player, msg);
-		if (hostif && player != SERVER_PLAYER) {
-			// don't echo packets to autohost
-			hostif->SendPlayerChat(player, msg);
-		}
+	serverNet->SendChat(player, msg);
+	if (hostif && player != SERVER_PLAYER) {
+		// don't echo packets to autohost
+		hostif->SendPlayerChat(player, msg);
 	}
 }
 
-void CGameServer::SetBoolArg(bool& value, const std::string& str, const char* cmd)
+void CGameServer::RestrictedAction(const std::string& action)
 {
-	char* end;
-	const char* start = str.c_str() + strlen(cmd);
-	const int num = strtol(start, &end, 10);
-	if (end != start) {
-		value = (num != 0);
-	} else {
-		value = !value;
-	}
+	RegisterAction(action);
+	commandBlacklist.insert(action);
 }
+

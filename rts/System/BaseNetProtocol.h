@@ -72,6 +72,7 @@ enum NETMSG {
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
 	NETMSG_GAMEDATA			= 52, // custom
 	NETMSG_ALLIANCE			= 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
+ 	NETMSG_CCOMMAND			= 54, // custom
 };
 
 // action to do with NETMSG_TEAM 

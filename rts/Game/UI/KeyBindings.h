@@ -9,16 +9,19 @@
 #include <vector>
 #include <set>
 #include <map>
-using namespace std;
-#include "KeySet.h"
 
+#include "KeySet.h"
+#include "Game/Console.h"
+#include "Game/Action.h"
+
+using namespace std;
 
 class CUnit;
 class CFileHandler;
 class CSimpleParser;
 
 
-class CKeyBindings
+class CKeyBindings : public CommandReciever
 {
 	public:
 		CKeyBindings();
@@ -28,20 +31,13 @@ class CKeyBindings
 		bool Save(const string& filename) const;
 		void Print() const;
 
-		struct Action {
-			Action() {}
-			Action(const string& line);
-			string command;   // first word, lowercase
-			string extra;     // everything but the first word
-			string rawline;   // includes the command, case preserved
-			string boundWith; // the string that defined the binding keyset
-		};
 		typedef vector<Action> ActionList;
 		typedef vector<string> HotkeyList;
 
 		const ActionList& GetActionList(const CKeySet& ks) const;
 		const HotkeyList& GetHotkeys(const string& action) const;
 
+		virtual void PushAction(const Action&);
 		bool Command(const string& line);
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
