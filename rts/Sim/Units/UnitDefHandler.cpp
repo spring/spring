@@ -154,9 +154,12 @@ void CUnitDefHandler::CleanBuildOptions()
 				                "\" entry from the \"" + ud.name + "\" build menu");
 				erase = true;
 			}
+			/*
 			else if (bd->maxThisUnit <= 0) {
+				// don't remove, just grey out the icon
 				erase = true; // silent removal
 			}
+			*/
 
 			if (erase) {
 				map<int, string>::iterator tmp = it;
@@ -466,8 +469,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
 	ud.refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	ud.minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
-
 	ud.maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
+
 	if (gameSetup) {
 		string lname = StringToLower(ud.name);
 
