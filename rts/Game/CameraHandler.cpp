@@ -8,6 +8,7 @@
 #include "Game/Camera/OverviewController.h"
 #include "Game/Camera/TWController.h"
 #include "Game/Camera.h"
+#include "Game/Action.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 
@@ -36,10 +37,15 @@ CCameraHandler::CCameraHandler() : currCamCtrl(camCtrl)
 	currCamCtrl = camControllers[currCamCtrlNum];
 
 	const double z = 0.0; // casting problems...
-	cameraTimeFactor =
-			std::max(z, atof(configHandler.GetString("CamTimeFactor", "1.0").c_str()));
-	cameraTimeExponent =
-			std::max(z, atof(configHandler.GetString("CamTimeExponent", "4.0").c_str()));
+	cameraTimeFactor = std::max(z, atof(configHandler.GetString("CamTimeFactor", "1.0").c_str()));
+	cameraTimeExponent = std::max(z, atof(configHandler.GetString("CamTimeExponent", "4.0").c_str()));
+
+	RegisterAction("viewfps");		RegisterAction("viewta");
+	RegisterAction("viewtw");		RegisterAction("viewrot");
+	RegisterAction("viewfree");		RegisterAction("viewov");
+	RegisterAction("viewlua");		RegisterAction("viewtaflip");
+	RegisterAction("viewsave");		RegisterAction("viewload");
+	RegisterAction("toggleoverview");
 }
 
 
@@ -217,6 +223,51 @@ bool CCameraHandler::LoadView(const std::string& name)
 	return LoadViewData(effective);
 }
 
+void CCameraHandler::PushAction(const Action& action)
+{
+	const std::string cmd = action.command;
+	if (cmd == "viewfps") {
+		SetCameraMode(0);
+	}
+	else if (cmd == "viewta") {
+		SetCameraMode(1);
+	}
+	else if (cmd == "viewtw") {
+		SetCameraMode(2);
+	}
+	else if (cmd == "viewrot") {
+		SetCameraMode(3);
+	}
+	else if (cmd == "viewfree") {
+		SetCameraMode(4);
+	}
+	else if (cmd == "viewov") {
+		SetCameraMode(5);
+	}
+	else if (cmd == "viewlua") {
+		SetCameraMode(6);
+	}
+	else if (cmd == "viewtaflip") {
+		COverheadController* taCam =
+				dynamic_cast<COverheadController*>(camControllers[1]);
+		if (taCam) {
+			if (!action.extra.empty()) {
+				taCam->flipped = !!atoi(action.extra.c_str());
+			} else {
+				taCam->flipped = !taCam->flipped;
+			}
+		}
+	}
+	else if (cmd == "viewsave") {
+		SaveView(action.extra);
+	}
+	else if (cmd == "viewload") {
+		LoadView(action.extra);
+	}
+	else if (cmd == "toggleoverview") {
+		ToggleOverviewCamera();
+	}
+}
 
 bool CCameraHandler::LoadViewData(const ViewData& vd)
 {

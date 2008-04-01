@@ -224,26 +224,6 @@ defaultBindings[] = {
 
 /******************************************************************************/
 //
-// CKeyBindings::Action
-//
-
-CKeyBindings::Action::Action(const string& line)
-{
-	rawline = line;
-	command = "";
-	extra = "";
-	vector<string> words = CSimpleParser::Tokenize(line, 1);
-	if (words.size() > 0) {
-		command = StringToLower(words[0]);
-	}
-	if (words.size() > 1) {
-		extra = words[1];
-	}
-}
-
-
-/******************************************************************************/
-//
 // CKeyBindings
 //
 
@@ -262,6 +242,20 @@ CKeyBindings::CKeyBindings()
 	statefulCommands.insert("movedown");
 	statefulCommands.insert("moveslow");
 	statefulCommands.insert("movefast");
+	
+	RegisterAction("bind");
+	RegisterAction("unbind");
+	RegisterAction("unbindall");
+	RegisterAction("unbindkeyset");
+	RegisterAction("unbindaction");
+	RegisterAction("keydebug");
+	RegisterAction("fakemeta");
+	RegisterAction("keyload");
+	RegisterAction("keyreload");
+	RegisterAction("keysave");
+	RegisterAction("keyprint");
+	RegisterAction("keysyms");
+	RegisterAction("keycodes");
 }
 
 
@@ -556,6 +550,34 @@ void CKeyBindings::LoadDefaults()
 	}
 }
 
+void CKeyBindings::PushAction(const Action& action)
+{
+	if (action.command == "keyload")
+		Load("uikeys.txt");
+	else if (action.command == "keyreload") {
+		Command("unbindall");
+		Command("unbind enter chat");
+		Load("uikeys.txt");
+	}
+	else if (action.command == "keysave") {
+		if (Save("uikeys.tmp")) {  // tmp, not txt
+			logOutput.Print("Saved uikeys.tmp");
+		} else {
+			logOutput.Print("Could not save uikeys.tmp");
+		}
+	}
+	else if (action.command == "keyprint") {
+		Print();
+	}
+	else if (action.command == "keysyms") {
+		keyCodes->PrintNameToCode(); // move to CKeyCodes?
+	}
+	else if (action.command == "keycodes") {
+		keyCodes->PrintCodeToName(); // move to CKeyCodes?
+	}
+	else
+		Command(action.rawline);
+}
 
 bool CKeyBindings::Command(const string& line)
 {

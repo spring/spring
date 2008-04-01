@@ -68,8 +68,7 @@ class CGuiHandler : public CInputReceiver {
 		bool SetActiveCommand(int cmdIndex,
 		                      int button, bool lmb, bool rmb,
 		                      bool alt, bool ctrl, bool meta, bool shift);
-		bool SetActiveCommand(const CKeyBindings::Action& action,
-		                      const CKeySet& ks, int actionIndex);
+		bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	public:
 		vector<CommandDescription> commands;
@@ -139,8 +138,8 @@ class CGuiHandler : public CInputReceiver {
 		bool LoadConfig(const std::string& filename);
 		void ParseFillOrder(const std::string& text);
 
-		bool ProcessLocalActions(const CKeyBindings::Action& action);
-		bool ProcessBuildActions(const CKeyBindings::Action& action);
+		bool ProcessLocalActions(const Action& action);
+		bool ProcessBuildActions(const Action& action);
 		int  GetIconPosCommand(int slot) const;
 		int  ParseIconSlot(const std::string& text) const;
 

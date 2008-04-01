@@ -1442,7 +1442,7 @@ void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
 				if (outMods.shift == Required)  { keys[SDLK_LSHIFT] = 1; }
 				if (outMods.shift == Forbidden) { keys[SDLK_LSHIFT] = 0; }
 
-				CKeyBindings::Action action(copy);
+				Action action(copy);
 				if (!ProcessLocalActions(action)) {
 					CKeySet ks;
 					game->ActionPressed(action, ks, false /*isRepeat*/);
@@ -1568,7 +1568,7 @@ int CGuiHandler::GetDefaultCommand(int x,int y) const
 }
 
 
-bool CGuiHandler::ProcessLocalActions(const CKeyBindings::Action& action)
+bool CGuiHandler::ProcessLocalActions(const Action& action)
 {
 	// do not process these actions if the control panel is not visible
 	if (iconsCount <= 0) {
@@ -1704,7 +1704,7 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 }
 
 
-bool CGuiHandler::ProcessBuildActions(const CKeyBindings::Action& action)
+bool CGuiHandler::ProcessBuildActions(const Action& action)
 {
 	const string arg = StringToLower(action.extra);
 	if (action.command == "buildspacing") {
@@ -1818,7 +1818,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
 		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
-		const CKeyBindings::Action& action = al[actionIndex];
+		const Action& action = al[actionIndex];
 		if (SetActiveCommand(action, ks, actionIndex)) {
 			return true;
 		}
@@ -1828,7 +1828,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 }
 
 
-bool CGuiHandler::SetActiveCommand(const CKeyBindings::Action& action,
+bool CGuiHandler::SetActiveCommand(const Action& action,
                                    const CKeySet& ks, int actionIndex)
 {
 	if (ProcessLocalActions(action)) {

@@ -6,11 +6,12 @@
 #include <string>
 #include <stack>
 
+#include "Console.h"
 
 class CCameraController;
 
 
-class CCameraHandler
+class CCameraHandler : public CommandReciever
 {
 public:
 	CCameraHandler();
@@ -30,6 +31,8 @@ public:
 	
 	CCameraController* &currCamCtrl;
 	std::vector<CCameraController*> camControllers;
+	
+	virtual void PushAction(const Action&);
 	
 private:
 	std::stack<unsigned> controllerStack;
@@ -53,7 +56,6 @@ private:
 	ViewData tmpView;
 	std::map<std::string, ViewData> views;
 };
-
 
 extern CCameraHandler* camHandler;
 

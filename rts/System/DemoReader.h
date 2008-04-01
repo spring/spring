@@ -29,6 +29,8 @@ public:
 	*/
 	bool ReachedEnd() const;
 
+	float GetNextReadTime() const;
+
 private:
 	CFileHandler* playbackDemo;
 	float demoTimeOffset;

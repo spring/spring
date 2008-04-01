@@ -106,3 +106,8 @@ bool CDemoReader::ReachedEnd() const
 	else
 		return false;
 }
+
+float CDemoReader::GetNextReadTime() const
+{
+	return chunkHeader.modGameTime;
+}

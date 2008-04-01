@@ -188,6 +188,11 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 	}
 }
 
+void CNet::SendData(const RawPacket* data)
+{
+	SendData(data->data, data->length);
+}
+
 void CNet::SendData(const unsigned char* data,const unsigned length, const unsigned playerNum)
 {
 	if (int(playerNum) <= MaxConnectionID() && connections[playerNum])

@@ -169,6 +169,7 @@ public:
 	@throw network_error Only when DEBUG is set: When the message identifier (data[0]) is not registered (through RegisterMessage())
 	*/
 	void SendData(const unsigned char* data,const unsigned length);
+	void SendData(const RawPacket* data);
 	
 	/**
 	@brief Send data to one client in particular

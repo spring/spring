@@ -30,6 +30,7 @@
 #include "FPUCheck.h"
 #include "GameHelper.h"
 #include "GameServer.h"
+#include "CommandMessage.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
 #include "LoadSaveHandler.h"
@@ -614,7 +615,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	if (userWriting) {
 		int actionIndex;
 		for (actionIndex = 0; actionIndex < (int)actionList.size(); actionIndex++) {
-			const CKeyBindings::Action& action = actionList[actionIndex];
+			const Action& action = actionList[actionIndex];
 
 			if (action.command == "edit_return") {
 				userWriting=false;
@@ -638,7 +639,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 						writingPos = 0;
 						logOutput.Print(command);
 						CKeySet ks(k, false);
-						CKeyBindings::Action fakeAction(actionLine);
+						Action fakeAction(actionLine);
 						ActionPressed(fakeAction, ks, isRepeat);
 					}
 				}
@@ -830,7 +831,7 @@ int CGame::KeyReleased(unsigned short k)
 }
 
 
-bool CGame::ActionPressed(const CKeyBindings::Action& action,
+bool CGame::ActionPressed(const Action& action,
                           const CKeySet& ks, bool isRepeat)
 {
 	// we may need these later
@@ -939,44 +940,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	}
 	else if (!isRepeat && cmd == "mouse5") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
-	}
-	else if (cmd == "viewfps") {
-		camHandler->SetCameraMode(0);
-	}
-	else if (cmd == "viewta") {
-		camHandler->SetCameraMode(1);
-	}
-	else if (cmd == "viewtw") {
-		camHandler->SetCameraMode(2);
-	}
-	else if (cmd == "viewrot") {
-		camHandler->SetCameraMode(3);
-	}
-	else if (cmd == "viewfree") {
-		camHandler->SetCameraMode(4);
-	}
-	else if (cmd == "viewov") {
-		camHandler->SetCameraMode(5);
-	}
-	else if (cmd == "viewlua") {
-		camHandler->SetCameraMode(6);
-	}
-	else if (cmd == "viewtaflip") {
-		COverheadController* taCam =
-			dynamic_cast<COverheadController*>(camHandler->camControllers[1]);
-		if (taCam) {
-			if (!action.extra.empty()) {
-				taCam->flipped = !!atoi(action.extra.c_str());
-			} else {
-				taCam->flipped = !taCam->flipped;
-			}
-		}
-	}
-	else if (cmd == "viewsave") {
-		camHandler->SaveView(action.extra);
-	}
-	else if (cmd == "viewload") {
-		camHandler->LoadView(action.extra);
 	}
 	else if (cmd == "viewselection") {
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -1133,9 +1096,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
-	else if (cmd == "toggleoverview") {
-		camHandler->ToggleOverviewCamera();
-	}
 	else if (cmd == "showhealthbars") {
 		if (action.extra.empty()) {
 			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
@@ -1155,10 +1115,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			net->SendPause(gu->myPlayerNum, newPause);
 			lastframe = SDL_GetTicks(); // this required here?
 		}
-	}
-	else if (cmd == "singlestep") {
-		if (gameServer && gs->paused)
-			gameServer->CreateNewFrame(false, true);
 	}
 	else if (cmd == "debug") {
 		if (gu->drawdebug)
@@ -1484,39 +1440,6 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 		logOutput.Print("Input grabbing %s",
 		                (newMode == SDL_GRAB_ON) ? "enabled" : "disabled");
 	}
-	else if ((cmd == "bind")         ||
-	         (cmd == "unbind")       ||
-	         (cmd == "unbindall")    ||
-	         (cmd == "unbindkeyset") ||
-	         (cmd == "unbindaction") ||
-	         (cmd == "keydebug")     ||
-	         (cmd == "fakemeta")) {
-		keyBindings->Command(action.rawline);
-	}
-	else if (cmd == "keyload") {
-		keyBindings->Load("uikeys.txt");
-	}
-	else if (cmd == "keyreload") {
-		keyBindings->Command("unbindall");
-		keyBindings->Command("unbind enter chat");
-		keyBindings->Load("uikeys.txt");
-	}
-	else if (cmd == "keysave") {
-		if (keyBindings->Save("uikeys.tmp")) {  // tmp, not txt
-			logOutput.Print("Saved uikeys.tmp");
-		} else {
-			logOutput.Print("Could not save uikeys.tmp");
-		}
-	}
-	else if (cmd == "keyprint") {
-		keyBindings->Print();
-	}
-	else if (cmd == "keysyms") {
-		keyCodes->PrintNameToCode();
-	}
-	else if (cmd == "keycodes") {
-		keyCodes->PrintCodeToName();
-	}
 	else if (cmd == "clock") {
 		if (action.extra.empty()) {
 			showClock = !showClock;
@@ -1791,15 +1714,68 @@ bool CGame::ActionPressed(const CKeyBindings::Action& action,
 			logOutput.Print("Unknown gamma format");
 		}
 	}
-	else {
-		return false;
+	else if (cmd == "crash" && gs->cheatEnabled) {
+		int *a=0;
+		*a=0;
 	}
-
-	return true;
+	else if (cmd == "exception" && gs->cheatEnabled) {
+		throw std::runtime_error("Exception test");
+	}
+	else if (cmd == "divbyzero" && gs->cheatEnabled) {
+		float a = 0;
+		logOutput.Print("Result: %f", 1.0f/a);
+	}
+	else if (cmd == "give" && gs->cheatEnabled) {
+		if (action.extra.find('@') == string::npos) {
+			std::string msg = "give "; //FIXME lazyness
+			msg += action.extra;
+			float3 p;
+			CInputReceiver* ir = NULL;
+			if (!hideInterface)
+				ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
+			if (ir == minimap)
+				p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+			else {
+				const float3& pos = camera->pos;
+				const float3& dir = mouse->dir;
+				const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
+				p = pos + (dir * dist);
+			}
+			char buf[128];
+			SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
+			msg += buf;
+			CommandMessage pckt(msg, gu->myPlayerNum);
+			net->SendData(pckt.Pack());
+		}
+		else {
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->SendData(pckt.Pack());
+		}
+	}
+	else if (cmd == "send") {
+		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
+		net->SendData(pckt.Pack());
+	}
+	else if (cmd == "atm" ||
+			cmd == "save" ||
+#ifdef DEBUG
+			cmd == "desync" ||
+#endif
+			cmd == "resync" ||
+			cmd == "take") {
+		//these are synced commands, forward only
+		CommandMessage pckt(action, gu->myPlayerNum);
+		net->SendData(pckt.Pack());
+	}
+	else {
+		if (!Console::Instance().ExecuteAction(action))
+			return false;
+	}
+	 return true;
 }
 
 
-bool CGame::ActionReleased(const CKeyBindings::Action& action)
+bool CGame::ActionReleased(const Action& action)
 {
 	const string& cmd = action.command;
 
@@ -1860,6 +1836,388 @@ bool CGame::ActionReleased(const CKeyBindings::Action& action)
 	return 0;
 }
 
+void SetBoolArg(bool& value, const std::string& str)
+{
+	if (str.empty()) // toggle
+	{
+		value = !value;
+	}
+	else // set
+	{
+		const int num = atoi(str.c_str());
+		value = (num != 0);
+	}
+}
+
+void CGame::ActionRecieved(const Action& action, int playernum)
+{
+	if (action.command == "cheat") {
+		SetBoolArg(gs->cheatEnabled, action.extra);
+		if (gs->cheatEnabled)
+			logOutput.Print("Cheating!");
+		else
+			logOutput.Print("No more cheating");
+	}
+	else if (action.command == "nohelp") {
+		SetBoolArg(gs->noHelperAIs, action.extra);
+		selectedUnits.PossibleCommandChange(NULL);
+		if (gs->noHelperAIs) {
+			// remove any current GroupAIs
+			CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
+			CUnitSet::iterator it;
+			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
+			{
+				CUnit* unit = *it;
+				if (unit->group && (unit->group->id > 9)) {
+					unit->SetGroup(NULL);
+				}
+			}
+		}
+		logOutput.Print("GroupAI and LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
+	}
+	else if (action.command == "godmode") {
+		if (!gs->cheatEnabled)
+			logOutput.Print("godmode requires .cheat");
+		else {
+			SetBoolArg(gs->godMode, action.extra);
+			CLuaUI::UpdateTeams();
+			if (gs->godMode)
+				logOutput.Print("God Mode Enabled");
+			else
+				logOutput.Print("God Mode Disabled");
+		}
+	}
+	else if (action.command == "nocost" && gs->cheatEnabled) {
+		for(unsigned i=0; i<unitDefHandler->numUnitDefs; i++)
+		{
+			unitDefHandler->unitDefs[i].metalCost = 1;
+			unitDefHandler->unitDefs[i].energyCost = 1;
+			unitDefHandler->unitDefs[i].buildTime = 10;
+			unitDefHandler->unitDefs[i].metalUpkeep = 0;
+			unitDefHandler->unitDefs[i].energyUpkeep = 0;
+		}
+		unitDefHandler->noCost=true;
+		logOutput.Print("Everything is for free!");
+	}
+	else if (action.command == "give" && gs->cheatEnabled) {
+		std::string s = "give "; //FIXME lazyness
+		s += action.extra;
+
+		// .give [amount] <unitName> [team] <@x,y,z>
+		vector<string> args = CSimpleParser::Tokenize(s, 0);
+
+		if (args.size() < 3) {
+			logOutput.Print("Someone is spoofing invalid .give messages!");
+			return;
+		}
+
+		float3 pos;
+		if (sscanf(args[args.size() - 1].c_str(), "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
+			logOutput.Print("Someone is spoofing invalid .give messages!");
+			return;
+		}
+
+		int amount = 1;
+		int team = gs->players[playernum]->team;
+
+		int amountArg = -1;
+		int teamArg = -1;
+
+		if (args.size() == 5) {
+			amountArg = 1;
+			teamArg = 3;
+		}
+		else if (args.size() == 4) {
+			if (args[1].find_first_not_of("0123456789") == string::npos) {
+				amountArg = 1;
+			} else {
+				teamArg = 2;
+			}
+		}
+
+		if (amountArg >= 0) {
+			const string& amountStr = args[amountArg];
+			amount = atoi(amountStr.c_str());
+			if ((amount < 0) || (amountStr.find_first_not_of("0123456789") != string::npos)) {
+				logOutput.Print("Bad give amount: %s", amountStr.c_str());
+				return;
+								}
+		}
+
+		if (teamArg >= 0) {
+			const string& teamStr = args[teamArg];
+			team = atoi(teamStr.c_str());
+			if ((team < 0) || (team >= gs->activeTeams) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
+				logOutput.Print("Bad give team: %s", teamStr.c_str());
+				return;
+			}
+		}
+
+		const string unitName = (amountArg >= 0) ? args[2] : args[1];
+
+		if (unitName == "all") {
+		// player entered ".give all"
+			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
+			int currentNumUnits = gs->Team(team)->units.size();
+			int numRequestedUnits = unitDefHandler->numUnitDefs;
+
+		// make sure team unit-limit not exceeded
+			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
+				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			}
+
+			for (int a = 1; a <= numRequestedUnits; ++a) {
+				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+				float3 pos2 = float3(posx, pos.y, posz);
+				const string& defName = unitDefHandler->unitDefs[a].name;
+				const CUnit* unit =
+						unitLoader.LoadUnit(defName, pos2, team, false, 0, NULL);
+
+				if (unit) {
+					unitLoader.FlattenGround(unit);
+				}
+			}
+		}
+		else if (!unitName.empty()) {
+			int numRequestedUnits = amount;
+			int currentNumUnits = gs->Team(team)->units.size();
+
+			if (currentNumUnits >= uh->maxUnits) {
+				logOutput.Print("Unable to give any more units to team %i", team);
+				return;
+			}
+
+		// make sure team unit-limit not exceeded
+			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
+				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			}
+
+			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+
+			if (unitDef != NULL) {
+				int xsize = unitDef->xsize;
+				int zsize = unitDef->ysize;
+				int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+				int total = numRequestedUnits;
+
+				float3 minpos = pos;
+				minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
+				minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
+
+				for (int z = 0; z < squareSize; ++z) {
+					for (int x = 0; x < squareSize && total > 0; ++x) {
+						float minposx = minpos.x + x * xsize * SQUARE_SIZE;
+						float minposz = minpos.z + z * zsize * SQUARE_SIZE;
+						const float3 upos(minposx, minpos.y, minposz);
+						const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, false, 0, NULL);
+
+						if (unit) {
+							unitLoader.FlattenGround(unit);
+						}
+						--total;
+					}
+				}
+
+				logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
+			}
+			else {
+				if (teamArg < 0) {
+					team = -1; // default to world features
+				}
+
+				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
+				if (featureDef) {
+					int xsize = featureDef->xsize;
+					int zsize = featureDef->ysize;
+					int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+					int total = amount; // FIXME -- feature count limit?
+
+					float3 minpos = pos;
+					minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
+					minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
+
+					for (int z = 0; z < squareSize; ++z) {
+						for (int x = 0; x < squareSize && total > 0; ++x) {
+							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
+							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
+							float minposy = ground->GetHeight2(minposx, minposz);
+							const float3 upos(minposx, minposy, minposz);
+							CFeature* feature = SAFE_NEW CFeature();
+							feature->Initialize(upos, featureDef, 0, 0, team, "");
+							--total;
+						}
+					}
+
+					logOutput.Print("Giving %i %s (feature) to team %i",
+									numRequestedUnits, unitName.c_str(), team);
+				}
+				else {
+					logOutput.Print(unitName + " is not a valid unitname");
+				}
+			}
+		}
+	}
+	else if (action.command == "nospectatorchat") {
+		SetBoolArg(noSpectatorChat, action.extra);
+		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can" : "can not");
+	}
+	else if (action.command == "reloadcob" && gs->cheatEnabled) {
+		ReloadCOB(action.extra, playernum);
+	}
+	else if (action.command == "devlua" && gs->cheatEnabled) {
+		bool devMode = CLuaHandle::GetDevMode();
+		SetBoolArg(devMode, action.extra);
+		CLuaHandle::SetDevMode(devMode);
+		if (devMode) {
+			logOutput.Print("Lua devmode enabled, this can cause desyncs");
+		} else {
+			logOutput.Print("Lua devmode disabled");
+		}
+	}
+	else if (action.command == "editdefs" && gs->cheatEnabled) {
+		SetBoolArg(gs->editDefsEnabled, action.extra);
+		if (gs->editDefsEnabled)
+			logOutput.Print("Definition Editing!");
+		else
+			logOutput.Print("No definition Editing");
+	}
+	else if (action.command == "luarules" && (gs->frameNum > 1)) {
+		if (gs->useLuaRules) {
+			if (action.extra == "reload") {
+				if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to reload synced scripts\n");
+				} else {
+					CLuaRules::FreeHandler();
+					CLuaRules::LoadHandler();
+					if (luaRules)
+						logOutput.Print("LuaRules reloaded\n");
+					else
+						logOutput.Print("LuaRules reload failed\n");
+				}
+			}
+			else if (action.extra == "disable") {
+				if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to disable synced scripts\n");
+				} else {
+					CLuaRules::FreeHandler();
+					logOutput.Print("LuaRules disabled\n");
+				}
+			}
+			else if (luaRules) {
+				luaRules->GotChatMsg(action.extra, playernum);
+			}
+			else {
+				logOutput.Print("LuaRules is not enabled\n");
+			}
+		}
+	}
+	else if (action.command == "luagaia" && (gs->frameNum > 1)) {
+		if (gs->useLuaGaia) {
+			if (action.extra == "reload") {
+				if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to reload synced scripts\n");
+				} else {
+					CLuaGaia::FreeHandler();
+					CLuaGaia::LoadHandler();
+					if (luaGaia) {
+						logOutput.Print("LuaGaia reloaded\n");
+					} else {
+						logOutput.Print("LuaGaia reload failed\n");
+					}
+				}
+			}
+			else if (action.extra == "disable") {
+				if (!gs->cheatEnabled) {
+					logOutput.Print("Cheating required to disable synced scripts\n");
+				} else {
+					CLuaGaia::FreeHandler();
+					logOutput.Print("LuaGaia disabled\n");
+				}
+			}
+			else if (luaGaia) {
+				luaGaia->GotChatMsg(action.extra, playernum);
+			}
+			else {
+				logOutput.Print("LuaGaia is not enabled\n");
+			}
+		}
+	}
+#ifdef DEBUG
+	if (action.command == "desync" && gs->cheatEnabled) {
+		for (int i = MAX_UNITS - 1; i >= 0; --i) {
+			if (uh->units[i]) {
+				if (playernum == gu->myPlayerNum) {
+					++uh->units[i]->midPos.x; // and desync...
+					++uh->units[i]->midPos.x;
+				} else {
+					// execute the same amount of flops on any other player, but don't desync (it's a NOP)...
+					++uh->units[i]->midPos.x;
+					--uh->units[i]->midPos.x;
+				}
+				break;
+			}
+		}
+		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
+	}
+#endif
+	if (action.command == "resync" && gs->cheatEnabled) {
+		CObject* o = CObject::GetSyncedObjects();
+		for (; o; o = o->GetNext()) {
+			creg::Class* c = o->GetClass();
+			logOutput.Print("%s\n", c->name.c_str());
+			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
+				logOutput.Print("  %s\n", (*m)->name);
+			}
+		}
+	}
+	else if (action.command == "atm" && gs->cheatEnabled) {
+		int team = gs->players[playernum]->team;
+		gs->Team(team)->AddMetal(1000);
+		gs->Team(team)->AddEnergy(1000);
+	}
+	else if (action.command == "take" && (!gs->players[playernum]->spectator || gs->cheatEnabled)) {
+		int sendTeam = gs->players[playernum]->team;
+		for (int a = 0; a < gs->activeTeams; ++a) {
+			if (gs->AlliedTeams(a, sendTeam)) {
+				bool hasPlayer = false;
+				for (int b = 0; b < gs->activePlayers; ++b) {
+					if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
+						hasPlayer = true;
+					}
+				}
+				if (!hasPlayer) {
+					for (std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui) {
+						CUnit* unit = *ui;
+						if ((unit->team == a) && (unit->selfDCountdown == 0)) {
+							unit->ChangeTeam(sendTeam, CUnit::ChangeGiven);
+						}
+					}
+				}
+			}
+		}
+	}
+	else if (action.command == "save ") {//.save [-y ]<savename>
+		if (filesystem.CreateDirectory("Saves")) {
+			bool saveoverride = action.extra.find("-y ") == 0;
+			std::string savename(action.extra.c_str()+(saveoverride?3:0));
+			savename="Saves/"+savename+".ssf";
+			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
+				logOutput.Print("Saving game to %s\n",savename.c_str());
+				CLoadSaveHandler ls;
+				ls.mapName = stupidGlobalMapname;
+				ls.modName = modInfo.filename;
+				ls.SaveGame(savename);
+			} else {
+				logOutput.Print("File %s allready exists(use /save -y to override)\n",savename.c_str());
+			}
+		}
+	}
+	else if (gs->frameNum > 1) {
+		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playernum);
+		if (luaGaia)  luaGaia->SyncedActionFallback(action.rawline, playernum);
+	}
+}
 
 bool CGame::Update()
 {
@@ -2922,12 +3280,15 @@ void CGame::ClientReadNet()
 
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
-				if (gs->frameNum != (serverframenum - 1))
+				if (gs->frameNum == (serverframenum - 1))
+				{
+					// everything ok, fall through
+				}
+				else
 				{
 					// error
-					logOutput.Print("Error Server framenum %i does not match client framenum %i", serverframenum - 1, gs->frameNum);
+					break;
 				}
-				// fall through
 			}
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
@@ -3220,6 +3581,12 @@ void CGame::ClientReadNet()
 					gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
 				else
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
+				break;
+			}
+			case NETMSG_CCOMMAND: {
+				CommandMessage msg((netcode::UnpackPacket*)(packet));
+				ActionRecieved(msg.action, msg.player);
+				break;
 			}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -3446,7 +3813,6 @@ void CGame::UpdateUI()
 		ignoreChar=0;
 	}
 }
-
 
 
 void CGame::MakeMemDump(void)
@@ -3706,27 +4072,6 @@ void CGame::SendNetChat(const std::string& message)
 		return;
 	}
 	string msg = message;
-	if ((msg.find(".give") == 0) && (msg.find('@') == string::npos)) {
-		float3 p;
-		CInputReceiver* ir = NULL;
-		if (!hideInterface) {
-			ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
-		}
-		if (ir == minimap) {
-			p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-		}
-		else {
-			const float3& pos = camera->pos;
-			const float3& dir = mouse->dir;
-			const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
-			p = pos + (dir * dist);
-		}
-
-		char buf[128];
-		SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
-		msg += buf;
-	}
-	
 	if (msg.size() > 128) {
 		msg.resize(128); // safety
 	}
@@ -3734,439 +4079,10 @@ void CGame::SendNetChat(const std::string& message)
 }
 
 
-static void SetBoolArg(bool& value, const std::string& str, const char* cmd)
-{
-	char* end;
-	const char* start = str.c_str() + strlen(cmd);
-	const int num = strtol(start, &end, 10);
-	if (end != start) {
-		value = (num != 0);
-	} else {
-		value = !value;
-	}
-}
-
-
 void CGame::HandleChatMsg(std::string s, int player)
 {
 	globalAI->GotChatMsg(s.c_str(),player);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
-
-	if ((s.find(".cheat") == 0) && (player == 0 || net->localDemoPlayback)) {
-		SetBoolArg(gs->cheatEnabled, s, ".cheat");
-		if (gs->cheatEnabled) {
-			logOutput.Print("Cheating!");
-		} else {
-			logOutput.Print("No more cheating");
-		}
-	}
-	else if ((s.find(".godmode") == 0) && (player == 0)) {
-		if (!gs->cheatEnabled) {
-			logOutput.Print("godmode requires .cheat");
-		} else {
-			SetBoolArg(gs->godMode, s, ".godmode");
-			if (gs->godMode) {
-				logOutput.Print("God Mode Enabled");
-			} else {
-				logOutput.Print("God Mode Disabled");
-			}
-			CLuaUI::UpdateTeams();
-		}
-	}
-	else if ((s.find(".nocost") == 0) && (player == 0) && gs->cheatEnabled) {
-		for(unsigned i=0; i<unitDefHandler->numUnitDefs; i++)
-		{
-			unitDefHandler->unitDefs[i].metalCost = 1;
-			unitDefHandler->unitDefs[i].energyCost = 1;
-			unitDefHandler->unitDefs[i].buildTime = 10;
-			unitDefHandler->unitDefs[i].metalUpkeep = 0;
-			unitDefHandler->unitDefs[i].energyUpkeep = 0;
-		}
-		unitDefHandler->noCost=true;
-		logOutput.Print("Everything is for free!");
-	}
-	else if (s.find(".crash") == 0 && gs->cheatEnabled) {
-		int *a=0;
-		*a=0;
-	}
-	else if (s.find(".exception") == 0 && gs->cheatEnabled) {
-		throw std::runtime_error("Exception test");
-	}
-	else if (s.find(".divbyzero") == 0 && gs->cheatEnabled) {
-		float a = 0;
-		logOutput.Print("Result: %f", 1.0f/a);
-	}
-#ifdef DEBUG
-	else if ((s.find(".desync") == 0) && gs->cheatEnabled) {
-		for (int i = MAX_UNITS - 1; i >= 0; --i) {
-			if (uh->units[i]) {
-				if (player == gu->myPlayerNum) {
-					++uh->units[i]->midPos.x; // and desync...
-					++uh->units[i]->midPos.x;
-				} else {
-					// execute the same amount of flops on any other player, but don't desync (it's a NOP)...
-					++uh->units[i]->midPos.x;
-					--uh->units[i]->midPos.x;
-				}
-				break;
-			}
-		}
-		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
-	}
-#endif
-	else if (s.find(".resync") == 0 && gs->cheatEnabled) {
-		CObject* o = CObject::GetSyncedObjects();
-		for (; o; o = o->GetNext()) {
-			creg::Class* c = o->GetClass();
-			logOutput.Print("%s\n", c->name.c_str());
-			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
-				logOutput.Print("  %s\n", (*m)->name);
-			}
-		}
-	}
-#ifdef SYNCDEBUG
-	else if ((s.find(".fakedesync") == 0) && gs->cheatEnabled && gameServer) {
-		gameServer->fakeDesync = true;
-		logOutput.Print("Fake desyncing.");
-	}
-	else if ((s.find(".reset") == 0) && gs->cheatEnabled) {
-		CSyncDebugger::GetInstance()->Reset();
-		logOutput.Print("Resetting sync debugger.");
-	}
-#endif
-	else if ((s.find(".atm") == 0) && gs->cheatEnabled) {
-		int team = gs->players[player]->team;
-		gs->Team(team)->AddMetal(1000);
-		gs->Team(team)->AddEnergy(1000);
-	}
-
-	else if ((s.find(".give") == 0) && gs->cheatEnabled) {
-		// .give [amount] <unitName> [team] <@x,y,z>
-		vector<string> args = CSimpleParser::Tokenize(s, 0);
-
-
-		if (args.size() < 3) {
-			logOutput.Print("Someone is spoofing invalid .give messages!");
-			return;
-		}
-
-		float3 pos;
-		if (sscanf(args[args.size() - 1].c_str(),
-		           "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
-			logOutput.Print("Someone is spoofing invalid .give messages!");
-			return;
-		}
-
-		int amount = 1;
-		int team = gs->players[player]->team;
-
-		int amountArg = -1;
-		int teamArg = -1;
-
-		if (args.size() == 5) {
-			amountArg = 1;
-			teamArg = 3;
-		}
-		else if (args.size() == 4) {
-			if (args[1].find_first_not_of("0123456789") == string::npos) {
-				amountArg = 1;
-			} else {
-				teamArg = 2;
-			}
-		}
-
-		if (amountArg >= 0) {
-			const string& amountStr = args[amountArg];
-			amount = atoi(amountStr.c_str());
-			if ((amount < 0) ||
-			    (amountStr.find_first_not_of("0123456789") != string::npos)) {
-				logOutput.Print("Bad .give amount: %s", amountStr.c_str());
-				return;
-			}
-		}
-
-		if (teamArg >= 0) {
-			const string& teamStr = args[teamArg];
-			team = atoi(teamStr.c_str());
-			if ((team < 0) || (team >= gs->activeTeams) ||
-			    (teamStr.find_first_not_of("0123456789") != string::npos)) {
-				logOutput.Print("Bad .give team: %s", teamStr.c_str());
-				return;
-			}
-		}
-
-		const string unitName = (amountArg >= 0) ? args[2] : args[1];
-
-		if (unitName == "all") {
-			// player entered ".give all"
-			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
-			int currentNumUnits = gs->Team(team)->units.size();
-			int numRequestedUnits = unitDefHandler->numUnitDefs;
-
-			// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
-				numRequestedUnits = uh->maxUnits - currentNumUnits;
-			}
-
-			for (int a = 1; a <= numRequestedUnits; ++a) {
-				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
-				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
-				float3 pos2 = float3(posx, pos.y, posz);
-				const string& defName = unitDefHandler->unitDefs[a].name;
-				const CUnit* unit =
-					unitLoader.LoadUnit(defName, pos2, team, false, 0, NULL);
-
-				if (unit) {
-					unitLoader.FlattenGround(unit);
-				}
-			}
-		}
-		else if (!unitName.empty()) {
-			int numRequestedUnits = amount;
-			int currentNumUnits = gs->Team(team)->units.size();
-
-			if (currentNumUnits >= uh->maxUnits) {
-				logOutput.Print("Unable to give any more units to team %i", team);
-				return;
-			}
-
-			// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
-				numRequestedUnits = uh->maxUnits - currentNumUnits;
-			}
-
-			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
-
-			if (unitDef != NULL) {
-				int xsize = unitDef->xsize;
-				int zsize = unitDef->ysize;
-				int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
-				int total = numRequestedUnits;
-
-				float3 minpos = pos;
-				minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
-				minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
-
-				for (int z = 0; z < squareSize; ++z) {
-					for (int x = 0; x < squareSize && total > 0; ++x) {
-						float minposx = minpos.x + x * xsize * SQUARE_SIZE;
-						float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-						const float3 upos(minposx, minpos.y, minposz);
-						const CUnit* unit = unitLoader.LoadUnit(unitName, upos, team, false, 0, NULL);
-
-						if (unit) {
-							unitLoader.FlattenGround(unit);
-						}
-						--total;
-					}
-				}
-
-				logOutput.Print("Giving %i %s to team %i",
-				                numRequestedUnits, unitName.c_str(), team);
-			}
-			else {
-				if (teamArg < 0) {
-					team = -1; // default to world features
-				}
-
-				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
-				if (featureDef) {
-					int xsize = featureDef->xsize;
-					int zsize = featureDef->ysize;
-					int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
-					int total = amount; // FIXME -- feature count limit?
-
-					float3 minpos = pos;
-					minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
-					minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
-
-					for (int z = 0; z < squareSize; ++z) {
-						for (int x = 0; x < squareSize && total > 0; ++x) {
-							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
-							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-							float minposy = ground->GetHeight2(minposx, minposz);
-							const float3 upos(minposx, minposy, minposz);
-							CFeature* feature = SAFE_NEW CFeature();
-							feature->Initialize(upos, featureDef, 0, 0, team, "");
-							--total;
-						}
-					}
-
-					logOutput.Print("Giving %i %s (feature) to team %i",
-					                numRequestedUnits, unitName.c_str(), team);
-				}
-				else {
-					logOutput.Print(unitName + " is not a valid unitname");
-				}
-			}
-		}
-	}
-
-	else if ((s.find(".take") == 0) && (!gs->players[player]->spectator || gs->cheatEnabled)) {
-		int sendTeam = gs->players[player]->team;
-		for (int a = 0; a < gs->activeTeams; ++a) {
-			if (gs->AlliedTeams(a, sendTeam)) {
-				bool hasPlayer = false;
-				for (int b = 0; b < gs->activePlayers; ++b) {
-					if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
-						hasPlayer = true;
-					}
-				}
-				if (!hasPlayer) {
-					for (std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui) {
-						CUnit* unit = *ui;
-						if ((unit->team == a) && (unit->selfDCountdown == 0)) {
-							unit->ChangeTeam(sendTeam, CUnit::ChangeGiven);
-						}
-					}
-				}
-			}
-		}
-	}
-	// .kick, .kickbynum and .nopause moved to CGameServer
-	else if ((s.find(".nospectatorchat") == 0) && (player == 0)) {
-		SetBoolArg(noSpectatorChat, s, ".nospectatorchat");
-		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can" : "can not");
-	}
-	else if ((s.find(".nohelp") == 0) && (player == 0)) {
-		SetBoolArg(gs->noHelperAIs, s, ".nohelp");
-		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-      for(it = teamUnits.begin(); it != teamUnits.end(); ++it) {
-      	CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
-		logOutput.Print("GroupAI and LuaUI control is %s",
-		                gs->noHelperAIs ? "disabled" : "enabled");
-	}
-	else if (s.find(".skip") == 0) {
-		if (((player != 0) || !gs->cheatEnabled) && !net->localDemoPlayback) {
-			logOutput.Print(".skip only works in replay, and when cheating\n");
-		} else if (gs->frameNum < 1) {
-			logOutput.Print(".skip only works after every demo-player has readied\n");
-		} else if (s.size() <= 6) {
-			logOutput.Print("missing argument to .skip\n");
-		} else {
-			Skip(s);
-		}
-	}
-	else if ((s.find(".reloadcob") == 0) && gs->cheatEnabled && (player == 0)) {
-		ReloadCOB(s, player);
-	}
-	else if ((s.find(".devlua") == 0) && (player == 0) && gs->cheatEnabled) {
-		bool devMode = CLuaHandle::GetDevMode();
-		SetBoolArg(devMode, s, ".devlua");
-		CLuaHandle::SetDevMode(devMode);
-		if (devMode) {
-			logOutput.Print("Lua devmode enabled, this can cause desyncs");
-		} else {
-			logOutput.Print("Lua devmode disabled");
-		}
-	}
-	else if ((s.find(".editdefs") == 0) && (player == 0) && gs->cheatEnabled) {
-		SetBoolArg(gs->editDefsEnabled, s, ".editdefs");
-		if (gs->editDefsEnabled) {
-			logOutput.Print("Definition Editing!");
-		} else {
-			logOutput.Print("No definition Editing");
-		}
-	}
-	else if ((s.find(".luarules") == 0) && (gs->frameNum > 1)) {
-		if (gs->useLuaRules) {
-			if (s == ".luarules reload") {
-				if (player != 0) {
-					logOutput.Print("Only the host player can reload synced scripts\n");
-				} else if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to reload synced scripts\n");
-				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-					if (luaRules) {
-						logOutput.Print("LuaRules reloaded\n");
-					} else {
-						logOutput.Print("LuaRules reload failed\n");
-					}
-				}
-			}
-			else if (s == ".luarules disable") {
-				if (player != 0) {
-					logOutput.Print("Only the host player can disable synced scripts\n");
-				} else if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to disable synced scripts\n");
-				} else {
-					CLuaRules::FreeHandler();
-					logOutput.Print("LuaRules disabled\n");
-				}
-			}
-			else if (luaRules) {
-				luaRules->GotChatMsg(s.substr(strlen(".luarules")), player);
-			}
-			else {
-				logOutput.Print("LuaRules is not enabled\n");
-			}
-		}
-	}
-	else if ((s.find(".luagaia") == 0) && (gs->frameNum > 1)) {
-		if (gs->useLuaGaia) {
-			if (s == ".luagaia reload") {
-				if (player != 0) {
-					logOutput.Print("Only the host player can reload synced scripts\n");
-				} else if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to reload synced scripts\n");
-				} else {
-					CLuaGaia::FreeHandler();
-					CLuaGaia::LoadHandler();
-					if (luaGaia) {
-						logOutput.Print("LuaGaia reloaded\n");
-					} else {
-						logOutput.Print("LuaGaia reload failed\n");
-					}
-				}
-			}
-			else if (s == ".luagaia disable") {
-				if (player != 0) {
-					logOutput.Print("Only the host player can disable synced scripts\n");
-				} else if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to disable synced scripts\n");
-				} else {
-					CLuaGaia::FreeHandler();
-					logOutput.Print("LuaGaia disabled\n");
-				}
-			}
-			else if (luaGaia) {
-				luaGaia->GotChatMsg(s.substr(strlen(".luagaia")), player);
-			}
-			else {
-				logOutput.Print("LuaGaia is not enabled\n");
-			}
-		}
-	}
-	else if (s.find(".save ") == 0) {//.save [-y ]<savename>
-		if (filesystem.CreateDirectory("Saves")) {
-			bool saveoverride = s.find(" -y ") == 0;
-			std::string savename(s.c_str()+(6+(saveoverride?3:0)));
-			savename="Saves/"+savename+".ssf";
-			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
-				logOutput.Print("Saving game to %s\n",savename.c_str());
-				CLoadSaveHandler ls;
-				ls.mapName = stupidGlobalMapname;
-				ls.modName = modInfo.filename;
-				ls.SaveGame(savename);
-			} else {
-				logOutput.Print("File %s allready exists(use .save -y to override)\n",savename.c_str());
-			}
-		}
-	}
-	else if ((s[0] == '.') && (gs->frameNum > 1)) {
-		if (luaRules && luaRules->SyncedActionFallback(s, player)) { return; }
-		if (luaGaia  && luaGaia->SyncedActionFallback(s, player))  { return; }
-	}
 }
 
 
@@ -4235,32 +4151,18 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 }
 
 
-void CGame::Skip(const std::string& msg)
+void CGame::Skip(int targetframe)
 {
 	if ((skipping < 0) || (skipping > 2)) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 		skipping = 0;
 	}
 
-	const string timeStr = msg.substr(6);
 	const int startFrame = gs->frameNum;
-	int endFrame;
-
-	// parse the skip time
-	if (timeStr[0] == 'f') {        // skip to frame
-		endFrame = atoi(timeStr.c_str() + 1);
-	} else if (timeStr[0] == '+') { // relative time
-		endFrame = startFrame + (GAME_SPEED * atoi(timeStr.c_str() + 1));
-	} else {                        // absolute time
-		endFrame = GAME_SPEED * atoi(timeStr.c_str());
-	}
+	int endFrame = targetframe;
 
 	if (endFrame <= startFrame) {
 		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
-		return;
-	}
-	if (gs->paused) {
-		logOutput.Print("Can not skip while paused\n");
 		return;
 	}
 
@@ -4284,9 +4186,6 @@ void CGame::Skip(const std::string& msg)
 			// FIXME: messes up the how-many-frames-are-left bar
 			Update();
 
-			if (gameServer) {
-				gameServer->SkipTo(gs->frameNum);
-			}
 			// draw something so that users don't file bug reports
 			const Uint32 gfxTime = SDL_GetTicks();
 			if ((gfxTime - gfxLastTime) > 100) { // 10fps
@@ -4337,7 +4236,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("reloadcob can only be used if cheating is enabled");
 		return;
 	}
-	const string unitName = (msg.size() >= 12)? msg.substr(11): "";
+	const string unitName = msg;
 	if (unitName.empty()) {
 		logOutput.Print("Missing unit name");
 		return;

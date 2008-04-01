@@ -31,4 +31,6 @@ const std::string NoTeamChange = "%s (%d) tried to change his team illegally";
 const std::string UnknownTeammsg = "Unknown action in NETMSG_TEAM (%d) from player %d";
 const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
 
+const std::string CommandNotAllowed = "Player %d is not allowed to execute command %s";
+
 #endif /*SERVERMSGSTRINGS_H_*/
