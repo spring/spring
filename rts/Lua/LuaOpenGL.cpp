@@ -134,12 +134,14 @@ void LuaOpenGL::Free()
 
 void LuaOpenGL::CalcFontHeight()
 {
+	/*
 	// calculate the text height that we'll use to
 	// provide a consistent display when rendering text
 	// (note the missing characters)
 	fontHeight = font->CalcTextHeight("abcdef hi klmno  rstuvwx z"
 	                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                    "0123456789");
+                                    "0123456789"); */
+	fontHeight = font->GetHeight();		// get height between two baselines
 	fontHeight = max(1.0e-6f, fontHeight);  // safety for dividing
 }
 
@@ -1147,10 +1149,10 @@ int LuaOpenGL::Text(lua_State* L)
 		  "Incorrect arguments to gl.Text(msg, x, y [,size] [,\"options\"]");
 	}
 	const string text = lua_tostring(L, 1);
-	const float x     = lua_tonumber(L, 2);
-	const float y     = lua_tonumber(L, 3);
+	const float x     = lua_tonumber(L, 2) * gu->pixelX;
+	const float y     = lua_tonumber(L, 3) * gu->pixelY;
 
-	float size = 12.0f;
+	float size = 12.0f * gu->pixelY;
 	bool right = false;
 	bool center = false;
 	bool outline = false;
@@ -1158,7 +1160,7 @@ int LuaOpenGL::Text(lua_State* L)
 	bool lightOut;
 
 	if ((args >= 4) && lua_isnumber(L, 4)) {
-		size = lua_tonumber(L, 4);
+		size = lua_tonumber(L, 4) * gu->pixelY;
 	}
 	if ((args >= 5) && lua_isstring(L, 5)) {
 	  const char* c = lua_tostring(L, 5);
@@ -1174,40 +1176,38 @@ int LuaOpenGL::Text(lua_State* L)
 		}
 	}
 
-	const float yScale = size / fontHeight;
-	const float xScale = yScale;
+	const float fontScale = size / fontHeight * (4.0f / 3.0f);		// In the old font system, fonts were created at 96 dpi. 96/72 = 4/3. Don't ask.
+
 	float xj = x; // justified x position
 	if (right) {
-		xj -= xScale * font->CalcTextWidth(text.c_str());
+		xj -= fontScale * font->CalcTextWidth(text.c_str());
 	} else if (center) {
-		xj -= xScale * font->CalcTextWidth(text.c_str()) * 0.5f;
+		xj -= fontScale * font->CalcTextWidth(text.c_str()) * 0.5f;
 	}
+
 	glPushMatrix();
-	glTranslatef(xj, y, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	if (!outline) {
-		if (colorCodes) {
-			font->glPrintColor("%s", text.c_str());
-		} else {
-			font->glPrint("%s", text.c_str());
-		}
-	} else {
-		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+	glScalef(gu->viewSizeX, gu->viewSizeY, 1.0f);
+
+	if (outline) {
 		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
+		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
 		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		const float xPixel = 1.0f / xScale;
-		const float yPixel = 1.0f / yScale;
+
 		if (lightOut) {
-			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, lightOutline);
+			font->Outline(true, noshow, lightOutline);
 		} else {
-			font->glPrintOutlined(text.c_str(), xPixel, yPixel, noshow, darkOutline);
+			font->Outline(true, noshow, darkOutline);
 		}
-		if (colorCodes) {
-			font->glPrintColor("%s", text.c_str());
-		} else {
-			font->glPrint("%s", text.c_str());
-		}
+		font->glPrintAt(xj, y, fontScale, text.c_str());
 	}
+
+	if (colorCodes) {
+		font->glPrintColorAt(xj, y, fontScale, text.c_str());
+	} else {
+		//glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		font->glPrintAt(xj, y, fontScale, text.c_str());
+	}
+
 	glPopMatrix();
 
 	return 0;

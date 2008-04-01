@@ -181,21 +181,17 @@ void CStartPosSelecter::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	const float width = font->CalcTextWidth("Ready");
-	const float yDiff = (readyBox.y2 - readyBox.y1);
-	const float xDiff = (readyBox.x2 - readyBox.x1);
-	const float yScale = 0.8f * yDiff;
-	const float xScale = 0.8f * (xDiff / width);
-	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-	const float yPos = readyBox.y1 + (0.1f * yDiff);
-	const float xPos = readyBox.x1 + (0.1f * xDiff);
+	// fit text into box
+	const float unitWidth = font->CalcTextWidth("Ready");
+	const float unitHeight = font->GetHeight();
 
-	glPushMatrix();
-	glTranslatef(xPos, yPos, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	const float dark[4]   = { 0.2f, 0.2f, 0.2f, 0.8f };
+	const float ySize = (readyBox.y2 - readyBox.y1);
+	const float xSize = (readyBox.x2 - readyBox.x1);
+
+	const float fontScale = 0.9f * min(xSize/unitWidth, ySize/unitHeight);
+	const float yPos = readyBox.y1 + (0.1f * ySize);
+	const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
+
 	const float white[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-	font->glPrintOutlined("Ready", xPixel, yPixel, white, dark);
-	glPopMatrix();
+	font->glPrintOutlinedCentered(xPos, yPos, fontScale, "Ready", white);
 }

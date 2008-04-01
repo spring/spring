@@ -120,12 +120,7 @@ void GameSetupDrawer::Draw()
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glPushMatrix();
-	glTranslatef(0.3f, 0.7f, 0.0f);
-	glScalef(0.03f, 0.04f, 0.1f);
-	glTranslatef(xshift, 0.0f, 0.0f);
-	font->glPrint(state.c_str());
-	glPopMatrix();
+	font->glPrintAt(0.3f, 0.7f, 1.0f, state.c_str());
 
 	for (int a = 0; a <= gameSetup->numPlayers; a++) {
 		const float* color;
@@ -133,7 +128,6 @@ void GameSetupDrawer::Draw()
 		const float  green[4] = { 0.2f, 1.0f, 0.2f, 1.0f };
 		const float yellow[4] = { 0.8f, 0.8f, 0.2f, 1.0f };
 		const float  white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		const float   dark[4] = { 0.2f, 0.2f, 0.2f, 0.8f };
 		if (a == gameSetup->numPlayers) {
 			color = white; //blue;
 		} else if (!gs->players[a]->readyToStart) {
@@ -150,17 +144,11 @@ void GameSetupDrawer::Draw()
 		} else {
 			name = gs->players[a]->playerName.c_str();
 		}
-		const float yScale = 0.028f;
-		const float xScale = yScale / gu->aspectRatio;
-		const float xPixel = 1.0f / (xScale * (float)gu->viewSizeX);
-		const float yPixel = 1.0f / (yScale * (float)gu->viewSizeY);
+		const float fontScale = 1.0f;
+		const float yScale = fontScale * font->GetHeight();
 		const float yPos = 0.5f - (0.5f * yScale * gameSetup->numPlayers) + (yScale * (float)a);
-		const float xPos = xScale;
-		glPushMatrix();
-		glTranslatef(xPos, yPos, 0.0f);
-		glScalef(xScale, yScale, 1.0f);
-		font->glPrintOutlined(name, xPixel, yPixel, color, dark);
-		glPopMatrix();
+		const float xPos = 10.0f * gu->pixelX;
+		font->glPrintOutlinedAt(xPos, yPos, fontScale, name, color);
 	}
 }
 
@@ -174,5 +162,8 @@ bool GameSetupDrawer::KeyPressed(unsigned short key, bool isRepeat)
 	}
 	return false;
 }
+
+
+
 
 

@@ -2838,37 +2838,20 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 	const float textBorder2 = (2.0f * textBorder);
 	float xScale = (xIconSize - textBorder2) / tWidth;
 	float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
-
-	const float yRatio = xScale * gu->aspectRatio;
-	if (yRatio < yScale) {
-		yScale = yRatio;
-	} else {
-		const float xRatio = yScale / gu->aspectRatio;
-		if (xRatio < xScale) {
-			xScale = xRatio;
-		}
-	}
+	const float fontScale = min(xScale, yScale);
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);
 	const float yCenter = 0.5f * (b.y1 + (b.y2 + yShrink));
-	const float xStart  = xCenter - (0.5f * xScale * tWidth);
-	const float yStart  = yCenter - (0.5f * yScale * (1.25f * tHeight));
+	const float xStart = xCenter - 0.5f * fontScale * tWidth;
+	const float yStart  = yCenter - (0.5f * fontScale * (1.25f * tHeight));
 	const float dShadow = 0.002f;
 
 	if (dropShadows) {
-		glPushMatrix();
 		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
-		glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
-		glScalef(xScale, yScale, 1.0f);
-		font->glPrintRaw(StripColorCodes(text).c_str());
-		glPopMatrix();
+		font->glPrintAt(xStart + dShadow, yStart - dShadow, fontScale, StripColorCodes(text).c_str());
 	}
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glTranslatef(xStart, yStart, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	font->glPrintColor("%s",text.c_str());
-
-	glLoadIdentity();
+	font->glPrintAt(xStart, yStart, fontScale, text.c_str());
 }
 
 
@@ -2879,14 +2862,11 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 	}
 	const Box& b = icon.visual;
 	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = (yIconSize * 0.2f) / tHeight;
-	const float xScale = yScale / gu->aspectRatio;
+	const float fontScale = (yIconSize * 0.2f) / tHeight;
 	const float xPos = b.x1 + textBorder + 0.002f;
-	const float yPos = b.y1 - textBorder - (yScale * tHeight) - 0.006f;
-	glTranslatef(xPos, yPos, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	font->glPrintColor("%s", text.c_str());
-	glLoadIdentity();
+	const float yPos = b.y1 - textBorder - (fontScale * tHeight) - 0.006f;
+
+	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
 }
 
 
@@ -2897,14 +2877,11 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 	}
 	const Box& b = icon.visual;
 	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = (yIconSize * 0.2f) / tHeight;
-	const float xScale = yScale / gu->aspectRatio;
+	const float fontScale = (yIconSize * 0.2f) / tHeight;
 	const float xPos = b.x1 + textBorder + 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
-	glTranslatef(xPos, yPos, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	font->glPrintColor("%s", text.c_str());
-	glLoadIdentity();
+
+	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
 }
 
 
@@ -2916,14 +2893,11 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 	const Box& b = icon.visual;
 	const float tWidth = font->CalcTextWidth(text.c_str());
 	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = (yIconSize * 0.2f) / tHeight;
-	const float xScale = yScale / gu->aspectRatio;
-	const float xPos = b.x2 - textBorder - (xScale * tWidth) - 0.002f;
-	const float yPos = b.y1 - textBorder - (yScale * tHeight) - 0.006f;
-	glTranslatef(xPos, yPos, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	font->glPrintColor("%s", text.c_str());
-	glLoadIdentity();
+	const float fontScale = (yIconSize * 0.2f) / tHeight;
+	const float xPos = b.x2 - textBorder - (fontScale * tWidth) - 0.002f;
+	const float yPos = b.y1 - textBorder - (fontScale * tHeight) - 0.006f;
+	
+	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
 }
 
 
@@ -2935,14 +2909,11 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 	const Box& b = icon.visual;
 	const float tWidth = font->CalcTextWidth(text.c_str());
 	const float tHeight = font->CalcTextHeight(text.c_str());
-	const float yScale = (yIconSize * 0.2f) / tHeight;
-	const float xScale = yScale / gu->aspectRatio;
-	const float xPos = b.x2 - textBorder - (xScale * tWidth) - 0.002f;
+	const float fontScale = (yIconSize * 0.2f) / tHeight;
+	const float xPos = b.x2 - textBorder - (fontScale * tWidth) - 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
-	glTranslatef(xPos, yPos, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-	font->glPrintColor("%s", text.c_str());
-	glLoadIdentity();
+
+	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
 }
 
 
@@ -2963,7 +2934,6 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 	glVertex2f(b.x2, b.y1);
 	glVertex2f(b.x2, b.y2);
 	glVertex2f(b.x1, b.y2);
-	glVertex2f(b.x1, b.y1);
 	glEnd();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -2984,7 +2954,6 @@ void CGuiHandler::DrawButtons()
 		glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
 		glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
 		glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
 		glEnd();
 	}
 
@@ -3123,7 +3092,7 @@ void CGuiHandler::DrawButtons()
 		}
 		const float textSize = 1.2f;
 		const float yBbot =
-			yBpos - (textSize * 0.5f * (font->CalcTextHeight(buf) / 32.0f));
+			yBpos - (textSize * 0.5f * font->CalcTextHeight(buf));
 		font->glPrintCentered(xBpos, yBbot, textSize, buf);
 	}
 
@@ -3140,10 +3109,9 @@ void CGuiHandler::DrawMenuName()
 	if (!menuName.empty() && (iconsCount > 0)) {
 		const char* text = menuName.c_str();
 
-		const float xScale = 0.0225f;
-		const float yScale = xScale * gu->aspectRatio;
-		const float textWidth  = xScale * font->CalcTextWidth(text);
-		const float textHeight = yScale * font->CalcTextHeight(text);
+		const float fontScale = 1.0f;
+		const float textWidth  = fontScale * font->CalcTextWidth(text);
+		const float textHeight = fontScale * font->CalcTextHeight(text);
 		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2 - textWidth);
 		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
 
@@ -3154,21 +3122,14 @@ void CGuiHandler::DrawMenuName()
 							buttonBox.y2,
 							buttonBox.x2,
 							buttonBox.y2 + (textHeight * 1.25f) + (yIconSize * 0.250f));
-			glTranslatef(xp, yp, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-			font->glPrintColor("%s", text);
+			font->glPrintColorAt(xp, yp, fontScale, text);
 		}
 		else {
-			glTranslatef(xp, yp, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
 			// use (alpha == 0.0) so that we only get the outline
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-			outlineFont.print(xPixel, yPixel, white, StripColorCodes(text).c_str());
-			font->glPrintColor("%s", text); // draw with color
+			font->glPrintOutlinedAt(xp, yp, fontScale, text, white);
+			font->glPrintColorAt(xp, yp, fontScale, text);
 		}
-		glLoadIdentity();
 	}
 
 }
@@ -3188,12 +3149,12 @@ void CGuiHandler::DrawSelectionInfo()
 			         selectedUnits.selectedUnits.size());
 		}
 
-		const float xScale = 0.015f;
-		const float yScale = xScale * gu->aspectRatio;
-		const float textWidth  = xScale * font->CalcTextWidth(buf);
-		const float textHeight = yScale * font->CalcTextHeight(buf);
+		const float fontScale = 1.0f;
 
 		if (!outlineFont.IsEnabled()) {
+			const float textWidth  = fontScale * smallFont->CalcTextWidth(buf);
+			const float textHeight = fontScale * smallFont->CalcTextHeight(buf);
+
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 			glRectf(xSelectionPos - frameBorder,
@@ -3201,19 +3162,11 @@ void CGuiHandler::DrawSelectionInfo()
 							xSelectionPos + frameBorder + textWidth,
 							ySelectionPos + frameBorder + (textHeight * 1.2f));
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-			font->glPrintRaw(buf);
+			smallFont->glPrintAt(xSelectionPos, ySelectionPos, fontScale, buf);
 		}
 		else {
-			glTranslatef(xSelectionPos, ySelectionPos, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
-
-			const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-			const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			outlineFont.print(xPixel, yPixel, white, buf);
+			smallFont->glPrintOutlinedAt(xSelectionPos, ySelectionPos, fontScale, buf, white);
 		}
 		glLoadIdentity();
 	}

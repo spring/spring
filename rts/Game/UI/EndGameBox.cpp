@@ -310,15 +310,15 @@ void CEndGameBox::Draw()
 		float scaley=0.54f/maxy;
 
 		for (int a = 0; a < 5; ++a) {
-			font->glPrintAt(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, "%s",
+			font->glPrintAt(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f,
 			                FloatToSmallString(maxy * 0.25f * a).c_str());
-			font->glPrintAt(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, "%02i:%02i",
+			font->glFormatAt(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, "%02i:%02i",
 			                int(a * 0.25f * numPoints * CTeam::statsPeriod / 60),
 			                int(a * 0.25f * (numPoints - 1) * CTeam::statsPeriod) % 60);
 		}
 
-		font->glPrintAt(box.x1+0.55f,box.y1+0.65f,0.8f,"%s",stats[stat1].name.c_str());
-		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f,"%s",stat2!=-1?stats[stat2].name.c_str():"");
+		font->glPrintAt(box.x1+0.55f,box.y1+0.65f,0.8f, stats[stat1].name.c_str());
+		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f, stat2!=-1?stats[stat2].name.c_str():"");
 
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);

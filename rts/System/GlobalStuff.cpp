@@ -204,6 +204,8 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	lastFrameTime=0;
 	viewSizeX=100;
 	viewSizeY=100;
+	pixelX=0.01f;
+	pixelY=0.01f;
 	aspectRatio=1.0f;
 	myPlayerNum=0;
 	myTeam=1;
@@ -269,4 +271,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 
 	return ret;
 }
+
+
+
 

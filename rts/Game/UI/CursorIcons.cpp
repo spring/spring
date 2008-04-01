@@ -122,33 +122,26 @@ void CCursorIcons::DrawTexts()
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
 
-	const float yScale = 20.0f / (float)gu->viewSizeX;
-	const float xScale = yScale / gu->aspectRatio;
-	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
-	const float yOffset = -50.0f / (float)gu->viewSizeX;
+	const float fontScale = 1.0f;
+	const float yOffset = 50.0f * gu->pixelY;
 	
 	std::set<IconText>::iterator it;
 	for (it = texts.begin(); it != texts.end(); ++it) {
 		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
 		if (winPos.z <= 1.0f) {
 			const char* text = it->text.c_str();
-			const float tWidth  = xScale * font->CalcTextWidth(text);
-			const float tHeight = yScale * font->CalcTextHeight(text);
-			const float x = (winPos.x / (float)gu->viewSizeX) - (0.5f * tWidth);
-			const float y = (winPos.y / (float)gu->viewSizeY) + tHeight + yOffset;
+			const float tWidth  = fontScale * font->CalcTextWidth(text);
+			const float tHeight = fontScale * font->CalcTextHeight(text);
+			const float x = (winPos.x * gu->pixelX) - (0.5f * tWidth);
+			const float y = (winPos.y * gu->pixelY) + tHeight + yOffset;
 
-			glPushMatrix();
-			glTranslatef(x, y, 0.0f);
-			glScalef(xScale, yScale, 1.0f);
 			if (outlineFont.IsEnabled()) {
 				const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-				const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-				font->glPrintOutlined(text, xPixel, yPixel, white, black);
+				//const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+				font->glPrintOutlinedAt(x, y, fontScale, text, white);
 			} else {
-				font->glPrintRaw(text);
+				font->glPrintAt(x, y, fontScale, text);
 			}
-			glPopMatrix();
 		}
 	}
 }
@@ -235,5 +228,8 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 	
 	return NULL;
 }
+
+
+
 
 

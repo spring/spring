@@ -67,8 +67,8 @@ void CTooltipConsole::Draw(void)
 
 	const std::string s = mouse->GetCurrentTooltip();
 
-	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (!outFont) {
@@ -76,16 +76,12 @@ void CTooltipConsole::Draw(void)
 		glRectf(x, y, (x + w), (y + h));
 	}
 
-	const float yScale = 0.015f;
-	const float xScale = (yScale / gu->aspectRatio) * 1.2f;
-	const float xPixel  = 1.0f / (xScale * (float)gu->viewSizeX);
-	const float yPixel  = 1.0f / (yScale * (float)gu->viewSizeY);
+	const float fontScale = 1.0f;
+	const float fontHeight = fontScale * smallFont->GetHeight();
 
-	glTranslatef(x + 0.01f, y + 0.08f, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
+	float curX = x + 0.01f;
+	float curY = y + 0.07f;
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-
-	glEnable(GL_TEXTURE_2D);
 
 	unsigned int p = 0;
 	while (p < s.size()) {
@@ -97,16 +93,14 @@ void CTooltipConsole::Draw(void)
 			}
 		}
 		if (!outFont) {
-			font->glPrintColor("%s", s2.c_str());
+			smallFont->glPrintColorAt(curX, curY, fontScale, s2.c_str());
 		} else {
 			const float color[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-			outlineFont.print(xPixel, yPixel, color, StripColorCodes(s2).c_str());
-			font->glPrintColor("%s", s2.c_str());
+			smallFont->glPrintOutlinedAt(curX, curY, fontScale, StripColorCodes(s2).c_str(), color);
+			smallFont->glPrintColorAt(curX, curY, fontScale, s2.c_str());
 		}
-		glTranslatef(0.0f, -1.2f, 0.0f);
+		curY -= fontHeight;
 	}
-
-	glPopMatrix();
 }
 
 
