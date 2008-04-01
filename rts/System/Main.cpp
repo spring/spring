@@ -22,6 +22,7 @@
 #endif
 
 
+
 // On msvc main() is declared as a non-throwing function.
 // Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
 int Run(int argc, char *argv[])
@@ -84,6 +85,8 @@ int Run(int argc, char *argv[])
 #endif
 }
 
+
+
 /**
  * @brief main
  * @return exit code
@@ -97,6 +100,8 @@ int main( int argc, char *argv[]) // , char *envp[ ] <- not used
 	return Run (argc,argv);
 }
 
+
+
 #ifdef WIN32
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
@@ -106,4 +111,5 @@ int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLi
 }
 
 #endif
+
 

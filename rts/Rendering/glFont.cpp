@@ -18,25 +18,114 @@ using namespace std;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CglFont* font;
+CglFont *font, *smallFont;
 
-typedef struct 
+class texture_size_exception : public std::exception
 {
-	int bitmap_width;
-	int bitmap_rows;
-	FT_Pos ybearing;
-	FT_Pos xbearing;
-	FT_Pos advance_x;
-	FT_Pos height;
-	unsigned char * bitmap_buffer;
-	int bitmap_pitch; 
-} StoredGlyph;
+};
+
+/**
+ * A utility class for CglFont which collects all glyphs of
+ * a font into one square luminance/alpha texture.
+ */
+class CFontTextureRenderer
+{
+public:
+	CFontTextureRenderer(int width, int height);
+	~CFontTextureRenderer();
+	void AddGlyph(FT_GlyphSlot slot, int &outX, int &outY);
+	GLuint CreateTexture();
+private:
+	int width, height;
+	unsigned char *buffer, *cur;
+	int curX, curY;
+	int curHeight;		// height of highest glyph in current line
+
+	void BreakLine();
+};
+
+CFontTextureRenderer::CFontTextureRenderer(int width, int height)
+{
+	this->width = width;
+	this->height = height;
+	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
+	memset(buffer, 0, 2*width*height);
+	cur = buffer;
+	curX = curY = 0;
+	curHeight = 0;
+}
+
+CFontTextureRenderer::~CFontTextureRenderer()
+{
+	if (buffer)
+		delete buffer;
+}
+
+void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
+{
+	FT_Bitmap &bmp = slot->bitmap;
+	if (bmp.width > width - curX)
+		BreakLine();
+	if (bmp.width > width - curX)
+		throw texture_size_exception();
+	if (bmp.rows > height - curY)
+		throw texture_size_exception();
+
+	// blit the bitmap into our buffer (row by row to avoid pitch issues)
+	for (int y = 0; y < bmp.rows; y++) {
+		unsigned char *src = bmp.buffer + y * bmp.pitch;
+		unsigned char *dst = cur + 2 * y * width;
+		for (int x = 0; x < bmp.width; x++) {
+			*dst++ = 255;		// luminance
+			*dst++ = *src++;	// alpha
+		}
+	}
+	outX = curX; outY = curY;
+
+	curX += bmp.width + 1;		// leave one pixel space between each glyph
+	cur += 2*(bmp.width + 1);
+	curHeight = max(curHeight, bmp.rows);
+}
+
+void CFontTextureRenderer::BreakLine()
+{
+	curX = 0;
+	curY += curHeight;
+	curHeight = 0;
+
+	if (curY >= height)
+		throw texture_size_exception();
+
+	cur = buffer + curY * 2*width;
+}
+
+GLuint CFontTextureRenderer::CreateTexture()
+{
+	GLuint tex;
+	glGenTextures(1, &tex);
+
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	if (GLEW_EXT_texture_edge_clamp) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, 
+		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
+	delete [] buffer;
+	buffer = 0;
+	if (glGetError() != GL_NO_ERROR)
+		throw std::runtime_error("Could not allocate font texture.");
+	return tex;
+}
 
 
-#define DRAW_SIZE 1
-#define FONTSIZE 20
 
-CglFont::CglFont(int start, int end, const char* fontfile)
+CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWidth, int texHeight)
 {
 	FT_Library library;
 	FT_Face face;
@@ -55,7 +144,8 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 		throw content_error(msg);
 	}
 
-	FT_Set_Char_Size(face, FONTSIZE << 6, FONTSIZE << 6, 96,96);
+	const float height = gu->viewSizeY*size*64.0f;
+	FT_Set_Char_Size(face, (int)(height * gu->aspectRatio/(4.0f/3.0f)), (int)height, 72, 72);
 
 	// clamp the char range
 	end = min(254, end);
@@ -66,24 +156,19 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 	charend = end;
 	charstart = start;
 
-	charWidths = SAFE_NEW int[chars];
-	charHeights = SAFE_NEW int[chars];
-	textures = SAFE_NEW GLuint[chars];
-
-	listbase        = glGenLists(chars);
-	listbaseNoshift = glGenLists(chars);
-	glGenTextures(chars, textures);
+	glyphs = SAFE_NEW GlyphInfo[chars];
 	
-	StoredGlyph * glyphs = SAFE_NEW StoredGlyph[chars];
+	const float toX = gu->pixelX;
+	const float toY = gu->pixelY;
+		
+	float descender = FT_MulFix(face->descender, face->size->metrics.y_scale) / 64.0f;	// max font descender in pixels
+	fontHeight = FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f * toY;	// distance between baselines in screen units
 
-	int maxabove = 0;
-	int maxbelow = 0;
-	int maxleft = 0;
-	int maxright = 0;
-	
+	CFontTextureRenderer texRenderer(texWidth, texHeight);
+
 	for (int i = charstart; i <= charend; i++) {
-		StoredGlyph* g = &(glyphs[i - charstart]);
-	
+		GlyphInfo *g = &glyphs[i-charstart];
+
 		// retrieve glyph index from character code
 		FT_UInt glyph_index = FT_Get_Char_Index(face, i);
 		
@@ -101,180 +186,70 @@ CglFont::CglFont(int start, int end, const char* fontfile)
 			throw std::runtime_error(msg);
 		}
 		FT_GlyphSlot slot = face->glyph;
+
+		int texture_x, texture_y;
+		try {
+			texRenderer.AddGlyph(slot, texture_x, texture_y);
+		} catch (texture_size_exception&) {
+			FT_Done_Face(face);			// destructor does not run when re-throwing
+			FT_Done_FreeType(library);
+			delete [] glyphs;
+			throw;
+		}
 		
-		g->bitmap_width = slot->bitmap.width;
-		g->bitmap_rows = slot->bitmap.rows;
-		g->bitmap_pitch = slot->bitmap.pitch;
+		int bitmap_width = slot->bitmap.width;
+		int bitmap_rows = slot->bitmap.rows;
+		int bitmap_pitch = slot->bitmap.pitch;
 		// Keep sign!
-		g->ybearing = slot->metrics.horiBearingY / 64;	
-		g->xbearing = slot->metrics.horiBearingX / 64;
-		g->advance_x = slot->advance.x;
-		g->height = slot->metrics.height;
-		
-		g->bitmap_buffer = SAFE_NEW unsigned char[slot->bitmap.rows * slot->bitmap.width];
-		memcpy(g->bitmap_buffer, 
-			slot->bitmap.buffer, 
-			slot->bitmap.width * slot->bitmap.rows);
-		
-		/* Vertical bearing. */
-		int above = 0;
-		int below = 0;
-		
-		if (g->ybearing >= 0) {
-			above = g->ybearing;
-			if (g->bitmap_rows > g->ybearing) {
-				below = g->bitmap_rows - g->ybearing;
-			}
-			/* Otherwise, it does not extend below the line. */
-		} else {
-			/* If the bearing defines the top, then the character 
-			   does not extend above the baseline. */
-		
-			below = abs(g->ybearing) + g->bitmap_rows;
-		}
-		
-		maxabove = max(above, maxabove);
-		maxbelow = max(below, maxbelow);
-				
-		/* Horizontal bearing. */
-		int left = 0;
-		int right = 0;
-		
-		if (g->xbearing >= 0) {
-			right = g->xbearing + g->bitmap_width;
-		} else {
-			left = abs(g->xbearing);
-			/* If the character extends back across the origin's
-			   Y axis, then there's also a right component. */
-			if (g->bitmap_width > left) {
-				right = g->bitmap_width - left;
-			}
-		}
-		
-		maxleft = max(left, maxleft);
-		maxright = max(right, maxright);
+		float ybearing = slot->metrics.horiBearingY / 64.0f;
+		float xbearing = slot->metrics.horiBearingX / 64.0f;
+
+		g->advance = slot->advance.x / 64.0f * toX;
+		g->height = slot->metrics.height / 64.0f * toY;
+
+		// determine texture coordinates of glyph bitmap in font texture
+		g->u0 = (float)texture_x / (float)texWidth;
+		g->v0 = (float)texture_y / (float)texHeight;
+		g->u1 = g->u0 + (float)bitmap_width / (float)texWidth;
+		g->v1 = g->v0 + (float)bitmap_rows / (float)texHeight;
+
+		g->x0 = xbearing * toX;
+		g->y0 = (ybearing - descender) * toY;
+		g->x1 = (xbearing + bitmap_width) * toX;
+		g->y1 = g->y0 - (slot->metrics.height / 64.0f) * toY;
 	}
 	
-	int texsize = max(maxleft + maxright, maxabove + maxbelow);
-	/* Make texture sizes a power of two */
-	int p2 = 1;
-	while (p2 < texsize) p2 <<= 1;
-	texsize = p2;
-
-	/* Now copy each bitmap into a texture of the same size, 
-	   but position them so the bottom of the e, g and k all
-	   start on the same pixel, so they line up properly at
-	   the right size. */
-	
-	// variable sized arrays on stack is a GCC-specific feature unfortunately...
-	unsigned char *tex = SAFE_NEW unsigned char[texsize*texsize*2];
-	
-	for (int ch = charstart; ch <= charend; ch++) {
-		StoredGlyph* g = &(glyphs[ch - charstart]);
-		
-		/* Copy the glyph into position. */
-		signed int move_down = maxabove - g->ybearing;
-		signed int move_right = g->xbearing;
-			
-		for (int y = 0; y < texsize; y++) {
-			for (int x = 0; x < texsize; x++) {
-				unsigned char pel_val;
-				
-				int buf_y = y - move_down;
-				int buf_x = x - move_right;
-				
-				if ((buf_x < 0) || (buf_x >= g->bitmap_width) ||
-				    (buf_y < 0) || (buf_y >= g->bitmap_rows)) {
-					pel_val = 0;
-				} else {
-					pel_val = g->bitmap_buffer[g->bitmap_pitch*buf_y+buf_x];
-				}
-				
-				tex[(y*texsize+x)*2+0] = 255;
-				tex[(y*texsize+x)*2+1] = pel_val;
-			}
-		}
-		
-		/* Upload the glyph's bitmap. */
-		glBindTexture(GL_TEXTURE_2D,textures[ch - charstart]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		if (GLEW_EXT_texture_edge_clamp) {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		}
-		glTexImage2D(GL_TEXTURE_2D, 
-			0, 2, 
-			texsize, texsize, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, tex);
-		
-		charWidths[ch - charstart] = g->advance_x / 2 / texsize;		
-		charHeights[ch - charstart] = g->height / 2 / texsize;		
-		const float x = (charWidths[ch - charstart]) / 32.0f;
-		const float y = 1 - 1.0f / 64;
-		
-		/* Upload drawing instructions for the glyph. */
-		glNewList(listbase + (ch - charstart), GL_COMPILE);
-		glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
-		glBegin(GL_TRIANGLE_STRIP);
-			glTexCoord2f(0, y); glVertex3f(0, 0, 0);
-			glTexCoord2f(0, 0); glVertex3f(0, DRAW_SIZE, 0);
-			glTexCoord2f(x, y); glVertex3f(DRAW_SIZE * x, 0, 0);
-			glTexCoord2f(x, 0); glVertex3f(DRAW_SIZE * x, DRAW_SIZE, 0);
-		glEnd();
-		glTranslatef(DRAW_SIZE * (x + 0.02f), 0, 0);
-		glEndList();
-		
-		/* Upload drawing instructions for the glyph, without the translation or texture binding */
-		glNewList(listbaseNoshift + (ch - charstart), GL_COMPILE);
-		glBegin(GL_TRIANGLE_STRIP);
-			glTexCoord2f(0, y); glVertex3f(0, 0, 0);
-			glTexCoord2f(0, 0); glVertex3f(0, DRAW_SIZE, 0);
-			glTexCoord2f(x, y); glVertex3f(DRAW_SIZE * x, 0, 0);
-			glTexCoord2f(x, 0); glVertex3f(DRAW_SIZE * x, DRAW_SIZE, 0);
-		glEnd();
-		glEndList();
-		
-		delete[] g->bitmap_buffer;
-		g->bitmap_buffer = NULL;
-	}
-
-	delete[] tex;
-	delete[] glyphs;
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
+
+	fontTexture = texRenderer.CreateTexture();
+
+	outline = false;
+	color = outlineColor = 0;
 }
 
+
+CglFont *CglFont::TryConstructFont(std::string fontFile, int start, int end, float size)
+{
+	CglFont *newFont = 0;
+	int texWidth = 128, texHeight = 128;
+	while (true) {
+		try {
+			newFont = SAFE_NEW CglFont(start, end, fontFile.c_str(), size, texWidth, texHeight);
+			return newFont;
+		} catch(texture_size_exception&) {
+			// texture size too small; make higher or wider
+			if (texHeight <= texWidth)
+				texHeight *= 2;
+			else
+				texWidth *= 2;
+		}
+	}
+}
 
 CglFont::~CglFont()
 {
-	glDeleteLists(listbase, chars);
-	glDeleteLists(listbaseNoshift, chars);
-	glDeleteTextures(chars, textures);
-	delete[] textures;
-	delete[] charWidths;
-	delete[] charHeights;
-}
-
-
-void CglFont::printstring(const unsigned char *text)
-{
-	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
-	glMatrixMode(GL_MODELVIEW);
-	glDisable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for (int i = 0; i < strlen((const char*)text); i++) {
-		const unsigned int ch = (unsigned char)text[i];
-		if ((ch >= charstart) && (ch <= charend)) {
-			glCallList((ch - charstart) + listbase);
-		}
-	}
-	glPopAttrib();
+	delete[] glyphs;
 }
 
 
@@ -289,97 +264,16 @@ static inline int SkipColorCodes(const char* text, int c)
 	return c;
 }
 
-
-void CglFont::glPrintOutlined(const char* text,
-                              float shiftX, float shiftY,
-                              const float* normalColor,
-                              const float* outlineColor)
-{
-	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glDisable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	const float twiceY = shiftY*2;
-	for (int i = 0; i < strlen(text); i++) {
-		i = SkipColorCodes(text, i);
-		if (i < 0) {
-			break;
-		}
-		const unsigned int ch = (unsigned char)text[i];
-		if ((ch >= charstart) && (ch <= charend)) {
-			glBindTexture(GL_TEXTURE_2D, textures[ch - charstart]);
-			const GLuint nsList = (ch - charstart) + listbaseNoshift;
-			glColor4fv(outlineColor);
-			glTranslatef(+shiftX, +shiftY, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, -twiceY, 0.0f); glCallList(nsList);
-			glTranslatef(-(shiftX*2), 0.0f, 0.0f); glCallList(nsList);
-			glTranslatef(0.0f, +twiceY, 0.0f); glCallList(nsList);
-			glTranslatef(+shiftX, -shiftY, 0.0f);
-			glColor4fv(normalColor);
-			glCallList((ch - charstart) + listbase);
-		}
-	}
-	glPopMatrix();
-	glPopAttrib();
-}
-
-
-void CglFont::glPrint(const char *fmt, ...)
-{
-	char text[512];
-	va_list	ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-	glPushMatrix();
-	printstring((const unsigned char*)text);
-	glPopMatrix();
-}
-
-void CglFont::glPrintColor(const char* fmt, ...)
-{
-	char text[512];
-	va_list ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-	glPushAttrib(GL_COLOR_BUFFER_BIT);
-	glPushMatrix();
-	glColor3f(1, 1, 1);
-	size_t lf;
-	string temp=text;
-	while((lf=temp.find("\xff"))!=string::npos) {
-		printstring((const unsigned char*)temp.substr(0, lf).c_str());
-		temp=temp.substr(lf, string::npos);
-		float r=((unsigned char)temp[1])/255.0f;
-		float g=((unsigned char)temp[2])/255.0f;
-		float b=((unsigned char)temp[3])/255.0f;
-		glColor3f(r, g, b);
-		temp=temp.substr(4, string::npos);
-	}
-	printstring((const unsigned char*)temp.c_str());
-	glPopMatrix();
-	glPopAttrib();
-}
-
-float CglFont::CalcCharWidth (char c)
+float CglFont::CalcCharWidth (char c) const
 {
 	const unsigned int ch = (unsigned int)c;
 	if ((c >= charstart) && (c <= charend)) {
-		return 0.02f + (charWidths[ch - charstart] / 32.0f);
-	}
-	return 0.02f + (charWidths[0] / 32.0f);
+		return glyphs[ch - charstart].advance;
+	} else
+		return 0.0f;
 }
 
-float CglFont::CalcTextWidth(const char *text)
+float CglFont::CalcTextWidth(const char *text) const
 {
 	float w=0.0f;
 	for (int a = 0; text[a]; a++)  {
@@ -389,14 +283,14 @@ float CglFont::CalcTextWidth(const char *text)
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
-			const float charpart = (charWidths[c - charstart]) / 32.0f;
-			w += charpart + 0.02f;
+			const float charpart = glyphs[c - charstart].advance;
+			w += charpart;// + 0.02f;
 		}
 	}
 	return w;
 }
 
-float CglFont::CalcTextHeight(const char *text)
+float CglFont::CalcTextHeight(const char *text) const
 {
 	float h=0.0f;
 	for (int a = 0; text[a]; a++)  {
@@ -406,115 +300,287 @@ float CglFont::CalcTextHeight(const char *text)
 		}
 		const unsigned int c = (unsigned int)text[a];
 		if ((c >= charstart) && (c <= charend)) {
-			float charpart = (charHeights[c - charstart])/32.0f;
+			float charpart = glyphs[c - charstart].height;
 			if (charpart > h) {
 				h = charpart;
 			}
 		}
 	}
-	return h+0.03f;
+	return h;
 }
 
-void CglFont::glWorldPrint(const char *fmt, ...)
+
+void CglFont::Outline(bool enable, const float *color, const float *outlineColor)
 {
-	char text[512];
-	va_list	ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-	glPushMatrix();
-	glRasterPos2i(0,0);
-	float w=CalcTextWidth (text);
-	/* Center (screen-wise) the text above the current position. */
-	glTranslatef(-0.5f*DRAW_SIZE*w*camera->right.x,
-	             -0.5f*DRAW_SIZE*w*camera->right.y,
-	             -0.5f*DRAW_SIZE*w*camera->right.z);
-	for (int a = 0; text[a]; a++)
-		WorldChar(text[a]);
-	glPopMatrix();
+	this->outline = enable;
+	if (enable) {
+		if (color) {		// if color is null, we keep the old settings (which should better not be null)
+			this->color = color;
+			this->outlineColor = outlineColor ? outlineColor : ChooseOutlineColor(color);
+		}
+	}
 }
+
+float CglFont::RenderString(float x, float y, float s, const unsigned char *text) const
+{
+//	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, fontTexture);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	/* NOTE:
+	 *
+	 * Font rendering no longer uses display lists, but immediate mode quads. This might
+	 * sound crazy at first, but it's actually faster for these reasons:
+	 *
+	 * 1. When using DLs, we can not group multiple glyphs into one glBegin/End pair
+	 *    because glTranslatef can not go between such a pair.
+	 * 2. We can now eliminate all glPushMatrix/PopMatrix pairs related to font rendering
+	 *    because the transformations are calculated on the fly. These are just a couple of
+	 *    floating point multiplications and shouldn't be too expensive.
+	 * 3. There is a certain overhead to using DLs, and having one quad per DL is probably
+	 *    not efficient.
+	 */
+
+	glBegin(GL_QUADS);
+	for (int i = 0; i < strlen((const char*)text); i++) {
+		const unsigned int ch = (unsigned char)text[i];
+		if ((ch >= charstart) && (ch <= charend)) {
+			GlyphInfo *g = &glyphs[ch - charstart];
+
+			glTexCoord2f(g->u0, g->v1); glVertex2f(x+s*g->x0, y+s*g->y1);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(x+s*g->x0, y+s*g->y0);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(x+s*g->x1, y+s*g->y0);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(x+s*g->x1, y+s*g->y1);
+
+			x += s*g->advance;
+		}
+	}
+	glEnd();
+
+	glPopAttrib();
+
+	return x;
+}
+
+float CglFont::RenderStringOutlined(float x, float y, float s, const unsigned char *text)
+{
+	const float shiftX = gu->pixelX, shiftY = gu->pixelY;
+
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, fontTexture);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glBegin(GL_QUADS);
+	for (int i = 0; i < strlen((const char*)text); i++) {
+		const unsigned int ch = (unsigned char)text[i];
+		if ((ch >= charstart) && (ch <= charend)) {
+
+			GlyphInfo *g = &glyphs[ch - charstart];
+
+			float dx0 = x + s * g->x0, dy0 = y + s * g->y0;
+			float dx1 = x + s * g->x1, dy1 = y + s * g->y1;
+
+			glColor4fv(outlineColor);
+
+			// draw 4 offset copies of the character
+			glTexCoord2f(g->u0, g->v1); glVertex2f(dx0+shiftX, dy1+shiftY);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(dx0+shiftX, dy0+shiftY);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(dx1+shiftX, dy0+shiftY);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(dx1+shiftX, dy1+shiftY);
+
+			glTexCoord2f(g->u0, g->v1); glVertex2f(dx0+shiftX, dy1-shiftY);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(dx0+shiftX, dy0-shiftY);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(dx1+shiftX, dy0-shiftY);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(dx1+shiftX, dy1-shiftY);
+
+			glTexCoord2f(g->u0, g->v1); glVertex2f(dx0-shiftX, dy1-shiftY);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(dx0-shiftX, dy0-shiftY);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(dx1-shiftX, dy0-shiftY);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(dx1-shiftX, dy1-shiftY);
+
+			glTexCoord2f(g->u0, g->v1); glVertex2f(dx0-shiftX, dy1+shiftY);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(dx0-shiftX, dy0+shiftY);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(dx1-shiftX, dy0+shiftY);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(dx1-shiftX, dy1+shiftY);
+
+			glColor4fv(color);
+
+			// draw the actual character
+			glTexCoord2f(g->u0, g->v1); glVertex2f(dx0, dy1);
+			glTexCoord2f(g->u0, g->v0); glVertex2f(dx0, dy0);
+			glTexCoord2f(g->u1, g->v0); glVertex2f(dx1, dy0);
+			glTexCoord2f(g->u1, g->v1); glVertex2f(dx1, dy1);
+
+			x += s*g->advance;
+		}
+	}
+	glEnd();
+
+	glPopAttrib();
+	
+	outline = false;		// outlining is valid only for one drawing operation
+	return x;
+}
+
+
+void CglFont::glPrintOutlinedAt(float x, float y, float scale, const char* text, const float* normalColor)
+{
+	Outline(true, normalColor);
+	glPrintAt(x, y, scale, text);
+}
+
+void CglFont::glPrintOutlinedRight(float x, float y, float scale, const char* text, const float* normalColor)
+{
+	Outline(true, normalColor);
+	glPrintRight(x, y, scale, text);
+}
+
+void CglFont::glPrintOutlinedCentered(float x, float y, float scale, const char* text, const float* normalColor)
+{
+	Outline(true, normalColor);
+	glPrintCentered(x, y, scale, text);
+}
+
+// macro for formatting printf-style
+#define FORMAT_STRING(fmt,out)					\
+		char out[512];							\
+		va_list	ap;								\
+		if (fmt == NULL)						\
+			return;								\
+		va_start(ap, fmt);						\
+		VSNPRINTF(out, sizeof(out), fmt, ap);	\
+		va_end(ap);
+
+
+void CglFont::glWorldPrint(const char *str) const
+{
+	float w=gu->aspectRatio * CalcTextWidth(str);
+	/* Center (screen-wise) the text above the current position. */
+	glTranslatef(-0.5f*w*camera->right.x,
+	             -0.5f*w*camera->right.y,
+	             -0.5f*w*camera->right.z);
+	glBindTexture(GL_TEXTURE_2D, fontTexture);
+	for (int a = 0; str[a]; a++) {
+		unsigned int ch = (unsigned char)str[a];
+		if (ch >= charstart && ch <= charend)
+			WorldChar(ch);
+	}
+}
+
+void CglFont::WorldChar(unsigned int ch) const
+{
+	GlyphInfo *g = &glyphs[ch - charstart];
+
+	glBegin(GL_QUADS);
+
+	const float aspect = gu->aspectRatio;
+	const float ux = camera->up.x, uy = camera->up.y, uz = camera->up.z;
+	const float rx = aspect*camera->right.x, ry = aspect*camera->right.y, rz = aspect*camera->right.z;
+
+#define CAMCOORDS(cx,cy) cx*rx+cy*ux,cx*ry+cy*uy,cx*rz+cy*uz
+
+	glTexCoord2f(g->u0, g->v1);
+	glVertex3f(CAMCOORDS(g->x0, g->y1));
+
+	glTexCoord2f(g->u0, g->v0);
+	glVertex3f(CAMCOORDS(g->x0, g->y0));
+
+	glTexCoord2f(g->u1, g->v0);
+	glVertex3f(CAMCOORDS(g->x1, g->y0));
+
+	glTexCoord2f(g->u1, g->v1);
+	glVertex3f(CAMCOORDS(g->x1, g->y1));
+
+	glEnd();
+
+	float advance = g->advance;
+	glTranslatef(advance*rx, advance*ry, advance*rz);
+}
+
+
 
 // centered version of glPrintAt
 void CglFont::glPrintCentered (float x, float y, float s, const char *fmt, ...)
 {
-	char text[512];
-	va_list	ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
+	FORMAT_STRING(fmt,text);
 
-	glPushMatrix();
-	glTranslatef(x,y,0.0f);
-	glScalef(0.02f*s,0.025f*s,1.0f);
-	glTranslatef(-0.5f*font->CalcTextWidth(text),0.0f,0.0f);
-	printstring((const unsigned char*)text);
-	glPopMatrix();
+	x -= s * 0.5f * CalcTextWidth(text);
+
+	if (outline)
+		RenderStringOutlined(x, y, s, (const unsigned char*)text);
+	else
+		RenderString(x, y, s, (const unsigned char*)text);
+}
+
+void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *str)
+{
+	if (outline)
+		RenderStringOutlined(x, y, s, (const unsigned char*)str);
+	else
+		RenderString(x, y, s, (const unsigned char*)str);
 }
 
 // right justified version of glPrintAt
 void CglFont::glPrintRight (float x, float y, float s, const char *fmt, ...)
 {
-	char text[512];
-	va_list	ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
+	FORMAT_STRING(fmt,text);
 
-	glPushMatrix();
-	glTranslatef(x,y,0.0f);
-	glScalef(0.02f*s,0.025f*s,1.0f);
-	glTranslatef(-font->CalcTextWidth(text),0.0f,0.0f);
-	printstring((const unsigned char*)text);
-	glPopMatrix();
+	x -= s * CalcTextWidth(text);
+
+	if (outline)
+		RenderStringOutlined(x, y, s, (const unsigned char*)text);
+	else
+		RenderString(x, y, s, (const unsigned char*)text);
 }
 
-void CglFont::glPrintAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
+void CglFont::glPrintColorAt(GLfloat x, GLfloat y, float s, const char *str)
 {
-	char text[512];
-	va_list	ap;
-	if (fmt == NULL)
-		return;
-	va_start(ap, fmt);
-	VSNPRINTF(text, sizeof(text), fmt, ap);
-	va_end(ap);
-	glPushMatrix();
-	glTranslatef(x, y, 0.0f);
-	glScalef(.02f * s, .03f * s, .01f);
-	printstring((const unsigned char*)text);
-	glPopMatrix();
+	glColor3f(1, 1, 1);
+	size_t lf;
+	string temp=str;
+	while((lf=temp.find("\xff"))!=string::npos) {
+		x = RenderString(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
+		temp=temp.substr(lf, string::npos);
+		float r=((unsigned char)temp[1])/255.0f;
+		float g=((unsigned char)temp[2])/255.0f;
+		float b=((unsigned char)temp[3])/255.0f;
+		glColor3f(r, g, b);
+		temp=temp.substr(4, string::npos);
+	}
+	RenderString(x, y, s, (const unsigned char*)temp.c_str());
 }
 
-void CglFont::WorldChar(char c)
+void CglFont::glFormatAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 {
-	float charpart=(charWidths[c - charstart])/32.0f;
-	glBindTexture(GL_TEXTURE_2D, textures[c - charstart]);
-	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0,1);
-		glVertex3f(0,0,0);
-		glTexCoord2f(0,0);
-		glVertex3f(DRAW_SIZE*camera->up.x,
-		           DRAW_SIZE*camera->up.y,
-		           DRAW_SIZE*camera->up.z);
-		glTexCoord2f(charpart,1);
-		glVertex3f(DRAW_SIZE*charpart*camera->right.x,
-		           DRAW_SIZE*charpart*camera->right.y,
-		           DRAW_SIZE*charpart*camera->right.z);
-		glTexCoord2f(charpart,0);
-		glVertex3f(DRAW_SIZE*(camera->up.x+camera->right.x*charpart),
-		           DRAW_SIZE*(camera->up.y+camera->right.y*charpart),
-		           DRAW_SIZE*(camera->up.z+camera->right.z*charpart));
-	glEnd();
-	glTranslatef(DRAW_SIZE*(charpart+0.03f)*camera->right.x,
-	             DRAW_SIZE*(charpart+0.03f)*camera->right.y,
-	             DRAW_SIZE*(charpart+0.03f)*camera->right.z);
+	FORMAT_STRING(fmt,text);
+	glPrintAt(x, y, s, text);
 }
 
+
+const float* CglFont::ChooseOutlineColor(const float *textColor)
+{
+	static const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+	static const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
+
+	const float luminance = (textColor[0] * 0.299f) +
+	                        (textColor[1] * 0.587f) +
+	                        (textColor[2] * 0.114f);
+	                        
+	if (luminance > 0.25f) {
+		return darkOutline;
+	} else {
+		return lightOutline;
+	}
+}
 
 
 #undef __FTERRORS_H__
@@ -529,7 +595,7 @@ void CglFont::WorldChar(char c)
 #include FT_ERRORS_H
 
 
-const char* CglFont::GetFTError (FT_Error e)
+const char* CglFont::GetFTError (FT_Error e) const
 {
 	for (int a=0;errorTable[a].err_msg;a++) {
 		if (errorTable[a].err_code == e)

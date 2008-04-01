@@ -204,15 +204,20 @@ bool SpringApp::Initialize ()
 	const int charLast  = configHandler.GetInt("FontCharLast", 255);
 	std::string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
 
+	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
+	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
+
 	try {
-		font = SAFE_NEW CglFont(charFirst, charLast, fontFile.c_str());
+		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
+		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
 	} catch(content_error&) {
 		// If the standard location fails, retry in fonts directory or vice versa.
 		if (fontFile.substr(0, 6) == "fonts/")
 			fontFile = fontFile.substr(6);
 		else
 			fontFile = "fonts/" + fontFile;
-		font = SAFE_NEW CglFont(charFirst, charLast, fontFile.c_str());
+		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
+		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
 	}
 
 	// Initialize GLEW
@@ -507,6 +512,9 @@ void SpringApp::SetupViewportGeometry()
 			gu->viewPosY = 0;
 		}
 	}
+
+	gu->pixelX = 1.0f / (float)gu->viewSizeX;
+	gu->pixelY = 1.0f / (float)gu->viewSizeY;
 
 	// NOTE:  gu->viewPosY is not currently used
 

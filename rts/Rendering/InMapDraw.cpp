@@ -246,9 +246,9 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			if (pi->label.size() > 0) {
 				glPushMatrix();
 				glTranslatef3(pi->pos + UpVector * 105);
-				glScalef(30, 30, 30);
+				glScalef(1200, 1200, 1200);
 				glColor4ub(pi->color[0], pi->color[1], pi->color[2], 250);
-				font->glWorldPrint("%s", pi->label.c_str());
+				font->glWorldPrint(pi->label.c_str());
 				glPopMatrix();
 				glBindTexture(GL_TEXTURE_2D, texture);
 			}
@@ -519,4 +519,7 @@ void CInMapDraw::PromptLabel (const float3& pos)
 	game->userPrompt = "Label: ";
 	game->ignoreChar = '\xA7';		//should do something better here
 }
+
+
+
 

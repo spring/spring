@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "UnsyncedRNG.h"
 
 #include <limits.h>

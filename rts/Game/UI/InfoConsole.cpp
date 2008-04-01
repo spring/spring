@@ -64,11 +64,12 @@ void CInfoConsole::Draw()
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	glPushMatrix();
-	glDisable(GL_TEXTURE_2D);
-	glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
-
 	if(!data.empty() && !outlineFont.IsEnabled()){
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
+
 		glBegin(GL_TRIANGLE_STRIP);
 			glVertex3f(xpos,ypos,0);
 			glVertex3f(xpos+width,ypos,0);
@@ -77,38 +78,30 @@ void CInfoConsole::Draw()
 		glEnd();
 	}
 
-	const float xScale = 0.015f;
-	const float yScale = 0.020f;
+	const float fontScale = 0.6f;
+	const float fontHeight = fontScale * font->GetHeight();
 
-	glTranslatef(xpos + 0.01f, ypos - 0.026f, 0.0f);
-	glScalef(xScale, yScale, 1.0f);
-
-	glEnable(GL_TEXTURE_2D);
+	float curX = xpos + 0.01f;
+	float curY = ypos - 0.026f;
 
 	if (!outlineFont.IsEnabled()) {
 		glColor4f(1,1,1,1);
 
 		std::deque<InfoLine>::iterator ili;
 		for (ili = data.begin(); ili != data.end(); ili++) {
-			glPushMatrix();
-			font->glPrintRaw(ili->text.c_str());
-			glPopMatrix();
-			glTranslatef(0.0f, -1.2f, 0.0f);
+			font->glPrintAt(curX, curY, fontScale, ili->text.c_str());
+			curY -= fontHeight;
 		}
 	}
 	else {
-		const float xPixel = 1.0f / (xScale * (float)gu->viewSizeX);
-		const float yPixel = 1.0f / (yScale * (float)gu->viewSizeY);
 		const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 		std::deque<InfoLine>::iterator ili;
 		for (ili = data.begin(); ili != data.end(); ili++) {
-			outlineFont.print(xPixel, yPixel, white, ili->text.c_str());
-			glTranslatef(0.0f, -1.2f, 0.0f);
+			font->glPrintOutlinedAt(curX, curY, fontScale, ili->text.c_str(), white);
+			curY -= fontHeight;
 		}
 	}
-
-	glPopMatrix();
 }
 
 
@@ -178,7 +171,7 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 		char temp[120];
 		float w = 0.0f;
 		for (;text[pos] && pos-line_start < sizeof(temp) - 1 && w <= maxWidth;pos++) {
-			w += font->CalcCharWidth (text[pos]);
+			w += font->CalcCharWidth(text[pos]);
 			temp[pos-line_start] = text[pos];
 		}
 		temp[pos-line_start] = 0;

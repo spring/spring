@@ -247,8 +247,7 @@ bool CPreGame::Draw()
 		const float xStart = 0.10f;
 		const float yStart = 0.75f;
 
-		const float xScale = 0.03f;
-		const float yScale = 0.04f;
+		const float fontScale = 1.0f;
 
 		// draw the caret
 		const int caretPos = userPrompt.length() + writingPos;
@@ -256,19 +255,16 @@ bool CPreGame::Draw()
 		const float caretWidth = font->CalcTextWidth(caretStr.c_str());
 		char c = userInput[writingPos];
 		if (c == 0) { c = ' '; }
-		const float cw = xScale * font->CalcCharWidth(c);
-		const float csx = xStart + (xScale * caretWidth);
+		const float cw = fontScale * font->CalcCharWidth(c);
+		const float csx = xStart + (fontScale * caretWidth);
 		glDisable(GL_TEXTURE_2D);
 		const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
 		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, yStart, csx + cw, yStart + yScale);
+		glRectf(csx, yStart, csx + cw, yStart + fontScale * font->GetHeight());
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glTranslatef(xStart, yStart, 0.0f);
-		glScalef(xScale, yScale, 1.0f);
-		font->glPrintRaw(tempstring.c_str());
-		glLoadIdentity();
+		font->glPrintAt(xStart, yStart, fontScale, tempstring.c_str());
 	}
 
 	if (showList) {

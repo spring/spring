@@ -1993,19 +1993,13 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	}
 
 	if (unit->group) {
-		const float scale = 10.0f;
-		char buf[32];
+		const float fontScale = 10.0f / font->GetHeight();
+		char buf[16];
 		sprintf(buf, "%i", unit->group->id);
-		const float width = scale * font->CalcTextWidth(buf);
+		const float width = fontScale  * font->CalcTextWidth(buf);
 
-		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glTranslatef(-7.0f - width, 0.0f, 0.0f); // right justified
-		glScalef(scale, scale, scale);
 		glColor3f(1.0f, 1.0f, 1.0f);
-		font->glPrintSuperRaw(buf);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
+		font->glPrintAt(-7.0f - width, 0.0f, fontScale, buf);
 	}
 
 	glPopMatrix();

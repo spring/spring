@@ -39,14 +39,13 @@ void ProfileDrawer::Draw()
 		glEnd();
 	}
 
-	glEnable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
 
-	int y=0;
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, y++)
-		font->glPrintAt(0.655f, 0.960f-y*0.024f, 1.0f, "%20s %6.2fs %5.2f%%",pi->first.c_str(),((float)pi->second.total)/1000.f,pi->second.percent*100);
+	int y = 0;
+	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y)
+		font->glFormatAt(0.655f, 0.960f - y * 0.024f, 1.0f, "%20s %6.2fs %5.2f%%", pi->first.c_str(), ((float)pi->second.total) / 1000.f, pi->second.percent * 100);
 
 	glTranslatef(0.655f,0.965f,0);
 	glScalef(0.015f,0.02f,0.02f);
@@ -126,6 +125,7 @@ ProfileDrawer::ProfileDrawer()
 ProfileDrawer::~ProfileDrawer()
 {
 }
+
 
 
 

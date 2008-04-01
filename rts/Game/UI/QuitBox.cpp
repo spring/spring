@@ -151,7 +151,7 @@ void CQuitBox::Draw(void)
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
-		font->glPrintAt(box.x1 + teamBox.x1 + 0.002f,
+		font->glFormatAt(box.x1 + teamBox.x1 + 0.002f,
 		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f, 0.7f,
 		                "Team%i (%s)%s%s", actualTeam,
 		                teamName.c_str(), ally.c_str(), dead.c_str());

@@ -12,6 +12,9 @@
 #include <SDL_mouse.h>
 #include "mmgr.h"
 
+const float itemFontScale = 1.5f;
+const float itemXMargin = 0.02f;
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -51,7 +54,7 @@ void CglList::AddItem(const char *name,const char *description)
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
-	float w = font->CalcTextWidth(name) * 0.035f + 0.04f;
+	float w = itemFontScale * font->CalcTextWidth(name) + 2 * itemXMargin;
 	if (w > (box.x2 - box.x1)) {
 		box.x1 = 0.5f - 0.5f * w;
 		box.x2 = 0.5f + 0.5f * w;
@@ -140,10 +143,7 @@ void CglList::Draw()
 	DrawBox(box);
 
 	glColor4f(1,1,0.4f,0.8f);
-	glLoadIdentity();
-	glTranslatef(box.x1 + 0.01f, box.y2 - 0.05f, 0.0f);
-	glScalef(0.035f*0.7f,0.05f*0.7f,0.1f);
-	font->glPrint(name.c_str());
+	font->glPrintAt(box.x1 + 0.01f, box.y2 - 0.05f, itemFontScale*0.7f, name.c_str());
 
 	/****************************************
 	* Insert Robert Diamond's section here *
@@ -225,19 +225,14 @@ void CglList::Draw()
 		}
 
 		const float dShadow = 0.002f;
-		const float xStart = box.x1 + 0.02f;
-		const float yStart = box.y2 - 0.11f - (nDrawOffset * 0.06f);
+		const float xStart = box.x1 + itemXMargin;
+		const float yStart = b.y1 + 0.002f;
 
 		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
-		glTranslatef(xStart + dShadow, yStart - dShadow, 0.0f);
-		glScalef(0.035f, 0.05f, 0.1f);
-		font->glPrint(ii->c_str());
+		font->glPrintAt(xStart + dShadow, yStart - dShadow, itemFontScale, ii->c_str());
 
-		glLoadIdentity();
 		glColor4f(1,1,1,0.8f);
-		glTranslatef(xStart, yStart, 0.0f);
-		glScalef(0.035f,0.05f,0.1f);
-		font->glPrint(ii->c_str());
+		font->glPrintAt(xStart, yStart, itemFontScale, ii->c_str());
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;

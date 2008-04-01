@@ -79,7 +79,7 @@ struct FontString {
 	FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
 	void CalcDimensions() {
 		width = font->CalcTextWidth(msg.c_str());
-		height = font->CalcTextHeight(msg.c_str());
+		height = font->GetHeight();
 	}
 	string msg;
 	float width;
@@ -204,30 +204,26 @@ void CGameInfo::Draw()
 		values.push_back("ENABLED");
 	}
 
-	// in pixels	
-	const float split = 10.0f;
-	const float border = 5.0f;
-	const float xFontScale = 32.0f; // should not have to have these...
-	const float yFontScale = 32.0f;
+	// in screen fractions
+	const float split = 10.0f / (float)gu->viewSizeX;
+	const float xBorder = 5.0f / (float)gu->viewSizeX;
+	const float yBorder = 5.0f / (float)gu->viewSizeY;
+
 	float labelsWidth, labelsHeight;
 	float valuesWidth, valuesHeight;
 	StringListStats(labels, labelsWidth, labelsHeight);
 	StringListStats(values, valuesWidth, valuesHeight);
-	const float width = ((xFontScale * (labelsWidth + valuesWidth)) + split + (2.0f * border));
-	const float rowHeight = (yFontScale * std::max(labelsHeight, valuesHeight)) + (2.0f * border);
+
+	const float width = labelsWidth + valuesWidth + split + 2.0f * xBorder;
+	const float rowHeight = std::max(labelsHeight, valuesHeight) + 2.0f * yBorder;
 	const float height = rowHeight * (float)(labels.size());
 
-	// in screen fractions
-	const float sx = (float)gu->viewSizeX;
-	const float sy = (float)gu->viewSizeY;
-	const float dy = (height / sy) / (float)labels.size();
-	const float xBorder = border / sx;
-	const float yBorder = border / sy;
+	const float dy = height / (float)labels.size();
 	
-	box.x1 = 0.5f - (width / (2.0f * sx)); 
-	box.x2 = 0.5f + (width / (2.0f * sx)); 
-	box.y1 = 0.5f - (height / (2.0f * sy)); 
-	box.y2 = 0.5f + (height / (2.0f * sy)); 
+	box.x1 = 0.5f - (width * 0.5f); 
+	box.x2 = 0.5f + (width * 0.5f);
+	box.y1 = 0.5f - (height * 0.5f);
+	box.y2 = 0.5f + (height * 0.5f);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);

@@ -1095,7 +1095,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	}
 
 	if (!lua_isstring(L, 1)) {
-		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
+		logOutput.Print("LayoutButtons() bad menuName value\n");
 		lua_settop(L, top);
 		return false;
 	}
