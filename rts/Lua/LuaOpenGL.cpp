@@ -348,7 +348,9 @@ void LuaOpenGL::ResetGLState()
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
+	if (glBlendEquation != NULL) {
+		glBlendEquation(GL_FUNC_ADD);
+	}
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_ALPHA_TEST);

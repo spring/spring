@@ -451,7 +451,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.wingDrag     = udTable.GetFloat("wingDrag",     0.07f);  // drag caused by wings
 	ud.wingAngle    = udTable.GetFloat("wingAngle",    0.08f);  // angle between front and the wing plane
-	ud.drag         = udTable.GetFloat("drag",         0.005f); // how fast the aircraft loses speed (see also below)
 	ud.frontToSpeed = udTable.GetFloat("frontToSpeed", 0.1f);   // fudge factor for lining up speed and front of plane
 	ud.speedToFront = udTable.GetFloat("speedToFront", 0.07f);  // fudge factor for lining up speed and front of plane
 	ud.myGravity    = udTable.GetFloat("myGravity",    0.4f);   // planes are slower than real airplanes so lower gravity to compensate
@@ -638,6 +637,11 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		//meant to set the drag such that the maxspeed becomes what it should be
 		ud.drag = 1.0f / (ud.speed/GAME_SPEED * 1.1f / ud.maxAcc)
 		          - (ud.wingAngle * ud.wingAngle * ud.wingDrag);
+	} else {
+		//shouldn't be needed since drag is only used in CAirMoveType anyway,
+		//and aircraft without acceleration or speed aren't common :)
+		//initializing it anyway just for safety
+		ud.drag = 0.005f;
 	}
 
 	std::string objectname = udTable.GetString("objectName", "");

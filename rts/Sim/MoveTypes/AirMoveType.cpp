@@ -1134,6 +1134,9 @@ void CAirMoveType::CheckForCollision(void)
 			float3 ortoDif = dif - forwardDif;
 			//note that the radiuses is multiplied by two since we rely on
 			//the aircrafts having to small radiuses (see unitloader)
+			
+			// FIXME: with the new collision volumes, is this still true?
+
 			float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.1f + 10;
 			if (ortoDif.SqLength() < minOrtoDif * minOrtoDif) {
 				dist = frontLength;
@@ -1176,7 +1179,7 @@ void CAirMoveType::DependentDied(CObject* o)
 void CAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed = speed;
-	if (owner->unitDef->maxAcc != 0 && owner->maxSpeed != 0) {
+	if (maxAcc != 0 && maxSpeed != 0) {
 		//meant to set the drag such that the maxspeed becomes what it should be
 		float drag = 1.0f / (maxSpeed / GAME_SPEED * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
 		invDrag = 1 - drag;
