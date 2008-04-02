@@ -74,27 +74,28 @@ void CWordCompletion::Reset()
 	words["maxspect "] = mm;
 	
 	// remote commands
-	words[".atm"] = sl;
-	words[".cheat "] = sl;
-	words[".devlua "] = sl;
-	words[".editdefs "] = sl;
-	words[".give "] = sl;
-	words[".kick "] = sl;
-	words[".kickbynum "] = sl;
-	words[".luagaia "] = sl;
-	words[".luarules "] = sl;
-	words[".nocost"] = sl;
-	words[".nohelp "] = sl;
-	words[".nopause "] = sl;
-	words[".nospectatorchat "] = sl;
-	words[".reloadcob "] = sl;
-	words[".save "] = sl;
-	words[".setmaxspeed "] = sl;
-	words[".setminspeed "] = sl;
-	words[".skip +"] = sl;
-	words[".spectator"] = sl;
-	words[".take"] = sl;
-	words[".team "] = sl;
+	//TODO those commans are registered in Console, get the list from there
+	words["/atm"] = sl;
+	words["/cheat "] = sl;
+	words["/devlua "] = sl;
+	words["/editdefs "] = sl;
+	words["/give "] = sl;
+	words["/kick "] = sl;
+	words["/kickbynum "] = sl;
+	words["/luagaia "] = sl;
+	words["/luarules "] = sl;
+	words["/nocost"] = sl;
+	words["/nohelp "] = sl;
+	words["/nopause "] = sl;
+	words["/nospectatorchat "] = sl;
+	words["/reloadcob "] = sl;
+	words["/save "] = sl;
+	words["/setmaxspeed "] = sl;
+	words["/setminspeed "] = sl;
+	words["/skip +"] = sl;
+	words["/spectator"] = sl;
+	words["/take"] = sl;
+	words["/team "] = sl;
 	// words[".crash"] = sl; // don't make it too easy
 
 	return;
@@ -115,7 +116,7 @@ vector<string> CWordCompletion::Complete(string& msg) const
 {
 	vector<string> partials;
 
-	const bool unitName = (msg.find(".give ") == 0);
+	const bool unitName = (msg.find("/give ") == 0);
 	const bool minimap = (msg.find("/minimap ") == 0);
 	  
 	// strip "a:" and "s:" prefixes
