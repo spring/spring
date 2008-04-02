@@ -23,6 +23,7 @@ class LuaSyncedRead {
 		static int IsDevLuaEnabled(lua_State* L);
 		static int IsEditDefsEnabled(lua_State* L);
 		static int AreHelperAIsEnabled(lua_State* L);
+		static int FixedAllies(lua_State* L);
 
 		static int IsGameOver(lua_State* L);
 
