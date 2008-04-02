@@ -12,6 +12,7 @@
 
 #include "GameSetupData.h"
 #include "Action.h"
+#include "ChatMessage.h"
 #include "CommandMessage.h"
 #include "System/StdAfx.h"
 #include "System/BaseNetProtocol.h"
@@ -447,7 +448,7 @@ void CGameServer::Update()
 		std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty())
-			GotChatMessage(msg, SERVER_PLAYER);
+			GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
 	}
 	
 	if ((SDL_GetTicks() - serverStartTime) > serverTimeout && serverNet->MaxConnectionID() == -1)
@@ -570,14 +571,15 @@ void CGameServer::ServerReadNet()
 						break;
 					}
 
-					case NETMSG_CHAT:
-						if(inbuf[2]!=a){
-							log.Warning(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]);
+					case NETMSG_CHAT: {
+						ChatMessage msg((netcode::UnpackPacket*)packet);
+						if (msg.fromPlayer != a ) {
+							log.Warning(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer);
 						} else {
-							GotChatMessage(std::string((char*)(inbuf+3)), inbuf[2]);
+							GotChatMessage(msg);
 						}
 						break;
-
+					}
 					case NETMSG_SYSTEMMSG:
 						if(inbuf[2]!=a){
 							log.Warning(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]);
@@ -1338,12 +1340,12 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	serverNet->FlushNet();
 }
 
-void CGameServer::GotChatMessage(const std::string& msg, unsigned player)
+void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
-	serverNet->SendChat(player, msg);
-	if (hostif && player != SERVER_PLAYER) {
+	serverNet->SendData(msg.Pack());
+	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
 		// don't echo packets to autohost
-		hostif->SendPlayerChat(player, msg);
+		hostif->SendPlayerChat(msg.fromPlayer, msg.msg);
 	}
 }
 

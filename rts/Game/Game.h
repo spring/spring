@@ -27,6 +27,7 @@ class CKeySet;
 class CInfoConsole;
 class LuaParser;
 class Action;
+class ChatMessage;
 
 
 class CGame : public CGameController
@@ -131,8 +132,10 @@ public:
 protected:
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
-	void SendNetChat(const std::string& message);
-	void HandleChatMsg(std::string msg, int player);
+	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
+	void SendNetChat(std::string message, int destination = -1);
+	/// Format and display a chat message recieved over network
+	void HandleChatMsg(const ChatMessage& msg);
 	
 	/// synced actions (recieved from server) go in here
 	void ActionRecieved(const Action&, int playernum);
@@ -145,7 +148,6 @@ protected:
 
 	void ReColorTeams();
 
-	void LogNetMsg(const std::string& msg, int player);
 	void ReloadCOB(const std::string& msg, int player);
 	void Skip(int targetframe);
 
