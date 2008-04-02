@@ -153,7 +153,16 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 		"A stacktrace has been written to:\n"
 		"%s\\infolog.txt", dir);
 	MessageBox(NULL, msg, "Spring: Unhandled exception", 0);
-	return 0;
+
+	// this seems to silently close the application
+	return EXCEPTION_EXECUTE_HANDLER;
+
+	// this triggers the microsoft "application has crashed" error dialog
+	//return EXCEPTION_CONTINUE_SEARCH;
+
+	// in practice, 100% CPU usage but no continuation of execution
+	// (tested segmentation fault and division by zero)
+	//return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 /** Install crash handler. */

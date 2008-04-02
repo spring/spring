@@ -8,6 +8,10 @@ include Makefile.libm_objects
 
 ifdef MINGDIR
 EXE_SUFFIX=.exe
+# heuristic: don't set RM to del on MSYS/CYGWIN shells
+ifndef BASH
+RM=del
+endif
 else
 EXE_SUFFIX=
 endif
@@ -40,7 +44,7 @@ SoftFloatWrapperExtended.o: SoftFloatWrapper.cpp SoftFloatWrapper.h Makefile FPU
 
 streflop.a: SMath.o Random.o ${USE_SOFT_BINARY}
 	$(MAKE) -C libm
-	@rm -f streflop.a
+	$(RM) streflop.a
 # just link twice, there are too much issues in attempting a platform independent copy...
 # (or rather, detecting the platform)
 ifeq (i586-mingw32msvc-gcc,$(findstring i586-mingw32msvc-gcc,$(CC)))

@@ -204,6 +204,9 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		cmd += " clean"
 	status = os.system("make " + cmd)
 	if status != 0:
+		# try with mingw32-make
+		status = os.system("mingw32-make " + cmd)
+	if status != 0:
 		print "Failed building streflop!"
 		env.Exit(1)
 	else:
