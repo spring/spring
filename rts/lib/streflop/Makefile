@@ -9,9 +9,10 @@ include Makefile.libm_objects
 ifdef MINGDIR
 EXE_SUFFIX=.exe
 # heuristic: don't set RM to del on MSYS/CYGWIN shells
-ifndef BASH
-RM=del
-endif
+# doesn't work probably because scons doesn't pass all env vars
+#ifndef BASH
+#RM=del
+#endif
 else
 EXE_SUFFIX=
 endif
