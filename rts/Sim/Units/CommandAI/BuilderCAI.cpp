@@ -359,55 +359,65 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6f, false);	//needed since above startmoving cancels this
 				}
-				if(!fac->curBuild && !fac->terraforming){
+				if (!fac->curBuild && !fac->terraforming) {
 					building=false;
 					StopMove();				//cancel the effect of KeepPointingTo
 					FinishCommand();
 				}
 				// This can only be true if two builders started building
 				// the restricted unit in the same simulation frame
-				else if(uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit){ //unit restricted
+				else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit){ //unit restricted
 					building = false;
 					fac->StopBuild();
 					CancelRestrictedUnit(boi->second);
 				}
 			} else {
 				build.Parse(c);
-				build.pos = helper->Pos2BuildPos(build);
-				const float dist = f3Dist(build.pos, fac->pos);
-				if ((dist < (fac->buildDistance * 0.6f + radius)) ||
-				    (!owner->unitDef->canmove && (dist <= (fac->buildDistance+radius-8.0f)))) {
-					StopMove();
-					if(luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
-						FinishCommand();
-					}
-					else if(uh->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit){ //unit restricted
-						CancelRestrictedUnit(boi->second);
-					}
-					else if(uh->maxUnits>(int)gs->Team(owner->team)->units.size()){ //max unitlimit reached
-						buildRetries++;
-						owner->moveType->KeepPointingTo(build.pos, fac->buildDistance*0.7f+radius, false);
-						if (fac->StartBuild(build) || (buildRetries > 20)) {
-							building=true;
-						} else {
-							ENTER_MIXED;
-							if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
-								logOutput.Print("%s: Build pos blocked",owner->unitDef->humanName.c_str());
-								logOutput.SetLastMsgPos(owner->pos);
-							}
-							ENTER_SYNCED;
-							helper->BuggerOff(build.pos,radius);
-							NonMoving();
-						}
-					}
+
+				if (uh->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit) {
+					// unit restricted, don't bother moving all the way
+					// to the construction site first before telling us
+					// (since greyed-out icons can still be clicked etc,
+					// would be better to prevent that)
+					CancelRestrictedUnit(boi->second);
 				} else {
-					if (owner->moveType->progressState == AMoveType::Failed) {
-						if (++buildRetries > 5) {
-							StopMove();
+					build.pos = helper->Pos2BuildPos(build);
+					const float dist = f3Dist(build.pos, fac->pos);
+
+					if ((dist < (fac->buildDistance * 0.6f + radius)) ||
+						(!owner->unitDef->canmove && (dist <= (fac->buildDistance + radius - 8.0f)))) {
+						StopMove();
+
+						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 							FinishCommand();
 						}
+						else if (uh->maxUnits > (int) gs->Team(owner->team)->units.size()) {
+							// max unitlimit reached
+							buildRetries++;
+							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
+
+							if (fac->StartBuild(build) || (buildRetries > 20)) {
+								building = true;
+							} else {
+								ENTER_MIXED;
+								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
+									logOutput.Print("%s: Build pos blocked", owner->unitDef->humanName.c_str());
+									logOutput.SetLastMsgPos(owner->pos);
+								}
+								ENTER_SYNCED;
+								helper->BuggerOff(build.pos, radius);
+								NonMoving();
+							}
+						}
+					} else {
+						if (owner->moveType->progressState == AMoveType::Failed) {
+							if (++buildRetries > 5) {
+								StopMove();
+								FinishCommand();
+							}
+						}
+						SetGoal(build.pos,owner->pos, fac->buildDistance*0.4f+radius);
 					}
-					SetGoal(build.pos,owner->pos, fac->buildDistance*0.4f+radius);
 				}
 			}
 		} else {		//!inCommand
