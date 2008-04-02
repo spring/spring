@@ -103,6 +103,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsDevLuaEnabled);
 	REGISTER_LUA_CFUNC(IsEditDefsEnabled);
 	REGISTER_LUA_CFUNC(AreHelperAIsEnabled);
+	REGISTER_LUA_CFUNC(FixedAllies);
 
 	REGISTER_LUA_CFUNC(IsGameOver);
 
@@ -600,6 +601,16 @@ int LuaSyncedRead::AreHelperAIsEnabled(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, !gs->noHelperAIs);
+	return 1;
+}
+
+int LuaSyncedRead::FixedAllies(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	if (!game) {
+		return 0;
+	}
+	lua_pushboolean(L, !(gameSetup && !gameSetup->fixedAllies));
 	return 1;
 }
 
