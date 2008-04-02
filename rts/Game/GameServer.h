@@ -21,6 +21,7 @@ class CBaseNetProtocol;
 class CDemoReader;
 class AutohostInterface;
 class CGameSetupData;
+class ChatMessage;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
 
@@ -103,7 +104,7 @@ private:
 	@param msg The whole message
 	@param player The playernumber which sent the message
 	*/
-	void GotChatMessage(const std::string& msg, unsigned player);
+	void GotChatMessage(const ChatMessage& msg);
 
 	/**
 	@brief kick the specified player from the battle

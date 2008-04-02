@@ -28,7 +28,7 @@ enum NETMSG {
 	NETMSG_STARTPLAYING     = 4,  // unsigned countdown
 	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
-	NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
+	NETMSG_CHAT             = 7,  // custom
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
@@ -113,7 +113,6 @@ public:
 	void SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
 	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
-	void SendChat(uchar myPlayerNum, const std::string& message);
 	void SendRandSeed(uint randSeed);
 	void SendGameID(const uchar* buf);
 	void SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);

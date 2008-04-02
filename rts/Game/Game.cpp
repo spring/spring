@@ -38,6 +38,7 @@
 #include "PlayerRoster.h"
 #include "Sync/SyncTracer.h"
 #include "Team.h"
+#include "ChatMessage.h"
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
@@ -909,6 +910,14 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
+	}
+	else if (cmd == "w") {
+		const int pos = action.extra.find_first_of(" ");
+		const int playernum = gs->Player(action.extra.substr(0, pos));
+		if (playernum >= 0)
+			SendNetChat(action.extra.substr(pos+1), playernum);
+		else
+			logOutput.Print("Player not found: %s", action.extra.substr(0, pos).c_str());
 	}
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
@@ -3220,19 +3229,9 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_CHAT: {
-				int player=inbuf[2];
-				if (player == SERVER_PLAYER) {
-					string s=(char*)(&inbuf[3]);
-					HandleChatMsg(s, player);
-					logOutput.Print(s);
-				} else if (player >= MAX_PLAYERS || player < 0){
-					logOutput.Print("Got invalid player num %i in chat msg",player);
-				} else  {
-					string s=(char*)(&inbuf[3]);
-					LogNetMsg(s, player);
-					HandleChatMsg(s, player);
-				}
-				AddTraffic(player, packetCode, dataLength);
+				ChatMessage msg((netcode::UnpackPacket*)packet);
+				HandleChatMsg(msg);
+				AddTraffic(msg.fromPlayer, packetCode, dataLength);
 				break;
 			}
 
@@ -4066,68 +4065,67 @@ void CGame::GameEnd()
 	}
 }
 
-void CGame::SendNetChat(const std::string& message)
+void CGame::SendNetChat(std::string message, int destination)
 {
 	if (message.empty()) {
 		return;
 	}
-	string msg = message;
-	if (msg.size() > 128) {
-		msg.resize(128); // safety
+	if (destination == -1) // overwrite
+	{
+		destination = ChatMessage::TO_EVERYONE;
+		if ((message.length() >= 2) && (message[1] == ':')) {
+			const char lower = tolower(message[0]);
+			if (lower == 'a') {
+				destination = ChatMessage::TO_ALLIES;
+				message = message.substr(2);
+			}
+			else if (lower == 's') {
+				destination = ChatMessage::TO_SPECTATORS;
+				message = message.substr(2);
+			}
+		}
+	}	
+	if (message.size() > 128) {
+		message.resize(128); // safety
 	}
-	net->SendChat(gu->myPlayerNum, msg);
+	ChatMessage buf(gu->myPlayerNum, destination, message);
+	net->SendData(buf.Pack());
 }
 
 
-void CGame::HandleChatMsg(std::string s, int player)
+void CGame::HandleChatMsg(const ChatMessage& msg)
 {
-	globalAI->GotChatMsg(s.c_str(),player);
-	CScriptHandler::Instance().chosenScript->GotChatMsg(s, player);
-}
+	if (msg.fromPlayer < 0 || (msg.fromPlayer >= MAX_PLAYERS && msg.fromPlayer != SERVER_PLAYER))
+		return;
 
+	globalAI->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
+	CScriptHandler::Instance().chosenScript->GotChatMsg(msg.msg, msg.fromPlayer);
+	string s = msg.msg;
 
-void CGame::LogNetMsg(const string& msg, int playerID)
-{
-	string s = msg;
-
-	CPlayer* player = gs->players[playerID];
-	const bool myMsg = (playerID == gu->myPlayerNum);
-
-	bool allyMsg = false;
-	bool specMsg = false;
-
-	if ((s.length() >= 2) && (s[1] == ':')) {
-		const char lower = tolower(s[0]);
-		if (lower == 'a') {
-			allyMsg = true;
-			s = s.substr(2);
+	if (!s.empty()) {
+		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : gs->players[msg.fromPlayer];
+		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
+	
+		string label;
+		if (!player) {
+			label = "> ";
+		} else if (player->spectator) {
+			label = "[" + player->playerName + "] ";
+		} else {
+			label = "<" + player->playerName + "> ";
 		}
-		else if (lower == 's') {
-			specMsg = true;
-			s = s.substr(2);
-		}
-	}
-
-	string label;
-	if (player->spectator) {
-		label = "[" + player->playerName + "] ";
-	} else {
-		label = "<" + player->playerName + "> ";
-	}
-
-	s.substr(0, 255);
-
-	/*
-	- If you're spectating you always see all chat messages.
-	- If you're playing you see:
-	  - "a:"-prefixed messages sent by allied players,
-	  - "s:"-prefixed messages sent by yourself,
-	  - unprefixed messages from players,
-	  - unprefixed messages from spectators only if noSpectatorChat is off!
-	*/
-
-	 if (!s.empty()) {
-		if (allyMsg) {
+	
+		/*
+		- If you're spectating you always see all chat messages.
+		- If you're playing you see:
+		- TO_ALLIES-messages sent by allied players,
+		- TO_SPECTATORS-messages sent by yourself,
+		- TO_EVERYONE-messages from players,
+		- TO_EVERYONE-messages from spectators only if noSpectatorChat is off!
+		- private messages if they are for you ;)
+		*/
+	
+		if (msg.destination == ChatMessage::TO_ALLIES && player) {
 			const int msgAllyTeam = gs->AllyTeam(player->team);
 			const bool allied = gs->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
@@ -4135,17 +4133,21 @@ void CGame::LogNetMsg(const string& msg, int playerID)
 				sound->PlaySample(chatSound, 5);
 			}
 		}
-		else if (specMsg) {
+		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				logOutput.Print(label + "Spectators: " + s);
 				sound->PlaySample(chatSound, 5);
 			}
 		}
-		else {
+		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			if (gu->spectating || !noSpectatorChat || !player->spectator) {
 				logOutput.Print(label + s);
 				sound->PlaySample(chatSound, 5);
 			}
+		}
+		else if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
+			logOutput.Print(label + "Private: " + s);
+			sound->PlaySample(chatSound, 5);
 		}
 	}
 }

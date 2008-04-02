@@ -357,6 +357,15 @@ public:
 	float sunVector4[4];
 
 	/**
+	 * @brief Player
+	 * @param name name of the player
+	 * @return his playernumber of -1 if not found
+	 *
+	 * Search a player by name.
+	 */
+	int Player(const std::string& name);
+
+	/**
 	 * @brief Team
 	 * @param i index to fetch
 	 * @return CTeam pointer

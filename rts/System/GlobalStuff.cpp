@@ -191,6 +191,16 @@ float3 CGlobalSyncedStuff::randVector()
 	return ret;
 }
 
+int CGlobalSyncedStuff::Player(const std::string& name)
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (players[i] && players[i]->playerName == name)
+			return i;
+	}
+	return -1;
+}
+
 /**
  * Initializes variables in CGlobalUnsyncedStuff
  */

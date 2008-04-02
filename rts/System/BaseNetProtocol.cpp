@@ -109,13 +109,6 @@ void CBaseNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& play
 	SendSTLData<uchar, std::string>(NETMSG_PLAYERNAME, myPlayerNum, playerName);
 }
 
-//  NETMSG_CHAT             = 7,  // uchar myPlayerNum; std::string message;
-
-void CBaseNetProtocol::SendChat(uchar myPlayerNum, const std::string& message)
-{
-	SendSTLData<uchar, std::string>(NETMSG_CHAT, myPlayerNum, message);
-}
-
 //  NETMSG_RANDSEED         = 8,  // uint randSeed;
 
 void CBaseNetProtocol::SendRandSeed(uint randSeed)
