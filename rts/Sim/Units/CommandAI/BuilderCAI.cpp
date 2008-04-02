@@ -345,6 +345,7 @@ void CBuilderCAI::SlowUpdate()
 
 	if (OutOfImmobileRange(c)) {
 		FinishCommand();
+		return;
 	}
 
 	map<int, string>::iterator boi = buildOptions.find(c.id);
@@ -353,20 +354,22 @@ void CBuilderCAI::SlowUpdate()
 		const float radius = GetUnitDefRadius(ud, c.id);
 		if (inCommand) {
 			if (building) {
-				if (f3Dist(build.pos, fac->pos) > fac->buildDistance+radius-8.0f) {
+				if (f3Dist(build.pos, fac->pos) > fac->buildDistance + radius - 8.0f) {
 					owner->moveType->StartMoving(build.pos, fac->buildDistance * 0.5f + radius);
 				} else {
 					StopMove();
-					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance+radius)*0.6f, false);	//needed since above startmoving cancels this
+					// needed since above startmoving cancels this
+					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance + radius) * 0.6f, false);
 				}
 				if (!fac->curBuild && !fac->terraforming) {
-					building=false;
+					building = false;
 					StopMove();				//cancel the effect of KeepPointingTo
 					FinishCommand();
 				}
 				// This can only be true if two builders started building
 				// the restricted unit in the same simulation frame
-				else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit){ //unit restricted
+				else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
+					// unit restricted
 					building = false;
 					fac->StopBuild();
 					CancelRestrictedUnit(boi->second);
@@ -378,8 +381,10 @@ void CBuilderCAI::SlowUpdate()
 					// unit restricted, don't bother moving all the way
 					// to the construction site first before telling us
 					// (since greyed-out icons can still be clicked etc,
-					// would be better to prevent that)
+					// would be better to prevent that but doesn't cover
+					// case where limit reached while builder en-route)
 					CancelRestrictedUnit(boi->second);
+					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build);
 					const float dist = f3Dist(build.pos, fac->pos);
@@ -416,7 +421,7 @@ void CBuilderCAI::SlowUpdate()
 								FinishCommand();
 							}
 						}
-						SetGoal(build.pos,owner->pos, fac->buildDistance*0.4f+radius);
+						SetGoal(build.pos, owner->pos, fac->buildDistance * 0.4f + radius);
 					}
 				}
 			}
