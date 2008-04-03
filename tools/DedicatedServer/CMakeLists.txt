@@ -56,7 +56,7 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(filesystem_files ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
-ADD_LIBRARY(server SHARED ${filesystem_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
+ADD_LIBRARY(server SHARED ${filesystem_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
 TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip boost_regex-mt)
 
 ADD_EXECUTABLE(dedicated main EventPrinter)
