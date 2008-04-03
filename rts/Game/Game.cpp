@@ -3020,7 +3020,7 @@ void CGame::ClientReadNet()
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
 	if(!gameServer){
-		unsigned int currentFrame = SDL_GetTicks();
+		const unsigned int currentFrame = SDL_GetTicks();
 
 		if (timeLeft > 1.0f)
 			timeLeft -= 1.0f;
@@ -3035,7 +3035,7 @@ void CGame::ClientReadNet()
 		unsigned ahead = 0;
 		while ((packet = net->Peek(ahead)) != NULL)
 		{
-			if (packet->data[0] == NETMSG_NEWFRAME)
+			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
 				++que;
 			++ahead;
 		}
