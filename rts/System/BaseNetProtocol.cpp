@@ -116,6 +116,13 @@ void CBaseNetProtocol::SendRandSeed(uint randSeed)
 	SendData<uint>(NETMSG_RANDSEED, randSeed);
 }
 
+void CBaseNetProtocol::SendRandSeed(uint randSeed, int toPlayer)
+{
+	uchar data[5] = {static_cast<uchar>(toPlayer)};
+	*(int*)(data+1) = randSeed;
+	SendData(data, 5, toPlayer);
+}
+
 //  NETMSG_GAMEID           = 9,  // char gameID[16];
 
 void CBaseNetProtocol::SendGameID(const uchar* buf)

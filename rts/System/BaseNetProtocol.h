@@ -114,6 +114,7 @@ public:
 	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
 	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	void SendRandSeed(uint randSeed);
+	void SendRandSeed(uint randSeed, int toPlayer);
 	void SendGameID(const uchar* buf);
 	void SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	void SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);

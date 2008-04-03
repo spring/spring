@@ -736,12 +736,6 @@ void CGameServer::ServerReadNet()
 							CheckForGameStart(true);
 						break;
 					}
-					case NETMSG_RANDSEED:
-					{
-						if (players[a]->hasRights && !demoReader)
-							serverNet->SendRandSeed(*(unsigned int*)(inbuf+1));
-						break;
-					}
 					case NETMSG_TEAM:
 					{
 						//TODO update players[] and teams[] and send to hostif
@@ -864,6 +858,7 @@ void CGameServer::ServerReadNet()
 					case NETMSG_INTERNAL_SPEED:
 					case NETMSG_ATTEMPTCONNECT:
 					case NETMSG_GAMEDATA:
+					case NETMSG_RANDSEED:
 						break;
 					default:
 						{
@@ -1296,6 +1291,8 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	hisNewNumber = serverNet->AcceptIncomingConnection(hisNewNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
+	static const int pregameRandomSeed = rng();
+	serverNet->SendRandSeed(pregameRandomSeed);
 	serverNet->SendData(gameData->Pack(), hisNewNumber);
 
 	for (int a = 0; a < MAX_PLAYERS; ++a) {

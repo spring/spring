@@ -379,6 +379,10 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_MAPDRAW: {
 			} break;
 
+			case NETMSG_RANDSEED: {
+				gs->SetRandSeed(*((unsigned int*)&inbuf[1]));
+				break;
+			}
 
 			case NETMSG_SYSTEMMSG:
 			case NETMSG_CHAT: {
