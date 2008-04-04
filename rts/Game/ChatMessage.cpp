@@ -1,8 +1,8 @@
 #include "ChatMessage.h"
 
 #include "BaseNetProtocol.h"
-#include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
+#include "Net/UnpackPacket.h"
 
 using namespace netcode;
 
@@ -10,19 +10,19 @@ ChatMessage::ChatMessage(int from, int dest, const std::string& chat) : fromPlay
 {
 }
 
-ChatMessage::ChatMessage(UnpackPacket* packet)
+ChatMessage::ChatMessage(const netcode::RawPacket& data)
 {
-	packet->Reset();
+	UnpackPacket packet(data);
 	unsigned char ID;
 	unsigned char length;
 	unsigned char from;
 	unsigned char dest;
-	*packet >> ID;
+	packet >> ID;
 	assert(ID == NETMSG_CHAT);
-	*packet >> length;
-	*packet >> from;
-	*packet >> dest;
-	*packet >> msg;
+	packet >> length;
+	packet >> from;
+	packet >> dest;
+	packet >> msg;
 	fromPlayer = from;
 	destination = dest;
 }

@@ -572,8 +572,8 @@ void CGameServer::ServerReadNet()
 					}
 
 					case NETMSG_CHAT: {
-						ChatMessage msg((netcode::UnpackPacket*)packet);
-						if (msg.fromPlayer != a ) {
+						ChatMessage msg(*packet);
+						if (static_cast<unsigned>(msg.fromPlayer) != a ) {
 							log.Warning(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer);
 						} else {
 							GotChatMessage(msg);
@@ -831,7 +831,7 @@ void CGameServer::ServerReadNet()
 						break;
 					}
 					case NETMSG_CCOMMAND: {
-						CommandMessage msg(static_cast<netcode::UnpackPacket*>(packet));
+						CommandMessage msg(*packet);
 						if (msg.player == a)
 						{
 							if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a]->hasRights)
@@ -1340,7 +1340,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
 	serverNet->SendData(msg.Pack());
-	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
+	if (hostif && static_cast<unsigned>(msg.fromPlayer) != SERVER_PLAYER) {
 		// don't echo packets to autohost
 		hostif->SendPlayerChat(msg.fromPlayer, msg.msg);
 	}

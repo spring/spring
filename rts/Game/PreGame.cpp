@@ -11,7 +11,6 @@
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "NetProtocol.h"
-#include "Net/UnpackPacket.h"
 #include "DemoRecorder.h"
 #include "DemoReader.h"
 #include "LoadSaveHandler.h"
@@ -495,7 +494,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		if (demobuffer[0] == NETMSG_GAMEDATA)
 		{
 			const RawPacket packet(demobuffer, length);
-			serverStartupData = new GameData((netcode::UnpackPacket*)(&packet));
+			serverStartupData = new GameData(packet);
 			break;
 		}
 		if (scanner.ReachedEnd())
@@ -656,7 +655,7 @@ void CPreGame::LoadMod(const std::string& modName)
 
 void CPreGame::GameDataRecieved(RawPacket* packet)
 {
-	gameData = new GameData((netcode::UnpackPacket*)packet);
+	gameData = new GameData(*packet);
 	logOutput << "Using script " << gameData->GetScript() << "\n";
 	CScriptHandler::SelectScript(gameData->GetScript());
 	

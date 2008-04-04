@@ -64,6 +64,7 @@ void UDPConnection::SendData(const RawPacket* data)
 {
 	//TODO make UDPConnection completely packet-based
 	SendData(data->data, data->length);
+	delete data;
 }
 
 const RawPacket* UDPConnection::Peek(unsigned ahead) const

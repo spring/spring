@@ -3,9 +3,8 @@
 namespace netcode
 {
 
-UnpackPacket::UnpackPacket(const unsigned char* const data, const unsigned length) : RawPacket(data, length), pos(0)
+UnpackPacket::UnpackPacket(const RawPacket& packet) : pckt(packet), pos(0)
 {
 }
 
 }
-
