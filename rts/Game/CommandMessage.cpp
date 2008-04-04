@@ -3,8 +3,8 @@
 #include <assert.h>
 
 #include "BaseNetProtocol.h"
-#include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
+#include "Net/UnpackPacket.h"
 
 using namespace netcode;
 
@@ -20,17 +20,17 @@ CommandMessage::CommandMessage(const Action& myaction, int playernum)
 	player = playernum;
 }
 
-CommandMessage::CommandMessage(UnpackPacket* packet)
+CommandMessage::CommandMessage(const netcode::RawPacket& pckt)
 {
-	packet->Reset();
+	UnpackPacket packet(pckt);
 	unsigned char ID;
 	unsigned short length;
-	*packet >> ID;
+	packet >> ID;
 	assert(ID == NETMSG_CCOMMAND);
-	*packet >> length;
-	*packet >> player;
-	*packet >> action.command;
-	*packet >> action.extra;
+	packet >> length;
+	packet >> player;
+	packet >> action.command;
+	packet >> action.extra;
 }
 
 const netcode::RawPacket* CommandMessage::Pack() const

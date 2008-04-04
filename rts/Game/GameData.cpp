@@ -3,8 +3,8 @@
 #include <assert.h>
 
 #include "BaseNetProtocol.h"
-#include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
+#include "Net/UnpackPacket.h"
 
 using namespace netcode;
 
@@ -14,19 +14,19 @@ GameData::GameData()
 	modChecksum = 0;
 }
 
-GameData::GameData(UnpackPacket* packet)
+GameData::GameData(const netcode::RawPacket& pckt)
 {
-	packet->Reset();
+	UnpackPacket packet(pckt);
 	unsigned char ID;
 	unsigned short length;
-	*packet >> ID;
+	packet >> ID;
 	assert(ID == NETMSG_GAMEDATA);
-	*packet >> length;
-	*packet >> script;
-	*packet >> map;
-	*packet >> mapChecksum;
-	*packet >> mod;
-	*packet >> modChecksum;
+	packet >> length;
+	packet >> script;
+	packet >> map;
+	packet >> mapChecksum;
+	packet >> mod;
+	packet >> modChecksum;
 }
 
 const netcode::RawPacket* GameData::Pack() const

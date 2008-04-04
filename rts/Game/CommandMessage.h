@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "Net/UnpackPacket.h"
 #include "Action.h"
 
 namespace netcode {
@@ -16,7 +15,7 @@ class CommandMessage
 public:
 	CommandMessage(const std::string& cmd, int playernum);
 	CommandMessage(const Action& action, int playernum);
-	CommandMessage(netcode::UnpackPacket* packet);
+	CommandMessage(const netcode::RawPacket& packet);
 
 	const netcode::RawPacket* Pack() const;
 

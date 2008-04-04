@@ -8,17 +8,17 @@
 namespace netcode
 {
 
-class UnpackPacket : public RawPacket
+class UnpackPacket
 {
 public:
-	UnpackPacket(const unsigned char* const data, const unsigned length);
-	void Reset() {pos = 0;};
+	UnpackPacket(const RawPacket&);
 	
 	template <typename T>
-	void operator>>(T& t) {t = *(T*)(data+pos); pos += sizeof(T);};
-	void operator>>(std::string& text) {text = std::string((char*)(data + pos)); pos += text.size()+1;};
+	void operator>>(T& t) {t = *(T*)(pckt.data+pos); pos += sizeof(T);};
+	void operator>>(std::string& text) {text = std::string((char*)(pckt.data + pos)); pos += text.size()+1;};
 	
 private:
+	const RawPacket& pckt;
 	unsigned pos;
 };
 

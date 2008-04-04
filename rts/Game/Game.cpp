@@ -3229,7 +3229,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_CHAT: {
-				ChatMessage msg((netcode::UnpackPacket*)packet);
+				ChatMessage msg(*packet);
 				HandleChatMsg(msg);
 				AddTraffic(msg.fromPlayer, packetCode, dataLength);
 				break;
@@ -3583,7 +3583,7 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_CCOMMAND: {
-				CommandMessage msg((netcode::UnpackPacket*)(packet));
+				CommandMessage msg(*packet);
 				ActionRecieved(msg.action, msg.player);
 				break;
 			}

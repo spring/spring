@@ -191,6 +191,7 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 void CNet::SendData(const RawPacket* data)
 {
 	SendData(data->data, data->length);
+	delete data;
 }
 
 void CNet::SendData(const unsigned char* data,const unsigned length, const unsigned playerNum)
@@ -213,6 +214,7 @@ void CNet::SendData(const RawPacket* data, const unsigned playerNum)
 	}
 	else
 	{
+		delete data;
 		throw network_error("Cant send data (wrong connection number)");
 	}
 }

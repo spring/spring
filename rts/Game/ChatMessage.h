@@ -1,7 +1,6 @@
 #ifndef CHAT_MESSAGE_H
 #define CHAT_MESSAGE_H
 
-#include "Net/UnpackPacket.h"
 #include "Action.h"
 
 namespace netcode {
@@ -12,7 +11,7 @@ class ChatMessage
 {
 public:
 	ChatMessage(int fromP, int dest, const std::string& chat);
-	ChatMessage(netcode::UnpackPacket* packet);
+	ChatMessage(const netcode::RawPacket& packet);
 
 	const netcode::RawPacket* Pack() const;
 

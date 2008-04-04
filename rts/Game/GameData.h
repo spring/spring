@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "Net/UnpackPacket.h"
 namespace netcode {
 	class RawPacket;
 }
@@ -12,7 +11,7 @@ class GameData
 {
 public:
 	GameData();
-	GameData(netcode::UnpackPacket* packet);
+	GameData(const netcode::RawPacket& packet);
 	
 	const netcode::RawPacket* Pack() const;
 	
