@@ -91,6 +91,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(avoidFriendly),
 	CR_MEMBER(avoidFeature),
+	CR_MEMBER(avoidNeutral),
 	CR_MEMBER(targetBorder),
 	CR_MEMBER(cylinderTargetting),
 	CR_MEMBER(minIntensity),
@@ -170,6 +171,7 @@ CWeapon::CWeapon(CUnit* owner)
 	hasCloseTarget(false),
 	avoidFriendly(true),
 	avoidFeature(true),
+	avoidNeutral(true),
 	targetBorder(0.f),
 	cylinderTargetting(0.f),
 	minIntensity(0.f),
@@ -182,7 +184,7 @@ CWeapon::CWeapon(CUnit* owner)
 
 CWeapon::~CWeapon()
 {
-	if(weaponDef->interceptor)
+	if (weaponDef->interceptor)
 		interceptHandler.RemoveInterceptorWeapon(this);
 }
 
