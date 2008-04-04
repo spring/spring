@@ -87,12 +87,15 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
+	wd.avoidNeutral  = wdTable.GetBool("avoidNeutral",  true);
 
 	wd.collisionFlags = 0;
 	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
 	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
-	if (!collideFriendly) { wd.collisionFlags += COLLISION_NOFRIENDLY; }
-	if (!collideFeature)  { wd.collisionFlags += COLLISION_NOFEATURE;  }
+	const bool collideNeutral  = wdTable.GetBool("collideNeutral",  true);
+	if (!collideFriendly) { wd.collisionFlags |= COLLISION_NOFRIENDLY; }
+	if (!collideFeature)  { wd.collisionFlags |= COLLISION_NOFEATURE;  }
+	if (!collideNeutral)  { wd.collisionFlags |= COLLISION_NONEUTRAL;  }
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 

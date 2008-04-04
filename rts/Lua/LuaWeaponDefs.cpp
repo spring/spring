@@ -44,6 +44,8 @@ static int WeaponDefMetatable(lua_State* L);
 // special access functions
 static int NoFeatureCollide(lua_State* L, const void* data);
 static int NoFriendlyCollide(lua_State* L, const void* data);
+static int NoNeutralCollide(lua_State* L, const void* data);
+
 static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
@@ -357,16 +359,22 @@ static int VisualsTable(lua_State* L, const void* data)
 
 static int NoFeatureCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*)data);
+	const int bits = *((const int*) data);
 	lua_pushboolean(L, (bits & COLLISION_NOFEATURE));
 	return 1;
 }
 
-
 static int NoFriendlyCollide(lua_State* L, const void* data)
 {
-	const int bits = *((const int*)data);
+	const int bits = *((const int*) data);
 	lua_pushboolean(L, (bits & COLLISION_NOFRIENDLY));
+	return 1;
+}
+
+static int NoNeutralCollide(lua_State* L, const void* data)
+{
+	const int bits = *((const int*) data);
+	lua_pushboolean(L, (bits & COLLISION_NONEUTRAL));
 	return 1;
 }
 
@@ -439,10 +447,11 @@ static bool InitParamMap()
 	ADD_FUNCTION("visuals",   wd.visuals,   VisualsTable);
 	ADD_FUNCTION("hitSound",  wd.soundhit,  GuiSoundSetTable);
 	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundSetTable);
-	ADD_FUNCTION("noFeatureCollide",  wd.collisionFlags, NoFeatureCollide);
-	ADD_FUNCTION("noFriendlyCollide", wd.collisionFlags, NoFriendlyCollide);
-	ADD_FUNCTION("onlyTargetCategories",
-	             wd.onlyTargetCategory, CategorySetFromBits);
+
+	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
+	ADD_FUNCTION("noFriendlyCollide",    wd.collisionFlags, NoFriendlyCollide);
+	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
+	ADD_FUNCTION("onlyTargetCategories", wd.onlyTargetCategory, CategorySetFromBits);
 
 	ADD_INT("id", wd.id);
 
@@ -568,6 +577,9 @@ static bool InitParamMap()
 	ADD_INT("interceptedByShieldType",  wd.interceptedByShieldType);
 
 	ADD_BOOL("avoidFriendly", wd.avoidFriendly);
+	ADD_BOOL("avoidFeature",  wd.avoidFeature);
+	ADD_BOOL("avoidNeutral",  wd.avoidNeutral);
+
 	ADD_FLOAT("targetBorder", wd.targetBorder);
 	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
 	ADD_FLOAT("minIntensity", wd.minIntensity);

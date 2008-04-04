@@ -19,7 +19,7 @@ public:
 	CUnitLoader();
 	virtual ~CUnitLoader();
 
-	CUnit* LoadUnit(const string& name,float3 pos, int side,
+	CUnit* LoadUnit(const string& name,float3 pos, int team,
 	                bool build, int facing, const CUnit* builder /* can be NULL */);
 	void FlattenGround(const CUnit* unit);
 

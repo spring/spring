@@ -65,7 +65,7 @@ CUnitLoader::~CUnitLoader()
 	CGroundMoveType::DeleteLineTable();
 }
 
-CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
+CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	CUnit* unit;
@@ -86,8 +86,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 	}
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
-	if (side < 0) {
-		side = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
+	if (team < 0) {
+		team = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
 	}
 
 	if (type == "GroundUnit"){
@@ -115,7 +115,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 		return NULL;
 	}
 
-	unit->UnitInit (ud, side, pos);
+	unit->UnitInit(ud, team, pos);
 
 	unit->beingBuilt=build;
 
@@ -300,7 +300,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int side,
 		unit->energyTickMake += ud->tidalGenerator * readmap->tidalStrength;
 
 
-	unit->model = ud->LoadModel(side);
+	unit->model = ud->LoadModel(team);
 	unit->SetRadius(unit->model->radius);
 
 	// CUnitLoader left this volume's axis-scales uninitialized
@@ -365,82 +365,82 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 {
 	CWeapon* weapon;
 
-	if(!weapondef){
+	if (!weapondef) {
 		logOutput.Print("Error: No weapon def?");
 	}
 
-	if(udw->name=="NOWEAPON"){
-		weapon=SAFE_NEW CNoWeapon(owner);
-	} else if(weapondef->type=="Cannon"){
-		weapon=SAFE_NEW CCannon(owner);
-		((CCannon*)weapon)->selfExplode=weapondef->selfExplode;
-	} else if(weapondef->type=="Rifle"){
-		weapon=SAFE_NEW CRifle(owner);
-	} else if(weapondef->type=="Melee"){
-		weapon=SAFE_NEW CMeleeWeapon(owner);
-	} else if(weapondef->type=="AircraftBomb"){
-		weapon=SAFE_NEW CBombDropper(owner,false);
-	} else if(weapondef->type=="Shield"){
-		weapon=SAFE_NEW CPlasmaRepulser(owner);
-	} else if(weapondef->type=="Flame"){
-		weapon=SAFE_NEW CFlameThrower(owner);
-	} else if(weapondef->type=="MissileLauncher"){
-		weapon=SAFE_NEW CMissileLauncher(owner);
-	} else if(weapondef->type=="TorpedoLauncher"){
-		if(owner->unitDef->canfly && !weapondef->submissile){
-			weapon=SAFE_NEW CBombDropper(owner,true);
-			if(weapondef->tracks)
-				((CBombDropper*)weapon)->tracking=weapondef->turnrate;
-			((CBombDropper*)weapon)->bombMoveRange=weapondef->range;
+	if (udw->name == "NOWEAPON") {
+		weapon = SAFE_NEW CNoWeapon(owner);
+	} else if (weapondef->type == "Cannon") {
+		weapon = SAFE_NEW CCannon(owner);
+		((CCannon*)weapon)->selfExplode = weapondef->selfExplode;
+	} else if (weapondef->type=="Rifle") {
+		weapon = SAFE_NEW CRifle(owner);
+	} else if (weapondef->type == "Melee") {
+		weapon = SAFE_NEW CMeleeWeapon(owner);
+	} else if (weapondef->type == "AircraftBomb") {
+		weapon = SAFE_NEW CBombDropper(owner, false);
+	} else if (weapondef->type == "Shield") {
+		weapon = SAFE_NEW CPlasmaRepulser(owner);
+	} else if (weapondef->type == "Flame") {
+		weapon = SAFE_NEW CFlameThrower(owner);
+	} else if (weapondef->type == "MissileLauncher") {
+		weapon = SAFE_NEW CMissileLauncher(owner);
+	} else if (weapondef->type == "TorpedoLauncher") {
+		if (owner->unitDef->canfly && !weapondef->submissile) {
+			weapon = SAFE_NEW CBombDropper(owner, true);
+			if (weapondef->tracks)
+				((CBombDropper*) weapon)->tracking = weapondef->turnrate;
+			((CBombDropper*) weapon)->bombMoveRange = weapondef->range;
 		} else {
-			weapon=SAFE_NEW CTorpedoLauncher(owner);
-			if(weapondef->tracks)
-				((CTorpedoLauncher*)weapon)->tracking=weapondef->turnrate;
+			weapon = SAFE_NEW CTorpedoLauncher(owner);
+			if (weapondef->tracks)
+				((CTorpedoLauncher*) weapon)->tracking = weapondef->turnrate;
 		}
-	} else if(weapondef->type=="LaserCannon"){
-		weapon=SAFE_NEW CLaserCannon(owner);
-		((CLaserCannon*)weapon)->color=weapondef->visuals.color;
-	} else if(weapondef->type=="BeamLaser"){
-		weapon=SAFE_NEW CBeamLaser(owner);
-		((CBeamLaser*)weapon)->color=weapondef->visuals.color;
-	} else if(weapondef->type=="LightingCannon"){
-		weapon=SAFE_NEW CLightingCannon(owner);
-		((CLightingCannon*)weapon)->color=weapondef->visuals.color;
-	} else if(weapondef->type=="EmgCannon"){
-		weapon=SAFE_NEW CEmgCannon(owner);
-	} else if(weapondef->type=="DGun"){
-		weapon=SAFE_NEW CDGunWeapon(owner);
-	} else if(weapondef->type=="StarburstLauncher"){
-		weapon=SAFE_NEW CStarburstLauncher(owner);
-		if(weapondef->tracks)
-			((CStarburstLauncher*)weapon)->tracking=weapondef->turnrate;
+	} else if (weapondef->type == "LaserCannon") {
+		weapon = SAFE_NEW CLaserCannon(owner);
+		((CLaserCannon*) weapon)->color = weapondef->visuals.color;
+	} else if (weapondef->type == "BeamLaser") {
+		weapon = SAFE_NEW CBeamLaser(owner);
+		((CBeamLaser*) weapon)->color = weapondef->visuals.color;
+	} else if (weapondef->type == "LightingCannon") {
+		weapon = SAFE_NEW CLightingCannon(owner);
+		((CLightingCannon*) weapon)->color = weapondef->visuals.color;
+	} else if (weapondef->type == "EmgCannon") {
+		weapon = SAFE_NEW CEmgCannon(owner);
+	} else if (weapondef->type == "DGun") {
+		weapon = SAFE_NEW CDGunWeapon(owner);
+	} else if (weapondef->type == "StarburstLauncher"){
+		weapon = SAFE_NEW CStarburstLauncher(owner);
+		if (weapondef->tracks)
+			((CStarburstLauncher*) weapon)->tracking = weapondef->turnrate;
 		else
-			((CStarburstLauncher*)weapon)->tracking=0;
-		((CStarburstLauncher*)weapon)->uptime=weapondef->uptime*GAME_SPEED;
-	}else {
+			((CStarburstLauncher*) weapon)->tracking = 0;
+		((CStarburstLauncher*) weapon)->uptime = weapondef->uptime * GAME_SPEED;
+	} else {
 		logOutput << "Unknown weapon type " << weapondef->type.c_str() << "\n";
 		return 0;
 	}
 	weapon->weaponDef = weapondef;
 
-	weapon->reloadTime= (int) (weapondef->reload*GAME_SPEED);
-	if(weapon->reloadTime==0)
-		weapon->reloadTime=1;
-	weapon->range=weapondef->range;
-//	weapon->baseRange=weapondef->range;
-	weapon->heightMod=weapondef->heightmod;
-	weapon->projectileSpeed=weapondef->projectilespeed;
-//	weapon->baseProjectileSpeed=weapondef->projectilespeed/GAME_SPEED;
+	weapon->reloadTime = (int) (weapondef->reload * GAME_SPEED);
+	if (weapon->reloadTime == 0)
+		weapon->reloadTime = 1;
+	weapon->range = weapondef->range;
+//	weapon->baseRange = weapondef->range;
+	weapon->heightMod = weapondef->heightmod;
+	weapon->projectileSpeed = weapondef->projectilespeed;
+//	weapon->baseProjectileSpeed = weapondef->projectilespeed / GAME_SPEED;
 
-	weapon->areaOfEffect=weapondef->areaOfEffect;
-	weapon->accuracy=weapondef->accuracy;
-	weapon->sprayangle=weapondef->sprayangle;
+	weapon->areaOfEffect = weapondef->areaOfEffect;
+	weapon->accuracy = weapondef->accuracy;
+	weapon->sprayangle = weapondef->sprayangle;
 
-	weapon->salvoSize=weapondef->salvosize;
-	weapon->salvoDelay=(int) (weapondef->salvodelay*GAME_SPEED);
+	weapon->salvoSize = weapondef->salvosize;
+	weapon->salvoDelay = (int) (weapondef->salvodelay * GAME_SPEED);
 
-	weapon->metalFireCost=weapondef->metalcost;
-	weapon->energyFireCost=weapondef->energycost;
+	weapon->metalFireCost = weapondef->metalcost;
+	weapon->energyFireCost = weapondef->energycost;
 
 
 	weapon->fireSoundId = weapondef->firesound.getID(0);
@@ -448,15 +448,17 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 
 
 	weapon->onlyForward = weapondef->onlyForward;
-	if (owner->unitDef->type == "Fighter" && !owner->unitDef->hoverAttack)	// fighter aircraft have too big tolerance in TA
+	if (owner->unitDef->type == "Fighter" && !owner->unitDef->hoverAttack) {
+		// fighter aircraft have too big tolerance in TA
 		weapon->maxAngleDif = cos(weapondef->maxAngle * 0.4f / 180 * PI);
-	else
+	} else {
 		weapon->maxAngleDif = cos(weapondef->maxAngle / 180 * PI);
+	}
 
 	weapon->SetWeaponNum(owner->weapons.size());
 
-	weapon->badTargetCategory=udw->badTargetCat;
-	weapon->onlyTargetCategory=weapondef->onlyTargetCategory & udw->onlyTargetCat;
+	weapon->badTargetCategory = udw->badTargetCat;
+	weapon->onlyTargetCategory = weapondef->onlyTargetCategory & udw->onlyTargetCat;
 
 	if (udw->slavedTo) {
 		const int index = (udw->slavedTo - 1);
@@ -466,8 +468,8 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 		weapon->slavedTo = owner->weapons[index];
 	}
 
-	weapon->mainDir=udw->mainDir;
-	weapon->maxMainDirAngleDif=udw->maxAngleDif;
+	weapon->mainDir = udw->mainDir;
+	weapon->maxMainDirAngleDif = udw->maxAngleDif;
 
 	weapon->fuelUsage = udw->fuelUsage;
 	weapon->avoidFriendly = weapondef->avoidFriendly;
@@ -504,6 +506,3 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
 }
-
-
-

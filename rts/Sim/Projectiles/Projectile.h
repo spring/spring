@@ -19,8 +19,9 @@ class CFeature;
 class CVertexArray;
 struct S3DOModel;
 
-#define COLLISION_NOFRIENDLY		1
-#define COLLISION_NOFEATURE			2
+#define COLLISION_NOFRIENDLY	1
+#define COLLISION_NOFEATURE		2
+#define COLLISION_NONEUTRAL		4
 
 class CProjectile : public CExpGenSpawnable
 {
@@ -33,14 +34,14 @@ public:
 
 	virtual void Draw();
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos,const float3& speed,CUnit* owner, bool synced);
+	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual ~CProjectile();
 	virtual void Update();
 	void DependentDied(CObject* o);
-	virtual void Init(const float3& pos, CUnit *owner);
+	virtual void Init(const float3& pos, CUnit* owner);
 
 	bool synced;
 	bool checkCol;
@@ -52,7 +53,7 @@ public:
 	float3 speed;
 	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);
-	virtual void DrawS3O(){DrawUnitPart();};
+	virtual void DrawS3O() { DrawUnitPart(); }
 
 	S3DOModel* s3domodel;
 };
