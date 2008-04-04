@@ -374,7 +374,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	} else if (weapondef->type == "Cannon") {
 		weapon = SAFE_NEW CCannon(owner);
 		((CCannon*)weapon)->selfExplode = weapondef->selfExplode;
-	} else if (weapondef->type=="Rifle") {
+	} else if (weapondef->type == "Rifle") {
 		weapon = SAFE_NEW CRifle(owner);
 	} else if (weapondef->type == "Melee") {
 		weapon = SAFE_NEW CMeleeWeapon(owner);
@@ -474,6 +474,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	weapon->fuelUsage = udw->fuelUsage;
 	weapon->avoidFriendly = weapondef->avoidFriendly;
 	weapon->avoidFeature = weapondef->avoidFeature;
+	weapon->avoidNeutral = weapondef->avoidNeutral;
 	weapon->targetBorder = weapondef->targetBorder;
 	weapon->cylinderTargetting = weapondef->cylinderTargetting;
 	weapon->minIntensity = weapondef->minIntensity;
