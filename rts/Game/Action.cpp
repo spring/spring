@@ -1,6 +1,7 @@
 #include "Action.h"
 
 #include <vector>
+#include <algorithm>
 
 #include "System/FileSystem/SimpleParser.h"
 
