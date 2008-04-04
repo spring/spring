@@ -2,7 +2,6 @@
 #include "SkyBox.h"
 #include "float3.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>	
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
 #include "GlobalStuff.h"

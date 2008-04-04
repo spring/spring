@@ -2,7 +2,6 @@
 #include "FartextureHandler.h"
 #include "UnitModels/3DOParser.h"
 #include "GL/myGL.h"
-#include <GL/glu.h>
 #include "GlobalStuff.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -157,4 +156,5 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	usedFarTextures++;
 	POP_CODE_MODE;
 }
+
 

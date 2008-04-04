@@ -6,7 +6,6 @@
 #include "NamedTextures.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include <GL/glu.h> // must come after myGL/GLEW
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;

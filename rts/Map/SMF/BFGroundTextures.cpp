@@ -4,7 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
-#include <GL/glu.h>
+#include "Rendering/GL/myGL.h"
 #include "mapfile.h"
 #include "Platform/errorhandler.h"
 #include "SmfReadMap.h"
