@@ -2,7 +2,6 @@
 #include "SmfReadMap.h"
 #include "mapfile.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "BFGroundTextures.h"

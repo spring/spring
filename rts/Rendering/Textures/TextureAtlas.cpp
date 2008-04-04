@@ -4,7 +4,6 @@
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>
 #include <list>
 
 CR_BIND(AtlasedTexture, );
@@ -351,4 +350,5 @@ AtlasedTexture CTextureAtlas::GetTextureWithBackup(const std::string& name,
 		return textures[StringToLower(backupName)];
 	}
 }
+
 

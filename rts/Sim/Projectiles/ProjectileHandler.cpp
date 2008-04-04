@@ -5,7 +5,6 @@
 
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Projectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"

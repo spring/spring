@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "myGL.h"
-#include <GL/glu.h>
 #include "Rendering/glFont.h"
 #include <ostream>
 #include <fstream>

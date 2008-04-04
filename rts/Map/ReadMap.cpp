@@ -4,7 +4,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header file for the gLu32 library
 #include "ReadMap.h"
 #include <stdlib.h>
 #include <string>

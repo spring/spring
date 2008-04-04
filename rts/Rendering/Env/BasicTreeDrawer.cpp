@@ -9,7 +9,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>			// Header File For The GLu32 Library
 #include "Rendering/Textures/Bitmap.h"
 #include "mmgr.h"
 
