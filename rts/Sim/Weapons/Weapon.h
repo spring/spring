@@ -52,7 +52,7 @@ public:
 
 	bool ShouldCheckForNewTarget() const;
 
-	virtual void Fire(){};								//should be implemented by subclasses
+	virtual void Fire() {};					// should be implemented by subclasses
 	void ScriptReady(void);
 
 	CUnit* owner;
@@ -60,91 +60,92 @@ public:
 	const WeaponDef *weaponDef;
 	std::string modelDispList;
 
-	int weaponNum;							//the weapons order among the owner weapons
+	int weaponNum;							// the weapons order among the owner weapons
 	bool haveUserTarget;
 
 	float areaOfEffect;
 
-	float3 relWeaponPos;				//weaponpos relative to the unit
-	float3 weaponPos;						//absolute weapon pos
+	float3 relWeaponPos;					// weaponpos relative to the unit
+	float3 weaponPos;						// absolute weapon pos
 
-	float3 relWeaponMuzzlePos;			//position of the firepoint
+	float3 relWeaponMuzzlePos;				// position of the firepoint
 	float3 weaponMuzzlePos;
 	float3 weaponDir;
 
-	float muzzleFlareSize;			//size of muzzle flare if drawn
-	int useWeaponPosForAim;			//sometimes weapon pos is better to use than aimpos
-	bool hasCloseTarget;					//might need to update weapon pos more often when enemy is near
+	float muzzleFlareSize;					// size of muzzle flare if drawn
+	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
+	bool hasCloseTarget;					// might need to update weapon pos more often when enemy is near
 
-	int reloadTime;							//time between succesive fires in ticks
-	int reloadStatus;						//next tick the weapon can fire again
+	int reloadTime;							// time between succesive fires in ticks
+	int reloadStatus;						// next tick the weapon can fire again
 
 	float range;
-	float heightMod;							//how much extra range the weapon gain per height difference
+	float heightMod;						// how much extra range the weapon gain per height difference
 
 	float projectileSpeed;
-	float accuracy;								//inaccuracy of whole salvo
-	float sprayangle;							//inaccuracy of individual shots inside salvo
+	float accuracy;							// inaccuracy of whole salvo
+	float sprayangle;						// inaccuracy of individual shots inside salvo
 
-	int salvoDelay;								//delay between shots in a salvo
-	int salvoSize;								//number of shots in a salvo
-	int nextSalvo;								//when the next shot in the current salvo will fire
-	int salvoLeft;								//number of shots left in current salvo
-	float3 salvoError;						//error vector for the whole salvo
+	int salvoDelay;							// delay between shots in a salvo
+	int salvoSize;							// number of shots in a salvo
+	int nextSalvo;							// when the next shot in the current salvo will fire
+	int salvoLeft;							// number of shots left in current salvo
+	float3 salvoError;						// error vector for the whole salvo
 
-	TargetType targetType;				//indicated if we have a target and what type
-	CUnit* targetUnit;						//the targeted unit if targettype=unit
-	float3 targetPos;							//the position of the target (even if targettype=unit)
-	int lastTargetRetry;					//when we last recalculated target selection
+	TargetType targetType;					// indicated if we have a target and what type
+	CUnit* targetUnit;						// the targeted unit if targettype=unit
+	float3 targetPos;						// the position of the target (even if targettype=unit)
+	int lastTargetRetry;					// when we last recalculated target selection
 
-	float predict;								//how long time we predict it take for a projectile to reach target
-	float predictSpeedMod;				//how the weapon predicts the speed of the units goes -> 1 when experience increases
+	float predict;							// how long time we predict it take for a projectile to reach target
+	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	float metalFireCost;
-	float energyFireCost;					//part of unit supply used to fire a salvo (transformed by unitloader)
+	float energyFireCost;					// part of unit supply used to fire a salvo (transformed by unitloader)
 
 	int fireSoundId;
 	float fireSoundVolume;
 
-	bool cobHasBlockShot;							//set when the script has a BlockShot() function for this weapon
-	bool hasTargetWeight;                            //set when there's a TargetWeight() function for this weapon
-	bool angleGood;										//set when script indicated ready to fire
-	bool avoidTarget;								//set when the script wants the weapon to pick a new target, reset once one has been chosen
-	bool subClassReady;								//set to false if the subclassed weapon cant fire for some reason
-	bool onlyForward;									//can only fire in the forward direction of the unit (for aircrafts mostly?)
+	bool cobHasBlockShot;					// set when the script has a BlockShot() function for this weapon
+	bool hasTargetWeight;					// set when there's a TargetWeight() function for this weapon
+	bool angleGood;							// set when script indicated ready to fire
+	bool avoidTarget;						// set when the script wants the weapon to pick a new target, reset once one has been chosen
+	bool subClassReady;						// set to false if the subclassed weapon cant fire for some reason
+	bool onlyForward;						// can only fire in the forward direction of the unit (for aircrafts mostly?)
 
-	float maxAngleDif;								//max dotproduct between wanted and actual angle to fire
-	float3 wantedDir;									//the angle we want to aim in,set by the weapon subclass
-	float3 lastRequestedDir;					//last angle we called the script with
-	int lastRequest;									//when the last script call was done
+	float maxAngleDif;						// max dotproduct between wanted and actual angle to fire
+	float3 wantedDir;						// the angle we want to aim in,set by the weapon subclass
+	float3 lastRequestedDir;				// last angle we called the script with
+	int lastRequest;						// when the last script call was done
 
-	unsigned int badTargetCategory;		//targets in this category get a lot lower targetting priority
-	unsigned int onlyTargetCategory;	//only targets in this category can be targeted (default 0xffffffff)
+	unsigned int badTargetCategory;			// targets in this category get a lot lower targetting priority
+	unsigned int onlyTargetCategory;		// only targets in this category can be targeted (default 0xffffffff)
 
-	std::list<CWeaponProjectile*> incoming;	//nukes that are on the way to our area
-	CWeaponProjectile* interceptTarget;				//nuke that we currently targets
+	std::list<CWeaponProjectile*> incoming;	// nukes that are on the way to our area
+	CWeaponProjectile* interceptTarget;		// nuke that we currently targets
 
-	float buildPercent;								//how far we have come on building current missile if stockpiling
-	int numStockpiled;								//how many missiles we have stockpiled
-	int numStockpileQued;							//how many weapons the user have added to our que
+	float buildPercent;						// how far we have come on building current missile if stockpiling
+	int numStockpiled;						// how many missiles we have stockpiled
+	int numStockpileQued;					// how many weapons the user have added to our que
 	void CheckIntercept(void);
 
 	float3 errorVector;
 	float3 errorVectorAdd;
 	int lastErrorVectorUpdate;
 
-	CWeapon* slavedTo;						//use this weapon to choose target
+	CWeapon* slavedTo;						// use this weapon to choose target
 
-	float3 mainDir;								//main aim dir of weapon
-	float maxMainDirAngleDif;					//how far away from main aim dir the weapon can aim at something (as an acos value)
+	float3 mainDir;							// main aim dir of weapon
+	float maxMainDirAngleDif;				// how far away from main aim dir the weapon can aim at something (as an acos value)
 
-	bool avoidFriendly;		//if true tried to avoid friendly Units when aiming.
-	bool avoidFeature;      		//if true try to avoid Features while aiming.
+	bool avoidFriendly;						// if true, try to avoid friendly units while aiming
+	bool avoidFeature;      				// if true, try to avoid features while aiming
+	bool avoidNeutral;						// if true, try to avoid neutral units while aiming
 
-	float targetBorder;  // if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
-	float cylinderTargetting;	//if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
-	float minIntensity;	// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
-	float heightBoostFactor;	//controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float targetBorder;						// if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
+	float cylinderTargetting;				// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
+	float minIntensity;						// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+	float heightBoostFactor;				// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
 	unsigned int collisionFlags;
 

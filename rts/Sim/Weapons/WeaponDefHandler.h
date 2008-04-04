@@ -200,8 +200,9 @@ struct WeaponDef
 	unsigned int shieldInterceptType;			// type of shield (bitfield)
 	unsigned int interceptedByShieldType;		// weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
 
-	bool avoidFriendly;							// if true try to avoid friendly Units when aiming.
-	bool avoidFeature;							// if true try to avoid Features while aiming.
+	bool avoidFriendly;							// if true, try to avoid friendly units while aiming
+	bool avoidFeature;							// if true, try to avoid features while aiming
+	bool avoidNeutral;							// if true, try to avoid neutral units while aiming
 
 	float targetBorder;							// if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
 	float cylinderTargetting;					// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere

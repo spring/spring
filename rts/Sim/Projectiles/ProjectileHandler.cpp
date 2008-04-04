@@ -634,6 +634,17 @@ void CProjectileHandler::CheckUnitCol()
 				if (p->owner == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam == p->owner->allyteam)))
 					continue;
 
+				if (p->collisionFlags & COLLISION_NONEUTRAL) {
+					if ((gs->useLuaGaia && unit->team == gs->gaiaTeamID) || (unit->team == MAX_TEAMS - 1)) {
+						// Gaia-team unit, count it as neutral
+						continue;
+					}
+					if (unit->neutral) {
+						// ordinary neutral unit
+						continue;
+					}
+				}
+
 				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
 
 				if (vol->DetectHit(unit, p->pos, p->pos + p->speed)) {

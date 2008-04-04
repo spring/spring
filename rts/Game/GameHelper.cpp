@@ -198,71 +198,79 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 
 float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length, float power, CUnit* owner, CUnit *&hit, int collisionFlags)
 {
-	float groundLength=ground->LineGroundCol(start,start+dir*length);
+	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
 	const bool ignoreFeatures = !!(collisionFlags & COLLISION_NOFEATURE);
+	const bool ignoreNeutrals = !!(collisionFlags & COLLISION_NONEUTRAL);
 
-//	logOutput.Print("gl %f",groundLength);
-	if(length>groundLength && groundLength>0)
-		length=groundLength;
+	if (length > groundLength && groundLength > 0)
+		length = groundLength;
 
 
 	int quads[1000];
 	int* endQuad = quads;
-	qf->GetQuadsOnRay(start,dir,length,endQuad);
+	qf->GetQuadsOnRay(start, dir, length, endQuad);
 
 	if (!ignoreFeatures) {
 		for (int* qi = quads; qi != endQuad; ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
+
 			for (list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 				if (!(*ui)->blocking)
 					continue;
-				float3 dif=(*ui)->midPos-start;
-				float closeLength=dif.dot(dir);
-				if(closeLength<0)
+
+				float3 dif = (*ui)->midPos - start;
+				float closeLength = dif.dot(dir);
+
+				if (closeLength < 0)
 					continue;
-				if(closeLength>length)
+				if (closeLength > length)
 					continue;
-				float3 closeVect=dif-dir*closeLength;
-				if(closeVect.SqLength() < (*ui)->sqRadius){
-					length=closeLength;
+
+				float3 closeVect = dif - dir * closeLength;
+
+				if (closeVect.SqLength() < (*ui)->sqRadius) {
+					length = closeLength;
 				}
 			}
 		}
 	}
 
-//	float minLength=length;
-	hit=0;
+	hit = 0;
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)==owner)
-				continue;
-			if(ignoreAllies && (*ui)->allyteam == owner->allyteam)
-				continue;
-			float3 dif=(*ui)->midPos-start;
-			float closeLength=dif.dot(dir);
-			if(closeLength<0)
-				continue;
-			if(closeLength>length)
-				closeLength=length;
-			float3 closeVect=dif-dir*closeLength;
+			CUnit* u = *ui;
 
-			/*float rad=(*ui)->radius;
-			float tmp = rad * rad - closeVect.SqLength();*/
+			if (u == owner)
+				continue;
+			if (ignoreAllies && u->allyteam == owner->allyteam)
+				continue;
+			if (ignoreNeutrals) {
+				if ((gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) continue;
+				if (u->neutral) continue;
+			}
 
-			/*if(tmp > 0 && length>closeLength+sqrt(tmp)){
-				length=closeLength-sqrt(tmp)*0.5f;
-				hit=*ui;
-			}*/
-			if(closeVect.SqLength() < (*ui)->sqRadius){
-				length=closeLength;
-				hit=*ui;
+			float3 dif = u->midPos - start;
+			float closeLength = dif.dot(dir);
+
+			if (closeLength < 0)
+				continue;
+			if (closeLength > length)
+				closeLength = length;
+
+			float3 closeVect = dif - dir * closeLength;
+
+			// FIXME: deal with the new collision volumes
+			if (closeVect.SqLength() < u->sqRadius) {
+				length = closeLength;
+				hit = u;
 			}
 		}
 	}
+
 	return length;
 }
 
