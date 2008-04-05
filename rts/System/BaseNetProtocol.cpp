@@ -118,7 +118,7 @@ void CBaseNetProtocol::SendRandSeed(uint randSeed)
 
 void CBaseNetProtocol::SendRandSeed(uint randSeed, int toPlayer)
 {
-	uchar data[5] = {static_cast<uchar>(toPlayer)};
+	uchar data[5] = {NETMSG_RANDSEED};
 	*(int*)(data+1) = randSeed;
 	SendData(data, 5, toPlayer);
 }

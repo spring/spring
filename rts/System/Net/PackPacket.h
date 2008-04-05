@@ -14,8 +14,12 @@ public:
 	PackPacket(const unsigned length);
 	
 	template <typename T>
-	void operator<<(const T& t) {*(T*)(data+pos) = t; pos += sizeof(T);};
-	void operator<<(const std::string& text) {strcpy((char*)(data+pos), text.c_str()); pos += text.size()+1;};
+	PackPacket& operator<<(const T& t) {
+		*(T*)(data+pos) = t;
+		pos += sizeof(T);
+		return *this;
+	};
+	PackPacket& operator<<(const std::string& text);
 	
 private:
 	unsigned pos;
