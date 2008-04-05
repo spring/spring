@@ -1,7 +1,8 @@
 #include "BaseNetProtocol.h"
 
 #include "Rendering/InMapDraw.h"
-
+#include "Net/PackPacket.h"
+using netcode::PackPacket;
 
 CBaseNetProtocol::CBaseNetProtocol()
 {
@@ -106,7 +107,10 @@ void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum, uchar connNumber)
 
 void CBaseNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)
 {
-	SendSTLData<uchar, std::string>(NETMSG_PLAYERNAME, myPlayerNum, playerName);
+	unsigned size = 3 + playerName.size() +1;
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_PLAYERNAME) << static_cast<uchar>(size) << myPlayerNum << playerName;
+	SendData(packet);
 }
 
 //  NETMSG_RANDSEED         = 8,  // uint randSeed;
@@ -137,14 +141,20 @@ void CBaseNetProtocol::SendGameID(const uchar* buf)
 
 void CBaseNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
 {
-	SendSTLData<uchar, int, uchar, std::vector<float> >(NETMSG_COMMAND, myPlayerNum, id, options, params);
+	unsigned size = 9 + params.size()*sizeof(float);
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_COMMAND) << static_cast<unsigned short>(size) << myPlayerNum << id << options << params;
+	SendData(packet);
 }
 
 //  NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 
 void CBaseNetProtocol::SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs)
 {
-	SendSTLData<uchar, std::vector<short> >(NETMSG_SELECT, myPlayerNum, selectedUnitIDs);
+	unsigned size = 4 + selectedUnitIDs.size()*sizeof(short);
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_SELECT) << static_cast<unsigned short>(size) << myPlayerNum << selectedUnitIDs;
+	SendData(packet);
 }
 
 //  NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -158,8 +168,10 @@ void CBaseNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
 
 void CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params)
 {
-	SendSTLData<uchar, short, int, uchar, std::vector<float> >(
-			NETMSG_AICOMMAND, myPlayerNum, unitID, id, options, params);
+	unsigned size = 11 + params.size()*sizeof(float);
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_AICOMMAND) << static_cast<unsigned short>(size) << myPlayerNum << unitID << id << options << params;
+	SendData(packet);
 }
 
 //  NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
@@ -263,7 +275,10 @@ void CBaseNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, sh
 
 void CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
 {
-	SendSTLData<uchar, uchar, short, short, std::string>(NETMSG_MAPDRAW, myPlayerNum, CInMapDraw::NET_POINT, x, z, label);
+	unsigned size = 8 + label.size()+1;
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_MAPDRAW) << static_cast<uchar>(size) << myPlayerNum << static_cast<uchar>(CInMapDraw::NET_POINT) << x << z << label;
+	SendData(packet);
 }
 
 //  NETMSG_SYNCREQUEST      = 32, // int frameNum;
@@ -284,7 +299,10 @@ void CBaseNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint ch
 
 void CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
 {
-	SendSTLData<uchar, std::string>(NETMSG_SYSTEMMSG, myPlayerNum, message);
+	unsigned size = 3 + message.size()+1;
+	PackPacket* packet = new PackPacket(size);
+	*packet << static_cast<uchar>(NETMSG_SYSTEMMSG) << static_cast<uchar>(size) << myPlayerNum << message;
+	SendData(packet);
 }
 
 //  NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;

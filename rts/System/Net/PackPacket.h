@@ -2,6 +2,8 @@
 #define PACK_PACKET_H
 
 #include <string>
+#include <vector>
+#include <assert.h>
 
 #include "RawPacket.h"
 
@@ -15,11 +17,21 @@ public:
 	
 	template <typename T>
 	PackPacket& operator<<(const T& t) {
+		unsigned size = sizeof(T);
+		assert(size + pos <= length);
 		*(T*)(data+pos) = t;
-		pos += sizeof(T);
+		pos += size;
 		return *this;
 	};
 	PackPacket& operator<<(const std::string& text);
+	template <typename element>
+	PackPacket& operator<<(const std::vector<element>& vec) {
+		unsigned size = vec.size()* sizeof(element);
+		assert(size + pos <= length);
+		memcpy((data+pos), (void*)(&vec[0]), size);
+		pos += size;
+		return *this;
+	};
 	
 private:
 	unsigned pos;

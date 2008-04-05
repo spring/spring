@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -17,17 +16,6 @@ class CConnection;
 class UDPListener;
 
 const unsigned NETWORK_BUFFER_SIZE = 40000;
-
-// If we switch to a networking lib and start using a bitstream, we might
-// as well remove this and use int as size type (because it'd be compressed anyway).
-template<typename T> struct is_string    {
-	typedef unsigned short size_type;
-	enum { TrailingNull = 0 };
-};
-template<> struct is_string<std::string> {
-	typedef unsigned char size_type;
-	enum { TrailingNull = 1 };
-};
 
 /**
 @brief Interface for low level networking
@@ -299,86 +287,6 @@ protected:
 		*(G*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F)] = g;
 		SendData(buf, size);
 	}
-
-	/** Send a net message without any fixed size parameter but with a variable sized
-	STL container parameter (e.g. std::string or std::vector). */
-	template<typename T>
-	void SendSTLData(const unsigned char msg, const T& s) {
-		typedef typename T::value_type value_type;
-		typedef typename is_string<T>::size_type size_type;
-
-		size_type size =  1 + sizeof(size_type) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		AssembleBuffer buf( msg, size );
-		buf.add_scalar(size).add_sequence(s );
-
-		SendData(buf.get(), size);
-	}
-
-	/** Send a net message with one fixed size parameter and a variable sized
-	STL container parameter (e.g. std::string or std::vector). */
-	template<typename A, typename T>
-	void SendSTLData(const unsigned char msg, const A a, const T& s) {
-		typedef typename T::value_type value_type;
-		typedef typename is_string<T>::size_type size_type;
-
-		size_type size =  1 + sizeof(size_type) + sizeof(A) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		AssembleBuffer buf( msg, size );
-
-		buf.add_scalar(size).add_scalar(a).add_sequence(s);
-
-		SendData(buf.get(), size);
-	}
-
-	template<typename A, typename B, typename T>
-	void SendSTLData(const unsigned char msg, const A a, const B b, const T& s) {
-		typedef typename T::value_type value_type;
-		typedef typename is_string<T>::size_type size_type;
-
-		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		AssembleBuffer buf( msg, size );
-
-		buf.add_scalar(size)
-				.add_scalar(a)
-				.add_scalar(b)
-				.add_sequence(s);
-
-		SendData(buf.get(), size);
-	}
-
-	template<typename A, typename B, typename C, typename T>
-	void SendSTLData(const unsigned char msg, A a, B b, C c, const T& s) {
-		typedef typename T::value_type value_type;
-		typedef typename is_string<T>::size_type size_type;
-
-		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-		AssembleBuffer buf( msg, size );
-
-		buf.add_scalar(size)
-		.add_scalar(a)
-		.add_scalar(b)
-		.add_scalar(c)
-		.add_sequence(s);
-
-		SendData(buf.get(), size);
-	}
-
-	template<typename A, typename B, typename C, typename D, typename T>
-	void SendSTLData(const unsigned char msg, A a, B b, C c, D d, const T& s) {
-		typedef typename T::value_type value_type;
-		typedef typename is_string<T>::size_type size_type;
-
-		size_type size = 1 + sizeof(size_type) + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + (s.size() + is_string<T>::TrailingNull) * sizeof(value_type);
-
-		AssembleBuffer buf( msg, size );
-		buf.add_scalar(size)
-		.add_scalar(a)
-		.add_scalar(b)
-		.add_scalar(c)
-		.add_scalar(d)
-		.add_sequence(s);
-
-		SendData(buf.get(), size);
-	}
 	
 private:
 	typedef boost::shared_ptr<CConnection> connPtr;
@@ -403,38 +311,6 @@ private:
 	@brief All active connections
 	*/
 	connVec connections;
-	
-	struct AssembleBuffer
-	{
-		boost::scoped_array<unsigned char> message_buffer;
-		size_t index;
-		AssembleBuffer( const unsigned char msg, size_t buffer_size )
-			: message_buffer( new unsigned char[buffer_size] ), index(1)
-		{ message_buffer[0] = msg; }
-
-		template<typename T>
-				AssembleBuffer& add_scalar( T const& obj)
-		{
-			* reinterpret_cast<T*>( message_buffer.get() + index) = obj;
-			index += sizeof(T);
-			return *this;
-		}
-
-		template<typename T>
-				AssembleBuffer& add_sequence( T const& obj)
-		{
-			typedef typename T::value_type value_type;
-			value_type * pos = reinterpret_cast<value_type*>( message_buffer.get() + index);
-			std::copy( obj.begin(), obj.end(), pos );
-			index += sizeof(value_type)*obj.size() + is_string<T>::TrailingNull;
-			if( is_string<T>::TrailingNull ) {
-				pos += obj.size();
-				*pos = typename T::value_type(0);
-			}
-			return *this;
-		}
-		unsigned char * get() const { return message_buffer.get(); };
-	};
 };
 
 } // namespace netcode

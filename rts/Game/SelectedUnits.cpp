@@ -11,6 +11,7 @@
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
 #include "NetProtocol.h"
+#include "Net/PackPacket.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -786,8 +787,7 @@ void CSelectedUnits::SendCommand(Command& c)
 }
 
 
-void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
-                                         const vector<Command>& commands)
+void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vector<Command>& commands)
 {
 	// NOTE: does not check for invalid unitIDs
 
@@ -795,59 +795,40 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 		return; // don't waste bandwidth
 	}
 
-	int u, c;
-	unsigned char buf[8192];
-	const int unitIDCount  = (int)unitIDs.size();
-	const int commandCount = (int)commands.size();
+	const unsigned unitIDCount  = unitIDs.size();
+	const unsigned commandCount = commands.size();
 
-	if ((unitIDCount <= 0) || (commandCount <= 0)) {
+	if ((unitIDCount == 0) || (commandCount == 0)) {
 		return;
 	}
 
-	int totalParams = 0;
-	for (c = 0; c < commandCount; c++) {
+	unsigned totalParams = 0;
+	for (unsigned c = 0; c < commandCount; c++) {
 		totalParams += commands[c].params.size();
 	}
 
-	int msgLen = 0;
+	unsigned msgLen = 0;
 	msgLen += (1 + 2 + 1); // msg type, msg size, player ID
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
 	msgLen += commandCount * (4 + 1 + 2); // id, options, params size
 	msgLen += totalParams * 4;
-	if (msgLen > sizeof(buf)) {
+	if (msgLen > 8192) {
 		logOutput.Print("Discarded oversized NETMSG_AICOMMANDS packet: %i\n",
 		                msgLen);
 		return; // drop the oversized packet
 	}
-
-	unsigned char* ptr = buf;
-
-// FIXME -- hackish
-#define PACK(type, value) *((type*)(ptr)) = value; ptr = ptr + sizeof(type)
-
-	PACK(unsigned char,  NETMSG_AICOMMANDS);
-	PACK(unsigned short, msgLen);
-	PACK(unsigned char,  gu->myPlayerNum);
-
-	PACK(unsigned short, unitIDCount);
-	for (u = 0; u < unitIDCount; u++) {
-		PACK(unsigned short, unitIDs[u]);
+	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
+	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS) << static_cast<unsigned short>(msgLen) << static_cast<unsigned char>(gu->myPlayerNum);
+	
+	*packet << static_cast<unsigned short>(unitIDCount) << unitIDs;
+	*packet << static_cast<unsigned short>(commandCount);
+	for (unsigned i = 0; i < commandCount; ++i) {
+		const Command& cmd = commands[i];
+		*packet << static_cast<unsigned int>(cmd.id) << cmd.options << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
 	}
 
-	PACK(unsigned short, commandCount);
-	for (c = 0; c < commandCount; c++) {
-		const Command& cmd = commands[c];
-		PACK(unsigned int,   cmd.id);
-		PACK(unsigned char,  cmd.options);
-		PACK(unsigned short, cmd.params.size());
-		for (int p = 0; p < (int)cmd.params.size(); p++) {
-			PACK(float, cmd.params[p]);
-		}
-	}
-
-	net->RawSend(buf, msgLen);
-
+	net->SendData(packet);
 	return;
 }
