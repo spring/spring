@@ -93,75 +93,60 @@ void CCannon::Update()
 	CWeapon::Update();
 }
 
-bool CCannon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
+bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 {
-
-	if(!CWeapon::TryTarget(pos,userTarget,unit))
-	{
+	if (!CWeapon::TryTarget(pos, userTarget, unit)) {
 		return false;
 	}
 
-	if(!weaponDef->waterweapon) {
-		if(unit)
-		{
-			if(unit->isUnderWater)
-			{
+	if (!weaponDef->waterweapon) {
+		if (unit) {
+			if (unit->isUnderWater) {
 				return false;
 			}
 		} else {
-			if(pos.y<0)
-			{
+			if (pos.y < 0) {
 				return false;
 			}
 		}
 	}
 
-	if (projectileSpeed == 0)
-	{
+	if (projectileSpeed == 0) {
 		return true;
 	}
-	float3 dif(pos-weaponMuzzlePos);
 
+	float3 dif(pos - weaponMuzzlePos);
 	float3 dir(GetWantedDir(dif));
 
-	if(dir.SqLength() == 0){
+	if (dir.SqLength() == 0) {
 		return false;
 	}
 
-	float3 flatdir(dif.x,0,dif.z);
-	float flatlength=flatdir.Length();
-	if(flatlength==0) {
+	float3 flatdir(dif.x, 0, dif.z);
+	float flatlength = flatdir.Length();
+	if (flatlength == 0) {
 		return true;
 	}
-	flatdir/=flatlength;
+	flatdir /= flatlength;
 
-	float gc=ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength-10,
+	float gc = ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 10,
 			dir.y , gravity / (projectileSpeed * projectileSpeed) * 0.5f);
-	if(gc>0) {
+	if (gc > 0) {
 		return false;
 	}
 
-/*	gc=ground->LineGroundCol(wpos+dir*(length*0.5f),pos,false);
-	if(gc>0 && gc<length*0.40f)
-		return false;
-*/
-	if(avoidFriendly && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir,
-		flatlength-30, dir.y, gravity /
-		(projectileSpeed * projectileSpeed) * 0.5f,
-		(accuracy+sprayangle) * 0.6f * (1-owner->limExperience * 0.9f) * 0.9f,
-		3, owner->allyteam, owner))
-	{
+	float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
+	float spread = (accuracy + sprayangle) * 0.6f * (1 - owner->limExperience * 0.9f) * 0.9f;
+
+	if (avoidFriendly && helper->TestTrajectoryAllyCone(weaponMuzzlePos, flatdir,
+		flatlength - 30, dir.y, quadratic, spread, 3, owner->allyteam, owner)) {
 		return false;
 	}
-/*	if(helper->TestCone(weaponPos,dir,length*0.5f,(accuracy+sprayangle)*1.2f*(1-owner->limExperience*0.9f)*0.9f,owner->allyteam,owner)){
+	if (avoidNeutral && helper->TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir,
+		flatlength - 30, dir.y, quadratic, spread, 3, owner)) {
 		return false;
 	}
-	float3 dir2(dif);
-	dir2.y+=predictTime*predictTime*gs->gravity;		//compensate for the earlier up prediction
-	dir2.Normalize();
-	if(helper->TestCone(weaponPos+dir*(length*0.5f),dir2,length*0.5f,(accuracy+sprayangle)*!userTarget*(1-owner->limExperience*0.9f)*0.6f,owner->allyteam,owner)){
-		return false;
-	}*/
+
 	return true;
 }
 

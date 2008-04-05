@@ -88,6 +88,9 @@ void CPlasmaRepulser::Update(void)
 	rechargeDelay -= (rechargeDelay > 0) ? 1 : 0;
 	
 	if (startShowingShield) {
+		// one-time iteration when shield first goes online
+		// (adds the projectile parts, this assumes owner is
+		// not mobile)
 		startShowingShield = false;
 		if (couldBeVisible) {
 			// 32 parts
@@ -151,7 +154,7 @@ void CPlasmaRepulser::Update(void)
 				if (gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
 					rechargeDelay = defRechargeDelay;
 					if (weaponDef->shieldRepulser) {
-					  // bounce the projectile
+						// bounce the projectile
 						const int type = (*pi)->ShieldRepulse(this, weaponPos,
 						                                      weaponDef->shieldForce,
 						                                      weaponDef->shieldMaxSpeed);

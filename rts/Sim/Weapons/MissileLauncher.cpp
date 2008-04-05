@@ -115,7 +115,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		if (gc > 0)
 			return false;
 
-		if (avoidFriendly && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
+		if (avoidFriendly && helper->TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
+			return false;
+		}
+		if (avoidNeutral && helper->TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner)) {
 			return false;
 		}
 	} else {
@@ -126,7 +129,7 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		dir /= length;
 
 		if (!onlyForward) {
-			//skip ground col testing for aircrafts
+			// skip ground col testing for aircraft
 			float g = ground->LineGroundCol(weaponMuzzlePos, pos);
 			if (g > 0 && g < length * 0.9f)
 				return false;
@@ -136,8 +139,13 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 			if (owner->frontdir.dot(goaldir) < maxAngleDif)
 				return false;
 		}
-		if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner))
+
+		if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner)) {
 			return false;
+		}
+		if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner)) {
+			return false;
+		}
 	}
 	return true;
 }
