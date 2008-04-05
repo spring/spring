@@ -79,7 +79,7 @@ void CBeamLaser::Update(void)
 	}
 }
 
-bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
+bool CBeamLaser::TryTarget(const float3& pos, bool userTarget,CUnit* unit)
 {
 	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
@@ -94,7 +94,7 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 		}
 	}
 
-	float3 dir = pos-weaponMuzzlePos;
+	float3 dir = pos - weaponMuzzlePos;
 	float length = dir.Length();
 
 	if (length == 0)
@@ -109,12 +109,17 @@ bool CBeamLaser::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 			return false;
 	}
 
-	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length))
-		return false;
+	float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.7f);
 
+	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
+		return false;
+	}
 	if (avoidFriendly) {
-		float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.7f);
-		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
+		if (helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
+			return false;
+	}
+	if (avoidNeutral) {
+		if (helper->TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner))
 			return false;
 	}
 

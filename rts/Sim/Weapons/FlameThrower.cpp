@@ -39,38 +39,42 @@ void CFlameThrower::Fire(void)
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
-bool CFlameThrower::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
+bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 {
-	if(!CWeapon::TryTarget(pos,userTarget,unit))
+	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
 	if (!weaponDef->waterweapon) {
-		if(unit){
-			if(unit->isUnderWater)
+		if (unit) {
+			if (unit->isUnderWater)
 				return false;
 		} else {
-			if(pos.y<0)
+			if (pos.y < 0)
 				return false;
 		}
 	}
 
-	float3 dir=pos-weaponMuzzlePos;
-	float length=dir.Length();
-	if(length==0)
+	float3 dir = pos - weaponMuzzlePos;
+	float length = dir.Length();
+	if (length == 0)
 		return true;
 
-	dir/=length;
+	dir /= length;
 
-	float g=ground->LineGroundCol(weaponMuzzlePos,pos);
-	if(g>0 && g<length*0.9f)
+	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	if(avoidFeature && helper->LineFeatureCol(weaponMuzzlePos,dir,length))
-		return false;
-
-	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle),owner->allyteam,owner)){
+	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
+	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner)) {
+		return false;
+	}
+	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner)) {
+		return false;
+	}
+
 	return true;
 }
 

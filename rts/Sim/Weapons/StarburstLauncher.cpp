@@ -64,22 +64,27 @@ void CStarburstLauncher::Fire(void)
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
-bool CStarburstLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
+bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 {
-	if(!CWeapon::TryTarget(pos,userTarget,unit))
+	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if(unit){
-		if(unit->isUnderWater && !weaponDef->waterweapon)
+	if (unit) {
+		if (unit->isUnderWater && !weaponDef->waterweapon)
 			return false;
 	} else {
-		if(pos.y<0 && !weaponDef->waterweapon)
+		if (pos.y < 0 && !weaponDef->waterweapon)
 			return false;
 	}
 
-	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,
-			(weaponDef->fixedLauncher ? weaponDir : UpVector), 100, 0, owner->allyteam, owner))
+	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner->allyteam, owner)) {
 		return false;
+	}
+	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner)) {
+		return false;
+	}
 
 	return true;
 }

@@ -667,53 +667,30 @@ void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyt
 	}
 }
 
-bool CGameHelper::TestCone(const float3 &from, const float3 &dir,float length, float spread, int allyteam,CUnit* owner)
-{
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from,dir,length,endQuad);
 
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
-			if((*ui)==owner)
-				continue;
-			CUnit* u=*ui;
-			float3 dif=u->midPos-from;
-			float closeLength=dif.dot(dir);
-			if(closeLength<=0)
-				continue;//closeLength=0;
-			if(closeLength>length)
-				closeLength=length;
-			float3 closeVect=dif-dir*closeLength;
-			float r=u->radius+spread*closeLength+1;
-			if(closeVect.SqLength() < r*r){
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float length)
 {
 	int quads[1000];
 	int* endQuad = quads;
-	qf->GetQuadsOnRay(start,dir,length,endQuad);
+	qf->GetQuadsOnRay(start, dir, length, endQuad);
 
-	for(int* qi=quads;qi!=endQuad;++qi){
+	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		for (list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
-			if(!(*ui)->blocking)
+			if (!(*ui)->blocking)
 				continue;
-			float3 dif=(*ui)->midPos-start;
-			float closeLength=dif.dot(dir);
-			if(closeLength<0)
+
+			float3 dif = (*ui)->midPos - start;
+			float closeLength = dif.dot(dir);
+
+			if (closeLength < 0)
 				continue;
-			if(closeLength>length)
+			if (closeLength > length)
 				continue;
-			float3 closeVect=dif-dir*closeLength;
-			if(closeVect.SqLength() < (*ui)->sqRadius){
+
+			float3 closeVect = dif - dir * closeLength;
+			if (closeVect.SqLength() < (*ui)->sqRadius) {
 				return true;
 			}
 		}
@@ -721,17 +698,20 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 	return false;
 }
 
+
 float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
 {
-	float nearHit=length;
-	vector<int> quads=qf->GetQuadsOnRay(start,dir,length);
-
+	float nearHit = length;
+	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		list<CFeature*>::const_iterator ui;
+
 		for (ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			CFeature* f = *ui;
+
 			if ((f->allyteam >= 0) && !gu->spectatingFullView &&
 			    (f->allyteam != gu->myAllyTeam) &&
 			    !loshandler->InLos(f->pos, gu->myAllyTeam)) {
@@ -741,32 +721,35 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 				continue;
 			}
 			float3 dif = f->midPos-start;
-			float closeLength=dif.dot(dir);
-			if(closeLength<0)
+			float closeLength = dif.dot(dir);
+
+			if (closeLength < 0)
 				continue;
-			if(closeLength>nearHit)
+			if (closeLength > nearHit)
 				continue;
-			float3 closeVect=dif-dir*closeLength;
-			if(closeVect.SqLength() < f->sqRadius){
+
+			float3 closeVect = dif - dir * closeLength;
+			if (closeVect.SqLength() < f->sqRadius) {
 				nearHit = closeLength;
 				feature = f;
 			}
 		}
 	}
+
 	return nearHit;
 }
 
 float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 {
-	float3 pos=unit->midPos;
-	if(gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)){
+	float3 pos = unit->midPos;
+	if (gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-	} else if((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && (unit->losStatus[allyteam] & LOS_CONTRADAR) && !unit->mobility){
+	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && (unit->losStatus[allyteam] & LOS_CONTRADAR) && !unit->mobility) {
 		// ^ this is a ghosted building, so don't add an error ^
-	} else if((unit->losStatus[allyteam] & LOS_INRADAR)){
-		pos+=unit->posErrorVector*radarhandler->radarErrorSize[allyteam];
+	} else if ((unit->losStatus[allyteam] & LOS_INRADAR)) {
+		pos += unit->posErrorVector * radarhandler->radarErrorSize[allyteam];
 	} else {
-		pos+=unit->posErrorVector*radarhandler->baseRadarErrorSize*2;
+		pos += unit->posErrorVector * radarhandler->baseRadarErrorSize * 2;
 	}
 	return pos;
 }
@@ -801,18 +784,18 @@ float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud)
 float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
 {
 	float3 pos;
-	if(buildInfo.GetXSize()&2)
-		pos.x=floor((buildInfo.pos.x)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	if (buildInfo.GetXSize() & 2)
+		pos.x = floor((buildInfo.pos.x    ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + 8;
 	else
-		pos.x=floor((buildInfo.pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+		pos.x = floor((buildInfo.pos.x + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	if(buildInfo.GetYSize()&2)
-		pos.z=floor((buildInfo.pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
+	if (buildInfo.GetYSize() & 2)
+		pos.z = floor((buildInfo.pos.z    ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + 8;
 	else
-		pos.z=floor((buildInfo.pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
+		pos.z = floor((buildInfo.pos.z + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	pos.y=uh->GetBuildHeight(pos,buildInfo.def);
-	if(buildInfo.def->floater && pos.y<0)
+	pos.y = uh->GetBuildHeight(pos,buildInfo.def);
+	if (buildInfo.def->floater && pos.y < 0)
 		pos.y = -buildInfo.def->waterline;
 
 	return pos;
@@ -820,62 +803,197 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
 
 void CGameHelper::Update(void)
 {
-	std::list<WaitingDamage*>* wd=&waitingDamages[gs->frameNum&127];
-	while(!wd->empty()){
-		WaitingDamage* w=wd->back();
+	std::list<WaitingDamage*>* wd = &waitingDamages[gs->frameNum&127];
+	while (!wd->empty()) {
+		WaitingDamage* w = wd->back();
 		wd->pop_back();
-		if(uh->units[w->target])
-			uh->units[w->target]->DoDamage(w->damage,w->attacker==-1?0:uh->units[w->attacker],w->impulse,w->weaponId);
+		if (uh->units[w->target])
+			uh->units[w->target]->DoDamage(w->damage, w->attacker == -1? 0: uh->units[w->attacker], w->impulse, w->weaponId);
 		delete w;
 	}
 }
 
-bool CGameHelper::TestTrajectoryCone(const float3 &from, const float3 &flatdir,float length, float linear, float quadratic, float spread, float baseSize, int allyteam,CUnit* owner)
+
+
+// return true if there is an allied unit within
+// the firing cone of <owner> (that might be hit)
+bool CGameHelper::TestAllyCone(const float3& from, const float3& dir, float length, float spread, int allyteam, CUnit* owner)
 {
 	int quads[1000];
 	int* endQuad = quads;
-	qf->GetQuadsOnRay(from,flatdir,length,endQuad);
+	qf->GetQuadsOnRay(from, dir, length, endQuad);
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		for (list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
-			if((*ui)==owner)
-				continue;
-			CUnit* u=*ui;
-			float3 dif=u->midPos-from;
-			float3 flatdif(dif.x,0,dif.z);
-			float closeFlatLength=flatdif.dot(flatdir);
-			if(closeFlatLength<=0)
-				continue;//closeLength=0;
-			if(closeFlatLength>length)
-				closeFlatLength=length;
-/*
-			float3 newfrom=from+flatdir*closeFlatLength;
-			newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
-			geometricObjects->AddLine(newfrom-UpVector*(spread*closeFlatLength+baseSize),newfrom+UpVector*(spread*closeFlatLength+baseSize),3,0,16);
-/**/
-			if(fabs(linear-quadratic*closeFlatLength)<0.15f){		//relativly flat region -> use approximation
-				dif.y-=(linear+quadratic*closeFlatLength)*closeFlatLength;
+			CUnit* u = *ui;
 
-				float3 closeVect=dif-flatdir*closeFlatLength;
-				float r=u->radius+spread*closeFlatLength+baseSize;
-				if(closeVect.SqLength() < r*r){
+			if (u == owner)
+				continue;
+
+			float3 dif = u->midPos - from;
+			float closeLength = dif.dot(dir);
+
+			if (closeLength <= 0)
+				continue;
+			if (closeLength > length)
+				closeLength = length;
+
+			float3 closeVect = dif - dir * closeLength;
+			float r = u->radius + spread * closeLength + 1;
+
+			if (closeVect.SqLength() < r * r) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+// same as TestAllyCone, but looks for neutral units
+bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float length, float spread, CUnit* owner)
+{
+	int quads[1000];
+	int* endQuad = quads;
+	qf->GetQuadsOnRay(from, dir, length, endQuad);
+
+	for (int* qi = quads; qi != endQuad; ++qi) {
+		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+
+		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+			CUnit* u = *ui;
+
+			if (u == owner)
+				continue;
+
+			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
+				float3 dif = u->midPos - from;
+				float closeLength = dif.dot(dir);
+
+				if (closeLength <= 0)
+					continue;
+				if (closeLength > length)
+					closeLength = length;
+
+				float3 closeVect = dif - dir * closeLength;
+				float r = u->radius + spread * closeLength + 1;
+
+				if (closeVect.SqLength() < r * r) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
+
+// return true if there is an allied unit within
+// the firing trajectory of <owner> (that might
+// be hit)
+bool CGameHelper::TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner)
+{
+	int quads[1000];
+	int* endQuad = quads;
+	qf->GetQuadsOnRay(from, flatdir, length, endQuad);
+
+	for (int* qi = quads; qi != endQuad; ++qi) {
+		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+		for (list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
+			CUnit* u = *ui;
+
+			if (u == owner)
+				continue;
+
+			float3 dif = u->midPos-from;
+			float3 flatdif(dif.x, 0, dif.z);
+			float closeFlatLength = flatdif.dot(flatdir);
+
+			if (closeFlatLength <= 0)
+				continue;
+			if (closeFlatLength > length)
+				closeFlatLength = length;
+
+			if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
+				// relatively flat region -> use approximation
+				dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
+
+				float3 closeVect = dif - flatdir * closeFlatLength;
+				float r = u->radius + spread * closeFlatLength + baseSize;
+				if (closeVect.SqLength() < r * r) {
 					return true;
 				}
 			} else {
-				float3 newfrom=from+flatdir*closeFlatLength;
-				newfrom.y+=(linear+quadratic*closeFlatLength)*closeFlatLength;
-				float3 dir=flatdir;
-				dir.y=linear+quadratic*closeFlatLength;
+				float3 newfrom = from + flatdir * closeFlatLength;
+				newfrom.y += (linear + quadratic * closeFlatLength) * closeFlatLength;
+				float3 dir = flatdir;
+				dir.y = linear + quadratic * closeFlatLength;
 				dir.Normalize();
 
-				dif=u->midPos-newfrom;
-				float closeLength=dif.dot(dir);
+				dif = u->midPos - newfrom;
+				float closeLength = dif.dot(dir);
 
-				float3 closeVect=dif-dir*closeLength;
-				float r=u->radius+spread*closeFlatLength+baseSize;
-				if(closeVect.SqLength() < r*r){
+				float3 closeVect = dif - dir * closeLength;
+				float r = u->radius + spread * closeFlatLength + baseSize;
+				if (closeVect.SqLength() < r * r) {
 					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+// same as TestTrajectoryAllyCone, but looks for neutral units
+bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner)
+{
+	int quads[1000];
+	int* endQuad = quads;
+	qf->GetQuadsOnRay(from, flatdir, length, endQuad);
+
+	for (int* qi = quads; qi != endQuad; ++qi) {
+		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+			CUnit* u = *ui;
+
+			if (u == owner)
+				continue;
+
+			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
+				float3 dif = u->midPos - from;
+				float3 flatdif(dif.x, 0, dif.z);
+				float closeFlatLength = flatdif.dot(flatdir);
+
+				if (closeFlatLength <= 0)
+					continue;
+				if (closeFlatLength > length)
+					closeFlatLength = length;
+
+				if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
+					// relatively flat region -> use approximation
+					dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
+
+					float3 closeVect = dif - flatdir * closeFlatLength;
+					float r = u->radius + spread * closeFlatLength + baseSize;
+					if (closeVect.SqLength() < r * r) {
+						return true;
+					}
+				} else {
+					float3 newfrom = from + flatdir * closeFlatLength;
+					newfrom.y += (linear + quadratic * closeFlatLength) * closeFlatLength;
+					float3 dir = flatdir;
+					dir.y = linear + quadratic * closeFlatLength;
+					dir.Normalize();
+
+					dif = u->midPos - newfrom;
+					float closeLength = dif.dot(dir);
+
+					float3 closeVect = dif - dir * closeLength;
+					float r = u->radius + spread * closeFlatLength + baseSize;
+					if (closeVect.SqLength() < r * r) {
+						return true;
+					}
 				}
 			}
 		}

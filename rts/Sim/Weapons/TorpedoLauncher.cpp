@@ -58,14 +58,12 @@ void CTorpedoLauncher::Fire(void)
 //	}
 	float3 startSpeed;
 	if (!weaponDef->fixedLauncher) {
-		startSpeed=dir*weaponDef->startvelocity;
+		startSpeed = dir * weaponDef->startvelocity;
 	}
 	else {
-		startSpeed=weaponDir*weaponDef->startvelocity;
+		startSpeed = weaponDir * weaponDef->startvelocity;
 	}
 
-//	if(onlyForward)
-//		startSpeed+=owner->speed*0.5f;
 	SAFE_NEW CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
 		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
 		targetUnit, weaponDef);
@@ -74,28 +72,35 @@ void CTorpedoLauncher::Fire(void)
 		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
-bool CTorpedoLauncher::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
+bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 {
-	if(!CWeapon::TryTarget(pos,userTarget,unit))
+	if (!CWeapon::TryTarget(pos, userTarget, unit))
 		return false;
 
-	if(unit){
-		if(!(weaponDef->submissile) && unit->unitDef->canhover)
+	if (unit) {
+		if (!(weaponDef->submissile) && unit->unitDef->canhover)
 			return false;
-		if(!(weaponDef->submissile) && unit->unitDef->canfly && unit->pos.y>0)
+		if (!(weaponDef->submissile) && unit->unitDef->canfly && unit->pos.y > 0)
 			return false;
 	}
-	if(!(weaponDef->submissile) && ground->GetHeight2(pos.x,pos.z)>0)
+	if (!(weaponDef->submissile) && ground->GetHeight2(pos.x, pos.z) > 0)
 		return 0;
 
-	float3 dir=pos-weaponMuzzlePos;
-	float length=dir.Length();
-	if(length==0)
+	float3 dir = pos-weaponMuzzlePos;
+	float length = dir.Length();
+	if (length == 0)
 		return true;
 
-	dir/=length;
+	dir /= length;
+	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
+	float spread = (accuracy + sprayangle) + 0.05f;
 
-	if(avoidFriendly && helper->TestCone(weaponMuzzlePos,dir,length,(accuracy+sprayangle)+0.05f,owner->allyteam,owner))	//+0.05f since torpedoes has an unfortunate tendency to hit own ships due to movement
+	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		return false;
+	}
+	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+		return false;
+	}
+
 	return true;
 }
