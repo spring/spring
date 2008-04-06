@@ -3,6 +3,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera/FPSController.h"
 #include "Game/Camera/OverheadController.h"
+#include "Game/Camera/SmoothController.h"
 #include "Game/Camera/RotOverheadController.h"
 #include "Game/Camera/FreeController.h"
 #include "Game/Camera/OverviewController.h"
@@ -29,7 +30,8 @@ CCameraHandler::CCameraHandler() : currCamCtrl(camCtrl)
 	camCtrls.push_back(new CTWController          (camCtrls.size())); // 2
 	camCtrls.push_back(new CRotOverheadController (camCtrls.size())); // 3
 	camCtrls.push_back(new CFreeController        (camCtrls.size())); // 4
-	camCtrls.push_back(new COverviewController    (camCtrls.size())); // 5  (last)
+	camCtrls.push_back(new SmoothController       (camCtrls.size())); // 5
+	camCtrls.push_back(new COverviewController    (camCtrls.size())); // 6  (last)
 
 	int mode = configHandler.GetInt("CamMode", 1);
 	mode = std::max(0, std::min(mode, (int)camControllers.size() - 1));
