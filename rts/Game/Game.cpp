@@ -913,14 +913,41 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "w") {
 		const int pos = action.extra.find_first_of(" ");
-		const int playernum = gs->Player(action.extra.substr(0, pos));
-		if (playernum >= 0)
-			SendNetChat(action.extra.substr(pos+1), playernum);
-		else
-			logOutput.Print("Player not found: %s", action.extra.substr(0, pos).c_str());
+		if (pos != std::string::npos)
+		{
+			const int playernum = gs->Player(action.extra.substr(0, pos));
+			if (playernum >= 0)
+				SendNetChat(action.extra.substr(pos+1), playernum);
+			else
+				logOutput.Print("Player not found: %s", action.extra.substr(0, pos).c_str());
+		}
 	}
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
+	}
+	else if (cmd == "setf") {
+		const int pos = action.extra.find_first_of(" ");
+		if (pos != std::string::npos)
+		{
+			const std::string varName = action.extra.substr(0, pos);
+			configHandler.SetFloat(varName, atof(action.extra.substr(pos+1).c_str()));
+		}
+	}
+	else if (cmd == "seti") {
+		const int pos = action.extra.find_first_of(" ");
+		if (pos != std::string::npos)
+		{
+			const std::string varName = action.extra.substr(0, pos);
+			configHandler.SetInt(varName, atoi(action.extra.substr(pos+1).c_str()));
+		}
+	}
+	else if (cmd == "sets") {
+		const int pos = action.extra.find_first_of(" ");
+		if (pos != std::string::npos)
+		{
+			const std::string varName = action.extra.substr(0, pos);
+			configHandler.SetString(varName, action.extra.substr(pos+1));
+		}
 	}
 	else if (cmd == "drawinmap") {
 		inMapDrawer->keyPressed = true;

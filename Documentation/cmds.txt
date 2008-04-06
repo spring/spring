@@ -3,48 +3,44 @@
 --
 --  REMOTE COMMANDS
 --
---  If you wish to bind these commands to a key,
---  you have to use the 'say' command to send them.
---  
---    ex:  bind  Meta+4  say .team 4
 --
 --
 
 -- the following can only be set by the host player
-.cheat [0|1]
-.kick      <player_name>
-.kickbynum <player_number>
-.nohelp  [0|1]
-.nopause [0|1]
-.nospectatorchat [0|1]
-.setmaxspeed <number>
-.setminspeed <number>
-.skip <[+|f]seconds>  -- requires .cheat if not in a replay
-.take                 -- requires .cheat when used by spectators
+/cheat [0|1]
+/kick      <player_name>
+/kickbynum <player_number>
+/nohelp  [0|1]
+/nopause [0|1]
+/nospectatorchat [0|1]
+/setmaxspeed <number>
+/setminspeed <number>
+/skip <[+|f]seconds>  -- requires .cheat if not in a replay
+/take                 -- requires .cheat when used by spectators
 
 -- lua scripts
-.luacob   < "reload" | "disable" | <custom command> >
-.luagaia  < "reload" | "disable" | <custom command> >
-.luarules < "reload" | "disable" | <custom command> >
-.devlua   [0|1]  -- requires .cheat, allows loading non-archived scripts
-.editdefs [0|1]  -- requires .cheat,
+/luacob   < "reload" | "disable" | <custom command> >
+/luagaia  < "reload" | "disable" | <custom command> >
+/luarules < "reload" | "disable" | <custom command> >
+/devlua   [0|1]  -- requires .cheat, allows loading non-archived scripts
+/editdefs [0|1]  -- requires .cheat,
                  -- allows lua writing to UnitDefs, FeatureDefs, and WeaponDefs
 
 -- the following require .cheat
-.atm
-.team <number>
-.spectator
-.nocost
-.reloadcob <unit_name>
-.give [count] <unit_name | "all"> [team]   {{ @x,y,z }}
-.godmode [0|1]
+/atm
+/team <number>
+/spectator
+/nocost
+/reloadcob <unit_name>
+/give [count] <unit_name | "all"> [team]   {{ @x,y,z }}
+/godmode [0|1]
 
 -- debugging
-.crash
-.desync
-.divbyzero
-.exception
-.fakedesync
+/crash
+/desync
+/divbyzero
+/exception
+/fakedesync
 
 
 --------------------------------------------------------------------------------
@@ -75,6 +71,10 @@ clock    [0|1]
 fps      [0|1]
 endgraph [0|1]
 
+setf <name> <float value>		-- Set a config variable (.springrc linux, Registry windows)
+seti <name> <integer value>
+sets <name> <string value>
+
 quit
 quitwarn
 pause
@@ -87,6 +87,7 @@ vsync   [-1|0|1|2|...]  --  -1 will use default setting in windows,
 
 say  <message>
 echo <message>
+w <playername> <message> -- Private Message
 
 drawinmap
 drawlabel
