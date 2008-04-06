@@ -419,6 +419,10 @@ void CGameServer::Update()
 			{
 				serverNet->RawSend(demobuffer, length);
 			}
+			else if ( demobuffer[0] != NETMSG_GAMEOVER )
+			{
+				sentGameOverMsg = true;
+			}
 		}
 
 		if (demoReader->ReachedEnd()) {
