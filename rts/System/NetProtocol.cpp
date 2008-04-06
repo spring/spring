@@ -80,7 +80,7 @@ void CNetProtocol::UpdateLoop()
 	while (loading)
 	{
 		Update();
-		SDL_Delay(1000);
+		SDL_Delay(400);
 	}
 }
 

@@ -68,8 +68,11 @@ void SmoothController::MouseMove(float3 move)
 		move.y = -move.y;
 	}
 	float pixelsize=100*mouseScale* camera->GetTanHalfFov() *2/gu->viewSizeY*height*2;
-	pos.x+=move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
-	pos.z+=move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed;
+	float3 thisMove(move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed, 0, move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed);
+	// do little smoothing here (and because its little it won't hurt if it depends on framerate)
+	static float3 lastMove(0, 0, 0);
+	pos += (thisMove+lastMove)/2.0f;
+	lastMove = (thisMove+lastMove)/2.0f;
 }
 
 void SmoothController::ScreenEdgeMove(float3 move)

@@ -836,7 +836,7 @@ void CGameServer::ServerReadNet()
 					}
 					case NETMSG_CCOMMAND: {
 						CommandMessage msg(*packet);
-						if (msg.player == a)
+						if (static_cast<unsigned>(msg.player) == a)
 						{
 							if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a]->hasRights)
 							{
