@@ -95,15 +95,15 @@ class CPathEstimator: public IPath {
 		void InitVerticesAndBlocks(int, int, int, int);
 		void InitVertices(int, int);
 		void InitBlocks(int, int);
-		void CalcOffsetsAndPathCosts(int, int);
-		void CalculateBlockOffsets(int, int);
-		void EstimatePathCosts(int, int);
+		void CalcOffsetsAndPathCosts(int, int, int threadID = -1);
+		void CalculateBlockOffsets(int, int, int);
+		void EstimatePathCosts(int, int, int);
 	
 		void SpawnThreads(int, bool);
-		void JoinThreads(int);
+		void JoinThreads(int, bool);
 
+		std::vector<CPathFinder*> pathFinders;
 		boost::mutex loadMsgMutex;
-		boost::mutex pathFinderMutex;
 		std::vector<boost::thread*> threads;
 
 
@@ -144,9 +144,9 @@ class CPathEstimator: public IPath {
 		};
 
 
-		void FindOffset(const MoveData& moveData, int blockX, int blockZ);
-		void CalculateVertices(const MoveData& moveData, int blockX, int blockZ);
-		void CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction);
+		void FindOffset(const MoveData&, int, int);
+		void CalculateVertices(const MoveData&, int, int, int threadID = -1);
+		void CalculateVertex(const MoveData&, int, int, unsigned int, int threadID = -1);
 	
 		SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& peDef);
 		SearchResult StartSearch(const MoveData& moveData, const CPathFinderDef& peDef);

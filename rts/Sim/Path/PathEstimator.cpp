@@ -121,39 +121,48 @@ CPathEstimator::~CPathEstimator() {
 void CPathEstimator::SpawnThreads(int numThreads, bool init) {
 	if (threads.size() != numThreads) {
 		threads.resize(numThreads);
+		pathFinders.resize(numThreads);
 	}
 
-	const int vertexMult = nbrOfVertices / numThreads;
-	const int blockMult = nbrOfBlocks / numThreads;
+	const int vertsPerThread = nbrOfVertices / numThreads;
+	const int blocksPerThread = nbrOfBlocks / numThreads;
 
 	for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
 		// if this is the last thread, we might have to do extra
 		// work if numThreads did not evenly divide nbrOfVertices
 		// or nbrOfBlocks, so calculate the remainder for both
 		const bool isLastThread = (threadIdx == numThreads - 1);
-		const int verticesRem = isLastThread? (nbrOfVertices - vertexMult * numThreads): 0;
-		const int blocksRem = isLastThread? (nbrOfBlocks - blockMult * numThreads): 0;
+		const int verticesRem = isLastThread? (nbrOfVertices - vertsPerThread * numThreads): 0;
+		const int blocksRem = isLastThread? (nbrOfBlocks - blocksPerThread * numThreads): 0;
 
-		const int minVertex = threadIdx * vertexMult;
-		const int maxVertex = minVertex + vertexMult + verticesRem;
-		const int minBlock = threadIdx * blockMult;
-		const int maxBlock = minBlock + blockMult + blocksRem;
+		const int minVertex = threadIdx * vertsPerThread;
+		const int maxVertex = minVertex + vertsPerThread + verticesRem;
+		const int minBlock = threadIdx * blocksPerThread;
+		const int maxBlock = minBlock + blocksPerThread + blocksRem;
 
 		if (init) {
 			threads[threadIdx] = SAFE_NEW
 				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
 		} else {
 			threads[threadIdx] = SAFE_NEW
-				boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, minBlock, maxBlock));
+				boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, minBlock, maxBlock, threadIdx));
+
+			// allocate one private CPathFinder object per thread
+			pathFinders[threadIdx] = SAFE_NEW CPathFinder();
 		}
 	}
 }
 
-void CPathEstimator::JoinThreads(int numThreads) {
+void CPathEstimator::JoinThreads(int numThreads, bool init) {
 	for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
 		threads[threadIdx]->join();
 		delete threads[threadIdx];
 		threads[threadIdx] = 0x0;
+
+		if (!init) {
+			delete pathFinders[threadIdx];
+			pathFinders[threadIdx] = 0x0;
+		}
 	}
 }
 
@@ -162,7 +171,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 
 	if (numThreads > 1) {
 		SpawnThreads(numThreads, true);
-		JoinThreads(numThreads);
+		JoinThreads(numThreads, true);
 
 		char loadMsg[512];
 		sprintf(loadMsg, "Reading estimate path costs (using %d threads)", numThreads);
@@ -176,7 +185,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 			// re-spawn the threads for the wrapper which calls
 			// CalculateBlockOffsets() and EstimatePathCosts()
 			SpawnThreads(numThreads, false);
-			JoinThreads(numThreads);
+			JoinThreads(numThreads, false);
 
 			WriteFile(name);
 		}
@@ -231,12 +240,12 @@ void CPathEstimator::InitBlocks(int minBlock, int maxBlock) {
 
 
 // wrapper
-void CPathEstimator::CalcOffsetsAndPathCosts(int minBlock, int maxBlock) {
-	CalculateBlockOffsets(minBlock, maxBlock);
-	EstimatePathCosts(minBlock, maxBlock);
+void CPathEstimator::CalcOffsetsAndPathCosts(int minBlock, int maxBlock, int threadID) {
+	CalculateBlockOffsets(minBlock, maxBlock, threadID);
+	EstimatePathCosts(minBlock, maxBlock, threadID);
 }
 
-void CPathEstimator::CalculateBlockOffsets(int minBlock, int maxBlock) {
+void CPathEstimator::CalculateBlockOffsets(int minBlock, int maxBlock, int) {
 	assert(maxBlock <= nbrOfBlocks);
 
 	for (int idx = minBlock; idx < maxBlock; idx++) {
@@ -250,7 +259,7 @@ void CPathEstimator::CalculateBlockOffsets(int minBlock, int maxBlock) {
 	}
 }
 
-void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock) {
+void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock, int threadID) {
 	assert(maxBlock <= nbrOfBlocks);
 
 	for (int move = 0; move < moveinfo->moveData.size(); move++) {
@@ -275,7 +284,7 @@ void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock) {
 		for (int idx = minBlock; idx < maxBlock; idx++) {
 			int x = idx % nbrOfBlocksX;
 			int z = idx / nbrOfBlocksX;
-			CalculateVertices(*mdi, x, z);
+			CalculateVertices(*mdi, x, z, threadID);
 		}
 	}
 }
@@ -325,9 +334,9 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
  * calculate all vertices connected from given block
  * (always 4 out of 8 vertices connected to the block)
  */
-void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ) {
+void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ, int threadID) {
 	for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-		CalculateVertex(moveData, blockX, blockZ, dir);
+		CalculateVertex(moveData, blockX, blockZ, dir, threadID);
 	}
 }
 
@@ -335,7 +344,7 @@ void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int
 /*
  * calculate requested vertex
  */
-void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction) {
+void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int threadID) {
 	// initial calculations
 	int parentBlocknr = parentBlockZ * nbrOfBlocksX + parentBlockX;
 	int childBlockX = parentBlockX + directionVector[direction].x;
@@ -367,9 +376,15 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	Path path;
 	SearchResult result;
 
-	{
-		// perform the search (NOTE: not thread-safe yet)
-		boost::mutex::scoped_lock lock(pathFinderMutex);
+	if (threadID >= 0) {
+		// since CPathFinder::GetPath() is not thread-safe,
+		// use this thread's "private" CPathFinder instance
+		// (rather than locking pathFinder->GetPath()) if we
+		// are in one
+		result = pathFinders[threadID]->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
+	} else {
+		// otherwise use the pathFinder instance passed to
+		// the constructor of this CPathEstimator object
 		result = pathFinder->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
 	}
 
@@ -819,7 +834,7 @@ void CPathEstimator::WriteFile(string name) {
 
 		// Write hash.
 		unsigned int hash = Hash();
-		zipWriteInFileInZip(file, (void*)&hash, 4);
+		zipWriteInFileInZip(file, (void*) &hash, 4);
 
 		// Write block-center-offsets.
 		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++) {
