@@ -12,7 +12,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
-
 class CPathEstimatorDef;
 class CPathFinderDef;
 
@@ -96,6 +95,7 @@ class CPathEstimator: public IPath {
 		void InitVerticesAndBlocks(int, int, int, int);
 		void InitVertices(int, int);
 		void InitBlocks(int, int);
+		void CalcOffsetsAndPathCosts(int, int);
 		void CalculateBlockOffsets(int, int);
 		void EstimatePathCosts(int, int);
 	
@@ -103,6 +103,7 @@ class CPathEstimator: public IPath {
 		void JoinThreads(int);
 
 		boost::mutex loadMsgMutex;
+		boost::mutex pathFinderMutex;
 		std::vector<boost::thread*> threads;
 
 
