@@ -102,8 +102,8 @@ class CPathEstimator: public IPath {
 		void SpawnThreads(int, bool);
 		void JoinThreads(int, bool);
 
-		std::vector<CPathFinder*> pathFinders;
 		boost::mutex loadMsgMutex;
+		std::vector<CPathFinder*> pathFinders;
 		std::vector<boost::thread*> threads;
 
 
