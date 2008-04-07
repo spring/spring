@@ -45,7 +45,7 @@ extern string stupidGlobalMapname;
 
 
 /*
- * Constructor, loads precalculated data if it exists
+ * constructor, loads precalculated data if it exists
  */
 CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, string name):
 	pathFinder(pf),
@@ -105,7 +105,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 
 
 /*
- * Free all used memory.
+ * free all used memory
  */
 CPathEstimator::~CPathEstimator() {
 	for (int i = 0; i < nbrOfBlocks; i++) {
@@ -144,8 +144,8 @@ void CPathEstimator::SpawnThreads(int numThreads, bool init) {
 			threads[threadIdx] = SAFE_NEW
 				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
 		} else {
-			threads[threadIdx] =
-				SAFE_NEW boost::thread(boost::bind(&CPathEstimator::CalculateBlockOffsets, this, minBlock, maxBlock));
+			threads[threadIdx] = SAFE_NEW
+				boost::thread(boost::bind(&CPathEstimator::CalculateBlockOffsets, this, minBlock, maxBlock));
 		}
 	}
 }
@@ -273,8 +273,8 @@ void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock) {
 
 
 /*
-Finds a square accessable by the given movedata within the given block.
-*/
+ * finds a square accessable by the given movedata within the given block
+ */
 void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ) {
 	// lower corner position of block
 	int lowerX = blockX * BLOCK_SIZE;
