@@ -144,11 +144,11 @@ void CPathEstimator::SpawnThreads(int numThreads, bool init) {
 			threads[threadIdx] = SAFE_NEW
 				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
 		} else {
-			threads[threadIdx] = SAFE_NEW
-				boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, minBlock, maxBlock, threadIdx));
-
 			// allocate one private CPathFinder object per thread
 			pathFinders[threadIdx] = SAFE_NEW CPathFinder();
+
+			threads[threadIdx] = SAFE_NEW
+				boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, minBlock, maxBlock, threadIdx));
 		}
 	}
 }
