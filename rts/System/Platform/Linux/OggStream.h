@@ -16,22 +16,23 @@ class COggStream {
 	public:
 		COggStream();
 
-		void play(const std::string& path, const float3& pos, float volume);
-		void release();
-		void display();
-		bool playback();
-		bool playing();
-		void stop();
-		bool updateBuffers();
-		void update();
+		void Play(const std::string& path, const float3& pos, float volume);
+		void Stop();
+		void TogglePause();
+		void Update();
 
-    protected:
-		bool stream(ALuint buffer);
-		void empty();
-		void check();
-		std::string errorString(int code);
+    private:
+		void Release();
+		void DisplayInfo();
+		bool IsPlaying();
+		bool StartPlaying();
 
-	private:
+		bool Stream(ALuint buffer);
+		void EmptyBuffers();
+		bool UpdateBuffers();
+		void CheckErrors();
+		std::string ErrorString(int code);
+
 		FILE* oggFile;
 		OggVorbis_File oggStream;
 		vorbis_info* vorbisInfo;
@@ -41,7 +42,10 @@ class COggStream {
 		ALuint source;
 		ALenum format;
 
+		unsigned int secsPlayed;
+		unsigned int lastTick;
 		bool stopped;
+		bool paused;
 };
 
 
