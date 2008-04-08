@@ -542,6 +542,23 @@ bool CAICallback::IsUnitParalyzed(int unitid){
 	return 0;
 }
 
+bool CAICallback::IsUnitNeutral(int unitid) {
+	verify();
+
+	if (CHECK_UNITID(unitid)) {
+		CUnit* unit = uh->units[unitid];
+
+		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+			if ((gs->useLuaGaia && unit->team == gs->gaiaTeamID) || (unit->team == MAX_TEAMS - 1))
+				return true;
+			if (unit->neutral)
+				return true;
+		}
+	}
+
+	return 0;
+}
+
 int CAICallback::InitPath(float3 start,float3 end,int pathType)
 {
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType),start,end);
@@ -557,88 +574,157 @@ void CAICallback::FreePath(int pathid)
 	pathManager->DeletePath(pathid);
 }
 
-float CAICallback::GetPathLength(float3 start,float3 end,int pathType)
+float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 {
-//	return pathfinder->GetPathLength(start,end,pathType);
+	// return pathfinder->GetPathLength(start, end, pathType);
 	return 0;
 }
 
-int CAICallback::GetEnemyUnits(int *units)
-{
-	list<CUnit*>::iterator ui;
-	int a=0;
 
-	verify ();
-	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(team)) && ((*ui)->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			units[a++]=(*ui)->id;
+
+
+int CAICallback::GetEnemyUnits(int* units)
+{
+	verify();
+	list<CUnit*>::iterator ui;
+	int a = 0;
+
+	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+			if (!IsUnitNeutral(u->id)) {
+				units[a++] = u->id;
+			}
 		}
 	}
+
 	return a;
 }
 
-
-int CAICallback::GetEnemyUnitsInRadarAndLos(int *units)
+int CAICallback::GetEnemyUnitsInRadarAndLos(int* units)
 {
+	verify();
 	list<CUnit*>::iterator ui;
-	int a=0;
+	int a = 0;
 
-	verify ();
-	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(team)) && ((*ui)->losStatus[gs->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
-			units[a++]=(*ui)->id;
+	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
+			if (!IsUnitNeutral(u->id)) {
+				units[a++] = u->id;
+			}
 		}
 	}
+
 	return a;
 }
 
-
-int CAICallback::GetEnemyUnits(int *units,const float3& pos,float radius)
+int CAICallback::GetEnemyUnits(int* units, const float3& pos, float radius)
 {
-	verify ();
-	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
-
+	verify();
+	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	vector<CUnit*>::iterator ui;
-	int a=0;
+	int a = 0;
 
-	for(ui=unit.begin();ui!=unit.end();++ui){
-		if(!gs->Ally((*ui)->allyteam,gs->AllyTeam(team)) && ((*ui)->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
-			units[a]=(*ui)->id;
-			++a;
+	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+			if (!IsUnitNeutral(u->id)) {
+				units[a] = u->id;
+				++a;
+			}
 		}
 	}
+
 	return a;
 }
+
 
 int CAICallback::GetFriendlyUnits(int *units)
 {
-	int a=0;
+	verify();
+	int a = 0;
 
-	verify ();
-	for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-		if(gs->Ally((*ui)->allyteam,gs->AllyTeam(team))){
-			units[a++]=(*ui)->id;
+	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (gs->Ally(u->allyteam, gs->AllyTeam(team))) {
+			// IsUnitNeutral does a LOS check, but inconsequential
+			// since we can always see friendly units anyway
+			if (!IsUnitNeutral(u->id)) {
+				units[a++] = u->id;
+			}
 		}
 	}
+
 	return a;
 }
 
-int CAICallback::GetFriendlyUnits(int *units,const float3& pos,float radius)
+int CAICallback::GetFriendlyUnits(int *units, const float3& pos, float radius)
 {
-	verify ();
-	vector<CUnit*> unit=qf->GetUnitsExact(pos,radius);
-
+	verify();
+	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	vector<CUnit*>::iterator ui;
-	int a=0;
+	int a = 0;
 
-	for(ui=unit.begin();ui!=unit.end();++ui){
-		if(gs->Ally((*ui)->allyteam,gs->AllyTeam(team))){
-			units[a]=(*ui)->id;
+	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (gs->Ally(u->allyteam, gs->AllyTeam(team))) {
+			// IsUnitNeutral does a LOS check, but inconsequential
+			// since we can always see friendly units anyway
+			if (!IsUnitNeutral(u->id)) {
+				units[a] = u->id;
+				++a;
+			}
+		}
+	}
+
+	return a;
+}
+
+
+int CAICallback::GetNeutralUnits(int* units)
+{
+	verify();
+	int a = 0;
+
+	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		// IsUnitNeutral does the LOS check
+		if (IsUnitNeutral(u->id)) {
+			units[a++] = u->id;
+		}
+	}
+
+	return a;
+}
+
+int CAICallback::GetNeutralUnits(int* units, const float3& pos, float radius)
+{
+	verify();
+	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
+	vector<CUnit*>::iterator ui;
+	int a = 0;
+
+	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+		CUnit* u = *ui;
+
+		// IsUnitNeutral does the LOS check
+		if (IsUnitNeutral(u->id)) {
+			units[a] = u->id;
 			++a;
 		}
 	}
+
 	return a;
 }
+
+
 
 
 int CAICallback::GetMapWidth()
