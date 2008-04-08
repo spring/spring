@@ -53,6 +53,7 @@ private:
 	void UnloadLandFlood(Command& c); //land and dispatch units all at once
 	void UnloadCrashFlood(Command& c); //slam into landscape abruptly and dispatch units all at once (incomplete)
 	
+	virtual bool AllowedCommand(const Command& c);
 	bool SpotIsClear(float3 pos, CUnit* u);
 	std::list<float3> dropSpots;		
 	bool isFirstIteration;
