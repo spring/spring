@@ -295,6 +295,18 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
 {
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		// If the command radius is less than the diameter of the unit we wish to drop
+		if(radius < emptyRadius*2) {
+			// Boundary checking.  If we are too close to the edge of the map, we will get stuck
+			// in an infinite loop due to not finding any random positions that match a valid location.
+			if	(	(center.x+radius < emptyRadius)
+				||	(center.z+radius < emptyRadius)
+				||	(center.x-radius >= gs->mapx * SQUARE_SIZE - emptyRadius)
+				||	(center.z-radius >= gs->mapy * SQUARE_SIZE - emptyRadius)
+				)
+				return false;
+		}
+
 		// handle air transports differently
 		for (int a = 0; a < 100; ++a) {
 			float3 delta(1, 0, 1);
@@ -967,4 +979,28 @@ bool CTransportCAI::LoadStillValid(CUnit* unit){
 	return !(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4
 		&& unit->pos.distance2D(
 		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > cmd.params[3]*2);
+}
+
+bool CTransportCAI::AllowedCommand(const Command& c)
+{
+	if(!CMobileCAI::AllowedCommand(c))
+		return false;
+
+	switch (c.id) {
+		case CMD_UNLOAD_UNIT:
+		case CMD_UNLOAD_UNITS: {
+			CTransportUnit* transport = (CTransportUnit*) owner;
+			if (transport->transported.empty()) return false;
+			CUnit* u = transport->transported.front().unit;
+			float3 pos(c.params[0],c.params[1],c.params[2]);
+			float radius = c.params[3];
+			float spread = u->radius * transport->unitDef->unloadSpread;
+			float3 found;
+			bool canUnload = FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
+			if(!canUnload) return false;
+			break;
+		}
+	}
+
+	return true;
 }
