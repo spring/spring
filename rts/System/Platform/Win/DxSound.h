@@ -30,11 +30,14 @@ public:
 	virtual ~CDxSound();
 	void Update();
 	unsigned int GetWaveId(const string& path, bool hardFail);
-	void PlaySample(int id,float volume=1);
-	void PlaySample(int id,const float3& p,float volume=1);
+	void PlaySample(int id, float volume = 1.0f);
+	void PlaySample(int id, const float3& p, float volume = 1.0f);
+
 	void PlayStream(const std::string& path, float volume = 1.0f,
 					const float3& pos = ZeroVector, bool loop = false);
 	void StopStream();
+	void PauseStream() { /* TODO */ }
+
 	void SetVolume(float v);
 
 private:

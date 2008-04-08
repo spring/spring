@@ -158,12 +158,17 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	CheckError("COpenALSound::PlaySample");
 */
 
-	oggStream.play(path, pos * posScale, volume);
+	oggStream.Play(path, pos * posScale, volume);
 }
 
 void COpenALSound::StopStream()
 {
-	oggStream.stop();
+	oggStream.Stop();
+}
+
+void COpenALSound::PauseStream()
+{
+	oggStream.TogglePause();
 }
 
 
@@ -230,7 +235,7 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 
 void COpenALSound::Update()
 {
-	oggStream.update();
+	oggStream.Update();
 
 	for (int a = 0; a < maxSounds; a++) {
 		if (Sources[a]) {
@@ -257,9 +262,9 @@ void COpenALSound::UpdateListener()
 	}
 	float3 pos = camera->pos * posScale;
 	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
-	alListener3f(AL_VELOCITY,0.0f,0.0f,0.0f);
+	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
-	alListenerfv(AL_ORIENTATION,ListenerOri);
+	alListenerfv(AL_ORIENTATION, ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);
 	CheckError("COpenALSound::UpdateListener");
 }
