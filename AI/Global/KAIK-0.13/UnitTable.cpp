@@ -521,8 +521,11 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 			benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
 
 			if (udef->windGenerator) {
-				if (ai->cb->GetMinWind() > 1.0f) {
-					benefit += (ai->cb->GetMinWind() + ai->cb->GetMaxWind()) / 2.0f;
+				const float minWind = ai->cb->GetMinWind();
+				const float maxWind = ai->cb->GetMaxWind();
+				const float avgWind = (minWind + maxWind) * 0.5f;
+				if (minWind >= 8.0f || (minWind >= 4.0f && avgWind >= 8.0f)) {
+					benefit += avgWind;
 				}
 			}
 			if (udef->tidalGenerator) {
