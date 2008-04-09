@@ -86,7 +86,6 @@ public:
 	int lastTick;
 	int chatSound;
 
-	int skipping;
 	bool playing;
 	bool chatting;
 	bool camMove[8];
@@ -149,7 +148,7 @@ protected:
 	void ReColorTeams();
 
 	void ReloadCOB(const std::string& msg, int player);
-	void Skip(int targetframe);
+	void Skip(int toFrame);
 
 	std::string hotBinding;
 	float inputTextPosX;
@@ -157,6 +156,7 @@ protected:
 	float inputTextSizeX;
 	float inputTextSizeY;
 	float lastCpuUsageTime;
+	bool skipping;
 	
 	unsigned lastFrameTime;
 
