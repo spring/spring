@@ -209,42 +209,11 @@ void CGameServer::SkipTo(int targetframe)
 		// fast-read and send demo data
 		while (serverframenum < targetframe)
 		{
-			unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-			unsigned length = 0;
-	
-			if ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 )
-			{
-				if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
-				{
-					serverframenum++;
-					if (demobuffer[0] == NETMSG_KEYFRAME)
-						serverNet->SendKeyFrame(serverframenum);
-					else
-						serverNet->SendNewFrame();
-	
-				}
-				else if ( demobuffer[0] != NETMSG_GAMEDATA &&
-						demobuffer[0] != NETMSG_SETPLAYERNUM &&
-						demobuffer[0] != NETMSG_USER_SPEED &&
-						demobuffer[0] != NETMSG_INTERNAL_SPEED &&
-						demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
-				{
-					serverNet->RawSend(demobuffer, length);
-				}
-			}
 			modGameTime = demoReader->GetNextReadTime()+0.1f; // skip time
-	
-			if (demoReader->ReachedEnd()) {
-				delete demoReader;
-				demoReader = 0;
-				log.Message(DemoEnd);
-				gameEndTime = SDL_GetTicks();
-				break;
-			}
+			SendDemoData(true);
 			if (serverframenum % 20 == 0)
 				serverNet->Update(); // send some data
 		}
-		lastTick = SDL_GetTicks();
 		CommandMessage msg2("skip end", SERVER_PLAYER);
 		serverNet->SendData(msg2.Pack());
 		serverNet->Update();
@@ -265,6 +234,49 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 		playerstring += players[*p]->name;
 	}
 	return playerstring;
+}
+
+void CGameServer::SendDemoData(const bool skipping)
+{
+	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
+	unsigned length = 0;
+
+	while ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 )
+	{
+		if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
+		{
+			// we can't use CreateNewFrame() here
+			lastTick = SDL_GetTicks();
+			serverframenum++;
+#ifdef SYNCCHECK
+		if (!skipping)
+			outstandingSyncFrames.push_back(serverframenum);
+#endif
+			if (demobuffer[0] == NETMSG_KEYFRAME)
+				serverNet->SendKeyFrame(serverframenum);
+			else
+				serverNet->SendNewFrame();
+		}
+		else if ( demobuffer[0] != NETMSG_GAMEDATA &&
+						demobuffer[0] != NETMSG_SETPLAYERNUM &&
+						demobuffer[0] != NETMSG_USER_SPEED &&
+						demobuffer[0] != NETMSG_INTERNAL_SPEED &&
+						demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+		{
+			serverNet->RawSend(demobuffer, length);
+		}
+		else if ( demobuffer[0] != NETMSG_GAMEOVER )
+		{
+			sentGameOverMsg = true;
+		}
+	}
+
+	if (demoReader->ReachedEnd()) {
+		delete demoReader;
+		demoReader = 0;
+		log.Message(DemoEnd);
+		gameEndTime = SDL_GetTicks();
+	}
 }
 
 void CGameServer::Message(const std::string& message)
@@ -399,45 +411,10 @@ void CGameServer::Update()
 	}
 
 	// when hosting a demo, read from file and broadcast data
-	if (demoReader != 0) {
-		unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-		unsigned length = 0;
-
-		while ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 ) {
-			if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
-			{
-				// we can't use CreateNewFrame() here
-				CheckSync();
-				lastTick = SDL_GetTicks();
-				serverframenum++;
-				if (demobuffer[0] == NETMSG_KEYFRAME)
-					serverNet->SendKeyFrame(serverframenum);
-				else
-					serverNet->SendNewFrame();
-#ifdef SYNCCHECK
-				outstandingSyncFrames.push_back(serverframenum);
-#endif
-			}
-			else if ( demobuffer[0] != NETMSG_GAMEDATA &&
-			          demobuffer[0] != NETMSG_SETPLAYERNUM &&
-			          demobuffer[0] != NETMSG_USER_SPEED &&
-			          demobuffer[0] != NETMSG_INTERNAL_SPEED &&
-			          demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
-			{
-				serverNet->RawSend(demobuffer, length);
-			}
-			else if ( demobuffer[0] != NETMSG_GAMEOVER )
-			{
-				sentGameOverMsg = true;
-			}
-		}
-
-		if (demoReader->ReachedEnd()) {
-			delete demoReader;
-			demoReader = 0;
-			log.Message(DemoEnd);
-			gameEndTime = SDL_GetTicks();
-		}
+	if (demoReader != 0)
+	{
+		CheckSync();
+		SendDemoData();
 	}
 
 	ServerReadNet();

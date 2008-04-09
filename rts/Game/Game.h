@@ -34,13 +34,8 @@ class CGame : public CGameController
 {
 public:
 	CR_DECLARE(CGame);			//Don't use CGame pointer in CR_MEMBER()!!!
-	void UpdateUI();
-	void ClientReadNet();
 	void PostLoad();
 
-	void SimFrame();
-	void StartPlaying();
-	bool DrawWorld();
 	bool Draw();
 	bool Update();
 	int KeyReleased(unsigned short k);
@@ -175,6 +170,13 @@ protected:
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
 private:
+	void ClientReadNet();
+	void UpdateUI();
+	bool DrawWorld();
+	
+	void SimFrame();
+	void StartPlaying();
+	
 	// to smooth out SimFrame calls
 	int leastQue;       ///< Lowest value of que in the past second.
 	float timeLeft;     ///< How many SimFrame() calls we still may do.

@@ -449,6 +449,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	lastMoveUpdate = lastframe;
 	lastUpdateRaw = lastframe;
 	updateDeltaSeconds = 0.0f;
+	script = CScriptHandler::Instance().chosenScript;
+	assert(script);
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START, 0.0f);
@@ -2271,8 +2273,6 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	mouse->EmptyMsgQueUpdate();
-	script = CScriptHandler::Instance().chosenScript;
-	assert(script);
 	thisFps++;
 
 	unsigned timeNow = SDL_GetTicks();
@@ -2316,7 +2316,8 @@ bool CGame::Update()
 		CInputReceiver::CollectGarbage();
 	}
 
-	UpdateUI();
+	if (!skipping)
+		UpdateUI();
 	net->Update();
 
 #ifdef DEBUG
@@ -3081,11 +3082,12 @@ void CGame::ClientReadNet()
 		if(que < leastQue)
 			leastQue = que;
 	}
-
-	// make sure ClientReadNet returns at least every 15 game frames
-	// so CGame can process keyboard input, and render etc.
-	if (gameServer)
+	else
+	{
+		// make sure ClientReadNet returns at least every 15 game frames
+		// so CGame can process keyboard input, and render etc.
 		timeLeft = 15.0f;
+	}
 
 	// really process the messages
 	while (timeLeft > 0.0f && (packet = net->GetData()) != NULL)
@@ -3734,9 +3736,6 @@ void CGame::ClientReadNet()
 
 void CGame::UpdateUI()
 {
-	if (skipping) {
-		return;
-	}
 	ASSERT_UNSYNCED_MODE;
 	//move camera if arrow keys pressed
 #ifdef DIRECT_CONTROL_ALLOWED
