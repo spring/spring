@@ -123,7 +123,7 @@ public:
 	virtual const std::vector<CommandDescription>* GetGroupCommands(int unitid) = 0;	// the commands that this unit can understand, other commands will be ignored
 	virtual int GiveGroupOrder(int unitid, Command* c) = 0;
 
-	virtual int GiveOrder(int unitid,Command* c) = 0;
+	virtual int GiveOrder(int unitid, Command* c) = 0;
 
 	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitid) = 0;
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid) = 0;
