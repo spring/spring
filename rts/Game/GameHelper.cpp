@@ -815,8 +815,8 @@ void CGameHelper::Update(void)
 
 
 
-// return true if there is an allied unit within
-// the firing cone of <owner> (that might be hit)
+/** @return true if there is an allied unit within
+    the firing cone of <owner> (that might be hit) */
 bool CGameHelper::TestAllyCone(const float3& from, const float3& dir, float length, float spread, int allyteam, CUnit* owner)
 {
 	int quads[1000];
@@ -831,26 +831,16 @@ bool CGameHelper::TestAllyCone(const float3& from, const float3& dir, float leng
 			if (u == owner)
 				continue;
 
-			float3 dif = u->midPos - from;
-			float closeLength = dif.dot(dir);
-
-			if (closeLength <= 0)
-				continue;
-			if (closeLength > length)
-				closeLength = length;
-
-			float3 closeVect = dif - dir * closeLength;
-			float r = u->radius + spread * closeLength + 1;
-
-			if (closeVect.SqLength() < r * r) {
+			if (TestConeHelper(from, dir, length, spread, u))
 				return true;
-			}
 		}
 	}
 	return false;
 }
 
-// same as TestAllyCone, but looks for neutral units
+
+
+/** same as TestAllyCone, but looks for neutral units */
 bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float length, float spread, CUnit* owner)
 {
 	int quads[1000];
@@ -867,20 +857,8 @@ bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float l
 				continue;
 
 			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
-				float3 dif = u->midPos - from;
-				float closeLength = dif.dot(dir);
-
-				if (closeLength <= 0)
-					continue;
-				if (closeLength > length)
-					closeLength = length;
-
-				float3 closeVect = dif - dir * closeLength;
-				float r = u->radius + spread * closeLength + 1;
-
-				if (closeVect.SqLength() < r * r) {
+				if (TestConeHelper(from, dir, length, spread, u))
 					return true;
-				}
 			}
 		}
 	}
@@ -889,9 +867,31 @@ bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float l
 
 
 
-// return true if there is an allied unit within
-// the firing trajectory of <owner> (that might
-// be hit)
+/** helper for TestAllyCone and TestNeutralCone
+    @return true if the unit u is in the firing cone, false otherwise */
+bool CGameHelper::TestConeHelper(const float3& from, const float3& dir, float length, float spread, const CUnit* u)
+{
+	float3 dif = u->midPos - from;
+	float closeLength = dif.dot(dir);
+
+	if (closeLength <= 0)
+		return false;
+	if (closeLength > length)
+		closeLength = length;
+
+	float3 closeVect = dif - dir * closeLength;
+	float r = u->radius + spread * closeLength + 1;
+
+	if (closeVect.SqLength() < r * r) {
+		return true;
+	}
+	return false;
+}
+
+
+
+/** @return true if there is an allied unit within
+    the firing trajectory of <owner> (that might be hit) */
 bool CGameHelper::TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner)
 {
 	int quads[1000];
@@ -906,46 +906,16 @@ bool CGameHelper::TestTrajectoryAllyCone(const float3& from, const float3& flatd
 			if (u == owner)
 				continue;
 
-			float3 dif = u->midPos-from;
-			float3 flatdif(dif.x, 0, dif.z);
-			float closeFlatLength = flatdif.dot(flatdir);
-
-			if (closeFlatLength <= 0)
-				continue;
-			if (closeFlatLength > length)
-				closeFlatLength = length;
-
-			if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
-				// relatively flat region -> use approximation
-				dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
-
-				float3 closeVect = dif - flatdir * closeFlatLength;
-				float r = u->radius + spread * closeFlatLength + baseSize;
-				if (closeVect.SqLength() < r * r) {
-					return true;
-				}
-			} else {
-				float3 newfrom = from + flatdir * closeFlatLength;
-				newfrom.y += (linear + quadratic * closeFlatLength) * closeFlatLength;
-				float3 dir = flatdir;
-				dir.y = linear + quadratic * closeFlatLength;
-				dir.Normalize();
-
-				dif = u->midPos - newfrom;
-				float closeLength = dif.dot(dir);
-
-				float3 closeVect = dif - dir * closeLength;
-				float r = u->radius + spread * closeFlatLength + baseSize;
-				if (closeVect.SqLength() < r * r) {
-					return true;
-				}
-			}
+			if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
+				return true;
 		}
 	}
 	return false;
 }
 
-// same as TestTrajectoryAllyCone, but looks for neutral units
+
+
+/** same as TestTrajectoryAllyCone, but looks for neutral units */
 bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner)
 {
 	int quads[1000];
@@ -961,41 +931,52 @@ bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& fl
 				continue;
 
 			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
-				float3 dif = u->midPos - from;
-				float3 flatdif(dif.x, 0, dif.z);
-				float closeFlatLength = flatdif.dot(flatdir);
-
-				if (closeFlatLength <= 0)
-					continue;
-				if (closeFlatLength > length)
-					closeFlatLength = length;
-
-				if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
-					// relatively flat region -> use approximation
-					dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
-
-					float3 closeVect = dif - flatdir * closeFlatLength;
-					float r = u->radius + spread * closeFlatLength + baseSize;
-					if (closeVect.SqLength() < r * r) {
-						return true;
-					}
-				} else {
-					float3 newfrom = from + flatdir * closeFlatLength;
-					newfrom.y += (linear + quadratic * closeFlatLength) * closeFlatLength;
-					float3 dir = flatdir;
-					dir.y = linear + quadratic * closeFlatLength;
-					dir.Normalize();
-
-					dif = u->midPos - newfrom;
-					float closeLength = dif.dot(dir);
-
-					float3 closeVect = dif - dir * closeLength;
-					float r = u->radius + spread * closeFlatLength + baseSize;
-					if (closeVect.SqLength() < r * r) {
-						return true;
-					}
-				}
+				if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
+					return true;
 			}
+		}
+	}
+	return false;
+}
+
+
+
+/** helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
+    @return true if the unit u is in the firing cone, false otherwise */
+bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
+{
+	float3 dif = u->midPos - from;
+	float3 flatdif(dif.x, 0, dif.z);
+	float closeFlatLength = flatdif.dot(flatdir);
+
+	if (closeFlatLength <= 0)
+		return false;
+	if (closeFlatLength > length)
+		closeFlatLength = length;
+
+	if (fabs(linear - quadratic * closeFlatLength) < 0.15f) {
+		// relatively flat region -> use approximation
+		dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
+
+		float3 closeVect = dif - flatdir * closeFlatLength;
+		float r = u->radius + spread * closeFlatLength + baseSize;
+		if (closeVect.SqLength() < r * r) {
+			return true;
+		}
+	} else {
+		float3 newfrom = from + flatdir * closeFlatLength;
+		newfrom.y += (linear + quadratic * closeFlatLength) * closeFlatLength;
+		float3 dir = flatdir;
+		dir.y = linear + quadratic * closeFlatLength;
+		dir.Normalize();
+
+		dif = u->midPos - newfrom;
+		float closeLength = dif.dot(dir);
+
+		float3 closeVect = dif - dir * closeLength;
+		float r = u->radius + spread * closeFlatLength + baseSize;
+		if (closeVect.SqLength() < r * r) {
+			return true;
 		}
 	}
 	return false;
