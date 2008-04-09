@@ -204,7 +204,8 @@ void CGameServer::SkipTo(int targetframe)
 {
 	if (targetframe > serverframenum && demoReader)
 	{
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+		CommandMessage msg(str( boost::format("skip start %d") %targetframe ), SERVER_PLAYER);
+		serverNet->SendData(msg.Pack());
 		// fast-read and send demo data
 		while (serverframenum < targetframe)
 		{
@@ -240,11 +241,17 @@ void CGameServer::SkipTo(int targetframe)
 				gameEndTime = SDL_GetTicks();
 				break;
 			}
-			if (serverframenum % 10 == 0)
-				serverNet->Update();
+			if (serverframenum % 20 == 0)
+				serverNet->Update(); // send some data
 		}
 		lastTick = SDL_GetTicks();
+		CommandMessage msg2("skip end", SERVER_PLAYER);
+		serverNet->SendData(msg2.Pack());
 		serverNet->Update();
+	}
+	else
+	{
+		// allready passed
 	}
 }
 
@@ -1121,7 +1128,7 @@ void CGameServer::PushAction(const Action& action)
 			int endFrame;
 			// parse the skip time
 			if (timeStr[0] == 'f') {        // skip to frame
-				endFrame = atoi(timeStr.c_str()) + 1;
+				endFrame = atoi(timeStr.c_str() + 1);
 			} else if (timeStr[0] == '+') { // relative time
 				endFrame = serverframenum + (GAME_SPEED * atoi(timeStr.c_str() + 1));
 			} else {                        // absolute time

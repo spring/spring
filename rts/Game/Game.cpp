@@ -237,7 +237,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	playing  = false;
 	gameOver = false;
-	skipping = 0;
+	skipping = false;
 
 	drawFpsHUD = true;
 	drawMapMarks = true;
@@ -2249,6 +2249,17 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 			}
 		}
 	}
+	else if (action.command == "skip") {
+		if (action.extra.find_first_of("start") == 0) {
+			std::istringstream buf(action.extra.substr(6));
+			int targetframe;
+			buf >> targetframe;
+			Skip(targetframe);
+		}
+		else if (action.extra == "end") {
+			skipping = false;
+		}
+	}
 	else if (gs->frameNum > 1) {
 		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playernum);
 		if (luaGaia)  luaGaia->SyncedActionFallback(action.rawline, playernum);
@@ -4180,15 +4191,14 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
-void CGame::Skip(int targetframe)
+void CGame::Skip(int toFrame)
 {
-	if ((skipping < 0) || (skipping > 2)) {
+	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
-		skipping = 0;
 	}
 
 	const int startFrame = gs->frameNum;
-	int endFrame = targetframe;
+	int endFrame = toFrame;
 
 	if (endFrame <= startFrame) {
 		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
@@ -4201,7 +4211,7 @@ void CGame::Skip(int targetframe)
 	CSound* tmpSound = sound;
 	sound = SAFE_NEW CNullSound;
 
-	skipping++;
+	skipping = true;
 	{
 		const float oldSpeed     = gs->speedFactor;
 		const float oldUserSpeed = gs->userSpeedFactor;
@@ -4211,7 +4221,7 @@ void CGame::Skip(int targetframe)
 
 		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
 
-		while (endFrame > gs->frameNum) {
+		while (skipping && endFrame >= gs->frameNum) {
 			// FIXME: messes up the how-many-frames-are-left bar
 			Update();
 
@@ -4250,7 +4260,6 @@ void CGame::Skip(int targetframe)
 		gs->speedFactor     = oldSpeed;
 		gs->userSpeedFactor = oldUserSpeed;
 	}
-	skipping--;
 
 	delete sound;
 	sound = tmpSound;

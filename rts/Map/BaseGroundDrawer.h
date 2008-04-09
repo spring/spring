@@ -42,7 +42,7 @@ public:
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();
-	bool DrawExtraTex() { return drawMode!=drawNormal; }
+	bool DrawExtraTex() const { return drawMode!=drawNormal; };
 
 	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 

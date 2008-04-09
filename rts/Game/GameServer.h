@@ -72,13 +72,6 @@ public:
 	*/
 	void PostLoad(unsigned lastTick, int serverframenum);
 
-	/**
-	@brief skip frames
-	@todo skipping is buggy and could need some improvements
-	Currently only sets serverframenum
-	*/
-	void SkipTo(int targetframe);
-
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	bool WaitsOnCon() const;
@@ -123,6 +116,13 @@ private:
 
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
+	
+	/**
+	@brief skip frames
+	
+	If you are watching a demo, this will push out all data until targetframe to all clients
+	*/
+	void SkipTo(int targetframe);
 	
 	void Message(const std::string& message);
 	void Warning(const std::string& message);

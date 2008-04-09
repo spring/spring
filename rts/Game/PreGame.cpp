@@ -109,7 +109,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				}
 				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 				{
-					logOutput.Print("Demo file does not contain GameSetup data");
+					logOutput.Print("Demo file does not contain a setupscript");
 					// Didn't get a CGameSetup script
 					// FIXME: duplicated in Main.cpp
 					const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
