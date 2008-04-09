@@ -1,20 +1,27 @@
+#include <SDL.h>
+
 #include "OggStream.h"
 #include "LogOutput.h"
 
 
 COggStream::COggStream() {
-	DS = 0;
-	DSB = 0;
-	oggFile = 0;
-	vorbisInfo = 0;
-	vorbisComment = 0;
+	DS = 0x0;
+	DSB = 0x0;
+	oggFile = 0x0;
+	vorbisInfo = 0x0;
+	vorbisComment = 0x0;
+
+	secsPlayed = 0;
+	lastTick = 0;
+
 	stopped = true;
+	paused = false;
 	isLastSection = true;
 	reachedEOS = true;
 }
 
 
-void COggStream::play(const std::string& path, float volume, const float3& position) {
+void COggStream::Play(const std::string& path, float volume, const float3& position) {
 	if (!stopped) {
 		return;
 	}
@@ -34,7 +41,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 
 	vorbisInfo = ov_info(&oggStream, -1);
 	vorbisComment = ov_comment(&oggStream, -1);
-	// display();
+	// DisplayInfo();
 
 	// set the wave format
 	WAVEFORMATEX wfm;
@@ -49,11 +56,12 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	wfm.nBlockAlign		= 2 * wfm.nChannels;
 	wfm.wFormatTag		= 1;
 
+
 	// set up the stream buffer
 	DSBUFFERDESC desc;
 
 	desc.dwSize         = sizeof(desc);
-	desc.dwFlags        = 0;
+	desc.dwFlags        = DSBCAPS_CTRLVOLUME;
 	desc.lpwfxFormat    = &wfm;
 	desc.dwReserved     = 0;
 
@@ -66,10 +74,12 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 	int ret = 1;
 	DWORD size = BUFSIZE * 2;
 
+	SetVolume(volume, true);
+
 	char* buf;
 	// offset to lock start, lock size, address of first lock part, size of first part, 0, 0, flag
 	DSB->Lock(0, size, (LPVOID*) &buf, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
-	DSB->SetVolume(int(DSBVOLUME_MIN * volume));
+
 
 	// read in the stream bits
 	while (ret && pos < size) {
@@ -82,7 +92,13 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 
 	curSection = 0;
 	lastSection = 0;
+
+	secsPlayed = 0;
+	lastTick = SDL_GetTicks();
+
 	stopped = false;
+	paused = false;
+
 	isLastSection = false;
 	reachedEOS = false;
 }
@@ -90,7 +106,7 @@ void COggStream::play(const std::string& path, float volume, const float3& posit
 
 // stops the currently playing stream
 // and cleans up the associated buffer
-void COggStream::stop() {
+void COggStream::Stop() {
 	if (!stopped) {
 		stopped = true;
 		DSB->Stop();
@@ -98,59 +114,104 @@ void COggStream::stop() {
 	}
 }
 
+void COggStream::SetVolume(float volume, bool b) {
+	if (!stopped || b) {
+		// clamp the volume to the interval [0, 1]
+		float v = std::max(0.0f, std::min(volume, 1.0f));
 
-void COggStream::update() {
-	if (stopped) {
-		return;
+		// SetVolume() wants the volume level specified in hundredths of
+		// decibels between DSBVOLUME_MIN [-10.000] and DSBVOLUME_MAX [0]
+		// but we assume <volume> is between 0 and 1, linearly convert it
+		//
+		// 0.0 --> -10000
+		// 0.1 -->  -9000
+		// ..............
+		// 1.0 -->      0
+		float db = (1.0f - v) * -10000;
+
+		DSB->SetVolume(db);
+	}
+}
+
+void COggStream::TogglePause() {
+	if (!stopped) {
+		paused = !paused;
+
+		if (paused) {
+			DSB->Stop();
+		} else {
+			DSB->Play(0, 0, DSBPLAY_LOOPING);
+		}
+	}
+}
+
+void COggStream::UpdateTimer() {
+	unsigned int tick = SDL_GetTicks();
+
+	if (paused) {
+		lastTick = tick;
 	}
 
-	DWORD pos;
-	DSB->GetCurrentPosition(&pos, NULL);
-	curSection = (pos < BUFSIZE)? 0: 1;
+	if ((tick - lastTick) >= 1000) {
+		secsPlayed += (tick - lastTick) / 1000;
+		lastTick = tick;
+	}
+}
 
-	// buffer section changed?
-	if (curSection != lastSection) {
-		if (reachedEOS) {
-			stop();
-			return;
-		}
-		if (isLastSection) {
-			reachedEOS = true;
-		}
+void COggStream::Update() {
+	if (!stopped) {
+		UpdateTimer();
 
-		DWORD size = BUFSIZE;
-		char* buf;
+		if (!paused) {
+			DWORD pos;
+			DSB->GetCurrentPosition(&pos, NULL);
+			curSection = (pos < BUFSIZE)? 0: 1;
 
-		// fill the section we switched from
-		DSB->Lock(lastSection * BUFSIZE, size, (LPVOID*) &buf, &size, NULL, NULL, 0);
+			// buffer section changed?
+			if (curSection != lastSection) {
+				if (reachedEOS) {
+					Stop();
+					return;
+				}
+				if (isLastSection) {
+					reachedEOS = true;
+				}
 
-		DWORD pos = 0;
-		int sec = 0;
-		int ret = 1;
+				DWORD size = BUFSIZE;
+				char* buf;
 
-		while (ret && pos < size) {
-			ret = ov_read(&oggStream, buf + pos, size - pos, 0, 2, 1, &sec);
-			pos += ret;
-		}
+				// fill the section we switched from
+				DSB->Lock(lastSection * BUFSIZE, size, (LPVOID*) &buf, &size, NULL, NULL, 0);
 
-		if (!ret) {
-			// EOS reached, zero rest of buffer
-			while (pos < size) {
-				*(buf + pos++) = 0;
+				DWORD pos = 0;
+				int sec = 0;
+				int ret = 1;
+
+				while (ret && pos < size) {
+					ret = ov_read(&oggStream, buf + pos, size - pos, 0, 2, 1, &sec);
+					pos += ret;
+				}
+
+				if (!ret) {
+					// EOS reached, zero rest of buffer
+					while (pos < size) {
+						*(buf + pos++) = 0;
+					}
+
+					// only this buffer section to go
+					isLastSection = true;
+				}
+
+				DSB->Unlock(buf, size, NULL, 0);
+				lastSection = curSection;
 			}
-
-			// only this buffer section to go
-			isLastSection = true;
 		}
-
-		DSB->Unlock(buf, size, NULL, 0);
-		lastSection = curSection;
 	}
 }
 
 
 // display Ogg info and comments
-void COggStream::display() {
+void COggStream::DisplayInfo() {
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
 	logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);

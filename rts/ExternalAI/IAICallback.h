@@ -185,7 +185,7 @@ public:
 	// * do NOT modify or delete any of the pointers returned
 	// * the maps are stored from top left and each data position is 8*8 in size
 	// * to get info about a position (x, y) look at location (int(y / 8)) * GetMapWidth() + (int(x / 8))
-	// * note that some of the maps are stored in a lower resolution than this
+	// * note that some of the type-maps are stored in a lower resolution than this
 	virtual int GetMapWidth() = 0;
 	virtual int GetMapHeight() = 0;
 	virtual const float* GetHeightMap() = 0;			// this is the height for the center of the squares, this differs slightly from the drawn map since it uses the height at the corners

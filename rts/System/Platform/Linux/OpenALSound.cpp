@@ -161,15 +161,10 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	oggStream.Play(path, pos * posScale, volume);
 }
 
-void COpenALSound::StopStream()
-{
-	oggStream.Stop();
-}
-
-void COpenALSound::PauseStream()
-{
-	oggStream.TogglePause();
-}
+void COpenALSound::StopStream() { oggStream.Stop(); }
+void COpenALSound::PauseStream() { oggStream.TogglePause(); }
+unsigned int COpenALSound::GetStreamTime() { return oggStream.GetPlayTime(); }
+void COpenALSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
 
 
 
@@ -199,32 +194,30 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 	assert(volume >= 0.0f);
 
 	ALuint source;
-	alGenSources(1,&source);
+	alGenSources(1, &source);
 
 	/* it seems OpenAL running on Windows is giving problems when too many sources are allocated at a time,
 	in which case it still generates errors. */
-	if (alGetError () != AL_NO_ERROR)
+	if (alGetError() != AL_NO_ERROR)
 		return;
-//	if (!CheckError("error generating OpenAL sound source"))
-//		return;
 
 	if (Sources[cur]) {
 		/* The Linux port of OpenAL generates an "Illegal call" error if we
 		delete a playing source, so we must stop it first. -- tvo */
 		alSourceStop(Sources[cur]);
-		alDeleteSources(1,&Sources[cur]);
+		alDeleteSources(1, &Sources[cur]);
 	}
 	Sources[cur++] = source;
 	if (cur == maxSounds)
 		cur = 0;
 
 	alSourcei(source, AL_BUFFER, id);
-	alSourcef(source, AL_PITCH, 1.0f );
-	alSourcef(source, AL_GAIN, volume );
+	alSourcef(source, AL_PITCH, 1.0f);
+	alSourcef(source, AL_GAIN, volume);
 
 	float3 pos = p * posScale;
 	alSource3f(source, AL_POSITION, pos.x, pos.y, pos.z);
-	alSource3f(source, AL_VELOCITY, 0.0f,0.0f,0.0f);
+	alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	alSourcei(source, AL_LOOPING, false);
 	alSourcei(source, AL_SOURCE_RELATIVE, relative);
 	alSourcePlay(source);
@@ -261,7 +254,7 @@ void COpenALSound::UpdateListener()
 		return;
 	}
 	float3 pos = camera->pos * posScale;
-	alListener3f(AL_POSITION, pos.x,pos.y,pos.z);
+	alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
 	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);

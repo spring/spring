@@ -20,16 +20,19 @@ class COggStream {
 		void Stop();
 		void TogglePause();
 		void Update();
+		unsigned int GetPlayTime() const { return ((!stopped)? secsPlayed: 0); }
+		void SetVolume(float, bool b = false);
 
     private:
-		void Release();
 		void DisplayInfo();
 		bool IsPlaying();
 		bool StartPlaying();
 
-		bool Stream(ALuint buffer);
+		bool DecodeStream(ALuint buffer);
 		void EmptyBuffers();
+		void ReleaseBuffers();
 		bool UpdateBuffers();
+		void UpdateTimer();
 		void CheckErrors();
 		std::string ErrorString(int code);
 
