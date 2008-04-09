@@ -36,7 +36,9 @@ public:
 	void PlayStream(const std::string& path, float volume = 1.0f,
 					const float3& pos = ZeroVector, bool loop = false);
 	void StopStream();
-	void PauseStream() { /* TODO */ }
+	void PauseStream();
+	unsigned int GetStreamTime();
+	void SetStreamVolume(float);
 
 	void SetVolume(float v);
 
@@ -47,7 +49,7 @@ private:
 	bool hardFail;
 
 protected:
-	int GetBuf(int id,float volume);
+	int GetBuf(int id, float volume);
 	int InitFile(const string& name);
 
 	struct SoundInfo {
@@ -59,7 +61,7 @@ protected:
 		float volume;
 	};
 
-	map<string,int> waveid;
+	map<string, int> waveid;
 	vector<SoundInfo*> loadedSounds;
 	list<PlayingSound> playingSounds;
 	vector<int> buf2id;
@@ -70,7 +72,7 @@ protected:
 	HRESULT RestoreBuffers(int num);
 	bool CreateStaticBuffer(const string& name);
 	HRESULT FillBuffer();
-	bool ReadWAV (const char *name, Uint8 *buf, int fileSize, Uint8 **soundData, Uint32* bufferSize, WAVEFORMATEX& wf);
+	bool ReadWAV (const char* name, Uint8* buf, int fileSize, Uint8** soundData, Uint32* bufferSize, WAVEFORMATEX& wf);
 
 	LPDIRECTSOUND		m_pDS;
 	DWORD               m_dwBufferBytes;

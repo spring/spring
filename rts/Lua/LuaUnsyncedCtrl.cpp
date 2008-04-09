@@ -63,6 +63,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
+	REGISTER_LUA_CFUNC(PauseSoundStream);
+	REGISTER_LUA_CFUNC(GetSoundStreamTime);
+	REGISTER_LUA_CFUNC(SetSoundStreamVolume);
 
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraTarget);
@@ -485,10 +488,29 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	}
 }
 
-
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
 	sound->StopStream();
+	return 0;
+}
+int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
+{
+	sound->PauseStream();
+	return 0;
+}
+int LuaUnsyncedCtrl::GetSoundStreamTime(lua_State* L)
+{
+	lua_pushnumber(L, sound->GetStreamTime());
+	return 1;
+}
+int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	if (args == 1) {
+		sound->SetStreamVolume(lua_tonumber(L, 1));
+	} else {
+		luaL_error(L, "Incorrect arguments to SetSoundStreamVolume(v)");
+	}
 	return 0;
 }
 

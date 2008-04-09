@@ -74,9 +74,9 @@ public:
 
 	int GetEnemyUnits(int* units);
 	int GetEnemyUnitsInRadarAndLos(int* units);
-	int GetEnemyUnits(int* units, const float3& pos,float radius);
+	int GetEnemyUnits(int* units, const float3& pos, float radius);
 	int GetFriendlyUnits(int* units);
-	int GetFriendlyUnits(int* units, const float3& pos,float radius);
+	int GetFriendlyUnits(int* units, const float3& pos, float radius);
 	int GetNeutralUnits(int* units);
 	int GetNeutralUnits(int* units, const float3& pos, float radius);
 

@@ -17,14 +17,19 @@ class COggStream {
 	public:
 		COggStream();
 
-		inline void setDSoundObject(LPDIRECTSOUND _DS) { DS = _DS; }
+		inline void SetDSoundObject(LPDIRECTSOUND _DS) { DS = _DS; }
 
-		void play(const std::string& path, float volume, const float3& position);
-		void stop();
-		void update();
-		void display();
+		void Play(const std::string& path, float volume, const float3& position);
+		void Stop();
+		void TogglePause();
+		void Update();
+		unsigned int GetPlayTime() const { return ((!stopped)? secsPlayed: 0); }
+		void SetVolume(float, bool b = false);
 
 	private:
+		void UpdateTimer();
+		void DisplayInfo();
+
 		LPDIRECTSOUND DS;
 		LPDIRECTSOUNDBUFFER DSB;
 
@@ -35,9 +40,14 @@ class COggStream {
 
 		int curSection;
 		int lastSection;
-		bool stopped;
 		bool isLastSection;
 		bool reachedEOS;
+
+		unsigned int secsPlayed;
+		unsigned int lastTick;
+
+		bool stopped;
+		bool paused;
 };
 
 #endif

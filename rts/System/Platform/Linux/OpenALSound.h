@@ -21,12 +21,14 @@ public:
 	ALuint GetWaveId(const string& path, bool hardFail);
 	void Update();
 	void PlaySample(int id, float volume);
-	void PlaySample(int id,const float3& p,float volume);
+	void PlaySample(int id, const float3& p, float volume);
 
 	void PlayStream(const std::string& path, float volume = 1.0f,
 					const float3& pos = ZeroVector, bool loop = false);
 	void StopStream();
 	void PauseStream();
+	unsigned int GetStreamTime();
+	void SetStreamVolume(float);
 
 	void SetVolume(float v);
 
@@ -34,7 +36,7 @@ public:
 	virtual ~COpenALSound();
 
 private:
-	bool ReadWAV(const char *name, Uint8 *buf, int size, ALuint albuffer);
+	bool ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer);
 
 private:
 	ALuint LoadALBuffer(const string& path);
