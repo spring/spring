@@ -83,8 +83,8 @@ protected:
 	std::list<WaitingDamage*> waitingDamages[128];		//probably a symptom of some other problems but im getting paranoid about putting whole classes into high trafic stl containers instead of pointers to them
 
 private:
-	bool CGameHelper::TestConeHelper(const float3& from, const float3& dir, float length, float spread, const CUnit* u);
-	bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u);
+	bool TestConeHelper(const float3& from, const float3& dir, float length, float spread, const CUnit* u);
+	bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u);
 };
 
 extern CGameHelper* helper;

@@ -117,6 +117,9 @@ private:
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 	
+	/// read data from demo and send it to clients
+	void SendDemoData(const bool skipping=false);
+	
 	/**
 	@brief skip frames
 	
