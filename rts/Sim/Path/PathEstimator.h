@@ -99,8 +99,8 @@ class CPathEstimator: public IPath {
 		void CalculateBlockOffsets(int, int, int);
 		void EstimatePathCosts(int, int, int);
 	
-		void SpawnThreads(int, bool);
-		void JoinThreads(int, bool);
+		void SpawnThreads(int, int);
+		void JoinThreads(int, int);
 
 		boost::mutex loadMsgMutex;
 		std::vector<CPathFinder*> pathFinders;

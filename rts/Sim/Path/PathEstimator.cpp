@@ -118,7 +118,7 @@ CPathEstimator::~CPathEstimator() {
 
 
 
-void CPathEstimator::SpawnThreads(int numThreads, bool init) {
+void CPathEstimator::SpawnThreads(int numThreads, int stage) {
 	if (threads.size() != numThreads) {
 		threads.resize(numThreads);
 		pathFinders.resize(numThreads);
@@ -140,26 +140,31 @@ void CPathEstimator::SpawnThreads(int numThreads, bool init) {
 		const int minBlock = threadIdx * blocksPerThread;
 		const int maxBlock = minBlock + blocksPerThread + blocksRem;
 
-		if (init) {
+		if (stage == 0) {
 			threads[threadIdx] = SAFE_NEW
 				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
-		} else {
+		}
+		if (stage == 1) {
+			threads[threadIdx] = SAFE_NEW
+				boost::thread(boost::bind(&CPathEstimator::CalculateBlockOffsets, this, minBlock, maxBlock, threadIdx));
+		}
+		if (stage == 2) {
 			// allocate one private CPathFinder object per thread
 			pathFinders[threadIdx] = SAFE_NEW CPathFinder();
 
 			threads[threadIdx] = SAFE_NEW
-				boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, minBlock, maxBlock, threadIdx));
+				boost::thread(boost::bind(&CPathEstimator::EstimatePathCosts, this, minBlock, maxBlock, threadIdx));
 		}
 	}
 }
 
-void CPathEstimator::JoinThreads(int numThreads, bool init) {
+void CPathEstimator::JoinThreads(int numThreads, int stage) {
 	for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
 		threads[threadIdx]->join();
 		delete threads[threadIdx];
 		threads[threadIdx] = 0x0;
 
-		if (!init) {
+		if (stage == 2) {
 			delete pathFinders[threadIdx];
 			pathFinders[threadIdx] = 0x0;
 		}
@@ -167,11 +172,11 @@ void CPathEstimator::JoinThreads(int numThreads, bool init) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	int numThreads = configHandler.GetInt("HardwareThreadCount", 1);
+	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
 
 	if (numThreads > 1) {
-		SpawnThreads(numThreads, true);
-		JoinThreads(numThreads, true);
+		SpawnThreads(numThreads, 0);
+		JoinThreads(numThreads, 0);
 
 		char loadMsg[512];
 		sprintf(loadMsg, "Reading estimate path costs (using %d threads)", numThreads);
@@ -182,10 +187,12 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 			sprintf(calcMsg, "Analyzing map accessibility (block-size %d)", BLOCK_SIZE);
 			PrintLoadMsg(calcMsg);
 
-			// re-spawn the threads for the wrapper which calls
-			// CalculateBlockOffsets() and EstimatePathCosts()
-			SpawnThreads(numThreads, false);
-			JoinThreads(numThreads, false);
+			// re-spawn the threads for CalculateBlockOffsets()
+			SpawnThreads(numThreads, 1);
+			JoinThreads(numThreads, 1);
+			// re-spawn the threads for EstimatePathCosts()
+			SpawnThreads(numThreads, 2);
+			JoinThreads(numThreads, 2);
 
 			WriteFile(name);
 		}
@@ -207,6 +214,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		}
 	}
 }
+
 
 
 // wrapper
@@ -239,8 +247,14 @@ void CPathEstimator::InitBlocks(int minBlock, int maxBlock) {
 }
 
 
+
 // wrapper
 void CPathEstimator::CalcOffsetsAndPathCosts(int minBlock, int maxBlock, int threadID) {
+	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
+	// A must be completely finished before B_i can be safely called. This means we cannot
+	// let thread i execute (A_i, B_i), but instead have to split the work such that every
+	// thread finishes its part of A before any starts B_i. Hence this wrapper function is
+	// no longer called when more than one thread is spawned in InitEstimator().
 	CalculateBlockOffsets(minBlock, maxBlock, threadID);
 	EstimatePathCosts(minBlock, maxBlock, threadID);
 }
