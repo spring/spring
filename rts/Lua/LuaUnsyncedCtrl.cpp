@@ -20,6 +20,7 @@ using namespace std;
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Game/Player.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/MouseHandler.h"

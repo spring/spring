@@ -10,6 +10,7 @@
 #include "FPUCheck.h"
 #include "GameServer.h"
 #include "GameSetup.h"
+#include "GameData.h"
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
 #include "DemoReader.h"
@@ -486,17 +487,17 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	logOutput.Print("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
 
-	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-	unsigned length = 0;
 	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
-	while ( (length = scanner.GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, INT_MAX)) > 0) {
-		if (demobuffer[0] == NETMSG_GAMEDATA)
+	RawPacket* buf = 0;
+	while ( (buf = scanner.GetData(static_cast<float>(INT_MAX))) ) {
+		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
-			const RawPacket packet(demobuffer, length);
-			serverStartupData = new GameData(packet);
+			serverStartupData = new GameData(*buf);
+			delete buf;
 			break;
 		}
+		delete buf;
 		if (scanner.ReachedEnd())
 		{
 			throw content_error("End of demo reached and no game data found");

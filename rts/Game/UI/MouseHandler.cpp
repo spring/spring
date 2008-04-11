@@ -24,6 +24,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
+#include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Platform/ConfigHandler.h"

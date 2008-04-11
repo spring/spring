@@ -23,6 +23,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
+#include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Rendering/UnitModels/3DModelParser.h"

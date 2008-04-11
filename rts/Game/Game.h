@@ -7,16 +7,10 @@
 
 #include <time.h>
 #include <string>
-#include <deque>
-#include <set>
 #include <map>
 #include "SDL_types.h"
 
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Player.h"
 #include "GameController.h"
-
-#define FRAME_HISTORY 16
 
 class CScript;
 class CBaseWater;
