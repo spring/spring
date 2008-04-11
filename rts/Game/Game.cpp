@@ -3319,10 +3319,10 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_KEYFRAME: {
+				int serverframenum = *(int*)(inbuf+1);
 #ifndef SYNCCHECK
 				net->SendKeyFrame(serverframenum-1);
 #endif
-				int serverframenum = *(int*)(inbuf+1);
 				if (gs->frameNum == (serverframenum - 1))
 				{
 					// everything ok, fall through
