@@ -8,14 +8,12 @@
 
 #include "RawPacket.h"
 
-typedef netcode::RawPacket RawPacket;
+using netcode::RawPacket;
 
 namespace netcode {
 
 class CConnection;
 class UDPListener;
-
-const unsigned NETWORK_BUFFER_SIZE = 40000;
 
 /**
 @brief Interface for low level networking

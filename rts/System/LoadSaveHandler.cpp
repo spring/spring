@@ -14,6 +14,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
 #include "creg/Serializer.h"

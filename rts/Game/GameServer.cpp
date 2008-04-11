@@ -238,36 +238,30 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 
 void CGameServer::SendDemoData(const bool skipping)
 {
-	unsigned char demobuffer[netcode::NETWORK_BUFFER_SIZE];
-	unsigned length = 0;
-
-	while ( (length = demoReader->GetData(demobuffer, netcode::NETWORK_BUFFER_SIZE, modGameTime)) > 0 )
+	RawPacket* buf = 0;
+	while ( (buf = demoReader->GetData(modGameTime)) )
 	{
-		if (demobuffer[0] == NETMSG_NEWFRAME || demobuffer[0] == NETMSG_KEYFRAME)
+		unsigned msgCode = static_cast<unsigned>(buf->data[0]);
+		if (msgCode == NETMSG_NEWFRAME || msgCode == NETMSG_KEYFRAME)
 		{
 			// we can't use CreateNewFrame() here
 			lastTick = SDL_GetTicks();
 			serverframenum++;
 #ifdef SYNCCHECK
-		if (!skipping)
-			outstandingSyncFrames.push_back(serverframenum);
+			if (!skipping)
+				outstandingSyncFrames.push_back(serverframenum);
 #endif
-			if (demobuffer[0] == NETMSG_KEYFRAME)
-				serverNet->SendKeyFrame(serverframenum);
-			else
-				serverNet->SendNewFrame();
+			serverNet->SendData(buf);
 		}
-		else if ( demobuffer[0] != NETMSG_GAMEDATA &&
-						demobuffer[0] != NETMSG_SETPLAYERNUM &&
-						demobuffer[0] != NETMSG_USER_SPEED &&
-						demobuffer[0] != NETMSG_INTERNAL_SPEED &&
-						demobuffer[0] != NETMSG_PAUSE) // dont send these from demo
+		else if ( msgCode != NETMSG_GAMEDATA &&
+						msgCode != NETMSG_SETPLAYERNUM &&
+						msgCode != NETMSG_USER_SPEED &&
+						msgCode != NETMSG_INTERNAL_SPEED &&
+						msgCode != NETMSG_PAUSE) // dont send these from demo
 		{
-			serverNet->RawSend(demobuffer, length);
-		}
-		else if ( demobuffer[0] != NETMSG_GAMEOVER )
-		{
-			sentGameOverMsg = true;
+			if (msgCode == NETMSG_GAMEOVER)
+				sentGameOverMsg = true;
+			serverNet->SendData(buf);
 		}
 	}
 
@@ -482,7 +476,7 @@ void CGameServer::ServerReadNet()
 			{
 				const unsigned char* inbuf = packet->data;
 				switch (inbuf[0]){
-					case NETMSG_NEWFRAME:
+					case NETMSG_KEYFRAME:
 						players[a]->ping = serverframenum-*(int*)&inbuf[1];
 						break;
 
@@ -662,7 +656,7 @@ void CGameServer::ServerReadNet()
 								delayedSyncResponseFrame = serverframenum;
 								log.Warning(format(DelayedSyncResponse) %players[a]->name %frameNum %serverframenum);
 							}
-							// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_NEWFRAME)
+							// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 							players[a]->ping = serverframenum - frameNum;
 						}
 #endif

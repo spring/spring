@@ -95,6 +95,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -3318,6 +3319,9 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_KEYFRAME: {
+#ifndef SYNCCHECK
+				net->SendKeyFrame(serverframenum-1);
+#endif
 				int serverframenum = *(int*)(inbuf+1);
 				if (gs->frameNum == (serverframenum - 1))
 				{
@@ -3337,8 +3341,6 @@ void CGame::ClientReadNet()
 				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
 				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
-#else
-				net->SendNewFrame();
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 

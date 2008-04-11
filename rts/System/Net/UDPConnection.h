@@ -2,7 +2,6 @@
 #define _REMOTE_CONNECTION
 
 #include "Connection.h"
-#include "Net.h"
 #include "UDPSocket.h"
 #include "RawPacket.h"
 
@@ -12,6 +11,8 @@
 #include <deque>
 
 namespace netcode {
+
+const unsigned UDPBufferSize = 8192;
 
 /**
 How Spring protocolheader looks like (size in bytes):
@@ -90,7 +91,7 @@ private:
 	sockaddr_in addr;
 
 	///outgoing stuff (pure data without header) waiting to be sended
-	unsigned char outgoingData[NETWORK_BUFFER_SIZE];
+	unsigned char outgoingData[UDPBufferSize];
 	unsigned outgoingLength;
 
 	/// packets the other side didn't ack'ed until now

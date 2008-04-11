@@ -53,7 +53,7 @@ UDPConnection::~UDPConnection()
 
 void UDPConnection::SendData(const unsigned char *data, const unsigned length)
 {
-	if(outgoingLength+length>=NETWORK_BUFFER_SIZE){
+	if(outgoingLength+length>=UDPBufferSize){
 		throw network_error("Buffer overflow in UDPConnection (SendData)");
 	}
 	memcpy(&outgoingData[outgoingLength],data,length);

@@ -4,13 +4,12 @@
 #include <string>
 
 #include "GameController.h"
-#include "GameData.h"
 
 class CglList;
 class CInfoConsole;
 class CLoadSaveHandler;
-
-namespace netcode{
+class GameData;
+namespace netcode {
 	class RawPacket;
 }
 

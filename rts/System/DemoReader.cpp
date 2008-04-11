@@ -7,6 +7,7 @@
 #include "Sync/Syncify.h"
 #include "Game/GameSetup.h"
 #endif
+#include "Net/RawPacket.h"
 #include "Game/GameVersion.h"
 #include "FileSystem/FileHandler.h"
 
@@ -77,15 +78,15 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	}
 }
 
-unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length, float curTime)
+netcode::RawPacket* CDemoReader::GetData(float curTime)
 {
 	if (ReachedEnd())
 		return 0;
 
 	// when paused, modGameTime wont increase so no seperate check needed
 	if (nextDemoRead < curTime) {
-		playbackDemo->Read((void*)(buf), chunkHeader.length);
-		unsigned ret = chunkHeader.length;
+		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
+		playbackDemo->Read((void*)(buf->data), chunkHeader.length);
 		bytesRemaining -= chunkHeader.length;
 
 		playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
@@ -93,7 +94,7 @@ unsigned CDemoReader::GetData(unsigned char *buf, const unsigned length, float c
 		nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
 		bytesRemaining -= sizeof(chunkHeader);
 
-		return ret;
+		return buf;
 	} else {
 		return 0;
 	}

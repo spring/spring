@@ -4,6 +4,7 @@
 #include "Demo.h"
 
 class CFileHandler;
+namespace netcode { class RawPacket; }
 
 /**
 @brief Utility class for reading demofiles
@@ -19,9 +20,9 @@ public:
 	
 	/**
 	@brief read from demo file
-	@return Amount of data read (bytes)
+	@return The data read (or 0 if no data), don't forget to delete it
 	*/
-	unsigned GetData(unsigned char *buf, const unsigned length, float curTime);
+	netcode::RawPacket* GetData(float curTime);
 
 	/**
 	@brief Wether the demo has reached the end
