@@ -20,6 +20,9 @@
 #include "mmgr.h"
 #include "creg/STL_List.h"
 
+#define AIRTRANSPORT_DOCKING_RADIUS 16
+#define AIRTRANSPORT_DOCKING_ANGLE 50
+
 static void ScriptCallback(int retCode,void* p1,void* p2)
 {
 	((CTransportCAI*)p1)->ScriptReady();
@@ -167,7 +170,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 					am->SetWantedAltitude(unit->model->height);
 					am->maxDrift=1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
-					if(owner->pos.distance(wantedPos)<4 && abs(owner->heading-unit->heading)<50 && owner->updir.dot(UpVector)>0.995f){
+					if(owner->pos.distance(wantedPos)<AIRTRANSPORT_DOCKING_RADIUS && abs(owner->heading-unit->heading)<AIRTRANSPORT_DOCKING_ANGLE && owner->updir.dot(UpVector)>0.995f){
 						am->dontCheckCol=false;
 						am->dontLand=true;
 						std::vector<int> args;
