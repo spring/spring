@@ -8,7 +8,7 @@
 class COverviewController : public CCameraController
 {
 public:
-	COverviewController(int num);
+	COverviewController();
 
 	const std::string GetName() const { return "ov"; }
 

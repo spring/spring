@@ -3,7 +3,6 @@
 #include <SDL_keysym.h>
 #include <SDL_types.h>
 #include "Game/Camera/CameraController.h"
-#include "Game/Camera/FPSController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/SelectedUnits.h"
@@ -514,8 +513,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		selectedUnits.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
-		if(camCtrl!=camHandler->camControllers[0]){
-			camCtrl->SetPos(sel->pos);
+		if(camHandler->GetCurrentControllerNum() != 0){
+			camHandler->GetCurrentController().SetPos(sel->pos);
 		} else {	//fps camera
 
 			if(camera->rot.x>-1)
@@ -527,7 +526,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			wantedCamDir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
 			wantedCamDir.Normalize();
 
-			((CFPSController*)camHandler->camControllers[0])->SetPos(sel->pos - wantedCamDir*800);
+			camHandler->GetCurrentController().SetPos(sel->pos - wantedCamDir*800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

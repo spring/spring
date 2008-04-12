@@ -190,7 +190,7 @@ void CGroupHandler::GroupCommand(int num)
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
-		camCtrl->SetPos(p);
+		camHandler->GetCurrentController().SetPos(p);
 	}
 
 	selectedUnits.SelectGroup(num);
@@ -244,7 +244,7 @@ void CGroupHandler::GroupCommand(int num, const string& cmd)
 			p+=(*gi)->pos;
 		}
 		p/=groups[num]->units.size();
-		camCtrl->SetPos(p);
+		camHandler->GetCurrentController().SetPos(p);
 	}
 
 	selectedUnits.SelectGroup(num);

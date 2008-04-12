@@ -19,9 +19,8 @@ extern Uint8 *keys;
 //        - rename it?  ;-)
 //
 
-CFreeController::CFreeController(int num)
-	: CCameraController(num),
-	dir(0.0f, 0.0f, 0.0f),
+CFreeController::CFreeController()
+	: dir(0.0f, 0.0f, 0.0f),
 	vel(0.0f, 0.0f, 0.0f),
 	avel(0.0f, 0.0f, 0.0f),
 	prevVel(0.0f, 0.0f, 0.0f),
@@ -395,7 +394,6 @@ void CFreeController::SwitchTo(bool showText)
 
 void CFreeController::GetState(std::vector<float>& fv) const
 {
-	fv.push_back(/*  0 */ (float)num);
 	fv.push_back(/*  1 */ pos.x);
 	fv.push_back(/*  2 */ pos.y);
 	fv.push_back(/*  3 */ pos.z);
@@ -430,37 +428,37 @@ void CFreeController::GetState(std::vector<float>& fv) const
 
 bool CFreeController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 28) || (fv[0] != (float)num)) {
+	if (fv.size() != 27) {
 		return false;
 	}
-	pos.x = fv[1];
-	pos.y = fv[2];
-	pos.z = fv[3];
-	dir.x = fv[4];
-	dir.y = fv[5];
-	dir.z = fv[6];
-	camera->rot.x = fv[7];
-	camera->rot.y = fv[8];
-	camera->rot.z = fv[9];
+	pos.x = fv[0];
+	pos.y = fv[1];
+	pos.z = fv[2];
+	dir.x = fv[3];
+	dir.y = fv[4];
+	dir.z = fv[5];
+	camera->rot.x = fv[6];
+	camera->rot.y = fv[7];
+	camera->rot.z = fv[8];
 
-	fov         =  fv[10];
-	gndOffset   =  fv[11];
-	gravity     =  fv[12];
-	slide       =  fv[13];
-	scrollSpeed =  fv[14];
-	tiltSpeed   =  fv[15];
-	velTime     =  fv[16];
-	avelTime    =  fv[17];
-	autoTilt    =  fv[18];
-	goForward   = (fv[19] > 0.0f);
-	invertAlt   = (fv[20] > 0.0f);
-	gndLock     = (fv[21] > 0.0f);
-	prevVel.x   =  fv[22];
-	prevVel.y   =  fv[23];
-	prevVel.z   =  fv[24];
-	prevAvel.x  =  fv[25];
-	prevAvel.y  =  fv[26];
-	prevAvel.z  =  fv[27];
+	fov         =  fv[9];
+	gndOffset   =  fv[10];
+	gravity     =  fv[11];
+	slide       =  fv[12];
+	scrollSpeed =  fv[13];
+	tiltSpeed   =  fv[14];
+	velTime     =  fv[15];
+	avelTime    =  fv[16];
+	autoTilt    =  fv[17];
+	goForward   = (fv[18] > 0.0f);
+	invertAlt   = (fv[19] > 0.0f);
+	gndLock     = (fv[20] > 0.0f);
+	prevVel.x   =  fv[21];
+	prevVel.y   =  fv[22];
+	prevVel.z   =  fv[23];
+	prevAvel.x  =  fv[24];
+	prevAvel.y  =  fv[25];
+	prevAvel.z  =  fv[26];
 
 	return true;
 }

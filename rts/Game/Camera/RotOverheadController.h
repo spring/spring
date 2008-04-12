@@ -8,7 +8,7 @@
 class CRotOverheadController : public CCameraController
 {
 public:
-	CRotOverheadController(int num);
+	CRotOverheadController();
 
 	const std::string GetName() const { return "rot"; }
 

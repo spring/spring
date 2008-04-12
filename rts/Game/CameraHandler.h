@@ -29,16 +29,17 @@ public:
 	void SaveView(const std::string& name);
 	bool LoadView(const std::string& name);
 	
-	CCameraController* &currCamCtrl;
-	std::vector<CCameraController*> camControllers;
+	CCameraController& GetCurrentController() {return *currCamCtrl;};
+	int GetCurrentControllerNum() const {return currCamCtrlNum;};
+	const std::vector<CCameraController*>& GetAvailableControllers() const {return camControllers;};
 	
 	virtual void PushAction(const Action&);
 	
 private:
+	std::vector<CCameraController*> camControllers;
 	std::stack<unsigned> controllerStack;
+	CCameraController* currCamCtrl;
 	int currCamCtrlNum;
-	int preControlCamNum;
-	CCameraController* overviewController;
 	
 	float cameraTime;
 	float cameraTimeLeft;

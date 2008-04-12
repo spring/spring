@@ -1226,10 +1226,10 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = gu->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = camCtrl->GetDir();
+			*(float3*)data = camHandler->GetCurrentController().GetDir();
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = camCtrl->GetPos();
+			*(float3*)data = camHandler->GetCurrentController().GetPos();
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			std::string f((char*) data);

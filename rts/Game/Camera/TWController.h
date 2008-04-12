@@ -7,7 +7,7 @@
 class CTWController : public CCameraController
 {
 public:
-	CTWController(int num);
+	CTWController();
 
 	const std::string GetName() const { return "tw"; }
 

@@ -7,7 +7,7 @@
 
 class CLuaCameraCtrl : public CCameraController {
 public:
-	CLuaCameraCtrl(int num);
+	CLuaCameraCtrl();
 
 	const std::string GetName() const { return "lua"; }
 
