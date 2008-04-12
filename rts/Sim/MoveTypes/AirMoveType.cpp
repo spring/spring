@@ -657,9 +657,11 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3 &speed = owner->speed;
 
 	float speedf = speed.Length();
-	float goalLength = (goalPos - pos).Length() + 0.01f;
+	float goalLength = (goalPos - pos).Length2D() + 0.01f;
 	float3 goalDir = (goalPos - pos) / goalLength;
+	float3 adjustedGoalDir = float3(goalPos.x,0,goalPos.z) - float3(pos.x,0,pos.z);
 	goalDir.Normalize();
+	adjustedGoalDir.Normalize();
 
 	float aileron = 0.0f;
 	float rudder = 0.0f;
@@ -679,9 +681,9 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		otherThreat = max(1200.0f, goalLength) / otherLength * 0.036f;
 	}
 
-	float goalDot = rightdir.dot(goalDir);
-	goalDot /= goalDir.dot(frontdir) * 0.5f + 0.501f;
-	if (goalDir.dot(frontdir) < -0.1f && goalLength < turnRadius
+	float goalDot = rightdir.dot(adjustedGoalDir);
+	goalDot /= adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
+	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius
 #ifdef DIRECT_CONTROL_ALLOWED
 		&& (!owner->directControl || owner->directControl->mouse2)
 #endif
