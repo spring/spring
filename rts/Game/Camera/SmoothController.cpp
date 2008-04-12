@@ -15,9 +15,8 @@
 
 extern Uint8 *keys;
 
-SmoothController::SmoothController(int num)
-	: CCameraController(num),
-	height(500),zscale(0.5f),
+SmoothController::SmoothController()
+	: height(500),zscale(0.5f),
 	oldAltHeight(500),
 	maxHeight(10000),
 	changeAltHeight(true),
@@ -199,7 +198,6 @@ void SmoothController::SwitchTo(bool showText)
 
 void SmoothController::GetState(std::vector<float>& fv) const
 {
-	fv.push_back(/* 0 */ (float)num);
 	fv.push_back(/* 1 */ pos.x);
 	fv.push_back(/* 2 */ pos.y);
 	fv.push_back(/* 3 */ pos.z);
@@ -213,18 +211,18 @@ void SmoothController::GetState(std::vector<float>& fv) const
 
 bool SmoothController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 10) || (fv[0] != (float)num)) {
+	if (fv.size() != 9) {
 		return false;
 	}
-	pos.x   =  fv[1];
-	pos.y   =  fv[2];
-	pos.z   =  fv[3];
-	dir.x   =  fv[4];
-	dir.y   =  fv[5];
-	dir.z   =  fv[6];
-	height  =  fv[7];
-	zscale  =  fv[8];
-	flipped = (fv[9] > 0.0f);
+	pos.x   =  fv[0];
+	pos.y   =  fv[1];
+	pos.z   =  fv[2];
+	dir.x   =  fv[3];
+	dir.y   =  fv[4];
+	dir.z   =  fv[5];
+	height  =  fv[6];
+	zscale  =  fv[7];
+	flipped = (fv[8] > 0.0f);
 	return true;
 }
 

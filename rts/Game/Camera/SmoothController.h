@@ -11,7 +11,7 @@ Behaves like the Overview(TA-style)-camera, but has an acceleration and breakrat
 class SmoothController : public CCameraController
 {
 public:
-	SmoothController(int num);
+	SmoothController();
 	~SmoothController();
 
 	const std::string GetName() const { return "sm"; }

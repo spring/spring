@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "GlobalStuff.h"
+#include "float3.h"
 
 class CCameraController
 {
 public:
-	CCameraController(int num);
+	CCameraController();
 	virtual ~CCameraController(void);
 
 	virtual const std::string GetName() const = 0;
@@ -24,7 +24,7 @@ public:
 	virtual float3 GetPos()=0;
 	virtual float3 GetDir()=0;
 
-	float GetFOV() { return fov; }
+	float GetFOV() const { return fov; };
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; };
 	virtual bool DisableTrackingByKey() { return true; }
@@ -36,8 +36,7 @@ public:
 	virtual bool SetState(const std::vector<float>& fv) = 0;
 	virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
 
-//FIXME		virtual const std::vector<std::string>& GetStateNames() const = 0;
-	const int num;
+	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
 	
 protected:
@@ -47,9 +46,6 @@ protected:
 	
 	float3 pos;
 };
-
-
-extern CCameraController* camCtrl;
 
 
 #endif // __CAMERA_CONTROLLER_H__

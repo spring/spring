@@ -7,7 +7,7 @@
 
 class CFreeController : public CCameraController {
 public:
-	CFreeController(int num);
+	CFreeController();
 
 	const std::string GetName() const { return "free"; }
 

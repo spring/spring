@@ -12,26 +12,26 @@
 #include "Game/Action.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
+#include "GlobalStuff.h"
 
 
 CCameraHandler* camHandler = NULL;
 
 
-CCameraHandler::CCameraHandler() : currCamCtrl(camCtrl)
+CCameraHandler::CCameraHandler()
 {
 	cameraTime=0.0f;
 	cameraTimeLeft=0.0f;
-	preControlCamNum=0;
 	
 	//fps camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
-	camCtrls.push_back(new CFPSController         (camCtrls.size())); // 0  (first)
-	camCtrls.push_back(new COverheadController    (camCtrls.size())); // 1
-	camCtrls.push_back(new CTWController          (camCtrls.size())); // 2
-	camCtrls.push_back(new CRotOverheadController (camCtrls.size())); // 3
-	camCtrls.push_back(new CFreeController        (camCtrls.size())); // 4
-	camCtrls.push_back(new SmoothController       (camCtrls.size())); // 5
-	camCtrls.push_back(new COverviewController    (camCtrls.size())); // 6  (last)
+	camCtrls.push_back(new CFPSController()); // 0  (first)
+	camCtrls.push_back(new COverheadController()); // 1
+	camCtrls.push_back(new CTWController()); // 2
+	camCtrls.push_back(new CRotOverheadController()); // 3
+	camCtrls.push_back(new CFreeController()); // 4
+	camCtrls.push_back(new SmoothController()); // 5
+	camCtrls.push_back(new COverviewController()); // 6
 
 	int mode = configHandler.GetInt("CamMode", 1);
 	mode = std::max(0, std::min(mode, (int)camControllers.size() - 1));
@@ -57,7 +57,6 @@ CCameraHandler::~CCameraHandler()
 		delete camControllers.back();
 		camControllers.pop_back();
 	}
-	camCtrl = NULL;
 }
 
 
@@ -101,7 +100,6 @@ void CCameraHandler::SetCameraMode(unsigned mode)
 		return;
 	}
 
-	preControlCamNum = currCamCtrlNum;
 	CameraTransition(1.0f);
 
 	CCameraController* oldCamCtrl = currCamCtrl;
@@ -115,7 +113,7 @@ void CCameraHandler::SetCameraMode(unsigned mode)
 
 void CCameraHandler::PushMode()
 {
-	controllerStack.push(currCamCtrl->num);
+	controllerStack.push(GetCurrentControllerNum());
 }
 
 

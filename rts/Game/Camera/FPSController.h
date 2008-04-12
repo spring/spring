@@ -8,7 +8,7 @@
 class CFPSController : public CCameraController
 {
 public:
-	CFPSController(int num);
+	CFPSController();
 
 	const std::string GetName() const { return "fps"; }
 

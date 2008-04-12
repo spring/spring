@@ -10,8 +10,7 @@
 
 extern Uint8 *keys;
 
-CTWController::CTWController(int num)
-	: CCameraController(num)
+CTWController::CTWController()
 {
 	scrollSpeed = configHandler.GetInt("TWScrollSpeed",10) * 0.1f;
 	enabled = !!configHandler.GetInt("TWEnabled",1);
@@ -110,7 +109,6 @@ void CTWController::SwitchTo(bool showText)
 
 void CTWController::GetState(std::vector<float>& fv) const
 {
-	fv.push_back(/* 0 */ (float)num);
 	fv.push_back(/* 1 */ pos.x);
 	fv.push_back(/* 2 */ pos.y);
 	fv.push_back(/* 3 */ pos.z);
@@ -121,14 +119,14 @@ void CTWController::GetState(std::vector<float>& fv) const
 
 bool CTWController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 7) || (fv[0] != (float)num)) {
+	if (fv.size() != 6) {
 		return false;
 	}
-	pos.x = fv[1];
-	pos.y = fv[2];
-	pos.z = fv[3];
-	camera->rot.x = fv[4];
-	camera->rot.y = fv[5];
-	camera->rot.z = fv[6];
+	pos.x = fv[0];
+	pos.y = fv[1];
+	pos.z = fv[2];
+	camera->rot.x = fv[3];
+	camera->rot.y = fv[4];
+	camera->rot.z = fv[5];
 	return true;
 }

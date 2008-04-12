@@ -989,7 +989,7 @@ bool CGame::ActionPressed(const Action& action,
 				pos += (*it)->midPos;
 			}
 			pos /= (float)selUnits.size();
-			camCtrl->SetPos(pos);
+			camHandler->GetCurrentController().SetPos(pos);
 			camHandler->CameraTransition(0.6f);
 		}
 	}
@@ -1103,7 +1103,7 @@ bool CGame::ActionPressed(const Action& action,
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
-		camCtrl->SetPos(infoConsole->lastMsgPos);
+		camHandler->GetCurrentController().SetPos(infoConsole->lastMsgPos);
 		camHandler->CameraTransition(0.6f);
 	}
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
@@ -3670,7 +3670,7 @@ void CGame::ClientReadNet()
 								}
 								camHandler->PushMode();
 								camHandler->SetCameraMode(0);
-								((CFPSController*)camCtrl)->SetPos(unit->midPos);
+								dynamic_cast<CFPSController&>(camHandler->GetCurrentController()).SetPos(unit->midPos);
 								selectedUnits.ClearSelected();
 							}
 							ENTER_SYNCED;
@@ -3751,7 +3751,7 @@ void CGame::UpdateUI()
 		float3 pos=owner->pos+owner->frontdir*relPos.z+owner->updir*relPos.y+owner->rightdir*relPos.x;
 		pos+=UpVector*7;
 
-		((CFPSController*)camHandler->camControllers[0])->SetPos(pos);
+		camHandler->GetCurrentController().SetPos(pos);
 	} else
 #endif
 	{
@@ -3782,11 +3782,11 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		if (disableTracker && camCtrl->DisableTrackingByKey()) {
+		if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
 		movement.z = cameraSpeed;
-		camCtrl->KeyMove(movement);
+		camHandler->GetCurrentController().KeyMove(movement);
 
 		movement=float3(0,0,0);
 
@@ -3811,15 +3811,15 @@ void CGame::UpdateUI()
 			}
 		}
 		movement.z=cameraSpeed;
-		camCtrl->ScreenEdgeMove(movement);
+		camHandler->GetCurrentController().ScreenEdgeMove(movement);
 
 		if(camMove[4])
-			camCtrl->MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
 		if(camMove[5])
-			camCtrl->MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+			camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
 	}
 
-	camCtrl->Update();
+	camHandler->GetCurrentController().Update();
 
 	if(chatting && !userWriting){
 		consoleHistory->AddLine(userInput);

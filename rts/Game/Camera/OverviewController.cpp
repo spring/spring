@@ -5,8 +5,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "LogOutput.h"
 
-COverviewController::COverviewController(int num)
-	: CCameraController(num)
+COverviewController::COverviewController()
 {
 	enabled = false;
 }
@@ -74,7 +73,6 @@ void COverviewController::SwitchTo(bool showText)
 
 void COverviewController::GetState(std::vector<float>& fv) const
 {
-	fv.push_back(/* 0 */ (float)num);
 	fv.push_back(/* 1 */ pos.x);
 	fv.push_back(/* 2 */ pos.y);
 	fv.push_back(/* 3 */ pos.z);
@@ -82,11 +80,11 @@ void COverviewController::GetState(std::vector<float>& fv) const
 
 bool COverviewController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 4) || (fv[0] != (float)num)) {
+	if (fv.size() != 3) {
 		return false;
 	}
-	pos.x = fv[1];
-	pos.y = fv[2];
-	pos.z = fv[3];
+	pos.x = fv[0];
+	pos.y = fv[1];
+	pos.z = fv[2];
 	return true;
 }

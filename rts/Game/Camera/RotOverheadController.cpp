@@ -6,18 +6,10 @@
 #include "Map/Ground.h"
 
 
-#ifdef _WIN32
-#define DEFAULT_MOUSE_SCALE 0.01f
-#else
-#define DEFAULT_MOUSE_SCALE 0.003f
-#endif
-
-
-CRotOverheadController::CRotOverheadController(int num)
-	: CCameraController(num),
-	oldHeight(500)
+CRotOverheadController::CRotOverheadController()
+	: oldHeight(500)
 {
-	mouseScale = configHandler.GetFloat("RotOverheadMouseScale", DEFAULT_MOUSE_SCALE);
+	mouseScale = configHandler.GetFloat("RotOverheadMouseScale", 0.01f);
 	scrollSpeed = configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
 	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
 	fov = configHandler.GetFloat("RotOverheadFOV", 45.0f);
@@ -108,7 +100,6 @@ void CRotOverheadController::SwitchTo(bool showText)
 
 void CRotOverheadController::GetState(std::vector<float>& fv) const
 {
-	fv.push_back(/*  0 */ (float)num);
 	fv.push_back(/*  1 */ pos.x);
 	fv.push_back(/*  2 */ pos.y);
 	fv.push_back(/*  3 */ pos.z);
@@ -123,19 +114,19 @@ void CRotOverheadController::GetState(std::vector<float>& fv) const
 
 bool CRotOverheadController::SetState(const std::vector<float>& fv)
 {
-	if ((fv.size() != 11) || (fv[0] != (float)num)) {
+	if (fv.size() != 10) {
 		return false;
 	}
-	pos.x = fv[1];
-	pos.y = fv[2];
-	pos.z = fv[3];
-	dir.x = fv[4];
-	dir.y = fv[5];
-	dir.z = fv[6];
-	camera->rot.x = fv[7];
-	camera->rot.y = fv[8];
-	camera->rot.z = fv[9];
-	oldHeight = fv[10];
+	pos.x = fv[0];
+	pos.y = fv[1];
+	pos.z = fv[2];
+	dir.x = fv[3];
+	dir.y = fv[4];
+	dir.z = fv[5];
+	camera->rot.x = fv[6];
+	camera->rot.y = fv[7];
+	camera->rot.z = fv[8];
+	oldHeight = fv[9];
 	return true;
 }
 
