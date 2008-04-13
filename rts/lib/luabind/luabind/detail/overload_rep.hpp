@@ -34,17 +34,23 @@
 #include <boost/preprocessor/repeat.hpp>
 #include <vector>
 
+// msvc and gcc 4.3 require a complete type
+#if defined(BOOST_MSVC) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#include <luabind/detail/policy.hpp>
+#endif
+
 #include <luabind/detail/overload_rep_base.hpp>
 
 #include <luabind/detail/is_indirect_const.hpp>
 
-#ifndef BOOST_MSVC
-#include <luabind/detail/policy.hpp>
-#endif
 
 namespace luabind { namespace detail
 {
 	struct dummy_ {};
+
+        // gcc 4.3 barfs without this
+        template<int, class> struct find_conversion_policy;
+
 
 	// this class represents a specific overload of a member-function.
 	struct overload_rep: public overload_rep_base
