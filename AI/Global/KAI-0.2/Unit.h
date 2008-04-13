@@ -1,7 +1,13 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "GlobalAI.h"
+#include "System/StdAfx.h"
+#include "creg/creg.h"
+
+#include "Definitions.h"
+#include "./Sim/Units/UnitDef.h"				// Unit Definitions
+
+class AIClasses;
 
 class CUNIT
 {

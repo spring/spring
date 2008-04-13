@@ -1,8 +1,20 @@
 #ifndef ATTACKGROUP_H
 #define ATTACKGROUP_H
 
-#include "GlobalAI.h"
+#include "System/StdAfx.h"
+#include "creg/creg.h"
+#include "creg/STL_List.h"
 
+#include "ExternalAI/aibase.h"					// DLL exports and definitions
+#include "ExternalAI/IGlobalAI.h"				// Main AI file
+#include "Definitions.h"
+
+using std::vector;
+using std::list;
+
+class CAttackGroup;
+
+class AIClasses;
 
 class CAttackGroup
 {

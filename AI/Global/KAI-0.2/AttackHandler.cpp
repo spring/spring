@@ -1,4 +1,5 @@
 #include "AttackHandler.h"
+#include "GlobalAI.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 

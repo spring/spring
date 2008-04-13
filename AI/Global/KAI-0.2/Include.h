@@ -48,8 +48,8 @@ static inline void itoa(int i, char* buf, int size) {
 #include "ExternalAI/IAICheats.h"				// AI Cheat Interface
 
 // KAI
-#include "Containers.h"							// All KAI containers
 #include "Definitions.h"						// Definition declarations
+#include "Containers.h"							// All KAI containers
 #include "MTRand.h"								// Mersenne Twister RNG
 #include "SurveillanceHandler.h"
 #include "SpotFinder.h"
@@ -66,8 +66,8 @@ static inline void itoa(int i, char* buf, int size) {
 #include "EconomyTracker.h"
 #include "DefenseMatrix.h"
 #include "BuildUp.h"
-#include "AttackHandler.h"
 #include "AttackGroup.h"
+#include "AttackHandler.h"
 #include "EconomyManager.h"
 #include "DamageControl.h"
 // added by Kloot
