@@ -44,13 +44,13 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/version.hpp>
 
+#include <luabind/detail/class_rep.hpp>
 #include <luabind/detail/class_registry.hpp>
 #include <luabind/detail/primitives.hpp>
 #include <luabind/detail/object_rep.hpp>
 #include <luabind/detail/typetraits.hpp>
 #include <luabind/detail/class_cache.hpp>
 #include <luabind/detail/debug.hpp>
-#include <luabind/detail/class_rep.hpp>
 
 #include <boost/type_traits/add_reference.hpp>
 
@@ -468,34 +468,39 @@ namespace luabind { namespace detail
 		typedef boost::mpl::bool_<false> is_value_converter;
 		typedef pointer_converter type;
 		
+		// has to be outside of the class
+		// because gcc 4.3 barfs otherwise
 		template<class T>
-		void apply(lua_State* L, T* ptr)
-		{
-			if (ptr == 0) 
-			{
-				lua_pushnil(L);
-				return;
-			}
-
-			if (luabind::get_back_reference(L, ptr))
-				return;
-
-			class_rep* crep = get_class_rep<T>(L);
-
-			// if you get caught in this assert you are
-			// trying to use an unregistered type
-			assert(crep && "you are trying to use an unregistered type");
-
-			// create the struct to hold the object
-			void* obj = lua_newuserdata(L, sizeof(object_rep));
-			//new(obj) object_rep(ptr, crep, object_rep::owner, destructor_s<T>::apply);
-			new(obj) object_rep(ptr, crep, 0, 0);
-
-			// set the meta table
-			detail::getref(L, crep->metatable_ref());
-			lua_setmetatable(L, -2);
-		}
+		void apply(lua_State* L, T* ptr);
 	};
+
+	template<class T>
+	inline void pointer_converter<cpp_to_lua>::apply(lua_State* L, T* ptr)
+	{
+		if (ptr == 0) 
+		{
+			lua_pushnil(L);
+			return;
+		}
+
+		if (luabind::get_back_reference(L, ptr))
+			return;
+
+		class_rep* crep = get_class_rep<T>(L);
+
+		// if you get caught in this assert you are
+		// trying to use an unregistered type
+		assert(crep && "you are trying to use an unregistered type");
+
+		// create the struct to hold the object
+		void* obj = lua_newuserdata(L, sizeof(object_rep));
+		//new(obj) object_rep(ptr, crep, object_rep::owner, destructor_s<T>::apply);
+		new(obj) object_rep(ptr, crep, 0, 0);
+
+		// set the meta table
+		detail::getref(L, crep->metatable_ref());
+		lua_setmetatable(L, -2);
+	}
 
 	template<class T> struct make_pointer { typedef T* type; };
 	template<>
