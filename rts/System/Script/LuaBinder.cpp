@@ -48,6 +48,8 @@ struct CScript_wrapper : CScript, wrap_base
 
 	virtual void Update() { check( call<void>("Update"); );	}
 	static void Update_static(CScript *ptr) { ptr->CScript::Update(); }
+	virtual void GameStart() { check( call<void>("GameStart"); );	}
+	static void GameStart_static(CScript *ptr) { ptr->CScript::GameStart(); }
 	virtual string GetMapName() { string x; check( x = call<string>("GetMapName"); ); return x; }
 	static string GetMapName_static(CScript *ptr) { return ptr->CScript::GetMapName(); }
 	virtual string GetModName() { string x; check( x = call<string>("GetModName"); ); return x; }
@@ -187,14 +189,18 @@ CLuaBinder::CLuaBinder(void)
 		class_<CGlobalSyncedStuff>("GlobalSynced")
 			.def_readonly("frameNum", &CGlobalSyncedStuff::frameNum)
 			.def_readonly("mapx", &CGlobalSyncedStuff::mapx)
+			.def_readonly("activeTeams", &CGlobalSyncedStuff::activeTeams)
 			.def_readonly("mapy", &CGlobalSyncedStuff::mapy),
-
-		class_<SFloat3>("float3")
+			
+		class_<SFloat3>("sfloat3")
 			.def(constructor<const float, const float, const float>())
 			.def_readwrite("x", &SFloat3::x)
 			.def_readwrite("y", &SFloat3::y)
 			.def_readwrite("z", &SFloat3::z)
 			.def("__tostring", &FloatToString),
+
+		class_<float3>("float3")
+			.def(constructor<const float, const float, const float>()),
 
 		class_<CWorldObject>("WorldObject")
 			.def_readonly("pos", &CWorldObject::pos),

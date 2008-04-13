@@ -17,6 +17,7 @@ public:
 	virtual ~CScript();
 
 	virtual void ScriptSelected();
+	virtual void GameStart();
 	virtual std::string GetMapName();
 	virtual std::string GetModName();
 

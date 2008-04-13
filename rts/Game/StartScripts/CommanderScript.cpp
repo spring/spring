@@ -32,12 +32,8 @@ CCommanderScript::~CCommanderScript(void)
 }
 
 
-void CCommanderScript::Update(void)
+void CCommanderScript::GameStart()
 {
-	if (gs->frameNum != 0) {
-		return;
-	}
-
 	if (gameSetup) {
 		TdfParser p("gamedata/SIDEDATA.TDF");
 

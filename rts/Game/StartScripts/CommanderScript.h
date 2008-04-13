@@ -9,7 +9,7 @@ class CCommanderScript :
 public:
 	CCommanderScript(void);
 	virtual ~CCommanderScript(void);
-	void Update(void);
+	virtual void GameStart();
 };
 
 #endif // __COMMANDER_SCRIPT_H__
