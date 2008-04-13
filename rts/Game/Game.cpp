@@ -2879,6 +2879,7 @@ void CGame::StartPlaying()
 //	grouphandler->team=gu->myTeam;
 	CLuaUI::UpdateTeams();
 	ENTER_SYNCED;
+	script->GameStart();
 
 }
 
