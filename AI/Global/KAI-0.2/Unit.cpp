@@ -1,4 +1,5 @@
 #include "Unit.h"
+#include "GlobalAI.h"
 
 static Command nullParamsCommand;
 static Command oneParamsCommand;

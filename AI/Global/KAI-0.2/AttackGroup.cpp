@@ -1,4 +1,5 @@
 #include "AttackGroup.h"
+#include "GlobalAI.h"
 #include "creg/STL_List.h"
 
 #undef assert

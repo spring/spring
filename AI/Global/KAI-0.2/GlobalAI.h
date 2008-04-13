@@ -1,6 +1,7 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
 
+#include "Unit.h"
 
 #include "Include.h"
 
@@ -65,5 +66,6 @@ class CGlobalAI : public IGlobalAI {
 		bool dminited;
 };
 
+#include "AttackHandler.h"
 
 #endif
