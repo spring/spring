@@ -1,4 +1,5 @@
 #include "AttackGroup.h"
+#include "GlobalAI.h"
 
 #define UNIT_STUCK_MOVE_DISTANCE 2.0f
 // not moving for 5 * 60 frames = stuck

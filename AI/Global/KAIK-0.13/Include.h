@@ -77,8 +77,8 @@ static inline void itoa(int i, char* buf, int size) {
 #include "EconomyTracker.h"
 #include "DefenseMatrix.h"
 #include "BuildUp.h"
-#include "AttackHandler.h"
 #include "AttackGroup.h"
+#include "AttackHandler.h"
 #include "EconomyManager.h"
 #include "DGunController.hpp"
 
