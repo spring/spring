@@ -2,8 +2,9 @@
 
 #include "aidef.h"
 
+#include "AAISector.h"
+
 class AAIBuildTable;
-class AAISector;
 class AAI;
 
 class AAIMap

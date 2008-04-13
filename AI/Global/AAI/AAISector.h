@@ -154,3 +154,6 @@ public:
 	int distance_to_base;	// 0 = base, 1 = neighbour to base 
 	bool interior;			// true if sector is no inner sector
 };
+
+#include "AAIMap.h"
+
