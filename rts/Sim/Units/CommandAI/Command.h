@@ -92,12 +92,14 @@ using namespace std; // FIXME -- should not have this in an external interface?
 #define INTERNAL_ORDER  (DONT_REPEAT)
 
 
-struct Command {
+struct Command
+{
 	CR_DECLARE_STRUCT(Command);
 
 	Command()
 	: options(0), tag(0), timeOut(INT_MAX) {};
 
+	void AddParam(float par) {params.push_back(par);};
 	int id;                     // CMD_xxx code  (custom codes can also be used)
 	unsigned char options;      // option bits
 	std::vector<float> params;  // command parameters
