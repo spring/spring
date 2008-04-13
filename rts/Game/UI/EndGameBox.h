@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include "Rendering/GL/myGL.h"
+#include <cmath>
 
 class CEndGameBox :
 	public CInputReceiver
@@ -48,8 +49,8 @@ protected:
 		void AddStat(int team,float value){
 			if(value>max)
 				max=value;
-			if(values[team].size()>0 && fabs(value-values[team].back())>maxdif)
-				maxdif=fabs(value-values[team].back());
+			if(values[team].size()>0 && std::fabs(value-values[team].back())>maxdif)
+				maxdif=std::fabs(value-values[team].back());
 
 			values[team].push_back(value);
 		}

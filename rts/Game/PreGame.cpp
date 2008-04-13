@@ -258,7 +258,7 @@ bool CPreGame::Draw()
 		const float cw = fontScale * font->CalcCharWidth(c);
 		const float csx = xStart + (fontScale * caretWidth);
 		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
+		const float f = 0.5f * (1.0f + std::sin((float)SDL_GetTicks() * 0.015f));
 		glColor4f(f, f, f, 0.75f);
 		glRectf(csx, yStart, csx + cw, yStart + fontScale * font->GetHeight());
 		glEnable(GL_TEXTURE_2D);

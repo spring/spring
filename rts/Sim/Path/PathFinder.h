@@ -97,22 +97,54 @@ private:
 		typedef int size_type;
 		typedef OpenSquare* reference;
 		typedef const OpenSquare* const_reference;
+		typedef OpenSquare** iterator;
+		typedef const OpenSquare* const* const_iterator;
+
+		// gcc 4.3 requires concepts, so give them to it
+		value_type& operator[](size_type idx) { return buf[idx]; }
+		const value_type& operator[](size_type idx) const { return buf[idx]; }
+
+		typedef iterator pointer;
+		typedef const_iterator const_pointer;
+		typedef int difference_type;
+
+		// XXX don't use this
+		// FIXME write proper versions of those
+		typedef OpenSquare** reverse_iterator;
+		typedef const OpenSquare* const* const_reverse_iterator;
+		reverse_iterator rbegin() { return 0; }
+		reverse_iterator rend() { return 0; }
+		const_reverse_iterator rbegin() const { return 0; }
+		const_reverse_iterator rend() const { return 0; }
+		myVector(int, const value_type&) { abort(); }
+		myVector(iterator, iterator) { abort(); }
+		void insert(iterator, const value_type&) { abort(); }
+		void insert(iterator, const size_type&, const value_type&) { abort(); }
+		void insert(iterator, iterator, iterator) { abort(); }
+		void erase(iterator, iterator) { abort(); }
+		void erase(iterator) { abort(); }
+		void erase(iterator, iterator, iterator) { abort(); }
+		void swap(myVector&) { abort(); }
+		// end of concept hax
 
 		int bufPos;
 		OpenSquare* buf[MAX_SEARCHED_SQUARES];
 
 		myVector() {bufPos=-1;}
 
-		inline void push_back(OpenSquare* os)			{buf[++bufPos]=os;}
-		inline void pop_back()										{--bufPos;}
-		inline OpenSquare* back() const						{return buf[bufPos];}
-		inline const value_type& front() const		{return buf[0];}
-		inline value_type& front()								{return buf[0];}
-		inline bool empty() const									{return (bufPos<0);}
-		inline size_type size()										{return bufPos+1;}
-		inline OpenSquare** begin()								{return &buf[0];}
-		inline OpenSquare** end()									{return &buf[bufPos+1];}
-		inline void clear()												{bufPos=-1;}
+		inline void push_back(OpenSquare* os)	{buf[++bufPos]=os;}
+		inline void pop_back()			{--bufPos;}
+		inline OpenSquare* back() const		{return buf[bufPos];}
+		inline const value_type& front() const	{return buf[0];}
+		inline value_type& front()		{return buf[0];}
+		inline bool empty() const		{return (bufPos<0);}
+		inline size_type size() const		{return bufPos+1;}
+		inline size_type max_size() const	{return 1<<30;}
+		inline iterator begin()			{return &buf[0];}
+		inline iterator end()			{return &buf[bufPos+1];}
+		inline const_iterator begin() const	{return &buf[0];}
+		inline const_iterator end() const	{return &buf[bufPos+1];}
+		inline void clear()			{bufPos=-1;}
 	};
 
   class myPQ : public std::priority_queue<OpenSquare*,myVector,lessCost>{
