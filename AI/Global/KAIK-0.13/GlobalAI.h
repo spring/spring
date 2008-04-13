@@ -2,9 +2,9 @@
 #define GLOBALAI_H
 
 
+#include "Unit.h"
 #include "Include.h"
 
-class CAttackHandler;
 class CGlobalAI: public IGlobalAI {
 	public:
 		CR_DECLARE(CGlobalAI);

@@ -1,4 +1,5 @@
 #include "Unit.h"
+#include "GlobalAI.h"
 
 
 CR_BIND(CUNIT, )
