@@ -31,7 +31,11 @@
 #include <list>
 
 #include <luabind/config.hpp>
-#include <luabind/detail/object_rep.hpp>
+
+namespace luabind { namespace detail {
+    class object_rep;
+}}
+
 #include <luabind/detail/construct_rep.hpp>
 #include <luabind/detail/garbage_collector.hpp>
 #include <luabind/detail/operator_id.hpp>
@@ -399,5 +403,7 @@ namespace luabind { namespace detail
 }}
 
 //#include <luabind/detail/overload_rep_impl.hpp>
+
+#include <luabind/detail/object_rep.hpp>
 
 #endif // LUABIND_CLASS_REP_HPP_INCLUDED

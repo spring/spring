@@ -34,8 +34,8 @@
 #include <boost/preprocessor/repeat.hpp>
 #include <vector>
 
-// msvc and gcc 4.3 require a complete type
-#if defined(BOOST_MSVC) || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+// actually, gcc cannot see pointer_converters before it sees class_rep
+#if defined(BOOST_MSVC) // || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 #include <luabind/detail/policy.hpp>
 #endif
 
