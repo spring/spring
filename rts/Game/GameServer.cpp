@@ -6,6 +6,7 @@
 #include <boost/format.hpp>
 #include <boost/version.hpp>
 #include <SDL_timer.h>
+#include <cmath>
 
 #ifndef NO_AVI
 #include "Game.h"

@@ -5,6 +5,7 @@
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
+#include <cmath>
 #include "Game.h"
 #include "Team.h"
 #include "FPUCheck.h"
