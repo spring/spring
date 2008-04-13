@@ -56,11 +56,6 @@ namespace luafunctions
 		u->held->commandAI->GiveCommand(*c);
 	}
 
-	void CommandAddParam(Command* c, float p)
-	{
-		c->params.push_back(p);
-	}
-
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(string name, float3 pos, int team, bool buil)
 	{
 		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil, 0, NULL);

@@ -31,7 +31,6 @@ namespace luafunctions
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);
-	void CommandAddParam(Command* c, float p);
 	//luabind::object GetUnitDefList( lua_State* L );
 	int GetNumUnitDefs();
 	//CObject_pointer<UnitDef>* GetUnitDefById( int id );

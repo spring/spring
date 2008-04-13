@@ -199,7 +199,7 @@ CLuaBinder::CLuaBinder(void)
 			.def_readwrite("z", &SFloat3::z)
 			.def("__tostring", &FloatToString),
 
-		class_<float3>("float3")
+		class_<float3, SFloat3>("float3")
 			.def(constructor<const float, const float, const float>()),
 
 		class_<CWorldObject>("WorldObject")
@@ -265,7 +265,7 @@ CLuaBinder::CLuaBinder(void)
 			.def(constructor<>())
 			.def_readwrite("id", &Command::id)
 			.def_readwrite("options", &Command::options)
-			.def("AddParam", &CommandAddParam),
+			.def("AddParam", &Command::AddParam),
 
 		// Access to spring's various global handlers are grouped into
 		// relevant lua namespaces to present a nice(r) interface than just exporting
