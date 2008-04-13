@@ -32,16 +32,7 @@
 
 namespace luabind
 {
-	struct value;
-
-	struct value_vector : public std::vector<value>
-	{
-		// a bug in intel's compiler forces us to declare these constructors explicitly.
-		value_vector();
-		virtual ~value_vector();
-		value_vector(const value_vector& v);
-		value_vector& operator,(const value& rhs);
-	};
+        struct value_vector;
 
 	struct value
 	{
@@ -55,20 +46,25 @@ namespace luabind
 		const char* name_;
 		int val_;
 
-		value_vector operator,(const value& rhs) const
-		{
-			value_vector v;
-
-			v.push_back(*this);
-			v.push_back(rhs);
-
-			return v;
-		}
+                // due to boost_concept_check in gcc 4.3, this
+                // has to be defined later, after value_vector
+                // is a complete type
+		value_vector operator,(const value& rhs) const;
 
 	private: 
 
 		value() {}
 	};
+
+	struct value_vector : public std::vector<value>
+	{
+		// a bug in intel's compiler forces us to declare these constructors explicitly.
+		value_vector();
+		virtual ~value_vector();
+		value_vector(const value_vector& v);
+		value_vector& operator,(const value& rhs);
+	};
+
 
 	inline value_vector::value_vector()
 		: std::vector<value>()
@@ -117,6 +113,17 @@ namespace luabind
 			template<class T> void operator,(T const&) const;
 		};
 	}
+
+
+        inline value_vector value::operator,(const value& rhs) const
+        {
+                value_vector v;
+
+                v.push_back(*this);
+                v.push_back(rhs);
+
+                return v;
+        }
 }
 
 #endif // LUABIND_ENUM_MAKER_HPP_INCLUDED
