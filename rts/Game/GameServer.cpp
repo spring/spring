@@ -4,6 +4,7 @@
 #include <ctime>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/version.hpp>
 #include <SDL_timer.h>
 
 #ifndef NO_AVI
@@ -1181,7 +1182,14 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
+#if BOOST_VERSION >= 103500
+	if (!fromServerThread)
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
+	else
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+#else
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
+#endif
 	CheckSync();
 	int newFrames = 1;
 
@@ -1200,7 +1208,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 		timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
 		lastTick=currentTick;
-		newFrames = (timeLeft > 0) ? ceil(timeLeft) : 0;
+		newFrames = (timeLeft > 0) ? std::ceil(timeLeft) : 0;
 		timeLeft -= newFrames;
 	}
 

@@ -1996,7 +1996,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 
 		if (unitName == "all") {
 		// player entered ".give all"
-			int sqSize = (int) ceil(sqrt((float) unitDefHandler->numUnitDefs));
+			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
 			int currentNumUnits = gs->Team(team)->units.size();
 			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
@@ -2037,7 +2037,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 			if (unitDef != NULL) {
 				int xsize = unitDef->xsize;
 				int zsize = unitDef->ysize;
-				int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+				int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 				int total = numRequestedUnits;
 
 				float3 minpos = pos;
@@ -2069,7 +2069,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 				if (featureDef) {
 					int xsize = featureDef->xsize;
 					int zsize = featureDef->ysize;
-					int squareSize = (int) ceil(sqrt((float) numRequestedUnits));
+					int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 					int total = amount; // FIXME -- feature count limit?
 
 					float3 minpos = pos;
@@ -2836,7 +2836,7 @@ void CGame::DrawInputText()
 	const float cw = fontScale * font->CalcCharWidth(c);
 	const float csx = inputTextPosX + (fontScale * caretWidth);
 	glDisable(GL_TEXTURE_2D);
-	const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
+	const float f = 0.5f * (1.0f + streflop::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
 	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + font->GetHeight() * fontScale);
 	glEnable(GL_TEXTURE_2D);
@@ -4023,7 +4023,7 @@ void CGame::DrawDirectControlHud(void)
 
 			glBegin(GL_LINE_STRIP);
 			for(int b=0;b<=80;++b){
-				glVertexf3(pos+(v2*sin(b*2*PI/80)+v3*cos(b*2*PI/80))*radius);
+				glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
 			}
 			glEnd();
 
@@ -4037,7 +4037,7 @@ void CGame::DrawDirectControlHud(void)
 
 				glBegin(GL_LINE_STRIP);
 				for(int b=0;b<=80;++b){
-					glVertexf3(pos+(v2*sin(b*2*PI/80)+v3*cos(b*2*PI/80))*radius);
+					glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
 				}
 				glEnd();
 			}
@@ -4046,11 +4046,11 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos);
 				glVertexf3(w->targetPos);
 
-				glVertexf3(pos+(v2*sin(PI*0.25f)+v3*cos(PI*0.25f))*radius);
-				glVertexf3(pos+(v2*sin(PI*1.25f)+v3*cos(PI*1.25f))*radius);
+				glVertexf3(pos+(v2*streflop::sin(PI*0.25f)+v3*streflop::cos(PI*0.25f))*radius);
+				glVertexf3(pos+(v2*streflop::sin(PI*1.25f)+v3*streflop::cos(PI*1.25f))*radius);
 
-				glVertexf3(pos+(v2*sin(PI*-0.25f)+v3*cos(PI*-0.25f))*radius);
-				glVertexf3(pos+(v2*sin(PI*-1.25f)+v3*cos(PI*-1.25f))*radius);
+				glVertexf3(pos+(v2*streflop::sin(PI*-0.25f)+v3*streflop::cos(PI*-0.25f))*radius);
+				glVertexf3(pos+(v2*streflop::sin(PI*-1.25f)+v3*streflop::cos(PI*-1.25f))*radius);
 			}
 			if((w->targetPos-camera->pos).Normalize().dot(camera->forward)<0.7f){
 				glVertexf3(w->targetPos);

@@ -1228,7 +1228,7 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 	else if (lua_isboolean(L, 3)) {
 		const float defDist = unit->unitDef->decloakDistance;
 		if (lua_toboolean(L, 3)) {
-			unit->decloakDistance = fabsf(defDist);
+			unit->decloakDistance = streflop::fabsf(defDist);
 		} else {
 			unit->decloakDistance = defDist;
 		}

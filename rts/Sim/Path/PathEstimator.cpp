@@ -4,7 +4,6 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
 #include <fstream>
 
 #include "Map/Ground.h"
@@ -14,6 +13,7 @@
 
 #include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
+#include "Platform/FileSystem.h"
 
 #include <boost/bind.hpp>
 

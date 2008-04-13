@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
+#include <cstring>
 
 #include "RawPacket.h"
 
@@ -29,7 +30,7 @@ public:
 		unsigned size = vec.size()* sizeof(element);
 		if (size > 0) {
 			assert(size + pos <= length);
-			memcpy((data+pos), (void*)(&vec[0]), size);
+                        std::memcpy((data+pos), (void*)(&vec[0]), size);
 			pos += size;
 		}
 		return *this;

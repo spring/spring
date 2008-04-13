@@ -15,6 +15,11 @@
 #include <iosfwd>
 #include <vector>
 
+// winapi redifines this which breaks things
+#if defined(CreateDirectory)
+# undef CreateDirectory
+#endif
+
 /**
  * @brief native file system handling abstraction
  */

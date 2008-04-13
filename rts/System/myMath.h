@@ -7,6 +7,7 @@
 
 #define SHORTINT_MAXVALUE	32768
 
+
 extern float2 headingToVectorTable[1024];
 
 inline short int GetHeadingFromFacing(int facing)
@@ -86,7 +87,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	// If h goes beyond SHORTINT_MAXVALUE, the following 
 	// conversion to a short int crashes.
 	//this change destroys the whole meaning with using short ints....
-	int iy = (int) (asin(vec.y)*(SHORTINT_MAXVALUE/PI));
+	int iy = (int) (streflop::asin(vec.y)*(SHORTINT_MAXVALUE/PI));
 	iy %= SHORTINT_MAXVALUE;
 	ret.y=(short int) iy;
 	ret.x=GetHeadingFromVector(vec.x, vec.z);
