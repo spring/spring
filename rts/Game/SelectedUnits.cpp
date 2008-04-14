@@ -822,7 +822,12 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vecto
 	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
 	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS) << static_cast<unsigned short>(msgLen) << static_cast<unsigned char>(gu->myPlayerNum);
 	
-	*packet << static_cast<unsigned short>(unitIDCount) << unitIDs;
+	*packet << static_cast<unsigned short>(unitIDCount);
+	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
+	{
+		*packet << static_cast<short>(*it);
+	}
+
 	*packet << static_cast<unsigned short>(commandCount);
 	for (unsigned i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
