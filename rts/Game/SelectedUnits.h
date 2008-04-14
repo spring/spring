@@ -57,8 +57,7 @@ public:
 	void SetCommandPage(int page);
 	void SendSelection(void);
 	void SendCommand(Command& c);
-	void SendCommandsToUnits(const vector<int>& unitIDs,
-	                         const vector<Command>& commands);
+	void SendCommandsToUnits(const vector<int>& unitIDs, const vector<Command>& commands);
 };
 
 extern CSelectedUnits selectedUnits;
