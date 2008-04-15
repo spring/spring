@@ -124,6 +124,9 @@
 #define WEAPON_SPRAY             128 // get (with fake set)
 #define WEAPON_RANGE             129 // get (with fake set)
 #define WEAPON_PROJECTILE_SPEED  130 // get (with fake set)
+#define MIN                      131 // get
+#define MAX                      132 // get
+#define ABS                      133 // get
 
 // NOTE: shared variables use codes [1024 - 5119]
 
@@ -1117,7 +1120,8 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (u == NULL)
 			return -1;
 		else
-			return u->heading;}
+			return u->heading;
+	}
 	case TARGET_ID:
 		if (unit->weapons[p1-1]) {
 			CWeapon* weapon = unit->weapons[p1-1];
@@ -1250,6 +1254,12 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
 	}
+	case MIN:
+		return min(p1, p2);
+	case MAX:
+		return max(p1, p2);
+	case ABS:
+		return abs(p1);
 	case FLANK_B_MODE:
 		return unit->flankingBonusMode;
 	case FLANK_B_DIR:
