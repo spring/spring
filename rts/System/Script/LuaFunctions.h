@@ -35,6 +35,7 @@ namespace luafunctions
 	int GetNumUnitDefs();
 	//CObject_pointer<UnitDef>* GetUnitDefById( int id );
 	CObject_pointer<CUnit>* UnitLoaderLoadUnit(std::string name, float3 pos, int team, bool buil);
+	void RemoveUnit(CObject_pointer<CUnit>* u);
 	CObject_pointer<CFeature>* FeatureLoaderLoadFeature( std::string name, float3 pos, int team );
 	luabind::object GetFeaturesAt(lua_State* L, const float3& pos, float radius);
 	int GetNumUnitsAt(const float3& pos, float radius);

@@ -1000,10 +1000,12 @@ void CGameServer::StartGame()
 
 	GenerateAndSendGameID();
 	if (setup) {
-		for (int a = 0; a < MAX_TEAMS; ++a)
+		for (int a = 0; a < setup->numTeams; ++a)
 		{
-			if (teams[a])
+			if (teams[a]) // its a player
 				serverNet->SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z);
+			else // maybe an AI?
+				serverNet->SendStartPos(SERVER_PLAYER, a, 1, setup->startPos[a].x, setup->startPos[a].y, setup->startPos[a].z);
 		}
 	}
 
