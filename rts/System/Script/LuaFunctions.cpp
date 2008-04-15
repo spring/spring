@@ -61,6 +61,12 @@ namespace luafunctions
 		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil, 0, NULL);
 		return SAFE_NEW CObject_pointer<CUnit>(x);
 	}
+	
+	void RemoveUnit(CObject_pointer<CUnit>* u)
+	{
+		if (u->held)
+			u->held->KillUnit(false, false, 0, false);
+	}
 
 	CObject_pointer<CFeature>* FeatureLoaderLoadFeature( string name, float3 pos, int team )
 	{

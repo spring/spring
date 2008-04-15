@@ -370,7 +370,7 @@ protected:
 	void UpdateLosStatus(int allyTeam);
 
 public:
-	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker);
+	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker, bool showDeathSequence = true);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 	void TempHoldFire(void);

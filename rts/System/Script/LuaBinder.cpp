@@ -276,7 +276,8 @@ CLuaBinder::CLuaBinder(void)
 			def("GetNumAt", &GetNumUnitsAt),
 			def("GetAt", &GetUnitsAt, raw(_1)),
 			def("GetSelected", &GetSelectedUnits, raw(_1)),
-			def("SendSelection", &SendSelectedUnits)
+			def("SendSelection", &SendSelectedUnits),
+			def("Remove", &RemoveUnit)
 		],
 
 		namespace_("unitdefhandler")

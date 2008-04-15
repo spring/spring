@@ -1609,7 +1609,7 @@ static void CUnitKilledCB(int retCode, void* p1, void* p2)
 	self->delayedWreckLevel = retCode;
 }
 
-void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
+void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
 	if (isDead) {
 		return;
@@ -1634,7 +1634,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker)
 	}
 	gs->Team(this->lineage)->LeftLineage(this);
 
-	if (!reclaimed && !beingBuilt) {
+	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		string exp;
 		if (selfDestruct) {
 			exp = unitDef->selfDExplosion;
