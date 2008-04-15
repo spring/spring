@@ -461,6 +461,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxBank = udTable.GetFloat("maxBank", 0.8f);         // max roll
 	ud.maxPitch = udTable.GetFloat("maxPitch", 0.45f);      // max pitch this plane tries to keep
 	ud.turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to the ai about how large turn radius this plane needs
+	ud.verticalSpeed = udTable.GetFloat("verticalSpeed", 3.0f); // speed of takeoff and landing, at least for gunships
 
 	ud.maxAileron  = udTable.GetFloat("maxAileron",  0.015f); // turn speed around roll axis
 	ud.maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis

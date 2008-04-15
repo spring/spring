@@ -260,6 +260,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->orgWantedHeight=mt->wantedHeight;
 			mt->dontLand = ud->DontLand ();
 			mt->collide = ud->collide;
+			mt->altitudeRate = ud->verticalSpeed;
 
 			unit->moveType = mt;
 		}

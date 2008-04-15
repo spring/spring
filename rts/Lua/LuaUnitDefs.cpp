@@ -852,6 +852,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("frontToSpeed", ud.frontToSpeed);
 	ADD_FLOAT("speedToFront", ud.speedToFront);
 	ADD_FLOAT("myGravity",    ud.myGravity);
+	ADD_FLOAT("verticalSpeed",ud.verticalSpeed);
 
 	ADD_FLOAT("maxBank",      ud.maxBank);
 	ADD_FLOAT("maxPitch",     ud.maxPitch);
