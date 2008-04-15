@@ -286,6 +286,7 @@ struct UnitDef
 	float maxPitch;
 	float turnRadius;
 	float wantedHeight;
+	float verticalSpeed;
 	bool canCrash;
 	bool hoverAttack;
 	bool airStrafe;
