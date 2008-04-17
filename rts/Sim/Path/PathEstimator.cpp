@@ -16,6 +16,7 @@
 #include "Platform/FileSystem.h"
 
 #include <boost/bind.hpp>
+#include <boost/version.hpp>
 
 #define PATHDEBUG false
 
@@ -172,9 +173,14 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
+	#if ((BOOST_VERSION / 100) % 1000 <= 34)
 	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
+	#else
+	int numThreads = boost::thread::hardware_concurrency();
+	#endif
 
 	if (numThreads > 1) {
+		// spawn the threads for InitVerticesAndBlocks()
 		SpawnThreads(numThreads, 0);
 		JoinThreads(numThreads, 0);
 
@@ -201,7 +207,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		InitVertices(0, nbrOfVertices);
 		InitBlocks(0, nbrOfBlocks);
 
-		PrintLoadMsg("Reading estimate path costs");
+		PrintLoadMsg("Reading estimate path costs (using %d thread)", 1);
 
 		if (!ReadFile(name)) {
 			char calcMsg[512];
@@ -279,20 +285,17 @@ void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock, int threadID)
 	for (int move = 0; move < moveinfo->moveData.size(); move++) {
 		MoveData* mdi = moveinfo->moveData[move];
 
-		/*
-		char calcMsg[512];
-		sprintf(calcMsg, "Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d)",
-			minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size());
-		*/
-
-		{
+		if (threadID == -1) {
+			char calcMsg[512];
+			sprintf(calcMsg, "Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d, thread-ID %d)",
+				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size(), -1);
+			PrintLoadMsg(calcMsg);
+		} else {
 			boost::mutex::scoped_lock lock(loadMsgMutex);
 
-			// NOTE: locking PrintLoadMsg() is not enough?
-			// PrintLoadMsg(calcMsg);
-
-			logOutput.Print("Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d)",
-				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size());
+			// NOTE: locking PrintLoadMsg() is not enough, can't call it here
+			logOutput.Print("Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d, thread-ID %d)",
+				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size(), threadID);
 		}
 
 		for (int idx = minBlock; idx < maxBlock; idx++) {
