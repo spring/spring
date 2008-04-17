@@ -34,6 +34,14 @@
 #include "mmgr.h"
 
 
+// msvc behaves really strange
+#if _MSC_VER
+namespace std {
+	using ::cos;
+	using ::sin;
+}
+#endif
+
 CPreGame* pregame=0;
 
 extern Uint8 *keys;
