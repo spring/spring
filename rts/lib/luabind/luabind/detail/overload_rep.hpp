@@ -34,10 +34,13 @@
 #include <boost/preprocessor/repeat.hpp>
 #include <vector>
 
+// actually, this causes a #include cyclic dependency, which causes
+// overload_rep to not be #defined when it is necessary. (in method_rep.hpp)
+
 // actually, gcc cannot see pointer_converters before it sees class_rep
-#if defined(BOOST_MSVC) // || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
-#include <luabind/detail/policy.hpp>
-#endif
+//#if defined(BOOST_MSVC) // || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+//#include <luabind/detail/policy.hpp>
+//#endif
 
 #include <luabind/detail/overload_rep_base.hpp>
 
