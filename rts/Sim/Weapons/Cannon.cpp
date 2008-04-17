@@ -154,7 +154,7 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 void CCannon::Fire(void)
 {
 	float3 diff = targetPos-weaponMuzzlePos;
-	float3 dir=GetWantedDir(diff);
+	float3 dir=(diff.Length() > 2.0) ? GetWantedDir(diff) : diff; //prevent vertical aim when emit-sfx firing the weapon
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
 #ifdef TRACE_SYNC
