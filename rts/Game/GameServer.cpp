@@ -30,6 +30,10 @@
 #include <iostream>
 #endif
 
+#if _MSC_VER 
+namespace std { using ::ceil; }
+#endif
+
 /// frames until a syncchech will time out and a warning is given out
 const int SYNCCHECK_TIMEOUT = 300;
 
