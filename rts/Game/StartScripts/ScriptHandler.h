@@ -21,7 +21,6 @@ public:
 	CglList* GenList(ListSelectCallback callb);
 
 	void AddScript(std::string name,CScript* s);
-	void StartLua();
 
 	static CScriptHandler& Instance();
 
@@ -31,6 +30,7 @@ private:
 #ifndef NO_LUA
 	std::list<CLuaBinder*> lua_binders;
 #endif
+	void StartLua();
 	std::map<std::string,CScript*> scripts; ///< Maps script names to CScript pointers.
 	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler
 	static ListSelectCallback callback;

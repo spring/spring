@@ -6,6 +6,7 @@
 #include "ScriptHandler.h"
 #include "Game/Game.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include "LoadScript.h"
 #include "CommanderScript.h"
 #include "CommanderScript2.h"
@@ -58,10 +59,12 @@ void CScriptHandler::LoadScripts() {
 void CScriptHandler::StartLua()
 {
 #ifndef NO_LUA
-	std::vector<string> files = CFileHandler::FindFiles("startscripts/", "*.lua");
+	std::vector<string> files = hpiHandler->GetFilesInDir("startscripts");
 	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
+		char buffer[16000];
+		const int returned = hpiHandler->LoadFile(std::string("startscripts/"+*i), buffer);
 		CLuaBinder* lua = SAFE_NEW CLuaBinder();
-		if (!lua->LoadScript(*i))
+		if (!lua->LoadScript(*i, buffer, returned))
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
 		lua_binders.push_back(lua);
 	}
@@ -75,6 +78,7 @@ CScriptHandler& CScriptHandler::Instance()
 	static CScriptHandler instance;
 	if( !created ) {
 		created = true;
+		instance.StartLua();
 		instance.LoadScripts();
 	}
 	return instance;

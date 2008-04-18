@@ -13,6 +13,7 @@ public:
 	std::string lastError;
 	CLuaBinder(void);
 	bool LoadScript(const std::string& name);
+	bool LoadScript(const std::string& name, char* buffer, int size);
 	~CLuaBinder(void);
 };
 
