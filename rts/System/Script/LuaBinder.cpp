@@ -190,7 +190,8 @@ CLuaBinder::CLuaBinder(void)
 			.def_readonly("frameNum", &CGlobalSyncedStuff::frameNum)
 			.def_readonly("mapx", &CGlobalSyncedStuff::mapx)
 			.def_readonly("activeTeams", &CGlobalSyncedStuff::activeTeams)
-			.def_readonly("mapy", &CGlobalSyncedStuff::mapy),
+			.def_readonly("mapy", &CGlobalSyncedStuff::mapy)
+			.def("randInt", &CGlobalSyncedStuff::randInt),
 			
 		class_<SFloat3>("sfloat3")
 			.def(constructor<const float, const float, const float>())
@@ -330,6 +331,16 @@ CLuaBinder::CLuaBinder(void)
 bool CLuaBinder::LoadScript(const string& name)
 {
 	if (luaL_loadfile(luaState, name.c_str()) || lua_pcall(luaState, 0, 0, 0)) {
+		lastError = lua_tostring(luaState, -1);
+		return false;
+	}
+
+	return true;
+}
+
+bool CLuaBinder::LoadScript(const string& name, char* buffer, int size)
+{
+	if (luaL_loadbuffer(luaState, buffer, size, name.c_str()) || lua_pcall(luaState, 0, 0, 0)) {
 		lastError = lua_tostring(luaState, -1);
 		return false;
 	}

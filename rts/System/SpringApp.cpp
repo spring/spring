@@ -12,7 +12,6 @@
 #include "Game/Game.h"
 #include "Game/Team.h"
 #include "Game/UI/KeyBindings.h"
-#include "Game/StartScripts/ScriptHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
@@ -230,9 +229,6 @@ bool SpringApp::Initialize ()
 
 	// Initialize Lua GL
 	LuaOpenGL::Init();
-
-	// Initialize ScriptHandler / LUA
-	CScriptHandler::Instance().StartLua();
 
 	// Create CGameSetup and CPreGame objects
 	CreateGameSetup ();
