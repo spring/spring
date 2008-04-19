@@ -105,6 +105,15 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.862	- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 
+		  naval units
+
+		- AAI now takes continents into account when sending scouts to positions (e.g. it does not try send ground scouts to 
+		  positions on other islands/continents anymore)
+
+		- Bumped mod learning file version to 0.86 due to some changes in handling of amphibious units
+
+
 AAI v0.86	- Added NON_AMPHIB_MAX_WATERDEPTH float (default is 15) statement to mod cfg file, specifies the max water depth 
 		  non amphibious ground units can cross
 

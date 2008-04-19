@@ -166,65 +166,54 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 	return dest;
 }
 
-AAISector* AAIBrain::GetNewScoutDest(int scout)
+void AAIBrain::GetNewScoutDest(float3 *dest, int scout)
 {
+	*dest = ZeroVector;
+
 	// TODO: take scouts pos into account
 	float my_rating, best_rating = 0;
 	AAISector *scout_sector = 0, *sector;
-	
+
 	const UnitDef *def = cb->GetUnitDef(scout);
+	unsigned int scout_movement_type = bt->units_static[def->id].movement_type;
+
+	float3 pos = cb->GetUnitPos(scout);
+
+	// get continent 
+	int continent = map->GetSmartContinentID(&pos, scout_movement_type);//map->GetContinentID(&pos);
 	
-	for(int x = 0; x < map->xSectors; x++)
+	for(int x = 0; x < map->xSectors; ++x)
 	{
-		for(int y = 0; y < map->ySectors; y++)
+		for(int y = 0; y < map->ySectors; ++y)
 		{
 			sector = &map->sector[x][y];
 			
-			if(sector->distance_to_base > 0)
+			if(sector->distance_to_base > 0 && scout_movement_type & sector->allowed_movement_types)
 			{
-				// land sector
-				if(sector->water_ratio > 0.7)
-				{
-					if(! (bt->units_static[def->id].movement_type & MOVE_TYPE_GROUND))
-					{
-						my_rating = sector->importance_this_game * sector->last_scout;
-						++sector->last_scout;
-					}
-					else
-						my_rating = 0;
-				}
-				// water sector
-				else if(sector->water_ratio < 0.3)
-				{
-					if(! (bt->units_static[def->id].movement_type & MOVE_TYPE_SEA))
-					{
-						my_rating = sector->importance_this_game * sector->last_scout;
-						++sector->last_scout;
-					}
-					else
-						my_rating = 0;
-				}
-				// land/water sector
-				else
-				{
-					my_rating = sector->importance_this_game * sector->last_scout;
-					++sector->last_scout;
-				}
-
+				my_rating = sector->importance_this_game * sector->last_scout;
+				++sector->last_scout;
+				
 				if(my_rating > best_rating)
 				{
-					best_rating = my_rating;
-					scout_sector = sector;
+					// possible scout dest, try to find pos in sector
+					pos = ZeroVector;
+
+					sector->GetMovePos(&pos, scout_movement_type, continent); 
+					
+					if(pos.x > 0)
+					{
+						best_rating = my_rating;
+						scout_sector = sector;
+						*dest = pos;
+					}
 				}
 			}
 		}
 	}
 
-	// set dest sector as visited
-	if(scout_sector)
+	// set dest sector as visited 
+	if(dest->x > 0)
 		scout_sector->last_scout = 1;
-	
-	return scout_sector;
 }
 
 bool AAIBrain::MetalForConstr(int unit, int workertime)

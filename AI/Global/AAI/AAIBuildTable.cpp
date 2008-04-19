@@ -363,11 +363,11 @@ void AAIBuildTable::Init()
 			{
 				if(unitList[i-1]->movedata->moveType == MoveData::Ground_Move)
 				{
-					units_static[i].movement_type |= MOVE_TYPE_GROUND;
-
 					// check for amphibious units
 					if(unitList[i-1]->maxWaterDepth >= 250)
 						units_static[i].movement_type |= MOVE_TYPE_AMPHIB;
+					else
+						units_static[i].movement_type |= MOVE_TYPE_GROUND;
 				}
 				else if(unitList[i-1]->movedata->moveType == MoveData::Hover_Move)
 					units_static[i].movement_type |= MOVE_TYPE_HOVER;	
@@ -3748,7 +3748,7 @@ bool AAIBuildTable::IsCommander(int def_id)
 
 bool AAIBuildTable::IsGround(int def_id)
 {
-	if(units_static[def_id].movement_type & MOVE_TYPE_GROUND)
+	if(units_static[def_id].movement_type & (MOVE_TYPE_GROUND + MOVE_TYPE_AMPHIB) )
 		return true;
 	else 
 		return false;
@@ -4066,21 +4066,13 @@ UnitCategory AAIBuildTable::GetAssaultCategoryOfID(int id)
 unsigned int AAIBuildTable::GetAllowedMovementTypesForAssister(int building)
 {
 	// determine allowed movement types
-	unsigned int allowed_movement_types = 0;
+	// alwas allowed: MOVE_TYPE_AIR, MOVE_TYPE_HOVER, MOVE_TYPE_AMPHIB
+	unsigned int allowed_movement_types = 22;
 
 	if(units_static[building].movement_type & MOVE_TYPE_STATIC_LAND)
-	{
-		allowed_movement_types |= MOVE_TYPE_AIR;
 		allowed_movement_types |= MOVE_TYPE_GROUND;
-		allowed_movement_types |= MOVE_TYPE_HOVER;
-	}
 	else
-	{
-		allowed_movement_types |= MOVE_TYPE_AIR;
 		allowed_movement_types |= MOVE_TYPE_SEA;
-		allowed_movement_types |= MOVE_TYPE_HOVER;	
-		allowed_movement_types |= MOVE_TYPE_AMPHIB;
-	}
-
+		
 	return allowed_movement_types;
 }

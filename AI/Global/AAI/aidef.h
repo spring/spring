@@ -32,9 +32,9 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.86"
+#define AAI_VERSION "0.862"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
-#define TABLE_FILE_VERSION "MOD_LEARN_0_85"
+#define TABLE_FILE_VERSION "MOD_LEARN_0_86"
 #define MAP_DATA_VERSION "MAP_DATA_0_86"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_86"
 
@@ -69,13 +69,16 @@ public:
 #define MOVE_TYPE_AIR (unsigned int) 2
 #define MOVE_TYPE_HOVER (unsigned int) 4
 #define MOVE_TYPE_SEA (unsigned int) 8
-#define MOVE_TYPE_UNIT (unsigned int) 15	// used to filter out unit movement typ (e.g. only MOVE_TYPE_SEA for sumarines (that also have MOVE_TYPE_UNDERWATER set))
-#define MOVE_TYPE_STATIC (unsigned int) 16
-#define MOVE_TYPE_FLOATER (unsigned int) 32
-#define MOVE_TYPE_UNDERWATER (unsigned int) 64
-#define MOVE_TYPE_STATIC_LAND (unsigned int) 128
-#define MOVE_TYPE_STATIC_WATER (unsigned int) 256
-#define MOVE_TYPE_AMPHIB (unsigned int) 512
+#define MOVE_TYPE_AMPHIB (unsigned int) 16
+#define MOVE_TYPE_STATIC (unsigned int) 32
+#define MOVE_TYPE_FLOATER (unsigned int) 64
+#define MOVE_TYPE_UNDERWATER (unsigned int) 128
+#define MOVE_TYPE_STATIC_LAND (unsigned int) 256
+#define MOVE_TYPE_STATIC_WATER (unsigned int) 512
+
+
+#define MOVE_TYPE_UNIT (unsigned int) 31	// used to filter out unit movement typ (e.g. only MOVE_TYPE_SEA for sumarines (that also have MOVE_TYPE_UNDERWATER set))
+#define MOVE_TYPE_CONTINENT_BOUND (unsigned int) 9
 
 
 // unit types (for bitfield)
