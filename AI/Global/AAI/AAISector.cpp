@@ -677,3 +677,43 @@ bool AAISector::ConnectedToOcean()
 
 	return false;
 }
+
+void AAISector::GetMovePos(float3 *pos, unsigned int movement_type, int continent)
+{
+	if(movement_type &  MOVE_TYPE_CONTINENT_BOUND)
+	{
+		*pos = ZeroVector;
+		
+		// try to get random spot
+		for(int i = 0; i < 6; ++i)
+		{
+			pos->x = left + map->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+			pos->z = top + map->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+
+			if(map->GetContinentID(pos) == continent)
+				return;
+			else
+				*pos = ZeroVector;
+		}
+
+		// search systematically 
+		for(int i = 0; i < map->xSectorSizeMap; i += 8)
+		{
+			for(int j = 0; j < map->ySectorSizeMap; j += 8)
+			{
+				if(map->GetContinentID(i + left/SQUARE_SIZE, j + top/SQUARE_SIZE) == continent)
+				{
+					pos->x = left + i * SQUARE_SIZE;
+					pos->z = top + j * SQUARE_SIZE;
+					return;
+				}
+			}
+		}
+
+	}
+	else	// air/hover/amphib -> can reach any pos
+	{
+			pos->x = left + map->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+			pos->z = top + map->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+	}
+}

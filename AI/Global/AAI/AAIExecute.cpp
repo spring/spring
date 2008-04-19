@@ -153,7 +153,6 @@ void AAIExecute::UpdateRecon()
 	{
 		int scout = 0;
 
-		
 		float cost; 
 		float los;
 
@@ -176,26 +175,19 @@ void AAIExecute::UpdateRecon()
 		}
 
 		// determine movement type of scout based on map
-		unsigned int allowed_movement_types = 0;
-	
-		allowed_movement_types |= MOVE_TYPE_AIR;
+		// always: MOVE_TYPE_AIR, MOVE_TYPE_HOVER, MOVE_TYPE_AMPHIB
+		unsigned int allowed_movement_types = 22;
 		
 		if(map->mapType == LAND_MAP)
-		{
 			allowed_movement_types |= MOVE_TYPE_GROUND;
-			allowed_movement_types |= MOVE_TYPE_HOVER;
-		}
 		else if(map->mapType == LAND_WATER_MAP)
 		{
 			allowed_movement_types |= MOVE_TYPE_GROUND;
 			allowed_movement_types |= MOVE_TYPE_SEA;
-			allowed_movement_types |= MOVE_TYPE_HOVER;
 		}
 		else if(map->mapType == WATER_MAP)
-		{
 			allowed_movement_types |= MOVE_TYPE_SEA;
-			allowed_movement_types |= MOVE_TYPE_HOVER;
-		}
+		
 
 		// request cloakable scouts from time to time
 		if(rand()%5 == 1)
@@ -217,40 +209,18 @@ void AAIExecute::UpdateRecon()
 		}
 	}
 
-	AAISector *dest;
-	int scout_x, scout_y;
-
 	// get idle scouts and let them explore the map
 	for(list<int>::iterator scout = ai->scouts.begin(); scout != ai->scouts.end(); ++scout)
 	{
 		if(!IsBusy(*scout))
 		{
+			pos = ZeroVector;
+			
 			// get scout dest
-			dest = brain->GetNewScoutDest(*scout);
+			brain->GetNewScoutDest(&pos, *scout);
 
-			// get sector of scout
-			pos = cb->GetUnitPos(*scout);
-			scout_x = pos.x/map->xSectorSize;
-			scout_y = pos.z/map->xSectorSize;
-
-			if(dest->x > scout_x)
-				pos.x = (dest->left + 7 * dest->right)/8;
-			else if(dest->x < scout_x)
-				pos.x = (7 * dest->left + dest->right)/8;
-			else
-				pos.x = (dest->left + dest->right)/2;
-
-			if(dest->y > scout_y)
-				pos.z = (7 * dest->bottom + dest->top)/8;
-			else if(dest->y < scout_y)
-				pos.z = (dest->bottom + 7 * dest->top)/8;
-			else
-				pos.z = (dest->bottom + dest->top)/2;
-
-			pos.y = cb->GetElevation(pos.x, pos.z);
-
-			moveUnitTo(*scout, &pos);
-
+			if(pos.x > 0)
+				moveUnitTo(*scout, &pos);
 		}
 	}
 }

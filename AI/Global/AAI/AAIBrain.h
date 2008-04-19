@@ -70,7 +70,7 @@ public:
 	bool EnergyForConstr(int unit, int wokertime = 175);
 
 	// returns pos where scout schould be sent to
-	AAISector* GetNewScoutDest(int scout);
+	void GetNewScoutDest(float3 *dest, int scout);
 
 	// returns true if sector is considered to be safe
 	bool IsSafeSector(AAISector *sector);

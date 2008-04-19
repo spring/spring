@@ -2,9 +2,8 @@
 
 #include "aidef.h"
 
-#include "AAISector.h"
-
 class AAIBuildTable;
+class AAISector;
 class AAI;
 
 class AAIMap
@@ -25,6 +24,10 @@ public:
 
 	// returns id of continent the cell belongs to
 	int GetContinentID(int x, int y);
+	int GetContinentID(float3 *pos);
+
+	// returns continent id with respect to the units movement type (eg land, non amphib unit being in shallow water will return id of nearest land continent)
+	int GetSmartContinentID(float3 *pos, unsigned int unit_movement_type);
 
 	// true if x/y are a valid sector
 	bool ValidSector(int x, int y);
@@ -107,8 +110,9 @@ public:
 	bool initialized;
 
 	// defence maps
-	vector<float> defence_map;	// defence map has 1/4 of resolution of blockmap/buildmap
+	vector<float> defence_map;	//  ground/sea defence map has 1/4 of resolution of blockmap/buildmap
 	vector<float> air_defence_map; // air defence map has 1/4 of resolution of blockmap/buildmap
+	vector<float> submarine_defence_map; // submarine defence map has 1/4 of resolution of blockmap/buildmap
 
 	// temp for scouting
 	vector<float> units_spotted;
@@ -129,7 +133,8 @@ public:
 
 	static int aai_instances;	// how many aai instances have been initialized
 
-	static int xMapSize, yMapSize;				// x and y size of the map
+	static int xSize, ySize;					// x and y size of the map (unit coordinates)
+	static int xMapSize, yMapSize;				// x and y size of the map (map coordinates)
 	static int xDefMapSize, yDefMapSize;		// x and y size of the defence maps (1/4 resolution of map)
 	static int xContMapSize, yContMapSize;		// x and y size of the defence maps (1/4 resolution of map)
 	static int xSectors, ySectors;				// number of sectors

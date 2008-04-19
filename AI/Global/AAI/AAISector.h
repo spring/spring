@@ -94,6 +94,9 @@ public:
 	float GetWaterRatio();
 	float GetFlatRatio();
 
+	// returns a position in sector on specified continent for the movement type (ZeroVector if none found)
+	void GetMovePos(float3 *pos, unsigned int movement_type, int continent); 
+
 	// returns true if sector is connected with a big ocean (and not only a small pond)
 	bool ConnectedToOcean();
 
@@ -153,7 +156,6 @@ public:
 
 	int distance_to_base;	// 0 = base, 1 = neighbour to base 
 	bool interior;			// true if sector is no inner sector
+
+	unsigned int allowed_movement_types;	// movement types that may enter this sector
 };
-
-#include "AAIMap.h"
-

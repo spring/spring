@@ -14,6 +14,8 @@
 
 // all the static vars
 int AAIMap::aai_instances = 0;
+int AAIMap::xSize;
+int AAIMap::ySize;	
 int AAIMap::xMapSize;
 int AAIMap::yMapSize;				
 int AAIMap::xDefMapSize;
@@ -169,6 +171,9 @@ void AAIMap::Init()
 		xMapSize = cb->GetMapWidth();
 		yMapSize = cb->GetMapHeight();
 
+		xSize = xMapSize * SQUARE_SIZE;
+		ySize = yMapSize * SQUARE_SIZE;
+
 		xDefMapSize = xMapSize / 4;
 		yDefMapSize = yMapSize / 4;
 
@@ -234,6 +239,7 @@ void AAIMap::Init()
 	// create defence
 	defence_map.resize(xDefMapSize*yDefMapSize, 0);
 	air_defence_map.resize(xDefMapSize*yDefMapSize, 0); 
+	submarine_defence_map.resize(xDefMapSize*yDefMapSize, 0); 
 
 	initialized = true;
 
@@ -735,6 +741,20 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			{
 				// load sector data
 				fscanf(load_file, "%f %f %f", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
+				
+				// set movement types that may enter this sector
+				// always: MOVE_TYPE_AIR, MOVE_TYPE_AMPHIB, MOVE_TYPE_HOVER;
+				sector[i][j].allowed_movement_types = 22;
+
+				if(sector[i][j].water_ratio < 0.3)
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_GROUND;
+				else if(sector[i][j].water_ratio < 0.7)
+				{
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_GROUND;
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_SEA;
+				}
+				else
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_SEA;
 
 				if(sector[i][j].importance_learned <= 1)
 					sector[i][j].importance_learned += (rand()%5)/20.0;
@@ -765,6 +785,20 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				sector[i][j].importance_learned = 1 + (rand()%5)/20.0;
 				sector[i][j].flat_ratio = sector[i][j].GetFlatRatio();
 				sector[i][j].water_ratio = sector[i][j].GetWaterRatio();
+
+				// set movement types that may enter this sector
+				// always: MOVE_TYPE_AIR, MOVE_TYPE_AMPHIB, MOVE_TYPE_HOVER;
+				sector[i][j].allowed_movement_types = 22;
+
+				if(sector[i][j].water_ratio < 0.3)
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_GROUND;
+				else if(sector[i][j].water_ratio < 0.7)
+				{
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_GROUND;
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_SEA;
+				}
+				else
+					sector[i][j].allowed_movement_types |= MOVE_TYPE_SEA;
 
 				if(auto_set)
 				{
@@ -2311,20 +2345,23 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 	float power;
 	float air_power;
+	float submarine_power;
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		power = bt->fixed_eff[defence][0] + bt->fixed_eff[defence][1];
-		air_power = bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3];
+		power = bt->fixed_eff[defence][0];
+		air_power = (bt->fixed_eff[defence][1] + bt->fixed_eff[defence][2])/2.0f;
+		submarine_power = bt->fixed_eff[defence][3];
 	}
 	else
 	{
 		if(bt->unitList[defence-1]->minWaterDepth > 0)
-			power = bt->fixed_eff[defence][3] + bt->fixed_eff[defence][4];
+			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = bt->fixed_eff[defence][0];
 		
 		air_power = bt->fixed_eff[defence][1];
+		submarine_power = bt->fixed_eff[defence][4];
 	}
 
 	int xPos = pos->x / 32;
@@ -2363,13 +2400,20 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 			defence_map[cell] += power;
 			air_defence_map[cell] += air_power;
+			submarine_defence_map[cell] += submarine_power;
 		}	
 	}
 
 	// further increase values close around the bulding (to prevent aai from packing buildings too close together)
-	// y range is const
-	yStart = yPos - 4;
-	yEnd = yPos + 4;
+	xStart = xPos - 2;
+	xEnd = xPos + 2;
+	yStart = yPos - 2;
+	yEnd = yPos + 2;
+
+	if(xStart < 0)
+		xStart = 0;
+	if(xEnd >= xDefMapSize)
+		xEnd = xDefMapSize-1;
 
 	if(yStart < 0)
 		yStart = 0;
@@ -2378,23 +2422,13 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 
 	for(int y = yStart; y <= yEnd; ++y)
 	{
-		// determine x-range
-		xRange = (int) floor( sqrt( (float) ( 16 - (y - yPos) * (y - yPos) ) ) + 0.5f );
-		
-		xStart = xPos - xRange;
-		xEnd = xPos + xRange;
-
-		if(xStart < 0)
-			xStart = 0;
-		if(xEnd > xDefMapSize)
-			xEnd = xDefMapSize;
-
-		for(int x = xStart; x < xEnd; ++x)
+		for(int x = xStart; x <= xEnd; ++x)
 		{
 			cell = x + xDefMapSize*y;
 			
 			defence_map[cell] += 128.0f;
 			air_defence_map[cell] += 128.0f;
+			submarine_defence_map[cell] += 128.0f;
 		}
 	}
 }
@@ -2406,34 +2440,38 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 
 	float power;
 	float air_power;
+	float submarine_power;
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		power = bt->fixed_eff[defence][0] + bt->fixed_eff[defence][1];
-		air_power = bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3];
+		power = bt->fixed_eff[defence][0];
+		air_power = (bt->fixed_eff[defence][1] + bt->fixed_eff[defence][2])/2.0f;
+		submarine_power = bt->fixed_eff[defence][3];
 	}
 	else
 	{
 		if(bt->unitList[defence-1]->minWaterDepth > 0)
-			power = bt->fixed_eff[defence][3] + bt->fixed_eff[defence][4];
+			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = bt->fixed_eff[defence][0];
 		
 		air_power = bt->fixed_eff[defence][1];
+		submarine_power = bt->fixed_eff[defence][4];
 	}
 	
 	int xPos = pos->x / 32;
 	int yPos = pos->z / 32;
 
-	// x range will change from line to line 
-	int xStart;
-	int xEnd;
-	int xRange;
-
 	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
-	// y range is const
-	int yStart = yPos - 4;
-	int yEnd = yPos + 4;
+	int xStart = xPos - 2;
+	int xEnd = xPos + 2;
+	int yStart = yPos - 2;
+	int yEnd = yPos + 2;
+
+	if(xStart < 0)
+		xStart = 0;
+	if(xEnd >= xDefMapSize)
+		xEnd = xDefMapSize-1;
 
 	if(yStart < 0)
 		yStart = 0;
@@ -2442,27 +2480,18 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 
 	for(int y = yStart; y <= yEnd; ++y)
 	{
-		// determine x-range
-		xRange = (int) floor( sqrt( (float) ( 16 - (y - yPos) * (y - yPos) ) ) + 0.5f );
-		
-		xStart = xPos - xRange;
-		xEnd = xPos + xRange;
-
-		if(xStart < 0)
-			xStart = 0;
-		if(xEnd > xDefMapSize)
-			xEnd = xDefMapSize;
-
-		for(int x = xStart; x < xEnd; ++x)
+		for(int x = xStart; x <= xEnd; ++x)
 		{
-			cell= x + xDefMapSize*y;
+			cell = x + xDefMapSize*y;
 			
 			defence_map[cell] -= 128.0f;
 			air_defence_map[cell] -= 128.0f;
+			submarine_defence_map[cell] -= 128.0f;
 		}
 	}
 
 	// y range is const
+	int xRange;
 	yStart = yPos - range;
 	yEnd = yPos + range;
 
@@ -2490,12 +2519,16 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 			
 			defence_map[cell] -= power;
 			air_defence_map[cell] -= air_power;
+			submarine_defence_map[cell] -= submarine_power;
 
 			if(defence_map[cell] < 0)
 				defence_map[cell] = 0;
 			
 			if(air_defence_map[cell] < 0)
 				air_defence_map[cell] = 0;
+
+			if(submarine_defence_map[cell] < 0)
+				submarine_defence_map[cell] = 0;
 		}
 	}
 }
@@ -2515,11 +2548,15 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 
 	if(cfg->AIR_ONLY_MOD)
 	{
-		if(category == HOVER_ASSAULT || category == SEA_ASSAULT)
+		if(category == AIR_ASSAULT || category == HOVER_ASSAULT)
 			map = &air_defence_map;
+		else if(category == SEA_ASSAULT)
+			map = &submarine_defence_map;
 	}
 	else if(category == AIR_ASSAULT)
 		map = &air_defence_map;
+	else if(category == SUBMARINE_ASSAULT)
+		map = &submarine_defence_map;
 
 	float range =  bt->units_static[def->id].range / 8.0;
 
@@ -2533,7 +2570,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 			{
 				cell = (xPos + xDefMapSize * yPos) / 4;
 
-				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.15f * ((float) (rand()%20));
+				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.15f *  (float)(rand()%20);
 
 				// determine minimum distance from buildpos to the edges of the map
 				edge_distance = xPos;
@@ -2576,4 +2613,71 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 int AAIMap::GetContinentID(int x, int y)
 {
 	return continent_map[(y/4) * xContMapSize + x / 4];
+}
+
+int AAIMap::GetContinentID(float3 *pos)
+{
+	int x = pos->x / 32;
+	int y = pos->z / 32;
+
+	// check if pos inside of the map
+	if(x < 0)
+		x = 0;
+	else if(x >= xContMapSize)
+		x = xContMapSize - 1;
+
+	if(y < 0)
+		y = 0;
+	else if(y >= yContMapSize)
+		y = yContMapSize - 1;
+
+	return continent_map[y * xContMapSize + x];
+}
+
+int AAIMap::GetSmartContinentID(float3 *pos, unsigned int unit_movement_type)
+{
+	// check if non sea/amphib unit in shallow water
+	if(ai->cb->GetElevation(pos->x, pos->z) < 0 && unit_movement_type & MOVE_TYPE_GROUND)
+	{
+		//look for closest land cell
+		for(int k = 1; k < 10; ++k)
+		{
+			if(ai->cb->GetElevation(pos->x + k * 16, pos->z) > 0)
+			{
+				pos->x += k *16;
+				break;
+			}
+			else if(ai->cb->GetElevation(pos->x - k * 16, pos->z) > 0)
+			{
+				pos->x -= k *16;
+				break;
+			}
+			else if(ai->cb->GetElevation(pos->x, pos->z + k * 16) > 0)
+			{
+				pos->z += k *16;
+				break;
+			}
+			else if(ai->cb->GetElevation(pos->x, pos->z - k * 16) > 0)
+			{
+				pos->z -= k *16;
+				break;
+			}
+		}
+	}
+
+	int x = pos->x / 32;
+	int y = pos->z / 32;
+
+	// check if pos inside of the map
+	if(x < 0)
+		x = 0;
+	else if(x >= xContMapSize)
+		x = xContMapSize - 1;
+
+	if(y < 0)
+		y = 0;
+	else if(y >= yContMapSize)
+		y = yContMapSize - 1;
+
+	return continent_map[y * xContMapSize + x];
 }
