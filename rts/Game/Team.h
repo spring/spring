@@ -28,6 +28,9 @@ public:
 	bool UseEnergyUpkeep(float amount);
 	bool UseMetalUpkeep(float amount);
 	
+	void SetBaseMetalStorage(float storage) {metalStorage = storage;};
+	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
+	
 	void SelfDestruct();
 	void GiveEverythingTo(const unsigned toTeam);
 	

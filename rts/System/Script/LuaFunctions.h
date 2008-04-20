@@ -43,6 +43,7 @@ namespace luafunctions
 	std::string MapGetTDFName();
 	luabind::object GetSelectedUnits(lua_State* L, int player);
 	void SendSelectedUnits();
+	CTeam* GetTeam(int num);
 };
 
 #endif

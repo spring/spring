@@ -2099,7 +2099,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 	}
 	else if (action.command == "nospectatorchat") {
 		SetBoolArg(noSpectatorChat, action.extra);
-		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can" : "can not");
+		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can not" : "can");
 	}
 	else if (action.command == "reloadcob" && gs->cheatEnabled) {
 		ReloadCOB(action.extra, playernum);
