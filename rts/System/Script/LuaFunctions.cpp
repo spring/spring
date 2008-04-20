@@ -171,6 +171,11 @@ namespace luafunctions
 		if (selectedUnits.selectionChanged)
 			selectedUnits.SendSelection();
 	}
+	
+	CTeam* GetTeam(int num)
+	{
+		return gs->Team(num);
+	}
 
 	string MapGetTDFName()
 	{

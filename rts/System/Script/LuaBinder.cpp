@@ -4,6 +4,7 @@
 #include "float3.h"
 #include "LogOutput.h"
 #include "GlobalStuff.h"
+#include "Game/Team.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "TdfParser.h"
@@ -221,6 +222,12 @@ CLuaBinder::CLuaBinder(void)
 			.def("GiveCommand", &UnitGiveCommand)
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
+			
+		class_<CTeam>("Team")
+			.def("setmetalstorage", &CTeam::SetBaseMetalStorage)
+			.def("setenergystorage", &CTeam::SetBaseEnergyStorage)
+			.def_readonly("metalstorage", &CTeam::metalStorage)
+			.def_readonly("energystorage", &CTeam::energyStorage),
 
 		class_<CFeature, bases<CWorldObject>, CObject_pointer<CFeature> >("Feature")
 		    .def_readonly("id", &CFeature::id )
@@ -297,6 +304,12 @@ CLuaBinder::CLuaBinder(void)
 			def("GetAt", &GetFeaturesAt, raw(_1)),
 			def("Load", &FeatureLoaderLoadFeature, adopt(result))
 		],
+		
+		namespace_("game")
+		[
+			def("End", &EndGame),
+			def("GetTeam", &GetTeam)
+		],
 
 		namespace_("map")
 		[
@@ -304,7 +317,6 @@ CLuaBinder::CLuaBinder(void)
 			def("GetTDFName", &MapGetTDFName)
 		],
 
-		def("EndGame", &EndGame),
 
 		// File access should probably be limited to the virtual filesystem. Disabled for now
 		def("dofile", &DisabledFunction),
