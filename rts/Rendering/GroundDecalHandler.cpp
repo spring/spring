@@ -167,8 +167,10 @@ void CGroundDecalHandler::Draw(void)
 					decal->alpha -= decal->AlphaFalloff * gu->lastFrameTime * gs->speedFactor;
 				}
 				if (decal->alpha < 0) {
-					// make sure RemoveBuilding won't try to modify this decal
-					decal->owner->buildingDecal = 0;
+					// make sure RemoveBuilding() won't try to modify this decal
+					if (decal->owner) {
+						decal->owner->buildingDecal = 0;
+					}
 					delete decal;
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
