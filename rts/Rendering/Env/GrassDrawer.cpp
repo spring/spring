@@ -147,19 +147,19 @@ struct InviewNearGrass {
 	float dist;
 };
 
-static const bool GrassSort(const InviewGrass* a,const InviewGrass* b){
-	return a->dist > b->dist;
+static const bool GrassSort(const InviewGrass& a, const InviewGrass& b){
+	return a.dist > b.dist;
 }
 
-static const bool GrassSortNear(const InviewNearGrass* a,const InviewNearGrass* b){
-	return a->dist > b->dist;
+static const bool GrassSortNear(const InviewNearGrass& a, const InviewNearGrass& b){
+	return a.dist > b.dist;
 }
 
 class CGrassBlockDrawer : public CReadMap::IQuadDrawer
 {
 public:
-	std::vector<InviewGrass*> inviewGrass;
-	std::vector<InviewNearGrass*> inviewNearGrass;
+	std::vector<InviewGrass> inviewGrass;
+	std::vector<InviewNearGrass> inviewNearGrass;
 	CVertexArray* va;
 	int cx,cy;
 	CGrassDrawer *gd;
@@ -208,10 +208,10 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 								}
 							}
 						} else {//near but not close, save for later drawing
-							InviewNearGrass* iv=SAFE_NEW InviewNearGrass;
-							iv->dist=sqdist;
-							iv->x=x*grassBlockSize+x2;
-							iv->y=y*grassBlockSize+y2;
+							InviewNearGrass iv;
+							iv.dist=sqdist;
+							iv.x=x*grassBlockSize+x2;
+							iv.y=y*grassBlockSize+y2;
 							inviewNearGrass.push_back(iv);
 							nearGrass[((y*grassBlockSize+y2)&31)*32+((x*grassBlockSize+x2)&31)].square=-1;
 						}
@@ -269,9 +269,9 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 				}
 			}
 		}
-		InviewGrass* ig=SAFE_NEW InviewGrass;
-		ig->num=curModSquare;
-		ig->dist=dist;
+		InviewGrass ig;
+		ig.num=curModSquare;
+		ig.dist=dist;
 		inviewGrass.push_back(ig);	
 	}
 }
@@ -451,13 +451,13 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	for(std::vector<InviewGrass*>::iterator gi=drawer.inviewGrass.begin();gi!=drawer.inviewGrass.end();++gi){
-		if((*gi)->dist+128<grassDistance)
+	for (std::vector<InviewGrass>::iterator gi = drawer.inviewGrass.begin(); gi != drawer.inviewGrass.end(); ++gi) {
+		if((*gi).dist+128<grassDistance)
 			glColor4f(0.62f,0.62f,0.62f,1);			
 		else
-			glColor4f(0.62f,0.62f,0.62f,1-((*gi)->dist+128-grassDistance)/128.0f);			
+			glColor4f(0.62f,0.62f,0.62f,1-((*gi).dist+128-grassDistance)/128.0f);			
 
-		float3 v=grass[(*gi)->num].pos-camera->pos;
+		float3 v=grass[(*gi).num].pos-camera->pos;
 		v.Normalize();
 		float3 side(v.cross(UpVector));
 		side.Normalize();
@@ -468,13 +468,12 @@ void CGrassDrawer::Draw(void)
 		int texPart=min(15,(int)max(0,(int)((ang+PI/16-PI/2)/PI*30)));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0f,0,0,0.0f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
-		grass[(*gi)->num].va->DrawArrayTN(GL_QUADS);
-		delete *gi;	
+		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
 	}
 	glColor4f(0.62f,0.62f,0.62f,1);			
-	for(std::vector<InviewNearGrass*>::iterator gi=drawer.inviewNearGrass.begin();gi!=drawer.inviewNearGrass.end();++gi){
-		int x=(*gi)->x;
-		int y=(*gi)->y;
+	for(std::vector<InviewNearGrass>::iterator gi = drawer.inviewNearGrass.begin(); gi != drawer.inviewNearGrass.end(); ++gi) {
+		int x = (*gi).x;
+		int y = (*gi).y;
 		if(grassMap[(y)*gs->mapx/grassSquareSize+(x)]){
 
 			float3 squarePos((x+0.5f)*SQUARE_SIZE*grassSquareSize, 0, (y+0.5f)*SQUARE_SIZE*grassSquareSize);
@@ -512,7 +511,6 @@ void CGrassDrawer::Draw(void)
 			}
 			va->DrawArrayTN(GL_QUADS);
 		}
-		delete *gi;	
 	}
 
 	//cleanup stuff

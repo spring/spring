@@ -533,7 +533,8 @@ struct CAdvTreeSquareDrawer_SP : CReadMap::IQuadDrawer
 
 void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 {
-	CAdvTreeDrawer::TreeSquareStruct* tss=&td->trees[y*td->treesX+x];
+	int treesX = td->treesX;
+	CAdvTreeDrawer::TreeSquareStruct* tss=&td->trees[y*treesX+x];
 	if(abs(cy-y)<=2 && abs(cx-x)<=2 && drawDetailed)	//skip the closest squares
 		return;
 
@@ -578,7 +579,7 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_END_Y4+ydif  ,base-side*width+float3(0,height,0));
 				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_START_Y4+ydif,base-side*width);
 			}
-			glNewList(td->trees[y*td->treesX+x].farDisplist,GL_COMPILE);
+			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
 			glEndList();
 		}
