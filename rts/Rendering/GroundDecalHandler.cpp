@@ -40,7 +40,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar1.bmp","resources\\graphics\\scars\\scar1")).c_str(),buf,0,256);
 	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar4.bmp","resources\\graphics\\scars\\scar4")).c_str(),buf,256,256);
 
-	glGenTextures(1, &scarTex);			
+	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
@@ -51,7 +51,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	scarFieldX=gs->mapx/32;
 	scarFieldY=gs->mapy/32;
 	scarField=SAFE_NEW std::set<Scar*>[scarFieldX*scarFieldY];
-	
+
 	lastTest=0;
 	maxOverlap=decalLevel+1;
 
@@ -167,6 +167,8 @@ void CGroundDecalHandler::Draw(void)
 					decal->alpha -= decal->AlphaFalloff * gu->lastFrameTime * gs->speedFactor;
 				}
 				if (decal->alpha < 0) {
+					// make sure RemoveBuilding won't try to modify this decal
+					decal->owner->buildingDecal = 0;
 					delete decal;
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
@@ -390,7 +392,7 @@ void CGroundDecalHandler::Draw(void)
 						float pz1 = z * 16;
 						float px2 = px1 + 16;
 						float pz2 = pz1 + 16;
-	
+
 						float tx1 = min(0.5f, (pos.x - px1) / (radius * 4.0f) + 0.25f);
 						float tx2 = max(0.0f, (pos.x - px2) / (radius * 4.0f) + 0.25f);
 						float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
@@ -555,7 +557,7 @@ unsigned int CGroundDecalHandler::LoadTexture(std::string name)
 			bm.mem[(y*bm.xsize+x)*4+2]=(brighness*30)/255;
 		}
 	}
-	
+
 	return bm.CreateTexture(true);
 }
 
