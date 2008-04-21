@@ -375,58 +375,7 @@ LuaTable LuaParser::GetRoot()
 
 int LuaParser::Echo(lua_State* L)
 {
-	// copied from lua/src/lib/lbaselib.c
-	string msg = "";
-	const int args = lua_gettop(L); // number of arguments
-
-	lua_getglobal(L, "tostring");
-
-	for (int i = 1; i <= args; i++) {
-		const char *s;
-		lua_pushvalue(L, -1);     // function to be called
-		lua_pushvalue(L, i);      // value to print
-		lua_call(L, 1, 1);
-		s = lua_tostring(L, -1);  // get result
-		if (s == NULL) {
-			return luaL_error(L, "`tostring' must return a string to `print'");
-		}
-		if (i > 1) {
-			msg += ", ";
-		}
-		msg += s;
-		lua_pop(L, 1);            // pop result
-	}
-	logOutput.Print(msg);
-
-	if ((args != 1) || !lua_istable(L, 1)) {
-		return 0;
-	}
-
-	// print solo tables (array style)
-	msg = "TABLE: ";
-	bool first = true;
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) {  // only numeric keys
-			const char *s;
-			lua_pushvalue(L, -3);     // function to be called
-			lua_pushvalue(L, -2	);    // value to print
-			lua_call(L, 1, 1);
-			s = lua_tostring(L, -1);  // get result
-			if (s == NULL) {
-				return luaL_error(L, "`tostring' must return a string to `print'");
-			}
-			if (!first) {
-				msg += ", ";
-			}
-			msg += s;
-			first = false;
-			lua_pop(L, 1);            // pop result
-		}
-	}
-	logOutput.Print(msg);
-
-	return 0;
+	return LuaUtils::Echo(L);
 }
 
 

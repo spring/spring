@@ -236,51 +236,7 @@ static int WeaponDefMetatable(lua_State* L)
 
 static int Next(lua_State* L)
 {
-	luaL_checktype(L, 1, LUA_TTABLE);
-	lua_settop(L, 2); // create a 2nd argument if there isn't one
-
-	// internal parameters first
-	if (lua_isnil(L, 2)) {
-		const string& nextKey = paramMap.begin()->first;
-		lua_pushstring(L, nextKey.c_str()); // push the key
-		lua_pushvalue(L, 3);                // copy the key
-		lua_gettable(L, 1);                 // get the value
-		return 2;
-	}
-
-	// all internal parameters use strings as keys
-	if (lua_isstring(L, 2)) {
-		const char* key = lua_tostring(L, 2);
-		ParamMap::const_iterator it = paramMap.find(key);
-		if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
-			// last key was an internal parameter
-			it++;
-			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE)) {
-				it++; // skip read-only parameters
-			}
-			if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
-				// next key is an internal parameter
-				const string& nextKey = it->first;
-				lua_pushstring(L, nextKey.c_str()); // push the key
-				lua_pushvalue(L, 3);                // copy the key
-				lua_gettable(L, 1);                 // get the value (proxied)
-				return 2;
-			}
-			// start the user parameters,
-			// remove the internal key and push a nil
-			lua_settop(L, 1);
-			lua_pushnil(L);
-		}
-	}
-
-	// user parameter
-	if (lua_next(L, 1)) {
-		return 2;
-	}
-
-	// end of the line
-	lua_pushnil(L);
-	return 1;
+	return LuaUtils::Next(paramMap, L);
 }
 
 

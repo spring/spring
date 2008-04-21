@@ -1977,119 +1977,6 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void ParseCommandOptions(lua_State* L, const char* caller,
-                                int index, Command& cmd)
-{
-	if (lua_isnumber(L, index)) {
-		cmd.options = (unsigned char)lua_tonumber(L, index);
-	}
-	else if (lua_istable(L, index)) {
-		const int optionTable = index;
-		for (lua_pushnil(L); lua_next(L, optionTable) != 0; lua_pop(L, 1)) {
-			if (lua_israwnumber(L, -2)) { // avoid 'n'
-				if (!lua_isstring(L, -1)) {
-					luaL_error(L, "%s(): bad option table entry", caller);
-				}
-				const string value = lua_tostring(L, -1);
-				if (value == "right") {
-					cmd.options |= RIGHT_MOUSE_KEY;
-				} else if (value == "alt") {
-					cmd.options |= ALT_KEY;
-				} else if (value == "ctrl") {
-					cmd.options |= CONTROL_KEY;
-				} else if (value == "shift") {
-					cmd.options |= SHIFT_KEY;
-				}
-			}
-		}
-	}
-	else {
-		luaL_error(L, "%s(): bad options", caller);
-	}
-}
-
-
-static void ParseCommand(lua_State* L, const char* caller,
-                         int idIndex, Command& cmd)
-{
-	// cmdID
-	if (!lua_isnumber(L, idIndex)) {
-		luaL_error(L, "%s(): bad command ID", caller);
-	}
-	cmd.id = (int)lua_tonumber(L, idIndex);
-
-	// params
-	const int paramTable = (idIndex + 1);
-	if (!lua_istable(L, paramTable)) {
-		luaL_error(L, "%s(): bad param table", caller);
-	}
-	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) { // avoid 'n'
-			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): bad param table entry", caller);
-			}
-			const float value = (float)lua_tonumber(L, -1);
-			cmd.params.push_back(value);
-		}
-	}
-
-	// options
-	ParseCommandOptions(L, caller, (idIndex + 2), cmd);
-
-	// NOTE: should do some sanity checking?
-}
-
-
-static void ParseCommandTable(lua_State* L, const char* caller,
-                              int table, Command& cmd)
-{
-	// cmdID
-	lua_rawgeti(L, table, 1);
-	if (!lua_isnumber(L, -1)) {
-		luaL_error(L, "%s(): bad command ID", caller);
-	}
-	cmd.id = (int)lua_tonumber(L, -1);
-	lua_pop(L, 1);
-
-	// params
-	lua_rawgeti(L, table, 2);
-	if (!lua_istable(L, -1)) {
-		luaL_error(L, "%s(): bad param table", caller);
-	}
-	const int paramTable = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) { // avoid 'n'
-			if (!lua_isnumber(L, -1)) {
-				luaL_error(L, "%s(): bad param table entry", caller);
-			}
-			const float value = (float)lua_tonumber(L, -1);
-			cmd.params.push_back(value);
-		}
-	}
-	lua_pop(L, 1);
-
-	// options
-	lua_rawgeti(L, table, 3);
-	ParseCommandOptions(L, caller, lua_gettop(L), cmd);
-	lua_pop(L, 1);
-
-	// NOTE: should do some sanity checking?
-}
-
-
-static void ParseCommandArray(lua_State* L, const char* caller,
-                              int table, vector<Command>& commands)
-{
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_istable(L, -1)) {
-			continue;
-		}
-		Command cmd;
-		ParseCommandTable(L, caller, lua_gettop(L), cmd);
-		commands.push_back(cmd);
-	}
-}
-
 
 static void ParseUnitMap(lua_State* L, const char* caller,
                          int table, vector<CUnit*>& unitIDs)
@@ -2139,7 +2026,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	}
 
 	Command cmd;
-	ParseCommand(L, __FUNCTION__, 2, cmd);
+	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
 	if (!CanControlUnit(unit)) {
 		lua_pushboolean(L, false);
@@ -2174,7 +2061,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	}
 
 	Command cmd;
-	ParseCommand(L, __FUNCTION__, 2, cmd);
+	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitMap() recursion is not permitted");
@@ -2211,7 +2098,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	}
 
 	Command cmd;
-	ParseCommand(L, __FUNCTION__, 2, cmd);
+	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");
@@ -2245,7 +2132,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 	// commands
 	vector<Command> commands;
-	ParseCommandArray(L, __FUNCTION__, 2, commands);
+	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
 
 	if ((unitCount <= 0) || (commandCount <= 0)) {
@@ -2286,7 +2173,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 
 	// commands
 	vector<Command> commands;
-	ParseCommandArray(L, __FUNCTION__, 2, commands);
+	LuaUtils::ParseCommandArray(L, __FUNCTION__, 2, commands);
 	const int commandCount = (int)commands.size();
 
 	if ((unitCount <= 0) || (commandCount <= 0)) {

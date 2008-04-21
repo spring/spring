@@ -4024,6 +4024,53 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 }
 
 
+template<class ModelType>
+static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
+{
+	lua_newtable(L);
+	HSTR_PUSH_STRING(L, "name", op.name.c_str());
+
+	HSTR_PUSH(L, "children");
+	lua_newtable(L);
+	for (int c = 0; c < (int)op.childs.size(); c++) {
+		lua_pushnumber(L, c + 1);
+		lua_pushstring(L, op.childs[c]->name.c_str());
+		lua_rawset(L, -3);
+	}
+	HSTR_PUSH_NUMBER(L, "n", op.childs.size());
+	lua_rawset(L, -3);
+
+	HSTR_PUSH(L, "isEmpty");
+	lua_pushboolean(L, op.isEmpty);
+	lua_rawset(L, -3);
+
+	HSTR_PUSH(L, "min");
+	lua_newtable(L); {
+		lua_pushnumber(L, 1); lua_pushnumber(L, op.minx); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, op.miny); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, op.minz); lua_rawset(L, -3);
+	}
+	lua_rawset(L, -3);
+
+	HSTR_PUSH(L, "max");
+	lua_newtable(L); {
+		lua_pushnumber(L, 1); lua_pushnumber(L, op.maxx); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, op.maxy); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, op.maxz); lua_rawset(L, -3);
+	}
+	lua_rawset(L, -3);
+
+	HSTR_PUSH(L, "offset");
+	lua_newtable(L); {
+		lua_pushnumber(L, 1); lua_pushnumber(L, op.offset.x); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, op.offset.y); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, op.offset.z); lua_rawset(L, -3);
+	}
+	lua_rawset(L, -3);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -4038,97 +4085,13 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	}
 	LocalS3DO& lp = localModel->pieces[piece];
 
-	float3 mins, maxs, offset;
-
 	if (lp.originals3o) {
 		const SS3O& op = *lp.originals3o;
-		lua_newtable(L); {
-			HSTR_PUSH_STRING(L, "name", op.name.c_str());
-
-			HSTR_PUSH(L, "children");
-			lua_newtable(L);
-			for (int c = 0; c < (int)op.childs.size(); c++) {
-				lua_pushnumber(L, c + 1);
-				lua_pushstring(L, op.childs[c]->name.c_str());
-				lua_rawset(L, -3);
-			}
-			HSTR_PUSH_NUMBER(L, "n", op.childs.size());
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "isEmpty");
-			lua_pushboolean(L, op.isEmpty);
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "min");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.minx); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.miny); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.minz); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "max");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.maxx); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.maxy); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.maxz); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "offset");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.offset.x); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.offset.y); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.offset.z); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-		}
-		return 1;
+		return ::GetUnitPieceInfo(L, op);
 	}
 	else if (lp.original3do) {
 		const S3DO& op = *lp.original3do;
-		lua_newtable(L); {
-			HSTR_PUSH_STRING(L, "name", op.name.c_str());
-
-			HSTR_PUSH(L, "children");
-			lua_newtable(L);
-			for (int c = 0; c < (int)op.childs.size(); c++) {
-				lua_pushnumber(L, c + 1);
-				lua_pushstring(L, op.childs[c]->name.c_str());
-				lua_rawset(L, -3);
-			}
-			HSTR_PUSH_NUMBER(L, "n", op.childs.size());
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "isEmpty");
-			lua_pushboolean(L, op.isEmpty);
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "min");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.minx); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.miny); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.minz); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "max");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.maxx); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.maxy); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.maxz); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-
-			HSTR_PUSH(L, "offset");
-			lua_newtable(L); {
-				lua_pushnumber(L, 1); lua_pushnumber(L, op.offset.x); lua_rawset(L, -3);
-				lua_pushnumber(L, 2); lua_pushnumber(L, op.offset.y); lua_rawset(L, -3);
-				lua_pushnumber(L, 3); lua_pushnumber(L, op.offset.z); lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-		}
-		return 1;
+		return ::GetUnitPieceInfo(L, op);
 	}
 
 	return 0;
