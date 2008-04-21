@@ -10,8 +10,9 @@ using std::string;
 using std::vector;
 
 #include "LuaHashString.h"
-
 #include "LuaInclude.h"
+#include "LuaDefs.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 class LuaUtils {
 	public:
@@ -37,6 +38,24 @@ class LuaUtils {
 		static void* GetUserData(lua_State* L, int index, const string& type);
 
 		static void PrintStack(lua_State* L);
+
+		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
+		static void ParseCommandOptions(lua_State* L, const char* caller,
+		                                int index, Command& cmd);
+		static void ParseCommand(lua_State* L, const char* caller,
+		                         int idIndex, Command& cmd);
+		static void ParseCommandTable(lua_State* L, const char* caller,
+		                              int table, Command& cmd);
+		static void ParseCommandArray(lua_State* L, const char* caller,
+		                              int table, vector<Command>& commands);
+
+		// from LuaFeatureDefs.cpp / LuaUnitDefs.cpp / LuaWeaponDefs.cpp
+		// (helper for the Next() iteration routine)
+		static int Next(const ParamMap& paramMap, lua_State* L);
+
+		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
+		// (implementation copied from lua/src/lib/lbaselib.c)
+		static int Echo(lua_State* L);
 };
 
 
