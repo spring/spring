@@ -914,7 +914,7 @@ int CLuaHandleSynced::SyncedRandom(lua_State* L)
 	else if ((args == 1) && lua_isnumber(L, 1)) {
 		const int maxn = (int)lua_tonumber(L, 1);
 		if (maxn < 1) {
-			luaL_error(L, "small integer(%i) given to math.random() {synced}", maxn);
+			luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
 		}
 		lua_pushnumber(L, 1 + (gs->randInt() % maxn));
 	}
@@ -972,7 +972,7 @@ int CLuaHandleSynced::SendToUnsynced(lua_State* L)
 		    !lua_isnumber(L, i) &&
 		    !lua_isstring(L, i) &&
 		    !lua_isboolean(L, i)) {
-			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %i", i);
+			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %d", i);
 		}
 	}
 	CLuaHandleSynced* lhs = GetActiveHandle();
