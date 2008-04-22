@@ -31,6 +31,7 @@
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
@@ -3689,7 +3690,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 	for(int z = tz1; z <= tz2; z++){
 		for(int x = tx1; x <= tx2; x++){
-			const CSolidObject* s = readmap->GroundBlocked((z * gs->mapx) + x);
+			const CSolidObject* s = groundBlockingObjectMap->GroundBlocked((z * gs->mapx) + x);
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature) {

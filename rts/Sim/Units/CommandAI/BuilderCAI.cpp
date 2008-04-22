@@ -18,6 +18,7 @@
 #include "Lua/LuaRules.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitSet.h"
@@ -310,7 +311,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c)
 				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
 				CSolidObject* s;
 				CUnit* u;
-				if((s=readmap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
+				if((s=groundBlockingObjectMap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
 				   (u=dynamic_cast<CUnit*>(s)) &&
 				   u->beingBuilt && (u->buildProgress == 0.0f) &&
 				   (!u->soloBuilder || (u->soloBuilder == owner))) {

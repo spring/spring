@@ -2,6 +2,7 @@
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "LogOutput.h"
@@ -185,7 +186,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 	|| xSquare >= gs->mapx || zSquare >= gs->mapy)
 		return true;
 
-	CSolidObject* obstacle = readmap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
+	CSolidObject* obstacle = groundBlockingObjectMap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
 	if(obstacle) {
 		if(obstacle->mobility) {
 			if(obstacle->isMoving){

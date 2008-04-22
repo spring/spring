@@ -32,6 +32,7 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_Set.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "mmgr.h"
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
@@ -363,7 +364,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 	int yardxpos=int(pos.x+4)/SQUARE_SIZE;
 	int yardypos=int(pos.z+4)/SQUARE_SIZE;
 	CSolidObject* s;
-	if ((s = readmap->GroundBlocked(yardypos*gs->mapx+yardxpos))) {
+	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos*gs->mapx+yardxpos))) {
 		if (dynamic_cast<CFeature*>(s)) {
 			feature = (CFeature*)s;
 		}
@@ -586,17 +587,6 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 	overrideId=-1;*/
 }
 
-bool CUnitHandler::CanCloseYard(CUnit* unit)
-{
-	for(int z=unit->mapPos.y;z<unit->mapPos.y+unit->ysize;++z){
-		for(int x=unit->mapPos.x;x<unit->mapPos.x+unit->xsize;++x){
-			CSolidObject* c=readmap->groundBlockingObjectMap[z*gs->mapx+x];
-			if(c!=0 && c!=unit)
-				return false;
-		}
-	}
-	return true;
-}
 
 /**
 * returns a build Command that intersects the ray described by pos and dir from the command queues of the

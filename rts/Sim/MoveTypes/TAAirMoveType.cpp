@@ -16,6 +16,8 @@
 #include "Mobility.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+
 
 CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
 
@@ -942,7 +944,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 
 	for (int z = mp.y; z < mp.y + owner->ysize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			CObject* o = readmap->groundBlockingObjectMap[z * gs->mapx + x];
+			CObject* o = groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x);
 			if (o && o != owner) {
 				return false;
 			}

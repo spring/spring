@@ -12,6 +12,7 @@
 #include "Map/Ground.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -1499,7 +1500,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case YARD_OPEN: {
 			if (param == 0) {
-				if (uh->CanCloseYard(unit)) {
+				if (groundBlockingObjectMap->CanCloseYard(unit)) {
 					yardOpen = false;
 				}
 			}

@@ -3,6 +3,7 @@
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "myMath.h"
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
@@ -82,7 +83,7 @@ Removes this object from GroundBlockingMap.
 */
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
-		readmap->RemoveGroundBlockingObject(this);
+		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
 	}
 }
 
@@ -97,9 +98,9 @@ void CSolidObject::Block() {
 	if (blocking && (physicalState == OnGround || physicalState == Floating || physicalState == Hovering || physicalState == Submarine)) {
 		// use the object's yardmap if available
 		if (yardMap) {
-			readmap->AddGroundBlockingObject(this, yardMap);
+			groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);
 		} else {
-			readmap->AddGroundBlockingObject(this);
+			groundBlockingObjectMap->AddGroundBlockingObject(this);
 		}
 	}
 }

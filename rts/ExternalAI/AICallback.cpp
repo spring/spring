@@ -23,6 +23,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -979,7 +980,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			int ysize=bi.GetYSize();
 			for(int z2=max(0,zs-ysize/2-minDist);z2<min(gs->mapy,zs+(ysize+1)/2+minDist);++z2){
 				for(int x2=max(0,xs-xsize/2-minDist);x2<min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
-					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
+					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
 						good=false;
 						break;
@@ -989,7 +990,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			//Checking factories near - factory can open yard for building
 			if (good) for(int z2=max(0,zs-ysize/2-minDist-2);z2<min(gs->mapy,zs+(ysize+1)/2+minDist+2);++z2){
 				for(int x2=max(0,xs-xsize/2-minDist-2);x2<min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
-					CSolidObject* so=readmap->groundBlockingObjectMap[z2*gs->mapx+x2];
+					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening){
 						good=false;
 						break;

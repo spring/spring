@@ -73,8 +73,6 @@ public:
 	int lastDamageWarning;
 	int lastCmdDamageWarning;
 
-	bool CanCloseYard(CUnit* unit);
-
 	bool limitDgun;
 	float dgunRadius;
 

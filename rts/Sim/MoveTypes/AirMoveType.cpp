@@ -8,6 +8,7 @@
 #include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
@@ -1092,9 +1093,9 @@ float3 CAirMoveType::FindLandingPos(void)
 	int2 mp = owner->GetMapPos();
 	owner->pos = tpos;
 
-	for (int z = mp.y; z < mp.y + owner -> ysize; z++) {
-		for (int x = mp.x; x < mp.x + owner -> xsize; x++) {
-			if (readmap -> groundBlockingObjectMap[z * gs->mapx + x]) {
+	for (int z = mp.y; z < mp.y + owner->ysize; z++) {
+		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x)) {
 				return ret;
 			}
 		}
