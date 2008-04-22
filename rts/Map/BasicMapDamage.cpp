@@ -5,9 +5,10 @@
 #include "HeightMapTexture.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "TimeProfiler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "LogOutput.h"
 #include "Sim/Path/PathManager.h"
@@ -76,7 +77,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	float invRadius=1.0f/radius;
 	for(int y=e->y1;y<=e->y2;++y){
 		for(int x=e->x1;x<=e->x2;++x){
-			if(readmap->groundBlockingObjectMap[y*gs->mapx+x] && readmap->groundBlockingObjectMap[y*gs->mapx+x]->blockHeightChanges){			//dont change squares with building on them here
+			CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
+			// don't change squares with building on them here
+			if (so && so->blockHeightChanges) {
 				e->squares.push_back(0);
 				continue;
 			}

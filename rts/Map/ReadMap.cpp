@@ -16,6 +16,7 @@
 #endif
 #include "MapDamage.h"
 #include "MetalMap.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
@@ -38,7 +39,6 @@ CReadMap* readmap=0;
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-				CR_MEMBER(groundBlockingObjectMap),
 				CR_SERIALIZER(Serialize)
 				));
 
@@ -125,8 +125,8 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		throw content_error("Bad/no terrain type map.");
 	if (typemap) rm->FreeInfoMap ("type", typemap);
 
-	rm->groundBlockingObjectMap.resize(gs->mapSquares,0);
-//	memset(rm->groundBlockingObjectMap, 0, gs->mapSquares*sizeof(CSolidObject*));
+	// FIXME: this isn't really the right place for this -> refactor sometime
+	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
 	return rm;
 }
@@ -362,148 +362,6 @@ void CReadMap::ParseSettings(TdfParser& resources)
 	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
 
 	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");
-}
-
-void CReadMap::AddGroundBlockingObject(CSolidObject *object)
-{
-	object->isMarkedOnBlockingMap=true;
-	object->mapPos=object->GetMapPos();
-	if(object->immobile){
-		object->mapPos.x&=0xfffffe;
-		object->mapPos.y&=0xfffffe;
-	}
-	int bx=object->mapPos.x;
-	int bz=object->mapPos.y;
-
-	int minXSqr = bx;
-	int minZSqr = bz;
-	int maxXSqr = bx + object->xsize;
-	int maxZSqr = bz + object->ysize;
-
-	for(int zSqr = minZSqr; zSqr < maxZSqr; zSqr++)
-		for(int xSqr = minXSqr; xSqr < maxXSqr; xSqr++)
-			if(!groundBlockingObjectMap[xSqr + zSqr*gs->mapx])
-				groundBlockingObjectMap[xSqr + zSqr*gs->mapx] = object;
-	if(!object->mobility && pathManager)
-		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
-}
-
-void CReadMap::AddGroundBlockingObject(CSolidObject *object, unsigned char *yardMap, unsigned char mask)
-{
-	object->isMarkedOnBlockingMap=true;
-	object->mapPos=object->GetMapPos();
-	if(object->immobile){
-		object->mapPos.x&=0xfffffe;
-		object->mapPos.y&=0xfffffe;
-	}
-	int bx=object->mapPos.x;
-	int bz=object->mapPos.y;
-
-	int minXSqr = bx;
-	int minZSqr = bz;
-	int maxXSqr = bx + object->xsize;
-	int maxZSqr = bz + object->ysize;
-
-	for(int z = 0; minZSqr + z < maxZSqr; z++) {
-		for(int x = 0; minXSqr + x < maxXSqr; x++) {
-			if(!groundBlockingObjectMap[minXSqr + x + (minZSqr + z)*gs->mapx]){
-				if(yardMap[x + z*object->xsize] & mask) {
-					groundBlockingObjectMap[minXSqr + x + (minZSqr + z)*gs->mapx] = object;
-				}
-			}
-		}
-	}
-	if(!object->mobility && pathManager)
-		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
-}
-
-void CReadMap::RemoveGroundBlockingObject(CSolidObject *object)
-{
-	object->isMarkedOnBlockingMap=false;
-	int bx=object->mapPos.x;
-	int bz=object->mapPos.y;
-	int sx=object->xsize;
-	int sz=object->ysize;
-	for(int z = bz; z < bz+sz; ++z)
-		for(int x = bx; x < bx+sx; ++x)
-			if(groundBlockingObjectMap[x + z*gs->mapx]==object)
-				groundBlockingObjectMap[x + z*gs->mapx] = 0;
-
-	if(!object->mobility)
-		pathManager->TerrainChange(bx, bz, bx+sx, bz+sz);
-}
-
-
-/*
-Moves a ground blocking object from old position to the current on map.
-*/
-void CReadMap::MoveGroundBlockingObject(CSolidObject *object, float3 oldPos) {
-	RemoveGroundBlockingObject(object);
-	AddGroundBlockingObject(object);
-}
-
-
-/*
-Checks if a ground-square is blocked.
-If it's not blocked, then 0 is returned.
-If it's blocked, then a pointer to the blocking object is returned.
-*/
-CSolidObject* CReadMap::GroundBlocked(int mapSquare) {
-	if(mapSquare < 0 || mapSquare >= gs->mapSquares)
-		return 0;
-	return groundBlockingObjectMap[mapSquare];
-}
-
-
-/*
-Checks if a ground-square is blocked.
-If it's not blocked, then 0 is returned.
-If it's blocked, then a pointer to the blocking object is returned.
-*/
-CSolidObject* CReadMap::GroundBlocked(float3 pos) {
-	int xSqr = int(pos.x / SQUARE_SIZE) % gs->mapx;
-	int zSqr = int(pos.z / SQUARE_SIZE) / gs->mapx;
-	return GroundBlocked(xSqr + zSqr*gs->mapx);
-}
-
-
-/*
-Opens up a yard in a blocked area.
-When a factory opens up, for example.
-*/
-void CReadMap::OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap) {
-	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard, blockingMap, 2);
-}
-
-
-/*
-Closes a yard, blocking the area.
-When a factory closes, for example.
-*/
-void CReadMap::CloseBlockingYard(CSolidObject *yard, unsigned char *blockingMap) {
-	RemoveGroundBlockingObject(yard);
-	AddGroundBlockingObject(yard, blockingMap, 1);
-}
-
-
-/*
-Used to look for dead references in the groundBlockingMap.
-*/
-void CReadMap::CleanBlockingMap(CSolidObject* object) {
-	int i, counter = 0;
-	for(i = 0; i < gs->mapSquares; i++)
-		if(groundBlockingObjectMap[i] == object) {
-			groundBlockingObjectMap[i] = 0;
-			counter++;
-		}
-
-	if(counter > 0) {
-		logOutput << "Dead references: " << counter << "\n";
-		if(dynamic_cast<CUnit*>(object)){
-			logOutput.Print("From %s",((CUnit*)object)->unitDef->humanName.c_str());
-		}
-	}
 }
 
 //this function assumes that the correct map has been loaded and only load/saves new height values

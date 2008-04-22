@@ -14,6 +14,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Lua/LuaCallInHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
@@ -108,7 +109,7 @@ void CFactory::Update()
 
 	if (quedBuild && !opening && !stunned) {
 		cob->Call(COBFN_Activate);
-		readmap->OpenBlockingYard(this, yardMap);
+		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}
 
@@ -242,9 +243,9 @@ void CFactory::Update()
 	}
 
 	if (((lastBuild + 200) < gs->frameNum) && !stunned &&
-	    !quedBuild && opening && uh->CanCloseYard(this)) {
+	    !quedBuild && opening && groundBlockingObjectMap->CanCloseYard(this)) {
 		// close the factory after inactivity
-		readmap->CloseBlockingYard(this, yardMap);
+		groundBlockingObjectMap->CloseBlockingYard(this, yardMap);
 		opening = false;
 		cob->Call(COBFN_Deactivate);
 	}
@@ -271,7 +272,7 @@ void CFactory::StartBuild(string type)
 
 	if (!opening && !stunned) {
 		cob->Call(COBFN_Activate);
-		readmap->OpenBlockingYard(this, yardMap);
+		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}
 }

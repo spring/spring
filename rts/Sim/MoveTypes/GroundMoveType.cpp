@@ -29,6 +29,7 @@
 #include "Game/SelectedUnits.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -1392,11 +1393,11 @@ void CGroundMoveType::CheckCollision(void)
 bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
 	for (int y = y1; y <= y2; ++y) {
-		CSolidObject* c = readmap->groundBlockingObjectMap[y * gs->mapx + x];
+		CSolidObject* c = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
 
 		if (c) {
-			if (readmap->groundBlockingObjectMap[y * gs->mapx + squareTestX] != 0 &&
-				readmap->groundBlockingObjectMap[y * gs->mapx + squareTestX] != owner) {
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + squareTestX) != NULL &&
+				groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + squareTestX) != owner) {
 				continue;
 			}
 			if (c->mobility) {
@@ -1441,9 +1442,9 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 			// hack to make units find openings easier until the pathfinder can do it itself
 			// FIXME CAN PLACE US IN BUILDING
-			if (readmap->groundBlockingObjectMap[y1 * gs->mapx + x] == 0)
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(y1 * gs->mapx + x) == NULL)
 				owner->pos.z -= fabs(owner->pos.x - xmove) * 0.5f;
-			if (readmap->groundBlockingObjectMap[y2 * gs->mapx + x] == 0)
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(y2 * gs->mapx + x) == NULL)
 				owner->pos.z += fabs(owner->pos.x - xmove) * 0.5f;
 
 			owner->pos.x = xmove;
@@ -1458,11 +1459,11 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
 	for (int x = x1; x <= x2; ++x) {
-		CSolidObject* c = readmap->groundBlockingObjectMap[y * gs->mapx + x];
+		CSolidObject* c = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
 
 		if (c) {
-			if (readmap->groundBlockingObjectMap[squareTestY * gs->mapx + x] != 0 &&
-				readmap->groundBlockingObjectMap[squareTestY * gs->mapx + x] != owner) {
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(squareTestY * gs->mapx + x) != NULL &&
+				groundBlockingObjectMap->GroundBlockedUnsafe(squareTestY * gs->mapx + x) != owner) {
 				continue;
 			}
 			if (c->mobility) {
@@ -1507,9 +1508,9 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 			// hack to make units find openings easier until the pathfinder can do it itself
 			// FIXME CAN PLACE US IN BUILDING
-			if (readmap->groundBlockingObjectMap[y * gs->mapx + x1] == 0)
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x1) == NULL)
 				owner->pos.x -= fabs(owner->pos.z - zmove) * 0.5f;
-			if (readmap->groundBlockingObjectMap[y * gs->mapx + x2] == 0)
+			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x2) == NULL)
 				owner->pos.x += fabs(owner->pos.z - zmove) * 0.5f;
 
 			owner->pos.z = zmove;
