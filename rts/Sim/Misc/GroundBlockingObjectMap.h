@@ -1,7 +1,6 @@
 #ifndef GROUNDBLOCKINGOBJECTMAP_H
 #define GROUNDBLOCKINGOBJECTMAP_H
 
-#include <vector>
 #include "creg/creg.h"
 #include "float3.h"
 
@@ -19,7 +18,7 @@ public:
 	void MoveGroundBlockingObject(CSolidObject *object, float3 oldPos);
 	void OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
 	void CloseBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
-	bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* object);
+	bool CanCloseYard(CSolidObject* object);
 	CSolidObject* GroundBlocked(float3 pos);
 	CSolidObject* GroundBlocked(int mapSquare);
 	///simple version of GroundBlocked without error checking
