@@ -47,6 +47,7 @@ public:
 	virtual ~CArchiveScanner(void);
 	void Scan(const string& curPath, bool checksum = false);
 	vector<ModData> GetPrimaryMods() const;
+	vector<ModData> GetAllMods() const;
 	vector<string> GetArchives(const string& root, int depth = 0);
 	vector<string> GetMaps();
 	vector<string> GetArchivesForMap(const string& mapName);
