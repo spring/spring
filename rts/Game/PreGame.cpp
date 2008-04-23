@@ -654,8 +654,10 @@ void CPreGame::LoadMod(const std::string& modName)
 		if (ars.empty())
 			throw content_error("Couldn't find any archives for mod '" + modName + "'");
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+		{
 			if (!hpiHandler->AddArchive(*i, false))
 				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
+		}
 	
 		// always load springcontent.sdz
 		hpiHandler->AddArchive("base/springcontent.sdz", false);

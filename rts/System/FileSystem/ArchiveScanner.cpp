@@ -518,6 +518,22 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 	return ret;
 }
 
+vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
+{
+	vector<ModData> ret;
+
+	for (map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
+		if (i->second.modData.name != "") {
+			// Add the archive the mod is in as the first dependency
+			ModData md = i->second.modData;
+			md.dependencies.insert(md.dependencies.begin(), i->second.origName);
+			ret.push_back(md);
+		}
+	}
+
+	return ret;
+}
+
 vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 {
 	// Protect against circular dependencies
@@ -528,7 +544,7 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 
 	vector<string> ret;
 
-	string lcname = StringToLower(root);
+	string lcname = StringToLower(ModNameToModArchive(root));
 
 	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
@@ -681,7 +697,7 @@ void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 std::string CArchiveScanner::ModNameToModArchive(const std::string& s) const
 {
 	// Convert mod name to mod archive
-	std::vector<ModData> found = GetPrimaryMods();
+	std::vector<ModData> found = GetAllMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		if (it->name == s)
 			return it->dependencies.front();
@@ -693,7 +709,7 @@ std::string CArchiveScanner::ModNameToModArchive(const std::string& s) const
 std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
 {
 	// Convert mod archive to mod name
-	std::vector<ModData> found = GetPrimaryMods();
+	std::vector<ModData> found = GetAllMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		if (it->dependencies.front() == s) {
 			return it->name;
@@ -706,7 +722,7 @@ std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
 CArchiveScanner::ModData CArchiveScanner::ModNameToModData(const std::string& s) const
 {
 	// Convert mod name to mod archive
-	std::vector<ModData> found = GetPrimaryMods();
+	std::vector<ModData> found = GetAllMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		const ModData& md = *it;
 		if (md.name == s) {
@@ -720,7 +736,7 @@ CArchiveScanner::ModData CArchiveScanner::ModNameToModData(const std::string& s)
 CArchiveScanner::ModData CArchiveScanner::ModArchiveToModData(const std::string& s) const
 {
 	// Convert mod archive to mod name
-	std::vector<ModData> found = GetPrimaryMods();
+	std::vector<ModData> found = GetAllMods();
 	for (std::vector<ModData>::iterator it = found.begin(); it != found.end(); ++it) {
 		const ModData& md = *it;
 		if (md.dependencies.front() == s) {
