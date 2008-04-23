@@ -34,10 +34,13 @@ enum NETMSG {
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
+
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
 	                              // short unitIDCount;  unitIDCount X short(unitID)
 	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
+	NETMSG_AISHARE          = 16, // uchar sourceTeam, uchar destTeam, std::vector<short> unitIDs, float metal, float energy
+
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
@@ -119,8 +122,11 @@ public:
 	void SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	void SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	void SendPause(uchar myPlayerNum, uchar bPaused);
+
 	void SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
 	void SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
+	void SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
+
 	void SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	void SendInternalSpeed(float internalSpeed);
 	void SendCPUUsage(float cpuUsage);

@@ -613,33 +613,49 @@ void CGameServer::ServerReadNet()
 							log.Warning(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]);
 						} else {
 							if (!demoReader)
-								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+								// forward data
+								serverNet->RawSend(inbuf,*((short int*)&inbuf[1]));
 						}
 						break;
 
-					case NETMSG_AICOMMAND:
-						if(inbuf[3]!=a){
-							log.Warning(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]);
+
+					case NETMSG_AICOMMAND: {
+						if (inbuf[3] != a) {
+							log.Warning(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]);
 						}
 						else if (noHelperAIs) {
 							log.Warning(format(NoHelperAI) %players[a]->name %a);
 						}
 						else if (!demoReader) {
-							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+							// forward data
+							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
 						}
-						break;
+					} break;
 
-					case NETMSG_AICOMMANDS:
-						if(inbuf[3]!=a){
-							log.Warning(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]);
+					case NETMSG_AICOMMANDS: {
+						if (inbuf[3] != a) {
+							log.Warning(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]);
 						}
 						else if (noHelperAIs) {
 							log.Warning(format(NoHelperAI) %players[a]->name %a);
 						}
 						else if (!demoReader) {
-							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+							// forward data
+							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
 						}
-						break;
+					} break;
+
+					case NETMSG_AISHARE: {
+						if (inbuf[3] != a) {
+							log.Warning(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]);
+						} else if (noHelperAIs) {
+							log.Warning(format(NoHelperAI) %players[a]->name %a);
+						} else if (!demoReader) {
+							// forward data
+							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
+						}
+					} break;
+
 
 					case NETMSG_LUAMSG:
 						if(inbuf[3]!=a){
@@ -1213,9 +1229,9 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		}
 #endif
 
-		timeLeft+=GAME_SPEED*internalSpeed*float(timeElapsed)/1000.0f;
+		timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
 		lastTick=currentTick;
-		newFrames = (timeLeft > 0) ? std::ceil(timeLeft) : 0;
+		newFrames = (timeLeft > 0)? int(std::ceil(timeLeft)): 0;
 		timeLeft -= newFrames;
 	}
 
