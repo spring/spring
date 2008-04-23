@@ -3475,8 +3475,8 @@ void CGame::ClientReadNet()
 
 				// total message length
 				const short numBytes = *(short*) &inbuf[1];
-				// total length minus the size of the fixed part
-				const int variableLen = numBytes - (1 + sizeof(short) + 3 + (2 * sizeof(float)));
+				const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
+				const int variableLen = numBytes - fixedLen;
 				const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
 				const int srcTeam = *(int*) &inbuf[4];
 				const int dstTeam = *(int*) &inbuf[8];
@@ -3496,7 +3496,7 @@ void CGame::ClientReadNet()
 					}
 				}
 
-				for (int i = 0, j = 0; i < numUnitIDs; i++, j += sizeof(short)) {
+				for (int i = 0, j = fixedLen;  i < numUnitIDs;  i++, j += sizeof(short)) {
 					short int unitID = *(short int*) &inbuf[j];
 					CUnit* u = uh->units[unitID];
 

@@ -160,6 +160,8 @@ int CAICallback::SendUnits(const std::vector<int>& unitIDs, int receivingTeam)
 				}
 
 				if (sentUnitIDs.size() > 0) {
+					// we can't use SendShare() here either, since
+					// AI's don't have a notion of "selected units"
 					net->SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), 0.0f, 0.0f, sentUnitIDs);
 				}
 			}
