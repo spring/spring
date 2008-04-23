@@ -23,6 +23,10 @@ public:
 	void SendTextMsg(const char* text, int zone);
 	void SetLastMsgPos(float3 pos);
 	void AddNotification(float3 pos, float3 color, float alpha);
+
+	bool SendResources(float mAmount, float eAmount, int receivingTeam);
+	int SendUnits(const std::vector<int>& unitIDs, int receivingTeam);
+
 	bool PosInCamera(float3 pos, float radius);
 
 	int GetCurrentFrame();

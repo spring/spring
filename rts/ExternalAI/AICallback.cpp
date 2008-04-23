@@ -66,19 +66,19 @@ CAICallback::~CAICallback(void)
 
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
-	if(startPos.z<gameSetup->startRectTop[GetMyAllyTeam()]*gs->mapy*8)
-		startPos.z=gameSetup->startRectTop[GetMyAllyTeam()]*gs->mapy*8;
+	if (startPos.z < gameSetup->startRectTop[GetMyAllyTeam()] * gs->mapy * 8)
+		startPos.z = gameSetup->startRectTop[GetMyAllyTeam()] * gs->mapy * 8;
 
-	if(startPos.z>gameSetup->startRectBottom[GetMyAllyTeam()]*gs->mapy*8)
-		startPos.z=gameSetup->startRectBottom[GetMyAllyTeam()]*gs->mapy*8;
+	if (startPos.z > gameSetup->startRectBottom[GetMyAllyTeam()] * gs->mapy * 8)
+		startPos.z = gameSetup->startRectBottom[GetMyAllyTeam()] * gs->mapy * 8;
 
-	if(startPos.x<gameSetup->startRectLeft[GetMyAllyTeam()]*gs->mapx*8)
-		startPos.x=gameSetup->startRectLeft[GetMyAllyTeam()]*gs->mapx*8;
+	if (startPos.x < gameSetup->startRectLeft[GetMyAllyTeam()] * gs->mapx * 8)
+		startPos.x = gameSetup->startRectLeft[GetMyAllyTeam()] * gs->mapx * 8;
 
-	if(startPos.x>gameSetup->startRectRight[GetMyAllyTeam()]*gs->mapx*8)
-		startPos.x=gameSetup->startRectRight[GetMyAllyTeam()]*gs->mapx*8;
+	if (startPos.x > gameSetup->startRectRight[GetMyAllyTeam()] * gs->mapx * 8)
+		startPos.x = gameSetup->startRectRight[GetMyAllyTeam()] * gs->mapx * 8;
 
-	unsigned char readyness = ready ? 1 : 0;
+	unsigned char readyness = ready? 1: 0;
 	net->SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z);
 }
 
@@ -99,6 +99,78 @@ void CAICallback::AddNotification(float3 pos, float3 color, float alpha)
 {
 	minimap->AddNotification(pos,color,alpha);
 }
+
+
+
+bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeam)
+{
+	typedef unsigned char ubyte;
+	bool ret = false;
+
+	if (receivingTeam >= 0 && receivingTeam < (MAX_TEAMS - 1)) {
+		if (gs->Team(receivingTeam) && gs->Team(team)) {
+			if (!gs->Team(receivingTeam)->isDead && !gs->Team(team)->isDead) {
+				// note: we can't use the existing SendShare()
+				// since its handler in CGame uses myPlayerNum
+				// (NETMSG_SHARE param) to determine which team
+				// the resources came from, which is not always
+				// our AI team
+				ret = true;
+
+				// cap the amounts to how much M and E we have
+				mAmount = std::max(0.0f, std::min(mAmount, GetMetal()));
+				eAmount = std::max(0.0f, std::min(eAmount, GetEnergy()));
+				std::vector<short> empty;
+
+				net->SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), mAmount, eAmount, empty);
+			}
+		}
+	}
+
+	return ret;
+}
+
+int CAICallback::SendUnits(const std::vector<int>& unitIDs, int receivingTeam)
+{
+	typedef unsigned char ubyte;
+	std::vector<short> sentUnitIDs;
+
+	if (receivingTeam >= 0 && receivingTeam < (MAX_TEAMS - 1)) {
+		if (gs->Team(receivingTeam) && gs->Team(team)) {
+			if (!gs->Team(receivingTeam)->isDead && !gs->Team(team)->isDead) {
+				// we must iterate over the ID's to check if
+				// all of them really belong to the AI's team
+				for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); it++ ) {
+					const int unitID = *it;
+
+					if (unitID > 0 && unitID < MAX_UNITS) {
+						CUnit* unit = uh->units[unitID];
+
+						if (unit && unit->team == team) {
+							// we own this unit, save it (note: safe cast
+							// since MAX_UNITS currently fits in a short)
+							sentUnitIDs.push_back(short(unitID));
+
+							// stop whatever this unit is doing
+							Command c;
+							c.id = CMD_STOP;
+							GiveOrder(unitID, &c);
+						}
+					}
+				}
+
+				if (sentUnitIDs.size() > 0) {
+					net->SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), 0.0f, 0.0f, sentUnitIDs);
+				}
+			}
+		}
+	}
+
+	// return how many units were actually put up for transfer
+	return (sentUnitIDs.size());
+}
+
+
 
 bool CAICallback::PosInCamera(float3 pos, float radius)
 {
@@ -182,7 +254,7 @@ void CAICallback::EraseGroup(int groupid)
 	}
 }
 
-bool CAICallback::AddUnitToGroup(int unitid,int groupid)
+bool CAICallback::AddUnitToGroup(int unitid, int groupid)
 {
 	if (CHECK_UNITID(unitid) && CHECK_GROUPID(groupid)) {
 		CUnit* u=uh->units[unitid];

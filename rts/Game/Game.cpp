@@ -888,15 +888,18 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "water") {
 		delete water;
+
+		static char rmodes[4][32] = {"basic", "reflective", "dynamic", "reflective&refractive"};
 		int next = 0;
+
 		if (!action.extra.empty()) {
-			next = atoi(action.extra.c_str());
+			next = std::max(0, atoi(action.extra.c_str()) % 4);
 		} else {
 			const int current = configHandler.GetInt("ReflectiveWater", 1);
 			next = (max(0, current) + 1) % 4;
 		}
 		configHandler.SetInt("ReflectiveWater", next);
-		logOutput.Print("Set ReflectiveWater to %i", next);
+		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
 		water = CBaseWater::GetWater();
 	}
 	else if (cmd == "advshading") {
@@ -3391,37 +3394,42 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_AICOMMAND:{
+
+
+			case NETMSG_AICOMMAND: {
+				const int player = inbuf[3];
+				if (player >= MAX_PLAYERS || player < 0) {
+					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMAND", player);
+					break;
+				}
+
+				int unitid = *((short int*) &inbuf[4]);
+				if (unitid >= MAX_UNITS || unitid < 0) {
+					logOutput.Print("Got invalid unitID (%i) in NETMSG_AICOMMAND", unitid);
+					break;
+				}
+
 				Command c;
-				int player=inbuf[3];
-				if(player>=MAX_PLAYERS || player<0){
-					logOutput.Print("Got invalid player num %i in aicommand msg",player);
-					break;
-				}
-				int unitid=*((short int*)&inbuf[4]);
-				if(unitid>=MAX_UNITS || unitid<0){
-					logOutput.Print("Got invalid unitid %i in aicommand msg",unitid);
-					break;
-				}
-				//if(uh->units[unitid] && uh->units[unitid]->team!=gs->players[player]->team)		//msgs from global ais can be for other teams
-				//	logOutput.Print("Warning player %i of team %i tried to send aiorder to unit from team %i",a,gs->players[player]->team,uh->units[unitid]->team);
-				c.id=*((int*)&inbuf[6]);
-				c.options=inbuf[10];
-				for(int a=0;a<((*((short int*)&inbuf[1])-11)/4);++a)
-					c.params.push_back(*((float*)&inbuf[11+a*4]));
+				c.id = *((int*) &inbuf[6]);
+				c.options = inbuf[10];
+
+				// insert the command parameters
+				for (int a = 0; a < ((*((short int*) &inbuf[1]) - 11) / 4); ++a)
+					c.params.push_back(*((float*) &inbuf[11 + a * 4]));
+
 				selectedUnits.AiOrder(unitid,c);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
-			case NETMSG_AICOMMANDS:{
-				int u, c;
+			case NETMSG_AICOMMANDS: {
 				const int player = inbuf[3];
-				if (player>=MAX_PLAYERS || player<0) {
-					logOutput.Print("Got invalid player num %i in aicommands msg",player);
+				if (player >= MAX_PLAYERS || player < 0) {
+					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMANDS", player);
 					break;
 				}
 
+				int u, c;
 				const unsigned char* ptr = &inbuf[4];
 
 				// FIXME -- hackish
@@ -3457,6 +3465,49 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
+
+			case NETMSG_AISHARE: {
+				const int player = inbuf[3];
+				if (player >= MAX_PLAYERS || player < 0) {
+					logOutput.Print("Got invalid player number (%i) in NETMSG_AISHARE", player);
+					break;
+				}
+
+				// total message length
+				const short numBytes = *(short*) &inbuf[1];
+				// total length minus the size of the fixed part
+				const int variableLen = numBytes - (1 + sizeof(short) + 3 + (2 * sizeof(float)));
+				const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
+				const int srcTeam = *(int*) &inbuf[4];
+				const int dstTeam = *(int*) &inbuf[8];
+				const float metalShare = *(float*) &inbuf[12];
+				const float energyShare = *(float*) &inbuf[16];
+
+				if (metalShare > 0.0f) {
+					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
+						gs->Team(srcTeam)->metal -= metalShare;
+						gs->Team(dstTeam)->metal += metalShare;
+					}
+				}
+				if (energyShare > 0.0f) {
+					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
+						gs->Team(srcTeam)->energy -= energyShare;
+						gs->Team(dstTeam)->energy += energyShare;
+					}
+				}
+
+				for (int i = 0, j = 0; i < numUnitIDs; i++, j += sizeof(short)) {
+					short int unitID = *(short int*) &inbuf[j];
+					CUnit* u = uh->units[unitID];
+
+					// ChangeTeam() handles the AllowUnitTransfer() LuaRule
+					if (u && u->team == srcTeam && !u->beingBuilt) {
+						u->ChangeTeam(dstTeam, CUnit::ChangeGiven);
+					}
+				}
+			} break;
+
+
 
 			case NETMSG_LUAMSG: {
 				const int player = inbuf[3];

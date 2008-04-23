@@ -49,7 +49,9 @@ struct PointMarker
 {
 	float3 pos;
 	unsigned char* color;
-	const char* label; // don't store this pointer anywhere, it may become invalid at any time after GetMapPoints()
+	// don't store this pointer anywhere, it may become
+	// invalid at any time after GetMapPoints()
+	const char* label;
 };
 
 struct LineMarker {
@@ -96,15 +98,34 @@ public:
 	virtual void SendTextMsg(const char* text, int zone) = 0;
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
+
+	// give <mAmount> of metal and <eAmount> of energy to <receivingTeam>
+	// * the amounts are capped to the AI team's resource levels
+	// * does not check for alliance with <receivingTeam>
+	// * LuaRules might not allow resource transfers, AI's must verify the deduction
+	virtual bool SendResources(float mAmount, float eAmount, int receivingTeam) = 0;
+	// give units to <receivingTeam>, the return value represents how many
+	// actually were transferred (make sure this always matches the size of
+	// the vector you pass in, if not then some unitID's were filtered out)
+	// * does not check for alliance with <receivingTeam>
+	// * AI's should check each unit if it is still under control of their
+	//   team after the transaction via UnitTaken() and UnitGiven(), since
+	//   LuaRules might block part of it
+	virtual int SendUnits(const std::vector<int>& unitIDs, int receivingTeam) = 0;
+
 	// checks if pos is within view of the current camera, using radius as a margin
 	virtual bool PosInCamera(float3 pos, float radius) = 0;
 
-	// get the current game time, there are 30 frames per second at normal speed
+	// get the current game time measured in frames (the
+	// simulation runs at 30 frames per second at normal
+	// speed)
 	virtual int GetCurrentFrame() = 0;
+
 	virtual int GetMyTeam() = 0;
 	virtual int GetMyAllyTeam() = 0;
 	virtual int GetPlayerTeam(int player) = 0;
 	virtual const char* GetTeamSide(int team) = 0;
+
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	// set something to !0 to tell other AI's that the area is already initialized when they try to
 	// create it (the exact internal format of the memory areas is up to the AI's to keep consistent)
