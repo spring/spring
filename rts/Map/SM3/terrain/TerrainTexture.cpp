@@ -176,7 +176,7 @@ namespace terrain {
 		return btex;
 	}
 
-	void TerrainTexture::Load (TdfParser *tdf, Heightmap *heightmap, TQuad *quadtree, const vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo *li)
+	void TerrainTexture::Load (const TdfParser *tdf, Heightmap *heightmap, TQuad *quadtree, const vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo *li)
 	{
 		string basepath="MAP\\TERRAIN\\";
 
@@ -594,7 +594,7 @@ namespace terrain {
 	}
 #endif
 
-	void ShaderDef::LoadStages(int numStages,const char *stagename, TdfParser& tdf, std::vector<ShaderDef::Stage>& stages)
+	void ShaderDef::LoadStages(int numStages,const char *stagename, const TdfParser& tdf, std::vector<ShaderDef::Stage>& stages)
 	{
 		for (int a=0;a<numStages;a++)
 		{
@@ -639,7 +639,7 @@ namespace terrain {
 		}
 	}
 
-	void ShaderDef::Parse(TdfParser& tdf, bool needNormalMap)
+	void ShaderDef::Parse(const TdfParser& tdf, bool needNormalMap)
 	{
 		string path = "map\\terrain\\";
 

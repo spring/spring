@@ -5,6 +5,7 @@
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
 #include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
 #include <boost/lexical_cast.hpp>
 #include "creg/STL_Deque.h"
@@ -113,10 +114,10 @@ CMoveInfo::CMoveInfo()
 	}
 
 	for (int a = 0; a < 256; ++a) {
-		terrainType2MoveFamilySpeed[a][0] = readmap->terrainTypes[a].tankSpeed;
-		terrainType2MoveFamilySpeed[a][1] = readmap->terrainTypes[a].kbotSpeed;
-		terrainType2MoveFamilySpeed[a][2] = readmap->terrainTypes[a].hoverSpeed;
-		terrainType2MoveFamilySpeed[a][3] = readmap->terrainTypes[a].shipSpeed;
+		terrainType2MoveFamilySpeed[a][0] = mapInfo->terrainTypes[a].tankSpeed;
+		terrainType2MoveFamilySpeed[a][1] = mapInfo->terrainTypes[a].kbotSpeed;
+		terrainType2MoveFamilySpeed[a][2] = mapInfo->terrainTypes[a].hoverSpeed;
+		terrainType2MoveFamilySpeed[a][3] = mapInfo->terrainTypes[a].shipSpeed;
 	}
 }
 

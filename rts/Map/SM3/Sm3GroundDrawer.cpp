@@ -8,6 +8,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Map/MapInfo.h"
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include "Platform/ConfigHandler.h"
@@ -74,7 +75,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 	terrain::RenderContext *currc = rc;
 
-	tr->SetShaderParams(gs->sunVector, currc->cam->pos);
+	tr->SetShaderParams(mapInfo->light.sunDir, currc->cam->pos);
 
 	if (shadowHandler->drawShadows)
 	{
@@ -97,16 +98,16 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_LIGHTING);
-	glLightfv(GL_LIGHT0, GL_POSITION,gs->sunVector4);
+	glLightfv(GL_LIGHT0, GL_POSITION,mapInfo->light.sunDir4);
 	float d[4]={0.0f,0.0f,0.0f,1.0f};
 	for (int a=0;a<3;a++)
-		d[a]=map->sunColor[a];
+		d[a]=mapInfo->light.groundSunColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
 	for (int a=0;a<3;a++)
-		d[a]=map->ambientColor[a];
+		d[a]=mapInfo->light.groundAmbientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
 	for (int a=0;a<3;a++)
-		d[a]=map->specularColor[a];
+		d[a]=mapInfo->light.groundSpecularColor[a];
 	glLightfv (GL_LIGHT0, GL_SPECULAR, d);
 	for (int a=0;a<4;a++)
 		d[a]=0.0f;

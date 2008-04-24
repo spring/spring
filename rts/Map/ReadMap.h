@@ -4,14 +4,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <vector>
 #define GLEW_STATIC
 #include <GL/glew.h>
+#include "creg/creg.h"
 #include "float3.h"
-#include "MetalMap.h"
-#include "TdfParser.h"
 
+class CMetalMap;
 class CCamera;
 class CFileHandler;
 class CUnit;
@@ -42,18 +40,12 @@ public:
 
 	void Serialize(creg::ISerializer& s); // creg serialize callback
 
-	static std::string GetTDFName (const std::string& mapname);
-	static void OpenTDF (const std::string& mapname, TdfParser& parser);
 	static CReadMap* LoadMap (const std::string& mapname);
 
 protected:
 	void Initialize(); // called by implementations of CReadMap
 public:
 	void CalcHeightfieldData(); /// Calculates derived heightmap information such as normals, centerheightmap and slopemap
-	void ParseSettings(TdfParser& resources);
-
-	std::string mapName;
-	std::string mapHumanName;
 
 	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
 	float* orgheightmap;
@@ -64,34 +56,9 @@ public:
 	float3* facenormals;
 	unsigned char* typemap;
 
-	unsigned char* heightLinePal;
-
-	struct TerrainType{
-		std::string name;
-		float hardness;
-		float tankSpeed;
-		float kbotSpeed;
-		float hoverSpeed;
-		float shipSpeed;
-		int receiveTracks;
-	};
-
-	std::vector<TerrainType> terrainTypes;
-
 	CMetalMap *metalMap;					//Metal-density/height-map
 
-	float tidalStrength;
-	float3 waterAbsorb;
-	float3 waterBaseColor;
-	float3 waterMinColor;
-	float3 waterSurfaceColor;
-	float maxMetal;
-
 	int width, height;
-
-	float3 waterPlaneColor;
-	bool hasWaterPlane;
-	std::string waterTexture;
 
 	unsigned int mapChecksum;
 protected:
@@ -130,19 +97,7 @@ public:
 	};
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;
 
-	TdfParser mapDefParser;
-
-	float3 ambientColor;
-	float3 sunColor;
-	float3 specularColor; // ground specular color
-	float shadowDensity;
-	float extractorRadius;			//extraction radius for mines
-	bool voidWater;
-
 	float minheight,maxheight;
-	void LoadSaveMap(CLoadSaveInterface* file,bool loading);
-
-	std::string skyBox;
 };
 
 extern CReadMap* readmap;

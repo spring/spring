@@ -3,6 +3,7 @@
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -87,7 +88,7 @@ void CFireBallProjectile::Update()
 		pos += speed;
 
 		if (weaponDef->gravityAffected)
-			speed.y += gs->gravity;
+			speed.y += mapInfo->map.gravity;
 
 		// g�ra om till ttl sedan kanske
 		if (weaponDef->noExplode) {

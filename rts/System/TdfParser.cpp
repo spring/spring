@@ -191,20 +191,6 @@ TdfParser::TdfParser(std::string const& filename) {
   LoadFile(filename);
 }
 
-//find value, display messagebox if no such value found
-std::string TdfParser::SGetValueMSG(std::string const& location) const
-{
-	std::string lowerd = StringToLower(location);
-	std::string value;
-	bool found = SGetValue(value, lowerd);
-	if(!found)
-	{
-		std::string error = "TDF parsing error: ";
-		error += value;
-		throw content_error(error);
-	}
-	return value;
-}
 
 //find value, return default value if no such value found
 std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string const& location) const

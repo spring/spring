@@ -132,7 +132,7 @@ namespace terrain {
 		void RemoveRenderContext (RenderContext *ctx);
 		void SetActiveContext (RenderContext *ctx);   // set active rendering context / camera viewpoint
 
-		void Load (TdfParser& tdf, LightingInfo* li, ILoadCallback *cb);
+		void Load (const TdfParser& tdf, LightingInfo* li, ILoadCallback *cb);
 		void Draw ();
 		void DrawAll (); // draw all terrain nodes, regardless of visibility or lod
 		void Update (); // update lod+visibility, should be called when camera position has changed

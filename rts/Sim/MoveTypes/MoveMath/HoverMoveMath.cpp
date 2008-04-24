@@ -35,7 +35,7 @@ float CHoverMoveMath::SpeedMod(const MoveData& moveData, float height, float slo
 	if(slope*moveSlope > moveData.maxSlope)
 		return 0.0f;
 	//Slope-mod
-	return 1 / (1 + max(0.0f,slope*moveSlope) * moveData.slopeMod);
+	return 1 / (1 + std::max(0.0f,slope*moveSlope) * moveData.slopeMod);
 }
 
 /*

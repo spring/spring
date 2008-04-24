@@ -11,6 +11,7 @@
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
+#include "Map/MapInfo.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
@@ -77,7 +78,7 @@ CProjectile::~CProjectile()
 
 void CProjectile::Update()
 {
-	speed.y+=gs->gravity;
+	speed.y+=mapInfo->map.gravity;
 
 	pos+=speed;
 }

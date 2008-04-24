@@ -5,6 +5,7 @@
 #include "StdAfx.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -36,7 +37,7 @@ CWreckProjectile::~CWreckProjectile()
 
 void CWreckProjectile::Update()
 {
-	speed.y+=gs->gravity;
+	speed.y+=mapInfo->map.gravity;
 	speed.x*=0.994f;
 	speed.z*=0.994f;
 	if(speed.y>0)

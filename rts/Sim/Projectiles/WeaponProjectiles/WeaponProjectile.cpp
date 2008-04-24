@@ -231,7 +231,7 @@ void CWeaponProjectile::Update()
 	//pos+=speed;
 
 	//if(weaponDef->gravityAffected)
-	//	speed.y+=gs->gravity;
+	//	speed.y+=mapInfo->map.gravity;
 
 
 	//if(weaponDef->noExplode)

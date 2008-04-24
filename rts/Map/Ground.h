@@ -4,16 +4,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CGround;
+#include "GlobalStuff.h"
 
-
-#include <vector>
-	// Added by ClassView
-#include "ReadMap.h"
 class CProjectileHandler;
 class CProjectile;
 
-using namespace std;
+
 class CGround
 {
 public:
@@ -31,13 +27,17 @@ public:
 	void CheckCol(CProjectileHandler* ph);
 	float TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic);
 
-	inline int GetSquare(const float3& pos){return max(0,min(gs->mapx-1,(int(pos.x)/SQUARE_SIZE)))+max(0,min(gs->mapy-1,(int(pos.z)/SQUARE_SIZE)))*gs->mapx;};
+	inline int GetSquare(const float3& pos) {
+		return std::max(0, std::min(gs->mapx - 1, (int(pos.x) / SQUARE_SIZE))) +
+			std::max(0, std::min(gs->mapy - 1, (int(pos.z) / SQUARE_SIZE))) * gs->mapx;
+	};
 private:
 
 	void CheckColSquare(CProjectile* p,int x,int y);
 
 	float LineGroundSquareCol(const float3 &from,const float3 &to,int xs,int ys);
 };
+
 extern CGround* ground;
 
 #endif /* GROUND_H */

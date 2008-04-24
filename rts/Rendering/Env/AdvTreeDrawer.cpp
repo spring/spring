@@ -6,6 +6,7 @@
 #include "AdvTreeDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
@@ -250,16 +251,16 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		if(shadowHandler->useFPShadows){
 			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, treeGen->treeFPShadow );
 			glEnable( GL_FRAGMENT_PROGRAM_ARB );
-			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, readmap->ambientColor.x,readmap->ambientColor.y,readmap->ambientColor.z,1);
-			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,1-readmap->shadowDensity*0.5f);
+			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,1);
+			glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, 0,0,0,1-mapInfo->light.groundShadowDensity*0.5f);
 
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		} else {
 			glEnable(GL_TEXTURE_2D);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-readmap->shadowDensity*0.5f);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-mapInfo->light.groundShadowDensity*0.5f);
 
-			float texConstant[]={readmap->ambientColor.x,readmap->ambientColor.y,readmap->ambientColor.z,0.0f};
+			float texConstant[]={mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,0.0f};
 			glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant);
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_CONSTANT);
@@ -318,8 +319,8 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		glEnable( GL_VERTEX_PROGRAM_ARB );
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, readmap->sunColor.x,readmap->sunColor.y,readmap->sunColor.z,0.85f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, readmap->ambientColor.x,readmap->ambientColor.y,readmap->ambientColor.z,0.85f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, mapInfo->light.groundSunColor.x,mapInfo->light.groundSunColor.y,mapInfo->light.groundSunColor.z,0.85f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,0.85f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 0,0,0,0.20f*(1.0f/MAX_TREE_HEIGHT));	//w=alpha/height modifier
 		glAlphaFunc(GL_GREATER,0.5f);
 		glDisable(GL_BLEND);
@@ -336,8 +337,8 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		static FadeTree fadeTrees[3000];
 		int curFade=0;
 
-		for(int y=max(0,cy-2);y<=min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);++y){	//close trees
-			for(int x=max(0,cx-2);x<=min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);++x){
+		for(int y=std::max(0,cy-2);y<=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);++y){	//close trees
+			for(int x=std::max(0,cx-2);x<=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);++x){
 				TreeSquareStruct* tss=&trees[y*treesX+x];
 				tss->lastSeen=gs->frameNum;
 				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
@@ -873,7 +874,7 @@ int CAdvTreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
 	if(s>500)
 		return 0;
 	ft.dir=dir/s;
-	ft.speed=max(0.01f,s*0.0004f);
+	ft.speed=std::max(0.01f,s*0.0004f);
 	ft.type=type;
 	ft.fallPos=0;
 

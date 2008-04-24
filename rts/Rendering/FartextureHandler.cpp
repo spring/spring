@@ -5,6 +5,7 @@
 #include "GlobalStuff.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Map/MapInfo.h"
 #include "mmgr.h"
 
 CFartextureHandler* fartextureHandler = NULL;
@@ -102,7 +103,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
 	glColor3f(1,1,1);
 	glRotatef(10,1,0,0);
-	glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);
+	glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);
 	glEnable(GL_LIGHT1);
 
 	int baseX=0;
@@ -127,7 +128,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 			}
 		baseX+=16;
 		glRotatef(45,0,1,0);
-		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);
+		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);
 	}
 
 	glCullFace(GL_BACK);

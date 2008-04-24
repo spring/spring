@@ -6,6 +6,7 @@
 #include "GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
@@ -13,7 +14,9 @@
 #include "Game/Camera.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/MapInfo.h"
 #include "ShadowHandler.h"
+#include "TdfParser.h"
 #include "mmgr.h"
 
 CGroundDecalHandler* groundDecals = 0;
@@ -143,9 +146,9 @@ void CGroundDecalHandler::Draw(void)
 		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, decalVP);
 		glEnable(GL_VERTEX_PROGRAM_ARB );
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-		float3 ac = readmap->ambientColor * (210.0f / 255.0f);
+		float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, ac.x, ac.y, ac.z, 1);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, readmap->shadowDensity);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, mapInfo->light.groundShadowDensity);
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_MODELVIEW);
@@ -463,7 +466,7 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 		mp=0;
 	if(mp>=gs->mapSquares/4)
 		mp=gs->mapSquares/4-1;
-	if(!readmap->terrainTypes[readmap->typemap[mp]].receiveTracks)
+	if(!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
 		return;
 
 	TrackType* type=trackTypes[unit->unitDef->trackType];

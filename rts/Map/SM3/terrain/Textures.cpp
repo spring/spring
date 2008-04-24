@@ -100,7 +100,7 @@ namespace terrain {
 	TiledTexture::~TiledTexture()
 	{}
 
-	void TiledTexture::Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf, bool isBumpmap)
+	void TiledTexture::Load(const std::string& name, const std::string& section, ILoadCallback *cb, const TdfParser *tdf, bool isBumpmap)
 	{
 		this->name = name;
 
@@ -146,7 +146,7 @@ namespace terrain {
 			delete generatorInfo;
 	}
 
-	void Blendmap::Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, TdfParser *tdf)
+	void Blendmap::Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, const TdfParser *tdf)
 	{
 		// Create blendmap
 		this->name = name;

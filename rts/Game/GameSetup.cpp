@@ -13,6 +13,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
@@ -78,7 +79,7 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 void CGameSetup::LoadStartPositionsFromMap()
 {
 	TdfParser p2;
-	CReadMap::OpenTDF (mapName, p2);
+	CMapInfo::OpenTDF (mapName, p2);
 
 	for(int a=0;a<numTeams;++a){
 		float x,z;

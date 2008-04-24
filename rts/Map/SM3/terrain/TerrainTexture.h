@@ -76,7 +76,7 @@ namespace terrain {
 	{
 	public:
 		ShaderDef() { hasLighting=useShadowMapping=false; specularExponent = 16.0f; }
-		void Parse(TdfParser& tdf, bool needNormalMap);
+		void Parse(const TdfParser& tdf, bool needNormalMap);
 		void Optimize(ShaderDef* dst);
 		void Output();
 		void GetTextureUsage(TextureUsage* tu);
@@ -103,7 +103,7 @@ namespace terrain {
 		float specularExponent;
 
 		static void OptimizeStages(std::vector<Stage>& src, std::vector<Stage>& dst);
-		static void LoadStages(int numStages, const char *stagename, TdfParser& tdf, std::vector<Stage>& stages);
+		static void LoadStages(int numStages, const char *stagename, const TdfParser& tdf, std::vector<Stage>& stages);
 	};
 
 	struct NodeSetupParams
@@ -192,7 +192,7 @@ namespace terrain {
 		TerrainTexture();
 		~TerrainTexture();
 
-		void Load (TdfParser *parser, Heightmap *heightmap, TQuad *quadTree, const std::vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo* li);
+		void Load (const TdfParser *parser, Heightmap *heightmap, TQuad *quadTree, const std::vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo* li);
 
 		int NumPasses ();
 
@@ -258,7 +258,7 @@ namespace terrain {
 		int maxPasses; // the highest number of passes a RenderSetupCollection requires (some nodes might need less passes than this)
 
 		//only valid during loading
-		TdfParser *tdfParser;
+		const TdfParser *tdfParser;
 
 		Lightmap *lightmap;
 		ShaderDef shaderDef;

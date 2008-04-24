@@ -3,6 +3,7 @@
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Matrix44f.h"
 #include "MissileProjectile.h"
 #include "myMath.h"
@@ -277,7 +278,7 @@ void CMissileProjectile::Update(void)
 		// only when TTL <= 0 do projectiles
 		// get influenced by gravity and drag
 		speed *= 0.995f;
-		speed.y += gs->gravity;
+		speed.y += mapInfo->map.gravity;
 		dir = speed;
 		dir.Normalize();
 	}

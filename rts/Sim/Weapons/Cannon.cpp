@@ -7,6 +7,7 @@
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "myMath.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
@@ -47,7 +48,7 @@ CCannon::CCannon(CUnit* owner)
 
 void CCannon::Init(void)
 {
-	gravity = weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity);
+	gravity = weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity);
 	highTrajectory = weaponDef->highTrajectory == 1;
 	if(highTrajectory){
 		maxPredict=projectileSpeed*2/-gravity;

@@ -4,6 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "LogOutput.h"
@@ -109,7 +110,7 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
 		glDisable(GL_TEXTURE_2D);
-		glColor3f(map->waterPlaneColor.x, map->waterPlaneColor.y, map->waterPlaneColor.z);
+		glColor3f(mapInfo->water.planeColor.x, mapInfo->water.planeColor.y, mapInfo->water.planeColor.z);
 		glBegin(GL_QUADS);
 
 		static const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
@@ -178,7 +179,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	SetupTextureUnits(drawWaterReflection, overrideVP);
 	bool inStrip = false;
 
-	if (map->voidWater && !waterDrawn) {
+	if (mapInfo->map.voidWater && !waterDrawn) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
@@ -633,11 +634,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if (map->voidWater && !waterDrawn) {
+	if (mapInfo->map.voidWater && !waterDrawn) {
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if (map->hasWaterPlane) {
+	if (mapInfo->hasWaterPlane) {
 		DrawWaterPlane(drawWaterReflection);
 	}
 
@@ -1018,9 +1019,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 	else if (shadowHandler->drawShadows) {
 		glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, groundFPShadow);
 		glEnable(GL_FRAGMENT_PROGRAM_ARB);
-		float3 ac = map->ambientColor * (210.0f / 255.0f);
+		float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, ac.x, ac.y, ac.z, 1);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, map->shadowDensity);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, mapInfo->light.groundShadowDensity);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glActiveTextureARB(GL_TEXTURE1_ARB);

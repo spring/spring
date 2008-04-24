@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "TdfParser.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////

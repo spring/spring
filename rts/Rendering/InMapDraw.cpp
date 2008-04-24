@@ -12,6 +12,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "NetProtocol.h"
 #include "LogOutput.h"
 #include "Sound.h"

@@ -55,6 +55,7 @@
 #include "Map/Ground.h"
 #include "Map/HeightMapTexture.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
@@ -86,6 +87,7 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
@@ -339,7 +341,15 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	ENTER_SYNCED;
 	ground = SAFE_NEW CGround();
+	mapInfo = SAFE_NEW CMapInfo(mapname); // must go before readmap
+
+	// FIXME: remove these silly global variables ...
+	FogLand[0] = mapInfo->atmosphere.fogColor.x;
+	FogLand[1] = mapInfo->atmosphere.fogColor.y;
+	FogLand[2] = mapInfo->atmosphere.fogColor.z;
+
 	readmap = CReadMap::LoadMap (mapname);
+	groundBlockingObjectMap = SAFE_NEW CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
 	moveinfo = SAFE_NEW CMoveInfo();
 	groundDecals = SAFE_NEW CGroundDecalHandler();
@@ -521,9 +531,10 @@ CGame::~CGame()
 
 	globalAI->PreDestroy ();
 	delete globalAI;           globalAI           = NULL;
-//	delete grouphandler;       grouphandler       = NULL;
+
 	for(int a=0;a<MAX_TEAMS;a++) {
-		delete grouphandlers[a];grouphandlers[a]   = NULL;}
+		delete grouphandlers[a]; grouphandlers[a] = NULL;
+	}
 
 	delete water;              water              = NULL;
 	delete sky;                sky                = NULL;
@@ -566,6 +577,12 @@ CGame::~CGame()
 	delete consoleHistory;     consoleHistory     = NULL;
 	delete wordCompletion;     wordCompletion     = NULL;
 	delete explGenHandler;     explGenHandler     = NULL;
+
+	delete const_cast<CMapInfo*>(mapInfo);
+	mapInfo = NULL;
+	delete groundBlockingObjectMap;
+	groundBlockingObjectMap = NULL;
+
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
 }
@@ -2382,7 +2399,7 @@ bool CGame::DrawWorld()
 		gd->Draw();
 	}
 	if (drawWater) {
-		if (!readmap->voidWater && water->drawSolid) {
+		if (!mapInfo->map.voidWater && water->drawSolid) {
 			water->Draw();
 		}
 	}
@@ -2405,7 +2422,7 @@ bool CGame::DrawWorld()
 		}
 	}
 	if (drawWater) {
-		if (!readmap->voidWater && !water->drawSolid) {
+		if (!mapInfo->map.voidWater && !water->drawSolid) {
 			water->Draw();
 		}
 	}
@@ -4497,8 +4514,8 @@ void CGame::ReColorTeams()
 	luaParser.AddParam("modShortName", modInfo.shortName);
 	luaParser.AddParam("modVersion",   modInfo.version);
 
-	luaParser.AddParam("mapName",      readmap->mapName);
-	luaParser.AddParam("mapHumanName", readmap->mapHumanName);
+	luaParser.AddParam("mapName",      mapInfo->map.name);
+	luaParser.AddParam("mapHumanName", mapInfo->map.humanName);
 
 	luaParser.AddParam("gameMode",     gs->gameMode);
 

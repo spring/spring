@@ -3,8 +3,8 @@
 #include "Sim/Units/UnitLoader.h"
 #include "TdfParser.h"
 #include "Game/Team.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -41,7 +41,7 @@ void CCommanderScript2::Update(void)
 		string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
 
 		TdfParser p2;
-		CReadMap::OpenTDF (stupidGlobalMapname, p2);
+		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
 
 		float x0,x1,z0,z1;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

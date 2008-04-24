@@ -9,6 +9,8 @@
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
 
+class CHeightLinePalette;
+
 class CBaseGroundDrawer
 {
 public:
@@ -58,8 +60,8 @@ public:
 	bool highResInfoTex;
 	bool highResInfoTexWanted;
 
-	unsigned char* extraTex;
-	unsigned char* extraTexPal;
+	const unsigned char* extraTex;
+	const unsigned char* extraTexPal;
 	float* extractDepthMap;
 
 	int updateTextureState;
@@ -76,6 +78,8 @@ public:
 	
 	bool highResLosTex;
 // 	bool smoothLosTex;
+
+	CHeightLinePalette* heightLinePal;
 };
 
 #endif // __BASE_GROUND_DRAWER__

@@ -15,7 +15,7 @@
 #include "Game/StartScripts/Script.h"
 #include "Game/UI/EndGameBox.h"
 #include "Lua/LuaCallInHandler.h"
-#include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -179,6 +179,6 @@ namespace luafunctions
 
 	string MapGetTDFName()
 	{
-		return CReadMap::GetTDFName(stupidGlobalMapname);
+		return CMapInfo::GetTDFName(stupidGlobalMapname);
 	}
 }

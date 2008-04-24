@@ -12,6 +12,7 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "myMath.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"

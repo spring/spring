@@ -5,6 +5,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
@@ -115,7 +116,7 @@ CDynWater::CDynWater(void)
 	dwAddSplashFP=LoadFragmentProgram("dwAddSplash.fp");
 	dwAddSplashVP=LoadVertexProgram("dwAddSplash.vp");
 
-	waterSurfaceColor = readmap->waterSurfaceColor;
+	waterSurfaceColor = mapInfo->water.surfaceColor;
 
 	for(int y=0;y<1024;++y){
 		for(int x=0;x<1024;++x){
@@ -314,9 +315,9 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.05f, 1-0.05f, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2f, 0, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,8, 0.5f, 0.6f, 0.8f, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,9, gs->sunVector.x, gs->sunVector.y, gs->sunVector.z, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, readmap->sunColor.x, readmap->sunColor.y, readmap->sunColor.z, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, readmap->ambientColor.x, readmap->ambientColor.y, readmap->ambientColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,9, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y, mapInfo->light.sunDir.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, mapInfo->light.groundSunColor.x, mapInfo->light.groundSunColor.y, mapInfo->light.groundSunColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,12, refractRight.x,refractRight.y,refractRight.z,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,13, refractUp.x,refractUp.y,refractUp.z,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,14, 0.5f/dx,0.5f/dy,1,1);
@@ -351,7 +352,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || readmap->voidWater)
+	if (readmap->minheight > 10 || mapInfo->map.voidWater)
 		return;
 
 	glDisable(GL_DEPTH_TEST);

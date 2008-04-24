@@ -109,12 +109,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	gaiaAllyTeamID=-1;
 	useLuaRules=true;
 	
-	sunVector=float3(0,0,1);
-	sunVector4[0]=0;
-	sunVector4[1]=0;
-	sunVector4[2]=1;
-	sunVector4[3]=0;
-
 	for(int a=0; a < MAX_TEAMS; ++a){
 		teams[a]=SAFE_NEW CTeam();
 		teams[a]->teamNum=a;
@@ -135,10 +129,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	activeTeams=2;
 	activeAllyTeams=2;
 	activePlayers=MAX_PLAYERS;
-
-	sunVector=float3(0,1,2).Normalize();
-
-	gravity = -0.1f;
 }
 
 /**

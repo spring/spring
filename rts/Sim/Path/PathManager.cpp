@@ -11,6 +11,7 @@
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "SDL_timer.h"
+#include "Map/MapInfo.h"
 #include "mmgr.h"
 
 const float ESTIMATE_DISTANCE = 55;
@@ -34,7 +35,7 @@ CPathManager::CPathManager() {
 	hover = SAFE_NEW CHoverMoveMath();
 	sea = SAFE_NEW CShipMoveMath();
 
-	float waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str());
+	float waterDamage = mapInfo->water.damage;
 	if(waterDamage>=1000)
 		CGroundMoveMath::waterCost=0;
 	else

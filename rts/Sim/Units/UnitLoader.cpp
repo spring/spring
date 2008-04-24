@@ -22,6 +22,8 @@
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -298,7 +300,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->energyTickMake = ud->energyMake;
 
 	if (ud->tidalGenerator > 0)
-		unit->energyTickMake += ud->tidalGenerator * readmap->tidalStrength;
+		unit->energyTickMake += ud->tidalGenerator * mapInfo->map.tidalStrength;
 
 
 	unit->model = ud->LoadModel(team);

@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "Wind.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "mmgr.h"
 
 CR_BIND(CWind, );
@@ -46,8 +46,8 @@ CWind::~CWind()
 void CWind::LoadWind()
 {
 	// TODO: decouple
-	readmap->mapDefParser.GetDef(minWind,"5","MAP\\ATMOSPHERE\\MinWind");
-	readmap->mapDefParser.GetDef(maxWind,"25","MAP\\ATMOSPHERE\\MaxWind");
+	minWind = mapInfo->atmosphere.minWind;
+	maxWind = mapInfo->atmosphere.maxWind;
 }
 
 

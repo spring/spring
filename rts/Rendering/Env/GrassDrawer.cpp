@@ -14,6 +14,7 @@
 #include "Platform/ConfigHandler.h"
 #include <algorithm>
 #include "FileSystem/FileHandler.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
 //#include "TimeProfiler.h"
@@ -313,9 +314,9 @@ void CGrassDrawer::Draw(void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-readmap->shadowDensity);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-mapInfo->light.groundShadowDensity);
 		
-		float texConstant[]={readmap->ambientColor.x*1.24f,readmap->ambientColor.y*1.24f,readmap->ambientColor.z*1.24f,1};
+		float texConstant[]={mapInfo->light.groundAmbientColor.x*1.24f,mapInfo->light.groundAmbientColor.y*1.24f,mapInfo->light.groundAmbientColor.z*1.24f,1};
 		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_CONSTANT);
@@ -465,7 +466,7 @@ void CGrassDrawer::Draw(void)
 		float3 up(side.cross(v));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 		float ang=acos(v.y);
-		int texPart=min(15,(int)max(0,(int)((ang+PI/16-PI/2)/PI*30)));
+		int texPart=std::min(15,(int)std::max(0,(int)((ang+PI/16-PI/2)/PI*30)));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0f,0,0,0.0f);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
@@ -486,7 +487,7 @@ void CGrassDrawer::Draw(void)
 			float3 up(side.cross(v));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
 			float ang=acos(v.y);
-			int texPart=min(15,int(max(0,int((ang+PI/16-PI/2)/PI*30))));
+			int texPart=std::min(15,int(std::max(0,int((ang+PI/16-PI/2)/PI*30))));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, texPart/16.0f,0,0,0.0f);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11,  -v.x,-v.y,-v.z,0);
 
@@ -738,7 +739,7 @@ void CGrassDrawer::CreateFarTex(void)
 					buf[((y)*1024*sizeMod+x+dx)*4+0]=(unsigned char) (r/a);
 					buf[((y)*1024*sizeMod+x+dx)*4+1]=(unsigned char) (g/a);
 					buf[((y)*1024*sizeMod+x+dx)*4+2]=(unsigned char) (b/a);
-					buf[((y)*1024*sizeMod+x+dx)*4+3]=(unsigned char) (min((float)255,a*16));
+					buf[((y)*1024*sizeMod+x+dx)*4+3]=(unsigned char) (std::min((float)255,a*16));
 				}
 			}
 		}

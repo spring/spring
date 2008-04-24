@@ -7,16 +7,12 @@
 #include "ReadMap.h"
 #include <stdlib.h>
 #include <string>
-//#include <ostream>
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"
 #include "Platform/ConfigHandler.h"
-#ifdef _WIN32
-#include <process.h>
-#endif
 #include "MapDamage.h"
+#include "MapInfo.h"
 #include "MetalMap.h"
-#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
@@ -42,24 +38,6 @@ CR_REG_METADATA(CReadMap, (
 				CR_SERIALIZER(Serialize)
 				));
 
-void CReadMap::OpenTDF (const std::string& mapname, TdfParser& parser)
-{
-	parser.LoadFile(GetTDFName(mapname));
-}
-
-std::string CReadMap::GetTDFName(const std::string& mapname)
-{
-	if (mapname.length() < 3)
-		throw std::runtime_error("CReadMap::GetTDFName(): mapname '" + mapname + "' too short");
-
-	string extension = mapname.substr(mapname.length()-3);
-	if (extension == "smf")
-		return string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
-	else if(extension == "sm3")
-		return string("maps/")+mapname;
-	else
-		throw std::runtime_error("CReadMap::GetTDFName(): Unknown extension: " + extension);
-}
 
 CReadMap* CReadMap::LoadMap (const std::string& mapname)
 {
@@ -78,8 +56,6 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (!rm)
 		return 0;
 
-	rm->mapName = mapname;
-
 	/* Read metal map */
 	MapBitmapInfo mbi;
 	unsigned char  *metalmap = rm->GetInfoMap ("metal", &mbi);
@@ -88,7 +64,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		int size = mbi.width*mbi.height;
 		unsigned char *map = SAFE_NEW unsigned char[size];
 		memcpy(map, metalmap, size);
-		rm->metalMap = SAFE_NEW CMetalMap(map, mbi.width, mbi.height, rm->maxMetal);
+		rm->metalMap = SAFE_NEW CMetalMap(map, mbi.width, mbi.height, mapInfo->map.maxMetal);
 	}
 	if (metalmap) rm->FreeInfoMap ("metal", metalmap);
 
@@ -106,27 +82,9 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 		assert (gs->hmapx == tbi.width && gs->hmapy == tbi.height);
 		rm->typemap = SAFE_NEW unsigned char[tbi.width*tbi.height];
 		memcpy(rm->typemap, typemap, tbi.width*tbi.height);
-
-		rm->terrainTypes.resize(256);
-		for(int a=0;a<256;++a){
-			char tname[200];
-			sprintf(tname,"TerrainType%i\\",a);
-			string section="map\\";
-			section+=tname;
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].name,"Default",section+"name");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].hardness,"1",section+"hardness");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].tankSpeed,"1",section+"tankmovespeed");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].kbotSpeed,"1",section+"kbotmovespeed");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].hoverSpeed,"1",section+"hovermovespeed");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].shipSpeed,"1",section+"shipmovespeed");
-			rm->mapDefParser.GetDef(rm->terrainTypes[a].receiveTracks,"1",section+"receivetracks");
-		}
 	} else
 		throw content_error("Bad/no terrain type map.");
 	if (typemap) rm->FreeInfoMap ("type", typemap);
-
-	// FIXME: this isn't really the right place for this -> refactor sometime
-	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
 	return rm;
 }
@@ -137,8 +95,6 @@ CReadMap::CReadMap() :
 		slopemap(NULL),
 		facenormals(NULL),
 		typemap(NULL),
-		heightLinePal(NULL),
-//		groundBlockingObjectMap(NULL),
 		metalMap(NULL)
 {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
@@ -156,8 +112,6 @@ CReadMap::~CReadMap()
 		delete[] mipHeightmap[i];
 
 	delete[] orgheightmap;
-//	delete[] groundBlockingObjectMap;
-	delete[] heightLinePal;
 }
 
 void CReadMap::Serialize(creg::ISerializer& s)
@@ -172,11 +126,8 @@ void CReadMap::Serialize(creg::ISerializer& s)
 void CReadMap::Initialize()
 {
 	PrintLoadMsg("Loading Map");
-	float* heightmap = GetHeightmap();
 
 	orgheightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
-	for(int y=0;y<(gs->mapy+1)*(gs->mapx+1);++y)
-		orgheightmap[y]=heightmap[y];
 
 	//	normals=SAFE_NEW float3[(gs->mapx+1)*(gs->mapy+1)];
 	facenormals=SAFE_NEW float3[gs->mapx*gs->mapy*2];
@@ -187,36 +138,6 @@ void CReadMap::Initialize()
 		mipHeightmap[i] = SAFE_NEW float[(gs->mapx>>i)*(gs->mapy>>i)];
 
 	slopemap=SAFE_NEW float[gs->hmapx*gs->hmapy];
-
-	heightLinePal=SAFE_NEW unsigned char[3*256];
-	if(configHandler.GetInt("ColorElev",1)){
-		for(int a=0;a<86;++a){
-			heightLinePal[a*3+0]=255-a*3;
-			heightLinePal[a*3+1]=a*3;
-			heightLinePal[a*3+2]=0;
-		}
-		for(int a=86;a<172;++a){
-			heightLinePal[a*3+0]=0;
-			heightLinePal[a*3+1]=255-(a-86)*3;
-			heightLinePal[a*3+2]=(a-86)*3;
-		}
-		for(int a=172;a<256;++a){
-			heightLinePal[a*3+0]=(a-172)*3;
-			heightLinePal[a*3+1]=0;
-			heightLinePal[a*3+2]=255-(a-172)*3;
-		}
-	} else {
-		for(int a=0;a<29;++a){
-			heightLinePal[a*3+0]=255-a*8;
-			heightLinePal[a*3+1]=255-a*8;
-			heightLinePal[a*3+2]=255-a*8;
-		}
-		for(int a=29;a<256;++a){
-			heightLinePal[a*3+0]=a;
-			heightLinePal[a*3+1]=a;
-			heightLinePal[a*3+2]=a;
-		}
-	}
 
 	CalcHeightfieldData();
 }
@@ -310,75 +231,6 @@ void CReadMap::CalcHeightfieldData()
 	}
 }
 
-
-extern GLfloat FogLand[];
-
-void CReadMap::ParseSettings(TdfParser& resources)
-{
-	mapHumanName = mapDefParser.SGetValueDef(mapName, "MAP\\Description");
-
-	gs->sunVector=mapDefParser.GetFloat3(float3(0,1,2),"MAP\\LIGHT\\SunDir");
-	gs->sunVector.Normalize();
-	gs->sunVector4[0]=gs->sunVector[0];
-	gs->sunVector4[1]=gs->sunVector[1];
-	gs->sunVector4[2]=gs->sunVector[2];
-	gs->sunVector4[3]=0;
-
-	gs->gravity=-atof(mapDefParser.SGetValueDef("130","MAP\\Gravity").c_str())/(GAME_SPEED*GAME_SPEED);
-
-	float3 fogColor=mapDefParser.GetFloat3(float3(0.7f,0.7f,0.8f),"MAP\\ATMOSPHERE\\FogColor");
-	FogLand[0]=fogColor[0];
-	FogLand[1]=fogColor[1];
-	FogLand[2]=fogColor[2];
-
-	mapDefParser.GetDef(skyBox, "", "MAP\\ATMOSPHERE\\SkyBox");
-	std::string tmp;
-	mapDefParser.GetDef(tmp, "", "MAP\\WATER\\WaterPlaneColor");
-	if(tmp.empty())
-		hasWaterPlane=0;
-	else
-	{
-		hasWaterPlane = 1;
-		waterPlaneColor = mapDefParser.GetFloat3(float3(0.0f,0.4f,0.0f),"MAP\\WATER\\WaterPlaneColor");
-	}
-	mapDefParser.GetDef(tidalStrength, "0", "MAP\\TidalStrength");
-
-	waterSurfaceColor=mapDefParser.GetFloat3(float3(0.75f,0.8f,0.85f),"MAP\\WATER\\WaterSurfaceColor");
-	waterAbsorb=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterAbsorb");
-	waterBaseColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterBaseColor");
-	waterMinColor=mapDefParser.GetFloat3(float3(0,0,0),"MAP\\WATER\\WaterMinColor");
-	mapDefParser.GetDef(waterTexture, "", "MAP\\WATER\\WaterTexture");
-	if(waterTexture.empty())	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
-		waterTexture = "bitmaps/"+resources.SGetValueDef("ocean.jpg","resources\\graphics\\maps\\watertex");
-	else
-		waterTexture = "maps/" + waterTexture;
-
-	ambientColor=mapDefParser.GetFloat3(float3(0.5f,0.5f,0.5f),"MAP\\LIGHT\\GroundAmbientColor");
-	sunColor=mapDefParser.GetFloat3(float3(0.5f,0.5f,0.5f),"MAP\\LIGHT\\GroundSunColor");
-	specularColor=mapDefParser.GetFloat3(float3(0.1f,0.1f,0.1f),"MAP\\LIGHT\\GroundSpecularColor");
-	mapDefParser.GetDef(shadowDensity, "0.8", "MAP\\LIGHT\\GroundShadowDensity");
-
-	mapDefParser.GetDef(maxMetal,"0.02","MAP\\MaxMetal");
-	mapDefParser.GetDef(extractorRadius,"500","MAP\\ExtractorRadius");
-
-	mapDefParser.GetDef(voidWater, "0", "MAP\\voidWater");
-}
-
-//this function assumes that the correct map has been loaded and only load/saves new height values
-void CReadMap::LoadSaveMap(CLoadSaveInterface* file,bool loading)
-{
-	float* heightmap=readmap->GetHeightmap();
-	//load/save heightmap
-	for(int y=0;y<gs->mapy+1;++y){
-		for(int x=0;x<gs->mapx+1;++x){
-			file->lsFloat(heightmap[y*(gs->mapx+1)+x]);
-		}
-	}
-	//recalculate dependent values if loading
-	if(loading){
-		mapDamage->RecalcArea(0,gs->mapx,0,gs->mapy);
-	}
-}
 
 CReadMap::IQuadDrawer::~IQuadDrawer() {
 }

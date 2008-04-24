@@ -7,6 +7,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
@@ -35,16 +36,16 @@ CAdvSky::CAdvSky()
 	domeheight=cos(PI/16)*1.01f;
 	domeWidth=sin(2*PI/32)*400*1.7f;
 
-	sundir2=gs->sunVector;
+	sundir2=mapInfo->light.sunDir;
 	sundir2.y=0;
 	if(sundir2.Length()==0)
 		sundir2.x=1;
 	sundir2.Normalize();
 	sundir1=sundir2.cross(UpVector);
 
-	modSunDir.y=gs->sunVector.y;
+	modSunDir.y=mapInfo->light.sunDir.y;
 	modSunDir.x=0;
-	modSunDir.z=sqrt(gs->sunVector.x*gs->sunVector.x+gs->sunVector.z*gs->sunVector.z);
+	modSunDir.z=sqrt(mapInfo->light.sunDir.x*mapInfo->light.sunDir.x+mapInfo->light.sunDir.z*mapInfo->light.sunDir.z);
 
 	sunTexCoordX=0.5f;
 	sunTexCoordY=GetTexCoordFromDir(modSunDir);
@@ -57,12 +58,13 @@ CAdvSky::CAdvSky()
 //	dynamicSky=!!regHandler.GetInt("DynamicSky",0);
 	dynamicSky=false;
 	lastCloudUpdate=-30;
-	readmap->mapDefParser.GetDef(cloudDensity,"0.5","MAP\\ATMOSPHERE\\CloudDensity");
-	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
+
+	cloudDensity = mapInfo->atmosphere.cloudDensity;
+	cloudColor = mapInfo->atmosphere.cloudColor;
+	skyColor = mapInfo->atmosphere.skyColor;
+	sunColor = mapInfo->atmosphere.sunColor;
+	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart>0.99f) gu->drawFog = false;
-	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1f,0.15f,0.7f),"MAP\\ATMOSPHERE\\SkyColor");
-	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
-	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
 
 	CreateClouds();
 	InitSun();

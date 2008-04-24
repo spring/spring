@@ -3,6 +3,7 @@
 #include "ScriptMoveType.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -195,7 +196,7 @@ void CScriptMoveType::Update()
 			                    (owner->rightdir * -relVel.x); // x is left
 			owner->speed += rVel;
 		}
-		vel.y        += gs->gravity * gravityFactor;
+		vel.y        += mapInfo->map.gravity * gravityFactor;
 		owner->speed += (wind.GetCurrentWind() * windFactor);
 		owner->pos   += owner->speed;
 	}

@@ -25,6 +25,7 @@
 #include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/3DModelParser.h"

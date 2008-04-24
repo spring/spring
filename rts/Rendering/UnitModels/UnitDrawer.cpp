@@ -13,6 +13,7 @@
 #include "Lua/LuaRules.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/Env/BaseSky.h"
@@ -88,11 +89,11 @@ CUnitDrawer::CUnitDrawer(void)
 
 	whiteTex=white.CreateTexture(false);
 
-	unitAmbientColor=readmap->mapDefParser.GetFloat3(float3(0.4f,0.4f,0.4f),"MAP\\LIGHT\\UnitAmbientColor");
-	unitSunColor=readmap->mapDefParser.GetFloat3(float3(0.7f,0.7f,0.7f),"MAP\\LIGHT\\UnitSunColor");
+	unitAmbientColor = mapInfo->light.unitAmbientColor;
+	unitSunColor = mapInfo->light.unitAmbientColor;
+	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
-	float3 specularSunColor=readmap->mapDefParser.GetFloat3(unitSunColor,"MAP\\LIGHT\\SpecularSunColor");
-	readmap->mapDefParser.GetDef(unitShadowDensity,"0.8","MAP\\LIGHT\\UnitShadowDensity");
+	float3 specularSunColor = mapInfo->light.specularSunColor;
 
 	advShading=!!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1 : 0);
 	if (advShading && !GLEW_ARB_fragment_program) {
@@ -137,12 +138,12 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,specTexSize,float3( 1, 1, 1),float3( 0, 0,-2),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,specTexSize,float3(-1, 1,-1),float3( 0, 0, 2),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,specTexSize,float3(-1 ,1,-1),float3( 2, 0, 0),float3(0, 0, 2),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,specTexSize,float3(-1,-1, 1),float3( 2, 0, 0),float3(0, 0,-2),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),gs->sunVector,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,specTexSize,float3( 1, 1, 1),float3( 0, 0,-2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,specTexSize,float3(-1, 1,-1),float3( 0, 0, 2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,specTexSize,float3(-1 ,1,-1),float3( 2, 0, 0),float3(0, 0, 2),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,specTexSize,float3(-1,-1, 1),float3( 2, 0, 0),float3(0, 0,-2),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 	}
 }
 
@@ -923,7 +924,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		}
 		glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, gs->sunVector.x, gs->sunVector.y, gs->sunVector.z, 0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y, mapInfo->light.sunDir.z, 0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, camera->pos.x, camera->pos.y, camera->pos.z, 0);
@@ -967,7 +968,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
+		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);	// Position The Light
 		glEnable(GL_LIGHT1);								// Enable Light One
 	//	glDisable(GL_CULL_FACE);
 	//	glCullFace(GL_BACK);
@@ -1115,7 +1116,7 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		}
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
 
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, gs->sunVector.x,gs->sunVector.y,gs->sunVector.z,0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, mapInfo->light.sunDir.x,mapInfo->light.sunDir.y,mapInfo->light.sunDir.z,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, unitAmbientColor.x,unitAmbientColor.y,unitAmbientColor.z,1);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, unitSunColor.x,unitSunColor.y,unitSunColor.z,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, camera->pos.x, camera->pos.y, camera->pos.z, 0);
@@ -1166,7 +1167,7 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION,gs->sunVector4);	// Position The Light
+		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);	// Position The Light
 		glEnable(GL_LIGHT1);								// Enable Light One
 
 		SetupBasicS3OTexture0();

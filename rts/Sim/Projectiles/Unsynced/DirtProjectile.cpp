@@ -6,6 +6,7 @@
 #include "DirtProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "mmgr.h"
@@ -61,7 +62,7 @@ CDirtProjectile::~CDirtProjectile()
 void CDirtProjectile::Update()
 {
 	speed*=slowdown;
-	speed.y+=gs->gravity;
+	speed.y+=mapInfo->map.gravity;
 	pos+=speed;
 	alpha-=alphaFalloff;
 	size+=sizeExpansion;

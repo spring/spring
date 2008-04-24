@@ -3,6 +3,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
 #include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Game/GameHelper.h"
 #include "myMath.h"
@@ -648,7 +649,7 @@ void CGroundMoveType::UpdateSkid(void)
 	SyncedFloat3& midPos=owner->midPos;
 
 	if(flying){
-		speed.y+=gs->gravity;
+		speed.y+=mapInfo->map.gravity;
 		if(midPos.y < 0)
 			speed*=0.95f;
 
@@ -694,8 +695,8 @@ void CGroundMoveType::UpdateSkid(void)
 		} else {
 			if (onSlope) {
 				float3 dir = ground->GetNormal(midPos.x, midPos.z);
-				float3 normalForce = dir*dir.dot(UpVector*gs->gravity);
-				float3 newForce = UpVector*gs->gravity - normalForce;
+				float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
+				float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
 				speed+=newForce;
 				speedf = speed.Length();
 				speed *= 1 - (.1*dir.y);
@@ -719,8 +720,8 @@ void CGroundMoveType::UpdateSkid(void)
 		else
 			wh = ground->GetHeight2(pos.x, pos.z);
 
-		if(wh-pos.y < speed.y + gs->gravity){
-			speed.y += gs->gravity;
+		if(wh-pos.y < speed.y + mapInfo->map.gravity){
+			speed.y += mapInfo->map.gravity;
 			skidding = true; // flying requires skidding
 			flying = true;
 		} else if(wh-pos.y > speed.y){
@@ -754,7 +755,7 @@ void CGroundMoveType::UpdateControlledDrop(void)
 		//set us upright
 		owner->cob->Call("Falling"); //start/continue parachute animation
 
-		speed.y += gs->gravity*owner->fallSpeed;
+		speed.y += mapInfo->map.gravity*owner->fallSpeed;
 
 		if(owner->speed.y > 0) //sometimes the dropped unit gets an upward force, still unsure where its coming from
 			owner->speed.y = 0;

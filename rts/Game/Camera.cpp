@@ -169,7 +169,7 @@ void CCamera::Update(bool freeze)
 	}
 
 	const float gndHeight = ground->GetHeight(pos.x, pos.z);
-	const float rangemod = 1.0f + max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
+	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
 	const float zNear = (NEAR_PLANE * rangemod);
 	gu->viewRange = MAX_VIEW_RANGE * rangemod;
 

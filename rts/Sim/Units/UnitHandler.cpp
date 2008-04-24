@@ -10,6 +10,7 @@
 #include "TimeProfiler.h"
 #include "myMath.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/FartextureHandler.h"
@@ -133,7 +134,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 	slowUpdateIterator = activeUnits.end();
 
-	waterDamage=atof(readmap->mapDefParser.SGetValueDef("0","MAP\\WATER\\WaterDamage").c_str())*(16.0f/30.0f);
+	waterDamage = mapInfo->water.damage;
 
 	if (gameSetup) {
 		maxUnits = gameSetup->maxUnits;
