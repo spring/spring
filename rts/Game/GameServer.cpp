@@ -436,7 +436,15 @@ void CGameServer::Update()
 		std::string msg = hostif->GetChatMessage();
 
 		if (!msg.empty())
-			GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
+		{
+			if (msg.at(0) == '/')
+			{
+				Action buf(msg);
+				PushAction(buf);
+			}
+			else
+				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
+		}
 	}
 	
 	if ((SDL_GetTicks() - serverStartTime) > serverTimeout && serverNet->MaxConnectionID() == -1)
@@ -1305,7 +1313,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
 	static const int pregameRandomSeed = rng();
-	serverNet->SendRandSeed(pregameRandomSeed);
+	serverNet->SendRandSeed(pregameRandomSeed, static_cast<int>(hisNewNumber));
 	serverNet->SendData(gameData->Pack(), hisNewNumber);
 
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
