@@ -1,7 +1,7 @@
-
 #ifndef SM3_MAP_H
 #define SM3_MAP_H
 
+#include <map>
 #include "Map/ReadMap.h"
 #include "terrain/TerrainBase.h"
 #include "terrain/Terrain.h"
