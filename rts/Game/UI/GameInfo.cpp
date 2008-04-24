@@ -9,6 +9,7 @@
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Game/Team.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
@@ -170,10 +171,10 @@ void CGameInfo::Draw()
 	values.push_back(gs->gameMode > 0 ? true : false);
 
 	labels.push_back("Gravity:");
-	values.push_back(-(gs->gravity * GAME_SPEED * GAME_SPEED));
+	values.push_back(-(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED));
 
 	labels.push_back("Tidal:");
-	values.push_back(readmap->tidalStrength);
+	values.push_back(mapInfo->map.tidalStrength);
 
 	labels.push_back("Min Wind:");
 	values.push_back(wind.GetMinWind());
@@ -194,7 +195,7 @@ void CGameInfo::Draw()
 	values.push_back(buf);
 	
 	labels.push_back("Map Name:");
-	values.push_back(readmap->mapName.c_str());
+	values.push_back(mapInfo->map.name.c_str());
 
 	labels.push_back("Mod Name:");
 	values.push_back(modInfo.filename.c_str());

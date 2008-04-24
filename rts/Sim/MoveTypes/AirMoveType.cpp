@@ -4,6 +4,7 @@
 #include "Game/Player.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Mobility.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -966,7 +967,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 
 	speed += engineVector * maxAcc * engine;
-	speed.y += gs->gravity * myGravity;
+	speed.y += mapInfo->map.gravity * myGravity;
 	speed *= invDrag;
 
 	float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;

@@ -103,7 +103,7 @@ namespace terrain {
 		TiledTexture ();
 		~TiledTexture ();
 
-		void Load(const std::string& name, const std::string& section, ILoadCallback *cb, TdfParser *tdf, bool isBumpmap);
+		void Load(const std::string& name, const std::string& section, ILoadCallback *cb, const TdfParser *tdf, bool isBumpmap);
 		static TiledTexture* CreateFlatBumpmap();
 	};
 
@@ -113,7 +113,7 @@ namespace terrain {
 		~Blendmap ();
 
 		void Generate (Heightmap *rootHm, int lodLevel, float hmscale, float hmoffset);
-		void Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, TdfParser *tdf);
+		void Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, const TdfParser *tdf);
 
 		struct GeneratorInfo {
 			float coverage, noise;

@@ -7,6 +7,7 @@
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
+#include "Map/MapInfo.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
@@ -56,9 +57,9 @@ void CBombDropper::Update()
 		if(weaponPos.y>targetPos.y){
 			float d=targetPos.y-weaponPos.y;
 			float s=-owner->speed.y;
-			float sq=(s-2*d)/-(weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
+			float sq=(s-2*d)/-(weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
 			if(sq>0)
-				predict=s/(weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity))+sqrt(sq);
+				predict=s/(weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity))+sqrt(sq);
 			else
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
@@ -125,7 +126,7 @@ void CBombDropper::Fire(void)
 		}
 		SAFE_NEW CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
 				weaponDef, 1000, areaOfEffect,
-				weaponDef->myGravity==0 ? gs->gravity : -(weaponDef->myGravity));
+				weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
 	}
 	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

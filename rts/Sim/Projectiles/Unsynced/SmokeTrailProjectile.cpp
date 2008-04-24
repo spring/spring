@@ -111,7 +111,7 @@ void CSmokeTrailProjectile::Draw()
 		if(lastSegment)
 			a1=0;
 		a1*=0.7f+fabs(dif.dot(dir1));
-		float alpha=min(255.f,max(0.f,a1));
+		float alpha=std::min(255.f,std::max(0.f,a1));
 		col[0]=(unsigned char) (color*alpha);
 		col[1]=(unsigned char) (color*alpha);
 		col[2]=(unsigned char) (color*alpha);
@@ -122,7 +122,7 @@ void CSmokeTrailProjectile::Draw()
 		if(firstSegment)
 			a2=0;
 		a2*=0.7f+fabs(dif2.dot(dir2));
-		alpha=min(255.f,max(0.f,a2));
+		alpha=std::min(255.f,std::max(0.f,a2));
 		col2[0]=(unsigned char) (color*alpha);
 		col2[1]=(unsigned char) (color*alpha);
 		col2[2]=(unsigned char) (color*alpha);
@@ -141,7 +141,7 @@ void CSmokeTrailProjectile::Draw()
 			unsigned char col3[4];
 			float a2=(1-float(age+4)/(lifeTime))*255;
 			a2*=0.7f+fabs(dif3.dot(middir));
-			alpha=min(255.f,max(0.f,a2));
+			alpha=std::min(255.f,std::max(0.f,a2));
 			col3[0]=(unsigned char) (color*alpha);
 			col3[1]=(unsigned char) (color*alpha);
 			col3[2]=(unsigned char) (color*alpha);
@@ -168,7 +168,7 @@ void CSmokeTrailProjectile::Draw()
 		unsigned char col[4];
 		for(int a=0;a<8;++a){
 			float a1=1-float(age+a)/lifeTime;
-			float alpha=min(255.f,max(0.f,a1*255));
+			float alpha=std::min(255.f,std::max(0.f,a1*255));
 			col[0]=(unsigned char) (color*alpha);
 			col[1]=(unsigned char) (color*alpha);
 			col[2]=(unsigned char) (color*alpha);

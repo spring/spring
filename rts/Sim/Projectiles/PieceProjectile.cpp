@@ -4,6 +4,7 @@
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Matrix44f.h"
 #include "myMath.h"
 #include "PieceProjectile.h"
@@ -263,7 +264,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 void CPieceProjectile::Update()
 {
 	if (flags & PP_Fall) {
-		speed.y += gs->gravity;
+		speed.y += mapInfo->map.gravity;
 	}
 
 	speed *= 0.997f;

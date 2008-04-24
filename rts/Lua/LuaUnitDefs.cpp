@@ -22,6 +22,7 @@
 #include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -537,7 +538,7 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 {
 	const UnitDef& ud = *((const UnitDef*)data);
 	const float basicEnergy = (ud.energyMake - ud.energyUpkeep);
-	const float tidalEnergy = (ud.tidalGenerator * readmap->tidalStrength);
+	const float tidalEnergy = (ud.tidalGenerator * mapInfo->map.tidalStrength);
 	float windEnergy = 0.0f;
 	if (ud.windGenerator > 0.0f) {
 		windEnergy = (0.25f * (wind.GetMinWind() + wind.GetMaxWind()));

@@ -303,15 +303,6 @@ public:
 	int gameMode;
 
 	/**
-	 * @brief gravity
-	 *
-	 * Stores the gravity as a negative number
-	 * and in units/frame^2
-	 * (NOT positive units/second^2 as in the mapfile)
-	 */
-	float gravity;
-
-	/**
 	 * @brief players
 	 *
 	 * Array of CPlayer pointers, for all the
@@ -341,20 +332,6 @@ public:
 	 * The number of active players
 	 */
 	int activePlayers;
-
-	/**
-	 * @brief sun vector
-	 *
-	 * Holds vector for the direction of the sun
-	 */
-	float3 sunVector;
-
-	/**
-	 * @brief sun vector4
-	 *
-	 * Holds vector for the sun as 4 components
-	 */
-	float sunVector4[4];
 
 	/**
 	 * @brief Player

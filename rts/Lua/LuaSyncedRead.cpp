@@ -26,6 +26,9 @@
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
+#include "Map/MetalMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
@@ -3634,7 +3637,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
 	const int typeIndex = readmap->typemap[index];
-	const CReadMap::TerrainType& tt = readmap->terrainTypes[typeIndex];
+	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[typeIndex];
 
 	lua_pushstring(L, tt.name.c_str());
 	lua_pushnumber(L, metal);
@@ -3643,7 +3646,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	lua_pushnumber(L, tt.kbotSpeed);
 	lua_pushnumber(L, tt.hoverSpeed);
 	lua_pushnumber(L, tt.shipSpeed);
-	lua_pushboolean(L, !!tt.receiveTracks);
+	lua_pushboolean(L, tt.receiveTracks);
 	return 8;
 }
 

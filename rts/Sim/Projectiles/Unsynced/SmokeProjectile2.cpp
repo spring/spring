@@ -104,18 +104,18 @@ void CSmokeProjectile2::Update()
 void CSmokeProjectile2::Draw()
 {
 	inArray=true;
-	float interAge=min(1.0f,age+ageSpeed*gu->timeOffset);
+	float interAge=std::min(1.0f,age+ageSpeed*gu->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
 	if(interAge<0.05f)
 		alpha=(unsigned char)(interAge*19*127);
 	else
 		alpha=(unsigned char)((1-interAge)*127);
-	float rglow=max(0.f,(1-interAge*glowFalloff)*127);
-	float gglow=max(0.f,(1-interAge*glowFalloff*2.5f)*127);
+	float rglow=std::max(0.f,(1-interAge*glowFalloff)*127);
+	float gglow=std::max(0.f,(1-interAge*glowFalloff*2.5f)*127);
 	col[0]=(unsigned char)(color*alpha+rglow);
 	col[1]=(unsigned char)(color*alpha+gglow);
-	col[2]=(unsigned char)max(0.f,color*alpha-gglow*0.5f);
+	col[2]=(unsigned char)std::max(0.f,color*alpha-gglow*0.5f);
 	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
 	//int frame=textureNum;
 	//float xmod=0.125f+(float(int(frame%6)))/16.0f;

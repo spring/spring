@@ -8,6 +8,7 @@
 #include "Game/Team.h"
 #include "Game/GameSetup.h"
 #include "Game/Game.h"
+#include "Map/MapInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -97,7 +98,7 @@ void CCommanderScript::GameStart()
 			StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
 
 		TdfParser p2;
-		CReadMap::OpenTDF(stupidGlobalMapname, p2);
+		CMapInfo::OpenTDF(stupidGlobalMapname, p2);
 
 		float x0, x1, z0, z1;
 		p2.GetDef(x0, "1000", "MAP\\TEAM0\\StartPosX");

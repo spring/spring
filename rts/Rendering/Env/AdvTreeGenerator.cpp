@@ -8,8 +8,10 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
+#include "TdfParser.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -160,7 +162,7 @@ void CAdvTreeGenerator::Draw()
 
 void CAdvTreeGenerator::DrawTrunk(const float3 &start, const float3 &end,const float3& orto1,const float3& orto2, float size)
 {
-	float3 flatSun=gs->sunVector;
+	float3 flatSun=mapInfo->light.sunDir;
 	flatSun.y=0;
 
 	int numIter=(int)max(3.0f,size*10);
@@ -237,7 +239,7 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 	float baseRot=fRand(2*PI);
 	int numLeaves=(int)length*10/MAX_TREE_HEIGHT;
 
-	float3 flatSun=gs->sunVector;
+	float3 flatSun=mapInfo->light.sunDir;
 	flatSun.y=0;
 
 	for(int a=0;a<numLeaves+1;a++){
@@ -299,8 +301,8 @@ void CAdvTreeGenerator::CreateFarTex()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1,0,0,0);	//camera side
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9, 0,1,0,0);	//camera up
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);	//position delta
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, readmap->sunColor.x,readmap->sunColor.y,readmap->sunColor.z,0.85f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, readmap->ambientColor.x,readmap->ambientColor.y,readmap->ambientColor.z,0.85f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, mapInfo->light.groundSunColor.x,mapInfo->light.groundSunColor.y,mapInfo->light.groundSunColor.z,0.85f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,0.85f);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12,0,0,0,0.02f);	//w=alpha/height modifier
 	glAlphaFunc(GL_GREATER,0.5f);
 	glDisable(GL_FOG);
@@ -681,7 +683,7 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 {
 	float3 orto1(1,0,0);
 	float3 orto2(0,0,1);
-	float3 flatSun=gs->sunVector;
+	float3 flatSun=mapInfo->light.sunDir;
 	flatSun.y=0;
 
 	int numIter=8;
@@ -703,7 +705,7 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 
 void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, float size)
 {
-	float3 flatSun=gs->sunVector;
+	float3 flatSun=mapInfo->light.sunDir;
 	flatSun.y=0;
 
 	float3 orto1=dir.cross(UpVector);

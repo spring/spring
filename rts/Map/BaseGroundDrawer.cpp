@@ -4,6 +4,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
+#include "Map/HeightLinePalette.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Game/SelectedUnits.h"
@@ -43,21 +44,23 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	highResLosTex = !!configHandler.GetInt("HighResLos", 0);
 // 	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
 
-  jamColor[0] = (int)(losColorScale * 0.25f);
-  jamColor[1] = (int)(losColorScale * 0.0f);
-  jamColor[2] = (int)(losColorScale * 0.0f);
+	jamColor[0] = (int)(losColorScale * 0.25f);
+	jamColor[1] = (int)(losColorScale * 0.0f);
+	jamColor[2] = (int)(losColorScale * 0.0f);
 
-  losColor[0] = (int)(losColorScale * 0.15f);
-  losColor[1] = (int)(losColorScale * 0.05f);
-  losColor[2] = (int)(losColorScale * 0.40f);
+	losColor[0] = (int)(losColorScale * 0.15f);
+	losColor[1] = (int)(losColorScale * 0.05f);
+	losColor[2] = (int)(losColorScale * 0.40f);
 
-  radarColor[0] = (int)(losColorScale *  0.05f);
-  radarColor[1] = (int)(losColorScale *  0.15f);
-  radarColor[2] = (int)(losColorScale * -0.20f);
+	radarColor[0] = (int)(losColorScale *  0.05f);
+	radarColor[1] = (int)(losColorScale *  0.15f);
+	radarColor[2] = (int)(losColorScale * -0.20f);
 
-  alwaysColor[0] = (int)(losColorScale * 0.25f);
-  alwaysColor[1] = (int)(losColorScale * 0.25f);
-  alwaysColor[2] = (int)(losColorScale * 0.25f);
+	alwaysColor[0] = (int)(losColorScale * 0.25f);
+	alwaysColor[1] = (int)(losColorScale * 0.25f);
+	alwaysColor[2] = (int)(losColorScale * 0.25f);
+
+	heightLinePal = SAFE_NEW CHeightLinePalette();
 }
 
 CBaseGroundDrawer::~CBaseGroundDrawer(void)
@@ -66,6 +69,8 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 	if (infoTex!=0) {
 		glDeleteTextures(1, &infoTex);
 	}
+
+	delete heightLinePal;
 }
 
 void CBaseGroundDrawer::DrawShadowPass(void)
@@ -278,7 +283,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				break;
 			}
 			case drawHeight: {
-				extraTexPal = readmap->heightLinePal;
+				extraTexPal = heightLinePal->GetData();
 				for (int y = starty; y < endy; ++y) {
 					for (int x = 0; x  < gs->mapx; ++x){
 						const float height = readmap->centerheightmap[(y * gs->mapx) + x];

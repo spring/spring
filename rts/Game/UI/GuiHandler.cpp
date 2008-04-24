@@ -22,6 +22,9 @@
 #include "Game/SelectedUnits.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
+#include "Map/MetalMap.h"
+#include "Map/ReadMap.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/glList.h"
@@ -82,11 +85,10 @@ CGuiHandler::CGuiHandler()
 
 	LoadConfig("ctrlpanel.txt");
 
-  miniMapMarker = !!configHandler.GetInt("MiniMapMarker", 1);
+	miniMapMarker = !!configHandler.GetInt("MiniMapMarker", 1);
+	invertQueueKey = !!configHandler.GetInt("InvertQueueKey", 0);
 
-  invertQueueKey = !!configHandler.GetInt("InvertQueueKey", 0);
-
-	readmap->mapDefParser.GetDef(autoShowMetal, "1", "MAP\\autoShowMetal");
+	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
 	if (GLEW_NV_depth_clamp && !!configHandler.GetInt("StencilBufferBits", 1)) {

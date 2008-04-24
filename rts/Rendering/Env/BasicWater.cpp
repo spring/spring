@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 
 #include "Rendering/Textures/Bitmap.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
@@ -18,8 +19,8 @@ CBasicWater::CBasicWater()
 {
 	glGenTextures(1, &texture);
 	CBitmap pic;
-	if (!pic.Load(readmap->waterTexture))
-		throw content_error("Could not read water texture from file " + readmap->waterTexture);
+	if (!pic.Load(mapInfo->water.texture))
+		throw content_error("Could not read water texture from file " + mapInfo->water.texture);
 
 	// create mipmapped texture
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -64,15 +65,13 @@ void CBasicWater::Draw()
 		// Use better repeat setting of 1 repeat per 4096 mapx/mapy for the new
 		// ocean.jpg while retaining backward compatibility with old maps relying
 		// on 1 repeat per 1024 mapx/mapy. (changed 16/05/2007)
-		if (readmap->waterTexture == "bitmaps/ocean.jpg") {
+		if (mapInfo->water.texture == "bitmaps/ocean.jpg") {
 			repeatX /= 4;
 			repeatY /= 4;
 		}
 
-		readmap->mapDefParser.GetTDef(repeatX, repeatX, "MAP\\WATER\\WaterRepeatX");
-		readmap->mapDefParser.GetTDef(repeatY, repeatY, "MAP\\WATER\\WaterRepeatY");
-		repeatX /= 16;
-		repeatY /= 16;
+		repeatX = (mapInfo->water.repeatX != 0 ? mapInfo->water.repeatX : repeatX) / 16;
+		repeatY = (mapInfo->water.repeatY != 0 ? mapInfo->water.repeatY : repeatY) / 16;
 
 		for(int y=0;y<16;y++){
 			for(int x=0;x<16;x++){

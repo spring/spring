@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "SmfReadMap.h"
 #include "mapfile.h"
+#include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
@@ -34,20 +35,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	ConfigureAnisotropy();
 
-	string smdfile = string("maps/")+mapname.substr(0,mapname.find_last_of('.'))+".smd";
-	mapDefParser.LoadFile(smdfile);
-	TdfParser resources("gamedata/resources.tdf");
-	ParseSettings(resources);
-
-	mapDefParser.GetDef(detailTexName, "", "MAP\\DetailTex");
-	if(detailTexName.empty())
-		detailTexName = "bitmaps/"+resources.SGetValueDef("detailtex2.bmp","resources\\graphics\\maps\\detailtex");
-	else
-		detailTexName = "maps/" + detailTexName;
-
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
-			float c=max(waterMinColor[b],waterBaseColor[b]-waterAbsorb[b]*a);
+			float c=max(mapInfo->water.minColor[b],mapInfo->water.baseColor[b]-mapInfo->water.absorb[b]*a);
 			waterHeightColors[a*4+b]=(unsigned char)(c*210);
 		}
 		waterHeightColors[a*4+3]=1;
@@ -104,6 +94,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	}
 
 	PrintLoadMsg("Loading detail textures");
+
+	detailTexName = mapInfo->smf.detailTexName;
 
 	CBitmap bm;
 	if (!bm.Load(detailTexName))
@@ -231,12 +223,12 @@ float3 CSmfReadMap::GetLightValue(int x, int y)
 	float3 n1=facenormals[(y*gs->mapx+x)*2]+facenormals[(y*gs->mapx+x)*2+1];
 	n1.Normalize();
 
-	float3 light=sunColor*gs->sunVector.dot(n1);
+	float3 light=mapInfo->light.groundSunColor*mapInfo->light.sunDir.dot(n1);
 	for(int a=0;a<3;++a)
 		if(light[a]<0)
 			light[a]=0;
 
-	light+=ambientColor;
+	light+=mapInfo->light.groundAmbientColor;
 	for(int a=0;a<3;++a)
 		if(light[a]>1)
 			light[a]=1;

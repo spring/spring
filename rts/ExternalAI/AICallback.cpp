@@ -12,6 +12,8 @@
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
+#include "Map/MapInfo.h"
+#include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
@@ -27,7 +29,6 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -829,32 +830,32 @@ const char* CAICallback::GetModName()
 
 float CAICallback::GetMaxMetal()
 {
-	return readmap->maxMetal;
+	return mapInfo->map.maxMetal;
 }
 
 float CAICallback::GetExtractorRadius()
 {
-	return readmap->extractorRadius;
+	return mapInfo->map.extractorRadius;
 }
 
 float CAICallback::GetMinWind()
 {
-	return wind.GetMinWind();
+	return mapInfo->atmosphere.minWind;
 }
 
 float CAICallback::GetMaxWind()
 {
-	return wind.GetMaxWind();
+	return mapInfo->atmosphere.maxWind;
 }
 
 float CAICallback::GetTidalStrength()
 {
-	return readmap->tidalStrength;
+	return mapInfo->map.tidalStrength;
 }
 
 float CAICallback::GetGravity()
 {
-	return gs->gravity;
+	return mapInfo->map.gravity;
 }
 
 /*const unsigned char* CAICallback::GetSupplyMap()

@@ -9,6 +9,7 @@
 #include <set>
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
@@ -36,7 +37,7 @@ void CSpawnScript::Update()
 		string s1=p.SGetValueDef("corcom","side1\\commander");
 
 		TdfParser p2;
-		CReadMap::OpenTDF (stupidGlobalMapname, p2);
+		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
 
 		float x0,z0;
 		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");

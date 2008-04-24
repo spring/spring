@@ -5,6 +5,8 @@
 #include "Game/Camera.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
 #include "Matrix44f.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -199,7 +201,7 @@ void CShadowHandler::CreateShadows(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	float3 sundir=gs->sunVector;
+	float3 sundir=mapInfo->light.sunDir;
 	cross1=(sundir.cross(UpVector)).Normalize();
 	cross2=cross1.cross(sundir);
 	centerPos=camera->pos;

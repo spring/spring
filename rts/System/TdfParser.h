@@ -51,20 +51,6 @@ public:
 
 
 	/**
-		*  @param value pointer to string to store the value in.
-		*  @param ... location of value, terminate with NULL.
-		*  @return true on success.
-
-	bool GetValue(std::string &value, ...);*/
-
-	/**
-		*  Retreive a specific value from the file and returns it, gives an error messagebox if value not found.
-		*  @param location location of value in the form "section\\section\\ ... \\name".
-		*  @return returns the value on success, undefined on failure.
-		*/
-	std::string SGetValueMSG(std::string const& location) const;
-
-	/**
 		*  Retreive a specific value from the file and returns it, returns the specified default value if not found.
 		*  @param defaultvalue
 		*  @param location location of value.
@@ -124,18 +110,6 @@ public:
 			//stream >> slask;
 
 		}
-	}
-
-	//template funktion för att häta ett värde, ger errormessagebox om värdet inte fins
-	template<typename T>
-	void GetMsg(T& value, const std::string& key) const
-	{
-		std::string str;
-		str = SGetValueMSG(key);
-
-		std::stringstream stream;
-		stream << str;
-		stream >> value;
 	}
 
 	//template funktion för att häta ett värde, tar defaultvärde om värdet inte fins

@@ -2,6 +2,7 @@
 #include "FlareProjectile.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
+#include "Map/MapInfo.h"
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -57,7 +58,7 @@ void CFlareProjectile::Update(void)
 	if(gs->frameNum>=activateFrame){
 		pos+=speed;
 		speed*=0.95f;
-		speed.y+=gs->gravity*0.3f;
+		speed.y+=mapInfo->map.gravity*0.3f;
 
 		if(owner && lastSub<gs->frameNum-owner->unitDef->flareSalvoDelay && numSub<owner->unitDef->flareSalvoSize){
 			subPos.push_back(owner->pos);
@@ -80,7 +81,7 @@ void CFlareProjectile::Update(void)
 		for(int a=0;a<numSub;++a){
 			subPos[a]+=subSpeed[a];
 			subSpeed[a]*=0.95f;
-			subSpeed[a].y+=gs->gravity*0.3f;
+			subSpeed[a].y+=mapInfo->map.gravity*0.3f;
 		}
 	}
 

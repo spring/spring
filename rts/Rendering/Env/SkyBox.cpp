@@ -5,6 +5,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
 #include "GlobalStuff.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "mmgr.h"
@@ -19,11 +20,12 @@ CSkyBox::CSkyBox(std::string texture)
 		throw content_error("Could not load skybox texture from file " + texture);
 	tex = btex.CreateTexture(0);
 
-	readmap->mapDefParser.GetDef(fogStart,"0.1","MAP\\ATMOSPHERE\\FogStart");
+	cloudDensity = mapInfo->atmosphere.cloudDensity;
+	cloudColor = mapInfo->atmosphere.cloudColor;
+	skyColor = mapInfo->atmosphere.skyColor;
+	sunColor = mapInfo->atmosphere.sunColor;
+	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart>0.99f) gu->drawFog = false;
-	skyColor=readmap->mapDefParser.GetFloat3(float3(0.1f,0.15f,0.7f),"MAP\\ATMOSPHERE\\SkyColor");
-	sunColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\SunColor");
-	cloudColor=readmap->mapDefParser.GetFloat3(float3(1,1,1),"MAP\\ATMOSPHERE\\CloudColor");
 }
 
 CSkyBox::~CSkyBox(void)

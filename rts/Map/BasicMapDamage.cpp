@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
+#include "MapInfo.h"
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
@@ -36,9 +37,9 @@ CBasicMapDamage::CBasicMapDamage(void)
 		craterTable[a]=0;
 	}
 	for(int a=0;a<256;++a)
-		invHardness[a]=1.0f/readmap->terrainTypes[a].hardness;
+		invHardness[a]=1.0f/mapInfo->terrainTypes[a].hardness;
 
-	mapHardness=atof(readmap->mapDefParser.SGetValueDef("100","MAP\\MapHardness").c_str());
+	mapHardness = mapInfo->map.hardness;
 
 	disabled = false;
 }

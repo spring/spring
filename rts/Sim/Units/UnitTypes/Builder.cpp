@@ -14,6 +14,7 @@
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/ReadMap.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Features/Feature.h"

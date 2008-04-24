@@ -8,11 +8,13 @@
 #include <GL/glew.h>
 #include <IL/il.h>
 #include <SDL_types.h>
+#include "Map/MapInfo.h"
 #include "Rendering/ShadowHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "FileSystem/FileHandler.h"
+#include "TdfParser.h"
 
 #include "terrain/TerrainNode.h"
 #include "Game/Camera.h"
@@ -77,16 +79,9 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		if (shadowHandler->drawShadows)
 			renderer->config.useShadowMaps = true;
 
-		// Load map info from TDF
-		std::string fn = std::string("maps/") + mapname;
-		mapDefParser.LoadFile (fn);
-		TdfParser resources("gamedata/resources.tdf");
-		ParseSettings(resources);
-
-		string minimap = mapDefParser.SGetValueDef(string(),"map\\minimap");
-		if (!minimap.empty()) {
+		if (!mapInfo->sm3.minimap.empty()) {
 			CBitmap bmp;
-			if(bmp.Load(minimap))
+			if(bmp.Load(mapInfo->sm3.minimap))
 				minimapTexture=bmp.CreateTexture(true);
 		}
 
@@ -100,13 +95,13 @@ void CSm3ReadMap::Initialize (const char *mapname)
 */
 		Sm3LoadCB loadcb;
 		terrain::LightingInfo lightInfo;
-		lightInfo.ambient = ambientColor;
+		lightInfo.ambient = mapInfo->light.groundAmbientColor;
 		terrain::StaticLight light;
-		light.color = sunColor;
+		light.color = mapInfo->light.groundSunColor;
 		light.directional = false;
-		light.position = gs->sunVector *1000000;
+		light.position = mapInfo->light.sunDir *1000000;
 		lightInfo.staticLights.push_back (light);
-		renderer->Load (mapDefParser, &lightInfo, &loadcb);
+		renderer->Load (mapInfo->GetMapDefParser(), &lightInfo, &loadcb);
 
 		height = width = renderer->GetHeightmapWidth ()-1;
 
@@ -124,6 +119,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 
 		CReadMap::Initialize();
 
+		const TdfParser& mapDefParser = mapInfo->GetMapDefParser();
 		if (mapDefParser.SectionExist("map\\featuretypes")) {
 			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
 			for (int a=0;a<numTypes;a++) {
@@ -255,7 +251,7 @@ const char *CSm3ReadMap::GetFeatureType (int typeID)
 void CSm3ReadMap::LoadFeatureData()
 {
 		// returns MapFeatureInfo[GetNumFeatures()]
-	std::string fd = mapDefParser.SGetValueDef(std::string(),"map\\featuredata");
+	std::string fd = mapInfo->GetMapDefParser().SGetValueDef(std::string(),"map\\featuredata");
 	if (!fd.empty()) {
 		CFileHandler fh(fd);
 		if (!fh.FileExists())
@@ -316,7 +312,7 @@ CSm3ReadMap::InfoMap::~InfoMap () {
 unsigned char *CSm3ReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bm)
 {
 	std::string map;
-	if (!mapDefParser.SGetValue(map, "MAP\\INFOMAPS\\" + name))
+	if (!mapInfo->GetMapDefParser().SGetValue(map, "MAP\\INFOMAPS\\" + name))
 		return 0;
 
 	CBitmap img;

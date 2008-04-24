@@ -16,6 +16,7 @@
 #include "Rendering/GroundFlash.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -30,6 +31,7 @@
 #include <algorithm>
 #include "Rendering/GL/IFramebuffer.h"
 #include "System/FileSystem/FileHandler.h"
+#include "TdfParser.h"
 #include "mmgr.h"
 #include "creg/STL_List.h"
 
@@ -356,7 +358,7 @@ void CProjectileHandler::Update()
 		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
 			(*pi)->pos+=(*pi)->speed;
 			(*pi)->speed*=0.996f;
-			(*pi)->speed.y+=gs->gravity;
+			(*pi)->speed.y+=mapInfo->map.gravity;
 			(*pi)->rot+=(*pi)->rotSpeed;
 			if((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x,(*pi)->pos.z)-10){
 				delete *pi;

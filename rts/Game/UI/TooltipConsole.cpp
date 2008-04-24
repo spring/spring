@@ -9,6 +9,9 @@
 #include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
+#include "Map/MetalMap.h"
+#include "Map/ReadMap.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/LosHandler.h"
@@ -141,7 +144,7 @@ static void GetDecoyResources(const CUnit* unit,
 	mMake += ud->metalMake;
 	eMake += ud->energyMake;
 	if (ud->tidalGenerator > 0.0f) {
-		eMake += (ud->tidalGenerator * readmap->tidalStrength);
+		eMake += (ud->tidalGenerator * mapInfo->map.tidalStrength);
 	}
 
 	bool active;
@@ -333,7 +336,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 	}
 
 	char tmp[512];
-	CReadMap::TerrainType* tt = &readmap->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
 	string ttype = tt->name;
 	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\n"
 	             "Speeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",

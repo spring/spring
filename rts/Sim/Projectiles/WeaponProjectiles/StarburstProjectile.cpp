@@ -3,6 +3,7 @@
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Matrix44f.h"
 #include "myMath.h"
 #include "Rendering/GL/myGL.h"
@@ -206,9 +207,9 @@ void CStarburstProjectile::Update(void)
 		if (distanceToTravel != MAX_WORLD_SIZE)
 			distanceToTravel -= speed.Length2D();
 	} else {
-		dir.y += gs->gravity;
+		dir.y += mapInfo->map.gravity;
 		dir.Normalize();
-		curSpeed += -gs->gravity;
+		curSpeed += -mapInfo->map.gravity;
 		speed = dir * curSpeed;
 	}
 

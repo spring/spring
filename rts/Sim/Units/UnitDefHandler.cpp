@@ -14,6 +14,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -575,7 +576,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.extractRange = 0;
 
 	if (ud.extractsMetal) {
-		ud.extractRange = readmap->extractorRadius;
+		ud.extractRange = mapInfo->map.extractorRadius;
 		ud.type = "MetalExtractor";
 	}
 	else if (ud.transportCapacity) {

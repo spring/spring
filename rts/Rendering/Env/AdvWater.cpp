@@ -16,7 +16,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Lua/LuaCallInHandler.h"
-
+#include "Map/MapInfo.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	if (loadShader)
 		waterFP=LoadFragmentProgram("water.fp");
 
-	waterSurfaceColor = readmap->waterSurfaceColor;
+	waterSurfaceColor = mapInfo->water.surfaceColor;
 }
 
 CAdvWater::~CAdvWater()
@@ -228,7 +228,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || readmap->voidWater)
+	if (readmap->minheight > 10 || mapInfo->map.voidWater)
 		return;
 
 	glViewport(0,0,128,128);

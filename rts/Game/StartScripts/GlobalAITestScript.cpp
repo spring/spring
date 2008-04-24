@@ -9,6 +9,7 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/FileSystem.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "mmgr.h"
 
@@ -45,7 +46,7 @@ void CGlobalAITestScript::Update(void)
 			string s1 = p.SGetValueDef("corcom", "side1\\commander");
 
 			TdfParser p2;
-			CReadMap::OpenTDF(stupidGlobalMapname, p2);
+			CMapInfo::OpenTDF(stupidGlobalMapname, p2);
 
 			float x0, x1, z0, z1;
 			p2.GetDef(x0, "1000", "MAP\\TEAM0\\StartPosX");

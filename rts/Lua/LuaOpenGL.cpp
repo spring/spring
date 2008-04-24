@@ -32,6 +32,7 @@
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/HeightMapTexture.h"
 #include "Rendering/glFont.h"
@@ -796,7 +797,7 @@ void LuaOpenGL::ResetDrawInMiniMap()
 void LuaOpenGL::SetupWorldLighting()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
+	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);
 	glEnable(GL_LIGHT1);
 }
 
@@ -876,7 +877,7 @@ void LuaOpenGL::SetupScreenLighting()
 	// sun light -- needs the camera transformation
 	glPushMatrix();
 	glLoadMatrixd(camera->GetModelview());
-	glLightfv(GL_LIGHT1, GL_POSITION, gs->sunVector4);
+	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
@@ -4807,17 +4808,17 @@ int LuaOpenGL::GetSun(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 0) {
-		lua_pushnumber(L, gs->sunVector4[0]);
-		lua_pushnumber(L, gs->sunVector4[1]);
-		lua_pushnumber(L, gs->sunVector4[2]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[0]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[1]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[2]);
 		return 3;
 	}
 
 	const string param = luaL_checkstring(L, 1);
 	if (param == "pos") {
-		lua_pushnumber(L, gs->sunVector4[0]);
-		lua_pushnumber(L, gs->sunVector4[1]);
-		lua_pushnumber(L, gs->sunVector4[2]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[0]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[1]);
+		lua_pushnumber(L, mapInfo->light.sunDir4[2]);
 		return 3;
 	}
 
@@ -4828,7 +4829,7 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	if (param == "shadowDensity") {
 		if (!unitMode) {
-			lua_pushnumber(L, readmap->shadowDensity);
+			lua_pushnumber(L, mapInfo->light.groundShadowDensity);
 		} else {
 			lua_pushnumber(L, unitDrawer->unitShadowDensity);
 		}
@@ -4836,21 +4837,21 @@ int LuaOpenGL::GetSun(lua_State* L)
 	}
 	else if (param == "diffuse") {
 		if (!unitMode) {
-			data = &readmap->sunColor;
+			data = &mapInfo->light.groundSunColor;
 		} else {
 			data = &unitDrawer->unitSunColor;
 		}
 	}
 	else if (param == "ambient") {
 		if (!unitMode) {
-			data = &readmap->sunColor;
+			data = &mapInfo->light.groundSunColor;
 		} else {
 			data = &unitDrawer->unitAmbientColor;
 		}
 	}
 	else if (param == "specular") {
 		if (!unitMode) {
-			data = &readmap->specularColor;
+			data = &mapInfo->light.groundSpecularColor;
 		}
 	}
 

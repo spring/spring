@@ -861,7 +861,7 @@ namespace terrain {
 		texturing->DebugEvent (event);
 	}
 
-	void Terrain::Load(TdfParser& tdf, LightingInfo *li, ILoadCallback *cb)
+	void Terrain::Load(const TdfParser& tdf, LightingInfo *li, ILoadCallback *cb)
 	{
 		string basepath = "MAP\\TERRAIN\\";
 

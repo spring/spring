@@ -6,16 +6,6 @@
 #ifndef AIBASE_H
 #define AIBASE_H
 
-#ifdef _WIN32
-
-#include <windows.h>
-
-#else
-
-#define WINAPI
-
-#endif
-
 // Shared library support
 #ifdef _WIN32
 	#define DLL_EXPORT extern "C" __declspec(dllexport)

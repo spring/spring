@@ -93,7 +93,7 @@ void CExplosiveProjectile::Collision()
 		float h=ground->GetHeight2(pos.x,pos.z);
 		if(h>pos.y){
 			float3 n=ground->GetNormal(pos.x,pos.z);
-			pos-=speed*max(0.0f,min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
+			pos-=speed*std::max(0.0f,std::min(1.0f,float((h-pos.y)*n.y/n.dot(speed)+0.1f)));
 		}
 		else if (weaponDef->waterweapon) {
 			return; //let waterweapons go underwater
