@@ -173,9 +173,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 		// CFeatureHandler left this volume's axis-scales uninitialized
 		// (ie. no "collisionVolumeScales" tag was defined in FeatureDef)
-		if (collisionVolumeData->GetScale(COLVOL_AXIS_X) < 0.01f &&
-			collisionVolumeData->GetScale(COLVOL_AXIS_Y) < 0.01f &&
-			collisionVolumeData->GetScale(COLVOL_AXIS_Z) < 0.01f) {
+		if (collisionVolumeData->GetScale(COLVOL_AXIS_X) <= 1.0f &&
+			collisionVolumeData->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
+			collisionVolumeData->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
 			collisionVolumeData->SetDefaultScale(model->radius);
 		}
 	}
