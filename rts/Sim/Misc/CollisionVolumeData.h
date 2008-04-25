@@ -64,9 +64,9 @@ struct CollisionVolumeData {
 		volumeType = vType % 3;
 		testType = tType % 2;
 
-		axisScales.x = (scales.x < EPS)? 1.0f: scales.x;  axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
-		axisScales.y = (scales.y < EPS)? 1.0f: scales.y;  axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
-		axisScales.z = (scales.z < EPS)? 1.0f: scales.z;  axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
+		axisScales.x = (scales.x < 1.0f)? 1.0f: scales.x;  axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
+		axisScales.y = (scales.y < 1.0f)? 1.0f: scales.y;  axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
+		axisScales.z = (scales.z < 1.0f)? 1.0f: scales.z;  axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
 
 		axisHIScales.x = 1.0f / axisHScales.x;  axisOffsets.x = offsets.x;
 		axisHIScales.y = 1.0f / axisHScales.y;  axisOffsets.y = offsets.y;

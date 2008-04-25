@@ -312,9 +312,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	// CUnitDefHandler left this volume's axis-scales uninitialized
 	// (ie. no "collisionVolumeScales" tag was defined in UnitDef)
-	if (unit->collisionVolumeData->GetScale(COLVOL_AXIS_X) < 0.01f &&
-		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Y) < 0.01f &&
-		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Z) < 0.01f) {
+	if (unit->collisionVolumeData->GetScale(COLVOL_AXIS_X) <= 1.0f &&
+		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
+		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
 		// aircraft still get half-size spheres for coldet purposes
 		// if no custom volume is defined (unit->model->radius and
 		// unit->radius themselves are no longer altered)
