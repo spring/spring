@@ -437,13 +437,19 @@ void CGameServer::Update()
 
 		if (!msg.empty())
 		{
-			if (msg.at(0) == '/')
+			if (!msg.at(0) == '/') // normal chat message
 			{
-				Action buf(msg);
+				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
+			}
+			else if (msg.at(0) == '/' && msg.at(1) == '/') // chatmessage with prefixed '/'
+			{
+				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg.substr(1)));
+			}
+			else // command
+			{
+				Action buf(msg.substr(1));
 				PushAction(buf);
 			}
-			else
-				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
 		}
 	}
 	
