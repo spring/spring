@@ -22,8 +22,8 @@ public:
 	bool InRadar(const float3& pos, int allyteam) {
 		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
 		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
-		const int square = max(0, min(ysize - 1, gz)) * xsize +
-		                   max(0, min(xsize - 1, gx));
+		const int square = std::max(0, std::min(ysize - 1, gz)) * xsize +
+		                   std::max(0, std::min(xsize - 1, gx));
 		if (pos.y < -0.5f) {
 			return (sonarMaps[allyteam][square] && !commonSonarJammerMap[square]);
 		}
@@ -38,7 +38,7 @@ public:
 	bool InRadar(const CUnit* unit, int allyteam) {
 		if(unit->stealth)
 			return false;
-		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
+		int square=std::max(0,std::min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+std::max(0,std::min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
 		if(unit->isUnderWater){
 			return (!!sonarMaps[allyteam][square]) && !commonSonarJammerMap[square];
 		}
@@ -50,7 +50,7 @@ public:
 	}
 
 	bool InSeismicDistance(const CUnit* unit, int allyteam) {
-		int square=max(0,min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+max(0,min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
+		int square=std::max(0,std::min(ysize-1,(int)unit->pos.z/(SQUARE_SIZE*RADAR_SIZE)))*xsize+std::max(0,std::min(xsize-1,(int)unit->pos.x/(SQUARE_SIZE*RADAR_SIZE)));
 		return !!seismicMaps[allyteam][square];
 	}
 

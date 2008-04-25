@@ -2967,7 +2967,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CollisionVolume.cpp"
+					RelativePath="..\..\Sim\Misc\CollisionHandler.cpp"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
@@ -3003,7 +3003,11 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CollisionVolume.h"
+					RelativePath="..\..\Sim\Misc\CollisionHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CollisionVolumeData.h"
 					>
 				</File>
 				<File

@@ -121,7 +121,7 @@ bool LuaUnitMaterial::SetLODCount(unsigned int count)
 
 bool LuaUnitMaterial::SetLastLOD(unsigned int lod)
 {
-	lastLOD = min(lod, lodCount - 1);
+	lastLOD = std::min(lod, lodCount - 1);
 	return true;
 }
 
@@ -331,7 +331,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
 	}
 
-	const int maxTex = max(texCount, prev.texCount);
+	const int maxTex = std::max(texCount, prev.texCount);
 	for (int t = 0; t < maxTex; t++) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		textures[t].Execute(prev.textures[t]);
@@ -367,7 +367,7 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return cmp;
 	}
 
-	const int maxTex = min(a.texCount, b.texCount);
+	const int maxTex = std::min(a.texCount, b.texCount);
 	for (int t = 0; t < maxTex; t++) {
 		cmp = LuaMatTexture::Compare(a.textures[t], b.textures[t]);
 		if (cmp != 0) {

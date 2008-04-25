@@ -64,7 +64,7 @@ void CBombDropper::Update()
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
 			float speedf=owner->speed.Length();
-			if(hitpos.distance2D(targetPos)<max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange){
+			if(hitpos.distance2D(targetPos)<std::max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange){
 				subClassReady=true;
 			}
 		}
@@ -111,10 +111,10 @@ void CBombDropper::Fire(void)
 		float3 dir=owner->speed;
 		dir.Normalize();
 		dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f); //add a random spray
-		dir.y=min(0.0f,dir.y);
+		dir.y=std::min(0.0f,dir.y);
 		dir.Normalize();
 		dif-=dir*dif.dot(dir);
-		dif/=max(0.01f,predict);
+		dif/=std::max(0.01f,predict);
 		float size=dif.Length();
 		if(size>1.0f)
 			dif/=size*1.0f;

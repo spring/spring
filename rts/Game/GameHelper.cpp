@@ -248,9 +248,8 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 				continue;
 			if (ignoreAllies && u->allyteam == owner->allyteam)
 				continue;
-			if (ignoreNeutrals) {
-				if ((gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) continue;
-				if (u->neutral) continue;
+			if (ignoreNeutrals && u->IsNeutral()) {
+				continue;
 			}
 
 			float3 dif = u->midPos - start;
@@ -856,7 +855,7 @@ bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float l
 			if (u == owner)
 				continue;
 
-			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
+			if (u->IsNeutral()) {
 				if (TestConeHelper(from, dir, length, spread, u))
 					return true;
 			}
@@ -930,7 +929,7 @@ bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& fl
 			if (u == owner)
 				continue;
 
-			if (u->neutral || (gs->useLuaGaia && u->team == gs->gaiaTeamID) || (u->team == MAX_TEAMS - 1)) {
+			if (u->IsNeutral()) {
 				if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
 					return true;
 			}
@@ -942,7 +941,7 @@ bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& fl
 
 
 /** helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
-    @return true if the unit u is in the firing cone, false otherwise */
+    @return true if the unit u is in the firing trajectory, false otherwise */
 bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
 {
 	float3 dif = u->midPos - from;

@@ -30,6 +30,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolumeData.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
@@ -83,6 +84,7 @@ float CUnit::expGrade = 0.0f;
 
 CUnit::CUnit ()
 :	unitDef(0),
+	collisionVolumeData(0),
 	team(0),
 	maxHealth(100),
 	health(100),
@@ -233,11 +235,11 @@ CUnit::CUnit ()
 
 CUnit::~CUnit()
 {
-	if(delayedWreckLevel>=0){
+	if (delayedWreckLevel >= 0) {
 		featureHandler->CreateWreckage(pos,wreckName, heading, buildFacing, delayedWreckLevel,team,-1,true,unitDef->name);
 	}
 
-	if(unitDef->isAirBase){
+	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
 	}
 
@@ -253,18 +255,17 @@ CUnit::~CUnit()
 	}
 #endif
 
-	if(activated && unitDef->targfac){
-		radarhandler->radarErrorSize[allyteam]*=radarhandler->targFacEffect;
+	if (activated && unitDef->targfac) {
+		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
 	}
 
-//	if(!beingBuilt){
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
-//	}
 
-	delete commandAI;     commandAI    = NULL;
-	delete moveType;      moveType     = NULL;
-	delete prevMoveType;  prevMoveType = NULL;
+	delete commandAI;           commandAI           = NULL;
+	delete moveType;            moveType            = NULL;
+	delete prevMoveType;        prevMoveType        = NULL;
+	delete collisionVolumeData; collisionVolumeData = NULL;
 
 	if (group) {
 		group->RemoveUnit(this);
@@ -272,14 +273,14 @@ CUnit::~CUnit()
 	group = NULL;
 
 	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi)
+	for (wi = weapons.begin(); wi != weapons.end(); ++wi)
 		delete *wi;
 
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
-	los=0;
+	los = 0;
 
-	if(hasRadarCapacity)
+	if (hasRadarCapacity)
 		radarhandler->RemoveUnit(this);
 
 	delete cob;

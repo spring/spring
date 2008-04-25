@@ -106,7 +106,7 @@ void CTorpedoProjectile::Update(void)
 
 		if (ttl > 0) {
 			if (curSpeed < maxSpeed)
-				curSpeed += max(0.2f, tracking);
+				curSpeed += std::max(0.2f, tracking);
 			if (target) {
 				float3 targPos;
 				if ((target->midPos - pos).SqLength() < 150 * 150 || !owner)

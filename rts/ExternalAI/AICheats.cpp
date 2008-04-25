@@ -294,13 +294,16 @@ bool CAICheats::IsUnitCloaked(int unitid) {
 	return false;
 }
 
-bool CAICheats::IsUnitParalyzed(int unitid){
-	if (!CHECK_UNITID(unitid)) return false;
+bool CAICheats::IsUnitParalyzed(int unitid) {
+	if (!CHECK_UNITID(unitid))
+		return false;
+
 	CUnit* unit = uh->units[unitid];
 	if (unit) {
 		return unit->stunned;
 	}
-	return 0;
+
+	return false;
 }
 
 
@@ -310,13 +313,10 @@ bool CAICheats::IsUnitNeutral(int unitid) {
 
 	CUnit* unit = uh->units[unitid];
 	if (unit) {
-		if ((gs->useLuaGaia && unit->team == gs->gaiaTeamID) || (unit->team == MAX_TEAMS - 1))
-			return true;
-		if (unit->neutral)
-			return true;
+		return (unit->IsNeutral());
 	}
 
-	return 0;
+	return false;
 }
 
 

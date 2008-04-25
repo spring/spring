@@ -27,13 +27,13 @@ struct LosInstance;
 struct S3DOModel;
 struct UnitDef;
 struct UnitTrackStruct;
+struct CollisionVolumeData;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	struct DirectControlStruct;
 #endif
 
 class CTransportUnit;
-using namespace std;
 
 
 // LOS state bits
@@ -115,13 +115,18 @@ public:
 	void CalculateTerrainType();
 	void UpdateTerrainType();
 
+	bool IsNeutral() const {
+		return ((gs->useLuaGaia && team == gs->gaiaTeamID) || (team == MAX_TEAMS - 1) || neutral);
+	}
+
 	enum ChangeType{
 		ChangeGiven,
 		ChangeCaptured
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
 
-	const UnitDef *unitDef;
+	const UnitDef* unitDef;
+	CollisionVolumeData* collisionVolumeData;
 	std::string unitDefName;
 
 	std::vector<float>         modParams;    // mod controlled parameters

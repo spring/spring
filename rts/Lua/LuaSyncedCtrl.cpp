@@ -31,6 +31,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolumeData.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -128,6 +129,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
+	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
+
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
@@ -147,6 +150,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
+	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
 	REGISTER_LUA_CFUNC(CallCOBScriptCB);
@@ -261,7 +265,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	}
 	const int unitID = (int)lua_tonumber(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
 	if (unit == NULL) {
@@ -312,7 +316,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	}
 	const int teamID = (int)lua_tonumber(L, index);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
-		luaL_error(L, "%s(): Bad teamID: %i", caller, teamID);
+		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
 	}
 	CTeam* team = gs->Team(teamID);
 	if (team == NULL) {
@@ -327,11 +331,11 @@ static CUnit* CheckUnitID(lua_State* L, int index)
 	luaL_checknumber(L, index);
 	const int unitID = (int)lua_tonumber(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		luaL_error(L, "Bad unitID: %i\n", unitID);
+		luaL_error(L, "Bad unitID: %d\n", unitID);
 	}
 	CUnit* unit = uh->units[unitID];
 	if (unit == NULL) {
-		luaL_error(L, "Bad unitID: %i\n", unitID);
+		luaL_error(L, "Bad unitID: %d\n", unitID);
 	}
 	return unit;
 }
@@ -342,11 +346,11 @@ static CPlayer* CheckPlayerID(lua_State* L, int index)
 	luaL_checknumber(L, index);
 	const int playerID = (int)lua_tonumber(L, index);
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
-		luaL_error(L, "Bad playerID: %i\n", playerID);
+		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
 	CPlayer* player = gs->players[playerID];
 	if (player == NULL) {
-		luaL_error(L, "Bad playerID: %i\n", playerID);
+		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
 	return player;
 }
@@ -736,7 +740,6 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 	if ((unit == NULL) || (unit->cob == NULL)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
 
 	int arg = 2;
 	bool splitData = false;
@@ -823,18 +826,18 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		teamID = (int)lua_tonumber(L, 6);
 	}
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		luaL_error(L, "CreateUnit(): bad team number: %i", teamID);
+		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
 	}
 
 	if (gs->AllyTeam(teamID) >= gs->activeAllyTeams) {
 		// FIXME: there's a segv in CLosHandler::LosAddAir,
 		//        this is a dirty hack to avoid it
-		luaL_error(L, "CreateUnit(): inactive team: %i", teamID);
+		luaL_error(L, "CreateUnit(): inactive team: %d", teamID);
 	}
 
 
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
-		luaL_error(L, "Error in CreateUnit(), bad team %i", teamID);
+		luaL_error(L, "Error in CreateUnit(), bad team %d", teamID);
 		return 0;
 	}
 
@@ -1447,6 +1450,42 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->collisionVolumeData == NULL) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L);
+	if (args == 10) {
+		const float xs = float(lua_tonumber(L, 2));
+		const float ys = float(lua_tonumber(L, 3));
+		const float zs = float(lua_tonumber(L, 4));
+		const float xo = float(lua_tonumber(L, 5));
+		const float yo = float(lua_tonumber(L, 6));
+		const float zo = float(lua_tonumber(L, 7));
+		const int vType = int(lua_tonumber(L,  8));
+		const int tType = int(lua_tonumber(L,  9));
+		const int pAxis = int(lua_tonumber(L, 10));
+
+		const float3 scales(xs, ys, zs);
+		const float3 offsets(xo, yo, zo);
+
+		unit->collisionVolumeData->Init(scales, offsets, vType, tType, pAxis);
+	} else {
+		luaL_error(L, "Incorrect arguments to SetUnitCollisionVolumeData()");
+	}
+
+	return 0;
+}
+
+
+
 int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 {
 	CheckAllowGameChanges(L);
@@ -1815,7 +1854,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	const int allyTeam = (team < 0) ? -1 : gs->AllyTeam(team);
 	if (!CanControlFeatureAllyTeam(allyTeam)) {
-		luaL_error(L, "CreateFeature() bad team permission %i", team);
+		luaL_error(L, "CreateFeature() bad team permission %d", team);
 	}
 
 	if (inCreateFeature) {
@@ -1971,6 +2010,40 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetFeatureNoSelect()");
 	}
 	feature->noSelect = !!lua_toboolean(L, 2);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	if (feature->collisionVolumeData == NULL) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L);
+	if (args == 10) {
+		const float xs = float(lua_tonumber(L, 2));
+		const float ys = float(lua_tonumber(L, 3));
+		const float zs = float(lua_tonumber(L, 4));
+		const float xo = float(lua_tonumber(L, 5));
+		const float yo = float(lua_tonumber(L, 6));
+		const float zo = float(lua_tonumber(L, 7));
+		const int vType = int(lua_tonumber(L,  8));
+		const int tType = int(lua_tonumber(L,  9));
+		const int pAxis = int(lua_tonumber(L, 10));
+
+		const float3 scales(xs, ys, zs);
+		const float3 offsets(xo, yo, zo);
+
+		feature->collisionVolumeData->Init(scales, offsets, vType, tType, pAxis);
+	} else {
+		luaL_error(L, "Incorrect arguments to SetFeatureCollisionVolumeData()");
+	}
+
 	return 0;
 }
 

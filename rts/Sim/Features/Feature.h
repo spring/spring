@@ -15,6 +15,7 @@ struct FeatureDef;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
+struct CollisionVolumeData;
 
 class CFeature : public CSolidObject, public boost::noncopyable
 {
@@ -66,6 +67,7 @@ public:
 
 	const FeatureDef* def;
 	std::string defName;
+	CollisionVolumeData* collisionVolumeData;
 
 	CMatrix44f transMatrix;
 //	float3 residualImpulse;	//impulse energy that havent been acted on
