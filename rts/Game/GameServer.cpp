@@ -441,11 +441,11 @@ void CGameServer::Update()
 			{
 				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
 			}
-			else if (msg.at(0) == '/' && msg.at(1) == '/') // chatmessage with prefixed '/'
+			else if (msg.at(0) == '/' && msg.size() > 1 && msg.at(1) == '/') // chatmessage with prefixed '/'
 			{
 				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg.substr(1)));
 			}
-			else // command
+			else if (msg.size() > 1) // command
 			{
 				Action buf(msg.substr(1));
 				PushAction(buf);
