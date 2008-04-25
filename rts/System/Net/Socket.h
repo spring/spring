@@ -13,8 +13,6 @@
 namespace netcode
 {
 
-enum SocketType { TCP, UDP };
-
 /**
 	@author Karl-Robert Ernst <k-r.ernst@my-mail.ch>
 	@brief Base class for all Sockets
@@ -22,6 +20,7 @@ enum SocketType { TCP, UDP };
 class Socket : public boost::noncopyable
 {
 public:
+	enum SocketType { STREAM, DATAGRAM };
 	/**
 	@brief Create Socket, initialise winsock when needed
 	@param SocketType TCP or UDP?
@@ -34,6 +33,11 @@ public:
 	*/
 	~Socket();
 	
+	/// Set the blocking state of the socket
+	void SetBlocking(const bool block) const;
+	
+	void Bind(unsigned short port /** in host byte order */) const;
+	
 	/**
 	@brief Resolves a host
 	@param address The host's address, can be an IP-Address or an Hostname
@@ -43,9 +47,6 @@ public:
 	sockaddr_in ResolveHost(const std::string& address, const unsigned port) const;
 	
 protected:
-	/// Set the blocking state of the socket
-	void SetBlocking(const bool block) const;
-	
 	/// return the last errormessage from the OS
 	std::string GetErrorMsg() const;
 	/// Check if last error is a real error (not EWOULDBLOCK etc.)

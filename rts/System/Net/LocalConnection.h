@@ -50,6 +50,7 @@ public:
 	virtual bool CheckTimeout() const;
 	
 	virtual std::string Statistics() const;
+	virtual NetAddress GetPeerName() const;
 
 private:
 	typedef std::deque<const RawPacket*> MsgQueue;

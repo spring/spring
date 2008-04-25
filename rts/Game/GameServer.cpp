@@ -946,10 +946,10 @@ void CGameServer::CheckForGameStart(bool forced)
 {
 	assert(!gameStartTime);
 	bool allReady = true;
-	unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
 	
 	if (setup)
 	{
+		unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
 		unsigned start = numDemoPlayers;
 #ifdef DEDICATED
 		// Lobby-protocol doesn't support creating games without players inside

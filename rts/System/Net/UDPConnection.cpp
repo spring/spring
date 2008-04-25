@@ -9,7 +9,6 @@
 #else
  #include <arpa/inet.h>
  #include <sys/socket.h>
- #include <netdb.h>
 #endif
 
 #include "ProtocolDef.h"
@@ -17,13 +16,6 @@
 
 namespace netcode {
 
-
-#ifdef _WIN32
-#else
-	typedef struct hostent* LPHOSTENT;
-	typedef struct in_addr* LPIN_ADDR;
-	const int SOCKET_ERROR = -1;
-#endif
 
 const unsigned UDPConnection::hsize = 9;
 
@@ -289,6 +281,14 @@ std::string UDPConnection::Statistics() const
 	msg += str( boost::format("%1% incoming packets had been dropped, %2% outgoing packets had to be resent\n") %droppedPackets %resentPackets);
 	msg += str( boost::format("%1% packets were splitted due to MTU\n") %fragmentedFlushes);
 	return msg;
+}
+
+NetAddress UDPConnection::GetPeerName() const
+{
+	NetAddress otherAddr;
+	otherAddr.port = ntohs(addr.sin_port);
+	otherAddr.host = ntohl(addr.sin_addr.s_addr);
+	return otherAddr;
 }
 
 bool UDPConnection::CheckAddress(const sockaddr_in& from) const

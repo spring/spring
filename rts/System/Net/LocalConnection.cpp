@@ -86,6 +86,14 @@ std::string CLocalConnection::Statistics() const
 	return msg;
 }
 
+NetAddress CLocalConnection::GetPeerName() const
+{
+	NetAddress addr;
+	addr.port = 0;
+	addr.host = 0;
+	return addr;
+}
+
 unsigned CLocalConnection::OtherInstance() const
 {
 	if (instance == 0)

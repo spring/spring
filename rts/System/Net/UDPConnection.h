@@ -1,14 +1,14 @@
 #ifndef _REMOTE_CONNECTION
 #define _REMOTE_CONNECTION
 
-#include "Connection.h"
-#include "UDPSocket.h"
-#include "RawPacket.h"
-
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
 #include <deque>
+
+#include "Connection.h"
+#include "UDPSocket.h"
+#include "RawPacket.h"
 
 namespace netcode {
 
@@ -67,6 +67,7 @@ public:
 	virtual bool CheckTimeout() const;
 	
 	virtual std::string Statistics() const;
+	virtual NetAddress GetPeerName() const;
 
 	/// do we have these address?
 	bool CheckAddress(const sockaddr_in&) const;

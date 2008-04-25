@@ -125,6 +125,11 @@ std::string CNet::GetConnectionStatistics(const unsigned number) const
 	return connections[number]->Statistics();
 }
 
+NetAddress CNet::GetConnectedAddress(const unsigned number)
+{
+	return connections[number]->GetPeerName();
+}
+
 const RawPacket* CNet::Peek(const unsigned conNum, unsigned ahead) const
 {
 	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])

@@ -9,6 +9,13 @@ namespace netcode
 {
 class RawPacket;
 
+struct NetAddress
+{
+	unsigned host;
+	unsigned short port;
+};
+
+
 /**
 @brief Base class for connecting to various recievers / senders
 */
@@ -41,6 +48,7 @@ public:
 	unsigned GetDataRecieved() const;
 	
 	virtual std::string Statistics() const = 0;
+	virtual NetAddress GetPeerName() const = 0;
 
 protected:
 	unsigned dataSent;
