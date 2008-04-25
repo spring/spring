@@ -6,11 +6,11 @@ namespace netcode
 {
 
 #ifndef _WIN32
-	const int SOCKET_ERROR = -1;
+const int SOCKET_ERROR = -1;
 #endif
 
 UDPConnectedSocket::UDPConnectedSocket(const std::string& server, const unsigned remoteport)
-: Socket(UDP)
+: Socket(DATAGRAM)
 {
 	sockaddr_in remoteAddr = ResolveHost(server, remoteport);
 	if (connect(mySocket, (sockaddr*)&remoteAddr, sizeof(remoteAddr)) == SOCKET_ERROR)

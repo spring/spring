@@ -1,8 +1,6 @@
 #ifndef _UDPSOCKET
 #define _UDPSOCKET
 
-#include <string>
-
 #include "Socket.h"
 
 namespace netcode {
@@ -48,9 +46,6 @@ public:
 	void SendTo(const unsigned char* const buf, const unsigned dataLength, const sockaddr_in* const destination) const;
 	
 protected:
-
-	/// our local address
-	sockaddr_in myAddr;
 };
 
 

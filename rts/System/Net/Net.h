@@ -11,8 +11,8 @@
 using netcode::RawPacket;
 
 namespace netcode {
-
 class CConnection;
+struct NetAddress;
 class UDPListener;
 
 /**
@@ -130,6 +130,7 @@ public:
 	@return string with statistics
 	 */
 	std::string GetConnectionStatistics(const unsigned number) const;
+	NetAddress GetConnectedAddress(const unsigned number);
 
 	/**
 	@brief Take a look at the messages that will be returned by GetData().

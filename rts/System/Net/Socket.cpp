@@ -6,8 +6,9 @@
 #else
 #include <fcntl.h>
 #include <errno.h>
-#include <netdb.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #endif
 
 #include "Exception.h"
@@ -16,7 +17,6 @@ namespace netcode
 {
 
 #ifdef _WIN32
-	inline int close(SOCKET mySocket) { return closesocket(mySocket); };
 	unsigned Socket::numSockets = 0;
 #else
 	typedef struct hostent* LPHOSTENT;
@@ -53,9 +53,9 @@ Socket::Socket(const SocketType type)
 	++numSockets;
 #endif
 	
-	if (type == UDP)
+	if (type == DATAGRAM)
 		mySocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // create UDP socket
-	else if (type == TCP)
+	else if (type == STREAM)
 		mySocket = socket(AF_INET, SOCK_STREAM, 0); // create TCP socket
 
 	if (mySocket == INVALID_SOCKET)
@@ -64,12 +64,40 @@ Socket::Socket(const SocketType type)
 
 Socket::~Socket()
 {
+#ifndef _WIN32
 	close(mySocket);
-#ifdef _WIN32
+#else
+	closesocket(mySocket);
 	--numSockets;
 	if (numSockets == 0)
 		WSACleanup();
 #endif
+}
+
+void Socket::SetBlocking(const bool block) const
+{
+#ifdef _WIN32
+	u_long u = block ? 0 : 1;
+	if (ioctlsocket(mySocket,FIONBIO,&u) == SOCKET_ERROR)
+#else
+	if (fcntl(mySocket, F_SETFL, block ? 0 : O_NONBLOCK) == -1)
+#endif
+	{
+		throw network_error(std::string("Error setting socket I/O mode: ") + GetErrorMsg());
+	}
+}
+
+void Socket::Bind(unsigned short port) const
+{
+	sockaddr_in myAddr;
+	myAddr.sin_family = AF_INET;
+	myAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Let the OS assign a address	
+	myAddr.sin_port = htons(port);	   // Use port passed from user
+
+	if (bind(mySocket,(struct sockaddr *)&myAddr,sizeof(struct sockaddr_in)) == SOCKET_ERROR)
+	{
+		throw network_error(std::string("Error binding socket: ") + GetErrorMsg());
+	}
 }
 
 sockaddr_in Socket::ResolveHost(const std::string& address, const unsigned port) const
@@ -99,19 +127,6 @@ sockaddr_in Socket::ResolveHost(const std::string& address, const unsigned port)
 		remoteAddr.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
 	}
 	return remoteAddr;
-}
-
-void Socket::SetBlocking(const bool block) const
-{
-#ifdef _WIN32
-	u_long u = block ? 0 : 1;
-	if (ioctlsocket(mySocket,FIONBIO,&u) == SOCKET_ERROR)
-#else
-	if (fcntl(mySocket, F_SETFL, block ? 0 : O_NONBLOCK) == -1)
-#endif
-	{
-		throw network_error(std::string("Error setting socket I/O mode: ") + GetErrorMsg());
-	}
 }
 
 std::string Socket::GetErrorMsg() const

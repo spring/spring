@@ -3,25 +3,15 @@
 #include "Exception.h"
 
 namespace netcode {
-
-
-#ifdef _WIN32
-	typedef int socklen_t;
+#ifndef _WIN32
+const int SOCKET_ERROR = -1;
 #else
-	const int SOCKET_ERROR = -1;
+typedef int socklen_t;
 #endif
 
-
-UDPSocket::UDPSocket(const int port) : Socket(UDP)
+UDPSocket::UDPSocket(const int port) : Socket(DATAGRAM)
 {
-	myAddr.sin_family = AF_INET;
-	myAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Let the OS assign a address	
-	myAddr.sin_port = htons(port);	   // Use port passed from user
-
-	if (bind(mySocket,(struct sockaddr *)&myAddr,sizeof(struct sockaddr_in)) == SOCKET_ERROR)
-	{
-		throw network_error(std::string("Error binding socket: ") + GetErrorMsg());
-	}
+	Bind(port);
 	SetBlocking(false);
 }
 
