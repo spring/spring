@@ -437,7 +437,7 @@ void CGameServer::Update()
 
 		if (!msg.empty())
 		{
-			if (!msg.at(0) == '/') // normal chat message
+			if (msg.at(0) != '/') // normal chat message
 			{
 				GotChatMessage(ChatMessage(SERVER_PLAYER, ChatMessage::TO_EVERYONE, msg));
 			}
