@@ -600,6 +600,7 @@ void CGameServer::ServerReadNet()
 							if (teams[team])
 							{
 								teams[team]->startpos = SFloat3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
+								teams[team]->readyToStart = static_cast<bool>(inbuf[3]);
 							}
 							serverNet->SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])); //forward data
 							if (hostif)
