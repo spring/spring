@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "System/FastMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 
@@ -307,7 +308,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolumeData* d, const f
 			return b0;
 		} else {
 			// two solutions for t
-			const float rD = sqrt(D);
+			const float rD = fastmath::sqrt(D);
 			const float t0 = (-B + rD) * 0.5f;
 			const float t1 = (-B - rD) * 0.5f;
 			// const float t0 = (-B + rD) / (2.0f * A);
@@ -453,7 +454,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolumeData* d, const fl
 			}
 		} else {
 			// two solutions for t
-			const float rD = sqrt(D);
+			const float rD = fastmath::sqrt(D);
 			t0 = (-B + rD) / (2.0f * A); p0 = pi0 + (dir * t0);
 			t1 = (-B - rD) / (2.0f * A); p1 = pi0 + (dir * t1);
 

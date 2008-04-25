@@ -1,6 +1,8 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
+#include "StdAfx.h"
+
 /**
  * @file FastMath.cpp
  * @brief Fast math routines
@@ -151,14 +153,14 @@ namespace fastmath {
 		/* range reduce to -PI ... PI, as the approximation
 		method only works well for that range. */
 		x = x - ((int)(x * INVPI2)) * PI2;
-		if(x > HALFPI) {
+		if (x > HALFPI) {
 			x = -x + PI;
 		} else if (x < NEGHALFPI ) {
 			x = -x - PI;
 		}
 		/* approximation */
-		x = (PIU4) * x + (PISUN4) * x * fabs(x);
-		x = 0.225 * (x * fabs(x) - x) + x;
+		x = (PIU4) * x + (PISUN4) * x * fabsf(x);
+		x = 0.225 * (x * fabsf(x) - x) + x;
 		return x;
 	}
 
