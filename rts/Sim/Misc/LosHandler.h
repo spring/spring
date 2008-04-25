@@ -63,19 +63,19 @@ public:
 		if(unit->alwaysVisible)
 			return true;
 		if(unit->useAirLos){
-			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(unit->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(unit->pos.x*invAirDiv)))))];
+			return !!airLosMap[allyteam][(std::max(0,std::min(airSizeY-1,((int(unit->pos.z*invAirDiv)))))*airSizeX) + std::max(0,std::min(airSizeX-1,((int(unit->pos.x*invAirDiv)))))];
 		} else {
 			if(unit->isUnderWater && !radarhandler->InRadar(unit,allyteam))
 				return false;
-			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(unit->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(unit->pos.x*invLosDiv))))];
+			return !!losMap[allyteam][std::max(0,std::min(losSizeY-1,((int)(unit->pos.z*invLosDiv))))*losSizeX+ std::max(0,std::min(losSizeX-1,((int)(unit->pos.x*invLosDiv))))];
 		}
 	}
 
 	bool InLos(const CWorldObject* object, int allyteam) {
 		if(object->useAirLos)
-			return !!airLosMap[allyteam][(max(0,min(airSizeY-1,((int(object->pos.z*invAirDiv)))))*airSizeX) + max(0,min(airSizeX-1,((int(object->pos.x*invAirDiv)))))] | object->alwaysVisible;
+			return !!airLosMap[allyteam][(std::max(0,std::min(airSizeY-1,((int(object->pos.z*invAirDiv)))))*airSizeX) + std::max(0,std::min(airSizeX-1,((int(object->pos.x*invAirDiv)))))] | object->alwaysVisible;
 		else
-			return !!losMap[allyteam][max(0,min(losSizeY-1,((int)(object->pos.z*invLosDiv))))*losSizeX+ max(0,min(losSizeX-1,((int)(object->pos.x*invLosDiv))))] | object->alwaysVisible;
+			return !!losMap[allyteam][std::max(0,std::min(losSizeY-1,((int)(object->pos.z*invLosDiv))))*losSizeX+ std::max(0,std::min(losSizeX-1,((int)(object->pos.x*invLosDiv))))] | object->alwaysVisible;
 	}
 
 	bool InLos(float3 pos, int allyteam) {

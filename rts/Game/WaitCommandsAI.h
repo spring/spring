@@ -72,7 +72,7 @@ class CWaitCommandsAI {
 				virtual void Update() = 0;
 				virtual void Draw() const { return; }
 				virtual void AddUnitPosition(const float3& pos) const { return; }
-				virtual const string& GetStateText() const { return noText; }
+				virtual const std::string& GetStateText() const { return noText; }
 			public:
 				time_t GetDeadTime() const { return deadTime; }
 				float GetCode() const { return code; }
@@ -99,7 +99,7 @@ class CWaitCommandsAI {
 				static KeyType GetNewKey();
 			private:
 				static KeyType keySource;
-				static const string noText;
+				static const std::string noText;
 				void PostLoad();
 		};
 
@@ -115,7 +115,7 @@ class CWaitCommandsAI {
 				void RemoveUnit(CUnit* unit);
 				void Update();
 				void Draw() const;
-				const string& GetStateText() const;
+				const std::string& GetStateText() const;
 				int GetDuration() const { return duration; }
 			private:
 				TimeWait(const Command& cmd, CUnit* unit);

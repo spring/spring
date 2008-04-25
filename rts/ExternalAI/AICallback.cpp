@@ -612,14 +612,16 @@ bool CAICallback::IsUnitCloaked(int unitid) {
 }
 
 bool CAICallback::IsUnitParalyzed(int unitid){
-	verify ();
+	verify();
+
 	if (CHECK_UNITID(unitid)) {
-		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		CUnit* unit = uh->units[unitid];
+		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
 			return unit->stunned;
 		}
 	}
-	return 0;
+
+	return false;
 }
 
 bool CAICallback::IsUnitNeutral(int unitid) {
@@ -629,14 +631,12 @@ bool CAICallback::IsUnitNeutral(int unitid) {
 		CUnit* unit = uh->units[unitid];
 
 		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
-			if ((gs->useLuaGaia && unit->team == gs->gaiaTeamID) || (unit->team == MAX_TEAMS - 1))
-				return true;
-			if (unit->neutral)
+			if (unit->IsNeutral())
 				return true;
 		}
 	}
 
-	return 0;
+	return false;
 }
 
 int CAICallback::InitPath(float3 start,float3 end,int pathType)

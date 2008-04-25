@@ -64,7 +64,7 @@ CTextureHandler::CTextureHandler()
 		files.push_back(*fi);
 	}
 
-	set<string> usedNames;
+	std::set<string> usedNames;
 
 	for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
 		std::string s = std::string(*fi);
@@ -230,7 +230,7 @@ CTextureHandler::CTextureHandler()
 
 CTextureHandler::~CTextureHandler()
 {
-	map<string,UnitTexture*>::iterator tti;
+	std::map<string,UnitTexture*>::iterator tti;
 	for(tti=textures.begin();tti!=textures.end();++tti){
 		delete tti->second;
 	}
@@ -342,9 +342,9 @@ TexFile* CTextureHandler::CreateTeamTex(const std::string& name, const std::stri
 	for(int a=0;a<bm->ysize*bm->xsize;++a){
 		if(bm->mem[a*4]==bm->mem[a*4+2] && bm->mem[a*4+1]==0){
 			float lum=bm->mem[a*4]/255.0f;
-			bm->mem[a*4+0]=(unsigned char)(min(255,int(teamCol[0]*lum*1.5f)));
-			bm->mem[a*4+1]=(unsigned char)(min(255,int(teamCol[1]*lum*1.5f)));
-			bm->mem[a*4+2]=(unsigned char)(min(255,int(teamCol[2]*lum*1.5f)));
+			bm->mem[a*4+0]=(unsigned char)(std::min(255,int(teamCol[0]*lum*1.5f)));
+			bm->mem[a*4+1]=(unsigned char)(std::min(255,int(teamCol[1]*lum*1.5f)));
+			bm->mem[a*4+2]=(unsigned char)(std::min(255,int(teamCol[2]*lum*1.5f)));
 		}
 	}
 	return tex;

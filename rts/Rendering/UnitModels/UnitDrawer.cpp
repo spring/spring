@@ -30,7 +30,7 @@
 
 #include "ExternalAI/Group.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/CollisionVolumeData.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -1704,13 +1704,13 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 		GLUquadricObj* q = gluNewQuadric();
 		gluQuadricDrawStyle(q, GLU_LINE);
 
-		CCollisionVolume* vol = unit->unitDef->collisionVolume;
+		CollisionVolumeData* data = unit->collisionVolumeData;
 
-		switch (vol->GetVolumeType()) {
+		switch (data->GetVolumeType()) {
 			case COLVOL_TYPE_ELLIPSOID: {
 				// scaled sphere: radius, slices, stacks
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
+				glTranslatef(data->GetOffset(0), data->GetOffset(1), data->GetOffset(2));
+				glScalef(data->GetHScale(0), data->GetHScale(1), data->GetHScale(2));
 				gluSphere(q, 1.0f, 20, 20);
 			} break;
 			case COLVOL_TYPE_CYLINDER: {
@@ -1719,23 +1719,23 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 				// (cylinder base is drawn at unit center by default so add offset
 				// by half major axis to visually match the mathematical situation,
 				// height of the cylinder equals the unit's full major axis)
-				switch (vol->GetPrimaryAxis()) {
+				switch (data->GetPrimaryAxis()) {
 					case COLVOL_AXIS_X: {
-						glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
+						glTranslatef(-(data->GetHScale(0)), 0.0f, 0.0f);
+						glTranslatef(data->GetOffset(0), data->GetOffset(1), data->GetOffset(2));
+						glScalef(data->GetScale(0), data->GetHScale(1), data->GetHScale(2));
 						glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
 					} break;
 					case COLVOL_AXIS_Y: {
-						glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
+						glTranslatef(0.0f, -(data->GetHScale(1)), 0.0f);
+						glTranslatef(data->GetOffset(0), data->GetOffset(1), data->GetOffset(2));
+						glScalef(data->GetHScale(0), data->GetScale(1), data->GetHScale(2));
 						glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 					} break;
 					case COLVOL_AXIS_Z: {
-						glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
+						glTranslatef(0.0f, 0.0f, -(data->GetHScale(2)));
+						glTranslatef(data->GetOffset(0), data->GetOffset(1), data->GetOffset(2));
+						glScalef(data->GetHScale(0), data->GetHScale(1), data->GetScale(2));
 					} break;
 				}
 
@@ -1743,8 +1743,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			} break;
 			case COLVOL_TYPE_BOX: {
 				// scaled cube: length, width, height
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+				glTranslatef(data->GetOffset(0), data->GetOffset(1), data->GetOffset(2));
+				glScalef(data->GetScale(0), data->GetScale(1), data->GetScale(2));
 				gluMyCube(1.0f);
 			} break;
 		}

@@ -239,8 +239,8 @@ static int ComparePlayerNames(const void* a, const void* b)
 	}
 
 	// sort by player name
-	const string aName = StringToLower(aP->playerName);
-	const string bName = StringToLower(bP->playerName);
+	const std::string aName = StringToLower(aP->playerName);
+	const std::string bName = StringToLower(bP->playerName);
 	return strcmp(aName.c_str(), bName.c_str());
 }
 

@@ -12,7 +12,7 @@ struct MoveData;
 struct WeaponDef;
 struct S3DOModel;
 struct UnitImage;
-class CCollisionVolume;
+struct CollisionVolumeData;
 class CExplosionGenerator;
 
 const int MAX_UNITS = 10000;
@@ -99,7 +99,7 @@ struct UnitDef
 	std::string filename;
 	int id;					// unique id for this type of unit
 
-	CCollisionVolume* collisionVolume;
+	CollisionVolumeData* collisionVolumeData;
 	const UnitDef* decoyDef;
 
 	int aihint;

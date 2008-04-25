@@ -96,7 +96,7 @@ void CFlareProjectile::Draw(void)
 
 	inArray=true;
 	unsigned char col[4];
-	float alpha=max(0.0f,1-(gs->frameNum-activateFrame)*alphaFalloff);
+	float alpha=std::max(0.0f,1-(gs->frameNum-activateFrame)*alphaFalloff);
 	col[0]=(unsigned char)alpha*255;
 	col[1]=(unsigned char)(alpha*0.5f)*255;
 	col[2]=(unsigned char)(alpha*0.2f)*255;

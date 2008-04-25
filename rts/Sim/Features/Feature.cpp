@@ -14,7 +14,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/ModInfo.h"
-#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/CollisionVolumeData.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
@@ -54,6 +54,7 @@ CR_REG_METADATA(CFeature, (
 
 CFeature::CFeature()
 :	def(0),
+	collisionVolumeData(0),
 	inUpdateQue(false),
 	reclaimLeft(1),
 	fireTime(0),
@@ -80,21 +81,25 @@ CFeature::CFeature()
 
 CFeature::~CFeature(void)
 {
-	if(blocking){
+	if (blocking) {
 		UnBlock();
 	}
+
 	qf->RemoveFeature(this);
-	if(def->drawType==DRAWTYPE_TREE)
+
+	if (def->drawType == DRAWTYPE_TREE)
 		treeDrawer->DeleteTree(pos);
 
-	if(myFire){
+	if (myFire) {
 		myFire->StopFire();
-		myFire=0;
+		myFire = 0;
 	}
 
 	if (def->geoThermal) {
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
+
+	delete collisionVolumeData; collisionVolumeData = NULL;
 }
 
 void CFeature::PostLoad()
@@ -162,21 +167,30 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
 
+		// copy the FeatureDef volume archetype data
+		collisionVolumeData = SAFE_NEW CollisionVolumeData();
+		collisionVolumeData->Copy(def->collisionVolumeData);
+
 		// CFeatureHandler left this volume's axis-scales uninitialized
-		if (def->collisionVolume->GetScale(COLVOL_AXIS_X) < 0.01f &&
-			def->collisionVolume->GetScale(COLVOL_AXIS_Y) < 0.01f &&
-			def->collisionVolume->GetScale(COLVOL_AXIS_Z) < 0.01f) {
-			def->collisionVolume->SetDefaultScale(model->radius);
+		// (ie. no "collisionVolumeScales" tag was defined in FeatureDef)
+		if (collisionVolumeData->GetScale(COLVOL_AXIS_X) < 0.01f &&
+			collisionVolumeData->GetScale(COLVOL_AXIS_Y) < 0.01f &&
+			collisionVolumeData->GetScale(COLVOL_AXIS_Z) < 0.01f) {
+			collisionVolumeData->SetDefaultScale(model->radius);
 		}
 	}
 	else if (def->drawType == DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
-		def->collisionVolume->SetDefaultScale(TREE_RADIUS);
+
+		// copy the FeatureDef volume archetype data
+		collisionVolumeData = SAFE_NEW CollisionVolumeData();
+		collisionVolumeData->Copy(def->collisionVolumeData);
+		collisionVolumeData->SetDefaultScale(TREE_RADIUS);
 	}
 	else {
-		// geothermal
+		// geothermal (no collision volume)
 		SetRadius(0.0f);
 		midPos = pos;
 	}

@@ -76,7 +76,7 @@ void CRepulseGfx::Draw(void)
 
 	inArray=true;
 	unsigned char col[4];
-	float alpha=min(255,age*10);
+	float alpha=std::min(255,age*10);
 	col[0]=(unsigned char)(color.x*alpha);
 	col[1]=(unsigned char)(color.y*alpha);
 	col[2]=(unsigned char)(color.z*alpha);
@@ -103,7 +103,7 @@ void CRepulseGfx::Draw(void)
 		}
 	}
 	drawsize=7;
-	alpha=min(10,age/2);
+	alpha=std::min(10,age/2);
 	col[0]=(unsigned char)(color.x*alpha);
 	col[1]=(unsigned char)(color.y*alpha);
 	col[2]=(unsigned char)(color.z*alpha);

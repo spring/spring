@@ -20,7 +20,7 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/ShadowHandler.h"
@@ -637,19 +637,12 @@ void CProjectileHandler::CheckUnitCol()
 					continue;
 
 				if (p->collisionFlags & COLLISION_NONEUTRAL) {
-					if ((gs->useLuaGaia && unit->team == gs->gaiaTeamID) || (unit->team == MAX_TEAMS - 1)) {
-						// Gaia-team unit, count it as neutral
-						continue;
-					}
-					if (unit->neutral) {
-						// ordinary neutral unit
+					if (unit->IsNeutral()) {
 						continue;
 					}
 				}
 
-				const CCollisionVolume* vol = unit->unitDef->collisionVolume;
-
-				if (vol->DetectHit(unit, p->pos, p->pos + p->speed)) {
+				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed)) {
 					p->Collision(unit);
 					break;
 				}
@@ -658,13 +651,11 @@ void CProjectileHandler::CheckUnitCol()
 			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
 				for (CFeature** fi = tempFeatures; fi != endFeature; ++fi) {
 					CFeature* feature = *fi;
-					// geothermals do not have a collision volume
+					// geothermals do not have a collision volume, skip
 					if (!feature->blocking || feature->def->geoThermal)
 						continue;
 
-					const CCollisionVolume* vol = feature->def->collisionVolume;
-
-					if (vol->DetectHit(feature, p->pos, p->pos + p->speed)) {
+					if (CCollisionHandler::DetectHit(feature, p->pos, p->pos + p->speed)) {
 						p->Collision(feature);
 						break;
 					}
