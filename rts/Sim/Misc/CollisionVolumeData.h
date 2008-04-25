@@ -53,7 +53,7 @@ struct CollisionVolumeData {
 		// so we need to double it to get the full-length scales
 		const float3 scales(s * 2.0f, s * 2.0f, s * 2.0f);
 
-		Init(scales, ZeroVector, COLVOL_TYPE_ELLIPSOID, COLVOL_TEST_DISC, 0);
+		Init(scales, ZeroVector, COLVOL_TYPE_ELLIPSOID, COLVOL_TEST_DISC, COLVOL_AXIS_Z);
 	}
 
 
@@ -64,9 +64,9 @@ struct CollisionVolumeData {
 		volumeType = vType % 3;
 		testType = tType % 2;
 
-		axisScales.x = scales.x;  axisHScales.x = scales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
-		axisScales.y = scales.y;  axisHScales.y = scales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
-		axisScales.z = scales.z;  axisHScales.z = scales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
+		axisScales.x = (scales.x < EPS)? 1.0f: scales.x;  axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
+		axisScales.y = (scales.y < EPS)? 1.0f: scales.y;  axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
+		axisScales.z = (scales.z < EPS)? 1.0f: scales.z;  axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
 
 		axisHIScales.x = 1.0f / axisHScales.x;  axisOffsets.x = offsets.x;
 		axisHIScales.y = 1.0f / axisHScales.y;  axisOffsets.y = offsets.y;
@@ -77,18 +77,21 @@ struct CollisionVolumeData {
 					(fabsf(axisHScales.x - axisHScales.y) < EPS) &&
 					(fabsf(axisHScales.y - axisHScales.z) < EPS));
 
+		// secondaryAxes[0] = (primaryAxis + 1) % 3;
+		// secondaryAxes[1] = (primaryAxis + 2) % 3;
+
 		switch (primaryAxis) {
 			case COLVOL_AXIS_X: {
-				secondaryAxes[0] = COLVOL_AXIS_Y; // (pAx + 1) % 3;
-				secondaryAxes[1] = COLVOL_AXIS_Z; // (pAx + 2) % 3;
+				secondaryAxes[0] = COLVOL_AXIS_Y;
+				secondaryAxes[1] = COLVOL_AXIS_Z;
 			} break;
 			case COLVOL_AXIS_Y: {
-				secondaryAxes[0] = COLVOL_AXIS_X; // (pAx + 1) % 3;
-				secondaryAxes[1] = COLVOL_AXIS_Z; // (pAx + 2) % 3;
+				secondaryAxes[0] = COLVOL_AXIS_X;
+				secondaryAxes[1] = COLVOL_AXIS_Z;
 			} break;
 			case COLVOL_AXIS_Z: {
-				secondaryAxes[0] = COLVOL_AXIS_X; // (pAx + 1) % 3;
-				secondaryAxes[1] = COLVOL_AXIS_Y; // (pAx + 2) % 3;
+				secondaryAxes[0] = COLVOL_AXIS_X;
+				secondaryAxes[1] = COLVOL_AXIS_Y;
 			} break;
 		}
 
@@ -108,7 +111,7 @@ struct CollisionVolumeData {
 				const float mshs = MAX(sahs, sbhs);					// max. secondary axis half-scale
 
 				volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
-				volumeBoundingRadius = sqrt(volumeBoundingRadiusSq);
+				volumeBoundingRadius = sqrtf(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_ELLIPSOID: {
 				if (spherical) {
