@@ -19,6 +19,10 @@ class cRAIUnitDefHandler;
 //#include <set>
 #include "Global.h"
 
+using std::string;
+using std::set;
+using std::pair;
+
 const int TASK_NONE = 1; // uses default combat behaviors
 const int TASK_CONSTRUCT = 2;
 const int TASK_ASSAULT = 3;

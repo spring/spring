@@ -4,6 +4,7 @@
 
 #include "GlobalAI.h"
 
+using std::pair;
 class CAttackGroup;
 
 class CAttackHandler {

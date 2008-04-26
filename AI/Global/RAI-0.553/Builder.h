@@ -19,6 +19,8 @@ class cBuilder;
 //#include "Sim/Units/UnitDef.h"
 //#include "ExternalAI/IAICallback.h"
 
+using std::list;
+
 struct sBuildQuarry
 {
 	sBuildQuarry(sRAIBuildList *buildlist);

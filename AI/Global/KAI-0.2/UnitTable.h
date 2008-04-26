@@ -3,6 +3,7 @@
 
 #include "GlobalAI.h"
 
+using std::pair;
 
 class CUnitTable
 {

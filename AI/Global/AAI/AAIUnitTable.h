@@ -2,6 +2,8 @@
 
 #include "aidef.h"
 
+using std::set;
+
 class AAI;
 class AAIBuildTable;
 

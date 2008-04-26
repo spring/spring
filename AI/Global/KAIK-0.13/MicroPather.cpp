@@ -318,7 +318,7 @@ float MicroPather::LeastCostEstimateLocal(int nodeStartIndex) {
 	int dy = abs(yStart - yEndNode);
 	int strait = abs(dx - dy);
 
-	return (strait + 1.41f * min(dx, dy));
+	return (strait + 1.41f * std::min(dx, dy));
 }
 
 void MicroPather::FixStartEndNode(void** startNode, void** endNode) {

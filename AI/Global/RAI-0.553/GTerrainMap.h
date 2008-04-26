@@ -15,6 +15,7 @@ struct MapSector;
 #include "LogFile.h"
 #include <map>
 
+using std::map;
 //#define SECTOR_SIZE 256
 
 struct MapSector

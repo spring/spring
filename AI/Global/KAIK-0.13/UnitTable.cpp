@@ -341,7 +341,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 					if (unit->weapons[i].def->type == string("Cannon")) {
 						float sinoid = (distancetravelled * gravity) / (u * u);
-						sinoid = min(sinoid, 1.0f);
+						sinoid = std::min(sinoid, 1.0f);
 						firingangle = asin(sinoid) / 2;
 
 						if (unit->highTrajectoryType == 1) {

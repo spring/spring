@@ -1,6 +1,8 @@
 #include "MetalMap.h"
 #include "time.h"
 
+using std::string;
+
 CMetalMap::CMetalMap(IAICallback* callback)
 {
 	this->callback=callback;

@@ -2590,7 +2590,7 @@ bool AAIBuildTable::CanBuildUnit(int id_builder, int id_unit)
 			return true;
 	}
 
-	// unit not found in builder´s buildoptions
+	// unit not found in builderï¿½s buildoptions
 	return false;
 }
 

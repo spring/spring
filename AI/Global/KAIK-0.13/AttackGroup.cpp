@@ -84,8 +84,8 @@ void CAttackGroup::AddUnit(int unitID) {
 		// set its group ID:
 		ai->MyUnits[unitID]->groupID = this->groupID;
 		// update the attack range properties of this group
-		this->lowestAttackRange = min(this->lowestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
-		this->highestAttackRange = max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+		this->lowestAttackRange = std::min(this->lowestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+		this->highestAttackRange = std::max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
 	}
 	else {
 		assert(false);
@@ -123,8 +123,8 @@ bool CAttackGroup::RemoveUnit(int unitID) {
 	for (unsigned int i = 0; i < units.size(); i++) {
 		int unitID = units[i];
 		if (ai->cb->GetUnitDef(unitID) != NULL) {
-			this->lowestAttackRange = min(this->lowestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
-			this->highestAttackRange = max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+			this->lowestAttackRange = std::min(this->lowestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+			this->highestAttackRange = std::max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
 		}
 	}
 
@@ -536,11 +536,11 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 					bool losHack = v1 > v2;
 					float a = (float) UNIT_MIN_MANEUVER_TIME / frameSpread;
 					float b = (dist / ai->MyUnits[unit]->def()->speed);
-					float c = ceilf(max(a, b));
+					float c = ceilf(std::max(a, b));
 
 					// assume the pathfinder returns correct Y values
 					// REMEMBER that this will suck for planes
-					if (dist > max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE * myRange), float(UNIT_MIN_MANEUVER_DISTANCE)) && losHack) {
+					if (dist > std::max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE * myRange), float(UNIT_MIN_MANEUVER_DISTANCE)) && losHack) {
 						debug2 = true;
 						ai->MyUnits[unit]->maneuverCounter = int(c);
 						ai->MyUnits[unit]->Move(moveHere);
@@ -569,8 +569,8 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 	const int maxStepsAhead = 8;
 	int pathMaxIndex = (int) pathToTarget.size() - 1;
-	int step1 = min(pathIterator + maxStepsAhead / 2, pathMaxIndex);
-	int step2 = min(pathIterator + maxStepsAhead, pathMaxIndex);
+	int step1 = std::min(pathIterator + maxStepsAhead / 2, pathMaxIndex);
+	int step2 = std::min(pathIterator + maxStepsAhead, pathMaxIndex);
 	float3 moveToHereFirst = pathToTarget[step1];
 	float3 moveToHere = pathToTarget[step2];
 
@@ -606,11 +606,11 @@ void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 		int increment = maxStepsAhead / 2;
 
 		while (groupDistanceToEnemy <= pathIteratorTargetDistanceToEnemy && pathIterator < pathMaxIndex) {
-			pathIterator = min(pathIterator + increment, pathMaxIndex);
+			pathIterator = std::min(pathIterator + increment, pathMaxIndex);
 			pathIteratorTargetDistanceToEnemy = pathToTarget[pathIterator].distance2D(endOfPathPos);
 		}
 
-		pathIterator = min(pathIterator, pathMaxIndex);
+		pathIterator = std::min(pathIterator, pathMaxIndex);
 	}
 	else {
 		// group thinks it has arrived at the destination

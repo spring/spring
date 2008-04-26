@@ -4,6 +4,8 @@
 #pragma once
 #include "ExternalAI/IAICallback.h"
 
+using std::vector;
+
 class CMetalMap
 {
 public:

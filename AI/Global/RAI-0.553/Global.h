@@ -24,7 +24,7 @@ public:
 	cTerrainMap *TM;
 	CMetalMap* KMM;
 //	cRMetalMap* RMM;
-	set<int> GeoSpot;
+	std::set<int> GeoSpot;
 	int AIs;
 
 private:

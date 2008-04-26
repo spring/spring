@@ -3,7 +3,7 @@
 
 #include "GlobalAI.h"
 
-
+using std::vector;
 struct EconomyUnitTracker;
 
 struct BuildingTracker {

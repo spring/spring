@@ -200,7 +200,7 @@ float CMaths::RandNormal(float m, float s, bool positiveonly) {
 	if (!positiveonly)
 		return (normal_x1 * s + m);
 	else
-		return max(0.0f, normal_x1 * s + m);
+		return std::max(0.0f, normal_x1 * s + m);
 }
 
 

@@ -48,22 +48,22 @@ void CPathFinder::Init() {
 
 		if (i + 1 < totalcells && (i + 1) % PathMapXSize) {
 			tempslope = fabs(HeightMap[i] - HeightMap[i + 1]);
-				maxslope = max(tempslope, maxslope);
+				maxslope = std::max(tempslope, maxslope);
 		}
 
 		if (i - 1 >= 0 && i % PathMapXSize) {
 			tempslope = fabs(HeightMap[i] - HeightMap[i - 1]);
-			maxslope = max(tempslope, maxslope);
+			maxslope = std::max(tempslope, maxslope);
 		}
 
 		if (i + PathMapXSize < totalcells) {
 			tempslope = fabs(HeightMap[i] - HeightMap[i + PathMapXSize]);
-			maxslope = max(tempslope, maxslope);
+			maxslope = std::max(tempslope, maxslope);
 		}
 
 		if (i - PathMapXSize >= 0) {
 			tempslope = fabs(HeightMap[i] - HeightMap[i - PathMapXSize]);
-			maxslope = max(tempslope, maxslope);
+			maxslope = std::max(tempslope, maxslope);
 		}
 
 		SlopeMap[i] = maxslope * 6 / resmodifier;

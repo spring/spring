@@ -4,6 +4,7 @@
 
 #include "GlobalAI.h"
 
+using std::vector;
 
 class CUnitTable {
 	public:

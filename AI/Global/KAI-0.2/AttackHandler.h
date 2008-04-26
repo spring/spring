@@ -12,6 +12,7 @@
 
 using std::vector;
 using std::list;
+using std::pair;
 
 class CAttackGroup;
 class AIClasses;

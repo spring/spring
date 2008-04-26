@@ -4,6 +4,10 @@
 
 #include "GlobalAI.h"
 
+using std::string;
+using std::stringstream;
+using std::map;
+
 class CSunParser {
 	public:
 		CSunParser(AIClasses* ai);

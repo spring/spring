@@ -8,6 +8,10 @@
 //#include "Other/SunParser.h"
 //#include "OTAI/SunParser.h"
 
+using std::set;
+using std::deque;
+using std::pair;
+
 cTerrainMap::cTerrainMap(IAICallback* cb, cLogFile* logfile)
 {
 	l=logfile;
