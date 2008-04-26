@@ -27,7 +27,7 @@ struct LosInstance;
 struct S3DOModel;
 struct UnitDef;
 struct UnitTrackStruct;
-struct CollisionVolumeData;
+struct CollisionVolume;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	struct DirectControlStruct;
@@ -126,7 +126,7 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 
 	const UnitDef* unitDef;
-	CollisionVolumeData* collisionVolumeData;
+	CollisionVolume* collisionVolume;
 	std::string unitDefName;
 
 	std::vector<float>         modParams;    // mod controlled parameters

@@ -26,7 +26,7 @@
 #include "Map/ReadMap.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -307,19 +307,18 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->SetRadius(unit->model->radius);
 
 	// copy the UnitDef volume archetype data
-	unit->collisionVolumeData = SAFE_NEW CollisionVolumeData();
-	unit->collisionVolumeData->Copy(ud->collisionVolumeData);
+	unit->collisionVolume = SAFE_NEW CollisionVolume(ud->collisionVolume);
 
 	// CUnitDefHandler left this volume's axis-scales uninitialized
 	// (ie. no "collisionVolumeScales" tag was defined in UnitDef)
-	if (unit->collisionVolumeData->GetScale(COLVOL_AXIS_X) <= 1.0f &&
-		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
-		unit->collisionVolumeData->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
+	if (unit->collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
+		unit->collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
+		unit->collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
 		// aircraft still get half-size spheres for coldet purposes
 		// if no custom volume is defined (unit->model->radius and
 		// unit->radius themselves are no longer altered)
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
-		unit->collisionVolumeData->SetDefaultScale(unit->model->radius * scaleFactor);
+		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 	}
 
 

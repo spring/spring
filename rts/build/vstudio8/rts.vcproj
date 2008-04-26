@@ -3007,7 +3007,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\Misc\CollisionVolumeData.h"
+					RelativePath="..\..\Sim\Misc\CollisionVolume.h"
 					>
 				</File>
 				<File

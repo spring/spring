@@ -22,7 +22,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/TimeProfiler.h"
@@ -132,9 +132,9 @@ CFeatureHandler::~CFeatureHandler()
 		// unsavory, but better than a memleak
 		FeatureDef* fd = (FeatureDef*) (*fi)->def;
 
-		if (fd->collisionVolumeData) {
-			delete fd->collisionVolumeData;
-			fd->collisionVolumeData = 0;
+		if (fd->collisionVolume) {
+			delete fd->collisionVolume;
+			fd->collisionVolume = 0;
 		}
 
 		delete *fi;
@@ -147,9 +147,9 @@ CFeatureHandler::~CFeatureHandler()
 
 		FeatureDef* fd = (FeatureDef*) fi->second;
 
-		if (fd->collisionVolumeData) {
-			delete fd->collisionVolumeData;
-			fd->collisionVolumeData = 0;
+		if (fd->collisionVolume) {
+			delete fd->collisionVolume;
+			fd->collisionVolume = 0;
 		}
 
 		delete fi->second;
@@ -249,7 +249,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
-	fd->collisionVolumeData = SAFE_NEW CollisionVolumeData(fd->collisionVolumeType,
+	fd->collisionVolume = SAFE_NEW CollisionVolume(fd->collisionVolumeType,
 		fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
 
 
@@ -322,7 +322,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->description = "Tree";
 			fd->mass = 20;
 			// trees by default have spherical collision volumes of fixed radius <TREE_RADIUS>
-			fd->collisionVolumeData = SAFE_NEW CollisionVolumeData("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
+			fd->collisionVolume = SAFE_NEW CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
 			AddFeatureDef(name, fd);
 		}
 		else if (name.find("geovent") != string::npos) {
@@ -344,7 +344,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->myName = name;
 			fd->mass = 100000;
 			// geothermals have no collision volume at all
-			fd->collisionVolumeData = 0;
+			fd->collisionVolume = 0;
 			AddFeatureDef(name, fd);
 		}
 		else {

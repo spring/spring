@@ -31,7 +31,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -1457,7 +1457,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->collisionVolumeData == NULL) {
+	if (unit->collisionVolume == NULL) {
 		return 0;
 	}
 
@@ -1476,7 +1476,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 		const float3 scales(xs, ys, zs);
 		const float3 offsets(xo, yo, zo);
 
-		unit->collisionVolumeData->Init(scales, offsets, vType, tType, pAxis);
+		unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 	} else {
 		luaL_error(L, "Incorrect arguments to SetUnitCollisionVolumeData()");
 	}
@@ -2020,7 +2020,7 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	if (feature->collisionVolumeData == NULL) {
+	if (feature->collisionVolume == NULL) {
 		return 0;
 	}
 
@@ -2039,7 +2039,7 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 		const float3 scales(xs, ys, zs);
 		const float3 offsets(xo, yo, zo);
 
-		feature->collisionVolumeData->Init(scales, offsets, vType, tType, pAxis);
+		feature->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 	} else {
 		luaL_error(L, "Incorrect arguments to SetFeatureCollisionVolumeData()");
 	}

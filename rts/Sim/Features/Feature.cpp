@@ -14,7 +14,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/ModInfo.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
@@ -54,7 +54,7 @@ CR_REG_METADATA(CFeature, (
 
 CFeature::CFeature()
 :	def(0),
-	collisionVolumeData(0),
+	collisionVolume(0),
 	inUpdateQue(false),
 	reclaimLeft(1),
 	fireTime(0),
@@ -99,7 +99,7 @@ CFeature::~CFeature(void)
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
 
-	delete collisionVolumeData; collisionVolumeData = NULL;
+	delete collisionVolume; collisionVolume = NULL;
 }
 
 void CFeature::PostLoad()
@@ -168,15 +168,14 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		midPos = pos + model->relMidPos;
 
 		// copy the FeatureDef volume archetype data
-		collisionVolumeData = SAFE_NEW CollisionVolumeData();
-		collisionVolumeData->Copy(def->collisionVolumeData);
+		collisionVolume = SAFE_NEW CollisionVolume(def->collisionVolume);
 
 		// CFeatureHandler left this volume's axis-scales uninitialized
 		// (ie. no "collisionVolumeScales" tag was defined in FeatureDef)
-		if (collisionVolumeData->GetScale(COLVOL_AXIS_X) <= 1.0f &&
-			collisionVolumeData->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
-			collisionVolumeData->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
-			collisionVolumeData->SetDefaultScale(model->radius);
+		if (collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
+			collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
+			collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
+			collisionVolume->SetDefaultScale(model->radius);
 		}
 	}
 	else if (def->drawType == DRAWTYPE_TREE) {
@@ -185,9 +184,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		height = 2 * TREE_RADIUS;
 
 		// copy the FeatureDef volume archetype data
-		collisionVolumeData = SAFE_NEW CollisionVolumeData();
-		collisionVolumeData->Copy(def->collisionVolumeData);
-		collisionVolumeData->SetDefaultScale(TREE_RADIUS);
+		collisionVolume = SAFE_NEW CollisionVolume(def->collisionVolume);
+		collisionVolume->SetDefaultScale(TREE_RADIUS);
 	}
 	else {
 		// geothermal (no collision volume)

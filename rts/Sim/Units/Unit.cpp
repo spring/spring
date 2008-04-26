@@ -30,7 +30,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
@@ -84,7 +84,7 @@ float CUnit::expGrade = 0.0f;
 
 CUnit::CUnit ()
 :	unitDef(0),
-	collisionVolumeData(0),
+	collisionVolume(0),
 	team(0),
 	maxHealth(100),
 	health(100),
@@ -262,10 +262,10 @@ CUnit::~CUnit()
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
 
-	delete commandAI;           commandAI           = NULL;
-	delete moveType;            moveType            = NULL;
-	delete prevMoveType;        prevMoveType        = NULL;
-	delete collisionVolumeData; collisionVolumeData = NULL;
+	delete commandAI;       commandAI       = NULL;
+	delete moveType;        moveType        = NULL;
+	delete prevMoveType;    prevMoveType    = NULL;
+	delete collisionVolume; collisionVolume = NULL;
 
 	if (group) {
 		group->RemoveUnit(this);
