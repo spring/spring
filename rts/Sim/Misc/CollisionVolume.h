@@ -1,5 +1,5 @@
-#ifndef COLLISION_VOLUME_DATA_H
-#define COLLISION_VOLUME_DATA_H
+#ifndef COLLISION_VOLUME_H
+#define COLLISION_VOLUME_H
 
 #include "StdAfx.h"
 #include "creg/creg.h"
@@ -12,11 +12,27 @@ enum COLVOL_TYPES {COLVOL_TYPE_ELLIPSOID, COLVOL_TYPE_CYLINDER, COLVOL_TYPE_BOX}
 enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
 enum COLVOL_TESTS {COLVOL_TEST_DISC, COLVOL_TEST_CONT};
 
-struct CollisionVolumeData {
-	CR_DECLARE_STRUCT(CollisionVolumeData);
+struct CollisionVolume {
+	CR_DECLARE_STRUCT(CollisionVolume);
 
-	CollisionVolumeData() {}
-	CollisionVolumeData(const std::string& volTypeStr, const float3& volScales, const float3& volOffsets, int tstType) {
+	CollisionVolume() {}
+	CollisionVolume(const CollisionVolume* src) {
+		axisScales = src->axisScales;
+		axisHScales = src->axisHScales;
+		axisHScalesSq = src->axisHScalesSq;
+		axisHIScales = src->axisHIScales;
+		axisOffsets = src->axisOffsets;
+		volumeBoundingRadius = src->volumeBoundingRadius;
+		volumeBoundingRadiusSq = src->volumeBoundingRadiusSq;
+		volumeType = src->volumeType;
+		testType = src->testType;
+		primaryAxis = src->primaryAxis;
+		secondaryAxes[0] = src->secondaryAxes[0];
+		secondaryAxes[1] = src->secondaryAxes[1];
+		spherical = src->spherical;
+	}
+
+	CollisionVolume(const std::string& volTypeStr, const float3& volScales, const float3& volOffsets, int tstType) {
 		// note: primaryAxis is only relevant for cylinders
 		primaryAxis = COLVOL_AXIS_Z;
 		volumeType = COLVOL_TYPE_ELLIPSOID;
@@ -124,22 +140,6 @@ struct CollisionVolumeData {
 				volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
 			} break;
 		}
-	}
-
-	void Copy(const CollisionVolumeData* src) {
-		axisScales = src->axisScales;
-		axisHScales = src->axisHScales;
-		axisHScalesSq = src->axisHScalesSq;
-		axisHIScales = src->axisHIScales;
-		axisOffsets = src->axisOffsets;
-		volumeBoundingRadius = src->volumeBoundingRadius;
-		volumeBoundingRadiusSq = src->volumeBoundingRadiusSq;
-		volumeType = src->volumeType;
-		testType = src->testType;
-		primaryAxis = src->primaryAxis;
-		secondaryAxes[0] = src->secondaryAxes[0];
-		secondaryAxes[1] = src->secondaryAxes[1];
-		spherical = src->spherical;
 	}
 
 	int GetVolumeType() const { return volumeType; }

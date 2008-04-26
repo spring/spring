@@ -4,7 +4,7 @@
 #include "StdAfx.h"
 #include "creg/creg.h"
 
-struct CollisionVolumeData;
+struct CollisionVolume;
 class CUnit;
 class CFeature;
 
@@ -38,15 +38,15 @@ class CCollisionHandler {
 	private:
 		static bool Collision(const CUnit*, const float3&);
 		static bool Collision(const CFeature*, const float3&);
-		static bool Collision(const CollisionVolumeData*, const CMatrix44f&, const float3&);
+		static bool Collision(const CollisionVolume*, const CMatrix44f&, const float3&);
 
 		static bool Intersect(const CUnit*, const float3& p1, const float3& p2, CollisionQuery* q);
 		static bool Intersect(const CFeature*, const float3& p1, const float3& p2, CollisionQuery* q);
-		static bool Intersect(const CollisionVolumeData*, const CMatrix44f&, const float3&, const float3&, CollisionQuery* q);
+		static bool Intersect(const CollisionVolume*, const CMatrix44f&, const float3&, const float3&, CollisionQuery* q);
 
-		static bool IntersectEllipsoid(const CollisionVolumeData*, const float3&, const float3&, CollisionQuery* q);
-		static bool IntersectCylinder(const CollisionVolumeData*, const float3&, const float3&, CollisionQuery* q);
-		static bool IntersectBox(const CollisionVolumeData*, const float3&, const float3&, CollisionQuery* q);
+		static bool IntersectEllipsoid(const CollisionVolume*, const float3&, const float3&, CollisionQuery* q);
+		static bool IntersectCylinder(const CollisionVolume*, const float3&, const float3&, CollisionQuery* q);
+		static bool IntersectBox(const CollisionVolume*, const float3&, const float3&, CollisionQuery* q);
 
 		static unsigned int numCollisionTests;
 		static unsigned int numIntersectionTests;

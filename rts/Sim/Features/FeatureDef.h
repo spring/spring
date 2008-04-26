@@ -6,7 +6,7 @@
 #define DRAWTYPE_NONE -1
 
 struct S3DOModel;
-struct CollisionVolumeData;
+struct CollisionVolume;
 
 struct FeatureDef
 {
@@ -20,7 +20,7 @@ struct FeatureDef
 		xsize(0), ysize(0), reclaimTime(0) {}
 
 	S3DOModel* LoadModel(int team) const;
-	CollisionVolumeData* collisionVolumeData;
+	CollisionVolume* collisionVolume;
 
 	std::string myName;
 	std::string description;

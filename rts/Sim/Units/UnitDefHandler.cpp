@@ -21,7 +21,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "Sim/Misc/CollisionVolumeData.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/ModInfo.h"
@@ -93,7 +93,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
 		unitDefs[id].unitImage  = 0;
-		unitDefs[id].collisionVolumeData = 0;
+		unitDefs[id].collisionVolume = 0;
 		unitDefs[id].techLevel  = -1;
 		unitDefs[id].decoyDef   = NULL;
 		unitID[unitName] = id;
@@ -132,8 +132,8 @@ CUnitDefHandler::~CUnitDefHandler(void)
 			unitDefs[i].unitImage = 0;
 		}
 
-		delete unitDefs[i].collisionVolumeData;
-		unitDefs[i].collisionVolumeData = 0;
+		delete unitDefs[i].collisionVolume;
+		unitDefs[i].collisionVolume = 0;
 	}
 	delete[] unitDefs;
 	delete weaponDefHandler;
@@ -734,7 +734,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	ud.collisionVolumeData = SAFE_NEW CollisionVolumeData(ud.collisionVolumeType,
+	ud.collisionVolume = SAFE_NEW CollisionVolume(ud.collisionVolumeType,
 		ud.collisionVolumeScales, ud.collisionVolumeOffsets, ud.collisionVolumeTest);
 
 
