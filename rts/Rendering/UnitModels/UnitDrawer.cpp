@@ -90,12 +90,12 @@ CUnitDrawer::CUnitDrawer(void)
 	whiteTex=white.CreateTexture(false);
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
-	unitSunColor = mapInfo->light.unitAmbientColor;
+	unitSunColor = mapInfo->light.unitSunColor;
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
 	float3 specularSunColor = mapInfo->light.specularSunColor;
+	advShading = !!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program? 1: 0);
 
-	advShading=!!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1 : 0);
 	if (advShading && !GLEW_ARB_fragment_program) {
 		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
 		advShading = false;
@@ -968,8 +968,8 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);	// Position The Light
-		glEnable(GL_LIGHT1);								// Enable Light One
+		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);	// Position The Light
+		glEnable(GL_LIGHT1);										// Enable Light One
 	//	glDisable(GL_CULL_FACE);
 	//	glCullFace(GL_BACK);
 		glEnable(GL_TEXTURE_2D);
