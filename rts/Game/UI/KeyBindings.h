@@ -14,8 +14,6 @@
 #include "Game/Console.h"
 #include "Game/Action.h"
 
-using namespace std;
-
 class CUnit;
 class CFileHandler;
 class CSimpleParser;
@@ -27,18 +25,18 @@ class CKeyBindings : public CommandReciever
 		CKeyBindings();
 		~CKeyBindings();
 
-		bool Load(const string& filename);
-		bool Save(const string& filename) const;
+		bool Load(const std::string& filename);
+		bool Save(const std::string& filename) const;
 		void Print() const;
 
-		typedef vector<Action> ActionList;
-		typedef vector<string> HotkeyList;
+		typedef std::vector<Action> ActionList;
+		typedef std::vector<std::string> HotkeyList;
 
 		const ActionList& GetActionList(const CKeySet& ks) const;
-		const HotkeyList& GetHotkeys(const string& action) const;
+		const HotkeyList& GetHotkeys(const std::string& action) const;
 
 		virtual void PushAction(const Action&);
-		bool Command(const string& line);
+		bool Command(const std::string& line);
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
 
@@ -52,40 +50,40 @@ class CKeyBindings : public CommandReciever
 		void Sanitize();
 		void BuildHotkeyMap();
 
-		bool Bind(const string& keystring, const string& action);
-		bool UnBind(const string& keystring, const string& action);
-		bool UnBindKeyset(const string& keystr);
-		bool UnBindAction(const string& action);
-		bool SetFakeMetaKey(const string& keystring);
-		bool AddKeySymbol(const string& keysym, const string& code);
-		bool AddNamedKeySet(const string& name, const string& keyset);
-		bool ParseTypeBind(CSimpleParser& parser, const string& line);
+		bool Bind(const std::string& keystring, const std::string& action);
+		bool UnBind(const std::string& keystring, const std::string& action);
+		bool UnBindKeyset(const std::string& keystr);
+		bool UnBindAction(const std::string& action);
+		bool SetFakeMetaKey(const std::string& keystring);
+		bool AddKeySymbol(const std::string& keysym, const std::string& code);
+		bool AddNamedKeySet(const std::string& name, const std::string& keyset);
+		bool ParseTypeBind(CSimpleParser& parser, const std::string& line);
 
-		bool ParseKeySet(const string& keystr, CKeySet& ks) const;
-		bool RemoveCommandFromList(ActionList& al, const string& command);
+		bool ParseKeySet(const std::string& keystr, CKeySet& ks) const;
+		bool RemoveCommandFromList(ActionList& al, const std::string& command);
 
 		bool FileSave(FILE* file) const;
 
 	protected:
-		typedef map<CKeySet, ActionList> KeyMap; // keyset to action
+		typedef std::map<CKeySet, ActionList> KeyMap; // keyset to action
 		KeyMap bindings;
 
-		typedef map<string, HotkeyList> ActionMap; // action to keyset
+		typedef std::map<std::string, HotkeyList> ActionMap; // action to keyset
 		ActionMap hotkeys;
 
-		typedef map<string, CKeySet> NamedKeySetMap; // user defined keysets
+		typedef std::map<std::string, CKeySet> NamedKeySetMap; // user defined keysets
 		NamedKeySetMap namedKeySets;
 
 		struct BuildTypeBinding {
-			string keystr;         // principal keyset
-			vector<string> reqs;   // requirements
-			vector<string> sorts;  // sorting criteria
-			vector<string> chords; // enumerated keyset chords
+			std::string keystr;         // principal keyset
+			std::vector<std::string> reqs;   // requirements
+			std::vector<std::string> sorts;  // sorting criteria
+			std::vector<std::string> chords; // enumerated keyset chords
 		};
-		vector<BuildTypeBinding> typeBindings;
+		std::vector<BuildTypeBinding> typeBindings;
 
 		// commands that use both Up and Down key presses
-		set<string> statefulCommands;
+		std::set<std::string> statefulCommands;
 
 		int debug;
 		int fakeMetaKey;

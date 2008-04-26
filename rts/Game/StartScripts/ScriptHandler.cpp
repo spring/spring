@@ -59,8 +59,8 @@ void CScriptHandler::LoadScripts() {
 void CScriptHandler::StartLua()
 {
 #ifndef NO_LUA
-	std::vector<string> files = hpiHandler->GetFilesInDir("startscripts");
-	for (std::vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
+	std::vector<std::string> files = hpiHandler->GetFilesInDir("startscripts");
+	for (std::vector<std::string>::iterator i = files.begin(); i != files.end(); ++i) {
 		char buffer[16000];
 		const int returned = hpiHandler->LoadFile(std::string("startscripts/"+*i), buffer);
 		CLuaBinder* lua = SAFE_NEW CLuaBinder();
@@ -100,7 +100,7 @@ CScriptHandler::~CScriptHandler()
 }
 
 /** Called by the CScript constructors to add themselves to the CScriptHandler. */
-void CScriptHandler::AddScript(string name, CScript *s)
+void CScriptHandler::AddScript(std::string name, CScript *s)
 {
 	scripts[name] = s;
 }

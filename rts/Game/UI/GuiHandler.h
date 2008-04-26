@@ -45,15 +45,15 @@ class CGuiHandler : public CInputReceiver {
 		                                   const BuildInfo& endInfo);
 		                                   // start.def has to be end.def
 
-		bool ReloadConfig(const string& filename);
+		bool ReloadConfig(const std::string& filename);
 
 		void ForceLayoutUpdate() { forceLayoutUpdate = true; }
 
 		int GetMaxPage()    const { return maxPage; }
 		int GetActivePage() const { return activePage; }
 
-		void RunLayoutCommand(const string& command);
-		void RunCustomCommands(const vector<string>& cmds, bool rmb);
+		void RunLayoutCommand(const std::string& command);
+		void RunCustomCommands(const std::vector<std::string>& cmds, bool rmb);
 
  		bool GetInvertQueueKey() const { return invertQueueKey; }
  		void SetInvertQueueKey(bool value) { invertQueueKey = value; }
@@ -71,7 +71,7 @@ class CGuiHandler : public CInputReceiver {
 		bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	public:
-		vector<CommandDescription> commands;
+		std::vector<CommandDescription> commands;
 		int inCommand;
 		int buildFacing;
 		int buildSpacing;
@@ -79,14 +79,14 @@ class CGuiHandler : public CInputReceiver {
 	private:
 		void GiveCommand(const Command& cmd, bool fromUser = true) const;
 
-		void MenuChoice(string s);
+		void MenuChoice(std::string s);
 		static void MenuSelection(std::string s);
 
 		void LayoutIcons(bool useSelectionPage);
 		bool LayoutCustomIcons(bool useSelectionPage);
 		void ResizeIconArray(unsigned int size);
-		void AppendPrevAndNext(vector<CommandDescription>& cmds);
- 		void ConvertCommands(vector<CommandDescription>&);
+		void AppendPrevAndNext(std::vector<CommandDescription>& cmds);
+ 		void ConvertCommands(std::vector<CommandDescription>&);
 
 		int  FindInCommandPage();
 		void RevertToCmdDesc(const CommandDescription& cmdDesc,

@@ -13,8 +13,6 @@
 class CGroup;
 class CUnitSet;
 
-using namespace std;
-
 class CGroupHandler
 {
 public:
@@ -26,24 +24,24 @@ public:
 	void Update();
 	void DrawCommands();
 	void GroupCommand(int num);
-	void GroupCommand(int num, const string& cmd);
+	void GroupCommand(int num, const std::string& cmd);
 	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);
 	void Load(std::istream *s);
 	void Save(std::ostream *s);
 
-	vector<CGroup*> groups;
-	map<AIKey,string> availableAI;
+	std::vector<CGroup*> groups;
+	std::map<AIKey, std::string> availableAI;
 
-	map<AIKey,string> GetSuitedAis(const CUnitSet& units);
-	map<AIKey,string> lastSuitedAis;
+	std::map<AIKey, std::string> GetSuitedAis(const CUnitSet& units);
+	std::map<AIKey, std::string> lastSuitedAis;
 
 	int team;
 protected:
 	void FindDlls(void);
-	void TestDll(string name);
+	void TestDll(std::string name);
 
-	vector<int> freeGroups;
+	std::vector<int> freeGroups;
 	int firstUnusedGroup;
 private:
 	AIKey defaultKey;

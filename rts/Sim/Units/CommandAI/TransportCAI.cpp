@@ -344,7 +344,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			return true;
 		}
 	} else {
-		for (float y = max(emptyRadius, center.z - radius); y < min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius); y += SQUARE_SIZE) {
+		for (float y = std::max(emptyRadius, center.z - radius); y < std::min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius); y += SQUARE_SIZE) {
 			float dy = y - center.z;
 			float rx = radius * radius - dy * dy;
 
@@ -353,7 +353,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 
 			rx = sqrt(rx);
 
-			for (float x = max(emptyRadius, center.x - rx); x < min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
+			for (float x = std::max(emptyRadius, center.x - rx); x < std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
 				float unloadPosHeight = ground->GetApproximateHeight(x, y);
 
 				if (unloadPosHeight < (0 - unitToUnload->unitDef->maxWaterDepth))
@@ -396,7 +396,7 @@ bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload) {
 bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots) {
 	//should only be used by air
 
-	CTransportUnit* transport=(CTransportUnit*)owner;
+	CTransportUnit* transport = (CTransportUnit*)owner;
 	//dropSpots.clear();
 	float gap = 25.5; //TODO - set tag for this?
 	float3 dir = endpos - startpos;
@@ -405,19 +405,16 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	float3 nextPos = startpos;
 	float3 pos;
 
-	list<CTransportUnit::TransportedUnit>::iterator ti = transport->transported.begin();
+	std::list<CTransportUnit::TransportedUnit>::iterator ti = transport->transported.begin();
 	dropSpots.push_front(nextPos);
 
-	//first spot
+	// first spot
 	if (ti!=transport->transported.end()) {
-		//float3 p = nextPos; //test to make intended land spots visible
-		//inMapDrawer->CreatePoint(p,ti->unit->unitDef->name);
-		//p.z +=transport->transportCapacityUsed*5;
 		nextPos += dir*(gap + ti->unit->radius);
 		ti++;
 	}
 
-	//remaining spots
+	// remaining spots
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 		while (ti != transport->transported.end() && startpos.distance(nextPos) < startpos.distance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
@@ -463,7 +460,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
 	float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
 	float3 found;
 
-	bool canUnload = FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
+	bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
 
 	if (canUnload) {
 		Command c2;
@@ -503,7 +500,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport) {
 
 			approachVector = startingDropPos-owner->pos;
 			approachVector.Normalize();
-			canUnload = FindEmptyDropSpots(pos, pos + approachVector*max(16.0f,radius), dropSpots);
+			canUnload = FindEmptyDropSpots(pos, pos + approachVector * std::max(16.0f,radius), dropSpots);
 
 		} else if (!dropSpots.empty() ) {
 			//make sure we check current spot infront of us each unload
@@ -553,7 +550,7 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 	float3 found;
 	//((CTransportUnit*)owner)->transported
 
-	bool canUnload=FindEmptySpot(pos,max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius  * ((CTransportUnit*)owner)->unitDef->unloadSpread,
+	bool canUnload=FindEmptySpot(pos, std::max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius  * ((CTransportUnit*)owner)->unitDef->unloadSpread,
 								found,((CTransportUnit*)owner)->transported.front().unit);
 	if(canUnload){
 
@@ -999,7 +996,7 @@ bool CTransportCAI::AllowedCommand(const Command& c)
 			float radius = c.params[3];
 			float spread = u->radius * transport->unitDef->unloadSpread;
 			float3 found;
-			bool canUnload = FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
+			bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
 			if(!canUnload) return false;
 			break;
 		}

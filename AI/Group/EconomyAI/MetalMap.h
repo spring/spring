@@ -18,7 +18,7 @@ public:
 	int NumSpotsFound;
 	float AverageMetal;
 	float AverageMetalPerSpot;
-	vector<float3> VectoredSpots;
+	std::vector<float3> VectoredSpots;
 	bool IsMetalMap;
 	void SaveMetalMap();
 	bool LoadMetalMap();

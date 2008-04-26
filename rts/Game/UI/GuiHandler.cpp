@@ -156,7 +156,7 @@ void CGuiHandler::LoadDefaults()
 }
 
 
-static bool SafeAtoF(float& var, const string& value)
+static bool SafeAtoF(float& var, const std::string& value)
 {
 	char* endPtr;
 	const char* startPtr = value.c_str();
@@ -176,20 +176,20 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	CFileHandler ifs(filename);
 	CSimpleParser parser(ifs);
 
-	string deadStr = "";
-	string prevStr = "";
-	string nextStr = "";
-	string fillOrderStr = "";
+	std::string deadStr = "";
+	std::string prevStr = "";
+	std::string nextStr = "";
+	std::string fillOrderStr = "";
 
 	while (true) {
-		const string line = parser.GetCleanLine();
+		const std::string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
 
-		vector<string> words = parser.Tokenize(line, 1);
+		std::vector<std::string> words = parser.Tokenize(line, 1);
 
-		const string command = StringToLower(words[0]);
+		const std::string command = StringToLower(words[0]);
 
 		if ((command == "dropshadows") && (words.size() > 1)) {
 			dropShadows = !!atoi(words[1].c_str());
@@ -272,12 +272,12 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 	}
 
 	// sane clamps
-	xIcons      = max(2,      xIcons);
-	yIcons      = max(2,      yIcons);
-	xIconSize   = max(0.010f, xIconSize);
-	yIconSize   = max(0.010f, yIconSize);
-	iconBorder  = max(0.0f,   iconBorder);
-	frameBorder = max(0.0f,   frameBorder);
+	xIcons      = std::max(2,      xIcons);
+	yIcons      = std::max(2,      yIcons);
+	xIconSize   = std::max(0.010f, xIconSize);
+	yIconSize   = std::max(0.010f, yIconSize);
+	iconBorder  = std::max(0.0f,   iconBorder);
+	frameBorder = std::max(0.0f,   frameBorder);
 
 	xIconStep = xIconSize + (iconBorder * 2.0f);
 	yIconStep = yIconSize + (iconBorder * 2.0f);
@@ -358,7 +358,7 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 		fillOrder.push_back(i);
 	}
 
-	// split the string into slot names
+	// split the std::string into slot names
 	std::vector<std::string> slotNames = CSimpleParser::Tokenize(text, 0);
 	if ((int)slotNames.size() != iconsPerPage) {
 		return;
@@ -402,7 +402,7 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig(const string& filename)
+bool CGuiHandler::ReloadConfig(const std::string& filename)
 {
 	LoadConfig(filename);
 	activePage = 0;
@@ -426,7 +426,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 }
 
 
-void CGuiHandler::AppendPrevAndNext(vector<CommandDescription>& cmds)
+void CGuiHandler::AppendPrevAndNext(std::vector<CommandDescription>& cmds)
 {
 	CommandDescription cd;
 
@@ -480,7 +480,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 			if (samePage) {
 				for (int ii = 0; ii < iconsCount; ii++) {
 					if (inCommand == icons[ii].commandsID) {
-						activePage = min(maxPage, (ii / iconsPerPage));;
+						activePage = std::min(maxPage, (ii / iconsPerPage));;
 						selectedUnits.SetCommandPage(activePage);
 					}
 				}
@@ -540,8 +540,8 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	ac = selectedUnits.GetAvailableCommands();
 	ConvertCommands(ac.commands);
 
-	vector<CommandDescription> hidden;
-	vector<CommandDescription>::const_iterator cdi;
+	std::vector<CommandDescription> hidden;
+	std::vector<CommandDescription>::const_iterator cdi;
 
 	// separate the visible/hidden icons
 	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
@@ -567,7 +567,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	const int prevPageCmd = cmdCount + 0;
 	const int nextPageCmd = cmdCount + 1;
 
-	maxPage    = max(0, pageCount - 1);
+	maxPage    = std::max(0, pageCount - 1);
 	iconsCount = pageCount * iconsPerPage;
 
 	// resize the icon array if required
@@ -640,9 +640,9 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	if (validInCommand) {
 		RevertToCmdDesc(cmdDesc, defCmd, samePage);
 	} else if (useSelectionPage) {
-		activePage = min(maxPage, ac.commandPage);
+		activePage = std::min(maxPage, ac.commandPage);
 	}
-	activePage = min(maxPage, activePage);
+	activePage = std::min(maxPage, activePage);
 }
 
 
@@ -655,7 +655,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	// get the commands to process
 	CSelectedUnits::AvailableCommandsStruct ac;
 	ac = selectedUnits.GetAvailableCommands();
-	vector<CommandDescription> cmds = ac.commands;
+	std::vector<CommandDescription> cmds = ac.commands;
 	if (cmds.size() > 0) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
@@ -664,14 +664,14 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	// call for a custom layout
 	int tmpXicons = xIcons;
 	int tmpYicons = yIcons;
-	vector<int> removeCmds;
-	vector<CommandDescription> customCmds;
-	vector<int> onlyTextureCmds;
-	vector<CLuaUI::ReStringPair> reTextureCmds;
-	vector<CLuaUI::ReStringPair> reNamedCmds;
-	vector<CLuaUI::ReStringPair> reTooltipCmds;
-	vector<CLuaUI::ReParamsPair> reParamsCmds;
-	map<int, int> iconMap;
+	std::vector<int> removeCmds;
+	std::vector<CommandDescription> customCmds;
+	std::vector<int> onlyTextureCmds;
+	std::vector<CLuaUI::ReStringPair> reTextureCmds;
+	std::vector<CLuaUI::ReStringPair> reNamedCmds;
+	std::vector<CLuaUI::ReStringPair> reTooltipCmds;
+	std::vector<CLuaUI::ReParamsPair> reParamsCmds;
+	std::map<int, int> iconMap;
 
 	if (!luaUI->LayoutButtons(tmpXicons, tmpYicons, cmds,
 	                          removeCmds, customCmds,
@@ -702,7 +702,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		}
 	}
 	// remove unwanted commands  (and mark all as onlyKey)
-	vector<CommandDescription> tmpCmds;
+	std::vector<CommandDescription> tmpCmds;
 	for (i = 0; i < cmds.size(); i++) {
 		if (removeIDs.find(i) == removeIDs.end()) {
 			cmds[i].onlyKey = true;
@@ -766,8 +766,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	for (i = 0; i < reParamsCmds.size(); i++) {
 		const int index = reParamsCmds[i].cmdIndex;
 		if ((index >= 0) && (index < cmdCount)) {
-			const map<int, string>& params = reParamsCmds[i].params;
-			map<int, string>::const_iterator pit;
+			const map<int, std::string>& params = reParamsCmds[i].params;
+			map<int, std::string>::const_iterator pit;
 			for (pit = params.begin(); pit != params.end(); ++pit) {
 				const int p = pit->first;
 				if ((p >= 0) && (p < (int)cmds[index].params.size())) {
@@ -781,7 +781,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	}
 
 	// build the iconList from the map
-	vector<int> iconList;
+	std::vector<int> iconList;
 	int nextPos = 0;
 	map<int, int>::iterator mit;
 	for (mit = iconMap.begin(); mit != iconMap.end(); ++mit) {
@@ -848,11 +848,11 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	iconsCount   = tmpIconsCount;
 	iconsPerPage = tmpIconsPerPage;
 
-	maxPage = max(0, pageCount - 1);
+	maxPage = std::max(0, pageCount - 1);
 	if (useSelectionPage) {
-		activePage = min(maxPage, ac.commandPage);
+		activePage = std::min(maxPage, ac.commandPage);
 	} else {
-		activePage = min(maxPage, activePage);
+		activePage = std::min(maxPage, activePage);
 	}
 
 	buttonBox.x1 = xPos;
@@ -884,7 +884,7 @@ void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 }
 
 
-void CGuiHandler::ConvertCommands(vector<CommandDescription>& cmds)
+void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 {
 	if (newAttackMode) {
 		const int count = (int)cmds.size();
@@ -1241,7 +1241,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 					"Choose the AI you want to assign to this group.\n"
 					"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
 					"assigned.";
-				vector<string>::const_iterator pi;
+				std::vector<std::string>::const_iterator pi;
 				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 					list->AddItem(pi->c_str(),"");
 				}
@@ -1329,8 +1329,8 @@ int CGuiHandler::IconAtPos(int x, int y)
 
 	int xSlot = int((fx - (buttonBox.x1 + frameBorder)) / xIconStep);
 	int ySlot = int(((buttonBox.y2 - frameBorder) - fy) / yIconStep);
-	xSlot = min(max(xSlot, 0), xIcons - 1);
-	ySlot = min(max(ySlot, 0), yIcons - 1);
+	xSlot = std::min(std::max(xSlot, 0), xIcons - 1);
+	ySlot = std::min(std::max(ySlot, 0), yIcons - 1);
   const int ii = (activePage * iconsPerPage) + (ySlot * xIcons) + xSlot;
   if ((ii >= 0) && (ii < iconsCount)) {
 		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
@@ -1360,7 +1360,7 @@ struct ModGroup {
 };
 
 
-static bool ParseCustomCmdMods(string& cmd, ModGroup& in, ModGroup& out)
+static bool ParseCustomCmdMods(std::string& cmd, ModGroup& in, ModGroup& out)
 {
 	const char* c = cmd.c_str();
 	if (*c != '@') {
@@ -1417,7 +1417,7 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 }
 
 
-void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
+void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
 {
 	static int depth = 0;
 	if (depth > 8) {
@@ -1426,7 +1426,7 @@ void CGuiHandler::RunCustomCommands(const vector<string>& cmds, bool rmb)
 	depth++;
 
 	for (int p = 0; p < (int)cmds.size(); p++) {
-		string copy = cmds[p];
+		std::string copy = cmds[p];
 		ModGroup inMods;  // must match for the action to execute
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
 		if (ParseCustomCmdMods(copy, inMods, outMods)) {
@@ -1511,7 +1511,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 	if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 	const int minX = (gu->viewSizeX * 1) / 4;
 	const int maxX = (gu->viewSizeX * 3) / 4;
-	const int effX = max(min(mouse->lastx, maxX), minX);
+	const int effX = std::max(std::min(mouse->lastx, maxX), minX);
 	const float factor = float(effX - minX) / float(maxX - minX);
 
 	return (minV + (factor * (maxV - minV)));
@@ -1610,7 +1610,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
 		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
 		if ((iconCmd >= 0) && (iconCmd < commands.size())) {
-			string cmd = "unbindaction " + commands[iconCmd].action;
+			std::string cmd = "unbindaction " + commands[iconCmd].action;
 			keyBindings->Command(cmd);
 			logOutput.Print("%s", cmd.c_str());
 		}
@@ -1655,7 +1655,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 }
 
 
-void CGuiHandler::RunLayoutCommand(const string& command)
+void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
 	if (command.find("reload") == 0) {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
@@ -1708,7 +1708,7 @@ void CGuiHandler::RunLayoutCommand(const string& command)
 
 bool CGuiHandler::ProcessBuildActions(const Action& action)
 {
-	const string arg = StringToLower(action.extra);
+	const std::string arg = StringToLower(action.extra);
 	if (action.command == "buildspacing") {
 		if (arg == "inc") {
 			buildSpacing++;
@@ -1867,7 +1867,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				 (cmdType == CMDTYPE_ICON_BUILDING))) {
 			for (int ii = 0; ii < iconsCount; ii++) {
 				if (icons[ii].commandsID == a) {
-					activePage = min(maxPage, (ii / iconsPerPage));
+					activePage = std::min(maxPage, (ii / iconsPerPage));
 					selectedUnits.SetCommandPage(activePage);
 				}
 			}
@@ -1895,7 +1895,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 						c.options = RIGHT_MOUSE_KEY | SHIFT_KEY | CONTROL_KEY;
 					}
 				}
-				else if (action.extra.find("queued") != string::npos) {
+				else if (action.extra.find("queued") != std::string::npos) {
 					c.options |= SHIFT_KEY;
 				}
 				GiveCommand(c);
@@ -1935,10 +1935,10 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					float maxV = 100.0f;
 					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
-					value = max(min(value, maxV), minV);
+					value = std::max(std::min(value, maxV), minV);
 					Command c;
 					c.options = 0;
-					if (action.extra.find("queued") != string::npos) {
+					if (action.extra.find("queued") != std::string::npos) {
 						c.options = SHIFT_KEY;
 					}
 					c.id = cd.id;
@@ -1975,7 +1975,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 			case CMDTYPE_COMBO_BOX:
 			if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
 				CommandDescription& cd = cmdDesc;
-				vector<string>::iterator pi;
+				std::vector<std::string>::iterator pi;
 				// check for an action bound to a specific entry
 				if (!action.extra.empty() && (iconCmd < 0)) {
 					int p = 0;
@@ -2051,7 +2051,7 @@ void CGuiHandler::MenuSelection(std::string s)
 }
 
 
-void CGuiHandler::MenuChoice(string s)
+void CGuiHandler::MenuChoice(std::string s)
 {
 	if (activeReceiver == list) {
 		activeReceiver = NULL;
@@ -2064,7 +2064,7 @@ void CGuiHandler::MenuChoice(string s)
 		switch (cd.type) {
 			case CMDTYPE_COMBO_BOX: {
 				inCommand = -1;
-				vector<string>::iterator pi;
+				std::vector<std::string>::iterator pi;
 				int a = 0;
 				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
 					if (*pi == s) {
@@ -2110,7 +2110,7 @@ bool CGuiHandler::IsAbove(int x, int y)
 
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
-	string s;
+	std::string s;
 	if (luaUI != NULL) {
 		s = luaUI->GetTooltip(x, y);
 		if (!s.empty()) {
@@ -2379,7 +2379,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					return defaultRet;
 				}
 				float3 pos2=camera->pos+mouse->dir*dist;
-				c.params.push_back(min(maxRadius,pos.distance2D(pos2)));
+				c.params.push_back(std::min(maxRadius,pos.distance2D(pos2)));
 			}
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
@@ -2602,7 +2602,7 @@ void CGuiHandler::Draw()
 }
 
 
-static string StripColorCodes(const string& text)
+static std::string StripColorCodes(const std::string& text)
 {
 	std::string nocolor;
 	const int len = (int)text.size();
@@ -2617,14 +2617,14 @@ static string StripColorCodes(const string& text)
 }
 
 
-static string FindCornerText(const string& corner, const vector<string>& params)
+static std::string FindCornerText(const std::string& corner, const vector<std::string>& params)
 {
 	for (int p = 0; p < (int)params.size(); p++) {
 		if (params[p].find(corner) == 0) {
 			return params[p].substr(corner.length());
 		}
 	}
-	return string("");
+	return std::string("");
 }
 
 
@@ -2686,8 +2686,8 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 }
 
 
-static inline bool ParseTextures(const string& texString,
-                                 string& tex1, string& tex2,
+static inline bool ParseTextures(const std::string& texString,
+                                 std::string& tex1, std::string& tex2,
                                  float& xscale, float& yscale)
 {
 	// format:  "&<xscale>x<yscale>&<tex>1&<tex2>"  --  <>'s are not included
@@ -2707,13 +2707,13 @@ static inline bool ParseTextures(const string& texString,
 	const int tex1Len = c - tex1Start;
 	c++;
 	tex1 = c; // draw 'tex2' first
-	tex2 = string(tex1Start, tex1Len);
+	tex2 = std::string(tex1Start, tex1Len);
 
 	return true;
 }
 
 
-static inline bool BindUnitTexByString(const string& str)
+static inline bool BindUnitTexByString(const std::string& str)
 {
 	char* endPtr;
 	const char* startPtr = str.c_str() + 1; // skip the '#'
@@ -2736,7 +2736,7 @@ static inline bool BindUnitTexByString(const string& str)
 }
 
 
-static bool BindTextureString(const string& str)
+static bool BindTextureString(const std::string& str)
 {
 	if (str[0] == '#') {
 		return BindUnitTexByString(str);
@@ -2752,8 +2752,8 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 		return false;
 	}
 
-	string tex1;
-	string tex2;
+	std::string tex1;
+	std::string tex2;
 	float xscale = 1.0f;
 	float yscale = 1.0f;
 
@@ -2847,7 +2847,7 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 	const float textBorder2 = (2.0f * textBorder);
 	float xScale = (xIconSize - textBorder2) / tWidth;
 	float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
-	const float fontScale = min(xScale, yScale);
+	const float fontScale = std::min(xScale, yScale);
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);
 	const float yCenter = 0.5f * (b.y1 + (b.y2 + yShrink));
@@ -2967,8 +2967,8 @@ void CGuiHandler::DrawButtons()
 	}
 
 	const int mouseIcon   = IconAtPos(mouse->lastx, mouse->lasty);
-	const int buttonStart = min(iconsCount, activePage * iconsPerPage);
-	const int buttonEnd   = min(iconsCount, buttonStart + iconsPerPage);
+	const int buttonStart = std::min(iconsCount, activePage * iconsPerPage);
+	const int buttonEnd   = std::min(iconsCount, buttonStart + iconsPerPage);
 
 	for (int ii = buttonStart; ii < buttonEnd; ii++) {
 
@@ -3048,7 +3048,7 @@ void CGuiHandler::DrawButtons()
 			// draw the text
 			if (!usedTexture || !onlyTexture) {
 				// command name (or parameter)
-				string toPrint = cmdDesc.name;
+				std::string toPrint = cmdDesc.name;
 				if (cmdDesc.type == CMDTYPE_ICON_MODE) {
 					const int opt = atoi(cmdDesc.params[0].c_str()) + 1;
 					if (opt < cmdDesc.params.size()) {
@@ -3192,7 +3192,7 @@ void CGuiHandler::DrawNumberInput()
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 			const float mouseX = (float)mouse->lastx / (float)gu->viewSizeX;
-			const float slideX = min(max(mouseX, 0.25f), 0.75f);
+			const float slideX = std::min(std::max(mouseX, 0.25f), 0.75f);
 			//const float mouseY = 1.0f - (float)(mouse->lasty - 16) / (float)gu->viewSizeY;
 			glColor4f(1.0f, 1.0f, 0.0f, 0.8f);
 			glRectf(0.235f, 0.45f, 0.25f, 0.55f);
@@ -3498,7 +3498,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 								color = grey;
 							}
 						}
-						const float radius = min(maxRadius, pos.distance2D(pos2));
+						const float radius = std::min(maxRadius, pos.distance2D(pos2));
 						if (!onMinimap) {
 							DrawArea(pos, radius, color);
 						}
@@ -3997,7 +3997,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	pos1 += (pos1 - pos2);
 	const int maxSteps = 256;
 	const float frontLen = (pos1 - pos2).Length2D();
-	const int steps = min(maxSteps, max(1, int(frontLen / 16.0f)));
+	const int steps = std::min(maxSteps, std::max(1, int(frontLen / 16.0f)));
 
 	glDisable(GL_FOG);
 	glBegin(GL_QUAD_STRIP);
@@ -4091,10 +4091,10 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
                                  bool invColorSelect)
 {
 	BoxData boxData;
-	boxData.mins = float3(min(pos0.x, pos1.x), readmap->minheight - 250.0f,
-                        min(pos0.z, pos1.z));
-	boxData.maxs = float3(max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
-	                      max(pos0.z, pos1.z));
+	boxData.mins = float3(std::min(pos0.x, pos1.x), readmap->minheight - 250.0f,
+                        std::min(pos0.z, pos1.z));
+	boxData.maxs = float3(std::max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
+	                      std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
@@ -4166,10 +4166,10 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1)
 		return;
 	}
 
-	const float3 mins(min(pos0.x, pos1.x), readmap->minheight - 250.0f,
-	                  min(pos0.z, pos1.z));
-	const float3 maxs(max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
-	                  max(pos0.z, pos1.z));
+	const float3 mins(std::min(pos0.x, pos1.x), readmap->minheight - 250.0f,
+	                  std::min(pos0.z, pos1.z));
+	const float3 maxs(std::max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
+	                  std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);

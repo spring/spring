@@ -125,11 +125,11 @@ void CPlasmaRepulser::Update(void)
 		if (weaponDef->visibleShield) {
 			drawAlpha += 1.0f;
 		}
-		drawAlpha = min(1.0f, drawAlpha * weaponDef->shieldAlpha);
+		drawAlpha = std::min(1.0f, drawAlpha * weaponDef->shieldAlpha);
 		const bool drawMe = (drawAlpha > 0.0f);
 
 		if (drawMe || wasDrawn) {
-			const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
+			const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 			const float3 color = (weaponDef->shieldGoodColor * colorMix) +
 													 (weaponDef->shieldBadColor * (1.0f - colorMix));
 			std::list<CShieldPartProjectile*>::iterator si;
@@ -182,7 +182,7 @@ void CPlasmaRepulser::Update(void)
 								}
 							if (i == hasGfx.end()) {
 								hasGfx.insert(hasGfx.end(),*pi);
-								const float colorMix = min(1.0f, curPower / max(1.0f, weaponDef->shieldPower));
+								const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 								const float3 color = (weaponDef->shieldGoodColor * colorMix) +
 								                     (weaponDef->shieldBadColor * (1.0f - colorMix));
 								SAFE_NEW CRepulseGfx(owner, *pi, radius, color);

@@ -131,17 +131,17 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 
 void CRadarHandler::AddMapArea(int2 pos, int radius, std::vector<unsigned short>& map, int amount)
 {
-	int sx=max(0,pos.x-radius);
-	int ex=min(xsize-1,pos.x+radius);
-	int sy=max(0,pos.y-radius);
-	int ey=min(ysize-1,pos.y+radius);
+	int sx = std::max(0,pos.x-radius);
+	int ex = std::min(xsize-1,pos.x+radius);
+	int sy = std::max(0,pos.y-radius);
+	int ey = std::min(ysize-1,pos.y+radius);
 
-	int rr=radius*radius;
-	for(int y=sy;y<=ey;++y){
-		int rrx=rr-(pos.y-y)*(pos.y-y);
-		for(int x=sx;x<=ex;++x){
-			if((pos.x-x)*(pos.x-x)<=rrx){
-				map[y*xsize+x]+=amount;
+	int rr = radius * radius;
+	for (int y = sy; y <= ey; ++y) {
+		int rrx = rr - (pos.y - y) * (pos.y - y);
+		for (int x = sx; x <= ex; ++x) {
+			if ((pos.x - x) * (pos.x - x) <= rrx) {
+				map[y * xsize + x] += amount;
 			}
 		}
 	}

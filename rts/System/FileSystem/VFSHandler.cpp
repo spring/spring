@@ -15,7 +15,7 @@ CVFSHandler::CVFSHandler()
 }
 
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
-bool CVFSHandler::AddArchive(string arName, bool override)
+bool CVFSHandler::AddArchive(std::string arName, bool override)
 {
 	CArchiveBase* ar = archives[arName];
 	if (!ar) {
@@ -27,7 +27,7 @@ bool CVFSHandler::AddArchive(string arName, bool override)
 	}
 
 	int cur;
-	string name;
+	std::string name;
 	int size;
 
 	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
@@ -47,17 +47,17 @@ bool CVFSHandler::AddArchive(string arName, bool override)
 
 CVFSHandler::~CVFSHandler(void)
 {
-	for (map<string, CArchiveBase*>::iterator i = archives.begin(); i != archives.end(); ++i) {
+	for (std::map<std::string, CArchiveBase*>::iterator i = archives.begin(); i != archives.end(); ++i) {
 		delete i->second;
 	}
 }
 
-int CVFSHandler::LoadFile(string name, void* buffer)
+int CVFSHandler::LoadFile(std::string name, void* buffer)
 {
 	StringToLowerInPlace(name);
 	filesystem.ForwardSlashes(name);
 
-	map<string, FileData>::iterator fi = files.find(name);
+	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
 		return -1;
 	}
@@ -75,12 +75,12 @@ int CVFSHandler::LoadFile(string name, void* buffer)
 	return fsize;
 }
 
-int CVFSHandler::GetFileSize(string name)
+int CVFSHandler::GetFileSize(std::string name)
 {
 	StringToLowerInPlace(name);
 	filesystem.ForwardSlashes(name);
 
-	map<string, FileData>::iterator fi = files.find(name);
+	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
 		return -1;
 	}
@@ -103,41 +103,41 @@ int CVFSHandler::GetFileSize(string name)
 }
 
 // Returns all the files in the given (virtual) directory without the preceeding pathname
-vector<string> CVFSHandler::GetFilesInDir(string dir)
+std::vector<std::string> CVFSHandler::GetFilesInDir(std::string dir)
 {
-	vector<string> ret;
+	std::vector<std::string> ret;
 	StringToLowerInPlace(dir);
 	filesystem.ForwardSlashes(dir);
 
-	map<string, FileData>::const_iterator filesStart = files.begin();
-	map<string, FileData>::const_iterator filesEnd   = files.end();
+	std::map<std::string, FileData>::const_iterator filesStart = files.begin();
+	std::map<std::string, FileData>::const_iterator filesEnd   = files.end();
 
 	// Non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
-		string::size_type dirLast = (dir.length() - 1);
+		std::string::size_type dirLast = (dir.length() - 1);
 		if (dir[dirLast] != '/') {
 			dir += "/";
 			dirLast++;
 		}
 		// limit the iterator range
-		string dirEnd = dir;
+		std::string dirEnd = dir;
 		dirEnd[dirLast] = dirEnd[dirLast] + 1;
 		filesStart = files.lower_bound(dir);
 		filesEnd   = files.upper_bound(dirEnd);
 	}
 
 	while (filesStart != filesEnd) {
-		const string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = filesystem.GetDirectory(filesStart->first);
 
 		// Test to see if this file start with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
 
 			// Strip pathname
-			const string name = filesStart->first.substr(dir.length());
+			const std::string name = filesStart->first.substr(dir.length());
 
 			// Do not return files in subfolders
-			if ((name.find('/') == string::npos) &&
-			    (name.find('\\') == string::npos)) {
+			if ((name.find('/') == std::string::npos) &&
+			    (name.find('\\') == std::string::npos)) {
 				ret.push_back(name);
 			}
 		}
@@ -149,46 +149,46 @@ vector<string> CVFSHandler::GetFilesInDir(string dir)
 
 
 // Returns all the sub-directories in the given (virtual) directory without the preceeding pathname
-vector<string> CVFSHandler::GetDirsInDir(string dir)
+std::vector<std::string> CVFSHandler::GetDirsInDir(std::string dir)
 {
-	vector<string> ret;
+	std::vector<std::string> ret;
 	StringToLowerInPlace(dir);
 	filesystem.ForwardSlashes(dir);
 
-	map<string, FileData>::const_iterator filesStart = files.begin();
-	map<string, FileData>::const_iterator filesEnd   = files.end();
+	std::map<std::string, FileData>::const_iterator filesStart = files.begin();
+	std::map<std::string, FileData>::const_iterator filesEnd   = files.end();
 
 	// Non-empty directories to look in should have a trailing backslash
 	if (!dir.empty()) {
-		string::size_type dirLast = (dir.length() - 1);
+		std::string::size_type dirLast = (dir.length() - 1);
 		if (dir[dirLast] != '/') {
 			dir += "/";
 			dirLast++;
 		}
 		// limit the iterator range
-		string dirEnd = dir;
+		std::string dirEnd = dir;
 		dirEnd[dirLast] = dirEnd[dirLast] + 1;
 		filesStart = files.lower_bound(dir);
 		filesEnd   = files.upper_bound(dirEnd);
 	}
 
-	set<string> dirs;
+	std::set<std::string> dirs;
 
 	while (filesStart != filesEnd) {
-		const string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = filesystem.GetDirectory(filesStart->first);
 		// Test to see if this file start with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
 			// Strip pathname
-			const string name = filesStart->first.substr(dir.length());
-			const string::size_type slash = name.find_first_of("/\\");
-			if (slash != string::npos) {
+			const std::string name = filesStart->first.substr(dir.length());
+			const std::string::size_type slash = name.find_first_of("/\\");
+			if (slash != std::string::npos) {
 				dirs.insert(name.substr(0, slash + 1));
 			}
 		}
 		filesStart++;
 	}
 
-	for (set<string>::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
+	for (std::set<std::string>::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
 		ret.push_back(*it);
 	}
 

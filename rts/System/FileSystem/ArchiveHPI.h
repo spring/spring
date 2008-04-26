@@ -11,14 +11,15 @@ class CArchiveHPI :
 protected:
 	hpiutil::hpifile *hpi;
 	int curSearchHandle;
-	map<string, int> fileSizes;			// hpiutil doesn't provide a way to determine this for a given file
-	map<int, map<string, int>::iterator> searchHandles;
-	virtual ABOpenFile_t* GetEntireFile(const string& fileName);
+	// hpiutil doesn't provide a way to determine this for a given file
+	std::map<std::string, int> fileSizes;
+	std::map<int, std::map<std::string, int>::iterator> searchHandles;
+	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
 public:
-	CArchiveHPI(const string& name);
+	CArchiveHPI(const std::string& name);
 	virtual ~CArchiveHPI(void);
 	virtual bool IsOpen();
-	virtual int FindFiles(int cur, string* name, int* size);
+	virtual int FindFiles(int cur, std::string* name, int* size);
 };
 
 #endif

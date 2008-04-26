@@ -17,12 +17,12 @@ class CArchiveBuffered :
 {
 protected:
 	int curFileHandle;
-	map<int, ABOpenFile_t*> fileHandles;
-	virtual ABOpenFile_t* GetEntireFile(const string& fileName) = 0;
+	std::map<int, ABOpenFile_t*> fileHandles;
+	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName) = 0;
 public:
-	CArchiveBuffered(const string& name);
+	CArchiveBuffered(const std::string& name);
 	virtual ~CArchiveBuffered(void);
-	virtual int OpenFile(const string& fileName);
+	virtual int OpenFile(const std::string& fileName);
 	virtual int ReadFile(int handle, void* buffer, int numBytes);
 	virtual void CloseFile(int handle);
 	virtual void Seek(int handle, int pos);

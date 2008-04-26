@@ -435,10 +435,10 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 			const float radius = 100.0f;
 			const int maxY = drawQuadsY - 1;
 			const int maxX = drawQuadsX - 1;
-			const int yStart = (int) max(0,    int((pos.z - radius) * quadScale));
-			const int xStart = (int) max(0,    int((pos.x - radius) * quadScale));
-			const int yEnd   = (int) min(maxY, int((pos.z + radius) * quadScale));
-			const int xEnd   = (int) min(maxX, int((pos.x + radius) * quadScale));
+			const int yStart = (int) std::max(0,    int((pos.z - radius) * quadScale));
+			const int xStart = (int) std::max(0,    int((pos.x - radius) * quadScale));
+			const int yEnd   = (int) std::min(maxY, int((pos.z + radius) * quadScale));
+			const int xEnd   = (int) std::min(maxX, int((pos.x + radius) * quadScale));
 
 			for (int y = yStart; y <= yEnd; ++y) {
 				for (int x = xStart; x <= xEnd; ++x) {

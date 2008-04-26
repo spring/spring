@@ -50,8 +50,8 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 		frame.startTime = animPeriod;
 		animPeriod += frame.length;
 		frame.endTime = animPeriod;
-		xmaxsize = max(frame.image.xOrigSize, xmaxsize);
-		ymaxsize = max(frame.image.yOrigSize, ymaxsize);
+		xmaxsize = std::max(frame.image.xOrigSize, xmaxsize);
+		ymaxsize = std::max(frame.image.yOrigSize, ymaxsize);
 	}
 
 	if (hotSpot == TopLeft) {
@@ -66,7 +66,7 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor(void)
 {
-	vector<ImageData>::iterator it;
+	std::vector<ImageData>::iterator it;
 	for (it = images.begin(); it != images.end(); ++it) {
 		glDeleteTextures(1, &it->texture);
 	}
@@ -83,20 +83,20 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 
 	CSimpleParser parser(specFH);
 	int lastFrame = 123456789;
-	map<string, int> imageIndexMap;
+	std::map<std::string, int> imageIndexMap;
 
 	while (true) {
 		const string line = parser.GetCleanLine();
 		if (line.empty()) {
 			break;
 		}
-		const vector<string> words = parser.Tokenize(line, 2);
-		const string command = StringToLower(words[0]);
+		const std::vector<std::string> words = parser.Tokenize(line, 2);
+		const std::string command = StringToLower(words[0]);
 
 		if ((command == "frame") && (words.size() >= 2)) {
-			const string imageName = words[1];
-			const float length = max(minFrameLength, (float)atof(words[2].c_str()));
-			map<string, int>::iterator iit = imageIndexMap.find(imageName);
+			const std::string imageName = words[1];
+			const float length = std::max(minFrameLength, (float)atof(words[2].c_str()));
+			std::map<std::string, int>::iterator iit = imageIndexMap.find(imageName);
 			if (iit != imageIndexMap.end()) {
 				FrameData frame(images[iit->second], length);
 				frames.push_back(frame);

@@ -958,8 +958,8 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 					BuildInfo bc(c);
 					BuildInfo bt(t);
 					if (bc.def && bt.def
-					    && fabs(bc.pos.x - bt.pos.x) * 2 <= max(bc.GetXSize(), bt.GetXSize()) * SQUARE_SIZE
-					    && fabs(bc.pos.z - bt.pos.z) * 2 <= max(bc.GetYSize(), bt.GetYSize()) * SQUARE_SIZE) {
+					    && fabs(bc.pos.x - bt.pos.x) * 2 <= std::max(bc.GetXSize(), bt.GetXSize()) * SQUARE_SIZE
+					    && fabs(bc.pos.z - bt.pos.z) * 2 <= std::max(bc.GetYSize(), bt.GetYSize()) * SQUARE_SIZE) {
 						return ci;
 					}
 				} else {
@@ -1058,8 +1058,8 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c,
 						const float dist2Z = 2.0f * fabs(cbi.pos.z - tbi.pos.z);
 						const float addSizeX = SQUARE_SIZE * (cbi.GetXSize() + tbi.GetXSize());
 						const float addSizeZ = SQUARE_SIZE * (cbi.GetYSize() + tbi.GetYSize());
-						const float maxSizeX = SQUARE_SIZE * max(cbi.GetXSize(), tbi.GetXSize());
-						const float maxSizeZ = SQUARE_SIZE * max(cbi.GetYSize(), tbi.GetYSize());
+						const float maxSizeX = SQUARE_SIZE * std::max(cbi.GetXSize(), tbi.GetXSize());
+						const float maxSizeZ = SQUARE_SIZE * std::max(cbi.GetYSize(), tbi.GetYSize());
 						if (cbi.def && tbi.def &&
 						    ((dist2X > maxSizeX) || (dist2Z > maxSizeZ)) &&
 						    ((dist2X < addSizeX) && (dist2Z < addSizeZ))) {

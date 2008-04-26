@@ -5,8 +5,6 @@
 #include <vector>
 #include "Rendering/GL/myGL.h"
 
-using namespace std;
-
 class CBitmap;
 
 
@@ -14,7 +12,7 @@ class CMouseCursor {
 	public:
 		enum HotSpot {TopLeft, Center};
 
-		static CMouseCursor* New(const string &name, HotSpot hs);
+		static CMouseCursor* New(const std::string &name, HotSpot hs);
 
 		~CMouseCursor(void);
 
@@ -44,18 +42,18 @@ class CMouseCursor {
 		};
 
 	protected:	
-		CMouseCursor(const string &name, HotSpot hs);
-		bool LoadCursorImage(const string& name, struct ImageData& image);
-		bool BuildFromSpecFile(const string& name);
-		bool BuildFromFileNames(const string& name, int lastFrame);
+		CMouseCursor(const std::string &name, HotSpot hs);
+		bool LoadCursorImage(const std::string& name, struct ImageData& image);
+		bool BuildFromSpecFile(const std::string& name);
+		bool BuildFromFileNames(const std::string& name, int lastFrame);
 		CBitmap* getAlignedBitmap(const CBitmap &orig);
 		void setBitmapTransparency(CBitmap &bm, int r, int g, int b);
 
 	protected:	
 		HotSpot hotSpot;
 
-		vector<ImageData> images;
-		vector<FrameData> frames;
+		std::vector<ImageData> images;
+		std::vector<FrameData> frames;
 
 		float animTime;
 		float animPeriod;

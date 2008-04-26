@@ -102,9 +102,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 
 	//Finding neighbours
 	std::vector<CUnit*> cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
-	maxExtractionRange = max(extractionRange, maxExtractionRange);
+	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
-	for(std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
+	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		if(typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {
 			CExtractorBuilding *eb = (CExtractorBuilding*)*ui;
 			if(eb->pos.distance2D(this->pos) < (eb->extractionRange + this->extractionRange)) {
@@ -119,12 +119,14 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	//Calculating area of control and metalExtract.
 	//TODO: Improve this method.
 	metalExtract = 0;
-	int xBegin = max(0,           (int)((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int xEnd   = min(gs->mapx/2-1,(int)((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zBegin = max(0,           (int)((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zEnd   = min(gs->mapy/2-1,(int)((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
-	for(int x = xBegin; x <= xEnd; x++) {
-		for(int z = zBegin; z <= zEnd; z++) {	//Going thru the whole (x,z)-square...
+	int xBegin = std::max(0,           (int)((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int xEnd   = std::min(gs->mapx/2-1,(int)((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zBegin = std::max(0,           (int)((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zEnd   = std::min(gs->mapy/2-1,(int)((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
+
+	for (int x = xBegin; x <= xEnd; x++) {
+		for (int z = zBegin; z <= zEnd; z++) {
+			// go through the whole (x, z)-square
 			const float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y,
 			                     (z + 0.5f) * METAL_MAP_SQUARE_SIZE);	//Center of metalsquare.
 			const float sqrCenterDistance = msqrPos.distance2D(this->pos);

@@ -414,10 +414,10 @@ void CMetalMap::GetMetalPoints()
 void CMetalMap::SaveMetalMap()
 {
 	char buffer[1000];
-	string filename = string("AI/HelperAI/MexData/") + string(aicb->GetMapName());
+	std::string filename = std::string("AI/HelperAI/MexData/") + std::string(aicb->GetMapName());
 	filename.resize(filename.size()-3);
-	filename += string("Mv");
-	filename += string(M_CLASS_VERSION);
+	filename += std::string("Mv");
+	filename += std::string(M_CLASS_VERSION);
 
 	strcpy(buffer, filename.c_str());
 	aicb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
@@ -444,10 +444,10 @@ void CMetalMap::SaveMetalMap()
 bool CMetalMap::LoadMetalMap()
 {
 	char buffer[1000];
-	string filename = string("AI/HelperAI/MexData/") + string(aicb->GetMapName());
+	std::string filename = std::string("AI/HelperAI/MexData/") + std::string(aicb->GetMapName());
 	filename.resize(filename.size()-3);
-	filename += string("Mv");
-	filename += string(M_CLASS_VERSION);
+	filename += std::string("Mv");
+	filename += std::string(M_CLASS_VERSION);
 
 	strcpy(buffer, filename.c_str());
 	aicb->GetValue(AIVAL_LOCATE_FILE_R, buffer);

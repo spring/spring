@@ -39,14 +39,14 @@ void CCommanderScript::GameStart()
 		TdfParser p("gamedata/SIDEDATA.TDF");
 
 		// make a map of all side names  (assumes contiguous sections)
-		std::map<string, string> sideMap;
+		std::map<std::string, std::string> sideMap;
 		char sideText[64];
 		for (int side = 0;
 				 SNPRINTF(sideText, sizeof(sideText), "side%i", side),
 				 p.SectionExist(sideText); // the test
 				 side++) {
-			const string sideName =
-				StringToLower(p.SGetValueDef("arm", string(sideText) + "\\name"));
+			const std::string sideName =
+				StringToLower(p.SGetValueDef("arm", std::string(sideText) + "\\name"));
 			sideMap[sideName] = sideText;
 		}
 
@@ -70,11 +70,11 @@ void CCommanderScript::GameStart()
 				globalAI->CreateGlobalAI(a, gameSetup->aiDlls[a].c_str());
 			}
 
-			std::map<string, string>::const_iterator it = sideMap.find(team->side);
+			std::map<std::string, std::string>::const_iterator it = sideMap.find(team->side);
 
 			if (it != sideMap.end()) {
-				const string& sideSection = it->second;
-				const string cmdrType =
+				const std::string& sideSection = it->second;
+				const std::string cmdrType =
 					StringToLower(p.SGetValueDef("armcom", sideSection + "\\commander"));
 
 				CUnit* unit = unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
@@ -92,10 +92,8 @@ void CCommanderScript::GameStart()
 	}
 	else {
 		TdfParser p("gamedata/SIDEDATA.TDF");
-		const string s0 =
-			StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
-		const string s1 =
-			StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
+		const std::string s0 = StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
+		const std::string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
 
 		TdfParser p2;
 		CMapInfo::OpenTDF(stupidGlobalMapname, p2);

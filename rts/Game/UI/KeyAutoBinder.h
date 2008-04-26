@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <set>
-using namespace std;
 
 #include "Lua/LuaHandle.h"
 

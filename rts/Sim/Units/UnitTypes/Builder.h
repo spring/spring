@@ -9,7 +9,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
-using namespace std;
 class CFeature;
 
 class CBuilder : public CUnit
@@ -81,7 +80,7 @@ public:
 	float3 terraformCenter;
 	float terraformRadius;
 
-	string nextBuildType;
+	std::string nextBuildType;
 	float3 nextBuildPos;
 };
 

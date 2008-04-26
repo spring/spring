@@ -697,7 +697,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			else if (action.command == "chatswitchall") {
 				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 					userInput = userInput.substr(2);
-					writingPos = max(0, writingPos - 2);
+					writingPos = std::max(0, writingPos - 2);
 				}
 				userInputPrefix = "";
 				break;
@@ -757,11 +757,11 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				break;
 			}
 			else if (action.command == "edit_prev_char") {
-				writingPos = max(0, min((int)userInput.length(), writingPos - 1));
+				writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
 				break;
 			}
 			else if (action.command == "edit_next_char") {
-				writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+				writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
 				break;
 			}
 			else if (action.command == "edit_prev_word") {
@@ -913,7 +913,7 @@ bool CGame::ActionPressed(const Action& action,
 			next = std::max(0, atoi(action.extra.c_str()) % 4);
 		} else {
 			const int current = configHandler.GetInt("ReflectiveWater", 1);
-			next = (max(0, current) + 1) % 4;
+			next = (std::max(0, current) + 1) % 4;
 		}
 		configHandler.SetInt("ReflectiveWater", next);
 		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
@@ -1201,7 +1201,7 @@ bool CGame::ActionPressed(const Action& action,
 		const char* startPtr = action.extra.c_str();
 		float volume = (float)strtod(startPtr, &endPtr);
 		if (endPtr != startPtr) {
-			gameSoundVolume = max(0.0f, min(1.0f, volume));
+			gameSoundVolume = std::max(0.0f, std::min(1.0f, volume));
 			sound->SetVolume(gameSoundVolume);
 			configHandler.SetInt("SoundVolume", (int)(gameSoundVolume * 100.0f));
 		}
@@ -1442,10 +1442,10 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "incguiopacity") {
-		CInputReceiver::guiAlpha = min(CInputReceiver::guiAlpha+0.1f,1.0f);
+		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
 	}
 	else if (cmd == "decguiopacity") {
-		CInputReceiver::guiAlpha = max(CInputReceiver::guiAlpha-0.1f,0.0f);
+		CInputReceiver::guiAlpha = std::max(CInputReceiver::guiAlpha-0.1f,0.0f);
 	}
 
 	else if (cmd == "screenshot") {
@@ -1512,7 +1512,7 @@ bool CGame::ActionPressed(const Action& action,
 			if (crossSize > 0.0f) {
 				crossSize = -crossSize;
 			} else {
-				crossSize = max(1.0f, -crossSize);
+				crossSize = std::max(1.0f, -crossSize);
 			}
 		} else {
 			crossSize = atof(action.extra.c_str());
@@ -1694,7 +1694,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "maxparticles") {
 		if (ph && !action.extra.empty()) {
-			const int value = max(1, atoi(action.extra.c_str()));
+			const int value = std::max(1, atoi(action.extra.c_str()));
 			ph->SetMaxParticles(value);
 			logOutput.Print("Set maximum particles to: %i", value);
 		}
@@ -3562,8 +3562,8 @@ void CGame::ClientReadNet()
 				int team1=gs->players[player]->team;
 				int team2=inbuf[2];
 				bool shareUnits=!!inbuf[3];
-				float metalShare=min(*(float*)&inbuf[4],(float)gs->Team(team1)->metal);
-				float energyShare=min(*(float*)&inbuf[8],(float)gs->Team(team1)->energy);
+				float metalShare=std::min(*(float*)&inbuf[4],(float)gs->Team(team1)->metal);
+				float energyShare=std::min(*(float*)&inbuf[8],(float)gs->Team(team1)->energy);
 
 				if (metalShare != 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
@@ -3930,8 +3930,8 @@ void CGame::MakeMemDump(void)
 		return;
 
 	file << "Frame " << gs->frameNum <<"\n";
-	list<CUnit*>::iterator usi;
-	for(usi=uh->activeUnits.begin();usi!=uh->activeUnits.end();usi++){
+	std::list<CUnit*>::iterator usi;
+	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); usi++) {
 		CUnit* u=*usi;
 		file << "Unit " << u->id << "\n";
 		file << "  xpos " << u->pos.x << " ypos " << u->pos.y << " zpos " << u->pos.z << "\n";
@@ -4096,7 +4096,7 @@ void CGame::DrawDirectControlHud(void)
 			glEnd();
 
 			if(!w->onlyForward){
-				float dist=min(w->owner->directControl->targetDist,w->range*0.9f);
+				float dist=std::min(w->owner->directControl->targetDist,w->range*0.9f);
 				pos=w->weaponPos+w->wantedDir*dist;
 				v1=(pos-camera->pos).Normalize();
 				v2=(v1.cross(UpVector)).Normalize();
@@ -4483,7 +4483,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 {
 	const float fOrig = (float)orig / 255.0f;
 	float luaVal = tbl.GetFloat(channel, fOrig);
-	luaVal = max(0.0f, min(1.0f, luaVal));
+	luaVal = std::max(0.0f, std::min(1.0f, luaVal));
 	return (unsigned char)(luaVal * 255.0f);
 }
 

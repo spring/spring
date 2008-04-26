@@ -36,7 +36,7 @@ CResourceBar::~CResourceBar(void)
 }
 
 
-static string FloatToSmallString(float num,float mul=1){
+static std::string FloatToSmallString(float num, float mul = 1) {
 	char c[50];
 
 	if(num==0)
@@ -243,13 +243,13 @@ bool CResourceBar::MousePress(int x, int y, int button)
 		moveBox=true;
 		if(!gu->spectating){
 			if(InBox(mx,my,box+metalBox)){
-				moveBox=false;
-				float metalShare=max(0.f,min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
+				moveBox = false;
+				float metalShare = std::max(0.f, std::min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
 				net->SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare);
 			}
 			if(InBox(mx,my,box+energyBox)){
-				moveBox=false;
-				float energyShare=max(0.f,min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
+				moveBox = false;
+				float energyShare = std::max(0.f, std::min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
 				net->SendSetShare(gu->myPlayerNum, gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare);
 			}
 		}

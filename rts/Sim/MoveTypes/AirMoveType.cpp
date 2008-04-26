@@ -219,7 +219,7 @@ void CAirMoveType::Update(void)
 			owner->pos = pos;
 
 			owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
-			owner->currentFuel = min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
+			owner->currentFuel = std::min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
 			if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
 				airBaseHandler->LeaveLandingPad(reservedPad);
@@ -241,7 +241,7 @@ void CAirMoveType::Update(void)
 #endif
 		owner->restTime = 0;
 		if (owner->userTarget || owner->userAttackGround) {
-			inefficientAttackTime = min(inefficientAttackTime, (float)gs->frameNum - owner->lastFireWeapon);
+			inefficientAttackTime = std::min(inefficientAttackTime, (float)gs->frameNum - owner->lastFireWeapon);
 			if (owner->userTarget) {
 				goalPos = owner->userTarget->pos;
 			} else {
@@ -274,7 +274,7 @@ void CAirMoveType::Update(void)
 		owner->crashing = true;
 		UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 		SAFE_NEW CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
-		if (!(gs->frameNum & 3) && max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
+		if (!(gs->frameNum & 3) && std::max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
 			owner->KillUnit(true, false, 0);
 		break;
 	case AIRCRAFT_TAKEOFF:
@@ -373,7 +373,7 @@ EndNormalControl:
 void CAirMoveType::SlowUpdate(void)
 {
 	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0)
-		owner->currentFuel = max (0.f, owner->currentFuel - (16.f / GAME_SPEED));
+		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
 
 	if (owner->pos != oldSlowUpdatePos) {
 		oldSlowUpdatePos = owner->pos;
@@ -563,7 +563,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 		}
 	} else {
 		float gHeight2 = ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40);
-		float hdif = max(gHeight, gHeight2) + 60 - pos.y - frontdir.y * speedf * 20;
+		float hdif = std::max(gHeight, gHeight2) + 60 - pos.y - frontdir.y * speedf * 20;
 		float minPitch;//=min(1.0f,hdif/(maxElevator*speedf*speedf*20));
 
 		if (hdif < -(maxElevator * speedf * speedf * 20)) {
@@ -610,7 +610,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	if(groundTarget)
 		engine = 1;
 	else
-		engine = min(1.f, (float)(goalLength / owner->maxRange + 1 - goalDir.dot(frontdir) * 0.7f));
+		engine = std::min(1.f, (float)(goalLength / owner->maxRange + 1 - goalDir.dot(frontdir) * 0.7f));
 
 	UpdateAirPhysics(rudder, aileron, elevator, engine, owner->frontdir);
 /*
@@ -680,7 +680,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		float3 otherDif = lastColWarning->pos - pos;
 		float otherLength = otherDif.Length();
 		otherDir = otherDif / (otherLength + 0.01f);
-		otherThreat = max(1200.0f, goalLength) / otherLength * 0.036f;
+		otherThreat = std::max(1200.0f, goalLength) / otherLength * 0.036f;
 	}
 
 	float goalDot = rightdir.dot(adjustedGoalDir);
@@ -744,7 +744,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		}
 		if (notColliding) {
 			float gHeight2 = ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40);
-			float hdif = max(gHeight, gHeight2) + wantedHeight - pos.y - frontdir.y * speedf * 20;
+			float hdif = std::max(gHeight, gHeight2) + wantedHeight - pos.y - frontdir.y * speedf * 20;
 			if (hdif < -(maxElevator * speedf * speedf * 20) && frontdir.y > -maxPitch) {
 				elevator = -1;
 			} else if (hdif > (maxElevator * speedf * speedf * 20) && frontdir.y < maxPitch) {
@@ -876,7 +876,7 @@ void CAirMoveType::UpdateLanding(void)
 	float dist = dif.Length();
 	dif /= dist;
 
-	float wsf = min(owner->maxSpeed, dist / speedf * 1.8f * maxAcc);
+	float wsf = std::min(owner->maxSpeed, dist / speedf * 1.8f * maxAcc);
 	float3 wantedSpeed = dif * wsf;
 
 	float3 delta = wantedSpeed - speed;
@@ -958,7 +958,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (owner->directControl) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
-			engine = max(0.0f, min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
+			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}
 		// check next position given current (unadjusted) pos and speed
 		nextPosInBounds = (pos + speed).CheckInBounds();

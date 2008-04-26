@@ -10,8 +10,6 @@
 class CCobFile;
 class CCobInstance;
 
-using namespace std;
-
 class CCobThread : public CObject
 {
 protected:

@@ -666,10 +666,10 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 int CAICallback::GetEnemyUnits(int* units)
 {
 	verify();
-	list<CUnit*>::iterator ui;
+	std::list<CUnit*>::iterator ui;
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
@@ -685,10 +685,10 @@ int CAICallback::GetEnemyUnits(int* units)
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* units)
 {
 	verify();
-	list<CUnit*>::iterator ui;
+	std::list<CUnit*>::iterator ui;
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
@@ -728,7 +728,7 @@ int CAICallback::GetFriendlyUnits(int *units)
 	verify();
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (gs->Ally(u->allyteam, gs->AllyTeam(team))) {
@@ -772,7 +772,7 @@ int CAICallback::GetNeutralUnits(int* units)
 	verify();
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
@@ -1057,8 +1057,8 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			bool good=true;
 			int xsize=bi.GetXSize();
 			int ysize=bi.GetYSize();
-			for(int z2=max(0,zs-ysize/2-minDist);z2<min(gs->mapy,zs+(ysize+1)/2+minDist);++z2){
-				for(int x2=max(0,xs-xsize/2-minDist);x2<min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
+			for(int z2=std::max(0,zs-ysize/2-minDist);z2<std::min(gs->mapy,zs+(ysize+1)/2+minDist);++z2){
+				for(int x2=std::max(0,xs-xsize/2-minDist);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
 					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
 						good=false;
@@ -1067,8 +1067,8 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 				}
 			}
 			//Checking factories near - factory can open yard for building
-			if (good) for(int z2=max(0,zs-ysize/2-minDist-2);z2<min(gs->mapy,zs+(ysize+1)/2+minDist+2);++z2){
-				for(int x2=max(0,xs-xsize/2-minDist-2);x2<min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
+			if (good) for(int z2=std::max(0,zs-ysize/2-minDist-2);z2<std::min(gs->mapy,zs+(ysize+1)/2+minDist+2);++z2){
+				for(int x2=std::max(0,xs-xsize/2-minDist-2);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
 					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening){
 						good=false;
@@ -1527,7 +1527,7 @@ int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 
 	for (int i=0;i<inMapDrawer->numQuads;i++){
 		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
+			for(std::list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
 				if(mp->color==gs->Team(team)->color) { //Maybe add so that markers of your ally team would be also found?
 					pm[a].pos=mp->pos;
 					pm[a].color=mp->color;
@@ -1551,7 +1551,7 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 
 	for (int i=0;i<inMapDrawer->numQuads;i++){
 		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
+			for(std::list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
 				if(ml->color==gs->Team(team)->color){ //Maybe add so that markers of your ally team would be also found?
 					lm[a].pos=ml->pos;
 					lm[a].color=ml->color;

@@ -18,8 +18,6 @@ class CFeature;
 class CGroupAICallback;
 class CGroupHandler;
 
-using namespace std;
-
 class CGroup : public CObject
 {
 public:

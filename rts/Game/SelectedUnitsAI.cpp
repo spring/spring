@@ -356,7 +356,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	std::multimap<float,int> orderedUnits;
 	CreateUnitOrder(orderedUnits,player);
 
-	for(multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){
+	for (std::multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){
 		nextPos = MoveToPos(oi->second, nextPos, sd, c);
 	}
 }
@@ -373,7 +373,7 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 			if(range<1)
 				range=2000;		//give weaponless units a long range to make them go to the back
 			float value=(ud->metalCost*60+ud->energyCost)/unit->maxHealth*range;
-			out.insert(pair<float,int>(value,*ui));
+			out.insert(std::pair<float,int>(value,*ui));
 		}
 	}
 }
@@ -573,8 +573,8 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 	}
 	const int allyTeam = gs->AllyTeam(p->team);
 
-	const float3 mins(min(pos0.x, pos1.x), 0.0f, min(pos0.z, pos1.z));
-	const float3 maxs(max(pos0.x, pos1.x), 0.0f, max(pos0.z, pos1.z));
+	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
+	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
 	vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
 

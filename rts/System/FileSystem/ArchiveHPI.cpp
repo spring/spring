@@ -5,7 +5,7 @@
 
 using namespace hpiutil;
 
-CArchiveHPI::CArchiveHPI(const string& name) :
+CArchiveHPI::CArchiveHPI(const std::string& name):
 	CArchiveBuffered(name),
 	curSearchHandle(1)
 {
@@ -16,7 +16,7 @@ CArchiveHPI::CArchiveHPI(const string& name) :
 	std::vector<hpientry_ptr> ret = HPIGetFiles(*hpi);
 	for (std::vector<hpientry_ptr>::iterator it = ret.begin(); it != ret.end(); it++) {
 		if (!(*it)->directory) {
-			string name = StringToLower((*it)->path());
+			std::string name = StringToLower((*it)->path());
 			fileSizes[name] = (*it)->size;
 		}
 	}
@@ -33,9 +33,9 @@ bool CArchiveHPI::IsOpen()
 	return (hpi != NULL);
 }
 
-ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
+ABOpenFile_t* CArchiveHPI::GetEntireFile(const std::string& fileName)
 {
-	string name = StringToLower(fileName);
+	std::string name = StringToLower(fileName);
 
 	hpientry_ptr f = HPIOpenFile(*hpi, (const char*)name.c_str());
 	if (!f.get())
@@ -57,7 +57,7 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const string& fileName)
 	return of;
 }
 
-int CArchiveHPI::FindFiles(int cur, string* name, int* size)
+int CArchiveHPI::FindFiles(int cur, std::string* name, int* size)
 {
 	if (cur == 0) {
 		curSearchHandle++;

@@ -253,7 +253,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
 								m = 0.0f;
 							}
-							m = min(1.0f, (float)sqrt(m));
+							m = std::min(1.0f, (float)sqrt(m));
 							const int a=y*gs->pwr2mapx/2+x;
 							infoTexMem[a*4+0]=255-int(m*255.0f);
 							infoTexMem[a*4+1]=int(m*255.0f);
@@ -272,7 +272,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
 							float extractDepth = extractDepthMap[(y * gs->hmapx) + x];
 							// a single pow(x, 0.25) call would be faster?
-							infoTexMem[a*4]=(unsigned char)min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
+							infoTexMem[a*4]=(unsigned char)std::min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
 						} else {
 							infoTexMem[a*4]=0;
 						}

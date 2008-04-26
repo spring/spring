@@ -18,9 +18,7 @@ class CCobThread;
 class CCobInstance;
 class CCobFile;
 
-using namespace std;
-
-class CCobThreadPtr_less : public binary_function<CCobThread *, CCobThread *, bool> {
+class CCobThreadPtr_less : public std::binary_function<CCobThread *, CCobThread *, bool> {
 	CCobThread *a, *b;
 public:
 	bool operator() (const CCobThread *const &a, const CCobThread *const &b) const {return a->GetWakeTime() > b->GetWakeTime();}
@@ -30,11 +28,11 @@ public:
 class CCobEngine
 {
 protected:
-	list<CCobThread *> running;
-	list<CCobThread *> wantToRun;				//Threads are added here if they are in Running. And moved to real running after running is empty
-	priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
-	list<CCobInstance *> animating;				//hash would be optimal. but not crucial.
-	map<string, CCobFile *> cobFiles;
+	std::list<CCobThread *> running;
+	std::list<CCobThread *> wantToRun;				//Threads are added here if they are in Running. And moved to real running after running is empty
+	std::priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
+	std::list<CCobInstance *> animating;				//hash would be optimal. but not crucial.
+	std::map<std::string, CCobFile *> cobFiles;
 	CCobThread *curThread;
 public:
 	CCobEngine(void);
@@ -44,10 +42,10 @@ public:
 	void RemoveInstance(CCobInstance *instance);
 	void Tick(int deltaTime);
 	void SetCurThread(CCobThread *cur);
-	void ShowScriptError(const string& msg);
-	CCobFile& GetCobFile(const string& name);
-	CCobFile& ReloadCobFile(const string& name);
-	const CCobFile* GetScriptAddr(const string& name) const;
+	void ShowScriptError(const std::string& msg);
+	CCobFile& GetCobFile(const std::string& name);
+	CCobFile& ReloadCobFile(const std::string& name);
+	const CCobFile* GetScriptAddr(const std::string& name) const;
 };
 
 extern CCobEngine GCobEngine;

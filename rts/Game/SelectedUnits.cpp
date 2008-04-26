@@ -463,7 +463,7 @@ void CSelectedUnits::Draw()
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
-			list<CBuilderCAI*>::const_iterator bi;
+			std::list<CBuilderCAI*>::const_iterator bi;
 			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
 				CBuilderCAI* builder = *bi;
 				if (builder->owner->team == gu->myTeam) {

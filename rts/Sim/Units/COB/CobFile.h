@@ -16,8 +16,6 @@
 // Should return true for scripts that should have debug output. 
 #define COB_DEBUG_FILTER (script.name == "scripts/ARMJETH.cob")
 
-using namespace std;
-
 class CFileHandler;
 
 //These are mapped by the CCobFile at startup to make common function calls faster
@@ -54,21 +52,21 @@ const int COBFN_Weapon_Funcs   = 8;
 class CCobFile
 {
 public:
-	vector<string> scriptNames;
-	vector<int> scriptOffsets;
-	vector<int> scriptLengths;			//Assumes that the scripts are sorted by offset in the file
-	vector<string> pieceNames;
-	vector<int> scriptIndex;
-	vector<int> sounds;
-	map<string, int> scriptMap;
-	vector<LuaHashString> luaScripts;
+	std::vector<std::string> scriptNames;
+	std::vector<int> scriptOffsets;
+	std::vector<int> scriptLengths;			//Assumes that the scripts are sorted by offset in the file
+	std::vector<std::string> pieceNames;
+	std::vector<int> scriptIndex;
+	std::vector<int> sounds;
+	std::map<std::string, int> scriptMap;
+	std::vector<LuaHashString> luaScripts;
 	int* code;
 	int numStaticVars;
-	string name;
+	std::string name;
 public:
-	CCobFile(CFileHandler &in, string name);
+	CCobFile(CFileHandler &in, std::string name);
 	~CCobFile(void);
-	int getFunctionId(const string &name);
+	int getFunctionId(const std::string &name);
 };
 
 #endif // __COB_FILE_H__

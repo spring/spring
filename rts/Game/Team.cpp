@@ -255,9 +255,9 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 void CTeam::Died()
 {
 	if (leader >= 0)
-		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
+		logOutput.Print(CMessages::Tr("Team %i (%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
 	else
-		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
+		logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
 	isDead = true;
 	luaCallIns.TeamDied(teamNum);
 	net->SendTeamDied(gu->myPlayerNum, teamNum);
@@ -307,8 +307,8 @@ void CTeam::SlowUpdate()
 	for(int a=0; a < gs->activeTeams; ++a){
 		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
 			CTeam* team = gs->Team(a);
-			eShare += max(0.0f, (team->energyStorage * 0.99f) - team->energy);
-			mShare += max(0.0f, (team->metalStorage * 0.99f) - team->metal);
+			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
+			mShare += std::max(0.0f, (team->metalStorage * 0.99f) - team->metal);
 		}
 	}
 
@@ -317,20 +317,20 @@ void CTeam::SlowUpdate()
 	delayedMetalShare = 0;
 	delayedEnergyShare = 0;
 
-	const float eExcess = max(0.0f, energy - (energyStorage * energyShare));
-	const float mExcess = max(0.0f, metal  - (metalStorage  * metalShare));
+	const float eExcess = std::max(0.0f, energy - (energyStorage * energyShare));
+	const float mExcess = std::max(0.0f, metal  - (metalStorage  * metalShare));
 
 	float de=0,dm=0;
-	if(eShare>0)
-		de=min(1.0f,eExcess/eShare);
-	if(mShare>0)
-		dm=min(1.0f,mExcess/mShare);
+	if (eShare > 0)
+		de = std::min(1.0f,eExcess/eShare);
+	if (mShare > 0)
+		dm = std::min(1.0f,mExcess/mShare);
 
 	for(int a=0; a < gs->activeTeams; ++a){
 		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
 			CTeam* team = gs->Team(a);
 
-			const float edif = max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
+			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
 			energy -= edif;
 			energySent += edif;
 			currentStats.energySent += edif;
@@ -338,7 +338,7 @@ void CTeam::SlowUpdate()
 			team->energyReceived += edif;
 			team->currentStats.energyReceived += edif;
 
-			const float mdif = max(0.0f, (team->metalStorage * 0.99f) - team->metal) * dm;
+			const float mdif = std::max(0.0f, (team->metalStorage * 0.99f) - team->metal) * dm;
 			metal -= mdif;
 			metalSent += mdif;
 			currentStats.metalSent += mdif;
@@ -368,9 +368,9 @@ void CTeam::SlowUpdate()
 	CUnit::ChangeTeam(), hence it'd cause a random amount of the shared units
 	to be killed if the commander is among them. Also, ".take" would kill all
 	units once it transfered the commander. */
-	if(gs->gameMode==1 && numCommanders<=0 && !gaia){
-		for(list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-			if((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
+	if (gs->gameMode==1 && numCommanders<=0 && !gaia){
+		for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
+			if ((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
 				(*ui)->KillUnit(true,false,0);
 		}
 		// Set to 1 to prevent above loop from being done every update.
@@ -433,7 +433,7 @@ void CTeam::CommanderDied(CUnit* commander)
 void CTeam::LeftLineage(CUnit* unit)
 {
 	if (gs->gameMode == 2 && unit->id == this->lineageRoot) {
-		for(list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 			if ((*ui)->lineage == this->teamNum)
 				(*ui)->KillUnit(true, false, 0);
 		}

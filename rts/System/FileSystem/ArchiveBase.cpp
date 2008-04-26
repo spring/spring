@@ -4,7 +4,7 @@ extern "C" {
 #include "lib/7zip/7zCrc.h"
 };
 
-unsigned int CArchiveBase::GetCrc32 (const string& fileName)
+unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 {
 	UInt32 crc;
 	unsigned char buffer [65536];
@@ -16,7 +16,7 @@ unsigned int CArchiveBase::GetCrc32 (const string& fileName)
 
 	while (!this->Eof(handle)) {
 		int maxRead = this->ReadFile(handle, &buffer, sizeof(buffer));
-		CrcUpdate (&crc, buffer, maxRead);
+		CrcUpdate(&crc, buffer, maxRead);
 	}
 
 	this->CloseFile(handle);

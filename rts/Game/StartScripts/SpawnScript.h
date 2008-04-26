@@ -7,7 +7,6 @@
 #include <vector>
 #include "FileSystem/FileHandler.h"
 
-using namespace std;
 class CSpawnScript :
 	public CScript
 {
@@ -23,7 +22,7 @@ private:
 
 	struct Spawn {
 		int frame;
-		string name;
+		std::string name;
 	};
 
 	std::list<Spawn> spawns;

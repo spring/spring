@@ -18,22 +18,22 @@ protected:
 	struct FileData {
 		unz_file_pos fp;
 		int size;
-		string origName;
+		std::string origName;
 		unsigned int crc;
 	};
 	unzFile zip;
-	map<string, FileData> fileData;		// using unzLocateFile is quite slow
+	std::map<std::string, FileData> fileData;		// using unzLocateFile is quite slow
 	int curSearchHandle;
-	map<int, map<string, FileData>::iterator> searchHandles;
-	virtual ABOpenFile_t* GetEntireFile(const string& fileName);
-	void SetSlashesForwardToBack(string& name);
-	void SetSlashesBackToForward(string& name);
+	std::map<int, std::map<std::string, FileData>::iterator> searchHandles;
+	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
+	void SetSlashesForwardToBack(std::string& name);
+	void SetSlashesBackToForward(std::string& name);
 public:
-	CArchiveZip(const string& name);
+	CArchiveZip(const std::string& name);
 	virtual ~CArchiveZip(void);
 	virtual bool IsOpen();
-	virtual int FindFiles(int cur, string* name, int* size);
-	virtual unsigned int GetCrc32 (const string& fileName);
+	virtual int FindFiles(int cur, std::string* name, int* size);
+	virtual unsigned int GetCrc32 (const std::string& fileName);
 };
 
 #endif

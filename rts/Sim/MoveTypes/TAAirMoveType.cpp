@@ -94,7 +94,7 @@ void CTAAirMoveType::SetGoal(float3 newPos, float distance)
 {
 	// aircraft need some marginals to avoid uber stacking
 	// when lots of them are ordered to one place
-	maxDrift = max(16.0f, distance);
+	maxDrift = std::max(16.0f, distance);
 	goalPos = newPos;
 	oldGoalPos = newPos;
 	forceHeading = false;
@@ -562,7 +562,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	float wantedBank = 0.0f;
 	if (!noBanking) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
-	float limit=min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
+	float limit = std::min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
 	if(wantedBank>limit)
 		wantedBank=limit;
 	else if(wantedBank<-limit)
@@ -570,9 +570,9 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
-		currentBank -= min(0.03f, currentBank - wantedBank);
+		currentBank -= std::min(0.03f, currentBank - wantedBank);
 	else
-		currentBank += min(0.03f, wantedBank - currentBank);
+		currentBank += std::min(0.03f, wantedBank - currentBank);
 
 	// Calculate a suitable upvector
 	updir = rightdir.cross(frontdir);
@@ -613,8 +613,9 @@ void CTAAirMoveType::UpdateAirPhysics()
 	}
 
 	speed.y = yspeed;
-	float h = pos.y - max(ground->GetHeight(pos.x, pos.z),
-						  ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
+	float h = pos.y - std::max(
+		ground->GetHeight(pos.x, pos.z),
+		ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
 
 	if (h < 4) {
 		speed.x *= 0.95f;
@@ -648,10 +649,10 @@ void CTAAirMoveType::UpdateAirPhysics()
 	}
 
 	if (speed.y > ws) {
-		speed.y = max(ws, speed.y - accRate * 1.5f);
+		speed.y = std::max(ws, speed.y - accRate * 1.5f);
 	} else {
 		// let them accelerate upward faster if close to ground
-		speed.y = min(ws, speed.y + accRate * (h < 20? 2.0f: 0.7f));
+		speed.y = std::min(ws, speed.y + accRate * (h < 20? 2.0f: 0.7f));
 	}
 
 	pos += speed;
@@ -774,7 +775,7 @@ void CTAAirMoveType::Update()
 
 					owner->pos = pos;
 					owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
-					owner->currentFuel = min(owner->unitDef->maxFuel,
+					owner->currentFuel = std::min(owner->unitDef->maxFuel,
 							owner->currentFuel + (owner->unitDef->maxFuel
 									/ (GAME_SPEED * owner->unitDef->refuelTime)));
 
@@ -885,7 +886,7 @@ void CTAAirMoveType::Update()
 void CTAAirMoveType::SlowUpdate(void)
 {
 	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0)
-		owner->currentFuel = max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
+		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
 
 	if (!reservedPad && aircraftState == AIRCRAFT_FLYING 
 			&& owner->health < owner->maxHealth * repairBelowHealth) {

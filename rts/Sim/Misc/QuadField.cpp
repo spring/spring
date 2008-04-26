@@ -67,11 +67,11 @@ vector<int> CQuadField::GetQuads(float3 pos,float radius)
 	pos.CheckInBounds();
 
 	vector<int> ret;
-	int maxx = min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
-	int maxz = min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
+	int maxx = std::min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
+	int maxz = std::min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
 
-	int minx = max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
-	int minz = max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
+	int minx = std::max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
+	int minz = std::max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
 
 	if (maxz < minz || maxx < minx)
 		return ret;
@@ -91,11 +91,11 @@ void CQuadField::GetQuads(float3 pos,float radius, int*& dst)
 {
 	pos.CheckInBounds();
 
-	int maxx = min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
-	int maxz = min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
+	int maxx = std::min(((int)(pos.x + radius)) / QUAD_SIZE + 1, numQuadsX - 1);
+	int maxz = std::min(((int)(pos.z + radius)) / QUAD_SIZE + 1, numQuadsZ - 1);
 
-	int minx = max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
-	int minz = max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
+	int minx = std::max(((int)(pos.x - radius)) / QUAD_SIZE, 0);
+	int minz = std::max(((int)(pos.z - radius)) / QUAD_SIZE, 0);
 
 	if (maxz < minz || maxx < minx)
 		return;
@@ -124,10 +124,10 @@ void CQuadField::MovedUnit(CUnit *unit)
 		if(qi2==newQuads.end())
 			return;
 	}
-	vector<int>::iterator qi;
-	for(qi=unit->quads.begin();qi!=unit->quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	std::vector<int>::iterator qi;
+	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
+		std::list<CUnit*>::iterator ui;
+		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
 			if(*ui==unit){
 				baseQuads[*qi].units.erase(ui);
 				break;
@@ -147,9 +147,9 @@ void CQuadField::MovedUnit(CUnit *unit)
 	unit->quads=newQuads;
 }
 
-vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
+std::vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 {
-	vector<CUnit*> units;
+	std::vector<CUnit*> units;
 
 	int* endQuad=tempQuads;
 	GetQuads(pos,radius,endQuad);
@@ -158,8 +158,8 @@ vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 
 	for(int* a=tempQuads;a!=endQuad;++a){
 		Quad& quad = baseQuads[*a];
-		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
-			if((*ui)->tempNum!=tempNum){
+		for (std::list<CUnit*>::iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+			if ((*ui)->tempNum!=tempNum){
 				(*ui)->tempNum=tempNum;
 				units.push_back(*ui);
 			}
@@ -169,22 +169,18 @@ vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 	return units;
 }
 
-vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
+std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 {
-	vector<CUnit*> units;
-/*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
-		return units;
-	}*/
+	std::vector<CUnit*> units;
 
 	int* endQuad=tempQuads;
 	GetQuads(pos,radius,endQuad);
 
 	int tempNum=gs->tempNum++;
 
-	for(int* a=tempQuads;a!=endQuad;++a){
+	for (int* a=tempQuads;a!=endQuad;++a){
 		Quad& quad = baseQuads[*a];
-		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
+		for (std::list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
 			float totRad=radius+(*ui)->radius;
 			if((*ui)->tempNum!=tempNum && (pos-(*ui)->midPos).SqLength()<totRad*totRad){
 				(*ui)->tempNum=tempNum;
@@ -196,18 +192,17 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 	return units;
 }
 
-vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
+std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
-	vector<CUnit*> units;
-
-	vector<int> quads = GetQuadsRectangle(mins, maxs);
+	std::vector<CUnit*> units;
+	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
-	vector<int>::iterator qi;
+	std::vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		list<CUnit*>& quadUnits = baseQuads[*qi].units;
-		list<CUnit*>::iterator ui;
+		std::list<CUnit*>& quadUnits = baseQuads[*qi].units;
+		std::list<CUnit*>::iterator ui;
 		for (ui = quadUnits.begin(); ui != quadUnits.end(); ++ui) {
 			CUnit* unit = *ui;
 			const float3& pos = unit->midPos;
@@ -223,12 +218,12 @@ vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 	return units;
 }
 
-vector<int> CQuadField::GetQuadsOnRay(const float3& start, float3 dir, float length)
+std::vector<int> CQuadField::GetQuadsOnRay(const float3& start, float3 dir, float length)
 {
 	int* end = tempQuads;
 	GetQuadsOnRay(start,dir,length,end);
 
-	return vector<int>(tempQuads,end);
+	return std::vector<int>(tempQuads, end);
 }
 
 void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
@@ -366,9 +361,9 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 void CQuadField::RemoveUnit(CUnit* unit)
 {
 	std::vector<int>::iterator qi;
-	for(qi=unit->quads.begin();qi!=unit->quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
+		std::list<CUnit*>::iterator ui;
+		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
 			if(*ui==unit){
 				baseQuads[*qi].units.erase(ui);
 				break;
@@ -415,10 +410,10 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 
 	int tempNum=gs->tempNum++;
 
-	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CFeature*>::iterator fi;
-		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
+	std::vector<int>::iterator qi;
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CFeature*>::iterator fi;
+		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
 			float totRad=radius+(*fi)->radius;
 			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
 				(*fi)->tempNum=tempNum;
@@ -430,19 +425,18 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 	return features;
 }
 
-vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
+std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
                                                const float3& maxs)
 {
-	vector<CFeature*> features;
-
-	vector<int> quads = GetQuadsRectangle(mins, maxs);
+	std::vector<CFeature*> features;
+	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
-	vector<int>::iterator qi;
+	std::vector<int>::iterator qi;
 	for(qi = quads.begin(); qi != quads.end(); ++qi) {
-		list<CFeature*>& quadFeatures = baseQuads[*qi].features;
-		list<CFeature*>::iterator fi;
+		std::list<CFeature*>& quadFeatures = baseQuads[*qi].features;
+		std::list<CFeature*>::iterator fi;
 		for (fi = quadFeatures.begin(); fi != quadFeatures.end(); ++fi) {
 			CFeature* feature = *fi;
 			const float3& pos = feature->midPos;
@@ -458,22 +452,16 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
 	return features;
 }
 
-vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
+std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 {
-	vector<CSolidObject*> solids;
-/*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
-		return units;
-	}*/
+	std::vector<CSolidObject*> solids;
+	std::vector<int> quads = GetQuads(pos,radius);
+	int tempNum = gs->tempNum++;
 
-	vector<int> quads=GetQuads(pos,radius);
-
-	int tempNum=gs->tempNum++;
-
-	vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
-		list<CUnit*>::iterator ui;
-		for(ui=baseQuads[*qi].units.begin();ui!=baseQuads[*qi].units.end();++ui){
+	std::vector<int>::iterator qi;
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CUnit*>::iterator ui;
+		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
 			if (!(*ui)->blocking)
 				continue;
 
@@ -484,7 +472,7 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 			}
 		}
 
-		list<CFeature*>::iterator fi;
+		std::list<CFeature*>::iterator fi;
 		for(fi=baseQuads[*qi].features.begin();fi!=baseQuads[*qi].features.end();++fi){
 			if (!(*fi)->blocking)
 				continue;
@@ -500,15 +488,15 @@ vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 	return solids;
 }
 
-vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
+std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2)
 {
-	vector<int> ret;
+	std::vector<int> ret;
 
-	int maxx = max(0, min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
-	int maxz = max(0, min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
+	int maxx = std::max(0, std::min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
+	int maxz = std::max(0, std::min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
 
-	int minx = max(0, min(((int)(pos.x)) / QUAD_SIZE, numQuadsX - 1));
-	int minz = max(0, min(((int)(pos.z)) / QUAD_SIZE, numQuadsZ - 1));
+	int minx = std::max(0, std::min(((int)(pos.x)) / QUAD_SIZE, numQuadsX - 1));
+	int minz = std::max(0, std::min(((int)(pos.z)) / QUAD_SIZE, numQuadsZ - 1));
 
 	if (maxz < minz || maxx < minx)
 		return ret;
@@ -531,7 +519,7 @@ void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit
 
 	for(int* a=tempQuads;a!=endQuad;++a){
 		Quad& quad = baseQuads[*a];
-		for(list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
+		for (std::list<CUnit*>::iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			if((*ui)->tempNum!=tempNum){
 				(*ui)->tempNum=tempNum;
 				*dstUnit=(*ui);
@@ -539,7 +527,7 @@ void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit
 			}
 		}
 
-		for(list<CFeature*>::iterator fi=quad.features.begin();fi!=quad.features.end();++fi){
+		for (std::list<CFeature*>::iterator fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			float totRad=radius+(*fi)->radius;
 			if((*fi)->tempNum!=tempNum && (pos-(*fi)->midPos).SqLength()<totRad*totRad){
 				(*fi)->tempNum=tempNum;

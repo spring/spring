@@ -874,7 +874,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
-			const float statsdamage = max(0.0f, min(maxHealth - health, damage));
+			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
 				gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
 			}
@@ -906,7 +906,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				if (paralyzeDamage > health) {
 					stunned = true;
 				}
-				paralyzeDamage = min(paralyzeDamage, maxParaDmg);
+				paralyzeDamage = std::min(paralyzeDamage, maxParaDmg);
 			}
 		}
 		else { // paralyzation healing
@@ -928,7 +928,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		if ((attacker != NULL) && !gs->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
-			                             * (damage + min(0.0f, health)) / maxHealth);
+			                             * (damage + std::min(0.0f, health)) / maxHealth);
 			ENTER_UNSYNCED;
 			const int warnFrame = (gs->frameNum - 100);
 			if ((team == gu->myTeam)
@@ -1889,7 +1889,7 @@ unsigned int CUnit::CalcLOD(unsigned int lastLOD) const
 
 	const float3 diff = (pos - camera->pos);
 	const float dist = diff.dot(camera->forward);
-	const float lpp = max(0.0f, dist * lodFactor);
+	const float lpp = std::max(0.0f, dist * lodFactor);
 	for (/* no-op */; lastLOD != 0; lastLOD--) {
 		if (lpp > lodLengths[lastLOD]) {
 			break;
@@ -1911,7 +1911,7 @@ unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
 	const float3 diff = (camera->pos - pos);
 	const float  dot  = diff.dot(sun);
 	const float3 gap  = diff - (sun * dot);
-	const float  lpp  = max(0.0f, gap.Length() * lodFactor);
+	const float  lpp  = std::max(0.0f, gap.Length() * lodFactor);
 
 	for (/* no-op */; lastLOD != 0; lastLOD--) {
 		if (lpp > lodLengths[lastLOD]) {
@@ -1948,7 +1948,7 @@ void CUnit::PostLoad()
 
 	// TA does some special handling depending on weapon count
 	if (weapons.size() > 1)
-		relMax = max(relMax, 3000);
+		relMax = std::max(relMax, 3000);
 
 	// Call initializing script functions
 	cob->Call(COBFN_Create);

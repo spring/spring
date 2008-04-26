@@ -230,7 +230,7 @@ CCobFile::~CCobFile(void)
 
 int CCobFile::getFunctionId(const string &name)
 {
-	map<string, int>::iterator i;
+	std::map<std::string, int>::iterator i;
 	if ((i = scriptMap.find(name)) != scriptMap.end()) {
 		return i->second;
 	}

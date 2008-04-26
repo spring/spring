@@ -336,7 +336,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 	}
 
 	char tmp[512];
-	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[readmap->typemap[min(gs->hmapx*gs->hmapy-1,max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
+	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[readmap->typemap[std::min(gs->hmapx*gs->hmapy-1, std::max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
 	string ttype = tt->name;
 	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\n"
 	             "Speeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",

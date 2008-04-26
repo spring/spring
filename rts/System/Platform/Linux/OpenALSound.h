@@ -10,15 +10,11 @@
 #include <AL/alc.h>
 #include "SDL_types.h"
 
-#include "OggStream.h"
 
-
-using namespace std;
-
-class COpenALSound : public CSound
+class COpenALSound: public CSound
 {
 public:
-	ALuint GetWaveId(const string& path, bool hardFail);
+	ALuint GetWaveId(const std::string& path, bool hardFail);
 	void Update();
 	void PlaySample(int id, float volume);
 	void PlaySample(int id, const float3& p, float volume);
@@ -39,7 +35,7 @@ private:
 	bool ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer);
 
 private:
-	ALuint LoadALBuffer(const string& path);
+	ALuint LoadALBuffer(const std::string& path);
 	void PlaySample(int id, const float3 &p, float volume, bool relative);
 
 	int maxSounds;
@@ -50,7 +46,7 @@ private:
 	void UpdateListener();
 	void Enqueue(ALuint src);
 	
-	map<string, ALuint> soundMap; // filename, index into Buffers
+	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
 	ALuint* Sources;
 };

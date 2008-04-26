@@ -10,7 +10,6 @@ class CWeapon;
 
 #include "UnitDef.h"
 
-using namespace std;
 struct GuiSoundSet;
 
 class CUnitLoader
@@ -19,8 +18,8 @@ public:
 	CUnitLoader();
 	virtual ~CUnitLoader();
 
-	CUnit* LoadUnit(const string& name,float3 pos, int team,
-	                bool build, int facing, const CUnit* builder /* can be NULL */);
+	CUnit* LoadUnit(const std::string& name, float3 pos, int team,
+		bool build, int facing, const CUnit* builder /* can be NULL */);
 	void FlattenGround(const CUnit* unit);
 
 	CWeapon* LoadWeapon(const WeaponDef* weapondef, CUnit* owner, const UnitDef::UnitDefWeapon* udw);

@@ -6,10 +6,6 @@
 #include <limits.h> // for INT_MAX
 #include "creg/creg.h"
 
-
-using namespace std; // FIXME -- should not have this in an external interface?
-
-
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_INSERT                 1

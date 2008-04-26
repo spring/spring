@@ -215,7 +215,7 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 		for (int* qi = quads; qi != endQuad; ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
-			for (list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
+			for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 				if (!(*ui)->blocking)
 					continue;
 
@@ -241,7 +241,7 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
-		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
@@ -291,7 +291,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* unit = *ui;
 			if (unit == exclude) {
@@ -364,11 +364,11 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 	vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if((*ui)==exclude)
+			if ((*ui)==exclude)
 				continue;
-			if(gs->Ally((*ui)->allyteam,allyteam) || ((*ui)->losStatus[allyteam] & LOS_INLOS)){
+			if (gs->Ally((*ui)->allyteam,allyteam) || ((*ui)->losStatus[allyteam] & LOS_INLOS)){
 				float3 dif=(*ui)->midPos-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
@@ -380,7 +380,7 @@ float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float leng
 					length=closeLength;
 					hit=*ui;
 				}
-			} else if(useRadar && radarhandler->InRadar(*ui,allyteam)){
+			} else if (useRadar && radarhandler->InRadar(*ui,allyteam)){
 				float3 dif=(*ui)->midPos+(*ui)->posErrorVector*radarhandler->radarErrorSize[allyteam]-start;
 				float closeLength=dif.dot(dir);
 				if(closeLength<0)
@@ -409,16 +409,16 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 	float secDamage = weapon->weaponDef->damages[0]*weapon->salvoSize/weapon->reloadTime*30;			//how much damage the weapon deal over 1 seconds
 	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
 
-	vector<int> quads = qf->GetQuads(pos,radius+(aHeight-max(0.f,readmap->minheight))*heightMod);
+	std::vector<int> quads = qf->GetQuads(pos,radius+(aHeight - std::max(0.f,readmap->minheight))*heightMod);
 
 	int tempNum = gs->tempNum++;
-	vector<int>::iterator qi;
-	for(qi = quads.begin(); qi != quads.end(); ++qi) {
-		for(int t = 0; t < gs->activeAllyTeams; ++t) {
+	std::vector<int>::iterator qi;
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		for (int t = 0; t < gs->activeAllyTeams; ++t) {
 			if (gs->Ally(attacker->allyteam, t)) {
 				continue;
 			}
-			list<CUnit*>::const_iterator ui;
+			std::list<CUnit*>::const_iterator ui;
 			const std::list<CUnit*>& allyTeamUnits = qf->GetQuad(*qi).teamUnits[t];
 			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
 				CUnit* unit = *ui;
@@ -465,7 +465,7 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 						if (weapon->hasTargetWeight) {
 							value *= weapon->TargetWeight(unit);
 						}
-						targets.insert(pair<float, CUnit*>(value, unit));
+						targets.insert(std::pair<float, CUnit*>(value, unit));
 					}
 				}
 			}
@@ -491,8 +491,8 @@ CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 	int tempNum = gs->tempNum++;
 	vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const list<CUnit*>& units = qf->GetQuad(*qi).units;
-		list<CUnit*>::const_iterator ui;
+		const std::list<CUnit*>& units = qf->GetQuad(*qi).units;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = units.begin(); ui != units.end(); ++ui) {
 			CUnit* unit = *ui;
 			if (unit->tempNum != tempNum) {
@@ -528,7 +528,7 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 	vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
@@ -552,11 +552,11 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 
 	if (sphere) {  // includes target radius
 		float closeDist = radius;
-		vector<int> quads = qf->GetQuads(pos, radius + uh->maxUnitRadius);
-		vector<int>::const_iterator qi;
+		std::vector<int> quads = qf->GetQuads(pos, radius + uh->maxUnitRadius);
+		std::vector<int>::const_iterator qi;
 		for (qi = quads.begin(); qi != quads.end(); ++qi) {
-			const list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
-			list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
+			std::list<CUnit*>::const_iterator ui;
 			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
 				CUnit* unit = *ui;
 				if (unit->tempNum != tempNum &&
@@ -573,11 +573,11 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 	}
 	else { // cylinder  (doesn't included target radius)
 		float closeDistSq = radius * radius;
-		vector<int> quads = qf->GetQuads(pos, radius);
-		vector<int>::const_iterator qi;
+		std::vector<int> quads = qf->GetQuads(pos, radius);
+		std::vector<int>::const_iterator qi;
 		for (qi = quads.begin(); qi != quads.end(); ++qi) {
-			const list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
-			list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
+			std::list<CUnit*>::const_iterator ui;
 			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
 				CUnit* unit = *ui;
 				if (unit->tempNum != tempNum &&
@@ -599,13 +599,13 @@ CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int s
 {
 	float closeDist=radius*radius;
 	CUnit* closeUnit=0;
-	vector<int> quads=qf->GetQuads(pos,radius);
+	std::vector<int> quads=qf->GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;
-	vector<int>::iterator qi;
+	std::vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			if((*ui)->tempNum!=tempNum && gs->Ally(searchAllyteam,(*ui)->allyteam)){
 				(*ui)->tempNum=tempNum;
@@ -627,10 +627,10 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 	vector<int> quads=qf->GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;
-	vector<int>::iterator qi;
+	std::vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
@@ -648,13 +648,13 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyteam, vector<int> &found)
 {
 	float sqRadius=radius*radius;
-	vector<int> quads=qf->GetQuads(pos,radius);
+	std::vector<int> quads=qf->GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;
-	vector<int>::iterator qi;
+	std::vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CUnit*>::const_iterator ui;
+		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			if((*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
@@ -676,7 +676,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
+		for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			if (!(*ui)->blocking)
 				continue;
 
@@ -701,12 +701,12 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
 {
 	float nearHit = length;
-	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
-	vector<int>::iterator qi;
+	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
+	std::vector<int>::iterator qi;
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		list<CFeature*>::const_iterator ui;
+		std::list<CFeature*>::const_iterator ui;
 
 		for (ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 			CFeature* f = *ui;
@@ -824,7 +824,7 @@ bool CGameHelper::TestAllyCone(const float3& from, const float3& dir, float leng
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
+		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
@@ -849,7 +849,7 @@ bool CGameHelper::TestNeutralCone(const float3& from, const float3& dir, float l
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
-		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
@@ -899,7 +899,7 @@ bool CGameHelper::TestTrajectoryAllyCone(const float3& from, const float3& flatd
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
+		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
@@ -923,7 +923,7 @@ bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& fl
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)

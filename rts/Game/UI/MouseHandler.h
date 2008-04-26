@@ -74,8 +74,8 @@ public:
 	                       const std::string& fileName,
 	                       CMouseCursor::HotSpot hotSpot,
 	                       bool overwrite);
-	bool ReplaceMouseCursor(const string& oldName,
-	                        const string& newName,
+	bool ReplaceMouseCursor(const std::string& oldName,
+	                        const std::string& newName,
 	                        CMouseCursor::HotSpot hotSpot);
 	void SafeDeleteCursor(CMouseCursor* cursor);
 

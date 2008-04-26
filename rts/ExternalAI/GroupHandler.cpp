@@ -92,7 +92,7 @@ void CGroupHandler::DrawCommands()
 			(*ai)->DrawCommands();
 }
 
-void CGroupHandler::TestDll(string name)
+void CGroupHandler::TestDll(std::string name)
 {
 	typedef int (* GETGROUPAIVERSION)();
 	typedef const char ** (* GETAINAMELIST)();
@@ -144,7 +144,7 @@ void CGroupHandler::TestDll(string name)
 		AIKey key;
 		key.dllName=name;
 		key.aiNumber=i;
-		availableAI[key]=string(aiNameList[i]);
+		availableAI[key] = std::string(aiNameList[i]);
 	}
 //	logOutput << name.c_str() << " " << c << "\n";
 	delete lib;
@@ -196,7 +196,7 @@ void CGroupHandler::GroupCommand(int num)
 	selectedUnits.SelectGroup(num);
 }
 
-void CGroupHandler::GroupCommand(int num, const string& cmd)
+void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
 	if ((cmd == "set") || (cmd == "add")) {
 		if (cmd == "set") {
@@ -291,15 +291,15 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	delete group;
 }
 
-map<AIKey,string> CGroupHandler::GetSuitedAis(const CUnitSet& units)
+std::map<AIKey, std::string> CGroupHandler::GetSuitedAis(const CUnitSet& units)
 {
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	ISUNITSUITED IsUnitSuited;
 
-	map<AIKey,string> suitedAis;
+	std::map<AIKey, std::string> suitedAis;
 	suitedAis[defaultKey]="default";
 
-	map<AIKey,string>::iterator aai;
+	std::map<AIKey, std::string>::iterator aai;
 	for(aai=availableAI.begin();aai!=availableAI.end();++aai)
 	{
 		SharedLib *lib;

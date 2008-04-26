@@ -3,7 +3,7 @@
 #include "ArchiveBuffered.h"
 #include "mmgr.h"
 
-CArchiveBuffered::CArchiveBuffered(const string& name) :
+CArchiveBuffered::CArchiveBuffered(const std::string& name):
 	CArchiveBase(name),
 	curFileHandle(1)
 {
@@ -11,13 +11,13 @@ CArchiveBuffered::CArchiveBuffered(const string& name) :
 
 CArchiveBuffered::~CArchiveBuffered(void)
 {
-	for (map<int, ABOpenFile_t*>::iterator i = fileHandles.begin(); i != fileHandles.end(); ++i) {
+	for (std::map<int, ABOpenFile_t*>::iterator i = fileHandles.begin(); i != fileHandles.end(); ++i) {
 		free((i->second)->data);
 		delete i->second;
 	}
 }
 
-int CArchiveBuffered::OpenFile(const string& fileName)
+int CArchiveBuffered::OpenFile(const std::string& fileName)
 {
 	ABOpenFile_t* fh = GetEntireFile(fileName);
 	if (!fh)
@@ -33,7 +33,7 @@ int CArchiveBuffered::ReadFile(int handle, void* buffer, int numBytes)
 {
 	ABOpenFile_t* of = fileHandles[handle];
 
-	int maxRead = min(numBytes, of->size - of->pos);
+	int maxRead = std::min(numBytes, of->size - of->pos);
 	memcpy(buffer, of->data + of->pos, maxRead);
 	of->pos += maxRead;
 
@@ -50,7 +50,7 @@ void CArchiveBuffered::CloseFile(int handle)
 void CArchiveBuffered::Seek(int handle, int pos)
 {
 	ABOpenFile_t* of = fileHandles[handle];
-	of->pos = min(pos, of->size);
+	of->pos = std::min(pos, of->size);
 }
 
 int CArchiveBuffered::Peek(int handle)

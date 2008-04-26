@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "mmgr.h"
 
-CArchiveZip::CArchiveZip(const string& name) :
+CArchiveZip::CArchiveZip(const std::string& name):
 	CArchiveBuffered(name),
 	curSearchHandle(1)
 {
@@ -21,7 +21,7 @@ CArchiveZip::CArchiveZip(const string& name) :
 	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
 		unz_file_info info;
 		char fname[512];
-		string name;
+		std::string name;
 
 		unzGetCurrentFileInfo(zip, &info, fname, 512, NULL, 0, NULL, 0);
 
@@ -47,9 +47,9 @@ CArchiveZip::~CArchiveZip(void)
 		unzClose(zip);
 }
 
-unsigned int CArchiveZip::GetCrc32 (const string& fileName)
+unsigned int CArchiveZip::GetCrc32 (const std::string& fileName)
 {
-	string lower = StringToLower(fileName);
+	std::string lower = StringToLower(fileName);
 	FileData fd = fileData[lower];
 	return fd.crc;
 }
@@ -59,17 +59,17 @@ bool CArchiveZip::IsOpen()
 	return (zip != NULL);
 }
 
-class zip_exception : public exception {};
+class zip_exception: public std::exception {};
 
 // To simplify things, files are always read completely into memory from the zipfile, since zlib does not
 // provide any way of reading more than one file at a time
-ABOpenFile_t* CArchiveZip::GetEntireFile(const string& fName)
+ABOpenFile_t* CArchiveZip::GetEntireFile(const std::string& fName)
 {
 	// Don't allow opening files on missing/invalid archives
 	if (!zip)
 		return NULL;
 
-	string fileName = StringToLower(fName);
+	std::string fileName = StringToLower(fName);
 
 	//if (unzLocateFile(zip, fileName.c_str(), 2) != UNZ_OK) 
 	//	return 0;
@@ -106,7 +106,7 @@ ABOpenFile_t* CArchiveZip::GetEntireFile(const string& fName)
 	return of;
 }
 
-int CArchiveZip::FindFiles(int cur, string* name, int* size)
+int CArchiveZip::FindFiles(int cur, std::string* name, int* size)
 {
 	if (cur == 0) {
 		curSearchHandle++;
@@ -126,7 +126,7 @@ int CArchiveZip::FindFiles(int cur, string* name, int* size)
 	return cur;
 }
 
-void CArchiveZip::SetSlashesForwardToBack(string& name)
+void CArchiveZip::SetSlashesForwardToBack(std::string& name)
 {
 	for (unsigned int i = 0; i < name.length(); ++i) {
 		if (name[i] == '/')
@@ -134,7 +134,7 @@ void CArchiveZip::SetSlashesForwardToBack(string& name)
 	}
 }
 
-void CArchiveZip::SetSlashesBackToForward(string& name)
+void CArchiveZip::SetSlashesBackToForward(std::string& name)
 {
 	for (unsigned int i = 0; i < name.length(); ++i) {
 		if (name[i] == '\\')

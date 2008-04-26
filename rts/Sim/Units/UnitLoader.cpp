@@ -136,7 +136,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->buildTime = ud->buildTime;
 	unit->aihint = ud->aihint;
 	unit->tooltip = ud->humanName + " - " + ud->tooltip;
-	unit->armoredMultiple = max(0.0001f, ud->armoredMultiple);		//armored multiple of 0 will crash spring
+	unit->armoredMultiple = std::max(0.0001f, ud->armoredMultiple);		//armored multiple of 0 will crash spring
 	unit->wreckName = ud->wreckName;
 
 	unit->realLosRadius = (int) (ud->losRadius);
@@ -324,7 +324,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 
 	if (ud->floater)
-		unit->pos.y = max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
+		unit->pos.y = std::max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
 	else
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 
@@ -347,7 +347,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	// TA does some special handling depending on weapon count
 	if (unit->weapons.size() > 1)
-		relMax = max(relMax, 3000);
+		relMax = std::max(relMax, 3000);
 
 	// Call initializing script functions
 	unit->cob->Call(COBFN_Create);
@@ -501,10 +501,10 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
 		bi.pos = helper->Pos2BuildPos(bi);
 		const float hss = 0.5f * SQUARE_SIZE;
-		const int tx1 = (int)max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
-		const int tz1 = (int)max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
-		const int tx2 = min(gs->mapx, tx1 + bi.GetXSize());
-		const int tz2 = min(gs->mapy, tz1 + bi.GetYSize());
+		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
+		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
+		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
+		const int tz2 = std::min(gs->mapy, tz1 + bi.GetYSize());
 		float* heightmap = readmap->GetHeightmap();
 		for(int z = tz1; z <= tz2; z++){
 			for(int x = tx1; x <= tx2; x++){

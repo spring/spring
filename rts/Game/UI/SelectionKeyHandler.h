@@ -4,8 +4,6 @@
 #include "InputReceiver.h"
 #include <vector>
 
-using namespace std;
-
 class CSelectionKeyHandler :
 	public CInputReceiver
 {
@@ -14,8 +12,8 @@ public:
 	~CSelectionKeyHandler(void);
 	bool KeyPressed(unsigned short key, bool isRepeat);
 	bool KeyReleased(unsigned short key);
-	string ReadToken(string& s);
-	string ReadDelimiter(string& s);
+	std::string ReadToken(std::string& s);
+	std::string ReadDelimiter(std::string& s);
 
 	struct HotKey {
 		unsigned char key;
@@ -23,10 +21,10 @@ public:
 		bool control;
 		bool alt;
 
-		string select;
+		std::string select;
 	};
-	vector<HotKey> hotkeys;
-	void DoSelection(string selectString);
+	std::vector<HotKey> hotkeys;
+	void DoSelection(std::string selectString);
 
 	int selectNumber;	//used to go through all possible units when selecting only a few
 };

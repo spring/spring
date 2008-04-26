@@ -20,11 +20,11 @@ C3DModelParser::~C3DModelParser(void)
 	delete units3oparser;
 }
 
-S3DOModel* C3DModelParser::Load3DModel(string name, float scale, int side)
+S3DOModel* C3DModelParser::Load3DModel(std::string name, float scale, int side)
 {
 	// TODO: abstract this
 	StringToLowerInPlace(name);
-	if (name.find(".s3o") != string::npos)
+	if (name.find(".s3o") != std::string::npos)
 		return units3oparser->LoadS3O(name, scale, side);
 	else
 		return unit3doparser->Load3DO(name, scale, side);
@@ -41,7 +41,7 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side,const float3
 }
 */
 
-LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
+LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces)
 {
 	LocalS3DOModel* lm;
 	if (model->rootobject3do) {

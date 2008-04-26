@@ -14,6 +14,7 @@
 #include "SDL_types.h"
 #include "Platform/byteorder.h"
 #include "OpenALSound.h"
+#include "OggStream.h"
 #include "mmgr.h"
 
 // Ogg-Vorbis audio stream object
@@ -71,7 +72,7 @@ COpenALSound::~COpenALSound()
 		alDeleteSources(1,&Sources[i]);
 	}
 	delete[] Sources;
-	map<string, ALuint>::iterator it;
+	std::map<std::string, ALuint>::iterator it;
 	for (it = soundMap.begin(); it != soundMap.end(); ++it) {
 		alDeleteBuffers(1, &it->second);
 	}
@@ -374,7 +375,7 @@ bool COpenALSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuff
 }
 
 
-ALuint COpenALSound::LoadALBuffer(const string& path)
+ALuint COpenALSound::LoadALBuffer(const std::string& path)
 {
 	Uint8* buf = 0;
 	ALuint buffer;
@@ -408,9 +409,9 @@ ALuint COpenALSound::LoadALBuffer(const string& path)
 }
 
 
-ALuint COpenALSound::GetWaveId(const string& path, bool _hardFail)
+ALuint COpenALSound::GetWaveId(const std::string& path, bool _hardFail)
 {
-	map<string, ALuint>::const_iterator it = soundMap.find(path);
+	std::map<std::string, ALuint>::const_iterator it = soundMap.find(path);
 	if (it != soundMap.end()) {
 		return it->second;
 	}

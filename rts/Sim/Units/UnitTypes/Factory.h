@@ -8,8 +8,6 @@
 #include "Building.h"
 #include <string>
 
-using namespace std;
-
 class CFactory : public CBuilding
 {
 public:
@@ -19,7 +17,7 @@ public:
 	virtual ~CFactory();
 	void PostLoad();
 	void StopBuild();
-	void StartBuild(string type);
+	void StartBuild(std::string type);
 	void Update();
 	void DependentDied(CObject* o);
 	void FinishedBuilding(void);
@@ -33,7 +31,7 @@ public:
 	float buildSpeed;
 
 	bool quedBuild;						//if we have a unit that we want to start to nanolath when script is ready
-	string nextBuild;
+	std::string nextBuild;
 	CUnit* curBuild;					//unit that we are nanolathing
 	bool opening;
 

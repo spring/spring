@@ -7,8 +7,6 @@
 #include <string>
 #include <map>
 
-using namespace std;
-
 
 class CKeySet {
 	public:
@@ -18,9 +16,9 @@ class CKeySet {
 		void Reset();
 		void SetAnyBit();
 		void ClearModifiers();
-		bool Parse(const string& token);
+		bool Parse(const std::string& token);
 
-		string GetString(bool useDefaultKeysym) const;
+		std::string GetString(bool useDefaultKeysym) const;
 
 		enum CKeySetModifiers {
 			KS_ALT     = (1 << 0),
@@ -59,7 +57,7 @@ class CKeySet {
 		}
 
 	protected:
-		bool ParseModifier(string& s, const string& token, const string& abbr);
+		bool ParseModifier(std::string& s, const std::string& token, const std::string& abbr);
 
 	protected:
 		int key;

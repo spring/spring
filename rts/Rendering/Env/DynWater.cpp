@@ -174,9 +174,9 @@ CDynWater::CDynWater(void)
 		for(int x=0;x<64;++x){
 			float dx=x-31.5f;
 			float dist=sqrt(dx*dx+dy*dy);
-			temp[(y*64+x)*4+0]=max(0.0f,1-dist/30.f)*max(0.0f,1-dist/30.f);
-			temp[(y*64+x)*4+1]=max(0.0f,1-dist/30.f);
-			temp[(y*64+x)*4+2]=max(0.0f,1-dist/30.f)*max(0.0f,1-dist/30.f);
+			temp[(y*64+x)*4+0]=std::max(0.0f,1-dist/30.f)*std::max(0.0f,1-dist/30.f);
+			temp[(y*64+x)*4+1]=std::max(0.0f,1-dist/30.f);
+			temp[(y*64+x)*4+2]=std::max(0.0f,1-dist/30.f)*std::max(0.0f,1-dist/30.f);
 			temp[(y*64+x)*4+3]=0;
 		}
 	}
@@ -380,8 +380,8 @@ void CDynWater::Update()
 
 	oldCamPosBig=camPosBig;
 
-	camPosBig.x=floor(max((float)WH_SIZE, min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig.z=floor(max((float)WH_SIZE, min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.x=floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z=floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -842,8 +842,8 @@ void CDynWater::DrawWaterSurface(void)
 	va=GetVertexArray();
 	va->Initialize();
 
-	camPosBig2.x=floor(max((float)WH_SIZE, min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z=floor(max((float)WH_SIZE, min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x=floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z=floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
 
 	for(int lod=1;lod<(2<<5);lod*=2){
 		int cx=(int)(cam2->pos.x/(WSQUARE_SIZE));
@@ -865,10 +865,10 @@ void CDynWater::DrawWaterSurface(void)
 		int minlx=cx+(-viewRadius+2-xsquaremod)*lod;
 		int maxlx=cx+(viewRadius-xsquaremod)*lod;
 
-		int xstart=max(minlx,mintx);
-		int xend=min(maxlx,maxtx);
-		int ystart=max(minly,minty);
-		int yend=min(maxly,maxty);
+		int xstart=std::max(minlx,mintx);
+		int xend=std::min(maxlx,maxtx);
+		int ystart=std::max(minly,minty);
+		int yend=std::min(maxly,maxty);
 
 		for(int y=ystart;y<yend;y+=lod){
 			int xs=xstart;
@@ -1233,15 +1233,15 @@ void CDynWater::AddExplosion(const float3& pos, float strength, float size)
 {
 	if(pos.y>size || size < 8)
 		return;
-	explosions.push_back(Explosion(pos,min(size*20,strength),size));
+	explosions.push_back(Explosion(pos,std::min(size*20,strength),size));
 }
 
 void CDynWater::DrawUpdateSquare(float dx,float dy, int* resetTexs)
 {
-	float startx=max(0.f, -dx/WF_SIZE);
-	float starty=max(0.f, -dy/WF_SIZE);
-	float endx=min(1.f, 1-dx/WF_SIZE);
-	float endy=min(1.f, 1-dy/WF_SIZE);
+	float startx=std::max(0.f, -dx/WF_SIZE);
+	float starty=std::max(0.f, -dy/WF_SIZE);
+	float endx=std::min(1.f, 1-dx/WF_SIZE);
+	float endy=std::min(1.f, 1-dy/WF_SIZE);
 
 	DrawSingleUpdateSquare(startx,starty,endx,endy);
 

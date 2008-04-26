@@ -923,10 +923,10 @@ void CCobThread::LuaCall()
 	const int r2 = GET_LONG_PC(); // arg count
 
 	// setup the parameter array
-	const int size = (int)stack.size();
-	const int argCount = min(r2, MAX_LUA_COB_ARGS);
-	const int start = max(0, size - r2);
-	const int end = min(size, start + argCount);
+	const int size = (int) stack.size();
+	const int argCount = std::min(r2, MAX_LUA_COB_ARGS);
+	const int start = std::max(0, size - r2);
+	const int end = std::min(size, start + argCount);
 	int a = 0;
 	for (int i = start; i < end; i++) {
 		luaArgs[a] = stack[i];

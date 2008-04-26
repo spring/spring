@@ -12,9 +12,7 @@
 #include <set>
 #include "3DModelParser.h"
 
-using namespace std;
 class CMatrix44f;
-
 class CFileHandler;
 
 struct S3DOVertex {
@@ -91,9 +89,9 @@ class C3DOParser
 public:
 	C3DOParser();
 	virtual ~C3DOParser();
-	S3DOModel* Load3DO(string name,float scale=1,int side=1);
-	// S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
+	S3DOModel* Load3DO(std::string name, float scale = 1, int side = 1);
+	// S3DOModel* Load3DO(std::string name,float scale,int side,const float3& offsets);
+	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
 
 private:
 	void FindCenter(S3DO* object);
@@ -110,10 +108,10 @@ private:
 	std::string GetText(int pos);
 	bool ReadChild(int pos,S3DO* root,int side, int *numobj);
 	void DrawSub(S3DO* o);
-	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum);
+	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
 
-	map<string,S3DOModel*> units;
-	set<string> teamtex;
+	std::map<std::string, S3DOModel*> units;
+	std::set<std::string> teamtex;
 
 	int curOffset;
 	unsigned char* fileBuf;

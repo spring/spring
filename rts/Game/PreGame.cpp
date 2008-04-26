@@ -197,10 +197,10 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 			return 0;
 		}
 		else if(k==SDLK_LEFT) {
-			writingPos = max(0, min((int)userInput.length(), writingPos - 1));
+			writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
 		}
 		else if(k==SDLK_RIGHT) {
-			writingPos = max(0, min((int)userInput.length(), writingPos + 1));
+			writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
 		}
 		else if(k==SDLK_HOME) {
 			writingPos = 0;

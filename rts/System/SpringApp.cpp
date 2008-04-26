@@ -251,7 +251,7 @@ static bool MultisampleTest(void)
 	if (!fsaa)
 		return false;
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-	GLuint fsaalevel = max(min(configHandler.GetInt("FSAALevel", 2), 8), 0);
+	GLuint fsaalevel = std::max(std::min(configHandler.GetInt("FSAALevel", 2), 8), 0);
 
 	make_even_number(fsaalevel);
 
@@ -892,7 +892,7 @@ int SpringApp::Run (int argc, char *argv[])
 								} else {
 									if (i < SDLK_DELETE) {
 										const int len = (int)ac->userInput.length();
-										ac->writingPos = max(0, min(len, ac->writingPos));
+										ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 										char str[2] = { char(i), 0 };
 										ac->userInput.insert(ac->writingPos, str);
 										ac->writingPos++;

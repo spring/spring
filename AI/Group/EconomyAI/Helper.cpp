@@ -67,16 +67,15 @@ CHelper::CHelper(IAICallback* aicb,CGroupAI *owner)
 	// get the best M / E ratio for metalmakers and get a unitdef for a geo
 	mmkrME	= 0;
 	geoDef	= 0;
-	map<string,const UnitDef*> targetBO;
+	std::map<std::string,const UnitDef*> targetBO;
 	int size = aicb->GetFriendlyUnits(&(friendlyUnits.front()));
-	for(int i=0;i<size;i++)
-	{
+
+	for (int i = 0; i < size; i++) {
 		if(myTeam != aicb->GetUnitTeam(friendlyUnits[i]))
 			continue;
 		ParseBuildOptions(targetBO,aicb->GetUnitDef(friendlyUnits[i]),true);
 	}
-	for(map<string,const UnitDef*>::iterator boi=targetBO.begin();boi!=targetBO.end();++boi)
-	{
+	for (std::map<std::string, const UnitDef*>::iterator boi = targetBO.begin(); boi != targetBO.end(); ++boi) {
 		const UnitDef* ud = boi->second;
 		if(ud->isMetalMaker)
 		{
@@ -114,16 +113,14 @@ void CHelper::PostLoad()
 	// get the best M / E ratio for metalmakers and get a unitdef for a geo
 	mmkrME	= 0;
 	geoDef	= 0;
-	map<string,const UnitDef*> targetBO;
+	std::map<std::string, const UnitDef*> targetBO;
 	int size = aicb->GetFriendlyUnits(&(friendlyUnits.front()));
-	for(int i=0;i<size;i++)
-	{
+	for (int i = 0; i < size; i++) {
 		if(myTeam != aicb->GetUnitTeam(friendlyUnits[i]))
 			continue;
 		ParseBuildOptions(targetBO,aicb->GetUnitDef(friendlyUnits[i]),true);
 	}
-	for(map<string,const UnitDef*>::iterator boi=targetBO.begin();boi!=targetBO.end();++boi)
-	{
+	for (std::map<std::string, const UnitDef*>::iterator boi = targetBO.begin(); boi != targetBO.end(); ++boi) {
 		const UnitDef* ud = boi->second;
 		if(ud->isMetalMaker)
 		{
@@ -140,16 +137,14 @@ void CHelper::PostLoad()
 		mmkrME = 1/100;
 }
 
-pair<int,int> CHelper::BuildNameToId(string name, int unit)
+pair<int,int> CHelper::BuildNameToId(std::string name, int unit)
 {
-	pair<int,int> commandPair;
+	std::pair<int, int> commandPair;
 	commandPair.first	= 0;
 	commandPair.second	= 0;
-	const vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
-	for(vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi)
-	{
-		if(cdi->id<0 && cdi->name==name)
-		{
+	const std::vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
+	for (std::vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi) {
+		if(cdi->id<0 && cdi->name==name) {
 			commandPair.first	= cdi->id;
 			commandPair.second	= cdi->type;
 			break;
@@ -158,14 +153,12 @@ pair<int,int> CHelper::BuildNameToId(string name, int unit)
 	return commandPair;
 }
 
-string CHelper::BuildIdToName(int id, int unit)
+std::string CHelper::BuildIdToName(int id, int unit)
 {
-	string name = "";
-	const vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
-	for(vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi)
-	{
-		if(cdi->id<0 && cdi->id==id)
-		{
+	std::string name = "";
+	const std::vector<CommandDescription>* cd=aicb->GetUnitCommands(unit);
+	for (std::vector<CommandDescription>::const_iterator cdi=cd->begin();cdi!=cd->end();++cdi) {
+		if(cdi->id<0 && cdi->id==id) {
 			name = cdi->name;
 			break;
 		}
@@ -173,7 +166,7 @@ string CHelper::BuildIdToName(int id, int unit)
 	return name;
 }
 
-void CHelper::ParseBuildOptions(map<string,const UnitDef*> &targetBO, const UnitDef *unitDef, bool recursive)
+void CHelper::ParseBuildOptions(std::map<std::string,const UnitDef*> &targetBO, const UnitDef *unitDef, bool recursive)
 {
 	if(unitDef==0)
 		return;
@@ -181,8 +174,7 @@ void CHelper::ParseBuildOptions(map<string,const UnitDef*> &targetBO, const Unit
 		return;
 	if(targetBO.find(unitDef->name)!=targetBO.end())
 		return;
-	for(map<int,string>::const_iterator boi=unitDef->buildOptions.begin();boi!=unitDef->buildOptions.end();++boi)
-	{
+	for (std::map<int, std::string>::const_iterator boi=unitDef->buildOptions.begin();boi!=unitDef->buildOptions.end();++boi) {
 		if(targetBO.find(boi->second)!=targetBO.end())
 			continue;
 		const UnitDef* ud=aicb->GetUnitDef(boi->second.c_str());
@@ -194,7 +186,7 @@ void CHelper::ParseBuildOptions(map<string,const UnitDef*> &targetBO, const Unit
 	}
 }
 
-float3 CHelper::FindBuildPos(string name, bool isMex, bool isGeo, float distance, int builder)
+float3 CHelper::FindBuildPos(std::string name, bool isMex, bool isGeo, float distance, int builder)
 {
 	const UnitDef* ud = aicb->GetUnitDef(name.c_str());
 	if(ud==0)

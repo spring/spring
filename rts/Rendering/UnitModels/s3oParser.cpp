@@ -41,7 +41,7 @@ CS3OParser::CS3OParser()
 
 CS3OParser::~CS3OParser()
 {
-	map<string,S3DOModel*>::iterator ui;
+	std::map<std::string,S3DOModel*>::iterator ui;
 	for(ui=units.begin();ui!=units.end();++ui){
 		DeleteSS3O(ui->second->rootobjects3o);
 		delete ui->second;
@@ -56,14 +56,14 @@ void CS3OParser::DeleteSS3O(SS3O* o)
 	delete o;
 }
 
-S3DOModel* CS3OParser::LoadS3O(string name,float scale,int side)
+S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
 {
-	if(name.find(".")==string::npos)
+	if(name.find(".")==std::string::npos)
 		name+=".s3o";
 
 	StringToLowerInPlace(name);
 
-	map<string,S3DOModel*>::iterator ui;
+	std::map<std::string,S3DOModel*>::iterator ui;
 	if((ui=units.find(name))!=units.end()){
 		return ui->second;
 	}
@@ -123,7 +123,7 @@ S3DOModel* CS3OParser::LoadS3O(string name,float scale,int side)
 	return model;
 }
 
-LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
+LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces)
 {
 	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
 	lmodel->numpieces = model->numobjects;
@@ -141,7 +141,7 @@ LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, vector<struct Pie
 	return lmodel;
 }
 
-void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum)
+void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum)
 {
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
@@ -163,10 +163,10 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<st
 
 	//Not found? Try again with partial matching
 	if (cur == pieces->size()) {
-		string &s1 = lmodel->pieces[*piecenum].name;
+		std::string &s1 = lmodel->pieces[*piecenum].name;
 		for (cur = 0; cur < pieces->size(); ++cur) {
-			string &s2 = (*pieces)[cur].name;
-			int maxcompare = min(s1.size(), s2.size());
+			std::string &s2 = (*pieces)[cur].name;
+			int maxcompare = std::min(s1.size(), s2.size());
 			int j;
 			for (j = 0; j < maxcompare; ++j) {
 				if (s1[j] != s2[j]) {
@@ -259,22 +259,22 @@ void CS3OParser::FindMinMax(SS3O *object)
 
 	std::vector<SS3OVertex>::iterator vi;
 	for(vi=object->vertices.begin();vi!=object->vertices.end();++vi){
-		maxx=max(maxx,vi->pos.x);
-		maxy=max(maxy,vi->pos.y);
-		maxz=max(maxz,vi->pos.z);
+		maxx=std::max(maxx,vi->pos.x);
+		maxy=std::max(maxy,vi->pos.y);
+		maxz=std::max(maxz,vi->pos.z);
 
-		minx=min(minx,vi->pos.x);
-		miny=min(miny,vi->pos.y);
-		minz=min(minz,vi->pos.z);
+		minx=std::min(minx,vi->pos.x);
+		miny=std::min(miny,vi->pos.y);
+		minz=std::min(minz,vi->pos.z);
 	}
 	for(si=object->childs.begin();si!=object->childs.end();++si){
-		maxx=max(maxx,(*si)->offset.x+(*si)->maxx);
-		maxy=max(maxy,(*si)->offset.y+(*si)->maxy);
-		maxz=max(maxz,(*si)->offset.z+(*si)->maxz);
+		maxx=std::max(maxx,(*si)->offset.x+(*si)->maxx);
+		maxy=std::max(maxy,(*si)->offset.y+(*si)->maxy);
+		maxz=std::max(maxz,(*si)->offset.z+(*si)->maxz);
 
-		minx=min(minx,(*si)->offset.x+(*si)->minx);
-		miny=min(miny,(*si)->offset.y+(*si)->miny);
-		minz=min(minz,(*si)->offset.z+(*si)->minz);
+		minx=std::min(minx,(*si)->offset.x+(*si)->minx);
+		miny=std::min(miny,(*si)->offset.y+(*si)->miny);
+		minz=std::min(minz,(*si)->offset.z+(*si)->minz);
 	}
 	object->maxx=maxx;
 	object->maxy=maxy;

@@ -81,7 +81,7 @@ CMouseHandler::CMouseHandler()
 	doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	scrollWheelSpeed = (float)configHandler.GetInt("ScrollWheelSpeed", 25);
-	scrollWheelSpeed = max(-255.0f, min(255.0f, scrollWheelSpeed));
+	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 }
 
 CMouseHandler::~CMouseHandler()

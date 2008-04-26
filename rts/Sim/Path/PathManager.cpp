@@ -302,7 +302,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		return float3(-1,-1,-1);
 
 	//Find corresponding multipath.
-	map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
+	std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
 	if(pi == pathMap.end())
 		return float3(-1,-1,-1);
 	MultiPath* multiPath = pi->second;
@@ -358,7 +358,7 @@ void CPathManager::DeletePath(unsigned int pathId) {
 		return;
 
 	//Find the multipath.
-	map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
+	std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
 	if(pi == pathMap.end())
 		return;
 	MultiPath* multiPath = pi->second;
@@ -405,10 +405,10 @@ void CPathManager::Draw() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
-	map<unsigned int, MultiPath*>::iterator pi;
+	std::map<unsigned int, MultiPath*>::iterator pi;
 	for(pi = pathMap.begin(); pi != pathMap.end(); pi++) {
 		MultiPath* path = pi->second;
-		list<float3>::iterator pvi;
+		std::list<float3>::iterator pvi;
 
 		//Start drawing a line.
 		glBegin(GL_LINE_STRIP);
@@ -451,34 +451,34 @@ void CPathManager::Draw() {
 
 
 void CPathManager::GetEstimatedPath(unsigned int pathId,
-                                      vector<float3>& points,
-                                      vector<int>& starts) const
+	std::vector<float3>& points,
+	std::vector<int>& starts) const
 {
 	points.clear();
 	starts.clear();
 
-	map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
 	if (pi == pathMap.end()) {
 		return;
 	}
 	const MultiPath* path = pi->second;
 
-	list<float3>::const_reverse_iterator pvi;
+	std::list<float3>::const_reverse_iterator pvi;
 
 	starts.push_back(points.size());
-	const list<float3>& dtlPoints = path->detailedPath.path;
+	const std::list<float3>& dtlPoints = path->detailedPath.path;
 	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
 	starts.push_back(points.size());
-	const list<float3>& estPoints = path->estimatedPath.path;
+	const std::list<float3>& estPoints = path->estimatedPath.path;
 	for (pvi = estPoints.rbegin(); pvi != estPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
 	starts.push_back(points.size());
-	const list<float3>& est2Points = path->estimatedPath2.path;
+	const std::list<float3>& est2Points = path->estimatedPath2.path;
 	for (pvi = est2Points.rbegin(); pvi != est2Points.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
