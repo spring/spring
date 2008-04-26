@@ -516,7 +516,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	}
 
 	//roll
-	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.f, updir.y) * 150 > gHeight + 60 + fabs(rightdir.y) * 150) {
+	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeight + 60 + fabs(rightdir.y) * 150) {
 		float goalBankDif = goalDot + rightdir.y * 0.2f;
 		if (goalBankDif > maxAileron * speedf * 4) {
 			aileron = 1;
