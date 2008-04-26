@@ -9,6 +9,8 @@
 
 #include "ExternalAI/IAICallback.h"
 
+using std::string;
+
 class cLogFile
 {
 public:

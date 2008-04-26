@@ -1,9 +1,11 @@
 #ifndef SUNPARSER_H
 #define SUNPARSER_H
 
-
 #include "GlobalAI.h"
 
+using std::string;
+using std::map;
+using std::stringstream;
 
 class CSunParser
 {

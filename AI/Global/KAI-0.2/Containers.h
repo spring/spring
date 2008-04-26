@@ -1,6 +1,9 @@
 #ifndef CONTAINERS_H
 #define CONTAINERS_H
 
+using std::string;
+using std::vector;
+using std::list;
 
 class IAICallback;
 class IAICheats;

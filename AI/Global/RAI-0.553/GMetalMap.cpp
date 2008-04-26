@@ -1,6 +1,8 @@
 #include "GMetalMap.h"
 #include <set>
 
+using std::set;
+
 cRMetalMap::cRMetalMap(IAICallback* cb, cLogFile* l)
 {
 	*l<<"\n Get Max Metal: "<<cb->GetMaxMetal();

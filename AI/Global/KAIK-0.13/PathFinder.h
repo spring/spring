@@ -4,6 +4,7 @@
 
 #include "GlobalAI.h"
 
+using std::vector;
 using namespace NSMicroPather;
 
 class CPathFinder: public Graph {

@@ -1,6 +1,6 @@
 #include "SunParser.h"
 
-
+using std::ifstream;
 
 
 CSunParser::CSunParser(AIClasses* ai) {
@@ -52,9 +52,9 @@ void CSunParser::LoadRealFile(string filename) {
 		return;
 	}
 
-	RealFile.seekg(0, ios_base::end);
+	RealFile.seekg(0, std::ios_base::end);
 	int size = RealFile.tellg();
-	RealFile.seekg(0, ios_base::beg);
+	RealFile.seekg(0, std::ios_base::beg);
 
 	char* filebuf = new char[size + 1];
 	RealFile.get(filebuf, size, '\0');

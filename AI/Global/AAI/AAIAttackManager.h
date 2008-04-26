@@ -11,6 +11,8 @@
 
 #include "aidef.h"
 
+using std::set;
+
 class AAI;
 class AAIBrain;
 class AAIBuildTable;

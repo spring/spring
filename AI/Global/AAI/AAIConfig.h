@@ -6,6 +6,10 @@
 #include <vector>
 //#include "aidef.h"
 
+using std::string;
+using std::list;
+using std::vector;
+
 class AAI;
 
 struct CostMultiplier

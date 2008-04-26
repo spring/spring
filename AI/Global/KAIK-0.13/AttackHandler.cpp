@@ -320,7 +320,7 @@ float CAttackHandler::DistanceToBase(float3 pos) {
 	for (int i = 0; i < this->kMeansK; i++) {
 		float3 mean = this->kMeansBase[i];
 		float distance = pos.distance2D(mean);
-		closestDistance = min(distance, closestDistance);
+		closestDistance = std::min(distance, closestDistance);
 	}
 
 	return closestDistance;
@@ -394,7 +394,7 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 	for (int i = 0; i < numUnits; i++) {
 		int meanIndex = unitsClosestMeanID[i];
 		 // don't divide by 0
-		float num = max(1, numUnitsAssignedToMean[meanIndex]);
+		float num = std::max(1, numUnitsAssignedToMean[meanIndex]);
 		newMeans[meanIndex] += unitPositions[i] / num;
 	}
 
@@ -444,7 +444,7 @@ void CAttackHandler::UpdateKMeans(void) {
 		}
 
 		// calculate a new K. change the formula to adjust max K, needs to be 1 minimum.
-		this->kMeansK = int(min((float) (KMEANS_BASE_MAX_K), 1.0f + sqrtf((float)numFriendlies + 0.01f)));
+		this->kMeansK = int(std::min((float) (KMEANS_BASE_MAX_K), 1.0f + sqrtf((float)numFriendlies + 0.01f)));
 		// iterate k-means algo over these positions and move the means
 		this->kMeansBase = KMeansIteration(this->kMeansBase, friendlyPositions, this->kMeansK);
 	}
@@ -477,7 +477,7 @@ void CAttackHandler::UpdateKMeans(void) {
 	}
 
 	// calculate a new K. change the formula to adjust max K, needs to be 1 minimum
-	this->kMeansEnemyK = int(min(float(KMEANS_ENEMY_MAX_K), 1.0f + sqrtf((float) numEnemies + 0.01f)));
+	this->kMeansEnemyK = int(std::min(float(KMEANS_ENEMY_MAX_K), 1.0f + sqrtf((float) numEnemies + 0.01f)));
 
 	// iterate k-means algo over these positions and move the means
 	this->kMeansEnemyBase = KMeansIteration(this->kMeansEnemyBase, enemyPositions, this->kMeansEnemyK);

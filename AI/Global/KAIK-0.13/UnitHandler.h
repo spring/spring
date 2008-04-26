@@ -5,6 +5,9 @@
 #include "GlobalAI.h"
 #include "MetalMaker.h"
 
+using std::list;
+using std::vector;
+
 class CMetalMaker;
 
 class CUnitHandler {
