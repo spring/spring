@@ -138,7 +138,7 @@ void CQuitBox::Draw(void)
 		else
 			teamName = "uncontrolled";
 
-		string ally, dead;
+		std::string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
 			ally = " <Ally>)";
 		} else {

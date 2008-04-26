@@ -4,8 +4,6 @@
 #include <set>
 #include "float.h"
 
-using namespace std;
-
 class CUnit;
 
 class CUnitTracker
@@ -45,7 +43,7 @@ class CUnitTracker
 
 		int trackMode;
 		int trackUnit;
-		set<int> trackGroup;
+		std::set<int> trackGroup;
 		
 		int timeOut;
 		int lastFollowUnit;

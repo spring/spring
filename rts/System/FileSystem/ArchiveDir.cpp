@@ -18,7 +18,7 @@ inline std::vector<std::string>::iterator& CArchiveDir::GetSearchHandle(int hand
 	return it->second;
 }
 
-CArchiveDir::CArchiveDir(const string& archivename) :
+CArchiveDir::CArchiveDir(const std::string& archivename) :
 		CArchiveBase(archivename),
 		archiveName(archivename + '/'),
 		curFileHandle(0),
@@ -92,7 +92,7 @@ int CArchiveDir::FileSize(int handle)
 	return GetFileHandler(handle)->FileSize();
 }
 
-int CArchiveDir::FindFiles(int cur, string* name, int* size)
+int CArchiveDir::FindFiles(int cur, std::string* name, int* size)
 {
 	if (cur == 0) {
 		cur = ++curSearchHandle;

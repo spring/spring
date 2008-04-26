@@ -27,17 +27,17 @@ class CArchiveDir : public CArchiveBase
 
 public:
 
-	CArchiveDir(const string& archiveName);
+	CArchiveDir(const std::string& archiveName);
 	virtual ~CArchiveDir(void);
 	virtual bool IsOpen();
-	virtual int OpenFile(const string& fileName);
+	virtual int OpenFile(const std::string& fileName);
 	virtual int ReadFile(int handle, void* buffer, int numBytes);
 	virtual void CloseFile(int handle);
 	virtual void Seek(int handle, int pos);
 	virtual int Peek(int handle);
 	virtual bool Eof(int handle);
 	virtual int FileSize(int handle);
-	virtual int FindFiles(int cur, string* name, int* size);
+	virtual int FindFiles(int cur, std::string* name, int* size);
 };
 
 #endif

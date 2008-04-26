@@ -198,7 +198,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	path.pathCost = PATHCOST_INFINITY;
 
 	//Store som basic data.
-	maxNodesToBeSearched = min((unsigned int)MAX_SEARCHED_SQUARES, maxNodes);
+	maxNodesToBeSearched = std::min((unsigned int)MAX_SEARCHED_SQUARES, maxNodes);
 	this->testMobile=testMobile;
 	this->exactPath = exactPath;
 	this->needPath=needPath;

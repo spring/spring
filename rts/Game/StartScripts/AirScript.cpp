@@ -141,7 +141,7 @@ void CAirScript::SetCamera(void)
 				break;
 			}
 		}
-		timeOut=min(1,timeOut+1);
+		timeOut=std::min(1,timeOut+1);
 	}
 	if(timeOut>0){
 		timeOut++;

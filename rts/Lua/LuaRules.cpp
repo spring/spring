@@ -946,7 +946,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 	}
 
 	// get the results
-	const int retArgs = min(lua_gettop(L) - top, (MAX_LUA_COB_ARGS - 1));
+	const int retArgs = std::min(lua_gettop(L) - top, (MAX_LUA_COB_ARGS - 1));
 	for (int a = 1; a <= retArgs; a++) {
 		const int index = (a + top);
 		if (lua_isnumber(L, index)) {

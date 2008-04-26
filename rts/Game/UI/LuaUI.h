@@ -8,7 +8,6 @@
 #include <vector>
 #include <map>
 #include "SDL_types.h"
-using namespace std;
 
 #include "Lua/LuaHandle.h"
 #include "Sim/Units/CommandAI/Command.h"

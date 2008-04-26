@@ -172,7 +172,7 @@ CCobInstance::~CCobInstance(void)
 	//Can't delete the thread here because that would confuse the scheduler to no end
 	//Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
 	//Also unregister all callbacks
-	for (list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
+	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		(*i)->state = CCobThread::Dead;
 		(*i)->SetCallback(NULL, NULL, NULL);
 	}
@@ -180,11 +180,11 @@ CCobInstance::~CCobInstance(void)
 	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
 	GCobEngine.RemoveInstance(this);
 
-	for (list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 
 		//All threads blocking on animations can be killed safely from here since the scheduler does not
 		//know about them
-		for (list<CCobThread *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
+		for (std::list<CCobThread *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
 			delete *j;
 		}
 		delete *i;
@@ -192,7 +192,7 @@ CCobInstance::~CCobInstance(void)
 }
 int CCobInstance::Call(const string &fname)
 {
-	vector<int> x;
+	std::vector<int> x;
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
@@ -203,14 +203,14 @@ int CCobInstance::Call(const string &fname, vector<int> &args)
 
 int CCobInstance::Call(const string &fname, int p1)
 {
-	vector<int> x;
+	std::vector<int> x;
 	x.push_back(p1);
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(const string &fname, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	vector<int> x;
+	std::vector<int> x;
 	return Call(fname, x, cb, p1, p2);
 }
 
@@ -227,13 +227,13 @@ int CCobInstance::Call(const string &fname, vector<int> &args, CBCobThreadFinish
 
 int CCobInstance::Call(int id)
 {
-	vector<int> x;
+	std::vector<int> x;
 	return Call(id, x, NULL, NULL, NULL);
 }
 
 int CCobInstance::Call(int id, int p1)
 {
-	vector<int> x;
+	std::vector<int> x;
 	x.push_back(p1);
 	return Call(id, x, NULL, NULL, NULL);
 }
@@ -245,7 +245,7 @@ int CCobInstance::Call(int id, vector<int> &args)
 
 int CCobInstance::Call(int id, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	vector<int> x;
+	std::vector<int> x;
 	return Call(id, x, cb, p1, p2);
 }
 
@@ -398,7 +398,7 @@ int CCobInstance::DoSpin(int &cur, int dest, int &speed, int accel, int divisor)
 // Unblocks all threads waiting on this animation
 void CCobInstance::UnblockAll(struct AnimInfo * anim)
 {
-	list<CCobThread *>::iterator li;
+	std::list<CCobThread *>::iterator li;
 
 	for (li = anim->listeners.begin(); li != anim->listeners.end(); ++li) {
 		//Not sure how to do this more cleanly.. Will probably rewrite it
@@ -420,8 +420,8 @@ void CCobInstance::UnblockAll(struct AnimInfo * anim)
 int CCobInstance::Tick(int deltaTime)
 {
 	int done;
-	list<struct AnimInfo *>::iterator it = anims.begin();
-	list<struct AnimInfo *>::iterator cur;
+	std::list<struct AnimInfo *>::iterator it = anims.begin();
+	std::list<struct AnimInfo *>::iterator cur;
 
 	while (it != anims.end()) {
 		//Advance it, so we can erase cur safely
@@ -461,7 +461,7 @@ int CCobInstance::Tick(int deltaTime)
 //Returns anims list
 struct CCobInstance::AnimInfo *CCobInstance::FindAnim(AnimType type, int piece, int axis)
 {
-	for (list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		if (((*i)->type == type) && ((*i)->piece == piece) && ((*i)->axis == axis))
 			return *i;
 	}
@@ -471,7 +471,7 @@ struct CCobInstance::AnimInfo *CCobInstance::FindAnim(AnimType type, int piece, 
 // Returns true if an animation was found and deleted
 void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 {
-	for (list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		if (((*i)->type == type) && ((*i)->piece == piece) && ((*i)->axis == axis)) {
 
 			// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
@@ -795,7 +795,7 @@ int CCobInstance::AddMoveListener(int piece, int axis, CCobThread *listener)
 
 void CCobInstance::Signal(int signal)
 {
-	for (list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
+	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		if ((signal & (*i)->signalMask) != 0) {
 			(*i)->state = CCobThread::Dead;
 			//logOutput.Print("Killing a thread %d %d", signal, (*i)->signalMask);
@@ -1256,9 +1256,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
 	}
 	case MIN:
-		return min(p1, p2);
+		return std::min(p1, p2);
 	case MAX:
-		return max(p1, p2);
+		return std::max(p1, p2);
 	case ABS:
 		return abs(p1);
 	case FLANK_B_MODE:
@@ -1609,7 +1609,7 @@ void CCobInstance::SetUnitVal(int val, int param)
 		case SHIELD_POWER: {
 			if (unit->shieldWeapon != NULL) {
 				CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
-				shield->curPower = max(0.0f, float(param) / float(COBSCALE));
+				shield->curPower = std::max(0.0f, float(param) / float(COBSCALE));
 			}
 			break;
 		}

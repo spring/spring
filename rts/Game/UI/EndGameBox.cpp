@@ -306,8 +306,8 @@ void CEndGameBox::Draw()
 			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/CTeam::statsPeriod;
 
 		int numPoints=stats[0].values[0].size();
-		float scalex=0.54f/max(1.0f,numPoints-1.0f);
-		float scaley=0.54f/maxy;
+		float scalex=0.54f / std::max(1.0f,numPoints-1.0f);
+		float scaley=0.54f / maxy;
 
 		for (int a = 0; a < 5; ++a) {
 			font->glPrintAt(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f,

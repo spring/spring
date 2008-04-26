@@ -653,7 +653,7 @@ const string& CWaitCommandsAI::TimeWait::GetStateText() const
 	static char buf[32];
 	if (enabled) {
 		const int remaining =
-			1 + (max(0, (endFrame - gs->frameNum - 1)) / GAME_SPEED);
+			1 + (std::max(0, (endFrame - gs->frameNum - 1)) / GAME_SPEED);
 		SNPRINTF(buf, sizeof(buf), "%i", remaining);
 	} else {
 		SNPRINTF(buf, sizeof(buf), "%i", duration / GAME_SPEED);
@@ -879,10 +879,10 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 {
 	units.clear();
 
-	const float3 mins(min(pos0.x, pos1.x), 0.0f, min(pos0.z, pos1.z));
-	const float3 maxs(max(pos0.x, pos1.x), 0.0f, max(pos0.z, pos1.z));
+	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
+	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
+	std::vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
 
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {

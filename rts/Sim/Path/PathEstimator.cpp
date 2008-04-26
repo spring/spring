@@ -41,13 +41,13 @@ const unsigned int PATHESTIMATOR_VERSION = 35;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
-extern string stupidGlobalMapname;
+extern std::string stupidGlobalMapname;
 
 
 /*
  * constructor, loads precalculated data if it exists
  */
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, string name):
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string name):
 	pathFinder(pf),
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
@@ -437,8 +437,8 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	}
 
 	// error-check
-	upperX = min(upperX, nbrOfBlocksX - 1);
-	upperZ = min(upperZ, nbrOfBlocksZ - 1);
+	upperX = std::min(upperX, nbrOfBlocksX - 1);
+	upperZ = std::min(upperZ, nbrOfBlocksZ - 1);
 	if (lowerX < 0) lowerX = 0;
 	if (lowerZ < 0) lowerZ = 0;
 
@@ -784,13 +784,13 @@ void CPathEstimator::ResetSearch() {
  * try to read offset and vertices data from file, return false on failure
  * TODO: Read-error-check.
  */
-bool CPathEstimator::ReadFile(string name)
+bool CPathEstimator::ReadFile(std::string name)
 {
 	unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
@@ -831,7 +831,7 @@ bool CPathEstimator::ReadFile(string name)
 /*
  * try to write offset and vertex data to file
  */
-void CPathEstimator::WriteFile(string name) {
+void CPathEstimator::WriteFile(std::string name) {
 	// We need this directory to exist
 	if (!filesystem.CreateDirectory("maps/paths"))
 		return;
@@ -840,7 +840,7 @@ void CPathEstimator::WriteFile(string name) {
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	string filename = string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location
@@ -1037,8 +1037,8 @@ float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, float3 pos)
 	int xm = (int) (pos.x / (SQUARE_SIZE * BLOCK_SIZE));
 	int ym = (int) (pos.z / (SQUARE_SIZE * BLOCK_SIZE));
 
-	for (int y = max(0, ym - 1); y <= min(nbrOfBlocksZ - 1, ym + 1); ++y) {
-		for (int x = max(0, xm - 1); x <= min(nbrOfBlocksX - 1, xm + 1); ++x) {
+	for (int y = std::max(0, ym - 1); y <= std::min(nbrOfBlocksZ - 1, ym + 1); ++y) {
+		for (int x = std::max(0, xm - 1); x <= std::min(nbrOfBlocksX - 1, xm + 1); ++x) {
 			startPos.push_back(float3(blockState[y * nbrOfBlocksX + x].sqrCenter[pathType].x * SQUARE_SIZE, 0, blockState[y * nbrOfBlocksX+x].sqrCenter[pathType].y * SQUARE_SIZE));
 		}
 	}

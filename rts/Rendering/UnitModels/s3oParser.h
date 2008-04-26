@@ -38,8 +38,8 @@ public:
 	CS3OParser();
 	virtual ~CS3OParser();
 
-	S3DOModel* LoadS3O(string name,float scale=1,int side=1);
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
+	S3DOModel* LoadS3O(std::string name, float scale = 1, int side = 1);
+	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
 
 private:
 	SS3O* LoadPiece(unsigned char* buf, int offset,S3DOModel* model);
@@ -47,9 +47,9 @@ private:
 	void FindMinMax(SS3O *object);
 	void DrawSub(SS3O* o);
 	void CreateLists(SS3O *o);
-	void CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum);
+	void CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
 
-	map<string,S3DOModel*> units;
+	std::map<std::string,S3DOModel*> units;
 };
 
 #endif /* S3OPARSER_H */

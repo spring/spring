@@ -335,7 +335,7 @@ void CMobileCAI::SlowUpdate()
 		const Command& c = *it;
 		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
 			const float defMaxSpeed = owner->maxSpeed;
-			const float newMaxSpeed = min(c.params[0], defMaxSpeed);
+			const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
 			if (newMaxSpeed > 0)
 				owner->moveType->SetMaxSpeed(newMaxSpeed);
 		}
@@ -733,7 +733,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				// FIXME kill magic frame number
 				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
 					owner->moveType->KeepPointingTo(orderTarget,
-							min((float) (owner->losRadius * SQUARE_SIZE * 2),
+							std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
 									owner->maxRange * 0.9f), true);
 				}
 			}
@@ -748,7 +748,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			{
 				StopMove();
 				owner->moveType->KeepPointingTo(orderTarget,
-						min((float) (owner->losRadius * SQUARE_SIZE * 2),
+						std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
 								owner->maxRange * 0.9f), true);
 			} else if(tempOrder && owner->moveState == 0){
 				SetGoal(lastUserGoal, owner->pos);

@@ -293,7 +293,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
-	for (list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -586,7 +586,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
-	list<CUnit*>::iterator usi;
+	std::list<CUnit*>::iterator usi;
 	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
 
@@ -1388,7 +1388,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 			if (dot < 0)
 				dot = 0;
 
-			float exp = min(1.f, powf(dot, exponent) + powf(dot, 3) * 0.25f);
+			float exp = std::min(1.f, powf(dot, exponent) + powf(dot, 3) * 0.25f);
 			buf[(y * size + x) * 4 + 0] = (unsigned char) (suncolor.x * exp * 255);
 			buf[(y * size + x) * 4 + 1] = (unsigned char) (suncolor.y * exp * 255);
 			buf[(y * size + x) * 4 + 2] = (unsigned char) (suncolor.z * exp * 255);
@@ -1949,7 +1949,7 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
 
 	// healthbar
-	const float hpp = max(0.0f, unit->health / unit->maxHealth);
+	const float hpp = std::max(0.0f, unit->health / unit->maxHealth);
 	const float hEnd = hpp * 10.0f;
 
 	if (unit->stunned) {

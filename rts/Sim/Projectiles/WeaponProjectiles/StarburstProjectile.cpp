@@ -73,7 +73,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	this->uptime=uptime;
 	if (weaponDef) {
 		if (weaponDef->flighttime == 0) {
-			ttl=(int)min(3000.f,uptime+weaponDef->range/maxSpeed+100);
+			ttl = (int) std::min(3000.f,uptime+weaponDef->range/maxSpeed+100);
 		}
 		else {
 			ttl=weaponDef->flighttime;
@@ -280,7 +280,7 @@ void CStarburstProjectile::Draw(void)
 
 			float a1=(1-float(0)/(Smoke_Time))*255;
 			a1*=0.7f+fabs(dif.dot(dir));
-			int alpha=min(255,(int)max(0.f,a1));
+			int alpha = std::min(255, (int) std::max(0.f,a1));
 			col[0]=(unsigned char) (color*alpha);
 			col[1]=(unsigned char) (color*alpha);
 			col[2]=(unsigned char) (color*alpha);
@@ -290,7 +290,7 @@ void CStarburstProjectile::Draw(void)
 			a2*=0.7f+fabs(dif2.dot(oldSmokeDir));
 			if(age<8)
 				a2=0;
-			alpha=min(255,(int)max(0.f,a2));
+			alpha = std::min(255, (int) std::max(0.f,a2));
 			col2[0]=(unsigned char) (color*alpha);
 			col2[1]=(unsigned char) (color*alpha);
 			col2[2]=(unsigned char) (color*alpha);
@@ -350,8 +350,8 @@ void CStarburstProjectile::DrawCallback(void)
 		for(float a=0;a<ospeed+0.6f;a+=0.15f){
 			float ageMod;
 			if(createAgeMods){
-				if(missileAge<20)
-					ageMod=1;
+				if (missileAge < 20)
+					ageMod = 1;
 				else
 					ageMod=0.6f+rand()*0.8f/RAND_MAX;
 				oldInfos[age]->ageMods.push_back(ageMod);
@@ -362,13 +362,13 @@ void CStarburstProjectile::DrawCallback(void)
 			float3 interPos=opos-odir*(age*0.5f+a);
 			float drawsize;
 			col[3]=1;
-			if(missileAge<20){
-				float alpha=max(0.f,((1-age2)*(1-age2)));
+			if (missileAge < 20) {
+				float alpha = std::max(0.f,((1-age2)*(1-age2)));
 				col[0]=(unsigned char) (255*alpha);
 				col[1]=(unsigned char) (200*alpha);
 				col[2]=(unsigned char) (150*alpha);
 			} else {
-				float alpha=max(0.f,((1-age2)*max(0.f,(1-age2))));
+				float alpha = std::max(0.f,((1-age2) * std::max(0.f,(1-age2))));
 				col[0]=(unsigned char) (255*alpha);
 				col[1]=(unsigned char) (200*alpha);
 				col[2]=(unsigned char) (150*alpha);
@@ -428,15 +428,16 @@ int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos
 {
 	float3 sdir=pos-shieldPos;
 	sdir.Normalize();
-	if(ttl > 0){
-		float3 dif2=sdir-dir;
-		float tracking=max(shieldForce*0.05f,weaponDef->turnrate*2);		//steer away twice as fast as we can steer toward target
-		if(dif2.Length()<tracking){
-			dir=sdir;
+	if (ttl > 0) {
+		float3 dif2 = sdir - dir;
+		// steer away twice as fast as we can steer toward target
+		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+		if (dif2.Length() < tracking) {
+			dir = sdir;
 		} else {
-			dif2-=dir*(dif2.dot(dir));
+			dif2 -= dir * (dif2.dot(dir));
 			dif2.Normalize();
-			dir+=dif2*tracking;
+			dir += dif2 * tracking;
 			dir.Normalize();
 		}
 		return 2;

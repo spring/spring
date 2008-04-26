@@ -7,8 +7,6 @@
 
 class CArchiveBase;
 
-using namespace std;
-
 class CVFSHandler
 {
 protected:
@@ -17,19 +15,19 @@ protected:
 		int size;
 		bool dynamic;
 	};
-	map<string, FileData> files; 
-	map<string, CArchiveBase*> archives;
+	std::map<std::string, FileData> files; 
+	std::map<std::string, CArchiveBase*> archives;
 public:
 	CVFSHandler();
 	virtual ~CVFSHandler();
 
-	int LoadFile(string name, void* buffer);
-	int GetFileSize(string name);
+	int LoadFile(std::string name, void* buffer);
+	int GetFileSize(std::string name);
 
-	vector<string> GetFilesInDir(string dir);
-	vector<string> GetDirsInDir(string dir);
+	std::vector<std::string> GetFilesInDir(std::string dir);
+	std::vector<std::string> GetDirsInDir(std::string dir);
 
-	bool AddArchive(string arName, bool override);
+	bool AddArchive(std::string arName, bool override);
 };
 
 extern CVFSHandler* hpiHandler;

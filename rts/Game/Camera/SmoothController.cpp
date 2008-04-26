@@ -155,7 +155,7 @@ void SmoothController::MouseWheelMove(float move)
 
 float3 SmoothController::GetPos()
 {
-	maxHeight=9.5f*max(gs->mapx,gs->mapy);		//map not created when constructor run
+	maxHeight = 9.5f * std::max(gs->mapx,gs->mapy);		//map not created when constructor run
 
 	if (pos.x < 0.01f) { pos.x = 0.01f; }
 	if (pos.z < 0.01f) { pos.z = 0.01f; }

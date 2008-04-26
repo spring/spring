@@ -352,7 +352,7 @@ void CPieceProjectile::Draw()
 				dir2.Normalize();
 
 				float a1 = ((1 - 0.0f / (Smoke_Time)) * 255) * (0.7f + fabs(dif.dot(dir)));
-				float alpha = min(255.0f, max(0.f, a1));
+				float alpha = std::min(255.0f, std::max(0.f, a1));
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
 				col[2] = (unsigned char) (color * alpha);
@@ -364,7 +364,7 @@ void CPieceProjectile::Draw()
 				if (age < 8)
 					a2 = 0;
 
-				alpha = min(255.0f, max(0.f, a2));
+				alpha = std::min(255.0f, std::max(0.f, a2));
 				col2[0] = (unsigned char) (color * alpha);
 				col2[1] = (unsigned char) (color * alpha);
 				col2[2] = (unsigned char) (color * alpha);

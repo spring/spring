@@ -2,7 +2,7 @@ struct UnitDef;
 
 struct BOInfo
 {
-	string name;
+	std::string name;
 
 	float mp;	// metal production
 	float ep;	// energy production
@@ -24,8 +24,8 @@ struct compareMetal
 {
 	bool operator()(BOInfo* const& bo1, BOInfo* const& bo2)
 	{
-		bool sameMetal	= max(bo1->mp,bo2->mp) / min(bo1->mp,bo2->mp) < 3 ? true : false;
-		bool sameCost	= max(bo1->totalCost,bo2->totalCost) / min(bo1->totalCost,bo2->totalCost) < 10 ? true : false;
+		bool sameMetal	= std::max(bo1->mp,bo2->mp) / std::min(bo1->mp,bo2->mp) < 3 ? true : false;
+		bool sameCost	= std::max(bo1->totalCost, bo2->totalCost) / std::min(bo1->totalCost,bo2->totalCost) < 10 ? true : false;
 
 		if( sameMetal &&  sameCost) return bo1->me > bo2->me;
 		if(!sameMetal &&  sameCost) return bo1->mp > bo2->mp;
@@ -37,8 +37,8 @@ struct compareEnergy
 {
 	bool operator()(BOInfo* const& bo1, BOInfo* const& bo2)
 	{
-		bool sameEnergy	= max(bo1->ep,bo2->ep) / min(bo1->ep,bo2->ep) < 3 ? true : false;
-		bool sameCost	= max(bo1->totalCost,bo2->totalCost) / min(bo1->totalCost,bo2->totalCost) < 10 ? true : false;
+		bool sameEnergy	= std::max(bo1->ep,bo2->ep) / std::min(bo1->ep,bo2->ep) < 3 ? true : false;
+		bool sameCost	= std::max(bo1->totalCost, bo2->totalCost) / std::min(bo1->totalCost,bo2->totalCost) < 10 ? true : false;
 
 		if( sameEnergy &&  sameCost) return bo1->em > bo2->em;
 		if(!sameEnergy &&  sameCost) return bo1->ep > bo2->ep;
@@ -58,9 +58,9 @@ class CBoHandler
 		void AddBuildOptions(const UnitDef* unitDef);
 		void SortBuildOptions();
 
-		map<string,BOInfo*> allBO;
-		vector<BOInfo*> bestMetal;	// ordered buildoptions for best metal production
-		vector<BOInfo*> bestEnergy;	// ordered buildoptions for best energy production
+		std::map<std::string,BOInfo*> allBO;
+		std::vector<BOInfo*> bestMetal;	// ordered buildoptions for best metal production
+		std::vector<BOInfo*> bestEnergy;	// ordered buildoptions for best energy production
 	private:
 		IAICallback* aicb;
 		bool BOchanged;

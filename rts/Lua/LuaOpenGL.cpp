@@ -1293,7 +1293,7 @@ int LuaOpenGL::Unit(lua_State* L)
 			if (tmpLod < 0) {
 				useLOD = false;
 			} else {
-				lod = min(unit->lodCount - 1, (unsigned int)tmpLod);
+				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
 			}
 		}
 		unit->currentLOD = lod;
@@ -1354,7 +1354,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 			if (tmpLod < 0) {
 				useLOD = false;
 			} else {
-				lod = min(unit->lodCount - 1, (unsigned int)tmpLod);
+				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
 			}
 		}
 		unit->currentLOD = lod;
@@ -1747,7 +1747,7 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 	const int divs =   (int)lua_tonumber(L, 5);
 
 	if ((args >= 6) && lua_isnumber(L, 6)) {
-		const float slope = (float)lua_tonumber(L, 6);
+		// const float slope = (float) lua_tonumber(L, 6);
 		glBallisticCircle(pos, r, NULL, divs);
 	} else {
 		glSurfaceCircle(pos, r, divs);
@@ -1797,14 +1797,14 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int mapzi = (gs->mapy + 1);
 	const float* heightmap = readmap->GetHeightmap();
 
-	const float xs = max(0.0f, min(float3::maxxpos, x0)); // x start
-	const float xe = max(0.0f, min(float3::maxxpos, x1)); // x end
-	const float zs = max(0.0f, min(float3::maxzpos, z0)); // z start
-	const float ze = max(0.0f, min(float3::maxzpos, z1)); // z end
-	const int xis = max(0, min(mapxi, int((xs + 0.5f) / SQUARE_SIZE)));
-	const int xie = max(0, min(mapxi, int((xe + 0.5f) / SQUARE_SIZE)));
-	const int zis = max(0, min(mapzi, int((zs + 0.5f) / SQUARE_SIZE)));
-	const int zie = max(0, min(mapzi, int((ze + 0.5f) / SQUARE_SIZE)));
+	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
+	const float xe = std::max(0.0f, std::min(float3::maxxpos, x1)); // x end
+	const float zs = std::max(0.0f, std::min(float3::maxzpos, z0)); // z start
+	const float ze = std::max(0.0f, std::min(float3::maxzpos, z1)); // z end
+	const int xis = std::max(0, std::min(mapxi, int((xs + 0.5f) / SQUARE_SIZE)));
+	const int xie = std::max(0, std::min(mapxi, int((xe + 0.5f) / SQUARE_SIZE)));
+	const int zis = std::max(0, std::min(mapzi, int((zs + 0.5f) / SQUARE_SIZE)));
+	const int zie = std::max(0, std::min(mapzi, int((ze + 0.5f) / SQUARE_SIZE)));
 	if ((xis >= xie) || (zis >= zie)) {
 		return 0;
 	}

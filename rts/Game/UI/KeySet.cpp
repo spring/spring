@@ -56,16 +56,16 @@ CKeySet::CKeySet(int k, bool release)
 }
 
 
-string CKeySet::GetString(bool useDefaultKeysym) const
+std::string CKeySet::GetString(bool useDefaultKeysym) const
 {
-	string name;
+	std::string name;
 	if (useDefaultKeysym) {
 		name = keyCodes->GetDefaultName(key);
 	} else {
 		name = keyCodes->GetName(key);
 	}
 	
-	string modstr;
+	std::string modstr;
 #ifndef DISALLOW_RELEASE_BINDINGS
 	if (modifiers & KS_RELEASE) { modstr += "Up+"; }
 #endif
@@ -79,7 +79,7 @@ string CKeySet::GetString(bool useDefaultKeysym) const
 }
 
 
-bool CKeySet::ParseModifier(string& s, const string& token, const string& abbr)
+bool CKeySet::ParseModifier(std::string& s, const std::string& token, const std::string& abbr)
 {
 	if (s.find(token) == 0) {
 		s.erase(0, token.size());
@@ -94,11 +94,11 @@ bool CKeySet::ParseModifier(string& s, const string& token, const string& abbr)
 }
 
 
-bool CKeySet::Parse(const string& token)
+bool CKeySet::Parse(const std::string& token)
 {
 	Reset();
 
-	string s = StringToLower(token);
+	std::string s = StringToLower(token);
 
 	// parse the modifiers
 	while (!s.empty()) {

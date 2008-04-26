@@ -37,8 +37,8 @@ void CCommanderScript2::Update(void)
 		gs->Team(1)->metalStorage=1000;
 
 		TdfParser p("gamedata/SIDEDATA.TDF");
-		string s0 = StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
-		string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
+		std::string s0 = StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
+		std::string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
 
 		TdfParser p2;
 		CMapInfo::OpenTDF (stupidGlobalMapname, p2);

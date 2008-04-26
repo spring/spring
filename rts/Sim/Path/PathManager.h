@@ -3,7 +3,6 @@
 
 #include <map>
 #include "IPath.h"
-using namespace std;
 
 class CSolidObject;
 class CPathFinder;
@@ -77,7 +76,7 @@ public:
 			The list of starting indices for the different estimation levels
 	*/
 	void GetEstimatedPath(unsigned int pathId,
-	                        vector<float3>& points, vector<int>& starts) const;
+		std::vector<float3>& points, std::vector<int>& starts) const;
 
 
 	/*
@@ -148,7 +147,7 @@ private:
 	CPathEstimator* pe;
 	CPathEstimator* pe2;
 
-	map<unsigned int, MultiPath*> pathMap;
+	std::map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathId;
 
 	CMoveMath* ground;

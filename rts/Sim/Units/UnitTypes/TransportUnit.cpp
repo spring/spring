@@ -52,11 +52,11 @@ void CTransportUnit::PostLoad()
 void CTransportUnit::Update()
 {
 	CUnit::Update();
-	list<TransportedUnit>::iterator ti;
+	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		float3 relPos;
 		if (ti->piece >= 0) {
-			relPos = localmodel->GetPiecePos(max(0, ti->piece));
+			relPos = localmodel->GetPiecePos(std::max(0, ti->piece));
 		} else {
 			relPos = float3(0.0f, -1000.0f, 0.0f);
 		}
@@ -80,8 +80,8 @@ void CTransportUnit::Update()
 
 void CTransportUnit::DependentDied(CObject* o)
 {
-	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		if(ti->unit==o){
+	for (std::list<TransportedUnit>::iterator ti = transported.begin(); ti != transported.end(); ++ti) {
+		if (ti->unit == o) {
 			transportCapacityUsed-=ti->size;
 			transportMassUsed-=ti->mass;
 			transported.erase(ti);
@@ -95,7 +95,7 @@ void CTransportUnit::DependentDied(CObject* o)
 
 void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 {
-	list<TransportedUnit>::iterator ti;
+	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		ti->unit->transporter = 0;
 		ti->unit->DeleteDeathDependence(this);
@@ -184,7 +184,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 		return;
 	}
 
-	list<TransportedUnit>::iterator ti;
+	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		if (ti->unit == unit) {
 			this->DeleteDeathDependence(unit);
@@ -219,10 +219,10 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 
 void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 
-	if(unit->transporter != this)
+	if (unit->transporter != this)
 		return;
 
-	for (list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
+	for (std::list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
 		if (ti->unit==unit) {
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
@@ -259,11 +259,11 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 
 void CTransportUnit::DetachUnitFromAir(CUnit* unit)
 {
-	if(unit->transporter != this)
+	if (unit->transporter != this)
 		return;
 
-	for(list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		if(ti->unit==unit){
+	for (std::list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
+		if (ti->unit == unit) {
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
 			unit->transporter=0;

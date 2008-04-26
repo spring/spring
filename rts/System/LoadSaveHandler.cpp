@@ -126,7 +126,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 			return;
 		}
 
-		string scriptText;
+		std::string scriptText;
 		if (gameSetup) {
 			scriptText = gameSetup->gameSetupText;
 		}

@@ -103,7 +103,7 @@ CMiniMap::CMiniMap()
 
 	unitBaseSize =
 		atof(configHandler.GetString("MiniMapUnitSize", "2.5").c_str());
-	unitBaseSize = max(0.0f, unitBaseSize);
+	unitBaseSize = std::max(0.0f, unitBaseSize);
 
 	unitExponent =
 		atof(configHandler.GetString("MiniMapUnitExp", "0.25").c_str());
@@ -113,7 +113,7 @@ CMiniMap::CMiniMap()
 
 	useIcons = !!configHandler.GetInt("MiniMapIcons", 1);
 
-	drawCommands = max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
+	drawCommands = std::max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
 
 	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
 
@@ -341,12 +341,12 @@ void CMiniMap::ConfigCommand(const std::string& line)
 		if (words.size() >= 2) {
 			unitBaseSize = atof(words[1].c_str());
 		}
-		unitBaseSize = max(0.0f, unitBaseSize);
+		unitBaseSize = std::max(0.0f, unitBaseSize);
 		UpdateGeometry();
 	}
 	else if (command == "drawcommands") {
 		if (words.size() >= 2) {
-			drawCommands = max(0, atoi(words[1].c_str()));
+			drawCommands = std::max(0, atoi(words[1].c_str()));
 
 		} else {
 			drawCommands = (drawCommands > 0) ? 0 : 1;
@@ -462,13 +462,13 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 	if (mouseMove) {
 		xpos += dx;
 		ypos -= dy;
-		xpos = max(0, xpos);
+		xpos = std::max(0, xpos);
 		if (gu->dualScreenMode) {
-			xpos = min((2 * gu->viewSizeX) - width, xpos);
+			xpos = std::min((2 * gu->viewSizeX) - width, xpos);
 		} else {
-			xpos = min(gu->viewSizeX - width, xpos);
+			xpos = std::min(gu->viewSizeX - width, xpos);
 		}
-		ypos = max(5, min(gu->viewSizeY - height, ypos));
+		ypos = std::max(5, std::min(gu->viewSizeY - height, ypos));
 		UpdateGeometry();
 		return;
 	}
@@ -477,18 +477,18 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos   -= dy;
 		width  += dx;
 		height += dy;
-		height = min(gu->viewSizeY, height);
+		height = std::min(gu->viewSizeY, height);
 		if (gu->dualScreenMode) {
-			width = min(2 * gu->viewSizeX, width);
+			width = std::min(2 * gu->viewSizeX, width);
 		} else {
-			width = min(gu->viewSizeX, width);
+			width = std::min(gu->viewSizeX, width);
 		}
 		if (keys[SDLK_LSHIFT]) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
-		width = max(5, width);
-		height = max(5, height);
-		ypos = min(gu->viewSizeY - height, ypos);
+		width = std::max(5, width);
+		height = std::max(5, height);
+		ypos = std::min(gu->viewSizeY - height, ypos);
 		UpdateGeometry();
 		return;
 	}
@@ -560,11 +560,11 @@ void CMiniMap::UpdateGeometry()
 		SetMaximizedGeometry();
 	}
 	else {
-		width = max(1, min(width, gu->viewSizeX));
-		height = max(1, min(height, gu->viewSizeY));
-		ypos = max(slaveDrawMode ? 0 : buttonSize, ypos);
-		ypos = min(gu->viewSizeY - height, ypos);
-		xpos = max(0, min(gu->viewSizeX - width, xpos));
+		width = std::max(1, std::min(width, gu->viewSizeX));
+		height = std::max(1, std::min(height, gu->viewSizeY));
+		ypos = std::max(slaveDrawMode ? 0 : buttonSize, ypos);
+		ypos = std::min(gu->viewSizeY - height, ypos);
+		xpos = std::max(0, std::min(gu->viewSizeX - width, xpos));
 	}
 	lastWindowSizeX = gu->viewSizeX;
 	lastWindowSizeY = gu->viewSizeY;
@@ -657,10 +657,10 @@ void CMiniMap::SelectUnits(int x, int y) const
 		// use a selection box
 		const float3 newPos = GetMapPosition(x, y);
 		const float3 oldPos = GetMapPosition(bp.x, bp.y);
-		const float xmin = min(oldPos.x, newPos.x);
-		const float xmax = max(oldPos.x, newPos.x);
-		const float zmin = min(oldPos.z, newPos.z);
-		const float zmax = max(oldPos.z, newPos.z);
+		const float xmin = std::min(oldPos.x, newPos.x);
+		const float xmax = std::max(oldPos.x, newPos.x);
+		const float zmin = std::min(oldPos.z, newPos.z);
+		const float zmax = std::max(oldPos.z, newPos.z);
 
 		CUnitSet::iterator ui;
 		CUnitSet& selection = selectedUnits.selectedUnits;
@@ -945,7 +945,7 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
 	const int lod = (int)(0.25 * log2(1.0f + (xPixels * yPixels)));
-	const int lodClamp = max(0, min(circleListsCount - 1, lod));
+	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
 	glCallList(circleLists + lodClamp);
 
 	glPopMatrix();
@@ -1006,8 +1006,8 @@ void CMiniMap::DrawForReal()
 	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0);
 
 	// draw the units
-	list<CUnit*>::iterator ui;
-	for(ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();ui++){
+	std::list<CUnit*>::iterator ui;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
 
@@ -1494,7 +1494,7 @@ void CMiniMap::DrawNotes(void)
 {
 	const float baseSize = gs->mapx * SQUARE_SIZE;
 	glBegin(GL_LINES);
-	list<Notification>::iterator ni = notes.begin();
+	std::list<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
 		if (age > 2) {

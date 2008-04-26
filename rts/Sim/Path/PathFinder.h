@@ -6,7 +6,6 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include <queue>
 #include <list>
-using namespace std;
 
 class CPathFinderDef;
 
@@ -160,9 +159,9 @@ private:
 	unsigned int maxNodesToBeSearched;
 	myPQ openSquares;
 
-	SquareState* squareState;		//Map of all squares on map.
-	//list<int> dirtySquares;			//Squares tested by search.
-	vector<int> dirtySquares;
+	SquareState* squareState;			// Map of all squares on map.
+	// std::list<int> dirtySquares;		// Squares tested by search.
+	std::vector<int> dirtySquares;
 
 	int2 directionVector[16];		//Unit square-movement in given direction.
 	float moveCost[16];				//The cost of moving in given direction.

@@ -343,7 +343,7 @@ void CMissileProjectile::Draw(void)
 
 			float a1 = (1.0f / (Smoke_Time)) * 255;
 			a1 *= 0.7f + fabs(dif.dot(dir));
-			float alpha = min(255.0f, max(0.0f, a1));
+			float alpha = std::min(255.0f, std::max(0.0f, a1));
 			col[0] = (unsigned char) (color * alpha);
 			col[1] = (unsigned char) (color * alpha);
 			col[2] = (unsigned char) (color * alpha);
@@ -356,7 +356,7 @@ void CMissileProjectile::Draw(void)
 				a2 = 0;
 
 			a2 *= 0.7f + fabs(dif2.dot(oldDir));
-			alpha = min(255.0f, max(0.0f, a2));
+			alpha = std::min(255.0f, std::max(0.0f, a2));
 			col2[0] = (unsigned char) (color * alpha);
 			col2[1] = (unsigned char) (color * alpha);
 			col2[2] = (unsigned char) (color * alpha);
@@ -466,7 +466,7 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 	if (ttl > 0) {
 		// steer away twice as fast as we can steer toward target
 		float3 dif2 = sdir - dir;
-		float tracking = max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
 
 		if (dif2.Length() < tracking) {
 			dir = sdir;

@@ -24,14 +24,12 @@ class CCobFile;
 class CCobInstance;
 class CUnit;
 
-using namespace std;
-
 typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
 
 struct PieceInfo {
 	int coords[3];
 	int rot[3];
-	string name;
+	std::string name;
 	bool updated;
 	bool visible;
 };
@@ -65,9 +63,9 @@ protected:
 		int dest;		//means final position when turning or moving, final speed when spinning
 		int accel;		//used for spinning, can be negative
 		bool interpolated;	//true if this animation is a result of interpolating a direct move/turn
-		list<CCobThread *> listeners;
+		std::list<CCobThread *> listeners;
 	};
-	list<struct AnimInfo *> anims;
+	std::list<struct AnimInfo *> anims;
 	CUnit *unit;
 	bool yardOpen;
 	void UnblockAll(struct AnimInfo * anim);
@@ -80,9 +78,9 @@ protected:
 
 public:
 	bool busy;
-	vector<int> staticVars;
-	list<CCobThread *> threads;
-	vector<struct PieceInfo> pieces;	
+	std::vector<int> staticVars;
+	std::list<CCobThread *> threads;
+	std::vector<struct PieceInfo> pieces;	
 	bool smoothAnim;
 	const CCobFile* GetScriptAddr() const { return &script; }
 
@@ -99,19 +97,19 @@ public:
 	inline       CUnit* GetUnit()       { return unit; }
 	inline const CUnit* GetUnit() const { return unit; }
 	void InitVars();
-	int Call(const string &fname);
-	int Call(const string &fname, int p1);
-	int Call(const string &fname, vector<int> &args);
-	int Call(const string &fname, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(const std::string &fname);
+	int Call(const std::string &fname, int p1);
+	int Call(const std::string &fname, std::vector<int> &args);
+	int Call(const std::string &fname, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(int id);
-	int Call(int id, vector<int> &args);
+	int Call(int id, std::vector<int> &args);
 	int Call(int id, int p1);
 	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
-	int RawCall(int fn, vector<int> &args);
-	int RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
-	int RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RawCall(int fn, std::vector<int> &args);
+	int RawCall(int fn, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	int Tick(int deltaTime);
 	int MoveToward(int &cur, int dest, int speed);
 	int TurnToward(int &cur, int dest, int speed);
@@ -141,7 +139,7 @@ public:
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 	bool HasScriptFunction(int id);
 	bool FunctionExist(int id);
-	int GetFunctionId(const string& funcName) const;
+	int GetFunctionId(const std::string& funcName) const;
 };
 
 #endif // __COB_INSTANCE_H__

@@ -651,7 +651,6 @@ string CLuaHandleSynced::GetSyncData()
 	}
 
 	// get the result
-	const int args = lua_gettop(L);
 	if (!lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return syncData;
@@ -927,7 +926,7 @@ int CLuaHandleSynced::SyncedRandom(lua_State* L)
 		const float diff  = (upper - lower);
 		const float r = gs->randFloat(); // [0,1], not [0,1) ?
 		int value = lower + (int)(r * (diff + 1));
-		value = max(lower, min(upper, value));
+		value = std::max(lower, std::min(upper, value));
 		lua_pushnumber(L, value);
 	}
 	else {

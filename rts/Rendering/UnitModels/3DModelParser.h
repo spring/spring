@@ -5,13 +5,10 @@
 #include <string>
 #include "Matrix44f.h"
 
-using namespace std;
-
-
 struct S3DO;
 struct SS3O;
-class	C3DOParser;
-class	CS3OParser;
+class C3DOParser;
+class CS3OParser;
 struct S3DOModel;
 struct LocalS3DOModel;
 
@@ -22,9 +19,9 @@ public:
 	C3DModelParser(void);
 	~C3DModelParser(void);
 
-	S3DOModel* Load3DModel(string name, float scale = 1.0f, int side = 1);
+	S3DOModel* Load3DModel(std::string name, float scale = 1.0f, int side = 1);
 	// S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces);
+	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
 
 	C3DOParser* unit3doparser;
 	CS3OParser* units3oparser;
@@ -40,7 +37,7 @@ struct S3DOModel
 	int numobjects;
 	float radius;
 	float height;
-	string name;
+	std::string name;
 	int farTextureNum;
 	float maxx,maxy,maxz;
 	float minx,miny,minz;
@@ -58,8 +55,8 @@ struct LocalS3DO
 {
 	float3 offset;
 	unsigned int displist;
-	vector<unsigned int> lodDispLists;
-	string name;
+	std::vector<unsigned int> lodDispLists;
+	std::string name;
 	std::vector<LocalS3DO*> childs;
 	LocalS3DO *parent;
 	S3DO *original3do;

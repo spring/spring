@@ -8,17 +8,15 @@
 #include <vector>
 #include <map>
 
-using namespace std;
-
 class CWordCompletion
 {
 	public:
 		CWordCompletion();
 		~CWordCompletion();
 		void Reset();
-		void AddWord(const string& word,
+		void AddWord(const std::string& word,
 		             bool startOfLine, bool unitName, bool minimap);
-		vector<string> Complete(string& msg) const; // returns partial matches
+		std::vector<std::string> Complete(std::string& msg) const; // returns partial matches
 
 	protected:
 		class WordProperties {
@@ -32,7 +30,7 @@ class CWordCompletion
 				bool unitName;
 				bool minimap;
 		};
-		map<string, WordProperties> words;
+		std::map<std::string, WordProperties> words;
 };
 
 #endif /* WORD_COMPLETION_H */

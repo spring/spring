@@ -8,20 +8,17 @@
 #include <string>
 #include <map>
 
-using namespace std;
-
-
 class CKeyCodes {
 	public:
 		CKeyCodes();
 		void Reset();
 
-		int GetCode(const string& name) const;
+		int GetCode(const std::string& name) const;
 
-		string GetName(int code) const;
-		string GetDefaultName(int code) const;
+		std::string GetName(int code) const;
+		std::string GetDefaultName(int code) const;
 
-		bool AddKeySymbol(const string& name, int code);
+		bool AddKeySymbol(const std::string& name, int code);
 
 		bool IsModifier(int code) const;
 
@@ -31,16 +28,16 @@ class CKeyCodes {
 		void SaveUserKeySymbols(FILE* file) const;
 
 	public:
-		static bool IsValidLabel(const string& label);
+		static bool IsValidLabel(const std::string& label);
 
 	protected:
-		void AddPair(const string& name, int code);
+		void AddPair(const std::string& name, int code);
 
 	protected:
-		map<string, int> nameToCode;
-		map<int, string> codeToName;
-		map<string, int> defaultNameToCode;
-		map<int, string> defaultCodeToName;
+		std::map<std::string, int> nameToCode;
+		std::map<int, std::string> codeToName;
+		std::map<std::string, int> defaultNameToCode;
+		std::map<int, std::string> defaultCodeToName;
 };
 
 extern CKeyCodes* keyCodes;

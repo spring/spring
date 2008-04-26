@@ -255,7 +255,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		}
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		const float part = (100 - amount) * 0.02f / max(10.0f, (def->metal + def->energy));
+		const float part = (100 - amount) * 0.02f / std::max(10.0f, (def->metal + def->energy));
 
 		// Work out how much that will cost
 		const float metalUse  = part * def->metal;
@@ -295,7 +295,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return true;
 		}
 
-		const float part = ((100 - amount) * 0.02f / max(10.0f, (def->reclaimTime)));
+		const float part = ((100 - amount) * 0.02f / std::max(10.0f, (def->reclaimTime)));
 
 		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, part)) {
 			return false;

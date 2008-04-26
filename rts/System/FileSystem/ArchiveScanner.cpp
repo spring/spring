@@ -50,10 +50,10 @@ std::string CArchiveScanner::GetFilename()
 {
 	char buf[32];
 	sprintf(buf, "ArchiveCacheV%i.txt", INTERNAL_VER);
-	return string(buf);
+	return std::string(buf);
 }
 
-CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string& section)
+CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::string& section)
 {
 	ModData md;
 	md.name = "";
@@ -95,14 +95,14 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const string&
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
 
-	if (md.name.find(md.version) == string::npos) {
+	if (md.name.find(md.version) == std::string::npos) {
 		md.name += " " + md.version;
 	}
 
 	return md;
 }
 
-void CArchiveScanner::Scan(const string& curPath, bool checksum)
+void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 {
 	InitCrcTable();
 	isDirty = true;
@@ -111,7 +111,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
 
 	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
-		string fullName = *it;
+		std::string fullName = *it;
 
 		// Strip
 		const char lastFullChar = fullName[fullName.size() - 1];
@@ -119,19 +119,19 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			fullName = fullName.substr(0, fullName.size() - 1);
 		}
 
-		const string fn    = filesystem.GetFilename(fullName);
-		const string fpath = filesystem.GetDirectory(fullName);
-		const string lcfn    = StringToLower(fn);
-		const string lcfpath = StringToLower(fpath);
+		const std::string fn    = filesystem.GetFilename(fullName);
+		const std::string fpath = filesystem.GetDirectory(fullName);
+		const std::string lcfn    = StringToLower(fn);
+		const std::string lcfpath = StringToLower(fpath);
 
 		// Exclude archivefiles found inside directory archives (.sdd)
-		if (lcfpath.find(".sdd") != string::npos) {
+		if (lcfpath.find(".sdd") != std::string::npos) {
 			continue;
 		}
 
 		// Exclude archivefiles found inside hidden directories
-		if ((lcfpath.find("/hidden/")   != string::npos) ||
-		    (lcfpath.find("\\hidden\\") != string::npos)) {
+		if ((lcfpath.find("/hidden/")   != std::string::npos) ||
+		    (lcfpath.find("\\hidden\\") != std::string::npos)) {
 			continue;
 		}
 
@@ -144,7 +144,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			// Determine whether to rely on the cached info or not
 			bool cached = false;
 
-			map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcfn);
+			std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.find(lcfn);
 			if (aii != archiveInfo.end()) {
 
 				// This archive may have been obsoleted, do not process it if so
@@ -193,7 +193,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 				CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
 				if (ar) {
 					int cur;
-					string name;
+					std::string name;
 					int size;
 					ArchiveInfo ai;
 
@@ -201,17 +201,17 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 					while (cur != 0) {
 						//printf("found %s %d\n", name.c_str(), size);
 
-						string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
+						std::string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
 
 						// only accept new format maps
 						if (ext == "smf" || ext == "sm3") {
 							MapData md;
-							if (name.find_last_of('\\') == string::npos && name.find_last_of('/') == string::npos) {
+							if (name.find_last_of('\\') == std::string::npos && name.find_last_of('/') == std::string::npos) {
 								md.name = name;
 								md.virtualPath = "/";
 							}
 							else {
-								if (name.find_last_of('\\') == string::npos) {
+								if (name.find_last_of('\\') == std::string::npos) {
 									md.name = name.substr(name.find_last_of('/') + 1);
 									md.virtualPath = name.substr(0, name.find_last_of('/') + 1);	// include the backslash
 								} else {
@@ -275,12 +275,11 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	}
 
 	// Now we'll have to parse the replaces-stuff found in the mods
-	for (map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		for (vector<string>::iterator i = aii->second.modData.replaces.begin(); i != aii->second.modData.replaces.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
+		for (std::vector<std::string>::iterator i = aii->second.modData.replaces.begin(); i != aii->second.modData.replaces.end(); ++i) {
 
-			string lcname = StringToLower(*i);
-
-			map<string, ArchiveInfo>::iterator ar = archiveInfo.find(lcname);
+			std::string lcname = StringToLower(*i);
+			std::map<std::string, ArchiveInfo>::iterator ar = archiveInfo.find(lcname);
 
 			// If it's not there, we will create a new entry
 			if (ar == archiveInfo.end()) {
@@ -304,14 +303,14 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 /** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
 
-unsigned int CArchiveScanner::GetCRC(const string& filename)
+unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 {
 	UInt32 crc;
 	UInt32 digest = 0;
 	CArchiveBase* ar;
-	list<string> files;
-	string innerName;
-	string lowerName;
+	std::list<std::string> files;
+	std::string innerName;
+	std::string lowerName;
 	int innerSize;
 	int cur = 0;
 
@@ -332,7 +331,7 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	files.sort();
 
 	// Add all files in sorted order
-	for (list<string>::iterator i = files.begin(); i != files.end(); i++ ) {
+	for (std::list<std::string>::iterator i = files.begin(); i != files.end(); i++ ) {
 		digest = CrcCalculateDigest(i->data(), i->size());
 		CrcUpdateUInt32(&crc, digest);
 		CrcUpdateUInt32(&crc, ar->GetCrc32(*i));
@@ -369,7 +368,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ArchiveInfo ai;
 		char keyb[100];
 		sprintf(keyb, "ArchiveCache\\Archive%d\\", i);
-		string key = keyb;
+		std::string key = keyb;
 
 		ai.origName = p.SGetValueDef("", key + "Name");
 
@@ -382,7 +381,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		for (int m = 0; m < numMaps; ++m) {
 			char mapb[100];
 			sprintf(mapb, "%sMap%d\\", key.c_str(), m);
-			string map = mapb;
+			std::string map = mapb;
 
 			MapData md;
 			md.name = p.SGetValueDef("", map + "Name");
@@ -395,7 +394,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 			ai.modData = GetModData(&p, key + "Mod");
 		}
 
-		string lcname = StringToLower(ai.origName);
+		std::string lcname = StringToLower(ai.origName);
 
 		archiveInfo[lcname] = ai;
 	}
@@ -413,8 +412,8 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		return;
 
 	// First delete all outdated information
-	for (map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
-		map<string, ArchiveInfo>::iterator next = i;
+	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
+		std::map<std::string, ArchiveInfo>::iterator next = i;
 		next++;
 		if (!i->second.updated) {
 			archiveInfo.erase(i);
@@ -426,7 +425,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	fprintf(out, "\tNumArchives=%d;\n", archiveInfo.size());
 	fprintf(out, "\tInternalVer=%d;\n", INTERNAL_VER);
 	int cur = 0;
-	for (map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		fprintf(out, "\t[ARCHIVE%d]\n\t{\n", cur);
 		fprintf(out, "\t\tName=%s;\n", i->second.origName.c_str());
 		fprintf(out, "\t\tPath=%s;\n", i->second.path.c_str());
@@ -436,7 +435,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 		fprintf(out, "\t\tNumMaps=%d;\n", i->second.mapData.size());
 		int curmap = 0;
-		for (vector<MapData>::iterator mi = i->second.mapData.begin(); mi != i->second.mapData.end(); ++mi) {
+		for (std::vector<MapData>::iterator mi = i->second.mapData.begin(); mi != i->second.mapData.end(); ++mi) {
 			fprintf(out, "\t\t[MAP%d]\n\t\t{\n", curmap);
 			//WriteData(out, *mi);
 			fprintf(out, "\t\t\tName=%s;\n", (*mi).name.c_str());
@@ -475,14 +474,14 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 			fprintf(out, "\t\t\tNumDependencies=%d;\n", i->second.modData.dependencies.size());
 			int curdep = 0;
-			for (vector<string>::iterator dep = i->second.modData.dependencies.begin(); dep != i->second.modData.dependencies.end(); ++dep) {
+			for (std::vector<std::string>::iterator dep = i->second.modData.dependencies.begin(); dep != i->second.modData.dependencies.end(); ++dep) {
 				fprintf(out, "\t\t\tDepend%d=%s;\n", curdep, (*dep).c_str());
 				curdep++;
 			}
 
 			fprintf(out, "\t\t\tNumReplaces=%d;\n", i->second.modData.replaces.size());
 			int currep = 0;
-			for (vector<string>::iterator rep = i->second.modData.replaces.begin(); rep != i->second.modData.replaces.end(); ++rep) {
+			for (std::vector<std::string>::iterator rep = i->second.modData.replaces.begin(); rep != i->second.modData.replaces.end(); ++rep) {
 				fprintf(out, "\t\t\tReplace%d=%s;\n", currep++, (*rep).c_str());
 			}
 
@@ -498,11 +497,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	isDirty = false;
 }
 
-vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
+std::vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 {
-	vector<ModData> ret;
+	std::vector<ModData> ret;
 
-	for (map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.modData.name != "") {
 
 			if (i->second.modData.modType != 1)
@@ -518,11 +517,11 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 	return ret;
 }
 
-vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
+std::vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 {
-	vector<ModData> ret;
+	std::vector<ModData> ret;
 
-	for (map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.modData.name != "") {
 			// Add the archive the mod is in as the first dependency
 			ModData md = i->second.modData;
@@ -534,7 +533,7 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 	return ret;
 }
 
-vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
+std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth)
 {
 	// Protect against circular dependencies
 	// (worst case depth is if all archives form one huge dependency chain)
@@ -542,11 +541,9 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 		throw content_error("Circular dependency");
 	}
 
-	vector<string> ret;
-
-	string lcname = StringToLower(ModNameToModArchive(root));
-
-	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	std::vector<std::string> ret;
+	std::string lcname = StringToLower(ModNameToModArchive(root));
+	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
 		return ret;
 
@@ -563,9 +560,9 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 		return ret;
 
 	// add depth-first
-	for (vector<string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
-		vector<string> dep = GetArchives(*i, depth + 1);
-		for (vector<string>::iterator j = dep.begin(); j != dep.end(); ++j) {
+	for (std::vector<std::string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
+		std::vector<std::string> dep = GetArchives(*i, depth + 1);
+		for (std::vector<std::string>::iterator j = dep.begin(); j != dep.end(); ++j) {
 			ret.push_back(*j);
 		}
 	}
@@ -573,12 +570,12 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 	return ret;
 }
 
-vector<string> CArchiveScanner::GetMaps()
+std::vector<std::string> CArchiveScanner::GetMaps()
 {
-	vector<string> ret;
+	std::vector<std::string> ret;
 
-	for (map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		for (vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
+		for (std::vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
 			ret.push_back((*i).name);
 		}
 	}
@@ -586,12 +583,12 @@ vector<string> CArchiveScanner::GetMaps()
 	return ret;
 }
 
-vector<string> CArchiveScanner::GetArchivesForMap(const string& mapName)
+std::vector<std::string> CArchiveScanner::GetArchivesForMap(const std::string& mapName)
 {
-	vector<string> ret;
+	std::vector<std::string> ret;
 
-	for (map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		for (vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
+	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
+		for (std::vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
 			if (mapName == (*i).name) {
 				return GetArchives(aii->first);
 			}
@@ -601,19 +598,19 @@ vector<string> CArchiveScanner::GetArchivesForMap(const string& mapName)
 	return ret;
 }
 
-unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
+unsigned int CArchiveScanner::GetArchiveChecksum(const std::string& name)
 {
-	string lcname = name;
+	std::string lcname = name;
 
 	// Strip path-info if present
-	if (lcname.find_last_of('\\') != string::npos)
+	if (lcname.find_last_of('\\') != std::string::npos)
 		lcname = lcname.substr(lcname.find_last_of('\\') + 1);
-	if (lcname.find_last_of('/') != string::npos)
+	if (lcname.find_last_of('/') != std::string::npos)
 		lcname = lcname.substr(lcname.find_last_of('/') + 1);
 
 	StringToLowerInPlace(lcname);
 
-	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
 		return 0;
 	}
@@ -621,19 +618,19 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	return aii->second.checksum;
 }
 
-std::string CArchiveScanner::GetArchivePath(const string& name)
+std::string CArchiveScanner::GetArchivePath(const std::string& name)
 {
-	string lcname = name;
+	std::string lcname = name;
 
 	// Strip path-info if present
-	if (lcname.find_last_of('\\') != string::npos)
+	if (lcname.find_last_of('\\') != std::string::npos)
 		lcname = lcname.substr(lcname.find_last_of('\\') + 1);
-	if (lcname.find_last_of('/') != string::npos)
+	if (lcname.find_last_of('/') != std::string::npos)
 		lcname = lcname.substr(lcname.find_last_of('/') + 1);
 
 	StringToLowerInPlace(lcname);
 
-	map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
 		return 0;
 	}
@@ -642,12 +639,12 @@ std::string CArchiveScanner::GetArchivePath(const string& name)
 }
 
 /** Get checksum of all required archives depending on selected mod. */
-unsigned int CArchiveScanner::GetModChecksum(const string& root)
+unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 {
 	unsigned int checksum = 0;
-	vector<string> ars = GetArchives(root);
+	std::vector<std::string> ars = GetArchives(root);
 
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
 	{
 		checksum ^= GetArchiveChecksum(*i);
 	}
@@ -655,18 +652,18 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 }
 
 /** Get checksum of all required archives depending on selected map. */
-unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
+unsigned int CArchiveScanner::GetMapChecksum(const std::string& mapName)
 {
 	unsigned int checksum = 0;
-	vector<string> ars = GetArchivesForMap(mapName);
+	std::vector<std::string> ars = GetArchivesForMap(mapName);
 
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
 		checksum ^= GetArchiveChecksum(*i);
 	return checksum;
 }
 
 /** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
-void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
+void CArchiveScanner::CheckMod(const std::string& root, unsigned checksum)
 {
 	unsigned local = GetModChecksum(root);
 	if (local != checksum) {
@@ -680,7 +677,7 @@ void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 }
 
 /** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
-void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
+void CArchiveScanner::CheckMap(const std::string& mapName, unsigned checksum)
 {
 	unsigned local = GetMapChecksum(mapName);
 	if (local != checksum) {

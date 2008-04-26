@@ -358,7 +358,7 @@ void CWeapon::Update()
 				} else {
 					owner->UseEnergy(energyFireCost);
 					owner->UseMetal(metalFireCost);
-					owner->currentFuel = max(0.0f, owner->currentFuel - fuelUsage);
+					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 				}
 				if(weaponDef->stockpile)
 					reloadStatus=gs->frameNum+60;
@@ -379,7 +379,7 @@ void CWeapon::Update()
 			// FIXME  -- never reached?
 			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
 				// update the energy and metal required counts
-				const int minPeriod = max(1, (int)(reloadTime / owner->reloadSpeed));
+				const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
 				gs->Team(owner->team)->energyPull += averageFactor * energyFireCost;
 				gs->Team(owner->team)->metalPull += averageFactor * metalFireCost;
@@ -846,7 +846,7 @@ void CWeapon::Init(void)
 		owner->maxRange = range;
 	}
 
-	muzzleFlareSize = min(areaOfEffect*0.2f,min(1500.f,weaponDef->damages[0])*0.003f);
+	muzzleFlareSize = std::min(areaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

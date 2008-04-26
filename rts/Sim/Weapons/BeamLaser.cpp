@@ -256,7 +256,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		actualRange += hit->radius*targetBorder;
 	}
 	// make it possible to always hit with some minimal intensity (melee weapons have use for that)
-	float intensity=max(minIntensity, 1-(curLength)/(actualRange*2));
+	float intensity = std::max(minIntensity, 1-(curLength)/(actualRange*2));
 
 	if(curLength<maxLength) {
 		// Dynamic Damage

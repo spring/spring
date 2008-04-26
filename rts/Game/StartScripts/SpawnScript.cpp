@@ -33,8 +33,8 @@ void CSpawnScript::Update()
 		LoadSpawns();
 
 		TdfParser p("gamedata/sidedata.tdf");
-		string s0=p.SGetValueDef("armcom","side0\\commander");
-		string s1=p.SGetValueDef("corcom","side1\\commander");
+		std::string s0=p.SGetValueDef("armcom","side0\\commander");
+		std::string s1=p.SGetValueDef("corcom","side1\\commander");
 
 		TdfParser p2;
 		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
@@ -153,7 +153,7 @@ void CSpawnScript::LoadSpawns()
 
 std::string CSpawnScript::LoadToken(CFileHandler& file)
 {
-	string s;
+	std::string s;
 	char c;
 
 	while (!file.Eof()) {

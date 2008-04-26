@@ -188,7 +188,7 @@ void CStartPosSelecter::Draw()
 	const float ySize = (readyBox.y2 - readyBox.y1);
 	const float xSize = (readyBox.x2 - readyBox.x1);
 
-	const float fontScale = 0.9f * min(xSize/unitWidth, ySize/unitHeight);
+	const float fontScale = 0.9f * std::min(xSize/unitWidth, ySize/unitHeight);
 	const float yPos = readyBox.y1 + (0.1f * ySize);
 	const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
 

@@ -478,7 +478,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		string lname = StringToLower(ud.name);
 
 		if (gameSetup->restrictedUnits.find(lname) != gameSetup->restrictedUnits.end()) {
-			ud.maxThisUnit = min(ud.maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
+			ud.maxThisUnit = std::min(ud.maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
 		}
 	}
 
@@ -1031,7 +1031,7 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 	}
 
 	fprintf(f, "\nTech Levels for \"%s\"\n", modname.c_str());
-	multimap<int, string> entries;
+	std::multimap<int, std::string> entries;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitID.begin(); uit != unitID.end(); uit++) {
 		const string& unitName = uit->first;
@@ -1041,11 +1041,11 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 			SNPRINTF(buf, sizeof(buf), " %3i:  %-15s  // %s :: %s\n",
 							 ud->techLevel, unitName.c_str(),
 							 ud->humanName.c_str(), ud->tooltip.c_str());
-			entries.insert(pair<int, string>(ud->techLevel, buf));
+			entries.insert(std::pair<int, string>(ud->techLevel, buf));
 		}
 	}
 	int prevLevel = -2;
-	multimap<int, string>::iterator eit;
+	std::multimap<int, std::string>::iterator eit;
 	for (eit = entries.begin(); eit != entries.end(); ++eit) {
 		if (eit->first != prevLevel) {
 			fprintf(f, "\n");

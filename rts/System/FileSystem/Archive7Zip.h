@@ -22,13 +22,13 @@ protected:
 	struct FileData {
 		int fp;
 		int size;
-		string origName;
+		std::string origName;
 		unsigned int crc;
 	};
-	map<string, FileData> fileData;
+	std::map<std::string, FileData> fileData;
 
 	int curSearchHandle;
-	map<int, map<string, FileData>::iterator> searchHandles;
+	std::map<int, std::map<std::string, FileData>::iterator> searchHandles;
 
 	CFileInStream archiveStream;
 	CArchiveDatabaseEx db;
@@ -36,14 +36,14 @@ protected:
 	ISzAlloc allocTempImp;
 
 	bool isOpen;
-	virtual ABOpenFile_t* GetEntireFile(const string& fName);
-	void SetSlashesForwardToBack(string& name);
+	virtual ABOpenFile_t* GetEntireFile(const std::string& fName);
+	void SetSlashesForwardToBack(std::string& name);
 public:
-	CArchive7Zip(const string& name);
+	CArchive7Zip(const std::string& name);
 	virtual ~CArchive7Zip(void);
 	virtual bool IsOpen();
-	virtual int FindFiles(int cur, string* name, int* size);
-	virtual unsigned int GetCrc32 (const string& fileName);
+	virtual int FindFiles(int cur, std::string* name, int* size);
+	virtual unsigned int GetCrc32 (const std::string& fileName);
 };
 
 #endif

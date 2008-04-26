@@ -7,8 +7,6 @@
 
 #include <stdio.h>
 
-using namespace std;
-
 /*
  * This class searches through a given directory and its subdirectories looking for archive files.
  * When it finds one, it figures out what kind of archive it is (i.e. if it is a map or a mod currently).
@@ -25,38 +23,38 @@ class CArchiveScanner
 {
 public:
 	struct MapData {
-		string name;
-		string virtualPath;					// Where in the archive the map can be found
+		std::string name;
+		std::string virtualPath;					// Where in the archive the map can be found
 	};
 	struct ModData {
-		string name;        // ex:  Original Total Annihilation v2.3
-		string shortName;   // ex:  OTA
-		string version;     // ex:  v2.3
-		string mutator;     // ex:  deployment
-		string game;        // ex:  Total Annihilation
-		string shortGame;   // ex:  TA
-		string description; // ex:  Little units blowing up other little units
+		std::string name;							// ex:  Original Total Annihilation v2.3
+		std::string shortName;						// ex:  OTA
+		std::string version;						// ex:  v2.3
+		std::string mutator;						// ex:  deployment
+		std::string game;							// ex:  Total Annihilation
+		std::string shortGame;						// ex:  TA
+		std::string description;					// ex:  Little units blowing up other little units
 		int modType;
-		vector<string> dependencies;		// Archives it depends on
-		vector<string> replaces;			// This archive obsoletes these ones
+		std::vector<std::string> dependencies;		// Archives it depends on
+		std::vector<std::string> replaces;			// This archive obsoletes these ones
 	};
 	CArchiveScanner(void);
 	std::string GetFilename();
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 	virtual ~CArchiveScanner(void);
-	void Scan(const string& curPath, bool checksum = false);
-	vector<ModData> GetPrimaryMods() const;
-	vector<ModData> GetAllMods() const;
-	vector<string> GetArchives(const string& root, int depth = 0);
-	vector<string> GetMaps();
-	vector<string> GetArchivesForMap(const string& mapName);
-	unsigned int GetArchiveChecksum(const string& name);
-	std::string GetArchivePath(const string& name);
-	unsigned int GetModChecksum(const string& root);
-	unsigned int GetMapChecksum(const string& mapName);
-	void CheckMod(const string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
-	void CheckMap(const string& mapName, unsigned checksum);
+	void Scan(const std::string& curPath, bool checksum = false);
+	std::vector<ModData> GetPrimaryMods() const;
+	std::vector<ModData> GetAllMods() const;
+	std::vector<std::string> GetArchives(const std::string& root, int depth = 0);
+	std::vector<std::string> GetMaps();
+	std::vector<std::string> GetArchivesForMap(const std::string& mapName);
+	unsigned int GetArchiveChecksum(const std::string& name);
+	std::string GetArchivePath(const std::string& name);
+	unsigned int GetModChecksum(const std::string& root);
+	unsigned int GetMapChecksum(const std::string& mapName);
+	void CheckMod(const std::string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
+	void CheckMap(const std::string& mapName, unsigned checksum);
 	std::string ModNameToModArchive(const std::string& s) const;
 	std::string ModArchiveToModName(const std::string& s) const;
 	ModData ModNameToModData(const std::string& s) const;
@@ -64,19 +62,19 @@ public:
 
 protected:
 	struct ArchiveInfo {
-		string path;
-		string origName;					// Could be useful to have the non-lowercased name around
+		std::string path;
+		std::string origName;					// Could be useful to have the non-lowercased name around
 		unsigned int modified;
-		vector<MapData> mapData;
+		std::vector<MapData> mapData;
 		ModData modData;
 		unsigned int checksum;
 		bool updated;
-		string replaced;					// If not empty, use that archive instead
+		std::string replaced;					// If not empty, use that archive instead
 	};
-	map<string, ArchiveInfo> archiveInfo;
-	ModData GetModData(TdfParser* p, const string& section);
-	unsigned int GetCRC(const string& filename);
-	unsigned int GetDirectoryCRC(const string& curPath);
+	std::map<std::string, ArchiveInfo> archiveInfo;
+	ModData GetModData(TdfParser* p, const std::string& section);
+	unsigned int GetCRC(const std::string& filename);
+	unsigned int GetDirectoryCRC(const std::string& curPath);
 	bool isDirty;
 	//void WriteModData(FILE* out, const ModData& data);	// Helper to write out dependencies
 };

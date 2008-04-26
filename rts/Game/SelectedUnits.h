@@ -11,8 +11,6 @@
 #include "Sim/Units/UnitSet.h"
 class CFeature;
 
-using namespace std;
-
 class CSelectedUnits : public CObject
 {
 public:

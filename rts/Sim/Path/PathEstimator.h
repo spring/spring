@@ -36,7 +36,7 @@ class CPathEstimator: public IPath {
 		 *		name of the corresponding map.
 		 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 		 */
-		CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, string name);
+		CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, std::string name);
 		~CPathEstimator();
 
 		// note: thread-safety (see PathFinder.cpp)?
@@ -125,7 +125,7 @@ class CPathEstimator: public IPath {
 				inline bool operator==(const OpenBlock& ob) { return blocknr == ob.blocknr; }
 		};
 
-		struct lessCost: public binary_function<OpenBlock*, OpenBlock*, bool> {
+		struct lessCost: public std::binary_function<OpenBlock*, OpenBlock*, bool> {
 			inline bool operator() (const OpenBlock* x, const OpenBlock* y) const {
 				return (x->cost > y->cost);
 			}
@@ -155,19 +155,19 @@ class CPathEstimator: public IPath {
 		void FinishSearch(const MoveData& moveData, Path& path);
 		void ResetSearch();
 
-		bool ReadFile(string name);
-		void WriteFile(string name);
+		bool ReadFile(std::string name);
+		void WriteFile(std::string name);
 		unsigned int Hash();
 
 		CPathFinder* pathFinder;
 
-		int nbrOfBlocksX, nbrOfBlocksZ, nbrOfBlocks;							// Number of blocks on map.
-		BlockInfo* blockState;													// Map over all blocks and there states.
-		OpenBlock openBlockBuffer[MAX_SEARCHED_BLOCKS];							// The buffer to be used in the priority-queue.
-		OpenBlock *openBlockBufferPointer;										// Pointer to the current position in the buffer.
-		priority_queue<OpenBlock*, vector<OpenBlock*>, lessCost> openBlocks;	// The priority-queue used to select next block to be searched.
-		list<int> dirtyBlocks;													// List of blocks changed in last search.
-		list<SingleBlock> needUpdate;											// Blocks that may need an update due to map changes.
+		int nbrOfBlocksX, nbrOfBlocksZ, nbrOfBlocks;									// Number of blocks on map.
+		BlockInfo* blockState;															// Map over all blocks and there states.
+		OpenBlock openBlockBuffer[MAX_SEARCHED_BLOCKS];									// The buffer to be used in the priority-queue.
+		OpenBlock *openBlockBufferPointer;												// Pointer to the current position in the buffer.
+		std::priority_queue<OpenBlock*, std::vector<OpenBlock*>, lessCost> openBlocks;	// The priority-queue used to select next block to be searched.
+		std::list<int> dirtyBlocks;														// List of blocks changed in last search.
+		std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
 
 		static const int PATH_DIRECTIONS = 8;
 		static const int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS / 2;

@@ -30,7 +30,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 
 	for(int a=0;a<=200;++a){
 		float r=a/200.0f;
-		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(max(0.0f,r*3-2)*PI));
+		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(std::max(0.0f,r*3-2)*PI));
 		craterTable[a]=d;
 	}
 	for(int a=201;a<10000;++a){
@@ -68,10 +68,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	e->pos=pos;
 	e->strength=strength;
 	e->ttl=10;
-	e->x1=max((int)(pos.x-radius)/SQUARE_SIZE,2);
-	e->x2=min((int)(pos.x+radius)/SQUARE_SIZE,gs->mapx-3);
-	e->y1=max((int)(pos.z-radius)/SQUARE_SIZE,2);
-	e->y2=min((int)(pos.z+radius)/SQUARE_SIZE,gs->mapy-3);
+	e->x1=std::max((int)(pos.x-radius)/SQUARE_SIZE,2);
+	e->x2=std::min((int)(pos.x+radius)/SQUARE_SIZE,gs->mapx-3);
+	e->y1=std::max((int)(pos.z-radius)/SQUARE_SIZE,2);
+	e->y2=std::min((int)(pos.z+radius)/SQUARE_SIZE,gs->mapy-3);
 
 	float* heightmap = readmap->GetHeightmap();
 	float baseStrength=-pow(strength,0.6f)*3/mapHardness;
@@ -169,10 +169,10 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	}
 
 	float3 n1,n2,n3,n4;
-	int decy=max(0,y1-1);
-	int incy=min(gs->mapy-1,y2+1);
-	int decx=max(0,x1-1);
-	int incx=min(gs->mapx-1,x2+1);
+	int decy=std::max(0,y1-1);
+	int incy=std::min(gs->mapy-1,y2+1);
+	int decx=std::max(0,x1-1);
+	int incx=std::min(gs->mapx-1,x2+1);
 
 	for(int y=decy;y<=incy;y++) {
 		for(int x=decx;x<=incx;x++)
@@ -195,9 +195,9 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	for(int y=max(2,(y1&0xfffffe));y<=min(gs->mapy-3,y2);y+=2)
+	for(int y=std::max(2,(y1&0xfffffe));y<=std::min(gs->mapy-3,y2);y+=2)
 	{
-		for(int x=max(2,(x1&0xfffffe));x<=min(gs->mapx-3,x2);x+=2)
+		for(int x=std::max(2,(x1&0xfffffe));x<=std::min(gs->mapx-3,x2);x+=2)
 		{
 			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
 			float3 e2( 0,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
@@ -218,10 +218,10 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	featureHandler->TerrainChanged(x1,y1,x2,y2);
 	readmap->HeightmapUpdated(x1,x2,y1,y2);
 
-	decy=max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incy=min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
-	decx=max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incx=min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	decy=std::max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
+	incy=std::min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	decx=std::max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
+	incx=std::min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
 
 	for(int y=decy;y<=incy;y++){
 		for(int x=decx;x<=incx;x++){

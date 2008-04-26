@@ -309,7 +309,7 @@ void CGroundMoveType::Update()
 					currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
 					wantedSpeed = std::min((float) wantedSpeed, (float) (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 				}
-				wantedSpeed *= max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
+				wantedSpeed *= std::max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
 				SetDeltaSpeed();
 			}
 		} else {
@@ -458,7 +458,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	//Sets the new goal.
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
-	requestedSpeed = min(speed, maxSpeed * 2);
+	requestedSpeed = std::min(speed, maxSpeed * 2);
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
@@ -548,7 +548,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum;
 		} else {
 			deltaSpeed=accRate;
-			nextDeltaSpeedUpdate=(int)(gs->frameNum+min((float)8,dif/accRate));
+			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float)8,dif/accRate));
 		}
 	}else {		//break, Breakrate = -3*accRate
 		if(dif > -3*accRate){
@@ -556,7 +556,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 			nextDeltaSpeedUpdate=gs->frameNum+1;
 		} else {
 			deltaSpeed = -3*accRate;
-			nextDeltaSpeedUpdate=(int)(gs->frameNum+min((float)8,dif/(-3*accRate)));
+			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float)8,dif/(-3*accRate)));
 		}
 	}
 	//float3 temp=UpVector*wSpeed;
@@ -578,9 +578,9 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	deltaHeading = wantedHeading - heading;
 
 	if(deltaHeading>0){
-		heading += min(deltaHeading,(short)turnRate);
+		heading += std::min(deltaHeading,(short)turnRate);
 	} else {
-		heading += max((short)-turnRate,deltaHeading);
+		heading += std::max((short)-turnRate,deltaHeading);
 	}
 
 	owner->frontdir = GetVectorFromHeading(heading);
@@ -1697,11 +1697,11 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 {
 	float goalDist=goalPos.distance2D(owner->pos);
 
-	int minx=(int)max(0.f,(goalPos.x-goalDist)/(SQUARE_SIZE*2));
-	int minz=(int)max(0.f,(goalPos.z-goalDist)/(SQUARE_SIZE*2));
+	int minx = (int) std::max(0.f,(goalPos.x-goalDist)/(SQUARE_SIZE*2));
+	int minz = (int) std::max(0.f,(goalPos.z-goalDist)/(SQUARE_SIZE*2));
 
-	int maxx=(int)min(float(gs->hmapx-1),(goalPos.x+goalDist)/(SQUARE_SIZE*2));
-	int maxz=(int)min(float(gs->hmapy-1),(goalPos.z+goalDist)/(SQUARE_SIZE*2));
+	int maxx = (int) std::min(float(gs->hmapx-1),(goalPos.x+goalDist)/(SQUARE_SIZE*2));
+	int maxz = (int) std::min(float(gs->hmapy-1),(goalPos.z+goalDist)/(SQUARE_SIZE*2));
 
 	MoveData* md=owner->unitDef->movedata;
 	CMoveMath* mm=md->moveMath;

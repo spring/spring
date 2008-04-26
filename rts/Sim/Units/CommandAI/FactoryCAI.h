@@ -5,8 +5,6 @@
 #include <string>
 #include <map>
 
-using namespace std;
-
 class CFactoryCAI :
 	public CCommandAI
 {
@@ -15,8 +13,8 @@ public:
 	CR_DECLARE_SUB(BuildOption);
 	struct BuildOption {
 		CR_DECLARE_STRUCT(BuildOption)
-		string name;
-		string fullName;
+		std::string name;
+		std::string fullName;
 		int numQued;
 	};
 
@@ -40,7 +38,7 @@ public:
 
 	CCommandQueue newUnitCommands;
 
-	map<int,BuildOption> buildOptions;
+	std::map<int, BuildOption> buildOptions;
 
 	bool building;
 

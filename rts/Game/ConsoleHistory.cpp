@@ -30,9 +30,9 @@ void CConsoleHistory::ResetPosition()
 }
 
 
-bool CConsoleHistory::AddLine(const string& msg)
+bool CConsoleHistory::AddLine(const std::string& msg)
 {
-	string message;
+	std::string message;
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {
 		message = msg.substr(2);
 	} else {
@@ -42,7 +42,7 @@ bool CConsoleHistory::AddLine(const string& msg)
 }
 
 	
-bool CConsoleHistory::AddLineRaw(const string& msg)
+bool CConsoleHistory::AddLineRaw(const std::string& msg)
 {
 	if (msg.empty()) {
 		return false; // do not save blank lines
@@ -66,9 +66,9 @@ bool CConsoleHistory::AddLineRaw(const string& msg)
 }
 
 
-string CConsoleHistory::NextLine(const string& current)
+std::string CConsoleHistory::NextLine(const std::string& current)
 {
-	string prefix, message;
+	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
 		prefix  = current.substr(0, 2);
 		message = current.substr(2);
@@ -103,9 +103,9 @@ string CConsoleHistory::NextLine(const string& current)
 }
 
 
-string CConsoleHistory::PrevLine(const string& current)
+std::string CConsoleHistory::PrevLine(const std::string& current)
 {
-	string prefix, message;
+	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
 		prefix  = current.substr(0, 2);
 		message = current.substr(2);

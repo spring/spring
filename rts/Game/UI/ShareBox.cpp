@@ -184,7 +184,7 @@ void CShareBox::Draw(void)
 		//if (gs->Team(actualTeam)->gaia) continue;
 
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
-		string teamName;
+		std::string teamName;
 
 		if (gs->Team(actualTeam)->leader >= 0) {
 			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
@@ -192,7 +192,7 @@ void CShareBox::Draw(void)
 			teamName = "Uncontrolled";
 		}
 
-		string ally, dead;
+		std::string ally, dead;
 		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
 			glColor4f(0.5f, 1.0f, 0.5f, alpha);
 			ally = " <Ally>";
@@ -259,12 +259,12 @@ bool CShareBox::MousePress(int x, int y, int button)
 		if(InBox(mx,my,box+okBox) || InBox(mx,my,box+applyBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+unitBox) || InBox(mx,my,box+metalBox) || InBox(mx,my,box+energyBox) || InBox(mx,my,box+teamBox))
 			moveBox=false;
 		if(InBox(mx,my,box+metalBox)){
-			metalMove=true;
-			metalShare=max(0.f,min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
+			metalMove = true;
+			metalShare = std::max(0.f, std::min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
 		}
 		if(InBox(mx,my,box+energyBox)){
-			energyMove=true;
-			energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
+			energyMove = true;
+			energyShare = std::max(0.f, std::min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 		}
 		if(InBox(mx,my,box+teamBox)){
 			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
@@ -320,10 +320,10 @@ void CShareBox::MouseMove(int x, int y, int dx, int dy, int button)
 		box.y2+=MouseMoveY(dy);
 	}
 	if(metalMove){
-		metalShare=max(0.f,min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
+		metalShare = std::max(0.f, std::min(1.f,(mx-box.x1-metalBox.x1)/(metalBox.x2-metalBox.x1)));
 	}
 	if(energyMove){
-		energyShare=max(0.f,min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
+		energyShare = std::max(0.f, std::min(1.f,(mx-box.x1-energyBox.x1)/(energyBox.x2-energyBox.x1)));
 	}
 	if(InBox(mx,my,box+teamBox)){
 		int team=(int)((box.y1+teamBox.y2-my)/0.025f);

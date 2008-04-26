@@ -29,10 +29,10 @@ CCobEngine::CCobEngine(void) :
 CCobEngine::~CCobEngine(void)
 {
 	//Should delete all things that the scheduler knows
-	for (list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
+	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
 		delete *i;
 	}
-	for (list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
+	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
 		delete *i;
 	}
 	while (sleeping.size() > 0) {
@@ -43,7 +43,7 @@ CCobEngine::~CCobEngine(void)
 	}
 
 	//Free all cobfiles
-	for (map<string, CCobFile *>::iterator i = cobFiles.begin(); i != cobFiles.end(); ++i) {
+	for (std::map<std::string, CCobFile *>::iterator i = cobFiles.begin(); i != cobFiles.end(); ++i) {
 		delete i->second;
 	}
 }
@@ -105,8 +105,8 @@ void CCobEngine::Tick(int deltaTime)
 	logOutput.Print("----");
 #endif
 
-	//Advance all running threads
-	for (list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
+	// Advance all running threads
+	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
 		//logOutput.Print("Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
 #ifdef _CONSOLE
 		printf("----\n");
@@ -119,13 +119,14 @@ void CCobEngine::Tick(int deltaTime)
 		}
 	}
 
-	//A thread can never go from running->running, so clear the list
-	//note: if preemption was to be added, this would no longer hold
-	//however, ta scripts can not run preemptively anyway since there isn't any synchronization methods available
+	// A thread can never go from running->running, so clear the list
+	// note: if preemption was to be added, this would no longer hold
+	// however, ta scripts can not run preemptively anyway since there
+	// isn't any synchronization methods available
 	running.clear();
 
-	//The threads that just ran may have added new threads that should run next tick
-	for (list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
+	// The threads that just ran may have added new threads that should run next tick
+	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
 		running.push_front(*i);
 	}
 	wantToRun.clear();
@@ -162,13 +163,13 @@ void CCobEngine::Tick(int deltaTime)
 		}
 	}
 
-	//Tick all instances that have registered themselves as animating
-	list<CCobInstance *>::iterator it = animating.begin();
-	list<CCobInstance *>::iterator curit;
-	while (it != animating.end()) {			
-		curit = it++;		
+	// Tick all instances that have registered themselves as animating
+	std::list<CCobInstance *>::iterator it = animating.begin();
+	std::list<CCobInstance *>::iterator curit;
+	while (it != animating.end()) {
+		curit = it++;
 		if ((*curit)->Tick(deltaTime) == -1)
-			animating.erase(curit);		
+			animating.erase(curit);
 	}
 }
 

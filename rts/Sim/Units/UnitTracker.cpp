@@ -128,14 +128,14 @@ void CUnitTracker::MakeTrackGroup()
 
 void CUnitTracker::CleanTrackGroup()
 {
-	set<int>::iterator it = trackGroup.begin();
+	std::set<int>::iterator it = trackGroup.begin();
 
 	while (it != trackGroup.end()) {
 		if (uh->units[*it] != NULL) {
 			it++;
 			continue;
 		}
-		set<int>::iterator it_next = it;
+		std::set<int>::iterator it_next = it;
 		it_next++;
 		if (trackUnit == *it) {
 			if (it_next == trackGroup.end()) {
@@ -163,7 +163,7 @@ void CUnitTracker::NextUnit()
 		return;
 	}
 
-	set<int>::iterator it = trackGroup.find(trackUnit);
+	std::set<int>::iterator it = trackGroup.find(trackUnit);
 	if (it == trackGroup.end()) {
 		trackUnit = *trackGroup.begin();
 	}
@@ -195,7 +195,7 @@ CUnit* CUnitTracker::GetTrackUnit()
 float3 CUnitTracker::CalcAveragePos() const
 {
 	float3 p(0,0,0);
-	set<int>::const_iterator it;
+	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
 		p += uh->units[*it]->midPos;
 	}
@@ -208,7 +208,7 @@ float3 CUnitTracker::CalcExtentsPos() const
 {
 	float3 minPos(+1e9f, +1e9f, +1e9f);
 	float3 maxPos(-1e9f, -1e9f, -1e9f);
-	set<int>::const_iterator it;
+	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
 		const float3& p = uh->units[*it]->midPos;
 		if (p.x < minPos.x) { minPos.x = p.x; }

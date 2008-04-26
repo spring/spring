@@ -212,7 +212,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_AUTOREPAIRLEVEL:
 */
 		default: {
-			map<int, string>::const_iterator it = customTypes.find(cmd);
+			std::map<int, std::string>::const_iterator it = customTypes.find(cmd);
 			if (it == customTypes.end()) {
 				return NULL;
 			}
@@ -220,7 +220,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		}
 	}
 
-	map<std::string, CMouseCursor *>::const_iterator it;
+	std::map<std::string, CMouseCursor *>::const_iterator it;
 	it = mouse->cursorCommandMap.find(cursorName);
 	if (it != mouse->cursorCommandMap.end()) {
 		return it->second;
@@ -228,8 +228,3 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 	
 	return NULL;
 }
-
-
-
-
-

@@ -24,7 +24,7 @@ SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 	return SZE_FAIL;
 }
 
-CArchive7Zip::CArchive7Zip(const string& name) :
+CArchive7Zip::CArchive7Zip(const std::string& name):
 	CArchiveBuffered(name),
 	curSearchHandle(1),
 	isOpen(false)
@@ -56,7 +56,7 @@ CArchive7Zip::CArchive7Zip(const string& name) :
 	for (unsigned i = 0; i < db.Database.NumFiles; ++i) {
 		CFileItem* fi = db.Database.Files + i;
 		if (fi->Size > 0) {
-			string name = fi->Name;
+			std::string name = fi->Name;
 			//SetSlashesForwardToBack(name);
 
 			FileData fd;
@@ -79,20 +79,20 @@ CArchive7Zip::~CArchive7Zip(void)
 	}
 }
 
-unsigned int CArchive7Zip::GetCrc32 (const string& fileName)
+unsigned int CArchive7Zip::GetCrc32 (const std::string& fileName)
 {
-	string lower = StringToLower(fileName);
+	std::string lower = StringToLower(fileName);
 	FileData fd = fileData[lower];
 	return fd.crc;
 }
 
-ABOpenFile_t* CArchive7Zip::GetEntireFile(const string& fName)
+ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 {
 	if (!isOpen)
 		return NULL;
 
 	// Figure out the file index
-	string fileName = StringToLower(fName);
+	std::string fileName = StringToLower(fName);
 	
 	if (fileData.find(fileName) == fileData.end())
 		return NULL;
@@ -133,7 +133,7 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const string& fName)
 	return of;
 }
 
-void CArchive7Zip::SetSlashesForwardToBack(string& name)
+void CArchive7Zip::SetSlashesForwardToBack(std::string& name)
 {
 	for (unsigned int i = 0; i < name.length(); ++i) {
 		if (name[i] == '/')
@@ -141,7 +141,7 @@ void CArchive7Zip::SetSlashesForwardToBack(string& name)
 	}
 }
 
-int CArchive7Zip::FindFiles(int cur, string* name, int* size)
+int CArchive7Zip::FindFiles(int cur, std::string* name, int* size)
 {
 	if (cur == 0) {
 		curSearchHandle++;

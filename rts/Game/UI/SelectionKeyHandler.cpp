@@ -34,13 +34,13 @@ CSelectionKeyHandler::CSelectionKeyHandler(void)
 
 	while(ifs.peek()!=EOF && !ifs.eof()){
 		ifs >> buf;
-		string key(buf);
+		std::string key(buf);
 
 		if(ifs.peek()==EOF || ifs.eof())
 			break;
 
 		ifs >> buf;
-		string sel(buf);
+		std::string sel(buf);
 
 		HotKey hk;
 
@@ -50,7 +50,7 @@ CSelectionKeyHandler::CSelectionKeyHandler(void)
 		hk.alt=false;
 
 		while(true){
-			string s=ReadToken(key);
+			std::string s=ReadToken(key);
 
 			if(s=="Shift"){
 				hk.shift=true;
@@ -96,9 +96,9 @@ bool CSelectionKeyHandler::KeyReleased(unsigned short key)
 	return false;
 }
 
-string CSelectionKeyHandler::ReadToken(string& s)
+std::string CSelectionKeyHandler::ReadToken(std::string& s)
 {
-	string ret;
+	std::string ret;
 	// change made.  avoiding repeated substr calls...
 /*	int index = 0;
 	//char c=s[index];
@@ -109,14 +109,14 @@ string CSelectionKeyHandler::ReadToken(string& s)
 	if ( index == s.length() )
 		s.clear();
 	else
-		s = s.substr(index, string::npos);
+		s = s.substr(index, std::string::npos);
 */
 	if (s.empty())
-		return string();
+		return std::string();
 
 	char c=s[0];
 	while(c && c!='_' && c!='+'){
-		s=s.substr(1,string::npos);
+		s=s.substr(1,std::string::npos);
 		ret+=c;
 		c=s[0];
 	}
@@ -125,11 +125,11 @@ string CSelectionKeyHandler::ReadToken(string& s)
 }
 
 
-string CSelectionKeyHandler::ReadDelimiter(string& s)
+std::string CSelectionKeyHandler::ReadDelimiter(std::string& s)
 {
-	string ret = s.substr(0, 1);
+	std::string ret = s.substr(0, 1);
 	if (s.size() >= 1) {
-		s = s.substr(1, string::npos);
+		s = s.substr(1, std::string::npos);
 	} else {
 		s = "";
 	}
@@ -137,12 +137,12 @@ string CSelectionKeyHandler::ReadDelimiter(string& s)
 }
 
 
-void CSelectionKeyHandler::DoSelection(string selectString)
+void CSelectionKeyHandler::DoSelection(std::string selectString)
 {
-	list<CUnit*> selection;
+	std::list<CUnit*> selection;
 
 //	guicontroller->AddText(selectString.c_str());
-	string s=ReadToken(selectString);
+	std::string s=ReadToken(selectString);
 
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
@@ -153,8 +153,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		} else {
 			// all units
-			list<CUnit*>* au=&uh->activeUnits;
-			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+			std::list<CUnit*>* au=&uh->activeUnits;
+			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
 				selection.push_back(*ui);
 			}
 		}
@@ -162,16 +162,16 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
 			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
-			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				if(camera->InView((*ui)->midPos,(*ui)->radius)){
+			for (CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
+				if (camera->InView((*ui)->midPos,(*ui)->radius)){
 					selection.push_back(*ui);
 				}
 			}
 		} else {
 		  // all units in viewport
-			list<CUnit*>* au=&uh->activeUnits;
-			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if(camera->InView((*ui)->midPos,(*ui)->radius)){
+			std::list<CUnit*>* au=&uh->activeUnits;
+			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+				if (camera->InView((*ui)->midPos,(*ui)->radius)){
 					selection.push_back(*ui);
 				}
 			}
@@ -193,8 +193,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			}
 		} else {
 		  // all units in mouse range
-			list<CUnit*>* au=&uh->activeUnits;
-			for(list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
+			std::list<CUnit*>* au=&uh->activeUnits;
+			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
 				if(mp.distance((*ui)->pos)<maxDist){
 					selection.push_back(*ui);
 				}
@@ -213,7 +213,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	ReadDelimiter(selectString);
 
 	while(true){
-		string s=ReadDelimiter(selectString);
+		std::string s=ReadDelimiter(selectString);
 		if(s=="+")
 			break;
 
@@ -228,7 +228,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		}
 
 		if(s=="Builder"){
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if((*ui)->unitDef->buildSpeed>0){
@@ -237,12 +237,12 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Building"){
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if(dynamic_cast<CBuilding*>(*ui)){
@@ -251,58 +251,58 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Commander"){
 			unsigned int comCat=CCategoryHandler::Instance()->GetCategory("COMMANDER");
 
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui!=selection.end()) {
 				bool filterTrue=false;
-				if((*ui)->category & comCat){	//fix with better test for commander
+				if ((*ui)->category & comCat){	//fix with better test for commander
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not) {
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Transport"){
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if((*ui)->unitDef->transportCapacity>0){
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not) {
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Aircraft"){
 			unsigned int acCat=CCategoryHandler::Instance()->GetCategory("VTOL");
 
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
-				if((*ui)->category & acCat){
+				if ((*ui)->category & acCat){
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not) {
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Weapons"){
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if(!(*ui)->weapons.empty()){
@@ -311,7 +311,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
@@ -319,16 +319,16 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			ReadDelimiter(selectString);
 			float minRange=atof(ReadToken(selectString).c_str());
 
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
-				if((*ui)->maxRange>minRange){
+				if ((*ui)->maxRange>minRange) {
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not) {
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
@@ -336,16 +336,16 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			ReadDelimiter(selectString);
 			float minHealth=atof(ReadToken(selectString).c_str());
 
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
-				if((*ui)->health>minHealth){
+				if ((*ui)->health>minHealth){
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
@@ -353,7 +353,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 			ReadDelimiter(selectString);
 			float minHealth=atof(ReadToken(selectString).c_str())*0.01f;//convert from percent
 
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if((*ui)->health/(*ui)->maxHealth > minHealth){
@@ -362,18 +362,18 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="InPrevSel"){
-			set<int> prevTypes;
+			std::set<int> prevTypes;
 			CUnitSet* tu=&selectedUnits.selectedUnits;
-			for(CUnitSet::iterator si=tu->begin();si!=tu->end();++si){
+			for (CUnitSet::iterator si=tu->begin();si!=tu->end();++si){
 				prevTypes.insert((*si)->aihint);
 			}
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
 				if(prevTypes.find((*ui)->aihint)!=prevTypes.end()){		//should move away from aihint
 					filterTrue=true;
@@ -381,30 +381,30 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="NameContain"){
 			ReadDelimiter(selectString);
-			string name=ReadToken(selectString);
+			std::string name=ReadToken(selectString);
 
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
-				if((*ui)->unitDef->humanName.find(name)!=string::npos){
+				if ((*ui)->unitDef->humanName.find(name)!=std::string::npos){
 					filterTrue=true;
 				}
-				if(filterTrue ^ _not){
+				if (filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Idle"){
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
 				if((*ui)->commandAI->commandQue.empty()){
 					filterTrue=true;
@@ -412,13 +412,13 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Waiting"){
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
 				if(!(*ui)->commandAI->commandQue.empty() &&
 				   ((*ui)->commandAI->commandQue.front().id == CMD_WAIT)){
@@ -427,13 +427,13 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="InHotkeyGroup"){
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
 				if((*ui)->group){
 					filterTrue=true;
@@ -441,13 +441,13 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
-		} else if(s=="Radar"){
-			list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
+		} else if (s == "Radar") {
+			std::list<CUnit*>::iterator ui=selection.begin();
+			while (ui != selection.end()) {
 				bool filterTrue=false;
 				if((*ui)->radarRadius || (*ui)->sonarRadius || (*ui)->jammerRadius){
 					filterTrue=true;
@@ -455,16 +455,16 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
 		} else if(s=="Category"){
 			ReadDelimiter(selectString);
-			string catname=ReadToken(selectString);
+			std::string catname=ReadToken(selectString);
 			unsigned int cat=CCategoryHandler::Instance()->GetCategory(catname);
 
-			list<CUnit*>::iterator ui=selection.begin();
+			std::list<CUnit*>::iterator ui=selection.begin();
 			while(ui!=selection.end()){
 				bool filterTrue=false;
 				if((*ui)->category==cat){
@@ -473,7 +473,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 				if(filterTrue ^ _not){
 					++ui;
 				} else {
-					list<CUnit*>::iterator prev=ui++;
+					std::list<CUnit*>::iterator prev=ui++;
 					selection.erase(prev);
 				}
 			}
@@ -495,7 +495,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 	}
 
 	if(s=="SelectAll"){
-		for(list<CUnit*>::iterator ui=selection.begin();ui!=selection.end();++ui)
+		for (std::list<CUnit*>::iterator ui=selection.begin();ui!=selection.end();++ui)
 			selectedUnits.AddUnit(*ui);
 	} else if(s=="SelectOne"){
 		if(selection.empty())
@@ -505,7 +505,7 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 
 		CUnit* sel = NULL;
 		int a=0;
-		for(list<CUnit*>::iterator ui=selection.begin();ui!=selection.end() && a<=selectNumber;++ui,++a)
+		for (std::list<CUnit*>::iterator ui=selection.begin();ui!=selection.end() && a<=selectNumber;++ui,++a)
 			sel=*ui;
 
 		if (sel == NULL)
@@ -538,10 +538,10 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		if(selectNumber>=selection.size())
 			selectNumber=0;
 
-		list<CUnit*>::iterator ui=selection.begin();
-		for(int a=0;a<selectNumber;++a)
+		std::list<CUnit*>::iterator ui=selection.begin();
+		for (int a=0;a<selectNumber;++a)
 			++ui;
-		for(int a=0;a<num;++ui,++a){
+		for (int a=0;a<num;++ui,++a){
 			if(ui==selection.end())
 				ui=selection.begin();
 			selectedUnits.AddUnit(*ui);
@@ -559,8 +559,8 @@ void CSelectionKeyHandler::DoSelection(string selectString)
 		if(selectNumber>=selection.size())
 			selectNumber=0;
 
-		list<CUnit*>::iterator ui=selection.begin();
-		for(int a=0;a<selectNumber;++a)
+		std::list<CUnit*>::iterator ui = selection.begin();
+		for (int a = 0; a < selectNumber; ++a)
 			++ui;
 		for(int a=0;a<num;++ui,++a){
 			if(ui==selection.end())
