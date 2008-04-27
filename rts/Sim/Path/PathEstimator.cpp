@@ -207,7 +207,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		InitVertices(0, nbrOfVertices);
 		InitBlocks(0, nbrOfBlocks);
 
-		PrintLoadMsg("Reading estimate path costs (using %d thread)", 1);
+		PrintLoadMsg("Reading estimate path costs (using 1 thread)");
 
 		if (!ReadFile(name)) {
 			char calcMsg[512];
