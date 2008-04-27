@@ -32,8 +32,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_RESERVED(16))
 );
 
-CSolidObject::CSolidObject(EObjectType synced):
-	CWorldObject(synced),
+CSolidObject::CSolidObject() :
 	mass(100000),
 	blocking(false),
 	blockHeightChanges(false),

@@ -12,10 +12,10 @@ class CWorldObject : public CObject
 public:
 	CR_DECLARE(CWorldObject);
 
-	CWorldObject(EObjectType synced = OT_Unknown):
-		CObject(synced), useAirLos(false), alwaysVisible(false) {}
-	CWorldObject(const float3& pos, EObjectType synced = OT_Unknown):
-		CObject(synced), pos(pos), useAirLos(false), alwaysVisible(false) {}
+	CWorldObject() :
+		useAirLos(false), alwaysVisible(false) {}
+	CWorldObject(const float3& pos) :
+		pos(pos), useAirLos(false), alwaysVisible(false) {}
 
 	void SetRadius(float r);
 	virtual ~CWorldObject();

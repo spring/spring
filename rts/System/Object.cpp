@@ -17,21 +17,12 @@ CR_REG_METADATA(CObject, (
 	CR_POSTLOAD(PostLoad)
 	));
 
-CObject* CObject::syncedObjects = 0;
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CObject::CObject(EObjectType synced) : prev(NULL), next(NULL)
+CObject::CObject()
 {
-	/*if (synced == OT_Synced)*/ {
-		// Push a synchronized object on front of the list.
-		next = syncedObjects;
-		syncedObjects = this;
-		if (next)
-			next->prev = this;
-	}
 }
 
 CObject::~CObject()
@@ -43,16 +34,6 @@ CObject::~CObject()
 	}
 	for(di=listening.begin();di!=listening.end();++di){
 		ListErase<CObject*>((*di)->listeners, this);
-	}
-
-	// remove from list of synced objects
-	if (IsSynchronized()) {
-		if (prev)
-			prev->next = next;
-		else
-			syncedObjects = next;
-		if (next)
-			next->prev = prev;
 	}
 }
 

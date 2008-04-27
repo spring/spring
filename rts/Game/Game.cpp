@@ -2203,7 +2203,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 		}
 	}
 #ifdef DEBUG
-	if (action.command == "desync" && gs->cheatEnabled) {
+	else if (action.command == "desync" && gs->cheatEnabled) {
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (playernum == gu->myPlayerNum) {
@@ -2220,16 +2220,6 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
 #endif
-	if (action.command == "resync" && gs->cheatEnabled) {
-		CObject* o = CObject::GetSyncedObjects();
-		for (; o; o = o->GetNext()) {
-			creg::Class* c = o->GetClass();
-			logOutput.Print("%s\n", c->name.c_str());
-			for (std::vector<creg::Class::Member*>::const_iterator m = c->members.begin(); m != c->members.end(); ++m) {
-				logOutput.Print("  %s\n", (*m)->name);
-			}
-		}
-	}
 	else if (action.command == "atm" && gs->cheatEnabled) {
 		int team = gs->players[playernum]->team;
 		gs->Team(team)->AddMetal(1000);
