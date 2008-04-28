@@ -25,6 +25,9 @@ CArchiveZip::CArchiveZip(const std::string& name):
 
 		unzGetCurrentFileInfo(zip, &info, fname, 512, NULL, 0, NULL, 0);
 
+		// NOTE: fix this on next CArchiveScanner INTERNAL_VER bump.
+		// It should be `if (info.uncompressed_size >= 0) {' because now
+		// zero-size files are ignored.
 		if (info.uncompressed_size > 0) {
 			name = StringToLower(fname);
 //			SetSlashesForwardToBack(name);

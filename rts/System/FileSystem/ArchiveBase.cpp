@@ -1,24 +1,23 @@
 #include "ArchiveBase.h"
-
-extern "C" {
-#include "lib/7zip/7zCrc.h"
-};
+#include "CRC.h"
 
 unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 {
-	UInt32 crc;
+	CRC crc;
 	unsigned char buffer [65536];
 	int handle;
+	int maxRead;
+	int total = 0;
 
-	CrcInit(&crc);
 	handle = this->OpenFile(fileName);
-	if (handle == 0) return CrcGetDigest(&crc);
+	if (handle == 0) return crc.GetDigest();
 
-	while (!this->Eof(handle)) {
-		int maxRead = this->ReadFile(handle, &buffer, sizeof(buffer));
-		CrcUpdate(&crc, buffer, maxRead);
-	}
+	do {
+		maxRead = this->ReadFile(handle, &buffer, sizeof(buffer));
+		crc.Update(buffer, maxRead);
+		total += maxRead;
+	} while (maxRead == sizeof(buffer));
 
 	this->CloseFile(handle);
-	return CrcGetDigest(&crc);
+	return crc.GetDigest();
 };
