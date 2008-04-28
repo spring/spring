@@ -28,8 +28,8 @@ public:
 	~CFeatureHandler();
 
 	CFeature* CreateWreckage(const float3& pos, const std::string& name,
-	                         float rot, int facing, int iter, int team, int allyteam,
-	                         bool emitSmoke, std::string fromUnit);
+		float rot, int facing, int iter, int team, int allyteam, bool emitSmoke,
+		std::string fromUnit, const float3& speed = ZeroVector);
 
 	void Update();
 

@@ -236,7 +236,7 @@ CUnit::CUnit ()
 CUnit::~CUnit()
 {
 	if (delayedWreckLevel >= 0) {
-		featureHandler->CreateWreckage(pos,wreckName, heading, buildFacing, delayedWreckLevel,team,-1,true,unitDef->name);
+		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name, deathSpeed);
 	}
 
 	if (unitDef->isAirBase) {
@@ -1617,8 +1617,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		return;
 	}
 
-	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt){
-		if (unitDef->canCrash && !selfDestruct && !reclaimed && gs->randFloat()>recentDamage*0.7f/maxHealth+0.2f) {
+	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt) {
+		if (unitDef->canCrash && !selfDestruct && !reclaimed && gs->randFloat() > recentDamage * 0.7f / maxHealth + 0.2f) {
 			((CAirMoveType*)moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 			health = maxHealth * 0.5f;
 			return;
@@ -1626,6 +1626,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 
 	isDead = true;
+	deathSpeed = speed;
 
 	luaCallIns.UnitDestroyed(this, attacker);
 	globalAI->UnitDestroyed(this, attacker);
@@ -1674,7 +1675,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		UnBlock();
 		delayedWreckLevel = args[1];
-//		featureHandler->CreateWreckage(pos,wreckName, heading, args[1],-1,true);
 	}
 	else {
 		deathScriptFinished=true;

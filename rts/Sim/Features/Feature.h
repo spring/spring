@@ -17,7 +17,7 @@ struct DamageArray;
 class CFireProjectile;
 struct CollisionVolume;
 
-class CFeature : public CSolidObject, public boost::noncopyable
+class CFeature: public CSolidObject, public boost::noncopyable
 {
 	CR_DECLARE(CFeature);
 
@@ -26,7 +26,9 @@ public:
 	~CFeature();
 
 	/** Pos of quad must not change after this. */
-	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing, int allyteam, std::string fromUnit);
+	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
+		int allyteam, std::string fromUnit, const float3& speed = ZeroVector);
+
 	/** Negative amount = reclaim
 	    @return true if reclaimed */
 	bool AddBuildPower(float amount, CUnit* builder);
@@ -35,6 +37,7 @@ public:
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
 	virtual bool Update(void);
+	bool UpdatePosition(void);
 	void StartFire(void);
 	float RemainingResource(float res) const;
 	float RemainingMetal(void) const;
@@ -70,20 +73,23 @@ public:
 	CollisionVolume* collisionVolume;
 
 	CMatrix44f transMatrix;
-//	float3 residualImpulse;	//impulse energy that havent been acted on
 
 	bool inUpdateQue;
 	/// which drawQuad we are part of
 	int drawQuad;
 
 	float finalHeight;
+	bool reachedFinalPos;
 
 	CFireProjectile* myFire;
 	int fireTime;
 	int emitSmokeTime;
 
 	/// the solid object that is on top of the geothermal
-	CSolidObject *solidOnTop;
+	CSolidObject* solidOnTop;
+
+	// initially a copy of CUnit::deathSpeed
+	float3 deathSpeed;
 
 private:
 	void PostLoad();
