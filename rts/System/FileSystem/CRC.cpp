@@ -1,73 +1,37 @@
 #include "CRC.h"
 
-#include <stdio.h>
+extern "C" {
+#include "lib/7zip/7zCrc.h"
+};
 
 
-unsigned int CRC::crcTable[256];
-
-
-/** @brief Generate the lookup table used for CRC calculation.
-    Code taken from http://paul.rutgers.edu/~rhoads/Code/crc-32b.c */
-void CRC::GenerateCRCTable()
+/** @brief Construct a new CRC object. */
+CRC::CRC()
 {
-	unsigned int crc, poly;
-	int	i, j;
-
-	poly = 0xEDB88320L;
-	for (i = 0; i < 256; i++) {
-		crc = i;
-		for (j = 8; j > 0; j--) {
-			if (crc & 1)
-				crc = (crc >> 1) ^ poly;
-			else
-				crc >>= 1;
-		}
-		crcTable[i] = crc;
-	}
+	CrcInit(&crc);
 }
 
 
-/** @brief Construct a new CRC object.
-    This generates the CRC table if it is the first CRC object being
-	constructed. */
-CRC::CRC() : crc(0xFFFFFFFF)
+/** @brief Get the final CRC digest. */
+unsigned int CRC::GetDigest() const
 {
-	if (crcTable[1] == 0)
-		GenerateCRCTable();
+	// make a temporary copy to get away with the const
+	unsigned int temp = crc;
+	return CrcGetDigest(&temp);
 }
 
 
-/** @brief Update CRC over the data in buf. */
-void CRC::UpdateData(const unsigned char* buf, unsigned bytes)
+/** @brief Update CRC over the data. */
+CRC& CRC::Update(const void* data, unsigned int size)
 {
-	for (size_t i = 0; i < bytes; ++i)
-		crc = (crc>>8) ^ crcTable[ (crc^(buf[i])) & 0xFF ];
+	CrcUpdate(&crc, data, size);
+	return *this;
 }
 
 
-/** @brief Update CRC over the data in buf. */
-void CRC::UpdateData(const std::string& buf)
+/** @brief Update CRC over the 4 bytes of data. */
+CRC& CRC::Update(unsigned int data)
 {
-	UpdateData((const unsigned char*) buf.c_str(), buf.size());
-}
-
-
-/** @brief Update CRC over the data in the specified file.
-    @return true on success, false if file could not be opened. */
-bool CRC::UpdateFile(const std::string& filename)
-{
-	FILE* fp = fopen(filename.c_str(), "rb");
-	if (!fp)
-		return false;
-
-	unsigned char buf[100000];
-	size_t bytes;
-	do {
-		bytes = fread((void*)buf, 1, 100000, fp);
-		UpdateData(buf, bytes);
-	} while (bytes == 100000);
-
-	fclose(fp);
-
-	return true;
+	CrcUpdateUInt32(&crc, data);
+	return *this;
 }

@@ -5,7 +5,9 @@
 #include <vector>
 #include <map>
 
-#include <stdio.h>
+class CArchiveBase;
+class IFileFilter;
+class TdfParser;
 
 /*
  * This class searches through a given directory and its subdirectories looking for archive files.
@@ -16,8 +18,6 @@
  * The archive namespace is global, so it is not allowed to have an archive with the same name in more
  * than one folder.
  */
-
-class TdfParser;
 
 class CArchiveScanner
 {
@@ -73,10 +73,9 @@ protected:
 	};
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	ModData GetModData(TdfParser* p, const std::string& section);
+	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
-	unsigned int GetDirectoryCRC(const std::string& curPath);
 	bool isDirty;
-	//void WriteModData(FILE* out, const ModData& data);	// Helper to write out dependencies
 };
 
 extern CArchiveScanner* archiveScanner;

@@ -9,16 +9,12 @@ class CRC
 public:
 	CRC();
 
-	void UpdateData(const unsigned char* buf, unsigned bytes);
-	void UpdateData(const std::string& buf);
-	bool UpdateFile(const std::string& filename);
+	unsigned int GetDigest() const;
 
-	unsigned int GetCRC() const { return crc ^ 0xFFFFFFFF; }
+	CRC& Update(const void* data, unsigned int size);
+	CRC& Update(unsigned int data);
 
 private:
-	static unsigned int crcTable[256];
-	static void GenerateCRCTable();
-
 	unsigned int crc;
 };
 

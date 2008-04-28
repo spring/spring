@@ -938,13 +938,13 @@ void CGameServer::GenerateAndSendGameID()
 	// or pseudo random bytes (if there is no setup)
 	if (setup != NULL) {
 		CRC crc;
-		crc.UpdateData((const unsigned char*)setup->gameSetupText, setup->gameSetupTextLength);
-		gameID.intArray[2] = crc.GetCRC();
+		crc.Update(setup->gameSetupText, setup->gameSetupTextLength);
+		gameID.intArray[2] = crc.GetDigest();
 	}
 
 	CRC entropy;
-	entropy.UpdateData((const unsigned char*)&lastTick, sizeof(lastTick));
-	gameID.intArray[3] = entropy.GetCRC();
+	entropy.Update(lastTick);
+	gameID.intArray[3] = entropy.GetDigest();
 
 	serverNet->SendGameID(gameID.charArray);
 }

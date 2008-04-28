@@ -2,20 +2,18 @@
 
 #include <list>
 #include <algorithm>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "ArchiveFactory.h"
 #include "ArchiveBuffered.h"
 #include "CRC.h"
+#include "FileFilter.h"
 #include "FileHandler.h"
 #include "Platform/FileSystem.h"
 #include "TdfParser.h"
 #include "mmgr.h"
-
-extern "C" {
-#include "lib/7zip/7zCrc.h"
-};
 
 // fix for windows
 #ifndef S_ISDIR
@@ -31,6 +29,8 @@ extern "C" {
  * is not slow, but mapping them all every time to make the list is)
  */
 
+// NOTE: on the next version bump, be sure to fix the zero-file-size bug in
+// Archive7zip.cpp and ArchiveZip.cpp  (search for NOTE)
 #define INTERNAL_VER	6
 
 CArchiveScanner* archiveScanner = NULL;
@@ -104,7 +104,6 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::st
 
 void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 {
-	InitCrcTable();
 	isDirty = true;
 
 	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
@@ -301,12 +300,34 @@ void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 	}
 }
 
-/** Get CRC of the data in the specified file. Returns 0 if file could not be opened. */
+
+IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
+{
+	IFileFilter* ignore = IFileFilter::Create();
+	int fh = ar->OpenFile("springignore.txt");
+
+	if (fh) {
+		int fsize = ar->FileSize(fh);
+		char* buf = SAFE_NEW char[fsize];
+
+		ar->ReadFile(fh, buf, fsize);
+		ar->CloseFile(fh);
+
+		// this automatically splits lines
+		ignore->AddRule(std::string(buf, fsize));
+
+		delete[] buf;
+	}
+	return ignore;
+}
+
+
+/** Get CRC of the data in the specified archive. Returns 0 if file could not be opened. */
 
 unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 {
-	UInt32 crc;
-	UInt32 digest = 0;
+	CRC crc;
+	unsigned int digest;
 	CArchiveBase* ar;
 	std::list<std::string> files;
 	std::string innerName;
@@ -314,17 +335,19 @@ unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 	int innerSize;
 	int cur = 0;
 
-	CrcInit(&crc);
-
 	// Try to open an archive
 	ar = CArchiveFactory::OpenArchive(filename);
 	if (!ar)
 		return 0; // It wasn't an archive
 
+	// Load ignore list.
+	IFileFilter* ignore = CreateIgnoreFilter(ar);
+
 	// Sort all file paths for deterministic behaviour
 	while (true) {
 		cur = ar->FindFiles(cur, &innerName, &innerSize);
 		if (cur == 0) break;
+		if (ignore->Match(innerName)) continue;
 		lowerName = StringToLower(innerName); // case insensitive hash
 		files.push_back(lowerName);
 	}
@@ -332,13 +355,14 @@ unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 
 	// Add all files in sorted order
 	for (std::list<std::string>::iterator i = files.begin(); i != files.end(); i++ ) {
-		digest = CrcCalculateDigest(i->data(), i->size());
-		CrcUpdateUInt32(&crc, digest);
-		CrcUpdateUInt32(&crc, ar->GetCrc32(*i));
+		digest = CRC().Update(i->data(), i->size()).GetDigest();
+		crc.Update(digest);
+		crc.Update(ar->GetCrc32(*i));
 	}
+	delete ignore;
 	delete ar;
 
-	digest = CrcGetDigest(&crc);
+	digest = crc.GetDigest();
 
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
