@@ -29,6 +29,8 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 ADD_LIBRARY(fileops SHARED  ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/Game/GameVersion)
 TARGET_LINK_LIBRARIES(fileops hpiutil2 7zip minizip boost_regex boost_thread)
 
+AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
+ADD_LIBRARY(net SHARED  ${netfiles})
 
 ADD_EXECUTABLE(analyser main)
-TARGET_LINK_LIBRARIES(analyser fileops)
+TARGET_LINK_LIBRARIES(analyser fileops net SDL)

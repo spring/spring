@@ -44,8 +44,6 @@
 
 const char AI_NAME[]="ABIC"; // probably should read this from config file or something
 
-using namespace std;
-
 #ifdef WIN32
 	#define AILOG_PATH "AI\\Bot-libs\\"
 #else
@@ -92,8 +90,8 @@ public:
 	::IGlobalAICallback* globalaicallback;
 	::IAICallback* aicallback;
 
-	set<int> myUnits;
-	set<int> enemies;
+	std::set<int> myUnits;
+	std::set<int> enemies;
     
 private:
   //  FILE *logfile;

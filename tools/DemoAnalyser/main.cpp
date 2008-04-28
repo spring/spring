@@ -6,6 +6,7 @@
 #include "System/Platform/FileSystem.h"
 #include "Game/GameSetupData.h"
 #include "BaseNetProtocol.h"
+#include "../../rts/System/Net/RawPacket.h"
 
 CGameSetupData* gameSetup = 0;
 using namespace std;
@@ -28,13 +29,11 @@ int main (int argc, char* argv[])
 	unsigned unknownMessages = 0;
 	while (!reader.ReachedEnd())
 	{
-		const unsigned length= 40000;
-		unsigned char buffer[40000];
-		unsigned ret = 0;
-		ret = reader.GetData(buffer, length, 3.40282347e+38f);
-		if (ret == 0)
+		RawPacket* packet;
+		packet = reader.GetData(3.40282347e+38f);
+		if (packet == 0)
 			continue;
-		
+		const unsigned char* buffer = packet->data;
 		switch ((unsigned char)buffer[0])
 		{
 			case NETMSG_ATTEMPTCONNECT:
@@ -64,6 +63,7 @@ int main (int argc, char* argv[])
 			default:
 				unknownMessages++;
 		}
+		delete packet;
 	}
 	cout << endl << "There had been " << unknownMessages << " unknown NETMSGs" << endl;
 	FileSystemHandler::Cleanup();

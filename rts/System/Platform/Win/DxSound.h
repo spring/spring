@@ -25,7 +25,6 @@
 #include "OggStream.h"
 
 class CWorldObject;
-using namespace std;
 
 class CDxSound: public CSound
 {
@@ -33,7 +32,7 @@ public:
 	CDxSound();
 	virtual ~CDxSound();
 	void Update();
-	unsigned int GetWaveId(const string& path, bool hardFail);
+	unsigned int GetWaveId(const std::string& path, bool hardFail);
 	void PlaySample(int id, float volume = 1.0f);
 	void PlaySample(int id, const float3& p, float volume = 1.0f);
 
@@ -54,10 +53,10 @@ private:
 
 protected:
 	int GetBuf(int id, float volume);
-	int InitFile(const string& name);
+	int InitFile(const std::string& name);
 
 	struct SoundInfo {
-		vector<int> freebufs;
+	    std::vector<int> freebufs;
 		int firstBuf;
 	};
 	struct PlayingSound {
@@ -65,16 +64,16 @@ protected:
 		float volume;
 	};
 
-	map<string, int> waveid;
-	vector<SoundInfo*> loadedSounds;
-	list<PlayingSound> playingSounds;
-	vector<int> buf2id;
+	std::map<std::string, int> waveid;
+	std::vector<SoundInfo*> loadedSounds;
+	std::list<PlayingSound> playingSounds;
+	std::vector<int> buf2id;
 	float globalVolume;
 
 	std::vector<LPDIRECTSOUNDBUFFER> buffers;
 
 	HRESULT RestoreBuffers(int num);
-	bool CreateStaticBuffer(const string& name);
+	bool CreateStaticBuffer(const std::string& name);
 	HRESULT FillBuffer();
 	bool ReadWAV (const char* name, Uint8* buf, int fileSize, Uint8** soundData, Uint32* bufferSize, WAVEFORMATEX& wf);
 

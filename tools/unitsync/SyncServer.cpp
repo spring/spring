@@ -2,6 +2,8 @@
 #include "SyncServer.h"
 #include <sstream>
 
+using namespace std;
+
 CSyncServer::CSyncServer(int id) :
 	CSyncer(id)
 {
