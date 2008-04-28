@@ -25,7 +25,7 @@
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
-
+using namespace std;
 
 CDxSound::CDxSound()
 {
@@ -113,7 +113,7 @@ CDxSound::~CDxSound()
 	}
 	SAFE_RELEASE(m_pDS);
 
-	for (vector<SoundInfo*>::iterator si = loadedSounds.begin(); si != loadedSounds.end(); ++si)
+	for (std::vector<SoundInfo*>::iterator si = loadedSounds.begin(); si != loadedSounds.end(); ++si)
 		delete *si;
 
 	// Release COM
@@ -162,7 +162,7 @@ unsigned int CDxSound::GetWaveId(const string &name, bool _hardFail)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	map<string, int>::iterator si = waveid.find(name);
+	std::map<string, int>::iterator si = waveid.find(name);
 
 	if (si == waveid.end()) {
 		hardFail = _hardFail;

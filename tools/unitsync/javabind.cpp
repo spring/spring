@@ -642,7 +642,7 @@ extern "C" {
 			std::vector<string> f = CFileHandler::FindFiles(path, patt);
 			string s = "";
 			if(f.empty()==false){
-				for(vector<string>::iterator i = f.begin(); i != f.end(); ++i){
+				for(std::vector<std::string>::iterator i = f.begin(); i != f.end(); ++i){
 					string q = *i;
 					if(s != string("")){
 						s += ",";

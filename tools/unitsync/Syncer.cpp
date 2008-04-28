@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <sstream>
 
+using namespace std;
 
 CSyncer::CSyncer(int id)
 : unitsLeft(-1)
