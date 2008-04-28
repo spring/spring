@@ -391,12 +391,12 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	activeFeatures.insert(feature);
 	SetFeatureUpdateable(feature);
 
-	if(feature->def->drawType==DRAWTYPE_3DO){
+	if (feature->def->drawType == DRAWTYPE_3DO) {
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
-		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
-		DrawQuad* dq=&drawQuads[quad];
+				   int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
+		DrawQuad* dq = &drawQuads[quad];
 		dq->features.insert(feature);
-		feature->drawQuad=quad;
+		feature->drawQuad = quad;
 	}
 
 	luaCallIns.FeatureCreated(feature);
@@ -415,8 +415,8 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 
 
 CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& name,
-                                          float rot, int facing, int iter, int team,
-                                          int allyteam, bool emitSmoke,std::string fromUnit)
+	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, std::string fromUnit,
+	const float3& speed)
 {
 	ASSERT_SYNCED_MODE;
 	if (name.empty()) {
@@ -429,19 +429,19 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	}
 
 	if (iter > 1) {
-		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, allyteam, emitSmoke, "");
+		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, allyteam, emitSmoke, "", speed);
 	}
 	else {
 		if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos)) {
 			return NULL;
 		}
-		if(!fd->modelname.empty()){
-			CFeature* f=SAFE_NEW CFeature;
-			f->Initialize (pos, fd, (short int)rot, facing, team, fromUnit);
+		if (!fd->modelname.empty()) {
+			CFeature* f = SAFE_NEW CFeature;
+			f->Initialize(pos, fd, (short int) rot, facing, team, fromUnit, speed);
 			// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)
 			f->allyteam = allyteam;
-			if(emitSmoke && f->blocking)
-				f->emitSmokeTime=300;
+			if (emitSmoke && f->blocking)
+				f->emitSmokeTime = 300;
 			return f;
 		}
 	}
@@ -489,7 +489,7 @@ void CFeatureHandler::Update()
 		}
 	}
 
-	CFeatureSet::iterator fi=updateFeatures.begin();
+	CFeatureSet::iterator fi = updateFeatures.begin();
 	while (fi != updateFeatures.end()) {
 		CFeature* feature = *fi;
 		++fi;
@@ -534,14 +534,14 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
 	ASSERT_SYNCED_MODE;
-	vector<int> quads=qf->GetQuadsRectangle(float3(x1*SQUARE_SIZE,0,y1*SQUARE_SIZE),
-	                                        float3(x2*SQUARE_SIZE,0,y2*SQUARE_SIZE));
-//	logOutput.Print("Checking feature pos %i",quads.size());
+	std::vector<int> quads = qf->GetQuadsRectangle(float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
+		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE));
 
-	for(vector<int>::iterator qi=quads.begin();qi!=quads.end();++qi){
-		list<CFeature*>::const_iterator fi;
+	for (std::vector<int>::iterator qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CFeature*>::const_iterator fi;
 		const list<CFeature*>& features = qf->GetQuad(*qi).features;
-		for(fi = features.begin(); fi != features.end(); ++fi) {
+
+		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
 			if (fpos.y > ground->GetHeight(fpos.x, fpos.z)) {
@@ -567,19 +567,19 @@ void CFeatureHandler::Draw()
 
 	unitDrawer->SetupForUnitDrawing();
 	DrawRaw(0, &drawFar);
-	unitDrawer->CleanUpUnitDrawing();
 
+	unitDrawer->CleanUpUnitDrawing();
 	unitDrawer->DrawQuedS3O();
 
-	CVertexArray* va=GetVertexArray();
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
 	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glEnable(GL_FOG);
-	for(vector<CFeature*>::iterator usi=drawFar.begin();usi!=drawFar.end();usi++){
-		DrawFar(*usi,va);
+	for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+		DrawFar(*usi, va);
 	}
 	va->DrawArrayTN(GL_QUADS);
 }
@@ -606,11 +606,10 @@ void CFeatureHandler::DrawShadowPass()
 class CFeatureDrawer : public CReadMap::IQuadDrawer
 {
 public:
-	void DrawQuad (int x,int y);
+	void DrawQuad(int x,int y);
 
-	CFeatureHandler *fh;
-//	CFeatureHandler::DrawQuad *drawQuads;
-	std::vector<CFeatureHandler::DrawQuad> *drawQuads;
+	CFeatureHandler* fh;
+	std::vector<CFeatureHandler::DrawQuad>* drawQuads;
 	int drawQuadsX;
 	bool drawReflection, drawRefraction;
 	float unitDrawDist;
@@ -618,7 +617,7 @@ public:
 };
 
 
-void CFeatureDrawer::DrawQuad (int x,int y)
+void CFeatureDrawer::DrawQuad(int x, int y)
 {
 	CFeatureHandler::DrawQuad* dq=&(*drawQuads)[y*drawQuadsX+x];
 

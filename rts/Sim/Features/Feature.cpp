@@ -6,6 +6,7 @@
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "myMath.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
@@ -71,6 +72,7 @@ CFeature::CFeature()
 	health(0),
 	id(0),
 	finalHeight(0),
+	reachedFinalPos(false),
 	solidOnTop(0),
 	model(NULL)
 {
@@ -140,7 +142,7 @@ void CFeature::ChangeTeam(int newTeam)
 
 
 void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
-                          int facing, int _team, std::string fromUnit)
+	int facing, int _team, std::string fromUnit, const float3& speed)
 {
 	pos = _pos;
 	def = _def;
@@ -194,11 +196,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	}
 
 	featureHandler->AddFeature(this);
-
 	qf->AddFeature(this);
 
-	CalculateTransform ();
-//	this->pos.y=ground->GetHeight(pos.x,pos.z);
+	CalculateTransform();
 
 	if (blocking) {
 		Block();
@@ -213,23 +213,28 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->AddTree(def->modelType, pos, 1);
 	}
+
+
+	if (speed != ZeroVector) {
+		deathSpeed = speed;
+	}
 }
 
 
 void CFeature::CalculateTransform()
 {
-	float3 frontDir=GetVectorFromHeading(heading);
+	float3 frontDir = GetVectorFromHeading(heading);
 	float3 upDir;
 
-	if (def->upright) upDir = float3(0.0f,1.0f,0.0f);
-	else upDir = ground->GetNormal(pos.x,pos.z);
+	if (def->upright) upDir = float3(0.0f, 1.0f, 0.0f);
+	else upDir = ground->GetNormal(pos.x, pos.z);
 
-	float3 rightDir=frontDir.cross(upDir);
+	float3 rightDir = frontDir.cross(upDir);
 	rightDir.Normalize();
-	frontDir=upDir.cross(rightDir);
+	frontDir = upDir.cross(rightDir);
 	frontDir.Normalize ();
 
-	transMatrix = CMatrix44f (pos,-rightDir,upDir,frontDir);
+	transMatrix = CMatrix44f(pos, -rightDir, upDir, frontDir);
 }
 
 
@@ -420,7 +425,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	// setup midPos
 	if (def->drawType == DRAWTYPE_3DO) {
 		midPos = pos + model->relMidPos;
-	} else if (def->drawType == DRAWTYPE_TREE){
+	} else if (def->drawType == DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 	} else {
 		midPos = pos;
@@ -453,70 +458,136 @@ void CFeature::ForcedSpin(const float3& newDir)
 	tmp.Translate(pos);
 	transMatrix = tmp;
 
-//	const float clamped = fmod(newDir.y, PI * 2.0);
-//	heading = (short int)(clamped * 65536);
+	// const float clamped = fmod(newDir.y, PI * 2.0);
+	// heading = (short int)(clamped * 65536);
 }
 
 
+bool CFeature::UpdatePosition()
+{
+	if (createdFromUnit.size() > 0) {
+		// we are a wreck of a dead unit
+		if (!reachedFinalPos) {
+			featureHandler->UpdateDrawQuad(this, pos);
+
+			bool haveForwardSpeed = false;
+			bool haveVerticalSpeed = false;
+
+			// FIXME: apparent "delay" between wreck creation
+			// and visual position update (appears like wreck
+			// instantly accelerates from standstill)
+			if (deathSpeed.SqLength2D() > 0.01f) {
+				UnBlock();
+				qf->RemoveFeature(this);
+
+				// update our forward speed (and quadfield
+				// position) if it's still greater than 0
+				pos += deathSpeed;
+				midPos += deathSpeed;
+				deathSpeed *= 0.95f;
+
+				haveForwardSpeed = true;
+
+				qf->AddFeature(this);
+				Block();
+			}
+
+			// def->floating is unreliable (true for land unit wrecks),
+			// just assume wrecks always sink even if their "owner" was
+			// a floating object (as is the case for ships anyway)
+			float realGroundHeight = ground->GetHeight2(pos.x, pos.z);
+			bool reachedGround = (pos.y <= realGroundHeight);
+
+			if (!reachedGround) {
+				if (pos.y > 0.0f) {
+					// quadratic acceleration if not in water
+					deathSpeed.y += mapInfo->map.gravity * 0.25f;
+				} else {
+					// constant downward speed otherwise
+					deathSpeed.y = mapInfo->map.gravity;
+				}
+
+				pos.y += deathSpeed.y;
+				midPos.y += deathSpeed.y;
+				haveVerticalSpeed = true;
+			} else {
+				// last Update() may have sunk us into
+				// ground if pos.y was only marginally
+				// larger than ground height, correct
+				pos.y = realGroundHeight;
+				midPos.y = pos.y + model->relMidPos.y;
+			}
+
+			reachedFinalPos = (!haveForwardSpeed && !haveVerticalSpeed);
+			CalculateTransform();
+		}
+	} else {
+		if (pos.y > finalHeight) {
+			const float3 oldPos = pos;
+
+			if (pos.y > 0) {
+				// fall faster when above water
+				pos.y -= 0.8f;
+				midPos.y -= 0.8f;
+				transMatrix[13] -= 0.8f;
+			} else {
+				pos.y -= 0.4f;
+				midPos.y -= 0.4f;
+				transMatrix[13] -= 0.4f;
+			}
+
+			if (def->drawType == DRAWTYPE_TREE) {
+				treeDrawer->DeleteTree(oldPos);
+				treeDrawer->AddTree(def->modelType, pos, 1.0f);
+			}
+		}
+	}
+
+	return true;
+}
+
 bool CFeature::Update(void)
 {
-	bool retValue=false;
+	bool retValue = UpdatePosition();
 
-	if(pos.y>finalHeight){
-		const float3 oldPos = pos;
-		if(pos.y>0){	//fall faster when above water
-			pos.y-=0.8f;
-			midPos.y-=0.8f;
-			transMatrix[13]-=0.8f;
-		} else {
-			pos.y-=0.4f;
-			midPos.y-=0.4f;
-			transMatrix[13]-=0.4f;
-		}
-//		logOutput.Print("feature sinking");
-		if (def->drawType == DRAWTYPE_TREE) {
-			treeDrawer->DeleteTree(oldPos);
-			treeDrawer->AddTree(def->modelType, pos, 1.0f);
-		}
-		retValue=true;
-	}
-	if(emitSmokeTime!=0){
+	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
-		if(!(gs->frameNum+id & 3) && ph->particleSaturation<0.7f){
-			SAFE_NEW CSmokeProjectile(midPos+gu->usRandVector()*radius*0.3f,gu->usRandVector()*0.3f+UpVector,emitSmokeTime/6+20,6,0.4f,0,0.5f);
+		if (!(gs->frameNum + id & 3) && ph->particleSaturation < 0.7f) {
+			SAFE_NEW CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
+				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
 		POP_CODE_MODE;
-		retValue=true;
+		retValue = true;
 	}
 
-	if(fireTime>0){
+	if (fireTime > 0) {
 		fireTime--;
-		if(fireTime==1)
+		if (fireTime == 1)
 			featureHandler->DeleteFeature(this);
-		retValue=true;
+		retValue = true;
 	}
 
-	if(def->geoThermal){
+	if (def->geoThermal) {
 		PUSH_CODE_MODE;
 		ENTER_MIXED;
 
-		if ((gs->frameNum+id % 5) % 5 == 0)
-		{
+		if ((gs->frameNum + id % 5) % 5 == 0) {
 			// Find the unit closest to the geothermal
 			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
 			float bestDist2 = 0;
-			CSolidObject *so = NULL;
-			for (vector<CSolidObject*>::iterator oi=objs.begin();oi!=objs.end();++oi) {
-				float dist2 = ((*oi)->pos-pos).SqLength();
+			CSolidObject* so = NULL;
+
+			for (vector<CSolidObject*>::iterator oi = objs.begin(); oi != objs.end(); ++oi) {
+				float dist2 = ((*oi)->pos - pos).SqLength();
 				if (!so || dist2 < bestDist2)  {
 					bestDist2 = dist2;
 					so = *oi;
 				}
 			}
 
-			if (so!=solidOnTop) {
+			if (so != solidOnTop) {
 				if (solidOnTop)
 					DeleteDeathDependence(solidOnTop);
 				if (so)
@@ -528,21 +599,18 @@ bool CFeature::Update(void)
 		// Hide the smoke if there is a geothermal unit on the vent
 		CUnit *u = dynamic_cast<CUnit*>(solidOnTop);
 		if (!u || !u->unitDef->needGeo) {
-			if((ph->particleSaturation<0.7f) || (ph->particleSaturation<1 && !(gs->frameNum&3))){
-				float3 speed=gu->usRandVector()*0.5f;
-				speed.y+=2.0f;
+			if ((ph->particleSaturation < 0.7f) || (ph->particleSaturation < 1 && !(gs->frameNum & 3))) {
+				float3 speed = gu->usRandVector() * 0.5f;
+				speed.y += 2.0f;
 
 				SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector() * 10 +
-				                                  float3(pos.x, pos.y-10, pos.z),
-				                                  speed, int(50+gu->usRandFloat()*7),
-				                                  this);
+					float3(pos.x, pos.y-10, pos.z), speed, int(50 + gu->usRandFloat() * 7), this);
 			}
 		}
 
 		POP_CODE_MODE;
-		retValue=true;
+		retValue = true;
 	}
-
 
 	return retValue;
 }
