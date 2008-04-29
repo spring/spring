@@ -1686,6 +1686,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			// -1 to make sure ~CUnit won't create a second wreck
 			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name, speed);
 			delayedWreckLevel = -1;
+			noDraw = true;
 		}
 	}
 	else {
