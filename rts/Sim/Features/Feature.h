@@ -47,6 +47,9 @@ public:
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
+	// should not be here
+	void DrawS3O();
+
 	S3DOModel* model;
 
 	std::string createdFromUnit;

@@ -294,38 +294,50 @@ bool CWeaponProjectile::TraveledRange()
 	return false;
 }
 
+
+
 void CWeaponProjectile::DrawUnitPart()
 {
-	float3 interPos=pos+speed*gu->timeOffset;
+	float3 interPos = pos + speed * gu->timeOffset;
 	float3 dir(speed);
 	dir.Normalize();
 	glPushMatrix();
 	float3 rightdir;
-	if(dir.y!=1)
-		rightdir=dir.cross(UpVector);
+
+	if (dir.y != 1)
+		rightdir = dir.cross(UpVector);
 	else
-		rightdir=float3(1,0,0);
+		rightdir = float3(1, 0, 0);
+
 	rightdir.Normalize();
 	float3 updir(rightdir.cross(dir));
 
 	CMatrix44f transMatrix;
-	transMatrix[0]=-rightdir.x;
-	transMatrix[1]=-rightdir.y;
-	transMatrix[2]=-rightdir.z;
-	transMatrix[4]=updir.x;
-	transMatrix[5]=updir.y;
-	transMatrix[6]=updir.z;
-	transMatrix[8]=dir.x;
-	transMatrix[9]=dir.y;
-	transMatrix[10]=dir.z;
-	transMatrix[12]=interPos.x;
-	transMatrix[13]=interPos.y;
-	transMatrix[14]=interPos.z;
-	glMultMatrixf(&transMatrix[0]);
+	transMatrix[ 0] = -rightdir.x;
+	transMatrix[ 1] = -rightdir.y;
+	transMatrix[ 2] = -rightdir.z;
+	transMatrix[ 4] = updir.x;
+	transMatrix[ 5] = updir.y;
+	transMatrix[ 6] = updir.z;
+	transMatrix[ 8] = dir.x;
+	transMatrix[ 9] = dir.y;
+	transMatrix[10] = dir.z;
+	transMatrix[12] = interPos.x;
+	transMatrix[13] = interPos.y;
+	transMatrix[14] = interPos.z;
 
+	glMultMatrixf(&transMatrix[0]);
 	glCallList(modelDispList);
 	glPopMatrix();
 }
+
+void CWeaponProjectile::DrawS3O(void)
+{
+	unitDrawer->SetS3OTeamColour(colorTeam);
+	DrawUnitPart();
+}
+
+
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
@@ -336,12 +348,6 @@ void CWeaponProjectile::DependentDied(CObject* o)
 		target=0;
 
 	CProjectile::DependentDied(o);
-}
-
-void CWeaponProjectile::DrawS3O(void)
-{
-	unitDrawer->SetS3OTeamColour(colorTeam);
-	DrawUnitPart();
 }
 
 void CWeaponProjectile::PostLoad()

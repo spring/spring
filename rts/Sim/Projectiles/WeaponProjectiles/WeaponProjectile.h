@@ -23,11 +23,13 @@ public:
 	virtual void Collision(CFeature* feature);
 	virtual void Collision(CUnit* unit);
 	virtual void Update();
-	virtual void DrawUnitPart();
-	void DrawS3O(void);
-	virtual int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed){return 0;};	//return 0=unaffected,1=instant repulse,2=gradual repulse
+	virtual int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; };	//return 0=unaffected,1=instant repulse,2=gradual repulse
+	static CWeaponProjectile* CreateWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef *weaponDef);
 
-	static CWeaponProjectile *CreateWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner, CUnit *target, const float3 &targetPos, const WeaponDef *weaponDef);
+	virtual void DrawUnitPart();
+	// should not be here
+	void DrawS3O(void);
+
 	/// true if we are a nuke and a anti is on the way
 	bool targeted;
 	const WeaponDef* weaponDef;
