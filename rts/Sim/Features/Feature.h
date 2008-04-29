@@ -91,7 +91,7 @@ public:
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
 
-	// initially a copy of CUnit::deathSpeed
+	// initially a copy of CUnit::speed
 	float3 deathSpeed;
 
 private:
