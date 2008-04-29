@@ -470,6 +470,7 @@ bool CFeature::UpdatePosition()
 		if (!reachedFinalPos) {
 			bool haveForwardSpeed = false;
 			bool haveVerticalSpeed = false;
+			bool inBounds = false;
 
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
@@ -513,7 +514,16 @@ bool CFeature::UpdatePosition()
 				midPos.y = pos.y + model->relMidPos.y;
 			}
 
+			inBounds = pos.CheckInBounds();
 			reachedFinalPos = (!haveForwardSpeed && !haveVerticalSpeed);
+			// reachedFinalPos = ((!haveForwardSpeed && !haveVerticalSpeed) || !inBounds);
+
+			if (!inBounds) {
+				// ensure that no more forward-speed updates are done
+				// (prevents wrecks floating in mid-air at edge of map
+				// due to gravity no longer being applied either)
+				deathSpeed = ZeroVector;
+			}
 
 			featureHandler->UpdateDrawQuad(this, pos);
 			CalculateTransform();
