@@ -24,6 +24,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
@@ -1973,6 +1974,15 @@ void CUnit::PostLoad()
 	}
 }
 
+
+
+void CUnit::DrawS3O()
+{
+	unitDrawer->DrawUnitS3O(this);
+}
+
+
+
 // Member bindings
 CR_REG_METADATA(CUnit, (
 				//CR_MEMBER(unitDef),
@@ -2177,12 +2187,3 @@ CR_REG_METADATA(CUnit, (
 
 				CR_POSTLOAD(PostLoad)
 				));
-
-
-
-
-
-
-
-
-

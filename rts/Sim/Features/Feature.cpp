@@ -53,8 +53,8 @@ CR_REG_METADATA(CFeature, (
 				));
 
 
-CFeature::CFeature()
-:	def(0),
+CFeature::CFeature():
+	def(0),
 	collisionVolume(0),
 	inUpdateQue(false),
 	reclaimLeft(1),
@@ -661,4 +661,11 @@ float CFeature::RemainingMetal() const
 float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);
+}
+
+
+
+void CFeature::DrawS3O()
+{
+	unitDrawer->DrawFeatureS3O(this);
 }

@@ -55,7 +55,8 @@ public:
 
 	void DrawUnitPart(void);
 	void DrawCallback(void);
-	
+
+	// should not be here
 	void DrawS3O(void);
 private:
 	bool HasVertices();

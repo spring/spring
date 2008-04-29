@@ -2006,12 +2006,12 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	glPopMatrix();
 }
 
+
 void CUnitDrawer::DrawUnitS3O(CUnit* unit)
 {
 	SetS3OTeamColour(unit->team);
 	DrawUnitNow(unit);
 }
-
 
 void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
 {
@@ -2026,21 +2026,13 @@ void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
 	glPopMatrix();
 }
 
-void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* obj)
+
+void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* S3OObj)
 {
-	// not as neat as the previous solution (ie. a virtual DrawS3O()
-	// function in CWorldObject implemented by CUnit and CFeature),
-	// but this way the sim-code does not need to be polluted with
-	// OGL stuff
-	if (obj) {
-		if (dynamic_cast<CUnit*>(obj)) {
-			// S3O unit
-			DrawUnitS3O((CUnit*) obj);
-		} else {
-			if (dynamic_cast<CFeature*>(obj)) {
-				// S3O feature
-				DrawFeatureS3O((CFeature*) obj);
-			}
-		}
+	if (S3OObj) {
+		// calls back to DrawUnitS3O() for units and
+		// DrawFeatureS3O() for features, projectiles
+		// and weapons with S3O models do not
+		S3OObj->DrawS3O();
 	}
 }

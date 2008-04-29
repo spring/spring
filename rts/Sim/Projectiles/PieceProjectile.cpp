@@ -409,26 +409,6 @@ void CPieceProjectile::Draw()
 	}
 }
 
-
-void CPieceProjectile::DrawUnitPart(void)
-{
-	glAlphaFunc(GL_GEQUAL, alphaThreshold);
-	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(spinPos,spinVec.x, spinVec.y, spinVec.z);
-	glCallList(dispList);
-	glPopMatrix();
-
-	*numCallback = 0;
-}
-
-void CPieceProjectile::DrawS3O(void)
-{
-	/* TODO Hmm, S3O nuclear missile... might want to copy this into WeaponProjectile? */
-	unitDrawer->SetS3OTeamColour(colorTeam);
-	DrawUnitPart();
-}
-
 void CPieceProjectile::DrawCallback(void)
 {
 	(*numCallback)++;
@@ -460,4 +440,24 @@ void CPieceProjectile::DrawCallback(void)
 			va->AddVertexTC(interPos - camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.yend,   col);
 		}
 	}
+}
+
+
+void CPieceProjectile::DrawUnitPart(void)
+{
+	glAlphaFunc(GL_GEQUAL, alphaThreshold);
+	glPushMatrix();
+	glTranslatef(pos.x, pos.y, pos.z);
+	glRotatef(spinPos, spinVec.x, spinVec.y, spinVec.z);
+	glCallList(dispList);
+	glPopMatrix();
+
+	*numCallback = 0;
+}
+
+void CPieceProjectile::DrawS3O(void)
+{
+	// copy of CWeaponProjectile::::DrawS3O()
+	unitDrawer->SetS3OTeamColour(colorTeam);
+	DrawUnitPart();
 }

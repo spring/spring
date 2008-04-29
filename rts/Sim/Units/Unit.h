@@ -125,6 +125,9 @@ public:
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
 
+	// should not be here
+	void DrawS3O();
+
 	const UnitDef* unitDef;
 	CollisionVolume* collisionVolume;
 	std::string unitDefName;
