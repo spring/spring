@@ -389,7 +389,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 
 void CFeature::Kill(float3& impulse) {
 	DamageArray damage;
-	DoDamage(damage*(health+1), 0, impulse);
+	DoDamage(damage * (health + 1), 0, impulse);
 }
 
 
@@ -468,14 +468,9 @@ bool CFeature::UpdatePosition()
 	if (createdFromUnit.size() > 0) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
-			featureHandler->UpdateDrawQuad(this, pos);
-
 			bool haveForwardSpeed = false;
 			bool haveVerticalSpeed = false;
 
-			// FIXME: apparent "delay" between wreck creation
-			// and visual position update (appears like wreck
-			// instantly accelerates from standstill)
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
 				qf->RemoveFeature(this);
@@ -519,6 +514,8 @@ bool CFeature::UpdatePosition()
 			}
 
 			reachedFinalPos = (!haveForwardSpeed && !haveVerticalSpeed);
+
+			featureHandler->UpdateDrawQuad(this, pos);
 			CalculateTransform();
 		}
 	} else {

@@ -237,7 +237,7 @@ CUnit::CUnit ()
 CUnit::~CUnit()
 {
 	if (delayedWreckLevel >= 0) {
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name, deathSpeed);
+		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name);
 	}
 
 	if (unitDef->isAirBase) {
@@ -1604,10 +1604,12 @@ void CUnit::FinishedBuilding(void)
 	}
 }
 
+
+
 // Called when a unit's Killed script finishes executing
 static void CUnitKilledCB(int retCode, void* p1, void* p2)
 {
-	CUnit* self = (CUnit *)p1;
+	CUnit* self = (CUnit *) p1;
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
@@ -1620,14 +1622,13 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt) {
 		if (unitDef->canCrash && !selfDestruct && !reclaimed && gs->randFloat() > recentDamage * 0.7f / maxHealth + 0.2f) {
-			((CAirMoveType*)moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
+			((CAirMoveType*) moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 			health = maxHealth * 0.5f;
 			return;
 		}
 	}
 
 	isDead = true;
-	deathSpeed = speed;
 
 	luaCallIns.UnitDestroyed(this, attacker);
 	globalAI->UnitDestroyed(this, attacker);
@@ -1676,16 +1677,27 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		UnBlock();
 		delayedWreckLevel = args[1];
+
+		if (delayedWreckLevel >= 0 && speed.SqLength() > 0.01f) {
+			// do this here rather than in ~CUnit to negate the delay
+			// between a unit's end-of-killscript and the creation of
+			// its wreck (since the delay is visually jarring when we
+			// want the wreck to move), also set delayedWreckLevel to
+			// -1 to make sure ~CUnit won't create a second wreck
+			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name, speed);
+			delayedWreckLevel = -1;
+		}
 	}
 	else {
-		deathScriptFinished=true;
+		deathScriptFinished = true;
 	}
 
 	if (beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed) {
 		uh->DeleteUnit(this);
-	}
-	else {
+	} else {
 		speed = ZeroVector;
+		// wait at least 5 more frames before
+		// permanently deleting this unit obj
 		deathCountdown = 5;
 		stunned = true;
 		paralyzeDamage = 1000000;
@@ -1694,6 +1706,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		}
 	}
 }
+
+
 
 bool CUnit::UseMetal(float metal)
 {

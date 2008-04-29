@@ -455,9 +455,10 @@ void CFeatureHandler::Update()
 	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Feature::Update");
 
-	if ((gs->frameNum & 31) == 0) {	// let all areareclaimers choose a target with a different id
+	if ((gs->frameNum & 31) == 0) {
+		// let all areareclaimers choose a target with a different id
 		bool dontClear = false;
-		for (list<int>::iterator it = toBeFreedIDs.begin(); it != toBeFreedIDs.end(); ++it) {
+		for (std::list<int>::iterator it = toBeFreedIDs.begin(); it != toBeFreedIDs.end(); ++it) {
 			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
 				// postpone recycling
 				dontClear = true;
@@ -619,24 +620,24 @@ public:
 
 void CFeatureDrawer::DrawQuad(int x, int y)
 {
-	CFeatureHandler::DrawQuad* dq=&(*drawQuads)[y*drawQuadsX+x];
+	CFeatureHandler::DrawQuad* dq = &(*drawQuads)[y * drawQuadsX + x];
 
 	for (CFeatureSet::iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
 		CFeature* f = (*fi);
 		const FeatureDef* def = f->def;
 
-		if((f->allyteam==-1 || f->allyteam==gu->myAllyTeam ||
-		    loshandler->InLos(f->pos,gu->myAllyTeam) || gu->spectatingFullView)
-		   && def->drawType==DRAWTYPE_3DO){
-			if(drawReflection){
+		if ((f->allyteam == -1 || f->allyteam == gu->myAllyTeam ||
+		    loshandler->InLos(f->pos, gu->myAllyTeam) || gu->spectatingFullView)
+		   && def->drawType == DRAWTYPE_3DO) {
+			if (drawReflection) {
 				float3 zeroPos;
-				if(f->midPos.y<0){
-					zeroPos=f->midPos;
-				}else{
-					float dif=f->midPos.y-camera->pos.y;
-					zeroPos=camera->pos*(f->midPos.y/dif) + f->midPos*(-camera->pos.y/dif);
+				if (f->midPos.y < 0) {
+					zeroPos = f->midPos;
+				} else {
+					float dif = f->midPos.y - camera->pos.y;
+					zeroPos = camera->pos * (f->midPos.y / dif) + f->midPos * (-camera->pos.y / dif);
 				}
-				if(ground->GetApproximateHeight(zeroPos.x,zeroPos.z)>f->radius){
+				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->radius) {
 					continue;
 				}
 			}
@@ -645,7 +646,7 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 					continue;
 			}
 
-			float sqDist = (f->pos-camera->pos).SqLength2D();
+			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
 			if (sqDist<farLength) {
@@ -665,9 +666,9 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 
 void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures)
 {
-	float featureDist=3000;
+	float featureDist = 3000;
 	if (!extraSize) {
-		featureDist=6000; //farfeatures wont be drawn for shadowpass anyway
+		featureDist = 6000; //farfeatures wont be drawn for shadowpass anyway
 	}
 	CFeatureDrawer drawer;
 	drawer.drawQuads = &drawQuads;
