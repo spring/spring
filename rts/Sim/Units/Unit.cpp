@@ -237,7 +237,12 @@ CUnit::CUnit ()
 CUnit::~CUnit()
 {
 	if (delayedWreckLevel >= 0) {
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name);
+		// note: could also do this in Update() or even in CUnitKilledCB()
+		// where we wouldn't need deathSpeed, but not in KillUnit() since
+		// we have to wait for deathScriptFinished (but we want the delay
+		// in frames between CUnitKilledCB() and the CreateWreckage() call
+		// to be as short as possible to prevent visual position jumps)
+		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name,  deathSpeed);
 	}
 
 	if (unitDef->isAirBase) {
@@ -305,7 +310,7 @@ void CUnit::SetEnergyStorage(float newStorage)
 }
 
 
-void CUnit::UnitInit (const UnitDef* def, int Team, const float3& position)
+void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 {
 	pos = position;
 	team = Team;
@@ -428,17 +433,29 @@ void CUnit::Update()
 {
 	posErrorVector += posErrorDelta;
 
+	if (deathScriptFinished) {
+		// if our kill-script is already finished, don't
+		// wait for the deathCountdown to reach zero and
+		// just delete us ASAP (costs one extra frame)
+		uh->DeleteUnit(this);
+		return;
+	}
+
 	if (deathCountdown) {
 		--deathCountdown;
+
 		if (!deathCountdown) {
 			if (deathScriptFinished) {
+				// kill-script has terminated, remove unit now
 				uh->DeleteUnit(this);
 			} else {
+				// kill-script still running, delay one more frame
 				deathCountdown = 1;
 			}
 		}
 		return;
 	}
+
 
 	if (beingBuilt) {
 		return;
@@ -462,7 +479,7 @@ void CUnit::Update()
 
 	if (!dontUseWeapons) {
 		std::vector<CWeapon*>::iterator wi;
-		for (wi = weapons.begin();wi != weapons.end(); ++wi) {
+		for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			(*wi)->Update();
 		}
 	}
@@ -1596,7 +1613,7 @@ void CUnit::FinishedBuilding(void)
 		UnBlock();
 		CFeature* f =
 			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-			                               0, team, allyteam, false, "");
+										   0, team, allyteam, false, "");
 		if (f) {
 			f->blockHeightChanges = true;
 		}
@@ -1609,7 +1626,7 @@ void CUnit::FinishedBuilding(void)
 // Called when a unit's Killed script finishes executing
 static void CUnitKilledCB(int retCode, void* p1, void* p2)
 {
-	CUnit* self = (CUnit *) p1;
+	CUnit* self = (CUnit*) p1;
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
@@ -1629,6 +1646,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 
 	isDead = true;
+	deathSpeed = speed;
 
 	luaCallIns.UnitDestroyed(this, attacker);
 	globalAI->UnitDestroyed(this, attacker);
@@ -1673,21 +1691,11 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		vector<int> args;
 		args.push_back((int) (recentDamage / maxHealth * 100));
 		args.push_back(0);
+		// start running the unit's kill-script
 		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
 		UnBlock();
 		delayedWreckLevel = args[1];
-
-		if (delayedWreckLevel >= 0 && speed.SqLength() > 0.01f) {
-			// do this here rather than in ~CUnit to negate the delay
-			// between a unit's end-of-killscript and the creation of
-			// its wreck (since the delay is visually jarring when we
-			// want the wreck to move), also set delayedWreckLevel to
-			// -1 to make sure ~CUnit won't create a second wreck
-			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name, speed);
-			delayedWreckLevel = -1;
-			noDraw = true;
-		}
 	}
 	else {
 		deathScriptFinished = true;
@@ -1712,20 +1720,20 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 bool CUnit::UseMetal(float metal)
 {
-	if(metal<0){
+	if (metal < 0) {
 		AddMetal(-metal);
 		return true;
 	}
 	gs->Team(team)->metalPull += metal;
-	bool canUse=gs->Team(team)->UseMetal(metal);
-	if(canUse)
+	bool canUse = gs->Team(team)->UseMetal(metal);
+	if (canUse)
 		metalUseI += metal;
 	return canUse;
 }
 
 void CUnit::AddMetal(float metal)
 {
-	if(metal<0){
+	if (metal < 0) {
 		UseMetal(-metal);
 		return;
 	}
@@ -1735,26 +1743,27 @@ void CUnit::AddMetal(float metal)
 
 bool CUnit::UseEnergy(float energy)
 {
-	if(energy<0){
+	if (energy < 0) {
 		AddEnergy(-energy);
 		return true;
 	}
 	gs->Team(team)->energyPull += energy;
-	bool canUse=gs->Team(team)->UseEnergy(energy);
-	if(canUse)
+	bool canUse = gs->Team(team)->UseEnergy(energy);
+	if (canUse)
 		energyUseI += energy;
 	return canUse;
 }
 
 void CUnit::AddEnergy(float energy)
 {
-	if(energy<0){
+	if (energy < 0) {
 		UseEnergy(-energy);
 		return;
 	}
 	energyMakeI += energy;
 	gs->Team(team)->AddEnergy(energy);
 }
+
 
 void CUnit::Activate()
 {

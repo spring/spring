@@ -202,51 +202,54 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 	toBeRemoved.push_back(unit);
 }
 
+void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
+{
+	int delTeam = 0;
+	int delType = 0;
+	std::list<CUnit*>::iterator usi;
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		if (*usi == delUnit) {
+			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
+				slowUpdateIterator++;
+			}
+			delTeam = delUnit->team;
+			delType = delUnit->unitDef->id;
+
+			activeUnits.erase(usi);
+			units[delUnit->id] = 0;
+			freeIDs.push_back(delUnit->id);
+			gs->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+
+			unitsByDefs[delTeam][delType].erase(delUnit);
+
+			delete delUnit;
+			break;
+		}
+	}
+	//debug
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
+		if (*usi == delUnit) {
+			logOutput.Print("Error: Duplicated unit found in active units on erase");
+			usi = activeUnits.erase(usi);
+		} else {
+			++usi;
+		}
+	}
+}
+
 void CUnitHandler::Update()
 {
 	ASSERT_SYNCED_MODE;
-
 	SCOPED_TIMER("Unit handler");
 
-	while(!toBeRemoved.empty()){
-		CUnit* delUnit=toBeRemoved.back();
+	while (!toBeRemoved.empty()) {
+		CUnit* delUnit = toBeRemoved.back();
 		toBeRemoved.pop_back();
 
-		int delTeam = 0;
-		int delType = 0;
-		list<CUnit*>::iterator usi;
-		for(usi=activeUnits.begin();usi!=activeUnits.end();++usi){
-			if(*usi==delUnit){
-				if (slowUpdateIterator!=activeUnits.end() && *usi==*slowUpdateIterator) {
-					slowUpdateIterator++;
-				}
-				delTeam = delUnit->team;
-				delType = delUnit->unitDef->id;
-
-				activeUnits.erase(usi);
-				units[delUnit->id] = 0;
-				freeIDs.push_back(delUnit->id);
-				gs->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
-
-				unitsByDefs[delTeam][delType].erase(delUnit);
-
-				delete delUnit;
-
-				break;
-			}
-		}
-		//debug
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
-			if (*usi == delUnit){
-				logOutput.Print("Error: Duplicated unit found in active units on erase");
-				usi = activeUnits.erase(usi);
-			} else {
-				++usi;
-			}
-		}
+		DeleteUnitNow(delUnit);
 	}
 
-	list<CUnit*>::iterator usi;
+	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
 		(*usi)->Update();
 	}
@@ -254,20 +257,20 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Unit slow update");
 		if (!(gs->frameNum & 15)) {
-			slowUpdateIterator=activeUnits.begin();
+			slowUpdateIterator = activeUnits.begin();
 		}
 
-		int numToUpdate=activeUnits.size()/16+1;
-		for(;slowUpdateIterator!=activeUnits.end() && numToUpdate!=0;++slowUpdateIterator){
+		int numToUpdate = activeUnits.size() / 16 + 1;
+		for (; slowUpdateIterator != activeUnits.end() && numToUpdate != 0; ++ slowUpdateIterator) {
 			(*slowUpdateIterator)->SlowUpdate();
 			numToUpdate--;
 		}
 	} // for timer destruction
 
-	if(!(gs->frameNum&15)){
-		if(diminishingMetalMakers)
-			metalMakerEfficiency=8.0f/(8.0f+max(0.0f,sqrtf(metalMakerIncome/gs->activeTeams)-4));
-		metalMakerIncome=0;
+	if (!(gs->frameNum & 15)) {
+		if (diminishingMetalMakers)
+			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrtf(metalMakerIncome / gs->activeTeams) - 4));
+		metalMakerIncome = 0;
 	}
 }
 

@@ -26,6 +26,7 @@ public:
 
 	void Update();
 	void DeleteUnit(CUnit* unit);
+	void DeleteUnitNow(CUnit* unit);
 	int AddUnit(CUnit* unit);
 	CUnitHandler(bool serializing=false);
 	void Serialize(creg::ISerializer& s);
