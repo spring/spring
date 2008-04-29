@@ -17,7 +17,7 @@ public:
 	bool Match(const string& filename) const;
 
 private:
-	string CFileFilter::glob_to_regex(const string& glob);
+	string glob_to_regex(const string& glob);
 
 	struct Rule {
 		Rule() : negate(false) {}
