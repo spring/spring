@@ -38,6 +38,7 @@ public:
 	float baseTurnRate;
 	float turnRate;
 	float accRate;
+	float decRate;
 
 	float wantedSpeed;
 	float currentSpeed;

@@ -221,6 +221,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			logOutput << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		mt->moveType=ud->moveType;
 		mt->accRate=ud->maxAcc;
+		mt->decRate=ud->maxDec;
 		mt->floatOnWater=ud->movedata->moveType==MoveData::Hover_Move || ud->movedata->moveType==MoveData::Ship_Move;
 		if(!unit->beingBuilt)
 			unit->mass=ud->mass;	//otherwise set this when finished building instead

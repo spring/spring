@@ -39,7 +39,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(baseTurnRate),
 		CR_MEMBER(turnRate),
 		CR_MEMBER(accRate),
-
+		CR_MEMBER(decRate),
+		
 		CR_MEMBER(wantedSpeed),
 		CR_MEMBER(currentSpeed),
 		CR_MEMBER(deltaSpeed),
@@ -122,6 +123,7 @@ std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 CGroundMoveType::CGroundMoveType(CUnit* owner)
 :	AMoveType(owner),
 	accRate(0.01f),
+	decRate(0.01f),
 	turnRate(0.1f),
 	baseTurnRate(0.1f),
 //	maxSpeed(0.2f),
@@ -537,26 +539,27 @@ void CGroundMoveType::SetDeltaSpeed(void)
 		logOutput.Print("Acceleration is zero on unit %s\n",owner->unitDef->name.c_str());
 		accRate=0.01f;
 	}
-
-	if(fabs(dif)<0.05f){		//good speed
-		deltaSpeed=dif/8;
-		nextDeltaSpeedUpdate=gs->frameNum+8;
-
-	} else if(dif>0){				//accelerate
-		if(dif<accRate){
+	if(fabs(dif) < 0.05f) {		//good speed
+		deltaSpeed = dif / 8;
+		nextDeltaSpeedUpdate = gs->frameNum + 8;
+	}
+	else if(dif > 0) {				//accelerate
+		if(dif < accRate) {
 			deltaSpeed = dif;
-			nextDeltaSpeedUpdate=gs->frameNum;
+			nextDeltaSpeedUpdate = gs->frameNum;
 		} else {
-			deltaSpeed=accRate;
-			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float)8,dif/accRate));
+			deltaSpeed = accRate;
+			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float) 8, dif / accRate));
 		}
-	}else {		//break, Breakrate = -3*accRate
-		if(dif > -3*accRate){
+	}
+	else {	// decRate = 0.1*brakeRate, I guess this is for aircraft
+		if(dif > -10*decRate){
 			deltaSpeed = dif;
-			nextDeltaSpeedUpdate=gs->frameNum+1;
-		} else {
-			deltaSpeed = -3*accRate;
-			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float)8,dif/(-3*accRate)));
+			nextDeltaSpeedUpdate = gs->frameNum + 1;
+		}
+		else {
+			deltaSpeed = -10*decRate;
+			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float) 8, dif / (-10*decRate)));
 		}
 	}
 	//float3 temp=UpVector*wSpeed;
