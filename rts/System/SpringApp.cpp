@@ -545,6 +545,8 @@ void SpringApp::ParseCmdLine()
 {
 	cmdline->addoption('f', "fullscreen",     OPTPARM_NONE,   "",  "Run in fullscreen mode");
 	cmdline->addoption('w', "window",         OPTPARM_NONE,   "",  "Run in windowed mode");
+	cmdline->addoption('x', "xresolution",    OPTPARM_INT,    "",  "Set X resolution");
+	cmdline->addoption('y', "yresolution",    OPTPARM_INT,    "",  "Set Y resolution");
 	cmdline->addoption('m', "minimise",       OPTPARM_NONE,   "",  "Start minimised");
 	cmdline->addoption('s', "server",         OPTPARM_NONE,   "",  "Run as a server");
 	cmdline->addoption('c', "client",         OPTPARM_NONE,   "",  "Run as a client");
@@ -588,8 +590,19 @@ void SpringApp::ParseCmdLine()
 		configHandler.SetString("name", name);
 	}
 
-	screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
-	screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
+
+	if (!cmdline->result("xresolution", screenWidth)) {
+		screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
+	} else {
+		screenWidth = std::max(screenWidth, 1);
+	}
+	
+	if (!cmdline->result("yresolution", screenHeight)) {
+		screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
+	} else {
+		screenHeight = std::max(screenHeight, 1);
+	}
+	
 }
 
 /**
