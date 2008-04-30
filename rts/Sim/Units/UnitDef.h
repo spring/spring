@@ -103,7 +103,7 @@ struct UnitDef
 	const UnitDef* decoyDef;
 
 	int aihint;
-	int cobID;				// associated with the COB <GET COB_ID unitID> call 
+	int cobID;				// associated with the COB <GET COB_ID unitID> call
 
 	int techLevel;
 	std::string gaia;
@@ -199,20 +199,10 @@ struct UnitDef
 
 
 	struct UnitDefWeapon {
+		UnitDefWeapon();
 		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
-		              float3 mainDir, float maxAngleDif,
-		              unsigned int badTargetCat, unsigned int onlyTargetCat,
-		              float fuelUse)
-		: name(name),
-		  def(def),
-		  slavedTo(slavedTo),
-		  mainDir(mainDir),
-		  maxAngleDif(maxAngleDif),
-		  badTargetCat(badTargetCat),
-		  onlyTargetCat(onlyTargetCat),
-		  fuelUsage(fuelUse)
-		{}
-
+		              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
+		              unsigned int onlyTargetCat, float fuelUse);
 		std::string name;
 		const WeaponDef* def;
 		int slavedTo;
@@ -271,7 +261,7 @@ struct UnitDef
 	bool canBeAssisted;
 	bool canRepeat;
 	bool canFireControl;
-	
+
 	int fireState;
 
 	//aircraft stuff
