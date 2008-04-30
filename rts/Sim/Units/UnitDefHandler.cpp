@@ -39,6 +39,34 @@ const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
 CUnitDefHandler* unitDefHandler;
 
+
+UnitDef::UnitDefWeapon::UnitDefWeapon()
+: name("NOWEAPON")
+, def(NULL)
+, slavedTo(0)
+, mainDir(0, 0, 1)
+, maxAngleDif(-1)
+, fuelUsage(0)
+, badTargetCat(0)
+, onlyTargetCat(0)
+{
+}
+
+
+UnitDef::UnitDefWeapon::UnitDefWeapon(
+	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
+	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
+: name(name)
+, def(def)
+, slavedTo(slavedTo)
+, mainDir(mainDir)
+, maxAngleDif(maxAngleDif)
+, badTargetCat(badTargetCat)
+, onlyTargetCat(onlyTargetCat)
+, fuelUsage(fuelUse)
+{}
+
+
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
 	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
@@ -522,9 +550,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 				                "to be present as a placeholder for missing weapons");
 				break;
 			} else {
-				ud.weapons.push_back(UnitDef::UnitDefWeapon("NOWEAPON", noWeaponDef,
-				                                            0, float3(0, 0, 1), -1,
-				                                            0, 0, 0));
+				ud.weapons.push_back(UnitDef::UnitDefWeapon());
+				ud.weapons.back().def = noWeaponDef;
 			}
 		}
 
