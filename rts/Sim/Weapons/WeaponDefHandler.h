@@ -31,7 +31,7 @@ struct AtlasedTexture;
 
 struct WeaponDef
 {
-	CR_DECLARE(WeaponDef);
+	CR_DECLARE_STRUCT(WeaponDef);
 
 	~WeaponDef();
 
