@@ -109,13 +109,13 @@ struct Command
 
 
 struct CommandDescription {
-	CR_DECLARE_STRUCT(CommandDescription)
+	CR_DECLARE_STRUCT(CommandDescription);
 
 	CommandDescription()
 	: showUnique(false),
 	  onlyKey(false),
 	  onlyTexture(false),
-	  disabled(false) {}
+	  disabled(false) {};
 
 	int id;    // CMD_xxx     code  (custom codes can also be used)
 	int type;  // CMDTYPE_xxx code 

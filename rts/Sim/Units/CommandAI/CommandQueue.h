@@ -13,14 +13,14 @@ class CCommandQueue {
 	friend class CCommandAI;
 	friend class CFactoryCAI;
 
-	enum QueueType {
-		CommandQueueType,
-		NewUnitQueueType,
-		BuildQueueType
-	};
-
 	CR_DECLARE(CCommandQueue);
 	public:
+		enum QueueType {
+			CommandQueueType,
+			NewUnitQueueType,
+			BuildQueueType
+		};
+
 		inline QueueType GetType() const { return queueType; }
 
 	public:
