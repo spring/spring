@@ -511,8 +511,10 @@ inline void CUnit::UpdateLosStatus(int at)
 
 	if (loshandler->InLos(this, at)) {
 		if ((prevLosStatus & LOS_INLOS) == 0) {
-
+			// we were not previously in LOS for this allyteam
 			if (beingBuilt) {
+				// we are being built, do not set LOS_PREVLOS
+				// since we do not want ghosts for nanoframes
 				losStatus[at] |= (LOS_INLOS | LOS_INRADAR);
 			} else {
 				losStatus[at] |= (LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR);
@@ -524,6 +526,13 @@ inline void CUnit::UpdateLosStatus(int at)
 			}
 			luaCallIns.UnitEnteredLos(this, at);
 			globalAI->UnitEnteredLos(this, at);
+		} else {
+			// if we were previously in LOS but still being built
+			// then LOS_PREVLOS and LOS_CONTRADAR weren't set for
+			// us yet, do so now
+			if (!beingBuilt) {
+				losStatus[at] |= (LOS_PREVLOS | LOS_CONTRADAR);
+			}
 		}
 	}
 	else if (radarhandler->InRadar(this, at)) {
