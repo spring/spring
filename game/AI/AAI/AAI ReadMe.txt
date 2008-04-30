@@ -105,6 +105,15 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.864	- Added some unit specific combat behaviour: Units with high ranged weapons will now try to keep enemies distant
+
+		- Added two new variables to mod config file:
+
+		  FALLBACK_DIST_RATIO 0.9 - units will try keep enemies at this ratio of their maximum weapons' range
+		  
+		  MIN_FALLBACK_RANGE 500  - units with lower weapons' range will not try fall back at all 
+
+
 AAI v0.862	- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 
 		  naval units
 

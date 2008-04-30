@@ -9,6 +9,7 @@
 
 #include "AAIExecute.h"
 #include "AAIBuildTable.h"
+#include "System/FastMath.h"
 
 // all the static vars
 float AAIExecute::current = 0.5;
@@ -201,10 +202,6 @@ void AAIExecute::UpdateRecon()
 			{
 				++ai->futureScouts;
 				++bt->units_dynamic[scout].requested;
-
-				//char c[120];
-				//sprintf(c, "requested scout: %i", ai->futureScouts); 
-				//cb->SendTextMsg(c, 0);
 			}
 		}
 	}
@@ -3510,4 +3507,67 @@ void AAIExecute::ChooseDifferentStartingSector(int x, int y)
 		brain->UpdateNeighbouringSectors();
 		brain->UpdateBaseCenter();
 	}
+}
+
+void AAIExecute::CheckFallBack(int unit_id, int def_id)
+{
+	float range = bt->units_static[def_id].range;
+
+	if(range > cfg->MIN_FALLBACK_RANGE)
+	{
+		float3 pos;
+
+		GetFallBackPos(&pos, unit_id, range);
+
+		if(pos.x > 0)
+		{	
+			Command c;
+			c.id = CMD_MOVE;
+			c.params.resize(3);
+
+			c.params[0] = pos.x;
+			c.params[1] = cb->GetElevation(pos.x, pos.z);
+			c.params[2] = pos.z;
+
+			cb->GiveOrder(unit_id, &c);
+		}
+	}
+}
+
+
+void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
+{
+	float3 unit_pos = cb->GetUnitPos(unit_id), temp_pos;
+
+	*pos = ZeroVector; 
+
+	// get list of enemies within weapons range
+	int number_of_enemies = cb->GetEnemyUnits(&(map->unitsInLos.front()), unit_pos, range * cfg->FALLBACK_DIST_RATIO);
+
+	if(number_of_enemies > 0)
+	{
+		float dist;
+
+		for(int k = 0; k < number_of_enemies; ++k)
+		{
+			// get distance to enemy 
+			temp_pos = cb->GetUnitPos(map->unitsInLos[k]);
+
+			dist = fastmath::sqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
+
+			// get dir from unit to enemy
+			temp_pos.x -= unit_pos.x;
+			temp_pos.z -= unit_pos.z;
+
+			// 
+			pos->x += (dist / range - 1) * temp_pos.x;
+			pos->z += (dist / range - 1) * temp_pos.z;
+		}
+
+		pos->x /= (float)number_of_enemies;
+		pos->z /= (float)number_of_enemies;
+
+		pos->x += unit_pos.x;
+		pos->z += unit_pos.z;
+	}	
 }

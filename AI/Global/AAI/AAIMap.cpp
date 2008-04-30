@@ -2115,128 +2115,113 @@ void AAIMap::UpdateRecon()
 	fill(units_spotted.begin(), units_spotted.end(), 0);
 
 	// first update all sectors with friendly units
-	cb->GetFriendlyUnits(&(unitsInLos.front()));
+	int number_of_units = cb->GetFriendlyUnits(&(unitsInLos.front()));
 
 	// go through the list
-	for(int i = 0; i < cfg->MAX_UNITS; ++i)
+	for(int i = 0; i < number_of_units; ++i)
 	{
-		// if 0 end of array reached
-		if(unitsInLos[i])
+		pos = cb->GetUnitPos(unitsInLos[i]);
+
+		if(pos.x != 0)
 		{
-			pos = cb->GetUnitPos(unitsInLos[i]);
+			// calculate in which sector unit is located
+			x = pos.x/xSectorSize;
+			y = pos.z/ySectorSize;
 
-			if(pos.x != 0)
+			if(x >= 0 && y >= 0 && x < xSectors && y < ySectors)
 			{
-				// calculate in which sector unit is located
-				x = pos.x/xSectorSize;
-				y = pos.z/ySectorSize;
+				sector = &this->sector[x][y];
 
-				if(x >= 0 && y >= 0 && x < xSectors && y < ySectors)
+				// we have a unit in that sector, reset values if not already done
+				if(unitsInSector[x+y*xSectors] == 0)
 				{
-					sector = &this->sector[x][y];
-
-					// we have a unit in that sector, reset values if not already done
-					if(unitsInSector[x+y*xSectors] == 0)
-					{
-						++unitsInSector[x+y*xSectors];
+					++unitsInSector[x+y*xSectors];
 						
-						fill(sector->enemyUnitsOfType.begin(), sector->enemyUnitsOfType.end(), 0);
-						fill(sector->stat_combat_power.begin(), sector->stat_combat_power.end(), 0);
-						fill(sector->mobile_combat_power.begin(), sector->mobile_combat_power.end(), 0);
+					fill(sector->enemyUnitsOfType.begin(), sector->enemyUnitsOfType.end(), 0);
+					fill(sector->stat_combat_power.begin(), sector->stat_combat_power.end(), 0);
+					fill(sector->mobile_combat_power.begin(), sector->mobile_combat_power.end(), 0);
 				
-						sector->threat = 0;
-						sector->allied_structures = 0;
-						sector->enemy_structures = 0;
-						sector->own_structures = 0;
-					}
+					sector->threat = 0;
+					sector->allied_structures = 0;
+					sector->enemy_structures = 0;
+					sector->own_structures = 0;
+				}
 
-					// check if building
-					def = cb->GetUnitDef(unitsInLos[i]);
+				// check if building
+				def = cb->GetUnitDef(unitsInLos[i]);
 
-					if(def && bt->units_static[def->id].category <= METAL_MAKER)
-					{
-						team = cb->GetUnitTeam(unitsInLos[i]);
+				if(def && bt->units_static[def->id].category <= METAL_MAKER)
+				{
+					team = cb->GetUnitTeam(unitsInLos[i]);
 
-						if(team == my_team)
-							sector->own_structures += bt->units_static[def->id].cost;
-						else
-							sector->allied_structures += bt->units_static[def->id].cost;
-					}
+					if(team == my_team)
+						sector->own_structures += bt->units_static[def->id].cost;
+					else
+						sector->allied_structures += bt->units_static[def->id].cost;
 				}
 			}
-
-			unitsInLos[i] = 0;
 		}
-		else 	// end of array reached
-			break;
 	}
 
 	// get all enemies in los
-	cb->GetEnemyUnits(&(unitsInLos.front()));
+	number_of_units = cb->GetEnemyUnits(&(unitsInLos.front()));
 
 	// go through the list
-	for(int i = 0; i < cfg->MAX_UNITS; ++i)
-	{
-		// if 0 end of array reached
-		if(unitsInLos[i])
+	for(int i = 0; i < number_of_units; ++i)
+	{	
+		pos = cb->GetUnitPos(unitsInLos[i]);
+
+		// calculate in which sector unit is located
+		sector = GetSectorOfPos(&pos);
+
+		if(sector)
 		{
-			pos = cb->GetUnitPos(unitsInLos[i]);
-
-			// calculate in which sector unit is located
-			sector = GetSectorOfPos(&pos);
-
-			if(sector)
+			if(unitsInSector[sector->x + sector->y*xSectors])
 			{
-				if(unitsInSector[sector->x + sector->y*xSectors])
-				{
-					def = cb->GetUnitDef(unitsInLos[i]);
-					cat = bt->units_static[def->id].category;
-					combat_category_id = (int) bt->GetIDOfAssaultCategory(cat);
+				def = cb->GetUnitDef(unitsInLos[i]);
+				cat = bt->units_static[def->id].category;
+				combat_category_id = (int) bt->GetIDOfAssaultCategory(cat);
 
-					sector->enemyUnitsOfType[(int)cat] += 1;
+				sector->enemyUnitsOfType[(int)cat] += 1;
 
 					// check if combat unit
-					if(combat_category_id >= 0)
+				if(combat_category_id >= 0)
+				{
+					sector->threat += 1;
+					units_spotted[combat_category_id] += 1;
+
+					// count combat power of combat units
+					for(int i = 0; i < bt->combat_categories; ++i)
+						sector->mobile_combat_power[i] += bt->units_static[def->id].efficiency[i];
+				}
+				else	// building or scout etc.
+				{
+					// check if promising bombing target
+					if(targets_checked < 3 && ( cat ==  EXTRACTOR || cat == STATIONARY_CONSTRUCTOR || cat == STATIONARY_ARTY || cat == STATIONARY_LAUNCHER ) )
 					{
-						sector->threat += 1;
-						units_spotted[combat_category_id] += 1;
+						// dont check targets that are already on bombing list
+						if(ai->ut->units[unitsInLos[i]].status != BOMB_TARGET)
+						{
+							ai->af->CheckBombTarget(unitsInLos[i], def->id);
+							targets_checked += 1;
 
-						// count combat power of combat units
-						for(int i = 0; i < bt->combat_categories; ++i)
-							sector->mobile_combat_power[i] += bt->units_static[def->id].efficiency[i];
+							cb->SendTextMsg("Checking target", 0);
+						}
 					}
-					else	// building or scout etc.
+
+					// count combat power of stat defences
+					if(cat == STATIONARY_DEF)
 					{
-						// check if promising bombing target
-						if(targets_checked < 3 && ( cat ==  EXTRACTOR || cat == STATIONARY_CONSTRUCTOR || cat == STATIONARY_ARTY || cat == STATIONARY_LAUNCHER ) )
-						{
-							// dont check targets that are already on bombing list
-							if(ai->ut->units[unitsInLos[i]].status != BOMB_TARGET)
-							{
-								ai->af->CheckBombTarget(unitsInLos[i], def->id);
-								targets_checked += 1;
-
-								cb->SendTextMsg("Checking target", 0);
-							}
-						}
-
-						// count combat power of stat defences
-						if(cat == STATIONARY_DEF)
-						{
-							for(int i = 0; i < bt->ass_categories; ++i)
-								sector->stat_combat_power[i] += bt->units_static[def->id].efficiency[i];
-						}
-
-						// add enemy buildings
-						if(cat <= METAL_MAKER)
-							sector->enemy_structures += bt->units_static[def->id].cost;
+						for(int i = 0; i < bt->ass_categories; ++i)
+							sector->stat_combat_power[i] += bt->units_static[def->id].efficiency[i];
 					}
+
+					// add enemy buildings
+					if(cat <= METAL_MAKER)
+						sector->enemy_structures += bt->units_static[def->id].cost;
 				}
 			}
-			unitsInLos[i] = 0;
 		}
-		else 	// end of arry reached
-			break;
 	}
 
 	ai->brain->UpdateMaxCombatUnitsSpotted(units_spotted);

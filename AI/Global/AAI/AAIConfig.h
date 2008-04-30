@@ -112,6 +112,10 @@ public:
 
 	vector<CostMultiplier> cost_multipliers;
 
+	// combat behaviour
+	float FALLBACK_DIST_RATIO;	// units will try to fall back if enemy is closer than ratio of weapons range of the unit
+	float MIN_FALLBACK_RANGE;	// units with lower weapons' range will not fall back
+
 	// internal
 	float CLIFF_SLOPE;  // cells with greater slope will be considered to be cliffs
 	int CONSTRUCTION_TIMEOUT;

@@ -188,9 +188,12 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 		cat =  bt->units_static[def->id].category;
 	else
 		cat = UNKNOWN;
+
+	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT) 
+		execute->CheckFallBack(damaged, def->id);
 	
 	// known attacker
-	if(attacker != -1)
+	if(attacker >= 0)
 	{
 		att_def = cb->GetUnitDef(attacker);
 

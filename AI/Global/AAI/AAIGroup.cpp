@@ -238,6 +238,36 @@ void AAIGroup::Update()
 		target_sector = 0;
 		task = GROUP_IDLE;
 	}
+
+	// check fall back of long range units
+	if(task == GROUP_ATTACKING)
+	{
+		float range;
+		float3 pos;
+		Command c;
+
+		c.id = CMD_MOVE;
+		c.params.resize(3);
+
+		for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+		{
+			range = bt->units_static[unit->y].range;
+
+			if(range > cfg->MIN_FALLBACK_RANGE)
+			{
+				ai->execute->GetFallBackPos(&pos, unit->x, range);
+
+				if(pos.x > 0)
+				{
+					c.params[0] = pos.x;
+					c.params[1] = cb->GetElevation(pos.x, pos.z);
+					c.params[2] = pos.z;
+
+					cb->GiveOrder(unit->x, &c);
+				}
+			}
+		}
+	}
 }
 
 float AAIGroup::GetPowerVS(int assault_cat_id)
