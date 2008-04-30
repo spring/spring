@@ -22,6 +22,9 @@ public:
 	void BuildMapPos2Pos(float3 *pos, const UnitDef* def);
 	void Pos2FinalBuildPos(float3 *pos, const UnitDef *def);
 
+	// ensures a position lies within the map
+	//void PosInMap(float3 *pos);
+
 	// returns id of continent the cell belongs to
 	int GetContinentID(int x, int y);
 	int GetContinentID(float3 *pos);
@@ -103,8 +106,6 @@ public:
 
 	void SearchMetalSpots();
 
-
-public:
 	vector<vector<AAISector> > sector;			// sectors
 
 	bool initialized;
@@ -114,6 +115,10 @@ public:
 	vector<float> air_defence_map; // air defence map has 1/4 of resolution of blockmap/buildmap
 	vector<float> submarine_defence_map; // submarine defence map has 1/4 of resolution of blockmap/buildmap
 
+	// used for scouting
+	vector<int> unitsInLos;
+	vector<int> unitsInSector;
+
 	// temp for scouting
 	vector<float> units_spotted;
 
@@ -121,10 +126,6 @@ private:
 	AAI *ai;
 	IAICallback *cb;
 	AAIBuildTable *bt;
-
-	// used for scouting
-	vector<int> unitsInLos;
-	vector<int> unitsInSector;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// static (shared with other ai players)
