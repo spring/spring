@@ -4196,7 +4196,6 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	if (msg.fromPlayer < 0 || (msg.fromPlayer >= MAX_PLAYERS && msg.fromPlayer != SERVER_PLAYER))
 		return;
 
-	globalAI->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
 	CScriptHandler::Instance().chosenScript->GotChatMsg(msg.msg, msg.fromPlayer);
 	string s = msg.msg;
 
@@ -4248,6 +4247,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			sound->PlaySample(chatSound, 5);
 		}
 	}
+
+	globalAI->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
 }
 
 
