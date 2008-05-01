@@ -3,6 +3,7 @@
 
   ; The battleroom
   File "..\game\TASClient.exe"
+  File "..\game\7za.dll"
   
   CreateDirectory "$INSTDIR\lobby\cache"
   CreateDirectory "$INSTDIR\lobby\cache\online"
