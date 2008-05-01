@@ -15,6 +15,7 @@
 
   ; The battleroom
   Delete "$INSTDIR\TASClient.exe"
+  Delete "$INSTDIR\7za.dll"
   Delete "$INSTDIR\lobby\sidepics\arm.bmp"
   Delete "$INSTDIR\lobby\sidepics\core.bmp"
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
