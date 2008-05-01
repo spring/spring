@@ -92,13 +92,13 @@ function widget:Update(dt)
       end
     end
     if (cs.name == "ta") then
-      local flip = -cs[10]
+      local flip = -cs[9]
       -- simple, forward and right are locked
-      cs[2] = cs[2] + (speed * flip * (x - mx))
+      cs[1] = cs[1] + (speed * flip * (x - mx))
       if (false) then
-        cs[3] = cs[3] + (speed * flip * (my - y))
+        cs[2] = cs[2] + (speed * flip * (my - y))
       else
-        cs[4] = cs[4] + (speed * flip * (my - y))
+        cs[3] = cs[3] + (speed * flip * (my - y))
       end
     else
       -- forward, up, right, top, bottom, left, right
