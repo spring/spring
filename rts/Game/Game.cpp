@@ -2000,7 +2000,7 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 			if ((amount < 0) || (amountStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give amount: %s", amountStr.c_str());
 				return;
-								}
+			}
 		}
 
 		if (teamArg >= 0) {
@@ -2015,15 +2015,20 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 		const string unitName = (amountArg >= 0) ? args[2] : args[1];
 
 		if (unitName == "all") {
-		// player entered ".give all"
+			// player entered ".give all"
 			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
 			int currentNumUnits = gs->Team(team)->units.size();
 			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
-		// make sure team unit-limit not exceeded
+			// make sure team unit-limit not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
 				numRequestedUnits = uh->maxUnits - currentNumUnits;
 			}
+
+			// make sure square is entirely on the map
+			float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
+			pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
+			pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
 
 			for (int a = 1; a <= numRequestedUnits; ++a) {
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
@@ -2950,7 +2955,7 @@ void CGame::SimFrame()
 				net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
 			}
 		}
-#endif	
+#endif
 		water->Update();
 	}
 
@@ -3661,7 +3666,7 @@ void CGame::ClientReadNet()
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
-						}						
+						}
 						if (gs->Team(newTeam)->leader == -1)
 							gs->Team(newTeam)->leader = player;
 						break;
@@ -4182,7 +4187,7 @@ void CGame::SendNetChat(std::string message, int destination)
 				message = message.substr(2);
 			}
 		}
-	}	
+	}
 	if (message.size() > 128) {
 		message.resize(128); // safety
 	}
@@ -4202,7 +4207,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	if (!s.empty()) {
 		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : gs->players[msg.fromPlayer];
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
-	
+
 		string label;
 		if (!player) {
 			label = "> ";
@@ -4211,7 +4216,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		} else {
 			label = "<" + player->playerName + "> ";
 		}
-	
+
 		/*
 		- If you're spectating you always see all chat messages.
 		- If you're playing you see:
@@ -4221,7 +4226,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		- TO_EVERYONE-messages from spectators only if noSpectatorChat is off!
 		- private messages if they are for you ;)
 		*/
-	
+
 		if (msg.destination == ChatMessage::TO_ALLIES && player) {
 			const int msgAllyTeam = gs->AllyTeam(player->team);
 			const bool allied = gs->Ally(msgAllyTeam, gu->myAllyTeam);
