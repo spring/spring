@@ -90,8 +90,8 @@ struct CollisionVolume {
 
 		// if all axes (or half-axes) are equal in scale, volume is a sphere
 		spherical = ((volumeType == COLVOL_TYPE_ELLIPSOID) &&
-					(fabsf(axisHScales.x - axisHScales.y) < EPS) &&
-					(fabsf(axisHScales.y - axisHScales.z) < EPS));
+					(streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
+					(streflop::fabsf(axisHScales.y - axisHScales.z) < EPS));
 
 		// secondaryAxes[0] = (primaryAxis + 1) % 3;
 		// secondaryAxes[1] = (primaryAxis + 2) % 3;
@@ -118,7 +118,7 @@ struct CollisionVolume {
 			case COLVOL_TYPE_BOX: {
 				// would be an over-estimation for cylinders
 				volumeBoundingRadiusSq = axisHScalesSq.x + axisHScalesSq.y + axisHScalesSq.z;
-				volumeBoundingRadius = sqrt(volumeBoundingRadiusSq);
+				volumeBoundingRadius = streflop::sqrt(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_CYLINDER: {
 				const float prhs = axisHScales[primaryAxis     ];	// primary axis half-scale
@@ -127,7 +127,7 @@ struct CollisionVolume {
 				const float mshs = MAX(sahs, sbhs);					// max. secondary axis half-scale
 
 				volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
-				volumeBoundingRadius = sqrtf(volumeBoundingRadiusSq);
+				volumeBoundingRadius = streflop::sqrtf(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_ELLIPSOID: {
 				if (spherical) {
