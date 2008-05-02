@@ -1,9 +1,10 @@
 #pragma once
 
 #include "aidef.h"
+#include "AAISector.h"
 
 class AAIBuildTable;
-class AAISector;
+//class AAISector;
 class AAI;
 
 class AAIMap
@@ -70,8 +71,8 @@ public:
 	// increases/decreases usefulness of the category of the killer/killed unit 
 	void UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, const UnitDef *killed_def, int killed);
 
-	char* GetMapTypeTextString(int mapType);
-	char* GetMapTypeString(int mapType);
+	const char* GetMapTypeTextString(int mapType);
+	const char* GetMapTypeString(int mapType);
 
 	// return next cell in direction with a certain value
 	int GetNextX(int direction, int xPos, int yPos, int value);	// 0 means left, other right; returns -1 if not found 

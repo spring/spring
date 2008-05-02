@@ -2275,7 +2275,7 @@ void AAIMap::UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, con
 }
 
 
-char* AAIMap::GetMapTypeString(int mapType)
+const char* AAIMap::GetMapTypeString(int mapType)
 {
 	if(mapType == 1)
 		return "LAND_MAP";
@@ -2289,7 +2289,7 @@ char* AAIMap::GetMapTypeString(int mapType)
 		return "UNKNOWN_MAP";
 }
 
-char* AAIMap::GetMapTypeTextString(int mapType)
+const char* AAIMap::GetMapTypeTextString(int mapType)
 {
 	if(mapType == 1)
 		return "land map";

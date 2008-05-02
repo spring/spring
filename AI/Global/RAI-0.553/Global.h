@@ -9,7 +9,7 @@
 
 class cRAIGlobal;
 
-#include "Krogs Metal Class v0.4/MetalMap.h"
+#include "KrogsMetalClass/MetalMap.h"
 #include "GTerrainMap.h"
 //#include "GMetalMap.h"
 //#include "ExternalAI/IAICallback.h"

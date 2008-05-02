@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExternalAI/IAICallback.h"
 #include <stdio.h>
+#include "ExternalAI/IAICallback.h"
 #include <list>
 #include <vector>
 //#include "aidef.h"
