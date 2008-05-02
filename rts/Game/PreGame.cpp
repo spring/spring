@@ -339,7 +339,7 @@ bool CPreGame::Update()
 				gs->players[gu->myPlayerNum]->StartSpectating();
 			LoadStartPicture(team->side);
 
-			game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole);
+			game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole, savefile);
 
 			if (savefile) {
 				savefile->LoadGame();

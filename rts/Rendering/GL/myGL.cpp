@@ -120,6 +120,8 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 
 void LoadStartPicture(const std::string& sidePref)
 {
+	if (startupTexture) 
+		return;
 	const string picDir = "bitmaps/loadpictures/";
 
 	string name = "";

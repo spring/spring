@@ -164,7 +164,7 @@ extern string stupidGlobalMapname;
 
 CGame* game = NULL;
 
-CR_BIND(CGame, (std::string(""), std::string(""), NULL));
+CR_BIND(CGame, (std::string(""), std::string(""), NULL, NULL));
 
 CR_REG_METADATA(CGame,(
 	CR_RESERVED(4),//r3927
@@ -200,7 +200,7 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
+CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSaveHandler *saveFile)
 : lastFrameTime(0),
   drawMode(notDrawing),
   drawSky(true),
@@ -399,7 +399,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 	modelParser = SAFE_NEW C3DModelParser();
 
  	ENTER_SYNCED;
- 	featureHandler->LoadFeaturesFromMap(CScriptHandler::Instance().chosenScript->loadGame);
+ 	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
  	pathManager = SAFE_NEW CPathManager();
 
  	delete defsParser;
@@ -488,7 +488,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic)
 
 	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
-	UnloadStartPicture();
+	if (!saveFile) UnloadStartPicture();
 	//sending your playername to the server indicates that you are finished loading
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 
@@ -1815,8 +1815,23 @@ bool CGame::ActionPressed(const Action& action,
 		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
 		net->SendData(pckt.Pack());
 	}
+	else if (cmd == "save") {// /save [-y ]<savename>
+		if (filesystem.CreateDirectory("Saves")) {
+			bool saveoverride = action.extra.find("-y ") == 0;
+			std::string savename(action.extra.c_str()+(saveoverride?3:0));
+			savename="Saves/"+savename+".ssf";
+			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
+				logOutput.Print("Saving game to %s\n",savename.c_str());
+				CLoadSaveHandler ls;
+				ls.mapName = stupidGlobalMapname;
+				ls.modName = modInfo.filename;
+				ls.SaveGame(savename);
+			} else {
+				logOutput.Print("File %s already exists(use /save -y to override)\n",savename.c_str());
+			}
+		}
+	}
 	else if (cmd == "atm" ||
-			cmd == "save" ||
 #ifdef DEBUG
 			cmd == "desync" ||
 #endif
@@ -2248,22 +2263,6 @@ void CGame::ActionRecieved(const Action& action, int playernum)
 						}
 					}
 				}
-			}
-		}
-	}
-	else if (action.command == "save ") {//.save [-y ]<savename>
-		if (filesystem.CreateDirectory("Saves")) {
-			bool saveoverride = action.extra.find("-y ") == 0;
-			std::string savename(action.extra.c_str()+(saveoverride?3:0));
-			savename="Saves/"+savename+".ssf";
-			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
-				logOutput.Print("Saving game to %s\n",savename.c_str());
-				CLoadSaveHandler ls;
-				ls.mapName = stupidGlobalMapname;
-				ls.modName = modInfo.filename;
-				ls.SaveGame(savename);
-			} else {
-				logOutput.Print("File %s allready exists(use /save -y to override)\n",savename.c_str());
 			}
 		}
 	}
