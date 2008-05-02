@@ -144,7 +144,7 @@ void CGameSetup::LoadStartPositions()
 			if (!zpos.empty())
 			{
 				gs->Team(a)->startPos.z = atoi(zpos.c_str());
-				startPos[a].y = gs->Team(a)->startPos.y;
+				startPos[a].z = gs->Team(a)->startPos.z;
 			}
 		}
 	}
