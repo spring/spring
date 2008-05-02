@@ -282,7 +282,7 @@ void CMobileCAI::RefuelIfNeeded()
 					owner->moveType->StopMoving();
 				}
 			}
-		} else if(owner->currentFuel < 
+		} else if(owner->currentFuel <
 				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel)
 				&& commandQue.empty() || commandQue.front().id == CMD_PATROL
 				|| commandQue.front().id == CMD_FIGHT) {
@@ -714,14 +714,14 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 
 		double diffLength2d = diff.Length2D();
-		
+
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
 		// also make sure that we're not locked in close-in/in-range state loop
 		// due to rotates invoked by in-range or out-of-range states
 		if (b2) {
 			if (!(tempOrder && owner->moveState == 0)
-				&& (diffLength2d * 1.4f > owner->maxRange 
+				&& (diffLength2d * 1.4f > owner->maxRange
 					- orderTarget->speed.SqLength()
 							/ owner->unitDef->maxAcc)
 				&& b4 && diff.dot(orderTarget->speed) < 0)
@@ -778,9 +778,16 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// in on target more
 		else if ((orderTarget->pos + owner->posErrorVector * 128).distance2D(goalPos)
 				> (10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
-			float3 fix = orderTarget->pos + owner->posErrorVector * 128;
+			// if the target isn't in LOS, go to its approximate position
+			// otherwise try to go precisely to the target
+			// this should fix issues with low range weapons (mainly melee)
+			float3 fix = orderTarget->pos +
+					(orderTarget->losStatus[owner->allyteam] & LOS_INLOS ?
+						float3(0.f,0.f,0.f) :
+						owner->posErrorVector * 128);
 			float3 norm = float3(fix - owner->pos).Normalize();
-			SetGoal(fix - norm*(orderTarget->radius*edgeFactor*0.8f), owner->pos);
+			float3 goal = fix - norm*(orderTarget->radius*edgeFactor*0.8f);
+			SetGoal(goal, owner->pos);
 			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
 				lastCloseInTry = gs->frameNum;
 		}
