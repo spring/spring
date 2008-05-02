@@ -1352,7 +1352,7 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	if(gs->Ally(team, attacker->team)){
+	if(gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)){
 		return;
 	}
 	if(lastAttacker && lastAttacker!=userTarget)
