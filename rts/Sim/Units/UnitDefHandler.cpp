@@ -32,8 +32,6 @@
 #include "System/TdfParser.h"
 #include "mmgr.h"
 
-CR_BIND(UnitDef, );
-
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
 

@@ -87,7 +87,6 @@ struct UnitModelDef
 
 struct UnitDef
 {
-	CR_DECLARE_STRUCT(UnitDef);
 	UnitDef() : valid(false) {}
 	~UnitDef();
 	S3DOModel* LoadModel(int team) const;

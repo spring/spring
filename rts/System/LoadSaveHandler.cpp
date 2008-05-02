@@ -66,16 +66,20 @@ static void SerializeString(creg::ISerializer& s, std::string& str)
 
 static void WriteString(std::ostream& s, std::string& str)
 {
-	for (int a=0;a<str.length();a++)
-		s << str[a];
-	s << (char)0;
+	char c;
+	for (int a=0;a<str.length();a++) {
+		c = str[a];
+		s.write(&c,sizeof(char));
+	}
+	c = 0;
+	s.write(&c,sizeof(char));
 }
 
 static void ReadString(std::istream& s, std::string& str)
 {
 	char c;
 	do {
-		s >> c;
+		s.read(&c,sizeof(char));
 		if (c) str += c;
 	} while (c != 0);
 }
