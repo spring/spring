@@ -1,3 +1,5 @@
+#include <string.h>
+#include <stdlib.h>
 #include "TestGlobalAI.h"
 #include "ExternalAI/aibase.h"
 

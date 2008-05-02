@@ -1,6 +1,7 @@
 #ifndef UNITDEF_H
 #define UNITDEF_H
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <map>

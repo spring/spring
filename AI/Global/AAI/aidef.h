@@ -2,7 +2,14 @@
 // 
 // standard headers 
 
-
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <stdio.h>
+#include <set>
+#include <list>
+#include <vector>
+#include <string>
 #include "ExternalAI/IAICheats.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
@@ -15,12 +22,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "AAIConfig.h"
-#include <set>
-#include <list>
-#include <vector>
-#include <stdio.h>
-#include <time.h>
-#include <string>
 
 
 #ifdef _MSC_VER

@@ -2,6 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <stdlib.h>
 #include "TestGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 #include "Sim/Units/UnitDef.h"

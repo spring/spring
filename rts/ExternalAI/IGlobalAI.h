@@ -1,6 +1,9 @@
 #ifndef IGLOBALAI_H
 #define IGLOBALAI_H
 
+#include <cstdlib>
+#include <cstring>
+
 #include "aibase.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "float3.h"
