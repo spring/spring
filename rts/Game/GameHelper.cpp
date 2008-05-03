@@ -709,8 +709,8 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 			CFeature* f = *ui;
 
 			if ((f->allyteam >= 0) && !gu->spectatingFullView &&
-			    (f->allyteam != gu->myAllyTeam) &&
-			    !loshandler->InLos(f->pos, gu->myAllyTeam)) {
+				(f->allyteam != gu->myAllyTeam) &&
+				!loshandler->InLos(f->pos, gu->myAllyTeam)) {
 				continue;
 			}
 			if (f->noSelect) {
