@@ -31,8 +31,8 @@
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
+#include "TdfParser.h"
 #include "mmgr.h"
-
 
 // msvc behaves really strange
 #if _MSC_VER
@@ -42,6 +42,8 @@ namespace std {
 }
 #endif
 
+const int springDefaultPort = 8452;
+
 CPreGame* pregame=0;
 
 extern Uint8 *keys;
@@ -49,6 +51,8 @@ extern bool globalQuit;
 std::string stupidGlobalMapname;
 
 CglList* CPreGame::showList = 0;
+std::string CPreGame::userScript;
+std::string CPreGame::userMap;
 
 CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 : server(server),
@@ -56,8 +60,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
   hasDemo(!demo.empty()),
   hasSave(!save.empty()),
   savefile(NULL),
-  gameData(0),
-  serverStartupData(0)
+  gameData(0)
 {
 	demoFile = gameSetup? gameSetup->demoName : demo;
 
@@ -80,27 +83,16 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 
 	if(server){
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-		serverStartupData = new GameData();
 		if(gameSetup){
-			CScriptHandler::SelectScript(gameSetup->scriptName);
-			SelectScript(gameSetup->scriptName);
-			if (!gameSetup->saveName.empty()) {
-				savefile = new CLoadSaveHandler();
-				savefile->LoadGameStartInfo(savefile->FindSaveFile(gameSetup->saveName.c_str()));
-			}
-			SelectMap(gameSetup->mapName);
-			SelectMod(gameSetup->baseMod);
+			StartServer(gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName);
 			state = WAIT_CONNECTING;
 		} else if (hasSave) {
 			savefile = new CLoadSaveHandler();
 			savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
-			CScriptHandler::SelectScript("Commanders");
-			SelectScript("Commanders");
-			SelectMap(gameSetup->mapName);
-			SelectMod(gameSetup->baseMod);
+			StartServer(gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName);
 			state = WAIT_CONNECTING;
 		} else {
-			ShowScriptList();
+			ShowMapList();
 			state = WAIT_ON_USERINPUT;
 		}
 	} else {
@@ -298,7 +290,7 @@ bool CPreGame::Update()
 				break;
 
 			configHandler.SetString("address",userInput);
-			net->InitClient(userInput.c_str(),8452,0, 0);
+			net->InitClient(userInput.c_str(),springDefaultPort,0, 0);
 			state = WAIT_CONNECTING;
 			// fall trough
 		}
@@ -308,16 +300,6 @@ bool CPreGame::Update()
 		}
 
 		case WAIT_CONNECTING:
-			if ((server || hasDemo) && !gameServer) {
-				good_fpu_control_registers("before CGameServer creation");
-				int myPort = gameSetup? gameSetup->hostport : 8452;
-				gameServer = new CGameServer(myPort, serverStartupData, gameSetup, demoFile);
-				if (gameSetup && gameSetup->autohostport > 0)
-					gameServer->AddAutohostInterface(gameSetup->autohostport);
-				gameServer->AddLocalClient();
-				good_fpu_control_registers("after CGameServer creation");
-			}
-
 			if (net->Connected())
 				state = WAIT_ON_GAMEDATA; // fall through
 			else
@@ -363,6 +345,83 @@ bool CPreGame::Update()
 	}
 
 	return true;
+}
+
+void CPreGame::StartServer(std::string map, std::string mod, std::string script)
+{
+	assert(!gameServer);
+	GameData* startupData = new GameData();
+	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
+	bool mapHasStartscript = false;
+	if (!map.empty())
+	{
+		// would be better to use MapInfo here, but this doesn't work
+		LoadMap(map); // map into VFS
+		std::string mapDefFile;
+		const std::string extension = map.substr(map.length()-3);
+		if (extension == "smf")
+			mapDefFile = std::string("maps/")+map.substr(0,map.find_last_of('.'))+".smd";
+		else if(extension == "sm3")
+			mapDefFile = string("maps/")+map;
+		else
+			throw std::runtime_error("CPreGame::StartServer(): Unknown extension: " + extension);
+
+		TdfParser mapDefParser(mapDefFile);
+		std::string mapWantedScript, scriptFile;
+		mapDefParser.GetDef(mapWantedScript, "", "MAP\\Script");
+		mapDefParser.GetDef(scriptFile, "", "MAP\\Scriptfile");
+		if (!scriptFile.empty())
+			CScriptHandler::Instance().LoadScriptFile(scriptFile);
+		if (!mapWantedScript.empty())
+		{
+			script = mapWantedScript;
+			mapHasStartscript = true;
+		}
+	}
+	startupData->SetScript(script);
+	// here we now the name of the script to use
+
+	try // to load the script 
+	{
+		CScriptHandler::SelectScript(script);
+		std::string scriptWantedMod;
+		scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
+		if (!scriptWantedMod.empty())
+			mod = scriptWantedMod;
+
+		LoadMod(mod);
+	}
+	catch (const std::runtime_error& err) // script not found, so it may be in the modarchive?
+	{
+		LoadMod(mod); // new map into VFS
+		CScriptHandler::SelectScript(script);
+	}
+	// make sure s is a modname (because the same mod can be in different archives on different computers)
+	mod = archiveScanner->ModArchiveToModName(mod);
+	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
+	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
+	
+	if (!mapHasStartscript)
+	{
+		std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
+		if (!mapFromScript.empty() && map != mapFromScript)
+		{
+			//TODO unload old map
+			LoadMap(mapFromScript, true);
+		}
+	}
+	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
+
+	if (gameSetup)
+		gameSetup->LoadStartPositions(); // only host needs to do this, because client will recieve startpos msg from server
+	
+	good_fpu_control_registers("before CGameServer creation");
+	int myPort = gameSetup? gameSetup->hostport : springDefaultPort;
+	gameServer = new CGameServer(myPort, startupData, gameSetup, demoFile);
+	if (gameSetup && gameSetup->autohostport > 0)
+		gameServer->AddAutohostInterface(gameSetup->autohostport);
+	gameServer->AddLocalClient();
+	good_fpu_control_registers("after CGameServer creation");
 }
 
 void CPreGame::UpdateClientNet()
@@ -502,7 +561,11 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	while ( (buf = scanner.GetData(static_cast<float>(INT_MAX))) ) {
 		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
-			serverStartupData = new GameData(*buf);
+			GameData *data = new GameData(*buf);
+			good_fpu_control_registers("before CGameServer creation");
+			gameServer = new CGameServer(springDefaultPort, data, gameSetup, demoName);
+			gameServer->AddLocalClient();
+			good_fpu_control_registers("after CGameServer creation");
 			delete buf;
 			break;
 		}
@@ -512,13 +575,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			throw content_error("End of demo reached and no game data found");
 		}
 	}
-}
-
-/** Create a CglList for selecting the script. */
-void CPreGame::ShowScriptList()
-{
-	CglList* list = CScriptHandler::Instance().GenList(SelectScript);
-	showList = list;
 }
 
 /** Create a CglList for selecting the map. */
@@ -548,6 +604,13 @@ void CPreGame::ShowMapList()
 	showList = list;
 }
 
+/** Create a CglList for selecting the script. */
+void CPreGame::ShowScriptList()
+{
+	CglList* list = CScriptHandler::Instance().GenList(SelectScript);
+	showList = list;
+}
+
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
 {
@@ -571,21 +634,6 @@ void CPreGame::ShowModList()
 	showList = list;
 }
 
-void CPreGame::SelectScript(std::string s)
-{
-	delete showList;
-	showList = 0;
-	assert(pregame->serverStartupData);
-	pregame->serverStartupData->SetScript(s);
-	
-	// if the script specify a map, use this and don't ask the user
-	std::string map = CScriptHandler::Instance().chosenScript->GetMapName();
-	if (map == "")
-		pregame->ShowMapList();
-	else
-		SelectMap(map);
-}
-
 void CPreGame::SelectMap(std::string s)
 {
 	if (s == "Random map") {
@@ -593,16 +641,16 @@ void CPreGame::SelectMap(std::string s)
 	}
 	delete showList;
 	showList = 0;
-	LoadMap(s);
-	if (gameSetup)
-		gameSetup->LoadStartPositions(); // only host needs to do this, because client will recieve startpos msg from server
-	pregame->serverStartupData->SetMap(s, archiveScanner->GetMapChecksum(s));
-	
-	std::string mod = CScriptHandler::Instance().chosenScript->GetModName();
-	if (mod == "")
-		pregame->ShowModList();
-	else
-		SelectMod(mod);
+	userMap = s;
+	pregame->ShowScriptList();
+}
+
+void CPreGame::SelectScript(std::string s)
+{
+	delete showList;
+	showList = 0;
+	userScript = s;
+	pregame->ShowModList();
 }
 
 void CPreGame::SelectMod(std::string s)
@@ -613,19 +661,15 @@ void CPreGame::SelectMod(std::string s)
 	}
 	delete showList;
 	showList = 0;
-	LoadMod(s);
-	// make sure s is a modname (because the same mod can be in different archives on different computers)
-	s = archiveScanner->ModArchiveToModName(s);
-	std::string modArchive = archiveScanner->ModNameToModArchive(s);
-	pregame->serverStartupData->SetMod(s, archiveScanner->GetModChecksum(modArchive));
-	pregame->state = WAIT_CONNECTING; // last thing to set, so start server now
+	pregame->StartServer(userMap, s, userScript);
+	pregame->state = WAIT_CONNECTING;
 }
 
-void CPreGame::LoadMap(const std::string& mapName)
+void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 {
 	static bool alreadyLoaded = false;
 	
-	if (!alreadyLoaded)
+	if (!alreadyLoaded || forceReload)
 	{
 		CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 		if (!f->FileExists()) {
@@ -668,9 +712,8 @@ void CPreGame::LoadMod(const std::string& modName)
 void CPreGame::GameDataRecieved(RawPacket* packet)
 {
 	gameData = new GameData(*packet);
-	logOutput << "Using script " << gameData->GetScript() << "\n";
-	CScriptHandler::SelectScript(gameData->GetScript());
 	
+	gs->SetRandSeed(gameData->GetRandomSeed());
 	logOutput << "Using map " << gameData->GetMap() << "\n";
 	stupidGlobalMapname = gameData->GetMap();
 	
@@ -678,6 +721,9 @@ void CPreGame::GameDataRecieved(RawPacket* packet)
 		net->GetDemoRecorder()->SetName(gameData->GetMap());
 	LoadMap(gameData->GetMap());
 	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());
+
+	logOutput << "Using script " << gameData->GetScript() << "\n";
+	CScriptHandler::SelectScript(gameData->GetScript());
 	
 	logOutput << "Using mod " << gameData->GetMod() << "\n";
 	LoadMod(gameData->GetMod());

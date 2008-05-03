@@ -13,6 +13,21 @@ namespace netcode {
 	class RawPacket;
 }
 
+/**
+ * @brief This controlls the game start
+ * 
+ * Before a game starts, this class does everything that needs to be done before.
+ * It basically goes like this:
+ * For servers:
+ * 1. Find out which map, script and mod to use
+ * 2. Start the server with this settings
+ * 3. continue with "For clients"
+ * 
+ * ForClients:
+ * 1. Connect to the server
+ * 2. Recieve GameData from server
+ * 3. Start the CGame with the information provided by server
+ * */
 class CPreGame : public CGameController
 {
 public:
@@ -24,6 +39,8 @@ public:
 	bool Update();
 
 private:
+	void StartServer(std::string map, std::string mod, std::string script);
+	
 	/// reads out map, mod and script from demos (with or without a gameSetupScript)
 	void ReadDataFromDemo(const std::string& demoName);
 
@@ -32,8 +49,8 @@ private:
 
 	CInfoConsole* infoConsole;
 
-	void ShowScriptList();
 	void ShowMapList();
+	void ShowScriptList();
 	void ShowModList();
 	static CglList* showList;
 	
@@ -41,9 +58,9 @@ private:
 	static void SelectScript(std::string s);
 	static void SelectMap(std::string s);
 	static void SelectMod(std::string s);
-	
+	static std::string userScript, userMap;
 	/// Load map and dependend archives into archive scanner
-	static void LoadMap(const std::string& mapName);
+	static void LoadMap(const std::string& mapName, const bool forceReload = false);
 	
 	/// Map all required archives depending on selected mod(s)
 	static void LoadMod(const std::string& modName);
@@ -69,9 +86,7 @@ private:
 	We won't start until we recieved this
 	*/
 	const GameData* gameData;
-	
-	/// all the GameData (script, map, mod and checksums) needed to start the server
-	GameData* serverStartupData;
+
 	std::string modArchive;
 	std::string demoFile;
 	CLoadSaveHandler *savefile;

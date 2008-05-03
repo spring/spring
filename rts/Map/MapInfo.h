@@ -51,6 +51,7 @@ public:
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {
 		std::string name;      ///< The filename as passed to the constructor.
+		std::string wantedScript;
 		std::string humanName; ///< "MAP\\Description"
 		float hardness;        ///< "MAP\\MapHardness"
 		bool  notDeformable;

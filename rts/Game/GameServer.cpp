@@ -1319,8 +1319,6 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	hisNewNumber = serverNet->AcceptIncomingConnection(hisNewNumber);
 
 	serverNet->SendSetPlayerNum((unsigned char)hisNewNumber, (unsigned char)hisNewNumber);
-	static const int pregameRandomSeed = rng();
-	serverNet->SendRandSeed(pregameRandomSeed, static_cast<int>(hisNewNumber));
 	serverNet->SendData(gameData->Pack(), hisNewNumber);
 
 	for (int a = 0; a < MAX_PLAYERS; ++a) {

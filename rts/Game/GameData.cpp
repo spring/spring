@@ -27,11 +27,12 @@ GameData::GameData(const netcode::RawPacket& pckt)
 	packet >> mapChecksum;
 	packet >> mod;
 	packet >> modChecksum;
+	packet >> randomSeed;
 }
 
 const netcode::RawPacket* GameData::Pack() const
 {
-	unsigned short size = 3 + 2*sizeof(unsigned) + map.size() + mod.size() + script.size() + 3;
+	unsigned short size = 3 + 2*sizeof(unsigned) + map.size() + mod.size() + script.size() + 4 + 3;
 	PackPacket* buffer = new PackPacket(size);
 	*buffer << (unsigned char)NETMSG_GAMEDATA;
 	*buffer << size;
@@ -40,6 +41,7 @@ const netcode::RawPacket* GameData::Pack() const
 	*buffer << mapChecksum;
 	*buffer << mod;
 	*buffer << modChecksum;
+	*buffer << randomSeed;
 	return buffer;
 }
 
@@ -58,4 +60,9 @@ void GameData::SetMod(const std::string& newMod, const unsigned checksum)
 {
 	mod = newMod;
 	modChecksum = checksum;
+}
+
+void GameData::SetRandomSeed(const unsigned seed)
+{
+	randomSeed = seed;
 }

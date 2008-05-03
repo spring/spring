@@ -340,16 +340,6 @@ CLuaBinder::CLuaBinder(void)
 	lastError = "";
 }
 
-bool CLuaBinder::LoadScript(const string& name)
-{
-	if (luaL_loadfile(luaState, name.c_str()) || lua_pcall(luaState, 0, 0, 0)) {
-		lastError = lua_tostring(luaState, -1);
-		return false;
-	}
-
-	return true;
-}
-
 bool CLuaBinder::LoadScript(const string& name, char* buffer, int size)
 {
 	if (luaL_loadbuffer(luaState, buffer, size, name.c_str()) || lua_pcall(luaState, 0, 0, 0)) {
