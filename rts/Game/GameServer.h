@@ -14,8 +14,6 @@
 #include "System/GlobalStuff.h"
 #include "System/UnsyncedRNG.h"
 #include "SFloat3.h"
-#include "Server/ServerLogHandler.h"
-#include "Server/ServerLog.h"
 
 class CBaseNetProtocol;
 class CDemoReader;
@@ -55,7 +53,7 @@ public:
 @brief Server class for game handling
 This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
 */
-class CGameServer : private ServerLog, public CommandReciever
+class CGameServer : public CommandReciever
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
@@ -88,8 +86,6 @@ public:
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 #endif
 	
-	ServerLogHandler log; //TODO make private and add public interface
-
 private:
 	/**
 	@brief catch commands from chat messages and handle them
