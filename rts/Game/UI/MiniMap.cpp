@@ -1062,9 +1062,11 @@ void CMiniMap::DrawForReal()
 
 	Projectile_List::iterator psi;
 	for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
-		CProjectile* p=*psi;
-		if((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
-		loshandler->InLos(p, gu->myAllyTeam) || gu->spectatingFullView) {
+		CProjectile* p = *psi;
+
+		if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
+			gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+
 			if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
 			} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
 				glBegin(GL_POINTS);
