@@ -7,6 +7,8 @@
 #include <set>
 #include <list>
 #include <cctype>
+
+#include <fstream>
 using namespace std;
 
 #include "LuaInclude.h"
@@ -33,6 +35,9 @@ using namespace std;
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
+
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/FileSystem.h"
 
 
 /******************************************************************************/
@@ -95,7 +100,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
-            
+
+	REGISTER_LUA_CFUNC(ExtractModArchiveFile);
 	return true;
 }
 
@@ -922,6 +928,52 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 	return 0;
 }
 
+
+
+int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
+{
+	bool ret = false;
+	const int args = lua_gettop(L);
+
+	if (args == 1) {
+		if (lua_isstring(L, 1)) {
+			std::string path(lua_tostring(L, 1));
+			CFileHandler fh(path, SPRING_VFS_MOD);
+
+			if (fh.FileExists()) {
+				std::string dname = filesystem.GetDirectory(path);
+				std::string fname = filesystem.GetFilename(path);
+
+				if (filesystem.CreateDirectory(dname)) {
+					int numBytes = fh.FileSize();
+					char* buffer = SAFE_NEW char[numBytes];
+
+					fh.Read(buffer, numBytes);
+
+					std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
+					fstr.write((const char*) buffer, numBytes);
+					fstr.close();
+
+					logOutput.Print("Extracted file \"%s\" to directory \"%s\"", fname.c_str(), dname.c_str());
+
+					delete[] buffer;
+					ret = true;
+				} else {
+					luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
+				}
+			} else {
+				luaL_error(L, "Path \"%s\" not found in mod archive", path.c_str());
+			}
+		} else {
+			luaL_error(L, "Argument to ExtractModArchiveFile(s) not a string");
+		}
+	} else {
+		luaL_error(L, "Incorrect number of arguments to ExtractModArchiveFile(s)");
+	}
+
+	lua_pushboolean(L, ret);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

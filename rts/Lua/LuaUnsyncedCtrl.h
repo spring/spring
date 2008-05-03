@@ -61,6 +61,8 @@ class LuaUnsyncedCtrl {
 		static int SetUnitNoDraw(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
+
+		static int ExtractModArchiveFile(lua_State* L);
 };
 
 
