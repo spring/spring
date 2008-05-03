@@ -234,6 +234,11 @@ void CNet::FlushNet()
 	}
 }
 
+void CNet::FlushNet(const unsigned connection)
+{
+	connections[connection]->Flush(true);
+}
+
 void CNet::Update()
 {
 	if (udplistener)

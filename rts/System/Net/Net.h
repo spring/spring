@@ -176,6 +176,7 @@ public:
 	@brief send all waiting data
 	*/
 	void FlushNet();
+	void FlushNet(const unsigned connection);
 	
 	/** 
 	@brief Do this from time to time

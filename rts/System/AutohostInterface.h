@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "Game/Server/ServerLog.h"
-
 namespace netcode {
 	class UDPConnectedSocket;
 }
@@ -13,7 +11,7 @@ namespace netcode {
 @brief Class to communicate with an autohost (or similar) using UDP over loopback
 @author Karl-Robert Ernst
 */
-class AutohostInterface : public ServerLog
+class AutohostInterface
 {
 public:
 	typedef unsigned char uchar;
@@ -37,8 +35,8 @@ public:
 	void SendPlayerChat(uchar playerNum, const std::string& msg) const;
 	void SendPlayerDefeated(uchar playerNum) const;
 	
-	virtual void Message(const std::string& message);
-	virtual void Warning(const std::string& message);
+	void Message(const std::string& message);
+	void Warning(const std::string& message);
 	
 	/**
 	@brief Recieve a chat message from the autohost

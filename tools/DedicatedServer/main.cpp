@@ -3,7 +3,6 @@
 #include "GameData.h"
 #include "System/Platform/FileSystem.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "EventPrinter.h"
 
 #include <string>
 #include <iostream>
@@ -21,7 +20,6 @@ int main(int argc, char *argv[])
 	FileSystemHandler::Initialize(false);
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
-	EventPrinter ep;
 
 	if (argc > 1)
 	{
@@ -43,7 +41,6 @@ int main(int argc, char *argv[])
 		data->SetScript(gameSetup->scriptName);
 		
 		server = new CGameServer(gameSetup->hostport, data, gameSetup);
-		server->log.Subscribe((ServerLog*)&ep);
 		
 		if (gameSetup->autohostport > 0)
 			server->AddAutohostInterface(gameSetup->autohostport);
