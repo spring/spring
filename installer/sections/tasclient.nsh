@@ -8,6 +8,7 @@
   CreateDirectory "$INSTDIR\lobby\cache"
   CreateDirectory "$INSTDIR\lobby\cache\online"
   CreateDirectory "$INSTDIR\lobby\cache\maps"
+  CreateDirectory "$INSTDIR\lobby\cache\mods"
   CreateDirectory "$INSTDIR\lobby\var"
   CreateDirectory "$INSTDIR\lobby\logs"
 
@@ -20,6 +21,7 @@
   Delete "$INSTDIR\lobby\sidepics\core.bmp"
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
   RmDir "$INSTDIR\lobby\cache\maps"
+  RmDir "$INSTDIR\lobby\cache\mods"
   RmDir "$INSTDIR\lobby\cache\online"
   RmDir "$INSTDIR\lobby\cache"
   RmDir "$INSTDIR\lobby\logs"

@@ -105,7 +105,9 @@ Function .onInit
   ;SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
   
   ;Pop $0 ; Delete variable $0
-  !insertmacro SetSectionFlag 0 16 ; make the core section read only
+  ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
+    !insertmacro SetSectionFlag 0 16 ; make the core section read only
+  ${EndIf}
   ;!insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
   ${If} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro UnselectSection 3 ; unselect default section (3) by default
@@ -133,13 +135,17 @@ Function .onInit
   !insertmacro UnselectSection 15 ; unselect CA section (15) by default
 FunctionEnd
 
-; For CA: BEGIN
+; For CA and Evolution: BEGIN
 
 Var CA
+Var EVO
 
 Function  .onGUIEnd
 ${If} $CA == 'true'
   Call LaunchUpdater
+${EndIf}
+${If} $EVO == 'true'
+  Call LaunchEvoUpdater
 ${EndIf}
 FunctionEnd
 
@@ -195,7 +201,19 @@ false:
   next:
 FunctionEnd
 
-; For CA: END
+Function LaunchEvoUpdater
+  MessageBox MB_YESNO \
+  "Before you can play Evolution, the Evolution Updater will need to fetch the mod. Do you wish to do so now?" \
+  IDYES true IDNO false
+true:
+  Exec '"$INSTDIR\mods\Evolution_Updater.bat"'
+  Goto next
+false:
+  next:
+FunctionEnd
+
+; For CA and Evolution: END
+
 
 ;Three functions which check to make sure OTA Content is installed before installing Mods that depend on it.
 Function CheckTATextures
@@ -323,7 +341,7 @@ SectionGroup "Mods"
 	!undef INSTALL
 	SectionEnd
 	
-	Section "EvolutionRTS Chapter 1" SEC_EVOLUTION
+	Section "Evolution RTS" SEC_EVOLUTION
 	!define INSTALL
 	AddSize 38700
 	!include "sections\evolution.nsh"
