@@ -697,7 +697,7 @@ void CArchiveScanner::CheckMod(const std::string& root, unsigned checksum)
 			"Your mod (checksum 0x%x) differs from the host's mod (checksum 0x%x).\n"
 			"This may be caused by a missing archive, a corrupted download, or there may even\n"
 			"be 2 different versions in circulation. Make sure you and the host have installed\n"
-			"the chosen mod and its dependencies and consider redownloading the mod.\n"
+			"the chosen mod and its dependencies and consider redownloading the mod.\n",
 			localChecksum, checksum);
 
 		throw content_error(msg);
@@ -715,7 +715,7 @@ void CArchiveScanner::CheckMap(const std::string& mapName, unsigned checksum)
 			"Your map (checksum 0x%x) differs from the host's map (checksum 0x%x).\n"
 			"This may be caused by a missing archive, a corrupted download, or there may even\n"
 			"be 2 different versions in circulation. Make sure you and the host have installed\n"
-			"the chosen map and its dependencies and consider redownloading the mod.\n"
+			"the chosen map and its dependencies and consider redownloading the mod.\n",
 			localChecksum, checksum);
 
 		throw content_error(msg);
