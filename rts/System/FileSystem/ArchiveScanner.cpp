@@ -689,28 +689,36 @@ unsigned int CArchiveScanner::GetMapChecksum(const std::string& mapName)
 /** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMod(const std::string& root, unsigned checksum)
 {
-	unsigned local = GetModChecksum(root);
-	if (local != checksum) {
-		throw content_error(
-				"Your mod differs from the host's mod. This may be caused by a\n"
-				"missing archive, a corrupted download, or there may even be\n"
-				"2 different versions in circulation. Make sure you and the host\n"
-				"have installed the chosen mod and it's dependencies and\n"
-				"consider redownloading the mod.");
+	unsigned localChecksum = GetModChecksum(root);
+	if (localChecksum != checksum) {
+		char msg[1024];
+		sprintf(
+			msg,
+			"Your mod (checksum 0x%x) differs from the host's mod (checksum 0x%x).\n"
+			"This may be caused by a missing archive, a corrupted download, or there may even\n"
+			"be 2 different versions in circulation. Make sure you and the host have installed\n"
+			"the chosen mod and its dependencies and consider redownloading the mod.\n"
+			localChecksum, checksum);
+
+		throw content_error(msg);
 	}
 }
 
 /** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMap(const std::string& mapName, unsigned checksum)
 {
-	unsigned local = GetMapChecksum(mapName);
-	if (local != checksum) {
-		throw content_error(
-				"Your map differs from the host's map. This may be caused by a\n"
-				"missing archive, a corrupted download, or there may even be\n"
-				"2 different versions in circulation. Make sure you and the host\n"
-				"have installed the chosen map and it's dependencies and\n"
-				"consider redownloading the map.");
+	unsigned localChecksum = GetMapChecksum(mapName);
+	if (localChecksum != checksum) {
+		char msg[1024];
+		sprintf(
+			msg,
+			"Your map (checksum 0x%x) differs from the host's map (checksum 0x%x).\n"
+			"This may be caused by a missing archive, a corrupted download, or there may even\n"
+			"be 2 different versions in circulation. Make sure you and the host have installed\n"
+			"the chosen map and its dependencies and consider redownloading the mod.\n"
+			localChecksum, checksum);
+
+		throw content_error(msg);
 	}
 }
 
