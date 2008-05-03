@@ -426,6 +426,11 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 
 void CPreGame::UpdateClientNet()
 {
+	if (gameData)
+	{
+		logOutput.Print("Warning: game should have started before");
+		return;
+	}
 	if (!net->IsActiveConnection())
 	{
 		logOutput.Print("Server not reachable");
@@ -438,109 +443,16 @@ void CPreGame::UpdateClientNet()
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
-
-			case NETMSG_GAMEDATA: {
-				GameDataRecieved(packet);
-				break;
-			}
-
-			case NETMSG_MAPDRAW: {
-			} break;
-
-			case NETMSG_RANDSEED: {
-				gs->SetRandSeed(*((unsigned int*)&inbuf[1]));
-				break;
-			}
-
-			case NETMSG_SYSTEMMSG:
-			case NETMSG_CHAT: {
-				// int player = inbuf[inbufpos + 2];
-				string s = (char*) (inbuf + 3);
-				logOutput.Print(s);
-			} break;
-
-			case NETMSG_STARTPOS: {
-				// copied from CGame
-				// unsigned player = inbuf[1];
-				int team = inbuf[2];
-				if(team>=gs->activeTeams || team<0 || !gameSetup){
-					logOutput.Print("Got invalid team num %i in startpos msg",team);
-				} else {
-					if(inbuf[3]!=2)
-						gameSetup->readyTeams[team]=!!inbuf[3];
-					gs->Team(team)->startPos.x=*(float*)&inbuf[4];
-					gs->Team(team)->startPos.y=*(float*)&inbuf[8];
-					gs->Team(team)->startPos.z=*(float*)&inbuf[12];
-				}
-				break;
-			}
-
 			case NETMSG_SETPLAYERNUM: {
 				gu->myPlayerNum = inbuf[1];
 				logOutput.Print("Became player %i", gu->myPlayerNum);
 			} break;
-
-			case NETMSG_PLAYERNAME: {
-				gs->players[inbuf[2]]->playerName = (char*) (inbuf + 3);
-				gs->players[inbuf[2]]->readyToStart = true;
-				gs->players[inbuf[2]]->active = true;
-				if (net->GetDemoRecorder())
-					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
-			} break;
-
-			case NETMSG_QUIT: {
-				globalQuit = true;
+			case NETMSG_GAMEDATA: {
+				GameDataRecieved(packet);
+				delete packet;
+				return;
 				break;
 			}
-
-			case NETMSG_USER_SPEED: {
-			} break;
-			case NETMSG_INTERNAL_SPEED: {
-			} break;
-
-			case NETMSG_SENDPLAYERSTAT: {
-			} break;
-			
-			case NETMSG_TEAM: {
-				const int player = (int)inbuf[1];
-				const unsigned char action = inbuf[2];
-
-				switch (action)
-				{
-					case TEAMMSG_SELFD: {
-						break;
-					}
-					case TEAMMSG_GIVEAWAY: {
-						break;
-					}
-					case TEAMMSG_RESIGN: {
-						break;
-					}
-					case TEAMMSG_JOIN_TEAM: {
-						//TODO is this enought?
-						int newTeam = int(inbuf[3]);
-						gs->players[player]->team = newTeam;
-						if (gs->Team(newTeam)->leader == -1)
-							gs->Team(newTeam)->leader = player;
-						break;
-					}
-					default: {
-						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
-					}
-				}
-				break;
-			}
-
-			case NETMSG_PAUSE: {
-				// these can get into the network stream here -- Kloot
-				int playerNum = (int) inbuf[1];
-				bool paused = !!inbuf[2];
-				logOutput.Print(paused? "player %i paused the game": "player %i unpaused the game", playerNum);
-			} break;
-
-			case NETMSG_PLAYERINFO:
-				break;
-
 			default: {
 				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(inbuf[0]));
 				break;
