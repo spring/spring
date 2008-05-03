@@ -277,13 +277,11 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 {
 	const float groundLength = ground->LineGroundCol(start, start + dir * length);
 
-//	logOutput.Print("gl %f",groundLength);
 	if ((length > (groundLength + 200.0f)) && (groundLength > 0.0f)) {
 		//need to add some cause we take the backside of the unit sphere;
 		length = groundLength + 200.0f;
 	}
 
-//	float minLength = length;
 	hit = 0;
 
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
@@ -298,10 +296,9 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				continue;
 			}
 
-			if((unit->allyteam == gu->myAllyTeam) ||
+			if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView ||
 			   (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
-			   (useRadar && radarhandler->InRadar(*ui, gu->myAllyTeam)) ||
-				 gu->spectatingFullView){
+			   (useRadar && radarhandler->InRadar(*ui, gu->myAllyTeam))) {
 				float3 pos;
 
 				if (gu->spectatingFullView) {
