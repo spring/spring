@@ -35,7 +35,9 @@
   File "..\game\LuaUI\Icons\hemi.png"
   SetOutPath "$INSTDIR\LuaUI\"
   File "..\game\LuaUI\loadmodel.lua"
+${IfNot} ${FileExists} "$INSTDIR\LuaUI\ctrlpanel.txt"
   File "..\game\LuaUI\ctrlpanel.txt"
+${EndIf}
   File "..\game\LuaUI\fonts.lua"
   File "..\game\LuaUI\savetable.lua"
   File "..\game\LuaUI\debug.lua"

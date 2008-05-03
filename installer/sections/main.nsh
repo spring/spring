@@ -126,6 +126,12 @@ ${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7"
 	     "http://installer.clan-sy.com/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
 ${EndIf}
 
+; Fix small divide desync
+${If} ${FileExists} "$INSTDIR\maps\SmallDivide.sd7"
+  Delete "$INSTDIR\maps\SmallDivide.sd7"
+    inetc::get \
+	     "http://installer.clan-sy.com/maps/SmallDivide.sd7" "$INSTDIR\maps\SmallDivide.sd7" 
+${EndIf}
 !else
 
   ; Main files
