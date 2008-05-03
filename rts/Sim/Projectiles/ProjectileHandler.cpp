@@ -565,12 +565,14 @@ void CProjectileHandler::DrawShadowPass(void)
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, projectileShadowVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
-	for(psi=ps.begin();psi != ps.end();++psi){
-		if((loshandler->InLos(*psi,gu->myAllyTeam) || gu->spectatingFullView ||
-		   ((*psi)->owner && gs->Ally((*psi)->owner->allyteam,gu->myAllyTeam)))){
-			if((*psi)->s3domodel)
+
+	for (psi = ps.begin(); psi != ps.end(); ++psi) {
+		if ((gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
+			((*psi)->owner && gs->Ally((*psi)->owner->allyteam, gu->myAllyTeam)))) {
+
+			if ((*psi)->s3domodel)
 				(*psi)->DrawUnitPart();
-			if((*psi)->castShadow){
+			if ((*psi)->castShadow){
 				struct projdist tmp;
 				tmp.proj = *psi;
 				distlist.push_back(tmp);
