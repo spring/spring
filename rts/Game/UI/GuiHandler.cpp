@@ -2905,7 +2905,7 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
 	const float xPos = b.x2 - textBorder - (fontScale * tWidth) - 0.002f;
 	const float yPos = b.y1 - textBorder - (fontScale * tHeight) - 0.006f;
-	
+
 	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
 }
 
@@ -3049,7 +3049,8 @@ void CGuiHandler::DrawButtons()
 			if (!usedTexture || !onlyTexture) {
 				// command name (or parameter)
 				std::string toPrint = cmdDesc.name;
-				if (cmdDesc.type == CMDTYPE_ICON_MODE) {
+				if (cmdDesc.type == CMDTYPE_ICON_MODE
+						&& cmdDesc.params.size() >= 1) {
 					const int opt = atoi(cmdDesc.params[0].c_str()) + 1;
 					if (opt < cmdDesc.params.size()) {
 						toPrint = cmdDesc.params[opt];
