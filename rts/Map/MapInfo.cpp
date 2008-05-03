@@ -66,6 +66,7 @@ std::string CMapInfo::GetTDFName(const std::string& mapname)
 void CMapInfo::ReadGlobal()
 {
 	map.humanName = mapDefParser->SGetValueDef(map.name, "MAP\\Description");
+	map.wantedScript = mapDefParser->SGetValueDef(map.wantedScript, "MAP\\Description");
 
 	mapDefParser->GetTDef(map.hardness, 100.0f, "MAP\\MapHardness");
 	map.notDeformable = mapDefParser->SGetValueDef("0", "MAP\\NotDeformable") != "0";

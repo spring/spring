@@ -21,6 +21,7 @@ public:
 	CglList* GenList(ListSelectCallback callb);
 
 	void AddScript(std::string name,CScript* s);
+	void LoadScriptFile(const std::string& file);
 
 	static CScriptHandler& Instance();
 
