@@ -275,12 +275,16 @@ void CMissileProjectile::Update(void)
 			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
 		}
 	} else {
-		// only when TTL <= 0 do projectiles
-		// get influenced by gravity and drag
-		speed *= 0.995f;
-		speed.y += mapInfo->map.gravity;
-		dir = speed;
-		dir.Normalize();
+		if (weaponDef->selfExplode) {
+			Collision();
+		} else {
+			// only when TTL <= 0 do projectiles
+			// get influenced by gravity and drag
+			speed *= 0.995f;
+			speed.y += mapInfo->map.gravity;
+			dir = speed;
+			dir.Normalize();
+		}
 	}
 
 	pos += speed;
