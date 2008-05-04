@@ -87,8 +87,8 @@ class CCommandQueue {
 
 	private:
 		std::deque<Command> queue;
-		int tagCounter;
 		QueueType queueType;
+		int tagCounter;
 };
 
 

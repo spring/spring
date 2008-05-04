@@ -415,8 +415,8 @@ struct BuildInfo
 	void FillCmd(Command& c) const;
 
 	const UnitDef* def;
-	int buildFacing;
 	float3 pos;
+	int buildFacing;
 };
 
 
