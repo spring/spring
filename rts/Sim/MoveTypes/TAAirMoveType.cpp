@@ -687,9 +687,6 @@ void CTAAirMoveType::UpdateMoveRate()
 void CTAAirMoveType::Update()
 {
 	float3& pos = owner->pos;
-	SyncedFloat3& rightdir = owner->rightdir;
-	SyncedFloat3& frontdir = owner->frontdir;
-	SyncedFloat3& updir = owner->updir;
 	float3& speed = owner->speed;
 
 	// This is only set to false after the plane has finished constructing
@@ -820,8 +817,7 @@ void CTAAirMoveType::Update()
 	// Turn and bank and move
 	UpdateHeading();
 	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);			// updates dirs
-	owner->midPos = pos + frontdir * owner->relMidPos.z + updir * owner->relMidPos.y
-			+ rightdir * owner->relMidPos.x;
+	owner->UpdateMidPos();
 
 	// Push other units out of the way
 	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
@@ -844,20 +840,15 @@ void CTAAirMoveType::Update()
 
 					if ((*ui)->mass >= 100000 || (*ui)->immobile) {
 						pos -= dif * (dist - totRad);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z
-								+ owner->updir * owner->relMidPos.y
-								+ owner->rightdir * owner->relMidPos.x;
+						owner->UpdateMidPos();
 						owner->speed *= 0.99f;
 					} else {
 						float part = owner->mass / (owner->mass + (*ui)->mass);
 						pos -= dif * (dist - totRad) * (1 - part);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z
-								+ owner->updir * owner->relMidPos.y
-								+ owner->rightdir * owner->relMidPos.x;
+						owner->UpdateMidPos();
 						CUnit* u = (CUnit*) (*ui);
 						u->pos += dif * (dist - totRad) * (part);
-						u->midPos = u->pos + u->frontdir * u->relMidPos.z
-								+ u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+						u->UpdateMidPos();
 						float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
 						owner->speed += dif * colSpeed * (1 - part);
 						u->speed -= dif * colSpeed * (part);

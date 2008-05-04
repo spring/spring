@@ -358,7 +358,7 @@ void CGroundMoveType::Update()
 			owner->pos.y = wh;
 
 		owner->speed = owner->pos-oldPos;
-		owner->midPos = owner->pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+		owner->UpdateMidPos();
 		oldPos = owner->pos;
 
 		if (groundDecals && owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
@@ -1427,7 +1427,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 					// push the blocking unit out of the way
 					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					u->pos += dif * (part);
-					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+					u->UpdateMidPos();
 				}
 
 				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
@@ -1493,7 +1493,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 					// push the blocking unit out of the way
 					// FIXME CAN PLACE OTHER PARTY IN BUILDING
 					c->pos += dif * (part);
-					u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+					u->UpdateMidPos();
 				}
 
 				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {

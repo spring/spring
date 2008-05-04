@@ -355,9 +355,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	}
 
 	pos = newPos;
-	midPos = pos + (frontdir * relMidPos.z) +
-	               (updir    * relMidPos.y) +
-	               (rightdir * relMidPos.x);
+	UpdateMidPos();
 
 	if (building && unitDef->useBuildingGroundDecal) {
 		groundDecals->AddBuilding(building);
@@ -382,6 +380,48 @@ void CUnit::ForcedSpin(const float3& newDir)
 	ForcedMove(pos); // lazy, don't need to update the quadfield, etc...
 }
 
+
+void CUnit::SetFront(const SyncedFloat3& newDir)
+{
+	frontdir = newDir;
+	frontdir.Normalize();
+	rightdir = frontdir.cross(updir);
+	rightdir.Normalize();
+	updir = rightdir.cross(frontdir);
+	updir.Normalize();
+	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+	UpdateMidPos();
+}
+
+void CUnit::SetUp(const SyncedFloat3& newDir)
+{
+	updir = newDir;
+	updir.Normalize();
+	frontdir = updir.cross(rightdir);
+	frontdir.Normalize();
+	rightdir = frontdir.cross(updir);
+	rightdir.Normalize();
+	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+	UpdateMidPos();
+}
+
+void CUnit::SetRight(const SyncedFloat3& newDir)
+{
+	rightdir = newDir;
+	rightdir.Normalize();
+	updir = rightdir.cross(frontdir);
+	updir.Normalize();
+	frontdir = updir.cross(rightdir);
+	frontdir.Normalize();
+	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+	UpdateMidPos();
+}
+
+void CUnit::UpdateMidPos()
+{
+	midPos = pos + (frontdir * relMidPos.z) + (updir * relMidPos.y)
+		+ (rightdir * relMidPos.x);
+}
 
 void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
 {

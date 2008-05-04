@@ -32,6 +32,7 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	reservedLandingPos(-1,-1,-1),
 	wantedHeight(80)
 {
+	useHeading = false;
 }
 
 AAirMoveType::~AAirMoveType()

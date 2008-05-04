@@ -65,9 +65,7 @@ void CTransportUnit::Update()
 		                         (rightdir * relPos.x);
 //		pos.y-=ti->unit->radius;
 		ti->unit->pos = pos;
-		ti->unit->midPos = ti->unit->pos + (ti->unit->frontdir * ti->unit->relMidPos.z) +
-		                                   (ti->unit->updir    * ti->unit->relMidPos.y) +
-		                                   (ti->unit->rightdir * ti->unit->relMidPos.x);
+		ti->unit->UpdateMidPos();
 		if (unitDef->holdSteady) {
 			ti->unit->heading  = heading;
 			ti->unit->updir    = updir;

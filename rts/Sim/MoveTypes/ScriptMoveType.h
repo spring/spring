@@ -42,7 +42,6 @@ class CScriptMoveType : public AMoveType
 		void LeaveTransport(void) {};
 
 	protected:
-		void CalcMidPos();
 		void CalcDirections();
 		void TrackSlope();
 		void CheckLimits();

@@ -106,18 +106,6 @@ CScriptMoveType::~CScriptMoveType(void)
 	}
 }
 
-
-inline void CScriptMoveType::CalcMidPos()
-{
-	const float3& pos = owner->pos;
-	const float3& pr = owner->relMidPos;
-	const float3& df = owner->frontdir;
-	const float3& du = owner->updir;
-	const float3& dr = owner->rightdir;
-	owner->midPos = pos + (df * pr.z) + (du * pr.y) + (dr * pr.x);
-}
-
-
 inline void CScriptMoveType::CalcDirections()
 {
 	CMatrix44f matrix;
@@ -224,7 +212,7 @@ void CScriptMoveType::Update()
 		TrackSlope();
 	}
 
-	CalcMidPos();
+	owner->UpdateMidPos();
 
 	// don't need the rest if the pos hasn't changed
 	if (oldPos == owner->pos) {

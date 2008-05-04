@@ -305,7 +305,7 @@ EndNormalControl:
 
 					if ((*ui)->immobile) {
 						pos -= dif * (dist - totRad);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->UpdateMidPos();
 						owner->speed *= 0.99f;
 						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
 						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
@@ -314,10 +314,10 @@ EndNormalControl:
 					} else {
 						float part = owner->mass / (owner->mass + (*ui)->mass);
 						pos -= dif * (dist - totRad) * (1 - part);
-						owner->midPos = pos + owner->frontdir * owner->relMidPos.z + owner->updir * owner->relMidPos.y + owner->rightdir * owner->relMidPos.x;
+						owner->UpdateMidPos();
 						CUnit* u = (CUnit*)(*ui);
 						u->pos += dif * (dist - totRad) * (part);
-						u->midPos = u->pos + u->frontdir * u->relMidPos.z + u->updir * u->relMidPos.y + u->rightdir * u->relMidPos.x;
+						u->UpdateMidPos();
 						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
 						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
 						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
@@ -817,7 +817,7 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 	owner->updir = owner->rightdir.cross(owner->frontdir);
 
 	pos += speed;
-	owner->midPos = pos + (owner->frontdir * owner->relMidPos.z) + (owner->updir * owner->relMidPos.y) + (owner->rightdir * owner->relMidPos.x);
+	owner->UpdateMidPos();
 }
 
 
@@ -910,7 +910,7 @@ void CAirMoveType::UpdateLanding(void)
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
 
-	owner->midPos = pos + (frontdir * owner->relMidPos.z) + (updir * owner->relMidPos.y) + (rightdir * owner->relMidPos.x);
+	owner->UpdateMidPos();
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1) {
@@ -1012,7 +1012,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
 
-	owner->midPos = pos + frontdir * owner->relMidPos.z + updir * owner->relMidPos.y + rightdir * owner->relMidPos.x;
+	owner->UpdateMidPos();
 
 #ifdef DEBUG_AIRCRAFT
 	if(selectedUnits.selectedUnits.find(this)!=selectedUnits.selectedUnits.end()){
