@@ -13,6 +13,7 @@
 #include "FileHandler.h"
 #include "Platform/FileSystem.h"
 #include "TdfParser.h"
+#include "LogOutput.h"
 #include "mmgr.h"
 
 // fix for windows
@@ -670,7 +671,9 @@ unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 
 	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
 	{
-		checksum ^= GetArchiveChecksum(*i);
+		unsigned tmp = GetArchiveChecksum(*i);
+		logOutput.Print("mod checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
+		checksum ^= tmp;
 	}
 	return checksum;
 }
@@ -681,8 +684,11 @@ unsigned int CArchiveScanner::GetMapChecksum(const std::string& mapName)
 	unsigned int checksum = 0;
 	std::vector<std::string> ars = GetArchivesForMap(mapName);
 
-	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		checksum ^= GetArchiveChecksum(*i);
+	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+		unsigned tmp = GetArchiveChecksum(*i);
+		logOutput.Print("map checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
+		checksum ^= tmp;
+	}
 	return checksum;
 }
 
