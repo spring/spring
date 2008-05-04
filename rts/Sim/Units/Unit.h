@@ -81,6 +81,9 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
+	void SetFront(const SyncedFloat3& newDir);
+	void SetUp(const SyncedFloat3& newDir);
+	void SetRight(const SyncedFloat3& newDir);
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
 
@@ -114,6 +117,8 @@ public:
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
+	
+	void UpdateMidPos();
 
 	bool IsNeutral() const {
 		return ((gs->useLuaGaia && team == gs->gaiaTeamID) || (team == MAX_TEAMS - 1) || neutral);
