@@ -7,9 +7,11 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "AAI.h"
+#include <set>
 #include <math.h>
 #include <stdio.h>
+
+#include "AAI.h"
 
 
 AAI::AAI()
@@ -73,14 +75,7 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable();
 
-	delete am;
-	delete brain;
-	delete execute;
-	delete ut;
-	delete af;
-	delete map;
-	delete bt;
-	
+		
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
 	{
@@ -90,7 +85,13 @@ AAI::~AAI()
 		}
 	}
 
-//	delete [] group_list;
+	delete am;
+	delete brain;
+	delete execute;
+	delete ut;
+	delete af;
+	delete map;
+	delete bt;
 
 	fclose(file);
 }
@@ -156,8 +157,8 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	execute = new AAIExecute(this, brain);
 
 	// create unit groups
-//	group_list = new list<AAIGroup*>[MOBILE_CONSTRUCTOR+1];
 	group_list.resize(MOBILE_CONSTRUCTOR+1);
+
 	// init airforce manager
 	af = new AAIAirForceManager(this, cb, bt);
 
@@ -188,13 +189,13 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 		cat =  bt->units_static[def->id].category;
 	else
 		cat = UNKNOWN;
-
-	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT) 
-		execute->CheckFallBack(damaged, def->id);
 	
 	// known attacker
 	if(attacker >= 0)
 	{
+		if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT) 
+			execute->CheckFallBack(damaged, def->id);
+
 		att_def = cb->GetUnitDef(attacker);
 
 		// filter out friendly fire
@@ -245,10 +246,10 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 			ut->units[damaged].cons->Retreat(att_cat);
 		
 		// building has been attacked
-		if(cat <= METAL_MAKER)
-			execute->DefendUnitVS(damaged, def, att_cat, NULL, 115);
-		else if(ut->IsBuilder(damaged))
-			execute->DefendUnitVS(damaged, def, att_cat, NULL, 110);
+		//if(cat <= METAL_MAKER)
+		//	execute->DefendUnitVS(damaged, def, att_cat, NULL, 115);
+		//else if(ut->IsBuilder(damaged))
+		//	execute->DefendUnitVS(damaged, def, att_cat, NULL, 110);
 	}
 }
 
@@ -658,17 +659,9 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			{
 				// look for a safer rallypoint if units get killed on their way 
 				if(ut->units[unit].status == HEADING_TO_RALLYPOINT)
-				{
-					float3 pos = execute->GetRallyPoint(category, 1, 1, 10);
-
-					if(pos.x > 0)
-						ut->units[unit].group->rally_point = pos;
-				}
-
-				if(ut->units[unit].group)
-					ut->units[unit].group->RemoveUnit(unit, attacker);
-				else
-					fprintf(file, "ERROR: tried to remove %s but group not found\n", bt->unitList[def->id-1]->name.c_str());		
+					ut->units[unit].group->GetNewRallyPoint();
+					
+				ut->units[unit].group->RemoveUnit(unit, attacker);		
 			}
 			// builder 
 			else if(bt->IsBuilder(def->id))
@@ -803,24 +796,14 @@ void AAI::UnitIdle(int unit)
 	{
 		if(ut->units[unit].cons->assistance < 0 && ut->units[unit].cons->construction_unit_id < 0 )
 		{	
-			/*if(!ut->units[unit].cons->factory)
-			{
-				char c[120];
-
-				if(ut->units[unit].cons->construction_unit_id == -1)
-					sprintf(c, "%s / %i is idle\n", bt->unitList[ut->units[unit].cons->def_id-1]->humanName.c_str(), unit);
-				else
-					sprintf(c, "%s is idle building %s\n", bt->unitList[ut->units[unit].cons->def_id-1]->humanName.c_str(), bt->unitList[ut->units[unit].cons->construction_def_id-1]->humanName.c_str());
-
-				cb->SendTextMsg(c,0);
-			}*/
+			ut->SetUnitStatus(unit, UNIT_IDLE);
 
 			ut->units[unit].cons->Idle();
 
 			if(ut->constructors.size() < 4)
 				execute->CheckConstruction();
 
-			ut->SetUnitStatus(unit, UNIT_IDLE);
+			
 		}
 	}
 	// idle combat units will report to their groups
@@ -831,28 +814,10 @@ void AAI::UnitIdle(int unit)
 	}
 	else
 		ut->SetUnitStatus(unit, UNIT_IDLE);
-
 }
 
 void AAI::UnitMoveFailed(int unit) 
-{
-	// not a good solution at all, hopefully not necessary in the future due to bug fixes 
-	// in the path finding routines
-	/*float3 pos = cb->GetUnitPos(unit);
-
-	int x = pos.x/map->xSectorSize;
-	int y = pos.z/map->ySectorSize;
-	
-	if(x < 0 || y < 0 || x >= map->xSectors || y >= map->ySectors)
-		return;
-
-	pos = map->sector[x][y].GetCenter();
-	pos.x += rand()%4 * map->xSectorSize;
-	pos.z += rand()%4 * map->ySectorSize;
-
-	execute->moveUnitTo(unit, &pos);*/
-
-	
+{	
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	if(ut->units[unit].cons)
@@ -874,8 +839,6 @@ void AAI::UnitMoveFailed(int unit)
 			}
 		}
 	}
-
-
 }
 
 void AAI::EnemyEnterLOS(int enemy) {}
@@ -931,7 +894,7 @@ void AAI::Update()
 	}
 	
 	// update groups
-	if(!(tick%219))
+	if(!(tick%169))
 	{
 		for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); category++)
 		{
@@ -1024,17 +987,17 @@ void AAI::Update()
 	}
 
 	// recheck rally points
-	if(!(tick%2577))
+	if(!(tick%1877))
 	{
-		for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); category++)
+		for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
 		{
-			for(list<AAIGroup*>::iterator group = group_list[*category].begin(); group != group_list[*category].end(); group++)
-				(*group)->rally_point = execute->GetRallyPoint(*category, 1, 1, 10);
+			for(list<AAIGroup*>::iterator group = group_list[*category].begin(); group != group_list[*category].end(); ++group)
+				(*group)->UpdateRallyPoint();
 		}
 	}
 
 	// recalculate efficiency stats
-	if(!(tick%2827))
+	if(!(tick%2927))
 	{
 		if(aai_instance == 1)
 			bt->UpdateMinMaxAvgEfficiency();

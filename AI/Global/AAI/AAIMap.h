@@ -4,7 +4,6 @@
 #include "AAISector.h"
 
 class AAIBuildTable;
-//class AAISector;
 class AAI;
 
 class AAIMap
@@ -22,9 +21,6 @@ public:
 	void Pos2BuildMapPos(float3 *pos, const UnitDef* def);
 	void BuildMapPos2Pos(float3 *pos, const UnitDef* def);
 	void Pos2FinalBuildPos(float3 *pos, const UnitDef *def);
-
-	// ensures a position lies within the map
-	//void PosInMap(float3 *pos);
 
 	// returns id of continent the cell belongs to
 	int GetContinentID(int x, int y);

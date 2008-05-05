@@ -105,7 +105,12 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
-AAI v0.864	- Added some unit specific combat behaviour: Units with high ranged weapons will now try to keep enemies distant
+AAI v0.866	- Fixed a bug that caused builders to leave the buildsite during construction 
+
+		- Various changes to issued orders; temporarily removed reclaiming. Reclaim orders were given multiple times per frame 
+		  thus flooding the interface with orders and causing Spring to freeze/huge drop in FPS 
+
+		- Added some unit specific combat behaviour: Units with high ranged weapons will now try to keep enemies distant
 
 		- Added two new variables to mod config file:
 

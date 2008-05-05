@@ -1,10 +1,10 @@
 #pragma once
 
+
 #include <stdio.h>
 #include "ExternalAI/IAICallback.h"
 #include <list>
 #include <vector>
-//#include "aidef.h"
 
 using std::string;
 using std::list;

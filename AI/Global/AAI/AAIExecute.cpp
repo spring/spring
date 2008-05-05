@@ -18,6 +18,8 @@ float AAIExecute::learned = 2.5;
 
 AAIExecute::AAIExecute(AAI *ai, AAIBrain *brain)
 {
+	issued_orders = 0;
+
 	this->ai = ai;
 	this->cb = ai->cb;
 	this->bt = ai->bt;
@@ -85,7 +87,8 @@ void AAIExecute::moveUnitTo(int unit, float3 *position)
 	c.params[1] = position->y;
 	c.params[2] = position->z;
 
-	cb->GiveOrder(unit, &c);
+	//cb->GiveOrder(unit, &c);
+	GiveOrder(&c, unit, "moveUnitTo");
 	ut->SetUnitStatus(unit, MOVING);
 }
 
@@ -94,7 +97,8 @@ void AAIExecute::stopUnit(int unit)
 	Command c;
 	c.id = CMD_STOP;
 
-	cb->GiveOrder(unit, &c);
+	//cb->GiveOrder(unit, &c);
+	GiveOrder(&c, unit, "StopUnit");
 	ut->SetUnitStatus(unit, UNIT_IDLE);
 }
 
@@ -574,58 +578,58 @@ void AAIExecute::InitBuildques()
 	}
 }
 
-float3 AAIExecute::GetRallyPoint(UnitCategory category, int min_dist, int max_dist, int random)
+float3 AAIExecute::GetRallyPoint(unsigned int unit_movement_type, int min_dist, int max_dist)
 {
-	AAISector* best_sector = 0;
-	float best_rating = 0, my_rating;
-
-	int combat_cat = bt->GetIDOfAssaultCategory(category);
-
-	bool land = true; 
-	bool water = true;
-
-	if(!cfg->AIR_ONLY_MOD)
-	{
-		if(category == GROUND_ASSAULT)
-			water = false;
-		else if(category == SEA_ASSAULT || category == SUBMARINE_ASSAULT)
-			land = false;
-	}	
+	float3 pos;
 
 	// check neighbouring sectors
 	for(int i = min_dist; i <= max_dist; ++i)
 	{
+		if(unit_movement_type & MOVE_TYPE_GROUND)
+			brain->sectors[i].sort(suitable_for_ground_rallypoint);
+		else if(unit_movement_type & MOVE_TYPE_SEA)
+			brain->sectors[i].sort(suitable_for_sea_rallypoint);
+		else 
+			brain->sectors[i].sort(suitable_for_all_rallypoint);
+
 		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
 		{
-			my_rating = 24.0f / ((*sector)->mobile_combat_power[combat_cat] + 4.0f) + 2 * (*sector)->GetMapBorderDist();
-			
-			if(land)
-				my_rating += 8 * pow((*sector)->flat_ratio, 2);
+			pos = (*sector)->GetMovePos(unit_movement_type);
 
-			if(water)
-				my_rating += 8 * pow((*sector)->water_ratio, 2);	
-
-			my_rating += 0.25 * (rand()%random);
-
-			my_rating /= sqrt(10.0f + (*sector)->allied_structures);
-
-			if(my_rating > best_rating)
-			{
-				best_rating = my_rating;
-				best_sector = *sector;
-			}
+			if(pos.x > 0)
+				return pos;
 		}
 	}
 
-	if(best_sector)
-		return best_sector->GetCenter();
-	else
-		return ZeroVector;	
+	return ZeroVector;	
 }
 
-float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, float3 pos, int min_dist, int max_dist)
+float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, float3 pos, int min_dist, int max_dist)
 {
-	AAISector* best_sector = 0;
+	//float3 pos;
+
+	// check neighbouring sectors
+	for(int i = min_dist; i <= max_dist; ++i)
+	{
+		if(unit_movement_type & MOVE_TYPE_GROUND)
+			brain->sectors[i].sort(suitable_for_ground_rallypoint);
+		else if(unit_movement_type & MOVE_TYPE_SEA)
+			brain->sectors[i].sort(suitable_for_sea_rallypoint);
+		else 
+			brain->sectors[i].sort(suitable_for_all_rallypoint);
+
+		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
+		{
+			pos = (*sector)->GetMovePos(unit_movement_type);
+
+			if(pos.x > 0)
+				return pos;
+		}
+	}
+
+	return ZeroVector;	
+
+	/*AAISector* best_sector = 0;
 	float best_rating = 0, my_rating;
 	float3 center;
 
@@ -668,9 +672,9 @@ float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, float3 pos, int m
 	}
 
 	if(best_sector)
-		return best_sector->GetCenter();
+		return best_sector->GetMovePos(unit_movement_type);
 	else
-		return ZeroVector;		
+		return ZeroVector;	*/	
 }
 
 
@@ -2489,7 +2493,8 @@ void AAIExecute::CheckRessources()
 					Command c;
 					c.id = CMD_ONOFF;
 					c.params.push_back(0);
-					cb->GiveOrder(*maker, &c);
+					//cb->GiveOrder(*maker, &c);
+					GiveOrder(&c, *maker, "ToggleMMaker");
 
 					futureRequestedEnergy += cb->GetUnitDef(*maker)->energyUpkeep;
 					++disabledMMakers;
@@ -2512,7 +2517,8 @@ void AAIExecute::CheckRessources()
 					Command c;
 					c.id = CMD_ONOFF;
 					c.params.push_back(1);
-					cb->GiveOrder(*maker, &c);
+					//cb->GiveOrder(*maker, &c);
+					GiveOrder(&c, *maker, "ToggleMMaker");
 
 					futureRequestedEnergy -= usage;
 					--disabledMMakers;
@@ -3039,6 +3045,24 @@ bool AAIExecute::suitable_for_arty(AAISector *left, AAISector *right)
 	return ( left_rating / sqrt(left->own_structures+ 1.0f) >  right_rating / sqrt(right->own_structures+ 1.0f) );
 }
 
+bool AAIExecute::suitable_for_ground_rallypoint(AAISector *left, AAISector *right)
+{
+	return ( (left->flat_ratio  + 0.5 * left->GetMapBorderDist())/ ((float) (left->rally_points + 1) )
+		>  (right->flat_ratio  + 0.5 * right->GetMapBorderDist())/ ((float) (right->rally_points + 1) ) );
+}
+
+bool AAIExecute::suitable_for_sea_rallypoint(AAISector *left, AAISector *right)
+{
+	return ( (left->water_ratio  + 0.5 * left->GetMapBorderDist())/ ((float) (left->rally_points + 1) )
+		>  (right->water_ratio  + 0.5 * right->GetMapBorderDist())/ ((float) (right->rally_points + 1) ) );
+}
+
+bool AAIExecute::suitable_for_all_rallypoint(AAISector *left, AAISector *right)
+{
+	return ( (left->flat_ratio + left->water_ratio + 0.5 * left->GetMapBorderDist())/ ((float) (left->rally_points + 1) )
+		>  (right->flat_ratio + right->water_ratio + 0.5 * right->GetMapBorderDist())/ ((float) (right->rally_points + 1) ) );
+}
+
 bool AAIExecute::defend_vs_ground(AAISector *left, AAISector *right)
 {
 	return ((2 + 2 * left->GetThreatBy(GROUND_ASSAULT, learned, current)) / (left->GetDefencePowerVs(GROUND_ASSAULT)+ 1))
@@ -3529,7 +3553,8 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 			c.params[1] = cb->GetElevation(pos.x, pos.z);
 			c.params[2] = pos.z;
 
-			cb->GiveOrder(unit_id, &c);
+			//cb->GiveOrder(unit_id, &c);
+			GiveOrder(&c, unit_id, "Fallback");
 		}
 	}
 }
@@ -3570,4 +3595,14 @@ void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
 		pos->x += unit_pos.x;
 		pos->z += unit_pos.z;
 	}	
+}
+
+void AAIExecute::GiveOrder(Command *c, int unit, const char *owner)
+{
+	//++issued_orders;
+
+	//if(issued_orders%50 == 0)
+	//	fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
+
+	cb->GiveOrder(unit, c);
 }

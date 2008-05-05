@@ -42,6 +42,12 @@ public:
 
 	void TargetUnitKilled();
 
+	// checks current rally point and chooses new one if necessary
+	void UpdateRallyPoint();
+
+	// gets a new rally point and orders units to get there
+	void GetNewRallyPoint();
+
 	void UnitIdle(int unit);
 
 	float GetPowerVS(int assault_cat_id);

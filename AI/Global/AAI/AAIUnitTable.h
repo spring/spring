@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include "aidef.h"
 
 using std::set;

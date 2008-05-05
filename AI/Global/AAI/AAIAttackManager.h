@@ -9,7 +9,9 @@
 
 #pragma once
 
+
 #include "aidef.h"
+#include <set>
 
 using std::set;
 

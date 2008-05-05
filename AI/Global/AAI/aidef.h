@@ -2,14 +2,12 @@
 // 
 // standard headers 
 
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <stdio.h>
-#include <set>
 #include <list>
 #include <vector>
+#include <stdio.h>
+#include <time.h>
 #include <string>
+
 #include "ExternalAI/IAICheats.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
@@ -24,6 +22,7 @@
 #include "AAIConfig.h"
 
 
+
 #ifdef _MSC_VER
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
 #endif 
@@ -33,7 +32,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.864"
+#define AAI_VERSION "0.866"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_86"
 #define MAP_DATA_VERSION "MAP_DATA_0_86"
