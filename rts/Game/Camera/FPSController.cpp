@@ -44,19 +44,19 @@ void CFPSController::MouseWheelMove(float move)
 
 float3 CFPSController::GetPos()
 {
-	const float margin = 0.01f;
-	const float xMin = margin;
-	const float zMin = margin;
-	const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
-	const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
-
-	pos.x = max(xMin, min(xMax, pos.x));
-	pos.z = max(zMin, min(zMax, pos.z));
-
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (!gu->directControl)
 #endif
 	{
+		const float margin = 0.01f;
+		const float xMin = margin;
+		const float zMin = margin;
+		const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
+		const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
+
+		pos.x = max(xMin, min(xMax, pos.x));
+		pos.z = max(zMin, min(zMax, pos.z));
+
 		const float gndHeight = ground->GetHeight(pos.x, pos.z);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
