@@ -108,6 +108,7 @@ void AAIConstructor::Update()
 					c.id = -def_id;
 					ai->cb->GiveOrder(unit_id, &c);
 					construction_def_id = def_id;
+					task == BUILDING;
 
 					++ai->futureUnits[cat];
 
@@ -133,6 +134,7 @@ void AAIConstructor::Update()
 
 						ai->cb->GiveOrder(unit_id, &c);
 						construction_def_id = def_id;
+						task == BUILDING;
 
 						++ai->futureUnits[cat];
 
@@ -140,8 +142,11 @@ void AAIConstructor::Update()
 						//	++ai->futureFactories;
 
 						buildque->pop_front();
+
 					}
 				}
+
+				return;
 			}
 		}
 
@@ -172,7 +177,7 @@ void AAIConstructor::Update()
 				}
 			}
 		}
-		else if(task == UNIT_IDLE)
+		/*else if(task == UNIT_IDLE)
 		{
 			float3 pos = cb->GetUnitPos(unit_id);
 
@@ -195,27 +200,27 @@ void AAIConstructor::Update()
 						if(def->canResurrect)
 						{
 							if(rand()%2 == 1)
-							{
 								c.id = CMD_RESURRECT;
-							} else
-							{
+							else
 								c.id = CMD_RECLAIM;
-							}
-						} else {
+						} 
+						else
 							c.id = CMD_RECLAIM;
-						}
+
 						c.params.resize(4);
 						c.params[0] = pos.x;
 						c.params[1] = cb->GetElevation(pos.x, pos.z);
 						c.params[2] = pos.z;
 						c.params[3] = 500.0;
 
-						cb->GiveOrder(unit_id, &c);
+						//cb->GiveOrder(unit_id, &c);
 						task = RECLAIMING;
+						ai->execute->GiveOrder(&c, unit_id, "Builder::Reclaming");
 					}
 				}
-			}
+			}	
 		}
+		*/
 	}
 }
 
@@ -334,7 +339,8 @@ void AAIConstructor::GiveReclaimOrder(int unit_id)
 	Command c;
 	c.id = CMD_RECLAIM;
 	c.params.push_back(unit_id);
-	cb->GiveOrder(this->unit_id, &c);
+	//cb->GiveOrder(this->unit_id, &c);
+	ai->execute->GiveOrder(&c, this->unit_id, "Builder::GiveRelaimOrder");
 }
 
 
@@ -438,7 +444,8 @@ void AAIConstructor::AssistConstruction(int constructor, int target_unit)
 			c.id = CMD_REPAIR;
 		}
 		c.params.push_back(constructor);
-		cb->GiveOrder(unit_id, &c);
+		//cb->GiveOrder(unit_id, &c);
+		ai->execute->GiveOrder(&c, unit_id, "Builder::Assist");
 
 		task = ASSISTING;
 		assistance = constructor;
@@ -448,7 +455,8 @@ void AAIConstructor::AssistConstruction(int constructor, int target_unit)
 		Command c;
 		c.id = CMD_REPAIR;
 		c.params.push_back(target_unit);
-		cb->GiveOrder(unit_id, &c);
+		//cb->GiveOrder(unit_id, &c);
+		ai->execute->GiveOrder(&c, unit_id, "Builder::Assist");
 
 		task = ASSISTING;
 		assistance = constructor;
@@ -518,7 +526,8 @@ void AAIConstructor::StopAssisting()
 	
 	Command c;
 	c.id = CMD_STOP;
-	cb->GiveOrder(unit_id, &c);
+	//cb->GiveOrder(unit_id, &c);
+	ai->execute->GiveOrder(&c, unit_id, "Builder::StopAssisting");
 }
 void AAIConstructor::RemoveAssitant(int unit_id)
 {
@@ -613,7 +622,8 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 			c.params.push_back(cb->GetElevation(pos.x, pos.z));
 			c.params.push_back(pos.z);
 
-			cb->GiveOrder(unit_id, &c);
+			ai->execute->GiveOrder(&c, unit_id, "BuilderRetreat");
+			//cb->GiveOrder(unit_id, &c);
 		}
 	}
 }

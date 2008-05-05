@@ -85,7 +85,13 @@ public:
 	float GetLostUnits(float ground, float air, float hover, float sea, float submarine);
 
 	// returns center of the sector
-	float3 GetCenter();			
+	float3 GetCenter();
+
+	// returns a position in sector for the movement type (ZeroVector if none found)
+	float3 GetMovePos(unsigned int unit_movement_type);
+
+	// returns a position in sector on specified continent for the movement type (ZeroVector if none found)
+	void GetMovePos(float3 *pos, unsigned int movement_type, int continent); 
 
 	// returns true is pos is within sector
 	bool PosInSector(float3 *pos);
@@ -93,9 +99,6 @@ public:
 	// get water/flat gorund ratio
 	float GetWaterRatio();
 	float GetFlatRatio();
-
-	// returns a position in sector on specified continent for the movement type (ZeroVector if none found)
-	void GetMovePos(float3 *pos, unsigned int movement_type, int continent); 
 
 	// returns true if sector is connected with a big ocean (and not only a small pond)
 	bool ConnectedToOcean();
@@ -106,6 +109,8 @@ public:
 	float enemy_structures; 
 	float own_structures;
 	float allied_structures;
+
+	int rally_points;	// how many groups got a rally point in that sector
 
 	list<AAIDefence> defences;
 	int failed_defences; // how many times aai tried to build defences and could not find possible constructionsite

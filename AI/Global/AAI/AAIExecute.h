@@ -118,8 +118,8 @@ public:
 	// 
 	AAIGroup* GetClosestGroupOfCategory(UnitCategory category, UnitType type, float3 pos, int importance); 
 
-	float3 GetRallyPoint(UnitCategory category, int min_dist, int max_dist, int random);
-	float3 GetRallyPointCloseTo(UnitCategory category, float3 pos, int min_dist, int max_dist);
+	float3 GetRallyPoint(unsigned int unit_movement_type, int min_dist, int max_dist);
+	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, float3 pos, int min_dist, int max_dist);
 
 	AAIMetalSpot* FindMetalSpotClosestToBuilder(int land_mex, int water_mex);
 	AAIMetalSpot* FindMetalSpot(bool land, bool water);
@@ -141,7 +141,10 @@ public:
 	bool static defend_vs_ground(AAISector *left, AAISector *right);
 	bool static defend_vs_air(AAISector *left, AAISector *right);
 	bool static defend_vs_hover(AAISector *left, AAISector *right);
-	bool static defend_vs_sea(AAISector *left, AAISector *right);
+	bool static defend_vs_sea(AAISector *left, AAISector *right);	
+	bool static suitable_for_ground_rallypoint(AAISector *left, AAISector *right);
+	bool static suitable_for_sea_rallypoint(AAISector *left, AAISector *right);
+	bool static suitable_for_all_rallypoint(AAISector *left, AAISector *right);
 
 	// cache to speed things up a bit
 	float static learned;
@@ -179,6 +182,11 @@ public:
 	// sector where next def vs category needs to be built (0 if none)
 	AAISector *next_defence;
 	UnitCategory def_category;
+
+	// debug
+	int issued_orders;
+	void GiveOrder(Command *c, int unit, const char *owner);
+
 
 private:
 	AAI *ai;

@@ -51,6 +51,7 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	interior = false;
 	distance_to_base = -1;
 	last_scout = 1;
+	rally_points = 0;
 	
 	// nothing sighted in that sector
 	enemy_structures = 0;
@@ -676,6 +677,78 @@ bool AAISector::ConnectedToOcean()
 	}
 
 	return false;
+}
+
+float3 AAISector::GetMovePos(unsigned int unit_movement_type)
+{
+	int x,y;
+
+	float height;
+
+	float3 pos = ZeroVector;	
+		
+	// try to get random spot
+	for(int i = 0; i < 6; ++i)
+	{
+		pos.x = left + map->xSectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+		pos.z = top + map->ySectorSize * (0.2f + 0.06f * (float)(rand()%11) );
+
+		height = ai->cb->GetElevation(pos.x, pos.z);
+
+		// check if cell height matches movement type 
+		if(height >= 0 && !(unit_movement_type & MOVE_TYPE_SEA) )
+		{			
+			// get cell index of middlepoint
+			x = (int) (pos.x / SQUARE_SIZE);
+			y = (int) (pos.z / SQUARE_SIZE);
+
+			if(map->buildmap[x + y * map->xMapSize] != 1)
+				return pos;
+		}	
+		else if(height < 0 && !(unit_movement_type & MOVE_TYPE_GROUND) )
+		{			
+			// get cell index of middlepoint
+			x = (int) (pos.x / SQUARE_SIZE);
+			y = (int) (pos.z / SQUARE_SIZE);
+
+			if(map->buildmap[x + y * map->xMapSize] != 5)
+				return pos;
+		}	
+	}
+
+	// search systematically 
+	for(int i = 0; i < map->xSectorSizeMap; i += 8)
+	{
+		for(int j = 0; j < map->ySectorSizeMap; j += 8)
+		{
+			pos.x = left + i * SQUARE_SIZE;
+			pos.z = top + j * SQUARE_SIZE;
+	
+			height = ai->cb->GetElevation(pos.x, pos.z);
+
+			// check if cell height matches movement type 
+			if(height >= 0 && !(unit_movement_type & MOVE_TYPE_SEA) )
+			{			
+				// get cell index of middlepoint
+				x = (int) (pos.x / SQUARE_SIZE);
+				y = (int) (pos.z / SQUARE_SIZE);
+
+				if(map->buildmap[x + y * map->xMapSize] != 1)
+					return pos;
+			}	
+			else if(height < 0 && !(unit_movement_type & MOVE_TYPE_GROUND) )
+			{			
+				// get cell index of middlepoint
+				x = (int) (pos.x / SQUARE_SIZE);
+				y = (int) (pos.z / SQUARE_SIZE);
+
+				if(map->buildmap[x + y * map->xMapSize] != 5)
+					return pos;
+			}
+		}
+	}
+
+	return ZeroVector;
 }
 
 void AAISector::GetMovePos(float3 *pos, unsigned int movement_type, int continent)

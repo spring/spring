@@ -19,6 +19,7 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 	this->bt = ai->bt;
 
 	attack = 0;
+	rally_point = ZeroVector;
 
 	category = bt->units_static[def->id].category;
 	combat_category = bt->GetIDOfAssaultCategory(category);
@@ -60,8 +61,9 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 
 	target_sector = 0;
 
-	rally_point = ai->execute->GetRallyPoint(category, 1, 1, 10);
-
+	// get a rally point
+	GetNewRallyPoint();
+	
 	// get speed group (if necessary)
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -95,6 +97,13 @@ AAIGroup::~AAIGroup(void)
 	attack = 0;
 
 	units.clear();
+
+	if(rally_point.x > 0)
+	{
+		AAISector *sector = ai->map->GetSectorOfPos(&rally_point);
+
+		--sector->rally_points;
+	}
 }
 
 bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
@@ -134,7 +143,8 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
 			if(category != AIR_ASSAULT)
 				c.options |= SHIFT_KEY;
 
-			cb->GiveOrder(unit_id, &c);
+			//cb->GiveOrder(unit_id, &c);
+			ai->execute->GiveOrder(&c, unit_id, "Group::AddUnit");
 		}
 
 		return true;
@@ -213,14 +223,15 @@ void AAIGroup::GiveOrder(Command *c, float importance, UnitTask task)
 
 	for(list<int2>::iterator i = units.begin(); i != units.end(); ++i)
 	{
-		cb->GiveOrder(i->x, c);
+		//cb->GiveOrder(i->x, c);
+		ai->execute->GiveOrder(c, i->x, "Group::GiveOrder");
 		ai->ut->SetUnitStatus(i->x, task);
 	}
 }
 
 void AAIGroup::Update()
 {
-	task_importance *= 0.96f;
+	task_importance *= 0.97f;
 
 	// attacking groups recheck target
 	if(task == GROUP_ATTACKING && target_sector)
@@ -263,7 +274,8 @@ void AAIGroup::Update()
 					c.params[1] = cb->GetElevation(pos.x, pos.z);
 					c.params[2] = pos.z;
 
-					cb->GiveOrder(unit->x, &c);
+					//cb->GiveOrder(unit->x, &c);
+					ai->execute->GiveOrder(&c, unit->x, "GroupFallBack");
 				}
 			}
 		}
@@ -552,4 +564,51 @@ void AAIGroup::AirRaidUnit(int unit_id)
 	ai->ut->AssignGroupToEnemy(unit_id, this);
 
 	task = GROUP_ATTACKING;
+}
+
+void AAIGroup::UpdateRallyPoint()
+{
+	AAISector *sector = ai->map->GetSectorOfPos(&rally_point);
+
+	// check if rally point lies within base (e.g. AAI has expanded its base after rally point had been set)
+	if(sector->distance_to_base <= 0)
+		GetNewRallyPoint();
+
+	// check if rally point is blocked by building
+		
+	
+}
+
+void AAIGroup::GetNewRallyPoint()
+{
+	AAISector *sector;
+
+	// delete old rally point (if there is any)
+	if(rally_point.x > 0)
+	{
+		sector = ai->map->GetSectorOfPos(&rally_point);
+
+		--sector->rally_points;
+	}
+
+	rally_point = ai->execute->GetRallyPoint(group_movement_type, 1, 1);
+
+	if(rally_point.x > 0)
+	{
+		//add new rally point to sector
+		sector = ai->map->GetSectorOfPos(&rally_point);
+		++sector->rally_points;
+
+		// send idle groups to new rally point
+		if(task == GROUP_IDLE)
+		{
+			Command c;
+			c.id = CMD_MOVE;
+			c.params.push_back(rally_point.x);
+			c.params.push_back(rally_point.y);
+			c.params.push_back(rally_point.z);
+
+			GiveOrder(&c, 90, HEADING_TO_RALLYPOINT);
+		}
+	}
 }
