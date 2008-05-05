@@ -373,64 +373,71 @@ void CGroundMoveType::Update()
 
 void CGroundMoveType::SlowUpdate()
 {
-	if(owner->transporter){
-		if(progressState == Active)
+	if (owner->transporter) {
+		if (progressState == Active)
 			StopEngine();
 		return;
 	}
 
-	//If got too far away from path, then need to reconsider.
-	if(progressState == Active && etaFailures>8) {
-		if(owner->pos.distance2D(goalPos)>200 || CheckGoalFeasability()){
-			if(DEBUG_CONTROLLER)
-				logOutput.Print("Unit eta failure %i",owner->id);
+	// if we've strayed too far away from path, then need to reconsider
+	if (progressState == Active && etaFailures > 8) {
+		if (owner->pos.distance2D(goalPos)>200 || CheckGoalFeasability()) {
+			if (DEBUG_CONTROLLER)
+				logOutput.Print("Unit eta failure %i", owner->id);
 			StopEngine();
 			StartEngine();
 		} else {
-			if(DEBUG_CONTROLLER)
-				logOutput.Print("Goal clogged up %i",owner->id);
+			if (DEBUG_CONTROLLER)
+				logOutput.Print("Goal clogged up %i", owner->id);
 			Fail();
 		}
 	}
 
-	//If the action is active, but not the engine and the
-	//re-try-delay has passed, then start the engine.
-	if(progressState == Active && !pathId && gs->frameNum > restartDelay) {
-		if(DEBUG_CONTROLLER)
-			logOutput.Print("Unit restart %i",owner->id);
+	// If the action is active, but not the engine and the
+	// re-try-delay has passed, then start the engine.
+	if (progressState == Active && !pathId && gs->frameNum > restartDelay) {
+		if (DEBUG_CONTROLLER)
+			logOutput.Print("Unit restart %i", owner->id);
 		StartEngine();
 	}
 
-	owner->pos.CheckInBounds();		//just kindly move it into the map again instead of deleteing
-
-	float wh;		//need the following if the ground change height when unit stand still
-	if(floatOnWater){
-		wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-		if(wh==0)
-			wh=-owner->unitDef->waterline;
-	} else {
-		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+	if (!flying) {
+		// just kindly move it into the map again instead of deleteing
+		owner->pos.CheckInBounds();
 	}
 
-	if (!(owner->falling || flying))
-		owner->pos.y=wh;
+	if (!(owner->falling || flying)) {
+		float wh;
 
-	if(!(owner->pos==oldSlowUpdatePos)){
-		oldSlowUpdatePos=owner->pos;
+		// need the following if the ground changes
+		// height while the unit is standing still
+		if (floatOnWater) {
+			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
+			if (wh == 0.0f) {
+				wh = -owner->unitDef->waterline;
+			}
+		} else {
+			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+		}
+		owner->pos.y = wh;
+	}
 
-		int newmapSquare=ground->GetSquare(owner->pos);
-		if(newmapSquare!=owner->mapSquare){
-			owner->mapSquare=newmapSquare;
+	if (!(owner->pos == oldSlowUpdatePos)) {
+		oldSlowUpdatePos = owner->pos;
+
+		int newmapSquare = ground->GetSquare(owner->pos);
+		if (newmapSquare != owner->mapSquare) {
+			owner->mapSquare = newmapSquare;
 
 			loshandler->MoveUnit(owner,false);
-			if(owner->hasRadarCapacity)
+			if (owner->hasRadarCapacity)
 				radarhandler->MoveUnit(owner);
 
-//			owner->UnBlock();
-//			owner->Block();
+			// owner->UnBlock();
+			// owner->Block();
 		}
 		qf->MovedUnit(owner);
-		owner->isUnderWater=owner->pos.y+owner->height<1;
+		owner->isUnderWater = owner->pos.y + owner->height < 1;
 	}
 }
 
