@@ -1333,7 +1333,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	// is this is the local player (== host) then he can kick, set options etc.
 	bool grantRights = setup ? (hisNewNumber == (unsigned)setup->myPlayerNum) : (wantedNumber == 0);
 	players[hisNewNumber].reset(new GameParticipant(grantRights)); // give him rights to change speed, kick players etc
-	if (setup && hisNewNumber < (unsigned)setup->numPlayers/* needed for non-hosted demo playback */)
+	if (setup)
 	{
 		unsigned hisTeam = setup->playerStartingTeam[hisNewNumber];
 		if (!teams[hisTeam]) // create new team
@@ -1353,13 +1353,16 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 	else
 	{
 		unsigned hisTeam = hisNewNumber;
-		teams[hisTeam].reset(new GameTeam());
-		players[hisNewNumber]->team = hisTeam;
-		serverNet->SendJoinTeam(hisNewNumber, hisTeam);
-		for (int a = 0; a < MAX_TEAMS; ++a)
+		if (!demoReader)
 		{
-			if (teams[a] && a != (int)hisNewNumber)
-				serverNet->SendJoinTeam(a, players[a]->team);
+			teams[hisTeam].reset(new GameTeam());
+			players[hisNewNumber]->team = hisTeam;
+			serverNet->SendJoinTeam(hisNewNumber, hisTeam);
+			for (int a = 0; a < MAX_TEAMS; ++a)
+			{
+				if (teams[a] && a != (int)hisNewNumber)
+					serverNet->SendJoinTeam(a, players[a]->team);
+			}
 		}
 	}
 	Message(str(format(NewConnection) %hisNewNumber %wantedNumber));
