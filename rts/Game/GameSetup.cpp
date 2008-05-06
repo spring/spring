@@ -166,8 +166,11 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		sprintf(section, "GAME\\PLAYER%i\\", a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1)))
+		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
+			// don't leave this uninitialized
+			playerStartingTeam[i] = 0;
 			continue;
+		}
 
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams
