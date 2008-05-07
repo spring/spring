@@ -633,7 +633,6 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 1;
 	} else {
-		/// KLOOTNOTE: THIS SHOULD RETURN 1 ALSO...
 		return 0;
 	}
 }
