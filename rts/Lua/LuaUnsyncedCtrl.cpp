@@ -423,15 +423,15 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	const int args = lua_gettop(L);
 
 	const string soundFile = luaL_checkstring(L, 1);
-	const float volume     =   luaL_optnumber(L, 2, 1.0f);
+	const float volume = luaL_optnumber(L, 2, 1.0f);
 
 	if (args < 5) {
 		sound->PlayStream(soundFile, volume);
 	}
 	else {
 		const float3 pos((float) lua_tonumber(L, 3),
-		                 (float) lua_tonumber(L, 4),
-		                 (float) lua_tonumber(L, 5));
+						 (float) lua_tonumber(L, 4),
+						 (float) lua_tonumber(L, 5));
 		sound->PlayStream(soundFile, volume, pos);
 	}
 
@@ -633,6 +633,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 1;
 	} else {
+		/// KLOOTNOTE: THIS SHOULD RETURN 1 ALSO...
 		return 0;
 	}
 }
@@ -930,6 +931,7 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 
 
+// TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
 	bool ret = false;
@@ -944,7 +946,17 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 				std::string dname = filesystem.GetDirectory(path);
 				std::string fname = filesystem.GetFilename(path);
 
-				if (filesystem.CreateDirectory(dname)) {
+				#ifdef WIN32
+				const int s = dname.size();
+				// get rid of any trailing slashes (CreateDirectory()
+				// fails on at least XP and Vista if they are present,
+				// ie. it creates the dir but actually returns false)
+				if (s > 0 && (dname[s - 1] == '/' || dname[s - 1] == '\\')) {
+					dname = dname.substr(0, s - 1);
+				}
+				#endif
+
+				if (dname.size() == 0 || filesystem.CreateDirectory(dname)) {
 					int numBytes = fh.FileSize();
 					char* buffer = SAFE_NEW char[numBytes];
 
@@ -954,7 +966,11 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 					fstr.write((const char*) buffer, numBytes);
 					fstr.close();
 
-					logOutput.Print("Extracted file \"%s\" to directory \"%s\"", fname.c_str(), dname.c_str());
+					if (dname.size() > 0) {
+						logOutput.Print("Extracted file \"%s\" to directory \"%s\"", fname.c_str(), dname.c_str());
+					} else {
+						logOutput.Print("Extracted file \"%s\"", fname.c_str());
+					}
 
 					delete[] buffer;
 					ret = true;
