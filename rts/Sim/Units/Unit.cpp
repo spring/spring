@@ -1056,13 +1056,13 @@ void CUnit::Kill(float3& impulse) {
 /******************************************************************************/
 /******************************************************************************/
 
-void CUnit::GetTransformMatrix(CMatrix44f& matrix) const
+void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 {
 	float3 interPos;
 	if (!transporter) {
-		interPos = pos + (speed * gu->timeOffset);
+		interPos = pos + (synced? speed: (speed * gu->timeOffset));
 	} else {
-		interPos = pos + (transporter->speed * gu->timeOffset);
+		interPos = pos + (synced? transporter->speed: (transporter->speed * gu->timeOffset));
 	}
 
 	if (usingScriptMoveType ||

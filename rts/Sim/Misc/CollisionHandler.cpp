@@ -79,7 +79,7 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			// collision volume gets drawn) since GetTransformMatrix()
 			// does not
 			CMatrix44f m;
-			u->GetTransformMatrix(m);
+			u->GetTransformMatrix(m, true);
 			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
@@ -175,7 +175,7 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 	const CollisionVolume* v = u->collisionVolume;
 
 	CMatrix44f m;
-	u->GetTransformMatrix(m);
+	u->GetTransformMatrix(m, true);
 	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
