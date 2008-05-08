@@ -9,6 +9,8 @@
 
 #include "AAIUnitTable.h"
 #include "AAI.h"
+#include "AAIExecute.h"
+#include "System/FastMath.h"
 
 AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 {
@@ -288,7 +290,7 @@ void AAIUnitTable::RemoveStationaryArty(int unit_id)
 	stationary_arty.erase(unit_id);
 }
 
-AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander, int importance)
+AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 {	
 	//fprintf(ai->file, "constructor for %s\n", bt->GetCategoryString(building));
 	AAIConstructor *builder;
@@ -318,11 +320,14 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander, int impo
 	return 0;
 }
 
-AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool commander, int importance)
+AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool commander)
 {	
 	float min_dist = 1000000, my_dist;
 	AAIConstructor *best_builder = 0, *builder;
 	float3 builder_pos;
+	bool suitable;
+
+	int continent = ai->map->GetContinentID(&pos);
 
 	// look for idle builder
 	for(set<int>::iterator i = constructors.begin(); i != constructors.end(); ++i)
@@ -335,28 +340,32 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool 
 			// find idle or assisting builder, who can build this building
 			if(  builder->task != BUILDING && bt->CanBuildUnit(builder->def_id, building)) 
 			{
-				// filter out commander
-				if(!commander &&  bt->IsCommander(builder->def_id))
-					my_dist = 1000000;
-				else
-				{
-					builder_pos = cb->GetUnitPos(builder->unit_id);
+				builder_pos = cb->GetUnitPos(builder->unit_id);
 
-					if(pos.x > 0)
-					{
-						my_dist = sqrt(pow(builder_pos.x - pos.x, 2)+pow(builder_pos.z - pos.z, 2));
-					
-						if(bt->unitList[builder->def_id-1]->speed > 0)
-							my_dist /= bt->unitList[builder->def_id-1]->speed;
-					}
-					else
-						my_dist = 1000000;	
-				}
-			
-				if(my_dist < min_dist)
+				// check continent if necessary
+				if(bt->units_static[builder->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
 				{
-					best_builder = builder;
-					min_dist = my_dist;
+					if(ai->map->GetContinentID(&builder_pos) == continent)
+						suitable = true;
+					else 
+						suitable = false;
+				}
+				else
+					suitable = true;
+
+				// filter out commander
+				if(suitable && ( commander || !bt->IsCommander(builder->def_id) ) )
+				{
+					my_dist = fastmath::sqrt( (builder_pos.x - pos.x) * (builder_pos.x - pos.x) + (builder_pos.z - pos.z) * (builder_pos.z - pos.z) );
+					
+					if(bt->unitList[builder->def_id-1]->speed > 0)
+						my_dist /= bt->unitList[builder->def_id-1]->speed;
+
+					if(my_dist < min_dist)
+					{
+						best_builder = builder;
+						min_dist = my_dist;
+					}
 				}
 			}
 		}
@@ -365,12 +374,14 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool 
 	return best_builder;
 }
 
-AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bool commander, unsigned int allowed_movement_types)
+AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, bool commander)
 {
-	AAIConstructor *best_assister = 0, *assister;
-	float best_rating = 0, my_rating;
-	float3 builder_pos;
-	float temp;
+	AAIConstructor *best_assistant = 0, *assistant;
+	float best_rating = 0, my_rating, dist;
+	float3 assistant_pos;
+	bool suitable;
+
+	int continent = ai->map->GetContinentID(&pos);
 
 	// find idle builder
 	for(set<int>::iterator i = constructors.begin(); i != constructors.end(); ++i)
@@ -378,28 +389,38 @@ AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bo
 		// check all assisters
 		if(units[*i].cons->assistant)
 		{
-			assister = units[*i].cons;
-
-			if(assister->task == UNIT_IDLE)
-			{
-				if(bt->units_static[assister->def_id].movement_type & allowed_movement_types)
-				{
-					if(!commander || bt->units_static[assister->def_id].category != COMMANDER)
-					{
-						builder_pos = cb->GetUnitPos(assister->unit_id);
-						temp = pow(pos.x - builder_pos.x, 2) + pow(pos.z - builder_pos.z, 2);
+			assistant = units[*i].cons;
 				
-						if(temp > 0)
-							//my_rating = assister->buildspeed * bt->unitList[assister->def_id-1]->speed / sqrt(temp);
-							my_rating = assister->buildspeed / sqrt(temp);
-						else
-							my_rating = 10;
+			// find idle assister
+			if(assistant->task == UNIT_IDLE)
+			{
+				assistant_pos = cb->GetUnitPos(assistant->unit_id);
+
+				// check continent if necessary
+				if(bt->units_static[assistant->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
+				{
+					if(ai->map->GetContinentID(&assistant_pos) == continent)
+						suitable = true;
+					else 
+						suitable = false;
+				}
+				else
+					suitable = true;
+
+				// filter out commander
+				if(suitable && ( commander || !bt->IsCommander(assistant->def_id) ) )
+				{
+					dist = (pos.x - assistant_pos.x) * (pos.x - assistant_pos.x) + (pos.z - assistant_pos.z) * (pos.z - assistant_pos.z);
+				
+					if(dist > 0)	
+						my_rating = assistant->buildspeed / fastmath::sqrt(dist);
+					else
+						my_rating = 1;
 		
-						if(my_rating > best_rating)
-						{
-							best_rating = my_rating;
-							best_assister = assister;
-						}
+					if(my_rating > best_rating)
+					{
+						best_rating = my_rating;
+						best_assistant = assistant;
 					}
 				}
 			}
@@ -407,10 +428,19 @@ AAIConstructor* AAIUnitTable::FindClosestAssister(float3 pos, int importance, bo
 	}
 		
 	// no assister found -> request one 
-	if(!best_assister)
-		bt->AddAssister(allowed_movement_types, true);	
+	if(!best_assistant)
+	{
+		unsigned int allowed_movement_types = 22;
+		
+		if(cb->GetElevation(pos.x, pos.z) < 0)
+			allowed_movement_types |= MOVE_TYPE_SEA;
+		else 
+			allowed_movement_types |= MOVE_TYPE_GROUND;
 
-	return best_assister;
+		bt->AddAssistant(allowed_movement_types, true);	
+	}
+
+	return best_assistant;
 }
 
 bool AAIUnitTable::IsUnitCommander(int unit_id)

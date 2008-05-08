@@ -258,9 +258,8 @@ void AAI::UnitCreated(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get unit큦 id and side
+	// get unit큦 id
 	const UnitDef *def = cb->GetUnitDef(unit);
-	int side = bt->GetSideByID(def->id)-1;
 	UnitCategory category = bt->units_static[def->id].category;
 
 	// add to unittable 
@@ -272,6 +271,7 @@ void AAI::UnitCreated(int unit)
 		++futureUnits[COMMANDER];
 
 		// set side
+		int side = bt->GetSideByID(def->id)-1;
 		this->side = side+1;
 
 		//debug
@@ -390,13 +390,6 @@ void AAI::UnitDestroyed(int unit, int attacker)
 {
 	// get unit큦 id 
 	const UnitDef *def = cb->GetUnitDef(unit);
-	int side = bt->GetSideByID(def->id)-1;
-
-	if(!def)
-	{
-		fprintf(file, "Error: UnitDestroyed() called with invalid unit id"); 
-		return;
-	}
 
 	// get unit's category
 	UnitCategory category = bt->units_static[def->id].category;
@@ -511,7 +504,6 @@ void AAI::UnitDestroyed(int unit, int attacker)
 			}
 
 			// check if building belongs to one of this groups
-			// side -1 because sides start with 1; array of sides with 0
 			if(category == STATIONARY_DEF)
 			{
 				if(validSector)
@@ -683,9 +675,8 @@ void AAI::UnitFinished(int unit)
 	if(!initialized)
 		return;
 
-	// get unit큦 id and side
+	// get unit큦 id
 	const UnitDef *def = cb->GetUnitDef(unit);
-	int side = bt->GetSideByID(def->id)-1;
 
 	UnitCategory category = bt->units_static[def->id].category;
 	futureUnits[category] -= 1;
@@ -693,6 +684,15 @@ void AAI::UnitFinished(int unit)
 	
 	bt->units_dynamic[def->id].requested -= 1;
 	bt->units_dynamic[def->id].active += 1;
+
+	// check if unit has been resurrected
+	float health = cb->GetUnitHealth(unit);
+	float max_health = cb->GetUnitMaxHealth(unit);
+	
+	/*if( health / max_health < 0.1f)
+	{
+		cb->SendTextMsg("ressurected", 0);
+	}*/
 
 	// building was completed
 	if(!def->movedata && !def->canfly)
@@ -801,15 +801,13 @@ void AAI::UnitIdle(int unit)
 			ut->units[unit].cons->Idle();
 
 			if(ut->constructors.size() < 4)
-				execute->CheckConstruction();
-
-			
+				execute->CheckConstruction();	
 		}
 	}
 	// idle combat units will report to their groups
 	else if(ut->units[unit].group)
-	{
-		ut->SetUnitStatus(unit, UNIT_IDLE);
+	{	
+		//ut->SetUnitStatus(unit, UNIT_IDLE);
 		ut->units[unit].group->UnitIdle(unit);
 	}
 	else

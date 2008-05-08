@@ -7,6 +7,7 @@ using std::set;
 
 class AAI;
 class AAIBuildTable;
+class AAIExecute;
 
 class AAIUnitTable
 {
@@ -41,9 +42,9 @@ public:
 	void AddStationaryArty(int unit_id, int def_id);
 	void RemoveStationaryArty(int unit_id);
 
-	AAIConstructor* FindBuilder(int building, bool commander, int importance);
-	AAIConstructor* FindClosestBuilder(int building, float3 pos, bool commander, int importance);
-	AAIConstructor* FindClosestAssister(float3 pos, int importance, bool commander, unsigned int allowed_movement_types);
+	AAIConstructor* FindBuilder(int building, bool commander);
+	AAIConstructor* FindClosestBuilder(int building, float3 pos, bool commander);
+	AAIConstructor* FindClosestAssistant(float3 pos, int importance, bool commander);
 
 	void EnemyKilled(int unit);
 
@@ -57,6 +58,7 @@ public:
 	bool IsBuilder(int unit_id);
 
 	AAI *ai;
+	AAIExecute *execute;
 	AAIBuildTable *bt;
 	IAICallback* cb;
 

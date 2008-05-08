@@ -482,7 +482,7 @@ void AAIGroup::UnitIdle(int unit)
 				ai->am->GetNextDest(attack);
 				return;
 			}
-			// unit the aa groups was guarding has been killed
+			// unit the aa group was guarding has been killed
 			else if(group_unit_type == ANTI_AIR_UNIT)
 			{
 				if(!attack->combat_groups.empty())
@@ -500,6 +500,45 @@ void AAIGroup::UnitIdle(int unit)
 				}
 				else
 					attack->StopAttack();
+			}
+		}
+		else
+		{
+			// idle assault units are ordered to attack the current target sector
+			if(group_unit_type == ASSAULT_UNIT)
+			{
+				Command c;
+				c.id = CMD_FIGHT;
+				c.params.resize(3);
+
+				// get position of the group
+				pos = ai->cb->GetUnitPos(unit);
+
+				int pos_x = pos.x/ai->map->xSectorSize;
+				int pos_y = pos.z/ai->map->ySectorSize;
+				
+				c.params[0] = (target_sector->left + target_sector->right)/2;
+				c.params[2] = (target_sector->bottom + target_sector->top)/2;
+							
+				// choose location that way that attacking units must cross the entire sector
+				if(target_sector->x > pos_x)
+					c.params[0] = (target_sector->left + 7 * target_sector->right)/8;
+				else if(target_sector->x < pos_x)
+					c.params[0] = (7 * target_sector->left + target_sector->right)/8;
+				else
+					c.params[0] = (target_sector->left + target_sector->right)/2;
+
+				if(target_sector->y > pos_y)
+					c.params[2] = (7 * target_sector->bottom + target_sector->top)/8;
+				else if(target_sector->y < pos_y)
+					c.params[2] = (target_sector->bottom + 7 * target_sector->top)/8;
+				else
+					c.params[2] = (target_sector->bottom + target_sector->top)/2;
+
+				c.params[1] = cb->GetElevation(c.params[0], c.params[2]);
+
+				// move group to that sector
+				GiveOrder(&c, 110, UNIT_ATTACKING);	
 			}
 		}
 	}

@@ -98,7 +98,7 @@ public:
 	void AddBuilder(int building_id);
 	// tries to build an assistant for the specified kind of unit
 	//void AddAssitantBuilder(bool water, bool floater, bool canBuild);
-	void AddAssister(unsigned int allowed_movement_types, bool canBuild);
+	void AddAssistant(unsigned int allowed_movement_types, bool canBuild);
 
 	// returns the allowed movement types for an assisters to assist constrcution of a specified building
 	unsigned int GetAllowedMovementTypesForAssister(int building);

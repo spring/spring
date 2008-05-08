@@ -7,8 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#include "System/FastMath.h"
 #include "AAIBuildTable.h"
-
 #include "AAI.h"
 
 // all the static vars
@@ -3332,7 +3332,7 @@ float AAIBuildTable::GetBuilderRating(int def_id)
 	else
 	{
 		// calculate rating and cache result
-		int buildings = 5;
+		int buildings = 10;
 
 		// only cout buildings that are likely to be built on that type of map
 		if(ai->map->mapType == LAND_MAP)
@@ -3357,6 +3357,7 @@ float AAIBuildTable::GetBuilderRating(int def_id)
 		}
 
 		units_static[def_id].efficiency[5] = sqrt((double)buildings);
+
 		return units_static[def_id].efficiency[5];
 	}
 }
@@ -3450,41 +3451,37 @@ void AAIBuildTable::BuildBuilderFor(int building_id)
 	int builder = 0;
 	float best_rating = -100000, my_rating; 
 
-	float cost = ai->brain->Affordable()/4.0f; 
+	float cost = 1.0f;
 	float buildspeed = 0.5f;
-	float urgency = 4.0f;
+	float urgency = 2.0f;
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0f;
 	
 	// look for best builder to do the job
 	for(list<int>::iterator unit = units_static[building_id].builtByList.begin();  unit != units_static[building_id].builtByList.end(); ++unit)
 	{
-		if(units_dynamic[*unit].requested <= 0)
-		{
-			my_rating = buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[ai->side-1]) 
-						- urgency * (unitList[*unit-1]->buildTime / max_buildtime) 
-						- cost * (units_static[*unit].cost / max_builder_cost[ai->side-1]);
+		my_rating = buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[ai->side-1]) 
+					- urgency * (unitList[*unit-1]->buildTime / max_buildtime) 
+					- cost * (units_static[*unit].cost / max_builder_cost[ai->side-1]);
 
-			my_rating += GetBuilderRating(*unit);
+		my_rating += GetBuilderRating(*unit);
 
-			// prefer builders that can be built atm
-			if(units_dynamic[*unit].buildersAvailable > 0)
-				my_rating += 50.0f;
+		// prefer builders that can be built atm
+		if(units_dynamic[*unit].buildersAvailable > 0)
+			my_rating += 20.0f;
 
-			if(my_rating > best_rating)
-			{	
-				best_rating = my_rating;
-				builder = *unit;
-			}	
-		}
+		if(my_rating > best_rating)
+		{	
+			best_rating = my_rating;
+			builder = *unit;
+		}	
 	}
 
-	if(builder)
+	if(builder && units_dynamic[builder].requested <= 0)
 	{
 		// build factory if necessary
 		if(units_dynamic[builder].buildersAvailable <= 0)
 			BuildFactoryFor(builder);
-		
 
 		if(ai->execute->AddUnitToBuildque(builder))
 		{
@@ -3507,8 +3504,8 @@ void AAIBuildTable::AddBuilder(int building_id)
 	float best_rating = -10000, my_rating; 
 
 	float cost = ai->brain->Affordable()/2.0; 
-	float buildspeed = sqrt((float) (1.0 + units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested))/2.0;
-	float urgency = 4.0 / (units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested + 0.5);
+	float buildspeed = fastmath::sqrt((float) (1.0 + units_dynamic[building_id].buildersAvailable + units_dynamic[building_id].buildersRequested))/2.0;
+	float urgency = 12.0 / (units_dynamic[building_id].buildersAvailable +  2.0);
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0;
 
@@ -3516,14 +3513,14 @@ void AAIBuildTable::AddBuilder(int building_id)
 	for(list<int>::iterator unit = units_static[building_id].builtByList.begin();  unit != units_static[building_id].builtByList.end(); ++unit)
 	{
 		// prevent ai from ordering too many builders of the same type/commanders/builders that cant be built atm
-		if(units_dynamic[*unit].active < cfg->MAX_BUILDERS_PER_TYPE && !units_dynamic[*unit].requested && units_dynamic[*unit].buildersAvailable > 0)
+		if(units_dynamic[*unit].active < cfg->MAX_BUILDERS_PER_TYPE && units_dynamic[*unit].buildersAvailable > 0)
 		{
 			my_rating = buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[ai->side-1]) 
 						- cost * (units_static[*unit].cost / max_builder_cost[ai->side-1]) 
 						- urgency * (unitList[*unit-1]->buildTime / max_buildtime);
 
 			my_rating += GetBuilderRating(*unit);
-			my_rating -=  0.5 * ((float)(units_dynamic[*unit].requested + units_dynamic[*unit].active)) / (float)cfg->MAX_BUILDERS_PER_TYPE;
+			//my_rating -=  0.5 * ((float)(units_dynamic[*unit].requested + units_dynamic[*unit].active)) / (float)cfg->MAX_BUILDERS_PER_TYPE;
 
 			if(my_rating > best_rating)
 			{	
@@ -3533,7 +3530,7 @@ void AAIBuildTable::AddBuilder(int building_id)
 		}
 	}
 	
-	if(builder)
+	if(builder && units_dynamic[builder].requested <= 0)
 	{
 		// build factory if necessary
 		if(units_dynamic[builder].buildersAvailable <= 0)
@@ -3549,22 +3546,22 @@ void AAIBuildTable::AddBuilder(int building_id)
 				units_dynamic[*j].buildersRequested += 1;
 	
 			// debug
-			fprintf(ai->file, "AddBuilder() requested: %s %i \n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);
+			//fprintf(ai->file, "AddBuilder() requested: %s %i \n", unitList[builder-1]->humanName.c_str(), units_dynamic[builder].requested);
 		}
 	}
 }
 
 
-void AAIBuildTable::AddAssister(unsigned int allowed_movement_types, bool canBuild)
+void AAIBuildTable::AddAssistant(unsigned int allowed_movement_types, bool canBuild)
 {
 	int builder = 0;
 	float best_rating = -10000, my_rating; 
 
 	int side = ai->side-1;
 
-	float cost = ai->brain->Affordable()/2.0; 
-	float buildspeed = 3.0;
-	float urgency = 9.0 / (ai->activeBuilders + ai->futureBuilders + 3);
+	float cost = ai->brain->Affordable()/2.0f; 
+	float buildspeed = 3.0f;
+	float urgency = 12.0f / (ai->activeBuilders + ai->futureBuilders + 3);
 
 	float max_buildtime = max_builder_buildtime[ai->side-1]/256.0;
 		
@@ -3573,16 +3570,13 @@ void AAIBuildTable::AddAssister(unsigned int allowed_movement_types, bool canBui
 		if(units_static[*unit].movement_type & allowed_movement_types)
 		{
 			if( (!canBuild || units_dynamic[*unit].buildersAvailable > 0)
-				&& units_dynamic[*unit].active < cfg->MAX_BUILDERS_PER_TYPE
-				&& units_dynamic[*unit].requested <= 0)
+				&& units_dynamic[*unit].active < cfg->MAX_BUILDERS_PER_TYPE)
 			{
 				if( unitList[*unit-1]->buildSpeed >= (float)cfg->MIN_ASSISTANCE_BUILDTIME && unitList[*unit-1]->canAssist)
 				{
 					my_rating = cost * (units_static[*unit].cost / max_builder_cost[side]) 
 								+ buildspeed * (unitList[*unit-1]->buildSpeed / max_builder_buildspeed[side]) 
 								- urgency * (unitList[*unit-1]->buildTime / max_buildtime);
-
-					my_rating -=  0.5 * ((float)(units_dynamic[*unit].requested + units_dynamic[*unit].active)) / (float)cfg->MAX_BUILDERS_PER_TYPE;
 	
 					if(my_rating > best_rating)
 					{	
@@ -3594,7 +3588,7 @@ void AAIBuildTable::AddAssister(unsigned int allowed_movement_types, bool canBui
 		}
 	}
 
-	if(builder)
+	if(builder && units_dynamic[builder].requested < 1)
 	{
 		// build factory if necessary
 		if(units_dynamic[builder].buildersAvailable <= 0)
