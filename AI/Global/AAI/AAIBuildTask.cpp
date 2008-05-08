@@ -45,7 +45,7 @@ void AAIBuildTask::BuilderDestroyed()
 	}
 	
 	// look for new builder 
-	AAIConstructor* new_builder = ai->ut->FindClosestAssister(build_pos, 10, commander, ai->bt->GetAllowedMovementTypesForAssister(def_id) );
+	AAIConstructor* new_builder = ai->ut->FindClosestAssistant(build_pos, 10, commander);
 	
 	if(new_builder)
 	{

@@ -108,7 +108,7 @@ void AAIConstructor::Update()
 					c.id = -def_id;
 					ai->cb->GiveOrder(unit_id, &c);
 					construction_def_id = def_id;
-					task == BUILDING;
+					task = BUILDING;
 
 					++ai->futureUnits[cat];
 
@@ -134,7 +134,7 @@ void AAIConstructor::Update()
 
 						ai->cb->GiveOrder(unit_id, &c);
 						construction_def_id = def_id;
-						task == BUILDING;
+						task = BUILDING;
 
 						++ai->futureUnits[cat];
 
@@ -255,7 +255,7 @@ void AAIConstructor::CheckAssistance()
 		
 			if(assist)
 			{
-				AAIConstructor* assistant = ai->ut->FindClosestAssister(ai->cb->GetUnitPos(unit_id), 5, true, bt->GetAllowedMovementTypesForAssister(def_id) );
+				AAIConstructor* assistant = ai->ut->FindClosestAssistant(ai->cb->GetUnitPos(unit_id), 5, true);
 
 				if(assistant)
 				{
@@ -303,7 +303,7 @@ void AAIConstructor::CheckAssistance()
 					commander = true;
 			}
 
-			AAIConstructor* assistant = ai->ut->FindClosestAssister(build_pos, 5, commander, bt->GetAllowedMovementTypesForAssister(construction_def_id) );
+			AAIConstructor* assistant = ai->ut->FindClosestAssistant(build_pos, 5, commander);
 			
 			if(assistant)
 			{

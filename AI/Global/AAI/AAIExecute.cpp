@@ -363,9 +363,9 @@ AAIMetalSpot* AAIExecute::FindMetalSpotClosestToBuilder(int land_mex, int water_
 					if(!(*spot)->occupied)	
 					{
 						if((*spot)->pos.y > 0)
-							builder = ut->FindClosestBuilder(land_mex, (*spot)->pos, true, 10);
+							builder = ut->FindClosestBuilder(land_mex, (*spot)->pos, true);
 						else
-							builder = ut->FindClosestBuilder(water_mex, (*spot)->pos, true, 10);
+							builder = ut->FindClosestBuilder(water_mex, (*spot)->pos, true);
 
 						if(builder)
 						{
@@ -709,7 +709,7 @@ bool AAIExecute::BuildExtractor()
 			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
 		}
 
-		builder = ut->FindBuilder(land_mex, true, 10);
+		builder = ut->FindBuilder(land_mex, true);
 
 		if(builder)
 		{
@@ -730,7 +730,7 @@ bool AAIExecute::BuildExtractor()
 	else // normal map
 	{
 		// different behaviour dependent on number of builders (to save time in late game)
-		if(ut->constructors.size() < 5)
+		if(ut->constructors.size() < 4)
 		{
 			// get id of an extractor and look for suitable builder
 			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
@@ -771,9 +771,9 @@ bool AAIExecute::BuildExtractor()
 
 				// only allow commander if spot is close to own base
 				if(map->sector[x][y].distance_to_base <= 0 || (brain->sectors[0].size() < 3 && map->sector[x][y].distance_to_base <= 1) )
-					builder = ut->FindClosestBuilder(land_mex, spot->pos, true, 10);
+					builder = ut->FindClosestBuilder(land_mex, spot->pos, true);
 				else
-					builder = ut->FindClosestBuilder(land_mex, spot->pos, false, 10);
+					builder = ut->FindClosestBuilder(land_mex, spot->pos, false);
 		
 				if(builder)
 				{
@@ -788,12 +788,11 @@ bool AAIExecute::BuildExtractor()
 			}
 			else
 			{	
-
 				// request metal makers if no spot found (only if spot was not found due to no buidlers available)
-				builder = ut->FindClosestBuilder(land_mex, brain->base_center, true, 10);
+				builder = ut->FindClosestBuilder(land_mex, brain->base_center, true);
 
 				if(!builder)	
-					builder = ut->FindClosestBuilder(water_mex, brain->base_center, true, 10);
+					builder = ut->FindClosestBuilder(water_mex, brain->base_center, true);
 		
 				if(!builder)
 				{
@@ -823,7 +822,7 @@ bool AAIExecute::BuildExtractor()
 				int x = spot->pos.x/map->xSectorSize;
 				int y = spot->pos.z/map->ySectorSize;
 
-				if(cb->GetElevation(spot->pos.x, spot->pos.z) > 0) 
+				if(cb->GetElevation(spot->pos.x, spot->pos.z) >= 0) 
 					water = false;	
 				else
 					water = true;
@@ -837,10 +836,6 @@ bool AAIExecute::BuildExtractor()
 					cost = 6.0f;
 					armed = true;
 					efficiency = 1.0f;
-
-					// check mex upgrade
-					if(ai->futureUnits[EXTRACTOR] < 2)
-						CheckMexUpgrade();
 				}
 
 				int mex = bt->GetMex(ai->side, cost, efficiency, armed, water, false);
@@ -855,9 +850,9 @@ bool AAIExecute::BuildExtractor()
 				if(mex)
 				{
 					if(map->sector[x][y].distance_to_base <= 0 || (brain->sectors[0].size() < 3 && map->sector[x][y].distance_to_base <= 1) )
-						builder = ut->FindClosestBuilder(mex, brain->base_center, true, 10);
+						builder = ut->FindClosestBuilder(mex, spot->pos, true);
 					else
-						builder = ut->FindClosestBuilder(mex, brain->base_center, false, 10);
+						builder = ut->FindClosestBuilder(mex, spot->pos, false);
 
 					if(builder)
 					{
@@ -869,7 +864,7 @@ bool AAIExecute::BuildExtractor()
 			else
 			{	
 				// check mex upgrade
-				if(ai->futureUnits[EXTRACTOR] < 2)
+				if(ai->futureUnits[EXTRACTOR] < 1)
 					CheckMexUpgrade();
 
 				// request metal makers if no spot found
@@ -908,7 +903,7 @@ bool AAIExecute::BuildPowerPlant()
 				// try to assist
 				if(builder->assistants.size() < cfg->MAX_ASSISTANTS)
 				{
-					AAIConstructor *assistant = ut->FindClosestAssister(builder->build_pos, 5, true, bt->GetAllowedMovementTypesForAssister(builder->construction_def_id));
+					AAIConstructor *assistant = ut->FindClosestAssistant(builder->build_pos, 5, true);
 
 					if(assistant)
 					{
@@ -1016,7 +1011,7 @@ bool AAIExecute::BuildPowerPlant()
 
 			if(pos.x > 0)
 			{
-				builder = ut->FindClosestBuilder(ground_plant, pos, true, 10);
+				builder = ut->FindClosestBuilder(ground_plant, pos, true);
 
 				if(builder)
 				{
@@ -1043,7 +1038,7 @@ bool AAIExecute::BuildPowerPlant()
 				pos = (*sector)->GetBuildsite(water_plant, true);
 			else 
 			{
-				builder = ut->FindBuilder(water_plant, true, 10);
+				builder = ut->FindBuilder(water_plant, true);
 				
 				if(builder)
 				{
@@ -1058,7 +1053,7 @@ bool AAIExecute::BuildPowerPlant()
 
 			if(pos.x > 0)
 			{
-				builder = ut->FindClosestBuilder(water_plant, pos, true, 10);
+				builder = ut->FindClosestBuilder(water_plant, pos, true);
 
 				if(builder)
 				{
@@ -1148,7 +1143,7 @@ bool AAIExecute::BuildMetalMaker()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(maker, pos, true, 10);
+					builder = ut->FindClosestBuilder(maker, pos, true);
 
 					if(builder)
 					{
@@ -1189,7 +1184,7 @@ bool AAIExecute::BuildMetalMaker()
 	
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(maker, pos, true, 10);
+					builder = ut->FindClosestBuilder(maker, pos, true);
 
 					if(builder)
 					{
@@ -1268,7 +1263,7 @@ bool AAIExecute::BuildStorage()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(storage, pos, true, 10);
+					builder = ut->FindClosestBuilder(storage, pos, true);
 	
 					if(builder)
 					{
@@ -1305,7 +1300,7 @@ bool AAIExecute::BuildStorage()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(storage, pos, true, 10);
+					builder = ut->FindClosestBuilder(storage, pos, true);
 
 					if(builder)
 					{
@@ -1377,7 +1372,7 @@ bool AAIExecute::BuildAirBase()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(airbase, pos, true, 10);
+					builder = ut->FindClosestBuilder(airbase, pos, true);
 	
 					if(builder)
 					{
@@ -1416,7 +1411,7 @@ bool AAIExecute::BuildAirBase()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(airbase, pos, true, 10);
+					builder = ut->FindClosestBuilder(airbase, pos, true);
 
 					if(builder)
 					{
@@ -1590,7 +1585,7 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 				
 			if(pos.x > 0)
 			{
-				builder = ut->FindClosestBuilder(building, pos, true, 10);	
+				builder = ut->FindClosestBuilder(building, pos, true);	
 
 				if(builder)
 				{
@@ -1647,7 +1642,7 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 				
 			if(pos.x > 0)
 			{
-				builder = ut->FindClosestBuilder(building, pos, true, 10);
+				builder = ut->FindClosestBuilder(building, pos, true);
 
 				if(builder)
 				{
@@ -1720,7 +1715,7 @@ bool AAIExecute::BuildArty()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(arty, pos, true, 10);
+					builder = ut->FindClosestBuilder(arty, pos, true);
 
 					if(builder)
 					{
@@ -1754,7 +1749,7 @@ bool AAIExecute::BuildArty()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(arty, pos, true, 10);
+					builder = ut->FindClosestBuilder(arty, pos, true);
 
 					if(builder)
 					{
@@ -1805,7 +1800,7 @@ bool AAIExecute::BuildFactory()
 			if(my_rating > best_rating)
 			{
 				// only check building if a suitable builder is available
-				temp_builder = ut->FindBuilder(*fac, true, 10);
+				temp_builder = ut->FindBuilder(*fac, true);
 					
 				if(temp_builder)
 				{
@@ -1885,7 +1880,7 @@ bool AAIExecute::BuildFactory()
 			
 		if(pos.x > 0)
 		{
-			builder = ut->FindClosestBuilder(building, pos, true, 10);
+			builder = ut->FindClosestBuilder(building, pos, true);
 			
 			if(builder)
 			{
@@ -2091,7 +2086,7 @@ bool AAIExecute::BuildRecon()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(radar, pos, true, 10);
+					builder = ut->FindClosestBuilder(radar, pos, true);
 
 					if(builder)
 					{
@@ -2124,7 +2119,7 @@ bool AAIExecute::BuildRecon()
 
 				if(pos.x > 0)
 				{
-					builder = ut->FindClosestBuilder(radar, pos, true, 10);
+					builder = ut->FindClosestBuilder(radar, pos, true);
 
 					if(builder)
 					{
@@ -2146,58 +2141,105 @@ bool AAIExecute::BuildRecon()
 
 bool AAIExecute::BuildJammer()
 {
+	if(ai->futureUnits[STATIONARY_JAMMER])
+		return true;
+
 	int jammer = 0;
+	AAIConstructor *builder;
+	float3 pos;
+	bool checkWater, checkGround;
 
 	float cost = brain->Affordable();
 	float range = 10.0 / (cost + 1);
-
-	jammer = bt->GetJammer(ai->side, cost, range, false, false);
-
-	if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0)
-	{
-		if(bt->units_dynamic[jammer].buildersRequested <= 0)
-			bt->BuildBuilderFor(jammer);
-
-		jammer = bt->GetJammer(ai->side, cost, range, false, true);
-	}
 	
-	if(jammer)
+	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 	{
-		AAIConstructor *builder = ut->FindBuilder(jammer, true, 10);
-
-		if(builder)
+		if((*sector)->unitsOfType[STATIONARY_JAMMER] > 0)
 		{
-			AAISector *best_sector = 0;
-			float best_rating = 0, my_rating;
-			
-			for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); sector++)
-			{
-				if((*sector)->unitsOfType[STATIONARY_JAMMER] == 0 && ((*sector)->unitsOfType[STATIONARY_CONSTRUCTOR] > 0 || (*sector)->unitsOfType[POWER_PLANT] > 0) )
-					my_rating = (*sector)->GetOverallThreat(1, 1);
-				else 
-					my_rating = 0;
+			checkWater = false;
+			checkGround = false;
+		}
+		else if((*sector)->water_ratio < 0.15)
+		{
+			checkWater = false;
+			checkGround = true;	
+		}
+		else if((*sector)->water_ratio < 0.85)
+		{
+			checkWater = true;
+			checkGround = true;
+		}
+		else
+		{
+			checkWater = true;
+			checkGround = false;
+		}
 
-				if(my_rating > best_rating)
-				{
-					best_rating = my_rating;
-					best_sector = *sector;
-				}
+		if(checkGround)
+		{
+			// find jammer
+			jammer = bt->GetJammer(ai->side, cost, range, false, false);
+
+			if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0 && bt->units_dynamic[jammer].buildersRequested <= 0)
+			{
+				bt->BuildBuilderFor(jammer);
+				jammer = bt->GetRadar(ai->side, cost, range, false, true);
 			}
-
-			// find centered spot in that sector
-			if(best_sector)
+		
+			if(jammer)
 			{
-				float3 pos = best_sector->GetCenterBuildsite(jammer, false);
+				pos = (*sector)->GetHighestBuildsite(jammer);
 
 				if(pos.x > 0)
 				{
-					builder->GiveConstructionOrder(jammer, pos, false);
-					futureRequestedEnergy += (bt->unitList[jammer-1]->energyUpkeep - bt->unitList[jammer-1]->energyMake);
+					builder = ut->FindClosestBuilder(jammer, pos, true);
+
+					if(builder)
+					{
+						builder->GiveConstructionOrder(jammer, pos, false);
+						return true;
+					}
+					else
+					{
+						bt->AddBuilder(jammer);
+						return false;
+					}
 				}
 			}
 		}
-		else
-			return false;
+
+		if(checkWater)
+		{
+			// find radar
+			jammer = bt->GetJammer(ai->side, cost, range, true, false);
+
+			if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0 && bt->units_dynamic[jammer].buildersRequested <= 0)
+			{
+				bt->BuildBuilderFor(jammer);
+				jammer = bt->GetJammer(ai->side, cost, range, true, true);
+			}
+		
+			if(jammer)
+			{
+				pos = (*sector)->GetBuildsite(jammer, true);
+
+				if(pos.x > 0)
+				{
+					builder = ut->FindClosestBuilder(jammer, pos, true);
+
+					if(builder)
+					{
+						builder->GiveConstructionOrder(jammer, pos, true);
+						return true;
+					}
+					else
+					{
+						bt->AddBuilder(jammer);
+						return false;
+					}
+				}
+			}
+		}
 	}
 
 	return true;
@@ -2278,9 +2320,9 @@ void AAIExecute::DefendMex(int mex, int def_id)
 					AAIConstructor *builder;
 
 					if(brain->sectors[0].size() > 2)
-						builder = ut->FindClosestBuilder(defence, pos, false, 10);
+						builder = ut->FindClosestBuilder(defence, pos, false);
 					else
-						builder = ut->FindClosestBuilder(defence, pos, true, 10);
+						builder = ut->FindClosestBuilder(defence, pos, true);
 
 					if(builder)
 						builder->GiveConstructionOrder(defence, pos, water);	
@@ -2433,7 +2475,7 @@ void AAIExecute::CheckDefences()
 
 		if(status == BUILDORDER_NOBUILDER)
 		{
-			float temp = 0.3 + 6.0 / ( (float) first->defences.size() + 1.0f); 
+			float temp = 0.05 + 3.0 / ( (float) first->defences.size() + 0.5f); 
 
 			if(urgency[STATIONARY_DEF] < temp)
 				urgency[STATIONARY_DEF] = temp;
@@ -2442,9 +2484,7 @@ void AAIExecute::CheckDefences()
 			def_category = cat1;
 		}
 		else if(status == BUILDORDER_NOBUILDPOS)
-		{
 			++first->failed_defences;
-		}
 	}
 	
 	if(second)
@@ -2622,7 +2662,7 @@ void AAIExecute::CheckMexUpgrade()
 
 	if(best_spot)
 	{
-		AAIConstructor *builder = ut->FindClosestAssister(best_spot->pos, 10, true, bt->GetAllowedMovementTypesForAssister(best_spot->extractor_def) ); 
+		AAIConstructor *builder = ut->FindClosestAssistant(best_spot->pos, 10, true); 
 
 		if(builder)
 			builder->GiveReclaimOrder(best_spot->extractor);
@@ -2665,7 +2705,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(land_def && my_def->radarRadius < land_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
+						AAIConstructor *builder = ut->FindClosestAssistant(cb->GetUnitPos(*recon), 10, true);
 
 						if(builder)
 						{
@@ -2679,7 +2719,7 @@ void AAIExecute::CheckRadarUpgrade()
 					if(water_def && my_def->radarRadius < water_def->radarRadius)
 					{
 						// better radar found, clear buildpos
-						AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*recon), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
+						AAIConstructor *builder = ut->FindClosestAssistant(cb->GetUnitPos(*recon), 10, true );
 
 						if(builder)
 						{
@@ -2726,7 +2766,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(land_def && my_def->jammerRadius < land_def->jammerRadius)
 				{
 					// better jammer found, clear buildpos
-					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
+					AAIConstructor *builder = ut->FindClosestAssistant(cb->GetUnitPos(*jammer), 10, true);
 
 					if(builder)
 					{
@@ -2740,7 +2780,7 @@ void AAIExecute::CheckJammerUpgrade()
 				if(water_def && my_def->jammerRadius < water_def->jammerRadius)
 				{
 					// better radar found, clear buildpos
-					AAIConstructor *builder = ut->FindClosestAssister(cb->GetUnitPos(*jammer), 10, true, bt->GetAllowedMovementTypesForAssister(my_def->id) );
+					AAIConstructor *builder = ut->FindClosestAssistant(cb->GetUnitPos(*jammer), 10, true);
 				
 					if(builder)
 					{
@@ -2959,7 +2999,7 @@ bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importa
 
 		if(builder && builder->construction_category == category && builder->assistants.size() < cfg->MAX_ASSISTANTS)
 		{
-			assistant = ut->FindClosestAssister(builder->build_pos, 5, true, bt->GetAllowedMovementTypesForAssister(builder->construction_def_id));
+			assistant = ut->FindClosestAssistant(builder->build_pos, 5, true);
 
 			if(assistant)
 			{

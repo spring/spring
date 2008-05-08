@@ -105,6 +105,11 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 		- Brandon Potter for his TBT 12 cfg file
 
 
+
+AAI v0.867	- AAI now takes continents into account when sending builder/assistant builders to positions (e.g. it does not try send 
+		  ground builders to positions on other islands/continents anymore (unless they are amphibious))
+
+
 AAI v0.866	- Fixed a bug that caused builders to leave the buildsite during construction 
 
 		- Various changes to issued orders; temporarily removed reclaiming. Reclaim orders were given multiple times per frame 
@@ -118,8 +123,7 @@ AAI v0.866	- Fixed a bug that caused builders to leave the buildsite during cons
 		  
 		  MIN_FALLBACK_RANGE 500  - units with lower weapons' range will not try fall back at all 
 
-
-AAI v0.862	- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 
+		- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 
 		  naval units
 
 		- AAI now takes continents into account when sending scouts to positions (e.g. it does not try send ground scouts to 
