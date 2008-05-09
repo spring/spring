@@ -1060,9 +1060,9 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 {
 	float3 interPos;
 	if (!transporter) {
-		interPos = pos + (synced? speed: (speed * gu->timeOffset));
+		interPos = (synced? pos: pos + (speed * gu->timeOffset));
 	} else {
-		interPos = pos + (synced? transporter->speed: (transporter->speed * gu->timeOffset));
+		interPos = (synced? pos: pos + (transporter->speed * gu->timeOffset));
 	}
 
 	if (usingScriptMoveType ||
