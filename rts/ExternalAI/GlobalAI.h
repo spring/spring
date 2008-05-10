@@ -8,42 +8,53 @@ class IGlobalAI;
 class CGlobalAICallback;
 class CGroupHandler;
 
-class CGlobalAI :
-	public CObject
+class CGlobalAI: public CObject
 {
 public:
 	CR_DECLARE(CGlobalAI);
 	CGlobalAI(int team, const char* dll);
 	~CGlobalAI(void);
+
+	void LoadAILib(int, const char*, bool);
+
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
 	void Load(std::istream *s);
 	void Save(std::ostream *s);
 
 	void Update(void);
-	void PreDestroy (); // called just before all the units are destroyed
+	void PreDestroy(); // called just before all the units are destroyed
 
 	int team;
 	bool cheatevents;
 
 	bool IsCInterface;
+	bool IsLoadSupported;
 
 	IGlobalAI* ai;
 	CGlobalAICallback* callback;
-//	CGroupHandler* gh;
 
-	SharedLib *lib;
-	std::string dllName;
+	SharedLib* lib;
+	std::string libName;
 
-	typedef bool (* ISCINTERFACE)();
-	typedef int (* GETGLOBALAIVERSION)();
-	typedef IGlobalAI* (* GETNEWAI)();
-	typedef void (* RELEASEAI)(IGlobalAI* i);
+	typedef bool (*ISCINTERFACE)();
+	typedef int (*GETGLOBALAIVERSION)();
+	typedef IGlobalAI* (*GETNEWAI)();
+	typedef IGlobalAI* (*GETNEWAIBYNAME)(const char*, int);
+	typedef void (*RELEASEAI)(IGlobalAI* i);
+	typedef bool (*ISLOADSUPPORTED)();
 	
-	ISCINTERFACE _IsCInterface;
-	GETGLOBALAIVERSION GetGlobalAiVersion;
-	GETNEWAI GetNewAI;
-	RELEASEAI ReleaseAI;
+	ISCINTERFACE _IsCInterfaceFunc;
+	GETGLOBALAIVERSION _GetGlobalAiVersionFunc;
+	GETNEWAI _GetNewAIFunc;
+	GETNEWAIBYNAME _GetNewAIByNameFunc;
+	RELEASEAI _ReleaseAIFunc;
+	ISLOADSUPPORTED _IsLoadSupportedFunc;
+
+private:
+	void LoadABICAI(int, const char*, bool, bool);
+	void LoadCPPAI(int, const char*, bool, bool, bool);
+	void LoadJavaProxyAI();
 };
 
 #endif

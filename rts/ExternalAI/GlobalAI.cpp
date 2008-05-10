@@ -15,99 +15,42 @@
 
 #include <sstream>
 
-CR_BIND_DERIVED(CGlobalAI,CObject,(0,NULL))
-
+CR_BIND_DERIVED(CGlobalAI, CObject, (0, NULL))
 CR_REG_METADATA(CGlobalAI, (
-				CR_MEMBER(team),
-				CR_MEMBER(cheatevents),
-				CR_MEMBER(dllName),
-//				CR_MEMBER(gh),
-				CR_SERIALIZER(Serialize),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_MEMBER(team),
+	CR_MEMBER(cheatevents),
+	CR_MEMBER(libName),
+	CR_MEMBER(IsCInterface),
+	CR_MEMBER(IsLoadSupported),
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+));
 
 void AIException(const char *what);
 
-#define HANDLE_EXCEPTION  \
-	catch (const std::exception& e) {	\
-		if (globalAI->CatchException ()) {		\
-			AIException(e.what());		\
-			throw;						\
-		} else throw;					\
-	}									\
+#define HANDLE_EXCEPTION					\
+	catch (const std::exception& e) {		\
+		if (globalAI->CatchException()) {	\
+			AIException(e.what());			\
+			throw;							\
+		} else throw;						\
+	}										\
 	catch (const char *s) {	\
-		if (globalAI->CatchException ()) {		\
-			AIException(s);				\
-			throw;						\
-		} else throw;					\
-	}									\
-	catch (...) {						\
-		if (globalAI->CatchException ()) {		\
-			AIException(0);				\
-			throw;						\
-		}else throw;					\
+		if (globalAI->CatchException()) {	\
+			AIException(s);					\
+			throw;							\
+		} else throw;						\
+	}										\
+	catch (...) {							\
+		if (globalAI->CatchException()) {	\
+			AIException(0);					\
+			throw;							\
+		} else throw;						\
 	}
 
-CGlobalAI::CGlobalAI(int team, const char* dll): team(team), cheatevents(false),dllName(dll?dll:"")
+CGlobalAI::CGlobalAI(int team, const char* botLibName): team(team), cheatevents(false), libName(botLibName? botLibName: "")
 {
-	ai = 0;
-	if (!dll) return;
-	if (!filesystem.GetFilesize(dll)) {
-		handleerror(NULL, dll, "Could not find AI lib", MBF_OK | MBF_EXCL);
-		return;
-	}
-
-	lib = SharedLib::Instantiate(dll);
-	_IsCInterface = (ISCINTERFACE) lib -> FindAddress("IsCInterface");
-
-	// check if IsCInterface function exported and return value true
-	if ( _IsCInterface != 0 && _IsCInterface() == 1) {
-		// presents C interface
-		logOutput << dll <<  " has C interface\n";
-		IsCInterface = true;
-
-		// keep as AbicProxy, so InitAI works ok
-		AbicProxy* ai = SAFE_NEW AbicProxy;
-		this->ai = ai;
-
-//		gh = SAFE_NEW CGroupHandler(team);
-		callback = SAFE_NEW CGlobalAICallback(this);
-		try {
-			ai->InitAI(dll, callback, team);
-		} HANDLE_EXCEPTION;
-	} else {
-		// presents C++ interface
-		logOutput << dll <<  " has C++ interface\n";
-		IsCInterface = false;
-
-		GetGlobalAiVersion = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
-
-		if (GetGlobalAiVersion == 0) {
-			handleerror(NULL, dll, "Incorrect Global AI dll", MBF_OK|MBF_EXCL);
-			return;
-		}
-
-		int i = GetGlobalAiVersion();
-
-		if (i != GLOBAL_AI_INTERFACE_VERSION) {
-			std::ostringstream tmp;
-			tmp << "Incorrect Global AI dll version " << i << ", expected "
-					<< GLOBAL_AI_INTERFACE_VERSION;
-			handleerror(NULL, dll, tmp.str().c_str(), MBF_OK | MBF_EXCL);
-			return;
-		}
-
-		GetNewAI = (GETNEWAI) lib->FindAddress("GetNewAI");
-		ReleaseAI = (RELEASEAI) lib->FindAddress("ReleaseAI");
-
-		ai = GetNewAI();
-//		gh = SAFE_NEW CGroupHandler(team);
-		callback = SAFE_NEW CGlobalAICallback(this);
-		try {
-			ai->InitAI(callback, team);
-		} HANDLE_EXCEPTION;
-
-	}
+	LoadAILib(team, botLibName, false);
 }
 
 void CGlobalAI::PreDestroy()
@@ -120,99 +63,86 @@ CGlobalAI::~CGlobalAI(void)
 	if (ai) {
 		if (!IsCInterface) {
 			try {
-				ReleaseAI(ai);
+				_ReleaseAIFunc(ai);
 			} HANDLE_EXCEPTION;
 		}
 
 		delete lib;
 		delete callback;
-//		delete gh;
 	}
 }
 
-void CGlobalAI::Serialize(creg::ISerializer *s)
+void CGlobalAI::Serialize(creg::ISerializer* s)
 {
-
 }
 
-void CGlobalAI::Load(std::istream *s)
+
+
+void CGlobalAI::Load(std::istream* s)
 {
 	try {
-		ai->Load(callback,s);
+		ai->Load(callback, s);
 	} HANDLE_EXCEPTION;
 }
 
-void CGlobalAI::Save(std::ostream *s)
+void CGlobalAI::Save(std::ostream* s)
 {
 	try {
 		ai->Save(s);
 	} HANDLE_EXCEPTION;
 }
 
+
+
 void CGlobalAI::PostLoad()
 {
-	if (!filesystem.GetFilesize(dllName.c_str())) {
-		handleerror(NULL, dllName.c_str(), "Could not find AI lib", MBF_OK | MBF_EXCL);
+	LoadAILib(team, libName.c_str(), true);
+}
+
+
+
+void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
+{
+	ai = 0;
+
+	if (!botLibName)
+		return;
+
+	if (!filesystem.GetFilesize(botLibName)) {
+		char msg[512];
+		SNPRINTF(msg, 511, "Could not find GlobalAI library \"%s\"", botLibName);
+		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
 		return;
 	}
-	typedef bool (* ISLOADSUPPORTED)();
-	ISLOADSUPPORTED _IsLoadSupported;
 
-	lib = SharedLib::Instantiate(dllName.c_str());
-	_IsCInterface = (ISCINTERFACE) lib -> FindAddress("IsCInterface");
-	_IsLoadSupported = (ISLOADSUPPORTED) lib -> FindAddress("IsLoadSupported");
-	bool IsLoadSupported = _IsLoadSupported && _IsLoadSupported();
+	bool isJavaAI = (strstr(botLibName, ".jar") != 0);
 
-	// check if IsCInterface function exported and return value true
-	if ( _IsCInterface != 0 && _IsCInterface() == 1) {
-		// presents C interface
-		logOutput << dllName.c_str() <<  " has C interface\n";
-		IsCInterface = true;
-
-		// keep as AbicProxy, so InitAI works ok
-		AbicProxy* ai = SAFE_NEW AbicProxy;
-		this->ai = ai;
-
-		callback = SAFE_NEW CGlobalAICallback(this);
-		if (!IsLoadSupported) {
-			try {
-				ai->InitAI(dllName.c_str(), callback, team);
-			} HANDLE_EXCEPTION;
-		}
+	if (isJavaAI) {
+		LoadJavaProxyAI();
+		// Java AI's are loaded by a C++ proxy anyway
+		_IsCInterfaceFunc = 0;
 	} else {
-		// presents C++ interface
-		logOutput << dllName.c_str() <<  " has C++ interface\n";
-		IsCInterface = false;
-
-		GetGlobalAiVersion = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
-
-		if (GetGlobalAiVersion == 0) {
-			handleerror(NULL, dllName.c_str(), "Incorrect Global AI dll", MBF_OK|MBF_EXCL);
-			return;
-		}
-
-		int i = GetGlobalAiVersion();
-
-		if (i != GLOBAL_AI_INTERFACE_VERSION) {
-			handleerror(NULL, dllName.c_str(), "Incorrect Global AI dll version", MBF_OK | MBF_EXCL);
-			return;
-		}
-
-		GetNewAI = (GETNEWAI) lib->FindAddress("GetNewAI");
-		ReleaseAI = (RELEASEAI) lib->FindAddress("ReleaseAI");
-
-		ai = GetNewAI();
-		callback = SAFE_NEW CGlobalAICallback(this);
-		if (!IsLoadSupported) {
-			try {
-				ai->InitAI(callback, team);
-			} HANDLE_EXCEPTION;
-		}
+		lib = SharedLib::Instantiate(botLibName);
+		_IsCInterfaceFunc = (ISCINTERFACE) lib->FindAddress("IsCInterface");
 	}
-	if (!IsLoadSupported) {
+
+	_IsLoadSupportedFunc = (ISLOADSUPPORTED) lib->FindAddress("IsLoadSupported");
+	IsCInterface = (_IsCInterfaceFunc != 0 && _IsCInterfaceFunc() == 1);
+	IsLoadSupported = (_IsLoadSupportedFunc != 0 && _IsLoadSupportedFunc());
+
+	if (IsCInterface) {
+		LoadABICAI(team, botLibName, postLoad, IsLoadSupported);
+	} else {
+		LoadCPPAI(team, botLibName, postLoad, IsLoadSupported, isJavaAI);
+	}
+
+
+	if (postLoad && !IsLoadSupported) {
+		// fallback code to help the AI if it
+		// doesn't implement load/save support
 		for (int a = 0; a < MAX_UNITS; a++) {
 			if (!uh->units[a]) continue;
-			if (uh->units[a]->team==team) {
+			if (uh->units[a]->team == team) {
 				try {
 					ai->UnitCreated(a);
 				} HANDLE_EXCEPTION;
@@ -221,10 +151,10 @@ void CGlobalAI::PostLoad()
 						ai->UnitFinished(a);
 					} HANDLE_EXCEPTION;
 			} else {
-				if ((uh->units[a]->allyteam==gs->AllyTeam(team))||gs->Ally(gs->AllyTeam(team),uh->units[a]->allyteam)) {
-
+				if ((uh->units[a]->allyteam == gs->AllyTeam(team)) || gs->Ally(gs->AllyTeam(team), uh->units[a]->allyteam)) {
+					/* do nothing */
 				} else {
-					if (uh->units[a]->losStatus[gs->AllyTeam(team)] & (LOS_INRADAR|LOS_INLOS)) {
+					if (uh->units[a]->losStatus[gs->AllyTeam(team)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
 							ai->EnemyEnterRadar(a);
 						} HANDLE_EXCEPTION;
@@ -240,9 +170,111 @@ void CGlobalAI::PostLoad()
 	}
 }
 
+
+
+void CGlobalAI::LoadABICAI(int team, const char* botLibName, bool postLoad, bool loadSupported)
+{
+	logOutput << botLibName <<  " has C interface\n";
+
+	// keep as AbicProxy, so InitAI works ok
+	AbicProxy* ai = SAFE_NEW AbicProxy;
+	this->ai = ai;
+
+	callback = SAFE_NEW CGlobalAICallback(this);
+
+	if (!postLoad || (postLoad && !loadSupported)) {
+		try {
+			ai->InitAI(botLibName, callback, team);
+		} HANDLE_EXCEPTION;
+	}
+}
+
+
+void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool loadSupported, bool isJavaAI)
+{
+	logOutput << botLibName <<  " has C++ interface\n";
+
+	_GetGlobalAiVersionFunc = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
+
+	if (_GetGlobalAiVersionFunc == 0) {
+		char msg[512];
+		SNPRINTF(msg, 511, "Incorrect GlobalAI library %s (no \"GetGlobalAiVersion\" function exported)", botLibName);
+		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
+		return;
+	}
+
+	const int botInterfaceVersion = _GetGlobalAiVersionFunc();
+
+	if (botInterfaceVersion != GLOBAL_AI_INTERFACE_VERSION) {
+		char msg[1024];
+		SNPRINTF(msg, 1023,
+			"Incorrect GlobalAI library (compiled against interface version %d,"
+			" expected expected interface version %d)",
+			botInterfaceVersion, GLOBAL_AI_INTERFACE_VERSION);
+		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
+		return;
+	}
+
+
+	if (isJavaAI) {
+		// we want to load a Java AI inside a jar,
+		// pass the name of the actual .jar to the
+		// proxy library so it can spawn a JVM for
+		// that AI
+		_GetNewAIByNameFunc = (GETNEWAIBYNAME) lib->FindAddress("GetNewAIByName");
+
+		if (_GetNewAIByNameFunc == 0) {
+			throw std::runtime_error("JAI proxy does not export \"GetNewAIByName\"");
+		}
+
+		ai = _GetNewAIByNameFunc(botLibName, team);
+	} else {
+		_GetNewAIFunc = (GETNEWAI) lib->FindAddress("GetNewAI");
+
+		if (_GetNewAIFunc == 0) {
+			char msg[512];
+			SNPRINTF(msg, 511, "GlobalAI library %s does not export \"GetNewAI\"", botLibName);
+			throw std::runtime_error(msg);
+		}
+
+		ai = _GetNewAIFunc();
+	}
+
+	// note: verify that this is really exported too?
+	_ReleaseAIFunc = (RELEASEAI) lib->FindAddress("ReleaseAI");
+	callback = SAFE_NEW CGlobalAICallback(this);
+
+	if (!postLoad || (postLoad && !loadSupported)) {
+		try {
+			ai->InitAI(callback, team);
+		} HANDLE_EXCEPTION;
+	}
+}
+
+
+void CGlobalAI::LoadJavaProxyAI()
+{
+	// Java AI, need to load the JAI proxy first
+	// TODO: Mac support? non-hardcoded proxy?
+	#ifdef WIN32
+	const char* javaProxyAI = "AI\\Bot-libs\\JAI\\JAI.dll";
+	#else
+	const char* javaProxyAI = "AI/Bot-libs/JAI/JAI.so";
+	#endif
+
+	if (!filesystem.GetFilesize(javaProxyAI)) {
+		char msg[512];
+		SNPRINTF(msg, 511, "Could not find Java GlobalAI proxy library \"%s\"", javaProxyAI);
+		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
+		return;
+	}
+
+	lib = SharedLib::Instantiate(javaProxyAI);
+}
+
+
 void CGlobalAI::Update(void)
 {
-//	gh->Update();
 	ai->Update();
 }
 
