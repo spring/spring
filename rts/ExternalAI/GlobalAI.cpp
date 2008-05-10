@@ -208,9 +208,9 @@ void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool 
 	if (botInterfaceVersion != GLOBAL_AI_INTERFACE_VERSION) {
 		char msg[1024];
 		SNPRINTF(msg, 1023,
-			"Incorrect GlobalAI library (compiled against interface version %d,"
-			" expected expected interface version %d)",
-			botInterfaceVersion, GLOBAL_AI_INTERFACE_VERSION);
+			"Incorrect GlobalAI library %s (compiled against"
+			"interface version %d, expected interface version %d)",
+			botLibName, botInterfaceVersion, GLOBAL_AI_INTERFACE_VERSION);
 		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
 		return;
 	}
