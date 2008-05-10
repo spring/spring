@@ -365,7 +365,7 @@ DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
 	ASSERT(archiveScanner && hpiHandler, "Call InitArchiveScanner before GetArchivePath.");
 	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchivePath.");
 	logOutput.Print("archive path: %s\n", arname);
-	return archiveScanner->GetArchivePath(arname).c_str();
+	return GetStr(archiveScanner->GetArchivePath(arname));
 }
 
 // Updated on every call to getmapcount
