@@ -222,9 +222,13 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 		return false;
 	}
 
+	if (net->localDemoPlayback) {
+		return false;
+	}
+
 	if (strncmp(dll, "LuaAI:", 6) == 0) {
 		CTeam* team = gs->Team(teamID);
-		if (team != NULL) { 
+		if (team != NULL) {
 			team->luaAI = (dll + 6);
 			return true;
 		}
@@ -232,23 +236,20 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 	}
 
 	try {
-		if (net->localDemoPlayback) {
+		if (ais[teamID]) {
+			delete ais[teamID];
+			ais[teamID] = 0;
+		}
+
+		ais[teamID] = SAFE_NEW CGlobalAI(teamID, dll);
+
+		if (!ais[teamID]->ai) {
+			delete ais[teamID];
+			ais[teamID] = 0;
 			return false;
 		}
 
-		if(ais[teamID]){
-			delete ais[teamID];
-			ais[teamID]=0;
-		}
-
-		ais[teamID]=SAFE_NEW CGlobalAI(teamID,dll);
-
-		if(!ais[teamID]->ai){
-			delete ais[teamID];
-			ais[teamID]=0;
-			return false;
-		}
-		hasAI=true;
+		hasAI = true;
 		return true;
 	} HANDLE_EXCEPTION;
 	return false;
