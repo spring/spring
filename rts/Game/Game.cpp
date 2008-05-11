@@ -462,6 +462,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	updateDeltaSeconds = 0.0f;
 	script = CScriptHandler::Instance().chosenScript;
 	assert(script);
+	luaCallIns.GameLoadLua();
 
 	glFogfv(GL_FOG_COLOR,FogLand);
 	glFogf(GL_FOG_START, 0.0f);
@@ -2894,6 +2895,7 @@ void CGame::StartPlaying()
 	CLuaUI::UpdateTeams();
 	ENTER_SYNCED;
 	script->GameStart();
+	luaCallIns.GameStartPlaying();
 
 }
 

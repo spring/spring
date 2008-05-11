@@ -202,6 +202,33 @@ void CLuaHandle::Shutdown()
 	return;
 }
 
+void CLuaHandle::GameLoadLua()
+{
+	LUA_CALL_IN_CHECK(L);	
+	lua_checkstack(L, 2);
+	static const LuaHashString cmdStr("GameLoadLua");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+	return;
+}
+
+void CLuaHandle::GameStartPlaying()
+{
+	LUA_CALL_IN_CHECK(L);	
+	lua_checkstack(L, 2);
+	static const LuaHashString cmdStr("GameStartPlaying");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	// call the routine
+	RunCallIn(cmdStr, 0, 0);
+	return;
+}
 
 void CLuaHandle::GameOver()
 {
