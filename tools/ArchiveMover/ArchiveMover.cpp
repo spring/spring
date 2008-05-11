@@ -5,6 +5,7 @@
 //  authors:  zizu
 //            Dave Rodgers  (aka: trepan)
 //            AF (wrote the original java version)
+//            Tobi Vollebregt (Linux port; refactors)
 //  date:     June 29, 2007
 //  desc:     Utility to classify and potentially move Spring
 //            archive files to their installation directories
@@ -22,7 +23,6 @@
 using std::endl;
 
 
-// FIXME: put in MSVC project file
 //#define ARCHIVE_MOVER_USE_WIN_API
 
 #ifdef ARCHIVE_MOVER_USE_WIN_API

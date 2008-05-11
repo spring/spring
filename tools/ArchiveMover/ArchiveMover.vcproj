@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="ArchiveMover"
 	ProjectGUID="{AB8CA13B-02DE-4DFB-A11B-4CF4433C77F1}"
+	RootNamespace="ArchiveMover"
 	>
 	<Platforms>
 		<Platform
@@ -37,7 +38,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\rts;..\..\vclibs\zlibwapi\include;boost_1_34_1"
-				PreprocessorDefinitions="BOOST_FILESYSTEM_NO_LIB;_SZ_ONE_DIRECTORY;ZLIB_WINAPI"
+				PreprocessorDefinitions="BOOST_FILESYSTEM_NO_LIB;_SZ_ONE_DIRECTORY;ZLIB_WINAPI;ARCHIVE_MOVER_USE_WIN_API;UNICODE"
 				DisableSpecificWarnings="4996"
 			/>
 			<Tool
@@ -102,7 +103,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\rts;..\..\vclibs\zlibwapi\include;boost_1_34_1"
-				PreprocessorDefinitions="BOOST_FILESYSTEM_NO_LIB;_SZ_ONE_DIRECTORY;ZLIB_WINAPI"
+				PreprocessorDefinitions="BOOST_FILESYSTEM_NO_LIB;_SZ_ONE_DIRECTORY;ZLIB_WINAPI;ARCHIVE_MOVER_USE_WIN_API;UNICODE"
 				DisableSpecificWarnings="4996"
 			/>
 			<Tool
