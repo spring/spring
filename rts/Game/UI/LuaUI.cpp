@@ -61,6 +61,7 @@ using namespace std;
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
+#include "System/SpringApp.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
@@ -806,8 +807,10 @@ bool CLuaUI::KeyPress(unsigned short key, bool isRepeat)
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());
 
+	lua_pushnumber(L, currentUnicode);
+
 	// call the function
-	if (!RunCallIn(cmdStr, 4, 1)) {
+	if (!RunCallIn(cmdStr, 5, 1)) {
 		return false;
 	}
 
@@ -842,8 +845,10 @@ bool CLuaUI::KeyRelease(unsigned short key)
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());
 
+	lua_pushnumber(L, currentUnicode);
+
 	// call the function
-	if (!RunCallIn(cmdStr, 3, 1)) {
+	if (!RunCallIn(cmdStr, 4, 1)) {
 		return false;
 	}
 

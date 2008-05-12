@@ -100,8 +100,8 @@ class CLuaHandle {
 
 		void Shutdown();
 
-		void GameLoadLua();
-		void GameStartPlaying();
+		void GamePreload();
+		void GameStart();
 		void GameOver();
 		void TeamDied(int teamID);
 

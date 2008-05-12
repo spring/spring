@@ -112,6 +112,13 @@ extern bool globalQuit;
 extern Uint8 *keys;
 
 /**
+ * @brief currentUnicode
+ *
+ * Unicode character for the current KeyPressed or KeyReleased
+ */
+extern Uint16 currentUnicode;
+
+/**
  * @brief fullscreen
  *
  * Whether or not the game is running in fullscreen

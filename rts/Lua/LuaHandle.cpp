@@ -202,11 +202,11 @@ void CLuaHandle::Shutdown()
 	return;
 }
 
-void CLuaHandle::GameLoadLua()
+void CLuaHandle::GamePreload()
 {
 	LUA_CALL_IN_CHECK(L);	
 	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr("GameLoadLua");
+	static const LuaHashString cmdStr("GamePreload");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return; // the call is not defined
 	}
@@ -216,11 +216,11 @@ void CLuaHandle::GameLoadLua()
 	return;
 }
 
-void CLuaHandle::GameStartPlaying()
+void CLuaHandle::GameStart()
 {
 	LUA_CALL_IN_CHECK(L);	
 	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr("GameStartPlaying");
+	static const LuaHashString cmdStr("GameStart");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return; // the call is not defined
 	}
