@@ -24,7 +24,7 @@ class CMouseCursor {
 		void Draw(int x, int y, float scale);	// software cursor draw
 		void DrawQuad(int x, int y);		// draw command queue icon
 		void BindTexture(); 			// software mouse cursor
-		bool BindHwCursor(); 			// hardware mouse cursor
+		void BindHwCursor(); 			// hardware mouse cursor
 
 		int GetMaxSizeX() const { return xmaxsize; }
 		int GetMaxSizeY() const { return ymaxsize; }
