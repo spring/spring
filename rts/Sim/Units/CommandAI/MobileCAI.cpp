@@ -7,7 +7,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/AirBaseHandler.h"

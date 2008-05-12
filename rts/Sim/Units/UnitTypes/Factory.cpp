@@ -193,20 +193,6 @@ void CFactory::Update()
 				curBuild->SetGroup(group);
 			}
 
-			Command c;
-			c.options = 0;
-
-			c.id = CMD_MOVE_STATE;
-			c.params.push_back(moveState);
-			curBuild->commandAI->GiveCommand(c);
-			c.params.clear();
-
-			if(curBuild->unitDef->fireState < 0) {
-				c.id = CMD_FIRE_STATE;
-				c.params.push_back(fireState);
-				curBuild->commandAI->GiveCommand(c);
-			}
-
 			bool userOrders = true;
 			if (curBuild->commandAI->commandQue.empty() ||
 					(dynamic_cast<CMobileCAI*>(curBuild->commandAI) &&

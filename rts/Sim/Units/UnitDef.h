@@ -263,6 +263,7 @@ struct UnitDef
 	bool canFireControl;
 
 	int fireState;
+	int moveState;
 
 	//aircraft stuff
 	float wingDrag;

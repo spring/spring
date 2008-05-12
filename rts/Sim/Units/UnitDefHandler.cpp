@@ -341,9 +341,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canPatrol   = udTable.GetBool("canPatrol",   true);
 	ud.canGuard    = udTable.GetBool("canGuard",    true);
 	ud.canRepeat   = udTable.GetBool("canRepeat",   true);
-	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
-	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
-	ud.fireState = udTable.GetInt("fireState", ud.canFireControl ? -1 : 0);
 
 	ud.builder = udTable.GetBool("builder", true);
 
@@ -385,6 +382,13 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.maxAcc   = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
 	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f*ud.maxAcc)) * (ud.canfly ? 0.1f : 1.f); // no negative values
 	ud.turnRate = udTable.GetFloat("turnRate",     0.0f);
+
+	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
+	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
+	ud.fireState = udTable.GetInt("fireState", ud.canFireControl ? -1 : 2);
+	ud.fireState = std::min(ud.fireState,2);
+	ud.moveState = udTable.GetInt("moveState", (ud.canmove && ud.speed>0.0f)  ? -1 : 1);
+	ud.moveState = std::min(ud.moveState,2);
 
 	ud.buildRange3D = udTable.GetBool("buildRange3D", false);
 	ud.buildDistance = udTable.GetFloat("buildDistance", 128.0f);

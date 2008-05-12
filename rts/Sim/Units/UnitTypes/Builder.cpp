@@ -327,7 +327,7 @@ void CBuilder::Update()
 					curCapture->lineage = this->lineage;
 					gs->Team(oldLineage)->LeftLineage(curCapture);
 				}
-				curCapture->captureProgress=0.5f;	//make units somewhat easier to capture back after first capture
+				curCapture->captureProgress=0.0f;
 				StopBuild(true);
 			}
 		} else {
