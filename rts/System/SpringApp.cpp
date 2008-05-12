@@ -49,6 +49,7 @@ using std::string;
 CGameController* activeController = 0;
 bool globalQuit = false;
 Uint8 *keys = 0;
+Uint16 currentUnicode = 0;
 bool fullscreen = true;
 char *win_lpCmdLine = 0;
 
@@ -885,6 +886,7 @@ int SpringApp::Run (int argc, char *argv[])
 				}
 				case SDL_KEYDOWN: {
 					int i = event.key.keysym.sym;
+					currentUnicode = event.key.keysym.unicode;
 
 					const bool isRepeat = !!keys[i];
 
@@ -932,6 +934,7 @@ int SpringApp::Run (int argc, char *argv[])
 				}
 				case SDL_KEYUP: {
 					int i = event.key.keysym.sym;
+					currentUnicode = event.key.keysym.unicode;
 
 					UpdateSDLKeys();
 

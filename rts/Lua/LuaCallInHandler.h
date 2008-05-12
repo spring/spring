@@ -40,8 +40,8 @@ class CLuaCallInHandler
 
 	public:
 		// Synced
-		void GameLoadLua();
-		void GameStartPlaying();
+		void GamePreload();
+		void GameStart();
 		void GameOver();
 		void TeamDied(int teamID);
 
@@ -109,8 +109,8 @@ class CLuaCallInHandler
 
 		CallInList handles;
 
-		CallInList listGameLoadLua;
-		CallInList listGameStartPlaying;
+		CallInList listGamePreload;
+		CallInList listGameStart;
 		CallInList listGameOver;
 		CallInList listTeamDied;
 

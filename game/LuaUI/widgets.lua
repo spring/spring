@@ -102,15 +102,15 @@ widgetHandler = {
 -- these call-ins are set to 'nil' if not used
 -- they are setup in UpdateCallIns()
 local flexCallIns = {
-  'GameLoadLua',
-  'GameStartPlaying',
+  'GamePreload',
+  'GameStart',
   'GameOver',
-  'TeamDied',
   'GameFrame',
+  'GameSetup',
+  'TeamDied',
   'ShockFront',
   'WorldTooltip',
   'MapDrawCmd',
-  'GameSetup',
   'DefaultCommand',
   'UnitCreated',
   'UnitFinished',
@@ -147,8 +147,8 @@ for _,ci in ipairs(flexCallIns) do
 end
 
 local callInLists = {
-  'GameLoadLua',
-  'GameStartPlaying',
+  'GamePreload',
+  'GameStart',
   'Shutdown',
   'Update',
   'TextCommand',
@@ -1227,11 +1227,12 @@ end
 --  Keyboard call-ins
 --
 
-function widgetHandler:KeyPress(key, mods, isRepeat)
+function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
+  print('KP2\n')
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
-      mo:TweakKeyPress(key, mods, isRepeat)
+      mo:TweakKeyPress(key, mods, isRepeat, label, unicode)
     end
     return true
   end
@@ -1241,7 +1242,7 @@ function widgetHandler:KeyPress(key, mods, isRepeat)
   end
 
   for _,w in ipairs(self.KeyPressList) do
-    if (w:KeyPress(key, mods, isRepeat)) then
+    if (w:KeyPress(key, mods, isRepeat, label, unicode)) then
       return true
     end
   end
@@ -1249,11 +1250,11 @@ function widgetHandler:KeyPress(key, mods, isRepeat)
 end
 
 
-function widgetHandler:KeyRelease(key, mods)
+function widgetHandler:KeyRelease(key, mods, label, unicode)
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyRelease) then
-      mo:TweakKeyRelease(key, mods)
+      mo:TweakKeyRelease(key, mods, label, unicode)
     elseif (key == KEYSYMS.ESCAPE) then
       Spring.Echo("LuaUI TweakMode: OFF")
       self.tweakMode = false
@@ -1266,7 +1267,7 @@ function widgetHandler:KeyRelease(key, mods)
   end
 
   for _,w in ipairs(self.KeyReleaseList) do
-    if (w:KeyRelease(key, mods)) then
+    if (w:KeyRelease(key, mods, label, unicode)) then
       return true
     end
   end
@@ -1421,16 +1422,16 @@ end
 --  Game call-ins
 --
 
-function widgetHandler:GameLoadLua()
-  for _,w in ipairs(self.GameLoadLuaList) do
-    w:GameLoadLua()
+function widgetHandler:GamePreload()
+  for _,w in ipairs(self.GamePreloadList) do
+    w:GamePreload()
   end
   return
 end
 
-function widgetHandler:GameStartPlaying()
-  for _,w in ipairs(self.GameStartPlayingList) do
-    w:GameStartPlaying()
+function widgetHandler:GameStart()
+  for _,w in ipairs(self.GameStartList) do
+    w:GameStart()
   end
   return
 end

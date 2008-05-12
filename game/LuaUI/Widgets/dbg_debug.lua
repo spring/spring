@@ -71,6 +71,24 @@ function widget:Shutdown()
 end
 
 
+function widget:GamePreload()
+  print('DEBUG (GamePreload)')
+  return
+end
+
+
+function widget:GameStart()
+  print('DEBUG (GameStart)')
+  return
+end
+
+
+function widget:GameOver()
+  print('DEBUG (GameOver)')
+  return
+end
+
+
 function widget:Update(deltaTime)
   if (printUpdate) then
     printUpdate = false
@@ -116,14 +134,14 @@ function widget:DrawScreen()
 end
 
 
-function widget:KeyPress(key, mods, isRepeat)
-  print('DEBUG (KeyPress) '..key)
+function widget:KeyPress(key, mods, isRepeat, label, unicode)
+  print('DEBUG (KeyPress) ' .. key .. ' ' .. label .. ' ' .. tostring(unicode))
   return false
 end
 
 
-function widget:KeyRelease(key, mods)
-  print('DEBUG (KeyRelease) '..key)
+function widget:KeyRelease(key, mods, label, unicode)
+  print('DEBUG (KeyReleased) ' .. key .. ' ' .. label .. ' ' .. tostring(unicode))
   return false
 end
 

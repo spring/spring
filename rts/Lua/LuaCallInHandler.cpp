@@ -19,8 +19,8 @@ CLuaCallInHandler luaCallIns;
 
 CLuaCallInHandler::CLuaCallInHandler()
 {
-	callInMap["GameLoadLua"]         = &listGameLoadLua;
-	callInMap["GameStartPlaying"]    = &listGameStartPlaying;
+	callInMap["GamePreload"]         = &listGamePreload;
+	callInMap["GameStart"]    = &listGameStart;
 	callInMap["GameOver"]            = &listGameOver;
 	callInMap["TeamDied"]            = &listTeamDied;
 
@@ -85,8 +85,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 #define ADDHANDLE(name) \
   if (lh->HasCallIn(#name)) { ListInsert(list ## name, lh); }
   
-	ADDHANDLE(GameLoadLua);
-	ADDHANDLE(GameStartPlaying);
+	ADDHANDLE(GamePreload);
+	ADDHANDLE(GameStart);
 	ADDHANDLE(GameOver);
 	ADDHANDLE(TeamDied);
 
@@ -141,8 +141,8 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 {
 	ListRemove(handles, lh);
 
-	ListRemove(listGameLoadLua, lh);
-	ListRemove(listGameStartPlaying, lh);
+	ListRemove(listGamePreload, lh);
+	ListRemove(listGameStart, lh);
 	ListRemove(listGameOver, lh);
 	ListRemove(listTeamDied, lh);
 
@@ -282,21 +282,21 @@ void CLuaCallInHandler::ListRemove(CallInList& ciList, CLuaHandle* lh)
 /******************************************************************************/
 /******************************************************************************/
 
-void CLuaCallInHandler::GameLoadLua()
+void CLuaCallInHandler::GamePreload()
 {
-	const int count = listGameLoadLua.size();
+	const int count = listGamePreload.size();
 	for (int i = 0; i < count; i++) {
-		CLuaHandle* lh = listGameLoadLua[i];
-		lh->GameLoadLua();
+		CLuaHandle* lh = listGamePreload[i];
+		lh->GamePreload();
 	}	
 }
 
-void CLuaCallInHandler::GameStartPlaying()
+void CLuaCallInHandler::GameStart()
 {
-	const int count = listGameStartPlaying.size();
+	const int count = listGameStart.size();
 	for (int i = 0; i < count; i++) {
-		CLuaHandle* lh = listGameStartPlaying[i];
-		lh->GameStartPlaying();
+		CLuaHandle* lh = listGameStart[i];
+		lh->GameStart();
 	}	
 }
 
