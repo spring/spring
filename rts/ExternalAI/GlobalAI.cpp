@@ -105,8 +105,10 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 {
 	ai = 0;
 
-	if (!botLibName)
+	if (!botLibName) {
+		// no AI for this team
 		return;
+	}
 
 	if (!filesystem.GetFilesize(botLibName)) {
 		char msg[512];
@@ -115,18 +117,19 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 		return;
 	}
 
-	bool isJavaAI = (strstr(botLibName, ".jar") != 0);
+	bool isJavaAI = (strstr(botLibName, ".jar") == (botLibName + strlen(botLibName) - 4));
 
 	if (isJavaAI) {
+		// Java AI, need to load the JAI proxy first
 		LoadJavaProxyAI();
-		// Java AI's are loaded by a C++ proxy anyway
-		_IsCInterfaceFunc = 0;
 	} else {
 		lib = SharedLib::Instantiate(botLibName);
-		_IsCInterfaceFunc = (ISCINTERFACE) lib->FindAddress("IsCInterface");
 	}
 
+	// the JAI proxy is C++ anyway
+	_IsCInterfaceFunc = (isJavaAI)? 0: (ISCINTERFACE) lib->FindAddress("IsCInterface");
 	_IsLoadSupportedFunc = (ISLOADSUPPORTED) lib->FindAddress("IsLoadSupported");
+
 	IsCInterface = (_IsCInterfaceFunc != 0 && _IsCInterfaceFunc() == 1);
 	IsLoadSupported = (_IsLoadSupportedFunc != 0 && _IsLoadSupportedFunc());
 
@@ -141,7 +144,9 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 		// fallback code to help the AI if it
 		// doesn't implement load/save support
 		for (int a = 0; a < MAX_UNITS; a++) {
-			if (!uh->units[a]) continue;
+			if (!uh->units[a])
+				continue;
+
 			if (uh->units[a]->team == team) {
 				try {
 					ai->UnitCreated(a);
@@ -174,7 +179,7 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 
 void CGlobalAI::LoadABICAI(int team, const char* botLibName, bool postLoad, bool loadSupported)
 {
-	logOutput << botLibName <<  " has C interface\n";
+	logOutput << botLibName << " has a C interface (ABIC)\n";
 
 	// keep as AbicProxy, so InitAI works ok
 	AbicProxy* ai = SAFE_NEW AbicProxy;
@@ -192,13 +197,17 @@ void CGlobalAI::LoadABICAI(int team, const char* botLibName, bool postLoad, bool
 
 void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool loadSupported, bool isJavaAI)
 {
-	logOutput << botLibName <<  " has C++ interface\n";
+	if (isJavaAI) {
+		logOutput << botLibName << " is a Java archive\n";
+	} else {
+		logOutput << botLibName << " has a C++ interface\n";
+	}
 
 	_GetGlobalAiVersionFunc = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
 
 	if (_GetGlobalAiVersionFunc == 0) {
 		char msg[512];
-		SNPRINTF(msg, 511, "Incorrect GlobalAI library %s (no \"GetGlobalAiVersion\" function exported)", botLibName);
+		SNPRINTF(msg, 511, "Incorrect GlobalAI library \"%s\" (no \"GetGlobalAiVersion\" function exported)", botLibName);
 		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
 		return;
 	}
@@ -208,8 +217,8 @@ void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool 
 	if (botInterfaceVersion != GLOBAL_AI_INTERFACE_VERSION) {
 		char msg[1024];
 		SNPRINTF(msg, 1023,
-			"Incorrect GlobalAI library %s (compiled against"
-			"interface version %d, expected interface version %d)",
+			"Incorrect GlobalAI library \"%s\"\n"
+			"(lib interface version %d, engine interface version %d)",
 			botLibName, botInterfaceVersion, GLOBAL_AI_INTERFACE_VERSION);
 		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
 		return;
@@ -227,13 +236,14 @@ void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool 
 			throw std::runtime_error("JAI proxy does not export \"GetNewAIByName\"");
 		}
 
+		// note: team parameter is unnecessary
 		ai = _GetNewAIByNameFunc(botLibName, team);
 	} else {
 		_GetNewAIFunc = (GETNEWAI) lib->FindAddress("GetNewAI");
 
 		if (_GetNewAIFunc == 0) {
 			char msg[512];
-			SNPRINTF(msg, 511, "GlobalAI library %s does not export \"GetNewAI\"", botLibName);
+			SNPRINTF(msg, 511, "GlobalAI library \"%s\" does not export \"GetNewAI\"", botLibName);
 			throw std::runtime_error(msg);
 		}
 
@@ -254,7 +264,6 @@ void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool 
 
 void CGlobalAI::LoadJavaProxyAI()
 {
-	// Java AI, need to load the JAI proxy first
 	// TODO: Mac support? non-hardcoded proxy?
 	#ifdef WIN32
 	const char* javaProxyAI = "AI\\Bot-libs\\JAI\\JAI.dll";
