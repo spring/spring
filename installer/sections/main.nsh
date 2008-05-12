@@ -16,7 +16,7 @@
   File "..\mingwlibs\dll\zlib1.dll"
 
   ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
-  File "..\game\SDL.dll"
+  File "..\external\SDL.dll"
 
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
@@ -34,19 +34,19 @@
   inetc::get \
   "http://installer.clan-sy.com/springsettings.exe" "$INSTDIR\springsettings.exe" 
 
-  File "..\game\mingwm10.dll"
-  File "..\game\wxbase28u_gcc_custom.dll"
-  File "..\game\wxbase28u_net_gcc_custom.dll"
-  File "..\game\wxmsw28u_adv_gcc_custom.dll"
-  File "..\game\wxmsw28u_core_gcc_custom.dll"
+  File "..\external\mingwm10.dll"
+  File "..\external\wxbase28u_gcc_custom.dll"
+  File "..\external\wxbase28u_net_gcc_custom.dll"
+  File "..\external\wxmsw28u_adv_gcc_custom.dll"
+  File "..\external\wxmsw28u_core_gcc_custom.dll"
 
   ; DLLs
-  File "..\game\MSVCR71.dll"
-  File "..\game\MSVCP71.dll"
+  File "..\external\MSVCR71.dll"
+  File "..\external\MSVCP71.dll"
   File "..\mingwlibs\dll\DevIL.dll"
   File "..\mingwlibs\dll\freetype6.dll"
   File "..\mingwlibs\dll\ILU.dll"
-  File "..\game\zlibwapi.dll"
+  File "..\external\zlibwapi.dll"
 
   File "..\game\PALETTE.PAL"
 
