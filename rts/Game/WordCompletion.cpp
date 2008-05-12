@@ -30,12 +30,14 @@ void CWordCompletion::Reset()
 
 	// local commands
 	words["/advshading "] = sl;
+	words["/hardwarecursor "] = sl;
 	words["/clock"] = sl;
 	words["/cmdcolors "] = sl;
 	words["/ctrlpanel "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
+	words["/grounddecals "] = sl;
 	words["/info "] = sl;
 	words["/luaui "] = sl;
 	words["/maxparticles "] = sl;
@@ -58,12 +60,15 @@ void CWordCompletion::Reset()
 	words["/keydebug"] = sl;
 	words["/fakemeta "] = sl;
 	words["/volume "] = sl;
+	words["/unitreplyvolume "] = sl;
 	words["/vsync "] = sl;
+	words["/wiremap "] = sl;
 
 	// minimap sub-commands
 	WordProperties mm(false, false, true);
 	words["fullproxy "] = mm;
 	words["drawcommands "] = mm;
+	words["drawprojectiles "] = mm;
 	words["icons "] = mm;
 	words["unitexp "] = mm;
 	words["unitsize "] = mm;

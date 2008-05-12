@@ -958,32 +958,30 @@ void CGuiHandler::Update()
 
 void CGuiHandler::SetCursorIcon() const
 {
-	mouse->cursorText = "";
+	string newCursor = "cursornormal";
 	mouse->cursorScale = 1.0f;
 
 	CInputReceiver* ir = NULL;
-	if (!game->hideInterface) {
+	if (!game->hideInterface)
 		ir = GetReceiverAt(mouse->lastx, mouse->lasty);
-	}
 
 	if ((ir != NULL) && (ir != minimap)) {
+		mouse->SetCursor(newCursor);
 		return;
 	}
 
-	if (ir == minimap) {
+	if (ir == minimap)
 		mouse->cursorScale = minimap->CursorScale();
-	}
 
-	const bool useMinimap =
-		(minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
+	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
 	if ((inCommand >= 0) && (inCommand<commands.size())) {
 		const CommandDescription& cmdDesc = commands[inCommand];
 
 		if (!cmdDesc.mouseicon.empty()) {
-			mouse->cursorText = cmdDesc.mouseicon;
+			newCursor=cmdDesc.mouseicon;
 		} else {
-			mouse->cursorText = cmdDesc.name;
+			newCursor=cmdDesc.name;
 		}
 
 		if (useMinimap && (cmdDesc.id < 0)) {
@@ -996,9 +994,9 @@ void CGuiHandler::SetCursorIcon() const
 			// does not consider it when checking for position blocking
 			CFeature* feature;
 			if(!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam)) {
-				mouse->cursorText = "BuildBad";
+				newCursor="BuildBad";
 			} else {
-				mouse->cursorText = "BuildGood";
+				newCursor="BuildGood";
 			}
 		}
 	}
@@ -1013,16 +1011,17 @@ void CGuiHandler::SetCursorIcon() const
 		if ((defcmd >= 0) && (defcmd < commands.size())) {
 			const CommandDescription& cmdDesc = commands[defcmd];
 			if (!cmdDesc.mouseicon.empty()) {
-				mouse->cursorText = cmdDesc.mouseicon;
+				newCursor=cmdDesc.mouseicon;
 			} else {
-				mouse->cursorText = cmdDesc.name;
+				newCursor=cmdDesc.name;
 			}
 		}
 	}
 
-	if (gatherMode && (mouse->cursorText == "Move")) {
-		mouse->cursorText = "GatherWait";
-	}
+	if (gatherMode && (mouse->cursorText == "Move"))
+		newCursor = "GatherWait";
+	
+	mouse->SetCursor(newCursor);
 }
 
 
@@ -4006,11 +4005,6 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	}
 	glEnd();
 
-	if(sizeDiv!=0){
-		char c[40];
-		SNPRINTF(c, 40, "%d", (int)(frontLen / sizeDiv) );
-		mouse->cursorTextRight=c;
-	}
 	glEnable(GL_FOG);
 }
 

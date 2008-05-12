@@ -97,6 +97,7 @@ public:
 
 	bool soundEnabled;
 	float gameSoundVolume;
+	float unitReplyVolume;
 
 	CScript* script;
 

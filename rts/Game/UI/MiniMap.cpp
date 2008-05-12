@@ -115,6 +115,8 @@ CMiniMap::CMiniMap()
 
 	drawCommands = std::max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
 
+	drawProjectiles = !!configHandler.GetInt("MiniMapDrawProjectiles", 1);
+
 	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
@@ -350,6 +352,14 @@ void CMiniMap::ConfigCommand(const std::string& line)
 
 		} else {
 			drawCommands = (drawCommands > 0) ? 0 : 1;
+		}
+	}
+	else if (command == "drawprojectiles") {
+		if (words.size() >= 2) {
+			drawProjectiles = !!atoi(words[1].c_str());
+
+		} else {
+			drawProjectiles = !drawProjectiles;
 		}
 	}
 	else if (command == "simplecolors") {
@@ -1060,57 +1070,59 @@ void CMiniMap::DrawForReal()
 	// draw the projectiles
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 
-	Projectile_List::iterator psi;
-	for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
-		CProjectile* p = *psi;
+	if (drawProjectiles) {
+		Projectile_List::iterator psi;
+		for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
+			CProjectile* p = *psi;
 
-		if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
-			gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+			if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
+				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
 
-			if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
-			} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
-				glBegin(GL_POINTS);
-				glColor4f(0,1,0,0.1);
-				glVertexf3(p->pos);
-				glEnd();
-			} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
-				glBegin(GL_LINES);
-				glColor4f(((CBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
-				glVertexf3(((CBeamLaserProjectile*)p)->startPos);
-				glVertexf3(((CBeamLaserProjectile*)p)->endPos);
-				glEnd();
-			} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
-				glBegin(GL_LINES);
-				glColor4f(((CLargeBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
-				glVertexf3(((CLargeBeamLaserProjectile*)p)->startPos);
-				glVertexf3(((CLargeBeamLaserProjectile*)p)->endPos);
-				glEnd();
-			} else if (dynamic_cast<CLightingProjectile*>(p)) {
-				glBegin(GL_LINES);
-				glColor4f(((CLightingProjectile*)p)->color[0],((CLightingProjectile*)p)->color[1],((CLightingProjectile*)p)->color[2],1);
-				glVertexf3(((CLightingProjectile*)p)->pos);
-				glVertexf3(((CLightingProjectile*)p)->endPos);
-				glEnd();
-			} else if (dynamic_cast<CPieceProjectile*>(p)) {
-				glBegin(GL_POINTS);
-				glColor4f(1,0,0,1);
-				glVertexf3(p->pos);
-				glEnd();
-			} else if (dynamic_cast<CWreckProjectile*>(p)) {
-				glBegin(GL_POINTS);
-				glColor4f(1,0,0,0.5);
-				glVertexf3(p->pos);
-				glEnd();
-			} else if (dynamic_cast<CWeaponProjectile*>(p)) {
-				glBegin(GL_POINTS);
-				glColor4f(1,1,0,1);
-				glVertexf3(p->pos);
-				glEnd();
-			} else {
-				glBegin(GL_POINTS);
-				glColor4f(1,1,1,0.1/*0.0002f*(width+height)*/);
-				glVertexf3(p->pos);
-				glEnd();
+				if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
+				} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
+					glBegin(GL_POINTS);
+					glColor4f(0,1,0,0.1);
+					glVertexf3(p->pos);
+					glEnd();
+				} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
+					glBegin(GL_LINES);
+					glColor4f(((CBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
+					glVertexf3(((CBeamLaserProjectile*)p)->startPos);
+					glVertexf3(((CBeamLaserProjectile*)p)->endPos);
+					glEnd();
+				} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
+					glBegin(GL_LINES);
+					glColor4f(((CLargeBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
+					glVertexf3(((CLargeBeamLaserProjectile*)p)->startPos);
+					glVertexf3(((CLargeBeamLaserProjectile*)p)->endPos);
+					glEnd();
+				} else if (dynamic_cast<CLightingProjectile*>(p)) {
+					glBegin(GL_LINES);
+					glColor4f(((CLightingProjectile*)p)->color[0],((CLightingProjectile*)p)->color[1],((CLightingProjectile*)p)->color[2],1);
+					glVertexf3(((CLightingProjectile*)p)->pos);
+					glVertexf3(((CLightingProjectile*)p)->endPos);
+					glEnd();
+				} else if (dynamic_cast<CPieceProjectile*>(p)) {
+					glBegin(GL_POINTS);
+					glColor4f(1,0,0,1);
+					glVertexf3(p->pos);
+					glEnd();
+				} else if (dynamic_cast<CWreckProjectile*>(p)) {
+					glBegin(GL_POINTS);
+					glColor4f(1,0,0,0.5);
+					glVertexf3(p->pos);
+					glEnd();
+				} else if (dynamic_cast<CWeaponProjectile*>(p)) {
+					glBegin(GL_POINTS);
+					glColor4f(1,1,0,1);
+					glVertexf3(p->pos);
+					glEnd();
+				} else {
+					glBegin(GL_POINTS);
+					glColor4f(1,1,1,0.1/*0.0002f*(width+height)*/);
+					glVertexf3(p->pos);
+					glEnd();
+				}
 			}
 		}
 	}
@@ -1120,7 +1132,7 @@ void CMiniMap::DrawForReal()
 	// NOTE: this needlessly adds to the CursorIcons list, but at least
 	//       they are not drawn  (because the input receivers are drawn
 	//       after the command queues)
-  LuaUnsyncedCtrl::DrawUnitCommandQueues();
+	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
 	  selectedUnits.DrawCommands();
 	}

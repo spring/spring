@@ -122,6 +122,7 @@ class CMiniMap : public CInputReceiver {
 		int lastWindowSizeX;
 		int lastWindowSizeY;
 		
+		bool drawProjectiles;
 		bool useIcons;
 		int drawCommands;
 		float cursorScale;

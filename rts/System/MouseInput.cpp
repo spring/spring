@@ -3,12 +3,17 @@
 	The code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.
 	Instead it installs a window message proc and reads input from WM_MOUSEMOVE.
 	On non-windows, the normal SDL events are used for mouse input
+
+	new:
+	It also workarounds a issue with SDL+windows and hardware cursors (->it has to block WM_SETCURSOR),
+	so it is used now always even in window mode!
 */
 
 #include "StdAfx.h"
 #include "Platform/Win/win32.h"
 #include "MouseInput.h"
 #include "Game/UI/MouseHandler.h"
+#include "LogOutput.h"
 
 #include <SDL_events.h>
 #include <SDL_syswm.h>
@@ -24,6 +29,7 @@ IMouseInput::~IMouseInput()
 //////////////////////////////////////////////////////////////////////
 
 #ifdef WIN32
+
 class CWin32MouseInput : public IMouseInput
 {
 public:
@@ -33,6 +39,7 @@ public:
 	int2 mousepos;
 	bool mousemoved;
 	HWND wnd;
+	HCURSOR hCursor;
 
 	// SDL runs the window in a different thread, hence the indirectness of the mouse pos handling
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -41,8 +48,21 @@ public:
 			inst->mousepos = int2(LOWORD(lparam),HIWORD(lparam));
 			inst->mousemoved = true;
 			return FALSE;
+		}else if (msg==WM_SETCURSOR) {
+			if (inst->hCursor!=NULL) {
+				Uint16 hittest = LOWORD(lparam);
+				if ( hittest == HTCLIENT ) {
+					SetCursor(inst->hCursor);
+					return TRUE;
+				}
+			}
 		}
 		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wparam, lparam);
+	}
+
+	void SetWMMouseCursor(void* wmcursor)
+	{
+		hCursor = (HCURSOR)wmcursor;
 	}
 
 	void InstallWndCallback()
@@ -55,6 +75,8 @@ public:
 	{
 		inst = this;
 
+		hCursor = NULL;
+
 		mousemoved = false;
 		sdl_wndproc = 0;
 
@@ -65,9 +87,7 @@ public:
 
 		wnd = info.window;
 
-		// In windowed mode, SDL uses straight Win32 API to handle mouse movement, which works ok.
-		if (fullscreen)
-			InstallWndCallback();
+		InstallWndCallback();
 	}
 	~CWin32MouseInput()
 	{
@@ -83,7 +103,7 @@ public:
 	{
 		mousepos = pos;
 		if (fullscreen)
-			SetCursorPos (pos.x, pos.y);
+			SetCursorPos(pos.x, pos.y);
 		else
 			SDL_WarpMouse(pos.x, pos.y);
 	}
@@ -111,12 +131,12 @@ public:
 					mouse->MousePress (mousepos.x, mousepos.y, 5);
 			}
 			break;}
-		case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode 
+		/*case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode 
 			if(!fullscreen) {
 				mousepos = int2(event.motion.x, event.motion.y);
 				mouse->MouseMove(mousepos.x, mousepos.y);
 			}
-			break;
+			break;*/
 		case SDL_MOUSEBUTTONDOWN:
 			if (event.button.button == SDL_BUTTON_WHEELUP)
 				mouse->MouseWheel(true);
