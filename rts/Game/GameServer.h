@@ -47,6 +47,7 @@ class GameTeam
 public:
 	SFloat3 startpos;
 	bool readyToStart;
+	int allyTeam;
 };
 
 /**

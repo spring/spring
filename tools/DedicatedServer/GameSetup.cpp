@@ -227,6 +227,8 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
 
 		const string aiDll = file.SGetValueDef("", s + "aidll");
+		teamAllyteam[i] = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
+
 		if (aiDll.substr(0, 6) == "LuaAI:") {
 		} else {
 			if (hostDemo) {
@@ -299,6 +301,8 @@ void CGameSetup::RemapAllyteams()
 	// relocate gs->allies matrix
 	for (int a = 0; a < MAX_TEAMS; ++a) {
 		for (int b = 0; b < MAX_TEAMS; ++b) {
+			teamAllyteam[a] = allyteamRemap[teamAllyteam[a]];
+
 			if (allyteamRemap.find(a) != allyteamRemap.end() &&
 				allyteamRemap.find(b) != allyteamRemap.end()) {
 			}

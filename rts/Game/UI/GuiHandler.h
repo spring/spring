@@ -144,7 +144,6 @@ class CGuiHandler : public CInputReceiver {
 		int  ParseIconSlot(const std::string& text) const;
 
 	private:
-		bool firstLayout;
 		bool needShift;
 		bool showingMetal;
 		bool autoShowMetal;

@@ -64,8 +64,7 @@ const char* CGuiHandler::luaUiFile = "gui.lua";
 
 
 CGuiHandler::CGuiHandler()
-: firstLayout(true),
-  inCommand(-1),
+: inCommand(-1),
   activeMousePress(false),
 	forceLayoutUpdate(false),
   defaultCmdMemory(-1),
@@ -515,13 +514,6 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	commands.clear();
 	forceLayoutUpdate = false;
 
-	// try using the custom layout handler
-	if (firstLayout) {
-		firstLayout = false;
-		if (!!configHandler.GetInt("LuaUI", 0)) {
-			CLuaUI::LoadHandler();
-		}
-	}
 	if ((luaUI != NULL) && luaUI->HasLayoutButtons()) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {

@@ -230,6 +230,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		gs->Team(i)->side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
 		// allyteam field is relocated in RemapAllyteams
 		gs->SetAllyTeam(i, atoi(file.SGetValueDef("0", s + "allyteam").c_str()));
+		teamAllyteam[i] = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
@@ -328,6 +329,7 @@ void CGameSetup::RemapAllyteams()
 		if (allyteamRemap.find(gs->AllyTeam(a)) == allyteamRemap.end())
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 		gs->SetAllyTeam(a, allyteamRemap[gs->AllyTeam(a)]);
+		teamAllyteam[a] = allyteamRemap[teamAllyteam[a]];
 	}
 
 	// relocate gs->allies matrix
