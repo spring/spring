@@ -52,6 +52,11 @@ protected:
 	int tileMapXSize;
 	int tileMapYSize;
 
+	// use Pixel Buffer Objects for async. uploading (DMA)?
+	bool usePBO;
+	GLuint pboIDs[30];
+	int currentPBO;
+
 	float anisotropy;
 
 	inline bool TexSquareInView(int, int);

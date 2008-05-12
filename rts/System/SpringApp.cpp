@@ -224,6 +224,13 @@ bool SpringApp::Initialize ()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
+	// Runtime compress textures?
+	if (GLEW_ARB_texture_compression) {
+		// we don't even need to check it, 'cos groundtextures must have that extension
+		// default to off because it reduces quality (smallest mipmap level is bigger)
+		gu->compressTextures = !!configHandler.GetInt("CompressTextures", 0);
+	}
+
 	// Initialize named texture handler
 	CNamedTextures::Init();
 
@@ -390,6 +397,12 @@ bool SpringApp::SetSDLVideoMode ()
 		}
 		glEnable(GL_POINT_SMOOTH);
 		glHint(GL_POINT_SMOOTH_HINT, hint);
+	}
+
+	// setup LOD bias factor
+	const float lodBias = std::max(std::min( configHandler.GetFloat("TextureLODBias", 0.0f) , 4.0f), -4.0f);
+	if (fabs(lodBias)>0.01f) {
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
 	// there must be a way to see if this is necessary, compare old/new context pointers?

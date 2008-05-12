@@ -13,6 +13,7 @@ CBaseSky* sky=0;
 
 CBaseSky::CBaseSky(void)
 {
+	wireframe = false;
 }
 
 CBaseSky::~CBaseSky(void)

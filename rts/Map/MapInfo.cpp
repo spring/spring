@@ -139,17 +139,46 @@ void CMapInfo::ReadWater()
 	hasWaterPlane = !tmp.empty();
 	water.planeColor = mapDefParser->GetFloat3(float3(0.0f, 0.4f, 0.0f), "MAP\\WATER\\WaterPlaneColor");
 
+	mapDefParser->GetDef(water.fresnelMin,"0.2","MAP\\WATER\\FresnelMin");
+	mapDefParser->GetDef(water.fresnelMax,"0.3","MAP\\WATER\\FresnelMax");
+	mapDefParser->GetDef(water.fresnelPower,"4.0","MAP\\WATER\\FresnelPower");
+
+	mapDefParser->GetDef(water.specularFactor,"20.0","MAP\\WATER\\WaterSpecularFactor");
+
+	water.specularColor = mapDefParser->GetFloat3(light.groundSunColor,"MAP\\WATER\\WaterSpecularColor");
 	water.surfaceColor = mapDefParser->GetFloat3(float3(0.75f, 0.8f, 0.85f), "MAP\\WATER\\WaterSurfaceColor");
+	mapDefParser->GetDef(water.surfaceAlpha,"0.55","MAP\\WATER\\WaterSurfaceAlpha");
 	water.absorb = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterAbsorb");
 	water.baseColor = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterBaseColor");
 	water.minColor = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterMinColor");
+
 	mapDefParser->GetDef(water.texture, "", "MAP\\WATER\\WaterTexture");
+	mapDefParser->GetDef(water.foamTexture, "", "MAP\\WATER\\WaterFoamTexture");
+	mapDefParser->GetDef(water.normalTexture, "", "MAP\\WATER\\WaterNormalTexture");
 
 	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
 	if(water.texture.empty())
 		water.texture = "bitmaps/" + resources->SGetValueDef("ocean.jpg", "resources\\graphics\\maps\\watertex");
 	else
 		water.texture = "maps/" + water.texture;
+
+	
+	if(water.foamTexture.empty())
+		water.foamTexture = "bitmaps/"+resources->SGetValueDef("foam.jpg","resources\\graphics\\maps\\waterfoamtex");
+	else
+		water.foamTexture = "maps/" + water.foamTexture;
+
+	if(water.normalTexture.empty())
+		water.normalTexture = "bitmaps/"+resources->SGetValueDef("waterbump.png","resources\\graphics\\maps\\waternormaltex");
+	else
+		water.normalTexture = "maps/" + water.normalTexture;
+
+	char num[10];
+	for (int i = 0; i < 32; i++) {
+		sprintf(num, "%02i", i);
+		water.causticTextures[i] = std::string("bitmaps/") + resources->SGetValueDef(std::string("caustics/caustic")+num+".jpg",
+								std::string("resources\\graphics\\caustics\\caustic")+num);
+	}
 }
 
 

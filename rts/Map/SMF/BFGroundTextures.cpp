@@ -9,11 +9,19 @@
 #include "Platform/errorhandler.h"
 #include "SmfReadMap.h"
 #include "mmgr.h"
+#include "FastMath.h"
 
 using namespace std;
 
 CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 {
+	usePBO = false;
+	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
+		glGenBuffers(30, pboIDs);
+		currentPBO=0;
+		usePBO = true;
+	}
+
 	CFileHandler* ifs = rm->ifs;
 	map = rm;
 
@@ -98,7 +106,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 			GroundSquare* square = &squares[y * numBigTexX + x];
 			square->texLevel = 1;
 			square->lastUsed = -100;
-
 			LoadSquare(x, y, 2);
 		}
 	}
@@ -111,6 +118,9 @@ CBFGroundTextures::~CBFGroundTextures(void)
 	delete[] squares;
 	delete[] tileMap;
 	delete[] tiles;
+	if (usePBO) {
+		glDeleteBuffers(30,pboIDs);
+	}
 }
 
 
@@ -126,7 +136,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 	static const int heightDataX = gs->mapx + 1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
 	static const int bigTexH = (gs->mapy << 3) / numBigTexY;
-	static const float bigTexSquareRadius = sqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
+	static const float bigTexSquareRadius = fastmath::sqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
 
 	const int x = btx * bigTexW + (bigTexW >> 1);
 	const int y = bty * bigTexH + (bigTexH >> 1);
@@ -160,7 +170,7 @@ void CBFGroundTextures::DrawUpdate(void)
 
 			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - 64 * SQUARE_SIZE;
 			dx = max(0.0f, float(fabs(dx) - 64.0f * SQUARE_SIZE));
-			float dist = sqrt(dx * dx + dy * dy);
+			float dist = fastmath::sqrt(dx * dx + dy * dy);
 
 			if (square->lastUsed < gs->frameNum - 60)
 				dist = 8000;
@@ -204,11 +214,29 @@ int tileoffset[] = {0, 512, 640, 672};
 
 void CBFGroundTextures::LoadSquare(int x, int y, int level)
 {
+	int size = 1024 >> level;
+
+	GLubyte* buf=NULL; bool usedPBO=false;
+
+	if (usePBO) {
+		if (currentPBO > 29) currentPBO=0;
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboIDs[currentPBO++]);
+
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, size * size / 2, 0, GL_STREAM_DRAW);
+
+		//map the buffer object into client's memory
+		buf = (GLubyte*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+		usedPBO = true;
+	}
+
+	if(buf==NULL) {
+		buf = SAFE_NEW GLubyte[size * size / 2];
+		usedPBO = false;
+	}
+
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	square->texLevel = level;
 
-	int size = 1024 >> level;
-	char* buf = SAFE_NEW char[size * size / 2];
 	int numblocks = 8 / (1 << level);
 
 	for (int y1 = 0; y1 < 32; y1++) {
@@ -217,10 +245,11 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 
 			for (int yt = 0; yt < numblocks; yt++) {
 				for (int xt = 0; xt < numblocks; xt++) {
-					char* sbuf = &tile[(xt + yt * numblocks) * 8];
-					char* dbuf = &buf[(x1 * numblocks+xt + (y1 * numblocks + yt) * (numblocks * 32)) * 8];
+					GLfloat* sbuf = (GLfloat*)&tile[(xt + yt * numblocks) * 8];
+					GLfloat* dbuf = (GLfloat*)&buf[(x1 * numblocks + xt + (y1 * numblocks + yt) * (numblocks * 32)) * 8];
 
-					for (int i = 0; i < 8; i++) {
+					//copy 4 bytes at once
+					for (int i = 0; i < 2; i++) {
 						dbuf[i] = sbuf[i];
 					}
 				}
@@ -234,12 +263,16 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	if (map->anisotropy != 0.0f) {
+	if (map->anisotropy != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
+
+	if (usedPBO) {
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, 0);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //free it
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	}else{
+		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);
+		delete[] buf;
 	}
-
-	glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);
-
-	delete[] buf;
 }

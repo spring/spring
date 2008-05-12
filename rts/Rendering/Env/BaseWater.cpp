@@ -2,6 +2,7 @@
 #include "BaseWater.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
+#include "BumpWater.h"
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
@@ -36,6 +37,20 @@ CBaseWater* CBaseWater::GetWater()
 			delete water;
 			water = NULL;
 			logOutput.Print("Loading Dynamic Water failed");
+			logOutput.Print("Error: %s", e.what());
+		}
+		if (water) {
+			return water;
+		}
+	}
+
+	if(configValue==4 && GLEW_ARB_shading_language_100) {
+		try {
+			water = SAFE_NEW CBumpWater;
+		} catch (content_error& e) {
+			delete water;
+			water = NULL;
+			logOutput.Print("Loading Bumpmapped Water failed");
 			logOutput.Print("Error: %s", e.what());
 		}
 		if (water) {

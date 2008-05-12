@@ -218,6 +218,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	viewRange=MAX_VIEW_RANGE;
 	timeOffset=0;
 	drawFog=true;
+	compressTextures=false;
 	teamNanospray=false;
 	autoQuit=false;
 	quitTime=0;

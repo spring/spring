@@ -246,7 +246,7 @@ void CAdvSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, cdtex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_LUMINANCE ,256, 256, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_LUMINANCE ,256, 256, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 
 	unsigned char randDetailMatrix[32*32];
 	glGenTextures(12, detailTextures);
@@ -290,7 +290,7 @@ void CAdvSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 	delete[] skytex;
 
 	unsigned char skytex2[256][256][4];
@@ -311,7 +311,7 @@ void CAdvSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
 
 	for(int a=0;a<CLOUD_DETAIL;a++){
 		CreateRandMatrix(randMatrix[a],1-a*0.03f);
@@ -660,7 +660,7 @@ void CAdvSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 
 	for(int y=0;y<4;++y){
 		for(int x=0;x<32;++x){

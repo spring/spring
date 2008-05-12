@@ -106,8 +106,17 @@ public:
 		float3 baseColor;
 		float3 minColor;
 		float3 surfaceColor;
+		float surfaceAlpha;
 		float3 planeColor;
+		float3 specularColor;
+		float specularFactor;
+		float fresnelMin;
+		float fresnelMax;
+		float fresnelPower;
 		std::string texture;
+		std::string foamTexture;
+		std::string normalTexture;
+		std::string causticTextures[32];
 	} water;
 	bool hasWaterPlane; ///< true if "MAP\WATER\WaterPlaneColor" is set
 

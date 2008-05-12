@@ -65,3 +65,5 @@ tooltip.bmp		probably SJ/Yeha
 tracks/ComTrack.bmp	SJ
 tracks/StdTank.bmp	SJ
 wake.tga		Yeha
+waterbump.png		jK
+caustics/*		jK (with GPL app: http://www.lysator.liu.se/~kand/caustics/)

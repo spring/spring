@@ -343,14 +343,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	{
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
-		// create mipmapped texture
-		if (GLEW_VERSION_1_4) {
-			// This required GL-1.4
-			// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
-			glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
-			glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
-		} else
-			gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize,GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize,GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
 	else
 	{
@@ -380,6 +373,7 @@ unsigned int CBitmap::CreateDDSTexture()
 	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texobj);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 		if(!ddsimage->upload_texture2D()) {
 			glDeleteTextures(1, &texobj);
 			texobj = 0;

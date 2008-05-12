@@ -85,8 +85,14 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedColor(L,  "waterBaseColor",    mapInfo->water.baseColor);
 	LuaPushNamedColor(L,  "waterMinColor",     mapInfo->water.minColor);
 	LuaPushNamedColor(L,  "waterSurfaceColor", mapInfo->water.surfaceColor);
+	LuaPushNamedNumber(L, "waterSurfaceAlpha", mapInfo->water.surfaceAlpha);
+	LuaPushNamedColor(L,  "waterSpecularColor",  mapInfo->water.specularColor);
+	LuaPushNamedNumber(L, "waterSpecularFactor", mapInfo->water.specularFactor);
 	LuaPushNamedColor(L,  "waterPlaneColor",   mapInfo->water.planeColor);
 	LuaPushNamedColor(L,  "fogColor",          fogColor);
+	LuaPushNamedColor(L,  "groundAmbientColor",      mapInfo->light.groundAmbientColor);
+	LuaPushNamedColor(L,  "groundSpecularColor",     mapInfo->light.groundSpecularColor);
+	LuaPushNamedColor(L,  "groundSunColor",          mapInfo->light.groundSunColor);
 
 	LuaPushNamedString(L, "modName",         modInfo.humanName);
 	LuaPushNamedString(L, "modShortName",    modInfo.shortName);

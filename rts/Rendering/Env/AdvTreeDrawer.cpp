@@ -158,7 +158,7 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_END_Y4+ydif  ,base-side*width+float3(0,height,0));
 				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_START_Y4+ydif,base-side*width);
 			}
-			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
+			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
 			glEndList();
 		}

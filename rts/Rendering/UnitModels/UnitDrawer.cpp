@@ -1810,16 +1810,16 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
 		glClipPlane(GL_CLIP_PLANE0, plane0);
 
-		if (shadowHandler->drawShadows && !water->drawReflection) {
+		//if (shadowHandler->drawShadows && !water->drawReflection) {
 			glPolygonOffset(1.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-		}
+		//}
 
 		DrawUnitModel(unit);
 
-		if (shadowHandler->drawShadows && !water->drawReflection) {
+		//if (shadowHandler->drawShadows && !water->drawReflection) {
 			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
+		//}
 	}
 
 	glDisable(GL_CLIP_PLANE0);
