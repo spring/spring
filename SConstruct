@@ -74,6 +74,7 @@ if env['strip']:
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
+uenv.AppendUnique(CPPDEFINES=['BITMAP_NO_OPENGL'])
 for d in filelist.list_directories(uenv, 'rts'):
 	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
