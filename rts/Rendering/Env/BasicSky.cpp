@@ -75,6 +75,7 @@ CBasicSky::CBasicSky()
 	glGetError();
 	displist=glGenLists(1);
 	glNewList(displist, GL_COMPILE);
+
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_ALPHA_TEST);
@@ -245,6 +246,8 @@ void CBasicSky::Draw()
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
+	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	glPushMatrix();
 //	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
 	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
@@ -257,8 +260,6 @@ void CBasicSky::Draw()
 		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
 	glMatrixMode(GL_MODELVIEW);
 
-
-
 	glCallList(displist);
 
 	glMatrixMode(GL_TEXTURE);						// Select The Projection Matrix
@@ -266,6 +267,8 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 
 	glPopMatrix();
+
+	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -338,7 +341,7 @@ void CBasicSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 //	delete[] skytex;
 
 	for(y=0;y<256;y++){
@@ -359,7 +362,7 @@ void CBasicSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
 
 	for(int a=0;a<CLOUD_DETAIL;a++){
 		CreateRandMatrix(randMatrix[a],1-a*0.03f);
@@ -685,7 +688,7 @@ void CBasicSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 
 	for(int y=0;y<2;++y){
 		for(int x=0;x<32;++x){

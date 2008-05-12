@@ -27,9 +27,28 @@ inline void glTranslatef3(const float3 &v)
 	glTranslatef(v.x,v.y,v.z);
 }
 
+inline void glSecondaryColorf3(const float3& v)
+{
+	glSecondaryColor3f(v.x,v.y,v.z);
+}
+
+inline void glColorf4(const float3& v, const float& alpha)
+{
+	glColor4f(v.x,v.y,v.z,alpha);
+}
+
+inline void glUniformf3(const GLint& location, const float3 &v)
+{
+	glUniform3f(location, v.x,v.y,v.z);
+}
+
+
+void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data);
+
 void LoadStartPicture(const std::string& sidePref);
 void PrintLoadMsg(const char* text, bool swapbuffers = true);
 void UnloadStartPicture();
+
 bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);

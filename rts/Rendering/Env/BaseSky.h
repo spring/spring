@@ -21,6 +21,8 @@ public:
 	bool dynamicSky;
 	float cloudDensity;
 
+	bool wireframe;
+
 	float fogStart;
 	float3 skyColor;
 	float3 sunColor;

@@ -33,6 +33,7 @@
 #include "Textures.h"
 #include "Lightcalc.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
 
 #include <SDL.h>
 #include <IL/il.h>
@@ -171,7 +172,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 
 	SaveImage ("lightmap.png", 4, IL_UNSIGNED_BYTE, w,w, shadingTexData);
 
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, w,w, GL_RGBA, GL_UNSIGNED_BYTE, shadingTexData);
+	glBuildMipmaps(GL_TEXTURE_2D, 4, w,w, GL_RGBA, GL_UNSIGNED_BYTE, shadingTexData);
 	delete[] shadingTexData;
 
 	id = shadingTex;

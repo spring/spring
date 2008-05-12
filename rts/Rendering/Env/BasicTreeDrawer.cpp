@@ -246,7 +246,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 		glCallList(tss->farDisplist);
 	}
 
-	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//midle distance trees
+	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//middle distance trees
 		tss->lastSeen=gs->frameNum;
 		if(!tss->displist){
 			va=GetVertexArray();
@@ -376,52 +376,7 @@ void CBasicTreeDrawer::CreateTreeTex(GLuint& texnum, unsigned char *data, int xs
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	int mipnum=0;
-	glTexImage2D(GL_TEXTURE_2D,mipnum,GL_RGBA8 ,xsize, ysize,0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	while(xsize!=1 || ysize!=1){
-		mipnum++;
-		if(xsize!=1)
-			xsize/=2;
-		if(ysize!=1)
-			ysize/=2;
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-/*				for(int a=0;a<3;a++){
-					int temp=0;
-					int num=0;
-					if(data[(y*2*xsize*2+x*2)*4+3]){
-						temp+=data[(y*2*xsize*2+x*2)*4+a];
-						num++;
-					}
-					if(data[((y*2+1)*xsize*2+x*2)*4+3]){
-						temp+=data[((y*2+1)*xsize*2+x*2)*4+a];
-						num++;
-					}
-					if(data[((y*2)*xsize*2+x*2+1)*4+3]){
-						temp+=data[((y*2)*xsize*2+x*2+1)*4+a];
-						num++;
-					}
-					if(data[((y*2+1)*xsize*2+x*2+1)*4+3]){
-						temp+=data[((y*2+1)*xsize*2+x*2+1)*4+a];
-						num++;
-					}
-					if(num>1)
-						temp/=num;
-					data[(y*xsize+x)*4+a]=temp;
-				}
-*/			data[(y*xsize+x)*4+0]=(data[(y*2*xsize*2+x*2)*4+0]+data[((y*2+1)*xsize*2+x*2)*4+0]+data[(y*2*xsize*2+x*2+1)*4+0]+data[((y*2+1)*xsize*2+x*2+1)*4+0])/4;
-				data[(y*xsize+x)*4+1]=(data[(y*2*xsize*2+x*2)*4+1]+data[((y*2+1)*xsize*2+x*2)*4+1]+data[(y*2*xsize*2+x*2+1)*4+1]+data[((y*2+1)*xsize*2+x*2+1)*4+1])/4;
-				data[(y*xsize+x)*4+2]=(data[(y*2*xsize*2+x*2)*4+2]+data[((y*2+1)*xsize*2+x*2)*4+2]+data[(y*2*xsize*2+x*2+1)*4+2]+data[((y*2+1)*xsize*2+x*2+1)*4+2])/4;
-				data[(y*xsize+x)*4+3]=(data[(y*2*xsize*2+x*2)*4+3]+data[((y*2+1)*xsize*2+x*2)*4+3]+data[(y*2*xsize*2+x*2+1)*4+3]+data[((y*2+1)*xsize*2+x*2+1)*4+3])/4;
-				if(data[(y*xsize+x)*4+3]>=127){
-					data[(y*xsize+x)*4+3]=255;
-				} else {
-					data[(y*xsize+x)*4+3]=0;
-				}
-			}
-		}
-		glTexImage2D(GL_TEXTURE_2D,mipnum,GL_RGBA8 ,xsize, ysize,0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	}
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 void CBasicTreeDrawer::ResetPos(const float3& pos)

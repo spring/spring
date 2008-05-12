@@ -210,7 +210,8 @@ CTextureHandler::CTextureHandler()
 	glBindTexture(GL_TEXTURE_2D, globalTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8 ,bigTexX, bigTexY, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex);
+	//glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bigTexX, bigTexY, GL_RGBA, GL_UNSIGNED_BYTE, tex);
 //	CBitmap save(tex,bigTexX,bigTexY);
 	//save.Save("unittex-1x.jpg");
 

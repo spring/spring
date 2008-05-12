@@ -34,6 +34,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	PrintLoadMsg("Opening map file");
 
 	ConfigureAnisotropy();
+	usePBO = !!configHandler.GetInt("UsePBO", 1);
 
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
@@ -104,7 +105,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}

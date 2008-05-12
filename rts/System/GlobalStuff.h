@@ -442,7 +442,7 @@ class CGlobalUnsyncedStuff
 public:
 	CR_DECLARE(CGlobalUnsyncedStuff);
 	CGlobalUnsyncedStuff(); 		//!< Constructor
-	~CGlobalUnsyncedStuff(); 	//!< Destructor
+	~CGlobalUnsyncedStuff();	 	//!< Destructor
 
 	int usRandInt(); 			//!< Unsynced random int
 	float usRandFloat(); 			//!< Unsynced random float
@@ -586,6 +586,13 @@ public:
 	 * Whether fog (of war) is drawn or not
 	 */
 	bool drawFog;
+	
+	/**
+	 * @brief compressTextures
+	 *
+	 * If set, many (not all) textures will compressed on run-time.
+	*/
+	bool compressTextures;
 
 	/**
 	 * @brief quit automatically?

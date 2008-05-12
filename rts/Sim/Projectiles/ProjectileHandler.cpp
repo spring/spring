@@ -93,7 +93,7 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 0; i < 12; i++) {
 		char num[10];
 		sprintf(num, "%02i", i);
-		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+resources.SGetValueDef(std::string("smoke/smoke") + num +".tga",std::string("resources\\graphics\\smoke\\smoke")+num+"alpha"));
+		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+resources.SGetValueDef(std::string("smoke/smoke") + num +".tga",std::string("resources\\graphics\\smoke\\smoke")+num));
 		blockMapTexNames.insert(std::string("ismoke") + num);
 	}
 
@@ -240,7 +240,7 @@ CProjectileHandler::CProjectileHandler()
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8,16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16,16, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
 	}
 
 	drawPerlinTex=false;

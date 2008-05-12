@@ -8,6 +8,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
+#include "bitops.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -80,18 +81,20 @@ CDynWater::CDynWater(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,64, 64, 0,GL_RGBA, GL_FLOAT, temp);
 
-	unsigned char* scrap=SAFE_NEW unsigned char[256*256*4];
 	CBitmap foam;
-	if (!foam.Load("bitmaps/foam.jpg") || foam.xsize != 256 || foam.ysize != 256)
-		throw content_error("Could not load foam from file bitmaps/foam.jpg");
-	for(int a=0;a<256*256;++a)
+	if (!foam.Load(mapInfo->water.foamTexture))
+		throw content_error("Could not load foam from file " + mapInfo->water.foamTexture);
+	if (count_bits_set(foam.xsize)!=1 || count_bits_set(foam.ysize)!=1)
+		throw content_error("Foam texture not power of two!");
+	unsigned char* scrap=SAFE_NEW unsigned char[foam.xsize*foam.ysize*4];
+	for(int a=0;a<foam.xsize*foam.ysize;++a)
 		scrap[a]=foam.mem[a*4];
 
 	glGenTextures(1, &foamTex);
 	glBindTexture(GL_TEXTURE_2D, foamTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,256, 256, GL_LUMINANCE, GL_UNSIGNED_BYTE, scrap);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,foam.xsize,foam.ysize, GL_LUMINANCE, GL_UNSIGNED_BYTE, scrap);
 
 	delete[] scrap;
 
@@ -331,7 +334,7 @@ void CDynWater::Draw()
 
 	glDisable( GL_FRAGMENT_PROGRAM_ARB );
 	glDisable( GL_VERTEX_PROGRAM_ARB );
-
+/*
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -348,6 +351,7 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE7_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	*/
 }
 
 void CDynWater::UpdateWater(CGame* game)

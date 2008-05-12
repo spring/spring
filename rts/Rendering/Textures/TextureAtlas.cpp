@@ -9,6 +9,9 @@
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 
+//texture spacing in the atlas (in pixels)
+#define TEXMARGIN 1
+
 bool CTextureAtlas::debug;
 
 CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
@@ -99,7 +102,7 @@ bool CTextureAtlas::Finalize()
 					if(maxy>ysize){
 						if(IncreaseSize())
 						{
-                            nextSub.clear();
+ 							nextSub.clear();
 							thisSub.clear();
 							cury=maxy=curx=0;
 							recalc=true;
@@ -131,11 +134,11 @@ bool CTextureAtlas::Finalize()
 
 			done=true;
 
-			if(thisSub.front().y+curtex->ysize<maxy){
-				nextSub.push_back(int2(thisSub.front().x,thisSub.front().y+curtex->ysize));
+			if(thisSub.front().y+curtex->ysize+TEXMARGIN<maxy){
+				nextSub.push_back(int2(thisSub.front().x+TEXMARGIN,thisSub.front().y+curtex->ysize+TEXMARGIN));
 			}
 
-			thisSub.front().x+=curtex->xsize;
+			thisSub.front().x+=curtex->xsize+TEXMARGIN;
 			while(thisSub.size()>1 && thisSub.front().x >= (++thisSub.begin())->x){
 				(++thisSub.begin())->x=thisSub.front().x;
 				thisSub.erase(thisSub.begin());
@@ -179,54 +182,17 @@ void CTextureAtlas::CreateTexture()
 {
 
 	unsigned char *data;
-	//for(int i=0,xmip=0,ymip=0; (xsize>>i) || (ysize>>i); i++)
-	//{
-	//	data[i] = SAFE_NEW unsigned char[(xsize>>xmip)*(ysize>>ymip)*4];
-
-	//	xmip = (xsize>>i)>1 ? xmip+=1 : xmip;
-	//	ymip = (ysize>>i)>1 ? ymip+=1 : ymip;
-	//}
-
-	//for(int i=0; i<memtextures.size(); i++)
-	//{
-	//	MemTex *tex = memtextures[i];
-	//	for(int mip=0,xmip=0,ymip=0; (tex->xsize>>mip) || (tex->ysize>>mip); mip++)
-	//	{
-	//		unsigned char *mipcell;
-
-	//		if(mip==0)
-	//			mipcell = (unsigned char*)tex->data;
-	//		else
-	//		{
-	//			mipcell = SAFE_NEW unsigned char[(tex->xsize>>xmip)*(tex->ysize>>ymip)*4];
-	//			gluScaleImage(GL_RGBA, tex->xsize, tex->ysize, GL_UNSIGNED_BYTE, tex->data, (tex->xsize>>xmip), (tex->ysize>>ymip), GL_UNSIGNED_BYTE, mipcell);
-	//		}
-
-	//		for(int x=0; x<tex->xsize>>xmip; x++)
-	//		{
-	//			for(int y=0; y<tex->ysize>>ymip; y++)
-	//			{
-	//				((int*)data[mip])[(tex->xpos>>xmip)+x+((tex->ypos>>ymip)+y)*(xsize>>mip)] = ((int*)mipcell)[x+y*(tex->xsize>>xmip)];
-	//			}
-	//		}
-
-	//		if(mip)
-	//			delete [] mipcell;
-	//		xmip = (xsize>>mip)>1 ? xmip+=1 : xmip;
-	//		ymip = (ysize>>mip)>1 ? ymip+=1 : ymip;
-	//	}
-	//}
-
 	data = SAFE_NEW unsigned char[xsize*ysize*4];
+	memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
 	for(int i=0; i<memtextures.size(); i++)
 	{
 		MemTex *tex = memtextures[i];
-        for(int x=0; x<tex->xsize; x++)
-			for(int y=0; y<tex->ysize; y++)
-			{
+		for(int x=0; x<tex->xsize; x++) {
+			for(int y=0; y<tex->ysize; y++) {
 				((int*)data)[tex->xpos+x+(tex->ypos+y)*xsize] = ((int*)tex->data)[x+y*tex->xsize];
 			}
+		}			
 	}
 
 	if (debug) {
@@ -248,19 +214,17 @@ void CTextureAtlas::CreateTexture()
 	glBindTexture(GL_TEXTURE_2D, gltex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,/*GL_NEAREST_MIPMAP_LINEAR*/GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+	if (GLEW_EXT_texture_edge_clamp) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
 
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete [] data;
-
-	//for(int i=0; (xsize>>i) || (ysize>>i); i++)
-	//{
-	//	glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, xsize>>i, ysize>>i, 0, GL_RGBA, GL_UNSIGNED_BYTE, data[i]);
-	//	delete [] data[i];
-	//}
-	
 
 	initialized=true;
 }

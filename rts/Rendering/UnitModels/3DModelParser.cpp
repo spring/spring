@@ -352,9 +352,9 @@ void LocalS3DO::ApplyTransform() const
 	glTranslatef(offset.x, offset.y, offset.z);
 
 	if (anim) {
-		glTranslatef(-anim->coords[0] / CORDDIV,
-									anim->coords[1] / CORDDIV,
-									anim->coords[2] / CORDDIV);
+		glTranslatef(anim->coords[0] / CORDDIV,
+				 anim->coords[1] / CORDDIV,
+				 anim->coords[2] / CORDDIV);
 		if (anim->rot[1]) { glRotatef( anim->rot[1] / ANGDIV, 0.0f, 1.0f, 0.0f); }
 		if (anim->rot[0]) { glRotatef( anim->rot[0] / ANGDIV, 1.0f, 0.0f, 0.0f); }
 		if (anim->rot[2]) { glRotatef(-anim->rot[2] / ANGDIV, 0.0f, 0.0f, 1.0f); }

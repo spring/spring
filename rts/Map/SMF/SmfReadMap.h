@@ -36,6 +36,7 @@ public:
 	MapHeader header;
 	CFileHandler *ifs;
 
+	bool usePBO;
 	float anisotropy;
 
 	unsigned char waterHeightColors[1024*4];

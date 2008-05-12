@@ -913,14 +913,14 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "water") {
 		delete water;
 
-		static char rmodes[4][32] = {"basic", "reflective", "dynamic", "reflective&refractive"};
+		static char rmodes[5][32] = {"basic", "reflective", "dynamic", "reflective&refractive", "bumpmapped"};
 		int next = 0;
 
 		if (!action.extra.empty()) {
-			next = std::max(0, atoi(action.extra.c_str()) % 4);
+			next = std::max(0, atoi(action.extra.c_str()) % 5);
 		} else {
 			const int current = configHandler.GetInt("ReflectiveWater", 1);
-			next = (std::max(0, current) + 1) % 4;
+			next = (std::max(0, current) + 1) % 5;
 		}
 		configHandler.SetInt("ReflectiveWater", next);
 		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
@@ -1779,9 +1779,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "wiremap") {
 		if (action.extra.empty()) {
-			gd->wireframe = !gd->wireframe;
+			gd->wireframe  = !gd->wireframe;
+			sky->wireframe = gd->wireframe;
 		} else {
-			gd->wireframe = !atoi(action.extra.c_str());
+			gd->wireframe  = !atoi(action.extra.c_str());
+			sky->wireframe = gd->wireframe;
 		}
 	}
 	else if (cmd == "setgamma") {

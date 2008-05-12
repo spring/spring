@@ -13,15 +13,16 @@
 #include "FPUCheck.h"
 #include <SDL.h>
 #include "mmgr.h"
+#include "System/GlobalStuff.h"
 
 #include "IFramebuffer.h"
 
 using namespace std;
 
 
-static CVertexArray* vertexArray1 = 0;
-static CVertexArray* vertexArray2 = 0;
-static CVertexArray* currentVertexArray = 0;
+static CVertexArray* vertexArray1 = NULL;
+static CVertexArray* vertexArray2 = NULL;
+static CVertexArray* currentVertexArray = NULL;
 
 static GLuint startupTexture = 0;
 
@@ -56,6 +57,24 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
 
+	/* Get available fullscreen/hardware modes */
+/*
+	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL|SDL_RESIZABLE);
+
+	if (modes == (SDL_Rect **)0) {
+		logOutput.Print("SDL_ListModes: No modes available!\n");
+	}else if (modes == (SDL_Rect **)-1) {
+		logOutput.Print("SDL_ListModes: Resolution is restricted.\n");
+	}else{
+		char buffer[512];
+		unsigned char n = 0;
+		for(int i=0;modes[i];++i) {
+			n += SNPRINTF(&buffer[n], 512-n, "%dx%d, ", modes[i]->w, modes[i]->h);
+		}
+		logOutput.Print("SDL_ListModes: %s\n",buffer);
+	}
+*/
+
 	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
 		handleerror(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
 		exit(0);
@@ -83,9 +102,40 @@ void UnloadExtensions()
 {
 	delete vertexArray1;
 	delete vertexArray2;
-
 }
 
+/******************************************************************************/
+
+void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data)
+{
+	if (gu->compressTextures) {
+		switch ( internalFormat ) {
+			case 3:
+			case GL_RGB8 :
+			case GL_RGB :   internalFormat = GL_COMPRESSED_RGB_ARB; break;
+			
+			case 4:
+			case GL_RGBA8 :
+			case GL_RGBA : internalFormat = GL_COMPRESSED_RGBA_ARB; break;
+			
+			case GL_LUMINANCE: internalFormat = GL_COMPRESSED_LUMINANCE_ARB; break;
+		}
+	}
+	
+	// create mipmapped texture
+	if (glGenerateMipmapEXT) {
+	//if (GLEW_EXT_framebuffer_object) { // Hurray (again), ATi only supports half of the extension
+		// newest method
+		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+		glGenerateMipmapEXT(GL_TEXTURE_2D);
+	}else if (GLEW_VERSION_1_4) {
+		// This required GL-1.4
+		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
+		glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
+		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+	} else
+		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);
+}
 
 /******************************************************************************/
 

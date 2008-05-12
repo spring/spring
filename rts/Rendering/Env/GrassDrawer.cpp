@@ -103,7 +103,7 @@ CGrassDrawer::CGrassDrawer()
 	glBindTexture(GL_TEXTURE_2D, grassBladeTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 64, GL_RGBA, GL_UNSIGNED_BYTE, gbt);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 64, GL_RGBA, GL_UNSIGNED_BYTE, gbt);
 
 	CreateFarTex();
 
@@ -759,7 +759,7 @@ void CGrassDrawer::CreateFarTex(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,1024*sizeMod, 64*sizeMod, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,1024*sizeMod, 64*sizeMod, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
 	delete[] buf;
 	delete[] buf2;

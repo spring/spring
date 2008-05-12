@@ -14,15 +14,19 @@
 
 using namespace std;
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+/*******************************************************************************/
+/*******************************************************************************/
 
 CglFont *font, *smallFont;
+
+#define GLYPH_MARGIN 3 // margin between glyphs in texture-atlas
 
 class texture_size_exception : public std::exception
 {
 };
+
+/*******************************************************************************/
+/*******************************************************************************/
 
 /**
  * A utility class for CglFont which collects all glyphs of
@@ -82,15 +86,15 @@ void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
 	}
 	outX = curX; outY = curY;
 
-	curX += bmp.width + 1;		// leave one pixel space between each glyph
-	cur += 2*(bmp.width + 1);
+	curX += bmp.width + GLYPH_MARGIN;	// leave one pixel space between each glyph
+	cur  += 2*(bmp.width + GLYPH_MARGIN); 	// 2channels (luminance and alpha))
 	curHeight = max(curHeight, bmp.rows);
 }
 
 void CFontTextureRenderer::BreakLine()
 {
 	curX = 0;
-	curY += curHeight;
+	curY += curHeight + GLYPH_MARGIN;
 	curHeight = 0;
 
 	if (curY >= height)
