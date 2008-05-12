@@ -5,6 +5,7 @@
   File "..\game\TASClient.exe"
   File "..\external\7za.dll"
   
+  
   CreateDirectory "$INSTDIR\lobby\cache"
   CreateDirectory "$INSTDIR\lobby\cache\online"
   CreateDirectory "$INSTDIR\lobby\cache\maps"
@@ -12,6 +13,8 @@
   CreateDirectory "$INSTDIR\lobby\var"
   CreateDirectory "$INSTDIR\lobby\logs"
 
+  SetOutPath "$INSTDIR\lobby\var"
+  File "..\Lobby\TASClient\lobby\var\groups.ini"
 !else
 
   ; The battleroom
