@@ -8,11 +8,6 @@ CR_BIND(CMatrix44f, );
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
 
 
-/*
-float globalArf=15;
-extern void arfurf();
-extern void TestDenormal(float f);
-*/
 CMatrix44f::CMatrix44f(void)
 {
 	LoadIdentity();
@@ -25,6 +20,15 @@ CMatrix44f::CMatrix44f(const float3& pos,const float3& x,const float3& y,const f
 	m[4]  = y.x;   m[5]  = y.y;   m[6]  = y.z;   m[7]  = 0.0f;
 	m[8]  = z.x;   m[9]  = z.y;   m[10] = z.z;   m[11] = 0.0f;
 	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z; m[15] = 1.0f;
+}
+
+
+CMatrix44f::CMatrix44f(const CMatrix44f& n)
+{
+	m[0]  = n[0];   m[1]  = n[1];   m[2]  = n[2];   m[3]  = n[3];
+	m[4]  = n[4];   m[5]  = n[5];   m[6]  = n[6];   m[7]  = n[7];
+	m[8]  = n[8];   m[9]  = n[9];   m[10] = n[10];  m[11] = n[11];
+	m[12] = n[12];  m[13] = n[13];  m[14] = n[14];  m[15] = n[15];
 }
 
 
@@ -48,6 +52,7 @@ void CMatrix44f::LoadIdentity()
 
 void CMatrix44f::RotateX(float rad)
 {
+/*
 	const float sr = sin(rad);
 	const float cr = cos(rad);
 
@@ -58,11 +63,31 @@ void CMatrix44f::RotateX(float rad)
 	rm[6]  = -sr;
 
 	*this=Mul(rm);
+*/
+	const float sr = sin(rad);
+	const float cr = cos(rad);
+
+	float a=m[4];
+	m[4] = cr*a - sr*m[8];
+	m[8] = sr*a + cr*m[8];
+
+	a=m[5];
+	m[5] = cr*a - sr*m[9];
+	m[9] = sr*a + cr*m[9];
+
+	a=m[6];
+	m[6]  = cr*a - sr*m[10];
+	m[10] = sr*a + cr*m[10];
+
+	a=m[7];
+	m[7]  = cr*a - sr*m[11];
+	m[11] = sr*a + cr*m[11];
 }
 
 
 void CMatrix44f::RotateY(float rad)
 {
+/*
 	const float sr = sin(rad);
 	const float cr = cos(rad);
 
@@ -73,11 +98,31 @@ void CMatrix44f::RotateY(float rad)
 	rm[8]  = -sr;
 
 	*this = Mul(rm);
+*/
+	const float sr = sin(rad);
+	const float cr = cos(rad);
+
+	float a=m[0];
+	m[0] =  cr*a + sr*m[8];
+	m[8] = -sr*a + cr*m[8];
+
+	a=m[1];
+	m[1] =  cr*a + sr*m[9];
+	m[9] = -sr*a + cr*m[9];
+
+	a=m[2];
+	m[2]  =  cr*a + sr*m[10];
+	m[10] = -sr*a + cr*m[10];
+
+	a=m[3];
+	m[3]  =  cr*a + sr*m[11];
+	m[11] = -sr*a + cr*m[11];
 }
 
 
 void CMatrix44f::RotateZ(float rad)
 {
+/*
 	const float sr = sin(rad);
 	const float cr = cos(rad);
 
@@ -88,11 +133,31 @@ void CMatrix44f::RotateZ(float rad)
 	rm[1] = -sr;
 
 	*this = Mul(rm);
+*/
+	const float sr = sin(rad);
+	const float cr = cos(rad);
+
+	float a=m[0];
+	m[0] = cr*a - sr*m[4];
+	m[4] = sr*a + cr*m[4];
+
+	a=m[1];
+	m[1] = cr*a - sr*m[5];
+	m[5] = sr*a + cr*m[5];
+
+	a=m[2];
+	m[2] = cr*a - sr*m[6];
+	m[6] = sr*a + cr*m[6];
+
+	a=m[3];
+	m[3] = cr*a - sr*m[7];
+	m[7] = sr*a + cr*m[7];
 }
 
 
 void CMatrix44f::Translate(float x, float y, float z)
 {
+/*
 	CMatrix44f tm;
 
 	tm[12] = x;
@@ -100,11 +165,18 @@ void CMatrix44f::Translate(float x, float y, float z)
 	tm[14] = z;
 
 	*this = Mul(tm);
+*/
+
+	m[12] += x*m[0] + y*m[4] + z*m[8];
+	m[13] += x*m[1] + y*m[5] + z*m[9];
+	m[14] += x*m[2] + y*m[6] + z*m[10];
+	m[15] += x*m[3] + y*m[7] + z*m[11];
 }
 
 
 void CMatrix44f::Translate(const float3& pos)
 {
+/*
 	CMatrix44f tm;
 
 	tm[12] = pos.x;
@@ -112,6 +184,15 @@ void CMatrix44f::Translate(const float3& pos)
 	tm[14] = pos.z;
 
 	*this = Mul(tm);
+*/
+
+	const float x=pos.x;
+	const float y=pos.y;
+	const float z=pos.z;
+	m[12] += x*m[0] + y*m[4] + z*m[8];
+	m[13] += x*m[1] + y*m[5] + z*m[9];
+	m[14] += x*m[2] + y*m[6] + z*m[10];
+	m[15] += x*m[3] + y*m[7] + z*m[11];
 }
 
 
@@ -148,24 +229,10 @@ CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const
 
 float3 CMatrix44f::Mul(const float3& vect) const
 {
-/*	float3 res;
-
-	for (int x = 0; x < 3; ++x) {
-		res[x] = 0;
-		for (int y = 0; y < 3; ++y) {
-			res[x] += vect[y] * m[x * 4 + y];
-		}
-	}
-
-	return res;
-/*/	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
-	//return float3(	v0*m[0] + v1*m[1] + v2*m[2] + m[3],
-	//				v0*m[4] + v1*m[5] + v2*m[6] + m[7],
-	//				v0*m[8] + v1*m[9] + v2*m[10] + m[11]);/**/
-
+	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
 	return float3(	v0*m[0] + v1*m[4] + v2*m[8] + m[12],
-					v0*m[1] + v1*m[5] + v2*m[9] + m[13],
-					v0*m[2] + v1*m[6] + v2*m[10] + m[14]);/**/
+				v0*m[1] + v1*m[5] + v2*m[9] + m[13],
+				v0*m[2] + v1*m[6] + v2*m[10] + m[14]);
 }
 
 
@@ -236,12 +303,7 @@ CMatrix44f& CMatrix44f::InvertInPlace()
 // m.Mul(m.Invert()) is identity
 CMatrix44f CMatrix44f::Invert() const
 {
-	CMatrix44f mInv;
-
-	// copy m
-	mInv[0] = m[0];  mInv[4] = m[4];  mInv[ 8] = m[ 8];  mInv[12] = m[12];
-	mInv[1] = m[1];  mInv[5] = m[5];  mInv[ 9] = m[ 9];  mInv[13] = m[13];
-	mInv[2] = m[2];  mInv[6] = m[6];  mInv[10] = m[10];  mInv[14] = m[14];
+	CMatrix44f mInv(*this);
 
 	// transpose the rotation
 	mInv[1] = m[4]; mInv[4] = m[1];
