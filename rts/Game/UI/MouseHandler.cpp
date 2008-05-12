@@ -61,7 +61,9 @@ CMouseHandler::CMouseHandler()
 {
 	lastx=300;
 	lasty=200;
-	hide=false;
+	hide=true;
+	hwHide=true;
+	currentCursor=NULL;
 
 	for(int a=1;a<=NUM_BUTTONS;a++){
 		buttons[a].pressed=false;
@@ -73,11 +75,18 @@ CMouseHandler::CMouseHandler()
 
 	LoadCursors();
 
+	// hide the cursor until we are ingame (not in loading screen etc.)
 	SDL_ShowCursor(SDL_DISABLE);
+
+#ifndef __APPLE__
+	hardwareCursor = !!configHandler.GetInt("HardwareCursor", 0);
+#else
+	hardwareCursor = false;
+#endif
 
 	soundMultiselID = sound->GetWaveId("sounds/button9.wav");
 
-	invertMouse=!!configHandler.GetInt("InvertMouse",1);
+	invertMouse = !!configHandler.GetInt("InvertMouse",1);
 	doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
 
 	scrollWheelSpeed = (float)configHandler.GetInt("ScrollWheelSpeed", 25);
@@ -86,7 +95,8 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
-	SDL_ShowCursor(SDL_ENABLE);
+	if (hwHide)
+		SDL_ShowCursor(SDL_ENABLE);
 
 	std::map<std::string, CMouseCursor*>::iterator ci;
 	for (ci = cursorFileMap.begin(); ci != cursorFileMap.end(); ++ci) {
@@ -533,36 +543,6 @@ void CMouseHandler::Draw()
 	}
 }
 
-void CMouseHandler::ShowMouse()
-{
-	if(hide){
-		SDL_ShowCursor(SDL_DISABLE);
-		hide=false;
-	}
-}
-
-
-void CMouseHandler::HideMouse()
-{
-	if (!hide) {
-		lastx = gu->viewSizeX / 2 + gu->viewPosX;
-		lasty = gu->viewSizeY / 2 + gu->viewPosY;
-    	SDL_ShowCursor(SDL_DISABLE);
-		mouseInput->SetPos(int2(lastx, lasty));
-		hide = true;
-	}
-}
-
-void CMouseHandler::ToggleState()
-{
-	if(locked){
-		locked=false;
-		ShowMouse();
-	} else {
-		locked=true;
-		HideMouse();
-}
-}
 
 void CMouseHandler::WarpMouse(int x, int y)
 {
@@ -631,6 +611,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	return "";
 }
 
+
 void CMouseHandler::EmptyMsgQueUpdate(void)
 {
 	if (!hide) {
@@ -653,29 +634,115 @@ void CMouseHandler::EmptyMsgQueUpdate(void)
 	}
 }
 
+
+void CMouseHandler::ShowMouse()
+{
+	if(hide){
+		// I don't use SDL_ShowCursor here 'cos it would cause a flicker (with hwCursor)
+		// instead update state and cursor at the same time
+		if (hardwareCursor){
+			hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
+		}else{
+			SDL_ShowCursor(SDL_DISABLE);
+		}
+		cursorText=""; //force hardware cursor rebinding (else we have standard b&w cursor)
+		hide=false;
+	}
+}
+
+
+void CMouseHandler::HideMouse()
+{
+	if (!hide) {
+		hwHide = true;
+		SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetWMMouseCursor(NULL);
+		lastx = gu->viewSizeX / 2 + gu->viewPosX;
+		lasty = gu->viewSizeY / 2 + gu->viewPosY;
+		mouseInput->SetPos(int2(lastx, lasty));
+		hide = true;
+	}
+}
+
+
+void CMouseHandler::ToggleState()
+{
+	if(locked){
+		locked=false;
+		ShowMouse();
+	} else {
+		locked=true;
+		HideMouse();
+	}
+}
+
+
+void CMouseHandler::UpdateHwCursor()
+{
+	if (hardwareCursor){
+		hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
+	}else{
+		mouseInput->SetWMMouseCursor(NULL);
+		SDL_ShowCursor(SDL_DISABLE);
+	}
+	cursorText = "";
+}
+
+
 /******************************************************************************/
+
+void CMouseHandler::SetCursor(const std::string& cmdName)
+{
+	if (cursorText.compare(cmdName)==0)
+		return;
+
+	cursorText = cmdName;
+	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cmdName);
+	if (it != cursorCommandMap.end()) {
+		currentCursor = it->second;
+	} else {
+		currentCursor = cursorFileMap["cursornormal"];
+	}
+
+	if (hardwareCursor && !hide && currentCursor) {
+		if (currentCursor->hwValid) {
+			if (hwHide) {
+				SDL_ShowCursor(SDL_ENABLE);
+				hwHide = false;
+			}
+			currentCursor->BindHwCursor();
+		}else{
+			hwHide = true;
+			SDL_ShowCursor(SDL_DISABLE);
+			mouseInput->SetWMMouseCursor(NULL);
+		}
+	}
+}
+
 
 void CMouseHandler::UpdateCursors()
 {
+	//we update all cursors, 'cos of the command queue icons
 	map<string, CMouseCursor *>::iterator it;
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
-		if (it->second != NULL) {
+		if (it->second != NULL)
 			it->second->Update();
-		}
 	}
 }
 
 
 void CMouseHandler::DrawCursor(void)
 {
-	if (guihandler) {
+	if (guihandler)
 		guihandler->DrawCentroidCursor();
-	}
 
-	if (hide || (cursorText == "none")) {
+	if (hide || (cursorText == "none"))
 		return;
-	}
 
+	if (currentCursor && (!hardwareCursor || !currentCursor->hwValid) )
+		currentCursor->Draw(lastx, lasty, cursorScale);
+
+/*
 	CMouseCursor* mc;
 	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cursorText);
 	if (it != cursorCommandMap.end()) {
@@ -699,11 +766,10 @@ void CMouseHandler::DrawCursor(void)
 		else {
 			nc->Draw(lastx, lasty, 1.0f);
 			if (mc != nc) {
-				mc->Draw(lastx + nc->GetMaxSizeX(),
-								 lasty + nc->GetMaxSizeY(), -cursorScale);
+				mc->Draw(lastx + nc->GetMaxSizeX(),  lasty + nc->GetMaxSizeY(), -cursorScale);
 			}
 		}
-	}
+	}*/
 }
 
 

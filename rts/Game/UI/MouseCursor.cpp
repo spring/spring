@@ -5,15 +5,15 @@
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "MouseCursor.h"
+#include "HwMouseCursor.h"
 #include "myMath.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "mmgr.h"
 
-
-static const float minFrameLength = 0.010f;  // seconds
-static const float defFrameLength = 0.100f;  // seconds
-
+//////////////////////////////////////////////////////////////////////
+// CMouseCursor Class
+//////////////////////////////////////////////////////////////////////
 
 CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 {
@@ -25,19 +25,20 @@ CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
 	return c;
 }
 
-
-//Would be nice if these were read from a gaf-file instead.
 CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 {
+	hwCursor = GetNewHwCursor();
+	hwCursor->hotSpot = hs;
 	hotSpot = hs;
 
-	if (!BuildFromSpecFile(name)) {
+	if (!BuildFromSpecFile(name))
 		BuildFromFileNames(name, 123456);
-	}
 
-	if (frames.size() <= 0) {
+	if (frames.size() <= 0)
 		return;
-	}
+
+	animated = (frames.size() > 1);
+	hwValid  = hwCursor->IsValid();
 
 	animTime = 0.0f;
 	animPeriod = 0.0f;
@@ -66,10 +67,11 @@ CMouseCursor::CMouseCursor(const string &name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor(void)
 {
+	delete hwCursor;
+
 	std::vector<ImageData>::iterator it;
-	for (it = images.begin(); it != images.end(); ++it) {
+	for (it = images.begin(); it != images.end(); ++it)
 		glDeleteTextures(1, &it->texture);
-	}
 }
 
 
@@ -100,10 +102,12 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 			if (iit != imageIndexMap.end()) {
 				FrameData frame(images[iit->second], length);
 				frames.push_back(frame);
+				hwCursor->PushFrame(iit->second,length);
 			}
 			else {
 				ImageData image;
 				if (LoadCursorImage(imageName, image)) {
+					hwCursor->SetDelay(length);
 					imageIndexMap[imageName] = images.size();
 					images.push_back(image);
 					FrameData frame(image, length);
@@ -114,13 +118,15 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 		else if ((command == "hotspot") && (words.size() >= 1)) {
 			if (words[1] == "topleft") {
 				hotSpot = TopLeft;
+				hwCursor->hotSpot = TopLeft;
 			}
 			else if (words[1] == "center") {
 				hotSpot = Center;
+				hwCursor->hotSpot = Center;
 			}
 			else {
 				logOutput.Print("%s: unknown hotspot  (%s)\n",
-												specFile.c_str(), words[1].c_str());
+							specFile.c_str(), words[1].c_str());
 			}
 		}
 		else if ((command == "lastframe") && (words.size() >= 1)) {
@@ -135,6 +141,8 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 	if (frames.size() <= 0) {
 		return BuildFromFileNames(name, lastFrame);
 	}
+
+	hwCursor->Finish();
 
 	return true;
 }
@@ -168,13 +176,14 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
 		         name.c_str(), frames.size(), ext);
 		ImageData image;
-		if (!LoadCursorImage(namebuf, image)) {
+		if (!LoadCursorImage(namebuf, image))
 			break;
-		}
 		images.push_back(image);
 		FrameData frame(image, defFrameLength);
 		frames.push_back(frame);
 	}
+
+	hwCursor->Finish();
 
 	return true;
 }
@@ -193,15 +202,23 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 		return false;
 	}
 
-	b.ReverseYAxis();
-
-	CBitmap* final = getAlignedBitmap(b);
-
-	// coded bmp transparency mask
+	// hardcoded bmp transparency mask
 	if ((name.size() >= 3) &&
 	    (StringToLower(name.substr(name.size() - 3)) == "bmp")) {
-		setBitmapTransparency(*final, 84, 84, 252);
+		setBitmapTransparency(b, 84, 84, 252);
 	}
+
+	if (hwCursor->needsYFlip()) {
+		//WINDOWS
+		b.ReverseYAxis();
+		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+	}else{
+		//X11
+		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		b.ReverseYAxis();
+	}
+
+	CBitmap* final = getAlignedBitmap(b);
 
 	GLuint texID = 0;
 	glGenTextures(1, &texID);
@@ -267,6 +284,8 @@ void CMouseCursor::setBitmapTransparency(CBitmap &bm, int r, int g, int b)
 
 void CMouseCursor::Draw(int x, int y, float scale)
 {
+	if (scale<0) scale=-scale;
+
 	const FrameData& frame = frames[currentFrame];
 	const int xs = int(float(frame.image.xAlignedSize) * scale);
 	const int ys = int(float(frame.image.yAlignedSize) * scale);
@@ -345,4 +364,9 @@ void CMouseCursor::BindTexture()
 {
 	const FrameData& frame = frames[currentFrame];
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
+}
+
+bool CMouseCursor::BindHwCursor()
+{
+	hwCursor->Bind();	
 }

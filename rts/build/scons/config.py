@@ -301,6 +301,8 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['SDLmain'],  [])]
 	else:
 		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
+		d += [Dependency(['Xcursor'], ['X11/Xcursor/Xcursor.h'])]
+		d += [Dependency(['X11'], ['X11/X.h'])]
 
 	d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
 	d += [Dependency(['vorbis'], [])]

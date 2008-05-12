@@ -145,6 +145,7 @@ gameinfoclose
 cross <size>  -- locked mouse cross size
 
 volume <float>  -- 0.0 to 1.0
+unitreplyvolume <float>  -- 0.0 to 1.0
 
 toggleoverview
 showhealthbars
@@ -188,6 +189,7 @@ decguiopacity
 screenshot ["png"]
 
 grabinput
+hardwarecursor [0|1]
 
 bind
 unbind
@@ -222,6 +224,7 @@ moveslow
 minimap <"fullproxy">    [0|1]
 minimap <"icons">        [0|1]
 minimap <"drawcommands"> [0|1]
+minimap <"drawprojectiles"> [0|1]
 minimap <"simplecolors"> [0|1]
 minimap <"min" | "minimize"> [0|1]
 minimap <"max" | "maximize"> [0|1]

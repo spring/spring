@@ -16,15 +16,20 @@ class CInputReceiver;
 class CCameraController;
 
 
-class CMouseHandler  
+class CMouseHandler
 {
 public:
+	void SetCursor(const std::string& cmdName);
+
+	bool hardwareCursor;
+	void UpdateHwCursor(); //calls SDL_ShowCursor, used for ingame hwcursor enabling
+
 	void UpdateCursors();
 	void HideMouse();
 	void ShowMouse();
-	void ToggleState();
+	void ToggleState(); // lock+hide (used by fps camera and middle click scrolling)
 	void WarpMouse(int x, int y);
-	void Draw();
+	void Draw(); // draw mousebox (selection box)
 	void MouseRelease(int x,int y,int button);
 	void MousePress(int x,int y,int button);
 	void MouseMove(int x,int y);
@@ -32,9 +37,10 @@ public:
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
-	int lastx;  
-	int lasty;  
+	int lastx;
+	int lasty;
 	bool hide;
+	bool hwHide;
 	bool locked;
 	bool invertMouse;
 	float doubleClickTime;
@@ -53,23 +59,19 @@ public:
 	};
 
 	ButtonPress buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
-	float3 dir;
-
 	int activeButton;
-
-	unsigned int cursorTex;
-	std::string cursorText;
-	std::string cursorTextRight;
-	float cursorScale;	
-	void DrawCursor(void);
-	std::string GetCurrentTooltip(void);
-
-	std::map<std::string, CMouseCursor*> cursorFileMap;
-	std::map<std::string, CMouseCursor*> cursorCommandMap;
-	//CMouseCursor *mc;
+	float3 dir;
 
 	int soundMultiselID;
 
+	float cursorScale;
+	void DrawCursor(void);
+	std::string GetCurrentTooltip(void);
+
+	std::string cursorText; //current cursor name
+	CMouseCursor *currentCursor;
+	std::map<std::string, CMouseCursor*> cursorFileMap;
+	std::map<std::string, CMouseCursor*> cursorCommandMap;
 	bool AssignMouseCursor(const std::string& cmdName,
 	                       const std::string& fileName,
 	                       CMouseCursor::HotSpot hotSpot,

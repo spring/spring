@@ -4,22 +4,27 @@
 #include <string>
 #include <vector>
 #include "Rendering/GL/myGL.h"
+//#include "HwMouseCursor.h"
 
 class CBitmap;
-
+class IHwCursor;
 
 class CMouseCursor {
 	public:
 		enum HotSpot {TopLeft, Center};
+
+		bool animated;
+		bool hwValid; //if hardware cursor is valid
 
 		static CMouseCursor* New(const std::string &name, HotSpot hs);
 
 		~CMouseCursor(void);
 
 		void Update();
-		void Draw(int x, int y, float scale);
-		void DrawQuad(int x, int y);
-		void BindTexture();
+		void Draw(int x, int y, float scale);	// software cursor draw
+		void DrawQuad(int x, int y);		// draw command queue icon
+		void BindTexture(); 			// software mouse cursor
+		bool BindHwCursor(); 			// hardware mouse cursor
 
 		int GetMaxSizeX() const { return xmaxsize; }
 		int GetMaxSizeY() const { return ymaxsize; }
@@ -55,6 +60,8 @@ class CMouseCursor {
 		std::vector<ImageData> images;
 		std::vector<FrameData> frames;
 
+		IHwCursor* hwCursor; // hardware cursor
+
 		float animTime;
 		float animPeriod;
 		int currentFrame;
@@ -65,6 +72,10 @@ class CMouseCursor {
 		int xofs; // describes where the center of the cursor is,
 		int yofs; // based on xmaxsize, ymaxsize, and the hotspot
 };
+
+
+static const float minFrameLength = 0.010f;  // seconds
+static const float defFrameLength = 0.100f;  // seconds
 
 
 #endif /* MOUSECURSOR_H */

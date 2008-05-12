@@ -193,6 +193,7 @@ CR_REG_METADATA(CGame,(
 
 	CR_MEMBER(soundEnabled),
 	CR_MEMBER(gameSoundVolume),
+	CR_MEMBER(unitReplyVolume),
 
 //	CR_MEMBER(script),
 	CR_RESERVED(64),
@@ -283,9 +284,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	ENTER_UNSYNCED;
 	sound = CSound::GetSoundSystem();
 	gameSoundVolume = configHandler.GetInt("SoundVolume", 60) * 0.01f;
+	unitReplyVolume = configHandler.GetInt("UnitReplyVolume", configHandler.GetInt("UnitReplySoundVolume", 80) ) * 0.01f;
 	soundEnabled = true;
 	sound->SetVolume(gameSoundVolume);
-	sound->SetUnitReplyVolume(configHandler.GetInt ("UnitReplySoundVolume", 80) * 0.01f);
+	sound->SetUnitReplyVolume(unitReplyVolume);
 
 	camera = SAFE_NEW CCamera();
 	cam2 = SAFE_NEW CCamera();
@@ -499,6 +501,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 		net->SendStartPlaying(0);
 
 	lastCpuUsageTime = gu->gameTime + 10;
+
+	mouse->ShowMouse();
 }
 
 
@@ -1209,6 +1213,16 @@ bool CGame::ActionPressed(const Action& action,
 			configHandler.SetInt("SoundVolume", (int)(gameSoundVolume * 100.0f));
 		}
 	}
+	else if (cmd == "unitreplyvolume") {
+		char* endPtr;
+		const char* startPtr = action.extra.c_str();
+		float volume = (float)strtod(startPtr, &endPtr);
+		if (endPtr != startPtr) {
+			unitReplyVolume = std::max(0.0f, std::min(1.0f, volume));
+			sound->SetUnitReplyVolume(unitReplyVolume);
+			configHandler.SetInt("UnitReplyVolume",(int)(unitReplyVolume * 100.0f));
+		}
+	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
@@ -1295,6 +1309,15 @@ bool CGame::ActionPressed(const Action& action,
 			hideInterface = !!atoi(action.extra.c_str());
 		}
 	}
+	else if (cmd == "hardwarecursor") {
+		if (action.extra.empty()) {
+			mouse->hardwareCursor = !mouse->hardwareCursor;
+		} else {
+			mouse->hardwareCursor = !!atoi(action.extra.c_str());
+		}
+		mouse->UpdateHwCursor();
+		configHandler.SetInt("HardwareCursor", (int)mouse->hardwareCursor);
+	}
 	else if (cmd == "increaseviewradius") {
 		gd->IncreaseDetail();
 	}
@@ -1318,8 +1341,12 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 
+	// Break up the if/else chain to workaround MSVC compiler limit
+	// "fatal error C1061: compiler limit : blocks nested too deeply"
+	else notfound1=true;
+	if (notfound1)
 
-	else if (cmd == "speedup") {
+	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
 		if (speed < 1) {
 			speed /= 0.8f;
@@ -1354,11 +1381,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 #endif
 
-	// Break up the if/else chain to workaround MSVC compiler limit
-	// "fatal error C1061: compiler limit : blocks nested too deeply"
-	else notfound1=true;
-	if (notfound1)
-	if (cmd == "showshadowmap") {
+	else if (cmd == "showshadowmap") {
 		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
 	}
 	else if (cmd == "showstandard") {
@@ -2387,7 +2410,7 @@ bool CGame::DrawWorld()
 	SCOPED_TIMER("Draw world");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
+	
 	if (drawSky) {
 		sky->Draw();
 	}
@@ -2423,6 +2446,7 @@ bool CGame::DrawWorld()
 			water->Draw();
 		}
 	}
+
 	unitDrawer->DrawCloakedUnits();
 	ph->Draw(false);
 
