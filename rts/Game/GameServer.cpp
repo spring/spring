@@ -1190,11 +1190,11 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-#ifndef DEDICATED
 	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	unsigned numActiveAllyTeams = 0;
 
+#ifndef DEDICATED
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 	{
 		bool hasPlayer = false;
@@ -1213,13 +1213,27 @@ void CGameServer::CheckForGameEnd()
 	for (unsigned a = 0; (int)a < gs->activeAllyTeams; ++a)
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
-
+#else
+	int lastAllyTeam = -1;
+	for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (players[i])
+		{
+			if (lastAllyTeam < 0)
+				lastAllyTeam = i;
+			else if (lastAllyTeam != teams[players[i]->team]->allyTeam)
+			{
+				numActiveAllyTeams = 1;
+				break;
+			}
+		}
+	}
+#endif
 	if (numActiveAllyTeams <= 1)
 	{
 		gameEndTime=SDL_GetTicks();
 		serverNet->SendSendPlayerStat();
 	}
-#endif
 }
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
@@ -1341,6 +1355,7 @@ void CGameServer::BindConnection(unsigned wantedNumber)
 			teams[hisTeam].reset(new GameTeam());
 			teams[hisTeam]->startpos = setup->startPos[hisTeam];
 			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetupData::StartPos_ChooseInGame);
+			teams[hisTeam]->allyTeam = setup->teamAllyteam[hisTeam];
 		}
 		players[hisNewNumber]->team = hisTeam;
 		serverNet->SendJoinTeam(hisNewNumber, hisTeam);

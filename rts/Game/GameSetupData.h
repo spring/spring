@@ -52,6 +52,7 @@ public:
 	SFloat3 startPos[MAX_TEAMS];
 	bool readyTeams[MAX_TEAMS];
 	int teamStartNum[MAX_TEAMS];
+	int teamAllyteam[MAX_TEAMS];
 	float startRectTop[MAX_TEAMS];
 	float startRectBottom[MAX_TEAMS];
 	float startRectLeft[MAX_TEAMS];

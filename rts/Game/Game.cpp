@@ -427,7 +427,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-
+	if (!!configHandler.GetInt("LuaUI", 0)) {
+		PrintLoadMsg("Loading LuaUI");
+		CLuaUI::LoadHandler();
+	}
 	PrintLoadMsg("Finalizing...");
 
 	ENTER_MIXED;
@@ -442,8 +445,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0);
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
 	}
-
-	logOutput.Print("Spring %s",VERSION_STRING);
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
 	if(!gameSetup || net->localDemoPlayback) {
@@ -482,14 +483,15 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	tracefile.NewInterval();
 #endif
 
-	net->loading = false;
-	thread.join();
-
 	activeController = this;
 
 	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
 	if (!saveFile) UnloadStartPicture();
+	
+	net->loading = false;
+		thread.join();
+	logOutput.Print("Spring %s",VERSION_STRING);
 	//sending your playername to the server indicates that you are finished loading
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
 

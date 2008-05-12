@@ -102,6 +102,8 @@ widgetHandler = {
 -- these call-ins are set to 'nil' if not used
 -- they are setup in UpdateCallIns()
 local flexCallIns = {
+  'GameLoadLua',
+  'GameStartPlaying',
   'GameOver',
   'TeamDied',
   'GameFrame',
@@ -145,6 +147,8 @@ for _,ci in ipairs(flexCallIns) do
 end
 
 local callInLists = {
+  'GameLoadLua',
+  'GameStartPlaying',
   'Shutdown',
   'Update',
   'TextCommand',
@@ -1416,6 +1420,20 @@ end
 --
 --  Game call-ins
 --
+
+function widgetHandler:GameLoadLua()
+  for _,w in ipairs(self.GameLoadLuaList) do
+    w:GameLoadLua()
+  end
+  return
+end
+
+function widgetHandler:GameStartPlaying()
+  for _,w in ipairs(self.GameStartPlayingList) do
+    w:GameStartPlaying()
+  end
+  return
+end
 
 function widgetHandler:GameOver()
   for _,w in ipairs(self.GameOverList) do

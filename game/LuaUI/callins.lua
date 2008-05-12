@@ -29,6 +29,8 @@ CallInsList = {
   "GroupChanged",
   "WorldTooltip",
 
+  "GameLoadLua",
+  "GameStartPlaying",
   "GameOver",
   "TeamDied",
 
