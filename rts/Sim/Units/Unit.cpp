@@ -1452,13 +1452,48 @@ void CUnit::Init(const CUnit* builder)
 	//All units are set as ground-blocking.
 	blocking = true;
 
-	if(pos.y+model->height<1)	//some torp launchers etc is exactly in the surface and should be considered uw anyway
+	if(pos.y+model->height<1)	//some torp launchers etc are exactly in the surface and should be considered uw anyway
 		isUnderWater=true;
 
 	if(!unitDef->canKamikaze || unitDef->type=="Building" || unitDef->type=="Factory")	//semi hack to make mines not block ground
 		Block();
 
 	UpdateTerrainType();
+
+	Command c;
+	if (unitDef->canmove || unitDef->builder) {
+		if (unitDef->moveState<0) {
+			if (builder!=NULL) {
+				moveState = builder->moveState;
+			}else{
+				moveState = 1;
+			}
+		} else {
+			moveState = unitDef->moveState;
+		}
+
+		c.id = CMD_MOVE_STATE;
+		c.params.push_back(moveState);
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
+
+	if (commandAI->CanChangeFireState()) {
+		if (unitDef->fireState<0) {
+			if (builder!=NULL) {
+				fireState = builder->fireState;
+			}else{
+				fireState = 2;
+			}
+		} else {
+			fireState = unitDef->fireState;
+		}
+
+		c.id = CMD_FIRE_STATE;
+		c.params.push_back(fireState);
+		commandAI->GiveCommand(c);
+		c.params.clear();
+	}
 
 	luaCallIns.UnitCreated(this, builder);
 	globalAI->UnitCreated(this); // FIXME -- add builder?

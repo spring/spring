@@ -9,7 +9,6 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
 #include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"

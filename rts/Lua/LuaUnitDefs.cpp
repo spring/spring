@@ -799,6 +799,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCrash",              ud.canCrash);
 	ADD_BOOL("canFireControl",        ud.canFireControl);
 	ADD_INT( "fireState",             ud.fireState);
+	ADD_INT( "moveState",             ud.moveState);
 	ADD_BOOL("fullHealthFactory",     ud.fullHealthFactory);
 	ADD_BOOL("factoryHeadingTakeoff", ud.factoryHeadingTakeoff);
 

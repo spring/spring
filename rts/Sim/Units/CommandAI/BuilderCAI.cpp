@@ -1102,7 +1102,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 		const CFeature* f = *fi;
 		if (f->def->reclaimable &&
 		    (recAnyTeam || (f->allyteam != owner->allyteam))) {
-			const float dist = f3Dist(f->pos, owner->pos);
+			const float dist = f3SqLen(f->pos - owner->pos);
 			if ((dist < bestDist) &&
 			    (noResCheck ||
 			     ((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
@@ -1146,7 +1146,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	for (fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
 		if (f->def->destructable && f->createdFromUnit != "") {
-			const float dist = f3Dist(f->pos, owner->pos);
+			const float dist = f3SqLen(f->pos - owner->pos);
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
 				if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
@@ -1186,7 +1186,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 
 		if (!gs->Ally(myAllyteam, unit->allyteam) && (unit != owner) &&
 			!unit->beingBuilt && unit->unitDef->capturable) {
-			const float dist = f3Dist(unit->pos, owner->pos);
+			const float dist = f3SqLen(unit->pos - owner->pos);
 
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
@@ -1251,7 +1251,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 					trySelfRepair = true;
 					continue;
 				}
-				const float dist = f3Dist(unit->pos, owner->pos);
+				const float dist = f3SqLen(unit->pos - owner->pos);
 				if (dist < bestDist) {
 					bestDist = dist;
 					best = unit;
@@ -1260,7 +1260,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		}
 		else {
 			if (attackEnemy && owner->unitDef->canAttack && (owner->maxRange > 0)) {
-				const float dist = f3Dist(unit->pos, owner->pos);
+				const float dist = f3SqLen(unit->pos - owner->pos);
 				if ((dist < bestDist) || !haveEnemy) {
 					if (!owner->unitDef->canmove &&
 					    ((dist - unit->radius) > owner->maxRange)) {
