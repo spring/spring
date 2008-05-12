@@ -90,7 +90,7 @@ void CLightingCannon::Fire(void)
 	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 	CUnit* u=0;
-	float r=helper->TraceRay(weaponMuzzlePos,dir,range,0,owner,u);
+	float r=helper->TraceRay(weaponMuzzlePos,dir,range,0,owner,u,collisionFlags);
 
 	float3 newDir;
 	CPlasmaRepulser* shieldHit;
