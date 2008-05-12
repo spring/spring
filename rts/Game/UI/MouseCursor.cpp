@@ -366,7 +366,7 @@ void CMouseCursor::BindTexture()
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
 }
 
-bool CMouseCursor::BindHwCursor()
+void CMouseCursor::BindHwCursor()
 {
 	hwCursor->Bind();	
 }

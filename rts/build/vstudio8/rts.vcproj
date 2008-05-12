@@ -951,6 +951,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Game\UI\HwMouseCursor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\HwMouseCursor.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Ui\InfoConsole.cpp"
 					>
 				</File>
@@ -1868,6 +1876,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\BasicWater.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\BumpWater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\BumpWater.h"
 					>
 				</File>
 				<File

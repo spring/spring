@@ -46,15 +46,20 @@ static void PrintLog(GLuint obj)
 	else
 		glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&maxLength);
 
-	char infoLog[maxLength];
+	char* infoLog = SAFE_NEW char[maxLength];
 
 	if (glIsShader(obj))
 		glGetShaderInfoLog(obj, maxLength, &infologLength, infoLog);
 	else
 		glGetProgramInfoLog(obj, maxLength, &infologLength, infoLog);
 
-	if (infologLength > 0)
-		throw content_error(string("BumpWater shader error: "+string(infoLog,infologLength)));
+	if (infologLength > 0) {
+		string str(infoLog, infologLength);
+		delete[] infoLog;
+		throw content_error(string("BumpWater shader error: " + str));
+	}
+
+	delete[] infoLog;
 }
 
 
