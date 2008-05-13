@@ -59,16 +59,16 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 CMouseHandler::CMouseHandler()
 : locked(false)
 {
-	lastx=300;
-	lasty=200;
-	hide=true;
-	hwHide=true;
-	currentCursor=NULL;
+	lastx = 300;
+	lasty = 200;
+	hide = true;
+	hwHide = true;
+	currentCursor = NULL;
 
-	for(int a=1;a<=NUM_BUTTONS;a++){
-		buttons[a].pressed=false;
-		buttons[a].lastRelease=-20;
-		buttons[a].movement=0;
+	for (int a = 1; a <= NUM_BUTTONS; a++) {
+		buttons[a].pressed = false;
+		buttons[a].lastRelease = -20;
+		buttons[a].movement = 0;
 	}
 
 	cursorScale = 1.0f;
@@ -711,7 +711,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName)
 				hwHide = false;
 			}
 			currentCursor->BindHwCursor();
-		}else{
+		} else {
 			hwHide = true;
 			SDL_ShowCursor(SDL_DISABLE);
 			mouseInput->SetWMMouseCursor(NULL);
@@ -739,37 +739,27 @@ void CMouseHandler::DrawCursor(void)
 	if (hide || (cursorText == "none"))
 		return;
 
-	if (currentCursor && (!hardwareCursor || !currentCursor->hwValid) )
-		currentCursor->Draw(lastx, lasty, cursorScale);
-
-/*
-	CMouseCursor* mc;
-	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cursorText);
-	if (it != cursorCommandMap.end()) {
-		mc = it->second;
-	} else {
-		mc = cursorFileMap["cursornormal"];
-	}
-
-	if (mc == NULL) {
+	if (!currentCursor || (hardwareCursor && currentCursor->hwValid)) {
 		return;
 	}
 
+	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
-		mc->Draw(lastx, lasty, cursorScale);
+		currentCursor->Draw(lastx, lasty, cursorScale);
 	}
 	else {
 		CMouseCursor* nc = cursorFileMap["cursornormal"];
 		if (nc == NULL) {
-			mc->Draw(lastx, lasty, -cursorScale);
+			currentCursor->Draw(lastx, lasty, -cursorScale);
 		}
 		else {
 			nc->Draw(lastx, lasty, 1.0f);
-			if (mc != nc) {
-				mc->Draw(lastx + nc->GetMaxSizeX(),  lasty + nc->GetMaxSizeY(), -cursorScale);
+			if (currentCursor != nc) {
+				currentCursor->Draw(lastx + nc->GetMaxSizeX(),
+				                    lasty + nc->GetMaxSizeY(), -cursorScale);
 			}
 		}
-	}*/
+	}
 }
 
 
