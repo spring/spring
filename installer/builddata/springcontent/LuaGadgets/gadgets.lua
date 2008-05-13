@@ -85,8 +85,8 @@ gadgetHandler = {
 local callInLists = {
   'Shutdown',
 
-  'GameLoadLua',
-  'GameStartPlaying',
+  'GamePreload',
+  'GameStart',
   'GameOver',
   'TeamDied',
 
@@ -868,16 +868,16 @@ end
 --  The call-in distribution routines
 --
 
-function gadgetHandler:GameLoadLua()
-  for _,g in ipairs(self.GameLoadLuaList) do
-    g:GameLoadLua()
+function gadgetHandler:GamePreload()
+  for _,g in ipairs(self.GamePreloadList) do
+    g:GamePreload()
   end
   return
 end
 
-function gadgetHandler:GameStartPlaying()
-  for _,g in ipairs(self.GameStartPlayingList) do
-    g:GameStartPlaying()
+function gadgetHandler:GameStart()
+  for _,g in ipairs(self.GameStartList) do
+    g:GameStart()
   end
   return
 end
