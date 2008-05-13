@@ -28,8 +28,8 @@ CallInsList = {
   "AddConsoleLine",
   "GroupChanged",
 
-  "GameLoadLua",
-  "GameStartPlaying",
+  "GamePreload",
+  "GameStart",
   "GameOver",
   "TeamDied",
 
