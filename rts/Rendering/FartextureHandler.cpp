@@ -8,11 +8,9 @@
 #include "Map/MapInfo.h"
 #include "mmgr.h"
 
+
 CFartextureHandler* fartextureHandler = NULL;
 
-extern GLfloat LightDiffuseLand[];
-extern GLfloat LightAmbientLand[];
-extern GLfloat FogLand[];
 
 CFartextureHandler::CFartextureHandler(void)
 {
@@ -26,6 +24,7 @@ CFartextureHandler::CFartextureHandler(void)
 	farTexture=0;
 }
 
+
 CFartextureHandler::~CFartextureHandler(void)
 {
 	delete[] farTextureMem;
@@ -34,6 +33,7 @@ CFartextureHandler::~CFartextureHandler(void)
 	delete texturehandler;
 	texturehandler=0;
 }
+
 
 /**
  * @brief Add the model to the queue of units waiting for their fartexture.
@@ -44,6 +44,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel* model)
 {
 	pending.push_back(model);
 }
+
 
 /**
  * @brief Process the queue of pending fartexture creation requests.
@@ -57,6 +58,7 @@ void CFartextureHandler::CreateFarTextures()
 	}
 	pending.clear();
 }
+
 
 /**
  * @brief Really create the far texture for the given model.
@@ -103,7 +105,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
 	glColor3f(1,1,1);
 	glRotatef(10,1,0,0);
-	glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);
+	glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir);
 	glEnable(GL_LIGHT1);
 
 	int baseX=0;
@@ -128,7 +130,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 			}
 		baseX+=16;
 		glRotatef(45,0,1,0);
-		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);
+		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir);
 	}
 
 	glCullFace(GL_BACK);
@@ -136,11 +138,11 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],0);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],0);
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand);		// Setup The Ambient Light
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand);		// Setup The Diffuse Light
-	glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand);		// Setup The Diffuse Light
+	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);
 
 	if(farTexture==0){
 		glGenTextures(1, &farTexture);
@@ -157,5 +159,3 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	usedFarTextures++;
 	POP_CODE_MODE;
 }
-
-

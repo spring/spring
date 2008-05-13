@@ -150,11 +150,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 
-GLfloat LightDiffuseLand[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-GLfloat LightAmbientLand[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-GLfloat FogLand[] =          { 0.7f, 0.7f, 0.8f, 0.0f };
-GLfloat FogWhite[] =         { 1.0f, 1.0f, 1.0f, 0.0f };
-GLfloat FogBlack[] =         { 0.0f, 0.0f, 0.0f, 0.0f };
 
 extern Uint8 *keys;
 extern bool globalQuit;
@@ -344,12 +339,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	ENTER_SYNCED;
 	ground = SAFE_NEW CGround();
 	mapInfo = SAFE_NEW CMapInfo(mapname); // must go before readmap
-
-	// FIXME: remove these silly global variables ...
-	FogLand[0] = mapInfo->atmosphere.fogColor.x;
-	FogLand[1] = mapInfo->atmosphere.fogColor.y;
-	FogLand[2] = mapInfo->atmosphere.fogColor.z;
-
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = SAFE_NEW CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
@@ -437,15 +426,11 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	ENTER_MIXED;
 	if (true || !shadowHandler->drawShadows) { // FIXME ?
-		for(int a = 0; a < 3; ++a) {
-			LightAmbientLand[a] = unitDrawer->unitAmbientColor[a];
-			LightDiffuseLand[a] = unitDrawer->unitSunColor[a];
-		}
-		glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand);		// Setup The Ambient Light
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand);		// Setup The Diffuse Light
-		glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand);		// Setup The Diffuse Light
-		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0);
-		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
+		glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
+		glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
+		glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 	}
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
@@ -467,13 +452,13 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	assert(script);
 	luaCallIns.GamePreload();
 
-	glFogfv(GL_FOG_COLOR,FogLand);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	glFogf(GL_FOG_START, 0.0f);
 	glFogf(GL_FOG_END, gu->viewRange * 0.98f);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);
-	glClearColor(FogLand[0], FogLand[1], FogLand[2], 0.0f);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 #ifdef TRACE_SYNC
 	tracefile.NewInterval();
 	tracefile.NewInterval();
@@ -2586,7 +2571,7 @@ bool CGame::Draw()
 	ph->UpdateTextures();
 	fartextureHandler->CreateFarTextures();
 
-	glClearColor(FogLand[0], FogLand[1], FogLand[2], 0);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 
 	sky->Update();
 

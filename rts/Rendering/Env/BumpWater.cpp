@@ -33,9 +33,6 @@ using std::string;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern GLfloat FogLand[];
-
-
 static void PrintLog(GLuint obj)
 {
 	int infologLength = 0;
@@ -385,7 +382,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	camera->Update(false);
 	glViewport(0,0,refrSizeX,refrSizeY);
 
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	float3 oldsun=unitDrawer->unitSunColor;
@@ -418,7 +415,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glDisable(target);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	unitDrawer->unitSunColor=oldsun;
 	unitDrawer->unitAmbientColor=oldambient;
@@ -465,7 +462,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	delete camera;
 	camera = realCam;

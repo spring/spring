@@ -98,7 +98,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_LIGHTING);
-	glLightfv(GL_LIGHT0, GL_POSITION,mapInfo->light.sunDir4);
+	glLightfv(GL_LIGHT0, GL_POSITION, mapInfo->light.sunDir);
 	float d[4]={0.0f,0.0f,0.0f,1.0f};
 	for (int a=0;a<3;a++)
 		d[a]=mapInfo->light.groundSunColor[a];

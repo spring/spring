@@ -78,8 +78,6 @@ using namespace std;
 
 
 extern Uint8 *keys;
-extern GLfloat LightDiffuseLand[];
-extern GLfloat LightAmbientLand[];
 
 
 CLuaUI* luaUI = NULL;

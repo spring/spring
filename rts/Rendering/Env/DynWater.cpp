@@ -23,8 +23,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
-extern GLfloat FogLand[];
-
 #define W_SIZE 5
 #define WF_SIZE 5120
 #define WH_SIZE 2560
@@ -464,7 +462,7 @@ void CDynWater::DrawReflection(CGame* game)
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	delete camera;
 	camera = realCam;
@@ -482,7 +480,7 @@ void CDynWater::DrawRefraction(CGame* game)
 
 	glViewport(0,0,refractSize,refractSize);
 
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	float3 oldsun=unitDrawer->unitSunColor;
@@ -515,7 +513,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,refractSize,refractSize);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	unitDrawer->unitSunColor=oldsun;
 	unitDrawer->unitAmbientColor=oldambient;

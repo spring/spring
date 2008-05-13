@@ -10,9 +10,6 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "mmgr.h"
 
-extern GLfloat FogBlack[]; 
-extern GLfloat FogLand[]; 
-
 CSkyBox::CSkyBox(std::string texture)
 {
 	CBitmap btex;
@@ -84,7 +81,7 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	if (gu->drawFog) {
-		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 		glFogi(GL_FOG_MODE,GL_LINEAR);
 		glFogf(GL_FOG_START,gu->viewRange*fogStart);
 		glFogf(GL_FOG_END,gu->viewRange);

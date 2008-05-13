@@ -24,8 +24,6 @@ static const float turfSize=20;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square
 static const int grassBlockSize=4;		//grass squares per grass block
 
-extern GLfloat FogLand[]; 
-
 static float fRand(float size)
 {
 	return float(rand())/RAND_MAX*size;
@@ -395,7 +393,7 @@ void CGrassDrawer::Draw(void)
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR,FogLand);
+	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 
 	const int blockMapSize=grassSquareSize*grassBlockSize;
 

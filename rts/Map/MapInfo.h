@@ -7,6 +7,21 @@
 class TdfParser;
 
 
+/** Float3 with a fourth data member, which is basically unused but required
+    to be able to pass the float3 into e.g. OpenGL functions that expect
+    an array of 4 floats. */
+struct float4 : public float3
+{
+	float w;
+
+	float4();
+	float4(const float3& f, float w = 0.0f) : float3(f), w(w) {}
+
+	/// Allows implicit conversion to const float* (for passing to gl functions)
+	operator const float* () const { return &x; }
+};
+
+
 class CMapInfo
 {
 public:
@@ -73,7 +88,7 @@ public:
 	struct atmosphere_t {
 		float  cloudDensity;
 		float  fogStart;
-		float3 fogColor;
+		float4 fogColor;
 		float3 skyColor;
 		float3 sunColor;
 		float3 cloudColor;
@@ -84,14 +99,13 @@ public:
 
 	/** settings read from "MAP\LIGHT" section */
 	struct light_t {
-		float3 sunDir;     ///< Holds vector for the direction of the sun
-		float  sunDir4[4]; ///< sunDir as 4 component vector
+		float4 sunDir;     ///< Holds vector for the direction of the sun
 		float3 groundAmbientColor;
 		float3 groundSunColor;
 		float3 groundSpecularColor;
 		float  groundShadowDensity;
-		float3 unitAmbientColor;
-		float3 unitSunColor;
+		float4 unitAmbientColor;
+		float4 unitSunColor;
 		float3 specularSunColor;
 		float  unitShadowDensity;
 	} light;

@@ -197,9 +197,6 @@ void CUnitDrawer::Update(void)
 }
 
 
-extern GLfloat FogLand[];
-
-
 inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	if (unit->isCloaked) {
@@ -274,7 +271,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawCloakedS3O.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glFogfv(GL_FOG_COLOR, FogLand);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
 	vector<CUnit*> drawIcon;
 	vector<CUnit*> drawRadarIcon;
@@ -409,7 +406,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	camNorm.Normalize();
 	glColor3f(1, 1, 1);
 	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR, FogLand);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
 	for (vector<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 		DrawFar(*usi);
@@ -968,8 +965,8 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);	// Position The Light
-		glEnable(GL_LIGHT1);										// Enable Light One
+		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+		glEnable(GL_LIGHT1);
 	//	glDisable(GL_CULL_FACE);
 	//	glCullFace(GL_BACK);
 		glEnable(GL_TEXTURE_2D);
@@ -1167,8 +1164,8 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir4);	// Position The Light
-		glEnable(GL_LIGHT1);								// Enable Light One
+		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+		glEnable(GL_LIGHT1);
 
 		SetupBasicS3OTexture0();
 

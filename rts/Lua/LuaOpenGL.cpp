@@ -69,11 +69,6 @@ using std::set;
 static const int MAX_TEXTURE_UNITS = 32;
 
 
-// from Game.cpp
-extern GLfloat LightDiffuseLand[];
-extern GLfloat LightAmbientLand[];
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -797,7 +792,7 @@ void LuaOpenGL::ResetDrawInMiniMap()
 void LuaOpenGL::SetupWorldLighting()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);
+	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	glEnable(GL_LIGHT1);
 }
 
@@ -877,12 +872,12 @@ void LuaOpenGL::SetupScreenLighting()
 	// sun light -- needs the camera transformation
 	glPushMatrix();
 	glLoadMatrixd(camera->GetModelview());
-	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir4);
+	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
-	const float* la = LightAmbientLand;
-	const float* ld = LightDiffuseLand;
+	const float* la = mapInfo->light.unitAmbientColor;
+	const float* ld = mapInfo->light.unitSunColor;
 
 	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
 	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
@@ -4808,17 +4803,17 @@ int LuaOpenGL::GetSun(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 0) {
-		lua_pushnumber(L, mapInfo->light.sunDir4[0]);
-		lua_pushnumber(L, mapInfo->light.sunDir4[1]);
-		lua_pushnumber(L, mapInfo->light.sunDir4[2]);
+		lua_pushnumber(L, mapInfo->light.sunDir[0]);
+		lua_pushnumber(L, mapInfo->light.sunDir[1]);
+		lua_pushnumber(L, mapInfo->light.sunDir[2]);
 		return 3;
 	}
 
 	const string param = luaL_checkstring(L, 1);
 	if (param == "pos") {
-		lua_pushnumber(L, mapInfo->light.sunDir4[0]);
-		lua_pushnumber(L, mapInfo->light.sunDir4[1]);
-		lua_pushnumber(L, mapInfo->light.sunDir4[2]);
+		lua_pushnumber(L, mapInfo->light.sunDir[0]);
+		lua_pushnumber(L, mapInfo->light.sunDir[1]);
+		lua_pushnumber(L, mapInfo->light.sunDir[2]);
 		return 3;
 	}
 
