@@ -16,9 +16,6 @@
 #include "Matrix44f.h"
 #include "mmgr.h"
 
-extern GLfloat FogBlack[];
-extern GLfloat FogLand[];
-
 #define Y_PART 10.0
 #define X_PART 10.0
 
@@ -191,7 +188,7 @@ void CAdvSky::Draw()
 
 	if (gu->drawFog) {
 		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 		glFogf(GL_FOG_START,gu->viewRange*fogStart);
 		glFogf(GL_FOG_END,gu->viewRange);
 		glFogf(GL_FOG_DENSITY,1.0f);

@@ -23,9 +23,6 @@
 #include "System/FileSystem/ArchiveScanner.h"
 
 
-extern GLfloat FogLand[];
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -48,7 +45,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	const bool diminishingMMs   = gameSetup ? gameSetup->diminishingMMs   : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
-	const float3 fogColor(FogLand[0], FogLand[1], FogLand[2]);
 
 	LuaPushNamedString(L, "version",       VERSION_STRING);
 
@@ -89,7 +85,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedColor(L,  "waterSpecularColor",  mapInfo->water.specularColor);
 	LuaPushNamedNumber(L, "waterSpecularFactor", mapInfo->water.specularFactor);
 	LuaPushNamedColor(L,  "waterPlaneColor",   mapInfo->water.planeColor);
-	LuaPushNamedColor(L,  "fogColor",          fogColor);
+	LuaPushNamedColor(L,  "fogColor",          mapInfo->atmosphere.fogColor);
 	LuaPushNamedColor(L,  "groundAmbientColor",      mapInfo->light.groundAmbientColor);
 	LuaPushNamedColor(L,  "groundSpecularColor",     mapInfo->light.groundSpecularColor);
 	LuaPushNamedColor(L,  "groundSunColor",          mapInfo->light.groundSunColor);

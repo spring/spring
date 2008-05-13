@@ -24,8 +24,6 @@
 #include <assert.h>
 
 //////////////////////////////////////////////////////////////////////
-extern GLfloat FogBlack[];
-extern GLfloat FogLand[];
 
 #define Y_PART 10.0
 #define X_PART 10.0
@@ -274,7 +272,7 @@ void CBasicSky::Draw()
 	glDisable(GL_BLEND);
 	if (gu->drawFog) {
 		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR,FogLand);
+		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 		glFogi(GL_FOG_MODE,GL_LINEAR);
 		glFogf(GL_FOG_START,gu->viewRange*fogStart);
 		glFogf(GL_FOG_END,gu->viewRange);

@@ -37,8 +37,6 @@
 
 CProjectileHandler* ph;
 using namespace std;
-extern GLfloat FogBlack[];
-extern GLfloat FogLand[];
 
 CR_BIND(CProjectileHandler,);
 
@@ -538,7 +536,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	glColor4f(1,1,1,0.2f);
 	glAlphaFunc(GL_GREATER,0.0f);
 	glEnable(GL_ALPHA_TEST);
-//	glFogfv(GL_FOG_COLOR,FogLand);
+//	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glDisable(GL_FOG);
 
 	currentParticles=0;
@@ -555,7 +553,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	currentParticles=(int)(ps.size()*0.8f+currentParticles*0.2f);
 	currentParticles+=(int)(0.2f*drawnPieces+0.3f*numFlyingPieces);
 	particleSaturation=(float)currentParticles/(float)maxParticles;
-//	glFogfv(GL_FOG_COLOR,FogLand);
+//	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 }
 
 void CProjectileHandler::DrawShadowPass(void)
@@ -677,6 +675,8 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 void CProjectileHandler::DrawGroundFlashes(void)
 {
+	static GLfloat black[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -686,7 +686,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	glDepthMask(0);
 	glPolygonOffset(-20,-1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFogfv(GL_FOG_COLOR,FogBlack);
+	glFogfv(GL_FOG_COLOR, black);
 
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
@@ -699,7 +699,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	}
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
-	glFogfv(GL_FOG_COLOR,FogLand);
+	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glDepthMask(1);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

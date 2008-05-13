@@ -3,6 +3,23 @@
 #include "TdfParser.h"
 
 
+float4::float4()
+{
+	float tmp[4];
+
+	// ensure alignment is correct to use it as array of floats
+	(void) tmp;
+	assert(&y - &x == &tmp[1] - &tmp[0]);
+	assert(&z - &x == &tmp[2] - &tmp[0]);
+	assert(&w - &x == &tmp[3] - &tmp[0]);
+
+	x = 0.0f;
+	y = 0.0f;
+	z = 0.0f;
+	w = 0.0f;
+}
+
+
 // before delete, the const is const_cast'ed away.
 // there are no (other) situations where mapInfo may be modified
 const CMapInfo* mapInfo;
@@ -109,18 +126,14 @@ void CMapInfo::ReadLight()
 	// MAP\LIGHT
 	light.sunDir = mapDefParser->GetFloat3(float3(0.0f, 1.0f, 2.0f), "MAP\\LIGHT\\SunDir");
 	light.sunDir.Normalize();
-	light.sunDir4[0] = light.sunDir[0];
-	light.sunDir4[1] = light.sunDir[1];
-	light.sunDir4[2] = light.sunDir[2];
-	light.sunDir4[3] = 0.0f;
 
 	light.groundAmbientColor = mapDefParser->GetFloat3(float3(0.5f, 0.5f, 0.5f), "MAP\\LIGHT\\GroundAmbientColor");
 	light.groundSunColor = mapDefParser->GetFloat3(float3(0.5f, 0.5f, 0.5f), "MAP\\LIGHT\\GroundSunColor");
 	light.groundSpecularColor = mapDefParser->GetFloat3(float3(0.1f, 0.1f, 0.1f), "MAP\\LIGHT\\GroundSpecularColor");
 	mapDefParser->GetTDef(light.groundShadowDensity, 0.8f, "MAP\\LIGHT\\GroundShadowDensity");
 
-	light.unitAmbientColor = mapDefParser->GetFloat3(float3(0.4f, 0.4f, 0.4f), "MAP\\LIGHT\\UnitAmbientColor");
-	light.unitSunColor = mapDefParser->GetFloat3(float3(0.7f, 0.7f, 0.7f), "MAP\\LIGHT\\UnitSunColor");
+	light.unitAmbientColor = float4(mapDefParser->GetFloat3(float3(0.4f, 0.4f, 0.4f), "MAP\\LIGHT\\UnitAmbientColor"), 1.0f);
+	light.unitSunColor = float4(mapDefParser->GetFloat3(float3(0.7f, 0.7f, 0.7f), "MAP\\LIGHT\\UnitSunColor"), 1.0f);
 	light.specularSunColor = mapDefParser->GetFloat3(light.unitSunColor, "MAP\\LIGHT\\SpecularSunColor");
 	mapDefParser->GetTDef(light.unitShadowDensity, 0.8f, "MAP\\LIGHT\\UnitShadowDensity");
 }

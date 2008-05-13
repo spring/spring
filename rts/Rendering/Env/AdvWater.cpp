@@ -23,8 +23,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern GLfloat FogLand[]; 
-
 CAdvWater::CAdvWater(bool loadShader)
 {
 	glGenTextures(1, &reflectTexture);
@@ -358,7 +356,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glClearColor(FogLand[0],FogLand[1],FogLand[2],1);
+	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	delete camera;
 	camera = realCam;
