@@ -282,8 +282,9 @@ def generate(env):
 			# to break.
 			# Since those constructs are used in the netcode and MathTest code, we disable the optimization.
 			env.AppendUnique(CCFLAGS=['-O'+level, '-pipe', '-fno-strict-aliasing'])
-			if int(level) <= 2:
-				env.AppendUnique(CCFLAGS=['-finline-functions','-funroll-loops'])
+			# MinGW 4.2 compiled binaries insta crash with this on...
+			#if int(level) <= 2:
+			#	env.AppendUnique(CCFLAGS=['-finline-functions','-funroll-loops'])
 		elif int(level) == 0:
 			print "optimizing NOT enabled",
 			env['optimize'] = 0
