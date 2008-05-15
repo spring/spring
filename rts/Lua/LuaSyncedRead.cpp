@@ -2161,8 +2161,8 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 		return 0;
 	}
 	const float range = luaL_optnumber(L, 2, 1.0e9f);
-	const bool useLos = !fullRead ||
-		(lua_isboolean(L, 3) && lua_toboolean(L, 3));
+	const bool useLos =
+		!fullRead || !lua_isboolean(L, 3) || lua_toboolean(L, 3);
 	CUnit* target = NULL;
 	if (useLos) {
 		target = helper->GetClosestEnemyUnit(unit->pos, range, unit->allyteam);
