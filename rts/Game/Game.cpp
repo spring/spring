@@ -3677,6 +3677,8 @@ void CGame::ClientReadNet()
 							gu->myTeam = newTeam;
 							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 							gu->spectating = false;
+							gu->spectatingFullView   = false;
+							gu->spectatingFullSelect = false;
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
