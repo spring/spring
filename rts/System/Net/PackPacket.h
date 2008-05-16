@@ -15,6 +15,7 @@ class PackPacket : public RawPacket
 {
 public:
 	PackPacket(const unsigned length);
+	PackPacket(const unsigned length, unsigned char msgID);
 	
 	template <typename T>
 	PackPacket& operator<<(const T& t) {
@@ -35,6 +36,8 @@ public:
 		}
 		return *this;
 	};
+	
+	unsigned char* GetWritingPos() {return data+pos;};
 	
 private:
 	unsigned pos;

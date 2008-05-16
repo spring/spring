@@ -1,6 +1,8 @@
 #ifndef CHAT_MESSAGE_H
 #define CHAT_MESSAGE_H
 
+#include <boost/shared_ptr.hpp>
+
 #include "Action.h"
 
 namespace netcode {
@@ -11,7 +13,7 @@ class ChatMessage
 {
 public:
 	ChatMessage(int fromP, int dest, const std::string& chat);
-	ChatMessage(const netcode::RawPacket& packet);
+	ChatMessage(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	const netcode::RawPacket* Pack() const;
 

@@ -438,27 +438,24 @@ void CPreGame::UpdateClientNet()
 		return;
 	}
 
-	RawPacket* packet = 0;
-	while ( (packet = net->GetData()) )
+	boost::shared_ptr<const RawPacket> packet;
+	while ((packet = net->GetData()))
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_SETPLAYERNUM: {
-				gu->myPlayerNum = inbuf[1];
+				gu->myPlayerNum = packet->data[1];
 				logOutput.Print("Became player %i", gu->myPlayerNum);
 			} break;
 			case NETMSG_GAMEDATA: {
 				GameDataRecieved(packet);
-				delete packet;
 				return;
-				break;
 			}
 			default: {
-				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(inbuf[0]));
+				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(packet->data[0]));
 				break;
 			}
 		}
-		delete packet;
 	}
 }
 
@@ -469,23 +466,24 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
-	RawPacket* buf = 0;
-	while ( (buf = scanner.GetData(static_cast<float>(INT_MAX))) ) {
+	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(INT_MAX)));
+	while ( buf )
+	{
 		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
-			GameData *data = new GameData(*buf);
+			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(springDefaultPort, data, gameSetup, demoName);
 			gameServer->AddLocalClient();
 			good_fpu_control_registers("after CGameServer creation");
-			delete buf;
 			break;
 		}
-		delete buf;
+		
 		if (scanner.ReachedEnd())
 		{
 			throw content_error("End of demo reached and no game data found");
 		}
+		buf.reset(scanner.GetData(static_cast<float>(INT_MAX)));
 	}
 }
 
@@ -621,9 +619,9 @@ void CPreGame::LoadMod(const std::string& modName)
 	}
 }
 
-void CPreGame::GameDataRecieved(RawPacket* packet)
+void CPreGame::GameDataRecieved(boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	gameData = new GameData(*packet);
+	gameData = new GameData(packet);
 	
 	gs->SetRandSeed(gameData->GetRandomSeed());
 	logOutput << "Using map " << gameData->GetMap() << "\n";

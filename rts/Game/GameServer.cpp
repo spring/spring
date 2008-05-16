@@ -469,32 +469,30 @@ void CGameServer::ServerReadNet()
 	// handle new connections
 	while (serverNet->HasIncomingConnection())
 	{
-		RawPacket* packet = serverNet->GetData();
-		const unsigned char* inbuf = packet->data;
+		boost::shared_ptr<const RawPacket> packet = serverNet->GetData();
 		
-		if (packet->length >= 3 && inbuf[0] == NETMSG_ATTEMPTCONNECT && inbuf[2] == NETWORK_VERSION)
+		if (packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT && packet->data[2] == NETWORK_VERSION)
 		{
-			const unsigned wantedNumber = inbuf[1];
+			const unsigned wantedNumber = packet->data[1];
 			BindConnection(wantedNumber);
 		}
 		else
 		{
 			if (packet->length >= 3) {
-				Warning(str(format(ConnectionReject) %inbuf[0] %inbuf[2] %packet->length));
+				Warning(str(format(ConnectionReject) %packet->data[0] %packet->data[2] %packet->length));
 			}
 			else {
 				Warning("Connection attempt rejected: Packet too short");
 			}
 			serverNet->RejectIncomingConnection();
 		}
-		delete packet;
 	}
 
 	for(unsigned a=0; (int)a <= serverNet->MaxConnectionID(); a++)
 	{
 		if (serverNet->IsActiveConnection(a))
 		{
-			RawPacket* packet = 0;
+			boost::shared_ptr<const RawPacket> packet;
 			bool quit = false;
 			while (!quit && (packet = serverNet->GetData(a)))
 			{
@@ -578,7 +576,7 @@ void CGameServer::ServerReadNet()
 					}
 
 					case NETMSG_CHAT: {
-						ChatMessage msg(*packet);
+						ChatMessage msg(packet);
 						if (static_cast<unsigned>(msg.fromPlayer) != a ) {
 							Warning(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
 						} else {
@@ -623,7 +621,7 @@ void CGameServer::ServerReadNet()
 							Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 						} else {
 							if (!demoReader)
-								serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+								serverNet->SendData(packet); //forward data
 						}
 						break;
 
@@ -632,8 +630,7 @@ void CGameServer::ServerReadNet()
 							Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 						} else {
 							if (!demoReader)
-								// forward data
-								serverNet->RawSend(inbuf,*((short int*)&inbuf[1]));
+								serverNet->SendData(packet); //forward data
 						}
 						break;
 
@@ -646,8 +643,7 @@ void CGameServer::ServerReadNet()
 							Warning(str(format(NoHelperAI) %players[a]->name %a));
 						}
 						else if (!demoReader) {
-							// forward data
-							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
+							serverNet->SendData(packet); //forward data
 						}
 					} break;
 
@@ -659,8 +655,7 @@ void CGameServer::ServerReadNet()
 							Warning(str(format(NoHelperAI) %players[a]->name %a));
 						}
 						else if (!demoReader) {
-							// forward data
-							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
+							serverNet->SendData(packet); //forward data
 						}
 					} break;
 
@@ -670,8 +665,7 @@ void CGameServer::ServerReadNet()
 						} else if (noHelperAIs) {
 							Warning(str(format(NoHelperAI) %players[a]->name %a));
 						} else if (!demoReader) {
-							// forward data
-							serverNet->RawSend(inbuf, *((short int*) &inbuf[1]));
+							serverNet->SendData(packet); //forward data
 						}
 					} break;
 
@@ -681,7 +675,7 @@ void CGameServer::ServerReadNet()
 							Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 						}
 						else if (!demoReader) {
-							serverNet->RawSend(inbuf,*((short int*)&inbuf[1])); //forward data
+							serverNet->SendData(packet); //forward data
 						}
 						break;
 
@@ -725,12 +719,12 @@ void CGameServer::ServerReadNet()
 						if(inbuf[1]!=a){
 							Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 						} else {
-							serverNet->RawSend(inbuf,sizeof(CPlayer::Statistics)+2); //forward data
+							serverNet->SendData(packet); //forward data
 						}
 						break;
 
 					case NETMSG_MAPDRAW:
-						serverNet->RawSend(inbuf,inbuf[1]); //forward data
+						serverNet->SendData(packet); //forward data
 						break;
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -854,7 +848,7 @@ void CGameServer::ServerReadNet()
 						break;
 					}
 					case NETMSG_CCOMMAND: {
-						CommandMessage msg(*packet);
+						CommandMessage msg(packet);
 						if (static_cast<unsigned>(msg.player) == a)
 						{
 							if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a]->hasRights)
@@ -889,7 +883,6 @@ void CGameServer::ServerReadNet()
 						}
 						break;
 				}
-				delete packet;
 			}
 		}
 		else if (players[a])

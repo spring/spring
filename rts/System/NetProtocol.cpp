@@ -57,19 +57,17 @@ bool CNetProtocol::IsActiveConnection() const
 	return CNet::IsActiveConnection(serverSlot);
 }
 
-const RawPacket* CNetProtocol::Peek(unsigned ahead) const
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
 	return CNet::Peek(serverSlot, ahead);
 }
 
-RawPacket* CNetProtocol::GetData()
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 {
-	RawPacket* ret = CNet::GetData(serverSlot);
+	boost::shared_ptr<const netcode::RawPacket> ret = CNet::GetData(serverSlot);
 	
 	if (record && ret)
-	{
 		record->SaveToDemo(ret->data, ret->length);
-	}
 	
 	return ret;
 }

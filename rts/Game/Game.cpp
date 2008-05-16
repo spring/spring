@@ -3086,7 +3086,7 @@ void CGame::ClientReadNet()
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 
-	const RawPacket* packet = NULL;
+	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
 	if(!gameServer){
@@ -3103,7 +3103,7 @@ void CGame::ClientReadNet()
 		// we still have to process (in variable "que")
 		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
 		unsigned ahead = 0;
-		while ((packet = net->Peek(ahead)) != NULL)
+		while ((packet = net->Peek(ahead)))
 		{
 			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
 				++que;
@@ -3121,7 +3121,7 @@ void CGame::ClientReadNet()
 	}
 
 	// really process the messages
-	while (timeLeft > 0.0f && (packet = net->GetData()) != NULL)
+	while (timeLeft > 0.0f && (packet = net->GetData()))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -3300,7 +3300,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_CHAT: {
-				ChatMessage msg(*packet);
+				ChatMessage msg(packet);
 				HandleChatMsg(msg);
 				AddTraffic(msg.fromPlayer, packetCode, dataLength);
 				break;
@@ -3705,7 +3705,7 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_CCOMMAND: {
-				CommandMessage msg(*packet);
+				CommandMessage msg(packet);
 				ActionRecieved(msg.action, msg.player);
 				break;
 			}
@@ -3808,7 +3808,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 		}
-		delete packet;
 	}
 
 	POP_CODE_MODE;

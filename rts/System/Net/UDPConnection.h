@@ -32,22 +32,19 @@ public:
 	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port);
 	virtual ~UDPConnection();
 
-	/// use this if you want data to be sent
-	virtual void SendData(const unsigned char *data, const unsigned length);
-	
 	/**
 	@brief Send packet to other instance
 	*/
-	virtual void SendData(const RawPacket* data);
+	virtual void SendData(boost::shared_ptr<const RawPacket> data);
 
-	virtual const RawPacket* Peek(unsigned ahead) const;
+	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
 
 	/**
 	@brief use this to recieve ready data
 	@return a network message encapsulated in a RawPacket,
 	or NULL if there are no more messages available.
 	*/
-	virtual RawPacket* GetData();
+	virtual boost::shared_ptr<const RawPacket> GetData();
 
 	/**
 	@brief update internals
@@ -76,8 +73,6 @@ public:
 	static const unsigned hsize;
 
 private:
-	typedef std::deque<RawPacket*> MsgQueue;
-
 	void Init();
 	
 	unsigned lastSendTime;
@@ -105,7 +100,7 @@ private:
 	int lastInOrder;
 	int lastNak;
 	unsigned lastNakTime;
-	MsgQueue msgQueue;
+	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	/** Our socket.
 	*/

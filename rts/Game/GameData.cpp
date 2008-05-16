@@ -14,7 +14,7 @@ GameData::GameData()
 	modChecksum = 0;
 }
 
-GameData::GameData(const netcode::RawPacket& pckt)
+GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
 	UnpackPacket packet(pckt);
 	unsigned char ID;

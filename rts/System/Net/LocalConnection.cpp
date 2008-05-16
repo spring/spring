@@ -9,7 +9,7 @@ namespace netcode {
 
 // static stuff
 unsigned CLocalConnection::Instances = 0;
-CLocalConnection::MsgQueue CLocalConnection::Data[2];
+std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::Data[2];
 boost::mutex CLocalConnection::Mutex[2];
 
 CLocalConnection::CLocalConnection()
@@ -25,48 +25,44 @@ CLocalConnection::CLocalConnection()
 CLocalConnection::~CLocalConnection()
 {
 	Instances--;
-	while (!Data[instance].empty())
-	{
-		delete Data[instance].front();
-		Data[instance].pop_front();
-	}
 }
 
-void CLocalConnection::SendData(const unsigned char *data, const unsigned length)
-{
-	SendData(new RawPacket(data, length));
-}
-
-void CLocalConnection::SendData(const RawPacket* data)
+void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
 	dataSent += data->length;
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 	Data[OtherInstance()].push_back(data);
 }
 
-const RawPacket* CLocalConnection::Peek(unsigned ahead) const
+boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
 
 	if (ahead < Data[instance].size())
 		return Data[instance][ahead];
-
-	return NULL;
+	else
+	{
+		boost::shared_ptr<const RawPacket> empty;
+		return empty;
+	}
 }
 
-RawPacket* CLocalConnection::GetData()
+boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
 	
 	if (!Data[instance].empty())
 	{
-		const RawPacket* next = Data[instance].front();
+		boost::shared_ptr<const RawPacket> next = Data[instance].front();
 		Data[instance].pop_front();
 		dataRecv += next->length;
-		return const_cast<RawPacket*>(next);
+		return next;
 	}
 	else
-		return NULL;
+	{
+		boost::shared_ptr<const RawPacket> empty;
+		return empty;
+	}
 }
 
 void CLocalConnection::Flush(const bool forced)
