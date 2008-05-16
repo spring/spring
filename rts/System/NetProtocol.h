@@ -36,7 +36,7 @@ public:
 	@param ahead How many packets to look ahead. A typical usage would be:
 	for (int ahead = 0; (packet = net->Peek(ahead)) != NULL; ++ahead) {}
 	*/
-	const RawPacket* Peek(unsigned ahead) const;
+	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
 	/**
 	@brief Recieve data from Client
@@ -45,7 +45,7 @@ public:
 	
 	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
-	RawPacket* GetData();
+	boost::shared_ptr<const netcode::RawPacket> GetData();
 	
 	CDemoRecorder* GetDemoRecorder() const { return record; }
 

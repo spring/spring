@@ -2,6 +2,7 @@
 #define GAMEDATA_H
 
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 namespace netcode {
 	class RawPacket;
@@ -11,7 +12,7 @@ class GameData
 {
 public:
 	GameData();
-	GameData(const netcode::RawPacket& packet);
+	GameData(boost::shared_ptr<const netcode::RawPacket>);
 	
 	const netcode::RawPacket* Pack() const;
 	

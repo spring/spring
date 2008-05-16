@@ -2,6 +2,7 @@
 #define PREGAME_H
 
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 #include "GameController.h"
 
@@ -65,7 +66,7 @@ private:
 	/// Map all required archives depending on selected mod(s)
 	static void LoadMod(const std::string& modName);
 
-	void GameDataRecieved(netcode::RawPacket* packet);
+	void GameDataRecieved(boost::shared_ptr<const netcode::RawPacket> packet);
 	
 	const bool server;
 	enum State {

@@ -25,23 +25,18 @@ public:
 	virtual ~CLocalConnection();
 	
 	/**
-	@brief Send data to other instance
-	*/
-	virtual void SendData(const unsigned char *data, const unsigned length);
-	
-	/**
 	@brief Send packet to other instance
 	
 	Use this, since it doesn't need memcpy'ing
 	 */
-	virtual void SendData(const RawPacket* data);
+	virtual void SendData(boost::shared_ptr<const RawPacket> data);
 
-	virtual const RawPacket* Peek(unsigned ahead) const;
+	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
 
 	/**
 	@brief Get data
 	*/
-	virtual RawPacket* GetData();
+	virtual boost::shared_ptr<const RawPacket> GetData();
 
 	/// does nothing
 	virtual void Flush(const bool forced = false);
@@ -53,9 +48,7 @@ public:
 	virtual NetAddress GetPeerName() const;
 
 private:
-	typedef std::deque<const RawPacket*> MsgQueue;
-
-	static MsgQueue Data[2];
+	static std::deque< boost::shared_ptr<const RawPacket> > Data[2];
 	static boost::mutex Mutex[2];
 
 	unsigned OtherInstance() const;

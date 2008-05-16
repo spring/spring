@@ -2,10 +2,11 @@
 #include <string.h>
 #include <iostream>
 #include <assert.h>
+#include <boost/shared_ptr.hpp>
 
 const unsigned int serverportnum = 5000;
-RawPacket* data1 = 0;
-RawPacket* data2 = 0;
+boost::shared_ptr<const netcode::RawPacket> data1;
+boost::shared_ptr<const netcode::RawPacket> data2;
 
 bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 {
@@ -22,26 +23,24 @@ bool TestLocal(netcode::CNet* server, unsigned freeNumber)
 	localclient->Update();
 	
 	
-	localclient->SendData(data1->data, data1->length);
+	localclient->SendData(data1);
 	localclient->FlushNet();
 	server->Update();
 	localclient->Update();
-	RawPacket* ret = server->GetData(0);
+	boost::shared_ptr<const netcode::RawPacket> ret = server->GetData(0);
 	if (!ret || ret->length != 10 || (int)ret->data[1] != 6)
 	{
-		std::cout << "Server dont recieved message" << std::endl;
+		std::cout << "Server dont recieved message" << ret->length << std::endl;
 		return false;
 	}
-	delete ret; ret = 0;
-	
-	server->SendData(data1->data, data1->length);
+		
+	server->SendData(data1);
 	ret = localclient->GetData(0);
 	if (!ret || ret->length != 10 || (int)ret->data[1] != 6)
 	{
 		std::cout << "Client dont recieved message" << std::endl;
 		return false;
 	}
-	delete ret; ret = 0;
 	
 	std::cout << localclient->GetConnectionStatistics(0);
 	delete localclient;
@@ -57,12 +56,12 @@ int main(int argc, const char* const* argv)
 	unsigned char buffer[10];
 	memset(buffer, 0, 10);
 	buffer[1] = 6;
-	data1 = new RawPacket(buffer, 10);
+	data1.reset(new RawPacket(buffer, 10));
 	
 	unsigned char bigbuffer[1000];
 	memset(bigbuffer, 0, 1000);
 	bigbuffer[0]=2;
-	data2 = new RawPacket(bigbuffer, 1000);
+	data2.reset(new RawPacket(bigbuffer, 1000));
 	
 	std::cout << "Starting Server and local Client" << std::endl;
 	netcode::CNet* server = new netcode::CNet();
@@ -73,7 +72,7 @@ int main(int argc, const char* const* argv)
 	server->RegisterMessage((unsigned char)0, 10);
 	server->RegisterMessage((unsigned char)1, 100);
 	server->RegisterMessage((unsigned char)2, 1000);
-	server->SendData(data1->data, data1->length);
+	server->SendData(data1);
 	
 	if (!TestLocal(server, 0))
 	{
@@ -90,21 +89,21 @@ int main(int argc, const char* const* argv)
 	client->RegisterMessage((unsigned char)2, 1000);
 	
 	{
-		client->SendData(data1->data, data1->length);
+		client->SendData(data1);
 		client->Update();
 		server->Update();
 		server->AcceptIncomingConnection(1);
 		server->Update();
-		RawPacket* ret  = server->GetData(1);
+		boost::shared_ptr<const netcode::RawPacket> ret  = server->GetData(1);
 		if (ret)
 		{
 			std::cout << "Recieved " << ret->length << " bytes UDP client message " << (int)ret->data[1] << std::endl;
-			delete ret; ret = 0;
+			ret.reset();
 		}
 		else
 			return 1;
 		
-		server->SendData(data1->data, data1->length);
+		server->SendData(data1);
 		sleep(1);	// buffer wont be flushed without this
 		server->Update();
 		client->Update();
@@ -113,12 +112,12 @@ int main(int argc, const char* const* argv)
 		if (ret)
 		{
 			std::cout << "Recieved " << ret->length << " bytes UDP server message " << (int)ret->data[1] << std::endl;
-			delete ret; ret = 0;
+			ret.reset();
 		}
 		else
 			return 1;
 		
-		client->SendData(data2->data, data2->length);
+		client->SendData(data2);
 		server->Update();
 		client->Update();
 		server->Update();
@@ -126,7 +125,7 @@ int main(int argc, const char* const* argv)
 		if (ret)
 		{
 			std::cout << "Recieved " << ret->length << " bytes UDP client message" << std::endl;
-			delete ret; ret = 0;
+			ret.reset();
 		}
 		else
 			return 1;
@@ -140,7 +139,5 @@ int main(int argc, const char* const* argv)
 	delete server;
 	std::cout << client->GetConnectionStatistics(1);
 	delete client;
-	
-	delete data1; delete data2; // so valgrind doesn't complain
 	return 0;
 }

@@ -20,7 +20,7 @@ CommandMessage::CommandMessage(const Action& myaction, int playernum)
 	player = playernum;
 }
 
-CommandMessage::CommandMessage(const netcode::RawPacket& pckt)
+CommandMessage::CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt)
 {
 	UnpackPacket packet(pckt);
 	unsigned char ID;

@@ -7,6 +7,11 @@ PackPacket::PackPacket(const unsigned length) : RawPacket(length), pos(0)
 {
 }
 
+PackPacket::PackPacket(const unsigned length, unsigned char msgID) : RawPacket(length), pos(0)
+{
+	*this << msgID;
+}
+
 PackPacket& PackPacket::operator<<(const std::string& text)
 {
 	unsigned size = text.size()+1;

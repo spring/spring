@@ -130,7 +130,7 @@ NetAddress CNet::GetConnectedAddress(const unsigned number)
 	return connections[number]->GetPeerName();
 }
 
-const RawPacket* CNet::Peek(const unsigned conNum, unsigned ahead) const
+boost::shared_ptr<const RawPacket> CNet::Peek(const unsigned conNum, unsigned ahead) const
 {
 	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
 	{
@@ -142,7 +142,7 @@ const RawPacket* CNet::Peek(const unsigned conNum, unsigned ahead) const
 	}
 }
 
-RawPacket* CNet::GetData(const unsigned conNum)
+boost::shared_ptr<const RawPacket> CNet::GetData(const unsigned conNum)
 {
 	if (int(conNum) <= MaxConnectionID() && (bool)connections[conNum])
 	{
@@ -154,12 +154,12 @@ RawPacket* CNet::GetData(const unsigned conNum)
 	}
 }
 
-void CNet::SendData(const unsigned char *data, const unsigned length)
+void CNet::SendData(boost::shared_ptr<const RawPacket> data)
 {
 #ifdef DEBUG
 	{
 		unsigned int msglength = 0;
-		unsigned char msgid = data[0];
+		unsigned char msgid = data->data[0];
 		ProtocolDef* proto = ProtocolDef::instance();
 		if (proto->HasFixedLength(msgid))
 		{
@@ -170,58 +170,33 @@ void CNet::SendData(const unsigned char *data, const unsigned length)
 			int length_t = proto->GetLength(msgid);
 			if (length_t == -1)
 			{
-				msglength = (unsigned int)data[1];
+				msglength = (unsigned int)(data->data[1]);
 			}
 			else if (length_t == -2)
 			{
-				msglength = *((short*)(data+1));
+				msglength = *((short*)(data->data+1));
 			}
 		}
 		
-		if (length != msglength || length == 0)
+		if (data->length != msglength || data->length == 0)
 		{
-			throw network_error( str( boost::format("Message length error (ID %1% with length %2% should be %3%) while sending (CNet::SendData(char*, unsigned))") % (unsigned int)data[0] % length % msglength ) );
+			throw network_error( str( boost::format("Message length error (ID %1% with length %2% should be %3%) while sending (CNet::SendData(char*, unsigned))") % (unsigned int)(data->data[0]) % data->length % msglength ) );
 		}
 	}
 #endif
-
 	for (connVec::iterator it = connections.begin(); it != connections.end(); ++it)
 	{
-		if(*it){
-			(*it)->SendData(data,length);
-		}
+		if(*it)
+			(*it)->SendData(data);
 	}
 }
 
-void CNet::SendData(const RawPacket* data)
-{
-	SendData(data->data, data->length);
-	delete data;
-}
-
-void CNet::SendData(const unsigned char* data,const unsigned length, const unsigned playerNum)
+void CNet::SendData(boost::shared_ptr<const RawPacket> data, const unsigned playerNum)
 {
 	if (int(playerNum) <= MaxConnectionID() && connections[playerNum])
-	{
-		connections[playerNum]->SendData(data,length);
-	}
-	else
-	{
-		throw network_error("Cant send data (wrong connection number)");
-	}
-}
-
-void CNet::SendData(const RawPacket* data, const unsigned playerNum)
-{
-	if (int(playerNum) <= MaxConnectionID() && connections[playerNum])
-	{
 		connections[playerNum]->SendData(data);
-	}
 	else
-	{
-		delete data;
-		throw network_error("Cant send data (wrong connection number)");
-	}
+		throw network_error("Can't send data (wrong connection number)");
 }
 
 void CNet::FlushNet()
@@ -296,23 +271,17 @@ bool CNet::HasIncomingConnection() const
 	return (localConnBuf || (udplistener && udplistener->HasIncomingConnections()));
 }
 
-RawPacket* CNet::GetData()
+boost::shared_ptr<const RawPacket> CNet::GetData()
 {
 	if (localConnBuf)
-	{
-		RawPacket* data = localConnBuf->GetData();
-		return data;
-	}
+		return localConnBuf->GetData();
 	else if (udplistener && udplistener->HasIncomingConnections())
 	{
 		boost::shared_ptr<UDPConnection> locked(udplistener->PreviewConnection());
-		RawPacket* data = locked->GetData();
-		return data;
+		return locked->GetData();
 	}
 	else
-	{
 		throw network_error("No Connection waiting (no data recieved)");
-	}
 }
 
 unsigned CNet::AcceptIncomingConnection(const unsigned wantedNumber)

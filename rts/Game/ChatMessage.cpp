@@ -10,7 +10,7 @@ ChatMessage::ChatMessage(int from, int dest, const std::string& chat) : fromPlay
 {
 }
 
-ChatMessage::ChatMessage(const netcode::RawPacket& data)
+ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 {
 	UnpackPacket packet(data);
 	unsigned char ID;

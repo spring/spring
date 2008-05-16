@@ -137,40 +137,39 @@ public:
 	@return A RawPacket holding the data, or 0 if no data
 	@param conNum The number to recieve from
 	@param ahead How many packets to look ahead. A typical usage would be:
-	for (int ahead = 0; (packet = net->Peek(conNum, ahead)) != NULL; ++ahead) {}
+	for (int ahead = 0; (packet = net->Peek(conNum, ahead)); ++ahead) {}
 	*/
-	const RawPacket* Peek(const unsigned conNum, unsigned ahead) const;
+	boost::shared_ptr<const RawPacket> Peek(const unsigned conNum, unsigned ahead) const;
 
 	/**
 	@brief Recieve data from a client
 	@param conNum The number to recieve from
-	@return a RawPacket* with the data inside (or 0 when there is no data) (YOU! need to delete it after using)
+	@return a smart RawPacket pointer with the data inside (or empty when no data)
 	@throw network_error When conNum is not a valid connection ID
 	*/
-	RawPacket* GetData(const unsigned conNum);
+	boost::shared_ptr<const RawPacket> GetData(const unsigned conNum);
 	
 	/**
 	@brief Broadcast data to all clients
-	@param data The data
-	@param length length of the data
+	@param data The smart packet pointer
 	@throw network_error Only when DEBUG is set: When the message identifier (data[0]) is not registered (through RegisterMessage())
 	*/
-	void SendData(const unsigned char* data,const unsigned length);
-	void SendData(const RawPacket* data);
-	
+	void SendData(boost::shared_ptr<const RawPacket> data);
+	void SendData(const RawPacket* const data)
+	{
+		SendData(boost::shared_ptr<const RawPacket>(data));
+	};
+
 	/**
 	@brief Send data to one client in particular
+	@param data The smart packet pointer
 	@throw network_error When playerNum is no valid connection ID
-	*/
-	void SendData(const unsigned char* data,const unsigned length, const unsigned playerNum);
-	
-	/**
-	@brief Send data to one client in particular
-	@param data the RawPacket I will take care of, DO NOT DELETE IT
-	@throw network_error When playerNum is no valid connection ID
-	@todo there are too much SendData functions here
 	 */
-	void SendData(const RawPacket* data, const unsigned playerNum);
+	void SendData(boost::shared_ptr<const RawPacket> data, const unsigned playerNum);
+	void SendData(const RawPacket* const data, const unsigned playerNum)
+	{
+		SendData(boost::shared_ptr<const RawPacket>(data), playerNum);
+	};
 	
 	/**
 	@brief send all waiting data
@@ -189,104 +188,13 @@ public:
 	bool HasIncomingConnection() const;
 	
 	/// Recieve data from first unbound connection to check if we allow him in our game
-	RawPacket* GetData();
+	boost::shared_ptr<const RawPacket> GetData();
 	
 	/// everything seems fine, accept him
 	unsigned AcceptIncomingConnection(const unsigned wantedNumber=0);
 	
 	/// we dont want you in our game
 	void RejectIncomingConnection();
-	
-protected:
-	/** Send a net message without any parameters. */
-	void SendData(const unsigned char msg) {
-		SendData(&msg, sizeof(msg));
-	}
-
-	/** Send a net message with one parameter. */
-	template<typename A>
-	void SendData(const unsigned char msg, const A a) {
-		const int size = 1 + sizeof(A);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B>
-	void SendData(const unsigned char msg, const A a, const B b) {
-		const int size = 1 + sizeof(A) + sizeof(B);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B, typename C>
-	void SendData(const unsigned char msg, const A a, const B b, const C c) {
-		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B, typename C, typename D>
-	void SendData(const unsigned char msg, const A a, const B b, const C c, const D d) {
-		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B, typename C, typename D, typename E>
-	void SendData(const unsigned char msg, A a, B b, C c, D d, E e) {
-		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B, typename C, typename D, typename E, typename F>
-	void SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f) {
-		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
-		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
-		SendData(buf, size);
-	}
-
-	template<typename A, typename B, typename C, typename D, typename E, typename F, typename G>
-	void SendData(const unsigned char msg, A a, B b, C c, D d, E e, F f, G g) {
-		const int size = 1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F) + sizeof(G);
-		unsigned char buf[size];
-		buf[0] = msg;
-		*(A*)&buf[1] = a;
-		*(B*)&buf[1 + sizeof(A)] = b;
-		*(C*)&buf[1 + sizeof(A) + sizeof(B)] = c;
-		*(D*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C)] = d;
-		*(E*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D)] = e;
-		*(F*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E)] = f;
-		*(G*)&buf[1 + sizeof(A) + sizeof(B) + sizeof(C) + sizeof(D) + sizeof(E) + sizeof(F)] = g;
-		SendData(buf, size);
-	}
 	
 private:
 	typedef boost::shared_ptr<CConnection> connPtr;

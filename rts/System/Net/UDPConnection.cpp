@@ -35,48 +35,41 @@ UDPConnection::~UDPConnection()
 {
 	if (fragmentBuffer)
 		delete fragmentBuffer;
-
-	while (!msgQueue.empty())
-	{
-		delete msgQueue.front();
-		msgQueue.pop_front();
-	}
 }
 
-void UDPConnection::SendData(const unsigned char *data, const unsigned length)
+void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
-	if(outgoingLength+length>=UDPBufferSize){
+	if(outgoingLength + data->length >= UDPBufferSize){
 		throw network_error("Buffer overflow in UDPConnection (SendData)");
 	}
-	memcpy(&outgoingData[outgoingLength],data,length);
-	outgoingLength+=length;
+	memcpy(&outgoingData[outgoingLength], data->data, data->length);
+	outgoingLength += data->length;
 }
 
-void UDPConnection::SendData(const RawPacket* data)
-{
-	//TODO make UDPConnection completely packet-based
-	SendData(data->data, data->length);
-	delete data;
-}
-
-const RawPacket* UDPConnection::Peek(unsigned ahead) const
+boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 {
 	if (ahead < msgQueue.size())
 		return msgQueue[ahead];
-
-	return NULL;
+	else
+	{
+		boost::shared_ptr<const RawPacket> empty;
+		return empty;
+	}
 }
 
-RawPacket* UDPConnection::GetData()
+boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 {
 	if (!msgQueue.empty())
 	{
-		RawPacket* msg = msgQueue.front();
+		boost::shared_ptr<const RawPacket> msg = msgQueue.front();
 		msgQueue.pop_front();
 		return msg;
 	}
 	else
-		return NULL;
+	{
+		boost::shared_ptr<const RawPacket> empty;
+		return empty;
+	}
 }
 
 void UDPConnection::Update()
@@ -214,7 +207,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 				if (bufLength >= pos + msglength)
 				{
 					// yes => add to msgQueue and keep going
-					msgQueue.push_back(new RawPacket(buf + pos, msglength));
+					msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(buf + pos, msglength)));
 					pos += msglength;
 				}
 				else

@@ -102,13 +102,6 @@ public:
 	CBaseNetProtocol();
 	~CBaseNetProtocol();
 
-	/**
-	@brief  Broadcast raw data to all clients
-	Should not be used. Use Send*(...) instead, only redirects to CNet::SendData(char*, int);
-	@todo make everything use the Send* functions
-	*/
-	void RawSend(const uchar* data,const unsigned length);
-
 	void SendKeyFrame(int frameNum);
 	void SendNewFrame();
 	void SendQuit();
@@ -124,7 +117,6 @@ public:
 	void SendPause(uchar myPlayerNum, uchar bPaused);
 
 	void SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
-	void SendAICommands(uchar myPlayerNum, short unitIDCount, ...);
 	void SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
 
 	void SendUserSpeed(uchar myPlayerNum, float userSpeed);
