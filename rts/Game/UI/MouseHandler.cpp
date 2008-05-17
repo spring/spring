@@ -693,8 +693,9 @@ void CMouseHandler::UpdateHwCursor()
 
 void CMouseHandler::SetCursor(const std::string& cmdName)
 {
-	if (cursorText.compare(cmdName)==0)
+	if (cursorText.compare(cmdName) == 0) {
 		return;
+	}
 
 	cursorText = cmdName;
 	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cmdName);
@@ -722,11 +723,12 @@ void CMouseHandler::SetCursor(const std::string& cmdName)
 
 void CMouseHandler::UpdateCursors()
 {
-	//we update all cursors, 'cos of the command queue icons
+	// we update all cursors (for the command queue icons)
 	map<string, CMouseCursor *>::iterator it;
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
-		if (it->second != NULL)
+		if (it->second != NULL) {
 			it->second->Update();
+		}
 	}
 }
 
@@ -831,6 +833,10 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 
 	delete oldCursor;
 
+	if (currentCursor == oldCursor) {
+		currentCursor = newCursor;
+	}
+
 	return true;
 }
 
@@ -851,6 +857,10 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 			delete cursor;
 			return;
 		}
+	}
+
+	if (currentCursor == cursor) {
+		currentCursor = NULL;
 	}
 
 	delete cursor;
