@@ -83,7 +83,7 @@ end
 local function SetupWeapons(tdf)
   local weapons = {}
 
-  for w = 1, 16 do
+  for w = 1, 32 do
     local name = tdf['weapon' .. w]
     if (name == nil) then
       if (w > 3) then

@@ -26,6 +26,7 @@
 #include "Sim/Misc/SensorHandler.h"
 #include "Sim/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Units/COB/CobFile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
@@ -527,7 +528,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON");
 
 	LuaTable weaponsTable = udTable.SubTable("weapons");
-	for (int w = 0; w < 16; w++) {
+	for (int w = 0; w < COB_MaxWeapons; w++) {
 		LuaTable wTable;
 		string name = weaponsTable.GetString(w + 1, "");
 		if (name.empty()) {
