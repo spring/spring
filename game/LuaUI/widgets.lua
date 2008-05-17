@@ -1228,7 +1228,6 @@ end
 --
 
 function widgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
-  print('KP2\n')
   if (self.tweakMode) then
     local mo = self.mouseOwner
     if (mo and mo.TweakKeyPress) then
