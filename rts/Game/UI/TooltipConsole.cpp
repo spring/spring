@@ -198,17 +198,22 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	const UnitDef* effectiveDef =
 		!enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
 
-	// don't show the tooltip if it's a radar dot
-	if (enemyUnit && !loshandler->InLos(unit, gu->myAllyTeam)) {
+	// don't show the unit type if it is not known
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+	if (enemyUnit &&
+	    !(losStatus & LOS_INLOS) &&
+	    ((losStatus & prevMask) != prevMask)) {
 		return "Enemy unit";
 	}
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		if (gs->Team(unit->team)->leader >= 0)
+		if (gs->Team(unit->team)->leader >= 0) {
 			s = gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
-		else
+		} else {
 			s = "Uncontrolled";
+		}
 	} else {
 		if (!decoyDef) {
 			s = unit->tooltip;
@@ -218,8 +223,9 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	}
 
 	// don't show the unit health and other info if it has
-	// the FBI tag hideDamage and is not on our ally team
-	if (!enemyUnit || !effectiveDef->hideDamage) {
+	// the FBI tag hideDamage and is not on our ally team or
+	// is not in LOS
+	if (!enemyUnit || (!effectiveDef->hideDamage && (losStatus & LOS_INLOS))) {
 		if (!decoyDef) {
 			const float cost = unit->metalCost + (unit->energyCost / 60.0f);
 			s += MakeUnitStatsString(
