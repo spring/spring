@@ -38,7 +38,7 @@ const int COBFN_HitByWeaponId = 15;
 const int COBFN_Last = 16;					//Make sure to update this, so the array will be sized properly
 
 // These are special (they need space for MaxWeapons of each)
-const int COB_MaxWeapons = 16;
+const int COB_MaxWeapons = 32;
 const int COBFN_QueryPrimary   = COBFN_Last;
 const int COBFN_AimPrimary     = COBFN_QueryPrimary   + COB_MaxWeapons;
 const int COBFN_AimFromPrimary = COBFN_AimPrimary     + COB_MaxWeapons;

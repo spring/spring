@@ -41,7 +41,7 @@ local function ProcessUnitDef(udName, ud)
   -- convert the weapon names
   local weapons = ud.weapons
   if (istable(weapons)) then
-    for i = 1, 16 do
+    for i = 1, 32 do
       local w = weapons[i]
       if (istable(w)) then
         if (isstring(w.def)) then
