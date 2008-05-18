@@ -87,7 +87,7 @@ function widget:Update(dt)
         return
       end
       -- clear the velocities
-      for p = 23,28 do
+      for p = 22,27 do
         cs[p] = 0
       end
     end
@@ -113,8 +113,8 @@ function widget:Update(dt)
       local drz = cr[3] / len
       local mxm = (speed * (x - mx))
       local mym = (speed * (y - my))
-      cs[2] = cs[2] + (mxm * drx) + (mym * dfx)
-      cs[4] = cs[4] + (mxm * drz) + (mym * dfz)
+      cs[1] = cs[1] + (mxm * drx) + (mym * dfx)
+      cs[3] = cs[3] + (mxm * drz) + (mym * dfz)
     end
     spSetCameraState(cs, 0)
     if (mmb) then
