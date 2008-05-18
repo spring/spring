@@ -59,7 +59,7 @@ class CGameServer : public CommandReceiver
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
 	CGameServer(int port, const GameData* const gameData, const CGameSetupData* const setup, const std::string& demoName = "");
-	~CGameServer();
+	virtual ~CGameServer();
 
 	void AddLocalClient();
 

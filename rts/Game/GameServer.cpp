@@ -151,7 +151,6 @@ CGameServer::CGameServer(int port, const GameData* const newGameData, const CGam
 	RestrictedAction("reloadcob");
 	RestrictedAction("devlua");
 	RestrictedAction("editdefs");
-	RestrictedAction("luarules");
 	RestrictedAction("luagaia");
 	RestrictedAction("singlestep");
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
