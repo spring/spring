@@ -91,7 +91,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/Misc/SensorHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -355,7 +354,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	ph = SAFE_NEW CProjectileHandler();
 
 	ENTER_SYNCED;
-	sensorHandler = SAFE_NEW CSensorHandler();
 	damageArrayHandler = SAFE_NEW CDamageArrayHandler();
 	unitDefHandler = SAFE_NEW CUnitDefHandler();
 
@@ -3963,10 +3961,10 @@ void CGame::MakeMemDump(void)
 	}
 	for(int a=0;a<gs->activeTeams;++a){
 		file << "Losmap for team " << a << "\n";
-		for(int y=0;y<gs->mapy>>sensorHandler->losMipLevel;++y){
+		for(int y=0;y<gs->mapy>>modInfo.losMipLevel;++y){
 			file << " ";
-			for(int x=0;x<gs->mapx>>sensorHandler->losMipLevel;++x){
-				file << loshandler->losMap[a][y*(gs->mapx>>sensorHandler->losMipLevel)+x] << " ";
+			for(int x=0;x<gs->mapx>>modInfo.losMipLevel;++x){
+				file << loshandler->losMap[a][y*(gs->mapx>>modInfo.losMipLevel)+x] << " ";
 			}
 			file << "\n";
 		}

@@ -23,7 +23,6 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "Sim/Misc/SensorHandler.h"
 #include "Sim/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/COB/CobFile.h"
@@ -322,12 +321,12 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.aihint = id; // FIXME? (as noted in SelectedUnits.cpp, aihint is ignored)
 	ud.cobID = udTable.GetInt("cobID", -1);
 
-	ud.losRadius = udTable.GetFloat("sightDistance", 0.0f) * sensorHandler->losMul / (SQUARE_SIZE * (1 << sensorHandler->losMipLevel));
+	ud.losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
 	ud.airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
 	if (ud.airLosRadius == -1.0f) {
-		ud.airLosRadius=udTable.GetFloat("sightDistance", 0.0f) * sensorHandler->airLosMul * 1.5f / (SQUARE_SIZE * (1 << sensorHandler->airMipLevel));
+		ud.airLosRadius=udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	} else {
-		ud.airLosRadius = ud.airLosRadius * sensorHandler->airLosMul / (SQUARE_SIZE * (1 << sensorHandler->airMipLevel));
+		ud.airLosRadius = ud.airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
 
 	ud.moveType = 0;
