@@ -27,7 +27,7 @@
   ; Delete Previous settings.exe
   Delete "..\game\settings.exe"
   File "..\external\SelectionEditor.exe"
-  ;File "..\external\settingstemplate.xml"
+  Delete "$INSTDIR\settingstemplate.xml"
 
 ;New Settings Program
 
@@ -145,7 +145,6 @@ ${EndIf}
   Delete "$INSTDIR\cmdcolors.txt"
   Delete "$INSTDIR\ctrlpanel.txt"
   ;Delete "$INSTDIR\settings.exe"
-  Delete "$INSTDIR\settingstemplate.xml"
 
   ;New Settings Program
   Delete "$INSTDIR\springsettings.exe"
