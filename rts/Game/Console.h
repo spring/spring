@@ -9,11 +9,11 @@ class Action;
 /**
 @brief this class can recieve commands (actions)
  */
-class CommandReciever
+class CommandReceiver
 {
 public:
-	CommandReciever() {};
-	virtual ~CommandReciever() {};
+	CommandReceiver() {};
+	virtual ~CommandReceiver() {};
 	
 	/**
 	@brief callback function for all registered commands
@@ -40,9 +40,9 @@ public:
 	/**
 	@brief register a command
 	@param name the name of the command (e.g. "cheat")
-	@param rec the CommandReciever who want to recieve the command
+	@param rec the CommandReceiver who want to recieve the command
 	*/
-	void AddCommandReciever(const std::string& name, CommandReciever* rec);
+	void AddCommandReceiver(const std::string& name, CommandReceiver* rec);
 	
 	/**
 	@brief Execute an action
@@ -52,7 +52,7 @@ public:
 private:
 	Console();
 	~Console();
-	std::map<const std::string, CommandReciever*> commandMap;
+	std::map<const std::string, CommandReceiver*> commandMap;
 };
 
 #endif

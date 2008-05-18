@@ -77,7 +77,7 @@ bool CLocalConnection::CheckTimeout() const
 std::string CLocalConnection::Statistics() const
 {
 	std::string msg = "Statistics for local connection:\n";
-	msg += str( boost::format("Recieved: %1% bytes\n") %dataRecv );
+	msg += str( boost::format("Received: %1% bytes\n") %dataRecv );
 	msg += str( boost::format("Sent: %1% bytes\n") %dataSent );
 	return msg;
 }

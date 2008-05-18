@@ -27,7 +27,7 @@ public:
 	void Send(const unsigned char* const buf, const unsigned dataLength) const;
 	
 	/**
-	@brief Recieve some data
+	@brief Receive some data
 	*/
 	unsigned Recv(unsigned char* buf, const unsigned bufLength) const;
 

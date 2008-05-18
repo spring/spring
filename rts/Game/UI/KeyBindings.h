@@ -19,7 +19,7 @@ class CFileHandler;
 class CSimpleParser;
 
 
-class CKeyBindings : public CommandReciever
+class CKeyBindings : public CommandReceiver
 {
 	public:
 		CKeyBindings();

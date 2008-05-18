@@ -1,9 +1,14 @@
 #ifndef FEATURE_DEF_H
 #define FEATURE_DEF_H
 
+#include <string>
+#include <map>
+
+
 #define DRAWTYPE_3DO 0
 #define DRAWTYPE_TREE 1
 #define DRAWTYPE_NONE -1
+
 
 struct S3DOModel;
 struct CollisionVolume;
@@ -69,6 +74,8 @@ struct FeatureDef
 	int xsize;
 	/// each size is 8 units
 	int ysize;
+
+	std::map<std::string, std::string> customParams;
 };
 
 #endif

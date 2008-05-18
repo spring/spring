@@ -12,7 +12,7 @@ CConnection::~CConnection()
 {
 }
 
-unsigned CConnection::GetDataRecieved() const
+unsigned CConnection::GetDataReceived() const
 {
 	return dataRecv;
 }

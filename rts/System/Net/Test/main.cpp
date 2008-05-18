@@ -97,7 +97,7 @@ int main(int argc, const char* const* argv)
 		boost::shared_ptr<const netcode::RawPacket> ret  = server->GetData(1);
 		if (ret)
 		{
-			std::cout << "Recieved " << ret->length << " bytes UDP client message " << (int)ret->data[1] << std::endl;
+			std::cout << "Received " << ret->length << " bytes UDP client message " << (int)ret->data[1] << std::endl;
 			ret.reset();
 		}
 		else
@@ -111,7 +111,7 @@ int main(int argc, const char* const* argv)
 		ret = client->GetData(1);
 		if (ret)
 		{
-			std::cout << "Recieved " << ret->length << " bytes UDP server message " << (int)ret->data[1] << std::endl;
+			std::cout << "Received " << ret->length << " bytes UDP server message " << (int)ret->data[1] << std::endl;
 			ret.reset();
 		}
 		else
@@ -124,7 +124,7 @@ int main(int argc, const char* const* argv)
 		ret = server->GetData(1);
 		if (ret)
 		{
-			std::cout << "Recieved " << ret->length << " bytes UDP client message" << std::endl;
+			std::cout << "Received " << ret->length << " bytes UDP client message" << std::endl;
 			ret.reset();
 		}
 		else

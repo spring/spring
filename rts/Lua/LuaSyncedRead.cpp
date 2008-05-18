@@ -336,8 +336,8 @@ static inline bool IsUnitTyped(const CUnit* unit)
 	if (readAllyTeam < 0) {
 		return fullRead;
 	}
-	const int losStatus = unit->losStatus[readAllyTeam];
-	const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+	const unsigned short losStatus = unit->losStatus[readAllyTeam];
+	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 	if ((losStatus & LOS_INLOS) ||
 	    ((losStatus & prevMask) == prevMask)) {
 		return true;
@@ -2775,16 +2775,18 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 		if (!fullRead) {
 			return 0;
 		}
-		const int args = lua_gettop(L); // number of arguments
-		if ((args < 2) || !lua_isnumber(L, 2)) {
-			return 0;
-		}
-		allyTeam = (int)lua_tonumber(L, 2);
+		allyTeam = luaL_checkint(L, 2);
 	}
 	if ((allyTeam < 0) || (allyTeam >= gs->activeAllyTeams)) {
 		return 0;
 	}
-	const int losStatus = unit->losStatus[allyTeam];
+	const unsigned short losStatus = unit->losStatus[allyTeam];
+
+	if (fullRead && lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		lua_pushnumber(L, losStatus);
+		return 1;
+	}
+	
 	lua_newtable(L);
 	if (losStatus & LOS_INLOS) {
 		HSTR_PUSH_BOOL(L, "los", true);

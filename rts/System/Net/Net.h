@@ -142,7 +142,7 @@ public:
 	boost::shared_ptr<const RawPacket> Peek(const unsigned conNum, unsigned ahead) const;
 
 	/**
-	@brief Recieve data from a client
+	@brief Receive data from a client
 	@param conNum The number to recieve from
 	@return a smart RawPacket pointer with the data inside (or empty when no data)
 	@throw network_error When conNum is not a valid connection ID
@@ -187,7 +187,7 @@ public:
 	/// did someone tried to connect?
 	bool HasIncomingConnection() const;
 	
-	/// Recieve data from first unbound connection to check if we allow him in our game
+	/// Receive data from first unbound connection to check if we allow him in our game
 	boost::shared_ptr<const RawPacket> GetData();
 	
 	/// everything seems fine, accept him

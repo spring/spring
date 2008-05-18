@@ -45,7 +45,7 @@ public:
 	virtual void Flush(const bool forced = false)=0;
 	virtual bool CheckTimeout() const = 0;
 	
-	unsigned GetDataRecieved() const;
+	unsigned GetDataReceived() const;
 	
 	virtual std::string Statistics() const = 0;
 	virtual NetAddress GetPeerName() const = 0;

@@ -224,6 +224,8 @@ struct WeaponDef
 	float dynDamageMin;
 	float dynDamageRange;
 	bool dynDamageInverted;
+
+	std::map<std::string, std::string> customParams;
 };
 
 

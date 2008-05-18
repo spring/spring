@@ -26,7 +26,7 @@ namespace netcode {
  * 
  * ForClients:
  * 1. Connect to the server
- * 2. Recieve GameData from server
+ * 2. Receive GameData from server
  * 3. Start the CGame with the information provided by server
  * */
 class CPreGame : public CGameController
@@ -66,7 +66,7 @@ private:
 	/// Map all required archives depending on selected mod(s)
 	static void LoadMod(const std::string& modName);
 
-	void GameDataRecieved(boost::shared_ptr<const netcode::RawPacket> packet);
+	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 	
 	const bool server;
 	enum State {

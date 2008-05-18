@@ -41,10 +41,18 @@ class CTransportUnit;
 #define LOS_INRADAR    (1 << 1)  // the unit is currently in radar from the allyteam
 #define LOS_PREVLOS    (1 << 2)  // the unit has previously been in los from the allyteam
 #define LOS_CONTRADAR  (1 << 3)  // the unit has continously been in radar since it was last inlos by the allyteam
-#define LOS_INTEAM     (1 << 4)  // the unit is part of this allyteam
+
+// LOS mask bits  (masked bits are not automatically updated)
+#define LOS_INLOS_MASK     (1 << 8)   // do not update LOS_INLOS
+#define LOS_INRADAR_MASK   (1 << 9)   // do not update LOS_INRADAR
+#define LOS_PREVLOS_MASK   (1 << 10)  // do not update LOS_PREVLOS
+#define LOS_CONTRADAR_MASK (1 << 11)  // do not update LOS_CONTRADAR
+
+#define LOS_ALL_MASK_BITS \
+	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
 
 
-enum ScriptCloakBits {
+enum ScriptCloakBits { // FIXME -- not implemented
 	// always set to 0 if not enabled
 	SCRIPT_CLOAK_ENABLED          = (1 << 0),
 	SCRIPT_CLOAK_IGNORE_ENERGY    = (1 << 1),
@@ -74,7 +82,7 @@ public:
 	                      const float3& impulse, int weaponId = -1);
 	virtual void Kill(float3& impulse);
 	virtual void FinishedBuilding(void);
-	void ChangeLos(int l,int airlos);
+	void ChangeLos(int l, int airlos);
 	bool AddBuildPower(float amount,CUnit* builder);		//negative amount=reclaim, return= true -> build power was succesfully applied
 	void Activate();		//turn the unit on
 	void Deactivate();		//turn the unit off
@@ -123,6 +131,9 @@ public:
 	bool IsNeutral() const {
 		return ((gs->useLuaGaia && team == gs->gaiaTeamID) || (team == MAX_TEAMS - 1) || neutral);
 	}
+
+	void SetLosStatus(int allyTeam, unsigned short newStatus);
+	unsigned short CalcLosStatus(int allyTeam);
 
 	enum ChangeType{
 		ChangeGiven,
@@ -183,7 +194,7 @@ public:
 	int realLosRadius;				//set los to this when finished building
 	int realAirLosRadius;
 
-	int losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
+	unsigned short losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
 
 	bool inBuildStance;				//used by constructing unigs
 	bool stunned;							//if we are stunned by a weapon or for other reason

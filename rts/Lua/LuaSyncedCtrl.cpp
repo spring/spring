@@ -117,6 +117,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
+	REGISTER_LUA_CFUNC(SetUnitLosMask);
+	REGISTER_LUA_CFUNC(SetUnitLosState);
 	REGISTER_LUA_CFUNC(SetUnitCloak);
 	REGISTER_LUA_CFUNC(SetUnitStealth);
 	REGISTER_LUA_CFUNC(SetUnitAlwaysVisible);
@@ -1204,6 +1206,84 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	}
 	const float experience = max(0.0f, (float)luaL_checknumber(L, 2));
 	unit->AddExperience(experience - unit->experience);
+	return 0;
+}
+
+
+static unsigned char ParseLosBits(lua_State* L, int index, unsigned char bits)
+{
+	if (lua_isnumber(L, index)) {
+		return (unsigned char)lua_tonumber(L, index);
+	}
+	else if (lua_istable(L, index)) {
+		for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
+			if (!lua_israwstring(L, -2)) { luaL_error(L, "bad key type");   }
+			if (!lua_isboolean(L, -1))   { luaL_error(L, "bad value type"); }
+			const string key = lua_tostring(L, -2);
+			const bool set = lua_toboolean(L, -1);
+			if (key == "los") {
+				if (set) { bits |=  LOS_INLOS; }
+				else     { bits &= ~LOS_INLOS; }
+			}
+			else if (key == "radar") {
+				if (set) { bits |=  LOS_INRADAR; }
+				else     { bits &= ~LOS_INRADAR; }
+			}
+			else if (key == "prevLos") {
+				if (set) { bits |=  LOS_PREVLOS; }
+				else     { bits &= ~LOS_PREVLOS; }
+			}
+			else if (key == "contRadar") {
+				if (set) { bits |=  LOS_CONTRADAR; }
+				else     { bits &= ~LOS_CONTRADAR; }
+			}
+		}
+		return bits;
+	}
+ 	luaL_error(L, "ERROR: expected number or table");
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int allyTeam = luaL_checkint(L, 2);
+	if ((allyTeam < 0) || (allyTeam >= MAX_TEAMS)) {
+		luaL_error(L, "bad allyTeam");
+	}
+	const unsigned short losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldMask = losStatus >> 8;
+	const unsigned char  newMask = ParseLosBits(L, 3, oldMask);
+	const unsigned short state = (newMask << 8) | (losStatus & 0x00FF);
+
+	unit->losStatus[allyTeam] = state;
+	unit->SetLosStatus(allyTeam, unit->CalcLosStatus(allyTeam));
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int allyTeam = luaL_checkint(L, 2);
+	if ((allyTeam < 0) || (allyTeam >= MAX_TEAMS)) {
+		luaL_error(L, "bad allyTeam");
+	}
+	const unsigned short losStatus = unit->losStatus[allyTeam];
+	const unsigned char  oldState = losStatus & 0xFF;
+	const unsigned char  newState = ParseLosBits(L, 3, oldState);
+	const unsigned short state = (losStatus & 0xFF00) | newState;
+
+	unit->SetLosStatus(allyTeam, state);
+
 	return 0;
 }
 
