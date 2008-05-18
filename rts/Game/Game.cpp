@@ -1844,7 +1844,8 @@ bool CGame::ActionPressed(const Action& action,
 			cmd == "desync" ||
 #endif
 			cmd == "resync" ||
-			cmd == "take") {
+			cmd == "take" ||
+			cmd == "luarules") {
 		//these are synced commands, forward only
 		CommandMessage pckt(action, gu->myPlayerNum);
 		net->SendData(pckt.Pack());

@@ -32,7 +32,7 @@ public:
 	@brief Take a look at the messages that will be returned by GetData().
 	@return A RawPacket holding the data, or 0 if no data
 	@param ahead How many packets to look ahead. A typical usage would be:
-	for (int ahead = 0; (packet = conn->Peek(ahead)) != NULL; ++ahead) {}
+	for (int ahead = 0; (packet = conn->Peek(ahead)); ++ahead) {}
 	*/
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
 	
