@@ -2,7 +2,7 @@
   SetOutPath "$INSTDIR"
 
   ; The battleroom
-  File "..\game\TASClient.exe"
+  File "..\external\TASClient.exe"
   File "..\external\7za.dll"
   
   
@@ -23,6 +23,7 @@
   Delete "$INSTDIR\lobby\sidepics\arm.bmp"
   Delete "$INSTDIR\lobby\sidepics\core.bmp"
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
+  Delete "$INSTDIR\lobby\var\groups.ini"
   RmDir "$INSTDIR\lobby\cache\maps"
   RmDir "$INSTDIR\lobby\cache\mods"
   RmDir "$INSTDIR\lobby\cache\online"

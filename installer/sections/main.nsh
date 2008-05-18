@@ -26,8 +26,8 @@
   
   ; Delete Previous settings.exe
   Delete "..\game\settings.exe"
-  File "..\game\SelectionEditor.exe"
-  ;File "..\game\settingstemplate.xml"
+  File "..\external\SelectionEditor.exe"
+  ;File "..\external\settingstemplate.xml"
 
 ;New Settings Program
 
@@ -215,6 +215,7 @@ ${EndIf}
   ; Generated stuff from running spring
   Delete "$INSTDIR\ArchiveCacheV4.txt"
   Delete "$INSTDIR\ArchiveCacheV5.txt"
+  Delete "$INSTDIR\ArchiveCacheV6.txt"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
   Delete "$INSTDIR\demos\test.sdf"
