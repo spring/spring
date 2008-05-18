@@ -330,7 +330,8 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 		losStatus[a] = 0;
 	}
 
-	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+	losStatus[allyteam] = LOS_ALL_MASK_BITS |
+		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	posErrorVector = gs->randVector();
 	posErrorVector.y *= 0.2f;
@@ -542,11 +543,86 @@ void CUnit::UpdateResources()
 }
 
 
+void CUnit::SetLosStatus(int at, unsigned short newStatus)
+{
+	const unsigned short currStatus = losStatus[at];
+	const unsigned short diffBits = (currStatus ^ newStatus);
+
+	if (diffBits) {
+		if (diffBits & LOS_INLOS) {
+			if (newStatus & LOS_INLOS) {
+				luaCallIns.UnitEnteredLos(this, at);
+				globalAI->UnitEnteredLos(this, at);
+			} else {
+				luaCallIns.UnitLeftLos(this, at);
+				globalAI->UnitLeftLos(this, at);
+			}
+		}	
+
+		if (diffBits & LOS_INRADAR) {
+			if (newStatus & LOS_INRADAR) {
+				luaCallIns.UnitEnteredRadar(this, at);
+				globalAI->UnitEnteredRadar(this, at);
+			} else {
+				luaCallIns.UnitLeftRadar(this, at);
+				globalAI->UnitLeftRadar(this, at);
+			}
+		}
+	}
+
+	losStatus[at] = newStatus;
+}
+
+
+unsigned short CUnit::CalcLosStatus(int at)
+{
+	const unsigned short currStatus = losStatus[at];
+
+	const bool inLos = loshandler->InLos(this, at);
+	const bool inRadar = inLos || radarhandler->InRadar(this, at);
+
+	unsigned short newStatus = currStatus;
+	unsigned short mask = ~(currStatus >> 8);
+
+	if (inLos) {
+		if (!beingBuilt) {
+			newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
+			                      LOS_PREVLOS | LOS_CONTRADAR));
+		} else {
+			// we are being built, do not set LOS_PREVLOS
+			// since we do not want ghosts for nanoframes
+			newStatus |=  (mask & (LOS_INLOS   | LOS_INRADAR));
+			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
+		}
+	}
+	else if (inRadar) {
+		newStatus |=  (mask & LOS_INRADAR);
+		newStatus &= ~(mask & LOS_INLOS);
+	}
+	else {
+		newStatus &= ~(mask & (LOS_INLOS | LOS_INRADAR | LOS_CONTRADAR));
+	}
+
+	return newStatus;
+}
+
+
 inline void CUnit::UpdateLosStatus(int at)
 {
-	const int prevLosStatus = losStatus[at];
-	if ((prevLosStatus & LOS_INTEAM) != 0) {
-		return; // allied -- no need to update
+	const unsigned short currStatus = losStatus[at];
+	if ((currStatus & LOS_ALL_MASK_BITS) == LOS_ALL_MASK_BITS) {
+		return; // no need to update, all changes are masked
+	}
+	SetLosStatus(at, CalcLosStatus(at));
+}
+
+
+/* FIXME
+inline void CUnit::UpdateLosStatus(int at)
+{
+	const unsigned short prevLosStatus = losStatus[at];
+	if ((prevLosStatus & LOS_ALL_MASK_BITS) == LOS_ALL_MASK_BITS) {
+		return; // no need to update
 	}
 
 	if (loshandler->InLos(this, at)) {
@@ -602,6 +678,7 @@ inline void CUnit::UpdateLosStatus(int at)
 		}
 	}
 }
+*/
 
 
 void CUnit::SlowUpdate()
@@ -1173,13 +1250,14 @@ void CUnit::DoSeismicPing(float pingSize)
 	}
 }
 
-void CUnit::ChangeLos(int l,int airlos)
+
+void CUnit::ChangeLos(int l, int airlos)
 {
 	loshandler->FreeInstance(los);
 	los=0;
 	losRadius=l;
 	airLosRadius=airlos;
-	loshandler->MoveUnit(this,false);
+	loshandler->MoveUnit(this, false);
 }
 
 
@@ -1266,7 +1344,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	neutral = false;
 
 	loshandler->MoveUnit(this,false);
-	losStatus[allyteam] = LOS_INTEAM | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+	losStatus[allyteam] = LOS_ALL_MASK_BITS |
+		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+
 	qf->MovedUnit(this);
 	if (hasRadarCapacity) {
 		radarhandler->MoveUnit(this);

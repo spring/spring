@@ -48,6 +48,7 @@ static int NoNeutralCollide(lua_State* L, const void* data);
 
 static int VisualsTable(lua_State* L, const void* data);
 static int DamagesArray(lua_State* L, const void* data);
+static int CustomParamsTable(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
 static int CategorySetFromBits(lua_State* L, const void* data);
 static int CategorySetFromString(lua_State* L, const void* data);
@@ -366,6 +367,20 @@ static int CategorySetFromString(lua_State* L, const void* data)
 }
 
 
+static int CustomParamsTable(lua_State* L, const void* data)
+{
+	const map<string, string>& params = *((const map<string, string>*)data);
+	lua_newtable(L);
+	map<string, string>::const_iterator it;
+	for (it = params.begin(); it != params.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
+
 static int GuiSoundSetTable(lua_State* L, const void* data)
 {
 	const GuiSoundSet& soundSet = *((const GuiSoundSet*) data);
@@ -404,6 +419,7 @@ static bool InitParamMap()
 	ADD_FUNCTION("hitSound",  wd.soundhit,  GuiSoundSetTable);
 	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundSetTable);
 
+	ADD_FUNCTION("customParams",         wd.customParams,   CustomParamsTable);
 	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
 	ADD_FUNCTION("noFriendlyCollide",    wd.collisionFlags, NoFriendlyCollide);
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);

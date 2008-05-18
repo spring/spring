@@ -11,7 +11,7 @@
 class CCameraController;
 
 
-class CCameraHandler : public CommandReciever
+class CCameraHandler : public CommandReceiver
 {
 public:
 	CCameraHandler();

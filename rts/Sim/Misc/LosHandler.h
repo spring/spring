@@ -58,10 +58,10 @@ public:
 	void FreeInstance(LosInstance* instance);
 
 	bool InLos(const CUnit* unit, int allyTeam) {
-		if (unit->isCloaked)
-			return false;
 		if (unit->alwaysVisible)
 			return true;
+		if (unit->isCloaked)
+			return false;
 		if (unit->useAirLos) {
 			const int rowIdx = std::max(0, std::min(airSizeY - 1, ((int(unit->pos.z * invAirDiv))))) * airSizeX;
 			const int colIdx = std::max(0, std::min(airSizeX - 1, ((int(unit->pos.x * invAirDiv)))));

@@ -1398,10 +1398,10 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 	scale = 1.0f;
 
 	if (useIcons) {
-		if ((unit->allyteam == gu->myAllyTeam) ||
-				(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
-				((unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) &&
-				 (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) ||
+		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+		const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+		if ((losStatus & LOS_INLOS) ||
+				((losStatus & prevMask) == prevMask) ||
 				gu->spectatingFullView) {
 			CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
 			if (icon->radiusAdjust) {

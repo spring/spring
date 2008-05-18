@@ -222,9 +222,9 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	fd->deathFeature = fdTable.GetString("featureDead", "");
 
-	fd->metal     = fdTable.GetFloat("metal",  0.0f);
-	fd->energy    = fdTable.GetFloat("energy", 0.0f);
-	fd->maxHealth = fdTable.GetFloat("damage", 0.0f);
+	fd->metal       = fdTable.GetFloat("metal",  0.0f);
+	fd->energy      = fdTable.GetFloat("energy", 0.0f);
+	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
 	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy));
 
 	fd->drawType = DRAWTYPE_3DO;
@@ -242,16 +242,15 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	// these take precedence over the old sphere tags as well as
 	// feature->radius (for feature <--> projectile interactions)
-	fd->collisionVolumeType = fdTable.GetString("collisionVolumeType", "");
-	fd->collisionVolumeScales = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
+	fd->collisionVolumeType    = fdTable.GetString("collisionVolumeType", "");
+	fd->collisionVolumeScales  = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	fd->collisionVolumeTest = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
+	fd->collisionVolumeTest    = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
 
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
 	fd->collisionVolume = SAFE_NEW CollisionVolume(fd->collisionVolumeType,
-		fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
-
+	fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
 
 	fd->upright = fdTable.GetBool("upright", false);
 
@@ -262,6 +261,9 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
 	fd->mass = fdTable.GetFloat("mass", defMass);
 	fd->mass = max(0.001f, fd->mass);
+
+	// custom parameters table
+	fdTable.SubTable("customParams").GetMap(fd->customParams);
 
 	AddFeatureDef(name, fd);
 

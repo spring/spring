@@ -39,11 +39,11 @@ public:
 	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
 	/**
-	@brief Recieve data from Client
+	@brief Receive data from Client
 	@return The data packet, or 0 if there is no data
 	@throw network_error If there is no such connection
 	
-	Recieves only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
+	Receives only one message (even if there are more in the recieve buffer), so call this until you get a 0 in return
 	 */
 	boost::shared_ptr<const netcode::RawPacket> GetData();
 	

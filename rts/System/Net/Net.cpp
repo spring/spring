@@ -98,7 +98,7 @@ bool CNet::Connected() const
 {
 	for (connVec::const_iterator  i = connections.begin(); i < connections.end(); ++i)
 	{
-		if ((*i) && (*i)->GetDataRecieved() > 0)
+		if ((*i) && (*i)->GetDataReceived() > 0)
 		{
 			return true;
 		}

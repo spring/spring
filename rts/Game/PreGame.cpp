@@ -448,7 +448,7 @@ void CPreGame::UpdateClientNet()
 				logOutput.Print("Became player %i", gu->myPlayerNum);
 			} break;
 			case NETMSG_GAMEDATA: {
-				GameDataRecieved(packet);
+				GameDataReceived(packet);
 				return;
 			}
 			default: {
@@ -619,7 +619,7 @@ void CPreGame::LoadMod(const std::string& modName)
 	}
 }
 
-void CPreGame::GameDataRecieved(boost::shared_ptr<const netcode::RawPacket> packet)
+void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	gameData = new GameData(packet);
 	

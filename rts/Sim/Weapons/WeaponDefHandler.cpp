@@ -605,6 +605,9 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 			}
 		}
 	}
+
+	// custom parameters table
+	wdTable.SubTable("customParams").GetMap(wd.customParams);
 }
 
 

@@ -128,7 +128,7 @@ protected:
 	void HandleChatMsg(const ChatMessage& msg);
 	
 	/// synced actions (recieved from server) go in here
-	void ActionRecieved(const Action&, int playernum);
+	void ActionReceived(const Action&, int playernum);
 
 	void DrawInputText();
 	void ParseInputTextGeometry(const std::string& geo);

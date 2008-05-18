@@ -302,9 +302,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			continue;
 		}
 		if (camera->InView(unit->midPos, unit->radius + 30)) {
-			if (gs->Ally(unit->allyteam,gu->myAllyTeam)       ||
-			    (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
-			    gu->spectatingFullView) {
+			const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+			if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 
 				if (drawReflection) {
 					float3 zeroPos;
@@ -348,7 +347,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 					}
 				}
 			}
-			else if (unit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) {
+			else if (losStatus & LOS_PREVLOS) {
 				unit->isIcon = true;
 
 				if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
@@ -367,15 +366,15 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 						unit->isIcon = false;
 					}
 				}
-				if ((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)) {
-					if (!(unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)) {
+				if (losStatus & LOS_INRADAR) {
+					if (!(losStatus & LOS_CONTRADAR)) {
 						drawRadarIcon.push_back(unit);
 					} else if (unit->isIcon) {
 						// this prevents us from drawing icons on top of ghosted buildings
 						drawIcon.push_back(unit);
 					}
 				}
-			} else if ((unit->losStatus[gu->myAllyTeam] & LOS_INRADAR)) {
+			} else if (losStatus & LOS_INRADAR) {
 				drawRadarIcon.push_back(unit);
 			}
 		}
@@ -587,10 +586,9 @@ void CUnitDrawer::DrawShadowPass(void)
 	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
 
-		if ((gs->Ally(unit->allyteam, gu->myAllyTeam)     ||
-			(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) ||
-			gu->spectatingFullView)
-		    && camera->InView(unit->midPos, unit->radius + 700)) {
+		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+		if (((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
+		    camera->InView(unit->midPos, unit->radius + 700)) {
 
 			// FIXME: test against the shadow projection intersection
 			float sqDist = (unit->pos-camera->pos).SqLength();
@@ -835,8 +833,8 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 	// cloaked units and living ghosted buildings (stored in same vector)
 	for (vector<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
 		CUnit* unit = *ui;
-
-		if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) {
+		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (is_s3o) {
 				SetBasicS3OTeamColour(unit->team);
 				texturehandler->SetS3oTexture(unit->model->textureType);
@@ -844,11 +842,11 @@ void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<Ghos
 			DrawUnitNow(unit);
 		} else {
 			// ghosted enemy units
-			if (unit->losStatus[gu->myAllyTeam] & LOS_CONTRADAR)
+			if (losStatus & LOS_CONTRADAR) {
 				glColor4f(0.9f, 0.9f, 0.9f, 0.5f);
-			else
+			} else {
 				glColor4f(0.6f, 0.6f, 0.6f, 0.4f);
-
+			}
 			glPushMatrix();
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);

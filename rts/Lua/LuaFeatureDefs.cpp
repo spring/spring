@@ -46,8 +46,8 @@ static int FeatureDefNewIndex(lua_State* L);
 static int FeatureDefMetatable(lua_State* L);
 
 // special access functions
-static int FeatureDefToID(lua_State* L, const void* data);
 static int DrawTypeString(lua_State* L, const void* data);
+static int CustomParamsTable(lua_State* L, const void* data);
 
 
 /******************************************************************************/
@@ -313,13 +313,16 @@ static int DrawTypeString(lua_State* L, const void* data)
 }
 
 
-static int FeatureDefToID(lua_State* L, const void* data)
+static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = *((const FeatureDef**)data);
-	if (fd == NULL) {
-		return 0;
+	const map<string, string>& params = *((const map<string, string>*)data);
+	lua_newtable(L);
+	map<string, string>::const_iterator it;
+	for (it = params.begin(); it != params.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
 	}
-	lua_pushnumber(L, fd->id);
 	return 1;
 }
 
@@ -391,7 +394,9 @@ static bool InitParamMap()
 	const FeatureDef fd;
 	const char* start = ADDRESS(fd);
 
-	ADD_FUNCTION("drawTypeString",  fd.drawType, DrawTypeString);
+	ADD_FUNCTION("drawTypeString", fd.drawType,     DrawTypeString);
+
+	ADD_FUNCTION("customParams",   fd.customParams, CustomParamsTable);
 
 	ADD_FUNCTION("height",  fd, ModelHeight);
 	ADD_FUNCTION("radius",  fd, ModelRadius);

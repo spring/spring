@@ -54,7 +54,7 @@ public:
 @brief Server class for game handling
 This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
 */
-class CGameServer : public CommandReciever
+class CGameServer : public CommandReceiver
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
