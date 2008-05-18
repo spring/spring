@@ -40,6 +40,16 @@ public:
 	int fireAtCrashing;	//1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
 
 	int flankingBonusModeDefault;	//0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
+	
+	//Sensors behaviour
+	/// miplevel for los
+	int losMipLevel;
+	/// miplevel to use for airlos
+	int airMipLevel;
+	/// units sightdistance will be multiplied with this, for testing purposes
+	float losMul;
+	/// units airsightdistance will be multiplied with this, for testing purposes
+	float airLosMul;
 };
 
 extern CModInfo modInfo;

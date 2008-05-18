@@ -5,13 +5,13 @@
 
 #include "LosHandler.h"
 
+#include "Sim/ModInfo.h"
 #include "Sim/Units/Unit.h"
 #include <list>
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
-#include "Sim/Misc/SensorHandler.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
@@ -89,8 +89,8 @@ CLosHandler* loshandler;
 
 CLosHandler::CLosHandler()
 {
-	losMipLevel = sensorHandler->losMipLevel;
-	airMipLevel = sensorHandler->airMipLevel;
+	losMipLevel = modInfo.losMipLevel;
+	airMipLevel = modInfo.airMipLevel;
 	airSizeX = std::max(1, gs->mapx >> airMipLevel);
 	airSizeY = std::max(1, gs->mapy >> airMipLevel);
 	losSizeX = std::max(1, gs->mapx >> losMipLevel);
