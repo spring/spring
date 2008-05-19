@@ -1,16 +1,18 @@
-#include "StdAfx.h"
 // TreeDrawer.cpp: implementation of the CBasicTreeDrawer class.
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "StdAfx.h"
 #include "BasicTreeDrawer.h"
-#include "Map/Ground.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Lua/LuaParser.h"
+#include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "TdfParser.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -21,10 +23,14 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 {
 	lastListClean=0;
 
-	TdfParser resources("gamedata/resources.tdf");
-
+	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+		logOutput.Print(resourcesParser.GetErrorLog());
+	
+	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("trees");
+		
 	CBitmap TexImage;
-	std::string fn("bitmaps/"+resources.SGetValueDef("gran.bmp","resources\\graphics\\trees\\gran1"));
+	std::string fn("bitmaps/"+treesTable.GetString("gran1", "gran.bmp"));
 	if (!TexImage.Load(fn))
 		throw content_error("Could not load tree texture from " + fn);
 	TexImage.ReverseYAxis();
@@ -48,7 +54,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	fn = "bitmaps/"+resources.SGetValueDef("gran2.bmp","resources\\graphics\\trees\\gran2");
+	fn = "bitmaps/"+treesTable.GetString("gran2", "gran2.bmp");
 	if (!TexImage.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
 	TexImage.ReverseYAxis();
@@ -70,7 +76,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	fn = "bitmaps/"+resources.SGetValueDef("birch1.bmp","resources\\graphics\\trees\\birch1");
+	fn = "bitmaps/"+treesTable.GetString("birch1", "birch1.bmp");
 	if (!TexImage.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
 	TexImage.ReverseYAxis();
@@ -92,7 +98,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	fn = "bitmaps/"+resources.SGetValueDef("birch2.bmp","resources\\graphics\\trees\\birch2");
+	fn = "bitmaps/"+treesTable.GetString("birch2", "birch2.bmp");
 	if (!TexImage.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
 	TexImage.ReverseYAxis();
@@ -114,7 +120,7 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 		}
 	}
 
-	fn = "bitmaps/"+resources.SGetValueDef("birch3.bmp","resources\\graphics\\trees\\birch3");
+	fn = "bitmaps/"+treesTable.GetString("birch3", "birch3.bmp");
 	if (!TexImage.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
 	TexImage.ReverseYAxis();

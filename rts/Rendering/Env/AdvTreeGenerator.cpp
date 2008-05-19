@@ -4,14 +4,16 @@
 
 #include "StdAfx.h"
 #include "AdvTreeGenerator.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
-#include "TdfParser.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 using namespace std;
@@ -32,10 +34,14 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	unsigned char(* tree)[2048][4]=SAFE_NEW unsigned char[256][2048][4];
 	memset(tree[0][0],128,256*2048*4);
 
-	TdfParser resources("gamedata/resources.tdf");
+	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+		logOutput.Print(resourcesParser.GetErrorLog());
+
+	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("trees");
 
 	CBitmap bm;
-	std::string fn("bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark"));
+	std::string fn("bitmaps/"+treesTable.GetString("bark", "Bark.bmp"));
 	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
 		throw content_error("Could not load tree texture from file " + fn);
 	for(int y=0;y<256;y++){
@@ -44,9 +50,13 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 			tree[y][x][1]=bm.mem[(y*256+x)*4+1];
 			tree[y][x][2]=bm.mem[(y*256+x)*4+2];
 			tree[y][x][3]=255;
+			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
+			tree[y][x+1024][1]=(unsigned char)(bm.mem[(y*256+x)*4+1]*0.6f);
+			tree[y][x+1024][2]=(unsigned char)(bm.mem[(y*256+x)*4+2]*0.6f);
+			tree[y][x+1024][3]=255;
 		}
 	}
-	fn = "bitmaps/"+resources.SGetValueDef("bleaf.bmp","resources\\graphics\\trees\\leaf");
+	fn = "bitmaps/"+treesTable.GetString("leaf", "bleaf.bmp");
 	if (!bm.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
 	bm.CreateAlpha(0,0,0);
@@ -65,18 +75,6 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	CreateLeafTex(leafTex,768,0,tree);
 
 	glDeleteTextures (1, &leafTex);
-
-	fn = "bitmaps/"+resources.SGetValueDef("Bark.bmp","resources\\graphics\\trees\\bark");
-	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
-		throw content_error("Could not load tree texture from file " + fn);
-	for(int y=0;y<256;y++){
-		for(int x=0;x<256;x++){
-			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
-			tree[y][x+1024][1]=(unsigned char)(bm.mem[(y*256+x)*4+1]*0.6f);
-			tree[y][x+1024][2]=(unsigned char)(bm.mem[(y*256+x)*4+2]*0.6f);
-			tree[y][x+1024][3]=255;
-		}
-	}
 
 	unsigned char* data=tree[0][0];
 	CreateGranTex(data,1024+768,0,2048);

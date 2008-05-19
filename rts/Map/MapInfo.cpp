@@ -1,7 +1,9 @@
 #include "MapInfo.h"
 
-#include "TdfParser.h"
-
+#include "Lua/LuaParser.h"
+#include "System/LogOutput.h"
+#include "System/TdfParser.h"
+#include "System/FileSystem/FileHandler.h"
 
 float4::float4()
 {
@@ -29,8 +31,11 @@ CMapInfo::CMapInfo(const std::string& mapname)
 {
 	map.name = mapname;
 	mapDefParser = new TdfParser(GetTDFName(mapname));
-	resources = new TdfParser("gamedata/resources.tdf");
-
+	resourcesParser = new LuaParser ("gamedata/resources.lua",
+														SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser->Execute() || !resourcesParser->IsValid())
+		logOutput.Print(resourcesParser->GetErrorLog());
+	
 	ReadGlobal();
 	ReadAtmosphere();
 	ReadGui();
@@ -40,8 +45,8 @@ CMapInfo::CMapInfo(const std::string& mapname)
 	ReadSm3();
 	ReadTerrainTypes();
 
-	delete resources;
-	resources = NULL;
+	delete resourcesParser;
+	resourcesParser = NULL;
 }
 
 
@@ -170,27 +175,29 @@ void CMapInfo::ReadWater()
 	mapDefParser->GetDef(water.normalTexture, "", "MAP\\WATER\\WaterNormalTexture");
 
 	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
+	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("maps");
+	const LuaTable causticsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("caustics");
+	
 	if(water.texture.empty())
-		water.texture = "bitmaps/" + resources->SGetValueDef("ocean.jpg", "resources\\graphics\\maps\\watertex");
+		water.texture = "bitmaps/" + mapsTable.GetString("watertex", "ocean.jpg");
 	else
 		water.texture = "maps/" + water.texture;
 
-	
 	if(water.foamTexture.empty())
-		water.foamTexture = "bitmaps/"+resources->SGetValueDef("foam.jpg","resources\\graphics\\maps\\waterfoamtex");
+		water.foamTexture = "bitmaps/" + mapsTable.GetString("waterfoamtex", "foam.jpg");
 	else
 		water.foamTexture = "maps/" + water.foamTexture;
 
 	if(water.normalTexture.empty())
-		water.normalTexture = "bitmaps/"+resources->SGetValueDef("waterbump.png","resources\\graphics\\maps\\waternormaltex");
+		water.normalTexture = "bitmaps/" + mapsTable.GetString("waternormaltex", "waterbump.png");
 	else
 		water.normalTexture = "maps/" + water.normalTexture;
 
 	char num[10];
 	for (int i = 0; i < 32; i++) {
 		sprintf(num, "%02i", i);
-		water.causticTextures[i] = std::string("bitmaps/") + resources->SGetValueDef(std::string("caustics/caustic")+num+".jpg",
-								std::string("resources\\graphics\\caustics\\caustic")+num);
+		water.causticTextures[i] = std::string("bitmaps/") + causticsTable.GetString(std::string("caustic")+num, 
+															 std::string("caustic")+num+".jpg");
 	}
 }
 
@@ -199,8 +206,11 @@ void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
 	mapDefParser->GetDef(smf.detailTexName, "", "MAP\\DetailTex");
+
+	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("resources").SubTable("graphics").SubTable("maps");
+	
 	if (smf.detailTexName.empty())
-		smf.detailTexName = "bitmaps/" + resources->SGetValueDef("detailtex2.bmp", "resources\\graphics\\maps\\detailtex");
+		smf.detailTexName = "bitmaps/" + mapsTable.GetString("detailtex","detailtex2.bmp");
 	else
 		smf.detailTexName = "maps/" + smf.detailTexName;
 }
