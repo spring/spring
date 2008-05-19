@@ -1,22 +1,23 @@
+#include <algorithm>
+#include <cctype>
 #include "StdAfx.h"
 #include "GroundDecalHandler.h"
-#include <algorithm>
-#include "Rendering/Textures/Bitmap.h"
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
-#include "Sim/Units/Unit.h"
-#include "Map/Ground.h"
-#include "Map/ReadMap.h"
-#include "Sim/Units/UnitDef.h"
-#include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
-#include <cctype>
 #include "Game/Camera.h"
-#include "Sim/Units/UnitTypes/Building.h"
+#include "Lua/LuaParser.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "ShadowHandler.h"
-#include "TdfParser.h"
+#include "Map/ReadMap.h"
+#include "Platform/ConfigHandler.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitTypes/Building.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 CGroundDecalHandler* groundDecals = 0;
@@ -37,12 +38,16 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
 
-	TdfParser tdfparser("gamedata/resources.tdf");
-	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar2.bmp","resources\\graphics\\scars\\scar2")).c_str(),buf,0,0);
-	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar3.bmp","resources\\graphics\\scars\\scar3")).c_str(),buf,256,0);
-	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar1.bmp","resources\\graphics\\scars\\scar1")).c_str(),buf,0,256);
-	LoadScar((char*)("bitmaps/"+tdfparser.SGetValueDef("scars/scar4.bmp","resources\\graphics\\scars\\scar4")).c_str(),buf,256,256);
-
+	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+		logOutput.Print(resourcesParser.GetErrorLog());
+	
+	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("scars");
+	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar2", "scars/scar2.bmp")).c_str(),buf,0,0);
+	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar3", "scars/scar3.bmp")).c_str(),buf,256,0);
+	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar1", "scars/scar1.bmp")).c_str(),buf,0,256);
+	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar4", "scars/scar4.bmp")).c_str(),buf,256,256);
+	
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);

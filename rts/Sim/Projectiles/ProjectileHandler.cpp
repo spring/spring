@@ -1,39 +1,41 @@
-#include "StdAfx.h"
+
 // ProjectileHandler.cpp: implementation of the CProjectileHandler class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "ProjectileHandler.h"
-#include "Rendering/GL/myGL.h"
+#include <algorithm>
+#include "StdAfx.h"
 #include "Projectile.h"
+#include "ProjectileHandler.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Sim/Misc/QuadField.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
-#include "TimeProfiler.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Rendering/GroundFlash.h"
-#include "Sim/Misc/LosHandler.h"
+#include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Features/FeatureDef.h"
-#include "Sim/Misc/CollisionHandler.h"
-#include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Platform/ConfigHandler.h"
+#include "Rendering/GroundFlash.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/IFramebuffer.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
-#include "LogOutput.h"
-#include <algorithm>
-#include "Rendering/GL/IFramebuffer.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
+#include "System/creg/STL_List.h"
 #include "System/FileSystem/FileHandler.h"
-#include "TdfParser.h"
 #include "mmgr.h"
-#include "creg/STL_List.h"
+
 
 CProjectileHandler* ph;
 using namespace std;
@@ -67,31 +69,41 @@ CProjectileHandler::CProjectileHandler()
 	// used to block resources_map.tdf from loading textures
 	std::set<std::string> blockMapTexNames;
 
-	TdfParser resources("gamedata/resources.tdf");
+	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+		logOutput.Print(resourcesParser.GetErrorLog());
+	const LuaTable ptTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("projectiletextures");
 	//add all textures in projectiletextures section
-	std::map<std::string,std::string> ptex = resources.GetAllValues("resources\\graphics\\projectiletextures");
+	std::map<std::string, std::string> ptex;
+	ptTable.GetMap(ptex);
+
 	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
 	{
 		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 		blockMapTexNames.insert(pi->first);
 	}
 	//add all texture from sections within projectiletextures section
-	std::vector<std::string> seclist = resources.GetSectionList("resources\\graphics\\projectiletextures");
+	std::vector<std::string> seclist; 
+	ptTable.GetKeys(seclist);
 	for(int i=0; i<seclist.size(); i++)
 	{
-		std::map<std::string,std::string> ptex2 = resources.GetAllValues("resources\\graphics\\projectiletextures\\" + seclist[i]);
-		for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
-		{
-			textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-			blockMapTexNames.insert(pi->first);
+		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
+		if (ptSubTable.IsValid()) {
+			std::map<std::string,std::string> ptex2;
+			ptSubTable.GetMap(ptex2);
+			for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
+			{
+				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+				blockMapTexNames.insert(pi->first);
+			}
 		}
 	}
 
-
+	const LuaTable smokeTable = resourcesParser.GetRoot().SubTable("resources").SubTable("smoke");
 	for (int i = 0; i < 12; i++) {
 		char num[10];
 		sprintf(num, "%02i", i);
-		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+resources.SGetValueDef(std::string("smoke/smoke") + num +".tga",std::string("resources\\graphics\\smoke\\smoke")+num));
+		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+smokeTable.GetString(std::string("smoke")+num, std::string("smoke/smoke") + num +".tga"));
 		blockMapTexNames.insert(std::string("ismoke") + num);
 	}
 
@@ -139,16 +151,30 @@ CProjectileHandler::CProjectileHandler()
 	blockMapTexNames.insert("plasmatexture");
 
 	// allow map specified atlas textures for gaia unit projectiles
-	CFileHandler fh("gamedata/resources_map.tdf");
-	if (fh.FileExists()) {
-		TdfParser resources_map("gamedata/resources_map.tdf");
+	LuaParser resources_mapParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (resources_mapParser.IsValid()) {
+		const LuaTable mapTable = resources_mapParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("projectiletextures");
 		//add all textures in projectiletextures section 
-		std::map<std::string,std::string> mptex =
-			resources_map.GetAllValues("resources\\graphics\\projectiletextures");
+		std::map<std::string,std::string> mptex;
+		mapTable.GetMap(mptex);
 		std::map<std::string,std::string>::iterator pi;
 		for (pi = mptex.begin(); pi != mptex.end(); ++pi) {
-			if (blockMapTexNames.find(pi->first) == blockMapTexNames.end()) {
+			if (blockMapTexNames.find(pi->first) == blockMapTexNames.end())
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+		}
+		//add all texture from sections within projectiletextures section
+		mapTable.GetKeys(seclist);
+		for(int i=0; i<seclist.size(); i++)
+		{
+			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
+			if (mapSubTable.IsValid()) {
+				std::map<std::string,std::string> ptex2;
+				mapSubTable.GetMap(ptex2);
+				for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
+				{
+					if (blockMapTexNames.find(pi->first) == blockMapTexNames.end())
+						textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+				}
 			}
 		}
 	}
@@ -196,19 +222,24 @@ CProjectileHandler::CProjectileHandler()
 
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
-	ptex = resources.GetAllValues("resources\\graphics\\groundfx");
+	const LuaTable groundfxTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("groundfx");
+	groundfxTable.GetMap(ptex);
 	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
 	{
 		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 	}
 	//add all texture from sections within groundfx section
-	seclist = resources.GetSectionList("resources\\graphics\\groundfx");
+	groundfxTable.GetKeys(seclist);
 	for(int i=0; i<seclist.size(); i++)
 	{
-		std::map<std::string,std::string> ptex2 = resources.GetAllValues("resources\\graphics\\groundfx\\" + seclist[i]);
-		for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
-		{
-			groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
+		if (gfxSubTable.IsValid()) {
+			std::map<std::string,std::string> ptex2;
+			gfxSubTable.GetMap(ptex2);
+			for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
+			{
+				groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
+			}
 		}
 	}
 

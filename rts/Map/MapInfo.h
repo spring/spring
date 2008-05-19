@@ -5,6 +5,7 @@
 #include "float3.h"
 
 class TdfParser;
+class LuaParser;
 
 
 /** Float3 with a fourth data member, which is basically unused but required
@@ -170,7 +171,7 @@ private:
 	void ReadSm3();
 	void ReadTerrainTypes();
 
-	TdfParser* resources;
+	LuaParser* resourcesParser;
 	TdfParser* mapDefParser;
 };
 
