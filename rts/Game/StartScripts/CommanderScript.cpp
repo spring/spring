@@ -1,22 +1,24 @@
-#include "StdAfx.h"
-#include "CommanderScript.h"
-#include "Sim/Units/UnitLoader.h"
-#include "TdfParser.h"
 #include <algorithm>
 #include <cctype>
 #include <map>
-#include "Game/Team.h"
-#include "Game/GameSetup.h"
-#include "Game/Game.h"
-#include "Map/MapInfo.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDefHandler.h"
+#include "StdAfx.h"
+#include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Map/ReadMap.h"
-#include "mmgr.h"
-
+#include "Game/Game.h"
+#include "Game/GameSetup.h"
+#include "Game/Team.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/InfoConsole.h"
+#include "Lua/LuaParser.h"
+#include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitLoader.h"
+#include "System/LogOutput.h"
+#include "System/TdfParser.h" // still required for parsing map SMD for start positions
+#include "System/FileSystem/FileHandler.h"
+#include "mmgr.h"
 
 
 extern std::string stupidGlobalMapname;
@@ -36,17 +38,21 @@ CCommanderScript::~CCommanderScript(void)
 void CCommanderScript::GameStart()
 {
 	if (gameSetup) {
-		TdfParser p("gamedata/SIDEDATA.TDF");
+		LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		if (!p.Execute() || !p.IsValid())
+			logOutput.Print(p.GetErrorLog());
+			
+		const LuaTable sideTable = p.GetRoot();
 
 		// make a map of all side names  (assumes contiguous sections)
 		std::map<std::string, std::string> sideMap;
 		char sideText[64];
 		for (int side = 0;
 				 SNPRINTF(sideText, sizeof(sideText), "side%i", side),
-				 p.SectionExist(sideText); // the test
+				 sideTable.KeyExists(sideText); // the test
 				 side++) {
 			const std::string sideName =
-				StringToLower(p.SGetValueDef("arm", std::string(sideText) + "\\name"));
+				StringToLower(sideTable.SubTable(std::string(sideText)).GetString("name", "No Name"));
 			sideMap[sideName] = sideText;
 		}
 
@@ -75,8 +81,9 @@ void CCommanderScript::GameStart()
 			if (it != sideMap.end()) {
 				const std::string& sideSection = it->second;
 				const std::string cmdrType =
-					StringToLower(p.SGetValueDef("armcom", sideSection + "\\commander"));
-
+					StringToLower(sideTable.SubTable(sideSection).GetString("commander",""));
+				if (cmdrType.length() == 0)
+					throw content_error ("Unable to load a commander for SIDE" + sideSection);
 				CUnit* unit = unitLoader.LoadUnit(cmdrType, team->startPos, a, false, 0, NULL);
 
 				team->lineageRoot = unit->id;
@@ -91,10 +98,17 @@ void CCommanderScript::GameStart()
 		}
 	}
 	else {
-		TdfParser p("gamedata/SIDEDATA.TDF");
-		const std::string s0 = StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
-		const std::string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
+		LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		if (!p.Execute() || !p.IsValid())
+			logOutput.Print(p.GetErrorLog());
+		
+		const LuaTable sideTable = p.GetRoot();
+		const std::string s0 = StringToLower(sideTable.SubTable("side0").GetString("commander", ""));
+		const std::string s1 = StringToLower(sideTable.SubTable("side1").GetString("commander", s0)); // default to side 0, in case mod has only 1 side
 
+		if (s0.length() == 0)
+			throw content_error ("Unable to load a commander for SIDE0");
+		
 		TdfParser p2;
 		CMapInfo::OpenTDF(stupidGlobalMapname, p2);
 

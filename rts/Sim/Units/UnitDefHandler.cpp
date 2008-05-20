@@ -29,7 +29,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
-#include "System/TdfParser.h"
 #include "mmgr.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
@@ -222,17 +221,20 @@ void CUnitDefHandler::ProcessDecoys()
 
 void CUnitDefHandler::FindCommanders()
 {
-	TdfParser tdfparser;
-	tdfparser.LoadFile("gamedata/SIDEDATA.TDF");
+	LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!p.Execute() || !p.IsValid())
+		logOutput.Print(p.GetErrorLog());
 
+	const LuaTable sideTable = p.GetRoot();
 	// get the commander UnitDef IDs
 	commanderIDs.clear();
-	std::vector<std::string> sides = tdfparser.GetSectionList("");
+	std::vector<std::string> sides;
+	sideTable.GetKeys(sides);
 	for (unsigned int i = 0; i < sides.size(); i++){
 		const std::string& section = sides[i];
 		if ((section.find("side") == 0) &&
 		    (section.find_first_not_of("0123456789", 4) == std::string::npos)) {
-			string commUnit = tdfparser.SGetValueDef("", section + "\\COMMANDER");
+			string commUnit = sideTable.SubTable(section).GetString("commander", "");
 			StringToLowerInPlace(commUnit);
 			if (!commUnit.empty()) {
 				std::map<std::string, int>::iterator it = unitID.find(commUnit);
