@@ -1,15 +1,14 @@
-#include <vector>
 #include <iostream>
-
+#include <vector>
 #include "StdAfx.h"
 #include "LoadScript.h"
-#include "LoadSaveHandler.h"
-#include "FileSystem/FileHandler.h"
-#include "Platform/FileSystem.h"
-#include "Game/Team.h"
-#include "Game/GameSetup.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "Game/GameSetup.h"
+#include "Game/Team.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "System/LoadSaveHandler.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/FileSystem.h"
 
 extern std::string stupidGlobalMapname;
 

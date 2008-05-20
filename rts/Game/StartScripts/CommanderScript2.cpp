@@ -1,10 +1,13 @@
 #include "StdAfx.h"
 #include "CommanderScript2.h"
-#include "Sim/Units/UnitLoader.h"
-#include "TdfParser.h"
 #include "Game/Team.h"
+#include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Sim/Units/UnitLoader.h"
+#include "System/LogOutput.h"
+#include "System/TdfParser.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;
@@ -36,9 +39,16 @@ void CCommanderScript2::Update(void)
 		gs->Team(1)->metalIncome=1000;
 		gs->Team(1)->metalStorage=1000;
 
-		TdfParser p("gamedata/SIDEDATA.TDF");
-		std::string s0 = StringToLower(p.SGetValueDef("armcom", "side0\\commander"));
-		std::string s1 = StringToLower(p.SGetValueDef("corcom", "side1\\commander"));
+		LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		if (!p.Execute() || !p.IsValid())
+			logOutput.Print(p.GetErrorLog());
+		
+		const LuaTable sideTable = p.GetRoot();
+		const std::string s0 = StringToLower(sideTable.SubTable("side0").GetString("commander", ""));
+		const std::string s1 = StringToLower(sideTable.SubTable("side1").GetString("commander", s0)); // default to side 0, in case mod has only 1 side
+
+		if (s0.length() == 0)
+			throw content_error ("Unable to load a commander for SIDE0");
 
 		TdfParser p2;
 		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
