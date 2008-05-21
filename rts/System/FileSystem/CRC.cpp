@@ -5,9 +5,16 @@ extern "C" {
 };
 
 
+static bool crcTableInitialized;
+
+
 /** @brief Construct a new CRC object. */
 CRC::CRC()
 {
+	if (!crcTableInitialized) {
+		crcTableInitialized = true;
+		InitCrcTable();
+	}
 	CrcInit(&crc);
 }
 
