@@ -57,25 +57,20 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	bool InLos(const CUnit* unit, int allyTeam) {
-		if (unit->alwaysVisible)
+	bool InLos(const CWorldObject* object, int allyTeam) {
+		if (object->alwaysVisible)
 			return true;
-		if (unit->isCloaked)
-			return false;
-		if (unit->useAirLos) {
-			const int rowIdx = std::max(0, std::min(airSizeY - 1, ((int(unit->pos.z * invAirDiv))))) * airSizeX;
-			const int colIdx = std::max(0, std::min(airSizeX - 1, ((int(unit->pos.x * invAirDiv)))));
+		if (object->useAirLos) {
+			const int rowIdx = std::max(0, std::min(airSizeY - 1, ((int (object->pos.z * invAirDiv))))) * airSizeX;
+			const int colIdx = std::max(0, std::min(airSizeX - 1, ((int (object->pos.x * invAirDiv)))));
 			const int square = rowIdx + colIdx;
 			#ifdef DEBUG
 			assert(square < airLosMap[allyTeam].size());
 			#endif
 			return !!airLosMap[allyTeam][square];
 		} else {
-			if (unit->isUnderWater && !radarhandler->InRadar(unit, allyTeam))
-				return false;
-
-			const int rowIdx = std::max(0, std::min(losSizeY - 1, ((int) (unit->pos.z * invLosDiv)))) * losSizeX;
-			const int colIdx = std::max(0, std::min(losSizeX - 1, ((int) (unit->pos.x * invLosDiv))));
+			const int rowIdx = std::max(0, std::min(losSizeY - 1, ((int) (object->pos.z * invLosDiv)))) * losSizeX;
+			const int colIdx = std::max(0, std::min(losSizeX - 1, ((int) (object->pos.x * invLosDiv))));
 			const int square = rowIdx + colIdx;
 			#ifdef DEBUG
 			assert(square < losMap[allyTeam].size());
@@ -84,24 +79,12 @@ public:
 		}
 	}
 
-	bool InLos(const CWorldObject* object, int allyTeam) {
-		if (object->useAirLos) {
-			const int rowIdx = std::max(0, std::min(airSizeY - 1, ((int (object->pos.z * invAirDiv))))) * airSizeX;
-			const int colIdx = std::max(0, std::min(airSizeX - 1, ((int (object->pos.x * invAirDiv)))));
-			const int square = rowIdx + colIdx;
-			#ifdef DEBUG
-			assert(square < airLosMap[allyTeam].size());
-			#endif
-			return !!airLosMap[allyTeam][square] | object->alwaysVisible;
-		} else {
-			const int rowIdx = std::max(0, std::min(losSizeY - 1, ((int) (object->pos.z * invLosDiv)))) * losSizeX;
-			const int colIdx = std::max(0, std::min(losSizeX - 1, ((int) (object->pos.x * invLosDiv))));
-			const int square = rowIdx + colIdx;
-			#ifdef DEBUG
-			assert(square < losMap[allyTeam].size());
-			#endif
-			return !!losMap[allyTeam][square] | object->alwaysVisible;
-		}
+	bool InLos(const CUnit* unit, int allyTeam) {
+		if (unit->alwaysVisible)
+			return true;
+		if (unit->isCloaked)
+			return false;
+		return InLos(static_cast<const CWorldObject*>(unit), allyTeam);
 	}
 
 	bool InLos(float3 pos, int allyTeam) {
