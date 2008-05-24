@@ -61,6 +61,9 @@ public:
 	void DrawFeatureS3O(CFeature*);									// was CFeature::DrawS3O()
 	void DrawWorldObjectS3O(CWorldObject*);
 
+	void SetUnitDrawDist(float dist);
+	void SetUnitIconDist(float dist);
+
 	std::vector<CUnit*> drawCloaked;
 	std::vector<CUnit*> drawCloakedS3O;
 
@@ -88,6 +91,7 @@ public:
 	unsigned int specTexSize;
 
 	float unitDrawDist;
+	float unitDrawDistSqr;
 	float unitIconDist;
 	float iconLength;
 

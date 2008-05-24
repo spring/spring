@@ -10,6 +10,9 @@ class CIconData;
 
 
 class CIcon {
+
+	friend class CIconHandler;
+
 	public:
 		CIcon();
 		CIcon(CIconData* data);

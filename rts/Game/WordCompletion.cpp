@@ -34,6 +34,8 @@ void CWordCompletion::Reset()
 	words["/clock"] = sl;
 	words["/cmdcolors "] = sl;
 	words["/ctrlpanel "] = sl;
+	words["/distdraw "] = sl;
+	words["/disticon "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;

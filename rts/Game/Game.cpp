@@ -1743,6 +1743,22 @@ bool CGame::ActionPressed(const Action& action,
 			ParseInputTextGeometry(action.extra);
 		}
 	}
+	else if (cmd == "disticon") {
+		if (!action.extra.empty()) {
+			const int iconDist = atoi(action.extra.c_str());
+			unitDrawer->SetUnitIconDist((float)iconDist);
+			configHandler.SetInt("UnitIconDist", iconDist);
+			logOutput.Print("Set UnitIconDist to %i", iconDist);
+		}
+	}
+	else if (cmd == "distdraw") {
+		if (!action.extra.empty()) {
+			const int drawDist = atoi(action.extra.c_str());
+			unitDrawer->SetUnitDrawDist((float)drawDist);
+			configHandler.SetInt("UnitLodDist", drawDist);
+			logOutput.Print("Set UnitLodDist to %i", drawDist);
+		}
+	}
 	else if (cmd == "lodscale") {
 		if (!action.extra.empty()) {
 			vector<string> args = CSimpleParser::Tokenize(action.extra, 0);
