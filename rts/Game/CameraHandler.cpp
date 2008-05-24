@@ -33,8 +33,7 @@ CCameraHandler::CCameraHandler()
 	camCtrls.push_back(new SmoothController()); // 5
 	camCtrls.push_back(new COverviewController()); // 6
 
-	int mode = configHandler.GetInt("CamMode", 1);
-	mode = std::max(0, std::min(mode, (int)camControllers.size() - 1));
+	const unsigned mode = std::min(static_cast<unsigned>(configHandler.GetInt("CamMode", 1)), camControllers.size()-1);
 	currCamCtrlNum = mode;
 	currCamCtrl = camControllers[currCamCtrlNum];
 
@@ -96,7 +95,7 @@ void CCameraHandler::UpdateCam()
 
 void CCameraHandler::SetCameraMode(unsigned mode)
 {
-	if ((mode >= camControllers.size()) || (mode == currCamCtrlNum)) {
+	if ((mode >= camControllers.size()) || (mode == static_cast<unsigned>(currCamCtrlNum))) {
 		return;
 	}
 
@@ -160,9 +159,9 @@ void CCameraHandler::ToggleState()
 }
 
 
-void CCameraHandler::ToggleOverviewCamera(void)
+void CCameraHandler::ToggleOverviewCamera()
 {
-	const int ovCamNum = (int)camControllers.size() - 1;
+	const unsigned ovCamNum = camControllers.size() - 1;
 	if (controllerStack.empty()) {
 		PushMode();
 		SetCameraMode(ovCamNum);
@@ -176,23 +175,20 @@ void CCameraHandler::ToggleOverviewCamera(void)
 
 void CCameraHandler::SaveView(const std::string& name)
 {
-	if (name.empty()) {
+	if (name.empty())
 		return;
-	}
 	ViewData vd;
-	vd.mode = currCamCtrlNum;
-	currCamCtrl->GetState(vd.state);
+	vd.push_back(currCamCtrlNum);
+	currCamCtrl->GetState(vd);
 	views[name] = vd;
-	logOutput.Print("Saved view: " + name);
 	return;
 }
 
 
 bool CCameraHandler::LoadView(const std::string& name)
 {
-	if (name.empty()) {
+	if (name.empty())
 		return false;
-	}
 
 	std::map<std::string, ViewData>::const_iterator it = views.find(name);
 	if (it == views.end()) {
@@ -201,26 +197,50 @@ bool CCameraHandler::LoadView(const std::string& name)
 	const ViewData& saved = it->second;
 
 	ViewData current;
-	current.mode = currCamCtrlNum;
-	currCamCtrl->GetState(current.state);
-
-	for (it = views.begin(); it != views.end(); ++it) {
-		if (it->second == current) {
-			break;
-		}
+	GetState(current);
+	
+	if (saved == current) // load a view twice to return to old settings
+	{
+		 if (name != "__old_view") // safety: should not happen, but who knows?
+			 return LoadView("__old_view");
+		 else
+			 return false;
 	}
-	if (it == views.end()) {
-		tmpView = current;
+	else
+	{
+		if (name != "__old_view")
+			SaveView("__old_view");
+		return LoadViewData(saved);
 	}
+}
 
-	ViewData effective;
-	if (saved == current) {
-		effective = tmpView;
-	} else {
-		effective = saved;
+void CCameraHandler::GetState(std::vector<float>& fv) const
+{
+	fv.clear();
+	fv.push_back(static_cast<float>(currCamCtrlNum));
+	currCamCtrl->GetState(fv);
+}
+
+bool CCameraHandler::SetState(const std::vector<float>& fv)
+{
+	if (fv.empty())
+		return false;
+	
+	const unsigned savedController = static_cast<unsigned>(fv[0]);
+	if (savedController >= camControllers.size())
+		return false;
+	if (savedController != currCamCtrlNum)
+	{
+		currCamCtrlNum = savedController;
+		currCamCtrl = camControllers[savedController];
+		currCamCtrl->SwitchTo();
 	}
+	return currCamCtrl->SetState(fv, 1);
+}
 
-	return LoadViewData(effective);
+const std::string CCameraHandler::GetCurrentControllerName() const
+{
+	return currCamCtrl->GetName();
 }
 
 void CCameraHandler::PushAction(const Action& action)
@@ -268,10 +288,15 @@ void CCameraHandler::PushAction(const Action& action)
 		}
 	}
 	else if (cmd == "viewsave") {
-		SaveView(action.extra);
+		if (!action.extra.empty())
+		{
+			SaveView(action.extra);
+			logOutput.Print("Saved view: " + action.extra);
+		}
 	}
 	else if (cmd == "viewload") {
-		LoadView(action.extra);
+		if (!LoadView(action.extra))
+			logOutput.Print("Loading view failed!");
 	}
 	else if (cmd == "toggleoverview") {
 		ToggleOverviewCamera();
@@ -280,22 +305,25 @@ void CCameraHandler::PushAction(const Action& action)
 
 bool CCameraHandler::LoadViewData(const ViewData& vd)
 {
-	if (vd.state.size() <= 0) {
+	if (vd.empty())
 		return false;
+
+	const unsigned currentMode = currCamCtrlNum;
+	const unsigned wantedMode = static_cast<unsigned>(vd[0]);
+
+	if ((wantedMode >= 0) && (wantedMode < camControllers.size())) {
+		if (wantedMode != currentMode)
+		{
+			currCamCtrl->SwitchFrom();
+			currCamCtrlNum = wantedMode;
+			currCamCtrl = camControllers[currCamCtrlNum];
+			const bool showMode = (currentMode != wantedMode);
+			currCamCtrl->SwitchTo(showMode);
+			CameraTransition(1.0f);
+		}
+		return currCamCtrl->SetState(vd, 1);
 	}
-
-	int currentMode = currCamCtrlNum;
-
-	if ((vd.mode == -1) ||
-			((vd.mode >= 0) && (vd.mode < camControllers.size()))) {
-		const float3 dummy = currCamCtrl->SwitchFrom();
-		currCamCtrlNum = vd.mode;
-		currCamCtrl = camControllers[currCamCtrlNum];
-		const bool showMode = (currentMode != vd.mode);
-		currCamCtrl->SwitchTo(showMode);
-		CameraTransition(1.0f);
-	}
-
-	return currCamCtrl->SetState(vd.state);
+	else
+		return false;
 }
 

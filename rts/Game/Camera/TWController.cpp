@@ -117,16 +117,16 @@ void CTWController::GetState(std::vector<float>& fv) const
 	fv.push_back(/* 6 */ camera->rot.z);
 }
 
-bool CTWController::SetState(const std::vector<float>& fv)
+bool CTWController::SetState(const std::vector<float>& fv, unsigned startPos)
 {
-	if (fv.size() != 6) {
+	if (fv.size() != 6+startPos) {
 		return false;
 	}
-	pos.x = fv[0];
-	pos.y = fv[1];
-	pos.z = fv[2];
-	camera->rot.x = fv[3];
-	camera->rot.y = fv[4];
-	camera->rot.z = fv[5];
+	pos.x = fv[startPos++];
+	pos.y = fv[startPos++];
+	pos.z = fv[startPos++];
+	camera->rot.x = fv[startPos++];
+	camera->rot.y = fv[startPos++];
+	camera->rot.z = fv[startPos++];
 	return true;
 }

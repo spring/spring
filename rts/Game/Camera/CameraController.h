@@ -33,7 +33,7 @@ public:
 	virtual void SwitchTo(bool showText=true)=0;
 	
 	virtual void GetState(std::vector<float>& fv) const = 0;
-	virtual bool SetState(const std::vector<float>& fv) = 0;
+	virtual bool SetState(const std::vector<float>& fv, unsigned startPos=0) = 0;
 	virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
 
 	/// should this mode appear when we toggle the camera controller?

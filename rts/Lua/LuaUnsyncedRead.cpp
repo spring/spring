@@ -652,18 +652,17 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 
 	lua_newtable(L);
-
+	vector<float> camState;
+	camHandler->GetState(camState);
+	
 	lua_pushstring(L, "mode");
-	lua_pushnumber(L, camHandler->GetCurrentControllerNum());
+	lua_pushnumber(L, camState[0]);
 	lua_rawset(L, -3);
 	lua_pushstring(L, "name");
-	lua_pushstring(L, camHandler->GetCurrentController().GetName().c_str());
+	lua_pushstring(L, camHandler->GetCurrentControllerName().c_str());
 	lua_rawset(L, -3);
-
-
-	vector<float> camState;
-	camHandler->GetCurrentController().GetState(camState);
-	for (int i = 0; i < (int)camState.size(); i++) {
+	
+	for (int i = 1; i < (int)camState.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushnumber(L, camState[i]);
 		lua_rawset(L, -3);

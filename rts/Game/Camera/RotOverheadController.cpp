@@ -112,21 +112,21 @@ void CRotOverheadController::GetState(std::vector<float>& fv) const
 	fv.push_back(/* 10 */ oldHeight);
 }
 
-bool CRotOverheadController::SetState(const std::vector<float>& fv)
+bool CRotOverheadController::SetState(const std::vector<float>& fv, unsigned startPos)
 {
-	if (fv.size() != 10) {
+	if (fv.size() != 10+startPos) {
 		return false;
 	}
-	pos.x = fv[0];
-	pos.y = fv[1];
-	pos.z = fv[2];
-	dir.x = fv[3];
-	dir.y = fv[4];
-	dir.z = fv[5];
-	camera->rot.x = fv[6];
-	camera->rot.y = fv[7];
-	camera->rot.z = fv[8];
-	oldHeight = fv[9];
+	pos.x = fv[startPos++];
+	pos.y = fv[startPos++];
+	pos.z = fv[startPos++];
+	dir.x = fv[startPos++];
+	dir.y = fv[startPos++];
+	dir.z = fv[startPos++];
+	camera->rot.x = fv[startPos++];
+	camera->rot.y = fv[startPos++];
+	camera->rot.z = fv[startPos++];
+	oldHeight = fv[startPos++];
 	return true;
 }
 

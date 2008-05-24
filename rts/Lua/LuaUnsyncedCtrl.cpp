@@ -607,16 +607,16 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 
 	const int table = 1;
 	const float camTime = (float)lua_tonumber(L, 2);
+	vector<float> camState;
 
 	lua_pushstring(L, "mode");
 	lua_gettable(L, table);
 	if (lua_isnumber(L, -1)) {
 		const int camNum = (int)lua_tonumber(L, -1);
-		camHandler->SetCameraMode(camNum);
+		camState.push_back(camNum);
 		camHandler->CameraTransition(camTime);
 	}
 
-	vector<float> camState;
 	int index = 1;
 	while (true) {
 		lua_rawgeti(L, table, index);
@@ -631,7 +631,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, camHandler->GetCurrentController().SetState(camState));
+	lua_pushboolean(L, camHandler->SetState(camState));
 	camHandler->CameraTransition(camTime);
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {

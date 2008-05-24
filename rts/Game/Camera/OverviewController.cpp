@@ -78,13 +78,13 @@ void COverviewController::GetState(std::vector<float>& fv) const
 	fv.push_back(/* 3 */ pos.z);
 }
 
-bool COverviewController::SetState(const std::vector<float>& fv)
+bool COverviewController::SetState(const std::vector<float>& fv, unsigned startPos)
 {
-	if (fv.size() != 3) {
+	if (fv.size() != 3+startPos) {
 		return false;
 	}
-	pos.x = fv[0];
-	pos.y = fv[1];
-	pos.z = fv[2];
+	pos.x = fv[startPos++];
+	pos.y = fv[startPos++];
+	pos.z = fv[startPos++];
 	return true;
 }
