@@ -28,7 +28,7 @@ public:
 	void SwitchTo(bool showText);
 
 	void GetState(std::vector<float>& fv) const;
-	bool SetState(const std::vector<float>& fv);
+	bool SetState(const std::vector<float>& fv, unsigned startPos=0);
 
 	bool flipped;
 

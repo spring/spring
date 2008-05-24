@@ -164,19 +164,19 @@ void COverheadController::GetState(std::vector<float>& fv) const
 	fv.push_back(/* 9 */ flipped ? +1.0f : -1.0f);
 }
 
-bool COverheadController::SetState(const std::vector<float>& fv)
+bool COverheadController::SetState(const std::vector<float>& fv, unsigned startPos)
 {
-	if (fv.size() != 9) {
+	if (fv.size() != 9+startPos) {
 		return false;
 	}
-	pos.x   =  fv[0];
-	pos.y   =  fv[1];
-	pos.z   =  fv[2];
-	dir.x   =  fv[3];
-	dir.y   =  fv[4];
-	dir.z   =  fv[5];
-	height  =  fv[6];
-	zscale  =  fv[7];
-	flipped = (fv[8] > 0.0f);
+	pos.x   =  fv[startPos++];
+	pos.y   =  fv[startPos++];
+	pos.z   =  fv[startPos++];
+	dir.x   =  fv[startPos++];
+	dir.y   =  fv[startPos++];
+	dir.z   =  fv[startPos++];
+	height  =  fv[startPos++];
+	zscale  =  fv[startPos++];
+	flipped = (fv[startPos++] > 0.0f);
 	return true;
 }

@@ -426,39 +426,39 @@ void CFreeController::GetState(std::vector<float>& fv) const
 }
 
 
-bool CFreeController::SetState(const std::vector<float>& fv)
+bool CFreeController::SetState(const std::vector<float>& fv, unsigned startPos)
 {
-	if (fv.size() != 27) {
+	if (fv.size() != 27+startPos) {
 		return false;
 	}
-	pos.x = fv[0];
-	pos.y = fv[1];
-	pos.z = fv[2];
-	dir.x = fv[3];
-	dir.y = fv[4];
-	dir.z = fv[5];
-	camera->rot.x = fv[6];
-	camera->rot.y = fv[7];
-	camera->rot.z = fv[8];
+	pos.x = fv[startPos++];
+	pos.y = fv[startPos++];
+	pos.z = fv[startPos++];
+	dir.x = fv[startPos++];
+	dir.y = fv[startPos++];
+	dir.z = fv[startPos++];
+	camera->rot.x = fv[startPos++];
+	camera->rot.y = fv[startPos++];
+	camera->rot.z = fv[startPos++];
 
-	fov         =  fv[9];
-	gndOffset   =  fv[10];
-	gravity     =  fv[11];
-	slide       =  fv[12];
-	scrollSpeed =  fv[13];
-	tiltSpeed   =  fv[14];
-	velTime     =  fv[15];
-	avelTime    =  fv[16];
-	autoTilt    =  fv[17];
-	goForward   = (fv[18] > 0.0f);
-	invertAlt   = (fv[19] > 0.0f);
-	gndLock     = (fv[20] > 0.0f);
-	prevVel.x   =  fv[21];
-	prevVel.y   =  fv[22];
-	prevVel.z   =  fv[23];
-	prevAvel.x  =  fv[24];
-	prevAvel.y  =  fv[25];
-	prevAvel.z  =  fv[26];
+	fov         =  fv[startPos++];
+	gndOffset   =  fv[startPos++];
+	gravity     =  fv[startPos++];
+	slide       =  fv[startPos++];
+	scrollSpeed =  fv[startPos++];
+	tiltSpeed   =  fv[startPos++];
+	velTime     =  fv[startPos++];
+	avelTime    =  fv[startPos++];
+	autoTilt    =  fv[startPos++];
+	goForward   = (fv[startPos++] > 0.0f);
+	invertAlt   = (fv[startPos++] > 0.0f);
+	gndLock     = (fv[startPos++] > 0.0f);
+	prevVel.x   =  fv[startPos++];
+	prevVel.y   =  fv[startPos++];
+	prevVel.z   =  fv[startPos++];
+	prevAvel.x  =  fv[startPos++];
+	prevAvel.y  =  fv[startPos++];
+	prevAvel.z  =  fv[startPos++];
 
 	return true;
 }
