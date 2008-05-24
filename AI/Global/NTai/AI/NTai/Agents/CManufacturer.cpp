@@ -1649,7 +1649,7 @@ namespace ntai {
 						GS->SetFigureColor(bGroup,0,0,0,0.5f);
 						break;
 					}
-				case '¬':// the lightning power symbol
+				case '¬':// the lightning power symbol  FIXME ???
 					{
 						Group = GS->CreateLineFigure(
 							float3(loc.x + pos+(Width*0.3f), loc.y, loc.z+(Height*0.1f)),

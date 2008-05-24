@@ -158,6 +158,7 @@ extern string stupidGlobalMapname;
 
 CGame* game = NULL;
 
+
 CR_BIND(CGame, (std::string(""), std::string(""), NULL, NULL));
 
 CR_REG_METADATA(CGame,(
@@ -289,6 +290,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	camHandler = SAFE_NEW CCameraHandler();
 	selectionKeys = SAFE_NEW CSelectionKeyHandler();
 	tooltip = SAFE_NEW CTooltipConsole();
+	iconHandler = SAFE_NEW CIconHandler();
 
 	ENTER_MIXED;
 
@@ -382,7 +384,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	ENTER_MIXED;
 	uh = SAFE_NEW CUnitHandler();
-	iconHandler = SAFE_NEW CIconHandler();
 	unitDrawer = SAFE_NEW CUnitDrawer();
 	fartextureHandler = SAFE_NEW CFartextureHandler();
 	modelParser = SAFE_NEW C3DModelParser();
@@ -560,6 +561,7 @@ CGame::~CGame()
 	delete hpiHandler;         hpiHandler         = NULL;
 	delete archiveScanner;     archiveScanner     = NULL;
 	delete modelParser;        modelParser        = NULL;
+	delete iconHandler;        iconHandler        = NULL;
 	delete fartextureHandler;  fartextureHandler  = NULL;
 	delete camera;             camera             = NULL;
 	delete cam2;               cam2               = NULL;
@@ -577,12 +579,14 @@ CGame::~CGame()
 	CColorMap::DeleteColormaps();
 }
 
+
 void CGame::PostLoad()
 {
 	if (gameServer) {
 		gameServer->PostLoad(lastTick, gs->frameNum);
 	}
 }
+
 
 void CGame::ResizeEvent()
 {
@@ -794,8 +798,8 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	// try the input receivers
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->KeyPressed(k, isRepeat)) {
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+		if ((*ri) && (*ri)->KeyPressed(k, isRepeat)) {
 			return 0;
 		}
 	}
@@ -816,16 +820,17 @@ int CGame::KeyReleased(unsigned short k)
 {
 	//	keys[k] = false;
 
-	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190) )){
+	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) {
 		return 0;
 	}
 
 	// try the input receivers
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->KeyReleased(k))
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+		if ((*ri) && (*ri)->KeyReleased(k)) {
 			return 0;
+		}
 	}
 
 	// try our list of actions
@@ -2170,9 +2175,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		else
 			logOutput.Print("No definition Editing");
 	}
-	else if (action.command == "luarules" && (gs->frameNum > 1)) {
+	else if ((action.command == "luarules") && (gs->frameNum > 1)) {
 		if (gs->useLuaRules) {
-			if (action.extra == "reload") {
+			if ((action.extra == "reload") && (playernum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to reload synced scripts");
 				} else {
@@ -2185,7 +2190,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 					}
 				}
 			}
-			else if (action.extra == "disable") {
+			else if ((action.extra == "disable") && (playernum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
@@ -2201,9 +2206,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 	}
-	else if (action.command == "luagaia" && (gs->frameNum > 1)) {
+	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
 		if (gs->useLuaGaia) {
-			if (action.extra == "reload") {
+			if ((action.extra == "reload") && (playernum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to reload synced scripts");
 				} else {
@@ -2216,7 +2221,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 					}
 				}
 			}
-			else if (action.extra == "disable") {
+			else if ((action.extra == "disable") && (playernum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
@@ -3700,6 +3705,9 @@ void CGame::ClientReadNet()
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
 				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
+					// FIXME - need to reset unit allyTeams
+					//       - need to reset unit texture for 3do
+					//       - need a call-in for lua and AIs
 					gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);

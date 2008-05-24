@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-// LuaRules.cpp: implementation of the CLuaRules class.
+// LuaHandle.cpp: implementation of the CLuaHandle class.
 //
 //////////////////////////////////////////////////////////////////////
 

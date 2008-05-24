@@ -326,7 +326,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 				}
 
 				float sqDist = (unit->pos-camera->pos).SqLength();
-				float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+				float iconDistMult = unit->unitDef->iconType->GetDistance();
 				float realIconLength = iconLength * (iconDistMult * iconDistMult);
 				if (sqDist>realIconLength) {
 					drawIcon.push_back(unit);
@@ -342,7 +342,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 						DrawUnit(unit);
 					}
 
-					if ((sqDist < (unitDrawDist * unitDrawDist * 500)) && showHealthBars) {
+					if (showHealthBars && (sqDist < (unitDrawDist * unitDrawDist * 500))) {
 						drawStat.push_back(unit);
 					}
 				}
@@ -354,7 +354,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 					// it's a building we've had LOS on once,
 					// add it to the vector of cloaked units
 					float sqDist = (unit->pos-camera->pos).SqLength();
-					float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+					float iconDistMult = unit->unitDef->iconType->GetDistance();
 					float realIconLength = iconLength * (iconDistMult * iconDistMult);
 
 					if (sqDist < realIconLength) {
@@ -595,7 +595,7 @@ void CUnitDrawer::DrawShadowPass(void)
 			float farLength = unit->sqRadius * (unitDrawDist * unitDrawDist);
 
 			if (sqDist < farLength) {
-				float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
+				float iconDistMult = unit->unitDef->iconType->GetDistance();
 				float realIconLength = iconLength * (iconDistMult * iconDistMult);
 
 				if (sqDist < realIconLength) {
@@ -656,18 +656,12 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 {
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	std::string iconType;
-	if(asRadarBlip){
-		iconType="default";
+	const CIconData* iconData;
+	if (asRadarBlip) {
+		iconData = iconHandler->GetDefaultIconData();
 	} else {
-		iconType=unit->unitDef->iconType;
+		iconData = unit->unitDef->iconType.GetIconData();
 	}
-
-	// Fetch the icon information.
-	CIcon* icon=iconHandler->GetIcon(iconType);
-
-	unsigned char color[4];
-	color[3]=255;
 
 	// Calculate the icon size. It scales with:
 	//  * The square root of the camera distance.
@@ -677,25 +671,23 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	if (gu->spectatingFullView) {
 		pos = unit->midPos;
 	} else {
-		pos = helper->GetUnitErrorPos(unit,gu->myAllyTeam);
+		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
-	float dist=sqrt((pos-camera->pos).Length());
-	float scale=0.4f*icon->size*dist;
-	if (icon->radiusAdjust && !asRadarBlip) {
-		scale=scale*unit->radius/30; // I take the standard unit radius to be 30 ... call it an educated guess. (Teake Nutma)
+	float dist = sqrt((pos - camera->pos).Length());
+	float scale = 0.4f * iconData->GetSize() * dist;
+	if (iconData->GetRadiusAdjust() && !asRadarBlip) {
+		// I take the standard unit radius to be 30
+		// ... call it an educated guess. (Teake Nutma)
+		scale *= (unit->radius / 30);
 	}
 
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
 	if (unit->commandAI->selected) {
-		color[0] = 255;
-		color[1] = 255;
-		color[2] = 255;
+		glColor3ub(255, 255, 255);
 	} else {
-		color[0] = gs->Team(unit->team)->color[0];
-		color[1] = gs->Team(unit->team)->color[1];
-		color[2] = gs->Team(unit->team)->color[2];
+		glColor3ubv(gs->Team(unit->team)->color);
 	}
 
 	// If the icon is partly under the ground, move it up.
@@ -704,15 +696,18 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 		pos.y = (h + scale);
 	}
 
+	// calculate the vertices
+	const float3 dy = camera->up    * scale;
+	const float3 dx = camera->right * scale;
+	const float3 vn = pos - dx;
+	const float3 vp = pos + dx;
+	const float3 vnn = vn - dy;
+	const float3 vpn = vp - dy;
+	const float3 vnp = vn + dy;
+	const float3 vpp = vp + dy;
+	
 	// Draw the icon.
-	glBindTexture(GL_TEXTURE_2D, icon->texture);
-	va = GetVertexArray();
-	va->Initialize();
-	va->AddVertexTC(pos + camera->up * scale + camera->right * scale, 1, 0, color);
-	va->AddVertexTC(pos - camera->up * scale + camera->right * scale, 1, 1, color);
-	va->AddVertexTC(pos - camera->up * scale - camera->right * scale, 0, 1, color);
-	va->AddVertexTC(pos + camera->up * scale - camera->right * scale, 0, 0, color);
-	va->DrawArrayTC(GL_QUADS);
+	iconData->Draw(vnn, vpn, vnp, vpp);
 }
 
 
@@ -1684,10 +1679,6 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 }
 
 
-
-
-
-
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	// draw the collision volume
@@ -1748,6 +1739,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 		glPopMatrix();
 	}
 }
+
 
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 {
@@ -1821,13 +1813,13 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 }
 
 
-
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
 	CMatrix44f m;
 	unit->GetTransformMatrix(m);
 	glMultMatrixf(&m[0]);
 }
+
 
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit->id)) {
@@ -1840,6 +1832,7 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 		unit->localmodel->DrawLOD(unit->currentLOD);
 	}
 }
+
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
@@ -1857,6 +1850,7 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 	DrawUnitDebug(unit);
 	glPopMatrix();
 }
+
 
 void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
 {
@@ -1881,6 +1875,7 @@ void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned 
 	glPopMatrix();
 }
 
+
 void CUnitDrawer::DrawUnitRaw(CUnit* unit)
 {
 	glPushMatrix();
@@ -1888,6 +1883,7 @@ void CUnitDrawer::DrawUnitRaw(CUnit* unit)
 	DrawUnitModel(unit);
 	glPopMatrix();
 }
+
 
 void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 {
@@ -1897,6 +1893,7 @@ void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 		unit->localmodel->DrawLOD(unit->currentLOD);
 	}
 }
+
 
 void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
 {
@@ -1915,6 +1912,7 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 
 	glPopMatrix();
 }
+
 
 void CUnitDrawer::DrawUnitStats(CUnit* unit)
 {
@@ -2007,6 +2005,7 @@ void CUnitDrawer::DrawUnitS3O(CUnit* unit)
 	SetS3OTeamColour(unit->team);
 	DrawUnitNow(unit);
 }
+
 
 void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
 {

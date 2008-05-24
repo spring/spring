@@ -1614,9 +1614,8 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 	//if (sqDist >= farLength) {
 	//	return NULL;
 	//}
-	const float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
-	const float realIconLength =
-		unitDrawer->iconLength * (iconDistMult * iconDistMult);
+	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
+	const float realIconLength = unitDrawer->iconLength * iconDistSqrMult;
 	if (sqDist >= realIconLength) {
 		return NULL;
 	}

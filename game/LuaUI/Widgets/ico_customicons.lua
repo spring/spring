@@ -32,6 +32,41 @@ local commanderUnitDefs = {}
 
 --------------------------------------------------------------------------------
 
+local iconDir = 'LuaUI/Icons/'
+
+local unitIcons = {
+--	{ name = 'default',
+		-- Missing parameters get evualeted to the following by Spring:
+		--   bitmap = <standard radar dot>
+		--   size = 1.0,
+		--   radiusadjust = false,
+		--   distance = 1.0,
+--	},
+	{ name = 'default',             size = 1.0, texture = ''                            },
+	{ name = 'star.user',           size = 1.5, texture = iconDir..'star.png'           },
+	{ name = 'star-dark.user',      size = 1.4, texture = iconDir..'star-dark.png'      },
+	{ name = 'tri-up.user',         size = 1.5, texture = iconDir..'tri-up.png'         },
+	{ name = 'tri-down.user',       size = 1.5, texture = iconDir..'tri-down.png'       },
+	{ name = 'diamond.user',        size = 1.0, texture = iconDir..'diamond.png'        },
+	{ name = 'square.user',         size = 1.0, texture = iconDir..'square.png'         },
+	{ name = 'square_+.user',       size = 1.0, texture = iconDir..'square_+.png'       },
+	{ name = 'square_x.user',       size = 1.0, texture = iconDir..'square_x.png'       },
+	{ name = 'm.user',              size = 1.0, texture = iconDir..'m.png'              },
+	{ name = 'e.user',              size = 1.0, texture = iconDir..'e.png'              },
+	{ name = 'hemi-up.user',        size = 1.2, texture = iconDir..'hemi-up.png'        },
+	{ name = 'hemi-down.user',      size = 1.2, texture = iconDir..'hemi-down.png'      },
+	{ name = 'cross.user',          size = 1.2, texture = iconDir..'cross.png'          },
+	{ name = 'hourglass.user',      size = 1.4, texture = iconDir..'hourglass.png'      },
+	{ name = 'hourglass-side.user', size = 1.4, texture = iconDir..'hourglass-side.png' },
+	{ name = 'sphere.user',         size = 1.0, texture = iconDir..'sphere.png'         },
+	{ name = 'triangle-down.user',  size = 1.0, texture = iconDir..'triangle-down.png'  },
+	{ name = 'triangle-up.user',    size = 1.0, texture = iconDir..'triangle-up.png'    },
+	{ name = 'x.user',              size = 1.4, texture = iconDir..'x.png'              },
+}
+
+
+--------------------------------------------------------------------------------
+
 function widget:Update(deltaTime)
   -- animated Commander(s) icon
   if (commanderUnitDefs) then
@@ -56,12 +91,19 @@ function widget:Shutdown()
       Spring.SetUnitDefIcon(udid, ud.origIconType)
     end
   end
+  for _,icon in pairs(unitIcons) do
+    Spring.FreeUnitIcon(icon.name)
+  end
 end
 
 
 --------------------------------------------------------------------------------
-
 function widget:Initialize()
+  -- add the unit icons
+  for _,icon in pairs(unitIcons) do
+    Spring.AddUnitIcon(icon.name, icon.texture, icon.size)
+  end
+
   -- Setup the unitdef icons
   for udid,ud in pairs(UnitDefs) do
     if (ud ~= nil) then

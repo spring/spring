@@ -78,6 +78,38 @@ LuaParser::LuaParser(const string& _fileName,
                      const string& _accessModes)
 : fileName(_fileName),
   fileModes(_fileModes),
+  textChunk(""),
+  accessModes(_accessModes),
+  valid(false),
+  initDepth(0),
+  rootRef(LUA_NOREF),
+  currentRef(LUA_NOREF)
+{
+	L = lua_open();
+
+	if (L != NULL) {
+		SetupStdLibs(L);
+
+		GetTable("Spring");
+		AddFunc("Echo", Echo);
+		AddFunc("TimeCheck", TimeCheck);
+		EndTable();
+
+		GetTable("VFS");
+		AddFunc("DirList",    DirList);
+		AddFunc("Include",    Include);
+		AddFunc("LoadFile",   LoadFile);
+		AddFunc("FileExists", FileExists);
+		EndTable();
+	}
+}
+
+
+LuaParser::LuaParser(const string& _textChunk,
+                     const string& _accessModes)
+: fileName(""),
+  fileModes(""),
+  textChunk(_textChunk),
   accessModes(_accessModes),
   valid(false),
   initDepth(0),
@@ -297,20 +329,28 @@ bool LuaParser::Execute()
 	initDepth = -1;
 
 	string code;
-	CFileHandler fh(fileName, fileModes);
-	if (!fh.LoadStringData(code)) {
-		errorLog = "could not open file: " + fileName;
-		lua_close(L);
-		L = NULL;
-		return false;
+	string codeLabel;
+	if (textChunk.size() > 0) {
+		code = textChunk;
+		codeLabel = "text chunk";
+	}
+	else {
+		codeLabel = fileName;
+		CFileHandler fh(fileName, fileModes);
+		if (!fh.LoadStringData(code)) {
+			errorLog = "could not open file: " + fileName;
+			lua_close(L);
+			L = NULL;
+			return false;
+		}
 	}
 
 	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), fileName.c_str());
+	error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
 	if (error != 0) {
 		errorLog = lua_tostring(L, -1);
 		logOutput.Print("error = %i, %s, %s\n",
-		                error, fileName.c_str(), errorLog.c_str());
+		                error, codeLabel.c_str(), errorLog.c_str());
 		lua_close(L);
 		L = NULL;
 		return false;

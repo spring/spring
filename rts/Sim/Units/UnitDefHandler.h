@@ -28,7 +28,7 @@ public:
 	int numUnitDefs;
 	std::map<std::string, int> unitID;
 	std::map<int, std::set<int> > decoyMap;
-	std::set<int> commanderIDs;
+	std::set<int> startUnitIDs;
 
 	CUnitDefHandler(void);
 	~CUnitDefHandler(void);
@@ -51,7 +51,7 @@ protected:
 
 	void CleanBuildOptions();
 
-	void FindCommanders();
+	void FindStartUnits();
 
 	void AssignTechLevel(UnitDef& ud, int level);
 

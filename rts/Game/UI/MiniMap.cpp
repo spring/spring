@@ -1393,7 +1393,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 }
 
 
-inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
+inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 
@@ -1403,16 +1403,16 @@ inline CIcon* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 		if ((losStatus & LOS_INLOS) ||
 				((losStatus & prevMask) == prevMask) ||
 				gu->spectatingFullView) {
-			CIcon* icon = iconHandler->GetIcon(unit->unitDef->iconType);
-			if (icon->radiusAdjust) {
+			const CIconData* iconData = unit->unitDef->iconType.GetIconData();
+			if (iconData->GetRadiusAdjust()) {
 				scale *= (unit->radius / 30.0f);
 			}
-			return icon;
+			return iconData;
 		}
 	}
 
 	if (unit->losStatus[gu->myAllyTeam] & LOS_INRADAR) {
-		return iconHandler->GetIcon("default");
+		return iconHandler->GetDefaultIconData();
 	}
 
 	return NULL;
@@ -1433,8 +1433,8 @@ void CMiniMap::DrawUnit(CUnit* unit)
 
 	// includes the visibility check
 	float iconScale;
-	CIcon* icon = GetUnitIcon(unit, iconScale);
-	if (icon == NULL) {
+	const CIconData* iconData = GetUnitIcon(unit, iconScale);
+	if (iconData == NULL) {
 		return;
 	}
 
@@ -1452,7 +1452,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 	}
 	else {
 		if (simpleColors) {
-			if (unit->team==gu->myTeam) {
+			if (unit->team == gu->myTeam) {
 				glColor3ubv(myColor);
 			} else if (gs->Ally(gu->myAllyTeam, unit->allyteam)) {
 				glColor3ubv(allyColor);
@@ -1464,17 +1464,16 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		}
 	}
 
-	iconScale *= icon->size;
+	iconScale *= iconData->GetSize();
 	const float sizeX = (iconScale * unitSizeX);
 	const float sizeY = (iconScale * unitSizeY);
 
-	glBindTexture(GL_TEXTURE_2D, icon->texture);
-	glBegin(GL_QUADS);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(pos.x + sizeX, pos.z + sizeY);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(pos.x + sizeX, pos.z - sizeY);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(pos.x - sizeX, pos.z - sizeY);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(pos.x - sizeX, pos.z + sizeY);
-	glEnd();
+	const float x0 = pos.x - sizeX;
+	const float x1 = pos.x + sizeX;
+	const float y0 = pos.z - sizeY;
+	const float y1 = pos.z + sizeY;
+
+	iconData->Draw(x0, y0, x1, y1);
 }
 
 

@@ -6,7 +6,6 @@
 #
 #   SetOutPath "$INSTDIR"
 #   File "..\game\gui.lua"
-#   File "..\game\usericons.tdf"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
 #   File /r /x .svn /x Config\*.lua "..\game\LuaUI\*.*"
@@ -14,7 +13,6 @@
 # !else
 #
 #   Delete "$INSTDIR\gui.lua"
-#   Delete "$INSTDIR\usericons.tdf"
 #   RmDir /r "$INSTDIR\LuaUI"
 #
 # !endif
@@ -65,7 +63,6 @@ print('!ifdef INSTALL')
 print('')
 print('  SetOutPath "$INSTDIR"')
 print('  File "..\\game\\gui.lua"')
-print('  File "..\\game\\usericons.tdf"')
 print('')
 for d in dirs:
   print('  SetOutPath "$INSTDIR\\' + osName(d) + '"')
@@ -77,7 +74,6 @@ print('!else')
 
 print('')
 print('  Delete "$INSTDIR\\gui.lua"')
-print('  Delete "$INSTDIR\\usericons.tdf"')
 print('')
 for d in dirs:
   for f in dirs[d]:

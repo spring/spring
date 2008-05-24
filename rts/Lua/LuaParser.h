@@ -93,6 +93,8 @@ class LuaParser {
 		LuaParser(const string& fileName,
 		          const string& fileModes,
 		          const string& accessModes);
+		LuaParser(const string& textChunk,
+		          const string& accessModes);
 		~LuaParser();
 
 		bool Execute();
@@ -123,6 +125,7 @@ class LuaParser {
 	public:
 		const string fileName;
 		const string fileModes;
+		const string textChunk;
 		const string accessModes;
 
 	private:

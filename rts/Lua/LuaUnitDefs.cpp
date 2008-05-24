@@ -23,6 +23,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -313,8 +314,8 @@ static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		const string& iconType = *((const string*)data);
-		lua_pushstring(L, iconType.c_str());
+		const CIcon& iconType = *((const CIcon*)data);
+		lua_pushstring(L, iconType->GetName().c_str());
 		return 1;
 	}
 	return 0;

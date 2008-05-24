@@ -514,7 +514,7 @@ float CAICallback::GetUnitExperience(int unitid)	//how experienced the unit is (
 	verify ();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit=uh->units[unitid];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
 			return unit->experience;
 		}
 	}
@@ -672,7 +672,8 @@ int CAICallback::GetEnemyUnits(int* units)
 	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) &&
+		    (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
 				units[a++] = u->id;
 			}

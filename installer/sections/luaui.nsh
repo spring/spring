@@ -5,7 +5,6 @@
 
   SetOutPath "$INSTDIR"
   File "..\game\gui.lua"
-  File "..\game\usericons.tdf"
 
   SetOutPath "$INSTDIR\LuaUI\Images\"
   File "..\game\LuaUI\Images\players.png"
@@ -112,7 +111,6 @@ ${EndIf}
 !else
 
   Delete "$INSTDIR\gui.lua"
-  Delete "$INSTDIR\usericons.tdf"
 
   Delete "$INSTDIR\LuaUI\Images\players.png"
   Delete "$INSTDIR\LuaUI\Images\highlight_strip.png"
