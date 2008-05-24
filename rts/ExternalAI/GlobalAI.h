@@ -52,7 +52,6 @@ public:
 	ISLOADSUPPORTED _IsLoadSupportedFunc;
 
 private:
-	void LoadABICAI(int, const char*, bool, bool);
 	void LoadCPPAI(int, const char*, bool, bool, bool);
 	void LoadJavaProxyAI();
 };

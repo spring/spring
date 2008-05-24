@@ -7,7 +7,6 @@
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
-#include "ExternalAI/GlobalAICInterface/AbicProxy.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 #include "Sim/Units/Unit.h"
@@ -133,11 +132,11 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 	IsCInterface = (_IsCInterfaceFunc != 0 && _IsCInterfaceFunc() == 1);
 	IsLoadSupported = (_IsLoadSupportedFunc != 0 && _IsLoadSupportedFunc());
 
-	if (IsCInterface) {
-		LoadABICAI(team, botLibName, postLoad, IsLoadSupported);
-	} else {
+	//if (IsCInterface) {
+	//	LoadABICAI(team, botLibName, postLoad, IsLoadSupported);
+	//} else {
 		LoadCPPAI(team, botLibName, postLoad, IsLoadSupported, isJavaAI);
-	}
+	//}
 
 
 	if (postLoad && !IsLoadSupported) {
@@ -174,26 +173,6 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 		}
 	}
 }
-
-
-
-void CGlobalAI::LoadABICAI(int team, const char* botLibName, bool postLoad, bool loadSupported)
-{
-	logOutput << botLibName << " has a C interface (ABIC)\n";
-
-	// keep as AbicProxy, so InitAI works ok
-	AbicProxy* ai = SAFE_NEW AbicProxy;
-	this->ai = ai;
-
-	callback = SAFE_NEW CGlobalAICallback(this);
-
-	if (!postLoad || (postLoad && !loadSupported)) {
-		try {
-			ai->InitAI(botLibName, callback, team);
-		} HANDLE_EXCEPTION;
-	}
-}
-
 
 void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool loadSupported, bool isJavaAI)
 {
