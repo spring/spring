@@ -19,6 +19,11 @@ class CIconData {
 		          bool ownTexture);
 		~CIconData();
 
+		void Ref();
+		void UnRef();
+
+		void CopyData(const CIconData* iconData);
+
 		void BindTexture() const;
 		void Draw(float x0, float y0, float x1, float y1) const;
 		void Draw(const float3& botLeft, const float3& botRight,
@@ -29,11 +34,6 @@ class CIconData {
 		inline const float        GetDistance()     const { return distance;     }
 		inline const float        GetDistanceSqr()  const { return distSqr;      }
 		inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
-
-		void CopyData(const CIconData* iconData);
-
-		void Ref();
-		void UnRef();
 
 	private:
 		bool ownTexture;
@@ -60,12 +60,13 @@ class CIconHandler {
 								 const std::string& textureName,
 								 float size, float distance,
 								 bool radiusAdjust);
+
 		bool FreeIcon(const std::string& iconName);
 
 		CIcon GetIcon(const std::string& iconName) const;
-		CIcon GetDefaultIcon() const {
-			return CIcon(const_cast<CIconData*>(defIconData));
-		}
+
+		CIcon GetDefaultIcon() const { return CIcon(defIconData); }
+
 		const CIconData* GetDefaultIconData() const { return defIconData; }
 
 	private:

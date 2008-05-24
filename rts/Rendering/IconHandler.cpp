@@ -217,7 +217,7 @@ CIcon::CIcon()
 
 CIcon::CIcon(CIconData* d)
 {
-	data = d;
+	data = d ? d : &CIconHandler::safetyData;
 	data->Ref();
 }
 
