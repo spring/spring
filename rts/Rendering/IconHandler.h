@@ -13,6 +13,7 @@
 
 class CIconData {
 	public:
+		CIconData(); // for CIconHandler::safetyData
 		CIconData(const std::string& name, unsigned int texID,
 		          float size, float distance, bool radiusAdjust,
 		          bool ownTexture);
@@ -48,6 +49,9 @@ class CIconData {
 
 
 class CIconHandler {
+
+	friend class CIcon;		
+
 	public:
 		CIconHandler(void);
 		~CIconHandler(void);
@@ -63,7 +67,7 @@ class CIconHandler {
 			return CIcon(const_cast<CIconData*>(defIconData));
 		}
 		const CIconData* GetDefaultIconData() const { return defIconData; }
-		
+
 	private:
 		bool LoadIcons(const std::string& filename);
 		unsigned int GetDefaultTexture();
@@ -72,8 +76,11 @@ class CIconHandler {
 		unsigned int defTexID;
 		CIconData* defIconData;
 
-		typedef std::map<std::string, CIconData*> IconMap;
+		typedef std::map<std::string, CIcon> IconMap;
 		IconMap iconMap;
+
+	private:
+		static CIconData safetyData;
 };
 
 

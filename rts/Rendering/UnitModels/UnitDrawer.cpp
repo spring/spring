@@ -69,9 +69,8 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler = SAFE_NEW CTextureHandler;
 	}
 
-	unitDrawDist = configHandler.GetInt("UnitLodDist",200);
-	unitIconDist = configHandler.GetInt("UnitIconDist",200);
-	iconLength = 750 * unitIconDist * unitIconDist;
+	SetUnitDrawDist((float)configHandler.GetInt("UnitLodDist",  200));
+	SetUnitIconDist((float)configHandler.GetInt("UnitIconDist", 200));
 
 	specTexSize = configHandler.GetInt("CubeTexSizeSpecular", 128);
 	reflTexSize = configHandler.GetInt("CubeTexSizeReflection", 128);
@@ -183,6 +182,20 @@ CUnitDrawer::~CUnitDrawer(void)
 		delete *gbi;
 		gbi = ghostBuildingsS3O.erase(gbi);
 	}
+}
+
+
+void CUnitDrawer::SetUnitDrawDist(float dist)
+{
+	unitDrawDist = dist;
+	unitDrawDistSqr = dist * dist;
+}
+
+
+void CUnitDrawer::SetUnitIconDist(float dist)
+{
+	unitIconDist = dist;
+	iconLength = 750 * unitIconDist * unitIconDist;
 }
 
 
@@ -335,14 +348,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 				else {
 					unit->isIcon = false;
 
-					float farLength = unit->sqRadius * (unitDrawDist * unitDrawDist);
-					if (sqDist>farLength) {
+					float farLength = unit->sqRadius * unitDrawDistSqr;
+					if (sqDist > farLength) {
 						drawFar.push_back(unit);
 					} else {
 						DrawUnit(unit);
 					}
 
-					if (showHealthBars && (sqDist < (unitDrawDist * unitDrawDist * 500))) {
+					if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
 						drawStat.push_back(unit);
 					}
 				}
@@ -592,7 +605,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 			// FIXME: test against the shadow projection intersection
 			float sqDist = (unit->pos-camera->pos).SqLength();
-			float farLength = unit->sqRadius * (unitDrawDist * unitDrawDist);
+			float farLength = unit->sqRadius * unitDrawDistSqr;
 
 			if (sqDist < farLength) {
 				float iconDistMult = unit->unitDef->iconType->GetDistance();
