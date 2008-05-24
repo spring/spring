@@ -578,13 +578,10 @@ unsigned short CUnit::CalcLosStatus(int at)
 {
 	const unsigned short currStatus = losStatus[at];
 
-	const bool inLos = loshandler->InLos(this, at);
-	const bool inRadar = inLos || radarhandler->InRadar(this, at);
-
 	unsigned short newStatus = currStatus;
 	unsigned short mask = ~(currStatus >> 8);
 
-	if (inLos) {
+	if (loshandler->InLos(this, at)) {
 		if (!beingBuilt) {
 			newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
 			                      LOS_PREVLOS | LOS_CONTRADAR));
@@ -595,7 +592,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
 		}
 	}
-	else if (inRadar) {
+	else if (radarhandler->InRadar(this, at)) {
 		newStatus |=  (mask & LOS_INRADAR);
 		newStatus &= ~(mask & LOS_INLOS);
 	}

@@ -52,6 +52,7 @@ using namespace std;
 #include "Game/UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/FontTexture.h"
 #include "Sim/Misc/LosHandler.h"
@@ -2347,21 +2348,18 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
 	}
 	const int unitDefID = (int)lua_tonumber(L, 1);
-	// HACK FIXME TODO remove the const_cast: factor iconType out of UnitDef
-	// so unitDef doesn't need to be modified by this code.
-	UnitDef* ud = const_cast<UnitDef*>(unitDefHandler->GetUnitByID(unitDefID));
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
 
-	ud->iconType = lua_tostring(L, 2);
+	ud->iconType = iconHandler->GetIcon(lua_tostring(L, 2));
 
 	// set decoys to the same icon
 	map<int, set<int> >::const_iterator fit;
 
 	if (ud->decoyDef) {
-		// more HACK HACK (see above)
-		const_cast<UnitDef*>(ud->decoyDef)->iconType = ud->iconType;
+		ud->decoyDef->iconType = ud->iconType;
 		fit = unitDefHandler->decoyMap.find(ud->decoyDef->id);
 	} else {
 		fit = unitDefHandler->decoyMap.find(ud->id);
@@ -2370,9 +2368,8 @@ int CLuaUI::SetUnitDefIcon(lua_State* L)
 		const set<int>& decoySet = fit->second;
 		set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-  		// more HACK HACK (see above)
-  		const UnitDef* constDef = unitDefHandler->GetUnitByID(*dit);
-			const_cast<UnitDef*>(constDef)->iconType = ud->iconType;
+  		const UnitDef* decoyDef = unitDefHandler->GetUnitByID(*dit);
+			decoyDef->iconType = ud->iconType;
 		}
 	}
 

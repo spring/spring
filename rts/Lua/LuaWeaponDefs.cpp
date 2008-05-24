@@ -552,11 +552,11 @@ static bool InitParamMap()
 	ADD_BOOL("avoidFeature",  wd.avoidFeature);
 	ADD_BOOL("avoidNeutral",  wd.avoidNeutral);
 
-	ADD_FLOAT("targetBorder", wd.targetBorder);
+	ADD_FLOAT("targetBorder",       wd.targetBorder);
 	ADD_FLOAT("cylinderTargetting", wd.cylinderTargetting);
-	ADD_FLOAT("minIntensity", wd.minIntensity);
-	ADD_FLOAT("heightBoostFactor", wd.heightBoostFactor);
-	ADD_FLOAT("proximityPriority", wd.proximityPriority);
+	ADD_FLOAT("minIntensity",       wd.minIntensity);
+	ADD_FLOAT("heightBoostFactor",  wd.heightBoostFactor);
+	ADD_FLOAT("proximityPriority",  wd.proximityPriority);
 
 //	CExplosionGenerator *explosionGenerator;
 

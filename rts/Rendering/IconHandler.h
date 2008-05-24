@@ -1,43 +1,83 @@
 /* Author: Teake Nutma */
 
-#ifndef ICONHANDLER_H
-#define ICONHANDLER_H
+#ifndef ICON_HANDLER_H
+#define ICON_HANDLER_H
 
 #include <map>
 #include <string>
 #include <vector>
 
-class CIcon
-{
-public:
-	unsigned int texture;
-	float size;
-	float distance;
-	bool radiusAdjust;
-	CIcon(unsigned int tex, float siz, float dis, bool radius)
-	{
-		texture      = tex;
-		size         = siz;
-		distance     = dis;
-		radiusAdjust = radius;
-	};
+#include "Icon.h"
+#include "float3.h"
+
+
+class CIconData {
+	public:
+		CIconData(const std::string& name, unsigned int texID,
+		          float size, float distance, bool radiusAdjust,
+		          bool ownTexture);
+		~CIconData();
+
+		void BindTexture() const;
+		void Draw(float x0, float y0, float x1, float y1) const;
+		void Draw(const float3& botLeft, const float3& botRight,
+		          const float3& topLeft, const float3& topRight) const;
+
+		inline const std::string& GetName()         const { return name;         }
+		inline const float        GetSize()         const { return size;         }
+		inline const float        GetDistance()     const { return distance;     }
+		inline const float        GetDistanceSqr()  const { return distSqr;      }
+		inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
+
+		void CopyData(const CIconData* iconData);
+
+		void Ref();
+		void UnRef();
+
+	private:
+		bool ownTexture;
+		int  refCount;
+
+		std::string name;
+		unsigned int texID;
+		float size;
+		float distance;
+		float distSqr;
+		bool  radiusAdjust;
 };
 
-class CIconHandler
-{
-public:
-	CIconHandler(void);
-	~CIconHandler(void);
-	CIcon* GetIcon(const std::string& iconName);
-	float GetDistance(const std::string& iconName);
-private:
-	bool LoadTDFicons(const std::string& filename);
-	unsigned int* GetStandardTexture();
-	unsigned int standardTexture;
-	bool standardTextureGenerated;
-	std::map<std::string, CIcon*> icons;
+
+class CIconHandler {
+	public:
+		CIconHandler(void);
+		~CIconHandler(void);
+
+		bool AddIcon(const std::string& iconName,
+								 const std::string& textureName,
+								 float size, float distance,
+								 bool radiusAdjust);
+		bool FreeIcon(const std::string& iconName);
+
+		CIcon GetIcon(const std::string& iconName) const;
+		CIcon GetDefaultIcon() const {
+			return CIcon(const_cast<CIconData*>(defIconData));
+		}
+		const CIconData* GetDefaultIconData() const { return defIconData; }
+		
+	private:
+		bool LoadIcons(const std::string& filename);
+		unsigned int GetDefaultTexture();
+
+	private:
+		unsigned int defTexID;
+		CIconData* defIconData;
+
+		typedef std::map<std::string, CIconData*> IconMap;
+		IconMap iconMap;
 };
+
 
 extern CIconHandler* iconHandler;
 
-#endif
+
+#endif // ICON_HANDLER_H

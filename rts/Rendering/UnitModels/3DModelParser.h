@@ -45,7 +45,6 @@ struct S3DOModel
 	int textureType;		//0=3do, otherwise s3o
 
 	void DrawStatic();
-
 };
 
 

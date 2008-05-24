@@ -28,6 +28,7 @@ using namespace std;
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/IconHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -100,6 +101,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
+
+	REGISTER_LUA_CFUNC(AddUnitIcon);
+	REGISTER_LUA_CFUNC(FreeUnitIcon);
 
 	REGISTER_LUA_CFUNC(ExtractModArchiveFile);
 	return true;
@@ -929,64 +933,86 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 }
 
 
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
+{
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	const string iconName  = luaL_checkstring(L, 1);
+	const string texName   = luaL_checkstring(L, 2);
+	const float  size      = luaL_optnumber(L, 3, 1.0f);
+	const float  dist      = luaL_optnumber(L, 4, 1.0f);
+	const bool   radAdjust = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
+	lua_pushboolean(L, iconHandler->AddIcon(iconName, texName,
+	                                        size, dist, radAdjust));
+	return 1;
+}
+
+
+int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
+{
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+	const string iconName  = luaL_checkstring(L, 1);
+	lua_pushboolean(L, iconHandler->FreeIcon(iconName));
+	return 1;
+}
+
+
+/******************************************************************************/
 
 // TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
-	bool ret = false;
-	const int args = lua_gettop(L);
+	const string path = luaL_checkstring(L, 1);
 
-	if (args == 1) {
-		if (lua_isstring(L, 1)) {
-			std::string path(lua_tostring(L, 1));
-			CFileHandler fh(path, SPRING_VFS_MOD);
+	CFileHandler fh(path, SPRING_VFS_MOD);
 
-			if (fh.FileExists()) {
-				std::string dname = filesystem.GetDirectory(path);
-				std::string fname = filesystem.GetFilename(path);
-
-				#ifdef WIN32
-				const int s = dname.size();
-				// get rid of any trailing slashes (CreateDirectory()
-				// fails on at least XP and Vista if they are present,
-				// ie. it creates the dir but actually returns false)
-				if (s > 0 && (dname[s - 1] == '/' || dname[s - 1] == '\\')) {
-					dname = dname.substr(0, s - 1);
-				}
-				#endif
-
-				if (dname.size() == 0 || filesystem.CreateDirectory(dname)) {
-					int numBytes = fh.FileSize();
-					char* buffer = SAFE_NEW char[numBytes];
-
-					fh.Read(buffer, numBytes);
-
-					std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
-					fstr.write((const char*) buffer, numBytes);
-					fstr.close();
-
-					if (dname.size() > 0) {
-						logOutput.Print("Extracted file \"%s\" to directory \"%s\"", fname.c_str(), dname.c_str());
-					} else {
-						logOutput.Print("Extracted file \"%s\"", fname.c_str());
-					}
-
-					delete[] buffer;
-					ret = true;
-				} else {
-					luaL_error(L, "Could not create directory \"%s\" for file \"%s\"", dname.c_str(), fname.c_str());
-				}
-			} else {
-				luaL_error(L, "Path \"%s\" not found in mod archive", path.c_str());
-			}
-		} else {
-			luaL_error(L, "Argument to ExtractModArchiveFile(s) not a string");
-		}
-	} else {
-		luaL_error(L, "Incorrect number of arguments to ExtractModArchiveFile(s)");
+	if (!fh.FileExists()) {
+		luaL_error(L, "Path \"%s\" not found in mod archive", path.c_str());
 	}
 
-	lua_pushboolean(L, ret);
+	string dname = filesystem.GetDirectory(path);
+	string fname = filesystem.GetFilename(path);
+
+#ifdef WIN32
+	const int s = dname.size();
+	// get rid of any trailing slashes (CreateDirectory()
+	// fails on at least XP and Vista if they are present,
+	// ie. it creates the dir but actually returns false)
+	if ((s > 0) && ((dname[s - 1] == '/') || (dname[s - 1] == '\\'))) {
+		dname = dname.substr(0, s - 1);
+	}
+#endif
+
+	if (!dname.empty() && !filesystem.CreateDirectory(dname)) {
+		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"",
+		           dname.c_str(), fname.c_str());
+	}
+
+	const int numBytes = fh.FileSize();
+	char* buffer = SAFE_NEW char[numBytes];
+
+	fh.Read(buffer, numBytes);
+
+	fstream fstr(path.c_str(), ios::out | ios::binary);
+	fstr.write((const char*) buffer, numBytes);
+	fstr.close();
+
+	if (!dname.empty()) {
+		logOutput.Print("Extracted file \"%s\" to directory \"%s\"",
+		                fname.c_str(), dname.c_str());
+	} else {
+		logOutput.Print("Extracted file \"%s\"", fname.c_str());
+	}
+
+	delete[] buffer;
+
+	lua_pushboolean(L, true);
+
 	return 1;
 }
 

@@ -989,24 +989,29 @@ DLL_EXPORT int __stdcall GetSideCount()
 
 	logOutput.Print("get side count: ");
 
-	try {
-		p.LoadFile("gamedata/sidedata.tdf");
-	} catch (const std::exception& e) {
-		logOutput.Print("failed: %s\n", e.what());
+	LuaParser luaParser("gamedata/sidedata.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
+		logOutput.Print("failed: %s\n", luaParser.GetErrorLog().c_str());
 		return 0;
 	}
 
-	for(int b=0;;++b){					//loop over all sides
-		char sideText[50];
-		sprintf(sideText,"side%i",b);
-		if(p.SectionExist(sideText)){
-			SideData sd;
-			sd.name = p.SGetValueDef("arm",string(sideText)+"\\name");
-			sideData.push_back(sd);
-		} else break;
+	const LuaTable sideDataTbl = luaParser.GetRoot();
+	if (!sideDataTbl.IsValid()) {
+		logOutput.Print("failed: missing 'sideData' table\n");
+		return 0;
 	}
 
-	logOutput.Print("%d sides\n", sideData.size());
+	for (int i = 1; true; i++) {
+		const LuaTable sideTbl = sideDataTbl.SubTable(i);
+		if (!sideTbl.IsValid()) {
+			break;
+		}
+		SideData sd;
+		sd.name = sideTbl.GetString("name", "unknown");
+		sideData.push_back(sd);
+	}
+
 	return sideData.size();
 }
 

@@ -35,16 +35,20 @@ void CSpawnScript::Update()
 	case 0:
 		LoadSpawns();
 
-		LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-		if (!p.Execute() || !p.IsValid())
-			logOutput.Print(p.GetErrorLog());
-		
-		const LuaTable sideTable = p.GetRoot();
-		const std::string s0 = StringToLower(sideTable.SubTable("side0").GetString("commander", ""));
-		const std::string s1 = StringToLower(sideTable.SubTable("side1").GetString("commander", s0)); // default to side 0, in case mod has only 1 side
-		
-		if (s0.length() == 0)
-			throw content_error ("Unable to load a commander for SIDE0");
+		LuaParser luaParser("gamedata/sidedata.lua",
+		                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+		if (!luaParser.Execute()) {
+			logOutput.Print(luaParser.GetErrorLog());
+		}
+		const LuaTable sideData = luaParser.GetRoot();
+		const LuaTable side1 = sideData.SubTable(1);
+		const LuaTable side2 = sideData.SubTable(2);
+		const std::string su1 = StringToLower(side1.GetString("startUnit", ""));
+		const std::string su2 = StringToLower(side2.GetString("startUnit", su1));
+
+		if (su1.length() == 0) {
+			throw content_error ("Unable to load a startUnit for the first side");
+		}
 
 		TdfParser p2;
 		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
@@ -56,7 +60,7 @@ void CSpawnScript::Update()
 		// Set the TEAM0 startpos as spawnpos if we're supposed to be
 		// autonomous, load the commander for the player if not.
 		if (autonomous) spawnPos.push_back(float3(x0,80,z0));
-		else unitLoader.LoadUnit(s0,float3(x0,80,z0),0,false,0,NULL);
+		else unitLoader.LoadUnit(su1, float3(x0,80,z0),0,false,0,NULL);
 
 		p2.GetDef(x0,"1000","MAP\\TEAM1\\StartPosX");
 		p2.GetDef(z0,"1000","MAP\\TEAM1\\StartPosZ");

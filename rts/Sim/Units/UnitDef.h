@@ -8,6 +8,7 @@
 
 #include "creg/creg.h"
 #include "float3.h"
+#include "Rendering/Icon.h"
 
 struct MoveData;
 struct WeaponDef;
@@ -229,7 +230,7 @@ struct UnitDef
 	std::string TEDClassString;	//these might be changed later for something better
 	std::string categoryString;
 
-	std::string iconType;
+	mutable CIcon iconType;
 
 	bool canSelfD;
 	int selfDCountdown;

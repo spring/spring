@@ -20,14 +20,33 @@ if (not VFS.FileExists('gamedata/sidedata.tdf')) then
   return false
 end
 
-local sidedata, err = TDF.Parse('gamedata/sidedata.tdf')
-if (sidedata == nil) then
+local sideData, err = TDF.Parse('gamedata/sidedata.tdf')
+if (sideData == nil) then
   error('Error parsing sidedata.tdf: ' .. err)
 end
 
+local luaSides = {}
+local index = 0
+while (true) do
+  local label = 'side' .. index -- tdf names start at 'side0'
+  local data = sideData[label]
+  if (type(data) ~= 'table') then
+    break
+  else
+    print(string.format('%s "%s" "%s"',
+                        label, tostring(data.name), tostring(data.commander)))
+    -- rename 'commander' to 'startunit'
+    data['startunit'] = data['commander']
+    data['commander'] = nil
+    index = index + 1
+    luaSides[index] = data -- lua indices start at 1
+  end
+end
+
+
 --------------------------------------------------------------------------------
 
-return sidedata
+return luaSides
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

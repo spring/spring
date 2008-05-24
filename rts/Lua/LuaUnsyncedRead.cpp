@@ -406,8 +406,8 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 		if (noIcons) {
 			const float sqDist = (unit->pos - camera->pos).SqLength();
-			const float iconDistMult = iconHandler->GetDistance(unit->unitDef->iconType);
-			const float realIconLength = iconLength * (iconDistMult * iconDistMult);
+			const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
+			const float realIconLength = iconLength * iconDistSqrMult;
 			if (sqDist > realIconLength) {
 				continue;
 			}

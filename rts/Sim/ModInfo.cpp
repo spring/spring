@@ -89,21 +89,20 @@ void CModInfo::Init(const char* modname)
 	const LuaTable sensors = root.SubTable("sensors");
 	/// LoS
 	const LuaTable los = sensors.SubTable("los");
-	losMipLevel = los.GetInt("losMipLevel", 1);
-	airMipLevel = los.GetInt("airMipLevel", 2);
-	
 	// losMipLevel is used as index to readmap->mipHeightmap,
 	// so the max value is CReadMap::numHeightMipMaps - 1
-	if (losMipLevel < 0 || losMipLevel >= 7)
+	losMipLevel = los.GetInt("losMipLevel", 1);
+	losMul = los.GetFloat("losMul", 1.0f);
+	if ((losMipLevel < 0) || (losMipLevel > 6)) {
 		throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
-				"The minimum value is 0. The maximum value is 6.");
-
+		                    "The minimum value is 0. The maximum value is 6.");
+	}
 	// airLosMipLevel doesn't have such restrictions, it's just used in various
 	// bitshifts with signed integers
-	if (airMipLevel < 0 || airMipLevel > 30)
+	airMipLevel = los.GetInt("airMipLevel", 2);
+	if ((airMipLevel < 0) || (airMipLevel > 30)) {
 		throw content_error("Sensors\\Los\\AirLosMipLevel out of bounds. "
-				"The minimum value is 0. The maximum value is 30.");
-	
-	losMul = los.GetFloat("losMul", 1.0f);
+		                    "The minimum value is 0. The maximum value is 30.");
+	}
 	airLosMul = los.GetFloat("airLosMul", 1.0f);
 }

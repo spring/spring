@@ -10,7 +10,7 @@
 #include "Rendering/GL/myGL.h"
 
 class CUnit;
-class CIcon;
+class CIconData;
 
 
 class CMiniMap : public CInputReceiver {
@@ -69,7 +69,7 @@ class CMiniMap : public CInputReceiver {
 		void DrawUnit(CUnit* unit);
 		void DrawUnitHighlight(CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
-		CIcon* GetUnitIcon(CUnit* unit, float& scale) const;
+		const CIconData* GetUnitIcon(CUnit* unit, float& scale) const;
 		void GetFrustumSide(float3& side);
 		
 	protected:

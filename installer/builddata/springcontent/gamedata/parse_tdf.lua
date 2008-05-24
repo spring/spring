@@ -156,15 +156,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function ParseTDF(filename)
-  if (debug) then
-    print('TDF.Parse: ' .. tostring(filename))
-  end
-
-  local text, err = VFS.LoadFile(filename)
-  if (text == nil) then
-    return nil, err
-  end
+local function Parse(text)
 
   text = DosToUnix(text)
   text = StripLineComments(text)
@@ -192,6 +184,18 @@ local function ParseTDF(filename)
   end
 
   return stack[1]
+end
+
+
+local function ParseFile(filename)
+  if (debug) then
+    print('TDF.Parse: ' .. tostring(filename))
+  end
+  local text, err = VFS.LoadFile(filename)
+  if (text == nil) then
+    return nil, err
+  end
+  return Parse(text)
 end
 
 
@@ -223,7 +227,8 @@ end
 --------------------------------------------------------------------------------
 
 TDFparser = {
-  Parse           = ParseTDF,
+  Parse           = ParseFile,
+  ParseText       = Parse,
   GetKeyFilter    = GetKeyFilter,
   SetKeyFilter    = SetKeyFilter,
   AllowDuplicates = AllowDuplicates,

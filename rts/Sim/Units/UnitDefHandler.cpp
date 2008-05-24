@@ -18,6 +18,7 @@
 #include "Map/ReadMap.h"
 #include "Platform/ConfigHandler.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -138,7 +139,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	numUnitDefs = (id - 1);
 
 	CleanBuildOptions();
-	FindCommanders();
+	FindStartUnits();
 	ProcessDecoys();
 	AssignTechLevels();
 }
@@ -219,33 +220,33 @@ void CUnitDefHandler::ProcessDecoys()
 }
 
 
-void CUnitDefHandler::FindCommanders()
+void CUnitDefHandler::FindStartUnits()
 {
-	LuaParser p("gamedata/sidedata.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!p.Execute() || !p.IsValid())
-		logOutput.Print(p.GetErrorLog());
+	LuaParser luaParser("gamedata/sidedata.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
+		logOutput.Print(luaParser.GetErrorLog());
+	}
 
-	const LuaTable sideTable = p.GetRoot();
-	// get the commander UnitDef IDs
-	commanderIDs.clear();
+	const LuaTable sideData = luaParser.GetRoot();
+	// get the startUnit UnitDef IDs
+	startUnitIDs.clear();
 	std::vector<std::string> sides;
-	sideTable.GetKeys(sides);
-	for (unsigned int i = 0; i < sides.size(); i++){
-		const std::string& section = sides[i];
-		if ((section.find("side") == 0) &&
-		    (section.find_first_not_of("0123456789", 4) == std::string::npos)) {
-			string commUnit = sideTable.SubTable(section).GetString("commander", "");
-			StringToLowerInPlace(commUnit);
-			if (!commUnit.empty()) {
-				std::map<std::string, int>::iterator it = unitID.find(commUnit);
-				if (it != unitID.end()) {
-					commanderIDs.insert(it->second);
-				}
+	for (int i = 1; true; i++) {
+		const LuaTable side = sideData.SubTable(i);
+		if (!side.IsValid()) {
+			break;
+		}
+		std::string startUnit = side.GetString("startUnit", "");
+		StringToLowerInPlace(startUnit);
+		if (!startUnit.empty()) {
+			std::map<std::string, int>::iterator it = unitID.find(startUnit);
+			if (it != unitID.end()) {
+				startUnitIDs.insert(it->second);
 			}
 		}
 	}
 }
-
 
 
 void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitName, int id)
@@ -519,7 +520,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
 //	logOutput.Print("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
 
-	ud.iconType = udTable.GetString("iconType", "default");
+	const string iconName = udTable.GetString("iconType", "default");
+	ud.iconType = iconHandler->GetIcon(iconName);
 
 	ud.shieldWeaponDef    = NULL;
 	ud.stockpileWeaponDef = NULL;
@@ -1022,7 +1024,7 @@ unsigned int CUnitDefHandler::GetUnitImage(const UnitDef* unitdef, std::string b
 void CUnitDefHandler::AssignTechLevels()
 {
 	set<int>::iterator it;
-	for (it = commanderIDs.begin(); it != commanderIDs.end(); ++it) {
+	for (it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
 		AssignTechLevel(unitDefs[*it], 0);
 	}
 }
