@@ -5,13 +5,23 @@
 #include <assert.h>
 #include <locale>
 #include <cctype>
+#include <string>
+#include <vector>
+#include <map>
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "Messages.h"
-#include "TdfParser.h"
+#include "Lua/LuaParser.h"
+#include "FileSystem/FileHandler.h"
 #include "mmgr.h"
 
+using std::string;
+using std::vector;
+using std::map;
+
+
 CMessages::CMessages(): loaded(false) {}
+
 
 /** Return a pointer to the single instance of CMessages. */
 CMessages* CMessages::GetInstance()
@@ -20,46 +30,66 @@ CMessages* CMessages::GetInstance()
 	return &instance;
 }
 
+
 /** Load the messages from gamedata/messages.tdf into memory. */
 void CMessages::Load()
 {
-	try {
-		TdfParser tdfparser("gamedata/messages.tdf");
-		// Grab a list of messages.  Each message is one section.
-		std::vector<std::string> section_list = tdfparser.GetSectionList("messages");
-		// Load the possible translations for every message.
-		for (std::vector<std::string>::const_iterator sit = section_list.begin(); sit != section_list.end(); ++sit) {
-			const std::map<std::string, std::string>& allvalues = tdfparser.GetAllValues("messages\\" + *sit);
-			for (std::map<std::string, std::string>::const_iterator it = allvalues.begin(); it != allvalues.end(); ++it) {
-				tr[*sit].push_back(it->second);
-			}
-		}
-	} catch (const TdfParser::parse_error& e) {
+	LuaParser luaParser("gamedata/messages.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
 		// Show parse errors in the infolog.
-		logOutput.Print("%s:%d: %s", e.get_filename().c_str(), e.get_line(), e.what());
-	} catch (const content_error&) {
-		// Ignore non-existant file.
+		logOutput.Print(string("ERROR: messages.lua: ") + luaParser.GetErrorLog());
+		return;
 	}
+
+	const LuaTable root = luaParser.GetRoot();
+
+	vector<string> labels;
+	root.GetKeys(labels);
+
+	for (int i = 0; i < labels.size(); i++) {
+		const string label = StringToLower(labels[i]);
+		const LuaTable msgTable = root.SubTable(label);
+		if (!msgTable.IsValid()) {
+			continue;
+		}
+		vector<string> msgs;
+		for (int i = 1; true; i++) {
+			const string msg = msgTable.GetString(i, "");
+			if (msg.empty()) {
+				break;
+			}
+			msgs.push_back(msg);
+		}
+		if (!msgs.empty()) {
+			tr[label] = msgs;
+		}
+	}
+		
 	loaded = true;
 }
 
+
 /** Translate \p msg. If multiple messages are available it picks one at random.
 Returns \p msg if no messages are available. */
-std::string CMessages::Translate(const std::string& msg) const
+string CMessages::Translate(const string& msg) const
 {
-	// TdfParser puts everything in lowercase.
-	std::string lowerd = StringToLower(msg);
-	message_map_t::const_iterator it = tr.find(lowerd);
-	if (it == tr.end())
+	// all keys are lowercase
+	const string lower = StringToLower(msg);
+	message_map_t::const_iterator it = tr.find(lower);
+	if (it == tr.end()) {
 		return msg;
+	}
 	return Pick(it->second);
 }
 
+
 /** Returns a message from \p vec at random. */
-std::string CMessages::Pick(const message_list_t& vec) const
+string CMessages::Pick(const message_list_t& vec) const
 {
 	assert(!vec.empty());
-	if (vec.size() == 1)
+	if (vec.size() == 1) {
 		return vec[0];
+	}
 	return vec[gu->usRandInt() % vec.size()];
 }

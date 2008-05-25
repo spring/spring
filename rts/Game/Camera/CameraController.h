@@ -3,11 +3,16 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "float3.h"
 
+
 class CCameraController
 {
+public:
+	typedef std::map<std::string, float> StateMap;
+
 public:
 	CCameraController();
 	virtual ~CCameraController(void);
@@ -32,13 +37,17 @@ public:
 	virtual float3 SwitchFrom() const =0;			//return pos that to send to new controllers SetPos
 	virtual void SwitchTo(bool showText=true)=0;
 	
-	virtual void GetState(std::vector<float>& fv) const = 0;
-	virtual bool SetState(const std::vector<float>& fv, unsigned startPos=0) = 0;
+	virtual void GetState(StateMap& sm) const = 0;
+	virtual bool SetState(const StateMap& sm) = 0;
 	virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
 
 	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
 	
+protected:
+	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
+	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
+
 protected:
 	float fov;
 	float mouseScale;

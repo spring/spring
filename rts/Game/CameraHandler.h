@@ -7,13 +7,14 @@
 #include <stack>
 
 #include "Console.h"
-
-class CCameraController;
+#include "Camera/CameraController.h"
 
 
 class CCameraHandler : public CommandReceiver
 {
-	typedef std::vector<float> ViewData;
+public:
+	typedef CCameraController::StateMap ViewData;
+
 public:
 	CCameraHandler();
 	~CCameraHandler();
@@ -32,16 +33,15 @@ public:
 	
 	/**
 	@brief write current camera settings in a vector
-	@param fv vector to hold the data, will be cleared, first float = controller number
 	*/
-	void GetState(ViewData& fv) const;
+	void GetState(CCameraController::StateMap& sm) const;
 	
 	/**
 	@brief restore a camera state
 	@param fv the state to set
 	@return false when vector has wrong size or garbage data, true when aplied without errors
 	*/
-	bool SetState(const ViewData& fv);
+	bool SetState(const CCameraController::StateMap& sm);
 	
 	CCameraController& GetCurrentController() {return *currCamCtrl;};
 	int GetCurrentControllerNum() const {return currCamCtrlNum;};

@@ -254,10 +254,12 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 
 void CTeam::Died()
 {
-	if (leader >= 0)
-		logOutput.Print(CMessages::Tr("Team %i (%s) is no more").c_str(), teamNum, gs->players[leader]->playerName.c_str());
-	else
-		logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
+	if (leader >= 0) {
+		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
+		                teamNum, gs->players[leader]->playerName.c_str());
+	} else {
+		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
+	}
 	isDead = true;
 	luaCallIns.TeamDied(teamNum);
 	net->SendTeamDied(gu->myPlayerNum, teamNum);

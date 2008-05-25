@@ -392,73 +392,79 @@ void CFreeController::SwitchTo(bool showText)
 }
 
 
-void CFreeController::GetState(std::vector<float>& fv) const
+void CFreeController::GetState(StateMap& sm) const
 {
-	fv.push_back(/*  1 */ pos.x);
-	fv.push_back(/*  2 */ pos.y);
-	fv.push_back(/*  3 */ pos.z);
-	fv.push_back(/*  4 */ dir.x);
-	fv.push_back(/*  5 */ dir.y);
-	fv.push_back(/*  6 */ dir.z);
-	fv.push_back(/*  7 */ camera->rot.x);
-	fv.push_back(/*  8 */ camera->rot.y);
-	fv.push_back(/*  9 */ camera->rot.z);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
 
-	fv.push_back(/* 10 */ fov);
-	fv.push_back(/* 11 */ gndOffset);
-	fv.push_back(/* 12 */ gravity);
-	fv.push_back(/* 13 */ slide);
-	fv.push_back(/* 14 */ scrollSpeed);
-	fv.push_back(/* 15 */ tiltSpeed);
-	fv.push_back(/* 16 */ velTime);
-	fv.push_back(/* 17 */ avelTime);
-	fv.push_back(/* 18 */ autoTilt);
-	fv.push_back(/* 19 */ goForward ? 1.0f : -1.0f);
-	fv.push_back(/* 20 */ invertAlt ? 1.0f : -1.0f);
-	fv.push_back(/* 21 */ gndLock   ? 1.0f : -1.0f);
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
 
-	fv.push_back(/* 22 */ prevVel.x);
-	fv.push_back(/* 23 */ prevVel.y);
-	fv.push_back(/* 24 */ prevVel.z);
-	fv.push_back(/* 25 */ prevAvel.x);
-	fv.push_back(/* 26 */ prevAvel.y);
-	fv.push_back(/* 27 */ prevAvel.z);
+	sm["rx"] = camera->rot.x;
+	sm["ry"] = camera->rot.y;
+	sm["rz"] = camera->rot.z;
+
+	sm["fov"]         = fov;
+	sm["gndOffset"]   = gndOffset;
+	sm["gravity"]     = gravity;
+	sm["slide"]       = slide;
+	sm["scrollSpeed"] = scrollSpeed;
+	sm["tiltSpeed"]   = tiltSpeed;
+	sm["velTime"]     = velTime;
+	sm["avelTime"]    = avelTime;
+	sm["autoTilt"]    = autoTilt;
+
+	sm["goForward"]   = goForward ? +1.0f : -1.0f;
+	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
+	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
+
+	sm["vx"] = prevVel.x;
+	sm["vy"] = prevVel.y;
+	sm["vz"] = prevVel.z;
+
+	sm["avx"] = prevAvel.x;
+	sm["avy"] = prevAvel.y;
+	sm["avz"] = prevAvel.z;
 }
 
 
-bool CFreeController::SetState(const std::vector<float>& fv, unsigned startPos)
+bool CFreeController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 27+startPos) {
-		return false;
-	}
-	pos.x = fv[startPos++];
-	pos.y = fv[startPos++];
-	pos.z = fv[startPos++];
-	dir.x = fv[startPos++];
-	dir.y = fv[startPos++];
-	dir.z = fv[startPos++];
-	camera->rot.x = fv[startPos++];
-	camera->rot.y = fv[startPos++];
-	camera->rot.z = fv[startPos++];
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
 
-	fov         =  fv[startPos++];
-	gndOffset   =  fv[startPos++];
-	gravity     =  fv[startPos++];
-	slide       =  fv[startPos++];
-	scrollSpeed =  fv[startPos++];
-	tiltSpeed   =  fv[startPos++];
-	velTime     =  fv[startPos++];
-	avelTime    =  fv[startPos++];
-	autoTilt    =  fv[startPos++];
-	goForward   = (fv[startPos++] > 0.0f);
-	invertAlt   = (fv[startPos++] > 0.0f);
-	gndLock     = (fv[startPos++] > 0.0f);
-	prevVel.x   =  fv[startPos++];
-	prevVel.y   =  fv[startPos++];
-	prevVel.z   =  fv[startPos++];
-	prevAvel.x  =  fv[startPos++];
-	prevAvel.y  =  fv[startPos++];
-	prevAvel.z  =  fv[startPos++];
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	SetStateFloat(sm, "rx", camera->rot.x);
+	SetStateFloat(sm, "ry", camera->rot.y);
+	SetStateFloat(sm, "rz", camera->rot.z);
+
+	SetStateFloat(sm, "fov",         fov);
+	SetStateFloat(sm, "gndOffset",   gndOffset);
+	SetStateFloat(sm, "gravity",     gravity);
+	SetStateFloat(sm, "slide",       slide);
+	SetStateFloat(sm, "scrollSpeed", scrollSpeed);
+	SetStateFloat(sm, "tiltSpeed",   tiltSpeed);
+	SetStateFloat(sm, "velTime",     velTime);
+	SetStateFloat(sm, "avelTime",    avelTime);
+	SetStateFloat(sm, "autoTilt",    autoTilt);
+
+	SetStateBool (sm, "goForward",   goForward);
+	SetStateBool (sm, "invertAlt",   invertAlt);
+	SetStateBool (sm, "gndLock",     gndLock);
+
+	SetStateFloat(sm, "vx", prevVel.x);
+	SetStateFloat(sm, "vy", prevVel.y);
+	SetStateFloat(sm, "vz", prevVel.z);
+
+	SetStateFloat(sm, "avx", prevAvel.x);
+	SetStateFloat(sm, "avy", prevAvel.y);
+	SetStateFloat(sm, "avz", prevAvel.z);
 
 	return true;
 }

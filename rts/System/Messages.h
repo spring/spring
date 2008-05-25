@@ -28,8 +28,9 @@ private:
 public:
 	static inline std::string Tr(const std::string& msg) {
 		CMessages* inst = GetInstance();
-		if (!inst->loaded)
+		if (!inst->loaded) {
 			inst->Load();
+		}
 		return inst->Translate(msg);
 	}
 };
