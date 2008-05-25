@@ -2343,11 +2343,11 @@ bool CGame::Update()
 	time(&fpstimer);
 
 	if (difftime(fpstimer, starttime) != 0) {		//do once every second
-		fps=thisFps;
-		thisFps=0;
+		fps = thisFps;
+		thisFps = 0;
 
-		starttime=fpstimer;
-		oldframenum=gs->frameNum;
+		starttime = fpstimer;
+		oldframenum = gs->frameNum;
 
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -2362,18 +2362,22 @@ bool CGame::Update()
 		CInputReceiver::CollectGarbage();
 	}
 
-	if (!skipping)
+	if (!skipping) {
 		UpdateUI();
+	}
+
 	net->Update();
 
 #ifdef DEBUG
-	if(gameServer)
-		gameServer->gameClientUpdated=true;
+	if (gameServer) {
+		gameServer->gameClientUpdated = true;
+	}
 #endif
 
 #ifdef SYNCIFY		//syncify doesnt support multithreading ...
-	if (gameServer)
+	if (gameServer) {
 		gameServer->Update();
+	}
 #endif
 
 	if(creatingVideo && playing && gameServer){
@@ -2381,24 +2385,22 @@ bool CGame::Update()
 	}
 
 	ClientReadNet();
-	if(!net->IsActiveConnection() && !gameOver){
+	if (!net->IsActiveConnection() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
-		gameOver=true;
+		gameOver = true;
 		luaCallIns.GameOver();
 		GameEnd();
 	}
 
-	if( gameServer && !gameServer->GameHasStarted() && !gameSetup)
-	{
+	if (gameServer && !gameServer->GameHasStarted() && !gameSetup) {
 		bool allReady = true;
-		for(int a=0;a<gs->activePlayers;a++) {
+		for (int a = 0; a < gs->activePlayers; a++) {
 			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
-				allReady=false;
+				allReady = false;
 				break;
 			}
 		}
-		if (allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer))
-		{
+		if (allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer)) {
 			chatting = false;
 			userWriting = false;
 			writingPos = 0;
@@ -2603,11 +2605,13 @@ bool CGame::Draw()
 	camHandler->UpdateCam();
 	mouse->UpdateCursors();
 
-	if(unitTracker.Enabled())
+	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
+	}
 
-	if(playing && (hideInterface || script->wantCameraControl))
+	if (playing && (hideInterface || script->wantCameraControl)) {
 		script->SetCamera();
+	}
 
 	CBaseGroundDrawer* gd;
 	{
@@ -2679,7 +2683,7 @@ bool CGame::Draw()
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	if(gu->directControl){
+	if (gu->directControl) {
 		DrawDirectControlHud();
 	}
 #endif
@@ -2711,16 +2715,19 @@ bool CGame::Draw()
 
 	glEnable(GL_TEXTURE_2D);
 
-	if(gu->drawdebug){
+	if (gu->drawdebug) {
 		//skriv ut fps etc
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS %d Frame %d Part %d(%d)",fps,gs->frameNum,ph->ps.size(),ph->currentParticles);
+		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS %d Frame %d Part %d(%d)",
+		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
 
-		if(playing)
-			font->glFormatAt(0.03f, 0.07f, 0.7f, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",camera->pos.x,camera->pos.y,camera->pos.z,gs->speedFactor);
+		if (playing) {
+			font->glFormatAt(0.03f, 0.07f, 0.7f, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
+			                 camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
+		}
 	}
 
-	if( gameServer && gameServer->WaitsOnCon() &&!gameSetup){
+	if (gameServer && gameServer->WaitsOnCon() && !gameSetup) {
 		glColor3f(1.0f, 1.0f, 1.0f);
 		font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
 	}
@@ -2774,7 +2781,7 @@ bool CGame::Draw()
 		}
 	}
 
-	if (playerRoster.GetSortType() != PlayerRoster::Disabled){
+	if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 		char buf[128];
 		const float fontScale = 1.0f;
 		int count;
@@ -2831,12 +2838,12 @@ bool CGame::Draw()
 	lastMoveUpdate = start;
 
 #ifndef NO_AVI
-	if(creatingVideo){
-		gu->lastFrameTime=1.0f/GAME_SPEED;
+	if (creatingVideo) {
+		gu->lastFrameTime = 1.0f/GAME_SPEED;
 		if(!aviGenerator->readOpenglPixelDataThreaded()){
 			creatingVideo = false;
 			delete aviGenerator;
-			aviGenerator = 0;
+			aviGenerator = NULL;
 		}
 //		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
 	}

@@ -29,8 +29,8 @@ public:
 	float3 SwitchFrom() const; // return pos that to send to new controllers SetPos
 	void SwitchTo(bool showText);
 
-	void GetState(std::vector<float>& fv) const;
-	bool SetState(const std::vector<float>& fv, unsigned startPos=0);
+	void GetState(StateMap& sm) const;
+	bool SetState(const StateMap& sm);
 
 private:
 	float3 dir;

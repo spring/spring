@@ -10,12 +10,14 @@
 
 extern Uint8 *keys;
 
+
 CTWController::CTWController()
 {
 	scrollSpeed = configHandler.GetInt("TWScrollSpeed",10) * 0.1f;
 	enabled = !!configHandler.GetInt("TWEnabled",1);
 	fov = configHandler.GetFloat("TWFOV", 45.0f);
 }
+
 
 void CTWController::KeyMove(float3 move)
 {
@@ -26,6 +28,7 @@ void CTWController::KeyMove(float3 move)
 	move*=sqrt(move.z)*200;
 	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
+
 
 void CTWController::MouseMove(float3 move)
 {
@@ -39,6 +42,7 @@ void CTWController::MouseMove(float3 move)
 	pos+=-(flatForward*move.y-camera->right*move.x)*scrollSpeed;
 }
 
+
 void CTWController::ScreenEdgeMove(float3 move)
 {
 	if(mouse->lasty<gu->viewSizeY/3){
@@ -48,10 +52,12 @@ void CTWController::ScreenEdgeMove(float3 move)
 	KeyMove(move);
 }
 
+
 void CTWController::MouseWheelMove(float move)
 {
 	camera->rot.x-=move*0.001f;
 }
+
 
 float3 CTWController::GetPos()
 {
@@ -86,6 +92,7 @@ float3 CTWController::GetPos()
 	return cpos;
 }
 
+
 float3 CTWController::GetDir()
 {
 	float3 dir;
@@ -96,37 +103,39 @@ float3 CTWController::GetDir()
 	return dir;
 }
 
+
 float3 CTWController::SwitchFrom() const
 {
 	return pos;
 }
 
+
 void CTWController::SwitchTo(bool showText)
 {
-	if(showText)
+	if (showText) {
 		logOutput.Print("Switching to Total War style camera");
-}
-
-void CTWController::GetState(std::vector<float>& fv) const
-{
-	fv.push_back(/* 1 */ pos.x);
-	fv.push_back(/* 2 */ pos.y);
-	fv.push_back(/* 3 */ pos.z);
-	fv.push_back(/* 4 */ camera->rot.x);
-	fv.push_back(/* 5 */ camera->rot.y);
-	fv.push_back(/* 6 */ camera->rot.z);
-}
-
-bool CTWController::SetState(const std::vector<float>& fv, unsigned startPos)
-{
-	if (fv.size() != 6+startPos) {
-		return false;
 	}
-	pos.x = fv[startPos++];
-	pos.y = fv[startPos++];
-	pos.z = fv[startPos++];
-	camera->rot.x = fv[startPos++];
-	camera->rot.y = fv[startPos++];
-	camera->rot.z = fv[startPos++];
+}
+
+
+void CTWController::GetState(StateMap& sm) const
+{
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+	sm["rx"] = camera->rot.x;
+	sm["ry"] = camera->rot.y;
+	sm["rz"] = camera->rot.z;
+}
+
+
+bool CTWController::SetState(const StateMap& sm)
+{
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+	SetStateFloat(sm, "rx", camera->rot.x);
+	SetStateFloat(sm, "ry", camera->rot.y);
+	SetStateFloat(sm, "rz", camera->rot.z);
 	return true;
 }

@@ -7,6 +7,7 @@
 
 using namespace std;
 
+
 CFPSController::CFPSController()
 	: oldHeight(300)
 {
@@ -15,11 +16,13 @@ CFPSController::CFPSController()
 	fov = configHandler.GetFloat("FPSFOV", 45.0f);
 }
 
+
 void CFPSController::KeyMove(float3 move)
 {
 	move*=move.z*400;
 	pos+=(camera->forward*move.y+camera->right*move.x)*scrollSpeed;
 }
+
 
 void CFPSController::MouseMove(float3 move)
 {
@@ -32,15 +35,18 @@ void CFPSController::MouseMove(float3 move)
 		camera->rot.x=-PI*0.4999f;
 }
 
+
 void CFPSController::ScreenEdgeMove(float3 move)
 {
 	KeyMove(move);
 }
 
+
 void CFPSController::MouseWheelMove(float move)
 {
 	pos += camera->up * move;
 }
+
 
 float3 CFPSController::GetPos()
 {
@@ -67,6 +73,7 @@ float3 CFPSController::GetPos()
 	return pos;
 }
 
+
 float3 CFPSController::GetDir()
 {
 	dir.x = (float)(cos(camera->rot.x) * sin(camera->rot.y));
@@ -75,6 +82,7 @@ float3 CFPSController::GetDir()
 	dir.Normalize();
 	return dir;
 }
+
 
 void CFPSController::SetPos(const float3& newPos)
 {
@@ -88,51 +96,61 @@ void CFPSController::SetPos(const float3& newPos)
 	}
 }
 
+
 void CFPSController::SetDir(const float3& newDir)
 {
 	dir = newDir;
 }
+
 
 float3 CFPSController::SwitchFrom() const
 {
 	return pos;
 }
 
+
 void CFPSController::SwitchTo(bool showText)
 {
-	if(showText)
+	if (showText) {
 		logOutput.Print("Switching to FPS style camera");
+  }
 }
 
-void CFPSController::GetState(std::vector<float>& fv) const
+
+void CFPSController::GetState(StateMap& sm) const
 {
-	fv.push_back(/*  1 */ pos.x);
-	fv.push_back(/*  2 */ pos.y);
-	fv.push_back(/*  3 */ pos.z);
-	fv.push_back(/*  4 */ dir.x);
-	fv.push_back(/*  5 */ dir.y);
-	fv.push_back(/*  6 */ dir.z);
-	fv.push_back(/*  7 */ camera->rot.x);
-	fv.push_back(/*  8 */ camera->rot.y);
-	fv.push_back(/*  9 */ camera->rot.z);
-	fv.push_back(/* 10 */ oldHeight);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
+
+	sm["rx"] = camera->rot.x;
+	sm["ry"] = camera->rot.y;
+	sm["rz"] = camera->rot.z;
+
+	sm["oldHeight"] = oldHeight;
 }
 
-bool CFPSController::SetState(const std::vector<float>& fv, unsigned startPos)
+
+bool CFPSController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 10+startPos) {
-		return false;
-	}
-	pos.x = fv[startPos++];
-	pos.y = fv[startPos++];
-	pos.z = fv[startPos++];
-	dir.x = fv[startPos++];
-	dir.y = fv[startPos++];
-	dir.z = fv[startPos++];
-	camera->rot.x = fv[startPos++];
-	camera->rot.y = fv[startPos++];
-	camera->rot.z = fv[startPos++];
-	oldHeight = fv[startPos++];
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	SetStateFloat(sm, "rx", camera->rot.x);
+	SetStateFloat(sm, "ry", camera->rot.y);
+	SetStateFloat(sm, "rz", camera->rot.z);
+
+	SetStateFloat(sm, "oldHeight", oldHeight);
+
 	return true;
 }
 

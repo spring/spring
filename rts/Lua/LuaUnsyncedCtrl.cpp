@@ -18,8 +18,8 @@ using namespace std;
 #include "LuaUtils.h"
 
 #include "Game/Camera.h"
-#include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
@@ -600,34 +600,24 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_istable(L, 1) || !lua_isnumber(L, 2)) {
+	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetCameraState(table, camTime)");
 	}
 
+	const float camTime = (float)luaL_checknumber(L, 2);
+	
+	CCameraController::StateMap camState;
+
 	const int table = 1;
-	const float camTime = (float)lua_tonumber(L, 2);
-	vector<float> camState;
-
-	lua_pushstring(L, "mode");
-	lua_gettable(L, table);
-	if (lua_isnumber(L, -1)) {
-		const int camNum = (int)lua_tonumber(L, -1);
-		camState.push_back(camNum);
-		camHandler->CameraTransition(camTime);
-	}
-
-	int index = 1;
-	while (true) {
-		lua_rawgeti(L, table, index);
-		if (!lua_isnumber(L, -1)) {
-			lua_pop(L, 1);
-			break;
-		}
-		else {
-			camState.push_back((float)lua_tonumber(L, -1));
-			lua_pop(L, 1);
-			index++;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_israwstring(L, -2)) {
+			const string key = lua_tostring(L, -2);
+			if (lua_isnumber(L, -1)) {
+				camState[key] = (float)lua_tonumber(L, -1);
+			}
+			else if (lua_isboolean(L, -1)) {
+				camState[key] = lua_toboolean(L, -1) ? +1.0f : -1.0f;
+			}
 		}
 	}
 

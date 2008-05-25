@@ -15,6 +15,7 @@
 
 extern Uint8 *keys;
 
+
 SmoothController::SmoothController()
 	: flipped(false),zscale(0.5f),
 	height(500),
@@ -34,6 +35,7 @@ SmoothController::SmoothController()
 SmoothController::~SmoothController()
 {
 }
+
 
 void SmoothController::KeyMove(float3 move)
 {
@@ -60,6 +62,7 @@ void SmoothController::KeyMove(float3 move)
 	}
 }
 
+
 void SmoothController::MouseMove(float3 move)
 {
 	if (flipped) {
@@ -73,6 +76,7 @@ void SmoothController::MouseMove(float3 move)
 	pos += (thisMove+lastMove)/2.0f;
 	lastMove = (thisMove+lastMove)/2.0f;
 }
+
 
 void SmoothController::ScreenEdgeMove(float3 move)
 {
@@ -98,6 +102,7 @@ void SmoothController::ScreenEdgeMove(float3 move)
 		Move(thisMove, timeDiff);
 	}
 }
+
 
 void SmoothController::MouseWheelMove(float move)
 {
@@ -153,6 +158,7 @@ void SmoothController::MouseWheelMove(float move)
 	}
 }
 
+
 float3 SmoothController::GetPos()
 {
 	maxHeight = 9.5f * std::max(gs->mapx,gs->mapy);		//map not created when constructor run
@@ -180,15 +186,18 @@ float3 SmoothController::GetPos()
 	return cpos;
 }
 
+
 float3 SmoothController::GetDir()
 {
 	return dir;
 }
 
+
 float3 SmoothController::SwitchFrom() const
 {
 	return pos;
 }
+
 
 void SmoothController::SwitchTo(bool showText)
 {
@@ -196,35 +205,39 @@ void SmoothController::SwitchTo(bool showText)
 		logOutput.Print("Switching to smooth camera");
 }
 
-void SmoothController::GetState(std::vector<float>& fv) const
+
+void SmoothController::GetState(StateMap& sm) const
 {
-	fv.push_back(/* 1 */ pos.x);
-	fv.push_back(/* 2 */ pos.y);
-	fv.push_back(/* 3 */ pos.z);
-	fv.push_back(/* 4 */ dir.x);
-	fv.push_back(/* 5 */ dir.y);
-	fv.push_back(/* 6 */ dir.z);
-	fv.push_back(/* 7 */ height);
-	fv.push_back(/* 8 */ zscale);
-	fv.push_back(/* 9 */ flipped ? +1.0f : -1.0f);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
+
+	sm["height"]  = height;
+	sm["zscale"]  = zscale;
+	sm["flipped"] = flipped ? +1.0f : -1.0f;
 }
 
-bool SmoothController::SetState(const std::vector<float>& fv, unsigned startPos)
+bool SmoothController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 9+startPos) {
-		return false;
-	}
-	pos.x   =  fv[startPos++];
-	pos.y   =  fv[startPos++];
-	pos.z   =  fv[startPos++];
-	dir.x   =  fv[startPos++];
-	dir.y   =  fv[startPos++];
-	dir.z   =  fv[startPos++];
-	height  =  fv[startPos++];
-	zscale  =  fv[startPos++];
-	flipped = (fv[startPos++] > 0.0f);
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	SetStateFloat(sm, "height",  height);
+	SetStateFloat(sm, "zscale",  zscale);
+	SetStateBool (sm, "flipped", flipped);
+
 	return true;
 }
+
 
 void SmoothController::Move(const float3& move, const unsigned timeDiff)
 {

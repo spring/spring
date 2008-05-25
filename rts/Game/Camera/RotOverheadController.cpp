@@ -15,6 +15,7 @@ CRotOverheadController::CRotOverheadController()
 	fov = configHandler.GetFloat("RotOverheadFOV", 45.0f);
 }
 
+
 void CRotOverheadController::KeyMove(float3 move)
 {
 	move*=sqrt(move.z)*400;
@@ -28,6 +29,7 @@ void CRotOverheadController::KeyMove(float3 move)
 	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
 
+
 void CRotOverheadController::MouseMove(float3 move)
 {
 	camera->rot.y -= mouseScale*move.x;
@@ -39,10 +41,12 @@ void CRotOverheadController::MouseMove(float3 move)
 		camera->rot.x=-PI*0.4999f;
 }
 
+
 void CRotOverheadController::ScreenEdgeMove(float3 move)
 {
 	KeyMove(move);
 }
+
 
 void CRotOverheadController::MouseWheelMove(float move)
 {
@@ -51,6 +55,7 @@ void CRotOverheadController::MouseWheelMove(float move)
 	height *= 1.0f + (move * mouseScale);
 	pos.y = height + gheight;
 }
+
 
 float3 CRotOverheadController::GetPos()
 {
@@ -72,6 +77,7 @@ float3 CRotOverheadController::GetPos()
 	return pos;
 }
 
+
 float3 CRotOverheadController::GetDir()
 {
 	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
@@ -81,16 +87,19 @@ float3 CRotOverheadController::GetDir()
 	return dir;
 }
 
+
 void CRotOverheadController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 	pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
 }
 
+
 float3 CRotOverheadController::SwitchFrom() const
 {
 	return pos;
 }
+
 
 void CRotOverheadController::SwitchTo(bool showText)
 {
@@ -98,35 +107,41 @@ void CRotOverheadController::SwitchTo(bool showText)
 		logOutput.Print("Switching to Rotatable overhead camera");
 }
 
-void CRotOverheadController::GetState(std::vector<float>& fv) const
+
+void CRotOverheadController::GetState(StateMap& sm) const
 {
-	fv.push_back(/*  1 */ pos.x);
-	fv.push_back(/*  2 */ pos.y);
-	fv.push_back(/*  3 */ pos.z);
-	fv.push_back(/*  4 */ dir.x);
-	fv.push_back(/*  5 */ dir.y);
-	fv.push_back(/*  6 */ dir.z);
-	fv.push_back(/*  7 */ camera->rot.x);
-	fv.push_back(/*  8 */ camera->rot.y);
-	fv.push_back(/*  9 */ camera->rot.z);
-	fv.push_back(/* 10 */ oldHeight);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
+
+	sm["rx"] = camera->rot.x;
+	sm["ry"] = camera->rot.y;
+	sm["rz"] = camera->rot.z;
+
+	sm["oldHeight"] = oldHeight;
 }
 
-bool CRotOverheadController::SetState(const std::vector<float>& fv, unsigned startPos)
+
+bool CRotOverheadController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 10+startPos) {
-		return false;
-	}
-	pos.x = fv[startPos++];
-	pos.y = fv[startPos++];
-	pos.z = fv[startPos++];
-	dir.x = fv[startPos++];
-	dir.y = fv[startPos++];
-	dir.z = fv[startPos++];
-	camera->rot.x = fv[startPos++];
-	camera->rot.y = fv[startPos++];
-	camera->rot.z = fv[startPos++];
-	oldHeight = fv[startPos++];
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	SetStateFloat(sm, "rx", camera->rot.x);
+	SetStateFloat(sm, "ry", camera->rot.y);
+	SetStateFloat(sm, "rz", camera->rot.z);
+
+	SetStateFloat(sm, "oldHeight", oldHeight);
+
 	return true;
 }
 

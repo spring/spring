@@ -71,20 +71,17 @@ void COverviewController::SwitchTo(bool showText)
 	}
 }
 
-void COverviewController::GetState(std::vector<float>& fv) const
+void COverviewController::GetState(StateMap& sm) const
 {
-	fv.push_back(/* 1 */ pos.x);
-	fv.push_back(/* 2 */ pos.y);
-	fv.push_back(/* 3 */ pos.z);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
 }
 
-bool COverviewController::SetState(const std::vector<float>& fv, unsigned startPos)
+bool COverviewController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 3+startPos) {
-		return false;
-	}
-	pos.x = fv[startPos++];
-	pos.y = fv[startPos++];
-	pos.z = fv[startPos++];
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
 	return true;
 }

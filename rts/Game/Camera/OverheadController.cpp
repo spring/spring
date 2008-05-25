@@ -151,32 +151,34 @@ void COverheadController::SwitchTo(bool showText)
 		logOutput.Print("Switching to Overhead (TA) style camera");
 }
 
-void COverheadController::GetState(std::vector<float>& fv) const
+void COverheadController::GetState(StateMap& sm) const
 {
-	fv.push_back(/* 1 */ pos.x);
-	fv.push_back(/* 2 */ pos.y);
-	fv.push_back(/* 3 */ pos.z);
-	fv.push_back(/* 4 */ dir.x);
-	fv.push_back(/* 5 */ dir.y);
-	fv.push_back(/* 6 */ dir.z);
-	fv.push_back(/* 7 */ height);
-	fv.push_back(/* 8 */ zscale);
-	fv.push_back(/* 9 */ flipped ? +1.0f : -1.0f);
+	sm["px"] = pos.x;
+	sm["py"] = pos.y;
+	sm["pz"] = pos.z;
+
+	sm["dx"] = dir.x;
+	sm["dy"] = dir.y;
+	sm["dz"] = dir.z;
+
+	sm["height"]  = height;
+	sm["zscale"]  = zscale;
+	sm["flipped"] = flipped ? +1.0f : -1.0f;
 }
 
-bool COverheadController::SetState(const std::vector<float>& fv, unsigned startPos)
+bool COverheadController::SetState(const StateMap& sm)
 {
-	if (fv.size() != 9+startPos) {
-		return false;
-	}
-	pos.x   =  fv[startPos++];
-	pos.y   =  fv[startPos++];
-	pos.z   =  fv[startPos++];
-	dir.x   =  fv[startPos++];
-	dir.y   =  fv[startPos++];
-	dir.z   =  fv[startPos++];
-	height  =  fv[startPos++];
-	zscale  =  fv[startPos++];
-	flipped = (fv[startPos++] > 0.0f);
+	SetStateFloat(sm, "px", pos.x);
+	SetStateFloat(sm, "py", pos.y);
+	SetStateFloat(sm, "pz", pos.z);
+
+	SetStateFloat(sm, "dx", dir.x);
+	SetStateFloat(sm, "dy", dir.y);
+	SetStateFloat(sm, "dz", dir.z);
+
+	SetStateFloat(sm, "height", height);
+	SetStateFloat(sm, "zscale", zscale);
+	SetStateBool (sm, "flipped", flipped);
+
 	return true;
 }
