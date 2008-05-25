@@ -182,17 +182,17 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 # build TestABICAI
-lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['game/spring.a'], CPPDEFINES = env['CPPDEFINES'] + ['BUILDING_AI'] )
-Alias('TestABICAI', lib)
-Alias('install-TestABICAI', inst)
-if sys.platform == 'win32':
-	Alias('GlobalAI', lib)
-	Default(lib)
-	inst = env.Install(install_dir, lib)
-	Alias('install', inst)
-	Alias('install-GlobalAI', inst)
-	if env['strip']:
-		env.AddPostAction(lib, Action([['strip','$TARGET']]))
+# lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['game/spring.a'], CPPDEFINES = env# ['CPPDEFINES'] + ['BUILDING_AI'] )
+# Alias('TestABICAI', lib)
+# Alias('install-TestABICAI', inst)
+# if sys.platform == 'win32':
+# 	Alias('GlobalAI', lib)
+# 	Default(lib)
+# 	inst = env.Install(install_dir, lib)
+# 	Alias('install', inst)
+# 	Alias('install-GlobalAI', inst)
+# 	if env['strip']:
+# 		env.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 # Build streflop (which has it's own Makefile-based build system)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
