@@ -26,7 +26,7 @@
 #ifndef _ABICUNITDEFWRAPPER_H
 #define _ABICUNITDEFWRAPPER_H
 
-#include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
+#include "AbicAICallback.h"
 
 #include "AbicMoveDataWrapper.h"
 

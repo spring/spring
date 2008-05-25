@@ -26,7 +26,7 @@
 #ifndef _ABICMOVEDATAWRAPPER_H
 #define _ABICMOVEDATAWRAPPER_H
 
-#include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
+#include "AbicAICallback.h"
 
 class AbicMoveDataWrapper
 {        
@@ -37,7 +37,7 @@ public:
         this->self = ( MoveData *)self;
     }
 
-   int get_moveType()
+    int get_moveType()
    {
       return MoveData_get_movetype( self );
    }

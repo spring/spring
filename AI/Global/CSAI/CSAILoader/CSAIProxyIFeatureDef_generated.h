@@ -27,11 +27,6 @@
       return self->get_maxHealth();
    }
 
-   double get_radius()
-   {
-      return self->get_radius();
-   }
-
    double get_mass()
    {
       return self->get_mass();

@@ -1,4 +1,4 @@
-if .%2==. goto :usage
+rem if .%2==. goto :usage
 goto :run
 
 :usage
@@ -10,19 +10,20 @@ goto :eof
 set ABICDLLNAME=%1
 set AIDLLNAME=%2
 
+if .%ABICDLLNAME%==. set ABICDLLNAME=csaibic.dll
+if .%AIDLLNAME%==. set AIDLLNAME=csailoader.dll
+
 rem you'll need:
 rem - Microsoft Visual C++ .Net Express (microsoft.com, free beer )
 rem - Microsoft Platform SDK (microsoft.com, free beer )
 rem - TASpring sourcecode (taspring website )
 
 rem modify the following paths for your environment:
-set SPRINGSOURCE=J:\taspring\spring_0.74b3_src\spring_0.74b3
-set SPRINGAPPLICATION=j:\taspring\release
+set SPRINGSOURCE=%~dp0../../../..
+set SPRINGAPPLICATION=%~dp0../../../../game
 set FRAMEWORKDIRECTORY=%windir%\microsoft.net\framework\v2.0.50727
-rem set MONODIR=j:\bin\Mono-1.2.2.1
-set MINGDIR=j:\devtools\dev-cpp
 
-set PATH=%PATH%;%MINGDIR%\bin;%MONODIR%\bin
+set PATH=%PATH%;%MINGDIR%\bin;%FRAMEWORKDIRECTORY%
 
 rem set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" /I"%PLATFORMSDK%\include" /I"%VISUALCPPDIRECTORY%\include" /I"%SPRINGSOURCE%\rts\System" /I"%SPRINGSOURCE%\rts"
 
