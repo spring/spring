@@ -21,7 +21,7 @@ rem set CL=%CL% /I"%SPRINGSOURCE%\rts\System" /I"%SPRINGSOURCE%\rts"
 rem set CL=%CL% /I..\AbicWrappers
 rem set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
 
-set INCLUDE=%PLATFORMSDK%\include;%INCLUDE%;%SPRINGSOURCE%\rts;%SPRINGSOURCE%\rts\System;%~dp0\..\ABICompatibilityLayer
+set INCLUDE=%PLATFORMSDK%\include;%INCLUDE%;%SPRINGSOURCE%\rts;%SPRINGSOURCE%\rts\System;%~dp0..\ABICompatibilityLayer;%~dp0..\AbicWrappers
 
 rem cd ..\AbicWrappers
 rem call generate
@@ -34,11 +34,14 @@ rem AbicWrapperGenerator.exe
 csc /debug CSAIProxyGenerator.cs /reference:CSAIInterfaces.dll
 CSAIProxyGenerator.exe
 
-cl /clr /MD /c CSAILoader.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
-cl /clr /MD /c CSAIProxy.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
+cl /clr:oldSyntax /MD /c CSAILoader.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
+cl /clr:oldSyntax /MD /c CSAIProxy.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
 
-link /lib /machine:i386 /def:%SPRINGAPPLICATION%\Spring.def /OUT:spring.lib /NAME:spring.exe
-link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj spring.lib /INCLUDE:__DllMainCRTStartup@12
+rem link /lib /machine:i386 /def:%SPRINGAPPLICATION%\Spring.def /OUT:spring.lib /NAME:spring.exe
+rem link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj spring.lib /INCLUDE:__DllMainCRTStartup@12
+
+link /lib /machine:i386 /def:..\abicompatibilitylayer\def_generated.def /OUT:abic.lib /NAME:spring.exe
+link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj abic.lib /INCLUDE:__DllMainCRTStartup@12
 
 copy /y csailoader.dll "%SPRINGAPPLICATION%"
 copy /y csailoader.xml "%SPRINGAPPLICATION%"

@@ -10,7 +10,7 @@ goto :eof
 set ABICDLLNAME=%1
 set AIDLLNAME=%2
 
-if .%ABICDLLNAME%==. set ABICDLLNAME=csaibic.dll
+if .%ABICDLLNAME%==. set ABICDLLNAME=csaiabic.dll
 if .%AIDLLNAME%==. set AIDLLNAME=csailoader.dll
 
 rem you'll need:
