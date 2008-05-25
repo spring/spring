@@ -104,9 +104,9 @@ AUX_SOURCE_DIRECTORY(System sysfiles)
 AUX_SOURCE_DIRECTORY(System/Platform sysfiles)
 ### only use the directory for target platform
 IF (UNIX)
-AUX_SOURCE_DIRECTORY(System/Platform/Linux sysfiles)
+	AUX_SOURCE_DIRECTORY(System/Platform/Linux sysfiles)
 ELSE (UNIX)
-AUX_SOURCE_DIRECTORY(System/Platform/Win sysfiles)
+	AUX_SOURCE_DIRECTORY(System/Platform/Win sysfiles)
 ENDIF (UNIX)
 AUX_SOURCE_DIRECTORY(System/FileSystem sysfiles)
 AUX_SOURCE_DIRECTORY(System/Net sysfiles)
@@ -114,7 +114,15 @@ AUX_SOURCE_DIRECTORY(System/Script sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
-ADD_EXECUTABLE(spring  ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${platformbase} ${aifiles})
+### Add icon and manifest to exe using windres
+IF (MINGW)
+	FIND_PROGRAM(WINDRES NAMES windres)
+	ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon.o COMMAND ${WINDRES} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc -o ${CMAKE_CURRENT_BINARY_DIR}/icon.o)
+	LIST(APPEND sysfiles icon.o)
+ENDIF (MINGW)
+
+
+ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles})
 
 ### libraries in lib/
 SET(spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
