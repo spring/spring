@@ -49,7 +49,7 @@ using namespace streflop;
 
 #include "ExternalAI/aibase.h"
 
-#include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
+#include "AbicAICallback.h"
 
 extern "C"{
 gpointer mono_delegate_to_ftnptr (MonoDelegate *delegate); 
