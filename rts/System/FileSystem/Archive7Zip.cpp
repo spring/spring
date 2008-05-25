@@ -102,21 +102,18 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 	FileData fd = fileData[fileName];
 
 	// Get 7zip to decompress it
-    size_t offset;
-    size_t outSizeProcessed;
+	size_t offset;
+	size_t outSizeProcessed;
 	
 	SZ_RESULT res;
 
 	// We don't really support solid archives anyway, so these can be reset for each file
-    UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0) 
-    Byte *outBuffer = 0; // it must be 0 before first call for each new archive. 
-    size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0) 
+	UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0) 
+	Byte *outBuffer = 0; // it must be 0 before first call for each new archive. 
+	size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0) 
 
-    res = SzExtract(&archiveStream.InStream, &db, fd.fp, 
-        &blockIndex, &outBuffer, &outBufferSize, 
-        &offset, &outSizeProcessed, 
-        &allocImp, &allocTempImp);
-    	
+	res = SzExtract(&archiveStream.InStream, &db, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
+
 	ABOpenFile_t* of = NULL;
 	if (res == SZ_OK) {
 		of = SAFE_NEW ABOpenFile_t;
