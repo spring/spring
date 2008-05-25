@@ -985,8 +985,6 @@ DLL_EXPORT int __stdcall GetSideCount()
 {
 	sideData.clear();
 
-	TdfParser p;
-
 	logOutput.Print("get side count: ");
 
 	LuaParser luaParser("gamedata/sidedata.lua",
