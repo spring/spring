@@ -209,16 +209,12 @@ void CTeam::AddEnergy(float amount)
 
 void CTeam::SelfDestruct()
 {
-	for(CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui)
-	{
-		if ((*ui) != NULL && (*ui)->unitDef->canSelfD)
-		{
-			if ((*ui)->beingBuilt)
-			{
+	for(CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
+		if ((*ui) != NULL && (*ui)->unitDef->canSelfD) {
+			if ((*ui)->beingBuilt) {
 				(*ui)->KillUnit(false, true, NULL); // kill units under construction without explosion
 			}
-			else
-			{
+			else {
 				(*ui)->KillUnit(true, false, NULL);
 			}
 		}
@@ -420,8 +416,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 		}
 	}
 
-	if(units.empty() && !gaia)
-	{
+	if(units.empty() && !gaia) {
 		Died();
 	}
 }
