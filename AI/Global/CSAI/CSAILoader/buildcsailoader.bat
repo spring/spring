@@ -40,7 +40,7 @@ cl /clr:oldSyntax /MD /c CSAIProxy.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
 rem link /lib /machine:i386 /def:%SPRINGAPPLICATION%\Spring.def /OUT:spring.lib /NAME:spring.exe
 rem link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj spring.lib /INCLUDE:__DllMainCRTStartup@12
 
-link /lib /machine:i386 /def:..\abicompatibilitylayer\def_generated.def /OUT:abic.lib /NAME:spring.exe
+link /lib /machine:i386 /def:..\abicompatibilitylayer\abicdef.def /OUT:abic.lib /NAME:spring.exe
 link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj abic.lib /INCLUDE:__DllMainCRTStartup@12
 
 copy /y csailoader.dll "%SPRINGAPPLICATION%"
