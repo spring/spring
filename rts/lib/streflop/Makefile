@@ -52,8 +52,8 @@ ifeq (i586-mingw32msvc-gcc,$(findstring i586-mingw32msvc-gcc,$(CC)))
 	i586-mingw32msvc-ar rs streflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
 	i586-mingw32msvc-ar rs libstreflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
 else
-	ar rs streflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
-	ar rs libstreflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
+	$(AR) rs streflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
+	$(AR) rs libstreflop.a $(LIBM_OBJECTS) SMath.o Random.o ${USE_SOFT_BINARY}
 endif
 
 arithmeticTest$(EXE_SUFFIX): arithmeticTest.cpp streflop.a
