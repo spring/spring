@@ -396,14 +396,6 @@
 			Name="External AI"
 			>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\GlobalAICInterface\AbicProxy.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\aibase.h"
 				>
 			</File>
