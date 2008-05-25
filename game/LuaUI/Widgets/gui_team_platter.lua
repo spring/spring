@@ -138,8 +138,8 @@ local function GetUnitDefRealRadius(udid)
   local dims = spGetUnitDefDimensions(udid)
   if (dims == nil) then return nil end
 
-  local scale = ud.hitSphereScale
-  scale = (scale == 0.0) and 1.0 or scale
+  local scale = ud.hitSphereScale -- missing in 0.76b1+
+  scale = ((scale == nil) or (scale == 0.0)) and 1.0 or scale
   radius = dims.radius / scale
   realRadii[udid] = radius
   return radius
