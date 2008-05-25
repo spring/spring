@@ -1789,9 +1789,22 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
+	bool usingAtiHacks = ( configHandler.GetInt("AtiHacks",0) == 1 );
+	if( usingAtiHacks ) // Some Ati mobility cards dont like clipping wireframes...
+	{
+		glDisable(GL_CLIP_PLANE0);
+		glDisable(GL_CLIP_PLANE1);
+	}
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	DrawUnitModel(unit);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	if( usingAtiHacks )
+	{
+		glEnable(GL_CLIP_PLANE0);  // should be enabled for all cards for the non-wireframe bits
+		glEnable(GL_CLIP_PLANE1);
+	}
 
 	if (unit->buildProgress > 0.33f) {
 		glColorf3(fc * (1.5f - col));
