@@ -58,7 +58,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
-#include "System/TdfParser.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
