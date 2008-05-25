@@ -22,7 +22,7 @@
              <include name="Command.cs" />
              <include name="Float3.cs" />
              <include name="GlobalAIProxy.cs" />
-             <include name="MonoLoaderProxy.cs" />
+             <include name="IMonoLoaderProxy.cs" />
           </sources>
       </csc>
    </target>
