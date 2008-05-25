@@ -162,7 +162,8 @@ class GenerateCode
         // pattern:
         // 	double get_maxSlope()
         //    double GetUnitDefRadius( int def )
-    string GetDeclarationString( Type targettype, string basetypename, MemberInfo memberinfo )
+    
+	string GetDeclarationString( Type targettype, string basetypename, MemberInfo memberinfo )
     {
         if( memberinfo.MemberType == MemberTypes.Field )
         {
@@ -257,8 +258,8 @@ class GenerateCode
                         // first we generate the string, throwing exceptions as appropriate
                         // then we write them to file if they worked out ok
                         // this needs to be atomic, so that we always have both header declaration + cpp definition, or neither
-                        string cppdeclaration = "   " + declarationstring + "\n";
-                        cppdeclaration += "   " + "{\n";
+                        string cppdeclaration = "   " + declarationstring + "\r\n";
+                        cppdeclaration += "   " + "{\r\n";
                         // pattern for strings:
                         // System::String *get_myName(){ return new System::String( string( actualfeaturedef->myName ).c_str() ); }
                         if( memberinfo.MemberType == MemberTypes.Property )
@@ -266,11 +267,11 @@ class GenerateCode
                             PropertyInfo pi = targettype.GetProperty( memberinfo.Name );
                             if( pi.PropertyType == typeof( string ) )
                             {
-                                cppdeclaration += "   " + "   return new System::String( string( self->get_" + memberinfo.Name + "() ).c_str() );\n"; // we can assume a property wont return void
+                                cppdeclaration += "   " + "   return new System::String( std::string( self->get_" + memberinfo.Name + "() ).c_str() );\r\n"; // we can assume a property wont return void
                             }
                             else
                             {
-                                cppdeclaration += "   " + "   return self->get_" + memberinfo.Name + "();\n"; // we can assume a property wont return void
+                                cppdeclaration += "   " + "   return self->get_" + memberinfo.Name + "();\r\n"; // we can assume a property wont return void
                             }
                         }
                         else if( memberinfo.MemberType == MemberTypes.Method )
@@ -282,7 +283,7 @@ class GenerateCode
                             }
                             else if( methodinfo.ReturnType == typeof( string ) )
                             {
-                                cppdeclaration += "   " + "   return new System::String( string( self->" + memberinfo.Name + "( ";
+                                cppdeclaration += "   " + "   return new System::String( std::string( self->" + memberinfo.Name + "( ";
                             }
                             else
                             {
@@ -307,10 +308,10 @@ class GenerateCode
                                 cppdeclaration += " ).c_str() )";
                             }
                             
-                            cppdeclaration += ";\n";                        
+                            cppdeclaration += ";\r\n";                        
                         }
-                        cppdeclaration += "   " + "}\n";
-                        cppdeclaration += "\n";
+                        cppdeclaration += "   " + "}\r\n";
+                        cppdeclaration += "\r\n";
                         
                         //headerfile.WriteLine( declarationstring + ";" );
                         headerfile.Write( cppdeclaration );

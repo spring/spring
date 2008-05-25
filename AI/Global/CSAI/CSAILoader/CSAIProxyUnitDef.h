@@ -25,6 +25,7 @@
 
 #using <mscorlib.dll>
 #include <vcclr.h>
+#include <string>
 using namespace System;
 using namespace System::Collections;
 using namespace System::Runtime::InteropServices;    
