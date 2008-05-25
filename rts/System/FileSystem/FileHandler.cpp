@@ -334,7 +334,7 @@ vector<string> CFileHandler::SubDirs(const string& path,
 	for (it = dirSet.begin(); it != dirSet.end(); ++it) {
 		dirVec.push_back(*it);
 	}
-	return dirVec;	
+	return dirVec;
 }
 
 
