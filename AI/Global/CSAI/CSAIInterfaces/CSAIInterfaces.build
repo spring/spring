@@ -2,7 +2,7 @@
 <project name="CSAI" default="deploy" basedir=".">
    <description>CSAIInterfaces</description>
    
-   <property name="taspring.applicationdirectory" value="j:\taspring\release" />
+   <property name="taspring.applicationdirectory" value="${project::get-buildfile-path()}/../../../../../game" />
 
    <property name="nant.settings.currentframework" value="net-1.1" />
    

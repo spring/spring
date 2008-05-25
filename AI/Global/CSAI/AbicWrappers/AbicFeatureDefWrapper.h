@@ -26,7 +26,7 @@
 #ifndef _ABICFEATUREDEFWRAPPER_H
 #define _ABICFEATUREDEFWRAPPER_H
 
-#include "ExternalAI/GlobalAICInterface/AbicAICallback.h"
+#include "AbicAICallback.h"
 
 class AbicFeatureDefWrapper
 {

@@ -8,37 +8,49 @@ New doc:
 
 requirements:
 
-- visual C++ 2003 Toolkit (may work with Visual C++ 2005 Express)
-- microsoft framework 1.1 (need this even if you have framework 2.0)
-- taspring
-- taspring sourcecode that matches the version of your taspring
-
-1.1 vs 2
-
-I'm using visual C++ 2003, so we have to force framework 1.1 on csaiinterfaces and csailoader.
-* The CSAI itself can be framework 2.0 *
+- Microsoft C++ 2008 Express (free beer download from Microsoft)
+- Microsoft SDK (free beer download from Microsoft)
+- nant
+- .net framework 2
+- mingw etc, all the requirements to build spring basically, including MINGDIR path and so on
+- taspring sourcecode, from svn
 
 1. CSAIInterfaces: C# reference classes for GlobalAI interfaces
 
 global for all AIs, only one copy needed, only changes if Spring AI API changes (or if we
 implement more functions)
 
-use nant with .build file
+Change into CSAI\CSAIInterfaces directory, and type:
 
-It's copied into root of Taspring directory
+nant
+
+The resulting csaiinterfaces.dll/.pdb are copied into the "game" directory
 
 2.ABICCompatiblityLayer
 
-change paths in buildabic.bat
-run "buildabic csaiabic.dll csailoader.dll"
+Change into CSAI\ABICompatiblityLayer directory
 
-csaiabic.dll is the dll that you will load in the lobby
-csaiabic.dll will load csailoader.dll
-csailoader.dll should have a C interface conform to what the ABIC layer is expecting
+Type:
 
-It's copied into root of Taspring\AI\Bot-libs
+buildabic csaiabic.dll csailoader.dll
 
-3. CSAiLoader
+- csaiabic.dll is the dll that you will load in the lobby
+- csaiabic.dll will load csailoader.dll
+- csailoader.dll should have a C interface conform to what the ABIC layer is expecting
+
+There are copied into root of game\AI\Bot-libs bot-libs directory
+
+3. abicwrappers
+
+- Change into csai\abicwrappers directory
+- check/tweak/change paths in generate.bat
+- run:
+
+   generate
+
+-> should create a bunch of xxx_generated.h files in the same directory
+
+4. CSAiLoader
 
 change paths in buildcsailoader.bat
 run "buildcsailoader.bat"
@@ -55,7 +67,7 @@ mycsailoader.xml  -> which could point to mycsai.dll
 
 It's copied into root of Taspring , along with the .xml file
 
-4. CSAI
+5. CSAI
 
 - make sure to add csaiinterfaces.dll as a reference to csai project
 - you can find this in the root of the taspring directory, or in the csaiinterfaces project directory
@@ -64,7 +76,7 @@ It's copied into root of Taspring , along with the .xml file
 - make sure your csailoader xml file points to this directory, filename, classname
 
 
-5. Run
+6. Run
 
 Open lobby, select dll, cross fingers
 

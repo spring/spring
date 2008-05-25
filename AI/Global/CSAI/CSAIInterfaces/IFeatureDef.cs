@@ -10,7 +10,7 @@ namespace CSharpAI
         double energy{ get; }
         double maxHealth{ get; }
     
-        double radius{ get; }
+        //double radius{ get; }
         double mass{ get; }									//used to see if the object can be overrun
     
         bool upright{ get; }
