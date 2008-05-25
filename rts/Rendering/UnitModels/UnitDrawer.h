@@ -126,6 +126,8 @@ public:
 
 	bool showHealthBars;
 
+	bool usingAtiHacks;
+
 	float3 camNorm;		//used by drawfar
 
 #ifdef DIRECT_CONTROL_ALLOWED
