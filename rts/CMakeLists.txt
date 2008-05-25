@@ -1,12 +1,8 @@
 ### Cmake 2.4 lacks some cross-compiling features and fails on windows
-cmake_minimum_required(VERSION 2.5)
+cmake_minimum_required(VERSION 2.6)
 PROJECT(Spring)
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
-
-IF(COMMAND cmake_policy)
-	cmake_policy(SET CMP0003 NEW)
-ENDIF(COMMAND cmake_policy)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
@@ -116,7 +112,7 @@ AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
 ### Add icon and manifest to exe using windres
 IF (MINGW)
-	FIND_PROGRAM(WINDRES NAMES windres)
+	FIND_PROGRAM(WINDRES NAMES windres i686-mingw32-windres DOC "path to mingw's windres executable")
 	ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon.o COMMAND ${WINDRES} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc -o ${CMAKE_CURRENT_BINARY_DIR}/icon.o)
 	LIST(APPEND sysfiles icon.o)
 ENDIF (MINGW)
