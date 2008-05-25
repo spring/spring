@@ -80,6 +80,9 @@ CUnitDrawer::CUnitDrawer(void)
 	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
 	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
 
+	// Some Ati mobility cards dont like clipping wireframes...
+	usingAtiHacks = !!configHandler.GetInt("AtiHacks", 0);
+
 	CBitmap white;
 	white.Alloc(1, 1);
 	for (int a = 0; a < 4; ++a) {
@@ -93,7 +96,7 @@ CUnitDrawer::CUnitDrawer(void)
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
 	float3 specularSunColor = mapInfo->light.specularSunColor;
-	advShading = !!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program? 1: 0);
+	advShading = !!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
 
 	if (advShading && !GLEW_ARB_fragment_program) {
 		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
@@ -1789,9 +1792,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
-	bool usingAtiHacks = ( configHandler.GetInt("AtiHacks",0) == 1 );
-	if( usingAtiHacks ) // Some Ati mobility cards dont like clipping wireframes...
-	{
+	if (usingAtiHacks) {
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 	}
@@ -1800,9 +1801,8 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	DrawUnitModel(unit);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if( usingAtiHacks )
-	{
-		glEnable(GL_CLIP_PLANE0);  // should be enabled for all cards for the non-wireframe bits
+	if (usingAtiHacks) {
+		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
 
