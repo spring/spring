@@ -33,12 +33,10 @@ local luaMsgs = {}
 for label, msgs in pairs(tdfMsgs.messages) do
   if ((type(label) == 'string') and
       (type(msgs)  == 'table')) then
-    print('MSG: ' .. label)
     local msgArray = {}
     for _, msg in pairs(msgs) do
       if (type(msg) == 'string') then
         table.insert(msgArray, msg)
-        print('  ' .. msg)
       end
     end
     luaMsgs[label:lower()] = msgArray -- lower case keys
