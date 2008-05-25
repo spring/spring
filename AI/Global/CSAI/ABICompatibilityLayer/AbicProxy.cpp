@@ -86,6 +86,8 @@ void AbicProxy::InitAI(IGlobalAICallback* callback, int team)
     //::aicallback = aicallback;
     
     string DllFilename = GetDllFilename();
+
+    WriteLine( DllFilename );
     
     lib = SharedLib::instantiate( DllFilename );
     

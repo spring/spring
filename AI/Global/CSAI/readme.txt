@@ -75,6 +75,7 @@ It's copied into root of Taspring , along with the .xml file
 - Place the resulting dll in a subfolder of taspring\ai such as taspring\ai\csai
 - make sure your csailoader xml file points to this directory, filename, classname
 
+Be sure to copy msvcr90.dll and so on into "game" directory
 
 6. Run
 

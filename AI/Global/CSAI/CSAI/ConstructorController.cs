@@ -265,7 +265,7 @@ namespace CSharpAI
                     BuildExtractor( constructorid );
                 }
             }
-            else if( 
+            //else if( 
                     
             // only build radar if we have at least one factory already
             //else if( factorycontroller.FactoryUnitDefByDeployedId.Count > 0 &&

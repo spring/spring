@@ -48,7 +48,7 @@ rem AIDLLNAME defines the dll that the ABIC dll will try to load at runtime
 gcc -c %CCOPTIONS% -DBUILDING_ABIC -DAIDLLNAME=%AIDLLNAME% AbicProxy.cpp
 
 set OBJECTS=AbicLoader.o AbicProxy.o AbicAICallback.o SharedLib.o DllLib.o
-dllwrap --driver-name g++ --dllname %ABICDLLNAME% %OBJECTS%
+dllwrap --driver-name g++ --dllname %ABICDLLNAME% %OBJECTS% --output-def abicdef.def
 
 copy /y GlobalAIInterfaces.dll %SPRINGAPPLICATION%
 copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Bot-libs"
