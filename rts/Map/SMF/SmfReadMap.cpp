@@ -221,18 +221,23 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 
 float3 CSmfReadMap::GetLightValue(int x, int y)
 {
-	float3 n1=facenormals[(y*gs->mapx+x)*2]+facenormals[(y*gs->mapx+x)*2+1];
+	float3 n1 = facenormals[((y * gs->mapx) + x) * 2] +
+	            facenormals[((y * gs->mapx) + x) * 2 + 1];
 	n1.Normalize();
 
-	float3 light=mapInfo->light.groundSunColor*mapInfo->light.sunDir.dot(n1);
-	for(int a=0;a<3;++a)
-		if(light[a]<0)
-			light[a]=0;
+	float3 light = mapInfo->light.groundSunColor*mapInfo->light.sunDir.dot(n1);
+	for (int a = 0; a < 3; ++a) {
+		if (light[a] < 0.0f) {
+			light[a] = 0.0f;
+		}
+	}
 
 	light+=mapInfo->light.groundAmbientColor;
-	for(int a=0;a<3;++a)
-		if(light[a]>1)
-			light[a]=1;
+	for (int a = 0; a < 3; ++a) {
+		if (light[a] > 1.0f){
+			light[a] = 1.0f;
+		}
+	}
 
 	return light;
 }

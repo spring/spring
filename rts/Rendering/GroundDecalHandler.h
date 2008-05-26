@@ -54,13 +54,13 @@ public:
 
 	void UnitMoved(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
-	int GetTrackType(std::string name);
+	int GetTrackType(const std::string& name);
 
 	void AddExplosion(float3 pos, float damage, float radius);
 
 	void AddBuilding(CBuilding* building);
 	void RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb);
-	int GetBuildingDecalType(std::string name);
+	int GetBuildingDecalType(const std::string& name);
 
 	GLuint scarTex;
 	int decalLevel;
@@ -121,10 +121,11 @@ protected:
 
 	int OverlapSize(Scar* s1, Scar* s2);
 	void TestOverlaps(Scar* scar);
-	void RemoveScar(Scar* scar,bool removeFromScars);
-	unsigned int LoadTexture(std::string name);
-	void LoadScar(std::string file, unsigned char* buf, int xoffset, int yoffset);
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
+	void RemoveScar(Scar* scar, bool removeFromScars);
+	unsigned int LoadTexture(const std::string& name);
+	void LoadScar(const std::string& file, unsigned char* buf,
+	              int xoffset, int yoffset);
+	void SetTexGen(float scalex, float scaley, float offsetx, float offsety);
 };
 
 extern CGroundDecalHandler* groundDecals;

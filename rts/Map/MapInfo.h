@@ -113,6 +113,7 @@ public:
 
 	/** settings read from "MAP\WATER" section
 	    prefix their name with "Water" to get the TDF variable */
+	static const int causticTextureCount = 32;
 	struct water_t {
 		float  repeatX; ///< (calculated default is in CBaseWater)
 		float  repeatY; ///< (calculated default is in CBaseWater)
@@ -131,7 +132,7 @@ public:
 		std::string texture;
 		std::string foamTexture;
 		std::string normalTexture;
-		std::string causticTextures[32];
+		std::string causticTextures[causticTextureCount];
 	} water;
 	bool hasWaterPlane; ///< true if "MAP\WATER\WaterPlaneColor" is set
 

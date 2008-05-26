@@ -99,6 +99,8 @@ public:
 	float gameSoundVolume;
 	float unitReplyVolume;
 
+	unsigned char gameID[16];
+
 	CScript* script;
 
 	CInfoConsole *infoConsole;

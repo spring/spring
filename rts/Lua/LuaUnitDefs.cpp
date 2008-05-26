@@ -745,14 +745,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("armorType",         ud.armorType);
 	ADD_FLOAT("armoredMultiple", ud.armoredMultiple);
 
-	/*
-	ADD_FLOAT("hitSphereScale",   ud.collisionSphereScale);
-	ADD_FLOAT("hitSphereOffsetX", ud.collisionSphereOffset.x);
-	ADD_FLOAT("hitSphereOffsetY", ud.collisionSphereOffset.y);
-	ADD_FLOAT("hitSphereOffsetZ", ud.collisionSphereOffset.z);
-	ADD_BOOL("useHitSphereOffset", ud.useCSOffset);
-	*/
-
 	ADD_FLOAT("minCollisionSpeed", ud.minCollisionSpeed);
 	ADD_FLOAT("slideTolerance",    ud.slideTolerance);
 

@@ -1792,16 +1792,19 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
-	if (usingAtiHacks) {
+	if (!usingAtiHacks) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		DrawUnitModel(unit);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+	else {
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
-	}
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	DrawUnitModel(unit);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		DrawUnitModel(unit);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	if (usingAtiHacks) {
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}

@@ -32,9 +32,10 @@ CMapInfo::CMapInfo(const std::string& mapname)
 	map.name = mapname;
 	mapDefParser = new TdfParser(GetTDFName(mapname));
 	resourcesParser = new LuaParser ("gamedata/resources.lua",
-														SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser->Execute() || !resourcesParser->IsValid())
+	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser->Execute()) {
 		logOutput.Print(resourcesParser->GetErrorLog());
+	}
 	
 	ReadGlobal();
 	ReadAtmosphere();
@@ -194,7 +195,7 @@ void CMapInfo::ReadWater()
 		water.normalTexture = "maps/" + water.normalTexture;
 
 	char num[10];
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < causticTextureCount; i++) {
 		sprintf(num, "%02i", i);
 		water.causticTextures[i] = std::string("bitmaps/") + causticsTable.GetString(std::string("caustic")+num, 
 															 std::string("caustic")+num+".jpg");

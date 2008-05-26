@@ -349,7 +349,6 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	else if (command == "drawcommands") {
 		if (words.size() >= 2) {
 			drawCommands = std::max(0, atoi(words[1].c_str()));
-
 		} else {
 			drawCommands = (drawCommands > 0) ? 0 : 1;
 		}
@@ -357,7 +356,6 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	else if (command == "drawprojectiles") {
 		if (words.size() >= 2) {
 			drawProjectiles = !!atoi(words[1].c_str());
-
 		} else {
 			drawProjectiles = !drawProjectiles;
 		}
