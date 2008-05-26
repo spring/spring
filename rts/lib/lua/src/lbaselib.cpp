@@ -408,9 +408,21 @@ static int luaB_tostring (lua_State *L) {
     case LUA_TNIL:
       lua_pushliteral(L, "nil");
       break;
+    /*
+     * SPRING - synced safety change
+     */
+    case LUA_TNONE:          { lua_pushliteral(L, "<none>");          break; }
+    case LUA_TTABLE:         { lua_pushliteral(L, "<table>");         break; }
+    case LUA_TUSERDATA:      { lua_pushliteral(L, "<userdata>");      break; }
+    case LUA_TLIGHTUSERDATA: { lua_pushliteral(L, "<lightuserdata>"); break; }
+    case LUA_TFUNCTION:      { lua_pushliteral(L, "<function>");      break; }
+    case LUA_TTHREAD:        { lua_pushliteral(L, "<thread>");        break; }
+    default:                 { lua_pushliteral(L, "<unknown_type>");  break; }
+/*
     default:
       lua_pushfstring(L, "%s: %p", luaL_typename(L, 1), lua_topointer(L, 1));
       break;
+*/
   }
   return 1;
 }
