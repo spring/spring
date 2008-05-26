@@ -138,9 +138,10 @@ bool CNamedTextures::Bind(const string& texName)
 			             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		} else {
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-			                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem); // make power of two!
+			                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		}
-	} else {
+	}
+	else {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		if (linear) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -148,8 +149,8 @@ bool CNamedTextures::Bind(const string& texName)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		}
 
-		glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		
+		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+		                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 	}
 
 	if (aniso && GLEW_EXT_texture_filter_anisotropic) {
