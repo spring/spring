@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "streflop_cond.h" // SPRING -- for luaV_tostring
+
 #define lvm_c
 #define LUA_CORE
 
@@ -50,7 +52,26 @@ int luaV_tostring (lua_State *L, StkId obj) {
   else {
     char s[LUAI_MAXNUMBER2STR];
     lua_Number n = nvalue(obj);
-    lua_number2str(s, n);
+    // SPRING -- synced safety change
+    //        -- need a custom number formatter?
+    if (isfinite(n)) {
+      lua_number2str(s, n);
+    }
+    else {
+      if (isnan(n)) {
+        strcpy(s, "nan");
+      }
+      else {
+        const int inf_type = isinf(n);
+        if (inf_type == 1) {
+          strcpy(s, "+inf");
+        } else if (inf_type == -1) {
+          strcpy(s, "-inf");
+        } else {
+          strcpy(s, "weird_number");
+        }
+      }
+    } 
     setsvalue2s(L, obj, luaS_new(L, s));
     return 1;
   }
