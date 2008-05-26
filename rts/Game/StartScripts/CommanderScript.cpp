@@ -53,19 +53,21 @@ void CCommanderScript::GameStart()
 			if (!side.IsValid()) {
 				break;
 			}
-			const std::string sideName = side.GetString("name", "unknown");
+			const std::string sideName  = side.GetString("name", "unknown");
 			const std::string startUnit = side.GetString("startUnit", "");
-			sideMap[sideName] = StringToLower(startUnit);
+			sideMap[StringToLower(sideName)] = StringToLower(startUnit);
 		}
 
 		// setup the teams
 		for (int a = 0; a < gs->activeTeams; ++a) {
 
 			// don't spawn a commander for the gaia team
-			if (gs->useLuaGaia && a == gs->gaiaTeamID)
+			if (gs->useLuaGaia && (a == gs->gaiaTeamID)) {
 				continue;
+			}
 
 			CTeam* team = gs->Team(a);
+
 			if (team->gaia) continue;
 
 			// remove the pre-existing storage except for a small amount
@@ -82,11 +84,11 @@ void CCommanderScript::GameStart()
 				sideMap.find(team->side);
 
 			if (it != sideMap.end()) {
-				const std::string& sideName = it->first;
+				const std::string& sideName  = it->first;
 				const std::string& startUnit = it->second;
 				if (startUnit.length() == 0) {
 					throw content_error (
-						"Unable to load a commander for the first side: " + sideName
+						"Unable to load a commander for side: " + sideName
 					);
 				}
 				CUnit* unit = unitLoader.LoadUnit(startUnit,
