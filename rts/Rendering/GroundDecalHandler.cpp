@@ -20,8 +20,11 @@
 #include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
-CGroundDecalHandler* groundDecals = 0;
 using namespace std;
+
+
+CGroundDecalHandler* groundDecals = NULL;
+
 
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
@@ -43,10 +46,10 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 		logOutput.Print(resourcesParser.GetErrorLog());
 	
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("scars");
-	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar2", "scars/scar2.bmp")).c_str(),buf,0,0);
-	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar3", "scars/scar3.bmp")).c_str(),buf,256,0);
-	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar1", "scars/scar1.bmp")).c_str(),buf,0,256);
-	LoadScar((char*)("bitmaps/"+scarsTable.GetString("scar4", "scars/scar4.bmp")).c_str(),buf,256,256);
+	LoadScar("bitmaps/" + scarsTable.GetString("scar2", "scars/scar2.bmp"), buf, 0,   0);
+	LoadScar("bitmaps/" + scarsTable.GetString("scar3", "scars/scar3.bmp"), buf, 256, 0);
+	LoadScar("bitmaps/" + scarsTable.GetString("scar1", "scars/scar1.bmp"), buf, 0,   256);
+	LoadScar("bitmaps/" + scarsTable.GetString("scar4", "scars/scar4.bmp"), buf, 256, 256);
 	
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
@@ -70,6 +73,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 		decalFP=LoadFragmentProgram("grounddecals.fp");
 	}
 }
+
 
 CGroundDecalHandler::~CGroundDecalHandler(void)
 {
@@ -104,6 +108,7 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		glSafeDeleteProgram(decalFP);
 	}
 }
+
 
 void CGroundDecalHandler::Draw(void)
 {
@@ -455,9 +460,11 @@ void CGroundDecalHandler::Draw(void)
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
+
 void CGroundDecalHandler::Update(void)
 {
 }
+
 
 void CGroundDecalHandler::UnitMoved(CUnit* unit)
 {
@@ -516,6 +523,7 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 	unit->myTrack->parts.push_back(tp);
 }
 
+
 void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 {
 	if(decalLevel==0)
@@ -527,44 +535,56 @@ void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 	}
 }
 
-int CGroundDecalHandler::GetTrackType(std::string name)
+
+int CGroundDecalHandler::GetTrackType(const std::string& name)
 {
-	if(decalLevel==0)
+	if (decalLevel == 0) {
 		return 0;
+	}
 
-	StringToLowerInPlace(name);
+	const std::string lowerName = StringToLower(name);
 
-	int a=0;
-	for(std::vector<TrackType*>::iterator ti=trackTypes.begin();ti!=trackTypes.end();++ti){
-		if((*ti)->name==name){
+	int a = 0;
+	std::vector<TrackType*>::iterator ti;
+	for(ti = trackTypes.begin(); ti != trackTypes.end(); ++ti) {
+		if ((*ti)->name == lowerName) {
 			return a;
 		}
 		++a;
 	}
-	TrackType* tt=SAFE_NEW TrackType;
-	tt->name=name;
-	tt->texture=LoadTexture(name);
+
+	TrackType* tt = SAFE_NEW TrackType;
+	tt->name = lowerName;
+	tt->texture = LoadTexture(lowerName);
 	trackTypes.push_back(tt);
-	return trackTypes.size()-1;
+
+	return trackTypes.size() - 1;
 }
 
-unsigned int CGroundDecalHandler::LoadTexture(std::string name)
+
+unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 {
-	if(name.find_first_of('.')==string::npos)
-		name+=".bmp";
-	if(name.find_first_of('\\')==string::npos&&name.find_first_of('/')==string::npos)
-		name=string("bitmaps/tracks/")+name;
+	std::string fullName = name;
+	if (fullName.find_first_of('.') == string::npos) {
+		fullName += ".bmp";
+	}
+	if ((fullName.find_first_of('\\') == string::npos) &&
+	    (fullName.find_first_of('/')  == string::npos)) {
+		fullName = string("bitmaps/tracks/") + fullName;
+	}
 
 	CBitmap bm;
-	if (!bm.Load(name))
-		throw content_error("Could not load ground decal from file " + name);
-	for(int y=0;y<bm.ysize;++y){
-		for(int x=0;x<bm.xsize;++x){
-			bm.mem[(y*bm.xsize+x)*4+3]=bm.mem[(y*bm.xsize+x)*4+1];
-			int brighness=bm.mem[(y*bm.xsize+x)*4+0];
-			bm.mem[(y*bm.xsize+x)*4+0]=(brighness*90)/255;
-			bm.mem[(y*bm.xsize+x)*4+1]=(brighness*60)/255;
-			bm.mem[(y*bm.xsize+x)*4+2]=(brighness*30)/255;
+	if (!bm.Load(fullName)) {
+		throw content_error("Could not load ground decal from file " + fullName);
+	}
+	for (int y = 0; y < bm.ysize; ++y) {
+		for (int x = 0; x < bm.xsize; ++x) {
+			const int index = ((y * bm.xsize) + x) * 4;
+			bm.mem[index + 3]    = bm.mem[index + 1];
+			const int brightness = bm.mem[index + 0];
+			bm.mem[index + 0] = (brightness * 90) / 255;
+			bm.mem[index + 1] = (brightness * 60) / 255;
+			bm.mem[index + 2] = (brightness * 30) / 255;
 		}
 	}
 
@@ -636,21 +656,27 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 	scars.push_back(s);
 }
 
-void CGroundDecalHandler::LoadScar(std::string file, unsigned char* buf, int xoffset, int yoffset)
+
+void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
+                                   int xoffset, int yoffset)
 {
 	CBitmap bm;
-	if (!bm.Load(file))
+	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
-	for(int y=0;y<bm.ysize;++y){
-		for(int x=0;x<bm.xsize;++x){
-			buf[((y+yoffset)*512+x+xoffset)*4+3]=bm.mem[(y*bm.xsize+x)*4+1];
-			int brighness=bm.mem[(y*bm.xsize+x)*4+0];
-			buf[((y+yoffset)*512+x+xoffset)*4+0]=(brighness*90)/255;
-			buf[((y+yoffset)*512+x+xoffset)*4+1]=(brighness*60)/255;
-			buf[((y+yoffset)*512+x+xoffset)*4+2]=(brighness*30)/255;
+	}
+	for (int y = 0; y < bm.ysize; ++y) {
+		for (int x = 0; x < bm.xsize; ++x) {
+			const int memIndex = ((y * bm.xsize) + x) * 4;
+			const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
+			buf[bufIndex + 3]    = bm.mem[memIndex + 1];
+			const int brightness = bm.mem[memIndex + 0];
+			buf[bufIndex + 0] = (brightness * 90) / 255;
+			buf[bufIndex + 1] = (brightness * 60) / 255;
+			buf[bufIndex + 2] = (brightness * 30) / 255;
 		}
 	}
 }
+
 
 int CGroundDecalHandler::OverlapSize(Scar* s1, Scar* s2)
 {
@@ -673,6 +699,7 @@ int CGroundDecalHandler::OverlapSize(Scar* s1, Scar* s2)
 
 	return xs*ys;
 }
+
 
 void CGroundDecalHandler::TestOverlaps(Scar* scar)
 {
@@ -709,6 +736,7 @@ void CGroundDecalHandler::TestOverlaps(Scar* scar)
 		}
 	}
 }
+
 
 void CGroundDecalHandler::RemoveScar(Scar* scar,bool removeFromScars)
 {
@@ -767,6 +795,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	type->buildingDecals.insert(decal);
 }
 
+
 void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
 {
 	BuildingGroundDecal* decal = building->buildingDecal;
@@ -778,26 +807,31 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostB
 	building->buildingDecal = 0;
 }
 
-int CGroundDecalHandler::GetBuildingDecalType(std::string name)
-{
-	if (decalLevel == 0)
-		return 0;
 
-	StringToLowerInPlace(name);
+int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
+{
+	if (decalLevel == 0) {
+		return 0;
+	}
+
+	const std::string lowerName = StringToLower(name);
 
 	int a = 0;
-	for (std::vector<BuildingDecalType*>::iterator bi = buildingDecalTypes.begin(); bi != buildingDecalTypes.end(); ++bi) {
-		if ((*bi)->name == name) {
+	std::vector<BuildingDecalType*>::iterator bi;
+	for (bi = buildingDecalTypes.begin(); bi != buildingDecalTypes.end(); ++bi) {
+		if ((*bi)->name == lowerName) {
 			return a;
 		}
 		++a;
 	}
 
 	BuildingDecalType* tt = SAFE_NEW BuildingDecalType;
-	tt->name = name;
+	tt->name = lowerName;
+	const std::string fullName = "unittextures/" + lowerName;
 	CBitmap bm;
-	if (!bm.Load(string("unittextures/") + name))
-		throw content_error("Could not load building decal from file unittextures/" + name);
+	if (!bm.Load(fullName)) {
+		throw content_error("Could not load building decal from file " + fullName);
+	}
 
 	tt->texture = bm.CreateTexture(true);
 	buildingDecalTypes.push_back(tt);

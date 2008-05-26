@@ -42,7 +42,8 @@ local unitIcons = {
 		--   radiusadjust = false,
 		--   distance = 1.0,
 --	},
-	{ name = 'default',             size = 1.0, texture = ''                            },
+	{ name = 'default',             size = 1.0, texture = iconDir..'chi.png'            },
+	{ name = 'default.user',        size = 1.0, texture = ''                            },
 	{ name = 'star.user',           size = 1.5, texture = iconDir..'star.png'           },
 	{ name = 'star-dark.user',      size = 1.4, texture = iconDir..'star-dark.png'      },
 	{ name = 'tri-up.user',         size = 1.5, texture = iconDir..'tri-up.png'         },
@@ -166,7 +167,7 @@ function widget:Initialize()
         end
       else
         -- FIXME: allow unknowns to use mod icons?
-        Spring.SetUnitDefIcon(udid, "default")
+        Spring.SetUnitDefIcon(udid, "default.user")
       end
     end
   end

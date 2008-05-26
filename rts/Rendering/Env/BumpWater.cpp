@@ -219,7 +219,7 @@ CBumpWater::CBumpWater()
 
 	foamTexture = LoadTexture( mapInfo->water.foamTexture );
 	normalTexture = LoadTexture( mapInfo->water.normalTexture );
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < CMapInfo::causticTextureCount; i++) {
 		caustTextures[i] = LoadTexture( mapInfo->water.causticTextures[i] );
 	}
 
@@ -305,7 +305,7 @@ CBumpWater::~CBumpWater()
 		glDeleteTextures(1, &refractTexture);
 
 	glDeleteTextures(1, &foamTexture);
-	glDeleteTextures(32, caustTextures);
+	glDeleteTextures(CMapInfo::causticTextureCount, caustTextures);
 	glDeleteTextures(1, &normalTexture);
 
 	glDeleteShader(waterVP);
@@ -332,18 +332,13 @@ void CBumpWater::Draw()
 	if (refraction<2)
 		glDepthMask(0);
 
-	glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-	glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, caustTextures[gs->frameNum%32]);
-	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, foamTexture);
-	glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, reflectTexture);
-	glActiveTexture(GL_TEXTURE5);
-		glBindTexture(target, refractTexture);
-	glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, normalTexture);
+	const int causticTexNum = (gs->frameNum % CMapInfo::causticTextureCount);
+	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, caustTextures[causticTexNum]);
+	glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, foamTexture);
+	glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, reflectTexture);
+	glActiveTexture(GL_TEXTURE5); glBindTexture(target,        refractTexture);
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	glUseProgram(waterShader);
 	glUniform1f(frameLoc,gs->frameNum/15000.0f);

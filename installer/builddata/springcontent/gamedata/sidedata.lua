@@ -1,9 +1,9 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    sidedata.lua
---  brief:   sidedata.tdf lua parser
---  author:  Craig Lawrence, Dave Rodgers
+--  file:     sidedata.lua
+--  brief:    sidedata.tdf lua parser
+--  authors:  Dave Rodgers, Craig Lawrence
 --
 --  Copyright (C) 2007.
 --  Licensed under the terms of the GNU GPL, v2 or later.

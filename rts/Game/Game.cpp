@@ -210,6 +210,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	timeLeft = 0.0f;
 	consumeSpeed = 1.0f;
 
+	memset(gameID, 0, sizeof(gameID));
+
 	infoConsole = ic;
 
 	script = NULL;
@@ -396,7 +398,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	defsParser = NULL;
 
 	ENTER_UNSYNCED;
-	sky=CBaseSky::GetSky();
+	sky = CBaseSky::GetSky();
 
 	resourceBar = SAFE_NEW CResourceBar();
 	keyCodes = SAFE_NEW CKeyCodes();
@@ -473,10 +475,12 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
-	if (!saveFile) UnloadStartPicture();
+	if (!saveFile) {
+		UnloadStartPicture();
+	}
 	
 	net->loading = false;
-		thread.join();
+	thread.join();
 	logOutput.Print("Spring %s",VERSION_STRING);
 	//sending your playername to the server indicates that you are finished loading
 	net->SendPlayerName(gu->myPlayerNum, p->playerName);
@@ -3368,6 +3372,7 @@ void CGame::ClientReadNet()
 				if (record != NULL) {
 					record->SetGameID(p);
 				}
+				memcpy(gameID, p, sizeof(gameID));
 				logOutput.Print(
 				  "GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 				  p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],

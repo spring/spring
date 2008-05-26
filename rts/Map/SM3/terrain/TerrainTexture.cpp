@@ -249,10 +249,9 @@ namespace terrain {
 		GenerateInfo gi;
 		gi.bmMipmaps = bmMipmaps;
 
-		if (cb) cb->PrintMsg ("  generating blendmap mipmaps...");
+		if (cb) { cb->PrintMsg ("  generating blendmap mipmaps..."); }
 
-		for (int a=0;a<blendMaps.size();a++)
-		{
+		for (int a=0;a<blendMaps.size();a++) {
 			Blendmap *bm = blendMaps[a];
 
 			AlphaImage *cur = bm->image;
@@ -273,13 +272,11 @@ namespace terrain {
 		if (cb) cb->PrintMsg ("  loading blendmaps into OpenGL...");
 
 		// Convert to textures
-		for (int a=0;a<blendMaps.size();a++)
-		{
+		for (int a=0;a<blendMaps.size();a++) {
 			AlphaImage *bm = bmMipmaps[a].back();
 
 			// Save image
-			if (blendMaps[a]->generatorInfo)
-			{
+			if (blendMaps[a]->generatorInfo) {
 				char fn[32];
 				SNPRINTF (fn,32, "blendmap%d.jpg", a);
 				remove(fn);
@@ -319,20 +316,20 @@ namespace terrain {
 		// see how lighting should be implemented, based on config and avaiable textures
 		InstantiateShaders(cfg, cb);
 
-        if (cb) cb->PrintMsg ("  initializing terrain node shaders...");
+		if (cb) { cb->PrintMsg ("  initializing terrain node shaders..."); }
 
 		CreateTexProg (quadtree, &gi);
 		shaderHandler->EndBuild();
 
 		// count passes
 		maxPasses = 0;
-		for (map<uint, RenderSetupCollection*>::iterator mi=gi.nodesetup.begin();mi!=gi.nodesetup.end();++mi)
-		{
+		for (map<uint, RenderSetupCollection*>::iterator mi=gi.nodesetup.begin();mi!=gi.nodesetup.end();++mi) {
 			for (int i = 0; i < mi->second->renderSetup.size(); i++) {
 				RenderSetup *rs = mi->second->renderSetup[i];
 
-				if (rs->passes.size () > maxPasses)
+				if (rs->passes.size () > maxPasses) {
 					maxPasses = rs->passes.size();
+				}
 			}
 			texNodeSetup.push_back (mi->second);
 		}
@@ -341,14 +338,16 @@ namespace terrain {
 
 		// Free blendmap mipmap images
 		for (int a=0;a<blendMaps.size();a++) {
-			for (deque<AlphaImage*>::iterator i=bmMipmaps[a].begin();i!=bmMipmaps[a].end();++i)
+			for (deque<AlphaImage*>::iterator i=bmMipmaps[a].begin();i!=bmMipmaps[a].end();++i) {
 				delete *i;
+			}
 		}
 
 		delete[] bmMipmaps;
 
-		if (cfg->useShadowMaps)
+		if (cfg->useShadowMaps) {
 			shadowMapParams = SAFE_NEW ShadowMapParams;
+		}
 	}
 
 	void TerrainTexture::CreateTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi)

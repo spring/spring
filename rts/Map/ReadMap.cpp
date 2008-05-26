@@ -23,7 +23,6 @@
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
-#include "System/TdfParser.h"
 #include "mmgr.h"
 
 using namespace std;
