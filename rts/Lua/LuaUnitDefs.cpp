@@ -88,8 +88,8 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 	  InitParamMap();
 	}
 
-	const std::map <std::string, int>& udMap = unitDefHandler->unitID;
-	std::map< std::string, int>::const_iterator udIt;
+	const map<string, int>& udMap = unitDefHandler->unitID;
+	map<string, int>::const_iterator udIt;
 	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
 	  const UnitDef* ud = unitDefHandler->GetUnitByID(udIt->second);
 		if (ud == NULL) {
@@ -134,7 +134,7 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 }
 
 
-bool LuaUnitDefs::IsDefaultParam(const std::string& word)
+bool LuaUnitDefs::IsDefaultParam(const string& word)
 {
 	if (paramMap.empty()) {
 	  InitParamMap();
@@ -484,7 +484,7 @@ static int ModelDefTable(lua_State* L, const void* data) {
 	HSTR_PUSH_STRING(L, "name", md.modelname);
 	HSTR_PUSH(L, "textures");
 	lua_newtable(L);
-	std::map<std::string, std::string>::const_iterator it;
+	map<string, string>::const_iterator it;
 	for (it = md.textures.begin(); it != md.textures.end(); ++it) {
 		LuaPushNamedString(L, it->first, it->second);
 	}
@@ -909,7 +909,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorG",   ud.nanoColor.y);
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
-//	std::vector<CExplosionGenerator*>  sfxExplGens;
+//	vector<CExplosionGenerator*>  sfxExplGens;
 	ADD_STRING("pieceTrailCEGTag",   ud.pieceTrailCEGTag);
 	ADD_INT(   "pieceTrailCEGRange", ud.pieceTrailCEGRange);
 

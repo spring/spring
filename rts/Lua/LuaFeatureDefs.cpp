@@ -59,9 +59,9 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	  InitParamMap();
 	}
 
-	const std::map<std::string, const FeatureDef*>& featureDefs =
+	const map<string, const FeatureDef*>& featureDefs =
 		featureHandler->GetFeatureDefs();
-	std::map<std::string, const FeatureDef*>::const_iterator fdIt;
+	map<string, const FeatureDef*>::const_iterator fdIt;
 	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); fdIt++) {
 	  const FeatureDef* fd = fdIt->second;
 		if (fd == NULL) {
@@ -106,7 +106,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 }
 
 
-bool LuaFeatureDefs::IsDefaultParam(const std::string& word)
+bool LuaFeatureDefs::IsDefaultParam(const string& word)
 {
 	if (paramMap.empty()) {
 	  InitParamMap();

@@ -20,16 +20,19 @@ public:
 	~CCameraHandler();
 	
 	void UpdateCam();
-	void SetCameraMode(unsigned mode);
+	void SetCameraMode(unsigned int mode);
+	void SetCameraMode(const std::string& mode);
 	void PushMode();
 	void PopMode();
 	void CameraTransition(float time);
-	
+
 	void ToggleState();
 	void ToggleOverviewCamera();
 	
 	void SaveView(const std::string& name);
 	bool LoadView(const std::string& name);
+
+	int GetModeIndex(const std::string& modeName) const;
 	
 	/**
 	@brief write current camera settings in a vector
@@ -52,9 +55,9 @@ public:
 	
 private:
 	std::vector<CCameraController*> camControllers;
-	std::stack<unsigned> controllerStack;
+	std::stack<unsigned int> controllerStack;
 	CCameraController* currCamCtrl;
-	unsigned currCamCtrlNum;
+	unsigned int currCamCtrlNum;
 	
 	float cameraTime;
 	float cameraTimeLeft;
@@ -63,6 +66,7 @@ private:
 	
 	bool LoadViewData(const ViewData& vd);
 	std::map<std::string, ViewData> views;
+	std::map<std::string, unsigned int> nameMap;
 };
 
 extern CCameraHandler* camHandler;

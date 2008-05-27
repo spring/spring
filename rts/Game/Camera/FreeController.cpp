@@ -20,32 +20,40 @@ extern Uint8 *keys;
 //
 
 CFreeController::CFreeController()
-	: dir(0.0f, 0.0f, 0.0f),
-	vel(0.0f, 0.0f, 0.0f),
-	avel(0.0f, 0.0f, 0.0f),
-	prevVel(0.0f, 0.0f, 0.0f),
-	prevAvel(0.0f, 0.0f, 0.0f),
-	tracking(false),
-	trackPos(0.0f, 0.0f, 0.0f),
-	trackRadius(0.0f),
-	gndLock(false)
+: vel(0.0f, 0.0f, 0.0f),
+  avel(0.0f, 0.0f, 0.0f),
+  prevVel(0.0f, 0.0f, 0.0f),
+  prevAvel(0.0f, 0.0f, 0.0f),
+  tracking(false),
+  trackPos(0.0f, 0.0f, 0.0f),
+  trackRadius(0.0f),
+  gndLock(false)
 {
-	enabled      = !!configHandler.GetInt("CamFreeEnabled",   0);
-	invertAlt    = !!configHandler.GetInt("CamFreeInvertAlt", 0);
-	goForward    = !!configHandler.GetInt("CamFreeGoForward", 0);
-	fov          = configHandler.GetFloat("CamFreeFOV",           45.0f);
-	scrollSpeed  = configHandler.GetFloat("CamFreeScrollSpeed",  500.0f);
-	gravity      = configHandler.GetFloat("CamFreeGravity",     -500.0f);
-	slide        = configHandler.GetFloat("CamFreeSlide",          0.5f);
-	gndOffset    = configHandler.GetFloat("CamFreeGroundOffset",  16.0f);
-	tiltSpeed    = configHandler.GetFloat("CamFreeTiltSpeed",    150.0f);
-	tiltSpeed    = tiltSpeed * (PI / 180.0);
-	autoTilt     = configHandler.GetFloat("CamFreeAutoTilt",     150.0f);
-	autoTilt     = autoTilt * (PI / 180.0);
-	velTime      = configHandler.GetFloat("CamFreeVelTime",        1.5f);
-	velTime      = max(0.1f, velTime);
-	avelTime     = configHandler.GetFloat("CamFreeAngVelTime",     1.0f);
-	avelTime     = max(0.1f, avelTime);
+	dir = float3(0.0f, -2.0f, -1.0f);
+	dir.Normalize();
+	if (camera) {
+		const float hDist = sqrtf((dir.x * dir.x) + (dir.z * dir.z));
+		camera->rot.y = atan2f(dir.x, dir.z);
+		camera->rot.x = atan2f(dir.y, hDist);
+	}
+	pos -= (dir * 1000.0f);
+
+	enabled     = !!configHandler.GetInt("CamFreeEnabled",   0);
+	invertAlt   = !!configHandler.GetInt("CamFreeInvertAlt", 0);
+	goForward   = !!configHandler.GetInt("CamFreeGoForward", 0);
+	fov         = configHandler.GetFloat("CamFreeFOV",           45.0f);
+	scrollSpeed = configHandler.GetFloat("CamFreeScrollSpeed",  500.0f);
+	gravity     = configHandler.GetFloat("CamFreeGravity",     -500.0f);
+	slide       = configHandler.GetFloat("CamFreeSlide",          0.5f);
+	gndOffset   = configHandler.GetFloat("CamFreeGroundOffset",  16.0f);
+	tiltSpeed   = configHandler.GetFloat("CamFreeTiltSpeed",    150.0f);
+	tiltSpeed   = tiltSpeed * (PI / 180.0);
+	autoTilt    = configHandler.GetFloat("CamFreeAutoTilt",     150.0f);
+	autoTilt    = autoTilt * (PI / 180.0);
+	velTime     = configHandler.GetFloat("CamFreeVelTime",        1.5f);
+	velTime     = max(0.1f, velTime);
+	avelTime    = configHandler.GetFloat("CamFreeAngVelTime",     1.0f);
+	avelTime    = max(0.1f, avelTime);
 }
 
 

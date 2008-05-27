@@ -88,16 +88,19 @@ end
 
 local function CreateFontFiles(fontName)
   local _, _, name, size = string.find(fontName, '^(.*)_(%d*)$')
-  if (name and size) then
-    local fullName
-    if (VFS.FileExists(name .. '.ttf', VFS.RAW_ONLY)) then
-      fullName = name .. '.ttf'
-    elseif (VFS.FileExists(name .. '.otf', VFS.RAW_ONLY)) then
-      fullName = name .. '.otf'
-    else
-      return
-    end
-    print('CreateFontFiles = ' .. fullName .. '.ttf, ' .. size)
+  if ((not name) or (not size)) then
+    return false
+  end
+  local fullName
+  if (VFS.FileExists(name .. '.ttf', VFS.RAW_ONLY)) then
+    fullName = name .. '.ttf'
+  elseif (VFS.FileExists(name .. '.otf', VFS.RAW_ONLY)) then
+    fullName = name .. '.otf'
+  else
+    return false
+  end
+  print('CreateFontFiles = ' .. fullName .. '.ttf, ' .. size)
+  return
     Spring.MakeFont(fullName, {
       height = tonumber(size),
       minChar = 0,
@@ -112,8 +115,6 @@ local function CreateFontFiles(fontName)
       debug =
     --]]
     })
-  end
-  return
 end
 
 
@@ -274,8 +275,8 @@ local function RawColorDraw(text)
     end
     if (strlen(color) == 4) then
       glColor(strbyte(color, 2) / 255,
-               strbyte(color, 3) / 255,
-               strbyte(color, 4) / 255)
+              strbyte(color, 3) / 255,
+              strbyte(color, 4) / 255)
     end
   end
 end
@@ -360,7 +361,7 @@ end
 --------------------------------------------------------------------------------
 
 local function LoadFont(fontName)
-  print('LoadFont:' .. fontName)
+  print('LoadFont:  ' .. fontName)
 
   if (fonts[fontName]) then
     return nil  -- already loaded
@@ -371,7 +372,7 @@ local function LoadFont(fontName)
   if (options) then
     baseName = bn
   else
-    options = ""
+    options = ''
   end
 
   if (not HaveFontFiles(baseName)) then
@@ -439,6 +440,7 @@ local function SetDefaultFont(name)
   local tmpFont = activeFont
   if (UseFont(name)) then
     DefaultFontName = name
+    defaultFont = activeFont
   end
   activeFont = tmpFont
 end

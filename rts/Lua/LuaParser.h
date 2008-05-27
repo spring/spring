@@ -67,6 +67,21 @@ class LuaTable {
 		float3 GetFloat3(const string& key, const float3& def) const;
 		string GetString(const string& key, const string& def) const;
 
+		/* not having these makes for better code, imo
+		LuaTable operator[](int key)           const { return SubTable(key); }
+		LuaTable operator[](const string& key) const { return SubTable(key); }
+		int    operator()(int key, int def)           const { return GetInt(key, def);    }
+		bool   operator()(int key, bool def)          const { return GetBool(key, def);   }
+		float  operator()(int key, float def)         const { return GetFloat(key, def);  }
+		float3 operator()(int key, const float3& def) const { return GetFloat3(key, def); }
+		string operator()(int key, const string& def) const { return GetString(key, def); }
+		int    operator()(const string& key, int def)           const { return GetInt(key, def);    }
+		bool   operator()(const string& key, bool def)          const { return GetBool(key, def);   }
+		float  operator()(const string& key, float def)         const { return GetFloat(key, def);  }
+		float3 operator()(const string& key, const float3& def) const { return GetFloat3(key, def); }
+		string operator()(const string& key, const string& def) const { return GetString(key, def); }
+		*/
+
 	private:
 		LuaTable(LuaParser* parser); // for LuaParser::GetRoot()
 

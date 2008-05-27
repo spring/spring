@@ -63,8 +63,8 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 	  InitParamMap();
 	}
 
-	const std::map<std::string, int>& weaponMap = weaponDefHandler->weaponID;
-	std::map<std::string, int>::const_iterator wit;
+	const map<string, int>& weaponMap = weaponDefHandler->weaponID;
+	map<string, int>::const_iterator wit;
 	for (wit = weaponMap.begin(); wit != weaponMap.end(); wit++) {
 		const WeaponDef* wd = &weaponDefHandler->weaponDefs[wit->second];
 		if (wd == NULL) {

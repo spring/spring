@@ -1,3 +1,6 @@
+
+#include "StdAfx.h"
+
 #include "CameraHandler.h"
 
 #include "Game/Action.h"
@@ -33,8 +36,19 @@ CCameraHandler::CCameraHandler()
 	camCtrls.push_back(new SmoothController());       // 5
 	camCtrls.push_back(new COverviewController());    // 6
 
-	const unsigned int mode = std::min(configHandler.GetInt("CamMode", 1),
-	                                   (int)camControllers.size() - 1);
+	for (unsigned int i = 0; i < camCtrls.size(); i++) {
+		nameMap[camCtrls[i]->GetName()] = i;
+	}
+
+	int modeIndex;
+	const std::string modeName = configHandler.GetString("CamModeName", "");
+	if (!modeName.empty()) {
+		modeIndex = GetModeIndex(modeName);
+	} else {
+		modeIndex = configHandler.GetInt("CamMode", 1);
+	}
+	const unsigned int mode =
+		(unsigned int)std::max(0, std::min(modeIndex, (int)camCtrls.size() - 1));
 	currCamCtrlNum = mode;
 	currCamCtrl = camControllers[currCamCtrlNum];
 
@@ -102,9 +116,9 @@ void CCameraHandler::UpdateCam()
 }
 
 
-void CCameraHandler::SetCameraMode(unsigned mode)
+void CCameraHandler::SetCameraMode(unsigned int mode)
 {
-	if ((mode >= camControllers.size()) || (mode == static_cast<unsigned>(currCamCtrlNum))) {
+	if ((mode >= camControllers.size()) || (mode == static_cast<unsigned int>(currCamCtrlNum))) {
 		return;
 	}
 
@@ -116,6 +130,26 @@ void CCameraHandler::SetCameraMode(unsigned mode)
 	currCamCtrl = camControllers[mode];
 	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
 	currCamCtrl->SwitchTo();
+}
+
+
+void CCameraHandler::SetCameraMode(const std::string& modeName)
+{
+	const int modeNum = GetModeIndex(modeName);
+	if (modeNum >= 0) {
+		SetCameraMode(modeNum);
+	}
+	// do nothing if the name is not matched
+}
+
+
+int CCameraHandler::GetModeIndex(const std::string& name) const
+{
+	std::map<std::string, unsigned int>::const_iterator it = nameMap.find(name);
+	if (it != nameMap.end()) {
+		return it->second;
+	}
+	return -1;
 }
 
 
@@ -170,7 +204,7 @@ void CCameraHandler::ToggleState()
 
 void CCameraHandler::ToggleOverviewCamera()
 {
-	const unsigned ovCamNum = camControllers.size() - 1;
+	const unsigned int ovCamNum = camControllers.size() - 1;
 	if (controllerStack.empty()) {
 		PushMode();
 		SetCameraMode(ovCamNum);

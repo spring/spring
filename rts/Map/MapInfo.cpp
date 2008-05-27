@@ -208,7 +208,7 @@ void CMapInfo::ReadSmf()
 	// SMF specific settings
 	mapDefParser->GetDef(smf.detailTexName, "", "MAP\\DetailTex");
 
-	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("resources").SubTable("graphics").SubTable("maps");
+	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("maps");
 	
 	if (smf.detailTexName.empty())
 		smf.detailTexName = "bitmaps/" + mapsTable.GetString("detailtex","detailtex2.bmp");
