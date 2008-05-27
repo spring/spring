@@ -19,7 +19,7 @@
 
 local SAFEWRAP = 0
 -- 0: disabled
--- 1: enabled, but can be overriden by widget.GetInfo().unsafe
+-- 1: enabled, but can be overriden by gadget.GetInfo().unsafe
 -- 2: always enabled
 
 
@@ -77,6 +77,8 @@ gadgetHandler = {
   yViewSize    = 1,
   xViewSizeOld = 1,
   yViewSizeOld = 1,
+
+  mouseOwner = nil,
 }
 
 
@@ -159,6 +161,16 @@ local callInLists = {
   'DrawScreen',
   'DrawInMiniMap',
   'RecvFromSynced',
+
+  -- proxied call-ins
+  'KeyPress',
+  'KeyRelease',
+  'MousePress',
+  'MouseRelease',
+  'MouseMove',
+  'MouseWheel',
+  'IsAbove',
+  'GetTooltip',
 }
 
 
@@ -404,6 +416,16 @@ function gadgetHandler:NewGadget()
     end
   end
 
+  -- for proxied call-ins
+  gh.IsMouseOwner = function (_)
+    return (self.mouseOwner == gadget)
+  end
+  gh.DisownMouse  = function (_)
+    if (self.mouseOwner == gadget) then
+      self.mouseOwner = nil
+    end
+  end
+
   return gadget
 end
 
@@ -459,7 +481,7 @@ local function SafeWrap(func, funcName)
       return unpack(r)
     else
       if (funcName ~= 'Shutdown') then
-        gadgetHandler:RemoveWidget(g)
+        gadgetHandler:RemoveGadget(g)
       else
         Spring.Echo('Error in Shutdown')
       end
@@ -472,7 +494,7 @@ local function SafeWrap(func, funcName)
 end
 
 
-local function SafeWrapWidget(gadget)
+local function SafeWrapGadget(gadget)
   if (SAFEWRAP <= 0) then
     return
   elseif (SAFEWRAP == 1) then
@@ -555,7 +577,7 @@ function gadgetHandler:RemoveGadget(gadget)
   end
 
   ArrayRemove(self.gadgets, gadget)
-  self:RemoveWidgetGlobals(gadget)
+  self:RemoveGadgetGlobals(gadget)
   actionHandler.RemoveGadgetActions(gadget)
   for _,listname in ipairs(callInLists) do
     ArrayRemove(self[listname..'List'], gadget)
@@ -809,7 +831,7 @@ function gadgetHandler:SetGlobal(owner, name, value)
 end
 
 
-function gadgetHandler:RemoveWidgetGlobals(owner)
+function gadgetHandler:RemoveGadgetGlobals(owner)
   local count = 0
   for name, o in pairs(self.globals) do
     if (o == owner) then
@@ -1200,11 +1222,10 @@ function gadgetHandler:UnitDestroyed(unitID,     unitDefID,     unitTeam,
 end
 
 
-function gadgetHandler:UnitExperience(unitID,     unitDefID,     unitTeam,
+function gadgetHandler:UnitExperience(unitID, unitDefID, unitTeam,
                                       experience, oldExperience)
   for _,g in ipairs(self.UnitExperienceList) do
-    g:UnitExperience(unitID,     unitDefID,     unitTeam,
-                    experience, oldExperience)
+    g:UnitExperience(unitID, unitDefID, unitTeam, experience, oldExperience)
   end
   return
 end
@@ -1466,6 +1487,99 @@ function gadgetHandler:DrawInMiniMap(mmsx, mmsy)
     g:DrawInMiniMap(mmsx, mmsy)
   end
   return
+end
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+function gadgetHandler:KeyPress(key, mods, isRepeat, label, unicode)
+  for _,g in ipairs(self.KeyPressList) do
+    if (g:KeyPress(key, mods, isRepeat, label, unicode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:KeyRelease(key, mods, label, unicode)
+  for _,g in ipairs(self.KeyReleaseList) do
+    if (g:KeyRelease(key, mods, label, unicode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:MousePress(x, y, button)
+  local mo = self.mouseOwner
+  if (mo) then
+    mo:MousePress(x, y, button)
+    return true  --  already have an active press
+  end
+  for _,g in ipairs(self.MousePressList) do
+    if (g:MousePress(x, y, button)) then
+      self.mouseOwner = g
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:MouseMove(x, y, dx, dy, button)
+  local mo = self.mouseOwner
+  if (mo and mo.MouseMove) then
+    return mo:MouseMove(x, y, dx, dy, button)
+  end
+end
+
+
+function gadgetHandler:MouseRelease(x, y, button)
+  local mo = self.mouseOwner
+  local mx, my, lmb, mmb, rmb = Spring.GetMouseState()
+  if (not (lmb or mmb or rmb)) then
+    self.mouseOwner = nil
+  end
+  if (mo and mo.MouseRelease) then
+    return mo:MouseRelease(x, y, button)
+  end
+  return -1
+end
+
+
+function gadgetHandler:MouseWheel(up, value)
+  for _,g in ipairs(self.MouseWheelList) do
+    if (g:MouseWheel(up, value)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:IsAbove(x, y)
+  for _,g in ipairs(self.IsAboveList) do
+    if (g:IsAbove(x, y)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:GetTooltip(x, y)
+  for _,g in ipairs(self.GetTooltipList) do
+    if (g:IsAbove(x, y)) then
+      local tip = g:GetTooltip(x, y)
+      if (string.len(tip) > 0) then
+        return tip
+      end
+    end
+  end
+  return ''
 end
 
 

@@ -206,8 +206,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 
 	vector<UnitDefHolder> defs;
 
-	const std::map <std::string, int>& udMap = unitDefHandler->unitID;
-	std::map< std::string, int>::const_iterator udIt;
+	const std::map<std::string, int>& udMap = unitDefHandler->unitID;
+	std::map<std::string, int>::const_iterator udIt;
 	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
 	  const UnitDef* ud = unitDefHandler->GetUnitByID(udIt->second);
 		if (ud == NULL) {

@@ -31,6 +31,9 @@
 #endif
 
 
+static const bool lowerKeys = true;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -716,7 +719,8 @@ LuaTable LuaTable::SubTable(int key) const
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-	const string key = StringToLower(mixedKey);
+	
+	const string key = !lowerKeys ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
@@ -810,7 +814,7 @@ bool LuaTable::PushValue(int key) const
 
 bool LuaTable::PushValue(const string& mixedKey) const
 {
-	const string key = StringToLower(mixedKey);
+	const string key = !lowerKeys ? mixedKey : StringToLower(mixedKey);
 	if (!PushTable()) {
 		return false;
 	}

@@ -131,7 +131,7 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 	}else if (GLEW_VERSION_1_4) {
 		// This required GL-1.4
 		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
-		glTexParameteri(GL_TEXTURE_2D,GL_GENERATE_MIPMAP,true);
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 	} else
 		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);

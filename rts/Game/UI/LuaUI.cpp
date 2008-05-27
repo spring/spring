@@ -2333,8 +2333,8 @@ int CLuaUI::MakeFont(lua_State* L)
 			}
 		}
 	}
-	FontTexture::Execute();
-	return 0;
+	lua_pushboolean(L, FontTexture::Execute());
+	return 1;
 }
 
 

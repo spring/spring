@@ -41,11 +41,13 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
 
-	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+	LuaParser resourcesParser("gamedata/resources.lua",
+	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
+	}
 	
-	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("scars");
+	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
 	LoadScar("bitmaps/" + scarsTable.GetString("scar2", "scars/scar2.bmp"), buf, 0,   0);
 	LoadScar("bitmaps/" + scarsTable.GetString("scar3", "scars/scar3.bmp"), buf, 256, 0);
 	LoadScar("bitmaps/" + scarsTable.GetString("scar1", "scars/scar1.bmp"), buf, 0,   256);

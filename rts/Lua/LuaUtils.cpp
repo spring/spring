@@ -34,21 +34,30 @@ static inline int PosLuaIndex(lua_State* src, int index)
 
 static bool CopyPushData(lua_State* dst, lua_State* src, int index)
 {
-	if (lua_isboolean(src, index)) {
-		lua_pushboolean(dst, lua_toboolean(src, index));
-	}
-	else if (lua_israwnumber(src, index)) {
-		lua_pushnumber(dst, lua_tonumber(src, index));
-	}
-	else if (lua_israwstring(src, index)) {
-		lua_pushstring(dst, lua_tostring(src, index));
-	}
-	else if (lua_istable(src, index)) {
-		CopyPushTable(dst, src, index);
-	}
-	else {
-		lua_pushnil(dst); // unhandled type
-		return false;
+	const int type = lua_type(src, index);
+	switch (type) {
+		case LUA_TBOOLEAN: {
+			lua_pushboolean(dst, lua_toboolean(src, index));
+			break;
+		}
+		case LUA_TNUMBER: {
+			lua_pushnumber(dst, lua_tonumber(src, index));
+			break;
+		}
+		case LUA_TSTRING: {
+			size_t len;
+			const char* data = lua_tolstring(src, index, &len);
+			lua_pushlstring(dst, data, len);
+			break;
+		}
+		case LUA_TTABLE: {
+			CopyPushTable(dst, src, index);
+			break;
+		}
+		default: {
+			lua_pushnil(dst); // unhandled type
+			return false;
+		}
 	}
 	return true;
 }

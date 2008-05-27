@@ -12,14 +12,17 @@
 
 extern std::string stupidGlobalMapname;
 
+
 CCommanderScript2::CCommanderScript2()
 : CScript(std::string("Cmds 1000 res"))
 {
 }
 
+
 CCommanderScript2::~CCommanderScript2(void)
 {
 }
+
 
 void CCommanderScript2::Update(void)
 {

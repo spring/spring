@@ -233,7 +233,7 @@ bool FontTexture::Execute()
 	error = FT_Init_FreeType(&library);
 	if (error) {
 		logOutput.Print("freetype library init failed: %i\n", error);
-		return 1;
+		return false;
 	}
 
 	if (inputData.empty()) {
@@ -247,12 +247,12 @@ bool FontTexture::Execute()
 	if (error == FT_Err_Unknown_File_Format) {
 		logOutput.Print("bad font file type\n");
 		FT_Done_FreeType(library);
-		return 1;
+		return false;
 	}
 	else if (error) {
 		logOutput.Print("unknown font file error: %i\n", error);
 		FT_Done_FreeType(library);
-		return 1;
+		return false;
 	}
 
 	if (face->num_fixed_sizes <= 0) {
@@ -261,7 +261,7 @@ bool FontTexture::Execute()
 			logOutput.Print("FT_Set_Pixel_Sizes() error: %i\n", error);
 			FT_Done_Face(face);
 			FT_Done_FreeType(library);
-			return 1;
+			return false;
 		}
 	} else {
 		height = face->available_sizes[0].height;

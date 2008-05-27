@@ -53,6 +53,7 @@ local vsx, vsy = widgetHandler:GetViewSizes()
 local font = 'FreeMonoBold'
 local fontSize = 16
 local fontGap  = 3
+local fontName = ':n:'..LUAUI_DIRNAME..'Fonts/'..font..'_'..fontSize
 
 local stateColorStrs = {
   missing  = string.char(255, 255,   1,   1),
@@ -140,7 +141,7 @@ local function DrawPlayerList()
     local str = colorStr .. ' '
     str = str .. name
     --str = str .. WhiteStr .. '  (' .. string.lower(flag.name) .. ')'
-    if (fontHandler.UseFont('LuaUI/Fonts/'..font..'_'..fontSize)) then
+    if (fontHandler.UseFont(fontName)) then
       fontHandler.Draw(str, xt, y)
     else 
       gl.Text(str, xt, y, fontSize, 'o')

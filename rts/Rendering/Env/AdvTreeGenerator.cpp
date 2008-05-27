@@ -35,10 +35,11 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	memset(tree[0][0],128,256*2048*4);
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute() || !resourcesParser.IsValid())
+	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
+	}
 
-	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("trees");
+	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
 
 	CBitmap bm;
 	std::string fn("bitmaps/"+treesTable.GetString("bark", "Bark.bmp"));

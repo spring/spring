@@ -149,6 +149,8 @@ bool CNamedTextures::Bind(const string& texName)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		}
 
+//		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+//									 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
 		                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 	}

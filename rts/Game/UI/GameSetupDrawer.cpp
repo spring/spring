@@ -32,8 +32,7 @@ void GameSetupDrawer::Enable()
 
 void GameSetupDrawer::Disable()
 {
-	if (instance)
-	{
+	if (instance) {
 		delete instance;
 		instance = 0;
 	}
@@ -41,12 +40,16 @@ void GameSetupDrawer::Disable()
 
 void GameSetupDrawer::StartCountdown(unsigned time)
 {
-	if (instance)
-	{
+	if (instance) {
 		instance->lastTick = SDL_GetTicks();
 		instance->readyCountdown = (int)time;
-		int mode = configHandler.GetInt("CamMode", 1);
-		camHandler->SetCameraMode(mode);
+		const std::string modeName = configHandler.GetString("CamModeName", "");
+		if (!modeName.empty()) {
+			camHandler->SetCameraMode(modeName);
+		} else {
+			const int modeIndex = configHandler.GetInt("CamMode", 1);
+			camHandler->SetCameraMode(modeIndex);
+		}
 	}
 }
 
@@ -68,13 +71,11 @@ GameSetupDrawer::~GameSetupDrawer()
 
 void GameSetupDrawer::Draw()
 {
-	if (readyCountdown > 0)
-	{
+	if (readyCountdown > 0) {
 		readyCountdown -= (SDL_GetTicks() - lastTick);
 		lastTick = SDL_GetTicks();
 	}
-	else if (readyCountdown < 0)
-	{
+	else if (readyCountdown < 0) {
 		GameSetupDrawer::Disable();
 	}
 
@@ -155,8 +156,7 @@ void GameSetupDrawer::Draw()
 
 bool GameSetupDrawer::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN))
-	{
+	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN)) {
 		// tell the server to force-start the game
 		net->SendStartPlaying(0);
 	}
