@@ -206,15 +206,17 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 
 	vector<UnitDefHolder> defs;
 
-	// find the unit definitions that meet the requirements
-	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
-	std::map<std::string, int>::const_iterator uit;
-	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-		const UnitDef& ud = unitDefHandler->unitDefs[uit->second];
-		if (HasRequirements(L, uit->second)) {
+	const std::map <std::string, int>& udMap = unitDefHandler->unitID;
+	std::map< std::string, int>::const_iterator udIt;
+	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
+	  const UnitDef* ud = unitDefHandler->GetUnitByID(udIt->second);
+		if (ud == NULL) {
+	  	continue;
+		}
+		if (HasRequirements(L, ud->id)) {
 			UnitDefHolder udh;
-			udh.ud = &ud;
-			udh.udID = uit->second;
+			udh.ud = ud;
+			udh.udID = ud->id;
 			defs.push_back(udh);
 		}
 	}
