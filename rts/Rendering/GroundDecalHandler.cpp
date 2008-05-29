@@ -48,10 +48,10 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	}
 	
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
-	LoadScar("bitmaps/" + scarsTable.GetString("scar2", "scars/scar2.bmp"), buf, 0,   0);
-	LoadScar("bitmaps/" + scarsTable.GetString("scar3", "scars/scar3.bmp"), buf, 256, 0);
-	LoadScar("bitmaps/" + scarsTable.GetString("scar1", "scars/scar1.bmp"), buf, 0,   256);
-	LoadScar("bitmaps/" + scarsTable.GetString("scar4", "scars/scar4.bmp"), buf, 256, 256);
+	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 0,   0);
+	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256, 0);
+	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   256);
+	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
 	
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
