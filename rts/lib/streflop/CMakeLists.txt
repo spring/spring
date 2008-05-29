@@ -6,7 +6,6 @@ AUX_SOURCE_DIRECTORY(libm/ldbl-96 libm_ldbl96_source)
 # th<ts why it is set in cxxflags as a workaround
 #INCLUDE_DIRECTORIES(libm/headers)
 
-ADD_DEFINITIONS(-DSTREFLOP_X87=1)
 SET(cxxflags "-w -O3 -frounding-math -fsignaling-nans -fno-strict-aliasing -mieee-fp -Wall -mfpmath=387 -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
 SET_SOURCE_FILES_PROPERTIES(${libm_flt32_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_FLT32 ${cxxflags}")
 SET_SOURCE_FILES_PROPERTIES(${libm_dbl64_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_DBL64 ${cxxflags}")
@@ -20,12 +19,3 @@ ADD_LIBRARY(streflop STATIC
 #	${libm_dbl64_source}
 #	${libm_ldbl96_source}
 )
-
-
-### Old streflop buildcode - use streflops makefile
-### streflop has its own Makefile, but $(RM) seems to be rm even on windows, so overwrite it with windows "del"
-#IF (CMAKE_HOST_WIN32)
-#	SET(RM_OVERRIDE RM=del)
-#ENDIF(CMAKE_HOST_WIN32)
-
-#ADD_CUSTOM_TARGET(strefloplib COMMAND make STREFLOP_X87=1 CXX=${CMAKE_C_COMPILER} ${RM_OVERRIDE} AR=${CMAKE_AR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/streflop) 
