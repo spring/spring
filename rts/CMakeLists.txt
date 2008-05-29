@@ -10,13 +10,13 @@ SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignal
 IF (UNIX)
 	SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
 ENDIF (UNIX)
-SET(CMAKE_CXX_FLAGS_DEBUG1  "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_Debug  "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_Debug2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_Debug3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_Release "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
 
 ### Spring defines
-ADD_DEFINITIONS( -D_SZ_ONE_DIRECTORY -DSYNCCHECK -DSTREFLOP_X87 -DDIRECT_CONTROL_ALLOWED)
+ADD_DEFINITIONS(-DSYNCCHECK -DSTREFLOP_X87 -DDIRECT_CONTROL_ALLOWED)
 IF (UNIX)
 	ADD_DEFINITIONS(-DNO_AVI)
 ELSE(UNIX)
@@ -30,6 +30,8 @@ IF (MINGW)
 	### add mingwlibs to link- and include-directories
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
+	SET(Boost_THREAD_LIBRARY boost_thread-mt)
+	SET(Boost_REGEX_LIBRARY boost_regex-mt)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
@@ -123,8 +125,7 @@ ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfi
 ### libraries in lib/
 SET(spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
 ### libraries needed on all platforms
-# ${BOOST_THREAD_LIBRARY} doesn't work
-LIST(APPEND spring_libraries SDL boost_thread-mt boost_regex-mt vorbisfile vorbis ogg freetype)
+LIST(APPEND spring_libraries SDL ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} vorbisfile vorbis ogg freetype)
 
 ### platform specific libraries
 IF (UNIX)
