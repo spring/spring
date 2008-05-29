@@ -103,10 +103,12 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	const LuaTable smokeTable = rootTable.SubTable("smoke");
-	for (int i = 0; i < 12; i++) {
+	//for (int i = 1; i < 13; i++) {
+	for (int i = 1; smokeTable.KeyExists(i); i++) {
 		char num[10];
-		sprintf(num, "%02i", i);
-		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+smokeTable.GetString(std::string("smoke")+num, std::string("smoke/smoke") + num +".tga"));
+		sprintf(num, "%02i", i-1);
+		//textureAtlas->AddTexFromFile(std::string("smoke") + num, std::string("bitmaps/")+smokeTable.GetString(std::string("smoke")+num, std::string("smoke/smoke") + num +".tga"));
+		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+smokeTable.GetString(i, std::string("smoke/smoke") + num +".tga"));
 		blockMapTexNames.insert(StringToLower(std::string("ismoke") + num));
 	}
 
@@ -202,9 +204,10 @@ CProjectileHandler::CProjectileHandler()
 	perlintex       = textureAtlas->GetTexture("perlintex");
 	flametex        = textureAtlas->GetTexture("flame");
 
-	for (int i = 0; i < 12; i++) {
+	//for (int i = 0; i < 12; i++) {
+	for (int i = 1; smokeTable.KeyExists(i); i++) {
 		char num[10];
-		sprintf(num, "%02i", i);
+		sprintf(num, "%02i", i-1);
 		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
 	}
 
@@ -231,7 +234,7 @@ CProjectileHandler::CProjectileHandler()
 
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
-	const LuaTable groundfxTable = resourcesParser.GetRoot().SubTable("resources").SubTable("graphics").SubTable("groundfx");
+	const LuaTable groundfxTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("groundfx");
 	groundfxTable.GetMap(ptex);
 	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
 	{

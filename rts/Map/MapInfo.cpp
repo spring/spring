@@ -197,8 +197,8 @@ void CMapInfo::ReadWater()
 	char num[10];
 	for (int i = 0; i < causticTextureCount; i++) {
 		sprintf(num, "%02i", i);
-		water.causticTextures[i] = std::string("bitmaps/") + causticsTable.GetString(std::string("caustic")+num, 
-															 std::string("caustic")+num+".jpg");
+		water.causticTextures[i] = std::string("bitmaps/") + causticsTable.GetString(i+1, 
+															 std::string("caustics/caustic")+num+".jpg");
 	}
 }
 
