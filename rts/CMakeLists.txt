@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 2.6)
 PROJECT(Spring)
 
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
@@ -10,17 +10,37 @@ SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignal
 IF (UNIX)
 	SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
 ENDIF (UNIX)
-SET(CMAKE_CXX_FLAGS_Debug  "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_Debug2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_Debug3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_Release "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
+SET(CMAKE_CXX_FLAGS_DEBUG  "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
 
 ### Spring defines
-ADD_DEFINITIONS(-DSYNCCHECK -DSTREFLOP_X87 -DDIRECT_CONTROL_ALLOWED)
+SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
+if (USE_MMGR)
+	ADD_DEFINITIONS(-DUSE_MMGR)
+endif (USE_MMGR)
+
+SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
+if (SYNCCHECK)
+	ADD_DEFINITIONS(-DSYNCCHECK)
+endif (SYNCCHECK)
+
+SET(DIRECT_CONTROL TRUE CACHE BOOL "Allow controling units in first-person-mode")
+if (DIRECT_CONTROL)
+	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
+endif (DIRECT_CONTROL)
+
 IF (UNIX)
 	ADD_DEFINITIONS(-DNO_AVI)
-ELSE(UNIX)
+ELSEIF (UNIX)
+	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
+	if (NO_AVI)
+		ADD_DEFINITIONS(-DNO_AVI)
+	endif (NO_AVI)
 ENDIF(UNIX)
+
+ADD_DEFINITIONS(-DSTREFLOP_X87)
 
 ### Find include directories
 IF (MINGW)
