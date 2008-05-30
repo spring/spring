@@ -10,7 +10,7 @@ SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignal
 IF (UNIX)
 	SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
 ENDIF (UNIX)
-SET(CMAKE_CXX_FLAGS_DEBUG  "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG   "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG")
 SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG")
 SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
@@ -33,6 +33,11 @@ endif (DIRECT_CONTROL)
 
 IF (UNIX)
 	ADD_DEFINITIONS(-DNO_AVI)
+	
+	SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+	if (SPRING_DATADIR)
+		ADD_DEFINITIONS(-DSPRING_DATADIR=${SPRING_DATADIR})
+	endif (SPRING_DATADIR)
 ELSEIF (UNIX)
 	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
 	if (NO_AVI)
@@ -42,16 +47,16 @@ ENDIF(UNIX)
 
 ADD_DEFINITIONS(-DSTREFLOP_X87)
 
-### Find include directories
+### Find include directories and add platform specific libraries
 IF (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
 	FIND_PACKAGE(Win32Libs REQUIRED)
+	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
 
 	### add mingwlibs to link- and include-directories
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	SET(Boost_THREAD_LIBRARY boost_thread-mt)
-	SET(Boost_REGEX_LIBRARY boost_regex-mt)
+	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
@@ -70,10 +75,15 @@ ELSE (MINGW)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
+	LIST(APPEND spring_libraries openal GL GLU IL ILU X11 Xcursor ${GLEW_LIBRARIES} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
 ENDIF (MINGW)
 
-# build all libraries in lib (has its own CMakeLists.txt)
+### libraries needed on all platforms
+LIST(APPEND spring_libraries SDL vorbisfile vorbis ogg freetype)
+
+### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
 
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} System)
@@ -139,19 +149,6 @@ IF (MINGW)
 	LIST(APPEND sysfiles icon.o)
 ENDIF (MINGW)
 
-
 ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles})
-
-### libraries in lib/
-SET(spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
-### libraries needed on all platforms
-LIST(APPEND spring_libraries SDL ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY} vorbisfile vorbis ogg freetype)
-
-### platform specific libraries
-IF (UNIX)
-	LIST(APPEND spring_libraries openal GL GLU IL ILU X11 Xcursor ${GLEW_LIBRARIES})
-ELSE (UNIX)
-	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
-ENDIF (UNIX)
 
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
