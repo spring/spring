@@ -32,7 +32,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.867"
+#define AAI_VERSION "0.868"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_86"
 #define MAP_DATA_VERSION "MAP_DATA_0_86"

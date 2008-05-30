@@ -749,6 +749,8 @@ void AAI::UnitFinished(int unit)
 		else if(category == STATIONARY_CONSTRUCTOR)
 		{
 			ut->AddConstructor(unit, def->id);
+
+			ut->units[unit].cons->Update();
 		}
 		return;
 	}
@@ -785,6 +787,8 @@ void AAI::UnitFinished(int unit)
 		else if(bt->IsBuilder(def->id))
 		{
 			ut->AddConstructor(unit, def->id);
+
+			ut->units[unit].cons->Update();
 		}
 	}
 }

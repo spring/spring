@@ -59,6 +59,8 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 	lastCommand.id = CMD_STOP;
 	lastCommand.params.resize(3);
 
+	lastCommandFrame = 0;
+
 	target_sector = 0;
 
 	// get a rally point
@@ -217,14 +219,16 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 	return false;
 }
 
-void AAIGroup::GiveOrder(Command *c, float importance, UnitTask task)
+void AAIGroup::GiveOrder(Command *c, float importance, UnitTask task, const char *owner)
 {
+	lastCommandFrame = cb->GetCurrentFrame();
+
 	task_importance = importance;
 
 	for(list<int2>::iterator i = units.begin(); i != units.end(); ++i)
 	{
 		//cb->GiveOrder(i->x, c);
-		ai->execute->GiveOrder(c, i->x, "Group::GiveOrder");
+		ai->execute->GiveOrder(c, i->x, owner);
 		ai->ut->SetUnitStatus(i->x, task);
 	}
 }
@@ -316,7 +320,7 @@ void AAIGroup::TargetUnitKilled()
 			c.params.push_back(rally_point.y);
 			c.params.push_back(rally_point.z);
 
-			GiveOrder(&c, 90, MOVING);
+			GiveOrder(&c, 90, MOVING, "Group::TargetUnitKilled");
 		}
 	}
 }
@@ -355,7 +359,7 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 	c.params[1] = cb->GetElevation(c.params[0], c.params[2]);
 
 	// move group to that sector
-	GiveOrder(&c, importance + 8, UNIT_ATTACKING);
+	GiveOrder(&c, importance + 8, UNIT_ATTACKING, "Group::AttackSector");
 	
 	target_sector = dest;
 	task = GROUP_ATTACKING;			
@@ -372,7 +376,7 @@ void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 		cmd.params.push_back(enemy_pos->y);
 		cmd.params.push_back(enemy_pos->z);
 
-		GiveOrder(&cmd, importance, DEFENDING);
+		GiveOrder(&cmd, importance, DEFENDING, "Group::Defend");
 
 		target_sector = ai->map->GetSectorOfPos(enemy_pos);
 	}
@@ -381,7 +385,7 @@ void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 		cmd.id = CMD_GUARD;
 		cmd.params.push_back(unit);
 			
-		GiveOrder(&cmd, importance, GUARDING);
+		GiveOrder(&cmd, importance, GUARDING, "Group::Defend");
 
 		float3 pos = cb->GetUnitPos(unit);
 
@@ -401,7 +405,7 @@ void AAIGroup::Retreat(float3 *pos)
 	c.params.push_back(pos->y);
 	c.params.push_back(pos->z);
 
-	GiveOrder(&c, 105, MOVING);
+	GiveOrder(&c, 105, MOVING, "Group::Retreat");
 
 	// set new dest sector
 	target_sector = ai->map->GetSectorOfPos(pos);
@@ -453,7 +457,10 @@ bool AAIGroup::SufficientAttackPower()
 
 void AAIGroup::UnitIdle(int unit)
 {
-	// special behaviour of aircraft in not air only mods
+	if(cb->GetCurrentFrame() - lastCommandFrame < 10)
+		return;
+
+	// special behaviour of aircraft in non air only mods
 	if(category == AIR_ASSAULT && task != GROUP_IDLE && !cfg->AIR_ONLY_MOD)
 	{
 		Command c;
@@ -462,7 +469,7 @@ void AAIGroup::UnitIdle(int unit)
 		c.params.push_back(rally_point.y);
 		c.params.push_back(rally_point.z);
 
-		GiveOrder(&c, 100, MOVING);
+		GiveOrder(&c, 100, MOVING, "Group::Idle_a");
 
 		task = GROUP_IDLE;
 	}
@@ -495,7 +502,7 @@ void AAIGroup::UnitIdle(int unit)
 						c.id = CMD_GUARD;
 						c.params.push_back(unit);
 
-						GiveOrder(&c, 110, GUARDING);
+						GiveOrder(&c, 110, GUARDING, "Group::Idle_b");
 					}
 				}
 				else
@@ -538,7 +545,7 @@ void AAIGroup::UnitIdle(int unit)
 				c.params[1] = cb->GetElevation(c.params[0], c.params[2]);
 
 				// move group to that sector
-				GiveOrder(&c, 110, UNIT_ATTACKING);	
+				GiveOrder(&c, 110, UNIT_ATTACKING, "Group::Idle_c");	
 			}
 		}
 	}
@@ -572,7 +579,7 @@ void AAIGroup::BombTarget(int target_id, float3 *target_pos)
 	c.params.push_back(target_pos->y);
 	c.params.push_back(target_pos->z);
 
-	GiveOrder(&c, 110, UNIT_ATTACKING);
+	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::BombTarget");
 
 	ai->ut->AssignGroupToEnemy(target_id, this);
 
@@ -587,7 +594,7 @@ void AAIGroup::DefendAirSpace(float3 *pos)
 	c.params.push_back(pos->y);
 	c.params.push_back(pos->z);
 
-	GiveOrder(&c, 110, UNIT_ATTACKING);
+	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::DefendAirSpace");
 
 	task = GROUP_PATROLING;
 }
@@ -598,7 +605,7 @@ void AAIGroup::AirRaidUnit(int unit_id)
 	c.id = CMD_ATTACK;
 	c.params.push_back(unit_id);
 
-	GiveOrder(&c, 110, UNIT_ATTACKING);
+	GiveOrder(&c, 110, UNIT_ATTACKING, "Group::AirRaidUnit");
 
 	ai->ut->AssignGroupToEnemy(unit_id, this);
 
@@ -647,7 +654,7 @@ void AAIGroup::GetNewRallyPoint()
 			c.params.push_back(rally_point.y);
 			c.params.push_back(rally_point.z);
 
-			GiveOrder(&c, 90, HEADING_TO_RALLYPOINT);
+			GiveOrder(&c, 90, HEADING_TO_RALLYPOINT, "Group::RallyPoint");
 		}
 	}
 }

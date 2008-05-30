@@ -2390,10 +2390,10 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	}
 
 	// further increase values close around the bulding (to prevent aai from packing buildings too close together)
-	xStart = xPos - 2;
-	xEnd = xPos + 2;
-	yStart = yPos - 2;
-	yEnd = yPos + 2;
+	xStart = xPos - 4;
+	xEnd = xPos + 4;
+	yStart = yPos - 4;
+	yEnd = yPos + 4;
 
 	if(xStart < 0)
 		xStart = 0;
@@ -2411,9 +2411,9 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		{
 			cell = x + xDefMapSize*y;
 			
-			defence_map[cell] += 128.0f;
-			air_defence_map[cell] += 128.0f;
-			submarine_defence_map[cell] += 128.0f;
+			defence_map[cell] += 64.0f;
+			air_defence_map[cell] += 64.0f;
+			submarine_defence_map[cell] += 64.0f;
 		}
 	}
 }
@@ -2448,10 +2448,10 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 	int yPos = pos->z / 32;
 
 	// further decrease values close around the bulding (to prevent aai from packing buildings too close together)
-	int xStart = xPos - 2;
-	int xEnd = xPos + 2;
-	int yStart = yPos - 2;
-	int yEnd = yPos + 2;
+	int xStart = xPos - 4;
+	int xEnd = xPos + 4;
+	int yStart = yPos - 4;
+	int yEnd = yPos + 4;
 
 	if(xStart < 0)
 		xStart = 0;
@@ -2469,9 +2469,9 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		{
 			cell = x + xDefMapSize*y;
 			
-			defence_map[cell] -= 128.0f;
-			air_defence_map[cell] -= 128.0f;
-			submarine_defence_map[cell] -= 128.0f;
+			defence_map[cell] -= 64.0f;
+			air_defence_map[cell] -= 64.0f;
+			submarine_defence_map[cell] -= 64.0f;
 		}
 	}
 
@@ -2555,7 +2555,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 			{
 				cell = (xPos + xDefMapSize * yPos) / 4;
 
-				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.15f *  (float)(rand()%20);
+				my_rating = terrain_modifier * plateau_map[cell] - (*map)[cell] + 0.3f *  (float)(rand()%10);
 
 				// determine minimum distance from buildpos to the edges of the map
 				edge_distance = xPos;

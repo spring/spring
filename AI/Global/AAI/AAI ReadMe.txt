@@ -106,11 +106,18 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 
 
 
+AAI v0.868	- Improved fall back behaviour: units with turnrate below MIN_FALLBACK turnrate will not fall back anymore, long ranged 
+		  units (e.g. snipers) will not fall back to their maximum weapons range anymore; added keywords:	
+  		  MIN_FALLBACK_TURNRATE 250	  
+		  MAX_FALLBACK_RANGE 800  
+
+		- Fixed another possible freeze when AAI's attack manager was flooding the interface with orders
+	
+
 AAI v0.867	- AAI now takes continents into account when sending builder/assistant builders to positions (e.g. it does not try send 
 		  ground builders to positions on other islands/continents anymore (unless they are amphibious))
 
-
-AAI v0.866	- Fixed a bug that caused builders to leave the buildsite during construction 
+		- Fixed a bug that caused builders to leave the buildsite during construction 
 
 		- Various changes to issued orders; temporarily removed reclaiming. Reclaim orders were given multiple times per frame 
 		  thus flooding the interface with orders and causing Spring to freeze/huge drop in FPS 

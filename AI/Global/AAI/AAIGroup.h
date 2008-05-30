@@ -17,7 +17,7 @@ public:
 
 	bool RemoveUnit(int unit, int attacker);
 
-	void GiveOrder(Command *c, float importance, UnitTask task);
+	void GiveOrder(Command *c, float importance, UnitTask task, const char *owner);
 
 	void AttackSector(AAISector *dest, float importance);
 
@@ -65,6 +65,7 @@ public:
 	list<int2> units;
 	
 	Command lastCommand;
+	int lastCommandFrame;
 
 	float task_importance;	// importance of current task
 

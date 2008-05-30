@@ -115,6 +115,8 @@ public:
 	// combat behaviour
 	float FALLBACK_DIST_RATIO;	// units will try to fall back if enemy is closer than ratio of weapons range of the unit
 	float MIN_FALLBACK_RANGE;	// units with lower weapons' range will not fall back
+	float MAX_FALLBACK_RANGE;	// maximum distance units will try to keep to their enemies
+	float MIN_FALLBACK_TURNRATE; // units with lower turnrate will not try to fall back
 
 	// internal
 	float CLIFF_SLOPE;  // cells with greater slope will be considered to be cliffs

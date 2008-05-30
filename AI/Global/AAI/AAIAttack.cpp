@@ -145,7 +145,7 @@ void AAIAttack::AttackSector(AAISector *sector, AttackType type)
 				c.id = CMD_GUARD;
 				c.params.push_back(unit);
 
-				(*group)->GiveOrder(&c, 110, GUARDING);
+				(*group)->GiveOrder(&c, 110, GUARDING, "Group::AttackSector");
 			}
 		}
 	}
