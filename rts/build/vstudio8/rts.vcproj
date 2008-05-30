@@ -1614,86 +1614,6 @@
 					RelativePath="..\..\Game\Server\MsgStrings.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Game\Server\ServerLog.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Server\ServerLog.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\Server\ServerLogHandler.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\Game\Server\ServerLogHandler.h"
-					>
-				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -3144,14 +3064,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\RadarHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Misc\SensorHandler.h"
 					>
 				</File>
 				<File
