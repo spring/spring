@@ -81,8 +81,10 @@ AAIConfig::AAIConfig(void)
 	HEAVY_ASSAULT_RATIO = 25.0f;
 	SUPER_HEAVY_ASSAULT_RATIO = 5.0f;
 
-	FALLBACK_DIST_RATIO = 0.9;
-	MIN_FALLBACK_RANGE = 450;
+	FALLBACK_DIST_RATIO = 0.9f;
+	MIN_FALLBACK_RANGE = 450.0f;
+	MAX_FALLBACK_RANGE = 800.0f;
+	MIN_FALLBACK_TURNRATE = 250.0f;
 	
 	LEARN_SPEED = 0.2f;
 	LEARN_RATE = 5;
@@ -351,6 +353,16 @@ void AAIConfig::LoadConfig(AAI *ai)
 			{
 				fscanf(file, "%f", &fval);
 				MIN_FALLBACK_RANGE = fval;
+			}
+			else if(!strcmp(keyword, "MAX_FALLBACK_RANGE"))
+			{
+				fscanf(file, "%f", &fval);
+				MAX_FALLBACK_RANGE = fval;
+			}
+			else if(!strcmp(keyword, "MIN_FALLBACK_TURNRATE"))
+			{
+				fscanf(file, "%f", &fval);
+				MIN_FALLBACK_TURNRATE = fval;
 			}
 			else if(!strcmp(keyword, "MIN_EFFICIENCY"))
 			{

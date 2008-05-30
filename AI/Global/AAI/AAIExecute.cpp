@@ -1473,7 +1473,6 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		}
 	}
 
-	
 	double gr_eff = 0, air_eff = 0, hover_eff = 0, sea_eff = 0, submarine_eff = 0;
 	
 	bool checkWater, checkGround;
@@ -1484,7 +1483,7 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 	float terrain = 3.0f;
 
 	if(dest->distance_to_base > 0)
-		terrain = 15.0f;
+		terrain = 6.0f;
 
 	if(dest->water_ratio < 0.15)
 	{
@@ -1515,12 +1514,12 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		if(t < 70)
 		{
 			range = 2.5;
-			terrain = 30.0f; 
+			terrain = 20.0f; 
 		}
 		else if(t < 200)
 		{
 			range = 1;
-			terrain = 25.0f; 
+			terrain = 10.0f; 
 		}
 
 		t = rand()%500;
@@ -1564,18 +1563,18 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		}
 
 		// stop building of weak defences if urgency is too low (wait for better defences)
-		if(urgency < 2.5)
+		if(urgency < 3)
 		{
 			int id = bt->GetIDOfAssaultCategory(category);
 			
-			if(bt->units_static[building].efficiency[id]  < bt->avg_eff[ai->side-1][5][id] / 2.0f)
+			if(bt->units_static[building].efficiency[id]  < 0.75f * bt->avg_eff[ai->side-1][5][id] )
 				building = 0;
 		}
 		else if(urgency < 0.75)
 		{
 			int id = bt->GetIDOfAssaultCategory(category);
 			
-			if(bt->units_static[building].efficiency[id]  < bt->avg_eff[ai->side-1][5][id])
+			if(bt->units_static[building].efficiency[id]  < 1.5f * bt->avg_eff[ai->side-1][5][id] )
 				building = 0;
 		}
 		
@@ -1621,18 +1620,18 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		}
 
 		// stop building of weak defences if urgency is too low (wait for better defences)
-		if(urgency < 2.5)
+		if(urgency < 3)
 		{
 			int id = bt->GetIDOfAssaultCategory(category);
 			
-			if(bt->units_static[building].efficiency[id]  < bt->avg_eff[ai->side-1][5][id] / 2.0f)
+			if(bt->units_static[building].efficiency[id]  < 0.75f * bt->avg_eff[ai->side-1][5][id] )
 				building = 0;
 		}
 		else if(urgency < 0.75)
 		{
 			int id = bt->GetIDOfAssaultCategory(category);
 			
-			if(bt->units_static[building].efficiency[id]  < bt->avg_eff[ai->side-1][5][id])
+			if(bt->units_static[building].efficiency[id]  < 1.5f * bt->avg_eff[ai->side-1][5][id] )
 				building = 0;
 		}
 
@@ -2429,22 +2428,20 @@ void AAIExecute::CheckDefences()
 		for(list<AAISector*>::iterator sector = brain->sectors[dist].begin(); sector != brain->sectors[dist].end(); ++sector)
 		{
 			// stop building further defences if maximum has been reached / sector contains allied buildings / is occupied by another aai instance
-			if((*sector)->defences.size() < cfg->MAX_DEFENCES && (*sector)->allied_structures < 100 && map->team_sector_map[(*sector)->x][(*sector)->y] != cb->GetMyAllyTeam())
+			if((*sector)->defences.size() < cfg->MAX_DEFENCES && (*sector)->allied_structures < 50 && map->team_sector_map[(*sector)->x][(*sector)->y] != cb->GetMyAllyTeam())
 			{
 				if((*sector)->failed_defences > 1)
-				{
-					(*sector)->failed_defences = 0;
-				}
+					(*sector)->failed_defences = 0;		
 				else
 				{
 					for(list<int>::iterator cat = map->map_categories_id.begin(); cat!= map->map_categories_id.end(); ++cat)
 					{
 						// anti air defences may be built anywhere
 						if(cfg->AIR_ONLY_MOD || *cat == AIR_ASSAULT)
-							rating = (1.0f + sqrt((*sector)->own_structures)) * (1.0f + bt->attacked_by_category[1][*cat][t]) * (*sector)->GetThreatByID(*cat, learned, current) / ( (*sector)->GetDefencePowerVsID(*cat) );
+							rating = (1.0f + sqrt((*sector)->own_structures)) * (0.5f + bt->attacked_by_category[1][*cat][t]) * (*sector)->GetThreatByID(*cat, learned, current) / ( (*sector)->GetDefencePowerVsID(*cat) );
 						// dont build anti ground/hover/sea defences in interior sectors
 						else if(!(*sector)->interior)
-							rating = (1.0f + sqrt((*sector)->own_structures)) * (1.0f + bt->attacked_by_category[1][*cat][t]) * (*sector)->GetThreatByID(*cat, learned, current) / ( (*sector)->GetDefencePowerVsID(*cat));		
+							rating = (1.0f + sqrt((*sector)->own_structures)) * (0.5f + bt->attacked_by_category[1][*cat][t]) * (*sector)->GetThreatByID(*cat, learned, current) / ( (*sector)->GetDefencePowerVsID(*cat) );		
 						else
 							rating = 0;
 								
@@ -2475,7 +2472,7 @@ void AAIExecute::CheckDefences()
 
 		if(status == BUILDORDER_NOBUILDER)
 		{
-			float temp = 0.05 + 3.0 / ( (float) first->defences.size() + 0.5f); 
+			float temp = 0.05 + 2.0 / ( (float) first->defences.size() + 0.5f); 
 
 			if(urgency[STATIONARY_DEF] < temp)
 				urgency[STATIONARY_DEF] = temp;
@@ -2902,7 +2899,7 @@ void AAIExecute::CheckJammer()
 void AAIExecute::CheckConstruction()
 {	
 	UnitCategory category = UNKNOWN; 
-	float highest_urgency = 0.3f;		// min urgency (prevents aai from building things it doesnt really need that much)
+	float highest_urgency = 0.5f;		// min urgency (prevents aai from building things it doesnt really need that much)
 	bool construction_started = false;
 
 	//fprintf(ai->file, "\n");
@@ -3577,8 +3574,11 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 {
 	float range = bt->units_static[def_id].range;
 
-	if(range > cfg->MIN_FALLBACK_RANGE)
+	if(range > cfg->MIN_FALLBACK_RANGE && bt->unitList[def_id-1]->turnRate >= cfg->MIN_FALLBACK_TURNRATE)
 	{
+		if(range > cfg->MAX_FALLBACK_RANGE)
+			range = cfg->MAX_FALLBACK_RANGE;
+
 		float3 pos;
 
 		GetFallBackPos(&pos, unit_id, range);
@@ -3639,10 +3639,10 @@ void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
 
 void AAIExecute::GiveOrder(Command *c, int unit, const char *owner)
 {
-	//++issued_orders;
+	++issued_orders;
 
-	//if(issued_orders%50 == 0)
-	//	fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
+	if(issued_orders%50 == 0)
+		fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
 
 	cb->GiveOrder(unit, c);
 }
