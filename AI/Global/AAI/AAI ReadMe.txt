@@ -83,10 +83,10 @@ Limitations:	  to buildings/objects)
 
 
 
-Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
-
-		- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions
+Thanks to: 	- Yuritch for testing and providing me with improved mod config files, numerous ideas and suggestions
 		  and coding contributions (since AAI v0.83) 
+
+		- Nicklas Marcusson for porting/compiling the linux version of AAI, lots of help with debugging
 
 		- TA Spring devs for creating the best open source rts game I know
 
@@ -106,35 +106,37 @@ Thanks to: 	- Nicklas Marcusson for porting/compiling the linux version of AAI, 
 
 
 
-AAI v0.868	- Improved fall back behaviour: units with turnrate below MIN_FALLBACK turnrate will not fall back anymore, long ranged 
-		  units (e.g. snipers) will not fall back to their maximum weapons range anymore; added keywords:	
-  		  MIN_FALLBACK_TURNRATE 250	  
-		  MAX_FALLBACK_RANGE 800  
+AAI v0.869	- Added proper handling of resurrected units (however AAI does not build resurrectors atm)
+		
+		- Fixed a bug that could prevent AAI from rebuilding destroyed factories	
 
-		- Fixed another possible freeze when AAI's attack manager was flooding the interface with orders
-	
 
-AAI v0.867	- AAI now takes continents into account when sending builder/assistant builders to positions (e.g. it does not try send 
-		  ground builders to positions on other islands/continents anymore (unless they are amphibious))
+AAI v0.868	- Added some unit specific combat behaviour: Units with high ranged weapons  will now try to keep enemies distant (if 
+		  their turnrate is not too low)
 
-		- Fixed a bug that caused builders to leave the buildsite during construction 
-
-		- Various changes to issued orders; temporarily removed reclaiming. Reclaim orders were given multiple times per frame 
-		  thus flooding the interface with orders and causing Spring to freeze/huge drop in FPS 
-
-		- Added some unit specific combat behaviour: Units with high ranged weapons will now try to keep enemies distant
-
-		- Added two new variables to mod config file:
+		- Added some new variables to mod config file:
 
 		  FALLBACK_DIST_RATIO 0.9 - units will try keep enemies at this ratio of their maximum weapons' range
 		  
-		  MIN_FALLBACK_RANGE 500  - units with lower weapons' range will not try fall back at all 
+		  MIN_FALLBACK_RANGE 500  - units with lower weapons' range will not try fall back at all
+		 
+		  MAX_FALLBACK_RANGE 800  - units with higher weapons' range will not try fall back at all   
+	
+  		  MIN_FALLBACK_TURNRATE 250 - units with lower turnrate will not try fall back at all	
 
 		- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 
 		  naval units
 
 		- AAI now takes continents into account when sending scouts to positions (e.g. it does not try send ground scouts to 
 		  positions on other islands/continents anymore)
+
+		- AAI now takes continents into account when sending builder/assistant builders to positions (e.g. it does not try send 
+		  ground builders to positions on other islands/continents anymore (unless they are amphibious))
+
+		- Fixed a bug that caused builders to leave the buildsite during construction 
+
+		- Fixed various freezes that have been caused by AAI flooding the ai interface with thousands of orders per frame
+
 
 		- Bumped mod learning file version to 0.86 due to some changes in handling of amphibious units
 

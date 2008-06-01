@@ -74,6 +74,7 @@ public:
 	// number of active/under construction units of all different types
 	int activeUnits[(int)MOBILE_CONSTRUCTOR+1];
 	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
+	int requestedUnits[(int)MOBILE_CONSTRUCTOR+1];
 
 	int activeScouts, futureScouts;
 	int activeBuilders, futureBuilders;

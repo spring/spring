@@ -2411,9 +2411,9 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		{
 			cell = x + xDefMapSize*y;
 			
-			defence_map[cell] += 64.0f;
-			air_defence_map[cell] += 64.0f;
-			submarine_defence_map[cell] += 64.0f;
+			defence_map[cell] += 1000.0f;
+			air_defence_map[cell] += 1000.0f;
+			submarine_defence_map[cell] += 1000.0f;
 		}
 	}
 }
@@ -2469,9 +2469,9 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		{
 			cell = x + xDefMapSize*y;
 			
-			defence_map[cell] -= 64.0f;
-			air_defence_map[cell] -= 64.0f;
-			submarine_defence_map[cell] -= 64.0f;
+			defence_map[cell] -= 1000.0f;
+			air_defence_map[cell] -= 1000.0f;
+			submarine_defence_map[cell] -= 1000.0f;
 		}
 	}
 
