@@ -349,83 +349,39 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 	// get def and final position
 	const UnitDef *def = ai->bt->unitList[id_building-1];
 	ai->map->Pos2FinalBuildPos(&pos, def);
-	build_pos = pos;
-
-	// determine target sector
-	int x = build_pos.x/ai->map->xSectorSize;
-	int y = build_pos.z/ai->map->ySectorSize;
-
-	// drop bad sectors (should only happen when defending mexes at the edge of the map)
-	if(x < 0 || y < 0 || x >= ai->map->xSectors || y >= ai->map->ySectors)
-		return;
-
-	order_tick = cb->GetCurrentFrame();
-
-	// check if builder was previously assisting other builders/factories
-	if(assistance >= 0)
+	
+	// give order if building can be placed at the desired position (position lies within a valid sector)
+	if(ai->execute->InitBuildingAt(def, pos))
 	{
-		ai->ut->units[assistance].cons->RemoveAssitant(unit_id);
+		order_tick = cb->GetCurrentFrame();
 
-		assistance = -1;
-	}
-
-	// set building as current task and order construction
-	construction_def_id = id_building;
-	task = BUILDING;
-	construction_category = ai->bt->units_static[id_building].category;
-
-	// order builder to construct building
-	Command c;
-	c.id = - id_building;
-	c.params.resize(3);
-	c.params[0] = build_pos.x;
-	c.params[1] = build_pos.y;
-	c.params[2] = build_pos.z;
-
-	cb->GiveOrder(unit_id, &c);
-
-	// increase number of active units of that type/category
-	ai->bt->units_dynamic[def->id].active += 1;
-	ai->futureUnits[construction_category] += 1;
-
-	if(bt->IsFactory(id_building))
-		++ai->futureFactories;
-
-	// increase number of units of that category in the target sector
-	++ai->map->sector[x][y].unitsOfType[construction_category];
-	ai->map->sector[x][y].own_structures += ai->bt->units_static[construction_def_id].cost;
-
-	// update buildmap of sector
-	ai->map->Pos2BuildMapPos(&pos, def);
-
-	// factory
-	if(construction_category == STATIONARY_CONSTRUCTOR) 
-	{
-		bool water = false;
-		int value = 1;
-
-		if(!bt->CanPlacedLand(id_building))
+		// check if builder was previously assisting other builders/factories
+		if(assistance >= 0)
 		{
-			water = true;
-			value = 5;
+			ai->ut->units[assistance].cons->RemoveAssitant(unit_id);
+			assistance = -1;
 		}
 
-		ai->map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, value);
-		ai->map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, true, water);
-		ai->map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, true, water);
-		ai->map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, true, water);
+		// set building as current task and order construction
+		build_pos = pos;
+		construction_def_id = id_building;
+		task = BUILDING;
+		construction_category = bt->units_static[id_building].category;
+
+		// order builder to construct building
+		Command c;
+		c.id = - id_building;
+		c.params.resize(3);
+		c.params[0] = build_pos.x;
+		c.params[1] = build_pos.y;
+		c.params[2] = build_pos.z;
+
+		cb->GiveOrder(unit_id, &c);
+
+		// increase number of active units of that type/category
+		bt->units_dynamic[def->id].requested += 1;
+		ai->requestedUnits[construction_category] += 1;
 	}
-	// normal building
-	else
-	{
-		if(water)
-			ai->map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 5);
-		else
-			ai->map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 1);
-	}
-	
-	// prevent ai from building too many things in a row
-	ai->map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, true, water);
 }
 
 void AAIConstructor::AssistConstruction(int constructor, int target_unit)
@@ -545,7 +501,7 @@ void AAIConstructor::Killed()
 			if(construction_unit_id == -1)
 			{
 				ai->bt->units_dynamic[construction_def_id].requested -= 1; 
-				ai->futureUnits[construction_category] -= 1;
+				ai->requestedUnits[construction_category] -= 1;
 
 				// killed on the way to the buildsite 
 				int x = build_pos.x / ai->map->xSectorSize;

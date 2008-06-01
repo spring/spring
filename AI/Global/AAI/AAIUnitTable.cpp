@@ -147,10 +147,10 @@ void AAIUnitTable::AddConstructor(int unit_id, int def_id)
 void AAIUnitTable::RemoveConstructor(int unit_id, int def_id)
 {
 	if(units[unit_id].cons->builder)
-		--ai->activeBuilders;
+		ai->activeBuilders -= 1;
 
-	if(units[unit_id].cons->factory)
-		--ai->activeFactories;
+	if(units[unit_id].cons->factory && bt->IsStatic(def_id))
+		ai->activeFactories -= 1;
 	
 	// decrease number of available builders for all buildoptions of the builder
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		

@@ -6,7 +6,7 @@ class AAI;
 class AAIBuildTask
 {
 public:
-	AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 pos, int tick);
+	AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 *pos, int tick);
 	~AAIBuildTask(void);
 
 	void BuilderDestroyed();

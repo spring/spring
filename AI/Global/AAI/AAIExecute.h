@@ -16,7 +16,14 @@ public:
 	AAIExecute(AAI* ai, AAIBrain *brain);
 	~AAIExecute(void);
 
+	void InitAI(int commander_unit_id, const UnitDef *commander_def);
+
+	// return true if building will be placed at a valid pos = inside sectors
+	bool InitBuildingAt(const UnitDef *def, float3 pos);
+
 	void ConstructBuildingAt(int building, int builder, float3 position); 
+
+	void CreateBuildTask(int unit, const UnitDef *def, float3 *pos);
 
 	void moveUnitTo(int unit, float3 *position);  
 

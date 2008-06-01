@@ -11,7 +11,7 @@
 #include "AAI.h"
 #include "AAIConstructor.h"
 
-AAIBuildTask::AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 pos, int tick)
+AAIBuildTask::AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 *pos, int tick)
 {
 	this->ai = ai;
 	this->unit_id = unit_id;
@@ -21,7 +21,7 @@ AAIBuildTask::AAIBuildTask(AAI *ai, int unit_id, int def_id, float3 pos, int tic
 
 	builder_id = -1;
 
-	build_pos = pos;
+	build_pos = *pos;
 }
 
 AAIBuildTask::~AAIBuildTask(void)

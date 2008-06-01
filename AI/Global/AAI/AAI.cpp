@@ -33,6 +33,7 @@ AAI::AAI()
 	{
 		activeUnits[i] = 0;
 		futureUnits[i] = 0;
+		requestedUnits[i] = 0;
 	}
 
 	activeScouts = futureScouts = 0;
@@ -262,126 +263,190 @@ void AAI::UnitCreated(int unit)
 	const UnitDef *def = cb->GetUnitDef(unit);
 	UnitCategory category = bt->units_static[def->id].category;
 
+	bt->units_dynamic[def->id].requested -= 1;
+	bt->units_dynamic[def->id].under_construction += 1;
+
+	requestedUnits[category] -= 1;
+	futureUnits[category] += 1;
+
 	// add to unittable 
 	ut->AddUnit(unit, def->id);
 
 	// get commander a startup
 	if(!initialized && ut->IsDefCommander(def->id))
 	{
-		++futureUnits[COMMANDER];
+		// UnitFinished() will decrease it later -> prevents AAI from having -1 future commanders 
+		requestedUnits[COMMANDER] += 1;
+		bt->units_dynamic[def->id].under_construction += 1;
 
-		// set side
-		int side = bt->GetSideByID(def->id)-1;
-		this->side = side+1;
-
-		//debug
-		fprintf(file, "Playing as %s\n", bt->sideNames[side+1].c_str());
-
-		if(this->side < 1 || this->side > bt->numOfSides)
-		{
-			cb->SendTextMsg("Error: side not properly set", 0);
-			fprintf(file, "ERROR: invalid side id %i\n", this->side);
-			return;
-		}
-
-		// tell the brain about the starting sector
-		float3 pos = cb->GetUnitPos(unit);
-		int x = pos.x/map->xSectorSize;
-		int y = pos.z/map->ySectorSize;
-
-		if(x < 0)
-			x = 0;
-		if(y < 0 ) 
-			y = 0;
-		if(x >= map->xSectors)
-			x = map->xSectors-1;
-		if(y >= map->ySectors)
-			y = map->ySectors-1;
-		
-		// set sector as part of the base
-		if(map->team_sector_map[x][y] < 0)
-		{
-			brain->AddSector(&map->sector[x][y]);
-			brain->start_pos = pos;
-			brain->UpdateNeighbouringSectors();
-			brain->UpdateBaseCenter();
-		}
-		else
-		{
-			// sector already occupied by another aai team (coms starting too close to each other)
-			// choose next free sector
-			execute->ChooseDifferentStartingSector(x, y);
-		}
-
-		if(map->mapType == WATER_MAP)
-			brain->ExpandBase(WATER_SECTOR);
-		else 
-			brain->ExpandBase(LAND_SECTOR);
-	
-		// now that we know the side, init buildques
-		execute->InitBuildques();
-
-		bt->InitCombatEffCache(this->side);
-
-		ut->AddCommander(unit, def->id);
-
-		// add the highest rated, buildable factory
-		execute->AddStartFactory();
-
-		// get economy working
-		execute->CheckRessources();
+		execute->InitAI(unit, def);
 
 		initialized = true;
 		return;
 	}
-	// construction of building started
-	else if(category <= METAL_MAKER && category > UNKNOWN)
+
+	// resurrected units will be handled differently
+	if( !cb->UnitBeingBuilt(unit))
 	{
-		// create new buildtask
-		AAIBuildTask *task;
+		cb->SendTextMsg("ressurected", 0);
 		
-		try
+		UnitCategory category = bt->units_static[def->id].category;
+		
+		// UnitFinished() will decrease it later 
+		requestedUnits[category] += 1;	
+		bt->units_dynamic[def->id].requested += 1;
+
+		if(category == SCOUT)
+			futureScouts += 1;
+		else if(category <= METAL_MAKER && category > UNKNOWN)
 		{
-			task = new AAIBuildTask(this, unit, def->id, cb->GetUnitPos(unit), cb->GetCurrentFrame());
+			float3 pos = cb->GetUnitPos(unit);
+			map->Pos2FinalBuildPos(&pos, def);
+
+			execute->InitBuildingAt(def, pos);
 		}
-		catch(...) 
+	}
+	else
+	{
+		// construction of building started
+		if(category <= METAL_MAKER && category > UNKNOWN)
 		{
-			fprintf(file, "Exception thrown when allocating memory for buildtask");
-		}
+			float3 pos = cb->GetUnitPos(unit);
 
-		build_tasks.push_back(task);
+			// create new buildtask
+			execute->CreateBuildTask(unit, def, &pos);
 
-		float3 pos = cb->GetUnitPos(unit);
-		// find builder and associate building with that builder
-		task->builder_id = -1;
-
-		for(set<int>::iterator i = ut->constructors.begin(); i != ut->constructors.end(); ++i)
-		{
-			if(ut->units[*i].cons->build_pos.x == pos.x && ut->units[*i].cons->build_pos.z == pos.z)
+			// add defence buildings to the sector
+			if(category == STATIONARY_DEF)
 			{
-				ut->units[*i].cons->construction_unit_id = unit;
-				task->builder_id = ut->units[*i].cons->unit_id;
-				ut->units[*i].cons->build_task = task;
-				ut->units[*i].cons->CheckAssistance();
+				int x = pos.x/map->xSectorSize;
+				int y = pos.z/map->ySectorSize;
+
+				if(x >= 0 && y >= 0 && x < map->xSectors && y < map->ySectors)
+					map->sector[x][y].AddDefence(unit, def->id);
+			}
+			else if(category == EXTRACTOR)
+			{
+				int x = pos.x/map->xSectorSize;
+				int y = pos.z/map->ySectorSize;
+
+				map->sector[x][y].AddExtractor(unit, def->id, &pos);
+			}
+		}
+	}
+}
+
+void AAI::UnitFinished(int unit) 
+{
+	if(!initialized)
+		return;
+
+	// get unit´s id
+	const UnitDef *def = cb->GetUnitDef(unit);
+
+	UnitCategory category = bt->units_static[def->id].category;
+	
+	futureUnits[category] -= 1;
+	activeUnits[category] += 1;
+	
+	bt->units_dynamic[def->id].under_construction -= 1;
+	bt->units_dynamic[def->id].active += 1;
+
+	// building was completed
+	if(!def->movedata && !def->canfly)
+	{
+		// delete buildtask
+		for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); task++)
+		{
+			if((*task)->unit_id == unit)
+			{
+				AAIBuildTask *build_task = *task;
+				
+				if((*task)->builder_id >= 0 && ut->units[(*task)->builder_id].cons)
+					ut->units[(*task)->builder_id].cons->ConstructionFinished();
+				
+				build_tasks.erase(task);
+				delete build_task;
 				break;
 			}
 		}
 
-		// add defence buildings to the sector
-		if(category == STATIONARY_DEF)
+		// check if building belongs to one of this groups
+		if(category == EXTRACTOR)
 		{
-			int x = pos.x/map->xSectorSize;
-			int y = pos.z/map->ySectorSize;
+			ut->AddExtractor(unit);
 
-			if(x >= 0 && y >= 0 && x < map->xSectors && y < map->ySectors)
-				map->sector[x][y].AddDefence(unit, def->id);
+			// order defence if necessary
+			execute->DefendMex(unit, def->id);
 		}
-		else if(category == EXTRACTOR)
+		else if(category == POWER_PLANT)
 		{
-			int x = pos.x/map->xSectorSize;
-			int y = pos.z/map->ySectorSize;
+			ut->AddPowerPlant(unit, def->id);
+		}
+		else if(category == STORAGE)
+		{
+			execute->futureStoredEnergy -= bt->unitList[def->id-1]->energyStorage;
+			execute->futureStoredMetal -= bt->unitList[def->id-1]->metalStorage;
+		}
+		else if(category == METAL_MAKER)
+		{
+			ut->AddMetalMaker(unit, def->id);
+		}
+		else if(category == STATIONARY_RECON)
+		{
+			ut->AddRecon(unit, def->id);
+		}
+		else if(category == STATIONARY_JAMMER)
+		{
+			ut->AddJammer(unit, def->id);
+		}
+		else if(category == STATIONARY_ARTY)
+		{
+			ut->AddStationaryArty(unit, def->id);
+		}
+		else if(category == STATIONARY_CONSTRUCTOR)
+		{
+			ut->AddConstructor(unit, def->id);
 
-			map->sector[x][y].AddExtractor(unit, def->id, &pos);
+			ut->units[unit].cons->Update();
+		}
+		return;
+	}
+	else	// unit was completed
+	{
+		// unit 
+		if(category >= GROUND_ASSAULT && category <= SUBMARINE_ASSAULT)
+		{
+			execute->AddUnitToGroup(unit, def->id, category);
+
+			brain->AddDefenceCapabilities(def->id, category);
+
+			ut->SetUnitStatus(unit, HEADING_TO_RALLYPOINT);
+		}
+		// scout
+		else if(category == SCOUT)
+		{
+			++activeScouts;
+			--futureScouts;
+
+			scouts.push_back(unit);
+
+			// cloak scout if cloakable
+			if(def->canCloak)
+			{
+				Command c;
+				c.id = CMD_CLOAK;
+				c.params.push_back(1);
+
+				cb->GiveOrder(unit, &c);
+			}
+		}
+		// builder 
+		else if(bt->IsBuilder(def->id))
+		{
+			ut->AddConstructor(unit, def->id);
+
+			ut->units[unit].cons->Update();
 		}
 	}
 }
@@ -416,8 +481,8 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	// unfinished unit has been killed
 	if(cb->UnitBeingBuilt(unit))
 	{
-		--futureUnits[category];
-		--bt->units_dynamic[def->id].requested;
+		futureUnits[category] -= 1;
+		bt->units_dynamic[def->id].under_construction -= 1;
 
 		// unfinished building
 		if(!def->canfly && !def->movedata)
@@ -451,11 +516,11 @@ void AAI::UnitDestroyed(int unit, int attacker)
 				for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
 					--bt->units_dynamic[*unit].buildersRequested;
 			}
-
-			if(bt->IsFactory(def->id))
+			else if(bt->IsFactory(def->id))
 			{
-				--futureFactories;
-
+				if(category == STATIONARY_CONSTRUCTOR)
+					--futureFactories;
+	
 				for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
 					--bt->units_dynamic[*unit].buildersRequested;
 			}
@@ -668,129 +733,6 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	}
 
 	ut->RemoveUnit(unit);
-}
-
-void AAI::UnitFinished(int unit) 
-{
-	if(!initialized)
-		return;
-
-	// get unit´s id
-	const UnitDef *def = cb->GetUnitDef(unit);
-
-	UnitCategory category = bt->units_static[def->id].category;
-	futureUnits[category] -= 1;
-	activeUnits[category] += 1;
-	
-	bt->units_dynamic[def->id].requested -= 1;
-	bt->units_dynamic[def->id].active += 1;
-
-	// check if unit has been resurrected
-	float health = cb->GetUnitHealth(unit);
-	float max_health = cb->GetUnitMaxHealth(unit);
-	
-	/*if( health / max_health < 0.1f)
-	{
-		cb->SendTextMsg("ressurected", 0);
-	}*/
-
-	// building was completed
-	if(!def->movedata && !def->canfly)
-	{
-		// delete buildtask
-		for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); task++)
-		{
-			if((*task)->unit_id == unit)
-			{
-				AAIBuildTask *build_task = *task;
-				
-				if((*task)->builder_id >= 0 && ut->units[(*task)->builder_id].cons)
-					ut->units[(*task)->builder_id].cons->ConstructionFinished();
-				
-				build_tasks.erase(task);
-				delete build_task;
-				break;
-			}
-		}
-
-		// check if building belongs to one of this groups
-		if(category == EXTRACTOR)
-		{
-			ut->AddExtractor(unit);
-
-			// order defence if necessary
-			execute->DefendMex(unit, def->id);
-		}
-		else if(category == POWER_PLANT)
-		{
-			ut->AddPowerPlant(unit, def->id);
-		}
-		else if(category == STORAGE)
-		{
-			execute->futureStoredEnergy -= bt->unitList[def->id-1]->energyStorage;
-			execute->futureStoredMetal -= bt->unitList[def->id-1]->metalStorage;
-		}
-		else if(category == METAL_MAKER)
-		{
-			ut->AddMetalMaker(unit, def->id);
-		}
-		else if(category == STATIONARY_RECON)
-		{
-			ut->AddRecon(unit, def->id);
-		}
-		else if(category == STATIONARY_JAMMER)
-		{
-			ut->AddJammer(unit, def->id);
-		}
-		else if(category == STATIONARY_ARTY)
-		{
-			ut->AddStationaryArty(unit, def->id);
-		}
-		else if(category == STATIONARY_CONSTRUCTOR)
-		{
-			ut->AddConstructor(unit, def->id);
-
-			ut->units[unit].cons->Update();
-		}
-		return;
-	}
-	else	// unit was completed
-	{
-		// unit 
-		if(category >= GROUND_ASSAULT && category <= SUBMARINE_ASSAULT)
-		{
-			execute->AddUnitToGroup(unit, def->id, category);
-
-			brain->AddDefenceCapabilities(def->id, category);
-
-			ut->SetUnitStatus(unit, HEADING_TO_RALLYPOINT);
-		}
-		// scout
-		else if(category == SCOUT)
-		{
-			++activeScouts;
-			--futureScouts;
-
-			scouts.push_back(unit);
-
-			// cloak scout if cloakable
-			if(def->canCloak)
-			{
-				Command c;
-				c.id = CMD_CLOAK;
-				c.params.push_back(1);
-
-				cb->GiveOrder(unit, &c);
-			}
-		}
-		// builder 
-		else if(bt->IsBuilder(def->id))
-		{
-			ut->AddConstructor(unit, def->id);
-
-			ut->units[unit].cons->Update();
-		}
-	}
 }
 
 void AAI::UnitIdle(int unit)
