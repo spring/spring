@@ -86,28 +86,8 @@ namespace ntai {
 						G->RegisterMessageHandler(currentTask);
 					}
 				}
-				/*if(!tasks.empty()){
-					if(tasks.front()->IsValid()==false){
-						G->L.print("next task?");
-						tasks.erase(tasks.begin());
-						if(tasks.empty()==false){
-							boost::shared_ptr<IModule> t = tasks.front();
-							t->Init();
-							G->RegisterMessageHandler(t);
-						}
-					}
-				}*/
+
 			}
-			/*if(EVERY_(32)){
-				float3 p = G->GetUnitPos(uid);
-				G->cb->CreateLineFigure(p,p+float3(30,40,30),5,0,32,0);
-				float3 p2 = G->cb->GetMousePos();
-				if(p2.distance2D(p)<30){
-					CMessage m("type?");
-					tasks.front()->RecieveMessage(m);
-					G->cb->SendTextMsg(m.GetType().c_str(),1);
-				}
-			}*/
 		}else if(message.GetType() == string("")){
 			return;
 		}else if(message.GetType() == string("unitfinished")){
@@ -117,16 +97,15 @@ namespace ntai {
 			}
 		}else if(message.GetType() == string("unitdestroyed")){
 			if(message.GetParameter(0) == uid){
+
 				if(!utd->IsMobile()){
 					G->BuildingPlacer->UnBlock(G->GetUnitPos(uid),utd);
 				}
+
 				G->RemoveHandler(currentTask);
 				taskManager->RemoveAllTasks();
 				G->RemoveHandler(taskManager);
-				/*if(!tasks.empty()){
-					tasks.erase(tasks.begin(),tasks.end());
-					tasks.clear();
-				}*/
+
 				if(!behaviours.empty()){
 					behaviours.erase(behaviours.begin(),behaviours.end());
 					behaviours.clear();
