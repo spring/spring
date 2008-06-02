@@ -13,7 +13,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapInfo.h"
+#include "Map/MapParser.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
@@ -78,17 +78,13 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
  */
 void CGameSetup::LoadStartPositionsFromMap()
 {
-	TdfParser p2;
-	CMapInfo::OpenTDF (mapName, p2);
+	MapParser mapParser(mapName);
 
-	for(int a=0;a<numTeams;++a){
-		float x,z;
-		char teamName[20];
-		sprintf(teamName, "TEAM%i", teamStartNum[a]);
-		p2.GetDef(x, "1000", string("MAP\\") + teamName + "\\StartPosX");
-		p2.GetDef(z, "1000", string("MAP\\") + teamName + "\\StartPosZ");
-		gs->Team(a)->startPos = float3(x, 100, z);
-		startPos[a] = SFloat3(x, 100, z);
+	for(int a = 0; a < numTeams; ++a) {
+		float3 pos(1000.0f, 100.0f, 1000.0f);
+		mapParser.GetStartPos(a, pos);
+		gs->Team(a)->startPos = pos;
+		startPos[a] = SFloat3(pos.x, pos.y, pos.z);
 	}
 }
 
@@ -121,8 +117,7 @@ void CGameSetup::LoadStartPositions()
 
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
-		for (int a = 0; a < numTeams; ++a)
-		{
+		for (int a = 0; a < numTeams; ++a) {
 			gs->Team(a)->startPos.y = -500;
 			startPos[a].y = -500;
 		}
@@ -289,8 +284,9 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		++i;
 	}
 
-	if (allyteamRemap.size() != numAllyTeams)
+	if (allyteamRemap.size() != numAllyTeams) {
 		throw content_error("incorrect number of allyteams in GameSetup script");
+	}
 }
 
 /** @brief Update all player indices to refer to the right player. */
@@ -298,14 +294,16 @@ void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
 	for (int a = 0; a < numTeams; ++a) {
-		if (playerRemap.find(gs->Team(a)->leader) == playerRemap.end())
+		if (playerRemap.find(gs->Team(a)->leader) == playerRemap.end()) {
 			throw content_error("invalid Team.TeamLeader in GameSetup script");
+		};
 		gs->Team(a)->leader = playerRemap[gs->Team(a)->leader];
 	}
 
 	// relocate myPlayerNum
-	if (playerRemap.find(myPlayerNum) == playerRemap.end())
+	if (playerRemap.find(myPlayerNum) == playerRemap.end()) {
 		throw content_error("invalid MyPlayerNum in GameSetup script");
+	}
 	myPlayerNum = playerRemap[myPlayerNum];
 }
 
@@ -326,8 +324,9 @@ void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
 	for (int a = 0; a < numTeams; ++a) {
-		if (allyteamRemap.find(gs->AllyTeam(a)) == allyteamRemap.end())
+		if (allyteamRemap.find(gs->AllyTeam(a)) == allyteamRemap.end()) {
 			throw content_error("invalid Team.Allyteam in GameSetup script");
+		}
 		gs->SetAllyTeam(a, allyteamRemap[gs->AllyTeam(a)]);
 		teamAllyteam[a] = allyteamRemap[teamAllyteam[a]];
 	}

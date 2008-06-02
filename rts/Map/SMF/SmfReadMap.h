@@ -33,7 +33,7 @@ public:
 
 	std::string detailTexName;
 	GLuint detailTex;
-	MapHeader header;
+	SMFHeader header;
 	CFileHandler *ifs;
 
 	bool usePBO;

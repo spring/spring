@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
-#include "TdfParser.h"
 #include "LogOutput.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"

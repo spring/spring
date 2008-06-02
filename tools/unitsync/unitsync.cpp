@@ -8,11 +8,11 @@
 #include "FileSystem/VFSHandler.h"
 #include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
+#include "Map/MapParser.h"
 #include "Map/SMF/mapfile.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "TdfParser.h"
 
 #include "Syncer.h"
 #include "SyncServer.h"
@@ -411,28 +411,19 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	const string mapName = name;
 	ScopedMapLoader mapLoader(mapName);
 
-	const string extension = mapName.substr(mapName.length() - 3);
-
-	TdfParser parser;
-	string maptdf;
-	if (extension == "smf") {
-		maptdf = string("maps/") + mapName.substr(0, mapName.find_last_of('.')) + ".smd";
-	} else if(extension == "sm3") {
-		maptdf = string("maps/") + mapName;
-	}
-
 	string err("");
 
-	try {
-		parser.LoadFile(maptdf);
-	} catch (const std::exception& e) {
-		err = e.what();
+	MapParser mapParser(mapName);
+	if (!mapParser.IsValid()) {
+		err = mapParser.GetErrorLog();
 	}
+	const LuaTable mapTable = mapParser.GetRoot();
 
 	// Retrieve the map header as well
 	if (err.empty()) {
+		const string extension = mapName.substr(mapName.length() - 3);
 		if (extension == "smf") {
-			MapHeader mh;
+			SMFHeader mh;
 			string origName = name;
 			mh.mapx = -1;
 			{
@@ -445,18 +436,15 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 			outInfo->height = mh.mapy * SQUARE_SIZE;
 		}
 		else {
-			int w = atoi(parser.SGetValueDef(string(), "map\\gameAreaW").c_str());
-			int h = atoi(parser.SGetValueDef(string(), "map\\gameAreaH").c_str());
+			int w = mapTable.GetInt("gameAreaW", 0);
+			int h = mapTable.GetInt("gameAreaW", 1);
 
 			outInfo->width  = w * SQUARE_SIZE;
 			outInfo->height = h * SQUARE_SIZE;
 		}
 
 		// Make sure we found stuff in both the smd and the header
-		if (!parser.SectionExist("MAP")) {
-			err = "Could not parse map";
-		}
-		else if (outInfo->width <= 0) {
+		if (outInfo->width <= 0) {
 			err = "Bad map width";
 		}
 		else if (outInfo->height <= 0) {
@@ -479,43 +467,35 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 		return 0;
 	}
 
-	map<string, string> values = parser.GetAllValues("MAP");
+	const string desc = mapTable.GetString("description", "");
+	strncpy(outInfo->description, desc.c_str(), 254);
 
-	string tmpdesc = values["description"];
-	if (tmpdesc.length() > 254) {
-		tmpdesc = tmpdesc.substr(0, 254);
-	}
-	strcpy(outInfo->description, tmpdesc.c_str());
-	outInfo->tidalStrength = atoi(values["tidalstrength"].c_str());
-	outInfo->gravity = atoi(values["gravity"].c_str());
-	outInfo->maxMetal = atof(values["maxmetal"].c_str());
-	outInfo->extractorRadius = atoi(values["extractorradius"].c_str());
+	outInfo->tidalStrength   = mapTable.GetInt("tidalstrength", 0);
+	outInfo->gravity         = mapTable.GetInt("gravity", 0);
+	outInfo->extractorRadius = mapTable.GetInt("extractorradius", 0);
+	outInfo->maxMetal        = mapTable.GetFloat("maxmetal", 0.0f);
 
 	if (version >= 1) {
-		strncpy(outInfo->author, values["author"].c_str(), 200);
+		const string author = mapTable.GetString("author", "");
+		strncpy(outInfo->author, author.c_str(), 200);
 	}
 
-	values = parser.GetAllValues("MAP\\ATMOSPHERE");
-
-	outInfo->minWind = atoi(values["minwind"].c_str());
-	outInfo->maxWind = atoi(values["maxwind"].c_str());
+	const LuaTable atmoTable = mapTable.SubTable("atmosphere");
+	outInfo->minWind = atmoTable.GetInt("minWind", 0);
+	outInfo->maxWind = atmoTable.GetInt("maxWind", 0);
 
 	// Find the start positions
-	int curPos;
-	for (curPos = 0; curPos < 16; ++curPos) {
-		char buf[50];
-		sprintf(buf, "MAP\\TEAM%d", curPos);
-		const string section(buf);
-
-		if (!parser.SectionExist(section)) {
-			break;
+	int curTeam;
+	for (curTeam = 0; curTeam < 16; ++curTeam) {
+		float3 pos(-1.0f, -1.0f, -1.0f); // defaults
+		if (!mapParser.GetStartPos(curTeam, pos)) {
+			break; // position could not be parsed
 		}
-
-		parser.GetDef(outInfo->positions[curPos].x, "-1", section + "\\StartPosX");
-		parser.GetDef(outInfo->positions[curPos].z, "-1", section + "\\StartPosZ");
+		outInfo->positions[curTeam].x = pos.x;
+		outInfo->positions[curTeam].z = pos.z;
 	}
 
-	outInfo->posCount = curPos;
+	outInfo->posCount = curTeam;
 
 	return 1;
 }
@@ -569,14 +549,8 @@ char* imgbuf[1024*1024*2];
 
 static void* GetMinimapSM3(string mapName, int miplevel)
 {
-	string minimapFile;
-	try {
-		TdfParser tdf("Maps/" + mapName);
-		minimapFile = tdf.SGetValueDef(string(), "map\\minimap");
-	} catch (TdfParser::parse_error&) {
-		memset(imgbuf,0,sizeof(imgbuf));
-		return imgbuf;
-	}
+	MapParser mapParser(mapName);
+	const string minimapFile = mapParser.GetRoot().GetString("minimap", "");
 
 	if (minimapFile.empty()) {
 		memset(imgbuf,0,sizeof(imgbuf));
@@ -633,7 +607,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	bool done = false;
 	if (in.FileExists()) {
 
-		MapHeader mh;
+		SMFHeader mh;
 		in.Read(&mh, sizeof(mh));
 		in.Seek(mh.minimapPtr + offset);
 		in.Read(buffer, size);
@@ -1243,12 +1217,21 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 
 static void ParseOptions(const string& fileName,
                          const string& fileModes,
-                         const string& accessModes)
+                         const string& accessModes,
+                         const string& mapName = "")
 {
 	options.clear();
 	optionsSet.clear();
 
 	LuaParser luaParser(fileName, fileModes, accessModes);
+	if (!mapName.empty()) {
+		luaParser.GetTable("Map");
+		luaParser.AddString("fileName", mapName);
+		luaParser.AddString("fullName", "maps/" + mapName);
+		luaParser.AddString("configFile", MapParser::GetMapConfigName(mapName));
+		luaParser.EndTable();
+	}
+		
 	if (!luaParser.Execute()) {
 		return;
 	}
@@ -1301,7 +1284,7 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 	ScopedMapLoader mapLoader(name);
 
-	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP);
+	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
 
 	return (int)options.size();
 }

@@ -28,6 +28,7 @@
 #include <boost/format.hpp>
 
 using std::string;
+using std::vector;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -217,16 +218,18 @@ CBumpWater::CBumpWater()
 	}
 
 
-	foamTexture = LoadTexture( mapInfo->water.foamTexture );
-	normalTexture = LoadTexture( mapInfo->water.normalTexture );
-	for (int i = 0; i < CMapInfo::causticTextureCount; i++) {
-		caustTextures[i] = LoadTexture( mapInfo->water.causticTextures[i] );
-	}
-
+	foamTexture = LoadTexture(mapInfo->water.foamTexture);
+	normalTexture = LoadTexture(mapInfo->water.normalTexture);
 	//heightTexture = readmap->GetShadingTexture();
-	/*
 
-	*/
+	// caustic textures
+	const vector<string>& causticNames = mapInfo->water.causticTextures;
+	if (causticNames.size() <= 0) {
+		throw content_error("no caustic textures");
+	}
+	for (int i = 0; i < (int)causticNames.size(); i++) {
+		caustTextures.push_back(LoadTexture(causticNames[i]));
+	}
 
 	/* DEFINE SOME RUNTIME CONSTANTS (I don't use Uniforms for that, 'cos the glsl compiler can't optimize those!) */
 	string definitions;
@@ -305,8 +308,10 @@ CBumpWater::~CBumpWater()
 		glDeleteTextures(1, &refractTexture);
 
 	glDeleteTextures(1, &foamTexture);
-	glDeleteTextures(CMapInfo::causticTextureCount, caustTextures);
 	glDeleteTextures(1, &normalTexture);
+	for (int i = 0; i < (int)caustTextures.size(); i++) {
+		glDeleteTextures(1, &caustTextures[i]);
+	}
 
 	glDeleteShader(waterVP);
 	glDeleteShader(waterFP);
@@ -332,7 +337,7 @@ void CBumpWater::Draw()
 	if (refraction<2)
 		glDepthMask(0);
 
-	const int causticTexNum = (gs->frameNum % CMapInfo::causticTextureCount);
+	const int causticTexNum = (gs->frameNum % caustTextures.size());
 	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, caustTextures[causticTexNum]);
 	glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, foamTexture);
@@ -341,8 +346,8 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	glUseProgram(waterShader);
-	glUniform1f(frameLoc,gs->frameNum/15000.0f);
-	glUniformf3(eyePosLoc,camera->pos);
+	glUniform1f(frameLoc, gs->frameNum / 15000.0f);
+	glUniformf3(eyePosLoc, camera->pos);
 
 	glBegin(GL_QUADS);
 		glTexCoord4f(0.0f,0.0f,0.0f,0.0f);

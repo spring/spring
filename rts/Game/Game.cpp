@@ -8,6 +8,7 @@
 #include <time.h>
 #include <cctype>
 #include <locale>
+#include <sstream>
 
 #include "Rendering/GL/myGL.h"
 #include <GL/glu.h>
@@ -303,7 +304,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	modInfo.Init(modName.c_str());
 
 	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
-	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	defsParser->GetTable("Spring");
 	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
@@ -2083,12 +2084,13 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const string& defName = unitDefHandler->unitDefs[a].name;
-				const CUnit* unit =
-						unitLoader.LoadUnit(defName, pos2, team, false, 0, NULL);
-
-				if (unit) {
-					unitLoader.FlattenGround(unit);
+				const UnitDef* ud = &unitDefHandler->unitDefs[a];
+				if (ud->valid) {
+					const CUnit* unit =
+						unitLoader.LoadUnit(ud->name, pos2, team, false, 0, NULL);
+					if (unit) {
+						unitLoader.FlattenGround(unit);
+					}
 				}
 			}
 		}
@@ -3349,19 +3351,26 @@ void CGame::ClientReadNet()
 				if ((team >= gs->activeTeams) || (team < 0) || !gameSetup) {
 					logOutput.Print("Got invalid team num %i in startpos msg",team);
 				} else {
-					if (inbuf[3] != 2) {
-						gameSetup->readyTeams[team] = !!inbuf[3];
+					float3 pos(*(float*)&inbuf[4],
+					           *(float*)&inbuf[8],
+					           *(float*)&inbuf[12]);
+					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
+						if (inbuf[3] != 2) {
+							gameSetup->readyTeams[team] = !!inbuf[3];
+						}
+						gs->Team(team)->startPos = pos;
+						char label[128];
+						snprintf(label, sizeof(label), "Start %i", team);
+						inMapDrawer->LocalPoint(pos, label, player);
+						// FIXME - erase old pos ?
 					}
-					gs->Team(team)->startPos.x = *(float*)&inbuf[4];
-					gs->Team(team)->startPos.y = *(float*)&inbuf[8];
-					gs->Team(team)->startPos.z = *(float*)&inbuf[12];
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
 
 			case NETMSG_RANDSEED: {
-				gs->SetRandSeed(*((unsigned int*)&inbuf[1]));
+				gs->SetRandSeed(*((unsigned int*)&inbuf[1]), true);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3963,7 +3972,7 @@ void CGame::UpdateUI()
 			userInput = userInput.substr(0, 200);
 			writingPos = (int)userInput.length();
 		}
-		inMapDrawer->CreatePoint(inMapDrawer->waitingPoint,userInput);
+		inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
 		inMapDrawer->wantLabel = false;
 		userInput = "";
 		writingPos = 0;
@@ -4597,31 +4606,31 @@ void CGame::ReColorTeams()
 
 	LuaParser luaParser("teamcolors.lua", SPRING_VFS_RAW, SPRING_VFS_RAW_FIRST);
 
-	luaParser.AddParam("myPlayer", gu->myPlayerNum);
+	luaParser.AddInt("myPlayer", gu->myPlayerNum);
 
-	luaParser.AddParam("modName",      modInfo.humanName);
-	luaParser.AddParam("modShortName", modInfo.shortName);
-	luaParser.AddParam("modVersion",   modInfo.version);
+	luaParser.AddString("modName",      modInfo.humanName);
+	luaParser.AddString("modShortName", modInfo.shortName);
+	luaParser.AddString("modVersion",   modInfo.version);
 
-	luaParser.AddParam("mapName",      mapInfo->map.name);
-	luaParser.AddParam("mapHumanName", mapInfo->map.humanName);
+	luaParser.AddString("mapName",      mapInfo->map.name);
+	luaParser.AddString("mapHumanName", mapInfo->map.humanName);
 
-	luaParser.AddParam("gameMode",     gs->gameMode);
+	luaParser.AddInt("gameMode", gs->gameMode);
 
 	luaParser.GetTable("teams");
 	for(int t = 0; t < gs->activeTeams; ++t) {
 		luaParser.GetTable(t); {
 			const CTeam* team = gs->Team(t);
 			const unsigned char* color = gs->Team(t)->color;
-			luaParser.AddParam("allyTeam", gs->AllyTeam(t));
-			luaParser.AddParam("gaia",     team->gaia);
-			luaParser.AddParam("leader",   team->leader);
-			luaParser.AddParam("side",     team->side);
+			luaParser.AddInt("allyTeam", gs->AllyTeam(t));
+			luaParser.AddBool("gaia",    team->gaia);
+			luaParser.AddInt("leader",   team->leader);
+			luaParser.AddString("side",  team->side);
 			luaParser.GetTable("color"); {
-				luaParser.AddParam(1, float(color[0]) / 255.0f);
-				luaParser.AddParam(2, float(color[1]) / 255.0f);
-				luaParser.AddParam(3, float(color[2]) / 255.0f);
-				luaParser.AddParam(4, float(color[3]) / 255.0f);
+				luaParser.AddFloat(1, float(color[0]) / 255.0f);
+				luaParser.AddFloat(2, float(color[1]) / 255.0f);
+				luaParser.AddFloat(3, float(color[2]) / 255.0f);
+				luaParser.AddFloat(4, float(color[3]) / 255.0f);
 			}
 			luaParser.EndTable(); // color
 		}
@@ -4633,10 +4642,10 @@ void CGame::ReColorTeams()
 	for(int p = 0; p < gs->activePlayers; ++p) {
 		luaParser.GetTable(p); {
 			const CPlayer* player = gs->players[p];
-			luaParser.AddParam("name",       player->playerName);
-			luaParser.AddParam("team",       player->team);
-			luaParser.AddParam("active",     player->active);
-			luaParser.AddParam("spectating", player->spectator);
+			luaParser.AddString("name",     player->playerName);
+			luaParser.AddInt("team",        player->team);
+			luaParser.AddBool("active",     player->active);
+			luaParser.AddBool("spectating", player->spectator);
 		}
 		luaParser.EndTable(); // player#
 	}

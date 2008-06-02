@@ -63,6 +63,8 @@ CR_REG_METADATA_SUB(CInMapDraw, DrawQuad, (
 ));
 
 
+const float quadScale = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
+
 
 CInMapDraw::CInMapDraw(void)
 {
@@ -313,18 +315,21 @@ void CInMapDraw::MousePress(int x, int y, int button)
 		return;
 
 	switch (button) {
-	case SDL_BUTTON_LEFT:
-		if (lastLeftClickTime > gu->gameTime - 0.3f) {
-			PromptLabel(pos);
+		case SDL_BUTTON_LEFT: {
+			if (lastLeftClickTime > gu->gameTime - 0.3f) {
+				PromptLabel(pos);
+			}
+			lastLeftClickTime = gu->gameTime;
+			break;
 		}
-		lastLeftClickTime = gu->gameTime;
-		break;
-	case SDL_BUTTON_RIGHT:
-		ErasePos(pos);
-		break;
-	case SDL_BUTTON_MIDDLE:{
-		CreatePoint(pos, "");
-		break;}
+		case SDL_BUTTON_RIGHT: {
+			SendErase(pos);
+			break;
+		}
+		case SDL_BUTTON_MIDDLE:{
+			SendPoint(pos, "");
+			break;
+		}
 	}
 
 	lastPos = pos;
@@ -333,23 +338,23 @@ void CInMapDraw::MousePress(int x, int y, int button)
 
 void CInMapDraw::MouseRelease(int x, int y, int button)
 {
-
 }
 
 
 void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 {
 	float3 pos = GetMouseMapPos();
-	if (pos.x < 0)
+	if (pos.x < 0) {
 		return;
-
+	}
 	if (mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime < gu->gameTime - 0.05f) {
-		AddLine(pos, lastPos);
+		SendLine(pos, lastPos);
 		lastLineTime = gu->gameTime;
 		lastPos = pos;
 	}
-	if (mouse->buttons[SDL_BUTTON_RIGHT].pressed)
-		ErasePos(pos);
+	if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
+		SendErase(pos);
+	}
 
 }
 
@@ -369,6 +374,32 @@ float3 CInMapDraw::GetMouseMapPos(void)
 void CInMapDraw::GotNetMsg(const unsigned char* msg)
 {
 	const int playerID = msg[2];
+
+	switch (msg[3]) {
+		case NET_POINT: {
+			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			const string label = (char*) &msg[8];
+			LocalPoint(pos, label, playerID);
+			break;
+		}
+		case NET_LINE: {
+			float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
+			LocalLine(pos1, pos2, playerID);
+			break;
+		}
+		case NET_ERASE: {
+			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			LocalErase(pos, playerID);
+			break;
+		}
+	}
+}
+
+
+void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
+                            int playerID)
+{
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		return;
 	}
@@ -376,9 +407,10 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 	if (sender == NULL) {
 		return;
 	}
-	const int team = sender->team;
-	const int allyteam = gs->AllyTeam(team);
-	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) && gs->Ally(allyteam, gu->myAllyTeam));
+	const int  team      = sender->team;
+	const int  allyteam  = gs->AllyTeam(team);
+	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) &&
+	                        gs->Ally(allyteam, gu->myAllyTeam));
 	bool allowed = true;
 
 	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
@@ -389,130 +421,149 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 		allowed = false;
 	}
 
-	const float quadScale = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
+	float3 pos = constPos;
+	pos.CheckInBounds();
+	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-	switch (msg[3]) {
-		case NET_POINT: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			pos.CheckInBounds();
-			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+	if (luaUI && luaUI->MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+		return;
+	}
 
-			const string label = (char*) &msg[8];
-			if (luaUI && luaUI->MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
-				return;
-			}
+	MapPoint point;
+	point.pos = pos;
+	point.color = gs->Team(team)->color;
+	point.label = label;
+	point.senderAllyTeam = allyteam;
+	point.senderSpectator = sender->spectator;
 
-			MapPoint p;
-			p.pos = pos;
-			p.color = gs->Team(team)->color;
-			p.label = label;
-			p.senderAllyTeam = allyteam;
-			p.senderSpectator = sender->spectator;
+	const int quad = int(pos.z * quadScale) * drawQuadsX +
+	                 int(pos.x * quadScale);
+	drawQuads[quad].points.push_back(point);
 
-			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
-			drawQuads[quad].points.push_back(p);
+	if (allowed || drawAll) {
+		// if we happen to be in drawAll mode, notify us now
+		// even if this message is not intented for our ears
+		logOutput.Print("%s added point: %s",
+		                sender->playerName.c_str(), point.label.c_str());
+		logOutput.SetLastMsgPos(pos);
+		sound->PlaySample(blippSound);
+		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
+	}
+}
 
-			if (allowed || drawAll) {
-				// if we happen to be in drawAll mode, notify us now
-				// even if this message is not intented for our ears
-				logOutput.Print("%s added point: %s", sender->playerName.c_str(), p.label.c_str());
-				logOutput.SetLastMsgPos(pos);
-				sound->PlaySample(blippSound);
-				minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
-			}
 
-			break;
-		}
+void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
+                           int playerID)
+{
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		return;
+	}
+	const CPlayer* sender = gs->players[playerID];
+	if (sender == NULL) {
+		return;
+	}
+	const int  team      = sender->team;
+	const int  allyteam  = gs->AllyTeam(team);
+	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) &&
+	                        gs->Ally(allyteam, gu->myAllyTeam));
 
-		case NET_ERASE: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			pos.CheckInBounds();
-			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
-			if (luaUI && luaUI->MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
-				return;
-			}
+	float3 pos1 = constPos1;
+	float3 pos2 = constPos2;
+	pos1.CheckInBounds();
+	pos2.CheckInBounds();
+	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
+	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
 
-			const float radius = 100.0f;
-			const int maxY = drawQuadsY - 1;
-			const int maxX = drawQuadsX - 1;
-			const int yStart = (int) std::max(0,    int((pos.z - radius) * quadScale));
-			const int xStart = (int) std::max(0,    int((pos.x - radius) * quadScale));
-			const int yEnd   = (int) std::min(maxY, int((pos.z + radius) * quadScale));
-			const int xEnd   = (int) std::min(maxX, int((pos.x + radius) * quadScale));
+	if (luaUI && luaUI->MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
+		return;
+	}
 
-			for (int y = yStart; y <= yEnd; ++y) {
-				for (int x = xStart; x <= xEnd; ++x) {
-					DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
+	MapLine line;
+	line.pos  = pos1;
+	line.pos2 = pos2;
+	line.color = gs->Team(team)->color;
+	line.senderAllyTeam = allyteam;
+	line.senderSpectator = sender->spectator;
 
-					std::list<MapPoint>::iterator pi;
-					for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
-						if (pi->pos.distance2D(pos) < radius) {
-							pi = dq->points.erase(pi);
-						} else {
-							++pi;
-						}
-					}
-					std::list<MapLine>::iterator li;
-					for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
-						if (li->pos.distance2D(pos) < radius) {
-							li = dq->lines.erase(li);
-						} else {
-							++li;
-						}
-					}
+	const int quad = int(pos1.z * quadScale) * drawQuadsX +
+	                 int(pos1.x * quadScale);
+	drawQuads[quad].lines.push_back(line);
+}
+
+
+void CInMapDraw::LocalErase(const float3& constPos, int playerID)
+{
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		return;
+	}
+	const CPlayer* sender = gs->players[playerID];
+	if (sender == NULL) {
+		return;
+	}
+	const int  team      = sender->team;
+	const int  allyteam  = gs->AllyTeam(team);
+	const bool alliedMsg = (gs->Ally(gu->myAllyTeam, allyteam) &&
+	                        gs->Ally(allyteam, gu->myAllyTeam));
+
+	float3 pos = constPos;
+	pos.CheckInBounds();
+	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+	if (luaUI && luaUI->MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+		return;
+	}
+
+	const float radius = 100.0f;
+	const int maxY = drawQuadsY - 1;
+	const int maxX = drawQuadsX - 1;
+	const int yStart = (int) std::max(0,    int((pos.z - radius) * quadScale));
+	const int xStart = (int) std::max(0,    int((pos.x - radius) * quadScale));
+	const int yEnd   = (int) std::min(maxY, int((pos.z + radius) * quadScale));
+	const int xEnd   = (int) std::min(maxX, int((pos.x + radius) * quadScale));
+
+	for (int y = yStart; y <= yEnd; ++y) {
+		for (int x = xStart; x <= xEnd; ++x) {
+			DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
+
+			std::list<MapPoint>::iterator pi;
+			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
+				if (pi->pos.distance2D(pos) < radius) {
+					pi = dq->points.erase(pi);
+				} else {
+					++pi;
 				}
 			}
-
-			break;
-		}
-
-		case NET_LINE: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
-			pos.CheckInBounds();
-			pos2.CheckInBounds();
-			pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
-			pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
-
-			if (luaUI && luaUI->MapDrawCmd(playerID, NET_LINE, &pos, &pos2, NULL)) {
-				return;
+			std::list<MapLine>::iterator li;
+			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
+				if (li->pos.distance2D(pos) < radius) {
+					li = dq->lines.erase(li);
+				} else {
+					++li;
+				}
 			}
-
-			MapLine l;
-			l.pos = pos;
-			l.pos2 = pos2;
-			l.color = gs->Team(team)->color;
-			l.senderAllyTeam = allyteam;
-			l.senderSpectator = sender->spectator;
-
-			const int quad = int(pos.z * quadScale) * drawQuadsX + int(pos.x * quadScale);
-			drawQuads[quad].lines.push_back(l);
-
-			break;
 		}
 	}
 }
 
 
-void CInMapDraw::ErasePos(const float3& pos)
+void CInMapDraw::SendErase(const float3& pos)
 {
 	net->SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z);
 }
 
 
-void CInMapDraw::CreatePoint(const float3& pos, std::string label)
+void CInMapDraw::SendPoint(const float3& pos, const std::string& label)
 {
 	net->SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label);
 }
 
 
-void CInMapDraw::AddLine(const float3& pos, const float3& pos2)
+void CInMapDraw::SendLine(const float3& pos, const float3& pos2)
 {
 	net->SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
 }
 
 
-void CInMapDraw::PromptLabel (const float3& pos)
+void CInMapDraw::PromptLabel(const float3& pos)
 {
 	waitingPoint = pos;
 	game->userWriting = true;

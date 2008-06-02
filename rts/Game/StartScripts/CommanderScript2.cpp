@@ -2,11 +2,10 @@
 #include "CommanderScript2.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapInfo.h"
+#include "Map/MapParser.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
-#include "System/TdfParser.h"
 #include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
@@ -57,17 +56,14 @@ void CCommanderScript2::Update(void)
 			throw content_error ("Unable to load a startUnit for the first side");
 		}
 
-		TdfParser p2;
-		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
+		MapParser mapParser(stupidGlobalMapname);
+		float3 startPos0(1000.0f, 80.0f, 1000.0f);
+		float3 startPos1(1200.0f, 80.0f, 1200.0f);
+		mapParser.GetStartPos(0, startPos0);
+		mapParser.GetStartPos(1, startPos1);
 
-		float x0,x1,z0,z1;
-		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM0\\StartPosZ");
-		p2.GetDef(x1,"1200","MAP\\TEAM1\\StartPosX");
-		p2.GetDef(z1,"1200","MAP\\TEAM1\\StartPosZ");
-
-		unitLoader.LoadUnit(su1, float3(x0, 80, z0), 0, false, 0, NULL);
-		unitLoader.LoadUnit(su2, float3(x1, 80, z1), 1, false, 0, NULL);
+		unitLoader.LoadUnit(su1, startPos0, 0, false, 0, NULL);
+		unitLoader.LoadUnit(su2, startPos1, 1, false, 0, NULL);
 
 //		unitLoader.LoadUnit("armsam",float3(2650,10,2600),0,false);
 //		unitLoader.LoadUnit("armflash",float3(2450,10,2600),1,false);

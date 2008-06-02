@@ -16,8 +16,9 @@ class CInMapDraw
 public:
 	CInMapDraw(void);
 	~CInMapDraw(void);
-	void Draw(void);
 	void PostLoad();
+
+	void Draw(void);
 
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
@@ -27,7 +28,14 @@ public:
 	void SetAllVisible(bool b) { drawAll = b; }
 
 	float3 GetMouseMapPos(void);
-	void ErasePos(const float3& pos);
+
+	void LocalPoint(const float3& pos, const std::string& label, int playerID);
+	void LocalLine(const float3& pos1, const float3& pos2, int playerID);
+	void LocalErase(const float3& pos, int playerID);
+
+	void SendPoint(const float3& pos, const std::string& label);
+	void SendLine(const float3& pos1, const float3& pos2);
+	void SendErase(const float3& pos);
 
 	bool keyPressed;
 
@@ -80,10 +88,9 @@ public:
 	int blippSound;
 	bool drawAll;
 
-	static void InMapDrawVisCallback (int x,int y,void *userData);
-	void CreatePoint(const float3& pos, std::string label);
-	void AddLine(const float3& pos, const float3& pos2);
-	void PromptLabel (const float3& pos);;
+	static void InMapDrawVisCallback(int x, int y, void* userData);
+
+	void PromptLabel(const float3& pos);;
 };
 
 extern CInMapDraw* inMapDrawer;

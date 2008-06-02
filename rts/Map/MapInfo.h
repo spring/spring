@@ -2,10 +2,10 @@
 #define MAPINFO_H
 
 #include <string>
+#include <vector>
 #include "float3.h"
 
-class TdfParser;
-class LuaParser;
+class LuaTable;
 
 
 /** Float3 with a fourth data member, which is basically unused but required
@@ -27,15 +27,8 @@ class CMapInfo
 {
 public:
 
-	static void OpenTDF(const std::string& mapname, TdfParser& parser);
-	static std::string GetTDFName(const std::string& mapname);
-
 	CMapInfo(const std::string& mapname);
 	~CMapInfo();
-
-	/** @brief Get a readonly reference to the TDF parser.
-	    This is needed by SM3 code to load feature and layer data. */
-	const TdfParser& GetMapDefParser() const { return *mapDefParser; }
 
 	/* The settings are just public members because:
 
@@ -107,13 +100,12 @@ public:
 		float  groundShadowDensity;
 		float4 unitAmbientColor;
 		float4 unitSunColor;
-		float3 specularSunColor;
 		float  unitShadowDensity;
+		float3 specularSunColor;
 	} light;
 
 	/** settings read from "MAP\WATER" section
 	    prefix their name with "Water" to get the TDF variable */
-	static const int causticTextureCount = 32;
 	struct water_t {
 		float  repeatX; ///< (calculated default is in CBaseWater)
 		float  repeatY; ///< (calculated default is in CBaseWater)
@@ -132,7 +124,7 @@ public:
 		std::string texture;
 		std::string foamTexture;
 		std::string normalTexture;
-		std::string causticTextures[causticTextureCount];
+		std::vector<std::string> causticTextures;
 	} water;
 	bool hasWaterPlane; ///< true if "MAP\WATER\WaterPlaneColor" is set
 
@@ -161,8 +153,13 @@ public:
 	};
 	TerrainType terrainTypes[256];
 
+	bool GetStartPos(int team, float3& pos) const; // FIXME: MapParser duplicate?
+	
 private:
+	std::vector<bool>   havePos;
+	std::vector<float3> startPos;
 
+private:
 	void ReadGlobal();
 	void ReadGui();
 	void ReadAtmosphere();
@@ -171,9 +168,10 @@ private:
 	void ReadSmf();
 	void ReadSm3();
 	void ReadTerrainTypes();
+	void ReadStartPos();
 
-	LuaParser* resourcesParser;
-	TdfParser* mapDefParser;
+	LuaTable* mapRoot; // map       parser root table
+	LuaTable* resRoot; // resources parser root table
 };
 
 extern const CMapInfo* mapInfo;

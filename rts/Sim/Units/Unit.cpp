@@ -1125,8 +1125,6 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 /******************************************************************************/
 /******************************************************************************/
 
-
-
 void CUnit::AddExperience(float exp)
 {
 	const float oldExp = experience;
@@ -1385,6 +1383,7 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	return r;
 }
 
+
 bool CUnit::AttackGround(const float3 &pos, bool dgun)
 {
 	bool r=false;
@@ -1403,6 +1402,7 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 	return r;
 }
 
+
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
 	if(gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)){
@@ -1417,6 +1417,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 		AddDeathDependence(attacker);
 }
 
+
 void CUnit::DependentDied(CObject* o)
 {
 	if (o == userTarget)   { userTarget   = NULL; }
@@ -1428,6 +1429,7 @@ void CUnit::DependentDied(CObject* o)
 
 	CSolidObject::DependentDied(o);
 }
+
 
 void CUnit::SetUserTarget(CUnit* target)
 {
@@ -1512,6 +1514,7 @@ void CUnit::Init(const CUnit* builder)
 	globalAI->UnitCreated(this); // FIXME -- add builder?
 }
 
+
 void CUnit::UpdateTerrainType()
 {
 	if (curTerrainType != lastTerrainType) {
@@ -1519,6 +1522,7 @@ void CUnit::UpdateTerrainType()
 		lastTerrainType = curTerrainType;
 	}
 }
+
 
 void CUnit::CalculateTerrainType()
 {
@@ -1550,6 +1554,7 @@ void CUnit::CalculateTerrainType()
 		curTerrainType = 4;
 	}
 }
+
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
@@ -1651,6 +1656,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 	return false;
 }
 
+
 void CUnit::FinishedBuilding(void)
 {
 	beingBuilt = false;
@@ -1719,7 +1725,6 @@ void CUnit::FinishedBuilding(void)
 }
 
 
-
 // Called when a unit's Killed script finishes executing
 static void CUnitKilledCB(int retCode, void* p1, void* p2)
 {
@@ -1727,6 +1732,7 @@ static void CUnitKilledCB(int retCode, void* p1, void* p2)
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
+
 
 void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
@@ -1814,7 +1820,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 }
 
 
-
 bool CUnit::UseMetal(float metal)
 {
 	if (metal < 0) {
@@ -1828,6 +1833,7 @@ bool CUnit::UseMetal(float metal)
 	return canUse;
 }
 
+
 void CUnit::AddMetal(float metal)
 {
 	if (metal < 0) {
@@ -1837,6 +1843,7 @@ void CUnit::AddMetal(float metal)
 	metalMakeI += metal;
 	gs->Team(team)->AddMetal(metal);
 }
+
 
 bool CUnit::UseEnergy(float energy)
 {
@@ -1850,6 +1857,7 @@ bool CUnit::UseEnergy(float energy)
 		energyUseI += energy;
 	return canUse;
 }
+
 
 void CUnit::AddEnergy(float energy)
 {
@@ -1887,6 +1895,7 @@ void CUnit::Activate()
 	}
 }
 
+
 void CUnit::Deactivate()
 {
 	if (!activated)
@@ -1909,6 +1918,7 @@ void CUnit::Deactivate()
 	}
 }
 
+
 void CUnit::PushWind(float x, float z, float strength)
 {
 	if(strength > unitDef->windGenerator)
@@ -1922,6 +1932,7 @@ void CUnit::PushWind(float x, float z, float strength)
 
 	cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
 }
+
 
 void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 {
@@ -1942,6 +1953,7 @@ void CUnit::LoadSave(CLoadSaveInterface* file, bool loading)
 	commandAI->LoadSave(file, loading);
 }
 
+
 void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
 	if (unitDef->canDropFlare) {
@@ -1955,11 +1967,13 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	}
 }
 
+
 void CUnit::TempHoldFire(void)
 {
 	dontFire = true;
 	AttackUnit(0, true);
 }
+
 
 void CUnit::ReleaseTempHoldFire(void)
 {

@@ -615,7 +615,12 @@ std::vector<std::string> CArchiveScanner::GetArchivesForMap(const std::string& m
 	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
 		for (std::vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
 			if (mapName == (*i).name) {
-				return GetArchives(aii->first);
+				ret = GetArchives(aii->first);
+				const std::string mapHelperPath = GetArchivePath("maphelper.sdz");
+				if (!mapHelperPath.empty()) {
+					ret.push_back(mapHelperPath + "maphelper.sdz");
+				}
+				break;
 			}
 		}
 	}
@@ -669,8 +674,7 @@ unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 	unsigned int checksum = 0;
 	std::vector<std::string> ars = GetArchives(root);
 
-	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
-	{
+	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 		unsigned tmp = GetArchiveChecksum(*i);
 		logOutput.Print("mod checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
 		checksum ^= tmp;

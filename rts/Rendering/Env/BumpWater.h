@@ -41,8 +41,8 @@ private:
 
 	GLuint foamTexture;
 	GLuint normalTexture;
-	GLuint caustTextures[32];
 	GLuint* heightTexture;
+	std::vector<GLuint> caustTextures;
 
 	GLuint waterFP;
 	GLuint waterVP;

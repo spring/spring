@@ -100,6 +100,7 @@ public:
 	AtlasedTexture smoketrailtex;
 	AtlasedTexture waketex;
 	AtlasedTexture smoketex[12];
+	std::vector<AtlasedTexture> smokeTex;
 	AtlasedTexture perlintex;
 	AtlasedTexture flametex;
 

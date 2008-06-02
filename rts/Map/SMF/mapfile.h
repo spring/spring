@@ -13,7 +13,7 @@ The SMD file is a file in the textual TDF format defining a number of
 properties for the map.
 
 The SMF file is the main file for the map, containing the tilemap and a lot of
-additional data. See MapHeader for details.
+additional data. See SMFHeader for details.
 
 The SMT file, for which the filename is stored in the SMF file, contains the
 tiles used by the map. This file can be shared between different maps. See
@@ -37,7 +37,7 @@ TileFileHeader for details.
 
 Map file (.smf) layout is like this:
 
-	- MapHeader
+	- SMFHeader
 	- ExtraHeader
 	- ExtraHeader
 	- ...
@@ -45,7 +45,7 @@ Map file (.smf) layout is like this:
 	- Chunk of data pointed to by header or extra headers
 	- ...
 */
-struct MapHeader {
+struct SMFHeader {
 	char magic[16];      ///< "spring map file\0"
 	int version;         ///< Must be 1 for now
 	int mapid;           ///< Sort of a GUID of the file, just set to a random value when writing a map
@@ -68,7 +68,7 @@ struct MapHeader {
 	int numExtraHeaders; ///< Numbers of extra headers following main header
 };
 
-/// Read MapHeader mh from CFileHandler srcptr (endian aware)
+/// Read SMFHeader mh from CFileHandler srcptr (endian aware)
 #define READPTR_MAPHEADER(mh,srcptr)			\
 do {							\
 	unsigned int __tmpdw;				\
@@ -145,7 +145,7 @@ that defines ground vegetation, if it's missing there is no ground vegetation.
 // Some structures used in the chunks of data later in the file
 
 /**
-@brief The header at offset MapHeader.tilesPtr in the .smf
+@brief The header at offset SMFHeader.tilesPtr in the .smf
 
 MapTileHeader is followed by numTileFiles file definition where each file
 definition is an int followed by a zero terminated file name. On loading,
@@ -177,7 +177,7 @@ do {							\
 } while (0)
 
 /**
-@brief The header at offset MapHeader.featurePtr in the .smf
+@brief The header at offset SMFHeader.featurePtr in the .smf
 
 MapFeatureHeader is followed by numFeatureType zero terminated strings indicating the names
 of the features in the map. Then follow numFeatures MapFeatureStructs.

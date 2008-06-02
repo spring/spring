@@ -33,8 +33,6 @@ while (true) do
   if (type(data) ~= 'table') then
     break
   else
-    print(string.format('%s "%s" "%s"',
-                        label, tostring(data.name), tostring(data.commander)))
     -- rename 'commander' to 'startunit'
     data['startunit'] = data['commander']
     data['commander'] = nil

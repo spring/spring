@@ -109,10 +109,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedColor(L,  "groundSpecularColor", mi->light.groundSpecularColor);
 	LuaPushNamedColor(L,  "groundSunColor",      mi->light.groundSunColor);
 
-	const string* causticTexs = mi->water.causticTextures;
+	const vector<string>& causticTexs = mi->water.causticTextures;
 	lua_pushstring(L, "waterCausticTextures");
 	lua_newtable(L);
-	for (int i = 0; i < CMapInfo::causticTextureCount; i++) {
+	for (int i = 0; i < (int)causticTexs.size(); i++) {
 		lua_pushnumber(L, i + 1);
 		lua_pushstring(L, causticTexs[i].c_str());
 		lua_rawset(L, -3);

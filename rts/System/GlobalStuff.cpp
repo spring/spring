@@ -41,6 +41,7 @@ CR_BIND(CGlobalSyncedStuff,);
 
 CR_REG_METADATA(CGlobalSyncedStuff, (
 				CR_MEMBER(randSeed),
+				CR_MEMBER(initRandSeed),
 				CR_MEMBER(frameNum),
 				CR_MEMBER(speedFactor),
 				CR_MEMBER(userSpeedFactor),
@@ -91,44 +92,45 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
  */
 CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
-	hmapx=256;
-	hmapy=256;
-	randSeed=18655;//li.LowPart;
-	frameNum=0;
-	speedFactor=1;
-	userSpeedFactor=1;
-	paused=false;
-	godMode=false;
-	cheatEnabled=false;
-	noHelperAIs=false;
-	editDefsEnabled=false;
-	tempNum=2;
-	gameMode=0;
-	useLuaGaia=true;
-	gaiaTeamID=-1;
-	gaiaAllyTeamID=-1;
-	useLuaRules=true;
+	hmapx = 256;
+	hmapy = 256;
+	randSeed = 18655; //li.LowPart;
+	initRandSeed = randSeed;
+	frameNum = 0;
+	speedFactor = 1;
+	userSpeedFactor = 1;
+	paused = false;
+	godMode = false;
+	cheatEnabled = false;
+	noHelperAIs = false;
+	editDefsEnabled = false;
+	tempNum = 2;
+	gameMode = 0;
+	useLuaGaia = true;
+	gaiaTeamID = -1;
+	gaiaAllyTeamID = -1;
+	useLuaRules = true;
 	
-	for(int a=0; a < MAX_TEAMS; ++a){
-		teams[a]=SAFE_NEW CTeam();
-		teams[a]->teamNum=a;
-		team2allyteam[a]=a;
+	for(int a = 0; a < MAX_TEAMS; ++a) {
+		teams[a] = SAFE_NEW CTeam();
+		teams[a]->teamNum = a;
+		team2allyteam[a] = a;
 	}
-	for(int a=0; a < MAX_PLAYERS; ++a){
-		players[a]=SAFE_NEW CPlayer();
-		players[a]->team=0;
+	for(int a = 0; a < MAX_PLAYERS; ++a) {
+		players[a] = SAFE_NEW CPlayer();
+		players[a]->team = 0;
 	}
 
-	for(int a=0; a < MAX_TEAMS; ++a){
-		for(int b=0;b<MAX_TEAMS;++b){
-			allies[a][b]=false;
+	for (int a = 0; a < MAX_TEAMS; ++a) {
+		for (int b = 0; b < MAX_TEAMS; ++b) {
+			allies[a][b] = false;
 		}
-		allies[a][a]=true;
+		allies[a][a] = true;
 	}
 
-	activeTeams=2;
-	activeAllyTeams=2;
-	activePlayers=MAX_PLAYERS;
+	activeTeams = 2;
+	activeAllyTeams = 2;
+	activePlayers = MAX_PLAYERS;
 }
 
 /**
@@ -136,10 +138,12 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
  */
 CGlobalSyncedStuff::~CGlobalSyncedStuff()
 {
-	for(int a=0;a<MAX_TEAMS;a++)
+	for(int a = 0; a < MAX_TEAMS; a++) {
 		delete teams[a];
-	for(int a=0;a<gs->activePlayers;a++)
+	}
+	for(int a = 0; a < gs->activePlayers; a++) {
 		delete players[a];
+	}
 }
 
 /**
@@ -172,10 +176,10 @@ float CGlobalSyncedStuff::randFloat()
 float3 CGlobalSyncedStuff::randVector()
 {
 	float3 ret;
-	do{
-		ret.x=randFloat()*2-1;
-		ret.y=randFloat()*2-1;
-		ret.z=randFloat()*2-1;
+	do {
+		ret.x = randFloat()*2-1;
+		ret.y = randFloat()*2-1;
+		ret.z = randFloat()*2-1;
 	} while(ret.SqLength()>1);
 
 	return ret;
@@ -183,10 +187,10 @@ float3 CGlobalSyncedStuff::randVector()
 
 int CGlobalSyncedStuff::Player(const std::string& name)
 {
-	for (int i = 0; i < MAX_PLAYERS; ++i)
-	{
-		if (players[i] && players[i]->playerName == name)
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		if (players[i] && players[i]->playerName == name) {
 			return i;
+		}
 	}
 	return -1;
 }
@@ -198,32 +202,32 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
 	Uint64 randnum;
 	randnum = SDL_GetTicks();
-	usRandSeed=randnum&0xffffffff;
-	modGameTime=0;
-	gameTime=0;
-	lastFrameTime=0;
-	viewSizeX=100;
-	viewSizeY=100;
-	pixelX=0.01f;
-	pixelY=0.01f;
-	aspectRatio=1.0f;
-	myPlayerNum=0;
-	myTeam=1;
-	myAllyTeam=1;
+	usRandSeed = randnum&0xffffffff;
+	modGameTime = 0;
+	gameTime = 0;
+	lastFrameTime = 0;
+	viewSizeX = 100;
+	viewSizeY = 100;
+	pixelX = 0.01f;
+	pixelY = 0.01f;
+	aspectRatio = 1.0f;
+	myPlayerNum = 0;
+	myTeam = 1;
+	myAllyTeam = 1;
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
-	drawdebug=false;
-	active=true;
-	viewRange=MAX_VIEW_RANGE;
-	timeOffset=0;
-	drawFog=true;
-	compressTextures=false;
-	teamNanospray=false;
-	autoQuit=false;
-	quitTime=0;
+	drawdebug = false;
+	active = true;
+	viewRange = MAX_VIEW_RANGE;
+	timeOffset = 0;
+	drawFog = true;
+	compressTextures = false;
+	teamNanospray = false;
+	autoQuit = false;
+	quitTime = 0;
 #ifdef DIRECT_CONTROL_ALLOWED
-	directControl=0;
+	directControl = 0;
 #endif
 }
 
@@ -264,11 +268,11 @@ float CGlobalUnsyncedStuff::usRandFloat()
 float3 CGlobalUnsyncedStuff::usRandVector()
 {
 	float3 ret;
-	do{
-		ret.x=usRandFloat()*2-1;
-		ret.y=usRandFloat()*2-1;
-		ret.z=usRandFloat()*2-1;
-	} while(ret.SqLength()>1);
+	do {
+		ret.x = usRandFloat() * 2 - 1;
+		ret.y = usRandFloat() * 2 - 1;
+		ret.z = usRandFloat() * 2 - 1;
+	} while (ret.SqLength() > 1);
 
 	return ret;
 }

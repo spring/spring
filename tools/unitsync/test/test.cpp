@@ -10,7 +10,7 @@ echo Clipped $start lines
 
 g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
-./a.out CastlesSDD.smf ba52.sdd
+./a.out Castles.smf ba621.sd7
 
 exit
 
@@ -167,6 +167,38 @@ int main(int argc, char** argv)
     printf("    [map %3i]   %s\n", i, mapName.c_str());
   }
 
+  // map archives
+  printf("  MAP ARCHIVES  (for %s)\n", map.c_str());
+  const int mapArcCount = GetMapArchiveCount(map.c_str());
+  for (int a = 0; a < mapArcCount; a++) {
+    printf("      arc %i: %s\n", a, GetMapArchiveName(a));
+  }
+  
+  // map info
+  printf("  MAP INFO  (for %s)\n", map.c_str());
+  MapInfo mi;
+  char auth[256];
+  char desc[256];
+  mi.author = auth;
+  mi.author[0] = 0;
+  mi.description = desc;
+  mi.description[0] = 0;
+  GetMapInfoEx(map.c_str(), &mi, 1);
+  printf("    author:    '%s'\n", mi.author);
+  printf("    desc:      '%s'\n", mi.description);
+  printf("    gravity:   %i\n",   mi.gravity);
+  printf("    tidal:     %i\n",   mi.tidalStrength);
+  printf("    maxMetal:  %f\n",   mi.maxMetal);
+  printf("    mexRad:    %i\n",   mi.extractorRadius);
+  printf("    minWind:   %i\n",   mi.minWind);
+  printf("    maxWind:   %i\n",   mi.maxWind);
+  printf("    width:     %i\n",   mi.width);
+  printf("    height:    %i\n",   mi.height);
+  for (int p = 0; p < mi.posCount; p++) {
+    const StartPos& sp = mi.positions[p];
+    printf("    pos %i:     <%i, %i>\n", p, sp.x, sp.z);
+  }
+    
   // mod names
   printf("  MODS\n");
   const int modCount = GetPrimaryModCount();
@@ -200,6 +232,12 @@ int main(int argc, char** argv)
     const string unitFullName = GetFullUnitName(i);
     printf("    [unit %3i]   %-16s  <%s>\n", i,
            unitName.c_str(), unitFullName.c_str());
+  }
+  printf("  SIDES\n");
+  const int sideCount = GetSideCount();
+  for (int i = 0; i < sideCount; i++) {
+    const string sideName= GetSideName(i);
+    printf("    side %i = '%s'\n", i, sideName.c_str());
   }
 
   // LuaAI options

@@ -9,7 +9,6 @@
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "TdfParser.h"
 
 #include "Syncer.h"
 #include "SyncServer.h"

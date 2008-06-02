@@ -36,6 +36,8 @@ class LuaTable {
 		LuaTable SubTable(int key) const;
 		LuaTable SubTable(const string& key) const;
 
+		LuaTable DotTable(const string& dot) const;
+
 		bool IsValid() const { return (parser != NULL); }
 
 		const string& GetPath() const { return path; }
@@ -118,6 +120,8 @@ class LuaParser {
 
 		LuaTable GetRoot();
 
+		LuaTable DotTable(const string& dot) { return GetRoot().DotTable(dot); }
+
 		const string& GetErrorLog() const { return errorLog; }
 	
 		const set<string>& GetAccessedFiles() const { return accessedFiles; }
@@ -127,15 +131,15 @@ class LuaParser {
 		void GetTable(const string& name, bool overwrite = false);
 		void EndTable();
 		void AddFunc(int key, int (*func)(lua_State*));
-		void AddParam(int key, const string& value);
-		void AddParam(int key, float value);
-		void AddParam(int key, int value);
-		void AddParam(int key, bool value);
+		void AddInt(int key, int value);
+		void AddBool(int key, bool value);
+		void AddFloat(int key, float value);
+		void AddString(int key, const string& value);
 		void AddFunc(const string& key, int (*func)(lua_State*));
-		void AddParam(const string& key, const string& value);
-		void AddParam(const string& key, float value);
-		void AddParam(const string& key, int value);
-		void AddParam(const string& key, bool value);
+		void AddInt(const string& key, int value);
+		void AddBool(const string& key, bool value);
+		void AddFloat(const string& key, float value);
+		void AddString(const string& key, const string& value);
 
 	public:
 		const string fileName;
@@ -144,6 +148,8 @@ class LuaParser {
 		const string accessModes;
 
 	private:
+		void SetupEnv();
+
 		void PushParam();
 
 		void AddTable(LuaTable* tbl);
