@@ -69,13 +69,15 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddString("fileName", mapName);
 	parser->AddString("fullName", "maps/" + mapName);
 	parser->AddString("configFile", mapConfig);
+	parser->EndTable();
 #ifndef UNITSYNC
 	// this should not be included with unitsync:
 	// 1. avoids linkage with LuaSyncedRead
 	// 2. MapOptions are not valid during unitsync map parsing
+	parser->GetTable("Spring");
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
-#endif
 	parser->EndTable();
+#endif
 	parser->Execute();
 }
 
