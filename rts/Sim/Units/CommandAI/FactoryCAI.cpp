@@ -39,11 +39,13 @@ CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
 				CR_MEMBER(numQued)
 				));
 
+
 CFactoryCAI::CFactoryCAI()
 : CCommandAI(),
 	building(false),
 	lastRestrictedWarning(0)
 {}
+
 
 CFactoryCAI::CFactoryCAI(CUnit* owner)
 : CCommandAI(owner),
@@ -111,32 +113,42 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 		}
 
 		CommandDescription c;
-		c.id=-ud->id; //build options are always negative
-		c.action="buildunit_" + StringToLower(ud->name);
-		c.type=CMDTYPE_ICON;
-		c.name=name;
-		c.mouseicon=c.name;
+		c.id = -ud->id; //build options are always negative
+		c.action = "buildunit_" + StringToLower(ud->name);
+		c.type = CMDTYPE_ICON;
+		c.name = name;
+		c.mouseicon = c.name;
+		c.disabled = (ud->maxThisUnit <= 0);
 
-		char tmp[500];
-		sprintf(tmp,"\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",ud->health,ud->metalCost,ud->energyCost,ud->buildTime);
-		c.tooltip = string("Build: ") + ud->humanName + " - " + ud->tooltip + tmp;
+		char tmp[1024];
+		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
+		        ud->health, ud->metalCost, ud->energyCost, ud->buildTime);
+		if (c.disabled) {
+			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
+		} else {
+			c.tooltip = "Build: ";
+		}
+		c.tooltip += ud->humanName + " - " + ud->tooltip + tmp;
 
 		possibleCommands.push_back(c);
 		BuildOption bo;
-		bo.name=name;
-		bo.fullName=name;
-		bo.numQued=0;
-		buildOptions[c.id]=bo;
+		bo.name = name;
+		bo.fullName = name;
+		bo.numQued = 0;
+		buildOptions[c.id] = bo;
 	}
 }
+
 
 CFactoryCAI::~CFactoryCAI()
 {
 }
 
+
 void CFactoryCAI::PostLoad()
 {
 }
+
 
 void CFactoryCAI::GiveCommandReal(const Command& c)
 {
@@ -203,65 +215,65 @@ void CFactoryCAI::GiveCommandReal(const Command& c)
 		return;
 	}
 
-	BuildOption &bo=boi->second;
+	BuildOption &bo = boi->second;
 
-	int numItems=1;
-	if(c.options& SHIFT_KEY)
-		numItems*=5;
-	if(c.options & CONTROL_KEY)
-		numItems*=20;
+	int numItems = 1;
+	if (c.options & SHIFT_KEY)   { numItems *= 5; }
+	if (c.options & CONTROL_KEY) { numItems *= 20; }
 
-	if(c.options & RIGHT_MOUSE_KEY){
-		bo.numQued-=numItems;
-		if(bo.numQued<0)
-			bo.numQued=0;
+	if (c.options & RIGHT_MOUSE_KEY) {
+		bo.numQued -= numItems;
+		if (bo.numQued < 0) {
+			bo.numQued = 0;
+		}
 
-		int numToErase=numItems;
-		if(c.options & ALT_KEY){
-			for(unsigned int cmdNum=0;cmdNum<commandQue.size() && numToErase;++cmdNum){
-				if(commandQue[cmdNum].id==c.id){
-					commandQue[cmdNum].id=CMD_STOP;
+		int numToErase = numItems;
+		if (c.options & ALT_KEY) {
+			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
+				if (commandQue[cmdNum].id == c.id) {
+					commandQue[cmdNum].id = CMD_STOP;
 					numToErase--;
 				}
 			}
-		} else {
-			for(int cmdNum=commandQue.size()-1;cmdNum!=-1 && numToErase;--cmdNum){
-				if(commandQue[cmdNum].id==c.id){
-					commandQue[cmdNum].id=CMD_STOP;
+		}
+		else {
+			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
+				if (commandQue[cmdNum].id == c.id) {
+					commandQue[cmdNum].id = CMD_STOP;
 					numToErase--;
 				}
 			}
 		}
 		UpdateIconName(c.id,bo);
 		SlowUpdate();
-
-	} else {
-		if(c.options & ALT_KEY){
-			for(int a=0;a<numItems;++a){
+	}
+	else {
+		if (c.options & ALT_KEY) {
+			for (int a = 0; a < numItems; ++a) {
 				if (repeatOrders) {
 					Command nc(c);
 					nc.options |= DONT_REPEAT;
-					if (commandQue.empty())
+					if (commandQue.empty()) {
 						commandQue.push_front(nc);
-					else
+					} else {
 						commandQue.insert(commandQue.begin()+1, nc);
+					}
 				} else {
 					commandQue.push_front(c);
 				}
-
 			}
 			if (!repeatOrders) {
 				building=false;
-				CFactory* fac=(CFactory*)owner;
+				CFactory* fac = (CFactory*)owner;
 				fac->StopBuild();
 			}
 		} else {
-			for(int a=0;a<numItems;++a){
+			for (int a = 0; a < numItems; ++a) {
 				commandQue.push_back(c);
 			}
 		}
-		bo.numQued+=numItems;
-		UpdateIconName(c.id,bo);
+		bo.numQued += numItems;
+		UpdateIconName(c.id, bo);
 
 		SlowUpdate();
 	}
@@ -392,6 +404,7 @@ void CFactoryCAI::SlowUpdate()
 	return;
 }
 
+
 void CFactoryCAI::ExecuteStop(Command &c)
 {
 	CFactory* fac=(CFactory*)owner;
@@ -400,6 +413,7 @@ void CFactoryCAI::ExecuteStop(Command &c)
 	commandQue.pop_front();
 	return;
 }
+
 
 int CFactoryCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
@@ -412,6 +426,7 @@ int CFactoryCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 	}
 	return CMD_MOVE;
 }
+
 
 void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 {

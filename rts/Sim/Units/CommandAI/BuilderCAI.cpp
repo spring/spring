@@ -81,65 +81,66 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 	lastPC2(-1)
 {
 	CommandDescription c;
-	if(owner->unitDef->canRepair){
-		c.id=CMD_REPAIR;
-		c.action="repair";
-		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name="Repair";
-		c.mouseicon=c.name;
-		c.tooltip="Repair: Repairs another unit";
+	if (owner->unitDef->canRepair) {
+		c.id = CMD_REPAIR;
+		c.action = "repair";
+		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
+		c.name = "Repair";
+		c.mouseicon = c.name;
+		c.tooltip = "Repair: Repairs another unit";
 		possibleCommands.push_back(c);
-	} else if(owner->unitDef->canAssist){
-		c.id=CMD_REPAIR;
-		c.action="assist";
-		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name="Assist";
-		c.mouseicon=c.name;
-		c.tooltip="Assist: Help build something";
+	}
+	else if (owner->unitDef->canAssist) {
+		c.id = CMD_REPAIR;
+		c.action = "assist";
+		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
+		c.name = "Assist";
+		c.mouseicon = c.name;
+		c.tooltip = "Assist: Help build something";
 		possibleCommands.push_back(c);
 	}
 
-	if(owner->unitDef->canReclaim){
-		c.id=CMD_RECLAIM;
-		c.action="reclaim";
-		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
-		c.name="Reclaim";
-		c.mouseicon=c.name;
-		c.tooltip="Reclaim: Sucks in the metal/energy content of a unit/feature and add it to your storage";
+	if (owner->unitDef->canReclaim) {
+		c.id = CMD_RECLAIM;
+		c.action = "reclaim";
+		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
+		c.name = "Reclaim";
+		c.mouseicon = c.name;
+		c.tooltip = "Reclaim: Sucks in the metal/energy content of a unit/feature and add it to your storage";
 		possibleCommands.push_back(c);
 	}
 
-	if(owner->unitDef->canRestore){
-		c.id=CMD_RESTORE;
-		c.action="restore";
-		c.type=CMDTYPE_ICON_AREA;
-		c.name="Restore";
-		c.mouseicon=c.name;
-		c.tooltip="Restore: Restores an area of the map to its original height";
+	if (owner->unitDef->canRestore) {
+		c.id = CMD_RESTORE;
+		c.action = "restore";
+		c.type = CMDTYPE_ICON_AREA;
+		c.name = "Restore";
+		c.mouseicon = c.name;
+		c.tooltip = "Restore: Restores an area of the map to its original height";
 		c.params.push_back("200");
 		possibleCommands.push_back(c);
 	}
 	c.params.clear();
 
-	if(owner->unitDef->canResurrect){
-		c.id=CMD_RESURRECT;
-		c.action="resurrect";
-		c.type=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
-		c.name="Resurrect";
-		c.mouseicon=c.name;
-		c.tooltip="Resurrect: Resurrects a unit from a feature";
+	if (owner->unitDef->canResurrect) {
+		c.id = CMD_RESURRECT;
+		c.action = "resurrect";
+		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
+		c.name = "Resurrect";
+		c.mouseicon = c.name;
+		c.tooltip = "Resurrect: Resurrects a unit from a feature";
 		possibleCommands.push_back(c);
 	}
-	if(owner->unitDef->canCapture){
-		c.id=CMD_CAPTURE;
-		c.action="capture";
-		c.type=CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name="Capture";
-		c.mouseicon=c.name;
-		c.tooltip="Capture: Captures a unit from the enemy";
+	if (owner->unitDef->canCapture) {
+		c.id = CMD_CAPTURE;
+		c.action = "capture";
+		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
+		c.name = "Capture";
+		c.mouseicon = c.name;
+		c.tooltip = "Capture: Captures a unit from the enemy";
 		possibleCommands.push_back(c);
 	}
-	CBuilder* fac=(CBuilder*)owner;
+	CBuilder* fac = (CBuilder*)owner;
 
 	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
@@ -153,18 +154,25 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 			throw content_error(errmsg);
 		}
 		CommandDescription c;
-		c.id=-ud->id; //build options are always negative
-		c.action="buildunit_" + StringToLower(ud->name);
-		c.type=CMDTYPE_ICON_BUILDING;
-		c.name=name;
-		c.mouseicon=c.name;
+		c.id = -ud->id; //build options are always negative
+		c.action = "buildunit_" + StringToLower(ud->name);
+		c.type = CMDTYPE_ICON_BUILDING;
+		c.name = name;
+		c.mouseicon = c.name;
+		c.disabled = (ud->maxThisUnit <= 0);
 
-		char tmp[500];
-		sprintf(tmp,"\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",ud->health,ud->metalCost,ud->energyCost,ud->buildTime);
-		c.tooltip = string("Build: ") + ud->humanName + " - " + ud->tooltip + tmp;
+		char tmp[1024];
+		sprintf(tmp, "\nHealth %.0f\nMetal cost %.0f\nEnergy cost %.0f Build time %.0f",
+		        ud->health, ud->metalCost, ud->energyCost, ud->buildTime);
+		if (c.disabled) {
+			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
+		} else {
+			c.tooltip = "Build: ";
+		}
+		c.tooltip += ud->humanName + " - " + ud->tooltip + tmp;
 
 		possibleCommands.push_back(c);
-		buildOptions[c.id]=name;
+		buildOptions[c.id] = name;
 	}
 	uh->AddBuilderCAI(this);
 }
