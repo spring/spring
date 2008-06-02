@@ -75,7 +75,7 @@ void CFireProjectile::Update(void)
 			sub.pos.y+=sub.posDif.y;
 			sub.posDif.y=0;
 			sub.rotSpeed=(gu->usRandFloat()-0.5f)*4;
-			sub.smokeType=gu->usRandInt()%6;
+			sub.smokeType=gu->usRandInt()% ph->smoketex.size();
 			subParticles.push_front(sub);
 
 			sub.maxSize=(0.7f+gu->usRandFloat()*0.3f)*particleSize;
