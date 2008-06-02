@@ -79,6 +79,7 @@ void CMapInfo::ReadGlobal()
 	map.notDeformable = topTable.GetBool("notDeformable", false);
 
 	map.gravity = topTable.GetFloat("gravity", 130.0f);
+	map.gravity = max(0.001f, map.gravity);
 	map.gravity = -map.gravity / (GAME_SPEED * GAME_SPEED);
 
 	map.tidalStrength   = topTable.GetFloat("tidalStrength", 0.0f);
@@ -88,7 +89,6 @@ void CMapInfo::ReadGlobal()
 	map.voidWater = topTable.GetBool("voidWater", false);
 
 	// clamps
-	map.gravity         = max(0.0f, map.gravity);
 	map.hardness        = max(0.0f, map.hardness);
 	map.tidalStrength   = max(0.0f, map.tidalStrength);
 	map.maxMetal        = max(0.0f, map.maxMetal);
