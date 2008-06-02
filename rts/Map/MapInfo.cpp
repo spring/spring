@@ -92,7 +92,7 @@ void CMapInfo::ReadGlobal()
 	map.hardness        = max(0.0f, map.hardness);
 	map.tidalStrength   = max(0.0f, map.tidalStrength);
 	map.maxMetal        = max(0.0f, map.maxMetal);
-	map.extractorRadius = max(0.0f, map.maxMetal);
+	map.extractorRadius = max(0.0f, map.extractorRadius);
 }
 
 
