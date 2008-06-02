@@ -22,7 +22,6 @@ do
   local lowerMap = {}
 
   local function lowerkeys2(t)
-    print('lowerkeys')
     if (lowerMap[t]) then
       return  -- avoid recursion / repetition
     end
