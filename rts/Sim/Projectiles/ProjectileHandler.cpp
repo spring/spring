@@ -111,7 +111,6 @@ CProjectileHandler::CProjectileHandler()
 		const string texName = "bitmaps/" + smokeTable.GetString(i, defTex);
 		textureAtlas->AddTexFromFile(string("ismoke") + num, texName);
 		blockMapTexNames.insert(StringToLower(string("ismoke") + num));
-		printf("SMOKE: ismoke%s -> %s\n", num, texName.c_str());
 	}
 
 	char tex[128][128][4];
