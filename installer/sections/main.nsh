@@ -102,6 +102,7 @@ ${EndIf}
   SetOutPath "$INSTDIR\base"
 
   File "..\game\base\springcontent.sdz"
+  File "..\game\base\maphelper.sdz"
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
 
@@ -201,6 +202,7 @@ ${EndIf}
   ; base content
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
+  Delete "$INSTDIR\base\maphelper.sdz"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
 
