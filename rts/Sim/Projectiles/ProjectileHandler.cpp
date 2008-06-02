@@ -104,13 +104,14 @@ CProjectileHandler::CProjectileHandler()
 	// FIXME -- all 12 are currently hardcoded in some places
 	//          smoketex[] should be converted to a vector, and
 	//          checked to make sure that at least 1 texture exists.
-	for (int i = 1; smokeTable.KeyExists(i); i++) {
+	for (int i = 1; i <= 12; i++) {
 		char num[10];
 		sprintf(num, "%02i", i - 1);
 		const string defTex = string("smoke/smoke") + num + ".tga";
 		const string texName = "bitmaps/" + smokeTable.GetString(i, defTex);
 		textureAtlas->AddTexFromFile(string("ismoke") + num, texName);
 		blockMapTexNames.insert(StringToLower(string("ismoke") + num));
+		printf("SMOKE: ismoke%s -> %s\n", num, texName.c_str());
 	}
 
 	char tex[128][128][4];
@@ -203,12 +204,11 @@ CProjectileHandler::CProjectileHandler()
 	perlintex       = textureAtlas->GetTexture("perlintex");
 	flametex        = textureAtlas->GetTexture("flame");
 
-	//for (int i = 0; i < 12; i++) {
-	for (int i = 1; smokeTable.KeyExists(i); i++) {
+	// FIXME -- hardcoded 12
+	for (int i = 0; i < 12; i++) {
 		char num[10];
-		sprintf(num, "%02i", i - 1);
+		sprintf(num, "%02i", i);
 		smoketex[i] = textureAtlas->GetTexture(string("ismoke") + num);
-//		smokeTex.push_back(textureAtlas->GetTexture(string("ismoke") + num));
 	}
 
 #define GETTEX(t, b) textureAtlas->GetTextureWithBackup((t), (b))
