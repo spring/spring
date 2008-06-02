@@ -18,7 +18,8 @@ public:
 	float ystart;
 	float yend;
 
-	int ixstart,iystart;
+	int ixstart;
+	int iystart;
 };
 
 /** @brief Same as AtlasedTexture but different name so the explosiongenerator
@@ -76,8 +77,9 @@ protected:
 		int xsize;
 		int ysize;
 		TextureType texType;
-		int xpos,ypos;
-		void *data;
+		int xpos;
+		int ypos;
+		void* data;
 	};
 
 	//temporary storage of all textures

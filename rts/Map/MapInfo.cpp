@@ -7,7 +7,9 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 
+
 using namespace std;
+
 
 float4::float4()
 {
@@ -84,6 +86,13 @@ void CMapInfo::ReadGlobal()
 	map.extractorRadius = topTable.GetFloat("extractorRadius", 500.0f);
 
 	map.voidWater = topTable.GetBool("voidWater", false);
+
+	// clamps
+	map.gravity         = max(0.0f, map.gravity);
+	map.hardness        = max(0.0f, map.hardness);
+	map.tidalStrength   = max(0.0f, map.tidalStrength);
+	map.maxMetal        = max(0.0f, map.maxMetal);
+	map.extractorRadius = max(0.0f, map.maxMetal);
 }
 
 
@@ -108,6 +117,12 @@ void CMapInfo::ReadAtmosphere()
 	atmo.sunColor   = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.cloudColor = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.skyBox = atmoTable.GetString("skyBox", "");
+
+	// clamps
+	atmo.cloudDensity = max(0.0f, atmo.cloudDensity);
+	atmo.maxWind      = max(0.0f, atmo.maxWind);
+	atmo.minWind      = max(0.0f, atmo.minWind);
+	atmo.minWind      = min(atmo.maxWind, atmo.minWind);
 }
 
 
@@ -245,12 +260,19 @@ void CMapInfo::ReadTerrainTypes()
 		const LuaTable terrain = terrTypeTable.SubTable(tt);
 		terrType.name          = terrain.GetString("name", "Default");
 		terrType.hardness      = terrain.GetFloat("hardness",   1.0f);
-		terrType.receiveTracks = terrain.GetFloat("receiveTracks", true);
+		terrType.receiveTracks = terrain.GetBool("receiveTracks", true);
 		const LuaTable moveTable = terrain.SubTable("moveSpeeds");
 		terrType.tankSpeed  = moveTable.GetFloat("tank",  1.0f);
 		terrType.kbotSpeed  = moveTable.GetFloat("kbot",  1.0f);
 		terrType.hoverSpeed = moveTable.GetFloat("hover", 1.0f);
 		terrType.shipSpeed  = moveTable.GetFloat("ship",  1.0f);
+
+		// clamps
+		terrType.hardness   = max(0.0f, terrType.hardness);
+		terrType.tankSpeed  = max(0.0f, terrType.tankSpeed);
+		terrType.kbotSpeed  = max(0.0f, terrType.kbotSpeed);
+		terrType.hoverSpeed = max(0.0f, terrType.hoverSpeed);
+		terrType.shipSpeed  = max(0.0f, terrType.shipSpeed);
 	}
 }
 
@@ -259,12 +281,26 @@ void CMapInfo::ReadStartPos()
 {
 	const float defX = 1000.0f;
 	const float defZ = 1000.0f;
-	const float defStep = 100.0f;
+	const float defXStep = 100.0f;
+	const float defZStep = 100.0f;
+
+	const LuaTable teamsTable = mapRoot->SubTable("teams");
+
 	for (int t = 0; t < MAX_TEAMS; ++t) {
-		float x, z;
-		char tname[200];
-		sprintf(tname, "MAP\\Team%i\\", t);
-		const string section = tname;
+		float3 pos;
+		pos.x = defX + (defXStep * t);
+		pos.z = defZ + (defZStep * t);
+		pos.y = 0.0f;
+		const LuaTable posTable = teamsTable.SubTable(t).SubTable("startPos");
+		if (posTable.KeyExists("x") &&
+		    posTable.KeyExists("z")) {
+			pos.x = posTable.GetFloat("x", pos.x);
+			pos.z = posTable.GetFloat("z", pos.z);
+			havePos.push_back(true);
+		} else {
+			havePos.push_back(false);
+		}
+		startPos.push_back(pos);		
 	}
 }
 
@@ -277,3 +313,4 @@ bool CMapInfo::GetStartPos(int team, float3& pos) const
 	pos = startPos[team];
 	return true;
 }
+

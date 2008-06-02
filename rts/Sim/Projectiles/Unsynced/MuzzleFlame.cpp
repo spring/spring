@@ -66,8 +66,8 @@ void CMuzzleFlame::Draw(void)
 	float alpha=std::max(0.f,1-age/(4+size*30));
 	float modAge=sqrtf(age+2);
 
-	for(int a=0;a<numSmoke;++a){
-		int tex=a%12;
+	for (int a = 0; a < numSmoke; ++a) {
+		int tex = a % ph->smoketex.size();
 		//float xmod=0.125f+(float(int(tex%6)))/16;
 		//float ymod=(int(tex/6))/16.0f;
 

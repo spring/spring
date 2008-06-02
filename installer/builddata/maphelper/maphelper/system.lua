@@ -83,7 +83,7 @@ local system = {
   reftable = reftable,
 
   --  Custom tables
-  DEFS = DEFS,
+  Map = Map,
 
   --  Standard packages
   math = math,

@@ -13,14 +13,14 @@
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
 
-local tdfResources, err = TDF.Parse('gamedata/resources.tdf')
+local resources, err = TDF.Parse('gamedata/resources.tdf')
 
 --------------------------------------------------------------------------------
 
 
-if (tdfResources == nil) then
+if (resources == nil) then
    -- load the defaults
-	tdfResources = {
+	resources = {
 		graphics = {
 			caustics = {
 				'caustics/caustic00.jpg',
@@ -114,28 +114,45 @@ if (tdfResources == nil) then
 	}
 
 else
-	tdfResources = tdfResources.resources
-	local function LuaNumbers(tablename, loopstart, loopend, thestring)
-		local tabledata = tdfResources.graphics[tablename]
-		if (type(tabledata) == 'table') then
-			for i=loopstart,loopend do
-				if (i > 9) then
-					thestring = string.sub(thestring,-string.len(thestring), -1) -- chop off the '0's
+	resources = resources.resources
+
+	local function MakeArray(t, prefix)
+		if (type(t) ~= 'table') then
+			return nil
+		end
+
+		local sorted = {}
+		for k,v in pairs(t) do
+			if ((type(k) == 'string') and (type(v) == 'string')) then
+				local s, e, p, num = k:find('(%D*)(%d*)')
+				num = tonumber(num)
+				if ((p == prefix) and num) then
+					table.insert(sorted, { num, v })
 				end
-				-- deal with scars starting at 1
-				tabledata[i-(loopstart-1)] = tabledata[thestring .. tostring(i)]
-				tabledata[thestring .. tostring(i)] = nil
 			end
 		end
+		table.sort(sorted, function(a, b)
+			if (a[1] < b[1]) then return true  end
+			if (b[1] < a[1]) then return false end
+			return (a[2] < b[2])
+		end)
+
+		local newTable = {}
+		for _,numVal in ipairs(sorted) do
+			table.insert(newTable, numVal[2])
+		end
+		return newTable
 	end
-	LuaNumbers('smoke', 0, 12, 'smoke0')
-	LuaNumbers('scars', 1, 4, 'scar')
-	LuaNumbers('caustics', 0, 32, 'caustic0')
+
+	local gfx = resources.graphics
+	gfx.smoke    = MakeArray(gfx.smoke,    'smoke')
+	gfx.scars    = MakeArray(gfx.scars,    'scar')
+	gfx.caustics = MakeArray(gfx.caustics, 'caustic')
 end
 
 --------------------------------------------------------------------------------
 
-return tdfResources
+return resources
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

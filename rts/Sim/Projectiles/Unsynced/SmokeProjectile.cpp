@@ -40,7 +40,7 @@ CSmokeProjectile::CSmokeProjectile()
 
 void CSmokeProjectile::Init(const float3& pos, CUnit *owner)
 {
-	textureNum=(int)(gu->usRandFloat()*12);
+	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
 		useAirLos=true;
@@ -62,7 +62,7 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	ageSpeed=1.0f/ttl;
 	checkCol=false;
 	castShadow=true;
-	textureNum=(int)(gu->usRandFloat()*12);
+	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
 		useAirLos=true;

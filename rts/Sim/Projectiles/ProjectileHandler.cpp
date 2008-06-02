@@ -75,7 +75,9 @@ CProjectileHandler::CProjectileHandler()
 		logOutput.Print(resourcesParser.GetErrorLog());
 	}
 	const LuaTable rootTable = resourcesParser.GetRoot();
-	const LuaTable ptTable = rootTable.SubTable("graphics").SubTable("projectileTextures");
+	const LuaTable gfxTable = rootTable.SubTable("graphics");
+
+	const LuaTable ptTable = gfxTable.SubTable("projectileTextures");
 	// add all textures in projectiletextures section
 	map<string, string> ptex;
 	ptTable.GetMap(ptex);
@@ -100,17 +102,33 @@ CProjectileHandler::CProjectileHandler()
 		}
 	}
 
-	const LuaTable smokeTable = rootTable.SubTable("graphics").SubTable("smoke");
-	// FIXME -- all 12 are currently hardcoded in some places
-	//          smoketex[] should be converted to a vector, and
-	//          checked to make sure that at least 1 texture exists.
-	for (int i = 1; i <= 12; i++) {
-		char num[10];
-		sprintf(num, "%02i", i - 1);
-		const string defTex = string("smoke/smoke") + num + ".tga";
-		const string texName = "bitmaps/" + smokeTable.GetString(i, defTex);
-		textureAtlas->AddTexFromFile(string("ismoke") + num, texName);
-		blockMapTexNames.insert(StringToLower(string("ismoke") + num));
+	// get the smoke textures, hold the count in 'smokeCount'
+	const LuaTable smokeTable = gfxTable.SubTable("smoke");
+	int smokeCount;
+	if (smokeTable.IsValid()) {
+		for (smokeCount = 0; true; smokeCount++) {
+			const string tex = smokeTable.GetString(smokeCount + 1, "");
+			if (tex.empty()) {
+				break;
+			}
+			const string texName = "bitmaps/" + tex;
+			const string smokeName = "ismoke" + IntToString(smokeCount, "%02i");
+			textureAtlas->AddTexFromFile(smokeName, texName);
+			blockMapTexNames.insert(StringToLower(smokeName));
+		}
+	}
+	else {
+		// setup the defaults
+		for (smokeCount = 0; smokeCount < 12; smokeCount++) {
+			const string smokeNum = IntToString(smokeCount, "%02i");
+			const string smokeName = "ismoke" + smokeNum;
+			const string texName = "bitmaps/smoke/smoke" + smokeNum + ".tga";
+			textureAtlas->AddTexFromFile(smokeName, texName);
+			blockMapTexNames.insert(StringToLower(smokeName));
+		}
+	}
+	if (smokeCount <= 0) {
+		throw content_error("missing smoke textures");
 	}
 
 	char tex[128][128][4];
@@ -203,11 +221,9 @@ CProjectileHandler::CProjectileHandler()
 	perlintex       = textureAtlas->GetTexture("perlintex");
 	flametex        = textureAtlas->GetTexture("flame");
 
-	// FIXME -- hardcoded 12
-	for (int i = 0; i < 12; i++) {
-		char num[10];
-		sprintf(num, "%02i", i);
-		smoketex[i] = textureAtlas->GetTexture(string("ismoke") + num);
+	for (int i = 0; i < smokeCount; i++) {
+		const string smokeName = "ismoke" + IntToString(i, "%02i");
+		smoketex.push_back(textureAtlas->GetTexture(smokeName));
 	}
 
 #define GETTEX(t, b) textureAtlas->GetTextureWithBackup((t), (b))
@@ -233,7 +249,7 @@ CProjectileHandler::CProjectileHandler()
 
 	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
-	const LuaTable groundfxTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("groundfx");
+	const LuaTable groundfxTable = gfxTable.SubTable("groundfx");
 	groundfxTable.GetMap(ptex);
 	for (map<string, string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);

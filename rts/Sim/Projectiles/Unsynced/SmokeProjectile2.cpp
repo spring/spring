@@ -43,7 +43,7 @@ CSmokeProjectile2::CSmokeProjectile2()
 
 void CSmokeProjectile2::Init(const float3& pos, CUnit *owner)
 {
-	textureNum=(int)(gu->usRandFloat()*12);
+	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
 		useAirLos=true;
@@ -73,7 +73,7 @@ CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,fl
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	glowFalloff=4.5f+gu->usRandFloat()*6;
-	textureNum=(int)(gu->usRandFloat()*12);
+	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
 	POP_CODE_MODE;
 }
 
