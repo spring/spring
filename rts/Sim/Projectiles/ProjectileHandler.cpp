@@ -67,7 +67,7 @@ CProjectileHandler::CProjectileHandler()
 	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 
 	// used to block resources_map.tdf from loading textures
-	std::set<std::string> blockMapTexNames;
+	set<string> blockMapTexNames;
 
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -76,40 +76,41 @@ CProjectileHandler::CProjectileHandler()
 	}
 	const LuaTable rootTable = resourcesParser.GetRoot();
 	const LuaTable ptTable = rootTable.SubTable("graphics").SubTable("projectileTextures");
-	//add all textures in projectiletextures section
-	std::map<std::string, std::string> ptex;
+	// add all textures in projectiletextures section
+	map<string, string> ptex;
 	ptTable.GetMap(ptex);
 
-	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
-	{
+	for (map<string, string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi) {
 		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 		blockMapTexNames.insert(StringToLower(pi->first));
 	}
-	//add all texture from sections within projectiletextures section
-	std::vector<std::string> seclist; 
+
+	// add all texture from sections within projectiletextures section
+	vector<string> seclist; 
 	ptTable.GetKeys(seclist);
-	for(int i=0; i<seclist.size(); i++)
-	{
+	for (int i = 0; i < seclist.size(); i++) {
 		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
 		if (ptSubTable.IsValid()) {
-			std::map<std::string,std::string> ptex2;
+			map<string, string> ptex2;
 			ptSubTable.GetMap(ptex2);
-			for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
-			{
+			for (map<string, string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 				blockMapTexNames.insert(StringToLower(pi->first));
 			}
 		}
 	}
 
-	const LuaTable smokeTable = rootTable.SubTable("smoke");
-	//for (int i = 1; i < 13; i++) {
+	const LuaTable smokeTable = rootTable.SubTable("graphics").SubTable("smoke");
+	// FIXME -- all 12 are currently hardcoded in some places
+	//          smoketex[] should be converted to a vector, and
+	//          checked to make sure that at least 1 texture exists.
 	for (int i = 1; smokeTable.KeyExists(i); i++) {
 		char num[10];
-		sprintf(num, "%02i", i-1);
-		//textureAtlas->AddTexFromFile(std::string("smoke") + num, std::string("bitmaps/")+smokeTable.GetString(std::string("smoke")+num, std::string("smoke/smoke") + num +".tga"));
-		textureAtlas->AddTexFromFile(std::string("ismoke") + num, std::string("bitmaps/")+smokeTable.GetString(i, std::string("smoke/smoke") + num +".tga"));
-		blockMapTexNames.insert(StringToLower(std::string("ismoke") + num));
+		sprintf(num, "%02i", i - 1);
+		const string defTex = string("smoke/smoke") + num + ".tga";
+		const string texName = "bitmaps/" + smokeTable.GetString(i, defTex);
+		textureAtlas->AddTexFromFile(string("ismoke") + num, texName);
+		blockMapTexNames.insert(StringToLower(string("ismoke") + num));
 	}
 
 	char tex[128][128][4];
@@ -162,9 +163,9 @@ CProjectileHandler::CProjectileHandler()
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
 		//add all textures in projectiletextures section 
-		std::map<std::string,std::string> mptex;
+		map<string, string> mptex;
 		mapTable.GetMap(mptex);
-		std::map<std::string,std::string>::iterator pi;
+		map<string, string>::iterator pi;
 		for (pi = mptex.begin(); pi != mptex.end(); ++pi) {
 			if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
@@ -172,14 +173,12 @@ CProjectileHandler::CProjectileHandler()
 		}
 		//add all texture from sections within projectiletextures section
 		mapTable.GetKeys(seclist);
-		for(int i=0; i<seclist.size(); i++)
-		{
+		for (int i = 0; i < seclist.size(); i++) {
 			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
 			if (mapSubTable.IsValid()) {
-				std::map<std::string,std::string> ptex2;
+				map<string, string> ptex2;
 				mapSubTable.GetMap(ptex2);
-				for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
-				{
+				for (map<string, string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
 					if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 						textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 					}
@@ -208,8 +207,8 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 1; smokeTable.KeyExists(i); i++) {
 		char num[10];
 		sprintf(num, "%02i", i - 1);
-		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
-		smokeTex.push_back(textureAtlas->GetTexture(std::string("ismoke") + num));
+		smoketex[i] = textureAtlas->GetTexture(string("ismoke") + num);
+//		smokeTex.push_back(textureAtlas->GetTexture(string("ismoke") + num));
 	}
 
 #define GETTEX(t, b) textureAtlas->GetTextureWithBackup((t), (b))
@@ -237,47 +236,47 @@ CProjectileHandler::CProjectileHandler()
 	//add all textures in groundfx section
 	const LuaTable groundfxTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("groundfx");
 	groundfxTable.GetMap(ptex);
-	for(std::map<std::string,std::string>::iterator pi=ptex.begin(); pi!=ptex.end(); ++pi)
-	{
+	for (map<string, string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 	}
 	//add all texture from sections within groundfx section
 	groundfxTable.GetKeys(seclist);
-	for(int i=0; i<seclist.size(); i++)
-	{
+	for (int i = 0; i < seclist.size(); i++) {
 		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
 		if (gfxSubTable.IsValid()) {
-			std::map<std::string,std::string> ptex2;
+			map<string, string> ptex2;
 			gfxSubTable.GetMap(ptex2);
-			for(std::map<std::string,std::string>::iterator pi=ptex2.begin(); pi!=ptex2.end(); ++pi)
-			{
+			for (map<string, string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
 				groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 			}
 		}
 	}
 
-	if (!groundFXAtlas->Finalize())
+	if (!groundFXAtlas->Finalize()) {
 		logOutput.Print("Could not finalize groundFX texture atlas. Use less/smaller textures.");
+	}
 
 	groundflashtex = groundFXAtlas->GetTexture("groundflash");
 	groundringtex = groundFXAtlas->GetTexture("groundring");
 	seismictex = groundFXAtlas->GetTexture("seismic");
 
-	if(shadowHandler->canUseShadows){
-		projectileShadowVP=LoadVertexProgram("projectileshadow.vp");
+	if (shadowHandler->canUseShadows) {
+		projectileShadowVP = LoadVertexProgram("projectileshadow.vp");
 	}
 
 
 	flying3doPieces = SAFE_NEW FlyingPiece_List;
 	flyingPieces.push_back(flying3doPieces);
 
-	for(int a=0;a<4;++a){
+	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a]=0;
 	}
+
 	unsigned char tempmem[4*16*16];
-	for(int a=0;a<4*16*16;++a)
-		tempmem[a]=0;
-	for(int a=0;a<8;++a){
+	for (int a = 0; a < 4 * 16 * 16; ++a) {
+		tempmem[a] = 0;
+	}
+	for (int a = 0; a < 8; ++a) {
 		glGenTextures(1, &perlinTex[a]);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -287,39 +286,47 @@ CProjectileHandler::CProjectileHandler()
 
 	drawPerlinTex=false;
 
-	if(shadowHandler && shadowHandler->drawShadows && GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap){	//this seems to bug on ati cards so disable it on those (just some random ati extension to detect ati cards), should be fixed by someone that actually has a ati card
+	if (shadowHandler && shadowHandler->drawShadows &&
+	    GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap) {
+		// this seems to bug on ati cards so disable it on those
+		// (just some random ati extension to detect ati cards),
+		// should be fixed by someone that actually has a ati card
 		perlinFB = instantiate_fb(512, 512, FBO_NEED_COLOR);
-		if (perlinFB && perlinFB->valid()){
+		if (perlinFB && perlinFB->valid()) {
 			drawPerlinTex=true;
 			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
 			perlinFB->checkFBOStatus();
 		}
 	}
-	else
+	else {
 		perlinFB = 0;
+	}
 }
 
 CProjectileHandler::~CProjectileHandler()
 {
-	for(int a=0;a<8;++a)
+	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures (1, &perlinTex[a]);
+	}
 
 	Projectile_List::iterator psi;
-	for(psi=ps.begin();psi!=ps.end();++psi)
+	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		delete *psi;
-	std::vector<CGroundFlash*>::iterator gfi;
-	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi)
+	}
+	vector<CGroundFlash*>::iterator gfi;
+	for(gfi = groundFlashes.begin(); gfi != groundFlashes.end(); ++gfi) {
 		delete *gfi;
+	}
 	distlist.clear();
 
-	if(shadowHandler->canUseShadows){
+	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(projectileShadowVP);
 	}
 
 	/* Also invalidates flying3doPieces and flyings3oPieces. */
-	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
+	for (list<FlyingPiece_List*>::iterator pti = flyingPieces.begin(); pti != flyingPieces.end(); ++pti) {
 		FlyingPiece_List * fpl = *pti;
-		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
+		for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
 			if ((*pi)->verts != NULL){
 				delete[] ((*pi)->verts);
 			}
@@ -369,7 +376,7 @@ void CProjectileHandler::Update()
 	SCOPED_TIMER("Projectile handler");
 
 	Projectile_List::iterator psi=ps.begin();
-	while(psi!= ps.end()){
+	while (psi != ps.end()) {
 		CProjectile *p = *psi;
 		if(p->deleteMe){
 			Projectile_List::iterator prev=psi++;
@@ -381,23 +388,24 @@ void CProjectileHandler::Update()
 		}
 	}
 
-	for(unsigned int i = 0; i < groundFlashes.size();)
-	{
+	for (unsigned int i = 0; i < groundFlashes.size(); /* do nothing */) {
 		CGroundFlash *gf = groundFlashes[i];
-		if (!gf->Update ())
-		{
+		if (!gf->Update ()) {
 			// swap gf with the groundflash at the end of the list, so pop_back() can be used to erase it
-			if ( i < groundFlashes.size()-1 )
-				std::swap (groundFlashes.back(), groundFlashes[i]);
+			if (i < groundFlashes.size() - 1) {
+				std::swap(groundFlashes.back(), groundFlashes[i]);
+			}
 			groundFlashes.pop_back();
 			delete gf;
-		} else i++;
+		} else {
+			i++;
+		}
 	}
 
-	for(std::list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
+	for(list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
 		FlyingPiece_List * fpl = *pti;
 		/* Note: nothing in the third clause of this loop. TODO Rewrite it as a while */
-		for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
+		for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
 			(*pi)->pos+=(*pi)->speed;
 			(*pi)->speed*=0.996f;
 			(*pi)->speed.y+=mapInfo->map.gravity;
@@ -436,7 +444,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	va->Initialize();
 	numFlyingPieces += flying3doPieces->size();
-	for(std::list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
+	for(list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
 		CMatrix44f m;
 		m.Rotate((*pi)->rot,(*pi)->rotAxis);
 		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
@@ -488,7 +496,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 			numFlyingPieces += fpl->size();
 
-			for(std::list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
+			for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
 				CMatrix44f m;
 				m.Rotate((*pi)->rot,(*pi)->rotAxis);
 				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
@@ -735,7 +743,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
 
-	std::vector<CGroundFlash*>::iterator gfi;
+	vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
 		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
 		    loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
@@ -785,7 +793,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	FlyingPiece_List * pieceList = NULL;
 
 	while(flyings3oPieces.size()<=textureType)
-		flyings3oPieces.push_back(std::vector<FlyingPiece_List*>());
+		flyings3oPieces.push_back(vector<FlyingPiece_List*>());
 
 	while(flyings3oPieces[textureType].size()<=team){
 		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
