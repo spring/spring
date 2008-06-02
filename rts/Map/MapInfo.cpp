@@ -187,10 +187,10 @@ void CMapInfo::ReadWater()
 	}
 
 	// water caustic textures
-	LuaTable caustics = wt.SubTable("causticTextures");
+	LuaTable caustics = wt.SubTable("caustics");
 	string causticPrefix = "maps/";
 	if (!caustics.IsValid()) {
-		caustics = resGfxMaps.SubTable("causticTextures");
+		caustics = resRoot->SubTable("graphics").SubTable("caustics");
 		causticPrefix = "bitmaps/";
 	}
 	if (caustics.IsValid()) {
@@ -215,7 +215,6 @@ void CMapInfo::ReadWater()
 void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
-
 	const LuaTable mapResTable = mapRoot->SubTable("resources");
 	smf.detailTexName = mapResTable.GetString("detailTex", "");
 	if (!smf.detailTexName.empty()) {
