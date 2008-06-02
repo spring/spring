@@ -195,11 +195,11 @@ void CMapInfo::ReadWater()
 	}
 	if (caustics.IsValid()) {
 		for (int i = 1; true; i++) {
-			const string texName = causticPrefix + caustics.GetString(i, "");
+			const string texName = caustics.GetString(i, "");
 			if (texName.empty()) {
 				break;
 			}
-			water.causticTextures.push_back(texName);
+			water.causticTextures.push_back(causticPrefix + texName);
 		}
 	} else {
 		// load the default 32 textures
