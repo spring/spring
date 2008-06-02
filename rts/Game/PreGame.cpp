@@ -21,6 +21,8 @@
 #include "FileSystem/VFSHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
+#include "Lua/LuaParser.h"
+#include "Map/MapParser.h"
 #include "Platform/Clipboard.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
@@ -31,7 +33,6 @@
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
-#include "TdfParser.h"
 #include "mmgr.h"
 
 // msvc behaves really strange
@@ -366,14 +367,14 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 		else
 			throw std::runtime_error("CPreGame::StartServer(): Unknown extension: " + extension);
 
-		TdfParser mapDefParser(mapDefFile);
-		std::string mapWantedScript, scriptFile;
-		mapDefParser.GetDef(mapWantedScript, "", "MAP\\Script");
-		mapDefParser.GetDef(scriptFile, "", "MAP\\Scriptfile");
-		if (!scriptFile.empty())
+		MapParser mp(map);
+		LuaTable mapRoot = mp.GetRoot();
+		const std::string mapWantedScript = mapRoot.GetString("script",     "");
+		const std::string scriptFile      = mapRoot.GetString("scriptFile", "");
+		if (!scriptFile.empty()) {
 			CScriptHandler::Instance().LoadScriptFile(scriptFile);
-		if (!mapWantedScript.empty())
-		{
+		}
+		if (!mapWantedScript.empty()) {
 			script = mapWantedScript;
 			mapHasStartscript = true;
 		}
@@ -381,18 +382,16 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	startupData->SetScript(script);
 	// here we now the name of the script to use
 
-	try // to load the script 
-	{
+	try { // to load the script 
 		CScriptHandler::SelectScript(script);
 		std::string scriptWantedMod;
 		scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
-		if (!scriptWantedMod.empty())
+		if (!scriptWantedMod.empty()) {
 			mod = scriptWantedMod;
-
+		}
 		LoadMod(mod);
 	}
-	catch (const std::runtime_error& err) // script not found, so it may be in the modarchive?
-	{
+	catch (const std::runtime_error& err) { // script not found, so it may be in the modarchive?
 		LoadMod(mod); // new map into VFS
 		CScriptHandler::SelectScript(script);
 	}
@@ -401,25 +400,26 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
 	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
 	
-	if (!mapHasStartscript)
-	{
+	if (!mapHasStartscript) {
 		std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
-		if (!mapFromScript.empty() && map != mapFromScript)
-		{
+		if (!mapFromScript.empty() && map != mapFromScript) {
 			//TODO unload old map
 			LoadMap(mapFromScript, true);
 		}
 	}
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
 
-	if (gameSetup)
-		gameSetup->LoadStartPositions(); // only host needs to do this, because client will recieve startpos msg from server
+	if (gameSetup) {
+		gameSetup->LoadStartPositions(); // only host needs to do this, because
+		                                 // client will receive startpos msg from server
+	}
 	
 	good_fpu_control_registers("before CGameServer creation");
 	int myPort = gameSetup? gameSetup->hostport : springDefaultPort;
 	gameServer = new CGameServer(myPort, startupData, gameSetup, demoFile);
-	if (gameSetup && gameSetup->autohostport > 0)
+	if (gameSetup && gameSetup->autohostport > 0) {
 		gameServer->AddAutohostInterface(gameSetup->autohostport);
+	}
 	gameServer->AddLocalClient();
 	good_fpu_control_registers("after CGameServer creation");
 }
@@ -584,11 +584,13 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 		CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
 		if (!f->FileExists()) {
 			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-			if (ars.empty())
+			if (ars.empty()) {
 				throw content_error("Couldn't find any archives for map '" + mapName + "'.");
+			}
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-				if (!hpiHandler->AddArchive(*i, false))
+				if (!hpiHandler->AddArchive(*i, false)) {
 					throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
+				}
 			}
 		}
 		delete f;
@@ -600,21 +602,23 @@ void CPreGame::LoadMod(const std::string& modName)
 {
 	static bool alreadyLoaded = false;
 	
-	if (!alreadyLoaded)
-	{
-		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+	if (!alreadyLoaded) {
 		// Map all required archives depending on selected mod(s)
+		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
 		vector<string> ars = archiveScanner->GetArchives(modArchive);
-		if (ars.empty())
+		if (ars.empty()) {
 			throw content_error("Couldn't find any archives for mod '" + modName + "'");
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-		{
-			if (!hpiHandler->AddArchive(*i, false))
+		}
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+
+			if (!hpiHandler->AddArchive(*i, false)) {
 				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
+			}
 		}
 	
 		// always load springcontent.sdz
 		hpiHandler->AddArchive("base/springcontent.sdz", false);
+
 		alreadyLoaded = true;
 	}
 }
@@ -623,7 +627,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 {
 	gameData = new GameData(packet);
 	
-	gs->SetRandSeed(gameData->GetRandomSeed());
+	gs->SetRandSeed(gameData->GetRandomSeed(), true);
 	logOutput << "Using map " << gameData->GetMap() << "\n";
 	stupidGlobalMapname = gameData->GetMap();
 	

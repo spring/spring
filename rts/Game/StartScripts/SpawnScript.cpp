@@ -4,7 +4,7 @@
 #include "SpawnScript.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapInfo.h"
+#include "Map/MapParser.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
@@ -12,7 +12,6 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "System/LogOutput.h"
-#include "System/TdfParser.h"
 #include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
@@ -50,29 +49,25 @@ void CSpawnScript::Update()
 			throw content_error ("Unable to load a startUnit for the first side");
 		}
 
-		TdfParser p2;
-		CMapInfo::OpenTDF (stupidGlobalMapname, p2);
+		MapParser mapParser(stupidGlobalMapname);
 
-		float x0,z0;
-		p2.GetDef(x0,"1000","MAP\\TEAM0\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM0\\StartPosZ");
+		float3 startPos0(1000.0f, 80.0f, 1000.0f);
+		mapParser.GetStartPos(0, startPos0);
 
 		// Set the TEAM0 startpos as spawnpos if we're supposed to be
 		// autonomous, load the commander for the player if not.
-		if (autonomous) spawnPos.push_back(float3(x0,80,z0));
-		else unitLoader.LoadUnit(su1, float3(x0,80,z0),0,false,0,NULL);
+		if (autonomous) {
+			spawnPos.push_back(startPos0);
+		} else {
+			unitLoader.LoadUnit(su1, startPos0, 0, false, 0, NULL);
+		}
 
-		p2.GetDef(x0,"1000","MAP\\TEAM1\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM1\\StartPosZ");
-		spawnPos.push_back(float3(x0,80,z0));
-
-		p2.GetDef(x0,"1000","MAP\\TEAM2\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM2\\StartPosZ");
-		spawnPos.push_back(float3(x0,80,z0));
-
-		p2.GetDef(x0,"1000","MAP\\TEAM3\\StartPosX");
-		p2.GetDef(z0,"1000","MAP\\TEAM3\\StartPosZ");
-		spawnPos.push_back(float3(x0,80,z0));
+		// load the start positions for teams 1 - 3
+		for (int teamID = 1; teamID <= 3; teamID++) {
+			float3 sp(1000.0f, 80.0f, 1000.0f);
+			mapParser.GetStartPos(teamID, sp);
+			spawnPos.push_back(sp);
+		}
 	}
 
 	if(!spawns.empty()){

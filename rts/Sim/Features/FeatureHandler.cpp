@@ -395,7 +395,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 	if (feature->def->drawType == DRAWTYPE_3DO) {
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
-				   int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
+		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		DrawQuad* dq = &drawQuads[quad];
 		dq->features.insert(feature);
 		feature->drawQuad = quad;

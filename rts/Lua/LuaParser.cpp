@@ -33,41 +33,7 @@
 
 static const bool lowerKeys = true;
 
-
-/******************************************************************************/
-/******************************************************************************/
-
 LuaParser* LuaParser::currentParser = NULL;
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-static void SetupStdLibs(lua_State* L)
-{
-	LUA_OPEN_LIB(L, luaopen_base);
-	LUA_OPEN_LIB(L, luaopen_math);
-	LUA_OPEN_LIB(L, luaopen_table);
-	LUA_OPEN_LIB(L, luaopen_string);
-	//LUA_OPEN_LIB(L, luaopen_io);
-	//LUA_OPEN_LIB(L, luaopen_os);
-	//LUA_OPEN_LIB(L, luaopen_package);
-	//LUA_OPEN_LIB(L, luaopen_debug);
-
-	// delete some dangerous/unsynced functions
-	lua_pushnil(L); lua_setglobal(L, "dofile");
-	lua_pushnil(L); lua_setglobal(L, "loadfile");
-	lua_pushnil(L); lua_setglobal(L, "loadlib");
-	lua_pushnil(L); lua_setglobal(L, "require");
-	lua_pushnil(L); lua_setglobal(L, "gcinfo");
-	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
-
-	// FIXME: replace "random" as in LuaHandleSynced (can write your own for now)
-	lua_getglobal(L, "math");
-	lua_pushstring(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
-	lua_pushstring(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
-	lua_pop(L, 1); // pop "math"
-}
 
 
 /******************************************************************************/
@@ -91,19 +57,7 @@ LuaParser::LuaParser(const string& _fileName,
 	L = lua_open();
 
 	if (L != NULL) {
-		SetupStdLibs(L);
-
-		GetTable("Spring");
-		AddFunc("Echo", Echo);
-		AddFunc("TimeCheck", TimeCheck);
-		EndTable();
-
-		GetTable("VFS");
-		AddFunc("DirList",    DirList);
-		AddFunc("Include",    Include);
-		AddFunc("LoadFile",   LoadFile);
-		AddFunc("FileExists", FileExists);
-		EndTable();
+		SetupEnv();
 	}
 }
 
@@ -122,19 +76,7 @@ LuaParser::LuaParser(const string& _textChunk,
 	L = lua_open();
 
 	if (L != NULL) {
-		SetupStdLibs(L);
-
-		GetTable("Spring");
-		AddFunc("Echo", Echo);
-		AddFunc("TimeCheck", TimeCheck);
-		EndTable();
-
-		GetTable("VFS");
-		AddFunc("DirList",    DirList);
-		AddFunc("Include",    Include);
-		AddFunc("LoadFile",   LoadFile);
-		AddFunc("FileExists", FileExists);
-		EndTable();
+		SetupEnv();
 	}
 }
 
@@ -152,6 +94,144 @@ LuaParser::~LuaParser()
 		table.isValid = false;
 		table.refnum  = LUA_NOREF;
 	}
+}
+
+
+void LuaParser::SetupEnv()
+{
+	LUA_OPEN_LIB(L, luaopen_base);
+	LUA_OPEN_LIB(L, luaopen_math);
+	LUA_OPEN_LIB(L, luaopen_table);
+	LUA_OPEN_LIB(L, luaopen_string);
+	//LUA_OPEN_LIB(L, luaopen_io);
+	//LUA_OPEN_LIB(L, luaopen_os);
+	//LUA_OPEN_LIB(L, luaopen_package);
+	//LUA_OPEN_LIB(L, luaopen_debug);
+
+	// delete some dangerous/unsynced functions
+	lua_pushnil(L); lua_setglobal(L, "dofile");
+	lua_pushnil(L); lua_setglobal(L, "loadfile");
+	lua_pushnil(L); lua_setglobal(L, "loadlib");
+	lua_pushnil(L); lua_setglobal(L, "require");
+	lua_pushnil(L); lua_setglobal(L, "gcinfo");
+	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
+
+	// FIXME: replace "random" as in LuaHandleSynced (can write your own for now)
+	lua_getglobal(L, "math");
+	lua_pushstring(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushstring(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
+	lua_pop(L, 1); // pop "math"
+
+	GetTable("Spring");
+	AddFunc("Echo", Echo);
+	AddFunc("TimeCheck", TimeCheck);
+	EndTable();
+
+	GetTable("VFS");
+	AddFunc("DirList",    DirList);
+	AddFunc("Include",    Include);
+	AddFunc("LoadFile",   LoadFile);
+	AddFunc("FileExists", FileExists);
+	EndTable();
+}
+
+
+/******************************************************************************/
+
+bool LuaParser::Execute()
+{
+	if (L == NULL) {
+		errorLog = "could not initialize LUA library";
+		return false;
+	}
+
+	rootRef = LUA_NOREF;
+
+	assert(initDepth == 0);
+	initDepth = -1;
+
+	string code;
+	string codeLabel;
+	if (!textChunk.empty()) {
+		code = textChunk;
+		codeLabel = "text chunk";
+	}
+	else if (!fileName.empty()) {
+		codeLabel = fileName;
+		CFileHandler fh(fileName, fileModes);
+		if (!fh.LoadStringData(code)) {
+			errorLog = "could not open file: " + fileName;
+			lua_close(L);
+			L = NULL;
+			return false;
+		}
+	}
+	else {
+		errorLog = "no source file or text";
+		lua_close(L);
+		L = NULL;
+		return false;
+	}
+
+	int error;
+	error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+	if (error != 0) {
+		errorLog = lua_tostring(L, -1);
+		logOutput.Print("error = %i, %s, %s\n",
+		                error, codeLabel.c_str(), errorLog.c_str());
+		lua_close(L);
+		L = NULL;
+		return false;
+	}
+
+	currentParser = this;
+
+	error = lua_pcall(L, 0, 1, 0);
+
+	currentParser = NULL;
+
+	if (error != 0) {
+		errorLog = lua_tostring(L, -1);
+		logOutput.Print("error = %i, %s, %s\n",
+		                error, fileName.c_str(), errorLog.c_str());
+		lua_close(L);
+		L = NULL;
+		return false;
+	}
+
+	if (!lua_istable(L, 1)) {
+		errorLog = "missing return table from " + fileName + "\n";
+		logOutput.Print("missing return table from %s\n", fileName.c_str());
+		lua_close(L);
+		L = NULL;
+		return false;
+	}
+
+	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
+
+	lua_settop(L, 0);
+
+	valid = true;
+
+	return true;
+}
+
+
+void LuaParser::AddTable(LuaTable* tbl)
+{
+	tables.insert(tbl);
+}
+
+
+void LuaParser::RemoveTable(LuaTable* tbl)
+{
+	tables.erase(tbl);
+}
+
+
+LuaTable LuaParser::GetRoot()
+{
+	return LuaTable(this);
 }
 
 
@@ -233,16 +313,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 }
 
 
-void LuaParser::AddParam(const string& key, const string& value)
-{
-	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
-	lua_pushstring(L, value.c_str());
-	PushParam();
-}
-
-
-void LuaParser::AddParam(const string& key, float value)
+void LuaParser::AddInt(const string& key, int value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
@@ -251,20 +322,29 @@ void LuaParser::AddParam(const string& key, float value)
 }
 
 
-void LuaParser::AddParam(const string& key, int value)
-{
-	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
-	lua_pushnumber(L, value);
-	PushParam();
-}
-
-
-void LuaParser::AddParam(const string& key, bool value)
+void LuaParser::AddBool(const string& key, bool value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushboolean(L, value);
+	PushParam();
+}
+
+
+void LuaParser::AddFloat(const string& key, float value)
+{
+	if ((L == NULL) || (initDepth < 0)) { return; }
+	lua_pushstring(L, key.c_str());
+	lua_pushnumber(L, value);
+	PushParam();
+}
+
+
+void LuaParser::AddString(const string& key, const string& value)
+{
+	if ((L == NULL) || (initDepth < 0)) { return; }
+	lua_pushstring(L, key.c_str());
+	lua_pushstring(L, value.c_str());
 	PushParam();
 }
 
@@ -281,16 +361,7 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 }
 
 
-void LuaParser::AddParam(int key, const string& value)
-{
-	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushnumber(L, key);
-	lua_pushstring(L, value.c_str());
-	PushParam();
-}
-
-
-void LuaParser::AddParam(int key, float value)
+void LuaParser::AddInt(int key, int value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
@@ -299,16 +370,7 @@ void LuaParser::AddParam(int key, float value)
 }
 
 
-void LuaParser::AddParam(int key, int value)
-{
-	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushnumber(L, key);
-	lua_pushnumber(L, value);
-	PushParam();
-}
-
-
-void LuaParser::AddParam(int key, bool value)
+void LuaParser::AddBool(int key, bool value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
@@ -317,96 +379,21 @@ void LuaParser::AddParam(int key, bool value)
 }
 
 
-/******************************************************************************/
-
-bool LuaParser::Execute()
+void LuaParser::AddFloat(int key, float value)
 {
-	if (L == NULL) {
-		errorLog = "could not initialize LUA library";
-		return false;
-	}
-
-	rootRef = LUA_NOREF;
-
-	assert(initDepth == 0);
-	initDepth = -1;
-
-	string code;
-	string codeLabel;
-	if (textChunk.size() > 0) {
-		code = textChunk;
-		codeLabel = "text chunk";
-	}
-	else {
-		codeLabel = fileName;
-		CFileHandler fh(fileName, fileModes);
-		if (!fh.LoadStringData(code)) {
-			errorLog = "could not open file: " + fileName;
-			lua_close(L);
-			L = NULL;
-			return false;
-		}
-	}
-
-	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
-	if (error != 0) {
-		errorLog = lua_tostring(L, -1);
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, codeLabel.c_str(), errorLog.c_str());
-		lua_close(L);
-		L = NULL;
-		return false;
-	}
-
-	currentParser = this;
-
-	error = lua_pcall(L, 0, 1, 0);
-
-	currentParser = NULL;
-
-	if (error != 0) {
-		errorLog = lua_tostring(L, -1);
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, fileName.c_str(), errorLog.c_str());
-		lua_close(L);
-		L = NULL;
-		return false;
-	}
-
-	if (!lua_istable(L, 1)) {
-		errorLog = "missing return table from " + fileName + "\n";
-		logOutput.Print("missing return table from %s\n", fileName.c_str());
-		lua_close(L);
-		L = NULL;
-		return false;
-	}
-
-	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
-
-	lua_settop(L, 0);
-
-	valid = true;
-
-	return true;
+	if ((L == NULL) || (initDepth < 0)) { return; }
+	lua_pushnumber(L, key);
+	lua_pushnumber(L, value);
+	PushParam();
 }
 
 
-void LuaParser::AddTable(LuaTable* tbl)
+void LuaParser::AddString(int key, const string& value)
 {
-	tables.insert(tbl);
-}
-
-
-void LuaParser::RemoveTable(LuaTable* tbl)
-{
-	tables.erase(tbl);
-}
-
-
-LuaTable LuaParser::GetRoot()
-{
-	return LuaTable(this);
+	if ((L == NULL) || (initDepth < 0)) { return; }
+	lua_pushnumber(L, key);
+	lua_pushstring(L, value.c_str());
+	PushParam();
 }
 
 
@@ -744,6 +731,47 @@ LuaTable LuaTable::SubTable(const string& mixedKey) const
 	parser->AddTable(&subTable);
 
 	return subTable;
+}
+
+
+LuaTable LuaTable::DotTable(const string& expr) const
+{
+	if (expr.empty()) {
+		return LuaTable(*this);
+	}
+	if (!isValid) {
+		return LuaTable();
+	}
+
+	string::size_type endPos;
+	LuaTable nextTable;
+
+	if (expr[0] == '[') { // numeric key
+    endPos = expr.find(']');
+    if (endPos == string::npos) {
+      return LuaTable(); // missing brace
+    }
+    const char* startPtr = expr.c_str() + 1; // skip the '['
+    char* endPtr;
+    const int index = strtol(startPtr, &endPtr, 10);
+    if (endPtr == startPtr) {
+      return LuaTable(); // invalid index
+    }
+    endPos++; // eat the ']'
+    nextTable = SubTable(index);
+	}
+	else { // string key
+		endPos = expr.find_first_of(".[");
+		if (endPos == string::npos) {
+			return SubTable(expr);
+		}
+		nextTable = SubTable(expr.substr(0, endPos));
+	}
+
+	if (expr[endPos] == '.') {
+		endPos++; // eat the dot
+	}
+	return nextTable.DotTable(expr.substr(endPos));
 }
 
 

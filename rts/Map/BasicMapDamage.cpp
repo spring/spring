@@ -155,15 +155,15 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	for(int y=y1/2;y<=hy2;y++)
 		for(int x=x1/2;x<=hx2;x++)
 			readmap->mipHeightmap[1][y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];*/
-	for(int i=0; i<readmap->numHeightMipMaps-1; i++){
-		int hmapx = gs->mapx>>i;
-		for(int y=(y1>>i)&(~1);y<y2>>i;y+=2){
-			for(int x=(x1>>i)&(~1);x<x2>>i;x+=2){
+	for (int i = 0; i < readmap->numHeightMipMaps - 1; i++) {
+		int hmapx = gs->mapx >> i;
+		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
+			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
 				float height = readmap->mipHeightmap[i][(x)+(y)*hmapx];
-				height += readmap->mipHeightmap[i][(x)+(y+1)*hmapx];
-				height += readmap->mipHeightmap[i][(x+1)+(y)*hmapx];
+				height += readmap->mipHeightmap[i][(x)  +(y+1)*hmapx];
+				height += readmap->mipHeightmap[i][(x+1)+(y)  *hmapx];
 				height += readmap->mipHeightmap[i][(x+1)+(y+1)*hmapx];
-				readmap->mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height/4.0f;
+				readmap->mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height * 0.25f;
 			}
 		}
 	}
@@ -174,66 +174,65 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	int decx=std::max(0,x1-1);
 	int incx=std::min(gs->mapx-1,x2+1);
 
-	for(int y=decy;y<=incy;y++) {
-		for(int x=decx;x<=incx;x++)
-		{
+	for (int y = decy; y <= incy; y++) {
+		for (int x = decx; x <= incx; x++) {
 			float3 e1(-SQUARE_SIZE,heightmap[y*(gs->mapx+1)+x]-heightmap[y*(gs->mapx+1)+x+1],0);
 			float3 e2( 0,heightmap[y*(gs->mapx+1)+x]-heightmap[(y+1)*(gs->mapx+1)+x],-SQUARE_SIZE);
 
 			float3 n=e2.cross(e1);
 			n.Normalize();
 
-			readmap->facenormals[(y*gs->mapx+x)*2]=n;
+			readmap->facenormals[(y*gs->mapx+x)*2] = n;
 
-			e1=float3( SQUARE_SIZE,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y+1)*(gs->mapx+1)+x],0);
-			e2=float3( 0,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
+			e1 = float3( SQUARE_SIZE,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y+1)*(gs->mapx+1)+x],0);
+			e2 = float3( 0,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
 
-			n=e2.cross(e1);
+			n = e2.cross(e1);
 			n.Normalize();
 
-			readmap->facenormals[(y*gs->mapx+x)*2+1]=n;
+			readmap->facenormals[(y*gs->mapx+x)*2+1] = n;
 		}
 	}
 
-	for(int y=std::max(2,(y1&0xfffffe));y<=std::min(gs->mapy-3,y2);y+=2)
-	{
-		for(int x=std::max(2,(x1&0xfffffe));x<=std::min(gs->mapx-3,x2);x+=2)
-		{
+	for(int y = std::max(2,(y1&0xfffffe)); y <= std::min(gs->mapy-3,y2); y += 2) {
+		for(int x = std::max(2,(x1&0xfffffe)); x <= std::min(gs->mapx-3,x2); x += 2) {
 			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
 			float3 e2( 0,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y+3)*(gs->mapx+1)+x-1],-SQUARE_SIZE*4);
 
-			float3 n=e2.cross(e1);
+			float3 n = e2.cross(e1);
 			n.Normalize();
 
-			e1=float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
-			e2=float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
+			e1 = float3( SQUARE_SIZE*4,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y+3)*(gs->mapx+1)+x-1],0);
+			e2 = float3( 0,heightmap[(y+3)*(gs->mapx+1)+x+3]-heightmap[(y-1)*(gs->mapx+1)+x+3],SQUARE_SIZE*4);
 
-			float3 n2=e2.cross(e1);
+			float3 n2 = e2.cross(e1);
 			n2.Normalize();
 
-			readmap->slopemap[(y/2)*gs->hmapx+(x/2)]=1-(n.y+n2.y)*0.5f;
+			readmap->slopemap[(y/2)*gs->hmapx+(x/2)] = 1-(n.y+n2.y)*0.5f;
 		}
 	}
-	pathManager->TerrainChange(x1,y1,x2,y2);
-	featureHandler->TerrainChanged(x1,y1,x2,y2);
-	readmap->HeightmapUpdated(x1,x2,y1,y2);
 
-	decy=std::max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incy=std::min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
-	decx=std::max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
-	incx=std::min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	pathManager->TerrainChange(x1, y1, x2, y2);
+	featureHandler->TerrainChanged(x1, y1, x2, y2);
+	readmap->HeightmapUpdated(x1, x2, y1, y2);
 
-	for(int y=decy;y<=incy;y++){
-		for(int x=decx;x<=incx;x++){
-			if(inRelosQue[y*qf->GetNumQuadsX()+x])
+	decy = std::max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
+	incy = std::min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+	decx = std::max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
+	incx = std::min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
+
+	for (int y = decy; y <= incy; y++) {
+		for (int x = decx; x <= incx; x++) {
+			if (inRelosQue[y*qf->GetNumQuadsX()+x]) {
 				continue;
+			}
 			RelosSquare rs;
-			rs.x=x;
-			rs.y=y;
-			rs.neededUpdate=gs->frameNum;
+			rs.x = x;
+			rs.y = y;
+			rs.neededUpdate = gs->frameNum;
 			rs.numUnits = qf->GetQuadAt(x, y).units.size();
-			relosSize+=rs.numUnits;
-			inRelosQue[y*qf->GetNumQuadsX()+x]=true;
+			relosSize += rs.numUnits;
+			inRelosQue[y*qf->GetNumQuadsX()+x] = true;
 			relosQue.push_back(rs);
 		}
 	}

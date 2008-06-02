@@ -169,7 +169,7 @@ static int FeatureDefIndex(lua_State* L)
 	ParamMap::const_iterator it = paramMap.find(name);
 
 	// not a default value
-	if (paramMap.find(name) == paramMap.end()) {
+	if (it == paramMap.end()) {
 	  lua_rawget(L, 1);
 	  return 1;
 	}
@@ -222,7 +222,7 @@ static int FeatureDefNewIndex(lua_State* L)
 	ParamMap::const_iterator it = paramMap.find(name);
 
 	// not a default value, set it
-	if (paramMap.find(name) == paramMap.end()) {
+	if (it == paramMap.end()) {
 		lua_rawset(L, 1);
 		return 0;
 	}

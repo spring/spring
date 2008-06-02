@@ -74,7 +74,7 @@ if env['strip']:
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
-uenv.AppendUnique(CPPDEFINES=['BITMAP_NO_OPENGL'])
+uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 for d in filelist.list_directories(uenv, 'rts'):
 	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
@@ -88,6 +88,7 @@ unitsync_extra_files = [
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
 	'rts/Lua/LuaParser.cpp',
+	'rts/Map/MapParser.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/System/TdfParser.cpp',
@@ -241,11 +242,15 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 				env.Exit(1)
 			if os.system("rm -f game/base/spring/bitmaps.sdz"):
 				env.Exit(1)
+			if os.system("rm -f game/base/maphelper.sdz"):
+				env.Exit(1)
 		else:
 			if os.system("installer/make_gamedata_arch.sh"):
 				env.Exit(1)
 
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
+Alias('install', inst)
+inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/maphelper.sdz')
 Alias('install', inst)
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)

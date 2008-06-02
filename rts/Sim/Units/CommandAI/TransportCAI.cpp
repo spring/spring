@@ -424,9 +424,6 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 				continue;
 
 			dropSpots.push_front(nextPos);
-			//float3 p = nextPos; //test to make intended land spots visible
-			//inMapDrawer->CreatePoint(p,ti->unit->unitDef->name);
-			//p.z +=transport->transportCapacityUsed*5;
 			nextPos += dir*(gap + ti->unit->radius);
 			ti++;
 		}

@@ -7,7 +7,6 @@
 #include "SFloat3.h"
 #include "GlobalStuff.h"
 
-class TdfParser;
 
 class CGameSetupData
 {

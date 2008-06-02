@@ -6,25 +6,19 @@
 #include <map>
 #include <set>
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "TdfParser.h"
 #include "UnitDef.h"
 
-class CUnitDefHandler;
+
 struct WeaponDef;
+
 class LuaTable;
-
-
-#define TA_UNIT     1
-#define SPRING_UNIT 2
 
 
 //this class takes care of all the unit definitions
 class CUnitDefHandler
 {
 public:
-
-
-	UnitDef *unitDefs;
+	UnitDef* unitDefs;
 	int numUnitDefs;
 	std::map<std::string, int> unitID;
 	std::map<int, std::set<int> > decoyMap;

@@ -3003,7 +3003,7 @@ int CLuaUI::MarkerAddPoint(lua_State* L)
 	  text = lua_tostring(L, 4);
 	}
 
-	inMapDrawer->CreatePoint(pos, text);
+	inMapDrawer->SendPoint(pos, text);
 
 	return 0;
 }
@@ -3029,7 +3029,7 @@ int CLuaUI::MarkerAddLine(lua_State* L)
 	                  (float)lua_tonumber(L, 5),
 	                  (float)lua_tonumber(L, 6));
 
-	inMapDrawer->AddLine(pos1, pos2);
+	inMapDrawer->SendLine(pos1, pos2);
 
 	return 0;
 }
@@ -3049,7 +3049,7 @@ int CLuaUI::MarkerErasePosition(lua_State* L)
 	                 (float)lua_tonumber(L, 2),
 	                 (float)lua_tonumber(L, 3));
 
-	inMapDrawer->ErasePos(pos);
+	inMapDrawer->SendErase(pos);
 
 	return 0;
 }

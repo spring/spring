@@ -9,6 +9,7 @@
 #include <IL/il.h>
 #include <SDL_types.h>
 #include "Map/MapInfo.h"
+#include "Map/MapParser.h"
 #include "Rendering/ShadowHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
@@ -22,6 +23,16 @@
 #include <stdexcept>
 #include <fstream>
 #include "bitops.h"
+
+
+// FIXME - temporary, until the LuaParser change is done
+static const TdfParser& GetMapDefParser()
+{
+	extern std::string stupidGlobalMapname;
+	static TdfParser tdf(MapParser::GetMapConfigName(stupidGlobalMapname));
+	return tdf;
+}
+
 
 CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
 
@@ -101,7 +112,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		light.directional = false;
 		light.position = mapInfo->light.sunDir *1000000;
 		lightInfo.staticLights.push_back (light);
-		renderer->Load (mapInfo->GetMapDefParser(), &lightInfo, &loadcb);
+		renderer->Load (GetMapDefParser(), &lightInfo, &loadcb);
 
 		height = width = renderer->GetHeightmapWidth ()-1;
 
@@ -119,7 +130,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 
 		CReadMap::Initialize();
 
-		const TdfParser& mapDefParser = mapInfo->GetMapDefParser();
+		const TdfParser& mapDefParser = GetMapDefParser();
 		if (mapDefParser.SectionExist("map\\featuretypes")) {
 			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
 			for (int a=0;a<numTypes;a++) {
@@ -251,7 +262,7 @@ const char *CSm3ReadMap::GetFeatureType (int typeID)
 void CSm3ReadMap::LoadFeatureData()
 {
 		// returns MapFeatureInfo[GetNumFeatures()]
-	std::string fd = mapInfo->GetMapDefParser().SGetValueDef(std::string(),"map\\featuredata");
+	std::string fd = GetMapDefParser().SGetValueDef(std::string(),"map\\featuredata");
 	if (!fd.empty()) {
 		CFileHandler fh(fd);
 		if (!fh.FileExists())
@@ -312,7 +323,7 @@ CSm3ReadMap::InfoMap::~InfoMap () {
 unsigned char *CSm3ReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bm)
 {
 	std::string map;
-	if (!mapInfo->GetMapDefParser().SGetValue(map, "MAP\\INFOMAPS\\" + name))
+	if (!GetMapDefParser().SGetValue(map, "MAP\\INFOMAPS\\" + name))
 		return 0;
 
 	CBitmap img;

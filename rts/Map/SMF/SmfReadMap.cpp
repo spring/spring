@@ -422,7 +422,7 @@ void CSmfReadMap::FreeInfoMap (const std::string& name, unsigned char *data)
 void CSmfReadMap::ReadGrassMap(void *data)
 {
 	CFileHandler* fh=ifs;
-	fh->Seek(sizeof(MapHeader));
+	fh->Seek(sizeof(SMFHeader));
 
 	for(int a=0;a<header.numExtraHeaders;++a){
 		int size;

@@ -25,3 +25,13 @@ pkzip -add _temp.zip builddata\springcontent\modinfo.tdf
 rename _temp.zip springcontent.sdz
 move /Y springcontent.sdz ..\game\base
 cd builddata
+
+echo Creating maphelper.sdz
+del /Q ..\..\base\maphelper.sdz
+cd maphelper
+..\..\pkzip -add -dir=current ..\..\_temp.zip maphelper\*
+cd ..\..
+pkzip -add _temp.zip builddata\maphelper\modinfo.tdf
+rename _temp.zip maphelper.sdz
+move /Y maphelper.sdz ..\game\base
+cd builddata

@@ -138,13 +138,19 @@ class CGlobalSyncedStuff
 {
 public:
 	CR_DECLARE(CGlobalSyncedStuff);
-	CGlobalSyncedStuff(); 		//!< Constructor
-	~CGlobalSyncedStuff(); 	//!< Destructor
+	CGlobalSyncedStuff();  //!< Constructor
+	~CGlobalSyncedStuff(); //!< Destructor
 
-	int randInt();			//!< synced random int
-	float randFloat(); 		//!< synced random float
-	float3 randVector(); 		//!< synced random vector
-	void SetRandSeed(unsigned seed) {randSeed = seed; };
+	int    randInt();    //!< synced random int
+	float  randFloat();  //!< synced random float
+	float3 randVector(); //!< synced random vector
+
+	void SetRandSeed(unsigned int seed, bool init = false) {
+		randSeed = seed;
+		if (init) { initRandSeed = randSeed; }
+	}
+	unsigned int GetRandSeed()     const { return randSeed; }
+	unsigned int GetInitRandSeed() const { return initRandSeed; }
 
 	/**
 	 * @brief frame number
@@ -408,6 +414,13 @@ private:
 	int randSeed;
 
 	/**
+	* @brief initial random seed
+	*
+	* Holds the synced initial random seed
+	*/
+	int initRandSeed;
+
+	/**
 	 * @brief allies array
 	 *
 	 * Array indicates whether teams are allied,
@@ -441,12 +454,12 @@ class CGlobalUnsyncedStuff
 {
 public:
 	CR_DECLARE(CGlobalUnsyncedStuff);
-	CGlobalUnsyncedStuff(); 		//!< Constructor
-	~CGlobalUnsyncedStuff();	 	//!< Destructor
+	CGlobalUnsyncedStuff();  //!< Constructor
+	~CGlobalUnsyncedStuff(); //!< Destructor
 
-	int usRandInt(); 			//!< Unsynced random int
-	float usRandFloat(); 			//!< Unsynced random float
-	float3 usRandVector(); 			//!< Unsynced random vector
+	int    usRandInt();    //!< Unsynced random int
+	float  usRandFloat();  //!< Unsynced random float
+	float3 usRandVector(); //!< Unsynced random vector
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?

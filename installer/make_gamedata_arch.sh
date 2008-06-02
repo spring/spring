@@ -21,14 +21,17 @@ done
 
 # Zip up the stuff.
 
+cd installer/builddata/
+
 echo Updating bitmaps.sdz
-cd installer/builddata/bitmaps
+cd bitmaps/
 zip -qu ../../../game/base/spring/bitmaps.sdz modinfo.tdf
 zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*
 zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*/*
+cd ..
 
 echo Updating springcontent.sdz
-cd ../springcontent
+cd springcontent/
 zip -qu ../../../game/base/springcontent.sdz modinfo.tdf
 zip -qu ../../../game/base/springcontent.sdz gamedata/*
 zip -qu ../../../game/base/springcontent.sdz gamedata/*/*
@@ -37,4 +40,12 @@ zip -qu ../../../game/base/springcontent.sdz bitmaps/*/*
 zip -qu ../../../game/base/springcontent.sdz anims/*
 zip -qu ../../../game/base/springcontent.sdz shaders/*
 zip -qu ../../../game/base/springcontent.sdz LuaGadgets/*
-cd ../../..
+cd ..
+
+echo Updating maphelper.sdz
+cd maphelper/
+zip -qu ../../../game/base/maphelper.sdz modinfo.tdf
+zip -qu ../../../game/base/maphelper.sdz maphelper/*
+cd ..
+
+cd ../..

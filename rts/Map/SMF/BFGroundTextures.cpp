@@ -29,7 +29,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 	numBigTexX = gs->mapx / bigSquareSize;
 	numBigTexY = gs->mapy / bigSquareSize;
 
-	MapHeader* header = &map->header;
+	SMFHeader* header = &map->header;
 	ifs->Seek(header->tilesPtr);
 
 	tileSize = header->tilesize;

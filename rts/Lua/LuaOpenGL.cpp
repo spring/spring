@@ -4816,7 +4816,7 @@ int LuaOpenGL::GetSun(lua_State* L)
 		return 3;
 	}
 
-	const bool unitMode = lua_isstring(L, 2) &&
+	const bool unitMode = lua_israwstring(L, 2) &&
 	                      (strcmp(lua_tostring(L, 2), "unit") == 0);
 
 	const float3* data = NULL;
@@ -4833,14 +4833,14 @@ int LuaOpenGL::GetSun(lua_State* L)
 		if (!unitMode) {
 			data = &mapInfo->light.groundSunColor;
 		} else {
-			data = &unitDrawer->unitSunColor;
+			data = &mapInfo->light.unitSunColor;
 		}
 	}
 	else if (param == "ambient") {
 		if (!unitMode) {
-			data = &mapInfo->light.groundSunColor;
+			data = &mapInfo->light.groundAmbientColor;
 		} else {
-			data = &unitDrawer->unitAmbientColor;
+			data = &mapInfo->light.unitAmbientColor;
 		}
 	}
 	else if (param == "specular") {

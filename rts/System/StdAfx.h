@@ -73,27 +73,36 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 
 /**
  * content_error
- * thrown when content couldn't be found/loaded.
- * any other type of exception will cause a crashreport box appearing (if it is installed).
+ *   thrown when content couldn't be found/loaded.
+ *   any other type of exception will cause a crashreport box appearing
+ *     (if it is installed).
  */
 class content_error : public std::runtime_error
 {
-public:
-	content_error(const std::string& msg) :
-	  std::runtime_error(msg) {}
+	public:
+		content_error(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-static inline void
-StringToLowerInPlace(std::string &s)
+
+static inline void StringToLowerInPlace(std::string &s)
 {
-	std::transform (s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
+	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
 }
 
-static inline std::string
-StringToLower(std::string s)
+
+static inline std::string StringToLower(std::string s)
 {
 	StringToLowerInPlace(s);
 	return s;
 }
+
+
+static inline std::string IntToString(int i, const std::string& format = "%i")
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), format.c_str(), i);
+	return std::string(buf);
+}
+
 
 #endif // __STD_AFX_H__

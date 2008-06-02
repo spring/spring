@@ -1,9 +1,13 @@
+#include "StdAfx.h"
+
 #include "MapInfo.h"
 
+#include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "System/LogOutput.h"
-#include "System/TdfParser.h"
 #include "System/FileSystem/FileHandler.h"
+
+using namespace std;
 
 float4::float4()
 {
@@ -27,16 +31,25 @@ float4::float4()
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const std::string& mapname)
+CMapInfo::CMapInfo(const string& mapname)
 {
 	map.name = mapname;
-	mapDefParser = new TdfParser(GetTDFName(mapname));
-	resourcesParser = new LuaParser ("gamedata/resources.lua",
-	                                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser->Execute()) {
-		logOutput.Print(resourcesParser->GetErrorLog());
+
+	MapParser mapParser(mapname);
+	if (!mapParser.IsValid()) {
+		logOutput.Print(mapParser.GetErrorLog());
 	}
-	
+	LuaTable mapTbl = mapParser.GetRoot();
+	mapRoot = &mapTbl;
+
+	LuaParser resParser("gamedata/resources.lua",
+	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!resParser.Execute()) {
+		logOutput.Print(resParser.GetErrorLog());
+	}
+	LuaTable resTbl = resParser.GetRoot();
+	resRoot = &resTbl;
+
 	ReadGlobal();
 	ReadAtmosphere();
 	ReadGui();
@@ -45,160 +58,156 @@ CMapInfo::CMapInfo(const std::string& mapname)
 	ReadSmf();
 	ReadSm3();
 	ReadTerrainTypes();
-
-	delete resourcesParser;
-	resourcesParser = NULL;
 }
 
 
 CMapInfo::~CMapInfo()
 {
-	delete mapDefParser;
-	mapDefParser = NULL;
-}
-
-
-/** @brief Opens the TDF file from the given map in parser.
-	FIXME: This is mostly a hack to supply CGameSetup with start positions,
-	when no CMapInfo object has yet been created.
- */
-void CMapInfo::OpenTDF(const std::string& mapname, TdfParser& parser)
-{
-	parser.LoadFile(GetTDFName(mapname));
-}
-
-
-/** @brief Get the name of the TDF file with map settings.
-	@return "maps/%.smd" for "%.smf" and "maps/%.sm3" for "%.sm3"
- */
-std::string CMapInfo::GetTDFName(const std::string& mapname)
-{
-	if (mapname.length() < 3)
-		throw std::runtime_error("CMapInfo::GetTDFName(): mapname '" + mapname + "' too short");
-
-	std::string extension = mapname.substr(mapname.length() - 3);
-	if (extension == "smf")
-		return std::string("maps/") + mapname.substr(0, mapname.find_last_of('.')) + ".smd";
-	else if(extension == "sm3")
-		return std::string("maps/") + mapname;
-	else
-		throw std::runtime_error("CMapInfo::GetTDFName(): Unknown extension: " + extension);
 }
 
 
 void CMapInfo::ReadGlobal()
 {
-	map.humanName = mapDefParser->SGetValueDef(map.name, "MAP\\Description");
-	map.wantedScript = mapDefParser->SGetValueDef(map.wantedScript, "MAP\\Script");
+	const LuaTable topTable = *mapRoot;
+	
+	map.humanName    = topTable.GetString("description", map.name);
+	map.wantedScript = topTable.GetString("script", map.wantedScript);
 
-	mapDefParser->GetTDef(map.hardness, 100.0f, "MAP\\MapHardness");
-	map.notDeformable = mapDefParser->SGetValueDef("0", "MAP\\NotDeformable") != "0";
+	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
+	map.notDeformable = topTable.GetBool("notDeformable", false);
 
-	mapDefParser->GetTDef(map.gravity, 130.0f, "MAP\\Gravity");
+	map.gravity = topTable.GetFloat("gravity", 130.0f);
 	map.gravity = -map.gravity / (GAME_SPEED * GAME_SPEED);
 
-	mapDefParser->GetTDef(map.tidalStrength, 0.0f, "MAP\\TidalStrength");
-	mapDefParser->GetTDef(map.maxMetal, 0.02f, "MAP\\MaxMetal");
-	mapDefParser->GetTDef(map.extractorRadius, 500.0f, "MAP\\ExtractorRadius");
+	map.tidalStrength   = topTable.GetFloat("tidalStrength", 0.0f);
+	map.maxMetal        = topTable.GetFloat("maxMetal", 0.02f);
+	map.extractorRadius = topTable.GetFloat("extractorRadius", 500.0f);
 
-	mapDefParser->GetDef(map.voidWater, "0", "MAP\\voidWater");
+	map.voidWater = topTable.GetBool("voidWater", false);
 }
 
 
 void CMapInfo::ReadGui()
 {
 	// GUI
-	mapDefParser->GetTDef(gui.autoShowMetal, true, "MAP\\autoShowMetal");
+	gui.autoShowMetal = mapRoot->GetBool("autoShowMetal", true);
 }
 
 
 void CMapInfo::ReadAtmosphere()
 {
 	// MAP\ATMOSPHERE
-	mapDefParser->GetTDef(atmosphere.cloudDensity, 0.5f, "MAP\\ATMOSPHERE\\CloudDensity");
-	mapDefParser->GetTDef(atmosphere.fogStart, 0.1f, "MAP\\ATMOSPHERE\\FogStart");
-	atmosphere.fogColor = mapDefParser->GetFloat3(float3(0.7f, 0.7f, 0.8f), "MAP\\ATMOSPHERE\\FogColor");
-	atmosphere.skyColor = mapDefParser->GetFloat3(float3(0.1f, 0.15f, 0.7f), "MAP\\ATMOSPHERE\\SkyColor");
-	atmosphere.sunColor = mapDefParser->GetFloat3(float3(1.0f, 1.0f, 1.0f), "MAP\\ATMOSPHERE\\SunColor");
-	atmosphere.cloudColor = mapDefParser->GetFloat3(float3(1.0f, 1.0f, 1.0f), "MAP\\ATMOSPHERE\\CloudColor");
-	mapDefParser->GetTDef(atmosphere.minWind, 5.0f, "MAP\\ATMOSPHERE\\MinWind");
-	mapDefParser->GetTDef(atmosphere.maxWind, 25.0f, "MAP\\ATMOSPHERE\\MaxWind");
-	mapDefParser->GetDef(atmosphere.skyBox, "", "MAP\\ATMOSPHERE\\SkyBox");
+	const LuaTable atmoTable = mapRoot->SubTable("atmosphere");
+	atmosphere_t& atmo = atmosphere;
+	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
+	atmo.minWind      = atmoTable.GetFloat("minWind", 5.0f);
+	atmo.maxWind      = atmoTable.GetFloat("maxWind", 25.0f);
+	atmo.fogStart     = atmoTable.GetFloat("fogStart", 0.1f);
+	atmo.fogColor   = atmoTable.GetFloat3("fogColor", float3(0.7f, 0.7f, 0.8f));
+	atmo.skyColor   = atmoTable.GetFloat3("skyColor", float3(0.1f, 0.15f, 0.7f));
+	atmo.sunColor   = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
+	atmo.cloudColor = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
+	atmo.skyBox = atmoTable.GetString("skyBox", "");
 }
 
 
 void CMapInfo::ReadLight()
 {
-	// MAP\LIGHT
-	light.sunDir = mapDefParser->GetFloat3(float3(0.0f, 1.0f, 2.0f), "MAP\\LIGHT\\SunDir");
+	const LuaTable lightTable = mapRoot->SubTable("lighting");
+
+	light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
 	light.sunDir.Normalize();
 
-	light.groundAmbientColor = mapDefParser->GetFloat3(float3(0.5f, 0.5f, 0.5f), "MAP\\LIGHT\\GroundAmbientColor");
-	light.groundSunColor = mapDefParser->GetFloat3(float3(0.5f, 0.5f, 0.5f), "MAP\\LIGHT\\GroundSunColor");
-	light.groundSpecularColor = mapDefParser->GetFloat3(float3(0.1f, 0.1f, 0.1f), "MAP\\LIGHT\\GroundSpecularColor");
-	mapDefParser->GetTDef(light.groundShadowDensity, 0.8f, "MAP\\LIGHT\\GroundShadowDensity");
+	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor",
+	                                                float3(0.5f, 0.5f, 0.5f));
+	light.groundSunColor      = lightTable.GetFloat3("groundDiffuseColor",
+	                                                float3(0.5f, 0.5f, 0.5f));
+	light.groundSpecularColor = lightTable.GetFloat3("groundSpecularColor",
+	                                                float3(0.1f, 0.1f, 0.1f));
+	light.groundShadowDensity = lightTable.GetFloat("groundShadowDensity", 0.8f);
 
-	light.unitAmbientColor = float4(mapDefParser->GetFloat3(float3(0.4f, 0.4f, 0.4f), "MAP\\LIGHT\\UnitAmbientColor"), 1.0f);
-	light.unitSunColor = float4(mapDefParser->GetFloat3(float3(0.7f, 0.7f, 0.7f), "MAP\\LIGHT\\UnitSunColor"), 1.0f);
-	light.specularSunColor = mapDefParser->GetFloat3(light.unitSunColor, "MAP\\LIGHT\\SpecularSunColor");
-	mapDefParser->GetTDef(light.unitShadowDensity, 0.8f, "MAP\\LIGHT\\UnitShadowDensity");
+	light.unitAmbientColor  = lightTable.GetFloat3("unitAmbientColor",
+	                                                float3(0.4f, 0.4f, 0.4f));
+	light.unitSunColor      = lightTable.GetFloat3("unitDiffuseColor",
+	                                                float3(0.7f, 0.7f, 0.7f));
+	light.specularSunColor = lightTable.GetFloat3("unitSpecularColor",
+	                                               light.unitSunColor);
+	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 }
 
 
 void CMapInfo::ReadWater()
 {
-	// MAP\WATER
-	mapDefParser->GetTDef(water.repeatX, 0.0f, "MAP\\WATER\\WaterRepeatX");
-	mapDefParser->GetTDef(water.repeatY, 0.0f, "MAP\\WATER\\WaterRepeatY");
-	mapDefParser->GetTDef(water.damage, 0.0f, "MAP\\WATER\\WaterDamage");
-	water.damage *= 16.0f / 30.0f;
-	
-	std::string tmp;
-	mapDefParser->GetDef(tmp, "", "MAP\\WATER\\WaterPlaneColor");
-	hasWaterPlane = !tmp.empty();
-	water.planeColor = mapDefParser->GetFloat3(float3(0.0f, 0.4f, 0.0f), "MAP\\WATER\\WaterPlaneColor");
+	const LuaTable wt = mapRoot->SubTable("water");
 
-	mapDefParser->GetDef(water.fresnelMin,"0.2","MAP\\WATER\\FresnelMin");
-	mapDefParser->GetDef(water.fresnelMax,"0.3","MAP\\WATER\\FresnelMax");
-	mapDefParser->GetDef(water.fresnelPower,"4.0","MAP\\WATER\\FresnelPower");
+	water.repeatX = wt.GetFloat("repeatX", 0.0f);
+	water.repeatY = wt.GetFloat("repeatY", 0.0f);
+	water.damage  = wt.GetFloat("damage", 0.0f) * (16.0f / 30.0f);
 
-	mapDefParser->GetDef(water.specularFactor,"20.0","MAP\\WATER\\WaterSpecularFactor");
+	water.absorb       = wt.GetFloat3("absorb",       float3(0.0f, 0.0f, 0.0f));
+	water.baseColor    = wt.GetFloat3("baseColor",    float3(0.0f, 0.0f, 0.0f));
+	water.minColor     = wt.GetFloat3("minColor",     float3(0.0f, 0.0f, 0.0f));
 
-	water.specularColor = mapDefParser->GetFloat3(light.groundSunColor,"MAP\\WATER\\WaterSpecularColor");
-	water.surfaceColor = mapDefParser->GetFloat3(float3(0.75f, 0.8f, 0.85f), "MAP\\WATER\\WaterSurfaceColor");
-	mapDefParser->GetDef(water.surfaceAlpha,"0.55","MAP\\WATER\\WaterSurfaceAlpha");
-	water.absorb = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterAbsorb");
-	water.baseColor = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterBaseColor");
-	water.minColor = mapDefParser->GetFloat3(float3(0, 0, 0), "MAP\\WATER\\WaterMinColor");
+	water.surfaceColor = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
+	water.surfaceAlpha = wt.GetFloat("surfaceAlpha",  0.55f);
 
-	mapDefParser->GetDef(water.texture, "", "MAP\\WATER\\WaterTexture");
-	mapDefParser->GetDef(water.foamTexture, "", "MAP\\WATER\\WaterFoamTexture");
-	mapDefParser->GetDef(water.normalTexture, "", "MAP\\WATER\\WaterNormalTexture");
+	water.planeColor   = wt.GetFloat3("planeColor",   float3(0.0f, 0.4f, 0.0f));
+	hasWaterPlane = wt.KeyExists("planeColor");
 
-	//default water is ocean.jpg in bitmaps, map specific water textures is saved in the map dir
-	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("maps");
-	const LuaTable causticsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("caustics");
-	
-	if(water.texture.empty())
-		water.texture = "bitmaps/" + mapsTable.GetString("watertex", "ocean.jpg");
-	else
+	water.specularColor  = wt.GetFloat3("specularColor", light.groundSunColor);
+	water.specularFactor = wt.GetFloat("specularFactor", 20.0f);
+
+	water.fresnelMin   = wt.GetFloat("fresnelMin",   0.2f);
+	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.3f);
+	water.fresnelPower = wt.GetFloat("fresnelPower", 4.0f);
+
+	water.texture       = wt.GetString("texture", "");
+	water.foamTexture   = wt.GetString("foamTexture", "");
+	water.normalTexture = wt.GetString("normalTexture", "");
+
+	// use 'resources.lua' for missing fields  (our the engine defaults)
+	const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
+
+	if (!water.texture.empty()) {
 		water.texture = "maps/" + water.texture;
+	} else {
+		water.texture = "bitmaps/" + resGfxMaps.GetString("watertex", "ocean.jpg");
+	}
 
-	if(water.foamTexture.empty())
-		water.foamTexture = "bitmaps/" + mapsTable.GetString("waterfoamtex", "foam.jpg");
-	else
+	if (!water.foamTexture.empty()) {
 		water.foamTexture = "maps/" + water.foamTexture;
+	} else {
+		water.foamTexture = "bitmaps/" + resGfxMaps.GetString("waterfoamtex", "foam.jpg");
+	}
 
-	if(water.normalTexture.empty())
-		water.normalTexture = "bitmaps/" + mapsTable.GetString("waternormaltex", "waterbump.png");
-	else
+	if (!water.normalTexture.empty()) {
 		water.normalTexture = "maps/" + water.normalTexture;
+	} else {
+		water.normalTexture = "bitmaps/" + resGfxMaps.GetString("waternormaltex", "waterbump.png");
+	}
 
-	char num[10];
-	for (int i = 0; i < causticTextureCount; i++) {
-		sprintf(num, "%02i", i);
-		water.causticTextures[i] = std::string("bitmaps/") + causticsTable.GetString(i+1, 
-															 std::string("caustics/caustic")+num+".jpg");
+	// water caustic textures
+	LuaTable caustics = wt.SubTable("causticTextures");
+	string causticPrefix = "maps/";
+	if (!caustics.IsValid()) {
+		caustics = resGfxMaps.SubTable("causticTextures");
+		causticPrefix = "bitmaps/";
+	}
+	if (caustics.IsValid()) {
+		for (int i = 1; true; i++) {
+			const string texName = causticPrefix + caustics.GetString(i, "");
+			if (texName.empty()) {
+				break;
+			}
+			water.causticTextures.push_back(texName);
+		}
+	} else {
+		// load the default 32 textures
+		for (int i = 0; i < 32; i++) {
+			char defTex[256];
+			sprintf(defTex, "bitmaps/caustics/caustic%02i.jpg", i);
+			water.causticTextures.push_back(defTex);
+		}
 	}
 }
 
@@ -206,36 +215,66 @@ void CMapInfo::ReadWater()
 void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
-	mapDefParser->GetDef(smf.detailTexName, "", "MAP\\DetailTex");
 
-	const LuaTable mapsTable = resourcesParser->GetRoot().SubTable("graphics").SubTable("maps");
-	
-	if (smf.detailTexName.empty())
-		smf.detailTexName = "bitmaps/" + mapsTable.GetString("detailtex","detailtex2.bmp");
-	else
+	const LuaTable mapResTable = mapRoot->SubTable("resources");
+	smf.detailTexName = mapResTable.GetString("detailTex", "");
+	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
+	}
+	else {
+		const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
+		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
+		smf.detailTexName = "bitmaps/" + smf.detailTexName;
+	}
 }
 
 
 void CMapInfo::ReadSm3()
 {
 	// SM3 specific settings
-	sm3.minimap = mapDefParser->SGetValueDef("", "MAP\\minimap");
+	sm3.minimap = mapRoot->GetString("minimap", "");
 }
 
 
 void CMapInfo::ReadTerrainTypes()
 {
-	for (int a = 0; a < 256; ++a) {
-		char tname[200];
-		sprintf(tname, "MAP\\TerrainType%i\\", a);
-		std::string section = tname;
-		mapDefParser->GetDef (terrainTypes[a].name,  "Default", section + "name");
-		mapDefParser->GetTDef(terrainTypes[a].hardness,   1.0f, section + "hardness");
-		mapDefParser->GetTDef(terrainTypes[a].tankSpeed,  1.0f, section + "tankmovespeed");
-		mapDefParser->GetTDef(terrainTypes[a].kbotSpeed,  1.0f, section + "kbotmovespeed");
-		mapDefParser->GetTDef(terrainTypes[a].hoverSpeed, 1.0f, section + "hovermovespeed");
-		mapDefParser->GetTDef(terrainTypes[a].shipSpeed,  1.0f, section + "shipmovespeed");
-		mapDefParser->GetDef(terrainTypes[a].receiveTracks, "1", section + "receivetracks");
+	const LuaTable terrTypeTable =
+		mapRoot->SubTable("terrainTypes");
+
+	for (int tt = 0; tt < 256; tt++) {
+		TerrainType& terrType = terrainTypes[tt];
+		const LuaTable terrain = terrTypeTable.SubTable(tt);
+		terrType.name          = terrain.GetString("name", "Default");
+		terrType.hardness      = terrain.GetFloat("hardness",   1.0f);
+		terrType.receiveTracks = terrain.GetFloat("receiveTracks", true);
+		const LuaTable moveTable = terrain.SubTable("moveSpeeds");
+		terrType.tankSpeed  = moveTable.GetFloat("tank",  1.0f);
+		terrType.kbotSpeed  = moveTable.GetFloat("kbot",  1.0f);
+		terrType.hoverSpeed = moveTable.GetFloat("hover", 1.0f);
+		terrType.shipSpeed  = moveTable.GetFloat("ship",  1.0f);
 	}
+}
+
+
+void CMapInfo::ReadStartPos()
+{
+	const float defX = 1000.0f;
+	const float defZ = 1000.0f;
+	const float defStep = 100.0f;
+	for (int t = 0; t < MAX_TEAMS; ++t) {
+		float x, z;
+		char tname[200];
+		sprintf(tname, "MAP\\Team%i\\", t);
+		const string section = tname;
+	}
+}
+
+
+bool CMapInfo::GetStartPos(int team, float3& pos) const
+{
+	if ((team < 0) || (team >= startPos.size()) || !havePos[team]) {
+		return false;
+	}
+	pos = startPos[team];
+	return true;
 }

@@ -119,6 +119,7 @@ CLuaRules::CLuaRules()
 	haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
 	haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
 	haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+	haveAllowStartPosition       = HasCallIn("AllowStartPosition");
 	haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
 	haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
 	haveDrawUnit                 = HasCallIn("DrawUnit");
@@ -242,6 +243,8 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 		haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
 	} else if (name == "AllowDirectUnitControl") {
 		haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+	} else if (name == "AllowStartPosition") {
+		haveAllowStartPosition       = HasCallIn("AllowStartPosition");
 	} else if (name == "MoveCtrlNotify") {
 		haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
 	} else if (name == "BuilderTerraformComplete") {
@@ -700,6 +703,44 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 }
 
 
+bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
+{
+	if (!haveAllowStartPosition) {
+		return true; // the call is not defined
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 9);
+	static const LuaHashString cmdStr("AllowStartPosition");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return true; // the call is not defined
+	}
+
+	// push the start position and playerID
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	lua_pushnumber(L, playerID);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 4, 1)) {
+		return true;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value (%i)\n",
+		                cmdStr.GetString().c_str(), args);
+		lua_pop(L, 1);
+		return true;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
 bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 {
 	if (!haveMoveCtrlNotify) {
@@ -815,7 +856,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	}
 
 	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		logOutput.Print("%s() bad return value (%i)\n",
 		                cmdStr.GetString().c_str(), args);
 		lua_pop(L, 1);

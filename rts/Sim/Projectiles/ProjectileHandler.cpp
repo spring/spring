@@ -207,8 +207,9 @@ CProjectileHandler::CProjectileHandler()
 	//for (int i = 0; i < 12; i++) {
 	for (int i = 1; smokeTable.KeyExists(i); i++) {
 		char num[10];
-		sprintf(num, "%02i", i-1);
+		sprintf(num, "%02i", i - 1);
 		smoketex[i] = textureAtlas->GetTexture(std::string("ismoke") + num);
+		smokeTex.push_back(textureAtlas->GetTexture(std::string("ismoke") + num));
 	}
 
 #define GETTEX(t, b) textureAtlas->GetTextureWithBackup((t), (b))
