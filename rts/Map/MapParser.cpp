@@ -9,24 +9,6 @@ using namespace std;
 #include "System/FileSystem/FileHandler.h"
 
 
-static bool IsTdfFormat(CFileHandler& fh)
-{
-
-	while (!fh.Eof()) {
-		char c = ' ';
-		fh.Read(&c, 1);
-		if (!isspace(c)) {
-			// TDF files should start with:
-			//   [name] - section header
-			//   /*     - comment
-			//   //     - comment
-			return ((c == '[') || (c == '/'));
-		}
-	}
-	return false;		
-}
-
-
 string MapParser::GetMapConfigName(const string& mapName)
 {
 	if (mapName.length() < 3) {
@@ -59,11 +41,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 		throw runtime_error("MapParser() missing file: " + mapConfig);
 	}
 
-	const bool isTDF =  IsTdfFormat(fh);
-
-	const string configScript = isTDF ? "maphelper/load_tdf_map.lua" : mapConfig;
-	
-	parser = SAFE_NEW LuaParser(configScript,
+	parser = SAFE_NEW LuaParser("maphelper/mapinfo.lua",
 															SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
 	parser->AddString("fileName", mapName);
@@ -78,7 +56,9 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
 #endif
-	parser->Execute();
+	if (!parser->Execute()) {
+		throw content_error("MapParser error: " + parser->GetErrorLog());
+	}
 }
 
 

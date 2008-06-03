@@ -114,37 +114,7 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
---
---  Main Routine
---
 
-local mapData, err = TDF.Parse(mapConfig)
-if (mapData == nil) then
-  error('Error parsing ' .. mapConfig .. ': ' .. err)
-end
-
-local map = mapData.map
-if (map == nil) then
-  error('Error parsing ' .. mapConfig .. ': missing MAP section')
-end
-
-
-ConvertTerrainTypes(map)
-
-ConvertLighting(map)
-
-ConvertWater(map)
-
-ConvertTeams(map)
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---
---  Debugging
---
-
--- FIXME -- debugging
 local function PrintTable(t, indent)
   indent = indent or ''
   for k,v in pairs(t) do
@@ -159,13 +129,38 @@ local function PrintTable(t, indent)
   end
 end
 
---PrintTable(map)
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+--
+--  Main Routine
+--
 
-return map
+return function(sourceText)
+  local mapData, err = TDF.ParseText(sourceText)
+  if (mapData == nil) then
+    error('Error parsing ' .. mapConfig .. ': ' .. err)
+  end
+
+  local map = mapData.map
+  if (map == nil) then
+    error('Error parsing ' .. mapConfig .. ': missing MAP section')
+  end
+
+
+  ConvertTerrainTypes(map)
+
+  ConvertLighting(map)
+
+  ConvertWater(map)
+
+  ConvertTeams(map)
+
+--  PrintTable(map)  -- FIXME -- debugging
+
+  return map
+end
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
