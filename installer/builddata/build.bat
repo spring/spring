@@ -32,6 +32,7 @@ cd maphelper
 ..\..\pkzip -add -dir=current ..\..\_temp.zip maphelper\*
 cd ..\..
 pkzip -add _temp.zip builddata\maphelper\modinfo.tdf
+pkzip -add _temp.zip builddata\maphelper\MapOptions.lua
 rename _temp.zip maphelper.sdz
 move /Y maphelper.sdz ..\game\base
 cd builddata

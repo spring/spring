@@ -10,6 +10,7 @@ echo Clipped $start lines
 
 g++ -I../../../rts/System test.tmp.cxx ../../../game/unitsync.so
 
+echo ./a.out Castles.smf ba621.sd7
 ./a.out Castles.smf ba621.sd7
 
 exit

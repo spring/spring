@@ -45,6 +45,7 @@ cd ..
 echo Updating maphelper.sdz
 cd maphelper/
 zip -qu ../../../game/base/maphelper.sdz modinfo.tdf
+zip -qu ../../../game/base/maphelper.sdz MapOptions.lua
 zip -qu ../../../game/base/maphelper.sdz maphelper/*
 cd ..
 

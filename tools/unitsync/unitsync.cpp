@@ -1233,6 +1233,8 @@ static void ParseOptions(const string& fileName,
 	}
 		
 	if (!luaParser.Execute()) {
+		printf("ParseOptions(%s) ERROR: %s\n",
+		       fileName.c_str(), luaParser.GetErrorLog().c_str());
 		return;
 	}
 
