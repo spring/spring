@@ -134,6 +134,9 @@ bool CIconHandler::FreeIcon(const string& iconName)
 	if (it == iconMap.end()) {
 		return false;
 	}
+	if (iconName == "default") {
+		return false;
+	}
 
 	CIconData* iconData = it->second.data;
 	iconData->CopyData(defIconData);
