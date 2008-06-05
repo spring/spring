@@ -451,7 +451,11 @@ bool CMiniMap::MousePress(int x, int y, int button)
 		if ((fullProxy && (button == SDL_BUTTON_MIDDLE)) ||
 				(!fullProxy && (button == SDL_BUTTON_RIGHT))) {
 			MoveView(x, y);
-			mouseLook = true;
+			if (maximized) {
+				ToggleMaximized(false);
+			} else {
+				mouseLook = true;
+			}
 			return true;
 		}
 		else if (fullProxy && (button == SDL_BUTTON_RIGHT)) {
