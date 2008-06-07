@@ -16,12 +16,19 @@
 #include "SFloat3.h"
 
 class CBaseNetProtocol;
+namespace netcode
+{
+	class RawPacket;
+	class CConnection;
+	class UDPListener;
+}
 class CDemoReader;
 class AutohostInterface;
 class CGameSetupData;
 class ChatMessage;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
+
 
 //TODO: move to seperate file
 class GameParticipant
@@ -36,7 +43,8 @@ public:
 	
 	unsigned team;
 
-	bool hasRights;
+	bool isLocal;
+	boost::shared_ptr<netcode::CConnection> link;
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
 #endif
@@ -58,10 +66,10 @@ class CGameServer : public CommandReceiver
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(int port, const GameData* const gameData, const CGameSetupData* const setup, const std::string& demoName = "");
+	CGameServer(int port, bool onlyLocal, const GameData* const gameData, const CGameSetupData* const setup, const std::string& demoName = "");
 	virtual ~CGameServer();
 
-	void AddLocalClient();
+	void AddLocalClient(unsigned wantedNumber);
 
 	void AddAutohostInterface(const int remotePort);
 
@@ -101,12 +109,13 @@ private:
 	*/
 	void KickPlayer(const int playerNum);
 
-	void BindConnection(unsigned wantedNumber);
+	unsigned BindConnection(unsigned wantedNumber, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
 
 	void CheckForGameStart(bool forced=false);
 	void StartGame();
 	void UpdateLoop();
 	void Update();
+	void ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
 	void ServerReadNet();
 	void CheckForGameEnd();
@@ -116,6 +125,8 @@ private:
 	
 	/// read data from demo and send it to clients
 	void SendDemoData(const bool skipping=false);
+	
+	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
 	
 	/**
 	@brief skip frames
@@ -174,11 +185,15 @@ private:
 	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
+	
+	bool hasLocalClient;
+	unsigned localClientNumber;
+	
 	void RestrictedAction(const std::string& action);
 	
 	/// If the server recieves a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
-	CBaseNetProtocol* serverNet;
+	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	CDemoReader* demoReader;
 	AutohostInterface* hostif;
 	UnsyncedRNG rng;

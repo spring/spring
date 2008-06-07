@@ -16,7 +16,6 @@ public:
 	int GetLength(unsigned char id) const;
 	unsigned IsComplete(const unsigned char* const buf, const unsigned bufLength) const;
 
-	unsigned UDP_MTU;
 private:
 	ProtocolDef();
 	ProtocolDef( const ProtocolDef& );

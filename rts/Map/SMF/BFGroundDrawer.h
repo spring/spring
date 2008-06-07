@@ -30,12 +30,12 @@ protected:
 	CSmfReadMap* map;
 	CBFGroundTextures* textures;
 
-	int numBigTexX;
-	int numBigTexY;
-	int bigSquareSize;
+	const int bigSquareSize;
+	const int numBigTexX;
+	const int numBigTexY;
 
 	float* heightData;
-	int heightDataX;
+	const int heightDataX;
 
 	CVertexArray* va;
 

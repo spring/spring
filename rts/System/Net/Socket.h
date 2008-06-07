@@ -36,6 +36,13 @@ public:
 	/// Set the blocking state of the socket
 	void SetBlocking(const bool block) const;
 	
+	/**
+	@brief wait for incoming data
+	@param timeout if there is no data to read, this call blocks for x miliseconds
+	@return Wheter there is any data to read
+	**/
+	bool HasIncomingData(int timeout) const;
+	
 	void Bind(unsigned short port /** in host byte order */) const;
 	
 	/**

@@ -21,12 +21,14 @@ const unsigned UDPConnection::hsize = 9;
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
 {
+	sharedSocket = true;
 	addr = MyAddr;
 	Init();
 }
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
 {
+	sharedSocket = false;
 	addr = mySocket->ResolveHost(address, port);
 	Init();
 }
@@ -35,6 +37,7 @@ UDPConnection::~UDPConnection()
 {
 	if (fragmentBuffer)
 		delete fragmentBuffer;
+	Flush(true);
 }
 
 void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
@@ -44,6 +47,11 @@ void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 	}
 	memcpy(&outgoingData[outgoingLength], data->data, data->length);
 	outgoingLength += data->length;
+}
+
+bool UDPConnection::HasIncomingData() const
+{
+	return !msgQueue.empty();
 }
 
 boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
@@ -74,6 +82,21 @@ boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 
 void UDPConnection::Update()
 {
+	if (!sharedSocket)
+	{
+		unsigned recv = 0;
+		unsigned char buffer[4096];
+		sockaddr_in fromAddr;
+		while ((recv = mySocket->RecvFrom(buffer, 4096, &fromAddr)) >= hsize)
+		{
+			RawPacket* data = new RawPacket(buffer, recv);
+			if (CheckAddress(fromAddr))
+				ProcessRawPacket(data);
+			else
+				; // silently drop
+		}
+	}
+	
 	const unsigned curTime = SDL_GetTicks();
 	bool force = false;	// should we force to send a packet?
 
@@ -231,25 +254,24 @@ void UDPConnection::Flush(const bool forced)
 	const float curTime = SDL_GetTicks();
 	if (forced || (outgoingLength>0 && (lastSendTime < (curTime - 200 + outgoingLength * 10))))
 	{
-		ProtocolDef* proto = ProtocolDef::instance();
 		lastSendTime=SDL_GetTicks();
 
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
 		// someone in the game gives a large order.
 
-		if (outgoingLength > proto->UDP_MTU)
+		if (outgoingLength > mtu)
 			++fragmentedFlushes;
 
 		unsigned pos = 0;
 		do
 		{
-			unsigned length = std::min(proto->UDP_MTU, outgoingLength);
+			unsigned length = std::min(mtu, outgoingLength);
 			SendRawPacket(outgoingData + pos, length, currentNum++);
 			unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
 			outgoingLength -= length;
-			pos += proto->UDP_MTU;
-		} while (outgoingLength != 0);
+			pos += mtu;
+		} while (outgoingLength > 0);
 	}
 }
 
@@ -299,6 +321,12 @@ bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 		return false;
 }
 
+void UDPConnection::SetMTU(unsigned mtu2)
+{
+	if (mtu2 > 20 && mtu2 < 4096)
+		mtu = mtu2;
+}
+
 void UDPConnection::Init()
 {
 	lastReceiveTime = SDL_GetTicks();
@@ -317,6 +345,7 @@ void UDPConnection::Init()
 	resentPackets = 0;
 	sentPackets = recvPackets = 0;
 	droppedPackets = 0;
+	mtu = 500;
 }
 
 void UDPConnection::AckPackets(const int nextAck)

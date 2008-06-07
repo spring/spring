@@ -112,6 +112,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound.h"
 #include "System/Platform/NullSound.h"
+#include "System/Net/RawPacket.h"
 #include "Platform/Clipboard.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -484,10 +485,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	thread.join();
 	logOutput.Print("Spring %s",VERSION_STRING);
 	//sending your playername to the server indicates that you are finished loading
-	net->SendPlayerName(gu->myPlayerNum, p->playerName);
+	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->playerName));
 
 	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
-		net->SendStartPlaying(0);
+		net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
 
 	lastCpuUsageTime = gu->gameTime + 10;
 
@@ -1039,12 +1040,12 @@ bool CGame::ActionPressed(const Action& action,
 		{
 			int team=atoi(action.extra.c_str());
 			if ((team >= 0) && (team <gs->activeTeams)) {
-				net->SendJoinTeam(gu->myPlayerNum, team);
+				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, team));
 			}
 		}
 	}
 	else if (cmd == "spectator"){
-		net->SendResign(gu->myPlayerNum);
+		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
@@ -1076,7 +1077,7 @@ bool CGame::ActionPressed(const Action& action,
 				int state = -1;
 				is >> state;
 				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					net->SendSetAllied(gu->myPlayerNum, otherAllyTeam, state);
+					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 			}
 		}
 	}
@@ -1168,7 +1169,7 @@ bool CGame::ActionPressed(const Action& action,
 			} else {
 				newPause = !!atoi(action.extra.c_str());
 			}
-			net->SendPause(gu->myPlayerNum, newPause);
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 			lastframe = SDL_GetTicks(); // this required here?
 		}
 	}
@@ -1346,7 +1347,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			speed += 0.5f;
 		}
-		net->SendUserSpeed(gu->myPlayerNum, speed);
+		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
 	else if (cmd == "slowdown") {
 		float speed = gs->userSpeedFactor;
@@ -1358,7 +1359,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			speed -= 0.5f;
 		}
-		net->SendUserSpeed(gu->myPlayerNum, speed);
+		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -1367,7 +1368,7 @@ bool CGame::ActionPressed(const Action& action,
 		c.id=CMD_STOP;
 		c.options=0;
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->SendDirectControl(gu->myPlayerNum);
+		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 	}
 #endif
 
@@ -1838,16 +1839,16 @@ bool CGame::ActionPressed(const Action& action,
 			SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
 			msg += buf;
 			CommandMessage pckt(msg, gu->myPlayerNum);
-			net->SendData(pckt.Pack());
+			net->Send(pckt.Pack());
 		}
 		else {
 			CommandMessage pckt(action, gu->myPlayerNum);
-			net->SendData(pckt.Pack());
+			net->Send(pckt.Pack());
 		}
 	}
 	else if (cmd == "send") {
 		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
-		net->SendData(pckt.Pack());
+		net->Send(pckt.Pack());
 	}
 	else if (cmd == "save") {// /save [-y ]<savename>
 		if (filesystem.CreateDirectory("Saves")) {
@@ -1874,7 +1875,7 @@ bool CGame::ActionPressed(const Action& action,
 			cmd == "luarules") {
 		//these are synced commands, forward only
 		CommandMessage pckt(action, gu->myPlayerNum);
-		net->SendData(pckt.Pack());
+		net->Send(pckt.Pack());
 	}
 	else {
 		if (!Console::Instance().ExecuteAction(action))
@@ -2391,7 +2392,7 @@ bool CGame::Update()
 	}
 
 	ClientReadNet();
-	if (!net->IsActiveConnection() && !gameOver) {
+	if (!net->Active() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		gameOver = true;
 		luaCallIns.GameOver();
@@ -2410,7 +2411,7 @@ bool CGame::Update()
 			chatting = false;
 			userWriting = false;
 			writingPos = 0;
-			net->SendStartPlaying(0);
+			net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
 		}
 	}
 
@@ -2997,7 +2998,7 @@ void CGame::SimFrame()
 				oldHeading=hp.x;
 				oldPitch=hp.y;
 				oldStatus=status;
-				net->SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y);
+				net->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y));
 			}
 		}
 #endif
@@ -3106,12 +3107,9 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 
 void CGame::ClientReadNet()
 {
-	if (!net->IsActiveConnection())
-		return; // should not happen
-
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
 		lastCpuUsageTime = gu->gameTime;
-		net->SendCPUUsage(profiler.profile["Sim time"].percent);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.profile["Sim time"].percent));
 	}
 
 	PUSH_CODE_MODE;
@@ -3241,7 +3239,7 @@ void CGame::ClientReadNet()
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-				net->SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats);
+				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats));
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -3393,7 +3391,7 @@ void CGame::ClientReadNet()
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
 #ifndef SYNCCHECK
-				net->SendKeyFrame(serverframenum-1);
+				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
 #endif
 				if (gs->frameNum == (serverframenum - 1)) {
 					// everything ok, fall through
@@ -3406,7 +3404,7 @@ void CGame::ClientReadNet()
 				SimFrame();
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
-				net->SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum());
+				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
 #endif
@@ -3594,7 +3592,7 @@ void CGame::ClientReadNet()
 				if (frame != gs->frameNum) {
 					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 				}
-				net->SendCPUUsage(profiler.profile["Sim time"].percent);
+				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.profile["Sim time"].percent));
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -4292,7 +4290,7 @@ void CGame::SendNetChat(std::string message, int destination)
 		message.resize(128); // safety
 	}
 	ChatMessage buf(gu->myPlayerNum, destination, message);
-	net->SendData(buf.Pack());
+	net->Send(buf.Pack());
 }
 
 

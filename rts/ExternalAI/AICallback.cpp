@@ -80,7 +80,7 @@ void CAICallback::SendStartPos(bool ready, float3 startPos)
 		startPos.x = gameSetup->startRectRight[GetMyAllyTeam()] * gs->mapx * 8;
 
 	unsigned char readyness = ready? 1: 0;
-	net->SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z);
+	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z));
 }
 
 void CAICallback::SendTextMsg(const char* text, int zone)
@@ -124,7 +124,7 @@ bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeam)
 					eAmount = std::max(0.0f, std::min(eAmount, GetEnergy()));
 					std::vector<short> empty;
 
-					net->SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), mAmount, eAmount, empty);
+					net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), mAmount, eAmount, empty));
 				}
 			}
 		}
@@ -166,7 +166,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIDs, int receivingTeam)
 					if (sentUnitIDs.size() > 0) {
 						// we can't use SendShare() here either, since
 						// AI's don't have a notion of "selected units"
-						net->SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), 0.0f, 0.0f, sentUnitIDs);
+						net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeam), 0.0f, 0.0f, sentUnitIDs));
 					}
 				}
 			}
@@ -338,7 +338,7 @@ int CAICallback::GiveOrder(int unitid, Command* c)
 	if (unit->team != team)
 		return -1;
 
-	net->SendAICommand(gu->myPlayerNum, unitid, c->id, c->options, c->params);
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitid, c->id, c->options, c->params));
 	return 0;
 }
 
@@ -1343,18 +1343,13 @@ int CAICallback::HandleCommand (int commandId, void *data)
 	case AIHCQuerySubVersionId:
 		return 1; // current version of Handle Command interface
 	case AIHCAddMapPointId:
-		net->SendMapDrawPoint(team,
-			(short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z,
-			std::string(((AIHCAddMapPoint *)data)->label));
+		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z, std::string(((AIHCAddMapPoint *)data)->label)));
 		return 1;
 	case AIHCAddMapLineId:
-		net->SendMapDrawLine(team,
-			(short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z,
-			(short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z);
+		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z, (short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z));
 		return 1;
 	case AIHCRemoveMapPointId:
-		net->SendMapErase(team,
-			(short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z);
+		net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
 		return 1;
 	case AIHCSendStartPosId:
 		SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);

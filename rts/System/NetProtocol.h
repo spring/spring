@@ -1,16 +1,24 @@
 #ifndef NETPROTOCOL_H
 #define NETPROTOCOL_H
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include "BaseNetProtocol.h"
 
 class CDemoRecorder;
+namespace netcode
+{
+	class RawPacket;
+	class CConnection;
+};
 
 /**
 @brief Even higher level network code layer
 
 The top of the networking stack.
 */
-class CNetProtocol : public CBaseNetProtocol
+class CNetProtocol
 {
 public:
 	CNetProtocol();
@@ -26,7 +34,8 @@ public:
 	 */
 	void InitLocalClient(const unsigned wantedNumber);
 
-	bool IsActiveConnection() const;
+	bool Active() const;
+	bool Connected() const;
 
 	bool localDemoPlayback;
 
@@ -47,16 +56,20 @@ public:
 	 */
 	boost::shared_ptr<const netcode::RawPacket> GetData();
 	
-	CDemoRecorder* GetDemoRecorder() const { return record; }
+	void Send(boost::shared_ptr<const netcode::RawPacket> pkt);
+	void Send(const netcode::RawPacket* pkt);
+	
+	CDemoRecorder* GetDemoRecorder() const { return record.get(); }
 
 	/// updates our network while the game loads to prevent timeouts
 	void UpdateLoop();
+	void Update();
 	volatile bool loading;
 
 private:
-	/// the connection number used for communicating with the server
-	unsigned serverSlot;
-	CDemoRecorder* record;
+	bool isLocal;
+	boost::scoped_ptr<netcode::CConnection> server;
+	boost::scoped_ptr<CDemoRecorder> record;
 };
 
 extern CNetProtocol* net;

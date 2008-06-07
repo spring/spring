@@ -547,19 +547,19 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 void CInMapDraw::SendErase(const float3& pos)
 {
-	net->SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z);
+	net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
 }
 
 
 void CInMapDraw::SendPoint(const float3& pos, const std::string& label)
 {
-	net->SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label);
+	net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label));
 }
 
 
 void CInMapDraw::SendLine(const float3& pos, const float3& pos2)
 {
-	net->SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z);
+	net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z));
 }
 
 

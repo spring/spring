@@ -28,6 +28,8 @@ public:
 	
 	virtual void SendData(boost::shared_ptr<const RawPacket> data)=0;
 
+	virtual bool HasIncomingData() const = 0;
+
 	/**
 	@brief Take a look at the messages that will be returned by GetData().
 	@return A RawPacket holding the data, or 0 if no data
@@ -49,6 +51,7 @@ public:
 	
 	virtual std::string Statistics() const = 0;
 	virtual NetAddress GetPeerName() const = 0;
+	virtual void Update() {};
 
 protected:
 	unsigned dataSent;

@@ -158,7 +158,7 @@ bool GameSetupDrawer::KeyPressed(unsigned short key, bool isRepeat)
 {
 	if (keys[SDLK_LCTRL] && (key == SDLK_RETURN)) {
 		// tell the server to force-start the game
-		net->SendStartPlaying(0);
+		net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
 	}
 	return false;
 }

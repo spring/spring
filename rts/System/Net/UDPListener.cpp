@@ -97,6 +97,11 @@ bool UDPListener::HasIncomingConnections() const
 	return !waiting.empty();
 }
 
+bool UDPListener::HasIncomingData(int timeout)
+{
+	return mySocket->HasIncomingData(timeout);
+}
+
 boost::weak_ptr<UDPConnection> UDPListener::PreviewConnection()
 {
 	return waiting.front();

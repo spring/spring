@@ -90,6 +90,12 @@ NetAddress CLocalConnection::GetPeerName() const
 	return addr;
 }
 
+bool CLocalConnection::HasIncomingData() const
+{
+	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
+	return (!Data[instance].empty());
+}
+
 unsigned CLocalConnection::OtherInstance() const
 {
 	if (instance == 0)

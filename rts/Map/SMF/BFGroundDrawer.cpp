@@ -17,16 +17,15 @@
 using std::min;
 using std::max;
 
-CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm)
+CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
+	bigSquareSize(128),
+	numBigTexX(gs->mapx / bigSquareSize),
+	numBigTexY(gs->mapy / bigSquareSize),
+	heightDataX(gs->mapx + 1)
 {
 	map = rm;
 
-	bigSquareSize = 128;
-	numBigTexX = gs->mapx / bigSquareSize;
-	numBigTexY = gs->mapy / bigSquareSize;
-
 	heightData = map->heightmap;
-	heightDataX = gs->mapx + 1;
 
 	if (shadowHandler->canUseShadows) {
 		groundVP = LoadVertexProgram("ground.vp");

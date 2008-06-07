@@ -1,75 +1,95 @@
 #include "NetProtocol.h"
 
 #include <SDL_timer.h>
+#include <boost/shared_ptr.hpp>
 
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
+#include "Platform/ConfigHandler.h"
+#include "Net/UDPConnection.h"
+#include "Net/LocalConnection.h"
+#include "Net/UDPSocket.h"
 
 
 CNetProtocol::CNetProtocol()
 {
-	serverSlot = 0;
-	record = 0;
 	localDemoPlayback = false;
 }
 
 CNetProtocol::~CNetProtocol()
 {
-	if (record != 0)
-		delete record;
-	
-	if (IsActiveConnection())
-		logOutput.Print(GetConnectionStatistics(serverSlot));
+	Send(CBaseNetProtocol::Get().SendQuit());
+	logOutput.Print(server->Statistics());
 }
 
-void CNetProtocol::InitClient(const char *server, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
+void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
 {
-	unsigned myNum = CNet::InitClient(server, portnum, sourceport,wantedNumber);
-	Listening(false);
-	SendAttemptConnect(myNum, NETWORK_VERSION);
-	FlushNet();
+	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
+	sock->SetBlocking(false);
+	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
+	conn->SetMTU(configHandler.GetInt("MaximumTransmissionUnit", 0));
+	server.reset(conn);
+	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
+	server->Flush(true);
+	isLocal = false;
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
-		record = new CDemoRecorder();
+		record.reset(new CDemoRecorder());
 	}
 	
-	logOutput.Print("Connected to %s:%i using number %i", server, portnum, myNum);
-
-	serverSlot = myNum;
+	logOutput.Print("Connecting to %s:%i using number %i", server_addr, portnum, wantedNumber);
 }
 
 void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
+	server.reset(new netcode::CLocalConnection);
+	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
+	server->Flush();
+	isLocal = true;
 	if (!localDemoPlayback)
 	{
-		record = new CDemoRecorder();
+		record.reset(new CDemoRecorder());
 	}
-
-	unsigned myNum = CNet::InitLocalClient(wantedNumber);
-	SendAttemptConnect(myNum, NETWORK_VERSION);
-	serverSlot = myNum;
+	
+	logOutput.Print("Connecting to local server using number %i", wantedNumber);
 }
 
-bool CNetProtocol::IsActiveConnection() const
+bool CNetProtocol::Active() const
 {
-	return CNet::IsActiveConnection(serverSlot);
+	return !server->CheckTimeout();
+}
+
+bool CNetProtocol::Connected() const
+{
+	return (server->GetDataReceived() > 0);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
-	return CNet::Peek(serverSlot, ahead);
+	return server->Peek(ahead);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 {
-	boost::shared_ptr<const netcode::RawPacket> ret = CNet::GetData(serverSlot);
+	boost::shared_ptr<const netcode::RawPacket> ret = server->GetData();
 	
 	if (record && ret)
 		record->SaveToDemo(ret->data, ret->length);
 	
 	return ret;
+}
+
+void CNetProtocol::Send(boost::shared_ptr<const netcode::RawPacket> pkt)
+{
+	server->SendData(pkt);
+}
+
+void CNetProtocol::Send(const netcode::RawPacket* pkt)
+{
+	boost::shared_ptr<const netcode::RawPacket> ptr(pkt);
+	Send(ptr);
 }
 
 void CNetProtocol::UpdateLoop()
@@ -80,6 +100,11 @@ void CNetProtocol::UpdateLoop()
 		Update();
 		SDL_Delay(400);
 	}
+}
+
+void CNetProtocol::Update()
+{
+	server->Update();
 }
 
 CNetProtocol* net=0;

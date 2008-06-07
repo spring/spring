@@ -46,6 +46,7 @@ public:
 	
 	virtual std::string Statistics() const;
 	virtual NetAddress GetPeerName() const;
+	virtual bool HasIncomingData() const;
 
 private:
 	static std::deque< boost::shared_ptr<const RawPacket> > Data[2];
