@@ -1282,7 +1282,7 @@ namespace luabind { namespace detail
 namespace luabind { namespace
 {
 #if defined(__BORLANDC__) || (BOOST_VERSION >= 103400 && defined(__GNUC__))
-# if (BOOST_VERSION >= 103500 && __GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+# if (BOOST_VERSION >= 103500 && __GNUC__ >= 4 && __GNUC_MINOR__ >= 2)
   static boost::arg<0> return_value;
   static boost::arg<0> result;
 #  define LUABIND_PLACEHOLDER_ARG(N) boost::arg<N>&
