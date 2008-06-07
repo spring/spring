@@ -37,7 +37,7 @@ bool CStartPosSelecter::Ready()
 	if (!startPosSet) // Player doesn't set startpos yet, so don't let him ready up
 		return false;
 
-	net->SendStartPos(gu->myPlayerNum, gu->myTeam, 1, startPos.x, startPos.y, startPos.z);
+	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, 1, startPos.x, startPos.y, startPos.z));
 
 	delete this;
 	return true;
@@ -72,8 +72,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	if(startPos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
 		startPos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
 
-	net->SendStartPos(gu->myPlayerNum, gu->myTeam, 0,
-	                  startPos.x, startPos.y, startPos.z);
+	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, 0, startPos.x, startPos.y, startPos.z));
 
 	return true;
 }

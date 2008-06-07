@@ -773,7 +773,7 @@ void CSelectedUnits::SendSelection(void)
 	std::vector<short>::iterator i = selectedUnitIDs.begin();
 	CUnitSet::const_iterator ui = selectedUnits.begin();
 	for(; ui != selectedUnits.end(); ++i, ++ui) *i = (*ui)->id;
-	net->SendSelect(gu->myPlayerNum, selectedUnitIDs);
+	net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
 	selectionChanged=false;
 }
 
@@ -783,7 +783,7 @@ void CSelectedUnits::SendCommand(Command& c)
 	if(selectionChanged){		//send new selection
 		SendSelection();
 	}
-	net->SendCommand(gu->myPlayerNum, c.id, c.options, c.params);
+	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.id, c.options, c.params));
 }
 
 
@@ -834,6 +834,6 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vecto
 		*packet << static_cast<unsigned int>(cmd.id) << cmd.options << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
 	}
 
-	net->SendData(packet);
+	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));
 	return;
 }

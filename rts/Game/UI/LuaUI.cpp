@@ -2740,8 +2740,7 @@ int CLuaUI::GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
-	net->SendAICommand(gu->myPlayerNum,
-	                   unit->id, cmd.id, cmd.options, cmd.params);
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.id, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2888,7 +2887,7 @@ int CLuaUI::SendLuaUIMsg(lua_State* L)
 	else if (!mode.empty()) {
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
-	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, msg);
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, msg));
 	return 0;
 }
 
@@ -2896,7 +2895,7 @@ int CLuaUI::SendLuaUIMsg(lua_State* L)
 int CLuaUI::SendLuaGaiaMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, msg);
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, msg));
 	return 0;
 }
 
@@ -2904,7 +2903,7 @@ int CLuaUI::SendLuaGaiaMsg(lua_State* L)
 int CLuaUI::SendLuaRulesMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	net->SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, msg);
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, msg));
 	return 0;
 }
 
@@ -2926,12 +2925,10 @@ int CLuaUI::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, (float)lua_tonumber(L, 2)));
 
 	if (shareType == "metal") {
-		net->SendSetShare(gu->myPlayerNum, gu->myTeam,
-		                  shareLevel, gs->Team(gu->myTeam)->energyShare);
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare));
 	}
 	else if (shareType == "energy") {
-		net->SendSetShare(gu->myPlayerNum, gu->myTeam,
-		                  gs->Team(gu->myTeam)->metalShare, shareLevel);
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	gs->Team(gu->myTeam)->metalShare, shareLevel));
 	}
 	else {
 		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -2965,16 +2962,16 @@ int CLuaUI::ShareResources(lua_State* L)
 		Command c;
 		c.id = CMD_STOP;
 		selectedUnits.GiveCommand(c, false);
-		net->SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f);
+		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnits.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = (float)lua_tonumber(L, 3);
 		if (type == "metal") {
-			net->SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f);
+			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
 		}
 		else if (type == "energy") {
-			net->SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount);
+			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
 		}
 	}
 	return 0;

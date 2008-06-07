@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		data->SetMod(gameSetup->baseMod, archiveScanner->GetModChecksum(modArchive));
 		data->SetScript(gameSetup->scriptName);
 		
-		server = new CGameServer(gameSetup->hostport, data, gameSetup);
+		server = new CGameServer(gameSetup->hostport, false, data, gameSetup);
 		
 		if (gameSetup->autohostport > 0)
 			server->AddAutohostInterface(gameSetup->autohostport);

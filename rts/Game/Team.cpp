@@ -258,7 +258,7 @@ void CTeam::Died()
 	}
 	isDead = true;
 	luaCallIns.TeamDied(teamNum);
-	net->SendTeamDied(gu->myPlayerNum, teamNum);
+	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		if (gs->players[a]->active && gs->players[a]->team == teamNum) {
 			gs->players[a]->StartSpectating();

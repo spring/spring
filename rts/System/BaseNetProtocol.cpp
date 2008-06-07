@@ -1,368 +1,313 @@
 #include "BaseNetProtocol.h"
 
+#include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"
+#include "Net/ProtocolDef.h"
+
 using netcode::PackPacket;
+typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
 
-CBaseNetProtocol::CBaseNetProtocol()
+CBaseNetProtocol& CBaseNetProtocol::Get()
 {
-  // RegisterMessage() length parameter:
-  //   > 0:  if its fixed length
-  //   < 0:  means the next x bytes represent the length
-
-	RegisterMessage(NETMSG_KEYFRAME, 5);
-	RegisterMessage(NETMSG_NEWFRAME, 1);
-	RegisterMessage(NETMSG_QUIT, 1);
-	RegisterMessage(NETMSG_STARTPLAYING, 5);
-	RegisterMessage(NETMSG_SETPLAYERNUM, 2);
-	RegisterMessage(NETMSG_PLAYERNAME, -1);
-	RegisterMessage(NETMSG_CHAT, -1);
-	RegisterMessage(NETMSG_RANDSEED, 5);
-	RegisterMessage(NETMSG_GAMEID, 17);
-	RegisterMessage(NETMSG_COMMAND, -2);
-	RegisterMessage(NETMSG_SELECT, -2);
-	RegisterMessage(NETMSG_PAUSE, 3);
-
-	RegisterMessage(NETMSG_AICOMMAND, -2);
-	RegisterMessage(NETMSG_AICOMMANDS, -2);
-	RegisterMessage(NETMSG_AISHARE, -2);
-
-	RegisterMessage(NETMSG_USER_SPEED, 6);
-	RegisterMessage(NETMSG_INTERNAL_SPEED, 5);
-	RegisterMessage(NETMSG_CPU_USAGE, 5);
-	RegisterMessage(NETMSG_DIRECT_CONTROL, 2);
-	RegisterMessage(NETMSG_DC_UPDATE, 7);
-	RegisterMessage(NETMSG_ATTEMPTCONNECT, 3);
-	RegisterMessage(NETMSG_SHARE, 12);
-	RegisterMessage(NETMSG_SETSHARE, 11);
-	RegisterMessage(NETMSG_SENDPLAYERSTAT, 1);
-	RegisterMessage(NETMSG_PLAYERSTAT, 2 + sizeof(CPlayer::Statistics));
-	RegisterMessage(NETMSG_GAMEOVER, 1);
-	RegisterMessage(NETMSG_MAPDRAW, -1);
-	RegisterMessage(NETMSG_SYNCREQUEST, 5);
-	RegisterMessage(NETMSG_SYNCRESPONSE, 10);
-	RegisterMessage(NETMSG_SYSTEMMSG, -1);
-	RegisterMessage(NETMSG_STARTPOS, 16);
-	RegisterMessage(NETMSG_PLAYERINFO, 10);
-	RegisterMessage(NETMSG_PLAYERLEFT, 3);
-	RegisterMessage(NETMSG_LUAMSG, -2);
-	RegisterMessage(NETMSG_TEAM, 4);
-	RegisterMessage(NETMSG_GAMEDATA, -2);
-	RegisterMessage(NETMSG_ALLIANCE, 4);
-	RegisterMessage(NETMSG_CCOMMAND, -2);
+	static CBaseNetProtocol instance;
+	return instance;
 }
 
-CBaseNetProtocol::~CBaseNetProtocol()
-{
-	SendQuit();
-}
-
-void CBaseNetProtocol::SendKeyFrame(int frameNum)
+PacketType CBaseNetProtocol::SendKeyFrame(int frameNum)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_KEYFRAME);
 	*packet << frameNum;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendNewFrame()
+PacketType CBaseNetProtocol::SendNewFrame()
 {
-	SendData(new PackPacket(1, NETMSG_NEWFRAME));
+	return PacketType(new PackPacket(1, NETMSG_NEWFRAME));
 }
 
 
-void CBaseNetProtocol::SendQuit()
+PacketType CBaseNetProtocol::SendQuit()
 {
-	SendData(new PackPacket(1, NETMSG_QUIT));
+	return PacketType(new PackPacket(1, NETMSG_QUIT));
 }
 
-void CBaseNetProtocol::SendQuit(unsigned playerNum)
-{
-	SendData(new PackPacket(5, NETMSG_QUIT), playerNum);
-}
-
-void CBaseNetProtocol::SendStartPlaying(unsigned countdown)
+PacketType CBaseNetProtocol::SendStartPlaying(unsigned countdown)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_STARTPLAYING);
 	*packet << countdown;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum, uchar connNumber)
+PacketType CBaseNetProtocol::SendSetPlayerNum(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(2, NETMSG_SETPLAYERNUM);
 	*packet << myPlayerNum;
-	SendData(packet, connNumber);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)
+PacketType CBaseNetProtocol::SendPlayerName(uchar myPlayerNum, const std::string& playerName)
 {
 	unsigned size = 3 + playerName.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_PLAYERNAME);
 	*packet << static_cast<uchar>(size) << myPlayerNum << playerName;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendRandSeed(unsigned randSeed)
+PacketType CBaseNetProtocol::SendRandSeed(unsigned randSeed)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_RANDSEED);
 	*packet << randSeed;
-	SendData(packet);
-}
-
-void CBaseNetProtocol::SendRandSeed(unsigned randSeed, int toPlayer)
-{
-	PackPacket* packet = new PackPacket(5, NETMSG_RANDSEED);
-	*packet << randSeed;
-	SendData(packet, toPlayer);
+	return PacketType(packet);
 }
 
 // NETMSG_GAMEID = 9, char gameID[16];
-void CBaseNetProtocol::SendGameID(const uchar* buf)
+PacketType CBaseNetProtocol::SendGameID(const uchar* buf)
 {
 	PackPacket* packet = new PackPacket(17, NETMSG_GAMEID);
 	memcpy(packet->GetWritingPos(), buf, 16);
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
+PacketType CBaseNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
 {
 	unsigned size = 9 + params.size() * sizeof(float);
 	PackPacket* packet = new PackPacket(size, NETMSG_COMMAND);
 	*packet << static_cast<unsigned short>(size) << myPlayerNum << id << options << params;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs)
+PacketType CBaseNetProtocol::SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs)
 {
 	unsigned size = 4 + selectedUnitIDs.size() * sizeof(short);
 	PackPacket* packet = new PackPacket(size, NETMSG_SELECT);
 	*packet << static_cast<unsigned short>(size) << myPlayerNum << selectedUnitIDs;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
+PacketType CBaseNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
 {
 	PackPacket* packet = new PackPacket(3, NETMSG_PAUSE);
 	*packet << myPlayerNum << bPaused;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
 
-void CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params)
+PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params)
 {
 	unsigned size = 11 + params.size() * sizeof(float);
 	PackPacket* packet = new PackPacket(size, NETMSG_AICOMMAND);
 	*packet << static_cast<unsigned short>(size) << myPlayerNum << unitID << id << options << params;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
+PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
 {
 	short totalNumBytes = (1 + sizeof(short)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
 
 	PackPacket* packet = new PackPacket(totalNumBytes, NETMSG_AISHARE);
 	*packet << totalNumBytes << myPlayerNum << sourceTeam << destTeam << metal << energy << unitIDs;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendUserSpeed(uchar myPlayerNum, float userSpeed)
+PacketType CBaseNetProtocol::SendUserSpeed(uchar myPlayerNum, float userSpeed)
 {
 	PackPacket* packet = new PackPacket(6, NETMSG_USER_SPEED);
 	*packet << myPlayerNum << userSpeed;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendInternalSpeed(float internalSpeed)
+PacketType CBaseNetProtocol::SendInternalSpeed(float internalSpeed)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_INTERNAL_SPEED);
 	*packet << internalSpeed;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendCPUUsage(float cpuUsage)
+PacketType CBaseNetProtocol::SendCPUUsage(float cpuUsage)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_CPU_USAGE);
 	*packet << cpuUsage;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
+PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(2, NETMSG_DIRECT_CONTROL);
 	*packet << myPlayerNum;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch)
+PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch)
 {
 	PackPacket* packet = new PackPacket(7, NETMSG_DC_UPDATE);
 	*packet << myPlayerNum << status << heading << pitch;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendAttemptConnect(uchar myPlayerNum, uchar networkVersion)
+PacketType CBaseNetProtocol::SendAttemptConnect(uchar myPlayerNum, uchar networkVersion)
 {
 	PackPacket* packet = new PackPacket(3, NETMSG_ATTEMPTCONNECT);
 	*packet << myPlayerNum << networkVersion;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy)
+PacketType CBaseNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy)
 {
 	PackPacket* packet = new PackPacket(12, NETMSG_SHARE);
 	*packet << myPlayerNum << shareTeam << bShareUnits << shareMetal << shareEnergy;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction)
+PacketType CBaseNetProtocol::SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction)
 {
 	PackPacket* packet = new PackPacket(11, NETMSG_SETSHARE);
 	*packet << myPlayerNum << myTeam << metalShareFraction << energyShareFraction;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 
-void CBaseNetProtocol::SendSendPlayerStat()
+PacketType CBaseNetProtocol::SendSendPlayerStat()
 {
-	SendData(new PackPacket(1, NETMSG_SENDPLAYERSTAT));
+	return PacketType(new PackPacket(1, NETMSG_SENDPLAYERSTAT));
 }
 
-void CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats)
+PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats)
 {
 	PackPacket* packet = new PackPacket(2 + sizeof(CPlayer::Statistics), NETMSG_PLAYERSTAT);
 	*packet << myPlayerNum << currentStats;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendGameOver()
+PacketType CBaseNetProtocol::SendGameOver()
 {
-	SendData(new PackPacket(1, NETMSG_GAMEOVER));
+	return PacketType(new PackPacket(1, NETMSG_GAMEOVER));
 }
 
 // NETMSG_MAPDRAW = 31, uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
-void CBaseNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
+PacketType CBaseNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
 {
 	PackPacket* packet = new PackPacket(8, NETMSG_MAPDRAW);
 	*packet << static_cast<uchar>(8) << myPlayerNum << static_cast<uchar>(CInMapDraw::NET_ERASE) << x << z;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 // NETMSG_MAPDRAW = 31, uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
-void CBaseNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2)
+PacketType CBaseNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2)
 {
 	PackPacket* packet = new PackPacket(12, NETMSG_MAPDRAW);
 	*packet << static_cast<uchar>(12) << myPlayerNum << static_cast<uchar>(CInMapDraw::NET_LINE) << x1 << z1 << x2 << z2;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 // NETMSG_MAPDRAW = 31, uchar messageSize, uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
-void CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
+PacketType CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label)
 {
 	unsigned size = 8 + label.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_MAPDRAW);
 	*packet << static_cast<uchar>(size) << myPlayerNum << static_cast<uchar>(CInMapDraw::NET_POINT) << x << z << label;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSyncRequest(int frameNum)
+PacketType CBaseNetProtocol::SendSyncRequest(int frameNum)
 {
 	PackPacket* packet = new PackPacket(5, NETMSG_SYNCREQUEST);
 	*packet << frameNum;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum)
+PacketType CBaseNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum)
 {
 	PackPacket* packet = new PackPacket(10, NETMSG_SYNCRESPONSE);
 	*packet << myPlayerNum << frameNum << checksum;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
+PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
 {
 	unsigned size = 3 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
 	*packet << static_cast<uchar>(size) << myPlayerNum << message;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z)
+PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z)
 {
 	PackPacket* packet = new PackPacket(16, NETMSG_STARTPOS);
 	*packet << myPlayerNum << teamNum << ready << x << y << z;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
+PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
 	PackPacket* packet = new PackPacket(10, NETMSG_PLAYERINFO);
 	*packet << myPlayerNum << cpuUsage << ping;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
+PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 {
 	PackPacket* packet = new PackPacket(3, NETMSG_PLAYERLEFT);
 	*packet << myPlayerNum << bIntended;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
-void CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
+PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
                                   const std::string& msg)
 {
 	unsigned short size = 6 + msg.size()+1;
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSelfD(uchar myPlayerNum)
+PacketType CBaseNetProtocol::SendSelfD(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
 	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_SELFD) << static_cast<uchar>(0);
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
+PacketType CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
 	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_GIVEAWAY) << giveTo;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendResign(uchar myPlayerNum)
+PacketType CBaseNetProtocol::SendResign(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
 	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_RESIGN) << static_cast<uchar>(0);
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
+PacketType CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
 	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_JOIN_TEAM) << wantedTeamNum;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
+PacketType CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
 	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_TEAM_DIED) << whichTeam;
-	SendData(packet);
+	return PacketType(packet);
 }
 
-void CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state)
+PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_ALLIANCE);
 	*packet << myPlayerNum << whichAllyTeam << state;
-	SendData(packet);
+	return PacketType(packet);
 }
 
 /* FIXME: add these:
@@ -376,3 +321,57 @@ void CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uch
 #endif // SYNCDEBUG
 
 */
+
+CBaseNetProtocol::CBaseNetProtocol()
+{
+	netcode::ProtocolDef* proto = netcode::ProtocolDef::instance();
+  // proto->AddType() length parameter:
+  //   > 0:  if its fixed length
+  //   < 0:  means the next x bytes represent the length
+
+	proto->AddType(NETMSG_KEYFRAME, 5);
+	proto->AddType(NETMSG_NEWFRAME, 1);
+	proto->AddType(NETMSG_QUIT, 1);
+	proto->AddType(NETMSG_STARTPLAYING, 5);
+	proto->AddType(NETMSG_SETPLAYERNUM, 2);
+	proto->AddType(NETMSG_PLAYERNAME, -1);
+	proto->AddType(NETMSG_CHAT, -1);
+	proto->AddType(NETMSG_RANDSEED, 5);
+	proto->AddType(NETMSG_GAMEID, 17);
+	proto->AddType(NETMSG_COMMAND, -2);
+	proto->AddType(NETMSG_SELECT, -2);
+	proto->AddType(NETMSG_PAUSE, 3);
+
+	proto->AddType(NETMSG_AICOMMAND, -2);
+	proto->AddType(NETMSG_AICOMMANDS, -2);
+	proto->AddType(NETMSG_AISHARE, -2);
+
+	proto->AddType(NETMSG_USER_SPEED, 6);
+	proto->AddType(NETMSG_INTERNAL_SPEED, 5);
+	proto->AddType(NETMSG_CPU_USAGE, 5);
+	proto->AddType(NETMSG_DIRECT_CONTROL, 2);
+	proto->AddType(NETMSG_DC_UPDATE, 7);
+	proto->AddType(NETMSG_ATTEMPTCONNECT, 3);
+	proto->AddType(NETMSG_SHARE, 12);
+	proto->AddType(NETMSG_SETSHARE, 11);
+	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);
+	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(CPlayer::Statistics));
+	proto->AddType(NETMSG_GAMEOVER, 1);
+	proto->AddType(NETMSG_MAPDRAW, -1);
+	proto->AddType(NETMSG_SYNCREQUEST, 5);
+	proto->AddType(NETMSG_SYNCRESPONSE, 10);
+	proto->AddType(NETMSG_SYSTEMMSG, -1);
+	proto->AddType(NETMSG_STARTPOS, 16);
+	proto->AddType(NETMSG_PLAYERINFO, 10);
+	proto->AddType(NETMSG_PLAYERLEFT, 3);
+	proto->AddType(NETMSG_LUAMSG, -2);
+	proto->AddType(NETMSG_TEAM, 4);
+	proto->AddType(NETMSG_GAMEDATA, -2);
+	proto->AddType(NETMSG_ALLIANCE, 4);
+	proto->AddType(NETMSG_CCOMMAND, -2);
+}
+
+CBaseNetProtocol::~CBaseNetProtocol()
+{
+	//SendQuit();
+}

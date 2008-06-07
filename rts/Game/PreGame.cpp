@@ -13,6 +13,7 @@
 #include "GameSetup.h"
 #include "GameData.h"
 #include "NetProtocol.h"
+#include "Net/RawPacket.h"
 #include "DemoRecorder.h"
 #include "DemoReader.h"
 #include "LoadSaveHandler.h"
@@ -38,7 +39,6 @@
 // msvc behaves really strange
 #if _MSC_VER
 namespace std {
-	using ::cos;
 	using ::sin;
 }
 #endif
@@ -46,6 +46,7 @@ namespace std {
 const int springDefaultPort = 8452;
 
 CPreGame* pregame=0;
+using netcode::RawPacket;
 
 extern Uint8 *keys;
 extern bool globalQuit;
@@ -60,8 +61,8 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
   state(UNKNOWN),
   hasDemo(!demo.empty()),
   hasSave(!save.empty()),
-  savefile(NULL),
-  gameData(0)
+  gameData(0),
+  savefile(NULL)
 {
 	demoFile = gameSetup? gameSetup->demoName : demo;
 
@@ -416,11 +417,11 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	
 	good_fpu_control_registers("before CGameServer creation");
 	int myPort = gameSetup? gameSetup->hostport : springDefaultPort;
-	gameServer = new CGameServer(myPort, startupData, gameSetup, demoFile);
+	gameServer = new CGameServer(myPort, false, startupData, gameSetup, demoFile);
 	if (gameSetup && gameSetup->autohostport > 0) {
 		gameServer->AddAutohostInterface(gameSetup->autohostport);
 	}
-	gameServer->AddLocalClient();
+	gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -431,7 +432,7 @@ void CPreGame::UpdateClientNet()
 		logOutput.Print("Warning: game should have started before");
 		return;
 	}
-	if (!net->IsActiveConnection())
+	if (!net->Active())
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;
@@ -473,8 +474,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(springDefaultPort, data, gameSetup, demoName);
-			gameServer->AddLocalClient();
+			gameServer = new CGameServer(springDefaultPort, false, data, gameSetup, demoName);
+			gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 			good_fpu_control_registers("after CGameServer creation");
 			break;
 		}

@@ -4,6 +4,7 @@
 #include <direct.h>
 #include <io.h>
 #else
+#include <poll.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -85,6 +86,33 @@ void Socket::SetBlocking(const bool block) const
 	{
 		throw network_error(std::string("Error setting socket I/O mode: ") + GetErrorMsg());
 	}
+}
+
+bool Socket::HasIncomingData(int timeout) const
+{
+#ifndef _WIN32
+	// linux has poll() which is faster and easier to use than select()
+	pollfd pd;
+	pd.fd = mySocket;
+	pd.events = POLLIN | POLLPRI;
+	const int ret = poll(&pd, 1, timeout);
+#else
+	// Windows only provides poll() in Vista, so use select() here
+	fd_set pd;
+	FD_ZERO(&pd);
+	FD_SET(mySocket, &pd);
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = timeout;
+	const int ret = select(mySocket+1, &pd, 0, 0, &tv);
+#endif
+	
+	if (ret > 0)
+		return true;
+	else if (ret == 0)
+		return false;
+	else
+		throw network_error(std::string("Poll for data failed: ") + GetErrorMsg());
 }
 
 void Socket::Bind(unsigned short port) const

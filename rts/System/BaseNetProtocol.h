@@ -1,9 +1,14 @@
 #ifndef BASENETPROTOCOL_H
 #define BASENETPROTOCOL_H
 
-#include "Net/Net.h"
+#include <boost/shared_ptr.hpp>
+
 #include "Game/Player.h"
 
+namespace netcode
+{
+	class RawPacket;
+}
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -94,62 +99,65 @@ enum TEAMMSG {
 @brief High level network code layer
 Provides protocoldependent functions over our CNet-Class. It includes all functions needed to send stuff without handling with the internals.
  */
-class CBaseNetProtocol : public netcode::CNet {
+class CBaseNetProtocol
+{
 public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
-
-	CBaseNetProtocol();
-	~CBaseNetProtocol();
-
-	void SendKeyFrame(int frameNum);
-	void SendNewFrame();
-	void SendQuit();
-	void SendQuit(unsigned playerNum);
-	void SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
-	void SendSetPlayerNum(uchar myPlayerNum, uchar connNumber);
-	void SendPlayerName(uchar myPlayerNum, const std::string& playerName);
-	void SendRandSeed(uint randSeed);
-	void SendRandSeed(uint randSeed, int toPlayer);
-	void SendGameID(const uchar* buf);
-	void SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
-	void SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
-	void SendPause(uchar myPlayerNum, uchar bPaused);
-
-	void SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
-	void SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
-
-	void SendUserSpeed(uchar myPlayerNum, float userSpeed);
-	void SendInternalSpeed(float internalSpeed);
-	void SendCPUUsage(float cpuUsage);
-	void SendDirectControl(uchar myPlayerNum);
-	void SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	void SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
-	void SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
-	void SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	void SendSendPlayerStat();
-	void SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
-	void SendGameOver();
-	void SendMapErase(uchar myPlayerNum, short x, short z);
-	void SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
-	void SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
-	void SendSyncRequest(int frameNum);
-	void SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
-	void SendSystemMessage(uchar myPlayerNum, const std::string& message);
-	void SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
-	void SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
-	void SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	void SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
+	typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
 	
-	void SendSelfD(uchar myPlayerNum);
-	void SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
-	void SendResign(uchar myPlayerNum);
-	void SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
+	static CBaseNetProtocol& Get();
+
+	PacketType SendKeyFrame(int frameNum);
+	PacketType SendNewFrame();
+	PacketType SendQuit();
+	PacketType SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
+	PacketType SendSetPlayerNum(uchar myPlayerNum);
+	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
+	PacketType SendRandSeed(uint randSeed);
+	PacketType SendGameID(const uchar* buf);
+	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
+	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
+	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
+
+	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
+	PacketType SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
+
+	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
+	PacketType SendInternalSpeed(float internalSpeed);
+	PacketType SendCPUUsage(float cpuUsage);
+	PacketType SendDirectControl(uchar myPlayerNum);
+	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
+	PacketType SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
+	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
+	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
+	PacketType SendSendPlayerStat();
+	PacketType SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
+	PacketType SendGameOver();
+	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
+	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
+	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
+	PacketType SendSyncRequest(int frameNum);
+	PacketType SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
+	PacketType SendSystemMessage(uchar myPlayerNum, const std::string& message);
+	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
+	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
+	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
+	PacketType SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
+	
+	PacketType SendSelfD(uchar myPlayerNum);
+	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
+	PacketType SendResign(uchar myPlayerNum);
+	PacketType SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
 	// currently only used to inform the server about its death
 	// it may have some problems when desync because the team may not die on every client
-	void SendTeamDied(uchar myPlayerNum, uchar whichTeam);
+	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 
-	void SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
+	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
+	
+private:
+	CBaseNetProtocol();
+	~CBaseNetProtocol();
 };
 
 #endif

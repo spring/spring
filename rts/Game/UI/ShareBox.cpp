@@ -294,8 +294,7 @@ void CShareBox::MouseRelease(int x, int y, int button)
 			// make sure the units are stopped and that the selection is transmitted
 			selectedUnits.GiveCommand(c, false);
 		}
-		net->SendShare(gu->myPlayerNum, shareTeam, shareUnits,
-				metalShare * gs->Team(gu->myTeam)->metal, energyShare * gs->Team(gu->myTeam)->energy);
+		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * gs->Team(gu->myTeam)->metal, energyShare * gs->Team(gu->myTeam)->energy));
 		if (shareUnits)
 			selectedUnits.ClearSelected();
 		lastShareTeam = shareTeam;

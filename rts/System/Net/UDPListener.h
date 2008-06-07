@@ -51,10 +51,10 @@ public:
 	bool Listen() const;
 	
 	bool HasIncomingConnections() const;
+	bool HasIncomingData(int timeout);
 	boost::weak_ptr<UDPConnection> PreviewConnection();
 	boost::shared_ptr<UDPConnection> AcceptConnection();
 	void RejectConnection();
-	
 	
 private:
 	/**

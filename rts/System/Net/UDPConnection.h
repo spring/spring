@@ -6,9 +6,9 @@
 #include <boost/shared_ptr.hpp>
 #include <deque>
 
-#include "Connection.h"
 #include "UDPSocket.h"
 #include "RawPacket.h"
+#include "Connection.h"
 
 namespace netcode {
 
@@ -37,6 +37,8 @@ public:
 	*/
 	virtual void SendData(boost::shared_ptr<const RawPacket> data);
 
+	virtual bool HasIncomingData() const;
+
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
 
 	/**
@@ -50,7 +52,7 @@ public:
 	@brief update internals
 	Check for unack'd packets, timeout etc.
 	*/
-	void Update();
+	virtual void Update();
 	
 	/**
 	@brief strip and parse header data and add data to waitingPackets
@@ -68,6 +70,8 @@ public:
 
 	/// do we have these address?
 	bool CheckAddress(const sockaddr_in&) const;
+	
+	void SetMTU(unsigned mtu);
 
 	/// The size of the protocol-header (Packets smaller than this get rejected)
 	static const unsigned hsize;
@@ -85,6 +89,11 @@ private:
 	void SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum);
 	/// address of the other end
 	sockaddr_in addr;
+
+	/// maximum size of packets to send
+	unsigned mtu;
+	
+	bool sharedSocket;
 
 	///outgoing stuff (pure data without header) waiting to be sended
 	unsigned char outgoingData[UDPBufferSize];
