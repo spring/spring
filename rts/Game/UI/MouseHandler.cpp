@@ -275,8 +275,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
-	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
-	buttons[button].pressed=false;
+	dir = hide ? camera->forward: camera->CalcPixelDir(x, y);
+	buttons[button].pressed = false;
 
 	if (inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseRelease(x, y, button);
@@ -299,10 +299,11 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	//  <= 0.3 s means a camera mode switch, > 0.3 s means a drag scroll)
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f)) {
-			if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
+			if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]) {
 				camHandler->ToggleState();
-			else
+			} else {
 				ToggleState();
+			}
 		}
 		return;
 	}
@@ -547,9 +548,9 @@ void CMouseHandler::Draw()
 void CMouseHandler::WarpMouse(int x, int y)
 {
 	if (!locked) {
-		lastx = x;
-		lasty = y;
-		mouseInput->SetPos(int2(x, y));
+		lastx = x + gu->viewPosX;
+		lasty = y + gu->viewPosY;
+		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
 
@@ -667,11 +668,11 @@ void CMouseHandler::HideMouse()
 
 void CMouseHandler::ToggleState()
 {
-	if(locked){
-		locked=false;
+	if (locked) {
+		locked = false;
 		ShowMouse();
 	} else {
-		locked=true;
+		locked = true;
 		HideMouse();
 	}
 }
