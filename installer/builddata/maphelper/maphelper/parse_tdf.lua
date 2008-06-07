@@ -128,7 +128,7 @@ end
 
 
 ParseSection = function()
-  local s, e, h, p = text:find('^%[[ \t]*(%S*)[ \t]*%]()', pos)
+  local s, e, h, p = text:find('^%[([^%]]+)%]()', pos)
   if (not h) then
     Crash('missing section')
   end
