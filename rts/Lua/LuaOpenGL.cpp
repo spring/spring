@@ -1190,17 +1190,15 @@ int LuaOpenGL::Text(lua_State* L)
 		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		if (lightOut) {
-			font->Outline(true, noshow, lightOutline);
+			font->OutlineS(true, lightOutline);
 		} else {
-			font->Outline(true, noshow, darkOutline);
+			font->OutlineS(true, darkOutline);
 		}
-		font->glPrintAt(xj, y, fontScale, text.c_str());
 	}
 
 	if (colorCodes) {
 		font->glPrintColorAt(xj, y, fontScale, text.c_str());
 	} else {
-		//glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		font->glPrintAt(xj, y, fontScale, text.c_str());
 	}
 
