@@ -15,7 +15,6 @@
 #include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
-#include "OutlineFont.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
@@ -146,7 +145,7 @@ void CGuiHandler::LoadDefaults()
 
 	menuName = "";
 
-	outlineFont.Enable(false);
+	outlineFonts = false;
 
 	attackRect = true;
 	newAttackMode = true;
@@ -254,7 +253,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 			SafeAtoF(textureAlpha, words[1]);
 		}
 		else if ((command == "outlinefont") && (words.size() > 1)) {
-			outlineFont.Enable(!!atoi(words[1].c_str()));
+			outlineFonts = !!atoi(words[1].c_str());
 		}
 		else if ((command == "attackrect") && (words.size() > 1)) {
 			attackRect = !!atoi(words[1].c_str());
@@ -3111,7 +3110,7 @@ void CGuiHandler::DrawMenuName()
 		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2 - textWidth);
 		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
 
-		if (!outlineFont.IsEnabled()) {
+		if (!outlineFonts) {
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 			glRectf(buttonBox.x1,
@@ -3147,7 +3146,7 @@ void CGuiHandler::DrawSelectionInfo()
 
 		const float fontScale = 1.0f;
 
-		if (!outlineFont.IsEnabled()) {
+		if (!outlineFonts) {
 			const float textWidth  = fontScale * smallFont->CalcTextWidth(buf);
 			const float textHeight = fontScale * smallFont->CalcTextHeight(buf);
 

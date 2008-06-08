@@ -2,10 +2,10 @@
 #include "CursorIcons.h"
 #include "CommandColors.h"
 #include "MouseHandler.h"
+#include "GuiHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Game/UI/OutlineFont.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -135,7 +135,7 @@ void CCursorIcons::DrawTexts()
 			const float x = (winPos.x * gu->pixelX) - (0.5f * tWidth);
 			const float y = (winPos.y * gu->pixelY) + tHeight + yOffset;
 
-			if (outlineFont.IsEnabled()) {
+			if (guihandler->GetOutlineFonts()) {
 				const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 				//const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 				font->glPrintOutlinedAt(x, y, fontScale, text, white);

@@ -66,11 +66,11 @@ protected:
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 #endif
 		WaitingDamage(int attacker,int target,const DamageArray& damage,const float3& impulse, const int weaponId)
-			:	attacker(attacker),
-				target(target),
+			:	target(target),
+				attacker(attacker),
+				weaponId(weaponId),
 				damage(damage),
-				impulse(impulse),
-				weaponId(weaponId)
+				impulse(impulse)
 		{}
 
 		int target;
