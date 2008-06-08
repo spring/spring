@@ -325,6 +325,14 @@ void CglFont::Outline(bool enable, const float *color, const float *outlineColor
 	}
 }
 
+void CglFont::OutlineS(bool enable, const float *outlineColor)
+{
+	this->outline = enable;
+	if (enable) {;
+		this->outlineColor = outlineColor ? outlineColor : ChooseOutlineColor(color);
+	}
+}
+
 float CglFont::RenderString(float x, float y, float s, const unsigned char *text) const
 {
 //	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
@@ -548,19 +556,33 @@ void CglFont::glPrintRight (float x, float y, float s, const char *fmt, ...)
 
 void CglFont::glPrintColorAt(GLfloat x, GLfloat y, float s, const char *str)
 {
-	glColor3f(1, 1, 1);
+	//TODO both glColor and float* color is set, make RenderString respect the float *color
+	const float *oldcolor = color;
+	float newcolor[4] = {1.0, 1.0, 1.0, 1.0};
+	color = const_cast<const float*>(newcolor);
+	glColor4fv(color);
 	size_t lf;
 	string temp=str;
 	while((lf=temp.find("\xff"))!=string::npos) {
-		x = RenderString(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
+		if (outline)
+		{
+			x = RenderStringOutlined(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
+			outline = true; //HACK RenderStringOutlined resets outline
+		}
+		else
+			x = RenderString(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
 		temp=temp.substr(lf, string::npos);
-		float r=((unsigned char)temp[1])/255.0f;
-		float g=((unsigned char)temp[2])/255.0f;
-		float b=((unsigned char)temp[3])/255.0f;
-		glColor3f(r, g, b);
+		newcolor[0] = ((unsigned char)temp[1])/255.0f;
+		newcolor[1] = ((unsigned char)temp[2])/255.0f;
+		newcolor[2] = ((unsigned char)temp[3])/255.0f;
+		glColor4fv(color);
 		temp=temp.substr(4, string::npos);
 	}
-	RenderString(x, y, s, (const unsigned char*)temp.c_str());
+	if (outline)
+		RenderStringOutlined(x, y, s, (const unsigned char*)temp.c_str());
+	else
+		RenderString(x, y, s, (const unsigned char*)temp.c_str());
+	color = oldcolor;
 }
 
 void CglFont::glFormatAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)

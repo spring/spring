@@ -27,6 +27,7 @@ public:
 	void glPrintRight (float x,float y, float s, const char *fmt,...);
 	void glPrintCentered (float x,float y, float s, const char *fmt,...);
 	void Outline(bool enable, const float *color, const float *outlineColor = 0);		/// Enable outlining for the next drawing operation.
+	void OutlineS(bool enable, const float *outlineColor = 0);		/// Enable outlining for the next drawing operation.
 
 	// The "outlined" functions are for convenience; their functionality may be obtained by calling Outline() before rendering text.
 	void glPrintOutlinedAt(float x, float y, float scale, const char* text, const float* normalColor);
