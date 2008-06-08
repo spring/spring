@@ -86,7 +86,7 @@ void CCommanderScript::GameStart()
 				const std::string& sideName  = it->first;
 				const std::string& startUnit = it->second;
 				if (startUnit.length() == 0) {
-					throw content_error (
+					throw content_error(
 						"Unable to load a commander for side: " + sideName
 					);
 				}
@@ -117,10 +117,13 @@ void CCommanderScript::GameStart()
 		const std::string su2 = StringToLower(side2.GetString("startUnit", su1));
 
 		if (su1.length() == 0) {
-			throw content_error ("Unable to load a startUnit for the first side");
+			throw content_error("Unable to load a startUnit for the first side");
 		}
 		
 		MapParser mapParser(stupidGlobalMapname);
+		if (!mapParser.IsValid()) {
+			throw content_error("MapParser: " + mapParser.GetErrorLog());
+		}
 		float3 startPos0(1000.0f, 80.0f, 1000.0f);
 		float3 startPos1(1200.0f, 80.0f, 1200.0f);
 		mapParser.GetStartPos(0, startPos0);

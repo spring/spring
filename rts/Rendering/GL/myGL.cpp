@@ -98,11 +98,13 @@ void LoadExtensions()
 		ofs.write(s.c_str(), s.length());
 }
 
+
 void UnloadExtensions()
 {
 	delete vertexArray1;
 	delete vertexArray2;
 }
+
 
 /******************************************************************************/
 
@@ -252,7 +254,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(1,1,1);
 
-	if(startupTexture){
+	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
 		glBegin(GL_QUADS);
 			glTexCoord2f(0,1);glVertex2f(0,0);
@@ -264,8 +266,9 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
 	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", VERSION_STRING);
 	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
-	if (swapbuffers)
+	if (swapbuffers) {
 		SDL_GL_SwapBuffers();
+	}
 	POP_CODE_MODE;
 }
 
@@ -379,16 +382,19 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 	return ret;
 }
 
+
 unsigned int LoadVertexProgram(const char* filename)
 {
 	return LoadProgram(GL_VERTEX_PROGRAM_ARB, filename, "vertex");
 }
+
 
 unsigned int LoadFragmentProgram(const char* filename)
 {
 
 	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
 }
+
 
 void glSafeDeleteProgram(GLuint program)
 {

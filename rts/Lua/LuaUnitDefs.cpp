@@ -724,7 +724,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("seismicSignature", ud.seismicSignature);
 
-	ADD_BOOL("stealth", ud.stealth);
+	ADD_BOOL("stealth",      ud.stealth);
+	ADD_BOOL("sonarStealth", ud.sonarStealth);
 
 	ADD_FLOAT("mass", ud.mass);
 

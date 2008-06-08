@@ -25,6 +25,9 @@
 #include <cstdio>
 #include <cstdarg>
 
+using std::string;
+
+
 #define ASSERT(condition, message) \
 	do { \
 		if (!(condition)) { \
@@ -417,7 +420,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 	if (!mapParser.IsValid()) {
 		err = mapParser.GetErrorLog();
 	}
-	const LuaTable mapTable = mapParser.GetRoot();
+	const	LuaTable mapTable = mapParser.GetRoot();
 
 	// Retrieve the map header as well
 	if (err.empty()) {
@@ -1224,11 +1227,14 @@ static void ParseOptions(const string& fileName,
 	optionsSet.clear();
 
 	LuaParser luaParser(fileName, fileModes, accessModes);
-	if (!mapName.empty()) {
+
+	const string configName = MapParser::GetMapConfigName(mapName);
+
+	if (!mapName.empty() && !configName.empty()) {
 		luaParser.GetTable("Map");
 		luaParser.AddString("fileName", mapName);
 		luaParser.AddString("fullName", "maps/" + mapName);
-		luaParser.AddString("configFile", MapParser::GetMapConfigName(mapName));
+		luaParser.AddString("configFile", configName);
 		luaParser.EndTable();
 	}
 		
@@ -1642,8 +1648,8 @@ DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 // pass the returned handle to findfiles to get the results
 DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 {
-	std::string path = filesystem.GetDirectory(pattern);
-	std::string patt = filesystem.GetFilename(pattern);
+	string path = filesystem.GetDirectory(pattern);
+	string patt = filesystem.GetFilename(pattern);
 	logOutput.Print("initfindvfs: %s\n", pattern);
 	curFindFiles = CFileHandler::FindFiles(path, patt);
 	return 0;
@@ -1775,7 +1781,7 @@ void PrintLoadMsg(const char* text)
  */
 DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const char* defvalue )
 {
-	std::string res = configHandler.GetString( name, defvalue );
+	string res = configHandler.GetString( name, defvalue );
 	return GetStr(res);
 }
 

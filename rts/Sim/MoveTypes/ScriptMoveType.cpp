@@ -1,10 +1,13 @@
 
 #include "StdAfx.h"
+
 #include "ScriptMoveType.h"
+
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -14,7 +17,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 
@@ -152,6 +155,8 @@ void CScriptMoveType::SlowUpdate()
 		}
 	}
 	qf->MovedUnit(owner);
+
+	owner->isUnderWater = ((owner->pos.y + owner->model->height) < 0.0f);
 };
 
 

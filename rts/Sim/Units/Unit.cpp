@@ -1433,14 +1433,16 @@ void CUnit::DependentDied(CObject* o)
 
 void CUnit::SetUserTarget(CUnit* target)
 {
-	if(userTarget && lastAttacker!=userTarget)
+	if (userTarget && (lastAttacker != userTarget)) {
 		DeleteDeathDependence(userTarget);
+	}
 
 	userTarget=target;
-	for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi)
-		(*wi)->haveUserTarget=false;
+	for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi) {
+		(*wi)->haveUserTarget = false;
+	}
 
-	if(target){
+	if (target) {
 		AddDeathDependence(target);
 	}
 }
@@ -1448,39 +1450,50 @@ void CUnit::SetUserTarget(CUnit* target)
 
 void CUnit::Init(const CUnit* builder)
 {
-	relMidPos=model->relMidPos;
-	midPos=pos+frontdir*relMidPos.z + updir*relMidPos.y + rightdir*relMidPos.x;
-	losHeight=relMidPos.y+radius*0.5f;
-	height = model->height;		//TODO: This one would be much better to have either in Constructor or UnitLoader!//why this is always called in unitloader
-	currentFuel=unitDef->maxFuel;
+	relMidPos = model->relMidPos;
+	midPos = pos + (frontdir * relMidPos.z)
+	             + (updir    * relMidPos.y)
+	             + (rightdir * relMidPos.x);
+	losHeight = relMidPos.y + (radius * 0.5f);
+	height = model->height;
+	// TODO: This one would be much better to have either in Constructor
+	//       or UnitLoader! // why this is always called in unitloader
+	currentFuel = unitDef->maxFuel;
 
-	//All ships starts on water, all other on ground.
-	//TODO: Improve this. There might be cases when this is not correct.
-	if(unitDef->movedata && unitDef->movedata->moveType==MoveData::Hover_Move){
+	// all ships starts on water, all other on ground.
+	// TODO: Improve this. There might be cases when this is not correct.
+	if (unitDef->movedata &&
+	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
 		physicalState = Hovering;
-	} else if(floatOnWater) {
+	} else if (floatOnWater) {
 		physicalState = Floating;
 	} else {
 		physicalState = OnGround;
 	}
 
-	//All units are set as ground-blocking.
+	// all units are set as ground-blocking.
 	blocking = true;
 
-	if(pos.y+model->height<1)	//some torp launchers etc are exactly in the surface and should be considered uw anyway
-		isUnderWater=true;
+	// some torp launchers etc are exactly in the surface and should be considered uw anyway
+	if ((pos.y + model->height) < 1) {
+		isUnderWater = true;
+	}
 
-	if(!unitDef->canKamikaze || unitDef->type=="Building" || unitDef->type=="Factory")	//semi hack to make mines not block ground
+	// semi hack to make mines not block ground
+	if (!unitDef->canKamikaze ||
+	    (unitDef->type == "Building") ||
+	    (unitDef->type == "Factory")) {
 		Block();
+	}
 
 	UpdateTerrainType();
 
 	Command c;
 	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState<0) {
+		if (unitDef->moveState < 0) {
 			if (builder!=NULL) {
 				moveState = builder->moveState;
-			}else{
+			} else {
 				moveState = 1;
 			}
 		} else {
@@ -1494,10 +1507,10 @@ void CUnit::Init(const CUnit* builder)
 	}
 
 	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState<0) {
-			if (builder!=NULL) {
+		if (unitDef->fireState < 0) {
+			if (builder != NULL) {
 				fireState = builder->fireState;
-			}else{
+			} else {
 				fireState = 2;
 			}
 		} else {
@@ -2205,7 +2218,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(radarSquares),
 				CR_MEMBER(oldRadarPos),
 				CR_MEMBER(stealth),
-				CR_RESERVED(16),
+				CR_MEMBER(sonarStealth),
+				CR_RESERVED(15),
 
 				CR_MEMBER(commandAI),
 				CR_MEMBER(moveType),

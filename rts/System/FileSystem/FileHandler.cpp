@@ -15,13 +15,15 @@ using namespace std;
 /******************************************************************************/
 /******************************************************************************/
 
-CFileHandler::CFileHandler(const char* filename, const char* modes) : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
+CFileHandler::CFileHandler(const char* filename, const char* modes)
+: ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
 	Init(filename, modes);
 }
 
 
-CFileHandler::CFileHandler(const string& filename, const string& modes) : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
+CFileHandler::CFileHandler(const string& filename, const string& modes)
+: ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
 	Init(filename, modes);
 }

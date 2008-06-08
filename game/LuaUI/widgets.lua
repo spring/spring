@@ -25,12 +25,11 @@ include("callins.lua")
 include("savetable.lua")
 
 
-local gl = Spring.Draw
+local gl = gl
 
 local ORDER_FILENAME     = LUAUI_DIRNAME .. 'Config/widget_order.lua'
 local CONFIG_FILENAME    = LUAUI_DIRNAME .. 'Config/widget_data.lua'
 local WIDGET_DIRNAME     = LUAUI_DIRNAME .. 'Widgets/'
-local MOD_WIDGET_DIRNAME = MODUI_DIRNAME .. 'Widgets/'
 
 local SELECTOR_BASENAME = 'selector.lua'
 

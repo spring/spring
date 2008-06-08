@@ -10,7 +10,7 @@
 #include "LogOutput.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sync/SyncTracer.h"
-#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"

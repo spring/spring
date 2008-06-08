@@ -12,6 +12,7 @@ class CRadarHandler : public boost::noncopyable
 {
 	CR_DECLARE(CRadarHandler);
 
+
 public:
 	CRadarHandler(bool circularRadar);
 	~CRadarHandler();
@@ -19,19 +20,24 @@ public:
 	void MoveUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 
-	bool InRadar(const float3& pos, int allyTeam) {
-		const int gx = (int) pos.x / (SQUARE_SIZE * RADAR_SIZE);
-		const int gz = (int) pos.z / (SQUARE_SIZE * RADAR_SIZE);
-		const int rowIdx = std::max(0, std::min(ysize - 1, gz)) * xsize;
+	inline int GetSquare(const float3& pos) const
+	{
+		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
+		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
+		const int rowIdx = std::max(0, std::min(ysize - 1, gz));
 		const int colIdx = std::max(0, std::min(xsize - 1, gx));
-		const int square = rowIdx + colIdx;
+		return (rowIdx * xsize) + colIdx;
+	}
+
+	bool InRadar(const float3& pos, int allyTeam) {
+		const int square = GetSquare(pos);
 		if (pos.y < -0.5f) {
 			#ifdef DEBUG
 			assert(square < sonarMaps[allyTeam].size());
 			#endif
 			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
-		else if (!circularRadar && pos.y > 0.5f) {
+		else if (!circularRadar && (pos.y > 0.5f)) {
 			#ifdef DEBUG
 			assert(square < airRadarMaps[allyTeam].size());
 			#endif
@@ -46,36 +52,46 @@ public:
 	}
 
 	bool InRadar(const CUnit* unit, int allyTeam) {
-		if (unit->stealth)
-			return false;
-
-		const int rowIdx = std::max(0, std::min(ysize - 1, (int) unit->pos.z / (SQUARE_SIZE * RADAR_SIZE))) * xsize;
-		const int colIdx = std::max(0, std::min(xsize - 1, (int) unit->pos.x / (SQUARE_SIZE * RADAR_SIZE)));
-		const int square = rowIdx + colIdx;
 
 		if (unit->isUnderWater) {
+			if (unit->sonarStealth) {
+				return false;
+			}
+			const int square = GetSquare(unit->pos);
 			#ifdef DEBUG
 			assert(square < sonarMaps[allyTeam].size());
 			#endif
-			return (!!sonarMaps[allyTeam][square]) && !commonSonarJammerMap[square];
+			return !!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square];
 		}
-		if (!circularRadar && unit->useAirLos) {
+		else if (!circularRadar && unit->useAirLos) {
+			if (unit->stealth) {
+				return false;
+			}
+			const int square = GetSquare(unit->pos);
 			#ifdef DEBUG
 			assert(square < airRadarMaps[allyTeam].size());
 			#endif
 			return airRadarMaps[allyTeam][square] && !commonJammerMap[square];
-		} else {
+		}
+		else {
+			const int square = GetSquare(unit->pos);
 			#ifdef DEBUG
-			assert(square < radarMaps[allyTeam].size() && square < sonarMaps[allyTeam].size());
+			assert((square < radarMaps[allyTeam].size()) &&
+			       (square < sonarMaps[allyTeam].size()));
 			#endif
-			return (radarMaps[allyTeam][square] || (unit->pos.y <= 1 && sonarMaps[allyTeam][square])) && !commonJammerMap[square];
+			return (radarMaps[allyTeam][square]
+			        && !unit->stealth
+			        && !commonJammerMap[square])
+			       ||
+			       ((unit->pos.y <= 1.0f)
+			        && sonarMaps[allyTeam][square]
+			        && !unit->sonarStealth
+			        && !commonSonarJammerMap[square]);
 		}
 	}
 
 	bool InSeismicDistance(const CUnit* unit, int allyTeam) {
-		const int rowIdx = std::max(0, std::min(ysize - 1, (int) unit->pos.z / (SQUARE_SIZE * RADAR_SIZE))) * xsize;
-		const int colIdx = std::max(0, std::min(xsize - 1, (int) unit->pos.x / (SQUARE_SIZE * RADAR_SIZE)));
-		const int square = rowIdx + colIdx;
+		const int square = GetSquare(unit->pos);
 		#ifdef DEBUG
 		assert(square < seismicMaps[allyTeam].size());
 		#endif

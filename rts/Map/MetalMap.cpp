@@ -5,7 +5,7 @@
 #include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
-CR_BIND(CMetalMap,(0,0,0,0.0));
+CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 
 CR_REG_METADATA(CMetalMap,(
 				CR_MEMBER(extractionMap)
@@ -13,20 +13,20 @@ CR_REG_METADATA(CMetalMap,(
 
 /*
 Constructor
-Reciving a map over all metal, and creating a map over extraction.
+Receiving a map over all metal, and creating a map over extraction.
 */
-CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
+CMetalMap::CMetalMap(unsigned char* map,
+                     int _sizeX, int _sizeZ, float _metalScale)
+: metalMap(map),
+  sizeX(_sizeX),
+  sizeZ(_sizeZ),
+  metalScale(_metalScale)
 {
-	this->metalMap = map;
-	this->sizex = sizex;
-	this->sizez = sizez;
-	this->metalscale = metalscale;
-	
-	//Creating an empty map over extraction.
-//	extractionMap = SAFE_NEW float[sizex * sizez];
-	extractionMap.resize(sizex * sizez,0.0);
+	// Creating an empty map over extraction.
+//	extractionMap = SAFE_NEW float[sizeX * sizeZ];
+	extractionMap.resize(sizeX * sizeZ, 0.0f);
 //	int i;
-//	for(i = 0; i < (sizex * sizez); i++) {
+//	for(i = 0; i < (sizeX * sizeZ); i++) {
 //		extractionMap[i] = 0.0f;
 //	}
 	
@@ -36,17 +36,17 @@ CMetalMap::CMetalMap(unsigned char *map, int sizex, int sizez, float metalscale)
 		/* Swap the green and blue channels. making metal go
 		   black -> blue -> cyan,
 		   rather than the usual black -> green -> cyan. */
-		for(int a=0;a<256;++a){
-			metalPal[a*3+0]=a;
-			metalPal[a*3+1]=std::max(0,a*2-255);
-			metalPal[a*3+2]=std::min(255,a*2);
+		for (int a = 0; a < 256; ++a) {
+			metalPal[a * 3 + 0] = a;
+			metalPal[a * 3 + 1] = std::max(0, a * 2 - 255);
+			metalPal[a * 3 + 2] = std::min(255, a * 2);
 		}
 	}
 	else {
-		for(int a=0;a<256;++a){
-			metalPal[a*3+0]=a;
-			metalPal[a*3+1]=std::min(255,a*2);
-			metalPal[a*3+2]=std::max(0,a*2-255);//a/2+((a*4)&127);
+		for(int a = 0; a < 256; ++a) {
+			metalPal[a * 3 + 0] = a;
+			metalPal[a * 3 + 1] = std::min(255, a * 2);
+			metalPal[a * 3 + 2] = std::max(0, a * 2 - 255);
 		}
 	}
 	
@@ -64,37 +64,34 @@ CMetalMap::~CMetalMap(void)
 }
 
 
+static inline void ClampInt(int& var, int min, int maxPlusOne)
+{
+	if (var < min) {
+		var = min;
+	} else if (var >= maxPlusOne) {
+		var = maxPlusOne - 1;
+	}
+}
+
+
 /*
 Gives the amount of metal over an area.
 */
 float CMetalMap::getMetalAmount(int x1, int z1, int x2, int z2) 
 {
-	if(x1<0)
-		x1=0;
-	else if(x1>=sizex)
-		x1=sizex-1;
-	if(x2<0)
-		x2=0;
-	else if(x2>=sizex)
-		x2=sizex-1;
-
-	if(z1<0)
-		z1=0;
-	else if(z1>=sizez)
-		z1=sizez-1;
-	if(z2<0)
-		z2=0;
-	else if(z2>=sizez)
-		z2=sizez-1;
-
+	ClampInt(x1, 0, sizeX);
+	ClampInt(x2, 0, sizeX);
+	ClampInt(z1, 0, sizeZ);
+	ClampInt(z2, 0, sizeZ);
+	
 	float metal = 0.0f;
 	int x, z;
-	for(x = x1; x < x2; x++) {
-		for(z = z1; z < z2; z++) {
-			metal += metalMap[x + z*sizex];
+	for (x = x1; x < x2; x++) {
+		for (z = z1; z < z2; z++) {
+			metal += metalMap[(z * sizeX) + x];
 		}
 	}
-	return metal * metalscale;
+	return metal * metalScale;
 }
 
 
@@ -103,17 +100,10 @@ Gives the amount of metal on a single square.
 */
 float CMetalMap::getMetalAmount(int x, int z) 
 {
-	if(x<0)
-		x=0;
-	else if(x>=sizex)
-		x=sizex-1;
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
 
-	if(z<0)
-		z=0;
-	else if(z>=sizez)
-		z=sizez-1;
-
-	return metalMap[x + z*sizex] * metalscale;
+	return metalMap[(z * sizeX) + x] * metalScale;
 }
 
 
@@ -127,21 +117,19 @@ extraction-depth 0.0 will be returned and nothing changed.
 */
 float CMetalMap::requestExtraction(int x, int z, float toDepth) 
 {
-	if(x<0)
-		x=0;
-	else if(x>=sizex)
-		x=sizex-1;
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
 
-	if(z<0)
-		z=0;
-	else if(z>=sizez)
-		z=sizez-1;
+	const float current = extractionMap[(z * sizeX) + x];
 
-	if(toDepth <= extractionMap[x + z*sizex])
-		return 0;
+	if (toDepth <= current) {
+		return 0.0f;
+	}
 
-	float available = toDepth - extractionMap[x + z*sizex];
-	extractionMap[x + z*sizex] = toDepth;
+	const float available = toDepth - current;
+
+	extractionMap[(z * sizeX) + x] = toDepth;
+
 	return available;
 }
 
@@ -153,15 +141,8 @@ extractors to use.
 */
 void CMetalMap::removeExtraction(int x, int z, float depth) 
 {
-	if(x<0)
-		x=0;
-	else if(x>=sizex)
-		x=sizex-1;
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
 
-	if(z<0)
-		z=0;
-	else if(z>=sizez)
-		z=sizez-1;
-
-	extractionMap[x + z*sizex] -= depth;
+	extractionMap[(z * sizeX) + x] -= depth;
 }

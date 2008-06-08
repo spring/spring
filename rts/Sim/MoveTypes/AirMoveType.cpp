@@ -7,7 +7,7 @@
 #include "Map/MapInfo.h"
 #include "Mobility.h"
 #include "myMath.h"
-#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"

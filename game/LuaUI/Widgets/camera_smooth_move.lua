@@ -42,6 +42,7 @@ local spGetMouseState    = Spring.GetMouseState
 local spSendCommands     = Spring.SendCommands
 local spSetCameraState   = Spring.SetCameraState
 local spSetMouseCursor   = Spring.SetMouseCursor
+local spTraceScreenRay   = Spring.TraceScreenRay
 local spWarpMouse        = Spring.WarpMouse
 
 
@@ -115,7 +116,9 @@ function widget:Update(dt)
       cs.px = cs.px + (mxm * drx) + (mym * dfx)
       cs.pz = cs.pz + (mxm * drz) + (mym * dfz)
     end
+
     spSetCameraState(cs, 0)
+
     if (mmb) then
       spSetMouseCursor('none')
     end
@@ -152,6 +155,95 @@ end
 function widget:MouseRelease(x, y, button)
   active = false
   return -1
+end
+
+
+function widget:MouseWheel(up, value)
+  local cs = spGetCameraState()
+  local a,c,m,s = spGetModKeyState()
+  if (m) then
+    local py = math.abs(cs.py)
+    local dy = (1 + math.pow(py * 100, 0.25)) * (up and -1 or 1)
+    local dy = (py / 10) * (up and -1 or 1)
+    print(dy)
+    spSetCameraState({
+      py = py + dy,
+--      vy = cs.vy + value,
+    }, 0)
+    return true
+  end
+  if (cs.name ~= 'free') then
+    return false
+  end
+  local scale = value * 10
+  local mx, my = spGetMouseState()
+  local _, gpos = spTraceScreenRay(mx, my, true)
+  if (not gpos) then
+    spSetCameraState({ vy = cs.vy + scale}, 0)
+  else
+    local dx = gpos[1] - cs.px
+    local dy = gpos[2] - cs.py
+    local dz = gpos[3] - cs.pz
+    local d = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+--    local s = (up and -1 or 1) / d
+    local s = (up and 1 or -1) * (1 / 8)
+    
+    dx = dx * s
+    dy = dy * s
+    dz = dz * s
+    local newCS = {
+      px = cs.px + dx,
+      py = cs.py + dy,
+      pz = cs.pz + dz,
+      vx = 0,
+      vy = 0,
+      vz = 0,
+    }
+    spSetCameraState(newCS, 0)
+  end
+  return true
+end
+
+
+function widget:MouseWheel2(up, value)
+  local cs = spGetCameraState()
+  local a,c,m,s = spGetModKeyState()
+  if (not m) then
+    local py = math.abs(cs.py)
+    local dy = (1 + math.pow(py * 100, 0.25)) * (up and -1 or 1)
+    local dy = (py / 10) * (up and -1 or 1)
+    print(dy)
+    spSetCameraState({
+      py = py + dy,
+--      vy = cs.vy + value,
+    }, 0)
+    return true
+  end
+  if (cs.name ~= 'free') then
+    return false
+  end
+  local scale = value * 10
+  local mx, my = spGetMouseState()
+  local _, gpos = spTraceScreenRay(mx, my, true)
+  if (not gpos) then
+    spSetCameraState({ vy = cs.vy + scale}, 0)
+  else
+    local dx = gpos[1] - cs.px
+    local dy = gpos[2] - cs.py
+    local dz = gpos[3] - cs.pz
+    local d = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+    local s = -scale / d
+    dx = dx * s
+    dy = dy * s
+    dz = dz * s
+    local newCS = {
+      vx = cs.vx + dx,
+      vy = cs.vy + dy,
+      vz = cs.vz + dz,
+    }
+    spSetCameraState(newCS, 0)
+  end
+  return true
 end
 
 

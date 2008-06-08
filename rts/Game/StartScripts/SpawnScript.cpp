@@ -50,7 +50,9 @@ void CSpawnScript::Update()
 		}
 
 		MapParser mapParser(stupidGlobalMapname);
-
+		if (!mapParser.IsValid()) {
+			throw content_error("MapParser: " + mapParser.GetErrorLog());
+		}
 		float3 startPos0(1000.0f, 80.0f, 1000.0f);
 		mapParser.GetStartPos(0, startPos0);
 

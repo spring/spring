@@ -132,7 +132,7 @@ CLuaUI::CLuaUI()
 	haveWorldTooltip = false;
 	haveMapDrawCmd = false;
 
-	const string code = LoadFile("gui.lua");
+	const string code = LoadFile("luaui.lua");
 	if (code.empty()) {
 		KillLua();
 		return;
@@ -188,7 +188,7 @@ CLuaUI::CLuaUI()
 
 	lua_settop(L, 0);
 
-	if (!LoadCode(code, "gui.lua")) {
+	if (!LoadCode(code, "luaui.lua")) {
 		KillLua();
 		return;
 	}

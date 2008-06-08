@@ -420,6 +420,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.sonarJamRadius = udTable.GetInt("sonarDistanceJam", 0);
 
 	ud.stealth        = udTable.GetBool("stealth",            false);
+	ud.sonarStealth   = udTable.GetBool("sonarStealth",       false);
 	ud.targfac        = udTable.GetBool("isTargetingUpgrade", false);
 	ud.isFeature      = udTable.GetBool("isFeature",          false);
 	ud.canResurrect   = udTable.GetBool("canResurrect",       false);

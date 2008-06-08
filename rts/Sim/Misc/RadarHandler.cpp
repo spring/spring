@@ -9,7 +9,9 @@
 CR_BIND(CRadarHandler, (false));
 
 CR_REG_METADATA(CRadarHandler, (
-	CR_SERIALIZER(Serialize), // radarMaps, airRadarMaps, sonarMaps, jammerMaps, seismicMaps, commonJammerMap, commonSonarJammerMap
+	CR_SERIALIZER(Serialize),
+	// radarMaps, airRadarMaps, sonarMaps, jammerMaps,
+	// seismicMaps, commonJammerMap, commonSonarJammerMap
 	CR_MEMBER(circularRadar),
 	CR_MEMBER(radarErrorSize),
 	CR_MEMBER(baseRadarErrorSize),
