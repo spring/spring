@@ -1009,7 +1009,22 @@ void CMobileCAI::FinishCommand(void)
 void CMobileCAI::IdleCheck(void)
 {
 	if(owner->unitDef->canAttack && owner->moveState && owner->fireState
-			&& !owner->weapons.empty() && (!owner->haveTarget || owner->weapons[0]->onlyForward)){
+			&& !owner->weapons.empty() && owner->haveTarget) {
+		if(!owner->userTarget) {
+			owner->haveTarget = false;
+		} else if(owner->pos.distance2D(owner->userTarget->pos) < 
+				owner->maxRange + 200*owner->moveState*owner->moveState) {
+			Command c;
+			c.id = CMD_ATTACK;
+			c.options=INTERNAL_ORDER;
+			c.params.push_back(owner->userTarget->id);
+			c.timeOut = gs->frameNum + 140;
+			commandQue.push_front(c);
+			return;
+		}
+	}
+	if(owner->unitDef->canAttack && owner->moveState && owner->fireState
+				&& !owner->weapons.empty() && !owner->haveTarget) {
 		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
 				&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
 			float3 apos=owner->lastAttacker->pos;
@@ -1027,8 +1042,7 @@ void CMobileCAI::IdleCheck(void)
 	}
 	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck+10)
 			&& owner->moveState && owner->fireState>=2 &&
-			!owner->weapons.empty() &&
-			(!owner->haveTarget || owner->weapons[0]->onlyForward))
+			!owner->weapons.empty() && !owner->haveTarget)
 	{
 		CUnit* u = helper->GetClosestEnemyUnit(owner->pos,
 				owner->maxRange + 150 * owner->moveState * owner->moveState, owner->allyteam);
