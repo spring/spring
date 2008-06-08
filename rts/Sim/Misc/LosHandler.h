@@ -21,7 +21,9 @@ struct LosInstance : public boost::noncopyable
 	CR_DECLARE_STRUCT(LosInstance);
  	std::vector<int> losSquares;
 	LosInstance() {} // default constructor for creg
-	LosInstance(int lossize,int allyteam,int baseX,int baseY,int baseSquare,int baseAirSquare,int hashNum,float baseHeight,int airLosSize)
+	LosInstance(int lossize, int allyteam, int baseX, int baseY,
+	            int baseSquare, int baseAirSquare, int hashNum,
+	            float baseHeight, int airLosSize)
 		: losSize(lossize),
 			airLosSize(airLosSize),
 			refCount(1),
@@ -32,7 +34,7 @@ struct LosInstance : public boost::noncopyable
 			baseAirSquare(baseAirSquare),
 			hashNum(hashNum),
 			baseHeight(baseHeight),
-			toBeDeleted(false){}
+			toBeDeleted(false) {}
 	int losSize;
 	int airLosSize;
 	int refCount;
@@ -58,20 +60,26 @@ public:
 	void FreeInstance(LosInstance* instance);
 
 	bool InLos(const CWorldObject* object, int allyTeam) {
-		if (object->alwaysVisible)
+		if (object->alwaysVisible) {
 			return true;
-		if (object->useAirLos) {
-			const int rowIdx = std::max(0, std::min(airSizeY - 1, ((int (object->pos.z * invAirDiv))))) * airSizeX;
-			const int colIdx = std::max(0, std::min(airSizeX - 1, ((int (object->pos.x * invAirDiv)))));
-			const int square = rowIdx + colIdx;
+		}
+		else if (object->useAirLos) {
+			const int gx = (int)(object->pos.x * invAirDiv);
+			const int gz = (int)(object->pos.z * invAirDiv);
+			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
+			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
+			const int square = (rowIdx * airSizeX) + colIdx;
 			#ifdef DEBUG
 			assert(square < airLosMap[allyTeam].size());
 			#endif
 			return !!airLosMap[allyTeam][square];
-		} else {
-			const int rowIdx = std::max(0, std::min(losSizeY - 1, ((int) (object->pos.z * invLosDiv)))) * losSizeX;
-			const int colIdx = std::max(0, std::min(losSizeX - 1, ((int) (object->pos.x * invLosDiv))));
-			const int square = rowIdx + colIdx;
+		}
+		else {
+			const int gx = (int)(object->pos.x * invLosDiv);
+			const int gz = (int)(object->pos.z * invLosDiv);
+			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
+			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
+			const int square = (rowIdx * losSizeX) + colIdx;
 			#ifdef DEBUG
 			assert(square < losMap[allyTeam].size());
 			#endif
@@ -80,16 +88,19 @@ public:
 	}
 
 	bool InLos(const CUnit* unit, int allyTeam) {
-		if (unit->alwaysVisible)
+		if (unit->alwaysVisible) {
 			return true;
-		if (unit->isCloaked)
+		}
+		if (unit->isCloaked) {
 			return false;
+		}
 		return InLos(static_cast<const CWorldObject*>(unit), allyTeam);
 	}
 
 	bool InLos(float3 pos, int allyTeam) {
 		pos.CheckInBounds();
-		const int square = ((int) (pos.z * invLosDiv)) * losSizeX + ((int) (pos.x * invLosDiv));
+		const int square = ((int)(pos.z * invLosDiv)) * losSizeX
+		                 + ((int)(pos.x * invLosDiv));
 		#ifdef DEBUG
 		assert(square < losMap[allyTeam].size());
 		#endif
@@ -98,7 +109,8 @@ public:
 
 	bool InAirLos(float3 pos, int allyTeam) {
 		pos.CheckInBounds();
-		const int square = ((int) (pos.z * invAirDiv)) * airSizeX + ((int) (pos.x * invAirDiv));
+		const int square = ((int)(pos.z * invAirDiv)) * airSizeX
+		                 + ((int)(pos.x * invAirDiv));
 		#ifdef DEBUG
 		assert(square < airLosMap[allyTeam].size());
 		#endif

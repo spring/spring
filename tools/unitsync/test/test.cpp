@@ -31,6 +31,7 @@ exit
 #include <stdlib.h>
 
 #include <string>
+#include <vector>
 using namespace std;
 
 #include "../unitsync.h"
@@ -144,6 +145,39 @@ static void DisplayOptions(int optionCount);
 /******************************************************************************/
 /******************************************************************************/
 
+static bool PrintMapInfo(const string& mapName)
+{
+  printf("  MAP INFO  (for %s)\n", mapName.c_str());
+  MapInfo mi;
+  char auth[256];
+  char desc[256];
+  mi.author = auth;
+  mi.author[0] = 0;
+  mi.description = desc;
+  mi.description[0] = 0;
+  if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
+    printf("ERROR getting info for map %s  (%s)\n",
+    mapName.c_str(), mi.description);
+  }
+  else {
+    printf("    author:    '%s'\n", mi.author);
+    printf("    desc:      '%s'\n", mi.description);
+    printf("    gravity:   %i\n",   mi.gravity);
+    printf("    tidal:     %i\n",   mi.tidalStrength);
+    printf("    maxMetal:  %f\n",   mi.maxMetal);
+    printf("    mexRad:    %i\n",   mi.extractorRadius);
+    printf("    minWind:   %i\n",   mi.minWind);
+    printf("    maxWind:   %i\n",   mi.maxWind);
+    printf("    width:     %i\n",   mi.width);
+    printf("    height:    %i\n",   mi.height);
+    for (int p = 0; p < mi.posCount; p++) {
+      const StartPos& sp = mi.positions[p];
+      printf("    pos %i:     <%5i, %5i>\n", p, sp.x, sp.z);
+    }
+  }
+}
+
+
 int main(int argc, char** argv)
 {
   if (argc < 3) {
@@ -162,9 +196,11 @@ int main(int argc, char** argv)
 
   // map names
   printf("  MAPS\n");
+  vector<string> mapNames;
   const int mapCount = GetMapCount();
   for (int i = 0; i < mapCount; i++) {
     const string mapName = GetMapName(i);
+    mapNames.push_back(mapName);
     printf("    [map %3i]   %s\n", i, mapName.c_str());
   }
 
@@ -176,28 +212,12 @@ int main(int argc, char** argv)
   }
   
   // map info
-  printf("  MAP INFO  (for %s)\n", map.c_str());
-  MapInfo mi;
-  char auth[256];
-  char desc[256];
-  mi.author = auth;
-  mi.author[0] = 0;
-  mi.description = desc;
-  mi.description[0] = 0;
-  GetMapInfoEx(map.c_str(), &mi, 1);
-  printf("    author:    '%s'\n", mi.author);
-  printf("    desc:      '%s'\n", mi.description);
-  printf("    gravity:   %i\n",   mi.gravity);
-  printf("    tidal:     %i\n",   mi.tidalStrength);
-  printf("    maxMetal:  %f\n",   mi.maxMetal);
-  printf("    mexRad:    %i\n",   mi.extractorRadius);
-  printf("    minWind:   %i\n",   mi.minWind);
-  printf("    maxWind:   %i\n",   mi.maxWind);
-  printf("    width:     %i\n",   mi.width);
-  printf("    height:    %i\n",   mi.height);
-  for (int p = 0; p < mi.posCount; p++) {
-    const StartPos& sp = mi.positions[p];
-    printf("    pos %i:     <%i, %i>\n", p, sp.x, sp.z);
+  PrintMapInfo(map);
+
+  if (true) { // FIXME -- debugging
+    for (int i = 0; i < mapNames.size(); i++) {
+      PrintMapInfo(mapNames[i]);
+    }
   }
     
   // mod names

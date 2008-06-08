@@ -111,6 +111,7 @@
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
 #define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
+#define SONAR_STEALTH            108 // set or get
 
 // NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
@@ -1177,6 +1178,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case STEALTH: {
 		return unit->stealth ? 1 : 0;
 	}
+	case SONAR_STEALTH: {
+		return unit->sonarStealth ? 1 : 0;
+	}
 	case CRASHING:
 		return !!unit->crashing;
 	case ALPHA_THRESHOLD: {
@@ -1613,6 +1617,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case STEALTH: {
 			unit->stealth = !!param;
+			break;
+		}
+		case SONAR_STEALTH: {
+			unit->sonarStealth = !!param;
 			break;
 		}
 		case CRASHING: {

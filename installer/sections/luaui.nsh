@@ -4,7 +4,7 @@
   Delete "$INSTDIR\LuaUI\unitdefs.lua"
 
   SetOutPath "$INSTDIR"
-  File "..\game\gui.lua"
+  File "..\game\luaui.lua"
 
   SetOutPath "$INSTDIR\LuaUI\Images\"
   File "..\game\LuaUI\Images\players.png"
@@ -110,7 +110,7 @@ ${EndIf}
 
 !else
 
-  Delete "$INSTDIR\gui.lua"
+  Delete "$INSTDIR\luaui.lua"
 
   Delete "$INSTDIR\LuaUI\Images\players.png"
   Delete "$INSTDIR\LuaUI\Images\highlight_strip.png"

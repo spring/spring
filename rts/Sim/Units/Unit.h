@@ -245,6 +245,7 @@ public:
 	std::vector<int> radarSquares;
 	int2 oldRadarPos;
 	bool stealth;
+	bool sonarStealth;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;

@@ -59,7 +59,7 @@ extern Uint8 *keys;
 CGuiHandler* guihandler = NULL;
 
 
-const char* CGuiHandler::luaUiFile = "gui.lua";
+const char* CGuiHandler::luaUiFile = "luaui.lua";
 
 
 CGuiHandler::CGuiHandler()

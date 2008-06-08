@@ -150,6 +150,7 @@ struct UnitDef
 	int seismicRadius;
 	float seismicSignature;
 	bool stealth;
+	bool sonarStealth;
 
 	bool  buildRange3D;
 	float buildDistance;

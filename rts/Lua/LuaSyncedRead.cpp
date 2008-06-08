@@ -1130,7 +1130,8 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 			count++;
 			lua_pushnumber(L, count);
 			lua_newtable(L); {
-				HSTR_PUSH_NUMBER(L, "frame",            (start + 1) * statsFrames);
+				HSTR_PUSH_NUMBER(L, "time",             i * CTeam::statsPeriod);
+				HSTR_PUSH_NUMBER(L, "frame",            i * statsFrames);
 				HSTR_PUSH_NUMBER(L, "metalUsed",        stats.metalUsed);
 				HSTR_PUSH_NUMBER(L, "metalProduced",    stats.metalProduced);
 				HSTR_PUSH_NUMBER(L, "metalExcess",      stats.metalExcess);
@@ -4140,7 +4141,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	}
 	float3 dir(0,0,0);
 	float3 pos(0,0,0);
-	localModel->GetRawEmitDirPos(piece,pos,dir);
+	localModel->GetRawEmitDirPos(piece, pos, dir);
 	pos = unit->pos + unit->frontdir * pos.z
 	                + unit->updir    * pos.y
 	                + unit->rightdir * pos.x;

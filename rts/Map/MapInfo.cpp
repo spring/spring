@@ -33,14 +33,15 @@ float4::float4()
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapname)
+CMapInfo::CMapInfo(const string& mapName)
 {
-	map.name = mapname;
+	map.name = mapName;
 
-	MapParser mapParser(mapname);
+	MapParser mapParser(mapName);
 	if (!mapParser.IsValid()) {
-		logOutput.Print(mapParser.GetErrorLog());
+		throw content_error("MapInfo: " + mapParser.GetErrorLog());
 	}
+
 	LuaTable mapTbl = mapParser.GetRoot();
 	mapRoot = &mapTbl;
 
@@ -157,17 +158,17 @@ void CMapInfo::ReadWater()
 
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
-	water.damage  = wt.GetFloat("damage", 0.0f) * (16.0f / 30.0f);
+	water.damage  = wt.GetFloat("damage",  0.0f) * (16.0f / 30.0f);
 
-	water.absorb       = wt.GetFloat3("absorb",       float3(0.0f, 0.0f, 0.0f));
-	water.baseColor    = wt.GetFloat3("baseColor",    float3(0.0f, 0.0f, 0.0f));
-	water.minColor     = wt.GetFloat3("minColor",     float3(0.0f, 0.0f, 0.0f));
+	water.absorb    = wt.GetFloat3("absorb",    float3(0.0f, 0.0f, 0.0f));
+	water.baseColor = wt.GetFloat3("baseColor", float3(0.0f, 0.0f, 0.0f));
+	water.minColor  = wt.GetFloat3("minColor",  float3(0.0f, 0.0f, 0.0f));
 
 	water.surfaceColor = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
 	water.surfaceAlpha = wt.GetFloat("surfaceAlpha",  0.55f);
 
-	water.planeColor   = wt.GetFloat3("planeColor",   float3(0.0f, 0.4f, 0.0f));
-	hasWaterPlane = wt.KeyExists("planeColor");
+	water.planeColor = wt.GetFloat3("planeColor", float3(0.0f, 0.4f, 0.0f));
+	hasWaterPlane    = wt.KeyExists("planeColor");
 
 	water.specularColor  = wt.GetFloat3("specularColor", light.groundSunColor);
 	water.specularFactor = wt.GetFloat("specularFactor", 20.0f);
@@ -176,8 +177,8 @@ void CMapInfo::ReadWater()
 	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.3f);
 	water.fresnelPower = wt.GetFloat("fresnelPower", 4.0f);
 
-	water.texture       = wt.GetString("texture", "");
-	water.foamTexture   = wt.GetString("foamTexture", "");
+	water.texture       = wt.GetString("texture",       "");
+	water.foamTexture   = wt.GetString("foamTexture",   "");
 	water.normalTexture = wt.GetString("normalTexture", "");
 
 	// use 'resources.lua' for missing fields  (our the engine defaults)

@@ -62,12 +62,13 @@ end
 
 --------------------------------------------------------------------------------
 
-if (Spring.GetMapOptions and mapInfo.autooptions) then
+if (Spring.GetMapOptions and mapInfo.defaultoptions) then
   local optsFunc = VFS.Include('maphelper/applyopts.lua')
   optsFunc(mapInfo)
 end
 
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 return mapInfo

@@ -12,8 +12,7 @@ using namespace std;
 string MapParser::GetMapConfigName(const string& mapName)
 {
 	if (mapName.length() < 3) {
-		throw runtime_error("CMapInfo::GetMapConfigName(): mapName '"
-		                         + mapName + "' too short");
+		return "";
 	}
 
 	const string extension = mapName.substr(mapName.length() - 3);
@@ -26,8 +25,7 @@ string MapParser::GetMapConfigName(const string& mapName)
 		       mapName.substr(0, mapName.find_last_of('.')) + ".smd";
 	}
 	else {
-		throw runtime_error("MapParser::GetMapConfigName(): Unknown extension: "
-		                    + extension);
+		return "";
 	}
 }
 
@@ -35,11 +33,6 @@ string MapParser::GetMapConfigName(const string& mapName)
 MapParser::MapParser(const string& mapName) : parser(NULL)
 {
 	const string mapConfig = GetMapConfigName(mapName);
-
-	CFileHandler fh(mapConfig, SPRING_VFS_MAP);
-	if (!fh.FileExists()) {
-		throw runtime_error("MapParser() missing file: " + mapConfig);
-	}
 
 	parser = SAFE_NEW LuaParser("maphelper/mapinfo.lua",
 															SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
@@ -57,7 +50,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->EndTable();
 #endif
 	if (!parser->Execute()) {
-		throw content_error("MapParser error: " + parser->GetErrorLog());
+		// do nothing
 	}
 }
 

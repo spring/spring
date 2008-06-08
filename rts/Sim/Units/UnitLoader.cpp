@@ -152,6 +152,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	                         unit->jammerRadius || unit->sonarJamRadius ||
 	                         unit->seismicRadius;
 	unit->stealth = ud->stealth;
+	unit->sonarStealth = ud->sonarStealth;
 	unit->category = ud->category;
 	unit->armorType = ud->armorType;
 	unit->floatOnWater =

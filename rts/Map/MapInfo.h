@@ -27,7 +27,7 @@ class CMapInfo
 {
 public:
 
-	CMapInfo(const std::string& mapname);
+	CMapInfo(const std::string& mapName);
 	~CMapInfo();
 
 	/* The settings are just public members because:

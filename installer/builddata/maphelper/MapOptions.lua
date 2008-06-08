@@ -1,3 +1,15 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  file:    MapOptions.lua
+--  brief:   example MapOptions.lua
+--  author:  Dave Rodgers
+--
+--  Copyright (C) 2008.
+--  Licensed under the terms of the GNU GPL, v2 or later.
+--
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 --  Custom Options Definition Table format
 
@@ -17,7 +29,6 @@
 --  step:     quantization step, aligned to the def value
 --  maxlen:   the maximum string length for string options
 --  items:    array of item strings for list options
---  scope:    'all', 'player', 'team', 'allyteam'      <<< not supported yet >>>
 --
 
 --------------------------------------------------------------------------------
@@ -28,7 +39,7 @@
 
 local mapInfo = VFS.Include('maphelper/mapinfo.lua')
 
-if (not mapInfo.autooptions) then
+if (not mapInfo.defaultoptions) then
   return {}
 end
 
@@ -38,6 +49,8 @@ end
 --
 --  Option creation utilities
 --
+
+local options = {}
 
 local function ItemNumbers(min, max, step)
   local t = {}
@@ -92,25 +105,29 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
---
---  Get our defaults from the map config file  (if available)
---
-
-local defGravity  = mapInfo.gravity         or 130.0
-local defMaxMetal = mapInfo.maxmetal        or 0.02
-local defTidal    = mapInfo.tidalstrength   or 0.0
-local defMexRad   = mapInfo.extractorradius or 500.0
-
-local atmo = mapInfo.atmosphere or {}
-local defMinWind  = atmo.minwind or 5.0
-local defMaxWind  = atmo.maxwind or 25.0
-
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
 --  Example MapOptions.lua 
 --
+
+local optionDefs = {
+  gravity = {
+    'gravity', 'Gravity', 'Map Gravity',
+    NumberOption,  mapInfo.gravity, mapDefaults.gravity, 1.0, 1000.0
+  },
+  notdeformable = {
+    'notdeformable', 'NotDeformable', 
+    BoolOption, mapInfo.hardness, true
+  }
+
+for _, opt in ipairs(selOpts) do
+  local optDef = optionDefs[opt]
+  if (optDef) then
+    optDef[4](optDef)
+  end
+end
 
 local options = {
   BoolOption(
