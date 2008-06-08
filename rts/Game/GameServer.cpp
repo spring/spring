@@ -103,8 +103,6 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 #ifdef DEBUG
 	gameClientUpdated=false;
 #endif
-	demoReader = 0;
-	hostif = 0;
 	hasLocalClient = false;
 	localClientNumber = 0;
 	IsPaused = false;
@@ -138,7 +136,7 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 	if (!demoName.empty())
 	{
 		Message(str( format(PlayingDemo) %demoName ));
-		demoReader = new CDemoReader(demoName, modGameTime+0.1f);
+		demoReader.reset(new CDemoReader(demoName, modGameTime+0.1f));
 	}
 
 	RestrictedAction("kick");			RestrictedAction("kickbynum");
@@ -173,14 +171,6 @@ CGameServer::~CGameServer()
 	quitServer=true;
 	thread->join();
 	delete thread;
-	if (demoReader)
-		delete demoReader;
-
-	if (hostif)
-	{
-		hostif->SendQuit();
-		delete hostif;
-	}
 }
 
 void CGameServer::AddLocalClient(unsigned wantedNumber)
@@ -193,10 +183,10 @@ void CGameServer::AddLocalClient(unsigned wantedNumber)
 
 void CGameServer::AddAutohostInterface(const int remotePort)
 {
-	if (hostif == 0)
+	if (!hostif)
 	{
 		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
-		hostif = new AutohostInterface(remotePort);
+		hostif.reset(new AutohostInterface(remotePort));
 		hostif->SendStart();
 		Message(str(format(ConnectAutohost) %remotePort));
 	}
@@ -277,8 +267,7 @@ void CGameServer::SendDemoData(const bool skipping)
 	}
 
 	if (demoReader->ReachedEnd()) {
-		delete demoReader;
-		demoReader = 0;
+		demoReader.reset();
 		Message(DemoEnd);
 		gameEndTime = SDL_GetTicks();
 	}
@@ -286,7 +275,7 @@ void CGameServer::SendDemoData(const bool skipping)
 
 void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	for (unsigned p = 0; p < MAX_PLAYERS; ++p)
+	for (unsigned p = 0; p < static_cast<unsigned>(MAX_PLAYERS); ++p)
 	{
 		if (players[p])
 			players[p]->link->SendData(packet);
@@ -430,7 +419,7 @@ void CGameServer::Update()
 	}
 
 	// when hosting a demo, read from file and broadcast data
-	if (demoReader != 0)
+	if (demoReader)
 	{
 		CheckSync();
 		SendDemoData();
@@ -472,7 +461,7 @@ void CGameServer::Update()
 	if ((SDL_GetTicks() - serverStartTime) > serverTimeout)
 	{
 		bool hasPlayers = false;
-		for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+		for (unsigned i = 0; i < static_cast<unsigned>(MAX_PLAYERS); ++i)
 		{
 			if (players[i])
 				hasPlayers = true;
@@ -1207,8 +1196,8 @@ void CGameServer::CheckForGameEnd()
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 	{
 		bool hasPlayer = false;
-		for (int b = 0; b < gs->activePlayers; ++b) {
-			if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
+		for (unsigned b = 0; b < static_cast<unsigned>(gs->activePlayers); ++b) {
+			if (gs->players[b]->active && gs->players[b]->team == static_cast<int>(a) && !gs->players[b]->spectator) {
 				hasPlayer = true;
 			}
 		}
@@ -1358,7 +1347,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 	}
 	if (players[hisNewNumber])
 	{
-		for (unsigned p = 0; p < MAX_PLAYERS; ++p)
+		for (unsigned p = 0; p < static_cast<unsigned>(MAX_PLAYERS); ++p)
 		{
 			if (!players[p])
 			{

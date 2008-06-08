@@ -194,8 +194,8 @@ private:
 	/// If the server recieves a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
-	CDemoReader* demoReader;
-	AutohostInterface* hostif;
+	boost::scoped_ptr<CDemoReader> demoReader;
+	boost::scoped_ptr<AutohostInterface> hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::recursive_mutex gameServerMutex;

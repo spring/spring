@@ -45,7 +45,6 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
 	server.reset(new netcode::CLocalConnection);
-	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
 	server->Flush();
 	isLocal = true;
 	if (!localDemoPlayback)
