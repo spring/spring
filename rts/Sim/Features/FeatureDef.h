@@ -18,11 +18,11 @@ struct FeatureDef
 	CR_DECLARE(FeatureDef);
 
 	FeatureDef():
-		metal(0), energy(0), maxHealth(0), mass(0),
+		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
 		upright(false), drawType(0), modelType(0),
 		destructable(false), reclaimable(true), blocking(false),
-		burnable(false), floating(false), geoThermal(false), noSelect(false),
-		xsize(0), ysize(0), reclaimTime(0) {}
+		burnable(false), floating(false), noSelect(false), geoThermal(false),
+		xsize(0), ysize(0) {}
 
 	S3DOModel* LoadModel(int team) const;
 	CollisionVolume* collisionVolume;

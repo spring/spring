@@ -61,6 +61,8 @@ class CGuiHandler : public CInputReceiver {
 
  		bool GetGatherMode() const { return gatherMode; }
  		void SetGatherMode(bool value) { gatherMode = value; }
+		
+		bool GetOutlineFonts() const {return outlineFonts;};
 
 		int  GetDefaultCommand(int x, int y) const;
 
@@ -176,6 +178,7 @@ class CGuiHandler : public CInputReceiver {
 		bool useOptionLEDs;
 		bool selectGaps;
 		bool selectThrough;
+		bool outlineFonts;
 		float frameAlpha;
 		float textureAlpha;
 		std::vector<int> fillOrder;

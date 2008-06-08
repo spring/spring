@@ -5,7 +5,7 @@
 
 #include "InfoConsole.h"
 #include <fstream>
-#include "OutlineFont.h"
+#include "GuiHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
@@ -64,7 +64,7 @@ void CInfoConsole::Draw()
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	if(!data.empty() && !outlineFont.IsEnabled()){
+	if(!data.empty() && !guihandler->GetOutlineFonts()){
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -84,7 +84,7 @@ void CInfoConsole::Draw()
 	float curX = xpos + 0.01f;
 	float curY = ypos - 0.026f;
 
-	if (!outlineFont.IsEnabled()) {
+	if (!guihandler->GetOutlineFonts()) {
 		glColor4f(1,1,1,1);
 
 		std::deque<InfoLine>::iterator ili;

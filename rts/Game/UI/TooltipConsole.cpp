@@ -2,7 +2,6 @@
 #include "TooltipConsole.h"
 #include "LuaUI.h"
 #include "MouseHandler.h"
-#include "OutlineFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/Player.h"

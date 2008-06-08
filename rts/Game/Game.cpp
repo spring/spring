@@ -126,7 +126,6 @@
 #include "UI/LuaUI.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
-#include "UI/OutlineFont.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
@@ -2765,7 +2764,7 @@ bool CGame::Draw()
 		const float fontScale = 1.0f;
 
 		glColor4f(1,1,1,1);
-		if (!outlineFont.IsEnabled()) {
+		if (!guihandler->GetOutlineFonts()) {
 			smallFont->glPrintRight(0.99f, 0.94f, fontScale, buf);
 		} else {
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -2779,7 +2778,7 @@ bool CGame::Draw()
 
 		const float fontScale = 1.0f;
 
-		if (!outlineFont.IsEnabled()) {
+		if (!guihandler->GetOutlineFonts()) {
 			glColor4f(1.0f, 1.0f, 0.25f, 1.0f);
 			smallFont->glPrintRight(0.99f, 0.92f, fontScale, buf);
 		} else {
@@ -2822,7 +2821,7 @@ bool CGame::Draw()
 						p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
 						(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 
-			if (!outlineFont.IsEnabled()) {
+			if (!guihandler->GetOutlineFonts()) {
 				glColor4fv(color);
 				smallFont->glPrintAt(0.76f, 0.01f + (0.02f * (count - a - 1)), fontScale, buf);
 			} else {
@@ -2917,7 +2916,7 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
-	if (!outlineFont.IsEnabled()) {
+	if (!guihandler->GetOutlineFonts()) {
 		glColor4fv(textColor);
 		font->glPrintAt(inputTextPosX, inputTextPosY, fontScale, tempstring.c_str());
 	} else {
