@@ -74,16 +74,14 @@ local a, e = 0, 0
 for teamID, team in pairs(teams) do
   if (team.gaia) then
     teamColors[teamID] = gaiaColor
+  elseif (teamID == myTeam) then
+    teamColors[teamID] = myColor
+  elseif (team.allyTeam == myAllyTeam) then
+    a = (a % #allyColors) + 1
+    teamColors[teamID] = allyColors[a]
   else
-    if (teamID == myTeam) then
-      teamColors[teamID] = myColor
-    elseif (team.allyTeam == myAllyTeam) then
-      a = (a % #allyColors) + 1
-      teamColors[teamID] = allyColors[a]
-    else
-      e = (e % #enemyColors) + 1
-      teamColors[teamID] = enemyColors[e]
-    end
+    e = (e % #enemyColors) + 1
+    teamColors[teamID] = enemyColors[e]
   end
 end
 
