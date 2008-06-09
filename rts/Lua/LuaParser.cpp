@@ -734,7 +734,7 @@ LuaTable LuaTable::SubTable(const string& mixedKey) const
 }
 
 
-LuaTable LuaTable::DotTable(const string& expr) const
+LuaTable LuaTable::SubTableExpr(const string& expr) const
 {
 	if (expr.empty()) {
 		return LuaTable(*this);
@@ -771,7 +771,7 @@ LuaTable LuaTable::DotTable(const string& expr) const
 	if (expr[endPos] == '.') {
 		endPos++; // eat the dot
 	}
-	return nextTable.DotTable(expr.substr(endPos));
+	return nextTable.SubTableExpr(expr.substr(endPos));
 }
 
 
