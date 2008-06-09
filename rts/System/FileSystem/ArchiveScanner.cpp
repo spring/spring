@@ -6,14 +6,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "ArchiveFactory.h"
-#include "ArchiveBuffered.h"
-#include "CRC.h"
-#include "FileFilter.h"
-#include "FileHandler.h"
-#include "Platform/FileSystem.h"
-#include "TdfParser.h"
-#include "LogOutput.h"
+#include "StdAfx.h"
+#include "Lua/LuaParser.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/ArchiveFactory.h"
+#include "System/FileSystem/ArchiveBuffered.h"
+#include "System/FileSystem/CRC.h"
+#include "System/FileSystem/FileFilter.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/FileSystem.h"
 #include "mmgr.h"
 
 // fix for windows
@@ -30,9 +31,7 @@
  * is not slow, but mapping them all every time to make the list is)
  */
 
-// NOTE: on the next version bump, be sure to fix the zero-file-size bug in
-// Archive7zip.cpp and ArchiveZip.cpp  (search for NOTE)
-#define INTERNAL_VER	6
+#define INTERNAL_VER	7
 
 
 CArchiveScanner* archiveScanner = NULL;
@@ -54,42 +53,36 @@ CArchiveScanner::~CArchiveScanner(void)
 std::string CArchiveScanner::GetFilename()
 {
 	char buf[32];
-	sprintf(buf, "ArchiveCacheV%i.txt", INTERNAL_VER);
+	sprintf(buf, "ArchiveCacheV%i.lua", INTERNAL_VER);
 	return std::string(buf);
 }
 
-
-CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::string& section)
+CArchiveScanner::ModData CArchiveScanner::GetModData(const LuaTable* modTable)
 {
 	ModData md;
 	md.name = "";
 
-	if (!p->SectionExist(section)) {
+	if (!modTable->IsValid()) {
 		return md;
 	}
 
-	md.name        = p->SGetValueDef("", section + "\\Name");
-	md.shortName   = p->SGetValueDef("", section + "\\ShortName");
-	md.version     = p->SGetValueDef("", section + "\\Version");
-	md.mutator     = p->SGetValueDef("", section + "\\Mutator");
-	md.game        = p->SGetValueDef("", section + "\\Game");
-	md.shortGame   = p->SGetValueDef("", section + "\\ShortGame");
-	md.description = p->SGetValueDef("", section + "\\Description");
+	md.name        = modTable->GetString("name", "");
+	md.shortName   = modTable->GetString("shortName", "");
+	md.version     = modTable->GetString("version", "");
+	md.mutator     = modTable->GetString("mutator", "");
+	md.game        = modTable->GetString("game", "");
+	md.shortGame   = modTable->GetString("shortGame", "");
+	md.description = modTable->GetString("description", "");
+	md.modType     = modTable->GetInt("modType", 0);
 
-	md.modType = atoi(p->SGetValueDef("0", section + "\\ModType").c_str());
-
-	int numDep = atoi(p->SGetValueDef("0", section + "\\NumDependencies").c_str());
-	for (int dep = 0; dep < numDep; ++dep) {
-		char key[100];
-		sprintf(key, "%s\\Depend%d", section.c_str(), dep);
-		md.dependencies.push_back(p->SGetValueDef("", key));
+	const LuaTable dependencies = modTable->SubTable("depend");
+	for (int dep = 1; dependencies.KeyExists(dep); ++dep) {
+		md.dependencies.push_back(dependencies.GetString(dep, ""));
 	}
 
-	int numReplace = atoi(p->SGetValueDef("0", (section + "\\NumReplaces").c_str()).c_str());
-	for (int rep = 0; rep < numReplace; ++rep) {
-		char key[100];
-		sprintf(key, "%s\\Replace%d", section.c_str(), rep);
-		md.replaces.push_back(p->SGetValueDef("", key));
+	const LuaTable replaces = modTable->SubTable("replace");
+	for (int rep = 1; replaces.KeyExists(rep); ++rep) {
+		md.replaces.push_back(replaces.GetString(rep, ""));
 	}
 
 	// HACK needed until lobbies, lobbyserver and unitsync are sorted out
@@ -97,7 +90,7 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::st
 	// (at time of this writing they use name only)
 
 	// NOTE when changing this, this function is used both by the code that
-	// reads ArchiveCache.txt and the code that reads modinfo.tdf from the mod.
+	// reads ArchiveCache.lua and the code that reads modinfo.lua from the mod.
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
 
@@ -108,11 +101,57 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::st
 	return md;
 }
 
+void CArchiveScanner::PreScan(const std::string& curPath)
+{
+	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
+	std::vector<std::string> found = filesystem.FindFiles(curPath, "springcontent.sdz", flags);
+	if (!found.empty()) {
+		CArchiveBase* ar = CArchiveFactory::OpenArchive(found[0]);
+		if (ar) {
+			int cur;
+			std::string name;
+			int size;
+
+			cur = ar->FindFiles(0, &name, &size);
+			while (cur != 0) {
+				if (name.find("parse_tdf.lua") != string::npos) {
+					int fh = ar->OpenFile(name);
+					if (fh) {
+						int fsize = ar->FileSize(fh);
+						char* buf = SAFE_NEW char[fsize];
+						ar->ReadFile(fh, buf, fsize);
+						ar->CloseFile(fh);
+						parse_tdf.append(buf,fsize);
+						delete [] buf;
+					}
+				}
+				if (name.find("scanutils.lua") != string::npos) {
+					int fh = ar->OpenFile(name);
+					if (fh) {
+						int fsize = ar->FileSize(fh);
+						char* buf = SAFE_NEW char[fsize];
+						ar->ReadFile(fh, buf, fsize);
+						ar->CloseFile(fh);
+						scanutils.append(buf,fsize);
+						delete [] buf;
+					}
+				}
+				cur = ar->FindFiles(cur, &name, &size);
+			}
+			delete ar;
+			parse_tdf.erase(parse_tdf.find_last_of("}") + 1); // we don't want to return the table
+		}
+	}
+}
 
 void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 {
 	isDirty = true;
 
+	if (curPath.find("base") != string::npos) { // perform the scan for parse_tdf.lua only when scanning base files
+	  PreScan(curPath);
+	}
+	
 	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
 	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
 
@@ -163,7 +202,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 					in all .sdd's always need to be stat()'ed, which really slows
 					down program startup.
 
-					An update can be forced anyway by removing ArchiveCacheV*.txt
+					An update can be forced anyway by removing ArchiveCacheV*.lua
 					or renaming the archive.
 				*/
 
@@ -206,7 +245,6 @@ void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 					cur = ar->FindFiles(0, &name, &size);
 					while (cur != 0) {
 						//printf("found %s %d\n", name.c_str(), size);
-
 						std::string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
 
 						// only accept new format maps
@@ -228,8 +266,8 @@ void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 							}
 							ai.mapData.push_back(md);
 						}
-
-						if (name == "modinfo.tdf") {
+								
+						if (name == "modinfo.lua") {
 							int fh = ar->OpenFile(name);
 							if (fh) {
 								int fsize = ar->FileSize(fh);
@@ -237,15 +275,49 @@ void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 								char* buf = SAFE_NEW char[fsize];
 								ar->ReadFile(fh, buf, fsize);
 								ar->CloseFile(fh);
-								try {
-									TdfParser p( buf, fsize );
-									ai.modData = GetModData(&p, "mod");
-								} catch (const TdfParser::parse_error&) {
-									// Silently ignore mods with parse errors
-								}
+								
+								std::string cleanbuf;
+								cleanbuf.append(buf, fsize);
 								delete [] buf;
+								LuaParser p(cleanbuf, SPRING_VFS_MOD);
+								if (!p.Execute()) {
+									logOutput.Print(p.GetErrorLog());
+								}
+								const LuaTable modTable = p.GetRoot();
+								ai.modData = GetModData(&modTable);
 							}
+						}
+						
+						if (name == "modinfo.tdf") {
+						  int fh = ar->OpenFile(name);
+							if (fh) {
+								int fsize = ar->FileSize(fh);
 
+								char* buf = SAFE_NEW char[fsize];
+								ar->ReadFile(fh, buf, fsize);
+								ar->CloseFile(fh);
+								std::string cleanbuf;
+								cleanbuf.append(buf, fsize);
+								delete [] buf;
+								if (parse_tdf.length() != 0 && scanutils.length() != 0) {
+									std::string luaFile = parse_tdf + "\n\n" + scanutils + "\n\n"
+																				+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
+																				+ cleanbuf + "]])\n\n"
+																				+ "if (tdfModinfo == nil) then\n"
+																				+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
+																				+ "end\n\n"
+																				+ "tdfModinfo.mod['depend'] = MakeArray(tdfModinfo.mod, 'depend')\n"
+																				+ "tdfModinfo.mod['replace'] = MakeArray(tdfModinfo.mod, 'replace')\n\n"
+																				+ "return tdfModinfo.mod\n";
+									LuaParser p(luaFile, SPRING_VFS_MOD);
+									if (!p.Execute()) {
+										logOutput.Print(p.GetErrorLog());
+									}
+									const LuaTable modTable = p.GetRoot();
+									ai.modData = GetModData(&modTable);
+								}
+								// silently ignore tdf mods if parse_tdf.lua  or scanutils.lua not found in base
+							}
 						}
 
 						cur = ar->FindFiles(cur, &name, &size);
@@ -382,49 +454,43 @@ unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
-	TdfParser p;
-
-	try {
-		p.LoadFile(filename);
-	} catch (const content_error&) {
-		return;
+  LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_ALL);
+	
+	if (!p.Execute()) {
+		logOutput.Print(p.GetErrorLog());
 	}
-
+	const LuaTable archiveCache = p.GetRoot();
+	const LuaTable archives = archiveCache.SubTable("archives");
+	
 	// Do not load old version caches
-	int ver = atoi(p.SGetValueDef("0", "archivecache\\internalver").c_str());
+	int ver = archiveCache.GetInt("internalVer", 0);
 	if (ver != INTERNAL_VER)
 		return;
 
-	int numArs = atoi(p.SGetValueDef("0", "archivecache\\numarchives").c_str());
-	for (int i = 0; i < numArs; ++i) {
+	for (int i = 1; archives.KeyExists(i); ++i) {
+	  const LuaTable curArchive = archives.SubTable(i);
+		const LuaTable maps = curArchive.SubTable("maps");
+		const LuaTable mod = curArchive.SubTable("modData");
 		ArchiveInfo ai;
-		char keyb[100];
-		sprintf(keyb, "ArchiveCache\\Archive%d\\", i);
-		std::string key = keyb;
 
-		ai.origName = p.SGetValueDef("", key + "Name");
-
-		ai.path = p.SGetValueDef("", key + "Path");
-		ai.modified = strtoul(p.SGetValueDef("0", key + "Modified").c_str(), 0, 10);
-		ai.checksum = strtoul(p.SGetValueDef("0", key + "Checksum").c_str(), 0, 10);
+		ai.origName = curArchive.GetString("name", "");
+		ai.path = curArchive.GetString("path", "");
+		// don't use GetInt for modified and checksum as lua uses 32bit ints, no longs
+		ai.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
+		ai.checksum = strtoul(curArchive.GetString("checksum", "0").c_str(), 0, 10);
 		ai.updated = false;
 
-		int numMaps = atoi(p.SGetValueDef("0", key + "NumMaps").c_str());
-		for (int m = 0; m < numMaps; ++m) {
-			char mapb[100];
-			sprintf(mapb, "%sMap%d\\", key.c_str(), m);
-			std::string map = mapb;
+		for (int m = 1; maps.KeyExists(m); ++m) {
+			const LuaTable curMap = maps.SubTable(m);
 
 			MapData md;
-			md.name = p.SGetValueDef("", map + "Name");
-			md.virtualPath = p.SGetValueDef("", map + "VirtualPath");
+			md.name = curMap.GetString("name", "");
+			md.virtualPath = curMap.GetString("virtualPath", "");
 
 			ai.mapData.push_back(md);
 		}
 
-		if (p.SectionExist(key + "Mod")) {
-			ai.modData = GetModData(&p, key + "Mod");
-		}
+		ai.modData = GetModData(&mod);
 
 		std::string lcname = StringToLower(ai.origName);
 
@@ -454,77 +520,72 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		i = next;
 	}
 
-	fprintf(out, "[ARCHIVECACHE]\n{\n");
-	fprintf(out, "\tNumArchives=%d;\n", archiveInfo.size());
-	fprintf(out, "\tInternalVer=%d;\n", INTERNAL_VER);
-	int cur = 0;
+	fprintf(out, "local archiveCache = {\n");
+	fprintf(out, "    internalVer = %d,\n", INTERNAL_VER);
+	fprintf(out, "    archives = {\n");
 	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
-		fprintf(out, "\t[ARCHIVE%d]\n\t{\n", cur);
-		fprintf(out, "\t\tName=%s;\n", i->second.origName.c_str());
-		fprintf(out, "\t\tPath=%s;\n", i->second.path.c_str());
-		fprintf(out, "\t\tModified=%u;\n", i->second.modified);
-		fprintf(out, "\t\tChecksum=%u;\n", i->second.checksum);
-		fprintf(out, "\t\tReplaced=%s;\n", i->second.replaced.c_str());
+		fprintf(out, "        {\n");
+		fprintf(out, "            name = \"%s\",\n", i->second.origName.c_str());
+		fprintf(out, "            path = [[%s]],\n", i->second.path.c_str()); // path contains '.\'s, use [[...]] format
+		fprintf(out, "            modified = \"%u\",\n", i->second.modified);
+		fprintf(out, "            checksum = \"%u\",\n", i->second.checksum);
+		fprintf(out, "            replaced = \"%s\",\n", i->second.replaced.c_str());
 
-		fprintf(out, "\t\tNumMaps=%d;\n", i->second.mapData.size());
-		int curmap = 0;
+		fprintf(out, "            maps = {\n");
 		for (std::vector<MapData>::iterator mi = i->second.mapData.begin(); mi != i->second.mapData.end(); ++mi) {
-			fprintf(out, "\t\t[MAP%d]\n\t\t{\n", curmap);
-			//WriteData(out, *mi);
-			fprintf(out, "\t\t\tName=%s;\n", (*mi).name.c_str());
-			fprintf(out, "\t\t\tVirtualPath=%s;\n", (*mi).virtualPath.c_str());
-			//fprintf(out, "\t\t\tDescription=%s;\n", (*mi).description.c_str());
-			fprintf(out, "\t\t}\n");
-			curmap++;
+			fprintf(out, "                {\n");
+			fprintf(out, "                    name = \"%s\",\n", (*mi).name.c_str());
+			fprintf(out, "                    virtualPath = \"%s\",\n", (*mi).virtualPath.c_str());
+			fprintf(out, "                },\n");
 		}
+		fprintf(out, "            },\n");
 
 		// Any mod info? or just a map archive?
 		if (i->second.modData.name != "") {
 			const ModData& md = i->second.modData;
-			fprintf(out, "\t\t[MOD]\n\t\t{\n");
-			fprintf(out, "\t\t\tName=%s;\n",          md.name.c_str());
+			fprintf(out, "            modData = {\n");
+			fprintf(out, "                name = \"%s\",\n",          md.name.c_str());
 
 			if (!md.shortName.empty()) {
-				fprintf(out, "\t\t\tShortName=%s;\n",   md.shortName.c_str());
+				fprintf(out, "                shortName = \"%s\",\n",   md.shortName.c_str());
 			}
 			if (!md.version.empty()) {
-				fprintf(out, "\t\t\tVersion=%s;\n",     md.version.c_str());
+				fprintf(out, "                version = \"%s\",\n",     md.version.c_str());
 			}
 			if (!md.mutator.empty()) {
-				fprintf(out, "\t\t\tMutator=%s;\n",     md.mutator.c_str());
+				fprintf(out, "                mutator = \"%s\",\n",     md.mutator.c_str());
 			}
 			if (!md.game.empty()) {
-				fprintf(out, "\t\t\tGame=%s;\n",        md.game.c_str());
+				fprintf(out, "                game = \"%s\",\n",        md.game.c_str());
 			}
 			if (!md.shortGame.empty()) {
-				fprintf(out, "\t\t\tShortGame=%s;\n",   md.shortGame.c_str());
+				fprintf(out, "                shortGame = \"%s\",\n",   md.shortGame.c_str());
 			}
 			if (!md.description.empty()) {
-				fprintf(out, "\t\t\tDescription=%s;\n", md.description.c_str());
+				fprintf(out, "                description = \"%s\",\n", md.description.c_str());
 			}
-
-			fprintf(out, "\t\t\tModType=%d;\n",     md.modType);
-
-			fprintf(out, "\t\t\tNumDependencies=%d;\n", i->second.modData.dependencies.size());
-			int curdep = 0;
+			fprintf(out, "                modType = %d,\n",     md.modType);
+			
+			fprintf(out, "                depend = {\n");
 			for (std::vector<std::string>::iterator dep = i->second.modData.dependencies.begin(); dep != i->second.modData.dependencies.end(); ++dep) {
-				fprintf(out, "\t\t\tDepend%d=%s;\n", curdep, (*dep).c_str());
-				curdep++;
+				fprintf(out, "                    \"%s\",\n", (*dep).c_str());
 			}
-
-			fprintf(out, "\t\t\tNumReplaces=%d;\n", i->second.modData.replaces.size());
-			int currep = 0;
+			fprintf(out, "                },\n");
+			
+			fprintf(out, "                replace = {\n");
 			for (std::vector<std::string>::iterator rep = i->second.modData.replaces.begin(); rep != i->second.modData.replaces.end(); ++rep) {
-				fprintf(out, "\t\t\tReplace%d=%s;\n", currep++, (*rep).c_str());
+				fprintf(out, "                    \"%s\",\n", (*rep).c_str());
 			}
-
-			fprintf(out, "\t\t}\n");
+			
+			fprintf(out, "                },\n");
+			fprintf(out, "            },\n");
 		}
 
-		fprintf(out, "\t}\n");
-		cur++;
+		fprintf(out, "        },\n");
 	}
-	fprintf(out, "}\n");
+	fprintf(out, "    }\n");
+	fprintf(out, "}\n\n");
+	fprintf(out, "return archiveCache");
 	fclose(out);
 
 	isDirty = false;
@@ -707,7 +768,8 @@ unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 	unsigned int checksum = 0;
 	std::vector<std::string> ars = GetArchives(root);
 
-	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+	for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i)
+	{
 		unsigned tmp = GetArchiveChecksum(*i);
 		logOutput.Print("mod checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
 		checksum ^= tmp;
