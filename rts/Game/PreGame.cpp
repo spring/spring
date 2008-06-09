@@ -616,10 +616,6 @@ void CPreGame::LoadMod(const std::string& modName)
 				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
 			}
 		}
-	
-		// always load springcontent.sdz
-		hpiHandler->AddArchive("base/springcontent.sdz", false);
-
 		alreadyLoaded = true;
 	}
 }
