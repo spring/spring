@@ -286,7 +286,7 @@ for f in aai_data:
 		Alias('install', inst)
 
 # install LuaUI files
-for f in ['gui.lua']:
+for f in ['luaui.lua']:
 	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
 	Alias('install', inst)
 luaui_files=filelist.list_files_recursive(env, 'game/LuaUI')
