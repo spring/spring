@@ -35,8 +35,7 @@ class LuaTable {
 
 		LuaTable SubTable(int key) const;
 		LuaTable SubTable(const string& key) const;
-
-		LuaTable DotTable(const string& dot) const;
+		LuaTable SubTableExpr(const string& expr) const;
 
 		bool IsValid() const { return (parser != NULL); }
 
@@ -120,7 +119,9 @@ class LuaParser {
 
 		LuaTable GetRoot();
 
-		LuaTable DotTable(const string& dot) { return GetRoot().DotTable(dot); }
+		LuaTable SubTableExpr(const string& expr) {
+			return GetRoot().SubTableExpr(expr);
+		}
 
 		const string& GetErrorLog() const { return errorLog; }
 	
