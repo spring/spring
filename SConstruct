@@ -268,7 +268,7 @@ for f in os.listdir('game/startscripts'):
 		Alias('install', inst)
 
 # install some files from root of datadir
-for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt']:
+for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
 	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
 	Alias('install', inst)
 
