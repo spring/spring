@@ -350,9 +350,6 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 		logOutput.Print("adding archive: %s\n", i->c_str());
 		hpiHandler->AddArchive(*i, false);
 	}
-	// always load springcontent.sdz
-	logOutput.Print("adding archive: base/springcontent.sdz\n");
-	hpiHandler->AddArchive("base/springcontent.sdz", false);
 }
 
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)

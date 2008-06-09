@@ -121,6 +121,7 @@ local optionDefs = {
     'notdeformable', 'NotDeformable', 
     BoolOption, mapInfo.hardness, true
   }
+}
 
 for _, opt in ipairs(selOpts) do
   local optDef = optionDefs[opt]

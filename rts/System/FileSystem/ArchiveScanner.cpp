@@ -34,12 +34,15 @@
 // Archive7zip.cpp and ArchiveZip.cpp  (search for NOTE)
 #define INTERNAL_VER	6
 
+
 CArchiveScanner* archiveScanner = NULL;
+
 
 CArchiveScanner::CArchiveScanner(void) :
 	isDirty(false)
 {
 }
+
 
 CArchiveScanner::~CArchiveScanner(void)
 {
@@ -47,12 +50,14 @@ CArchiveScanner::~CArchiveScanner(void)
 		WriteCacheData(filesystem.LocateFile(GetFilename(), FileSystem::WRITE));
 }
 
+
 std::string CArchiveScanner::GetFilename()
 {
 	char buf[32];
 	sprintf(buf, "ArchiveCacheV%i.txt", INTERNAL_VER);
 	return std::string(buf);
 }
+
 
 CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::string& section)
 {
@@ -102,6 +107,7 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(TdfParser* p, const std::st
 
 	return md;
 }
+
 
 void CArchiveScanner::Scan(const std::string& curPath, bool checksum)
 {
@@ -373,6 +379,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& filename)
 		return digest;
 }
 
+
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
 	TdfParser p;
@@ -426,6 +433,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 
 	isDirty = false;
 }
+
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
@@ -522,6 +530,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	isDirty = false;
 }
 
+
 std::vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 {
 	std::vector<ModData> ret;
@@ -529,8 +538,9 @@ std::vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.modData.name != "") {
 
-			if (i->second.modData.modType != 1)
+			if (i->second.modData.modType != 1) {
 				continue;
+			}
 
 			// Add the archive the mod is in as the first dependency
 			ModData md = i->second.modData;
@@ -541,6 +551,7 @@ std::vector<CArchiveScanner::ModData> CArchiveScanner::GetPrimaryMods() const
 
 	return ret;
 }
+
 
 std::vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 {
@@ -558,6 +569,7 @@ std::vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 	return ret;
 }
 
+
 std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth)
 {
 	// Protect against circular dependencies
@@ -569,20 +581,23 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	std::vector<std::string> ret;
 	std::string lcname = StringToLower(ModNameToModArchive(root));
 	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
-	if (aii == archiveInfo.end())
+	if (aii == archiveInfo.end()) {
 		return ret;
+	}
 
 	// Check if this archive has been replaced
 	while (aii->second.replaced.length() > 0) {
 		aii = archiveInfo.find(aii->second.replaced);
-		if (aii == archiveInfo.end())
+		if (aii == archiveInfo.end()) {
 			return ret;
+		}
 	}
 
 	ret.push_back(aii->second.path + aii->second.origName);
 
-	if (aii->second.modData.name == "")
+	if (aii->second.modData.name == "") {
 		return ret;
+	}
 
 	// add depth-first
 	for (std::vector<std::string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
@@ -592,8 +607,20 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 		}
 	}
 
+	// add springcontent.sdz for primary mod archives
+	if ((depth == 0) && (aii->second.modData.modType == 1)) {
+		const std::string springContentPath = GetArchivePath("springcontent.sdz");
+		if (springContentPath.empty()) {
+			throw content_error("missing springcontent.sdz");
+		} else {
+			printf("Added springcontent.sdz for %s\n", root.c_str());
+			ret.push_back(springContentPath + "springcontent.sdz");
+		}
+	}
+
 	return ret;
 }
+
 
 std::vector<std::string> CArchiveScanner::GetMaps()
 {
@@ -608,6 +635,7 @@ std::vector<std::string> CArchiveScanner::GetMaps()
 	return ret;
 }
 
+
 std::vector<std::string> CArchiveScanner::GetArchivesForMap(const std::string& mapName)
 {
 	std::vector<std::string> ret;
@@ -617,7 +645,9 @@ std::vector<std::string> CArchiveScanner::GetArchivesForMap(const std::string& m
 			if (mapName == (*i).name) {
 				ret = GetArchives(aii->first);
 				const std::string mapHelperPath = GetArchivePath("maphelper.sdz");
-				if (!mapHelperPath.empty()) {
+				if (mapHelperPath.empty()) {
+					throw content_error("missing maphelper.sdz");
+				} else {
 					ret.push_back(mapHelperPath + "maphelper.sdz");
 				}
 				break;
@@ -627,6 +657,7 @@ std::vector<std::string> CArchiveScanner::GetArchivesForMap(const std::string& m
 
 	return ret;
 }
+
 
 unsigned int CArchiveScanner::GetArchiveChecksum(const std::string& name)
 {
@@ -648,6 +679,7 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const std::string& name)
 	return aii->second.checksum;
 }
 
+
 std::string CArchiveScanner::GetArchivePath(const std::string& name)
 {
 	std::string lcname = name;
@@ -668,6 +700,7 @@ std::string CArchiveScanner::GetArchivePath(const std::string& name)
 	return aii->second.path;
 }
 
+
 /** Get checksum of all required archives depending on selected mod. */
 unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 {
@@ -682,6 +715,7 @@ unsigned int CArchiveScanner::GetModChecksum(const std::string& root)
 	return checksum;
 }
 
+
 /** Get checksum of all required archives depending on selected map. */
 unsigned int CArchiveScanner::GetMapChecksum(const std::string& mapName)
 {
@@ -695,6 +729,7 @@ unsigned int CArchiveScanner::GetMapChecksum(const std::string& mapName)
 	}
 	return checksum;
 }
+
 
 /** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMod(const std::string& root, unsigned checksum)
@@ -714,6 +749,7 @@ void CArchiveScanner::CheckMod(const std::string& root, unsigned checksum)
 	}
 }
 
+
 /** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
 void CArchiveScanner::CheckMap(const std::string& mapName, unsigned checksum)
 {
@@ -732,6 +768,7 @@ void CArchiveScanner::CheckMap(const std::string& mapName, unsigned checksum)
 	}
 }
 
+
 /** Convert mod name to mod primary archive, e.g. ModNameToModArchive("XTA v8.1") returns "xtape.sd7". */
 std::string CArchiveScanner::ModNameToModArchive(const std::string& s) const
 {
@@ -743,6 +780,7 @@ std::string CArchiveScanner::ModNameToModArchive(const std::string& s) const
 	}
 	return s;
 }
+
 
 /** The reverse of ModNameToModArchive() */
 std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
@@ -757,6 +795,7 @@ std::string CArchiveScanner::ModArchiveToModName(const std::string& s) const
 	return s;
 }
 
+
 /** Convert mod name to mod data struct, can return empty ModData */
 CArchiveScanner::ModData CArchiveScanner::ModNameToModData(const std::string& s) const
 {
@@ -770,6 +809,7 @@ CArchiveScanner::ModData CArchiveScanner::ModNameToModData(const std::string& s)
 	}
 	return ModData();
 }
+
 
 /** Convert mod archive to mod data struct, can return empty ModData */
 CArchiveScanner::ModData CArchiveScanner::ModArchiveToModData(const std::string& s) const
