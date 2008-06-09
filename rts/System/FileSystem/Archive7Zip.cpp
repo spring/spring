@@ -55,9 +55,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name):
 	// Get contents of archive and store name->int mapping
 	for (unsigned i = 0; i < db.Database.NumFiles; ++i) {
 		CFileItem* fi = db.Database.Files + i;
-		// NOTE: fix this on next CArchiveScanner INTERNAL_VER bump.
-		// It should be `if (fi->Size >= 0) {' because now zero-size files are ignored.
-		if (fi->Size > 0) {
+		if (fi->Size >= 0) { 		//  zero-size files are ignored.
 			std::string name = fi->Name;
 			//SetSlashesForwardToBack(name);
 

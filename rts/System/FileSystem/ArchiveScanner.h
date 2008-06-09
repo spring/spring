@@ -7,7 +7,8 @@
 
 class CArchiveBase;
 class IFileFilter;
-class TdfParser;
+class LuaParser;
+class LuaTable;
 
 /*
  * This class searches through a given directory and its subdirectories looking for archive files.
@@ -43,6 +44,7 @@ public:
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 	virtual ~CArchiveScanner(void);
+	void PreScan(const std::string& curPath);
 	void Scan(const std::string& curPath, bool checksum = false);
 	std::vector<ModData> GetPrimaryMods() const;
 	std::vector<ModData> GetAllMods() const;
@@ -72,10 +74,12 @@ protected:
 		std::string replaced;					// If not empty, use that archive instead
 	};
 	std::map<std::string, ArchiveInfo> archiveInfo;
-	ModData GetModData(TdfParser* p, const std::string& section);
+	ModData GetModData(const LuaTable* modTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
+	std::string parse_tdf;
+	std::string scanutils;
 };
 
 extern CArchiveScanner* archiveScanner;
