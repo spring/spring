@@ -5,7 +5,7 @@
 --  brief:   local team recoloring
 --  author:  Dave Rodgers
 --
---  Copyright (C) 2007.
+--  Copyright (C) 2008.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
 --------------------------------------------------------------------------------
@@ -26,11 +26,11 @@ local print = Spring.Echo
 --  Color sets
 --
 
-local myColor = { 0, 1, 1 }
+local myColor = { 0.0, 1.0, 1.0 } -- cyan
 
-local gaiaColor = { 0.8, 0.8, 0.8 }
+local gaiaColor = { 0.8, 0.8, 0.8 } -- off-white
 
-local allyColors = {
+local allyColors = { -- greens
   { 0.0, 1.0, 0.0 },
   { 0.0, 1.0, 0.5 },
   { 0.0, 1.0, 1.0 },
@@ -42,7 +42,7 @@ local allyColors = {
   { 0.0, 0.4, 0.6 },
 }
 
-local enemyColors = {
+local enemyColors = { -- reds
   { 1.0, 0.0, 0.0 },
   { 1.0, 0.0, 0.5 },
   { 1.0, 0.0, 1.0 },
