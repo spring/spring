@@ -66,6 +66,10 @@ ${IfNot} ${FileExists} "$INSTDIR\ctrlpanel.txt"
   File "..\game\ctrlpanel.txt"
 ${EndIf}
 
+${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
+  File "..\game\teamcolors.lua"
+${EndIf}
+
 ;!endif ; SP_UPDATE
 
   SetOutPath "$INSTDIR\startscripts"
@@ -145,6 +149,7 @@ ${EndIf}
   Delete "$INSTDIR\uikeys.txt"
   Delete "$INSTDIR\cmdcolors.txt"
   Delete "$INSTDIR\ctrlpanel.txt"
+  Delete "$INSTDIR\teamcolors.lua"
   ;Delete "$INSTDIR\settings.exe"
 
   ;New Settings Program
