@@ -1,5 +1,6 @@
 #include "AutohostInterface.h"
 
+#include <string.h>
 #include "Net/UDPConnectedSocket.h" 
 
 namespace {

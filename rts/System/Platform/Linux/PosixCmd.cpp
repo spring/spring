@@ -9,6 +9,7 @@
  */
 #include "PosixCmd.h"
 
+#include <stdlib.h>
 
 /**
  * Just stores the arguments and calls the parent class's

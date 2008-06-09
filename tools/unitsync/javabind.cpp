@@ -14,6 +14,7 @@
 #include "SyncServer.h"
 
 #include <string>
+#include <string.h>
 #include <vector>
 #include <algorithm>
 

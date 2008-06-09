@@ -1,5 +1,6 @@
 #include "ExternalAI/IAICallback.h"
 #include "MetalMap.h"
+#include <string.h>
 
 CMetalMap::CMetalMap(IAICallback* aicb, bool verbose)
 {

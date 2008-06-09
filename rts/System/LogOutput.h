@@ -8,6 +8,7 @@ LogOutput - global object to write log info to.
 
 #include <stdarg.h>
 #include <vector>
+#include <string>
 
 // format string error checking
 #ifdef __GNUC__

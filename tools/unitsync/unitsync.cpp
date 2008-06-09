@@ -19,6 +19,7 @@
 #include "unitsyncLogOutput.h"
 
 #include <string>
+#include <string.h>
 #include <vector>
 #include <set>
 #include <algorithm>
