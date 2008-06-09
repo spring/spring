@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 #include <ostream>
 #include <fstream>
+#include <string.h>
 #include "FileSystem/FileHandler.h"
 #if defined(USE_QUICKTIME)
 #include <QuickTime/ImageCompression.h>

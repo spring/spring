@@ -9,6 +9,7 @@
 #include "StdAfx.h"
 #include "DataDirLocater.h"
 #include <sstream>
+#include <string.h>
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
