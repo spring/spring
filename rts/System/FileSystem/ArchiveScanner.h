@@ -68,10 +68,6 @@ public:
 	ModData ModArchiveToModData(const std::string& s) const;
 
 protected:
-	void Scan(const std::string& curPath, bool checksum = false);
-	void PreScan(const std::string& curPath);
-
-protected:
 	struct ArchiveInfo {
 		std::string path;
 		std::string origName;					// Could be useful to have the non-lowercased name around
@@ -82,13 +78,25 @@ protected:
 		bool updated;
 		std::string replaced;					// If not empty, use that archive instead
 	};
+
+protected:
+	void PreScan(const std::string& curPath);
+	void Scan(const std::string& curPath, bool checksum = false);
+	void ScanArchive(const std::string& fullName, bool checksum = false);
+	void ScanMap(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	void ScanModLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	void ScanModTdf(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+
+protected:
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	ModData GetModData(const LuaTable& modTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
-	std::string parse_tdf;
-	std::string scanutils;
+	std::string parse_tdf_path;
+	std::string parse_tdf_code;
+	std::string scanutils_path;
+	std::string scanutils_code;
 };
 
 extern CArchiveScanner* archiveScanner;
