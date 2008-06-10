@@ -35,9 +35,11 @@ WinFileSystemHandler::WinFileSystemHandler(bool verbose) : FileSystemHandler('\\
 	// Create the archive scanner and vfs handler
 	archiveScanner = new CArchiveScanner();
 	archiveScanner->ReadCacheData(archiveScanner->GetFilename());
-	archiveScanner->Scan("./maps", true);
-	archiveScanner->Scan("./base", true);
-	archiveScanner->Scan("./mods", true);
+	std::vector<std::string> scanDirs;
+	scanDirs.push_back("./maps");
+	scanDirs.push_back("./base");
+	scanDirs.push_back("./mods");
+	archiveScanner->ScanDirs(scanDirs, true);
 	archiveScanner->WriteCacheData(archiveScanner->GetFilename());
 	hpiHandler = new CVFSHandler();
 }

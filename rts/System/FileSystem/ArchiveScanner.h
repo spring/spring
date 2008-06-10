@@ -27,6 +27,7 @@ public:
 		std::string name;
 		std::string virtualPath;					// Where in the archive the map can be found
 	};
+
 	struct ModData {
 		std::string name;							// ex:  Original Total Annihilation v2.3
 		std::string shortName;						// ex:  OTA
@@ -39,13 +40,17 @@ public:
 		std::vector<std::string> dependencies;		// Archives it depends on
 		std::vector<std::string> replaces;			// This archive obsoletes these ones
 	};
+
 	CArchiveScanner(void);
+	virtual ~CArchiveScanner(void);
+
 	std::string GetFilename();
+
+	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
+
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
-	virtual ~CArchiveScanner(void);
-	void PreScan(const std::string& curPath);
-	void Scan(const std::string& curPath, bool checksum = false);
+
 	std::vector<ModData> GetPrimaryMods() const;
 	std::vector<ModData> GetAllMods() const;
 	std::vector<std::string> GetArchives(const std::string& root, int depth = 0);
@@ -63,6 +68,10 @@ public:
 	ModData ModArchiveToModData(const std::string& s) const;
 
 protected:
+	void Scan(const std::string& curPath, bool checksum = false);
+	void PreScan(const std::string& curPath);
+
+protected:
 	struct ArchiveInfo {
 		std::string path;
 		std::string origName;					// Could be useful to have the non-lowercased name around
@@ -74,7 +83,7 @@ protected:
 		std::string replaced;					// If not empty, use that archive instead
 	};
 	std::map<std::string, ArchiveInfo> archiveInfo;
-	ModData GetModData(const LuaTable* modTable);
+	ModData GetModData(const LuaTable& modTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;

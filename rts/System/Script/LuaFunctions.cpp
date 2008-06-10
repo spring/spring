@@ -7,7 +7,6 @@
 #include "GlobalStuff.h"
 #include "float3.h"
 #include "LogOutput.h"
-#include "TdfParser.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
