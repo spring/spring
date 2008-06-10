@@ -115,45 +115,55 @@ void CArchiveScanner::PreScan(const string& curPath)
 	if (!found.empty()) {
 		CArchiveBase* ar = CArchiveFactory::OpenArchive(found[0]);
 		if (ar) {
-			int cur;
 			string name;
 			int size;
-
-			cur = ar->FindFiles(0, &name, &size);
-			while (cur != 0) {
+			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
 				if (name == "gamedata/parse_tdf.lua") {
-					int fh = ar->OpenFile(name);
-					if (fh) {
-						int fsize = ar->FileSize(fh);
-						char* buf = SAFE_NEW char[fsize];
-						ar->ReadFile(fh, buf, fsize);
+					const int fh = ar->OpenFile(name);
+					if (fh != 0) {
+						parse_tdf_path = found[0];
 						ar->CloseFile(fh);
-						parse_tdf.clear();
-						parse_tdf.append(buf,fsize);
-						delete [] buf;
 					}
 				}
 				else if (name == "gamedata/scanutils.lua") {
-					int fh = ar->OpenFile(name);
-					if (fh) {
-						int fsize = ar->FileSize(fh);
-						char* buf = SAFE_NEW char[fsize];
-						ar->ReadFile(fh, buf, fsize);
+					const int fh = ar->OpenFile(name);
+					if (fh != 0) {
+						scanutils_path = found[0];
 						ar->CloseFile(fh);
-						scanutils.clear();
-						scanutils.append(buf,fsize);
-						delete [] buf;
 					}
 				}
-				cur = ar->FindFiles(cur, &name, &size);
 			}
 			delete ar;
-			// we don't want to return the table
-			parse_tdf.erase(parse_tdf.find_last_of("}") + 1);
-			// NOTE: this is a dangerous game to play,
-			//       better to use a tag in the source file
 		}
 	}
+}
+
+
+static bool LoadSourceFile(const string& archive,
+                           const string& fileName, string& source)
+{
+	CArchiveBase* ar = CArchiveFactory::OpenArchive(archive);
+	if (ar == NULL) {
+		return false;
+	}
+
+	const int fh = ar->OpenFile(fileName);
+	if (!fh) {
+		delete ar;
+		return false;
+	}
+
+	const int fsize = ar->FileSize(fh);
+	char* buf = SAFE_NEW char[fsize];
+	ar->ReadFile(fh, buf, fsize);
+	ar->CloseFile(fh);
+	source.clear();
+	source.append(buf, fsize);
+	delete [] buf;
+
+	delete ar;
+
+	return true;
 }
 
 
@@ -164,9 +174,24 @@ void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool checksum)
 		PreScan(scanDirs[d]);
 	}
 
+	LoadSourceFile(parse_tdf_path, "gamedata/parse_tdf.lua", parse_tdf_code);
+	if (parse_tdf_code.empty()) {
+		throw content_error("could not find 'gamedata/parse_tdf.lua' code");
+	}
+
+	LoadSourceFile(scanutils_path, "gamedata/scanutils.lua", scanutils_code);
+	if (scanutils_code.empty()) {
+		throw content_error("could not find 'gamedata/scanutils.lua' code");
+	}
+
+	// we don't want to return the parse_tdf table
+	parse_tdf_code.erase(parse_tdf_code.find_last_of("}") + 1);
+	// NOTE: this is a dangerous game to play,
+	//       better to use a tag in the source file
+
 	// add the archives
 	for (unsigned int d = 0; d < scanDirs.size(); d++) {
-		printf("Scanning: %s\n", scanDirs[d].c_str());
+		logOutput.Print("Scanning: %s\n", scanDirs[d].c_str());
 		Scan(scanDirs[d], checksum);
 	}
 }
@@ -206,177 +231,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 
 		// Is this an archive we should look into?
 		if (CArchiveFactory::IsArchive(fullName)) {
-			struct stat info;
-
-			stat(fullName.c_str(), &info);
-
-			// Determine whether to rely on the cached info or not
-			bool cached = false;
-
-			std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcfn);
-			if (aii != archiveInfo.end()) {
-
-				// This archive may have been obsoleted, do not process it if so
-				if (aii->second.replaced.length() > 0) {
-					continue;
-				}
-
-				/*
-					For truely correct updating of .sdd archives, this code should
-					be enabled. Unfortunately it has as side effect that all files
-					in all .sdd's always need to be stat()'ed, which really slows
-					down program startup.
-
-					An update can be forced anyway by removing ArchiveCacheV*.lua
-					or renaming the archive.
-				*/
-
-				/*if (S_ISDIR(info.st_mode)) {
-					struct stat info2;
-					vector<string> sddfiles = filesystem.FindFiles(fpath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
-					for (vector<string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
-						stat(sddit->c_str(), &info2);
-						if (info.st_mtime < info2.st_mtime) {
-							info.st_mtime = info2.st_mtime;
-						}
-					}
-				}*/
-
-				if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
-					cached = true;
-					aii->second.updated = true;
-				}
-
-				// If we are here, we could have invalid info in the cache
-				// Force a reread if it's a directory archive, as st_mtime only
-				// reflects changes to the directory itself, not the contents.
-				if (!cached) {
-					archiveInfo.erase(aii);
-				}
-			}
-
-			// Time to parse the info we are interested in
-			if (!cached) {
-
-				//printf("scanning archive: %s\n", fullName.c_str());
-
-				CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
-				if (ar) {
-					int cur;
-					string name;
-					int size;
-					ArchiveInfo ai;
-
-					cur = ar->FindFiles(0, &name, &size);
-					while (cur != 0) {
-						//printf("found %s %d\n", name.c_str(), size);
-						string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
-
-						// only accept new format maps
-						if ((ext == "smf") || (ext == "sm3")) {
-							MapData md;
-							if (name.find_last_of('\\') == string::npos && name.find_last_of('/') == string::npos) {
-								md.name = name;
-								md.virtualPath = "/";
-							}
-							else {
-								if (name.find_last_of('\\') == string::npos) {
-									md.name = name.substr(name.find_last_of('/') + 1);
-									// include the backslash
-									md.virtualPath = name.substr(0, name.find_last_of('/') + 1);
-								} else {
-									md.name = name.substr(name.find_last_of('\\') + 1);
-									// include the backslash
-									md.virtualPath = name.substr(0, name.find_last_of('\\') + 1);
-								}
-								//md.name = md.name.substr(0, md.name.find_last_of('.'));
-							}
-							ai.mapData.push_back(md);
-						}
-						else if (name == "modinfo.lua") {
-							int fh = ar->OpenFile(name);
-							if (fh) {
-								int fsize = ar->FileSize(fh);
-
-								char* buf = SAFE_NEW char[fsize];
-								ar->ReadFile(fh, buf, fsize);
-								ar->CloseFile(fh);
-								
-								string cleanbuf;
-								cleanbuf.append(buf, fsize);
-								delete [] buf;
-								LuaParser p(cleanbuf, SPRING_VFS_MOD);
-								if (!p.Execute()) {
-									logOutput.Print(p.GetErrorLog());
-								}
-								const LuaTable modTable = p.GetRoot();
-								ai.modData = GetModData(modTable);
-							}
-						}
-						else if (name == "modinfo.tdf") {
-						  int fh = ar->OpenFile(name);
-							if (fh) {
-								int fsize = ar->FileSize(fh);
-
-								char* buf = SAFE_NEW char[fsize];
-								ar->ReadFile(fh, buf, fsize);
-								ar->CloseFile(fh);
-								string cleanbuf;
-								cleanbuf.append(buf, fsize);
-								delete [] buf;
-								if ((parse_tdf.length() != 0) && (scanutils.length() != 0)) {
-									const string luaFile =
-										  parse_tdf + "\n\n"
-										+ scanutils + "\n\n"
-										+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
-										+ cleanbuf + "]])\n\n"
-										+ "if (tdfModinfo == nil) then\n"
-										+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
-										+ "end\n\n"
-										+ "tdfModinfo.mod.depend  = MakeArray(tdfModinfo.mod, 'depend')\n"
-										+ "tdfModinfo.mod.replace = MakeArray(tdfModinfo.mod, 'replace')\n\n"
-										+ "return tdfModinfo.mod\n";
-									LuaParser p(luaFile, SPRING_VFS_MOD);
-									if (!p.Execute()) {
-										logOutput.Print(p.GetErrorLog());
-									}
-									const LuaTable modTable = p.GetRoot();
-									ai.modData = GetModData(modTable);
-								}
-								// silently ignore tdf mods if either
-								// parse_tdf.lua  or scanutils.lua  not found in base
-							}
-						}
-
-						cur = ar->FindFiles(cur, &name, &size);
-					}
-
-					ai.path = fpath;
-					ai.modified = info.st_mtime;
-					ai.origName = fn;
-					ai.updated = true;
-
-					delete ar;
-
-					// Optionally calculate a checksum for the file
-					// To prevent reading all files in all directory (.sdd) archives
-					// every time this function is called, directory archive checksums
-					// are calculated on the fly.
-					if (checksum) {
-						ai.checksum = GetCRC(fullName);
-					} else {
-						ai.checksum = 0;
-					}
-
-					archiveInfo[lcfn] = ai;
-				}
-			}
-			else {
-				// If cached is true, aii will point to the archive
-				if ((checksum) && (aii->second.checksum == 0)) {
-					aii->second.checksum = GetCRC(fullName);
-				}
-			}
+			ScanArchive(fullName, checksum);
 		}
 	}
 
@@ -384,7 +239,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 	for (std::map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
 		for (vector<string>::iterator i = aii->second.modData.replaces.begin(); i != aii->second.modData.replaces.end(); ++i) {
 
-			string lcname = StringToLower(*i);
+			const string lcname = StringToLower(*i);
 			std::map<string, ArchiveInfo>::iterator ar = archiveInfo.find(lcname);
 
 			// If it's not there, we will create a new entry
@@ -404,6 +259,198 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 			ar->second.updated = true;
 			ar->second.replaced = aii->first;
 		}
+	}
+}
+
+
+void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
+{
+	struct stat info;
+
+	stat(fullName.c_str(), &info);
+
+	const string fn    = filesystem.GetFilename(fullName);
+	const string fpath = filesystem.GetDirectory(fullName);
+	const string lcfn    = StringToLower(fn);
+	const string lcfpath = StringToLower(fpath);
+
+	// Determine whether to rely on the cached info or not
+	bool cached = false;
+
+	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcfn);
+	if (aii != archiveInfo.end()) {
+
+		// This archive may have been obsoleted, do not process it if so
+		if (aii->second.replaced.length() > 0) {
+			return;
+		}
+
+		/*
+			For truely correct updating of .sdd archives, this code should
+			be enabled. Unfortunately it has as side effect that all files
+			in all .sdd's always need to be stat()'ed, which really slows
+			down program startup.
+
+			An update can be forced anyway by removing ArchiveCacheV*.lua
+			or renaming the archive.
+		*/
+
+		/*if (S_ISDIR(info.st_mode)) {
+			struct stat info2;
+			vector<string> sddfiles = filesystem.FindFiles(fpath, "*", FileSystem::RECURSE | FileSystem::INCLUDE_DIRS);
+			for (vector<string>::iterator sddit = found.begin(); sddit != found.end(); ++sddit) {
+				stat(sddit->c_str(), &info2);
+				if (info.st_mtime < info2.st_mtime) {
+					info.st_mtime = info2.st_mtime;
+				}
+			}
+		}*/
+
+		if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
+			cached = true;
+			aii->second.updated = true;
+		}
+
+		// If we are here, we could have invalid info in the cache
+		// Force a reread if it's a directory archive, as st_mtime only
+		// reflects changes to the directory itself, not the contents.
+		if (!cached) {
+			archiveInfo.erase(aii);
+		}
+	}
+
+	// Time to parse the info we are interested in
+	if (cached) {
+		// If cached is true, aii will point to the archive
+		if ((checksum) && (aii->second.checksum == 0)) {
+			aii->second.checksum = GetCRC(fullName);
+		}
+	}
+	else {
+		CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
+		if (ar) {
+			ArchiveInfo ai;
+
+			string name;
+			int size;
+			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+				//printf("found %s %d\n", name.c_str(), size);
+				string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
+
+				// only accept new format maps
+				if ((ext == "smf") || (ext == "sm3")) {
+					ScanMap(ar, name, ai);
+				}
+				else if (name == "modinfo.lua") {
+					ScanModLua(ar, name, ai);
+				}
+				else if (name == "modinfo.tdf") {
+					ScanModTdf(ar, name, ai);
+				}
+			}
+
+			ai.path = fpath;
+			ai.modified = info.st_mtime;
+			ai.origName = fn;
+			ai.updated = true;
+
+			delete ar;
+
+			// Optionally calculate a checksum for the file
+			// To prevent reading all files in all directory (.sdd) archives
+			// every time this function is called, directory archive checksums
+			// are calculated on the fly.
+			if (checksum) {
+				ai.checksum = GetCRC(fullName);
+			} else {
+				ai.checksum = 0;
+			}
+
+			archiveInfo[lcfn] = ai;
+		}
+	}
+}
+
+
+void CArchiveScanner::ScanMap(CArchiveBase* ar, const string& fileName,
+                              ArchiveInfo& ai)
+{
+	MapData md;
+	if ((fileName.find_last_of('\\') == string::npos) &&
+			(fileName.find_last_of('/') == string::npos)) {
+		md.name = fileName;
+		md.virtualPath = "/";
+	}
+	else {
+		if (fileName.find_last_of('\\') == string::npos) {
+			md.name = fileName.substr(fileName.find_last_of('/') + 1);
+			// include the backslash
+			md.virtualPath = fileName.substr(0, fileName.find_last_of('/') + 1);
+		}
+		else {
+			md.name = fileName.substr(fileName.find_last_of('\\') + 1);
+			// include the backslash
+			md.virtualPath = fileName.substr(0, fileName.find_last_of('\\') + 1);
+		}
+	}
+	ai.mapData.push_back(md);
+}
+
+
+void CArchiveScanner::ScanModLua(CArchiveBase* ar, const string& fileName,
+                                 ArchiveInfo& ai)
+{
+	const int fh = ar->OpenFile(fileName);
+	if (fh) {
+		const int fsize = ar->FileSize(fh);
+
+		char* buf = SAFE_NEW char[fsize];
+		ar->ReadFile(fh, buf, fsize);
+		ar->CloseFile(fh);
+		
+		string cleanbuf;
+		cleanbuf.append(buf, fsize);
+		delete [] buf;
+		LuaParser p(cleanbuf, SPRING_VFS_MOD);
+		if (!p.Execute()) {
+			logOutput.Print(p.GetErrorLog());
+		}
+		const LuaTable modTable = p.GetRoot();
+		ai.modData = GetModData(modTable);
+	}
+}
+
+
+void CArchiveScanner::ScanModTdf(CArchiveBase* ar, const string& fileName,
+                                 ArchiveInfo& ai)
+{
+	const int fh = ar->OpenFile(fileName);
+	if (fh) {
+		const int fsize = ar->FileSize(fh);
+
+		char* buf = SAFE_NEW char[fsize];
+		ar->ReadFile(fh, buf, fsize);
+		ar->CloseFile(fh);
+		string cleanbuf;
+		cleanbuf.append(buf, fsize);
+		delete [] buf;
+		const string luaFile =
+				parse_tdf_code + "\n\n"
+			+ scanutils_code + "\n\n"
+			+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
+			+ cleanbuf + "]])\n\n"
+			+ "if (tdfModinfo == nil) then\n"
+			+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
+			+ "end\n\n"
+			+ "tdfModinfo.mod.depend  = MakeArray(tdfModinfo.mod, 'depend')\n"
+			+ "tdfModinfo.mod.replace = MakeArray(tdfModinfo.mod, 'replace')\n\n"
+			+ "return tdfModinfo.mod\n";
+		LuaParser p(luaFile, SPRING_VFS_MOD);
+		if (!p.Execute()) {
+			logOutput.Print(p.GetErrorLog());
+		}
+		const LuaTable modTable = p.GetRoot();
+		ai.modData = GetModData(modTable);
 	}
 }
 
@@ -431,19 +478,15 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 
 /** Get CRC of the data in the specified archive.
     Returns 0 if file could not be opened. */
-unsigned int CArchiveScanner::GetCRC(const string& filename)
+unsigned int CArchiveScanner::GetCRC(const string& arcName)
 {
 	CRC crc;
 	unsigned int digest;
 	CArchiveBase* ar;
 	std::list<string> files;
-	string innerName;
-	string lowerName;
-	int innerSize;
-	int cur = 0;
 
 	// Try to open an archive
-	ar = CArchiveFactory::OpenArchive(filename);
+	ar = CArchiveFactory::OpenArchive(arcName);
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
@@ -451,13 +494,15 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 	// Load ignore list.
 	IFileFilter* ignore = CreateIgnoreFilter(ar);
 
+	string name;
+	int size;
 	// Sort all file paths for deterministic behaviour
-	while (true) {
-		cur = ar->FindFiles(cur, &innerName, &innerSize);
-		if (cur == 0) { break; }
-		if (ignore->Match(innerName)) { continue; }
-		lowerName = StringToLower(innerName); // case insensitive hash
-		files.push_back(lowerName);
+	for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+		if (ignore->Match(name)) {
+			continue;
+		}
+		const string lower = StringToLower(name); // case insensitive hash
+		files.push_back(lower);
 	}
 	files.sort();
 
@@ -467,6 +512,7 @@ unsigned int CArchiveScanner::GetCRC(const string& filename)
 		crc.Update(digest);
 		crc.Update(ar->GetCrc32(*i));
 	}
+
 	delete ignore;
 	delete ar;
 
@@ -537,8 +583,8 @@ static inline void SafeStr(FILE* out, const char* prefix, const string& str)
 	if (str.empty()) {
 		return;
 	}
-	if (str.find_first_of("\\'") == string::npos) {
-		fprintf(out, "%s'%s',\n", prefix, str.c_str());
+	if (str.find_first_of("\\\"") == string::npos) {
+		fprintf(out, "%s\"%s\",\n", prefix, str.c_str());
 	} else {
 		fprintf(out, "%s[[%s]],\n", prefix, str.c_str());
 	}
@@ -566,16 +612,16 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 		i = next;
 	}
 
-	fprintf(out, "local archiveCache = {\n");
-	fprintf(out, "\tinternalver = %d,\n", INTERNAL_VER);
+	fprintf(out, "local archiveCache = {\n\n");
+	fprintf(out, "\tinternalver = %d,\n\n", INTERNAL_VER);
 	fprintf(out, "\tarchives = {\n");
 	std::map<string, ArchiveInfo>::const_iterator arcIt;
 	for (arcIt = archiveInfo.begin(); arcIt != archiveInfo.end(); ++arcIt) {
 		fprintf(out, "\t\t{\n");
 		SafeStr(out, "\t\t\tname = ",            arcIt->second.origName);
 		SafeStr(out, "\t\t\tpath = ",            arcIt->second.path); 
-		fprintf(out, "\t\t\tmodified = '%u',\n", arcIt->second.modified);
-		fprintf(out, "\t\t\tchecksum = '%u',\n", arcIt->second.checksum);
+		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcIt->second.modified);
+		fprintf(out, "\t\t\tchecksum = \"%u\",\n", arcIt->second.checksum);
 		SafeStr(out, "\t\t\treplaced = ",        arcIt->second.replaced);
 
 		const vector<MapData>& mapData = arcIt->second.mapData;
@@ -630,7 +676,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 		fprintf(out, "\t\t},\n");
 	}
 
-	fprintf(out, "\t}\n"); // close 'archives'
+	fprintf(out, "\t},\n"); // close 'archives'
 	fprintf(out, "}\n\n"); // close 'archiveCache'
 	fprintf(out, "return archiveCache\n");
 
