@@ -43,12 +43,17 @@ void UnixFileSystemHandler::InitVFS() const
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 
 	archiveScanner = new CArchiveScanner();
+
 	archiveScanner->ReadCacheData(writedir->path + archiveScanner->GetFilename());
+
+	std::vector<std::string> scanDirs;
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		archiveScanner->Scan(d->path + "maps", true);
-		archiveScanner->Scan(d->path + "base", true);
-		archiveScanner->Scan(d->path + "mods", true);
+		scanDirs.push_back(d->path + "maps");
+		scanDirs.push_back(d->path + "base");
+		scanDirs.push_back(d->path + "mods");
 	}
+	archiveScanner->ScanDirs(scanDirs, true);
+
 	archiveScanner->WriteCacheData(writedir->path + archiveScanner->GetFilename());
 
 	hpiHandler = new CVFSHandler();
