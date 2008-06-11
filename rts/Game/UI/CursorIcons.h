@@ -79,7 +79,7 @@ class CCursorIcons
 
 		struct BuildIcon {
 			BuildIcon(int c, const float3& p, int t, int f)
-			: cmd(c), pos(p), team(t), facing(f) {}
+			: pos(p), cmd(c), team(t), facing(f) {}
 
 			bool operator<(const BuildIcon& i) const
 			{

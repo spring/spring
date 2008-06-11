@@ -69,9 +69,7 @@ public:
 			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
 			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
 			const int square = (rowIdx * airSizeX) + colIdx;
-			#ifdef DEBUG
-			assert(square < airLosMap[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
 			return !!airLosMap[allyTeam][square];
 		}
 		else {
@@ -80,9 +78,7 @@ public:
 			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
 			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
 			const int square = (rowIdx * losSizeX) + colIdx;
-			#ifdef DEBUG
-			assert(square < losMap[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
 			return !!losMap[allyTeam][square];
 		}
 	}
@@ -103,9 +99,7 @@ public:
 			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
 			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
 			const int square = (rowIdx * airSizeX) + colIdx;
-			#ifdef DEBUG
-			assert(square < airLosMap[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
 			return !!airLosMap[allyTeam][square];
 		}
 		else {
@@ -117,9 +111,7 @@ public:
 			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
 			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
 			const int square = (rowIdx * losSizeX) + colIdx;
-			#ifdef DEBUG
-			assert(square < losMap[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
 			return !!losMap[allyTeam][square];
 		}
 	}
@@ -128,9 +120,7 @@ public:
 		pos.CheckInBounds();
 		const int square = ((int)(pos.z * invLosDiv)) * losSizeX
 		                 + ((int)(pos.x * invLosDiv));
-		#ifdef DEBUG
-		assert(square < losMap[allyTeam].size());
-		#endif
+		assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
 		return !!losMap[allyTeam][square];
 	}
 
@@ -138,9 +128,7 @@ public:
 		pos.CheckInBounds();
 		const int square = ((int)(pos.z * invAirDiv)) * airSizeX
 		                 + ((int)(pos.x * invAirDiv));
-		#ifdef DEBUG
-		assert(square < airLosMap[allyTeam].size());
-		#endif
+		assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
 		return !!airLosMap[allyTeam][square];
 	}
 
