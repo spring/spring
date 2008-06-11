@@ -88,13 +88,40 @@ public:
 	}
 
 	bool InLos(const CUnit* unit, int allyTeam) {
+		// NOTE: units are treated differently than world objects in 2 ways:
+		//       1. they can be cloaked 
+		//       2. when underwater, they only get LOS if they also have sonar
 		if (unit->alwaysVisible) {
 			return true;
 		}
-		if (unit->isCloaked) {
+		else if (unit->isCloaked) {
 			return false;
 		}
-		return InLos(static_cast<const CWorldObject*>(unit), allyTeam);
+		else if (unit->useAirLos) {
+			const int gx = (int)(unit->pos.x * invAirDiv);
+			const int gz = (int)(unit->pos.z * invAirDiv);
+			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
+			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
+			const int square = (rowIdx * airSizeX) + colIdx;
+			#ifdef DEBUG
+			assert(square < airLosMap[allyTeam].size());
+			#endif
+			return !!airLosMap[allyTeam][square];
+		}
+		else {
+			if (unit->isUnderWater && !radarhandler->InRadar(unit, allyTeam)) {
+				return false;
+			}
+			const int gx = (int)(unit->pos.x * invLosDiv);
+			const int gz = (int)(unit->pos.z * invLosDiv);
+			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
+			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
+			const int square = (rowIdx * losSizeX) + colIdx;
+			#ifdef DEBUG
+			assert(square < losMap[allyTeam].size());
+			#endif
+			return !!losMap[allyTeam][square];
+		}
 	}
 
 	bool InLos(float3 pos, int allyTeam) {
