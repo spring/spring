@@ -807,7 +807,10 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 				if (player == NULL) {
 					return;
 				}
-				if (player->spectator) {
+				if (gu->spectatingFullView) {
+					sendMsg = true;
+				}
+				else if (player->spectator) {
 					sendMsg = gu->spectating;
 				} else {
 					const int msgAllyTeam = gs->AllyTeam(player->team);
