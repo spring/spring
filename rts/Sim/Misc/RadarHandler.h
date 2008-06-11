@@ -32,21 +32,15 @@ public:
 	bool InRadar(const float3& pos, int allyTeam) {
 		const int square = GetSquare(pos);
 		if (pos.y < -0.5f) {
-			#ifdef DEBUG
-			assert(square < sonarMaps[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < sonarMaps[allyTeam].size());
 			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
 		else if (!circularRadar && (pos.y > 0.5f)) {
-			#ifdef DEBUG
-			assert(square < airRadarMaps[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < airRadarMaps[allyTeam].size());
 			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
-			#ifdef DEBUG
-			assert(square < radarMaps[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < radarMaps[allyTeam].size());
 			return (radarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 	}
@@ -58,9 +52,7 @@ public:
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			#ifdef DEBUG
-			assert(square < sonarMaps[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < sonarMaps[allyTeam].size());
 			return !!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square];
 		}
 		else if (!circularRadar && unit->useAirLos) {
@@ -68,17 +60,13 @@ public:
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			#ifdef DEBUG
-			assert(square < airRadarMaps[allyTeam].size());
-			#endif
+			assert(static_cast<unsigned>(square) < airRadarMaps[allyTeam].size());
 			return airRadarMaps[allyTeam][square] && !commonJammerMap[square];
 		}
 		else {
 			const int square = GetSquare(unit->pos);
-			#ifdef DEBUG
-			assert((square < radarMaps[allyTeam].size()) &&
-			       (square < sonarMaps[allyTeam].size()));
-			#endif
+			assert((static_cast<unsigned>(square) < radarMaps[allyTeam].size()) &&
+					(static_cast<unsigned>(square) < sonarMaps[allyTeam].size()));
 			return (radarMaps[allyTeam][square]
 			        && !unit->stealth
 			        && !commonJammerMap[square])
@@ -92,9 +80,7 @@ public:
 
 	bool InSeismicDistance(const CUnit* unit, int allyTeam) {
 		const int square = GetSquare(unit->pos);
-		#ifdef DEBUG
-		assert(square < seismicMaps[allyTeam].size());
-		#endif
+		assert(static_cast<unsigned>(square) < seismicMaps[allyTeam].size());
 		return !!seismicMaps[allyTeam][square];
 	}
 
