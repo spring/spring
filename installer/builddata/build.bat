@@ -36,3 +36,13 @@ pkzip -add _temp.zip builddata\maphelper\MapOptions.lua
 rename _temp.zip maphelper.sdz
 move /Y maphelper.sdz ..\game\base
 cd builddata
+
+echo Creating cursors.sdz
+del /Q ..\..\base\cursors.sdz
+cd cursors
+..\..\pkzip -add -dir=current ..\..\_temp.zip anims\*
+cd ..\..
+pkzip -add _temp.zip builddata\cursors\modinfo.lua
+rename _temp.zip cursors.sdz
+move /Y cursors.sdz ..\game\base
+cd builddata
