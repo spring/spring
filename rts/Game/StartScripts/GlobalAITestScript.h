@@ -11,7 +11,7 @@ public:
 	CGlobalAITestScript(std::string dll);
 	~CGlobalAITestScript(void);
 
-	void Update(void);
+	void GameStart(void);
 };
 
 #endif
