@@ -78,7 +78,7 @@ uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 for d in filelist.list_directories(uenv, 'rts'):
 	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
-unitsync_files          = filelist.get_source(uenv, 'tools/unitsync', 'test/test.cpp');
+unitsync_files          = filelist.get_source(uenv, 'tools/unitsync', 'tools/unitsync/test/test.cpp');
 unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/');
 unitsync_lua_files      = filelist.get_source(uenv, 'rts/lib/lua/src');
 unitsync_7zip_files     = filelist.get_source(uenv, 'rts/lib/7zip');
