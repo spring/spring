@@ -1,12 +1,9 @@
-IF (UNIX)
-	OPTION(MINGW "If MinGW is used for building" FALSE)
-ELSE (UNIX)
-	OPTION(MINGW "If MinGW is used for building" TRUE)
-ENDIF (UNIX)
-
+### Cmake 2.4 lacks some cross-compiling features and fails on windows
+cmake_minimum_required(VERSION 2.6)
+PROJECT(Dedicated)
 
 IF (MINGW)
-	SET(MINGWLIBS ../../mingwlibs CACHE PATH "Location of the mingwlibs")
+	SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
 
@@ -19,9 +16,9 @@ ELSE (MINGW)
 ENDIF (MINGW)
 
 SET(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -Wall -DDEBUG -D_DEBUG")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=i686 -msse -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=i686 -DNDEBUG")
 
-ADD_DEFINITIONS( -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
+ADD_DEFINITIONS( -DSTREFLOP_X87 -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK )
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 ADD_LIBRARY(net SHARED  ${netfiles})
@@ -29,22 +26,9 @@ TARGET_LINK_LIBRARIES(net SDL boost_thread-mt)
 IF (MINGW)
 	TARGET_LINK_LIBRARIES(net ws2_32)
 ENDIF (MINGW)
-INCLUDE_DIRECTORIES(../../rts/System/Net/)
+INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 
-AUX_SOURCE_DIRECTORY(../../rts/lib/7zip 7zipfiles)
-ADD_LIBRARY(7zip SHARED  ${7zipfiles})
-
-IF (NOT MINGW)
-	ADD_LIBRARY(minizip SHARED  ../../rts/lib/minizip/unzip ../../rts/lib/minizip/zip ../../rts/lib/minizip/ioapi)
-	TARGET_LINK_LIBRARIES(minizip z)
-ELSE (NOT MINGW)
-	ADD_LIBRARY(minizip SHARED  ../../rts/lib/minizip/unzip ../../rts/lib/minizip/zip ../../rts/lib/minizip/iowin32 ../../rts/lib/minizip/ioapi)
-	TARGET_LINK_LIBRARIES(minizip z)
-ENDIF (NOT MINGW)
-
-AUX_SOURCE_DIRECTORY(../../rts/lib/hpiutil2 hpiutil2)
-ADD_LIBRARY(hpiutil2 SHARED  ${hpiutil2})
-TARGET_LINK_LIBRARIES(hpiutil2 z)
+ADD_SUBDIRECTORY(../../rts/lib libs)
 
 IF (UNIX)
 	SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)
@@ -53,11 +37,11 @@ ELSE (UNIX)
 ENDIF (UNIX)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
-SET(filesystem_files ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
+SET(system_files ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
-ADD_LIBRARY(server SHARED ${filesystem_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG)
-TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip boost_regex-mt)
+ADD_LIBRARY(server SHARED ${system_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG ../../rts/Lua/LuaParser ../../rts/Lua/LuaUtils)
+TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip lua boost_regex-mt)
 
 ADD_EXECUTABLE(dedicated main)
 TARGET_LINK_LIBRARIES(dedicated server)
