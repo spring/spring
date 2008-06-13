@@ -13,6 +13,7 @@ class CAirScript :
 public:
 	CAirScript(void);
 	~CAirScript(void);
+	void GameStart();
 	void Update(void);
 
 	std::deque<int> planes;

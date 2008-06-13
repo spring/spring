@@ -14,6 +14,10 @@
 #include "mmgr.h"
 
 
+const char* armhawk_name[] = { "arm_hawk", "ARMHAWK", NULL };
+const char* armfig_name [] = { "arm_freedom_fighter", "ARMFIG", NULL };
+const char* corvamp_name[] = { "core_vamp", "CORVAMP", NULL };
+const char* corape_name [] = { "core_rapier", "CORAPE", NULL };
 
 CAirScript::CAirScript()
 : CScript(std::string("Air combat test")),
@@ -44,90 +48,83 @@ static const char* FindUnit(const char** name)
 	return name[0];
 }
 
+void CAirScript::GameStart()
+{
+	doRoll=!configHandler.GetInt("ReflectiveWater",1);
+
+	ENTER_MIXED;
+	tcp=camera->pos;
+	tcf=camera->forward;
+	ENTER_SYNCED;
+	for(int a=0;a<10;++a){
+		CUnit* u;
+		if(gs->randFloat()<0.5f)
+			u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1650,300,2100+a*150),0,false,0,NULL);
+		else
+			u=unitLoader.LoadUnit(FindUnit(armfig_name),float3(1650,300,2100+a*150),0,false,0,NULL);
+		u->pos.y=350;
+		u->experience=0.3f;
+		((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
+		planes.push_back(u->id);
+		Command c2;
+		c2.id=CMD_MOVE_STATE;
+		c2.params.push_back(1);
+		u->commandAI->GiveCommand(c2);
+
+		Command c;
+		c.id=CMD_PATROL;
+		c.options=0;
+		c.params.push_back(6570);
+		c.params.push_back(0);
+		c.params.push_back(2560);
+		u->commandAI->GiveCommand(c);
+
+		if(gs->randFloat()<0.5f){
+			u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(3880,300,2100+a*150),1,false,0,NULL);
+			((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
+		}else{
+			u=unitLoader.LoadUnit(FindUnit(corape_name),float3(3880,300,2100+a*150),1,false,0,NULL);
+		}
+		u->pos.y=350;
+		u->experience=0.3f;
+		planes.push_back(u->id);
+		u->commandAI->GiveCommand(c2);
+		c.params[0]=500;
+		u->commandAI->GiveCommand(c);
+	}
+}
+
 void CAirScript::Update()
 {
-	static const char* armhawk_name[] = { "arm_hawk", "ARMHAWK", NULL };
-	static const char* armfig_name [] = { "arm_freedom_fighter", "ARMFIG", NULL };
-	static const char* corvamp_name[] = { "core_vamp", "CORVAMP", NULL };
-	static const char* corape_name [] = { "core_rapier", "CORAPE", NULL };
-
-	switch(gs->frameNum){
-	case 0:
-		doRoll=!configHandler.GetInt("ReflectiveWater",1);
-
-		ENTER_MIXED;
-		tcp=camera->pos;
-		tcf=camera->forward;
-		ENTER_SYNCED;
-		for(int a=0;a<10;++a){
+	std::deque<int>::iterator pi;
+	int num=0;
+	for(pi=planes.begin();pi!=planes.end();++pi){
+		if(uh->units[*pi]==0){
 			CUnit* u;
-			if(gs->randFloat()<0.5f)
-				u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1650,300,2100+a*150),0,false,0,NULL);
+			if(!(num&1))
+				u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false,0,NULL);
 			else
-				u=unitLoader.LoadUnit(FindUnit(armfig_name),float3(1650,300,2100+a*150),0,false,0,NULL);
-			u->pos.y=350;
+				u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false,0,NULL);
+			u->pos.y=ground->GetHeight(1000+(num&1)*5000,2100+num*120)+350;
 			u->experience=0.3f;
+			u->speed.x=2.8f;
 			((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
-			planes.push_back(u->id);
-			Command c2;
-			c2.id=CMD_MOVE_STATE;
-			c2.params.push_back(1);
-			u->commandAI->GiveCommand(c2);
+			*pi=u->id;
 
 			Command c;
 			c.id=CMD_PATROL;
 			c.options=0;
-			c.params.push_back(6570);
-			c.params.push_back(0);
-			c.params.push_back(2560);
-			u->commandAI->GiveCommand(c);
+			c.params.push_back(7000-(num&1)*6500);
+			c.params.push_back(200);
+			c.params.push_back(2500+num*60);
 
-			if(gs->randFloat()<0.5f){
-				u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(3880,300,2100+a*150),1,false,0,NULL);
-				((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
-			}else{
-				u=unitLoader.LoadUnit(FindUnit(corape_name),float3(3880,300,2100+a*150),1,false,0,NULL);
-			}
-			u->pos.y=350;
-			u->experience=0.3f;
-			planes.push_back(u->id);
+			Command c2;
+			c2.id=CMD_MOVE_STATE;
+			c2.params.push_back(1);
 			u->commandAI->GiveCommand(c2);
-			c.params[0]=500;
 			u->commandAI->GiveCommand(c);
 		}
-		break;
-	default:
-		std::deque<int>::iterator pi;
-		int num=0;
-		for(pi=planes.begin();pi!=planes.end();++pi){
-			if(uh->units[*pi]==0){
-				CUnit* u;
-				if(!(num&1))
-					u=unitLoader.LoadUnit(FindUnit(armhawk_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false,0,NULL);
-				else
-					u=unitLoader.LoadUnit(FindUnit(corvamp_name),float3(1000+(num&1)*5000,500,2100+num*120),(num&1),false,0,NULL);
-				u->pos.y=ground->GetHeight(1000+(num&1)*5000,2100+num*120)+350;
-				u->experience=0.3f;
-				u->speed.x=2.8f;
-				((CAirMoveType*)u->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
-				*pi=u->id;
-
-				Command c;
-				c.id=CMD_PATROL;
-				c.options=0;
-				c.params.push_back(7000-(num&1)*6500);
-				c.params.push_back(200);
-				c.params.push_back(2500+num*60);
-
-				Command c2;
-				c2.id=CMD_MOVE_STATE;
-				c2.params.push_back(1);
-				u->commandAI->GiveCommand(c2);
-				u->commandAI->GiveCommand(c);
-			}
-			num++;
-		}
-		break;
+		num++;
 	}
 }
 

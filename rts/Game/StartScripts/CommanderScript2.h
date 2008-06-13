@@ -3,13 +3,12 @@
 
 #include "Script.h"
 
-class CCommanderScript2 :
-	public CScript
+class CCommanderScript2 : public CScript
 {
 public:
-	CCommanderScript2(void);
-	virtual ~CCommanderScript2(void);
-	void Update(void);
+	CCommanderScript2();
+	virtual ~CCommanderScript2();
+	void GameStart();
 };
 
 

@@ -13,13 +13,11 @@ end
 
 -- This function is executed every simulated frame (30 times/sec)
 function CmdrScript:Update()
-    if gs.frameNum == 0 then
-        self:SetupRegular()
-    end
+	-- do stuff here
 end
 
 -- Spawns a correct commander from team 0 at startpos 0
-function CmdrScript:SetupRegular()
+function CmdrScript:GameStart()
     local p = TdfParser()
     p:LoadFile("gamedata\\sidedata.tdf")
 
