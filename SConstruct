@@ -244,6 +244,8 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 				env.Exit(1)
 			if os.system("rm -f game/base/maphelper.sdz"):
 				env.Exit(1)
+			if os.system("rm -f game/base/cursors.sdz"):
+				env.Exit(1)
 		else:
 			if os.system("installer/make_gamedata_arch.sh"):
 				env.Exit(1)
@@ -251,6 +253,8 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/springcontent.sdz')
 Alias('install', inst)
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/maphelper.sdz')
+Alias('install', inst)
+inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), 'game/base/cursors.sdz')
 Alias('install', inst)
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spring'), 'game/base/spring/bitmaps.sdz')
 Alias('install', inst)
