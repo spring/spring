@@ -49,4 +49,10 @@ zip -qu ../../../game/base/maphelper.sdz MapOptions.lua
 zip -qu ../../../game/base/maphelper.sdz maphelper/*
 cd ..
 
+echo Updating cursors.sdz
+cd cursors/
+zip -qu ../../../game/base/cursors.sdz modinfo.lua
+zip -qu ../../../game/base/cursors.sdz anims/*
+cd ..
+
 cd ../..
