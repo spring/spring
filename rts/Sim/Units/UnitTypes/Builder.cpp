@@ -23,6 +23,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -252,7 +253,10 @@ void CBuilder::Update()
   					adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed); // repair
 				}
 
-				if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
+	  			if(adjBuildSpeed > 0 && !commandAI->commandQue.empty()
+	  					&& commandAI->commandQue.front().id == CMD_WAIT) {
+	  				curBuild->AddBuildPower(0, this);
+	  			} else if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
 					CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 				} else {
 					if(!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {

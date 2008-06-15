@@ -129,7 +129,7 @@ CCommandAI::CCommandAI(CUnit* owner)
  	c.type=CMDTYPE_ICON;
  	c.name="Wait";
  	c.mouseicon=c.name;
- 	c.onlyKey=true;
+ 	c.onlyKey=false;
  	c.tooltip="Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
 //	nonQueingCommands.insert(CMD_WAIT);

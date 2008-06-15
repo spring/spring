@@ -178,7 +178,9 @@ void CFactory::Update()
 	
 			const CCommandQueue& queue = commandAI->commandQue;
 	
-			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
+			if(!queue.empty() && (queue.front().id == CMD_WAIT)) {
+				curBuild->AddBuildPower(0, this);
+			} else {
 				if (curBuild->AddBuildPower(buildSpeed, this)) {
 					CreateNanoParticle();
 				}
