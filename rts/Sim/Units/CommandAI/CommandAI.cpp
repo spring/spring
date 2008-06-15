@@ -94,43 +94,42 @@ CCommandAI::CCommandAI(CUnit* owner)
 	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {
-	owner->commandAI=this;
+	owner->commandAI = this;
 	CommandDescription c;
-	c.id=CMD_STOP;
-	c.action="stop";
-	c.type=CMDTYPE_ICON;
-	c.name="Stop";
-	c.mouseicon=c.name;
-	c.tooltip="Stop: Cancel the units current actions";
+	c.id = CMD_STOP;
+	c.action = "stop";
+	c.type = CMDTYPE_ICON;
+	c.name = "Stop";
+	c.mouseicon = c.name;
+	c.tooltip = "Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
 	if (isAttackCapable()) {
-		c.id=CMD_ATTACK;
-		c.action="attack";
-		c.type=CMDTYPE_ICON_UNIT_OR_MAP;
-		c.name="Attack";
-		c.mouseicon=c.name;
-		c.tooltip="Attack: Attacks an unit or a position on the ground";
+		c.id = CMD_ATTACK;
+		c.action = "attack";
+		c.type = CMDTYPE_ICON_UNIT_OR_MAP;
+		c.name = "Attack";
+		c.mouseicon = c.name;
+		c.tooltip = "Attack: Attacks an unit or a position on the ground";
 		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canDGun) {
-		c.id=CMD_DGUN;
-		c.action="dgun";
-		c.type=CMDTYPE_ICON_MAP;
-		c.name="DGun";
-		c.mouseicon=c.name;
-		c.tooltip="DGun: Attacks using the units special weapon";
+		c.id = CMD_DGUN;
+		c.action = "dgun";
+		c.type = CMDTYPE_ICON_MAP;
+		c.name = "DGun";
+		c.mouseicon = c.name;
+		c.tooltip = "DGun: Attacks using the units special weapon";
 		possibleCommands.push_back(c);
 	}
 
- 	c.id=CMD_WAIT;
-	c.action="wait";
- 	c.type=CMDTYPE_ICON;
- 	c.name="Wait";
- 	c.mouseicon=c.name;
- 	c.onlyKey=false;
- 	c.tooltip="Wait: Tells the unit to wait until another units handles him";
+ 	c.id = CMD_WAIT;
+	c.action = "wait";
+ 	c.type = CMDTYPE_ICON;
+ 	c.name = "Wait";
+ 	c.mouseicon = c.name;
+ 	c.tooltip = "Wait: Tells the unit to wait until another units handles him";
  	possibleCommands.push_back(c);
 //	nonQueingCommands.insert(CMD_WAIT);
 
@@ -139,11 +138,12 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_NUMBER;
 	c.name = "TimeWait";
 	c.mouseicon=c.name;
-	c.onlyKey = true;
 	c.tooltip = "TimeWait: Wait for a period of time before continuing";
 	c.params.push_back("1");  // min
 	c.params.push_back("60"); // max
+	c.onlyKey = true;
 	possibleCommands.push_back(c);
+ 	c.onlyKey = false;
 	c.params.clear();
 
 	// only for games with 2 ally teams  --  checked later
@@ -152,20 +152,22 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 	c.name = "DeathWait";
 	c.mouseicon=c.name;
-	c.onlyKey = true;
 	c.tooltip = "DeathWait: Wait until units die before continuing";
+	c.onlyKey = true;
 	possibleCommands.push_back(c);
+ 	c.onlyKey = false;
 
 	c.id = CMD_SQUADWAIT;
 	c.action = "squadwait";
 	c.type = CMDTYPE_NUMBER;
 	c.name = "SquadWait";
 	c.mouseicon=c.name;
-	c.onlyKey = true;
 	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
 	c.params.push_back("2");   // min
 	c.params.push_back("100"); // max
+	c.onlyKey = true;
 	possibleCommands.push_back(c);
+ 	c.onlyKey = false;
 	c.params.clear();
 
 	c.id = CMD_GATHERWAIT;
@@ -173,9 +175,10 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.type = CMDTYPE_ICON;
 	c.name = "GatherWait";
 	c.mouseicon=c.name;
-	c.onlyKey = true;
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
+	c.onlyKey = true;
 	possibleCommands.push_back(c);
+ 	c.onlyKey = false;
 
 	if (owner->unitDef->canSelfD) {
 		c.id = CMD_SELFD;
@@ -183,84 +186,83 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.type = CMDTYPE_ICON;
 		c.name = "SelfD";
 		c.mouseicon = c.name;
-		c.onlyKey = true;
 		c.tooltip = "SelfD: Tells the unit to self destruct";
+		c.onlyKey = true;
 		possibleCommands.push_back(c);
+	 	c.onlyKey = false;
 	}
 //	nonQueingCommands.insert(CMD_SELFD);
 
-	c.onlyKey=false;
-
 	if(CanChangeFireState()) {
-		c.id=CMD_FIRE_STATE;
-		c.action="firestate";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Fire state";
-		c.mouseicon=c.name;
+		c.id = CMD_FIRE_STATE;
+		c.action = "firestate";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Fire state";
+		c.mouseicon = c.name;
 		c.params.push_back("2");
 		c.params.push_back("Hold fire");
 		c.params.push_back("Return fire");
 		c.params.push_back("Fire at will");
-		c.tooltip="Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
+		c.tooltip = "Fire State: Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_FIRE_STATE);
 	}
 
 	if (owner->unitDef->canmove || owner->unitDef->builder) {
 		c.params.clear();
-		c.id=CMD_MOVE_STATE;
-		c.action="movestate";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Move state";
-		c.mouseicon=c.name;
+		c.id = CMD_MOVE_STATE;
+		c.action = "movestate";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Move state";
+		c.mouseicon = c.name;
 		c.params.push_back("1");
 		c.params.push_back("Hold pos");
 		c.params.push_back("Maneuver");
 		c.params.push_back("Roam");
-		c.tooltip="Move State: Sets how far out of its way\n an unit will move to attack enemies";
+		c.tooltip = "Move State: Sets how far out of its way\n an unit will move to attack enemies";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_MOVE_STATE);
 	} else {
-		owner->moveState=0;
+		owner->moveState = 0;
 	}
 
 	if (owner->unitDef->canRepeat) {
 		c.params.clear();
-		c.id=CMD_REPEAT;
-		c.action="repeat";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Repeat";
-		c.mouseicon=c.name;
+		c.id = CMD_REPEAT;
+		c.action = "repeat";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Repeat";
+		c.mouseicon = c.name;
 		c.params.push_back("0");
 		c.params.push_back("Repeat off");
 		c.params.push_back("Repeat on");
-		c.tooltip="Repeat: If on the unit will continously\n push finished orders to the end of its\n order que";
+		c.tooltip = "Repeat: If on the unit will continously\n push finished orders to the end of its\n order que";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_REPEAT);
 	}
 
 	if (owner->unitDef->highTrajectoryType>1) {
 		c.params.clear();
-		c.id=CMD_TRAJECTORY;
-		c.action="trajectory";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Trajectory";
-		c.mouseicon=c.name;
+		c.id = CMD_TRAJECTORY;
+		c.action = "trajectory";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Trajectory";
+		c.mouseicon = c.name;
 		c.params.push_back("0");
 		c.params.push_back("Low traj");
 		c.params.push_back("High traj");
-		c.tooltip="Trajectory: If set to high, weapons that\n support it will try to fire in a higher\n trajectory than usual (experimental)";
+		c.tooltip = "Trajectory: If set to high, weapons that\n support it will try to fire in a higher\n trajectory than usual (experimental)";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_TRAJECTORY);
 	}
 
 	if (owner->unitDef->onoffable) {
 		c.params.clear();
-		c.id=CMD_ONOFF;
-		c.action="onoff";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Active state";
-		c.mouseicon=c.name;
+		c.id = CMD_ONOFF;
+		c.action = "onoff";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Active state";
+		c.mouseicon = c.name;
 
 		if (owner->unitDef->activateWhenBuilt) {
 			c.params.push_back("1");
@@ -271,18 +273,18 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back(" Off ");
 		c.params.push_back(" On ");
 
-		c.tooltip="Active State: Sets the active state of the unit to on or off";
+		c.tooltip = "Active State: Sets the active state of the unit to on or off";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_ONOFF);
 	}
 
 	if (owner->unitDef->canCloak) {
 		c.params.clear();
-		c.id=CMD_CLOAK;
-		c.action="cloak";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Cloak state";
-		c.mouseicon=c.name;
+		c.id = CMD_CLOAK;
+		c.action = "cloak";
+		c.type = CMDTYPE_ICON_MODE;
+		c.name = "Cloak state";
+		c.mouseicon = c.name;
 
 		if (owner->unitDef->startCloaked) {
 			c.params.push_back("1");
@@ -293,7 +295,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("UnCloaked");
 		c.params.push_back("Cloaked");
 
-		c.tooltip="Cloak State: Sets wheter the unit is cloaked or not";
+		c.tooltip = "Cloak State: Sets wheter the unit is cloaked or not";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_CLOAK);
 	}
@@ -303,13 +305,13 @@ CCommandAI::~CCommandAI()
 {
 	if(orderTarget){
 		DeleteDeathDependence(orderTarget);
-		orderTarget=0;
+		orderTarget = 0;
 	}
 }
 
 void CCommandAI::PostLoad()
 {
-	selected=false;//HACK: selected list does not serialized
+	selected = false; // HACK: selected list does not serialized
 }
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()
@@ -321,7 +323,8 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 bool CCommandAI::isAttackCapable() const
 {
 	const UnitDef* ud = owner->unitDef;
-	return (ud->canAttack && (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory")));
+	return (ud->canAttack &&
+	        (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory")));
 }
 
 
