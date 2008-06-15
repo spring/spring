@@ -258,7 +258,7 @@ def generate(env):
 				'-Wunknown-pragmas'
 			])
 			if not args.has_key('debugdefines') or not args['debugdefines']:
-				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG'])
+				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG', 'NO_CATCH_EXCEPTIONS'])
 			else:
 				env.AppendUnique(CPPDEFINES=['NDEBUG'])
 		else:

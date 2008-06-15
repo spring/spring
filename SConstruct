@@ -204,7 +204,10 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		cmd = "STREFLOP_X87=1 " + cmd
 	if env.GetOption('clean'):
 		cmd += " clean"
-	status = os.system("make " + cmd)
+	if env['platform'] == 'freebsd':
+		status = os.system("gmake " + cmd)
+	else:
+		status = os.system("make " + cmd)
 	if status != 0:
 		# try with mingw32-make
 		status = os.system("mingw32-make " + cmd)

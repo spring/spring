@@ -75,6 +75,8 @@ def guess_include_path(env, conf, name, subdir):
 		#	path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
 	elif env['platform'] == 'darwin':
 		path = [os.path.join('/opt/local/include', subdir)]
+	elif env['platform'] == 'freebsd':
+		path = [os.path.join('/usr/local/include', subdir)]
 	else:
 		path = [os.path.join('/usr/include', subdir)]
 	env.AppendUnique(CPPPATH = path)
@@ -211,6 +213,10 @@ def check_java(env, conf):
 		return
 	if env['platform'] == 'windows':
 		guess_include_path(env, conf, 'Java', 'java')
+		return
+	if os.path.exists('/usr/local/jdk1.6.0/include'):
+		env.AppendUnique(CPPPATH = '/usr/local/jdk1.6.0/include')
+		env.AppendUnique(CPPPATH = '/usr/local/jdk1.6.0/include/' + env['platform'])
 		return
 	possible_dirs = []
 	for root in ["/usr/local/lib/jvm", "/usr/local/lib64/jvm", "/usr/lib/jvm", "/usr/lib64/jvm", "/usr/java"]:
