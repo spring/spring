@@ -7,6 +7,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#ifdef __FreeBSD__
+#include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #endif
 

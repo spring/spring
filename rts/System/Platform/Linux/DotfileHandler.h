@@ -14,6 +14,10 @@
 
 #include "Platform/ConfigHandler.h"
 
+#ifdef __FreeBSD__
+#include <sys/stat.h>
+#endif
+
 #include <stdio.h>
 #include <string>
 #include <map>
