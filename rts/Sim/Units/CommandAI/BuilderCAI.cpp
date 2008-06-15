@@ -288,7 +288,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c)
 		return;
 	}
 
-	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
+	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()
+			&& c.id != CMD_WAIT) {
 		building=false;
 		CBuilder* fac=(CBuilder*)owner;
 		fac->StopBuild();
