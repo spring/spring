@@ -279,15 +279,17 @@ CUnit::~CUnit()
 	group = NULL;
 
 	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi)
+	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		delete *wi;
+	}
 
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
 	los = 0;
 
-	if (hasRadarCapacity)
+	if (hasRadarCapacity) {
 		radarhandler->RemoveUnit(this);
+	}
 
 	delete cob;
 	delete localmodel;
