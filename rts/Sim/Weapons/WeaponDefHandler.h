@@ -99,6 +99,7 @@ struct WeaponDef
 	bool tracks;
 	bool dropped;
 	bool paralyzer;								// weapon will only paralyze not do real damage
+	bool impactOnly;                             // The weapon damages by impacting, not by exploding
 
 	bool noAutoTarget;							// cant target stuff (for antinuke,dgun)
 	bool manualfire;							// use dgun button

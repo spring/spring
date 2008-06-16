@@ -448,6 +448,7 @@ static bool InitParamMap()
 	ADD_INT("highTrajectory", wd.highTrajectory);
 
 	ADD_BOOL("noSelfDamage", wd.noSelfDamage);
+	ADD_BOOL("impactOnly",   wd.impactOnly);
 	ADD_FLOAT("areaOfEffect", wd.areaOfEffect);
 	ADD_FLOAT("fireStarter", wd.fireStarter);
 	ADD_FLOAT("edgeEffectiveness", wd.edgeEffectiveness);
