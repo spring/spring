@@ -1,6 +1,6 @@
+#include "StdAfx.h"
 #include <fstream>
 #include <set>
-#include "StdAfx.h"
 #include "SpawnScript.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
