@@ -3357,7 +3357,7 @@ void CGame::ClientReadNet()
 						}
 						gs->Team(team)->startPos = pos;
 						char label[128];
-						snprintf(label, sizeof(label), "Start %i", team);
+						SNPRINTF(label, sizeof(label), "Start %i", team);
 						inMapDrawer->LocalPoint(pos, label, player);
 						// FIXME - erase old pos ?
 					}

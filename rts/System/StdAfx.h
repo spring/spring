@@ -100,7 +100,7 @@ static inline std::string StringToLower(std::string s)
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {
 	char buf[64];
-	snprintf(buf, sizeof(buf), format.c_str(), i);
+	SNPRINTF(buf, sizeof(buf), format.c_str(), i);
 	return std::string(buf);
 }
 

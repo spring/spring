@@ -1,7 +1,7 @@
+#include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
 #include <map>
-#include "StdAfx.h"
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Game.h"
