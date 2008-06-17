@@ -443,20 +443,21 @@ void CAirCAI::ExecuteAttack(Command &c)
 	assert(owner->unitDef->canAttack);
 	targetAge++;
 
-	if (tempOrder && owner->moveState == 1){		//limit how far away we fly
-		if(orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500){
+	if (tempOrder && owner->moveState == 1) {
+		// limit how far away we fly
+		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
 			owner->SetUserTarget(0);
 			FinishCommand();
 			return;
 		}
 	}
-	if(inCommand){
-		if(targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)){
+	if (inCommand) {
+		if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 			FinishCommand();
 			return;
 		}
 		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-			owner->AttackUnit(0,true);
+			owner->AttackUnit(0, true);
 			FinishCommand();
 			return;
 		}
@@ -473,11 +474,16 @@ void CAirCAI::ExecuteAttack(Command &c)
 			}
 		}
 	} else {
-		targetAge=0;
+		targetAge = 0;
 		owner->commandShotCount = -1;
-		if(c.params.size() == 1){
-			if(uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner){
-				orderTarget = uh->units[int(c.params[0])];
+
+		if (c.params.size() == 1) {
+			const int targetID     = int(c.params[0]);
+			const bool legalTarget = (targetID >= 0 && targetID < MAX_UNITS);
+			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+
+			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+				orderTarget = targetUnit;
 				owner->AttackUnit(orderTarget, false);
 				AddDeathDependence(orderTarget);
 				inCommand = true;
@@ -487,11 +493,12 @@ void CAirCAI::ExecuteAttack(Command &c)
 				return;
 			}
 		} else {
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			owner->AttackGround(pos,false);
+			float3 pos(c.params[0], c.params[1], c.params[2]);
+			owner->AttackGround(pos, false);
 			inCommand = true;
 		}
 	}
+
 	return;
 }
 

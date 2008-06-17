@@ -1099,7 +1099,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 	assert(owner->unitDef->canAttack);
 
 	if (inCommand) {
-		if (targetDied || (c.params.size()==1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
+		if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 			FinishCommand();
 			return;
 		}
@@ -1116,23 +1116,27 @@ void CCommandAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			if (uh->units[int(c.params[0])] != 0 && uh->units[int(c.params[0])] != owner) {
-				owner->AttackUnit(uh->units[int(c.params[0])], c.id == CMD_DGUN);
+			const int targetID     = int(c.params[0]);
+			const bool legalTarget = (targetID >= 0 && targetID < MAX_UNITS);
+			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+
+			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+				owner->AttackUnit(targetUnit, c.id == CMD_DGUN);
 
 				if (orderTarget)
 					DeleteDeathDependence(orderTarget);
 
-				orderTarget=uh->units[int(c.params[0])];
+				orderTarget = targetUnit;
 				AddDeathDependence(orderTarget);
-				inCommand=true;
+				inCommand = true;
 			} else {
 				FinishCommand();
 				return;
 			}
 		} else {
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			owner->AttackGround(pos, c.id==CMD_DGUN);
-			inCommand=true;
+			float3 pos(c.params[0], c.params[1], c.params[2]);
+			owner->AttackGround(pos, c.id == CMD_DGUN);
+			inCommand = true;
 		}
 	}
 }
@@ -1161,13 +1165,13 @@ void CCommandAI::ExecuteDGun(Command &c)
 
 void CCommandAI::SlowUpdate()
 {
-	if(commandQue.empty()){
+	if (commandQue.empty()) {
 		return;
 	}
 
 	Command& c = commandQue.front();
 
-	switch(c.id){
+	switch (c.id) {
 		case CMD_WAIT: {
 			return;
 		}

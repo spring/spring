@@ -190,72 +190,78 @@ void CMobileCAI::GiveCommandReal(const Command &c)
 {
 	if (!AllowedCommand(c))
 		return;
-	if(owner->unitDef->canfly && c.id==CMD_AUTOREPAIRLEVEL){
+
+	if (owner->unitDef->canfly && c.id == CMD_AUTOREPAIRLEVEL) {
 		if (c.params.empty()) {
 			return;
 		}
 		CTAAirMoveType* airMT;
 		if (owner->usingScriptMoveType) {
-			if(!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
+			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
 				return;
 			airMT = (CTAAirMoveType*)owner->prevMoveType;
 		} else {
-			if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
 				return;
-			airMT = (CTAAirMoveType*)owner->moveType;
+			airMT = (CTAAirMoveType*) owner->moveType;
 		}
-		switch((int)c.params[0]){
+		switch ((int) c.params[0]) {
 			case 0: { airMT->repairBelowHealth = 0.0f; break; }
 			case 1: { airMT->repairBelowHealth = 0.3f; break; }
 			case 2: { airMT->repairBelowHealth = 0.5f; break; }
 			case 3: { airMT->repairBelowHealth = 0.8f; break; }
 		}
-		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi){
-			if(cdi->id==CMD_AUTOREPAIRLEVEL){
+
+		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
+				cdi != possibleCommands.end(); ++cdi) {
+			if (cdi->id == CMD_AUTOREPAIRLEVEL) {
 				char t[10];
-				SNPRINTF(t,10,"%d", (int)c.params[0]);
-				cdi->params[0]=t;
+				SNPRINTF(t, 10, "%d", (int) c.params[0]);
+				cdi->params[0] = t;
 				break;
 			}
 		}
+
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
-	if(owner->unitDef->canfly && c.id==CMD_IDLEMODE){
+
+	if (owner->unitDef->canfly && c.id == CMD_IDLEMODE) {
 		if (c.params.empty()) {
 			return;
 		}
 		CTAAirMoveType* airMT;
 		if (owner->usingScriptMoveType) {
-			if(!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
+			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
 				return;
-			airMT = (CTAAirMoveType*)owner->prevMoveType;
+			airMT = (CTAAirMoveType*) owner->prevMoveType;
 		} else {
-			if(!dynamic_cast<CTAAirMoveType*>(owner->moveType))
+			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
 				return;
-			airMT = (CTAAirMoveType*)owner->moveType;
+			airMT = (CTAAirMoveType*) owner->moveType;
 		}
-		switch((int)c.params[0]){
+		switch ((int) c.params[0]) {
 			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true; break; }
 		}
-		for(vector<CommandDescription>::iterator cdi = possibleCommands.begin();
-				cdi != possibleCommands.end(); ++cdi){
-			if(cdi->id==CMD_IDLEMODE){
+		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
+				cdi != possibleCommands.end(); ++cdi) {
+			if (cdi->id == CMD_IDLEMODE) {
 				char t[10];
-				SNPRINTF(t,10,"%d", (int)c.params[0]);
-				cdi->params[0]=t;
+				SNPRINTF(t, 10, "%d", (int) c.params[0]);
+				cdi->params[0] = t;
 				break;
 			}
 		}
 		selectedUnits.PossibleCommandChange(owner);
 		return;
 	}
-	if(!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id)==nonQueingCommands.end()){
-		tempOrder=false;
+
+	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id) == nonQueingCommands.end()) {
+		tempOrder = false;
 		StopSlowGuard();
 	}
+
 	CCommandAI::GiveAllowedCommand(c);
 }
 
@@ -350,12 +356,12 @@ void CMobileCAI::Execute()
 {
 	Command& c = commandQue.front();
 	switch (c.id) {
-		case CMD_SET_WANTED_MAX_SPEED:	{ ExecuteSetWantedMaxSpeed(c); return; }
-		case CMD_MOVE:      { ExecuteMove(c);	     return; }
-		case CMD_PATROL:    { ExecutePatrol(c);		 return; }
-		case CMD_FIGHT:     { ExecuteFight(c);		 return; }
-		case CMD_GUARD:     { ExecuteGuard(c);		 return; }
-		case CMD_LOAD_ONTO: { ExecuteLoadUnits(c); return; }
+		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c);	return; }
+		case CMD_MOVE:                 { ExecuteMove(c);				return; }
+		case CMD_PATROL:               { ExecutePatrol(c);				return; }
+		case CMD_FIGHT:                { ExecuteFight(c);				return; }
+		case CMD_GUARD:                { ExecuteGuard(c);				return; }
+		case CMD_LOAD_ONTO:            { ExecuteLoadUnits(c);			return; }
 		default: {
 		  CCommandAI::SlowUpdate();
 		  return;
@@ -393,37 +399,39 @@ void CMobileCAI::ExecuteMove(Command &c)
 	return;
 }
 
-void CMobileCAI::ExecuteLoadUnits(Command &c){
-	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int)c.params[0]]);
-	if(!tran){
+void CMobileCAI::ExecuteLoadUnits(Command &c) {
+	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int) c.params[0]]);
+	if (!tran) {
 		FinishCommand();
 		return;
 	}
-	if(!inCommand){
-		inCommand ^= true;
+
+	if (!inCommand) {
+		inCommand ^= true; // ?
 		Command newCommand;
 		newCommand.id = CMD_LOAD_UNITS;
 		newCommand.params.push_back(owner->id);
 		newCommand.options = INTERNAL_ORDER | SHIFT_KEY;
 		tran->commandAI->GiveCommandReal(newCommand);
 	}
-	if(owner->transporter) {
+	if (owner->transporter) {
 		FinishCommand();
 		return;
 	}
-	CUnit *unit = uh->units[(int)c.params[0]];
+
+	CUnit* unit = uh->units[(int) c.params[0]];
 	if (!unit) {
 		return;
 	}
+
 	float3 pos = unit->pos;
-	if((pos - goalPos).SqLength2D() > cancelDistance){
+	if ((pos - goalPos).SqLength2D() > cancelDistance) {
 		SetGoal(pos, owner->pos);
 	}
-	if((owner->pos - goalPos).SqLength2D() < cancelDistance){
+	if ((owner->pos - goalPos).SqLength2D() < cancelDistance) {
 		StopMove();
 	}
-	if(owner->moveType->progressState == AMoveType::Failed){
-	}
+
 	return;
 }
 
@@ -605,8 +613,8 @@ void CMobileCAI::ExecuteStop(Command &c)
 */
 void CMobileCAI::ExecuteDGun(Command &c)
 {
-	if(uh->limitDgun && owner->unitDef->isCommander
-			&& owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
+	if (uh->limitDgun && owner->unitDef->isCommander
+			&& owner->pos.distance(gs->Team(owner->team)->startPos) > uh->dgunRadius) {
 		StopMove();
 		return FinishCommand();
 	}
@@ -627,7 +635,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	if (tempOrder && (owner->moveState < 2) && orderTarget
 			&& LinePointDist(ClosestPointOnLine(commandPos1, commandPos2, owner->pos),
 					commandPos2, orderTarget->pos)
-			> (500*owner->moveState + owner->maxRange)) {
+			> (500 * owner->moveState + owner->maxRange)) {
 		StopMove();
 		FinishCommand();
 		return;
@@ -639,21 +647,23 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			int unitID = int(c.params[0]);
+			const int targetID     = int(c.params[0]);
+			const bool legalTarget = (targetID >= 0 && targetID < MAX_UNITS);
+			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (uh->units[unitID] != 0 && uh->units[unitID] != owner) {
-				float3 fix = uh->units[unitID]->pos + owner->posErrorVector * 128;
+			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 				float3 diff = float3(fix - owner->pos).Normalize();
-				if(owner->moveState > 0 || !tempOrder) {
-					SetGoal(fix - diff*uh->units[unitID]->radius, owner->pos);
+
+				if (owner->moveState > 0 || !tempOrder) {
+					SetGoal(fix - diff * targetUnit->radius, owner->pos);
 				}
-				// get ID of attack-order target unit
-				orderTarget = uh->units[unitID];
+
+				orderTarget = targetUnit;
 				AddDeathDependence(orderTarget);
 				inCommand = true;
-			}
-			else {
+			} else {
 				// unit may not fire on itself, cancel order
 				StopMove();
 				FinishCommand();
@@ -663,7 +673,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		else {
 			// user gave force-fire attack command
 			float3 pos(c.params[0], c.params[1], c.params[2]);
- 			SetGoal(pos, owner->pos);
+			SetGoal(pos, owner->pos);
 			inCommand = true;
 		}
 	}
