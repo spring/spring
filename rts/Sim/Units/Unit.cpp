@@ -550,6 +550,9 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	const unsigned short currStatus = losStatus[at];
 	const unsigned short diffBits = (currStatus ^ newStatus);
 
+	// set the new state before running the callins
+	losStatus[at] = newStatus;
+
 	if (diffBits) {
 		if (diffBits & LOS_INLOS) {
 			if (newStatus & LOS_INLOS) {
@@ -559,7 +562,7 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 				luaCallIns.UnitLeftLos(this, at);
 				globalAI->UnitLeftLos(this, at);
 			}
-		}	
+		}
 
 		if (diffBits & LOS_INRADAR) {
 			if (newStatus & LOS_INRADAR) {
@@ -571,8 +574,6 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 			}
 		}
 	}
-
-	losStatus[at] = newStatus;
 }
 
 
