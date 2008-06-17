@@ -550,7 +550,7 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	const unsigned short currStatus = losStatus[at];
 	const unsigned short diffBits = (currStatus ^ newStatus);
 
-	// add to the new state before running the callins
+	// add to the state before running the callins
 	losStatus[at] |= newStatus;
 
 	if (diffBits) {
@@ -575,7 +575,7 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 		}
 	}
 
-	// remove from the new state after running the callins
+	// remove from the state after running the callins
 	losStatus[at] &= newStatus;
 }
 
