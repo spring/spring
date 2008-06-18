@@ -46,7 +46,12 @@ public:
 	
 	
 	/// Team the player will start in (read-only)
-	unsigned playerStartingTeam[MAX_PLAYERS];
+	struct PlayerData
+	{
+		unsigned team;
+		bool spectator;
+	};
+	PlayerData playerStartingData[MAX_PLAYERS];
 	/// Initial startposition (read-only)
 	SFloat3 startPos[MAX_TEAMS];
 	bool readyTeams[MAX_TEAMS];

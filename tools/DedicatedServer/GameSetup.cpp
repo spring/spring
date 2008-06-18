@@ -188,7 +188,8 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		if (!file.SectionExist(s.substr(0, s.length() - 1)))
 			continue;
 
-		playerStartingTeam[i] = unsigned(atoi(file.SGetValueDef("0",   s + "team").c_str()));
+		playerStartingData[i].team = unsigned(atoi(file.SGetValueDef("0",   s + "team").c_str()));
+		playerStartingData[i].spectator = !!atoi(file.SGetValueDef("0", s + "spectator").c_str());
 
 		int fromDemo;
 		file.GetDef(fromDemo, "0", s + "IsFromDemo");
@@ -291,7 +292,7 @@ void CGameSetup::RemapTeams()
 {
 	// relocate Player.Team field
 	for (int a = 0; a < numPlayers; ++a) {
-		playerStartingTeam[a] = teamRemap[playerStartingTeam[a]];
+		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 	}
 }
 

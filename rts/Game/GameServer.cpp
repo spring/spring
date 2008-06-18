@@ -1105,13 +1105,17 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "setmaxspeed")
 	{
-		maxUserSpeed = atof(action.extra.c_str());
-		if (userSpeedFactor > maxUserSpeed) {
-			Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
-			userSpeedFactor = maxUserSpeed;
-			if (internalSpeed > maxUserSpeed) {
-				Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
-				internalSpeed = userSpeedFactor;
+		float newUserSpeed = atof(action.extra.c_str());
+		if (newUserSpeed > 0.2)
+		{
+			maxUserSpeed = atof(action.extra.c_str());
+			if (userSpeedFactor > maxUserSpeed) {
+				Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
+				userSpeedFactor = maxUserSpeed;
+				if (internalSpeed > maxUserSpeed) {
+					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
+					internalSpeed = userSpeedFactor;
+				}
 			}
 		}
 	}
@@ -1369,7 +1373,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 
 	if (setup)
 	{
-		unsigned hisTeam = setup->playerStartingTeam[hisNewNumber];
+		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
@@ -1378,7 +1382,8 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 			teams[hisTeam]->allyTeam = setup->teamAllyteam[hisTeam];
 		}
 		players[hisNewNumber]->team = hisTeam;
-		Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
+		if (!setup->playerStartingData[hisNewNumber].spectator)
+			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
 		for (int a = 0; a < MAX_TEAMS; ++a)
 		{
 			if (teams[a])
