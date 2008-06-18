@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 2.6)
 PROJECT(Dedicated)
 
 IF (MINGW)
-	SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+	if (NOT COMPLETE_BUILD)
+		SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+	endif (NOT COMPLETE_BUILD)
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
 
@@ -28,7 +30,9 @@ IF (MINGW)
 ENDIF (MINGW)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 
-ADD_SUBDIRECTORY(../../rts/lib libs)
+if (NOT COMPLETE_BUILD)
+	ADD_SUBDIRECTORY(../../rts/lib libs)
+endif (NOT COMPLETE_BUILD)
 
 IF (UNIX)
 	SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)

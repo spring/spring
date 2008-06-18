@@ -163,18 +163,19 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 
 		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			// don't leave this uninitialized
-			playerStartingTeam[i] = 0;
+			playerStartingData[i].team = 0;
 			continue;
 		}
 
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams
 		gs->players[i]->team = atoi(file.SGetValueDef("0",   s + "team").c_str());
-		playerStartingTeam[i] = unsigned(gs->players[i]->team);
+		playerStartingData[i].team = unsigned(gs->players[i]->team);
 		gs->players[i]->rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
 		gs->players[i]->playerName  = file.SGetValueDef("no name", s + "name");
 		gs->players[i]->countryCode = file.SGetValueDef("",  s + "countryCode");
 		gs->players[i]->spectator = !!atoi(file.SGetValueDef("0", s + "spectator").c_str());
+		playerStartingData[i].spectator = gs->players[i]->spectator;
 
 		int fromDemo;
 		file.GetDef(fromDemo, "0", s + "IsFromDemo");
@@ -315,7 +316,7 @@ void CGameSetup::RemapTeams()
 		if (teamRemap.find(gs->players[a]->team) == teamRemap.end())
 			throw content_error("invalid Player.Team in GameSetup script");
 		gs->players[a]->team = teamRemap[gs->players[a]->team];
-		playerStartingTeam[a] = teamRemap[playerStartingTeam[a]];
+		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 	}
 }
 

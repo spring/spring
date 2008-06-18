@@ -3708,7 +3708,6 @@ void CGame::ClientReadNet()
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
-						//TODO is this enought?
 						int newTeam = int(inbuf[3]);
 						gs->players[player]->team = newTeam;
 						gs->players[player]->spectator = false;
