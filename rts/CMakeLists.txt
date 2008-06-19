@@ -84,7 +84,7 @@ LIST(APPEND spring_libraries SDL vorbisfile vorbis ogg freetype)
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind gml)
 
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} System)
