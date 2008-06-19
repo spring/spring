@@ -52,6 +52,17 @@ protected:
 	unsigned int groundFPShadow;
 	bool waterDrawn;
 
+	volatile unsigned int mt_overrideVP;
+
+  bool DrawMT(int bty);
+	static void DrawMTcb(void *c,int bty) {((CBFGroundDrawer *)c)->DrawMT(bty);}
+	void DrawVertexAMT(CVertexArray *ma, int x, int y);
+	void DrawVertexAMT(CVertexArray *ma, int x, int y, float height);
+  void EndStripMT(CVertexArray *ma);
+  void DrawGroundVertexArrayMT(CVertexArray * &ma);
+	bool DrawShadowPassMT(int nlod);
+	static void DrawShadowPassMTcb(void *c,int nlod) {((CBFGroundDrawer *)c)->DrawShadowPassMT(nlod);}
+
 	inline void DrawVertexA(int x, int y);
 	inline void DrawVertexA(int x, int y, float height);
 	inline void EndStrip();

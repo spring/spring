@@ -489,7 +489,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		tp+=interPos;
 		va->AddVertexTN(tp,tex->xstart,tex->yend,tn);
 	}
-	drawnPieces+=va->drawIndex/32;
+	drawnPieces+=va->drawIndex()/32;
 	va->DrawArrayTN(GL_QUADS);
 
 	unitDrawer->CleanUpUnitDrawing();
@@ -527,7 +527,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					va->AddVertexTN(tp,verts[i].textureX,verts[i].textureY,tn);
 				}
 			}
-			drawnPieces+=va->drawIndex/32;
+			drawnPieces+=va->drawIndex()/32;
 			va->DrawArrayTN(GL_QUADS);
 		}
 	}

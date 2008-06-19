@@ -3,10 +3,6 @@
 
 #include "Sound.h"
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
 #ifndef _WINSOCKAPI_
 	#define _WINSOCKAPI_
 	#include <dsound.h>

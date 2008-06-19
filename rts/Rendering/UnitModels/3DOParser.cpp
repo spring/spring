@@ -498,7 +498,7 @@ void C3DOParser::DrawSub(S3DO* o)
 		}
 	}
 	va->DrawArrayTN(GL_QUADS);
-	if(va2->drawIndex!=0)
+	if(va2->drawIndex()!=0)
 		va2->DrawArrayTN(GL_TRIANGLES);
 }
 

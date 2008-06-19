@@ -16,6 +16,9 @@
 #include "bitops.h"
 #include "mmgr.h"
 
+#include "lib/gml/gmlsrv.h"
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+
 using namespace std;
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
@@ -302,7 +305,6 @@ void CSmfReadMap::DrawMinimap ()
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
-
 void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
 {
 	int cx=(int)(cam->pos.x/(SQUARE_SIZE*quadSize));
@@ -319,15 +321,17 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 	if(ey>=header.mapy/quadSize)
 		ey=header.mapy/quadSize-1;
 
+	int sxi=cx-drawSquare;
+	if(sxi<0)
+		sxi=0;
+	int exi=cx+drawSquare;
+	if(exi>drawQuadsX-1)
+		exi=drawQuadsX-1;
+ 
 	for(int y=sy;y<=ey;y++){
-		int sx=cx-drawSquare;
-		if(sx<0)
-			sx=0;
-		int ex=cx+drawSquare;
-		if(ex>drawQuadsX-1)
-			ex=drawQuadsX-1;
+		int sx=sxi;
+		int ex=exi;
 		float xtest,xtest2;
-
 		std::vector<CBFGroundDrawer::fline>::iterator fli;
 		for(fli=groundDrawer->left.begin();fli!=groundDrawer->left.end();fli++){
 			xtest=((fli->base/SQUARE_SIZE+fli->dir*(y*quadSize)));

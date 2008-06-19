@@ -11,6 +11,7 @@
 
 #include "StdAfx.h"
 #include <assert.h>
+#include <limits.h>
 #include <boost/regex.hpp>
 #include <fstream>
 #include <sys/stat.h>

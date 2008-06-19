@@ -7,6 +7,7 @@
 #include <set>
 #include <list>
 #include <cctype>
+#include <limits.h>
 #include <boost/regex.hpp>
 using namespace std;
 

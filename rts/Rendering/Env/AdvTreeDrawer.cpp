@@ -393,38 +393,39 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 					}
 				}
 			}
-			//draw trees that has been marked as falling
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-			for(std::list<FallingTree>::iterator fti=fallingTrees.begin();fti!=fallingTrees.end();){
-				float3 pos=fti->pos-UpVector*(fti->fallPos*20);
-				if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
-					float ang=fti->fallPos*PI;
-					float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
-					float3 z(up.cross(float3(-1,0,0)));
-					z.Normalize();
-					float3 x(up.cross(z));
-					CMatrix44f transMatrix(pos,x,up,z);
-
-					glPushMatrix();
-					glMultMatrixf(&transMatrix[0]);
-
-					int type=fti->type;
-					int displist;
-					if(type<8){
-						displist=treeGen->pineDL+type;
-					} else {
-						type-=8;
-						displist=treeGen->leafDL+type;
-					}
-					glCallList(displist);
-
-					glPopMatrix();
-				}
-				++fti;
-			}
 		}
+		//draw trees that has been marked as falling
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
+		for(std::list<FallingTree>::iterator fti=fallingTrees.begin();fti!=fallingTrees.end();){
+			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
+			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
+				float ang=fti->fallPos*PI;
+				float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
+				float3 z(up.cross(float3(-1,0,0)));
+				z.Normalize();
+				float3 x(up.cross(z));
+				CMatrix44f transMatrix(pos,x,up,z);
+
+				glPushMatrix();
+				glMultMatrixf(&transMatrix[0]);
+
+				int type=fti->type;
+				int displist;
+				if(type<8){
+					displist=treeGen->pineDL+type;
+				} else {
+					type-=8;
+					displist=treeGen->leafDL+type;
+				}
+				glCallList(displist);
+
+				glPopMatrix();
+			}
+			++fti;
+		}
+
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 
 		if(shadowHandler->drawShadows && !gd->DrawExtraTex()){

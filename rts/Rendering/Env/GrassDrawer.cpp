@@ -6,7 +6,6 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>	
 #include "AdvTreeDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"

@@ -4,8 +4,7 @@
 #ifndef __BF_GROUND_TEXTURES_H__
 #define __BF_GROUND_TEXTURES_H__
 
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 
 class CFileHandler;
 class CSmfReadMap;

@@ -4,7 +4,7 @@
 #include "LogOutput.h"
 
 #include <windows.h>
-#include <GL/gl.h>
+#include "Rendering/GL/myGL.h"
 #if defined(_WIN32) && defined(__MINGW32__)
 #include <GL/glext.h>
 #endif

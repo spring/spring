@@ -65,6 +65,8 @@ using std::string;
 using std::vector;
 using std::set;
 
+#undef far // avoid collision with windef.h
+#undef near
 
 static const int MAX_TEXTURE_UNITS = 32;
 

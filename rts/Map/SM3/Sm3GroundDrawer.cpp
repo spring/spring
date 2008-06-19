@@ -8,9 +8,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Map/MapInfo.h"
-#define GLEW_STATIC
-#include <GL/glew.h>
 #include "Platform/ConfigHandler.h"
 
 #include <SDL_keysym.h>

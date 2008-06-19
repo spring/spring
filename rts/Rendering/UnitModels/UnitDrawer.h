@@ -26,12 +26,20 @@ public:
 
 	void Update(void);
 
+  volatile bool mt_drawReflection;
+  volatile bool mt_drawRefraction;
+	CUnit * volatile mt_excludeUnit;
+
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawUnit(CUnit* unit);
+	bool DrawUnitMT(CUnit *unit);
+	static void DrawUnitMTcb(void *c,CUnit *unit) {((CUnitDrawer *)c)->DrawUnitMT(unit);}
 	void DrawUnitLOD(CUnit* unit);
 
 	void DrawCloakedUnits(void);									// cloaked units must be drawn after all others
 	void DrawShadowPass(void);
+  bool DrawUnitShadowMT(CUnit *unit);
+	static void DrawUnitShadowMTcb(void *c,CUnit *unit) {((CUnitDrawer *)c)->DrawUnitShadowMT(unit);}
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);
 	void SetupForS3ODrawing(void);
@@ -64,8 +72,14 @@ public:
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
-	std::vector<CUnit*> drawCloaked;
-	std::vector<CUnit*> drawCloakedS3O;
+	GML_VECTOR<CUnit*> drawCloaked;
+	GML_VECTOR<CUnit*> drawCloakedS3O;
+
+	GML_VECTOR<CUnit*> drawFar;
+	GML_VECTOR<CUnit*> drawStat;
+
+	GML_VECTOR<CUnit*> drawIcon;
+	GML_VECTOR<CUnit*> drawRadarIcon;
 
 	CVertexArray* va;
 
@@ -139,7 +153,7 @@ public:
 	void QueS3ODraw(CWorldObject* object,int textureType);
 	void DrawQuedS3O(void);
 
-	std::vector<std::vector<CWorldObject*> > quedS3Os;
+	GML_CLASSVECTOR<GML_VECTOR<CWorldObject*> > quedS3Os;
 	std::set<int> usedS3OTextures;
 
 	void SetS3OTeamColour(int team);
@@ -160,7 +174,7 @@ private:
 	void CleanupBasicS3OTexture1(void);
 	void CleanupBasicS3OTexture0(void);
 	void DrawIcon(CUnit * unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o);
+	void DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o);
 };
 
 extern CUnitDrawer* unitDrawer;

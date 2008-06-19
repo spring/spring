@@ -1,3 +1,5 @@
+#include <map>
+#include <set>
 #include "BaseNetProtocol.h"
 
 #include "Net/RawPacket.h"

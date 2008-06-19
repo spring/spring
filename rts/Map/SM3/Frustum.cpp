@@ -9,9 +9,8 @@
 
 #include "Frustum.h"
 
-#define GLEW_STATIC
-#include <GL/glew.h> 
-
+#include "Rendering/GL/myGL.h"
+#undef far // avoid collision with windef.h
 
 void Frustum::InversePlanes ()
 {

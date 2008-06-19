@@ -4,8 +4,7 @@
 #include "Sm3GroundDrawer.h"
 
 #include "LogOutput.h"
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 #include <IL/il.h>
 #include <SDL_types.h>
 #include "Map/MapInfo.h"

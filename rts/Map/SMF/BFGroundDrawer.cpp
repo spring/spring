@@ -14,6 +14,9 @@
 #include "Platform/ConfigHandler.h"
 #include "mmgr.h"
 
+#include "lib/gml/gmlsrv.h"
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+
 using std::min;
 using std::max;
 
@@ -86,6 +89,28 @@ inline void CBFGroundDrawer::EndStrip()
 }
 
 
+inline void CBFGroundDrawer::DrawVertexAMT(CVertexArray *ma, int x, int y)
+{
+	float height = heightData[y * heightDataX + x];
+	if (waterDrawn && height < 0) {
+		height *= 2;
+	}
+
+	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+}
+
+inline void CBFGroundDrawer::DrawVertexAMT(CVertexArray *ma, int x, int y, float height)
+{
+	if (waterDrawn && height < 0) {
+		height *= 2;
+	}
+	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+}
+
+inline void CBFGroundDrawer::EndStripMT(CVertexArray *ma)
+{
+	ma->EndStripQ();
+}
 
 inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	static int mapWidth = (gs->mapx << 3);
@@ -138,6 +163,485 @@ inline void CBFGroundDrawer::DrawGroundVertexArray()
 }
 
 
+inline void CBFGroundDrawer::DrawGroundVertexArrayMT(CVertexArray * &ma)
+{
+	ma->DrawArray0(GL_TRIANGLE_STRIP);
+	ma = GetVertexArray();
+	ma->Initialize();
+}
+
+int neededLod=0;
+int maxIdx=0;
+
+bool CBFGroundDrawer::DrawMT(int bty) {
+	unsigned int overrideVP=mt_overrideVP;
+#define CLAMP(i) std::max(0, std::min((i), maxIdx))
+	if (!BigTexSquareRowVisible(bty)) {
+		// skip this entire row of squares if we can't see it
+		return true;
+	}
+
+	CVertexArray *ma = GetVertexArray();
+	ma->Initialize();
+
+	bool inStrip = false;
+	int x,y;
+	// only process the necessary big squares in the x direction
+	int sx = 0;
+	int ex = numBigTexX;
+	float x0, x1;
+	std::vector<fline>::iterator fli;
+
+
+	for (fli = left.begin(); fli != left.end(); fli++) {
+		x0 = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 ));
+		x1 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize)));
+
+		if (x0 > x1)
+			x0 = x1;
+
+		x0 /= bigSquareSize;
+
+		if (x0 > sx)
+			sx = (int) x0;
+	}
+	for (fli = right.begin(); fli != right.end(); fli++) {
+		x0 = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 )) + bigSquareSize;
+		x1 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize))) + bigSquareSize;
+
+		if (x0 < x1)
+			x0 = x1;
+
+		x0 /= bigSquareSize;
+
+		if (x0 < ex)
+			ex = (int) x0;
+	}
+
+
+	for (int btx = sx; btx < ex; ++btx) {
+		// must be in drawLos mode or shadows must be off
+		if (DrawExtraTex() || !shadowHandler->drawShadows) {
+			textures->SetTexture(btx, bty);
+			SetTexGen(1.0f / 1024, 1.0f / 1024, -btx, -bty);
+
+			if (overrideVP) {
+				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
+			}
+		} else {
+			textures->SetTexture(btx, bty);
+			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
+		}
+
+		for (int lod = 1; lod < neededLod; lod <<= 1) {
+			float cx2 = (cam2->pos.x / (SQUARE_SIZE));
+			float cy2 = (cam2->pos.z / (SQUARE_SIZE));
+
+			float oldcamxpart = 0.0f;
+			float oldcamypart = 0.0f;
+
+			int hlod = lod >> 1;
+			int dlod = lod << 1;
+
+			int cx = (int)cx2;
+			int cy = (int)cy2;
+
+			if(lod>1) {
+				int cxo = (cx / hlod) * hlod;
+				int cyo = (cy / hlod) * hlod;
+				float cx2o = (cxo / lod) * lod;
+				float cy2o = (cyo / lod) * lod;
+				oldcamxpart = (cx2 - cx2o) / (lod);
+				oldcamypart = (cy2 - cy2o) / (lod);
+			}
+
+			cx = (cx / lod) * lod;
+			cy = (cy / lod) * lod;
+			int ysquaremod = ((cy) % (dlod)) / lod;
+			int xsquaremod = ((cx) % (dlod)) / lod;
+
+			float camxpart = (cx2 - ((cx / (dlod)) * dlod)) / (dlod);
+			float camypart = (cy2 - ((cy / (dlod)) * dlod)) / (dlod);
+
+			int minty =  bty      * bigSquareSize;
+			int maxty = (bty + 1) * bigSquareSize;
+			int mintx =  btx      * bigSquareSize;
+			int maxtx = (btx + 1) * bigSquareSize;
+
+			int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
+			int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
+			int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
+			int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
+
+			int xstart = max(minlx, mintx);
+			int xend   = min(maxlx, maxtx);
+			int ystart = max(minly, minty);
+			int yend   = min(maxly, maxty);
+
+			for (y = ystart; y < yend; y += lod) {
+				int xs = xstart;
+				int xe = xend;
+				int xt0, xt1;
+				std::vector<fline>::iterator fli;
+
+
+				for (fli = left.begin(); fli != left.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+					if (xt0 > xt1) xt0 = xt1;
+					if (xt0 > xs) xs = xt0;
+				}
+				for (fli = right.begin(); fli != right.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+					if (xt0 < xt1) xt0 = xt1;
+					if (xt0 < xe) xe = xt0;
+				}
+
+				int nloop=(xe-xs)/lod+1;
+				ma->EnlargeArrays(52*nloop, 14*nloop+1); // includes one extra for final endstrip
+
+				for (x = xs; x < xe; x += lod) {
+					if ((lod == 1) ||
+						(x > (cx) + viewRadius * hlod) || (x < (cx) - viewRadius * hlod) ||
+						(y > (cy) + viewRadius * hlod) || (y < (cy) - viewRadius * hlod)) {
+							// normal terrain
+							if (!inStrip) {
+								DrawVertexAMT(ma, x, y      );
+								DrawVertexAMT(ma, x, y + lod);
+								inStrip = true;
+							}
+
+							DrawVertexAMT(ma, x + lod, y      );
+							DrawVertexAMT(ma, x + lod, y + lod);
+					} else {
+						// inre begr�sning mot f�eg�nde lod
+						if ((x >= (cx) + viewRadius * hlod)) {
+							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+							int idx3 = CLAMP((y + hlod) * heightDataX + x),                              idx3HLOD = CLAMP(idx3 + hlod);
+							float h1 = (heightData[idx1] + heightData[idx2   ]) * 0.5f * (1 - oldcamxpart) + heightData[idx3    ] * (oldcamxpart);
+							float h2 = (heightData[idx1] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx1HLOD] * (oldcamxpart);
+							float h3 = (heightData[idx2] + heightData[idx1LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx3HLOD] * (oldcamxpart);
+							float h4 = (heightData[idx2] + heightData[idx2LOD]) * 0.5f * (1 - oldcamxpart) + heightData[idx2HLOD] * (oldcamxpart);
+
+							if (inStrip) {
+								EndStripMT(ma);
+								inStrip = false;
+							}
+
+							DrawVertexAMT(ma, x,        y           );
+							DrawVertexAMT(ma, x,        y + hlod, h1);
+							DrawVertexAMT(ma, x + hlod, y,        h2);
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x,        y + hlod, h1);
+							DrawVertexAMT(ma, x,        y +  lod    );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x + hlod, y +  lod, h4);
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x + hlod, y +  lod, h4);
+							DrawVertexAMT(ma, x +  lod, y +  lod    );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x +  lod, y           );
+							DrawVertexAMT(ma, x + hlod, y,        h2);
+							EndStripMT(ma);
+						}
+						if ((x <= (cx) - viewRadius * hlod)) {
+							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+							int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+							float h1 = (heightData[idx1LOD] + heightData[idx2LOD]) * 0.5f * (oldcamxpart) + heightData[idx3LOD ] * (1 - oldcamxpart);
+							float h2 = (heightData[idx1   ] + heightData[idx1LOD]) * 0.5f * (oldcamxpart) + heightData[idx1HLOD] * (1 - oldcamxpart);
+							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (oldcamxpart) + heightData[idx3HLOD] * (1 - oldcamxpart);
+							float h4 = (heightData[idx2   ] + heightData[idx2LOD]) * 0.5f * (oldcamxpart) + heightData[idx2HLOD] * (1 - oldcamxpart);
+
+							if (inStrip) {
+								EndStripMT(ma);
+								inStrip = false;
+							}
+
+							DrawVertexAMT(ma, x +  lod, y + hlod, h1);
+							DrawVertexAMT(ma, x +  lod, y           );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x + hlod, y,        h2);
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x +  lod, y +  lod    );
+							DrawVertexAMT(ma, x +  lod, y + hlod, h1);
+							DrawVertexAMT(ma, x + hlod, y +  lod, h4);
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x + hlod, y,        h2);
+							DrawVertexAMT(ma, x,        y           );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x,        y +  lod    );
+							DrawVertexAMT(ma, x + hlod, y +  lod, h4);
+							EndStripMT(ma);
+						}
+						if ((y >= (cy) + viewRadius * hlod)) {
+							int idx1 = (y       ) * heightDataX + x, idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
+							int idx2 = (y +  lod) * heightDataX + x, idx2LOD = CLAMP(idx2 + lod);
+							int idx3 = (y + hlod) * heightDataX + x, idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+							float h1 = (heightData[idx1   ] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx1HLOD] * (oldcamypart);
+							float h2 = (heightData[idx1   ] + heightData[idx2   ]) * 0.5f * (1 - oldcamypart) + heightData[idx3    ] * (oldcamypart);
+							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx3HLOD] * (oldcamypart);
+							float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * 0.5f * (1 - oldcamypart) + heightData[idx3LOD ] * (oldcamypart);
+
+							if (inStrip) {
+								EndStripMT(ma);
+								inStrip = false;
+							}
+
+							DrawVertexAMT(ma, x,        y           );
+							DrawVertexAMT(ma, x,        y + hlod, h2);
+							DrawVertexAMT(ma, x + hlod, y,        h1);
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x +  lod, y           );
+							DrawVertexAMT(ma, x +  lod, y + hlod, h4);
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x,        y + hlod, h2);
+							DrawVertexAMT(ma, x,        y +  lod    );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x +  lod, y +  lod    );
+							DrawVertexAMT(ma, x +  lod, y + hlod, h4);
+							EndStripMT(ma);
+						}
+						if ((y <= (cy) - viewRadius * hlod)) {
+							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
+							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
+							int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
+							float h1 = (heightData[idx2   ] + heightData[idx2LOD]) * 0.5f * (oldcamypart) + heightData[idx2HLOD] * (1 - oldcamypart);
+							float h2 = (heightData[idx1   ] + heightData[idx2   ]) * 0.5f * (oldcamypart) + heightData[idx3    ] * (1 - oldcamypart);
+							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * 0.5f * (oldcamypart) + heightData[idx3HLOD] * (1 - oldcamypart);
+							float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * 0.5f * (oldcamypart) + heightData[idx3LOD ] * (1 - oldcamypart);
+
+							if (inStrip) {
+								EndStripMT(ma);
+								inStrip = false;
+							}
+
+							DrawVertexAMT(ma, x,        y + hlod, h2);
+							DrawVertexAMT(ma, x,        y +  lod    );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x + hlod, y +  lod, h1);
+							DrawVertexAMT(ma, x +  lod, y + hlod, h4);
+							DrawVertexAMT(ma, x +  lod, y +  lod    );
+							EndStripMT(ma);
+							DrawVertexAMT(ma, x +  lod, y + hlod, h4);
+							DrawVertexAMT(ma, x +  lod, y           );
+							DrawVertexAMT(ma, x + hlod, y + hlod, h3);
+							DrawVertexAMT(ma, x,        y           );
+							DrawVertexAMT(ma, x,        y + hlod, h2);
+							EndStripMT(ma);
+						}
+					}
+				}
+
+				if (inStrip) {
+					EndStripMT(ma);
+					inStrip = false;
+				}
+			}
+
+			int yst=max(ystart - lod, minty);
+			int yed=min(yend + lod, maxty);
+			int nloop=(yed-yst)/lod+1;
+			ma->EnlargeArrays(8*nloop, 2*nloop);
+
+			// rita yttre begr�snings yta mot n�ta lod
+			if (maxlx < maxtx && maxlx >= mintx) {
+				x = maxlx;
+				for (y = yst; y < yed; y += lod) {
+					DrawVertexAMT(ma, x, y      );
+					DrawVertexAMT(ma, x, y + lod);
+
+					if (y % (dlod)) {
+						int idx1 = CLAMP((y      ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
+						int idx2 = CLAMP((y + lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
+						int idx3 = CLAMP((y - lod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
+						float h = ((heightData[idx3LOD] +
+							heightData[idx2LOD]) * 0.5f) * (1 - camxpart) +
+							heightData[idx1LOD] * (camxpart);
+
+						DrawVertexAMT(ma, x + lod, y,       h);
+						DrawVertexAMT(ma, x + lod, y + lod   );
+					} else {
+						int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
+						int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
+						int idx3 = CLAMP((y + dlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
+						float h = (heightData[idx1LOD] +
+							heightData[idx3LOD]) * 0.5f * (1 - camxpart) +
+							heightData[idx2LOD] * (camxpart);
+
+						DrawVertexAMT(ma, x + lod, y);
+						DrawVertexAMT(ma, x + lod, y + lod, h);
+					}
+					EndStripMT(ma);
+				}
+			}
+
+			if (minlx > mintx && minlx < maxtx) {
+				x = minlx - lod;
+				for (y = yst; y < yed; y += lod) {
+					if (y % (dlod)) {
+						int idx1 = CLAMP((y      ) * heightDataX + x);
+						int idx2 = CLAMP((y + lod) * heightDataX + x);
+						int idx3 = CLAMP((y - lod) * heightDataX + x);
+						float h = ((heightData[idx3] +
+							heightData[idx2]) * 0.5f) * (camxpart) +
+							heightData[idx1] * (1 - camxpart);
+
+						DrawVertexAMT(ma, x, y,       h);
+						DrawVertexAMT(ma, x, y + lod   );
+					} else {
+						int idx1 = CLAMP((y       ) * heightDataX + x);
+						int idx2 = CLAMP((y +  lod) * heightDataX + x);
+						int idx3 = CLAMP((y + dlod) * heightDataX + x);
+						float h = (heightData[idx1] +
+							heightData[idx3]) * 0.5f * (camxpart) +
+							heightData[idx2] * (1 - camxpart);
+
+						DrawVertexAMT(ma, x, y);
+						DrawVertexAMT(ma, x, y + lod, h);
+					}
+					DrawVertexAMT(ma, x + lod, y      );
+					DrawVertexAMT(ma, x + lod, y + lod);
+					EndStripMT(ma);
+				}
+			}
+
+			if (maxly < maxty && maxly > minty) {
+				y = maxly;
+				int xs = max(xstart - lod, mintx);
+				int xe = min(xend + lod,   maxtx);
+				int xt0, xt1;
+				std::vector<fline>::iterator fli;
+
+
+				for (fli = left.begin(); fli != left.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+					if (xt0 > xt1) xt0 = xt1;
+					if (xt0 > xs) xs = xt0;
+				}
+				for (fli = right.begin(); fli != right.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+					if (xt0 < xt1) xt0 = xt1;
+					if (xt0 < xe) xe = xt0;
+				}
+
+
+				if (xs < xe) {
+					x = xs;
+					int nloop=(xe-xs)/lod+2; // one extra for if statment
+					ma->EnlargeArrays(2*nloop, 1);
+					if (x % (dlod)) {
+						int idx2     = CLAMP((y + lod) * heightDataX + x),
+							idx2PLOD = CLAMP(idx2 + lod),
+							idx2MLOD = CLAMP(idx2 - lod);
+						float h = ((heightData[idx2MLOD] +
+							heightData[idx2PLOD]) * 0.5f) * (1 - camypart) +
+							heightData[idx2    ] * (camypart);
+
+						DrawVertexAMT(ma, x, y);
+						DrawVertexAMT(ma, x, y + lod, h);
+					} else {
+						DrawVertexAMT(ma, x, y      );
+						DrawVertexAMT(ma, x, y + lod);
+					}
+					for (x = xs; x < xe; x += lod) {
+						if (x % (dlod)) {
+							DrawVertexAMT(ma, x + lod, y      );
+							DrawVertexAMT(ma, x + lod, y + lod);
+						} else {
+							int idx2      = CLAMP((y + lod) * heightDataX + x),
+								idx2PLOD  = CLAMP(idx2 +  lod),
+								idx2PLOD2 = CLAMP(idx2 + dlod);
+							float h = (heightData[idx2PLOD2] +
+								heightData[idx2     ]) * 0.5f * (1 - camypart) +
+								heightData[idx2PLOD ] * (camypart);
+
+							DrawVertexAMT(ma, x + lod, y);
+							DrawVertexAMT(ma, x + lod, y + lod, h);
+						}
+					}
+					EndStripMT(ma);
+				}
+			}
+
+			if (minly > minty && minly < maxty) {
+				y = minly - lod;
+				int xs = max(xstart - lod, mintx);
+				int xe = min(xend + lod,   maxtx);
+				int xt0, xt1;
+				std::vector<fline>::iterator fli;
+
+
+				for (fli = left.begin(); fli != left.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod - lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod - lod;
+
+					if (xt0 > xt1) xt0 = xt1;
+					if (xt0 > xs) xs = xt0;
+				}
+				for (fli = right.begin(); fli != right.end(); fli++) {
+					xt0 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir *  y       )) / lod * lod + lod;
+					xt1 = ((int) (fli->base / (SQUARE_SIZE) + fli->dir * (y + lod))) / lod * lod + lod;
+
+					if (xt0 < xt1) xt0 = xt1;
+					if (xt0 < xe) xe = xt0;
+				}
+
+
+				if (xs < xe) {
+					x = xs;
+					int nloop=(xe-xs)/lod+2; // one extra for if statment
+					ma->EnlargeArrays(2*nloop, 1);
+					if (x % (dlod)) {
+						int idx1     = CLAMP((y) * heightDataX + x),
+							idx1PLOD = CLAMP(idx1 + lod),
+							idx1MLOD = CLAMP(idx1 - lod);
+						float h = ((heightData[idx1MLOD] +
+							heightData[idx1PLOD]) * 0.5f) * (camypart) +
+							heightData[idx1    ] * (1 - camypart);
+
+						DrawVertexAMT(ma, x, y,       h);
+						DrawVertexAMT(ma, x, y + lod   );
+					} else {
+						DrawVertexAMT(ma, x, y      );
+						DrawVertexAMT(ma, x, y + lod);
+					}
+
+					for (x = xs; x < xe; x+= lod) {
+						if (x % (dlod)) {
+							DrawVertexAMT(ma, x + lod, y      );
+							DrawVertexAMT(ma, x + lod, y + lod);
+						} else {
+							int idx1      = CLAMP((y) * heightDataX + x),
+								idx1PLOD  = CLAMP(idx1 +  lod),
+								idx1PLOD2 = CLAMP(idx1 + dlod);
+							float h = (heightData[idx1PLOD2] +
+								heightData[idx1     ]) * 0.5f * (camypart) +
+								heightData[idx1PLOD ] * (1 - camypart);
+
+							DrawVertexAMT(ma, x + lod, y,       h);
+							DrawVertexAMT(ma, x + lod, y + lod   );
+						}
+					}
+					EndStripMT(ma);
+				}
+			}
+		}
+		DrawGroundVertexArrayMT(ma);
+	}
+	return true;
+}
+
 
 void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
 {
@@ -161,8 +665,8 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	textures->DrawUpdate();
 
 	int x, y;
-	const int neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
-	const int maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
+	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
+	maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
 	#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
 	UpdateCamRestraints();
@@ -186,6 +690,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	float camxpart = 0.0f, oldcamxpart;
 	float camypart = 0.0f, oldcamypart;
 
+#if GML_ENABLE_DRAWGROUND
+	mt_overrideVP=overrideVP;
+	gmlProcessor.Work(NULL,&CBFGroundDrawer::DrawMTcb,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
+#else
 	for (int bty = 0; bty < numBigTexY; ++bty) {
 		if (!BigTexSquareRowVisible(bty)) {
 			// skip this entire row of squares if we can't see it
@@ -625,6 +1133,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 			DrawGroundVertexArray();
 		}
 	}
+#endif
 
 	ResetTextureUnits(drawWaterReflection, overrideVP);
 	glDisable(GL_CULL_FACE);
@@ -694,6 +1203,286 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 }
 
 
+bool CBFGroundDrawer::DrawShadowPassMT(int nlod) {
+	CVertexArray *ma = GetVertexArray();
+	ma->Initialize();
+
+	bool inStrip=false;
+	int x,y;
+	int lod=1<<nlod;
+
+	float cx2 = (camera->pos.x / (SQUARE_SIZE));
+	float cy2 = (camera->pos.z / (SQUARE_SIZE));
+
+	float oldcamxpart = 0.0f;
+	float oldcamypart = 0.0f;
+
+	int hlod = lod >> 1;
+	int dlod = lod << 1;
+
+	int cx = (int)cx2;
+	int cy = (int)cy2;
+	if(lod>1) {
+		int cxo = (cx / hlod) * hlod;
+		int cyo = (cy / hlod) * hlod;
+		float cx2o = (cxo / lod) * lod;
+		float cy2o = (cyo / lod) * lod;
+		oldcamxpart = (cx2 - cx2o) / (lod);
+		oldcamypart = (cy2 - cy2o) / (lod);
+	}
+
+	cx = (cx / lod) * lod;
+	cy = (cy / lod) * lod;
+	int ysquaremod = ((cy) % (dlod)) / lod;
+	int xsquaremod = ((cx) % (dlod)) / lod;
+
+	float camxpart = (cx2 - ((cx / (dlod)) * dlod)) / (dlod);
+	float camypart = (cy2 - ((cy / (dlod)) * dlod)) / (dlod);
+
+	int minty = 0;
+	int maxty = gs->mapy;
+	int mintx = 0;
+	int maxtx = gs->mapx;
+
+	int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
+	int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
+	int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
+	int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
+
+	int xstart = max(minlx, mintx);
+	int xend   = min(maxlx, maxtx);
+	int ystart = max(minly, minty);
+	int yend   = min(maxly, maxty);
+
+	for (y = ystart; y < yend; y += lod) {
+		int xs = xstart;
+		int xe = xend;
+
+		int nloop=(xe-xs)/lod+1;
+		ma->EnlargeArrays(52*nloop, 14*nloop+1); // includes one extra for final endstrip
+		for (x = xs; x < xe; x += lod) {
+			if ((lod == 1) ||
+				(x > (cx) + viewRadius * hlod) || (x < (cx) - viewRadius * hlod) ||
+				(y > (cy) + viewRadius * hlod) || (y < (cy) - viewRadius * hlod)) {
+					if (!inStrip) {
+						DrawVertexAMT(ma, x, y      );
+						DrawVertexAMT(ma, x, y + lod);
+						inStrip = true;
+					}
+					DrawVertexAMT(ma, x + lod, y      );
+					DrawVertexAMT(ma, x + lod, y + lod);
+			} else {  //inre begr�sning mot f�eg�nde lod
+				if((x>=(cx)+viewRadius*hlod)){
+					float h1=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x]*(oldcamxpart);
+					float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(oldcamxpart);
+					float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x+hlod]*(oldcamxpart);
+					float h4=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y+lod)*heightDataX+x+hlod]*(oldcamxpart);
+
+					if(inStrip){
+						EndStripMT(ma);
+						inStrip=false;
+					}
+					DrawVertexAMT(ma, x,y);
+					DrawVertexAMT(ma, x,y+hlod,h1);
+					DrawVertexAMT(ma, x+hlod,y,h2);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x,y+hlod,h1);
+					DrawVertexAMT(ma, x,y+lod);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+hlod,y+lod,h4);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x+hlod,y+lod,h4);
+					DrawVertexAMT(ma, x+lod,y+lod);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+hlod,y,h2);
+					EndStripMT(ma);
+				}
+				if((x<=(cx)-viewRadius*hlod)){
+					float h1=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamxpart);
+					float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(1-oldcamxpart);
+					float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+hlod)*heightDataX+x+hlod]*(1-oldcamxpart);
+					float h4=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamxpart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamxpart);
+
+					if(inStrip){
+						EndStripMT(ma);
+						inStrip=false;
+					}
+					DrawVertexAMT(ma, x+lod,y+hlod,h1);
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+hlod,y,h2);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x+lod,y+lod);
+					DrawVertexAMT(ma, x+lod,y+hlod,h1);
+					DrawVertexAMT(ma, x+hlod,y+lod,h4);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x+hlod,y,h2);
+					DrawVertexAMT(ma, x,y);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x,y+lod);
+					DrawVertexAMT(ma, x+hlod,y+lod,h4);
+					EndStripMT(ma);
+				}
+				if((y>=(cy)+viewRadius*hlod)){
+					float h1=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y)*heightDataX+x+hlod]*(oldcamypart);
+					float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(oldcamypart);
+					float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x+hlod]*(oldcamypart);
+					float h4=(heightData[(y+lod)*heightDataX+x+lod]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamypart)+heightData[(y+hlod)*heightDataX+x+lod]*(oldcamypart);
+
+					if(inStrip){
+						EndStripMT(ma);
+						inStrip=false;
+					}
+					DrawVertexAMT(ma, x,y);
+					DrawVertexAMT(ma, x,y+hlod,h2);
+					DrawVertexAMT(ma, x+hlod,y,h1);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+lod,y+hlod,h4);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x,y+hlod,h2);
+					DrawVertexAMT(ma, x,y+lod);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+lod,y+lod);
+					DrawVertexAMT(ma, x+lod,y+hlod,h4);
+					EndStripMT(ma);
+				}
+				if((y<=(cy)-viewRadius*hlod)){
+					float h1=(heightData[(y+lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+lod)*heightDataX+x+hlod]*(1-oldcamypart);
+					float h2=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x]*(1-oldcamypart);
+					float h3=(heightData[(y+lod)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x+hlod]*(1-oldcamypart);
+					float h4=(heightData[(y+lod)*heightDataX+x+lod]+heightData[(y)*heightDataX+x+lod])*0.5f*(oldcamypart)+heightData[(y+hlod)*heightDataX+x+lod]*(1-oldcamypart);
+
+					if(inStrip){
+						EndStripMT(ma);
+						inStrip=false;
+					}
+					DrawVertexAMT(ma, x,y+hlod,h2);
+					DrawVertexAMT(ma, x,y+lod);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x+hlod,y+lod,h1);
+					DrawVertexAMT(ma, x+lod,y+hlod,h4);
+					DrawVertexAMT(ma, x+lod,y+lod);
+					EndStripMT(ma);
+					DrawVertexAMT(ma, x+lod,y+hlod,h4);
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+hlod,y+hlod,h3);
+					DrawVertexAMT(ma, x,y);
+					DrawVertexAMT(ma, x,y+hlod,h2);
+					EndStripMT(ma);
+				}
+			}
+		}
+		if(inStrip){
+			EndStripMT(ma);
+			inStrip=false;
+		}
+	}
+
+	int yst=max(ystart - lod, minty);
+	int yed=min(yend + lod, maxty);
+	int nloop=(yed-yst)/lod+1;
+	ma->EnlargeArrays(8*nloop, 2*nloop);
+	//rita yttre begr�snings yta mot n�ta lod
+	if(maxlx<maxtx && maxlx>=mintx){
+		x=maxlx;
+		for(y=yst;y<yed;y+=lod){
+			DrawVertexAMT(ma, x,y);
+			DrawVertexAMT(ma, x,y+lod);
+			if(y%(lod*2)){
+				float h=((heightData[(y-lod)*heightDataX+x+lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f)*(1-camxpart)+heightData[(y)*heightDataX+x+lod]*(camxpart);
+				DrawVertexAMT(ma, x+lod,y,h);
+				DrawVertexAMT(ma, x+lod,y+lod);
+			} else {
+				DrawVertexAMT(ma, x+lod,y);
+				float h=(heightData[(y)*heightDataX+x+lod]+heightData[(y+lod*2)*heightDataX+x+lod])*0.5f*(1-camxpart)+heightData[(y+lod)*heightDataX+x+lod]*(camxpart);
+				DrawVertexAMT(ma, x+lod,y+lod,h);
+			}
+			EndStripMT(ma);
+		}
+	}
+	if(minlx>mintx && minlx<maxtx){
+		x=minlx-lod;
+		for(y=yst;y<yed;y+=lod){
+			if(y%(lod*2)){
+				float h=((heightData[(y-lod)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f)*(camxpart)+heightData[(y)*heightDataX+x]*(1-camxpart);
+				DrawVertexAMT(ma, x,y,h);
+				DrawVertexAMT(ma, x,y+lod);
+			} else {
+				DrawVertexAMT(ma, x,y);
+				float h=(heightData[(y)*heightDataX+x]+heightData[(y+lod*2)*heightDataX+x])*0.5f*(camxpart)+heightData[(y+lod)*heightDataX+x]*(1-camxpart);
+				DrawVertexAMT(ma, x,y+lod,h);
+			}
+			DrawVertexAMT(ma, x+lod,y);
+			DrawVertexAMT(ma, x+lod,y+lod);
+			EndStripMT(ma);
+		}
+	}
+	if(maxly<maxty && maxly>minty){
+		y=maxly;
+		int xs=max(xstart-lod,mintx);
+		int xe=min(xend+lod,maxtx);
+		if(xs<xe){
+			x=xs;
+			int nloop=(xe-xs)/lod+2; // one extra for if statment
+			ma->EnlargeArrays(2*nloop, 1);
+			if(x%(lod*2)){
+				DrawVertexAMT(ma, x,y);
+				float h=((heightData[(y+lod)*heightDataX+x-lod]+heightData[(y+lod)*heightDataX+x+lod])*0.5f)*(1-camypart)+heightData[(y+lod)*heightDataX+x]*(camypart);
+				DrawVertexAMT(ma, x,y+lod,h);
+			} else {
+				DrawVertexAMT(ma, x,y);
+				DrawVertexAMT(ma, x,y+lod);
+			}
+			for(x=xs;x<xe;x+=lod){
+				if(x%(lod*2)){
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+lod,y+lod);
+				} else {
+					DrawVertexAMT(ma, x+lod,y);
+					float h=(heightData[(y+lod)*heightDataX+x+2*lod]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-camypart)+heightData[(y+lod)*heightDataX+x+lod]*(camypart);
+					DrawVertexAMT(ma, x+lod,y+lod,h);
+				}
+			}
+			EndStripMT(ma);
+		}
+	}
+	if(minly>minty && minly<maxty){
+		y=minly-lod;
+		int xs=max(xstart-lod,mintx);
+		int xe=min(xend+lod,maxtx);
+		if(xs<xe){
+			x=xs;
+			int nloop=(xe-xs)/lod+2; // one extra for if statment
+			ma->EnlargeArrays(2*nloop, 1);
+			if(x%(lod*2)){
+				float h=((heightData[(y)*heightDataX+x-lod]+heightData[(y)*heightDataX+x+lod])*0.5f)*(camypart)+heightData[(y)*heightDataX+x]*(1-camypart);
+				DrawVertexAMT(ma, x,y,h);
+				DrawVertexAMT(ma, x,y+lod);
+			} else {
+				DrawVertexAMT(ma, x,y);
+				DrawVertexAMT(ma, x,y+lod);
+			}
+			for(x=xs;x<xe;x+=lod){
+				if(x%(lod*2)){
+					DrawVertexAMT(ma, x+lod,y);
+					DrawVertexAMT(ma, x+lod,y+lod);
+				} else {
+					float h=(heightData[(y)*heightDataX+x+2*lod]+heightData[(y)*heightDataX+x])*0.5f*(camypart)+heightData[(y)*heightDataX+x+lod]*(1-camypart);
+					DrawVertexAMT(ma, x+lod,y,h);
+					DrawVertexAMT(ma, x+lod,y+lod);
+				}
+			}
+			EndStripMT(ma);
+		}
+	}
+
+	DrawGroundVertexArrayMT(ma);
+	return true;
+}
 
 
 void CBFGroundDrawer::DrawShadowPass(void)
@@ -715,6 +1504,9 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundShadowVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
 
+#if GML_ENABLE_DRAWGROUNDSHADOW
+	gmlProcessor.Work(NULL,&CBFGroundDrawer::DrawShadowPassMTcb,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
+#else
 	for (int lod = 1; lod < (2 << NUM_LODS); lod *= 2) {
 		int cx = (((int) (camera->pos.x / SQUARE_SIZE)) / lod) * lod;
 		int cy = (((int) (camera->pos.z / SQUARE_SIZE)) / lod) * lod;
@@ -964,6 +1756,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 		DrawGroundVertexArray();
 	}
+#endif
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_CULL_FACE);

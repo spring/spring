@@ -10,6 +10,7 @@
  */
 
 #include "StdAfx.h"
+#include <limits.h>
 #include <boost/regex.hpp>
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"

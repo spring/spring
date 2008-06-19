@@ -3,6 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cctype>
+#include <limits.h>
 #include <boost/regex.hpp>
 #include "VFSHandler.h"
 #include "Platform/FileSystem.h"

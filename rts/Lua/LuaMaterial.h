@@ -202,7 +202,7 @@ class LuaMatBin : public LuaMaterial {
 
 	public:
 		void Clear() { units.clear(); }
-		const vector<CUnit*>& GetUnits() const { return units; }
+		const GML_VECTOR<CUnit*>& GetUnits() const { return units; }
 
 		void Ref();
 		void UnRef();
@@ -218,7 +218,7 @@ class LuaMatBin : public LuaMaterial {
 
 	private:
 		int refCount;
-		vector<CUnit*> units;
+		GML_VECTOR<CUnit*> units;
 };
 
 

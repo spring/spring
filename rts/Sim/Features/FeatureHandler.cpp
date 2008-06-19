@@ -27,7 +27,6 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/TimeProfiler.h"
 #include "System/Platform/ConfigHandler.h"
-#include <GL/glu.h> // after myGL.h
 #include "mmgr.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"

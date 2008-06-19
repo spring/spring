@@ -434,7 +434,8 @@ void CGroundDecalHandler::Draw(void)
 					const int start = 5;
 					const int stride = 6;
 
-					for (int i = start; i < scar->scarQuads->drawIndex; i += stride) {
+					int sdi=scar->scarQuads->drawIndex();
+					for (int i = start; i < sdi; i += stride) {
 						scar->scarQuads->drawArray[i] = c;
 					}
 				}

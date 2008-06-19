@@ -1,6 +1,10 @@
 #ifndef __STD_AFX_H__
 #define __STD_AFX_H__
 
+#ifndef NOMINMAX
+#define NOMINMAX // avoid conflicts with std::min and std::max
+#endif
+
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #endif
