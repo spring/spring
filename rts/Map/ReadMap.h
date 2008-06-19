@@ -4,8 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
 

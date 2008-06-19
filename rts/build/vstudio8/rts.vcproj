@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
@@ -66,7 +66,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib"
-				OutputFile="../../../game/debug.exe"
+				OutputFile="../../../game/spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
@@ -388,6 +388,104 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Release+MT with error catching|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/vmg"
+				Optimization="2"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../../crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;_GML_"
+				StringPooling="true"
+				ExceptionHandling="2"
+				RuntimeLibrary="2"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="1"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4018;4244;4267;4288;4305;4996"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="../../System"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib"
+				OutputFile="../../../game/spring.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype-2.1.10/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL-1.2.9/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
+				IgnoreDefaultLibraryNames="LIBC.lib"
+				GenerateDebugInformation="true"
+				AssemblyDebug="2"
+				ProgramDatabaseFile="../../../game/spring.pdb"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				OptimizeReferences="0"
+				EnableCOMDATFolding="0"
+				TargetMachine="0"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -550,6 +648,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\CameraHandler.h"
@@ -654,6 +760,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameData.h"
@@ -696,6 +810,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -750,6 +872,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameSetupData.h"
@@ -784,6 +914,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -929,6 +1067,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\UI\GameSetupDrawer.h"
@@ -1031,14 +1177,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\Ui\OutlineFont.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\Ui\OutlineFont.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\UI\ProfileDrawer.cpp"
 					>
 					<FileConfiguration
@@ -1067,6 +1205,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1197,6 +1343,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\GlobalAITestScript.h"
@@ -1281,6 +1435,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\CameraController.h"
@@ -1315,6 +1477,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1361,6 +1531,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\FreeController.h"
@@ -1395,6 +1573,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1441,6 +1627,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\OverheadController.h"
@@ -1475,6 +1669,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1521,6 +1723,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\RotOverheadController.h"
@@ -1561,6 +1771,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Game\Camera\SmoothController.h"
@@ -1595,6 +1813,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1909,6 +2135,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\FBO.h"
@@ -2023,6 +2257,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -2961,6 +3203,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\CollisionHandler.h"
@@ -3023,6 +3273,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -3146,6 +3404,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\AutohostInterface.h"
@@ -3180,6 +3446,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -3250,6 +3524,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\DemoReader.h"
@@ -3284,6 +3566,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -3390,6 +3680,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\NetProtocol.h"
@@ -3432,6 +3730,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -3490,6 +3796,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\System\TimeProfiler.h"
@@ -3524,6 +3838,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -3575,6 +3897,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -3653,6 +3983,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveScanner.h"
@@ -3701,6 +4039,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\CRC.h"
@@ -3735,6 +4081,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -3786,6 +4140,15 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -3847,6 +4210,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpientry.h"
@@ -3881,6 +4252,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -3927,6 +4306,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\hpiutil.h"
@@ -3961,6 +4348,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4007,6 +4402,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\hpiutil2\sqshstream.h"
@@ -4041,6 +4444,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4091,6 +4502,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zAlloc.h"
@@ -4131,6 +4550,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zBuffer.h"
@@ -4165,6 +4592,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4214,6 +4649,15 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									PreprocessorDefinitions="_SZ_ONE_DIRECTORY"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zDecode.h"
@@ -4248,6 +4692,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4294,6 +4746,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zHeader.h"
@@ -4328,6 +4788,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4374,6 +4842,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\7zItem.h"
@@ -4408,6 +4884,14 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Syncdebug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -4458,6 +4942,14 @@
 									UsePrecompiledHeader="0"
 								/>
 							</FileConfiguration>
+							<FileConfiguration
+								Name="Release+MT with error catching|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									UsePrecompiledHeader="0"
+								/>
+							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\..\lib\7zip\LzmaDecode.h"
@@ -4490,6 +4982,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -4542,6 +5042,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -4623,6 +5131,14 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.h"
@@ -4663,6 +5179,14 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\OggStream.h"
@@ -4689,6 +5213,14 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -4733,6 +5265,14 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -4792,6 +5332,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\float3.h"
@@ -4826,6 +5374,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -4953,6 +5509,14 @@
 							UsePrecompiledHeader="2"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\creg\VarTypes.h"
@@ -5001,6 +5565,14 @@
 							DisableSpecificWarnings="4675"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							DisableSpecificWarnings="4675"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Script\LuaBinder.h"
@@ -5019,6 +5591,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5069,6 +5649,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\bget.cpp"
@@ -5107,6 +5695,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5221,6 +5817,16 @@
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\Connection.h"
@@ -5273,57 +5879,19 @@
 							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\LocalConnection.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\Net.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\Net.h"
 					>
 				</File>
 				<File
@@ -5355,6 +5923,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5401,6 +5977,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\ProtocolDef.h"
@@ -5435,6 +6019,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5481,6 +6073,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\Socket.h"
@@ -5515,6 +6115,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5561,6 +6169,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPConnection.h"
@@ -5601,6 +6217,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPListener.h"
@@ -5635,6 +6259,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -5726,6 +6358,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Map\HeightLinePalette.h"
@@ -5782,9 +6422,25 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Map\MapInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Map\MapParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Map\MapParser.h"
 				>
 			</File>
 			<File
@@ -6074,6 +6730,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaFBOs.h"
@@ -6182,6 +6846,14 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaRBOs.h"
@@ -6224,6 +6896,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -6413,6 +7093,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\streflop\Random.h"
@@ -6450,6 +7138,15 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -6520,6 +7217,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_acoshf.cpp"
@@ -6556,6 +7263,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -6608,6 +7325,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_atan2f.cpp"
@@ -6644,6 +7371,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -6696,6 +7433,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_coshf.cpp"
@@ -6732,6 +7479,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -6784,6 +7541,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_expf.cpp"
@@ -6820,6 +7587,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -6872,6 +7649,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_gammaf_r.cpp"
@@ -6908,6 +7695,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -6960,6 +7757,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_lgammaf_r.cpp"
@@ -6996,6 +7803,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7048,6 +7865,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_log2f.cpp"
@@ -7084,6 +7911,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7136,6 +7973,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_powf.cpp"
@@ -7172,6 +8019,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7224,6 +8081,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_remainderf.cpp"
@@ -7260,6 +8127,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7312,6 +8189,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\e_sqrtf.cpp"
@@ -7348,6 +8235,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7400,6 +8297,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\k_rem_pio2f.cpp"
@@ -7436,6 +8343,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7488,6 +8405,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\k_tanf.cpp"
@@ -7524,6 +8451,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7576,6 +8513,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_atanf.cpp"
@@ -7612,6 +8559,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7664,6 +8621,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_ceilf.cpp"
@@ -7700,6 +8667,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7752,6 +8729,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_cosf.cpp"
@@ -7788,6 +8775,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7840,6 +8837,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_expm1f.cpp"
@@ -7876,6 +8883,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -7928,6 +8945,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_finitef.cpp"
@@ -7964,6 +8991,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8016,6 +9053,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_fpclassifyf.cpp"
@@ -8052,6 +9099,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8104,6 +9161,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_ilogbf.cpp"
@@ -8140,6 +9207,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8192,6 +9269,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_isnanf.cpp"
@@ -8228,6 +9315,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8280,6 +9377,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_llrintf.cpp"
@@ -8316,6 +9423,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8368,6 +9485,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_log1pf.cpp"
@@ -8404,6 +9531,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8456,6 +9593,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_lrintf.cpp"
@@ -8492,6 +9639,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8544,6 +9701,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_modff.cpp"
@@ -8580,6 +9747,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8632,6 +9809,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_nextafterf.cpp"
@@ -8668,6 +9855,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8720,6 +9917,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_rintf.cpp"
@@ -8756,6 +9963,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8808,6 +10025,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_scalblnf.cpp"
@@ -8844,6 +10071,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8896,6 +10133,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_signbitf.cpp"
@@ -8932,6 +10179,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -8984,6 +10241,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_sinf.cpp"
@@ -9020,6 +10287,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -9072,6 +10349,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\s_tanhf.cpp"
@@ -9108,6 +10395,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -9160,6 +10457,16 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\lib\streflop\libm\flt-32\t_exp2f.h"
@@ -9200,6 +10507,16 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								AdditionalIncludeDirectories="../../lib/streflop/libm/headers"
+								PreprocessorDefinitions="LIBM_COMPILING_FLT32"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -9277,6 +10594,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\class_info.cpp"
@@ -9307,6 +10632,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9349,6 +10682,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\class_rep.cpp"
@@ -9379,6 +10720,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9421,6 +10770,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\error.cpp"
@@ -9451,6 +10808,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9493,6 +10858,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\function.cpp"
@@ -9523,6 +10896,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9565,6 +10946,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\link_compatibility.cpp"
@@ -9595,6 +10984,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9637,6 +11034,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\open.cpp"
@@ -9667,6 +11072,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9709,6 +11122,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\pcall.cpp"
@@ -9739,6 +11160,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9781,6 +11210,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\scope.cpp"
@@ -9811,6 +11248,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -9853,6 +11298,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\weak_ref.cpp"
@@ -9889,6 +11342,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\luabind\src\wrapper_base.cpp"
@@ -9919,6 +11380,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10089,6 +11558,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lapi.h"
@@ -10123,6 +11600,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10169,6 +11654,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lcode.cpp"
@@ -10199,6 +11692,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10245,6 +11746,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\ldebug.cpp"
@@ -10275,6 +11784,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10321,6 +11838,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\ldo.h"
@@ -10361,6 +11886,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lfunc.cpp"
@@ -10391,6 +11924,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10437,6 +11978,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lgc.h"
@@ -10471,6 +12020,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10513,6 +12070,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\llex.cpp"
@@ -10543,6 +12108,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10593,6 +12166,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lmem.cpp"
@@ -10623,6 +12204,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10669,6 +12258,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lobject.cpp"
@@ -10699,6 +12296,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10745,6 +12350,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lopcodes.h"
@@ -10785,6 +12398,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lparser.cpp"
@@ -10815,6 +12436,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10861,6 +12490,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lstate.h"
@@ -10895,6 +12532,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -10941,6 +12586,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\ltable.cpp"
@@ -10971,6 +12624,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -11017,6 +12678,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\ltm.cpp"
@@ -11047,6 +12716,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -11109,6 +12786,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lundump.h"
@@ -11143,6 +12828,14 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -11189,6 +12882,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\lua\src\lzio.h"
@@ -11229,6 +12930,46 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="gml"
+				>
+				<File
+					RelativePath="..\..\lib\gml\gml.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gml.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlcls.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmldef.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlfun.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlimp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlsrv.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
@@ -11265,6 +13006,14 @@
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Syncdebug|Win32"
+				>
+				<Tool
+					Name="VCResourceCompilerTool"
+					AdditionalIncludeDirectories="../../"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release+MT with error catching|Win32"
 				>
 				<Tool
 					Name="VCResourceCompilerTool"

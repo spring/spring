@@ -30,8 +30,15 @@ bool CGameController::Draw(void)
 {
 	return true;
 }
-
-
+/*
+bool CGameController::Draw2(void)
+{
+	return true;
+}*/
+/*bool CGameController::DrawMT(void)
+{
+	return true;
+}*/
 
 bool CGameController::Update(void)
 {

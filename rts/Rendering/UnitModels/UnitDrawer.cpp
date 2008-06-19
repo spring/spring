@@ -42,6 +42,8 @@
 #include "Sim/Weapons/Weapon.h"
 #include "mmgr.h"
 
+#include "lib/gml/gmlsrv.h"
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 static bool luaDrawing = false; // FIXME
@@ -277,20 +279,114 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 }
 
 
+bool CUnitDrawer::DrawUnitMT(CUnit *unit) {
+	bool drawReflection=mt_drawReflection;
+	bool drawRefraction=mt_drawRefraction;
+	CUnit *excludeUnit=mt_excludeUnit;
+#ifdef DIRECT_CONTROL_ALLOWED
+	if (unit == excludeUnit) {
+		return false;
+	}
+#endif
+	if (unit->noDraw) {
+		return false;
+	}
+	if (camera->InView(unit->midPos, unit->radius + 30)) {
+		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
+
+			if (drawReflection) {
+				float3 zeroPos;
+				if (unit->midPos.y < 0.0f) {
+					zeroPos = unit->midPos;
+				} else {
+					const float dif = unit->midPos.y - camera->pos.y;
+					zeroPos = camera->pos  * (unit->midPos.y / dif) +
+						unit->midPos * (-camera->pos.y / dif);
+				}
+				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
+					return false;
+				}
+			}
+
+			if (drawRefraction) {
+				if (unit->pos.y > 0.0f) {
+					return false;
+				}
+			}
+
+			float sqDist = (unit->pos-camera->pos).SqLength();
+			float iconDistMult = unit->unitDef->iconType->GetDistance();
+			float realIconLength = iconLength * (iconDistMult * iconDistMult);
+			if (sqDist>realIconLength) {
+				drawIcon.push_back(unit);
+				unit->isIcon = true;
+			}
+			else {
+				unit->isIcon = false;
+
+				float farLength = unit->sqRadius * unitDrawDistSqr;
+				if (sqDist > farLength) {
+					drawFar.push_back(unit);
+				} else {
+					DrawUnit(unit);
+				}
+
+				if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
+					drawStat.push_back(unit);
+				}
+			}
+		}
+		else if (losStatus & LOS_PREVLOS) {
+			unit->isIcon = true;
+
+			if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
+				// it's a building we've had LOS on once,
+				// add it to the vector of cloaked units
+				float sqDist = (unit->pos-camera->pos).SqLength();
+				float iconDistMult = unit->unitDef->iconType->GetDistance();
+				float realIconLength = iconLength * (iconDistMult * iconDistMult);
+
+				if (sqDist < realIconLength) {
+					if (unit->model->textureType) {
+						drawCloakedS3O.push_back(unit);
+					} else {
+						drawCloaked.push_back(unit);
+					}
+					unit->isIcon = false;
+				}
+			}
+			if (losStatus & LOS_INRADAR) {
+				if (!(losStatus & LOS_CONTRADAR)) {
+					drawRadarIcon.push_back(unit);
+				} else if (unit->isIcon) {
+					// this prevents us from drawing icons on top of ghosted buildings
+					drawIcon.push_back(unit);
+				}
+			}
+		} else if (losStatus & LOS_INRADAR) {
+			drawRadarIcon.push_back(unit);
+		}
+	}
+	return true;
+}
+
+
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	ASSERT_UNSYNCED_MODE;
 
-	vector<CUnit*> drawFar;
-	vector<CUnit*> drawStat;
+	drawFar.clear();
+	drawStat.clear();
+
 	drawCloaked.clear();
 	drawCloakedS3O.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
-	vector<CUnit*> drawIcon;
-	vector<CUnit*> drawRadarIcon;
+	drawIcon.clear();
+	drawRadarIcon.clear();
 
 	if (drawReflection) {
 		CUnit::SetLODFactor(LODScale * LODScaleReflection);
@@ -306,9 +402,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
+#if GML_ENABLE_DRAWUNIT
+	mt_drawReflection=drawReflection;
+	mt_drawRefraction=drawRefraction;
+	mt_excludeUnit=excludeUnit;
+	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DrawUnitMTcb,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+#else
 	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
-
 #ifdef DIRECT_CONTROL_ALLOWED
 		if (unit == excludeUnit) {
 			continue;
@@ -395,6 +496,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			}
 		}
 	}
+#endif
 
 	std::multimap<int, TempDrawUnit>::iterator ti;
 	for (ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
@@ -423,7 +525,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glEnable(GL_FOG);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
-	for (vector<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+	for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 		DrawFar(*usi);
 	}
 
@@ -432,7 +534,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	if (!drawReflection) {
 		// Draw unit icons and radar blips.
 		glAlphaFunc(GL_GREATER, 0.5f);
-		vector<CUnit*>::iterator ui;
+		GML_VECTOR<CUnit*>::iterator ui;
 		for (ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
@@ -470,7 +572,7 @@ static void DrawBins(LuaMatType type)
 		bin->Execute(*currMat);
 		currMat = (LuaMaterial*)bin;
 
-		const vector<CUnit*>& units = bin->GetUnits();
+		const GML_VECTOR<CUnit*>& units = bin->GetUnits();
 		const int count = (int)units.size();
 		for (int i = 0; i < count; i++) {
 			CUnit* unit = units[i];
@@ -584,6 +686,41 @@ void CUnitDrawer::DrawShadowShaderUnits()
 /******************************************************************************/
 /******************************************************************************/
 
+
+bool CUnitDrawer::DrawUnitShadowMT(CUnit *unit) {
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+	if (((losStatus & LOS_INLOS) || gu->spectatingFullView) && camera->InView(unit->midPos, unit->radius + 700)) {
+		// FIXME: test against the shadow projection intersection
+		float sqDist = (unit->pos-camera->pos).SqLength();
+		float farLength = unit->sqRadius * unitDrawDistSqr;
+
+		if (sqDist < farLength) {
+			float iconDistMult = unit->unitDef->iconType->GetDistance();
+			float realIconLength = iconLength * (iconDistMult * iconDistMult);
+
+			if (sqDist < realIconLength) {
+				if (!unit->isCloaked) {
+					if (unit->lodCount <= 0) {
+						DrawUnitNow(unit);
+					} else {
+						LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
+						const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+						unit->currentLOD = lod;
+						LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+
+						if ((lodMat != NULL) && lodMat->IsActive()) {
+							lodMat->AddUnit(unit);
+						} else {
+							DrawUnitNow(unit);
+						}
+					}
+				}
+			}
+		}
+	}
+	return true;
+}
+
 void CUnitDrawer::DrawShadowPass(void)
 {
 	ASSERT_UNSYNCED_MODE;
@@ -598,6 +735,9 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
+#if GML_ENABLE_DRAWUNITSHADOW
+	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DrawUnitShadowMTcb,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+#else
 	std::list<CUnit*>::iterator usi;
 	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
@@ -635,6 +775,7 @@ void CUnitDrawer::DrawShadowPass(void)
 			}
 		}
 	}
+#endif
 
 	glDisable(GL_VERTEX_PROGRAM_ARB);
 
@@ -839,10 +980,10 @@ void CUnitDrawer::DrawCloakedUnits(void)
 }
 
 
-void CUnitDrawer::DrawCloakedUnitsHelper(std::vector<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o)
+void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o)
 {
 	// cloaked units and living ghosted buildings (stored in same vector)
-	for (vector<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
+	for (GML_VECTOR<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
 		CUnit* unit = *ui;
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
@@ -1473,26 +1614,29 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	camera = realCam;
 }
 
-
 void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 {
+#if GML_ENABLE
+	quedS3Os.acquire(textureType).push_back(object);
+	quedS3Os.release();
+#else
 	while (quedS3Os.size() <= textureType)
-		quedS3Os.push_back(std::vector<CWorldObject*>());
-
+		quedS3Os.push_back(GML_VECTOR<CWorldObject*>());
 	quedS3Os[textureType].push_back(object);
 	usedS3OTextures.insert(textureType);
+#endif
 }
-
 
 void CUnitDrawer::DrawQuedS3O(void)
 {
 	SetupForS3ODrawing();
 
+#if !GML_ENABLE
 	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
 		const int tex = *uti;
 		texturehandler->SetS3oTexture(tex);
 
-		for (std::vector<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
+		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
 			DrawWorldObjectS3O(*ui);
 		}
 
@@ -1500,6 +1644,18 @@ void CUnitDrawer::DrawQuedS3O(void)
 	}
 
 	usedS3OTextures.clear();
+#else
+	int sz=quedS3Os.size();
+	for(int tex=0; tex<sz;++tex) {
+		if(quedS3Os[tex].size()>0) {
+			texturehandler->SetS3oTexture(tex);
+			for(GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
+				DrawWorldObjectS3O(*ui);
+			}
+			quedS3Os[tex].clear();
+		}
+	}
+#endif
 	CleanUpS3ODrawing();
 }
 

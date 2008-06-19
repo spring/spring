@@ -11,7 +11,6 @@
 #include <sstream>
 
 #include "Rendering/GL/myGL.h"
-#include <GL/glu.h>
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -150,12 +149,15 @@
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 
+#include <boost/thread/barrier.hpp>
+
+#include "lib/gml/gmlsrv.h"
+gmlClientServer<void, int,CUnit*> gmlProcessor;
 
 extern Uint8 *keys;
 extern bool globalQuit;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
-
 
 CGame* game = NULL;
 
@@ -2449,6 +2451,7 @@ bool CGame::DrawWorld()
 	//transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
+
 	if (drawGround) {
 		if (treeDrawer->drawTrees) {
 			treeDrawer->DrawGrass();
@@ -2540,9 +2543,22 @@ bool CGame::DrawWorld()
 	return true;
 }
 
+#if GML_ENABLE_DRAWALL
+bool CGame::Draw() {
+#else
+bool CGame::DrawMT() {
+#endif
+	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
+	return TRUE;
+}
 
-bool CGame::Draw()
-{
+
+#if GML_ENABLE_DRAWALL
+bool CGame::DrawMT() {
+#else
+bool CGame::Draw() {
+#endif
+
 	ASSERT_UNSYNCED_MODE;
 
 	SetDrawMode(normalDraw);
@@ -2943,8 +2959,29 @@ void CGame::StartPlaying()
 
 }
 
-void CGame::SimFrame()
-{
+
+// This will be run by a separate thread in parallel with the Sim
+// ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
+void CGame::UnsyncedStuff() {
+	if(!skipping) {
+		infoConsole->Update();
+	}
+}
+
+
+#if GML_ENABLE_SIM
+void CGame::SimFrame() {
+#else
+void CGame::SimFrameMT() {
+#endif
+	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
+}
+
+#if GML_ENABLE_SIM
+void CGame::SimFrameMT() {
+#else
+void CGame::SimFrame() {
+#endif
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 	ASSERT_SYNCED_MODE;
@@ -2970,7 +3007,10 @@ void CGame::SimFrame()
 	ENTER_UNSYNCED;
 
 	if (!skipping) {
-		infoConsole->Update();
+#if !GML_ENABLE_SIM
+    UnsyncedStuff();
+#endif
+//		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		if(!(gs->frameNum & 7))
@@ -3715,6 +3755,8 @@ void CGame::ClientReadNet()
 							gu->myTeam = newTeam;
 							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
 							gu->spectating           = false;
+							gu->spectatingFullView   = false;
+							gu->spectatingFullSelect = false;
 							gu->spectatingFullView   = false;
 							gu->spectatingFullSelect = false;
 							selectedUnits.ClearSelected();

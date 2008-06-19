@@ -1,5 +1,5 @@
 #include "FileFilter.h"
-
+#include <limits.h>
 #include <boost/regex.hpp>
 #include <ctype.h>
 #include <sstream>

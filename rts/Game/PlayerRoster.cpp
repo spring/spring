@@ -7,7 +7,6 @@
 #include "Player.h"
 #include "Team.h"
 
-
 static int CompareAllies     (const void* a, const void* b);
 static int CompareTeamIDs    (const void* a, const void* b);
 static int ComparePlayerNames(const void* a, const void* b);

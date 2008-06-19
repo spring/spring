@@ -2,6 +2,9 @@
 #define WINDOWS_H_INCLUDED
 
 	#ifdef _WIN32
+  #ifndef NOMINMAX
+  #define NOMINMAX
+  #endif
 	#include <windows.h>
 
 		#undef  PlaySound

@@ -14,7 +14,7 @@
 
 #include "Rendering/GL/myGL.h"
 #if defined(__APPLE__)
-#include <OpenGL/gl.h>
+//#include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #endif
 

@@ -120,7 +120,7 @@ void CProjectile::Draw()
 void CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
-	ph->currentParticles+=va->drawIndex/24;		//each particle quad is 24 values large
+	ph->currentParticles+=va->drawIndex()/24;		//each particle quad is 24 values large
 	va=GetVertexArray();
 	va->Initialize();
 	inArray=false;

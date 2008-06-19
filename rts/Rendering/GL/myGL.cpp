@@ -26,18 +26,35 @@ static CVertexArray* currentVertexArray = NULL;
 
 static GLuint startupTexture = 0;
 
-
+#if GML_ENABLE
+static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
+static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
+static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
+#endif
+//BOOL gmlVertexArrayEnable=0;
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
+#if GML_ENABLE // each thread gets its own array to avoid conflicts
+//	if(gmlVertexArrayEnable) {
+		int thread=gmlThreadNumber;
+		if(currentVertexArrays[thread]==&vertexArrays1[thread]){
+			currentVertexArrays[thread]=&vertexArrays2[thread];
+		} else {
+			currentVertexArrays[thread]=&vertexArrays1[thread];
+		}
+		return currentVertexArrays[thread];
+//	}
+#else
 	if(currentVertexArray==vertexArray1){
 		currentVertexArray=vertexArray2;
 	} else {
 		currentVertexArray=vertexArray1;
 	}
 	return currentVertexArray;
+#endif
 }
 
 

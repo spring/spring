@@ -28,8 +28,7 @@
 */
 
 #include "StdAfx.h"
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 
 #include "TerrainBase.h"
 #include "TerrainNode.h"

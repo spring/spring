@@ -6,6 +6,7 @@
 #include "LuaParser.h"
 
 #include <algorithm>
+#include <limits.h>
 #include <boost/regex.hpp>
 #include <SDL_timer.h>
 

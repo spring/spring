@@ -156,7 +156,6 @@ template<class U, class V> inline bool operator!=(const SyncedPrimitive<U>& f, c
 
 	FOR_EACH_PRIMITIVE_TYPE
 #undef DO
-
 template<class T> inline T min(const T f, const SyncedPrimitive<T>& g) {return std::min(f,g.x);}
 template<class T> inline T min(const SyncedPrimitive<T>& f, const T g) {return std::min(f.x,g);}
 template<class T> inline T max(const T f, const SyncedPrimitive<T>& g) {return std::max(f,g.x);}

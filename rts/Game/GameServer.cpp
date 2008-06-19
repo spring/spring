@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GameServer.h"
 
 #include <stdarg.h>
@@ -36,6 +37,7 @@
 namespace std { using ::ceil; }
 #endif
 using netcode::RawPacket;
+
 
 /// frames until a syncchech will time out and a warning is given out
 const int SYNCCHECK_TIMEOUT = 300;
@@ -1240,7 +1242,7 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-#if BOOST_VERSION >= 103500
+#if (BOOST_VERSION >= 103500)
 	if (!fromServerThread)
 		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
 	else
@@ -1425,4 +1427,5 @@ void CGameServer::RestrictedAction(const std::string& action)
 	RegisterAction(action);
 	commandBlacklist.insert(action);
 }
+
 

@@ -173,10 +173,10 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	#if ((BOOST_VERSION / 100) % 1000 <= 34)
-	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
-	#else
+	#if (BOOST_VERSION >= 103500)
 	int numThreads = boost::thread::hardware_concurrency();
+	#else
+	int numThreads = GML_CPU_COUNT; //configHandler.GetInt("HardwareThreadCount", 2);
 	#endif
 
 	if (numThreads > 1) {
@@ -185,12 +185,12 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		JoinThreads(numThreads, 0);
 
 		char loadMsg[512];
-		sprintf(loadMsg, "Reading estimate path costs (using %d threads)", numThreads);
+		sprintf(loadMsg, "Reading estimate path costs (%d threads)", numThreads);
 		PrintLoadMsg(loadMsg);
 
 		if (!ReadFile(name)) {
 			char calcMsg[512];
-			sprintf(calcMsg, "Analyzing map accessibility (block-size %d)", BLOCK_SIZE);
+			sprintf(calcMsg, "Analyzing map accessibility [%d] (%d threads)", BLOCK_SIZE, numThreads);
 			PrintLoadMsg(calcMsg);
 
 			// re-spawn the threads for CalculateBlockOffsets()
@@ -207,11 +207,11 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		InitVertices(0, nbrOfVertices);
 		InitBlocks(0, nbrOfBlocks);
 
-		PrintLoadMsg("Reading estimate path costs (using 1 thread)");
+		PrintLoadMsg("Reading estimate path costs (1 thread)");
 
 		if (!ReadFile(name)) {
 			char calcMsg[512];
-			sprintf(calcMsg, "Analyzing map accessibility (block-size %d)", BLOCK_SIZE);
+			sprintf(calcMsg, "Analyzing map accessibility [%d] (1 thread)", BLOCK_SIZE);
 			PrintLoadMsg(calcMsg);
 
 			CalcOffsetsAndPathCosts(0, nbrOfBlocks);
