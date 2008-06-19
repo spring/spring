@@ -1,11 +1,11 @@
 INCLUDE_DIRECTORIES(streflop lua/include luabind ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/System)
 
 AUX_SOURCE_DIRECTORY(lua/src lualibfiles)
-ADD_LIBRARY(lua STATIC ${lualibfiles})
+ADD_LIBRARY(lua STATIC EXCLUDE_FROM_ALL ${lualibfiles})
 TARGET_LINK_LIBRARIES(lua streflop)
 
 AUX_SOURCE_DIRECTORY(luabind/src luabindfiles)
-ADD_LIBRARY(luabind STATIC ${luabindfiles})
+ADD_LIBRARY(luabind STATIC EXCLUDE_FROM_ALL ${luabindfiles})
 TARGET_LINK_LIBRARIES(luabind lua)
 
 ADD_DEFINITIONS(-D_SZ_ONE_DIRECTORY)
@@ -17,7 +17,7 @@ ADD_LIBRARY(hpiutil2 STATIC ${hpifiles})
 TARGET_LINK_LIBRARIES(hpiutil2 z)
 
 AUX_SOURCE_DIRECTORY(gml gmlfiles)
-ADD_LIBRARY(gml STATIC ${gmlfiles})
+ADD_LIBRARY(gml STATIC EXCLUDE_FROM_ALL ${gmlfiles})
 
 IF (UNIX)
 	ADD_LIBRARY(minizip STATIC  minizip/unzip minizip/zip minizip/ioapi)

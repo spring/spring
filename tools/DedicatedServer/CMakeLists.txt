@@ -28,7 +28,7 @@ TARGET_LINK_LIBRARIES(net SDL boost_thread-mt)
 IF (MINGW)
 	TARGET_LINK_LIBRARIES(net ws2_32)
 ENDIF (MINGW)
-INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
+INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
 
 if (NOT COMPLETE_BUILD)
 	ADD_SUBDIRECTORY(../../rts/lib libs)
