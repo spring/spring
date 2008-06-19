@@ -12,6 +12,7 @@
 #include <GL/glew.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/version.hpp>
 #define private public // we need access to the private value_ member of atomic_count
 #include <boost/detail/atomic_count.hpp>
 #undef private
