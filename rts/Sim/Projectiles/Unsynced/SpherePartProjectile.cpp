@@ -5,7 +5,8 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SpherePartProjectile.h"
 #include "mmgr.h"
-using namespace std;
+
+using std::min;
 
 CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (float3(0,0,0),0,0,0.0,0.0,0,NULL,float3(0,0,0)));
 

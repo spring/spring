@@ -11,7 +11,8 @@
 #include "mmgr.h"
 #include "FastMath.h"
 
-using namespace std;
+using std::string;
+using std::max;
 
 CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 {

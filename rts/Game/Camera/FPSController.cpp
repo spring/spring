@@ -5,8 +5,8 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 
-using namespace std;
-
+using std::min;
+using std::max;
 
 CFPSController::CFPSController()
 	: oldHeight(300)

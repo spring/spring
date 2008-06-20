@@ -31,8 +31,6 @@
 #define CLOUD_DETAIL 6
 #define CLOUD_SIZE 256
 
-using namespace std;
-
 CBasicSky::CBasicSky()
 {
 	PrintLoadMsg("Creating sky");

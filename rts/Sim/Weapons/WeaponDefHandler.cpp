@@ -19,8 +19,8 @@
 #include "System/Sound.h"
 #include "mmgr.h"
 
-using namespace std;
-
+using std::min;
+using std::max;
 
 CR_BIND(WeaponDef, );
 
@@ -555,7 +555,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 
 	const float gd = max(30.0f, wd.damages[0] / 20.0f);
-	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrtf(gd) * 0.7f)) * 0.5f;
+	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrt(gd) * 0.7f)) * 0.5f;
 	wd.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 
 	// Dynamic Damage

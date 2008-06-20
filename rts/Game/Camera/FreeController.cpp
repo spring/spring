@@ -7,7 +7,8 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 
-using namespace std;
+using std::max;
+using std::min;
 extern Uint8 *keys;
 
 /******************************************************************************/
@@ -32,9 +33,9 @@ CFreeController::CFreeController()
 	dir = float3(0.0f, -2.0f, -1.0f);
 	dir.Normalize();
 	if (camera) {
-		const float hDist = sqrtf((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = atan2f(dir.x, dir.z);
-		camera->rot.x = atan2f(dir.y, hDist);
+		const float hDist = sqrt((dir.x * dir.x) + (dir.z * dir.z));
+		camera->rot.y = atan2(dir.x, dir.z);
+		camera->rot.x = atan2(dir.y, hDist);
 	}
 	pos -= (dir * 1000.0f);
 
@@ -76,7 +77,7 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	camera->rot.y = rads;
 
 	const float len2D = diff.Length2D();
-	if (fabsf(len2D) <= 0.001f) {
+	if (fabs(len2D) <= 0.001f) {
 		camera->rot.x = 0.0f;
 	} else {
 		camera->rot.x = atan2((trackPos.y - pos.y), len2D);
@@ -233,7 +234,7 @@ void CFreeController::Update()
 		if (pos.y < minHeight) {
 			pos.y = minHeight;
 			if (gndLock) {
-				vel.y = min(fabsf(scrollSpeed), ((minHeight - prevPos.y) / ft));
+				vel.y = min(fabs(scrollSpeed), ((minHeight - prevPos.y) / ft));
 			} else {
 				vel.y = 0.0f;
 			}
@@ -347,7 +348,7 @@ void CFreeController::SetPos(const float3& newPos)
 	if ((yDiff * dir.y) >= 0.0f) {
 		pos = float3(newPos.x, h, newPos.z);
 	} else {
-		pos = target - (dir * fabsf(yDiff / dir.y));
+		pos = target - (dir * fabs(yDiff / dir.y));
 	} // FIXME
 /*
 	const float oldPosY = pos.y;

@@ -159,8 +159,8 @@ namespace fastmath {
 			x = -x - PI;
 		}
 		/* approximation */
-		x = (PIU4) * x + (PISUN4) * x * fabsf(x);
-		x = 0.225 * (x * fabsf(x) - x) + x;
+		x = (PIU4) * x + (PISUN4) * x * fabs(x);
+		x = 0.225 * (x * fabs(x) - x) + x;
 		return x;
 	}
 

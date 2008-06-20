@@ -23,7 +23,8 @@
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 #include "mmgr.h"
 
-using namespace std;
+using std::min;
+using std::max;
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 
@@ -721,7 +722,7 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 void CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
 	const vector<creg::Class*>& classes = creg::System::GetClasses();
-	ofstream fs("projectiles.txt");
+	std::ofstream fs("projectiles.txt");
 	CExplosionGeneratorHandler egh;
 
 	if (fs.bad() || !fs.is_open())
@@ -733,7 +734,7 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 			continue;
 
 		creg::Class *klass = *ci;
-		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(klass->name) << endl;
+		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(klass->name) << std::endl;
 		for (;klass;klass=klass->base) {
 			for (unsigned int a=0;a<klass->members.size();a++)
 			{

@@ -16,6 +16,9 @@
 #include "creg/STL_List.h"
 #include "mmgr.h"
 
+using std::min;
+using std::max;
+
 CR_BIND(LosInstance, );
 CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
@@ -80,8 +83,6 @@ CR_REG_METADATA_SUB(CLosHandler,CPoint,(
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-using namespace std;
 
 
 CLosHandler* loshandler;

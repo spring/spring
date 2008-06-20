@@ -40,7 +40,7 @@
 
 namespace terrain {
 
-using namespace std;
+using std::min;
 
 void BlurGrayscaleImage(int w, int h, uchar *data)
 {
@@ -217,7 +217,7 @@ void Lightmap::CalculateShadows (uchar *dst, int dstw, float lightX,float lightY
 					continue;
 			}
 
-			float len = sqrtf(dx*dx+dy*dy);
+			float len = sqrt(dx*dx+dy*dy);
 			const float step = 5.0f;
 			float invLength2d = step/len;
 			dx *= invLength2d;

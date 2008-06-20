@@ -30,8 +30,8 @@
 #include "Sound.h"
 #include "mmgr.h"
 
-using namespace std;
-
+using std::min;
+using std::max;
 
 CR_BIND_DERIVED(CBuilder, CUnit, );
 

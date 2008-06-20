@@ -60,7 +60,7 @@ void FileSystemHandler::Initialize(bool verbose)
 {
 	if (!instance) {
 #ifdef WIN32
-		instance = new WinFileSystemHandler(verbose);
+		instance = new UnixFileSystemHandler(verbose);
 #elif defined(__APPLE__)
 		instance = new MacFileSystemHandler(verbose);
 #else
@@ -89,39 +89,6 @@ FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator
 	// because WinFileSystemHandler/UnixFileSystemHandler ctor initializes the
 	// ArchiveScanner (which uses FileSystemHandler::GetInstance again...).
 	instance = this;
-}
-
-/**
- * @brief return a writable directory
- */
-std::string FileSystemHandler::GetWriteDir() const
-{
-	char buf[3];
-	buf[0] = '.';
-	buf[1] = native_path_separator;
-	buf[2] = 0;
-	return buf;
-}
-
-/**
- * @brief return a vector of all data directories
- */
-std::vector<std::string> FileSystemHandler::GetDataDirectories() const
-{
-	std::vector<std::string> f;
-	f.push_back(FileSystemHandler::GetWriteDir());
-	return f;
-}
-
-/**
- * @brief locate a file
- *
- * This implementation just assumes the file lives in the current working
- * directory, so it just returns it's argument: file.
- */
-std::string FileSystemHandler::LocateFile(const std::string& file) const
-{
-	return file;
 }
 
 ////////////////////////////////////////

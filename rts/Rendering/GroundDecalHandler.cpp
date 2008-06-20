@@ -20,8 +20,9 @@
 #include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
-using namespace std;
-
+using std::list;
+using std::min;
+using std::max;
 
 CGroundDecalHandler* groundDecals = NULL;
 

@@ -36,6 +36,9 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "mmgr.h"
 
+using std::min;
+using std::max;
+
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
 	def = unitDefHandler->GetUnitByName(name);
@@ -77,7 +80,6 @@ bool BuildInfo::Parse(const Command& c)
 //////////////////////////////////////////////////////////////////////
 
 CUnitHandler* uh;
-using namespace std;
 
 CR_BIND(CUnitHandler, (true));
 CR_REG_METADATA(CUnitHandler, (
@@ -165,7 +167,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 CUnitHandler::~CUnitHandler()
 {
-	list<CUnit*>::iterator usi;
+	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
 		delete (*usi);
 	}
@@ -269,7 +271,7 @@ void CUnitHandler::Update()
 
 	if (!(gs->frameNum & 15)) {
 		if (diminishingMetalMakers)
-			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrtf(metalMakerIncome / gs->activeTeams) - 4));
+			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrt(metalMakerIncome / gs->activeTeams) - 4));
 		metalMakerIncome = 0;
 	}
 }
@@ -538,7 +540,7 @@ void CUnitHandler::PushNewWind(float x, float z, float strength)
 {
 	ASSERT_SYNCED_MODE;
 	//todo: fixa en lista med enbart windgenerators kanske blir lite snabbare
-	list<CUnit*>::iterator usi;
+	std::list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 	{
 		if((*usi)->unitDef->windGenerator)
