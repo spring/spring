@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <locale>
 #include <cctype>
+#include <cmath>
 #include <vector>
 #include <string>
 #include "GlobalStuff.h"

@@ -226,12 +226,10 @@ void DataDirLocater::LocateDataDirs()
 	}
 	
 #ifdef WIN32
-	// Add current binary directory to searchpath (and its first one for historic reason)
-	char buf[3];
-	buf[0] = '.';
-	buf[1] = '\\';
-	buf[2] = 0;
-	AddDirs(std::string(buf));
+	TCHAR currentDir[MAX_PATH];
+	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
+	std::string curPath = currentDir;
+	AddDirs(std::string(currentDir));
 	
 	// my documents
 	TCHAR strPath[MAX_PATH];
