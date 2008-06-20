@@ -54,9 +54,11 @@ unitsync_files = [
 if platform == 'win32':
 	unitsync_files += ['rts/lib/minizip/iowin32.c',
 		'rts/System/Platform/Win/WinFileSystemHandler.cpp',
+		'rts/System/Platform/Win/DataDirLocater.cpp',
 		'rts/System/Platform/Win/RegHandler.cpp']
 else:
 	unitsync_files += ['rts/System/Platform/Linux/DotfileHandler.cpp',
+		'rts/System/Platform/Linux/DataDirLocater.cpp',
 		'rts/System/Platform/Linux/UnixFileSystemHandler.cpp']
 
 # Setup the unitsync library.

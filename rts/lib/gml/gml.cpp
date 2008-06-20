@@ -31,7 +31,6 @@
 // Please note: Some functions may require more advanced coding to implement
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
-#include "StdAfx.h"
 #include "gmlcls.h"
 
 #define EXEC_RUN (BYTE *)NULL
