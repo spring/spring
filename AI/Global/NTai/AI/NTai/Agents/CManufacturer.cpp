@@ -1,8 +1,10 @@
-//-------------------------------------------------------------------------
-// NTai
-// Copyright 2004-2007 AF
-// Released under GPL 2 license
-//-------------------------------------------------------------------------
+/*
+NTai
+Tom J Nowell
+tarendai@darkstars.co.uk
+www.darkstars.co.uk
+LGPL 2 licence 2004+
+*/
 
 // CManufacturer
 #include "../Core/include.h"

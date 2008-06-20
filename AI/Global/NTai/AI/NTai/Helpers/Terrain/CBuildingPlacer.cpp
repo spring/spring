@@ -1,3 +1,11 @@
+/*
+NTai
+Tom J Nowell
+tarendai@darkstars.co.uk
+www.darkstars.co.uk
+LGPL 2 licence 2004+
+*/
+
 #include "../../Core/include.h"
 
 namespace ntai {
@@ -60,11 +68,7 @@ namespace ntai {
 								}else if(G->UnitDefLoader->HasUnit("bit")!= 0){
 									G->cb->DrawUnit("bit", pos, 1, 35, 0, true, false, 0);
 								}
-								//G->cb->DrawUnit("armpw",pos,1,35,0,false,false,0);
-								//G->cb->DrawUnit("arm_peewee",pos,1,35,0,false,false,0);
 							}
-							//int k = G->cb->CreateLineFigure(pos,pos+float3(16,50,0),10,1,10,0);
-							//G->cb->SetFigureColor(k,1,0,0,0.5);
 						}
 					}
 				}
@@ -97,207 +101,168 @@ namespace ntai {
 				}
 			}
 		}
-		/*slopemap.Initialize(mapdim,float3(32,0,32),true);
-		 slopemap.SetDefaultGridValue(0);
-		 slopemap.SetMinimumValue(0);
-		 slopemap.UseArray(slope,smaxW*smaxH,smaxH,smaxW);*/
-
-		/*	geomap.Initialize(mapdim,float3(124,0,124),true);
-		 geomap.SetDefaultGridValue(0);
-		 geomap.SetMinimumValue(0);*/
-
-		/*const float* heightmaparray = G->cb->GetHeightMap();
-		lowheightmap.Initialize(mapdim, float3(32, 0, 32), true);
-		lowheightmap.SetDefaultGridValue(0);
-		lowheightmap.SetMinimumValue(0);
-		lowheightmap.UseArrayLowValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);
-
-		highheightmap.Initialize(mapdim, float3(32, 0, 32), true);
-		highheightmap.SetDefaultGridValue(0);
-		highheightmap.SetMinimumValue(0);
-		highheightmap.UseArrayHighValues(heightmaparray, smaxW*smaxH*2, smaxH*2, smaxW*2);*/
 
 		blockingmap.Initialize(mapdim, float3(32, 0, 32), true);
 		blockingmap.SetDefaultGridValue(0);
 		blockingmap.SetMinimumValue(1);
 
-		/*G->RegisterMessageHandler("unitcreated", me);
-		G->RegisterMessageHandler("unitdestroyed", me);
-		G->RegisterMessageHandler("unitidle", me);
-		G->RegisterMessageHandler("update", me);*/
 		return true;
 	}
 
-	/*float3 CBuildingPlacer::GetBuildPos(float3 builderpos, const UnitDef* builder, const UnitDef* building, float freespace){
-		if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
-			if(G->UnitDefHelper->IsMobile(building)){
-				return builderpos;
-			}
+
+	CBuildAlgorithm::CBuildAlgorithm(CBuildingPlacer* buildalgorithm, IModule* reciever, float3 builderpos, CUnitTypeData* wbuilder, CUnitTypeData* wbuilding, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
+		buildalgorithm(buildalgorithm),
+		reciever(reciever),
+		builderpos(builderpos),
+		builder(wbuilder),
+		building(wbuilding),
+		freespace(freespace),
+		blockingmap(blockingmap),
+		heightmap(heightmap),
+		mapdim(mapdim),
+		valid(true),
+		G(G)
+	{
+		//
+	}
+
+	void CBuildAlgorithm::RecieveMessage(CMessage &message){
+		//
+	}
+
+	bool CBuildAlgorithm::Init(){
+		return true;
+	}
+
+	void CBuildAlgorithm::operator()(){
+		//boost::mutex::scoped_lock lock(io_mutex[building->id]);
+		if(!reciever->IsValid()) return;
+		float3 bestPosition = UpVector;
+		float bestDistance = 500000.0f;
+		if(G->L.IsVerbose()){
+			AIHCAddMapPoint ac;
+			ac.label=new char[11];
+			ac.label="build algo";
+			ac.pos = builderpos;
+			G->cb->HandleCommand(AIHCAddMapPointId,&ac);
 		}
-		return findfreespace(building, builderpos, freespace, 1000);
-	}*/
 
-	class CBuildAlgorithm : public IModule{
-	public:
-		CBuildAlgorithm(CBuildingPlacer* buildalgorithm, IModule* reciever, float3 builderpos, CUnitTypeData* wbuilder, CUnitTypeData* wbuilding, float freespace, CGridManager* blockingmap, const float* heightmap, float3 mapdim, Global* G):
-			buildalgorithm(buildalgorithm),
-			reciever(reciever),
-			builderpos(builderpos),
-			builder(wbuilder),
-			building(wbuilding),
-			freespace(freespace),
-			blockingmap(blockingmap),
-			heightmap(heightmap),
-			mapdim(mapdim),
-			valid(true),
-			G(G){ }
+		float search_radius = freespace+3000;
+		if(builder->IsHub()){
+			search_radius = builder->GetUnitDef()->buildDistance;
+		}
+		CUBuild b;
+		b.Init(G, builder, 0);
+		int e=0;
+		vector<float3> cells = blockingmap->GetCellsInRadius(builderpos, search_radius, e);
 
-		void RecieveMessage(CMessage &message){}
-		bool Init(){ return true;}
-		void operator()(){
-			//boost::mutex::scoped_lock lock(io_mutex[building->id]);
-			if(!reciever->IsValid()) return;
-			float3 bestPosition = UpVector;
-			float bestDistance = 500000.0f;
-			if(G->L.IsVerbose()){
-				AIHCAddMapPoint ac;
-				ac.label=new char[11];
-				ac.label="build algo";
-				ac.pos = builderpos;
-				G->cb->HandleCommand(AIHCAddMapPointId,&ac);
-			}
+		if(!cells.empty()){
 
-			float search_radius = freespace+3000;
-			if(builder->IsHub()){
-				search_radius = builder->GetUnitDef()->buildDistance;
-			}
-			CUBuild b;
-			b.Init(G, builder, 0);
-			int e=0;
-			vector<float3> cells = blockingmap->GetCellsInRadius(builderpos, search_radius, e);
+			bestDistance = freespace+2001;
 
-			if(!cells.empty()){
+			for(vector<float3>::iterator i = cells.begin(); i != cells.end(); ++i){// for each cell
 
-				bestDistance = freespace+2001;
-
-				for(vector<float3>::iterator i = cells.begin(); i != cells.end(); ++i){// for each cell
-
-					if(!valid){
-						bestPosition = UpVector;
-						break;
-					}
-
-					// check the reciever is still valid
-					// The reciever may have died during this threads running so we need to stop if its
-					// invalid to prevent running overtime
-					if(reciever->IsValid()==false){
-						break;
-					}
-
-					float3 gpos = *i;
-
-					if(blockingmap->ValidGridPos(gpos)==false){
-						continue;
-					}
-
-					float3 mpos = blockingmap->GridtoMap(gpos);
-
-					if(blockingmap->ValidMapPos(mpos)==false){
-						continue;
-					}
-
-					float distance = mpos.distance2D(builderpos);
-
-					if(distance < bestDistance){
-						bool good = true;
-
-						// check our blocking map
-						vector<float3> cells2 = blockingmap->GetCellsInRadius(mpos, freespace);
-
-						if(!cells2.empty()){
-
-							//for each cell
-							for(vector<float3>::iterator i2 = cells2.begin(); i2 != cells2.end(); ++i2){
-
-								if (blockingmap->GetValuebyGrid(*i2) == 3){
-
-									good = false;
-									break;
-								}
-							}
-
-						}else{
-
-							good = false;//continue;
-						}
-
-						// if good == false then the previous check gave a negative result so exit
-						if(!good){
-							continue;
-						}
-
-						// Check if the engine says we can build here
-						// This incorporates checking the terrain
-						if(G->cb->CanBuildAt(building->GetUnitDef(), mpos)==false){
-							continue;
-						}
-
-						// update best position/distance
-						bestPosition = gpos;
-						bestDistance = distance;
-					}else{
-						continue;
-					}
-				}
-
-				if(!b.OkBuildSelection(building->GetName())){
+				if(!valid){
 					bestPosition = UpVector;
+					break;
 				}
 
-			}else{
+				// check the reciever is still valid
+				// The reciever may have died during this threads running so we need to stop if its
+				// invalid to prevent running overtime
+				if(reciever->IsValid()==false){
+					break;
+				}
 
-				// no surrounding cells?! assign an error value
-				string es = "no cells: "+to_string(e);
-				G->L.iprint(es);
+				float3 gpos = *i;
 
-				bestPosition= UpVector;
+				if(blockingmap->ValidGridPos(gpos)==false){
+					continue;
+				}
+
+				float3 mpos = blockingmap->GridtoMap(gpos);
+
+				if(blockingmap->ValidMapPos(mpos)==false){
+					continue;
+				}
+
+				float distance = mpos.distance2D(builderpos);
+
+				if(distance < bestDistance){
+					bool good = true;
+
+					// check our blocking map
+					vector<float3> cells2 = blockingmap->GetCellsInRadius(mpos, freespace);
+
+					if(!cells2.empty()){
+
+						//for each cell
+						for(vector<float3>::iterator i2 = cells2.begin(); i2 != cells2.end(); ++i2){
+
+							if (blockingmap->GetValuebyGrid(*i2) == 3){
+
+								good = false;
+								break;
+							}
+						}
+
+					}else{
+
+						good = false;//continue;
+					}
+
+					// if good == false then the previous check gave a negative result so exit
+					if(!good){
+						continue;
+					}
+
+					// Check if the engine says we can build here
+					// This incorporates checking the terrain
+					if(G->cb->CanBuildAt(building->GetUnitDef(), mpos)==false){
+						continue;
+					}
+
+					// update best position/distance
+					bestPosition = gpos;
+					bestDistance = distance;
+				}else{
+					continue;
+				}
 			}
 
-			e = blockingmap->ValidGridPosE(bestPosition);
-
-			// check if the grid position is valid
-			if(e==0){
-				// its valid so convert to a map position
-				bestPosition = blockingmap->GridtoMap(bestPosition);
-			}else{
-				string es = "bad pos(1)"+to_string(e);
-				G->L.iprint(es);
-
-				// its invalid so assign an error value
+			if(!b.OkBuildSelection(building->GetName())){
 				bestPosition = UpVector;
 			}
 
-			CMessage m("buildposition");
-			m.AddParameter(bestPosition);
+		}else{
 
-			reciever->RecieveMessage(m);
+			// no surrounding cells?! assign an error value
+			string es = "no cells: "+to_string(e);
+			G->L.iprint(es);
 
+			bestPosition= UpVector;
 		}
 
-		Global* G;
-		const float* heightmap;
-		float bestDistance;
-		float3 mapdim;
+		e = blockingmap->ValidGridPosE(bestPosition);
 
-		bool valid;
-		CGridManager* blockingmap;
-		CBuildingPlacer* buildalgorithm;
-		IModule* reciever;
-		float3 builderpos;
-		CUnitTypeData* builder;
-		CUnitTypeData* building;
-		float freespace;
-	};
+		// check if the grid position is valid
+		if(e==0){
+			// its valid so convert to a map position
+			bestPosition = blockingmap->GridtoMap(bestPosition);
+		}else{
+			string es = "bad pos(1)"+to_string(e);
+			G->L.iprint(es);
+
+			// its invalid so assign an error value
+			bestPosition = UpVector;
+		}
+
+		CMessage m("buildposition");
+		m.AddParameter(bestPosition);
+
+		reciever->RecieveMessage(m);
+
+	}
 
 	void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, CUnitTypeData* builder, CUnitTypeData* building, float freespace){
 		/*if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){

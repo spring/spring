@@ -1,5 +1,11 @@
-// Grid class written by AF
-// GPL 2
+/*
+NTai
+Tom J Nowell
+tarendai@darkstars.co.uk
+www.darkstars.co.uk
+LGPL 2 licence 2004+
+*/
+
 #include "../../SDK/AI.h"
 #include "CGridManager.h"
 
