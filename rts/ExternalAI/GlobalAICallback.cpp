@@ -6,9 +6,9 @@
 #include "AICheats.h"
 #include "mmgr.h"
 
-CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai)
-: ai(ai),
-	cheats(0), 
+CGlobalAICallback::CGlobalAICallback(CGlobalAI* ai):
+	ai(ai),
+	cheats(0),
 	scb(ai->team, grouphandlers[ai->team]/*ai->gh*/)
 {
 }
@@ -20,15 +20,15 @@ CGlobalAICallback::~CGlobalAICallback(void)
 
 IAICheats* CGlobalAICallback::GetCheatInterface()
 {
-	if(cheats)
+	if (cheats)
 		return cheats;
 
-	logOutput.Print ("AI has enabled cheating.");
-	cheats=SAFE_NEW CAICheats(ai);
+	logOutput.Print("GlobalAI%i: Cheating enabled.", ai->team);
+	cheats = SAFE_NEW CAICheats(ai);
 	return cheats;
 }
 
-IAICallback *CGlobalAICallback::GetAICallback ()
+IAICallback* CGlobalAICallback::GetAICallback()
 {
 	return &scb;
 }

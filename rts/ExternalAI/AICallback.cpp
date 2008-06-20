@@ -410,19 +410,22 @@ int CAICallback::GetUnitAllyTeam(int unitid)
 	return 0;
 }
 
-float CAICallback::GetUnitHealth(int unitid)			//the units current health
+float CAICallback::GetUnitHealth(int unitid)
 {
-	verify ();
+	verify();
 	if (CHECK_UNITID(unitid)) {
 		CUnit* unit = uh->units[unitid];
+
 		if (unit) {
 			const int allyTeam = gs->AllyTeam(team);
+
 			if (gs->Ally(unit->allyteam, allyTeam)) {
 				return unit->health;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
 				const UnitDef* unitDef = unit->unitDef;
 				const UnitDef* decoyDef = unitDef->decoyDef;
+
 				if (decoyDef == NULL) {
 					return unit->health;
 				} else {
@@ -432,6 +435,7 @@ float CAICallback::GetUnitHealth(int unitid)			//the units current health
 			}
 		}
 	}
+
 	return 0;
 }
 
