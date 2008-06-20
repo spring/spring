@@ -5,6 +5,7 @@
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
+#include <limits.h>
 #include <stdexcept>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
