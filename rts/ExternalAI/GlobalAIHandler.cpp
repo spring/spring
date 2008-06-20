@@ -128,11 +128,11 @@ void CGlobalAIHandler::PreDestroy ()
 	} HANDLE_EXCEPTION;
 }
 
-void CGlobalAIHandler::UnitEnteredLos(CUnit* unit,int allyteam)
+void CGlobalAIHandler::UnitEnteredLos(CUnit* unit, int allyteam)
 {
-	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+	if (hasAI) {
+		for (int a = 0; a < gs->activeTeams; ++a) {
+			if (ais[a] && gs->AllyTeam(a) == allyteam && !gs->Ally(allyteam, unit->allyteam))
 				try {
 					ais[a]->ai->EnemyEnterLOS(unit->id);
 				} HANDLE_EXCEPTION;
