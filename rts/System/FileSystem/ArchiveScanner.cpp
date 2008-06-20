@@ -481,7 +481,7 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 unsigned int CArchiveScanner::GetCRC(const string& arcName)
 {
 	CRC crc;
-	unsigned int digest;
+	unsigned int digest = 0;
 	CArchiveBase* ar;
 	std::list<string> files;
 

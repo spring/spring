@@ -1,29 +1,35 @@
-INCLUDE_DIRECTORIES(streflop lua/include luabind ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/System)
+INCLUDE_DIRECTORIES(streflop lua/include luabind)
 
 AUX_SOURCE_DIRECTORY(lua/src lualibfiles)
 ADD_LIBRARY(lua STATIC EXCLUDE_FROM_ALL ${lualibfiles})
 TARGET_LINK_LIBRARIES(lua streflop)
+SET_TARGET_PROPERTIES(lua PROPERTIES COMPILE_FLAGS -fPIC)
 
 AUX_SOURCE_DIRECTORY(luabind/src luabindfiles)
 ADD_LIBRARY(luabind STATIC EXCLUDE_FROM_ALL ${luabindfiles})
 TARGET_LINK_LIBRARIES(luabind lua)
+SET_TARGET_PROPERTIES(luabind PROPERTIES COMPILE_FLAGS -fPIC)
 
 ADD_DEFINITIONS(-D_SZ_ONE_DIRECTORY)
 AUX_SOURCE_DIRECTORY(7zip 7zipfiles)
-ADD_LIBRARY(7zip STATIC ${7zipfiles})
+ADD_LIBRARY(7zip STATIC EXCLUDE_FROM_ALL ${7zipfiles})
+SET_TARGET_PROPERTIES(7zip PROPERTIES COMPILE_FLAGS -fPIC)
 
 AUX_SOURCE_DIRECTORY(hpiutil2 hpifiles)
-ADD_LIBRARY(hpiutil2 STATIC ${hpifiles})
+ADD_LIBRARY(hpiutil2 STATIC EXCLUDE_FROM_ALL ${hpifiles})
 TARGET_LINK_LIBRARIES(hpiutil2 z)
+SET_TARGET_PROPERTIES(hpiutil2 PROPERTIES COMPILE_FLAGS -fPIC)
 
 AUX_SOURCE_DIRECTORY(gml gmlfiles)
 ADD_LIBRARY(gml STATIC EXCLUDE_FROM_ALL ${gmlfiles})
+SET_TARGET_PROPERTIES(gml PROPERTIES COMPILE_FLAGS -fPIC)
 
 IF (UNIX)
-	ADD_LIBRARY(minizip STATIC  minizip/unzip minizip/zip minizip/ioapi)
+	ADD_LIBRARY(minizip STATIC EXCLUDE_FROM_ALL minizip/unzip minizip/zip minizip/ioapi)
 ELSE (UNIX)
-	ADD_LIBRARY(minizip STATIC  minizip/unzip minizip/zip minizip/iowin32 minizip/ioapi)
+	ADD_LIBRARY(minizip STATIC EXCLUDE_FROM_ALL minizip/unzip minizip/zip minizip/iowin32 minizip/ioapi)
 ENDIF (UNIX)
 TARGET_LINK_LIBRARIES(minizip z)
+SET_TARGET_PROPERTIES(minizip PROPERTIES COMPILE_FLAGS -fPIC)
 
 ADD_SUBDIRECTORY(streflop)
