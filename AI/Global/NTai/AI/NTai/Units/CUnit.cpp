@@ -77,15 +77,17 @@ namespace ntai {
 				return;
 			}
 
-			if(EVERY_((GetAge()%16+17))){
+			if(EVERY_((GetAge()%32+20))){
 				if(currentTask.get() != 0){
-					if(currentTask->IsValid()==false){
+					if(!currentTask->IsValid()){
 						//
 						taskManager->TaskFinished();
 						if(taskManager->HasTasks()){
 							currentTask = taskManager->GetNextTask();
-							currentTask->Init();
-							G->RegisterMessageHandler(currentTask);
+							if(currentTask.get() != 0){
+								currentTask->Init();
+								G->RegisterMessageHandler(currentTask);
+							}
 						}else{
 							currentTask = boost::shared_ptr<IModule>();
 						}
@@ -94,15 +96,15 @@ namespace ntai {
 					//
 					if(taskManager->HasTasks()){
 						currentTask = taskManager->GetNextTask();
-						currentTask->Init();
-						G->RegisterMessageHandler(currentTask);
+						if(currentTask.get() != 0){
+							currentTask->Init();
+							G->RegisterMessageHandler(currentTask);
+						}
 					}
 				}
 
 			}
 
-		}else if(message.GetType() == string("")){
-			return;
 		}else if(message.GetType() == string("unitfinished")){
 			if(message.GetParameter(0) == this->uid){
 				under_construction = false;
