@@ -1,5 +1,9 @@
 /*
-AF 2007
+NTai
+Tom J Nowell
+tarendai@darkstars.co.uk
+www.darkstars.co.uk
+LGPL 2 licence 2004+
 */
 
 #include "../Core/include.h"

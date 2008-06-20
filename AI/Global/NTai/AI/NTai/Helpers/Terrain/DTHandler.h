@@ -1,4 +1,18 @@
+/*
+NTai
+Tom J Nowell
+tarendai@darkstars.co.uk
+www.darkstars.co.uk
+LGPL 2 licence 2004+
+*/
+
+/*
+This was originally taken from OTAI and heavily modified
+credits go to veylon the coder and maintainer of that AI.
+*/
+
 namespace ntai {
+
 	// Dragon's Teeth
 	#define DT_SIZE             32
 	#define DT_NUM_GAPS         6
