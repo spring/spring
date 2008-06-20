@@ -3,7 +3,7 @@
  * @brief Abstracts locating of content on different platforms
  * @author Tobi Vollebregt
  *
- * Unix implementation, supporting multiple data directories / search paths.
+ * Linux and Windows implementation, supporting multiple data directories / search paths.
  *
  * Copyright (C) 2006-2008 Tobi Vollebregt.
  * Licensed under the terms of the GNU GPL, v2 or later
@@ -64,7 +64,12 @@ void UnixFileSystemHandler::InitVFS() const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool initialize)
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool initialize) :
+#ifndef _WIN32
+		FileSystemHandler('/')
+#else
+		FileSystemHandler('\\')
+#endif
 {
 	if(initialize){
 		locater.LocateDataDirs();
@@ -165,7 +170,11 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 		return true;
 
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
+#ifndef _WIN32
 	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
+#else
+	if (::mkdir(dir.c_str()) == 0)
+#endif
 		return true;
 
 	// Otherwise we return false.
@@ -198,11 +207,11 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 					// or a directory?
 					if (flags & FileSystem::INCLUDE_DIRS) {
 						if (boost::regex_match(ep->d_name, regexpattern)) {
-							matches.push_back(dir + ep->d_name + '/');
+							matches.push_back(dir + ep->d_name + "/");
 						}
 					}
 					if (flags & FileSystem::RECURSE) {
-						FindFiles(matches, dir + ep->d_name + '/', regexpattern, flags);
+						FindFiles(matches, dir + ep->d_name + "/", regexpattern, flags);
 					}
 				}
 			}
@@ -225,7 +234,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
  */
 void UnixFileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const
 {
-	assert(!dir.empty() && dir[dir.length() - 1] == '/');
+	assert(!dir.empty() && dir[dir.length() - 1] == native_path_separator);
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 

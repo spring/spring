@@ -586,12 +586,12 @@ void CMiniMap::UpdateGeometry()
 	const float h = float(height);
 	const float mapx = float(gs->mapx * SQUARE_SIZE);
 	const float mapy = float(gs->mapy * SQUARE_SIZE);
-	const float ref  = unitBaseSize / powf((200.f * 200.0f), unitExponent);
-	const float dpr  = ref * powf((w * h), unitExponent);
+	const float ref  = unitBaseSize / pow((200.f * 200.0f), unitExponent);
+	const float dpr  = ref * pow((w * h), unitExponent);
 
 	unitSizeX = dpr * (mapx / w);
 	unitSizeY = dpr * (mapy / h);
-	unitSelectRadius = sqrtf(unitSizeX * unitSizeY);
+	unitSelectRadius = sqrt(unitSizeX * unitSizeY);
 
 	// in mouse coordinates
 	mapBox.xmin = xpos;

@@ -6,8 +6,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "mmgr.h"
 
-using namespace std;
-
 CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (float3(0,0,0),0,0,0,float3(0,0,0),0,NULL,NULL));
 
 CR_REG_METADATA(CShieldPartProjectile,(

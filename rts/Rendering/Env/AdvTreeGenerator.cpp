@@ -16,7 +16,8 @@
 #include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
-using namespace std;
+using std::max;
+using std::min;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -25,7 +25,8 @@
 
 //static unsigned int cdtex;
 
-using namespace std;
+using std::max;
+using std::min;
 
 CAdvSky::CAdvSky()
 {

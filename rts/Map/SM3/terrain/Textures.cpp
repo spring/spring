@@ -40,7 +40,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/FileSystem.h"
 
-using namespace std;
 
 namespace terrain {
 
@@ -272,7 +271,7 @@ namespace terrain {
 				}
 
 				// flatness=dotproduct of surface normal with up vector
-				float slope = 1.0f - fabsf (norm_y);
+				float slope = 1.0f - fabs(norm_y);
 
 				if (slope < gi->minSlope - gi->minSlopeFuzzy) {
 					bm->at (x,y) = 0.0f;
@@ -331,7 +330,7 @@ namespace terrain {
 				Vector3 n;
 
 				if (sx*sx + sy*sy < 32*32) {
-					int sz = (int)sqrtf(32 * 32 - sx*sx - sy*sy);
+					int sz = (int)sqrt(static_cast<float>(32 * 32 - sx*sx - sy*sy));
 					n = Vector3(sx,sy,sz);
 					n.Normalize ();
 				}

@@ -12,6 +12,9 @@
 #include "creg/STL_Map.h"
 #include "mmgr.h"
 
+using std::min;
+using std::max;
+
 CR_BIND(MoveData, );
 CR_BIND(CMoveInfo, );
 
@@ -43,8 +46,6 @@ CR_REG_METADATA(CMoveInfo, (
 
 
 CMoveInfo* moveinfo;
-using namespace std;
-
 
 static float DegreesToMaxSlope(float degrees)
 {

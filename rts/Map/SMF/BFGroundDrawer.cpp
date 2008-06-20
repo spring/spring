@@ -121,7 +121,7 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	const int minz = bty * bigTexH;
 	const int maxz = minz + bigTexH;
 	const float miny = readmap->minheight;
-	const float maxy = fabsf(cam2->pos.y); // ??
+	const float maxy = fabs(cam2->pos.y); // ??
 
 	const float3 mins(minx, miny, minz);
 	const float3 maxs(maxx, maxy, maxz);

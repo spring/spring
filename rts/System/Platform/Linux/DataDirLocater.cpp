@@ -8,6 +8,15 @@
 
 #include "StdAfx.h"
 #include "DataDirLocater.h"
+#ifdef WIN32
+	#include <io.h>
+	#include <windows.h>
+	#include <shlobj.h>
+	#include <shlwapi.h>
+	#ifndef SHGFP_TYPE_CURRENT
+		#define SHGFP_TYPE_CURRENT 0
+	#endif
+#endif
 #include <sstream>
 #include <string.h>
 #include "System/FileSystem/VFSHandler.h"
@@ -23,10 +32,17 @@
  */
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
+#ifndef _WIN32
 	if (path.empty())
 		path = "./";
 	if (path[path.size() - 1] != '/')
 		path += '/';
+#else
+	if (path.empty())
+		path = ".\\";
+	if (path[path.size() - 1] != '\\')
+		path += '\\';
+#endif
 }
 
 /**
@@ -51,10 +67,12 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 			out << *ch;
 		} else {
 			switch (*ch) {
+#ifndef _WIN32
 				case '\\': {
 					escape = true;
 					break;
 				}
+#endif
 				case '$': {
 					std::ostringstream envvar;
 					for (++ch; ch != in.end() && (isalnum(*ch) || *ch == '_'); ++ch)
@@ -81,10 +99,17 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 void DataDirLocater::AddDirs(const std::string& in)
 {
 	size_t prev_colon = 0, colon;
+#ifndef _WIN32
 	while ((colon = in.find(':', prev_colon)) != std::string::npos) {
+#else
+	while ((colon = in.find(';', prev_colon)) != std::string::npos) {
+#endif
 		datadirs.push_back(in.substr(prev_colon, colon - prev_colon));
 		prev_colon = colon + 1;
 	}
+#ifdef DEBUG
+	logOutput.Print("Adding %s to directories" , in.substr(prev_colon).c_str());
+#endif
 	datadirs.push_back(in.substr(prev_colon));
 }
 
@@ -94,7 +119,11 @@ void DataDirLocater::AddDirs(const std::string& in)
  */
 bool DataDirLocater::DeterminePermissions(DataDir* d)
 {
+#ifndef _WIN32
 	if (d->path.c_str()[0] != '/' || d->path.find("..") != std::string::npos)
+#else
+	if (d->path.find("..") != std::string::npos)
+#endif
 		throw content_error("specify data directories using absolute paths please");
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that check write access too
@@ -155,12 +184,12 @@ void DataDirLocater::DeterminePermissions()
  * On *nix platforms, attempts to locate
  * and change to the spring data directory
  *
- * The data directory to chdir to is determined by the following, in this
+ * In Unixes, the data directory to chdir to is determined by the following, in this
  * order (first items override lower items):
  *
- * - 'SPRING_DATADIR' environment variable. (colon separated list, like PATH)
  * - 'SpringData=/path/to/data' declaration in '~/.springrc'. (colon separated list)
- *   This defaults to "$HOME/.spring"
+ * - "$HOME/.spring"
+ * - 'SPRING_DATADIR' environment variable. (colon separated list, like PATH)
  * - In the same order any line in '/etc/spring/datadir', if that file exists.
  * - 'datadir=/path/to/data' option passed to 'scons configure'.
  * - 'prefix=/install/path' option passed to scons configure. The datadir is
@@ -168,6 +197,14 @@ void DataDirLocater::DeterminePermissions()
  * - the default datadirs in the default prefix, ie. '/usr/local/games/spring'
  *   (This is set by the build system, ie. SPRING_DATADIR and SPRING_DATADIR_2
  *   preprocessor definitions.)
+ *
+ * In Windows, its:
+ * - user configurable (SpringData in registry)
+ * - location of the binary dir (like it has been until 0.76b1)
+ * - the Users 'Documents'-directory (in subdirectory Spring), unless spring is configured to use another
+ * - all users app-data (in subdirectory Spring)
+ * - SPRING_DATADIR env-variable
+ * - compiler flags SPRING_DATADIR and SPRING_DATADIR_2
  *
  * All of the above methods support environment variable substitution, eg.
  * '$HOME/myspringdatadir' will be converted by spring to something like
@@ -181,15 +218,46 @@ void DataDirLocater::LocateDataDirs()
 	// Construct the list of datadirs from various sources.
 	datadirs.clear();
 
+	// user defined (in spring config handler (Linux: ~/.spring, Windows: registry))
+	std::string userDef = configHandler.GetString("SpringData", "");
+	if (!userDef.empty())
+	{
+		AddDirs(SubstEnvVars(userDef));
+	}
+	
+#ifdef WIN32
+	// Add current binary directory to searchpath (and its first one for historic reason)
+	char buf[3];
+	buf[0] = '.';
+	buf[1] = '\\';
+	buf[2] = 0;
+	AddDirs(std::string(buf));
+	
+	// my documents
+	TCHAR strPath[MAX_PATH];
+	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
+	std::string cfg = strPath;
+	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
+	AddDirs(cfg);
+	cfg.clear();
+
+	// appdata
+	SHGetFolderPath( NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
+	cfg = strPath;
+	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
+	AddDirs(cfg);
+#else
+	// home
+	AddDirs(SubstEnvVars("$HOME/.spring"));
+#endif
+
+	// environment variable
 	char* env = getenv("SPRING_DATADIR");
 	if (env && *env)
 		AddDirs(SubstEnvVars(env));
 
-	std::string cfg = configHandler.GetString("SpringData", "$HOME/.spring");
-	if (!cfg.empty()) {
-		AddDirs(SubstEnvVars(cfg));
-	}
-
+#ifndef _WIN32
+	// settings in /etc
 	FILE* f = ::fopen("/etc/spring/datadir", "r");
 	if (f) {
 		char buf[1024];
@@ -201,7 +269,9 @@ void DataDirLocater::LocateDataDirs()
 		}
 		fclose(f);
 	}
+#endif
 
+	// compiler flags
 #ifdef SPRING_DATADIR
 	datadirs.push_back(SubstEnvVars(SPRING_DATADIR));
 #endif

@@ -132,7 +132,7 @@ void CCamera::Update(bool freeze)
 	up.Normalize();
 
 	const float aspect = (float) gu->viewSizeX / (float) gu->viewSizeY;
-	const float viewx = tanf(aspect * halfFov);
+	const float viewx = tan(aspect * halfFov);
 	// const float viewx = aspect * tanHalfFov;
 	const float viewy = tanHalfFov;
 
@@ -273,9 +273,9 @@ bool CCamera::InView(const float3 &p, float radius)
 
 void CCamera::UpdateForward()
 {
-	forward.z = cosf(rot.y) * cosf(rot.x);
-	forward.x = sinf(rot.y) * cosf(rot.x);
-	forward.y = sinf(rot.x);
+	forward.z = cos(rot.y) * cos(rot.x);
+	forward.x = sin(rot.y) * cos(rot.x);
+	forward.y = sin(rot.x);
 	forward.Normalize();
 }
 
@@ -357,5 +357,5 @@ void CCamera::SetFov(float myfov)
 {
 	fov = myfov;
 	halfFov = fov * 0.008726646f;
-	tanHalfFov = tanf(halfFov);
+	tanHalfFov = tan(halfFov);
 }

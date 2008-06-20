@@ -1535,7 +1535,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 			if (dot < 0)
 				dot = 0;
 
-			float exp = std::min(1.f, powf(dot, exponent) + powf(dot, 3) * 0.25f);
+			float exp = std::min(1.f, pow(dot, exponent) + pow(dot, 3) * 0.25f);
 			buf[(y * size + x) * 4 + 0] = (unsigned char) (suncolor.x * exp * 255);
 			buf[(y * size + x) * 4 + 1] = (unsigned char) (suncolor.y * exp * 255);
 			buf[(y * size + x) * 4 + 2] = (unsigned char) (suncolor.z * exp * 255);

@@ -508,7 +508,7 @@ void CUnit::Update()
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
-		travel = fmodf(travel, travelPeriod);
+		travel = fmod(travel, travelPeriod);
 	}
 
 	recentDamage *= 0.9f;

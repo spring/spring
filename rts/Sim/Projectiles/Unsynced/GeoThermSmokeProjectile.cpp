@@ -25,7 +25,7 @@ void CGeoThermSmokeProjectile::Update()
 		float sql = d.SqLength();
 		if (sql > 0.0f && sql < o->radius*o->radius && o->blocking)
 		{
-			d *= o->radius / sqrtf(sql);
+			d *= o->radius / sqrt(sql);
 			pos = pos * 0.3f + (o->pos + d) * 0.7f;
 
 			if(d.y < o->radius*0.4f)

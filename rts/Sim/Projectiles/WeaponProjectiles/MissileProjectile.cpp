@@ -244,8 +244,8 @@ void CMissileProjectile::Update(void)
 				// is too close or height difference too large)
 				const float horDiff = (targPos - pos).Length2D() + 0.01f;
 				const float verDiff = (targPos.y - pos.y) + 0.01f;
-				const float dirDiff = fabsf(targetDir.y - dir.y);
-				const float ratio = fabsf(verDiff / horDiff);
+				const float dirDiff = fabs(targetDir.y - dir.y);
+				const float ratio = fabs(verDiff / horDiff);
 				dir.y -= (dirDiff * ratio);
 			} else {
 				// missile is still ascending
