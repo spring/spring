@@ -348,19 +348,19 @@ bool COpenALSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuff
 	}
 
 	if (header->datalen > size - sizeof(WAVHeader)) {
-		logOutput.Print("\n");
+//		logOutput.Print("\n");
 		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %d\n",
 			name, header->datalen, size - sizeof(WAVHeader));
-		logOutput.Print("OpenAL: size %d\n", size);
-		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
-		logOutput.Print("OpenAL: format_tag %d\n", header->format_tag);
-		logOutput.Print("OpenAL: channels %d\n", header->channels);
-		logOutput.Print("OpenAL: BlockAlign %d\n", header->BlockAlign);
-		logOutput.Print("OpenAL: BitsPerSample %d\n", header->BitsPerSample);
-		logOutput.Print("OpenAL: totalLength %d\n", header->totalLength);
-		logOutput.Print("OpenAL: length %d\n", header->length);
-		logOutput.Print("OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
-		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
+//		logOutput.Print("OpenAL: size %d\n", size);
+//		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
+//		logOutput.Print("OpenAL: format_tag %d\n", header->format_tag);
+//		logOutput.Print("OpenAL: channels %d\n", header->channels);
+//		logOutput.Print("OpenAL: BlockAlign %d\n", header->BlockAlign);
+//		logOutput.Print("OpenAL: BitsPerSample %d\n", header->BitsPerSample);
+//		logOutput.Print("OpenAL: totalLength %d\n", header->totalLength);
+//		logOutput.Print("OpenAL: length %d\n", header->length);
+//		logOutput.Print("OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
+//		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
 
 		// FIXME: setting datalen to size - sizeof(WAVHeader) only
 		// works for some files that have a garbage datalen field
