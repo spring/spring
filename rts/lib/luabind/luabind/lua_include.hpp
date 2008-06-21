@@ -23,8 +23,10 @@
 #ifndef LUA_INCLUDE_HPP_INCLUDED
 #define LUA_INCLUDE_HPP_INCLUDED
 #include <boost/version.hpp>
+#ifdef _MSC_VER
 #if (BOOST_VERSION >= 103500)
 #undef _CMATH_ // workaround to make it compile with MSVC + Boost 1.35
+#endif
 #endif
 #include "LuaInclude.h"
 
