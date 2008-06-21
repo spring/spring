@@ -55,7 +55,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name):
 	// Get contents of archive and store name->int mapping
 	for (unsigned i = 0; i < db.Database.NumFiles; ++i) {
 		CFileItem* fi = db.Database.Files + i;
-		if (fi->Size >= 0) { 		//  zero-size files are ignored.
+		if ((fi->Size >= 0) && !fi->IsDirectory) {
 			std::string name = fi->Name;
 			//SetSlashesForwardToBack(name);
 
@@ -63,7 +63,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name):
 			fd.origName = name;
 			fd.fp = i;
 			fd.size = fi->Size;
-			fd.crc = fi->FileCRC;
+			fd.crc = (fi->Size > 0) ? fi->FileCRC : 0;
 
 			StringToLowerInPlace(name);
 			fileData[name] = fd;
