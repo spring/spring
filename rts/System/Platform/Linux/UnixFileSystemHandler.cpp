@@ -13,11 +13,17 @@
 #include "UnixFileSystemHandler.h"
 #include <limits.h>
 #include <boost/regex.hpp>
-#include <dirent.h>
-#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifndef _WIN32
+#include <dirent.h>
+#include <sstream>
 #include <unistd.h>
+#else
+#include <windows.h>
+#include <io.h>
+#include <direct.h>
+#endif
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LogOutput.h"
@@ -125,6 +131,18 @@ std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir
 std::string UnixFileSystemHandler::LocateFile(const std::string& file) const
 {
 	// if it's an absolute path, don't look for it in the data directories
+#ifdef WIN32
+	if (file.length()>1 && file[1] == ':')
+		return file;
+
+	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
+	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		std::string fn(d->path + file);
+		if (_access(fn.c_str(), 4) == 0)
+			return fn;
+	}
+	return file;
+#else
 	if (file[0] == '/')
 		return file;
 
@@ -135,6 +153,7 @@ std::string UnixFileSystemHandler::LocateFile(const std::string& file) const
 			return fn;
 	}
 	return file;
+#endif
 }
 
 std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
@@ -164,17 +183,24 @@ std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
  */
 bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 {
+#ifdef _WIN32
+	struct _stat info;
+
+	// First check if directory exists. We'll return success if it does.
+	if (_stat(dir.c_str(), &info) == 0 && (info.st_mode&_S_IFDIR))
+		return true;
+#else
 	struct stat info;
 
 	// First check if directory exists. We'll return success if it does.
 	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
 		return true;
-
+#endif
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
 #ifndef _WIN32
 	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
 #else
-	if (::mkdir(dir.c_str()) == 0)
+	if (::_mkdir(dir.c_str()) == 0)
 #endif
 		return true;
 
@@ -184,6 +210,35 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 
 static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
+#ifdef _WIN32
+	WIN32_FIND_DATA wfd;
+  HANDLE hFind = FindFirstFile((dir+"*").c_str(), &wfd);
+
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			if(strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
+				if(!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
+					if ((flags & FileSystem::ONLY_DIRS) == 0) {
+						if (boost::regex_match(wfd.cFileName, regexpattern)) {
+							matches.push_back(dir + wfd.cFileName);
+						}
+					}
+				}
+				else {
+					if (flags & FileSystem::INCLUDE_DIRS) {
+						if (boost::regex_match(wfd.cFileName, regexpattern)) {
+							matches.push_back(dir + wfd.cFileName + "\\");
+						}
+					}
+					if (flags & FileSystem::RECURSE) {
+						FindFiles(matches, dir + wfd.cFileName + "\\", regexpattern, flags);
+					}
+				}
+			}
+		} while (FindNextFile(hFind, &wfd)); 
+		FindClose(hFind);
+	}
+#else
 	DIR* dp;
 	struct dirent* ep;
 
@@ -219,6 +274,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 		}
 	}
 	closedir(dp);
+#endif
 }
 
 
