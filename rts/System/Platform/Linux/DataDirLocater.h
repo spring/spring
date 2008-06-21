@@ -21,12 +21,8 @@ struct DataDir
 class DataDirLocater
 {
 public:
-	DataDirLocater() {
-		// TO BE IMPLEMENTED
-	}
-	void LocateDataDirs() {
-		// TO BE IMPLEMENTED
-	}
+	DataDirLocater();
+	void LocateDataDirs();
 
 	const std::vector<DataDir>& GetDataDirs() const { return datadirs; }
 	const DataDir* GetWriteDir() const { return writedir; }

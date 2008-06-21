@@ -116,7 +116,7 @@ std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir
 	std::vector<std::string> matches;
 
 	// if it's an absolute path, don't look for it in the data directories
-	if (dir[0] == '/') {
+	if (dir[0] == '/' || (dir.length() > 1 && dir[1] == ':')) {
 		FindFilesSingleDir(matches, dir, pattern, flags);
 		return matches;
 	}
