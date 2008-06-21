@@ -26,6 +26,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "LogOutput.h"
 
+namespace std {using ::tan;} // for some reason MSVS needs this
+
 using std::min;
 using std::max;
 
@@ -126,7 +128,6 @@ int LuaUnitRendering::SetLODLength(lua_State* L)
 	unit->lodLengths[lod] = lpp;
 	return 0;
 }
-
 
 int LuaUnitRendering::SetLODDistance(lua_State* L)
 {

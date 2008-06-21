@@ -11,6 +11,7 @@
 
 #include "StdAfx.h"
 #include "UnixFileSystemHandler.h"
+#include <limits.h>
 #include <boost/regex.hpp>
 #include <dirent.h>
 #include <sstream>
