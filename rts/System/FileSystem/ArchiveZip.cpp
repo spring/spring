@@ -21,23 +21,24 @@ CArchiveZip::CArchiveZip(const std::string& name):
 	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
 		unz_file_info info;
 		char fname[512];
-		std::string name;
 
 		unzGetCurrentFileInfo(zip, &info, fname, 512, NULL, 0, NULL, 0);
 
-		if (info.uncompressed_size >= 0) {
-			name = StringToLower(fname);
-//			SetSlashesForwardToBack(name);
-
-			FileData fd;
-			unzGetFilePos(zip, &fd.fp);
-			fd.size = info.uncompressed_size;
-			fd.origName = fname;
-			fd.crc = info.crc;
-//			SetSlashesForwardToBack(fd.origName);
-
-			fileData[name] = fd;
+		const std::string name = StringToLower(fname);
+		if (name.empty()) {
+			continue;
 		}
+		const char last = name[name.length() - 1];
+		if ((last == '/') || (last == '\\')) {
+			continue; // exclude directory names
+		}
+
+		FileData fd;
+		unzGetFilePos(zip, &fd.fp);
+		fd.size = info.uncompressed_size;
+		fd.origName = fname;
+		fd.crc = info.crc;
+		fileData[name] = fd;
 	}
 }
 
