@@ -279,17 +279,14 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 }
 
 
-bool CUnitDrawer::DrawUnitMT(CUnit *unit) {
-	bool drawReflection=mt_drawReflection;
-	bool drawRefraction=mt_drawRefraction;
-	CUnit *excludeUnit=mt_excludeUnit;
+inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit) {
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (unit == excludeUnit) {
-		return false;
+		return;
 	}
 #endif
 	if (unit->noDraw) {
-		return false;
+		return;
 	}
 	if (camera->InView(unit->midPos, unit->radius + 30)) {
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -305,13 +302,13 @@ bool CUnitDrawer::DrawUnitMT(CUnit *unit) {
 						unit->midPos * (-camera->pos.y / dif);
 				}
 				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
-					return false;
+					return;
 				}
 			}
 
 			if (drawRefraction) {
 				if (unit->pos.y > 0.0f) {
-					return false;
+					return;
 				}
 			}
 
@@ -368,7 +365,6 @@ bool CUnitDrawer::DrawUnitMT(CUnit *unit) {
 			drawRadarIcon.push_back(unit);
 		}
 	}
-	return true;
 }
 
 
@@ -403,98 +399,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #endif
 
 #if GML_ENABLE_DRAWUNIT
-	mt_drawReflection=drawReflection;
+	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
 	mt_drawRefraction=drawRefraction;
 	mt_excludeUnit=excludeUnit;
-	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DrawUnitMTcb,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
 #else
 	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
-#ifdef DIRECT_CONTROL_ALLOWED
-		if (unit == excludeUnit) {
-			continue;
-		}
-#endif
-		if (unit->noDraw) {
-			continue;
-		}
-		if (camera->InView(unit->midPos, unit->radius + 30)) {
-			const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-			if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-
-				if (drawReflection) {
-					float3 zeroPos;
-					if (unit->midPos.y < 0.0f) {
-						zeroPos = unit->midPos;
-					} else {
-						const float dif = unit->midPos.y - camera->pos.y;
-						zeroPos = camera->pos  * (unit->midPos.y / dif) +
-						          unit->midPos * (-camera->pos.y / dif);
-					}
-					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
-						continue;
-					}
-				}
-
-				if (drawRefraction) {
-					if (unit->pos.y > 0.0f) {
-						continue;
-					}
-				}
-
-				float sqDist = (unit->pos-camera->pos).SqLength();
-				float iconDistMult = unit->unitDef->iconType->GetDistance();
-				float realIconLength = iconLength * (iconDistMult * iconDistMult);
-				if (sqDist>realIconLength) {
-					drawIcon.push_back(unit);
-					unit->isIcon = true;
-				}
-				else {
-					unit->isIcon = false;
-
-					float farLength = unit->sqRadius * unitDrawDistSqr;
-					if (sqDist > farLength) {
-						drawFar.push_back(unit);
-					} else {
-						DrawUnit(unit);
-					}
-
-					if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
-						drawStat.push_back(unit);
-					}
-				}
-			}
-			else if (losStatus & LOS_PREVLOS) {
-				unit->isIcon = true;
-
-				if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
-					// it's a building we've had LOS on once,
-					// add it to the vector of cloaked units
-					float sqDist = (unit->pos-camera->pos).SqLength();
-					float iconDistMult = unit->unitDef->iconType->GetDistance();
-					float realIconLength = iconLength * (iconDistMult * iconDistMult);
-
-					if (sqDist < realIconLength) {
-						if (unit->model->textureType) {
-							drawCloakedS3O.push_back(unit);
-						} else {
-							drawCloaked.push_back(unit);
-						}
-						unit->isIcon = false;
-					}
-				}
-				if (losStatus & LOS_INRADAR) {
-					if (!(losStatus & LOS_CONTRADAR)) {
-						drawRadarIcon.push_back(unit);
-					} else if (unit->isIcon) {
-						// this prevents us from drawing icons on top of ghosted buildings
-						drawIcon.push_back(unit);
-					}
-				}
-			} else if (losStatus & LOS_INRADAR) {
-				drawRadarIcon.push_back(unit);
-			}
-		}
+		DoDrawUnit(unit,drawReflection,drawRefraction,excludeUnit);
 	}
 #endif
 
@@ -687,9 +599,11 @@ void CUnitDrawer::DrawShadowShaderUnits()
 /******************************************************************************/
 
 
-bool CUnitDrawer::DrawUnitShadowMT(CUnit *unit) {
+inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-	if (((losStatus & LOS_INLOS) || gu->spectatingFullView) && camera->InView(unit->midPos, unit->radius + 700)) {
+	if (((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
+		camera->InView(unit->midPos, unit->radius + 700)) {
+
 		// FIXME: test against the shadow projection intersection
 		float sqDist = (unit->pos-camera->pos).SqLength();
 		float farLength = unit->sqRadius * unitDrawDistSqr;
@@ -718,7 +632,6 @@ bool CUnitDrawer::DrawUnitShadowMT(CUnit *unit) {
 			}
 		}
 	}
-	return true;
 }
 
 void CUnitDrawer::DrawShadowPass(void)
@@ -736,44 +649,12 @@ void CUnitDrawer::DrawShadowPass(void)
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
 #if GML_ENABLE_DRAWUNITSHADOW
-	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DrawUnitShadowMTcb,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitShadowMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
 #else
 	std::list<CUnit*>::iterator usi;
 	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
-
-		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-		if (((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
-		    camera->InView(unit->midPos, unit->radius + 700)) {
-
-			// FIXME: test against the shadow projection intersection
-			float sqDist = (unit->pos-camera->pos).SqLength();
-			float farLength = unit->sqRadius * unitDrawDistSqr;
-
-			if (sqDist < farLength) {
-				float iconDistMult = unit->unitDef->iconType->GetDistance();
-				float realIconLength = iconLength * (iconDistMult * iconDistMult);
-
-				if (sqDist < realIconLength) {
-					if (!unit->isCloaked) {
-						if (unit->lodCount <= 0) {
-							DrawUnitNow(unit);
-						} else {
-							LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-							const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
-							unit->currentLOD = lod;
-							LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-							if ((lodMat != NULL) && lodMat->IsActive()) {
-								lodMat->AddUnit(unit);
-							} else {
-								DrawUnitNow(unit);
-							}
-						}
-					}
-				}
-			}
-		}
+		DoDrawUnitShadow(unit);
 	}
 #endif
 

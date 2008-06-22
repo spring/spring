@@ -54,14 +54,14 @@ protected:
 
 	volatile unsigned int mt_overrideVP;
 
-  bool DrawMT(int bty);
-	static void DrawMTcb(void *c,int bty) {((CBFGroundDrawer *)c)->DrawMT(bty);}
-	void DrawVertexAMT(CVertexArray *ma, int x, int y);
-	void DrawVertexAMT(CVertexArray *ma, int x, int y, float height);
-  void EndStripMT(CVertexArray *ma);
-  void DrawGroundVertexArrayMT(CVertexArray * &ma);
-	bool DrawShadowPassMT(int nlod);
-	static void DrawShadowPassMTcb(void *c,int nlod) {((CBFGroundDrawer *)c)->DrawShadowPassMT(nlod);}
+  inline void DoDrawGroundRow(int bty, unsigned int overrideVP);
+	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
+	void DrawVertexAQ(CVertexArray *ma, int x, int y);
+	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
+  void EndStripQ(CVertexArray *ma);
+  void DrawGroundVertexArrayQ(CVertexArray * &ma);
+	inline void DoDrawGroundShadowLOD(int nlod);
+	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
 	inline void DrawVertexA(int x, int y);
 	inline void DrawVertexA(int x, int y, float height);
