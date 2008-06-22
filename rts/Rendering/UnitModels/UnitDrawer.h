@@ -32,14 +32,14 @@ public:
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawUnit(CUnit* unit);
-	bool DrawUnitMT(CUnit *unit);
-	static void DrawUnitMTcb(void *c,CUnit *unit) {((CUnitDrawer *)c)->DrawUnitMT(unit);}
+	inline void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
+	static void DoDrawUnitMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnit(unit,((CUnitDrawer *)c)->mt_drawReflection,((CUnitDrawer *)c)->mt_drawRefraction,((CUnitDrawer *)c)->mt_excludeUnit);}
 	void DrawUnitLOD(CUnit* unit);
 
 	void DrawCloakedUnits(void);									// cloaked units must be drawn after all others
 	void DrawShadowPass(void);
-  bool DrawUnitShadowMT(CUnit *unit);
-	static void DrawUnitShadowMTcb(void *c,CUnit *unit) {((CUnitDrawer *)c)->DrawUnitShadowMT(unit);}
+  inline void DoDrawUnitShadow(CUnit *unit);
+	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);
 	void SetupForS3ODrawing(void);
