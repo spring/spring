@@ -54,13 +54,13 @@ protected:
 
 	volatile unsigned int mt_overrideVP;
 
-  inline void DoDrawGroundRow(int bty, unsigned int overrideVP);
+  void DoDrawGroundRow(int bty, unsigned int overrideVP);
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
   void EndStripQ(CVertexArray *ma);
   void DrawGroundVertexArrayQ(CVertexArray * &ma);
-	inline void DoDrawGroundShadowLOD(int nlod);
+	void DoDrawGroundShadowLOD(int nlod);
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
 	inline void DrawVertexA(int x, int y);
