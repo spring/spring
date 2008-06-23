@@ -5105,6 +5105,14 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\System\Platform\Linux\DataDirLocater.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Linux\DataDirLocater.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\System\Platform\Win\DllLib.cpp"
 						>
 						<FileConfiguration

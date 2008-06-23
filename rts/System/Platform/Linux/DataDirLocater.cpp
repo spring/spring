@@ -10,7 +10,8 @@
 #include "DataDirLocater.h"
 #ifdef WIN32
 	#include <io.h>
-	#include <windows.h>
+  #include <direct.h>
+  #include <windows.h>
 	#include <shlobj.h>
 	#include <shlwapi.h>
 	#ifndef SHGFP_TYPE_CURRENT
@@ -131,6 +132,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 	// Note: we check for executable bit otherwise we can't browse the directory
 	// Note: we fail to test whether the path actually is a directory
 	// Note: modifying permissions while or after this function runs has undefined behaviour
+#ifndef _WIN32
 	if (access(d->path.c_str(), R_OK | X_OK | F_OK) == 0) {
 		// Note: disallow multiple write directories.
 		// There isn't really a use for it as every thing is written to the first one anyway,
@@ -138,6 +140,10 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 		// like network mounted datadir lost connection and suddenly files end up in some
 		// other random writedir you didn't even remember you had added it.
 		if (!writedir && access(d->path.c_str(), W_OK) == 0) {
+#else
+	if (_access(d->path.c_str(), 4) == 0) {
+		if (!writedir && _access(d->path.c_str(), 2) == 0) {
+#endif
 			d->writable = true;
 			writedir = &*d;
 		}
@@ -293,8 +299,11 @@ void DataDirLocater::LocateDataDirs()
 	// all AIs still just assume it's ok to put their stuff in the current directory after all
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
+#ifndef _WIN32
 	chdir(GetWriteDir()->path.c_str());
-
+#else
+	_chdir(GetWriteDir()->path.c_str());
+#endif
 	// Logging MAY NOT start before the chdir, otherwise the logfile ends up
 	// in the wrong directory.
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {

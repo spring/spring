@@ -212,7 +212,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
-  HANDLE hFind = FindFirstFile((dir+"*").c_str(), &wfd);
+  HANDLE hFind = FindFirstFile((dir+"\\*").c_str(), &wfd);
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
