@@ -64,11 +64,19 @@
 #endif
 
 #ifdef _MSC_VER
-extern __declspec(thread) int gmlThreadNumber;
 #define GML_TYPENAME typename
 #else
-extern __thread int gmlThreadNumber;
 #define GML_TYPENAME
+#endif
+
+#if GML_ENABLE
+#ifdef _MSC_VER
+extern __declspec(thread) int gmlThreadNumber;
+#else
+extern __thread int gmlThreadNumber;
+#endif
+#else
+extern int gmlThreadNumber;
 #endif
 extern int gmlThreadCount;
 extern int gmlThreadCountOverride;

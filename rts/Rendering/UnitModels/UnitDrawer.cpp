@@ -401,12 +401,20 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #if GML_ENABLE_DRAWUNIT
 	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
 	mt_drawRefraction=drawRefraction;
+#ifdef DIRECT_CONTROL_ALLOWED
 	mt_excludeUnit=excludeUnit;
+#endif
 	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
 #else
 	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
-		DoDrawUnit(unit,drawReflection,drawRefraction,excludeUnit);
+		DoDrawUnit(unit,drawReflection,drawRefraction,
+#ifdef DIRECT_CONTROL_ALLOWED
+								excludeUnit
+#else
+								NULL
+#endif
+							);
 	}
 #endif
 

@@ -38,10 +38,14 @@
 #define EXEC_RES (BYTE *)-2
 
 // TLS (thread local storage) thread identifier
+#if GML_ENABLE
 #ifdef _MSC_VER
 __declspec(thread) int gmlThreadNumber=0;
 #else
 __thread int gmlThreadNumber=0;
+#endif
+#else
+int gmlThreadNumber=0;
 #endif
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
 int gmlThreadCountOverride=0; // number of threads to use (can be manually overridden here)
