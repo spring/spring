@@ -49,7 +49,6 @@ DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 
 DLL_EXPORT void         __stdcall UnInit();
 DLL_EXPORT int          __stdcall Init(bool isServer, int id);
-DLL_EXPORT int          __stdcall InitArchiveScanner(void);
 
 DLL_EXPORT int          __stdcall ProcessUnits(void);
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
