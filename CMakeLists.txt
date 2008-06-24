@@ -9,11 +9,11 @@ Add_Subdirectory(rts)
 Add_Subdirectory(tools/DedicatedServer)
 Add_Subdirectory(tools/unitsync)
 
-if (UNIX)
+if (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-else (UNIX)
+else (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-endif(UNIX)
+endif(UNIX OR CMAKE_CROSSCOMPILING)
 
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game DESTINATION /opt/spring/ PATTERN ".svn" EXCLUDE)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION /opt/spring PATTERN ".svn" EXCLUDE)
 

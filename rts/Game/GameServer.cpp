@@ -1319,6 +1319,8 @@ void CGameServer::UpdateLoop()
 			ServerReadNet(); // new data arrived, we may have new packets
 		Update();
 	}
+	if (hostif)
+		hostif->SendQuit();
 }
 
 bool CGameServer::WaitsOnCon() const
