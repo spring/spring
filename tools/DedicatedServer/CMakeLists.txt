@@ -37,7 +37,7 @@ endif (NOT COMPLETE_BUILD)
 IF (UNIX)
 	SET(platformfiles ../../rts/System/Platform/Linux/UnixFileSystemHandler ../../rts/System/Platform/Linux/DataDirLocater ../../rts/System/Platform/Linux/DotfileHandler)
 ELSE (UNIX)
-	SET(platformfiles ../../rts/System/Platform/Win/WinFileSystemHandler ../../rts/System/Platform/Win/RegHandler)
+	SET(platformfiles ../../rts/System/Platform/Win/WinFileSystemHandler ../../rts/System/Platform/Win/DataDirLocater ../../rts/System/Platform/Win/RegHandler)
 ENDIF (UNIX)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)

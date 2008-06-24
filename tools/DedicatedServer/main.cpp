@@ -8,7 +8,7 @@
 #include <iostream>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 int main(int argc, char *argv[])
