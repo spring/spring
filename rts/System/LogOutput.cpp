@@ -62,9 +62,11 @@ void CLogOutput::Output(int zone, const char *str)
 #endif
 
 	if (filelog) {
+#ifndef DEDICATED
 		if (gs) {
 			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
 		}
+#endif
 		(*filelog) << str;
 		if (nl < 0 || str[nl] != '\n')
 			(*filelog) << "\n";

@@ -779,11 +779,11 @@ public:
       T szv=*(volatile T *)sz;
       *(volatile T *)sz=0;
 			GML_MUTEX_UNLOCK();
-      if(szv>n)
+      if(szv>static_cast<T>(n))
         (*delfun)(ip+szv,szv-n); // del excessive
-      if(szv<n)
+	  if(szv<static_cast<T>(n))
         (*delfun)(ip,szv); // del all
-      if(szv>=n)
+	  if(szv>=static_cast<T>(n))
         return ip;
     }
   }
