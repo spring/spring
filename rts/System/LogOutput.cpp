@@ -62,6 +62,11 @@ void CLogOutput::Output(int zone, const char *str)
 #endif
 
 	if (filelog) {
+		if (gs) {
+			char stamp[16];
+			SNPRINTF(stamp, 16, "[%7d] ", gs->frameNum);
+			(*filelog) << stamp;
+		}
 		(*filelog) << str;
 		if (nl < 0 || str[nl] != '\n')
 			(*filelog) << "\n";
