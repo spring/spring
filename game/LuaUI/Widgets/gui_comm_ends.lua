@@ -65,7 +65,7 @@ function widget:DrawScreen()
   if (Game.commEnds) then
     local timer = widgetHandler:GetHourTimer()
     local colorStr
-    if (math.mod(timer, 0.5) < 0.25) then
+    if ((timer % 0.5) < 0.25) then
       colorStr = RedStr
     else
       colorStr = YellowStr

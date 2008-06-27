@@ -4,6 +4,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
+#include "Sim/SideParser.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -39,18 +40,10 @@ void CCommanderScript2::GameStart()
 	gs->Team(1)->metalIncome=1000;
 	gs->Team(1)->metalStorage=1000;
 
-	LuaParser luaParser("gamedata/sidedata.lua",
-						SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		logOutput.Print(luaParser.GetErrorLog());
-	}
-	const LuaTable sideData = luaParser.GetRoot();
-	const LuaTable side1 = sideData.SubTable(1);
-	const LuaTable side2 = sideData.SubTable(2);
-	const std::string su1 = StringToLower(side1.GetString("startUnit", ""));
-	const std::string su2 = StringToLower(side2.GetString("startUnit", su1));
+	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
+	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);
 
-	if (su1.length() == 0) {
+	if (startUnit0.length() == 0) {
 		throw content_error ("Unable to load a startUnit for the first side");
 	}
 
@@ -63,7 +56,7 @@ void CCommanderScript2::GameStart()
 	mapParser.GetStartPos(0, startPos0);
 	mapParser.GetStartPos(1, startPos1);
 
-	unitLoader.LoadUnit(su1, startPos0, 0, false, 0, NULL);
-	unitLoader.LoadUnit(su2, startPos1, 1, false, 0, NULL);
+	unitLoader.LoadUnit(startUnit0, startPos0, 0, false, 0, NULL);
+	unitLoader.LoadUnit(startUnit1, startPos1, 1, false, 0, NULL);
 }
 

@@ -30,7 +30,7 @@ local isSyncedCode = (SendToUnsynced ~= nil)
 
 local function MakeWords(line)
   local words = {}
-  for w in string.gfind(line, "[^%s]+") do
+  for w in string.gmatch(line, "[^%s]+") do
     table.insert(words, w)
   end   
   return words
@@ -151,7 +151,7 @@ end
 --------------------------------------------------------------------------------
 
 local function EchoLines(msg)
-  for line in string.gfind(msg, '([^\n]+)\n?') do
+  for line in string.gmatch(msg, '([^\n]+)\n?') do
     Spring.Echo(line)
   end
 end
@@ -233,9 +233,10 @@ end
 
 
 local function RecvFromSynced(...)
-  if (type(arg[1]) == 'string') then
+  local arg1, arg2 = ...
+  if (type(arg1) == 'string') then
     -- a raw sync msg
-    local callInfoList = syncActions[arg[1]]
+    local callInfoList = syncActions[arg1]
     if (callInfoList == nil) then
       return false
     end
@@ -243,17 +244,17 @@ local function RecvFromSynced(...)
     for i,callInfo in ipairs(callInfoList) do
       local func = callInfo[1]
       -- local gadget = callInfo[2]
-      if (func(unpack(arg))) then
+      if (func(...)) then
         return true
       end
     end
     return false
   end
 
-  if (type(arg[1]) == 'number') then
+  if (type(arg1) == 'number') then
     -- a proxied chat msg
-    if (type(arg[2]) == 'string') then
-      return GotChatMsg(arg[2], arg[1])
+    if (type(arg2) == 'string') then
+      return GotChatMsg(arg2, arg1)
     end
     return false
   end

@@ -12,7 +12,7 @@
 #include "../Player.h"
 #include "../GameSetup.h"
 #include "StartPosSelecter.h"
-#include "LuaUI.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Rendering/glFont.h"
 
 extern Uint8 *keys;
@@ -107,7 +107,7 @@ void GameSetupDrawer::Draw()
 
 	CStartPosSelecter* selector = CStartPosSelecter::selector;
 	bool ready = (selector == NULL);
-	if (luaUI && luaUI->GameSetup(state, ready, playerStates)) {
+	if (luaCallIns.GameSetup(state, ready, playerStates)) {
 		if (selector) {
 			selector->ShowReady(false);
 			if (ready) {

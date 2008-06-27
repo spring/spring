@@ -14,7 +14,6 @@
 
 class CUnit;
 class CglList;
-class CLuaUI;
 struct UnitDef;
 struct BuildInfo;
 
@@ -161,8 +160,6 @@ class CGuiHandler : public CInputReceiver {
 		int actionOffset;
 		CKeySet lastKeySet;
 
-		bool luaUIClick;
-
 		std::string menuName;
 		int xIcons, yIcons;
 		float xPos, yPos;
@@ -217,8 +214,6 @@ class CGuiHandler : public CInputReceiver {
 		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 
 		std::set<int> changedGroups;
-
-		static const char* luaUiFile;
 };
 
 

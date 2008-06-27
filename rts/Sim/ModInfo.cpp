@@ -87,6 +87,7 @@ void CModInfo::Init(const char* modname)
 	
 	// sensors
 	const LuaTable sensors = root.SubTable("sensors");
+	requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
 	/// LoS
 	const LuaTable los = sensors.SubTable("los");
 	// losMipLevel is used as index to readmap->mipHeightmap,

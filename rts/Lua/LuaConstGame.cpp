@@ -135,6 +135,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "fireAtKilled",    modInfo.fireAtKilled);
 	LuaPushNamedNumber(L, "fireAtCrashing",  modInfo.fireAtCrashing);
 
+	LuaPushNamedNumber(L, "requireSonarUnderWater", modInfo.requireSonarUnderWater);
+
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
 	         archiveScanner->GetMapChecksum(mapInfo->map.name));

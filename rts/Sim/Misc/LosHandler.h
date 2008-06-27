@@ -87,6 +87,7 @@ public:
 		// NOTE: units are treated differently than world objects in 2 ways:
 		//       1. they can be cloaked 
 		//       2. when underwater, they only get LOS if they also have sonar
+		//          (when the requireSonarUnderWater variable is enabled)
 		if (unit->alwaysVisible) {
 			return true;
 		}
@@ -103,7 +104,8 @@ public:
 			return !!airLosMap[allyTeam][square];
 		}
 		else {
-			if (unit->isUnderWater && !radarhandler->InRadar(unit, allyTeam)) {
+			if (unit->isUnderWater && requireSonarUnderWater &&
+			    !radarhandler->InRadar(unit, allyTeam)) {
 				return false;
 			}
 			const int gx = (int)(unit->pos.x * invLosDiv);
@@ -148,6 +150,8 @@ public:
 	int airSizeY;
 	int losSizeX;
 	int losSizeY;
+
+	bool requireSonarUnderWater;
 
 private:
 

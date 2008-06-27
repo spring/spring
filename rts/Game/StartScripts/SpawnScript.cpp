@@ -6,6 +6,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
+#include "Sim/SideParser.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -34,18 +35,9 @@ void CSpawnScript::Update()
 	case 0:
 		LoadSpawns();
 
-		LuaParser luaParser("gamedata/sidedata.lua",
-		                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-		if (!luaParser.Execute()) {
-			logOutput.Print(luaParser.GetErrorLog());
-		}
-		const LuaTable sideData = luaParser.GetRoot();
-		const LuaTable side1 = sideData.SubTable(1);
-		const LuaTable side2 = sideData.SubTable(2);
-		const std::string su1 = StringToLower(side1.GetString("startUnit", ""));
-		const std::string su2 = StringToLower(side2.GetString("startUnit", su1));
+		const std::string startUnit0 = sideParser.GetStartUnit(0);
 
-		if (su1.length() == 0) {
+		if (startUnit0.length() == 0) {
 			throw content_error ("Unable to load a startUnit for the first side");
 		}
 
@@ -61,7 +53,7 @@ void CSpawnScript::Update()
 		if (autonomous) {
 			spawnPos.push_back(startPos0);
 		} else {
-			unitLoader.LoadUnit(su1, startPos0, 0, false, 0, NULL);
+			unitLoader.LoadUnit(startUnit0, startPos0, 0, false, 0, NULL);
 		}
 
 		// load the start positions for teams 1 - 3

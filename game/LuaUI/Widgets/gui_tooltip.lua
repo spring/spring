@@ -135,7 +135,7 @@ function widget:DrawScreen()
     fontHandler.DisableCache()  -- ground tooltips change too much for caching
   end
 
-  for line in string.gfind(tooltip, "([^\n]*)\n?") do
+  for line in string.gmatch(tooltip, "([^\n]*)\n?") do
     if (unitTip and (i == 0)) then
       line = "\255\255\128\255" .. line
     else

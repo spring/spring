@@ -145,17 +145,16 @@ void CReadMap::CalcHeightfieldData()
 {
 	float* heightmap = GetHeightmap();
 
-	minheight=1000;
-	maxheight=-1000;
-	mapChecksum=0;
-	for(int y=0;y<(gs->mapy+1)*(gs->mapx+1);++y){
-		orgheightmap[y]=heightmap[y];
-		if(heightmap[y]<minheight)
-			minheight=heightmap[y];
-		if(heightmap[y]>maxheight)
-			maxheight=heightmap[y];
-		mapChecksum+=(unsigned int)(heightmap[y]*100);
-		mapChecksum^=*(unsigned int*)&heightmap[y];
+	minheight = +123456.0f;
+	maxheight = -123456.0f;
+
+	mapChecksum = 0;
+	for (int y = 0; y < ((gs->mapy + 1) * (gs->mapx + 1)); ++y) {
+		orgheightmap[y] = heightmap[y];
+		if (heightmap[y] < minheight) { minheight = heightmap[y]; }
+		if (heightmap[y] > maxheight) { maxheight = heightmap[y]; }
+		mapChecksum +=  (unsigned int)(heightmap[y] * 100);
+		mapChecksum ^= *(unsigned int*)&heightmap[y];
 	}
 
 //	PrintLoadMsg("Creating surface normals");

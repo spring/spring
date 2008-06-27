@@ -3,8 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <cmath>
-
 #include "LuaUnitRendering.h"
 #include "LuaMaterial.h"
 
@@ -140,7 +138,7 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 		return 0;
 	}
 	// adjusted for 45 degree FOV with a 1024x768 screen
-	const float scale = 2.0f * (float)std::tanf((45.0 * 0.5) * (PI / 180.0)) / 768.0f;
+	const float scale = 2.0f * (float)streflop::tanf((45.0 * 0.5) * (PI / 180.0)) / 768.0f;
 	const float dist = (float)luaL_checknumber(L, 3);
 	unit->lodLengths[lod] = dist * scale;
 	return 0;

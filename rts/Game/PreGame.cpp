@@ -5,7 +5,6 @@
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
-#include <cmath>
 #include "Game.h"
 #include "Team.h"
 #include "FPUCheck.h"
@@ -45,16 +44,18 @@ namespace std {
 
 const int springDefaultPort = 8452;
 
-CPreGame* pregame=0;
+CPreGame* pregame = NULL;
 using netcode::RawPacket;
 
-extern Uint8 *keys;
+extern Uint8* keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 
-CglList* CPreGame::showList = 0;
+CglList* CPreGame::showList = NULL;
 std::string CPreGame::userScript;
 std::string CPreGame::userMap;
+std::string CPreGame::userMod;
+
 
 CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 : server(server),
@@ -94,7 +95,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 			StartServer(gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName);
 			state = WAIT_CONNECTING;
 		} else {
-			ShowMapList();
+			ShowModList();
 			state = WAIT_ON_USERINPUT;
 		}
 	} else {
@@ -111,8 +112,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
 				}
-				else	// we dont read a GameSetup from demofile (this code was copied from CDemoReader)
-				{
+				else { // we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 					logOutput.Print("Demo file does not contain a setupscript");
 					// Didn't get a CGameSetup script
 					// FIXME: duplicated in Main.cpp
@@ -147,12 +147,14 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	assert(state != UNKNOWN);
 }
 
+
 CPreGame::~CPreGame()
 {
 	delete gameData;
 	delete infoConsole;
 	infoConsole = 0;
 }
+
 
 int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 {
@@ -163,12 +165,12 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 		} else
 			logOutput.Print("Use shift-esc to quit");
 	}
-	if(showList){					//are we currently showing a list?
+	if (showList) { //are we currently showing a list?
 		showList->KeyPressed(k, isRepeat);
 		return 0;
 	}
 
-	if (userWriting){
+	if (userWriting) {
 		keys[k] = true;
 		if (k == SDLK_v && keys[SDLK_LCTRL]){
 			CClipboard clipboard;
@@ -184,26 +186,26 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 			}
 			return 0;
 		}
-		if(k == SDLK_DELETE){
+		if (k == SDLK_DELETE) {
 			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
 				userInput.erase(writingPos, 1);
 			}
 			return 0;
 		}
-		else if(k==SDLK_LEFT) {
+		else if (k == SDLK_LEFT) {
 			writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
 		}
-		else if(k==SDLK_RIGHT) {
+		else if (k == SDLK_RIGHT) {
 			writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
 		}
-		else if(k==SDLK_HOME) {
+		else if (k == SDLK_HOME) {
 			writingPos = 0;
 		}
-		else if(k==SDLK_END) {
+		else if (k == SDLK_END) {
 			writingPos = (int)userInput.length();
 		}
-		if(k == SDLK_RETURN){
-			userWriting=false;
+		if (k == SDLK_RETURN){
+			userWriting = false;
 			return 0;
 		}
 		return 0;
@@ -212,6 +214,7 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 	return 0;
 }
 
+
 bool CPreGame::Draw()
 {
 	SDL_Delay(10); // milliseconds
@@ -219,7 +222,10 @@ bool CPreGame::Draw()
 		return true;
 	}
 
-	if (!showList) {
+	if (showList) {
+		PrintLoadMsg("", false); // just clear screen and set up matrices etc.
+	}
+	else {
 		switch (state) {
 			case WAIT_ON_GAMEDATA:
 				PrintLoadMsg("Waiting on game data", false);
@@ -238,13 +244,11 @@ bool CPreGame::Draw()
 				PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 				break;
 		}
-	} else {
-		PrintLoadMsg("", false); // just clear screen and set up matrices etc.
 	}
 
 	infoConsole->Draw();
 
-	if(userWriting){
+	if (userWriting) {
 		const std::string tempstring = userPrompt + userInput;
 
 		const float xStart = 0.10f;
@@ -261,7 +265,7 @@ bool CPreGame::Draw()
 		const float cw = fontScale * font->CalcCharWidth(c);
 		const float csx = xStart + (fontScale * caretWidth);
 		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + std::sin((float)SDL_GetTicks() * 0.015f));
+		const float f = 0.5f * (1.0f + sin((float)SDL_GetTicks() * 0.015f));
 		glColor4f(f, f, f, 0.75f);
 		glRectf(csx, yStart, csx + cw, yStart + fontScale * font->GetHeight());
 		glEnable(GL_TEXTURE_2D);
@@ -276,6 +280,7 @@ bool CPreGame::Draw()
 
 	return true;
 }
+
 
 bool CPreGame::Update()
 {
@@ -319,8 +324,9 @@ bool CPreGame::Update()
 			const int teamID = gs->players[gu->myPlayerNum]->team;
 			const CTeam* team = gs->Team(teamID);
 			assert(team);
-			if (net->localDemoPlayback)
+			if (net->localDemoPlayback) {
 				gs->players[gu->myPlayerNum]->StartSpectating();
+			}
 			LoadStartPicture(team->side);
 
 			game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole, savefile);
@@ -348,6 +354,7 @@ bool CPreGame::Update()
 
 	return true;
 }
+
 
 void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 {
@@ -425,6 +432,7 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	good_fpu_control_registers("after CGameServer creation");
 }
 
+
 void CPreGame::UpdateClientNet()
 {
 	if (gameData)
@@ -460,6 +468,7 @@ void CPreGame::UpdateClientNet()
 	}
 }
 
+
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	logOutput.Print("Pre-scanning demo file for game data...");
@@ -488,6 +497,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	}
 }
 
+
 /** Create a CglList for selecting the map. */
 void CPreGame::ShowMapList()
 {
@@ -515,12 +525,14 @@ void CPreGame::ShowMapList()
 	showList = list;
 }
 
+
 /** Create a CglList for selecting the script. */
 void CPreGame::ShowScriptList()
 {
 	CglList* list = CScriptHandler::Instance().GenList(SelectScript);
 	showList = list;
 }
+
 
 /** Create a CglList for selecting the mod. */
 void CPreGame::ShowModList()
@@ -545,36 +557,46 @@ void CPreGame::ShowModList()
 	showList = list;
 }
 
+
 void CPreGame::SelectMap(std::string s)
 {
+	delete showList;
+	showList = NULL;
+
 	if (s == "Random map") {
 		s = pregame->showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
 	}
-	delete showList;
-	showList = 0;
+
 	userMap = s;
-	pregame->ShowScriptList();
+	pregame->StartServer(userMap, userMod, userScript);
+	pregame->state = WAIT_CONNECTING;
 }
+
 
 void CPreGame::SelectScript(std::string s)
 {
 	delete showList;
-	showList = 0;
+	showList = NULL;
+
 	userScript = s;
-	pregame->ShowModList();
+	pregame->ShowMapList();
 }
+
 
 void CPreGame::SelectMod(std::string s)
 {
+	delete showList;
+	showList = NULL;
+
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
 		s = showList->items[index];
 	}
-	delete showList;
-	showList = 0;
-	pregame->StartServer(userMap, s, userScript);
-	pregame->state = WAIT_CONNECTING;
+
+	userMod = s;
+	pregame->ShowScriptList();
 }
+
 
 void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 {
@@ -599,6 +621,7 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 	}
 }
 
+
 void CPreGame::LoadMod(const std::string& modName)
 {
 	static bool alreadyLoaded = false;
@@ -620,6 +643,7 @@ void CPreGame::LoadMod(const std::string& modName)
 	}
 }
 
+
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	gameData = new GameData(packet);
@@ -628,8 +652,9 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	logOutput << "Using map " << gameData->GetMap() << "\n";
 	stupidGlobalMapname = gameData->GetMap();
 	
-	if (net && net->GetDemoRecorder())
+	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());
+	}
 	LoadMap(gameData->GetMap());
 	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());
 
@@ -641,8 +666,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	modArchive = archiveScanner->ModNameToModArchive(gameData->GetMod());
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
 	
-	if (gameSetup)
-	{
+	if (gameSetup) {
 		gameSetup->scriptName = gameData->GetScript();
 		gameSetup->mapName = gameData->GetMap();
 		gameSetup->baseMod = gameData->GetMod();

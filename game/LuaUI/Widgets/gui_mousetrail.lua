@@ -56,7 +56,7 @@ function widget:DrawScreen()
   local elements = {}
   local h = head
   while h do
-    local timeLeft = math.mod((h[4] - timer) + 3600.0, 3600.0)
+    local timeLeft = ((h[4] - timer) + 3600.0) % 3600.0
     if (timeLeft > lifeTime) then
       if (h == head) then
         head = nil

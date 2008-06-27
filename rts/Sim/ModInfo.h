@@ -50,6 +50,8 @@ public:
 	float losMul;
 	/// units airsightdistance will be multiplied with this, for testing purposes
 	float airLosMul;
+	/// when underwater, units are not in LOS unless also in sonar
+	bool requireSonarUnderWater;
 };
 
 extern CModInfo modInfo;

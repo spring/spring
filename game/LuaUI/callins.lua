@@ -49,6 +49,11 @@ CallInsList = {
   "UnitLoaded",
   "UnitUnloaded",
 
+  "UnitEnteredWater",
+  "UnitEnteredAir",
+  "UnitLeftWater",
+  "UnitLeftAir",
+
   "FeatureCreated",
   "FeatureDestroyed",
 

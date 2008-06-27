@@ -19,16 +19,16 @@ extern bool globalQuit;
 static string FloatToSmallString(float num,float mul=1){
 	char c[50];
 
-	if(num==0)
+	if (num == 0) {
 		return "0";
-	if(std::fabs(num)<10*mul){
+	} else if (fabs(num) < 10 * mul) {
 		sprintf(c,"%.1f",num);
-	} else if(std::fabs(num)<10000*mul){
+	} else if (fabs(num) < 10000 * mul) {
 		sprintf(c,"%.0f",num);
-	} else if(std::fabs(num)<10000000*mul){
-		sprintf(c,"%.0fk",num/1000);
+	} else if (fabs(num) < 10000000 * mul) {
+		sprintf(c,"%.0fk", num / 1000);
 	} else {
-		sprintf(c,"%.0fM",num/1000000);
+		sprintf(c,"%.0fM", num / 1000000);
 	}
 	return c;
 };
@@ -145,7 +145,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 	if(dispMode>0){
 		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
-			int sel=(int)std::floor(-(my-box.y1-0.57f)*50);
+			int sel=(int)floor(-(my-box.y1-0.57f)*50);
 
 			if(button==1) {
 				stat1=sel;
@@ -277,7 +277,7 @@ void CEndGameBox::Draw()
 
 		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
 
-			int sel=(int)std::floor(-(my-box.y1-0.57f)*50);
+			int sel=(int)floor(-(my-box.y1-0.57f)*50);
 
 			glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 			glDisable(GL_TEXTURE_2D);

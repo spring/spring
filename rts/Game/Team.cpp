@@ -33,7 +33,9 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(lineageRoot),
 				CR_MEMBER(handicap),
 				CR_MEMBER(side),
+				CR_MEMBER(isAI),
 				CR_MEMBER(luaAI),
+				CR_MEMBER(dllAI),
 				CR_MEMBER(units),
 				CR_MEMBER(startPos),
 				CR_MEMBER(metal),
@@ -125,7 +127,9 @@ CTeam::CTeam()
   energySent(0),
   energyReceived(0),
   side("arm"),
+  isAI(false),
   luaAI(""),
+  dllAI(""),
   startPos(100,100,100),
   handicap(1),
   leader(-1),
@@ -138,89 +142,97 @@ CTeam::CTeam()
 	statHistory.push_back(currentStats);
 }
 
+
 CTeam::~CTeam()
 {
-
 }
+
 
 bool CTeam::UseMetal(float amount)
 {
-	if(metal-prevMetalUpkeep*10>=amount){
-		metal-=amount;
-		metalExpense+=amount;
+	if ((metal - (prevMetalUpkeep * 10)) >= amount) {
+		metal -= amount;
+		metalExpense += amount;
 		return true;
 	}
 	return false;
 }
+
 
 bool CTeam::UseEnergy(float amount)
 {
-	if(energy-prevEnergyUpkeep*10>=amount){
-		energy-=amount;
-		energyExpense+=amount;
+	if ((energy - (prevEnergyUpkeep * 10)) >= amount) {
+		energy -= amount;
+		energyExpense += amount;
 		return true;
 	}
 	return false;
 }
+
 
 bool CTeam::UseMetalUpkeep(float amount)
 {
-	if(metal>=amount){
-		metal-=amount;
-		metalExpense+=amount;
-		metalUpkeep+=amount;
+	if (metal >= amount) {
+		metal -= amount;
+		metalExpense += amount;
+		metalUpkeep += amount;
 		return true;
 	}
 	return false;
 }
+
 
 bool CTeam::UseEnergyUpkeep(float amount)
 {
-	if(energy>=amount){
-		energy-=amount;
-		energyExpense+=amount;
-		energyUpkeep+=amount;
+	if (energy >= amount) {
+		energy -= amount;
+		energyExpense += amount;
+		energyUpkeep += amount;
 		return true;
 	}
 	return false;
 }
 
+
 void CTeam::AddMetal(float amount)
 {
-	amount*=handicap;
-	metal+=amount;
-	metalIncome+=amount;
-	if(metal>metalStorage){
+	amount *= handicap;
+	metal += amount;
+	metalIncome += amount;
+	if (metal > metalStorage) {
 		delayedMetalShare += metal - metalStorage;
-		metal=metalStorage;
+		metal = metalStorage;
 	}
 }
+
 
 void CTeam::AddEnergy(float amount)
 {
-	amount*=handicap;
-	energy+=amount;
-	energyIncome+=amount;
-	if(energy>energyStorage){
+	amount *= handicap;
+	energy += amount;
+	energyIncome += amount;
+	if (energy > energyStorage) {
 		delayedEnergyShare += energy - energyStorage;
-		energy=energyStorage;
+		energy = energyStorage;
 	}
 }
 
+
 void CTeam::SelfDestruct()
 {
-	for(CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
-		if ((*ui) != NULL && (*ui)->unitDef->canSelfD) {
-			if ((*ui)->beingBuilt) {
-				(*ui)->KillUnit(false, true, NULL); // kill units under construction without explosion
-			}
-			else {
-				(*ui)->KillUnit(true, false, NULL);
+	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
+		CUnit* unit = (*ui);
+		if (unit != NULL && unit->unitDef->canSelfD) {
+			if (unit->beingBuilt) {
+				unit->KillUnit(false, true, NULL); // kill units under construction without explosion
+			} else {
+				unit->KillUnit(true, false, NULL);
 			}
 		}
 	}
 	Died();
 }
+
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
@@ -248,6 +260,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 	Died();
 }
 
+
 void CTeam::Died()
 {
 	if (leader >= 0) {
@@ -257,19 +270,25 @@ void CTeam::Died()
 		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
 	}
 	isDead = true;
-	luaCallIns.TeamDied(teamNum);
+
+	// this message is not relayed to clients, it's only for the server
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		if (gs->players[a]->active && gs->players[a]->team == teamNum) {
+		if (gs->players[a]->active && (gs->players[a]->team == teamNum)) {
 			gs->players[a]->StartSpectating();
 		}
 	}
 	if (globalAI->ais[teamNum]) {
 		delete globalAI->ais[teamNum];
-		globalAI->ais[teamNum] = 0;
+		globalAI->ais[teamNum] = NULL;
 	}
+
 	CLuaUI::UpdateTeams();
+  CPlayer::UpdateControlledTeams();
+	luaCallIns.TeamDied(teamNum);
 }
+
 
 void CTeam::SlowUpdate()
 {
@@ -376,6 +395,7 @@ void CTeam::SlowUpdate()
 	}
 }
 
+
 void CTeam::AddUnit(CUnit* unit,AddType type)
 {
 	units.insert(unit);
@@ -397,6 +417,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 		numCommanders++;
 	}
 }
+
 
 void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 {
@@ -421,11 +442,13 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 	}
 }
 
+
 void CTeam::CommanderDied(CUnit* commander)
 {
 	assert(commander->unitDef->isCommander);
 	--numCommanders;
 }
+
 
 void CTeam::LeftLineage(CUnit* unit)
 {

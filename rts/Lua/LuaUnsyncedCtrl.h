@@ -66,6 +66,55 @@ class LuaUnsyncedCtrl {
 		static int FreeUnitIcon(lua_State* L);
 
 		static int ExtractModArchiveFile(lua_State* L);
+
+
+		// moved from LuaUI
+
+//FIXME		static int SetShockFrontFactors(lua_State* L);
+
+		static int GetConfigInt(lua_State* L);
+		static int SetConfigInt(lua_State* L);
+		static int GetConfigString(lua_State* L);
+		static int SetConfigString(lua_State* L);
+
+		static int CreateDir(lua_State* L);
+		static int MakeFont(lua_State* L);
+
+		static int SetUnitDefIcon(lua_State* L);
+
+		static int SetActiveCommand(lua_State* L);
+
+		static int ForceLayoutUpdate(lua_State* L);
+
+		static int SetLosViewColors(lua_State* L);
+
+		static int WarpMouse(lua_State* L);
+
+		static int SetMouseCursor(lua_State* L);
+
+		static int SetCameraOffset(lua_State* L);
+
+		static int SendCommands(lua_State* L);
+
+		static int SetShareLevel(lua_State* L);
+		static int ShareResources(lua_State* L);
+
+		static int SetUnitGroup(lua_State* L);
+
+		static int GiveOrder(lua_State* L);
+		static int GiveOrderToUnit(lua_State* L);
+		static int GiveOrderToUnitMap(lua_State* L);
+		static int GiveOrderToUnitArray(lua_State* L);
+		static int GiveOrderArrayToUnitMap(lua_State* L);
+		static int GiveOrderArrayToUnitArray(lua_State* L);
+
+		static int SendLuaUIMsg(lua_State* L);
+		static int SendLuaGaiaMsg(lua_State* L);
+		static int SendLuaRulesMsg(lua_State* L);
+
+		static int MarkerAddPoint(lua_State* L);
+		static int MarkerAddLine(lua_State* L);
+		static int MarkerErasePosition(lua_State* L);
 };
 
 

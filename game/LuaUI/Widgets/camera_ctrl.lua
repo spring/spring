@@ -90,7 +90,8 @@ local function CamCtrl(cmd, line, words)
       Spring.Echo('  bad parameter name: ' .. words[1])
       return true
     end
-    cs[words[1]] = tonumber(words[2])
+    local newValue = tonumber(words[2])
+    cs[words[1]] = newValue
     local camTime = 0
     if (wc >= 3) then  --  specified transition time?
       camTime = tonumber(words[3])
@@ -100,7 +101,7 @@ local function CamCtrl(cmd, line, words)
       end
     end
     Spring.SetCameraState(cs, camTime)
-    Spring.Echo('  set ' .. words[1] .. ' to ' .. value)
+    Spring.Echo('  set ' .. words[1] .. ' to ' .. newValue)
   end
 
   return true

@@ -181,7 +181,6 @@ void CShareBox::Draw(void)
 		if (team >= gu->myTeam) {
 			actualTeam++;
 		}
-		//if (gs->Team(actualTeam)->gaia) continue;
 
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
 		std::string teamName;

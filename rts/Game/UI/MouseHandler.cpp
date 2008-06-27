@@ -14,7 +14,6 @@
 #include "CommandColors.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
-#include "LuaUI.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
 #include "MouseInput.h"
@@ -27,6 +26,8 @@
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaInputReceiver.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/glFont.h"
@@ -242,10 +243,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 					return;
 				}
 			}
-			if (guihandler != NULL) {
-				// this includes LuaUI
-				if (guihandler->MousePress(x, y, button)) {
-					activeReceiver = guihandler;
+			if (luaInputReceiver != NULL) {
+				if (luaInputReceiver->MousePress(x, y, button)) {
+					activeReceiver = luaInputReceiver;
 					return;
 				}
 			}
@@ -473,7 +473,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 void CMouseHandler::MouseWheel(bool up)
 {
 	const float value = up ? +scrollWheelSpeed : -scrollWheelSpeed;
-	if (luaUI && luaUI->MouseWheel(up, value)) {
+	if (luaCallIns.MouseWheel(up, value)) {
 		return;
 	}
 	camHandler->GetCurrentController().MouseWheelMove(value);

@@ -91,7 +91,7 @@ unitsync_extra_files = [
 	'rts/Map/MapParser.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
-	'rts/System/TdfParser.cpp',
+	'rts/Sim/SideParser.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
 ]

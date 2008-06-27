@@ -10,7 +10,7 @@ class CArchiveBase;
 class CVFSHandler
 {
 protected:
-	struct FileData{
+	struct FileData {
 		CArchiveBase *ar;
 		int size;
 		bool dynamic;
@@ -21,13 +21,14 @@ public:
 	CVFSHandler();
 	virtual ~CVFSHandler();
 
-	int LoadFile(std::string name, void* buffer);
-	int GetFileSize(std::string name);
+	int LoadFile(const std::string& name, void* buffer);
+	int GetFileSize(const std::string& name);
 
-	std::vector<std::string> GetFilesInDir(std::string dir);
-	std::vector<std::string> GetDirsInDir(std::string dir);
+	std::vector<std::string> GetFilesInDir(const std::string& dir);
+	std::vector<std::string> GetDirsInDir(const std::string& dir);
 
-	bool AddArchive(std::string arName, bool override);
+	bool AddArchive(const std::string& arName, bool override,
+	                const std::string& type = "");
 };
 
 extern CVFSHandler* hpiHandler;

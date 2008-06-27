@@ -162,7 +162,7 @@ local callInLists = {
   'DrawInMiniMap',
   'RecvFromSynced',
 
-  -- proxied call-ins
+  -- moved from LuaUI
   'KeyPress',
   'KeyRelease',
   'MousePress',
@@ -171,6 +171,12 @@ local callInLists = {
   'MouseWheel',
   'IsAbove',
   'GetTooltip',
+
+  -- FIXME -- not implemented  (more of these?)
+  'WorldTooltip',
+  'MapDrawCmd',
+  'GameSetup',
+  'DefaultCommand',
 }
 
 
@@ -475,7 +481,7 @@ end
 local function SafeWrap(func, funcName)
   local gh = gadgetHandler
   return function(g, ...)
-    local r = { pcall(func, g, unpack(arg)) }
+    local r = { pcall(func, g, ...) }
     if (r[1]) then
       table.remove(r, 1)
       return unpack(r)
@@ -602,7 +608,7 @@ function gadgetHandler:UpdateCallIn(name)
       (name == 'RecvFromSynced')) then
     local selffunc = self[name]
     _G[name] = function(...)
-      return selffunc(self, unpack(arg))
+      return selffunc(self, ...)
     end
   else
     _G[name] = nil
@@ -920,11 +926,11 @@ end
 
 
 function gadgetHandler:RecvFromSynced(...)
-  if (actionHandler.RecvFromSynced(unpack(arg))) then
+  if (actionHandler.RecvFromSynced(...)) then
     return
   end
   for _,g in ipairs(self.RecvFromSyncedList) do
-    if (g:RecvFromSynced(unpack(arg))) then
+    if (g:RecvFromSynced(...)) then
       return
     end
   end
@@ -1317,17 +1323,21 @@ function gadgetHandler:UnitSeismicPing(x, y, z, strength,
 end
 
 
-function gadgetHandler:UnitLoaded(x, y, z, strength)
+function gadgetHandler:UnitLoaded(unitID, unitDefID, unitTeam,
+                                  transportID, transportTeam)
   for _,g in ipairs(self.UnitLoadedList) do
-    g:UnitLoaded(x, y, z, strength)
+    g:UnitLoaded(unitID, unitDefID, unitTeam,
+                 transportID, transportTeam)
   end
   return
 end
 
 
-function gadgetHandler:UnitUnloaded(x, y, z, strength)
+function gadgetHandler:UnitUnloaded(unitID, unitDefID, unitTeam,
+                                    transportID, transportTeam)
   for _,g in ipairs(self.UnitUnloadedList) do
-    g:UnitUnloaded(x, y, z, strength)
+    g:UnitUnloaded(unitID, unitDefID, unitTeam,
+                   transportID, transportTeam)
   end
   return
 end

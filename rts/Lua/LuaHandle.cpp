@@ -5,6 +5,9 @@
 
 #include "LuaHandle.h"
 #include <string>
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
 
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaGaia.h"
@@ -15,20 +18,28 @@
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
+#include "LuaUtils.h"
 #include "Game/Player.h"
+#include "Game/UI/KeyCodes.h"
+#include "Game/UI/KeySet.h"
+#include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
+#include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
+#include "System/SpringApp.h"
 #include "System/FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
 
+extern Uint8 *keys;
 
 bool CLuaHandle::devMode = false;
+bool CLuaHandle::modUICtrl = true;
 
 CLuaHandle* CLuaHandle::activeHandle = NULL;
 bool CLuaHandle::activeFullRead    = false;
@@ -168,7 +179,6 @@ void CLuaHandle::CheckStack()
 
 bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
-//	logOutput.Print("RunCallIn: %s %s\n", hs.GetString().c_str(), name.c_str());fflush(stdout);//FIXME
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
 	const int error = lua_pcall(L, inArgs, outArgs, 0);
@@ -183,6 +193,16 @@ bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 		return false;
 	}
 	return true;
+}
+
+
+inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs,
+                                          int inArgs, int outArgs)
+{
+	synced = false;
+	const bool retval = RunCallIn(hs, inArgs, outArgs);
+	synced = !userMode;
+	return retval;
 }
 
 
@@ -264,6 +284,25 @@ void CLuaHandle::TeamDied(int teamID)
 
 /******************************************************************************/
 
+inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
+{
+	LUA_CALL_IN_CHECK(L);	
+	lua_checkstack(L, 5);
+	if (!hs.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	RunCallIn(hs, 3, 0);
+
+	return;
+}
+
+
 void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 {
 	LUA_CALL_IN_CHECK(L);	
@@ -288,19 +327,8 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 
 void CLuaHandle::UnitFinished(const CUnit* unit)
 {
-	LUA_CALL_IN_CHECK(L);	
-	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("UnitFinished");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	RunCallIn(cmdStr, 3, 0);
+	UnitCallIn(cmdStr, unit);
 	return;
 }
 
@@ -396,19 +424,8 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
 
 void CLuaHandle::UnitIdle(const CUnit* unit)
 {
-	LUA_CALL_IN_CHECK(L);	
-	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("UnitIdle");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	RunCallIn(cmdStr, 3, 0);
+	UnitCallIn(cmdStr, unit);
 	return;
 }
 
@@ -618,40 +635,52 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 
 /******************************************************************************/
 
+void CLuaHandle::UnitEnteredWater(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitEnteredWater");
+	UnitCallIn(cmdStr, unit);
+	return;
+}
+
+
+void CLuaHandle::UnitEnteredAir(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitEnteredAir");
+	UnitCallIn(cmdStr, unit);
+	return;
+}
+
+
+void CLuaHandle::UnitLeftWater(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitLeftWater");
+	UnitCallIn(cmdStr, unit);
+	return;
+}
+
+
+void CLuaHandle::UnitLeftAir(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitLeftAir");
+	UnitCallIn(cmdStr, unit);
+	return;
+}
+
+
+/******************************************************************************/
+
 void CLuaHandle::UnitCloaked(const CUnit* unit)
 {
-	LUA_CALL_IN_CHECK(L);	
-	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("UnitCloaked");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	RunCallIn(cmdStr, 3, 0);
+	UnitCallIn(cmdStr, unit);
 	return;
 }
 
 
 void CLuaHandle::UnitDecloaked(const CUnit* unit)
 {
-	LUA_CALL_IN_CHECK(L);	
-	lua_checkstack(L, 5);
 	static const LuaHashString cmdStr("UnitDecloaked");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
-
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// call the routine
-	RunCallIn(cmdStr, 3, 0);
+	UnitCallIn(cmdStr, unit);
 	return;
 }
 
@@ -858,12 +887,38 @@ void CLuaHandle::Update()
 		return;
 	}
 
-	synced = false;
+	// call the routine
+	RunCallInUnsynced(cmdStr, 0, 0);
+
+	return;
+}
+
+
+void CLuaHandle::ViewResize()
+{
+	LUA_CALL_IN_CHECK(L);	
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("ViewResize");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return;
+	}
+
+	lua_newtable(L);
+	LuaPushNamedNumber(L, "screenSizeX", gu->screenSizeX);
+	LuaPushNamedNumber(L, "screenSizeY", gu->screenSizeY);
+	LuaPushNamedNumber(L, "screenPosX",  0.0f);
+	LuaPushNamedNumber(L, "screenPosY",  0.0f);
+	LuaPushNamedNumber(L, "windowSizeX", gu->winSizeX);
+	LuaPushNamedNumber(L, "windowSizeY", gu->winSizeY);
+	LuaPushNamedNumber(L, "windowPosX",  gu->winPosX);
+	LuaPushNamedNumber(L, "windowPosY",  gu->winPosY);
+	LuaPushNamedNumber(L, "viewSizeX",   gu->viewSizeX);
+	LuaPushNamedNumber(L, "viewSizeY",   gu->viewSizeY);
+	LuaPushNamedNumber(L, "viewPosX",    gu->viewPosX);
+	LuaPushNamedNumber(L, "viewPosY",    gu->viewPosY);
 
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 1, 0);
 
 	return;
 }
@@ -904,12 +959,8 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 	}
 */
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, args, 1);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, args, 1);
 
 	if (!lua_isnumber(L, 1)) {
 		lua_pop(L, 1);
@@ -933,12 +984,8 @@ void CLuaHandle::DrawGenesis()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -953,12 +1000,8 @@ void CLuaHandle::DrawWorld()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -973,12 +1016,8 @@ void CLuaHandle::DrawWorldPreUnit()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -993,12 +1032,8 @@ void CLuaHandle::DrawWorldShadow()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -1013,12 +1048,8 @@ void CLuaHandle::DrawWorldReflection()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -1033,12 +1064,8 @@ void CLuaHandle::DrawWorldRefraction()
 		return;
 	}
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 0, 0);
 
 	return;
 }
@@ -1056,12 +1083,8 @@ void CLuaHandle::DrawScreen()
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 2, 0);
 
 	return;
 }
@@ -1079,12 +1102,8 @@ void CLuaHandle::DrawScreenEffects()
 	lua_pushnumber(L, gu->viewSizeX);
 	lua_pushnumber(L, gu->viewSizeY);
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 2, 0);
 
 	return;
 }
@@ -1110,17 +1129,523 @@ void CLuaHandle::DrawInMiniMap()
 	lua_pushnumber(L, xSize);
 	lua_pushnumber(L, ySize);
 
-	synced = false;
-
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
-
-	synced = !userMode;
+	RunCallInUnsynced(cmdStr, 2, 0);
 
 	return;
 }
 
+/******************************************************************************/
+/******************************************************************************/
 
+bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
+	static const LuaHashString cmdStr("KeyPress");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
+
+	lua_pushboolean(L, isRepeat);
+
+	CKeySet ks(key, false);
+	lua_pushstring(L, ks.GetString(true).c_str());
+
+	lua_pushnumber(L, currentUnicode);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 5, 1)) {
+		return false;
+	}
+
+	// const int args = lua_gettop(L); unused
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::KeyRelease(unsigned short key)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("KeyRelease");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, key);
+
+	lua_newtable(L);
+	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
+	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
+	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
+
+	CKeySet ks(key, false);
+	lua_pushstring(L, ks.GetString(true).c_str());
+
+	lua_pushnumber(L, currentUnicode);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 4, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::MousePress(int x, int y, int button)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("MousePress");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, button);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+int CLuaHandle::MouseRelease(int x, int y, int button)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("MouseRelease");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, button);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+		return false;
+	}
+
+	if (!lua_isnumber(L, -1)) {
+		lua_pop(L, 1);
+		return -1;
+	}
+	const int retval = (int)lua_tonumber(L, -1) - 1;
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
+	static const LuaHashString cmdStr("MouseMove");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, dx);
+	lua_pushnumber(L, -dy);
+	lua_pushnumber(L, button);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 5, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::MouseWheel(bool up, float value)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("MouseWheel");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushboolean(L, up);
+	lua_pushnumber(L, value);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::IsAbove(int x, int y)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("IsAbove");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+string CLuaHandle::GetTooltip(int x, int y)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("GetTooltip");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return ""; // the call is not defined
+	}
+
+	lua_pushnumber(L, x - gu->viewPosX);
+	lua_pushnumber(L, gu->viewSizeY - y - 1);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
+		return "";
+	}
+
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
+		return "";
+	}
+	const string retval = lua_tostring(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::ConfigCommand(const string& command)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
+	static const LuaHashString cmdStr("ConfigureLayout");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return true; // the call is not defined
+	}
+
+	lua_pushstring(L, command.c_str());
+
+	// call the routine
+	if (!RunCallInUnsynced(cmdStr, 1, 0)) {
+		return false;
+	}
+	return true;
+}
+
+
+bool CLuaHandle::CommandNotify(const Command& cmd)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("CommandNotify");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined
+	}
+
+	// push the command id
+	lua_pushnumber(L, cmd.id);
+
+	// push the params list
+	lua_newtable(L);
+	for (int p = 0; p < (int)cmd.params.size(); p++) {
+		lua_pushnumber(L, p + 1);
+		lua_pushnumber(L, cmd.params[p]);
+		lua_rawset(L, -3);
+	}
+
+	// push the options table
+	lua_newtable(L);
+	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
+	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
+	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
+	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+		return false;
+	}
+
+	// get the results
+	const int args = lua_gettop(L);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("CommandNotify() bad return value (%i)\n", args);
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::AddConsoleLine(const string& msg, int zone)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("AddConsoleLine");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return true; // the call is not defined
+	}
+
+	lua_pushstring(L, msg.c_str());
+	lua_pushnumber(L, zone);
+
+	// call the function
+	if (!RunCallIn(cmdStr, 2, 0)) {
+		return false;
+	}
+
+	return true;
+}
+
+
+
+bool CLuaHandle::GroupChanged(int groupID)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+	static const LuaHashString cmdStr("GroupChanged");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined
+	}
+
+	lua_pushnumber(L, groupID);
+
+	// call the routine
+	if (!RunCallInUnsynced(cmdStr, 1, 0)) {
+		return false;
+	}
+
+	return true;
+}
+
+
+
+string CLuaHandle::WorldTooltip(const CUnit* unit,
+                                const CFeature* feature,
+                                const float3* groundPos)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
+	static const LuaHashString cmdStr("WorldTooltip");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return ""; // the call is not defined
+	}
+
+	int args;
+	if (unit) {
+		HSTR_PUSH(L, "unit");
+		lua_pushnumber(L, unit->id);
+		args = 2;
+	}
+	else if (feature) {
+		HSTR_PUSH(L, "feature");
+		lua_pushnumber(L, feature->id);
+		args = 2;
+	}
+	else if (groundPos) {
+		HSTR_PUSH(L, "ground");
+		lua_pushnumber(L, groundPos->x);
+		lua_pushnumber(L, groundPos->y);
+		lua_pushnumber(L, groundPos->z);
+		args = 4;
+	}
+	else {
+		HSTR_PUSH(L, "selection");
+		args = 1;
+	}
+
+	// call the routine
+	if (!RunCallInUnsynced(cmdStr, args, 1)) {
+		return "";
+	}
+
+	if (!lua_isstring(L, -1)) {
+		lua_pop(L, 1);
+		return "";
+	}
+	const string retval = lua_tostring(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::MapDrawCmd(int playerID, int type,
+                            const float3* pos0,
+                            const float3* pos1,
+                            const string* label)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 9);
+	static const LuaHashString cmdStr("MapDrawCmd");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined
+	}
+
+	int args;
+
+	lua_pushnumber(L, playerID);
+
+	if (type == CInMapDraw::NET_POINT) {
+		HSTR_PUSH(L, "point");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushstring(L, label->c_str());
+		args = 6;
+	}
+	else if (type == CInMapDraw::NET_LINE) {
+		HSTR_PUSH(L, "line");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushnumber(L, pos1->x);
+		lua_pushnumber(L, pos1->y);
+		lua_pushnumber(L, pos1->z);
+		args = 8;
+	}
+	else if (type == CInMapDraw::NET_ERASE) {
+		HSTR_PUSH(L, "erase");
+		lua_pushnumber(L, pos0->x);
+		lua_pushnumber(L, pos0->y);
+		lua_pushnumber(L, pos0->z);
+		lua_pushnumber(L, 100.0f);  // radius
+		args = 6;
+	}
+	else {
+		logOutput.Print("Unknown MapDrawCmd() type");
+		lua_pop(L, 2); // pop the function and playerID
+		return false;
+	}
+
+	// call the routine
+	if (!RunCallInUnsynced(cmdStr, args, 1)) {
+		return false;
+	}
+
+	// take the event?
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+bool CLuaHandle::GameSetup(const string& state, bool& ready,
+                           const map<int, string>& playerStates)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+	static const LuaHashString cmdStr("GameSetup");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false;
+	}
+
+	lua_pushstring(L, state.c_str());
+
+	lua_pushboolean(L, ready);
+
+	lua_newtable(L);
+	map<int, string>::const_iterator it;
+	for (it = playerStates.begin(); it != playerStates.end(); ++it) {
+		lua_pushnumber(L, it->first);
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+
+	// call the routine
+	if (!RunCallInUnsynced(cmdStr, 3, 2)) {
+		return false;
+	}
+
+	if (lua_isboolean(L, -2)) {
+		if (lua_toboolean(L, -2)) {
+			if (lua_isboolean(L, -1)) {
+				ready = lua_toboolean(L, -1);
+			}
+			lua_pop(L, 2);
+			return true;
+		}
+	}
+	lua_pop(L, 2);
+	return false;
+}
+
+
+/******************************************************************************/
 /******************************************************************************/
 
 bool CLuaHandle::AddBasicCalls()

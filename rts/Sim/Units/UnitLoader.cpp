@@ -325,10 +325,11 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 
 
-	if (ud->floater)
+	if (ud->floater) {
 		unit->pos.y = std::max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
-	else
+	} else {
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
+	}
 
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
@@ -348,8 +349,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	relMax *= 30;		// convert ticks to milliseconds
 
 	// TA does some special handling depending on weapon count
-	if (unit->weapons.size() > 1)
+	if (unit->weapons.size() > 1) {
 		relMax = std::max(relMax, 3000);
+	}
 
 	// Call initializing script functions
 	unit->cob->Call(COBFN_Create);
@@ -364,8 +366,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	unit->Init(builder);
 
-	if(!build)
+	if (!build) {
 		unit->FinishedBuilding();
+	}
 
 	return unit;
 }

@@ -68,7 +68,8 @@ CR_REG_METADATA(CLosHandler,(
 //		CR_MEMBER(Points),
 		CR_MEMBER(terrainHeight),
 //		CR_MEMBER(lostables)
-		CR_RESERVED(32),
+		CR_MEMBER(requireSonarUnderWater),
+		CR_RESERVED(31),
 		CR_POSTLOAD(PostLoad)
 		));
 
@@ -99,13 +100,16 @@ CLosHandler::CLosHandler()
 	invLosDiv = 1 / ((float)SQUARE_SIZE * (1 << losMipLevel));
 	invAirDiv = 1 / ((float)SQUARE_SIZE * (1 << airMipLevel));
 
-	for(int a=0;a<gs->activeAllyTeams;++a){
-		losMap[a].resize(losSizeX*losSizeY,0);
-		airLosMap[a].resize(airSizeX*airSizeY,0);
+	requireSonarUnderWater = modInfo.requireSonarUnderWater;
+
+	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+		losMap[a].resize(losSizeX * losSizeY, 0);
+		airLosMap[a].resize(airSizeX * airSizeY, 0);
 	}
 
-	for(int a=1;a<=MAX_LOS_TABLE;++a)
+	for (int a=1;a<=MAX_LOS_TABLE;++a) {
 		OutputTable(a);
+	}
 
 	for(int a=0;a<256;++a)
 		terrainHeight[a]=-15;

@@ -21,10 +21,11 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModelParser.h"
+#include "Sim/ModInfo.h"
+#include "Sim/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "Sim/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -222,23 +223,8 @@ void CUnitDefHandler::ProcessDecoys()
 
 void CUnitDefHandler::FindStartUnits()
 {
-	LuaParser luaParser("gamedata/sidedata.lua",
-	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		logOutput.Print(luaParser.GetErrorLog());
-	}
-
-	const LuaTable sideData = luaParser.GetRoot();
-	// get the startUnit UnitDef IDs
-	startUnitIDs.clear();
-	std::vector<std::string> sides;
-	for (int i = 1; true; i++) {
-		const LuaTable side = sideData.SubTable(i);
-		if (!side.IsValid()) {
-			break;
-		}
-		std::string startUnit = side.GetString("startUnit", "");
-		StringToLowerInPlace(startUnit);
+	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
+		const std::string& startUnit = sideParser.GetStartUnit(i);
 		if (!startUnit.empty()) {
 			std::map<std::string, int>::iterator it = unitID.find(startUnit);
 			if (it != unitID.end()) {

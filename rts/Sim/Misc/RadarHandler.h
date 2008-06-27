@@ -6,7 +6,19 @@
 #include "Object.h"
 #include "Sim/Units/Unit.h"
 
+
 #define RADAR_SIZE 8
+
+
+// Because submerged units are only given LOS if they are also
+// in sonar range (see LosHandler.h), sonar stealth and sonar
+// jammed units can not be detected (probably why those 2 features
+// are not being used by most mods). Uncommenting the following
+// line will allow the LOS display mode to differentiate between
+// radar and sonar coverage, and radar and sonar jammer coverage.
+
+//#define SONAR_JAMMER_MAPS
+
 
 class CRadarHandler : public boost::noncopyable
 {
@@ -90,6 +102,9 @@ public:
 	std::vector<unsigned short> airRadarMaps[MAX_TEAMS];
 	std::vector<unsigned short> sonarMaps[MAX_TEAMS];
 	std::vector<unsigned short> jammerMaps[MAX_TEAMS];
+#ifdef SONAR_JAMMER_MAPS
+	std::vector<unsigned short> sonarJammerMaps[MAX_TEAMS];
+#endif
 	std::vector<unsigned short> seismicMaps[MAX_TEAMS];
 	std::vector<unsigned short> commonJammerMap;
 	std::vector<unsigned short> commonSonarJammerMap;

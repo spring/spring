@@ -121,7 +121,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 			dist = fudgeRad;
 		}
 		// dist2 = distance from boundary of unit's hitsphere to center of explosion,
-		// unless unit->isUnderwater and explosion is above water: then it's center to center distance
+		// unless unit->isUnderWater and explosion is above water: then it's center to center distance
 		float dist2 = dist - unit->radius;
 		if (unit->isUnderWater && (pos.y > -1.0f)) {	//should make it harder to damage subs with above water weapons
 			dist2 += unit->radius;

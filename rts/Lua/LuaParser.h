@@ -41,7 +41,9 @@ class LuaTable {
 
 		const string& GetPath() const { return path; }
 
-		int GetLength() const; // lua '#' operator
+		int GetLength() const;                  // lua '#' operator
+		int GetLength(int key) const;           // lua '#' operator
+		int GetLength(const string& key) const; // lua '#' operator
 
 		bool GetKeys(vector<int>& data) const;
 		bool GetKeys(vector<string>& data) const;

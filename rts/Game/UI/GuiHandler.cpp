@@ -19,6 +19,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -59,9 +60,6 @@ extern Uint8 *keys;
 CGuiHandler* guihandler = NULL;
 
 
-const char* CGuiHandler::luaUiFile = "luaui.lua";
-
-
 CGuiHandler::CGuiHandler()
 : inCommand(-1),
   activeMousePress(false),
@@ -74,7 +72,6 @@ CGuiHandler::CGuiHandler()
   buildSpacing(0),
   buildFacing(0),
   actionOffset(0),
-  luaUIClick(false),
   gatherMode(false)
 {
 	icons = SAFE_NEW IconInfo[16];
@@ -857,10 +854,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 {
-	if (luaUI != NULL) {
-		if (luaUI->CommandNotify(cmd)) {
-			return;
-		}
+	if (luaCallIns.CommandNotify(cmd)) {
+		return;
 	}
 
 	selectedUnits.GiveCommand(cmd, fromUser);
@@ -920,11 +915,9 @@ void CGuiHandler::Update()
 
 	// Notify LuaUI about groups that have changed
 	if (!changedGroups.empty()) {
-		if (luaUI != NULL) {
-			set<int>::const_iterator it;
-			for (it = changedGroups.begin(); it != changedGroups.end(); ++it) {
-				luaUI->GroupChanged(*it);
-			}
+		set<int>::const_iterator it;
+		for (it = changedGroups.begin(); it != changedGroups.end(); ++it) {
+			luaCallIns.GroupChanged(*it);
 		}
 		changedGroups.clear();
 	}
@@ -1026,13 +1019,6 @@ void CGuiHandler::SetCursorIcon() const
 
 bool CGuiHandler::MousePress(int x, int y, int button)
 {
-	if (luaUI != NULL) {
-		luaUIClick = luaUI->MousePress(x, y, button);
-		if (luaUIClick) {
-			return true;
-		}
-	}
-
 	if (button == SDL_BUTTON_MIDDLE) {
 		return false;
 	}
@@ -1074,9 +1060,6 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (luaUI != NULL) {
-		luaUI->MouseMove(x, y, dx, dy, button);
-	}
 }
 
 
@@ -1084,20 +1067,8 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 {
 	int iconCmd = -1;
 
-	if (luaUIClick) {
-		luaUIClick = false;
-		if (luaUI != NULL) {
-			iconCmd = luaUI->MouseRelease(x, y, button);
-		}
-		if ((iconCmd < 0) || (iconCmd >= commands.size())) {
-			return;
-		} else {
-			activeMousePress = true;
-		}
-	}
-
 	if (activeMousePress) {
-		activeMousePress=false;
+		activeMousePress = false;
 	} else {
 		return;
 	}
@@ -1654,14 +1625,14 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 			return;
 		}
 		if (luaUI == NULL) {
-			logOutput.Print("Loading: \"%s\"\n", luaUiFile);
+			logOutput.Print("Loading: \"%s\"\n", "luaui.lua"); // FIXME
 			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
 				LoadConfig("ctrlpanel.txt");
 				logOutput.Print("Loading failed\n");
 			}
 		} else {
-			logOutput.Print("Reloading: \"%s\"\n", luaUiFile);
+			logOutput.Print("Reloading: \"%s\"\n", "luaui.lua"); // FIXME
 			CLuaUI::FreeHandler();
 			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
@@ -1769,12 +1740,6 @@ int CGuiHandler::GetIconPosCommand(int slot) const
 
 bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 {
-	if (luaUI != NULL) {
-		if (luaUI->KeyPress(key, isRepeat)) {
-			return true;
-		}
-	}
-
 	if (key == SDLK_ESCAPE && activeMousePress) {
 		activeMousePress = false;
 		inCommand = -1;
@@ -2028,9 +1993,6 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 bool CGuiHandler::KeyReleased(unsigned short key)
 {
-	if (luaUI != NULL) {
-		return luaUI->KeyRelease(key);
-	}
 	return false;
 }
 
@@ -2089,11 +2051,6 @@ void CGuiHandler::FinishCommand(int button)
 
 bool CGuiHandler::IsAbove(int x, int y)
 {
-	if (luaUI != NULL) {
-		if (luaUI->IsAbove(x, y)) {
-			return true;
-		}
-	}
 	return AboveGui(x, y);
 }
 
@@ -2101,12 +2058,6 @@ bool CGuiHandler::IsAbove(int x, int y)
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
 	std::string s;
-	if (luaUI != NULL) {
-		s = luaUI->GetTooltip(x, y);
-		if (!s.empty()) {
-			return s;
-		}
-	}
 
 	const int iconPos = IconAtPos(x, y);
 	const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;

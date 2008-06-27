@@ -447,14 +447,14 @@ static bool InitParamMap()
 	ADD_FLOAT("predictBoost", wd.predictBoost);
 	ADD_INT("highTrajectory", wd.highTrajectory);
 
-	ADD_BOOL("noSelfDamage", wd.noSelfDamage);
-	ADD_BOOL("impactOnly",   wd.impactOnly);
+	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
+	ADD_BOOL("impactOnly",    wd.impactOnly);
 	ADD_FLOAT("areaOfEffect", wd.areaOfEffect);
-	ADD_FLOAT("fireStarter", wd.fireStarter);
-	ADD_FLOAT("edgeEffectiveness", wd.edgeEffectiveness);
-	ADD_FLOAT("size", wd.size);
-	ADD_FLOAT("sizeGrowth", wd.sizeGrowth);
+	ADD_FLOAT("fireStarter",  wd.fireStarter);
+	ADD_FLOAT("size",          wd.size);
+	ADD_FLOAT("sizeGrowth",    wd.sizeGrowth);
 	ADD_FLOAT("collisionSize", wd.collisionSize);
+	ADD_FLOAT("edgeEffectiveness", wd.edgeEffectiveness);
 
 	ADD_INT("salvoSize",    wd.salvosize);
 	ADD_INT("projectiles",  wd.projectilespershot);
@@ -463,11 +463,11 @@ static bool InitParamMap()
 	ADD_FLOAT("beamtime",   wd.beamtime);
 	ADD_BOOL("beamburst",   wd.beamburst);
 
-	ADD_BOOL("waterbounce", wd.waterBounce);
-	ADD_BOOL("groundbounce", wd.groundBounce);
-	ADD_FLOAT("groundslip", wd.bounceSlip);
+	ADD_BOOL("waterbounce",    wd.waterBounce);
+	ADD_BOOL("groundbounce",   wd.groundBounce);
+	ADD_FLOAT("groundslip",    wd.bounceSlip);
 	ADD_FLOAT("bouncerebound", wd.bounceRebound);
-	ADD_INT("numbounce", wd.numBounce);
+	ADD_INT("numbounce",       wd.numBounce);
 
 	ADD_FLOAT("maxAngle", wd.maxAngle);
 	ADD_FLOAT("restTime", wd.restTime);

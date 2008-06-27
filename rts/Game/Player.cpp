@@ -8,6 +8,7 @@
 #include "UI/MouseHandler.h"
 #include "CameraHandler.h"
 #include "Camera.h"
+#include "Team.h"
 #include <assert.h>
 #endif
 #include "mmgr.h"
@@ -25,6 +26,8 @@ CR_REG_METADATA(CPlayer, (
 //				CR_MEMBER(cpuUsage),
 //				CR_MEMBER(ping),
 				CR_MEMBER(currentStats),
+				CR_MEMBER(playerNum),
+//				CR_MEMBER(controlledTeams),
 				CR_RESERVED(32)
 				));
 
@@ -84,24 +87,67 @@ CPlayer::~CPlayer()
 	delete currentStats;
 }
 
+
+void CPlayer::SetControlledTeams()
+{
+	controlledTeams.clear();
+
+	if (gs->godMode) {
+		// anyone can control any unit
+		for (int t = 0; t < MAX_TEAMS; t++) {
+			controlledTeams.insert(t);
+		}
+		return;
+	}
+
+	if (spectator) {
+		return; // spectators can't control any units
+	}
+
+	// my team
+	controlledTeams.insert(team);
+
+	// AI teams
+	for (int t = 0; t < MAX_TEAMS; t++) {
+		const CTeam* team = gs->Team(t);
+		if (team && team->isAI &&
+		    !team->dllAI.empty() && // luaAI does not require client control
+		    (team->leader == playerNum)) {
+			controlledTeams.insert(t);
+		}
+	}
+}
+
+
+void CPlayer::UpdateControlledTeams()
+{
+	for (int p = 0; p < MAX_PLAYERS; p++) {
+		CPlayer* player = gs->players[p];
+		if (player) {
+			player->SetControlledTeams();
+		}
+	}
+}
+
+
 void CPlayer::StartSpectating()
 {
-	spectator=true;
-	if (gs->players[gu->myPlayerNum] == this) //TODO bad hack
-	{
+	spectator = true;
+	if (gs->players[gu->myPlayerNum] == this) { //TODO bad hack
 		gu->spectating           = true;
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
 	}
 }
 
+
 #ifdef DIRECT_CONTROL_ALLOWED
 void CPlayer::StopControllingUnit()
 {
 	ENTER_UNSYNCED;
-	if(gu->directControl==playerControlledUnit){
+	if (gu->directControl == playerControlledUnit) {
 		assert(gs->players[gu->myPlayerNum] == this);
-		gu->directControl=0;
+		gu->directControl = 0;
 
 		/* Switch back to the camera we were using before. */
 		camHandler->PopMode();
@@ -113,6 +159,6 @@ void CPlayer::StopControllingUnit()
 	}
 	ENTER_SYNCED;
 
-	playerControlledUnit=0;
+	playerControlledUnit = 0;
 }
 #endif

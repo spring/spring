@@ -32,6 +32,7 @@
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
+#include "Sim/SideParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -129,6 +130,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetHeadingFromVector);
 	REGISTER_LUA_CFUNC(GetVectorFromHeading);
 
+	REGISTER_LUA_CFUNC(GetSideData);
+
 	REGISTER_LUA_CFUNC(GetAllyTeamStartBox);
 	REGISTER_LUA_CFUNC(GetTeamStartPosition);
 
@@ -149,6 +152,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
+
+	REGISTER_LUA_CFUNC(ValidUnitID);
+	REGISTER_LUA_CFUNC(ValidFeatureID);
 
 	REGISTER_LUA_CFUNC(GetAllUnits);
 	REGISTER_LUA_CFUNC(GetTeamUnits);
@@ -375,7 +381,11 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	}
 	const int unitID = (int)lua_tonumber(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		if (caller != NULL) {
+			luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
+		} else {
+			return NULL;
+		}
 	}
 	CUnit* unit = uh->units[unitID];
 	if (unit == NULL) {
@@ -795,6 +805,49 @@ int LuaSyncedRead::GetVectorFromHeading(lua_State* L)
 	lua_pushnumber(L, vec.x);
 	lua_pushnumber(L, vec.z);
 	return 2;
+}
+
+
+/******************************************************************************/
+
+int LuaSyncedRead::GetSideData(lua_State* L)
+{
+	if (lua_israwstring(L, 1)) {
+		const string sideName = lua_tostring(L, 1);
+		const string& startUnit = sideParser.GetStartUnit(sideName);
+		const string& caseName  = sideParser.GetCaseName(sideName);
+		if (startUnit.empty()) {
+			return 0;
+		}
+		lua_pushstring(L, startUnit.c_str());
+		lua_pushstring(L, caseName.c_str());
+		return 2;
+	}
+	else if (lua_israwnumber(L, 1)) {
+		const unsigned int index = (int)lua_tonumber(L, 1) - 1;
+		if (!sideParser.ValidSide(index)) {
+			return 0;
+		}
+		lua_pushstring(L, sideParser.GetSideName(index).c_str());
+		lua_pushstring(L, sideParser.GetStartUnit(index).c_str());
+		lua_pushstring(L, sideParser.GetCaseName(index).c_str());
+		return 3;
+	}
+	else {
+		lua_newtable(L);
+		const unsigned int sideCount = sideParser.GetCount();
+		for (unsigned int i = 0; i < sideCount; i++) {
+			lua_pushnumber(L, i + 1);
+			lua_newtable(L); {
+				LuaPushNamedString(L, "sideName",  sideParser.GetSideName(i));
+				LuaPushNamedString(L, "caseName",  sideParser.GetCaseName(i));
+				LuaPushNamedString(L, "startUnit", sideParser.GetStartUnit(i));
+			}
+			lua_rawset(L, -3);
+		}
+		return 1;
+	}
+	return 0;
 }
 
 
@@ -2236,6 +2289,14 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedRead::ValidUnitID(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, NULL, 1); // note the NULL
+	lua_pushboolean(L, unit != NULL);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitStates(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -3365,19 +3426,32 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isnumber(L, index)) {
-		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
+		if (caller != NULL) {
+			luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
+		} else {
+			return NULL;
+		}
 	}
 	const int featureID = (int)lua_tonumber(L, index);
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 	CFeatureSet::const_iterator it = fset.find(featureID);
 
-	if (it == fset.end())
+	if (it == fset.end()) {
 		return NULL;
+	}
 
 	if (!IsFeatureVisible(*it)) {
 		return NULL;
 	}
 	return *it;
+}
+
+
+int LuaSyncedRead::ValidFeatureID(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, NULL, 1); // note the NULL
+	lua_pushboolean(L, feature != NULL);
+	return 1;
 }
 
 
@@ -3579,40 +3653,28 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 
 int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to GetGroundHeight(x, z)");
-	}
-	const float x = lua_tonumber(L, 1);
-	const float y = lua_tonumber(L, 2);
+	const float x = (float)luaL_checknumber(L, 1);
+	const float z = (float)luaL_checknumber(L, 2);
 	// GetHeight2() does not clamp the value to (>= 0)
-	lua_pushnumber(L, ground->GetHeight2(x, y));
+	lua_pushnumber(L, ground->GetHeight2(x, z));
 	return 1;
 }
 
 
 int LuaSyncedRead::GetGroundOrigHeight(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to GetGroundOrigHeight(x, z)");
-	}
-	const float x = lua_tonumber(L, 1);
-	const float y = lua_tonumber(L, 2);
-	lua_pushnumber(L, ground->GetOrigHeight(x, y));
+	const float x = (float)luaL_checknumber(L, 1);
+	const float z = (float)luaL_checknumber(L, 2);
+	lua_pushnumber(L, ground->GetOrigHeight(x, z));
 	return 1;
 }
 
 
 int LuaSyncedRead::GetGroundNormal(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to GetGroundNormal(x, z)");
-	}
-	const float x = lua_tonumber(L, 1);
-	const float y = lua_tonumber(L, 2);
-	const float3 normal = ground->GetSmoothNormal(x, y);
+	const float x = (float)luaL_checknumber(L, 1);
+	const float z = (float)luaL_checknumber(L, 2);
+	const float3 normal = ground->GetSmoothNormal(x, z);
 	lua_pushnumber(L, normal.x);
 	lua_pushnumber(L, normal.y);
 	lua_pushnumber(L, normal.z);
@@ -3622,13 +3684,8 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 
 int LuaSyncedRead::GetGroundInfo(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to GetGroundInfo(x, z)");
-	}
-
-	const float x = lua_tonumber(L, 1);
-	const float z = lua_tonumber(L, 2);
+	const float x = (float)luaL_checknumber(L, 1);
+	const float z = (float)luaL_checknumber(L, 2);
 
 	const int ix = (int)(max(0.0f, min(float3::maxxpos, x)) / 16.0f);
 	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);

@@ -45,17 +45,24 @@ extern Uint8 *keys;
 //////////////////////////////////////////////////////////////////////
 CSelectedUnits selectedUnits;
 
+
 CSelectedUnits::CSelectedUnits()
 : selectionChanged(false),
 	possibleCommandsChanged(true),
-	selectedGroup(-1)
+	selectedGroup(-1),
+	buildIconsFirst(false)
 {
-	buildIconsFirst = !!configHandler.GetInt("BuildIconsFirst", 0);
 }
 
 
 CSelectedUnits::~CSelectedUnits()
 {
+}
+
+
+void CSelectedUnits::Init()
+{
+	buildIconsFirst = !!configHandler.GetInt("BuildIconsFirst", 0);
 }
 
 
@@ -427,28 +434,25 @@ void CSelectedUnits::Draw()
 	if (cmdColors.unitBox[3] > 0.0f) {
 		glColor4fv(cmdColors.unitBox);
 
-		glBegin(GL_QUADS);
-		CUnitSet::iterator ui;
-		if(selectedGroup!=-1){
-			for(ui=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.begin();ui!=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.end();++ui){
-				if((*ui)->isIcon)
-					continue;
-				float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
-				glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
-				glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
-				glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
-				glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
-			}
+		const CUnitSet* unitSet;
+		if (selectedGroup != -1) {
+			unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 		} else {
-			for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-				if((*ui)->isIcon)
-					continue;
-				float3 pos((*ui)->pos+(*ui)->speed*gu->timeOffset);
-				glVertexf3(pos+float3((*ui)->xsize*4,0,(*ui)->ysize*4));
-				glVertexf3(pos+float3(-(*ui)->xsize*4,0,(*ui)->ysize*4));
-				glVertexf3(pos+float3(-(*ui)->xsize*4,0,-(*ui)->ysize*4));
-				glVertexf3(pos+float3((*ui)->xsize*4,0,-(*ui)->ysize*4));
+			unitSet = &selectedUnits;
+		}
+
+		glBegin(GL_QUADS);
+		CUnitSet::const_iterator ui;
+		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
+			const CUnit* unit = *ui;
+			if (unit->isIcon) {
+				continue;
 			}
+			const float3 pos(unit->pos + unit->speed * gu->timeOffset);
+			glVertexf3(pos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(pos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(pos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
+			glVertexf3(pos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
 		}
 		glEnd();
 	}
@@ -505,12 +509,34 @@ void CSelectedUnits::NetSelect(vector<int>& s,int player)
 }
 
 
-void CSelectedUnits::NetOrder(Command &c, int player)
+void CSelectedUnits::NetOrder(Command &c, int playerID)
 {
-	selectedUnitsAI.GiveCommandNet(c,player);
+	selectedUnitsAI.GiveCommandNet(c, playerID);
 
-	if (netSelected[player].size() > 0)
-		globalAI->PlayerCommandGiven(netSelected[player],c,player);
+	if (netSelected[playerID].size() > 0) {
+		globalAI->PlayerCommandGiven(netSelected[playerID], c, playerID);
+	}
+}
+
+
+void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
+{
+	CUnit* unit = uh->units[unitid];
+	if (unit == NULL) {
+		return;
+	}
+
+	const CPlayer* player = gs->players[playerID];
+	if (player == NULL) {
+		return;
+	}
+	if (!player->CanControlTeam(unit->team)) {
+		logOutput.Print("Invalid order from player %i for (unit %i, team %i)",
+		                playerID, unitid, unit->team);
+		return;
+	}
+	
+	unit->commandAI->GiveCommand(c, false);
 }
 
 
@@ -622,13 +648,6 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 
 
 /******************************************************************************/
-
-void CSelectedUnits::AiOrder(int unitid, Command &c)
-{
-	if(uh->units[unitid]!=0)
-		uh->units[unitid]->commandAI->GiveCommand(c,false);
-}
-
 
 void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 {
@@ -787,7 +806,8 @@ void CSelectedUnits::SendCommand(Command& c)
 }
 
 
-void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vector<Command>& commands)
+void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
+                                         const vector<Command>& commands)
 {
 	// NOTE: does not check for invalid unitIDs
 
@@ -820,7 +840,9 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vecto
 		return; // drop the oversized packet
 	}
 	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
-	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS) << static_cast<unsigned short>(msgLen) << static_cast<unsigned char>(gu->myPlayerNum);
+	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS)
+	        << static_cast<unsigned short>(msgLen)
+	        << static_cast<unsigned char>(gu->myPlayerNum);
 	
 	*packet << static_cast<unsigned short>(unitIDCount);
 	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
@@ -831,7 +853,9 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs, const vecto
 	*packet << static_cast<unsigned short>(commandCount);
 	for (unsigned i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
-		*packet << static_cast<unsigned int>(cmd.id) << cmd.options << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
+		*packet << static_cast<unsigned int>(cmd.id)
+		        << cmd.options
+		        << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
 	}
 
 	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));

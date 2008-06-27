@@ -109,7 +109,7 @@ static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 }
 
 
-void CSelectedUnitsAI::GiveCommandNet(Command &c,int player)
+void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 {
 	const vector<int>& netSelected = selectedUnits.netSelected[player];
 	vector<int>::const_iterator ui;

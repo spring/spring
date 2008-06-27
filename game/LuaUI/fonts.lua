@@ -43,13 +43,13 @@ local spGetLastUpdateSeconds = Spring.GetLastUpdateSeconds
 --  Local speedups
 --
 
-local floor    = math.floor
-local strlen   = string.len
-local strsub   = string.sub
-local strbyte  = string.byte
-local strchar  = string.char
-local strfind  = string.find
-local strgfind = string.gfind
+local floor     = math.floor
+local strlen    = string.len
+local strsub    = string.sub
+local strbyte   = string.byte
+local strchar   = string.char
+local strfind   = string.find
+local strgmatch = string.gmatch
 
 
 --------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ local debug = false
 local origPrint = print
 local print = function(...)
   if (debug) then
-    origPrint(unpack(arg))
+    origPrint(...)
   end
 end
 
@@ -205,7 +205,7 @@ end
 
 local function StripColorCodes(text)
   local stripped = ""
-  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
+  for txt, color in strgmatch(text, "([^\255]*)(\255?.?.?.?)") do
     if (strlen(txt) > 0) then
       stripped = stripped .. txt
     end
@@ -269,7 +269,7 @@ end
 
 
 local function RawColorDraw(text)
-  for txt, color in strgfind(text, "([^\255]*)(\255?.?.?.?)") do
+  for txt, color in strgmatch(text, "([^\255]*)(\255?.?.?.?)") do
     if (strlen(txt) > 0) then
       RawDraw(txt)
     end

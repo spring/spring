@@ -1,45 +1,50 @@
 #include "StdAfx.h"
+
 #include "BaseGroundDrawer.h"
-#include "Platform/ConfigHandler.h"
-#include "Rendering/GL/myGL.h"
+
 #include "Game/Camera.h"
-#include "Map/ReadMap.h"
+#include "Game/SelectedUnits.h"
+#include "Game/UI/GuiHandler.h"
+#include "Map/Ground.h"
 #include "Map/HeightLinePalette.h"
+#include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/UnitDef.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "Game/UI/GuiHandler.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
+
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
-	updateFov=true;
+	updateFov = true;
 
-	striptype=GL_TRIANGLE_STRIP;
+	striptype = GL_TRIANGLE_STRIP;
 
-	infoTexAlpha=0.25f;
-	infoTex=0;
+	infoTexAlpha = 0.25f;
+	infoTex = 0;
 
-	drawMode=drawNormal;
-	drawLineOfSight=false;
-	drawRadarAndJammer=true;
-	wireframe=false;
+	drawMode = drawNormal;
+	drawLineOfSight = false;
+	drawRadarAndJammer = true;
+	wireframe = false;
 
-	extraTex=0;
-	extraTexPal=0;
-	extractDepthMap=0;
+	extraTex = 0;
+	extraTexPal = 0;
+	extractDepthMap = 0;
 
-	infoTexMem=SAFE_NEW unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
-	for(int a=0;a<gs->pwr2mapx*gs->pwr2mapy*4;++a)
-		infoTexMem[a]=255;
+	infoTexMem = SAFE_NEW unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
+	for (int a = 0; a < (gs->pwr2mapx * gs->pwr2mapy * 4); ++a) {
+		infoTexMem[a] = 255;
+	}
 
-	highResInfoTexWanted=false;
+	highResInfoTexWanted = false;
 
 	highResLosTex = !!configHandler.GetInt("HighResLos", 0);
 // 	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
@@ -63,6 +68,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	heightLinePal = SAFE_NEW CHeightLinePalette();
 }
 
+
 CBaseGroundDrawer::~CBaseGroundDrawer(void)
 {
 	delete[] infoTexMem;
@@ -73,13 +79,16 @@ CBaseGroundDrawer::~CBaseGroundDrawer(void)
 	delete heightLinePal;
 }
 
+
 void CBaseGroundDrawer::DrawShadowPass(void)
 {}
+
 
 void CBaseGroundDrawer::SetDrawMode (DrawMode dm)
 {
 	drawMode = dm;
 }
+
 
 //todo: this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
@@ -95,6 +104,7 @@ void CBaseGroundDrawer::DisableExtraTexture()
 	while(!UpdateExtraTexture());
 }
 
+
 void CBaseGroundDrawer::SetHeightTexture()
 {
 	if (drawMode == drawHeight)
@@ -107,6 +117,7 @@ void CBaseGroundDrawer::SetHeightTexture()
 		while(!UpdateExtraTexture());
 	}
 }
+
 
 void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes)
 {
@@ -124,6 +135,7 @@ void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,uns
 	}
 }
 
+
 void CBaseGroundDrawer::SetPathMapTexture()
 {
 	if (drawMode==drawPath)
@@ -136,6 +148,7 @@ void CBaseGroundDrawer::SetPathMapTexture()
 		while(!UpdateExtraTexture());
 	}
 }
+
 
 void CBaseGroundDrawer::ToggleLosTexture()
 {
@@ -152,6 +165,7 @@ void CBaseGroundDrawer::ToggleLosTexture()
 	}
 }
 
+
 void CBaseGroundDrawer::ToggleRadarAndJammer()
 {
 	drawRadarAndJammer=!drawRadarAndJammer;
@@ -161,7 +175,9 @@ void CBaseGroundDrawer::ToggleRadarAndJammer()
 	}
 }
 
-static inline int InterpolateLos(unsigned short* p, int xsize, int ysize, int mip, int factor, int x, int y)
+
+static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
+                                 int mip, int factor, int x, int y)
 {
 	const int x1 = (x >> mip);
 	const int y1 = (y >> mip);
@@ -184,28 +200,35 @@ static inline int InterpolateLos(unsigned short* p, int xsize, int ysize, int mi
 	return factor * s1;
 }
 
+
 // Gradually calculate the extra texture based on updateTextureState:
 //   updateTextureState < 50:   Calculate the texture color values and copy them in a buffer
 //   updateTextureState >= 50:  Copy the buffer into a texture
 //   updateTextureState = 57:   Reset to 0 and restart updating
 bool CBaseGroundDrawer::UpdateExtraTexture()
 {
-	if(drawMode == drawNormal)
+	if (drawMode == drawNormal) {
 		return true;
+	}
 
-	unsigned short* myLos    = &loshandler->losMap[gu->myAllyTeam].front();
-	unsigned short* myAirLos = &loshandler->airLosMap[gu->myAllyTeam].front();
-	unsigned short* myRadar  = &radarhandler->radarMaps[gu->myAllyTeam].front();
-	unsigned short* myJammer = &radarhandler->jammerMaps[gu->myAllyTeam].front();
-	if(updateTextureState<50){
+	const unsigned short* myLos         = &loshandler->losMap[gu->myAllyTeam].front();
+	const unsigned short* myAirLos      = &loshandler->airLosMap[gu->myAllyTeam].front();
+	const unsigned short* myRadar       = &radarhandler->radarMaps[gu->myAllyTeam].front();
+	const unsigned short* myJammer      = &radarhandler->jammerMaps[gu->myAllyTeam].front();
+#ifdef SONAR_JAMMER_MAPS
+	const unsigned short* mySonar       = &radarhandler->sonarMaps[gu->myAllyTeam].front();
+	const unsigned short* mySonarJammer = &radarhandler->sonarJammerMaps[gu->myAllyTeam].front();
+#endif
+
+	if (updateTextureState < 50) {
 		int starty;
 		int endy;
-		if(highResInfoTexWanted){
-			starty=updateTextureState*gs->mapy/50;
-			endy=(updateTextureState+1)*gs->mapy/50;
+		if (highResInfoTexWanted) {
+			starty = updateTextureState * gs->mapy / 50;
+			endy = (updateTextureState + 1) * gs->mapy / 50;
 		} else {
-			starty=updateTextureState*gs->hmapy/50;
-			endy=(updateTextureState+1)*gs->hmapy/50;
+			starty = updateTextureState * gs->hmapy / 50;
+			endy = (updateTextureState + 1) * gs->hmapy / 50;
 		}
 
 		switch(drawMode) {
@@ -309,14 +332,27 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				if (drawRadarAndJammer) {
 					const int rxsize = radarhandler->xsize;
 					const int rysize = radarhandler->ysize;
+					const int posScale = highResInfoTexWanted ? SQUARE_SIZE : (SQUARE_SIZE * 2);
 					for (int y = starty; y < endy; ++y) {
+						const float zPos = y * posScale;
 						for (int x = 0; x < endx; ++x) {
+							const float xPos = x * posScale;
 							int a = (y * pwr2mapx) + x;
 							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 255, x, y);
 							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 255, x, y);
 							const int totalLos = (inLos + inAir) / 2;
-							const int inJam   = InterpolateLos(myJammer, rxsize, rysize, 3 + lowRes, 255, x, y);
-							const int inRadar = InterpolateLos(myRadar,  rxsize, rysize, 3 + lowRes, 255, x, y);
+
+#ifdef SONAR_JAMMER_MAPS
+							const bool useRadar = (ground->GetHeight2(xPos, zPos) >= 0.0f);
+							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
+							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
+#else
+							const unsigned short* radarMap  = myRadar;
+							const unsigned short* jammerMap = myJammer;
+#endif // SONAR_JAMMER_MAPS
+							const int inRadar = InterpolateLos(radarMap,  rxsize, rysize, 3 + lowRes, 255, x, y);
+							const int inJam   = InterpolateLos(jammerMap, rxsize, rysize, 3 + lowRes, 255, x, y);
+
 							const int index = (a * 4);
 							for (int c = 0; c < 3; c++) {
 								int val = alwaysColor[c] * 255;
@@ -385,7 +421,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 	updateTextureState++;
 	return false;
 }
-
 
 
 void CBaseGroundDrawer::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
