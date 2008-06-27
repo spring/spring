@@ -461,10 +461,10 @@ void CFeature::ForcedSpin(const float3& newDir)
 */
 
 	CMatrix44f tmp;
+	tmp.Translate(pos);
 	tmp.RotateZ(newDir.z);
 	tmp.RotateX(newDir.x);
 	tmp.RotateY(newDir.y);
-	tmp.Translate(pos);
 	transMatrix = tmp;
 
 	// const float clamped = fmod(newDir.y, PI * 2.0);
