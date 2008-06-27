@@ -4,12 +4,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Player.h"
-#ifdef DIRECT_CONTROL_ALLOWED
-#include "UI/MouseHandler.h"
-#include "CameraHandler.h"
-#include "Camera.h"
 #include "Team.h"
-#include <assert.h>
+#ifdef DIRECT_CONTROL_ALLOWED
+#  include "UI/MouseHandler.h"
+#  include "CameraHandler.h"
+#  include "Camera.h"
+#  include <assert.h>
 #endif
 #include "mmgr.h"
 
