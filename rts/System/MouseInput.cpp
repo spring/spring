@@ -18,13 +18,17 @@
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 
-IMouseInput *mouseInput = 0;
+
+IMouseInput* mouseInput = NULL;
+
 
 IMouseInput::IMouseInput()
 {}
 
+
 IMouseInput::~IMouseInput()
 {}
+
 
 //////////////////////////////////////////////////////////////////////
 

@@ -47,8 +47,9 @@ DLL_EXPORT const char*  __stdcall GetSpringVersion();
 
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 
-DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
+DLL_EXPORT int          __stdcall Init(bool isServer, int id);
+DLL_EXPORT int          __stdcall InitArchiveScanner(void);
 
 DLL_EXPORT int          __stdcall ProcessUnits(void);
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
@@ -92,7 +93,6 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
 
 DLL_EXPORT int          __stdcall GetSideCount();
 DLL_EXPORT const char*  __stdcall GetSideName(int side);
-DLL_EXPORT const char*  __stdcall GetSideStartUnit(int side);
 
 DLL_EXPORT int          __stdcall GetLuaAICount();
 DLL_EXPORT const char*  __stdcall GetLuaAIName(int aiIndex);
@@ -128,7 +128,6 @@ DLL_EXPORT int          __stdcall InitFindVFS(const char* pattern);
 DLL_EXPORT int          __stdcall FindFilesVFS(int handle, char* nameBuf, int size);
 
 DLL_EXPORT int          __stdcall OpenArchive(const char* name);
-DLL_EXPORT int          __stdcall OpenArchiveType(const char* name, const char* type);
 DLL_EXPORT void         __stdcall CloseArchive(int archive);
 DLL_EXPORT int          __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
 DLL_EXPORT int          __stdcall OpenArchiveFile(int archive, const char* name);
@@ -136,59 +135,11 @@ DLL_EXPORT int          __stdcall ReadArchiveFile(int archive, int handle, void*
 DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
 
-DLL_EXPORT void        __stdcall lpClose();
-DLL_EXPORT int         __stdcall lpOpenFile(const char* filename,
-                                            const char* fileModes,
-                                            const char* accessModes);
-DLL_EXPORT int         __stdcall lpOpenSource(const char* source,
-                                              const char* accessModes);
-DLL_EXPORT int         __stdcall lpExecute();
-DLL_EXPORT const char* __stdcall lpErrorLog();
-
-DLL_EXPORT void        __stdcall lpAddTableInt(int key, int override);
-DLL_EXPORT void        __stdcall lpAddTableStr(const char* key, int override);
-DLL_EXPORT void        __stdcall lpEndTable();
-DLL_EXPORT void        __stdcall lpAddIntKeyIntVal(int key, int val);
-DLL_EXPORT void        __stdcall lpAddStrKeyIntVal(const char* key, int val);
-DLL_EXPORT void        __stdcall lpAddIntKeyBoolVal(int key, int val);
-DLL_EXPORT void        __stdcall lpAddStrKeyBoolVal(const char* key, int val);
-DLL_EXPORT void        __stdcall lpAddIntKeyFloatVal(int key, float val);
-DLL_EXPORT void        __stdcall lpAddStrKeyFloatVal(const char* key, float val);
-DLL_EXPORT void        __stdcall lpAddIntKeyStrVal(int key, const char* val);
-DLL_EXPORT void        __stdcall lpAddStrKeyStrVal(const char* key, const char* val);
-
-DLL_EXPORT int         __stdcall lpRootTable();
-DLL_EXPORT int         __stdcall lpRootTableExpr(const char* expr);
-DLL_EXPORT int         __stdcall lpSubTableInt(int key);
-DLL_EXPORT int         __stdcall lpSubTableStr(const char* key);
-DLL_EXPORT int         __stdcall lpSubTableExpr(const char* expr);
-DLL_EXPORT void        __stdcall lpPopTable();
-
-DLL_EXPORT int         __stdcall lpGetKeyExistsInt(int key);
-DLL_EXPORT int         __stdcall lpGetKeyExistsStr(const char* key);
-
-DLL_EXPORT int         __stdcall lpGetIntKeyListCount();
-DLL_EXPORT int         __stdcall lpGetIntKeyListEntry(int index);
-DLL_EXPORT int         __stdcall lpGetStrKeyListCount();
-DLL_EXPORT const char* __stdcall lpGetStrKeyListEntry(int index);
-
-DLL_EXPORT int         __stdcall lpGetIntKeyIntVal(int key, int defVal);
-DLL_EXPORT int         __stdcall lpGetStrKeyIntVal(const char* key, int defVal);
-DLL_EXPORT int         __stdcall lpGetIntKeyBoolVal(int key, int defVal);
-DLL_EXPORT int         __stdcall lpGetStrKeyBoolVal(const char* key, int defVal);
-DLL_EXPORT float       __stdcall lpGetIntKeyFloatVal(int key, float defVal);
-DLL_EXPORT float       __stdcall lpGetStrKeyFloatVal(const char* key, float defVal);
-DLL_EXPORT const char* __stdcall lpGetIntKeyStrVal(int key, const char* defVal);
-DLL_EXPORT const char* __stdcall lpGetStrKeyStrVal(const char* key, const char* defVal);
-
-
-
 
 /******************************************************************************/
 /******************************************************************************/
 
 static void DisplayOptions(int optionCount);
-static bool TestLuaParser();
 
 
 /******************************************************************************/
@@ -239,11 +190,9 @@ int main(int argc, char** argv)
   printf("MOD = %s\n", mod.c_str());
 
   Init(false, 0);
+  InitArchiveScanner();
 
   printf("GetSpringVersion() = %s\n", GetSpringVersion());
-
-  // test the lua parser interface
-  TestLuaParser();
 
   // map names
   printf("  MAPS\n");
@@ -265,7 +214,7 @@ int main(int argc, char** argv)
   // map info
   PrintMapInfo(map);
 
-  if (true && false) { // FIXME -- debugging
+  if (true) { // FIXME -- debugging
     for (int i = 0; i < mapNames.size(); i++) {
       PrintMapInfo(mapNames[i]);
     }
@@ -308,10 +257,8 @@ int main(int argc, char** argv)
   printf("  SIDES\n");
   const int sideCount = GetSideCount();
   for (int i = 0; i < sideCount; i++) {
-    const string sideName  = GetSideName(i);
-    const string startUnit = GetSideStartUnit(i);
-    printf("    side %i = '%s' <%s>\n",
-           i, sideName.c_str(), startUnit.c_str());
+    const string sideName= GetSideName(i);
+    printf("    side %i = '%s'\n", i, sideName.c_str());
   }
 
   // LuaAI options
@@ -401,100 +348,3 @@ static void DisplayOptions(int optionCount)
 
 /******************************************************************************/
 /******************************************************************************/
-
-static bool TestLuaParser()
-{
-  const string source =
-    "for k, v in pairs(Test) do\n"
-    "  print('LUA Test Table:  '..tostring(k)..' = '..tostring(v))\n"
-    "end\n"
-    "return {\n"
-    "  [0] = 'ZERO',\n"
-    "  [1] = 'ONE',\n"
-    "  [2] = 'TWO',\n"
-    "  [3] = 'THREE',\n"
-    "  [4] = 4.4,\n"
-    "  [5] = 5.5,\n"
-    "  [6] = 6.6,\n"
-    "  [11] = { 'one', 'two', 'three' },\n"
-    "  [12] = { 'one', 'success1', three = { 'success2', 'crap' }, four = { 'success3' }},\n"
-    "  string = 'string',\n"
-    "  number = 12345678,\n"
-    "}\n";
-
-  if (!lpOpenSource(source.c_str(), "r")) {
-    printf("LuaParser API test failed  --  should not happen here\n");
-    return false;
-  }
-
-  lpAddTableStr("Test", 1);
-    lpAddIntKeyFloatVal(1, 111.1f);
-    lpAddIntKeyFloatVal(2, 222.2f);
-    lpAddIntKeyFloatVal(3, 333.3f);
-    lpAddTableStr("Sub", 1);
-      lpAddStrKeyStrVal("test", "value1");
-    lpEndTable();
-    lpAddTableInt(4, 1);
-      lpAddStrKeyStrVal("test", "value2");
-    lpEndTable();
-    lpAddTableInt(5, 1);
-      lpAddStrKeyStrVal("test", "value3");
-    lpEndTable();
-    lpAddIntKeyStrVal(6, "hello");
-    lpAddIntKeyStrVal(7, "world");
-  lpEndTable();  
-
-  if (!lpExecute()) {
-    printf("LuaParser API test failed: %s\n", lpErrorLog());
-    return false;
-  }
-
-  const int intCount = lpGetIntKeyListCount();
-  for (int i = 0; i < intCount; i++) {
-    const char* str = lpGetIntKeyStrVal(i, "");
-    const float num = lpGetIntKeyFloatVal(i, 666.666f);
-    printf("  int-key = %i, val = '%s'  (%f)\n", i, str, num);
-  }
-
-  const int strCount = lpGetStrKeyListCount();
-  for (int i = 0; i < strCount; i++) {
-    const string key = lpGetStrKeyListEntry(i);
-    const char* str  = lpGetStrKeyStrVal(key.c_str(), "");
-    const float num  = lpGetStrKeyFloatVal(key.c_str(), 666.666f);
-    printf("  str-key = '%s', val = '%s'  (%f)\n", key.c_str(), str, num);
-  }
-
-  lpRootTable();
-    lpSubTableInt(12);
-      const char* result;
-      printf("SubTable test1: '%s'\n", lpGetIntKeyStrVal(2, "FAILURE"));
-      lpSubTableStr("three");
-        printf("SubTable test2: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-      lpPopTable();
-      lpSubTableStr("four");
-        printf("SubTable test3: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-      lpPopTable();
-    lpPopTable();
-    lpPopTable();
-    lpPopTable();
-    lpPopTable();
-    lpPopTable();
-    lpPopTable();
-    lpSubTableInt(12);
-      printf("SubTable test1: '%s'\n", lpGetIntKeyStrVal(2, "FAILURE"));
-    lpPopTable();
-  lpRootTable();
-  lpSubTableExpr("[12].four");
-      printf("SubTable sub-expr: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-  lpRootTableExpr("[12].four");
-      printf("SubTable root-expr: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-  lpRootTableExpr("[12].four");
-      printf("SubTable root-expr: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-  
-  return true;  
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-

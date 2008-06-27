@@ -152,7 +152,7 @@ end
 
 local function MakeWords(line)
   local words = {}
-  for w in string.gfind(line, "[^%s]+") do
+  for w in string.gmatch(line, "[^%s]+") do
     table.insert(words, w)
   end
   return words

@@ -5,8 +5,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <set>
 #include "Platform/byteorder.h"
 #include "float3.h"
+
 
 #ifdef DIRECT_CONTROL_ALLOWED
 class CPlayer;
@@ -27,6 +29,7 @@ struct DirectControlStruct{
 };
 #endif
 
+
 class CPlayer  
 {
 public:
@@ -35,6 +38,13 @@ public:
 	CPlayer();
 	~CPlayer();
 	
+	std::set<int> controlledTeams;
+	bool CanControlTeam(int teamID) const {
+		return (controlledTeams.find(teamID) != controlledTeams.end());
+	}
+	void SetControlledTeams();
+	static void UpdateControlledTeams(); // SetControlledTeams() for all players
+
 	void StartSpectating();
 
 	bool active;
@@ -42,9 +52,11 @@ public:
 	std::string countryCode;
 	int rank;
 
+	int playerNum;
 	bool spectator;
 	int team;
 	bool readyToStart;
+
 
 	float cpuUsage;
 	int ping;

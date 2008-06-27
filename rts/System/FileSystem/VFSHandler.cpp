@@ -8,18 +8,22 @@
 #include "Platform/FileSystem.h"
 #include "mmgr.h"
 
-CVFSHandler* hpiHandler=0;
+
+CVFSHandler* hpiHandler = NULL;
+
 
 CVFSHandler::CVFSHandler()
 {
 }
 
+
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
-bool CVFSHandler::AddArchive(std::string arName, bool override)
+bool CVFSHandler::AddArchive(const std::string& arName, bool override,
+                             const std::string& type)
 {
 	CArchiveBase* ar = archives[arName];
 	if (!ar) {
-		ar = CArchiveFactory::OpenArchive(arName);
+		ar = CArchiveFactory::OpenArchive(arName, type);
 		if (!ar) {
 			return false;
 		}
@@ -45,6 +49,7 @@ bool CVFSHandler::AddArchive(std::string arName, bool override)
 	return true;
 }
 
+
 CVFSHandler::~CVFSHandler(void)
 {
 	for (std::map<std::string, CArchiveBase*>::iterator i = archives.begin(); i != archives.end(); ++i) {
@@ -52,9 +57,10 @@ CVFSHandler::~CVFSHandler(void)
 	}
 }
 
-int CVFSHandler::LoadFile(std::string name, void* buffer)
+
+int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 {
-	StringToLowerInPlace(name);
+	std::string name = StringToLower(rawName);
 	filesystem.ForwardSlashes(name);
 
 	std::map<std::string, FileData>::iterator fi = files.find(name);
@@ -75,9 +81,10 @@ int CVFSHandler::LoadFile(std::string name, void* buffer)
 	return fsize;
 }
 
-int CVFSHandler::GetFileSize(std::string name)
+
+int CVFSHandler::GetFileSize(const std::string& rawName)
 {
-	StringToLowerInPlace(name);
+	std::string name = StringToLower(rawName);
 	filesystem.ForwardSlashes(name);
 
 	std::map<std::string, FileData>::iterator fi = files.find(name);
@@ -102,11 +109,12 @@ int CVFSHandler::GetFileSize(std::string name)
 	return -1;
 }
 
+
 // Returns all the files in the given (virtual) directory without the preceeding pathname
-std::vector<std::string> CVFSHandler::GetFilesInDir(std::string dir)
+std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 {
 	std::vector<std::string> ret;
-	StringToLowerInPlace(dir);
+	std::string dir = StringToLower(rawDir);
 	filesystem.ForwardSlashes(dir);
 
 	std::map<std::string, FileData>::const_iterator filesStart = files.begin();
@@ -149,10 +157,10 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(std::string dir)
 
 
 // Returns all the sub-directories in the given (virtual) directory without the preceeding pathname
-std::vector<std::string> CVFSHandler::GetDirsInDir(std::string dir)
+std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 {
 	std::vector<std::string> ret;
-	StringToLowerInPlace(dir);
+	std::string dir = StringToLower(rawDir);
 	filesystem.ForwardSlashes(dir);
 
 	std::map<std::string, FileData>::const_iterator filesStart = files.begin();

@@ -221,6 +221,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
 	if (GLEW_EXT_framebuffer_object) {
+		// FIXME: obsolete
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
 		REGISTER_LUA_CFUNC(RenderToTexture);
 	}
@@ -3495,6 +3496,7 @@ int LuaOpenGL::DeleteTexture(lua_State* L)
 }
 
 
+// FIXME: obsolete
 int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 {
 	if (lua_isnil(L, 1)) {
@@ -3676,6 +3678,7 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 }
 
 
+// FIXME: obsolete
 int LuaOpenGL::RenderToTexture(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);

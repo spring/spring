@@ -7,7 +7,6 @@
 #include <boost/format.hpp>
 #include <boost/version.hpp>
 #include <SDL_timer.h>
-#include <cmath>
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
 #endif
@@ -791,8 +790,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						}
 						break;
 					}
-					case TEAMMSG_TEAM_DIED: {
-									// don't send to clients, they don't need it
+					case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
 						unsigned char team = inbuf[3];
 						if (teams[team] && players[player]->isLocal) // currently only host is allowed
 						{
@@ -1207,7 +1205,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!setup || !setup->aiDlls[a].empty())
+		if (!setup || !gs->Team(a)->dllAI.empty())
 			hasPlayer = true;
 
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)
@@ -1268,7 +1266,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 		timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
 		lastTick=currentTick;
-		newFrames = (timeLeft > 0)? int(std::ceil(timeLeft)): 0;
+		newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 		timeLeft -= newFrames;
 	}
 

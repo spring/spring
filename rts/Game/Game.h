@@ -20,6 +20,7 @@ class CWordCompletion;
 class CKeySet;
 class CInfoConsole;
 class LuaParser;
+class LuaInputReceiver;
 class CLoadSaveHandler;
 class Action;
 class ChatMessage;

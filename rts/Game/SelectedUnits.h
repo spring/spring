@@ -14,8 +14,9 @@ class CFeature;
 class CSelectedUnits : public CObject
 {
 public:
+	void Init();
 	void SelectGroup(int num);
-	void AiOrder(int unitid,Command& c);
+	void AiOrder(int unitid, const Command& c, int playerID);
 	void SendOrdersToUnits(const vector<int>& unitIDs,
 	                       const vector<Command>& commands);
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);

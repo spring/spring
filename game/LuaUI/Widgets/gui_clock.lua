@@ -82,8 +82,8 @@ local function GetTimeString()
   if (timeSecs ~= secs) then
     timeSecs = secs
     local h = math.floor(secs / 3600)
-    local m = math.floor(math.mod(secs, 3600) / 60)
-    local s = math.floor(math.mod(secs, 60))
+    local m = math.floor((secs % 3600) / 60)
+    local s = math.floor(secs % 60)
     if (h > 0) then
       timeString = string.format('%02i:%02i:%02i', h, m, s)
     else

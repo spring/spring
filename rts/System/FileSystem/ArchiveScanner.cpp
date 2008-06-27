@@ -112,30 +112,34 @@ void CArchiveScanner::PreScan(const string& curPath)
 {
 	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
 	vector<string> found = filesystem.FindFiles(curPath, "springcontent.sdz", flags);
-	if (!found.empty()) {
-		CArchiveBase* ar = CArchiveFactory::OpenArchive(found[0]);
-		if (ar) {
-			string name;
-			int size;
-			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
-				if (name == "gamedata/parse_tdf.lua") {
-					const int fh = ar->OpenFile(name);
-					if (fh != 0) {
-						parse_tdf_path = found[0];
-						ar->CloseFile(fh);
-					}
-				}
-				else if (name == "gamedata/scanutils.lua") {
-					const int fh = ar->OpenFile(name);
-					if (fh != 0) {
-						scanutils_path = found[0];
-						ar->CloseFile(fh);
-					}
-				}
+	if (found.empty()) {
+		return;
+	}
+	CArchiveBase* ar = CArchiveFactory::OpenArchive(found[0]);
+	if (ar == NULL) {
+		return;
+	}
+
+	string name;
+	int size;
+	for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+		if (name == "gamedata/parse_tdf.lua") {
+			const int fh = ar->OpenFile(name);
+			if (fh != 0) {
+				parse_tdf_path = found[0];
+				ar->CloseFile(fh);
 			}
-			delete ar;
+		}
+		else if (name == "gamedata/scanutils.lua") {
+			const int fh = ar->OpenFile(name);
+			if (fh != 0) {
+				scanutils_path = found[0];
+				ar->CloseFile(fh);
+			}
 		}
 	}
+
+	delete ar;
 }
 
 
@@ -157,8 +161,7 @@ static bool LoadSourceFile(const string& archive,
 	char* buf = SAFE_NEW char[fsize];
 	ar->ReadFile(fh, buf, fsize);
 	ar->CloseFile(fh);
-	source.clear();
-	source.append(buf, fsize);
+	source.assign(buf, fsize);
 	delete [] buf;
 
 	delete ar;
@@ -167,7 +170,7 @@ static bool LoadSourceFile(const string& archive,
 }
 
 
-void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool checksum)
+void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool doChecksum)
 {
 	// pre-scan for the modinfo utils
 	for (unsigned int d = 0; d < scanDirs.size(); d++) {
@@ -192,12 +195,12 @@ void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool checksum)
 	// add the archives
 	for (unsigned int d = 0; d < scanDirs.size(); d++) {
 		logOutput.Print("Scanning: %s\n", scanDirs[d].c_str());
-		Scan(scanDirs[d], checksum);
+		Scan(scanDirs[d], doChecksum);
 	}
 }
 
 
-void CArchiveScanner::Scan(const string& curPath, bool checksum)
+void CArchiveScanner::Scan(const string& curPath, bool doChecksum)
 {
 	isDirty = true;
 
@@ -230,8 +233,8 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 		}
 
 		// Is this an archive we should look into?
-		if (CArchiveFactory::IsArchive(fullName)) {
-			ScanArchive(fullName, checksum);
+		if (CArchiveFactory::IsScanArchive(fullName)) {
+			ScanArchive(fullName, doChecksum);
 		}
 	}
 
@@ -263,7 +266,7 @@ void CArchiveScanner::Scan(const string& curPath, bool checksum)
 }
 
 
-void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
+void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 {
 	struct stat info;
 
@@ -322,7 +325,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
 	// Time to parse the info we are interested in
 	if (cached) {
 		// If cached is true, aii will point to the archive
-		if ((checksum) && (aii->second.checksum == 0)) {
+		if (doChecksum && (aii->second.checksum == 0)) {
 			aii->second.checksum = GetCRC(fullName);
 		}
 	}
@@ -334,7 +337,6 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
 			string name;
 			int size;
 			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
-				//printf("found %s %d\n", name.c_str(), size);
 				string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
 
 				// only accept new format maps
@@ -360,7 +362,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
 			// To prevent reading all files in all directory (.sdd) archives
 			// every time this function is called, directory archive checksums
 			// are calculated on the fly.
-			if (checksum) {
+			if (doChecksum) {
 				ai.checksum = GetCRC(fullName);
 			} else {
 				ai.checksum = 0;
@@ -372,7 +374,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool checksum)
 }
 
 
-void CArchiveScanner::ScanMap(CArchiveBase* ar, const string& fileName,
+bool CArchiveScanner::ScanMap(CArchiveBase* ar, const string& fileName,
                               ArchiveInfo& ai)
 {
 	MapData md;
@@ -394,64 +396,71 @@ void CArchiveScanner::ScanMap(CArchiveBase* ar, const string& fileName,
 		}
 	}
 	ai.mapData.push_back(md);
+	return true;
 }
 
 
-void CArchiveScanner::ScanModLua(CArchiveBase* ar, const string& fileName,
+bool CArchiveScanner::ScanModLua(CArchiveBase* ar, const string& fileName,
                                  ArchiveInfo& ai)
 {
 	const int fh = ar->OpenFile(fileName);
-	if (fh) {
-		const int fsize = ar->FileSize(fh);
-
-		char* buf = SAFE_NEW char[fsize];
-		ar->ReadFile(fh, buf, fsize);
-		ar->CloseFile(fh);
-		
-		string cleanbuf;
-		cleanbuf.append(buf, fsize);
-		delete [] buf;
-		LuaParser p(cleanbuf, SPRING_VFS_MOD);
-		if (!p.Execute()) {
-			logOutput.Print(p.GetErrorLog());
-		}
-		const LuaTable modTable = p.GetRoot();
-		ai.modData = GetModData(modTable);
+	if (fh == 0) {
+		return false;
 	}
+	const int fsize = ar->FileSize(fh);
+
+	char* buf = SAFE_NEW char[fsize];
+	ar->ReadFile(fh, buf, fsize);
+	ar->CloseFile(fh);
+	
+	const string cleanbuf(buf, fsize);
+	delete [] buf;
+	LuaParser p(cleanbuf, SPRING_VFS_MOD);
+	if (!p.Execute()) {
+		logOutput.Print("ERROR in " + fileName + ": " + p.GetErrorLog());
+		return false;
+	}
+	const LuaTable modTable = p.GetRoot();
+	ai.modData = GetModData(modTable);
+
+	return true;
 }
 
 
-void CArchiveScanner::ScanModTdf(CArchiveBase* ar, const string& fileName,
+bool CArchiveScanner::ScanModTdf(CArchiveBase* ar, const string& fileName,
                                  ArchiveInfo& ai)
 {
 	const int fh = ar->OpenFile(fileName);
-	if (fh) {
-		const int fsize = ar->FileSize(fh);
-
-		char* buf = SAFE_NEW char[fsize];
-		ar->ReadFile(fh, buf, fsize);
-		ar->CloseFile(fh);
-		string cleanbuf;
-		cleanbuf.append(buf, fsize);
-		delete [] buf;
-		const string luaFile =
-				parse_tdf_code + "\n\n"
-			+ scanutils_code + "\n\n"
-			+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
-			+ cleanbuf + "]])\n\n"
-			+ "if (tdfModinfo == nil) then\n"
-			+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
-			+ "end\n\n"
-			+ "tdfModinfo.mod.depend  = MakeArray(tdfModinfo.mod, 'depend')\n"
-			+ "tdfModinfo.mod.replace = MakeArray(tdfModinfo.mod, 'replace')\n\n"
-			+ "return tdfModinfo.mod\n";
-		LuaParser p(luaFile, SPRING_VFS_MOD);
-		if (!p.Execute()) {
-			logOutput.Print(p.GetErrorLog());
-		}
-		const LuaTable modTable = p.GetRoot();
-		ai.modData = GetModData(modTable);
+	if (fh == 0) {
+		return false;
 	}
+	const int fsize = ar->FileSize(fh);
+
+	char* buf = SAFE_NEW char[fsize];
+	ar->ReadFile(fh, buf, fsize);
+	ar->CloseFile(fh);
+	const string cleanbuf(buf, fsize);
+	delete [] buf;
+	const string luaCode =
+			parse_tdf_code + "\n\n"
+		+ scanutils_code + "\n\n"
+		+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
+		+ cleanbuf + "]])\n\n"
+		+ "if (tdfModinfo == nil) then\n"
+		+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
+		+ "end\n\n"
+		+ "tdfModinfo.mod.depend  = MakeArray(tdfModinfo.mod, 'depend')\n"
+		+ "tdfModinfo.mod.replace = MakeArray(tdfModinfo.mod, 'replace')\n\n"
+		+ "return tdfModinfo.mod\n";
+	LuaParser p(luaCode, SPRING_VFS_MOD);
+	if (!p.Execute()) {
+		logOutput.Print("ERROR in " + fileName + ": " + p.GetErrorLog());
+		return false;
+	}
+	const LuaTable modTable = p.GetRoot();
+	ai.modData = GetModData(modTable);
+
+	return true;
 }
 
 
@@ -481,7 +490,6 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 unsigned int CArchiveScanner::GetCRC(const string& arcName)
 {
 	CRC crc;
-	unsigned int digest = 0;
 	CArchiveBase* ar;
 	std::list<string> files;
 
@@ -508,15 +516,16 @@ unsigned int CArchiveScanner::GetCRC(const string& arcName)
 
 	// Add all files in sorted order
 	for (std::list<string>::iterator i = files.begin(); i != files.end(); i++ ) {
-		digest = CRC().Update(i->data(), i->size()).GetDigest();
-		crc.Update(digest);
-		crc.Update(ar->GetCrc32(*i));
+		const unsigned int nameCRC = CRC().Update(i->data(), i->size()).GetDigest();
+		const unsigned int dataCRC = ar->GetCrc32(*i);
+		crc.Update(nameCRC);
+		crc.Update(dataCRC);
 	}
 
 	delete ignore;
 	delete ar;
 
-	digest = crc.GetDigest();
+	unsigned int digest = crc.GetDigest();
 
 	// A value of 0 is used to indicate no crc.. so never return that
 	// Shouldn't happen all that often
@@ -530,16 +539,16 @@ unsigned int CArchiveScanner::GetCRC(const string& arcName)
 
 void CArchiveScanner::ReadCacheData(const string& filename)
 {
-  LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_ALL);
+  LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
 	
 	if (!p.Execute()) {
-		logOutput.Print(p.GetErrorLog());
+		logOutput.Print("ERROR in " + filename + ": " + p.GetErrorLog());
 	}
 	const LuaTable archiveCache = p.GetRoot();
 	const LuaTable archives = archiveCache.SubTable("archives");
 	
 	// Do not load old version caches
-	const int ver = archiveCache.GetInt("internalVer", 0);
+	const int ver = archiveCache.GetInt("internalVer", (INTERNAL_VER + 1));
 	if (ver != INTERNAL_VER) {
 		return;
 	}
@@ -551,8 +560,11 @@ void CArchiveScanner::ReadCacheData(const string& filename)
 		ArchiveInfo ai;
 
 		ai.origName = curArchive.GetString("name", "");
-		ai.path = curArchive.GetString("path", "");
-		// don't use GetInt for modified and checksum as lua uses 32bit ints, no longs
+		ai.path     = curArchive.GetString("path", "");
+
+		// do not use LuaTable.GetInt() for 32-bit integers, the Spring lua
+		// library uses 32-bit floats to represent numbers, which can only
+		// represent 2^24 consecutive integers
 		ai.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
 		ai.checksum = strtoul(curArchive.GetString("checksum", "0").c_str(), 0, 10);
 		ai.updated = false;
@@ -613,18 +625,22 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 	}
 
 	fprintf(out, "local archiveCache = {\n\n");
-	fprintf(out, "\tinternalver = %d,\n\n", INTERNAL_VER);
-	fprintf(out, "\tarchives = {\n");
+	fprintf(out, "\tinternalver = %i,\n\n", INTERNAL_VER);
+	fprintf(out, "\tarchives = {  -- count = %i\n", archiveInfo.size());
+
 	std::map<string, ArchiveInfo>::const_iterator arcIt;
 	for (arcIt = archiveInfo.begin(); arcIt != archiveInfo.end(); ++arcIt) {
-		fprintf(out, "\t\t{\n");
-		SafeStr(out, "\t\t\tname = ",            arcIt->second.origName);
-		SafeStr(out, "\t\t\tpath = ",            arcIt->second.path); 
-		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcIt->second.modified);
-		fprintf(out, "\t\t\tchecksum = \"%u\",\n", arcIt->second.checksum);
-		SafeStr(out, "\t\t\treplaced = ",        arcIt->second.replaced);
+		const ArchiveInfo& arcInfo = arcIt->second;
 
-		const vector<MapData>& mapData = arcIt->second.mapData;
+		fprintf(out, "\t\t{\n");
+		SafeStr(out, "\t\t\tname = ",              arcInfo.origName);
+		SafeStr(out, "\t\t\tpath = ",              arcInfo.path); 
+		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcInfo.modified);
+		fprintf(out, "\t\t\tchecksum = \"%u\",\n", arcInfo.checksum);
+		SafeStr(out, "\t\t\treplaced = ",          arcInfo.replaced);
+
+		// map info?
+		const vector<MapData>& mapData = arcInfo.mapData;
 		if (!mapData.empty()) {
 			fprintf(out, "\t\t\tmaps = {\n");
 			vector<MapData>::const_iterator mapIt;
@@ -637,8 +653,8 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 			fprintf(out, "\t\t\t},\n");
 		}
 
-		// Any mod info? or just a map archive?
-		const ModData& modData = arcIt->second.modData;
+		// mod info?
+		const ModData& modData = arcInfo.modData;
 		if (modData.name != "") {
 			fprintf(out, "\t\t\tmoddata = {\n");
 			SafeStr(out, "\t\t\t\tname = ",         modData.name);

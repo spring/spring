@@ -886,6 +886,43 @@ bool LuaTable::KeyExists(const string& key) const
 /******************************************************************************/
 /******************************************************************************/
 //
+//  Object lengths
+//
+
+int LuaTable::GetLength() const
+{
+	if (!PushTable()) {
+		return 0;
+	}
+	return lua_objlen(L, -1);
+}
+
+
+int LuaTable::GetLength(int key) const
+{
+	if (!PushValue(key)) {
+		return 0;
+	}
+	const int len = lua_objlen(L, -1);
+	lua_pop(L, 1);
+	return len;
+}
+
+
+int LuaTable::GetLength(const string& key) const
+{
+	if (!PushValue(key)) {
+		return 0;
+	}
+	const int len = lua_objlen(L, -1);
+	lua_pop(L, 1);
+	return len;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
 //  Key list functions
 //
 

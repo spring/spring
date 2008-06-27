@@ -129,10 +129,10 @@ local function DefaultHandler(xIcons, yIcons, cmdCount, commands)
   for cmdSlot = 1, (cmdCount - 2) do
 
     -- fill the last row with special buttons
-    while (math.mod(pos, ipp) >= firstSpecial) do
+    while ((pos % ipp) >= firstSpecial) do
       pos = pos + 1
     end
-    local onLastRow = (math.abs(math.mod(pos, ipp)) < 0.1)
+    local onLastRow = (math.abs(pos % ipp) < 0.1)
 
     if (onLastRow) then
       local pageStart = math.floor(ipp * math.floor(pos / ipp))

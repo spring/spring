@@ -73,7 +73,7 @@ function widget:Update(deltaTime)
   if (commanderUnitDefs) then
     local timer = widgetHandler:GetHourTimer()
     local iconName
-    if (math.mod(timer, 0.5) > 0.25) then
+    if ((timer % 0.5) > 0.25) then
       iconName = "star.user"
     else
       iconName = "star-dark.user"

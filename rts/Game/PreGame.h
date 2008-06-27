@@ -59,7 +59,10 @@ private:
 	static void SelectScript(std::string s);
 	static void SelectMap(std::string s);
 	static void SelectMod(std::string s);
-	static std::string userScript, userMap;
+	static std::string userScript;
+	static std::string userMap;
+	static std::string userMod;
+
 	/// Load map and dependend archives into archive scanner
 	static void LoadMap(const std::string& mapName, const bool forceReload = false);
 	

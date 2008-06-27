@@ -241,6 +241,13 @@ void CMapInfo::ReadSmf()
 		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
+
+	// height overrides
+	const LuaTable smfTable = mapRoot->SubTable("smf");
+	smf.minHeightOverride = smfTable.KeyExists("minHeight");
+	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
+	smf.minHeight = smfTable.GetFloat("minHeight", 0.0f);
+	smf.maxHeight = smfTable.GetFloat("maxHeight", 0.0f);
 }
 
 

@@ -33,6 +33,7 @@ class LuaTextures {
 
 			GLuint id;
 
+			// FIXME: obsolete, use raw FBO's
 			GLuint fbo;
 			GLuint fboDepth;
 

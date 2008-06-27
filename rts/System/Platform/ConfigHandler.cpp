@@ -29,6 +29,9 @@ extern "C" void PreInitMac();
 ConfigHandler* ConfigHandler::instance = NULL;
 
 
+std::string ConfigHandler::configSource;
+
+
 /**
  * Returns reference to the current platform's config class.
  * If none exists, create one.
@@ -36,17 +39,28 @@ ConfigHandler* ConfigHandler::instance = NULL;
 ConfigHandler& ConfigHandler::GetInstance()
 {
 	if (!instance) {
+		if (configSource.empty()) {
 #ifdef _WIN32
-		instance = SAFE_NEW RegHandler("Software\\SJ\\spring");
+			configSource = "Software\\SJ\\spring";
+#elif defined(__APPLE__)
+			configSource = "this string is not currently used";
+#else
+			configSource = DotfileHandler::GetDefaultConfig();
+#endif
+		}
+
+#ifdef _WIN32
+		instance = SAFE_NEW RegHandler(configSource);
 #elif defined(__APPLE__)
 		PreInitMac();
 		instance = SAFE_NEW UserDefsHandler(); // Config path is based on bundle id
 #else
-		instance = SAFE_NEW DotfileHandler(DotfileHandler::GetDefaultConfig());
+		instance = SAFE_NEW DotfileHandler(configSource);
 #endif
 	}
 	return *instance;
 }
+
 
 /**
  * Destroys existing ConfigHandler instance.
@@ -58,9 +72,11 @@ void ConfigHandler::Deallocate()
 	instance = 0;
 }
 
+
 ConfigHandler::~ConfigHandler()
 {
 }
+
 
 float ConfigHandler::GetFloat(const std::string& name, const float def)
 {
@@ -73,10 +89,24 @@ float ConfigHandler::GetFloat(const std::string& name, const float def)
 	return val;
 }
 
+
 void ConfigHandler::SetFloat(const std::string& name, float value)
 {
 	std::ostringstream buffer;
 	buffer << value;
 
 	SetString(name, buffer.str());
+}
+
+
+bool ConfigHandler::SetConfigSource(const std::string& source)
+{
+	configSource = source;
+	return true;
+}
+
+
+const std::string& ConfigHandler::GetConfigSource()
+{
+	return configSource;
 }

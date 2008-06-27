@@ -870,9 +870,11 @@ void CPathEstimator::WriteFile(std::string name) {
 /*
 Gives a hash-code identifying the dataset of this estimator.
 */
-unsigned int CPathEstimator::Hash() {
+unsigned int CPathEstimator::Hash()
+{
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }
+
 
 void CPathEstimator::Draw(void)
 {

@@ -319,6 +319,9 @@ public:
 	bool	falling;  // for units being dropped from transports (parachute drops)
 	float	fallSpeed; 
 
+	bool inAir;
+	bool inWater;
+
 	int flankingBonusMode;  // 0 = no flanking bonus
 	                        // 1 = global coords, mobile
 	                        // 2 = unit coords, mobile

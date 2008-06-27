@@ -12,6 +12,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
+#include "Sim/SideParser.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
@@ -37,26 +38,6 @@ CCommanderScript::~CCommanderScript(void)
 void CCommanderScript::GameStart()
 {
 	if (gameSetup) {
-		LuaParser luaParser("gamedata/sidedata.lua",
-		                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-		if (!luaParser.Execute()) {
-			logOutput.Print(luaParser.GetErrorLog());
-		}
-
-		const LuaTable sideData = luaParser.GetRoot();
-
-		// make a map of all side names  (assumes contiguous sections)
-		std::map<std::string, std::string> sideMap;
-		for (int i = 1; true; i++) {
-			const LuaTable side = sideData.SubTable(i);
-			if (!side.IsValid()) {
-				break;
-			}
-			const std::string sideName  = side.GetString("name", "unknown");
-			const std::string startUnit = side.GetString("startUnit", "");
-			sideMap[StringToLower(sideName)] = StringToLower(startUnit);
-		}
-
 		// setup the teams
 		for (int a = 0; a < gs->activeTeams; ++a) {
 
@@ -74,49 +55,35 @@ void CCommanderScript::GameStart()
 			team->energyStorage = 20;
 
 			// create a GlobalAI if required
-			if (!gameSetup->aiDlls[a].empty() &&
-			    (gu->myPlayerNum == team->leader)) {
-				globalAI->CreateGlobalAI(a, gameSetup->aiDlls[a].c_str());
+			if (!team->dllAI.empty() && (gu->myPlayerNum == team->leader)) {
+				globalAI->CreateGlobalAI(a, team->dllAI.c_str());
 			}
 
-			std::map<std::string, std::string>::const_iterator it =
-				sideMap.find(team->side);
+			// get the team startup info
+			const std::string& side = team->side;
+			const std::string& startUnit = sideParser.GetStartUnit(side);
+			if (startUnit.empty()) {
+				throw content_error( "Unable to load a commander for side: " + side);
+			}
 
-			if (it != sideMap.end()) {
-				const std::string& sideName  = it->first;
-				const std::string& startUnit = it->second;
-				if (startUnit.length() == 0) {
-					throw content_error(
-						"Unable to load a commander for side: " + sideName
-					);
-				}
-				CUnit* unit = unitLoader.LoadUnit(startUnit,
-				                                  team->startPos, a, false, 0, NULL);
+			CUnit* unit =
+				unitLoader.LoadUnit(startUnit, team->startPos, a, false, 0, NULL);
 
-				team->lineageRoot = unit->id;
+			team->lineageRoot = unit->id;
 
-				// FIXME this shouldn't be here, but no better place exists currently
-				if (a == gu->myTeam) {
-					minimap->AddNotification(team->startPos,
-					                         float3(1.0f, 1.0f, 1.0f), 1.0f);
-					game->infoConsole->SetLastMsgPos(team->startPos);
-				}
+			// FIXME this shouldn't be here, but no better place exists currently
+			if (a == gu->myTeam) {
+				minimap->AddNotification(team->startPos,
+																 float3(1.0f, 1.0f, 1.0f), 1.0f);
+				game->infoConsole->SetLastMsgPos(team->startPos);
 			}
 		}
 	}
 	else {
-		LuaParser luaParser("gamedata/sidedata.lua",
-		                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-		if (!luaParser.Execute()) {
-			logOutput.Print(luaParser.GetErrorLog());
-		}
-		const LuaTable sideData = luaParser.GetRoot();
-		const LuaTable side1 = sideData.SubTable(1);
-		const LuaTable side2 = sideData.SubTable(2);
-		const std::string su1 = StringToLower(side1.GetString("startUnit", ""));
-		const std::string su2 = StringToLower(side2.GetString("startUnit", su1));
+		const std::string startUnit0 = sideParser.GetStartUnit(0, "");
+		const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);
 
-		if (su1.length() == 0) {
+		if (startUnit0.length() == 0) {
 			throw content_error("Unable to load a startUnit for the first side");
 		}
 		
@@ -129,8 +96,8 @@ void CCommanderScript::GameStart()
 		mapParser.GetStartPos(0, startPos0);
 		mapParser.GetStartPos(1, startPos1);
 
-		unitLoader.LoadUnit(su1, startPos0, 0, false, 0, NULL);
-		unitLoader.LoadUnit(su2, startPos1, 1, false, 0, NULL);
+		unitLoader.LoadUnit(startUnit0, startPos0, 0, false, 0, NULL);
+		unitLoader.LoadUnit(startUnit1, startPos1, 1, false, 0, NULL);
 
 		// FIXME this shouldn't be here, but no better place exists currently
 		minimap->AddNotification(startPos0, float3(1.0f, 1.0f, 1.0f), 1.0f);

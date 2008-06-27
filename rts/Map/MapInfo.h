@@ -131,6 +131,10 @@ public:
 	/** SMF specific settings */
 	struct smf_t {
 		std::string detailTexName; ///< "MAP\DetailTex"
+		float minHeight;
+		bool  minHeightOverride;
+		float maxHeight;
+		bool  maxHeightOverride;
 	} smf;
 
 	/** SM3 specific settings

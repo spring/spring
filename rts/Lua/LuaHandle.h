@@ -26,8 +26,9 @@ using std::set;
 
 
 class CUnit;
-class CFeature;
 class CWeapon;
+class CFeature;
+struct Command;
 struct LuaHashString;
 struct lua_State;
 
@@ -42,7 +43,6 @@ class CLuaHandle {
 		int GetCallInErrors() const { return callinErrors; }
 		void ResetCallinErrors() { callinErrors = 0; }
 		
-
 	public:
 		enum SpecialTeams {
 			NoAccessTeam   = -1,
@@ -74,7 +74,7 @@ class CLuaHandle {
 		int  GetCtrlTeam()     const { return ctrlTeam; }
 		int  GetSelectTeam()   const { return selectTeam; }
 
-		bool WantsToDie()      const { return killMe; }
+		bool WantsToDie() const { return killMe; }
 
 		const LuaCobCallback  GetCallback() { return cobCallback; }
 
@@ -97,6 +97,8 @@ class CLuaHandle {
 		virtual bool UnsyncedUpdateCallIn(const string& name) { return false; }
 
 		void Update();
+
+		void ViewResize();
 
 		void Shutdown();
 
@@ -125,6 +127,11 @@ class CLuaHandle {
 		void UnitEnteredLos(const CUnit* unit, int allyTeam);
 		void UnitLeftRadar(const CUnit* unit, int allyTeam);
 		void UnitLeftLos(const CUnit* unit, int allyTeam);
+
+		void UnitEnteredWater(const CUnit* unit);
+		void UnitEnteredAir(const CUnit* unit);
+		void UnitLeftWater(const CUnit* unit);
+		void UnitLeftAir(const CUnit* unit);
 
 		void UnitLoaded(const CUnit* unit, const CUnit* transport);
 		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
@@ -155,6 +162,37 @@ class CLuaHandle {
 		void DrawScreen();
 		void DrawInMiniMap();
 
+		// moved from LuaUI
+		bool KeyPress(unsigned short key, bool isRepeat);
+		bool KeyRelease(unsigned short key);
+		bool MouseMove(int x, int y, int dx, int dy, int button);
+		bool MousePress(int x, int y, int button);
+		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
+		bool MouseWheel(bool up, float value);
+		bool IsAbove(int x, int y);
+		string GetTooltip(int x, int y);
+
+		bool ConfigCommand(const string& command);
+
+		bool CommandNotify(const Command& cmd);
+
+		bool AddConsoleLine(const string& msg, int zone);
+
+		bool GroupChanged(int groupID);
+
+		bool GameSetup(const string& state, bool& ready,
+		               const map<int, string>& playerStates);
+
+		string WorldTooltip(const CUnit* unit,
+		                    const CFeature* feature,
+		                    const float3* groundPos);
+
+		bool MapDrawCmd(int playerID, int type,
+		                const float3* pos0,
+		                const float3* pos1,
+		                const string* labe);
+
+
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(const string& funcName) { return false; }
@@ -181,7 +219,9 @@ class CLuaHandle {
 		                       bool (*entriesFunc)(lua_State*));
 
 		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
+		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
+		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 		bool PushUnsyncedCallIn(const LuaHashString& hs);
 
 	protected:
@@ -241,7 +281,7 @@ class CLuaHandle {
 		static const CLuaHandle* GetActiveHandle() { return activeHandle; }
 
 		static bool ActiveCanCtrlTeam(int team) {
-			return activeHandle->CanReadAllyTeam(team);
+			return activeHandle->CanCtrlTeam(team);
 		}
 		static bool ActiveCanReadAllyTeam(int allyTeam) {
 			return activeHandle->CanReadAllyTeam(allyTeam);
@@ -265,6 +305,9 @@ class CLuaHandle {
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
+		static void SetModUICtrl(bool value) { modUICtrl = value; }
+		static bool GetModUICtrl() { return modUICtrl; }
+
 		static void HandleLuaMsg(int playerID, int script, int mode,
 		                         const string& msg);
 
@@ -274,6 +317,7 @@ class CLuaHandle {
 		static int  activeReadAllyTeam;
 
 		static bool devMode; // allows real file access
+		static bool modUICtrl; // allows non-user scripts to use UI controls
 };
 
 

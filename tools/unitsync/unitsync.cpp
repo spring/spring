@@ -13,7 +13,9 @@
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Sim/SideParser.h"
 
+#include "LuaParserAPI.h"
 #include "Syncer.h"
 #include "SyncServer.h"
 #include "unitsyncLogOutput.h"
@@ -150,6 +152,8 @@ DLL_EXPORT void __stdcall Message(const char* p_szMessage)
 
 DLL_EXPORT void __stdcall UnInit()
 {
+	lpClose();
+
 	FileSystemHandler::Cleanup();
 
 	if ( syncer )
@@ -941,48 +945,30 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name
 //////////////////////////
 //////////////////////////
 
-struct SideData {
-	string name;
-};
-
-vector<SideData> sideData;
-
 DLL_EXPORT int __stdcall GetSideCount()
 {
-	sideData.clear();
-
-	logOutput.Print("get side count: ");
-
-	LuaParser luaParser("gamedata/sidedata.lua",
-	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		logOutput.Print("failed: %s\n", luaParser.GetErrorLog().c_str());
+	if (!sideParser.Load()) {
+		logOutput.Print("failed: %s\n", sideParser.GetErrorLog().c_str());
 		return 0;
 	}
-
-	const LuaTable sideDataTbl = luaParser.GetRoot();
-	if (!sideDataTbl.IsValid()) {
-		logOutput.Print("failed: missing 'sideData' table\n");
-		return 0;
-	}
-
-	for (int i = 1; true; i++) {
-		const LuaTable sideTbl = sideDataTbl.SubTable(i);
-		if (!sideTbl.IsValid()) {
-			break;
-		}
-		SideData sd;
-		sd.name = sideTbl.GetString("name", "unknown");
-		sideData.push_back(sd);
-	}
-
-	return sideData.size();
+	return sideParser.GetCount();
 }
+
 
 DLL_EXPORT const char* __stdcall GetSideName(int side)
 {
-	ASSERT((unsigned)side < sideData.size(), "Array index out of bounds. Call GetSideCount before GetSideName.");
-	return GetStr(sideData[side].name);
+	ASSERT((unsigned int)side < sideParser.GetCount(),
+	       "Array index out of bounds. Call GetSideCount before GetSideName.");
+	// the full case name  (not the lowered version)
+	return GetStr(sideParser.GetCaseName(side));
+}
+
+
+DLL_EXPORT const char* __stdcall GetSideStartUnit(int side)
+{
+	ASSERT((unsigned int)side < sideParser.GetCount(),
+	       "Array index out of bounds. Call GetSideCount before GetSideStartUnit.");
+	return GetStr(sideParser.GetStartUnit(side));
 }
 
 
@@ -1679,6 +1665,22 @@ DLL_EXPORT int __stdcall OpenArchive(const char* name)
 	}
 }
 
+// returns 0 on error, a handle otherwise
+DLL_EXPORT int __stdcall OpenArchiveType(const char* name, const char* type)
+{
+	ASSERT(name && *name && type && *type,
+	       "Don't pass a NULL pointer or an empty string to OpenArchiveType.");
+	CArchiveBase* a = CArchiveFactory::OpenArchive(name, type);
+	if (a) {
+		nextArchive++;
+		openArchives[nextArchive] = a;
+		return nextArchive;
+	}
+	else {
+		return 0;
+	}
+}
+
 DLL_EXPORT void __stdcall CloseArchive(int archive)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchive.");
@@ -1801,7 +1803,7 @@ DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float d
  * @param name name of key to set
  * @param value string value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigString( const char* name, const char* value )
+DLL_EXPORT void __stdcall SetSpringConfigString(const char* name, const char* value)
 {
 	configHandler.SetString( name, value );
 }
@@ -1811,7 +1813,7 @@ DLL_EXPORT void __stdcall SetSpringConfigString( const char* name, const char* v
  * @param name name of key to set
  * @param value integer value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigInt( const char* name, const int value )
+DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
 {
 	configHandler.SetInt( name, value );
 }
@@ -1821,7 +1823,8 @@ DLL_EXPORT void __stdcall SetSpringConfigInt( const char* name, const int value 
  * @param name name of key to set
  * @param value float value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigFloat( const char* name, const float value )
+DLL_EXPORT void __stdcall SetSpringConfigFloat(const char* name, const float value)
 {
 	configHandler.SetFloat( name, value );
 }
+

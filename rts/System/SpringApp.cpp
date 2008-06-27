@@ -5,6 +5,9 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
+#undef KeyPress
+#undef KeyRelease
+
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"
@@ -138,12 +141,10 @@ bool crashCallback(void* crState)
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
  */
-bool SpringApp::Initialize ()
+bool SpringApp::Initialize()
 {
-	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
-
 	// Initialize class system
-	creg::System::InitializeClasses ();
+	creg::System::InitializeClasses();
 
 	// Initialize crash reporting
 #ifdef _WIN32
@@ -161,6 +162,9 @@ bool SpringApp::Initialize ()
 #endif
 
 	ParseCmdLine();
+
+	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
+
 	FileSystemHandler::Initialize(true);
 
 	if (!InitWindow(("Spring " + std::string(VERSION_STRING)).c_str())) {
@@ -172,9 +176,9 @@ bool SpringApp::Initialize ()
 
 	// Global structures
 	ENTER_SYNCED;
-	gs=SAFE_NEW CGlobalSyncedStuff();
+	gs = SAFE_NEW CGlobalSyncedStuff();
 	ENTER_UNSYNCED;
-	gu=SAFE_NEW CGlobalUnsyncedStuff();
+	gu = SAFE_NEW CGlobalUnsyncedStuff();
 
 	if (cmdline->result("minimise")) {
 		gu->active = false;
@@ -568,7 +572,13 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption('t', "textureatlas",   OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
 	cmdline->addoption('q', "quit",           OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
 	cmdline->addoption('n', "name",           OPTPARM_STRING, "",  "Set your player name");
+	cmdline->addoption('C', "config",         OPTPARM_STRING, "",  "Configuration file");
 	cmdline->parse();
+
+	string configSource;
+	if (cmdline->result("config", configSource)) {
+		ConfigHandler::SetConfigSource(configSource);
+	}
 
 #ifdef _DEBUG
 	fullscreen = false;

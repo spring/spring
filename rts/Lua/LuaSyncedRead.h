@@ -42,6 +42,8 @@ class LuaSyncedRead {
 		static int GetHeadingFromVector(lua_State* L);
 		static int GetVectorFromHeading(lua_State* L);
 
+		static int GetSideData(lua_State* L);
+
 		static int GetAllyTeamStartBox(lua_State* L);
 		static int GetTeamStartPosition(lua_State* L);
 
@@ -82,6 +84,7 @@ class LuaSyncedRead {
 
 		static int GetFeaturesInRectangle(lua_State* L);
 
+		static int ValidUnitID(lua_State* L);
 		static int GetUnitTooltip(lua_State* L);
 		static int GetUnitDefID(lua_State* L);
 		static int GetUnitTeam(lua_State* L);
@@ -135,6 +138,7 @@ class LuaSyncedRead {
 		static int GetAllFeatures(lua_State* L);
 		static int GetFeatureList(lua_State* L);
 
+		static int ValidFeatureID(lua_State* L);
 		static int GetFeatureDefID(lua_State* L);
 		static int GetFeatureTeam(lua_State* L);
 		static int GetFeatureAllyTeam(lua_State* L);

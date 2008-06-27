@@ -76,25 +76,30 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
-	float base=header.minHeight;
-	float mod=(header.maxHeight-header.minHeight)/65536.0f;
+	const CMapInfo::smf_t& smf = mapInfo->smf;
+	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
+	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
 
-	int hmx=gs->mapx+1, hmy=gs->mapy+1;
-	unsigned short* temphm=SAFE_NEW unsigned short[hmx * hmy];
+	const float base = minH;
+	const float mod = (maxH - minH) / 65536.0f;
+
+	const int hmx = gs->mapx + 1;
+	const int hmy = gs->mapy + 1;
+	unsigned short* temphm = SAFE_NEW unsigned short[hmx * hmy];
 	ifs->Seek(header.heightmapPtr);
-	ifs->Read(temphm,hmx*hmy*2);
+	ifs->Read(temphm, hmx * hmy * 2);
 
-	for(int y=0;y<hmx*hmy;++y){
-		heightmap[y]=base+swabword(temphm[y])*mod;
+	for (int y = 0; y < hmx * hmy; ++y) {
+		heightmap[y] = base + swabword(temphm[y]) * mod;
 	}
 
 	delete[] temphm;
 
 	CReadMap::Initialize();
 
-	for(unsigned int a=0;a<mapname.size();++a){
-		mapChecksum+=mapname[a];
-		mapChecksum*=mapname[a];
+	for (unsigned int a = 0; a < mapname.size(); ++a) {
+		mapChecksum += mapname[a];
+		mapChecksum *= mapname[a];
 	}
 
 	PrintLoadMsg("Loading detail textures");
@@ -102,8 +107,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	detailTexName = mapInfo->smf.detailTexName;
 
 	CBitmap bm;
-	if (!bm.Load(detailTexName))
+	if (!bm.Load(detailTexName)) {
 		throw content_error("Could not load detail texture from file " + detailTexName);
+	}
 	glGenTextures(1, &detailTex);
 	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -124,8 +130,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 	//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	int offset=0;
-	for(unsigned int i=0; i<MINIMAP_NUM_MIPMAP; i++)
-	{
+	for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
 		int mipsize = 1024>>i;
 
 		int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;

@@ -59,7 +59,10 @@ public:
 
 	float handicap;
 	std::string side;
+
+	bool isAI;
 	std::string luaAI;
+	std::string dllAI;
 
 	// color info is unsynced
 	unsigned char color[4];

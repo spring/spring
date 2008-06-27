@@ -116,6 +116,8 @@ CUnit::CUnit ()
 	upright(true),
 	falling(false),
 	fallSpeed(0.2),
+	inAir(false),
+	inWater(false),
 	maxRange(0),
 	haveTarget(false),
 	lastAttacker(0),
@@ -499,12 +501,33 @@ void CUnit::Update()
 		return;
 	}
 
-
 	if (beingBuilt) {
 		return;
 	}
 
+	const bool oldInAir   = inAir;
+	const bool oldInWater = inWater;
+
 	moveType->Update();
+
+	const float top = (pos.y + height);
+	inAir   = ((pos.y + height) >= 0.0f);
+	inWater =  (pos.y           <= 0.0f);
+
+	if (inAir != oldInAir) {
+		if (inAir) {
+			luaCallIns.UnitEnteredAir(this);
+		} else {
+			luaCallIns.UnitLeftAir(this);
+		}
+	}
+	if (inWater != oldInWater) {
+		if (inWater) {
+			luaCallIns.UnitEnteredWater(this);
+		} else {
+			luaCallIns.UnitLeftWater(this);
+		}
+	}
 
 	if (travelPeriod != 0.0f) {
 		travel += speed.Length();
@@ -2294,6 +2317,8 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(isDead),
 				CR_MEMBER(falling),
 				CR_MEMBER(fallSpeed),
+				CR_MEMBER(fallSpeed),
+				CR_MEMBER(fallSpeed),
 
 				CR_MEMBER(flankingBonusMode),
 				CR_MEMBER(flankingBonusDir),
@@ -2338,7 +2363,10 @@ CR_REG_METADATA(CUnit, (
 				CR_MEMBER(maxSpeed),
 				CR_MEMBER(weaponHitMod),
 
-				CR_RESERVED(128),
+				CR_MEMBER(inAir),
+				CR_MEMBER(inWater),
+
+				CR_RESERVED(126),
 
 				CR_POSTLOAD(PostLoad)
 				));

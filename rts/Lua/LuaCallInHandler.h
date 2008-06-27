@@ -21,6 +21,8 @@ using std::map;
 
 class CUnit;
 class CWeapon;
+class CFeature;
+struct Command;
 
 
 class CLuaCallInHandler
@@ -68,6 +70,11 @@ class CLuaCallInHandler
 		void UnitLeftRadar(const CUnit* unit, int allyTeam);
 		void UnitLeftLos(const CUnit* unit, int allyTeam);
 
+		void UnitEnteredWater(const CUnit* unit);
+		void UnitEnteredAir(const CUnit* unit);
+		void UnitLeftWater(const CUnit* unit);
+		void UnitLeftAir(const CUnit* unit);
+
 		void UnitLoaded(const CUnit* unit, const CUnit* transport);
 		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
@@ -85,6 +92,8 @@ class CLuaCallInHandler
 		// Unsynced
 		void Update();
 
+		void ViewResize();
+
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		void DrawGenesis();
@@ -97,12 +106,45 @@ class CLuaCallInHandler
 		void DrawScreen();
 		void DrawInMiniMap();
 
+		// from LuaUI
+		bool KeyPress(unsigned short key, bool isRepeat);
+		bool KeyRelease(unsigned short key);
+		bool MouseMove(int x, int y, int dx, int dy, int button);
+		bool MousePress(int x, int y, int button);
+		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
+		bool MouseWheel(bool up, float value);
+		bool IsAbove(int x, int y);
+		string GetTooltip(int x, int y);
+
+		bool CommandNotify(const Command& cmd);
+
+		bool AddConsoleLine(const string& msg, int zone);
+
+		bool GroupChanged(int groupID);
+
+		bool GameSetup(const string& state, bool& ready,
+		               const map<int, string>& playerStates);
+
+		string WorldTooltip(const CUnit* unit,
+		                    const CFeature* feature,
+		                    const float3* groundPos);
+
+		bool MapDrawCmd(int playerID, int type,
+		                const float3* pos0,
+		                const float3* pos1,
+		                const string* labe);
+
+//FIXME		void ShockFront(float power, const float3& pos, float areaOfEffect);
+
 	private:
 		typedef vector<CLuaHandle*> CallInList;
 
 	private:
 		void ListInsert(CallInList& ciList, CLuaHandle* lh);
 		void ListRemove(CallInList& ciList, CLuaHandle* lh);
+
+	private:
+		CLuaHandle* mouseOwner;
 
 	private:
 		map<string, CallInList*> callInMap;
@@ -132,6 +174,11 @@ class CLuaCallInHandler
 		CallInList listUnitLeftRadar;
 		CallInList listUnitLeftLos;
 
+		CallInList listUnitEnteredWater;
+		CallInList listUnitEnteredAir;
+		CallInList listUnitLeftWater;
+		CallInList listUnitLeftAir;
+
 		CallInList listUnitLoaded;
 		CallInList listUnitUnloaded;
 
@@ -147,6 +194,8 @@ class CLuaCallInHandler
 
 		CallInList listUpdate;
 
+		CallInList listViewResize;
+
 		CallInList listDefaultCommand;
 
 		CallInList listDrawGenesis;
@@ -158,6 +207,23 @@ class CLuaCallInHandler
 		CallInList listDrawScreenEffects;
 		CallInList listDrawScreen;
 		CallInList listDrawInMiniMap;
+
+		// from LuaUI
+		CallInList listKeyPress;
+		CallInList listKeyRelease;
+		CallInList listMouseMove;
+		CallInList listMousePress;
+		CallInList listMouseRelease;
+		CallInList listMouseWheel;
+		CallInList listIsAbove;
+		CallInList listGetTooltip;
+		CallInList listConfigCommand;
+		CallInList listCommandNotify;
+		CallInList listAddConsoleLine;
+		CallInList listGroupChanged;
+		CallInList listGameSetup;
+		CallInList listWorldTooltip;
+		CallInList listMapDrawCmd;
 };
 
 
@@ -199,6 +265,10 @@ UNIT_CALLIN_NO_PARAM(Finished)
 UNIT_CALLIN_NO_PARAM(Idle)
 UNIT_CALLIN_NO_PARAM(Cloaked)
 UNIT_CALLIN_NO_PARAM(Decloaked)
+UNIT_CALLIN_NO_PARAM(EnteredWater)
+UNIT_CALLIN_NO_PARAM(EnteredAir)
+UNIT_CALLIN_NO_PARAM(LeftWater)
+UNIT_CALLIN_NO_PARAM(LeftAir)
 
 
 #define UNIT_CALLIN_INT_PARAM(name)                                       \

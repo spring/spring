@@ -30,7 +30,7 @@ local SOUND_DIRNAME = LUAUI_DIRNAME .. 'Sounds/'
 
 
 local function playSound(filename, ...)
-  Spring.PlaySoundFile(SOUND_DIRNAME .. filename, unpack(arg))
+  Spring.PlaySoundFile(SOUND_DIRNAME .. filename, ...)
 end
 
 

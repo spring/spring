@@ -64,8 +64,6 @@ public:
 	
 	std::map<std::string, int> restrictedUnits;
 	
-	std::string aiDlls[MAX_TEAMS];
-	
 	std::map<std::string, std::string> mapOptions;
 	std::map<std::string, std::string> modOptions;
 	

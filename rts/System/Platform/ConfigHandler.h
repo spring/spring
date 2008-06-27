@@ -76,6 +76,9 @@ public:
 	 */
 	static ConfigHandler& GetInstance();
 
+	static bool SetConfigSource(const std::string& name);
+	static const std::string& GetConfigSource();
+
 	/**
 	 * @brief deallocate
 	 */
@@ -84,6 +87,8 @@ public:
 	virtual ~ConfigHandler();
 
 protected:
+	static std::string configSource;
+
 	/**
 	 * @brief instance
 	 *

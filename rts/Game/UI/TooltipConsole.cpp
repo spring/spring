@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "TooltipConsole.h"
-#include "LuaUI.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
@@ -11,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/LosHandler.h"
@@ -180,11 +180,9 @@ static void GetDecoyResources(const CUnit* unit,
 
 std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 {
-	if (luaUI) {
-		string custom = luaUI->WorldTooltip(unit, NULL, NULL);
-		if (!custom.empty()) {
-			return custom;
-		}
+	string custom = luaCallIns.WorldTooltip(unit, NULL, NULL);
+	if (!custom.empty()) {
+		return custom;
 	}
 
 	std::string s;
@@ -299,11 +297,9 @@ std::string CTooltipConsole::MakeUnitStatsString(
 
 std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 {
-	if (luaUI) {
-		string custom = luaUI->WorldTooltip(NULL, feature, NULL);
-		if (!custom.empty()) {
-			return custom;
-		}
+	string custom = luaCallIns.WorldTooltip(NULL, feature, NULL);
+	if (!custom.empty()) {
+		return custom;
 	}
 
 	std::string s;
@@ -333,11 +329,9 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 
 std::string CTooltipConsole::MakeGroundString(const float3& pos)
 {
-	if (luaUI) {
-		string custom = luaUI->WorldTooltip(NULL, NULL, &pos);
-		if (!custom.empty()) {
-			return custom;
-		}
+	string custom = luaCallIns.WorldTooltip(NULL, NULL, &pos);
+	if (!custom.empty()) {
+		return custom;
 	}
 
 	char tmp[512];

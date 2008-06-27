@@ -205,8 +205,9 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		sprintf(section, "GAME\\TEAM%i\\", a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1)))
+		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			continue;
+		}
 
 		// Get default color from palette (based on "color" tag)
 		int colorNum = atoi(file.SGetValueDef("0", s + "color").c_str());
@@ -233,11 +234,12 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		const string aiDll = file.SGetValueDef("", s + "aidll");
 		if (aiDll.substr(0, 6) == "LuaAI:") {
 			gs->Team(i)->luaAI = aiDll.substr(6);
-		} else {
+		}
+		else {
 			if (hostDemo) {
-				aiDlls[i] = "";
+				gs->Team(i)->dllAI = "";
 			} else {
-				aiDlls[i] = aiDll;
+				gs->Team(i)->dllAI = aiDll;
 			}
 		}
 

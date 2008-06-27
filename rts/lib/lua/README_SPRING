@@ -36,5 +36,12 @@ Lua-5.1.2 source code modifications:
   7. Changed the return type of lua_toboolean from int to bool to prevent
      compiler performance warnings on Visual Studio 2005.
 
-	8. Modified lbaselib.cpp:luaB_tostring() and lvm.cpp:luaV_tostring()
+  8. Modified lbaselib.cpp:luaB_tostring() and lvm.cpp:luaV_tostring()
      so that the tostring() lua function would be sync safe.
+
+  9. Undefined (in include/luaconf.h):
+       LUA_COMPAT_VARARG
+       LUA_COMPAT_MOD
+       LUA_COMPAT_LSTR
+       LUA_COMPAT_GFIND
+       LUA_COMPAT_OPENLIB

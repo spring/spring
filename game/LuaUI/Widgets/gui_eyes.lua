@@ -150,7 +150,7 @@ end
 
 function widget:GetTooltip(x, y)
   local r = 0.333
-  local toggle = (math.mod(widgetHandler:GetHourTimer(), r) < (r * 0.5))
+  local toggle = ((widgetHandler:GetHourTimer() % r) < (r * 0.5))
   local cs1 = (toggle and '\255\64\255\64') or '\255\64\128\64'
   local w = WhiteStr
   local tt = w
@@ -246,7 +246,7 @@ local function DrawEye(e)
   local timer = widgetHandler:GetHourTimer()
   gl.MatrixMode(GL.TEXTURE)
   gl.PushMatrix()
-  gl.Rotate(math.mod(e.td * timer * 60, 360), 0.0, 0.0, 1.0)
+  gl.Rotate((e.td * timer * 60) % 360, 0.0, 0.0, 1.0)
   gl.MatrixMode(GL.MODELVIEW)
   DrawLists(e.x, e.y, e.sx * 0.5, e.sy * 0.5, {
     { circlePolyList, color}, { circleLineList, black }
@@ -271,7 +271,7 @@ function widget:DrawScreen()
   -- an unmissable message
   local htime = widgetHandler:GetHourTimer()
   local r = 0.333
-  local toggle = math.mod(htime, r) < (r * 0.5)
+  local toggle = (htime % r) < (r * 0.5)
   local cs1 = (toggle and '\255\255\255\64') or '\255\128\128\64'
   local tt = ''
   tt = tt .. WhiteStr .. 'Use'

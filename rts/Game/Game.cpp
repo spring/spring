@@ -77,12 +77,16 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaInputReceiver.h"
+#include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCtrl.h"
+#include "Sim/ModInfo.h"
+#include "Sim/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -92,7 +96,6 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -209,6 +212,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
+	CPlayer::UpdateControlledTeams();
+
 	leastQue = 0;
 	timeLeft = 0.0f;
 	consumeSpeed = 1.0f;
@@ -269,6 +274,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	writingPos = 0;
 	userPrompt = "";
 
+	CLuaHandle::SetModUICtrl(!!configHandler.GetInt("LuaModUICtrl", 1));
+
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
@@ -297,6 +304,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	tooltip = SAFE_NEW CTooltipConsole();
 	iconHandler = SAFE_NEW CIconHandler();
 
+	selectedUnits.Init();
+
 	ENTER_MIXED;
 
 	helper = SAFE_NEW CGameHelper(this);
@@ -304,6 +313,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	ENTER_SYNCED;
 
 	modInfo.Init(modName.c_str());
+
+	if (!sideParser.Load()) {
+		throw content_error(sideParser.GetErrorLog());
+	}
 
 	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
 	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -440,9 +453,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	CPlayer* p = gs->players[gu->myPlayerNum];
 	if(!gameSetup || net->localDemoPlayback) {
 		p->playerName = configHandler.GetString("name", "");
-	}
-	else
-	{
+	} else {
 		GameSetupDrawer::Enable();
 	}
 
@@ -494,6 +505,9 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	lastCpuUsageTime = gu->gameTime + 10;
 
 	mouse->ShowMouse();
+
+	// last in, first served
+	luaInputReceiver = SAFE_NEW LuaInputReceiver();
 }
 
 
@@ -547,6 +561,7 @@ CGame::~CGame()
 	delete pathManager;        pathManager        = NULL;
 	delete groundDecals;       groundDecals       = NULL;
 	delete ground;             ground             = NULL;
+	delete luaInputReceiver;   luaInputReceiver   = NULL; 
 	delete inMapDrawer;        inMapDrawer        = NULL;
 	delete net;                net                = NULL;
 	delete radarhandler;       radarhandler       = NULL;
@@ -604,6 +619,8 @@ void CGame::ResizeEvent()
 	// Fix water renderer, they depend on screen resolution...
 	delete water;
 	water = CBaseWater::GetWater();
+
+	luaCallIns.ViewResize();
 }
 
 
@@ -854,6 +871,7 @@ int CGame::KeyReleased(unsigned short k)
 }
 
 
+// FOR UNSYNCED MESSAGES
 bool CGame::ActionPressed(const Action& action,
                           const CKeySet& ks, bool isRepeat)
 {
@@ -1688,11 +1706,20 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
-
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 			guihandler->RunLayoutCommand(action.extra);
 		}
+	}
+	else if (cmd == "luamoduictrl") {
+		bool modUICtrl;
+		if (action.extra.empty()) {
+			modUICtrl = !CLuaHandle::GetModUICtrl();
+		} else {
+			modUICtrl = !!atoi(action.extra.c_str());
+		}
+		CLuaHandle::SetModUICtrl(modUICtrl);
+		configHandler.SetInt("LuaModUICtrl", modUICtrl ? 1 : 0);
 	}
 	else if (cmd == "minimap") {
 		if (minimap != NULL) {
@@ -1947,6 +1974,7 @@ bool CGame::ActionReleased(const Action& action)
 	return 0;
 }
 
+
 void SetBoolArg(bool& value, const std::string& str)
 {
 	if (str.empty()) // toggle
@@ -1960,6 +1988,8 @@ void SetBoolArg(bool& value, const std::string& str)
 	}
 }
 
+
+// FOR SYNCED MESSAGES
 void CGame::ActionReceived(const Action& action, int playernum)
 {
 	if (action.command == "cheat") {
@@ -1992,10 +2022,12 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		else {
 			SetBoolArg(gs->godMode, action.extra);
 			CLuaUI::UpdateTeams();
-			if (gs->godMode)
+			if (gs->godMode) {
 				logOutput.Print("God Mode Enabled");
-			else
+			} else {
 				logOutput.Print("God Mode Disabled");
+			}
+			CPlayer::UpdateControlledTeams();
 		}
 	}
 	else if (action.command == "nocost" && gs->cheatEnabled) {
@@ -2400,6 +2432,16 @@ bool CGame::Update()
 		GameEnd();
 	}
 
+	// send out new console lines
+	if (infoConsole) {
+		vector<CInfoConsole::RawLine> lines;
+		infoConsole->GetNewRawLines(lines);
+		for (unsigned int i = 0; i < lines.size(); i++) {
+			const CInfoConsole::RawLine& rawLine = lines[i];
+			luaCallIns.AddConsoleLine(rawLine.text, rawLine.zone);
+		}
+	}
+
 	if (gameServer && !gameServer->GameHasStarted() && !gameSetup) {
 		bool allReady = true;
 		for (int a = 0; a < gs->activePlayers; a++) {
@@ -2573,10 +2615,6 @@ bool CGame::Draw() {
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 
-	if (luaUI) {
-		luaUI->AddConsoleLines();
-	}
-
 	luaCallIns.Update();
 
 	luaCallIns.DrawGenesis();
@@ -2719,19 +2757,13 @@ bool CGame::Draw() {
 		}
 		else {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			if (!inputReceivers.empty()) {
-				std::deque<CInputReceiver*>::reverse_iterator ri;
-				for(ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
-					CInputReceiver* rcvr = *ri;
-					if (rcvr) {
-						rcvr->Draw();
-					}
+			std::deque<CInputReceiver*>::reverse_iterator ri;
+			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
+				CInputReceiver* rcvr = *ri;
+				if (rcvr) {
+					rcvr->Draw();
 				}
 			}
-		}
-
-		if (!hideInterface) {
-			luaCallIns.DrawScreen();
 		}
 	}
 
@@ -3519,7 +3551,7 @@ void CGame::ClientReadNet()
 					c.params.push_back(*((float*) &inbuf[11 + a * 4]));
 				}
 
-				selectedUnits.AiOrder(unitid,c);
+				selectedUnits.AiOrder(unitid, c, player);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -3561,7 +3593,7 @@ void CGame::ClientReadNet()
 				// apply the commands
 				for (c = 0; c < commandCount; c++) {
 					for (u = 0; u < unitCount; u++) {
-						selectedUnits.AiOrder(unitIDs[u], commands[c]);
+						selectedUnits.AiOrder(unitIDs[u], commands[c], player);
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -3722,6 +3754,7 @@ void CGame::ClientReadNet()
 						} else {
 							gs->players[player]->StartSpectating();
 						}
+						CPlayer::UpdateControlledTeams();
 						break;
 					}
 					case TEAMMSG_GIVEAWAY: {
@@ -3732,6 +3765,7 @@ void CGame::ClientReadNet()
 						} else {
 							gs->players[player]->StartSpectating();
 						}
+						CPlayer::UpdateControlledTeams();
 						break;
 					}
 					case TEAMMSG_RESIGN: {
@@ -3745,6 +3779,7 @@ void CGame::ClientReadNet()
 							gs->Team(fromTeam)->leader = -1;
 						}
 						logOutput.Print("Player %i resigned and is now spectating!", player);
+						CPlayer::UpdateControlledTeams();
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
@@ -3766,6 +3801,7 @@ void CGame::ClientReadNet()
 						if (gs->Team(newTeam)->leader == -1) {
 							gs->Team(newTeam)->leader = player;
 						}
+						CPlayer::UpdateControlledTeams();
 						break;
 					}
 					default: {

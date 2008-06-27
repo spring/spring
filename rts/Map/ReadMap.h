@@ -96,7 +96,7 @@ public:
 	};
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;
 
-	float minheight,maxheight;
+	float minheight, maxheight;
 };
 
 extern CReadMap* readmap;

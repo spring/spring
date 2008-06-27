@@ -124,6 +124,10 @@ local flexCallIns = {
   'UnitEnteredLos',
   'UnitLeftRadar',
   'UnitLeftLos',
+  'UnitEnteredWater',
+  'UnitEnteredAir',
+  'UnitLeftWater',
+  'UnitLeftAir',
   'UnitSeismicPing',
   'UnitLoaded',
   'UnitUnloaded',
@@ -283,6 +287,42 @@ end
 
 --------------------------------------------------------------------------------
 
+
+local function GetWidgetInfo(name, mode)
+  local lines = VFS.LoadFile(name, mode)
+
+  local infoLines = {}
+
+  for line in lines:gmatch('([^\n]*)\n') do
+    if (not line:find('^%s*%-%-')) then
+      if (line:find('[^\r]')) then
+        break -- not commented, not a blank line
+      end
+    end
+    local s, e, source = line:find('^%s*%-%-%>%>(.*)')
+    if (source) then
+      table.insert(infoLines, source)
+    end
+  end
+
+  local info = {}
+  local chunk, err = loadstring(table.concat(infoLines, '\n'))
+  if (not chunk) then
+    Spring.Echo('not loading ' .. name .. ': ' .. err)
+  else
+    setfenv(chunk, info)
+    local success, err = pcall(chunk)
+    if (not success) then
+      Spring.Echo('not loading ' .. name .. ': ' .. err)
+    end
+  end
+
+  for k,v in pairs(info) do
+    Spring.Echo(name, k, 'type: ' .. type(v), '<'..tostring(v)..'>')
+  end
+end
+
+
 function widgetHandler:Initialize()
   self:LoadOrderList()
   self:LoadConfigData()
@@ -298,6 +338,7 @@ function widgetHandler:Initialize()
   -- stuff the raw widgets into unsortedWidgets
   local widgetFiles = VFS.DirList(WIDGET_DIRNAME, "*.lua", VFS.RAW_ONLY)
   for k,wf in ipairs(widgetFiles) do
+    GetWidgetInfo(wf, VFS.RAW_ONLY)
     local widget = self:LoadWidget(wf, false)
     if (widget) then
       table.insert(unsortedWidgets, widget)
@@ -307,6 +348,7 @@ function widgetHandler:Initialize()
   -- stuff the zip widgets into unsortedWidgets
   local widgetFiles = VFS.DirList(WIDGET_DIRNAME, "*.lua", VFS.ZIP_ONLY)
   for k,wf in ipairs(widgetFiles) do
+    GetWidgetInfo(wf, VFS.ZIP_ONLY)
     local widget = self:LoadWidget(wf, true)
     if (widget) then
       table.insert(unsortedWidgets, widget)
@@ -561,7 +603,7 @@ local function SafeWrapFuncNoGL(func, funcName)
 
   return function(w, ...)
 
-    local r = { pcall(func, w, unpack(arg)) }
+    local r = { pcall(func, w, ...) }
 
     if (r[1]) then
       table.remove(r, 1)
@@ -588,7 +630,7 @@ local function SafeWrapFuncGL(func, funcName)
   return function(w, ...)
 
     glPushAttrib(GL.ALL_ATTRIB_BITS)
-    local r = { pcall(func, w, unpack(arg)) }
+    local r = { pcall(func, w, ...) }
     glPopAttrib()
 
     if (r[1]) then
@@ -733,7 +775,7 @@ function widgetHandler:UpdateCallIn(name)
     -- always assign these call-ins
     local selffunc = self[name]
     _G[name] = function(...)
-      return selffunc(self, unpack(arg))
+      return selffunc(self, ...)
     end
   else
     _G[name] = nil
@@ -1024,7 +1066,7 @@ end
 function widgetHandler:Update()
   local deltaTime = Spring.GetLastUpdateSeconds()  
   -- update the hour timer
-  hourTimer = math.mod(hourTimer + deltaTime, 3600.0)
+  hourTimer = (hourTimer + deltaTime) % 3600.0
   for _,w in ipairs(self.UpdateList) do
     w:Update(deltaTime)
   end
@@ -1131,6 +1173,12 @@ end
 
 
 function widgetHandler:ViewResize(vsx, vsy)
+  if (type(vsx) == 'table') then
+    vsy = vsx.viewSizeY
+    vsx = vsx.viewSizeX
+    print('real ViewResize') -- FIXME
+  end
+    
   for _,w in ipairs(self.ViewResizeList) do
     w:ViewResize(vsx, vsy)
   end
@@ -1502,7 +1550,7 @@ end
 
 function widgetHandler:DefaultCommand(...)
   for _,w in ripairs(self.DefaultCommandList) do
-    local result = w:DefaultCommand(unpack(arg))
+    local result = w:DefaultCommand(...)
     if (type(result) == 'number') then
       return result
     end
@@ -1599,9 +1647,9 @@ function widgetHandler:UnitEnteredRadar(unitID, unitTeam)
 end
 
 
-function widgetHandler:UnitEnteredLos(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitEnteredLos(unitID, unitTeam)
   for _,w in ipairs(self.UnitEnteredLosList) do
-    w:UnitEnteredLos(unitID, unitDefID, unitTeam)
+    w:UnitEnteredLos(unitID, unitTeam)
   end
   return
 end
@@ -1615,9 +1663,41 @@ function widgetHandler:UnitLeftRadar(unitID, unitTeam)
 end
 
 
-function widgetHandler:UnitLeftLos(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitLeftLos(unitID, unitTeam)
   for _,w in ipairs(self.UnitLeftLosList) do
-    w:UnitLeftLos(unitID, unitDefID, unitTeam)
+    w:UnitLeftLos(unitID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitEnteredWaterList) do
+    w:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitEnteredAirList) do
+    w:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitLeftWater(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitLeftWaterList) do
+    w:UnitLeftWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitLeftAir(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitLeftAirList) do
+    w:UnitLeftAir(unitID, unitDefID, unitTeam)
   end
   return
 end

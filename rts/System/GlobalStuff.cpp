@@ -118,6 +118,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	}
 	for(int a = 0; a < MAX_PLAYERS; ++a) {
 		players[a] = SAFE_NEW CPlayer();
+		players[a]->playerNum = a;
 		players[a]->team = 0;
 	}
 

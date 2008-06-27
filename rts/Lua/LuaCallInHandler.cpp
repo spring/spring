@@ -19,8 +19,10 @@ CLuaCallInHandler luaCallIns;
 
 CLuaCallInHandler::CLuaCallInHandler()
 {
+	mouseOwner = NULL;
+
 	callInMap["GamePreload"]         = &listGamePreload;
-	callInMap["GameStart"]    = &listGameStart;
+	callInMap["GameStart"]           = &listGameStart;
 	callInMap["GameOver"]            = &listGameOver;
 	callInMap["TeamDied"]            = &listTeamDied;
 
@@ -41,6 +43,11 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["UnitLeftRadar"]       = &listUnitLeftRadar;
 	callInMap["UnitLeftLos"]         = &listUnitLeftLos;
 
+	callInMap["UnitEnteredWater"]    = &listUnitEnteredWater;
+	callInMap["UnitEnteredAir"]      = &listUnitEnteredAir;
+	callInMap["UnitLeftWater"]       = &listUnitLeftWater;
+	callInMap["UnitLeftAir"]         = &listUnitLeftAir;
+
 	callInMap["UnitLoaded"]          = &listUnitLoaded;
 	callInMap["UnitUnloaded"]        = &listUnitUnloaded;
 
@@ -56,6 +63,8 @@ CLuaCallInHandler::CLuaCallInHandler()
 
 	callInMap["Update"]              = &listUpdate;
 
+	callInMap["ViewResize"]          = &listViewResize;
+
 	callInMap["DefaultCommand"]      = &listDefaultCommand;
 
 	callInMap["DrawGenesis"]         = &listDrawGenesis;
@@ -67,6 +76,22 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["DrawScreenEffects"]   = &listDrawScreenEffects;
 	callInMap["DrawScreen"]          = &listDrawScreen;
 	callInMap["DrawInMiniMap"]       = &listDrawInMiniMap;
+
+  // from LuaUI
+  callInMap["KeyPress"]        = &listKeyPress;
+  callInMap["KeyRelease"]      = &listKeyRelease;
+  callInMap["MouseMove"]       = &listMouseMove;
+  callInMap["MousePress"]      = &listMousePress;
+  callInMap["MouseRelease"]    = &listMouseRelease;
+  callInMap["MouseWheel"]      = &listMouseWheel;
+  callInMap["IsAbove"]         = &listIsAbove;
+  callInMap["GetTooltip"]      = &listGetTooltip;
+  callInMap["CommandNotify"]   = &listCommandNotify;
+  callInMap["AddConsoleLine"]  = &listAddConsoleLine;
+  callInMap["GroupChanged"]    = &listGroupChanged;
+  callInMap["GameSetup"]       = &listGameSetup;
+  callInMap["WorldTooltip"]    = &listWorldTooltip;
+  callInMap["MapDrawCmd"]      = &listMapDrawCmd;
 }
 
 
@@ -108,6 +133,11 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(UnitLeftRadar);
 	ADDHANDLE(UnitLeftLos);
 
+	ADDHANDLE(UnitEnteredWater);
+	ADDHANDLE(UnitEnteredAir);
+	ADDHANDLE(UnitLeftWater);
+	ADDHANDLE(UnitLeftAir);
+
 	ADDHANDLE(UnitLoaded);
 	ADDHANDLE(UnitUnloaded);
 
@@ -123,6 +153,8 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 
 	ADDHANDLE(Update);
 
+	ADDHANDLE(ViewResize);
+
 	ADDHANDLE(DefaultCommand);
 
 	ADDHANDLE(DrawGenesis);
@@ -134,11 +166,31 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(DrawScreenEffects);
 	ADDHANDLE(DrawScreen);
 	ADDHANDLE(DrawInMiniMap);
+
+  // from LuaUI
+  ADDHANDLE(KeyPress);
+  ADDHANDLE(KeyRelease);
+  ADDHANDLE(MouseMove);
+  ADDHANDLE(MousePress);
+  ADDHANDLE(MouseRelease);
+  ADDHANDLE(MouseWheel);
+  ADDHANDLE(IsAbove);
+  ADDHANDLE(GetTooltip);
+  ADDHANDLE(CommandNotify);
+  ADDHANDLE(AddConsoleLine);
+  ADDHANDLE(GroupChanged);
+  ADDHANDLE(GameSetup);
+  ADDHANDLE(WorldTooltip);
+  ADDHANDLE(MapDrawCmd);
 }
 
 
 void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 {
+	if (mouseOwner == lh) {
+		mouseOwner == NULL;
+	}
+
 	ListRemove(handles, lh);
 
 	ListRemove(listGamePreload, lh);
@@ -165,6 +217,11 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listUnitLeftRadar, lh);
 	ListRemove(listUnitLeftLos, lh);
 
+	ListRemove(listUnitEnteredWater, lh);
+	ListRemove(listUnitEnteredAir, lh);
+	ListRemove(listUnitLeftWater, lh);
+	ListRemove(listUnitLeftAir, lh);
+
 	ListRemove(listUnitLoaded, lh);
 	ListRemove(listUnitUnloaded, lh);
 
@@ -180,6 +237,8 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listUpdate, lh);
 
+	ListRemove(listViewResize, lh);
+
 	ListRemove(listDefaultCommand, lh);
 
 	ListRemove(listDrawGenesis, lh);
@@ -191,6 +250,22 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 	ListRemove(listDrawScreenEffects, lh);
 	ListRemove(listDrawScreen, lh);
 	ListRemove(listDrawInMiniMap, lh);
+
+  // from LuaUI
+  ListRemove(listKeyPress, lh);
+  ListRemove(listKeyRelease, lh);
+  ListRemove(listMouseMove, lh);
+  ListRemove(listMousePress, lh);
+  ListRemove(listMouseRelease, lh);
+  ListRemove(listMouseWheel, lh);
+  ListRemove(listIsAbove, lh);
+  ListRemove(listGetTooltip, lh);
+  ListRemove(listCommandNotify, lh);
+  ListRemove(listAddConsoleLine, lh);
+  ListRemove(listGroupChanged, lh);
+  ListRemove(listGameSetup, lh);
+  ListRemove(listWorldTooltip, lh);
+  ListRemove(listMapDrawCmd, lh);
 }
 
 
@@ -207,6 +282,7 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 {
 	if ((ciName == "Update")              ||
 	    (ciName == "DefaultCommand")      ||
+	    (ciName == "ViewResize")          ||
 	    (ciName == "DrawGenesis")         ||
 	    (ciName == "DrawWorld")           ||
 	    (ciName == "DrawWorldPreUnit")    ||
@@ -217,7 +293,22 @@ bool CLuaCallInHandler::UnsyncedCallIn(const string& ciName)
 	    (ciName == "DrawScreen")          ||
 	    (ciName == "DrawInMiniMap")       ||
 	    (ciName == "DrawUnit")            ||
-	    (ciName == "AICallIn")) {
+	    (ciName == "AICallIn")            ||
+      // from LuaUI
+      (ciName == "KeyPress")            ||
+      (ciName == "KeyRelease")          ||
+      (ciName == "MouseMove")           ||
+      (ciName == "MousePress")          ||
+      (ciName == "MouseRelease")        ||
+      (ciName == "MouseWheel")          ||
+      (ciName == "IsAbove")             ||
+      (ciName == "GetTooltip")          ||
+      (ciName == "CommandNotify")       ||
+      (ciName == "AddConsoleLine")      ||
+      (ciName == "GroupChanged")        ||
+      (ciName == "GameSetup")           ||
+      (ciName == "WorldTooltip")        ||
+      (ciName == "MapDrawCmd")) {
 		return true;
 	}
 	return false;
@@ -333,6 +424,16 @@ void CLuaCallInHandler::Update()
 }
 
 
+void CLuaCallInHandler::ViewResize()
+{
+	const int count = listViewResize.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listViewResize[i];
+		lh->ViewResize();
+	}
+}
+
+
 #define DRAW_CALLIN(name)                         \
   void CLuaCallInHandler:: Draw ## name ()        \
   {                                               \
@@ -362,6 +463,238 @@ DRAW_CALLIN(WorldRefraction)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+// from LuaUI
+//
+
+
+static inline bool CheckModUICtrl(const CLuaHandle* lh)
+{
+	return CLuaHandle::GetModUICtrl() || 
+	       CLuaHandle::GetActiveHandle()->GetUserMode();
+}
+
+
+
+
+bool CLuaCallInHandler::CommandNotify(const Command& cmd)
+{
+	// reverse order, user has the override
+	const int count = listCommandNotify.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listCommandNotify[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->CommandNotify(cmd)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+bool CLuaCallInHandler::KeyPress(unsigned short key, bool isRepeat)
+{
+	// reverse order, user has the override
+	const int count = listKeyPress.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listKeyPress[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->KeyPress(key, isRepeat)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+bool CLuaCallInHandler::KeyRelease(unsigned short key)
+{
+	// reverse order, user has the override
+	const int count = listKeyRelease.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listKeyRelease[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->KeyRelease(key)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+bool CLuaCallInHandler::MousePress(int x, int y, int button)
+{
+	// reverse order, user has the override
+	const int count = listMousePress.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listMousePress[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->MousePress(x, y, button)) {
+				mouseOwner = lh;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+// return a cmd index, or -1
+int CLuaCallInHandler::MouseRelease(int x, int y, int button)
+{
+	if (mouseOwner == NULL) {
+		return -1;
+	}
+	const int retval = mouseOwner->MouseRelease(x, y, button);
+	mouseOwner = NULL;
+	return retval;
+}
+
+
+bool CLuaCallInHandler::MouseMove(int x, int y, int dx, int dy, int button)
+{
+	if (mouseOwner == NULL) {
+		return false;
+	}
+	return mouseOwner->MouseMove(x, y, dx, dy, button);
+}
+
+
+bool CLuaCallInHandler::MouseWheel(bool up, float value)
+{
+	// reverse order, user has the override
+	const int count = listMouseWheel.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listMouseWheel[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->MouseWheel(up, value)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+bool CLuaCallInHandler::IsAbove(int x, int y)
+{
+	// reverse order, user has the override
+	const int count = listIsAbove.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listIsAbove[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->IsAbove(x, y)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+string CLuaCallInHandler::GetTooltip(int x, int y)
+{
+	// reverse order, user has the override
+	const int count = listGetTooltip.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listGetTooltip[i];
+		if (CheckModUICtrl(lh)) {
+			const string tt = lh->GetTooltip(x, y);
+			if (!tt.empty()) {
+				return tt;
+			}
+		}
+	}
+	return "";
+}
+
+
+bool CLuaCallInHandler::AddConsoleLine(const string& msg, int zone)
+{
+	const int count = listAddConsoleLine.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listAddConsoleLine[i];
+		if (CheckModUICtrl(lh)) {
+			lh->AddConsoleLine(msg, zone);
+		}
+	}
+	return true;
+}
+
+
+bool CLuaCallInHandler::GroupChanged(int groupID)
+{
+	const int count = listGroupChanged.size();
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listGroupChanged[i];
+		if (CheckModUICtrl(lh)) {
+			lh->GroupChanged(groupID);
+		}
+	}
+	return false;
+}
+
+
+
+bool CLuaCallInHandler::GameSetup(const string& state, bool& ready,
+                                  const map<int, string>& playerStates)
+{
+	// reverse order, user has the override
+	const int count = listGameSetup.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listGameSetup[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->GameSetup(state, ready, playerStates)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
+string CLuaCallInHandler::WorldTooltip(const CUnit* unit,
+                                       const CFeature* feature,
+                                       const float3* groundPos)
+{
+	// reverse order, user has the override
+	const int count = listWorldTooltip.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listWorldTooltip[i];
+		if (CheckModUICtrl(lh)) {
+			const string tt = lh->WorldTooltip(unit, feature, groundPos);
+			if (!tt.empty()) {
+				return tt;
+			}
+		}
+	}
+	return "";
+}
+
+
+bool CLuaCallInHandler::MapDrawCmd(int playerID, int type,
+                                   const float3* pos0, const float3* pos1,
+                                   const string* label)
+{
+	// reverse order, user has the override
+	const int count = listMapDrawCmd.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CLuaHandle* lh = listMapDrawCmd[i];
+		if (CheckModUICtrl(lh)) {
+			if (lh->MapDrawCmd(playerID, type, pos0, pos1, label)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 
 /******************************************************************************/

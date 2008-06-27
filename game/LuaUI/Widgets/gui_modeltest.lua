@@ -178,7 +178,7 @@ function widget:Update()
   local cx = 0.5 * Game.mapSizeX
   local cz = 0.5 * Game.mapSizeZ
   local time = widgetHandler:GetHourTimer()
-  radians = math.mod(math.pi * 2 * time * 0.1, math.pi * 2)
+  radians = (math.pi * 2 * time * 0.1) % (math.pi * 2)
   if (revolve) then
     local cos_val = math.cos(radians)
     local sin_val = math.sin(radians)
@@ -203,7 +203,7 @@ function Draw(useMat, mode)
   if (clip) then
     local hourTime = widgetHandler:GetHourTimer()
     local rate = 4
-    local dist = msx * (0.5 - (math.mod(hourTime, rate) / rate))
+    local dist = msx * (0.5 - ((hourTime % rate) / rate))
     gl.ClipPlane(1,  1, 0, 0, dist)
     gl.ClipPlane(2, -1, 0, 0, -dist + (msx * 0.1))
   end

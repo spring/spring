@@ -64,34 +64,9 @@ class CLuaUI : public CLuaHandle {
 
 		bool ConfigCommand(const string& command);
 
-		bool CommandNotify(const Command& cmd);
-
-		bool KeyPress(unsigned short key, bool isRepeat);
-		bool KeyRelease(unsigned short key);
-		bool MouseMove(int x, int y, int dx, int dy, int button);
-		bool MousePress(int x, int y, int button);
-		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
-		bool MouseWheel(bool up, float value);
-		bool IsAbove(int x, int y);
-		string GetTooltip(int x, int y);
-
 		bool AddConsoleLines();
 
-		bool GroupChanged(int groupID);
-
 		void ShockFront(float power, const float3& pos, float areaOfEffect);
-
-		bool GameSetup(const string& state, bool& ready,
-		               const map<int, string>& playerStates);
-
-		string WorldTooltip(const CUnit* unit,
-		                     const CFeature* feature,
-		                     const float3* groundPos);
-
-		bool MapDrawCmd(int playerID, int type,
-		                const float3* pos0,
-		                const float3* pos1,
-		                const string* labe);
 
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
@@ -127,101 +102,8 @@ class CLuaUI : public CLuaHandle {
 		float shockFrontMinPower;
 		float shockFrontDistAdj;
 
-		bool haveWorldTooltip;
-		bool haveMapDrawCmd;
-
 	private: // call-outs
-		static int GetConfigInt(lua_State* L);
-		static int SetConfigInt(lua_State* L);
-		static int GetConfigString(lua_State* L);
-		static int SetConfigString(lua_State* L);
-
-		static int CreateDir(lua_State* L);
-		static int MakeFont(lua_State* L);
-		static int SetUnitDefIcon(lua_State* L);
-
-		static int GetFPS(lua_State* L);
-
-		static int GetMouseState(lua_State* L);
-		static int GetMouseMiniMapState(lua_State* L);
-		static int GetMouseStartPosition(lua_State* L);
-		static int WarpMouse(lua_State* L);
-
-		static int SetCameraOffset(lua_State* L);
-
 		static int SetShockFrontFactors(lua_State* L);
-
-		static int SetLosViewColors(lua_State* L);
-
-		static int SetMouseCursor(lua_State* L);
-		static int GetMouseCursor(lua_State* L);
-
-		static int GetKeyState(lua_State* L);
-		static int GetModKeyState(lua_State* L);
-		static int GetPressedKeys(lua_State* L);
-		static int GetInvertQueueKey(lua_State* L);
-
-		static int SetActiveCommand(lua_State* L);
-		static int GetActiveCommand(lua_State* L);
-		static int GetDefaultCommand(lua_State* L);
-		static int GetActiveCmdDescs(lua_State* L);
-		static int GetActiveCmdDesc(lua_State* L);
-		static int GetCmdDescIndex(lua_State* L);
-
-		static int GetGatherMode(lua_State* L);
-
-		static int GetBuildFacing(lua_State* L);
-		static int GetBuildSpacing(lua_State* L);
-
-		static int GetActivePage(lua_State* L);
-		static int ForceLayoutUpdate(lua_State* L);
-
-		static int GetConsoleBuffer(lua_State* L);
-		static int GetCurrentTooltip(lua_State* L);
-
-		static int GetKeyCode(lua_State* L);
-		static int GetKeySymbol(lua_State* L);
-		static int GetKeyBindings(lua_State* L);
-		static int GetActionHotKeys(lua_State* L);
-
-		static int GetGroupList(lua_State* L);
-		static int GetSelectedGroup(lua_State* L);
-		static int GetGroupAIName(lua_State* L);
-		static int GetGroupAIList(lua_State* L);
-
-		static int SendCommands(lua_State* L);
-
-		static int SetShareLevel(lua_State* L);
-		static int ShareResources(lua_State* L);
-
-		static int GetMyAllyTeamID(lua_State* L);
-		static int GetMyTeamID(lua_State* L);
-		static int GetMyPlayerID(lua_State* L);
-
-		static int SetUnitGroup(lua_State* L);
-		static int GetUnitGroup(lua_State* L);
-
-		static int GetGroupUnits(lua_State* L);
-		static int GetGroupUnitsSorted(lua_State* L);
-		static int GetGroupUnitsCounts(lua_State* L);
-		static int GetGroupUnitsCount(lua_State* L);
-
-		static int GiveOrder(lua_State* L);
-		static int GiveOrderToUnit(lua_State* L);
-		static int GiveOrderToUnitMap(lua_State* L);
-		static int GiveOrderToUnitArray(lua_State* L);
-		static int GiveOrderArrayToUnitMap(lua_State* L);
-		static int GiveOrderArrayToUnitArray(lua_State* L);
-
-		static int SendLuaUIMsg(lua_State* L);
-		static int SendLuaGaiaMsg(lua_State* L);
-		static int SendLuaRulesMsg(lua_State* L);
-
-		static int MarkerAddPoint(lua_State* L);
-		static int MarkerAddLine(lua_State* L);
-		static int MarkerErasePosition(lua_State* L);
-
-		static int GetPlayerTraffic(lua_State* L);
 };
 
 

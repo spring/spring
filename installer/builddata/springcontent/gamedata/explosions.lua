@@ -47,7 +47,7 @@ end
 local function ParseColorString(str)
   local color = { 1.0, 1.0, 0.8 }
   local i = 1
-  for word in string.gfind(str, '[^,]+') do
+  for word in string.gmatch(str, '[^,]+') do
     local val = tonumber(word)
     if (val) then
       color[i] = val

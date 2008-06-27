@@ -83,9 +83,9 @@ protected:
 	void PreScan(const std::string& curPath);
 	void Scan(const std::string& curPath, bool checksum = false);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
-	void ScanMap(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
-	void ScanModLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
-	void ScanModTdf(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanMap(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanModLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanModTdf(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
 
 protected:
 	std::map<std::string, ArchiveInfo> archiveInfo;
