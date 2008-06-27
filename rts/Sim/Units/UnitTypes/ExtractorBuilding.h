@@ -3,7 +3,7 @@
 
 #include "Building.h"
 
-class CExtractorBuilding : public CBuilding {
+class CExtractorBuilding: public CBuilding {
 public:
 	CR_DECLARE(CExtractorBuilding);
 	CR_DECLARE_SUB(MetalSquareOfControl);
@@ -15,8 +15,9 @@ public:
 	void ResetExtraction();
 	void SetExtractionRangeAndDepth(float range, float depth);
 	void ReCalculateMetalExtraction();
-	void AddNeighboor(CExtractorBuilding* neighboor);
-	void RemoveNeighboor(CExtractorBuilding* neighboor);
+	bool IsNeighbour(CExtractorBuilding* neighbour);
+	void AddNeighbour(CExtractorBuilding* neighbour);
+	void RemoveNeighbour(CExtractorBuilding* neighbour);
 
 	float GetExtractionRange() const { return extractionRange; }
 	float GetExtractionDepth() const { return extractionDepth; }

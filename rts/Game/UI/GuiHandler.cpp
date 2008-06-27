@@ -3632,7 +3632,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					buildPos = GetBuildPos(bi, bi);
 				}
 
-				for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=buildPos.end();++bpi) {
+				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
 					const float3& buildpos = bpi->pos;
 					// draw weapon range
 					if (unitdef->weapons.size() > 0) {
@@ -3643,7 +3643,12 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
+
+						if (unitdef->extractSquare) {
+							glSurfaceSquare(buildpos, unitdef->extractRange, unitdef->extractRange);
+						} else {
+							glSurfaceCircle(buildpos, unitdef->extractRange, 40);
+						}
 					}
 					// draw build range for immobile builders
 					if (unitdef->builder && !unitdef->canmove) {

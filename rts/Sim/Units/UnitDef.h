@@ -124,6 +124,9 @@ struct UnitDef
 	float metalStorage;
 	float energyStorage;
 
+	bool extractSquare;
+	bool isMetalMaker;
+
 	float autoHeal;		//amount autohealed
 	float idleAutoHeal;	//amount autohealed only during idling
 	int idleTime;		//time a unit needs to idle before its considered idling
@@ -373,7 +376,6 @@ struct UnitDef
 	int flareSalvoDelay;
 
 	bool smoothAnim;								// True if the unit should use interpolated animation
-	bool isMetalMaker;
 	bool canLoopbackAttack;							// only matters for fighter aircraft
 	bool levelGround;								// only matters for buildings
 

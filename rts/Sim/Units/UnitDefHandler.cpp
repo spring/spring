@@ -594,7 +594,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	string TEDClass = udTable.GetString("TEDClass", "0");
 	ud.TEDClassString = TEDClass;
-	ud.extractRange = 0;
+
+	ud.extractRange = 0.0f;
+	ud.extractSquare = udTable.GetBool("extractSquare", false);
 
 	if (ud.extractsMetal) {
 		ud.extractRange = mapInfo->map.extractorRadius;
