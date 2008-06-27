@@ -963,10 +963,26 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 	glPopMatrix();
 }
 
+void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize)
+{
+	glPushMatrix();
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(pos.x + xsize, 0.0f, pos.z + zsize);
+		glVertex3f(pos.x - xsize, 0.0f, pos.z + zsize);
+		glVertex3f(pos.x - xsize, 0.0f, pos.z - zsize);
+		glVertex3f(pos.x + xsize, 0.0f, pos.z - zsize);
+	glEnd();
+	glPopMatrix();
+}
+
 
 void CMiniMap::DrawSurfaceCircle(const float3& pos, float radius, unsigned int)
 {
 	minimap->DrawCircle(pos, radius);
+}
+void CMiniMap::DrawSurfaceSquare(const float3& pos, float xsize, float ysize)
+{
+	minimap->DrawSquare(pos, xsize, ysize);
 }
 
 
@@ -985,6 +1001,7 @@ void CMiniMap::DrawForReal()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 	setSurfaceCircleFunc(DrawSurfaceCircle);
+	setSurfaceSquareFunc(DrawSurfaceSquare);
 	cursorIcons.Enable(false);
 
 	glEnable(GL_BLEND);
@@ -996,6 +1013,7 @@ void CMiniMap::DrawForReal()
 		}
 		cursorIcons.Enable(true);
 		setSurfaceCircleFunc(NULL);
+		setSurfaceSquareFunc(NULL);
 		return;
 	}
 
@@ -1225,6 +1243,7 @@ void CMiniMap::DrawForReal()
 
 	cursorIcons.Enable(true);
 	setSurfaceCircleFunc(NULL);
+	setSurfaceSquareFunc(NULL);
 }
 
 

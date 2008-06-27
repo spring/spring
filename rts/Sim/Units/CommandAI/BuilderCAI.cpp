@@ -1471,7 +1471,13 @@ void CBuilderCAI::DrawCommands(void)
 				if (bi.def->extractRange > 0) {
 					lineDrawer.Break(bi.pos, cmdColors.build);
 					glColor4fv(cmdColors.rangeExtract);
-					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+
+					if (bi.def->extractSquare) {
+						glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
+					} else {
+						glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+					}
+
 					lineDrawer.Restart();
 				}
 			}

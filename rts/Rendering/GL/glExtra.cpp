@@ -9,12 +9,11 @@
 /*
  *  Draws a trigonometric circle in 'resolution' steps.
  */
-static void defSurfaceCircle(const float3& center, float radius,
-                             unsigned int resolution)
+static void defSurfaceCircle(const float3& center, float radius, unsigned int res)
 {
 	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < resolution; ++i) {
-		const float radians = (2.0f * PI) * (float)i / (float)resolution;
+	for (int i = 0; i < res; ++i) {
+		const float radians = (2.0f * PI) * (float)i / (float)res;
 		float3 pos;
 		pos.x = center.x + (sin(radians) * radius);
 		pos.z = center.z + (cos(radians) * radius);
@@ -24,16 +23,36 @@ static void defSurfaceCircle(const float3& center, float radius,
 	glEnd();
 }
 
+static void defSurfaceSquare(const float3& center, float xsize, float zsize)
+{
+	// FIXME: terrain contouring
+	const float3 p0 = center + float3(-xsize, 0.0f, -zsize);
+	const float3 p1 = center + float3( xsize, 0.0f, -zsize);
+	const float3 p2 = center + float3( xsize, 0.0f,  zsize);
+	const float3 p3 = center + float3(-xsize, 0.0f,  zsize);
+
+	glBegin(GL_LINE_LOOP);
+		glVertex3f(p0.x, ground->GetHeight(p0.x, p0.z), p0.z);
+		glVertex3f(p1.x, ground->GetHeight(p1.x, p1.z), p1.z);
+		glVertex3f(p2.x, ground->GetHeight(p2.x, p2.z), p2.z);
+		glVertex3f(p3.x, ground->GetHeight(p3.x, p3.z), p3.z);
+	glEnd();
+}
+
+
 SurfaceCircleFunc glSurfaceCircle = defSurfaceCircle;
+SurfaceSquareFunc glSurfaceSquare = defSurfaceSquare;
 
 void setSurfaceCircleFunc(SurfaceCircleFunc func)
 {
-	if (func == NULL) {
-		glSurfaceCircle = defSurfaceCircle;
-	} else {
-		glSurfaceCircle = func;
-	}
+	glSurfaceCircle = (func == NULL)? defSurfaceCircle: func;
 }
+
+void setSurfaceSquareFunc(SurfaceSquareFunc func)
+{
+	glSurfaceSquare = (func == NULL)? defSurfaceSquare: func;
+}
+
 
 
 /*

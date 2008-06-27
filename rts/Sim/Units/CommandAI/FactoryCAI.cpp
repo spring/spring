@@ -492,7 +492,7 @@ void CFactoryCAI::DrawCommands(void)
 			}
 			case CMD_GUARD:{
 				const CUnit* unit = uh->units[int(ci->params[0])];
-				if((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos =
 						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
@@ -528,7 +528,13 @@ void CFactoryCAI::DrawCommands(void)
 			if (bi.def->extractRange > 0) {
 				lineDrawer.Break(bi.pos, cmdColors.build);
 				glColor4fv(cmdColors.rangeExtract);
-				glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+
+				if (bi.def->extractSquare) {
+					glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
+				} else {
+					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+				}
+
 				lineDrawer.Restart();
 			}
 		}
