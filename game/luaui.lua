@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  file:    gui.lua
---  brief:   entry point for the user LuaUI, can redirect to a mod's LuaUI
+--  file:    luaui.lua
+--  brief:   entry point for LuaUI
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2008.
