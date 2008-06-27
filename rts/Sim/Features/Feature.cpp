@@ -404,6 +404,10 @@ void CFeature::DependentDied(CObject *o)
 
 void CFeature::ForcedMove(const float3& newPos)
 {
+	if (blocking) {
+		UnBlock();
+	}
+
 	featureHandler->UpdateDrawQuad(this, newPos);
 
 	// remove from managers
@@ -411,7 +415,6 @@ void CFeature::ForcedMove(const float3& newPos)
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 	}
-	UnBlock();
 
 	pos = newPos;
 
@@ -431,12 +434,18 @@ void CFeature::ForcedMove(const float3& newPos)
 		midPos = pos;
 	}
 
+	// setup the visual transformation matrix
+	CalculateTransform();
+
 	// insert into managers
 	qf->AddFeature(this);
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->AddTree(def->modelType, pos, 1.0f);
 	}
-	Block();
+
+	if (blocking) {
+		Block();
+	}
 }
 
 
