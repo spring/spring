@@ -13,7 +13,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 using std::max;

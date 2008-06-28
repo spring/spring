@@ -1642,13 +1642,14 @@ static bool CanGiveOrders()
 	if (gs->noHelperAIs) {
 		return false;
 	}
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int ctrlTeam = lh->GetCtrlTeam();
-	if ((ctrlTeam >= 0) || (ctrlTeam == CLuaHandle::AllAccessTeam)) {
+	if (gs->godMode) {
+		return true;
 	}
-	if (gu->spectating && !gs->godMode) {
+	if (gu->spectating) {
 		return false;
 	}
+	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
+	const int ctrlTeam = lh->GetCtrlTeam();
 	// FIXME ? (correct? warning / error?)
 	if ((ctrlTeam != gu->myTeam) || (ctrlTeam < 0)) {
 		return false;

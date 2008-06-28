@@ -10,7 +10,7 @@
 #include "Rendering/GL/myGL.h"
 
 #ifdef WIN32
-#include "Platform/Win/win32.h"
+#  include "Platform/Win/win32.h"
 #endif
 
 #include "Sync/SyncTracer.h"

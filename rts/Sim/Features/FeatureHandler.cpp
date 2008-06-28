@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "FeatureHandler.h"
 #include "Feature.h"
-#include "FileSystem/FileHandler.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "LoadSaveInterface.h"

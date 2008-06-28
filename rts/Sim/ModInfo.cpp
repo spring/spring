@@ -9,7 +9,6 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 
 

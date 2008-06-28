@@ -43,7 +43,7 @@
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #ifdef _WIN32
-#include "winerror.h"
+#  include "winerror.h"
 #endif
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
@@ -138,14 +138,14 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
 #ifndef NO_AVI
-#include "Platform/Win/AVIGenerator.h"
+#  include "Platform/Win/AVIGenerator.h"
 #endif
 
 #ifdef DIRECT_CONTROL_ALLOWED
-#include "myMath.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#  include "myMath.h"
+#  include "Sim/MoveTypes/MoveType.h"
+#  include "Sim/Weapons/Weapon.h"
+#  include "Sim/Weapons/WeaponDefHandler.h"
 #endif
 
 #include "mmgr.h"
@@ -530,6 +530,7 @@ CGame::~CGame()
 		aviGenerator = NULL;
 	}
 #endif
+
 #ifdef TRACE_SYNC
 	tracefile << "End game\n";
 #endif

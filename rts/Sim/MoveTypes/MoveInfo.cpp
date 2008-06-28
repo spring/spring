@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "MoveInfo.h"
-#include "FileSystem/FileHandler.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"

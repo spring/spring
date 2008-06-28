@@ -14,6 +14,7 @@ using std::map;
 using std::set;
 
 #include "System/float3.h"
+#include "System/FileSystem/VFSModes.h"
 
 
 class LuaTable;

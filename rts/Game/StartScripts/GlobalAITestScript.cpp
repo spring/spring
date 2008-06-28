@@ -11,7 +11,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
 #include "mmgr.h"
 

@@ -17,7 +17,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 using std::list;

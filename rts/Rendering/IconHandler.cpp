@@ -12,7 +12,6 @@
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 using std::string;
