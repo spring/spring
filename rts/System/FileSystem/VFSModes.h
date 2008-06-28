@@ -1,10 +1,6 @@
 #ifndef VFS_MODES_H
 #define VFS_MODES_H
 
-#include <set>
-#include <vector>
-#include <string>
-
 
 #define SPRING_VFS_RAW  "r"
 #define SPRING_VFS_MOD  "M"
