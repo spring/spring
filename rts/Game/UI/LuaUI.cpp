@@ -107,7 +107,12 @@ void CLuaUI::LoadHandler()
 
 void CLuaUI::FreeHandler()
 {
-	delete luaUI;
+	static bool inFree = false;
+	if (!inFree) {
+		inFree = true;
+		delete luaUI;
+		inFree = false;
+	}
 }
 
 
