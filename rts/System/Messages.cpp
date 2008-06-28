@@ -12,7 +12,6 @@
 #include "LogOutput.h"
 #include "Messages.h"
 #include "Lua/LuaParser.h"
-#include "FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 using std::string;

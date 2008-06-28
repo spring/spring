@@ -10,7 +10,6 @@ using std::set;
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
 
 
 SideParser sideParser;

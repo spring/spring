@@ -7,7 +7,6 @@
 #include "Sim/SideParser.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
 #include "mmgr.h"
 
 extern std::string stupidGlobalMapname;

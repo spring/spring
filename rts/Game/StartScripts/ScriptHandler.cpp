@@ -17,7 +17,7 @@
 #include "TestScript.h"
 #include "Platform/SharedLib.h"
 #ifndef NO_LUA
-#include "System/Platform/errorhandler.h"
+#  include "System/Platform/errorhandler.h"
 #endif
 #include "mmgr.h"
 

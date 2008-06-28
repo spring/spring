@@ -20,9 +20,13 @@ using std::set;
 #include "LuaDisplayLists.h"
 
 
-#define LUA_HANDLE_ORDER_RULES 0
-#define LUA_HANDLE_ORDER_GAIA  1
-#define LUA_HANDLE_ORDER_UI    2
+#define LUA_HANDLE_ORDER_UNITS          0
+#define LUA_HANDLE_ORDER_RULES          1
+#define LUA_HANDLE_ORDER_GAIA           2
+#define LUA_HANDLE_ORDER_UNITS_UNSYNCED 3
+#define LUA_HANDLE_ORDER_RULES_UNSYNCED 4
+#define LUA_HANDLE_ORDER_GAIA_UNSYNCED  5
+#define LUA_HANDLE_ORDER_UI             6
 
 
 class CUnit;

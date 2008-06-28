@@ -4,7 +4,6 @@
 #include "LogOutput.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
-#include "System/FileSystem/FileHandler.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
