@@ -78,9 +78,9 @@ void FileSystemHandler::Cleanup()
 FileSystemHandler::~FileSystemHandler()
 {
 	delete archiveScanner;
-	delete hpiHandler;
+	delete vfsHandler;
 	archiveScanner = NULL;
-	hpiHandler = NULL;
+	vfsHandler = NULL;
 }
 
 FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator(native_path_sep)

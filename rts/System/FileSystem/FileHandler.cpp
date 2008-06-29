@@ -61,16 +61,16 @@ bool CFileHandler::TryRawFS(const string& filename)
 
 bool CFileHandler::TryModFS(const string& filename)
 {
-	if (hpiHandler == NULL) {
+	if (vfsHandler == NULL) {
 		return false;
 	}
 
 	const string file = StringToLower(filename);
 
-	hpiLength = hpiHandler->GetFileSize(file);
+	hpiLength = vfsHandler->GetFileSize(file);
 	if (hpiLength != -1) {
 		hpiFileBuffer = SAFE_NEW unsigned char[hpiLength];
-		if (hpiHandler->LoadFile(file, hpiFileBuffer) < 0) {
+		if (vfsHandler->LoadFile(file, hpiFileBuffer) < 0) {
 			delete[] hpiFileBuffer;
 			hpiFileBuffer = NULL;
 		}
@@ -214,8 +214,8 @@ vector<string> CFileHandler::FindFiles(const string& path,
 	                          boost::regex::icase);
 	vector<string> f;
 
-	if (hpiHandler) {
-		f = hpiHandler->GetFilesInDir(path);
+	if (vfsHandler) {
+		f = vfsHandler->GetFilesInDir(path);
 	}
 
 	for (vector<string>::iterator fi = f.begin(); fi != f.end(); ++fi) {
@@ -276,7 +276,7 @@ bool CFileHandler::InsertModFiles(set<string>& fileSet,
                                   const string& path,
                                   const string& pattern)
 {
-	if (!hpiHandler) {
+	if (!vfsHandler) {
 		return false;
 	}
 
@@ -287,7 +287,7 @@ bool CFileHandler::InsertModFiles(set<string>& fileSet,
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
 
-	vector<string> found = hpiHandler->GetFilesInDir(path);
+	vector<string> found = vfsHandler->GetFilesInDir(path);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -366,7 +366,7 @@ bool CFileHandler::InsertModDirs(set<string>& dirSet,
                                  const string& path,
                                  const string& pattern)
 {
-	if (!hpiHandler) {
+	if (!vfsHandler) {
 		return false;
 	}
 
@@ -377,7 +377,7 @@ bool CFileHandler::InsertModDirs(set<string>& dirSet,
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
 
-	vector<string> found = hpiHandler->GetDirsInDir(path);
+	vector<string> found = vfsHandler->GetDirsInDir(path);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {

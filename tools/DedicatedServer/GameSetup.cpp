@@ -59,7 +59,7 @@ void CGameSetup::LoadMap()
 		if (ars.empty())
 			throw content_error("Couldn't find any map archives for map '" + mapName + "'.");
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-			if (!hpiHandler->AddArchive(*i, false))
+			if (!vfsHandler->AddArchive(*i, false))
 				throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
 		}
 	}

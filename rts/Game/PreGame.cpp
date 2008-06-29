@@ -72,7 +72,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	pregame = this; // prevent crashes if Select* is called from ctor
 	net = SAFE_NEW CNetProtocol();
 
-	//hpiHandler=SAFE_NEW CHpiHandler();
+	//vfsHandler=SAFE_NEW CHpiHandler();
 
 	activeController=this;
 
@@ -611,7 +611,7 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 				throw content_error("Couldn't find any archives for map '" + mapName + "'.");
 			}
 			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-				if (!hpiHandler->AddArchive(*i, false)) {
+				if (!vfsHandler->AddArchive(*i, false)) {
 					throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
 				}
 			}
@@ -635,7 +635,7 @@ void CPreGame::LoadMod(const std::string& modName)
 		}
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
 
-			if (!hpiHandler->AddArchive(*i, false)) {
+			if (!vfsHandler->AddArchive(*i, false)) {
 				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
 			}
 		}

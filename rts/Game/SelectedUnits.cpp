@@ -799,7 +799,7 @@ void CSelectedUnits::SendSelection(void)
 
 void CSelectedUnits::SendCommand(Command& c)
 {
-	if(selectionChanged){		//send new selection
+	if (selectionChanged) {		//send new selection
 		SendSelection();
 	}
 	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.id, c.options, c.params));

@@ -31,6 +31,6 @@ public:
 	                const std::string& type = "");
 };
 
-extern CVFSHandler* hpiHandler;
+extern CVFSHandler* vfsHandler;
 
 #endif
