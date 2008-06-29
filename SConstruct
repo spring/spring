@@ -215,7 +215,7 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		print "Failed building streflop!"
 		env.Exit(1)
 	else:
-		print "Succes building streflop!"
+		print "Success building streflop!"
 
 # Use this to avoid an error message 'how to make target test ?'
 env.Alias('test', None)
