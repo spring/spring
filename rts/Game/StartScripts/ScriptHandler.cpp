@@ -59,10 +59,10 @@ void CScriptHandler::LoadScripts() {
 void CScriptHandler::StartLua()
 {
 #ifndef NO_LUA
-	std::vector<std::string> files = hpiHandler->GetFilesInDir("startscripts");
+	std::vector<std::string> files = vfsHandler->GetFilesInDir("startscripts");
 	for (std::vector<std::string>::iterator i = files.begin(); i != files.end(); ++i) {
 		char buffer[16000];
-		const int returned = hpiHandler->LoadFile(std::string("startscripts/"+*i), buffer);
+		const int returned = vfsHandler->LoadFile(std::string("startscripts/"+*i), buffer);
 		CLuaBinder* lua = SAFE_NEW CLuaBinder();
 		if (!lua->LoadScript(*i, buffer, returned))
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
@@ -108,7 +108,7 @@ void CScriptHandler::AddScript(std::string name, CScript *s)
 void CScriptHandler::LoadScriptFile(const std::string& file)
 {
 	char buffer[16000];
-	const int returned = hpiHandler->LoadFile(std::string("startscripts/"+file), buffer);
+	const int returned = vfsHandler->LoadFile(std::string("startscripts/"+file), buffer);
 	if (returned > 0)
 	{
 		CLuaBinder* lua = SAFE_NEW CLuaBinder();

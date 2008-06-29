@@ -417,14 +417,14 @@ int LuaVFS::UseArchive(lua_State* L)
 		return 0;
 	}
 
-	CVFSHandler* oldHandler = hpiHandler;
-	hpiHandler = SAFE_NEW CVFSHandler;
-	hpiHandler->AddArchive(filename, false);
+	CVFSHandler* oldHandler = vfsHandler;
+	vfsHandler = SAFE_NEW CVFSHandler;
+	vfsHandler->AddArchive(filename, false);
 
 	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-	delete hpiHandler;
-	hpiHandler = oldHandler;
+	delete vfsHandler;
+	vfsHandler = oldHandler;
 
 	if (error != 0) {
 		lua_error(L);

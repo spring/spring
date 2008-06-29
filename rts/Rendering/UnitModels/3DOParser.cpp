@@ -178,14 +178,14 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 //	ifstream ifs(name, ios::in|ios::binary);
-	//int size=hpiHandler->GetFileSize(name);
+	//int size=vfsHandler->GetFileSize(name);
 	CFileHandler file(name);
 	if(!file.FileExists()){
 		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
 	fileBuf=SAFE_NEW unsigned char[file.FileSize()];
-	//hpiHandler->LoadFile(name,fileBuf);
+	//vfsHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
 		delete [] fileBuf;

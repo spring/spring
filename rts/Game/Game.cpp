@@ -581,7 +581,7 @@ CGame::~CGame()
 	delete moveinfo;           moveinfo           = NULL;
 	delete unitDefHandler;     unitDefHandler     = NULL;
 	delete damageArrayHandler; damageArrayHandler = NULL;
-	delete hpiHandler;         hpiHandler         = NULL;
+	delete vfsHandler;         vfsHandler         = NULL;
 	delete archiveScanner;     archiveScanner     = NULL;
 	delete modelParser;        modelParser        = NULL;
 	delete iconHandler;        iconHandler        = NULL;

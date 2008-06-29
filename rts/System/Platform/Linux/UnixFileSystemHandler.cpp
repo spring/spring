@@ -63,7 +63,7 @@ void UnixFileSystemHandler::InitVFS() const
 
 	archiveScanner->WriteCacheData(writedir->path + archiveScanner->GetFilename());
 
-	hpiHandler = new CVFSHandler();
+	vfsHandler = new CVFSHandler();
 }
 
 /**

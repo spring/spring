@@ -9,7 +9,7 @@
 #include "mmgr.h"
 
 
-CVFSHandler* hpiHandler = NULL;
+CVFSHandler* vfsHandler = NULL;
 
 
 CVFSHandler::CVFSHandler()
