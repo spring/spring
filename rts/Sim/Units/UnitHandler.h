@@ -56,7 +56,7 @@ public:
 	vector<CUnitSet> unitsByDefs[MAX_TEAMS]; // units sorted by team and unitDef
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
-	std::deque<int> freeIDs;
+	std::vector<int> freeIDs;
 	CUnit* units[MAX_UNITS];							//used to get units from IDs (0 if not created)
 
 	std::vector<CUnit*> toBeRemoved;			//units that will be removed at start of next update
