@@ -3,41 +3,43 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <assert.h>
 #include "UnitHandler.h"
 #include "Unit.h"
-#include "Rendering/GL/myGL.h"
+#include "UnitDefHandler.h"
+#include "UnitLoader.h"
+#include "CommandAI/BuilderCAI.h"
+#include "Game/GameSetup.h"
+#include "Game/SelectedUnits.h"
+#include "Game/SelectedUnits.h"
 #include "Game/Team.h"
-#include "TimeProfiler.h"
-#include "myMath.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Platform/ConfigHandler.h"
 #include "Rendering/FartextureHandler.h"
-#include "UnitDefHandler.h"
-#include "Sim/Misc/QuadField.h"
-#include "CommandAI/BuilderCAI.h"
-#include "Game/SelectedUnits.h"
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
-#include "Game/SelectedUnits.h"
+#include "Rendering/GL/myGL.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Units/Unit.h"
-#include "LoadSaveInterface.h"
-#include "UnitLoader.h"
-#include "Sync/SyncTracer.h"
-#include "Game/GameSetup.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Misc/AirBaseHandler.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Deque.h"
-#include "creg/STL_Set.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "mmgr.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Units/Unit.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
+#include "System/myMath.h"
+#include "System/mmgr.h"
+#include "System/Platform/ConfigHandler.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/creg/STL_Deque.h"
+#include "System/creg/STL_List.h"
+#include "System/creg/STL_Set.h"
 
 using std::min;
 using std::max;
+
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
@@ -45,6 +47,7 @@ BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 	pos = p;
 	buildFacing = facing;
 }
+
 
 void BuildInfo::FillCmd(Command& c) const
 {
@@ -55,6 +58,7 @@ void BuildInfo::FillCmd(Command& c) const
 	c.params[2]=pos.z;
 	c.params[3]=(float)buildFacing;
 }
+
 
 bool BuildInfo::Parse(const Command& c)
 {
@@ -105,15 +109,18 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_SERIALIZER(Serialize)
 	));
 
+
 void CUnitHandler::Serialize(creg::ISerializer& s)
 {
 }
+
 
 void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
 	slowUpdateIterator = activeUnits.end();
 }
+
 
 CUnitHandler::CUnitHandler(bool serializing)
 :
@@ -130,9 +137,9 @@ CUnitHandler::CUnitHandler(bool serializing)
 	//unitModelLoader=SAFE_NEW CUnit3DLoader;
 	for (int a = 1; a < MAX_UNITS; a++) {
 		freeIDs.push_back(a);
-		units[a] = 0;
+		units[a] = NULL;
 	}
-	units[0] = 0;
+	units[0] = NULL;
 
 	slowUpdateIterator = activeUnits.end();
 
@@ -173,24 +180,33 @@ CUnitHandler::~CUnitHandler()
 	}
 
 	delete airBaseHandler;
-
 }
+
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
 	ASSERT_SYNCED_MODE;
-	int num=(int)(gs->randFloat())*((int)activeUnits.size()-1);
-	std::list<CUnit*>::iterator ui=activeUnits.begin();
-	for(int a=0;a<num;++a){
+	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
+	std::list<CUnit*>::iterator ui = activeUnits.begin();
+	for (int a = 0; a < num;++a) {
 		++ui;
 	}
-	activeUnits.insert(ui,unit);		//randomize this to make the order in slowupdate random (good if one build say many buildings at once and then many mobile ones etc)
 
-	unit->id=freeIDs.front();
-	freeIDs.pop_front();
+	// randomize this to make the order in slowupdate random (good if one
+	// builds say many buildings at once and then many mobile ones etc)
+	activeUnits.insert(ui, unit);
 
-	units[unit->id]=unit;
-	gs->Team(unit->team)->AddUnit(unit,CTeam::AddBuilt);
+	// randomize the unitID assignment so that lua widgets
+	// can't determine enemy unit counts from unitIDs alone
+	assert(freeIDs.size() > 0);
+	const unsigned int freeSlot = gs->randInt() % freeIDs.size();
+	const unsigned int freeMax  = freeIDs.size() - 1;
+	unit->id = freeIDs[freeSlot]; // set the unit ID
+	freeIDs[freeSlot] = freeIDs[freeMax];
+	freeIDs.resize(freeMax);
+
+	units[unit->id] = unit;
+	gs->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
@@ -198,11 +214,13 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	return unit->id;
 }
 
+
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(unit);
 }
+
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
@@ -238,6 +256,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 }
+
 
 void CUnitHandler::Update()
 {
@@ -275,6 +294,7 @@ void CUnitHandler::Update()
 		metalMakerIncome = 0;
 	}
 }
+
 
 float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 {
@@ -322,28 +342,31 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	return h;
 }
 
+
 int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&feature, int allyteam)
 {
-	feature=0;
-	int xsize=buildInfo.GetXSize();
-	int ysize=buildInfo.GetYSize();
-	float3 pos=buildInfo.pos;
+	feature = NULL;
+	int xsize = buildInfo.GetXSize();
+	int ysize = buildInfo.GetYSize();
+	float3 pos = buildInfo.pos;
 
-	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
-	int x2 = x1+xsize*SQUARE_SIZE;
-	int z1 = (int) (pos.z-(ysize*0.5f*SQUARE_SIZE));
-	int z2 = z1+ysize*SQUARE_SIZE;
+	int x1 = (int) (pos.x - (xsize * 0.5f * SQUARE_SIZE));
+	int x2 = x1 + xsize * SQUARE_SIZE;
+	int z1 = (int) (pos.z - (ysize * 0.5f * SQUARE_SIZE));
+	int z2 = z1 + ysize * SQUARE_SIZE;
 	float h=GetBuildHeight(pos,buildInfo.def);
 
-	int canBuild=2;
+	int canBuild = 2;
 
-	if(buildInfo.def->needGeo){
-		canBuild=0;
+	if (buildInfo.def->needGeo) {
+		canBuild = 0;
 		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
 
-		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<ysize*4-4){
-				canBuild=2;
+		for (std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi) {
+			if ((*fi)->def->geoThermal
+			    && fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
+			    && fabs((*fi)->pos.z - pos.z) < (ysize * 4 - 4)){
+				canBuild = 2;
 				break;
 			}
 		}
@@ -360,6 +383,7 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 
 	return canBuild;
 }
+
 
 int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFeature *&feature, int allyteam)
 {
@@ -406,10 +430,12 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 	return ret;
 }
 
+
 int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo)
 {
 	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
 }
+
 
 int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv)
 {
@@ -536,6 +562,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	return canbuild;
 }
 
+
 void CUnitHandler::PushNewWind(float x, float z, float strength)
 {
 	ASSERT_SYNCED_MODE;
@@ -548,15 +575,18 @@ void CUnitHandler::PushNewWind(float x, float z, float strength)
 	}
 }
 
+
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	builderCAIs.insert(builderCAIs.end(),b);
 }
 
+
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
+
 
 void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 {
@@ -623,6 +653,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	c.id = 0;
 	return c;
 }
+
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
