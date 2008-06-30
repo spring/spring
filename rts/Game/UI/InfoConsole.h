@@ -13,7 +13,7 @@
 #include "InputReceiver.h"
 #include "LogOutput.h"
 
-class CInfoConsole : public CInputReceiver, public ILogSubscriber
+class CInfoConsole: public CInputReceiver, public ILogSubscriber
 {
 public:
 	CInfoConsole();
@@ -24,7 +24,24 @@ public:
 
 	// ILogSubscriber interface implementation
 	void NotifyLogMsg(int zone, const char* txt);
+
+
 	void SetLastMsgPos(const float3& pos);
+	const float3& GetMsgPos() {
+		if (lastMsgPositions.empty()) {
+			return ZeroVector;
+		}
+
+		// advance the position
+		const float3& p = *(lastMsgIter++);
+
+		// wrap around
+		if (lastMsgIter == lastMsgPositions.end()) {
+			lastMsgIter = lastMsgPositions.begin();
+		}
+
+		return p;
+	}
 
 
 	int lifetime;
@@ -35,7 +52,8 @@ public:
 	int numLines;
 	bool disabled;
 
-	float3 lastMsgPos;
+	std::list<float3> lastMsgPositions;
+	std::list<float3>::iterator lastMsgIter;
 
 public:
 	static const int maxRawLines;

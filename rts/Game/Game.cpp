@@ -1141,7 +1141,8 @@ bool CGame::ActionPressed(const Action& action,
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
 	else if (cmd == "lastmsgpos") {
-		camHandler->GetCurrentController().SetPos(infoConsole->lastMsgPos);
+		// cycle through the positions
+		camHandler->GetCurrentController().SetPos(infoConsole->GetMsgPos());
 		camHandler->CameraTransition(0.6f);
 	}
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
