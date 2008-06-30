@@ -52,9 +52,6 @@ public:
 	int numLines;
 	bool disabled;
 
-	std::list<float3> lastMsgPositions;
-	std::list<float3>::iterator lastMsgIter;
-
 public:
 	static const int maxRawLines;
 	struct RawLine {
@@ -67,6 +64,9 @@ public:
 	void GetNewRawLines(std::vector<RawLine>& copy);
 
 private:
+	std::list<float3> lastMsgPositions;
+	std::list<float3>::iterator lastMsgIter;
+
 	std::deque<RawLine> rawData;
 	int newLines;
 	int rawId;
