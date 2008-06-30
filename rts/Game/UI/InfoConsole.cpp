@@ -26,8 +26,9 @@
 const int CInfoConsole::maxRawLines = 1024;
 
 
-CInfoConsole::CInfoConsole()
-: lastMsgPos(0,0,0), disabled(false), newLines(0), rawId(0)
+CInfoConsole::CInfoConsole():
+	disabled(false), newLines(0), rawId(0),
+	lastMsgIter(lastMsgPositions.begin())
 {
 	data.clear();
 
@@ -208,5 +209,13 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 
 void CInfoConsole::SetLastMsgPos(const float3& pos)
 {
-	lastMsgPos=pos;
+	if (lastMsgPositions.size() < 10) {
+		lastMsgPositions.push_front(pos);
+	} else {
+		lastMsgPositions.push_front(pos);
+		lastMsgPositions.pop_back();
+	}
+
+	// reset the iterator when a new msg comes in
+	lastMsgIter = lastMsgPositions.begin();
 }
