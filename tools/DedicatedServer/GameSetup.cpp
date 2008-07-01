@@ -230,14 +230,14 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		const string aiDll = file.SGetValueDef("", s + "aidll");
 		teamAllyteam[i] = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
 
-		if (aiDll.substr(0, 6) == "LuaAI:") {
-		} else {
-			if (hostDemo) {
-				aiDlls[i] = "";
-			} else {
-				aiDlls[i] = aiDll;
-			}
-		}
+		//if (aiDll.substr(0, 6) == "LuaAI:") {
+		//} else {
+		//	if (hostDemo) {
+		//		aiDlls[i] = "";
+		//	} else {
+		//		aiDlls[i] = aiDll;
+		//	}
+		//}
 
 		teamRemap[a] = i;
 		++i;
