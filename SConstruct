@@ -75,8 +75,11 @@ if env['strip']:
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
-for d in filelist.list_directories(uenv, 'rts'):
+
+for d in filelist.list_directories(uenv, 'rts', exclude_list=["crashrpt"]):
 	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
+
+
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 unitsync_files          = filelist.get_source(uenv, 'tools/unitsync', 'tools/unitsync/test/test.cpp');
 unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/');
