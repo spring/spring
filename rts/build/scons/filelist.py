@@ -84,6 +84,7 @@ def get_spring_source(env):
 	exclude1 = [
 		'rts/AI',
 		'rts/build',
+		'rts/lib/crashrpt', # unused
 		'rts/lib/libhpi',
 		'rts/lib/streflop', # streflop is compiled with it's own Makefiles
 		'rts/System/Platform/BackgroundReader.cpp',
