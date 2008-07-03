@@ -170,6 +170,17 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 
 
+bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
+{
+	// TODO: use in CGameHelper::GuiTraceRay()
+	CMatrix44f m;
+	u->GetTransformMatrix(m, true);
+	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
+	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+
+	return CCollisionHandler::Intersect(v, m, p0, p1, q);
+}
+
 bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	const CollisionVolume* v = u->collisionVolume;
@@ -245,6 +256,12 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 		} break;
 	}
 
+	if (q) {
+		// transform the intersection points
+		q->p0 = m.Mul(q->p0);
+		q->p1 = m.Mul(q->p1);
+	}
+
 	return intersect;
 }
 
@@ -309,8 +326,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 		} else {
 			// two solutions for t
 			const float rD = fastmath::sqrt(D);
-			const float t0 = (-B + rD) * 0.5f;
-			const float t1 = (-B - rD) * 0.5f;
+			const float t0 = (-B - rD) * 0.5f;
+			const float t1 = (-B + rD) * 0.5f;
 			// const float t0 = (-B + rD) / (2.0f * A);
 			// const float t1 = (-B - rD) / (2.0f * A);
 			// get the intersection points in sphere-space
@@ -345,8 +362,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	const float3 dir = (pi1 - pi0).Normalize();
 
 	// end-cap plane normals
-	float3 n0;
-	float3 n1;
+	float3 n0 = ZVec;
+	float3 n1 = ZVec;
 
 	// pi0 transformed to unit-cylinder space
 	float3 pii0;
@@ -368,8 +385,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			pass = (pi0.x > -v->axisHScales.x  &&  pi0.x < v->axisHScales.x);
 			pii0 = float3(pi0.x, pi0.y * v->axisHIScales.y, pi0.z * v->axisHIScales.z);
 
-			n0 = float3( 1.0f, 0.0f, 0.0f);
-			n1 = float3(-1.0f, 0.0f, 0.0f);
+			n0.x =  1.0f;
+			n1.x = -1.0f;
 
 			// get the parameters for the (2D)
 			// yz-plane ellipse surface equation
@@ -382,8 +399,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			pass = (pi0.y > -v->axisHScales.y  &&  pi0.y < v->axisHScales.y);
 			pii0 = float3(pi0.x * v->axisHIScales.x, pi0.y, pi0.z * v->axisHIScales.z);
 
-			n0 = float3(0.0f,  1.0f, 0.0f);
-			n1 = float3(0.0f, -1.0f, 0.0f);
+			n0.y =  1.0f;
+			n1.y = -1.0f;
 
 			// get the parameters for the (2D)
 			// xz-plane ellipse surface equation
@@ -396,8 +413,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			pass = (pi0.z > -v->axisHScales.z  &&  pi0.z < v->axisHScales.z);
 			pii0 = float3(pi0.x * v->axisHIScales.x, pi0.y * v->axisHIScales.y, pi0.z);
 
-			n0 = float3(0.0f, 0.0f,  1.0f);
-			n1 = float3(0.0f, 0.0f, -1.0f);
+			n0.z =  1.0f;
+			n1.z = -1.0f;
 
 			// get the parameters for the (2D)
 			// xy-plane ellipse surface equation
@@ -418,10 +435,10 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		return true;
 	}
 
-	const int pAx = v->primaryAxis;
+	const int pAx  = v->primaryAxis;
 	const int sAx0 = v->secondaryAxes[0];
 	const int sAx1 = v->secondaryAxes[1];
-	const float D = (B * B) - (4.0f * A * C);
+	const float D  = (B * B) - (4.0f * A * C);
 
 	if (D < -EPS) {
 		return false;
@@ -434,7 +451,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 		if (D < EPS) {
 			// one solution for t
-			t0 = -D / (2.0f * A); p0 = pi0 + (dir * t0);
+			t0 = -B / (2.0f * A); p0 = pi0 + (dir * t0);
 
 			if (p0[pAx] > -v->axisHScales[pAx]  &&  p0[pAx] < v->axisHScales[pAx]) {
 				// intersection point <p0> falls between cylinder
@@ -455,8 +472,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		} else {
 			// two solutions for t
 			const float rD = fastmath::sqrt(D);
-			t0 = (-B + rD) / (2.0f * A); p0 = pi0 + (dir * t0);
-			t1 = (-B - rD) / (2.0f * A); p1 = pi0 + (dir * t1);
+			t0 = (-B - rD) / (2.0f * A); p0 = pi0 + (dir * t0);
+			t1 = (-B + rD) / (2.0f * A); p1 = pi0 + (dir * t1);
 
 			// test the 1st intersection point
 			// along the cylinder's major axis

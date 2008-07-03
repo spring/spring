@@ -372,12 +372,14 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 		}
 	}
 
-	for(int x=x1; x<x2; x+=SQUARE_SIZE){
-		for(int z=z1; z<z2; z+=SQUARE_SIZE){
-			int tbs=TestBuildSquare(float3(x,h,z),buildInfo.def,feature,allyteam);
-			canBuild=min(canBuild,tbs);
-			if(canBuild==0)
+	for (int x = x1; x < x2; x += SQUARE_SIZE) {
+		for (int z = z1; z < z2; z += SQUARE_SIZE) {
+			int tbs = TestBuildSquare(float3(x, h, z), buildInfo.def, feature, allyteam);
+			canBuild = min(canBuild, tbs);
+
+			if (canBuild == 0) {
 				return 0;
+			}
 		}
 	}
 
@@ -385,21 +387,22 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 }
 
 
-int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFeature *&feature, int allyteam)
+int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam)
 {
-	int ret=2;
-	if(pos.x<0 || pos.x>=gs->mapx*SQUARE_SIZE || pos.z<0 || pos.z>=gs->mapy*SQUARE_SIZE)
+	if (pos.x < 0 || pos.x >= gs->mapx * SQUARE_SIZE || pos.z < 0 || pos.z >= gs->mapy * SQUARE_SIZE) {
 		return 0;
+	}
 
-	int yardxpos=int(pos.x+4)/SQUARE_SIZE;
-	int yardypos=int(pos.z+4)/SQUARE_SIZE;
+	int ret = 2;
+	int yardxpos = int(pos.x + 4) / SQUARE_SIZE;
+	int yardypos = int(pos.z + 4) / SQUARE_SIZE;
 	CSolidObject* s;
-	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos*gs->mapx+yardxpos))) {
+
+	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos * gs->mapx + yardxpos))) {
 		if (dynamic_cast<CFeature*>(s)) {
-			feature = (CFeature*)s;
-		}
-		else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
-		         (((CUnit*)s)->losStatus[allyteam] & LOS_INLOS)) {
+			feature = (CFeature*) s;
+		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
+			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {
 				return 0;
 			} else {
@@ -408,24 +411,28 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef *unitdef, CFe
 		}
 	}
 
-	if(!unitdef->floater)
-	{
-		float* heightmap=readmap->GetHeightmap();
-		int x=(int) (pos.x/SQUARE_SIZE);
-		int z=(int) (pos.z/SQUARE_SIZE);
-		float orgh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-		float h=heightmap[z*(gs->mapx+1)+x];
-		float hdif=unitdef->maxHeightDif;
-		if(pos.y>orgh+hdif && pos.y>h+hdif)
-			return 0;
-		if(pos.y<orgh-hdif && pos.y<h-hdif)
-			return 0;
+	if (!unitdef->floater) {
+		float* heightmap = readmap->GetHeightmap();
+		int x = (int) (pos.x / SQUARE_SIZE);
+		int z = (int) (pos.z / SQUARE_SIZE);
+		float orgh = readmap->orgheightmap[z * (gs->mapx + 1) + x];
+		float h = heightmap[z * (gs->mapx + 1) + x];
+		float hdif = unitdef->maxHeightDif;
+
+		if (pos.y > orgh + hdif && pos.y > h + hdif) { return 0; }
+		if (pos.y < orgh - hdif && pos.y < h - hdif) { return 0; }
 	}
-	float groundheight = ground->GetHeight2(pos.x,pos.z);
-	if(!unitdef->floater && groundheight<-unitdef->maxWaterDepth)
+
+	const float groundheight = ground->GetHeight2(pos.x, pos.z);
+
+	if (!unitdef->floater && groundheight < -unitdef->maxWaterDepth) {
+		// ground is deeper than our maxWaterDepth, cannot build here
 		return 0;
-	if(groundheight>-unitdef->minWaterDepth)
+	}
+	if (groundheight > -unitdef->minWaterDepth) {
+		// round is shallower than our minWaterDepth, cannot build here
 		return 0;
+	}
 
 	return ret;
 }

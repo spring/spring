@@ -1504,7 +1504,7 @@ void CUnit::Init(const CUnit* builder)
 	blocking = true;
 
 	// some torp launchers etc are exactly in the surface and should be considered uw anyway
-	if ((pos.y + model->height) < 1) {
+	if ((pos.y + model->height) < 0.0f) {
 		isUnderWater = true;
 	}
 

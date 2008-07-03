@@ -417,7 +417,7 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	}
 
 	//Looking for improvements.
-	if(!exactPath	&& heuristicCost < goalHeuristic) {
+	if (!exactPath && heuristicCost < goalHeuristic) {
 		goalSquare = sqr;
 		goalHeuristic = heuristicCost;
 	}
@@ -541,18 +541,19 @@ Tells if the goal are is unaccessable.
 If the goal area is small and blocked then it's considered blocked, else not.
 */
 bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
-	if((sqGoalRadius < SQUARE_SIZE*SQUARE_SIZE*4 || sqGoalRadius <= (moveData.size/2)*(moveData.size/2)*1.5f*SQUARE_SIZE*SQUARE_SIZE)
-	&& (moveData.moveMath->IsBlocked(moveData, goal) & moveMathOptions))
-		return true;
-	else
-		return false;
+	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4;
+	const float r1 = (moveData.size / 2) * (moveData.size / 2) * 1.5f * SQUARE_SIZE * SQUARE_SIZE;
+
+	return
+		((sqGoalRadius < r0 || sqGoalRadius <= r1) &&
+		(moveData.moveMath->IsBlocked(moveData, goal) & moveMathOptions));
 }
 
 int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {
 	int blockPixelSize = blockSize * SQUARE_SIZE;
 	int2 offset;
-	offset.x = ((int)goal.x % blockPixelSize) / SQUARE_SIZE;
-	offset.y = ((int)goal.z % blockPixelSize) / SQUARE_SIZE;
+	offset.x = ((int) goal.x % blockPixelSize) / SQUARE_SIZE;
+	offset.y = ((int) goal.z % blockPixelSize) / SQUARE_SIZE;
 	return offset;
 }
 

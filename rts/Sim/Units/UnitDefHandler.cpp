@@ -637,7 +637,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
 		if ((ud.movedata->moveType == MoveData::Hover_Move) ||
 		    (ud.movedata->moveType == MoveData::Ship_Move)) {
-			ud.upright=true;
+			ud.upright = true;
 		}
 		if (ud.canhover) {
 			if (ud.movedata->moveType != MoveData::Hover_Move) {

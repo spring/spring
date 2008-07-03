@@ -72,11 +72,11 @@ void AMoveType::ImpulseAdded(void)
 
 void AMoveType::SlowUpdate()
 {
-	owner->pos.y = ground->GetHeight2(owner->pos.x,owner->pos.z);
-	if(owner->floatOnWater && owner->pos.y< -owner->unitDef->waterline) {
+	owner->pos.y = ground->GetHeight2(owner->pos.x, owner->pos.z);
+	if (owner->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
 		owner->pos.y = -owner->unitDef->waterline;
 	}
-	owner->midPos.y=owner->pos.y+owner->relMidPos.y;
+	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
 };
 
 void AMoveType::LeaveTransport(void)

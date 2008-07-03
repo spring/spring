@@ -10,201 +10,192 @@
 
 CR_BIND_INTERFACE(CMoveMath);
 
-/*
-Converts a point-request into a square-positional request.
-*/
+CMoveMath::~CMoveMath() {
+}
+
+/* Converts a point-request into a square-positional request. */
 float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos) {
-	int x = ((int)pos.x) / SQUARE_SIZE;
-	int z = ((int)pos.z) / SQUARE_SIZE;
+	int x = int(pos.x / SQUARE_SIZE);
+	int z = int(pos.z / SQUARE_SIZE);
 	return SpeedMod(moveData, x, z);
 }
 
 
-/*
-Extract height and slope data from given square and make
-a sub-functional call for calculations upon whose data.
-*/
+/* calculate the local speed-modifier for this movedata */
 float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
-	//Error-check
-	if(xSquare < 0 || zSquare < 0
-	|| xSquare >= gs->mapx || zSquare >= gs->mapy)
+	// Error-check
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
+	}
 
-	//Extract data.
-	int square = xSquare/2 + zSquare/2 * gs->hmapx;
+	// Extract data.
+	int square = xSquare / 2 + zSquare / 2 * gs->hmapx;
 	float height = readmap->mipHeightmap[1][square];
 	float slope = readmap->slopemap[square];
-	float typemod=moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
+	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
 
-	//Call calculations.
-	return SpeedMod(moveData, height, slope)*typemod;
+	return (SpeedMod(moveData, height, slope) * typemod);
 }
 
-float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos,const float3& moveDir) {
-	int x = (int)pos.x / SQUARE_SIZE;
-	int z = (int)pos.z / SQUARE_SIZE;
+float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos, const float3& moveDir) {
+	int x = int(pos.x / SQUARE_SIZE);
+	int z = int(pos.z / SQUARE_SIZE);
 	return SpeedMod(moveData, x, z,moveDir);
 }
 
 
-/*
-Extract height and slope data from given square and make
-a sub-functional call for calculations upon whose data.
-*/
 float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare,const float3& moveDir) {
-	//Error-check
-	if(xSquare < 0 || zSquare < 0
-	|| xSquare >= gs->mapx || zSquare >= gs->mapy)
+	// Error-check
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
+	}
 
-	//Extract data.
-	int square = xSquare/2 + zSquare/2 * gs->hmapx;
+	// Extract data.
+	int square = xSquare / 2 + zSquare / 2 * gs->hmapx;
 	float height = readmap->mipHeightmap[1][square];
 	float slope = readmap->slopemap[square];
 
-	float3 flatNorm=readmap->facenormals[(xSquare + zSquare * gs->mapx)*2];
-	flatNorm.y=0;
+	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
+	flatNorm.y = 0;
 	flatNorm.Normalize();
-	float moveSlope=-moveDir.dot(flatNorm);
-	float typemod=moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
+	float moveSlope = -moveDir.dot(flatNorm);
+	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
 
-	//Call calculations.
-	return SpeedMod(moveData, height, slope,moveSlope)*typemod;
+	return (SpeedMod(moveData, height, slope, moveSlope) * typemod);
 }
 
-/*
-Converts a point-request into a square-positional request.
-*/
-int CMoveMath::IsBlocked(const MoveData& moveData, float3 pos) {
-	int x = (int)(pos.x / SQUARE_SIZE);
-	int z = (int)(pos.z / SQUARE_SIZE);
-	return IsBlocked(moveData, x, z);
+
+/* Converts a point-request into a square-positional request. */
+int CMoveMath::IsBlocked(const MoveData& moveData, float3 pos, bool fromEst) {
+	int x = int(pos.x / SQUARE_SIZE);
+	int z = int(pos.z / SQUARE_SIZE);
+	return IsBlocked(moveData, x, z, fromEst);
 }
 
-/*
-Check if a given square-position is accessable by the footprint.
-this one check terrain
-*/
-int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) {
-	if(CMoveMath::SpeedMod(moveData, xSquare, zSquare) == 0.0f)
-		return true;
+/* Check if a given square-position is accessable by the movedata footprint. */
+int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
+	if (CMoveMath::SpeedMod(moveData, xSquare, zSquare) == 0.0f) {
+		return 1;
+	}
 
-	int ret=0;
+	int ret = 0;
 
-	ret|=SquareIsBlocked(moveData, xSquare, zSquare);
-	ret|=SquareIsBlocked(moveData, xSquare - moveData.size/2, zSquare - moveData.size/2);
-	ret|=SquareIsBlocked(moveData, xSquare + moveData.size/2 - 1, zSquare - moveData.size/2);
-	ret|=SquareIsBlocked(moveData, xSquare - moveData.size/2, zSquare + moveData.size/2 - 1);
-	ret|=SquareIsBlocked(moveData, xSquare + moveData.size/2 - 1, zSquare + moveData.size/2 - 1);
+	ret |= SquareIsBlocked(moveData, xSquare                        , zSquare                        , fromEst);
+	ret |= SquareIsBlocked(moveData, xSquare - moveData.size / 2    , zSquare - moveData.size / 2    , fromEst);
+	ret |= SquareIsBlocked(moveData, xSquare + moveData.size / 2 - 1, zSquare - moveData.size / 2    , fromEst);
+	ret |= SquareIsBlocked(moveData, xSquare - moveData.size / 2    , zSquare + moveData.size / 2 - 1, fromEst);
+	ret |= SquareIsBlocked(moveData, xSquare + moveData.size / 2 - 1, zSquare + moveData.size / 2 - 1, fromEst);
 
 	return ret;
 }
 
 /*
-Check if a given square-position is accessable by the footprint.
-this one doesnt check terrain
-but do check so it doesnt run over something small if its big
-*/
-int CMoveMath::IsBlocked2(const MoveData& moveData, int xSquare, int zSquare) 
-{
-	int ret=0;
+ * Check if a given square-position is accessable given the movedata footprint.
+ * Doesn't check terrain, but takes size into account so it does not run over
+ * something small if footprint is big.
+ */
+int CMoveMath::IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
+	int ret = 0;
 
-	switch(moveData.size){
-	case 12:
-	case 11:
-		ret|=SquareIsBlocked(moveData, xSquare+4, zSquare+4);
-		ret|=SquareIsBlocked(moveData, xSquare-6, zSquare+4);
-		ret|=SquareIsBlocked(moveData, xSquare-6, zSquare-6);
-		ret|=SquareIsBlocked(moveData, xSquare+4, zSquare-6);
-	case 8:
-	case 7:
-		ret|=SquareIsBlocked(moveData, xSquare+2, zSquare+2);
-		ret|=SquareIsBlocked(moveData, xSquare-4, zSquare+2);
-		ret|=SquareIsBlocked(moveData, xSquare-4, zSquare-4);
-		ret|=SquareIsBlocked(moveData, xSquare+2, zSquare-4);
-	case 4:
-	case 3:
-		ret|=SquareIsBlocked(moveData, xSquare, zSquare);
-		ret|=SquareIsBlocked(moveData, xSquare-2, zSquare);
-		ret|=SquareIsBlocked(moveData, xSquare, zSquare-2);
-		ret|=SquareIsBlocked(moveData, xSquare-2, zSquare-2);
-		break;
+	switch (moveData.size) {
+		case 12:
+		case 11:
+			ret |= SquareIsBlocked(moveData, xSquare + 4, zSquare + 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 6, zSquare + 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 6, zSquare - 6, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare + 4, zSquare - 6, fromEst);
+		case 8:
+		case 7:
+			ret |= SquareIsBlocked(moveData, xSquare + 2, zSquare + 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 4, zSquare + 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 4, zSquare - 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare + 2, zSquare - 4, fromEst);
+		case 4:
+		case 3:
+			ret |= SquareIsBlocked(moveData, xSquare    , zSquare    , fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 2, zSquare    , fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare    , zSquare - 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 2, zSquare - 2, fromEst);
+			break;
 
-	case 14:
-	case 13:
-		ret|=SquareIsBlocked(moveData, xSquare+6, zSquare+6);
-		ret|=SquareIsBlocked(moveData, xSquare-6, zSquare+6);
-		ret|=SquareIsBlocked(moveData, xSquare-6, zSquare-6);
-		ret|=SquareIsBlocked(moveData, xSquare+6, zSquare-6);
-	case 10:
-	case 9:
-		ret|=SquareIsBlocked(moveData, xSquare+4, zSquare+4);
-		ret|=SquareIsBlocked(moveData, xSquare-4, zSquare+4);
-		ret|=SquareIsBlocked(moveData, xSquare-4, zSquare-4);
-		ret|=SquareIsBlocked(moveData, xSquare+4, zSquare-4);
-	case 6:
-	case 5:
-		ret|=SquareIsBlocked(moveData, xSquare+2, zSquare+2);
-		ret|=SquareIsBlocked(moveData, xSquare-2, zSquare+2);
-		ret|=SquareIsBlocked(moveData, xSquare-2, zSquare-2);
-		ret|=SquareIsBlocked(moveData, xSquare+2, zSquare-2);
-	case 2:
-	case 1:
-		ret|=SquareIsBlocked(moveData, xSquare, zSquare);
-		break;
+		case 14:
+		case 13:
+			ret |= SquareIsBlocked(moveData, xSquare + 6, zSquare + 6, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 6, zSquare + 6, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 6, zSquare - 6, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare + 6, zSquare - 6, fromEst);
+		case 10:
+		case 9:
+			ret |= SquareIsBlocked(moveData, xSquare + 4, zSquare + 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 4, zSquare + 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 4, zSquare - 4, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare + 4, zSquare - 4, fromEst);
+		case 6:
+		case 5:
+			ret |= SquareIsBlocked(moveData, xSquare + 2, zSquare + 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 2, zSquare + 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare - 2, zSquare - 2, fromEst);
+			ret |= SquareIsBlocked(moveData, xSquare + 2, zSquare - 2, fromEst);
+		case 2:
+		case 1:
+			ret |= SquareIsBlocked(moveData, xSquare, zSquare, fromEst);
+			break;
 
-	default:
-		logOutput.Print("Unknown size in IsBlocked2 %i",moveData.size);
-		break;
+		default:
+			logOutput.Print("Unknown footprint size in IsBlocked2() (%i)", moveData.size);
+			break;
 	};
+
 	return ret;
 }
 
 /*
-Simply check if the object is blocking or not.
-*/
+ * check if an object is blocking or not for a given MoveData (feature
+ * objects block iif their mass exceeds the movedata's crush-strength).
+ * NOTE: modify for selective blocking
+ */
 bool CMoveMath::IsBlocking(const MoveData& moveData, const CSolidObject* object) {
-	return object->blocking && (!dynamic_cast<const CFeature*>(object) || object->mass > moveData.crushStrength);
+	return
+		(object->blocking && (!dynamic_cast<const CFeature*>(object) ||
+		object->mass > moveData.crushStrength));
 }
 
 
-/*
-Converts a point-request into a square-positional request.
-*/
+/* Converts a point-request into a square-positional request. */
 float CMoveMath::yLevel(const float3 pos) {
-	int x = (int)(pos.x / SQUARE_SIZE);
-	int z = (int)(pos.z / SQUARE_SIZE);
+	int x = int(pos.x / SQUARE_SIZE);
+	int z = int(pos.z / SQUARE_SIZE);
 	return yLevel(x, z);
 }
 
-/*
-Check if a single square is accessable.
-*/
-int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare) {
-	//Error-check
-	if(xSquare < 0 || zSquare < 0
-	|| xSquare >= gs->mapx || zSquare >= gs->mapy)
-		return true;
+/* Check if a single square is accessable (for any object which uses the given movedata). */
+int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
+	// Error-check
+	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
+		return 1;
+	}
 
 	CSolidObject* obstacle = groundBlockingObjectMap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
-	if(obstacle) {
-		if(obstacle->mobility) {
-			if(obstacle->isMoving){
+	if (obstacle) {
+		if (obstacle->mobility) {
+			// mobile obstacle
+			if (obstacle->isMoving) {
 				return BLOCK_MOVING;
 			} else {
-				if(!((CUnit*)obstacle)->beingBuilt && ((CUnit*)obstacle)->commandAI->commandQue.empty()){
+				if (!((CUnit*) obstacle)->beingBuilt && ((CUnit*) obstacle)->commandAI->commandQue.empty()) {
+					// idling mobile unit
 					return BLOCK_MOBILE;
 				} else {
+					// busy mobile unit (but not following path)
 					return BLOCK_MOBILE_BUSY;
 				}
 			}
 		} else {
-			if(IsBlocking(moveData, obstacle))
+			if (IsBlocking(moveData, obstacle)) {
 				return BLOCK_STRUCTURE;
+			}
 		}
 	}
-  return 0;
-}
 
-CMoveMath::~CMoveMath() {
+	return 0;
 }

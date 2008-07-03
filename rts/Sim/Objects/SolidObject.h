@@ -2,7 +2,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
-#include "Sim/MoveTypes/Mobility.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "GlobalStuff.h"
 #include "Sync/SyncedFloat3.h"
 
@@ -38,12 +38,12 @@ public:
 	// Static properties.
 	float mass;									// The physical mass of this object.
 	bool blocking;								// If this object is blocking/collidable. (NOTE: Some objects could be flat => not collidable.)
-	bool floatOnWater;							// If the object will float or not in water.	(TODO: "float dencity;" would give more dynamic.)
+	bool floatOnWater;							// If the object will float or not in water. (TODO: "float density;" would be more dynamic.)
 	bool isUnderWater;
-	bool immobile;								// Immobile objects could not be moved. (Except perhaps in y, to make them stay on gound.)
-	bool blockHeightChanges;					// map height cant change under this object
-	int xsize;									// The x-size of this object, according to it's footprint.
-	int ysize;									// The z-size of this object, according to it's footprint. NOTE: This one should have been called zsize!
+	bool immobile;								// Immobile objects can not be moved. (Except perhaps along y-axis, to make them stay on ground.)
+	bool blockHeightChanges;					// map height cannot change under this object
+	int xsize;									// The x-size of this object, according to its footprint.
+	int ysize;									// The z-size of this object, according to its footprint. (NOTE: This one should have been called zsize!)
 	float height;								// The height of this object.
 	short heading;								// Contains the same information as frontdir, but in a short signed integer.
 	
@@ -58,7 +58,7 @@ public:
 	float3 residualImpulse;						// Used to sum up external impulses.
 
 	// Mobility
-	CMobility *mobility;						// holds information about the mobility of this object (0 means object can not move on its own)
+	MoveData* mobility;							// holds information about the mobility and movedata of this object (0 means object can not move on its own)
 
 	// Map
 	int2 mapPos;								// Current position on GroundBlockingMap.
