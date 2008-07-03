@@ -30,26 +30,27 @@ Creates pathfinder and estimators.
 */
 CPathManager::CPathManager() {
 	//--TODO: Move to creation of MoveData!--//
-	//Create MoveMaths.
+	// create the MoveMaths
 	ground = SAFE_NEW CGroundMoveMath();
 	hover = SAFE_NEW CHoverMoveMath();
 	sea = SAFE_NEW CShipMoveMath();
 
 	float waterDamage = mapInfo->water.damage;
-	if(waterDamage>=1000)
-		CGroundMoveMath::waterCost=0;
-	else
-		CGroundMoveMath::waterCost=1/(1.0f+waterDamage*0.1f);
+	if (waterDamage >= 1000.0f) {
+		CGroundMoveMath::waterCost = 0.0f;
+	} else {
+		CGroundMoveMath::waterCost = 1.0f / (1.0f + waterDamage * 0.1f);
+	}
 
-	CHoverMoveMath::noWaterMove=waterDamage>=10000;
+	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
 
-	//Address movemath and pathtype to movedata.
+	// assign movemath and pathtype to the movedata's
 	int counter = 0;
 	std::vector<MoveData*>::iterator mi;
-	for(mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
+	for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
 		(*mi)->pathType = counter;
-//		(*mi)->crushStrength = 0;
-		switch((*mi)->moveType) {
+
+		switch ((*mi)->moveType) {
 			case MoveData::Ground_Move:
 				(*mi)->moveMath = ground;
 				break;
@@ -62,14 +63,13 @@ CPathManager::CPathManager() {
 		}
 		counter++;
 	}
-	//---------------------------------------//
 
-	//Create pathfinder and estimators.
+	// Create pathfinder and estimators.
 	pf = new CPathFinder();
 	pe = new CPathEstimator(pf, 8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe");
 	pe2 = new CPathEstimator(pf, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2");
 
-	//Reset id-counter.
+	// Reset id-counter.
 	nextPathId = 0;
 }
 
@@ -93,65 +93,70 @@ CPathManager::~CPathManager() {
 Help-function.
 Turns a start->goal-request into a will defined request.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius,CSolidObject* caller) {
+unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius, CSolidObject* caller) {
 	startPos.CheckInBounds();
 	goalPos.CheckInBounds();
-	if(startPos.x>gs->mapx*SQUARE_SIZE-5)
-		startPos.x=gs->mapx*SQUARE_SIZE-5;
-	if(goalPos.z>gs->mapy*SQUARE_SIZE-5)
-		goalPos.z=gs->mapy*SQUARE_SIZE-5;
 
-	//Create a estimator definition.
-	CRangedGoalWithCircularConstraint * rangedGoalPED = SAFE_NEW CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius,3,2000);
+	if (startPos.x > gs->mapx * SQUARE_SIZE - 5) { startPos.x = gs->mapx * SQUARE_SIZE - 5; }
+	if (goalPos.z > gs->mapy * SQUARE_SIZE - 5) { goalPos.z = gs->mapy * SQUARE_SIZE - 5; }
 
-	//Make request.
-	return RequestPath(moveData, startPos, rangedGoalPED,goalPos,caller);
+	// Create an estimator definition.
+	CRangedGoalWithCircularConstraint* rangedGoalPED = SAFE_NEW CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius, 3, 2000);
+
+	// Make request.
+	return RequestPath(moveData, startPos, rangedGoalPED, goalPos, caller);
 }
 
 
 /*
 Request a new multipath, store the result and return an handle-id to it.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef,float3 goalPos,CSolidObject* caller) {
-//	static int calls = 0;
-//	logOutput << "RequestPath() called: " << (++calls) << "\n";	//Debug
-
+unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller) {
 	SCOPED_TIMER("AI:PFS");
 
-	//Creates a new multipath.
+	// Creates a new multipath.
 	MultiPath* newPath = SAFE_NEW MultiPath(startPos, peDef, moveData);
-	newPath->finalGoal=goalPos;
-	newPath->caller=caller;
+	newPath->finalGoal = goalPos;
+	newPath->caller = caller;
 
-	if(caller)
+	if (caller) {
 		caller->UnBlock();
+	}
 
-	unsigned int retValue=0;
-	//Choose finder dependent on distance to goal.
+	unsigned int retValue = 0;
+	// Choose finder dependent on distance to goal.
 	float distanceToGoal = peDef->Heuristic(int(startPos.x / SQUARE_SIZE), int(startPos.z / SQUARE_SIZE));
-	if(distanceToGoal < DETAILED_DISTANCE) {
-		//Get a detailed path.
-		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath,true);
-		if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
-			retValue=Store(newPath);
+
+	if (distanceToGoal < DETAILED_DISTANCE) {
+		// Get a detailed path.
+		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath, true);
+
+		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
+			retValue = Store(newPath);
 		} else {
 			delete newPath;
 		}
-	} else if(distanceToGoal < ESTIMATE_DISTANCE) {
-		//Get an estimate path.
+	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
+		// Get an estimate path.
 		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath);
-		if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
-			//Turn a part of it into detailed path.
+
+		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
+			// Turn a part of it into detailed path.
 			EstimateToDetailed(*newPath, startPos);
-			//Store the path.
-			retValue=Store(newPath);
-		} else {	//if we fail see if it can work find a better block to start from
-			float3 sp=pe->FindBestBlockCenter(moveData,startPos);
-			if(sp.x!=0 && (((int)sp.x)/(SQUARE_SIZE*8)!=((int)startPos.x)/(SQUARE_SIZE*8) || ((int)sp.z)/(SQUARE_SIZE*8)!=((int)startPos.z)/(SQUARE_SIZE*8))){
+			// Store the path.
+			retValue = Store(newPath);
+		} else {
+			// if we fail see if it can work find a better block to start from
+			float3 sp = pe->FindBestBlockCenter(moveData, startPos);
+
+			if (sp.x != 0 &&
+				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
+				((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
 				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
-				if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+
+				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 					EstimateToDetailed(*newPath, startPos);
-					retValue=Store(newPath);
+					retValue = Store(newPath);
 				} else {
 					delete newPath;
 				}
@@ -160,27 +165,35 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			}
 		}
 	} else {
-		//Get a low-res. estimate path.
+		// Get a low-res. estimate path.
 		IPath::SearchResult result = pe2->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath2);
-		if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
-			//Turn a part of it into hi-res. estimate path.
+
+		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
+			// Turn a part of it into hi-res. estimate path.
 			Estimate2ToEstimate(*newPath, startPos);
-			//And estimate into detailed.
+			// And estimate into detailed.
 			EstimateToDetailed(*newPath, startPos);
-			//Store the path.
-			retValue=Store(newPath);
-		} else {	//sometimes the 32*32 squares can be wrong so if it fail to get a path also try with 8*8 squares
+			// Store the path.
+			retValue = Store(newPath);
+		} else {
+			// sometimes the 32*32 squares can be wrong so if it fails to get a path also try with 8*8 squares
 			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath);
-			if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+
+			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 				EstimateToDetailed(*newPath, startPos);
-				retValue=Store(newPath);
-			} else { //8*8 can also fail rarely, so see if we can find a better 8*8 to start from
-				float3 sp=pe->FindBestBlockCenter(moveData,startPos);
-				if(sp.x!=0 && (((int)sp.x)/(SQUARE_SIZE*8)!=((int)startPos.x)/(SQUARE_SIZE*8) || ((int)sp.z)/(SQUARE_SIZE*8)!=((int)startPos.z)/(SQUARE_SIZE*8))){
+				retValue = Store(newPath);
+			} else {
+				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
+				float3 sp = pe->FindBestBlockCenter(moveData, startPos);
+
+				if (sp.x != 0 &&
+					(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
+					((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
 					IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
-					if(result == IPath::Ok || result == IPath::GoalOutOfRange) {
+
+					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 						EstimateToDetailed(*newPath, startPos);
-						retValue=Store(newPath);
+						retValue = Store(newPath);
 					} else {
 						delete newPath;
 					}
@@ -190,8 +203,9 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			}
 		}
 	}
-	if(caller)
+	if (caller) {
 		caller->Block();
+	}
 	return retValue;
 }
 

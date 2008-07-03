@@ -3073,14 +3073,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\Mobility.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\Mobility.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Sim\MoveTypes\MoveInfo.cpp"
 					>
 				</File>

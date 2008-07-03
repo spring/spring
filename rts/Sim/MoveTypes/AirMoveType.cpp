@@ -5,7 +5,6 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Mobility.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -383,7 +382,7 @@ void CAirMoveType::SlowUpdate(void)
 			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5  + 100;
 
 		int newmapSquare = ground->GetSquare(owner->pos);
-		if(newmapSquare != owner->mapSquare){
+		if (newmapSquare != owner->mapSquare) {
 			owner->mapSquare = newmapSquare;
 			float oldlh = owner->losHeight;
 			float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
@@ -394,8 +393,9 @@ void CAirMoveType::SlowUpdate(void)
 
 			owner->losHeight = oldlh;
 		}
+
 		qf->MovedUnit(owner);
-		owner->isUnderWater = owner->pos.y + owner->model->height < 0;
+		owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
 	}
 }
 

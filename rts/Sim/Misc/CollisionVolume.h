@@ -15,21 +15,27 @@ enum COLVOL_TESTS {COLVOL_TEST_DISC, COLVOL_TEST_CONT};
 struct CollisionVolume {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
-	CollisionVolume() {}
+	CollisionVolume():
+		volumeBoundingRadius(1.0f), volumeType(COLVOL_TYPE_ELLIPSOID),
+		testType(COLVOL_TEST_DISC), primaryAxis(COLVOL_AXIS_Z) {
+		secondaryAxes[0] = COLVOL_AXIS_X;
+		secondaryAxes[1] = COLVOL_AXIS_Y;
+		spherical = true;
+	}
 	CollisionVolume(const CollisionVolume* src) {
-		axisScales = src->axisScales;
-		axisHScales = src->axisHScales;
-		axisHScalesSq = src->axisHScalesSq;
-		axisHIScales = src->axisHIScales;
-		axisOffsets = src->axisOffsets;
-		volumeBoundingRadius = src->volumeBoundingRadius;
+		axisScales             = src->axisScales;
+		axisHScales            = src->axisHScales;
+		axisHScalesSq          = src->axisHScalesSq;
+		axisHIScales           = src->axisHIScales;
+		axisOffsets            = src->axisOffsets;
+		volumeBoundingRadius   = src->volumeBoundingRadius;
 		volumeBoundingRadiusSq = src->volumeBoundingRadiusSq;
-		volumeType = src->volumeType;
-		testType = src->testType;
-		primaryAxis = src->primaryAxis;
-		secondaryAxes[0] = src->secondaryAxes[0];
-		secondaryAxes[1] = src->secondaryAxes[1];
-		spherical = src->spherical;
+		volumeType             = src->volumeType;
+		testType               = src->testType;
+		primaryAxis            = src->primaryAxis;
+		secondaryAxes[0]       = src->secondaryAxes[0];
+		secondaryAxes[1]       = src->secondaryAxes[1];
+		spherical              = src->spherical;
 	}
 
 	CollisionVolume(const std::string& volTypeStr, const float3& volScales, const float3& volOffsets, int tstType) {

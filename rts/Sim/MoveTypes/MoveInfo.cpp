@@ -18,30 +18,37 @@ CR_BIND(MoveData, );
 CR_BIND(CMoveInfo, );
 
 CR_REG_METADATA(MoveData, (
-		CR_ENUM_MEMBER(moveType),
-		CR_MEMBER(size),
+	CR_ENUM_MEMBER(moveType),
+	CR_ENUM_MEMBER(moveFamily),
+	CR_MEMBER(size),
 
-		CR_MEMBER(depth),
-		CR_MEMBER(maxSlope),
-		CR_MEMBER(slopeMod),
-		CR_MEMBER(depthMod),
+	CR_MEMBER(depth),
+	CR_MEMBER(maxSlope),
+	CR_MEMBER(slopeMod),
+	CR_MEMBER(depthMod),
 
-		CR_MEMBER(pathType),
-		CR_MEMBER(moveMath),
-		CR_MEMBER(crushStrength),
-		CR_MEMBER(moveFamily),
+	CR_MEMBER(pathType),
+	CR_MEMBER(moveMath),
+	CR_MEMBER(crushStrength),
 
-		CR_MEMBER(name),
-		CR_RESERVED(16)
-		));
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxTurnRate),
+	CR_MEMBER(maxAcceleration),
+	CR_MEMBER(maxBreaking),
+	CR_MEMBER(canFly),
+	CR_MEMBER(subMarine),
+
+	CR_MEMBER(name),
+	CR_RESERVED(16)
+));
 
 CR_REG_METADATA(CMoveInfo, (
-		CR_MEMBER(moveData),
-		CR_MEMBER(name2moveData),
-		CR_MEMBER(moveInfoChecksum),
-		CR_MEMBER(terrainType2MoveFamilySpeed),
-		CR_RESERVED(16)
-		));
+	CR_MEMBER(moveData),
+	CR_MEMBER(name2moveData),
+	CR_MEMBER(moveInfoChecksum),
+	CR_MEMBER(terrainType2MoveFamilySpeed),
+	CR_RESERVED(16)
+));
 
 
 CMoveInfo* moveinfo;
@@ -67,7 +74,7 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = SAFE_NEW MoveData;
+		MoveData* md = SAFE_NEW MoveData();
 		const string name = moveTable.GetString("name", "");
 
 		md->name = name;
@@ -81,12 +88,12 @@ CMoveInfo::CMoveInfo()
 		    (name.find("SHIP") != string::npos)) {
 			md->moveType = MoveData::Ship_Move;
 			md->depth = moveTable.GetFloat("minWaterDepth", 10.0f);
-			md->moveFamily = 3;
+			md->moveFamily = MoveData::Ship;
 		}
 		else if (name.find("HOVER") != string::npos) {
 			md->moveType = MoveData::Hover_Move;
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
-			md->moveFamily = 2;
+			md->moveFamily = MoveData::Hover;
 		}
 		else {
 			md->moveType = MoveData::Ground_Move;
@@ -94,9 +101,9 @@ CMoveInfo::CMoveInfo()
 			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			if (name.find("TANK") != string::npos) {
-				md->moveFamily = 0;
+				md->moveFamily = MoveData::Tank;
 			} else {
-				md->moveFamily = 1;
+				md->moveFamily = MoveData::KBot;
 			}
 		}
 
@@ -135,8 +142,7 @@ MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name, bool exactMatc
 {
 	if (!exactMatch) {
 		return moveData[name2moveData[name]];
-	}
-	else {
+	} else {
 		map<string, int>::const_iterator it = name2moveData.find(name);
 		if (it == name2moveData.end()) {
 			return NULL;

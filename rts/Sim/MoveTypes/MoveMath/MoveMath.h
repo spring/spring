@@ -8,15 +8,15 @@
 class CMoveMath {
 	CR_DECLARE(CMoveMath);
 public:
-	//Block-check-options
-	//Note: Whose options are hierarchial, with CHECK_STRUCTURE as the first check.
+	// Block-check-options
+	// Note: options are hierarchical, with CHECK_STRUCTURE as the first check.
 	const static int BLOCK_MOVING = 1;
 	const static int BLOCK_MOBILE = 2;
 	const static int BLOCK_MOBILE_BUSY = 4;
 	const static int BLOCK_STRUCTURE = 8;
 	const static int BLOCK_TERRAIN = 16;
 
-	//SpeedMod returns a speed-multiplier for given position or data.
+	// returns a speed-multiplier for given position or data
 	float SpeedMod(const MoveData& moveData, float3 pos);
 	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare);
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope) = 0;
@@ -24,21 +24,20 @@ public:
 	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare,const float3& moveDir);
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope,float moveSlope) = 0;
 
-	//IsBlocked tells whenever a position is blocked(=none-accessable) or not.
-	int IsBlocked(const MoveData& moveData, float3 pos);
-	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare);
+	// tells whether a position is blocked (inaccessable for a given object's movedata)
+	int IsBlocked(const MoveData& moveData, float3 pos, bool fromEst = false);
+	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
+	int IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
 
-	int IsBlocked2(const MoveData& moveData, int xSquare, int zSquare);
-
-	//IsBlocking tells whenever a given object are blocking the given movedata or not.
+	// tells whether a given object is blocking the given movedata
 	bool IsBlocking(const MoveData& moveData, const CSolidObject* object);
 
-	//Gives the y-coordinate the unit will "stand on".
+	// gives the y-coordinate the unit will "stand on"
 	float yLevel(float3 pos);
 	virtual float yLevel(int xSquare, int Square) = 0;
 
-	//Investigate the block-status of a single quare.
-	int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare);
+	// returns the block-status of a single quare
+	int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
 
 	virtual ~CMoveMath();
 };

@@ -2,7 +2,6 @@
 
 #include "TAAirMoveType.h"
 
-#include "Mobility.h"
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Rendering/UnitModels/3DModelParser.h"
@@ -912,7 +911,7 @@ void CTAAirMoveType::SlowUpdate(void)
 	}
 
 	qf->MovedUnit(owner);
-	owner->isUnderWater = (owner->pos.y + owner->model->height < 0);
+	owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
 }
 
 //Returns true if indicated position is a suitable landing spot

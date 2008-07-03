@@ -330,9 +330,11 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 			int dx = x - (BLOCK_SIZE >> 1);
 			int dz = z - (BLOCK_SIZE >> 1);
 			float cost = (dx * dx + dz * dz) + num / (0.001f + moveData.moveMath->SpeedMod(moveData, lowerX + x, lowerZ + z));
+			int mask = CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN;
 
-			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))
+			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z, true) & mask) {
 				cost += 1000000.0f;
+			}
 			if (cost < best) {
 				best = cost;
 				bestX = x;
@@ -740,7 +742,7 @@ void CPathEstimator::FinishSearch(const MoveData& moveData, Path& path) {
 		int xGSquare = block.x * BLOCK_SIZE + goalSqrOffset.x;
 		int zGSquare = block.y * BLOCK_SIZE + goalSqrOffset.y;
 		// in first case try to use an offset defined by goal...
-		if (!moveData.moveMath->IsBlocked(moveData, moveMathOptions, xGSquare, zGSquare)) {
+		if (!moveData.moveMath->IsBlocced(moveData, moveMathOptions, xGSquare, zGSquare)) {
 			float3 pos = SquareToFloat3(xGSquare, zGSquare);
 			pos.y = moveData.moveMath->yLevel(xGSquare, zGSquare);
 			path.path.push_back(pos);

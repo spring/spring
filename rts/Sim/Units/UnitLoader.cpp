@@ -83,8 +83,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	if (!build) {
 		pos.y = ground->GetHeight2(pos.x, pos.z);
-		if (ud->floater && pos.y < 0)
-			pos.y = -ud->waterline;
+		if (ud->floater && pos.y < 0.0f) {
+			// adjust to waterline iif we are submerged
+ 			pos.y = -ud->waterline;
+		}
 	}
 	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
@@ -214,55 +216,52 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	if (ud->canmove && !ud->canfly && type!="Factory") {
 		CGroundMoveType* mt = SAFE_NEW CGroundMoveType(unit);
-		mt->maxSpeed=ud->speed/GAME_SPEED;
-		mt->maxWantedSpeed=ud->speed/GAME_SPEED;
-		mt->turnRate=ud->turnRate;
-		mt->baseTurnRate=ud->turnRate;
-		if (!mt->accRate)
+		mt->maxSpeed = ud->speed / GAME_SPEED;
+		mt->maxWantedSpeed = ud->speed / GAME_SPEED;
+		mt->turnRate = ud->turnRate;
+		mt->baseTurnRate = ud->turnRate;
+
+		if (!mt->accRate) {
 			logOutput << "acceleration of " << ud->name.c_str() << " is zero!!\n";
-		mt->moveType=ud->moveType;
-		mt->accRate=ud->maxAcc;
-		mt->decRate=ud->maxDec;
-		mt->floatOnWater=ud->movedata->moveType==MoveData::Hover_Move || ud->movedata->moveType==MoveData::Ship_Move;
-		if(!unit->beingBuilt)
-			unit->mass=ud->mass;	//otherwise set this when finished building instead
-		unit->moveType=mt;
+		}
 
+		mt->moveType = ud->moveType;
+		mt->accRate = ud->maxAcc;
+		mt->decRate = ud->maxDec;
+		mt->floatOnWater = (ud->movedata->moveType == MoveData::Hover_Move || ud->movedata->moveType == MoveData::Ship_Move);
 
-		//Ground-mobility
-		unit->mobility = SAFE_NEW CMobility();
-		unit->mobility->canFly = false;
-		unit->mobility->subMarine = false;		//Not always correct, as submarines are treated as ships.
-		unit->mobility->maxAcceleration = ud->maxAcc;
-		unit->mobility->maxBreaking = -3*ud->maxAcc;
-		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
-		unit->mobility->maxTurnRate = (short int) ud->turnRate;
-		unit->mobility->moveData = ud->movedata;
+		if (!unit->beingBuilt) {
+			// otherwise set this when finished building instead
+			unit->mass = ud->mass;
+		}
+		unit->moveType = mt;
 
-	} else if(ud->canfly) {
-		//Air-mobility
-		unit->mobility = SAFE_NEW CMobility();
-		unit->mobility->canFly = true;
-		unit->mobility->subMarine = false;
-		unit->mobility->maxAcceleration = ud->maxAcc;
-		unit->mobility->maxBreaking = -3*ud->maxAcc;	//Correct?
-		unit->mobility->maxSpeed = ud->speed / GAME_SPEED;
-		unit->mobility->maxTurnRate = (short int) ud->turnRate;
-		unit->mobility->moveData = ud->movedata;
+		// Ground-mobility
+		unit->mobility = SAFE_NEW MoveData(ud->maxAcc, ud->maxAcc * -3.0f,
+			ud->speed / GAME_SPEED, (short int) ud->turnRate, false, false,
+			ud->movedata);
 
-		if(!unit->beingBuilt)
-			unit->mass=ud->mass; //otherwise set this when finished building instead
+	} else if (ud->canfly) {
+		// Air-mobility
+		unit->mobility = SAFE_NEW MoveData(ud->maxAcc, ud->maxAcc * -3.0f,
+			ud->speed / GAME_SPEED, (short int) ud->turnRate, true, false,
+			ud->movedata);
+
+		if (!unit->beingBuilt) {
+			// otherwise set this when finished building instead
+			unit->mass = ud->mass;
+		}
 
 		if ((type == "Builder") || ud->hoverAttack || ud->transportCapacity) {
-			CTAAirMoveType *mt = SAFE_NEW CTAAirMoveType(unit);
+			CTAAirMoveType* mt = SAFE_NEW CTAAirMoveType(unit);
 
 			mt->turnRate = ud->turnRate;
 			mt->maxSpeed = ud->speed / GAME_SPEED;
 			mt->accRate = ud->maxAcc;
 			mt->decRate = ud->maxDec;
-			mt->wantedHeight = ud->wantedHeight+gs->randFloat()*5;
+			mt->wantedHeight = ud->wantedHeight + gs->randFloat() * 5;
 			mt->orgWantedHeight=mt->wantedHeight;
-			mt->dontLand = ud->DontLand ();
+			mt->dontLand = ud->DontLand();
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
 
@@ -326,6 +325,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 
 	if (ud->floater) {
+		// restrict our depth to our waterline
 		unit->pos.y = std::max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
 	} else {
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);

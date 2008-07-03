@@ -17,9 +17,9 @@ struct CollisionQuery {
 		b1 = false; t1 = 0.0f; p1 = ZeroVector;
 	}
 
-	bool b0, b1;
-	float t0, t1;
-	float3 p0, p1;
+	bool b0, b1;	// true if ingress (b0) or egress (b1) point on ray segment
+	float t0, t1;	// distance parameter for ingress and egress point
+	float3 p0, p1;	// ray-volume ingress and egress points
 };
 
 // responsible for detecting hits between projectiles
@@ -34,6 +34,7 @@ class CCollisionHandler {
 
 		static bool DetectHit(const CUnit*, const float3&, const float3&, CollisionQuery* q = 0x0);
 		static bool DetectHit(const CFeature*, const float3&, const float3&, CollisionQuery* q = 0x0);
+		static bool MouseHit(const CUnit*, const float3& p0, const float3& p1, const CollisionVolume*, CollisionQuery* q);
 
 	private:
 		static bool Collision(const CUnit*, const float3&);
