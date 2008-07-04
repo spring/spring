@@ -100,15 +100,13 @@ void CPlayer::SetControlledTeams()
 		return;
 	}
 
-	if (spectator) {
-		return; // spectators can't control any units
+	if (!spectator) {
+		// my team
+		controlledTeams.insert(team);
 	}
 
-	// my team
-	controlledTeams.insert(team);
-
 	// AI teams
-	for (int t = 0; t < MAX_TEAMS; t++) {
+	for (int t = 0; t < gs->activeTeams; t++) {
 		const CTeam* team = gs->Team(t);
 		if (team && team->isAI &&
 		    !team->dllAI.empty() && // luaAI does not require client control
@@ -121,7 +119,7 @@ void CPlayer::SetControlledTeams()
 
 void CPlayer::UpdateControlledTeams()
 {
-	for (int p = 0; p < MAX_PLAYERS; p++) {
+	for (int p = 0; p < gs->activeTeams; p++) {
 		CPlayer* player = gs->players[p];
 		if (player) {
 			player->SetControlledTeams();

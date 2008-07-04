@@ -192,13 +192,17 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
 		teams[i]->side = setup->teamStartingData[i].side;
 		SetAllyTeam(i, setup->teamStartingData[i].teamAllyteam);
 		if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") {
-			gs->Team(i)->luaAI = setup->teamStartingData[i].aiDll.substr(6);
+			teams[i]->luaAI = setup->teamStartingData[i].aiDll.substr(6);
+			teams[i]->isAI = true;
 		}
 		else {
 			if (setup->hostDemo)
 				teams[i]->dllAI = "";
 			else
+			{
 				teams[i]->dllAI = setup->teamStartingData[i].aiDll;
+				teams[i]->isAI = true;
+			}
 		}
 		for (unsigned t = 0; t < static_cast<unsigned>(MAX_TEAMS); ++t)
 		{
