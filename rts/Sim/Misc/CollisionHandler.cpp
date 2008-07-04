@@ -170,12 +170,11 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 
 
-bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
+bool CCollisionHandler::MouseHit(const CUnit* u, const float3& e, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
 {
-	// TODO: use in CGameHelper::GuiTraceRay()
 	CMatrix44f m;
 	u->GetTransformMatrix(m, true);
-	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
+	m.Translate(u->relMidPos.x + e.x, u->relMidPos.y + e.y, u->relMidPos.z + e.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
@@ -358,166 +357,154 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 
 bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
 {
-	// get the ray direction in volume space
+	// ray direction in volume-space
 	const float3 dir = (pi1 - pi0).Normalize();
 
-	// end-cap plane normals
+	// ray direction in (unit) cylinder-space
+	float3 diir = ZVec;
+
+	// ray terminals in (unit) cylinder-space
+	float3 pii0 = pi0;
+	float3 pii1 = pi1;
+
+	// end-cap plane normals in volume-space
 	float3 n0 = ZVec;
 	float3 n1 = ZVec;
 
-	// pi0 transformed to unit-cylinder space
-	float3 pii0;
-	bool pass = false;
+	// (unit) cylinder-space to volume-space transformation
+	float3 inv(1.0f, 1.0f, 1.0f);
 
-	// pi0.dot(pi0), pi0.dot(dir), dir.dot(dir)
-	const float pxSq = pi0.x * pi0.x, pxdx = pi0.x * dir.x, dxSq = dir.x * dir.x;
-	const float pySq = pi0.y * pi0.y, pydy = pi0.y * dir.y, dySq = dir.y * dir.y;
-	const float pzSq = pi0.z * pi0.z, pzdz = pi0.z * dir.z, dzSq = dir.z * dir.z;
-	const float saSq = v->axisHScalesSq.x;
-	const float sbSq = v->axisHScalesSq.y;
-	const float scSq = v->axisHScalesSq.z;
-
-	float A = 0.0f, B = 0.0f, C = 0.0f;
+	// unit-cylinder surface equation params
+	float a = 0.0f;
+	float b = 0.0f;
+	float c = 0.0f;
 
 	switch (v->primaryAxis) {
 		case COLVOL_AXIS_X: {
-			// see if start of ray lies between end-caps
-			pass = (pi0.x > -v->axisHScales.x  &&  pi0.x < v->axisHScales.x);
-			pii0 = float3(pi0.x, pi0.y * v->axisHIScales.y, pi0.z * v->axisHIScales.z);
+			pii0.y = pi0.y * v->axisHIScales.y;
+			pii0.z = pi0.z * v->axisHIScales.z;
+			pii1.y = pi1.y * v->axisHIScales.y;
+			pii1.z = pi1.z * v->axisHIScales.z;
+
+			inv.y = v->axisHScales.y;
+			inv.z = v->axisHScales.z;
+			diir = (pii1 - pii0).Normalize();
 
 			n0.x =  1.0f;
 			n1.x = -1.0f;
 
-			// get the parameters for the (2D)
-			// yz-plane ellipse surface equation
-			A = (dySq / sbSq) + (dzSq / scSq);
-			B = ((2.0f * pydy) / sbSq) + ((2.0f * pzdz) / scSq);
-			C = (pySq / sbSq) + (pzSq / scSq) - 1.0f;
+			// yz-surface equation params
+			a =  (diir.y * diir.y) + (diir.z * diir.z);
+			b = ((pii0.y * diir.y) + (pii0.z * diir.z)) * 2.0f;
+			c =  (pii0.y * pii0.y) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
 		case COLVOL_AXIS_Y: {
-			// see if start of ray lies between end-caps
-			pass = (pi0.y > -v->axisHScales.y  &&  pi0.y < v->axisHScales.y);
-			pii0 = float3(pi0.x * v->axisHIScales.x, pi0.y, pi0.z * v->axisHIScales.z);
+			pii0.x = pi0.x * v->axisHIScales.x;
+			pii0.z = pi0.z * v->axisHIScales.z;
+			pii1.x = pi1.x * v->axisHIScales.x;
+			pii1.z = pi1.z * v->axisHIScales.z;
+
+			inv.x = v->axisHScales.x;
+			inv.z = v->axisHScales.z;
+			diir = (pii1 - pii0).Normalize();
 
 			n0.y =  1.0f;
 			n1.y = -1.0f;
 
-			// get the parameters for the (2D)
-			// xz-plane ellipse surface equation
-			A = (dxSq / saSq) + (dzSq / scSq);
-			B = ((2.0f * pxdx) / saSq) + ((2.0f * pzdz) / scSq);
-			C = (pxSq / saSq) + (pzSq / scSq) - 1.0f;
+			// xz-surface equation params
+			a =  (diir.x * diir.x) + (diir.z * diir.z);
+			b = ((pii0.x * diir.x) + (pii0.z * diir.z)) * 2.0f;
+			c =  (pii0.x * pii0.x) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
 		case COLVOL_AXIS_Z: {
-			// see if start of ray lies between end-caps
-			pass = (pi0.z > -v->axisHScales.z  &&  pi0.z < v->axisHScales.z);
-			pii0 = float3(pi0.x * v->axisHIScales.x, pi0.y * v->axisHIScales.y, pi0.z);
+			pii0.x = pi0.x * v->axisHIScales.x;
+			pii0.y = pi0.y * v->axisHIScales.y;
+			pii1.x = pi1.x * v->axisHIScales.x;
+			pii1.y = pi1.y * v->axisHIScales.y;
+
+			inv.x = v->axisHScales.x;
+			inv.y = v->axisHScales.y;
+			diir = (pii1 - pii0).Normalize();
 
 			n0.z =  1.0f;
 			n1.z = -1.0f;
 
-			// get the parameters for the (2D)
-			// xy-plane ellipse surface equation
-			A = (dxSq / saSq) + (dySq / sbSq);
-			B = ((2.0f * pxdx) / saSq) + ((2.0f * pydy) / sbSq);
-			C = (pxSq / saSq) + (pySq / sbSq) - 1.0f;
+			// xy-surface equation params
+			a =  (diir.x * diir.x) + (diir.y * diir.y);
+			b = ((pii0.x * diir.x) + (pii0.y * diir.y)) * 2.0f;
+			c =  (pii0.x * pii0.x) + (pii0.y * pii0.y)  - 1.0f;
 		} break;
 	}
 
-	if (pass && pii0.dot(pii0) <= 1.0f) {
-		// terminate early in the special case
-		// that shot originated within volume
-		if (q) {
-			q->b0 = true; q->b1 = true;
-			q->t0 = 0.0f; q->t1 = 0.0f;
-			q->p0 = ZVec; q->p1 = ZVec;
-		}
-		return true;
-	}
+	float d = (b * b) - (4.0f * a * c);
+	float rd = 0.0f;
 
-	const int pAx  = v->primaryAxis;
+	// volume-space intersection points
+	float3 p0 = ZVec;
+	float3 p1 = ZVec;
+
+	bool b0 = false;
+	bool b1 = false;
+	float r0 = 0.0f, s0 = 0.0f, t0 = 0.0f;
+	float r1 = 0.0f, s1 = 0.0f, t1 = 0.0f;
+	const int pAx = v->primaryAxis;
 	const int sAx0 = v->secondaryAxes[0];
 	const int sAx1 = v->secondaryAxes[1];
-	const float D  = (B * B) - (4.0f * A * C);
+	const float3& ahs = v->axisHScales;
+	const float3& ahsq = v->axisHScalesSq;
+	// get the length of the ray segment in volume-space
+	const float segLenSq = (pi1 - pi0).SqLength();
 
-	if (D < -EPS) {
-		return false;
-	} else {
-		// get the length of the ray segment in volume-space
-		const float segLenSq = (pi1 - pi0).SqLength();
-
-		float3 p0; float t0 = 0.0f, r0 = 0.0f, dSq0 = 0.0f; bool b0 = false;
-		float3 p1; float t1 = 0.0f, r1 = 0.0f, dSq1 = 0.0f; bool b1 = false;
-
-		if (D < EPS) {
-			// one solution for t
-			t0 = -B / (2.0f * A); p0 = pi0 + (dir * t0);
-
-			if (p0[pAx] > -v->axisHScales[pAx]  &&  p0[pAx] < v->axisHScales[pAx]) {
-				// intersection point <p0> falls between cylinder
-				// caps, check if it also lies on our ray segment
-				dSq0 = (p0 - pi0).SqLength();
-				b0 = (/* t0 > 0.0f && */ dSq0 <= segLenSq);
-			} else {
-				// <p> does not fall between end-caps but ray
-				// segment might still intersect one, so test
-				// for intersection against the cap planes
-				t0 = -(n0.dot(pi0) + v->axisHScales[pAx]) / n0.dot(dir); p0 = pi0 + (dir * t0);
-				t1 = -(n1.dot(pi0) - v->axisHScales[pAx]) / n1.dot(dir); p1 = pi0 + (dir * t1);
-				r0 = (((p0[sAx0] * p0[sAx0]) / v->axisHScalesSq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / v->axisHScalesSq[sAx1]));
-				r1 = (((p1[sAx0] * p1[sAx0]) / v->axisHScalesSq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / v->axisHScalesSq[sAx1]));
-				b0 = (t0 > 0.0f && r0 <= 1.0f);
-				b1 = (t1 > 0.0f && r1 <= 1.0f);
-			}
+	if (d >= -EPS) {
+		// one or two surface intersections
+		if (d < EPS) {
+			t0 = -b / (2.0f * a);
+			p0 = (pii0 + (diir * t0)) * inv;
+			s0 = (p0 - pi0).SqLength();
+			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
 		} else {
-			// two solutions for t
-			const float rD = fastmath::sqrt(D);
-			t0 = (-B - rD) / (2.0f * A); p0 = pi0 + (dir * t0);
-			t1 = (-B + rD) / (2.0f * A); p1 = pi0 + (dir * t1);
-
-			// test the 1st intersection point
-			// along the cylinder's major axis
-			if (p0[pAx] > -v->axisHScales[pAx]  &&  p0[pAx] < v->axisHScales[pAx]) {
-				// intersection point <p0> falls between cylinder
-				// caps, check if it also lies on our ray segment
-				dSq0 = (p0 - pi0).SqLength();
-				b0 = (/* t0 > 0.0f && */ dSq0 <= segLenSq);
-			}
-
-			// test the 2nd intersection point
-			// along the cylinder's major axis
-			if (p1[pAx] > -v->axisHScales[pAx]  &&  p1[pAx] < v->axisHScales[pAx]) {
-				// intersection point <p1> falls between cylinder
-				// caps, check if it also lies on our ray segment
-				dSq1 = (p1 - pi0).SqLength();
-				b1 = (/* t1 > 0.0f && */ dSq1 <= segLenSq);
-			}
+			rd = fastmath::sqrt(d);
+			t0 = (-b - rd) / (2.0f * a);
+			t1 = (-b + rd) / (2.0f * a);
+			p0 = (pii0 + (diir * t0)) * inv;
+			p1 = (pii0 + (diir * t1)) * inv;
+			s0 = (p0 - pi0).SqLength();
+			s1 = (p1 - pi0).SqLength();
+			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+			b1 = (s1 < segLenSq && (p1[pAx] > -ahs[pAx] && p1[pAx] < ahs[pAx]));
 		}
-
-		if (!b0 && !b1) {
-			// neither p0 nor p1 lies on ray segment (or falls between
-			// the cylinder end-caps) but segment might still intersect
-			// a cap, so do extra test for intersection against the cap
-			// planes
-			// NOTE: DIV0 if normal and dir are orthogonal?
-			t0 = -(n0.dot(pi0) + v->axisHScales[pAx]) / n0.dot(dir);
-			t1 = -(n1.dot(pi0) - v->axisHScales[pAx]) / n1.dot(dir);
-			p0 = pi0 + (dir * t0); dSq0 = (p0 - pi0).SqLength();
-			p1 = pi0 + (dir * t1); dSq1 = (p1 - pi0).SqLength();
-			r0 = (((p0[sAx0] * p0[sAx0]) / v->axisHScalesSq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / v->axisHScalesSq[sAx1]));
-			r1 = (((p1[sAx0] * p1[sAx0]) / v->axisHScalesSq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / v->axisHScalesSq[sAx1]));
-			b0 = (t0 > 0.0f && r0 <= 1.0f && dSq0 <= segLenSq);
-			b1 = (t1 > 0.0f && r1 <= 1.0f && dSq1 <= segLenSq);
-		}
-
-		if (q) {
-			q->b0 = b0; q->b1 = b1;
-			q->t0 = t0; q->t1 = t1;
-			q->p0 = p0; q->p1 = p1;
-		}
-
-		return (b0 || b1);
 	}
+
+	if (!b0) {
+		// p0 does not lie on ray segment, or does not fall
+		// between cylinder end-caps: check if segment goes
+		// through front cap (plane)
+		// NOTE: DIV0 if normal and dir are orthogonal?
+		t0 = -(n0.dot(pi0) + ahs[pAx]) / n0.dot(dir);
+		p0 = pi0 + (dir * t0);
+		s0 = (p0 - pi0).SqLength();
+		r0 = (((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) + ((p0[sAx1] * p0[sAx1]) / ahsq[sAx1]));
+		b0 = (t0 >= 0.0f && r0 <= 1.0f && s0 <= segLenSq);
+	}
+	if (!b1) {
+		// p1 does not lie on ray segment, or does not fall
+		// between cylinder end-caps: check if segment goes
+		// through rear cap (plane)
+		// NOTE: DIV0 if normal and dir are orthogonal?
+		t1 = -(n1.dot(pi0) - ahs[pAx]) / n1.dot(dir);
+		p1 = pi0 + (dir * t1);
+		s1 = (p1 - pi0).SqLength();
+		r1 = (((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) + ((p1[sAx1] * p1[sAx1]) / ahsq[sAx1]));
+		b1 = (t1 >= 0.0f && r1 <= 1.0f && s1 <= segLenSq);
+	}
+
+	if (q) {
+		q->b0 = b0; q->b1 = b1;
+		q->t0 = t0; q->t1 = t1;
+		q->p0 = p0; q->p1 = p1;
+	}
+
+	return (b0 || b1);
 }
 
 bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)

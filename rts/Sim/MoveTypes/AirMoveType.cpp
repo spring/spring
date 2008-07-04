@@ -774,7 +774,7 @@ void CAirMoveType::UpdateLanded(void)
 	SyncedFloat3 &rightdir = owner->rightdir;
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner -> speed;
+	float3 &speed = owner->speed;
 
 	speed = ZeroVector;
 
@@ -858,10 +858,10 @@ void CAirMoveType::UpdateLanding(void)
 		int2 mp = owner->GetMapPos();
 		owner->pos = tpos;
 
-		for (int z = mp.y; z < mp.y + owner -> ysize; z++) {
-			for (int x = mp.x; x < mp.x + owner -> xsize; x++) {
-				if (readmap -> groundBlockingObjectMap[z * gs -> mapx + x] != owner){
-					owner -> UnBlock();
+		for (int z = mp.y; z < mp.y + owner->ysize; z++) {
+			for (int x = mp.x; x < mp.x + owner->xsize; x++) {
+				if (readmap->groundBlockingObjectMap[z * gs->mapx + x] != owner) {
+					owner->UnBlock();
 					reservedLandingPos.x = -1;
 					UpdateFlying(wantedHeight, 1);
 					return;
@@ -914,12 +914,12 @@ void CAirMoveType::UpdateLanding(void)
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1) {
-		float gh = ground -> GetHeight(pos.x, pos.z);
-		float gah = ground -> GetApproximateHeight(pos.x, pos.z);
+		float gh = ground->GetHeight(pos.x, pos.z);
+		float gah = ground->GetApproximateHeight(pos.x, pos.z);
 		float alt = 0.0f;
 
 		// can we submerge and are we still above water?
-		if ((owner -> unitDef -> canSubmerge) && (gah < 0)) {
+		if ((owner->unitDef->canSubmerge) && (gah < 0)) {
 			alt = pos.y - gah;
 			reservedLandingPos.y = gah;
 		}
@@ -1081,7 +1081,7 @@ float3 CAirMoveType::FindLandingPos(void)
 {
 	float3 ret(-1, -1, -1);
 	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
-	tryPos.y = ground -> GetHeight2(tryPos.x, tryPos.z);
+	tryPos.y = ground->GetHeight2(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
 		return ret;
