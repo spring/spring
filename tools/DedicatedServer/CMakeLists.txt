@@ -40,10 +40,21 @@ ELSE (UNIX)
 ENDIF (UNIX)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
-SET(system_files ${fsfiles} ${platformfiles} ../../rts/System/TdfParser ../../rts/System/Platform/FileSystem ../../rts/System/Platform/ConfigHandler ../../rts/System/LogOutput)
+SET(system_files 
+	${fsfiles}
+	${platformfiles}
+	../../rts/System/TdfParser
+	../../rts/System/Platform/FileSystem
+	../../rts/System/Platform/ConfigHandler
+	../../rts/System/LogOutput
+	../../rts/System/BaseNetProtocol
+	../../rts/System/Demo
+	../../rts/System/DemoReader
+	../../rts/System/AutohostInterface
+	../../rts/System/UnsyncedRNG )
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
-ADD_LIBRARY(server SHARED ${system_files} ${serverfiles} ../../rts/Game/GameServer GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/System/DemoReader ../../rts/System/Demo ../../rts/System/AutohostInterface  ../../rts/System/BaseNetProtocol ../../rts/System/UnsyncedRNG ../../rts/Lua/LuaParser ../../rts/Lua/LuaUtils)
+ADD_LIBRARY(server SHARED ${system_files} ${serverfiles} ../../rts/Game/GameServer ../../rts/Game/GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/Lua/LuaParser ../../rts/Lua/LuaUtils ../../rts/Map/MapParser ../../rts/Rendering/Textures/TAPalette)
 TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip lua boost_regex-mt)
 
 ADD_EXECUTABLE(dedicated main)

@@ -721,6 +721,11 @@ void SpringApp::CreateGameSetup()
 			delete gameSetup;
 			gameSetup = 0;
 		}
+		else
+		{
+			gs->LoadFromSetup(gameSetup);
+			gu->LoadFromSetup(gameSetup);
+		}
 	}
 
 	if (!gameSetup && demofile.empty()) {

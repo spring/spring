@@ -52,6 +52,7 @@ public:
 	void RemoveUnit(CUnit* unit,RemoveType type);
 
 	int teamNum;
+	bool readyToStart;
 	bool isDead;
 	bool gaia;
 	int leader;

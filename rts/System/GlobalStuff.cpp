@@ -6,12 +6,16 @@
  * unsynced global stuff
  */
 #include "StdAfx.h"
+#include <cstring>
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/GameSetupData.h"
 #include "Sync/SyncTracer.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Rendering/Textures/TAPalette.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
 #include "mmgr.h"
@@ -147,6 +151,82 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 	}
 }
 
+void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
+{
+	gameMode = setup->gameMode;
+	noHelperAIs = !!setup->noHelperAIs;
+
+	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
+	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
+
+	activeTeams = setup->numTeams;
+	activeAllyTeams = setup->numAllyTeams;
+	
+	assert(activeTeams <= MAX_TEAMS);
+	assert(activeAllyTeams <= MAX_TEAMS);
+	
+	for (unsigned i = 0; i < static_cast<unsigned>(setup->numPlayers); ++i)
+	{
+		gs->players[i]->team = setup->playerStartingData[i].team;
+		gs->players[i]->rank = setup->playerStartingData[i].rank;
+		gs->players[i]->playerName  = setup->playerStartingData[i].name;
+		gs->players[i]->countryCode = setup->playerStartingData[i].countryCode;
+		gs->players[i]->spectator = setup->playerStartingData[i].spectator;
+	}
+	
+	for (unsigned i = 0; i < static_cast<unsigned>(activeTeams); ++i)
+	{
+		teams[i]->metal = setup->startMetal;
+		teams[i]->metalIncome = setup->startMetal; // for the endgame statistics
+
+		teams[i]->energy = setup->startEnergy;
+		teams[i]->energyIncome = setup->startEnergy;
+
+		teams[i]->startPos.x = setup->teamStartingData[i].startPos.x;
+		teams[i]->startPos.y = setup->teamStartingData[i].startPos.y;
+		teams[i]->startPos.z = setup->teamStartingData[i].startPos.z;
+		teams[i]->readyToStart = (setup->startPosType != CGameSetupData::StartPos_ChooseInGame);
+		std::memcpy(teams[i]->color, setup->teamStartingData[i].color, 4);
+		teams[i]->handicap = setup->teamStartingData[i].handicap;
+		teams[i]->leader = setup->teamStartingData[i].leader;
+		teams[i]->side = setup->teamStartingData[i].side;
+		SetAllyTeam(i, setup->teamStartingData[i].teamAllyteam);
+		if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") {
+			gs->Team(i)->luaAI = setup->teamStartingData[i].aiDll.substr(6);
+		}
+		else {
+			if (setup->hostDemo)
+				teams[i]->dllAI = "";
+			else
+				teams[i]->dllAI = setup->teamStartingData[i].aiDll;
+		}
+		for (unsigned t = 0; t < static_cast<unsigned>(MAX_TEAMS); ++t)
+		{
+			allies[i][t] = setup->allyStartingData[i].allies[t];
+		}
+	}
+
+	if (useLuaGaia) {
+		//TODO duplicated in SpringApp::CreateGameSetup()
+		// Gaia adjustments
+		gaiaTeamID = activeTeams;
+		gaiaAllyTeamID = activeAllyTeams;
+		activeTeams++;
+		activeAllyTeams++;
+
+		// Setup the gaia team
+		CTeam* team = gs->Team(gs->gaiaTeamID);
+		team->color[0] = 255;
+		team->color[1] = 255;
+		team->color[2] = 255;
+		team->color[3] = 255;
+		team->gaia = true;
+		team->readyToStart = true;
+		players[setup->numPlayers]->team = gaiaTeamID;
+		SetAllyTeam(gaiaTeamID, gaiaAllyTeamID);
+	}
+}
+
 /**
  * @return synced random integer
  *
@@ -278,6 +358,14 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 	return ret;
 }
 
+void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetupData* setup)
+{
+	myPlayerNum = setup->myPlayerNum;
+	myTeam = setup->playerStartingData[myPlayerNum].team;
+	myAllyTeam = setup->teamStartingData[myPlayerNum].teamAllyteam;
 
-
+	spectating = setup->playerStartingData[myPlayerNum].spectator;
+	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
+	spectatingFullSelect = setup->playerStartingData[myPlayerNum].spectator;
+}
 

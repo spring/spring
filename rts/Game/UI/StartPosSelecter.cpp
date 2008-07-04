@@ -60,17 +60,17 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	inMapDrawer->SendErase(startPos);
 	startPos = camera->pos + mouse->dir * dist;
 
-	if(startPos.z<gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8)
-		startPos.z=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
+	if(startPos.z<gameSetup->allyStartingData[gu->myAllyTeam].startRectTop *gs->mapy*8)
+		startPos.z=gameSetup->allyStartingData[gu->myAllyTeam].startRectTop*gs->mapy*8;
 
-	if(startPos.z>gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8)
-		startPos.z=gameSetup->startRectBottom[gu->myAllyTeam]*gs->mapy*8;
+	if(startPos.z>gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom*gs->mapy*8)
+		startPos.z=gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom*gs->mapy*8;
 
-	if(startPos.x<gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8)
-		startPos.x=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
+	if(startPos.x<gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft*gs->mapx*8)
+		startPos.x=gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft*gs->mapx*8;
 
-	if(startPos.x>gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8)
-		startPos.x=gameSetup->startRectRight[gu->myAllyTeam]*gs->mapx*8;
+	if(startPos.x>gameSetup->allyStartingData[gu->myAllyTeam].startRectRight*gs->mapx*8)
+		startPos.x=gameSetup->allyStartingData[gu->myAllyTeam].startRectRight*gs->mapx*8;
 
 	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, 0, startPos.x, startPos.y, startPos.z));
 
@@ -93,11 +93,11 @@ void CStartPosSelecter::Draw()
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glBegin(GL_QUADS);
-	float by=gameSetup->startRectTop[gu->myAllyTeam]*gs->mapy*8;
-	float bx=gameSetup->startRectLeft[gu->myAllyTeam]*gs->mapx*8;
+	float by= gameSetup->allyStartingData[gu->myAllyTeam].startRectTop *gs->mapy*8;
+	float bx= gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft *gs->mapx*8;
 
-	float dy=(gameSetup->startRectBottom[gu->myAllyTeam]-gameSetup->startRectTop[gu->myAllyTeam])*gs->mapy*8/10;
-	float dx=(gameSetup->startRectRight[gu->myAllyTeam]-gameSetup->startRectLeft[gu->myAllyTeam])*gs->mapx*8/10;
+	float dy = (gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom - gameSetup->allyStartingData[gu->myAllyTeam].startRectTop) *gs->mapy*8/10;
+	float dx = (gameSetup->allyStartingData[gu->myAllyTeam].startRectRight - gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft) *gs->mapx*8/10;
 
 	for(int a=0;a<10;++a){	//draw start rect restrictions
 		float3 pos1(bx+a*dx,0,by);
