@@ -303,8 +303,8 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 
 				CollisionVolume* cv = 0x0;
 				float3 error = (!gu->spectatingFullView)?
-					// relative to relMidPos, since MouseHit() translates by it
-					unit->relMidPos - (unit->midPos - GetUnitErrorPos(unit, gu->myAllyTeam)):
+					// relative error, since MouseHit() translates by relMidPos
+					(unit->midPos - GetUnitErrorPos(unit, gu->myAllyTeam)):
 					ZeroVector;
 
 				if (unit->isIcon) {
