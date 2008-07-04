@@ -1017,7 +1017,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				CMoveMath* moveMath = moveData->moveMath;
 
 				// basic blocking-check
-				if (object != owner && moveData->moveMath->IsBlocking(*moveData, object) && desiredDir.dot(object->pos - owner->pos) > 0) {
+				if (object != owner && moveMath->IsBlocking(*moveData, object) && desiredDir.dot(object->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - object->pos - object->speed * 30);
 					float distanceToObject = objectToUnit.Length();
 					float radiusSum = (owner->xsize + object->xsize) * SQUARE_SIZE / 2;

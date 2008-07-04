@@ -4,7 +4,7 @@
 #include "StdAfx.h"
 #include "creg/creg.h"
 
-#define EPS 0.001f
+#define EPS 0.000001f
 #define MIN(a, b) std::min((a), (b))
 #define MAX(a, b) std::max((a), (b))
 

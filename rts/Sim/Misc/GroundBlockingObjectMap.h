@@ -2,6 +2,7 @@
 #define GROUNDBLOCKINGOBJECTMAP_H
 
 #include "creg/creg.h"
+#include "creg/STL_Set.h"
 #include "float3.h"
 
 class CSolidObject;
@@ -12,20 +13,26 @@ class CGroundBlockingObjectMap
 
 public:
 	CGroundBlockingObjectMap(int numSquares);
-	void AddGroundBlockingObject(CSolidObject *object);
-	void AddGroundBlockingObject(CSolidObject *object, unsigned char *blockingMap, unsigned char mask = 255);
-	void RemoveGroundBlockingObject(CSolidObject *object);
-	void MoveGroundBlockingObject(CSolidObject *object, float3 oldPos);
-	void OpenBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
-	void CloseBlockingYard(CSolidObject *yard, unsigned char *blockingMap);
+
+	void AddGroundBlockingObject(CSolidObject* object);
+	void AddGroundBlockingObject(CSolidObject* object, unsigned char* yardMap, unsigned char mask = 255);
+	void RemoveGroundBlockingObject(CSolidObject* object);
+	void MoveGroundBlockingObject(CSolidObject* object, float3 oldPos);
+
+	void OpenBlockingYard(CSolidObject* yard, unsigned char* yardMap);
+	void CloseBlockingYard(CSolidObject* yard, unsigned char* yardMap);
 	bool CanCloseYard(CSolidObject* object);
-	CSolidObject* GroundBlocked(float3 pos);
+
 	CSolidObject* GroundBlocked(int mapSquare);
-	///simple version of GroundBlocked without error checking
-	CSolidObject* GroundBlockedUnsafe(int mapSquare){return groundBlockingObjectMap[mapSquare];}
+	CSolidObject* GroundBlocked(float3 pos);
+	// same as GroundBlocked(), but does not bounds-check mapSquare
+	CSolidObject* GroundBlockedUnsafe(int mapSquare);
 
 private:
-	std::vector<CSolidObject*> groundBlockingObjectMap;
+	typedef std::set<CSolidObject*> BlockingMapCell;
+	typedef BlockingMapCell::iterator BlockingMapCellIt;
+	typedef std::vector<BlockingMapCell> BlockingMap;
+	BlockingMap groundBlockingMap;
 };
 
 extern CGroundBlockingObjectMap* groundBlockingObjectMap;

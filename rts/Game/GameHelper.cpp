@@ -16,6 +16,8 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
@@ -273,16 +275,14 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 	return length;
 }
 
-float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit *&hit,float sizeMod,bool useRadar,CUnit* exclude)
+float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, float _, bool useRadar, CUnit* exclude)
 {
-	const float groundLength = ground->LineGroundCol(start, start + dir * length);
+	// distance from start to ground intersection point + fudge
+	float groundLen = ground->LineGroundCol(start, start + dir * length);
+	float returnLen = (groundLen > 0.0f)? groundLen + 200.0f: length;
 
-	if ((length > (groundLength + 200.0f)) && (groundLength > 0.0f)) {
-		//need to add some cause we take the backside of the unit sphere;
-		length = groundLength + 200.0f;
-	}
-
-	hit = 0;
+	hit = 0x0;
+	CollisionQuery cq;
 
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
@@ -290,6 +290,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		std::list<CUnit*>::const_iterator ui;
+
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* unit = *ui;
 			if (unit == exclude) {
@@ -297,52 +298,40 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 			}
 
 			if ((unit->allyteam == gu->myAllyTeam) || gu->spectatingFullView ||
-			   (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
-			   (useRadar && radarhandler->InRadar(*ui, gu->myAllyTeam))) {
-				float3 pos;
+				(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
+				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam))) {
 
-				if (gu->spectatingFullView) {
-					pos = unit->midPos;
-				} else {
-					pos = GetUnitErrorPos(*ui,gu->myAllyTeam);
-				}
+				CollisionVolume* cv = 0x0;
+				float3 error = (!gu->spectatingFullView)?
+					// relative to relMidPos, since MouseHit() translates by it
+					(unit->relMidPos - GetUnitErrorPos(unit, gu->myAllyTeam)):
+					ZeroVector;
 
 				if (unit->isIcon) {
-					const float h = ground->GetHeight(pos.x, pos.z);
-					if (pos.y < (h + unit->iconRadius)) {
-						pos.y = h + unit->iconRadius;
-					}
+					// for iconified units, just pretend the collision
+					// volume is a sphere of radius <unit->IconRadius>
+					static CollisionVolume sphere;
+					sphere.SetDefaultScale(unit->iconRadius);
+					cv = &sphere;
+				} else {
+					cv = unit->collisionVolume;
 				}
-				const float3 dif = pos - start;
-				float closeLength = dif.dot(dir);
-				if (closeLength < 0.0f) {
-					continue;
-				}
-				if (closeLength > length) {
-					closeLength = length;
-				}
-				float3 closeVect = dif - dir * closeLength;
-				const float rad = (unit->isIcon) ? unit->iconRadius : unit->radius;
 
-				// The argument to sqrt became negative (3.5f*10^-7) for some reason...
-				// so tempstoring the value
-				const float tmp = rad * rad - closeVect.SqLength();
-				if (tmp > 0.0f) {
-					const float sqrttmp = sqrt(tmp);
-					if (length > (closeLength + sqrttmp)){
-						//note that we take the length to the backside of the units,
-						// this is so you can select stuff inside factories
-						length = closeLength + sqrttmp;
+				if (CCollisionHandler::MouseHit(unit, error, start, start + dir * length, cv, &cq)) {
+					// get the distance to the ray-volume egress point
+					// so we can still select stuff inside factories
+					const float len = (cq.p1 - start).Length();
+
+					if (len < returnLen) {
+						returnLen = len;
 						hit = unit;
 					}
 				}
 			}
 		}
 	}
-	if (!hit) {
-		length -= 200.0f; //fix length from the previous fudge
-	}
-	return length;
+
+	return returnLen;
 }
 
 float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam)
