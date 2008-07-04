@@ -41,7 +41,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddString("fullName", "maps/" + mapName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();
-#ifndef UNITSYNC
+#if !defined UNITSYNC && !defined DEDICATED
 	// this should not be included with unitsync:
 	// 1. avoids linkage with LuaSyncedRead
 	// 2. MapOptions are not valid during unitsync map parsing

@@ -53,7 +53,7 @@
 
 	MyPlayerNum=x;      //only variable that should vary between different players
 
-	NumPlayers=x;
+	NumPlayers=x;		// not mandatory, but can be used for debugging purposes
 	NumTeams=y;
 	NumAllyTeams=z;
 

@@ -31,6 +31,7 @@ public:
 	std::string mapName;
 	std::string baseMod;
 	std::string scriptName;
+	bool useLuaGaia;
 	std::string luaGaiaStr;
 	std::string luaRulesStr;
 	
@@ -49,21 +50,39 @@ public:
 	struct PlayerData
 	{
 		unsigned team;
+		int rank;
+		std::string name;
+		std::string countryCode;
 		bool spectator;
+		bool isFromDemo;
 	};
 	PlayerData playerStartingData[MAX_PLAYERS];
-	/// Initial startposition (read-only)
-	SFloat3 startPos[MAX_TEAMS];
-	bool readyTeams[MAX_TEAMS];
-	int teamStartNum[MAX_TEAMS];
-	int teamAllyteam[MAX_TEAMS];
-	float startRectTop[MAX_TEAMS];
-	float startRectBottom[MAX_TEAMS];
-	float startRectLeft[MAX_TEAMS];
-	float startRectRight[MAX_TEAMS];
+	
+	struct TeamData
+	{
+		unsigned leader;
+		unsigned char color[4];
+		float handicap;
+		std::string side;
+		SFloat3 startPos;
+		int teamStartNum;
+		int teamAllyteam;
+		std::string aiDll;
+	};
+	TeamData teamStartingData[MAX_TEAMS];
+	
+	struct AllyTeamData
+	{
+		float startRectTop;
+		float startRectBottom;
+		float startRectLeft;
+		float startRectRight;
+		bool allies[MAX_TEAMS];
+	};
+	AllyTeamData allyStartingData[MAX_TEAMS];
 	
 	std::map<std::string, int> restrictedUnits;
-	
+
 	std::map<std::string, std::string> mapOptions;
 	std::map<std::string, std::string> modOptions;
 	

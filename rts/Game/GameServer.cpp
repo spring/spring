@@ -1042,7 +1042,7 @@ void CGameServer::StartGame()
 			if (teams[a]) // its a player
 				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
 			else // maybe an AI?
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->startPos[a].x, setup->startPos[a].y, setup->startPos[a].z));
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->teamStartingData[a].startPos.x, setup->teamStartingData[a].startPos.y, setup->teamStartingData[a].startPos.z));
 		}
 	}
 
@@ -1379,9 +1379,9 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
-			teams[hisTeam]->startpos = setup->startPos[hisTeam];
+			teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
 			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetupData::StartPos_ChooseInGame);
-			teams[hisTeam]->allyTeam = setup->teamAllyteam[hisTeam];
+			teams[hisTeam]->allyTeam = setup->teamStartingData[hisTeam].teamAllyteam;
 		}
 		players[hisNewNumber]->team = hisTeam;
 		if (!setup->playerStartingData[hisNewNumber].spectator)

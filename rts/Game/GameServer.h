@@ -40,7 +40,7 @@ public:
 	bool readyToStart;
 	float cpuUsage;
 	int ping;
-	
+
 	unsigned team;
 
 	bool isLocal;

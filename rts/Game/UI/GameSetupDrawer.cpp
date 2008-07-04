@@ -10,6 +10,7 @@
 #include "Platform/ConfigHandler.h"
 #include "../CameraHandler.h"
 #include "../Player.h"
+#include "../Team.h"
 #include "../GameSetup.h"
 #include "StartPosSelecter.h"
 #include "Lua/LuaCallInHandler.h"
@@ -85,7 +86,7 @@ void GameSetupDrawer::Draw()
 		char buf[64];
 		sprintf(buf, "Starting in %i", readyCountdown / 1000);
 		state = buf;
-	} else if (!gameSetup->readyTeams[gu->myTeam]) {
+	} else if (!gs->Team(gu->myTeam)->readyToStart) {
 		state = "Choose start pos";
 	} else if (gu->myPlayerNum==0) {
 		state = "Waiting for players, Ctrl+Return to force start";
@@ -98,7 +99,7 @@ void GameSetupDrawer::Draw()
 	for (int a = 0; a < gameSetup->numPlayers; a++) {
 		if (!gs->players[a]->readyToStart) {
 			playerStates[a] = "missing";
-		} else if (!gameSetup->readyTeams[gs->players[a]->team]) {
+		} else if (!gs->Team(gs->players[a]->team)->readyToStart) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
@@ -133,7 +134,7 @@ void GameSetupDrawer::Draw()
 			color = white; //blue;
 		} else if (!gs->players[a]->readyToStart) {
 			color = red;
-		} else if (!gameSetup->readyTeams[gs->players[a]->team]) {
+		} else if (!gs->Team(gs->players[a]->team)->readyToStart) {
 			color = yellow;
 		} else {
 			color = green;

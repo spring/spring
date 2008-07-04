@@ -1,17 +1,18 @@
 #include "StdAfx.h"
+
 #include <algorithm>
 #include <cctype>
 #include <SDL_timer.h>
+
+#ifndef DEDICATED
+	#include "Team.h"
+#endif
 #include "GameSetup.h"
-#include "Player.h"
 #include "TdfParser.h"
-#include "Team.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "TdfParser.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
@@ -74,7 +75,6 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 /**
 @brief Load startpositions from map
 @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
-@todo don't store in global variables directly
  */
 void CGameSetup::LoadStartPositionsFromMap()
 {
@@ -83,8 +83,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 	for(int a = 0; a < numTeams; ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
 		mapParser.GetStartPos(a, pos);
-		gs->Team(a)->startPos = pos;
-		startPos[a] = SFloat3(pos.x, pos.y, pos.z);
+		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
 	}
 }
 
@@ -92,7 +91,6 @@ void CGameSetup::LoadStartPositionsFromMap()
 @brief Load startpositions from map/script
 @pre numTeams and startPosType initialized
 @post readyTeams, teamStartNum and team start positions initialized
-@todo don't store in global variables directly
 
 Unlike the other functions, this is not called on Init() , instead we wait for CPreGame to call this. The reason is that the map is not known before CPreGame recieves the gamedata from the server.
  */
@@ -102,15 +100,20 @@ void CGameSetup::LoadStartPositions()
 	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
 	for (int a = 0; a < numTeams; ++a) {
 		// Ready up automatically unless startPosType is choose in game
-		readyTeams[a] = (startPosType != StartPos_ChooseInGame);
-		teamStartNum[a] = a;
+		//teamStartingData[a].readyTeams = (startPosType != StartPos_ChooseInGame);
+		teamStartingData[a].teamStartNum = a;
 	}
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
 		rng.Seed(gameSetupTextLength ^ SDL_GetTicks());
+		int teamStartNum[MAX_TEAMS];
+		for (int i = 0; i < MAX_TEAMS; ++i)
+			teamStartNum[i] = i;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
+		for (int i = 0; i < MAX_TEAMS; ++i)
+			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 
 	LoadStartPositionsFromMap();
@@ -118,8 +121,7 @@ void CGameSetup::LoadStartPositions()
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
 		for (int a = 0; a < numTeams; ++a) {
-			gs->Team(a)->startPos.y = -500;
-			startPos[a].y = -500;
+			teamStartingData[a].startPos.y = -500;
 		}
 	}
 
@@ -133,13 +135,11 @@ void CGameSetup::LoadStartPositions()
 			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
 			if (!xpos.empty())
 			{
-				gs->Team(a)->startPos.x = atoi(xpos.c_str());
-				startPos[a].x = gs->Team(a)->startPos.x;
+				teamStartingData[a].startPos.x = atoi(xpos.c_str());
 			}
 			if (!zpos.empty())
 			{
-				gs->Team(a)->startPos.z = atoi(zpos.c_str());
-				startPos[a].z = gs->Team(a)->startPos.z;
+				teamStartingData[a].startPos.z = atoi(zpos.c_str());
 			}
 		}
 	}
@@ -149,7 +149,6 @@ void CGameSetup::LoadStartPositions()
 @brief Load players and remove gaps in the player numbering.
 @pre numPlayers initialized
 @post players loaded, numDemoPlayers initialized
-@todo don't store in global variables directly
  */
 void CGameSetup::LoadPlayers(const TdfParser& file)
 {
@@ -168,14 +167,13 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		}
 
 		// expects lines of form team=x rather than team=TEAMx
-		// team field is relocated in RemapTeams
-		gs->players[i]->team = atoi(file.SGetValueDef("0",   s + "team").c_str());
-		playerStartingData[i].team = unsigned(gs->players[i]->team);
-		gs->players[i]->rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
-		gs->players[i]->playerName  = file.SGetValueDef("no name", s + "name");
-		gs->players[i]->countryCode = file.SGetValueDef("",  s + "countryCode");
-		gs->players[i]->spectator = !!atoi(file.SGetValueDef("0", s + "spectator").c_str());
-		playerStartingData[i].spectator = gs->players[i]->spectator;
+		// team field is relocated in RemapTeams		
+		playerStartingData[i].team = static_cast<unsigned>(atoi(file.SGetValueDef("0",   s + "team").c_str()));
+		playerStartingData[i].rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
+		playerStartingData[i].name  = file.SGetValueDef("no name", s + "name");
+		playerStartingData[i].countryCode = file.SGetValueDef("",  s + "countryCode");
+		playerStartingData[i].spectator = static_cast<bool>(atoi(file.SGetValueDef("0", s + "spectator").c_str()));
+		playerStartingData[i].isFromDemo = static_cast<bool>(atoi(file.SGetValueDef("0",  s + "IsFromDemo").c_str()));
 
 		int fromDemo;
 		file.GetDef(fromDemo, "0", s + "IsFromDemo");
@@ -186,7 +184,12 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		++i;
 	}
 
-	if (playerRemap.size() != numPlayers)
+	int playerCount = -1;
+	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
+	
+	if (playerCount == -1 || playerRemap.size() == playerCount)
+		numPlayers = playerRemap.size();
+	else
 		throw content_error("incorrect number of players in GameSetup script");
 }
 
@@ -194,7 +197,6 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 @brief Load teams and remove gaps in the team numbering.
 @pre numTeams, hostDemo initialized
 @post teams loaded
-@todo don't store in global variables directly
  */
 void CGameSetup::LoadTeams(const TdfParser& file)
 {
@@ -217,37 +219,30 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// Read RGBColor, this overrides color if both had been set.
 		float3 color = file.GetFloat3(defaultCol, s + "rgbcolor");
 		for (int b = 0; b < 3; ++b) {
-			gs->Team(i)->color[b] = int(color[b] * 255);
+			teamStartingData[i].color[b] = int(color[b] * 255);
 		}
-		gs->Team(i)->color[3] = 255;
+		teamStartingData[i].color[3] = 255;
 
-		gs->Team(i)->handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
-		// leader field is relocated in RemapPlayers
-		gs->Team(i)->leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
-		gs->Team(i)->side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
-		// allyteam field is relocated in RemapAllyteams
-		gs->SetAllyTeam(i, atoi(file.SGetValueDef("0", s + "allyteam").c_str()));
-		teamAllyteam[i] = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
+		teamStartingData[i].handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
+		teamStartingData[i].leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
+		teamStartingData[i].side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
+		teamStartingData[i].teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
 		const string aiDll = file.SGetValueDef("", s + "aidll");
-		if (aiDll.substr(0, 6) == "LuaAI:") {
-			gs->Team(i)->luaAI = aiDll.substr(6);
-		}
-		else {
-			if (hostDemo) {
-				gs->Team(i)->dllAI = "";
-			} else {
-				gs->Team(i)->dllAI = aiDll;
-			}
-		}
+		teamStartingData[i].aiDll = aiDll;
 
 		teamRemap[a] = i;
 		++i;
 	}
 
-	if (teamRemap.size() != numTeams)
+	int teamCount = -1;
+	file.GetDef(teamCount,   "-1", "GAME\\NumTeams");
+	
+	if (teamCount == -1 || teamRemap.size() == teamCount)
+		numTeams = teamRemap.size();
+	else
 		throw content_error("incorrect number of teams in GameSetup script");
 }
 
@@ -255,7 +250,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 @brief Load allyteams and remove gaps in the allyteam numbering.
 @pre numAllyTeams initialized
 @post allyteams loaded
-@todo don't store in global variables directly
 */
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
 {
@@ -269,10 +263,10 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		if (!file.SectionExist(s.substr(0, s.length() - 1)))
 			continue;
 
-		startRectTop[i]    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
-		startRectBottom[i] = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
-		startRectLeft[i]   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
-		startRectRight[i]  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
+		allyStartingData[i].startRectTop    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
+		allyStartingData[i].startRectBottom = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
+		allyStartingData[i].startRectLeft   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
+		allyStartingData[i].startRectRight  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
 
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
@@ -280,7 +274,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			char key[100];
 			sprintf(key, "GAME\\ALLYTEAM%i\\Ally%i", a, b);
 			int other = atoi(file.SGetValueDef("0",key).c_str());
-			gs->SetAlly(a, other, true); // relocated in RemapAllyteams
+			allyStartingData[i].allies[other] = true;
 		}
 
 		allyteamRemap[a] = i;
@@ -297,10 +291,10 @@ void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
 	for (int a = 0; a < numTeams; ++a) {
-		if (playerRemap.find(gs->Team(a)->leader) == playerRemap.end()) {
+		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
 			throw content_error("invalid Team.TeamLeader in GameSetup script");
 		};
-		gs->Team(a)->leader = playerRemap[gs->Team(a)->leader];
+		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
 
 	// relocate myPlayerNum
@@ -315,9 +309,8 @@ void CGameSetup::RemapTeams()
 {
 	// relocate Player.Team field
 	for (int a = 0; a < numPlayers; ++a) {
-		if (teamRemap.find(gs->players[a]->team) == teamRemap.end())
+		if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
 			throw content_error("invalid Player.Team in GameSetup script");
-		gs->players[a]->team = teamRemap[gs->players[a]->team];
 		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 	}
 }
@@ -327,11 +320,10 @@ void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
 	for (int a = 0; a < numTeams; ++a) {
-		if (allyteamRemap.find(gs->AllyTeam(a)) == allyteamRemap.end()) {
+		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end()) {
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 		}
-		gs->SetAllyTeam(a, allyteamRemap[gs->AllyTeam(a)]);
-		teamAllyteam[a] = allyteamRemap[teamAllyteam[a]];
+		teamStartingData[a].teamAllyteam = allyteamRemap[teamStartingData[a].teamAllyteam];
 	}
 
 	// relocate gs->allies matrix
@@ -339,7 +331,7 @@ void CGameSetup::RemapAllyteams()
 		for (int b = 0; b < MAX_TEAMS; ++b) {
 			if (allyteamRemap.find(a) != allyteamRemap.end() &&
 				allyteamRemap.find(b) != allyteamRemap.end()) {
-				gs->SetAlly(allyteamRemap[a], allyteamRemap[b], gs->Ally(a, b));
+				allyStartingData[allyteamRemap[a]].allies[allyteamRemap[b]] = allyStartingData[a].allies[b];
 			}
 		}
 	}
@@ -371,6 +363,10 @@ bool CGameSetup::Init(const char* buf, int size)
 	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	luaGaiaStr  = file.SGetValueDef("1", "GAME\\LuaGaia");
+	if (luaGaiaStr == "0")
+		useLuaGaia = false;
+	else
+		useLuaGaia = true;
 	luaRulesStr = file.SGetValueDef("1", "GAME\\LuaRules");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
@@ -390,8 +386,6 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
 
 	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
-	file.GetDef(numPlayers,   "2", "GAME\\NumPlayers");
-	file.GetDef(numTeams,     "2", "GAME\\NumTeams");
 	file.GetDef(numAllyTeams, "2", "GAME\\NumAllyTeams");
 	file.GetDef(fixedAllies, "1", "GAME\\FixedAllies");
 
@@ -424,54 +418,6 @@ bool CGameSetup::Init(const char* buf, int size)
 
 	// Postprocessing
 	baseMod = archiveScanner->ModArchiveToModName(baseMod);
-
-	gu->myPlayerNum = myPlayerNum;
-	gu->myTeam = gs->players[myPlayerNum]->team;
-	gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
-
-	gu->spectating = gs->players[myPlayerNum]->spectator;
-	gu->spectatingFullView   = gu->spectating;
-	gu->spectatingFullSelect = gu->spectating;
-
-	gs->gameMode = gameMode;
-	gs->noHelperAIs = !!noHelperAIs;
-
-	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-
-	gs->activeTeams = numTeams;
-	gs->activeAllyTeams = numAllyTeams;
-
-	if (gs->useLuaGaia) {
-		// Gaia adjustments
-		gs->gaiaTeamID = gs->activeTeams;
-		gs->gaiaAllyTeamID = gs->activeAllyTeams;
-		gs->activeTeams++;
-		gs->activeAllyTeams++;
-		teamStartNum[gs->gaiaTeamID] = gs->gaiaTeamID;
-
-		// Setup the gaia team
-		CTeam* team = gs->Team(gs->gaiaTeamID);
-		team->color[0] = 255;
-		team->color[1] = 255;
-		team->color[2] = 255;
-		team->color[3] = 255;
-		team->gaia = true;
-		readyTeams[gs->gaiaTeamID] = true;
-		gs->players[numPlayers]->team = gs->gaiaTeamID;
-		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
-	}
-
-	for(int a = 0; a < gs->activeTeams; ++a) {
-		gs->Team(a)->metal = startMetal;
-		gs->Team(a)->metalIncome = startMetal; // for the endgame statistics
-
-		gs->Team(a)->energy = startEnergy;
-		gs->Team(a)->energyIncome = startEnergy;
-	}
-
-	assert(gs->activeTeams <= MAX_TEAMS);
-	assert(gs->activeAllyTeams <= MAX_TEAMS);
 
 	return true;
 }
