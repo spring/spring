@@ -38,11 +38,8 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
 			const int idx = xSqr + zSqr * gs->mapx;
 			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(object);
 
-			if (it == cell.end()) {
-				cell.insert(object);
-			}
+			cell.insert(object);
 		}
 	}
 
@@ -75,9 +72,8 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, uns
 			const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
 			const int off = x + z * object->xsize;
 			BlockingMapCell& cell = groundBlockingMap[idx];
-			BlockingMapCellIt it = cell.find(object);
 
-			if (it == cell.end() && (yardMap[off] & mask)) {
+			if ((yardMap[off] & mask)) {
 				cell.insert(object);
 			}
 		}
