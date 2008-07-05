@@ -331,7 +331,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 		}
 	}
 
-	return returnLen;
+	return ((hit)? returnLen: (returnLen - 200.0f));
 }
 
 float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam)
