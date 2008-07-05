@@ -66,6 +66,7 @@ ${EndIf}
   File "..\game\LuaUI\Widgets\gui_xray_shader.lua"
   File "..\game\LuaUI\Widgets\minimap_relative.lua"
   File "..\game\LuaUI\Widgets\minimap_startbox.lua"
+  File "..\game\LuaUI\Widgets\unit_factory_guard.lua"
   File "..\game\LuaUI\Widgets\unit_immobile_buider.lua"
   File "..\game\LuaUI\Widgets\unit_metal_maker.lua"
   File "..\game\LuaUI\Widgets\unit_stockpile.lua"
