@@ -140,7 +140,7 @@ gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
 
 // Item server instances
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3)
 
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramServer(&glCreateProgram, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
@@ -639,7 +639,7 @@ void gmlQueue::SyncRequest() {
 #include "gmlfun.h"
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3)
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (*)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
 #else
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);

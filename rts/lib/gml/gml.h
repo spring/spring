@@ -21,7 +21,7 @@ extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 extern boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3)
 // gcc has issues with attributes in function pointers it seems
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramServer;
