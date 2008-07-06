@@ -140,17 +140,33 @@ gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
 
 // Item server instances
+#ifdef __GNUC__
+
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramServer(&glCreateProgram, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
+
+gmlSingleItemServer<GLUquadric *, GLUquadric *(*)(void)> gmlQuadricServer(&gluNewQuadric, 100, 25);
+
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei,GLuint *)> gmlTextureServer(&glGenTextures, 100, 25);
+
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlBufferARBServer(&glGenBuffersARB, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlFencesNVServer(&glGenFencesNV, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlProgramsARBServer(&glGenProgramsARB, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlRenderbuffersEXTServer(&glGenRenderbuffersEXT, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlFramebuffersEXTServer(&glGenFramebuffersEXT, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlQueryServer(&glGenQueries, 20, 5);
+gmlMultiItemServer<GLuint, GLsizei, void (*)(GLsizei, GLuint*)> gmlBufferServer(&glGenBuffers, 2, 0);
+
+//
+#else
+
 gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMPROC *> gmlProgramServer(&glCreateProgram, 2, 0);
 gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMOBJECTARBPROC *> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
 
-gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
-gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
-
-gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_VERTEX(&glCreateShaderObjectARB_VERTEX, 2, 0);
-gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT(&glCreateShaderObjectARB_FRAGMENT, 2, 0);
 gmlSingleItemServer<GLUquadric *, GLUquadric *(GML_GLAPIENTRY *)(void)> gmlQuadricServer(&gluNewQuadric, 100, 25);
 
 gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei,GLuint *)> gmlTextureServer(&glGenTextures, 100, 25);
+
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSARBPROC *> gmlBufferARBServer(&glGenBuffersARB, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENFENCESNVPROC *> gmlFencesNVServer(&glGenFencesNV, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENPROGRAMSARBPROC *> gmlProgramsARBServer(&glGenProgramsARB, 2, 0);
@@ -158,16 +174,24 @@ gmlMultiItemServer<GLuint, GLsizei, PFNGLGENRENDERBUFFERSEXTPROC *> gmlRenderbuf
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENFRAMEBUFFERSEXTPROC *> gmlFramebuffersEXTServer(&glGenFramebuffersEXT, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENQUERIESPROC *> gmlQueryServer(&glGenQueries, 20, 5);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSPROC *> gmlBufferServer(&glGenBuffers, 2, 0);
+#endif
+
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
+
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_VERTEX(&glCreateShaderObjectARB_VERTEX, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT(&glCreateShaderObjectARB_FRAGMENT, 2, 0);
+
 
 
 // GMLqueue implementation
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),
 ClientState(0),
-CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL), 
-EFPstride(0), EFPpointer(NULL), 
-IPtype(0), IPstride(0), IPpointer(NULL), 
-NPtype(0), NPstride(0), NPpointer(NULL), 
+CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL),
+EFPstride(0), EFPpointer(NULL),
+IPtype(0), IPstride(0), IPpointer(NULL),
+NPtype(0), NPstride(0), NPpointer(NULL),
 TCPsize(0), TCPtype(0), TCPstride(0), TCPpointer(NULL),
 ArrayBuffer(0), ElementArrayBuffer(0), PixelPackBuffer(0),PixelUnpackBuffer(0)
 {
@@ -193,7 +217,7 @@ BYTE *gmlQueue::Realloc(BYTE **e) {
 	else {
 		*(BYTE * volatile *)&Write=Queue2=(BYTE *)realloc(Queue2,newsize);
 		Size2=Queue2+newsize;
-	}  
+	}
 	*(BYTE * volatile *)&WritePos=Write+oldpos;
 	*(BYTE * volatile *)&WriteSize=Write+newsize;
 
@@ -325,7 +349,7 @@ BOOL_ gmlQueue::GetWrite(BOOL_ critical) {
 		if(!critical)
 			return FALSE;
 		boost::thread::yield();
-	} 
+	}
 }
 
 void gmlQueue::ReleaseRead() {
@@ -560,7 +584,7 @@ void gmlQueue::SyncRequest() {
 //glLight
 #define GMLMAKESUBHANDLER2(flag,fun,arg,name)\
 	if(((gml##name##Data *)p)->ClientState & (1<<(flag-GL_VERTEX_ARRAY))) {\
- 	  fun(0,(((gml##name##Data *)p)->ClientState & GML_##arg##_ARRAY_BUFFER)?((gml##name##Data *)p)->arg##pointer:ptr);\
+ 	  fun(0,(GLboolean*)((((gml##name##Data *)p)->ClientState & GML_##arg##_ARRAY_BUFFER)?((gml##name##Data *)p)->arg##pointer:ptr));\
 	  ptr+=((gml##name##Data *)p)->arg##totalsize;\
 	}
 #define GMLMAKESUBHANDLER3(flag,fun,arg,name)\
@@ -614,7 +638,12 @@ void gmlQueue::SyncRequest() {
 
 #include "gmlfun.h"
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here
+
+#ifdef __GNUC__
+gmlItemSequenceServer<GLuint, GLsizei,GLuint (*)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
+#else
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
+#endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)
 // ptr is a temporary variable used inside the handlers
@@ -973,3 +1002,4 @@ void gmlQueue::ExecuteSynced() {
 #endif
 //  GML_DEBUG("ExecuteSync ",procs);
 }
+
