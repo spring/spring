@@ -289,10 +289,19 @@ end
 
 --------------------------------------------------------------------------------
 
-local function LoadModel(filename)
-  local version, objs, mats, v, t, n, c, exts = include(filename)
+local function LoadModel(data)
+  local version, objs, mats, v, t, n, c, exts
+  if (type(data) == 'table') then
+    version, objs, mats, v, t, n, c, exts = unpack(data)
+  elseif (type(data) == 'string') then
+    version, objs, mats, v, t, n, c, exts = include(data)
+  else
+    print("bad data passed to LoadModel(string|table)")
+    return nil
+  end
+
   if (objs == nil) then
-    print("LoadModel() failed to load:  " .. filename)
+    print("LoadModel() failed to load:  " .. tostring(data))
     return nil
   end
 
