@@ -560,12 +560,12 @@ void CPreGame::ShowModList()
 
 void CPreGame::SelectMap(std::string s)
 {
-	delete showList;
-	showList = NULL;
-
 	if (s == "Random map") {
 		s = pregame->showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
 	}
+
+	delete showList;
+	showList = NULL;
 
 	userMap = s;
 	pregame->StartServer(userMap, userMod, userScript);
@@ -585,13 +585,13 @@ void CPreGame::SelectScript(std::string s)
 
 void CPreGame::SelectMod(std::string s)
 {
-	delete showList;
-	showList = NULL;
-
 	if (s == "Random mod") {
 		const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
 		s = showList->items[index];
 	}
+
+	delete showList;
+	showList = NULL;
 
 	userMod = s;
 	pregame->ShowScriptList();
