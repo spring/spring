@@ -74,7 +74,7 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
 
-	/* Get available fullscreen/hardware modes */
+	/** Get available fullscreen/hardware modes **/
 /*
 	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL|SDL_RESIZABLE);
 
@@ -143,14 +143,13 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 	
 	// create mipmapped texture
 	if (glGenerateMipmapEXT) {
-	//if (GLEW_EXT_framebuffer_object) { // Hurray (again), ATi only supports half of the extension
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
+		glGenerateMipmapEXT(target);
 	}else if (GLEW_VERSION_1_4) {
 		// This required GL-1.4
 		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE);
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 	} else
 		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);

@@ -38,17 +38,17 @@ IFramebuffer* instantiate_fb(const int w, const int h, const int requires)
 FBO::FBO(int requires, int w, int h) : frameBuffer(0), depthRenderBuffer(0), requires(requires)
 {
 	glGenFramebuffersEXT(1,&frameBuffer);
-	select();
 	// Is a depth renderbuffer needed?
 	if ((requires & FBO_NEED_DEPTH) && !(requires & FBO_NEED_DEPTH_TEXTURE))
 	{
+		select();
 		glGenRenderbuffersEXT(1, &depthRenderBuffer);
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, depthRenderBuffer);
 		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, w, h);
 		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
 										GL_RENDERBUFFER_EXT, depthRenderBuffer);
+		deselect();
 	}
-	deselect();
 }
 
 /**

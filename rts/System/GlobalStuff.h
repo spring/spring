@@ -525,6 +525,13 @@ public:
 	float aspectRatio;
 
 	/**
+	 * @brief Depthbuffer bits
+	 *
+	 * depthbuffer precision
+	 */
+	int depthBufferBits;
+
+	/**
 	 * @brief my player num
 	 *
 	 * Local player's number

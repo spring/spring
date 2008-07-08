@@ -35,25 +35,15 @@ protected:
 
 	GroundSquare* squares;
 
-	// variables controlling background reading of textures
-	bool inRead;
-	int readProgress;
-	int readX;
-	int readY;
-	GroundSquare* readSquare;
-	int readLevel;
-	unsigned char* readBuffer;
-	unsigned char* readTempLine;
-
 	int* tileMap;
 	int tileSize;
 	char* tiles;
 	int tileMapXSize;
 	int tileMapYSize;
 
-	// use Pixel Buffer Objects for async. uploading (DMA)?
+	//! use Pixel Buffer Objects for async. uploading (DMA)?
 	bool usePBO;
-	GLuint pboIDs[30];
+	GLuint pboIDs[10];
 	int currentPBO;
 
 	float anisotropy;

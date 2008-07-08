@@ -18,7 +18,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 {
 	usePBO = false;
 	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
-		glGenBuffers(30, pboIDs);
+		glGenBuffers(10, pboIDs);
 		currentPBO=0;
 		usePBO = true;
 	}
@@ -110,17 +110,20 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 			LoadSquare(x, y, 2);
 		}
 	}
-
-	inRead = false;
 }
 
 CBFGroundTextures::~CBFGroundTextures(void)
 {
+	for (int i = 0; i < numBigTexX * numBigTexY; ++i) {
+		glDeleteTextures(1, &squares[i].texture);
+	}
+
 	delete[] squares;
 	delete[] tileMap;
 	delete[] tiles;
+
 	if (usePBO) {
-		glDeleteBuffers(30,pboIDs);
+		glDeleteBuffers(10,pboIDs);
 	}
 }
 
@@ -149,16 +152,9 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 
 void CBFGroundTextures::DrawUpdate(void)
 {
-	float maxDif = 0;
-	float totalDif = 0;
-	int maxX;
-	int maxY;
-	int wantedNew;
-	int currentReadWantedLevel;
-
 	for (int y = 0; y < numBigTexY; ++y) {
-		float dy = cam2->pos.z - y * bigSquareSize * SQUARE_SIZE - 64 * SQUARE_SIZE;
-		dy = max(0.0f, float(fabs(dy) - 64.0f * SQUARE_SIZE));
+		float dy = cam2->pos.z - y * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
+		dy = max(0.0f, float(fabs(dy) - (SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < numBigTexX; ++x) {
 			if (!TexSquareInView(x, y)) {
@@ -169,8 +165,8 @@ void CBFGroundTextures::DrawUpdate(void)
 
 			GroundSquare* square = &squares[y * numBigTexX + x];
 
-			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - 64 * SQUARE_SIZE;
-			dx = max(0.0f, float(fabs(dx) - 64.0f * SQUARE_SIZE));
+			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
+			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
 			float dist = fastmath::sqrt(dx * dx + dy * dy);
 
 			if (square->lastUsed < gs->frameNum - 60)
@@ -183,26 +179,6 @@ void CBFGroundTextures::DrawUpdate(void)
 			if (wantedLevel < square->texLevel - 1)
 				wantedLevel = square->texLevel - 1;
 
-			float dif = square->texLevel + 0.5f - wantedLevel;
-			if (dif < 0)
-				dif *= -0.5f;
-
-			if ((int) wantedLevel != square->texLevel) {
-				if (dist < 8)
-					dif += 5;
-
-				totalDif += dif;
-
-				if (dif > maxDif) {
-					maxDif = dif;
-					maxX = x;
-					maxY = y;
-					wantedNew = (int) wantedLevel;
-				}
-			}
-			if (inRead && x == readX && y == readY) {
-				currentReadWantedLevel = (int) wantedLevel;
-			}
 			if (square->texLevel != (int) wantedLevel) {
 				glDeleteTextures(1, &square->texture);
 				LoadSquare(x, y, (int) wantedLevel);
@@ -220,9 +196,8 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	GLubyte* buf=NULL; bool usedPBO=false;
 
 	if (usePBO) {
-		if (currentPBO > 29) currentPBO=0;
+		if (currentPBO > 9) currentPBO=0;
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboIDs[currentPBO++]);
-
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, size * size / 2, 0, GL_STREAM_DRAW);
 
 		//map the buffer object into client's memory
@@ -246,13 +221,12 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 
 			for (int yt = 0; yt < numblocks; yt++) {
 				for (int xt = 0; xt < numblocks; xt++) {
-					GLfloat* sbuf = (GLfloat*)&tile[(xt + yt * numblocks) * 8];
-					GLfloat* dbuf = (GLfloat*)&buf[(x1 * numblocks + xt + (y1 * numblocks + yt) * (numblocks * 32)) * 8];
+					GLint* sbuf = (GLint*)&tile[(xt + yt * numblocks) * 8];
+					GLint* dbuf = (GLint*)&buf[(x1 * numblocks + xt + (y1 * numblocks + yt) * (numblocks * 32)) * 8];
 
-					//copy 4 bytes at once
-					for (int i = 0; i < 2; i++) {
-						dbuf[i] = sbuf[i];
-					}
+					//copy 2x 4 bytes at once
+					dbuf[0] = sbuf[0];
+					dbuf[1] = sbuf[1];
 				}
 			}
 		}
@@ -260,10 +234,13 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 
 	glGenTextures(1, &square->texture);
 	glBindTexture(GL_TEXTURE_2D, square->texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	if (GLEW_EXT_texture_edge_clamp) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
 	if (map->anisotropy != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
 

@@ -164,18 +164,31 @@ void CMapInfo::ReadWater()
 	water.baseColor = wt.GetFloat3("baseColor", float3(0.0f, 0.0f, 0.0f));
 	water.minColor  = wt.GetFloat3("minColor",  float3(0.0f, 0.0f, 0.0f));
 
-	water.surfaceColor = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
-	water.surfaceAlpha = wt.GetFloat("surfaceAlpha",  0.55f);
+	water.ambientFactor = wt.GetFloat("ambientFactor", 1.0f);
+	water.diffuseFactor = wt.GetFloat("diffuseFactor", 1.0f);
+	water.specularFactor= wt.GetFloat("specularFactor",1.0f);
+	water.specularPower = wt.GetFloat("specularPower", 20.0f);
 
 	water.planeColor = wt.GetFloat3("planeColor", float3(0.0f, 0.4f, 0.0f));
 	hasWaterPlane    = wt.KeyExists("planeColor");
 
-	water.specularColor  = wt.GetFloat3("specularColor", light.groundSunColor);
-	water.specularFactor = wt.GetFloat("specularFactor", 20.0f);
+	water.surfaceColor  = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
+	water.surfaceAlpha  = wt.GetFloat("surfaceAlpha",  0.55f);
+	water.diffuseColor  = wt.GetFloat3("diffuseColor",  float3(1.0f, 1.0f, 1.0f));
+	water.specularColor = wt.GetFloat3("specularColor", light.groundSunColor);
 
 	water.fresnelMin   = wt.GetFloat("fresnelMin",   0.2f);
-	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.3f);
+	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.7f);
 	water.fresnelPower = wt.GetFloat("fresnelPower", 4.0f);
+
+	water.reflDistortion = wt.GetFloat("reflectionDistortion", 1.0f);
+
+	water.blurBase     = wt.GetFloat("blurBase", 2.0f);
+	water.blurExponent = wt.GetFloat("blurExponent", 1.5f);
+
+	water.perlinStartFreq  = wt.GetFloat("perlinStartFreq",  8.0f);
+	water.perlinLacunarity = wt.GetFloat("perlinLacunarity", 3.0f);
+	water.perlinAmplitude  = wt.GetFloat("perlinAmplitude",  0.9f);
 
 	water.texture       = wt.GetString("texture",       "");
 	water.foamTexture   = wt.GetString("foamTexture",   "");

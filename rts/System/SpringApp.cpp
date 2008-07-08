@@ -180,6 +180,8 @@ bool SpringApp::Initialize()
 	ENTER_UNSYNCED;
 	gu = SAFE_NEW CGlobalUnsyncedStuff();
 
+	gu->depthBufferBits = depthBufferBits;
+
 	if (cmdline->result("minimise")) {
 		gu->active = false;
 		SDL_WM_IconifyWindow();
@@ -354,7 +356,9 @@ bool SpringApp::SetSDLVideoMode ()
 #else
 	const int defaultDepthSize = 16;
 #endif
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, configHandler.GetInt("DepthBufferBits", defaultDepthSize));
+	depthBufferBits = configHandler.GetInt("DepthBufferBits", defaultDepthSize);
+
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.GetInt("StencilBufferBits", 1));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
