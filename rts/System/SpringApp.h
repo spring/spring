@@ -83,6 +83,13 @@ protected:
 	 */
 	bool FSAA;
 
+	/**
+	 * @brief depthBufferBits
+	 *
+	 * number of Depthbuffer bits
+	 */
+	bool depthBufferBits;
+
 private:
 	static void SigAbrtHandler(int unused);
 };

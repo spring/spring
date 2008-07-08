@@ -50,7 +50,7 @@ public:
 	float* orgheightmap;
 	float* centerheightmap;
 	static const int numHeightMipMaps = 7;	//number of heightmap mipmaps, including full resolution
-	float* mipHeightmap[numHeightMipMaps];	//array of pointers to heightmap in diferent resolution, mipHeightmap[0] is full resolution, mipHeightmap[n+1] is half resolution of mipHeightmap[n]
+	float* mipHeightmap[numHeightMipMaps];	//array of pointers to heightmap in different resolutions, mipHeightmap[0] is full resolution, mipHeightmap[n+1] is half resolution of mipHeightmap[n]
 	float* slopemap;
 	float3* facenormals;
 	unsigned char* typemap;

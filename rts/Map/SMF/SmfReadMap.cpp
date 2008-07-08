@@ -72,7 +72,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
-	heightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];//SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
+	heightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
 
 	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 

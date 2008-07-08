@@ -52,6 +52,7 @@ CCamera::CCamera() : forward(1.0f, 0.0f, 0.0f), rot(0.0f, 0.0f, 0.0f), pos(2000.
 
 CCamera::~CCamera()
 {
+	glDeleteLists(billboardList,1);
 }
 
 

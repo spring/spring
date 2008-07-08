@@ -10,9 +10,15 @@
 
 //////////////////////////////////////////////////
 // runtime defined constants are:
-// #define MapMid vec3
-// #define SunDir vec3
+// #define MapMid           vec3
+// #define SunDir           vec3
+// #define PerlinStartFreq  float
+// #define PerlinLacunarity float
+// #define PerlinAmp        float
 
+#define Speed 12.0
+
+uniform float frame;
 uniform vec3 eyePos;
 varying vec3 eyeVec;
 varying vec3 ligVec;
@@ -20,10 +26,18 @@ varying vec3 ligVec;
 void main(void)
 {
 	gl_Position = ftransform();
-	gl_TexCoord[0] = gl_MultiTexCoord0;
-	//gl_FrontColor  = gl_Color;
-	//gl_FrontSecondaryColor = gl_SecondaryColor;
+
+	const float fstart = PerlinStartFreq;
+	const float f      = PerlinLacunarity;
+	gl_TexCoord[0].st = (vec2(-1.0,-1.0)+gl_MultiTexCoord0.st+0.75)*fstart      +frame*Speed;
+	gl_TexCoord[1].st = (vec2(-1.0, 1.0)+gl_MultiTexCoord0.st+0.50)*fstart*f    -frame*Speed;
+	gl_TexCoord[2].st = (vec2( 1.0,-1.0)+gl_MultiTexCoord0.st+0.25)*fstart*f*f  +frame*Speed*vec2(1.0,-1.0);
+	gl_TexCoord[3].st = (vec2( 1.0, 1.0)+gl_MultiTexCoord0.st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
+	gl_TexCoord[0].pq = vec2(0.0,0.0);
+	gl_TexCoord[1].pq = vec2(0.0,0.0);
+	gl_TexCoord[2].pq = vec2(0.0,0.0);
+	gl_TexCoord[3].pq = vec2(0.0,0.0);
+
 	eyeVec = eyePos - gl_Vertex.xyz;
-	//ligVec = normalize(lightDir*200.0 - gl_Vertex.xyz - gl_Vertex.xyz); //FIXME use map midpoint!!
 	ligVec = normalize(SunDir*20000.0 + MapMid - gl_Vertex.xyz);
 }
