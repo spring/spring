@@ -15,7 +15,7 @@ struct CollisionVolume;
 
 struct FeatureDef
 {
-	CR_DECLARE(FeatureDef);
+	CR_DECLARE_STRUCT(FeatureDef);
 
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
