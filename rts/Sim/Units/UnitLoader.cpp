@@ -357,7 +357,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->cob->Call(COBFN_Create);
 	unit->cob->Call("SetMaxReloadTime", relMax);
 
-	unit->heading = facing * 16 * 1024;
+	unit->heading = GetHeadingFromFacing(facing);
 	unit->frontdir = GetVectorFromHeading(unit->heading);
 	unit->updir = UpVector;
 	unit->rightdir = unit->frontdir.cross(unit->updir);

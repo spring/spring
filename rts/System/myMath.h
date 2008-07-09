@@ -5,7 +5,7 @@
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
-#define SHORTINT_MAXVALUE	32768
+#define SHORTINT_MAXVALUE 32768
 
 
 extern float2 headingToVectorTable[1024];
@@ -23,29 +23,29 @@ inline short int GetHeadingFromFacing(int facing)
 
 inline short int GetHeadingFromVector(float dx, float dz)
 {
-	float h;
-	if (dz != 0) {
+	float h = 0.0f;
+	if (dz != 0.0f) {
 		float d = dx / dz;
 
-		if (d > 1) {
-			h = (PI / 2) - d / (d * d + 0.28f);
+		if (d > 1.0f) {
+			h = (PI * 0.5f) - d / (d * d + 0.28f);
 		} else if (d < -1) {
-			h = -(PI / 2) - d / (d * d + 0.28f);
+			h = -(PI * 0.5f) - d / (d * d + 0.28f);
 		} else {
-			h = d / (1 + 0.28f * d * d);
+			h = d / (1.0f + 0.28f * d * d);
 		}
 
-		if (dz < 0) {
-			if (dx > 0)
+		if (dz < 0.0f) {
+			if (dx > 0.0f)
 				h += PI;
 			else
 				h -= PI;
 		}
 	} else {
-		if (dx > 0)
-			h = PI / 2;
+		if (dx > 0.0f)
+			h = PI * 0.5f;
 		else
-			h = -PI / 2;
+			h = -PI * 0.5f;
 	}
 
 	h *= SHORTINT_MAXVALUE / PI;
@@ -53,51 +53,44 @@ inline short int GetHeadingFromVector(float dx, float dz)
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
-//	if (h > SHORTINT_MAXVALUE) h=SHORTINT_MAXVALUE;
-//	return (short int) h;
+	// if (h > SHORTINT_MAXVALUE) h = SHORTINT_MAXVALUE;
+	// return (short int) h;
 
 	int ih = (int) h;
+	if (ih == -SHORTINT_MAXVALUE) {
+		// ih represents due-north, but modulo operation
+		// would cause it to wrap around from -32768 to 0
+		// which means due-south
+		ih += 1;
+	}
 	ih %= SHORTINT_MAXVALUE;
 	return (short int) ih;
-
-/*
-	float wantedHeading;
-
-	if(dz!=0)
-		wantedHeading=atanf(dx/dz);
-	else
-		wantedHeading=PI;
-	if(dz<0)
-		wantedHeading+=PI;
-
-	wantedHeading*=32768/PI;
-
-	return wantedHeading;*/
 }
-struct shortint2{
-	short int x,y;
+
+struct shortint2 {
+	short int x, y;
 };
 
-//vec should be normalized
+// vec should be normalized
 inline shortint2 GetHAndPFromVector(const float3& vec)
 {
 	shortint2 ret;
 
 	// Prevents ret.y from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following 
+	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	//this change destroys the whole meaning with using short ints....
-	int iy = (int) (streflop::asin(vec.y)*(SHORTINT_MAXVALUE/PI));
+	int iy = (int) (streflop::asin(vec.y) * (SHORTINT_MAXVALUE / PI));
 	iy %= SHORTINT_MAXVALUE;
-	ret.y=(short int) iy;
-	ret.x=GetHeadingFromVector(vec.x, vec.z);
+	ret.y = (short int) iy;
+	ret.x = GetHeadingFromVector(vec.x, vec.z);
 	return ret;
 }
 
 inline float3 GetVectorFromHeading(short int heading)
 {
-	float2 v = headingToVectorTable[heading/64+512];
-	return float3(v.x,0.0f,v.y);
+	float2 v = headingToVectorTable[heading / 64 + 512];
+	return float3(v.x, 0.0f, v.y);
 }
 
 float3 GetVectorFromHAndPExact(short int heading,short int pitch);
@@ -106,7 +99,7 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 {
 	float ni=1-i;
 
-	float3 res(p1*ni*ni*ni+p2*3*i*ni*ni+p3*3*i*i*ni+p4*i*i*i);
+	float3 res((p1 * ni * ni * ni) + (p2 * 3 * i * ni * ni) + (p3 * 3 * i * i * ni) + (p4 * i * i * i));
 	return res;
 }
 

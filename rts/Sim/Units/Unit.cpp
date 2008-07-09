@@ -510,7 +510,6 @@ void CUnit::Update()
 
 	moveType->Update();
 
-	const float top = (pos.y + height);
 	inAir   = ((pos.y + height) >= 0.0f);
 	inWater =  (pos.y           <= 0.0f);
 
