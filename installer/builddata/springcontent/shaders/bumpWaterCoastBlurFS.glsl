@@ -1,3 +1,15 @@
+/**
+ * @project Spring RTS
+ * @file bumpWaterCoastBlurFS.glsl
+ * @brief Input is a 0/1 bitmap and 1 indicates land.
+ *        Now this shader blurs this map, so you get something like
+ *        a distance to land map (->coastmap).
+ * @author jK
+ *
+ * Copyright (C) 2008.  Licensed under the terms of the
+ * GNU GPL, v2 or later.
+ */
+
 uniform sampler2D tex0;
 uniform vec2 blurDir;
 
