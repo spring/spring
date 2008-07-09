@@ -300,16 +300,14 @@ CProjectileHandler::CProjectileHandler()
 
 	drawPerlinTex=false;
 
-	if (shadowHandler && shadowHandler->drawShadows &&
-	    GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap) {
+	if (GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap) {
 		// this seems to bug on ati cards so disable it on those
 		// (just some random ati extension to detect ati cards),
 		// should be fixed by someone that actually has a ati card
 		perlinFB = instantiate_fb(512, 512, FBO_NEED_COLOR);
 		if (perlinFB && perlinFB->valid()) {
-			drawPerlinTex=true;
 			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
-			perlinFB->checkFBOStatus();
+			drawPerlinTex=perlinFB->checkFBOStatus();
 		}
 	}
 	else {

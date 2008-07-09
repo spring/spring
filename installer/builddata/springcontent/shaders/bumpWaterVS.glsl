@@ -29,14 +29,11 @@ void main(void)
 
 	const float fstart = PerlinStartFreq;
 	const float f      = PerlinLacunarity;
-	gl_TexCoord[0].st = (vec2(-1.0,-1.0)+gl_MultiTexCoord0.st+0.75)*fstart      +frame*Speed;
-	gl_TexCoord[1].st = (vec2(-1.0, 1.0)+gl_MultiTexCoord0.st+0.50)*fstart*f    -frame*Speed;
+	gl_TexCoord[0]     = gl_MultiTexCoord0;
+	gl_TexCoord[1].st = (vec2(-1.0,-1.0)+gl_MultiTexCoord0.st+0.75)*fstart      +frame*Speed;
+	gl_TexCoord[1].pq = (vec2(-1.0, 1.0)+gl_MultiTexCoord0.st+0.50)*fstart*f    -frame*Speed;
 	gl_TexCoord[2].st = (vec2( 1.0,-1.0)+gl_MultiTexCoord0.st+0.25)*fstart*f*f  +frame*Speed*vec2(1.0,-1.0);
-	gl_TexCoord[3].st = (vec2( 1.0, 1.0)+gl_MultiTexCoord0.st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
-	gl_TexCoord[0].pq = vec2(0.0,0.0);
-	gl_TexCoord[1].pq = vec2(0.0,0.0);
-	gl_TexCoord[2].pq = vec2(0.0,0.0);
-	gl_TexCoord[3].pq = vec2(0.0,0.0);
+	gl_TexCoord[2].pq = (vec2( 1.0, 1.0)+gl_MultiTexCoord0.st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
 
 	eyeVec = eyePos - gl_Vertex.xyz;
 	ligVec = normalize(SunDir*20000.0 + MapMid - gl_Vertex.xyz);

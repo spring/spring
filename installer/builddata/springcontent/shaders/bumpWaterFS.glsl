@@ -125,10 +125,10 @@ float waveIntensity(const float x, const float step) {
     gl_FragColor.a = 1.0;
 
 // NORMALMAP
-    vec3 octave1 = texture2D(normalmap,gl_TexCoord[0].st).rgb;
+    vec3 octave1 = texture2D(normalmap,gl_TexCoord[1].st).rgb;
     vec3 octave2 = texture2D(normalmap,gl_TexCoord[1].pq).rgb;
     vec3 octave3 = texture2D(normalmap,gl_TexCoord[2].st).rgb;
-    vec3 octave4 = texture2D(normalmap,gl_TexCoord[3].pq).rgb;
+    vec3 octave4 = texture2D(normalmap,gl_TexCoord[2].pq).rgb;
 
     const float a = PerlinAmp;
     octave1 = (octave1*2.0-1.0)*a;
@@ -227,8 +227,8 @@ float waveIntensity(const float x, const float step) {
     vec3 reflColor   = texture2D(reflection,reftexcoord.st).rgb;
 
   #ifdef blur_reflection
-    const vec2 v = BlurBase;
-    const vec2 s = BlurExponent;
+    const vec2  v = BlurBase;
+    const float s = BlurExponent;
     reflColor   += texture2D(reflection,reftexcoord.st+v).rgb;
     reflColor   += texture2D(reflection,reftexcoord.st+v*s).rgb;
     reflColor   += texture2D(reflection,reftexcoord.st+v*s*s).rgb;
