@@ -130,11 +130,11 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
 		
-	wd.waterBounce = wdTable.GetBool("waterbounce", false);
-	wd.groundBounce = wdTable.GetBool("groundbounce", false);
-	wd.bounceSlip = wdTable.GetFloat("bounceslip", 1);
-	wd.bounceRebound = wdTable.GetFloat("bouncerebound", 1);
-	wd.numBounce = wdTable.GetInt("numbounce", -1);
+	wd.waterBounce = wdTable.GetBool("waterBounce", false);
+	wd.groundBounce = wdTable.GetBool("groundBounce", false);
+	wd.bounceSlip = wdTable.GetFloat("bounceSlip", 1);
+	wd.bounceRebound = wdTable.GetFloat("bounceRebound", 1);
+	wd.numBounce = wdTable.GetInt("numBounce", -1);
 
 	wd.thickness      = wdTable.GetFloat("thickness",       2.0f);
 	wd.corethickness  = wdTable.GetFloat("coreThickness",   0.25f);
@@ -278,18 +278,18 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.projectilespeed = wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED;
 	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
 	wd.weaponacceleration = wdTable.GetFloat("weaponAcceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
-	wd.reload = wdTable.GetFloat("reloadtime", 1.0f);
-	wd.salvodelay = wdTable.GetFloat("burstrate", 0.1f);
+	wd.reload = wdTable.GetFloat("reloadTime", 1.0f);
+	wd.salvodelay = wdTable.GetFloat("burstRate", 0.1f);
 	wd.salvosize = wdTable.GetInt("burst", 1);
 	wd.projectilespershot = wdTable.GetInt("projectiles", 1);
 	wd.maxAngle = wdTable.GetFloat("tolerance", 3000.0f) * 180.0f / 0x7fff;
 	wd.restTime = 0.0f;
-	wd.metalcost = wdTable.GetFloat("metalpershot", 0.0f);
-	wd.energycost = wdTable.GetFloat("energypershot", 0.0f);
+	wd.metalcost = wdTable.GetFloat("metalPerShot", 0.0f);
+	wd.energycost = wdTable.GetFloat("energyPerShot", 0.0f);
 	wd.selfExplode = wdTable.GetBool("burnblow", false);
 	wd.predictBoost = wdTable.GetFloat("predictBoost", wd.selfExplode ? 0.5f : 0.0f);
 	wd.sweepFire = wdTable.GetBool("sweepfire", false);
-	wd.canAttackGround = wdTable.GetBool("canattackground", true);
+	wd.canAttackGround = wdTable.GetBool("canAttackGround", true);
 	wd.myGravity = wdTable.GetFloat("myGravity", 0.0f);
 
 	wd.fireStarter = wdTable.GetFloat("fireStarter", 0.0f) * 0.01f;
@@ -564,8 +564,8 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.dynDamageMin      = wdTable.GetFloat("dynDamageMin",   0.0f);
 	wd.dynDamageRange    = wdTable.GetFloat("dynDamageRange", 0.0f);
 
-	LoadSound(wdTable, wd.firesound, "firesound");
-	LoadSound(wdTable, wd.soundhit,  "soundhit");
+	LoadSound(wdTable, wd.firesound, "fireSound");
+	LoadSound(wdTable, wd.soundhit,  "soundHit");
 
 	if ((wd.firesound.getVolume(0) == -1.0f) ||
 	    (wd.soundhit.getVolume(0)  == -1.0f)) {
