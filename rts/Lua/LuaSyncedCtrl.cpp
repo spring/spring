@@ -37,6 +37,8 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -171,6 +173,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(LevelHeightMap);
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
 	REGISTER_LUA_CFUNC(RevertHeightMap);
+
+	REGISTER_LUA_CFUNC(SpawnCEG);
 
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
 	REGISTER_LUA_CFUNC(InsertUnitCmdDesc);
@@ -2493,6 +2497,39 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	return 0;
 }
 
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::SpawnCEG(lua_State* L)
+{
+	const int argc = lua_gettop(L);
+
+	if (argc == 9 && lua_isstring(L, 1)) {
+		const string name = lua_tostring(L, 1);
+		const float posx  = lua_isnumber(L, 2)? lua_tonumber(L, 2): 0.0f;
+		const float posy  = lua_isnumber(L, 3)? lua_tonumber(L, 3): 0.0f;
+		const float posz  = lua_isnumber(L, 4)? lua_tonumber(L, 4): 0.0f;
+		const float dirx  = lua_isnumber(L, 5)? lua_tonumber(L, 5): 0.0f;
+		const float diry  = lua_isnumber(L, 6)? lua_tonumber(L, 6): 0.0f;
+		const float dirz  = lua_isnumber(L, 7)? lua_tonumber(L, 7): 0.0f;
+		const float rad   = lua_isnumber(L, 8)? lua_tonumber(L, 8): 0.0f;
+		const float dmg   = lua_isnumber(L, 9)? lua_tonumber(L, 9): 0.0f;
+		const float dmgMod = 1.0f;
+
+		if (!name.empty()) {
+			const float3 pos(posx, posy, posz);
+			const float3 dir(dirx, diry, dirz);
+
+			CWeaponProjectile p;
+			p.ceg.Load(explGenHandler, name);
+			p.ceg.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
+		}
+	} else {
+		luaL_error(L, "Incorrect arguments to SpawnCEG()");
+	}
+
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/

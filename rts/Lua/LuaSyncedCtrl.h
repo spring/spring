@@ -98,6 +98,8 @@ class LuaSyncedCtrl {
 		static int AdjustHeightMap(lua_State* L);
 		static int RevertHeightMap(lua_State* L);
 
+		static int SpawnCEG(lua_State* L);
+
 		// LuaRules  (fullCtrl)
 		static int EditUnitCmdDesc(lua_State* L);
 		static int InsertUnitCmdDesc(lua_State* L);
