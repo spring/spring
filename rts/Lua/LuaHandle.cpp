@@ -27,6 +27,7 @@
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
@@ -689,7 +690,7 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
-	LUA_CALL_IN_CHECK(L);	
+	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("FeatureCreated");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -707,7 +708,7 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
-	LUA_CALL_IN_CHECK(L);	
+	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("FeatureDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -722,6 +723,44 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 	return;
 }
 
+
+/******************************************************************************/
+
+void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("ProjectileCreated");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	const bool b = (projectile->owner != 0x0);
+
+	lua_pushnumber(L, projectile->id);
+	lua_pushnumber(L, b? projectile->owner->id: -1);
+
+	// call the routine
+	RunCallIn(cmdStr, 2, 0);
+	return;
+}
+
+
+void CLuaHandle::ProjectileDestroyed(const CProjectile* projectile)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("ProjectileDestroyed");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, projectile->id);
+
+	// call the routine
+	RunCallIn(cmdStr, 1, 0);
+	return;
+}
 
 /******************************************************************************/
 

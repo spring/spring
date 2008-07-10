@@ -57,6 +57,9 @@ CLuaCallInHandler::CLuaCallInHandler()
 	callInMap["FeatureCreated"]      = &listFeatureCreated;
 	callInMap["FeatureDestroyed"]    = &listFeatureDestroyed;
 
+	callInMap["ProjectileCreated"]   = &listProjectileCreated;
+	callInMap["ProjectileDestroyed"] = &listProjectileDestroyed;
+
 	callInMap["Explosion"]           = &listExplosion;
 
 	callInMap["StockpileChanged"]    = &listStockpileChanged;
@@ -147,6 +150,9 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 	ADDHANDLE(FeatureCreated);
 	ADDHANDLE(FeatureDestroyed);
 
+	ADDHANDLE(ProjectileCreated);
+	ADDHANDLE(ProjectileDestroyed);
+
 	ADDHANDLE(Explosion);
 
 	ADDHANDLE(StockpileChanged);
@@ -188,6 +194,7 @@ void CLuaCallInHandler::AddHandle(CLuaHandle* lh)
 void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 {
 	if (mouseOwner == lh) {
+		// ??
 		mouseOwner == NULL;
 	}
 
@@ -230,6 +237,9 @@ void CLuaCallInHandler::RemoveHandle(CLuaHandle* lh)
 
 	ListRemove(listFeatureCreated, lh);
 	ListRemove(listFeatureDestroyed, lh);
+
+	ListRemove(listProjectileCreated, lh);
+	ListRemove(listProjectileDestroyed, lh);
 
 	ListRemove(listExplosion, lh);
 

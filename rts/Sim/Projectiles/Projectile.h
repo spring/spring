@@ -9,8 +9,8 @@
 #endif
 
 class CProjectileHandler;
-class CFace;
-class CEdge;
+/*class CFace;
+class CEdge;*/
 class CBuilding;
 
 #include "ExplosionGenerator.h"
@@ -23,7 +23,7 @@ struct S3DOModel;
 #define COLLISION_NOFEATURE		2
 #define COLLISION_NONEUTRAL		4
 
-class CProjectile : public CExpGenSpawnable
+class CProjectile: public CExpGenSpawnable
 {
 public:
 	CR_DECLARE(CProjectile);
@@ -34,7 +34,7 @@ public:
 
 	virtual void Draw();
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced);
+	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon = false);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
@@ -44,6 +44,7 @@ public:
 	virtual void Init(const float3& pos, CUnit* owner);
 
 	bool synced;
+	bool weapon;
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;
@@ -56,6 +57,7 @@ public:
 	virtual void DrawS3O() { DrawUnitPart(); }
 
 	S3DOModel* s3domodel;
+	unsigned int id;
 };
 
 #endif /* PROJECTILE_H */

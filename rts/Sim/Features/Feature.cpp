@@ -559,6 +559,7 @@ bool CFeature::UpdatePosition()
 		}
 	}
 
+	isUnderWater = ((pos.y + height) < 0.0f);
 	return true;
 }
 

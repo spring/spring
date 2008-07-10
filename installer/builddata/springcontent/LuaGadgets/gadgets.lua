@@ -126,6 +126,10 @@ local callInLists = {
   'FeatureCreated',
   'FeatureDestroyed',
 
+  -- Projectile CallIns
+  'ProjectileCreated',
+  'ProjectileDestroyed',
+
   -- Misc Synced CallIns
   'Explosion',
 
@@ -1385,6 +1389,27 @@ end
 function gadgetHandler:FeatureDestroyed(featureID, allyTeam)
   for _,g in ipairs(self.FeatureDestroyedList) do
     g:FeatureDestroyed(featureID, allyTeam)
+  end
+  return
+end
+
+
+--------------------------------------------------------------------------------
+--
+--  Projectile call-ins
+--
+
+function gadgetHandler:ProjectileCreated(proID, proOwnerID)
+  for _,g in ipairs(self.ProjectileCreatedList) do
+    g:ProjectileCreated(proID, proOwnerID)
+  end
+  return
+end
+
+
+function gadgetHandler:ProjectileDestroyed(proID)
+  for _,g in ipairs(self.ProjectileDestroyedList) do
+    g:ProjectileDestroyed(proID)
   end
   return
 end

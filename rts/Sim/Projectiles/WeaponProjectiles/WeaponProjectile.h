@@ -30,7 +30,7 @@ public:
 	// should not be here
 	void DrawS3O(void);
 
-	/// true if we are a nuke and a anti is on the way
+	// true if we are a nuke and an anti is on the way
 	bool targeted;
 	const WeaponDef* weaponDef;
 	std::string weaponDefName;

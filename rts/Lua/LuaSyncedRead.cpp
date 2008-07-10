@@ -43,6 +43,8 @@
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Path/PathManager.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -238,6 +240,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureResources);
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
+
+	REGISTER_LUA_CFUNC(GetProjectilePosition);
+	REGISTER_LUA_CFUNC(GetProjectileVelocity);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
@@ -3447,6 +3452,50 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
+{
+	const CProjectile* pro = pp.first;
+	const int proAllyteam = pp.second;
+
+	if (readAllyTeam < 0) {
+		return fullRead;
+	}
+	if ((readAllyTeam != proAllyteam) &&
+	    (!loshandler->InLos(pro->pos, readAllyTeam))) {
+		return false;
+	}
+	return true;
+}
+
+static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Incorrect arguments to %s(projectileID)", caller);
+		} else {
+			return NULL;
+		}
+	}
+	const int proID = (int) lua_tonumber(L, index);
+	ProjectileMap::iterator it = ph->weaponProjectileIDs.find(proID);
+
+	if (it == ph->weaponProjectileIDs.end()) {
+		// not an assigned weapon projectile ID
+		return NULL;
+	}
+
+	const ProjectileMapPair& pp = it->second;
+	return IsProjectileVisible(pp)? pp.first: NULL;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 int LuaSyncedRead::ValidFeatureID(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, NULL, 1); // note the NULL
@@ -3645,6 +3694,38 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 	lua_pushstring(L, feature->createdFromUnit.c_str());
 	lua_pushnumber(L, feature->buildFacing);
 	return 2;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedRead::GetProjectilePosition(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, pro->pos.x);
+	lua_pushnumber(L, pro->pos.y);
+	lua_pushnumber(L, pro->pos.z);
+	return 3;
+}
+
+int LuaSyncedRead::GetProjectileVelocity(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, pro->speed.x);
+	lua_pushnumber(L, pro->speed.y);
+	lua_pushnumber(L, pro->speed.z);
+	return 3;
 }
 
 

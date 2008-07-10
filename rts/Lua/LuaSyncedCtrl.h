@@ -94,6 +94,9 @@ class LuaSyncedCtrl {
 		static int SetFeatureNoSelect(lua_State* L);
 		static int SetFeatureCollisionVolumeData(lua_State* L);
 
+		static int SetProjectilePosition(lua_State* L);
+		static int SetProjectileVelocity(lua_State* L);
+
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);
 		static int RevertHeightMap(lua_State* L);

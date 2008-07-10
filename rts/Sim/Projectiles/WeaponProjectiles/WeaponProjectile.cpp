@@ -38,13 +38,14 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ceg),
 	CR_MEMBER(cegTag),
 	CR_MEMBER(interceptTarget),
+	CR_MEMBER(id),
 	CR_RESERVED(15),
 	CR_POSTLOAD(PostLoad)
 	));
 
 CWeaponProjectile::CWeaponProjectile()
 {
-	targeted = false;				//if we are a nuke and a anti is on the way
+	targeted = false;
 	weaponDef = 0;
 	target = 0;
 	ttl = 0;
@@ -60,7 +61,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
 		bool synced, int ttl):
-	CProjectile(pos,speed,owner, synced),
+	CProjectile(pos, speed, owner, synced, true),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
@@ -78,12 +79,12 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		colorTeam = owner->team;
 	}
 
-	if(target) {
+	if (target) {
 		AddDeathDependence(target);
 	}
 
-	if(interceptTarget){
-		interceptTarget->targeted=true;
+	if (interceptTarget) {
+		interceptTarget->targeted = true;
 		AddDeathDependence(interceptTarget);
 	}
 	if (weaponDef) {
@@ -93,14 +94,15 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
-		if(!weaponDef->visuals.modelName.empty()){
-			S3DOModel* model = modelParser->Load3DModel(string("objects3d/")+weaponDef->visuals.modelName,1,colorTeam);
-			if(model){
-				s3domodel=model;
-				if(s3domodel->rootobject3do)
-					modelDispList= model->rootobject3do->displist;
+		if (!weaponDef->visuals.modelName.empty()) {
+			S3DOModel* model = modelParser->Load3DModel(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
+			if (model) {
+				s3domodel = model;
+
+				if (s3domodel->rootobject3do)
+					modelDispList = model->rootobject3do->displist;
 				else
-					modelDispList= model->rootobjects3o->displist;
+					modelDispList = model->rootobjects3o->displist;
 			}
 		}
 		collisionFlags = weaponDef->collisionFlags;

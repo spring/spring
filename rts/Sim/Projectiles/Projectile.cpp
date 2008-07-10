@@ -9,6 +9,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h" /// TEMP
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Map/MapInfo.h"
@@ -32,28 +33,31 @@ CR_REG_METADATA(CProjectile,
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-bool CProjectile::inArray=false;
-CVertexArray* CProjectile::va=0;
+bool CProjectile::inArray = false;
+CVertexArray* CProjectile::va = 0;
 
-CProjectile::CProjectile()
-:	owner(0),
+CProjectile::CProjectile():
+	owner(0),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
 	s3domodel(0),
-	collisionFlags(0)
+	collisionFlags(0),
+	id(0)
 {}
 
-void CProjectile::Init (const float3& explosionPos, CUnit *owner)
+
+void CProjectile::Init (const float3& explosionPos, CUnit* owner)
 {
 	pos += explosionPos;
 	SetRadius(1.7f);
 	ph->AddProjectile(this);
-	if(owner)
+	if (owner)
 		AddDeathDependence(owner);
 }
 
-CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner, bool synced)
+
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon)
 :	CExpGenSpawnable(pos),
 	owner(owner),
 	speed(speed),
@@ -62,39 +66,40 @@ CProjectile::CProjectile(const float3& pos,const float3& speed,CUnit* owner, boo
 	castShadow(false),
 	s3domodel(0),
 	collisionFlags(0),
-	synced(synced)
+	synced(synced),
+	weapon(weapon)
 {
 	SetRadius(1.7f);
-	ph->AddProjectile(this);
-	if(owner)
+	ph->AddProjectile(this, weapon);
+
+	if (owner)
 		AddDeathDependence(owner);
 }
 
 CProjectile::~CProjectile()
 {
-//	if(owner)
+//	if (owner)
 //		DeleteDeathDependence(owner);
 }
 
 void CProjectile::Update()
 {
-	speed.y+=mapInfo->map.gravity;
-
-	pos+=speed;
+	speed.y += mapInfo->map.gravity;
+	pos += speed;
 }
 
 void CProjectile::Collision()
 {
-	deleteMe=true;
-	checkCol=false;
-	pos.y=MAX_WORLD_SIZE;
+	deleteMe = true;
+	checkCol = false;
+	pos.y = MAX_WORLD_SIZE;
 }
 
 void CProjectile::Collision(CUnit *unit)
 {
-	deleteMe=true;
-	checkCol=false;
-	pos.y=MAX_WORLD_SIZE;
+	deleteMe = true;
+	checkCol = false;
+	pos.y = MAX_WORLD_SIZE;
 }
 
 void CProjectile::Collision(CFeature* feature)
