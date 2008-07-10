@@ -2565,7 +2565,6 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
-	return 0;
 	const int argc = lua_gettop(L);
 
 	if (argc == 9 && lua_isstring(L, 1)) {
