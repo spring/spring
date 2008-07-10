@@ -10,7 +10,6 @@
 #include "Game/Camera.h"
 #include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaParser.h"
-#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Platform/ConfigHandler.h"
@@ -685,11 +684,11 @@ void CProjectileHandler::DrawShadowPass(void)
 }
 
 
-void CProjectileHandler::AddProjectile(CProjectile* p, bool weapon)
+void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	ps.push_back(p);
 
-	if (weapon) {
+	if (p->synced && p->weapon) {
 		// <ps> stores both synced and unsynced projectiles,
 		// only keep track of IDs of the synced ones for Lua
 		p->id = curWeaponProjectileID++;

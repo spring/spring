@@ -9,8 +9,6 @@
 #endif
 
 class CProjectileHandler;
-/*class CFace;
-class CEdge;*/
 class CBuilding;
 
 #include "ExplosionGenerator.h"
