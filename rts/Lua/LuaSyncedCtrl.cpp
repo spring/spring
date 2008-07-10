@@ -38,7 +38,8 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -156,6 +157,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
+
+	REGISTER_LUA_CFUNC(SetProjectilePosition);
+	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
 	REGISTER_LUA_CFUNC(CallCOBScriptCB);
@@ -312,6 +316,24 @@ static inline CFeature* ParseFeature(lua_State* L,
 		return NULL;
 	}
 	return *it;
+}
+
+
+static inline CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "%s(): Bad projectile ID", caller);
+	}
+
+	const int proID = (int) lua_tonumber(L, index);
+	ProjectileMap::iterator it = ph->weaponProjectileIDs.find(proID);
+
+	if (it == ph->weaponProjectileIDs.end()) {
+		luaL_error(L, "%s(): Bad projectile ID: %d\n", caller, proID);
+	}
+
+	const ProjectileMapPair& pp = it->second;
+	return pp.first;
 }
 
 
@@ -2151,6 +2173,47 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+	if (pro == NULL) {
+		return 0;
+	}
+
+	const int argc = lua_gettop(L);
+	if (argc == 4) {
+		pro->pos.x = lua_isnumber(L, 2)? float(lua_tonumber(L, 2)): 0.0f;
+		pro->pos.y = lua_isnumber(L, 3)? float(lua_tonumber(L, 3)): 0.0f;
+		pro->pos.z = lua_isnumber(L, 4)? float(lua_tonumber(L, 4)): 0.0f;
+	} else {
+		luaL_error(L, "Incorrect arguments to SetProjectilePosition()");
+	}
+
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+	if (pro == NULL) {
+		return 0;
+	}
+
+	const int argc = lua_gettop(L);
+	if (argc == 4) {
+		pro->speed.x = lua_isnumber(L, 2)? float(lua_tonumber(L, 2)): 0.0f;
+		pro->speed.y = lua_isnumber(L, 3)? float(lua_tonumber(L, 3)): 0.0f;
+		pro->speed.z = lua_isnumber(L, 4)? float(lua_tonumber(L, 4)): 0.0f;
+	} else {
+		luaL_error(L, "Incorrect arguments to SetProjectileVelocity()");
+	}
+
+	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 static void ParseUnitMap(lua_State* L, const char* caller,
                          int table, vector<CUnit*>& unitIDs)
@@ -2502,6 +2565,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
+	return 0;
 	const int argc = lua_gettop(L);
 
 	if (argc == 9 && lua_isstring(L, 1)) {
@@ -2520,9 +2584,9 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 			const float3 pos(posx, posy, posz);
 			const float3 dir(dirx, diry, dirz);
 
-			CWeaponProjectile p;
-			p.ceg.Load(explGenHandler, name);
-			p.ceg.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
+			CCustomExplosionGenerator g;
+			g.Load(explGenHandler, name);
+			g.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
 		}
 	} else {
 		luaL_error(L, "Incorrect arguments to SpawnCEG()");

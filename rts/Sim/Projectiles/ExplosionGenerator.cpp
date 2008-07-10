@@ -310,8 +310,10 @@ CCustomExplosionGenerator::CCustomExplosionGenerator()
 
 CCustomExplosionGenerator::~CCustomExplosionGenerator()
 {
-	if (groundFlash)
+	if (groundFlash) {
 		delete groundFlash;
+		groundFlash = 0x0;
+	}
 }
 
 

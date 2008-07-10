@@ -8,7 +8,9 @@
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
+#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaParser.h"
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Platform/ConfigHandler.h"
@@ -32,22 +34,25 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
+#include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
 #include "mmgr.h"
 
 
 CProjectileHandler* ph;
+
 using namespace std;
 
-CR_BIND(CProjectileHandler,);
-
-CR_REG_METADATA(CProjectileHandler,(
-				//CR_MEMBER(ps),
-				CR_MEMBER(groundFlashes),
-				CR_RESERVED(32),
-				CR_SERIALIZER(Serialize),
-				CR_POSTLOAD(PostLoad)
-				));
+CR_BIND(CProjectileHandler, );
+CR_REG_METADATA(CProjectileHandler, (
+	CR_MEMBER(ps),
+	CR_MEMBER(weaponProjectileIDs),
+	CR_MEMBER(curWeaponProjectileID),
+	CR_MEMBER(groundFlashes),
+	CR_RESERVED(32),
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -57,11 +62,12 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
-	maxParticles=configHandler.GetInt("MaxParticles",4000);
+	maxParticles = configHandler.GetInt("MaxParticles",4000);
 
-	currentParticles=0;
-	particleSaturation=0;
-	numPerlinProjectiles=0;
+	currentParticles = 0;
+	particleSaturation = 0;
+	numPerlinProjectiles = 0;
+	curWeaponProjectileID = 0;
 
 	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 
@@ -387,12 +393,23 @@ void CProjectileHandler::Update()
 {
 	SCOPED_TIMER("Projectile handler");
 
-	Projectile_List::iterator psi=ps.begin();
+	Projectile_List::iterator psi = ps.begin();
 	while (psi != ps.end()) {
-		CProjectile *p = *psi;
-		if(p->deleteMe){
-			Projectile_List::iterator prev=psi++;
+		CProjectile* p = *psi;
+
+		if (p->deleteMe) {
+			Projectile_List::iterator prev = psi++;
 			ps.erase(prev);
+
+			if (p->synced && p->weapon) {
+				// iterator is always valid
+				ProjectileMap::iterator it = weaponProjectileIDs.find(p->id);
+				const ProjectileMapPair& pp = it->second;
+
+				luaCallIns.ProjectileDestroyed(pp);
+				weaponProjectileIDs.erase(it);
+			}
+
 			delete p;
 		} else {
 			(*psi)->Update();
@@ -414,17 +431,18 @@ void CProjectileHandler::Update()
 		}
 	}
 
-	for(list<FlyingPiece_List*>::iterator pti=flyingPieces.begin();pti!=flyingPieces.end();++pti){
-		FlyingPiece_List * fpl = *pti;
+	for (list<FlyingPiece_List*>::iterator pti = flyingPieces.begin(); pti != flyingPieces.end(); ++pti) {
+		FlyingPiece_List* fpl = *pti;
 		/* Note: nothing in the third clause of this loop. TODO Rewrite it as a while */
-		for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();){
-			(*pi)->pos+=(*pi)->speed;
-			(*pi)->speed*=0.996f;
-			(*pi)->speed.y+=mapInfo->map.gravity;
-			(*pi)->rot+=(*pi)->rotSpeed;
-			if((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x,(*pi)->pos.z)-10){
+		for (list<FlyingPiece*>::iterator pi = fpl->begin(); pi != fpl->end(); ) {
+			(*pi)->pos += (*pi)->speed;
+			(*pi)->speed *= 0.996f;
+			(*pi)->speed.y += mapInfo->map.gravity;
+			(*pi)->rot += (*pi)->rotSpeed;
+
+			if ((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x, (*pi)->pos.z) - 10) {
 				delete *pi;
-				pi=fpl->erase(pi);
+				pi = fpl->erase(pi);
 			} else {
 				++pi;
 			}
@@ -432,7 +450,7 @@ void CProjectileHandler::Update()
 	}
 }
 
-int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2){
+int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
 	if (arg1.dist <= arg2.dist)
 	   return 0;
    return 1;
@@ -644,32 +662,44 @@ void CProjectileHandler::DrawShadowPass(void)
 
 	glEnable(GL_TEXTURE_2D);
 	textureAtlas->BindTexture();
-	glColor4f(1,1,1,1);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glAlphaFunc(GL_GREATER,0.3f);
 	glEnable(GL_ALPHA_TEST);
 	glShadeModel(GL_SMOOTH);
 
-	CProjectile::inArray=false;
-	CProjectile::va=GetVertexArray();
+	CProjectile::inArray = false;
+	CProjectile::va = GetVertexArray();
 	CProjectile::va->Initialize();
-	for(int b=0;b<distlist.size();b++){
+
+	for (int b = 0; b < distlist.size(); b++) {
 		distlist.at(b).proj->Draw();
 	}
-	if(CProjectile::inArray)
+
+	if (CProjectile::inArray)
 		CProjectile::DrawArray();
 
 	glShadeModel(GL_FLAT);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
-	glDisable( GL_VERTEX_PROGRAM_ARB );
+	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
-void CProjectileHandler::AddProjectile(CProjectile* p)
+
+void CProjectileHandler::AddProjectile(CProjectile* p, bool weapon)
 {
 	ps.push_back(p);
-//	toBeAddedProjectile.push(p);
-}
 
+	if (weapon) {
+		// <ps> stores both synced and unsynced projectiles,
+		// only keep track of IDs of the synced ones for Lua
+		p->id = curWeaponProjectileID++;
+		// projectile owner can die before projectile itself
+		// does, so copy the allyteam at projectile creation
+		ProjectileMapPair pp(p, p->owner? p->owner->allyteam: -1);
+		luaCallIns.ProjectileCreated(pp);
+		weaponProjectileIDs[p->id] = pp;
+	}
+}
 
 
 void CProjectileHandler::CheckUnitCol()
@@ -835,7 +865,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 
 void CProjectileHandler::UpdateTextures()
 {
-	if(numPerlinProjectiles && drawPerlinTex)
+	if (numPerlinProjectiles && drawPerlinTex)
 		UpdatePerlin();
 /*
 	if(gs->frameNum==300){
@@ -854,7 +884,7 @@ void CProjectileHandler::UpdateTextures()
 void CProjectileHandler::UpdatePerlin()
 {
 	perlinFB->select();
-	glViewport(perlintex.ixstart,perlintex.iystart,128,128);
+	glViewport(perlintex.ixstart, perlintex.iystart, 128, 128);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();

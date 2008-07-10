@@ -20,6 +20,8 @@ struct SS3OVertex;
 #include "float3.h"
 
 typedef std::list<CProjectile*> Projectile_List;
+typedef std::pair<CProjectile*, int> ProjectileMapPair;
+typedef std::map<unsigned int, ProjectileMapPair> ProjectileMap;
 
 class CGroundFlash;
 class IFramebuffer;
@@ -34,41 +36,43 @@ public:
 	void PostLoad();
 
 	void CheckUnitCol();
-	void LoadSmoke(unsigned char tex[512][512][4],int xoffs,int yoffs,char* filename,char* alphafile);
+	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
 
 	void SetMaxParticles(int value);
 
-	void Draw(bool drawReflection,bool drawRefraction=false);
+	void Draw(bool drawReflection, bool drawRefraction = false);
 	void UpdateTextures();
-	void AddProjectile(CProjectile* p);
+	void AddProjectile(CProjectile* p, bool weapon = false);
 	void Update();
 	void AddGroundFlash(CGroundFlash* flash);
 	void DrawGroundFlashes(void);
 
 	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
 	void DrawShadowPass(void);
-	void AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece);
-	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts);
+	void AddFlyingPiece(float3 pos, float3 speed, S3DO* object, S3DOPrimitive* piece);
+	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
-	struct projdist{
+	struct projdist {
 		float dist;
 		CProjectile* proj;
 	};
 
-	Projectile_List ps;
+	Projectile_List ps;						// contains both synced and unsynced projectiles
+	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
+	unsigned int curWeaponProjectileID;		// enough IDs for 40 hours at 1000 projectiles per frame
 
 	std::vector<projdist> distlist;
 
 	unsigned int projectileShadowVP;
 
-	int maxParticles;					//different effects should start to cut down on unnececary(unsynced) particles when this number is reached
-	int currentParticles;			//number of particles weighted by how complex they are
-	float particleSaturation;	//currentParticles/maxParticles
+	int maxParticles;						// different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int currentParticles;					// number of particles weighted by how complex they are
+	float particleSaturation;				// currentParticles / maxParticles ratio
 
 	int numPerlinProjectiles;
 
-	CTextureAtlas *textureAtlas;  //texture atlas for projectiles
-	CTextureAtlas *groundFXAtlas; //texture atlas for ground fx
+	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
+	CTextureAtlas* groundFXAtlas; //texture atlas for ground fx
 
 	//texturcoordinates for projectiles
 	AtlasedTexture flaretex;

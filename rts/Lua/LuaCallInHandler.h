@@ -15,6 +15,7 @@ using std::vector;
 using std::map;
 
 #include "LuaHandle.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 
@@ -22,6 +23,7 @@ using std::map;
 class CUnit;
 class CWeapon;
 class CFeature;
+class CProjectile;
 struct Command;
 
 
@@ -83,6 +85,9 @@ class CLuaCallInHandler
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
+
+		void ProjectileCreated(const std::pair<CProjectile*, int>& projectilePair);
+		void ProjectileDestroyed(const std::pair<CProjectile*, int>& projectilePair);
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
@@ -187,6 +192,9 @@ class CLuaCallInHandler
 
 		CallInList listFeatureCreated;
 		CallInList listFeatureDestroyed;
+
+		CallInList listProjectileCreated;
+		CallInList listProjectileDestroyed;
 
 		CallInList listStockpileChanged;
 
@@ -439,7 +447,6 @@ inline void CLuaCallInHandler::FeatureCreated(const CFeature* feature)
 	}
 }
 
-
 inline void CLuaCallInHandler::FeatureDestroyed(const CFeature* feature)
 {
 	const int featureAllyTeam = feature->allyteam;
@@ -452,6 +459,39 @@ inline void CLuaCallInHandler::FeatureDestroyed(const CFeature* feature)
 		}
 	}
 }
+
+
+
+inline void CLuaCallInHandler::ProjectileCreated(const std::pair<CProjectile*, int>& projectilePair)
+{
+	const CProjectile* pro = projectilePair.first;
+	const int proAllyTeam = projectilePair.second;
+	const int count = listProjectileCreated.size();
+
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listProjectileCreated[i];
+		if ((proAllyTeam < 0) || // projectile had no owner at creation
+		    lh->GetFullRead() || (lh->GetReadAllyTeam() == proAllyTeam)) {
+			lh->ProjectileCreated(pro);
+		}
+	}
+}
+
+inline void CLuaCallInHandler::ProjectileDestroyed(const std::pair<CProjectile*, int>& projectilePair)
+{
+	const CProjectile* pro = projectilePair.first;
+	const int proAllyTeam = projectilePair.second;
+	const int count = listProjectileDestroyed.size();
+
+	for (int i = 0; i < count; i++) {
+		CLuaHandle* lh = listProjectileDestroyed[i];
+		if ((proAllyTeam < 0) || // projectile had no owner at creation
+		    lh->GetFullRead() || (lh->GetReadAllyTeam() == proAllyTeam)) {
+			lh->ProjectileDestroyed(pro);
+		}
+	}
+}
+
 
 
 inline void CLuaCallInHandler::StockpileChanged(const CUnit* unit,

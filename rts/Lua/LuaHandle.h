@@ -32,6 +32,7 @@ using std::set;
 class CUnit;
 class CWeapon;
 class CFeature;
+class CProjectile;
 struct Command;
 struct LuaHashString;
 struct lua_State;
@@ -145,6 +146,9 @@ class CLuaHandle {
 
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
+
+		void ProjectileCreated(const CProjectile* p);
+		void ProjectileDestroyed(const CProjectile* p);
 
 		void StockpileChanged(const CUnit* owner,
 		                      const CWeapon* weapon, int oldCount);
