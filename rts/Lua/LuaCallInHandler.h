@@ -15,7 +15,6 @@ using std::vector;
 using std::map;
 
 #include "LuaHandle.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 

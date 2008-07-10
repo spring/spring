@@ -42,7 +42,7 @@ public:
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void UpdateTextures();
-	void AddProjectile(CProjectile* p, bool weapon = false);
+	void AddProjectile(CProjectile* p);
 	void Update();
 	void AddGroundFlash(CGroundFlash* flash);
 	void DrawGroundFlashes(void);

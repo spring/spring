@@ -9,7 +9,6 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h" /// TEMP
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Map/MapInfo.h"
@@ -70,7 +69,7 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	weapon(weapon)
 {
 	SetRadius(1.7f);
-	ph->AddProjectile(this, weapon);
+	ph->AddProjectile(this);
 
 	if (owner)
 		AddDeathDependence(owner);
