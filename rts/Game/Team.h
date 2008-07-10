@@ -36,6 +36,10 @@ public:
 	
 	void Died();
 
+	void StartposMessage(const float3& pos, const bool isReady);
+	void StartposMessage(const float3& pos);
+	
+	inline bool IsReadyToStart() const {return readyToStart;};
 	enum AddType{
 		AddBuilt,
 		AddCaptured,
@@ -52,7 +56,6 @@ public:
 	void RemoveUnit(CUnit* unit,RemoveType type);
 
 	int teamNum;
-	bool readyToStart;
 	bool isDead;
 	bool gaia;
 	int leader;
@@ -149,6 +152,9 @@ public:
 
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
+
+private:
+	bool readyToStart;
 };
 
 #endif /* TEAM_H */

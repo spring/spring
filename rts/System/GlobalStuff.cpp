@@ -182,10 +182,8 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
 		teams[i]->energy = setup->startEnergy;
 		teams[i]->energyIncome = setup->startEnergy;
 
-		teams[i]->startPos.x = setup->teamStartingData[i].startPos.x;
-		teams[i]->startPos.y = setup->teamStartingData[i].startPos.y;
-		teams[i]->startPos.z = setup->teamStartingData[i].startPos.z;
-		teams[i]->readyToStart = (setup->startPosType != CGameSetupData::StartPos_ChooseInGame);
+		float3 start(setup->teamStartingData[i].startPos.x, setup->teamStartingData[i].startPos.y, setup->teamStartingData[i].startPos.z);
+		teams[i]->StartposMessage(start, (setup->startPosType != CGameSetupData::StartPos_ChooseInGame));
 		std::memcpy(teams[i]->color, setup->teamStartingData[i].color, 4);
 		teams[i]->handicap = setup->teamStartingData[i].handicap;
 		teams[i]->leader = setup->teamStartingData[i].leader;
@@ -225,8 +223,8 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
 		team->color[2] = 255;
 		team->color[3] = 255;
 		team->gaia = true;
-		team->readyToStart = true;
-		players[setup->numPlayers]->team = gaiaTeamID;
+		team->StartposMessage(float3(0.0, 0.0, 0.0), true);
+		//players[setup->numPlayers]->team = gaiaTeamID;
 		SetAllyTeam(gaiaTeamID, gaiaAllyTeamID);
 	}
 }

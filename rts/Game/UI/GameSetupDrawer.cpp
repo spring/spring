@@ -80,13 +80,12 @@ void GameSetupDrawer::Draw()
 		GameSetupDrawer::Disable();
 	}
 
-	float xshift = 0.0f;
 	std::string state = "Unknown state.";
 	if (readyCountdown > 0) {
 		char buf[64];
 		sprintf(buf, "Starting in %i", readyCountdown / 1000);
 		state = buf;
-	} else if (!gs->Team(gu->myTeam)->readyToStart) {
+	} else if (!gs->Team(gu->myTeam)->IsReadyToStart()) {
 		state = "Choose start pos";
 	} else if (gu->myPlayerNum==0) {
 		state = "Waiting for players, Ctrl+Return to force start";
@@ -99,7 +98,7 @@ void GameSetupDrawer::Draw()
 	for (int a = 0; a < gameSetup->numPlayers; a++) {
 		if (!gs->players[a]->readyToStart) {
 			playerStates[a] = "missing";
-		} else if (!gs->Team(gs->players[a]->team)->readyToStart) {
+		} else if (!gs->Team(gs->players[a]->team)->IsReadyToStart()) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
@@ -134,7 +133,7 @@ void GameSetupDrawer::Draw()
 			color = white; //blue;
 		} else if (!gs->players[a]->readyToStart) {
 			color = red;
-		} else if (!gs->Team(gs->players[a]->team)->readyToStart) {
+		} else if (!gs->Team(gs->players[a]->team)->IsReadyToStart()) {
 			color = yellow;
 		} else {
 			color = green;

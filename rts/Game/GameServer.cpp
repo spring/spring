@@ -1389,7 +1389,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		for (int a = 0; a < MAX_TEAMS; ++a)
 		{
 			if (teams[a])
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
+				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, teams[a]->readyToStart, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
 		}
 	}
 	else

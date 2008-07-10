@@ -289,6 +289,16 @@ void CTeam::Died()
 	luaCallIns.TeamDied(teamNum);
 }
 
+void CTeam::StartposMessage(const float3& pos, const bool isReady)
+{
+	readyToStart = isReady;
+	startPos = pos;
+}
+
+void CTeam::StartposMessage(const float3& pos)
+{
+	startPos = pos;
+}
 
 void CTeam::SlowUpdate()
 {
