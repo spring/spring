@@ -276,6 +276,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			int other = atoi(file.SGetValueDef("0",key).c_str());
 			allyStartingData[i].allies[other] = true;
 		}
+		allyStartingData[i].allies[i] = true; // team i is ally from team i
 
 		allyteamRemap[a] = i;
 		++i;

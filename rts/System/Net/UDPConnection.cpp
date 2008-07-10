@@ -172,6 +172,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 		{
 			// combine with fragment buffer
 			bufLength += fragmentBuffer->length;
+			assert(fragmentBuffer->length < 8000);
 			memcpy(buf, fragmentBuffer->data, bufLength);
 			delete fragmentBuffer;
 			fragmentBuffer = NULL;
@@ -179,6 +180,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 		lastInOrder++;
 #if (BOOST_VERSION >= 103400)
+		assert((wpi->second->length + bufLength) < 8000);
 		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
 		bufLength += (wpi->second)->length;
 #else
@@ -203,7 +205,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 					int length_t = proto->GetLength(msgid);
 
 					// got enough data in the buffer to read the length of the message?
-					if (bufLength >= pos + -length_t)
+					if (bufLength > pos - length_t)
 					{
 						// yes => read the length (as byte or word)
 						if (length_t == -1)

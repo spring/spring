@@ -3427,9 +3427,10 @@ void CGame::ClientReadNet()
 					           *(float*)&inbuf[12]);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
 						if (inbuf[3] != 2) {
-							gs->Team(team)->readyToStart = !!inbuf[3];
+							gs->Team(team)->StartposMessage(pos, !!inbuf[3]);
 						}
-						gs->Team(team)->startPos = pos;
+						else
+							gs->Team(team)->StartposMessage(pos);
 						char label[128];
 						SNPRINTF(label, sizeof(label), "Start %i", team);
 						inMapDrawer->LocalPoint(pos, label, player);
