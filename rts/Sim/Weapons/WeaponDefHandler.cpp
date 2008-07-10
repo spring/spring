@@ -564,8 +564,8 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.dynDamageMin      = wdTable.GetFloat("dynDamageMin",   0.0f);
 	wd.dynDamageRange    = wdTable.GetFloat("dynDamageRange", 0.0f);
 
-	LoadSound(wdTable, wd.firesound, "fireSound");
-	LoadSound(wdTable, wd.soundhit,  "soundHit");
+	LoadSound(wdTable, wd.firesound, "start");
+	LoadSound(wdTable, wd.soundhit,  "hit");
 
 	if ((wd.firesound.getVolume(0) == -1.0f) ||
 	    (wd.soundhit.getVolume(0)  == -1.0f)) {
@@ -618,11 +618,11 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 	string name = "";
 	float volume = -1.0f;
 
-	if (soundCat == "firesound") {
+	if (soundCat == "start") {
 		name   = wdTable.GetString("soundStart", "");
 		volume = wdTable.GetFloat("soundStartVolume", -1.0f);
 	}
-	else if (soundCat == "soundhit") {
+	else if (soundCat == "hit") {
 		name   = wdTable.GetString("soundHit", "");
 		volume = wdTable.GetFloat("soundHitVolume", -1.0f);
 	}
