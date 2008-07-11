@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <cassert>
 #include "GroupAI.h"
 #include "ExternalAI/IGroupAiCallback.h"
 #include "ExternalAI/IAICallback.h"
