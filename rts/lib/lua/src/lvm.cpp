@@ -13,6 +13,8 @@
 #include "streflop_cond.h" // FIXME -- should always be compiled with streflop
 #ifdef UNITSYNC
 using std::isfinite;
+using std::isnan;
+using std::isinf;
 #endif
 
 #define lvm_c
