@@ -722,13 +722,14 @@ void SpringApp::CreateGameSetup()
 	ENTER_SYNCED;
 
 	if (!startscript.empty()) {
-		gameSetup = SAFE_NEW CGameSetup();
-		if (!gameSetup->Init(startscript)) {
-			delete gameSetup;
-			gameSetup = 0;
+		CGameSetup* temp = SAFE_NEW CGameSetup();
+		if (!temp->Init(startscript)) {
+			delete temp;
+			temp = 0;
 		}
 		else
 		{
+			gameSetup = const_cast<const CGameSetup*>(temp);
 			gs->LoadFromSetup(gameSetup);
 			gu->LoadFromSetup(gameSetup);
 		}

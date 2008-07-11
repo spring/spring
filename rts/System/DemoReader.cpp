@@ -5,8 +5,8 @@
 
 #ifndef DEDICATED
 #include "Sync/Syncify.h"
-#include "Game/GameSetup.h"
 #endif
+#include "Game/GameSetup.h"
 #include "Net/RawPacket.h"
 #include "Game/GameVersion.h"
 #include "FileSystem/FileHandler.h"
@@ -53,14 +53,13 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo->Read(buf, fileHeader.scriptSize);
-#ifndef DEDICATED
 		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
-			gameSetup = SAFE_NEW CGameSetup();
-			gameSetup->Init(buf, fileHeader.scriptSize);
-			gameSetup->demoName = filename;
-			gameSetup->numDemoPlayers = GetFileHeader().maxPlayerNum+1;
+			CGameSetup* temp = new CGameSetup();
+			temp->Init(buf, fileHeader.scriptSize);
+			temp->demoName = filename;
+			temp->numDemoPlayers = GetFileHeader().maxPlayerNum+1;
+			gameSetup = temp;
 		}
-#endif
 		delete[] buf;
 	}
 

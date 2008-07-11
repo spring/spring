@@ -23,15 +23,22 @@
 using namespace std;
 
 
-CGameSetup* gameSetup = NULL;
+const CGameSetup* gameSetup = NULL;
 
 
 CGameSetup::CGameSetup()
 {
+	gameSetupText=0;
+	startPosType=StartPos_Fixed;
+	numDemoPlayers=0;
+	hostDemo=false;
+	autohostport = 0;
 }
 
 CGameSetup::~CGameSetup()
 {
+	if (gameSetupText)
+		delete[] gameSetupText;
 }
 
 bool CGameSetup::Init(std::string setupFile)
@@ -161,19 +168,19 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		string s(section);
 
 		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
-			// don't leave this uninitialized
-			playerStartingData[i].team = 0;
 			continue;
 		}
+		PlayerData data;
 
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams		
-		playerStartingData[i].team = static_cast<unsigned>(atoi(file.SGetValueDef("0",   s + "team").c_str()));
-		playerStartingData[i].rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
-		playerStartingData[i].name  = file.SGetValueDef("no name", s + "name");
-		playerStartingData[i].countryCode = file.SGetValueDef("",  s + "countryCode");
-		playerStartingData[i].spectator = static_cast<bool>(atoi(file.SGetValueDef("0", s + "spectator").c_str()));
-		playerStartingData[i].isFromDemo = static_cast<bool>(atoi(file.SGetValueDef("0",  s + "IsFromDemo").c_str()));
+		data.team = static_cast<unsigned>(atoi(file.SGetValueDef("0",   s + "team").c_str()));
+		data.rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
+		data.name  = file.SGetValueDef("no name", s + "name");
+		data.countryCode = file.SGetValueDef("",  s + "countryCode");
+		data.spectator = static_cast<bool>(atoi(file.SGetValueDef("0", s + "spectator").c_str()));
+		data.isFromDemo = static_cast<bool>(atoi(file.SGetValueDef("0",  s + "IsFromDemo").c_str()));
+		playerStartingData.push_back(data);
 
 		int fromDemo;
 		file.GetDef(fromDemo, "0", s + "IsFromDemo");
@@ -187,8 +194,8 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	int playerCount = -1;
 	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
 	
-	if (playerCount == -1 || playerRemap.size() == playerCount)
-		numPlayers = playerRemap.size();
+	if (playerCount == -1 || playerStartingData.size() == playerCount)
+		numPlayers = playerStartingData.size();
 	else
 		throw content_error("incorrect number of players in GameSetup script");
 }
@@ -218,30 +225,32 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 		// Read RGBColor, this overrides color if both had been set.
 		float3 color = file.GetFloat3(defaultCol, s + "rgbcolor");
+		TeamData data;
 		for (int b = 0; b < 3; ++b) {
-			teamStartingData[i].color[b] = int(color[b] * 255);
+			data.color[b] = int(color[b] * 255);
 		}
-		teamStartingData[i].color[3] = 255;
+		data.color[3] = 255;
 
-		teamStartingData[i].handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
-		teamStartingData[i].leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
-		teamStartingData[i].side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
-		teamStartingData[i].teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
+		data.handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
+		data.leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
+		data.side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
+		data.teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
 		const string aiDll = file.SGetValueDef("", s + "aidll");
-		teamStartingData[i].aiDll = aiDll;
+		data.aiDll = aiDll;
+		teamStartingData.push_back(data);
 
 		teamRemap[a] = i;
 		++i;
 	}
 
 	int teamCount = -1;
-	file.GetDef(teamCount,   "-1", "GAME\\NumTeams");
+	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
 	
-	if (teamCount == -1 || teamRemap.size() == teamCount)
-		numTeams = teamRemap.size();
+	if (teamCount == -1 || teamStartingData.size() == teamCount)
+		numTeams = teamStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
 }
@@ -262,11 +271,11 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 		if (!file.SectionExist(s.substr(0, s.length() - 1)))
 			continue;
-
-		allyStartingData[i].startRectTop    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
-		allyStartingData[i].startRectBottom = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
-		allyStartingData[i].startRectLeft   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
-		allyStartingData[i].startRectRight  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
+		AllyTeamData data;
+		data.startRectTop    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
+		data.startRectBottom = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
+		data.startRectLeft   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
+		data.startRectRight  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
 
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
@@ -274,17 +283,23 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			char key[100];
 			sprintf(key, "GAME\\ALLYTEAM%i\\Ally%i", a, b);
 			int other = atoi(file.SGetValueDef("0",key).c_str());
-			allyStartingData[i].allies[other] = true;
+			data.allies[other] = true;
 		}
-		allyStartingData[i].allies[i] = true; // team i is ally from team i
+		data.allies[i] = true; // team i is ally from team i
+		allyStartingData.push_back(data);
 
 		allyteamRemap[a] = i;
 		++i;
 	}
 
-	if (allyteamRemap.size() != numAllyTeams) {
-		throw content_error("incorrect number of allyteams in GameSetup script");
-	}
+	
+	int allyCount = -1;
+	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
+	
+	if (allyCount == -1 || allyStartingData.size() == allyCount)
+		numAllyTeams = allyStartingData.size();
+	else
+		throw content_error("incorrect number of teams in GameSetup script");
 }
 
 /** @brief Update all player indices to refer to the right player. */
@@ -387,7 +402,6 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
 
 	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
-	file.GetDef(numAllyTeams, "2", "GAME\\NumAllyTeams");
 	file.GetDef(fixedAllies, "1", "GAME\\FixedAllies");
 
 	// Read the map & mod options

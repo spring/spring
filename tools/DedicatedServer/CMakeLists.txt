@@ -22,12 +22,8 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=i686 -DNDEBUG")
 ADD_DEFINITIONS( -DSTREFLOP_X87 -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK -fPIC)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
-ADD_LIBRARY(net STATIC  ${netfiles})
-TARGET_LINK_LIBRARIES(net SDL boost_thread-mt)
-IF (MINGW)
-	TARGET_LINK_LIBRARIES(net ws2_32)
-ENDIF (MINGW)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
+INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
 
 if (NOT COMPLETE_BUILD)
 	ADD_SUBDIRECTORY(../../rts/lib libs)
@@ -43,6 +39,7 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files 
 	${fsfiles}
 	${platformfiles}
+	 ${netfiles}
 	../../rts/System/TdfParser
 	../../rts/System/Platform/FileSystem
 	../../rts/System/Platform/ConfigHandler
@@ -54,9 +51,25 @@ SET(system_files
 	../../rts/System/UnsyncedRNG )
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
-ADD_LIBRARY(server SHARED ${system_files} ${serverfiles} ../../rts/Game/GameServer ../../rts/Game/GameSetup ../../rts/Game/GameSetupData ../../rts/Game/GameData ../../rts/Game/GameVersion ../../rts/Game/CommandMessage ../../rts/Game/ChatMessage ../../rts/Game/Console ../../rts/Game/Action ../../rts/Lua/LuaParser ../../rts/Lua/LuaUtils ../../rts/Map/MapParser ../../rts/Rendering/Textures/TAPalette)
-TARGET_LINK_LIBRARIES(server SDL boost_thread-mt net hpiutil2 7zip minizip lua boost_regex-mt)
+ADD_LIBRARY(server SHARED
+	${system_files}
+	${serverfiles}
+	../../rts/Game/GameServer
+	../../rts/Game/GameSetup
+	../../rts/Game/GameData
+	../../rts/Game/GameVersion
+	../../rts/Game/CommandMessage
+	../../rts/Game/ChatMessage
+	../../rts/Game/Console
+	../../rts/Game/Action
+	../../rts/Lua/LuaParser
+	../../rts/Lua/LuaUtils
+	../../rts/Map/MapParser
+	../../rts/Rendering/Textures/TAPalette)
+TARGET_LINK_LIBRARIES(server SDL boost_thread-mt hpiutil2 7zip minizip lua boost_regex-mt)
+IF (MINGW)
+	TARGET_LINK_LIBRARIES(server ws2_32)
+ENDIF (MINGW)
 
 ADD_EXECUTABLE(dedicated main)
 TARGET_LINK_LIBRARIES(dedicated server)
-INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)

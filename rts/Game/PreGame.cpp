@@ -418,7 +418,7 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
 
 	if (gameSetup) {
-		gameSetup->LoadStartPositions(); // only host needs to do this, because
+		const_cast<CGameSetup*>(gameSetup)->LoadStartPositions(); // only host needs to do this, because
 		                                 // client will receive startpos msg from server
 	}
 	
@@ -667,8 +667,8 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
 	
 	if (gameSetup) {
-		gameSetup->scriptName = gameData->GetScript();
-		gameSetup->mapName = gameData->GetMap();
-		gameSetup->baseMod = gameData->GetMod();
+		const_cast<CGameSetup*>(gameSetup)->scriptName = gameData->GetScript();
+		const_cast<CGameSetup*>(gameSetup)->mapName = gameData->GetMap();
+		const_cast<CGameSetup*>(gameSetup)->baseMod = gameData->GetMod();
 	}
 }

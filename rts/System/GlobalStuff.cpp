@@ -9,7 +9,7 @@
 #include <cstring>
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
-#include "Game/GameSetupData.h"
+#include "Game/GameSetup.h"
 #include "Sync/SyncTracer.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
@@ -151,7 +151,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 	}
 }
 
-void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
+void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
 	gameMode = setup->gameMode;
 	noHelperAIs = !!setup->noHelperAIs;
@@ -183,7 +183,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetupData* setup)
 		teams[i]->energyIncome = setup->startEnergy;
 
 		float3 start(setup->teamStartingData[i].startPos.x, setup->teamStartingData[i].startPos.y, setup->teamStartingData[i].startPos.z);
-		teams[i]->StartposMessage(start, (setup->startPosType != CGameSetupData::StartPos_ChooseInGame));
+		teams[i]->StartposMessage(start, (setup->startPosType != CGameSetup::StartPos_ChooseInGame));
 		std::memcpy(teams[i]->color, setup->teamStartingData[i].color, 4);
 		teams[i]->handicap = setup->teamStartingData[i].handicap;
 		teams[i]->leader = setup->teamStartingData[i].leader;
@@ -360,7 +360,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 	return ret;
 }
 
-void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetupData* setup)
+void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
 	myPlayerNum = setup->myPlayerNum;
 	myTeam = setup->playerStartingData[myPlayerNum].team;
