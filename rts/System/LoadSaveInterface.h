@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "Sync/SyncedFloat3.h"
+
 class CLoadSaveInterface
 {
 public:

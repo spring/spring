@@ -6,12 +6,10 @@
 #include <boost/shared_ptr.hpp>
 #include <deque>
 
-#include "UDPSocket.h"
-#include "RawPacket.h"
 #include "Connection.h"
+#include "UDPSocket.h"
 
 namespace netcode {
-
 const unsigned UDPBufferSize = 8192;
 
 /**

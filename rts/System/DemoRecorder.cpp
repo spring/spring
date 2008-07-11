@@ -24,7 +24,7 @@ CDemoRecorder::CDemoRecorder()
 	wantedName = demoName = "demos/unnamed.sdf";
 
 	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
-	recordDemo = SAFE_NEW std::ofstream(filename.c_str(), std::ios::out | std::ios::binary);
+	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
 
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
@@ -36,7 +36,7 @@ CDemoRecorder::CDemoRecorder()
 	_time64(&currtime);
 	fileHeader.unixTime = currtime;
 
-	recordDemo->write((char*)&fileHeader, sizeof(fileHeader));
+	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
 
 	if (gameSetup) {
 		// strip trailing null termination characters
@@ -45,7 +45,7 @@ CDemoRecorder::CDemoRecorder()
 			--length;
 
 		fileHeader.scriptSize = length;
-		recordDemo->write(gameSetup->gameSetupText, length);
+		recordDemo.write(gameSetup->gameSetupText, length);
 	}
 
 	fileHeader.playerStatElemSize = sizeof(CPlayer::Statistics);
@@ -62,8 +62,6 @@ CDemoRecorder::~CDemoRecorder()
 	WriteTeamStats();
 	WriteFileHeader();
 
-	delete recordDemo;
-
 	if (demoName != wantedName) {
 		rename(demoName.c_str(), wantedName.c_str());
 	} else {
@@ -79,10 +77,10 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)
 	chunkHeader.modGameTime = gu->modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	recordDemo->write((char*)&chunkHeader, sizeof(chunkHeader));
-	recordDemo->write((char*)buf, length);
+	recordDemo.write((char*)&chunkHeader, sizeof(chunkHeader));
+	recordDemo.write((char*)buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
-	recordDemo->flush();
+	recordDemo.flush();
 }
 
 void CDemoRecorder::SetName(const std::string& mapname)
@@ -163,15 +161,15 @@ Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
 void CDemoRecorder::WriteFileHeader()
 {
-	int pos = recordDemo->tellp();
+	int pos = recordDemo.tellp();
 
-	recordDemo->seekp(0);
+	recordDemo.seekp(0);
 
 	fileHeader.swab(); // to little endian
-	recordDemo->write((char*)&fileHeader, sizeof(fileHeader));
+	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
 	fileHeader.swab(); // back to host endian
 
-	recordDemo->seekp(pos);
+	recordDemo.seekp(pos);
 }
 
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
@@ -180,16 +178,16 @@ void CDemoRecorder::WritePlayerStats()
 	if (fileHeader.numPlayers == 0)
 		return;
 
-	int pos = recordDemo->tellp();
+	int pos = recordDemo.tellp();
 
 	for (std::vector< CPlayer::Statistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		CPlayer::Statistics& stats = *it;
 		stats.swab();
-		recordDemo->write((char*)&stats, sizeof(CPlayer::Statistics));
+		recordDemo.write((char*)&stats, sizeof(CPlayer::Statistics));
 	}
 	playerStats.clear();
 
-	fileHeader.playerStatSize = (int)recordDemo->tellp() - pos;
+	fileHeader.playerStatSize = (int)recordDemo.tellp() - pos;
 }
 
 /** @brief Write the CTeam::Statistics at the current position in the file. */
@@ -198,12 +196,12 @@ void CDemoRecorder::WriteTeamStats()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	int pos = recordDemo->tellp();
+	int pos = recordDemo.tellp();
 
 	// Write array of dwords indicating number of CTeam::Statistics per team.
 	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabdword(it->size());
-		recordDemo->write((char*)&c, sizeof(unsigned int));
+		recordDemo.write((char*)&c, sizeof(unsigned int));
 	}
 
 	// Write big array of CTeam::Statistics.
@@ -211,10 +209,10 @@ void CDemoRecorder::WriteTeamStats()
 		for (std::vector< CTeam::Statistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			CTeam::Statistics& stats = *it2;
 			stats.swab();
-			recordDemo->write((char*)&stats, sizeof(CTeam::Statistics));
+			recordDemo.write((char*)&stats, sizeof(CTeam::Statistics));
 		}
 	}
 	teamStats.clear();
 
-	fileHeader.teamStatSize = (int)recordDemo->tellp() - pos;
+	fileHeader.teamStatSize = (int)recordDemo.tellp() - pos;
 }

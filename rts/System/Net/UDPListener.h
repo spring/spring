@@ -7,12 +7,11 @@
 #include <list>
 #include <queue>
 
-#include "UDPSocket.h"
-#include "UDPConnection.h"
 
 namespace netcode
 {
-
+class UDPConnection;
+class UDPSocket;
 
 /**
 @brief Class for handling Connections on an UDPSocket

@@ -10,7 +10,7 @@
 #include "streflop.h"
 using namespace streflop;
 #else
-#include <math.h>
+#include <cmath>
 #endif
 
 #endif

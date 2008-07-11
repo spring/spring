@@ -66,14 +66,12 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include "Sync/Syncify.h"
 #include "creg/creg.h"
 #include "float3.h"
-#include "Sync/SyncedFloat3.h"
 #include "GlobalStuff.h"
 
 #include <algorithm>
-#include <cassert>
 #include <stdexcept>
 #include <string>
-#include <ctype.h>
+#include <cctype>
 
 /**
  * content_error
