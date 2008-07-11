@@ -1,5 +1,6 @@
 /* Author: Tobi Vollebregt */
 
+#include <assert.h>
 #include "StdAfx.h"
 #include "ArchiveDir.h"
 #include "Platform/FileSystem.h"
