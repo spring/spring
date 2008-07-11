@@ -142,7 +142,7 @@ gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
 
 // Item server instances
-#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3)
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3) && (__GNUC_PATCHLEVEL__ == 0)
 
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramServer(&glCreateProgram, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
