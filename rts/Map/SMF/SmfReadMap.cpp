@@ -16,8 +16,10 @@
 #include "bitops.h"
 #include "mmgr.h"
 
+#ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+#endif
 
 using namespace std;
 

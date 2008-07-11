@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "ShadowHandler.h"
-#include "GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "UnitModels/UnitDrawer.h"
@@ -12,9 +11,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/IFramebuffer.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Lua/LuaCallInHandler.h"
-#include "GL/IFramebuffer.h"
+#include "System/EventHandler.h"
 #include "mmgr.h"
 
 CShadowHandler* shadowHandler=0;
@@ -157,7 +157,7 @@ void CShadowHandler::DrawShadowPasses(void)
 	featureHandler->DrawShadowPass();
 	readmap->GetGroundDrawer()->DrawShadowPass();
 	treeDrawer->DrawShadowPass();
-	luaCallIns.DrawWorldShadow();
+	eventHandler.DrawWorldShadow();
 
 	inShadowPass=false;
 }

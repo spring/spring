@@ -107,6 +107,8 @@ local flexCallIns = {
   'GameFrame',
   'GameSetup',
   'TeamDied',
+  'TeamChanged',
+  'PlayerChanged',
   'ShockFront',
   'WorldTooltip',
   'MapDrawCmd',
@@ -118,6 +120,7 @@ local flexCallIns = {
   'UnitTaken',
   'UnitGiven',
   'UnitIdle',
+  'UnitCommand',
   'UnitCmdDone',
   'UnitDamaged',
   'UnitEnteredRadar',
@@ -289,6 +292,9 @@ end
 
 
 local function GetWidgetInfo(name, mode)
+
+  do return end -- FIXME
+
   local lines = VFS.LoadFile(name, mode)
 
   local infoLines = {}
@@ -1443,7 +1449,7 @@ function widgetHandler:GetTooltip(x, y)
     for _,w in ipairs(self.GetTooltipList) do
       if (w:IsAbove(x, y)) then
         local tip = w:GetTooltip(x, y)
-        if (string.len(tip) > 0) then
+        if ((type(tip) == 'string') and (#tip > 0)) then
           return tip
         end
       end
@@ -1452,8 +1458,8 @@ function widgetHandler:GetTooltip(x, y)
   else
     for _,w in ipairs(self.TweakGetTooltipList) do
       if (w:TweakIsAbove(x, y)) then
-        local tip = w:TweakGetTooltip(x, y)
-        if (string.len(tip) > 0) then
+        local tip = w:TweakGetTooltip(x, y) or ''
+        if ((type(tip) == 'string') and (#tip > 0)) then
           return tip
         end
       end
@@ -1493,6 +1499,22 @@ end
 function widgetHandler:TeamDied(teamID)
   for _,w in ipairs(self.TeamDiedList) do
     w:TeamDied(teamID)
+  end
+  return
+end
+
+
+function widgetHandler:TeamChanged(teamID)
+  for _,w in ipairs(self.TeamChangedList) do
+    w:TeamChanged(teamID)
+  end
+  return
+end
+
+
+function widgetHandler:PlayerChanged(playerID)
+  for _,w in ipairs(self.PlayerChangedList) do
+    w:PlayerChanged(playerID)
   end
   return
 end
@@ -1617,6 +1639,16 @@ end
 function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitIdleList) do
     w:UnitIdle(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function widgetHandler:UnitCommand(unitID, unitDefID, unitTeam,
+                                   cmdId, cmdOpts, cmdParams)
+  for _,w in ipairs(self.UnitCommandList) do
+    w:UnitCommand(unitID, unitDefID, unitTeam,
+                  cmdId, cmdOpts, cmdParams)
   end
   return
 end

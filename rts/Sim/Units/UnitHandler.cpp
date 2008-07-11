@@ -196,8 +196,8 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	// builds say many buildings at once and then many mobile ones etc)
 	activeUnits.insert(ui, unit);
 
-	// randomize the unitID assignment so that lua widgets
-	// can't determine enemy unit counts from unitIDs alone
+	// randomize the unitID assignment so that lua widgets can
+	// not easily determine enemy unit counts from unitIDs alone
 	assert(freeIDs.size() > 0);
 	const unsigned int freeSlot = gs->randInt() % freeIDs.size();
 	const unsigned int freeMax  = freeIDs.size() - 1;

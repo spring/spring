@@ -7,7 +7,6 @@
 #include "LogOutput.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -24,6 +23,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "mmgr.h"
@@ -382,6 +382,8 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 {
 	ASSERT_SYNCED_MODE;
 
+	// FIXME -- randomize me, pretty please
+	//          (could be done in blocks, if (empty) { add 5000 freeIDs } ?)
 	if (freeIDs.empty()) {
 		feature->id = nextFreeID++;
 	} else {
@@ -399,7 +401,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		feature->drawQuad = quad;
 	}
 
-	luaCallIns.FeatureCreated(feature);
+	eventHandler.FeatureCreated(feature);
 
 	return feature->id ;
 }
@@ -410,7 +412,7 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(feature->id);
 
-	luaCallIns.FeatureDestroyed(feature);
+	eventHandler.FeatureDestroyed(feature);
 }
 
 

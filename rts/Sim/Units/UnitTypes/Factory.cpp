@@ -13,7 +13,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -26,6 +25,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "Sound.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
@@ -224,7 +224,7 @@ void CFactory::Update()
 				}
 				waitCommandsAI.AddLocalUnit(curBuild, this);
 			}
-			luaCallIns.UnitFromFactory(curBuild, this, userOrders);
+			eventHandler.UnitFromFactory(curBuild, this, userOrders);
 
 			StopBuild();
 		}

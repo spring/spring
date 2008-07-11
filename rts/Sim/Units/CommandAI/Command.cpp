@@ -29,10 +29,10 @@ CR_REG_METADATA(CommandDescription, (
 				CR_MEMBER(mouseicon),
 				CR_MEMBER(tooltip),
 
-				CR_MEMBER(showUnique),
-				CR_MEMBER(onlyKey),
-				CR_MEMBER(onlyTexture),
+				CR_MEMBER(hidden),
 				CR_MEMBER(disabled),
+				CR_MEMBER(showUnique),
+				CR_MEMBER(onlyTexture),
 
 				CR_MEMBER(params),
 				CR_RESERVED(32)

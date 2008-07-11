@@ -569,6 +569,7 @@
 /* On a Microsoft compiler, use assembler */
 #if defined(_MSC_VER)
 
+#warning Using ASM for lua_number2int  (SPRING)
 #define lua_number2int(i,d)   __asm fld d   __asm fistp i
 #define lua_number2integer(i,n)		lua_number2int(i, n)
 
@@ -576,6 +577,7 @@
    with a DirectX idiosyncrasy */
 #else
 
+#warning Using casting for lua_number2int  (SPRING)
 union luai_Cast { double l_d; long l_l; };
 #define lua_number2int(i,d) \
   { volatile union luai_Cast u; u.l_d = (d) + 6755399441055744.0; (i) = u.l_l; }

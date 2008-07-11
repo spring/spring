@@ -31,6 +31,8 @@
 // Please note: Some functions may require more advanced coding to implement
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
+#ifdef USE_GML
+
 #include "gmlcls.h"
 #include "gml.h"
 
@@ -1003,3 +1005,4 @@ void gmlQueue::ExecuteSynced() {
 //  GML_DEBUG("ExecuteSync ",procs);
 }
 
+#endif // USE_GML

@@ -46,13 +46,14 @@ CProjectile::CProjectile():
 {}
 
 
-void CProjectile::Init (const float3& explosionPos, CUnit* owner)
+void CProjectile::Init(const float3& explosionPos, CUnit* owner)
 {
 	pos += explosionPos;
 	SetRadius(1.7f);
 	ph->AddProjectile(this);
-	if (owner)
+	if (owner) {
 		AddDeathDependence(owner);
+	}
 }
 
 

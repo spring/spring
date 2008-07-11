@@ -15,6 +15,7 @@ using namespace std;
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaIO.h"
 #include "LuaUtils.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -92,7 +93,7 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 {
 	const int args = lua_gettop(L);
 	if (index < 0) {
-		index = (args - index + 1);
+		index = (args + index + 1);
 	}
 	if ((index < 1) || (index > args)) {
 		if (synced && !CLuaHandle::GetDevMode()) {
@@ -101,7 +102,7 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 		return SPRING_VFS_RAW_FIRST;
 	}
 
-	if (!lua_isstring(L, index)) {
+	if (!lua_israwstring(L, index)) {
 		luaL_error(L, "Bad VFS access mode");
 	}
 
@@ -143,6 +144,9 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	const string filename = lua_tostring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+//FIXME		return 0;
+	}
 
 	const string modes = GetModes(L, 3, synced);
 	
@@ -216,6 +220,9 @@ int LuaVFS::LoadFile(lua_State* L, bool synced)
 	}
 
 	const string filename = lua_tostring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+//FIXME		return 0;
+	}
 
 	const string modes = GetModes(L, 2, synced);
 
@@ -250,6 +257,9 @@ int LuaVFS::FileExists(lua_State* L, bool synced)
 	}
 
 	const string filename = lua_tostring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+//FIXME		return 0;
+	}
 
 	const string modes = GetModes(L, 2, synced);
 
@@ -284,9 +294,8 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 
 	const string dir = lua_tostring(L, 1);
 	// keep searches within the Spring directory
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    ((dir.size() >= 2) && (dir[1] == ':'))) {
-		return 0;
+	if (!LuaIO::IsSimplePath(dir)) {
+//FIXME		return 0;
 	}
 	const string pattern = luaL_optstring(L, 2, "*");
 	const string modes = GetModes(L, 3, synced);
@@ -343,9 +352,8 @@ int LuaVFS::SubDirs(lua_State* L, bool synced)
 
 	const string dir = lua_tostring(L, 1);
 	// keep searches within the Spring directory
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    ((dir.size() >= 2) && (dir[1] == ':'))) {
-		return 0;
+	if (!LuaIO::IsSimplePath(dir)) {
+//FIXME		return 0;
 	}
 	const string pattern = luaL_optstring(L, 2, "*");
 	const string modes = GetModes(L, 3, synced);
@@ -395,6 +403,9 @@ int LuaVFS::UnsyncSubDirs(lua_State* L)
 int LuaVFS::UseArchive(lua_State* L)
 {
 	const string filename = luaL_checkstring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+//FIXME		return 0;
+	}
 
 	int funcIndex = 2;
 	string modes = SPRING_VFS_ALL;
@@ -479,13 +490,13 @@ int PackType(lua_State* L)
 }
 
 
-int LuaVFS::PackU8(lua_State* L)  { return PackType<boost::uint8_t>(L); }
+int LuaVFS::PackU8(lua_State*  L) { return PackType<boost::uint8_t>(L);  }
 int LuaVFS::PackU16(lua_State* L) { return PackType<boost::uint16_t>(L); }
 int LuaVFS::PackU32(lua_State* L) { return PackType<boost::uint32_t>(L); }
-int LuaVFS::PackS8(lua_State* L)  { return PackType<boost::int8_t>(L); }
-int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L); }
-int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L); }
-int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L); }
+int LuaVFS::PackS8(lua_State*  L) { return PackType<boost::int8_t>(L);   }
+int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L);  }
+int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L);  }
+int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L);           }
 
 
 /******************************************************************************/
@@ -500,7 +511,7 @@ int UnpackType(lua_State* L)
 	const char* str = lua_tolstring(L, 1, &len);
 
 	if (lua_isnumber(L, 2)) {
-		const int pos = (int)lua_tonumber(L, 2);
+		const int pos = lua_toint(L, 2);
 		if ((pos < 1) || (pos >= len)) {
 			return 0;
 		}
@@ -521,7 +532,7 @@ int UnpackType(lua_State* L)
 	}
 	else {
 		const int maxCount = (len / eSize);
-		int tableCount = (int)lua_tonumber(L, 3);
+		int tableCount = lua_toint(L, 3);
 		if (tableCount < 0) {
 			tableCount = maxCount;
 		}
@@ -542,13 +553,13 @@ int UnpackType(lua_State* L)
 }
 
 
-int LuaVFS::UnpackU8(lua_State* L)  { return UnpackType<boost::uint8_t>(L); }
+int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<boost::uint8_t>(L);  }
 int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<boost::uint16_t>(L); }
 int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<boost::uint32_t>(L); }
-int LuaVFS::UnpackS8(lua_State* L)  { return UnpackType<boost::int8_t>(L); }
-int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L); }
-int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L); }
-int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L); }
+int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<boost::int8_t>(L);   }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L);  }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L);  }
+int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
 
 
 /******************************************************************************/

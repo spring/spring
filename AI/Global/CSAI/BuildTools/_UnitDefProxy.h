@@ -143,7 +143,7 @@
    int get_buildingDecalSizeX(){ return actualunitdef->buildingDecalSizeX; }
    int get_buildingDecalSizeY(){ return actualunitdef->buildingDecalSizeY; }
    double get_buildingDecalDecaySpeed(){ return actualunitdef->buildingDecalDecaySpeed; }
-   bool get_isfireplatform(){ return actualunitdef->isfireplatform; }
+   bool get_isfireplatform(){ return actualunitdef->isFirePlatform; }
    bool get_showNanoFrame(){ return actualunitdef->showNanoFrame; }
    bool get_showNanoSpray(){ return actualunitdef->showNanoSpray; }
    double get_maxFuel(){ return actualunitdef->maxFuel; }

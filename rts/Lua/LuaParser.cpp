@@ -12,6 +12,7 @@
 
 #include "LuaInclude.h"
 
+#include "LuaIO.h"
 #include "LuaUtils.h"
 
 #include "Game/GameSetup.h"
@@ -440,9 +441,7 @@ int LuaParser::DirList(lua_State* L)
 	}
 
 	const string dir = luaL_checkstring(L, 1);
-	// keep searches within the Spring directory
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    ((dir.size() >= 2) && (dir[1] == ':'))) {
+	if (!LuaIO::IsSimplePath(dir)) {
 		return 0;
 	}
 	const string pat = luaL_optstring(L, 2, "*");
@@ -478,6 +477,9 @@ int LuaParser::Include(lua_State* L)
 
 	// filename [, fenv]
 	const string filename = luaL_checkstring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+		luaL_error(L, "bad pathname");
+	}
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -547,6 +549,9 @@ int LuaParser::LoadFile(lua_State* L)
 	}
 
 	const string filename = luaL_checkstring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+		return 0;
+	}
 	string modes = luaL_optstring(L, 2, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -576,6 +581,9 @@ int LuaParser::FileExists(lua_State* L)
 		luaL_error(L, "invalid call to FileExists() after execution");
 	}
 	const string filename = luaL_checkstring(L, 1);
+	if (!LuaIO::IsSimplePath(filename)) {
+		return 0;
+	}
 	CFileHandler fh(filename, currentParser->accessModes);
 	lua_pushboolean(L, fh.FileExists());
 	return 1;
@@ -934,7 +942,7 @@ bool LuaTable::GetKeys(vector<int>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
-			const int value = (int)lua_tonumber(L, -2);
+			const int value = lua_toint(L, -2);
 			data.push_back(value);
 		}
 	}
@@ -974,8 +982,8 @@ bool LuaTable::GetMap(map<int, float>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {
-			const int   key   =   (int)lua_tonumber(L, -2);
-			const float value = (float)lua_tonumber(L, -1);
+			const int   key   =   lua_toint(L, -2);
+			const float value = lua_tofloat(L, -1);
 			data[key] = value;
 		}
 	}
@@ -991,7 +999,7 @@ bool LuaTable::GetMap(map<int, string>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
-			const int    key   = (int)lua_tonumber(L, -2);
+			const int    key   = lua_toint(L, -2);
 			const string value = lua_tostring(L, -1);
 			data[key] = value;
 		}
@@ -1009,7 +1017,7 @@ bool LuaTable::GetMap(map<string, float>& data) const
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 			const string key   = lua_tostring(L, -2);
-			const float  value = (float)lua_tonumber(L, -1);
+			const float  value = lua_tofloat(L, -1);
 			data[key] = value;
 		}
 	}
@@ -1049,7 +1057,7 @@ static bool ParseTableFloat(lua_State* L,
 		lua_pop(L, 1);
 		return false;
 	}
-	value = (float)lua_tonumber(L, -1);
+	value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return true;
 }
@@ -1083,7 +1091,7 @@ static bool ParseBoolean(lua_State* L, int index, bool& value)
 		return true;
 	}
 	else if (lua_isnumber(L, index)) {
-		value = ((float)lua_tonumber(L, index) != 0.0f);
+		value = (lua_tofloat(L, index) != 0.0f);
 		return true;
 	}
 	else if (lua_isstring(L, index)) {
@@ -1116,7 +1124,7 @@ int LuaTable::GetInt(const string& key, int def) const
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = (int)lua_tonumber(L, -1);
+	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1146,7 +1154,7 @@ float LuaTable::GetFloat(const string& key, float def) const
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = (float)lua_tonumber(L, -1);
+	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1197,7 +1205,7 @@ int LuaTable::GetInt(int key, int def) const
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = (int)lua_tonumber(L, -1);
+	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1227,7 +1235,7 @@ float LuaTable::GetFloat(int key, float def) const
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = (float)lua_tonumber(L, -1);
+	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }

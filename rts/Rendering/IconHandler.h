@@ -16,7 +16,7 @@ class CIconData {
 		CIconData(); // for CIconHandler::safetyData
 		CIconData(const std::string& name, unsigned int texID,
 		          float size, float distance, bool radiusAdjust,
-		          bool ownTexture);
+		          bool ownTexture, int xsize, int ysize);
 		~CIconData();
 
 		void Ref();
@@ -34,6 +34,8 @@ class CIconData {
 		inline const float        GetDistance()     const { return distance;     }
 		inline const float        GetDistanceSqr()  const { return distSqr;      }
 		inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
+		inline const int          GetSizeX()        const { return xsize;        }
+		inline const int          GetSizeY()        const { return ysize;        }
 
 	private:
 		bool ownTexture;
@@ -41,6 +43,8 @@ class CIconData {
 
 		std::string name;
 		unsigned int texID;
+		int xsize;
+		int ysize;
 		float size;
 		float distance;
 		float distSqr;

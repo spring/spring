@@ -37,7 +37,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitImage.h"
+#include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -235,7 +235,7 @@ static int UnitDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case INT_TYPE: {
-			*((int*)p) = (int)lua_tonumber(L, -1);
+			*((int*)p) = lua_toint(L, -1);
 			return 0;
 		}
 		case BOOL_TYPE: {
@@ -243,7 +243,7 @@ static int UnitDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case FLOAT_TYPE: {
-			*((float*)p) = (float)lua_tonumber(L, -1);
+			*((float*)p) = lua_tofloat(L, -1);
 			return 0;
 		}
 		case STRING_TYPE: {
@@ -669,7 +669,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
 
-	ADD_STRING("buildpicname", ud.unitImage->buildPicName);
+	ADD_STRING("buildpicname", ud.buildPicName);
 
 	ADD_INT("aihint", ud.aihint);
 	ADD_INT("cobID",  ud.cobID);
@@ -846,7 +846,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("transportMass",         ud.transportMass);
 	ADD_FLOAT("loadingRadius",         ud.loadingRadius);
 	ADD_BOOL( "isAirBase",             ud.isAirBase);
-	ADD_BOOL( "isFirePlatform",        ud.isfireplatform);
+	ADD_BOOL( "isFirePlatform",        ud.isFirePlatform);
 	ADD_BOOL( "holdSteady",            ud.holdSteady);
 	ADD_BOOL( "releaseHeld",           ud.releaseHeld);
 	ADD_BOOL( "transportByEnemy",      ud.transportByEnemy);

@@ -1575,33 +1575,23 @@ void CCobInstance::SetUnitVal(int val, int param)
 			break;
 		}
 		case RADAR_RADIUS: {
-			radarhandler->RemoveUnit(unit);
-			unit->radarRadius = param;
-			radarhandler->MoveUnit(unit);
+			unit->ChangeSensorRadius(&unit->radarRadius, param);
 			break;
 		}
 		case JAMMER_RADIUS: {
-			radarhandler->RemoveUnit(unit);
-			unit->jammerRadius = param;
-			radarhandler->MoveUnit(unit);
+			unit->ChangeSensorRadius(&unit->jammerRadius, param);
 			break;
 		}
 		case SONAR_RADIUS: {
-			radarhandler->RemoveUnit(unit);
-			unit->sonarRadius = param;
-			radarhandler->MoveUnit(unit);
+			unit->ChangeSensorRadius(&unit->sonarRadius, param);
 			break;
 		}
 		case SONAR_JAM_RADIUS: {
-			radarhandler->RemoveUnit(unit);
-			unit->sonarJamRadius = param;
-			radarhandler->MoveUnit(unit);
+			unit->ChangeSensorRadius(&unit->sonarJamRadius, param);
 			break;
 		}
 		case SEISMIC_RADIUS: {
-			radarhandler->RemoveUnit(unit);
-			unit->seismicRadius = param;
-			radarhandler->MoveUnit(unit);
+			unit->ChangeSensorRadius(&unit->seismicRadius, param);
 			break;
 		}
 		case CURRENT_FUEL: {

@@ -120,6 +120,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
+	REGISTER_LUA_CFUNC(SetUnitArmored);
 	REGISTER_LUA_CFUNC(SetUnitLosMask);
 	REGISTER_LUA_CFUNC(SetUnitLosState);
 	REGISTER_LUA_CFUNC(SetUnitCloak);
@@ -130,12 +131,15 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
+	REGISTER_LUA_CFUNC(SetUnitFlanking);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
+	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -144,6 +148,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddUnitDamage);
 	REGISTER_LUA_CFUNC(AddUnitImpulse);
+	REGISTER_LUA_CFUNC(AddUnitSeismicPing);
 
 	REGISTER_LUA_CFUNC(AddUnitResource);
 	REGISTER_LUA_CFUNC(UseUnitResource);
@@ -173,7 +178,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GiveOrderToUnitArray);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitMap);
 	REGISTER_LUA_CFUNC(GiveOrderArrayToUnitArray);
-
 
 	REGISTER_LUA_CFUNC(LevelHeightMap);
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
@@ -229,9 +233,19 @@ static inline bool CanControlTeam(int teamID)
 {
 	const int ctrlTeam = CtrlTeam();
 	if (ctrlTeam < 0) {
-		return (ctrlTeam == CLuaHandle::AllAccessTeam) ? true : false;
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
 	return (ctrlTeam == teamID);
+}
+
+
+static inline bool CanControlAllyTeam(int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam();
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
@@ -239,28 +253,41 @@ static inline bool CanControlUnit(const CUnit* unit)
 {
 	const int ctrlTeam = CtrlTeam();
 	if (ctrlTeam < 0) {
-		return (ctrlTeam == CLuaHandle::AllAccessTeam) ? true : false;
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
 	return (ctrlTeam == unit->team);
 }
 
 
-static inline bool CanControlFeatureAllyTeam(int allyTeam)
+static inline bool CanControlFeatureAllyTeam(int allyTeamID)
 {
 	const int ctrlTeam = CtrlTeam();
 	if (ctrlTeam < 0) {
-		return (ctrlTeam == CLuaHandle::AllAccessTeam) ? true : false;
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
-	if (allyTeam < 0) {
+	if (allyTeamID < 0) {
 		return (ctrlTeam == gs->gaiaTeamID);
 	}
-	return (gs->AllyTeam(ctrlTeam) == allyTeam);
+	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
 static inline bool CanControlFeature(const CFeature* feature)
 {
 	return CanControlFeatureAllyTeam(feature->allyteam);
+}
+
+
+static inline bool CanControlProjectileAllyTeam(int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam();
+	if (ctrlTeam < 0) {
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
+	}
+	if (allyTeamID < 0) {
+		return false;
+	}
+	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
@@ -275,7 +302,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
-	const int unitID = (int)lua_tonumber(L, index);
+	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
@@ -306,7 +333,7 @@ static inline CFeature* ParseFeature(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
-	const int featureID = (int)lua_tonumber(L, index);
+	const int featureID = lua_toint(L, index);
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 	CFeatureSet::const_iterator it = fset.find(featureID);
 
@@ -320,21 +347,20 @@ static inline CFeature* ParseFeature(lua_State* L,
 }
 
 
-static inline CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
+static inline CProjectile* ParseProjectile(lua_State* L,
+                                           const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-
-	const int proID = (int) lua_tonumber(L, index);
-	ProjectileMap::iterator it = ph->weaponProjectileIDs.find(proID);
-
-	if (it == ph->weaponProjectileIDs.end()) {
-		luaL_error(L, "%s(): Bad projectile ID: %d\n", caller, proID);
+	const ProjectileMapPair* pmp = ph->GetMapPairByID(lua_toint(L, index));
+	if (pmp == NULL) {
+		return NULL;
 	}
-
-	const ProjectileMapPair& pp = it->second;
-	return pp.first;
+	if (!CanControlProjectileAllyTeam(pmp->second)) {
+		return NULL;
+	}
+	return pmp->first;
 }
 
 
@@ -344,7 +370,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad teamID", caller);
 		return NULL;
 	}
-	const int teamID = (int)lua_tonumber(L, index);
+	const int teamID = lua_toint(L, index);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
 	}
@@ -359,7 +385,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 static CUnit* CheckUnitID(lua_State* L, int index)
 {
 	luaL_checknumber(L, index);
-	const int unitID = (int)lua_tonumber(L, index);
+	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "Bad unitID: %d\n", unitID);
 	}
@@ -374,7 +400,7 @@ static CUnit* CheckUnitID(lua_State* L, int index)
 static CPlayer* CheckPlayerID(lua_State* L, int index)
 {
 	luaL_checknumber(L, index);
-	const int playerID = (int)lua_tonumber(L, index);
+	const int playerID = lua_toint(L, index);
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
@@ -400,7 +426,7 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 			return -1;
 		}
 		if (index < size) {
-			array[index] = (float)lua_tonumber(L, -1);
+			array[index] = lua_tofloat(L, -1);
 			index++;
 		}
 	}
@@ -410,15 +436,19 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 
 static int ParseFacing(lua_State* L, const char* caller, int index)
 {
-	if (lua_isnumber(L, index)) {
-		return (int)lua_tonumber(L, index);
+	if (lua_israwnumber(L, index)) {
+		return lua_toint(L, index);
 	}
-	else if (lua_isstring(L, index)) {
+	else if (lua_israwstring(L, index)) {
 		const string dir = StringToLower(lua_tostring(L, index));
 		if (dir == "s") { return 0; }
 		if (dir == "e") { return 1; }
 		if (dir == "n") { return 2; }
 		if (dir == "w") { return 3; }
+		if (dir == "south") { return 0; }
+		if (dir == "east")  { return 1; }
+		if (dir == "north") { return 2; }
+		if (dir == "west")  { return 3; }
 		luaL_error(L, "%s(): bad facing string", caller);
 	}
 	luaL_error(L, "%s(): bad facing parameter", caller);
@@ -434,12 +464,7 @@ static int ParseFacing(lua_State* L, const char* caller, int index)
 
 int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to AddTeamResource()");
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
+	const int teamID = luaL_checkint(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		return 0;
 	}
@@ -451,9 +476,9 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 		return 0;
 	}
 
-	const string type = lua_tostring(L, 2);
+	const string type = luaL_checkstring(L, 2);
 
-	const float value = max(0.0f, float(lua_tonumber(L, 3)));
+	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
 		team->AddMetal(value);
@@ -467,11 +492,7 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 
 int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to UseTeamResource()");
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
+	const int teamID = luaL_checkint(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		return 0;
 	}
@@ -525,18 +546,16 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		}
 		return 1;
 	}
+	else {
+		luaL_error(L, "bad arguments");
+	}
 	return 0;
 }
 
 
 int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetTeamResource()");
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
+	const int teamID = luaL_checkint(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		return 0;
 	}
@@ -548,9 +567,9 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 		return 0;
 	}
 
-	const string type = lua_tostring(L, 2);
+	const string type = luaL_checkstring(L, 2);
 
-	const float value = max(0.0f, (float)lua_tonumber(L, 3));
+	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
 		team->metal = min(team->metalStorage, value);
@@ -572,12 +591,7 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 
 int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) ||
-	    !lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetTeamShareLevel()");
-	}
-	const int teamID = (int)lua_tonumber(L, 1);
+	const int teamID = luaL_checkint(L, 1);
 	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
 		return 0;
 	}
@@ -589,9 +603,9 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 		return 0;
 	}
 
-	const string type = lua_tostring(L, 2);
+	const string type = luaL_checkstring(L, 2);
 
-	const float value = (float)lua_tonumber(L, 3);
+	const float value = luaL_checkfloat(L, 3);
 
 	if ((type == "m") || (type == "metal")) {
 		team->metalShare = max(0.0f, min(1.0f, value));
@@ -611,14 +625,14 @@ static inline void ParseCobArgs(lua_State* L,
 {
 	for (int a = first; a <= last; a++) {
 		if (lua_isnumber(L, a)) {
-			args.push_back((int)lua_tonumber(L, a));
+			args.push_back(lua_toint(L, a));
 		}
 		else if (lua_istable(L, a)) {
 			lua_rawgeti(L, a, 1);
 			lua_rawgeti(L, a, 2);
 			if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {
-				const int x = (int)lua_tonumber(L, -2);
-				const int z = (int)lua_tonumber(L, -1);
+				const int x = lua_toint(L, -2);
+				const int z = lua_toint(L, -1);
 				args.push_back(PACKXZ(x, z));
 			} else {
 				args.push_back(0);
@@ -656,15 +670,15 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	// collect the arguments
 	vector<int> cobArgs;
 	ParseCobArgs(L, 4, args, cobArgs);
-	const int retParams = min((int)lua_tonumber(L, 3),
+	const int retParams = min(lua_toint(L, 3),
 	                          min(MAX_LUA_COB_ARGS, (int)cobArgs.size()));
 
 	int retval;
-	if (lua_isnumber(L, 2)) {
-		const int funcId = (int)lua_tonumber(L, 2);
+	if (lua_israwnumber(L, 2)) {
+		const int funcId = lua_toint(L, 2);
 		retval = unit->cob->RawCall(funcId, cobArgs);
 	}
-	else if (lua_isstring(L, 2)) {
+	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
 		retval = unit->cob->Call(funcName, cobArgs);
 	}
@@ -704,20 +718,20 @@ int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 	// collect the arguments
 	vector<int> cobArgs;
 	ParseCobArgs(L, 5, args, cobArgs);
-	const int retParams = min((int)lua_tonumber(L, 3),
+	const int retParams = min(lua_toint(L, 3),
 	                          min(MAX_LUA_COB_ARGS, (int)cobArgs.size()));
 
 	// callback data
-	float cbData = (float)lua_tonumber(L, 4);
+	float cbData = lua_tofloat(L, 4);
 
 	int retval;
-	if (lua_isnumber(L, 2)) {
-		const int funcId = (int)lua_tonumber(L, 2);
+	if (lua_israwnumber(L, 2)) {
+		const int funcId = lua_toint(L, 2);
 		retval = unit->cob->RawCall(funcId, cobArgs,
 		                            CLuaHandle::GetActiveCallback(),
 		                            (void*) unit->id, (void*) *((int*)&cbData));
 	}
-	else if (lua_isstring(L, 2)) {
+	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
 		retval = unit->cob->Call(funcName, cobArgs,
 		                         CLuaHandle::GetActiveCallback(),
@@ -778,7 +792,7 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 		arg++;
 	}
 
-	const int val = (int)luaL_checknumber(L, arg); arg++;
+	const int val = luaL_checkint(L, arg); arg++;
 
 	int p[4];
 	for (int a = 0; a < 4; a++, arg++) {
@@ -811,14 +825,14 @@ int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
-	const int val = (int)luaL_checknumber(L, 2);
+	const int val = luaL_checkint(L, 2);
 	int param;
 	if (args == 3) {
-		param = (int)luaL_checknumber(L, 3);
+		param = luaL_checkint(L, 3);
 	}
 	else {
-		const int x = (int)luaL_checknumber(L, 3);
-		const int z = (int)luaL_checknumber(L, 4);
+		const int x = luaL_checkint(L, 3);
+		const int z = luaL_checkint(L, 4);
 		param = PACKXZ(x, z);
 	}
 	unit->cob->SetUnitVal(val, param);
@@ -832,28 +846,33 @@ int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
 int LuaSyncedCtrl::CreateUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 5) ||
-	    !lua_isstring(L, 1) || // name, pos, facing[, teamID]
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
-	    !(lua_isnumber(L, 5) || lua_isstring(L, 5))) {
+
+	const UnitDef* unitDef = NULL;
+	if (lua_israwstring(L, 1)) {
+		const string defName = lua_tostring(L, 1);
+		unitDef = unitDefHandler->GetUnitByName(defName);
+		if (unitDef == NULL) {
+			luaL_error(L, "CreateUnit() bad unitDef name: %s", defName.c_str());
+		}
+	} else if (lua_israwnumber(L, 1)) {
+		const int defID = lua_toint(L, 1);
+		unitDef = unitDefHandler->GetUnitByID(defID);
+		if (unitDef == NULL) {
+			luaL_error(L, "CreateUnit() bad unitDef ID: %i", defID);
+		}
+	} else {
 		luaL_error(L, "Incorrect arguments to CreateUnit()");
 	}
 
-	const string& defName = lua_tostring(L, 1);
-	const UnitDef* unitDef = unitDefHandler->GetUnitByName(defName);
-	if (unitDef == NULL) {
-		luaL_error(L, "CreateUnit() bad unit name: %s", defName.c_str());
-	}
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
 	const int facing = ParseFacing(L, __FUNCTION__, 5);
 
 	int teamID = CtrlTeam();
-	if ((args >= 6) && lua_isnumber(L, 6)) {
-		teamID = (int)lua_tonumber(L, 6);
+	if (lua_israwnumber(L, 6)) {
+		teamID = lua_toint(L, 6);
 	}
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
@@ -881,7 +900,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "CreateUnit() recursion is not permitted");
 	}
 	inCreateUnit = true;
-	CUnit* unit = unitLoader.LoadUnit(defName, pos, teamID, false, facing, NULL);
+	CUnit* unit = unitLoader.LoadUnit(unitDef->name, pos, teamID,
+	                                  false, facing, NULL);
 	inCreateUnit = false;
 
 	if (unit) {
@@ -935,12 +955,8 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to TransferUnit()");
-	}
 
-	const int newTeam = (int)lua_tonumber(L, 2);
+	const int newTeam = luaL_checkint(L, 2);
 	if ((newTeam < 0) || (newTeam >= gs->activeTeams)) {
 		return 0;
 	}
@@ -950,17 +966,16 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	}
 
 	bool given = true;
-	if (FullCtrl()) {
-		if ((args >= 3) && lua_isboolean(L, 3)) {
-			given = lua_toboolean(L, 3);
-		}
+	if (FullCtrl() && lua_isboolean(L, 3)) {
+		given = lua_toboolean(L, 3);
 	}
 
 	if (inTransferUnit) {
 		luaL_error(L, "TransferUnit() recursion is not permitted");
 	}
 	inTransferUnit = true;
-	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven : CUnit::ChangeCaptured);
+	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
+	                                : CUnit::ChangeCaptured);
 	inTransferUnit = false;
 
 	return 0;
@@ -976,7 +991,7 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_istable(L, 2)) {
+	if (!lua_istable(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitCosts");
 	}
 	const int table = 2;
@@ -1042,13 +1057,12 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args == 3) && lua_isstring(L, 2) && lua_isnumber(L, 3)) {
-		const string key = lua_tostring(L, 2);
-		const float value = lua_tonumber(L, 3);
+	if (lua_israwstring(L, 2)) {
+		const string key = luaL_checkstring(L, 2);
+		const float value = luaL_checkfloat(L, 3);
 		SetUnitResourceParam(unit, key, value);
 	}
-	else if ((args == 2) && lua_istable(L, 2)) {
+	else if (lua_istable(L, 2)) {
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1)) {
@@ -1074,11 +1088,7 @@ int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitTooltip()");
-	}
-	unit->tooltip = lua_tostring(L, 2);
+	unit->tooltip = luaL_checkstring(L, 2);
 	return 0;
 }
 
@@ -1089,13 +1099,9 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
-		luaL_error(L, "Incorrect arguments to SetUnitHealth()");
-	}
 
 	if (lua_isnumber(L, 2)) {
-		float health = (float)lua_tonumber(L, 2);
+		float health = lua_tofloat(L, 2);
 		health = min(unit->maxHealth, health);
 		unit->health = health;
 	}
@@ -1104,7 +1110,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = (float)lua_tonumber(L, -1);
+				const float value = lua_tofloat(L, -1);
 				if (key == "health") {
 					unit->health = min(unit->maxHealth, value);
 				}
@@ -1142,7 +1148,7 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->maxHealth = (float)luaL_checknumber(L, 2);
+	unit->maxHealth = luaL_checkfloat(L, 2);
 	if (unit->maxHealth <= 0.0f) {
 		unit->maxHealth = 1.0f;
 	}
@@ -1172,7 +1178,7 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 	}
 
 	if (lua_isnumber(L, 3)) {
-		const float percent = max(0.0f, min(1.0f, (float)lua_tonumber(L, 3)));
+		const float percent = max(0.0f, min(1.0f, lua_tofloat(L, 3)));
 		unit->stockpileWeapon->buildPercent = percent;
 	}
 
@@ -1187,7 +1193,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 
-	const int weaponNum = (int)luaL_checknumber(L,2);
+	const int weaponNum = luaL_checkint(L,2);
 	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
@@ -1198,7 +1204,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = (float)lua_tonumber(L, -1);
+				const float value = lua_tofloat(L, -1);
 				// FIXME: KDR -- missing checks and updates?
 				if (key == "reloadstate") {
 					weapon->reloadStatus = (int)value;
@@ -1232,8 +1238,21 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const float experience = max(0.0f, (float)luaL_checknumber(L, 2));
+	const float experience = max(0.0f, luaL_checkfloat(L, 2));
 	unit->AddExperience(experience - unit->experience);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitArmored(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (lua_isboolean(L, 2)) {
+		unit->armoredState = lua_toboolean(L, 2);
+	}
 	return 0;
 }
 
@@ -1322,20 +1341,17 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
-		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
-	}
+
 	if (lua_isboolean(L, 2)) {
 		unit->scriptCloak = lua_toboolean(L, 2) ? 1 : 0;
 	} else if (lua_isnumber(L, 2)) {
-		unit->scriptCloak = (int)lua_tonumber(L, 2);
+		unit->scriptCloak = lua_toint(L, 2);
 	} else if (!lua_isnil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitCloak()");
 	}
 
 	if (lua_israwnumber(L, 3)) {
-		unit->decloakDistance = (float)lua_tonumber(L, 3);
+		unit->decloakDistance = lua_tofloat(L, 3);
 	}
 	else if (lua_isboolean(L, 3)) {
 		const float defDist = unit->unitDef->decloakDistance;
@@ -1356,8 +1372,7 @@ int LuaSyncedCtrl::SetUnitStealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitStealth()");
 	}
 	unit->stealth = lua_toboolean(L, 2);
@@ -1371,8 +1386,7 @@ int LuaSyncedCtrl::SetUnitSonarStealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitSonarStealth()");
 	}
 	unit->sonarStealth = lua_toboolean(L, 2);
@@ -1386,8 +1400,7 @@ int LuaSyncedCtrl::SetUnitAlwaysVisible(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
 	}
 	unit->alwaysVisible = lua_toboolean(L, 2);
@@ -1405,15 +1418,8 @@ int LuaSyncedCtrl::SetUnitMetalExtraction(lua_State* L)
 	if (mex == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitMetalExtraction()");
-	}
-	const float depth = (float)lua_tonumber(L, 2);
-	float range = mex->GetExtractionRange();
-	if ((args >= 3) && lua_isnumber(L, 3)) {
-		range = (float)lua_tonumber(L, 3);
-	}
+	const float depth = luaL_checkfloat(L, 2);
+	const float range = luaL_optfloat(L, 3, mex->GetExtractionRange());
 	mex->ResetExtraction();
 	mex->SetExtractionRangeAndDepth(range, depth);
 	return 0;
@@ -1426,36 +1432,35 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetUnitBuildSpeed()");
-	}
+
 	const float buildScale = (1.0f / 32.0f);
-	const float buildSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 2));
+	const float buildSpeed = buildScale * max(0.0f, luaL_checkfloat(L, 2));
+
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
 	if (factory) {
 		factory->buildSpeed = buildSpeed;
 		return 0;
 	}
+
 	CBuilder* builder = dynamic_cast<CBuilder*>(unit);
 	if (!builder) {
 		return 0;
 	}
 	builder->buildSpeed = buildSpeed;
-	if ((args >= 3) && lua_isnumber(L, 3)) {
-		builder->repairSpeed    = buildScale * max(0.0f, (float)lua_tonumber(L, 3));
+	if (lua_isnumber(L, 3)) {
+		builder->repairSpeed    = buildScale * max(0.0f, lua_tofloat(L, 3));
 	}
-	if ((args >= 4) && lua_isnumber(L, 4)) {
-		builder->reclaimSpeed   = buildScale * max(0.0f, (float)lua_tonumber(L, 4));
+	if (lua_isnumber(L, 4)) {
+		builder->reclaimSpeed   = buildScale * max(0.0f, lua_tofloat(L, 4));
 	}
-	if ((args >= 5) && lua_isnumber(L, 5)) {
-		builder->resurrectSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 5));
+	if (lua_isnumber(L, 5)) {
+		builder->resurrectSpeed = buildScale * max(0.0f, lua_tofloat(L, 5));
 	}
-	if ((args >= 6) && lua_isnumber(L, 6)) {
-		builder->captureSpeed   = buildScale * max(0.0f, (float)lua_tonumber(L, 6));
+	if (lua_isnumber(L, 6)) {
+		builder->captureSpeed   = buildScale * max(0.0f, lua_tofloat(L, 6));
 	}
-	if ((args >= 7) && lua_isnumber(L, 7)) {
-		builder->terraformSpeed = buildScale * max(0.0f, (float)lua_tonumber(L, 7));
+	if (lua_isnumber(L, 7)) {
+		builder->terraformSpeed = buildScale * max(0.0f, lua_tofloat(L, 7));
 	}
 	return 0;
 }
@@ -1467,14 +1472,16 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
 	}
+	const bool longTerm = lua_isboolean(L, 3) && lua_toboolean(L, 3);
 	if (lua_toboolean(L, 2)) {
+		if (longTerm) { unit->blocking = true; }
 		unit->Block();
 	} else {
 		unit->UnBlock();
+		if (longTerm) { unit->blocking = false; }
 	}
 	return 0;
 }
@@ -1494,7 +1501,46 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 		shield->isEnabled = lua_toboolean(L, 2);
 	}
 	if (lua_isnumber(L, 3)) {
-		shield->curPower = (float)lua_tonumber(L, 3);
+		shield->curPower = lua_tofloat(L, 3);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitFlanking(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const string key = luaL_checkstring(L, 2);
+
+	if (key == "mode") {
+		unit->flankingBonusMode = luaL_checkint(L, 3);
+	}
+	else if (key == "dir") {
+		float3 dir(luaL_checkfloat(L, 3),
+		           luaL_checkfloat(L, 4),
+		           luaL_checkfloat(L, 5));
+		unit->flankingBonusDir = dir.Normalize();
+	}
+	else if (key == "moveFactor") {
+		unit->flankingBonusMobilityAdd = luaL_checkfloat(L, 3);
+	}
+	else if (key == "minDamage") {
+		const float minDamage = luaL_checkfloat(L, 3);
+		const float maxDamage = unit->flankingBonusAvgDamage +
+		                        unit->flankingBonusDifDamage;
+		unit->flankingBonusAvgDamage = (maxDamage + minDamage) * 0.5f;
+		unit->flankingBonusDifDamage = (maxDamage - minDamage) * 0.5f;
+	}
+	else if (key == "maxDamage") {
+		const float maxDamage = luaL_checkfloat(L, 3);
+		const float minDamage = unit->flankingBonusAvgDamage -
+		                        unit->flankingBonusDifDamage;
+		unit->flankingBonusAvgDamage = (maxDamage + minDamage) * 0.5f;
+		unit->flankingBonusDifDamage = (maxDamage - minDamage) * 0.5f;
 	}
 	return 0;
 }
@@ -1507,11 +1553,22 @@ int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
 		return 0;
 	}
 	if (lua_isnumber(L, 2)) {
-		unit->travel = (float)lua_tonumber(L, 2);
+		unit->travel = lua_tofloat(L, 2);
 	}
 	if (lua_isnumber(L, 3)) {
-		unit->travelPeriod = (float)lua_tonumber(L, 3);
+		unit->travelPeriod = lua_tofloat(L, 3);
 	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitFuel(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	unit->currentFuel = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -1558,9 +1615,9 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 	}
 	const int args = lua_gettop(L);
 	if (args >= 4) {
-		const float3 pos((float)lua_tonumber(L, 2),
-		                 (float)lua_tonumber(L, 3),
-		                 (float)lua_tonumber(L, 4));
+		const float3 pos(luaL_checkfloat(L, 2),
+		                 luaL_checkfloat(L, 3),
+		                 luaL_checkfloat(L, 4));
 		const bool dgun = lua_isboolean(L, 5) && lua_toboolean(L, 5);
 		unit->AttackGround(pos, dgun);
 	}
@@ -1584,29 +1641,69 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L);
-	if (args == 10) {
-		const float xs = float(lua_tonumber(L, 2));
-		const float ys = float(lua_tonumber(L, 3));
-		const float zs = float(lua_tonumber(L, 4));
-		const float xo = float(lua_tonumber(L, 5));
-		const float yo = float(lua_tonumber(L, 6));
-		const float zo = float(lua_tonumber(L, 7));
-		const int vType = int(lua_tonumber(L,  8));
-		const int tType = int(lua_tonumber(L,  9));
-		const int pAxis = int(lua_tonumber(L, 10));
+	const float xs = luaL_checkfloat(L, 2);
+	const float ys = luaL_checkfloat(L, 3);
+	const float zs = luaL_checkfloat(L, 4);
+	const float xo = luaL_checkfloat(L, 5);
+	const float yo = luaL_checkfloat(L, 6);
+	const float zo = luaL_checkfloat(L, 7);
+	const int vType = luaL_checkint(L,  8);
+	const int tType = luaL_checkint(L,  9);
+	const int pAxis = luaL_checkint(L, 10);
 
-		const float3 scales(xs, ys, zs);
-		const float3 offsets(xo, yo, zo);
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
 
-		unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
-	} else {
-		luaL_error(L, "Incorrect arguments to SetUnitCollisionVolumeData()");
-	}
+	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 
 	return 0;
 }
 
+
+int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const string key = luaL_checkstring(L, 2);
+	const float radius = luaL_checkfloat(L, 3);
+
+	const int radarDiv    = (SQUARE_SIZE * RADAR_SIZE);
+	const int radarRadius = (int)(radius / (float)radarDiv);
+
+	if (key == "los") {
+		const int losRange = (int)(radius * loshandler->invLosDiv);
+		unit->ChangeLos(losRange, unit->realAirLosRadius);
+		unit->realLosRadius = losRange;
+		lua_pushnumber(L, unit->losRadius * loshandler->losDiv);
+	} else if (key == "airLos") {
+		const int airRange = (int)(radius * loshandler->invAirDiv);
+		unit->ChangeLos(unit->realLosRadius, airRange);
+		unit->realAirLosRadius = airRange;
+		lua_pushnumber(L, unit->airLosRadius * loshandler->airDiv);
+	} else if (key == "radar") {
+		unit->ChangeSensorRadius(&unit->radarRadius, radarRadius);
+		lua_pushnumber(L, unit->radarRadius * radarDiv);
+	} else if (key == "sonar") {
+		unit->ChangeSensorRadius(&unit->sonarRadius, radarRadius);
+		lua_pushnumber(L, unit->sonarRadius * radarDiv);
+	} else if (key == "seismic") {
+		unit->ChangeSensorRadius(&unit->seismicRadius, radarRadius);
+		lua_pushnumber(L, unit->seismicRadius * radarDiv);
+	} else if (key == "radarJammer") {
+		unit->ChangeSensorRadius(&unit->jammerRadius, radarRadius);
+		lua_pushnumber(L, unit->jammerRadius * radarDiv);
+	} else if (key == "sonarJammer") {
+		unit->ChangeSensorRadius(&unit->sonarJamRadius, radarRadius);
+		lua_pushnumber(L, unit->sonarJamRadius * radarDiv);
+	} else {
+		return 0; // unknown sensor type
+	}
+
+	return 1;
+}
 
 
 int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
@@ -1619,11 +1716,11 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 	if (unit->moveType == NULL) {
 		return 0;
 	}
-	const float3 pos((float)luaL_checknumber(L, 2),
-									 (float)luaL_checknumber(L, 3),
-									 (float)luaL_checknumber(L, 4));
-	const float radius = (float)luaL_optnumber(L, 5, 0.0f);
-	const float speed  = (float)luaL_optnumber(L, 6, unit->maxSpeed * 2.0f);
+	const float3 pos(luaL_checkfloat(L, 2),
+									 luaL_checkfloat(L, 3),
+									 luaL_checkfloat(L, 4));
+	const float radius = luaL_optfloat(L, 5, 0.0f);
+	const float speed  = luaL_optfloat(L, 6, unit->maxSpeed * 2.0f);
 
 	unit->moveType->StartMoving(pos, radius, speed);
 
@@ -1678,22 +1775,18 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetUnitPosition()");
-	}
 
 	if (lua_isnumber(L, 4)) {
-		float3 pos((float)lua_tonumber(L, 2),
-							 (float)lua_tonumber(L, 3),
-							 (float)lua_tonumber(L, 4));
+		float3 pos(luaL_checkfloat(L, 2),
+							 luaL_checkfloat(L, 3),
+							 luaL_checkfloat(L, 4));
 		unit->ForcedMove(pos);
 		return 0;
 	}
 
 	float x, y, z;
-	x = (float)lua_tonumber(L, 2);
-	z = (float)lua_tonumber(L, 3);
+	x = luaL_checkfloat(L, 2);
+	z = luaL_checkfloat(L, 3);
 	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
 		y = ground->GetHeight(x, z);
 	} else {
@@ -1711,14 +1804,9 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetUnitRotation()");
-	}
-	const float3 rot((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+	const float3 rot(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	CMatrix44f matrix;
 	matrix.RotateZ(rot.z);
 	matrix.RotateX(rot.x);
@@ -1747,14 +1835,9 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetUnitVelocity()");
-	}
-	float3 dir((float)lua_tonumber(L, 2),
-	           (float)lua_tonumber(L, 3),
-	           (float)lua_tonumber(L, 4));
+	float3 dir(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
 	unit->speed = dir;
 	return 0;
 }
@@ -1766,13 +1849,13 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const float damage   = (float)luaL_checknumber(L, 2);
+	const float damage   = luaL_checkfloat(L, 2);
 	const int paralyze   = luaL_optint(L, 3, 0);
 	const int attackerID = luaL_optint(L, 4, -1);
 	const int weaponID   = luaL_optint(L, 5, -1);
-	const float3 impulse = float3((float)luaL_optnumber(L, 6, 0.0f),
-	                              (float)luaL_optnumber(L, 7, 0.0f),
-	                              (float)luaL_optnumber(L, 8, 0.0f));
+	const float3 impulse = float3(luaL_optfloat(L, 6, 0.0f),
+	                              luaL_optfloat(L, 7, 0.0f),
+	                              luaL_optfloat(L, 8, 0.0f));
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
@@ -1805,16 +1888,23 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to AddUnitImpulse()");
-	}
-	float3 impulse((float)lua_tonumber(L, 2),
-	               (float)lua_tonumber(L, 3),
-	               (float)lua_tonumber(L, 4));
+	float3 impulse(luaL_checkfloat(L, 2),
+	               luaL_checkfloat(L, 3),
+	               luaL_checkfloat(L, 4));
 	unit->residualImpulse += impulse;
 	unit->moveType->ImpulseAdded();
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AddUnitSeismicPing(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const float pingSize = luaL_checkfloat(L, 2);
+	unit->DoSeismicPing(pingSize);
 	return 0;
 }
 
@@ -1828,14 +1918,9 @@ int LuaSyncedCtrl::AddUnitResource(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to AddUnitResource()");
-	}
+	const string type = luaL_checkstring(L, 2);
 
-	const string type = lua_tostring(L, 2);
-
-	const float value = max(0.0f, float(lua_tonumber(L, 3)));
+	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
 		unit->AddMetal(value);
@@ -1852,11 +1937,6 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
-		luaL_error(L, "Incorrect arguments to UseUnitResource()");
 	}
 
 	if (lua_isstring(L, 2)) {
@@ -1898,6 +1978,10 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 		}
 		return 1;
 	}
+	else {
+		luaL_error(L, "Incorrect arguments to UseUnitResource()");
+	}
+		
 	return 0;
 }
 
@@ -1938,25 +2022,24 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 int LuaSyncedCtrl::CreateFeature(lua_State* L)
 {
 	CheckAllowGameChanges(L);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    // name, pos[, heading[, allyTeam]]
-	    !lua_isstring(L, 1) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to CreateFeature()");
+
+	const FeatureDef* featureDef = NULL;
+	if (lua_israwstring(L, 1)) {
+		featureDef = featureHandler->GetFeatureDef(lua_tostring(L, 1));
+	} else if (lua_israwnumber(L, 1)) {
+		featureDef = featureHandler->GetFeatureDefByID(lua_toint(L, 1));
 	}
-	const string defName = lua_tostring(L, 1);
-	const FeatureDef* featureDef = featureHandler->GetFeatureDef(defName);
 	if (featureDef == NULL) {
 		return 0; // do not error  (featureDefs are dynamic)
 	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 
 	short int heading = 0;
-	if ((args >= 5) && lua_isnumber(L, 5)) {
-		heading = (int)lua_tonumber(L, 5);
+	if (lua_isnumber(L, 5)) {
+		heading = lua_toint(L, 5);
 	}
 
 	int team = CtrlTeam();
@@ -1966,8 +2049,8 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// FIXME -- separate teamcolor/allyteam arguments
 
-	if ((args >= 6) && lua_isnumber(L, 6)) {
-		team = (int)lua_tonumber(L, 6);
+	if (lua_isnumber(L, 6)) {
+		team = lua_toint(L, 6);
 		if (team < -1) {
 			team = -1;
 		} else if (team >= MAX_TEAMS) {
@@ -2023,11 +2106,7 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to TransferFeature()");
-	}
-	const int team = (int)lua_tonumber(L, 2);
+	const int team = luaL_checkint(L, 2);
 	if (team >= MAX_TEAMS) {
 		return 0;
 	}
@@ -2041,11 +2120,7 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetFeatureHealth()");
-	}
-	feature->health = (float)lua_tonumber(L, 2);
+	feature->health = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -2056,11 +2131,7 @@ int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetFeatureReclaim()");
-	}
-	feature->reclaimLeft = (float)lua_tonumber(L, 2);
+	feature->reclaimLeft = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -2071,14 +2142,9 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetFeaturePosition()");
-	}
-	const float3 pos((float)lua_tonumber(L, 2),
-	                 (float)lua_tonumber(L, 3),
-	                 (float)lua_tonumber(L, 4));
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	feature->ForcedMove(pos);
 	return 0;
 }
@@ -2090,14 +2156,9 @@ int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to SetFeatureDirection()");
-	}
-	float3 dir((float)lua_tonumber(L, 2),
-	           (float)lua_tonumber(L, 3),
-	           (float)lua_tonumber(L, 4));
+	float3 dir(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
 	dir.Normalize();
 	feature->ForcedSpin(dir);
 	return 0;
@@ -2110,11 +2171,9 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
+	feature->createdFromUnit = luaL_checkstring(L, 2);
+
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetFeatureResurrect()");
-	}
-	feature->createdFromUnit = lua_tostring(L, 2);
 	if (args >= 3) {
 		feature->buildFacing = ParseFacing(L, __FUNCTION__, 3);
 	}
@@ -2128,8 +2187,7 @@ int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetFeatureNoSelect()");
 	}
 	feature->noSelect = !!lua_toboolean(L, 2);
@@ -2147,79 +2205,64 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const int args = lua_gettop(L);
-	if (args == 10) {
-		const float xs = float(lua_tonumber(L, 2));
-		const float ys = float(lua_tonumber(L, 3));
-		const float zs = float(lua_tonumber(L, 4));
-		const float xo = float(lua_tonumber(L, 5));
-		const float yo = float(lua_tonumber(L, 6));
-		const float zo = float(lua_tonumber(L, 7));
-		const int vType = int(lua_tonumber(L,  8));
-		const int tType = int(lua_tonumber(L,  9));
-		const int pAxis = int(lua_tonumber(L, 10));
+	const float xs = luaL_checkfloat(L, 2);
+	const float ys = luaL_checkfloat(L, 3);
+	const float zs = luaL_checkfloat(L, 4);
+	const float xo = luaL_checkfloat(L, 5);
+	const float yo = luaL_checkfloat(L, 6);
+	const float zo = luaL_checkfloat(L, 7);
+	const int vType = luaL_checkint(L,  8);
+	const int tType = luaL_checkint(L,  9);
+	const int pAxis = luaL_checkint(L, 10);
 
-		const float3 scales(xs, ys, zs);
-		const float3 offsets(xo, yo, zo);
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
 
-		feature->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
-	} else {
-		luaL_error(L, "Incorrect arguments to SetFeatureCollisionVolumeData()");
-	}
+	feature->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 
 	return 0;
 }
-
 
 /******************************************************************************/
 /******************************************************************************/
 
 int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 {
-	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
-	if (pro == NULL) {
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
 		return 0;
 	}
 
-	const int argc = lua_gettop(L);
-	if (argc == 4) {
-		pro->pos.x = lua_isnumber(L, 2)? float(lua_tonumber(L, 2)): 0.0f;
-		pro->pos.y = lua_isnumber(L, 3)? float(lua_tonumber(L, 3)): 0.0f;
-		pro->pos.z = lua_isnumber(L, 4)? float(lua_tonumber(L, 4)): 0.0f;
-	} else {
-		luaL_error(L, "Incorrect arguments to SetProjectilePosition()");
-	}
+	proj->pos.x = luaL_optfloat(L, 2, 0.0f);
+	proj->pos.y = luaL_optfloat(L, 3, 0.0f);
+	proj->pos.z = luaL_optfloat(L, 4, 0.0f);
 
 	return 0;
 }
 
+
 int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 {
-	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
-	if (pro == NULL) {
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
 		return 0;
 	}
 
-	const int argc = lua_gettop(L);
-	if (argc == 4) {
-		pro->speed.x = lua_isnumber(L, 2)? float(lua_tonumber(L, 2)): 0.0f;
-		pro->speed.y = lua_isnumber(L, 3)? float(lua_tonumber(L, 3)): 0.0f;
-		pro->speed.z = lua_isnumber(L, 4)? float(lua_tonumber(L, 4)): 0.0f;
-	} else {
-		luaL_error(L, "Incorrect arguments to SetProjectileVelocity()");
-	}
+	proj->speed.x = luaL_optfloat(L, 2, 0.0f);
+	proj->speed.y = luaL_optfloat(L, 3, 0.0f);
+	proj->speed.z = luaL_optfloat(L, 4, 0.0f);
 
 	return 0;
 }
 
 int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 {
-	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
-	if (pro == NULL) {
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
 		return 0;
 	}
 
-	pro->Collision();
+	proj->Collision();
 
 	return 0;
 }
@@ -2465,23 +2508,16 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 3) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)|| !lua_isnumber(L, 3)) {
-			luaL_error(L, "Incorrect arguments to %s()", caller);
-		}
-		fx1 = fx2 = (float)lua_tonumber(L, 1);
-		fz1 = fz2 = (float)lua_tonumber(L, 2);
-		factor    = (float)lua_tonumber(L, 3);
+		fx1 = fx2 = luaL_checkfloat(L, 1);
+		fz1 = fz2 = luaL_checkfloat(L, 2);
+		factor    = luaL_checkfloat(L, 3);
 	}
 	else if (args == 5) {
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) ||
-		    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
-			luaL_error(L, "Incorrect arguments to %s()", caller);
-		}
-		fx1    = (float)lua_tonumber(L, 1);
-		fz1    = (float)lua_tonumber(L, 2);
-		fx2    = (float)lua_tonumber(L, 3);
-		fz2    = (float)lua_tonumber(L, 4);
-		factor = (float)lua_tonumber(L, 5);
+		fx1    = luaL_checkfloat(L, 1);
+		fz1    = luaL_checkfloat(L, 2);
+		fx2    = luaL_checkfloat(L, 3);
+		fz2    = luaL_checkfloat(L, 4);
+		factor = luaL_checkfloat(L, 5);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
@@ -2577,31 +2613,23 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
-	const int argc = lua_gettop(L);
-
-	if (argc == 9 && lua_isstring(L, 1)) {
-		const string name = lua_tostring(L, 1);
-		const float posx  = lua_isnumber(L, 2)? lua_tonumber(L, 2): 0.0f;
-		const float posy  = lua_isnumber(L, 3)? lua_tonumber(L, 3): 0.0f;
-		const float posz  = lua_isnumber(L, 4)? lua_tonumber(L, 4): 0.0f;
-		const float dirx  = lua_isnumber(L, 5)? lua_tonumber(L, 5): 0.0f;
-		const float diry  = lua_isnumber(L, 6)? lua_tonumber(L, 6): 0.0f;
-		const float dirz  = lua_isnumber(L, 7)? lua_tonumber(L, 7): 0.0f;
-		const float rad   = lua_isnumber(L, 8)? lua_tonumber(L, 8): 0.0f;
-		const float dmg   = lua_isnumber(L, 9)? lua_tonumber(L, 9): 0.0f;
-		const float dmgMod = 1.0f;
-
-		if (!name.empty()) {
-			const float3 pos(posx, posy, posz);
-			const float3 dir(dirx, diry, dirz);
-
-			CCustomExplosionGenerator g;
-			g.Load(explGenHandler, name);
-			g.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
-		}
-	} else {
-		luaL_error(L, "Incorrect arguments to SpawnCEG()");
+	const string name = luaL_checkstring(L, 1);
+	const float3 pos(luaL_optfloat(L, 2, 0.0f),
+									 luaL_optfloat(L, 3, 0.0f),
+									 luaL_optfloat(L, 4, 0.0f));
+	const float3 dir(luaL_optfloat(L, 5, 0.0f),
+									 luaL_optfloat(L, 6, 0.0f),
+									 luaL_optfloat(L, 7, 0.0f));
+	const float rad = luaL_optfloat(L, 8, 0.0f);
+	const float dmg = luaL_optfloat(L, 9, 0.0f);
+	const float dmgMod = 1.0f;
+	if (name.empty()) {
+		return 0;
 	}
+
+	CCustomExplosionGenerator g;
+	g.Load(explGenHandler, name);
+	g.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
 
 	return 0;
 }
@@ -2614,8 +2642,7 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 	if (!FullCtrl()) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isboolean(L, 1)) {
+	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetNoPause()");
 	}
 	// Important: only works in server mode, has no effect in client mode
@@ -2631,8 +2658,7 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 	if (!FullCtrl()) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isboolean(L, 1)) {
+	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetUnitToFeature()");
 	}
 	uh->morphUnitToFeature = lua_toboolean(L, 1);
@@ -2645,19 +2671,19 @@ int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 	if (!FullCtrl()) {
 		return 0;
 	}
-	const float expGrade = (float)luaL_checknumber(L, 1);
+	const float expGrade = luaL_checkfloat(L, 1);
 	CUnit::SetExpGrade(expGrade);
 
 	// NOTE: for testing, should be using modrules.tdf
 	if (gs->cheatEnabled) {
 		if (lua_isnumber(L, 2)) {
-			CUnit::SetExpPowerScale((float)lua_tonumber(L, 2));
+			CUnit::SetExpPowerScale(lua_tofloat(L, 2));
 		}
 		if (lua_isnumber(L, 3)) {
-			CUnit::SetExpHealthScale((float)lua_tonumber(L, 3));
+			CUnit::SetExpHealthScale(lua_tofloat(L, 3));
 		}
 		if (lua_isnumber(L, 4)) {
-			CUnit::SetExpReloadScale((float)lua_tonumber(L, 4));
+			CUnit::SetExpReloadScale(lua_tofloat(L, 4));
 		}
 	}
 	return 0;
@@ -2674,7 +2700,7 @@ static bool ParseNamedInt(lua_State* L, const string& key,
 		return false;
 	}
 	if (lua_isnumber(L, -1)) {
-		value = (int)lua_tonumber(L, -1);
+		value = lua_toint(L, -1);
 	} else {
 		luaL_error(L, "bad %s argument", name.c_str());
 	}
@@ -2737,7 +2763,7 @@ static int ParseFloatVector(lua_State* L, int index, vector<float>& floatvec)
 	while (true) {
 		lua_rawgeti(L, index, i);
 		if (lua_isnumber(L, -1)) {
-			floatvec.push_back((float)lua_tonumber(L, -1));
+			floatvec.push_back(lua_tofloat(L, -1));
 			lua_pop(L, 1);
 			i++;
 		} else {
@@ -2755,7 +2781,7 @@ static int ParseIntVector(lua_State* L, int index, vector<float>& intvec)
 	while (true) {
 		lua_rawgeti(L, index, i);
 		if (lua_isnumber(L, -1)) {
-			intvec.push_back((int)lua_tonumber(L, -1));
+			intvec.push_back(lua_toint(L, -1));
 			lua_pop(L, 1);
 			i++;
 		} else {
@@ -2788,7 +2814,7 @@ static bool ParseCommandDescription(lua_State* L, int table,
 		    ParseNamedString(L, key, "tooltip",     cd.tooltip)    ||
 		    ParseNamedString(L, key, "texture",     cd.iconname)   ||
 		    ParseNamedString(L, key, "cursor",      cd.mouseicon)  ||
-		    ParseNamedBool(L,   key, "hidden",      cd.onlyKey)    ||
+		    ParseNamedBool(L,   key, "hidden",      cd.hidden)     ||
 		    ParseNamedBool(L,   key, "disabled",    cd.disabled)   ||
 		    ParseNamedBool(L,   key, "showUnique",  cd.showUnique) ||
 		    ParseNamedBool(L,   key, "onlyTexture", cd.onlyTexture)) {
@@ -2811,11 +2837,6 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	if (!FullCtrl()) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 3) ||
-	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_istable(L, 3)) {
-		luaL_error(L, "Incorrect arguments to EditUnitCmdDesc");
-	}
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -2823,7 +2844,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	}
 	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
-	const int cmdDescID = (int)lua_tonumber(L, 2) - 1;
+	const int cmdDescID = luaL_checkint(L, 2) - 1;
 	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
 		return 0;
 	}
@@ -2860,7 +2881,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 
 	int cmdDescID = (int)cmdDescs.size();
 	if (args >= 3) {
-		cmdDescID = (int)lua_tonumber(L, 2) - 1;
+		cmdDescID = lua_toint(L, 2) - 1;
 		if (cmdDescID < 0) {
 			cmdDescID = 0;
 		}
@@ -2888,10 +2909,6 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	if (!FullCtrl()) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to RemoveUnitCmdDesc");
-	}
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -2900,8 +2917,8 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
 	int cmdDescID = (int)cmdDescs.size() - 1;
-	if ((args >= 2) && lua_isnumber(L, 2)) {
-		cmdDescID = (int)lua_tonumber(L, 2) - 1;
+	if (lua_isnumber(L, 2)) {
+		cmdDescID = lua_toint(L, 2) - 1;
 	}
 
 	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {

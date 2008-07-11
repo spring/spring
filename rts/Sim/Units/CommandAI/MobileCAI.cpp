@@ -99,9 +99,9 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	c.name="Load units";
 	c.mouseicon=c.name;
 	c.tooltip="Sets the unit to load itself onto a transport";
-	c.onlyKey = true;
+	c.hidden = true;
 	possibleCommands.push_back(c);
-	c.onlyKey = false;
+	c.hidden = false;
 
 	if (owner->unitDef->canmove) {
 		c.id=CMD_MOVE;

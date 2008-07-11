@@ -13,7 +13,7 @@
 struct MoveData;
 struct WeaponDef;
 struct S3DOModel;
-struct UnitImage;
+struct UnitDefImage;
 struct CollisionVolume;
 class CExplosionGenerator;
 
@@ -93,7 +93,6 @@ struct UnitDef
 	~UnitDef();
 	S3DOModel* LoadModel(int team) const;
 
-	UnitImage* unitImage;	// GLuint wrapper pointing to build-pic data of this unit type
 	bool valid;
 	std::string name;
 	std::string humanName;
@@ -231,8 +230,11 @@ struct UnitDef
 	std::string deathExplosion;
 	std::string selfDExplosion;
 
-	std::string TEDClassString;	//these might be changed later for something better
+	std::string TEDClassString;	// these might be changed later for something better
 	std::string categoryString;
+
+	std::string buildPicName;
+	mutable UnitDefImage* buildPic;
 
 	mutable CIcon iconType;
 
@@ -310,6 +312,7 @@ struct UnitDef
 	int transportSize;
 	int minTransportSize;
 	bool isAirBase;
+	bool isFirePlatform;							// should the carried units still be able to shoot?
 	float transportMass;
 	float minTransportMass;
 	bool holdSteady;
@@ -384,7 +387,6 @@ struct UnitDef
 	int buildingDecalSizeX;
 	int buildingDecalSizeY;
 	float buildingDecalDecaySpeed;
-	bool isfireplatform;							// should the carried units still be able to shoot?
 
 	bool showNanoFrame;								// Does the nano frame animation get shown during construction?
 	bool showNanoSpray;								// Does nano spray get shown at all?

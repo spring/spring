@@ -10,7 +10,6 @@
 #include "Game/Player.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Map/Ground.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -25,6 +24,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "mmgr.h"
@@ -315,7 +315,7 @@ void CWeapon::Update()
 			numStockpileQued--;
 			numStockpiled++;
 			owner->commandAI->StockpileChanged(this);
-			luaCallIns.StockpileChanged(owner, this, oldCount);
+			eventHandler.StockpileChanged(owner, this, oldCount);
 		}
 	}
 
@@ -354,7 +354,7 @@ void CWeapon::Update()
 					const int oldCount = numStockpiled;
 					numStockpiled--;
 					owner->commandAI->StockpileChanged(this);
-					luaCallIns.StockpileChanged(owner, this, oldCount);
+					eventHandler.StockpileChanged(owner, this, oldCount);
 				} else {
 					owner->UseEnergy(energyFireCost);
 					owner->UseMetal(metalFireCost);
@@ -427,7 +427,7 @@ void CWeapon::Update()
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
 				if (owner->isCloaked) {
 					owner->isCloaked = false;
-					luaCallIns.UnitDecloaked(owner);
+					eventHandler.UnitDecloaked(owner);
 				}
 				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
 			}

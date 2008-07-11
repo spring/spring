@@ -236,7 +236,7 @@ void LuaUtils::ParseCommand(lua_State* L, const char* caller,
 	if (!lua_isnumber(L, idIndex)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	cmd.id = (int)lua_tonumber(L, idIndex);
+	cmd.id = lua_toint(L, idIndex);
 
 	// params
 	const int paramTable = (idIndex + 1);
@@ -248,7 +248,7 @@ void LuaUtils::ParseCommand(lua_State* L, const char* caller,
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
-			const float value = (float)lua_tonumber(L, -1);
+			const float value = lua_tofloat(L, -1);
 			cmd.params.push_back(value);
 		}
 	}
@@ -268,7 +268,7 @@ void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
 	if (!lua_isnumber(L, -1)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	cmd.id = (int)lua_tonumber(L, -1);
+	cmd.id = lua_toint(L, -1);
 	lua_pop(L, 1);
 
 	// params
@@ -282,7 +282,7 @@ void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
 			if (!lua_isnumber(L, -1)) {
 				luaL_error(L, "%s(): bad param table entry", caller);
 			}
-			const float value = (float)lua_tonumber(L, -1);
+			const float value = lua_tofloat(L, -1);
 			cmd.params.push_back(value);
 		}
 	}

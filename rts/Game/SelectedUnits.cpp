@@ -15,7 +15,6 @@
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Lua/LuaCallInHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
 #include "UI/LuaUI.h"
@@ -31,6 +30,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "System/EventHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "Player.h"
 #include "Camera.h"
@@ -75,46 +75,52 @@ void CSelectedUnits::ToggleBuildIconsFirst()
 
 CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 {
-	possibleCommandsChanged=false;
+	possibleCommandsChanged = false;
 
-	if(selectedGroup!=-1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai){
+	if (selectedGroup != -1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
 		AvailableCommandsStruct ac;
-		ac.commandPage=grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage;
-		ac.commands=grouphandlers[gu->myTeam]->groups[selectedGroup]->GetPossibleCommands();
+		ac.commandPage = grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage;
+		ac.commands = grouphandlers[gu->myTeam]->groups[selectedGroup]->GetPossibleCommands();
 
 		CommandDescription c;			//make sure we can clear the group even when selected
-		c.id=CMD_GROUPCLEAR;
-		c.action="groupclear";
-		c.type=CMDTYPE_ICON;
-		c.name="Clear group";
-		c.tooltip="Removes the units from any group they belong to";
+		c.id      = CMD_GROUPCLEAR;
+		c.action  = "groupclear";
+		c.type    = CMDTYPE_ICON;
+		c.name    = "Clear group";
+		c.tooltip = "Removes the units from any group they belong to";
 		ac.commands.push_back(c);
 
 		return ac;
 	}
 
-	int commandPage=1000;
-	int foundGroup=-2;
-	int foundGroup2=-2;
-	map<int,int> count;
+	int commandPage = 1000;
+	int foundGroup = -2;
+	int foundGroup2 = -2;
+	map<int, int> states;
 
-	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
+	for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+		vector<CommandDescription>* c = &(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
-		for(ci=c->begin();ci!=c->end();++ci)
-			count[ci->id]=1;
-		if((*ui)->commandAI->lastSelectedCommandPage<commandPage)
-			commandPage=(*ui)->commandAI->lastSelectedCommandPage;
+		for (ci = c->begin(); ci != c->end(); ++ci) {
+			states[ci->id] = ci->disabled ? 2 : 1;
+		}
+		if ((*ui)->commandAI->lastSelectedCommandPage < commandPage) {
+			commandPage = (*ui)->commandAI->lastSelectedCommandPage;
+		}
 
-		if(foundGroup==-2 && (*ui)->group)
-			foundGroup=(*ui)->group->id;
-		if(!(*ui)->group || foundGroup!=(*ui)->group->id)
-			foundGroup=-1;
+		if (foundGroup == -2 && (*ui)->group) {
+			foundGroup = (*ui)->group->id;
+		}
+		if (!(*ui)->group || foundGroup!=(*ui)->group->id) {
+			foundGroup = -1;
+		}
 
-		if(foundGroup2==-2 && (*ui)->group)
-			foundGroup2=(*ui)->group->id;
-		if(foundGroup2>=0 && (*ui)->group && (*ui)->group->id!=foundGroup2)
-			foundGroup2=-1;
+		if (foundGroup2 == -2 && (*ui)->group) {
+			foundGroup2 = (*ui)->group->id;
+		}
+		if (foundGroup2 >= 0 && (*ui)->group && (*ui)->group->id != foundGroup2) {
+			foundGroup2 = -1;
+		}
 	}
 
 	vector<CommandDescription> groupCommands;
@@ -143,11 +149,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		// add the selected units to a previous group (that at least one unit is also selected from)
 		if ((foundGroup < 0) && (foundGroup2 >= 0)) {
 			CommandDescription c;
-			c.id=CMD_GROUPADD;
-			c.action="groupadd";
-			c.type=CMDTYPE_ICON;
-			c.name="Add to group";
-			c.tooltip="Adds the selected to an existing group (of which one or more units is already selected)";
+			c.id      = CMD_GROUPADD;
+			c.action  = "groupadd";
+			c.type    = CMDTYPE_ICON;
+			c.name    = "Add to group";
+			c.tooltip = "Adds the selected to an existing group (of which one or more units is already selected)";
 			groupCommands.push_back(c);
 		}
 
@@ -155,11 +161,11 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		if (foundGroup >= 0) {
 			CommandDescription c;
 
-			c.id=CMD_GROUPSELECT;
-			c.action="groupselect";
-			c.type=CMDTYPE_ICON;
-			c.name="Select group";
-			c.tooltip="Select the group that these units belong to";
+			c.id      = CMD_GROUPSELECT;
+			c.action  = "groupselect";
+			c.type    = CMDTYPE_ICON;
+			c.name    = "Select group";
+			c.tooltip = "Select the group that these units belong to";
 			groupCommands.push_back(c);
 		}
 
@@ -167,70 +173,72 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 		if (foundGroup2 != -2) {
 			CommandDescription c;
 
-			c.id=CMD_GROUPCLEAR;
-			c.action="groupclear";
-			c.type=CMDTYPE_ICON;
-			c.name="Clear group";
-			c.tooltip="Removes the units from any group they belong to";
+			c.id      = CMD_GROUPCLEAR;
+			c.action  = "groupclear";
+			c.type    = CMDTYPE_ICON;
+			c.name    = "Clear group";
+			c.tooltip = "Removes the units from any group they belong to";
 			groupCommands.push_back(c);
 		}
 	} // end if (!gs->noHelperAIs)
 
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
-	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
+	for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+		vector<CommandDescription>* c = &(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
-		for(ci=c->begin(); ci!=c->end(); ++ci){
+		for (ci = c->begin(); ci != c->end(); ++ci) {
 			if (buildIconsFirst) {
 				if (ci->id >= 0) { continue; }
 			} else {
 				if (ci->id < 0)  { continue; }
 			}
-			if(ci->showUnique && selectedUnits.size()>1)
+			if (ci->showUnique && selectedUnits.size() > 1) {
 				continue;
-			if(count[ci->id]>0){
+			}
+			if (states[ci->id] > 0) {
 				commands.push_back(*ci);
-				count[ci->id]=0;
+				states[ci->id] = 0;
 			}
 		}
 	}
 
 	if (!buildIconsFirst && !gs->noHelperAIs) {
 		vector<CommandDescription>::iterator ci;
-		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
+		for(ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
 			commands.push_back(*ci);
 		}
 	}
 
 	// load the second set  (all those that have not already been included)
-	for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
-		vector<CommandDescription>* c=&(*ui)->commandAI->GetPossibleCommands();
+	for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+		vector<CommandDescription>* c = &(*ui)->commandAI->GetPossibleCommands();
 		vector<CommandDescription>::iterator ci;
-		for(ci=c->begin(); ci!=c->end(); ++ci){
+		for (ci = c->begin(); ci != c->end(); ++ci) {
 			if (buildIconsFirst) {
 				if (ci->id < 0)  { continue; }
 			} else {
 				if (ci->id >= 0) { continue; }
 			}
-			if(ci->showUnique && selectedUnits.size()>1)
+			if (ci->showUnique && selectedUnits.size() > 1) {
 				continue;
-			if(count[ci->id]>0){
+			}
+			if (states[ci->id] > 0) {
 				commands.push_back(*ci);
-				count[ci->id]=0;
+				states[ci->id] = 0;
 			}
 		}
 	}
 	if (buildIconsFirst && !gs->noHelperAIs) {
 		vector<CommandDescription>::iterator ci;
-		for(ci=groupCommands.begin(); ci!=groupCommands.end(); ++ci){
+		for (ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
 			commands.push_back(*ci);
 		}
 	}
 
 	AvailableCommandsStruct ac;
-	ac.commandPage=commandPage;
-	ac.commands=commands;
+	ac.commandPage = commandPage;
+	ac.commands = commands;
 	return ac;
 }
 
@@ -349,7 +357,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	if (unit->transporter != NULL && !unit->transporter->unitDef->isfireplatform) {
+	if (unit->transporter != NULL && !unit->transporter->unitDef->isFirePlatform) {
 		return;
 	}
 
@@ -418,8 +426,8 @@ void CSelectedUnits::SelectGroup(int num)
 	}
 	ENTER_UNSYNCED;
 
-	possibleCommandsChanged=true;
 	selectionChanged=true;
+	possibleCommandsChanged=true;
 }
 
 
@@ -608,7 +616,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 {
 	// NOTE: the unitDef->aihint value is being ignored
 	int luaCmd;
-	if (luaCallIns.DefaultCommand(unit, feature, luaCmd)) {
+	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
 		return luaCmd;
 	}
 

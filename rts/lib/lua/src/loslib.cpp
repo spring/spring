@@ -18,6 +18,7 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
+#include "lstate.h" /* SPRING */
 
 
 static int os_pushresult (lua_State *L, int i, const char *filename) {
@@ -36,21 +37,38 @@ static int os_pushresult (lua_State *L, int i, const char *filename) {
 
 
 static int os_execute (lua_State *L) {
-  lua_pushinteger(L, system(luaL_optstring(L, 1, NULL)));
+  if (!G(L)->system_func) { /* SPRING */
+    lua_pushinteger(L, -1);
+  } else {
+    lua_pushinteger(L, G(L)->system_func(L, luaL_optstring(L, 1, NULL)));
+  }
   return 1;
 }
 
 
 static int os_remove (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
-  return os_pushresult(L, remove(filename) == 0, filename);
+  int success = 0;
+  if (!G(L)->remove_func) { /* SPRING */
+    lua_pushnil(L);
+    lua_pushliteral(L, "os.remove() is not available");
+    lua_pushnumber(L, 0);
+    return 3;
+  }
+  return os_pushresult(L, G(L)->remove_func(L, filename) == 0, filename);
 }
 
 
 static int os_rename (lua_State *L) {
   const char *fromname = luaL_checkstring(L, 1);
   const char *toname = luaL_checkstring(L, 2);
-  return os_pushresult(L, rename(fromname, toname) == 0, fromname);
+  if (!G(L)->rename_func) { /* SPRING */
+    lua_pushnil(L);
+    lua_pushliteral(L, "os.rename() is not available");
+    lua_pushnumber(L, 0);
+    return 3;
+  }
+  return os_pushresult(L, G(L)->rename_func(L, fromname, toname) == 0, fromname);
 }
 
 

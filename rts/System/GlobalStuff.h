@@ -493,6 +493,9 @@ public:
 	 */
 	float lastFrameTime;
 
+	// the draw frame number (never 0)
+	unsigned int drawFrame;
+
 	// the screen size in pixels
 	int screenSizeX;
 	int screenSizeY;

@@ -35,9 +35,9 @@ class FileSystemHandler
 		virtual bool mkdir(const std::string& dir) const = 0;
 
 		// custom functions
-		virtual std::string GetWriteDir() const = 0;
 		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const = 0;
 		virtual std::string LocateFile(const std::string& file) const = 0;
+		virtual std::string GetWriteDir() const = 0;
 		virtual std::vector<std::string> GetDataDirectories() const = 0;
 
 		int GetNativePathSeparator() const { return native_path_separator; }
@@ -91,6 +91,8 @@ class FileSystem
 		std::string glob_to_regex(const std::string& glob) const;
 		std::string& FixSlashes  (std::string& path) const;
 		std::string& ForwardSlashes(std::string& path) const;
+		bool InReadDir(const std::string& path);
+		bool InWriteDir(const std::string& path, const std::string& prefix = "");
 
 	private:
 		bool CheckFile(const std::string& file) const;

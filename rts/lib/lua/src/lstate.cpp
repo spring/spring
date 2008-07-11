@@ -186,6 +186,15 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   }
   else
     luai_userstateopen(L);
+
+  /* SPRING additions, default to disabled functions */
+  g->fopen_func  = NULL;
+  g->popen_func  = NULL;
+  g->pclose_func = NULL;
+  g->system_func = NULL;
+  g->remove_func = NULL;
+  g->rename_func = NULL;
+
   return L;
 }
 

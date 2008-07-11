@@ -33,7 +33,7 @@ float4::float4()
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapName)
+CMapInfo::CMapInfo(const string& mapName, bool onlyBasics)
 {
 	map.name = mapName;
 
@@ -54,13 +54,15 @@ CMapInfo::CMapInfo(const string& mapName)
 	resRoot = &resTbl;
 
 	ReadGlobal();
-	ReadAtmosphere();
-	ReadGui();
-	ReadLight();
-	ReadWater();
-	ReadSmf();
-	ReadSm3();
-	ReadTerrainTypes();
+	if (!onlyBasics) {
+		ReadAtmosphere();
+		ReadGui();
+		ReadLight();
+		ReadWater();
+		ReadSmf();
+		ReadSm3();
+		ReadTerrainTypes();
+	}
 }
 
 
@@ -74,7 +76,8 @@ void CMapInfo::ReadGlobal()
 	const LuaTable topTable = *mapRoot;
 	
 	map.humanName    = topTable.GetString("description", map.name);
-	map.wantedScript = topTable.GetString("script", map.wantedScript);
+	map.author       = topTable.GetString("author", "");
+	map.wantedScript = topTable.GetString("script", "");
 
 	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
 	map.notDeformable = topTable.GetBool("notDeformable", false);

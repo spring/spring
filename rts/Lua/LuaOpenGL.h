@@ -136,6 +136,7 @@ class LuaOpenGL {
 		static int Lighting(lua_State* L);
 		static int ShadeModel(lua_State* L);
 		static int Scissor(lua_State* L);
+		static int Viewport(lua_State* L);
 		static int ColorMask(lua_State* L);
 		static int DepthMask(lua_State* L);
 		static int DepthTest(lua_State* L);
@@ -256,6 +257,7 @@ class LuaOpenGL {
 		static int Finish(lua_State* L);
 
 		static int ReadPixels(lua_State* L);
+		static int SaveImage(lua_State* L);
 
 		static int CreateQuery(lua_State* L);
 		static int DeleteQuery(lua_State* L);

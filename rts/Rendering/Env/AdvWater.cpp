@@ -15,7 +15,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Lua/LuaCallInHandler.h"
+#include "System/EventHandler.h"
 #include "Map/MapInfo.h"
 #include "mmgr.h"
 
@@ -344,7 +344,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
-	luaCallIns.DrawWorldReflection();
+	eventHandler.DrawWorldReflection();
 
 	game->SetDrawMode(CGame::normalDraw);
 

@@ -7,7 +7,7 @@
 #include <cctype>
 
 #include "UnitDef.h"
-#include "UnitImage.h"
+#include "UnitDefImage.h"
 
 #include "FileSystem/FileHandler.h"
 #include "Game/Game.h"
@@ -119,10 +119,10 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].name = unitName;
 		unitDefs[id].id = id;
 		unitDefs[id].buildangle = 0;
-		unitDefs[id].unitImage  = 0;
-		unitDefs[id].collisionVolume = 0;
-		unitDefs[id].techLevel  = -1;
+		unitDefs[id].buildPic   = NULL;
 		unitDefs[id].decoyDef   = NULL;
+		unitDefs[id].techLevel  = -1;
+		unitDefs[id].collisionVolume = NULL;
 		unitID[unitName] = id;
 		for (int ym = 0; ym < 4; ym++) {
 			unitDefs[id].yardmaps[ym] = 0;
@@ -150,18 +150,23 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
-		for (int u = 0; u < 4; u++)
-			delete[] unitDefs[i].yardmaps[u];
-
-		if (unitDefs[i].unitImage) {
-			glDeleteTextures(1, &unitDefs[i].unitImage->textureID);
-			delete unitDefs[i].unitImage;
-			unitDefs[i].unitImage = 0;
+		UnitDef& ud = unitDefs[i];
+		for (int u = 0; u < 4; u++) {
+			delete[] ud.yardmaps[u];
 		}
 
-		delete unitDefs[i].collisionVolume;
-		unitDefs[i].collisionVolume = 0;
+		if (ud.buildPic) {
+			if (ud.buildPic->textureOwner) {
+				glDeleteTextures(1, &unitDefs[i].buildPic->textureID);
+			}
+			delete ud.buildPic;
+			ud.buildPic = NULL;
+		}
+
+		delete ud.collisionVolume;
+		ud.collisionVolume = NULL;
 	}
+
 	delete[] unitDefs;
 	delete weaponDefHandler;
 }
@@ -240,7 +245,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	UnitDef& ud = unitDefs[id];
 
 	// allocate and fill ud->unitImage
-	GetUnitImage(&unitDefs[id], udTable.GetString("buildPic", ""));
+	ud.buildPicName = udTable.GetString("buildPic", "");
 
 	ud.humanName = udTable.GetString("name", "");
 
@@ -452,7 +457,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.transportSize     = udTable.GetInt("transportSize",      0);
 	ud.minTransportSize  = udTable.GetInt("minTransportSize",   0);
 	ud.transportCapacity = udTable.GetInt("transportCapacity",  0);
-	ud.isfireplatform    = udTable.GetBool("isFirePlatform",    false);
+	ud.isFirePlatform    = udTable.GetBool("isFirePlatform",    false);
 	ud.isAirBase         = udTable.GetBool("isAirBase",         false);
 	ud.loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
 	ud.unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
@@ -974,39 +979,63 @@ static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
 }
 
 
-unsigned int CUnitDefHandler::GetUnitImage(const UnitDef* unitdef, std::string buildPicName)
+unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
 {
-	if (unitdef->unitImage != 0) {
-		return (unitdef->unitImage->textureID);
+	if (unitDef->buildPic != NULL) {
+		return (unitDef->buildPic->textureID);
 	}
-
+	SetUnitDefImage(unitDef, unitDef->buildPicName);
+	return unitDef->buildPic->textureID;
+}
+	
+	
+void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
+                                      const std::string& texName)
+{
+	if (unitDef->buildPic == NULL) {
+		unitDef->buildPic = SAFE_NEW UnitDefImage;
+	} else if (unitDef->buildPic->textureOwner) {
+		glDeleteTextures(1, &unitDef->buildPic->textureID);
+	}
+		
 	CBitmap bitmap;
 
-	if (!buildPicName.empty()) {
-		bitmap.Load("unitpics/" + buildPicName);
+	if (!texName.empty()) {
+		bitmap.Load("unitpics/" + texName);
 	}
 	else {
-		if (!LoadBuildPic("unitpics/" + unitdef->name + ".dds", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".png", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".pcx", bitmap) &&
-		    !LoadBuildPic("unitpics/" + unitdef->name + ".bmp", bitmap)) {
+		if (!LoadBuildPic("unitpics/" + unitDef->name + ".dds", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
+		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
 			bitmap.Alloc(1, 1); // last resort
 		}
 	}
 
 	const unsigned int texID = bitmap.CreateTexture(false);
 
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
-	UnitDef& ud = unitDefs[unitdef->id]; // get away with the const
-	ud.unitImage = SAFE_NEW UnitImage;
-	ud.unitImage->buildPicName = buildPicName;
-	ud.unitImage->textureID = texID;
-	ud.unitImage->imageSizeX = bitmap.xsize;
-	ud.unitImage->imageSizeY = bitmap.ysize;
-	POP_CODE_MODE;
+	UnitDefImage* unitImage = unitDef->buildPic;
+	unitImage->textureID = texID;
+	unitImage->textureOwner = true;
+	unitImage->imageSizeX = bitmap.xsize;
+	unitImage->imageSizeY = bitmap.ysize;
+}
 
-	return texID;
+
+void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
+                                      unsigned int texID, int xsize, int ysize)
+{
+	if (unitDef->buildPic == NULL) {
+		unitDef->buildPic = SAFE_NEW UnitDefImage;
+	} else if (unitDef->buildPic->textureOwner) {
+		glDeleteTextures(1, &unitDef->buildPic->textureID);
+	}
+
+	UnitDefImage* unitImage = unitDef->buildPic;
+	unitImage->textureID = texID;
+	unitImage->textureOwner = false;
+	unitImage->imageSizeX = xsize;
+	unitImage->imageSizeY = ysize;
 }
 
 

@@ -4,6 +4,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "LuaUI.h"
+
+#include <stdio.h>
 #include <set>
 #include <cctype>
 #include <SDL_keysym.h>
@@ -14,7 +16,6 @@ using namespace std;
 #include "LuaInclude.h"
 
 #include "Lua/LuaCallInCheck.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaUtils.h"
 #include "Lua/LuaConstGL.h"
 #include "Lua/LuaConstCMD.h"
@@ -30,6 +31,7 @@ using namespace std;
 #include "Lua/LuaScream.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFS.h"
+#include "Lua/LuaIO.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
@@ -60,6 +62,7 @@ using namespace std;
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
@@ -150,13 +153,21 @@ CLuaUI::CLuaUI()
 	LUA_OPEN_LIB(L, luaopen_package);
 	LUA_OPEN_LIB(L, luaopen_debug);
 
+	// setup the lua IO access check functions
+	lua_set_fopen(L, LuaIO::fopen);
+	lua_set_popen(L, LuaIO::popen, LuaIO::pclose);
+	lua_set_system(L, LuaIO::system);
+	lua_set_remove(L, LuaIO::remove);
+	lua_set_rename(L, LuaIO::rename);
+
 	// remove a few dangerous calls
 	lua_getglobal(L, "io");
 	lua_pushstring(L, "popen"); lua_pushnil(L); lua_rawset(L, -3);
 	lua_pop(L, 1);
 	lua_getglobal(L, "os");
-	lua_pushstring(L, "exit");    lua_pushnil(L); lua_rawset(L, -3);
-	lua_pushstring(L, "execute"); lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushstring(L, "exit");      lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushstring(L, "execute");   lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushstring(L, "setlocale"); lua_pushnil(L); lua_rawset(L, -3);
 	lua_pop(L, 1);
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
@@ -196,7 +207,7 @@ CLuaUI::CLuaUI()
 	}
 
 	// register for call-ins
-	luaCallIns.AddHandle(this);
+	eventHandler.AddClient(this);
 
 	// update extra call-ins
 	UnsyncedUpdateCallIn("WorldTooltip");
@@ -269,9 +280,9 @@ bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 	}
 
 	if (HasCallIn(name)) {
-		luaCallIns.InsertCallIn(this, name);
+		eventHandler.InsertEvent(this, name);
 	} else {
-		luaCallIns.RemoveCallIn(this, name);
+		eventHandler.RemoveEvent(this, name);
 	}
 	return true;
 }
@@ -516,7 +527,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	// get the results
 	const int args = lua_gettop(L);
 
-	if ((args == 1) && (lua_isstring(L, -1)) &&
+	if (lua_israwstring(L, -1) &&
 	    (string(lua_tostring(L, -1)) == "disabled")) {
 		lua_settop(L, top);
 		return false; // no warnings
@@ -539,8 +550,8 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 		lua_settop(L, top);
 		return false;
 	}
-	xButtons = (int)lua_tonumber(L, 2);
-	yButtons = (int)lua_tonumber(L, 3);
+	xButtons = lua_toint(L, 2);
+	yButtons = lua_toint(L, 3);
 
 	if (!GetLuaIntList(L, 4, removeCmds)) {
 		logOutput.Print("LayoutButtons() bad removeCommands table\n");
@@ -609,7 +620,7 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 			HSTR_PUSH_NUMBER(L, "type",     cmds[i].type);
 			HSTR_PUSH_STRING(L, "action",   cmds[i].action);
 			HSTR_PUSH_STRING(L, "texture",  cmds[i].iconname);
-			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].onlyKey);
+			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].hidden);
 			HSTR_PUSH_BOOL(L,   "disabled", cmds[i].disabled);
 
 			HSTR_PUSH(L, "params");
@@ -639,8 +650,8 @@ bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
 			lua_pop(L, 2);
 			return false;
 		}
-		const int key = (int)lua_tonumber(L, -2);
-		const int value = (int)lua_tonumber(L, -1) - CMD_INDEX_OFFSET;
+		const int key = lua_toint(L, -2);
+		const int value = lua_toint(L, -1) - CMD_INDEX_OFFSET;
 		intMap[key] = value;
 	}
 
@@ -659,7 +670,7 @@ bool CLuaUI::GetLuaIntList(lua_State* L, int index, vector<int>& intList)
 			lua_pop(L, 2);
 			return false;
 		}
-		const int value = (int)lua_tonumber(L, -1) - CMD_INDEX_OFFSET;
+		const int value = lua_toint(L, -1) - CMD_INDEX_OFFSET;
 		intList.push_back(value);
 	}
 
@@ -681,7 +692,7 @@ bool CLuaUI::GetLuaReStringList(lua_State* L, int index,
 			return false;
 		}
 		ReStringPair rp;
-		rp.cmdIndex = (int)lua_tonumber(L, -2) - CMD_INDEX_OFFSET;
+		rp.cmdIndex = lua_toint(L, -2) - CMD_INDEX_OFFSET;
 		rp.texture = lua_tostring(L, -1);
 		reStringList.push_back(rp);
 	}
@@ -704,14 +715,14 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 			return false;
 		}
 		ReParamsPair paramsPair;
-		paramsPair.cmdIndex = (int)lua_tonumber(L, -2) - CMD_INDEX_OFFSET;
+		paramsPair.cmdIndex = lua_toint(L, -2) - CMD_INDEX_OFFSET;
 		const int paramTable = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, paramTable) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2) || !lua_isstring(L, -1)) {
 				lua_pop(L, 4);
 				return false;
 			}
-			const int paramIndex = (int)lua_tonumber(L, -2);
+			const int paramIndex = lua_toint(L, -2);
 			const string paramValue = lua_tostring(L, -1);
 			paramsPair.params[paramIndex] = paramValue;
 		}
@@ -872,15 +883,15 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 {
 	luaUI->haveShockFront = true;
 	if (lua_isnumber(L, 1)) {
-		const float value = max(0.0f, (float)lua_tonumber(L, 1));
+		const float value = max(0.0f, lua_tofloat(L, 1));
 		luaUI->shockFrontMinArea = value;
 	}
 	if (lua_isnumber(L, 2)) {
-		const float value = max(0.0f, (float)lua_tonumber(L, 2));
+		const float value = max(0.0f, lua_tofloat(L, 2));
 		luaUI->shockFrontMinPower = value;
 	}
 	if (lua_isnumber(L, 3)) {
-		const float value = max(1.0f, (float)lua_tonumber(L, 3));
+		const float value = max(1.0f, lua_tofloat(L, 3));
 		luaUI->shockFrontDistAdj = value;
 	}
 	return 0;

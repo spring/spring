@@ -30,4 +30,28 @@ inline int lua_checkgeti(lua_State* L, int idx, int n)
 }
 
 
+inline int lua_toint(lua_State* L, int idx)
+{
+  return (int)lua_tointeger(L, idx);
+}
+
+
+inline float lua_tofloat(lua_State* L, int idx)
+{
+  return (float)lua_tonumber(L, idx);
+}
+
+
+inline float luaL_checkfloat(lua_State* L, int idx)
+{
+  return (float)luaL_checknumber(L, idx);
+}
+
+
+inline float luaL_optfloat(lua_State* L, int idx, float def)
+{
+  return (float)luaL_optnumber(L, idx, def);
+}
+
+
 #endif // SPRING_LUA_INCLUDE

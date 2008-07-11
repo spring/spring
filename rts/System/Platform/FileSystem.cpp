@@ -31,9 +31,11 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 
+
 #define fs (FileSystemHandler::GetInstance())
 
 FileSystem filesystem;
+
 
 ////////////////////////////////////////
 ////////// FileSystemHandler
@@ -41,7 +43,7 @@ FileSystem filesystem;
 /**
  * @brief The global data directory handler instance
  */
-FileSystemHandler* FileSystemHandler::instance;
+FileSystemHandler* FileSystemHandler::instance = NULL;
 
 /**
  * @brief get the data directory handler instance
@@ -369,19 +371,36 @@ bool FileSystem::CheckMode(const char* mode) const
  */
 std::string FileSystem::LocateFile(std::string file, int flags) const
 {
-	if (!CheckFile(file))
+	if (!CheckFile(file)) {
 		return "";
+	}
+
 	FixSlashes(file);
 
 	if (flags & WRITE) {
-
-		if (flags & CREATE_DIRS)
+		if (flags & CREATE_DIRS) {
 			CreateDirectory(GetDirectory(file));
-
+		}
 		return file;
 	}
+
 	return fs.LocateFile(file);
 }
+
+
+bool FileSystem::InReadDir(const std::string& path)
+{
+	const std::vector<std::string> readDirs = fs.GetDataDirectories();
+	return true;
+}
+
+
+bool FileSystem::InWriteDir(const std::string& path, const std::string& prefix)
+{
+	const std::string writeDir = fs.GetWriteDir();
+	return true;
+}
+
 
 /**
  * @brief remove a file

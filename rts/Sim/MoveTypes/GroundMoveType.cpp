@@ -968,7 +968,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 	// Obstacle-avoidance-system only needs to be run if the unit wants to move
 	if (pathId) {
 		float3 avoidanceDir = desiredDir;
-		// Speed-optimizer. Reduces the times this system is ran.
+		// Speed-optimizer. Reduces the times this system is run.
 		if (gs->frameNum >= nextObstacleAvoidanceUpdate) {
 			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
@@ -979,16 +979,18 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			int lty = wsy - moveSquareY + 5;
 
 			if (ltx >= 0 && ltx < 11 && lty >= 0 && lty < 11) {
-				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
-					int x = (moveSquareX + li->x) * 2;
-					int y = (moveSquareY + li->y) * 2;
-					int mask = CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN | CMoveMath::BLOCK_MOBILE_BUSY;
-
-					if ((owner->unitDef->movedata->moveMath->IsBlocked(*owner->unitDef->movedata, x, y) & mask) ||
-							owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
+				std::vector<int2>::iterator li;
+				for (li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
+					const int x = (moveSquareX + li->x) * 2;
+					const int y = (moveSquareY + li->y) * 2;
+					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
+					                      CMoveMath::BLOCK_TERRAIN   | 
+					                      CMoveMath::BLOCK_MOBILE_BUSY;
+					MoveData& moveData  = *owner->unitDef->movedata;
+					if ((moveData.moveMath->IsBlocked(moveData, x, y) & blockBits) ||
+					    (moveData.moveMath->SpeedMod(moveData, x, y) <= 0.01f)) {
 						// not reachable, force a new path to be calculated next slowupdate
 						++etaFailures;
-
 						if (DEBUG_CONTROLLER) {
 							logOutput.Print("Waypoint path blocked for unit %i", owner->id);
 						}

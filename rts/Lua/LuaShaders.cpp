@@ -46,6 +46,8 @@ bool LuaShaders::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UniformInt);
 	REGISTER_LUA_CFUNC(UniformMatrix);
 
+	REGISTER_LUA_CFUNC(SetShaderParameter);
+
 	REGISTER_LUA_CFUNC(GetShaderLog);
 
 	return true;
@@ -98,7 +100,7 @@ GLuint LuaShaders::GetProgramName(unsigned int progID) const
 
 GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 {
-	const int progID = (GLuint)luaL_checknumber(L, 1);
+	const int progID = (GLuint)luaL_checkint(L, 1);
 	if ((progID <= 0) || (progID >= (int)programs.size())) {
 		return 0;
 	}
@@ -172,7 +174,7 @@ static int ParseIntArray(lua_State* L, int* array, int size)
 	for (int i = 0; i < size; i++) {
 		lua_rawgeti(L, table, (i + 1));
 		if (lua_isnumber(L, -1)) {
-			array[i] = (int)lua_tonumber(L, -1);
+			array[i] = lua_toint(L, -1);
 			lua_pop(L, 1);
 		} else {
 			lua_pop(L, 1);
@@ -192,7 +194,7 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 	for (int i = 0; i < size; i++) {
 		lua_rawgeti(L, table, (i + 1));
 		if (lua_isnumber(L, -1)) {
-			array[i] = (float)lua_tonumber(L, -1);
+			array[i] = lua_tofloat(L, -1);
 			lua_pop(L, 1);
 		} else {
 			lua_pop(L, 1);
@@ -205,8 +207,7 @@ static int ParseFloatArray(lua_State* L, float* array, int size)
 
 static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 {
-	lua_pushstring(L, "uniform");
-	lua_gettable(L, index);
+	lua_getfield(L, index, "uniform");
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -215,7 +216,7 @@ static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 				const GLint loc = glGetUniformLocation(progName, name.c_str());
 				if (loc >= 0) {
 					if (lua_israwnumber(L, -1)) {
-						const float value = (float)lua_tonumber(L, -1);
+						const float value = lua_tofloat(L, -1);
 						glUniform1f(loc, value);
 					}
 					else if (lua_istable(L, -1)) {
@@ -239,8 +240,7 @@ static bool ParseUniformTable(lua_State* L, int index, GLuint progName)
 
 static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 {
-	lua_pushstring(L, "uniformInt");
-	lua_gettable(L, index);
+	lua_getfield(L, index, "uniformInt");
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -249,7 +249,7 @@ static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 				const GLint loc = glGetUniformLocation(progName, name.c_str());
 				if (loc >= 0) {
 					if (lua_israwnumber(L, -1)) {
-						const int value = (int)lua_tonumber(L, -1);
+						const int value = lua_toint(L, -1);
 						glUniform1i(loc, value);
 					}
 					else if (lua_istable(L, -1)) {
@@ -273,8 +273,7 @@ static bool ParseUniformIntTable(lua_State* L, int index, GLuint progName)
 
 static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
 {
-	lua_pushstring(L, "uniformMatrix");
-	lua_gettable(L, index);
+	lua_getfield(L, index, "uniformMatrix");
 	if (lua_istable(L, -1)) {
 		const int table = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
@@ -329,6 +328,11 @@ static GLuint CompileObject(const vector<string>& sources, GLenum type,
 	}
 
 	GLuint obj = glCreateShader(type);
+	if (obj == 0) {
+		LuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		shaders.errorLog = "Could not create shader object";
+		return 0;
+	}
 
 	const int count = (int)sources.size();
 	
@@ -352,6 +356,11 @@ static GLuint CompileObject(const vector<string>& sources, GLenum type,
 		
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 		shaders.errorLog = log;
+		if (shaders.errorLog.empty()) {
+			shaders.errorLog = "Empty error message:  code = "
+			                   + IntToString(result) + " (0x"
+			                   + IntToString(result, "%04X") + ")";
+		}
 		
 		glDeleteShader(obj);
 
@@ -367,14 +376,9 @@ static GLuint CompileObject(const vector<string>& sources, GLenum type,
 static bool ParseSources(lua_State* L, int table,
                          const char* type, vector<string>& srcs)
 {
-	if (!lua_istable(L, 1)) {
-		return false;
-	}
-
-	lua_pushstring(L, type);
-	lua_gettable(L, table);
+	lua_getfield(L, table, type);
 	
-	if (lua_isstring(L, -1)) {
+	if (lua_israwstring(L, -1)) {
 		const string src = lua_tostring(L, -1);
 		if (!src.empty()) {
 			srcs.push_back(src);
@@ -393,11 +397,39 @@ static bool ParseSources(lua_State* L, int table,
 		}
 	}
 	else if (!lua_isnil(L, -1)) {
+		LuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		shaders.errorLog = "Invalid " + string(type) + " shader source";
 		lua_pop(L, 1);
 		return false;
 	}
 
 	lua_pop(L, 1);
+	return true;
+}
+
+
+static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
+{
+	if (!glProgramParameteriEXT) {
+		return true;
+	}
+
+	struct { const char* name; GLenum param; } parameters[] = {
+		{ "geoInputType",   GL_GEOMETRY_INPUT_TYPE_EXT },
+		{ "geoOutputType",  GL_GEOMETRY_OUTPUT_TYPE_EXT },
+		{ "geoOutputVerts", GL_GEOMETRY_VERTICES_OUT_EXT }
+	};
+
+	const int count = sizeof(parameters) / sizeof(parameters[0]);
+	for (int i = 0; i < count; i++) {
+		lua_getfield(L, table, parameters[i].name);
+		if (lua_israwnumber(L, -1)) {
+			const GLint type = lua_toint(L, -1);
+			glProgramParameteriEXT(prog, parameters[i].param, type);
+		}
+		lua_pop(L, 1);
+	}
+
 	return true;
 }
 
@@ -410,12 +442,14 @@ int LuaShaders::CreateShader(lua_State* L)
 	}
 
 	vector<string> vertSrcs;
+	vector<string> geomSrcs;
 	vector<string> fragSrcs;
 	if (!ParseSources(L, 1, "vertex",   vertSrcs) ||
+	    !ParseSources(L, 1, "geometry", geomSrcs) ||
 	    !ParseSources(L, 1, "fragment", fragSrcs)) {
 		return 0;
 	}
-	if (vertSrcs.empty() && fragSrcs.empty()) {
+	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty()) {
 		return 0;
 	}
 
@@ -424,9 +458,15 @@ int LuaShaders::CreateShader(lua_State* L)
 	if (!success) {
 		return 0;
 	}
+	const GLuint geomObj = CompileObject(geomSrcs, GL_GEOMETRY_SHADER_EXT, success);
+	if (!success) {
+		glDeleteShader(vertObj);
+		return 0;
+	}
 	const GLuint fragObj = CompileObject(fragSrcs, GL_FRAGMENT_SHADER, success);
 	if (!success) {
 		glDeleteShader(vertObj);
+		glDeleteShader(geomObj);
 		return 0;
 	}
 
@@ -438,6 +478,11 @@ int LuaShaders::CreateShader(lua_State* L)
 	if (vertObj != 0) {
 		glAttachShader(prog, vertObj);
 		p.objects.push_back(Object(vertObj, GL_VERTEX_SHADER));
+	}
+	if (geomObj != 0) {
+		glAttachShader(prog, geomObj);
+		p.objects.push_back(Object(geomObj, GL_GEOMETRY_SHADER_EXT));
+		ApplyGeometryParameters(L, 1, prog); // done before linking
 	}
 	if (fragObj != 0) {
 		glAttachShader(prog, fragObj);
@@ -476,7 +521,7 @@ int LuaShaders::DeleteShader(lua_State* L)
 	if (lua_isnil(L, 1)) {
 		return 0;
 	}
-	const int progID = (int)luaL_checknumber(L, 1);
+	const int progID = luaL_checkint(L, 1);
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 	shaders.RemoveProgram(progID);
 	return 0;
@@ -487,7 +532,7 @@ int LuaShaders::UseShader(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int progID = (int)luaL_checknumber(L, 1);
+	const int progID = luaL_checkint(L, 1);
 	if (progID == 0) {
 		glUseProgram(0);
 		lua_pushboolean(L, true);
@@ -508,7 +553,7 @@ int LuaShaders::UseShader(lua_State* L)
 
 int LuaShaders::ActiveShader(lua_State* L)
 {
-	const int progID = (int)luaL_checkint(L, 1);
+	const int progID = luaL_checkint(L, 1);
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 
 	GLuint progName;
@@ -611,7 +656,6 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", uniformCount);
 	
 	return 1;
 }
@@ -637,7 +681,7 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 
 int LuaShaders::Uniform(lua_State* L)
 {
-	if (activeShaderDepth == 0) {
+	if (activeShaderDepth <= 0) {
 		CheckDrawingEnabled(L, __FUNCTION__);
 	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
@@ -646,28 +690,28 @@ int LuaShaders::Uniform(lua_State* L)
 	switch (values) {
 		case 1: {
 			glUniform1f(location,
-									(float)luaL_checknumber(L, 2));
+									luaL_checkfloat(L, 2));
 			break;
 		}
 		case 2: {
 			glUniform2f(location,
-									(float)luaL_checknumber(L, 2),
-									(float)luaL_checknumber(L, 3));
+									luaL_checkfloat(L, 2),
+									luaL_checkfloat(L, 3));
 			break;
 		}
 		case 3: {
 			glUniform3f(location,
-									(float)luaL_checknumber(L, 2),
-									(float)luaL_checknumber(L, 3),
-									(float)luaL_checknumber(L, 4));
+									luaL_checkfloat(L, 2),
+									luaL_checkfloat(L, 3),
+									luaL_checkfloat(L, 4));
 			break;
 		}
 		case 4: {
 			glUniform4f(location,
-									(float)luaL_checknumber(L, 2),
-									(float)luaL_checknumber(L, 3),
-									(float)luaL_checknumber(L, 4),
-									(float)luaL_checknumber(L, 5));
+									luaL_checkfloat(L, 2),
+									luaL_checkfloat(L, 3),
+									luaL_checkfloat(L, 4),
+									luaL_checkfloat(L, 5));
 			break;
 		}
 		default: {
@@ -680,7 +724,7 @@ int LuaShaders::Uniform(lua_State* L)
 
 int LuaShaders::UniformInt(lua_State* L)
 {
-	if (activeShaderDepth == 0) {
+	if (activeShaderDepth <= 0) {
 		CheckDrawingEnabled(L, __FUNCTION__);
 	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
@@ -689,28 +733,28 @@ int LuaShaders::UniformInt(lua_State* L)
 	switch (values) {
 		case 1: {
 			glUniform1i(location,
-									(int)luaL_checknumber(L, 2));
+									luaL_checkint(L, 2));
 			break;
 		}
 		case 2: {
 			glUniform2i(location,
-									(int)luaL_checknumber(L, 2),
-									(int)luaL_checknumber(L, 3));
+									luaL_checkint(L, 2),
+									luaL_checkint(L, 3));
 			break;
 		}
 		case 3: {
 			glUniform3i(location,
-									(int)luaL_checknumber(L, 2),
-									(int)luaL_checknumber(L, 3),
-									(int)luaL_checknumber(L, 4));
+									luaL_checkint(L, 2),
+									luaL_checkint(L, 3),
+									luaL_checkint(L, 4));
 			break;
 		}
 		case 4: {
 			glUniform4i(location,
-									(int)luaL_checknumber(L, 2),
-									(int)luaL_checknumber(L, 3),
-									(int)luaL_checknumber(L, 4),
-									(int)luaL_checknumber(L, 5));
+									luaL_checkint(L, 2),
+									luaL_checkint(L, 3),
+									luaL_checkint(L, 4),
+									luaL_checkint(L, 5));
 			break;
 		}
 		default: {
@@ -733,7 +777,7 @@ static void UniformMatrix4dv(GLint location, const double dm[16])
 
 int LuaShaders::UniformMatrix(lua_State* L)
 {
-	if (activeShaderDepth == 0) {
+	if (activeShaderDepth <= 0) {
 		CheckDrawingEnabled(L, __FUNCTION__);
 	}
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
@@ -768,7 +812,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 		case (2 * 2): {
 			float array[2 * 2];
 			for (int i = 0; i < (2 * 2); i++) {
-				array[i] = (float)luaL_checknumber(L, i + 2);
+				array[i] = luaL_checkfloat(L, i + 2);
 			}
 			glUniformMatrix2fv(location, 1, GL_FALSE, array);
 			break;
@@ -776,7 +820,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 		case (3 * 3): {
 			float array[3 * 3];
 			for (int i = 0; i < (3 * 3); i++) {
-				array[i] = (float)luaL_checknumber(L, i + 2);
+				array[i] = luaL_checkfloat(L, i + 2);
 			}
 			glUniformMatrix3fv(location, 1, GL_FALSE, array);
 			break;
@@ -784,7 +828,7 @@ int LuaShaders::UniformMatrix(lua_State* L)
 		case (4 * 4): {
 			float array[4 * 4];
 			for (int i = 0; i < (4 * 4); i++) {
-				array[i] = (float)luaL_checknumber(L, i + 2);
+				array[i] = luaL_checkfloat(L, i + 2);
 			}
 			glUniformMatrix4fv(location, 1, GL_FALSE, array);
 			break;
@@ -793,6 +837,29 @@ int LuaShaders::UniformMatrix(lua_State* L)
 			luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 		}
 	}
+	return 0;
+}
+
+
+int LuaShaders::SetShaderParameter(lua_State* L)
+{
+	if (activeShaderDepth <= 0) {
+		CheckDrawingEnabled(L, __FUNCTION__);
+	}
+
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
+	const GLuint progName = shaders.GetProgramName(L, 1);
+	if (progName == 0) {
+		return 0;
+	}
+
+	const GLenum param = (GLenum)luaL_checkint(L, 2);
+	const GLint  value =  (GLint)luaL_checkint(L, 3);
+
+	if (glProgramParameteriEXT) {
+		glProgramParameteriEXT(progName, param, value);
+	}
+
 	return 0;
 }
 

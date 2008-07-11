@@ -332,7 +332,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	}
 
 	const int maxTex = std::max(texCount, prev.texCount);
-	for (int t = maxTex-1; t >= 0; t--) {
+	for (int t = (maxTex - 1); t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		textures[t].Execute(prev.textures[t]);
 	}

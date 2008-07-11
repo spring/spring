@@ -6,8 +6,10 @@
 #include "Sim/Objects/WorldObject.h"
 #include <map>
 
+
 class CUnit;
 class CExplosionGenerator;
+
 
 class CExpGenSpawnable : public CWorldObject
 {
@@ -18,6 +20,7 @@ public:
 	virtual ~CExpGenSpawnable(){};
 	virtual void Init(const float3& pos, CUnit *owner)=0;
 };
+
 
 class ClassAliasList 
 {
@@ -30,6 +33,7 @@ public:
 protected:
 	std::map<std::string, std::string> aliases;
 };
+
 
 class CExplosionGeneratorHandler
 {
@@ -59,6 +63,7 @@ public:
 	virtual void Load(CExplosionGeneratorHandler* loader, const std::string& tag) = 0;
 };
 
+
 class CStdExplosionGenerator : public CExplosionGenerator
 {
 public:
@@ -68,8 +73,9 @@ public:
 	virtual ~CStdExplosionGenerator();
 
 	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir);
-	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);
+	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);
 };
+
 
 /* Defines the result of an explosion as a series of new projectiles */
 class CCustomExplosionGenerator : public CStdExplosionGenerator
@@ -113,6 +119,8 @@ public:
 	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir);
 };
 
+
 extern CExplosionGeneratorHandler* explGenHandler;
+
 
 #endif 

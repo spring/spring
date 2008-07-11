@@ -13,7 +13,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/StartScripts/Script.h"
 #include "Game/UI/EndGameBox.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Map/MapParser.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
@@ -25,6 +24,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "System/EventHandler.h"
 
 using namespace std;
 using namespace luabind;
@@ -39,7 +39,7 @@ namespace luafunctions
 	{
 		SAFE_NEW CEndGameBox();
 		game->gameOver = true;
-		luaCallIns.GameOver();
+		eventHandler.GameOver();
 	}
 
 	void CreateGlobalAI( int teamnumber, std::string dllname )

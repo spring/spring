@@ -90,6 +90,7 @@ unitsync_hpiutil2_files = filelist.get_source(uenv, 'rts/lib/hpiutil2');
 unitsync_extra_files = [
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
+	'rts/Lua/LuaIO.cpp',
 	'rts/Lua/LuaParser.cpp',
 	'rts/Map/MapParser.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',

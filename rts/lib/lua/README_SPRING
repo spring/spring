@@ -45,3 +45,10 @@ Lua-5.1.2 source code modifications:
        LUA_COMPAT_LSTR
        LUA_COMPAT_GFIND
        LUA_COMPAT_OPENLIB
+
+  10. Added the following to lua.h  (and associated code)
+        lua_set_fopen()
+        lua_set_popen()
+        lua_set_system()
+        lua_set_remove()
+        lua_set_rename()

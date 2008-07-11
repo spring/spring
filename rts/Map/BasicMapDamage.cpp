@@ -99,8 +99,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 				treeDrawer->RemoveGrass(x,y);
 		}
 	}
+	// calculate how much to offset the buildings in the explosion radius with
+	// (while still keeping the ground under them flat)
 	std::vector<CUnit*> units=qf->GetUnitsExact(pos,radius);
-	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){		//calculate how much to offset the buildings in the explosion radius with (while still keeping the ground under them flat
+	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		if((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap){
 			CUnit* unit=*ui;
 

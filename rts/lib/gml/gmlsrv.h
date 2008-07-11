@@ -9,6 +9,8 @@
 #ifndef GMLSRV_H
 #define GMLSRV_H
 
+#ifdef USE_GML
+
 #include <boost/thread/barrier.hpp>
 #include  <boost/bind.hpp>
 
@@ -259,5 +261,7 @@ public:
 		}
 	}
 };
+
+#endif // USE_GML
 
 #endif

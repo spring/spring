@@ -55,14 +55,15 @@ creg::Class* ClassAliasList::GetClass(const string& name)
 	string n = name;
 	for (;;) {
 		map<string,string>::iterator i = aliases.find(n);
-		if (i == aliases.end())
+		if (i == aliases.end()) {
 			break;
-
+		}
 		n = i->second;
 	}
 	creg::Class *cls = creg::System::GetClass(n);
-	if (!cls)
+	if (!cls) {
 		throw content_error("Unknown class: " + name);
+	}
 	return cls;
 }
 
@@ -161,7 +162,9 @@ void CStdExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& t
 }
 
 
-void CStdExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir)
+void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
+                                       float radius, CUnit *owner,float gfxMod,
+                                       CUnit *hit, const float3 &dir)
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;

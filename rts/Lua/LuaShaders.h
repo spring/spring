@@ -62,6 +62,8 @@ class LuaShaders {
 		static int UniformInt(lua_State* L);
 		static int UniformMatrix(lua_State* L);
 
+		static int SetShaderParameter(lua_State* );
+
 		static int GetShaderLog(lua_State* L);
 
 	private:

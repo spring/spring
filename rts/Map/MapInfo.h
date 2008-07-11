@@ -27,7 +27,7 @@ class CMapInfo
 {
 public:
 
-	CMapInfo(const std::string& mapName);
+	CMapInfo(const std::string& mapName, bool onlyBasics = false);
 	~CMapInfo();
 
 	/* The settings are just public members because:
@@ -62,6 +62,7 @@ public:
 		std::string name;      ///< The filename as passed to the constructor.
 		std::string wantedScript;
 		std::string humanName; ///< "MAP\\Description"
+		std::string author;
 		float hardness;        ///< "MAP\\MapHardness"
 		bool  notDeformable;
 		/** Stores the gravity as a negative number in units/frame^2

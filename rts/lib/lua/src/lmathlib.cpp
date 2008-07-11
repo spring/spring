@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 //SPRING#include <math.h>
-#include "streflop_cond.h"
+#include "streflop_cond.h" // FIXME -- should always be compiled with streflop
 
 #define lmathlib_c
 #define LUA_LIB

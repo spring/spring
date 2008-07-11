@@ -25,7 +25,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/Wind.h"
-#include "Lua/LuaCallInHandler.h"
+#include "System/EventHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include <boost/format.hpp>
 
@@ -673,7 +673,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	featureHandler->Draw();
 	drawReflection=false;
 	ph->Draw(false,true);
-	luaCallIns.DrawWorldRefraction();
+	eventHandler.DrawWorldRefraction();
 
 	glDisable(GL_CLIP_PLANE2);
 	game->SetDrawMode(CGame::normalDraw);
@@ -725,7 +725,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
-	luaCallIns.DrawWorldReflection();
+	eventHandler.DrawWorldReflection();
 
 	game->SetDrawMode(CGame::normalDraw);
 	drawReflection=false;

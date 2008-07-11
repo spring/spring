@@ -34,6 +34,14 @@ bool SideParser::Load()
 
 	LuaParser parser("gamedata/sidedata.lua",
 	                 SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+#if !defined UNITSYNC && !defined DEDICATED
+	// this should not be included with unitsync:
+	// 1. avoids linkage with LuaSyncedRead
+	// 2. ModOptions are not valid during unitsync mod parsing
+	parser.GetTable("Spring");
+	parser.AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+	parser.EndTable();
+#endif
 	if (!parser.Execute()) {
 		errorLog = parser.GetErrorLog();
 		return false;

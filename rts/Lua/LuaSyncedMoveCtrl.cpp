@@ -97,7 +97,7 @@ static inline bool CanControlUnit(const CUnit* unit)
 {
 	const int ctrlTeam = CtrlTeam();
 	if (ctrlTeam < 0) {
-		return (ctrlTeam == CLuaHandle::AllAccessTeam) ? true : false;
+		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
 	return (ctrlTeam == unit->team);
 }
@@ -108,7 +108,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
-	const int unitID = (int)lua_tonumber(L, index);
+	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
@@ -199,7 +199,7 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetTag()");
 	}
-	moveType->tag = (int)lua_tonumber(L, 2);
+	moveType->tag = lua_toint(L, 2);
 	return 0;
 }
 
@@ -230,7 +230,7 @@ int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
 	}
 
 	if (lua_isnumber(L, 2)) {
-		const int state = (int)lua_tonumber(L, 2);
+		const int state = lua_toint(L, 2);
 		if ((state < AMoveType::Done) || (state > AMoveType::Failed)) {
 			luaL_error(L, "SetProgressState(): bad state value (%i)", state);
 		}
@@ -280,15 +280,15 @@ int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 pos((float)luaL_checknumber(L, 2),
-	                 (float)luaL_checknumber(L, 3),
-	                 (float)luaL_checknumber(L, 4));
-	const float3 vel((float)luaL_checknumber(L, 5),
-	                 (float)luaL_checknumber(L, 6),
-	                 (float)luaL_checknumber(L, 7));
-	const float3 rot((float)luaL_checknumber(L, 8),
-	                 (float)luaL_checknumber(L, 9),
-	                 (float)luaL_checknumber(L, 10));
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
+	const float3 vel(luaL_checkfloat(L, 5),
+	                 luaL_checkfloat(L, 6),
+	                 luaL_checkfloat(L, 7));
+	const float3 rot(luaL_checkfloat(L, 8),
+	                 luaL_checkfloat(L, 9),
+	                 luaL_checkfloat(L, 10));
 	moveType->SetPhysics(pos, vel, rot);
 	return 0;
 }
@@ -300,9 +300,9 @@ int LuaSyncedMoveCtrl::SetPosition(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 pos((float)luaL_checknumber(L, 2),
-	                 (float)luaL_checknumber(L, 3),
-	                 (float)luaL_checknumber(L, 4));
+	const float3 pos(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	moveType->SetPosition(pos);
 	return 0;
 }
@@ -314,9 +314,9 @@ int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 vel((float)luaL_checknumber(L, 2),
-	                 (float)luaL_checknumber(L, 3),
-	                 (float)luaL_checknumber(L, 4));
+	const float3 vel(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	moveType->SetVelocity(vel);
 	return 0;
 }
@@ -328,9 +328,9 @@ int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 relVel((float)luaL_checknumber(L, 2),
-	                    (float)luaL_checknumber(L, 3),
-	                    (float)luaL_checknumber(L, 4));
+	const float3 relVel(luaL_checkfloat(L, 2),
+	                    luaL_checkfloat(L, 3),
+	                    luaL_checkfloat(L, 4));
 	moveType->SetRelativeVelocity(relVel);
 	return 0;
 }
@@ -342,9 +342,9 @@ int LuaSyncedMoveCtrl::SetRotation(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 rot((float)luaL_checknumber(L, 2),
-	                 (float)luaL_checknumber(L, 3),
-	                 (float)luaL_checknumber(L, 4));
+	const float3 rot(luaL_checkfloat(L, 2),
+	                 luaL_checkfloat(L, 3),
+	                 luaL_checkfloat(L, 4));
 	moveType->SetRotation(rot);
 	return 0;
 }
@@ -356,9 +356,9 @@ int LuaSyncedMoveCtrl::SetRotationOffset(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 rotOff((float)luaL_checknumber(L, 2),
-	                    (float)luaL_checknumber(L, 3),
-	                    (float)luaL_checknumber(L, 4));
+	const float3 rotOff(luaL_checkfloat(L, 2),
+	                    luaL_checkfloat(L, 3),
+	                    luaL_checkfloat(L, 4));
 	moveType->SetRotationOffset(rotOff);
 	return 0;
 }
@@ -370,9 +370,9 @@ int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 rotVel((float)luaL_checknumber(L, 2),
-	                    (float)luaL_checknumber(L, 3),
-	                    (float)luaL_checknumber(L, 4));
+	const float3 rotVel(luaL_checkfloat(L, 2),
+	                    luaL_checkfloat(L, 3),
+	                    luaL_checkfloat(L, 4));
 	moveType->SetRotationVelocity(rotVel);
 	return 0;
 }
@@ -428,7 +428,7 @@ int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	moveType->groundOffset = (float)luaL_checknumber(L, 2);
+	moveType->groundOffset = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -439,7 +439,7 @@ int LuaSyncedMoveCtrl::SetGravity(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	moveType->gravityFactor = (float)luaL_checknumber(L, 2);
+	moveType->gravityFactor = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -450,7 +450,7 @@ int LuaSyncedMoveCtrl::SetDrag(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	moveType->drag = (float)luaL_checknumber(L, 2);
+	moveType->drag = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -461,7 +461,7 @@ int LuaSyncedMoveCtrl::SetWindFactor(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	moveType->windFactor = (float)luaL_checknumber(L, 2);
+	moveType->windFactor = luaL_checkfloat(L, 2);
 	return 0;
 }
 
@@ -472,12 +472,12 @@ int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 	if (moveType == NULL) {
 		return 0;
 	}
-	const float3 mins((float)luaL_checknumber(L, 2),
-	                  (float)luaL_checknumber(L, 3),
-	                  (float)luaL_checknumber(L, 4));
-	const float3 maxs((float)luaL_checknumber(L, 5),
-	                  (float)luaL_checknumber(L, 6),
-	                  (float)luaL_checknumber(L, 7));
+	const float3 mins(luaL_checkfloat(L, 2),
+	                  luaL_checkfloat(L, 3),
+	                  luaL_checkfloat(L, 4));
+	const float3 maxs(luaL_checkfloat(L, 5),
+	                  luaL_checkfloat(L, 6),
+	                  luaL_checkfloat(L, 7));
 	moveType->mins = mins;
 	moveType->maxs = maxs;
 	return 0;

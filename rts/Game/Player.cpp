@@ -11,6 +11,7 @@
 #  include "Camera.h"
 #  include <assert.h>
 #endif
+#include "System/EventHandler.h"
 #include "mmgr.h"
 
 CR_BIND(CPlayer,);
@@ -136,6 +137,7 @@ void CPlayer::StartSpectating()
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
 	}
+	eventHandler.PlayerChanged(playerNum);
 }
 
 

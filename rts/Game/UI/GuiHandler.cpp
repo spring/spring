@@ -19,13 +19,16 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Lua/LuaCallInHandler.h"
+#include "Lua/LuaTextures.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/glFont.h"
+#include "Rendering/IconHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/glList.h"
 #include "Rendering/GL/myGL.h"
@@ -44,6 +47,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/EventHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
@@ -533,7 +537,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 
 	// separate the visible/hidden icons
 	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
-		if (cdi->onlyKey) {
+		if (cdi->hidden) {
 			hidden.push_back(*cdi);
 		} else {
 			commands.push_back(*cdi);
@@ -689,11 +693,11 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			                index);
 		}
 	}
-	// remove unwanted commands  (and mark all as onlyKey)
+	// remove unwanted commands  (and mark all as hidden)
 	std::vector<CommandDescription> tmpCmds;
 	for (i = 0; i < cmds.size(); i++) {
 		if (removeIDs.find(i) == removeIDs.end()) {
-			cmds[i].onlyKey = true;
+			cmds[i].hidden = true;
 			tmpCmds.push_back(cmds[i]);
 		}
 	}
@@ -701,7 +705,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 	// add the custom commands
 	for (i = 0; i < customCmds.size(); i++) {
-		customCmds[i].onlyKey = true;
+		customCmds[i].hidden = true;
 		cmds.push_back(customCmds[i]);
 	}
 	const int cmdCount = (int)cmds.size();
@@ -803,7 +807,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) && (index < cmdCount)) {
 
 			icon.commandsID = index;
-			cmds[index].onlyKey = false;
+			cmds[index].hidden = false;
 
 			const int slot = (ii % tmpIconsPerPage);
 			const float fx = (float)(slot % tmpXicons);
@@ -854,7 +858,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 
 void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 {
-	if (luaCallIns.CommandNotify(cmd)) {
+	if (eventHandler.CommandNotify(cmd)) {
 		return;
 	}
 
@@ -917,7 +921,7 @@ void CGuiHandler::Update()
 	if (!changedGroups.empty()) {
 		set<int>::const_iterator it;
 		for (it = changedGroups.begin(); it != changedGroups.end(); ++it) {
-			luaCallIns.GroupChanged(*it);
+			eventHandler.GroupChanged(*it);
 		}
 		changedGroups.clear();
 	}
@@ -1010,8 +1014,11 @@ void CGuiHandler::SetCursorIcon() const
 		}
 	}
 
-	if (gatherMode && (mouse->cursorText == "Move"))
+	if (gatherMode &&
+	    (mouse->cursorText == "Move") ||
+	    (mouse->cursorText == "Fight")) {
 		newCursor = "GatherWait";
+	}
 	
 	mouse->SetCursor(newCursor);
 }
@@ -1058,11 +1065,6 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 }
 
 
-void CGuiHandler::MouseMove(int x, int y, int dx, int dy, int button)
-{
-}
-
-
 void CGuiHandler::MouseRelease(int x, int y, int button)
 {
 	int iconCmd = -1;
@@ -1075,8 +1077,8 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 
 	if (!invertQueueKey && needShift && !keys[SDLK_LSHIFT]) {
 		SetShowingMetal(false);
-		inCommand=-1;
-		needShift=false;
+		inCommand = -1;
+		needShift = false;
 	}
 
 	if (button < 0) {
@@ -1098,7 +1100,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button)
 	}
 
 	if ((iconCmd >= 0) && (iconCmd < commands.size())) {
-		const bool rmb = (button == SDL_BUTTON_LEFT) ? false : true;
+		const bool rmb = (button == SDL_BUTTON_RIGHT);
 		SetActiveCommand(iconCmd, rmb);
 		return;
 	}
@@ -1479,7 +1481,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 }
 
 
-int CGuiHandler::GetDefaultCommand(int x,int y) const
+int CGuiHandler::GetDefaultCommand(int x, int y) const
 {
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface) {
@@ -1814,7 +1816,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 		const int cmdType = cmdDesc.type;
 
 		// set the activePage
-		if (!cmdDesc.onlyKey &&
+		if (!cmdDesc.hidden &&
 				(((cmdType == CMDTYPE_ICON) &&
 					 ((cmdDesc.id < 0) ||
 						(cmdDesc.id == CMD_STOCKPILE))) ||
@@ -2608,7 +2610,7 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
-		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
 		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
@@ -2666,7 +2668,63 @@ static inline bool BindUnitTexByString(const std::string& str)
 		return false;
 	}
 
-	glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitImage(ud));
+	glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
+
+	return true;
+}
+
+
+static inline bool BindIconTexByString(const std::string& str)
+{
+	char* endPtr;
+	const char* startPtr = str.c_str() + 1; // skip the '^'
+	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	if (endPtr == startPtr) {
+		return false; // bad unitID spec
+	}
+	// UnitDefHandler's array size is (numUnitDefs + 1)
+	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
+		return false;
+	}
+	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	if (ud == NULL) {
+		return false;
+	}
+
+	ud->iconType->BindTexture();
+
+	return true;
+}
+
+
+static inline bool BindLuaTexByString(const std::string& str)
+{
+	CLuaHandle* luaHandle = NULL;
+	const char scriptType = str[1];
+	switch (str[1]) {
+		case 'u': { luaHandle = luaUI; break; }
+		case 'g': { luaHandle = luaGaia; break; }
+		case 'm': { luaHandle = luaRules; break; }
+		default:  { break; }
+	}
+	if (luaHandle == NULL) {
+		return false;
+	}
+	if (str[2] != LuaTextures::prefix) { // '!'
+		return false;
+	}
+
+	const string luaTexStr = str.substr(2);
+	const LuaTextures::Texture* texInfo =
+		luaHandle->GetTextures().GetInfo(luaTexStr);
+	if (texInfo == NULL) {
+		return false;
+	}
+
+	if (texInfo->target != GL_TEXTURE_2D) {
+		return false;
+	}
+	glBindTexture(GL_TEXTURE_2D, texInfo->id);
 
 	return true;
 }
@@ -2676,6 +2734,10 @@ static bool BindTextureString(const std::string& str)
 {
 	if (str[0] == '#') {
 		return BindUnitTexByString(str);
+	} else if (str[0] == '^') {
+		return BindIconTexByString(str);
+	} else if (str[0] == LuaTextures::prefix) { // '!'
+		return BindLuaTexByString(str);
 	} else {
 		return CNamedTextures::Bind(str);
 	}

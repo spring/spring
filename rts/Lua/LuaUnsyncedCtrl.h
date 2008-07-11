@@ -81,6 +81,7 @@ class LuaUnsyncedCtrl {
 		static int MakeFont(lua_State* L);
 
 		static int SetUnitDefIcon(lua_State* L);
+		static int SetUnitDefImage(lua_State* L);
 
 		static int SetActiveCommand(lua_State* L);
 

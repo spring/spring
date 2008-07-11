@@ -11,8 +11,8 @@
 #include "Game/UI/CursorIcons.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
+#include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -23,7 +23,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Map/Ground.h"
+#include "System/EventHandler.h"
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
@@ -141,9 +141,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip = "TimeWait: Wait for a period of time before continuing";
 	c.params.push_back("1");  // min
 	c.params.push_back("60"); // max
-	c.onlyKey = true;
+	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.onlyKey = false;
+ 	c.hidden = false;
 	c.params.clear();
 
 	// only for games with 2 ally teams  --  checked later
@@ -153,9 +153,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.name = "DeathWait";
 	c.mouseicon=c.name;
 	c.tooltip = "DeathWait: Wait until units die before continuing";
-	c.onlyKey = true;
+	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.onlyKey = false;
+ 	c.hidden = false;
 
 	c.id = CMD_SQUADWAIT;
 	c.action = "squadwait";
@@ -165,9 +165,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip = "SquadWait: Wait for a number of units to arrive before continuing";
 	c.params.push_back("2");   // min
 	c.params.push_back("100"); // max
-	c.onlyKey = true;
+	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.onlyKey = false;
+ 	c.hidden = false;
 	c.params.clear();
 
 	c.id = CMD_GATHERWAIT;
@@ -176,9 +176,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.name = "GatherWait";
 	c.mouseicon=c.name;
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
-	c.onlyKey = true;
+	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.onlyKey = false;
+ 	c.hidden = false;
 
 	if (owner->unitDef->canSelfD) {
 		c.id = CMD_SELFD;
@@ -187,9 +187,9 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.name = "SelfD";
 		c.mouseicon = c.name;
 		c.tooltip = "SelfD: Tells the unit to self destruct";
-		c.onlyKey = true;
+		c.hidden = true;
 		possibleCommands.push_back(c);
-	 	c.onlyKey = false;
+	 	c.hidden = false;
 	}
 //	nonQueingCommands.insert(CMD_SELFD);
 
@@ -456,6 +456,7 @@ void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 	if (luaRules && !luaRules->AllowCommand(owner, c, fromSynced)) {
 		return;
 	}
+	eventHandler.UnitCommand(owner, c);
 	this->GiveCommandReal(c); // send to the sub-classes
 }
 
@@ -729,7 +730,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 		if (!owner->group) {
 			globalAI->UnitIdle(owner);
 		}
-		luaCallIns.UnitIdle(owner);
+		eventHandler.UnitIdle(owner);
 	}
 
 	return;
@@ -832,7 +833,7 @@ void CCommandAI::ExecuteInsert(const Command& c)
 		if (owner->group) {
 			owner->group->CommandFinished(owner->id, cmd.id);
 		}
-		luaCallIns.UnitCmdDone(owner, cmd.id, cmd.tag);
+		eventHandler.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}
 
 	queue->insert(insertIt, newCmd);
@@ -1354,13 +1355,13 @@ void CCommandAI::FinishCommand(void)
 	if (owner->group) {
 		owner->group->CommandFinished(owner->id, cmdID);
 	}
-	luaCallIns.UnitCmdDone(owner, cmdID, cmdTag);
+	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
 
 	if (commandQue.empty()) {
 		if (!owner->group) {
 			globalAI->UnitIdle(owner);
 		}
-		luaCallIns.UnitIdle(owner);
+		eventHandler.UnitIdle(owner);
 	}
 
 	if (lastFinishCommand != gs->frameNum) {	//avoid infinite loops

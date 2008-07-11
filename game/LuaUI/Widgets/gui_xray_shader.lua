@@ -48,6 +48,7 @@ local spGetTeamColor         = Spring.GetTeamColor
 local spGetTeamList          = Spring.GetTeamList
 local spGetTeamUnits         = Spring.GetTeamUnits
 local spIsUnitVisible        = Spring.IsUnitVisible
+local spIsUnitIconic         = Spring.IsUnitIconic
 
 
 --------------------------------------------------------------------------------
@@ -104,15 +105,15 @@ function widget:Initialize()
 
       void main()
       {
-              vec4 P = gl_ModelViewMatrix * gl_Vertex;
+        vec4 P = gl_ModelViewMatrix * gl_Vertex;
               
-              eyeVec = P.xyz;
+        eyeVec = P.xyz;
               
-              normal  = gl_NormalMatrix * gl_Normal;
+        normal  = gl_NormalMatrix * gl_Normal;
               
-              color = gl_Color.rgb;
+        color = gl_Color.rgb;
               
-              gl_Position = gl_ProjectionMatrix * P;
+        gl_Position = gl_ProjectionMatrix * P;
       }
     ]],  
  
@@ -125,12 +126,12 @@ function widget:Initialize()
 
       void main()
       {
-          float opac = dot(normalize(normal), normalize(eyeVec));
-          opac = 1.0 - abs(opac);
-          opac = pow(opac, edgeExponent);
+        float opac = dot(normalize(normal), normalize(eyeVec));
+        opac = 1.0 - abs(opac);
+        opac = pow(opac, edgeExponent);
           
-          gl_FragColor.rgb = color;
-          gl_FragColor.a = opac;
+        gl_FragColor.rgb = color;
+        gl_FragColor.a = opac;
       }
     ]],
   })
@@ -188,7 +189,7 @@ function widget:DrawWorld()
   for _, teamID in ipairs(spGetTeamList()) do
     SetTeamColor(teamID)
     for _, unitID in ipairs(spGetTeamUnits(teamID)) do
-      if (spIsUnitVisible(unitID)) then
+      if (spIsUnitVisible(unitID, nil, true)) then
         glUnit(unitID, true)
       end
     end

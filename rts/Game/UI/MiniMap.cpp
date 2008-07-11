@@ -17,7 +17,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "GuiHandler.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -51,8 +50,9 @@
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/FileSystem/SimpleParser.h"
+#include "System/EventHandler.h"
 #include "System/Sound.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
 #include "mmgr.h"
@@ -1223,7 +1223,7 @@ void CMiniMap::DrawForReal()
 	DrawNotes();
 
 	// allow the LUA scripts to draw into the minimap
-	luaCallIns.DrawInMiniMap();
+	eventHandler.DrawInMiniMap();
 
 	// reset the modelview
 	glLoadIdentity();

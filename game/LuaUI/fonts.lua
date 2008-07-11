@@ -18,6 +18,8 @@ end
 -- ":n:" sets it to nearest texture filtering
 local DefaultFontName = ":n:" .. LUAUI_DIRNAME .. "Fonts/FreeMonoBold_12"
 
+Spring.CreateDir(LUAUI_DIRNAME .. 'Fonts')
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -91,17 +93,22 @@ local function CreateFontFiles(fontName)
   if ((not name) or (not size)) then
     return false
   end
-  local fullName
-  if (VFS.FileExists(name .. '.ttf', VFS.RAW_ONLY)) then
-    fullName = name .. '.ttf'
-  elseif (VFS.FileExists(name .. '.otf', VFS.RAW_ONLY)) then
+
+  local fullName = name .. '.ttf'
+  local inData = VFS.LoadFile(fullName)
+  if (not inData) then
     fullName = name .. '.otf'
-  else
+    inData = VFS.LoadFile(fullName)
+  end
+  if (not inData) then
     return false
   end
-  print('CreateFontFiles = ' .. fullName .. '.ttf, ' .. size)
+  
+  print('CreateFontFiles = ' .. fullName .. ', ' .. size)
+
   return
     Spring.MakeFont(fullName, {
+      inData = inData,
       height = tonumber(size),
       minChar = 0,
       maxChar = 255,

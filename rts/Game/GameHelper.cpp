@@ -9,7 +9,6 @@
 #include "GameHelper.h"
 #include "Game/UI/LuaUI.h"
 #include "LogOutput.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -33,6 +32,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ void CGameHelper::Explosion(float3 pos, const DamageArray& damages,
 			}
 		}
 	}
-	bool noGfx = luaCallIns.Explosion(weaponId, pos, owner);
+	bool noGfx = eventHandler.Explosion(weaponId, pos, owner);
 
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
