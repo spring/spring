@@ -96,6 +96,7 @@ class LuaSyncedCtrl {
 
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);
+		static int SetProjectileDetonate(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);

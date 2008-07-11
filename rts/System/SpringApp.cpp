@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "SpringApp.h"
 
+#include <iostream>
+
 #include <signal.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
