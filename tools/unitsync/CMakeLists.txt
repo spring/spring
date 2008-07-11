@@ -1,5 +1,3 @@
-set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/game)
-
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../rts/build/cmake")
 
 IF (MINGW)
@@ -42,6 +40,7 @@ list(APPEND platformfiles
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
 	../../rts/System/TdfParser
+	../../rts/Sim/SideParser
 	../../rts/Game/GameVersion
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
@@ -53,12 +52,13 @@ if (PYTHONLIBS_FOUND)
 	list(APPEND unitsync_files pybind)
 endif (PYTHONLIBS_FOUND)
 
-ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync Syncer SyncServer stdafx)
+ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer SyncServer stdafx)
 TARGET_LINK_LIBRARIES(unitsync hpiutil2 7zip minizip lua gml GLEW boost_regex-mt IL openal GL GLU IL ILU)
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})
 endif (PYTHONLIBS_FOUND)
 SET_TARGET_PROPERTIES( unitsync PROPERTIES COMPILE_FLAGS -fPIC)
+install (TARGETS unitsync DESTINATION spring)
 
 
 

@@ -152,3 +152,4 @@ ENDIF (MINGW)
 ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles})
 
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
+install (TARGETS spring DESTINATION spring)
