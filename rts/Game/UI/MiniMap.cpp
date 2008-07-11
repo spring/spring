@@ -29,6 +29,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -1035,6 +1036,10 @@ void CMiniMap::DrawForReal()
 	glTranslatef(0.0f, +1.0f, 0.0f);
 	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0);
 
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.0f);
+
 	// draw the units
 	std::list<CUnit*>::iterator ui;
 	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
@@ -1047,6 +1052,7 @@ void CMiniMap::DrawForReal()
 		DrawUnitHighlight(unit);
 	}
 
+	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 
 	left.clear();
@@ -1061,7 +1067,7 @@ void CMiniMap::DrawForReal()
 		// draw the camera lines
 		std::vector<fline>::iterator fli,fli2;
 		for(fli=left.begin();fli!=left.end();fli++){
-		  for(fli2=left.begin();fli2!=left.end();fli2++){
+			for(fli2=left.begin();fli2!=left.end();fli2++){
 				if(fli==fli2)
 					continue;
 				float colz=0;
@@ -1087,10 +1093,22 @@ void CMiniMap::DrawForReal()
 		}
 		glEnd();
 	}
-	// draw the projectiles
+
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 
-	if (drawProjectiles) {
+	// draw the projectiles
+	if (drawProjectiles && ph->ps.size()>0) {
+		CVertexArray* lines=GetVertexArray();
+		CVertexArray* points=GetVertexArray();
+		lines->Initialize();
+		points->Initialize();
+
+		static unsigned char red[4]    = {255,0,0,255};
+		static unsigned char redA[4]   = {255,0,0,128};
+		static unsigned char yellow[4] = {255,255,0,255};
+		static unsigned char green[4]  = {0,255,0,25};
+		static unsigned char white[4]  = {255,255,255,25};
+
 		Projectile_List::iterator psi;
 		for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
 			CProjectile* p = *psi;
@@ -1100,51 +1118,38 @@ void CMiniMap::DrawForReal()
 
 				if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
 				} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
-					glBegin(GL_POINTS);
-					glColor4f(0,1,0,0.1);
-					glVertexf3(p->pos);
-					glEnd();
+					points->AddVertexC(p->pos,green);
 				} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
-					glBegin(GL_LINES);
-					glColor4f(((CBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
-					glVertexf3(((CBeamLaserProjectile*)p)->startPos);
-					glVertexf3(((CBeamLaserProjectile*)p)->endPos);
-					glEnd();
+					CBeamLaserProjectile& beam = *(CBeamLaserProjectile*)p;
+					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
+					lines->AddVertexC(beam.startPos,color);
+					lines->AddVertexC(beam.endPos,color);
+					lines->EndStrip();
 				} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
-					glBegin(GL_LINES);
-					glColor4f(((CLargeBeamLaserProjectile*)p)->kocolstart[0]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[1]/255.0,((CLargeBeamLaserProjectile*)p)->kocolstart[2]/255.0,1);
-					glVertexf3(((CLargeBeamLaserProjectile*)p)->startPos);
-					glVertexf3(((CLargeBeamLaserProjectile*)p)->endPos);
-					glEnd();
+					CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
+					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
+					lines->AddVertexC(beam.startPos,color);
+					lines->AddVertexC(beam.endPos,color);
+					lines->EndStrip();
 				} else if (dynamic_cast<CLightingProjectile*>(p)) {
-					glBegin(GL_LINES);
-					glColor4f(((CLightingProjectile*)p)->color[0],((CLightingProjectile*)p)->color[1],((CLightingProjectile*)p)->color[2],1);
-					glVertexf3(((CLightingProjectile*)p)->pos);
-					glVertexf3(((CLightingProjectile*)p)->endPos);
-					glEnd();
+					CLightingProjectile& beam = *(CLightingProjectile*)p;
+					unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
+					lines->AddVertexC(beam.pos,color);
+					lines->AddVertexC(beam.endPos,color);
+					lines->EndStrip();
 				} else if (dynamic_cast<CPieceProjectile*>(p)) {
-					glBegin(GL_POINTS);
-					glColor4f(1,0,0,1);
-					glVertexf3(p->pos);
-					glEnd();
+					points->AddVertexC(p->pos,red);
 				} else if (dynamic_cast<CWreckProjectile*>(p)) {
-					glBegin(GL_POINTS);
-					glColor4f(1,0,0,0.5);
-					glVertexf3(p->pos);
-					glEnd();
+					points->AddVertexC(p->pos,redA);
 				} else if (dynamic_cast<CWeaponProjectile*>(p)) {
-					glBegin(GL_POINTS);
-					glColor4f(1,1,0,1);
-					glVertexf3(p->pos);
-					glEnd();
+					points->AddVertexC(p->pos,yellow);
 				} else {
-					glBegin(GL_POINTS);
-					glColor4f(1,1,1,0.1/*0.0002f*(width+height)*/);
-					glVertexf3(p->pos);
-					glEnd();
+					points->AddVertexC(p->pos,white);
 				}
 			}
 		}
+		lines->DrawArrayC(GL_LINES);
+		points->DrawArrayC(GL_POINTS);
 	}
 
 	// draw the queued commands
@@ -1154,7 +1159,7 @@ void CMiniMap::DrawForReal()
 	//       after the command queues)
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-	  selectedUnits.DrawCommands();
+		selectedUnits.DrawCommands();
 	}
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

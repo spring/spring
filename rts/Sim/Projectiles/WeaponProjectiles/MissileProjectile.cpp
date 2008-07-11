@@ -337,13 +337,13 @@ void CMissileProjectile::Draw(void)
 		if (drawTrail) {
 			// draw the trail as a single quad
 			float3 dif(interPos - camera->pos);
-			dif.Normalize();
+			dif.ANormalize();
 			float3 dir1(dif.cross(dir));
-			dir1.Normalize();
+			dir1.ANormalize();
 			float3 dif2(oldSmoke - camera->pos);
-			dif2.Normalize();
+			dif2.ANormalize();
 			float3 dir2(dif2.cross(oldDir));
-			dir2.Normalize();
+			dir2.ANormalize();
 
 			float a1 = (1.0f / (Smoke_Time)) * 255;
 			a1 *= 0.7f + fabs(dif.dot(dir));
@@ -442,19 +442,7 @@ void CMissileProjectile::DrawUnitPart(void)
 	rightdir.Normalize();
 	float3 updir = rightdir.cross(dir);
 
-	CMatrix44f transMatrix;
-	transMatrix[ 0] = -rightdir.x;
-	transMatrix[ 1] = -rightdir.y;
-	transMatrix[ 2] = -rightdir.z;
-	transMatrix[ 4] =  updir.x;
-	transMatrix[ 5] =  updir.y;
-	transMatrix[ 6] =  updir.z;
-	transMatrix[ 8] =  dir.x;
-	transMatrix[ 9] =  dir.y;
-	transMatrix[10]=   dir.z;
-	transMatrix[12] =  interPos.x + dir.x * radius * 0.9f;
-	transMatrix[13] =  interPos.y + dir.y * radius * 0.9f;
-	transMatrix[14] =  interPos.z + dir.z * radius * 0.9f;
+	CMatrix44f transMatrix(interPos + dir * radius * 0.9f,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
 	glCallList(modelDispList);

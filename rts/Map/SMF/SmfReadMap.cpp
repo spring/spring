@@ -253,9 +253,10 @@ float3 CSmfReadMap::GetLightValue(int x, int y)
 
 void CSmfReadMap::DrawMinimap ()
 {
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
+
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
@@ -267,7 +268,6 @@ void CSmfReadMap::DrawMinimap ()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	if(groundDrawer->DrawExtraTex()){
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -278,8 +278,8 @@ void CSmfReadMap::DrawMinimap ()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	float isx=gs->mapx/float(gs->pwr2mapx);
-	float isy=gs->mapy/float(gs->pwr2mapy);
+	static float isx=gs->mapx/float(gs->pwr2mapx);
+	static float isy=gs->mapy/float(gs->pwr2mapy);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,isy);
@@ -300,14 +300,17 @@ void CSmfReadMap::DrawMinimap ()
 		glVertex2f(1,0);
 	glEnd();
 
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
+
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
+
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	glDisable(GL_TEXTURE_2D);
 }
 
 void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)

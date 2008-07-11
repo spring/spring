@@ -189,7 +189,6 @@ void CSm3ReadMap::DrawMinimap ()
 		return;
 
 	 // draw the minimap in a quad (with extends: (0,0)-(1,1))
-	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
