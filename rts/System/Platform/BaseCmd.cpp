@@ -9,6 +9,9 @@
  */
 #include "StdAfx.h"
 #include "BaseCmd.h"
+
+#include <iostream>
+
 #ifdef _WIN32
 #include "Win/Win32Cmd.h"
 #else

@@ -8,7 +8,6 @@
 
 namespace netcode
 {
-class RawPacket;
 
 struct NetAddress
 {

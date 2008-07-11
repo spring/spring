@@ -1,7 +1,6 @@
 #include "NetProtocol.h"
 
 #include <SDL_timer.h>
-#include <boost/shared_ptr.hpp>
 
 #include "Game/GameSetup.h"
 #include "LogOutput.h"

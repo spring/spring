@@ -22,6 +22,7 @@
 #include "System/BaseNetProtocol.h"
 #include "System/Net/UDPListener.h"
 #include "System/Net/Connection.h"
+#include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"

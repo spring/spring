@@ -10,9 +10,6 @@
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
-#include <stdio.h>
-#include <ios>
-#include <iosfwd>
 #include <vector>
 
 // winapi redifines this which breaks things

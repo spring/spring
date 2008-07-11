@@ -6,6 +6,7 @@
  */
 
 #include "StdAfx.h"
+#include "SyncedFloat3.h"
 
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 

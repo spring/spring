@@ -3,6 +3,8 @@
 #include <boost/weak_ptr.hpp>
 
 #include "ProtocolDef.h"
+#include "UDPConnection.h"
+#include "UDPSocket.h"
 
 namespace netcode
 {

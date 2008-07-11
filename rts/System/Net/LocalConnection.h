@@ -5,7 +5,6 @@
 #include <deque>
 
 #include "Connection.h"
-#include "RawPacket.h"
 
 namespace netcode {
 

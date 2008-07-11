@@ -41,7 +41,7 @@ private:
 	void WritePlayerStats();
 	void WriteTeamStats();
 
-	std::ofstream* recordDemo;
+	std::ofstream recordDemo;
 	std::string wantedName;
 	std::vector< CPlayer::Statistics > playerStats;
 	std::vector< std::vector<CTeam::Statistics> > teamStats;

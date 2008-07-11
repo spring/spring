@@ -12,7 +12,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 
 /**
  * @brief Option parameter none

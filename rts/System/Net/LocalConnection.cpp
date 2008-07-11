@@ -1,6 +1,5 @@
 #include "LocalConnection.h"
 
-#include <string.h>
 #include <boost/format.hpp>
 
 #include "Exception.h"

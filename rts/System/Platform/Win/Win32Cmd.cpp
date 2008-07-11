@@ -10,6 +10,8 @@
 #include "StdAfx.h"
 #include "Win32Cmd.h"
 
+#include <iostream>
+
 /**
  * Just stores the arguments
  */

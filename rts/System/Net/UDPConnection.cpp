@@ -85,9 +85,9 @@ void UDPConnection::Update()
 	if (!sharedSocket)
 	{
 		unsigned recv = 0;
-		unsigned char buffer[4096];
+		unsigned char buffer[UDPBufferSize];
 		sockaddr_in fromAddr;
-		while ((recv = mySocket->RecvFrom(buffer, 4096, &fromAddr)) >= hsize)
+		while ((recv = mySocket->RecvFrom(buffer, UDPBufferSize, &fromAddr)) >= hsize)
 		{
 			RawPacket* data = new RawPacket(buffer, recv);
 			if (CheckAddress(fromAddr))
@@ -165,14 +165,14 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
-		unsigned char buf[8000];
+		unsigned char buf[UDPBufferSize];
 		unsigned bufLength = 0;
 
 		if (fragmentBuffer)
 		{
 			// combine with fragment buffer
 			bufLength += fragmentBuffer->length;
-			assert(fragmentBuffer->length < 8000);
+			assert(fragmentBuffer->length < UDPBufferSize);
 			memcpy(buf, fragmentBuffer->data, bufLength);
 			delete fragmentBuffer;
 			fragmentBuffer = NULL;
@@ -180,7 +180,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 		lastInOrder++;
 #if (BOOST_VERSION >= 103400)
-		assert((wpi->second->length + bufLength) < 8000);
+		assert((wpi->second->length + bufLength) < UDPBufferSize);
 		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
 		bufLength += (wpi->second)->length;
 #else
