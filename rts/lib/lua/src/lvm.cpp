@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "streflop_cond.h" // SPRING -- for luaV_tostring
+#include <cmath> // SPRING -- for luaV_tostring
 
 #define lvm_c
 #define LUA_CORE
@@ -54,15 +54,15 @@ int luaV_tostring (lua_State *L, StkId obj) {
     lua_Number n = nvalue(obj);
     // SPRING -- synced safety change
     //        -- need a custom number formatter?
-    if (isfinite(n)) {
+	if (std::isfinite(n)) {
       lua_number2str(s, n);
     }
     else {
-      if (isnan(n)) {
+      if (std::isnan(n)) {
         strcpy(s, "nan");
       }
       else {
-        const int inf_type = isinf(n);
+        const int inf_type = std::isinf(n);
         if (inf_type == 1) {
           strcpy(s, "+inf");
         } else if (inf_type == -1) {
