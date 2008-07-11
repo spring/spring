@@ -238,17 +238,6 @@ class CEventHandler
 
 		EventClientList listDefaultCommand;
 
-		EventClientList listDrawGenesis;
-		EventClientList listDrawWorld;
-		EventClientList listDrawWorldPreUnit;
-		EventClientList listDrawWorldShadow;
-		EventClientList listDrawWorldReflection;
-		EventClientList listDrawWorldRefraction;
-		EventClientList listDrawScreenEffects;
-		EventClientList listDrawScreen;
-		EventClientList listDrawInMiniMap;
-
-		// from LuaUI
 		EventClientList listKeyPress;
 		EventClientList listKeyRelease;
 		EventClientList listMouseMove;
@@ -264,6 +253,16 @@ class CEventHandler
 		EventClientList listGameSetup;
 		EventClientList listWorldTooltip;
 		EventClientList listMapDrawCmd;
+
+		EventClientList listDrawGenesis;
+		EventClientList listDrawWorld;
+		EventClientList listDrawWorldPreUnit;
+		EventClientList listDrawWorldShadow;
+		EventClientList listDrawWorldReflection;
+		EventClientList listDrawWorldRefraction;
+		EventClientList listDrawScreenEffects;
+		EventClientList listDrawScreen;
+		EventClientList listDrawInMiniMap;
 };
 
 

@@ -36,7 +36,7 @@ using std::vector;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static void PrintShaderLog(GLuint obj)
+static void PrintShaderLog(GLuint obj, const string& type)
 {
 	// WAS COMPILATION SUCCESSFUL ?
 	GLint compiled;
@@ -66,7 +66,8 @@ static void PrintShaderLog(GLuint obj)
 	if (infologLength > 0) {
 		string str(infoLog, infologLength);
 		delete[] infoLog;
-		logOutput.Print("BumpWater shader error: " + str); //string size is limited with content_error()
+		// string size is limited with content_error()
+		logOutput.Print("BumpWater shader error (" + type  + "): " + str);
 		throw content_error(string("BumpWater shader error!"));
 	}
 	delete[] infoLog;
@@ -305,16 +306,17 @@ CBumpWater::CBumpWater()
 	if (shorewaves) {
 		waveRandTexture = LoadTexture( "bitmaps/shorewaverand.bmp" );
 
-		const GLchar* fsSource = LoadShaderSource("shaders/bumpWaterCoastBlurFS.glsl").c_str();
+		const string fsSource = LoadShaderSource("shaders/bumpWaterCoastBlurFS.glsl");
+		const GLchar* fsSourceStr = fsSource.c_str();
 		blurFP = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(blurFP, 1, &fsSource, NULL);
+		glShaderSource(blurFP, 1, &fsSourceStr, NULL);
 		glCompileShader(blurFP);
-		PrintShaderLog(blurFP);
+		PrintShaderLog(blurFP, "blurFP");
 
 		blurShader = glCreateProgram();
 		glAttachShader(blurShader, blurFP);
 		glLinkProgram(blurShader);
-		PrintShaderLog(blurShader);
+		PrintShaderLog(blurShader, "blurShader");
 		blurDirLoc    = glGetUniformLocation(blurShader, "blurDir");
 		GLuint texLoc = glGetUniformLocation(blurShader, "tex0");
 		glUniform1i(texLoc, 0);
@@ -367,20 +369,20 @@ CBumpWater::CBumpWater()
 	strings[1] = vsSource.c_str();
 	glShaderSource(waterVP, strings.size(), &strings.front(), &lengths.front());
 	glCompileShader(waterVP);
-	PrintShaderLog(waterVP);
+	PrintShaderLog(waterVP, "waterVP");
 
 	waterFP = glCreateShader(GL_FRAGMENT_SHADER);
 	lengths[1] = fsSource.length();
 	strings[1] = fsSource.c_str();
 	glShaderSource(waterFP, strings.size(), &strings.front(), &lengths.front());
 	glCompileShader(waterFP);
-	PrintShaderLog(waterFP);
+	PrintShaderLog(waterFP, "waterFP");
 
 	waterShader = glCreateProgram();
 	glAttachShader(waterShader, waterVP);
 	glAttachShader(waterShader, waterFP);
 	glLinkProgram(waterShader);
-	PrintShaderLog(waterShader);
+	PrintShaderLog(waterShader, "waterShader");
 
 
 	/** BIND TEXTURE UNIFORMS **/
