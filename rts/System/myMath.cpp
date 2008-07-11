@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <assert.h>
 #include "Platform/errorhandler.h"
 #include "myMath.h"
 #include "mmgr.h"

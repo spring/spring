@@ -1,5 +1,6 @@
 
 #include "StdAfx.h"
+#include <assert.h>
 #include "LogOutput.h"
 #include <cstdarg>
 #include <fstream>
