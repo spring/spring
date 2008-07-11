@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <assert.h>
 
 #include "MapInfo.h"
 
