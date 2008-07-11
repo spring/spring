@@ -11,6 +11,7 @@ using std::string;
 using std::vector;
 using std::set;
 
+#include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
@@ -20,11 +21,11 @@ using std::set;
 #include "LuaDisplayLists.h"
 
 
-#define LUA_HANDLE_ORDER_UNITS          0
-#define LUA_HANDLE_ORDER_RULES          1
+#define LUA_HANDLE_ORDER_RULES          0
+#define LUA_HANDLE_ORDER_UNITS          1
 #define LUA_HANDLE_ORDER_GAIA           2
-#define LUA_HANDLE_ORDER_UNITS_UNSYNCED 3
-#define LUA_HANDLE_ORDER_RULES_UNSYNCED 4
+#define LUA_HANDLE_ORDER_RULES_UNSYNCED 3
+#define LUA_HANDLE_ORDER_UNITS_UNSYNCED 4
 #define LUA_HANDLE_ORDER_GAIA_UNSYNCED  5
 #define LUA_HANDLE_ORDER_UI             6
 
@@ -41,20 +42,14 @@ struct lua_State;
 typedef void (*LuaCobCallback)(int retCode, void* unitID, void* data);
 
 
-class CLuaHandle {
+class CLuaHandle : public CEventClient
+{
 	public:
-		const string& GetName() const { return name; }
 		void CheckStack();
 		int GetCallInErrors() const { return callinErrors; }
 		void ResetCallinErrors() { callinErrors = 0; }
 		
 	public:
-		enum SpecialTeams {
-			NoAccessTeam   = -1,
-			AllAccessTeam  = -2,
-			MinSpecialTeam = -2
-		};
-
 		inline bool CanCtrlTeam(int team) {
 			if (ctrlTeam < 0) {
 				return (ctrlTeam == AllAccessTeam);
@@ -92,12 +87,11 @@ class CLuaHandle {
 		CLuaDisplayLists& GetDisplayLists() { return displayLists; }
 
 	public:
-		const string name;
-		const int order;
 		const bool userMode;
 
 	public: // call-ins
-		virtual bool HasCallIn(const string& name) { return false; }
+		virtual bool HasCallIn(const string& name) { return false; } // FIXME
+		bool WantsEvent(const string& name)  { return HasCallIn(name); } // FIXME
 		virtual bool SyncedUpdateCallIn(const string& name) { return false; }
 		virtual bool UnsyncedUpdateCallIn(const string& name) { return false; }
 
@@ -111,6 +105,8 @@ class CLuaHandle {
 		void GameStart();
 		void GameOver();
 		void TeamDied(int teamID);
+		void TeamChanged(int teamID);
+		void PlayerChanged(int playerID);
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);
 		void UnitFinished(const CUnit* unit);
@@ -121,6 +117,7 @@ class CLuaHandle {
 		void UnitGiven(const CUnit* unit, int oldTeam);
 
 		void UnitIdle(const CUnit* unit);
+		void UnitCommand(const CUnit* unit, const Command& command);
 		void UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag);
 		void UnitDamaged(const CUnit* unit, const CUnit* attacker,
 		                 float damage, int weaponID, bool paralyzer);
@@ -232,13 +229,16 @@ class CLuaHandle {
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 		bool PushUnsyncedCallIn(const LuaHashString& hs);
 
+		inline bool CheckModUICtrl() { return modUICtrl || userMode; }
+
 	protected:
 		lua_State* L;
 
 		bool killMe;
 		string killMsg;
 
-		bool synced;
+		bool synced; // FIXME -- remove this once the lua_State split is done
+		             //          (use the constant CEventClient version ...)
 
 		bool fullCtrl;
 		bool fullRead;
@@ -282,6 +282,7 @@ class CLuaHandle {
 		static int CallOutGetSelectTeam(lua_State* L);
 		static int CallOutGetGlobal(lua_State* L);
 		static int CallOutGetRegistry(lua_State* L);
+		static int CallOutGetCallInList(lua_State* L);
 		static int CallOutSyncedUpdateCallIn(lua_State* L);
 		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
 

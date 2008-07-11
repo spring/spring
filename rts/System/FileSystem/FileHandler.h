@@ -28,6 +28,9 @@ class CFileHandler {
 		bool LoadStringData(std::string& data);
 
 	public:
+		static bool InReadDir(const std::string& path);
+		static bool InWriteDir(const std::string& path);
+
 		static std::vector<std::string> FindFiles(const std::string& path, const std::string& pattern);
 
 		static std::vector<std::string> DirList(const std::string& path,

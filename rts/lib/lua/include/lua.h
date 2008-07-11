@@ -107,6 +107,21 @@ typedef LUA_INTEGER lua_Integer;
 typedef unsigned int lua_Hash;
 
 
+/*
+** SPRING additions for io access security
+*/
+#include <stdio.h>
+typedef FILE* (*lua_Func_fopen)(lua_State* L, const char* path, const char* mode);
+typedef FILE* (*lua_Func_popen)(lua_State* L, const char* command, const char* type);
+typedef int   (*lua_Func_pclose)(lua_State* L, FILE* stream);
+typedef int   (*lua_Func_system)(lua_State* L, const char* command);
+typedef int   (*lua_Func_remove)(lua_State* L, const char* pathname);
+typedef int   (*lua_Func_rename)(lua_State* L, const char* oldpath, const char* newpath);
+LUA_API void lua_set_fopen(lua_State* L, lua_Func_fopen);
+LUA_API void lua_set_popen(lua_State* L, lua_Func_popen, lua_Func_pclose);
+LUA_API void lua_set_system(lua_State* L, lua_Func_system);
+LUA_API void lua_set_remove(lua_State* L, lua_Func_remove);
+LUA_API void lua_set_rename(lua_State* L, lua_Func_rename);
 
 /*
 ** state manipulation

@@ -76,7 +76,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
@@ -111,8 +110,9 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
-#include "System/FileSystem/SimpleParser.h"
+#include "System/EventHandler.h"
 #include "System/Sound.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/NullSound.h"
 #include "System/Net/RawPacket.h"
 #include "Platform/Clipboard.h"
@@ -154,8 +154,10 @@
 
 #include <boost/thread/barrier.hpp>
 
+#ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
 gmlClientServer<void, int,CUnit*> gmlProcessor;
+#endif
 
 extern Uint8 *keys;
 extern bool globalQuit;
@@ -427,6 +429,13 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	globalAI = SAFE_NEW CGlobalAIHandler();
 
+	CPlayer* p = gs->players[gu->myPlayerNum];
+	if(!gameSetup || net->localDemoPlayback) {
+		p->playerName = configHandler.GetString("name", "");
+	} else {
+		GameSetupDrawer::Enable();
+	}
+
 	if (gs->useLuaRules) {
 		PrintLoadMsg("Loading LuaRules");
 		CLuaRules::LoadHandler();
@@ -435,7 +444,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	if (!!configHandler.GetInt("LuaUI", 0)) {
+	if (!!configHandler.GetInt("LuaUI", 1)) {
 		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
@@ -450,13 +459,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 	}
 
-	CPlayer* p = gs->players[gu->myPlayerNum];
-	if(!gameSetup || net->localDemoPlayback) {
-		p->playerName = configHandler.GetString("name", "");
-	} else {
-		GameSetupDrawer::Enable();
-	}
-
 	lastframe = SDL_GetTicks();
 	lastModGameTimeMeasure = lastframe;
 	lastUpdate = lastframe;
@@ -465,7 +467,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	updateDeltaSeconds = 0.0f;
 	script = CScriptHandler::Instance().chosenScript;
 	assert(script);
-	luaCallIns.GamePreload();
+	eventHandler.GamePreload();
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	glFogf(GL_FOG_START, 0.0f);
@@ -621,7 +623,7 @@ void CGame::ResizeEvent()
 	delete water;
 	water = CBaseWater::GetWater();
 
-	luaCallIns.ViewResize();
+	eventHandler.ViewResize();
 }
 
 
@@ -1748,11 +1750,14 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "gathermode") {
 		if (guihandler != NULL) {
+			bool gatherMode;
 			if (action.extra.empty()) {
-				guihandler->SetGatherMode(!guihandler->GetGatherMode());
+				gatherMode = !guihandler->GetGatherMode();
 			} else {
-				guihandler->SetGatherMode(!!atoi(action.extra.c_str()));
+				gatherMode = !!atoi(action.extra.c_str());
 			}
+			guihandler->SetGatherMode(gatherMode);
+			logOutput.Print("gathermode %s", gatherMode ? "enabled" : "disabled");
 		}
 	}
 	else if (cmd == "pastetext") {
@@ -2430,7 +2435,7 @@ bool CGame::Update()
 	if (!net->Active() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		gameOver = true;
-		luaCallIns.GameOver();
+		eventHandler.GameOver();
 		GameEnd();
 	}
 
@@ -2440,7 +2445,7 @@ bool CGame::Update()
 		infoConsole->GetNewRawLines(lines);
 		for (unsigned int i = 0; i < lines.size(); i++) {
 			const CInfoConsole::RawLine& rawLine = lines[i];
-			luaCallIns.AddConsoleLine(rawLine.text, rawLine.zone);
+			eventHandler.AddConsoleLine(rawLine.text, rawLine.zone);
 		}
 	}
 
@@ -2484,7 +2489,7 @@ bool CGame::DrawWorld()
 	}
 
 	selectedUnits.Draw();
-	luaCallIns.DrawWorldPreUnit();
+	eventHandler.DrawWorldPreUnit();
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
 
@@ -2514,7 +2519,7 @@ bool CGame::DrawWorld()
 		sky->DrawSun();
 	}
 
-	luaCallIns.DrawWorld();
+	eventHandler.DrawWorld();
 
 	LuaUnsyncedCtrl::DrawUnitCommandQueues();
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
@@ -2587,21 +2592,23 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-#if GML_ENABLE_DRAWALL
+#ifndef USE_GML
 bool CGame::Draw() {
-#else
+#else // USE_GML
+#  if GML_ENABLE_DRAWALL
+bool CGame::Draw() {
+#  else
 bool CGame::DrawMT() {
-#endif
+#  endif
 	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
 	return TRUE;
 }
-
-
-#if GML_ENABLE_DRAWALL
+#  if GML_ENABLE_DRAWALL
 bool CGame::DrawMT() {
-#else
+#  else
 bool CGame::Draw() {
-#endif
+#  endif
+#endif // USE_GML
 
 	ASSERT_UNSYNCED_MODE;
 
@@ -2617,14 +2624,13 @@ bool CGame::Draw() {
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 
-	luaCallIns.Update();
+	eventHandler.Update();
 
-	luaCallIns.DrawGenesis();
+	eventHandler.DrawGenesis();
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
-		// FIXME: trepan -- I want error reports, make this verbose and annoying
-		for (int annoy = 0; annoy < 32; annoy++) {
+		for (int annoy = 0; annoy < 8; annoy++) {
 			logOutput << "5 errors deep in LuaUI, disabling...\n";
 		}
 		guihandler->RunLayoutCommand("disable");
@@ -2729,7 +2735,7 @@ bool CGame::Draw() {
 
 	glDisable(GL_FOG);
 
-	luaCallIns.DrawScreenEffects();
+	eventHandler.DrawScreenEffects();
 
 	if (mouse->locked && (crossSize > 0.0f)) {
 		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
@@ -2978,44 +2984,49 @@ void CGame::DrawInputText()
 
 void CGame::StartPlaying()
 {
-	playing=true;
+	playing = true;
 	GameSetupDrawer::Disable();
-	lastTick=clock();
+	lastTick = clock();
 	lastframe = SDL_GetTicks();
+
 	ENTER_MIXED;
-	gu->myTeam=gs->players[gu->myPlayerNum]->team;
-	gu->myAllyTeam=gs->AllyTeam(gu->myTeam);
-//	grouphandler->team=gu->myTeam;
+	gu->myTeam = gs->players[gu->myPlayerNum]->team;
+	gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+//	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
+
 	ENTER_SYNCED;
 	script->GameStart();
-	luaCallIns.GameStart();
-
+	eventHandler.GameStart();
 }
 
 
 // This will be run by a separate thread in parallel with the Sim
 // ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
 void CGame::UnsyncedStuff() {
-	if(!skipping) {
+	if (!skipping) {
 		infoConsole->Update();
 	}
 }
 
 
-#if GML_ENABLE_SIM
+#ifndef USE_GML
 void CGame::SimFrame() {
-#else
+#else // USE_GML
+#  if GML_ENABLE_SIM
+void CGame::SimFrame() {
+#  else
 void CGame::SimFrameMT() {
-#endif
+#  endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
 }
-
-#if GML_ENABLE_SIM
+#  if GML_ENABLE_SIM
 void CGame::SimFrameMT() {
-#else
+#  else
 void CGame::SimFrame() {
-#endif
+#  endif
+#endif // USE_GML
+
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 	ASSERT_SYNCED_MODE;
@@ -3052,26 +3063,29 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		globalAI->Update();
-		for (int a = 0; a < MAX_TEAMS; a++)
+		for (int a = 0; a < MAX_TEAMS; a++) {
 			grouphandlers[a]->Update();
+		}
 		profiler.Update();
 		unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
-		if(gu->directControl){
-			unsigned char status=0;
-			if(camMove[0]) status|=1;
-			if(camMove[1]) status|=2;
-			if(camMove[2]) status|=4;
-			if(camMove[3]) status|=8;
-			if(mouse->buttons[SDL_BUTTON_LEFT].pressed) status|=16;
-			if(mouse->buttons[SDL_BUTTON_RIGHT].pressed) status|=32;
-			shortint2 hp=GetHAndPFromVector(camera->forward);
+		if (gu->directControl) {
+			unsigned char status = 0;
+			if (camMove[0]) { status |= (1 << 0); }
+			if (camMove[1]) { status |= (1 << 1); }
+			if (camMove[2]) { status |= (1 << 2); }
+			if (camMove[3]) { status |= (1 << 3); }
+			if (mouse->buttons[SDL_BUTTON_LEFT].pressed)  { status |= (1 << 4); }
+			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) { status |= (1 << 5); }
+			shortint2 hp = GetHAndPFromVector(camera->forward);
 
-			if(hp.x!=oldHeading || hp.y!=oldPitch || oldStatus!=status){
-				oldHeading=hp.x;
-				oldPitch=hp.y;
-				oldStatus=status;
-				net->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, status, hp.x, hp.y));
+			if (hp.x != oldHeading || hp.y != oldPitch || oldStatus != status) {
+				oldHeading = hp.x;
+				oldPitch = hp.y;
+				oldStatus = status;
+				net->Send(
+					CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum,
+					                                                status, hp.x, hp.y));
 			}
 		}
 #endif
@@ -3235,7 +3249,7 @@ void CGame::ClientReadNet()
 				if (!gameOver)
 				{
 					gameOver=true;
-					luaCallIns.GameOver();
+					eventHandler.GameOver();
 					GameEnd();
 				}
 				POP_CODE_MODE;
@@ -3295,7 +3309,7 @@ void CGame::ClientReadNet()
 			case NETMSG_GAMEOVER: {
 				ENTER_MIXED;
 				gameOver=true;
-				luaCallIns.GameOver();
+				eventHandler.GameOver();
 				if (gu->autoQuit) {
 					logOutput.Print("Automatical quit enforced from commandline");
 					globalQuit = true;
@@ -3795,8 +3809,6 @@ void CGame::ClientReadNet()
 							gu->spectating           = false;
 							gu->spectatingFullView   = false;
 							gu->spectatingFullSelect = false;
-							gu->spectatingFullView   = false;
-							gu->spectatingFullSelect = false;
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
@@ -3805,6 +3817,7 @@ void CGame::ClientReadNet()
 							gs->Team(newTeam)->leader = player;
 						}
 						CPlayer::UpdateControlledTeams();
+						eventHandler.PlayerChanged(player);
 						break;
 					}
 					default: {
@@ -3821,11 +3834,12 @@ void CGame::ClientReadNet()
 				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
-					//       - need a call-in for lua and AIs
+					//       - need a call-in for AIs
 					gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 				}
+				eventHandler.TeamChanged(gs->players[player]->team);
 				break;
 			}
 			case NETMSG_CCOMMAND: {
@@ -4096,10 +4110,11 @@ void CGame::MakeMemDump(void)
 	logOutput.Print("Memdump finished");
 }
 
+
 void CGame::DrawDirectControlHud(void)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
-	CUnit* unit=gu->directControl;
+	CUnit* unit = gu->directControl;
 	glPushMatrix();
 
 	glEnable(GL_BLEND);
@@ -4112,9 +4127,9 @@ void CGame::DrawDirectControlHud(void)
 		glTranslatef(0.1f,0.5f,0);
 		glScalef(0.25f, 0.25f * gu->aspectRatio, 0.25f);
 
-		if(unit->moveType->useHeading){
+		if (unit->moveType->useHeading) {
 			glPushMatrix();
-			glRotatef(unit->heading*180.0f/32768+180,0,0,1);
+			glRotatef(unit->heading * 180.0f / 32768 + 180, 0, 0, 1);
 
 			glColor4f(0.3f, 0.9f, 0.3f, 0.4f);
 			glBegin(GL_TRIANGLE_FAN);
@@ -4130,14 +4145,17 @@ void CGame::DrawDirectControlHud(void)
 
 		glEnable(GL_DEPTH_TEST);
 		glPushMatrix();
-		if(unit->moveType->useHeading){
-			float scale=0.4f/unit->radius;
-			glScalef(scale,scale,scale);
-			glRotatef(90,1,0,0);
+		if (unit->moveType->useHeading) {
+			const float scale = 0.4f/unit->radius;
+			glScalef(scale, scale, scale);
+			glRotatef(90, 1, 0, 0);
 		} else {
-			float scale=0.2f/unit->radius;
-			glScalef(scale,scale,-scale);
-			CMatrix44f m(ZeroVector,float3(camera->right.x,camera->up.x,camera->forward.x),float3(camera->right.y,camera->up.y,camera->forward.y),float3(camera->right.z,camera->up.z,camera->forward.z));
+			const float scale = 0.2f / unit->radius;
+			glScalef(scale, scale, -scale);
+			CMatrix44f m(ZeroVector,
+			             float3(camera->right.x, camera->up.x, camera->forward.x),
+			             float3(camera->right.y, camera->up.y, camera->forward.y),
+			             float3(camera->right.z, camera->up.z, camera->forward.z));
 			glMultMatrixf(m.m);
 		}
 		glTranslatef3(-unit->pos - (unit->speed * gu->timeOffset));
@@ -4149,7 +4167,7 @@ void CGame::DrawDirectControlHud(void)
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
 
-		if(unit->moveType->useHeading){
+		if (unit->moveType->useHeading) {
 			glPushMatrix();
 			glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0f/32768+180,0,0,1);
 			glScalef(0.4f,0.4f,0.3f);
@@ -4305,6 +4323,7 @@ void CGame::DrawDirectControlHud(void)
 	glPopMatrix();
 #endif
 }
+
 
 void CGame::GameEnd()
 {

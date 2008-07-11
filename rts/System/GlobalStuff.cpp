@@ -289,6 +289,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	modGameTime = 0;
 	gameTime = 0;
 	lastFrameTime = 0;
+	drawFrame = 1;
 	viewSizeX = 100;
 	viewSizeY = 100;
 	pixelX = 0.01f;

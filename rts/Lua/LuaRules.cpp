@@ -312,10 +312,8 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -374,10 +372,8 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -416,10 +412,8 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -455,10 +449,8 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -495,10 +487,8 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -535,10 +525,8 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -575,10 +563,8 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -612,10 +598,8 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -651,10 +635,8 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -689,10 +671,8 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -728,10 +708,8 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -766,10 +744,8 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -810,10 +786,8 @@ bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
 	}
 
 	// get the results
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -855,10 +829,8 @@ bool CLuaRules::DrawUnit(int unitID)
 		return false;
 	}
 
-	const int args = lua_gettop(L);
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value (%i)\n",
-		                cmdStr.GetString().c_str(), args);
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -920,7 +892,7 @@ int CLuaRules::UnpackCobArg(lua_State* L)
 	if (currentCobArgs == NULL) {
 		luaL_error(L, "Error in UnpackCobArg(), no current args");
 	}
-	const int arg = (int)luaL_checknumber(L, 1) - 1;
+	const int arg = luaL_checkint(L, 1) - 1;
 	if ((arg < 0) || (arg >= MAX_LUA_COB_ARGS)) {
 		luaL_error(L, "Error in UnpackCobArg(), bad index");
 	}
@@ -991,7 +963,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 	for (int a = 1; a <= retArgs; a++) {
 		const int index = (a + top);
 		if (lua_isnumber(L, index)) {
-			args[a] = (int)lua_tonumber(L, index);
+			args[a] = lua_toint(L, index);
 		}
 		else if (lua_isboolean(L, index)) {
 			args[a] = lua_toboolean(L, index) ? 1 : 0;
@@ -1000,8 +972,8 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 			lua_rawgeti(L, index, 1);
 			lua_rawgeti(L, index, 2);
 			if (lua_isnumber(L, -2) && lua_isnumber(L, -1)) {
-				const int x = (int)lua_tonumber(L, -2);
-				const int z = (int)lua_tonumber(L, -1);
+				const int x = lua_toint(L, -2);
+				const int z = lua_toint(L, -1);
 				args[a] = PACKXZ(x, z);
 			} else {
 				args[a] = 0;
@@ -1054,8 +1026,7 @@ int CLuaRules::PermitHelperAIs(lua_State* L)
 int CLuaRules::SetRulesInfoMap(lua_State* L)
 {
 	assert(luaRules != NULL);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_istable(L, 1)) {
+	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetRulesInfoMap(teamID)");
 	}
 	map<string, string>& infoMap = luaRules->infoMap;
@@ -1084,7 +1055,7 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 	int pIndex = -1;
 
 	if (lua_israwnumber(L, index)) {
-		pIndex = (int)lua_tonumber(L, index) - 1;
+		pIndex = lua_toint(L, index) - 1;
 	}
 	else if (lua_israwstring(L, index)) {
 		const string pName = lua_tostring(L, index);
@@ -1110,7 +1081,7 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 	if (!lua_isnumber(L, valIndex)) {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
-	params[pIndex] = (float)lua_tonumber(L, valIndex);
+	params[pIndex] = lua_tofloat(L, valIndex);
 	return;
 }
 
@@ -1134,7 +1105,7 @@ void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 			return;
 		}
 		else if (lua_israwnumber(L, -1)) {
-			const float value = (float)lua_tonumber(L, -1);
+			const float value = lua_tofloat(L, -1);
 			params.push_back(value);
 		}
 		else if (lua_istable(L, -1)) {
@@ -1181,7 +1152,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad teamID type\n", caller);
 	}
-	const int teamID = (int)lua_tonumber(L, index);
+	const int teamID = lua_toint(L, index);
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		luaL_error(L, "%s(): Bad teamID: %i\n", teamID);
 	}
@@ -1230,7 +1201,7 @@ static CUnit* ParseUnit(lua_State* L, const char* caller, int luaIndex)
 	if (!lua_isnumber(L, luaIndex)) {
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
-	const int unitID = (int)lua_tonumber(L, luaIndex);
+	const int unitID = lua_toint(L, luaIndex);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}

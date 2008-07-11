@@ -8,16 +8,16 @@
 #include "LogOutput.h"
 #include "Player.h"
 #include "Game/UI/LuaUI.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
+#include "ExternalAI/GlobalAI.h"
+#include "ExternalAI/GlobalAIHandler.h"
+#include "System/EventHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
-#include "ExternalAI/GlobalAI.h"
-#include "ExternalAI/GlobalAIHandler.h"
 #include "mmgr.h"
 #include "NetProtocol.h"
 
@@ -286,7 +286,7 @@ void CTeam::Died()
 
 	CLuaUI::UpdateTeams();
   CPlayer::UpdateControlledTeams();
-	luaCallIns.TeamDied(teamNum);
+	eventHandler.TeamDied(teamNum);
 }
 
 void CTeam::StartposMessage(const float3& pos, const bool isReady)
@@ -330,12 +330,12 @@ void CTeam::SlowUpdate()
 	metalReceived = 0;
 	energyReceived = 0;
 
-	float eShare=0,mShare=0;
-	for(int a=0; a < gs->activeTeams; ++a){
-		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
+	float eShare = 0.0f, mShare = 0.0f;
+	for (int a = 0; a < gs->activeTeams; ++a) {
+		if ((a != teamNum) && gs->AlliedTeams(teamNum, a)) {
 			CTeam* team = gs->Team(a);
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
-			mShare += std::max(0.0f, (team->metalStorage * 0.99f) - team->metal);
+			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
 		}
 	}
 
@@ -347,14 +347,15 @@ void CTeam::SlowUpdate()
 	const float eExcess = std::max(0.0f, energy - (energyStorage * energyShare));
 	const float mExcess = std::max(0.0f, metal  - (metalStorage  * metalShare));
 
-	float de=0,dm=0;
-	if (eShare > 0)
-		de = std::min(1.0f,eExcess/eShare);
-	if (mShare > 0)
-		dm = std::min(1.0f,mExcess/mShare);
-
-	for(int a=0; a < gs->activeTeams; ++a){
-		if((a != teamNum) && gs->AlliedTeams(teamNum,a)){
+	float de = 0.0f, dm = 0.0f;
+	if (eShare > 0.0f) {
+		de = std::min(1.0f, eExcess/eShare);
+	}
+	if (mShare > 0.0f) {
+		dm = std::min(1.0f, mExcess/mShare);
+	}
+	for (int a = 0; a < gs->activeTeams; ++a) {
+		if ((a != teamNum) && gs->AlliedTeams(teamNum, a)) {
 			CTeam* team = gs->Team(a);
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
@@ -447,7 +448,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 		}
 	}
 
-	if(units.empty() && !gaia) {
+	if (units.empty() && !gaia) {
 		Died();
 	}
 }

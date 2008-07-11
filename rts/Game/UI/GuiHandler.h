@@ -32,7 +32,6 @@ class CGuiHandler : public CInputReceiver {
 		bool KeyPressed(unsigned short key, bool isRepeat);
 		bool KeyReleased(unsigned short key);
 		bool MousePress(int x, int y, int button);
-		void MouseMove(int x, int y, int dx, int dy, int button);
 		void MouseRelease(int x, int y, int button);
 		bool IsAbove(int x, int y);
 		std::string GetTooltip(int x, int y);

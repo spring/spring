@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "TransportUnit.h"
-#include "Lua/LuaCallInHandler.h"
+#include "Game/SelectedUnits.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Game/SelectedUnits.h"
+#include "System/EventHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
@@ -110,7 +110,7 @@ void CTransportUnit::KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker)
 			}
 			ti->unit->speed = speed;
 
-			luaCallIns.UnitUnloaded(ti->unit, this);
+			eventHandler.UnitUnloaded(ti->unit, this);
 		}
 	}
 
@@ -151,7 +151,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->AddDeathDependence (this);
 	unit->transporter = this;
 	unit->toBeTransported=false;
-	if (!unitDef->isfireplatform) {
+	if (!unitDef->isFirePlatform) {
 		unit->stunned=true;	//make sure unit doesnt fire etc in transport
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -173,7 +173,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->CalculateTerrainType();
 	unit->UpdateTerrainType();
 
-	luaCallIns.UnitLoaded(unit, this);
+	eventHandler.UnitLoaded(unit, this);
 }
 
 void CTransportUnit::DetachUnit(CUnit* unit)
@@ -208,7 +208,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
 
-			luaCallIns.UnitUnloaded(unit, this);
+			eventHandler.UnitUnloaded(unit, this);
 
 			break;
 		}
@@ -228,7 +228,7 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 			if (dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
 
-			unit->stunned=false; // de-stun in case it isfireplatform=0
+			unit->stunned=false; // de-stun in case it isFirePlatform=0
 			loshandler->MoveUnit(unit,false);
 
 			//add an additional move command for after we land
@@ -247,7 +247,7 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
 			unit->moveType->LeaveTransport();
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
-			luaCallIns.UnitUnloaded(unit, this);
+			eventHandler.UnitUnloaded(unit, this);
 
 			break;
 		}
@@ -267,7 +267,7 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit)
 			unit->transporter=0;
 			if (dynamic_cast<CTAAirMoveType*>(moveType))
 				unit->moveType->useHeading=true;
-			unit->stunned=false; // de-stun in case it isfireplatform=0
+			unit->stunned=false; // de-stun in case it isFirePlatform=0
 			unit->Block();
 
 			loshandler->MoveUnit(unit,false);
@@ -284,7 +284,7 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit)
 			unit->moveType->LeaveTransport();
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
-			luaCallIns.UnitUnloaded(unit, this);
+			eventHandler.UnitUnloaded(unit, this);
 
 			break;
 		}

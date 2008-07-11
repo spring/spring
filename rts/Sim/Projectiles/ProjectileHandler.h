@@ -19,12 +19,15 @@ struct SS3OVertex;
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
 
+
+class CGroundFlash;
+class IFramebuffer;
+
+
 typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<unsigned int, ProjectileMapPair> ProjectileMap;
 
-class CGroundFlash;
-class IFramebuffer;
 
 class CProjectileHandler
 {
@@ -34,6 +37,14 @@ public:
 	virtual ~CProjectileHandler();
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
+
+	inline const ProjectileMapPair* GetMapPairByID(int id) const {
+		ProjectileMap::const_iterator it = weaponProjectileIDs.find(id);
+		if (it == weaponProjectileIDs.end()) {
+			return NULL;
+		}
+		return &(it->second);
+	}
 
 	void CheckUnitCol();
 	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
@@ -58,8 +69,9 @@ public:
 	};
 
 	Projectile_List ps;						// contains both synced and unsynced projectiles
+	int maxUsedID;
+	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
-	unsigned int curWeaponProjectileID;		// enough IDs for 40 hours at 1000 projectiles per frame
 
 	std::vector<projdist> distlist;
 
@@ -142,7 +154,11 @@ private:
 	IFramebuffer *perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
+
 };
+
+
 extern CProjectileHandler* ph;
+
 
 #endif /* PROJECTILEHANDLER_H */

@@ -53,12 +53,12 @@ static int path_next(lua_State* L)
 
 	float3 callerPos = ZeroVector;
 	if (args >= 4) {
-		callerPos.x = (float)luaL_checknumber(L, 2);
-		callerPos.y = (float)luaL_checknumber(L, 3);
-		callerPos.z = (float)luaL_checknumber(L, 4);
+		callerPos.x = luaL_checkfloat(L, 2);
+		callerPos.y = luaL_checkfloat(L, 3);
+		callerPos.z = luaL_checkfloat(L, 4);
 	}
 
-	const float minDist = (float)luaL_optnumber(L, 5, 0.0f);
+	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
 	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist);
 
@@ -176,7 +176,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 		moveData = moveinfo->GetMoveDataFromName(moveName, true);
 	}
 	else {
-		const int moveID = (int)luaL_checknumber(L, 1);
+		const int moveID = luaL_checkint(L, 1);
 		if ((moveID < 0) || (moveID >= moveinfo->moveData.size())) {
 			luaL_error(L, "Invalid moveID passed to RequestPath");
 		}
@@ -187,15 +187,15 @@ int LuaPathFinder::RequestPath(lua_State* L)
 		return 0;
 	}
 
-	const float3 start((float)luaL_checknumber(L, 2),
-	                   (float)luaL_checknumber(L, 3),
-	                   (float)luaL_checknumber(L, 4));
+	const float3 start(luaL_checkfloat(L, 2),
+	                   luaL_checkfloat(L, 3),
+	                   luaL_checkfloat(L, 4));
 
-	const float3   end((float)luaL_checknumber(L, 5),
-	                   (float)luaL_checknumber(L, 6),
-	                   (float)luaL_checknumber(L, 7));
+	const float3   end(luaL_checkfloat(L, 5),
+	                   luaL_checkfloat(L, 6),
+	                   luaL_checkfloat(L, 7));
 
-	const float radius = (float)luaL_optnumber(L, 8, 8.0f);
+	const float radius = luaL_optfloat(L, 8, 8.0f);
 
 	const int pathID =
 		pathManager->RequestPath(moveData, start, end, radius, NULL);

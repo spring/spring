@@ -201,7 +201,7 @@ static int WeaponDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case INT_TYPE: {
-			*((int*)p) = (int)lua_tonumber(L, -1);
+			*((int*)p) = lua_toint(L, -1);
 			return 0;
 		}
 		case BOOL_TYPE: {
@@ -209,7 +209,7 @@ static int WeaponDefNewIndex(lua_State* L)
 			return 0;
 		}
 		case FLOAT_TYPE: {
-			*((float*)p) = (float)lua_tonumber(L, -1);
+			*((float*)p) = lua_tofloat(L, -1);
 			return 0;
 		}
 		case STRING_TYPE: {

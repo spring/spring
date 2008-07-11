@@ -42,8 +42,10 @@
 #include "Sim/Weapons/Weapon.h"
 #include "mmgr.h"
 
+#ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+#endif
 
 CUnitDrawer* unitDrawer;
 static bool luaDrawing = false; // FIXME

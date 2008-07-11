@@ -10,7 +10,6 @@
 #include "LuaInclude.h"
 
 #include "LuaCallInCheck.h"
-#include "LuaCallInHandler.h"
 #include "LuaUtils.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -37,6 +36,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
@@ -57,11 +57,11 @@ static const LuaHashString unsyncedStr("UNSYNCED");
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaHandleSynced::CLuaHandleSynced(const string& name, int order,
+CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order,
                                    LuaCobCallback callback,
                                    const string& msgPrefix)
 : messagePrefix(msgPrefix),
-  CLuaHandle(name, order, false, callback),
+  CLuaHandle(_name, _order, false, callback),
   allowChanges(false),
   allowUnsafeChanges(false),
   teamsLocked(false)
@@ -158,7 +158,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	// register for call-ins
-	luaCallIns.AddHandle(this);
+	eventHandler.AddClient(this);
 
 	SetActiveHandle(origHandle);
 }
@@ -428,7 +428,7 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(const char* funcName)
 	}
 	else if (!lua_isfunction(L, -1)) {
 		lua_settop(L, 0);
-		logOutput.Print("%s in %s is not a function", funcName, name.c_str());
+		logOutput.Print("%s in %s is not a function", funcName, GetName().c_str());
 		return false;
 	}
 	lua_pushvalue(L, unsynced);
@@ -549,7 +549,7 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 	if ((name != "DrawUnit") &&
 	    (name != "AICallIn") &&
 	    (name != "RecvFromSynced") &&
-	    !luaCallIns.UnsyncedCallIn(name)) {
+	    !eventHandler.IsUnsynced(name)) {
 		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
 	} else {
 		tableIndex = LUA_REGISTRYINDEX; // unsynced call-ins in REGISTRY
@@ -571,13 +571,13 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 bool CLuaHandleSynced::SyncedUpdateCallIn(const string& name)
 {
 	if ((name == "RecvFromSynced") ||
-	    luaCallIns.UnsyncedCallIn(name)) {
+	    eventHandler.IsUnsynced(name)) {
 		return false;
 	}
 	if (HasCallIn(name)) {
-		luaCallIns.InsertCallIn(this, name);
+		eventHandler.InsertEvent(this, name);
 	} else {
-		luaCallIns.RemoveCallIn(this, name);
+		eventHandler.RemoveEvent(this, name);
 	}
 	return true;
 }	
@@ -586,14 +586,14 @@ bool CLuaHandleSynced::SyncedUpdateCallIn(const string& name)
 bool CLuaHandleSynced::UnsyncedUpdateCallIn(const string& name)
 {
 	if ((name != "RecvFromSynced") &&
-	    !luaCallIns.UnsyncedCallIn(name)) {
+	    !eventHandler.IsUnsynced(name)) {
 		  return false;
 	}
 	if (name != "RecvFromSynced") {
 		if (HasCallIn(name)) {
-			luaCallIns.InsertCallIn(this, name);
+			eventHandler.InsertEvent(this, name);
 		} else {
-			luaCallIns.RemoveCallIn(this, name);
+			eventHandler.RemoveEvent(this, name);
 		}
 	}
 	SetupUnsyncedFunction(name.c_str());
@@ -691,7 +691,7 @@ void CLuaHandleSynced::SendCallbacks()
 void CLuaHandleSynced::GameFrame(int frameNumber)
 {
 	if (killMe) {
-		string msg = name;
+		string msg = GetName();
 		if (!killMsg.empty()) {
 			msg += ": " + killMsg;
 		}
@@ -911,15 +911,15 @@ int CLuaHandleSynced::SyncedRandom(lua_State* L)
 		lua_pushnumber(L, gs->randFloat());
 	}
 	else if ((args == 1) && lua_isnumber(L, 1)) {
-		const int maxn = (int)lua_tonumber(L, 1);
+		const int maxn = lua_toint(L, 1);
 		if (maxn < 1) {
 			luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
 		}
 		lua_pushnumber(L, 1 + (gs->randInt() % maxn));
 	}
 	else if ((args == 2) && lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
-		const int lower = (int)lua_tonumber(L, 1);
-		const int upper = (int)lua_tonumber(L, 2);
+		const int lower = lua_toint(L, 1);
+		const int upper = lua_toint(L, 2);
 		if (lower >= upper) {
 			luaL_error(L, "Empty interval in math.random() {synced}");
 		}
@@ -1001,17 +1001,17 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
-		const int teamID = (int)lua_tonumber(L, 1);
+		const int teamID = lua_toint(L, 1);
 		if ((teamID < MinSpecialTeam) || (teamID >= gs->activeTeams)) {
 			luaL_error(L, "Bad teamID in SetCtrlTeam");
 		}
 		// ctrl
 		lhs->ctrlTeam = teamID;
-		lhs->fullCtrl = (lhs->ctrlTeam == AllAccessTeam);
+		lhs->fullCtrl = (lhs->ctrlTeam == CEventClient::AllAccessTeam);
 		// read
 		lhs->readTeam = teamID;
 		lhs->readAllyTeam = (teamID < 0) ? teamID : gs->AllyTeam(teamID);
-		lhs->fullRead = (lhs->readAllyTeam == AllAccessTeam);
+		lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
 		activeFullRead     = lhs->fullRead;
 		activeReadAllyTeam = lhs->readAllyTeam;
 		// select
@@ -1024,19 +1024,19 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 				continue;
 			}
 			const string key = lua_tostring(L, -2);
-			const int teamID = (int)lua_tonumber(L, -1);
+			const int teamID = lua_toint(L, -1);
 			if ((teamID < MinSpecialTeam) || (teamID >= gs->activeTeams)) {
 				luaL_error(L, "Bad teamID in SetCtrlTeam");
 			}
 
 			if (key == "ctrl") {
 				lhs->ctrlTeam = teamID;
-				lhs->fullCtrl = (lhs->ctrlTeam == AllAccessTeam);
+				lhs->fullCtrl = (lhs->ctrlTeam == CEventClient::AllAccessTeam);
 			}
 			else if (key == "read") {
 				lhs->readTeam = teamID;
 				lhs->readAllyTeam = (teamID < 0) ? teamID : gs->AllyTeam(teamID);
-				lhs->fullRead = (lhs->readAllyTeam == AllAccessTeam);
+				lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
 				activeFullRead     = lhs->fullRead;
 				activeReadAllyTeam = lhs->readAllyTeam;
 			}
@@ -1158,7 +1158,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 {
 	CLuaHandleSynced* lhs = GetActiveHandle();
-	const int weaponID = (int)luaL_checknumber(L, 1);
+	const int weaponID = luaL_checkint(L, 1);
 	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
 		return 0;
 	}
@@ -1170,7 +1170,7 @@ int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 int CLuaHandleSynced::SetWatchWeapon(lua_State* L)
 {
 	CLuaHandleSynced* lhs = GetActiveHandle();
-	const int weaponID = (int)luaL_checknumber(L, 1);
+	const int weaponID = luaL_checkint(L, 1);
 	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
 		return 0;
 	}

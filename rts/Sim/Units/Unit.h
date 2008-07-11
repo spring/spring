@@ -21,6 +21,7 @@ class CMissileProjectile;
 class AMoveType;
 class CUnitAI;
 class CWeapon;
+class CUnitScript;
 struct DamageArray;
 struct LocalS3DOModel;
 struct LosInstance;
@@ -83,6 +84,7 @@ public:
 	virtual void Kill(float3& impulse);
 	virtual void FinishedBuilding(void);
 	void ChangeLos(int l, int airlos);
+	void ChangeSensorRadius(int* valuePtr, int newValue);
 	bool AddBuildPower(float amount,CUnit* builder);		//negative amount=reclaim, return= true -> build power was succesfully applied
 	void Activate();		//turn the unit on
 	void Deactivate();		//turn the unit off
@@ -310,6 +312,7 @@ public:
 	//CUnit3DLoader::UnitModel* model;
 	S3DOModel *model;
 	CCobInstance *cob;
+	CUnitScript* script;
 	LocalS3DOModel *localmodel;
 
 	std::string tooltip;

@@ -86,6 +86,7 @@ def generate(env):
 	usropts.AddOptions(
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
+		('gml',               'Set to false to disable OpenGL thread library', True),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
@@ -102,7 +103,7 @@ def generate(env):
 		('datadir',           'Data directory (relative to prefix)', 'share/games/spring'),
 		('bindir',            'Directory for executables (rel. to prefix)', 'games'),
 		('libdir',            'Directory for AI plugin modules (rel. to prefix)', 'lib/spring'),
-		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', True),
+		('strip',             'Discard symbols from the executable (only when neither debugging nor profiling)', False),
 		#porting options - optional in a first phase
 		('disable_avi',       'Set to no to turn on avi support', 'False on windows, True otherwise'),
 		#other ported parts
@@ -146,7 +147,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
+		for key in ['platform', 'gml', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
 			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
 			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines']:
@@ -346,6 +347,7 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
+		bool_opt('gml', True)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
@@ -361,6 +363,13 @@ def generate(env):
 		# Make a list of preprocessor defines.
 		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])
 		spring_defines = []
+
+		# gml library
+		if env['gml']:
+			spring_defines += ['USE_GML']
+			print 'GML OpenGL thread library is enabled'
+		else:
+			print 'GML OpenGL thread library NOT enabled'
 
 		# Add define specifying type of floating point math to use.
 		if env['fpmath']:

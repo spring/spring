@@ -94,7 +94,10 @@ void CSolidObject::Block() {
 	if (isMarkedOnBlockingMap)
 		UnBlock();
 
-	if (blocking && (physicalState == OnGround || physicalState == Floating || physicalState == Hovering || physicalState == Submarine)) {
+	if (blocking && (physicalState == OnGround ||
+	                 physicalState == Floating ||
+	                 physicalState == Hovering ||
+	                 physicalState == Submarine)) {
 		// use the object's yardmap if available
 		if (yardMap) {
 			groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);

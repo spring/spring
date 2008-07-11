@@ -9,6 +9,11 @@
 #ifndef GML_H
 #define GML_H
 
+#ifndef USE_GML
+#  define GML_VECTOR      std::vector
+#  define GML_CLASSVECTOR std::vector
+#else
+
 #include <set>
 #include <map>
 #include <GL/glew.h>
@@ -155,5 +160,7 @@ EXTERN inline void gmlUpdateServers() {
 #define GML_VECTOR std::vector
 #define GML_CLASSVECTOR std::vector
 #endif
+
+#endif // USE_GML
 
 #endif

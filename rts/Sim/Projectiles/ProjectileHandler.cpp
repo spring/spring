@@ -8,7 +8,6 @@
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -31,6 +30,7 @@
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
@@ -46,7 +46,8 @@ CR_BIND(CProjectileHandler, );
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(ps),
 	CR_MEMBER(weaponProjectileIDs),
-	CR_MEMBER(curWeaponProjectileID),
+	CR_MEMBER(freeIDs),
+	CR_MEMBER(maxUsedID),
 	CR_MEMBER(groundFlashes),
 	CR_RESERVED(32),
 	CR_SERIALIZER(Serialize),
@@ -66,7 +67,13 @@ CProjectileHandler::CProjectileHandler()
 	currentParticles = 0;
 	particleSaturation = 0;
 	numPerlinProjectiles = 0;
-	curWeaponProjectileID = 0;
+
+	// preload some IDs
+	// (note that 0 is reserved for unsynced projectiles)
+	for (int i = 1; i <= 12345; i++) {
+		freeIDs.push_back(i);
+	}
+	maxUsedID = freeIDs.size();
 
 	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
 
@@ -405,8 +412,11 @@ void CProjectileHandler::Update()
 				ProjectileMap::iterator it = weaponProjectileIDs.find(p->id);
 				const ProjectileMapPair& pp = it->second;
 
-				luaCallIns.ProjectileDestroyed(pp);
+				eventHandler.ProjectileDestroyed(pp.first, pp.second);
 				weaponProjectileIDs.erase(it);
+				if (p->id != 0) {
+					freeIDs.push_back(p->id);
+				}
 			}
 
 			delete p;
@@ -691,12 +701,23 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	if (p->synced && p->weapon) {
 		// <ps> stores both synced and unsynced projectiles,
 		// only keep track of IDs of the synced ones for Lua
-		p->id = curWeaponProjectileID++;
+		int newID = 0;
+		if (!freeIDs.empty()) {
+			newID = freeIDs.front();
+			freeIDs.pop_front();
+		} else {
+			maxUsedID++;
+			newID = maxUsedID;
+			if (maxUsedID > (1 << 24)) {
+				logOutput.Print("LUA projectile IDs are now out of range");
+			}
+		}
+		p->id = newID;
 		// projectile owner can die before projectile itself
 		// does, so copy the allyteam at projectile creation
-		ProjectileMapPair pp(p, p->owner? p->owner->allyteam: -1);
-		luaCallIns.ProjectileCreated(pp);
+		ProjectileMapPair pp(p, p->owner ? p->owner->allyteam : -1);
 		weaponProjectileIDs[p->id] = pp;
+		eventHandler.ProjectileCreated(pp.first, pp.second);
 	}
 }
 

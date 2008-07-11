@@ -26,7 +26,6 @@
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
@@ -41,6 +40,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
+#include "System/EventHandler.h"
 #include "Sound.h"
 #include "mmgr.h"
 
@@ -477,7 +477,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 void CMouseHandler::MouseWheel(bool up)
 {
 	const float value = up ? +scrollWheelSpeed : -scrollWheelSpeed;
-	if (luaCallIns.MouseWheel(up, value)) {
+	if (eventHandler.MouseWheel(up, value)) {
 		return;
 	}
 	camHandler->GetCurrentController().MouseWheelMove(value);

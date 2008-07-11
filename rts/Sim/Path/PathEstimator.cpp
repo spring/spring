@@ -173,11 +173,15 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	#if (BOOST_VERSION >= 103500)
+#if (BOOST_VERSION >= 103500)
 	int numThreads = boost::thread::hardware_concurrency();
-	#else
-	int numThreads = GML_CPU_COUNT; //configHandler.GetInt("HardwareThreadCount", 2);
-	#endif
+#else
+#  ifdef USE_GML	
+	int numThreads = GML_CPU_COUNT;
+#  else
+	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
+#  endif
+#endif
 
 	if (numThreads > 1) {
 		// spawn the threads for InitVerticesAndBlocks()

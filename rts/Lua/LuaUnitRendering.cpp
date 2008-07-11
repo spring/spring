@@ -81,7 +81,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 			return NULL;
 		}
 	}
-	const int unitID = (int)lua_tonumber(L, index);
+	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
@@ -122,7 +122,7 @@ int LuaUnitRendering::SetLODLength(lua_State* L)
 	if (lod >= unit->lodCount) {
 		return 0;
 	}
-	const float lpp = (float)luaL_checknumber(L, 3);
+	const float lpp = luaL_checkfloat(L, 3);
 	unit->lodLengths[lod] = lpp;
 	return 0;
 }
@@ -139,7 +139,7 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 	}
 	// adjusted for 45 degree FOV with a 1024x768 screen
 	const float scale = 2.0f * (float)streflop::tanf((45.0 * 0.5) * (PI / 180.0)) / 768.0f;
-	const float dist = (float)luaL_checknumber(L, 3);
+	const float dist = luaL_checkfloat(L, 3);
 	unit->lodLengths[lod] = dist * scale;
 	return 0;
 }
@@ -304,7 +304,7 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 		if (ud == NULL) {
 			return;
 		}
-		texID = unitDefHandler->GetUnitImage(ud);
+		texID = unitDefHandler->GetUnitDefImage(ud);
 	}
 	else if (image[0] == LuaTextures::prefix) {
 		// dynamic texture
@@ -409,7 +409,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 		}
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "order") {
-			mat.order = (int)luaL_checknumber(L, -1);
+			mat.order = luaL_checkint(L, -1);
 		}
 		else if (key == "shader") {
 			ParseShader(L, caller, -1, mat.shader);
@@ -419,7 +419,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 			  const int texTable = (int)lua_gettop(L);
 				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
 					if (lua_israwnumber(L, -2)) {
-						const int texUnit = (int)lua_tonumber(L, -2);
+						const int texUnit = lua_toint(L, -2);
 						if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
 							ParseTexture(L, caller, -1, mat.textures[texUnit]);
 						}
@@ -624,7 +624,7 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 
 int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
 {
-	const int unitID = (int)luaL_checknumber(L, 1);
+	const int unitID = luaL_checkint(L, 1);
 	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
 		return 0;
 	}

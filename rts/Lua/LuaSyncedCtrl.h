@@ -56,6 +56,7 @@ class LuaSyncedCtrl {
 		static int SetUnitStockpile(lua_State* L);
 		static int SetUnitWeaponState(lua_State* L);
 		static int SetUnitExperience(lua_State* L);
+		static int SetUnitArmored(lua_State* L);
 		static int SetUnitLosMask(lua_State* L);
 		static int SetUnitLosState(lua_State* L);
 		static int SetUnitCloak(lua_State* L);
@@ -66,12 +67,15 @@ class LuaSyncedCtrl {
 		static int SetUnitBuildSpeed(lua_State* L);
 		static int SetUnitBlocking(lua_State* L);
 		static int SetUnitShieldState(lua_State* L);
+		static int SetUnitFlanking(lua_State* L);
 		static int SetUnitTravel(lua_State* L);
+		static int SetUnitFuel(lua_State* L);
 		static int SetUnitMoveGoal(lua_State* L);
 		static int SetUnitLineage(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
 		static int SetUnitTarget(lua_State* L);
 		static int SetUnitCollisionVolumeData(lua_State* L);
+		static int SetUnitSensorRadius(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
@@ -80,6 +84,7 @@ class LuaSyncedCtrl {
 
 		static int AddUnitDamage(lua_State* L);
 		static int AddUnitImpulse(lua_State* L);
+		static int AddUnitSeismicPing(lua_State* L);
 
 		static int AddUnitResource(lua_State* L);
 		static int UseUnitResource(lua_State* L);

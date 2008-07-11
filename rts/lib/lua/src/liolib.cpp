@@ -17,6 +17,7 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
+#include "lstate.h" /* SPRING */
 
 
 
@@ -25,6 +26,17 @@
 
 
 static const char *const fnames[] = {"input", "output"};
+
+
+/* SPRING */
+static FILE* lua_fopen(lua_State* L, const char* filename, const char* mode)
+{
+  if (G(L)->fopen_func) {
+    return G(L)->fopen_func(L, filename, mode);
+  }
+  errno = EIO; /* why not? */
+  return NULL;
+}
 
 
 static int pushresult (lua_State *L, int i, const char *filename) {
@@ -98,7 +110,7 @@ static FILE **newfile (lua_State *L) {
 */
 static int io_pclose (lua_State *L) {
   FILE **p = topfile(L);
-  int ok = lua_pclose(L, *p);
+  int ok = lua_pclose(L, *p); // FIXME - SPRING L->pclose_func
   *p = NULL;
   return pushresult(L, ok, NULL);
 }
@@ -150,7 +162,7 @@ static int io_open (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
-  *pf = fopen(filename, mode);
+  *pf = lua_fopen(L, filename, mode);
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
 }
 
@@ -159,7 +171,7 @@ static int io_popen (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
-  *pf = lua_popen(L, filename, mode);
+  *pf = lua_popen(L, filename, mode); // FIXME - SPRING L->popen_func
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
 }
 
@@ -186,7 +198,7 @@ static int g_iofile (lua_State *L, int f, const char *mode) {
     const char *filename = lua_tostring(L, 1);
     if (filename) {
       FILE **pf = newfile(L);
-      *pf = fopen(filename, mode);
+      *pf = lua_fopen(L, filename, mode);
       if (*pf == NULL)
         fileerror(L, 1, filename);
     }
@@ -238,7 +250,7 @@ static int io_lines (lua_State *L) {
   else {
     const char *filename = luaL_checkstring(L, 1);
     FILE **pf = newfile(L);
-    *pf = fopen(filename, "r");
+    *pf = lua_fopen(L, filename, "r");
     if (*pf == NULL)
       fileerror(L, 1, filename);
     aux_lines(L, lua_gettop(L), 1);

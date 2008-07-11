@@ -267,45 +267,58 @@ bool CBitmap::LoadGrayscale (const string& filename)
 }
 
 
-void CBitmap::Save(string const& filename)
+bool CBitmap::Save(string const& filename, bool opaque)
 {
 	if (type == BitmapTypeDDS) {
-		ddsimage->save(filename);
-		return;
+		return ddsimage->save(filename);
 	}
 
-#if !defined(USE_QUICKTIME) // Use devil on Windows/Linux/...
+#if defined(USE_QUICKTIME)
+
+	return false; // I'll add a quicktime exporter for mac soonish...Krysole
+
+#else
+
+	// Use DevIL on Windows/Linux/...
+
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	unsigned char* buf=SAFE_NEW unsigned char[xsize*ysize*4];
+	unsigned char* buf = SAFE_NEW unsigned char[xsize * ysize * 4];
+	const int ymax = (ysize - 1);
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
 		Duplicated with ReverseYAxis. */
-	for(int y=0;y<ysize;++y){
-		for(int x=0;x<xsize;++x){
-			buf[((ysize-1-y)*xsize+x)*4+0] = mem[((y)*xsize+x)*4+0];
-			buf[((ysize-1-y)*xsize+x)*4+1] = mem[((y)*xsize+x)*4+1];
-			buf[((ysize-1-y)*xsize+x)*4+2] = mem[((y)*xsize+x)*4+2];
-			buf[((ysize-1-y)*xsize+x)*4+3] = 0xff; // mem[((y)*xsize+x)*4+3];
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
+			const int bi = 4 * (x + (xsize * (ymax - y)));
+			const int mi = 4 * (x + (xsize * (y)));
+			buf[bi + 0] = mem[mi + 0];
+			buf[bi + 1] = mem[mi + 1];
+			buf[bi + 2] = mem[mi + 2];
+			buf[bi + 3] = opaque ? 0xff : mem[mi + 3];
 		}
 	}
 
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
-	ilSetInteger (IL_JPG_QUALITY, 80);
+	ilSetInteger(IL_JPG_QUALITY, 80);
 
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize,ysize,1,4,IL_RGBA,IL_UNSIGNED_BYTE,NULL);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, NULL);
 	ilSetData(buf);
 
-	ilSaveImage((char*)( filesystem.LocateFile(filename, FileSystem::WRITE).c_str() ));
+	const string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
+	const bool success = ilSaveImage((char*)fullpath.c_str());
 
 	ilDeleteImages(1,&ImageName);
 	delete[] buf;
-#endif // I'll add a quicktime exporter for mac soonish...Krysole
+
+	return success;
+
+#endif // USE_QUICKTIME
 }
 
 

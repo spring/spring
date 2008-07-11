@@ -279,10 +279,12 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 			c.mouseicon = i->mouseicon.c_str();
 			c.tooltip   = i->tooltip.c_str();
 			c.showUnique  = i->showUnique;
-			c.onlyKey     = i->onlyKey;
+			c.hidden      = i->hidden;
+			c.disabled    = i->disabled;
 			c.onlyTexture = i->onlyTexture;
-			for (vector<string>::const_iterator j = i->params.begin(); j != i->params.end(); ++j)
+			for (vector<string>::const_iterator j = i->params.begin(); j != i->params.end(); ++j) {
 				c.params.push_back(j->c_str());
+			}
 			myCommands.push_back(c);
 			c.params.clear();
 		}

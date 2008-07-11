@@ -112,10 +112,10 @@ struct CommandDescription {
 	CR_DECLARE_STRUCT(CommandDescription);
 
 	CommandDescription()
-	: showUnique(false),
-	  onlyKey(false),
-	  onlyTexture(false),
-	  disabled(false) {};
+	: hidden(false),
+	  disabled(false),
+	  showUnique(false),
+	  onlyTexture(false) {}
 
 	int id;    // CMD_xxx     code  (custom codes can also be used)
 	int type;  // CMDTYPE_xxx code 
@@ -126,10 +126,10 @@ struct CommandDescription {
 	std::string mouseicon;  // mouse cursor
 	std::string tooltip;    // tooltip text
 
-	bool showUnique;   // command only applies to single units
-	bool onlyKey;      // if true dont show a button for the command
-	bool onlyTexture;  // do not draw the name if the texture is available
+	bool hidden;       // if true dont show a button for the command
 	bool disabled;     // for greying-out commands
+	bool showUnique;   // command only applies to single units
+	bool onlyTexture;  // do not draw the name if the texture is available
 
 	std::vector<std::string> params;
 };

@@ -43,7 +43,7 @@ CIconHandler::CIconHandler()
 	}
 	else {
 		defIconData = SAFE_NEW CIconData("default", GetDefaultTexture(),
-																		 1.0f, 1.0f, false, false);
+																		 1.0f, 1.0f, false, false, 128, 128);
 		iconMap["default"] = CIcon(defIconData);
 	}
 }
@@ -88,6 +88,7 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
                            float size, float distance, bool radAdj)
 {
 	unsigned int texID;
+	int xsize, ysize;
 
 	bool ownTexture = true;
 
@@ -95,13 +96,18 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 		CBitmap bitmap;
 		if (!textureName.empty() && bitmap.Load(textureName)) {
 			texID = bitmap.CreateTexture(true);
+			
 			glBindTexture(GL_TEXTURE_2D, texID);
 			const GLenum wrapMode = GLEW_EXT_texture_edge_clamp ?
 			                        GL_CLAMP_TO_EDGE : GL_CLAMP;
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+			xsize = bitmap.xsize;
+			ysize = bitmap.ysize;
 		} else {
 			texID = GetDefaultTexture();
+			xsize = 128;
+			ysize = 128;
 			ownTexture = false;
 		}
 	}
@@ -114,8 +120,8 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 		FreeIcon(iconName);
 	}
 
-	CIconData* iconData =
-		SAFE_NEW CIconData(iconName, texID,  size, distance, radAdj, ownTexture);
+	CIconData* iconData = SAFE_NEW CIconData(iconName, texID,  size, distance,
+	                                         radAdj, ownTexture, xsize, ysize);
 
 	iconMap[iconName] = CIcon(iconData);
 
@@ -255,17 +261,20 @@ CIcon::~CIcon()
 
 CIconData::CIconData()
 : ownTexture(false), refCount(123456), name("safety"), texID(0),
-  size(1.0f), distance(1.0f), distSqr(1.0f), radiusAdjust(false)
+  size(1.0f), distance(1.0f), distSqr(1.0f), radiusAdjust(false),
+  xsize(1), ysize(1)
 {
 }
 
 
 CIconData::CIconData(const std::string& _name, unsigned int _texID,
-                     float _size, float _distance, bool radAdj, bool ownTex)
+                     float _size, float _distance, bool radAdj, bool ownTex,
+                     int _xsize, int _ysize)
 : ownTexture(ownTex), refCount(0),
   name(_name), texID(_texID),
   size(_size), distance(_distance),
-  radiusAdjust(radAdj)
+  radiusAdjust(radAdj),
+  xsize(_xsize), ysize(_ysize)
 {
 	distSqr = distance * distance;
 }
@@ -302,6 +311,8 @@ void CIconData::CopyData(const CIconData* iconData)
 	distance     = iconData->distance;
 	distSqr      = iconData->distSqr;
 	radiusAdjust = iconData->radiusAdjust;
+	xsize        = iconData->xsize;
+	ysize        = iconData->ysize;
 	ownTexture   = false;
 }
 

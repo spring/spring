@@ -1099,3 +1099,38 @@ LUA_API const char *lua_setupvalue (lua_State *L, int funcindex, int n) {
   return name;
 }
 
+
+/* SPRING syscall additions */
+LUA_API void lua_set_fopen(lua_State* L, lua_Func_fopen func) {
+  G(L)->fopen_func = func;
+}
+
+
+LUA_API void lua_set_popen(lua_State* L, lua_Func_popen popen_func,
+                                         lua_Func_pclose pclose_func) {
+  if (popen_func && pclose_func) {
+    G(L)->popen_func  = popen_func;
+    G(L)->pclose_func = pclose_func;
+  } else {
+    G(L)->popen_func  = NULL;
+    G(L)->pclose_func = NULL;
+  }
+}
+
+
+LUA_API void lua_set_system(lua_State* L, lua_Func_system func) {
+  G(L)->system_func = func;
+}
+
+
+LUA_API void lua_set_remove(lua_State* L, lua_Func_remove func) {
+  G(L)->remove_func = func;
+}
+
+
+LUA_API void lua_set_rename(lua_State* L, lua_Func_rename func) {
+  G(L)->rename_func = func;
+}
+/* END SPRING syscall additions */
+
+

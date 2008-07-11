@@ -18,10 +18,10 @@
 #include "Game/GameHelper.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/EventHandler.h"
 
 #define W_SIZE 5
 #define WF_SIZE 5120
@@ -448,7 +448,7 @@ void CDynWater::DrawReflection(CGame* game)
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
 	ph->Draw(true);
-	luaCallIns.DrawWorldReflection();
+	eventHandler.DrawWorldReflection();
 
 	sky->DrawSun();
 
@@ -502,7 +502,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	featureHandler->Draw();
 	drawReflection=false;
 	ph->Draw(false,true);
-	luaCallIns.DrawWorldRefraction();
+	eventHandler.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
 	game->SetDrawMode(CGame::normalDraw);

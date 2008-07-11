@@ -66,6 +66,7 @@ void UnixFileSystemHandler::InitVFS() const
 	vfsHandler = new CVFSHandler();
 }
 
+
 /**
  * @brief Creates the archive scanner and vfs handler
  *
@@ -78,7 +79,7 @@ UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool initialize) :
 		FileSystemHandler('\\')
 #endif
 {
-	if(initialize){
+	if (initialize) {
 		locater.LocateDataDirs();
 		InitVFS();
 	}
@@ -90,15 +91,17 @@ UnixFileSystemHandler::~UnixFileSystemHandler()
 	configHandler.Deallocate();
 }
 
+
 /**
  * @brief returns the highest priority writable directory, aka the writedir
  */
 std::string UnixFileSystemHandler::GetWriteDir() const
 {
 	const DataDir* writedir = locater.GetWriteDir();
-	assert(writedir && writedir->writable); //duh
+	assert(writedir && writedir->writable); // duh
 	return writedir->path;
 }
+
 
 /**
  * @brief find files
@@ -116,7 +119,7 @@ std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir
 	std::vector<std::string> matches;
 
 	// if it's an absolute path, don't look for it in the data directories
-	if (dir[0] == '/' || (dir.length() > 1 && dir[1] == ':')) {
+	if ((dir[0] == '/') || ((dir.length() > 1) && (dir[1] == ':'))) {
 		FindFilesSingleDir(matches, dir, pattern, flags);
 		return matches;
 	}
@@ -128,33 +131,39 @@ std::vector<std::string> UnixFileSystemHandler::FindFiles(const std::string& dir
 	return matches;
 }
 
+
 std::string UnixFileSystemHandler::LocateFile(const std::string& file) const
 {
 	// if it's an absolute path, don't look for it in the data directories
 #ifdef WIN32
-	if (file.length()>1 && file[1] == ':')
+	if ((file.length() > 1) && (file[1] == ':')) {
 		return file;
+	}
 
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		std::string fn(d->path + file);
-		if (_access(fn.c_str(), 4) == 0)
+		if (_access(fn.c_str(), 4) == 0) {
 			return fn;
+		}
 	}
 	return file;
 #else
-	if (file[0] == '/')
+	if (file[0] == '/') {
 		return file;
+	}
 
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		std::string fn(d->path + file);
-		if (access(fn.c_str(), R_OK | F_OK) == 0)
+		if (access(fn.c_str(), R_OK | F_OK) == 0) {
 			return fn;
+		}
 	}
 	return file;
 #endif
 }
+
 
 std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
 {
@@ -166,6 +175,7 @@ std::vector<std::string> UnixFileSystemHandler::GetDataDirectories() const
 	}
 	return f;
 }
+
 
 /**
  * @brief creates a rwxr-xr-x dir in the writedir
@@ -207,6 +217,7 @@ bool UnixFileSystemHandler::mkdir(const std::string& dir) const
 	// Otherwise we return false.
 	return false;
 }
+
 
 static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {

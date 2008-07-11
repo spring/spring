@@ -97,8 +97,10 @@ CLosHandler::CLosHandler()
 	airSizeY = std::max(1, gs->mapy >> airMipLevel);
 	losSizeX = std::max(1, gs->mapx >> losMipLevel);
 	losSizeY = std::max(1, gs->mapy >> losMipLevel);
-	invLosDiv = 1 / ((float)SQUARE_SIZE * (1 << losMipLevel));
-	invAirDiv = 1 / ((float)SQUARE_SIZE * (1 << airMipLevel));
+	losDiv = (SQUARE_SIZE * (1 << losMipLevel));
+	airDiv = (SQUARE_SIZE * (1 << airMipLevel));
+	invLosDiv = 1.0f / losDiv;
+	invAirDiv = 1.0f / airDiv;
 
 	requireSonarUnderWater = modInfo.requireSonarUnderWater;
 
@@ -128,6 +130,7 @@ CLosHandler::CLosHandler()
 		terrainHeight[a]=10;
 }
 
+
 CLosHandler::~CLosHandler()
 {
 	std::list<LosInstance*>::iterator li;
@@ -141,48 +144,53 @@ CLosHandler::~CLosHandler()
 
 }
 
-void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
+
+void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 {
 	SCOPED_TIMER("Los");
-	float3 losPos=unit->pos;
+	float3 losPos = unit->pos;
 	losPos.CheckInBounds();
 
-	const int allyteam=unit->allyteam;
-	unit->lastLosUpdate=gs->frameNum;
+	const int allyteam = unit->allyteam;
+	unit->lastLosUpdate = gs->frameNum;
 
-	if(unit->losRadius<=0){
+	if (unit->losRadius <= 0) {
 		return;
 	}
-	const int xmap=(int)(losPos.x*invLosDiv);
-	const int ymap=(int)(losPos.z*invLosDiv);
-	const int baseSquare=max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
-	const int baseX=max(0,min(losSizeX-1,xmap));
-	const int baseY=max(0,min(losSizeY-1,(ymap)));
+	const int xmap = (int)(losPos.x*invLosDiv);
+	const int ymap = (int)(losPos.z*invLosDiv);
+	const int baseSquare = max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
+	const int baseX = max(0,min(losSizeX-1,xmap));
+	const int baseY = max(0,min(losSizeY-1,(ymap)));
 
 	LosInstance* instance;
-	if(redoCurrent){
-		if(!unit->los){
+	if (redoCurrent) {
+		if (!unit->los) {
 			return;
 		}
-		instance=unit->los;
+		instance = unit->los;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
-		instance->baseX=baseX;
-		instance->baseY=baseY;
-		instance->baseSquare=baseSquare;	//this could be a problem if several units are sharing the same instance
-		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
-		instance->baseAirSquare=baseAirSquare;
+		instance->baseX = baseX;
+		instance->baseY = baseY;
+		instance->baseSquare = baseSquare;	//this could be a problem if several units are sharing the same instance
+		int baseAirSquare = max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
+		instance->baseAirSquare = baseAirSquare;
 	} else {
-		if(unit->los && unit->los->baseSquare==baseSquare){
+		if (unit->los && (unit->los->baseSquare == baseSquare)) {
 			return;
 		}
 		FreeInstance(unit->los);
-		int hash=GetHashNum(unit);
+		int hash = GetHashNum(unit);
 		std::list<LosInstance*>::iterator lii;
-		for(lii=instanceHash[hash].begin();lii!=instanceHash[hash].end();++lii){
-			if((*lii)->baseSquare==baseSquare && (*lii)->losSize==unit->losRadius && (*lii)->airLosSize==unit->airLosRadius && (*lii)->baseHeight==unit->losHeight && (*lii)->allyteam==allyteam){
+		for (lii = instanceHash[hash].begin(); lii != instanceHash[hash].end(); ++lii) {
+			if ((*lii)->baseSquare == baseSquare         &&
+			    (*lii)->losSize    == unit->losRadius    &&
+			    (*lii)->airLosSize == unit->airLosRadius &&
+			    (*lii)->baseHeight == unit->losHeight    &&
+			    (*lii)->allyteam   == allyteam) {
 				AllocInstance(*lii);
-				unit->los=*lii;
+				unit->los = *lii;
 				return;
 			}
 		}
@@ -191,11 +199,14 @@ void CLosHandler::MoveUnit(CUnit *unit,bool redoCurrent)
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	if(xmap-unit->losRadius<0 || xmap+unit->losRadius>=losSizeX || ymap-unit->losRadius<0 || ymap+unit->losRadius>=losSizeY)
-		SafeLosAdd(instance,xmap,ymap);
-	else
+	if (xmap-unit->losRadius < 0 || xmap+unit->losRadius >= losSizeX ||
+	    ymap-unit->losRadius < 0 || ymap+unit->losRadius >= losSizeY) {
+		SafeLosAdd(instance, xmap, ymap);
+	} else {
 		LosAdd(instance);
+	}
 }
+
 
 void CLosHandler::LosAdd(LosInstance* instance)
 {
@@ -203,16 +214,16 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	assert(instance->allyteam < gs->activeAllyTeams);
 	assert(instance->allyteam >= 0);
 
-	const int allyteam=instance->allyteam;
-	const int mapSquare=instance->baseSquare;
+	const int allyteam  = instance->allyteam;
+	const int mapSquare = instance->baseSquare;
 
 	LosAddAir(instance);
 
-	int tablenum=instance->losSize;
-	if(tablenum>MAX_LOS_TABLE){
-		tablenum=MAX_LOS_TABLE;
+	int tablenum = instance->losSize;
+	if (tablenum > MAX_LOS_TABLE) {
+		tablenum = MAX_LOS_TABLE;
 	}
-	LosTable& table=lostables[tablenum-1];
+	LosTable& table = lostables[tablenum - 1];
 
 	instance->losSquares.push_back(mapSquare);
 	losMap[allyteam][mapSquare]++;
@@ -220,11 +231,11 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	for(LosTable::iterator li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
 		const float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
-		float maxAng1=-1000;
-		float maxAng2=-1000;
-		float maxAng3=-1000;
-		float maxAng4=-1000;
-		float r=1;
+		float maxAng1 = -1000;
+		float maxAng2 = -1000;
+		float maxAng3 = -1000;
+		float maxAng4 = -1000;
+		float r = 1;
 		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
 			float invR=1.0f/r;
 			int square=mapSquare+linei->x+linei->y*losSizeX;
@@ -283,6 +294,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	}
 }
 
+
 void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 {
 	int xmap=xm;
@@ -299,14 +311,14 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 	}
 	LosTable& table=lostables[tablenum-1];
 
-	for(LosTable::iterator li=table.begin();li!=table.end();++li){
-		LosLine& line=*li;
+	for (LosTable::iterator li = table.begin(); li != table.end(); ++li) {
+		LosLine& line = *li;
 		float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
-		float maxAng1=-1000;
-		float maxAng2=-1000;
-		float maxAng3=-1000;
-		float maxAng4=-1000;
-		float r=1;
+		float maxAng1 = -1000;
+		float maxAng2 = -1000;
+		float maxAng3 = -1000;
+		float maxAng4 = -1000;
+		float r = 1;
 		instance->losSquares.push_back(mapSquare);
 		losMap[allyteam][mapSquare]++;
 
@@ -371,6 +383,7 @@ void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
 		}
 	}
 }
+
 
 void CLosHandler::OutputTable(int Table)
 {
@@ -440,6 +453,7 @@ void CLosHandler::OutputTable(int Table)
 	delete[] PaintTable;
 }
 
+
 CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
 {
 	LosLine losline;
@@ -470,6 +484,7 @@ CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
 	return losline;
 }
 
+
 void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 {
 	int x0 = 0;
@@ -498,6 +513,7 @@ void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
 	}
 }
 
+
 int CLosHandler::Round(float Num)
 {
   if((Num - (int)Num) <0.5f)
@@ -505,6 +521,7 @@ int CLosHandler::Round(float Num)
   else
     return (int)Num+1;
 }
+
 
 void CLosHandler::FreeInstance(LosInstance* instance)
 {
@@ -544,12 +561,14 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 	}
 }
 
+
 int CLosHandler::GetHashNum(CUnit* unit)
 {
 	unsigned int t=unit->mapSquare*unit->losRadius+unit->allyteam;
 	t^=*(unsigned int*)&unit->losHeight;
 	return t%2309;
 }
+
 
 void CLosHandler::AllocInstance(LosInstance* instance)
 {
@@ -562,6 +581,7 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 	}
 	instance->refCount++;
 }
+
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
@@ -587,6 +607,7 @@ void CLosHandler::CleanupInstance(LosInstance* instance)
 		}
 	}
 }
+
 
 void CLosHandler::LosAddAir(LosInstance* instance)
 {
@@ -616,6 +637,7 @@ void CLosHandler::LosAddAir(LosInstance* instance)
 	}
 }
 
+
 void CLosHandler::Update(void)
 {
 	while(!delayQue.empty() && delayQue.front().timeoutTime<gs->frameNum){
@@ -623,6 +645,7 @@ void CLosHandler::Update(void)
 		delayQue.pop_front();
 	}
 }
+
 
 void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 {

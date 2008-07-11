@@ -214,7 +214,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		SAFE_NEW CCommandAI(unit);
 	}
 
-	if (ud->canmove && !ud->canfly && type!="Factory") {
+	if (ud->canmove && !ud->canfly && (type != "Factory")) {
 		CGroundMoveType* mt = SAFE_NEW CGroundMoveType(unit);
 		mt->maxSpeed = ud->speed / GAME_SPEED;
 		mt->maxWantedSpeed = ud->speed / GAME_SPEED;
@@ -228,7 +228,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		mt->moveType = ud->moveType;
 		mt->accRate = ud->maxAcc;
 		mt->decRate = ud->maxDec;
-		mt->floatOnWater = (ud->movedata->moveType == MoveData::Hover_Move || ud->movedata->moveType == MoveData::Ship_Move);
+		mt->floatOnWater = (ud->movedata->moveType == MoveData::Hover_Move ||
+		                    ud->movedata->moveType == MoveData::Ship_Move);
 
 		if (!unit->beingBuilt) {
 			// otherwise set this when finished building instead
@@ -260,7 +261,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->accRate = ud->maxAcc;
 			mt->decRate = ud->maxDec;
 			mt->wantedHeight = ud->wantedHeight + gs->randFloat() * 5;
-			mt->orgWantedHeight=mt->wantedHeight;
+			mt->orgWantedHeight = mt->wantedHeight;
 			mt->dontLand = ud->DontLand();
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
@@ -284,7 +285,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->maxBank = ud->maxBank;
 			mt->maxPitch = ud->maxPitch;
 			mt->turnRadius = ud->turnRadius;
-			mt->wantedHeight = ud->wantedHeight*1.5f+(gs->randFloat()-0.3f)*15*(mt->isFighter?2:1);
+			mt->wantedHeight = (ud->wantedHeight * 1.5f) +
+			                   ((gs->randFloat() - 0.3f) * 15 * (mt->isFighter ? 2 : 1));
 
 			mt->maxAcc = ud->maxAcc;
 			mt->maxAileron = ud->maxAileron;
@@ -321,8 +323,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
 		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 	}
-
-
 
 	if (ud->floater) {
 		// restrict our depth to our waterline
@@ -454,10 +454,8 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	weapon->metalFireCost = weapondef->metalcost;
 	weapon->energyFireCost = weapondef->energycost;
 
-
 	weapon->fireSoundId = weapondef->firesound.getID(0);
 	weapon->fireSoundVolume = weapondef->firesound.getVolume(0);
-
 
 	weapon->onlyForward = weapondef->onlyForward;
 	if (owner->unitDef->type == "Fighter" && !owner->unitDef->hoverAttack) {

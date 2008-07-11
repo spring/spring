@@ -10,7 +10,6 @@
 #include "Game/GameHelper.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -27,6 +26,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "System/EventHandler.h"
 #include "Sound.h"
 #include "mmgr.h"
 
@@ -241,7 +241,7 @@ void CBuilder::Update()
 				if (scriptCloak <= 2) {
 					if (isCloaked) {
 						isCloaked = false;
-						luaCallIns.UnitDecloaked(this);
+						eventHandler.UnitDecloaked(this);
 					}
 					curCloakTimeout = gs->frameNum + cloakTimeout;
 				}
@@ -270,7 +270,7 @@ void CBuilder::Update()
 		if (scriptCloak <= 2) {
 			if (isCloaked) {
 				isCloaked = false;
-				luaCallIns.UnitDecloaked(this);
+				eventHandler.UnitDecloaked(this);
 			}
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 		}

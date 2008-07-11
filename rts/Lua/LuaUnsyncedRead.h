@@ -15,6 +15,7 @@ class LuaUnsyncedRead {
 		static int IsReplay(lua_State* L);
 		static int GetModUICtrl(lua_State* L);
 
+		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
 		static int GetHasLag(lua_State* L);
@@ -22,6 +23,8 @@ class LuaUnsyncedRead {
 		static int GetViewGeometry(lua_State* L);
 		static int GetWindowGeometry(lua_State* L);
 		static int GetScreenGeometry(lua_State* L);
+		static int GetMiniMapGeometry(lua_State* L);
+		static int GetMiniMapDualScreen(lua_State* L);
 
 		static int IsAABBInView(lua_State* L);
 		static int IsSphereInView(lua_State* L);
@@ -29,6 +32,7 @@ class LuaUnsyncedRead {
 		static int IsUnitAllied(lua_State* L);
 		static int IsUnitInView(lua_State* L);
 		static int IsUnitVisible(lua_State* L);
+		static int IsUnitIcon(lua_State* L);
 		static int IsUnitSelected(lua_State* L);
 
 		static int GetUnitLuaDraw(lua_State* L);
@@ -77,10 +81,8 @@ class LuaUnsyncedRead {
 		static int GetFPS(lua_State* L);
 
 		static int GetMouseState(lua_State* L);
-		static int GetMouseMiniMapState(lua_State* L);
-		static int GetMouseStartPosition(lua_State* L);
-
 		static int GetMouseCursor(lua_State* L);
+		static int GetMouseStartPosition(lua_State* L);
 
 		static int GetKeyState(lua_State* L);
 		static int GetModKeyState(lua_State* L);

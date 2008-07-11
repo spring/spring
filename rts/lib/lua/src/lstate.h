@@ -91,6 +91,15 @@ typedef struct global_State {
   UpVal uvhead;  /* head of double-linked list of all open upvalues */
   struct Table *mt[NUM_TAGS];  /* metatables for basic types */
   TString *tmname[TM_N];  /* array with tag-method names */
+
+  /* SPRING additions */
+  lua_Func_fopen  fopen_func;
+  lua_Func_popen  popen_func;
+  lua_Func_pclose pclose_func;
+  lua_Func_system system_func;
+  lua_Func_remove remove_func;
+  lua_Func_rename rename_func;
+
 } global_State;
 
 

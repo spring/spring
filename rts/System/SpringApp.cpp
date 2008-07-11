@@ -802,6 +802,10 @@ int SpringApp::Update ()
 		if (!activeController->Update()) {
 			ret = 0;
 		} else {
+			gu->drawFrame++;
+			if (gu->drawFrame == 0) {
+				gu->drawFrame++;
+			}
 			ret = activeController->Draw();
 		}
 	}

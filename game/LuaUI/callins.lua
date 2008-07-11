@@ -41,6 +41,7 @@ CallInsList = {
   "UnitTaken",
   "UnitGiven",
   "UnitIdle",
+  "UnitCommand",
   "UnitSeismicPing",
   "UnitEnteredRadar",
   "UnitEnteredLos",

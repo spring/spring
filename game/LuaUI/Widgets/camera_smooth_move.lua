@@ -158,6 +158,7 @@ function widget:MouseRelease(x, y, button)
 end
 
 
+-- FIXME -- this algo could still use some lovin'
 function widget:MouseWheel(up, value)
   local cs = spGetCameraState()
   local a,c,m,s = spGetModKeyState()
@@ -168,7 +169,6 @@ function widget:MouseWheel(up, value)
     print(dy)
     spSetCameraState({
       py = py + dy,
---      vy = cs.vy + value,
     }, 0)
     return true
   end
@@ -185,7 +185,6 @@ function widget:MouseWheel(up, value)
     local dy = gpos[2] - cs.py
     local dz = gpos[3] - cs.pz
     local d = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
---    local s = (up and -1 or 1) / d
     local s = (up and 1 or -1) * (1 / 8)
     
     dx = dx * s
@@ -205,71 +204,36 @@ function widget:MouseWheel(up, value)
 end
 
 
-function widget:MouseWheel2(up, value)
-  local cs = spGetCameraState()
-  local a,c,m,s = spGetModKeyState()
-  if (not m) then
-    local py = math.abs(cs.py)
-    local dy = (1 + math.pow(py * 100, 0.25)) * (up and -1 or 1)
-    local dy = (py / 10) * (up and -1 or 1)
-    print(dy)
-    spSetCameraState({
-      py = py + dy,
---      vy = cs.vy + value,
-    }, 0)
-    return true
-  end
-  if (cs.name ~= 'free') then
-    return false
-  end
-  local scale = value * 10
-  local mx, my = spGetMouseState()
-  local _, gpos = spTraceScreenRay(mx, my, true)
-  if (not gpos) then
-    spSetCameraState({ vy = cs.vy + scale}, 0)
-  else
-    local dx = gpos[1] - cs.px
-    local dy = gpos[2] - cs.py
-    local dz = gpos[3] - cs.pz
-    local d = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
-    local s = -scale / d
-    dx = dx * s
-    dy = dy * s
-    dz = dz * s
-    local newCS = {
-      vx = cs.vx + dx,
-      vy = cs.vy + dy,
-      vz = cs.vz + dz,
-    }
-    spSetCameraState(newCS, 0)
-  end
-  return true
-end
-
-
 local function DrawPoint(x, y, c, s)
   glPointSize(s)
   glColor(c)
-  glBeginEnd(GL_POINTS, function(x, y)
-    glVertex(x, y)
-  end, x, y)
+  glBeginEnd(GL_POINTS, glVertex, x, y)
 end
+
+
+local function DrawLine(x0, y0, c0, x1, y1, c1)
+  glColor(c0); glVertex(x0, y0)
+  glColor(c1); glVertex(x1, y1)
+end
+
+
+local red   = { 1, 0, 0 }
+local green = { 0, 1, 0 }
+local black = { 0, 0, 0 }
+local white = { 1, 1, 1 }
 
 
 function widget:DrawScreen()
   if (active) then
     local x, y = spGetMouseState()
 
-    DrawPoint(mx, my, { 0, 0, 0 }, 14)
-    DrawPoint(mx, my, { 1, 1, 1 }, 11)
-    DrawPoint(mx, my, { 0, 0, 0 },  8)
-    DrawPoint(mx, my, { 1, 0, 0 },  5)
+    DrawPoint(mx, my, black, 14)
+    DrawPoint(mx, my, white, 11)
+    DrawPoint(mx, my, black,  8)
+    DrawPoint(mx, my, red,    5)
 
     glLineWidth(2)
-    glBeginEnd(GL_LINES, function()
-      glColor(0, 1, 0); glVertex(x,  y)
-      glColor(1, 0, 0); glVertex(mx, my)
-    end)
+    glBeginEnd(GL_LINES, DrawLine, x, y, green, mx, my, red)
     glLineWidth(1)
 
     DrawPoint(x, y, { 0, 1, 0 },  5)

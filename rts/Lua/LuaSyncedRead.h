@@ -97,10 +97,12 @@ class LuaSyncedRead {
 		static int GetUnitResources(lua_State* L);
 		static int GetUnitExperience(lua_State* L);
 		static int GetUnitStates(lua_State* L);
+		static int GetUnitArmored(lua_State* L);
 		static int GetUnitIsActive(lua_State* L);
 		static int GetUnitIsCloaked(lua_State* L);
 		static int GetUnitSelfDTime(lua_State* L);
 		static int GetUnitStockpile(lua_State* L);
+		static int GetUnitSensorRadius(lua_State* L);
 		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
@@ -113,9 +115,12 @@ class LuaSyncedRead {
 		static int GetUnitTransporter(lua_State* L);
 		static int GetUnitIsTransporting(lua_State* L);
 		static int GetUnitShieldState(lua_State* L);
+		static int GetUnitFlanking(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
+		static int GetUnitFuel(lua_State* L);
 		static int GetUnitEstimatedPath(lua_State* L);
+		static int GetUnitLastAttacker(lua_State* L);
 
 		static int GetUnitCommands(lua_State* L);
 		static int GetFactoryCounts(lua_State* L);

@@ -42,16 +42,16 @@ class CCommandQueue {
 		inline void push_back(const Command& cmd);
 		inline void push_front(const Command& cmd);
 
-		inline void insert(iterator pos, const Command& cmd);
+		inline iterator insert(iterator pos, const Command& cmd);
 
 		inline void pop_back()  { queue.pop_back(); }
 		inline void pop_front() { queue.pop_front(); }
 
-		inline void erase(iterator pos) {
-			queue.erase(pos);
+		inline iterator erase(iterator pos) {
+			return queue.erase(pos);
 		}
-		inline void erase(iterator first, iterator last) {
-			queue.erase(first, last);
+		inline iterator erase(iterator first, iterator last) {
+			return queue.erase(first, last);
 		}
 		inline void clear() { queue.clear(); }
 
@@ -116,11 +116,12 @@ inline void CCommandQueue::push_front(const Command& cmd)
 }
 
 
-inline void CCommandQueue::insert(iterator pos, const Command& cmd)
+inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
+                                                     const Command& cmd)
 {
 	Command tmpCmd = cmd;
 	tmpCmd.tag = GetNextTag();
-	queue.insert(pos, tmpCmd);
+	return queue.insert(pos, tmpCmd);
 }
 
 

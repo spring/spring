@@ -13,8 +13,8 @@
 #include "../Team.h"
 #include "../GameSetup.h"
 #include "StartPosSelecter.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Rendering/glFont.h"
+#include "System/EventHandler.h"
 
 extern Uint8 *keys;
 
@@ -24,7 +24,7 @@ GameSetupDrawer* GameSetupDrawer::instance = NULL;
 
 void GameSetupDrawer::Enable()
 {
-	assert(instance == 0);
+	assert(instance == NULL);
 	assert(gameSetup);
 
 	instance = new GameSetupDrawer();
@@ -35,9 +35,10 @@ void GameSetupDrawer::Disable()
 {
 	if (instance) {
 		delete instance;
-		instance = 0;
+		instance = NULL;
 	}
 }
+
 
 void GameSetupDrawer::StartCountdown(unsigned time)
 {
@@ -107,7 +108,7 @@ void GameSetupDrawer::Draw()
 
 	CStartPosSelecter* selector = CStartPosSelecter::selector;
 	bool ready = (selector == NULL);
-	if (luaCallIns.GameSetup(state, ready, playerStates)) {
+	if (eventHandler.GameSetup(state, ready, playerStates)) {
 		if (selector) {
 			selector->ShowReady(false);
 			if (ready) {

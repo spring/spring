@@ -144,6 +144,8 @@ public:
 
 	int losMipLevel;
 	int airMipLevel;
+	int losDiv;
+	int airDiv;
 	float invLosDiv;
 	float invAirDiv;
 	int airSizeX;

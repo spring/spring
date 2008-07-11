@@ -17,7 +17,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
 #include "Game/UI/MiniMap.h"
-#include "Lua/LuaCallInHandler.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
@@ -47,6 +46,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sync/SyncTracer.h"
+#include "System/EventHandler.h"
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
@@ -132,7 +132,8 @@ CUnit::CUnit ()
 	los(0),
 	userAttackPos(0,0,0),
 	crashing(false),
-	cob(0),
+	cob(NULL),
+	script(NULL),
 	flankingBonusMode(0),
 	flankingBonusDir(1.0f, 0.0f, 0.0f),
 	flankingBonusAvgDamage(1.4f),
@@ -294,6 +295,7 @@ CUnit::~CUnit()
 	}
 
 	delete cob;
+	//FIXME delete script;
 	delete localmodel;
 }
 
@@ -410,6 +412,7 @@ void CUnit::SetUp(const SyncedFloat3& newDir)
 	UpdateMidPos();
 }
 
+
 void CUnit::SetRight(const SyncedFloat3& newDir)
 {
 	rightdir = newDir;
@@ -422,11 +425,13 @@ void CUnit::SetRight(const SyncedFloat3& newDir)
 	UpdateMidPos();
 }
 
+
 void CUnit::UpdateMidPos()
 {
 	midPos = pos + (frontdir * relMidPos.z) + (updir * relMidPos.y)
 		+ (rightdir * relMidPos.x);
 }
+
 
 void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
 {
@@ -515,16 +520,16 @@ void CUnit::Update()
 
 	if (inAir != oldInAir) {
 		if (inAir) {
-			luaCallIns.UnitEnteredAir(this);
+			eventHandler.UnitEnteredAir(this);
 		} else {
-			luaCallIns.UnitLeftAir(this);
+			eventHandler.UnitLeftAir(this);
 		}
 	}
 	if (inWater != oldInWater) {
 		if (inWater) {
-			luaCallIns.UnitEnteredWater(this);
+			eventHandler.UnitEnteredWater(this);
 		} else {
-			luaCallIns.UnitLeftWater(this);
+			eventHandler.UnitLeftWater(this);
 		}
 	}
 
@@ -578,20 +583,20 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	if (diffBits) {
 		if (diffBits & LOS_INLOS) {
 			if (newStatus & LOS_INLOS) {
-				luaCallIns.UnitEnteredLos(this, at);
+				eventHandler.UnitEnteredLos(this, at);
 				globalAI->UnitEnteredLos(this, at);
 			} else {
-				luaCallIns.UnitLeftLos(this, at);
+				eventHandler.UnitLeftLos(this, at);
 				globalAI->UnitLeftLos(this, at);
 			}
 		}
 
 		if (diffBits & LOS_INRADAR) {
 			if (newStatus & LOS_INRADAR) {
-				luaCallIns.UnitEnteredRadar(this, at);
+				eventHandler.UnitEnteredRadar(this, at);
 				globalAI->UnitEnteredRadar(this, at);
 			} else {
-				luaCallIns.UnitLeftRadar(this, at);
+				eventHandler.UnitLeftRadar(this, at);
 				globalAI->UnitLeftRadar(this, at);
 			}
 		}
@@ -670,7 +675,7 @@ void CUnit::SlowUpdate()
 
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (paralyzeDamage < health && !(transporter && !transporter->unitDef->isfireplatform) ) {
+		if (paralyzeDamage < health && !(transporter && !transporter->unitDef->isFirePlatform) ) {
 			stunned = false;
 		}
 		const bool oldCloak = isCloaked;
@@ -681,9 +686,9 @@ void CUnit::SlowUpdate()
 		}
 		if (oldCloak != isCloaked) {
 			if (isCloaked) {
-				luaCallIns.UnitCloaked(this);
+				eventHandler.UnitCloaked(this);
 			} else {
-				luaCallIns.UnitDecloaked(this);
+				eventHandler.UnitDecloaked(this);
 			}
 		}
 		UpdateResources();
@@ -819,9 +824,9 @@ void CUnit::SlowUpdate()
 
 	if (oldCloak != isCloaked) {
 		if (isCloaked) {
-			luaCallIns.UnitCloaked(this);
+			eventHandler.UnitCloaked(this);
 		} else {
-			luaCallIns.UnitDecloaked(this);
+			eventHandler.UnitDecloaked(this);
 		}
 	}
 
@@ -889,6 +894,7 @@ void CUnit::SlowUpdate()
 	UpdateTerrainType();
 }
 
+
 void CUnit::SetDirectionFromHeading(void)
 {
 	frontdir=GetVectorFromHeading(heading);
@@ -907,6 +913,7 @@ void CUnit::SetDirectionFromHeading(void)
 		frontdir=updir.cross(rightdir);
 	}
 }
+
 
 void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
@@ -1064,7 +1071,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		}
 	}
 
-	luaCallIns.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
+	eventHandler.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
 	globalAI->UnitDamaged(this, attacker, damage);
 
 	if (health <= 0.0f) {
@@ -1153,6 +1160,29 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 /******************************************************************************/
 /******************************************************************************/
 
+void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
+{
+	if (hasRadarCapacity) {
+		radarhandler->RemoveUnit(this);
+	}
+
+	*valuePtr = newValue;
+
+	if (newValue != 0) {
+		hasRadarCapacity = true;
+	}
+	else if (hasRadarCapacity) {
+		hasRadarCapacity = radarRadius || jammerRadius   ||
+		                   sonarRadius || sonarJamRadius ||
+		                   seismicRadius;
+	}
+
+	if (hasRadarCapacity) {
+		radarhandler->MoveUnit(this);
+	}
+}
+
+
 void CUnit::AddExperience(float exp)
 {
 	const float oldExp = experience;
@@ -1165,7 +1195,7 @@ void CUnit::AddExperience(float exp)
 		const int oldGrade = (int)(oldLimExp     / expGrade);
 		const int newGrade = (int)(limExperience / expGrade);
 		if (oldGrade != newGrade) {
-			luaCallIns.UnitExperience(this, oldExp);
+			eventHandler.UnitExperience(this, oldExp);
 		}
 	}
 
@@ -1198,12 +1228,12 @@ void CUnit::DoSeismicPing(float pingSize)
 		                             ph->seismictex, 30, 15, 0, pingSize, 1,
 		                             float3(0.8f,0.0f,0.0f));
 	}
-	for (int a=0; a<gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < gs->activeAllyTeams; ++a) {
 		if (radarhandler->InSeismicDistance(this, a)) {
 			const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
-							 errorScale[a] * (0.5f - rz));
+			                 errorScale[a] * (0.5f - rz));
 			const float3 pingPos = (pos + err);
-			luaCallIns.UnitSeismicPing(this, a, pingPos, pingSize);
+			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
 			globalAI->SeismicPing(a, this, pingPos, pingSize);
 		}
 	}
@@ -1250,7 +1280,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(0);
 
-	luaCallIns.UnitTaken(this, newteam);
+	eventHandler.UnitTaken(this, newteam);
 	globalAI->UnitTaken(this, oldteam);
 
 	// reset states and clear the queues
@@ -1321,7 +1351,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	luaCallIns.UnitGiven(this, oldteam);
+	eventHandler.UnitGiven(this, oldteam);
 	globalAI->UnitGiven(this, oldteam);
 
 	return true;
@@ -1551,7 +1581,7 @@ void CUnit::Init(const CUnit* builder)
 		c.params.clear();
 	}
 
-	luaCallIns.UnitCreated(this, builder);
+	eventHandler.UnitCreated(this, builder);
 	globalAI->UnitCreated(this); // FIXME -- add builder?
 }
 
@@ -1746,11 +1776,11 @@ void CUnit::FinishedBuilding(void)
 		airBaseHandler->RegisterAirBase(this);
 	}
 
-	luaCallIns.UnitFinished(this);
+	eventHandler.UnitFinished(this);
 	globalAI->UnitFinished(this);
 
 	if (oldCloak != isCloaked) {
-		luaCallIns.UnitCloaked(this); // do this after the UnitFinished call-in
+		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
 	}
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
@@ -1792,7 +1822,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	isDead = true;
 	deathSpeed = speed;
 
-	luaCallIns.UnitDestroyed(this, attacker);
+	eventHandler.UnitDestroyed(this, attacker);
 	globalAI->UnitDestroyed(this, attacker);
 
 	blockHeightChanges = false;
@@ -1962,12 +1992,10 @@ void CUnit::Deactivate()
 
 void CUnit::PushWind(float x, float z, float strength)
 {
-	if(strength > unitDef->windGenerator)
-	{
+	if (strength > unitDef->windGenerator) {
 		cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
 	}
-	else
-	{
+	else {
 		cob->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
 	}
 
@@ -2110,6 +2138,8 @@ void CUnit::PostLoad()
 	model = unitDef->LoadModel(team);
 	SetRadius(model->radius);
 
+	//FIXME script = SAFE_NEW CUnitScript(this);
+	//FIXME localmodel = modelParser->CreateLocalModel(model, script->GetPieces());
 	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
 	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
 
@@ -2309,6 +2339,7 @@ CR_REG_METADATA(CUnit, (
 				CR_RESERVED(32),
 				//CR_MEMBER(model),
 				//CR_MEMBER(cob),
+				//CR_MEMBER(script),
 				//CR_MEMBER(localmodel),
 
 				CR_MEMBER(tooltip),
