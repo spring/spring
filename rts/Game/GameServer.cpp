@@ -14,7 +14,7 @@
 #include "Game.h"
 #endif
 
-#include "GameSetupData.h"
+#include "GameSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -86,7 +86,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGameData, const CGameSetupData* const mysetup = 0, const std::string& demoName)
+CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup = 0, const std::string& demoName)
 : setup(mysetup)
 {
 	serverStartTime = SDL_GetTicks();
@@ -578,7 +578,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if(inbuf[1] != a){
 				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			}
-			else if (setup && setup->startPosType == CGameSetupData::StartPos_ChooseInGame)
+			else if (setup && setup->startPosType == CGameSetup::StartPos_ChooseInGame)
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (teams[team])
@@ -1364,6 +1364,13 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
+	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers))
+	{
+		// number not in setup, drop connection
+		Message(str(format("Connection rejected because of number %i not in setup (wanted number %i).") %hisNewNumber %wantedNumber));
+		return 0;
+	}
+	
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
@@ -1381,7 +1388,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		{
 			teams[hisTeam].reset(new GameTeam());
 			teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
-			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetupData::StartPos_ChooseInGame);
+			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
 			teams[hisTeam]->allyTeam = setup->teamStartingData[hisTeam].teamAllyteam;
 		}
 		players[hisNewNumber]->team = hisTeam;

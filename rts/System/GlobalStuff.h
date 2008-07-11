@@ -127,7 +127,7 @@ class CTeam;
 class CUnit;
 class CPlayer;
 class LuaParser;
-class CGameSetupData;
+class CGameSetup;
 
 /**
  * @brief Global synced stuff
@@ -141,7 +141,7 @@ public:
 	CR_DECLARE(CGlobalSyncedStuff);
 	CGlobalSyncedStuff();  //!< Constructor
 	~CGlobalSyncedStuff(); //!< Destructor
-	void LoadFromSetup(const CGameSetupData*);
+	void LoadFromSetup(const CGameSetup*);
 
 	int    randInt();    //!< synced random int
 	float  randFloat();  //!< synced random float
@@ -463,7 +463,7 @@ public:
 	float  usRandFloat();  //!< Unsynced random float
 	float3 usRandVector(); //!< Unsynced random vector
 
-	void LoadFromSetup(const CGameSetupData*);
+	void LoadFromSetup(const CGameSetup*);
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?

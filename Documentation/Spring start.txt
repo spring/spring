@@ -54,8 +54,8 @@
 	MyPlayerNum=x;      //only variable that should vary between different players
 
 	NumPlayers=x;		// not mandatory, but can be used for debugging purposes
-	NumTeams=y;
-	NumAllyTeams=z;
+	NumTeams=y;			// same here, set this to check if the script is right
+	NumAllyTeams=z;		// see above
 
 	// a player (player 0 is the host)
 	[PLAYER0]
