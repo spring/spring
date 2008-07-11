@@ -62,6 +62,7 @@ ADD_LIBRARY(server SHARED
 	../../rts/Game/ChatMessage
 	../../rts/Game/Console
 	../../rts/Game/Action
+	../../rts/Lua/LuaIO
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser
