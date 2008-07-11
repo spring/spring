@@ -73,3 +73,5 @@ ENDIF (MINGW)
 
 ADD_EXECUTABLE(dedicated main)
 TARGET_LINK_LIBRARIES(dedicated server)
+
+install (TARGETS server dedicated RUNTIME DESTINATION spring LIBRARY DESTINATION spring)
