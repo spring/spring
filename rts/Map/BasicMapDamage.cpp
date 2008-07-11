@@ -155,15 +155,18 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	for(int y=y1/2;y<=hy2;y++)
 		for(int x=x1/2;x<=hx2;x++)
 			readmap->mipHeightmap[1][y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];*/
-	for (int i = 0; i < readmap->numHeightMipMaps - 1; i++) {
+
+	float numHeightMipMaps = readmap->numHeightMipMaps - 1;
+	float** mipHeightmap = readmap->mipHeightmap;
+	for (int i = 0; i < numHeightMipMaps; i++) {
 		int hmapx = gs->mapx >> i;
 		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
 			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
-				float height = readmap->mipHeightmap[i][(x)+(y)*hmapx];
-				height += readmap->mipHeightmap[i][(x)  +(y+1)*hmapx];
-				height += readmap->mipHeightmap[i][(x+1)+(y)  *hmapx];
-				height += readmap->mipHeightmap[i][(x+1)+(y+1)*hmapx];
-				readmap->mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height * 0.25f;
+				float height = mipHeightmap[i][(x)+(y)*hmapx];
+				height += mipHeightmap[i][(x)  +(y+1)*hmapx];
+				height += mipHeightmap[i][(x+1)+(y)  *hmapx];
+				height += mipHeightmap[i][(x+1)+(y+1)*hmapx];
+				mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height * 0.25f;
 			}
 		}
 	}
@@ -174,6 +177,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	int decx=std::max(0,x1-1);
 	int incx=std::min(gs->mapx-1,x2+1);
 
+	float3* facenormals = readmap->facenormals;
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
 			float3 e1(-SQUARE_SIZE,heightmap[y*(gs->mapx+1)+x]-heightmap[y*(gs->mapx+1)+x+1],0);
@@ -182,7 +186,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			float3 n=e2.cross(e1);
 			n.Normalize();
 
-			readmap->facenormals[(y*gs->mapx+x)*2] = n;
+			facenormals[(y*gs->mapx+x)*2] = n;
 
 			e1 = float3( SQUARE_SIZE,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y+1)*(gs->mapx+1)+x],0);
 			e2 = float3( 0,heightmap[(y+1)*(gs->mapx+1)+x+1]-heightmap[(y)*(gs->mapx+1)+x+1],SQUARE_SIZE);
@@ -190,7 +194,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			n = e2.cross(e1);
 			n.Normalize();
 
-			readmap->facenormals[(y*gs->mapx+x)*2+1] = n;
+			facenormals[(y*gs->mapx+x)*2+1] = n;
 		}
 	}
 
