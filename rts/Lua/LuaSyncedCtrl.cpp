@@ -160,7 +160,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
-	REGISTER_LUA_CFUNC(SetProjectileDetonate);
+	REGISTER_LUA_CFUNC(SetProjectileCollision);
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
 	REGISTER_LUA_CFUNC(CallCOBScriptCB);
@@ -2212,7 +2212,7 @@ int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 	return 0;
 }
 
-int LuaSyncedCtrl::SetProjectileDetonate(lua_State* L)
+int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 {
 	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
 	if (pro == NULL) {
