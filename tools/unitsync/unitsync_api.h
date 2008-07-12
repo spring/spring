@@ -88,7 +88,14 @@ DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
 DLL_EXPORT void         __stdcall CloseFileVFS(int handle);
 DLL_EXPORT void         __stdcall ReadFileVFS(int handle, void* buf, int length);
 DLL_EXPORT int          __stdcall FileSizeVFS(int handle);
+
 DLL_EXPORT int          __stdcall InitFindVFS(const char* pattern);
+DLL_EXPORT int          __stdcall InitDirListVFS(const char* path,
+                                                 const char* pattern,
+                                                 const char* modes);
+DLL_EXPORT int          __stdcall InitSubDirsVFS(const char* path,
+                                                 const char* pattern,
+                                                 const char* modes);
 DLL_EXPORT int          __stdcall FindFilesVFS(int handle, char* nameBuf, int size);
 
 DLL_EXPORT int          __stdcall OpenArchive(const char* name);

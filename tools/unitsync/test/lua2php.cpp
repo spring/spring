@@ -21,11 +21,6 @@ exit
 
 /******************************************************************************/
 /******************************************************************************/
-//  Simple file to help test unitsync, compile with:
-//
-//    g++ -I../../../rts/System lua2php.cxx ../../../game/unitsync.so
-//
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +55,9 @@ static FILE* outfile = NULL;
 #define SPRING_VFS_ZIP        SPRING_VFS_MOD  SPRING_VFS_MAP  SPRING_VFS_BASE
 
 
+/******************************************************************************/
+/******************************************************************************/
+
 int main(int argc, char** argv)
 {
   if (argc < 2) {
@@ -69,6 +67,8 @@ int main(int argc, char** argv)
   const string mod = argv[1];
   printf("MOD = %s\n", mod.c_str());
 
+  // open the output file in the local directory, before
+  // initializing unitsync (which changes the working directory)
   const string outName = mod + ".php";
   printf("outName = %s\n", outName.c_str());
   outfile = fopen(outName.c_str(), "w");
@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   lpOpenFile("gamedata/defs.lua", SPRING_VFS_MOD_BASE , SPRING_VFS_ZIP);
   if (!lpExecute()) {
     printf(lpErrorLog());
+    printf("\n");
   }
   else {
     lpRootTable();
@@ -102,6 +103,8 @@ int main(int argc, char** argv)
   UnInit();
 
   fclose(outfile);
+
+  printf("%s has been created\n", outName.c_str());
 
   return 0;
 }
@@ -149,12 +152,12 @@ static inline std::string IntToString(int i, const std::string& format = "%i")
 #define LUA_TTHREAD        8
 
 
-static string SafeStr(const string& str)
+static string SafeStr(const string& str, char escChar = '\'')
 {
   string newStr;
   for (unsigned int i = 0; i < str.size(); i++) {
     const char c = str[i];
-    if (c == '"')  {
+    if (c == escChar)  {
       newStr.push_back('\\');
     }
     newStr.push_back(c);
@@ -185,8 +188,8 @@ static void OutputPHPTable(const string& indent)
       } else if (type == LUA_TBOOLEAN) {
         OUTF("%s%i => %s,\n",   ind, key, lpGetIntKeyBoolVal(key, 0) ? "true" : "false");
       } else if (type == LUA_TSTRING) {
-        OUTF("%s%i => \"%s\",\n", ind, key,
-               SafeStr(lpGetIntKeyStrVal(key, "BOGUS")).c_str());
+        OUTF("%s%i => '%s',\n", ind, key,
+             SafeStr(lpGetIntKeyStrVal(key, "BOGUS")).c_str());
       } else {
         OUTF("//%s%i => bad type (%i)\n", ind, key, type);
       }
@@ -208,8 +211,8 @@ static void OutputPHPTable(const string& indent)
       } else if (type == LUA_TBOOLEAN) {
         OUTF("%s\"%s\" => %s,\n",   ind, key, lpGetStrKeyBoolVal(key, 0) ? "true" : "false");
       } else if (type == LUA_TSTRING) {
-        OUTF("%s\"%s\" => \"%s\",\n", ind, key,
-               SafeStr(lpGetStrKeyStrVal(key, "BOGUS")).c_str());
+        OUTF("%s\"%s\" => '%s',\n", ind, key,
+             SafeStr(lpGetStrKeyStrVal(key, "BOGUS")).c_str());
       } else {
         OUTF("//%s\"%s\" => bad type (%i)\n", ind, key, type);
       }

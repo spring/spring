@@ -13,6 +13,7 @@ exit
 #endif
 
 
+
 /******************************************************************************/
 /******************************************************************************/
 //  Simple file to help test unitsync, compile with:
@@ -189,6 +190,18 @@ int main(int argc, char** argv)
     for (int i = 0; i < modValidMapCount; i++) {
       printf("    %i: %s\n", i, GetModValidMap(i));
     }
+  }
+
+  InitDirListVFS("", NULL, NULL);
+  char buf[512];
+  for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
+    printf("FOUND DIR:  %s\n", buf);
+  }
+
+  InitSubDirsVFS("", NULL, NULL);
+  char buf[512];
+  for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
+    printf("FOUND DIR:  %s\n", buf);
   }
 
   UnInit();
