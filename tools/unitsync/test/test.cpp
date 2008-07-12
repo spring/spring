@@ -195,11 +195,10 @@ int main(int argc, char** argv)
   InitDirListVFS("", NULL, NULL);
   char buf[512];
   for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
-    printf("FOUND DIR:  %s\n", buf);
+    printf("FOUND FILE:  %s\n", buf);
   }
 
   InitSubDirsVFS("", NULL, NULL);
-  char buf[512];
   for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
     printf("FOUND DIR:  %s\n", buf);
   }
