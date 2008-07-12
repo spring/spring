@@ -59,7 +59,8 @@ using namespace std;
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
 
-
+// MinGW defines this for a WINAPI function
+#undef SendMessage
 extern Uint8 *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions

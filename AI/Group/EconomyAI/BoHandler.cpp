@@ -65,7 +65,7 @@ void CBoHandler::AddBuildOptions(const UnitDef* unitDef)
 				info->spacing = wd->areaOfEffect * (maxDamage - maxLoss) / (maxDamage - maxLoss * wd->edgeEffectiveness);
 				info->spacing = std::max(info->spacing, 0.0f);
 			}
-			info->spacing = std::min(info->spacing, 0.5 * maxPartitionRadius);
+			info->spacing = std::min(info->spacing, 0.5f * maxPartitionRadius);
 		}
 		else
 		{

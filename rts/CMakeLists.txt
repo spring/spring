@@ -4,17 +4,19 @@ PROJECT(Spring)
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
-### Compiler flags and defines based on build type
-INCLUDE(TestCXXAcceptsVisibilityFlag)
-SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
-IF (UNIX)
-	SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
-ENDIF (UNIX)
-SET(CMAKE_CXX_FLAGS_DEBUG   "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
-SET(CMAKE_CXX_FLAGS_PROFILE   "${BASE_FLAGS} -O2 -pg -Wall -DNDEBUG")
+if (NOT COMPLETE_BUILD)
+	### Compiler flags and defines based on build type
+	INCLUDE(TestCXXAcceptsVisibilityFlag)
+	SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
+	IF (UNIX)
+		SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
+	ENDIF (UNIX)
+	SET(CMAKE_CXX_FLAGS_DEBUG   "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+	SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+	SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+	SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
+	SET(CMAKE_CXX_FLAGS_PROFILE   "${BASE_FLAGS} -O2 -pg -Wall -DNDEBUG")
+endif (NOT COMPLETE_BUILD)
 
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
@@ -32,18 +34,18 @@ if (DIRECT_CONTROL)
 	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
 endif (DIRECT_CONTROL)
 
-SET(USE_GML TRUE CACHE BOOL "Use the GML OpenGL threading library?")
+SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
 if (USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML)
 endif (USE_GML)
 
+SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+if (SPRING_DATADIR)
+	ADD_DEFINITIONS(-DSPRING_DATADIR=${SPRING_DATADIR})
+endif (SPRING_DATADIR)
+
 IF (UNIX)
 	ADD_DEFINITIONS(-DNO_AVI)
-	
-	SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
-	if (SPRING_DATADIR)
-		ADD_DEFINITIONS(-DSPRING_DATADIR=${SPRING_DATADIR})
-	endif (SPRING_DATADIR)
 ELSEIF (UNIX)
 	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
 	if (NO_AVI)
@@ -55,13 +57,16 @@ ADD_DEFINITIONS(-DSTREFLOP_X87)
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
-	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
+	if (NOT COMPLETE_BUILD)
+		SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
+		
+		### add mingwlibs to link- and include-directories
+		INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
+		LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
+	endif (NOT COMPLETE_BUILD)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
 
-	### add mingwlibs to link- and include-directories
-	INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
-	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
 	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
@@ -88,7 +93,10 @@ LIST(APPEND spring_libraries SDL vorbisfile vorbis ogg freetype)
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind gml)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
+if (USE_GML)
+	list (APPEND spring_libraries gml)
+endif (USE_GML)
 
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} System)
