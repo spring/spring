@@ -1630,6 +1630,30 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 	return 0;
 }
 
+// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
+// pass the returned handle to findfiles to get the results
+DLL_EXPORT int __stdcall InitDirListVFS(const char* path, const char* pattern, const char* modes)
+{
+	if (path    == NULL) { path = "";              }
+	if (modes   == NULL) { modes = SPRING_VFS_ALL; }
+	if (pattern == NULL) { pattern = "*";          }
+	logOutput.Print("InitDirListVFS: '%s' '%s' '%s'\n", path, pattern, modes);
+	curFindFiles = CFileHandler::DirList(path, pattern, modes);
+	return 0;
+}
+
+// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
+// pass the returned handle to findfiles to get the results
+DLL_EXPORT int __stdcall InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
+{
+	if (path    == NULL) { path = "";              }
+	if (modes   == NULL) { modes = SPRING_VFS_ALL; }
+	if (pattern == NULL) { pattern = "*";          }
+	logOutput.Print("InitSubDirsVFS: '%s' '%s' '%s'\n", path, pattern, modes);
+	curFindFiles = CFileHandler::SubDirs(path, pattern, modes);
+	return 0;
+}
+
 // On first call, pass handle from initfind. pass the return value of this function on subsequent calls
 // until 0 is returned. size should be set to max namebuffer size on call
 DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
