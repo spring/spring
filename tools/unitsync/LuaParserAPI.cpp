@@ -32,8 +32,8 @@ static LuaTable rootTable;
 static LuaTable currTable;
 static vector<LuaTable> luaTables;
 
-static vector<int> intKeys;
-static vector<string> stringKeys;
+static vector<int>    intKeys;
+static vector<string> strKeys;
 
 
 /******************************************************************************/
@@ -49,7 +49,7 @@ DLL_EXPORT void __stdcall lpClose()
 	luaTables.clear();
 
 	intKeys.clear();
-	stringKeys.clear();
+	strKeys.clear();
 
 	delete luaParser;
 	luaParser = NULL;
@@ -254,6 +254,7 @@ DLL_EXPORT int __stdcall lpGetIntKeyListCount()
 		intKeys.clear();
 		return 0;
 	}
+	intKeys.clear();
 	currTable.GetKeys(intKeys);
 	return (int)intKeys.size();
 }
@@ -271,20 +272,21 @@ DLL_EXPORT int __stdcall lpGetIntKeyListEntry(int index)
 DLL_EXPORT int __stdcall lpGetStrKeyListCount()
 {
 	if (!currTable.IsValid()) {
-		stringKeys.clear();
+		strKeys.clear();
 		return 0;
 	}
-	currTable.GetKeys(stringKeys);
-	return (int)stringKeys.size();
+	strKeys.clear();
+	currTable.GetKeys(strKeys);
+	return (int)strKeys.size();
 }
 
 
 DLL_EXPORT const char* __stdcall lpGetStrKeyListEntry(int index)
 {
-	if ((index < 0) || (index >= stringKeys.size())) {
+	if ((index < 0) || (index >= strKeys.size())) {
 		return GetStr("");
 	}
-	return GetStr(stringKeys[index]);
+	return GetStr(strKeys[index]);
 }
 
 
