@@ -245,6 +245,23 @@ DLL_EXPORT int __stdcall lpGetKeyExistsStr(const char* key)
 
 /******************************************************************************/
 //
+//  Type
+//
+
+DLL_EXPORT int __stdcall lpGetIntKeyType(int key)
+{
+	return currTable.GetType(key);
+}
+
+
+DLL_EXPORT int __stdcall lpGetStrKeyType(const char* key)
+{
+	return currTable.GetType(key);
+}
+
+
+/******************************************************************************/
+//
 // Key lists
 //
 
