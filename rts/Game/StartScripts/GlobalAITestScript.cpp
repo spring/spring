@@ -18,10 +18,15 @@
 extern std::string stupidGlobalMapname;
 
 
-CGlobalAITestScript::CGlobalAITestScript(std::string dll)
-	: CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
+CGlobalAITestScript::CGlobalAITestScript(std::string dll):
+	CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
 	dllName(dll)
 {
+	// make sure CSelectedUnits::AiOrder()
+	// still works without a setup script
+	gs->Team(1)->isAI = true;
+	gs->Team(1)->dllAI = dllName;
+	gs->Team(1)->leader = 0;
 }
 
 
