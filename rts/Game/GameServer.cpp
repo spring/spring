@@ -255,6 +255,8 @@ void CGameServer::SendDemoData(const bool skipping)
 				outstandingSyncFrames.push_back(serverframenum);
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
+			if (!skipping)
+				return;
 		}
 		else if ( msgCode != NETMSG_GAMEDATA &&
 						msgCode != NETMSG_SETPLAYERNUM &&
@@ -420,21 +422,14 @@ void CGameServer::Update()
 		}
 	}
 
-	// when hosting a demo, read from file and broadcast data
-	if (demoReader)
-	{
-		CheckSync();
-		SendDemoData();
-	}
-
 	if (!gameStartTime)
 	{
 		CheckForGameStart();
 	}
-	else if (serverframenum > 0 && !demoReader)
+	else if (serverframenum > 0 || demoReader)
 	{
 		CreateNewFrame(true, false);
-		if (!sentGameOverMsg)
+		if (!sentGameOverMsg && !demoReader)
 			CheckForGameEnd();
 	}
 
@@ -1241,56 +1236,65 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
+	if (!demoReader) // use NEWFRAME_MSGes from demo otherwise
+	{
 #if (BOOST_VERSION >= 103500)
-	if (!fromServerThread)
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
-	else
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+		if (!fromServerThread)
+			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
+		else
+			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 #else
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
 #endif
-	CheckSync();
-	int newFrames = 1;
-
-	if(!fixedFrameTime){
-		unsigned currentTick = SDL_GetTicks();
-		unsigned timeElapsed = currentTick - lastTick;
-		if (timeElapsed>200) {
-			timeElapsed=200;
-		}
+		CheckSync();
+		int newFrames = 1;
+	
+		if(!fixedFrameTime){
+			unsigned currentTick = SDL_GetTicks();
+			unsigned timeElapsed = currentTick - lastTick;
+			if (timeElapsed>200) {
+				timeElapsed=200;
+			}
 
 #ifdef DEBUG
-		if(gameClientUpdated){
-			gameClientUpdated=false;
-		}
+			if(gameClientUpdated){
+				gameClientUpdated=false;
+			}
 #endif
 
-		timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
-		lastTick=currentTick;
-		newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
-		timeLeft -= newFrames;
-	}
-
-	bool rec = false;
+			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
+			lastTick=currentTick;
+			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
+			timeLeft -= newFrames;
+		}
+	
+		bool rec = false;
 #ifndef NO_AVI
-	rec = game && game->creatingVideo;
+		rec = game && game->creatingVideo;
 #endif
-	bool normalFrame = !IsPaused && !rec;
-	bool videoFrame = !IsPaused && fixedFrameTime;
-	bool singleStep = fixedFrameTime && !rec;
-
-	if(normalFrame || videoFrame || singleStep){
-		for(int i=0; i < newFrames; ++i){
-			++serverframenum;
-			//Send out new frame messages.
-			if (0 == (serverframenum % serverKeyframeIntervall))
-				Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
-			else
-				Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+		bool normalFrame = !IsPaused && !rec;
+		bool videoFrame = !IsPaused && fixedFrameTime;
+		bool singleStep = fixedFrameTime && !rec;
+	
+		if(normalFrame || videoFrame || singleStep){
+			for(int i=0; i < newFrames; ++i){
+				assert(!demoReader);
+				++serverframenum;
+				//Send out new frame messages.
+				if (0 == (serverframenum % serverKeyframeIntervall))
+					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
+				else
+					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
 #ifdef SYNCCHECK
-			outstandingSyncFrames.push_back(serverframenum);
+				outstandingSyncFrames.push_back(serverframenum);
 #endif
+			}
 		}
+	}
+	else
+	{
+		CheckSync();
+		SendDemoData();
 	}
 }
 
