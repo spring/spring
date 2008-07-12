@@ -30,6 +30,7 @@ ConfigHandler* ConfigHandler::instance = NULL;
 
 
 std::string ConfigHandler::configSource;
+extern const char* VERSION_STRING;
 
 
 /**
@@ -41,7 +42,7 @@ ConfigHandler& ConfigHandler::GetInstance()
 	if (!instance) {
 		if (configSource.empty()) {
 #ifdef _WIN32
-			configSource = "Software\\SJ\\spring";
+			configSource = "Software\\SJ\\Spring " + std::string(VERSION_STRING);
 #elif defined(__APPLE__)
 			configSource = "this string is not currently used";
 #else
