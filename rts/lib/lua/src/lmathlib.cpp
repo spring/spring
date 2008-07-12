@@ -8,6 +8,11 @@
 #include <stdlib.h>
 //SPRING#include <math.h>
 #include "streflop_cond.h" // FIXME -- should always be compiled with streflop
+#ifdef UNITSYNC
+using std::isfinite;
+using std::isnan;
+using std::isinf;
+#endif
 
 #define lmathlib_c
 #define LUA_LIB
@@ -94,14 +99,26 @@ static int math_fmod (lua_State *L) {
   return 1;
 }
 
-//FIXME
-//static int math_modf (lua_State *L) {
-//  double ip;
-//  double fp = modf(luaL_checknumber(L, 1), &ip);
-//  lua_pushnumber(L, ip);
-//  lua_pushnumber(L, fp);
-//  return 2;
-//}
+static int math_modf (lua_State *L) {
+  // FIXME -- streflop does not have modf()
+  // double fp = modf(luaL_checknumber(L, 1), &ip);
+  const float in = (float)luaL_checknumber(L, 1);
+  if (isnan(in)) {
+    lua_pushnumber(L, in);
+    lua_pushnumber(L, in);
+  }
+  else if (isinf(in)) {
+    lua_pushnumber(L, in);
+    lua_pushnumber(L, 0.0f);
+  }
+  else {
+    const float fp = fmod(in, 1.0f);
+    const float ip = (in - fp);
+    lua_pushnumber(L, ip);
+    lua_pushnumber(L, fp);
+  }
+  return 2;
+}
 
 static int math_sqrt (lua_State *L) {
   lua_pushnumber(L, sqrt(luaL_checknumber(L, 1)));
@@ -255,7 +272,7 @@ static const luaL_Reg mathlib[] = {
   {"log",   math_log   },
   {"max",   math_max   },
   {"min",   math_min   },
-//{"modf",  math_modf  },  FIXME?
+  {"modf",  math_modf  },
   {"pow",   math_pow   },
   {"rad",   math_rad   },
   {"random",     math_random },
