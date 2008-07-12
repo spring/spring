@@ -11,14 +11,14 @@ class CUnit;
 class CExplosionGenerator;
 
 
-class CExpGenSpawnable : public CWorldObject
+class CExpGenSpawnable: public CWorldObject
 {
 public:
 	CR_DECLARE(CExpGenSpawnable);
-	CExpGenSpawnable() : CWorldObject(){};
-	CExpGenSpawnable(const float3& pos) : CWorldObject(pos){};
-	virtual ~CExpGenSpawnable(){};
-	virtual void Init(const float3& pos, CUnit *owner)=0;
+	CExpGenSpawnable(): CWorldObject(){};
+	CExpGenSpawnable(const float3& pos): CWorldObject(pos) {};
+	virtual ~CExpGenSpawnable() {};
+	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
 
 
@@ -38,7 +38,7 @@ protected:
 class CExplosionGeneratorHandler
 {
 public:
-	CExplosionGeneratorHandler ();
+	CExplosionGeneratorHandler();
 
 	CExplosionGenerator* LoadGenerator(const std::string& tag);
 	const LuaTable& GetTable() { return luaTable; }
@@ -59,12 +59,12 @@ public:
 	CExplosionGenerator();
 	virtual ~CExplosionGenerator();
 
-	virtual void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir) = 0;
+	virtual void Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir) = 0;
 	virtual void Load(CExplosionGeneratorHandler* loader, const std::string& tag) = 0;
 };
 
 
-class CStdExplosionGenerator : public CExplosionGenerator
+class CStdExplosionGenerator: public CExplosionGenerator
 {
 public:
 	CR_DECLARE(CStdExplosionGenerator);
@@ -72,29 +72,29 @@ public:
 	CStdExplosionGenerator();
 	virtual ~CStdExplosionGenerator();
 
-	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir);
+	void Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
 	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);
 };
 
 
 /* Defines the result of an explosion as a series of new projectiles */
-class CCustomExplosionGenerator : public CStdExplosionGenerator
+class CCustomExplosionGenerator: public CStdExplosionGenerator
 {
 protected:
 	CR_DECLARE(CCustomExplosionGenerator);
 
-	struct ProjectileSpawnInfo
-	{
-		ProjectileSpawnInfo() { projectileClass=0; }
+	struct ProjectileSpawnInfo {
+		ProjectileSpawnInfo() { projectileClass = 0; }
 
 		creg::Class* projectileClass;
 		std::vector<char> code;
 		int count;// number of projectiles spawned of this type
 		unsigned int flags;
 	};
+
 	// TODO: Handle ground flashes with more flexibility like the projectiles
-	struct GroundFlashInfo { 
-		GroundFlashInfo() { ttl=0; }
+	struct GroundFlashInfo {
+		GroundFlashInfo() { ttl = 0; }
 
 		float flashSize;
 		float flashAlpha;
@@ -103,12 +103,17 @@ protected:
 		int ttl;
 		float3 color;
 		unsigned int flags;
-	} *groundFlash;
+	};
 
-	bool useDefaultExplosions;
-	std::vector<ProjectileSpawnInfo*> projectileSpawn;
-	void ParseExplosionCode(ProjectileSpawnInfo *psi, int baseOffset, creg::IType *type, const std::string& script, std::string& code);
-	void ExecuteExplosionCode (const char *code, float damage, char *instance, int spawnIndex, const float3 &dir);
+	struct CEGData {
+		std::vector<ProjectileSpawnInfo> projectileSpawn;
+		GroundFlashInfo groundFlash;
+		bool useDefaultExplosions;
+	};
+
+	CEGData* currentCEG;
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, creg::IType* type, const std::string& script, std::string& code);
+	void ExecuteExplosionCode (const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 public:
 	CCustomExplosionGenerator();
@@ -116,11 +121,11 @@ public:
 	static void OutputProjectileClassInfo();
 
 	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
-	void Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit, const float3 &dir);
+	void Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
 };
 
 
 extern CExplosionGeneratorHandler* explGenHandler;
 
 
-#endif 
+#endif

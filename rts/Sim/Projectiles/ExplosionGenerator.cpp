@@ -307,16 +307,11 @@ CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
 {
-	groundFlash = 0;
+	currentCEG = 0;
 }
-
 
 CCustomExplosionGenerator::~CCustomExplosionGenerator()
 {
-	if (groundFlash) {
-		delete groundFlash;
-		groundFlash = 0x0;
-	}
 }
 
 
@@ -462,7 +457,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float dam
 
 
 void CCustomExplosionGenerator::ParseExplosionCode(
-	CCustomExplosionGenerator::ProjectileSpawnInfo *psi,
+	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
 	int offset, creg::IType *type, const string& script, string& code)
 {
 
@@ -605,92 +600,104 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 }
 
 
-void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
+void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
 {
-	const LuaTable& root = h->GetTable();
+	static std::map<string, CEGData> cachedCEGs;
+	std::map<string, CEGData>::iterator it = cachedCEGs.find(tag);
 
-	const LuaTable expTable = root.SubTable(tag);
-	if (!expTable.IsValid()) {
-		throw content_error("Explosion info for " + tag + " not found.");
-	}
+	if (it == cachedCEGs.end()) {
+		CEGData cegData;
 
-	vector<string> spawns;
-	expTable.GetKeys(spawns);
-
-	ProjectileSpawnInfo *psi;
-	for (vector<string>::iterator si = spawns.begin(); si != spawns.end(); ++si) {
-		const string& spawnName = *si;
-		const LuaTable spawnTable = expTable.SubTable(spawnName);
-		if (!spawnTable.IsValid()) {
-			continue;
-		}
-		if (spawnName == "groundflash") {
-			continue;
+		const LuaTable& root = h->GetTable();
+		const LuaTable expTable = root.SubTable(tag);
+		if (!expTable.IsValid()) {
+			throw content_error("Explosion info for " + tag + " not found.");
 		}
 
-		psi = SAFE_NEW ProjectileSpawnInfo;
-		projectileSpawn.push_back(psi);
+		vector<string> spawns;
+		expTable.GetKeys(spawns);
 
-		const string className = spawnTable.GetString("class", spawnName);
+		for (vector<string>::iterator si = spawns.begin(); si != spawns.end(); ++si) {
+			ProjectileSpawnInfo psi;
 
+			const string& spawnName = *si;
+			const LuaTable spawnTable = expTable.SubTable(spawnName);
 
-		psi->projectileClass = h->projectileClasses.GetClass(className);
-
-		unsigned int flags = 0;
-		if (spawnTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-		if (spawnTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-		if (spawnTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-		if (spawnTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-		if (spawnTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-		if (spawnTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
-		psi->flags = flags;
-		psi->count = spawnTable.GetInt("count", 1);
-
-		string code;
-		map<string, string> props;
-		map<string, string>::const_iterator propIt;
-		spawnTable.SubTable("properties").GetMap(props);
-		for (propIt = props.begin(); propIt != props.end(); ++propIt) {
-			creg::Class::Member* m = psi->projectileClass->FindMember(propIt->first.c_str());
-			if (m && (m->flags & creg::CM_Config)) {
-				ParseExplosionCode(psi, m->offset, m->type, propIt->second, code);
+			if (!spawnTable.IsValid() || spawnName == "groundflash") {
+				continue;
 			}
+
+			const string className = spawnTable.GetString("class", spawnName);
+			unsigned int flags = 0;
+
+			if (spawnTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
+			if (spawnTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
+			if (spawnTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
+			if (spawnTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
+			if (spawnTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
+			if (spawnTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
+
+			psi.projectileClass = h->projectileClasses.GetClass(className);
+			psi.flags = flags;
+			psi.count = spawnTable.GetInt("count", 1);
+
+			string code;
+			map<string, string> props;
+			map<string, string>::const_iterator propIt;
+			spawnTable.SubTable("properties").GetMap(props);
+
+			for (propIt = props.begin(); propIt != props.end(); ++propIt) {
+				creg::Class::Member* m = psi.projectileClass->FindMember(propIt->first.c_str());
+				if (m && (m->flags & creg::CM_Config)) {
+					ParseExplosionCode(&psi, m->offset, m->type, propIt->second, code);
+				}
+			}
+
+			code += (char)OP_END;
+			psi.code.resize(code.size());
+			copy(code.begin(), code.end(), psi.code.begin());
+
+			cegData.projectileSpawn.push_back(psi);
 		}
 
-		code += (char)OP_END;
-		psi->code.resize(code.size());
-		copy(code.begin(), code.end(), psi->code.begin());
+		const LuaTable gndTable = expTable.SubTable("groundflash");
+		const int ttl = gndTable.GetInt("ttl", 0);
+		if (ttl > 0) {
+			cegData.groundFlash.circleAlpha  = gndTable.GetFloat("circleAlpha",  0.0f);
+			cegData.groundFlash.flashSize    = gndTable.GetFloat("flashSize",    0.0f);
+			cegData.groundFlash.flashAlpha   = gndTable.GetFloat("flashAlpha",   0.0f);
+			cegData.groundFlash.circleGrowth = gndTable.GetFloat("circleGrowth", 0.0f);
+			cegData.groundFlash.color        = gndTable.GetFloat3("color", float3(1.0f, 1.0f, 0.8f));
+
+			unsigned int flags = SPW_GROUND;
+			if (gndTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
+			if (gndTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
+			if (gndTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
+			if (gndTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
+			if (gndTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
+			if (gndTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
+
+			cegData.groundFlash.flags = flags;
+			cegData.groundFlash.ttl = ttl;
+		}
+
+		cegData.useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
+
+		cachedCEGs[tag] = cegData;
+		currentCEG = &cachedCEGs[tag];
+	} else {
+		currentCEG = &(it->second);
 	}
-
-	const LuaTable gndTable = expTable.SubTable("groundflash");
-	const int ttl = gndTable.GetInt("ttl", 0);
-	if (ttl) {
-		groundFlash = SAFE_NEW GroundFlashInfo;
-
-		groundFlash->circleAlpha  = gndTable.GetFloat("circleAlpha",  0.0f);
-		groundFlash->flashSize    = gndTable.GetFloat("flashSize",    0.0f);
-		groundFlash->flashAlpha   = gndTable.GetFloat("flashAlpha",   0.0f);
-		groundFlash->circleGrowth = gndTable.GetFloat("circleGrowth", 0.0f);
-		groundFlash->color        = gndTable.GetFloat3("color", float3(1.0f, 1.0f, 0.8f));
-
-		unsigned int flags = SPW_GROUND;
-		if (gndTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-		if (gndTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-		if (gndTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-		if (gndTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-		if (gndTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-		if (gndTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
-		groundFlash->flags = flags;
-
-		groundFlash->ttl = ttl;
-	}
-
-	useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
 }
 
 
-void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float radius, CUnit *owner,float gfxMod, CUnit *hit,const float3 &dir)
+void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir)
 {
+	if (currentCEG == 0) {
+		// Explosion() called before Load()'ing a CEG
+		return;
+	}
+
 	float h2 = ground->GetHeight2(pos.x, pos.z);
 	unsigned int flags = 0;
 
@@ -702,25 +709,31 @@ void CCustomExplosionGenerator::Explosion(const float3 &pos, float damage, float
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
 
-	for (int a = 0; a < projectileSpawn.size(); a++) {
-		ProjectileSpawnInfo *psi = projectileSpawn[a];
+	for (int a = 0; a < currentCEG->projectileSpawn.size(); a++) {
+		ProjectileSpawnInfo* psi = &currentCEG->projectileSpawn[a];
 
-		if (!(psi->flags & flags))
+		if (!(psi->flags & flags)) {
 			continue;
+		}
 
 		for (int c = 0; c < psi->count; c++) {
-			CExpGenSpawnable *projectile = (CExpGenSpawnable*)psi->projectileClass->CreateInstance();
+			CExpGenSpawnable* projectile = (CExpGenSpawnable*) psi->projectileClass->CreateInstance();
 
-			ExecuteExplosionCode(&psi->code[0], damage, (char*)projectile, c, dir);
+			ExecuteExplosionCode(&psi->code[0], damage, (char*) projectile, c, dir);
 			projectile->Init(pos, owner);
 		}
 	}
 
-	if ((flags & SPW_GROUND) && groundFlash)
-		SAFE_NEW CStandardGroundFlash(pos, groundFlash->circleAlpha, groundFlash->flashAlpha, groundFlash->flashSize, groundFlash->circleGrowth, groundFlash->ttl, groundFlash->color);
+	const GroundFlashInfo& groundFlash = currentCEG->groundFlash;
 
-	if (useDefaultExplosions)
+	if ((flags & SPW_GROUND) && groundFlash.ttl > 0) {
+		SAFE_NEW CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
+			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
+	}
+
+	if (currentCEG->useDefaultExplosions) {
 		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);
+	}
 }
 
 
@@ -730,21 +743,22 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 	std::ofstream fs("projectiles.txt");
 	CExplosionGeneratorHandler egh;
 
-	if (fs.bad() || !fs.is_open())
+	if (fs.bad() || !fs.is_open()) {
 		return;
+	}
 
-	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci)
-	{
-		if (!(*ci)->IsSubclassOf (CExpGenSpawnable::StaticClass()) || (*ci) == CExpGenSpawnable::StaticClass())
+	for (vector<creg::Class*>::const_iterator ci = classes.begin(); ci != classes.end(); ++ci) {
+		if (!(*ci)->IsSubclassOf (CExpGenSpawnable::StaticClass()) || (*ci) == CExpGenSpawnable::StaticClass()) {
 			continue;
+		}
 
 		creg::Class *klass = *ci;
 		fs << "Class: " << klass->name << ".  Scriptname: " << egh.projectileClasses.FindAlias(klass->name) << std::endl;
-		for (;klass;klass=klass->base) {
-			for (unsigned int a=0;a<klass->members.size();a++)
-			{
-				if (klass->members[a]->flags & creg::CM_Config)
+		for (; klass; klass = klass->base) {
+			for (unsigned int a = 0; a < klass->members.size(); a++) {
+				if (klass->members[a]->flags & creg::CM_Config) {
 					fs << "\t" << klass->members[a]->name << ": " << klass->members[a]->type->GetName() << "\n";
+				}
 			}
 		}
 		fs << "\n\n";
