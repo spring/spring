@@ -894,6 +894,34 @@ bool LuaTable::KeyExists(const string& key) const
 /******************************************************************************/
 /******************************************************************************/
 //
+//  Value types
+//
+
+int LuaTable::GetType(int key) const
+{
+	if (!PushValue(key)) {
+		return -1;
+	}
+	const int type = lua_type(L, -1);
+	lua_pop(L, 1);
+	return type;
+}
+
+
+int LuaTable::GetType(const string& key) const
+{
+	if (!PushValue(key)) {
+		return -1;
+	}
+	const int type = lua_type(L, -1);
+	lua_pop(L, 1);
+	return type;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
 //  Object lengths
 //
 

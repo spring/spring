@@ -57,6 +57,9 @@ class LuaTable {
 		bool KeyExists(int key) const;
 		bool KeyExists(const string& key) const;
 
+		int GetType(int key) const;
+		int GetType(const string& key) const;
+
 		// numeric keys
 		int    GetInt(int key, int def) const;
 		bool   GetBool(int key, bool def) const;

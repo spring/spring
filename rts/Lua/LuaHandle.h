@@ -147,10 +147,10 @@ class CLuaHandle : public CEventClient
 		void ProjectileCreated(const CProjectile* p);
 		void ProjectileDestroyed(const CProjectile* p);
 
+		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+
 		void StockpileChanged(const CUnit* owner,
 		                      const CWeapon* weapon, int oldCount);
-
-		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		// LuaHandleSynced wraps this to set allowChanges
 		virtual bool RecvLuaMsg(const string& msg, int playerID);
