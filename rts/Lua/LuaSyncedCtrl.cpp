@@ -190,7 +190,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
 	REGISTER_LUA_CFUNC(RevertHeightMap);
 
-	REGISTER_LUA_CFUNC(SetHeight);
+	REGISTER_LUA_CFUNC(AddHeightMap);
+	REGISTER_LUA_CFUNC(SetHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMapFunc);
 
 	REGISTER_LUA_CFUNC(SpawnCEG);
@@ -2621,41 +2622,79 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaSyncedCtrl::SetHeight(lua_State* L)
+int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 {
 	if (!inHeightMap) {
-		luaL_error(L, "SetHeight() can only be called in Spring.SetHeightMapFunc()");
+		luaL_error(L, "AddHeightMap() can only be called in SetHeightMapFunc()");
 	}
 
 	const float xl = luaL_checkfloat(L, 1);
 	const float zl = luaL_checkfloat(L, 2);
 	const float h  = luaL_checkfloat(L, 3);
 
-	// quantize and clamp
+	// quantize
 	const int x = (int)(xl / SQUARE_SIZE);
 	const int z = (int)(zl / SQUARE_SIZE);
 
-	if (x<0 || x>gs->mapx || z<0 || z>gs->mapy) return 0;
+	// discard invalid coordinates
+	if ((x < 0) || (x > gs->mapx) ||
+	    (z < 0) || (z > gs->mapy)) {
+		return 0;
+	}
+
+	const int index = (z * (gs->mapx + 1)) + x;
+	readmap->GetHeightmap()[index] += h;
+	heightMapAmountChanged += fabs(h);
+
+	// update RecalcArea()
+	if (x < heightMapx1) { heightMapx1 = x; }
+	if (x > heightMapx2) { heightMapx2 = x; }
+	if (z < heightMapz1) { heightMapz1 = z; }
+	if (z > heightMapz2) { heightMapz2 = z; }
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetHeightMap(lua_State* L)
+{
+	if (!inHeightMap) {
+		luaL_error(L, "SetHeightMap() can only be called in SetHeightMapFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / SQUARE_SIZE);
+	const int z = (int)(zl / SQUARE_SIZE);
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > gs->mapx) ||
+	    (z < 0) || (z > gs->mapy)) {
+		return 0;
+	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
 	float& heightMap = readmap->GetHeightmap()[index];
 	const float oldHeight = heightMap;
 
 	if (lua_israwnumber(L, 4)) {
-		const float t  = lua_tofloat(L, 4);
+		const float t = lua_tofloat(L, 4);
 		heightMap += (h - heightMap) * t;
-	}else{
+	} else{
 		heightMap = h;
 	}
 
-	const float heightDiff =  heightMap - oldHeight;
+	const float heightDiff = heightMap - oldHeight;
+	heightMapAmountChanged += fabs(heightDiff);
 
 	//update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
 	if (x > heightMapx2) { heightMapx2 = x; }
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
-	heightMapAmountChanged += heightDiff;
 
 	lua_pushnumber(L, heightDiff);
 	return 1;
@@ -2681,7 +2720,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	heightMapx2 = -1;
 	heightMapz1 = gs->mapy;
 	heightMapz2 = 0;
-	heightMapAmountChanged = 0;
+	heightMapAmountChanged = 0.0f;
 
 	inHeightMap = true;
 	const int error = lua_pcall(L, (args - 1), 0, 0);
