@@ -5020,13 +5020,27 @@ static SelectBuffer selectBuffer;
 
 int LuaOpenGL::RenderMode(lua_State* L)
 {
-	if (!gs->cheatEnabled) {
-		return 0; // minimal protection, for now
-	}
 	CheckDrawingEnabled(L, __FUNCTION__);
+
 	const GLenum mode = (GLenum)luaL_checkint(L, 1);
-	const GLint count = glRenderMode(mode);
-	lua_pushnumber(L, count);
+	if (!lua_isfunction(L, 2)) {
+		luaL_error(L, "Incorrect arguments to gl.RenderMode(mode, func, ...)");
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	// call the function
+	glRenderMode(mode);
+	const int error = lua_pcall(L, (args - 2), 0, 0);
+	const GLint count2 = glRenderMode(GL_RENDER);
+
+	if (error != 0) {
+		logOutput.Print("gl.RenderMode: error(%i) = %s",
+		                error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	lua_pushnumber(L, count2);
 	return 1;
 }
 
