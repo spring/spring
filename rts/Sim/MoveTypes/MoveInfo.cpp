@@ -97,7 +97,7 @@ CMoveInfo::CMoveInfo()
 		}
 		else {
 			md->moveType = MoveData::Ground_Move;
-			md->depthMod = 0.1f;
+			md->depthMod = moveTable.GetFloat("depthMod", 0.1f);
 			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			if (name.find("TANK") != string::npos) {
@@ -107,8 +107,7 @@ CMoveInfo::CMoveInfo()
 			}
 		}
 
-		md->slopeMod = 4.0f / (md->maxSlope + 0.001f);
-
+		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
 		// TA has only half our res so multiply size with 2
 		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
 
