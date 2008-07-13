@@ -459,10 +459,8 @@ void CProjectileHandler::Update()
 	}
 }
 
-int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
-	if (arg1.dist <= arg2.dist)
-	   return 0;
-   return 1;
+inline int CompareProjDist(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
+	return (arg1.dist > arg2.dist);
 }
 
 void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
@@ -794,7 +792,6 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-//	glBindTexture(GL_TEXTURE_2D, CGroundFlash::texture);
 	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(0);
@@ -969,10 +966,6 @@ void CProjectileHandler::UpdatePerlin()
 		speed*=0.6f;
 		size*=2;
 	}
-/*
-	glBindTexture(GL_TEXTURE_2D, CProjectile::textures[0]);
-	glCopyTexSubImage2D(GL_TEXTURE_2D,0,384,256,0,0,128,128);
-*/
 	perlinFB->deselect();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 

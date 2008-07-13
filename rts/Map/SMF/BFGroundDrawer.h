@@ -20,7 +20,10 @@ class CBFGroundDrawer :
 public:
 	CBFGroundDrawer(CSmfReadMap* rm);
 	~CBFGroundDrawer(void);
+
 	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false, unsigned int overrideVP = 0);
+	void DrawShadowPass();
+	void Update();
 
 	void IncreaseDetail();
 	void DecreaseDetail();
@@ -54,12 +57,12 @@ protected:
 
 	volatile unsigned int mt_overrideVP;
 
-  void DoDrawGroundRow(int bty, unsigned int overrideVP);
+	void DoDrawGroundRow(int bty, unsigned int overrideVP);
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
-  void EndStripQ(CVertexArray *ma);
-  void DrawGroundVertexArrayQ(CVertexArray * &ma);
+	void EndStripQ(CVertexArray *ma);
+	void DrawGroundVertexArrayQ(CVertexArray * &ma);
 	void DoDrawGroundShadowLOD(int nlod);
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
@@ -74,9 +77,6 @@ protected:
 
 	void AddFrustumRestraint(const float3& side);
 	void UpdateCamRestraints();
-	void Update() {}
-public:
-	void DrawShadowPass();
 };
 
 #endif // __BF_GROUND_DRAWER_H__

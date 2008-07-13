@@ -662,12 +662,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 
 	va = GetVertexArray();
 	va->Initialize();
-	textures->DrawUpdate();
 
-	int x, y;
 	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
 	maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
-	#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
 	UpdateCamRestraints();
 
@@ -680,15 +677,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupTextureUnits(drawWaterReflection, overrideVP);
-	bool inStrip = false;
 
 	if (mapInfo->map.voidWater && !waterDrawn) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
-
-	float camxpart = 0.0f, oldcamxpart;
-	float camypart = 0.0f, oldcamypart;
 
 #if GML_ENABLE_DRAWGROUND
 	mt_overrideVP=overrideVP;
@@ -1071,7 +1064,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
 #else
 	for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
-    DoDrawGroundShadowLOD(nlod);
+		DoDrawGroundShadowLOD(nlod);
 	}
 #endif
 
@@ -1326,6 +1319,10 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 }
 
+void CBFGroundDrawer::Update()
+{
+	textures->DrawUpdate();
+}
 
 void CBFGroundDrawer::IncreaseDetail()
 {

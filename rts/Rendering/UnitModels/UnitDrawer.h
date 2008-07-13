@@ -26,8 +26,8 @@ public:
 
 	void Update(void);
 
-  volatile bool mt_drawReflection;
-  volatile bool mt_drawRefraction;
+	volatile bool mt_drawReflection;
+	volatile bool mt_drawRefraction;
 	CUnit * volatile mt_excludeUnit;
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
@@ -38,7 +38,7 @@ public:
 
 	void DrawCloakedUnits(void);									// cloaked units must be drawn after all others
 	void DrawShadowPass(void);
-  void DoDrawUnitShadow(CUnit *unit);
+	void DoDrawUnitShadow(CUnit *unit);
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);

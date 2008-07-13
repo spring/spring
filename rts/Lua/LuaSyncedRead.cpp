@@ -59,6 +59,7 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -199,6 +200,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitRadius);
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitBasePosition);
+	REGISTER_LUA_CFUNC(GetUnitVectors);
 	REGISTER_LUA_CFUNC(GetUnitDirection);
 	REGISTER_LUA_CFUNC(GetUnitHeading);
 	REGISTER_LUA_CFUNC(GetUnitVelocity);
@@ -209,6 +211,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitShieldState);
 	REGISTER_LUA_CFUNC(GetUnitFlanking);
 	REGISTER_LUA_CFUNC(GetUnitWeaponState);
+	REGISTER_LUA_CFUNC(GetUnitWeaponVectors);
 	REGISTER_LUA_CFUNC(GetUnitTravel);
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
@@ -2562,6 +2565,28 @@ int LuaSyncedRead::GetUnitBasePosition(lua_State* L)
 	return 3;
 }
 
+int LuaSyncedRead::GetUnitVectors(lua_State* L)
+{
+	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+#define PACK_VECTOR(n) \
+	HSTR_PUSH(L, #n);           \
+	lua_newtable(L);            \
+	lua_pushnumber(L, 1); lua_pushnumber(L, unit-> n .x); lua_rawset(L, -3); \
+	lua_pushnumber(L, 2); lua_pushnumber(L, unit-> n .y); lua_rawset(L, -3); \
+	lua_pushnumber(L, 3); lua_pushnumber(L, unit-> n .z); lua_rawset(L, -3); \
+	lua_rawset(L, -3)
+
+	PACK_VECTOR(frontdir);
+	PACK_VECTOR(updir);
+	PACK_VECTOR(rightdir);
+
+	return 3;
+}
+
 
 int LuaSyncedRead::GetUnitDirection(lua_State* L)
 {
@@ -2753,6 +2778,39 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	lua_pushnumber(L,  weapon->salvoLeft);
 	lua_pushnumber(L,  weapon->numStockpiled);
 	return 5;
+}
+
+
+int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 2) || !lua_isnumber(L, 2)) {
+		luaL_error(L, "Incorrect arguments to GetUnitWeaponVectors(unitID,weaponNum)");
+	}
+	const int weaponNum = (int)lua_tonumber(L, 2);
+	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+		return 0;
+	}
+	const float3& weaponPos = unit->weapons[weaponNum]->weaponMuzzlePos;
+	float3& weaponDir = unit->weapons[weaponNum]->wantedDir;
+	const string& wtype = unit->weapons[weaponNum]->weaponDef->type;
+
+	if (wtype=="StarburstLauncher" || wtype=="TorpedoLauncher" || wtype=="MissileLauncher")
+		weaponDir = unit->weapons[weaponNum]->weaponDir;
+
+	lua_pushnumber(L, weaponPos.x);
+	lua_pushnumber(L, weaponPos.y);
+	lua_pushnumber(L, weaponPos.z);
+
+	lua_pushnumber(L, weaponDir.x);
+	lua_pushnumber(L, weaponDir.y);
+	lua_pushnumber(L, weaponDir.z);
+
+	return 6;
 }
 
 

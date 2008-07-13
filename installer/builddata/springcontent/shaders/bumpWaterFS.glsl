@@ -223,7 +223,7 @@ float waveIntensity(const float x, const float step) {
 // REFLECTION
 #ifdef use_reflection
     float fresnel    = FresnelMin + FresnelMax * pow(angle,FresnelPower);
-    vec2 reftexcoord = vec2(0.0,1.0) - (gl_FragCoord.xy-ViewPos)*ScreenInverse - vec2(0.0,2.0*ScreenInverse.y) + normal.xz*0.09*ReflDistortion;
+    vec2 reftexcoord = vec2(0.0,1.0) - (gl_FragCoord.xy-ViewPos)*ScreenInverse + vec2(0.0,3.0*ScreenInverse.y) + normal.xz*0.09*ReflDistortion;
     vec3 reflColor   = texture2D(reflection,reftexcoord.st).rgb;
 
   #ifdef blur_reflection

@@ -293,7 +293,6 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 	if (camera->InView(unit->midPos, unit->radius + 30)) {
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-
 			if (drawReflection) {
 				float3 zeroPos;
 				if (unit->midPos.y < 0.0f) {
@@ -431,8 +430,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		}
 	}
 
-	DrawQuedS3O();
 	CleanUpUnitDrawing();
+	DrawQuedS3O();
 	DrawOpaqueShaderUnits();
 
 	va = GetVertexArray();
@@ -993,14 +992,11 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-		float t[16];
-		glGetFloatv(GL_MODELVIEW_MATRIX,t);
-
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixf(t);
+		glMultMatrixd(camera->GetModelview());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1192,14 +1188,11 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glAlphaFunc(GL_GREATER,0.5f);
 		glEnable(GL_ALPHA_TEST);
 
-		float t[16];
-		glGetFloatv(GL_MODELVIEW_MATRIX,t);
-
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixf(t);
+		glMultMatrixd(camera->GetModelview());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();

@@ -1124,19 +1124,16 @@ void CMiniMap::DrawForReal()
 					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
 					lines->AddVertexC(beam.startPos,color);
 					lines->AddVertexC(beam.endPos,color);
-					lines->EndStrip();
 				} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
 					CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
 					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
 					lines->AddVertexC(beam.startPos,color);
 					lines->AddVertexC(beam.endPos,color);
-					lines->EndStrip();
 				} else if (dynamic_cast<CLightingProjectile*>(p)) {
 					CLightingProjectile& beam = *(CLightingProjectile*)p;
 					unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
 					lines->AddVertexC(beam.pos,color);
 					lines->AddVertexC(beam.endPos,color);
-					lines->EndStrip();
 				} else if (dynamic_cast<CPieceProjectile*>(p)) {
 					points->AddVertexC(p->pos,red);
 				} else if (dynamic_cast<CWreckProjectile*>(p)) {

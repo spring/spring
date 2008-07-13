@@ -2492,7 +2492,10 @@ bool CGame::DrawWorld()
 		sky->Draw();
 	}
 	if (drawGround) {
+		{
+		SCOPED_TIMER("ExtraTexture");
 		gd->UpdateExtraTexture();
+		}
 		gd->Draw();
 	}
 	if (drawWater) {
@@ -2672,8 +2675,6 @@ bool CGame::Draw() {
 	ph->UpdateTextures();
 	fartextureHandler->CreateFarTextures();
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
-
 	sky->Update();
 
 //	glEnable(GL_BLEND);
@@ -2719,6 +2720,8 @@ bool CGame::Draw() {
 	}
 
 	camera->Update(false);
+
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 
 	{
 		SCOPED_TIMER("Water");
