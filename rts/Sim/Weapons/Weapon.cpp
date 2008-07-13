@@ -391,7 +391,7 @@ void CWeapon::Update()
 		nextSalvo=gs->frameNum+salvoDelay;
 		owner->lastFireWeapon=gs->frameNum;
 
-		int projectiles = weaponDef->projectilespershot;
+		int projectiles = projectilesPerShot;
 
 		while(projectiles > 0) {
 			--projectiles;
