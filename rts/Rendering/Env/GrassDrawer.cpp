@@ -314,7 +314,7 @@ void CGrassDrawer::Draw(void)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1-mapInfo->light.groundShadowDensity);
 		
 		float texConstant[]={mapInfo->light.groundAmbientColor.x*1.24f,mapInfo->light.groundAmbientColor.y*1.24f,mapInfo->light.groundAmbientColor.z*1.24f,1};
-		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant); 
+		glTexEnvfv(GL_TEXTURE_ENV,GL_TEXTURE_ENV_COLOR,texConstant);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_CONSTANT);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB,GL_TEXTURE);
@@ -329,24 +329,21 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
-		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture()); 
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, grassBladeTex);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);		
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-
-		float t[16];
-		glGetFloatv(GL_MODELVIEW_MATRIX,t);
 
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixf(t);
+		glMultMatrixd(camera->GetModelview());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
