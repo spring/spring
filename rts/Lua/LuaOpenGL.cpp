@@ -4985,35 +4985,31 @@ class SelectBuffer {
 		static const GLsizei maxSize = (1 << 24); // float integer range
 		static const GLsizei defSize = (256 * 1024);
 
-		SelectBuffer() : size(0), count(0), buffer(NULL) {}
+		SelectBuffer() : size(0), buffer(NULL) {}
 		~SelectBuffer() { delete[] buffer; }
 
 		inline GLuint* GetBuffer() const { return buffer; }
 
-		inline GLsizei GetCount() const { return count; }
-
 		inline bool ValidIndex(int index) const {
-			return ((index >= 0) && (index < count));
+			return ((index >= 0) && (index < size));
 		}
 
 		inline GLuint operator[](int index) const {
 			return ValidIndex(index) ? buffer[index] : 0;
 		}
 
-		inline bool Resize(GLsizei c) {
+		inline GLsizei Resize(GLsizei c) {
 			c = (c < maxSize) ? c : maxSize;
-			if (c > count) {
-				size = c;
+			if (c != size) {
 				delete[] buffer;
-				buffer = SAFE_NEW GLuint(size);
+				buffer = SAFE_NEW GLuint[c];
 			}
-			count = c;
-			return true;
+			size = c;
+			return size;
 		}
 
 	private:
 		GLsizei size;
-		GLsizei count;
 		GLuint* buffer;
 };
 
@@ -5036,10 +5032,9 @@ int LuaOpenGL::SelectBuffer(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	GLsizei selCount = (GLsizei)luaL_optint(L, 1, SelectBuffer::defSize);
-	selectBuffer.Resize(selCount);
-	GLsizei count = selectBuffer.GetCount();
-	glSelectBuffer(count, selectBuffer.GetBuffer());
-	lua_pushnumber(L, count);
+	selCount = selectBuffer.Resize(selCount);
+	glSelectBuffer(selCount, selectBuffer.GetBuffer());
+	lua_pushnumber(L, selCount);
 	return 1;
 }
 
