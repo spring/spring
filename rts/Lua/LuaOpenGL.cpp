@@ -5020,6 +5020,9 @@ static SelectBuffer selectBuffer;
 
 int LuaOpenGL::RenderMode(lua_State* L)
 {
+	if (!gs->cheatEnabled) {
+		return 0; // minimal protection, for now
+	}
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const GLenum mode = (GLenum)luaL_checkint(L, 1);
 	const GLint count = glRenderMode(mode);
