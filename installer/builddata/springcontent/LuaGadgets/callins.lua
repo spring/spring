@@ -80,7 +80,7 @@ CallInsList = {
   "AllowResourceLevel",
   "AllowResourceTransfer",
   "MoveCtrlNotify",
-  "BuilderTerraformComplete",
+  "TerraformComplete",
 }
 
 
