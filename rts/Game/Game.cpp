@@ -198,6 +198,8 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(gameSoundVolume),
 	CR_MEMBER(unitReplyVolume),
 
+	CR_MEMBER(moveWarnings),
+
 //	CR_MEMBER(script),
 	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
@@ -297,6 +299,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	soundEnabled = true;
 	sound->SetVolume(gameSoundVolume);
 	sound->SetUnitReplyVolume(unitReplyVolume);
+
+	moveWarnings = !!configHandler.GetInt("MoveWarnings", 1);
 
 	camera = SAFE_NEW CCamera();
 	cam2 = SAFE_NEW CCamera();
@@ -1693,7 +1697,16 @@ bool CGame::ActionPressed(const Action& action,
 			drawFpsHUD = !!atoi(action.extra.c_str());
 		}
 	}
-
+	else if (cmd == "movewarnings") {
+		if (action.extra.empty()) {
+			moveWarnings = !moveWarnings;
+		} else {
+			moveWarnings = !!atoi(action.extra.c_str());
+		}
+		configHandler.SetInt("MoveWarnings", moveWarnings ? 1 : 0);
+		logOutput.Print(string("movewarnings ") +
+		                (moveWarnings ? "enabled" : "disabled"));
+	}
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
 			drawMapMarks = !drawMapMarks;
@@ -2762,6 +2775,7 @@ bool CGame::Draw() {
 		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
 			guihandler->Update();
+			luaInputReceiver->Draw();
 		}
 		else {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();

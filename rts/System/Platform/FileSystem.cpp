@@ -390,6 +390,9 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 
 bool FileSystem::InReadDir(const std::string& path)
 {
+	if (path.find("..") != std::string::npos) {
+		return false; // realpath() would be nice
+	}
 	const std::vector<std::string> readDirs = fs.GetDataDirectories();
 	return true;
 }

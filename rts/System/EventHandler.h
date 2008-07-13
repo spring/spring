@@ -1,4 +1,4 @@
-#ifndef EVENT_HANDLER_H
+	#ifndef EVENT_HANDLER_H
 #define EVENT_HANDLER_H
 // EventHandler.h: interface for the CEventHandler class.
 //
@@ -40,7 +40,7 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public:
-		// Synced
+		// Synced events
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -82,6 +82,8 @@ class CEventHandler
 		void UnitCloaked(const CUnit* unit);
 		void UnitDecloaked(const CUnit* unit);
 
+		void UnitMoveFailed(const CUnit* unit);
+
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
@@ -93,24 +95,10 @@ class CEventHandler
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
 	
-		// Unsynced
+	public:
+		// Unsynced events
 		void Update();
 
-		void ViewResize();
-
-		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
-
-		void DrawGenesis();
-		void DrawWorld();
-		void DrawWorldPreUnit();
-		void DrawWorldShadow();
-		void DrawWorldReflection();
-		void DrawWorldRefraction();
-		void DrawScreenEffects();
-		void DrawScreen();
-		void DrawInMiniMap();
-
-		// from LuaUI
 		bool KeyPress(unsigned short key, bool isRepeat);
 		bool KeyRelease(unsigned short key);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
@@ -119,6 +107,8 @@ class CEventHandler
 		bool MouseWheel(bool up, float value);
 		bool IsAbove(int x, int y);
 		std::string GetTooltip(int x, int y);
+
+		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		bool CommandNotify(const Command& cmd);
 
@@ -137,6 +127,18 @@ class CEventHandler
 		                const float3* pos0,
 		                const float3* pos1,
 		                const std::string* label);
+
+		void ViewResize();
+
+		void DrawGenesis();
+		void DrawWorld();
+		void DrawWorldPreUnit();
+		void DrawWorldShadow();
+		void DrawWorldReflection();
+		void DrawWorldRefraction();
+		void DrawScreenEffects();
+		void DrawScreen();
+		void DrawInMiniMap();
 
 //FIXME		void ShockFront(float power, const float3& pos, float areaOfEffect);
 
@@ -221,6 +223,8 @@ class CEventHandler
 		EventClientList listUnitCloaked;
 		EventClientList listUnitDecloaked;
 
+		EventClientList listUnitMoveFailed;
+
 		EventClientList listFeatureCreated;
 		EventClientList listFeatureDestroyed;
 
@@ -234,10 +238,6 @@ class CEventHandler
 		// unsynced
 		EventClientList listUpdate;
 
-		EventClientList listViewResize;
-
-		EventClientList listDefaultCommand;
-
 		EventClientList listKeyPress;
 		EventClientList listKeyRelease;
 		EventClientList listMouseMove;
@@ -246,6 +246,8 @@ class CEventHandler
 		EventClientList listMouseWheel;
 		EventClientList listIsAbove;
 		EventClientList listGetTooltip;
+
+		EventClientList listDefaultCommand;
 		EventClientList listConfigCommand;
 		EventClientList listCommandNotify;
 		EventClientList listAddConsoleLine;
@@ -253,6 +255,8 @@ class CEventHandler
 		EventClientList listGameSetup;
 		EventClientList listWorldTooltip;
 		EventClientList listMapDrawCmd;
+
+		EventClientList listViewResize;
 
 		EventClientList listDrawGenesis;
 		EventClientList listDrawWorld;
@@ -290,26 +294,27 @@ inline void CEventHandler::UnitCreated(const CUnit* unit,
 
 
 #define UNIT_CALLIN_NO_PARAM(name)                                 \
-	inline void CEventHandler:: Unit ## name (const CUnit* unit) \
+	inline void CEventHandler:: name (const CUnit* unit) \
 	{                                                                \
 		const int unitAllyTeam = unit->allyteam;                       \
-		const int count = listUnit ## name.size();                     \
+		const int count = list ## name.size();                     \
 		for (int i = 0; i < count; i++) {                              \
-			CEventClient* ec = listUnit ## name [i];                       \
+			CEventClient* ec = list ## name [i];                       \
 			if (ec->CanReadAllyTeam(unitAllyTeam)) {                     \
-				ec-> Unit ## name (unit);                                  \
+				ec-> name (unit);                                  \
 			}                                                            \
 		}                                                              \
 	}
 
-UNIT_CALLIN_NO_PARAM(Finished)
-UNIT_CALLIN_NO_PARAM(Idle)
-UNIT_CALLIN_NO_PARAM(Cloaked)
-UNIT_CALLIN_NO_PARAM(Decloaked)
-UNIT_CALLIN_NO_PARAM(EnteredWater)
-UNIT_CALLIN_NO_PARAM(EnteredAir)
-UNIT_CALLIN_NO_PARAM(LeftWater)
-UNIT_CALLIN_NO_PARAM(LeftAir)
+UNIT_CALLIN_NO_PARAM(UnitFinished)
+UNIT_CALLIN_NO_PARAM(UnitIdle)
+UNIT_CALLIN_NO_PARAM(UnitCloaked)
+UNIT_CALLIN_NO_PARAM(UnitDecloaked)
+UNIT_CALLIN_NO_PARAM(UnitMoveFailed)
+UNIT_CALLIN_NO_PARAM(UnitEnteredWater)
+UNIT_CALLIN_NO_PARAM(UnitEnteredAir)
+UNIT_CALLIN_NO_PARAM(UnitLeftWater)
+UNIT_CALLIN_NO_PARAM(UnitLeftAir)
 
 
 #define UNIT_CALLIN_INT_PARAM(name)                                       \

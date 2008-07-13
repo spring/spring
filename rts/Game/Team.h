@@ -21,13 +21,14 @@ public:
 	~CTeam();
 	void SlowUpdate();
 
+
 	void AddMetal(float amount);
 	void AddEnergy(float amount);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
 	bool UseEnergyUpkeep(float amount);
 	bool UseMetalUpkeep(float amount);
-	
+
 	void SetBaseMetalStorage(float storage) {metalStorage = storage;};
 	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
 	

@@ -108,6 +108,8 @@ public:
 	float gameSoundVolume;
 	float unitReplyVolume;
 
+	bool moveWarnings;
+
 	unsigned char gameID[16];
 
 	CScript* script;

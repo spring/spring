@@ -749,6 +749,14 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 }
 
 
+void CLuaHandle::UnitMoveFailed(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitMoveFailed");
+	UnitCallIn(cmdStr, unit);
+	return;
+}
+
+
 /******************************************************************************/
 
 void CLuaHandle::FeatureCreated(const CFeature* feature)
@@ -1917,6 +1925,9 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 		lua_newtable(L); {
 			lua_pushliteral(L, "unsynced");
 			lua_pushboolean(L, eventHandler.IsUnsynced(list[i]));
+			lua_rawset(L, -3);
+			lua_pushliteral(L, "controller");
+			lua_pushboolean(L, eventHandler.IsController(list[i]));
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);

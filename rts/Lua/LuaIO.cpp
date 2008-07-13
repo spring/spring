@@ -12,6 +12,8 @@
 using std::string;
 
 #include "LuaHandle.h"
+#include "LuaInclude.h"
+#include "System/Platform/FileSystem.h"
 
 
 /******************************************************************************/
@@ -50,13 +52,13 @@ bool LuaIO::IsSimplePath(const string& path)
 
 bool LuaIO::SafeExecPath(const string& path)
 {
-	return true;
+	return false; // don't allow execution of external programs, yet
 }
 
 
 bool LuaIO::SafeReadPath(const string& path)
 {
-	return IsSimplePath(path);
+	return filesystem.InReadDir(path);
 }
 
 
@@ -66,13 +68,10 @@ bool LuaIO::SafeWritePath(const string& path)
 #if !defined UNITSYNC && !defined DEDICATED
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	if (lh != NULL) {
-		prefix = lh->GetName() + "/" + "write";
+		prefix = lh->GetName() + "/" + "Write";
 	}
 #endif
-	if (path.compare(0, prefix.size(), prefix) != 0) {
-		return false;
-	}
-	return true;
+	return filesystem.InWriteDir(path, prefix);
 }
 
 
@@ -120,7 +119,8 @@ int LuaIO::pclose(lua_State* L, FILE* stream)
 
 int LuaIO::system(lua_State* L, const char* command)
 {
-	return -1;
+	luaL_error(L, "the system() call is not available");
+	return -1; //
 }
 
 

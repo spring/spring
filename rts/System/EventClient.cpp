@@ -69,6 +69,8 @@ void CEventClient::UnitUnloaded(const CUnit* unit, const CUnit* transport) { ret
 void CEventClient::UnitCloaked(const CUnit* unit) { return; }
 void CEventClient::UnitDecloaked(const CUnit* unit) { return; }
 
+void CEventClient::UnitMoveFailed(const CUnit* unit) { return; }
+
 void CEventClient::FeatureCreated(const CFeature* feature) { return; }
 void CEventClient::FeatureDestroyed(const CFeature* feature) { return; }
 

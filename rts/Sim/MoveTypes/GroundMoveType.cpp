@@ -1,35 +1,37 @@
 #include "StdAfx.h"
 #include "GroundMoveType.h"
-#include "Map/Ground.h"
-#include "Sim/Misc/QuadField.h"
-#include "Map/ReadMap.h"
-#include "Map/MapInfo.h"
-#include "Sim/Misc/LosHandler.h"
+#include "ExternalAI/GlobalAIHandler.h"
+#include "Game/Camera.h"
+#include "Game/Game.h"
 #include "Game/GameHelper.h"
-#include "myMath.h"
-#include "LogOutput.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sync/SyncTracer.h"
+#include "Game/Player.h"
+#include "Game/SelectedUnits.h"
+#include "Map/Ground.h"
+#include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
+#include "MoveMath/MoveMath.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sound.h"
+#include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Path/PathManager.h"
-#include "Game/Player.h"
-#include "Game/Camera.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "MoveMath/MoveMath.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Weapons/Weapon.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Game/SelectedUnits.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "ExternalAI/GlobalAIHandler.h"
-#include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sync/SyncTracer.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Sound.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -1335,28 +1337,27 @@ void CGroundMoveType::Fail()
 
 	StopEngine();
 
-	//Failure of finding a path means that this action
-	//has failed to reach it's goal.
+	// failure of finding a path means that
+	// this action has failed to reach it's goal.
 	progressState = Failed;
 
+	eventHandler.UnitMoveFailed(owner);
 	globalAI->UnitMoveFailed(owner);
 
-	//Sends a message to user.
+	// sends a message to user.
 	ENTER_UNSYNCED;
-	if (owner->team == gu->myTeam) {
-		// Playing "can't" sound.
+	if (game->moveWarnings && (owner->team == gu->myTeam)) {
+		// playing "cant" sound.
 		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
 		if (soundIdx >= 0) {
 			sound->PlayUnitReply(
 				owner->unitDef->sounds.cant.getID(soundIdx), owner,
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}
-
-		if (!owner->commandAI->unimportantMove && owner->pos.distance(goalPos) > goalRadius + 150) {
-			if (gs->frameNum % (GAME_SPEED * 3) == 0) {
-				logOutput << owner->unitDef->humanName.c_str() << ": Can't reach destination!\n";
-				logOutput.SetLastMsgPos(owner->pos);
-			}
+		if (!owner->commandAI->unimportantMove &&
+		    (owner->pos.distance(goalPos) > (goalRadius + 150.0f))) {
+			logOutput.Print(owner->unitDef->humanName + ": Can't reach destination!");
+			logOutput.SetLastMsgPos(owner->pos);
 		}
 	}
 	ENTER_SYNCED;

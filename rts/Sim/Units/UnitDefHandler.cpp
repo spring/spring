@@ -761,10 +761,11 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	ud.collisionVolume = SAFE_NEW CollisionVolume(ud.collisionVolumeType,
-		ud.collisionVolumeScales, ud.collisionVolumeOffsets, ud.collisionVolumeTest);
-
-
+	ud.collisionVolume = SAFE_NEW CollisionVolume(
+		ud.collisionVolumeType,
+		ud.collisionVolumeScales,
+		ud.collisionVolumeOffsets,
+		ud.collisionVolumeTest);
 
 	ud.seismicRadius    = udTable.GetInt("seismicDistance", 0);
 	ud.seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);

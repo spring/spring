@@ -24,7 +24,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "LogOutput.h"
 
-namespace std {using ::tanf;} // for some reason MSVS needs this
 
 using std::min;
 using std::max;

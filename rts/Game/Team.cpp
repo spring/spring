@@ -470,3 +470,4 @@ void CTeam::LeftLineage(CUnit* unit)
 		}
 	}
 }
+

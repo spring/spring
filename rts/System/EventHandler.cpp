@@ -17,13 +17,13 @@ CEventHandler eventHandler;
 /******************************************************************************/
 /******************************************************************************/
 
-#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
-
 void CEventHandler::SetupEvent(const string& eName,
                                EventClientList* list, int props)
 {
 	eventMap[eName] = EventInfo(eName, list, props);
 }
+
+#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
 
 
 /******************************************************************************/
@@ -32,10 +32,6 @@ void CEventHandler::SetupEvent(const string& eName,
 CEventHandler::CEventHandler()
 {
 	mouseOwner = NULL;
-
-	// unmanaged call-ins
-	eventMap["AIEvent"] = EventInfo("AIEvent", NULL, UNSYNCED_BIT);
-	eventMap["DrawUnit"] = EventInfo("DrawUnit", NULL, UNSYNCED_BIT);
 
 	// synced call-ins
 	SETUP_EVENT(GamePreload,   MANAGED_BIT);
@@ -69,10 +65,12 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(UnitLeftWater,    MANAGED_BIT);
 	SETUP_EVENT(UnitLeftAir,      MANAGED_BIT);
 
-	SETUP_EVENT(UnitLoaded,    MANAGED_BIT);
-	SETUP_EVENT(UnitUnloaded,  MANAGED_BIT);
-	SETUP_EVENT(UnitCloaked,   MANAGED_BIT);
-	SETUP_EVENT(UnitDecloaked, MANAGED_BIT);
+	SETUP_EVENT(UnitLoaded,     MANAGED_BIT);
+	SETUP_EVENT(UnitUnloaded,   MANAGED_BIT);
+	SETUP_EVENT(UnitCloaked,    MANAGED_BIT);
+	SETUP_EVENT(UnitDecloaked,  MANAGED_BIT);
+
+	SETUP_EVENT(UnitMoveFailed, MANAGED_BIT);
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
@@ -86,8 +84,25 @@ CEventHandler::CEventHandler()
 
 	// unsynced call-ins
 	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT);
+
+  SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
+
 	SETUP_EVENT(DefaultCommand, MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
+  SETUP_EVENT(MapDrawCmd,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(DrawGenesis,         MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawWorld,           MANAGED_BIT | UNSYNCED_BIT);
@@ -99,20 +114,24 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DrawScreen,          MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
 
-  SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MapDrawCmd,     MANAGED_BIT | UNSYNCED_BIT);
+	// unmanaged call-ins
+	SetupEvent("AIEvent",  NULL, UNSYNCED_BIT);
+	SetupEvent("DrawUnit", NULL, UNSYNCED_BIT);
+
+	// LuaRules
+	SetupEvent("CommandFallback",        NULL, CONTROL_BIT);
+	SetupEvent("AllowCommand",           NULL, CONTROL_BIT);
+	SetupEvent("AllowUnitCreation",      NULL, CONTROL_BIT);
+	SetupEvent("AllowUnitTransfer",      NULL, CONTROL_BIT);
+	SetupEvent("AllowUnitBuildStep",     NULL, CONTROL_BIT);
+	SetupEvent("AllowFeatureCreation",   NULL, CONTROL_BIT);
+	SetupEvent("AllowFeatureBuildStep",  NULL, CONTROL_BIT);
+	SetupEvent("AllowResourceLevel",     NULL, CONTROL_BIT);
+	SetupEvent("AllowResourceTransfer",  NULL, CONTROL_BIT);
+	SetupEvent("AllowDirectUnitControl", NULL, CONTROL_BIT);
+	SetupEvent("AllowStartPosition",     NULL, CONTROL_BIT);
+	SetupEvent("TerraformComplete",      NULL, CONTROL_BIT);
+	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 }
 
 
@@ -204,6 +223,9 @@ bool CEventHandler::InsertEvent(CEventClient* ec, const string& ciName)
 {
 	EventMap::iterator it = eventMap.find(ciName);
 	if ((it == eventMap.end()) || (it->second.GetList() == NULL)) {
+		return false;
+	}
+	if (ec->GetSynced() && it->second.HasPropBit(UNSYNCED_BIT)) {
 		return false;
 	}
 	ListInsert(*it->second.GetList(), ec);

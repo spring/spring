@@ -245,7 +245,9 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent visual position jumps)
-		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing, delayedWreckLevel, team, -1, true, unitDef->name,  deathSpeed);
+		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
+		                               delayedWreckLevel, team, -1, true,
+		                               unitDef->name, deathSpeed);
 	}
 
 	if (unitDef->isAirBase) {
@@ -1812,7 +1814,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 
 	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt) {
-		if (unitDef->canCrash && !selfDestruct && !reclaimed && gs->randFloat() > recentDamage * 0.7f / maxHealth + 0.2f) {
+		if (unitDef->canCrash && !selfDestruct && !reclaimed &&
+		    (gs->randFloat() > (recentDamage * 0.7f / maxHealth + 0.2f))) {
 			((CAirMoveType*) moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 			health = maxHealth * 0.5f;
 			return;

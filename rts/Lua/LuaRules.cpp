@@ -109,21 +109,21 @@ CLuaRules::CLuaRules()
 		return;
 	}
 
-	haveCommandFallback          = HasCallIn("CommandFallback");
-	haveAllowCommand             = HasCallIn("AllowCommand");
-	haveAllowUnitCreation        = HasCallIn("AllowUnitCreation");
-	haveAllowUnitTransfer        = HasCallIn("AllowUnitTransfer");
-	haveAllowUnitBuildStep       = HasCallIn("AllowUnitBuildStep");
-	haveAllowFeatureCreation     = HasCallIn("AllowFeatureCreation");
-	haveAllowFeatureBuildStep    = HasCallIn("AllowFeatureBuildStep");
-	haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
-	haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
-	haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
-	haveAllowStartPosition       = HasCallIn("AllowStartPosition");
-	haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
-	haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
-	haveDrawUnit                 = HasCallIn("DrawUnit");
-	haveAICallIn                 = HasCallIn("AICallIn");
+	haveCommandFallback        = HasCallIn("CommandFallback");
+	haveAllowCommand           = HasCallIn("AllowCommand");
+	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
+	haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
+	haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
+	haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
+	haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
+	haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
+	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
+	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
+	haveAllowStartPosition     = HasCallIn("AllowStartPosition");
+	haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
+	haveTerraformComplete      = HasCallIn("TerraformComplete");
+	haveDrawUnit               = HasCallIn("DrawUnit");
+	haveAICallIn               = HasCallIn("AICallIn");
 
 	SetupUnsyncedFunction("DrawUnit");
 	SetupUnsyncedFunction("AICallIn");
@@ -224,31 +224,31 @@ const map<string, int>& CLuaRules::GetGameParamsMap()
 bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
 	if (name == "CommandFallback") {
-		haveCommandFallback          = HasCallIn("CommandFallback");
+		haveCommandFallback        = HasCallIn("CommandFallback");
 	} else if (name == "AllowCommand") {
-		haveAllowCommand             = HasCallIn("AllowCommand");
+		haveAllowCommand           = HasCallIn("AllowCommand");
 	} else if (name == "AllowUnitCreation") {
-		haveAllowUnitCreation        = HasCallIn("AllowUnitCreation");
+		haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
 	} else if (name == "AllowUnitTransfer") {
-		haveAllowUnitTransfer        = HasCallIn("AllowUnitTransfer");
+		haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
 	} else if (name == "AllowUnitBuildStep") {
-		haveAllowUnitBuildStep       = HasCallIn("AllowUnitBuildStep");
+		haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
 	} else if (name == "AllowFeatureCreation") {
-		haveAllowFeatureCreation     = HasCallIn("AllowFeatureCreation");
+		haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
 	} else if (name == "AllowFeatureBuildStep") {
-		haveAllowFeatureBuildStep    = HasCallIn("AllowFeatureBuildStep");
+		haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
 	} else if (name == "AllowResourceLevel") {
-		haveAllowResourceLevel       = HasCallIn("AllowResourceLevel");
+		haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
 	} else if (name == "AllowResourceTransfer") {
-		haveAllowResourceTransfer    = HasCallIn("AllowResourceTransfer");
+		haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
 	} else if (name == "AllowDirectUnitControl") {
-		haveAllowDirectUnitControl   = HasCallIn("AllowDirectUnitControl");
+		haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
 	} else if (name == "AllowStartPosition") {
-		haveAllowStartPosition       = HasCallIn("AllowStartPosition");
+		haveAllowStartPosition     = HasCallIn("AllowStartPosition");
 	} else if (name == "MoveCtrlNotify") {
-		haveMoveCtrlNotify           = HasCallIn("MoveCtrlNotify");
-	} else if (name == "BuilderTerraformComplete") {
-		haveBuilderTerraformComplete = HasCallIn("BuilderTerraformComplete");
+		haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
+	} else if (name == "TerraformComplete") {
+		haveTerraformComplete      = HasCallIn("TerraformComplete");
 	} else {
 		return CLuaHandleSynced::SyncedUpdateCallIn(name);
 	}
@@ -757,15 +757,15 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 }
 
 
-bool CLuaRules::BuilderTerraformComplete(const CUnit* unit, const CUnit* build)
+bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 {
-	if (!haveBuilderTerraformComplete) {
+	if (!haveTerraformComplete) {
 		return false; // the call is not defined
 	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
-	static const LuaHashString cmdStr("BuilderTerraformComplete");
+	static const LuaHashString cmdStr("TerraformComplete");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined
 	}
