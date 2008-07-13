@@ -134,7 +134,7 @@ end
 --
 
 for name, def in pairs(unitDefs) do
-  local cob   = 'scripts/'   .. name .. '.cob'
+  local cob = 'scripts/'   .. name .. '.cob'
   if (not VFS.FileExists(cob)) then
     unitDefs[name] = nil
     Spring.Echo('WARNING: removed ' .. name .. ' unitDef, missing cob script')

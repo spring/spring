@@ -62,12 +62,6 @@
 using namespace std;
 
 
-static int heightMapx1;
-static int heightMapx2;
-static int heightMapz1;
-static int heightMapz2;
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -78,6 +72,11 @@ bool LuaSyncedCtrl::inCreateFeature = false;
 bool LuaSyncedCtrl::inDestroyFeature = false;
 bool LuaSyncedCtrl::inGiveOrder = false;
 bool LuaSyncedCtrl::inHeightMap = false;
+
+static int heightMapx1;
+static int heightMapx2;
+static int heightMapz1;
+static int heightMapz2;
 
 
 /******************************************************************************/
@@ -2628,15 +2627,9 @@ int LuaSyncedCtrl::SetHeight(lua_State* L)
 		luaL_error(L, "SetHeight() can only be called in Spring.SetHeightMapFunc()");
 	}
 
-	const int args = lua_gettop(L);
-
-	if (args != 3 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to Spring.SetHeight(x,z,h)");
-	}
-
-	const float xl = (float)lua_tonumber(L, 1);
-	const float zl = (float)lua_tonumber(L, 2);
-	const float h  = (float)lua_tonumber(L, 3);
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
 
 	// quantize and clamp
 	const int x = (int)max(0 , min(gs->mapx, (int)(xl / SQUARE_SIZE)));
@@ -2646,11 +2639,11 @@ int LuaSyncedCtrl::SetHeight(lua_State* L)
 
 	readmap->GetHeightmap()[index] = h;
 
-	//update RecalcArea()
-	if (x<heightMapx1) heightMapx1 = x;
-	if (x>heightMapx2) heightMapx2 = x;
-	if (z<heightMapz1) heightMapz1 = z;
-	if (z>heightMapz2) heightMapz2 = z;
+	// update RecalcArea()
+	if (x < heightMapx1) { heightMapx1 = x; }
+	if (x > heightMapx2) { heightMapx2 = x; }
+	if (z < heightMapz1) { heightMapz1 = z; }
+	if (z > heightMapz2) { heightMapz2 = z; }
 
 	return 0;
 }
@@ -2662,16 +2655,10 @@ int LuaSyncedCtrl::SetTerraform(lua_State* L)
 		luaL_error(L, "SetTerraform() can only be called in Spring.SetHeightMapFunc()");
 	}
 
-	const int args = lua_gettop(L);
-
-	if (args != 4 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L, "Incorrect arguments to Spring.SetTerraform(x,z,height,terraformScale)");
-	}
-
-	const float xl = (float)lua_tonumber(L, 1);
-	const float zl = (float)lua_tonumber(L, 2);
-	const float h  = (float)lua_tonumber(L, 3);
-	const float t  = (float)lua_tonumber(L, 3);
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+	const float t  = luaL_checkfloat(L, 4);
 
 	// quantize and clamp
 	const int x = (int)max(0 , min(gs->mapx, (int)(xl / SQUARE_SIZE)));
@@ -2683,10 +2670,10 @@ int LuaSyncedCtrl::SetTerraform(lua_State* L)
 	heightMap += (h - heightMap) * t;
 
 	//update RecalcArea()
-	if (x<heightMapx1) heightMapx1 = x;
-	if (x>heightMapx2) heightMapx2 = x;
-	if (z<heightMapz1) heightMapz1 = z;
-	if (z>heightMapz2) heightMapz2 = z;
+	if (x < heightMapx1) { heightMapx1 = x; }
+	if (x > heightMapx2) { heightMapx2 = x; }
+	if (z < heightMapz1) { heightMapz1 = z; }
+	if (z > heightMapz2) { heightMapz2 = z; }
 
 	return 0;
 }
@@ -2713,7 +2700,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	heightMapz2 = gs->mapy;
 
 	inHeightMap = true;
-	const int error = lua_pcall(L, (args-1), 0, 0);
+	const int error = lua_pcall(L, (args - 1), 0, 0);
 	inHeightMap = false;
 
 	if (error != 0) {
