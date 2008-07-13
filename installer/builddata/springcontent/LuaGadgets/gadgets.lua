@@ -144,7 +144,7 @@ local callInLists = {
   'AllowResourceTransfer',
   'AllowDirectUnitControl',
   'MoveCtrlNotify',
-  'BuilderTerraformComplete',
+  'TerraformComplete',
   -- unsynced
   'DrawUnit',
   'AICallIn',
@@ -1178,10 +1178,10 @@ function gadgetHandler:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
 end
 
 
-function gadgetHandler:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+function gadgetHandler:TerraformComplete(unitID, unitDefID, unitTeam,
                                        buildUnitID, buildUnitDefID, buildUnitTeam)
-  for _,g in ipairs(self.BuilderTerraformCompleteList) do
-    local stop = g:BuilderTerraformComplete(unitID, unitDefID, unitTeam,
+  for _,g in ipairs(self.TerraformCompleteList) do
+    local stop = g:TerraformComplete(unitID, unitDefID, unitTeam,
                                        buildUnitID, buildUnitDefID, buildUnitTeam)
     if (stop) then
       return true
