@@ -450,6 +450,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 
 	weapon->salvoSize = weapondef->salvosize;
 	weapon->salvoDelay = (int) (weapondef->salvodelay * GAME_SPEED);
+	weapon->projectilesPerShot = weapondef->projectilespershot;
 
 	weapon->metalFireCost = weapondef->metalcost;
 	weapon->energyFireCost = weapondef->energycost;

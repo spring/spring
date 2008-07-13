@@ -1235,6 +1235,15 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 				else if (key == "projectilespeed") {
 					weapon->projectileSpeed = value;
 				}
+				else if (key == "burst") {
+					weapon->salvoSize = (int)value;
+				}
+				else if (key == "burstRate") {
+					weapon->salvoDelay = (int)(value * GAME_SPEED);
+				}
+				else if (key == "projectiles") {
+					weapon->projectilesPerShot = (int)value;
+				}
 			}
 		}
 	}
