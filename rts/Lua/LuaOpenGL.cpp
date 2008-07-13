@@ -322,6 +322,14 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 //FIXME		LuaVBOs::PushEntries(L);
 
+	REGISTER_LUA_CFUNC(RenderMode);
+	REGISTER_LUA_CFUNC(SelectBuffer);
+	REGISTER_LUA_CFUNC(SelectBufferData);
+	REGISTER_LUA_CFUNC(InitNames);
+	REGISTER_LUA_CFUNC(PushName);
+	REGISTER_LUA_CFUNC(PopName);
+	REGISTER_LUA_CFUNC(LoadName);
+
 	return true;
 }
 
@@ -4965,6 +4973,119 @@ int LuaOpenGL::GetSun(lua_State* L)
 		return 3;
 	}
 
+	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+class SelectBuffer {
+	public:
+		static const GLsizei maxSize = (1 << 24); // float integer range
+		static const GLsizei defSize = (256 * 1024);
+
+		SelectBuffer() : size(0), count(0), buffer(NULL) {}
+		~SelectBuffer() { delete[] buffer; }
+
+		inline GLuint* GetBuffer() const { return buffer; }
+
+		inline GLsizei GetCount() const { return count; }
+
+		inline bool ValidIndex(int index) const {
+			return ((index >= 0) && (index < count));
+		}
+
+		inline GLuint operator[](int index) const {
+			return ValidIndex(index) ? buffer[index] : 0;
+		}
+
+		inline bool Resize(GLsizei c) {
+			c = (c < maxSize) ? c : maxSize;
+			if (c > count) {
+				size = c;
+				delete[] buffer;
+				buffer = SAFE_NEW GLuint(size);
+			}
+			count = c;
+			return true;
+		}
+
+	private:
+		GLsizei size;
+		GLsizei count;
+		GLuint* buffer;
+};
+
+static SelectBuffer selectBuffer;
+
+
+/******************************************************************************/
+
+int LuaOpenGL::RenderMode(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLenum mode = (GLenum)luaL_checkint(L, 1);
+	const GLint count = glRenderMode(mode);
+	lua_pushnumber(L, count);
+	return 1;
+}
+
+
+int LuaOpenGL::SelectBuffer(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	GLsizei selCount = (GLsizei)luaL_optint(L, 1, SelectBuffer::defSize);
+	selectBuffer.Resize(selCount);
+	GLsizei count = selectBuffer.GetCount();
+	glSelectBuffer(count, selectBuffer.GetBuffer());
+	lua_pushnumber(L, count);
+	return 1;
+}
+
+
+int LuaOpenGL::SelectBufferData(lua_State* L)
+{
+	const int index = luaL_checkint(L, 1);
+	bool error = false;
+	if (!selectBuffer.ValidIndex(index)) {
+		return 0;
+	}
+	lua_pushnumber(L, selectBuffer[index]);
+	return 1;
+}
+
+
+int LuaOpenGL::InitNames(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glInitNames();
+	return 0;
+}
+
+
+int LuaOpenGL::LoadName(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLuint name = (GLenum)luaL_checkint(L, 1);
+	glLoadName(name);
+	return 0;
+}
+
+
+int LuaOpenGL::PushName(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	const GLuint name = (GLenum)luaL_checkint(L, 1);
+	glPushName(name);
+	return 0;
+}
+
+
+int LuaOpenGL::PopName(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glPopName();
 	return 0;
 }
 

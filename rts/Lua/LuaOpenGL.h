@@ -269,6 +269,14 @@ class LuaOpenGL {
 		static int GetShadowMapParams(lua_State* L);
 
 		static int GetSun(lua_State* L);
+
+		static int RenderMode(lua_State* L);
+		static int SelectBuffer(lua_State* L);
+		static int SelectBufferData(lua_State* L);
+		static int InitNames(lua_State* L);
+		static int LoadName(lua_State* L);
+		static int PushName(lua_State* L);
+		static int PopName(lua_State* L);
 };
 
 
