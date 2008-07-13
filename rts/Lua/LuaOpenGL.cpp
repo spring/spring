@@ -3451,6 +3451,16 @@ int LuaOpenGL::Texture(lua_State* L)
 				lua_pushboolean(L, true);
 			}
 		}
+		else if (texture == "$shading") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
+		else if (texture == "$grass") {
+			glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
 		else {
 			lua_pushboolean(L, false);
 		}
@@ -3693,6 +3703,16 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture.GetSizeY());
 			}
 		}
+		else if (texture == "$shading") {
+			lua_newtable(L);
+			HSTR_PUSH_NUMBER(L, "xsize", gs->pwr2mapx);
+			HSTR_PUSH_NUMBER(L, "ysize", gs->pwr2mapy);
+		}
+		else if (texture == "$grass") {
+			lua_newtable(L);
+			HSTR_PUSH_NUMBER(L, "xsize", 1024);
+			HSTR_PUSH_NUMBER(L, "ysize", 1024);
+		}
 	}
 	else {
 		const CNamedTextures::TexInfo* texInfo;
@@ -3723,8 +3743,8 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 	if (tex == NULL) {
 		return 0;
 	}
-	glBindTexture(GL_TEXTURE_2D, tex->id);
-	glEnable(GL_TEXTURE_2D); // leave it bound and enabled
+	glBindTexture(tex->target, tex->id);
+	glEnable(tex->target); // leave it bound and enabled
 
 	const GLint xoff =   (GLint)luaL_checknumber(L, 2);
 	const GLint yoff =   (GLint)luaL_checknumber(L, 3);
@@ -3732,10 +3752,12 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 	const GLint    y =   (GLint)luaL_checknumber(L, 5);
 	const GLsizei  w = (GLsizei)luaL_checknumber(L, 6);
 	const GLsizei  h = (GLsizei)luaL_checknumber(L, 7);
-	const GLenum target = (GLenum)luaL_optnumber(L, 8, GL_TEXTURE_2D);
+	const GLenum target = (GLenum)luaL_optnumber(L, 8, tex->target);
 	const GLenum level  = (GLenum)luaL_optnumber(L, 9, 0);
 
 	glCopyTexSubImage2D(target, level, xoff, yoff, x, y, w, h);
+
+	if (tex->target != GL_TEXTURE_2D) {glDisable(tex->target);}
 
 	return 0;
 }
@@ -4292,6 +4314,7 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
 		}
+		return 0;
 	}
 	else if (luaType == LUA_TTABLE) {
 		if (ParseFloatArray(L, matrix, 16) != 16) {
@@ -4322,6 +4345,7 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
 		}
+		return 0;
 	}
 	else if (luaType == LUA_TTABLE) {
 		if (ParseFloatArray(L, matrix, 16) != 16) {

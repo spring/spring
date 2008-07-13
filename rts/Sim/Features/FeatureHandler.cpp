@@ -570,21 +570,23 @@ void CFeatureHandler::Draw()
 
 	unitDrawer->SetupForUnitDrawing();
 	DrawRaw(0, &drawFar);
-
 	unitDrawer->CleanUpUnitDrawing();
+
 	unitDrawer->DrawQuedS3O();
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	glAlphaFunc(GL_GREATER, 0.8f);
-	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glEnable(GL_FOG);
-	for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
-		DrawFar(*usi, va);
+	if (drawFar.size()>0) {
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		glAlphaFunc(GL_GREATER, 0.8f);
+		glEnable(GL_ALPHA_TEST);
+		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+		glColor3f(1.0f, 1.0f, 1.0f);
+		glEnable(GL_FOG);
+		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+			DrawFar(*usi, va);
+		}
+		va->DrawArrayTN(GL_QUADS);
 	}
-	va->DrawArrayTN(GL_QUADS);
 }
 
 

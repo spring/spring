@@ -20,6 +20,7 @@ class LuaSyncedCtrl {
 		static bool inCreateFeature;
 		static bool inDestroyFeature;
 		static bool inGiveOrder;
+		static bool inHeightMap;
 
 	private:
 		// all LuaHandleSynced
@@ -106,6 +107,10 @@ class LuaSyncedCtrl {
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);
 		static int RevertHeightMap(lua_State* L);
+
+		static int SetHeight(lua_State* L);
+		static int SetTerraform(lua_State* L);
+		static int SetHeightMapFunc(lua_State* L);
 
 		static int SpawnCEG(lua_State* L);
 

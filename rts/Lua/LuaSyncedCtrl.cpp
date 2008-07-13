@@ -62,6 +62,12 @@
 using namespace std;
 
 
+static int heightMapx1;
+static int heightMapx2;
+static int heightMapz1;
+static int heightMapz2;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -71,6 +77,7 @@ bool LuaSyncedCtrl::inTransferUnit = false;
 bool LuaSyncedCtrl::inCreateFeature = false;
 bool LuaSyncedCtrl::inDestroyFeature = false;
 bool LuaSyncedCtrl::inGiveOrder = false;
+bool LuaSyncedCtrl::inHeightMap = false;
 
 
 /******************************************************************************/
@@ -182,6 +189,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(LevelHeightMap);
 	REGISTER_LUA_CFUNC(AdjustHeightMap);
 	REGISTER_LUA_CFUNC(RevertHeightMap);
+
+	REGISTER_LUA_CFUNC(SetHeight);
+	REGISTER_LUA_CFUNC(SetTerraform);
+	REGISTER_LUA_CFUNC(SetHeightMapFunc);
 
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
@@ -2605,6 +2616,115 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 		}
 	}
 	mapDamage->RecalcArea(x1, x2, z1, z2);
+	return 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::SetHeight(lua_State* L)
+{
+	if (!inHeightMap) {
+		luaL_error(L, "SetHeight() can only be called in Spring.SetHeightMapFunc()");
+	}
+
+	const int args = lua_gettop(L);
+
+	if (args != 3 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetHeight(x,z,h)");
+	}
+
+	const float xl = (float)lua_tonumber(L, 1);
+	const float zl = (float)lua_tonumber(L, 2);
+	const float h  = (float)lua_tonumber(L, 3);
+
+	// quantize and clamp
+	const int x = (int)max(0 , min(gs->mapx, (int)(xl / SQUARE_SIZE)));
+	const int z = (int)max(0 , min(gs->mapy, (int)(zl / SQUARE_SIZE)));
+
+	const int index = (z * (gs->mapx + 1)) + x;
+
+	readmap->GetHeightmap()[index] = h;
+
+	//update RecalcArea()
+	if (x<heightMapx1) heightMapx1 = x;
+	if (x>heightMapx2) heightMapx2 = x;
+	if (z<heightMapz1) heightMapz1 = z;
+	if (z>heightMapz2) heightMapz2 = z;
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetTerraform(lua_State* L)
+{
+	if (!inHeightMap) {
+		luaL_error(L, "SetTerraform() can only be called in Spring.SetHeightMapFunc()");
+	}
+
+	const int args = lua_gettop(L);
+
+	if (args != 4 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetTerraform(x,z,height,terraformScale)");
+	}
+
+	const float xl = (float)lua_tonumber(L, 1);
+	const float zl = (float)lua_tonumber(L, 2);
+	const float h  = (float)lua_tonumber(L, 3);
+	const float t  = (float)lua_tonumber(L, 3);
+
+	// quantize and clamp
+	const int x = (int)max(0 , min(gs->mapx, (int)(xl / SQUARE_SIZE)));
+	const int z = (int)max(0 , min(gs->mapy, (int)(zl / SQUARE_SIZE)));
+
+	const int index = (z * (gs->mapx + 1)) + x;
+
+	float& heightMap = readmap->GetHeightmap()[index];
+	heightMap += (h - heightMap) * t;
+
+	//update RecalcArea()
+	if (x<heightMapx1) heightMapx1 = x;
+	if (x>heightMapx2) heightMapx2 = x;
+	if (z<heightMapz1) heightMapz1 = z;
+	if (z>heightMapz2) heightMapz2 = z;
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
+{
+	if (mapDamage->disabled) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isfunction(L, 1)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetHeightMapFunc(func, ...)");
+	}
+
+	if (inHeightMap) {
+		luaL_error(L, "SetHeightMapFunc() recursion is not permitted");
+	}
+
+	heightMapx1 = -1;
+	heightMapx2 = gs->mapx;
+	heightMapz1 = -1;
+	heightMapz2 = gs->mapy;
+
+	inHeightMap = true;
+	const int error = lua_pcall(L, (args-1), 0, 0);
+	inHeightMap = false;
+
+	if (error != 0) {
+		logOutput.Print("Spring.SetHeightMapFunc: error(%i) = %s",
+		                error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	if (heightMapx1 != -1) {
+		mapDamage->RecalcArea(heightMapx1, heightMapx2, heightMapz1, heightMapz2);
+	}
 	return 0;
 }
 

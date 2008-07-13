@@ -107,6 +107,7 @@ class LuaSyncedRead {
 		static int GetUnitRadius(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
+		static int GetUnitVectors(lua_State* L);
 		static int GetUnitDirection(lua_State* L);
 		static int GetUnitHeading(lua_State* L);
 		static int GetUnitVelocity(lua_State* L);
@@ -117,6 +118,7 @@ class LuaSyncedRead {
 		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitFlanking(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
+		static int GetUnitWeaponVectors(lua_State* L);
 		static int GetUnitTravel(lua_State* L);
 		static int GetUnitFuel(lua_State* L);
 		static int GetUnitEstimatedPath(lua_State* L);
