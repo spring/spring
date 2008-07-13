@@ -40,7 +40,7 @@ class CEventClient
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
 		virtual bool GetFullRead()     const { return GetReadAllyTeam() == AllAccessTeam; }
 		inline bool CanReadAllyTeam(int allyTeam) {
-			return GetFullRead() || (GetReadAllyTeam() == allyTeam);
+			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
 	private:
@@ -53,7 +53,7 @@ class CEventClient
 		virtual ~CEventClient();
 
 	public:
-		// Synced
+		// Synced events
 		virtual void GamePreload();
 		virtual void GameStart();
 		virtual void GameOver();
@@ -95,6 +95,8 @@ class CEventClient
 		virtual void UnitCloaked(const CUnit* unit);
 		virtual void UnitDecloaked(const CUnit* unit);
 
+		virtual void UnitMoveFailed(const CUnit* unit);
+
 		virtual void FeatureCreated(const CFeature* feature);
 		virtual void FeatureDestroyed(const CFeature* feature);
 
@@ -106,24 +108,9 @@ class CEventClient
 	
 		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
-		// Unsynced
+		// Unsynced events
 		virtual void Update();
 
-		virtual void ViewResize();
-
-		virtual bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
-
-		virtual void DrawGenesis();
-		virtual void DrawWorld();
-		virtual void DrawWorldPreUnit();
-		virtual void DrawWorldShadow();
-		virtual void DrawWorldReflection();
-		virtual void DrawWorldRefraction();
-		virtual void DrawScreenEffects();
-		virtual void DrawScreen();
-		virtual void DrawInMiniMap();
-
-		// from LuaUI
 		virtual bool KeyPress(unsigned short key, bool isRepeat);
 		virtual bool KeyRelease(unsigned short key);
 		virtual bool MouseMove(int x, int y, int dx, int dy, int button);
@@ -132,6 +119,8 @@ class CEventClient
 		virtual bool MouseWheel(bool up, float value);
 		virtual bool IsAbove(int x, int y);
 		virtual std::string GetTooltip(int x, int y);
+
+		virtual bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		virtual bool CommandNotify(const Command& cmd);
 
@@ -150,6 +139,18 @@ class CEventClient
 		                        const float3* pos0,
 		                        const float3* pos1,
 		                        const std::string* label);
+
+		virtual void ViewResize();
+
+		virtual void DrawGenesis();
+		virtual void DrawWorld();
+		virtual void DrawWorldPreUnit();
+		virtual void DrawWorldShadow();
+		virtual void DrawWorldReflection();
+		virtual void DrawWorldRefraction();
+		virtual void DrawScreenEffects();
+		virtual void DrawScreen();
+		virtual void DrawInMiniMap();
 };
 
 

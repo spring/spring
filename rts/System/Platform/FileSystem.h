@@ -91,6 +91,8 @@ class FileSystem
 		std::string glob_to_regex(const std::string& glob) const;
 		std::string& FixSlashes  (std::string& path) const;
 		std::string& ForwardSlashes(std::string& path) const;
+
+		// access check functions
 		bool InReadDir(const std::string& path);
 		bool InWriteDir(const std::string& path, const std::string& prefix = "");
 

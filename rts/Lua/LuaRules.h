@@ -44,7 +44,6 @@ class CLuaRules : public CLuaHandleSynced
 		bool UnsyncedUpdateCallIn(const string& name);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
-		bool BuilderTerraformComplete(const CUnit* unit, const CUnit* build);
 		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
 		bool AllowUnitCreation(const UnitDef* unitDef,
 		                       const CUnit* builder, const float3* pos);
@@ -59,6 +58,8 @@ class CLuaRules : public CLuaHandleSynced
 		                           const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowStartPosition(int playerID, const float3& pos);
+
+		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 
 		bool MoveCtrlNotify(const CUnit* unit, int data);
 
@@ -118,7 +119,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowDirectUnitControl;
 		bool haveAllowStartPosition;
 		bool haveMoveCtrlNotify;
-		bool haveBuilderTerraformComplete;
+		bool haveTerraformComplete;
 		bool haveDrawUnit;
 		bool haveAICallIn;
 

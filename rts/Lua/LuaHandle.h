@@ -21,13 +21,13 @@ using std::set;
 #include "LuaDisplayLists.h"
 
 
-#define LUA_HANDLE_ORDER_RULES          0
-#define LUA_HANDLE_ORDER_UNITS          1
-#define LUA_HANDLE_ORDER_GAIA           2
-#define LUA_HANDLE_ORDER_RULES_UNSYNCED 3
-#define LUA_HANDLE_ORDER_UNITS_UNSYNCED 4
-#define LUA_HANDLE_ORDER_GAIA_UNSYNCED  5
-#define LUA_HANDLE_ORDER_UI             6
+#define LUA_HANDLE_ORDER_RULES            100
+#define LUA_HANDLE_ORDER_UNITS            200
+#define LUA_HANDLE_ORDER_GAIA             300
+#define LUA_HANDLE_ORDER_RULES_UNSYNCED  1100
+#define LUA_HANDLE_ORDER_UNITS_UNSYNCED  1200
+#define LUA_HANDLE_ORDER_GAIA_UNSYNCED   1300
+#define LUA_HANDLE_ORDER_UI              2000
 
 
 class CUnit;
@@ -95,10 +95,6 @@ class CLuaHandle : public CEventClient
 		virtual bool SyncedUpdateCallIn(const string& name) { return false; }
 		virtual bool UnsyncedUpdateCallIn(const string& name) { return false; }
 
-		void Update();
-
-		void ViewResize();
-
 		void Shutdown();
 
 		void GamePreload();
@@ -141,6 +137,8 @@ class CLuaHandle : public CEventClient
 		void UnitCloaked(const CUnit* unit);
 		void UnitDecloaked(const CUnit* unit);
 
+		void UnitMoveFailed(const CUnit* unit);
+
 		void FeatureCreated(const CFeature* feature);
 		void FeatureDestroyed(const CFeature* feature);
 
@@ -155,19 +153,8 @@ class CLuaHandle : public CEventClient
 		// LuaHandleSynced wraps this to set allowChanges
 		virtual bool RecvLuaMsg(const string& msg, int playerID);
 
-		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
+		void Update();
 
-		void DrawGenesis();
-		void DrawWorld();
-		void DrawWorldPreUnit();
-		void DrawWorldShadow();
-		void DrawWorldReflection();
-		void DrawWorldRefraction();
-		void DrawScreenEffects();
-		void DrawScreen();
-		void DrawInMiniMap();
-
-		// moved from LuaUI
 		bool KeyPress(unsigned short key, bool isRepeat);
 		bool KeyRelease(unsigned short key);
 		bool MouseMove(int x, int y, int dx, int dy, int button);
@@ -176,6 +163,8 @@ class CLuaHandle : public CEventClient
 		bool MouseWheel(bool up, float value);
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
+
+		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		bool ConfigCommand(const string& command);
 
@@ -197,6 +186,17 @@ class CLuaHandle : public CEventClient
 		                const float3* pos1,
 		                const string* labe);
 
+		void ViewResize();
+
+		void DrawGenesis();
+		void DrawWorld();
+		void DrawWorldPreUnit();
+		void DrawWorldShadow();
+		void DrawWorldReflection();
+		void DrawWorldRefraction();
+		void DrawScreenEffects();
+		void DrawScreen();
+		void DrawInMiniMap();
 
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
