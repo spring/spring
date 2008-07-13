@@ -250,7 +250,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.humanName = udTable.GetString("name", "");
 
 	if (ud.humanName.empty()) {
-		const string errmsg = "missing 'name' parameter for the" + unitName + " unitdef";
+		const string errmsg = "missing 'name' parameter for the " + unitName + " unitdef";
 		throw content_error(errmsg);
 	}
 	ud.filename  = udTable.GetString("filename", "");
