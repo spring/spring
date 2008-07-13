@@ -85,10 +85,23 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(const LuaTable& modTable)
 	for (int dep = 1; dependencies.KeyExists(dep); ++dep) {
 		md.dependencies.push_back(dependencies.GetString(dep, ""));
 	}
-
 	const LuaTable replaces = modTable.SubTable("replace");
 	for (int rep = 1; replaces.KeyExists(rep); ++rep) {
 		md.replaces.push_back(replaces.GetString(rep, ""));
+	}
+
+	// append "springcontent.sdz" for primary mods that haven't already added it
+	if (md.modType == 1) {
+		bool found = false;
+		for (int dep = 0; dep < md.dependencies.size(); dep++) {
+			if (StringToLower(md.dependencies[dep]) == "springcontent.sdz") {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			md.dependencies.push_back("springcontent.sdz");
+		}
 	}
 
 	// HACK needed until lobbies, lobbyserver and unitsync are sorted out
@@ -337,16 +350,17 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			string name;
 			int size;
 			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
-				string ext = StringToLower(name.substr(name.find_last_of('.') + 1));
+				const string lowerName = StringToLower(name);
+				const string ext = lowerName.substr(lowerName.find_last_of('.') + 1);
 
 				// only accept new format maps
 				if ((ext == "smf") || (ext == "sm3")) {
 					ScanMap(ar, name, ai);
 				}
-				else if (name == "modinfo.lua") {
+				else if (lowerName == "modinfo.lua") {
 					ScanModLua(ar, name, ai);
 				}
-				else if (name == "modinfo.tdf") {
+				else if (lowerName == "modinfo.tdf") {
 					ScanModTdf(ar, name, ai);
 				}
 			}
@@ -667,21 +681,30 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 			fprintf(out, "\t\t\t\tmodtype = %d,\n", modData.modType);
 
 			const vector<string>& modDeps = modData.dependencies;
-			if (!modDeps.empty()) {
+			const int depCount = (int)modDeps.size();
+			bool foundCustomDep = false;
+			for (int d = 0; d < depCount; d++) {
+				if (modDeps[d] != "springcontent.sdz") {
+					foundCustomDep = true;
+					break;
+				}
+			}
+			if (foundCustomDep) {
 				fprintf(out, "\t\t\t\tdepend = {\n");
-				vector<string>::const_iterator depIt;
-				for (depIt = modDeps.begin(); depIt != modDeps.end(); ++depIt) {
-					SafeStr(out, "\t\t\t\t\t", *depIt);
+				for (int d = 0; d < depCount; d++) {
+					if ((d != (depCount - 1)) || (modDeps[d] != "springcontent.sdz")) {
+						SafeStr(out, "\t\t\t\t\t", modDeps[d]);
+					}
 				}
 				fprintf(out, "\t\t\t\t},\n");
 			}
 			
 			const vector<string>& modReps = modData.replaces;
-			if (!modReps.empty())  {
+			const int repCount = (int)modReps.size();
+			if (repCount > 0)  {
 				fprintf(out, "\t\t\t\treplace = {\n");
-				vector<string>::const_iterator repIt;
-				for (repIt = modReps.begin(); repIt != modReps.end(); ++repIt) {
-					SafeStr(out, "\t\t\t\t\t", *repIt);
+				for (int r = 0; r < repCount; r++) {
+					SafeStr(out, "\t\t\t\t\t", modReps[r]);
 				}
 				fprintf(out, "\t\t\t\t},\n");
 			}
@@ -775,17 +798,6 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 		vector<string> dep = GetArchives(*i, depth + 1);
 		for (vector<string>::iterator j = dep.begin(); j != dep.end(); ++j) {
 			ret.push_back(*j);
-		}
-	}
-
-	// add springcontent.sdz for primary mod archives
-	if ((depth == 0) && (aii->second.modData.modType == 1)) {
-		const string springContentPath = GetArchivePath("springcontent.sdz");
-		if (springContentPath.empty()) {
-			throw content_error("missing springcontent.sdz");
-		} else {
-			printf("Added springcontent.sdz for %s\n", root.c_str());
-			ret.push_back(springContentPath + "springcontent.sdz");
 		}
 	}
 
