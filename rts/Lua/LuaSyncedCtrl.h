@@ -109,7 +109,6 @@ class LuaSyncedCtrl {
 		static int RevertHeightMap(lua_State* L);
 
 		static int SetHeight(lua_State* L);
-		static int SetTerraform(lua_State* L);
 		static int SetHeightMapFunc(lua_State* L);
 
 		static int SpawnCEG(lua_State* L);
