@@ -201,7 +201,7 @@ static bool LowerKeysReal(lua_State* L, int depth)
 				lua_pushstring(L, lowerKey.c_str());
 				lua_rawget(L, table);
 				if (lua_isnil(L, -1)) {
-					// add the lower case entry to the changed table
+					// lower case does not exist, add it to the changed table
 					lua_pushstring(L, lowerKey.c_str());
 					lua_pushvalue(L, -3); // the value
 					lua_rawset(L, changed);
