@@ -31,6 +31,7 @@ public:
 
 	// tells whether a given object is blocking the given movedata
 	bool IsBlocking(const MoveData& moveData, const CSolidObject* object);
+	bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
 
 	// gives the y-coordinate the unit will "stand on"
 	float yLevel(float3 pos);

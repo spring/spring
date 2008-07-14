@@ -128,7 +128,7 @@ Checks if a ground-square is blocked.
 If it's not blocked, then NULL is returned.
 If it's blocked, then a pointer to the blocking object is returned.
 */
-CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) {
+CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool topMost) {
 	if (groundBlockingMap[mapSquare].empty()) {
 		return 0x0;
 	}
@@ -147,10 +147,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) {
 	// return the top-most blocking object
 	// (rather than objects.begin(), since
 	// we cannot rely on pointer order)
-	return p;
+	return ((topMost)? p: q);
 }
 
-CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare) {
+CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare, bool topMost) {
 	if (mapSquare < 0 || mapSquare >= gs->mapSquares) {
 		return NULL;
 	}
@@ -158,10 +158,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare) {
 	return GroundBlockedUnsafe(mapSquare);
 }
 
-CSolidObject* CGroundBlockingObjectMap::GroundBlocked(float3 pos) {
+CSolidObject* CGroundBlockingObjectMap::GroundBlocked(float3 pos, bool topMost) {
 	int xSqr = int(pos.x / SQUARE_SIZE) % gs->mapx;
 	int zSqr = int(pos.z / SQUARE_SIZE) / gs->mapx;
-	return GroundBlocked(xSqr + zSqr * gs->mapx);
+	return GroundBlocked(xSqr + zSqr * gs->mapx, topMost);
 }
 
 

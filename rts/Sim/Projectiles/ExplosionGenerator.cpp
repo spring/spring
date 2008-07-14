@@ -335,7 +335,7 @@ CCustomExplosionGenerator::~CCustomExplosionGenerator()
 #define OP_POW      17 // Power with code as exponent
 #define OP_POWBUFF  18 // Power with buffer as exponent
 
-void CCustomExplosionGenerator::ExecuteExplosionCode(const char *code, float damage, char *instance, int spawnIndex, const float3 &dir)
+void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3 &dir)
 {
 	float val = 0.0f;
 	void* ptr = NULL;

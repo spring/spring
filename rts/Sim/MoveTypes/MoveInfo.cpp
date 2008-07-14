@@ -20,6 +20,7 @@ CR_BIND(CMoveInfo, );
 CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(moveType),
 	CR_ENUM_MEMBER(moveFamily),
+	CR_ENUM_MEMBER(terrainClass),
 	CR_MEMBER(size),
 
 	CR_MEMBER(depth),
@@ -35,10 +36,11 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxTurnRate),
 	CR_MEMBER(maxAcceleration),
 	CR_MEMBER(maxBreaking),
-	CR_MEMBER(canFly),
 	CR_MEMBER(subMarine),
 
 	CR_MEMBER(name),
+
+	CR_MEMBER(followGround),
 	CR_RESERVED(16)
 ));
 
@@ -84,11 +86,15 @@ CMoveInfo::CMoveInfo()
 		md->depth = 0.0f;
 		md->crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
 
+		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
+		const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
+
 		if ((name.find("BOAT") != string::npos) ||
 		    (name.find("SHIP") != string::npos)) {
 			md->moveType = MoveData::Ship_Move;
-			md->depth = moveTable.GetFloat("minWaterDepth", 10.0f);
+			md->depth = minWaterDepth;
 			md->moveFamily = MoveData::Ship;
+			md->subMarine = moveTable.GetBool("subMarine", 0);
 		}
 		else if (name.find("HOVER") != string::npos) {
 			md->moveType = MoveData::Hover_Move;
@@ -98,7 +104,7 @@ CMoveInfo::CMoveInfo()
 		else {
 			md->moveType = MoveData::Ground_Move;
 			md->depthMod = moveTable.GetFloat("depthMod", 0.1f);
-			md->depth = moveTable.GetFloat("maxWaterDepth", 0.0f);
+			md->depth = maxWaterDepth;
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			if (name.find("TANK") != string::npos) {
 				md->moveFamily = MoveData::Tank;
@@ -107,13 +113,44 @@ CMoveInfo::CMoveInfo()
 			}
 		}
 
+
+		// ground units hug the ocean floor when in water,
+		// ships stay at a "fixed" level (their waterline)
+		md->followGround =
+			(md->moveFamily == MoveData::Tank ||
+			md->moveFamily == MoveData::KBot);
+
+		// tank or bot that cannot get its threads / feet
+		// wet, or hovercraft (which doesn't touch ground
+		// or water)
+		const bool b0 =
+			((md->followGround && maxWaterDepth <= 0.0) ||
+			md->moveFamily == MoveData::Hover);
+
+		// ship (or sub) that cannot crawl onto shore, OR tank or
+		// kbot restricted to snorkling (strange but possible)
+		const bool b1 =
+			((md->moveFamily == MoveData::Ship && minWaterDepth > 0.0) ||
+			((md->followGround) && minWaterDepth > 0.0));
+
+		// tank or kbot that CAN go skinny-dipping (amph.),
+		// or ship that CAN sprout legs when at the beach
+		const bool b2 =
+			((md->followGround) && maxWaterDepth > 0.0) ||
+			(md->moveFamily == MoveData::Ship && minWaterDepth < 0.0);
+
+		if (b0) { md->terrainClass = MoveData::Land; }
+		if (b1) { md->terrainClass = MoveData::Water; }
+		if (b2) { md->terrainClass = MoveData::Mixed; }
+
+
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
-		// TA has only half our res so multiply size with 2
+		// TA has only half our resolution, multiply size by 2
 		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
 
 		moveInfoChecksum += md->size;
-		moveInfoChecksum ^= *(unsigned int*)&md->slopeMod;
-		moveInfoChecksum += *(unsigned int*)&md->depth;
+		moveInfoChecksum ^= *(unsigned int*) &md->slopeMod;
+		moveInfoChecksum += *(unsigned int*) &md->depth;
 
 		moveData.push_back(md);
 		name2moveData[name] = md->pathType;
@@ -150,4 +187,3 @@ MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name, bool exactMatc
 	}
 	return moveData[name2moveData[name]];
 }
-

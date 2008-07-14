@@ -94,22 +94,22 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		team = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
 	}
 
-	if (type == "GroundUnit"){
+	if (type == "GroundUnit") {
 		unit = SAFE_NEW CUnit;
 		blocking = true;
-	} else if (type == "Transport"){
+	} else if (type == "Transport") {
 		unit = SAFE_NEW CTransportUnit;
 		blocking = true;
-	} else if (type == "Building"){
+	} else if (type == "Building") {
 		unit = SAFE_NEW CBuilding;
 		blocking = true;
-	} else if (type == "Factory"){
+	} else if (type == "Factory") {
 		unit = SAFE_NEW CFactory;
 		blocking = true;
-	} else if (type == "Builder"){
+	} else if (type == "Builder") {
 		unit = SAFE_NEW CBuilder;
 		blocking = true;
-	} else if (type == "Bomber" || type == "Fighter"){
+	} else if (type == "Bomber" || type == "Fighter") {
 		unit = SAFE_NEW CUnit;
 	} else if (type == "MetalExtractor") {
 		unit = SAFE_NEW CExtractorBuilding;
@@ -121,7 +121,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	unit->UnitInit(ud, team, pos);
 
-	unit->beingBuilt=build;
+	unit->beingBuilt = build;
 
 	unit->xsize = ((facing & 1) == 0) ? ud->xsize : ud->ysize;
 	unit->ysize = ((facing & 1) == 1) ? ud->xsize : ud->ysize;
@@ -238,15 +238,11 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->moveType = mt;
 
 		// Ground-mobility
-		unit->mobility = SAFE_NEW MoveData(ud->maxAcc, ud->maxAcc * -3.0f,
-			ud->speed / GAME_SPEED, (short int) ud->turnRate, false, false,
-			ud->movedata);
+		unit->mobility = SAFE_NEW MoveData(ud->movedata, GAME_SPEED);
 
 	} else if (ud->canfly) {
 		// Air-mobility
-		unit->mobility = SAFE_NEW MoveData(ud->maxAcc, ud->maxAcc * -3.0f,
-			ud->speed / GAME_SPEED, (short int) ud->turnRate, true, false,
-			ud->movedata);
+		unit->mobility = SAFE_NEW MoveData(ud->movedata, GAME_SPEED);
 
 		if (!unit->beingBuilt) {
 			// otherwise set this when finished building instead
@@ -346,7 +342,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		if (dynamic_cast<CBeamLaser*>(*i))
 			relMax = 150;
 	}
-	relMax *= 30;		// convert ticks to milliseconds
+
+	// convert ticks to milliseconds
+	relMax *= 30;
 
 	// TA does some special handling depending on weapon count
 	if (unit->weapons.size() > 1) {

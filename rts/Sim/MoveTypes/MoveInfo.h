@@ -10,27 +10,28 @@ class CMoveMath;
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(float _maxAcc = 0.0f, float _maxBreaking = 0.0f,
-			float _maxSpeed = 0.0f, short _maxTurnRate = 0,
-			bool _canFly = false, bool _subMarine = false,
-			const MoveData* udefMD = 0x0):
-		maxSpeed(_maxSpeed), maxTurnRate(_maxTurnRate), maxAcceleration(_maxAcc),
-		maxBreaking(_maxBreaking), canFly(_canFly), subMarine(_subMarine)
-	{
-		// udefMD is null when reading the MoveDefs
-		moveType      = udefMD? udefMD->moveType:      MoveData::Ground_Move;
-		size          = udefMD? udefMD->size:          0;
-		depth         = udefMD? udefMD->depth:         0.0f;
-		maxSlope      = udefMD? udefMD->maxSlope:      0.0f;
-		slopeMod      = udefMD? udefMD->slopeMod:      0.0f;
-		depthMod      = udefMD? udefMD->depthMod:      0.0f;
-		pathType      = udefMD? udefMD->pathType:      0;
-		moveMath      = udefMD? udefMD->moveMath:      0x0;
-		crushStrength = udefMD? udefMD->crushStrength: 0.0f;
-		moveFamily    = udefMD? udefMD->moveFamily:    MoveData::Tank;
-		name          = udefMD? udefMD->name:          "";
-	}
+	MoveData(const MoveData* udefMD = 0x0, int gs = 30) {
 
+		maxAcceleration = udefMD? udefMD->maxAcceleration:         0.0f;
+		maxBreaking     = udefMD? udefMD->maxAcceleration * -3.0f: 0.0f;
+		maxSpeed        = udefMD? udefMD->maxSpeed / gs:           0.0f;
+		maxTurnRate     = udefMD? (short int) udefMD->maxTurnRate: 0;
+
+		size            = udefMD? udefMD->size:                    0;
+		depth           = udefMD? udefMD->depth:                   0.0f;
+		maxSlope        = udefMD? udefMD->maxSlope:                0.0f;
+		slopeMod        = udefMD? udefMD->slopeMod:                0.0f;
+		depthMod        = udefMD? udefMD->depthMod:                0.0f;
+		pathType        = udefMD? udefMD->pathType:                0;
+		moveMath        = udefMD? udefMD->moveMath:                0x0;
+		crushStrength   = udefMD? udefMD->crushStrength:           0.0f;
+		moveType        = udefMD? udefMD->moveType:                MoveData::Ground_Move;
+		moveFamily      = udefMD? udefMD->moveFamily:              MoveData::Tank;
+		terrainClass    = udefMD? udefMD->terrainClass:            MoveData::Mixed;
+		followGround    = udefMD? udefMD->followGround:            true;
+		subMarine       = udefMD? udefMD->subMarine:               false;
+		name            = udefMD? udefMD->name:                    "TANK";
+	}
 
 	enum MoveType {
 		Ground_Move,
@@ -43,9 +44,16 @@ struct MoveData {
 		Hover,
 		Ship
 	};
+	enum TerrainClass {
+		Land,					// we are restricted to "land" (terrain with height >= 0)
+		Water,					// we are restricted to "water" (terrain with height < 0)
+		Mixed					// we can exist at heights both greater and smaller than 0
+	};
 
 	MoveType moveType;			// NOTE: rename? (because of (AMoveType*) CUnit::moveType)
 	MoveFamily moveFamily;
+	TerrainClass terrainClass;
+	bool followGround;			// do we stick to the ground when in water?
 
 	int size;					// of the footprint
 	float depth;				// minWaterDepth for ships, maxWaterDepth otherwise
@@ -67,8 +75,7 @@ struct MoveData {
 	float maxAcceleration;
 	float maxBreaking;
 
-	bool canFly;
-	bool subMarine;				// always false
+	bool subMarine;				// are we supposed to be a purely sub-surface ship?
 };
 
 
