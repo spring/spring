@@ -2772,7 +2772,7 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const string key = luaL_optstring(L, 1, "");
+	const string key = luaL_optstring(L, 3, "");
 	if (key.empty()) { // backwards compatible
 		lua_pushboolean(L, weapon->angleGood);
 		lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
