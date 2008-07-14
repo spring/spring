@@ -44,7 +44,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos, const float3& mo
 }
 
 
-float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare,const float3& moveDir) {
+float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) {
 	// Error-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
@@ -160,6 +160,44 @@ bool CMoveMath::IsBlocking(const MoveData& moveData, const CSolidObject* object)
 		object->mass > moveData.crushStrength));
 }
 
+/*
+ * check if an object is NON-blocking for a given MoveData
+ * (ex. a submarine's moveDef vs. a surface ship object)
+ */
+bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle) {
+	if (moveData.terrainClass == MoveData::Land) {
+		return (obstacle->isUnderWater);
+	} else {
+		const int x = int(obstacle->pos.x / SQUARE_SIZE);
+		const int z = int(obstacle->pos.z / SQUARE_SIZE);
+		const int i = (x >> 1) + (z >> 1) * gs->hmapx;
+		const bool iss = moveData.subMarine;
+		const bool oss = (obstacle->mobility && obstacle->mobility->subMarine);
+
+		const float oy = obstacle->pos.y;
+		const float oh = obstacle->height;
+		const float gy = readmap->mipHeightmap[1][i];
+
+		// note that these conditions can lead to
+		// a certain degree of clipping, for full
+		// 3D accuracy the height of the movedata
+		// owner would need to be accessible (but
+		// the path-estimator defs aren't tied to
+		// any)
+		if (moveData.followGround || gy > 0.0f) {
+			return ((oy - oh) > gy);
+		} else {
+			if (iss) {
+				return ((oy + oh) > 0.0f);
+			} else {
+				return (((oy + oh) <= 0.0f) || oss);
+			}
+		}
+	}
+
+	return false;
+}
+
 
 /* Converts a point-request into a square-positional request. */
 float CMoveMath::yLevel(const float3 pos) {
@@ -176,7 +214,12 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 	}
 
 	CSolidObject* obstacle = groundBlockingObjectMap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
+
 	if (obstacle) {
+		if (IsNonBlocking(moveData, obstacle)) {
+			return 0;
+		}
+
 		if (obstacle->mobility) {
 			// mobile obstacle
 			if (obstacle->isMoving) {

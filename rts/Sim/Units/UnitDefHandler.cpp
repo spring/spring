@@ -363,10 +363,10 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.pushResistant = udTable.GetBool("pushResistant", false);
 
 	ud.waterline = udTable.GetFloat("waterline", 0.0f);
-	if ((ud.waterline > 8.0f) && ud.canmove) {
+	if ((ud.waterline >= 5.0f) && ud.canmove) {
 		// make subs travel at somewhat larger depths
 		// to reduce vulnerability to surface weapons
-		ud.waterline += 5.0f;
+		ud.waterline += 10.0f;
 	}
 
 	ud.canSelfD = udTable.GetBool("canSelfDestruct", true);

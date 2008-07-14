@@ -88,7 +88,7 @@ public:
 
 	int salvoDelay;							// delay between shots in a salvo
 	int salvoSize;							// number of shots in a salvo
-	int projectilesPerShot;                 // number of projectiles per shot
+	int projectilesPerShot;					// number of projectiles per shot
 	int nextSalvo;							// when the next shot in the current salvo will fire
 	int salvoLeft;							// number of shots left in current salvo
 	float3 salvoError;						// error vector for the whole salvo

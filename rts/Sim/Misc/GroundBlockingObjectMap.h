@@ -23,10 +23,10 @@ public:
 	void CloseBlockingYard(CSolidObject* yard, unsigned char* yardMap);
 	bool CanCloseYard(CSolidObject* object);
 
-	CSolidObject* GroundBlocked(int mapSquare);
-	CSolidObject* GroundBlocked(float3 pos);
+	CSolidObject* GroundBlocked(int mapSquare, bool topMost = true);
+	CSolidObject* GroundBlocked(float3 pos, bool topMost = true);
 	// same as GroundBlocked(), but does not bounds-check mapSquare
-	CSolidObject* GroundBlockedUnsafe(int mapSquare);
+	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 
 private:
 	typedef std::set<CSolidObject*> BlockingMapCell;

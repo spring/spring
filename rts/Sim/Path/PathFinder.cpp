@@ -122,22 +122,22 @@ CPathFinder::~CPathFinder()
 Search with several start positions
 */
 IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path) {
-	//Clear the given path.
+	// Clear the given path.
 	path.path.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
-	//Store som basic data.
+	// Store som basic data.
 	maxNodesToBeSearched = MAX_SEARCHED_SQUARES;
-	testMobile=false;
+	testMobile = false;
 	exactPath = true;
-	needPath=true;
+	needPath = true;
 
-	//If exact path is reqired and the goal is blocked, then no search is needed.
-	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
+	// If exact path is reqired and the goal is blocked, then no search is needed.
+	if (exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
 
-	//If the starting position is a goal position, then no search need to be performed.
-	if(pfDef.IsGoal(startxSqr, startzSqr))
+	// If the starting position is a goal position, then no search need to be performed.
+	if (pfDef.IsGoal(startxSqr, startzSqr))
 		return CantGetCloser;
 
 	//Clearing the system from last search.
@@ -145,10 +145,10 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 
 	openSquareBufferPointer = &openSquareBuffer[0];
 
-	for(std::vector<float3>::const_iterator si=startPos.begin();si!=startPos.end();++si){
+	for (std::vector<float3>::const_iterator si = startPos.begin(); si != startPos.end(); ++si) {
 		start = *si;
-		startxSqr = (int(start.x) / SQUARE_SIZE)|1;
-		startzSqr = (int(start.z) / SQUARE_SIZE)|1;
+		startxSqr = (int(start.x) / SQUARE_SIZE) | 1;
+		startzSqr = (int(start.z) / SQUARE_SIZE) | 1;
 		startSquare = startxSqr + startzSqr * gs->mapx;
 
 		squareState[startSquare].status = (PATHOPT_START | PATHOPT_OPEN);
@@ -242,24 +242,24 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 Setting up the starting point of the search.
 */
 IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
-	//If exact path is reqired and the goal is blocked, then no search is needed.
-	if(exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
+	// If exact path is reqired and the goal is blocked, then no search is needed.
+	if (exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
 
-	//Clamp the start position
-	if (startxSqr < 0) startxSqr=0;
-	if (startxSqr >= gs->mapx) startxSqr = gs->mapx-1;
-	if (startzSqr < 0) startzSqr =0;
-	if (startzSqr >= gs->mapy) startzSqr = gs->mapy-1;
+	// Clamp the start position
+	if (startxSqr < 0) startxSqr = 0;
+	if (startxSqr >= gs->mapx) startxSqr = gs->mapx - 1;
+	if (startzSqr < 0) startzSqr = 0;
+	if (startzSqr >= gs->mapy) startzSqr = gs->mapy - 1;
 
-	//If the starting position is a goal position, then no search need to be performed.
+	// If the starting position is a goal position, then no search need to be performed.
 	if(pfDef.IsGoal(startxSqr, startzSqr))
 		return CantGetCloser;
 
-	//Clearing the system from last search.
+	// Clear the system from last search.
 	ResetSearch();
 
-	//Marks and store the start-square.
+	// Marks and store the start-square.
 	squareState[startSquare].status = (PATHOPT_START | PATHOPT_OPEN);
 	squareState[startSquare].cost = 0;
 	dirtySquares.push_back(startSquare);
@@ -294,42 +294,45 @@ Performs the actual search.
 */
 IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
 	bool foundGoal = false;
-	while(!openSquares.empty() && openSquareBufferPointer - openSquareBuffer < (maxNodesToBeSearched - 8)){
-		//Gets the open square with lowest expected path-cost.
-		OpenSquare* os = (OpenSquare*)openSquares.top();
+	while (!openSquares.empty() && openSquareBufferPointer - openSquareBuffer < (maxNodesToBeSearched - 8)) {
+		// Get the open square with lowest expected path-cost.
+		OpenSquare* os = (OpenSquare*) openSquares.top();
 		openSquares.pop();
 
-		//Check if this OpenSquare-holder have become obsolete.
-		if(squareState[os->sqr].cost != os->cost)
+		// Check if this OpenSquare-holder have become obsolete.
+		if (squareState[os->sqr].cost != os->cost)
 			continue;
 
-		//Check if the goal is reached.
-		if(pfDef.IsGoal(os->square.x, os->square.y)) {
+		// Check if the goal is reached.
+		if (pfDef.IsGoal(os->square.x, os->square.y)) {
 			goalSquare = os->sqr;
 			goalHeuristic = 0;
 			foundGoal = true;
 			break;
 		}
 
-		//Testing the 8 surrounding squares.
-		bool right=TestSquare(moveData, pfDef, os, PATHOPT_RIGHT);
-		bool left=TestSquare(moveData, pfDef, os, PATHOPT_LEFT);
-		bool up=TestSquare(moveData, pfDef, os, PATHOPT_UP);
-		bool down=TestSquare(moveData, pfDef, os, PATHOPT_DOWN);
-		if(up){		//we dont want to search diagonally if there is a blocking object (not blocking terrain) in one of the two side squares
-			if(right)
+		// Test the 8 surrounding squares.
+		bool right = TestSquare(moveData, pfDef, os, PATHOPT_RIGHT);
+		bool left = TestSquare(moveData, pfDef, os, PATHOPT_LEFT);
+		bool up = TestSquare(moveData, pfDef, os, PATHOPT_UP);
+		bool down = TestSquare(moveData, pfDef, os, PATHOPT_DOWN);
+
+		if (up) {
+			// we dont want to search diagonally if there is a blocking object
+			// (not blocking terrain) in one of the two side squares
+			if (right)
 				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP));
-			if(left)
+			if (left)
 				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP));
 		}
-		if(down){
-			if(right)
+		if (down) {
+			if (right)
 				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN));
-			if(left)
+			if (left)
 				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN));
 		}
 
-		//Mark this square as closed.
+		// Mark this square as closed.
 		squareState[os->sqr].status |= PATHOPT_CLOSED;
 	}
 
@@ -358,79 +361,86 @@ and possibly add it to the queue of open squares.
 bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection) {
 	testedNodes++;
 
-	//Calculate the new square.
+	// Calculate the new square.
 	int2 square;
 	square.x = parentOpenSquare->square.x + directionVector[enterDirection].x;
 	square.y = parentOpenSquare->square.y + directionVector[enterDirection].y;
 
-	//Inside map?
-	if(square.x < 0 || square.y < 0	|| square.x >= gs->mapx || square.y >= gs->mapy)
+	// Inside map?
+	if (square.x < 0 || square.y < 0 || square.x >= gs->mapx || square.y >= gs->mapy) {
 		return false;
-	int sqr = square.x + square.y * gs->mapx;
-
-	//Check if the square is unaccessable or used.
-	if(squareState[sqr].status & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED)){
-		if(squareState[sqr].status & PATHOPT_BLOCKED)
-			return false;
-		else
-			return false;
 	}
 
-	int blockStatus=moveData.moveMath->IsBlocked2(moveData, square.x, square.y);
-	//Check if square are out of constraints or blocked by something.
-	//Don't need to be done on open squares, as whose are already tested.
-	if(!(squareState[sqr].status & PATHOPT_OPEN) && (!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))){
+	int sqr = square.x + square.y * gs->mapx;
+	int sqrStatus = squareState[sqr].status;
+
+	// Check if the square is unaccessable or used.
+	if (sqrStatus & (PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED)) {
+		return false;
+	}
+
+	int blockStatus = moveData.moveMath->IsBlocked2(moveData, square.x, square.y);
+	int blockBits = (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN);
+
+	// Check if square are out of constraints or blocked by something.
+	// Doesn't need to be done on open squares, as those are already tested.
+	if ((!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & blockBits)) &&
+		!(sqrStatus & PATHOPT_OPEN)) {
+
 		squareState[sqr].status |= PATHOPT_BLOCKED;
 		dirtySquares.push_back(sqr);
 		return false;
 	}
 
-	//Evaluate this node.
+	// Evaluate this square.
 	float squareSpeedMod = moveData.moveMath->SpeedMod(moveData, square.x, square.y);
+	blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
-	if(squareSpeedMod==0){
+	if (squareSpeedMod == 0) {
 		squareState[sqr].status |= PATHOPT_FORBIDDEN;
 		dirtySquares.push_back(sqr);
 		return false;
 	}
-	if(testMobile && (blockStatus & (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY))){
-		if(blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod*=0.65f;
-		else if(blockStatus & CMoveMath::BLOCK_MOBILE)
-			squareSpeedMod*=0.35f;
+
+	if (testMobile && (blockStatus & blockBits)) {
+		if (blockStatus & CMoveMath::BLOCK_MOVING)
+			squareSpeedMod *= 0.65f;
+		else if (blockStatus & CMoveMath::BLOCK_MOBILE)
+			squareSpeedMod *= 0.35f;
 		else
-			squareSpeedMod*=0.10f;
+			squareSpeedMod *= 0.10f;
 	}
+
 	float squareCost = moveCost[enterDirection] / squareSpeedMod;
 	float heuristicCost = pfDef.Heuristic(square.x, square.y);
 
-	//Summarize cost.
+	// Summarize cost.
 	float currentCost = parentOpenSquare->currentCost + squareCost;
 	float cost = currentCost + heuristicCost;
 
-	//Checks if this square are in que already.
-	//If the old one is better then keep it, else change it.
-	if(squareState[sqr].status & PATHOPT_OPEN) {
-		if(squareState[sqr].cost <= cost)
+	// Checks if this square is in open queue already.
+	// If the old one is better then keep it, else change it.
+	if (squareState[sqr].status & PATHOPT_OPEN) {
+		if (squareState[sqr].cost <= cost)
 			return true;
 		squareState[sqr].status &= ~PATHOPT_DIRECTION;
 	}
 
-	//Looking for improvements.
+	// Look for improvements.
 	if (!exactPath && heuristicCost < goalHeuristic) {
 		goalSquare = sqr;
 		goalHeuristic = heuristicCost;
 	}
 
-	//Store this square as open.
-	OpenSquare *os = ++openSquareBufferPointer;		//Take the next OpenSquare in buffer.
+	// Store this square as open.
+	OpenSquare* os = ++openSquareBufferPointer;		//Take the next OpenSquare in buffer.
 	os->square = square;
 	os->sqr = sqr;
 	os->currentCost = currentCost;
 	os->cost = cost;
 	openSquares.push(os);
 
-	//Set this one as open and the direction from which it was reached.
+	// Set this one as open and the direction from which it was reached.
 	squareState[sqr].cost = os->cost;
 	squareState[sqr].status |= (PATHOPT_OPEN | enterDirection);
 	dirtySquares.push_back(sqr);
@@ -628,10 +638,10 @@ Tests if a square is inside is the circular constrainted area.
 */
 bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const
 {
-	int dx=halfWayX-xSquare;
-	int dz=halfWayZ-zSquare;
+	int dx = halfWayX - xSquare;
+	int dz = halfWayZ - zSquare;
 
-	return (dx*dx+dz*dz <= searchRadiusSq);
+	return ((dx * dx + dz * dz) <= searchRadiusSq);
 }
 
 void CPathFinder::myPQ::DeleteAll()
