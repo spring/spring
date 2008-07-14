@@ -68,10 +68,10 @@ bool CLightingCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner)) {
+	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner)) {
+	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 		return false;
 	}
 
@@ -87,7 +87,7 @@ void CLightingCannon::Fire(void)
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
+	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 	CUnit* u=0;
 	float r=helper->TraceRay(weaponMuzzlePos,dir,range,0,owner,u,collisionFlags);

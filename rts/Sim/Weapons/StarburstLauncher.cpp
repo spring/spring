@@ -50,7 +50,7 @@ void CStarburstLauncher::Fire(void)
 	} else {
 		maxrange = (float)range;
 	}
-	float3 aimError((gs->randVector()*sprayangle + salvoError)*(1-owner->limExperience*0.7f));
+	float3 aimError((gs->randVector()*sprayAngle + salvoError)*(1-owner->limExperience*0.7f));
 
 	CStarburstProjectile* p =
 		SAFE_NEW CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,

@@ -1217,22 +1217,22 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 				const string key = lua_tostring(L, -2);
 				const float value = lua_tofloat(L, -1);
 				// FIXME: KDR -- missing checks and updates?
-				if (key == "reloadstate") {
+				if (key == "reloadState") {
 					weapon->reloadStatus = (int)value;
 				}
-				else if (key == "reloadtime") {
+				else if (key == "reloadTime") {
 					weapon->reloadTime = (int)(value * GAME_SPEED);
 				}
 				else if (key == "accuracy") {
 					weapon->accuracy = value;
 				}
-				else if (key == "sprayangle") {
-					weapon->sprayangle = value;
+				else if (key == "sprayAngle") {
+					weapon->sprayAngle = value;
 				}
 				else if (key == "range") {
 					weapon->range = value;
 				}
-				else if (key == "projectilespeed") {
+				else if (key == "projectileSpeed") {
 					weapon->projectileSpeed = value;
 				}
 				else if (key == "burst") {

@@ -50,7 +50,7 @@ void CDGunWeapon::Fire(void)
 		dir=targetPos-weaponMuzzlePos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
+	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
 	SAFE_NEW CFireBallProjectile(weaponMuzzlePos, dir * projectileSpeed, owner, 0, targetPos, weaponDef);

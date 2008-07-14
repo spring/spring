@@ -109,7 +109,7 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget,CUnit* unit)
 			return false;
 	}
 
-	float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.7f);
+	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -189,7 +189,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	float curLength=0;
 	float3 curPos=weaponMuzzlePos;
 	float3 hitPos;
-	dir += gs->randVector() * sprayangle * (1 - owner->limExperience * 0.7f);
+	dir += gs->randVector() * sprayAngle * (1 - owner->limExperience * 0.7f);
 	dir.Normalize();
 
 	bool tryAgain=true;

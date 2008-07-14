@@ -84,7 +84,7 @@ public:
 
 	float projectileSpeed;
 	float accuracy;							// inaccuracy of whole salvo
-	float sprayangle;						// inaccuracy of individual shots inside salvo
+	float sprayAngle;						// inaccuracy of individual shots inside salvo
 
 	int salvoDelay;							// delay between shots in a salvo
 	int salvoSize;							// number of shots in a salvo

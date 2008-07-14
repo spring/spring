@@ -66,7 +66,7 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.5f);
+	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.5f);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -90,7 +90,7 @@ void CEmgCannon::Fire(void)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Emg fire: ";
-	tracefile << sprayangle << " " << gs->randSeed << " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
+	tracefile << sprayAngle << " " << gs->randSeed << " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	float3 dir;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
@@ -99,7 +99,7 @@ void CEmgCannon::Fire(void)
 		dir=targetPos-weaponMuzzlePos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.5f);
+	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
 	SAFE_NEW CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
