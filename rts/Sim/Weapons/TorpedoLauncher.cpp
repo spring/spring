@@ -93,7 +93,7 @@ bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 
 	dir /= length;
 	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
-	float spread = (accuracy + sprayangle) + 0.05f;
+	float spread = (accuracy + sprayAngle) + 0.05f;
 
 	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		return false;

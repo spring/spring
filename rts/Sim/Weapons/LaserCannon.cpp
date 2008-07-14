@@ -66,7 +66,7 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 			return false;
 	}
 
-	float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.7f);
+	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -95,7 +95,7 @@ void CLaserCannon::Fire(void)
 		dir=targetPos-weaponMuzzlePos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.7f);
+	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.7f);
 	dir.Normalize();
 
 	int fpsSub=0;

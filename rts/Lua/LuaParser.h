@@ -148,6 +148,8 @@ class LuaParser {
 		void AddFloat(const string& key, float value);
 		void AddString(const string& key, const string& value);
 
+		void SetLowerKeys(bool state) { lowerKeys = state; }
+
 	public:
 		const string fileName;
 		const string fileModes;
@@ -171,10 +173,15 @@ class LuaParser {
 		int rootRef;
 		int currentRef;
 
+		bool lowerKeys; // convert all returned keys to lower case
+
 		string errorLog;	
 		set<string> accessedFiles;
 
 	private:
+		// Weird call-outs
+		static int DontMessWithMyCase(lua_State* L);
+
 		// Spring call-outs
 		static int Echo(lua_State* L);
 		static int TimeCheck(lua_State* L);

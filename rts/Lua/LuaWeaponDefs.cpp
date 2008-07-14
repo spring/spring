@@ -439,7 +439,7 @@ static bool InitParamMap()
 	ADD_FLOAT("range", wd.range);
 	ADD_FLOAT("heightMod", wd.heightmod);
 	ADD_FLOAT("accuracy", wd.accuracy);
-	ADD_FLOAT("sprayAngle", wd.sprayangle);
+	ADD_FLOAT("sprayAngle", wd.sprayAngle);
 	ADD_FLOAT("movingAccuracy", wd.movingAccuracy);
 	ADD_FLOAT("targetMoveError", wd.targetMoveError);
 	ADD_FLOAT("leadLimit", wd.leadLimit);

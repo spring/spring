@@ -2772,12 +2772,46 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	lua_pushboolean(L, weapon->angleGood);
-	lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
-	lua_pushnumber(L,  weapon->reloadStatus);
-	lua_pushnumber(L,  weapon->salvoLeft);
-	lua_pushnumber(L,  weapon->numStockpiled);
-	return 5;
+	const string key = luaL_optstring(L, 1, "");
+	if (key.empty()) { // backwards compatible
+		lua_pushboolean(L, weapon->angleGood);
+		lua_pushboolean(L, weapon->reloadStatus <= gs->frameNum);
+		lua_pushnumber(L,  weapon->reloadStatus);
+		lua_pushnumber(L,  weapon->salvoLeft);
+		lua_pushnumber(L,  weapon->numStockpiled);
+		return 5;
+	}
+	else if (key == "reloadState") {
+		lua_pushnumber(L, weapon->reloadStatus);
+	}
+	else if (key == "reloadTime") {
+		lua_pushnumber(L, weapon->reloadTime / GAME_SPEED);
+	}
+	else if (key == "accuracy") {
+		lua_pushnumber(L, weapon->accuracy);
+	}
+	else if (key == "sprayAngle") {
+		lua_pushnumber(L, weapon->sprayAngle);
+	}
+	else if (key == "range") {
+		lua_pushnumber(L, weapon->range);
+	}
+	else if (key == "projectileSpeed") {
+		lua_pushnumber(L, weapon->projectileSpeed);
+	}
+	else if (key == "burst") {
+		lua_pushnumber(L, weapon->salvoSize);
+	}
+	else if (key == "burstRate") {
+		lua_pushnumber(L, weapon->salvoDelay / GAME_SPEED);
+	}
+	else if (key == "projectiles") {
+		lua_pushnumber(L, weapon->projectilesPerShot);
+	}
+	else {
+		return 0;
+	}
+	return 1;
 }
 
 
@@ -2795,20 +2829,25 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
-	const float3& weaponPos = unit->weapons[weaponNum]->weaponMuzzlePos;
-	float3& weaponDir = unit->weapons[weaponNum]->wantedDir;
-	const string& wtype = unit->weapons[weaponNum]->weaponDef->type;
 
-	if (wtype=="StarburstLauncher" || wtype=="TorpedoLauncher" || wtype=="MissileLauncher")
-		weaponDir = unit->weapons[weaponNum]->weaponDir;
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	const float3& pos = weapon->weaponMuzzlePos;
+	const float3* dir = &weapon->wantedDir;
 
-	lua_pushnumber(L, weaponPos.x);
-	lua_pushnumber(L, weaponPos.y);
-	lua_pushnumber(L, weaponPos.z);
+	const string& type = weapon->weaponDef->type;
+	if ((type == "TorpedoLauncher") ||
+	    (type == "MissileLauncher") ||
+	    (type == "StarburstLauncher")) {
+		dir = &weapon->weaponDir;
+	}
 
-	lua_pushnumber(L, weaponDir.x);
-	lua_pushnumber(L, weaponDir.y);
-	lua_pushnumber(L, weaponDir.z);
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+
+	lua_pushnumber(L, dir->x);
+	lua_pushnumber(L, dir->y);
+	lua_pushnumber(L, dir->z);
 
 	return 6;
 }

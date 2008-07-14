@@ -1335,11 +1335,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case WEAPON_SPRAY: {
 		if (p1 > 0 && p1 <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->sprayangle * COBSCALE);
+			return int(unit->weapons[p1-1]->sprayAngle * COBSCALE);
 		}
 		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
-			int old = int(unit->weapons[-p1-1]->sprayangle * COBSCALE);
-			unit->weapons[-p1-1]->sprayangle = float(p2) / COBSCALE;
+			int old = int(unit->weapons[-p1-1]->sprayAngle * COBSCALE);
+			unit->weapons[-p1-1]->sprayAngle = float(p2) / COBSCALE;
 			return old;
 		}
 		else {

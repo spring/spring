@@ -29,7 +29,7 @@ void CFlameThrower::Fire(void)
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
-	float3 spread=(gs->randVector()*sprayangle+salvoError)*0.2f;
+	float3 spread=(gs->randVector()*sprayAngle+salvoError)*0.2f;
 	spread-=dir*0.001f;
 
 	SAFE_NEW CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
@@ -68,10 +68,10 @@ bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner)) {
+	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner)) {
+	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 		return false;
 	}
 

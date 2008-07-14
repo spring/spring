@@ -446,7 +446,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 
 	weapon->areaOfEffect = weapondef->areaOfEffect;
 	weapon->accuracy = weapondef->accuracy;
-	weapon->sprayangle = weapondef->sprayangle;
+	weapon->sprayAngle = weapondef->sprayAngle;
 
 	weapon->salvoSize = weapondef->salvosize;
 	weapon->salvoDelay = (int) (weapondef->salvodelay * GAME_SPEED);

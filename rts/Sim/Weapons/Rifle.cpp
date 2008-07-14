@@ -72,7 +72,7 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	float spread = (accuracy + sprayangle) * (1 - owner->limExperience * 0.9f);
+	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.9f);
 
 	if (helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		// note: check avoidFriendly?
@@ -89,7 +89,7 @@ void CRifle::Fire(void)
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
-	dir+=(gs->randVector()*sprayangle+salvoError)*(1-owner->limExperience*0.9f);
+	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
 #ifdef TRACE_SYNC
 	tracefile << "Rifle fire: ";

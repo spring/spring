@@ -47,7 +47,7 @@ struct WeaponDef
 	float range;
 	float heightmod;
 	float accuracy;							// inaccuracy of whole burst
-	float sprayangle;						// inaccuracy of individual shots inside burst
+	float sprayAngle;						// inaccuracy of individual shots inside burst
 	float movingAccuracy;					// inaccuracy while owner moving
 	float targetMoveError;					// fraction of targets move speed that is used as error offset
 	float leadLimit;                        // maximum distance the weapon will lead the target

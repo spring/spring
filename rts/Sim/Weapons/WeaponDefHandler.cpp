@@ -225,12 +225,12 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.range = wdTable.GetFloat("range", 10.0f);
 	const float accuracy       = wdTable.GetFloat("accuracy",   0.0f);
-	const float sprayangle     = wdTable.GetFloat("sprayAngle", 0.0f);
+	const float sprayAngle     = wdTable.GetFloat("sprayAngle", 0.0f);
 	const float movingAccuracy = wdTable.GetFloat("movingAccuracy", accuracy);
 	// should really be tan but TA seem to cap it somehow
 	// should also be 7fff or ffff theoretically but neither seems good
 	wd.accuracy       = sin((accuracy)       * PI / 0xafff);
-	wd.sprayangle     = sin((sprayangle)     * PI / 0xafff);
+	wd.sprayAngle     = sin((sprayAngle)     * PI / 0xafff);
 	wd.movingAccuracy = sin((movingAccuracy) * PI / 0xafff);
 
 	wd.targetMoveError = wdTable.GetFloat("targetMoveError", 0.0f);

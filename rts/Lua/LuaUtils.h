@@ -20,6 +20,31 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
+		// lower case all keys in the table, with recursion
+		static bool LowerKeys(lua_State* L, int tableIndex);
+
+		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
+		static void ParseCommandOptions(lua_State* L, const char* caller,
+		                                int index, Command& cmd);
+		static void ParseCommand(lua_State* L, const char* caller,
+		                         int idIndex, Command& cmd);
+		static void ParseCommandTable(lua_State* L, const char* caller,
+		                              int table, Command& cmd);
+		static void ParseCommandArray(lua_State* L, const char* caller,
+		                              int table, vector<Command>& commands);
+
+		static void* GetUserData(lua_State* L, int index, const string& type);
+
+		static void PrintStack(lua_State* L);
+
+		// from LuaFeatureDefs.cpp / LuaUnitDefs.cpp / LuaWeaponDefs.cpp
+		// (helper for the Next() iteration routine)
+		static int Next(const ParamMap& paramMap, lua_State* L);
+
+		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
+		// (implementation copied from lua/src/lib/lbaselib.c)
+		static int Echo(lua_State* L);
+
 		// not implemented...		
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);
@@ -35,27 +60,6 @@ class LuaUtils {
 		static int ParseStringVector(lua_State* L, int tableIndex,
 		                             vector<string>& vec);
 
-		static void* GetUserData(lua_State* L, int index, const string& type);
-
-		static void PrintStack(lua_State* L);
-
-		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
-		static void ParseCommandOptions(lua_State* L, const char* caller,
-		                                int index, Command& cmd);
-		static void ParseCommand(lua_State* L, const char* caller,
-		                         int idIndex, Command& cmd);
-		static void ParseCommandTable(lua_State* L, const char* caller,
-		                              int table, Command& cmd);
-		static void ParseCommandArray(lua_State* L, const char* caller,
-		                              int table, vector<Command>& commands);
-
-		// from LuaFeatureDefs.cpp / LuaUnitDefs.cpp / LuaWeaponDefs.cpp
-		// (helper for the Next() iteration routine)
-		static int Next(const ParamMap& paramMap, lua_State* L);
-
-		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
-		// (implementation copied from lua/src/lib/lbaselib.c)
-		static int Echo(lua_State* L);
 };
 
 

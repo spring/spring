@@ -33,7 +33,7 @@
 #endif
 
 
-static const bool lowerKeys = true;
+static const bool lowerCppKeys = true;
 
 LuaParser* LuaParser::currentParser = NULL;
 
@@ -54,7 +54,8 @@ LuaParser::LuaParser(const string& _fileName,
   valid(false),
   initDepth(0),
   rootRef(LUA_NOREF),
-  currentRef(LUA_NOREF)
+  currentRef(LUA_NOREF),
+  lowerKeys(true)
 {
 	L = lua_open();
 
@@ -73,7 +74,8 @@ LuaParser::LuaParser(const string& _textChunk,
   valid(false),
   initDepth(0),
   rootRef(LUA_NOREF),
-  currentRef(LUA_NOREF)
+  currentRef(LUA_NOREF),
+  lowerKeys(true)
 {
 	L = lua_open();
 
@@ -123,6 +125,8 @@ void LuaParser::SetupEnv()
 	lua_pushstring(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
 	lua_pushstring(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
 	lua_pop(L, 1); // pop "math"
+
+	AddFunc("DontMessWithMyCase", DontMessWithMyCase);
 
 	GetTable("Spring");
 	AddFunc("Echo", Echo);
@@ -207,6 +211,10 @@ bool LuaParser::Execute()
 		lua_close(L);
 		L = NULL;
 		return false;
+	}
+
+	if (lowerKeys) {
+		LuaUtils::LowerKeys(L, 1);
 	}
 
 	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -590,6 +598,16 @@ int LuaParser::FileExists(lua_State* L)
 }
 
 
+int LuaParser::DontMessWithMyCase(lua_State* L)
+{
+	if (currentParser == NULL) {
+		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
+	}
+	currentParser->SetLowerKeys(lua_toboolean(L, 1));
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -716,7 +734,7 @@ LuaTable LuaTable::SubTable(int key) const
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
 	
-	const string key = !lowerKeys ? mixedKey : StringToLower(mixedKey);
+	const string key = !lowerCppKeys ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
@@ -851,7 +869,7 @@ bool LuaTable::PushValue(int key) const
 
 bool LuaTable::PushValue(const string& mixedKey) const
 {
-	const string key = !lowerKeys ? mixedKey : StringToLower(mixedKey);
+	const string key = !lowerCppKeys ? mixedKey : StringToLower(mixedKey);
 	if (!PushTable()) {
 		return false;
 	}

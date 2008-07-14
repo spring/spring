@@ -153,6 +153,101 @@ void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
+static int lowerKeysTable = 0;
+
+
+static bool LowerKeysCheck(lua_State* L, int table)
+{
+	bool used = false;
+	lua_pushvalue(L, table);
+	lua_rawget(L, lowerKeysTable);
+	if (lua_isnil(L, -1)) {
+		used = false;
+		lua_pushvalue(L, table);
+		lua_pushboolean(L, true);
+		lua_rawset(L, lowerKeysTable);
+	}
+	lua_pop(L, 1);
+	return used;
+}
+
+
+static bool LowerKeysReal(lua_State* L, int depth)
+{
+	lua_checkstack(L, lowerKeysTable + (depth * 3) + 8);
+
+	const int table = lua_gettop(L);
+	if (LowerKeysCheck(L, table)) {
+		return true;
+	}
+
+	// a new table for changed values
+	const int changed = table + 1;
+	lua_newtable(L);
+
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (lua_istable(L, -1)) {
+			LowerKeysReal(L, depth + 1);
+		}
+		if (lua_israwstring(L, -2)) {
+			const string rawKey = lua_tostring(L, -2);
+			const string lowerKey = StringToLower(rawKey);
+			if (rawKey != lowerKey) {
+				// removed the mixed case entry
+				lua_pushvalue(L, -2); // the key
+				lua_pushnil(L);
+				lua_rawset(L, table);
+				// does the lower case key alread exist in the table?
+				lua_pushstring(L, lowerKey.c_str());
+				lua_rawget(L, table);
+				if (lua_isnil(L, -1)) {
+					// add the lower case entry to the changed table
+					lua_pushstring(L, lowerKey.c_str());
+					lua_pushvalue(L, -3); // the value
+					lua_rawset(L, changed);
+				}
+				lua_pop(L, 1);
+			}
+		}
+	}
+
+	// copy the changed values into the table
+	for (lua_pushnil(L); lua_next(L, changed) != 0; lua_pop(L, 1)) {
+		lua_pushvalue(L, -2); // copy the key to the top
+		lua_pushvalue(L, -2); // copy the value to the top
+		lua_rawset(L, table);		
+	}
+
+	lua_pop(L, 1); // pop the changed table
+
+	return true;
+}
+
+
+bool LuaUtils::LowerKeys(lua_State* L, int table)
+{
+	if (!lua_istable(L, table)) {
+		return false;
+	}
+
+	// table of processed tables
+	lowerKeysTable = lua_gettop(L) + 1;
+	lua_checkstack(L, lowerKeysTable);
+	lua_newtable(L);
+
+	lua_pushvalue(L, table); // push the table onto the top of the stack
+
+	LowerKeysReal(L, 0);
+
+	lua_pop(L, 2); // the lowered table, and the check table
+
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 // copied from lua/src/lauxlib.cpp:luaL_checkudata()
 void* LuaUtils::GetUserData(lua_State* L, int index, const string& type)
 {

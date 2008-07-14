@@ -63,7 +63,7 @@ void CMissileLauncher::Fire(void)
 		}
 	}
 
-	dir += (gs->randVector() * sprayangle + salvoError) * (1 - owner->limExperience * 0.5f);
+	dir += (gs->randVector() * sprayAngle + salvoError) * (1 - owner->limExperience * 0.5f);
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
@@ -140,10 +140,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 				return false;
 		}
 
-		if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner->allyteam, owner)) {
+		if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 			return false;
 		}
-		if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayangle), owner)) {
+		if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 			return false;
 		}
 	}
