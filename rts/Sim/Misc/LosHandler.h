@@ -60,7 +60,7 @@ public:
 	void FreeInstance(LosInstance* instance);
 
 	bool InLos(const CWorldObject* object, int allyTeam) {
-		if (object->alwaysVisible) {
+		if (object->alwaysVisible || gs->globalLOS) {
 			return true;
 		}
 		else if (object->useAirLos) {
@@ -85,10 +85,10 @@ public:
 
 	bool InLos(const CUnit* unit, int allyTeam) {
 		// NOTE: units are treated differently than world objects in 2 ways:
-		//       1. they can be cloaked 
+		//       1. they can be cloaked
 		//       2. when underwater, they only get LOS if they also have sonar
 		//          (when the requireSonarUnderWater variable is enabled)
-		if (unit->alwaysVisible) {
+		if (unit->alwaysVisible || gs->globalLOS) {
 			return true;
 		}
 		else if (unit->isCloaked) {
@@ -119,6 +119,9 @@ public:
 	}
 
 	bool InLos(float3 pos, int allyTeam) {
+		if (gs->globalLOS) {
+			return true;
+		}
 		pos.CheckInBounds();
 		const int square = ((int)(pos.z * invLosDiv)) * losSizeX
 		                 + ((int)(pos.x * invLosDiv));
@@ -127,6 +130,9 @@ public:
 	}
 
 	bool InAirLos(float3 pos, int allyTeam) {
+		if (gs->globalLOS) {
+			return true;
+		}
 		pos.CheckInBounds();
 		const int square = ((int)(pos.z * invAirDiv)) * airSizeX
 		                 + ((int)(pos.x * invAirDiv));
