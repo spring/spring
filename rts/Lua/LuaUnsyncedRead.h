@@ -25,6 +25,7 @@ class LuaUnsyncedRead {
 		static int GetScreenGeometry(lua_State* L);
 		static int GetMiniMapGeometry(lua_State* L);
 		static int GetMiniMapDualScreen(lua_State* L);
+		static int IsAboveMiniMap(lua_State* L);
 
 		static int IsAABBInView(lua_State* L);
 		static int IsSphereInView(lua_State* L);

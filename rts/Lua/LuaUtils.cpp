@@ -174,7 +174,7 @@ static bool LowerKeysCheck(lua_State* L, int table)
 
 static bool LowerKeysReal(lua_State* L, int depth)
 {
-	lua_checkstack(L, lowerKeysTable + (depth * 3) + 8);
+	lua_checkstack(L, lowerKeysTable + 8 + (depth * 3));
 
 	const int table = lua_gettop(L);
 	if (LowerKeysCheck(L, table)) {
@@ -232,7 +232,7 @@ bool LuaUtils::LowerKeys(lua_State* L, int table)
 
 	// table of processed tables
 	lowerKeysTable = lua_gettop(L) + 1;
-	lua_checkstack(L, lowerKeysTable);
+	lua_checkstack(L, lowerKeysTable + 2);
 	lua_newtable(L);
 
 	lua_pushvalue(L, table); // push the table onto the top of the stack
@@ -521,6 +521,73 @@ int LuaUtils::Echo(lua_State* L)
 	logOutput.Print(msg);
 
 	return 0;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUtils::tobool(lua_State* L)
+{
+	return 1;
+}
+
+
+int LuaUtils::isnil(lua_State* L)
+{
+	lua_pushboolean(L, lua_isnoneornil(L, 1));
+	return 1;
+}
+
+
+int LuaUtils::isbool(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TBOOLEAN);
+	return 1;
+}
+
+
+int LuaUtils::isnumber(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TNUMBER);
+	return 1;
+}
+
+
+int LuaUtils::isstring(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TSTRING);
+	return 1;
+}
+
+
+int LuaUtils::istable(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TTABLE);
+	return 1;
+}
+
+
+int LuaUtils::isthread(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TTHREAD);
+	return 1;
+}
+
+
+int LuaUtils::isfunction(lua_State* L)
+{
+	lua_pushboolean(L, lua_type(L, 1) == LUA_TFUNCTION);
+	return 1;
+}
+
+
+int LuaUtils::isuserdata(lua_State* L)
+{
+	const int type = lua_type(L, 1);
+	lua_pushboolean(L, (type == LUA_TUSERDATA) ||
+	                   (type == LUA_TLIGHTUSERDATA));
+	return 1;
 }
 
 

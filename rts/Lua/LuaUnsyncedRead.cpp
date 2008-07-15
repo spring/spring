@@ -90,6 +90,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetScreenGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapDualScreen);
+	REGISTER_LUA_CFUNC(IsAboveMiniMap);
 
 	REGISTER_LUA_CFUNC(IsAABBInView);
 	REGISTER_LUA_CFUNC(IsSphereInView);
@@ -328,6 +329,31 @@ int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 			lua_pushliteral(L, "right");
 		}
 	}
+	return 1;
+}
+
+
+int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
+{
+	if (minimap == NULL) {
+		return 0;
+	}
+
+	if (minimap->GetMinimized() || game->hideInterface) {
+		return false;
+	}
+
+	const int x = luaL_checkint(L, 1) + gu->viewPosX;
+	const int y = luaL_checkint(L, 2);
+
+	const int x0 = minimap->GetPosX();
+	const int y0 = minimap->GetPosY();
+	const int x1 = x0 + minimap->GetSizeX();
+	const int y1 = y0 + minimap->GetSizeY();
+
+	lua_pushboolean(L, (x >= x0) && (x < x1) &&
+	                   (y >= y0) && (y < y1));
+		
 	return 1;
 }
 

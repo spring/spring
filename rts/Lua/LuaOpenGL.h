@@ -202,16 +202,19 @@ class LuaOpenGL {
 		static int Text(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 
-		//static int Map1(lua_State* L);
-		//static int Map2(lua_State* L);
-		//static int MapGrid1(lua_State* L);
-		//static int MapGrid2(lua_State* L);
-		//static int EvalMesh1(lua_State* L);
-		//static int EvalMesh2(lua_State* L);
-		//static int EvalCoord1(lua_State* L);
-		//static int EvalCoord2(lua_State* L);
-		//static int EvalPoint1(lua_State* L);
-		//static int EvalPoint2(lua_State* L);
+		static int Map1(lua_State* L);
+		static int Map2(lua_State* L);
+		static int MapGrid1(lua_State* L);
+		static int MapGrid2(lua_State* L);
+		static int Eval(lua_State* L);
+		static int EvalEnable(lua_State* L);
+		static int EvalDisable(lua_State* L);
+		static int EvalMesh1(lua_State* L);
+		static int EvalMesh2(lua_State* L);
+		static int EvalCoord1(lua_State* L);
+		static int EvalCoord2(lua_State* L);
+		static int EvalPoint1(lua_State* L);
+		static int EvalPoint2(lua_State* L);
 
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);

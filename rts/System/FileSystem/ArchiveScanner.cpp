@@ -21,6 +21,9 @@ using std::string;
 using std::vector;
 
 
+static const int debugChecksums = false;
+
+
 // fix for windows
 #ifndef S_ISDIR
 #define S_ISDIR(x) (((x) & 0170000) == 0040000) /* directory */
@@ -891,12 +894,13 @@ string CArchiveScanner::GetArchivePath(const string& name)
 /** Get checksum of all required archives depending on selected mod. */
 unsigned int CArchiveScanner::GetModChecksum(const string& root)
 {
+	const vector<string> ars = GetArchives(root);
 	unsigned int checksum = 0;
-	vector<string> ars = GetArchives(root);
-
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-		unsigned tmp = GetArchiveChecksum(*i);
-		logOutput.Print("mod checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
+	for (unsigned int a = 0; a < ars.size(); a++) {
+		const unsigned int tmp = GetArchiveChecksum(ars[a]);
+		if (debugChecksums) {
+			logOutput.Print("mod checksum %s: %u/%d", ars[a].c_str(), tmp, (int)tmp);
+		}
 		checksum ^= tmp;
 	}
 	return checksum;
@@ -906,12 +910,13 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 /** Get checksum of all required archives depending on selected map. */
 unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 {
+	const vector<string> ars = GetArchivesForMap(mapName);
 	unsigned int checksum = 0;
-	vector<string> ars = GetArchivesForMap(mapName);
-
-	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-		unsigned tmp = GetArchiveChecksum(*i);
-		logOutput.Print("map checksum %s: %u/%d", i->c_str(), tmp, (int)tmp);
+	for (unsigned int a = 0; a < ars.size(); a++) {
+		const unsigned int tmp = GetArchiveChecksum(ars[a]);
+		if (debugChecksums) {
+			logOutput.Print("map checksum %s: %u/%d", ars[a].c_str(), tmp, (int)tmp);
+		}
 		checksum ^= tmp;
 	}
 	return checksum;

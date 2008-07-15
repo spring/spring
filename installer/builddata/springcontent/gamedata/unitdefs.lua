@@ -140,7 +140,7 @@ for name, def in pairs(unitDefs) do
     Spring.Echo('WARNING: removed ' .. name .. ' unitDef, missing cob script')
   end
 
-  local obj = def.objectname
+  local obj = def.objectName or def.objectname
   if (obj == nil) then
     unitDefs[name] = nil
     Spring.Echo('WARNING: removed ' .. name ..
@@ -161,7 +161,7 @@ end
 
 for name, def in pairs(unitDefs) do
   local badOptions = {}
-  local buildOptions = def.buildoptions
+  local buildOptions = def.buildOptions or def.buildoptions
   if (buildOptions) then
     for i, option in ipairs(buildOptions) do
       if (unitDefs[option] == nil) then
