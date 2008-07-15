@@ -252,6 +252,13 @@ public:
 	bool godMode;
 
 	/**
+	 * @brief global line-of-sight
+	 *
+	 * Whether everything on the map is visible at all times
+	 */
+	bool globalLOS;
+
+	/**
 	 * @brief cheat enabled
 	 *
 	 * Whether cheating is enabled
@@ -261,7 +268,7 @@ public:
 	/**
 	 * @brief disable helper AIs
 	 *
-	 * Whether helper AIs are allow, including GroupAI and LuaUI control widgets
+	 * Whether helper AIs are allowed, including GroupAI and LuaUI control widgets
 	 */
 	bool noHelperAIs;
 

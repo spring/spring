@@ -2038,7 +2038,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)
-			logOutput.Print("godmode requires .cheat");
+			logOutput.Print("godmode requires /cheat");
 		else {
 			SetBoolArg(gs->godMode, action.extra);
 			CLuaUI::UpdateTeams();
@@ -2048,6 +2048,18 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				logOutput.Print("God Mode Disabled");
 			}
 			CPlayer::UpdateControlledTeams();
+		}
+	}
+	else if (action.command == "globalLOS") {
+		if (!gs->cheatEnabled) {
+			logOutput.Print("globalLOS requires /cheat");
+		} else {
+			SetBoolArg(gs->globalLOS, action.extra);
+			if (gs->globalLOS) {
+				logOutput.Print("Global LOS Enabled");
+			} else {
+				logOutput.Print("Global LOS Disabled");
+			}
 		}
 	}
 	else if (action.command == "nocost" && gs->cheatEnabled) {

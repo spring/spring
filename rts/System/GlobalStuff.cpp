@@ -52,6 +52,7 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 				CR_MEMBER(paused),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(godMode),
+				CR_MEMBER(globalLOS),
 				CR_MEMBER(cheatEnabled),
 				CR_MEMBER(noHelperAIs),
 				CR_MEMBER(editDefsEnabled),
@@ -98,13 +99,14 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 {
 	hmapx = 256;
 	hmapy = 256;
-	randSeed = 18655; //li.LowPart;
+	randSeed = 18655;
 	initRandSeed = randSeed;
 	frameNum = 0;
 	speedFactor = 1;
 	userSpeedFactor = 1;
 	paused = false;
 	godMode = false;
+	globalLOS = false;
 	cheatEnabled = false;
 	noHelperAIs = false;
 	editDefsEnabled = false;
