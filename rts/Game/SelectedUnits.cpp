@@ -17,7 +17,6 @@
 #include "ExternalAI/GlobalAIHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
-#include "UI/LuaUI.h"
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -724,11 +723,9 @@ std::string CSelectedUnits::GetTooltip(void)
 		return s;
 	}
 
-	if (luaUI) {
-		string custom = luaUI->WorldTooltip(NULL, NULL, NULL);
-		if (!custom.empty()) {
-			return custom;
-		}
+	const string custom = eventHandler.WorldTooltip(NULL, NULL, NULL);
+	if (!custom.empty()) {
+		return custom;
 	}
 
 	char tmp[500];

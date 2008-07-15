@@ -1,24 +1,24 @@
 #include "StdAfx.h"
 #include "InMapDraw.h"
-#include "glFont.h"
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/Player.h"
 #include "Game/Team.h"
-#include "Game/UI/LuaUI.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "NetProtocol.h"
-#include "LogOutput.h"
-#include "Sound.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "System/EventHandler.h"
+#include "System/NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/Sound.h"
+#include "creg/STL_List.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
-#include "creg/STL_List.h"
 
 
 #define DRAW_QUAD_SIZE 32
@@ -425,7 +425,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-	if (luaUI && luaUI->MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+	if (eventHandler.MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
 		return;
 	}
 
@@ -474,7 +474,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
 	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
 
-	if (luaUI && luaUI->MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
+	if (eventHandler.MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
 		return;
 	}
 
@@ -508,7 +508,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 	float3 pos = constPos;
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
-	if (luaUI && luaUI->MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+	if (eventHandler.MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 

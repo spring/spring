@@ -44,6 +44,7 @@ class CEventHandler
 		void GamePreload();
 		void GameStart();
 		void GameOver();
+
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);

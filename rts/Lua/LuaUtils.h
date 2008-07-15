@@ -45,6 +45,17 @@ class LuaUtils {
 		// (implementation copied from lua/src/lib/lbaselib.c)
 		static int Echo(lua_State* L);
 
+		static bool PushCustomBaseFunctions(lua_State* L);
+		static int tobool(lua_State* L);
+		static int isnil(lua_State* L);
+		static int isbool(lua_State* L);
+		static int isnumber(lua_State* L);
+		static int isstring(lua_State* L);
+		static int istable(lua_State* L);
+		static int isthread(lua_State* L);
+		static int isfunction(lua_State* L);
+		static int isuserdata(lua_State* L);
+
 		// not implemented...		
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);

@@ -115,7 +115,9 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
 
 	// unmanaged call-ins
-	SetupEvent("AIEvent",  NULL, UNSYNCED_BIT);
+	SetupEvent("RecvLuaMsg", NULL, 0);
+
+	SetupEvent("AICallIn", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawUnit", NULL, UNSYNCED_BIT);
 
 	// LuaRules

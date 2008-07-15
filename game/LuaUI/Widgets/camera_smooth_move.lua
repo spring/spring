@@ -28,17 +28,20 @@ end
 
 -- Automatically generated local definitions
 
-local GL_LINES           = GL.LINES
-local GL_POINTS          = GL.POINTS
-local glBeginEnd         = gl.BeginEnd
-local glColor            = gl.Color
-local glLineWidth        = gl.LineWidth
-local glPointSize        = gl.PointSize
-local glVertex           = gl.Vertex
+local GL_LINES    = GL.LINES
+local GL_POINTS   = GL.POINTS
+
+local glBeginEnd  = gl.BeginEnd
+local glColor     = gl.Color
+local glLineWidth = gl.LineWidth
+local glPointSize = gl.PointSize
+local glVertex    = gl.Vertex
+
 local spGetCameraState   = Spring.GetCameraState
 local spGetCameraVectors = Spring.GetCameraVectors
 local spGetModKeyState   = Spring.GetModKeyState
 local spGetMouseState    = Spring.GetMouseState
+local spIsAboveMiniMap   = Spring.IsAboveMiniMap
 local spSendCommands     = Spring.SendCommands
 local spSetCameraState   = Spring.SetCameraState
 local spSetMouseCursor   = Spring.SetMouseCursor
@@ -55,9 +58,6 @@ local spWarpMouse        = Spring.WarpMouse
 --
 
 local blockModeSwitching = true
-
-
-local gl = gl
 
 
 local vsx, vsy = widgetHandler:GetViewSizes()
@@ -128,6 +128,9 @@ end
 
 function widget:MousePress(x, y, button)
   if (button ~= 2) then
+    return false
+  end
+  if (spIsAboveMiniMap(x, y)) then
     return false
   end
   local cs = spGetCameraState()

@@ -2652,7 +2652,8 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
-	readmap->GetHeightmap()[index] += h;
+	float& heightMap = readmap->GetHeightmap()[index];
+	heightMap += h;
 	heightMapAmountChanged += streflop::fabsf(h);
 
 	// update RecalcArea()
@@ -2661,7 +2662,8 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
 
-	return 0;
+	lua_pushnumber(L, heightMap);
+	return 1;
 }
 
 
@@ -2696,10 +2698,10 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 		heightMap = h;
 	}
 
-	const float heightDiff = heightMap - oldHeight;
+	const float heightDiff = (heightMap - oldHeight);
 	heightMapAmountChanged += streflop::fabsf(heightDiff);
 
-	//update RecalcArea()
+	// update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
 	if (x > heightMapx2) { heightMapx2 = x; }
 	if (z < heightMapz1) { heightMapz1 = z; }
