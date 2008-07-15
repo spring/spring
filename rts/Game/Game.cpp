@@ -2050,7 +2050,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			CPlayer::UpdateControlledTeams();
 		}
 	}
-	else if (action.command == "globalLOS") {
+	else if (action.command == "globallos") {
 		if (!gs->cheatEnabled) {
 			logOutput.Print("globalLOS requires /cheat");
 		} else {

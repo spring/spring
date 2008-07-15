@@ -144,6 +144,7 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 	RestrictedAction("nohelp");
 	RestrictedAction("cheat"); //TODO register cheats only after cheating is on
 	RestrictedAction("godmode");
+	RestrictedAction("globallos");
 	RestrictedAction("nocost");
 	RestrictedAction("forcestart");
 	RestrictedAction("nospectatorchat");
