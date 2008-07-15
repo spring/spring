@@ -2052,7 +2052,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 	else if (action.command == "globallos") {
 		if (!gs->cheatEnabled) {
-			logOutput.Print("globalLOS requires /cheat");
+			logOutput.Print("globallos requires /cheat");
 		} else {
 			SetBoolArg(gs->globalLOS, action.extra);
 			if (gs->globalLOS) {
