@@ -288,7 +288,7 @@ void CBuilder::Update()
 			}
 			else {
 				// Corpse has been restored, begin resurrection
-				if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * 0.5f)) {
+				if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
 					curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
 					CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
 				}
@@ -314,25 +314,38 @@ void CBuilder::Update()
 	}
 	else if(curCapture && f3Dist(curCapture->pos, pos)<buildDistance+curCapture->radius && inBuildStance){
 		if(curCapture->team!=team){
-			curCapture->captureProgress+=1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
-			CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
-			if(curCapture->captureProgress > 1.0f){
-				if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
-					// capture failed
-					ENTER_MIXED;
-					if (team == gu->myTeam) {
-						logOutput.Print("%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
-						logOutput.SetLastMsgPos(pos);
+
+			float captureProgressTemp = curCapture->captureProgress + 1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
+			if (captureProgressTemp >= 1.0f) {
+				captureProgressTemp = 1.0f;
+			}
+	
+			const float captureFraction = captureProgressTemp - curCapture->captureProgress;
+			const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
+
+			if (!UseEnergy(energyUseScaled)) {
+				gs->Team(team)->energyPull += energyUseScaled;
+			} else {
+				curCapture->captureProgress = captureProgressTemp;
+				CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
+				if(curCapture->captureProgress > 1.0f){
+					if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
+						// capture failed
+						ENTER_MIXED;
+						if (team == gu->myTeam) {
+							logOutput.Print("%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
+							logOutput.SetLastMsgPos(pos);
+						}
+						ENTER_SYNCED;
+					} else {
+						// capture succesful
+						int oldLineage = curCapture->lineage;
+						curCapture->lineage = this->lineage;
+						gs->Team(oldLineage)->LeftLineage(curCapture);
 					}
-					ENTER_SYNCED;
-				} else {
-					// capture succesful
-					int oldLineage = curCapture->lineage;
-					curCapture->lineage = this->lineage;
-					gs->Team(oldLineage)->LeftLineage(curCapture);
+					curCapture->captureProgress=0.0f;
+					StopBuild(true);
 				}
-				curCapture->captureProgress=0.0f;
-				StopBuild(true);
 			}
 		} else {
 			StopBuild(true);

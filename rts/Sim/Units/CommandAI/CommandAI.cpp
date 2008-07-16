@@ -15,6 +15,7 @@
 #include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -401,6 +402,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 			CUnit* unit = uh->units[unitID];
 			if (unit && !unit->unitDef->reclaimable)
 				return false;
+			if (unit && !unit->AllowedReclaim(owner)) return false;
 		} else {
 			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 			CFeatureSet::const_iterator f = fset.find(unitID - MAX_UNITS);

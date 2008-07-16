@@ -113,6 +113,7 @@ public:
 	virtual void Init(const CUnit* builder);
 	bool SetGroup(CGroup* group);
 
+	bool AllowedReclaim(CUnit *builder);
 	bool UseMetal(float metal);
 	void AddMetal(float metal);
 	bool UseEnergy(float energy);

@@ -573,7 +573,6 @@ void CUnit::UpdateResources()
 	metalMakeI = metalUseI = energyMakeI = energyUseI = 0.0f;
 }
 
-
 void CUnit::SetLosStatus(int at, unsigned short newStatus)
 {
 	const unsigned short currStatus = losStatus[at];
@@ -1651,17 +1650,19 @@ bool CUnit::SetGroup(CGroup* newGroup)
 
 bool CUnit::AddBuildPower(float amount, CUnit* builder)
 {
+	const float part = amount / buildTime;
+	const float metalUse  = (metalCost  * part);
+	const float energyUse = (energyCost * part);
+
 	if (amount >= 0.0f) { //  build / repair
 		if (!beingBuilt && (health >= maxHealth)) {
 			return false;
 		}
 
 		lastNanoAdd = gs->frameNum;
-		const float part = amount / buildTime;
 
-		if (beingBuilt) {
-			const float metalUse  = (metalCost  * part);
-			const float energyUse = (energyCost * part);
+
+		if (beingBuilt) { //build
 			if ((gs->Team(builder->team)->metal  >= metalUse) &&
 			    (gs->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
@@ -1688,7 +1689,14 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 			return false;
 		}
-		else {
+		else { //repair
+			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
+
+	  		if (!builder->UseEnergy(energyUseScaled)) {
+				gs->Team(builder->team)->energyPull += energyUseScaled;
+				return false;
+			}
+
 			if (health < maxHealth) {
 				repairAmount += amount;
 				health += maxHealth * part;
@@ -1704,22 +1712,43 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		if (isDead) {
 			return false;
 		}
-		const float part = amount / buildTime;
+
 		if (luaRules && !luaRules->AllowUnitBuildStep(builder, this, part)) {
 			return false;
 		}
+
 		restTime = 0;
+
+		if (!AllowedReclaim(builder)) {
+			builder->DependentDied(this);
+			return false;
+		}
+
+		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
+	  
+		if (!builder->UseEnergy(-energyUseScaled)) {
+			gs->Team(builder->team)->energyPull += energyUseScaled;
+			return false;
+		}
+
+		if ((modInfo.reclaimUnitMethod == 0) && (!beingBuilt)) {
+			beingBuilt = true;
+		}
+
 		health += maxHealth * part;
 		if (beingBuilt) {
-			builder->AddMetal(metalCost*-part);
+			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency);
 			buildProgress+=part;
 			if(buildProgress<0 || health<0){
 				KillUnit(false, true, NULL);
 				return false;
 			}
-		} else {
+		}
+
+		
+		else {
 			if (health < 0) {
-				builder->AddMetal(metalCost);
+				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency);
 				KillUnit(false, true, NULL);
 				return false;
 			}
@@ -1893,6 +1922,19 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 }
 
+bool CUnit::AllowedReclaim (CUnit *builder)
+{
+	// Don't allow the reclaim if the unit is finished and we arent allowed to reclaim it
+	if (!beingBuilt) {
+		if (allyteam == builder->allyteam) {
+			if ((team != builder->team) && (!modInfo.reclaimAllowAllies)) return false;
+		} else {
+			if (!modInfo.reclaimAllowEnemies) return false;
+		}
+	}
+
+	return true;
+}
 
 bool CUnit::UseMetal(float metal)
 {

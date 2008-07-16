@@ -25,9 +25,24 @@ public:
 	int constructionDecayTime;  //How long until they start decaying?
 	float constructionDecaySpeed; //How fast do they decay?
 
-	// Reclaim behaviour
-	int multiReclaim;	// 0 = 1 reclaimer per feature max, otherwise unlimited
-	int reclaimMethod;	// 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
+	//Reclaim behaviour
+	int multiReclaim;	              // 0 = 1 reclaimer per feature max, otherwise unlimited
+	int reclaimMethod;	              // 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
+	int reclaimUnitMethod;                // 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+	float reclaimUnitEnergyCostFactor;    // How much should energy should reclaiming a unit cost, default 0.0
+	float reclaimUnitEfficiency;          // How much metal should reclaim return, default 1.0
+	float reclaimFeatureEnergyCostFactor; // How much should energy should reclaiming a feature cost, default 0.0
+	bool reclaimAllowEnemies;             // Allow reclaiming enemies? default true
+	bool reclaimAllowAllies;              // Allow reclaiming allies? default true
+
+	//Repair beheaviour
+	float repairEnergyCostFactor; // How much should energy should repair cost, default 0.0
+
+	//Ressurect behaviour
+	float resurrectEnergyCostFactor; // How much should energy should resurrect cost, default 0.5
+
+	//Capture beheaviour
+	float captureEnergyCostFactor; // How much should energy should capture cost, default 0.0
 
 	//Transportation behaviour
 	int transportGround;	//0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.

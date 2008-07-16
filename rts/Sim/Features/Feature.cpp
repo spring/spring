@@ -306,14 +306,23 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return false;
 		}
 
-		reclaimLeft -= part;
-
+		float reclaimLeftTemp = reclaimLeft - part;
 		// stop the last bit giving too much resource
-		if (reclaimLeft < 0) {
-			reclaimLeft = 0;
+		if (reclaimLeftTemp < 0) {
+			reclaimLeftTemp = 0;
 		}
 
-		const float fractionReclaimed = oldReclaimLeft - reclaimLeft;
+		const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
+		const float metalFraction = def->metal * fractionReclaimed;
+		const float energyFraction = def->energy * fractionReclaimed;
+		const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
+
+		if (!builder->UseEnergy(energyUseScaled)) {
+			gs->Team(builder->team)->energyPull += energyUseScaled;
+			return false;
+		}
+
+		reclaimLeft = reclaimLeftTemp;
 
 		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0)) {
 			// All-at-end method
@@ -322,8 +331,8 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		}
 		else if (modInfo.reclaimMethod == 0) {
 			// Gradual reclaim
-			builder->AddMetal(def->metal * fractionReclaimed);
-			builder->AddEnergy(def->energy * fractionReclaimed);
+			builder->AddMetal(metalFraction);
+			builder->AddEnergy(energyFraction);
 		}
 		else {
 			// Chunky reclaiming, work out how many chunk boundaries we crossed

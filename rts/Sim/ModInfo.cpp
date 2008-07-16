@@ -60,6 +60,24 @@ void CModInfo::Init(const char* modname)
 	const LuaTable reclaimTbl = root.SubTable("reclaim");
 	multiReclaim  = reclaimTbl.GetInt("multiReclaim",  0);
 	reclaimMethod = reclaimTbl.GetInt("reclaimMethod", 1);
+	reclaimUnitMethod = reclaimTbl.GetInt("unitMethod", 1);
+	reclaimUnitEnergyCostFactor = reclaimTbl.GetFloat("unitEnergyCostFactor", 0.0);
+	reclaimUnitEfficiency = reclaimTbl.GetFloat("unitEfficiency", 1.0);
+	reclaimFeatureEnergyCostFactor = reclaimTbl.GetFloat("featureEnergyCostFactor", 0.0);
+	reclaimAllowEnemies = reclaimTbl.GetBool("allowEnemies", true);
+	reclaimAllowAllies = reclaimTbl.GetBool("allowAllies", true);
+
+	// repair
+	const LuaTable repairTbl = root.SubTable("repair");
+	repairEnergyCostFactor = repairTbl.GetFloat("energyCostFactor", 0.0);
+
+	// resurrect
+	const LuaTable resurrectTbl = root.SubTable("resurrect");
+	resurrectEnergyCostFactor  = resurrectTbl.GetFloat("energyCostFactor",  0.5);
+
+	// capture
+	const LuaTable captureTbl = root.SubTable("capture");
+	captureEnergyCostFactor = captureTbl.GetFloat("energyCostFactor", 0.0);
 
 	// fire-at-dead-units
 	const LuaTable fireAtDeadTbl = root.SubTable("fireAtDead");

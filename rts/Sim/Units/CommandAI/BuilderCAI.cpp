@@ -20,6 +20,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -724,7 +725,8 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 
 		} else {                   //reclaim unit
 			CUnit* unit=uh->units[id];
-			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id)){
+
+			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id) && unit->AllowedReclaim(owner) ){
 				if(!ReclaimObject(unit)){
 					StopMove();
 					FinishCommand();
