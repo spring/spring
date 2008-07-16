@@ -69,7 +69,7 @@ def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
 					source_files += [g]
 				# Exclude 'Test' too so one can dump unit testing code in 'Test' subdirectories
 				# (Couldn't really use regexp for it since it'd exclude files like TestScript.cpp too)
-				elif os.path.isdir(g) and f != 'Test':
+				elif os.path.isdir(g) and f.lower() != 'test':
 					path_stack += [g]
 	if env.has_key('builddir') and env['builddir']:
 		source_files_2 = []
