@@ -41,9 +41,9 @@ add_library(TestGlobalAI SHARED ${testai})
 
 
 if (UNIX)
-install (TARGETS KAIK-0.13 KAI-0.2 RAI_0.553 AAI JCAI NTai TestGlobalAI DESTINATION spring/AI/Bot-libs)
+install (TARGETS KAIK-0.13 KAI-0.2 RAI_0.553 AAI JCAI NTai TestGlobalAI DESTINATION ${LIBDIR}/AI/Bot-libs)
 else (UNIX)
-install (TARGETS KAIK-0.13 KAI-0.2 RAI_0.553 AAI NTai TestGlobalAI DESTINATION spring/AI/Bot-libs)
+install (TARGETS KAIK-0.13 KAI-0.2 RAI_0.553 AAI NTai TestGlobalAI DESTINATION ${LIBDIR}/AI/Bot-libs)
 endif (UNIX)
 
 ### Group AIs
@@ -69,4 +69,4 @@ aux_source_directory(Group/SimpleFormationAI formation)
 add_library(SimpleFormationAI SHARED ${formation})
 
 
-install (TARGETS CentralBuildAI EconomyAI MetalMakerAI MexUpgraderAI RadarAI ReportIdleAI SimpleFormationAI DESTINATION spring/AI/Helper-libs)
+install (TARGETS CentralBuildAI EconomyAI MetalMakerAI MexUpgraderAI RadarAI ReportIdleAI SimpleFormationAI DESTINATION ${LIBDIR}/AI/Helper-libs)

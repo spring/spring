@@ -4,7 +4,12 @@ Project(Spring)
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
-Set(COMPLETE_BUILD true)
+set (ONE_DIRECTORY TRUE CACHE BOOLEAN "When true, place all spring files in one single directory, otherwise seperate to bin/, lib/ etc.")
+set (BINDIR "spring" CACHE STRING "Where to install binaries")
+set (LIBDIR "spring" CACHE STRING "Where to install libraries")
+set (DATADIR "spring" CACHE STRING "Where to install game content")
+
+set (COMPLETE_BUILD true)
 
 if (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
@@ -35,6 +40,6 @@ else (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
 endif(UNIX OR CMAKE_CROSSCOMPILING)
 
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION spring PATTERN ".svn" EXCLUDE)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".svn" EXCLUDE)
 
 
