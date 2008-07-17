@@ -10,8 +10,7 @@ class CMoveMath;
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* udefMD = 0x0, int gs = 30) {
-
+	MoveData(const MoveData* udefMD, int gs) {
 		maxAcceleration = udefMD? udefMD->maxAcceleration:         0.0f;
 		maxBreaking     = udefMD? udefMD->maxAcceleration * -3.0f: 0.0f;
 		maxSpeed        = udefMD? udefMD->maxSpeed / gs:           0.0f;
