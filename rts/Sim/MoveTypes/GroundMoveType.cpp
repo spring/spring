@@ -441,7 +441,7 @@ void CGroundMoveType::SlowUpdate()
 		// submarines aren't always deep enough to be fully
 		// submerged (yet should have the isUnderWater flag
 		// set at all times)
-		const float s = (owner->mobility->moveType == MoveData::Ship_Move)? 0.25f: 1.0f;
+		const float s = (owner->mobility->subMarine)? 0.5f: 1.0f;
 		owner->isUnderWater = ((owner->pos.y + owner->height * s) < 0.0f);
 	}
 }
@@ -1025,7 +1025,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					continue;
 				}
 
-				// basic blocking-check
+				// basic blocking-check (test if the obstacle cannot be overrun)
 				if (o != owner && moveMath->IsBlocking(*moveData, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
 					float distanceToObject = objectToUnit.Length();
@@ -1033,16 +1033,18 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 					// if object is close enough
 					if (distanceToObject < speedf * 35 + 10 + radiusSum && distanceToObject < currentDistanceToGoal && distanceToObject > 0.001f) {
-						// Don't divide by zero. TODO figure out why this can actually happen.
-						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);	//Positive value means "to right".
-						// If object and unit in relative motion are closing in to each other (or not yet fully apart),
-						// the object are in path of the unit and they are not collided.
+						// Don't divide by zero. (TODO: figure out why this can
+						// actually happen.) Positive value means "to the right".
+						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);
 
+						// If object and unit in relative motion are closing in on one another
+						// (or not yet fully apart), then the object is on the path of the unit
+						// and they are not collided.
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
 							fabs(objectDistToAvoidDirCenter) < radiusSum &&
 							(o->mobility || Distance2D(owner, o) >= 0)) {
 							// Avoid collision by turning the heading to left or right.
-							// Using the one who need most adjustment.
+							// Using the object thats needs the most adjustment.
 							if (DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
 
@@ -1428,67 +1430,83 @@ void CGroundMoveType::CheckCollision(void)
 
 bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
-	for (int y = y1; y <= y2; ++y) {
-		// get the top-most blocking object
-		CSolidObject* c = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x, true);
+	const MoveData* m = owner->mobility;
 
-		if (c) {
-			if (owner->mobility->moveMath->IsNonBlocking(*owner->mobility, c)) {
+	for (int y = y1; y <= y2; ++y) {
+		bool blocked = false;
+		const int idx1 = y * gs->mapx + x;
+		const int idx2 = y * gs->mapx + squareTestX;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
+		BlockingMapCellIt it;
+		float3 posDelta = ZeroVector;
+
+		if (!d.empty() && d.find(owner) == d.end()) {
+			continue;
+		}
+
+		// NOTE: clients may have different iteration orders,
+		// but the cumulative change to owner->pos is synced
+		// (all clients process the same objects)
+		for (it = c.begin(); it != c.end(); it++) {
+			CSolidObject* obj = *it;
+
+			if (m->moveMath->IsNonBlocking(*m, obj)) {
 				// no collision possible
 				continue;
-			}
+			} else {
+				blocked = true;
 
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + squareTestX) != NULL &&
-				groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + squareTestX) != owner) {
-				continue;
-			}
-			if (c->mobility) {
-				// if other party is mobile, start to skuff it out of the way
-				float part = owner->mass / (owner->mass + c->mass * 2);
-				float3 dif = c->pos - owner->pos;
-				float dl = dif.Length();
-				float colDepth = fabs(owner->pos.x - xmove);
-				dif *= dl != 0 ? colDepth / dl : 0;
+				if (obj->mobility) {
+					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
+					float3 dif = obj->pos - owner->pos;
+					float dl = dif.Length();
+					float colDepth = streflop::fabs(owner->pos.x - xmove);
 
-				// adjust our own position a bit so
-				// we have to turn less (FIXME: can
-				// place us in building)
-				owner->pos -= dif * (1 - part);
-				// safe cast (only units can be mobile)
-				CUnit* u = (CUnit*) c;
+					// adjust our own position a bit so we have to
+					// turn less (FIXME: can place us in building)
+					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
+					posDelta -= (dif * (1.0f - part));
 
-				const int uAllyTeam = u->allyteam;
-				const int oAllyTeam = owner->allyteam;
-				const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					// safe cast (only units can be mobile)
+					CUnit* u = (CUnit*) obj;
 
-				if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-					// push the blocking unit out of the way
-					// FIXME CAN PLACE OTHER PARTY IN BUILDING
-					u->pos += dif * (part);
-					u->UpdateMidPos();
+					const int uAllyTeam = u->allyteam;
+					const int oAllyTeam = owner->allyteam;
+					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+
+					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+						// push the blocking unit out of the way
+						// (FIXME: can place object in building)
+						u->pos += (dif * part);
+						u->UpdateMidPos();
+					}
 				}
 
-				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
-					// if we (MT owner) are doing something important, tell units around us to bugger off
-					helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+				// if we can overrun this object (eg.
+				// DTs, trees, wreckage) then do so
+				if (!m->moveMath->IsBlocking(*m, obj)) {
+					float3 fix = owner->frontdir * currentSpeed * 200.0f;
+					obj->Kill(fix);
 				}
 			}
+		}
 
-			MoveData* m = owner->mobility;
-
-			// if other party can be overrun then overrun it
-			if (!m->moveMath->IsBlocking(*m, c)) {
-				float3 fix = owner->frontdir * currentSpeed * 200;
-				c->Kill(fix);
+		if (blocked) {
+			// HACK: make units find openings on the blocking map more easily
+			if (groundBlockingObjectMap->GetCell(y1 * gs->mapx + x).empty()) {
+				posDelta.z -= streflop::fabs(owner->pos.x - xmove) * 0.5f;
+			}
+			if (groundBlockingObjectMap->GetCell(y2 * gs->mapx + x).empty()) {
+				posDelta.z += streflop::fabs(owner->pos.x - xmove) * 0.5f;
 			}
 
-			// hack to make units find openings easier until the pathfinder can do it itself
-			// FIXME CAN PLACE US IN BUILDING
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(y1 * gs->mapx + x) == NULL)
-				owner->pos.z -= fabs(owner->pos.x - xmove) * 0.5f;
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(y2 * gs->mapx + x) == NULL)
-				owner->pos.z += fabs(owner->pos.x - xmove) * 0.5f;
+			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+				// if we are doing something important, tell units around us to bugger off
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+			}
 
+			owner->pos += posDelta;
 			owner->pos.x = xmove;
 			currentSpeed *= 0.97f;
 			return true;
@@ -1500,67 +1518,83 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
-	for (int x = x1; x <= x2; ++x) {
-		// get the top-most blocking object
-		CSolidObject* c = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x, true);
+	const MoveData* m = owner->mobility;
 
-		if (c) {
-			if (owner->mobility->moveMath->IsNonBlocking(*owner->mobility, c)) {
+	for (int x = x1; x <= x2; ++x) {
+		bool blocked = false;
+		const int idx1 = y * gs->mapx + x;
+		const int idx2 = squareTestY * gs->mapx + x;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
+		BlockingMapCellIt it;
+		float3 posDelta = ZeroVector;
+
+		if (!d.empty() && d.find(owner) == d.end()) {
+			continue;
+		}
+
+		// NOTE: clients may have different iteration orders,
+		// but the cumulative change to owner->pos is synced
+		// (all clients process the same objects)
+		for (it = c.begin(); it != c.end(); it++) {
+			CSolidObject* obj = *it;
+
+			if (m->moveMath->IsNonBlocking(*m, obj)) {
 				// no collision possible
 				continue;
-			}
+			} else {
+				blocked = true;
 
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(squareTestY * gs->mapx + x) != NULL &&
-				groundBlockingObjectMap->GroundBlockedUnsafe(squareTestY * gs->mapx + x) != owner) {
-				continue;
-			}
-			if (c->mobility) {
-				// if other party is mobile, start to skuff it out of the way
-				float part = owner->mass / (owner->mass + c->mass * 2);
-				float3 dif = c->pos - owner->pos;
-				float dl = dif.Length();
-				float colDepth = fabs(owner->pos.z - zmove);
-				dif *= dl != 0 ? colDepth / dl : 0;
+				if (obj->mobility) {
+					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
+					float3 dif = obj->pos - owner->pos;
+					float dl = dif.Length();
+					float colDepth = streflop::fabs(owner->pos.z - zmove);
 
-				// adjust our own position a bit so
-				// we have to turn less (FIXME: can
-				// place us in building)
-				owner->pos -= dif * (1 - part);
-				// safe cast (only units can be mobile)
-				CUnit* u = (CUnit*) c;
+					// adjust our own position a bit so we have to
+					// turn less (FIXME: can place us in building)
+					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
+					posDelta -= (dif * (1.0f - part));
 
-				const int uAllyTeam = u->allyteam;
-				const int oAllyTeam = owner->allyteam;
-				const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					// safe cast (only units can be mobile)
+					CUnit* u = (CUnit*) obj;
 
-				if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
-					// push the blocking unit out of the way
-					// FIXME CAN PLACE OTHER PARTY IN BUILDING
-					c->pos += dif * (part);
-					u->UpdateMidPos();
+					const int uAllyTeam = u->allyteam;
+					const int oAllyTeam = owner->allyteam;
+					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+
+					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+						// push the blocking unit out of the way
+						// (FIXME: can place object in building)
+						u->pos += (dif * part);
+						u->UpdateMidPos();
+					}
 				}
 
-				if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
-					// if we (MT owner) are doing something important, tell units around us to bugger off
-					helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+				// if we can overrun this object (eg.
+				// DTs, trees, wreckage) then do so
+				if (!m->moveMath->IsBlocking(*m, obj)) {
+					float3 fix = owner->frontdir * currentSpeed * 200.0f;
+					obj->Kill(fix);
 				}
 			}
+		}
 
-			MoveData* m = owner->mobility;
-
-			// if other party can be overrun then overrun it
-			if (!m->moveMath->IsBlocking(*m, c)) {
-				float3 fix = owner->frontdir * currentSpeed * 200;
-				c->Kill(fix);
+		if (blocked) {
+			// HACK: make units find openings on the blocking map more easily
+			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x1).empty()) {
+				posDelta.x -= streflop::fabs(owner->pos.z - zmove) * 0.5f;
+			}
+			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x2).empty()) {
+				posDelta.x += streflop::fabs(owner->pos.z - zmove) * 0.5f;
 			}
 
-			// hack to make units find openings easier until the pathfinder can do it itself
-			// FIXME CAN PLACE US IN BUILDING
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x1) == NULL)
-				owner->pos.x -= fabs(owner->pos.z - zmove) * 0.5f;
-			if (groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x2) == NULL)
-				owner->pos.x += fabs(owner->pos.z - zmove) * 0.5f;
+			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+				// if we are doing something important, tell units around us to bugger off
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+			}
 
+			owner->pos += posDelta;
 			owner->pos.z = zmove;
 			currentSpeed *= 0.97f;
 			return true;

@@ -208,37 +208,41 @@ float CMoveMath::yLevel(const float3 pos) {
 
 /* Check if a single square is accessable (for any object which uses the given movedata). */
 int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
-	// Error-check
+	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 1;
 	}
 
-	CSolidObject* obstacle = groundBlockingObjectMap->GroundBlockedUnsafe(xSquare + zSquare * gs->mapx);
+	int r = 0;
+	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
+	BlockingMapCellIt it;
 
-	if (obstacle) {
+	for (it = c.begin(); it != c.end(); it++) {
+		CSolidObject* obstacle = *it;
+
 		if (IsNonBlocking(moveData, obstacle)) {
-			return 0;
+			continue;
 		}
 
 		if (obstacle->mobility) {
 			// mobile obstacle
 			if (obstacle->isMoving) {
-				return BLOCK_MOVING;
+				r |= BLOCK_MOVING;
 			} else {
 				if (!((CUnit*) obstacle)->beingBuilt && ((CUnit*) obstacle)->commandAI->commandQue.empty()) {
 					// idling mobile unit
-					return BLOCK_MOBILE;
+					r |= BLOCK_MOBILE;
 				} else {
 					// busy mobile unit (but not following path)
-					return BLOCK_MOBILE_BUSY;
+					r |= BLOCK_MOBILE_BUSY;
 				}
 			}
 		} else {
 			if (IsBlocking(moveData, obstacle)) {
-				return BLOCK_STRUCTURE;
+				r |= BLOCK_STRUCTURE;
 			}
 		}
 	}
 
-	return 0;
+	return r;
 }
