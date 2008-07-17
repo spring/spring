@@ -15,7 +15,6 @@
 #include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"

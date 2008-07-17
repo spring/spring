@@ -20,7 +20,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/ModInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
