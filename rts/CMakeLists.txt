@@ -85,7 +85,7 @@ ELSE (MINGW)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	LIST(APPEND spring_libraries openal GL GLU IL ILU X11 Xcursor ${GLEW_LIBRARIES} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+	LIST(APPEND spring_libraries openal GL GLU ${DEVIL_LIBRARIES} X11 Xcursor ${GLEW_LIBRARIES} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
 ENDIF (MINGW)
 
 ### libraries needed on all platforms
