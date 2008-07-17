@@ -338,9 +338,14 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						for (int x = 0; x < endx; ++x) {
 							const float xPos = x * posScale;
 							int a = (y * pwr2mapx) + x;
-							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 255, x, y);
-							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 255, x, y);
-							const int totalLos = (inLos + inAir) / 2;
+							int totalLos;
+							if (gs->globalLOS) {
+								totalLos = 255;
+							} else {
+								const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 255, x, y);
+								const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 255, x, y);
+								totalLos = (inLos + inAir) / 2;
+							}
 
 #ifdef SONAR_JAMMER_MAPS
 							const bool useRadar = (ground->GetHeight2(xPos, zPos) >= 0.0f);
