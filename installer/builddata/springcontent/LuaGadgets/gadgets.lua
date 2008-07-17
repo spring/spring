@@ -24,7 +24,7 @@ local SAFEWRAP = 0
 
 
 local HANDLER_DIR = 'LuaGadgets/'
-local GADGETS_DIR = Script.GetName() .. '/Gadgets/'
+local GADGETS_DIR = Script.GetName():gsub('US$', '') .. '/Gadgets/'
 
 
 local VFSMODE = VFS.ZIP_ONLY -- FIXME: ZIP_FIRST ?
