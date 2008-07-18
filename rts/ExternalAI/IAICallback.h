@@ -67,6 +67,9 @@ struct LineMarker {
 #define AIHCAddMapLineId 2
 #define AIHCRemoveMapPointId 3
 #define AIHCSendStartPosId 4
+#define AIHCGetUnitDefByIdId 5
+#define AIHCGetWeaponDefByIdId 6
+#define AIHCGetFeatureDefByIdId 7
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -91,6 +94,24 @@ struct AIHCSendStartPos ///< result of HandleCommand is 1 - ok supported
 	float3 pos;
 };
 
+struct AIHCGetUnitDefById ///< result of HandleCommand is 1 - ok supported
+{
+	int unitDefId;
+	const UnitDef* ret;
+};
+
+struct AIHCGetWeaponDefById ///< result of HandleCommand is 1 - ok supported
+{
+	int weaponDefId;
+	const WeaponDef* ret;
+};
+
+struct AIHCGetFeatureDefById ///< result of HandleCommand is 1 - ok supported
+{
+	int featureDefId;
+	const FeatureDef* ret;
+};
+
 
 class SPRING_API IAICallback
 {
@@ -111,7 +132,7 @@ public:
 	// * AI's should check each unit if it is still under control of their
 	//   team after the transaction via UnitTaken() and UnitGiven(), since
 	//   LuaRules might block part of it
-	virtual int SendUnits(const std::vector<int>& unitIDs, int receivingTeam) = 0;
+	virtual int SendUnits(const std::vector<int>& unitIds, int receivingTeamId) = 0;
 
 	// checks if pos is within view of the current camera, using radius as a margin
 	virtual bool PosInCamera(float3 pos, float radius) = 0;
@@ -123,8 +144,8 @@ public:
 
 	virtual int GetMyTeam() = 0;
 	virtual int GetMyAllyTeam() = 0;
-	virtual int GetPlayerTeam(int player) = 0;
-	virtual const char* GetTeamSide(int team) = 0;
+	virtual int GetPlayerTeam(int playerId) = 0;
+	virtual const char* GetTeamSide(int teamId) = 0;
 
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	// set something to !0 to tell other AI's that the area is already initialized when they try to
@@ -133,44 +154,44 @@ public:
 	// release your reference to a memory area
 	virtual void ReleasedSharedMemArea(char* name) = 0;
 
-	virtual int CreateGroup(char* dll, unsigned aiNumber) = 0;							// creates a group and return the id it was given, return -1 on
+	virtual int CreateGroup(char* libraryName, unsigned aiNumber) = 0;							// creates a group and return the id it was given, return -1 on
 																						// failure (dll didn't exist, etc)
-	virtual void EraseGroup(int groupid) = 0;											// erases a specified group
-	virtual bool AddUnitToGroup(int unitid, int groupid) = 0;							// adds a unit to a specific group, if it was previously in a group
+	virtual void EraseGroup(int groupId) = 0;											// erases a specified group
+	virtual bool AddUnitToGroup(int unitId, int groupId) = 0;							// adds a unit to a specific group, if it was previously in a group
 																						// it is removed from that, return false if the group didn't exist
 																						// or didn't accept the unit
-	virtual bool RemoveUnitFromGroup(int unitid) = 0;									// removes a unit from its group
-	virtual int GetUnitGroup(int unitid) = 0;											// returns the group a unit belongs to, -1 if none
-	virtual const std::vector<CommandDescription>* GetGroupCommands(int unitid) = 0;	// the commands that this unit can understand, other commands will be ignored
-	virtual int GiveGroupOrder(int unitid, Command* c) = 0;
+	virtual bool RemoveUnitFromGroup(int unitId) = 0;									// removes a unit from its group
+	virtual int GetUnitGroup(int unitId) = 0;											// returns the group a unit belongs to, -1 if none
+	virtual const std::vector<CommandDescription>* GetGroupCommands(int groupId) = 0;	// the commands that this group can understand, other commands will be ignored
+	virtual int GiveGroupOrder(int unitId, Command* c) = 0;
 
-	virtual int GiveOrder(int unitid, Command* c) = 0;
+	virtual int GiveOrder(int unitId, Command* c) = 0;
 
-	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitid) = 0;
-	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid) = 0;
+	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitId) = 0;         // the commands that this unit can understand, other commands will be ignored
+	virtual const CCommandQueue* GetCurrentUnitCommands(int unitId) = 0;
 
 	// these functions always work on allied units, but for
 	// enemies only when you have LOS on them (so watch out
 	// when calling GetUnitDef)
-	virtual int GetUnitAiHint(int unitid) = 0;				// integer telling something about the units main function, not implemented yet
-	virtual int GetUnitTeam(int unitid) = 0;
-	virtual int GetUnitAllyTeam(int unitid) = 0;
-	virtual float GetUnitHealth(int unitid) = 0;			// the unit's current health
-	virtual float GetUnitMaxHealth(int unitid) = 0;			// the unit's max health
-	virtual float GetUnitSpeed(int unitid) = 0;				// the unit's max speed
-	virtual float GetUnitPower(int unitid) = 0;				// sort of the measure of the units overall power
-	virtual float GetUnitExperience(int unitid) = 0;		// how experienced the unit is (0.0f-1.0f)
-	virtual float GetUnitMaxRange(int unitid) = 0;			// the furthest any weapon of the unit can fire
-	virtual bool IsUnitActivated (int unitid) = 0;
-	virtual bool UnitBeingBuilt(int unitid) = 0;			// true if the unit is currently being built
-	virtual const UnitDef* GetUnitDef(int unitid) = 0;		// returns the unit's unitdef struct from which you can read all the
+	virtual int GetUnitAiHint(int unitId) = 0;				// integer telling something about the units main function, not implemented yet
+	virtual int GetUnitTeam(int unitId) = 0;
+	virtual int GetUnitAllyTeam(int unitId) = 0;
+	virtual float GetUnitHealth(int unitId) = 0;			// the unit's current health
+	virtual float GetUnitMaxHealth(int unitId) = 0;			// the unit's max health
+	virtual float GetUnitSpeed(int unitId) = 0;				// the unit's max speed
+	virtual float GetUnitPower(int unitId) = 0;				// sort of the measure of the units overall power
+	virtual float GetUnitExperience(int unitId) = 0;		// how experienced the unit is (0.0f-1.0f)
+	virtual float GetUnitMaxRange(int unitId) = 0;			// the furthest any weapon of the unit can fire
+	virtual bool IsUnitActivated (int unitId) = 0;
+	virtual bool UnitBeingBuilt(int unitId) = 0;			// true if the unit is currently being built
+	virtual const UnitDef* GetUnitDef(int unitId) = 0;		// returns the unit's unitdef struct from which you can read all the
 															// statistics of the unit, do NOT try to change any values in it
-	virtual float3 GetUnitPos(int unitid) = 0;
-	virtual int GetBuildingFacing(int unitid) = 0;			// returns the unit's build facing (0-3)
-	virtual bool IsUnitCloaked(int unitid) = 0;
-	virtual bool IsUnitParalyzed(int unitid) = 0;
-	virtual bool IsUnitNeutral(int unitid) = 0;
-	virtual bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo) = 0;
+	virtual float3 GetUnitPos(int unitId) = 0;
+	virtual int GetBuildingFacing(int unitId) = 0;			// returns the unit's build facing (0-3)
+	virtual bool IsUnitCloaked(int unitId) = 0;
+	virtual bool IsUnitParalyzed(int unitId) = 0;
+	virtual bool IsUnitNeutral(int unitId) = 0;
+	virtual bool GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) = 0;
 
 	virtual const UnitDef* GetUnitDef(const char* unitName) = 0;
 
@@ -181,8 +202,8 @@ public:
 	// * the waypoint's x and z coordinates are returned in x and z while y is used for error codes
 	//   y >= 0: worked ok, y = -2: still thinking call again, y = -1: end of path reached or invalid path
 	virtual int InitPath(float3 start, float3 end, int pathType) = 0;
-	virtual float3 GetNextWaypoint(int pathid) = 0;
-	virtual void FreePath(int pathid) = 0;
+	virtual float3 GetNextWaypoint(int pathId) = 0;
+	virtual void FreePath(int pathId) = 0;
 
 	// returns the approximate path cost between two points(note that
 	// it needs to calculate the complete path so somewhat expensive)
@@ -194,13 +215,13 @@ public:
 	// * the return value indicates how many units were returned, the rest of the array is unchanged
 	// * all forms of GetEnemyUnits and GetFriendlyUnits filter out any neutrals, use the GetNeutral
 	//   callbacks to retrieve them
-	virtual int GetEnemyUnits(int* units) = 0;										// returns all known (in LOS) enemy units
-	virtual int GetEnemyUnits(int* units, const float3& pos, float radius) = 0;		// returns all known enemy units within radius from pos
-	virtual int GetEnemyUnitsInRadarAndLos(int* units) = 0;							// returns all enemy units in radar and los
-	virtual int GetFriendlyUnits(int* units) = 0;									// returns all friendly units
-	virtual int GetFriendlyUnits(int* units, const float3& pos, float radius) = 0;	// returns all friendly units within radius from pos
-	virtual int GetNeutralUnits(int* units) = 0;									// returns all known (in LOS) neutral units
-	virtual int GetNeutralUnits(int* units, const float3& pos, float radius) = 0;	// returns all known neutral units within radius from pos
+	virtual int GetEnemyUnits(int* unitIds) = 0;										// returns all known (in LOS) enemy units
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius) = 0;		// returns all known enemy units within radius from pos
+	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds) = 0;							// returns all enemy units in radar and los
+	virtual int GetFriendlyUnits(int* unitIds) = 0;									// returns all friendly units
+	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius) = 0;	// returns all friendly units within radius from pos
+	virtual int GetNeutralUnits(int* unitIds) = 0;									// returns all known (in LOS) neutral units
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius) = 0;	// returns all known neutral units within radius from pos
 
 	// the following functions are used to get information about the map
 	// * do NOT modify or delete any of the pointers returned
@@ -236,29 +257,29 @@ public:
 	virtual void LineDrawerStartPath(const float3& pos, const float* color) = 0;
 	virtual void LineDrawerFinishPath() = 0;
 	virtual void LineDrawerDrawLine(const float3& endPos, const float* color) = 0;
-	virtual void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos, const float* color) = 0;
-	virtual void LineDrawerDrawIconAtLastPos(int cmdID) = 0;
+	virtual void LineDrawerDrawLineAndIcon(int commandId, const float3& endPos, const float* color) = 0;
+	virtual void LineDrawerDrawIconAtLastPos(int commandId) = 0;
 	virtual void LineDrawerBreak(const float3& endPos, const float* color) = 0;
 	virtual void LineDrawerRestart() = 0;
 	virtual void LineDrawerRestartSameColor() = 0;
 
 	// the following functions allow the AI to draw figures in the world
-	// * each figure is part of a group
-	// * when creating figures use 0 as group to get a new one, the return value is the new group
-	// * the lifetime is how many frames a figure should live before being autoremoved, 0 means no removal
+	// * each figure is part of a figureGroup
+	// * when creating figures use 0 as figureGroupId to get a new figureGroup, the return value is the new figureGroup
+	// * the lifeTime is how many frames a figure should live before being autoremoved, 0 means no removal
 	// * arrow != 0 means that the figure will get an arrow at the end
 	//
 	// creates a cubic Bezier spline figure (from pos1 to pos4 with control points pos2 and pos3)
-	virtual int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifetime, int group) = 0;
-	virtual int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifetime, int group) = 0;
-	virtual void SetFigureColor(int group, float red, float green, float blue, float alpha) = 0;
-	virtual void DeleteFigureGroup(int group) = 0;
+	virtual int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) = 0;
+	virtual int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) = 0;
+	virtual void SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) = 0;
+	virtual void DeleteFigureGroup(int figureGroupId) = 0;
 
 	// this function allows you to draw units in the map
 	// * they only show up on the local player's screen
 	// * they will be drawn in the "standard pose" (as if before any COB scripts are run)
 	// * the rotation is in radians, team affects the color of the unit
-	virtual void DrawUnit(const char* name, float3 pos, float rotation, int lifetime, int team, bool transparent, bool drawBorder, int facing = 0) = 0;
+	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
 	// returns the closest position from a given position that the building can be built at
@@ -271,11 +292,11 @@ public:
 	virtual bool GetValue(int id, void* dst) = 0;
 	virtual int HandleCommand(int commandId, void* data) = 0;
 
-	virtual int GetFileSize(const char* name) = 0;								// return -1 when the file doesn't exist
-	virtual bool ReadFile(const char* name, void* buffer, int bufferLen) = 0;	// returns false when file doesn't exist or buffer is too small
+	virtual int GetFileSize(const char* filename) = 0;								// return -1 when the file doesn't exist
+	virtual bool ReadFile(const char* filename, void* buffer, int bufferLen) = 0;	// returns false when file doesn't exist or buffer is too small
 
 	// added by alik
-	virtual int GetSelectedUnits(int* units) = 0;
+	virtual int GetSelectedUnits(int* unitIds) = 0;
 	virtual float3 GetMousePos() = 0;
 	virtual int GetMapPoints(PointMarker* pm, int maxPoints) = 0;
 	virtual int GetMapLines(LineMarker* lm, int maxLines) = 0;
@@ -290,19 +311,19 @@ public:
 	virtual float GetEnergyUsage() = 0;				// current energy usage for team
 	virtual float GetEnergyStorage() = 0;			// curent energy storage capacity for team
 
-	virtual int GetFeatures(int *features, int max) = 0;
-	virtual int GetFeatures(int *features, int max, const float3& pos, float radius) = 0;
-	virtual const FeatureDef* GetFeatureDef(int feature) = 0;
-	virtual float GetFeatureHealth(int feature) = 0;
-	virtual float GetFeatureReclaimLeft(int feature) = 0;
-	virtual float3 GetFeaturePos(int feature) = 0;
+	virtual int GetFeatures(int *featureIds, int max) = 0;
+	virtual int GetFeatures(int *featureIds, int max, const float3& pos, float radius) = 0;
+	virtual const FeatureDef* GetFeatureDef(int featureId) = 0;
+	virtual float GetFeatureHealth(int featureId) = 0;
+	virtual float GetFeatureReclaimLeft(int featureId) = 0;
+	virtual float3 GetFeaturePos(int featureId) = 0;
 
 	virtual int GetNumUnitDefs() = 0;
 	virtual void GetUnitDefList(const UnitDef** list) = 0;
-	virtual float GetUnitDefHeight(int def) = 0;	// forces loading of the unit model
-	virtual float GetUnitDefRadius(int def) = 0;	// forces loading of the unit model
+	virtual float GetUnitDefHeight(int unitDefId) = 0;	// forces loading of the unit model
+	virtual float GetUnitDefRadius(int unitDefId) = 0;	// forces loading of the unit model
 
-	virtual const WeaponDef* GetWeapon(const char* weaponname) = 0;
+	virtual const WeaponDef* GetWeapon(const char* weaponName) = 0;
 
 	virtual const float3* GetStartPos() = 0;
 
