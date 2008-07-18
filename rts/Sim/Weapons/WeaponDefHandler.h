@@ -32,6 +32,9 @@ struct AtlasedTexture;
 struct WeaponDef
 {
 	CR_DECLARE_STRUCT(WeaponDef);
+        
+        WeaponDef() {}
+        WeaponDef(DamageArray damages) : damages(damages) {}
 
 	~WeaponDef();
 
@@ -239,6 +242,7 @@ class CWeaponDefHandler {
 		~CWeaponDefHandler();
 
 		const WeaponDef* GetWeapon(const std::string weaponname);
+		const WeaponDef* GetWeaponById(int weaponDefId);
 
 		void LoadSound(const LuaTable&, GuiSoundSet&, const std::string& name);
 
