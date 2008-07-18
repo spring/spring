@@ -662,6 +662,10 @@ const WeaponDef *CWeaponDefHandler::GetWeapon(const string weaponname2)
 
 	return &weaponDefs[ii->second];
 }
+const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
+{
+	return &weaponDefs[weaponDefId];
+}
 
 float3 CWeaponDefHandler::hs2rgb(float h, float s)
 {
