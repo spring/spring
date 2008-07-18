@@ -662,10 +662,16 @@ const WeaponDef *CWeaponDefHandler::GetWeapon(const string weaponname2)
 
 	return &weaponDefs[ii->second];
 }
+
+
 const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
 {
+	if ((weaponDefId < 0) || (weaponDefId > numWeaponDefs)) {
+		return NULL;
+	}
 	return &weaponDefs[weaponDefId];
 }
+
 
 float3 CWeaponDefHandler::hs2rgb(float h, float s)
 {
@@ -703,6 +709,7 @@ float3 CWeaponDefHandler::hs2rgb(float h, float s)
 	}
 	return col;
 }
+
 
 DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startPos, float3 curPos, float range, float exp, float damageMin, bool inverted)
 {
@@ -746,5 +753,7 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 	return dynDamages;
 }
 
-WeaponDef::~WeaponDef() {
+
+WeaponDef::~WeaponDef()
+{
 }
