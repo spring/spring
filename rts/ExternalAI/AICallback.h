@@ -24,65 +24,68 @@ public:
 	void SetLastMsgPos(float3 pos);
 	void AddNotification(float3 pos, float3 color, float alpha);
 
-	bool SendResources(float mAmount, float eAmount, int receivingTeam);
-	int SendUnits(const std::vector<int>& unitIDs, int receivingTeam);
+	bool SendResources(float mAmount, float eAmount, int receivingTeamId);
+	int SendUnits(const std::vector<int>& unitIds, int receivingTeamId);
 
 	bool PosInCamera(float3 pos, float radius);
 
 	int GetCurrentFrame();
 	int GetMyTeam();
 	int GetMyAllyTeam();
-	int GetPlayerTeam(int player);
-	const char* GetTeamSide(int team);
+	int GetPlayerTeam(int playerId);
+	const char* GetTeamSide(int teamId);
 	void* CreateSharedMemArea(char* name, int size);
 	void ReleasedSharedMemArea(char* name);
 
-	int CreateGroup(char* dll, unsigned aiNumber);
-	void EraseGroup(int groupid);
-	bool AddUnitToGroup(int unitid, int groupid);
-	bool RemoveUnitFromGroup(int unitid);
-	int GetUnitGroup(int unitid);
-	const std::vector<CommandDescription>* GetGroupCommands(int unitid);
-	int GiveGroupOrder(int unitid, Command* c);
+	int CreateGroup(char* libraryName, unsigned aiNumber);
+	void EraseGroup(int groupId);
+	bool AddUnitToGroup(int unitId, int groupId);
+	bool RemoveUnitFromGroup(int unitId);
+	int GetUnitGroup(int unitId);
+	const std::vector<CommandDescription>* GetGroupCommands(int groupId);
+	int GiveGroupOrder(int unitId, Command* c);
 
-	int GiveOrder(int unitid,Command* c);
-	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
-	const CCommandQueue* GetCurrentUnitCommands(int unitid);
+	int GiveOrder(int unitId,Command* c);
+	const std::vector<CommandDescription>* GetUnitCommands(int unitId);
+	const CCommandQueue* GetCurrentUnitCommands(int unitId);
 
-	int GetUnitAiHint(int unitid);
-	int GetUnitTeam(int unitid);
-	int GetUnitAllyTeam(int unitid);
-	float GetUnitHealth(int unitid);
-	float GetUnitMaxHealth(int unitid);
-	float GetUnitSpeed(int unitid);
-	float GetUnitPower(int unitid);
-	float GetUnitExperience(int unitid);
-	float GetUnitMaxRange(int unitid);
-	bool IsUnitActivated (int unitid);
-	bool UnitBeingBuilt(int unitid);
-	const UnitDef* GetUnitDef(int unitid);
-	float3 GetUnitPos(int unitid);
-	int GetBuildingFacing(int unitid);
-	bool IsUnitCloaked(int unitid);
-	bool IsUnitParalyzed(int unitid);
-	bool IsUnitNeutral(int unitid);
-	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
+	int GetUnitAiHint(int unitId);
+	int GetUnitTeam(int unitId);
+	int GetUnitAllyTeam(int unitId);
+	float GetUnitHealth(int unitId);
+	float GetUnitMaxHealth(int unitId);
+	float GetUnitSpeed(int unitId);
+	float GetUnitPower(int unitId);
+	float GetUnitExperience(int unitId);
+	float GetUnitMaxRange(int unitId);
+	bool IsUnitActivated (int unitId);
+	bool UnitBeingBuilt(int unitId);
+	const UnitDef* GetUnitDef(int unitId);
+	float3 GetUnitPos(int unitId);
+	int GetBuildingFacing(int unitId);
+	bool IsUnitCloaked(int unitId);
+	bool IsUnitParalyzed(int unitId);
+	bool IsUnitNeutral(int unitId);
+	bool GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo);
 
 	const UnitDef* GetUnitDef(const char* unitName);
+private:
+	const UnitDef* GetUnitDefById(int unitDefId);
+public:
 
 	int InitPath(float3 start, float3 end, int pathType);
-	float3 GetNextWaypoint(int pathid);
-	void FreePath(int pathid);
+	float3 GetNextWaypoint(int pathId);
+	void FreePath(int pathId);
 
 	float GetPathLength(float3 start, float3 end, int pathType);
 
-	int GetEnemyUnits(int* units);
-	int GetEnemyUnitsInRadarAndLos(int* units);
-	int GetEnemyUnits(int* units, const float3& pos, float radius);
-	int GetFriendlyUnits(int* units);
-	int GetFriendlyUnits(int* units, const float3& pos, float radius);
-	int GetNeutralUnits(int* units);
-	int GetNeutralUnits(int* units, const float3& pos, float radius);
+	int GetEnemyUnits(int* unitIds);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius);
+	int GetFriendlyUnits(int* unitIds);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius);
+	int GetNeutralUnits(int* unitIds);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius);
 
 
 	int GetMapWidth();
@@ -110,18 +113,18 @@ public:
 	void LineDrawerStartPath(const float3& pos, const float* color);
 	void LineDrawerFinishPath();
 	void LineDrawerDrawLine(const float3& endPos, const float* color);
-	void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
-	void LineDrawerDrawIconAtLastPos(int cmdID);
+	void LineDrawerDrawLineAndIcon(int commandId, const float3& endPos, const float* color);
+	void LineDrawerDrawIconAtLastPos(int commandId);
 	void LineDrawerBreak(const float3& endPos, const float* color);
 	void LineDrawerRestart();
 	void LineDrawerRestartSameColor();
 
-	int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifetime, int group);
-	int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifetime, int group);
-	void SetFigureColor(int group,float red, float green, float blue, float alpha);
-	void DeleteFigureGroup(int group);
+	int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifetime, int figureGroupId);
+	int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifetime, int figureGroupId);
+	void SetFigureColor(int figureGroupId,float red, float green, float blue, float alpha);
+	void DeleteFigureGroup(int figureGroupId);
 
-	void DrawUnit(const char* name, float3 pos, float rotation, int lifetime, int team, bool transparent, bool drawBorder, int facing);
+	void DrawUnit(const char* unitName, float3 pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
 
 	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
 	float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing);
@@ -136,26 +139,29 @@ public:
 	float GetEnergyUsage();
 	float GetEnergyStorage();
 
-	int GetFeatures(int* features, int max);
-	int GetFeatures(int* features, int max, const float3& pos, float radius);
-	const FeatureDef* GetFeatureDef (int feature);
-	float GetFeatureHealth(int feature);
-	float GetFeatureReclaimLeft(int feature);
-	float3 GetFeaturePos (int feature);
+	int GetFeatures(int* featureIds, int max);
+	int GetFeatures(int* featureIds, int max, const float3& pos, float radius);
+	const FeatureDef* GetFeatureDef(int featureId);
+private:
+	const FeatureDef* GetFeatureDefById(int featureDefId);
+public:
+	float GetFeatureHealth(int featureId);
+	float GetFeatureReclaimLeft(int featureId);
+	float3 GetFeaturePos (int featureId);
 
-	bool GetProperty(int unit, int property, void* dst);
+	bool GetProperty(int unitId, int property, void* dst);
 	bool GetValue(int id, void* dst);
 	int HandleCommand(int commandId, void* data);
 
-	int GetFileSize(const char* name);
-	bool ReadFile(const char* name, void* buffer,int bufferLen);
-	int GetFileSize(const char* name, const char* modes);
-	bool ReadFile(const char* name, const char* modes, void* buffer, int bufferLen);
+	int GetFileSize(const char* filename);
+	bool ReadFile(const char* filename, void* buffer,int bufferLen);
+	int GetFileSize(const char* filename, const char* modes);
+	bool ReadFile(const char* filename, const char* modes, void* buffer, int bufferLen);
 
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
-	int GetSelectedUnits(int* units);
+	int GetSelectedUnits(int* unitIds);
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker* pm, int maxPoints);
 	int GetMapLines(LineMarker* lm, int maxLines);
@@ -163,7 +169,10 @@ public:
 	float GetUnitDefRadius(int def);
 	float GetUnitDefHeight(int def);
 
-	const WeaponDef* GetWeapon(const char* weaponname);
+	const WeaponDef* GetWeapon(const char* weaponName);
+private:
+	const WeaponDef* GetWeaponDefById(int weaponDefId);
+public:
 
 	// false if a unit cannot currently be created
 	bool CanBuildUnit(int unitDefID);
