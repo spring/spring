@@ -288,8 +288,8 @@ public:
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing = 0) = 0;
 
 	// for certain future callback extensions
-	virtual bool GetProperty(int id, int property, void* dst) = 0;
-	virtual bool GetValue(int id, void* dst) = 0;
+	virtual bool GetProperty(int unitId, int propertyId, void* dst) = 0;
+	virtual bool GetValue(int valueId, void* dst) = 0;
 	virtual int HandleCommand(int commandId, void* data) = 0;
 
 	virtual int GetFileSize(const char* filename) = 0;								// return -1 when the file doesn't exist
