@@ -60,6 +60,7 @@ TARGET_LINK_LIBRARIES(server SDL boost_thread-mt hpiutil2 7zip minizip lua boost
 IF (MINGW)
 	TARGET_LINK_LIBRARIES(server ws2_32)
 ENDIF (MINGW)
+SET_TARGET_PROPERTIES(server PROPERTIES COMPILE_FLAGS "-fpic")
 
 ADD_EXECUTABLE(dedicated main)
 TARGET_LINK_LIBRARIES(dedicated server)
