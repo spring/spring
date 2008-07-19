@@ -19,7 +19,8 @@ endif (MINGW)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
-SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
+set (MARCH_FLAG native CACHE STRING "Passed to GCC for CPU-dependend optimization")
+SET(BASE_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
 IF (UNIX)
 	SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
 ENDIF (UNIX)
