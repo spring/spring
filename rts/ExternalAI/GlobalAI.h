@@ -12,18 +12,19 @@ class CGlobalAI: public CObject
 {
 public:
 	CR_DECLARE(CGlobalAI);
+	CGlobalAI();
 	CGlobalAI(int team, const char* dll);
 	~CGlobalAI(void);
 
-	void LoadAILib(int, const char*, bool);
+	virtual void LoadAILib(int, const char*, bool);
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
-	void Load(std::istream *s);
-	void Save(std::ostream *s);
+	virtual void Load(std::istream *s);
+	virtual void Save(std::ostream *s);
 
-	void Update(void);
-	void PreDestroy(); // called just before all the units are destroyed
+	virtual void Update(void);
+	virtual void PreDestroy(); // called just before all the units are destroyed
 
 	int team;
 	bool cheatevents;

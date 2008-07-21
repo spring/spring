@@ -3,7 +3,6 @@
 #include "IGlobalAI.h"
 #include "GlobalAICallback.h"
 #include "GlobalAIHandler.h"
-#include "GroupHandler.h"
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
@@ -46,6 +45,10 @@ void AIException(const char *what);
 			throw;							\
 		} else throw;						\
 	}
+
+CGlobalAI::CGlobalAI() {
+    
+}
 
 CGlobalAI::CGlobalAI(int team, const char* botLibName): team(team), cheatevents(false), libName(botLibName? botLibName: "")
 {

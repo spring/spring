@@ -11,7 +11,7 @@
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 
-float float3::maxxpos = 2048.0f; /**< Maximum X position is 2048 */
+float float3::maxxpos = 2048.0f; /**< Maximum x position is 2048 */
 float float3::maxzpos = 2048.0f; /**< Maximum z position is 2048 */
 
 /**
@@ -53,4 +53,15 @@ float3& float3::ANormalize()
 		z *= invL;
 	}
 	return *this;
+}
+
+SAIFloat3 float3::toSAIFloat3() const {
+
+	SAIFloat3 sAIFloat3;
+
+	sAIFloat3.x = x;
+	sAIFloat3.y = y;
+	sAIFloat3.z = z;
+
+	return  sAIFloat3;
 }

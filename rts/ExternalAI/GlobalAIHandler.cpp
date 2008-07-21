@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "StdAfx.h"
 #include "GlobalAIHandler.h"
 #include "GlobalAI.h"
@@ -11,6 +13,8 @@
 #include "System/NetProtocol.h"
 #include "System/Platform/errorhandler.h"
 #include "mmgr.h"
+
+#include "AILibraryGlobalAI.h"
 
 CGlobalAIHandler* globalAI=0;
 
@@ -241,8 +245,12 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 			ais[teamID] = 0;
 		}
 
-		ais[teamID] = SAFE_NEW CGlobalAI(teamID, dll);
-
+		//TODO : This is the crossover to the new AI
+		//Eventually we should rewrite a less hacky AILibraryHandler
+		//and change all calls to the global ai to be appropriate.
+		//ais[teamID] = SAFE_NEW CGlobalAI(teamID, dll);
+		ais[teamID] = SAFE_NEW CAILibraryGlobalAI(dll, teamID);
+		
 		if (!ais[teamID]->ai) {
 			delete ais[teamID];
 			ais[teamID] = 0;

@@ -10,6 +10,7 @@
 #include "SFloat3.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
+#include "ExternalAI/SAIFloat3.h"
 
 /**
  * @brief float3 class
@@ -42,6 +43,31 @@ public:
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
 	inline float3(const float x,const float y,const float z) : SFloat3(x,y,z) {}
+
+	/**
+	 * @brief Constructor
+	 * @param sAIFloat3 SAIFLoat3 sAIFLoat3
+	 *
+	 * With parameters, initializes x/y/z to the given SAIFLoat3.
+	 */
+	inline float3(const SAIFloat3& sAIFloat3) : SFloat3(sAIFloat3.x, sAIFloat3.y, sAIFloat3.z) {}
+
+	/**
+	 * @brief operator =
+	 * @param t index in xyz array
+	 * @return const float3
+	 *
+	 * Same as plain [] operator but used in
+	 * a const context
+	 */
+	inline float3& operator= (const SAIFloat3& sAIFloat3) {
+		
+		x = sAIFloat3.x;
+		y = sAIFloat3.y;
+		z = sAIFloat3.z;
+
+		return *this;
+	}
 
 	/**
 	 * @brief Destructor
@@ -442,6 +468,8 @@ public:
 	static float maxzpos;
 
 	bool CheckInBounds(); //!< Check if this vector is in bounds
+
+	SAIFloat3 toSAIFloat3() const;
 };
 
 #endif /* FLOAT3_H */

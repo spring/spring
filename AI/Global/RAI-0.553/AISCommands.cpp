@@ -1,0 +1,2 @@
+
+#include "ExternalAI/AISCommands.cpp"

@@ -12,6 +12,7 @@ class CCommandQueue {
 
 	friend class CCommandAI;
 	friend class CFactoryCAI;
+	friend class CAIAICallback; // the C++ AI interface wrapper
 
 	CR_DECLARE(CCommandQueue);
 	public:
