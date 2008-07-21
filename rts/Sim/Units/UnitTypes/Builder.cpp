@@ -328,7 +328,7 @@ void CBuilder::Update()
 			} else {
 				curCapture->captureProgress = captureProgressTemp;
 				CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
-				if(curCapture->captureProgress > 1.0f){
+				if(curCapture->captureProgress >= 1.0f){
 					if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
 						// capture failed
 						ENTER_MIXED;
