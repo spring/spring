@@ -22,11 +22,10 @@ void DamageArray::creg_Serialize(creg::ISerializer& s)
 }
 
 
-DamageArray::DamageArray()
+DamageArray::DamageArray() : paralyzeDamageTime(0),
+			impulseFactor(1.0f), impulseBoost(0.0f),
+			craterMult(1.0f), craterBoost(0.0f)
 {
-	paralyzeDamageTime = 0;
-	impulseBoost = craterBoost = 0.0f;
-	impulseFactor = craterMult = 1.0f;
 	if (damageArrayHandler) numTypes = damageArrayHandler->GetNumTypes();
 	else numTypes = 1;
 	damages = SAFE_NEW float[numTypes];
@@ -35,7 +34,7 @@ DamageArray::DamageArray()
 }
 
 
-DamageArray::DamageArray(const DamageArray& other)
+/*DamageArray::DamageArray(const DamageArray& other)
 {
 	paralyzeDamageTime = other.paralyzeDamageTime;
 	impulseBoost = other.impulseBoost;
@@ -46,10 +45,10 @@ DamageArray::DamageArray(const DamageArray& other)
 	damages = SAFE_NEW float[numTypes];
 	for(int a = 0; a < numTypes; ++a)
 		damages[a] = other.damages[a];
-}
+}*/
 
 
-DamageArray::~DamageArray()
+/*DamageArray::~DamageArray()
 {
 	delete[] damages;
-}
+}*/

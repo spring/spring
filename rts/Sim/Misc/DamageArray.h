@@ -1,6 +1,9 @@
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
+#include "StdAfx.h"
+#include "DamageArrayHandler.h"
+
 struct DamageArray
 {
 	CR_DECLARE_STRUCT(DamageArray);
@@ -8,8 +11,38 @@ struct DamageArray
 public:
 
 	DamageArray();
-	DamageArray(const DamageArray& other);
-	~DamageArray();
+
+	/**
+	 * This constructor is currently only used by C++ AIs
+	 * which use the legacy C++ wrapper around the C AI interface.
+	 */
+	DamageArray(int numTypes, const float* typeDamages) :
+			numTypes(numTypes)
+	{
+		damages = new float[numTypes];
+		for(int a = 0; a < numTypes; ++a) {
+			damages[a] = typeDamages[a];
+		}
+	}
+
+DamageArray(const DamageArray& other)
+{
+	paralyzeDamageTime = other.paralyzeDamageTime;
+	impulseBoost = other.impulseBoost;
+	craterBoost = other.craterBoost;
+	impulseFactor = other.impulseFactor;
+	craterMult = other.craterMult;
+	numTypes = other.numTypes;
+	damages = SAFE_NEW float[numTypes];
+	for(int a = 0; a < numTypes; ++a)
+		damages[a] = other.damages[a];
+}
+
+
+	~DamageArray()
+	{
+		delete[] damages;
+	}
 
 	void operator=(const DamageArray& other) {
 		paralyzeDamageTime = other.paralyzeDamageTime;
@@ -31,6 +64,8 @@ public:
 		return da;
 	}
 
+	int GetNumTypes() const { return numTypes; }
+	float GetTypeDamage(int typeIndex) const { return damages[typeIndex]; }
 	float GetDefaultDamage() const { return damages[0]; }
 
 	int paralyzeDamageTime;

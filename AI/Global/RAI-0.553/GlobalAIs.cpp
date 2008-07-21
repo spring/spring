@@ -4,7 +4,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-std::set<IGlobalAI*> ais;
+std::set<IGlobalAI*> oldais;
 
 DLL_EXPORT int GetGlobalAiVersion()
 {
@@ -19,12 +19,12 @@ DLL_EXPORT void GetAiName(char* name)
 DLL_EXPORT IGlobalAI* GetNewAI()
 {
 	cRAI* ai=new cRAI;
-	ais.insert(ai);
+	oldais.insert(ai);
 	return ai;
 }
 
 DLL_EXPORT void ReleaseAI(IGlobalAI* i)
 {
 	delete (cRAI*)i;
-	ais.erase(i);
+	oldais.erase(i);
 }
