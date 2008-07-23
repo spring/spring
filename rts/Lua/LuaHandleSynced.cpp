@@ -193,15 +193,15 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 
 	LuaPushNamedNumber(L, "COBSCALE", COBSCALE);
 	
-	// load our libraries
+	// load our libraries  (LuaSyncedCtrl overrides some LuaUnsyncedCtrl entries)
 	if (!AddEntriesToTable(L, "VFS",         LuaVFS::PushSynced)           ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaSyncedCall::PushEntries)   ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
