@@ -236,7 +236,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	if (obj == NULL) {
 		return false;
 	}
-	
+
 	switch (cmd.id) {
 		case CMD_REPAIR:
 		case CMD_RECLAIM:
@@ -359,7 +359,7 @@ void CBuilderCAI::SlowUpdate()
 	}
 
 	map<int, string>::iterator boi = buildOptions.find(c.id);
-	if (boi != buildOptions.end()) {
+	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitByName(boi->second);
 		const float radius = GetUnitDefRadius(ud, c.id);
 		if (inCommand) {
