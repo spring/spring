@@ -8,6 +8,8 @@
 
 struct lua_State;
 
+// MinGW defines this for a WINAPI function
+#undef SendMessage
 
 class LuaUnsyncedCtrl {
 	public:
