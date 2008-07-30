@@ -498,7 +498,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	if (!saveFile) {
 		UnloadStartPicture();
 	}
-	
+
 	net->loading = false;
 	thread.join();
 	logOutput.Print("Spring %s",VERSION_STRING);
@@ -568,7 +568,7 @@ CGame::~CGame()
 	delete pathManager;        pathManager        = NULL;
 	delete groundDecals;       groundDecals       = NULL;
 	delete ground;             ground             = NULL;
-	delete luaInputReceiver;   luaInputReceiver   = NULL; 
+	delete luaInputReceiver;   luaInputReceiver   = NULL;
 	delete inMapDrawer;        inMapDrawer        = NULL;
 	delete net;                net                = NULL;
 	delete radarhandler;       radarhandler       = NULL;
@@ -2499,7 +2499,7 @@ bool CGame::DrawWorld()
 	SCOPED_TIMER("Draw world");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	
+
 	if (drawSky) {
 		sky->Draw();
 	}
@@ -3563,8 +3563,8 @@ void CGame::ClientReadNet()
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
-						if (uh->units[unitid] &&
-						    (uh->units[unitid]->team == gs->players[player]->team) ||
+						if ((uh->units[unitid] &&
+						    (uh->units[unitid]->team == gs->players[player]->team)) ||
 						    gs->godMode) {
 							selected.push_back(unitid);
 						}
@@ -3746,7 +3746,10 @@ void CGame::ClientReadNet()
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
 						if (unit && unit->team==team1 && !unit->beingBuilt) {
-							unit->ChangeTeam(team2, CUnit::ChangeGiven);
+#ifdef DIRECT_CONTROL_ALLOWED
+							if (!unit->directControl)
+#endif
+								unit->ChangeTeam(team2, CUnit::ChangeGiven);
 						}
 					}
 					netSelUnits.clear();
