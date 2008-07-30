@@ -256,12 +256,10 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 				}
 			}
 		} else if(s=="Commander"){
-			unsigned int comCat=CCategoryHandler::Instance()->GetCategory("COMMANDER");
-
 			std::list<CUnit*>::iterator ui=selection.begin();
 			while (ui!=selection.end()) {
 				bool filterTrue=false;
-				if ((*ui)->category & comCat){	//fix with better test for commander
+				if((*ui)->unitDef->isCommander){
 					filterTrue=true;
 				}
 				if (filterTrue ^ _not) {
@@ -286,12 +284,11 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 				}
 			}
 		} else if(s=="Aircraft"){
-			unsigned int acCat=CCategoryHandler::Instance()->GetCategory("VTOL");
 
 			std::list<CUnit*>::iterator ui=selection.begin();
 			while (ui != selection.end()) {
 				bool filterTrue=false;
-				if ((*ui)->category & acCat){
+				if ((*ui)->unitDef->canfly){
 					filterTrue=true;
 				}
 				if (filterTrue ^ _not) {
