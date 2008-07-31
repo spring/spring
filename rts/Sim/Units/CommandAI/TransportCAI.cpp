@@ -668,7 +668,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
 						float3 newpos;
-						if (FindEmptySpot(wantedPos, std::min(128.f, unit->radius*4),
+						if (FindEmptySpot(wantedPos, std::max(128.f, unit->radius*4),
 								unit->radius, newpos, unit)) {
 							c.params[0] = newpos.x;
 							c.params[1] = newpos.y;
