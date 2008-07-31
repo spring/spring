@@ -3,7 +3,7 @@
 
 #include "MobileCAI.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
- 
+
 #define UNLOAD_LAND 0
 #define UNLOAD_DROP 1
 #define UNLOAD_LANDFLOOD 2
@@ -22,7 +22,7 @@ public:
 	void SlowUpdate(void);
 	void ScriptReady(void);
 
-	int unloadType;	
+	int unloadType;
 	bool CanTransport(CUnit* unit);
 	bool FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload);
 	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots);
@@ -41,21 +41,22 @@ public:
 	bool scriptReady;
 	int lastCall;
 
-private:	
+private:
 	void UnloadUnits_Land(Command& c, CTransportUnit* transport);
-	void UnloadUnits_Drop(Command& c, CTransportUnit* transport);	
+	void UnloadUnits_Drop(Command& c, CTransportUnit* transport);
 	void UnloadUnits_LandFlood(Command& c, CTransportUnit* transport);
 	void UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport); //incomplete
-	
+
 	void UnloadNormal(Command& c);
 	void UnloadLand(Command& c);
 	void UnloadDrop(Command& c);	//parachute drop units
 	void UnloadLandFlood(Command& c); //land and dispatch units all at once
 	void UnloadCrashFlood(Command& c); //slam into landscape abruptly and dispatch units all at once (incomplete)
-	
+
 	virtual bool AllowedCommand(const Command& c);
 	bool SpotIsClear(float3 pos, CUnit* u);
-	std::list<float3> dropSpots;		
+	bool SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload);
+	std::list<float3> dropSpots;
 	bool isFirstIteration;
 	float3 startingDropPos;
 	float3 lastDropPos;
