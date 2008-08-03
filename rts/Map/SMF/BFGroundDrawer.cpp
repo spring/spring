@@ -702,7 +702,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if (mapInfo->hasWaterPlane && waterplane) {
+	if (mapInfo->hasWaterPlane) {
 		DrawWaterPlane(drawWaterReflection);
 	}
 
