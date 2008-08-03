@@ -10,11 +10,41 @@
 
 //////////////////////////////////////////////////
 // runtime defined constants are:
+// #define SurfaceColor     vec4
+// #define DiffuseColor     vec3
+// #define PlaneColor       vec4  (unused)
+// #define AmbientFactor    float
+// #define DiffuseFactor    float   (note: it is the map defined value multipled with 15x!)
+// #define SpecularColor    vec3
+// #define SpecularPower    float
+// #define SpecularFactor   float
+// #define PerlinStartFreq  float
+// #define PerlinFreq       float
+// #define PerlinAmp        float
+// #define Speed            float
+// #define FresnelMin       float
+// #define FresnelMax       float
+// #define FresnelPower     float
+// #define ScreenInverse    vec2
+// #define ViewPos          vec2
 // #define MapMid           vec3
 // #define SunDir           vec3
+// #define ReflDistortion   float
+// #define BlurBase         vec2
+// #define BlurExponent     float
 // #define PerlinStartFreq  float
 // #define PerlinLacunarity float
 // #define PerlinAmp        float
+
+//////////////////////////////////////////////////
+// possible flags are:
+// //#define use_heightmap
+// #define use_reflection
+// #define use_refraction
+// #define use_shorewaves
+// #define use_depth
+// #define blur_reflection
+// #define use_texrect
 
 #define Speed 12.0
 
@@ -27,14 +57,24 @@ void main(void)
 {
 	gl_Position = ftransform();
 
+	// COMPUTE TEXCOORDS
+	vec4 planes        = vec4(gl_ObjectPlaneS[0].x,gl_ObjectPlaneT[0].z,
+	                          gl_ObjectPlaneR[0].x,gl_ObjectPlaneQ[0].z);
+	gl_TexCoord[0]     = planes*gl_Vertex.xzxz;
+
+	// COMPUTE WAVE TEXTURE COORDS
 	const float fstart = PerlinStartFreq;
 	const float f      = PerlinLacunarity;
-	gl_TexCoord[0]     = gl_MultiTexCoord0;
-	gl_TexCoord[1].st = (vec2(-1.0,-1.0)+gl_MultiTexCoord0.st+0.75)*fstart      +frame*Speed;
-	gl_TexCoord[1].pq = (vec2(-1.0, 1.0)+gl_MultiTexCoord0.st+0.50)*fstart*f    -frame*Speed;
-	gl_TexCoord[2].st = (vec2( 1.0,-1.0)+gl_MultiTexCoord0.st+0.25)*fstart*f*f  +frame*Speed*vec2(1.0,-1.0);
-	gl_TexCoord[2].pq = (vec2( 1.0, 1.0)+gl_MultiTexCoord0.st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
+	gl_TexCoord[1].st = (vec2(-1.0,-1.0)+gl_TexCoord[0].st+0.75)*fstart      +frame*Speed;
+	gl_TexCoord[1].pq = (vec2(-1.0, 1.0)+gl_TexCoord[0].st+0.50)*fstart*f    -frame*Speed;
+	gl_TexCoord[2].st = (vec2( 1.0,-1.0)+gl_TexCoord[0].st+0.25)*fstart*f*f  +frame*Speed*vec2(1.0,-1.0);
+	gl_TexCoord[2].pq = (vec2( 1.0, 1.0)+gl_TexCoord[0].st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
 
+	// COMPUTE LIGHT VECTORS
 	eyeVec = eyePos - gl_Vertex.xyz;
 	ligVec = normalize(SunDir*20000.0 + MapMid - gl_Vertex.xyz);
+
+	// FOG
+	gl_FogFragCoord = (gl_ModelViewMatrix*gl_Vertex).z;
+
 }

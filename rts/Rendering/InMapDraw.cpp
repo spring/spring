@@ -89,15 +89,29 @@ CInMapDraw::CInMapDraw(void)
 			tex[y][x][3] = 0;
 		}
 	}
+
+	#define SMOOTHSTEP(x,y,a) (unsigned char)(x * (1.0f - a) + y * a)
+
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
 			float dist = sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
-			if (dist > 31.875f) {
+			if (dist > 31.0f) {
 				// do nothing - leave transparent
-			} else if (dist > 24.5f) {
+			} else if (dist > 30.0f) {
+				// interpolate (outline -> nothing)
+				float a = (dist - 30.0f);
+				tex[y][x][3] = SMOOTHSTEP(255,0,a);
+			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
+			} else if (dist > 23.0f) {
+				// interpolate (inner -> outline)
+				float a = (dist - 23.0f);
+				tex[y][x][0] = SMOOTHSTEP(255,0,a);
+				tex[y][x][1] = SMOOTHSTEP(255,0,a);
+				tex[y][x][2] = SMOOTHSTEP(255,0,a);
+				tex[y][x][3] = SMOOTHSTEP(200,255,a);
 			} else {
 				tex[y][x][0] = 255;
 				tex[y][x][1] = 255;
@@ -108,16 +122,29 @@ CInMapDraw::CInMapDraw(void)
 	}
 	for (int y = 0; y < 64; y++) {
 		// linear falloff
-		for (int x = 0; x < 64; x++) {
+		for (int x = 64; x < 128; x++) {
 			float dist = abs(y - 32);
-			if (dist > 24.5f) {
+			if (dist > 31.0f) {
+				// do nothing - leave transparent
+			} else if (dist > 30.0f) {
+				// interpolate (outline -> nothing)
+				float a = (dist - 30.0f);
+				tex[y][x][3] = SMOOTHSTEP(255,0,a);
+			} else if (dist > 24.0f) {
 				// black outline
-				tex[y][x + 64][3] = 255;
+				tex[y][x][3] = 255;
+			} else if (dist > 23.0f) {
+				// interpolate (inner -> outline)
+				float a = (dist - 23.0f);
+				tex[y][x][0] = SMOOTHSTEP(255,0,a);
+				tex[y][x][1] = SMOOTHSTEP(255,0,a);
+				tex[y][x][2] = SMOOTHSTEP(255,0,a);
+				tex[y][x][3] = SMOOTHSTEP(200,255,a);
 			} else {
-				tex[y][x + 64][0] = 255;
-				tex[y][x + 64][1] = 255;
-				tex[y][x + 64][2] = 255;
-				tex[y][x + 64][3] = 200;
+				tex[y][x][0] = 255;
+				tex[y][x][1] = 255;
+				tex[y][x][2] = 255;
+				tex[y][x][3] = 200;
 			}
 		}
 	}
@@ -126,6 +153,8 @@ CInMapDraw::CInMapDraw(void)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
 	blippSound=sound->GetWaveId("sounds/beep6.wav");
@@ -253,7 +282,6 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 				glColor4ub(pi->color[0], pi->color[1], pi->color[2], 250);
 				font->glWorldPrint(pi->label.c_str());
 				glPopMatrix();
-				glBindTexture(GL_TEXTURE_2D, texture);
 			}
 		}
 	}
@@ -266,8 +294,8 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
-			lineva->AddVertexC(li->pos - (li->pos - camera->pos).Normalize() * 26, li->color);
-			lineva->AddVertexC(li->pos2 - (li->pos2 - camera->pos).Normalize() * 26, li->color);
+			lineva->AddVertexC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
+			lineva->AddVertexC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
 		}
 	}
 }
@@ -284,10 +312,9 @@ void CInMapDraw::Draw(void)
 	CVertexArray* lineva = GetVertexArray();
 	lineva->Initialize();
 
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-	glBindTexture(GL_TEXTURE_2D, texture);
 
 	InMapDraw_QuadDrawer drawer;
 	drawer.imd = this;
@@ -302,7 +329,9 @@ void CInMapDraw::Draw(void)
 	lineva->DrawArrayC(GL_LINES);
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture);
 	va->DrawArrayTC(GL_QUADS);
+
 	glDepthMask(1);
 }
 

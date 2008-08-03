@@ -25,7 +25,6 @@ public:
 	float* GetHeightmap();
 	void Update();
 	void Explosion(float x,float y,float strength);
-	void ExplosionUpdate(int x1,int x2,int y1,int y2);
 	GLuint GetShadingTexture (); // a texture with RGB for shading and A for height
 	void DrawMinimap (); // draw the minimap in a quad (with extends: (0,0)-(1,1))
 

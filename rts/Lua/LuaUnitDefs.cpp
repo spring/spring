@@ -473,7 +473,7 @@ static int SoundsTable(lua_State* L, const void* data) {
 static int ModelDefTable(lua_State* L, const void* data) {
 	const UnitModelDef& md = *((const UnitModelDef*) data);
 	const char* type;
-	if (md.modelpath.find(".s3o") != string::npos) {
+	if (StringToLower(md.modelpath).find(".s3o") != string::npos) {
 		type = "s3o";
 	} else {
 		type = "3do";

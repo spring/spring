@@ -12,6 +12,7 @@ public:
 	virtual void Draw()=0;
 	virtual void Update(){};
 	virtual void UpdateWater(CGame* game)=0;
+	virtual void HeightmapChanged(const int x1, const int y1, const int x2, const int y2){};
 	virtual void AddExplosion(const float3& pos, float strength, float size){};
 	virtual int  GetID() const { return -1; }
 

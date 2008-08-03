@@ -500,6 +500,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
+	unitDrawer->DrawCloakedUnits();
 	drawReflection=false;
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();

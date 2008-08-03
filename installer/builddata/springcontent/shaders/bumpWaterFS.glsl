@@ -8,13 +8,14 @@
  * GNU GPL, v2 or later.
  */
 
+
 //////////////////////////////////////////////////
 // runtime defined constants are:
 // #define SurfaceColor     vec4
 // #define DiffuseColor     vec3
 // #define PlaneColor       vec4  (unused)
 // #define AmbientFactor    float
-// #define DiffuseFactor    float   (note: it is the map defined value multipled with 15x!)
+// #define DiffuseFactor    float (note: it is the map defined value multipled with 15x!)
 // #define SpecularColor    vec3
 // #define SpecularPower    float
 // #define SpecularFactor   float
@@ -36,6 +37,11 @@
 // #define PerlinLacunarity float
 // #define PerlinAmp        float
 
+#define CausticDepth 0.5
+#define CausticRange 0.45
+#define WavesLength  0.15
+
+
 //////////////////////////////////////////////////
 // possible flags are:
 // //#define use_heightmap
@@ -44,12 +50,15 @@
 // #define use_shorewaves
 // #define use_depth
 // #define blur_reflection
+// #define use_texrect
 
-#extension GL_ARB_texture_rectangle : enable
+#ifdef use_texrect
+  #extension GL_ARB_texture_rectangle : enable
+#else
+  #define texture2DRect texture2D
+  #define sampler2DRect sampler2D
+#endif
 
-#define CausticDepth 0.5
-#define CausticRange 0.45
-#define WavesLength  0.15
 
 //////////////////////////////////////////////////
 // Uniforms + Varyings
@@ -69,18 +78,32 @@
   varying vec3 eyeVec;
   varying vec3 ligVec;
 
+
+//////////////////////////////////////////////////
+// Screen Coordinates (normalized and screen dimensions)
+
+#ifdef use_texrect
+  vec2 screencoord = (gl_FragCoord.xy - ViewPos);
+  vec2 reftexcoord = (screencoord*ScreenInverse);
+#else
+  vec2 screencoord = (gl_FragCoord.xy - ViewPos)*ScreenInverse;
+  vec2 reftexcoord = screencoord;
+#endif
+
+
 //////////////////////////////////////////////////
 // Depth conversion
-
+#ifdef use_depth
   float pm15 = gl_ProjectionMatrix[2][3];
   float pm11 = gl_ProjectionMatrix[2][3];
   float convertDepthToZ(float d) {
     return pm15 / (((d * 2.0) - 1.0) + pm11);
   }
-
+#endif
 
 //////////////////////////////////////////////////
 // shorewaves functions
+#ifdef use_shorewaves
 const float InvWavesLength = 1.0/WavesLength;
 
 float smoothlimit(const float x, const float step) {
@@ -100,6 +123,7 @@ float waveIntensity(const float x, const float step) {
   else
     return front;
 }
+#endif
 
 //////////////////////////////////////////////////
 // MAIN()
@@ -110,13 +134,21 @@ float waveIntensity(const float x, const float step) {
     float waterdepth = -texture2D(heightmap,gl_TexCoord[0].st).r;
     if (waterdepth<0.0) discard;
 #else
-    float waterdepth = 1.0-texture2D(heightmap,gl_TexCoord[0].pq).a; //heightmap in alpha channel
-    if (waterdepth==0.0) discard;
-    //float invwaterdepth = 1.0-waterdepth;
+    float waterdepth;
+    if ( any(greaterThanEqual(gl_TexCoord[0].pq,vec2(1.0,1.0))) ||
+         any(lessThanEqual(gl_TexCoord[0].pq,vec2(0.0,0.0)))
+       )
+    {
+      waterdepth = 1.0;
+    }else{
+      waterdepth = 1.0 - texture2D(heightmap,gl_TexCoord[0].pq).a; //heightmap in alpha channel
+      if (waterdepth==0.0) discard;
+    }
+    //float invwaterdepth = 1.0 - waterdepth;
 #endif
 
 #ifdef use_depth
-    float tz = texture2DRect(depthmap, gl_FragCoord.xy-ViewPos ).r;
+    float tz = texture2DRect(depthmap, screencoord ).r;
     float shallowScale = clamp( abs( convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z) )/3.0, 0.0,1.0);
 #else
     float shallowScale = waterdepth;
@@ -139,14 +171,14 @@ float waveIntensity(const float x, const float step) {
     vec3 normal = octave1+octave2+octave3+octave4;
     normal = normalize( normal ).xzy;
 
-    vec3 eVec   = normalize(eyeVec); // wait for texture fetches
+    vec3 eVec   = normalize(eyeVec);
     float eyeNormalCos = dot(-eVec, normal);
     float angle = (1.0-abs(eyeNormalCos));
 
 
 // AMBIENT & DIFFUSE
     vec3 reflectDir   = reflect(normalize(-ligVec), normal);
-    float specular    = SpecularFactor * angle * pow( max(dot(reflectDir,eVec), 0.0) , SpecularPower) * shallowScale;
+    float specular    = angle * pow( max(dot(reflectDir,eVec), 0.0) , SpecularPower) * SpecularFactor * shallowScale;
     const vec3 SunLow = SunDir * vec3(1.0,0.1,1.0);
     float diffuse     = pow( max( dot(normal,SunLow) ,0.0 ) ,3.0)*DiffuseFactor;
     float ambient     = smoothstep(-1.3,0.0,eyeNormalCos)*AmbientFactor;
@@ -163,7 +195,7 @@ float waveIntensity(const float x, const float step) {
 
 // REFRACTION
 #ifdef use_refraction
-    vec3 refrColor = texture2DRect(refraction, gl_FragCoord.xy-ViewPos + normal.xz*refractDistortion ).rgb;
+    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz*refractDistortion ).rgb;
     gl_FragColor.rgb = mix(refrColor,waterSurface, 0.1+surfaceMix);
 #else
     gl_FragColor.rgb = waterSurface;
@@ -196,20 +228,25 @@ float waveIntensity(const float x, const float step) {
     vec3 shorewavesColor = vec3(0.0);
     float inwaterdepth = 1.0-waterdepth;
     //if (waterdepth<1.0) {
-      float coastdist = texture2D(coastmap, gl_TexCoord[0].st ).r;
+      float coastdist = texture2D(coastmap, gl_TexCoord[0].st ).r + octave3.x*0.1; //FIXME
       //if (coastdist>0.0 && coastdist<0.25) {
         vec3 wavefoam  = texture2D(foam, gl_TexCoord[0].st*160.0+frame ).rgb;
         wavefoam += texture2D(foam, gl_TexCoord[0].st*90.0+frame ).rgb;
         wavefoam *= 0.5;
 
+        vec2 wrcoord = gl_TexCoord[0].st*2.0;
+
         float fframe = fract(frame);
-        for (float i=0.0; i<1.0; i+=1.0) {
-          float frac = fract(i+fframe*40.0)*1.4-0.2;
+        for (float i=0.0; i<1.0; i+=0.25) {
+          float wave  = i+fframe*50.0;
+          float wavef = fract(wave);
+                wave -= wavef;
+          float frac  = wavef*1.4-0.2;
           float f = frac-coastdist;
           if (abs(f)>WavesLength) continue;
-          float rand = texture2D(waverand, gl_TexCoord[0].st*2.0+frame+i ).r;
-          float f2 = waveIntensity( min(1.0,(WavesLength-f)*InvWavesLength) ,0.93);
-          shorewavesColor += wavefoam*f2*rand*rand;
+          float rand = texture2D(waverand, wrcoord+wave*0.37+i ).r;
+          float f2   = waveIntensity( min(1.0,(WavesLength-f)*InvWavesLength) ,0.85);
+          shorewavesColor += wavefoam*f2*rand;
         }
 
         shorewavesColor *= coastdist;
@@ -222,27 +259,34 @@ float waveIntensity(const float x, const float step) {
 
 // REFLECTION
 #ifdef use_reflection
-    float fresnel    = FresnelMin + FresnelMax * pow(angle,FresnelPower);
-    vec2 reftexcoord = vec2(0.0,1.0) - (gl_FragCoord.xy-ViewPos)*ScreenInverse + vec2(0.0,3.0*ScreenInverse.y) + normal.xz*0.09*ReflDistortion;
-    vec3 reflColor   = texture2D(reflection,reftexcoord.st).rgb;
+    //we have to mirror the Y-axis
+    reftexcoord  = vec2(reftexcoord.x,1.0 - reftexcoord.y);
+    reftexcoord += vec2(0.0,3.0*ScreenInverse.y) + normal.xz*0.09*ReflDistortion;
+
+    vec3 reflColor = texture2D(reflection,reftexcoord).rgb;
 
   #ifdef blur_reflection
     const vec2  v = BlurBase;
     const float s = BlurExponent;
-    reflColor   += texture2D(reflection,reftexcoord.st+v).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s*s).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s*s*s).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s*s*s*s).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s*s*s*s*s).rgb;
-    reflColor   += texture2D(reflection,reftexcoord.st+v*s*s*s*s*s*s).rgb;
-    reflColor   *= 0.125;
+    reflColor += texture2D(reflection,reftexcoord.st+v).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s*s).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s*s*s).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s*s*s*s).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s*s*s*s*s).rgb;
+    reflColor += texture2D(reflection,reftexcoord.st+v*s*s*s*s*s*s).rgb;
+    reflColor *= 0.125;
   #endif
 
+    float fresnel    = FresnelMin + FresnelMax * pow(angle,FresnelPower);
     gl_FragColor.rgb = mix(gl_FragColor.rgb, reflColor, fresnel*shallowScale);
 #endif
 
 
 // SPECULAR
     gl_FragColor.rgb += specular*SpecularColor;
+
+// FOG
+    float fog = clamp( (gl_Fog.end - abs(gl_FogFragCoord)) * gl_Fog.scale ,0.0,1.0);
+    gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fog );
   }

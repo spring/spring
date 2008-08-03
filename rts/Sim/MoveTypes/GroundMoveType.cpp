@@ -31,6 +31,7 @@
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
+#include "System/FastMath.h"
 #include "myMath.h"
 #include "mmgr.h"
 
@@ -307,7 +308,7 @@ void CGroundMoveType::Update()
 				// If arriving at waypoint, then need to slow down, or may pass it.
 				if (!owner->commandAI->HasMoreMoveCommands() &&
 					currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-					wantedSpeed = std::min((float) wantedSpeed, (float) (sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+					wantedSpeed = std::min((float) wantedSpeed, (float) (fastmath::sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
 				}
 				wantedSpeed *= std::max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
 				SetDeltaSpeed();
