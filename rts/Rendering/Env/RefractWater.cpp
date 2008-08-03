@@ -67,6 +67,8 @@ void CRefractWater::Draw()
 
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glDisable(target);

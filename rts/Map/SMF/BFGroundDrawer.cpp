@@ -12,6 +12,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Platform/ConfigHandler.h"
+#include "System/FastMath.h"
 #include "mmgr.h"
 
 #ifdef USE_GML
@@ -26,7 +27,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	bigSquareSize(128),
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize),
-	heightDataX(gs->mapx + 1)
+	heightDataX(gs->mapx + 1),
+	maxIdx(((gs->mapx + 1) * (gs->mapy + 1)) - 1)
 {
 	map = rm;
 
@@ -66,28 +68,58 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 }
 
 
+inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
+	if (!drawWaterReflection) {
+		glDisable(GL_TEXTURE_2D);
 
-inline void CBFGroundDrawer::DrawVertexA(int x, int y)
-{
-	float height = heightData[y * heightDataX + x];
-	if (waterDrawn && height < 0) {
-		height *= 2;
+		const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
+		const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
+		const bool  camOutMap = (camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos);
+
+		CVertexArray *va = GetVertexArray();
+		va->Initialize();
+
+		unsigned char fogColor[4] = {
+		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
+		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
+		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[2]),
+		  255
+		};
+
+		unsigned char planeColor[4] = {
+		  (unsigned char)(255 * mapInfo->water.planeColor[0]),
+		  (unsigned char)(255 * mapInfo->water.planeColor[1]),
+		  (unsigned char)(255 * mapInfo->water.planeColor[2]),
+		   255
+		};
+
+		const float alphainc = fastmath::PI2 / 32;
+		float alpha,r1,r2;
+		float3 p(0.0f,-200.0f,0.0f);
+		const float size = std::min(xsize,ysize);
+		for (int n = (camOutMap) ? 0 : 1; n < 4 ; ++n) {
+			if ((n==1) && !camOutMap) {
+				r1 = 2 * size;
+			}else{
+				r1 = n*n * size;
+			}
+			if (n==3) {
+				r2 = (n+0.5)*(n+0.5) * size;
+			}else{
+				r2 = (n+1)*(n+1) * size;
+			}
+			for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
+				p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
+				p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
+				va->AddVertexC(p, planeColor );
+				p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
+				p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
+				va->AddVertexC(p, (n==3) ? fogColor : planeColor);
+			}
+		}
+
+		va->DrawArrayC(GL_TRIANGLE_STRIP);
 	}
-
-	va->AddVertex0(float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE));
-}
-
-inline void CBFGroundDrawer::DrawVertexA(int x, int y, float height)
-{
-	if (waterDrawn && height < 0) {
-		height *= 2;
-	}
-	va->AddVertex0(float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE));
-}
-
-inline void CBFGroundDrawer::EndStrip()
-{
-	va->EndStrip();
 }
 
 
@@ -114,12 +146,13 @@ inline void CBFGroundDrawer::EndStripQ(CVertexArray *ma)
 	ma->EndStripQ();
 }
 
+
 inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	static int mapWidth = (gs->mapx << 3);
 	static int bigTexH = (gs->mapy << 3) / numBigTexY;
 
-	const int minx =                   0;
-	const int maxx =            mapWidth;
+	const int minx =             0;
+	const int maxx =      mapWidth;
 	const int minz = bty * bigTexH;
 	const int maxz = minz + bigTexH;
 	const float miny = readmap->minheight;
@@ -132,68 +165,30 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 }
 
 
-
-inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
-	if (!drawWaterReflection) {
-		glDisable(GL_TEXTURE_2D);
-		glColor3f(mapInfo->water.planeColor.x, mapInfo->water.planeColor.y, mapInfo->water.planeColor.z);
-		glBegin(GL_QUADS);
-
-		static const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
-		static const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
-		const bool camOutMap = (camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos);
-
-		for (int y = -4; y < 8; ++y) {
-			for (int x = -4; x < 8; ++x) {
-				if (x > 3 || x < 0 || y > 3 || y < 0 || camOutMap) {
-					glVertex3f( x      * xsize, -200,  y      * ysize);
-					glVertex3f((x + 1) * xsize, -200,  y      * ysize);
-					glVertex3f((x + 1) * xsize, -200, (y + 1) * ysize);
-					glVertex3f( x      * xsize, -200, (y + 1) * ysize);
-				}
-			}
-		}
-		glEnd();
-	}
-}
-
-inline void CBFGroundDrawer::DrawGroundVertexArray()
-{
-	va->DrawArray0(GL_TRIANGLE_STRIP);
-	va = GetVertexArray();
-	va->Initialize();
-}
-
-
 inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 {
 	ma->DrawArray0(GL_TRIANGLE_STRIP);
 	ma = GetVertexArray();
-	ma->Initialize();
 }
 
-int neededLod=0;
-int maxIdx=0;
+#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
 inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
-#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 	if (!BigTexSquareRowVisible(bty)) {
 		// skip this entire row of squares if we can't see it
 		return;
 	}
 
 	CVertexArray *ma = GetVertexArray();
-	ma->Initialize();
 
 	bool inStrip = false;
+	float x0, x1;
 	int x,y;
-	// only process the necessary big squares in the x direction
 	int sx = 0;
 	int ex = numBigTexX;
-	float x0, x1;
 	std::vector<fline>::iterator fli;
 
-
+	// only process the necessary big squares in the x direction
 	for (fli = left.begin(); fli != left.end(); fli++) {
 		x0 = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 ));
 		x1 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize)));
@@ -233,6 +228,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 			textures->SetTexture(btx, bty);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
 		}
+
+		ma->Initialize();
 
 		for (int lod = 1; lod < neededLod; lod <<= 1) {
 			float cx2 = (cam2->pos.x / (SQUARE_SIZE));
@@ -318,7 +315,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 							DrawVertexAQ(ma, x + lod, y      );
 							DrawVertexAQ(ma, x + lod, y + lod);
 					} else {
-						// inre begr�sning mot f�eg�nde lod
+						// inre begr?sning mot f?eg?nde lod
 						if ((x >= (cx) + viewRadius * hlod)) {
 							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
@@ -451,7 +448,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 			int nloop=(yed-yst)/lod+1;
 			ma->EnlargeArrays(8*nloop, 2*nloop);
 
-			// rita yttre begr�snings yta mot n�ta lod
+			// rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
 				x = maxlx;
 				for (y = yst; y < yed; y += lod) {
@@ -653,18 +650,20 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	int baseViewRadius = max(4, viewRadius);
 
 	if (drawUnitReflection) {
-		viewRadius = (viewRadius >> 1) & 0xfffffe;
+		viewRadius = ((int)(viewRadius * LODScaleUnitReflection)) & 0xfffffe;
 	}
+	if (drawWaterReflection) {
+		viewRadius = ((int)(viewRadius * LODScaleReflection)) & 0xfffffe;
+	}
+	//if (drawWaterRefraction) {
+	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
+	//}
 
 	float zoom = 45.0f / camera->GetFov();
 	viewRadius = (int) (viewRadius * sqrt(zoom));
 	viewRadius += (viewRadius & 1);
 
-	va = GetVertexArray();
-	va->Initialize();
-
 	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
-	maxIdx = ((gs->mapx + 1) * (gs->mapy + 1)) - 1;
 
 	UpdateCamRestraints();
 
@@ -703,7 +702,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if (mapInfo->hasWaterPlane) {
+	if (mapInfo->hasWaterPlane && waterplane) {
 		DrawWaterPlane(drawWaterReflection);
 	}
 
@@ -828,7 +827,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					}
 					DrawVertexAQ(ma, x + lod, y      );
 					DrawVertexAQ(ma, x + lod, y + lod);
-			} else {  //inre begr�sning mot f�eg�nde lod
+			} else {  //inre begr?sning mot f?eg?nde lod
 				if((x>=(cx)+viewRadius*hlod)){
 					float h1=(heightData[(y)*heightDataX+x]+heightData[(y+lod)*heightDataX+x])*0.5f*(1-oldcamxpart)+heightData[(y+hlod)*heightDataX+x]*(oldcamxpart);
 					float h2=(heightData[(y)*heightDataX+x]+heightData[(y)*heightDataX+x+lod])*0.5f*(1-oldcamxpart)+heightData[(y)*heightDataX+x+hlod]*(oldcamxpart);
@@ -943,7 +942,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int yed=min(yend + lod, maxty);
 	int nloop=(yed-yst)/lod+1;
 	ma->EnlargeArrays(8*nloop, 2*nloop);
-	//rita yttre begr�snings yta mot n�ta lod
+	//rita yttre begr?snings yta mot n?ta lod
 	if(maxlx<maxtx && maxlx>=mintx){
 		x=maxlx;
 		for(y=yst;y<yed;y+=lod){
@@ -1043,19 +1042,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
-	va = GetVertexArray();
-	va->Initialize();
-
 //	glEnable(GL_CULL_FACE);
-	bool inStrip = false;
 	const int NUM_LODS = 4;
 
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	int x,y;
-	float camxpart = 0.0f, oldcamxpart;
-	float camypart = 0.0f, oldcamypart;
 
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundShadowVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -1256,9 +1247,9 @@ void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 		b.z = 0.0001f;
 
 	{
-		temp.dir = b.x / b.z;				// set direction to that
-		float3 c = b.cross(side);			// get vector from camera to collision line
-		float3 colpoint;					// a point on the collision line
+		temp.dir = b.x / b.z;      // set direction to that
+		float3 c = b.cross(side);  // get vector from camera to collision line
+		float3 colpoint;           // a point on the collision line
 
 		if (side.y > 0)
 			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->minheight - 100)) / c.y);
@@ -1298,9 +1289,9 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	float3 b = up.cross(camHorizontal);
 
 	if (fabs(b.z) > 0.0001f) {
-		temp.dir = b.x / b.z;					// set direction to that
-		float3 c = b.cross(camHorizontal);		// get vector from camera to collision line
-		float3 colpoint;						// a point on the collision line
+		temp.dir = b.x / b.z;               // set direction to that
+		float3 c = b.cross(camHorizontal);  // get vector from camera to collision line
+		float3 colpoint;                    // a point on the collision line
 
 		if (side.y > 0)
 			colpoint = cam2->pos + camHorizontal * gu->viewRange * 1.05f - c * (cam2->pos.y / c.y);

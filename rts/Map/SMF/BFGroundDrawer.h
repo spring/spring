@@ -36,11 +36,12 @@ protected:
 	const int bigSquareSize;
 	const int numBigTexX;
 	const int numBigTexY;
+	const int maxIdx;
+
+	int neededLod;
 
 	float* heightData;
 	const int heightDataX;
-
-	CVertexArray* va;
 
 	struct fline {
 		float base;
@@ -66,12 +67,8 @@ protected:
 	void DoDrawGroundShadowLOD(int nlod);
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
-	inline void DrawVertexA(int x, int y);
-	inline void DrawVertexA(int x, int y, float height);
-	inline void EndStrip();
 	inline void DrawWaterPlane(bool);
 	inline bool BigTexSquareRowVisible(int);
-	inline void DrawGroundVertexArray();
 	void SetupTextureUnits(bool drawReflection, unsigned int overrideVP);
 	void ResetTextureUnits(bool drawReflection, unsigned int overrideVP);
 
@@ -80,3 +77,4 @@ protected:
 };
 
 #endif // __BF_GROUND_DRAWER_H__
+

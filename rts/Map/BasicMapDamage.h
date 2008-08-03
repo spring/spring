@@ -40,7 +40,7 @@ public:
 	};
 	std::deque<RelosSquare> relosQue;
 
-	bool* inRelosQue;//todo supposes 512*512 map
+	bool* inRelosQue;
 	int relosSize;
 	int neededLosUpdate;
 	std::deque<int> relosUnits;

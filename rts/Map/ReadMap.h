@@ -67,7 +67,6 @@ public:
 	virtual void HeightmapUpdated(int x1, int x2, int y1, int y2)=0;
 	virtual void Update(){};
 	virtual void Explosion(float x,float y,float strength){};
-	virtual void ExplosionUpdate(int x1,int x2,int y1,int y2){};
 	virtual GLuint GetShadingTexture () = 0; // a texture with RGB for shading and A for height
 	static inline unsigned char EncodeHeight(float h) { return std::max(0, (int)(255+10.0f*h)); }
 

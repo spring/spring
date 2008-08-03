@@ -5,6 +5,7 @@
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/BaseWater.h"
 #include "TimeProfiler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -17,6 +18,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
 #include "mmgr.h"
+
 
 CBasicMapDamage::CBasicMapDamage(void)
 {
@@ -72,6 +74,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 	e->x2=std::min((int)(pos.x+radius)/SQUARE_SIZE,gs->mapx-3);
 	e->y1=std::max((int)(pos.z-radius)/SQUARE_SIZE,2);
 	e->y2=std::min((int)(pos.z+radius)/SQUARE_SIZE,gs->mapy-3);
+	e->squares.reserve((e->y2-e->y1+1)*(e->x2-e->x1+1));
 
 	float* heightmap = readmap->GetHeightmap();
 	float baseStrength=-pow(strength,0.6f)*3/mapHardness;
@@ -84,8 +87,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength,float radius)
 				e->squares.push_back(0);
 				continue;
 			}
-			float dist=pos.distance2D(float3(x*SQUARE_SIZE,0,y*SQUARE_SIZE));							//calculate the distance
-			float relDist=dist*invRadius;																					//normalize distance
+			float dist=pos.distance2D(float3(x*SQUARE_SIZE,0,y*SQUARE_SIZE));	//calculate the distance
+			float relDist=dist*invRadius;	//normalize distance
 			float dif=baseStrength*craterTable[int(relDist*200)]*invHardness[readmap->typemap[(y/2)*gs->hmapx+x/2]];
 
 			float prevDif=heightmap[y*(gs->mapx+1)+x]-readmap->orgheightmap[y*(gs->mapx+1)+x];
@@ -152,12 +155,6 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	/*int hy2=min(gs->hmapy-1,y2/2);
-	int hx2=min(gs->hmapx-1,x2/2);
-	for(int y=y1/2;y<=hy2;y++)
-		for(int x=x1/2;x<=hx2;x++)
-			readmap->mipHeightmap[1][y*gs->hmapx+x]=heightmap[(y*2+1)*(gs->mapx+1)+(x*2+1)];*/
-
 	float numHeightMipMaps = readmap->numHeightMipMaps - 1;
 	float** mipHeightmap = readmap->mipHeightmap;
 	for (int i = 0; i < numHeightMipMaps; i++) {
@@ -168,12 +165,11 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 				height += mipHeightmap[i][(x)  +(y+1)*hmapx];
 				height += mipHeightmap[i][(x+1)+(y)  *hmapx];
 				height += mipHeightmap[i][(x+1)+(y+1)*hmapx];
-				mipHeightmap[i+1][(x/2)+(y/2)*hmapx/2] = height * 0.25f;
+				mipHeightmap[i+1][(x+(y*hmapx)/2)/2] = height * 0.25f;
 			}
 		}
 	}
 
-	float3 n1,n2,n3,n4;
 	int decy=std::max(0,y1-1);
 	int incy=std::min(gs->mapy-1,y2+1);
 	int decx=std::max(0,x1-1);
@@ -200,6 +196,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
+	float* slopemap = readmap->slopemap;
 	for(int y = std::max(2,(y1&0xfffffe)); y <= std::min(gs->mapy-3,y2); y += 2) {
 		for(int x = std::max(2,(x1&0xfffffe)); x <= std::min(gs->mapx-3,x2); x += 2) {
 			float3 e1(-SQUARE_SIZE*4,heightmap[(y-1)*(gs->mapx+1)+x-1]-heightmap[(y-1)*(gs->mapx+1)+x+3],0);
@@ -214,34 +211,38 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 			float3 n2 = e2.cross(e1);
 			n2.Normalize();
 
-			readmap->slopemap[(y/2)*gs->hmapx+(x/2)] = 1-(n.y+n2.y)*0.5f;
+			slopemap[(y/2)*gs->hmapx+(x/2)] = 1-(n.y+n2.y)*0.5f;
 		}
 	}
-
-	pathManager->TerrainChange(x1, y1, x2, y2);
-	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	readmap->HeightmapUpdated(x1, x2, y1, y2);
 
 	decy = std::max(0,(y1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
 	incy = std::min(qf->GetNumQuadsZ()-1,(y2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
 	decx = std::max(0,(x1*SQUARE_SIZE-QUAD_SIZE/2)/QUAD_SIZE);
 	incx = std::min(qf->GetNumQuadsX()-1,(x2*SQUARE_SIZE+QUAD_SIZE/2)/QUAD_SIZE);
 
+	const int numQuadsX = qf->GetNumQuadsX();
+	const int frameNum  = gs->frameNum;
+
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
-			if (inRelosQue[y*qf->GetNumQuadsX()+x]) {
+			if (inRelosQue[y*numQuadsX+x]) {
 				continue;
 			}
 			RelosSquare rs;
 			rs.x = x;
 			rs.y = y;
-			rs.neededUpdate = gs->frameNum;
+			rs.neededUpdate = frameNum;
 			rs.numUnits = qf->GetQuadAt(x, y).units.size();
 			relosSize += rs.numUnits;
-			inRelosQue[y*qf->GetNumQuadsX()+x] = true;
+			inRelosQue[y*numQuadsX+x] = true;
 			relosQue.push_back(rs);
 		}
 	}
+
+	pathManager->TerrainChange(x1, y1, x2, y2);
+	featureHandler->TerrainChanged(x1, y1, x2, y2);
+	readmap->HeightmapUpdated(x1, x2, y1, y2);
+	water->HeightmapChanged(x1, y1, x2, y2);
 	heightMapTexture.UpdateArea(x1, y1, x2, y2);
 }
 
@@ -255,7 +256,7 @@ void CBasicMapDamage::Update(void)
 
 	for(ei=explosions.begin();ei!=explosions.end();++ei){
 		Explo* e=*ei;
-		if (e->ttl<0) continue;
+		if (e->ttl<=0) continue;
 		--e->ttl;
 
 		int x1=e->x1;
@@ -287,63 +288,14 @@ void CBasicMapDamage::Update(void)
 				unit->midPos.y+=dif;
 			}
 		}
-		readmap->ExplosionUpdate(e->x1,e->x2,e->y1,e->y2);
 		if(e->ttl==0){
-			float3 pos=e->pos;
 			RecalcArea(x1-2,x2+2,y1-2,y2+2);
-	/*		for(int y=y1>>3;y<=y2>>3;++y){
-				for(int x=x1>>3;x<=x2>>3;++x){
-					if(!inRejuvQue[y][x]){
-						RejuvSquare rs;
-						rs.x=x;
-						rs.y=y;
-						rejuvQue.push_back(rs);
-						inRejuvQue[y][x]=true;
-					}
-				}
-			}*/
 		}
 	}
 	while(!explosions.empty() && explosions.front()->ttl==0){
 		delete explosions.front();
 		explosions.pop_front();
 	}
-
-/*
-	nextRejuv+=rejuvQue.size()/300.0f;
-	while(nextRejuv>0){
-		nextRejuv-=1;
-		int bx=rejuvQue.front().x;
-		int by=rejuvQue.front().y;
-		bool damaged=false;
-
-		for(int y=by*16;y<by*16+16;++y){
-			for(int x=bx*16;x<bx*16+16;++x){
-				if(readmap->damagemap[y*1024+x]!=0){
-					damaged=true;
-					if(readmap->damagemap[y*1024+x]>5){
-						int hsquare=((y+1)/2)*(gs->mapx+1)+(x+1)/2;
-						readmap->heightmap[hsquare]-=(readmap->heightmap[hsquare]-readmap->orgheightmap[hsquare])*0.003f;
-						readmap->damagemap[y*1024+x]-=4;
-					} else {
-						readmap->damagemap[y*1024+x]=0;
-						if(readmap->typemap[(y/2)*512+x/2]&128){
-							readmap->typemap[(y/2)*512+x/2]&=127;
-							treeDrawer->ResetPos(float3(x*4,0,y*4));
-						}
-					}
-				}
-			}
-		}
-		if(damaged){
-			rejuvQue.push_back(rejuvQue.front());
-			RecalcArea(bx*8,bx*8+8,by*8,by*8+8);
-			readmap->RecalcTexture(bx*8,bx*8+8,by*8,by*8+8);
-		} else {
-			inRejuvQue[by][bx]=false;
-		}
-		rejuvQue.pop_front();
-	}*/
 	UpdateLos();
 }
 

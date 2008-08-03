@@ -18,6 +18,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Platform/ConfigHandler.h"
+#include "System/FastMath.h"
 #include "mmgr.h"
 
 
@@ -25,7 +26,9 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
 	updateFov = true;
 
-	striptype = GL_TRIANGLE_STRIP;
+	LODScaleReflection = configHandler.GetFloat("GroundLODScaleReflection", 1.0f);
+	LODScaleRefraction = configHandler.GetFloat("GroundLODScaleRefraction", 1.0f);
+	LODScaleUnitReflection = configHandler.GetFloat("GroundLODScaleUnitReflection", 1.0f);
 
 	infoTexAlpha = 0.25f;
 	infoTex = 0;
@@ -295,7 +298,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
 							float extractDepth = extractDepthMap[(y * gs->hmapx) + x];
 							// a single pow(x, 0.25) call would be faster?
-							infoTexMem[a*4]=(unsigned char)std::min(255.0f,(float)sqrt(sqrt(extractDepth))*900);
+							infoTexMem[a*4]=(unsigned char)std::min(255.0f,(float)fastmath::sqrt(fastmath::sqrt(extractDepth))*900);
 						} else {
 							infoTexMem[a*4]=0;
 						}

@@ -150,7 +150,7 @@ void CMapInfo::ReadLight()
 	                                                float3(0.4f, 0.4f, 0.4f));
 	light.unitSunColor      = lightTable.GetFloat3("unitDiffuseColor",
 	                                                float3(0.7f, 0.7f, 0.7f));
-	light.specularSunColor = lightTable.GetFloat3("unitSpecularColor",
+	light.specularSunColor  = lightTable.GetFloat3("unitSpecularColor",
 	                                               light.unitSunColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 }
@@ -182,7 +182,7 @@ void CMapInfo::ReadWater()
 	water.specularColor = wt.GetFloat3("specularColor", light.groundSunColor);
 
 	water.fresnelMin   = wt.GetFloat("fresnelMin",   0.2f);
-	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.7f);
+	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.8f);
 	water.fresnelPower = wt.GetFloat("fresnelPower", 4.0f);
 
 	water.reflDistortion = wt.GetFloat("reflectionDistortion", 1.0f);
@@ -197,6 +197,8 @@ void CMapInfo::ReadWater()
 	water.texture       = wt.GetString("texture",       "");
 	water.foamTexture   = wt.GetString("foamTexture",   "");
 	water.normalTexture = wt.GetString("normalTexture", "");
+
+	water.shoreWaves = wt.GetBool("shoreWaves", true);
 
 	// use 'resources.lua' for missing fields  (our the engine defaults)
 	const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
@@ -215,8 +217,16 @@ void CMapInfo::ReadWater()
 
 	if (!water.normalTexture.empty()) {
 		water.normalTexture = "maps/" + water.normalTexture;
+		water.numTiles    = std::min(16,std::max(1,wt.GetInt("numTiles",1)));
 	} else {
 		water.normalTexture = "bitmaps/" + resGfxMaps.GetString("waternormaltex", "waterbump.png");
+		if (resGfxMaps.KeyExists("waternormaltex")) {
+			water.numTiles = std::min(16,std::max(1,resGfxMaps.GetInt("numTiles",1)));
+		}else{
+			// default texture is a TileSet of 3x3
+			// user-defined textures are expected to be 1x1 (no DynWaves possible)
+			water.numTiles = 3;
+		}
 	}
 
 	// water caustic textures

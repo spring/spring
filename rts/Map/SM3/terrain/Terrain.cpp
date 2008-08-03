@@ -51,9 +51,6 @@ namespace terrain {
 
 	using namespace std;
 
-	// debug stuff
-	bool fill=true;
-
 	Config::Config()
 	{
 		cacheTextures=false;
@@ -592,14 +589,9 @@ namespace terrain {
 
 	void Terrain::Draw ()
 	{
-		if (!fill)
-			glPolygonMode (GL_FRONT_AND_BACK,GL_LINE);
-		else {
-			glPolygonMode (GL_FRONT_AND_BACK,GL_FILL);
+		const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffuse);
 
-			const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffuse);
-		}
 		glEnable(GL_CULL_FACE);
 		glColor3f(1.0f,1.0f,1.0f);
 
@@ -647,23 +639,21 @@ namespace terrain {
 
 			glEnable(GL_DEPTH_TEST);
 
-			if (fill) texturing->BeginTexturing();
+			texturing->BeginTexturing();
 
-			if (!fill) numPasses=1;
+			numPasses=1;
 			for (int pass=0;pass<numPasses;pass++)
 			{
 				bool skipNodes=false;
 
-				if (fill)
-					texturing->BeginPass(pass);
+				texturing->BeginPass(pass);
 
 				for (int a=0;a<activeRC->quads.size();a++)
 				{
 					TQuad *q = activeRC->quads[a].quad;
 
 					// Setup node texturing
-					if (fill)
-						skipNodes = !texturing->SetupNode (q, pass);
+					skipNodes = !texturing->SetupNode (q, pass);
 
 					assert (q->renderData);
 
@@ -673,20 +663,17 @@ namespace terrain {
 					}
 				}
 
-				if (fill) texturing->EndPass();
+				texturing->EndPass();
 			}
 
 			glDisable (GL_BLEND);
 			glDepthMask (GL_TRUE);
 
-			if (fill)
-				texturing->EndTexturing ();
+			texturing->EndTexturing ();
 		}
 
 		if (debugQuad)
 			DrawNormals (debugQuad, lowdetailhm->GetLevel (debugQuad->depth));
-
-		glPolygonMode (GL_FRONT_AND_BACK,GL_FILL);
 	}
 
 	void Terrain::CalcRenderStats (RenderStats& stats, RenderContext *ctx)
@@ -840,10 +827,6 @@ namespace terrain {
 
 	void Terrain::DebugEvent (const std::string& event)
 	{
-		if (event == "t_toggle_fill") {
-			fill=!fill;
-			return;
-		}
 		if (event == "t_detail_inc")
 			config.detailMod *= 1.2f;
 		if (event == "t_detail_dec")

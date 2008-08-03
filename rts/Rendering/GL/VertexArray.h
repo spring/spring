@@ -23,18 +23,17 @@ public:
 	void DrawArray0(int drawType,int stride=12);
 	inline void AddVertexC(const float3& pos,unsigned char* color);
 	void DrawArrayC(int drawType,int stride=16);
-	void EnlargeStripArray();
-	void EnlargeDrawArray();
-	void EndStrip();
-	bool IsReady();
-  inline void CheckEnlargeDrawArray();
-	void CheckEndStrip();
-  void DrawArrays(int drawType, int stride);
-  void EnlargeArrays(int vertexes, int strips, int stripsize=3);
-	void EndStripQ();
+
+	//! same as AddVertex0, but without autmated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
 
+	//! same as EndStrip, but without autmated EnlargeStripArray
+	void EndStripQ();
+
+	bool IsReady();
 	int drawIndex();
+	void EndStrip();
+	void EnlargeArrays(int vertexes, int strips, int stripsize=3);
 
 	float* drawArray;
 	float* drawArrayPos;
@@ -43,6 +42,13 @@ public:
 	int* stripArray;
 	int* stripArrayPos;
 	int* stripArraySize;
+
+protected:
+	void DrawArrays(int drawType, int stride);
+	inline void CheckEnlargeDrawArray();
+	void EnlargeStripArray();
+	void EnlargeDrawArray();
+	void CheckEndStrip();
 };
 
 inline void CVertexArray::CheckEnlargeDrawArray() {

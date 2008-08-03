@@ -2731,7 +2731,7 @@ bool CGame::Draw() {
 		}
 	}
 
-	camera->Update(false);
+	camera->Update(false); //FIXME: after UpdateWater?
 
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 
