@@ -136,26 +136,33 @@ void CBuilder::Update()
 		return;
 	}
 
-	if(terraforming && inBuildStance){
-		float* heightmap = readmap->GetHeightmap();
+	if (terraforming && inBuildStance) {
+		const float* heightmap = readmap->GetHeightmap();
 		assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 		float terraformScale = 0.1;
-		switch(terraformType) {
+
+		switch (terraformType) {
 		    case Terraform_Building:
-				if(curBuild) {
+				if (curBuild) {
 					terraformScale = (terraformSpeed + terraformHelp) / curBuild->terraformLeft;
 					curBuild->terraformLeft -= (terraformSpeed + terraformHelp);
 					terraformHelp = 0;
+
 					if (terraformScale > 1.0f) {
 						terraformScale = 1.0f;
 					}
-					curBuild->AddBuildPower(0.0f,this); //prevent building from timing out while terraforming for it
-					for(int z=tz1; z<=tz2; z++){
-						for(int x=tx1; x<=tx2; x++){
-							float ch=heightmap[z*(gs->mapx+1)+x];
-							heightmap[z*(gs->mapx+1)+x] += (curBuild->pos.y - ch) * terraformScale;
+
+					// prevent building from timing out while terraforming for it
+					curBuild->AddBuildPower(0.0f, this);
+					for (int z = tz1; z <= tz2; z++) {
+						for (int x = tx1; x <= tx2; x++) {
+							int idx = z * (gs->mapx + 1) + x;
+							float ch = heightmap[idx];
+
+							readmap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
 						}
 					}
+
 					if(curBuild->terraformLeft<=0){
 						terraforming=false;
 						mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
@@ -170,53 +177,70 @@ void CBuilder::Update()
 				terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
 				myTerraformLeft -= (terraformSpeed + terraformHelp);
 				terraformHelp = 0;
+
 				if (terraformScale > 1.0f) {
 					terraformScale = 1.0f;
 				}
-				for(int z=tz1; z<=tz2; z++){
-					for(int x=tx1; x<=tx2; x++){
-						float ch=heightmap[z*(gs->mapx+1)+x];
-						float oh=readmap->orgheightmap[z*(gs->mapx+1)+x];
-						heightmap[z*(gs->mapx+1)+x] += (oh-ch) * terraformScale;
+
+				for (int z = tz1; z <= tz2; z++) {
+					for (int x = tx1; x <= tx2; x++) {
+						int idx = z * (gs->mapx + 1) + x;
+						float ch = heightmap[idx];
+						float oh = readmap->orgheightmap[idx];
+
+						readmap->AddHeight(idx, (oh - ch) * terraformScale);
 					}
 				}
-				if(myTerraformLeft<=0){
+
+				if (myTerraformLeft <= 0) {
 					terraforming=false;
 					mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
 					StopBuild();
 				}
 				break;
 		}
+
 		CreateNanoParticle(terraformCenter,terraformRadius*0.5f,false);
-		for(int z=tz1; z<=tz2; z++){		//smooth the borders x
-			for(int x=1; x<=3; x++){
-				if(tx1-3>=0){
-					float ch3=heightmap[z*(gs->mapx+1)+tx1];
-					float ch=heightmap[z*(gs->mapx+1)+tx1-x];
-					float ch2=heightmap[z*(gs->mapx+1)+tx1-3];
-					heightmap[z*(gs->mapx+1)+tx1-x] += ((ch3*(3-x)+ch2*x)/3-ch) * terraformScale;
+
+		for (int z = tz1; z <= tz2; z++) {
+			// smooth the borders x
+			for (int x = 1; x <= 3; x++) {
+				if (tx1 - 3 >= 0) {
+					float ch3 = heightmap[z * (gs->mapx + 1) + tx1    ];
+					float ch  = heightmap[z * (gs->mapx + 1) + tx1 - x];
+					float ch2 = heightmap[z * (gs->mapx + 1) + tx1 - 3];
+					float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
+
+					readmap->AddHeight(z * (gs->mapx + 1) + tx1 - x, amount);
 				}
-				if(tx2+3<gs->mapx){
-					float ch3=heightmap[z*(gs->mapx+1)+tx2];
-					float ch=heightmap[z*(gs->mapx+1)+tx2+x];
-					float ch2=heightmap[z*(gs->mapx+1)+tx2+3];
-					heightmap[z*(gs->mapx+1)+tx2+x] += ((ch3*(3-x)+ch2*x)/3-ch) * terraformScale;
+				if (tx2 + 3 < gs->mapx) {
+					float ch3 = heightmap[z * (gs->mapx + 1) + tx2    ];
+					float ch  = heightmap[z * (gs->mapx + 1) + tx2 + x];
+					float ch2 = heightmap[z * (gs->mapx + 1) + tx2 + 3];
+					float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
+
+					readmap->AddHeight(z * (gs->mapx + 1) + tx2 + x, amount);
 				}
 			}
 		}
-		for(int z=1; z<=3; z++){		//smooth the borders z
-			for(int x=tx1; x<=tx2; x++){
-				if(tz1-3>=0){
-					float ch3=heightmap[(tz1)*(gs->mapx+1)+x];
-					float ch=heightmap[(tz1-z)*(gs->mapx+1)+x];
-					float ch2=heightmap[(tz1-3)*(gs->mapx+1)+x];
-					heightmap[(tz1-z)*(gs->mapx+1)+x] += ((ch3*(3-z)+ch2*z)/3-ch) * terraformScale;
+		for (int z = 1; z <= 3; z++) {
+			// smooth the borders z
+			for (int x = tx1; x <= tx2; x++) {
+				if (tz1 - 3 >= 0) {
+					float ch3 = heightmap[(tz1    ) * (gs->mapx + 1) + x];
+					float ch  = heightmap[(tz1 - z) * (gs->mapx + 1) + x];
+					float ch2 = heightmap[(tz1 - 3) * (gs->mapx + 1) + x];
+					float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+
+					readmap->AddHeight((tz1 - z) * (gs->mapx + 1) + x, adjust);
 				}
-				if(tz2+3<gs->mapy){
-					float ch3=heightmap[(tz2)*(gs->mapx+1)+x];
-					float ch=heightmap[(tz2+z)*(gs->mapx+1)+x];
-					float ch2=heightmap[(tz2+3)*(gs->mapx+1)+x];
-					heightmap[(tz2+z)*(gs->mapx+1)+x] += ((ch3*(3-z)+ch2*z)/3-ch) * terraformScale;
+				if (tz2 + 3 < gs->mapy) {
+					float ch3 = heightmap[(tz2    ) * (gs->mapx + 1) + x];
+					float ch  = heightmap[(tz2 + z) * (gs->mapx + 1) + x];
+					float ch2 = heightmap[(tz2 + 3) * (gs->mapx + 1) + x];
+					float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+
+					readmap->AddHeight((tz2 + z) * (gs->mapx + 1) + x, adjust);
 				}
 			}
 		}
@@ -460,12 +484,13 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	tz1 = (int)max((float)0,(centerPos.z-radius)/SQUARE_SIZE);
 	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
-	float tcost=0;
-	float* heightmap = readmap->GetHeightmap();
-	for(int z=tz1; z<=tz2; z++){
-		for(int x=tx1; x<=tx2; x++){
-			float delta=readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x];
-			tcost+=fabs(delta);
+	float tcost = 0.0f;
+	const float* heightmap = readmap->GetHeightmap();
+
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			float delta = readmap->orgheightmap[z * (gs->mapx + 1) + x] - heightmap[z * (gs->mapx + 1) + x];
+			tcost += fabs(delta);
 		}
 	}
 	myTerraformLeft=tcost;
@@ -589,18 +614,20 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 {
 	float3& buildPos=buildInfo.pos;
 
-	float tcost=0;
-	float* heightmap = readmap->GetHeightmap();
-	for(int z=tz1; z<=tz2; z++){
-		for(int x=tx1; x<=tx2; x++){
-			float delta=buildPos.y-heightmap[z*(gs->mapx+1)+x];
+	float tcost = 0.0f;
+	const float* heightmap = readmap->GetHeightmap();
+
+	for (int z = tz1; z <= tz2; z++) {
+		for (int x = tx1; x <= tx2; x++) {
+			int idx = z * (gs->mapx + 1) + x;
+			float delta = buildPos.y - heightmap[idx];
 			float cost;
-			if(delta>0){
-				cost=max(3.f,heightmap[z*(gs->mapx+1)+x]-readmap->orgheightmap[z*(gs->mapx+1)+x]+delta*0.5f);
+			if (delta > 0) {
+				cost = max(3.0f, heightmap[idx]-readmap->orgheightmap[idx] + delta * 0.5f);
 			} else {
-				cost=max(3.f,readmap->orgheightmap[z*(gs->mapx+1)+x]-heightmap[z*(gs->mapx+1)+x]-delta*0.5f);
+				cost = max(3.0f, readmap->orgheightmap[idx] - heightmap[idx] - delta * 0.5f);
 			}
-			tcost+=fabs(delta)*cost;
+			tcost += fabs(delta) * cost;
 		}
 	}
 

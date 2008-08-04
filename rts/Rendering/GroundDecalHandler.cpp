@@ -194,7 +194,7 @@ void CGroundDecalHandler::Draw(void)
 				if (camera->InView(decal->pos, decal->radius) &&
 					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView)) {
 					color[3] = int(decal->alpha * 255);
-					float* heightmap = readmap->GetHeightmap();
+					const float* heightmap = readmap->GetHeightmap();
 					float xts = 1.0f / decal->xsize;
 					float yts = 1.0f / decal->ysize;
 
@@ -400,7 +400,7 @@ void CGroundDecalHandler::Draw(void)
 				int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
 				int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
 				int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f);
-				float* heightmap = readmap->GetHeightmap();
+				const float* heightmap = readmap->GetHeightmap();
 
 				// create the scar texture-quads
 				for (int x = sx; x <= ex; ++x) {

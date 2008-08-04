@@ -302,6 +302,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->energyTickMake += ud->tidalGenerator * mapInfo->map.tidalStrength;
 
 
+
+
 	unit->model = ud->LoadModel(team);
 	unit->SetRadius(unit->model->radius);
 
@@ -327,8 +329,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
+
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+
 
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
@@ -507,12 +511,13 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
 		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
 		const int tz2 = std::min(gs->mapy, tz1 + bi.GetYSize());
-		float* heightmap = readmap->GetHeightmap();
-		for(int z = tz1; z <= tz2; z++){
-			for(int x = tx1; x <= tx2; x++){
-				heightmap[z * (gs->mapx + 1) + x] = bi.pos.y;
+
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				readmap->SetHeight(z * (gs->mapx + 1) + x, bi.pos.y);
 			}
 		}
+
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
 }

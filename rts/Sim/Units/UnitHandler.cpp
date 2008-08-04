@@ -302,7 +302,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	float maxh=5000;
 	int numBorder=0;
 	float borderh=0;
-	float* heightmap=readmap->GetHeightmap();
+	const float* heightmap=readmap->GetHeightmap();
 
 	int xsize=1;
 	int ysize=1;
@@ -412,7 +412,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	}
 
 	if (!unitdef->floater) {
-		float* heightmap = readmap->GetHeightmap();
+		const float* heightmap = readmap->GetHeightmap();
 		int x = (int) (pos.x / SQUARE_SIZE);
 		int z = (int) (pos.z / SQUARE_SIZE);
 		float orgh = readmap->orgheightmap[z * (gs->mapx + 1) + x];
