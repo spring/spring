@@ -264,7 +264,7 @@ CDynWater::~CDynWater(void)
 
 void CDynWater::Draw()
 {
-	if(readmap->minheight>10)
+	if (readmap->currMinHeight > 1.0f)
 		return;
 
 	glDisable(GL_BLEND);
@@ -354,7 +354,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || mapInfo->map.voidWater)
+	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
 		return;
 
 	glDisable(GL_DEPTH_TEST);
@@ -377,7 +377,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if(readmap->minheight>10)
+	if (readmap->currMinHeight > 1.0f)
 		return;
 
 	oldCamPosBig=camPosBig;

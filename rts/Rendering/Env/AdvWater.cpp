@@ -119,8 +119,9 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if(readmap->minheight>10)
+	if (readmap->currMinHeight > 1.0f)
 		return;
+
 	float3 dir,zpos;
 	float3 base=camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
 	float3 dv=camera->CalcPixelDir(gu->viewPosX,0)-camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
@@ -226,7 +227,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || mapInfo->map.voidWater)
+	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
 		return;
 
 	glViewport(0,0,128,128);

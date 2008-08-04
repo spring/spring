@@ -21,8 +21,19 @@ public:
 	void DrawMinimap ();
 	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
 	CBaseGroundDrawer* GetGroundDrawer();
-	float* GetHeightmap() { return heightmap; }
-	
+	const float* GetHeightmap() { return heightmap; }
+
+	inline void SetHeight(int idx, float h) {
+		heightmap[idx] = h;
+		currMinHeight = std::min(h, currMinHeight);
+		currMaxHeight = std::max(h, currMaxHeight);
+	}
+	inline void AddHeight(int idx, float a) {
+		heightmap[idx] += a;
+		currMinHeight = std::min(heightmap[idx], currMinHeight);
+		currMaxHeight = std::max(heightmap[idx], currMaxHeight);
+	}
+
 	int GetNumFeatureTypes ();
 	int GetNumFeatures ();
 	void GetFeatureInfo (MapFeatureInfo* f);// returns all feature info in MapFeatureInfo[NumFeatures]

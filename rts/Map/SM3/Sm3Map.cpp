@@ -173,12 +173,6 @@ void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	renderer->HeightmapUpdated(x1,y1,x2-x1,y2-y1);
 }
 
-float* CSm3ReadMap::GetHeightmap()
-{
-	return renderer->GetHeightmap();
-}
-
-
 void CSm3ReadMap::Update() {}
 void CSm3ReadMap::Explosion(float x,float y,float strength) {}
 GLuint CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height

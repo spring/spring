@@ -44,9 +44,14 @@ public:
 protected:
 	void Initialize(); // called by implementations of CReadMap
 public:
-	void CalcHeightfieldData(); /// Calculates derived heightmap information such as normals, centerheightmap and slopemap
+	// calculates derived heightmap information such as normals, centerheightmap and slopemap
+	void CalcHeightfieldData();
 
-	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
+	virtual const float* GetHeightmap() = 0;
+	// if you modify the heightmap, call HeightmapUpdated
+	virtual void SetHeight(int idx, float h) = 0;
+	virtual void AddHeight(int idx, float a) = 0;
+
 	float* orgheightmap;
 	float* centerheightmap;
 	static const int numHeightMipMaps = 7;	//number of heightmap mipmaps, including full resolution
@@ -96,6 +101,7 @@ public:
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;
 
 	float minheight, maxheight;
+	float currMinHeight, currMaxHeight;
 };
 
 extern CReadMap* readmap;

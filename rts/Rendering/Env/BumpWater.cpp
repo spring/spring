@@ -568,7 +568,7 @@ CBumpWater::~CBumpWater()
 
 void CBumpWater::Update()
 {
-	if (readmap->minheight>1 || mapInfo->map.voidWater)
+	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
 		return;
 
 	float3 w = wind.GetCurrentWind();
@@ -611,7 +611,7 @@ void CBumpWater::Update()
 
 void CBumpWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight>1 || mapInfo->map.voidWater)
+	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
 		return;
 
 	if (refraction>1) DrawRefraction(game);
@@ -904,7 +904,7 @@ static void DrawRadialDisc()
 
 void CBumpWater::Draw()
 {
-	if(readmap->minheight>1)
+	if (readmap->currMinHeight > 1.0f)
 		return;
 
 	if (refraction == 1) {

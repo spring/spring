@@ -2562,13 +2562,13 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
-	float* heightMap = readmap->GetHeightmap();
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
 			const int index = (z * (gs->mapx + 1)) + x;
-			heightMap[index] = height;
+			readmap->SetHeight(index, height);
 		}
 	}
+
 	mapDamage->RecalcArea(x1, x2, z1, z2);
 	return 0;
 }
@@ -2583,13 +2583,13 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, height, x1, z1, x2, z2);
 
-	float* heightMap = readmap->GetHeightmap();
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
 			const int index = (z * (gs->mapx + 1)) + x;
-			heightMap[index] += height;
+			readmap->AddHeight(index, height);
 		}
 	}
+
 	mapDamage->RecalcArea(x1, x2, z1, z2);
 	return 0;
 }
@@ -2604,13 +2604,15 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
 
-	float* origMap = readmap->orgheightmap;
-	float* currMap = readmap->GetHeightmap();
+	const float* origMap = readmap->orgheightmap;
+	const float* currMap = readmap->GetHeightmap();
+
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int index = (z * (gs->mapx + 1)) + x;
-				currMap[index] = origMap[index];
+				const int idx = (z * (gs->mapx + 1)) + x;
+
+				readmap->SetHeight(idx, origMap[idx]);
 			}
 		}
 	}
@@ -2619,11 +2621,13 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
 				const int index = (z * (gs->mapx + 1)) + x;
-				currMap[index] = (origFactor * origMap[index]) +
-				                 (currFactor * currMap[index]);
+				const float ofh = origFactor * origMap[index];
+				const float cfh = currFactor * currMap[index];
+				readmap->SetHeight(index, ofh + cfh);
 			}
 		}
 	}
+
 	mapDamage->RecalcArea(x1, x2, z1, z2);
 	return 0;
 }
@@ -2652,8 +2656,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
-	float& heightMap = readmap->GetHeightmap()[index];
-	heightMap += h;
+	const float oldHeight = readmap->GetHeightmap()[index];
 	heightMapAmountChanged += streflop::fabsf(h);
 
 	// update RecalcArea()
@@ -2662,7 +2665,9 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
 
-	lua_pushnumber(L, heightMap);
+	readmap->AddHeight(index, h);
+	// push the new height
+	lua_pushnumber(L, oldHeight + h);
 	return 1;
 }
 
@@ -2688,17 +2693,17 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
-	float& heightMap = readmap->GetHeightmap()[index];
-	const float oldHeight = heightMap;
+	const float oldHeight = readmap->GetHeightmap()[index];
+	float height = oldHeight;
 
 	if (lua_israwnumber(L, 4)) {
 		const float t = lua_tofloat(L, 4);
-		heightMap += (h - heightMap) * t;
+		height += (h - oldHeight) * t;
 	} else{
-		heightMap = h;
+		height = h;
 	}
 
-	const float heightDiff = (heightMap - oldHeight);
+	const float heightDiff = (height - oldHeight);
 	heightMapAmountChanged += streflop::fabsf(heightDiff);
 
 	// update RecalcArea()
@@ -2707,6 +2712,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	if (z < heightMapz1) { heightMapz1 = z; }
 	if (z > heightMapz2) { heightMapz2 = z; }
 
+	readmap->SetHeight(index, height);
 	lua_pushnumber(L, heightDiff);
 	return 1;
 }
