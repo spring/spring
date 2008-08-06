@@ -107,13 +107,13 @@ CR_REG_METADATA(CGroundMoveType, (
 		));
 
 
-const unsigned int MAX_REPATH_FREQUENCY = 30;		//The minimum of frames between two full path-requests.
+const unsigned int MAX_REPATH_FREQUENCY = 30;		// The minimum of frames between two full path-requests.
 
-const float ETA_ESTIMATION = 1.5f;					//How much time the unit are given to reach the waypoint.
-const float MAX_WAYPOINT_DISTANCE_FACTOR = 2.0f;		//Used to tune how often new waypoints are requested. Multiplied with MinDistanceToWaypoint().
-const float MAX_OFF_PATH_FACTOR = 20;				//How far away from a waypoint a unit could be before a new path is requested.
+const float ETA_ESTIMATION = 1.5f;					// How much time the unit are given to reach the waypoint.
+const float MAX_WAYPOINT_DISTANCE_FACTOR = 2.0f;	// Used to tune how often new waypoints are requested. Multiplied with MinDistanceToWaypoint().
+const float MAX_OFF_PATH_FACTOR = 20;				// How far away from a waypoint a unit could be before a new path is requested.
 
-const float MINIMUM_SPEED = 0.01f;					//Minimum speed a unit may move in.
+const float MINIMUM_SPEED = 0.01f;					// Minimum speed a unit may move in.
 
 static const bool DEBUG_CONTROLLER=false;
 std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
@@ -304,12 +304,14 @@ void CGroundMoveType::Update()
 			}
 
 			if (nextDeltaSpeedUpdate <= gs->frameNum) {
-				wantedSpeed = pathId? requestedSpeed: 0;
+				wantedSpeed = pathId? requestedSpeed: 0.0f;
+				bool moreCommands = owner->commandAI->HasMoreMoveCommands();
+
 				// If arriving at waypoint, then need to slow down, or may pass it.
-				if (!owner->commandAI->HasMoreMoveCommands() &&
-					currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-					wantedSpeed = std::min((float) wantedSpeed, (float) (fastmath::sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking)));
+				if (!moreCommands && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+					wantedSpeed = std::min(wantedSpeed, fastmath::sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 				}
+
 				wantedSpeed *= std::max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
 				SetDeltaSpeed();
 			}
@@ -383,12 +385,13 @@ void CGroundMoveType::SlowUpdate()
 	if (progressState == Active && etaFailures > 8) {
 		if (owner->pos.distance2D(goalPos) > 200 || CheckGoalFeasability()) {
 			if (DEBUG_CONTROLLER)
-				logOutput.Print("Unit eta failure %i", owner->id);
+				logOutput.Print("ETA failure for unit %i", owner->id);
+
 			StopEngine();
 			StartEngine();
 		} else {
 			if (DEBUG_CONTROLLER)
-				logOutput.Print("Goal clogged up %i", owner->id);
+				logOutput.Print("Goal clogged up for unit %i", owner->id);
 			Fail();
 		}
 	}
@@ -434,8 +437,6 @@ void CGroundMoveType::SlowUpdate()
 			if (owner->hasRadarCapacity)
 				radarhandler->MoveUnit(owner);
 
-			// owner->UnBlock();
-			// owner->Block();
 		}
 		qf->MovedUnit(owner);
 
@@ -470,20 +471,19 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 		StopEngine();
 	}
 
-	//Sets the new goal.
+	// set the new goal
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
-	requestedSpeed = std::min(speed, maxSpeed * 2);
+	requestedSpeed = std::min(speed, maxSpeed * 2.0f);
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
-
 	progressState = Active;
 
-	//Starts the engine.
 	if (DEBUG_CONTROLLER) {
 		logOutput << owner->id << ": StartMoving() starting engine.\n";
 	}
+
 	StartEngine();
 
 	ENTER_UNSYNCED;
@@ -510,74 +510,88 @@ void CGroundMoveType::StopMoving() {
 	StopEngine();
 
 	useMainHeading = false;
-	if(progressState != Done)
+	if (progressState != Done)
 		progressState = Done;
 }
 
 void CGroundMoveType::SetDeltaSpeed(void)
 {
-	//Rounding of low speed.
-	if(wantedSpeed == 0 && currentSpeed < 0.01f){
-		currentSpeed=0;
-		deltaSpeed=0;
-//		nextDeltaSpeedUpdate=gs->frameNum+8;
+	// round low speeds to zero
+	if (wantedSpeed == 0.0f && currentSpeed < 0.01f) {
+		currentSpeed = 0.0f;
+		deltaSpeed = 0.0f;
 		return;
 	}
 
-	//Wanted speed and acceleration.
+	// wanted speed and acceleration
 	float wSpeed = maxSpeed;
 
-	//Limiting speed and acceleration.
-	if(wantedSpeed > 0) {
-		float groundMod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, owner->pos,flatFrontDir);
+	// limit speed and acceleration
+	if (wantedSpeed > 0.0f) {
+		float groundMod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, owner->pos, flatFrontDir);
 		wSpeed *= groundMod;
 
-		float3 goalDif=waypoint-owner->pos;
-		short turn=owner->heading-GetHeadingFromVector(goalDif.x,goalDif.z);
-		if(turn!=0){
-			float goalLength=goalDif.Length();
+		float3 goalDif = waypoint - owner->pos;
+		short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
-			float turnSpeed=(goalLength+8)/(abs(turn)/turnRate)*0.5f;
-			if(turnSpeed<wSpeed)		//make sure we can turn fast enought to get hit the goal
-				wSpeed=turnSpeed;
+		if (turn != 0) {
+			float goalLength = goalDif.Length();
+			float turnSpeed = (goalLength + 8.0f) / (abs(turn) / turnRate) * 0.5f;
+
+			if (turnSpeed < wSpeed) {
+				// make sure we can turn fast enough to hit the goal
+				// (but don't slow us down to a complete crawl either)
+				//
+				// NOTE: can cause units with large turning circles to
+				// circle around close waypoints indefinitely, but one
+				// GetNextWaypoint() often is sufficient prevention
+				if (owner->unitDef->turnInPlace || currentSpeed < 1.5f) {
+					// keep the turn mostly in-place
+					wSpeed = turnSpeed;
+				} else {
+					GetNextWaypoint();
+					wSpeed = (turnSpeed + wSpeed) * 0.667f;
+				}
+			}
 	}
-	if(wSpeed>wantedSpeed)
-		wSpeed=wantedSpeed;
+
+	if (wSpeed > wantedSpeed)
+		wSpeed = wantedSpeed;
 	} else {
-		wSpeed=0;
+		wSpeed = 0.0f;
 	}
-	//Limit change according to acceleration.
+
+	// limit speed change according to acceleration
 	float dif = wSpeed - currentSpeed;
 
 	if (!accRate) {
-		logOutput.Print("Acceleration is zero on unit %s\n",owner->unitDef->name.c_str());
-		accRate=0.01f;
+		logOutput.Print("Acceleration is zero for unit %s\n", owner->unitDef->name.c_str());
+		accRate = 0.01f;
 	}
-	if(fabs(dif) < 0.05f) {		//good speed
-		deltaSpeed = dif / 8;
+
+	if (fabs(dif) < 0.05f) {
+		// we are already going (mostly) how fast we want to go
+		deltaSpeed = dif * 0.125f;
 		nextDeltaSpeedUpdate = gs->frameNum + 8;
-	}
-	else if(dif > 0) {				//accelerate
-		if(dif < accRate) {
+	} else if (dif > 0.0f) {
+		// we want to accelerate
+		if (dif < accRate) {
 			deltaSpeed = dif;
 			nextDeltaSpeedUpdate = gs->frameNum;
 		} else {
 			deltaSpeed = accRate;
-			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float) 8, dif / accRate));
+			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, dif / accRate));
 		}
-	}
-	else {	// decRate = 0.1*brakeRate, I guess this is for aircraft
-		if(dif > -10*decRate){
+	} else {
+		// we want to decelerate
+		if (dif > -10.0f * decRate) {
 			deltaSpeed = dif;
 			nextDeltaSpeedUpdate = gs->frameNum + 1;
-		}
-		else {
-			deltaSpeed = -10*decRate;
-			nextDeltaSpeedUpdate = (int)(gs->frameNum + std::min((float) 8, dif / (-10*decRate)));
+		} else {
+			deltaSpeed = -10.0f * decRate;
+			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, dif / deltaSpeed));
 		}
 	}
-	//float3 temp=UpVector*wSpeed;
-	//temp.CheckInBounds();
 
 #ifdef TRACE_SYNC
 	tracefile << "Unit delta speed: ";
@@ -800,9 +814,6 @@ void CGroundMoveType::UpdateControlledDrop(void)
 			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
 			owner->cob->Call("Landed"); //stop parachute animation
 		}
-
-
-
 	}
 }
 
@@ -953,12 +964,10 @@ void CGroundMoveType::CalcSkidRot(void)
 }
 
 
-const float AVOIDANCE_DISTANCE = 1.0f;				// How far away a unit should start avoiding an obstacle. Multiplied with distance to waypoint.
-const float AVOIDANCE_STRENGTH = 2.0f;				// How strongly an object should be avoided. Raise this value to give some more marginal.
-const float FORCE_FIELD_DISTANCE = 50;				// How faar away a unit may be affected by the force-field. Multiplied with speed of the unit.
-const float FORCE_FIELD_STRENGTH = 0.4f;			// Maximum strenght of the force-field.
-
-
+// const float AVOIDANCE_DISTANCE = 1.0f;			// How far away a unit should start avoiding an obstacle. Multiplied with distance to waypoint.
+const float AVOIDANCE_STRENGTH = 2.0f;				// How strongly an object should be avoided. Raise this value to give some more margin.
+// const float FORCE_FIELD_DISTANCE = 50;			// How far away a unit may be affected by the force-field. Multiplied with speed of the unit.
+// const float FORCE_FIELD_STRENGTH = 0.4f;			// Maximum strenght of the force-field.
 
 /*
  * Dynamic obstacle avoidance, helps the unit to
@@ -1140,7 +1149,7 @@ void CGroundMoveType::GetNewPath()
 			pathId = 0;
 			return;
 		}
-	}else {
+	} else {
 		lastGetPathPos = owner->pos;
 		nonMovingFailures = 0;
 	}
@@ -1148,8 +1157,9 @@ void CGroundMoveType::GetNewPath()
 	pathManager->DeletePath(pathId);
 	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 	nextWaypoint = owner->pos;
-	// new path received, can't be at waypoint.
-	if (pathId){
+
+	// if new path received, can't be at waypoint
+	if (pathId) {
 		atGoal = false;
 		haveFinalWaypoint = false;
 		GetNextWaypoint();
@@ -1176,7 +1186,7 @@ void CGroundMoveType::GetNextWaypoint()
 			atGoal = false;
 		} else {
 			if (DEBUG_CONTROLLER)
-				logOutput.Print("Path failure %i %i", owner->id, pathFailures);
+				logOutput.Print("Path-failure count for unit %i: %i", owner->id, pathFailures);
 			pathFailures++;
 			if (pathFailures > 0) {
 				pathFailures = 0;
@@ -1195,6 +1205,8 @@ void CGroundMoveType::GetNextWaypoint()
 }
 
 
+
+
 /*
 The distance the unit will move at max breaking before stopping,
 starting from given speed.
@@ -1208,7 +1220,6 @@ float CGroundMoveType::BreakingDistance(float speed)
 	return fabs(speed * speed / owner->mobility->maxBreaking);
 }
 
-
 /*
 Gives the position this unit will end up at with full breaking
 from current velocity.
@@ -1216,7 +1227,7 @@ from current velocity.
 float3 CGroundMoveType::Here()
 {
 	float3 motionDir = owner->speed;
-	if(motionDir.SqLength2D() == 0) {
+	if (motionDir.SqLength2D() == 0) {
 		return owner->midPos;
 	} else {
 		motionDir.Normalize();
@@ -1234,7 +1245,6 @@ float CGroundMoveType::MinDistanceToWaypoint()
 	return BreakingDistance(owner->speed.Length2D()) + CPathManager::PATH_RESOLUTION;
 }
 
-
 /*
 Gives the maximum distance from it's waypoint a unit could be
 before a new path is requested.
@@ -1244,9 +1254,10 @@ float CGroundMoveType::MaxDistanceToWaypoint()
 	return MinDistanceToWaypoint() * MAX_OFF_PATH_FACTOR;
 }
 
-/*
-Initializes motion.
-*/
+
+
+
+/* Initializes motion. */
 void CGroundMoveType::StartEngine() {
 	// ran only if the unit has no path and is not already at goal
 	if (!pathId && !atGoal) {
@@ -1272,12 +1283,9 @@ void CGroundMoveType::StartEngine() {
 	}
 
 	nextObstacleAvoidanceUpdate = gs->frameNum;
-	//SetDeltaSpeed();
 }
 
-/*
-Stops motion.
-*/
+/* Stops motion. */
 void CGroundMoveType::StopEngine() {
 	// ran only if engine is active
 	if (pathId) {
@@ -1295,25 +1303,22 @@ void CGroundMoveType::StopEngine() {
 			logOutput << "Engine stopped." << " " << owner->id << "\n";
 		}
 	}
+
 	owner->isMoving = false;
 	wantedSpeed = 0;
-	// SetDeltaSpeed();
 }
 
 
-/*
-Called when the unit arrives at it's waypoint.
-*/
+/* Called when the unit arrives at its waypoint. */
 void CGroundMoveType::Arrived()
 {
-	//Can only "arrive" if the engine is active.
-	if(progressState == Active) {
-		//Have reached waypoint.
+	// can only "arrive" if the engine is active
+	if (progressState == Active) {
+		// we have reached our waypoint
 		atGoal = true;
 
 		StopEngine();
 
-		// Play "arrived" sound.
 		ENTER_UNSYNCED;
 		if (owner->team == gu->myTeam) {
 			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
@@ -1325,11 +1330,11 @@ void CGroundMoveType::Arrived()
 		}
 		ENTER_SYNCED;
 
-		//And the action is done.
+		// and the action is done
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		if(DEBUG_CONTROLLER)
+		if (DEBUG_CONTROLLER)
 			logOutput << "Unit arrived!\n";
 	}
 }
@@ -1340,7 +1345,7 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	if(DEBUG_CONTROLLER)
+	if (DEBUG_CONTROLLER)
 		logOutput.Print("Unit failed! %i",owner->id);
 
 	StopEngine();
@@ -1843,22 +1848,26 @@ void CGroundMoveType::LeaveTransport(void)
 void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive){
 	mainHeadingPos = pos;
 	useMainHeading = aggressive;
-	if(useMainHeading && !owner->weapons.empty()){
-		if(!owner->weapons[0]->weaponDef->waterweapon && mainHeadingPos.y <= 1){
+
+	if (useMainHeading && !owner->weapons.empty()) {
+		if (!owner->weapons[0]->weaponDef->waterweapon && mainHeadingPos.y <= 1) {
 			mainHeadingPos.y = 1;
 		}
+
 		float3 dir1 = owner->weapons.front()->mainDir;
 		dir1.y = 0;
 		dir1.Normalize();
-		float3 dir2 = mainHeadingPos-owner->pos;
+		float3 dir2 = mainHeadingPos - owner->pos;
 		dir2.y = 0;
 		dir2.Normalize();
-		if(dir2 != ZeroVector){
-			short heading = GetHeadingFromVector(dir2.x,dir2.z)
-				- GetHeadingFromVector(dir1.x,dir1.z);
-			if(owner->heading != heading
+
+		if (dir2 != ZeroVector) {
+			short heading =
+				GetHeadingFromVector(dir2.x, dir2.z) -
+				GetHeadingFromVector(dir1.x,dir1.z);
+			if (owner->heading != heading
 					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))){
+					mainHeadingPos, true, 0))) {
 				progressState = Active;
 			}
 		}
@@ -1868,22 +1877,27 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive){
 	mainHeadingPos = unit->pos;
 	useMainHeading = aggressive;
-	if(useMainHeading
+
+	if (useMainHeading
 			&& !owner->weapons.empty()
 			&& (this-owner->weapons[0]->weaponDef->waterweapon
-			|| mainHeadingPos.y >= 0)){
+			|| mainHeadingPos.y >= 0)) {
+
 		float3 dir1 = owner->weapons.front()->mainDir;
 		dir1.y = 0;
 		dir1.Normalize();
-		float3 dir2 = mainHeadingPos-owner->pos;
+		float3 dir2 = mainHeadingPos - owner->pos;
 		dir2.y = 0;
 		dir2.Normalize();
-		if(dir2 != ZeroVector){
-			short heading = GetHeadingFromVector(dir2.x,dir2.z)
-				- GetHeadingFromVector(dir1.x,dir1.z);
-			if(owner->heading != heading
+
+		if (dir2 != ZeroVector) {
+			short heading =
+				GetHeadingFromVector(dir2.x, dir2.z) -
+				GetHeadingFromVector(dir1.x, dir1.z);
+
+			if (owner->heading != heading
 					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))){
+					mainHeadingPos, true, 0))) {
 				progressState = Active;
 			}
 		}
