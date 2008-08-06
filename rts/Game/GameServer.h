@@ -11,6 +11,7 @@
 
 #include "Console.h"
 #include "GameData.h"
+#include "PlayerBase.h"
 #include "System/GlobalStuff.h"
 #include "System/UnsyncedRNG.h"
 #include "SFloat3.h"
@@ -29,19 +30,14 @@ class ChatMessage;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
 
-
-//TODO: move to seperate file
-class GameParticipant
+class GameParticipant : public PlayerBase
 {
 public:
 	GameParticipant(bool willHaveRights);
 
-	std::string name;
 	bool readyToStart;
 	float cpuUsage;
 	int ping;
-
-	unsigned team;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;

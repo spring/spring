@@ -144,7 +144,7 @@ void GameSetupDrawer::Draw()
 		if (a == gameSetup->numPlayers) {
 			name = "Players:";
 		} else {
-			name = gs->players[a]->playerName.c_str();
+			name = gs->players[a]->name.c_str();
 		}
 		const float fontScale = 1.0f;
 		const float yScale = fontScale * font->GetHeight();

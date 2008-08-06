@@ -1228,7 +1228,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NONAME");
 	} else {
-		lua_pushstring(L, player->playerName.c_str());
+		lua_pushstring(L, player->name.c_str());
 	}
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
@@ -2342,7 +2342,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* decoyDef = IsAllyUnit(unit) ? NULL : unitDef->decoyDef;
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
-		tooltip = gs->players[gs->Team(unit->team)->leader]->playerName;
+		tooltip = gs->players[gs->Team(unit->team)->leader]->name;
 	} else {
 		if (!decoyDef) {
 			tooltip = unit->tooltip;

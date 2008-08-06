@@ -375,14 +375,14 @@ static string ParseMessage(lua_State* L, const string& msg)
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
 	const CPlayer* player = gs->players[playerID];
-	if ((player == NULL) || !player->active || player->playerName.empty()) {
+	if ((player == NULL) || !player->active || player->name.empty()) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
 
 	const string head = msg.substr(0, start);
 	const string tail = msg.substr(endPtr - msg.c_str() + 1);
 
-	return head + player->playerName + ParseMessage(L, tail);
+	return head + player->name + ParseMessage(L, tail);
 }
 
 

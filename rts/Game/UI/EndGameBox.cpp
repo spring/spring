@@ -242,7 +242,7 @@ void CEndGameBox::Draw()
 				continue;
 			char values[6][100];
 
-			sprintf(values[0],"%s",	gs->players[a]->playerName.c_str());
+			sprintf(values[0],"%s",	gs->players[a]->name.c_str());
 			sprintf(values[1],"%i",(int)(gs->players[a]->currentStats->mouseClicks*60/game->totalGameTime));
 			sprintf(values[2],"%i",(int)(gs->players[a]->currentStats->mousePixels*60/game->totalGameTime));
 			sprintf(values[3],"%i",(int)(gs->players[a]->currentStats->keyPresses*60/game->totalGameTime));

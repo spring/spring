@@ -9,6 +9,7 @@
 #include "Platform/byteorder.h"
 #include "float3.h"
 
+#include "PlayerBase.h"
 
 #ifdef DIRECT_CONTROL_ALLOWED
 class CPlayer;
@@ -30,7 +31,7 @@ struct DirectControlStruct{
 #endif
 
 
-class CPlayer  
+class CPlayer : public PlayerBase
 {
 public:
 	CR_DECLARE(CPlayer);
@@ -48,15 +49,9 @@ public:
 	void StartSpectating();
 
 	bool active;
-	std::string playerName;
-	std::string countryCode;
-	int rank;
 
 	int playerNum;
-	bool spectator;
-	int team;
 	bool readyToStart;
-
 
 	float cpuUsage;
 	int ping;
