@@ -374,8 +374,10 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;
 	ud.maxAcc   = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f*ud.maxAcc)) * (ud.canfly ? 0.1f : 1.f); // no negative values
-	ud.turnRate = udTable.GetFloat("turnRate",     0.0f);
+	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
+
+	ud.turnRate    = udTable.GetFloat("turnRate",     0.0f);
+	ud.turnInPlace = udTable.GetBool( "turnInPlace",  true);
 
 	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
