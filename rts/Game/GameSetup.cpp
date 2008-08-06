@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <map>
 #include <SDL_timer.h>
 
 #ifndef DEDICATED
@@ -164,29 +165,35 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
-		sprintf(section, "GAME\\PLAYER%i\\", a);
+		sprintf(section, "GAME\\PLAYER%i", a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
+		if (!file.SectionExist(s)) {
 			continue;
 		}
-		PlayerData data;
+		PlayerBase data;
 
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams		
-		data.team = static_cast<unsigned>(atoi(file.SGetValueDef("0",   s + "team").c_str()));
-		data.rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
-		data.name  = file.SGetValueDef("no name", s + "name");
-		data.countryCode = file.SGetValueDef("",  s + "countryCode");
-		data.spectator = static_cast<bool>(atoi(file.SGetValueDef("0", s + "spectator").c_str()));
-		data.isFromDemo = static_cast<bool>(atoi(file.SGetValueDef("0",  s + "IsFromDemo").c_str()));
-		playerStartingData.push_back(data);
+		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		std::map<std::string, std::string>::iterator it;
+		if ((it = setup.find("team")) != setup.end())
+			data.team = atoi(it->second.c_str());
+		if ((it = setup.find("rank")) != setup.end())
+			data.rank = atoi(it->second.c_str());
+		if ((it = setup.find("name")) != setup.end())
+			data.name = it->second;
+		if ((it = setup.find("countryCode")) != setup.end())
+			data.countryCode = it->second;
+		if ((it = setup.find("spectator")) != setup.end())
+			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
+		if ((it = setup.find("IsFromDemo")) != setup.end())
+			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
 
-		int fromDemo;
-		file.GetDef(fromDemo, "0", s + "IsFromDemo");
-		if (fromDemo)
+		if (data.isFromDemo)
 			numDemoPlayers++;
 
+		playerStartingData.push_back(data);
 		playerRemap[a] = i;
 		++i;
 	}

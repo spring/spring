@@ -7,6 +7,7 @@
 
 #include "SFloat3.h"
 #include "GlobalStuff.h"
+#include "PlayerBase.h"
 
 class TdfParser;
 
@@ -50,18 +51,7 @@ public:
 	
 	StartPosType startPosType;
 	
-	
-	/// Team the player will start in (read-only)
-	struct PlayerData
-	{
-		unsigned team;
-		int rank;
-		std::string name;
-		std::string countryCode;
-		bool spectator;
-		bool isFromDemo;
-	};
-	std::vector<PlayerData> playerStartingData;
+	std::vector<PlayerBase> playerStartingData;
 	
 	struct TeamData
 	{

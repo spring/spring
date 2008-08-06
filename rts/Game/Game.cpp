@@ -283,7 +283,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
-	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false, false);
+	  wordCompletion->AddWord(gs->players[pp]->name, false, false, false);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -435,7 +435,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
 	if(!gameSetup || net->localDemoPlayback) {
-		p->playerName = configHandler.GetString("name", "");
+		p->name = configHandler.GetString("name", "");
 	} else {
 		GameSetupDrawer::Enable();
 	}
@@ -503,7 +503,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	thread.join();
 	logOutput.Print("Spring %s",VERSION_STRING);
 	//sending your playername to the server indicates that you are finished loading
-	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->playerName));
+	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 
 	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
 		net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
@@ -2903,7 +2903,7 @@ bool CGame::Draw() {
 			}
 			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-						p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
+						p->team, prefix, p->name.c_str(), p->cpuUsage * 100.0f,
 						(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 
 			if (!guihandler->GetOutlineFonts()) {
@@ -3294,20 +3294,20 @@ void CGame::ClientReadNet()
 					switch (inbuf[2]) {
 						case 1: {
 							if (gs->players[player]->spectator) {
-								logOutput.Print("Spectator %s left", gs->players[player]->playerName.c_str());
+								logOutput.Print("Spectator %s left", gs->players[player]->name.c_str());
 							} else {
-								logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
+								logOutput.Print("Player %s left", gs->players[player]->name.c_str());
 							}
 							break;
 						}
 						case 2:
-							logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
+							logOutput.Print("Player %s has been kicked", gs->players[player]->name.c_str());
 							break;
 						case 0:
-							logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
+							logOutput.Print("Lost connection to %s", gs->players[player]->name.c_str());
 							break;
 						default:
-							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->playerName.c_str(), inbuf[2]);
+							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->name.c_str(), inbuf[2]);
 					}
 					gs->players[player]->active = false;
 				}
@@ -3386,9 +3386,9 @@ void CGame::ClientReadNet()
 				else if (!skipping) {
 					gs->paused=!!inbuf[2];
 					if(gs->paused){
-						logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
+						logOutput.Print("%s paused the game",gs->players[player]->name.c_str());
 					} else {
-						logOutput.Print("%s unpaused the game",gs->players[player]->playerName.c_str());
+						logOutput.Print("%s unpaused the game",gs->players[player]->name.c_str());
 					}
 					lastframe = SDL_GetTicks();
 				}
@@ -3407,7 +3407,7 @@ void CGame::ClientReadNet()
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				unsigned char pNum = *(unsigned char*) &inbuf[1];
-				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->playerName.c_str();
+				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->name.c_str();
 
 				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, pName);
 				AddTraffic(pNum, packetCode, dataLength);
@@ -3434,13 +3434,13 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERNAME: {
 				int player = inbuf[2];
-				gs->players[player]->playerName=(char*)(&inbuf[3]);
+				gs->players[player]->name=(char*)(&inbuf[3]);
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
 				if (net->GetDemoRecorder()) {
 					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
 				}
-				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
+				wordCompletion->AddWord(gs->players[player]->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -3892,7 +3892,7 @@ void CGame::ClientReadNet()
 				CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
 				if (ctrlUnit) {
 					CUnit* unit=gs->players[player]->playerControlledUnit;
-				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
+				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
 					unit->directControl=0;
 					unit->AttackUnit(0,true);
@@ -3901,7 +3901,7 @@ void CGame::ClientReadNet()
 				else {
 					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
 						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
+						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 						if (unit->directControl) {
 							if (player == gu->myPlayerNum) {
 								logOutput.Print("Sorry someone already controls that unit");
@@ -4442,9 +4442,9 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		if (!player) {
 			label = "> ";
 		} else if (player->spectator) {
-			label = "[" + player->playerName + "] ";
+			label = "[" + player->name + "] ";
 		} else {
-			label = "<" + player->playerName + "> ";
+			label = "<" + player->name + "> ";
 		}
 
 		/*
@@ -4770,7 +4770,7 @@ void CGame::ReColorTeams()
 	for(int p = 0; p < gs->activePlayers; ++p) {
 		luaParser.GetTable(p); {
 			const CPlayer* player = gs->players[p];
-			luaParser.AddString("name",     player->playerName);
+			luaParser.AddString("name",     player->name);
 			luaParser.AddInt("team",        player->team);
 			luaParser.AddBool("active",     player->active);
 			luaParser.AddBool("spectating", player->spectator);

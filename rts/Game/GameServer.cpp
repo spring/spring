@@ -57,11 +57,9 @@ const unsigned serverKeyframeIntervall = 16;
 using boost::format;
 
 GameParticipant::GameParticipant(bool local)
-: name("unnamed")
-, readyToStart(false)
+: readyToStart(false)
 , cpuUsage (0.0f)
 , ping (0)
-, team(0)
 , isLocal(local)
 {
 }

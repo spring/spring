@@ -134,7 +134,7 @@ void CQuitBox::Draw(void)
 
 		std::string teamName;
 		if (gs->Team(actualTeam)->leader >= 0)
-			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+			teamName = gs->players[gs->Team(actualTeam)->leader]->name;
 		else
 			teamName = "uncontrolled";
 
@@ -223,8 +223,8 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
 			sprintf(givenAwayMsg,"%s gave everything to %s.",
-				gs->players[gu->myPlayerNum]->playerName.c_str(),
-				gs->players[gs->Team(shareTeam)->leader]->playerName.c_str());
+				gs->players[gu->myPlayerNum]->name.c_str(),
+				gs->players[gs->Team(shareTeam)->leader]->name.c_str());
 			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg));
 		}
 		// resign, so self-d all units

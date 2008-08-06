@@ -125,7 +125,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	for(int a = 0; a < MAX_PLAYERS; ++a) {
 		players[a] = SAFE_NEW CPlayer();
 		players[a]->playerNum = a;
-		players[a]->team = 0;
 	}
 
 	for (int a = 0; a < MAX_TEAMS; ++a) {
@@ -169,11 +168,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	
 	for (unsigned i = 0; i < static_cast<unsigned>(setup->numPlayers); ++i)
 	{
-		gs->players[i]->team = setup->playerStartingData[i].team;
-		gs->players[i]->rank = setup->playerStartingData[i].rank;
-		gs->players[i]->playerName  = setup->playerStartingData[i].name;
-		gs->players[i]->countryCode = setup->playerStartingData[i].countryCode;
-		gs->players[i]->spectator = setup->playerStartingData[i].spectator;
+		static_cast<PlayerBase>(*players[i]) = setup->playerStartingData[i];
 	}
 	
 	for (unsigned i = 0; i < static_cast<unsigned>(activeTeams); ++i)
@@ -273,7 +268,7 @@ float3 CGlobalSyncedStuff::randVector()
 int CGlobalSyncedStuff::Player(const std::string& name)
 {
 	for (int i = 0; i < MAX_PLAYERS; ++i) {
-		if (players[i] && players[i]->playerName == name) {
+		if (players[i] && players[i]->name == name) {
 			return i;
 		}
 	}

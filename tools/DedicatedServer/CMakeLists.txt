@@ -46,6 +46,7 @@ ADD_LIBRARY(server SHARED
 	../../rts/Game/GameServer
 	../../rts/Game/GameSetup
 	../../rts/Game/GameData
+	../../rts/Game/PlayerBase
 	../../rts/Game/GameVersion
 	../../rts/Game/CommandMessage
 	../../rts/Game/ChatMessage

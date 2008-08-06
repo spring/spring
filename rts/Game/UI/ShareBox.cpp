@@ -186,7 +186,7 @@ void CShareBox::Draw(void)
 		std::string teamName;
 
 		if (gs->Team(actualTeam)->leader >= 0) {
-			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+			teamName = gs->players[gs->Team(actualTeam)->leader]->name;
 		} else {
 			teamName = "Uncontrolled";
 		}

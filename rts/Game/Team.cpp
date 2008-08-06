@@ -265,7 +265,7 @@ void CTeam::Died()
 {
 	if (leader >= 0) {
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
-		                teamNum, gs->players[leader]->playerName.c_str());
+		                teamNum, gs->players[leader]->name.c_str());
 	} else {
 		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
 	}

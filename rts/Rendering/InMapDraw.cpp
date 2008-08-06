@@ -473,7 +473,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 		// if we happen to be in drawAll mode, notify us now
 		// even if this message is not intented for our ears
 		logOutput.Print("%s added point: %s",
-		                sender->playerName.c_str(), point.label.c_str());
+		                sender->name.c_str(), point.label.c_str());
 		logOutput.SetLastMsgPos(pos);
 		sound->PlaySample(blippSound);
 		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
