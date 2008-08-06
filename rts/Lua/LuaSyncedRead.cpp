@@ -2573,12 +2573,10 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 	}
 
 #define PACK_VECTOR(n) \
-	HSTR_PUSH(L, #n);           \
 	lua_newtable(L);            \
 	lua_pushnumber(L, 1); lua_pushnumber(L, unit-> n .x); lua_rawset(L, -3); \
 	lua_pushnumber(L, 2); lua_pushnumber(L, unit-> n .y); lua_rawset(L, -3); \
-	lua_pushnumber(L, 3); lua_pushnumber(L, unit-> n .z); lua_rawset(L, -3); \
-	lua_rawset(L, -3)
+	lua_pushnumber(L, 3); lua_pushnumber(L, unit-> n .z); lua_rawset(L, -3)
 
 	PACK_VECTOR(frontdir);
 	PACK_VECTOR(updir);

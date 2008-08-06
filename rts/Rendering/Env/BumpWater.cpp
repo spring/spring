@@ -340,7 +340,7 @@ CBumpWater::CBumpWater()
 		tileOffsets = SAFE_NEW unsigned char[mapInfo->water.numTiles * mapInfo->water.numTiles];
 
 		normalTexture2 = normalTexture;
-		glBindTexture(target, normalTexture2);
+		glBindTexture(GL_TEXTURE_2D, normalTexture2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 0.0);
