@@ -556,10 +556,11 @@ void CGroundMoveType::SetDeltaSpeed(void)
 					wSpeed = (turnSpeed + wSpeed) * 0.625f;
 				}
 			}
-	}
+		}
 
-	if (wSpeed > wantedSpeed)
-		wSpeed = wantedSpeed;
+		if (wSpeed > wantedSpeed) {
+			wSpeed = wantedSpeed;
+		}
 	} else {
 		wSpeed = 0.0f;
 	}
