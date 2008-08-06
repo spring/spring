@@ -312,7 +312,10 @@ void CGroundMoveType::Update()
 					wantedSpeed = std::min(wantedSpeed, fastmath::sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 				}
 
-				wantedSpeed *= std::max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
+				if (owner->unitDef->turnInPlace) {
+					wantedSpeed *= std::max(0.0f, std::min(1.0f, desiredVelocity.dot(owner->frontdir) + 0.1f));
+				}
+
 				SetDeltaSpeed();
 			}
 		} else {
@@ -550,7 +553,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 					wSpeed = turnSpeed;
 				} else {
 					GetNextWaypoint();
-					wSpeed = (turnSpeed + wSpeed) * 0.667f;
+					wSpeed = (turnSpeed + wSpeed) * 0.625f;
 				}
 			}
 	}
