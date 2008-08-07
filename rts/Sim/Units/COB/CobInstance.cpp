@@ -1501,38 +1501,40 @@ void CCobInstance::SetUnitVal(int val, int param)
 			break;
 		}
 		case YARD_OPEN: {
-			if (param == 0) {
-				if (groundBlockingObjectMap->CanCloseYard(unit)) {
-					yardOpen = false;
+			if (unit->yardMap != 0x0) {
+				if (param == 0) {
+					if (groundBlockingObjectMap->CanCloseYard(unit)) {
+						groundBlockingObjectMap->CloseBlockingYard(unit, unit->yardMap);
+						yardOpen = false;
+					}
+				} else {
+					groundBlockingObjectMap->OpenBlockingYard(unit, unit->yardMap);
+					yardOpen = true;
 				}
-			}
-			else {
-				yardOpen = true;
 			}
 			break;
 		}
 		case BUGGER_OFF: {
 			if (param != 0) {
-				helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5f);
+				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f);
 			}
-			//yardOpen = (param != 0);
 			break;
 		}
 		case ARMORED: {
-			if(param){
-				unit->curArmorMultiple=unit->armoredMultiple;
+			if (param) {
+				unit->curArmorMultiple = unit->armoredMultiple;
 			} else {
-				unit->curArmorMultiple=1;
+				unit->curArmorMultiple = 1;
 			}
 			unit->armoredState = (param != 0);
 			break;
 		}
 		case VETERAN_LEVEL: {
-			unit->experience=param*0.01f;
+			unit->experience = param * 0.01f;
 			break;
 		}
 		case MAX_SPEED: {
-			if(unit->moveType && param > 0){
+			if (unit->moveType && param > 0) {
 				// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
 				for (CCommandQueue::iterator it = unit->commandAI->commandQue.begin();
 						it != unit->commandAI->commandQue.end(); ++it) {
