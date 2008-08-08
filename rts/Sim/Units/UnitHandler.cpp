@@ -430,7 +430,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		return 0;
 	}
 	if (groundheight > -unitdef->minWaterDepth) {
-		// round is shallower than our minWaterDepth, cannot build here
+		// ground is shallower than our minWaterDepth, cannot build here
 		return 0;
 	}
 

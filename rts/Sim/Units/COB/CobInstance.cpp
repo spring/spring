@@ -1502,6 +1502,10 @@ void CCobInstance::SetUnitVal(int val, int param)
 		}
 		case YARD_OPEN: {
 			if (unit->yardMap != 0x0) {
+				// note: if this unit is a factory, engine-controlled
+				// OpenYard() and CloseYard() calls can interfere with
+				// the yardOpen state (they probably should be removed
+				// at some point)
 				if (param == 0) {
 					if (groundBlockingObjectMap->CanCloseYard(unit)) {
 						groundBlockingObjectMap->CloseBlockingYard(unit, unit->yardMap);
