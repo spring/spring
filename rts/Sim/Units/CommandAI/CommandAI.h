@@ -27,7 +27,7 @@ public:
 	void GiveCommand(const Command& c, bool fromSynced = true); // feeds into GiveCommandReal()
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
-	virtual void GiveCommandReal(const Command& c);
+	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void DrawCommands(void);
 	virtual void FinishCommand(void);
@@ -53,7 +53,7 @@ public:
 	void SetCommandDescParam0(const Command& c);
 	bool ExecuteStateCommand(const Command& c);
 
-	void ExecuteInsert(const Command& c);
+	void ExecuteInsert(const Command& c, bool fromSynced = true);
 	void ExecuteRemove(const Command& c);
 
 	void AddStockpileWeapon(CWeapon* weapon);
@@ -82,9 +82,9 @@ public:
 protected:
 	bool isTrackable(const CUnit* unit) const;
 	bool isAttackCapable() const;
-	virtual bool AllowedCommand(const Command &c);
+	virtual bool AllowedCommand(const Command &c, bool fromSynced = true);
 	bool SkipParalyzeTarget(const CUnit* target);
-	void GiveAllowedCommand(const Command& c);
+	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);

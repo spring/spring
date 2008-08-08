@@ -338,7 +338,7 @@ static inline bool isCommandInMap(const Command& c)
 	return true;
 }
 
-bool CCommandAI::AllowedCommand(const Command& c)
+bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 {
 	// check if the command is in the map first
 	switch (c.id) {
@@ -374,7 +374,7 @@ bool CCommandAI::AllowedCommand(const Command& c)
 
 			if (c.params.size() == 3) {
 				// check if attack ground is really attack ground
-				if (fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) >
+				if (!fromSynced && fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) >
 					maxHeightDiff) {
 					return false;
 				}
@@ -458,17 +458,17 @@ void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 		return;
 	}
 	eventHandler.UnitCommand(owner, c);
-	this->GiveCommandReal(c); // send to the sub-classes
+	this->GiveCommandReal(c, fromSynced); // send to the sub-classes
 }
 
 
-void CCommandAI::GiveCommandReal(const Command& c)
+void CCommandAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	if (!AllowedCommand(c)) {
+	if (!AllowedCommand(c, fromSynced)) {
 		return;
 	}
 
-	GiveAllowedCommand(c);
+	GiveAllowedCommand(c, fromSynced);
 }
 
 
@@ -551,7 +551,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 }
 
 
-void CCommandAI::GiveAllowedCommand(const Command& c)
+void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 {
 	if (ExecuteStateCommand(c)) {
 		return;
@@ -594,7 +594,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			return;
 		}
 		case CMD_INSERT: {
-			ExecuteInsert(c);
+			ExecuteInsert(c, fromSynced);
 			return;
 		}
 		case CMD_REMOVE: {
@@ -738,7 +738,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 }
 
 
-void CCommandAI::ExecuteInsert(const Command& c)
+void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 {
 	if (c.params.size() < 3) {
 		return;
@@ -753,7 +753,7 @@ void CCommandAI::ExecuteInsert(const Command& c)
 	}
 
 	// validate the command
-	if (!AllowedCommand(newCmd)) {
+	if (!AllowedCommand(newCmd, fromSynced)) {
 		return;
 	}
 
