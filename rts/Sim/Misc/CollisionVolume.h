@@ -80,8 +80,8 @@ struct CollisionVolume {
 
 
 	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis) {
-		// assign these here too, since SetData() can
-		// be called from outside of the constructor
+		// assign these here too, since we can be
+		// called from outside of the constructor
 		primaryAxis = pAxis % 3;
 		volumeType = vType % 3;
 		testType = tType % 2;

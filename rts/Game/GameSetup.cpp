@@ -296,6 +296,10 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			data.allies[other] = true;
 		}
 		data.allies[i] = true; // team i is ally from team i
+		// FIXME?
+		//   rts/Game/GameSetup.cpp:298: warning: name lookup of 'i' changed
+		//   rts/Game/GameSetup.cpp:273: warning:   matches this 'i' under ISO standard rules
+		//   rts/Game/GameSetup.cpp:289: warning:   matches this 'i' under old rules
 		allyStartingData.push_back(data);
 
 		allyteamRemap[a] = i;

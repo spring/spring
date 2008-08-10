@@ -305,10 +305,8 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 bool CWeaponProjectile::TraveledRange()
 {
-	float trange = (pos-startpos).Length();
-	if(trange>weaponDef->range)
-		return true;
-	return false;
+	float trangeSq = (pos - startpos).SqLength();
+	return (trangeSq > (weaponDef->range * weaponDef->range));
 }
 
 
