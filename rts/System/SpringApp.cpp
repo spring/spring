@@ -586,6 +586,8 @@ void SpringApp::ParseCmdLine()
 		ConfigHandler::SetConfigSource(configSource);
 	}
 
+	logOutput.Print("using configuration source \"" + configHandler.GetConfigSource() + "\"");
+
 #ifdef _DEBUG
 	fullscreen = false;
 #else
@@ -662,8 +664,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 	// If there are any options, they will start before the demo file name.
 
-   if (win_lpCmdLine == 0)
-   logOutput.Print("ERROR");
+	if (win_lpCmdLine == 0) {
+		logOutput.Print("ERROR: invalid commandline ptr");
+	}
+
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
 	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
