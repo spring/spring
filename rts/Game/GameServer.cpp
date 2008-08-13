@@ -1364,7 +1364,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
-	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers))
+	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers) && !demoReader)
 	{
 		// number not in setup, drop connection
 		Message(str(format("Connection rejected because of number %i not in setup (wanted number %i).") %hisNewNumber %wantedNumber));
@@ -1381,7 +1381,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 			Broadcast(CBaseNetProtocol::Get().SendPlayerName(a, players[a]->name));
 	}
 
-	if (setup)
+	if (setup && (!demoReader || setup->demoName.empty()) /* gamesetup from demo? */)
 	{
 		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
