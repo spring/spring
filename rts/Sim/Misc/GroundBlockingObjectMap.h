@@ -7,7 +7,7 @@
 
 class CSolidObject;
 typedef std::set<CSolidObject*> BlockingMapCell;
-typedef BlockingMapCell::iterator BlockingMapCellIt;
+typedef BlockingMapCell::const_iterator BlockingMapCellIt;
 typedef std::vector<BlockingMapCell> BlockingMap;
 
 class CGroundBlockingObjectMap
