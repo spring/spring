@@ -9,11 +9,13 @@
 #include "Game/GameVersion.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
+#include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
 #include <SDL.h>
 #include "mmgr.h"
 #include "System/GlobalStuff.h"
+
 
 #include "IFramebuffer.h"
 
@@ -132,17 +134,17 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 			case 3:
 			case GL_RGB8 :
 			case GL_RGB :   internalFormat = GL_COMPRESSED_RGB_ARB; break;
-			
+
 			case 4:
 			case GL_RGBA8 :
 			case GL_RGBA : internalFormat = GL_COMPRESSED_RGBA_ARB; break;
-			
+
 			case GL_LUMINANCE: internalFormat = GL_COMPRESSED_LUMINANCE_ARB; break;
 		}
 	}
-	
+
 	// create mipmapped texture
-	if (glGenerateMipmapEXT) {
+	if (configHandler.GetInt("AtiHacks", 0) == 0 && glGenerateMipmapEXT) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		glGenerateMipmapEXT(target);
@@ -188,7 +190,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 
 void LoadStartPicture(const std::string& sidePref)
 {
-	if (startupTexture) 
+	if (startupTexture)
 		return;
 	const string picDir = "bitmaps/loadpictures/";
 
