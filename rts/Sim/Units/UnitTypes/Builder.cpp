@@ -132,7 +132,7 @@ void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 
 void CBuilder::Update()
 {
-	if (beingBuilt) {
+	if (beingBuilt || stunned) {
 		return;
 	}
 
