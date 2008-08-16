@@ -1519,7 +1519,7 @@ void CUnit::Init(const CUnit* builder)
 	//       or UnitLoader! // why this is always called in unitloader
 	currentFuel = unitDef->maxFuel;
 
-	// all ships starts on water, all other on ground.
+	// all ships starts on water, all others on ground.
 	// TODO: Improve this. There might be cases when this is not correct.
 	if (unitDef->movedata &&
 	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
@@ -1530,8 +1530,12 @@ void CUnit::Init(const CUnit* builder)
 		physicalState = OnGround;
 	}
 
-	// all units are set as ground-blocking.
+	// all units are set as ground-blocking by default,
+	// units that pretend to be "pseudo-buildings" (ie.
+	// hubs, etc) are flagged as immobile so that their
+	// positions are not considered valid for building
 	blocking = true;
+	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
 
 	// some torp launchers etc are exactly in the surface and should be considered uw anyway
 	if ((pos.y + model->height) < 0.0f) {
@@ -1550,7 +1554,7 @@ void CUnit::Init(const CUnit* builder)
 	Command c;
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState < 0) {
-			if (builder!=NULL) {
+			if (builder != NULL) {
 				moveState = builder->moveState;
 			} else {
 				moveState = 1;
