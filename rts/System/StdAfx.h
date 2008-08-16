@@ -72,6 +72,9 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include <stdexcept>
 #include <string>
 #include <cctype>
+#include <string>
+#include <cstring>
+#include <cctype>
 
 /**
  * content_error

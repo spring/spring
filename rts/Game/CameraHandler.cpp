@@ -1,6 +1,4 @@
-
 #include "StdAfx.h"
-
 #include "CameraHandler.h"
 
 #include "Game/Action.h"
@@ -25,7 +23,7 @@ CCameraHandler::CCameraHandler()
 {
 	cameraTime=0.0f;
 	cameraTimeLeft=0.0f;
-	
+
 	// FPS camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
 	camCtrls.push_back(new CFPSController());         // 0
@@ -166,7 +164,7 @@ void CCameraHandler::PopMode()
 		controllerStack.pop();
 	}
 }
-	
+
 
 void CCameraHandler::CameraTransition(float time)
 {
@@ -242,7 +240,7 @@ bool CCameraHandler::LoadView(const std::string& name)
 
 	ViewData current;
 	GetState(current);
-	
+
 	if (saved == current) { // load a view twice to return to old settings
 		 if (name != "__old_view") { // safety: should not happen, but who knows?
 			 return LoadView("__old_view");
