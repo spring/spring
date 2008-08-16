@@ -227,7 +227,8 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 			continue;
 		}
 
-		if (obstacle->mobility) {
+		// mobility implies canmove, but not (speed > 0.0f)
+		if (obstacle->mobility && !obstacle->immobile) {
 			// mobile obstacle
 			if (obstacle->isMoving) {
 				r |= BLOCK_MOVING;
