@@ -150,7 +150,7 @@ void CFactoryCAI::PostLoad()
 }
 
 
-void CFactoryCAI::GiveCommandReal(const Command& c)
+void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	// move is always allowed for factories (passed to units it produces)
 	if ((c.id == CMD_SET_WANTED_MAX_SPEED) ||
