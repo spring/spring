@@ -174,7 +174,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		PlayerBase data;
 
 		// expects lines of form team=x rather than team=TEAMx
-		// team field is relocated in RemapTeams		
+		// team field is relocated in RemapTeams
 		std::map<std::string, std::string> setup = file.GetAllValues(s);
 		std::map<std::string, std::string>::iterator it;
 		if ((it = setup.find("team")) != setup.end())
@@ -200,7 +200,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 
 	int playerCount = -1;
 	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
-	
+
 	if (playerCount == -1 || playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
@@ -255,7 +255,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 	int teamCount = -1;
 	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
-	
+
 	if (teamCount == -1 || teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
@@ -286,8 +286,8 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
-		for (int i = 0; i < MAX_TEAMS; ++i) {
-			data.allies[i] = (a == i);
+		for (int j = 0; j < MAX_TEAMS; ++j) {
+			data.allies[j] = (a == j);
 		}
 		for (int b = 0; b < numAllies; ++b) {
 			char key[100];
@@ -296,20 +296,16 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			data.allies[other] = true;
 		}
 		data.allies[i] = true; // team i is ally from team i
-		// FIXME?
-		//   rts/Game/GameSetup.cpp:298: warning: name lookup of 'i' changed
-		//   rts/Game/GameSetup.cpp:273: warning:   matches this 'i' under ISO standard rules
-		//   rts/Game/GameSetup.cpp:289: warning:   matches this 'i' under old rules
 		allyStartingData.push_back(data);
 
 		allyteamRemap[a] = i;
 		++i;
 	}
 
-	
+
 	int allyCount = -1;
 	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
-	
+
 	if (allyCount == -1 || allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
