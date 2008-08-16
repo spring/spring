@@ -21,7 +21,7 @@ public:
 	void SlowUpdate();
 
 	void DrawCommands(void);
-	void GiveCommandReal(const Command& c);
+	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void DrawQuedBuildingSquares(void);
 
 	bool FindReclaimableFeatureAndReclaim(const float3& pos, float radius,

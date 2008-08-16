@@ -186,7 +186,7 @@ CMobileCAI::~CMobileCAI()
 
 }
 
-void CMobileCAI::GiveCommandReal(const Command &c)
+void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
 	if (!AllowedCommand(c))
 		return;
@@ -1022,7 +1022,7 @@ void CMobileCAI::IdleCheck(void)
 			&& !owner->weapons.empty() && owner->haveTarget) {
 		if(!owner->userTarget) {
 			owner->haveTarget = false;
-		} else if(owner->pos.distance2D(owner->userTarget->pos) < 
+		} else if(owner->pos.distance2D(owner->userTarget->pos) <
 				owner->maxRange + 200*owner->moveState*owner->moveState) {
 			Command c;
 			c.id = CMD_ATTACK;
