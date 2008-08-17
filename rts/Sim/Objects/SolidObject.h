@@ -34,7 +34,6 @@ public:
 	void Block();
 	void UnBlock();
 
-
 	// Static properties.
 	float mass;									// The physical mass of this object.
 	bool blocking;								// If this object is blocking/collidable. (NOTE: Some objects could be flat => not collidable.)
@@ -64,7 +63,7 @@ public:
 	int2 mapPos;								// Current position on GroundBlockingMap.
 	unsigned char* yardMap;						// Current active yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;							// Orientation of footprint, 4 different states
-	bool isMarkedOnBlockingMap;					// Tells if this object are marked on the GroundBlockingMap.
+	bool isMarkedOnBlockingMap;					// true if this object is currently marked on the GroundBlockingMap
 
 	// Old stuff. Used for back-compability. NOTE: Don't use these!
 	float3 speed;

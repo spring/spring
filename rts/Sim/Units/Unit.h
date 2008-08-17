@@ -154,7 +154,6 @@ public:
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
 
-	int id;
 	int team;
 	int allyteam;
 	int lineage;    // the unit's origin lies in this team
