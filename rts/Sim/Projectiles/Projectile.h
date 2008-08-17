@@ -55,6 +55,7 @@ public:
 	virtual void DrawS3O() { DrawUnitPart(); }
 
 	S3DOModel* s3domodel;
+	int id;
 };
 
 #endif /* PROJECTILE_H */

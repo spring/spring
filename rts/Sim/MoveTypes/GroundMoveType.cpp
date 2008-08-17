@@ -484,7 +484,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	progressState = Active;
 
 	if (DEBUG_CONTROLLER) {
-		logOutput << int(owner->id) << ": StartMoving() starting engine.\n";
+		logOutput << owner->id << ": StartMoving() starting engine.\n";
 	}
 
 	StartEngine();
@@ -508,7 +508,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 	if(DEBUG_CONTROLLER)
-		logOutput << "SMove: Action stopped." << " " << int(owner->id) << "\n";
+		logOutput << "SMove: Action stopped." << " " << owner->id << "\n";
 
 	StopEngine();
 
@@ -1275,11 +1275,11 @@ void CGroundMoveType::StartEngine() {
 			owner->cob->Call(COBFN_StartMoving);
 
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine started" << " " << int(owner->id) << "\n";
+				logOutput << "Engine started" << " " << owner->id << "\n";
 			}
 		} else {
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine start failed: " << int(owner->id) << "\n";
+				logOutput << "Engine start failed: " << owner->id << "\n";
 			}
 
 			Fail();
@@ -1304,7 +1304,7 @@ void CGroundMoveType::StopEngine() {
 		owner->cob->Call(COBFN_StopMoving);
 
 		if (DEBUG_CONTROLLER) {
-			logOutput << "Engine stopped. " << int(owner->id) << "\n";
+			logOutput << "Engine stopped." << " " << owner->id << "\n";
 		}
 	}
 
@@ -1451,12 +1451,15 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 		BlockingMapCellIt it;
 		float3 posDelta = ZeroVector;
 
-		if (!d.empty() && d.find(owner->id) == d.end()) {
+		if (!d.empty() && d.find(owner) == d.end()) {
 			continue;
 		}
 
+		// NOTE: clients may have different iteration orders,
+		// but the cumulative change to owner->pos is synced
+		// (all clients process the same objects)
 		for (it = c.begin(); it != c.end(); it++) {
-			CSolidObject* obj = it->second;
+			CSolidObject* obj = *it;
 
 			if (m->moveMath->IsNonBlocking(*m, obj)) {
 				// no collision possible
@@ -1536,12 +1539,15 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 		BlockingMapCellIt it;
 		float3 posDelta = ZeroVector;
 
-		if (!d.empty() && d.find(owner->id) == d.end()) {
+		if (!d.empty() && d.find(owner) == d.end()) {
 			continue;
 		}
 
+		// NOTE: clients may have different iteration orders,
+		// but the cumulative change to owner->pos is synced
+		// (all clients process the same objects)
 		for (it = c.begin(); it != c.end(); it++) {
-			CSolidObject* obj = it->second;
+			CSolidObject* obj = *it;
 
 			if (m->moveMath->IsNonBlocking(*m, obj)) {
 				// no collision possible
