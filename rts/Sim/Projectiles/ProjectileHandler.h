@@ -26,7 +26,7 @@ class IFramebuffer;
 
 typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
-typedef std::map<unsigned int, ProjectileMapPair> ProjectileMap;
+typedef std::map<int, ProjectileMapPair> ProjectileMap;
 
 
 class CProjectileHandler
