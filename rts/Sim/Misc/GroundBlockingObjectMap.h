@@ -2,11 +2,11 @@
 #define GROUNDBLOCKINGOBJECTMAP_H
 
 #include "creg/creg.h"
-#include "creg/STL_Map.h"
+#include "creg/STL_Set.h"
 #include "float3.h"
 
 class CSolidObject;
-typedef std::map<int, CSolidObject*> BlockingMapCell;
+typedef std::set<CSolidObject*> BlockingMapCell;
 typedef BlockingMapCell::const_iterator BlockingMapCellIt;
 typedef std::vector<BlockingMapCell> BlockingMap;
 
@@ -15,7 +15,7 @@ class CGroundBlockingObjectMap
 	CR_DECLARE(CGroundBlockingObjectMap);
 
 public:
-	CGroundBlockingObjectMap(int numSquares) { groundBlockingMap.resize(numSquares); }
+	CGroundBlockingObjectMap(int numSquares);
 
 	void AddGroundBlockingObject(CSolidObject* object);
 	void AddGroundBlockingObject(CSolidObject* object, unsigned char* yardMap, unsigned char mask = 255);

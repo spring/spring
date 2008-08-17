@@ -8,7 +8,7 @@
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 
-CR_REG_METADATA(CSolidObject,
+CR_REG_METADATA(CSolidObject, 
 (
 	CR_MEMBER(mass),
 	CR_MEMBER(blocking),
@@ -32,7 +32,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_RESERVED(16))
 );
 
-CSolidObject::CSolidObject():
+CSolidObject::CSolidObject() :
 	mass(100000),
 	blocking(false),
 	blockHeightChanges(false),
@@ -72,6 +72,10 @@ CSolidObject::~CSolidObject() {
 }
 
 
+
+/////////////////////
+// Useful fuctions //
+/////////////////////
 
 /*
 Removes this object from GroundBlockingMap.

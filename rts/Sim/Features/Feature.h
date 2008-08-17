@@ -62,6 +62,7 @@ public:
 
 	float health;
 	float reclaimLeft;
+	int id;
 	int allyteam;
 	int team;
 
