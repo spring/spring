@@ -7,8 +7,7 @@
 #include "myMath.h"
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
-
-CR_REG_METADATA(CSolidObject, 
+CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(mass),
 	CR_MEMBER(blocking),
@@ -32,7 +31,8 @@ CR_REG_METADATA(CSolidObject,
 	CR_RESERVED(16))
 );
 
-CSolidObject::CSolidObject() :
+
+CSolidObject::CSolidObject():
 	mass(100000),
 	blocking(false),
 	blockHeightChanges(false),
@@ -60,39 +60,25 @@ CSolidObject::CSolidObject() :
 	mapPos = GetMapPos();
 }
 
-
-/*
-Destructor
-*/
 CSolidObject::~CSolidObject() {
-	UnBlock();
-
-	if (mobility)
+	if (mobility) {
 		delete mobility;
+		mobility = 0x0;
+	}
 }
 
 
 
-/////////////////////
-// Useful fuctions //
-/////////////////////
-
-/*
-Removes this object from GroundBlockingMap.
-*/
+/* Removes this object from the GroundBlockingMap. */
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
 		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
 	}
 }
 
-
-/*
-Adds this object to the GroundBlockingMap.
-*/
+/* Adds this object to the GroundBlockingMap. */
 void CSolidObject::Block() {
-	if (isMarkedOnBlockingMap)
-		UnBlock();
+	UnBlock();
 
 	if (blocking && (physicalState == OnGround ||
 	                 physicalState == Floating ||

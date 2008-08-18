@@ -41,8 +41,7 @@ CProjectile::CProjectile():
 	deleteMe(false),
 	castShadow(false),
 	s3domodel(0),
-	collisionFlags(0),
-	id(0)
+	collisionFlags(0)
 {}
 
 
@@ -133,10 +132,10 @@ void CProjectile::DrawArray()
 }
 
 
-void CProjectile::DependentDied(CObject *o)
+void CProjectile::DependentDied(CObject* o)
 {
-	if(o==owner)
-		owner=0;
+	if (o == owner)
+		owner = 0;
 }
 
 void CProjectile::DrawCallback(void)

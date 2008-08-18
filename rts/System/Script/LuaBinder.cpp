@@ -204,7 +204,9 @@ CLuaBinder::CLuaBinder(void)
 		class_<float3, SFloat3>("float3")
 			.def(constructor<const float, const float, const float>()),
 
+
 		class_<CWorldObject>("WorldObject")
+			.def_readonly("id", &CWorldObject::id)
 			.def_readonly("pos", &CWorldObject::pos),
 
 		class_<CUnit, bases<CWorldObject>, CObject_pointer<CUnit> >("Unit")
@@ -213,7 +215,6 @@ CLuaBinder::CLuaBinder(void)
 				value("GIVEN", CUnit::ChangeGiven),
 				value("CAPTURED", CUnit::ChangeCaptured)
 			]
-			.def_readonly("id", &CUnit::id)
 			.def_readonly("health", &CUnit::health)
 			.property("transporter", &UnitGetTransporter)
 			.def_readonly("definition", &CUnit::unitDef)
@@ -230,7 +231,6 @@ CLuaBinder::CLuaBinder(void)
 			.def_readonly("energystorage", &CTeam::energyStorage),
 
 		class_<CFeature, bases<CWorldObject>, CObject_pointer<CFeature> >("Feature")
-		    .def_readonly("id", &CFeature::id )
 		    .def_readonly("definition", &CFeature::def )
 			.def("remainingmetal", &CFeature::RemainingMetal )
 			.def("remainingenergy", &CFeature::RemainingEnergy )
