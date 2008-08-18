@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include <assert.h>
+
 #include "GroundBlockingObjectMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Path/PathManager.h"
