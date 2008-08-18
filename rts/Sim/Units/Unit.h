@@ -74,7 +74,7 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	virtual void UnitInit (const UnitDef* def, int team, const float3& position);
+	virtual void UnitInit(const UnitDef* def, int team, const float3& position);
 
 	bool AttackGround(const float3&pos,bool dgun);
 	bool AttackUnit(CUnit* unit,bool dgun);
@@ -83,6 +83,9 @@ public:
 	                      const float3& impulse, int weaponId = -1);
 	virtual void Kill(float3& impulse);
 	virtual void FinishedBuilding(void);
+
+	int GetBlockingMapID() const { return id; }
+
 	void ChangeLos(int l, int airlos);
 	void ChangeSensorRadius(int* valuePtr, int newValue);
 	bool AddBuildPower(float amount,CUnit* builder);		//negative amount=reclaim, return= true -> build power was succesfully applied
@@ -154,7 +157,6 @@ public:
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
 
-	int id;
 	int team;
 	int allyteam;
 	int lineage;    // the unit's origin lies in this team
