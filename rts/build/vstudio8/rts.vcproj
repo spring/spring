@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
@@ -596,14 +596,10 @@
 			<File
 				RelativePath="..\..\Game\Action.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\Game\Action.h"
+				>
 			</File>
 			<File
 				RelativePath="..\..\Game\Camera.cpp"
@@ -616,46 +612,6 @@
 			<File
 				RelativePath="..\..\Game\CameraHandler.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\CameraHandler.h"
@@ -664,26 +620,14 @@
 			<File
 				RelativePath="..\..\Game\ChatMessage.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\Game\ChatMessage.h"
+				>
 			</File>
 			<File
 				RelativePath="..\..\Game\CommandMessage.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\CommandMessage.h"
@@ -692,14 +636,10 @@
 			<File
 				RelativePath="..\..\Game\Console.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\Game\Console.h"
+				>
 			</File>
 			<File
 				RelativePath="..\..\Game\ConsoleHistory.cpp"
@@ -728,46 +668,6 @@
 			<File
 				RelativePath="..\..\Game\GameData.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameData.h"
@@ -784,46 +684,6 @@
 			<File
 				RelativePath="..\..\Game\GameServer.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameServer.h"
@@ -838,96 +698,8 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\GameSetupData.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\Game\GameSetupData.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Game\GameVersion.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Game\GameVersion.h"
@@ -939,6 +711,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\Player.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerBase.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerBase.h"
 				>
 			</File>
 			<File
@@ -2313,6 +2093,14 @@
 				RelativePath="..\..\Sim\ModInfo.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\Sim\SideParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sim\SideParser.h"
+				>
+			</File>
 			<Filter
 				Name="Units"
 				>
@@ -3575,6 +3363,22 @@
 			</File>
 			<File
 				RelativePath="..\..\System\DemoRecorder.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\EventClient.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\EventClient.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\EventHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\EventHandler.h"
 				>
 			</File>
 			<File
@@ -4956,38 +4760,6 @@
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.cpp"
 					>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\BaseCmd.h"
@@ -5002,52 +4774,12 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\Clipboard.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\Clipboard.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\Clipboard.h"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.cpp"
 					>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\ConfigHandler.h"
@@ -5067,6 +4799,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\FileSystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\NullSound.h"
 					>
 				</File>
 				<File
@@ -6648,11 +6384,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaCallInHandler.cpp"
+				RelativePath="..\..\Lua\LuaCallInCheck.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lua\LuaCallInHandler.h"
+				RelativePath="..\..\Lua\LuaCallInCheck.h"
 				>
 			</File>
 			<File
@@ -6698,46 +6434,6 @@
 			<File
 				RelativePath="..\..\Lua\LuaFBOs.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaFBOs.h"
@@ -6780,6 +6476,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Lua\LuaInputReceiver.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaInputReceiver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaIO.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaIO.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lua\LuaMaterial.cpp"
 				>
 			</File>
@@ -6814,46 +6526,6 @@
 			<File
 				RelativePath="..\..\Lua\LuaRBOs.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaRBOs.h"
@@ -6870,46 +6542,6 @@
 			<File
 				RelativePath="..\..\Lua\LuaScream.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaScream.h"

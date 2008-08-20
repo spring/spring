@@ -7,7 +7,11 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
+
+#ifndef _MSC_VER	// this header file does not exist for the microsoft compiler
+ #include <unistd.h>
+#endif
+
 #include <string>
 using std::string;
 
