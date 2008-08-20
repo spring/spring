@@ -1320,6 +1320,7 @@ void CGameServer::UpdateLoop()
 	}
 	if (hostif)
 		hostif->SendQuit();
+	Broadcast(CBaseNetProtocol::Get().SendQuit());
 }
 
 bool CGameServer::WaitsOnCon() const
