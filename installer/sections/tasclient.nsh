@@ -11,6 +11,7 @@
   CreateDirectory "$INSTDIR\lobby\cache\maps"
   CreateDirectory "$INSTDIR\lobby\cache\mods"
   CreateDirectory "$INSTDIR\lobby\var"
+  CreateDirectory "$INSTDIR\lobby\var\replayFilters"
   CreateDirectory "$INSTDIR\lobby\logs"
 
   SetOutPath "$INSTDIR\lobby\var"
@@ -29,6 +30,7 @@
   RmDir "$INSTDIR\lobby\cache\online"
   RmDir "$INSTDIR\lobby\cache"
   RmDir "$INSTDIR\lobby\logs"
+  RmDir "$INSTDIR\lobby\var\replayFilters"
   RmDir "$INSTDIR\lobby\var"
   RmDir "$INSTDIR\lobby"
 
