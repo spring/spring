@@ -1373,6 +1373,8 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 	
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
+	if (setup)
+		*static_cast<PlayerBase*>(players[hisNewNumber].get()) = setup->playerStartingData[hisNewNumber];
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 

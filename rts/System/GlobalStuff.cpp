@@ -168,7 +168,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	
 	for (unsigned i = 0; i < static_cast<unsigned>(setup->numPlayers); ++i)
 	{
-		static_cast<PlayerBase>(*players[i]) = setup->playerStartingData[i];
+		*static_cast<PlayerBase*>(players[i]) = setup->playerStartingData[i];
 	}
 	
 	for (unsigned i = 0; i < static_cast<unsigned>(activeTeams); ++i)
