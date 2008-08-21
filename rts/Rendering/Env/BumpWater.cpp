@@ -439,6 +439,7 @@ CBumpWater::CBumpWater()
 	GLSLDefineConstf3(definitions, "SunDir",         mapInfo->light.sunDir );
 	GLSLDefineConstf3(definitions, "MapMid",         float3(readmap->width*SQUARE_SIZE*0.5f,0.0f,readmap->height*SQUARE_SIZE*0.5f) );
 	GLSLDefineConstf2(definitions, "ScreenInverse",  1.0f/gu->viewSizeX, 1.0f/gu->viewSizeY );
+	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f/screenTextureX, 1.0f/screenTextureY );
 	GLSLDefineConstf2(definitions, "ViewPos",        gu->viewPosX,gu->viewPosY );
 	GLSLDefineConstf1(definitions, "FresnelMin",     mapInfo->water.fresnelMin);
 	GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
