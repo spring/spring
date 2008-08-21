@@ -1,12 +1,12 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "ResourceBar.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/Team.h"
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
-#include "mmgr.h"
-
 #include "TimeProfiler.h"
 
 CResourceBar* resourceBar=0;

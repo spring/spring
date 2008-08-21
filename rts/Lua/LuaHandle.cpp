@@ -3,11 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaHandle.h"
 #include <string>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaHandle.h"
 
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaGaia.h"

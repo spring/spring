@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FeatureHandler.h"
 #include "Feature.h"
 #include "Game/Camera.h"
@@ -26,7 +28,6 @@
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
 

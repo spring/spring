@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "DamageArray.h"
 #include "DamageArrayHandler.h"
 

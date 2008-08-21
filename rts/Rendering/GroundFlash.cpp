@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "GroundFlash.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Map/Ground.h"
@@ -6,7 +8,6 @@
 #include "GL/VertexArray.h"
 #include "LogOutput.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 

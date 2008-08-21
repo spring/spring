@@ -1,10 +1,13 @@
-#include "GameSetupDrawer.h"
-
+#include "StdAfx.h"
 #include <assert.h>
 #include <string>
 #include <map>
 #include <SDL_timer.h>
 #include <SDL_keysym.h>
+
+#include "mmgr.h"
+
+#include "GameSetupDrawer.h"
 
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"

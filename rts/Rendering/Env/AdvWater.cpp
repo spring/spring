@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AdvWater.h"
 #include "Game/Game.h"
 #include "Rendering/GL/myGL.h"
@@ -17,7 +19,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "System/EventHandler.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

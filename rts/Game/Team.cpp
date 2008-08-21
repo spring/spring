@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Messages.h"
 #include "Team.h"
 #include "LogOutput.h"
@@ -18,7 +20,6 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
-#include "mmgr.h"
 #include "NetProtocol.h"
 
 CR_BIND(CTeam,);

@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Game/Camera.h"
@@ -10,7 +12,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

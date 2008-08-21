@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include "mmgr.h"
+
 #include "LuaInputReceiver.h"
 #include "System/EventHandler.h"
 

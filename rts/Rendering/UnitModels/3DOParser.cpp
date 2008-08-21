@@ -3,31 +3,32 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <cctype>
+#include <locale>
+#include <stdexcept>
+#include "mmgr.h"
+
 #include "3DOParser.h"
 #include "Rendering/GL/myGL.h"
 #include "GlobalStuff.h"
 #include "LogOutput.h"
-#include <vector>
 #include "Rendering/GL/VertexArray.h"
 #include "FileSystem/VFSHandler.h"
-#include <set>
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "Rendering/FartextureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
-#include <algorithm>
-#include <cctype>
-#include <locale>
-#include <stdexcept>
 #include "Game/Team.h"
 #include "Game/Player.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-#include "mmgr.h"
 
 using namespace std;
 

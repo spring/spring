@@ -189,13 +189,15 @@
 #include <string.h>
 #include <assert.h>
 #include "nv_dds.h"
+
 #include "FileSystem/FileHandler.h"
 #include "Platform/byteorder.h"
-
 // Moved because of conflicts with GLEW.
 #if defined(UNIX) || defined(unix)
 #  include <GL/glx.h>
 #endif
+
+#include "mmgr.h"
 
 using namespace std;
 using namespace nv_dds;

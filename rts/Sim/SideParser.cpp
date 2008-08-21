@@ -6,6 +6,8 @@
 using std::string;
 using std::set;
 
+#include "mmgr.h"
+
 #include "SideParser.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"

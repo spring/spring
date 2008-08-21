@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "GroundMoveType.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Camera.h"
@@ -33,7 +35,6 @@
 #include "System/Sound.h"
 #include "System/FastMath.h"
 #include "myMath.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 

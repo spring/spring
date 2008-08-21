@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BaseWater.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
@@ -8,7 +10,6 @@
 #include "LogOutput.h"
 #include "DynWater.h"
 #include "RefractWater.h"
-#include "mmgr.h"
 
 CBaseWater* water=0;
 

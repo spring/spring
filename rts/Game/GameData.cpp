@@ -1,6 +1,9 @@
-#include "GameData.h"
-
+#include "StdAfx.h"
 #include <assert.h>
+
+#include "mmgr.h"
+
+#include "GameData.h"
 
 #include "BaseNetProtocol.h"
 #include "Net/PackPacket.h"

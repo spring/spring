@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "GlobalStuff.h"
@@ -19,7 +21,6 @@
 #include "Sync/SyncTracer.h"
 #include "Unsynced/SmokeProjectile.h"
 #include "Unsynced/SmokeTrailProjectile.h"
-#include "mmgr.h"
 
 static const float Smoke_Time = 40;
 

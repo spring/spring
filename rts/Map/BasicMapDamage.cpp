@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
@@ -17,7 +19,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
-#include "mmgr.h"
 
 
 CBasicMapDamage::CBasicMapDamage(void)

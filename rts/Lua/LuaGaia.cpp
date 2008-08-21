@@ -3,9 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaGaia.h"
 #include <set>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaGaia.h"
 
 #include "LuaInclude.h"
 

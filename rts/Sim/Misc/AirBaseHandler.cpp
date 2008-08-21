@@ -1,10 +1,10 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "AirBaseHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "creg/STL_List.h"
-#include "mmgr.h"
 
 CAirBaseHandler* airBaseHandler=0;
 

@@ -1,10 +1,11 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BitmapMuzzleFlame.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 

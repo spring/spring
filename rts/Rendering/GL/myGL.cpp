@@ -1,8 +1,11 @@
 #include "StdAfx.h"
-#include "myGL.h"
-#include "Rendering/glFont.h"
 #include <ostream>
 #include <fstream>
+#include <SDL.h>
+#include "mmgr.h"
+
+#include "myGL.h"
+#include "Rendering/glFont.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "FileSystem/FileHandler.h"
@@ -12,10 +15,7 @@
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
-#include <SDL.h>
-#include "mmgr.h"
 #include "System/GlobalStuff.h"
-
 
 #include "IFramebuffer.h"
 

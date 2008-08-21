@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "UnitDrawer.h"
 #include "myMath.h"
 #include "LogOutput.h"

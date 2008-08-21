@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "System/FastMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"

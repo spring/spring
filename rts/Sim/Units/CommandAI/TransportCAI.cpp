@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "Sim/Units/UnitHandler.h"
@@ -16,7 +18,6 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/ModInfo.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "mmgr.h"
 #include "creg/STL_List.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16

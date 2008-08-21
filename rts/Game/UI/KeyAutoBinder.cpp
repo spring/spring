@@ -2,10 +2,10 @@
 // KeyAutoBinder.cpp: implementation of the CKeyAutoBinder class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <cctype>
+#include "mmgr.h"
 
 #include "KeyAutoBinder.h"
-
-#include <cctype>
 
 #include "LuaInclude.h"
 

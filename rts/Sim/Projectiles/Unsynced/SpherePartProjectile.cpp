@@ -1,10 +1,11 @@
 #include "StdAfx.h"
 #include <algorithm>
+#include "mmgr.h"
+
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SpherePartProjectile.h"
-#include "mmgr.h"
 
 using std::min;
 

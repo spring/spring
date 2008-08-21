@@ -2,6 +2,7 @@
 // Projectile.cpp: implementation of the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include "Projectile.h"
@@ -12,7 +13,6 @@
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 

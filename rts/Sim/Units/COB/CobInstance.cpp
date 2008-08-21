@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CobEngine.h"
 #include "CobFile.h"
 #include "CobInstance.h"
@@ -7,6 +9,7 @@
 #ifndef _CONSOLE
 
 #include <SDL_types.h>
+
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -37,7 +40,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 
 #endif
 
@@ -891,6 +893,8 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
+                    // FIXME: this is a memory leak
+                    // a comment in FlyingPiece says it deletes, but mmgr says otherwise
 					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];

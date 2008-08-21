@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "AdvTreeDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -17,7 +18,6 @@
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

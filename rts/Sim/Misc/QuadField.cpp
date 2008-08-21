@@ -3,13 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "mmgr.h"
+
 #include "QuadField.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
-#include "mmgr.h"
 
 
 CR_BIND(CQuadField, );

@@ -4,6 +4,8 @@
 #include <ctype.h>
 using namespace std;
 
+#include "mmgr.h"
+
 #include "MapParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/FileSystem/FileHandler.h"

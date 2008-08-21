@@ -2,6 +2,7 @@
 // LuaConstGame.cpp: implementation of the LuaConstGame class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaConstGame.h"
 

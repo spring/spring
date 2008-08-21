@@ -1,4 +1,7 @@
 #include "StdAfx.h"
+#include <algorithm>
+#include "mmgr.h"
+
 #include "GrassDrawer.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"
@@ -11,13 +14,11 @@
 #include "LogOutput.h"
 #include "myMath.h"
 #include "Platform/ConfigHandler.h"
-#include <algorithm>
 #include "FileSystem/FileHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
 //#include "TimeProfiler.h"
-#include "mmgr.h"
 
 static const float turfSize=20;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square

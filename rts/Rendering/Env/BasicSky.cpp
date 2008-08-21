@@ -6,6 +6,9 @@
 #endif
 
 #include "StdAfx.h"
+#include <assert.h>
+#include "mmgr.h"
+
 #include "BasicSky.h"
 
 #include "Rendering/GL/myGL.h"
@@ -17,11 +20,9 @@
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
-#include <assert.h>
 
 //////////////////////////////////////////////////////////////////////
 

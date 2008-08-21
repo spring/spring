@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaSyncedCtrl.h"
 #include <set>
 #include <list>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaSyncedCtrl.h"
 
 #include "LuaInclude.h"
 

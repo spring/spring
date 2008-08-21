@@ -1,5 +1,10 @@
+#include "StdAfx.h"
+
 #include <SDL_keysym.h>
 #include <SDL_types.h>
+
+#include "mmgr.h"
+
 #include "TWController.h"
 
 #include "Platform/ConfigHandler.h"

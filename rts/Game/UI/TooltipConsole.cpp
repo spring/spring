@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -18,7 +20,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
 
 
 CTooltipConsole* tooltip = 0;

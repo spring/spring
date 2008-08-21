@@ -1,4 +1,7 @@
 #include "StdAfx.h"
+
+#include "mmgr.h"
+
 #include "CameraHandler.h"
 
 #include "Game/Action.h"

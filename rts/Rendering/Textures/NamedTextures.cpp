@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "bitops.h"
 #include "NamedTextures.h"
 #include "Rendering/GL/myGL.h"

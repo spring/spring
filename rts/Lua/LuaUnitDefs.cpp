@@ -3,14 +3,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUnitDefs.h"
-
 #include <set>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaUnitDefs.h"
 
 #include "LuaInclude.h"
 

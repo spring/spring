@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "SkyBox.h"
 #include "float3.h"
 #include "Rendering/GL/myGL.h"
@@ -8,7 +10,6 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "mmgr.h"
 
 CSkyBox::CSkyBox(std::string texture)
 {

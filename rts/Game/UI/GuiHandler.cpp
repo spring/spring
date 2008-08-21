@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "GuiHandler.h"
 #include <map>
 #include <set>
 #include <list>
+
+#include "mmgr.h"
+
+#include "GuiHandler.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
@@ -51,7 +54,6 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
 
 extern Uint8 *keys;
 

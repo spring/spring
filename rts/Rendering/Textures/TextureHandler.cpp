@@ -3,13 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "TextureHandler.h"
 
 #include <algorithm>
 #include <cctype>
 #include <set>
 #include <sstream>
+#include "mmgr.h"
 
+#include "TextureHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "Game/Team.h"
@@ -21,7 +22,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

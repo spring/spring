@@ -39,9 +39,11 @@ class CPathEstimator: public IPath {
 		CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, std::string name);
 		~CPathEstimator();
 
+#if !defined(USE_MMGR)
 		// note: thread-safety (see PathFinder.cpp)?
 		void* operator new(size_t size) { return pfAlloc(size); }
 		inline void operator delete(void* p, size_t size) { pfDealloc(p, size); }
+#endif
 
 		void Draw(void);
 

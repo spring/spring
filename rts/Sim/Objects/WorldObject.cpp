@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "WorldObject.h"
 #include "mmgr.h"
+#include "WorldObject.h"
 
 CR_BIND_DERIVED(CWorldObject, CObject, )
 CR_REG_METADATA(CWorldObject, (

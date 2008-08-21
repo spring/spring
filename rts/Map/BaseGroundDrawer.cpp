@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 
 #include "BaseGroundDrawer.h"
 
@@ -19,7 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "mmgr.h"
+
 
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)

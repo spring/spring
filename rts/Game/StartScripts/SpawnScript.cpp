@@ -1,6 +1,9 @@
 #include "StdAfx.h"
 #include <fstream>
 #include <set>
+
+#include "mmgr.h"
+
 #include "SpawnScript.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
@@ -14,7 +17,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
-#include "mmgr.h"
+
 
 extern std::string stupidGlobalMapname;
 

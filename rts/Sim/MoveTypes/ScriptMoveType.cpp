@@ -1,5 +1,6 @@
 
 #include "StdAfx.h"
+#include "System/mmgr.h"
 
 #include "ScriptMoveType.h"
 
@@ -17,7 +18,6 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 

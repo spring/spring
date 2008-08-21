@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
+#include "mmgr.h"
+
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -17,7 +19,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
 
 using std::list;
 using std::min;

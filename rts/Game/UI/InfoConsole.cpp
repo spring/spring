@@ -2,9 +2,11 @@
 // InfoConsole.cpp: implementation of the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <fstream>
+
+#include "mmgr.h"
 
 #include "InfoConsole.h"
-#include <fstream>
 #include "GuiHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
@@ -17,7 +19,6 @@
 #include "Platform/ConfigHandler.h"
 #include "InputReceiver.h"
 
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

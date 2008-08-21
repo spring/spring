@@ -3,10 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Rendering/GL/myGL.h"
-#include "ReadMap.h"
 #include <stdlib.h>
 #include <string>
+#include "mmgr.h"
+
+#include "Rendering/GL/myGL.h"
+#include "ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"
 #include "Platform/ConfigHandler.h"
@@ -23,7 +25,6 @@
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
-#include "mmgr.h"
 
 using namespace std;
 

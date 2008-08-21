@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -11,7 +13,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SmokeProjectile.h"
 #include "WreckProjectile.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CWreckProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
 

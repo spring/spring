@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "SolidObject.h"
 #include "Map/ReadMap.h"
 #include "LogOutput.h"

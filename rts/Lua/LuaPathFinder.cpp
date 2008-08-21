@@ -3,12 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaPathFinder.h"
-
 #include <stdlib.h>
 #include <algorithm>
 
+#include "mmgr.h"
+
 using namespace std;
+
+#include "LuaPathFinder.h"
 
 #include "LuaInclude.h"
 

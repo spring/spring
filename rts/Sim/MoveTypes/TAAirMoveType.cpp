@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 
 #include "TAAirMoveType.h"
 

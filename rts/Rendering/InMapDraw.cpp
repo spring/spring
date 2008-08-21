@@ -1,4 +1,8 @@
 #include "StdAfx.h"
+#include "SDL_mouse.h"
+#include "SDL_keyboard.h"
+#include "mmgr.h"
+
 #include "InMapDraw.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
@@ -17,8 +21,6 @@
 #include "System/LogOutput.h"
 #include "System/Sound.h"
 #include "creg/STL_List.h"
-#include "SDL_mouse.h"
-#include "SDL_keyboard.h"
 
 
 #define DRAW_QUAD_SIZE 32

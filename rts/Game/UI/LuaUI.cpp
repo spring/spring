@@ -3,14 +3,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUI.h"
-
 #include <stdio.h>
 #include <set>
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaUI.h"
+
+
 using namespace std;
 
 #include "LuaInclude.h"

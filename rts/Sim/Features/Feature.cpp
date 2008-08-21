@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Feature.h"
 #include "FeatureHandler.h"
 #include "Game/Team.h"
@@ -22,7 +24,6 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 

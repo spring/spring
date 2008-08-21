@@ -1,11 +1,12 @@
 #include "StdAfx.h"
-#include "UnitDefHandler.h"
 #include <stdio.h>
 #include <algorithm>
 #include <iostream>
 #include <locale>
 #include <cctype>
+#include "mmgr.h"
 
+#include "UnitDefHandler.h"
 #include "UnitDef.h"
 #include "UnitDefImage.h"
 
@@ -31,7 +32,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
-#include "mmgr.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 

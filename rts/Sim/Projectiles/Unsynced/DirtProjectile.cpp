@@ -2,6 +2,7 @@
 // DirtProjectile.cpp: implementation of the CDirtCloudProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "DirtProjectile.h"
 #include "Game/Camera.h"
@@ -9,7 +10,6 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
 

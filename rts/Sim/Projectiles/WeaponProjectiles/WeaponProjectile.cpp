@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sound.h"
@@ -17,7 +19,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
 
 #include "Sim/Weapons/WeaponDefHandler.h"
 

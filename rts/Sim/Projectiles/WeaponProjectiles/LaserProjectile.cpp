@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "LaserProjectile.h"
 #include "LogOutput.h"
@@ -7,7 +9,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
 

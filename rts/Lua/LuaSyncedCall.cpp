@@ -3,11 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaSyncedCall.h"
 #include <set>
 #include <list>
 #include <cctype>
 using namespace std;
+
+#include "mmgr.h"
+
+#include "LuaSyncedCall.h"
 
 #include "LuaInclude.h"
 

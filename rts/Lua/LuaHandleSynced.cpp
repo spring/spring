@@ -3,9 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaHandleSynced.h"
 #include <set>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaHandleSynced.h"
 
 #include "LuaInclude.h"
 
