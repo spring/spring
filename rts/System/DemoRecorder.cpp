@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <errno.h>
 
 #include "Sync/Syncify.h"
 #include "Platform/FileSystem.h"
