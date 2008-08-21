@@ -1,6 +1,5 @@
-#include "StdAfx.h"
-#include <SDL_syswm.h>
 #include "Rendering/Textures/Bitmap.h"
+#include "StdAfx.h"
 
 #ifdef WIN32
 #  include "windows.h"
@@ -14,15 +13,17 @@ typedef unsigned char byte;
 
 #include "mmgr.h"
 
+#include "Rendering/GL/myGL.h"
 #include "bitops.h"
+#include "MouseCursor.h"
+#include "HwMouseCursor.h"
 #include "CommandColors.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
-#include "MouseCursor.h"
-#include "HwMouseCursor.h"
 #include "myMath.h"
-#include "Rendering/GL/myGL.h"
+
+#include <SDL_syswm.h>
 
 
 
