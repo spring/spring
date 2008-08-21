@@ -2,7 +2,7 @@
   StrCpy $CA "true"
   SetOutPath "$INSTDIR"
   
-  inetc::get \
+;  inetc::get \
              "http://installer.clan-sy.com/CaDownloader.exe" "$INSTDIR\CaDownloader.exe" \         
 
   Call GetDotNETVersion
