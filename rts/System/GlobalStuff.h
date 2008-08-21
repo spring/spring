@@ -629,6 +629,13 @@ public:
 	bool compressTextures;
 
 	/**
+	 * @brief collection of some ATI bugfixes
+	 *
+	 * enables some ATI bugfixes
+	 */
+	bool atiHacks;
+
+	/**
 	 * @brief quit automatically?
 	 *
 	 * If set, quit immediately on game over or if gameTime > quitTime,

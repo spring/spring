@@ -304,6 +304,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	timeOffset = 0;
 	drawFog = true;
 	compressTextures = false;
+	atiHacks = false;
 	teamNanospray = false;
 	autoQuit = false;
 	quitTime = 0;
