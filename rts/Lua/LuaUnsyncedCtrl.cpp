@@ -3,7 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUnsyncedCtrl.h"
 #include <set>
 #include <list>
 #include <cctype>
@@ -14,6 +13,10 @@ using namespace std;
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaUnsyncedCtrl.h"
 
 #include "LuaInclude.h"
 

@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FartextureHandler.h"
 #include "UnitModels/3DOParser.h"
 #include "GL/myGL.h"
@@ -6,7 +8,6 @@
 #include "UnitModels/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 
 CFartextureHandler* fartextureHandler = NULL;

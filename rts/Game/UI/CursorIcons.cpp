@@ -1,4 +1,8 @@
 #include "StdAfx.h"
+#include <algorithm>
+
+#include "mmgr.h"
+
 #include "CursorIcons.h"
 #include "CommandColors.h"
 #include "MouseHandler.h"
@@ -12,7 +16,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 
-#include <algorithm>
+
 
 
 CCursorIcons cursorIcons;

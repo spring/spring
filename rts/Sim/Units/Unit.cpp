@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "COB/CobFile.h"
 #include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
@@ -58,7 +60,6 @@
 #include "UnitLoader.h"
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
-#include "mmgr.h"
 
 #include "COB/CobEngine.h"
 #include "CommandAI/AirCAI.h"

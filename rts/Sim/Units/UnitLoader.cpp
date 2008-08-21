@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "UnitLoader.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"

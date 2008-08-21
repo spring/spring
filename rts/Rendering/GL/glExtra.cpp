@@ -1,7 +1,8 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "glExtra.h"
 #include "Map/Ground.h"
-#include "mmgr.h"
 #include "Sim/Weapons/Weapon.h"
 #include "LogOutput.h"
 

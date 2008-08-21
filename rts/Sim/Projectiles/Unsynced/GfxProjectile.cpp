@@ -2,12 +2,12 @@
 // GfxProjectile.cpp: implementation of the CGfxProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "GfxProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
 

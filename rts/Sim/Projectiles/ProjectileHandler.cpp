@@ -3,8 +3,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <algorithm>
 #include "StdAfx.h"
+#include <algorithm>
+#include "mmgr.h"
+
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
@@ -36,7 +38,6 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
-#include "mmgr.h"
 
 
 CProjectileHandler* ph;

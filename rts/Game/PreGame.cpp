@@ -1,10 +1,13 @@
 #include "StdAfx.h"
-#include "PreGame.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
+
+#include "mmgr.h"
+
+#include "PreGame.h"
 #include "Game.h"
 #include "Team.h"
 #include "FPUCheck.h"
@@ -33,7 +36,6 @@
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
-#include "mmgr.h"
 
 // msvc behaves really strange
 #if _MSC_VER

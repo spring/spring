@@ -1,9 +1,10 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "ExploSpikeProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
 

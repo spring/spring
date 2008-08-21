@@ -1,6 +1,9 @@
-#include "CommandMessage.h"
-
+#include "StdAfx.h"
 #include <assert.h>
+
+#include "mmgr.h"
+
+#include "CommandMessage.h"
 
 #include "BaseNetProtocol.h"
 #include "Net/PackPacket.h"

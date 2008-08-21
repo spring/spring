@@ -3,12 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaShaders.h"
-
 #include <string>
 #include <vector>
 using std::string;
 using std::vector;
+
+#include "mmgr.h"
+
+#include "LuaShaders.h"
 
 #include "LuaInclude.h"
 

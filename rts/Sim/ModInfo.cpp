@@ -1,5 +1,7 @@
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "GlobalStuff.h"
 #include "ModInfo.h"
 #include "Game/GameSetup.h"

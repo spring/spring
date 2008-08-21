@@ -17,8 +17,10 @@ public:
 	CPathFinder();
 	virtual ~CPathFinder();
 
+#if !defined(USE_MMGR)
 	void* operator new(size_t size){return pfAlloc(size);};
 	inline void operator delete(void* p,size_t size){pfDealloc(p,size);};
+#endif
 
 	/**
 	Gives a detailed path from given starting location to target defined in CPathFinderDef,

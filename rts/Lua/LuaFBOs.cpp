@@ -2,11 +2,12 @@
 // LuaFBOs.cpp: implementation of the LuaFBOs class.
 //
 //////////////////////////////////////////////////////////////////////
-
-#include "LuaFBOs.h"
-
 #include <map>
 using std::map;
+
+#include "mmgr.h"
+
+#include "LuaFBOs.h"
 
 #include "LuaInclude.h"
 

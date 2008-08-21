@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CommandAI.h"
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
@@ -27,7 +29,6 @@
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
-#include "mmgr.h"
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
 

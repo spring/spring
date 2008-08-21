@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "GenericParticleProjectile.h"
 #include "GlobalStuff.h"
@@ -6,7 +8,6 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "SimpleParticleSystem.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 

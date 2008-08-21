@@ -1,11 +1,12 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BaseTreeDrawer.h"
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
-#include "mmgr.h"
 
 CBaseTreeDrawer* treeDrawer=0;
 

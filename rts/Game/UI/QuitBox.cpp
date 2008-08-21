@@ -1,4 +1,7 @@
 #include "StdAfx.h"
+#include <SDL_keysym.h>
+#include "mmgr.h"
+
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "MouseHandler.h"
@@ -6,7 +9,6 @@
 #include "QuitBox.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
-#include <SDL_keysym.h>
 
 extern bool globalQuit;
 

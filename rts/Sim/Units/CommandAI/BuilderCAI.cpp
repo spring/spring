@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BuilderCAI.h"
 #include "TransportCAI.h"
 #include "LineDrawer.h"
@@ -30,7 +32,6 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
-#include "mmgr.h"
 #include "creg/STL_Map.h"
 
 

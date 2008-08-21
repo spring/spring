@@ -11,13 +11,16 @@
 // - use materials instead of raw calls (again, handle dlists)
 //
 
-#include "LuaOpenGL.h"
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaOpenGL.h"
 
 #include "LuaInclude.h"
 

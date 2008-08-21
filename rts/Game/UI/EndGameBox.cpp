@@ -1,4 +1,7 @@
 #include "StdAfx.h"
+
+#include "mmgr.h"
+
 #include "EndGameBox.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"

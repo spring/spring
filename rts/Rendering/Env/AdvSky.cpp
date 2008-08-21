@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AdvSky.h"
 
 #include "Rendering/GL/myGL.h"
@@ -14,7 +16,6 @@
 #include "LogOutput.h"
 #include "TimeProfiler.h"
 #include "Matrix44f.h"
-#include "mmgr.h"
 
 #define Y_PART 10.0
 #define X_PART 10.0

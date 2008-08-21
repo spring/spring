@@ -6,6 +6,9 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_types.h>
+
+#include "mmgr.h"
+
 #include "CommandColors.h"
 #include "CursorIcons.h"
 #include "ExternalAI/Group.h"
@@ -55,7 +58,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
-#include "mmgr.h"
+
 
 
 //////////////////////////////////////////////////////////////////////

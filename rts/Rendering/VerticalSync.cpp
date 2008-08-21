@@ -8,11 +8,12 @@
 #else
 #include <GL/glxew.h> // for glXWaitVideoSyncSGI()
 #endif
+#include "mmgr.h"
+
 #include "VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
 
 
 CVerticalSync VSync;

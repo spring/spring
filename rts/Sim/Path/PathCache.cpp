@@ -1,8 +1,9 @@
 #include "StdAfx.h"
-#include "PathCache.h"
 #include <algorithm>
-#include "LogOutput.h"
 #include "mmgr.h"
+
+#include "PathCache.h"
+#include "LogOutput.h"
 
 using namespace std;
 

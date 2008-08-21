@@ -3,8 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaIO.h"
-
 #include <stdio.h>
 #include <errno.h>
 
@@ -14,6 +12,10 @@
 
 #include <string>
 using std::string;
+
+#include "mmgr.h"
+
+#include "LuaIO.h"
 
 #include "LuaHandle.h"
 #include "LuaInclude.h"

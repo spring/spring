@@ -3,7 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUnsyncedRead.h"
 #include <set>
 #include <list>
 #include <cctype>
@@ -13,6 +12,10 @@ using namespace std;
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
+
+#include "mmgr.h"
+
+#include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
 

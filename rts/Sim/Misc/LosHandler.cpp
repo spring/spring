@@ -2,19 +2,19 @@
 // LosHandler.cpp: implementation of the CLosHandler class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <list>
+#include "mmgr.h"
 
 #include "LosHandler.h"
 
 #include "Sim/ModInfo.h"
 #include "Sim/Units/Unit.h"
-#include <list>
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
-#include "mmgr.h"
 
 using std::min;
 using std::max;

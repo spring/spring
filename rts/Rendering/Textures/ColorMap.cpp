@@ -1,9 +1,11 @@
 #include "StdAfx.h"
+#include <sstream>
+#include "mmgr.h"
+
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
-#include <sstream>
 
 std::vector<CColorMap *> CColorMap::colorMaps;
 std::map<std::string, CColorMap *> CColorMap::colorMapsMap;

@@ -3,14 +3,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaWeaponDefs.h"
-
 #include <set>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaWeaponDefs.h"
 
 #include "LuaInclude.h"
 

@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <cctype>
 #include <map>
+
+#include "mmgr.h"
+
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Game.h"
@@ -17,7 +20,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
+
 
 
 extern std::string stupidGlobalMapname;

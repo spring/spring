@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -11,7 +13,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "TorpedoProjectile.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CTorpedoProjectile, CTorpedoProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
 

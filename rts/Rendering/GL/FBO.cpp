@@ -10,6 +10,8 @@
 #include "StdAfx.h"
 #include <assert.h>
 #include <vector>
+#include "mmgr.h"
+
 #include "IFramebuffer.h"
 #include "FBO.h"
 #include "LogOutput.h"

@@ -2,6 +2,7 @@
 // LuaConstGL.cpp: implementation of the LuaConstGL class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaConstGL.h"
 

@@ -25,6 +25,8 @@ using namespace std;
 #include <IL/il.h>
 #include <IL/ilu.h>
 
+#include "mmgr.h"
+
 #include "FontTexture.h"
 #include "LogOutput.h"
 

@@ -10,11 +10,9 @@
 //#define USE_QUICKTIME
 #endif
 
-#include "Rendering/GL/myGL.h"
 #include <ostream>
 #include <fstream>
 #include <string.h>
-#include "FileSystem/FileHandler.h"
 #if defined(USE_QUICKTIME)
 #include <QuickTime/ImageCompression.h>
 #include <QuickTime/QuickTimeComponents.h>
@@ -22,10 +20,13 @@
 #include <IL/il.h>
 #include <IL/ilu.h>
 #endif
+#include "mmgr.h"
+
+#include "Rendering/GL/myGL.h"
+#include "FileSystem/FileHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "bitops.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

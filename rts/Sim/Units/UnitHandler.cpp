@@ -4,6 +4,8 @@
 
 #include "StdAfx.h"
 #include <assert.h>
+#include "System/mmgr.h"
+
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -30,7 +32,6 @@
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"

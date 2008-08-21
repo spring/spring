@@ -7,6 +7,8 @@
 #include <fstream>
 #include <locale>
 #include <stdexcept>
+#include "mmgr.h"
+
 #include "s3oParser.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
@@ -16,7 +18,6 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
-#include "mmgr.h"
 
 void SS3O::DrawStatic()
 {

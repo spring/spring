@@ -8,6 +8,9 @@
  */
 
 #include "StdAfx.h"
+#include <boost/format.hpp>
+#include "mmgr.h"
+
 #include "bitops.h"
 #include "BumpWater.h"
 #include "BaseSky.h"
@@ -29,7 +32,6 @@
 #include "System/Platform/ConfigHandler.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
-#include <boost/format.hpp>
 
 using std::string;
 using std::vector;

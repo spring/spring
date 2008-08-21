@@ -1,22 +1,25 @@
 #include "StdAfx.h"
+#include <fstream>
+#include <boost/bind.hpp>
+#include <boost/version.hpp>
+#include "lib/minizip/zip.h"
+#include "mmgr.h"
+
 #include "PathEstimator.h"
+
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
-#include <fstream>
 
 #include "Map/Ground.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
-#include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
 #include "Platform/FileSystem.h"
 
-#include <boost/bind.hpp>
-#include <boost/version.hpp>
 
 #define PATHDEBUG false
 

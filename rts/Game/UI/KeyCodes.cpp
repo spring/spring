@@ -2,11 +2,12 @@
 // KeyCodes.cpp: implementation of the CKeyCodes class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <cctype>
+
+#include "mmgr.h"
 
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
-#include <cctype>
-
 #include "System/LogOutput.h"
 
 

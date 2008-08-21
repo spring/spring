@@ -2,6 +2,7 @@
 // DrawWater.cpp: implementation of the CBasicWater class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "BasicWater.h"
 #include "Rendering/GL/myGL.h"
@@ -9,7 +10,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

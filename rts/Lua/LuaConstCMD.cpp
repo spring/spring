@@ -2,6 +2,7 @@
 // LuaConstCMD.cpp: implementation of the LuaConstCMD class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaConstCMD.h"
 

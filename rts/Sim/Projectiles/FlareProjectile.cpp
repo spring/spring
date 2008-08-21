@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FlareProjectile.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
@@ -9,7 +11,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponProjectiles/MissileProjectile.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
 

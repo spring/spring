@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaSyncedRead.h"
 #include <set>
 #include <list>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaSyncedRead.h"
 
 #include "LuaInclude.h"
 

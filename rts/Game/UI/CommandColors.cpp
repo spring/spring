@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 #include <map>
+
+#include "mmgr.h"
+
 using namespace std;
 
 #include "Rendering/GL/myGL.h"

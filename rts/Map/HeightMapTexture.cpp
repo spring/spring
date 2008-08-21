@@ -2,6 +2,7 @@
 // HeightMapTexture.cpp: implementation of the HeightMapTexture class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "HeightMapTexture.h"
 

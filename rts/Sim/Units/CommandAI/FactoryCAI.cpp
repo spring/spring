@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
@@ -17,7 +19,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 #include "creg/STL_Map.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );

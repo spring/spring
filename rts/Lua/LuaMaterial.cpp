@@ -3,12 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaMaterial.h"
-
 #include <string>
 #include <vector>
 using std::string;
 using std::vector;
+
+#include "mmgr.h"
+
+#include "LuaMaterial.h"
 
 #include "LuaHashString.h"
 #include "LuaHandle.h"

@@ -7,10 +7,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdexcept>
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
-#include "mmgr.h"
 
 using namespace std;
 

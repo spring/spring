@@ -61,7 +61,7 @@ protected:
 	CExplosionGenerator *stdExplosionGenerator;
 
 	struct WaitingDamage{
-#ifndef SYNCIFY
+#if !defined(SYNCIFY) && !defined(USE_MMGR)
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 #endif

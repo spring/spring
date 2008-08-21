@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "PlayerRoster.h"
 #include "Player.h"
 #include "Team.h"

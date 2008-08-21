@@ -5,6 +5,8 @@
 #include <map>
 #include <SDL_timer.h>
 
+#include "mmgr.h"
+
 #ifndef DEDICATED
 	#include "Team.h"
 #endif
@@ -19,6 +21,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
+#include "LogOutput.h"
 
 
 using namespace std;

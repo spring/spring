@@ -2,6 +2,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <SDL_types.h>
+#include "mmgr.h"
+
 #include "creg/VarTypes.h"
 #include "ExplosionGenerator.h"
 #include "FileSystem/FileHandler.h"
@@ -21,7 +23,6 @@
 #include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
-#include "mmgr.h"
 
 using std::min;
 using std::max;

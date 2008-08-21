@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AirScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitLoader.h"
@@ -11,7 +13,7 @@
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "mmgr.h"
+
 
 
 const char* armhawk_name[] = { "arm_hawk", "ARMHAWK", NULL };

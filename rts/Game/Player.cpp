@@ -2,6 +2,9 @@
 // Player.cpp: implementation of the CPlayer class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <assert.h>
+
+#include "mmgr.h"
 
 #include "Player.h"
 #include "Team.h"
@@ -9,10 +12,8 @@
 #  include "UI/MouseHandler.h"
 #  include "CameraHandler.h"
 #  include "Camera.h"
-#  include <assert.h>
 #endif
 #include "System/EventHandler.h"
-#include "mmgr.h"
 
 CR_BIND(CPlayer,);
 

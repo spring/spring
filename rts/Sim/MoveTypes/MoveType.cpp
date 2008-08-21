@@ -1,9 +1,10 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "MoveType.h"
 #include "Map/Ground.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
 

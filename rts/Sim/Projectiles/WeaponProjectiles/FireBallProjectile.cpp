@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "creg/STL_Deque.h"
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
@@ -7,7 +9,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,float3(0,0,0),NULL));
 CR_BIND(CFireBallProjectile::Spark, );

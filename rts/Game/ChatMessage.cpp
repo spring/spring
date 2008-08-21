@@ -1,3 +1,7 @@
+#include "StdAfx.h"
+
+#include "mmgr.h"
+
 #include "ChatMessage.h"
 
 #include "BaseNetProtocol.h"

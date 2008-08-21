@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "UnitTracker.h"
 #include "Unit.h"
 #include "UnitHandler.h"
@@ -9,7 +11,6 @@
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 
 
 CUnitTracker unitTracker;

@@ -10,6 +10,8 @@
 #include <boost/regex.hpp>
 #include <SDL_timer.h>
 
+#include "mmgr.h"
+
 #include "LuaInclude.h"
 
 #include "LuaIO.h"

@@ -3,9 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "KeyBindings.h"
 #include <stdio.h>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "KeyBindings.h"
 #include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"

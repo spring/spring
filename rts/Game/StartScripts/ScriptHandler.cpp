@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "ScriptHandler.h"
 #include "Game/Game.h"
 #include "FileSystem/FileHandler.h"
@@ -19,7 +21,7 @@
 #ifndef NO_LUA
 #  include "System/Platform/errorhandler.h"
 #endif
-#include "mmgr.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

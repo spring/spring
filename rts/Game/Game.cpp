@@ -10,7 +10,11 @@
 #include <locale>
 #include <sstream>
 
-#include "Rendering/GL/myGL.h"
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
+
+#include <boost/thread/barrier.hpp>
+
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -19,6 +23,9 @@
 #include <SDL_events.h>
 #include <SDL_video.h>
 
+#include "mmgr.h"
+
+#include "Rendering/GL/myGL.h"
 #include "Game.h"
 #include "float.h"
 #include "Camera.h"
@@ -148,11 +155,6 @@
 #  include "Sim/Weapons/WeaponDefHandler.h"
 #endif
 
-#include "mmgr.h"
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
-
-#include <boost/thread/barrier.hpp>
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"

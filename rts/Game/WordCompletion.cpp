@@ -8,6 +8,8 @@
 
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "WordCompletion.h"
 
 CWordCompletion::CWordCompletion()

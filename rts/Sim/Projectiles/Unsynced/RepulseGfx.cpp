@@ -1,10 +1,11 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "RepulseGfx.h"
 #include "Sim/Units/Unit.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL,NULL,0,float3(0,0,0)));
 

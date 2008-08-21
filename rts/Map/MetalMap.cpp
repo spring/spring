@@ -1,9 +1,10 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "MetalMap.h"
 #include "GlobalStuff.h"
 #include "ReadMap.h"
 #include "Platform/ConfigHandler.h"
-#include "mmgr.h"
 
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 

@@ -1,8 +1,9 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Wind.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 CR_BIND(CWind, );
 

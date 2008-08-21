@@ -2,6 +2,8 @@
 #include <fstream>
 #include <SDL_keysym.h>
 #include <SDL_types.h>
+#include "mmgr.h"
+
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -18,7 +20,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "mmgr.h"
 
 CSelectionKeyHandler *selectionKeys;
 

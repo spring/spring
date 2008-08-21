@@ -7,6 +7,9 @@
 #include <SDL_mouse.h>
 #include <SDL_keysym.h>
 #include <SDL_events.h>
+
+#include "mmgr.h"
+
 #include "MouseHandler.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -42,7 +45,6 @@
 #include "Sim/Units/UnitTracker.h"
 #include "System/EventHandler.h"
 #include "Sound.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

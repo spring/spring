@@ -3,11 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "Game/Team.h"
-#include "SelectedUnits.h"
 #include <map>
 #include <SDL_types.h>
 #include <SDL_keysym.h>
+
+#include "mmgr.h"
+
+#include "Game/Team.h"
+#include "SelectedUnits.h"
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
 #include "NetProtocol.h"
@@ -34,7 +37,6 @@
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"
-#include "mmgr.h"
 
 extern Uint8 *keys;
 

@@ -1,5 +1,7 @@
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Rendering/GL/myGL.h"
 #include "RefractWater.h"
 #include "LogOutput.h"

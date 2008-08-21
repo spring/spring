@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AirCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
@@ -15,7 +17,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CAirCAI,CMobileCAI , );
 

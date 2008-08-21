@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AdvTreeGenerator.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -13,7 +15,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
 
 using std::max;
 using std::min;
