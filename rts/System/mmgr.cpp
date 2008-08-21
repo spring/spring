@@ -148,7 +148,7 @@ static	const	unsigned int	paddingSize            = 1024; // An extra 8K per allo
 static	const	unsigned int	hashBits               = 16;
 static __thread		bool		randomWipe             = true;
 static __thread		bool		alwaysValidateAll      = false;
-static __thread		bool		alwaysLogAll           = true;
+static __thread		bool		alwaysLogAll           = false;
 static __thread		bool		alwaysWipeAll          = true;
 static		bool		cleanupLogOnFirstRun   = true;
 static	const	unsigned int	paddingSize            = 32;
@@ -433,6 +433,9 @@ static	void	resetGlobals()
 	sourceLine = 0;
 	sourceFunc = "??";
 }
+
+void m_resetGlobals() { resetGlobals(); }
+ 
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 static FILE *fp_log;

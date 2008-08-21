@@ -1,5 +1,7 @@
 #include "BaseNetProtocol.h"
 
+#include "mmgr.h"
+
 #include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"

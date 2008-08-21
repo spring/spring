@@ -2,8 +2,10 @@
 // SimpleParser.cpp: implementation of the SimpleParser class.
 //
 //////////////////////////////////////////////////////////////////////
-#include "SimpleParser.h"
 #include <sstream>
+#include "mmgr.h"
+
+#include "SimpleParser.h"
 
 using namespace std;
 

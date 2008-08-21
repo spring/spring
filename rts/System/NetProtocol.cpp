@@ -1,6 +1,8 @@
-#include "NetProtocol.h"
-
+#include "StdAfx.h"
 #include <SDL_timer.h>
+#include "mmgr.h"
+
+#include "NetProtocol.h"
 
 #include "Game/GameSetup.h"
 #include "LogOutput.h"

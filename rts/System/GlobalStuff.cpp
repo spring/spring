@@ -7,6 +7,7 @@
  */
 #include "StdAfx.h"
 #include <cstring>
+#include "mmgr.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -18,7 +19,6 @@
 #include "Lua/LuaRules.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
-#include "mmgr.h"
 
 /**
  * @brief global synced

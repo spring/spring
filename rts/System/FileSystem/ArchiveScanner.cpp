@@ -1,4 +1,4 @@
-#include "ArchiveScanner.h"
+#include "StdAfx.h"
 
 #include <list>
 #include <algorithm>
@@ -6,7 +6,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "StdAfx.h"
+#include "mmgr.h"
+
+#include "ArchiveScanner.h"
+
 #include "Lua/LuaParser.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/ArchiveFactory.h"
@@ -15,7 +18,6 @@
 #include "System/FileSystem/FileFilter.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
-#include "mmgr.h"
 
 using std::string;
 using std::vector;

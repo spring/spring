@@ -5,6 +5,8 @@
 #include <time.h>
 #include <errno.h>
 
+#include "mmgr.h"
+
 #include "Sync/Syncify.h"
 #include "Platform/FileSystem.h"
 #include "FileSystem/FileHandler.h"

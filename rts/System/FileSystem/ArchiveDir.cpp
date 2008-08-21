@@ -1,7 +1,9 @@
 /* Author: Tobi Vollebregt */
 
-#include <assert.h>
 #include "StdAfx.h"
+#include <assert.h>
+#include "mmgr.h"
+
 #include "ArchiveDir.h"
 #include "Platform/FileSystem.h"
 

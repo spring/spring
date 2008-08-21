@@ -1,8 +1,10 @@
 #include "StdAfx.h"
-#include "DemoReader.h"
 
 #include <limits.h>
 #include <stdexcept>
+#include "mmgr.h"
+
+#include "DemoReader.h"
 
 #ifndef DEDICATED
 #include "Sync/Syncify.h"
