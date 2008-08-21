@@ -35,11 +35,12 @@ struct MapInfo
 
 
 enum OptionType {
-	opt_error  = 0,
-	opt_bool   = 1,
-	opt_list   = 2,
-	opt_number = 3,
-	opt_string = 4
+	opt_error   = 0,
+	opt_bool    = 1,
+	opt_list    = 2,
+	opt_number  = 3,
+	opt_string  = 4,
+	opt_section = 5
 };
 
 
