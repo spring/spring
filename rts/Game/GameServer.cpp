@@ -1356,8 +1356,6 @@ void CGameServer::KickPlayer(const int playerNum)
 
 unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
-	m_validateAllAllocUnits();
-	_heapchk();
 	unsigned hisNewNumber = wantedNumber;
 	if (demoReader) {
 		hisNewNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
@@ -1374,9 +1372,6 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
-	logOutput.Print("0\n");
-	m_validateAllAllocUnits();
-    _heapchk();
 	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers) && !demoReader)
 	{
 		// number not in setup, drop connection
@@ -1386,11 +1381,9 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 	
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
-	logOutput.Print("1\n");
-	if (setup) {
+	if (setup && hisNewNumber < setup->playerStartingData.size()) {
 		*static_cast<PlayerBase*>(players[hisNewNumber].get()) = setup->playerStartingData[hisNewNumber];
 	}
-	logOutput.Print("2\n");
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 
