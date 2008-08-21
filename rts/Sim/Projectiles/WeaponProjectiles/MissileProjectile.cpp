@@ -280,7 +280,7 @@ void CMissileProjectile::Update(void)
 		} else {
 			// only when TTL <= 0 do projectiles
 			// get influenced by gravity and drag
-			speed *= 0.995f;
+			speed *= 0.98f;
 			speed.y += mapInfo->map.gravity;
 			dir = speed;
 			dir.Normalize();
