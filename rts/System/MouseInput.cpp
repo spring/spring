@@ -10,8 +10,6 @@
 */
 
 #include "StdAfx.h"
-#include <SDL_events.h>
-#include <SDL_syswm.h>
 #include "mmgr.h"
 
 #include "Platform/Win/win32.h"
@@ -19,6 +17,8 @@
 #include "Game/UI/MouseHandler.h"
 #include "LogOutput.h"
 
+#include <SDL_events.h>
+#include <SDL_syswm.h>
 
 
 IMouseInput* mouseInput = NULL;
