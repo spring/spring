@@ -240,6 +240,9 @@ bool SpringApp::Initialize()
 		gu->compressTextures = !!configHandler.GetInt("CompressTextures", 0);
 	}
 
+	// use some ATI bugfixes?
+	gu->atiHacks = !!configHandler.GetInt("AtiHacks", 0);
+
 	// Initialize named texture handler
 	CNamedTextures::Init();
 

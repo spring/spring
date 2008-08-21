@@ -22,7 +22,7 @@ void main(void) {
 
   vec2 texCoord = gl_TexCoord[0].st;
 
-  const vec2 texel = vec2(dFdx(gl_TexCoord[0].s),dFdy(gl_TexCoord[0].t));
+  vec2 texel = vec2(dFdx(gl_TexCoord[0].s),dFdy(gl_TexCoord[0].t));
 
   // 0 distance
   gl_FragColor  = texture2D(texture, texCoord );
