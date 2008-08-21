@@ -1,16 +1,18 @@
 
 #include "StdAfx.h"
 #include <assert.h>
-#include "LogOutput.h"
 #include <cstdarg>
 #include <fstream>
 #include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
 
-
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
+
+#include "mmgr.h"
+
+#include "LogOutput.h"
 
 static std::ofstream* filelog = 0;
 static bool initialized = false;

@@ -3,8 +3,10 @@ creg - Code compoment registration system
 Copyright 2005 Jelmer Cnossen
 */
 #include "StdAfx.h"
-#include "VarTypes.h"
 #include <assert.h>
+#include "mmgr.h"
+
+#include "VarTypes.h"
 
 using namespace std;
 using namespace creg;

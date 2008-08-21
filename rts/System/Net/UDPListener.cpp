@@ -1,6 +1,8 @@
-#include "UDPListener.h"
-
 #include <boost/weak_ptr.hpp>
+
+#include "mmgr.h"
+
+#include "UDPListener.h"
 
 #include "ProtocolDef.h"
 #include "UDPConnection.h"

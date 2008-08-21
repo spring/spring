@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "Sound.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"

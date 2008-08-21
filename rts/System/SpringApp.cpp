@@ -1,11 +1,14 @@
 #include "StdAfx.h"
-#include "SpringApp.h"
 
 #include <iostream>
 
 #include <signal.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
+
+#include "mmgr.h"
+
+#include "SpringApp.h"
 
 #undef KeyPress
 #undef KeyRelease

@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include <string.h>
-#include "ArchiveBuffered.h"
 #include "mmgr.h"
+
+#include "ArchiveBuffered.h"
 
 CArchiveBuffered::CArchiveBuffered(const std::string& name):
 	CArchiveBase(name),

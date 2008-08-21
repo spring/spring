@@ -1,7 +1,8 @@
-#include "RawPacket.h"
-
 #include <string.h>
 #include <stdexcept>
+#include "mmgr.h"
+
+#include "RawPacket.h"
 
 namespace netcode
 {

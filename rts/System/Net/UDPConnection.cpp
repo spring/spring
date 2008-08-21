@@ -1,4 +1,3 @@
-#include "UDPConnection.h"
 
 #include <SDL_timer.h>
 #include <boost/version.hpp>
@@ -10,6 +9,10 @@
  #include <arpa/inet.h>
  #include <sys/socket.h>
 #endif
+
+#include "mmgr.h"
+
+#include "UDPConnection.h"
 
 #include "ProtocolDef.h"
 #include "Exception.h"
