@@ -86,8 +86,9 @@
   vec2 screencoord = (gl_FragCoord.xy - ViewPos);
   vec2 reftexcoord = (screencoord*ScreenInverse);
 #else
-  vec2 screencoord = (gl_FragCoord.xy - ViewPos)*ScreenInverse;
-  vec2 reftexcoord = screencoord;
+  vec2 screenPos = gl_FragCoord.xy - ViewPos;
+  vec2 screencoord = screenPos*ScreenTextureSizeInverse;
+  vec2 reftexcoord = screenPos*ScreenInverse;
 #endif
 
 
@@ -195,7 +196,11 @@ float waveIntensity(const float x, const float step) {
 
 // REFRACTION
 #ifdef use_refraction
+  #ifdef use_texrect
     vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz*refractDistortion ).rgb;
+  #else
+    vec3 refrColor = texture2DRect(refraction, screencoord + normal.xz*refractDistortion*ScreenInverse ).rgb;
+  #endif
     gl_FragColor.rgb = mix(refrColor,waterSurface, 0.1+surfaceMix);
 #else
     gl_FragColor.rgb = waterSurface;
