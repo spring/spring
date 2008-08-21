@@ -654,6 +654,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());
+		logOutput << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameData->GetMap());
 	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());

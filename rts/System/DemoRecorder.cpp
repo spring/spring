@@ -10,6 +10,8 @@
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 
+#include "LogOutput.h"
+
 #ifdef __GNUC__
 #define __time64_t time_t
 #define _time64(x) time(x)
@@ -22,7 +24,8 @@ CDemoRecorder::CDemoRecorder()
 	if (!filesystem.CreateDirectory("demos"))
 		return;
 
-	wantedName = demoName = "demos/unnamed.sdf";
+	SetName("unnamed");
+	demoName = wantedName;
 
 	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
 	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
@@ -63,11 +66,17 @@ CDemoRecorder::~CDemoRecorder()
 	WriteTeamStats();
 	WriteFileHeader();
 
+	recordDemo.close();
+
 	if (demoName != wantedName) {
-		rename(demoName.c_str(), wantedName.c_str());
+		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
+            logOutput << "Renaming demo " << demoName << " to " << wantedName << "\n";
+            logOutput << "failed: " << strerror(errno) << "\n";
+		}
 	} else {
-		remove("demos/unnamed.sdf");
-		rename(demoName.c_str(), "demos/unnamed.sdf");
+	    // pointless?
+		//remove("demos/unnamed.sdf");
+		//rename(demoName.c_str(), "demos/unnamed.sdf");
 	}
 }
 
@@ -91,16 +100,21 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	_time64(&long_time);                /* Get time as long integer. */
 	newtime = _localtime64(&long_time); /* Convert to local time. */
 
-	char buf[500];
-	sprintf(buf, "%02i%02i%02i", newtime->tm_year % 100, newtime->tm_mon + 1, newtime->tm_mday);
-	std::string name = std::string(buf) + "-" + mapname.substr(0, mapname.find_first_of("."));
-	name += std::string("-") + VERSION_STRING;
+	char buf[1000];
+	snprintf(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
+        newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
+	name += std::string("_") + VERSION_STRING;
+	// games without gameSetup should have different names
+	if (!gameSetup) {
+	    name = "local_" + name;
+	}
 
-	sprintf(buf,"demos/%s.sdf", name.c_str());
+	snprintf(buf, sizeof(buf), "demos/%s.sdf", name.c_str());
 	CFileHandler ifs(buf);
 	if (ifs.FileExists()) {
 		for (int a = 0; a < 9999; ++a) {
-			sprintf(buf,"demos/%s-%i.sdf", name.c_str(), a);
+			snprintf(buf, sizeof(buf), "demos/%s_(%i).sdf", name.c_str(), a);
 			CFileHandler ifs(buf);
 			if (!ifs.FileExists())
 				break;
