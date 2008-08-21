@@ -4,6 +4,9 @@
   ; The battleroom
   File "..\external\TASClient.exe"
   File "..\external\7za.dll"
+
+  inetc::get \
+             "http://files.caspring.org/caupdater/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe" \         
   
   
   CreateDirectory "$INSTDIR\lobby\cache"
@@ -19,6 +22,8 @@
 !else
 
   ; The battleroom
+  ExecWait "$INSTDIR\SpringDownloader.exe -uninstall"
+  Delete "$INSTDIR\SpringDownloader.exe"
   Delete "$INSTDIR\TASClient.exe"
   Delete "$INSTDIR\7za.dll"
   Delete "$INSTDIR\lobby\sidepics\arm.bmp"
