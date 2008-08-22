@@ -12,6 +12,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
 #include "System/Platform/FileSystem.h"
+#include "Game/GameSetup.h"
 #include "mmgr.h"
 
 
@@ -22,11 +23,13 @@ CGlobalAITestScript::CGlobalAITestScript(std::string dll):
 	CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
 	dllName(dll)
 {
-	// make sure CSelectedUnits::AiOrder()
-	// still works without a setup script
-	gs->Team(1)->isAI = true;
-	gs->Team(1)->dllAI = dllName;
-	gs->Team(1)->leader = 0;
+	if (!gameSetup) {
+		// make sure CSelectedUnits::AiOrder()
+		// still works without a setup script
+		gs->Team(1)->isAI = true;
+		gs->Team(1)->dllAI = dllName;
+		gs->Team(1)->leader = 0;
+	}
 }
 
 
