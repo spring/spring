@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(streflop lua/include luabind)
+INCLUDE_DIRECTORIES(streflop lua/include luabind ${CMAKE_SOURCE_DIR}/rts/System)
 
 AUX_SOURCE_DIRECTORY(lua/src lualibfiles)
 ADD_LIBRARY(lua STATIC ${lualibfiles})

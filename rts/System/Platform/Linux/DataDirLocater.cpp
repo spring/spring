@@ -272,7 +272,7 @@ void DataDirLocater::LocateDataDirs()
 			char* newl = strchr(buf, '\n');
 			if (newl)
 				*newl = 0;
-			char white[2] = {'\t', ' '};
+			char white[3] = {'\t', ' ', 0};
 			if (strlen(buf) > 0 && strspn(buf, white) != strlen(buf)) // don't count lines of whitespaces / tabulators
 				AddDirs(SubstEnvVars(buf));
 		}
