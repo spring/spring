@@ -362,6 +362,11 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
 	myPlayerNum = setup->myPlayerNum;
+
+	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
+		setup->playerStartingData.size() >= myPlayerNum &&
+		setup->teamStartingData.size() >= myPlayerNum);
+
 	myTeam = setup->playerStartingData[myPlayerNum].team;
 	myAllyTeam = setup->teamStartingData[myPlayerNum].teamAllyteam;
 
