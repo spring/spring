@@ -123,7 +123,7 @@ void CGameSetup::LoadStartPositions()
 		for (int i = 0; i < MAX_TEAMS; ++i)
 			teamStartNum[i] = i;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
-		for (int i = 0; i < MAX_TEAMS; ++i)
+		for (int i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 
