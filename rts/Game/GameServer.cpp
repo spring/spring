@@ -1106,7 +1106,7 @@ void CGameServer::PushAction(const Action& action)
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
-	else if (action.command == "setmaxspeed")
+	else if (action.command == "setmaxspeed" && !action.extra.empty())
 	{
 		float newUserSpeed = atof(action.extra.c_str());
 		if (newUserSpeed > 0.2)
@@ -1122,7 +1122,7 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
-	else if (action.command == "setminspeed")
+	else if (action.command == "setminspeed" && !action.extra.empty())
 	{
 		minUserSpeed = atof(action.extra.c_str());
 		if (userSpeedFactor < minUserSpeed) {
