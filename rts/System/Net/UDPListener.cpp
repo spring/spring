@@ -1,4 +1,12 @@
+#include "StdAfx.h"
 #include <boost/weak_ptr.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+#include <list>
+#include <queue>
 
 #include "mmgr.h"
 

@@ -6,6 +6,10 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <deque>
 #include <SDL_timer.h>
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
