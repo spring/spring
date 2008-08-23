@@ -30,7 +30,7 @@ public:
 	int IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
 
 	// tells whether a given object is blocking the given movedata
-	bool IsBlocking(const MoveData& moveData, const CSolidObject* object);
+	bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
 	bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
 
 	// gives the y-coordinate the unit will "stand on"

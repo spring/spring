@@ -312,8 +312,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	// copy the UnitDef volume archetype data
 	unit->collisionVolume = SAFE_NEW CollisionVolume(ud->collisionVolume);
 
-	// CUnitDefHandler left this volume's axis-scales uninitialized
-	// (ie. no "collisionVolumeScales" tag was defined in UnitDef)
+	// if no "collisionVolumeScales" tag was defined in UnitDef,
+	// the default scale for this volume will be a ZeroVector
 	if (unit->collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
 		unit->collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
 		unit->collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
@@ -322,6 +322,12 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		// unit->radius themselves are no longer altered)
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
 		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
+
+		if (unit->collisionVolume->volumeBoundingRadius <= 30.0f) {
+			// the interval-based method fails too easily for units
+			// with small default volumes, force use of raytracing
+			unit->collisionVolume->testType = COLVOL_TEST_CONT;
+		}
 	}
 
 	if (ud->floater) {

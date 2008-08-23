@@ -15,57 +15,49 @@ enum COLVOL_TESTS {COLVOL_TEST_DISC, COLVOL_TEST_CONT};
 struct CollisionVolume {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
-	CollisionVolume():
-		volumeBoundingRadius(1.0f), volumeType(COLVOL_TYPE_ELLIPSOID),
-		testType(COLVOL_TEST_DISC), primaryAxis(COLVOL_AXIS_Z) {
-		secondaryAxes[0] = COLVOL_AXIS_X;
-		secondaryAxes[1] = COLVOL_AXIS_Y;
-		spherical = true;
-	}
-	CollisionVolume(const CollisionVolume* src) {
-		axisScales             = src->axisScales;
-		axisHScales            = src->axisHScales;
-		axisHScalesSq          = src->axisHScalesSq;
-		axisHIScales           = src->axisHIScales;
-		axisOffsets            = src->axisOffsets;
-		volumeBoundingRadius   = src->volumeBoundingRadius;
-		volumeBoundingRadiusSq = src->volumeBoundingRadiusSq;
-		volumeType             = src->volumeType;
-		testType               = src->testType;
-		primaryAxis            = src->primaryAxis;
-		secondaryAxes[0]       = src->secondaryAxes[0];
-		secondaryAxes[1]       = src->secondaryAxes[1];
-		spherical              = src->spherical;
+	CollisionVolume(const CollisionVolume* src = 0x0) {
+		axisScales             = src? src->axisScales:             float3(2.0f, 2.0f, 2.0f);
+		axisHScales            = src? src->axisHScales:            float3(1.0f, 1.0f, 1.0f);
+		axisHScalesSq          = src? src->axisHScalesSq:          float3(1.0f, 1.0f, 1.0f);
+		axisHIScales           = src? src->axisHIScales:           float3(1.0f, 1.0f, 1.0f);
+		axisOffsets            = src? src->axisOffsets:            ZeroVector;
+		volumeBoundingRadius   = src? src->volumeBoundingRadius:   1.0f;
+		volumeBoundingRadiusSq = src? src->volumeBoundingRadiusSq: 1.0f;
+		volumeType             = src? src->volumeType:             COLVOL_TYPE_ELLIPSOID;
+		testType               = src? src->testType:               COLVOL_TEST_DISC;
+		primaryAxis            = src? src->primaryAxis:            COLVOL_AXIS_Z;
+		secondaryAxes[0]       = src? src->secondaryAxes[0]:       COLVOL_AXIS_X;
+		secondaryAxes[1]       = src? src->secondaryAxes[1]:       COLVOL_AXIS_Y;
+		spherical              = src? src->spherical:              true;
 	}
 
-	CollisionVolume(const std::string& volTypeStr, const float3& volScales, const float3& volOffsets, int tstType) {
-		// note: primaryAxis is only relevant for cylinders
-		primaryAxis = COLVOL_AXIS_Z;
-		volumeType = COLVOL_TYPE_ELLIPSOID;
-		testType = tstType;
+	CollisionVolume(const std::string& typeStr, const float3& scales, const float3& offsets, int testType) {
+		if (typeStr.size() > 0) {
+			std::string typeStrLC(StringToLower(typeStr));
 
-		if (volTypeStr.size() > 0) {
-			// note: case-sensitivity?
-			if (volTypeStr.find("Ell") != std::string::npos) {
+			if (typeStrLC.find("ell") != std::string::npos) {
 				volumeType = COLVOL_TYPE_ELLIPSOID;
 			}
 
-			if (volTypeStr.find("Cyl") != std::string::npos) {
+			if (typeStrLC.find("cyl") != std::string::npos) {
 				volumeType = COLVOL_TYPE_CYLINDER;
 
-				if (volTypeStr.size() == 4) {
-					if (volTypeStr[3] == 'X') { primaryAxis = COLVOL_AXIS_X; }
-					if (volTypeStr[3] == 'Y') { primaryAxis = COLVOL_AXIS_Y; }
-					if (volTypeStr[3] == 'Z') { primaryAxis = COLVOL_AXIS_Z; }
+				if (typeStrLC.size() == 4) {
+					if (typeStrLC[3] == 'x') { primaryAxis = COLVOL_AXIS_X; }
+					if (typeStrLC[3] == 'y') { primaryAxis = COLVOL_AXIS_Y; }
+					if (typeStrLC[3] == 'z') { primaryAxis = COLVOL_AXIS_Z; }
 				}
 			}
 
-			if (volTypeStr.find("Box") != std::string::npos) {
+			if (typeStrLC.find("box") != std::string::npos) {
 				volumeType = COLVOL_TYPE_BOX;
 			}
+		} else {
+			volumeType = COLVOL_TYPE_ELLIPSOID;
+			primaryAxis = COLVOL_AXIS_Z;
 		}
 
-		Init(volScales, volOffsets, volumeType, testType, primaryAxis);
+		Init(scales, offsets, volumeType, testType, primaryAxis);
 	}
 
 
@@ -75,29 +67,34 @@ struct CollisionVolume {
 		// so we need to double it to get the full-length scales
 		const float3 scales(s * 2.0f, s * 2.0f, s * 2.0f);
 
-		Init(scales, ZeroVector, COLVOL_TYPE_ELLIPSOID, COLVOL_TEST_DISC, COLVOL_AXIS_Z);
+		Init(scales, ZeroVector, volumeType, testType, primaryAxis);
 	}
 
 
 	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis) {
-		// assign these here too, since we can be
-		// called from outside of the constructor
+		// assign these here, since we can be
+		// called from outside the constructor
 		primaryAxis = pAxis % 3;
 		volumeType = vType % 3;
 		testType = tType % 2;
 
-		axisScales.x = (scales.x < 1.0f)? 1.0f: scales.x;  axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
-		axisScales.y = (scales.y < 1.0f)? 1.0f: scales.y;  axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
-		axisScales.z = (scales.z < 1.0f)? 1.0f: scales.z;  axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
+		axisScales.x = (scales.x < 1.0f)? 1.0f: scales.x;
+		axisScales.y = (scales.y < 1.0f)? 1.0f: scales.y;
+		axisScales.z = (scales.z < 1.0f)? 1.0f: scales.z;
+
+		axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
+		axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
+		axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
 
 		axisHIScales.x = 1.0f / axisHScales.x;  axisOffsets.x = offsets.x;
 		axisHIScales.y = 1.0f / axisHScales.y;  axisOffsets.y = offsets.y;
 		axisHIScales.z = 1.0f / axisHScales.z;  axisOffsets.z = offsets.z;
 
 		// if all axes (or half-axes) are equal in scale, volume is a sphere
-		spherical = ((volumeType == COLVOL_TYPE_ELLIPSOID) &&
-					(streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
-					(streflop::fabsf(axisHScales.y - axisHScales.z) < EPS));
+		spherical =
+			((volumeType == COLVOL_TYPE_ELLIPSOID) &&
+			(streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
+			(streflop::fabsf(axisHScales.y - axisHScales.z) < EPS));
 
 		// secondaryAxes[0] = (primaryAxis + 1) % 3;
 		// secondaryAxes[1] = (primaryAxis + 2) % 3;
