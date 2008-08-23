@@ -474,7 +474,15 @@ void CPreGame::UpdateClientNet()
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	logOutput.Print("Pre-scanning demo file for game data...");
+	bool hasSetup = static_cast<bool>(gameSetup);
 	CDemoReader scanner(demoName, 0);
+	bool demoSetup = static_cast<bool>(gameSetup);
+	if (demoSetup && ! hasSetup)
+	{
+		//HACK: make gs read the setup if we just read it out of the demofile
+		gs->LoadFromSetup(gameSetup);
+		gu->LoadFromSetup(gameSetup);
+	}
 
 	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
