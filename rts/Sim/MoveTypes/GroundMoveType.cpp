@@ -1001,9 +1001,9 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int x = (moveSquareX + li->x) * 2;
 					const int y = (moveSquareY + li->y) * 2;
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
-					                      CMoveMath::BLOCK_TERRAIN   | 
+					                      CMoveMath::BLOCK_TERRAIN   |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
-					MoveData& moveData  = *owner->unitDef->movedata;
+					MoveData& moveData = *owner->unitDef->movedata;
 					if ((moveData.moveMath->IsBlocked(moveData, x, y) & blockBits) ||
 					    (moveData.moveMath->SpeedMod(moveData, x, y) <= 0.01f)) {
 						// not reachable, force a new path to be calculated next slowupdate
@@ -1041,7 +1041,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				}
 
 				// basic blocking-check (test if the obstacle cannot be overrun)
-				if (o != owner && moveMath->IsBlocking(*moveData, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
+				if (o != owner && moveMath->CrushResistant(*moveData, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
 					float distanceToObject = objectToUnit.Length();
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
@@ -1493,7 +1493,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 				// if we can overrun this object (eg.
 				// DTs, trees, wreckage) then do so
-				if (!m->moveMath->IsBlocking(*m, obj)) {
+				if (!m->moveMath->CrushResistant(*m, obj)) {
 					float3 fix = owner->frontdir * currentSpeed * 200.0f;
 					obj->Kill(fix);
 				}
@@ -1578,7 +1578,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 				// if we can overrun this object (eg.
 				// DTs, trees, wreckage) then do so
-				if (!m->moveMath->IsBlocking(*m, obj)) {
+				if (!m->moveMath->CrushResistant(*m, obj)) {
 					float3 fix = owner->frontdir * currentSpeed * 200.0f;
 					obj->Kill(fix);
 				}
