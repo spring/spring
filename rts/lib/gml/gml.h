@@ -83,16 +83,16 @@ EXTERN inline GLhandleARB gmlCreateProgramObjectARB() {
 }
 EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 	if(type==GL_VERTEX_SHADER)
-  	  return gmlShaderServer_VERTEX.GetItems();
+		return gmlShaderServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER)
-  	  return gmlShaderServer_FRAGMENT.GetItems();
+		return gmlShaderServer_FRAGMENT.GetItems();
 	return 0;
 }
 EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 	if(type==GL_VERTEX_SHADER_ARB)
-  	  return gmlShaderObjectARBServer_VERTEX.GetItems();
+		return gmlShaderObjectARBServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER_ARB)
-  	  return gmlShaderObjectARBServer_FRAGMENT.GetItems();
+		return gmlShaderObjectARBServer_FRAGMENT.GetItems();
 	return 0;
 }
 EXTERN inline GLUquadric *gmluNewQuadric() {
@@ -126,7 +126,7 @@ EXTERN inline void gmlGenBuffers(GLsizei n, GLuint *items) {
 }
 
 EXTERN inline GLuint gmlGenLists(GLsizei items) {
-  return gmlListServer.GetItems(items);
+	return gmlListServer.GetItems(items);
 }
 
 EXTERN inline void gmlUpdateServers() {
