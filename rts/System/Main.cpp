@@ -95,7 +95,7 @@ int Run(int argc, char *argv[])
  *
  * Main entry point function
  */
-int main( int argc, char *argv[]) // , char *envp[ ] <- not used
+int main(int argc, char *argv[])
 {
 	return Run (argc,argv);
 }

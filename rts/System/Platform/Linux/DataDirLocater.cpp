@@ -196,9 +196,9 @@ void DataDirLocater::DeterminePermissions()
  * In Unixes, the data directory to chdir to is determined by the following, in this
  * order (first items override lower items):
  *
+ * - 'SPRING_DATADIR' environment variable. (colon separated list, like PATH)
  * - 'SpringData=/path/to/data' declaration in '~/.springrc'. (colon separated list)
  * - "$HOME/.spring"
- * - 'SPRING_DATADIR' environment variable. (colon separated list, like PATH)
  * - In the same order any line in '/etc/spring/datadir', if that file exists.
  * - 'datadir=/path/to/data' option passed to 'scons configure'.
  * - 'prefix=/install/path' option passed to scons configure. The datadir is
@@ -208,11 +208,11 @@ void DataDirLocater::DeterminePermissions()
  *   preprocessor definitions.)
  *
  * In Windows, its:
+ * - SPRING_DATADIR env-variable
  * - user configurable (SpringData in registry)
  * - location of the binary dir (like it has been until 0.76b1)
  * - the Users 'Documents'-directory (in subdirectory Spring), unless spring is configured to use another
  * - all users app-data (in subdirectory Spring)
- * - SPRING_DATADIR env-variable
  * - compiler flags SPRING_DATADIR and SPRING_DATADIR_2
  *
  * All of the above methods support environment variable substitution, eg.
@@ -227,13 +227,18 @@ void DataDirLocater::LocateDataDirs()
 	// Construct the list of datadirs from various sources.
 	datadirs.clear();
 
+	// environment variable
+	char* env = getenv("SPRING_DATADIR");
+	if (env && *env)
+		AddDirs(SubstEnvVars(env));
+
 	// user defined (in spring config handler (Linux: ~/.spring, Windows: registry))
 	std::string userDef = configHandler.GetString("SpringData", "");
 	if (!userDef.empty())
 	{
 		AddDirs(SubstEnvVars(userDef));
 	}
-	
+
 #ifdef WIN32
 	TCHAR currentDir[MAX_PATH];
 	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
@@ -256,14 +261,7 @@ void DataDirLocater::LocateDataDirs()
 #else
 	// home
 	AddDirs(SubstEnvVars("$HOME/.spring"));
-#endif
 
-	// environment variable
-	char* env = getenv("SPRING_DATADIR");
-	if (env && *env)
-		AddDirs(SubstEnvVars(env));
-
-#ifndef _WIN32
 	// settings in /etc
 	FILE* f = ::fopen("/etc/spring/datadir", "r");
 	if (f) {
