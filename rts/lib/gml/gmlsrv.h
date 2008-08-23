@@ -12,7 +12,7 @@
 #ifdef USE_GML
 
 #include <boost/thread/barrier.hpp>
-#include  <boost/bind.hpp>
+#include <boost/bind.hpp>
 
 #define GML_MAX_EXEC_DEPTH 4
 
@@ -40,7 +40,7 @@ struct gmlExecState {
 
 	void ExecServerFun() {
 		if(serverfun)
-		  (*serverfun)(workerclass);
+			(*serverfun)(workerclass);
 	}
 
 	void ExecAll(int &pos, typename std::list<U>::iterator &it) {
@@ -49,20 +49,20 @@ struct gmlExecState {
 			return;
 		if(workeriter) {
 			while(++i<num_units) {
-  			(*workeriter)(workerclass,*it);
+				(*workeriter)(workerclass,*it);
 				++it;
 				++pos;
 			}
 		}
 		else if(worker) {
 			while(++i<num_units)
-  			(*worker)(workerclass);
+				(*worker)(workerclass);
 		}
 		else if(workerarg) {
 			while(++i<num_units)
-  			(*workerarg)(workerclass,i);
+				(*workerarg)(workerclass,i);
 		}
-    UnitCounter%=num_units;
+		UnitCounter%=num_units;
 	}
 
 	BOOL_ Exec(int &pos, typename std::list<U>::iterator &it) {
@@ -92,7 +92,7 @@ class gmlClientServer {
 public:
 	int ExecDepth;
 	GML_TYPENAME gmlExecState<R,A,U> ExecState[GML_MAX_EXEC_DEPTH];
-  boost::barrier Barrier; 
+	boost::barrier Barrier; 
 	boost::thread *threads[GML_MAX_NUM_THREADS];
 	BOOL_ inited;
 	gmlCount threadcnt;
@@ -119,20 +119,20 @@ public:
 			newwork=0;
 
 			Barrier.wait();
-      
+			
 			if(execswf)
-			  ex->ExecServerFun();
+				ex->ExecServerFun();
 
 			typename std::list<U>::iterator it;
 			if(ex->workeriter)
 				it=ex->iter->begin();
 			int pos=0;
-//      int nproc=0;
+//			int nproc=0;
 			int updsrv=0;
 			if(gmlThreadCount>1) {
 				while(ClientsReady<=gmlThreadCount+1) {
 					if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
-  					gmlUpdateServers();
+						gmlUpdateServers();
 					BOOL_ processed=FALSE;
 					for(int i=1; i<gmlThreadCount; ++i) {
 						gmlQueue *qd=&gmlQueues[i];
@@ -171,7 +171,7 @@ public:
 
 	void WorkInit() {
 		if(!inited) {
-  		gmlInit();
+			gmlInit();
 			for(int i=1; i<gmlThreadCount; ++i)
 				threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
 			inited=TRUE;
@@ -183,7 +183,7 @@ public:
 			NewWork(wrk,wrka,wrkit,cls,mt,sm,it,nu,l1,l2,sw,swf);
 			return;
 		}
-  	GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
 		new (ex) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
 		if(!inited)
 			WorkInit();
@@ -194,7 +194,7 @@ public:
 		gmlQueue *qd=&gmlQueues[gmlThreadNumber];
 		qd->ReleaseWrite();
 
-  	GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 		new (ex+1) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
 		newwork=TRUE;
 
@@ -213,10 +213,10 @@ public:
 		Barrier.wait();
 
 		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
-    
+		
 		int thread=gmlThreadNumber;
 		if(thread>=ex->maxthreads) {
-  		++ClientsReady;	
+			++ClientsReady;	
 			return;
 		}
 
@@ -257,7 +257,7 @@ public:
 		gmlThreadNumber=++threadcnt;
 		streflop_init<streflop::Simple>();
 		while(1) {
-      gmlClientSub();
+			gmlClientSub();
 		}
 	}
 };

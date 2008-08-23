@@ -104,7 +104,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	newtime = _localtime64(&long_time); /* Convert to local time. */
 
 	char buf[1000];
-	snprintf(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
+	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
         newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
 	name += std::string("_") + VERSION_STRING;
@@ -113,11 +113,11 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	    name = "local_" + name;
 	}
 
-	snprintf(buf, sizeof(buf), "demos/%s.sdf", name.c_str());
+	SNPRINTF(buf, sizeof(buf), "demos/%s.sdf", name.c_str());
 	CFileHandler ifs(buf);
 	if (ifs.FileExists()) {
 		for (int a = 0; a < 9999; ++a) {
-			snprintf(buf, sizeof(buf), "demos/%s_(%i).sdf", name.c_str(), a);
+			SNPRINTF(buf, sizeof(buf), "demos/%s_(%i).sdf", name.c_str(), a);
 			CFileHandler ifs(buf);
 			if (!ifs.FileExists())
 				break;

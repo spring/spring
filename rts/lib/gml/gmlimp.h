@@ -1,10 +1,10 @@
 // GML - OpenGL Multithreading Library
+// for Spring http://spring.clan-sy.com
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
-// Ware Zerver Tech. licenses this library to
-// be used freely, for any purpose, within the
-// Spring project http://spring.clan-sy.com
-// as long as this notice remains unchanged
+// Ware Zerver Tech. licenses this library
+// to be used freely for any purpose, as
+// long as this notice remains unchanged
 
 #undef glAccum
 #undef glActiveStencilFaceEXT
@@ -1563,6 +1563,9 @@
 #undef gluUnProject
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+// Definitions below
+///////////////////////////////////////////////////////////////////////////////////////
 
 
 #define glAccum GML_FUNCTION_NOT_IMPLEMENTED

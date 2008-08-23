@@ -30,10 +30,6 @@ void CVertexArray::Initialize() {
 	stripArrayPos=stripArray;
 }
 
-int CVertexArray::drawIndex() {
-	return drawArrayPos-drawArray;
-}
-
 bool CVertexArray::IsReady() {
 	return true;
 }
@@ -51,20 +47,6 @@ void CVertexArray::EnlargeArrays(int vertexes, int strips, int stripsize) {
 
 	while((char *)stripArrayPos>(char *)stripArraySize-sizeof(int)*strips)
 		EnlargeStripArray();
-}
-
-void CVertexArray::EndStripQ() {
-	*stripArrayPos++=((char *)drawArrayPos-(char *)drawArray);
-}
-
-void CVertexArray::DrawArrays(int drawType, int stride) {
-	int newIndex,oldIndex=0;
-	int *stripArrayPtr=stripArray;
-	while(stripArrayPtr<stripArrayPos) {
-		newIndex=(*stripArrayPtr++)/stride;
-		glDrawArrays(drawType,oldIndex,newIndex-oldIndex);
-		oldIndex=newIndex;
-	}
 }
 
 void CVertexArray::DrawArray0(int drawType,int stride) {
