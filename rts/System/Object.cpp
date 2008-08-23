@@ -81,7 +81,7 @@ void CObject::PostLoad()
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 #endif
 		(*i)->listeners.insert((*i)->listeners.end(),this);
-}
+	}
 #ifdef USE_MMGR
 	m_resetGlobals();
 #endif

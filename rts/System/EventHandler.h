@@ -1,4 +1,4 @@
-	#ifndef EVENT_HANDLER_H
+#ifndef EVENT_HANDLER_H
 #define EVENT_HANDLER_H
 // EventHandler.h: interface for the CEventHandler class.
 //
