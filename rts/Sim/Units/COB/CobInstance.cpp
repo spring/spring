@@ -131,6 +131,7 @@
 #define MIN                      131 // get
 #define MAX                      132 // get
 #define ABS                      133 // get
+#define GAME_FRAME               134 // get
 
 // NOTE: shared variables use codes [1024 - 5119]
 
@@ -1375,6 +1376,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else {
 			return -1;
 		}
+	}
+	case GAME_FRAME: {
+		return gs->frameNum;	                 		
 	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
