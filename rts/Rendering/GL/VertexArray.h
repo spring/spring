@@ -1,6 +1,6 @@
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
-#include "mygl.h"
+#include "myGL.h"
 // VertexArray.h: interface for the CVertexArray class.
 //
 //////////////////////////////////////////////////////////////////////
