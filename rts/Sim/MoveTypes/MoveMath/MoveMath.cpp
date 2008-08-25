@@ -182,7 +182,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 		// as non-blocking
 		const float oy = obstacle->pos.y;
 		const float oh = std::max(obstacle->height, -obstacle->height);
-		const float gy = (i >= j)? 0.0f: readmap->mipHeightmap[1][i];
+		const float gy = (i < 0 || i >= j)? 0.0f: readmap->mipHeightmap[1][i];
 
 		// note that these conditions can lead to
 		// a certain degree of clipping, for full
