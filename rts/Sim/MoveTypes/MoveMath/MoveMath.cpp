@@ -171,15 +171,18 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 		const int x = int(obstacle->pos.x / SQUARE_SIZE);
 		const int z = int(obstacle->pos.z / SQUARE_SIZE);
 		const int i = (x >> 1) + (z >> 1) * gs->hmapx;
+		const int j = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(mipHeightmap[1])
+
 		const bool iss = moveData.subMarine;
 		const bool oss = (obstacle->mobility && obstacle->mobility->subMarine);
 
 		// some objects appear to have negative model heights
-		// (the S3DO model parsers allow it for some reason),
-		// take the absolute value
+		// (the S3DO parsers allow it for some reason), take
+		// the absolute value to prevent them being regarded
+		// as non-blocking
 		const float oy = obstacle->pos.y;
 		const float oh = std::max(obstacle->height, -obstacle->height);
-		const float gy = readmap->mipHeightmap[1][i];
+		const float gy = (i >= j)? 0.0f: readmap->mipHeightmap[1][i];
 
 		// note that these conditions can lead to
 		// a certain degree of clipping, for full
