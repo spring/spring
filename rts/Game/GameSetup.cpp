@@ -289,8 +289,8 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
-		for (int j = 0; j < MAX_TEAMS; ++j) {
-			data.allies[j] = (a == j);
+		for (int otherAllyTeam = 0; otherAllyTeam < MAX_TEAMS; ++otherAllyTeam) {
+			data.allies[otherAllyTeam] = (i == otherAllyTeam);
 		}
 		for (int b = 0; b < numAllies; ++b) {
 			char key[100];
