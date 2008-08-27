@@ -90,10 +90,10 @@ public:
 	float energyExpense, prevEnergyExpense;
 	float energyUpkeep,  prevEnergyUpkeep;
 
-	float metalStorage, energyStorage;
+	SyncedFloat metalStorage, energyStorage;
 
 	float metalShare, energyShare;
-	float delayedMetalShare, delayedEnergyShare; //excess that might be shared next SlowUpdate
+	SyncedFloat delayedMetalShare, delayedEnergyShare; //excess that might be shared next SlowUpdate
 
 	float metalSent;
 	float metalReceived;

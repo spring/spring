@@ -35,6 +35,7 @@ Add_Subdirectory(rts)
 Add_Subdirectory(AI)
 Add_Subdirectory(tools/DedicatedServer)
 Add_Subdirectory(tools/unitsync)
+Add_Subdirectory(tools/DemoAnalyser)
 
 if (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)

@@ -260,6 +260,7 @@ void CGameServer::SendDemoData(const bool skipping)
 #ifdef SYNCCHECK
 			if (!skipping)
 				outstandingSyncFrames.push_back(serverframenum);
+			CheckSync();
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
 			if (!skipping)
