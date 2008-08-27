@@ -160,6 +160,7 @@ ${EndIf}
   Delete "$INSTDIR\wxbase28u_net_gcc_custom.dll"
   Delete "$INSTDIR\wxmsw28u_adv_gcc_custom.dll"
   Delete "$INSTDIR\wxmsw28u_core_gcc_custom.dll"
+  Delete "$INSTDIR\springsettings.conf"
 
   ; DLLs
   Delete "$INSTDIR\DevIL.dll"
@@ -224,6 +225,8 @@ ${EndIf}
   Delete "$INSTDIR\ArchiveCacheV4.txt"
   Delete "$INSTDIR\ArchiveCacheV5.txt"
   Delete "$INSTDIR\ArchiveCacheV6.txt"
+  Delete "$INSTDIR\ArchiveCacheV7.lua"
+  Delete "$INSTDIR\unitsync.log"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
   Delete "$INSTDIR\demos\test.sdf"

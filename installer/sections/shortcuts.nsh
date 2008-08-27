@@ -3,7 +3,7 @@
   SetOutPath "$INSTDIR"
   ; Main shortcuts
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  ${If} ${SectionIsSelected} ${SEC_BATTLEROOM}
+  ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
   ${EndIf}
