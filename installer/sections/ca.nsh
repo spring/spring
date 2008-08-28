@@ -1,9 +1,9 @@
 !ifdef INSTALL
-  StrCpy $CA "true"
+  ;StrCpy $CA "true"
   SetOutPath "$INSTDIR\mods"
   
   inetc::get \
-             "http://files.caspring.org/snapshots/CA_Installer_Version.sdz" "$INSTDIR\mods\CA_Installer_Version.sdz" \         
+             "http://files.caspring.org/installer/CA_Installer_Version.sdz" "$INSTDIR\mods\CA_Installer_Version.sdz" \         
 
   ;Call GetDotNETVersion
   ;Pop $0
@@ -17,8 +17,7 @@
   
  
 !else
-  ExecWait  "$INSTDIR\CaDownloader.exe -uninstall"
-  Delete "$INSTDIR\CaDownloader.exe"
+  Delete "$INSTDIR\mods\CA_Installer_Version.sdz"
   Delete "$INSTDIR\base\tatextures_v062.sdz"
   Delete "$INSTDIR\base\tacontent_v2.sdz"
   Delete "$INSTDIR\base\otacontent.sdz"
