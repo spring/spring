@@ -7,7 +7,10 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 set (BINDIR "bin" CACHE STRING "Where to install binaries")
 set (LIBDIR "lib" CACHE STRING "Where to install libraries")
-set (DATADIR "share/games" CACHE STRING "Where to install game content")
+set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
+set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
+set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
+set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
 
 ### Usr-definable build options
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
@@ -20,9 +23,9 @@ if (DIRECT_CONTROL)
 	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
 endif (DIRECT_CONTROL)
 
-SET(SPRING_DATADIR "${CMAKE_INSTALL_PREFIX}/${DATADIR}" CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+SET(SPRING_DATADIR ${CMAKE_INSTALL_PREFIX}/${DATADIR} CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 if (SPRING_DATADIR)
-	ADD_DEFINITIONS(-D"SPRING_DATADIR=${SPRING_DATADIR}")
+	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}")
 endif (SPRING_DATADIR)
 
 ### mingwlibs
@@ -63,6 +66,13 @@ else (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
 endif(UNIX OR CMAKE_CROSSCOMPILING)
 
+### install base data files
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".svn" EXCLUDE)
 
+### Install freedesktop-files, mime-types etc.
+if (UNIX)
+	install (FILES installer/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
+	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
+	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
+endif (UNIX)
 
