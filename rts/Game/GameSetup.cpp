@@ -7,9 +7,6 @@
 
 #include "mmgr.h"
 
-#ifndef DEDICATED
-	#include "Team.h"
-#endif
 #include "GameSetup.h"
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"

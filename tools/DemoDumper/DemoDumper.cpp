@@ -43,7 +43,7 @@ using std::endl;
 
 BOOST_STATIC_ASSERT(BOOST_VERSION >= 103400);
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/cerrno.hpp>
+#include <boost/cerrno.hpp>
 #include <boost/filesystem/fstream.hpp>
 namespace fs = boost::filesystem;
 

@@ -8,7 +8,6 @@
 #include "BaseNetProtocol.h"
 #include "../../rts/System/Net/RawPacket.h"
 
-const CGameSetup* gameSetup = 0;
 using namespace std;
 using namespace netcode;
 
