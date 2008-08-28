@@ -4,12 +4,28 @@ Project(Spring)
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
-set (BINDIR "spring" CACHE STRING "Where to install binaries")
-set (LIBDIR "spring" CACHE STRING "Where to install libraries")
-set (DATADIR "spring" CACHE STRING "Where to install game content")
+### Install path (relative to CMAKE_INSTALL_PREFIX)
+set (BINDIR "bin" CACHE STRING "Where to install binaries")
+set (LIBDIR "lib" CACHE STRING "Where to install libraries")
+set (DATADIR "share/games" CACHE STRING "Where to install game content")
 
-set (COMPLETE_BUILD true)
+### Usr-definable build options
+SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
+if (SYNCCHECK)
+	ADD_DEFINITIONS(-DSYNCCHECK)
+endif (SYNCCHECK)
 
+SET(DIRECT_CONTROL TRUE CACHE BOOL "Allow controling units in first-person-mode")
+if (DIRECT_CONTROL)
+	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
+endif (DIRECT_CONTROL)
+
+SET(SPRING_DATADIR "${CMAKE_INSTALL_PREFIX}/${DATADIR}" CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+if (SPRING_DATADIR)
+	ADD_DEFINITIONS(-D"SPRING_DATADIR=${SPRING_DATADIR}")
+endif (SPRING_DATADIR)
+
+### mingwlibs
 if (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
 	include_directories(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
