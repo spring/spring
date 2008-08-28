@@ -30,6 +30,10 @@ if (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
 	include_directories(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
+else (MINGW)
+	# AIs need it
+	FIND_PACKAGE(SDL REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 endif (MINGW)
 
 ### Compiler flags and defines based on build type

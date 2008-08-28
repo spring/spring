@@ -19,7 +19,7 @@
 #include "SupportHandler.h"
 #include "ReconHandler.h"
 
-#include "Sim/Units/UnitHandler.h" // for MAX_UNITS
+#include "Sim/Units/UnitDef.h" // for MAX_UNITS
 
 #include "DebugWindow.h"
 
