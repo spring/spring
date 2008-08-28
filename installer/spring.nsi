@@ -138,13 +138,13 @@ FunctionEnd
 
 ; For CA and Evolution: BEGIN
 
-Var CA
+;Var CA
 Var EVO
 
 Function  .onGUIEnd
-${If} $CA == 'true'
-  Call LaunchUpdater
-${EndIf}
+;${If} $CA == 'true'
+  ;Call LaunchUpdater
+;${EndIf}
 ${If} $EVO == 'true'
   Call LaunchEvoUpdater
 ${EndIf}
@@ -191,16 +191,16 @@ false:
 next:
 FunctionEnd
 
-Function LaunchUpdater
-  MessageBox MB_YESNO \
-  "Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
-  IDYES true IDNO false
-true:
-  Exec '"$INSTDIR\CaDownloader.exe"'
-  Goto next
-false:
-  next:
-FunctionEnd
+;Function LaunchUpdater
+  ;MessageBox MB_YESNO \
+  ;"Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
+  ;IDYES true IDNO false
+;true:
+  ;Exec '"$INSTDIR\CaDownloader.exe"'
+  ;Goto next
+;false:
+  ;next:
+;FunctionEnd
 
 Function LaunchEvoUpdater
   MessageBox MB_YESNO \
@@ -376,7 +376,7 @@ SectionGroup "Mods"
         Call CheckTATextures
         Call CheckOTAContent
         Call CheckTAContent
-        AddSize 393
+        AddSize 54400
 	!include "sections\ca.nsh"
 	!undef INSTALL
 	SectionEnd
