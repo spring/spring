@@ -1,48 +1,13 @@
-### Cmake 2.4 lacks some cross-compiling features and fails on windows
-cmake_minimum_required(VERSION 2.6)
-PROJECT(Spring)
-
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
-
-if (NOT COMPLETE_BUILD)
-	### Compiler flags and defines based on build type
-	INCLUDE(TestCXXAcceptsVisibilityFlag)
-	SET(BASE_FLAGS "-march=i686 -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
-	IF (UNIX)
-		SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
-	ENDIF (UNIX)
-	SET(CMAKE_CXX_FLAGS_DEBUG   "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
-	SET(CMAKE_CXX_FLAGS_PROFILE   "${BASE_FLAGS} -O2 -pg -Wall -DNDEBUG")
-endif (NOT COMPLETE_BUILD)
-
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
 endif (USE_MMGR)
 
-SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
-if (SYNCCHECK)
-	ADD_DEFINITIONS(-DSYNCCHECK)
-endif (SYNCCHECK)
-
-SET(DIRECT_CONTROL TRUE CACHE BOOL "Allow controling units in first-person-mode")
-if (DIRECT_CONTROL)
-	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
-endif (DIRECT_CONTROL)
-
 SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
 if (USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML)
 endif (USE_GML)
-
-SET(SPRING_DATADIR "${CMAKE_INSTALL_PREFIX}/${DATADIR}" CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
-if (SPRING_DATADIR)
-	ADD_DEFINITIONS(-D"SPRING_DATADIR=${SPRING_DATADIR}")
-endif (SPRING_DATADIR)
 
 IF (UNIX)
 	ADD_DEFINITIONS(-DNO_AVI)
@@ -66,7 +31,6 @@ IF (MINGW)
 	endif (NOT COMPLETE_BUILD)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
-
 	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
