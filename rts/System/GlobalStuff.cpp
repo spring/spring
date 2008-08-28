@@ -368,7 +368,7 @@ void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		setup->teamStartingData.size() >= myPlayerNum);
 
 	myTeam = setup->playerStartingData[myPlayerNum].team;
-	myAllyTeam = setup->teamStartingData[myPlayerNum].teamAllyteam;
+	myAllyTeam = setup->teamStartingData[myTeam].teamAllyteam;
 
 	spectating = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
