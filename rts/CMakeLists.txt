@@ -22,20 +22,10 @@ ADD_DEFINITIONS(-DSTREFLOP_X87)
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
-	if (NOT COMPLETE_BUILD)
-		SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
-		
-		### add mingwlibs to link- and include-directories
-		INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
-		LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	endif (NOT COMPLETE_BUILD)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
 	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
 ELSE (MINGW)
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
 	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
 
 	FIND_PACKAGE(X11 REQUIRED)
