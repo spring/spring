@@ -94,6 +94,7 @@ public:
 	GML_TYPENAME gmlExecState<R,A,U> ExecState[GML_MAX_EXEC_DEPTH];
 	boost::barrier Barrier; 
 	boost::thread *threads[GML_MAX_NUM_THREADS];
+	volatile BOOL_ dorun[GML_MAX_NUM_THREADS];
 	BOOL_ inited;
 	gmlCount threadcnt;
 	gmlCount ClientsReady;
@@ -101,9 +102,19 @@ public:
 
 	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE) {
 		inited=FALSE;
+		memset((void *)dorun,1,GML_MAX_NUM_THREADS*sizeof(BOOL_));
 	}
 
 	~gmlClientServer() {
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+		ex->maxthreads=0;
+		for(int i=1; i<gmlThreadCount; ++i)
+			dorun[i]=0;
+		Barrier.wait();
+		for(int i=1; i<gmlThreadCount; ++i) {
+			threads[i]->join();
+			delete threads[i];
+		}
 	}
 
 	void gmlServer() {
@@ -254,9 +265,9 @@ public:
 	}
 
 	void gmlClient() {
-		gmlThreadNumber=++threadcnt;
+		int thread=gmlThreadNumber=++threadcnt;
 		streflop_init<streflop::Simple>();
-		while(1) {
+		while(dorun[thread]) {
 			gmlClientSub();
 		}
 	}
