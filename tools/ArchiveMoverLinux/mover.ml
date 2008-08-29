@@ -19,14 +19,27 @@ module Archive = struct
     try
       let in_zip = Zip.open_in path in
       let entries = Zip.entries in_zip in
-      let has_file filename =
-        let lower = String.lowercase filename in
-          List.exists (fun entry -> entry.Zip.filename = lower) entries
+      let test_files func =
+        let test entry = func (String.lowercase entry.Zip.filename) in
+          List.exists test entries
+      in
+      let is_map path =
+        let dirname = Filename.dirname path in
+        let basename = Filename.basename path in
+          if dirname = "maps" then
+            if String.ends_with basename ".smf" then
+              true
+            else if String.ends_with basename ".sm3" then
+              true
+            else
+              false
+          else
+            false
       in
         Zip.close_in in_zip;
-        if has_file "maps/" then Map
-        else if has_file "modinfo.tdf" then Mod
-        else if has_file "modinfo.lua" then Mod
+        if test_files is_map then Map
+        else if test_files (fun filename -> filename = "modinfo.tdf") then Mod
+        else if test_files (fun filename -> filename = "modinfo.lua") then Mod
         else Unknown
     with Zip.Error _ -> Unknown
 
@@ -60,11 +73,14 @@ module FileSystem = struct
       close_out out_chan
         
   let move src dst =
-    try
-      Sys.rename src dst
-    with Sys_error _ ->
-      copy src dst;
-      Unix.unlink src
+    if src != dst then
+      try
+        Sys.rename src dst
+      with Sys_error _ ->
+        copy src dst;
+        Sys.remove src
+    else
+      ()
 end
 
 
@@ -76,14 +92,9 @@ module GUI = struct
       let message = Printf.sprintf "%s was successfully installed" dest in
         FileSystem.move path dest;
         GToolbox.message_box ~title:"Success" ~ok:"Exit" message
-    with
-        Unix.Unix_error (error, func, filename) ->
-          let error_string = Unix.error_message error in
-          let message = Printf.sprintf "Error performing %s on %s: %s" func filename error_string in
-            GToolbox.message_box ~title:"Error" ~ok:"Exit" message
-      | Sys_error (error_string) ->
-          let message = Printf.sprintf "Error: %s" error_string in
-            GToolbox.message_box ~title:"Error" ~ok:"Exit" message
+    with Sys_error (error_string) ->
+      let message = Printf.sprintf "Error: %s" error_string in
+        GToolbox.message_box ~title:"Error" ~ok:"Exit" message
               
   let get_archive_dir combo_box =
     let int = combo_box#active in
@@ -148,13 +159,26 @@ module GUI = struct
         option
     with Sys_error _ -> None
 
+  let detect_datadir home_dir =
+    try
+      let in_file = open_in "/etc/spring/datadir" in
+      let input = IO.input_channel in_file in
+      let format = IO.read_line input in
+      let (_, dir) = String.replace format "$HOME" home_dir in
+        close_in in_file;
+        Some dir
+    with Sys_error _ -> None
+
   let detect_spring_dir springdir_entry =
     let dir = 
       match detect_home_dir () with
           Some home_dir ->
             (match detect_springrc home_dir with
                 Some springdir -> springdir
-              | None -> Filename.concat home_dir ".spring")
+              | None ->
+                  (match detect_datadir home_dir with
+                       Some springdir -> springdir
+                     | None -> Filename.concat home_dir ".spring"))
         | None -> "" in
       springdir_entry#set_text dir
         
@@ -247,7 +271,7 @@ module GUI = struct
 end
 
 let usage () =
-  ()
+  Printf.printf "Usage: %s </path/to/archive.sdz>\n" Sys.argv.(0)
 
 let main () =
   if Array.length (Sys.argv) != 2 then
