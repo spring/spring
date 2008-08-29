@@ -1,9 +1,7 @@
 open ExtString
 
 module Config = struct
-  let spring_dir = Filename.concat (Unix.getenv "HOME") ".spring"
-  let map_dir = Filename.concat spring_dir "maps"
-  let mod_dir = Filename.concat spring_dir "mods"
+  let detect_spring_dir () = Filename.concat (Unix.getenv "HOME") ".spring"
 end
 
 module Archive = struct
@@ -20,12 +18,6 @@ module Archive = struct
         Map -> 0
       | Mod -> 1
       | Unknown -> -1
-
-  let to_help_text t = 
-    match t with
-        Map -> "Detected map archive"
-      | Mod -> "Detected mod archive"
-      | Unknown -> "Unable to detect archive type\nSelect from the menu"
 
   let from_zip path =
     let in_zip = Zip.open_in path in
@@ -79,80 +71,118 @@ end
 
 
 module GUI = struct
-  let install path dir =
-    let basename = Filename.basename path in
-    let dest = Filename.concat dir basename in
-    let message = Printf.sprintf "%s was successfully installed" basename in
+  let install path dest =
+    print_endline dest;
+    let message = Printf.sprintf "%s was successfully installed" dest in
       FileSystem.move path dest;
       GToolbox.message_box ~title:"Success" ~ok:"Exit" message;
       exit 0
         
-  let install_archive path combo_box =
+  let install_archive path combo_box springdir_entry basename_entry =
     let int = combo_box#active in
     let archive = Archive.from_int int in
+    let springdir = springdir_entry#text in
+    let basename = basename_entry#text in
+    let make dir = Filename.concat (Filename.concat springdir dir) basename in
       match archive with
-          Archive.Mod -> install path Config.mod_dir
-        | Archive.Map -> install path Config.map_dir
+          Archive.Mod -> install path (make "mods")
+        | Archive.Map -> install path (make "maps")
         | Archive.Unknown ->
             GToolbox.message_box
               ~title:"Error"
               "Please select an archive type from the drop down list"
               
-  let detect_archive_type path insert combo_box =
-    let archive = Archive.from_path path in
+  let detect_spring_dir springdir_entry =
+    let spring_dir = Config.detect_spring_dir () in
+      springdir_entry#set_text spring_dir
+        
+  let detect_basename path basename_entry =
     let basename = Filename.basename path in
-    let help_text = Archive.to_help_text archive in
-    let text = Printf.sprintf "Archive: %s\n%s\nClick 'Install' to move to your Spring dir" basename help_text in
-      combo_box#set_active (Archive.to_int archive);
-      insert text
+      basename_entry#set_text basename
+        
+  let detect_archive_type path combo_box =
+    let archive = Archive.from_path path in
+      combo_box#set_active (Archive.to_int archive)
+
+  let detect_all path combo_box springdir_entry basename_entry =
+    detect_spring_dir springdir_entry;
+    detect_basename path basename_entry;
+    detect_archive_type path combo_box
         
   let main path =
     let window = GWindow.window
       ~title:"ArchiveMover"
       ~width:512
-      ~height:240
+      ~height:192
+      ~position:`CENTER
+      ~type_hint:`DIALOG
       () in
       
     let vbox = GPack.vbox
       ~packing:window#add
       () in
-      
-    let out_text = GText.view
-      ~wrap_mode:`WORD
-      ~packing:(vbox#pack ~fill:true ~expand:true)
-      ~editable:false
+
+    let table = GPack.table
+      ~col_spacings:5
+      ~packing:vbox#add
+      () in
+
+    let _ = GMisc.label
+      ~text:"Spring directory"
+      ~packing:(table#attach ~left:0 ~top:0)
+      () in
+
+    let springdir_entry = GEdit.entry
+      ~packing:(table#attach ~left:1 ~top:0 ~expand:`X)
       () in
       
-    let hbox = GPack.hbox
-      ~packing:(vbox#pack ~fill:true ~expand:false)
+    let _ = GMisc.label
+      ~text:"Filename"
+      ~packing:(table#attach ~left:0 ~top:1)
+      () in
+
+    let basename_entry = GEdit.entry
+      ~packing:(table#attach ~left:1 ~top:1 ~expand:`X)
       () in
       
+    let _ = GMisc.label
+      ~text:"Archive type"
+      ~packing:(table#attach ~left:0 ~top:2)
+      () in
+
     let (combo_box, _) = GEdit.combo_box_text
       ~strings:["Map"; "Mod"]
-      ~packing:(hbox#pack ~fill:true ~expand:true)
+      ~packing:(table#attach ~left:1 ~top:2 ~expand:`X)
       () in
       
     let button_box = GPack.button_box `HORIZONTAL
-      ~packing:(hbox#pack ~fill:false ~expand:false)
-      () in
-      
-    let install_button = GButton.button
-      ~label:"Install"
-      ~packing:button_box#pack
+      ~packing:(vbox#pack ~fill:false ~expand:false)
       () in
       
     let exit_button = GButton.button
       ~label:"Exit"
       ~packing:button_box#pack
       () in
-      
+    
+    let detect_button = GButton.button
+      ~label:"Auto-detect"
+      ~packing:button_box#pack
+      () in
+
+    let install_button = GButton.button
+      ~label:"Install"
+      ~packing:button_box#pack
+      () in
+
     let destroy () = GMain.Main.quit () in
-    let install () = install_archive path combo_box in
+    let install () = install_archive path combo_box springdir_entry basename_entry in
+    let detect () = detect_all path combo_box springdir_entry basename_entry in
     let _ = window#connect#destroy ~callback:destroy in
-    let _ = install_button#connect#clicked ~callback:install in
     let _ = exit_button#connect#clicked ~callback:destroy in
+    let _ = detect_button#connect#clicked ~callback:detect in
+    let _ = install_button#connect#clicked ~callback:install in
       window#show ();
-      detect_archive_type path (out_text#buffer#insert) combo_box;
+      detect ();
       GtkMain.Main.main ()
 end
 
