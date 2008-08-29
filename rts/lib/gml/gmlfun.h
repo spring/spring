@@ -12,27 +12,20 @@
 #include <set>
 #include <map>
 
+#define DEBUG_GML 0 // enable debugging
 
-#define GML_NERROR_FUN(str,val)\
-f=fopen("C:\\GMLERR.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
-}
-
-#define GML_ERROR_FUN(str,val)\
-FILE *f=fopen("C:\\GMLERR.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
-}
-
+#if DEBUG_GML
 #define GML_DEBUG_FUN(str,val)\
-FILE *f=fopen("C:\\GMLDBG.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
+{\
+	FILE *f=fopen("C:\\GMLDBG.TXT","a");\
+	if(f) {\
+		fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
+		fclose(f);\
+	}\
 }
+#else
+#define GML_DEBUG_FUN(str,val)
+#endif
 
 extern std::map<GLenum,GLint> gmlGetIntegervCache;
 extern std::map<GLenum,GLfloat> gmlGetFloatvCache;
@@ -43,10 +36,9 @@ extern std::map<GLenum,std::string> gmlGetStringCache;
 #define GML_DEFAULT_RET(c,r) if(GML_USE_DEFAULT && (c)) {return r;}
 #define GML_DEFAULT_ERROR() if(GML_USE_NO_ERROR) return GL_NO_ERROR;
 
+//teximage, build2dmip
 EXTERN inline int gmlNumArgsTexImage(int datatype) {
-//	FILE *f;
 	switch(datatype) {
-		//teximage, build2dmip
 		case GL_COLOR_INDEX:
 		case GL_RED:
 		case GL_GREEN:
@@ -64,15 +56,14 @@ EXTERN inline int gmlNumArgsTexImage(int datatype) {
 		case GL_BGRA_EXT:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsTexImage", datatype)
+			GML_DEBUG_FUN("gmlNumArgsTexImage", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsLightMat(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 // glLight, glMaterial
+EXTERN inline int gmlNumArgsLightMat(int datatype) {
+	switch(datatype) {
 		case GL_AMBIENT:
 		case GL_DIFFUSE:
 		case GL_SPECULAR:
@@ -91,15 +82,14 @@ EXTERN inline int gmlNumArgsLightMat(int datatype) {
 		case GL_QUADRATIC_ATTENUATION:
 			return 1;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsLightMat", datatype)
+			GML_DEBUG_FUN("gmlNumArgsLightMat", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsFog(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glFog
+EXTERN inline int gmlNumArgsFog(int datatype) {
+	switch(datatype) {
 		case GL_FOG_MODE:
 		case GL_FOG_DENSITY:
 		case GL_FOG_START:
@@ -109,44 +99,41 @@ EXTERN inline int gmlNumArgsFog(int datatype) {
 		case GL_FOG_COLOR:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsFog", datatype)
+			GML_DEBUG_FUN("gmlNumArgsFog", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexGen(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexGen
+EXTERN inline int gmlNumArgsTexGen(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_GEN_MODE:
 			return 1;
 		case GL_OBJECT_PLANE:
 		case GL_EYE_PLANE:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsTexGen", datatype)
+			GML_DEBUG_FUN("gmlNumArgsTexGen", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexEnv(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexEnv
+EXTERN inline int gmlNumArgsTexEnv(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_ENV_MODE:
 			return 1;
 		case GL_TEXTURE_ENV_COLOR:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsTexEnv", datatype)
+			GML_DEBUG_FUN("gmlNumArgsTexEnv", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsPointParam(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glPointParametefv
+EXTERN inline int gmlNumArgsPointParam(int datatype) {
+	switch(datatype) {
 		case GL_POINT_SIZE_MIN:
 		case GL_POINT_SIZE_MAX:
 		case GL_POINT_FADE_THRESHOLD_SIZE:
@@ -155,15 +142,14 @@ EXTERN inline int gmlNumArgsPointParam(int datatype) {
 		case GL_POINT_DISTANCE_ATTENUATION:
 			return 3;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsPointParam", datatype)
+			GML_DEBUG_FUN("gmlNumArgsPointParam", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexParam(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexParameterfv
+EXTERN inline int gmlNumArgsTexParam(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_MIN_FILTER:
 		case GL_TEXTURE_MAG_FILTER:
 		case GL_TEXTURE_WRAP_S:
@@ -173,28 +159,28 @@ EXTERN inline int gmlNumArgsTexParam(int datatype) {
 		case GL_TEXTURE_BORDER_COLOR:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsTexParam", datatype)
+			GML_DEBUG_FUN("gmlNumArgsTexParam", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsLightModel(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glLightModelfv
+EXTERN inline int gmlNumArgsLightModel(int datatype) {
+	switch(datatype) {
 		case GL_LIGHT_MODEL_LOCAL_VIEWER:
 		case GL_LIGHT_MODEL_TWO_SIDE:
 			return 1;
 		case GL_LIGHT_MODEL_AMBIENT:
 			return 4;
 		default:
-//			GML_NERROR_FUN("gmlNumArgsLightModel", datatype)
+			GML_DEBUG_FUN("gmlNumArgsLightModel", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsMap1(GLenum type) {
-	switch(type) {
+//glMap1f
+EXTERN inline int gmlNumArgsMap1(int datatype) {
+	switch(datatype) {
 		case GL_MAP1_INDEX:
 		case GL_MAP1_TEXTURE_COORD_1:
 			return 1;
@@ -209,12 +195,14 @@ EXTERN inline int gmlNumArgsMap1(GLenum type) {
 		case GL_MAP1_TEXTURE_COORD_4:
 			return 4;
 		default:
+			GML_DEBUG_FUN("gmlNumArgsMap1", datatype)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsMap2(GLenum type) {
-	switch(type) {
+//glMap2f
+EXTERN inline int gmlNumArgsMap2(int datatype) {
+	switch(datatype) {
 		case GL_MAP2_INDEX:
 		case GL_MAP2_TEXTURE_COORD_1:
 			return 1;
@@ -229,12 +217,12 @@ EXTERN inline int gmlNumArgsMap2(GLenum type) {
 		case GL_MAP2_TEXTURE_COORD_4:
 			return 4;
 		default:
+			GML_DEBUG_FUN("gmlNumArgsMap2", datatype)
 			return 0;
 	}
 }
 
 EXTERN inline int gmlSizeOf(int datatype) {
-//	FILE *f;
 	switch(datatype) {
 		case GL_UNSIGNED_BYTE:
 			return sizeof(GLubyte);
@@ -255,7 +243,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 		case GL_DOUBLE:
 			return sizeof(GLdouble);
 		default:
-//			GML_NERROR_FUN("gmlSizeOf", datatype)
+			GML_DEBUG_FUN("gmlSizeOf", datatype)
 			return 0;
 	}
 }
@@ -721,7 +709,6 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 	ftypeX *e=&(p->F);\
 	ftype6 *v=F;\
 	GML_STDCOPY1(ftype6,count,stride,nargs)\
-/*	memcpy(&(p->D),D,size+sizeof(ftypeX));*/\
 	GML_UPD_POS()\
 }
 
@@ -749,13 +736,12 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, f
 	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
 	int nargs=numargs;\
 	GML_PREP_VAR_SIZE(name,(nargs*count1*count2-1)*sizeof(ftypeX))\
-	GML_MAKEASS_E()\
+	GML_MAKEASS_I()\
 	p->stride1=nargs*count2;\
 	p->stride2=nargs;\
 	ftypeX *e=&(p->J);\
 	ftype10 *v=J;\
 	GML_STDCOPY2(ftype10,count1,stride1,count2,stride2,nargs)\
-/*	memcpy(&(p->D),D,size+sizeof(ftypeX));*/\
 	GML_UPD_POS()\
 }
 
@@ -887,28 +873,24 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 
 #define GML_MEMCOPY()\
 	for(int i=0; i<C; ++i) {\
-/*		BYTE *e2=e;*/\
 		BYTE *v2=v;\
 		for(int j=0; j<itemsize; ++j) {\
-			*e/*2*/=*v2;\
-			++e/*2*/;\
+			*e=*v2;\
+			++e;\
 			++v2;\
 		}\
-/*		e+=itemsize;*/\
 		v+=itemstride;\
 	}
 
 #define GML_IDXLOOP(ltype)\
 	for(int i=0; i<B; ++i) {\
-/*		BYTE *e2=e;*/\
 		BYTE *v2=v+(*(ltype *)dt)*itemstride;\
 		dt+=sizeof(ltype);\
 		for(int j=0; j<itemsize; ++j) {\
-			*e/*2*/=*v2;\
-			++e/*2*/;\
+			*e=*v2;\
+			++e;\
 			++v2;\
 		}\
-/*		e+=itemsize;*/\
 	}
 
 #define GML_IDXCOPY()\
@@ -974,7 +956,6 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 	std::set<GLuint>::iterator si=qd->VAset.begin();\
 	while(si!=qd->VAset.end()) {\
 		std::map<GLuint,VAdata>::iterator mi=qd->VAmap.find(*si);\
-\
 		VAdata *vd=&(mi->second);\
 		int itemstride=vd->stride;\
  		int itemsize=vd->size*gmlSizeOf(vd->type);\
@@ -986,7 +967,6 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 		datasize+=totalsize;\
 		while(qd->WritePos+datasize>=qd->WriteSize)\
 			p=(gml##name##Data *)qd->WaitRealloc(&e);\
-\
 		VAstruct *vs=(VAstruct *)e;\
 		e+=sizeof(VAstruct);\
 		vs->target=*si;\
@@ -996,12 +976,10 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 		vs->totalsize=totalsize;\
 		vs->pointer=(GLvoid *)((BYTE *)vd->pointer+first*itemstride);\
 		vs->buffer=vd->buffer;\
-\
 		if(!vd->buffer) {\
 			BYTE *v=(BYTE *)vs->pointer;\
 			copyfun\
 		}\
-\
 		++si;\
 	}
 
