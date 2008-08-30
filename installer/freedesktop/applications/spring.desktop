@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Spring
-MimeType=application/x-spring-demo;application/x-spring-data-zip;application/x-spring-data-7zip
+MimeType=application/x-spring-demo
 Comment=An open source RTS with similar gameplay to TA
 Comment[de]=Open-Source Multiplayerstrategie
 TryExec=spring

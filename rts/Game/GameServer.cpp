@@ -796,7 +796,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					}
 					case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
 						unsigned char team = inbuf[3];
+#ifndef DEDICATED
 						if (teams[team] && players[player]->isLocal) // currently only host is allowed
+#else
+						if (teams[team])
+#endif
 						{
 							teams[fromTeam].reset();
 							for (int i = 0; i < MAX_PLAYERS; ++i)
@@ -1196,11 +1200,11 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
-	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	unsigned numActiveAllyTeams = 0;
 
 #ifndef DEDICATED
+	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
+	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 	{
 		bool hasPlayer = false;
@@ -1220,16 +1224,19 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 #else
-	int lastAllyTeam = -1;
+	int firstAllyTeam = -1;
 	for (unsigned i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (players[i])
+		if (players[i] && !players[i]->spectator)
 		{
-			if (lastAllyTeam < 0)
-				lastAllyTeam = i;
-			else if (lastAllyTeam != teams[players[i]->team]->allyTeam)
+			if (firstAllyTeam < 0)
 			{
+				firstAllyTeam = teams[players[i]->team]->allyTeam;
 				numActiveAllyTeams = 1;
+			}
+			else if (firstAllyTeam != teams[players[i]->team]->allyTeam)
+			{
+				numActiveAllyTeams = 2;
 				break;
 			}
 		}
