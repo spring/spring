@@ -186,7 +186,7 @@ CBumpWater::CBumpWater()
 	refraction   = configHandler.GetInt("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
 	anisotropy   = atof(configHandler.GetString("BumpWaterAnisotropy", "0.0").c_str());
 	depthCopy    = !!configHandler.GetInt("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler.GetInt("BumpWaterDepthBits", 24);
+	depthBits    = configHandler.GetInt("BumpWaterDepthBits", (gu->atiHacks)?16:24);
 	blurRefl     = !!configHandler.GetInt("BumpWaterBlurReflection", 0);
 	shoreWaves   = (!!configHandler.GetInt("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler.GetInt("BumpWaterEndlessOcean", 1)) && mapInfo->hasWaterPlane;
@@ -706,13 +706,13 @@ void CBumpWater::UploadCoastline(const int x1, const int y1, const int x2, const
 
 void CBumpWater::UpdateCoastmap(const int x1, const int y1, const int x2, const int y2)
 {
+	glDisable(GL_BLEND);
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, coastFBO);
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status == GL_FRAMEBUFFER_COMPLETE_EXT) {
-		glDisable(GL_DEPTH_TEST);
-		glDepthMask(GL_FALSE);
-		glDisable(GL_BLEND);
-
 		glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, coastTexture[1]);
 		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, coastTexture[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

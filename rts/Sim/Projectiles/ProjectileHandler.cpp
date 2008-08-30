@@ -488,26 +488,28 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		m.Rotate((*pi)->rot,(*pi)->rotAxis);
 		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
 		CTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
+		const std::vector<S3DOVertex>& vertices    = (*pi)->object->vertices;
+		const std::vector<int>&        verticesIdx = (*pi)->prim->vertices;
 
-		S3DOVertex* v=&(*pi)->object->vertices[(*pi)->prim->vertices[0]];
+		const S3DOVertex* v=&vertices[verticesIdx[0]];
 		float3 tp=m.Mul(v->pos);
 		float3 tn=m.Mul(v->normal);
 		tp+=interPos;
 		va->AddVertexTN(tp,tex->xstart,tex->ystart,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[1]];
+		v=&vertices[verticesIdx[1]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
 		va->AddVertexTN(tp,tex->xend,tex->ystart,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[2]];
+		v=&vertices[verticesIdx[2]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
 		va->AddVertexTN(tp,tex->xend,tex->yend,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[3]];
+		v=&vertices[verticesIdx[3]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
@@ -619,14 +621,14 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	sort(distlist.begin(), distlist.end(), CompareProjDist);
 
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
 	textureAtlas->BindTexture();
-	glEnable(GL_BLEND);
-	glDepthMask(0);
 	glColor4f(1,1,1,0.2f);
 	glAlphaFunc(GL_GREATER,0.0f);
 	glEnable(GL_ALPHA_TEST);
+	glDepthMask(0);
 //	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glDisable(GL_FOG);
 
@@ -639,8 +641,13 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	}
 	if(CProjectile::inArray)
 		CProjectile::DrawArray();
-	glDisable(GL_TEXTURE_2D);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+	glColor4f(1,1,1,1.0f);
 	glDepthMask(1);
+
 	currentParticles=(int)(ps.size()*0.8f+currentParticles*0.2f);
 	currentParticles+=(int)(0.2f*drawnPieces+0.3f*numFlyingPieces);
 	particleSaturation=(float)currentParticles/(float)maxParticles;
@@ -993,6 +1000,7 @@ void CProjectileHandler::UpdatePerlin()
 	perlinFB->deselect();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
