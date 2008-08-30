@@ -485,7 +485,7 @@ static void DrawBins(LuaMatType type)
 
 	luaDrawing = true;
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
 	const LuaMaterial* currMat = &LuaMaterial::defMat;
 

@@ -312,6 +312,8 @@ void CGroundDecalHandler::Draw(void)
 		glDisable(GL_FRAGMENT_PROGRAM_ARB);
 		glDisable(GL_VERTEX_PROGRAM_ARB);
 		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 		glDisable(GL_TEXTURE_2D);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);

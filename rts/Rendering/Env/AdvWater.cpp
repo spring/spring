@@ -148,7 +148,6 @@ void CAdvWater::Draw(bool useBlending)
 		glDisable(GL_BLEND);
 	}
 	glDepthMask(0);
-	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, bumpTexture);
 		GLfloat plan[]={0.02f,0,0,0};
@@ -161,6 +160,7 @@ void CAdvWater::Draw(bool useBlending)
 		glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
 		glEnable(GL_TEXTURE_GEN_T);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waterFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
