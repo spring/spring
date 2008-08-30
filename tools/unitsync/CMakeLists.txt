@@ -1,5 +1,7 @@
 IF (MINGW)
 	set (unitsync_libs glew32 opengl32 glu32 devil ilu)
+	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
+	set (JNI_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
@@ -15,6 +17,14 @@ ELSE (MINGW)
 	else (PYTHONLIBS_FOUND)
 		message ("No python libraries found, python bindings disabled")
 	endif (PYTHONLIBS_FOUND)
+	
+	FIND_PACKAGE(JNI)
+	if (JAVA_INCLUDE_PATH)
+		include_directories(${JAVA_INCLUDE_PATH} ${JNI_INCLUDE_DIRS})
+		set (JAVA_FOUND TRUE)
+	else (JAVA_INCLUDE_PATH)
+		message ("No Java includes found, java bindings disabled")
+	endif (JAVA_INCLUDE_PATH)
 	
 	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
 ENDIF (MINGW)
@@ -54,7 +64,9 @@ set(unitsync_files
 if (PYTHONLIBS_FOUND)
 	list(APPEND unitsync_files pybind)
 endif (PYTHONLIBS_FOUND)
-
+if (JAVA_FOUND)
+	list(APPEND unitsync_files javabind)
+endif (JAVA_FOUND)
 ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer SyncServer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua boost_regex-mt ILU SDL)
 if (PYTHONLIBS_FOUND)

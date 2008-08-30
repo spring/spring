@@ -70,9 +70,9 @@ endif(UNIX OR CMAKE_CROSSCOMPILING)
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".svn" EXCLUDE)
 
 ### Install freedesktop-files, mime-types etc.
-if (UNIX)
+if (UNIX AND NOT MINGW)
 	install (FILES installer/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
 	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
 	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
-endif (UNIX)
+endif (UNIX AND NOT MINGW)
 
