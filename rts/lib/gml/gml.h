@@ -129,28 +129,6 @@ EXTERN inline GLuint gmlGenLists(GLsizei items) {
 	return gmlListServer.GetItems(items);
 }
 
-EXTERN inline void gmlUpdateServers() {
-	gmlItemsConsumed=0;
-	gmlProgramServer.GenerateItems();
-	gmlProgramObjectARBServer.GenerateItems();
-	gmlShaderServer_VERTEX.GenerateItems();
-	gmlShaderServer_FRAGMENT.GenerateItems();
-	gmlShaderObjectARBServer_VERTEX.GenerateItems();
-	gmlShaderObjectARBServer_FRAGMENT.GenerateItems();
-	gmlQuadricServer.GenerateItems();
-
-	gmlTextureServer.GenerateItems();
-	gmlBufferARBServer.GenerateItems();
-	gmlFencesNVServer.GenerateItems();
-	gmlProgramsARBServer.GenerateItems();
-	gmlRenderbuffersEXTServer.GenerateItems();
-	gmlFramebuffersEXTServer.GenerateItems();
-	gmlQueryServer.GenerateItems();
-	gmlBufferServer.GenerateItems();
-
-	gmlListServer.GenerateItems();
-}
-
 #if GML_ENABLE
 #include "gmlimp.h"
 #include "gmldef.h"
