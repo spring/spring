@@ -32,7 +32,7 @@
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
 #ifdef USE_GML
-
+#include "stdafx.h"
 #include "gmlcls.h"
 
 #define EXEC_RUN (BYTE *)NULL
@@ -910,7 +910,8 @@ void gmlQueue::Execute() {
 //	GML_DEBUG("Execute ",procs);
 }
 
-extern void gmlUpdateServers();
+//extern void gmlUpdateServers();
+#include "gmlsrv.h"
 
 // Execute - executes all GL commands in the current read queue.
 // Execution is synced (this means it will stop at certain points

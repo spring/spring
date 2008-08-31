@@ -40,6 +40,7 @@
 #define GML_UPDSRV_INTERVAL 10
 #define GML_ALTERNATE_SYNCMODE 1 // mutex-protected synced execution, slower but more portable
 
+//#define BOOST_AC_USE_PTHREADS
 #ifdef _MSC_VER
 #define GML_ORDERED_VOLATILE (_MSC_VER >= 1400) 
 #else
@@ -159,14 +160,14 @@ public:
 #else
 class gmlCount : public boost::detail::atomic_count {
 public:
+//	boost::mutex mutex_;
 	gmlCount(long val):boost::detail::atomic_count(val) {
 	}
-
 	virtual ~gmlCount() {}
 
 	long operator++() {
 	#if defined(BOOST_AC_USE_PTHREADS)
-		scoped_lock lock(mutex_);
+		boost::mutex::scoped_lock lock(mutex_);
 		return ++value_;
 	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
 		return atomic_exchange_and_add(&value_, 1)+1;
@@ -180,7 +181,7 @@ public:
 		return __exchange_and_add(&value_, 1)+1;
 	#elif defined(BOOST_HAS_PTHREADS)
 		#define BOOST_AC_USE_PTHREADS
-		scoped_lock lock(mutex_);
+		boost::mutex::scoped_lock lock(mutex_);
 		return ++value_;
 	#else
 		#error Unrecognized threading platform

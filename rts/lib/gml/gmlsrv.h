@@ -13,6 +13,29 @@
 
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
+#include "System/Platform/errorhandler.h"
+
+EXTERN inline void gmlUpdateServers() {
+	gmlItemsConsumed=0;
+	gmlProgramServer.GenerateItems();
+	gmlProgramObjectARBServer.GenerateItems();
+	gmlShaderServer_VERTEX.GenerateItems();
+	gmlShaderServer_FRAGMENT.GenerateItems();
+	gmlShaderObjectARBServer_VERTEX.GenerateItems();
+	gmlShaderObjectARBServer_FRAGMENT.GenerateItems();
+	gmlQuadricServer.GenerateItems();
+
+	gmlTextureServer.GenerateItems();
+	gmlBufferARBServer.GenerateItems();
+	gmlFencesNVServer.GenerateItems();
+	gmlProgramsARBServer.GenerateItems();
+	gmlRenderbuffersEXTServer.GenerateItems();
+	gmlFramebuffersEXTServer.GenerateItems();
+	gmlQueryServer.GenerateItems();
+	gmlBufferServer.GenerateItems();
+
+	gmlListServer.GenerateItems();
+}
 
 #define GML_MAX_EXEC_DEPTH 4
 
@@ -94,26 +117,25 @@ public:
 	GML_TYPENAME gmlExecState<R,A,U> ExecState[GML_MAX_EXEC_DEPTH];
 	boost::barrier Barrier; 
 	boost::thread *threads[GML_MAX_NUM_THREADS];
-	volatile BOOL_ dorun[GML_MAX_NUM_THREADS];
+	volatile BOOL_ dorun;
 	BOOL_ inited;
 	gmlCount threadcnt;
 	gmlCount ClientsReady;
 	BOOL_ newwork;
 
-	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE) {
-		inited=FALSE;
-		memset((void *)dorun,1,GML_MAX_NUM_THREADS*sizeof(BOOL_));
+	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE),inited(FALSE),dorun(TRUE) {
 	}
 
 	~gmlClientServer() {
-		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
-		ex->maxthreads=0;
-		for(int i=1; i<gmlThreadCount; ++i)
-			dorun[i]=0;
-		Barrier.wait();
-		for(int i=1; i<gmlThreadCount; ++i) {
-			threads[i]->join();
-			delete threads[i];
+		if(inited) {
+			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+			ex->maxthreads=0;
+			dorun=FALSE;
+			Barrier.wait();
+			for(int i=1; i<gmlThreadCount; ++i) {
+				threads[i]->join();
+				delete threads[i];
+			}
 		}
 	}
 
@@ -171,6 +193,7 @@ public:
 			else {
 				ex->ExecAll(pos,it);
 			}
+
 //			GML_DEBUG("server ",nproc)
 			if(ExecDepth>0 && !*(volatile int *)&newwork) {
 				--ExecDepth;
@@ -183,8 +206,16 @@ public:
 	void WorkInit() {
 		if(!inited) {
 			gmlInit();
+
 			for(int i=1; i<gmlThreadCount; ++i)
 				threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
+
+			for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
+				boost::thread::yield();
+			if(gmlThreadNumber!=0) {
+				handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
+			}
+
 			inited=TRUE;
 		}
 	}
@@ -265,9 +296,9 @@ public:
 	}
 
 	void gmlClient() {
-		int thread=gmlThreadNumber=++threadcnt;
+		gmlThreadNumber=++threadcnt;
 		streflop_init<streflop::Simple>();
-		while(dorun[thread]) {
+		while(dorun) {
 			gmlClientSub();
 		}
 	}
