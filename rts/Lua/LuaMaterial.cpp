@@ -275,7 +275,7 @@ void LuaMatTexture::Bind(const LuaMatTexture& prev) const
 
 void LuaMatTexture::Unbind() const
 {
-	if (type == LUATEX_NONE || (!enable && (type == LUATEX_SHADOWMAP)))
+	if (type == LUATEX_NONE || (!enable && (type != LUATEX_SHADOWMAP)))
         return;
 
 	if (type == LUATEX_GL) {
