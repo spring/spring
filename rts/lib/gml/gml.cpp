@@ -32,7 +32,7 @@
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
 #ifdef USE_GML
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "gmlcls.h"
 
 #define EXEC_RUN (BYTE *)NULL
