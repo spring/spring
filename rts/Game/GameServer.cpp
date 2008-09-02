@@ -1213,7 +1213,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!setup || !gs->Team(a)->dllAI.empty())
+		if (!setup || gs->Team(a)->isAI)
 			hasPlayer = true;
 
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)
