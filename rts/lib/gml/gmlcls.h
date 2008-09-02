@@ -10,12 +10,20 @@
 #define GMLCLASSES_H
 
 #include <GL/glew.h>
+
+#ifndef GML_COMPATIBLE_ATOMIC_COUNT
+# ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
+#  error "Please make sure StdAfx.h is included before anything that includes boost"
+# endif
+# define GML_COMPATIBLE_ATOMIC_COUNT
+# define private public
+# include <boost/detail/atomic_count.hpp>
+# undef private
+#endif
+
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/version.hpp>
-#define private public // we need access to the private value_ member of atomic_count
-#include <boost/detail/atomic_count.hpp>
-#undef private
 #include <map>
 #include <set>
 
@@ -39,6 +47,7 @@
 //#define GML_USE_QUADRIC_SERVER 1 // use server thread to create/delete quadrics
 #define GML_UPDSRV_INTERVAL 10
 #define GML_ALTERNATE_SYNCMODE 1 // mutex-protected synced execution, slower but more portable
+#define GML_ENABLE_TLS_CHECK 1 // check if Thread Local Storage appears to be working
 
 //#define BOOST_AC_USE_PTHREADS
 #ifdef _MSC_VER
@@ -119,21 +128,6 @@ typedef int BOOL_;
 #	endif
 #endif /* _WIN32 */
 
-#define GML_ERROR(str,val)\
-	FILE *f=fopen("C:\\GMLERR.TXT","a");\
-	if(f) {\
-		fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-		fclose(f);\
-	}\
-Sleep(1000);
-
-#define GML_DEBUG(str,val)\
-	FILE *f=fopen("C:\\GMLDBG.TXT","a");\
-	if(f) {\
-		fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-		fclose(f);\
-	}
-
 // gmlMutex - exploits the boost mutex to get direct access to the Lock/Unlock methods
 class gmlMutex {
 	boost::mutex sl_mutex;
@@ -151,6 +145,47 @@ public:
 		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
 #else
 		(((boost::mutex::scoped_lock *)sl_lock)+gmlThreadNumber)->~scoped_lock();
+#endif
+	}
+};
+
+// gmlLock - combines boost mutex+lock into one covenient package
+class gmlLock {
+	boost::try_mutex sl_mutex;
+	BYTE sl_lock[sizeof(boost::try_mutex::scoped_try_lock)*GML_MAX_NUM_THREADS];
+	
+public:
+	gmlLock() {
+	}
+	virtual ~gmlLock() {
+	}
+	bool Lock() {
+		boost::try_mutex::scoped_try_lock *lock=((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber;
+#if (BOOST_VERSION >= 103600)
+		new (lock) boost::try_mutex::scoped_try_lock(sl_mutex);
+		if(lock->owns_lock())
+			return true;
+		lock->~try_lock_wrapper();
+#elif (BOOST_VERSION >= 103500)
+		new (lock) boost::try_mutex::scoped_try_lock(sl_mutex,boost::try_to_lock);
+		if(lock->owns_lock())
+			return true;
+		lock->~unique_lock();
+#else
+		new (lock) boost::try_mutex::scoped_try_lock(sl_mutex);
+		if(lock->locked())
+			return true;
+		lock->~scoped_try_lock();
+#endif
+		return false;
+	}
+	void Unlock() {
+#if (BOOST_VERSION >= 103600)
+		(((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber)->~try_lock_wrapper();
+#elif (BOOST_VERSION >= 103500)
+		(((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
+#else
+		(((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber)->~scoped_try_lock();
 #endif
 	}
 };
@@ -552,43 +587,6 @@ public:
 			Shrink();
 	}
 };
-
-// gmlLock - combines boost mutex+lock into one covenient package
-class gmlLock {
-	boost::try_mutex sl_mutex;
-	BYTE sl_lock[sizeof(boost::try_mutex::scoped_try_lock)*GML_MAX_NUM_THREADS];
-	
-public:
-	gmlLock() {
-	}
-	virtual ~gmlLock() {
-	}
-	bool Lock() {
-		boost::try_mutex::scoped_try_lock *lock=((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber;
-#if (BOOST_VERSION >= 103500)
-		new (lock) boost::try_mutex::scoped_try_lock(sl_mutex,boost::try_to_lock);
-		if(lock->owns_lock())
-#else
-		new (lock) boost::try_mutex::scoped_try_lock(sl_mutex);
-		if(lock->locked())
-#endif
-			return true;
-#if (BOOST_VERSION >= 103500)
-		lock->~unique_lock();
-#else
-		lock->~scoped_try_lock();
-#endif
-		return false;
-	}
-	void Unlock() {
-#if (BOOST_VERSION >= 103500)
-		(((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber)->~unique_lock();
-#else
-		(((boost::try_mutex::scoped_try_lock *)sl_lock)+gmlThreadNumber)->~scoped_try_lock();
-#endif
-	}
-};
-
 
 struct VAdata {
 	GLint size;

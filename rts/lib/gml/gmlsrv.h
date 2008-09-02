@@ -194,7 +194,7 @@ public:
 				ex->ExecAll(pos,it);
 			}
 
-//			GML_DEBUG("server ",nproc)
+//			GML_DEBUG("server ",nproc, 3)
 			if(ExecDepth>0 && !*(volatile int *)&newwork) {
 				--ExecDepth;
 				newwork=-1;
@@ -209,13 +209,13 @@ public:
 
 			for(int i=1; i<gmlThreadCount; ++i)
 				threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
-
+#if GML_ENABLE_TLS_CHECK
 			for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
 				boost::thread::yield();
 			if(gmlThreadNumber!=0) {
 				handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 			}
-
+#endif
 			inited=TRUE;
 		}
 	}
@@ -288,7 +288,7 @@ public:
 			if(processed>=ex->limit1 && qd->GetWrite(processed>=ex->limit2))
 				processed=0;
 //			if(exproc!=processed) {
-//				GML_DEBUG("client ",exproc)
+//				GML_DEBUG("client ",exproc, 3)
 //			}
 		}
 		qd->ReleaseWrite();
