@@ -12,11 +12,11 @@
 #include <set>
 #include <map>
 
-#define DEBUG_GML 0 // enable debugging
+#define GML_ENABLE_DEBUG 0
 
-#if DEBUG_GML
-#define GML_DEBUG_FUN(str,val)\
-{\
+#if GML_ENABLE_DEBUG
+#define GML_DEBUG(str,val,type)\
+if(type==GML_ENABLE_DEBUG) {\
 	FILE *f=fopen("C:\\GMLDBG.TXT","a");\
 	if(f) {\
 		fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
@@ -24,7 +24,7 @@
 	}\
 }
 #else
-#define GML_DEBUG_FUN(str,val)
+#define GML_DEBUG(str,val,type)
 #endif
 
 extern std::map<GLenum,GLint> gmlGetIntegervCache;
@@ -56,7 +56,7 @@ EXTERN inline int gmlNumArgsTexImage(int datatype) {
 		case GL_BGRA_EXT:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsTexImage", datatype)
+			GML_DEBUG("gmlNumArgsTexImage", datatype, 1)
 			return 0;
 	}
 }
@@ -82,7 +82,7 @@ EXTERN inline int gmlNumArgsLightMat(int datatype) {
 		case GL_QUADRATIC_ATTENUATION:
 			return 1;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsLightMat", datatype)
+			GML_DEBUG("gmlNumArgsLightMat", datatype, 1)
 			return 0;
 	}
 }
@@ -99,7 +99,7 @@ EXTERN inline int gmlNumArgsFog(int datatype) {
 		case GL_FOG_COLOR:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsFog", datatype)
+			GML_DEBUG("gmlNumArgsFog", datatype, 1)
 			return 0;
 	}
 }
@@ -113,7 +113,7 @@ EXTERN inline int gmlNumArgsTexGen(int datatype) {
 		case GL_EYE_PLANE:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsTexGen", datatype)
+			GML_DEBUG("gmlNumArgsTexGen", datatype, 1)
 			return 0;
 	}
 }
@@ -126,7 +126,7 @@ EXTERN inline int gmlNumArgsTexEnv(int datatype) {
 		case GL_TEXTURE_ENV_COLOR:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsTexEnv", datatype)
+			GML_DEBUG("gmlNumArgsTexEnv", datatype, 1)
 			return 0;
 	}
 }
@@ -142,7 +142,7 @@ EXTERN inline int gmlNumArgsPointParam(int datatype) {
 		case GL_POINT_DISTANCE_ATTENUATION:
 			return 3;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsPointParam", datatype)
+			GML_DEBUG("gmlNumArgsPointParam", datatype, 1)
 			return 0;
 	}
 }
@@ -159,7 +159,7 @@ EXTERN inline int gmlNumArgsTexParam(int datatype) {
 		case GL_TEXTURE_BORDER_COLOR:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsTexParam", datatype)
+			GML_DEBUG("gmlNumArgsTexParam", datatype, 1)
 			return 0;
 	}
 }
@@ -173,7 +173,7 @@ EXTERN inline int gmlNumArgsLightModel(int datatype) {
 		case GL_LIGHT_MODEL_AMBIENT:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsLightModel", datatype)
+			GML_DEBUG("gmlNumArgsLightModel", datatype, 1)
 			return 0;
 	}
 }
@@ -195,7 +195,7 @@ EXTERN inline int gmlNumArgsMap1(int datatype) {
 		case GL_MAP1_TEXTURE_COORD_4:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsMap1", datatype)
+			GML_DEBUG("gmlNumArgsMap1", datatype, 1)
 			return 0;
 	}
 }
@@ -217,7 +217,7 @@ EXTERN inline int gmlNumArgsMap2(int datatype) {
 		case GL_MAP2_TEXTURE_COORD_4:
 			return 4;
 		default:
-			GML_DEBUG_FUN("gmlNumArgsMap2", datatype)
+			GML_DEBUG("gmlNumArgsMap2", datatype, 1)
 			return 0;
 	}
 }
@@ -243,7 +243,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 		case GL_DOUBLE:
 			return sizeof(GLdouble);
 		default:
-			GML_DEBUG_FUN("gmlSizeOf", datatype)
+			GML_DEBUG("gmlSizeOf", datatype, 1)
 			return 0;
 	}
 }

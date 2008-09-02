@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "BaseNetProtocol.h"
 
 #include "mmgr.h"

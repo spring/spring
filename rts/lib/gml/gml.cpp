@@ -903,11 +903,11 @@ void gmlQueue::Execute() {
 	BYTE *ptr=NULL;
 
 	while(p<e) {
-//	 	GML_DEBUG("Cmd ",*(int *)p);
+//	 	GML_DEBUG("Cmd ",*(int *)p, 2);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
-//	GML_DEBUG("Execute ",procs);
+//	GML_DEBUG("Execute ",procs, 2);
 }
 
 //extern void gmlUpdateServers();
@@ -986,7 +986,7 @@ void gmlQueue::ExecuteSynced() {
 			if(p==e)
 				break;
 		}
-//	 	GML_DEBUG("CmdSync ",*(int *)p);
+//	 	GML_DEBUG("CmdSync ",*(int *)p, 2);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
@@ -1001,7 +1001,7 @@ void gmlQueue::ExecuteSynced() {
 		Pos2=Queue2;
 	}
 #endif
-//	GML_DEBUG("ExecuteSync ",procs);
+//	GML_DEBUG("ExecuteSync ",procs, 2);
 }
 
 #endif

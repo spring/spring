@@ -63,6 +63,16 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include <set>
 #endif
 
+// need this to support boost 1.36+
+#ifdef USE_GML
+# ifndef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
+#  define GML_COMPATIBLE_ATOMIC_COUNT
+#  define private public
+#  include <boost/detail/atomic_count.hpp>
+#  undef private
+# endif
+#endif
+
 #include "Sync/Syncify.h"
 #include "creg/creg.h"
 #include "float3.h"
