@@ -362,16 +362,15 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
 	myPlayerNum = setup->myPlayerNum;
-
-	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
-		setup->playerStartingData.size() >= myPlayerNum &&
-		setup->teamStartingData.size() >= myTeam);
-
 	myTeam = setup->playerStartingData[myPlayerNum].team;
 	myAllyTeam = setup->teamStartingData[myTeam].teamAllyteam;
 
 	spectating = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullSelect = setup->playerStartingData[myPlayerNum].spectator;
+	
+	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
+			setup->playerStartingData.size() >= myPlayerNum &&
+			setup->teamStartingData.size() >= myTeam);
 }
 
