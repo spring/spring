@@ -422,7 +422,7 @@ def generate(env):
 				print 'ERROR: MINGDIR environment variable not set and MSVC build unsupported.'
 				print 'Set it to your Dev-Cpp or MinGW install directory (e.g. C:\\Dev-Cpp) and try again.'
 				env.Exit(1)
-			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'], LINKFLAGS = ['-mwindows'])
+			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'], LINKFLAGS = ['-mwindows', '-mthreads'])
 		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 
 		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
