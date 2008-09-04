@@ -15,7 +15,7 @@ void pfDealloc(void *p,size_t n);
 class CPathFinder : public IPath {
 public:
 	CPathFinder();
-	virtual ~CPathFinder();
+	~CPathFinder();
 
 #if !defined(USE_MMGR)
 	void* operator new(size_t size){return pfAlloc(size);};

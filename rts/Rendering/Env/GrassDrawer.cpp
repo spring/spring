@@ -24,7 +24,7 @@ static const float turfSize=20;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square
 static const int grassBlockSize=4;		//grass squares per grass block
 
-static float fRand(float size)
+inline float fRand(float size)
 {
 	return float(rand())/RAND_MAX*size;
 }
