@@ -365,7 +365,7 @@ void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 
 	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
 		setup->playerStartingData.size() >= myPlayerNum &&
-		setup->teamStartingData.size() >= myPlayerNum);
+		setup->teamStartingData.size() >= myTeamNum);
 
 	myTeam = setup->playerStartingData[myPlayerNum].team;
 	myAllyTeam = setup->teamStartingData[myTeam].teamAllyteam;
