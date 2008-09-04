@@ -199,10 +199,12 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 				teams[i]->isAI = true;
 			}
 		}
-		for (unsigned t = 0; t < static_cast<unsigned>(MAX_TEAMS); ++t)
-		{
-			allies[i][t] = setup->allyStartingData[i].allies[t];
-		}
+	}
+	
+	for (unsigned allyTeam1 = 0; allyTeam1 < static_cast<unsigned>(activeAllyTeams); ++allyTeam1)
+	{
+		for (unsigned allyTeam2 = 0; allyTeam2 < static_cast<unsigned>(activeAllyTeams); ++allyTeam2)
+			allies[allyTeam1][allyTeam2] = setup->allyStartingData[allyTeam1].allies[allyTeam2];
 	}
 
 	if (useLuaGaia) {
