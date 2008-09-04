@@ -2380,6 +2380,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (action.extra == "end") {
 			skipping = false;
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
 	else if (gs->frameNum > 1) {

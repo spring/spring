@@ -227,6 +227,8 @@ void CGameServer::SkipTo(int targetframe)
 		
 		if (UDPNet)
 			UDPNet->Update();
+		lastUpdate = SDL_GetTicks();
+		IsPaused = true;
 	}
 	else
 	{
