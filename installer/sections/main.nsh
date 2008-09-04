@@ -32,7 +32,7 @@
 ;New Settings Program
 
   inetc::get \
-  "http://installer.clan-sy.com/springsettings.exe" "$INSTDIR\springsettings.exe" 
+  "http://www.springlobby.info/installer/springsettings.exe" "$INSTDIR\springsettings.exe" 
 
   File "..\external\mingwm10.dll"
   File "..\external\wxbase28u_gcc_custom.dll"
