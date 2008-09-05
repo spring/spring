@@ -97,6 +97,15 @@ CSyncTracer& CSyncTracer::operator<<(const int i)
 	return *this;
 }
 
+CSyncTracer& CSyncTracer::operator<<(const unsigned i)
+{
+	char t[20];
+	sprintf(t,"%d",i);
+	traces[nowActive]+=t;
+	if (init()) (*logfile) << i;
+	return *this;
+}
+
 CSyncTracer& CSyncTracer::operator<<(const float f)
 {
 	char t[50];

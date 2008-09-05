@@ -8,6 +8,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
+
 CR_BIND_DERIVED(CLightingProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
 
 CR_REG_METADATA(CLightingProjectile,(

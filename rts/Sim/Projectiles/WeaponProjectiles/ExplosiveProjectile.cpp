@@ -15,6 +15,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
+
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,1,0));
 
 CR_REG_METADATA(CExplosiveProjectile, (

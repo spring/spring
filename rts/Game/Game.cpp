@@ -3064,8 +3064,8 @@ void CGame::SimFrame() {
 	ASSERT_SYNCED_MODE;
 
 #ifdef TRACE_SYNC
-	uh->CreateChecksum();
-	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
+	//uh->CreateChecksum();
+	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
 #endif
 
 #ifdef USE_MMGR

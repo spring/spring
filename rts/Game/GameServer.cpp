@@ -215,7 +215,7 @@ void CGameServer::SkipTo(int targetframe)
 		CommandMessage msg(str( boost::format("skip start %d") %targetframe ), SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg.Pack()));
 		// fast-read and send demo data
-		while (serverframenum < targetframe)
+		while (serverframenum < targetframe && demoReader)
 		{
 			modGameTime = demoReader->GetNextReadTime()+0.1f; // skip time
 			SendDemoData(true);
