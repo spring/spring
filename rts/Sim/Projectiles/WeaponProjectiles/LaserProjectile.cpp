@@ -10,6 +10,10 @@
 #include "Sim/Projectiles/Unsynced/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
+
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
 
 CR_REG_METADATA(CLaserProjectile,(

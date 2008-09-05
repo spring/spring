@@ -90,7 +90,7 @@ void CEmgCannon::Fire(void)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Emg fire: ";
-	tracefile << sprayAngle << " " << gs->randSeed << " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
+	tracefile << sprayAngle << " " << gs->GetRandSeed() << " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	float3 dir;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed

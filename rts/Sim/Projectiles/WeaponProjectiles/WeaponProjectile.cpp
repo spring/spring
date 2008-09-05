@@ -19,6 +19,10 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "System/LogOutput.h"
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
+
 
 #include "Sim/Weapons/WeaponDefHandler.h"
 
