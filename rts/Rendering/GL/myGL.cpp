@@ -235,7 +235,6 @@ void UnloadStartPicture()
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	static char prevText[100];
-	static unsigned startTicks;
 
 	PUSH_CODE_MODE;
 
@@ -246,13 +245,9 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	// Check to prevent infolog spam by CPreGame which uses this function
 	// to render the screen background each frame.
 	if (strcmp(prevText, text)) {
-		unsigned ticks = SDL_GetTicks();
-//		if (prevText[0])
-//			logOutput.Print("Loading step `%s' took %g seconds", prevText, (ticks - startTicks) / 1000.0f);
 		logOutput.Print("%s",text);
 		strncpy(prevText, text, sizeof(prevText));
 		prevText[sizeof(prevText) - 1] = 0;
-		startTicks = ticks;
 	}
 
 	good_fpu_control_registers(text);

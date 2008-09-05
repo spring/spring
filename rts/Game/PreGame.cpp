@@ -234,9 +234,9 @@ bool CPreGame::Draw()
 				break;
 			case WAIT_CONNECTING:
 				if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-					PrintLoadMsg("Connecting to server .");
+					PrintLoadMsg("Connecting to server .", false);
 				else
-					PrintLoadMsg("Connecting to server  ");
+					PrintLoadMsg("Connecting to server  ", false);
 				break;
 			case UNKNOWN:
 			case WAIT_ON_ADDRESS:
