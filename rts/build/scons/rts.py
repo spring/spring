@@ -91,6 +91,7 @@ def generate(env):
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
 		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
+		('synctrace',         'Enable sync tracing', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('profile_generate',  'Set to yes to compile with -fprofile-generate to generate profiling information', False),
@@ -308,6 +309,7 @@ def generate(env):
 		# Must come before the '-fvisibility=hidden' code.
 		bool_opt('syncdebug', False)
 		bool_opt('synccheck', True)
+		bool_opt('synctrace', False)
 		if env['syncdebug'] and env['synccheck']:
 			print "syncdebug and synccheck are mutually exclusive. Please choose one."
 			env.Exit(1)
@@ -383,6 +385,8 @@ def generate(env):
 			spring_defines += ['SYNCDEBUG']
 		if env['synccheck']:
 			spring_defines += ['SYNCCHECK']
+		if env['synctrace']:
+			spring_defines += ['TRACE_SYNC']
 
 		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
 		# and some AIs maybe.  Just make exceptions in SConstruct.
