@@ -19,8 +19,12 @@ bool CSyncTracer::init()
 #ifdef TRACE_SYNC
 	if (logfile == 0) {
 		char c[100];
-		sprintf(c, "trace%i.log", gu->myTeam);
+		if (gu)
+			sprintf(c, "trace%i.log", gu->myTeam);
+		else
+			sprintf(c, "trace_early.log");
 		logfile = SAFE_NEW std::ofstream(c);
+		logOutput.Print("Sync trace log: %s\n", c);
 	}
 #endif
 	return logfile != 0;
