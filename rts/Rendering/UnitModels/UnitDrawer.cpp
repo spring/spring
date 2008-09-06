@@ -86,9 +86,6 @@ CUnitDrawer::CUnitDrawer(void)
 	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
 	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
 
-	// Some Ati mobility cards dont like clipping wireframes...
-	usingAtiHacks = !!configHandler.GetInt("AtiHacks", 0);
-
 	CBitmap white;
 	white.Alloc(1, 1);
 	for (int a = 0; a < 4; ++a) {
@@ -404,19 +401,19 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #if GML_ENABLE_DRAWUNIT
 	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
 	mt_drawRefraction=drawRefraction;
-#ifdef DIRECT_CONTROL_ALLOWED
+  #ifdef DIRECT_CONTROL_ALLOWED
 	mt_excludeUnit=excludeUnit;
-#endif
+  #endif
 	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
 #else
 	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* unit = *usi;
 		DoDrawUnit(unit,drawReflection,drawRefraction,
-#ifdef DIRECT_CONTROL_ALLOWED
+  #ifdef DIRECT_CONTROL_ALLOWED
 								excludeUnit
-#else
+  #else
 								NULL
-#endif
+  #endif
 							);
 	}
 #endif
@@ -486,6 +483,15 @@ static void DrawBins(LuaMatType type)
 	luaDrawing = true;
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+	if (type==LUAMAT_ALPHA || type==LUAMAT_ALPHA_REFLECT) {
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.1f);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}else{
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
+	}
 
 	const LuaMaterial* currMat = &LuaMaterial::defMat;
 
@@ -1834,12 +1840,12 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
-	if (!usingAtiHacks) {
+	if (!gu->atiHacks) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		DrawUnitModel(unit);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-	else {
+	} else {
+		//! some ATi mobility cards/drivers dont like clipping wireframes...
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 
@@ -1868,16 +1874,12 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
 		glClipPlane(GL_CLIP_PLANE0, plane0);
 
-		//if (shadowHandler->drawShadows && !water->drawReflection) {
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-		//}
+		glPolygonOffset(1.0f, 1.0f);
+		glEnable(GL_POLYGON_OFFSET_FILL);
 
 		DrawUnitModel(unit);
 
-		//if (shadowHandler->drawShadows && !water->drawReflection) {
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		//}
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	glDisable(GL_CLIP_PLANE0);

@@ -41,22 +41,23 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 
 void LuaUnitUniforms::Execute(CUnit* unit) const
 {
+	//FIXME use vertex attributes
 	if (!haveUniforms) {
 		return;
 	}
-	if (speedLoc != 0) {
+	if (speedLoc >= 0) {
 		glUniformf3(speedLoc, unit->speed);
 	}
-	if (healthLoc != 0) {
+	if (healthLoc >= 0) {
 		glUniform1f(healthLoc, unit->health / unit->maxHealth);
 	}
-	if (unitIDLoc != 0) {
+	if (unitIDLoc >= 0) {
 		glUniform1i(unitIDLoc, unit->id);
 	}
-	if (teamIDLoc != 0) {
+	if (teamIDLoc >= 0) {
 		glUniform1i(teamIDLoc, unit->id);
 	}
-	if (customLoc != 0) {
+	if (customLoc >= 0) {
 		if (customCount > 0) {
 			glUniform1fv(customLoc, customCount, customData);
 		}
