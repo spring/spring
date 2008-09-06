@@ -91,22 +91,33 @@ typedef struct _CFileInStream {
 
 SRes ml_sevenzip_read(void *object, void **buffer, size_t *size)
 {
-  value readable = ((CFileInStream *)object)->readable;
-  value read = Field(readable, 0);
-  value tuple = caml_callback(read, Val_int(*size));
-  value ml_string = Field(tuple, 0);
-  value ml_size = Field(tuple, 1);
+
+  CFileInStream *archive_in = (CFileInStream *) object;
+  value readable = (archive_in->readable);
+  CAMLparam1 (readable);
+  CAMLlocal4 (read, tuple, ml_string, ml_size);
+
+  read = Field(readable, 0);
+  tuple = caml_callback(read, Val_int(*size));
+  ml_string = Field(tuple, 0);
+  ml_size = Field(tuple, 1);
   *buffer = String_val(ml_string);
   *size = Int_val(ml_size);
 
-  return SZ_OK;
+  /* The GC might have moved the readable pointer */
+  archive_in->readable = readable;
+
+  CAMLreturnT(SRes, SZ_OK);
 }
 
 SRes ml_sevenzip_seek(void *object, CFileSize pos, ESzSeek origin)
 {
-  value readable = ((CFileInStream *)object)->readable;
-  value seek = Field(readable, 1);
-  value term;
+  CFileInStream *archive_in = (CFileInStream *) object;
+  value readable = archive_in->readable;
+  CAMLparam1 (readable);
+  CAMLlocal2 (seek, term);
+
+  seek = Field(readable, 1);
 
   switch (origin) {
 
@@ -118,7 +129,10 @@ SRes ml_sevenzip_seek(void *object, CFileSize pos, ESzSeek origin)
 
   caml_callback2(seek, Val_int(pos), term);
 
-  return SZ_OK;
+  /* The GC might have moved the readable pointer */
+  archive_in->readable = readable;
+
+  CAMLreturnT(SRes, SZ_OK);
 }
 
 /* Sevenzip.open_readable */
@@ -126,18 +140,18 @@ SRes ml_sevenzip_seek(void *object, CFileSize pos, ESzSeek origin)
 value ml_sevenzip_open_readable (value readable)
 {
   CAMLparam1 (readable);
+  CAMLlocal1 (sevenzip);
 
-  CFileInStream archiveStream;
+  CFileInStream archive_in;
   CSzArEx db;
   SRes res;
-  value sevenzip;
 
-  archiveStream.funcs.Read = ml_sevenzip_read;
-  archiveStream.funcs.Seek = ml_sevenzip_seek;
-  archiveStream.readable = readable;
+  archive_in.funcs.Read = ml_sevenzip_read;
+  archive_in.funcs.Seek = ml_sevenzip_seek;
+  archive_in.readable = readable;
 
   SzArEx_Init(&db);
-  res = SzArEx_Open(&db, &archiveStream.funcs, &allocImp, &allocTempImp);
+  res = SzArEx_Open(&db, &archive_in.funcs, &allocImp, &allocTempImp);
 
   switch (res) {
 
