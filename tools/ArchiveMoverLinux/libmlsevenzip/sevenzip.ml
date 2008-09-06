@@ -3,14 +3,15 @@ exception Error of string
 external init: unit -> unit = "ml_sevenzip_init"
 let () = init ()
 
-type in_file
-
 type origin = SeekSet | SeekCur | SeekEnd
 
 type readable = {
   read: int -> (string * int);
   seek: int -> origin -> unit
 }
+
+type db
+type in_file = readable * db
 
 type entry = {
   index: int;
@@ -19,17 +20,18 @@ type entry = {
   is_directory: bool
 }
 
-external _open_readable: readable -> in_file = "ml_sevenzip_open_readable"
+external _open_readable: readable -> db = "ml_sevenzip_open_readable"
 let open_readable readable =
   try
-    _open_readable readable
+    (readable, _open_readable readable)
   with
       Failure s -> raise (Error s)
 
-external entries: in_file -> entry array = "ml_sevenzip_entries"
+external _entries: db -> entry array = "ml_sevenzip_entries"
+let entries (_, db) = _entries db
 
 let open_in path =
-  let file = open_in path in
+  let file = open_in_bin path in
   let buffer = String.create 65536 in
     
   let read n =

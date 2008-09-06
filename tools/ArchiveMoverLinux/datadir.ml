@@ -9,10 +9,9 @@ let detect_springrc home_dir =
   try
     let springrc = Filename.concat home_dir ".springrc" in
     let in_file = open_in springrc in
-    let input = IO.input_channel in_file in
     let rec loop option =
       try 
-        let line = IO.read_line input in
+        let line = input_line in_file in
           try
             let (key, value) = String.split line "=" in
               if key = "SpringData" then
@@ -20,7 +19,7 @@ let detect_springrc home_dir =
               else
                 loop option
           with Invalid_string -> loop option
-      with IO.No_more_input -> option in
+      with End_of_file -> option in
     let option = loop None in
       close_in in_file;
       option
