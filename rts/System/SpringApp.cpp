@@ -50,6 +50,7 @@
 	#include <winreg.h>
 	#include <direct.h>
 	#include "Platform/Win/seh.h"
+	#include "Platform/Win/WinVersion.h"
 #endif // WIN32
 
 using std::string;
@@ -142,6 +143,34 @@ bool crashCallback(void* crState)
 }
 #endif
 
+#ifdef WIN32
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+/** @brief checks if the current process is running in 32bit emulation mode
+    @return FALSE, TRUE, -1 on error (usually no permissions) */
+static int GetWow64Status()
+{
+	BOOL bIsWow64 = FALSE;
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
+		{
+			return -1;
+		}
+	}
+	return bIsWow64;
+}
+
+
+#endif
+
+
 /**
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
@@ -169,6 +198,25 @@ bool SpringApp::Initialize()
 	ParseCmdLine();
 
 	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
+
+	// log OS version
+	// TODO: improve version logging of non-Windows OSes
+#if defined(WIN32)
+	logOutput.Print("OS: %s\n", GetOSDisplayString().c_str());
+	if (GetWow64Status() == TRUE) {
+		logOutput.Print("OS: WOW64 detected\n");
+	}
+	logOutput.Print("Hardware: %s\n", GetHardwareInfoString().c_str());
+#elif defined(__linux__)
+	logOutput.Print("OS: Linux\n");
+#elif defined(__FreeBSD__)
+	logOutput.Print("OS: FreeBSD\n");
+#elif defined(MACOS_X)
+	logOutput.Print("OS: MacOS X\n");
+#else
+	logOutput.Print("OS: unknown\n");
+#endif
+
 
 	FileSystemHandler::Initialize(true);
 
@@ -340,7 +388,7 @@ bool SpringApp::SetSDLVideoMode ()
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
 	int bitsPerPixel = configHandler.GetInt("BitsPerPixel", 0);
-	
+
 	if (bitsPerPixel == 32)
 	{
 		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -634,13 +682,13 @@ void SpringApp::ParseCmdLine()
 	} else {
 		screenWidth = std::max(screenWidth, 1);
 	}
-	
+
 	if (!cmdline->result("yresolution", screenHeight)) {
 		screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
 	} else {
 		screenHeight = std::max(screenHeight, 1);
 	}
-	
+
 }
 
 /**
