@@ -372,6 +372,11 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
+	
+#ifdef SYNCDEBUG
+	proto->AddType(NETMSG_SD_CHKREQUEST, 5);
+	proto->AddType(NETMSG_SD_CHKRESPONSE, -2);
+#endif
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()

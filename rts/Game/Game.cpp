@@ -3971,8 +3971,8 @@ void CGame::ClientReadNet()
 			}
 			default: {
 #ifdef SYNCDEBUG
-				lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
-				if (!lastLength)
+				//lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
+				//if (!lastLength)
 #endif
 				{
 					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);

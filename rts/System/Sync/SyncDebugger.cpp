@@ -6,7 +6,8 @@
 
 #include "LogOutput.h"
 #include "System/GlobalStuff.h"
-#include "System/Net.h"
+#include "System/BaseNetProtocol.h"
+#include "System/NetProtocol.h"
 #include "SyncDebugger.h"
 #include "Logger.h"
 
@@ -323,8 +324,8 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
-		serverNet->SendPause(gu->myPlayerNum, true);
-		serverNet->SendData< int >(NETMSG_SD_CHKREQUEST, serverframenum);
+		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+		net->Send(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 	}
 }
 
@@ -346,7 +347,7 @@ void CSyncDebugger::ClientSendChecksumResponse()
 		}
 		checksums.push_back(checksum);
 	}
-	net->SendSTLData< unsigned char, Uint64, std::vector<unsigned> >(NETMSG_SD_CHKRESPONSE, gu->myPlayerNum, flop, checksums);
+	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
 }
 
 
@@ -389,7 +390,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 // 		serverNet->SendData<unsigned> (NETMSG_SD_BLKREQUEST, ii);
 	} else {
 		logger.AddLine("Server: huh, all blocks equal?!?");
-		serverNet->SendData(NETMSG_SD_RESET);
+		net->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
 	for (int j = 0; j < MAX_PLAYERS; ++j)
@@ -407,7 +408,7 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 {
 	if (!pendingBlocksToRequest.empty() && !waitingForBlockResponse) {
 		// last two shorts are for progress indication
-		serverNet->SendData<unsigned short, unsigned short, unsigned short> (NETMSG_SD_BLKREQUEST, pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size());
+		net->Send(CBaseNetProtocol::Get().SendSdBlockrequest(pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size()));
 		waitingForBlockResponse = true;
 	}
 }
@@ -426,7 +427,7 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 			checksums.push_back(historybt[BLOCK_SIZE * block + i].chk);
 		else  checksums.push_back(history[BLOCK_SIZE * block + i].chk);
 	}
-	net->SendSTLData< unsigned char, std::vector<unsigned> >(NETMSG_SD_BLKRESPONSE, gu->myPlayerNum, checksums);
+	net->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
 }
 
 
@@ -527,7 +528,7 @@ void CSyncDebugger::ServerDumpStack()
 	}
 
 	// and reset
-	serverNet->SendData(NETMSG_SD_RESET);
+	net->Send(CBaseNetProtocol::Get().SendSdReset());
 	logger.AddLine("Server: Done!");
 	logger.CloseSession();
 	logOutput.Print("[SD] Server: Done!");
