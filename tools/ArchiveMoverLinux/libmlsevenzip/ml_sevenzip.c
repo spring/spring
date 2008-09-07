@@ -93,10 +93,10 @@ SRes ml_sevenzip_read(void *object, void **buffer, size_t *size)
 {
 
   CFileInStream *archive_in = (CFileInStream *) object;
-  value readable = (archive_in->readable);
-  CAMLparam1 (readable);
-  CAMLlocal4 (read, tuple, ml_string, ml_size);
+  CAMLparam0 ();
+  CAMLlocal5 (readable, read, tuple, ml_string, ml_size);
 
+  readable = archive_in->readable;
   read = Field(readable, 0);
   tuple = caml_callback(read, Val_int(*size));
   ml_string = Field(tuple, 0);
@@ -113,10 +113,10 @@ SRes ml_sevenzip_read(void *object, void **buffer, size_t *size)
 SRes ml_sevenzip_seek(void *object, CFileSize pos, ESzSeek origin)
 {
   CFileInStream *archive_in = (CFileInStream *) object;
-  value readable = archive_in->readable;
-  CAMLparam1 (readable);
-  CAMLlocal2 (seek, term);
+  CAMLparam0 ();
+  CAMLlocal3 (readable, seek, term);
 
+  readable = archive_in->readable;
   seek = Field(readable, 1);
 
   switch (origin) {
@@ -176,17 +176,16 @@ value ml_sevenzip_open_readable (value readable)
 value ml_sevenzip_entries(value sevenzip)
 {
   CAMLparam1 (sevenzip);
-  CAMLlocal1 (entries);
+  CAMLlocal2 (entries, entry);
   CSzArEx db = sevenzip_in_file_val(sevenzip);
 
   entries = caml_alloc (db.db.NumFiles, 0);
 
   UInt32 i;
-  for (i = 0; i < db.db.NumFiles; i++)
-    {
-      value entry = alloc_sevenzip_entry(db, i);
-      Store_field (entries, i, entry);
-    }
+  for (i = 0; i < db.db.NumFiles; i++) {
+    entry = alloc_sevenzip_entry(db, i);
+    Store_field (entries, i, entry);
+  }
 
   CAMLreturn (entries);
 }
