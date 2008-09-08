@@ -5028,6 +5028,14 @@
 						RelativePath="..\..\System\Platform\Win\WinFileSystemHandler.h"
 						>
 					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\WinVersion.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\WinVersion.h"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
@@ -12578,13 +12586,6 @@
 				<File
 					RelativePath="..\..\lib\gml\gml.cpp"
 					>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gml.h"

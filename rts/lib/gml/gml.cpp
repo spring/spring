@@ -41,11 +41,13 @@
 
 // TLS (thread local storage) thread identifier
 #if GML_ENABLE
-#ifdef _MSC_VER
+#	ifdef _MSC_VER
 __declspec(thread) int gmlThreadNumber=0;
-#else
+#	else
+#		if !GML_GCC_TLS_FIX
 __thread int gmlThreadNumber=0;
-#endif
+#		endif
+#	endif
 #else
 int gmlThreadNumber=0;
 #endif

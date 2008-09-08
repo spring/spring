@@ -30,6 +30,9 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	heightDataX(gs->mapx + 1),
 	maxIdx(((gs->mapx + 1) * (gs->mapy + 1)) - 1)
 {
+	mapWidth = (gs->mapx << 3);
+	bigTexH = (gs->mapy << 3) / numBigTexY;
+
 	map = rm;
 
 	heightData = map->heightmap;
@@ -148,9 +151,6 @@ inline void CBFGroundDrawer::EndStripQ(CVertexArray *ma)
 
 
 inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
-	static int mapWidth = (gs->mapx << 3);
-	static int bigTexH = (gs->mapy << 3) / numBigTexY;
-
 	const int minx =             0;
 	const int maxx =      mapWidth;
 	const int minz = bty * bigTexH;
