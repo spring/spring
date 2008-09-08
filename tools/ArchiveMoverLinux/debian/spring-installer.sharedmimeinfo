@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  
+  <mime-type type="application/x-spring-sdz">
+    <sub-class-of type="application/zip"/>
+    <comment>Spring Archive</comment>
+    <glob pattern="*.sdz"/>
+  </mime-type>
+
+  <mime-type type="application/x-spring-sd7">
+    <sub-class-of type="application/x-7z-compressed"/>
+    <comment>Spring Archive</comment>
+    <glob pattern="*.sd7"/>
+  </mime-type>
+
+</mime-info>

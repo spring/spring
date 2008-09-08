@@ -10,7 +10,7 @@ let load path =
     else if String.ends_with path ".sd7" then
       Sd7.In.load path
     else
-    raise (Error (Printf.sprintf "Unknown archive type: %s" path))
+      raise (Error (Printf.sprintf "Unknown archive type: %s" path))
   with
       Zip.Error (path, _, s) -> raise (Error (Printf.sprintf "%s: %s" path s))
     | Sevenzip.Error s -> raise (Error (Printf.sprintf "%s: %s" path s))
@@ -19,10 +19,11 @@ let load path =
 let detect_kind path =
   let archive = load path in
   let entries = archive#entries in
+
   let test_files func =
     let f entry = func (String.lowercase entry#name) in
-      List.exists f entries
-  in
+      List.exists f entries in
+
   let is_map path =
     let dirname = Filename.dirname path in
     let basename = Filename.basename path in

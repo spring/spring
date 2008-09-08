@@ -1,15 +1,17 @@
+let title = "Spring Installer"
+
 let die message = 
-  GToolbox.message_box ~title:"Spring Archive Mover" ~ok:"Exit" message;
+  GToolbox.message_box ~title:title ~ok:"Exit" message;
   GMain.Main.quit ()
 
 let warn message = 
-  GToolbox.message_box ~title:"Spring Archive Mover" ~ok:"Ok" message
+  GToolbox.message_box ~title:title ~ok:"Ok" message
 
 let archive_mover path kind datadir =
   (* Window *)
 
   let window = GWindow.window
-    ~title:"Spring Archive Mover"
+    ~title:title
     ~width:512
     ~height:160
     ~position:`CENTER
@@ -152,7 +154,7 @@ let archive_mover path kind datadir =
 
 let fail message =
   GToolbox.message_box
-    ~title:"Spring Archive Mover"
+    ~title:title
     ~ok:"Exit"
     message
 
