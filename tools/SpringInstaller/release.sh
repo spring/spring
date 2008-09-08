@@ -1,3 +1,4 @@
+#!/bin/bash
 PACKAGE=`dpkg-parsechangelog -c1 | sed -rn "s/^Source: (.+)/\1/p"`
 VERSION=`dpkg-parsechangelog -c1 | sed -rn "s/^Version: (.+)-.+$/\1/p"`
 TMPDIR=`mktemp -d`
