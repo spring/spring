@@ -16,6 +16,6 @@ clean:
 
 install:
 	install -m 755 spring-installer $(DESTDIR)/usr/bin/spring-installer
- 	install -m 644 debian/spring-installer.desktop $(DESTDIR)/usr/share/applications/spring-installer.desktop
+	install -m 644 debian/spring-installer.desktop $(DESTDIR)/usr/share/applications/spring-installer.desktop
 
 .PHONY: all clean libmlsevenzip
