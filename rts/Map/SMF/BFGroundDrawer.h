@@ -38,6 +38,9 @@ protected:
 	const int numBigTexY;
 	const int maxIdx;
 
+	int mapWidth;
+	int bigTexH;
+
 	int neededLod;
 
 	float* heightData;

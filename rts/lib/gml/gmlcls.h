@@ -48,12 +48,36 @@
 #define GML_UPDSRV_INTERVAL 10
 #define GML_ALTERNATE_SYNCMODE 1 // mutex-protected synced execution, slower but more portable
 #define GML_ENABLE_TLS_CHECK 1 // check if Thread Local Storage appears to be working
-
+#define GML_GCC_TLS_FIX 1 // fix buggy TLS in GCC by using the Win32 TIB (faster also!)
+#define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
 //#define BOOST_AC_USE_PTHREADS
-#ifdef _MSC_VER
-#define GML_ORDERED_VOLATILE (_MSC_VER >= 1400) 
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
+#	include <libkern/OSAtomic.h>
+#	define GML_MEMBAR OSMemoryBarrier()
+#elif defined(__GNUC__)
+#	if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
+#		define GML_MEMBAR __sync_synchronize()
+#	elif defined( __ppc__ ) || defined( __powerpc__) || defined( __PPC__ )
+#		define GML_MEMBAR asm volatile("sync":::"memory")
+#	elif defined( __i386__ ) || defined( __i486__ ) || defined( __i586__ ) || defined( __i686__ ) || defined( __x86_64__ )
+#		define GML_MEMBAR asm volatile("mfence":::"memory")
+#	endif
+#elif defined(_MSC_VER)
+#	if (_MSC_VER >= 1400) 
+#		define GML_MEMBAR 
+#	else
+#		define GML_MEMBAR MemoryBarrier()
+#	endif
+#elif defined(__BORLANDC__)
+#	define GML_MEMBAR _asm {lock add [esp], 0}
+#endif
+
+#ifdef GML_MEMBAR
+#	define GML_ORDERED_VOLATILE 1
 #else
-#define GML_ORDERED_VOLATILE 0
+#	define GML_ORDERED_VOLATILE 0
+#	define GML_MEMBAR
 #endif
 // optimize by assuming volatile accesses are
 // guaranteed not to be reordered (MSVS 2005 ONLY)
@@ -79,15 +103,31 @@
 #define GML_TYPENAME
 #endif
 
+#define set_threadnum(val) gmlThreadNumber=val
+
 #if GML_ENABLE
-#ifdef _MSC_VER
+#	ifdef _MSC_VER
 extern __declspec(thread) int gmlThreadNumber;
-#else
+#	else
+#		if GML_GCC_TLS_FIX
+static inline unsigned long get_threadnum(void) {
+	unsigned long _v;
+	__asm__("mov %%fs:0x14, %0":"=r" (_v) : : );
+	return _v;
+}
+#			undef set_threadnum
+static inline void set_threadnum(unsigned long val) {
+	__asm__ __volatile__("mov %0,%%fs:0x14" : : "r" (val));
+}
+#	define gmlThreadNumber get_threadnum()
+#		else
 extern __thread int gmlThreadNumber;
-#endif
+#		endif
+#	endif
 #else
 extern int gmlThreadNumber;
 #endif
+
 extern int gmlThreadCount;
 extern int gmlThreadCountOverride;
 extern unsigned gmlCPUCount();
@@ -225,9 +265,32 @@ public:
 };
 #endif
 
-// this hack will assign the counter of a boost atomic_count object
+// this will assign the counter of a boost atomic_count object
 inline void operator%=(gmlCount& a, long val) {
+#if GML_LOCKED_GMLCOUNT_ASSIGNMENT
+	#if defined(BOOST_AC_USE_PTHREADS)
+		boost::mutex::scoped_lock lock(a.mutex_);
+		a.value_=val;
+	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
+		__asm__ __volatile__("lock\n\txchgl %0,%1\n\t" : "=r" (val) : "m" (a.value_), "0" (val) : "memory");
+	#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+		return BOOST_INTERLOCKED_EXCHANGE(&a.value_,val);
+	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (__GNUC__*100+__GNUC_MINOR__>=401))
+		__sync_exchange_FIXME(&a.value_, val);
+	#elif defined(__GLIBCXX__)
+		__gnu_cxx::__exchange_FIXME(&a.value_, val);
+	#elif defined(__GLIBCPP__)
+		__exchange_FIXME(&a.value_, val);
+	#elif defined(BOOST_HAS_PTHREADS)
+		#define BOOST_AC_USE_PTHREADS
+		boost::mutex::scoped_lock lock(a.mutex_);
+		a.value_=val;
+	#else
+		#error Unrecognized threading platform
+	#endif
+#else
 	a.value_=val;
+#endif
 /*#ifdef BOOST_AC_USE_PTHREADS
 	a.~gmlCount();
 #endif
@@ -334,7 +397,8 @@ public:
 							int ms;
 							if(sz==(ms=GML_VOLATILE(int) maxsize))
 								Expand(da,ms);
-							new (da+sz-1) T();
+							new ((void *)(volatile T *)(da+sz-1)) T();
+							GML_MEMBAR;
 							++added;
 						}
 						else {
@@ -387,7 +451,8 @@ public:
 				int ms;
 				if(sz==(ms=GML_VOLATILE(int) maxsize))
 					Expand(da,ms);
-				new (da+sz-1) T(d);
+				new ((void *)(volatile T *)(da+sz-1)) T(d);
+				GML_MEMBAR;
 				++added;
 				return;
 			}
@@ -425,6 +490,7 @@ public:
 		int ms2=ms<<1;
 		da=(T *)volatile_realloc((BYTE *)da,ms*sizeof(T),ms2*sizeof(T));
 		GML_VOLATILE(T *) data=da; 
+		GML_MEMBAR;
 		GML_VOLATILE(int) maxsize=ms2;
 	}
 	
@@ -535,6 +601,7 @@ public:
 		if(sz==(ms=GML_VOLATILE(int) maxsize))
 			Expand(da,ms);
 		*(volatile T *)(da+sz-1)=d;
+		GML_MEMBAR;
 		++added;
 #else
 		mutex.Lock();
@@ -563,7 +630,8 @@ public:
 		shrinksize=ms;
 		int ms2=ms<<1;
 		da=(T *)volatile_realloc((BYTE *)da,ms*sizeof(T),ms2*sizeof(T));
-		GML_VOLATILE(T *) data=da; 
+		GML_VOLATILE(T *) data=da;
+		GML_MEMBAR;
 		GML_VOLATILE(int) maxsize=ms2;
 	}
 	
@@ -685,6 +753,7 @@ struct gmlQueue {
 };
 
 
+
 template<class T,class S, class C>
 class gmlItemSequenceServer {
 	typedef void (*delitemseqfun)(T, S);
@@ -733,6 +802,7 @@ public:
 		while(avail<req+pregen && item_arr[i=(avail%arr_size)]==0) {
 			GML_MUTEX_LOCK();
 			*(volatile T *)(item_arr+i)=(*genfun)(1);
+			GML_MEMBAR; // perhaps not needed, because ++avail acts as a barrier
 			GML_MUTEX_UNLOCK();
 			++avail;
 		}
@@ -741,7 +811,9 @@ public:
 			int gensize=size_large;
 			GML_MUTEX_LOCK();
 			*(volatile T *)(large_item_arr+i)=(*genfun)(gensize);
+			GML_MEMBAR;
 			*(volatile T *)(large_size_arr+i)=gensize;
+			GML_MEMBAR; // perhaps not needed, because ++avail_large acts as a barrier
 			GML_MUTEX_UNLOCK();
 			++avail_large;
 		}
@@ -776,6 +848,7 @@ public:
 			T ip=*(volatile T *)(large_item_arr+idx);
 			T *sz=large_size_arr+idx;
 			T szv=*(volatile T *)sz;
+			GML_MEMBAR;
 			*(volatile T *)sz=0;
 			GML_MUTEX_UNLOCK();
 			if(szv>static_cast<T>(n))
@@ -817,6 +890,7 @@ public:
 		while(avail<req+pregen && arr[i=(avail%arr_size)]==0) {
 			GML_MUTEX_LOCK();
 			*(volatile T *)(arr+i)=(*genfun)();
+			GML_MEMBAR; // perhaps not needed, because ++avail acts as a barrier
 			GML_MUTEX_UNLOCK();
 			++avail;
 		}
@@ -833,6 +907,7 @@ public:
 		T *ip=arr+(num-1)%arr_size;
 		GML_MUTEX_LOCK();
 		T ret=*(volatile T *)ip;
+		GML_MEMBAR; // probably not needed, becase reordering is not possible
 		*(volatile T *)ip=0;
 		GML_MUTEX_UNLOCK();
 		return ret;
@@ -870,6 +945,7 @@ public:
 			(*genfun)(1,&val);
 			GML_MUTEX_LOCK();
 			*(volatile T *)(arr+i)=val;
+			GML_MEMBAR; // perhaps not needed, because ++avail acts as a barrier
 			GML_MUTEX_UNLOCK();
 			++avail;
 		}
@@ -888,6 +964,7 @@ public:
 			T *ip=arr+(num-1)%arr_size;
 			GML_MUTEX_LOCK();
 			data[i]=*(volatile T *)ip;
+			GML_MEMBAR; // probably not needed, becase reordering is not possible
 			*(volatile T *)ip=0;
 			GML_MUTEX_UNLOCK();
 		}

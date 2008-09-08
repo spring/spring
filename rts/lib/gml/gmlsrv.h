@@ -167,6 +167,7 @@ public:
 					if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
 						gmlUpdateServers();
 					BOOL_ processed=FALSE;
+
 					for(int i=1; i<gmlThreadCount; ++i) {
 						gmlQueue *qd=&gmlQueues[i];
 						if(qd->Reloc)
@@ -186,6 +187,7 @@ public:
 							//						++nproc;
 						}
 					}
+
 					if(ClientsReady>=gmlThreadCount-1)
 						++ClientsReady;
 				}
@@ -204,31 +206,30 @@ public:
 	}
 
 	void WorkInit() {
-		if(!inited) {
-			gmlInit();
+		set_threadnum(0);
+		gmlInit();
 
-			for(int i=1; i<gmlThreadCount; ++i)
-				threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
+		for(int i=1; i<gmlThreadCount; ++i)
+			threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
 #if GML_ENABLE_TLS_CHECK
-			for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
-				boost::thread::yield();
-			if(gmlThreadNumber!=0) {
-				handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
-			}
-#endif
-			inited=TRUE;
+		for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
+			boost::thread::yield();
+		if(gmlThreadNumber!=0) {
+			handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 		}
+#endif
+		inited=TRUE;
 	}
 
 	void Work(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, GML_TYPENAME std::list<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
+		if(!inited)
+			WorkInit();
 		if(gmlThreadNumber!=0) {
 			NewWork(wrk,wrka,wrkit,cls,mt,sm,it,nu,l1,l2,sw,swf);
 			return;
 		}
 		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
 		new (ex) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
-		if(!inited)
-			WorkInit();
 		gmlServer();
 	}
 
@@ -296,7 +297,7 @@ public:
 	}
 
 	void gmlClient() {
-		gmlThreadNumber=++threadcnt;
+		set_threadnum(++threadcnt);
 		streflop_init<streflop::Simple>();
 		while(dorun) {
 			gmlClientSub();

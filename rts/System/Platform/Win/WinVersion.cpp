@@ -57,6 +57,10 @@ using namespace std;
 typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 
+#ifndef SM_SERVERR2
+#define SM_SERVERR2 89
+#endif
+
 // this is a modified version of http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
 // always provide a long enough buffer
 std::string GetOSDisplayString()

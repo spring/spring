@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "BaseNetProtocol.h"
 
-#include <stdint.h>
-
+#include <boost/cstdint.hpp>
+using boost::uint16_t;
 #include "mmgr.h"
 
 #include "Net/RawPacket.h"
