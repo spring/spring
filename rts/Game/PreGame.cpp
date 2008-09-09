@@ -88,7 +88,12 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 
 	if(server){
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-		if(gameSetup){
+		if (!demoFile.empty())
+		{
+			ReadDataFromDemo(demoFile);
+			state = WAIT_CONNECTING;
+		}
+		else if(gameSetup){
 			StartServer(gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName);
 			state = WAIT_CONNECTING;
 		} else if (hasSave) {
@@ -473,6 +478,7 @@ void CPreGame::UpdateClientNet()
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
+	assert(!gameServer);
 	logOutput.Print("Pre-scanning demo file for game data...");
 	bool hasSetup = static_cast<bool>(gameSetup);
 	CDemoReader scanner(demoName, 0);
@@ -484,7 +490,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		gu->LoadFromSetup(gameSetup);
 	}
 
-	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
+	if (!hasSetup)
+		gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
 	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(INT_MAX)));
 	while ( buf )
@@ -493,7 +500,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(springDefaultPort, false, data, gameSetup, demoName);
+			gameServer = new CGameServer(hasSetup ? gameSetup->hostport : springDefaultPort, false, data, gameSetup, demoName);
 			gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 			good_fpu_control_registers("after CGameServer creation");
 			break;
@@ -505,6 +512,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		}
 		buf.reset(scanner.GetData(static_cast<float>(INT_MAX)));
 	}
+	assert(gameServer);
 }
 
 
