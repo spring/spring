@@ -12,13 +12,13 @@
 #include <GL/glew.h>
 
 #ifndef GML_COMPATIBLE_ATOMIC_COUNT
-# ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
-#  error "Please make sure StdAfx.h is included before anything that includes boost"
-# endif
-# define GML_COMPATIBLE_ATOMIC_COUNT
-# define private public
-# include <boost/detail/atomic_count.hpp>
-# undef private
+#	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
+#		error "Please make sure StdAfx.h is included before anything that includes boost"
+#	endif
+#	define GML_COMPATIBLE_ATOMIC_COUNT
+#	define private public
+#	include <boost/detail/atomic_count.hpp>
+#	undef private
 #endif
 
 #include <boost/thread/mutex.hpp>
@@ -52,6 +52,7 @@
 #define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
 //#define BOOST_AC_USE_PTHREADS
 
+// memory barriers for different platforms
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #	include <libkern/OSAtomic.h>
 #	define GML_MEMBAR OSMemoryBarrier()
@@ -65,9 +66,9 @@
 #	endif
 #elif defined(_MSC_VER)
 #	if (_MSC_VER >= 1400) 
-#		define GML_MEMBAR 
+#		define GML_MEMBAR // no barrier needed
 #	else
-#		define GML_MEMBAR MemoryBarrier()
+#		define GML_MEMBAR MemoryBarrier() // _asm {lock add [esp], 0}
 #	endif
 #elif defined(__BORLANDC__)
 #	define GML_MEMBAR _asm {lock add [esp], 0}
@@ -80,27 +81,32 @@
 #	define GML_MEMBAR
 #endif
 // optimize by assuming volatile accesses are
-// guaranteed not to be reordered (MSVS 2005 ONLY)
+// guaranteed not to be reordered (MSVS 2005 or memory barrier needed)
 // http://msdn.microsoft.com/en-us/library/12a04hfd(VS.80).aspx
 // http://msdn.microsoft.com/en-us/library/ms686355(VS.85).aspx
 // http://msdn.microsoft.com/en-us/library/bb310595(VS.85).aspx
 
 #if GML_ORDERED_VOLATILE
-#define GML_VOLATILE(x) *(x volatile *)&
-#define GML_MUTEX
-#define GML_MUTEX_LOCK()
-#define GML_MUTEX_UNLOCK()
+#	define GML_VOLATILE(x) *(x volatile *)&
+#	define GML_MUTEX
+#	define GML_MUTEX_LOCK()
+#	define GML_MUTEX_UNLOCK()
 #else
-#define GML_VOLATILE(x)
-#define GML_MUTEX gmlMutex mutex
-#define GML_MUTEX_LOCK() mutex.Lock()
-#define GML_MUTEX_UNLOCK() mutex.Unlock()
+#	define GML_VOLATILE(x)
+#	define GML_MUTEX gmlMutex mutex
+#	define GML_MUTEX_LOCK() mutex.Lock()
+#	define GML_MUTEX_UNLOCK() mutex.Unlock()
 #endif
 
 #ifdef _MSC_VER
-#define GML_TYPENAME typename
+#	define GML_TYPENAME typename
 #else
-#define GML_TYPENAME
+#	define GML_TYPENAME
+#endif
+
+#define GML_USE_SPEEDY_TLS (!defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__)) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#if GML_USE_SPEEDY_TLS
+#	include "speedy-tls.h"
 #endif
 
 #define set_threadnum(val) gmlThreadNumber=val
@@ -109,17 +115,36 @@
 #	ifdef _MSC_VER
 extern __declspec(thread) int gmlThreadNumber;
 #	else
-#		if GML_GCC_TLS_FIX
+#		if GML_GCC_TLS_FIX || GML_USE_SPEEDY_TLS
 static inline unsigned long get_threadnum(void) {
 	unsigned long _v;
+#			if GML_GCC_TLS_FIX
+#				ifndef _WIN64
 	__asm__("mov %%fs:0x14, %0":"=r" (_v) : : );
+#				else
+	__asm__("mov %%gs:0x28, %0":"=r" (_v) : : );
+#				endif
+#			else
+	speedy_tls_get_int32(0, 0, sizeof(unsigned long), _v);
+#			endif
 	return _v;
 }
 #			undef set_threadnum
 static inline void set_threadnum(unsigned long val) {
+#			if GML_GCC_TLS_FIX
+#				ifndef _WIN64
 	__asm__ __volatile__("mov %0,%%fs:0x14" : : "r" (val));
+#				else
+	__asm__ __volatile__("mov %0,%%gs:0x28" : : "r" (val));
+#				endif
+#			else
+	if (speedy_tls_init(sizeof(unsigned long))<0) { // this works because we only set the thread number once per thread
+		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);
+	}
+	speedy_tls_put_int32(0, 0, sizeof(unsigned long), val);
+#			endif
 }
-#	define gmlThreadNumber get_threadnum()
+#			define gmlThreadNumber get_threadnum()
 #		else
 extern __thread int gmlThreadNumber;
 #		endif
