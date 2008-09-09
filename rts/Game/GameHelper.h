@@ -27,7 +27,7 @@ class CGameHelper
 {
 public:
 	CGameHelper(CGame* game);
-	virtual ~CGameHelper();
+	~CGameHelper();
 	bool TestAllyCone(const float3& from, const float3& dir, float length, float spread, int allyteam, CUnit* owner);
 	bool TestNeutralCone(const float3& from, const float3& dir, float length, float spread, CUnit* owner);
 	bool TestTrajectoryAllyCone(const float3 &from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner);

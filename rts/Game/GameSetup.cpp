@@ -187,7 +187,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 			data.countryCode = it->second;
 		if ((it = setup.find("spectator")) != setup.end())
 			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
-		if ((it = setup.find("IsFromDemo")) != setup.end())
+		if ((it = setup.find("isfromdemo")) != setup.end())
 			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
 
 		if (data.isFromDemo)

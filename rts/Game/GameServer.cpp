@@ -979,7 +979,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			if (!players[a] || !players[a]->readyToStart) {
 				allReady = false;
 				break;
-			} else if (!teams[players[a]->team]->readyToStart && !demoReader)
+			} else if (teams[players[a]->team] && !teams[players[a]->team]->readyToStart && !demoReader)
 			{
 				allReady = false;
 				break;
