@@ -44,7 +44,7 @@
 #	ifdef _MSC_VER
 __declspec(thread) int gmlThreadNumber=0;
 #	else
-#		if !GML_GCC_TLS_FIX
+#		if !GML_GCC_TLS_FIX && !GML_USE_SPEEDY_TLS
 __thread int gmlThreadNumber=0;
 #		endif
 #	endif
