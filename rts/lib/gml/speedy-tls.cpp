@@ -59,15 +59,22 @@ typedef struct i386_descriptor {
 
 #ifdef linux
 
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <sys/syscall.h>
 #include <asm/ldt.h>
-#include <asm/unistd.h>
+#include <linux/unistd.h>
+#include <linux/version.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 
+int modify_ldt(int func, void *ptr, unsigned long bytecount) {
+	return syscall(__NR_modify_ldt, func, ptr, bytecount);
+}
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 66)
+#define modify_ldt_ldt_s user_desc
+#endif
+
 //Define the modify_ldt function that will call this particular syscall.
-_syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount);
+//_syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount);
 
 #ifdef __x86_64__
 #include <sys/prctl.h>
