@@ -2,6 +2,7 @@
 //Speedy TLS 1.0. Latest version at http://www.kevinjhoffman.com/
 //Contains macros that can be used to very quickly (one instruction) access thread-local memory.
 
+#ifdef USE_GML
 #if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__)
 
 #include "speedy-tls.h"
@@ -423,4 +424,5 @@ void* speedy_tls_get_base()
 
 #endif
 
+#endif
 #endif
