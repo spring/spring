@@ -49,6 +49,8 @@
 #define GML_ALTERNATE_SYNCMODE 1 // mutex-protected synced execution, slower but more portable
 #define GML_ENABLE_TLS_CHECK 1 // check if Thread Local Storage appears to be working
 #define GML_GCC_TLS_FIX 1 // fix buggy TLS in GCC by using the Win32 TIB (faster also!)
+#define GML_MSC_TLS_OPT 1 // use the Win32 TIB for TLS in MSVC (possibly faster)
+#define GML_64BIT_USE_GS 1 // 64-bit OS will use the GS register for TLS (untested feature)
 #define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
 //#define BOOST_AC_USE_PTHREADS
 
@@ -66,7 +68,7 @@
 #	endif
 #elif defined(_MSC_VER)
 #	if (_MSC_VER >= 1400) 
-#		define GML_MEMBAR // no barrier needed
+#		define GML_MEMBAR // no barrier needed for MSVS 2005
 #	else
 #		define GML_MEMBAR MemoryBarrier() // _asm {lock add [esp], 0}
 #	endif
@@ -80,6 +82,7 @@
 #	define GML_ORDERED_VOLATILE 0
 #	define GML_MEMBAR
 #endif
+
 // optimize by assuming volatile accesses are
 // guaranteed not to be reordered (MSVS 2005 or memory barrier needed)
 // http://msdn.microsoft.com/en-us/library/12a04hfd(VS.80).aspx
@@ -104,7 +107,11 @@
 #	define GML_TYPENAME
 #endif
 
-#define GML_USE_SPEEDY_TLS (!defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__)) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#define GML_USE_SPEEDY_TLS 1
+#else
+#define GML_USE_SPEEDY_TLS 0
+#endif
 #if GML_USE_SPEEDY_TLS
 #	include "speedy-tls.h"
 #endif
@@ -113,26 +120,54 @@
 
 #if GML_ENABLE
 #	ifdef _MSC_VER
+#		if GML_MSC_TLS_OPT
+static inline unsigned long get_threadnum(void) {
+	unsigned long val;
+	__asm {
+#if !defined(_WIN64) || !GML_64BIT_USE_GS
+		mov EAX, FS:[14h]
+#else
+		mov EAX, GS:[28h]
+#endif
+		mov [val], EAX
+	}
+	return val;
+}
+#			define gmlThreadNumber get_threadnum()
+#			undef set_threadnum
+static inline void set_threadnum(unsigned long val) {
+	__asm {
+		mov EAX, [val]
+#if !defined(_WIN64) || !GML_64BIT_USE_GS
+		mov FS:[14h], EAX
+#else
+		mov GS:[28h], EAX
+#endif
+	}
+}
+#		else
 extern __declspec(thread) int gmlThreadNumber;
+#		endif
 #	else
 #		if GML_GCC_TLS_FIX || GML_USE_SPEEDY_TLS
 static inline unsigned long get_threadnum(void) {
-	unsigned long _v;
+	unsigned long val;
 #			if GML_GCC_TLS_FIX
-#				ifndef _WIN64
-	__asm__("mov %%fs:0x14, %0":"=r" (_v) : : );
+#				if !defined(_WIN64) || !GML_64BIT_USE_GS
+	__asm__("mov %%fs:0x14, %0" : "=r" (val) : : );
 #				else
-	__asm__("mov %%gs:0x28, %0":"=r" (_v) : : );
+	__asm__("mov %%gs:0x28, %0" : "=r" (val) : : );
 #				endif
 #			else
-	speedy_tls_get_int32(0, 0, sizeof(unsigned long), _v);
+	speedy_tls_get_int32(0, 0, sizeof(unsigned long), val);
 #			endif
-	return _v;
+	return val;
 }
+#			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
 static inline void set_threadnum(unsigned long val) {
 #			if GML_GCC_TLS_FIX
-#				ifndef _WIN64
+#				if !defined(_WIN64) || !GML_64BIT_USE_GS
 	__asm__ __volatile__("mov %0,%%fs:0x14" : : "r" (val));
 #				else
 	__asm__ __volatile__("mov %0,%%gs:0x28" : : "r" (val));
@@ -144,7 +179,6 @@ static inline void set_threadnum(unsigned long val) {
 	speedy_tls_put_int32(0, 0, sizeof(unsigned long), val);
 #			endif
 }
-#			define gmlThreadNumber get_threadnum()
 #		else
 extern __thread int gmlThreadNumber;
 #		endif
