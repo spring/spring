@@ -1,7 +1,7 @@
 Source: spring-installer
 Section: games
 Priority: optional
-Maintainer: Chris Clearwater <chris@caspring.org>
+Maintainer: Chris Clearwater <chris@detrino.org>
 Build-Depends: debhelper, ocaml, libzip-ocaml-dev, libextlib-ocaml-dev, liblablgtk2-ocaml-dev
 Standards-Version: 3.7.2
 
