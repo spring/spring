@@ -12,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 
