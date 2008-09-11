@@ -127,10 +127,9 @@ class CSyncDebugger {
 
 		void Initialize(bool useBacktrace);
 		void ServerTriggerSyncErrorHandling(int serverframenum);
-		int ServerReceived(const unsigned char* inbuf);
+		bool ServerReceived(const unsigned char* inbuf);
 		void ServerHandlePendingBlockRequests();
-		int ClientReceived(const unsigned char* inbuf);
-		int GetMessageLength(const unsigned char* inbuf) const;
+		bool ClientReceived(const unsigned char* inbuf);
 		void Reset();
 
 		friend class CSyncedPrimitiveBase;
