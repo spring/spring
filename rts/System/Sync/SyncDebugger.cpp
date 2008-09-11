@@ -122,6 +122,8 @@ void CSyncDebugger::Initialize(bool useBacktrace)
 
 	// init logger
 	logger.SetFilename(useBacktrace ? LOGFILE_SERVER : LOGFILE_CLIENT);
+	logger.AddLine("Syncdebugger initialised");
+	logger.FlushBuffer();
 }
 
 
@@ -254,6 +256,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 			syncDebugPacket = true;
 			break;
 	}
+	logger.FlushBuffer();
 	return syncDebugPacket;
 }
 
@@ -302,6 +305,7 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 			syncDebugPacket = true;
 			break;
 	}
+	logger.FlushBuffer();
 	return syncDebugPacket;
 }
 

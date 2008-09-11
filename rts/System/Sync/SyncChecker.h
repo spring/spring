@@ -140,25 +140,6 @@ class CSyncChecker {
 		friend class CSyncedPrimitiveBase;
 };
 
-
-/**
- * @brief base class to use for synced classes
- */
-class CSyncedPrimitiveBase {
-
-	protected:
-
-		/**
-		 * @brief wrapper to call the private CSyncChecker::Sync()
-		 */
-		inline void Sync(void* p, unsigned size, const char* s) {
-			CSyncChecker::Sync(p, size);
-#ifdef TRACE_SYNC_HEAVY
-            tracefile << "Sync " << s << " " << CSyncChecker::GetChecksum() << "\n";
-#endif
-		}
-};
-
 #endif // SYNCDEBUG
 
 #endif // SYNCDEBUGGER_H

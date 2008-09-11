@@ -360,7 +360,9 @@ void CGameServer::CheckSync()
 
 				// TODO enable this when we have resync
 				//serverNet->SendPause(SERVER_PLAYER, true);
-
+#ifdef SYNCDEBUG
+				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
+#endif
 				//For each group, output a message with list of playernames in it.
 				// TODO this should be linked to the resync system so it can roundrobin
 				// the resync checksum request packets to multiple clients in the same group.
@@ -871,7 +873,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
-			if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
+			CSyncDebugger::GetInstance()->ServerReceived(inbuf);
+			break;
+		case NETMSG_SD_CHKREQUEST:
+		case NETMSG_SD_BLKREQUEST:
+		case NETMSG_SD_RESET:
+			Broadcast(packet);
 			break;
 #endif
 		default:
