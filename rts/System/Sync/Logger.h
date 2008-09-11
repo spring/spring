@@ -32,6 +32,7 @@ class CLogger {
 		void CloseSession();
 
 		void SetFilename(const char* fn) { filename = fn; }
+		void FlushBuffer();
 
 	private:
 
@@ -39,7 +40,6 @@ class CLogger {
 		CLogger(const CLogger&);
 		CLogger& operator=(const CLogger&);
 
-		void FlushBuffer();
 		void CppFilt(char* sym, int size);
 
 		boost::mutex logmutex;

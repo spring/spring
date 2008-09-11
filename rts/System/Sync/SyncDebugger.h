@@ -135,22 +135,6 @@ class CSyncDebugger {
 		friend class CSyncedPrimitiveBase;
 };
 
-
-/**
- * @brief base class to use for synced classes
- */
-class CSyncedPrimitiveBase {
-
-	protected:
-
-		/**
-		 * @brief wrapper to call the private CSyncDebugger::Sync()
-		 */
-		void Sync(void* p, unsigned size, const char* op) {
-			CSyncDebugger::GetInstance()->Sync(p, size, op);
-		}
-};
-
 #endif // SYNCDEBUG
 
 #endif // SYNCDEBUGGER_H
