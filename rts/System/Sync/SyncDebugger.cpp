@@ -202,9 +202,9 @@ unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
  * Plugin for the CGameServer network code in GameServer.cpp.
  * @return the number of bytes read from the network stream
  */
-int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
+bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 {
-	int length = 0;
+	bool syncDebugPacket = false;
 	switch (inbuf[0]) {
 		case NETMSG_SD_CHKRESPONSE:
 			if (*(short*)&inbuf[1] != HISTORY_SIZE * sizeof(unsigned) + 12) {
@@ -227,7 +227,7 @@ int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					}
 				}
 			}
-			length = *(short*)&inbuf[1];
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_BLKRESPONSE:
 			if (*(short*)&inbuf[1] != BLOCK_SIZE * sizeof(unsigned) + 4) {
@@ -251,14 +251,10 @@ int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					}
 				}
 			}
-			length = *(short*)&inbuf[1];
-			break;
-		default:
-			logger.AddLine("Server: invalid msg");
-			length = 0;
+			syncDebugPacket = true;
 			break;
 	}
-	return length;
+	return syncDebugPacket;
 }
 
 
@@ -268,9 +264,9 @@ int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
  * Plugin for the CGame network code in Game.cpp.
  * @return the number of bytes read from the network stream
  */
-int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
+bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 {
-	int length = 0;
+	bool syncDebugPacket = false;
 	switch (inbuf[0]) {
 		case NETMSG_SD_CHKREQUEST:
 			if (gs->frameNum != *(int*)&inbuf[1]) {
@@ -281,7 +277,7 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				ClientSendChecksumResponse();
 				logger.AddLine("Client: checksum response sent");
 			}
-			length = 5;
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_BLKREQUEST:
 			if (*(unsigned short*)&inbuf[1] >= HISTORY_SIZE) {
@@ -292,7 +288,7 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				// simple progress indication
 				logOutput.Print("[SD] Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
 			}
-			length = 7;
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_RESET:
 			logger.CloseSession();
@@ -303,14 +299,10 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				logOutput.Print("[SD] Client: Automatical quit enforced from commandline");
 				globalQuit = true;
 			}
-			length = 1;
-			break;
-		default:
-			logOutput.Print("[SD] Client: invalid msg");
-			length = 0;
+			syncDebugPacket = true;
 			break;
 	}
-	return length;
+	return syncDebugPacket;
 }
 
 
@@ -533,31 +525,6 @@ void CSyncDebugger::ServerDumpStack()
 	logger.CloseSession();
 	logOutput.Print("[SD] Server: Done!");
 }
-
-
-/**
- * @brief helper network plugin function
- *
- * @return the size of the sync debugger related net message in inbuf
- * at index 0 (if any), zero otherwise.
- */
-int CSyncDebugger::GetMessageLength(const unsigned char* inbuf) const
-{
-	switch (inbuf[0]) {
-		case NETMSG_SD_CHKREQUEST:
-			return 5;
-		case NETMSG_SD_BLKREQUEST:
-			return 7;
-		case NETMSG_SD_CHKRESPONSE:
-		case NETMSG_SD_BLKRESPONSE:
-			return *(short*)&inbuf[1];
-		case NETMSG_SD_RESET:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
 
 /**
  * @brief re-enable the history

@@ -868,6 +868,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 #endif
 			break;
+#ifdef SYNCDEBUG
+		case NETMSG_SD_CHKRESPONSE:
+		case NETMSG_SD_BLKRESPONSE:
+			if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
+			break;
+#endif
 		default:
 		{
 			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
