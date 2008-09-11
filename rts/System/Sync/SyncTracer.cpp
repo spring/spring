@@ -51,7 +51,10 @@ void CSyncTracer::Commit()
 #ifdef TRACE_SYNC
 	if(file == 0){
 		char c[100];
-		sprintf(c, "trace%i.txt", gu->myTeam);
+		if (gu)
+			sprintf(c, "trace%i.log", gu->myTeam);
+		else
+			sprintf(c, "trace_early.log");
 		file = SAFE_NEW std::ofstream(c);
 	}
 #endif
