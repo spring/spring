@@ -125,6 +125,12 @@ static string LoadShaderSource(const string& file)
 }
 
 
+static void GLSLDefineConst4f(string& str, const string& name, const float x, const float y, const float z, const float w)
+{
+	str += boost::str(boost::format(string("#define ")+name+" vec4(%1$.12f,%2$.12f,%3$.12f,%4$.12f)\n") % (x) % (y) % (z) % (w));
+}
+
+
 static void GLSLDefineConstf4(string& str, const string& name, const float3& v, const float& alpha)
 {
 	str += boost::str(boost::format(string("#define ")+name+" vec4(%1$.12f,%2$.12f,%3$.12f,%4$.12f)\n") % (v.x) % (v.y) % (v.z) % (alpha));
@@ -173,6 +179,41 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 
 	return texID;
 }
+
+
+static void DrawRadialDisc()
+{
+	//! SAME ALGORITHM AS FOR WATERPLANE IN BFGroundDrawer.cpp!
+	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
+	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
+
+	CVertexArray *va = GetVertexArray();
+	va->Initialize();
+
+	const float alphainc = fastmath::PI2 / 32;
+	float alpha,r1,r2;
+	float3 p(0.0f,0.0f,0.0f);
+	const float size = std::min(xsize,ysize);
+	for (int n = 0; n < 4 ; ++n) {
+		r1 = n*n * size;
+		if (n==3) {
+			r2 = (n+0.5)*(n+0.5) * size;
+		}else{
+			r2 = (n+1)*(n+1) * size;
+		}
+		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
+			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
+			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
+			va->AddVertex0(p);
+			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
+			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
+			va->AddVertex0(p);
+		}
+	}
+
+	va->DrawArray0(GL_TRIANGLE_STRIP);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// (DE-)CONSTRUCTOR
@@ -238,8 +279,10 @@ CBumpWater::CBumpWater()
 		glBindTexture(GL_TEXTURE_2D, coastTexture[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, gs->mapx, gs->mapy, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGenerateMipmapEXT(GL_TEXTURE_2D);
 
@@ -453,6 +496,15 @@ CBumpWater::CBumpWater()
 	GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
 	GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
 
+	{
+		const int mapX = readmap->width  * SQUARE_SIZE;
+		const int mapZ = readmap->height * SQUARE_SIZE;
+		const float shadingX = (float)gs->mapx / gs->pwr2mapx;
+		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
+
+		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, shadingX/mapX, shadingZ/mapZ);
+	}
+
 	/** LOAD SHADERS **/
 	string vsSource = LoadShaderSource("shaders/bumpWaterVS.glsl");
 	string fsSource = LoadShaderSource("shaders/bumpWaterFS.glsl");
@@ -508,6 +560,24 @@ CBumpWater::CBumpWater()
 		glUniform1i(depthmapLoc, 7);
 		glUniform1i(waverandLoc, 8);
 	glUseProgram(0);
+
+
+	/** CREATE DISPLAYLIST **/
+	displayList = glGenLists(1);
+	glNewList(displayList,GL_COMPILE);
+	if (endlessOcean) {
+		DrawRadialDisc();
+	}else{
+		const int mapX = readmap->width  * SQUARE_SIZE;
+		const int mapZ = readmap->height * SQUARE_SIZE;
+		glBegin(GL_QUADS);
+		glVertex3i(   0, 0, 0);
+		glVertex3i(   0, 0, mapZ);
+		glVertex3i(mapX, 0, mapZ);
+		glVertex3i(mapX, 0, 0);
+		glEnd();
+	}
+	glEndList();
 }
 
 
@@ -539,6 +609,8 @@ CBumpWater::~CBumpWater()
 	glDeleteShader(waterVP);
 	glDeleteShader(waterFP);
 	glDeleteProgram(waterShader);
+
+	glDeleteLists(displayList,1);
 
 	if (shoreWaves) {
 		glDeleteTextures(2, coastTexture);
@@ -872,39 +944,6 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 ///  DRAW FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void DrawRadialDisc()
-{
-	//! SAME ALGORITHM AS FOR WATERPLANE IN BFGroundDrawer.cpp!
-	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
-	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
-
-	CVertexArray *va = GetVertexArray();
-	va->Initialize();
-
-	const float alphainc = fastmath::PI2 / 32;
-	float alpha,r1,r2;
-	float3 p(0.0f,0.0f,0.0f);
-	const float size = std::min(xsize,ysize);
-	for (int n = 0; n < 4 ; ++n) {
-		r1 = n*n * size;
-		if (n==3) {
-			r2 = (n+0.5)*(n+0.5) * size;
-		}else{
-			r2 = (n+1)*(n+1) * size;
-		}
-		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
-			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertex0(p);
-			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertex0(p);
-		}
-	}
-
-	va->DrawArray0(GL_TRIANGLE_STRIP);
-}
-
 void CBumpWater::Draw()
 {
 	if (readmap->currMinHeight > 1.0f)
@@ -944,35 +983,10 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	glUseProgram(waterShader);
-	glUniform1f(frameLoc, gs->frameNum / 15000.0f);
+	glUniform1f(frameLoc,  gs->frameNum / 15000.0f);
 	glUniformf3(eyePosLoc, camera->pos);
 
-
-	const int mapX = readmap->width *SQUARE_SIZE;
-	const int mapZ = readmap->height*SQUARE_SIZE;
-	const float shadingX = (float)gs->mapx/gs->pwr2mapx;
-	const float shadingZ = (float)gs->mapy/gs->pwr2mapy;
-
-	const GLfloat planeS[4] = {1.0f/mapX,0,0,0};
-	const GLfloat planeT[4] = {0,0,1.0f/mapZ,0};
-	const GLfloat planeR[4] = {shadingX/mapX,0,0,0};
-	const GLfloat planeQ[4] = {0,0,shadingZ/mapZ,0};
-	glTexGenfv(GL_S,GL_OBJECT_PLANE,planeS);
-	glTexGenfv(GL_T,GL_OBJECT_PLANE,planeT);
-	glTexGenfv(GL_R,GL_OBJECT_PLANE,planeR);
-	glTexGenfv(GL_Q,GL_OBJECT_PLANE,planeQ);
-
-	
-	if (endlessOcean) {
-		DrawRadialDisc();
-	}else{
-		glBegin(GL_QUADS);
-		glVertex3i(   0, 0, 0);
-		glVertex3i(   0, 0, mapZ);
-		glVertex3i(mapX, 0, mapZ);
-		glVertex3i(mapX, 0, 0);
-		glEnd();
-	}
+	glCallList(displayList);
 
 	glUseProgram(0);
 

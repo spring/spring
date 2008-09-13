@@ -52,6 +52,21 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	viewRadius += (viewRadius & 1);
 
 	waterDrawn = false;
+
+	waterPlaneCamInDispList  = 0;
+	waterPlaneCamOutDispList = 0;
+
+	if (mapInfo->hasWaterPlane) {
+		waterPlaneCamInDispList = glGenLists(1);
+		glNewList(waterPlaneCamInDispList,GL_COMPILE);
+		CreateWaterPlanes(false);
+		glEndList();
+
+		waterPlaneCamOutDispList = glGenLists(1);
+		glNewList(waterPlaneCamOutDispList,GL_COMPILE);
+		CreateWaterPlanes(true);
+		glEndList();
+	}
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -68,60 +83,71 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	}
 
 	configHandler.SetInt("GroundDetail", viewRadius);
+
+	if (waterPlaneCamInDispList) {
+		glDeleteLists(waterPlaneCamInDispList,1);
+		glDeleteLists(waterPlaneCamOutDispList,1);
+	}
 }
 
+void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
+	glDisable(GL_TEXTURE_2D);
+
+	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
+	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
+
+	CVertexArray *va = GetVertexArray();
+	va->Initialize();
+
+	unsigned char fogColor[4] = {
+	  (unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
+	  (unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
+	  (unsigned char)(255 * mapInfo->atmosphere.fogColor[2]),
+	  255
+	};
+
+	unsigned char planeColor[4] = {
+	  (unsigned char)(255 * mapInfo->water.planeColor[0]),
+	  (unsigned char)(255 * mapInfo->water.planeColor[1]),
+	  (unsigned char)(255 * mapInfo->water.planeColor[2]),
+	   255
+	};
+
+	const float alphainc = fastmath::PI2 / 32;
+	float alpha,r1,r2;
+	float3 p(0.0f,-200.0f,0.0f);
+	const float size = std::min(xsize,ysize);
+	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
+
+		if ((n==1) && !camOufOfMap) {
+			//! don't render vertices under the map
+			r1 = 2 * size;
+		}else{
+			r1 = n*n * size;
+		}
+
+		if (n==3) {
+			//! last stripe: make it thinner (looks better with fog)
+			r2 = (n+0.5)*(n+0.5) * size;
+		}else{
+			r2 = (n+1)*(n+1) * size;
+		}
+		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
+			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
+			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
+			va->AddVertexC(p, planeColor );
+			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
+			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
+			va->AddVertexC(p, (n==3) ? fogColor : planeColor);
+		}
+	}
+	va->DrawArrayC(GL_TRIANGLE_STRIP);
+}
 
 inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
-		glDisable(GL_TEXTURE_2D);
-
-		const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
-		const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
-		const bool  camOutMap = (camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos);
-
-		CVertexArray *va = GetVertexArray();
-		va->Initialize();
-
-		unsigned char fogColor[4] = {
-		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
-		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
-		  (unsigned char)(255 * mapInfo->atmosphere.fogColor[2]),
-		  255
-		};
-
-		unsigned char planeColor[4] = {
-		  (unsigned char)(255 * mapInfo->water.planeColor[0]),
-		  (unsigned char)(255 * mapInfo->water.planeColor[1]),
-		  (unsigned char)(255 * mapInfo->water.planeColor[2]),
-		   255
-		};
-
-		const float alphainc = fastmath::PI2 / 32;
-		float alpha,r1,r2;
-		float3 p(0.0f,-200.0f,0.0f);
-		const float size = std::min(xsize,ysize);
-		for (int n = (camOutMap) ? 0 : 1; n < 4 ; ++n) {
-			if ((n==1) && !camOutMap) {
-				r1 = 2 * size;
-			}else{
-				r1 = n*n * size;
-			}
-			if (n==3) {
-				r2 = (n+0.5)*(n+0.5) * size;
-			}else{
-				r2 = (n+1)*(n+1) * size;
-			}
-			for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
-				p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
-				p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-				va->AddVertexC(p, planeColor );
-				p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
-				p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-				va->AddVertexC(p, (n==3) ? fogColor : planeColor);
-			}
-		}
-
-		va->DrawArrayC(GL_TRIANGLE_STRIP);
+		const bool camOutOfMap = (camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos);
+		glCallList(camOutOfMap ? waterPlaneCamOutDispList : waterPlaneCamInDispList);
 	}
 }
 
@@ -175,7 +201,7 @@ inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 
 inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 	if (!BigTexSquareRowVisible(bty)) {
-		// skip this entire row of squares if we can't see it
+		//! skip this entire row of squares if we can't see it
 		return;
 	}
 
@@ -188,7 +214,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 	int ex = numBigTexX;
 	std::vector<fline>::iterator fli;
 
-	// only process the necessary big squares in the x direction
+	//! only process the necessary big squares in the x direction
 	for (fli = left.begin(); fli != left.end(); fli++) {
 		x0 = ((fli->base / SQUARE_SIZE + fli->dir *  (bty * bigSquareSize)                 ));
 		x1 = ((fli->base / SQUARE_SIZE + fli->dir * ((bty * bigSquareSize) + bigSquareSize)));
@@ -216,7 +242,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 
 
 	for (int btx = sx; btx < ex; ++btx) {
-		// must be in drawLos mode or shadows must be off
+		//! must be in drawLos mode or shadows must be off
 		if (DrawExtraTex() || !shadowHandler->drawShadows) {
 			textures->SetTexture(btx, bty);
 			SetTexGen(1.0f / 1024, 1.0f / 1024, -btx, -bty);
@@ -299,24 +325,26 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 				}
 
 				int nloop=(xe-xs)/lod+1;
-				ma->EnlargeArrays(52*nloop, 14*nloop+1); // includes one extra for final endstrip
+				ma->EnlargeArrays(52*nloop, 14*nloop+1); //! includes one extra for final endstrip
 
 				for (x = xs; x < xe; x += lod) {
+					//! info: all triangle quads start in the top left corner
 					if ((lod == 1) ||
 						(x > (cx) + viewRadius * hlod) || (x < (cx) - viewRadius * hlod) ||
 						(y > (cy) + viewRadius * hlod) || (y < (cy) - viewRadius * hlod)) {
-							// normal terrain
-							if (!inStrip) {
-								DrawVertexAQ(ma, x, y      );
-								DrawVertexAQ(ma, x, y + lod);
-								inStrip = true;
-							}
+						//! normal terrain (all vertices in one LOD)
+						if (!inStrip) {
+							DrawVertexAQ(ma, x, y      );
+							DrawVertexAQ(ma, x, y + lod);
+							inStrip = true;
+						}
 
-							DrawVertexAQ(ma, x + lod, y      );
-							DrawVertexAQ(ma, x + lod, y + lod);
+						DrawVertexAQ(ma, x + lod, y      );
+						DrawVertexAQ(ma, x + lod, y + lod);
 					} else {
-						// inre begr?sning mot f?eg?nde lod
+						//! border between 2 different LODs
 						if ((x >= (cx) + viewRadius * hlod)) {
+							//! lower LOD to the right
 							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP((y + hlod) * heightDataX + x),                              idx3HLOD = CLAMP(idx3 + hlod);
@@ -346,8 +374,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 							DrawVertexAQ(ma, x +  lod, y           );
 							DrawVertexAQ(ma, x + hlod, y,        h2);
 							EndStripQ(ma);
-						}
+						}else
+
 						if ((x <= (cx) - viewRadius * hlod)) {
+							//! lower LOD to the left
 							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
@@ -378,7 +408,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 							DrawVertexAQ(ma, x + hlod, y +  lod, h4);
 							EndStripQ(ma);
 						}
+
 						if ((y >= (cy) + viewRadius * hlod)) {
+							//! lower LOD above
 							int idx1 = (y       ) * heightDataX + x, idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = (y +  lod) * heightDataX + x, idx2LOD = CLAMP(idx2 + lod);
 							int idx3 = (y + hlod) * heightDataX + x, idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
@@ -405,8 +437,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 							DrawVertexAQ(ma, x +  lod, y +  lod    );
 							DrawVertexAQ(ma, x +  lod, y + hlod, h4);
 							EndStripQ(ma);
-						}
+						}else
+
 						if ((y <= (cy) - viewRadius * hlod)) {
+							//! lower LOD beneath
 							int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
 							int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP((y + hlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);

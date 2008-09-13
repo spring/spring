@@ -53,6 +53,8 @@ private:
 	GLuint coastFBO;
 	GLuint dynWavesFBO;
 
+	GLuint displayList;
+
 	//! coastmap
 	bool coastmapNeedUpload;
 	bool coastmapNeedUpdate;
