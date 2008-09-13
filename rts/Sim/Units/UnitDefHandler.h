@@ -47,7 +47,7 @@ protected:
 	void ParseTAUnit(const LuaTable&, const std::string& name, int id);
 
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
-	void LoadSound(GuiSoundSet&, const std::string& fileName, float volume);
+	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);
 
 	void CleanBuildOptions();
 

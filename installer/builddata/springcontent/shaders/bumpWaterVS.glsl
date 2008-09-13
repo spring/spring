@@ -35,6 +35,7 @@
 // #define PerlinStartFreq  float
 // #define PerlinLacunarity float
 // #define PerlinAmp        float
+// #define TexGenPlane      vec4
 
 //////////////////////////////////////////////////
 // possible flags are:
@@ -58,17 +59,15 @@ void main(void)
 	gl_Position = ftransform();
 
 	// COMPUTE TEXCOORDS
-	vec4 planes        = vec4(gl_ObjectPlaneS[0].x,gl_ObjectPlaneT[0].z,
-	                          gl_ObjectPlaneR[0].x,gl_ObjectPlaneQ[0].z);
-	gl_TexCoord[0]     = planes*gl_Vertex.xzxz;
+	gl_TexCoord[0]     = TexGenPlane*gl_Vertex.xzxz;
 
 	// COMPUTE WAVE TEXTURE COORDS
 	const float fstart = PerlinStartFreq;
 	const float f      = PerlinLacunarity;
-	gl_TexCoord[1].st = (vec2(-1.0,-1.0)+gl_TexCoord[0].st+0.75)*fstart      +frame*Speed;
-	gl_TexCoord[1].pq = (vec2(-1.0, 1.0)+gl_TexCoord[0].st+0.50)*fstart*f    -frame*Speed;
-	gl_TexCoord[2].st = (vec2( 1.0,-1.0)+gl_TexCoord[0].st+0.25)*fstart*f*f  +frame*Speed*vec2(1.0,-1.0);
-	gl_TexCoord[2].pq = (vec2( 1.0, 1.0)+gl_TexCoord[0].st+0.00)*fstart*f*f*f+frame*Speed*vec2(-1.0,1.0);
+	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].st + 0.75) * fstart       + frame * Speed;
+	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].st + 0.50) * fstart*f     - frame * Speed;
+	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].st + 0.25) * fstart*f*f   + frame * Speed * vec2(1.0,-1.0);
+	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].st + 0.00) * fstart*f*f*f + frame * Speed * vec2(-1.0,1.0);
 
 	// COMPUTE LIGHT VECTORS
 	eyeVec = eyePos - gl_Vertex.xyz;
@@ -77,4 +76,8 @@ void main(void)
 	// FOG
 	gl_FogFragCoord = (gl_ModelViewMatrix*gl_Vertex).z;
 
+
+	gl_TexCoord[3].st = gl_TexCoord[0].st * 160.0 + frame;
+	gl_TexCoord[3].pq = gl_TexCoord[0].st * 90.0  + frame;
+	gl_TexCoord[4].st = gl_TexCoord[0].st * 2.0;
 }

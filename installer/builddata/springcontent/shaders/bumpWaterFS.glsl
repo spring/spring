@@ -116,10 +116,10 @@ float smoothlimit(const float x, const float step) {
 }
 
 
-float waveIntensity(const float x, const float step) {
-  float front = 1.0-(abs(x-step))/(1.0-step);
-  //float front = smoothstep(1.0-step,0.0,abs(x-step));
-  if (x<step)
+float waveIntensity(const float x) {
+  //float front = smoothstep(1.0-0.85,0.0,abs(x-0.85));
+  float front = 1.0-(abs(x-0.85))/(1.0-0.85);
+  if (x<0.85)
     return max(front,x*0.5);
   else
     return front;
@@ -232,33 +232,34 @@ float waveIntensity(const float x, const float step) {
 #ifdef use_shorewaves
     vec3 shorewavesColor = vec3(0.0);
     float inwaterdepth = 1.0-waterdepth;
-    //if (waterdepth<1.0) {
-      float coastdist = texture2D(coastmap, gl_TexCoord[0].st ).r + octave3.x*0.1; //FIXME
-      //if (coastdist>0.0 && coastdist<0.25) {
-        vec3 wavefoam  = texture2D(foam, gl_TexCoord[0].st*160.0+frame ).rgb;
-        wavefoam += texture2D(foam, gl_TexCoord[0].st*90.0+frame ).rgb;
+    if (waterdepth<1.0) {
+      float coastdist = texture2D(coastmap, gl_TexCoord[0].st ).r + octave3.x*0.1;
+      if (coastdist>0.0) {
+
+        vec3 wavefoam  = texture2D(foam, gl_TexCoord[3].st ).rgb;
+        wavefoam += texture2D(foam, gl_TexCoord[3].pq ).rgb;
         wavefoam *= 0.5;
 
-        vec2 wrcoord = gl_TexCoord[0].st*2.0;
+        vec2 wrcoord = gl_TexCoord[4].st;
 
         float fframe = fract(frame);
         for (float i=0.0; i<1.0; i+=0.25) {
-          float wave  = i+fframe*50.0;
+          float wave  = i + fframe * 50.0;
           float wavef = fract(wave);
                 wave -= wavef;
-          float frac  = wavef*1.4-0.2;
-          float f = frac-coastdist;
+          float frac  = wavef * 1.4 - 0.2;
+          float f = frac - coastdist;
           if (abs(f)>WavesLength) continue;
-          float rand = texture2D(waverand, wrcoord+wave*0.37+i ).r;
-          float f2   = waveIntensity( min(1.0,(WavesLength-f)*InvWavesLength) ,0.85);
-          shorewavesColor += wavefoam*f2*rand;
+          float rand = texture2D(waverand, wrcoord + wave * 0.37 + i ).r;
+          float f2   = waveIntensity( min(1.0, (WavesLength - f) * InvWavesLength));
+          shorewavesColor += wavefoam * f2 * rand;
         }
 
         shorewavesColor *= coastdist;
-      //}
-    //}
+      }
+    }
     float iwd = smoothlimit(inwaterdepth, 0.8);
-    gl_FragColor.rgb += shorewavesColor*iwd*1.5;
+    gl_FragColor.rgb += shorewavesColor * iwd * 1.5;
 #endif
 
 

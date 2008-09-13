@@ -61,6 +61,13 @@ protected:
 
 	volatile unsigned int mt_overrideVP;
 
+	GLuint waterPlaneCamOutDispList;
+	GLuint waterPlaneCamInDispList;
+
+protected:
+	void CreateWaterPlanes(const bool &camOufOfMap);
+	inline void DrawWaterPlane(bool);
+
 	void DoDrawGroundRow(int bty, unsigned int overrideVP);
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
@@ -70,7 +77,6 @@ protected:
 	void DoDrawGroundShadowLOD(int nlod);
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
-	inline void DrawWaterPlane(bool);
 	inline bool BigTexSquareRowVisible(int);
 	void SetupTextureUnits(bool drawReflection, unsigned int overrideVP);
 	void ResetTextureUnits(bool drawReflection, unsigned int overrideVP);

@@ -14,7 +14,10 @@
 using std::string;
 using std::max;
 
-CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
+CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
+	bigSquareSize(128),
+	numBigTexX(gs->mapx / bigSquareSize),
+	numBigTexY(gs->mapy / bigSquareSize)
 {
 	usePBO = false;
 	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
@@ -25,10 +28,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 
 	CFileHandler* ifs = rm->ifs;
 	map = rm;
-
-	bigSquareSize = 128;
-	numBigTexX = gs->mapx / bigSquareSize;
-	numBigTexY = gs->mapy / bigSquareSize;
 
 	SMFHeader* header = &map->header;
 	ifs->Seek(header->tilesPtr);

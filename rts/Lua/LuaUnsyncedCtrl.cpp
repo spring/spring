@@ -178,6 +178,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(ShareResources);
 
+	REGISTER_LUA_CFUNC(SetLastMsgPos);
+
 	REGISTER_LUA_CFUNC(MarkerAddPoint);
 	REGISTER_LUA_CFUNC(MarkerAddLine);
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
@@ -1984,6 +1986,26 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 	return 0;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+int LuaUnsyncedCtrl::SetLastMsgPos(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to SetLastMsgPos(x, y, z)");
+	}
+	const float3 pos(lua_tofloat(L, 1),
+	                 lua_tofloat(L, 2),
+	                 lua_tofloat(L, 3));
+
+	logOutput.SetLastMsgPos(pos);
+
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/

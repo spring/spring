@@ -854,9 +854,15 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 
 
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
-                                const string& fileName, float volume)
+                                const string& fileName, const float volume)
 {
-	const string soundFile = "sounds/" + fileName + ".wav";
+	string soundFile = "sounds/" + fileName;
+
+	if (soundFile.find(".wav") == -1) {
+	 	// .wav extension missing, add it
+		soundFile += ".wav";
+	}
+
 	CFileHandler fh(soundFile);
 
 	if (fh.FileExists()) {

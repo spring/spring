@@ -969,14 +969,12 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 
 void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize)
 {
-	glPushMatrix();
 	glBegin(GL_LINE_LOOP);
 		glVertex3f(pos.x + xsize, 0.0f, pos.z + zsize);
 		glVertex3f(pos.x - xsize, 0.0f, pos.z + zsize);
 		glVertex3f(pos.x - xsize, 0.0f, pos.z - zsize);
 		glVertex3f(pos.x + xsize, 0.0f, pos.z - zsize);
 	glEnd();
-	glPopMatrix();
 }
 
 
@@ -1002,14 +1000,13 @@ void CMiniMap::DrawForReal()
 {
 	SCOPED_TIMER("Draw minimap");
 
-	glEnable(GL_BLEND);
-	glDepthFunc(GL_LEQUAL);
 	setSurfaceCircleFunc(DrawSurfaceCircle);
 	setSurfaceSquareFunc(DrawSurfaceSquare);
 	cursorIcons.Enable(false);
 
-	glEnable(GL_BLEND);
+	//glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthFunc(GL_LEQUAL);
 
 	if (minimized) {
 		if (!slaveDrawMode) {
