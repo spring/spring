@@ -362,6 +362,8 @@ void CGameServer::CheckSync()
 				//serverNet->SendPause(SERVER_PLAYER, true);
 #ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
+				Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 #endif
 				//For each group, output a message with list of playernames in it.
 				// TODO this should be linked to the resync system so it can roundrobin

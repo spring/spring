@@ -213,7 +213,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received checksum response of %d instead of %d bytes", *(short*)&inbuf[1], HISTORY_SIZE * 4 + 12);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activeTeams || player < 0) {
+				if(player >= gs->activePlayers || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in checksum response", player);
 				} else {
 					logger.AddLine("Server: got checksum response from %d", player);
@@ -229,8 +229,6 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 						ServerQueueBlockRequests();
 						logger.AddLine("Server: checksum responses received; %d block requests queued", pendingBlocksToRequest.size());
 					}
-					else
-						logger.AddLine("Left at %d active: %d", i, gs->activePlayers);
 				}
 			}
 			syncDebugPacket = true;
@@ -240,7 +238,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received block response of %d instead of %d bytes", *(short*)&inbuf[1], BLOCK_SIZE * 4 + 4);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activeTeams || player < 0) {
+				if(player >= gs->activePlayers || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in block response", player);
 				} else {
 					const unsigned* begin = (unsigned*)&inbuf[4];
@@ -250,8 +248,8 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					std::copy(begin, end, remoteHistory[player].begin() + size);
 					int i = 0;
 					size += BLOCK_SIZE;
-					while (i < gs->activeTeams && size == remoteHistory[i].size()) ++i;
-					if (i == gs->activeTeams) {
+					while (i < gs->activePlayers && size == remoteHistory[i].size()) ++i;
+					if (i == gs->activePlayers) {
 						logger.AddLine("Server: block responses received");
 						ServerReceivedBlockResponses();
 					}
@@ -320,15 +318,12 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 /**
  * @brief first step after desync
  *
- * Called by server to trigger sync error handling.
- * It pauses the game and sends a checksum request to all clients.
+ * Does nothing
  */
 void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
-		net->Send(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 	}
 }
 
@@ -379,7 +374,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	for (; c < HISTORY_SIZE; ++i, ++c) {
 		unsigned correctChecksum = 0;
 		if (i == HISTORY_SIZE) i = 0;
-		for (int j = 0; j < gs->activeTeams; ++j) {
+		for (int j = 0; j < gs->activePlayers; ++j) {
 			if (correctChecksum && checksumResponses[j][i] != correctChecksum) {
 				pendingBlocksToRequest.push_back(i);
 				break;
@@ -486,7 +481,7 @@ void CSyncDebugger::ServerDumpStack()
 		unsigned correctChecksum = 0;
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
-		for (int j = 0; j < gs->activeTeams; ++j) {
+		for (int j = 0; j < gs->activePlayers; ++j) {
 			if (correctChecksum && remoteHistory[j][i] != correctChecksum) {
 				if (historybt) {
 					virtualBlockNr = i / BLOCK_SIZE;
