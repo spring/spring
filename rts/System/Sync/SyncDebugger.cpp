@@ -216,17 +216,21 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				if(player >= gs->activeTeams || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in checksum response", player);
 				} else {
+					logger.AddLine("Server: got checksum response from %d", player);
 					const unsigned* begin = (unsigned*)&inbuf[12];
 					const unsigned* end = begin + HISTORY_SIZE;
 					checksumResponses[player].resize(HISTORY_SIZE);
 					std::copy(begin, end, checksumResponses[player].begin());
 					remoteFlop[player] = *(Uint64*)&inbuf[4];
+					assert(!checksumResponses[player].empty());
 					int i = 0;
-					while (i < gs->activeTeams && !checksumResponses[i].empty()) ++i;
-					if (i == gs->activeTeams) {
+					while (i < gs->activePlayers && !checksumResponses[i].empty()) ++i;
+					if (i == gs->activePlayers) {
 						ServerQueueBlockRequests();
 						logger.AddLine("Server: checksum responses received; %d block requests queued", pendingBlocksToRequest.size());
 					}
+					else
+						logger.AddLine("Left at %d active: %d", i, gs->activePlayers);
 				}
 			}
 			syncDebugPacket = true;
@@ -254,6 +258,9 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				}
 			}
 			syncDebugPacket = true;
+			break;
+		default:
+			logger.AddLine("Server: unknown packet");
 			break;
 	}
 	logger.FlushBuffer();
@@ -358,8 +365,9 @@ void CSyncDebugger::ClientSendChecksumResponse()
  */
 void CSyncDebugger::ServerQueueBlockRequests()
 {
+	logger.AddLine("Server: queuing block requests");
 	Uint64 correctFlop = 0;
-	for (int j = 0; j < gs->activeTeams; ++j) {
+	for (int j = 0; j < gs->activePlayers; ++j) {
 		if (correctFlop) {
 			if (remoteFlop[j] != correctFlop)
 				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", remoteFlop[j], correctFlop, j);

@@ -8,9 +8,11 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 set (BINDIR "bin" CACHE STRING "Where to install binaries")
 set (LIBDIR "lib" CACHE STRING "Where to install libraries")
 set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
-set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
-set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
-set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
+if (UNIX AND NOT MINGW)
+	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
+	set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
+	set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
+endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
@@ -27,6 +29,11 @@ SET(SPRING_DATADIR ${CMAKE_INSTALL_PREFIX}/${DATADIR} CACHE STRING "Path to game
 if (SPRING_DATADIR)
 	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}")
 endif (SPRING_DATADIR)
+
+set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
+if (CUSTOM_COMPILER_DEFINITIONS)
+	ADD_DEFINITIONS(${CUSTOM_COMPILER_DEFINITIONS})
+endif (CUSTOM_COMPILER_DEFINITIONS)
 
 ### mingwlibs
 if (MINGW)
