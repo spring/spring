@@ -147,7 +147,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 	for(int a = 0; a < MAX_TEAMS; a++) {
 		delete teams[a];
 	}
-	for(int a = 0; a < gs->activePlayers; a++) {
+	for(int a = 0; a < MAX_PLAYERS; a++) {
 		delete players[a];
 	}
 }
@@ -160,13 +160,14 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
 	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
 
+	activePlayers = setup->numPlayers;
 	activeTeams = setup->numTeams;
 	activeAllyTeams = setup->numAllyTeams;
 	
 	assert(activeTeams <= MAX_TEAMS);
 	assert(activeAllyTeams <= MAX_TEAMS);
 	
-	for (unsigned i = 0; i < static_cast<unsigned>(setup->numPlayers); ++i)
+	for (unsigned i = 0; i < static_cast<unsigned>(activePlayers); ++i)
 	{
 		*static_cast<PlayerBase*>(players[i]) = setup->playerStartingData[i];
 	}

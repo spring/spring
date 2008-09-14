@@ -19,7 +19,7 @@ class CSyncedPrimitiveBase {
 #ifdef SYNCCHECK
 			CSyncChecker::Sync(p, size);
 	#ifdef TRACE_SYNC_HEAVY
-			tracefile << "Sync " << s << " " << CSyncChecker::GetChecksum() << "\n";
+			tracefile << "Sync " << op << " " << CSyncChecker::GetChecksum() << "\n";
 	#endif
 #endif
 		}
