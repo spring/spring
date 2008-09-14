@@ -115,7 +115,7 @@ class LuaUnsyncedCtrl {
 		static int SendLuaGaiaMsg(lua_State* L);
 		static int SendLuaRulesMsg(lua_State* L);
 
-		static int SetLastMsgPos(lua_State* L);
+		static int SetLastMessagePosition(lua_State* L);
 
 		static int MarkerAddPoint(lua_State* L);
 		static int MarkerAddLine(lua_State* L);

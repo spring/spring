@@ -26,20 +26,14 @@ public:
 
 	void Update(void);
 
-	volatile bool mt_drawReflection;
-	volatile bool mt_drawRefraction;
-	CUnit * volatile mt_excludeUnit;
-
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawUnit(CUnit* unit);
 	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
-	static void DoDrawUnitMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnit(unit,((CUnitDrawer *)c)->mt_drawReflection,((CUnitDrawer *)c)->mt_drawRefraction,((CUnitDrawer *)c)->mt_excludeUnit);}
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(void);									// cloaked units must be drawn after all others
+	void DrawCloakedUnits(void);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
-	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void);
 	void SetupForS3ODrawing(void);
@@ -48,6 +42,23 @@ public:
 	void SetupForGhostDrawing();
 	void SetupForGhostDrawingS3O();
 
+
+#ifdef GML_ENABLE_DRAWUNIT
+	volatile bool mt_drawReflection;
+	volatile bool mt_drawRefraction;
+  #ifdef DIRECT_CONTROL_ALLOWED
+	CUnit * volatile mt_excludeUnit;
+  #endif
+	static void DoDrawUnitMT(void *c,CUnit *unit) {
+		CUnitDrawer* const ud = (CUnitDrawer*)c;
+		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, ud->mt_excludeUnit);
+	}
+#endif
+
+#ifdef GML_ENABLE_DRAWUNITSHADOW
+	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
+#endif
+
 	void DrawOpaqueShaderUnits();
 	void DrawCloakedShaderUnits();
 	void DrawShadowShaderUnits();
@@ -55,19 +66,19 @@ public:
 	inline void DrawFar(CUnit* unit);
 
 	// note: make these static?
-	inline void DrawUnitDebug(CUnit*);								// was CUnit::DrawDebug()
-	void DrawUnitBeingBuilt(CUnit*);								// was CUnit::DrawBeingBuilt()
-	void ApplyUnitTransformMatrix(CUnit*);							// was CUnit::ApplyTransformMatrix()
-	inline void DrawUnitModel(CUnit*);								// was CUnit::DrawModel()
-	void DrawUnitNow(CUnit*);										// was CUnit::Draw()
-	void DrawUnitWithLists(CUnit*, unsigned int, unsigned int);		// was CUnit::DrawWithLists() [CUnitDrawer]
-	void DrawUnitRaw(CUnit*);										// was CUnit::DrawRaw()
-	void DrawUnitRawModel(CUnit*);									// was CUnit::DrawRawModel() [CLuaOpenGL]
-	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);	// was CUnit::DrawRawWithLists()
-	void DrawUnitStats(CUnit*);										// was CUnit::DrawStats()
-	void DrawUnitS3O(CUnit*);										// was CUnit::DrawS3O()
-	void DrawFeatureS3O(CFeature*);									// was CFeature::DrawS3O()
-	void DrawWorldObjectS3O(CWorldObject*);
+	inline void DrawUnitDebug(CUnit*);                              // was CUnit::DrawDebug()
+	void DrawUnitBeingBuilt(CUnit*);                                // was CUnit::DrawBeingBuilt()
+	void ApplyUnitTransformMatrix(CUnit*);                          // was CUnit::ApplyTransformMatrix()
+	inline void DrawUnitModel(CUnit*);                              // was CUnit::DrawModel()
+	void DrawUnitNow(CUnit*);                                       // was CUnit::Draw()
+	void DrawUnitWithLists(CUnit*, unsigned int, unsigned int);     // was CUnit::DrawWithLists() [CUnitDrawer]
+	void DrawUnitRaw(CUnit*);                                       // was CUnit::DrawRaw()
+	void DrawUnitRawModel(CUnit*);                                  // was CUnit::DrawRawModel() [CLuaOpenGL]
+	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);  // was CUnit::DrawRawWithLists()
+	void DrawUnitStats(CUnit*);                                     // was CUnit::DrawStats()
+	void DrawUnitS3O(CUnit*);                                       // was CUnit::DrawS3O()
+	void DrawFeatureS3O(CFeature*);                                 // was CFeature::DrawS3O()
+	inline void DrawWorldObjectS3O(CWorldObject*);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -160,11 +171,11 @@ public:
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing=0);
 	void DrawUnitDef(const UnitDef* unitDef, int team);
 
-	/* CUnit::Draw */
+	/** CUnit::Draw **/
 	void UnitDrawingTexturesOff(S3DOModel *model);
 	void UnitDrawingTexturesOn(S3DOModel *model);
 
-	/* CGame::DrawDirectControlHud,  */
+	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit * unit);
 
 private:

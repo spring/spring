@@ -74,6 +74,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incoming),
 //	CR_MEMBER(weaponDef),
+	CR_MEMBER(stockpileTime),
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -155,6 +156,7 @@ CWeapon::CWeapon(CUnit* owner)
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 	weaponDef(0),
+	stockpileTime(1),
 	buildPercent(0),
 	numStockpiled(0),
 	numStockpileQued(0),
@@ -299,7 +301,7 @@ void CWeapon::Update()
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){
-		float p=1.0f/reloadTime;
+		float p=1.0f/stockpileTime;
 		if(gs->Team(owner->team)->metal>=metalFireCost*p && gs->Team(owner->team)->energy>=energyFireCost*p){
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);

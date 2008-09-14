@@ -111,6 +111,8 @@ struct WeaponDef
 	bool stockpile;
 	float coverageRange;						// range of anti nuke
 
+	float stockpileTime;						// builtime of a missile
+
 	float intensity;
 	float thickness;
 	float laserflaresize;
