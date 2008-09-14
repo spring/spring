@@ -363,6 +363,7 @@ void CGameServer::CheckSync()
 #ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
 				Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+				IsPaused = true;
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 #endif
 				//For each group, output a message with list of playernames in it.
