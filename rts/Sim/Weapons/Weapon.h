@@ -125,6 +125,7 @@ public:
 	std::list<CWeaponProjectile*> incoming;	// nukes that are on the way to our area
 	CWeaponProjectile* interceptTarget;		// nuke that we currently targets
 
+	int stockpileTime;						// how long it takes to stockpile 1 missile
 	float buildPercent;						// how far we have come on building current missile if stockpiling
 	int numStockpiled;						// how many missiles we have stockpiled
 	int numStockpileQued;					// how many weapons the user have added to our que

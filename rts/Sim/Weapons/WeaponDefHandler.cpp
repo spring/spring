@@ -308,6 +308,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
 	wd.stockpile     = wdTable.GetBool("stockpile", false);
+	wd.stockpileTime = wdTable.GetFloat("stockpileTime", wd.reload);
 	wd.interceptor   = wdTable.GetInt("interceptor", 0);
 	wd.targetable    = wdTable.GetInt("targetable",  0);
 	wd.manualfire    = wdTable.GetBool("commandfire", false);

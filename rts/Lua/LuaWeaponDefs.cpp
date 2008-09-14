@@ -494,6 +494,8 @@ static bool InitParamMap()
 	ADD_INT("interceptor",     wd.interceptor);
 	ADD_FLOAT("coverageRange", wd.coverageRange);
 
+	ADD_FLOAT("stockpileTime", wd.stockpileTime);
+
 	ADD_FLOAT("intensity", wd.intensity);
 	ADD_FLOAT("thickness", wd.thickness);
 	ADD_FLOAT("laserFlareSize", wd.laserflaresize);
