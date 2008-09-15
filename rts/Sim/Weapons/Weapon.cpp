@@ -337,7 +337,8 @@ void CWeapon::Update()
 	{
 		if ((weaponDef->stockpile ||
 		     (gs->Team(owner->team)->metal >= metalFireCost &&
-		      gs->Team(owner->team)->energy >= energyFireCost))) {
+		      gs->Team(owner->team)->energy >= energyFireCost)))
+		{
 			std::vector<int> args;
 			args.push_back(0);
 			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
@@ -362,10 +363,7 @@ void CWeapon::Update()
 					owner->UseMetal(metalFireCost);
 					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 				}
-				if(weaponDef->stockpile)
-					reloadStatus=gs->frameNum+60;
-				else
-					reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
+				reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
 
 				salvoLeft=salvoSize;
 				nextSalvo=gs->frameNum;

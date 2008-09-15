@@ -128,7 +128,7 @@ void CBombDropper::Fire(void)
 				weaponDef, 1000, areaOfEffect,
 				weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
 	}
-	//CWeaponProjectile::CreateWeaponProjectile(owner->pos,owner->speed,owner, NULL, float3(0,0,0), damages, weaponDef);
+
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
