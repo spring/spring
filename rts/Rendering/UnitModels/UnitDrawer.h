@@ -47,11 +47,16 @@ public:
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
   #ifdef DIRECT_CONTROL_ALLOWED
-	CUnit * volatile mt_excludeUnit;
+	CUnit* volatile mt_excludeUnit;
   #endif
-	static void DoDrawUnitMT(void *c,CUnit *unit) {
-		CUnitDrawer* const ud = (CUnitDrawer*)c;
+
+	static void DoDrawUnitMT(void* c, CUnit* unit) {
+		CUnitDrawer* const ud = (CUnitDrawer*) c;
+		#ifdef DIRECT_CONTROL_ALLOWED
 		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, ud->mt_excludeUnit);
+		#else
+		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, NULL);
+		#endif
 	}
 #endif
 
