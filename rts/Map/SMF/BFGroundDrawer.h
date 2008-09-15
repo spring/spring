@@ -68,6 +68,7 @@ protected:
 	void CreateWaterPlanes(const bool &camOufOfMap);
 	inline void DrawWaterPlane(bool);
 
+	void FindRange(int &xs, int &xe, std::vector<fline> &left, std::vector<fline> &right, int y, int lod);
 	void DoDrawGroundRow(int bty, unsigned int overrideVP);
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
