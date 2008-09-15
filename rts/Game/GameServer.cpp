@@ -432,7 +432,10 @@ void CGameServer::Update()
 				if(newSpeed<0.1f)
 					newSpeed=0.1f;
 				if(newSpeed!=internalSpeed)
+				{
+					internalSpeed = newSpeed;
 					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
+				}
 			}
 		}
 	}
