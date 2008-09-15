@@ -126,6 +126,7 @@ let archive_mover path kind datadir =
       let dest_dir = Filename.concat spring_dir sub_dir in
       let dest = Filename.concat dest_dir basename in
         try
+          FileSystem.make_dirs [spring_dir; dest_dir];
           FileSystem.move path dest;
           die (Printf.sprintf "%s was successfully installed" dest)
         with
