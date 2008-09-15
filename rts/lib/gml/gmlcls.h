@@ -28,9 +28,9 @@
 #include <set>
 
 #ifdef USE_GML
-#define GML_ENABLE 1
+#	define GML_ENABLE 1
 #else
-#define GML_ENABLE 0 // manually enable opengl multithreading here
+#	define GML_ENABLE 0 // manually enable opengl multithreading here
 #endif
 
 #define GML_ENABLE_SIM (GML_ENABLE && 1) // runs the sim in a separate thread
@@ -108,9 +108,9 @@
 #endif
 
 #if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
-#define GML_USE_SPEEDY_TLS 1
+#	define GML_USE_SPEEDY_TLS 1
 #else
-#define GML_USE_SPEEDY_TLS 0
+#	define GML_USE_SPEEDY_TLS 0
 #endif
 #if GML_USE_SPEEDY_TLS
 #	include "speedy-tls.h"
@@ -121,28 +121,28 @@
 #if GML_ENABLE
 #	ifdef _MSC_VER
 #		if GML_MSC_TLS_OPT
-static inline unsigned long get_threadnum(void) {
-	unsigned long val;
+static inline int get_threadnum(void) {
+	int val;
 	__asm {
-#if !defined(_WIN64) || !GML_64BIT_USE_GS
+#			if !defined(_WIN64) || !GML_64BIT_USE_GS
 		mov EAX, FS:[14h]
-#else
+#			else
 		mov EAX, GS:[28h]
-#endif
+#			endif
 		mov [val], EAX
 	}
 	return val;
 }
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
-static inline void set_threadnum(unsigned long val) {
+static inline void set_threadnum(int val) {
 	__asm {
 		mov EAX, [val]
-#if !defined(_WIN64) || !GML_64BIT_USE_GS
+#			if !defined(_WIN64) || !GML_64BIT_USE_GS
 		mov FS:[14h], EAX
-#else
+#			else
 		mov GS:[28h], EAX
-#endif
+#			endif
 	}
 }
 #		else
@@ -150,8 +150,8 @@ extern __declspec(thread) int gmlThreadNumber;
 #		endif
 #	else
 #		if GML_GCC_TLS_FIX || GML_USE_SPEEDY_TLS
-static inline unsigned long get_threadnum(void) {
-	unsigned long val;
+static inline int get_threadnum(void) {
+	int val;
 #			if GML_GCC_TLS_FIX
 #				if !defined(_WIN64) || !GML_64BIT_USE_GS
 	__asm__("mov %%fs:0x14, %0" : "=r" (val) : : );
@@ -159,13 +159,13 @@ static inline unsigned long get_threadnum(void) {
 	__asm__("mov %%gs:0x28, %0" : "=r" (val) : : );
 #				endif
 #			else
-	speedy_tls_get_int32(0, 0, sizeof(unsigned long), val);
+	speedy_tls_get_int32(0, 0, sizeof(int), val);
 #			endif
 	return val;
 }
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
-static inline void set_threadnum(unsigned long val) {
+static inline void set_threadnum(int val) {
 #			if GML_GCC_TLS_FIX
 #				if !defined(_WIN64) || !GML_64BIT_USE_GS
 	__asm__ __volatile__("mov %0,%%fs:0x14" : : "r" (val));
@@ -173,10 +173,10 @@ static inline void set_threadnum(unsigned long val) {
 	__asm__ __volatile__("mov %0,%%gs:0x28" : : "r" (val));
 #				endif
 #			else
-	if (speedy_tls_init(sizeof(unsigned long))<0) { // this works because we only set the thread number once per thread
+	if (speedy_tls_init(sizeof(int))<0) { // this works because we only set the thread number once per thread
 		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);
 	}
-	speedy_tls_put_int32(0, 0, sizeof(unsigned long), val);
+	speedy_tls_put_int32(0, 0, sizeof(int), val);
 #			endif
 }
 #		else
@@ -290,7 +290,7 @@ public:
 };
 
 #if !defined(BOOST_HAS_THREADS) || (!defined(BOOST_AC_USE_PTHREADS) && (BOOST_VERSION<103500 || !(defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32__)))
-#define gmlCount boost::detail::atomic_count
+#	define gmlCount boost::detail::atomic_count
 #else
 class gmlCount : public boost::detail::atomic_count {
 public:
