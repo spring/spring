@@ -118,29 +118,6 @@ CWeaponProjectile::~CWeaponProjectile(void)
 {
 }
 
-CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,
-		const float3& speed, CUnit* owner, CUnit *target,
-		const float3 &targetPos, const WeaponDef* weaponDef)
-{
-	switch(weaponDef->visuals.renderType)
-	{
-	case WEAPON_RENDERTYPE_LASER:
-		return SAFE_NEW CLaserProjectile(pos, speed, owner, 30,
-				weaponDef->visuals.color, weaponDef->visuals.color2,
-				weaponDef->intensity, weaponDef,
-				(int)(weaponDef->range/weaponDef->projectilespeed));
-		break;
-	case WEAPON_RENDERTYPE_PLASMA:
-		break;
-	case WEAPON_RENDERTYPE_FIREBALL:
-		return SAFE_NEW CFireBallProjectile(pos,speed,owner,target,targetPos,weaponDef);
-		break;
-	}
-
-	//gniarf!
-	return NULL;
-}
-
 void CWeaponProjectile::Collision()
 {
 	if(!weaponDef->noExplode || gs->frameNum&1)

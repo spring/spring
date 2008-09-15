@@ -19,11 +19,6 @@
 #define WEAPONTYPE_STARBURSTLAUNCHER 11
 #define WEAPONTYPE_UNKNOWN 12
 
-#define WEAPON_RENDERTYPE_MODEL 1
-#define WEAPON_RENDERTYPE_LASER 2
-#define WEAPON_RENDERTYPE_PLASMA 3
-#define WEAPON_RENDERTYPE_FIREBALL 4
-
 class LuaTable;
 class CColorMap;
 class CExplosionGenerator;
@@ -143,23 +138,22 @@ struct WeaponDef
 
 	unsigned int onlyTargetCategory;
 
-	float wobble;								// how much the missile will wobble around its course
-	float dance;								// how much the missile will dance
-	float trajectoryHeight;						// how high trajectory missiles will try to fly in
+	float wobble;             // how much the missile will wobble around its course
+	float dance;              // how much the missile will dance
+	float trajectoryHeight;   // how high trajectory missiles will try to fly in
 
 	struct Visuals
 	{
 		float3 color;
 		float3 color2;
 
-		int renderType;
 		//bool hasmodel;
 		std::string modelName;
 		CColorMap *colorMap;
 
 		bool smokeTrail;
 		bool beamweapon;
-		bool hardStop;	//whether the shot should fade out or stop and contract at max range
+		bool hardStop;   //whether the shot should fade out or stop and contract at max range
 
 		AtlasedTexture *texture1;
 		AtlasedTexture *texture2;
@@ -258,7 +252,7 @@ class CWeaponDefHandler {
 		int numWeaponDefs;
 
 	private:
-		void ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd);
+		void ParseWeapon(const LuaTable& wdTable, WeaponDef& wd);
 		float3 hs2rgb(float h, float s);
 };
 

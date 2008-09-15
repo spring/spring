@@ -176,14 +176,10 @@ void CCannon::Fire(void)
 	} else {
 		ttl=predict*2;
 	}
+
 	SAFE_NEW CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef, ttl, areaOfEffect, gravity);
-	//CWeaponProjectile::CreateWeaponProjectile(weaponPos,owner->speed,owner, NULL, float3(0,0,0), weaponDef);
 
-//	SAFE_NEW CSmokeProjectile(weaponPos,dir*0.01f,90,0.1f,0.02f,owner,0.6f);
-//	CHeatCloudProjectile* p=SAFE_NEW CHeatCloudProjectile(weaponPos,dir*0.02f,8,0.6f,owner);
-//	p->Update();
-//	p->maxheat=p->heat;
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 //	if(weaponMuzzlePos.y < 30)
