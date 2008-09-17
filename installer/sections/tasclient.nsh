@@ -20,6 +20,7 @@
 
   SetOutPath "$INSTDIR\lobby\var"
   File "..\Lobby\TASClient\lobby\var\groups.ini"
+  File "..\Lobby\TASClient\lobby\var\tips.txt"
 
   Call GetDotNETVersion
   Pop $0
