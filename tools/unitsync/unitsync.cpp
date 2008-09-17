@@ -1071,6 +1071,7 @@ struct Option {
 	string name;
 	string desc;
 	string section;
+	string style;
 
 	string type; // "bool", "number", "string", "list", "section"
 
@@ -1119,6 +1120,7 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 	opt.desc = optTbl.GetString("desc", opt.name);
 
 	opt.section = optTbl.GetString("section", "");
+	opt.style = optTbl.GetString("style", "");
 
 	opt.type = optTbl.GetString("type", "");
 	opt.type = StringToLower(opt.type);
@@ -1311,6 +1313,14 @@ DLL_EXPORT const char* __stdcall GetOptionSection(int optIndex)
 		return NULL;
 	}
 	return GetStr(options[optIndex].section);
+}
+
+DLL_EXPORT const char* __stdcall GetOptionStyle(int optIndex)
+{
+	if (InvalidOptionIndex(optIndex)) {
+		return NULL;
+	}
+	return GetStr(options[optIndex].style);
 }
 
 DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)

@@ -67,6 +67,7 @@ DLL_EXPORT int          __stdcall GetModOptionCount();
 DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
 DLL_EXPORT const char* __stdcall GetOptionSection(int optIndex);
+DLL_EXPORT const char* __stdcall GetOptionStyle(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionBoolDef(int optIndex);
