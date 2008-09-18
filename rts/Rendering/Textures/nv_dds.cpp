@@ -690,15 +690,18 @@ bool CDDSImage::upload_texture1D()
     if (is_compressed())
     {
         // get function pointer if needed
+#ifndef USE_GML
         if (glCompressedTexImage1DARB == NULL)
         {
             GET_EXT_POINTER(glCompressedTexImage1DARB, 
                             PFNGLCOMPRESSEDTEXIMAGE1DARBPROC);
         }
-        
+
         if (glCompressedTexImage1DARB == NULL)
             return false;
-        
+#else
+        ::
+#endif                
         glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format, 
             baseImage.get_width(), 0, baseImage.get_size(), baseImage);
         
@@ -706,6 +709,9 @@ bool CDDSImage::upload_texture1D()
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
+#ifdef USE_GML
+            ::
+#endif
             glCompressedTexImage1DARB(GL_TEXTURE_1D, i+1, m_format, 
                 mipmap.get_width(), 0, mipmap.get_size(), mipmap);
         }
@@ -769,6 +775,7 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target)
     if (is_compressed())
     {
         // load function pointer if needed
+#ifndef USE_GML
         if (glCompressedTexImage2DARB == NULL)
         {
             GET_EXT_POINTER(glCompressedTexImage2DARB, 
@@ -777,7 +784,9 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target)
         
         if (glCompressedTexImage2DARB == NULL)
             return false;
-        
+#else
+        ::
+#endif
         glCompressedTexImage2DARB(target, 0, m_format, image.get_width(), 
             image.get_height(), 0, image.get_size(), image);
         
@@ -785,7 +794,9 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target)
         for (unsigned int i = 0; i < image.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = image.get_mipmap(i);
-
+#ifdef USE_GML
+            ::
+#endif
             glCompressedTexImage2DARB(target, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), 0, 
                 mipmap.get_size(), mipmap);
@@ -835,6 +846,7 @@ bool CDDSImage::upload_texture3D()
     if (is_compressed())
     {
         // retrieve function pointer if needed
+#ifndef USE_GML
         if (glCompressedTexImage3DARB == NULL)
         {
             GET_EXT_POINTER(glCompressedTexImage3DARB, 
@@ -843,7 +855,9 @@ bool CDDSImage::upload_texture3D()
 
         if (glCompressedTexImage3DARB == NULL)
             return false;
-
+#else
+        ::
+#endif
         glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,  
             baseImage.get_width(), baseImage.get_height(), baseImage.get_depth(),
             0, baseImage.get_size(), baseImage);
@@ -852,7 +866,9 @@ bool CDDSImage::upload_texture3D()
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-
+#ifdef USE_GML
+            ::
+#endif
             glCompressedTexImage3DARB(GL_TEXTURE_3D, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 
                 0, mipmap.get_size(), mipmap);

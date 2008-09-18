@@ -459,8 +459,8 @@
 #define glRasterPos2i gmlRasterPos2i
 #define glReadBuffer gmlReadBuffer
 #define glScissor gmlScissor
-#define glShaderSource
-#define glShaderSourceARB
+#define glShaderSource gmlShaderSource
+#define glShaderSourceARB gmlShaderSourceARB
 #define glTexCoord2fv gmlTexCoord2fv
 #define glTexParameterfv gmlTexParameterfv
 #define glTranslated gmlTranslated

@@ -69,9 +69,11 @@ extern gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)>
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT;
+extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT;
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_VERTEX;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT;
+extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_GEOMETRY_EXT;
 
 extern void gmlInit();
 
@@ -86,6 +88,8 @@ EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 		return gmlShaderServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER)
 		return gmlShaderServer_FRAGMENT.GetItems();
+	if(type==GL_GEOMETRY_SHADER_EXT)
+		return gmlShaderServer_GEOMETRY_EXT.GetItems();
 	return 0;
 }
 EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
@@ -93,6 +97,8 @@ EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 		return gmlShaderObjectARBServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER_ARB)
 		return gmlShaderObjectARBServer_FRAGMENT.GetItems();
+	if(type==GL_GEOMETRY_SHADER_EXT)
+		return gmlShaderObjectARBServer_GEOMETRY_EXT.GetItems();
 	return 0;
 }
 EXTERN inline GLUquadric *gmluNewQuadric() {

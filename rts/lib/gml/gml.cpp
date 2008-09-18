@@ -134,11 +134,17 @@ EXTERN inline GLhandleARB glCreateShader_VERTEX() {
 EXTERN inline GLhandleARB glCreateShader_FRAGMENT() {
 	return glCreateShader(GL_FRAGMENT_SHADER);
 }
+EXTERN inline GLhandleARB glCreateShader_GEOMETRY_EXT() {
+	return glCreateShader(GL_GEOMETRY_SHADER_EXT);
+}
 EXTERN inline GLhandleARB glCreateShaderObjectARB_VERTEX() {
 	return glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
 }
 EXTERN inline GLhandleARB glCreateShaderObjectARB_FRAGMENT() {
 	return glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+}
+EXTERN inline GLhandleARB glCreateShaderObjectARB_GEOMETRY_EXT() {
+	return glCreateShaderObjectARB(GL_GEOMETRY_SHADER_EXT);
 }
 gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
@@ -150,9 +156,11 @@ gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMOBJECTARBPROC *> gmlProgramOb
 
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT(&glCreateShader_GEOMETRY_EXT, 2, 0);
 
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_VERTEX(&glCreateShaderObjectARB_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT(&glCreateShaderObjectARB_FRAGMENT, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_GEOMETRY_EXT(&glCreateShaderObjectARB_GEOMETRY_EXT, 2, 0);
 gmlSingleItemServer<GLUquadric *, GLUquadric *(GML_GLAPIENTRY *)(void)> gmlQuadricServer(&gluNewQuadric, 100, 25);
 
 gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei,GLuint *)> gmlTextureServer(&glGenTextures, 100, 25);
