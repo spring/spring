@@ -25,6 +25,15 @@ if (DIRECT_CONTROL)
 	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
 endif (DIRECT_CONTROL)
 
+IF (UNIX)
+	ADD_DEFINITIONS(-DNO_AVI)
+ELSEIF (UNIX)
+	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
+	if (NO_AVI)
+		ADD_DEFINITIONS(-DNO_AVI)
+	endif (NO_AVI)
+ENDIF(UNIX)
+
 SET(SPRING_DATADIR ${CMAKE_INSTALL_PREFIX}/${DATADIR} CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 if (SPRING_DATADIR)
 	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}")
@@ -44,12 +53,15 @@ else (MINGW)
 	# AIs need it
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
+	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
 endif (MINGW)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
-set (MARCH_FLAG native CACHE STRING "Passed to GCC for CPU-dependend optimization")
-SET(CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing")
+set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
+SET(CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing -fvisibility=hidden -fvisibility-inlines-hidden -DGCC_HASCLASSVISIBILITY")
+# ADD_DEFINITIONS(-DSTREFLOP_X87) breaks AI compiling
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 ENDIF (UNIX)

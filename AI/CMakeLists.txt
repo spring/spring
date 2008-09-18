@@ -1,6 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/rts/System)
 
-add_definitions(-fPIC)
+add_definitions(-fPIC -D_REENTRANT -D_GNU_SOURCE=1)
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
 list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
 

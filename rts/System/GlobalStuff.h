@@ -406,13 +406,13 @@ public:
 
 	/**
 	 * @brief set ally
-	 * @param teamA first team
-	 * @param teamB second team
+	 * @param allyteamA first allyteam
+	 * @param allyteamB second allyteam
 	 * @param allied whether or not these two teams are allied
 	 *
-	 * Sets two teams to be allied or not
+	 * Sets two allyteams to be allied or not
 	 */
-	void SetAlly(int teamA,int teamB, bool allied) { allies[teamA][teamB]=allied; }
+	void SetAlly(int allyteamA,int allyteamB, bool allied) { allies[allyteamA][allyteamB]=allied; }
 
 private:
 	/**

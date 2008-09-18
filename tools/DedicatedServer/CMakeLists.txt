@@ -1,12 +1,5 @@
-IF (MINGW)
-ELSE (MINGW)
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
-ENDIF (MINGW)
-
-ADD_DEFINITIONS( -DSTREFLOP_X87 -D_SZ_ONE_DIRECTORY -DNO_AVI -DDEDICATED -DSYNCCHECK -fPIC)
+ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../../CMakeLists.txt
+ADD_DEFINITIONS(-DDEDICATED -fPIC)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
@@ -57,10 +50,13 @@ ADD_LIBRARY(server SHARED
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser
 	../../rts/Rendering/Textures/TAPalette)
-TARGET_LINK_LIBRARIES(server SDL boost_thread-mt hpiutil2 7zip minizip lua boost_regex-mt)
-IF (MINGW)
-	TARGET_LINK_LIBRARIES(server ws2_32)
-ENDIF (MINGW)
+ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
+TARGET_LINK_LIBRARIES(server SDL hpiutil2 7zip minizip lua)
+if (MINGW)
+	TARGET_LINK_LIBRARIES (server ws2_32 boost_thread-mt boost_regex-mt)
+else (MINGW)
+	TARGET_LINK_LIBRARIES (server ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+endif (MINGW)
 
 ADD_EXECUTABLE(dedicated main)
 TARGET_LINK_LIBRARIES(dedicated server)

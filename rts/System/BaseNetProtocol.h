@@ -96,8 +96,9 @@ enum TEAMMSG {
 };
 
 /**
-@brief High level network code layer
-Provides protocoldependent functions over our CNet-Class. It includes all functions needed to send stuff without handling with the internals.
+@brief A factory used to make often-used network messages.
+
+Use this if you want to create a network message. Implemented as a singleton.
  */
 class CBaseNetProtocol
 {

@@ -29,7 +29,7 @@ ELSE (MINGW)
 	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
 ENDIF (MINGW)
 
-ADD_DEFINITIONS( -D_SZ_ONE_DIRECTORY -DNO_AVI -DSYNCCHECK -DUNITSYNC -DBITMAP_NO_OPENGL)
+ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL)
 
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)

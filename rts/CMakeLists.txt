@@ -1,3 +1,5 @@
+ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../CMakeLists.txt
+
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
@@ -18,17 +20,6 @@ SET(SYNCDEBUG FALSE CACHE BOOL "Enable sync debugger (needs SYNCCHECK=true)")
 if (SYNCDEBUG)
 	ADD_DEFINITIONS(-DSYNCDEBUG)
 endif (SYNCDEBUG)
-
-IF (UNIX)
-	ADD_DEFINITIONS(-DNO_AVI)
-ELSEIF (UNIX)
-	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
-	if (NO_AVI)
-		ADD_DEFINITIONS(-DNO_AVI)
-	endif (NO_AVI)
-ENDIF(UNIX)
-
-ADD_DEFINITIONS(-DSTREFLOP_X87)
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
