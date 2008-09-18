@@ -663,7 +663,7 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 **C, ftype4 *D) {\
 		GLint sl=(len?strlen(C[i]):D[i])+1;\
 		datasize+=sl;\
 		((intptr_t *)&(p->C))[i]=sl;\
-			--sl;\
+		--sl;\
 		while(qd->WritePos+datasize>=qd->WriteSize)\
 			p=(gml##name##Data *)qd->WaitRealloc(&e);\
 		memcpy(e,C[i],sl);\
