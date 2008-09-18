@@ -1,6 +1,7 @@
 IF (MINGW)
 	set (unitsync_libs glew32 opengl32 glu32 devil ilu)
 	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
+	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/python2.5)
 	set (JNI_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
@@ -29,7 +30,7 @@ ELSE (MINGW)
 	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
 ENDIF (MINGW)
 
-ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL)
+ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
 
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
@@ -72,7 +73,6 @@ TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua boost_
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})
 endif (PYTHONLIBS_FOUND)
-SET_TARGET_PROPERTIES( unitsync PROPERTIES COMPILE_FLAGS -fPIC)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 
