@@ -12,6 +12,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include <assert.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

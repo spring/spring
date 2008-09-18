@@ -40,6 +40,7 @@
 
 #include <fstream>
 #include <list>
+#include <assert.h>
 
 namespace terrain {
 using namespace std;

@@ -43,6 +43,7 @@
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
 #include "FileSystem/FileHandler.h"
+#include <assert.h>
 
 // define this for big endian machines
 //#define SWAP_SHORT

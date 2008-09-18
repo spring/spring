@@ -33,6 +33,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "creg/STL_Map.h"
+#include <assert.h>
 
 
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );

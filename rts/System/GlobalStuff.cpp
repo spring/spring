@@ -19,6 +19,7 @@
 #include "Lua/LuaRules.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
+#include <assert.h>
 
 /**
  * @brief global synced

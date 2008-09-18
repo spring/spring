@@ -23,6 +23,7 @@
 #include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+#include <assert.h>
 
 using std::min;
 using std::max;
