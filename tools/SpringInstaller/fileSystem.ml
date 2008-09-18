@@ -38,16 +38,22 @@ let move src dst =
 
 let size path = (Unix.stat path).Unix.st_size
 
-let make_dirs dirs =
-  let mkdir path =
-    let dirname = Filename.dirname path in
-      if Sys.file_exists dirname then
-        if Sys.is_directory dirname then
-          ()
-        else
-          raise (Sys_error (Printf.sprintf "%s exists but is not a directory" dirname))
-      else
-        Unix.mkdir dirname 0o755 in
-    
-    List.iter mkdir dirs
-      
+let make_dir path =
+  if Sys.file_exists path then
+    if Sys.is_directory path then
+      ()
+    else
+      raise (Sys_error 
+               (Printf.sprintf
+                  "Error creating directory %s: File exists but is not a directory"
+                  path))
+  else
+    try
+      Unix.mkdir path 0o755;
+    with
+        Unix.Unix_error (error, _, _) ->
+          raise (Sys_error
+                   (Printf.sprintf
+                      "Error creating directory %s: %s"
+                      path
+                      (Unix.error_message error)))
