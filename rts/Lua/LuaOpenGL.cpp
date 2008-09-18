@@ -1592,6 +1592,7 @@ int LuaOpenGL::Unit(lua_State* L)
 		} else {
 			int tmpLod = lua_toint(L, 3);
 			if (tmpLod < 0) {
+				lod = 0;
 				useLOD = false;
 			} else {
 				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);

@@ -13,6 +13,7 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "RadarHandler.h"
+#include <assert.h>
 
 #define MAX_LOS_TABLE 110
 

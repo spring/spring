@@ -23,6 +23,7 @@
 #include "Sim/Weapons/DGunWeapon.h"
 #include "System/LogOutput.h"
 #include "myMath.h"
+#include <assert.h>
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
@@ -289,9 +290,8 @@ void CMobileCAI::RefuelIfNeeded()
 				}
 			}
 		} else if(owner->currentFuel <
-				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel)
-				&& commandQue.empty() || commandQue.front().id == CMD_PATROL
-				|| commandQue.front().id == CMD_FIGHT) {
+				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && 
+				(commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT)) {
 			CAirBaseHandler::LandingPad* lp =
 				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 			if(lp) {

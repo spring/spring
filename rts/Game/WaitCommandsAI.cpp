@@ -24,7 +24,7 @@
 #include "UI/CursorIcons.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_List.h"
-
+#include <assert.h>
 
 CWaitCommandsAI waitCommandsAI;
 

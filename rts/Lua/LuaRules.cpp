@@ -39,7 +39,7 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
-
+#include <assert.h>
 
 CLuaRules* luaRules = NULL;
 

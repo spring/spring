@@ -37,6 +37,7 @@
 
 #include <SDL.h>
 #include <IL/il.h>
+#include <assert.h>
 
 namespace terrain {
 

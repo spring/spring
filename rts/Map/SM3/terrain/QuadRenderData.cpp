@@ -33,6 +33,7 @@
 #include "TerrainBase.h"
 #include "TerrainNode.h"
 #include "TerrainTexture.h"
+#include <assert.h>
 
 namespace terrain {
 	using namespace std;

@@ -31,6 +31,7 @@
 #include "myMath.h"
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
+#include <assert.h>
 
 #define TARGET_LOST_TIMER 120	// in calls to SlowUpdate() (approx. once every second)
 
