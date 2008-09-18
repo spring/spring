@@ -42,13 +42,14 @@ let archive_mover path kind datadir =
   let spring_dir_entry = GEdit.entry
     ~packing:(table#attach ~left:1 ~top:0 ~expand:`X)
     () in
+
   let spring_dir_entry_defaults () = spring_dir_entry#set_text datadir in
   let spring_dir_entry_get () = spring_dir_entry#text in
 
-  (* Filename *)
+  (* Install as *)
 
   let _ = GMisc.label
-    ~text:"Filename"
+    ~text:"Install as"
     ~packing:(table#attach ~left:0 ~top:1)
     () in
     
@@ -56,7 +57,8 @@ let archive_mover path kind datadir =
     ~packing:(table#attach ~left:1 ~top:1 ~expand:`X)
     () in
 
-  let basename_entry_defaults () = basename_entry#set_text (Filename.basename path) in
+  let basename_entry_defaults () =
+    basename_entry#set_text (Filename.basename path) in
   let basename_entry_get () = basename_entry#text in
 
   (* Archive Kind *)
@@ -92,14 +94,14 @@ let archive_mover path kind datadir =
     ~packing:(vbox#pack ~fill:false ~expand:false)
     () in
     
-  (* Exit *)
+  (* Cancel *)
 
-  let exit_button = GButton.button
-    ~label:"Exit"
+  let cancel_button = GButton.button
+    ~label:"Cancel"
     ~packing:button_box#pack
     () in
 
-  let _ = exit_button#connect#clicked ~callback:GMain.Main.quit in
+  let _ = cancel_button#connect#clicked ~callback:GMain.Main.quit in
 
   (* Defaults *)
     
@@ -126,7 +128,8 @@ let archive_mover path kind datadir =
       let dest_dir = Filename.concat spring_dir sub_dir in
       let dest = Filename.concat dest_dir basename in
         try
-          FileSystem.make_dirs [spring_dir; dest_dir];
+          FileSystem.make_dir spring_dir;
+          FileSystem.make_dir dest_dir;
           FileSystem.move path dest;
           die (Printf.sprintf "%s was successfully installed" dest)
         with

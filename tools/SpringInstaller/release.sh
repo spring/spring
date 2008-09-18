@@ -10,7 +10,7 @@ svn export . "$TMPDIR/$SOURCEDIR"
 cd "$TMPDIR"
 tar -zcvf "$SOURCETARGZ" "$SOURCEDIR"
 cd "$SOURCEDIR"
-dpkg-buildpackage
+debuild -S -sa
 cd "$TMPDIR"
 rm -rf "$SOURCEDIR"
 cd $TARGET
