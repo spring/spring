@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <list>
 #include "Platform/byteorder.h"

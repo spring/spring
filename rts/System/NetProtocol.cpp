@@ -40,7 +40,6 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	server.reset(conn);
 	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
 	server->Flush(true);
-	isLocal = false;
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
@@ -54,7 +53,6 @@ void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
 	server.reset(new netcode::CLocalConnection);
 	server->Flush();
-	isLocal = true;
 	if (!localDemoPlayback)
 	{
 		record.reset(new CDemoRecorder());
