@@ -1,5 +1,5 @@
 ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../../CMakeLists.txt
-ADD_DEFINITIONS(-DDEDICATED -fPIC)
+ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
@@ -50,12 +50,12 @@ ADD_LIBRARY(server SHARED
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser
 	../../rts/Rendering/Textures/TAPalette)
-ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
 TARGET_LINK_LIBRARIES(server SDL hpiutil2 7zip minizip lua)
 if (MINGW)
 	TARGET_LINK_LIBRARIES (server ws2_32 boost_thread-mt boost_regex-mt)
 else (MINGW)
 	TARGET_LINK_LIBRARIES (server ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+	ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
 endif (MINGW)
 
 ADD_EXECUTABLE(dedicated main)

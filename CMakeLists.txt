@@ -1,6 +1,6 @@
 ### Cmake 2.4 lacks some cross-compiling features and fails on windows
 cmake_minimum_required(VERSION 2.6)
-Project(Spring)
+project(Spring)
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
@@ -60,18 +60,22 @@ endif (MINGW)
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
 set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
-SET(CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing -fvisibility=hidden -fvisibility-inlines-hidden -DGCC_HASCLASSVISIBILITY")
+SET(CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 # ADD_DEFINITIONS(-DSTREFLOP_X87) breaks AI compiling
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 ENDIF (UNIX)
-SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_DEBUG2  "${CMAKE_CXX_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_DEBUG3  "${CMAKE_CXX_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} ${VISIBILITY_HIDDEN} -g -O2 -DNDEBUG")
-SET(CMAKE_CXX_FLAGS_PROFILE   "${CMAKE_CXX_FLAGS} -O2 -pg -Wall -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG   "-ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_DEBUG2  "-ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_DEBUG3  "-ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fomit-frame-pointer")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_PROFILE   "-O2 -pg -Wall -DNDEBUG")
+if (NOT MINGW)
+	set (PIC_FLAG "-fpic")
+endif (NOT MINGW)
 
+### Where the other CMakeLists.txt are
 Add_Subdirectory(rts)
 Add_Subdirectory(AI)
 Add_Subdirectory(tools/DedicatedServer)
@@ -79,6 +83,7 @@ Add_Subdirectory(tools/unitsync)
 Add_Subdirectory(tools/DemoAnalyser)
 Add_Subdirectory(tools/DemoDumper)
 
+### make the basefiles (aka sdz's)
 if (UNIX OR CMAKE_CROSSCOMPILING)
 	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
 else (UNIX OR CMAKE_CROSSCOMPILING)
