@@ -152,31 +152,31 @@ extern __declspec(thread) int gmlThreadNumber;
 #		if GML_GCC_TLS_FIX || GML_USE_SPEEDY_TLS
 static inline int get_threadnum(void) {
 	int val;
-#			if GML_GCC_TLS_FIX
+#			if GML_USE_SPEEDY_TLS
+	speedy_tls_get_int32(0, 0, sizeof(int), val);
+#			else
 #				if !defined(_WIN64) || !GML_64BIT_USE_GS
 	__asm__("mov %%fs:0x14, %0" : "=r" (val) : : );
 #				else
 	__asm__("mov %%gs:0x28, %0" : "=r" (val) : : );
 #				endif
-#			else
-	speedy_tls_get_int32(0, 0, sizeof(int), val);
 #			endif
 	return val;
 }
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
 static inline void set_threadnum(int val) {
-#			if GML_GCC_TLS_FIX
+#			if GML_USE_SPEEDY_TLS
+	if (speedy_tls_init(sizeof(int))<0) { // this works because we only set the thread number once per thread
+		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);
+	}
+	speedy_tls_put_int32(0, 0, sizeof(int), val);
+#			else
 #				if !defined(_WIN64) || !GML_64BIT_USE_GS
 	__asm__ __volatile__("mov %0,%%fs:0x14" : : "r" (val));
 #				else
 	__asm__ __volatile__("mov %0,%%gs:0x28" : : "r" (val));
 #				endif
-#			else
-	if (speedy_tls_init(sizeof(int))<0) { // this works because we only set the thread number once per thread
-		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);
-	}
-	speedy_tls_put_int32(0, 0, sizeof(int), val);
 #			endif
 }
 #		else
