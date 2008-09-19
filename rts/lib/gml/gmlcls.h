@@ -109,6 +109,7 @@
 
 #if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #	define GML_USE_SPEEDY_TLS 1
+#include "System/Platform/errorhandler.h"
 #else
 #	define GML_USE_SPEEDY_TLS 0
 #endif
