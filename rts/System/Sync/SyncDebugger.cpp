@@ -11,7 +11,7 @@
 #include "SyncDebugger.h"
 #include "Logger.h"
 
-
+#include <map>
 #ifndef WIN32
 /* for backtrace() function */
 # include <execinfo.h>
