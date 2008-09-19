@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 #include <SDL_timer.h>
 #include <boost/version.hpp>
 #include <boost/format.hpp>

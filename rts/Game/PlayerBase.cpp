@@ -1,6 +1,4 @@
-#include "StdAfx.h"
 #include "PlayerBase.h"
-
 
 
 PlayerBase::PlayerBase() :

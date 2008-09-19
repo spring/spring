@@ -528,7 +528,7 @@ void CTAAirMoveType::UpdateHeading()
 		return;
 	}
 
-	short& heading = owner->heading;
+	SyncedSshort& heading = owner->heading;
 	short deltaHeading = wantedHeading - heading;
 
 	if (forceHeading) {
