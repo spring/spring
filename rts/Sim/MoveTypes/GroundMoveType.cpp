@@ -609,7 +609,7 @@ void CGroundMoveType::SetDeltaSpeed(void)
 Changes the heading of the owner.
 */
 void CGroundMoveType::ChangeHeading(short wantedHeading) {
-	short heading = owner->heading;
+	SyncedSshort& heading = owner->heading;
 
 	deltaHeading = wantedHeading - heading;
 

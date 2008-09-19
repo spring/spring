@@ -45,7 +45,7 @@ public:
 	int xsize;									// The x-size of this object, according to its footprint.
 	int ysize;									// The z-size of this object, according to its footprint. (NOTE: This one should have been called zsize!)
 	float height;								// The height of this object.
-	short heading;								// Contains the same information as frontdir, but in a short signed integer.
+	SyncedSshort heading;								// Contains the same information as frontdir, but in a short signed integer.
 	
 	// Positional properties.
 	PhysicalState physicalState;				// The current state of the object within the gameworld. I.e Flying or OnGround.

@@ -154,7 +154,7 @@ class CEventHandler
 		
 		class EventInfo {
 			public:
-				EventInfo() : propBits(0), list(NULL) {}
+				EventInfo() : list(NULL), propBits(0) {}
 				EventInfo(const std::string& _name, EventClientList* _list, int _bits)
 				: name(_name), list(_list), propBits(_bits) {}
 				~EventInfo() {}
@@ -566,7 +566,7 @@ inline void CEventHandler::StockpileChanged(const CUnit* unit,
 	const int count = listStockpileChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listStockpileChanged[i];
-		const int ecAllyTeam = ec->GetReadAllyTeam();
+		//const int ecAllyTeam = ec->GetReadAllyTeam();
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
 			ec->StockpileChanged(unit, weapon, oldCount);
 		}
