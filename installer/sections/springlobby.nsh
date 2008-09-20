@@ -1,7 +1,7 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
   inetc::get \
-             "http://installer.clan-sy.com/springlobby.exe" "$INSTDIR\springlobby.exe"  
+             "http://www.springlobby.info/installer/springlobby.exe" "$INSTDIR\springlobby.exe"
   File "..\external\SDL_mixer.dll"
   File "..\external\wxbase28u_xml_gcc_custom.dll"
   File "..\external\wxmsw28u_aui_gcc_custom.dll"
