@@ -353,6 +353,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 				int xe = xend;
 				FindRange(xs, xe, left, right, y, lod);
 
+				int ylod = y + lod;
+				int yhlod = y + hlod;
+
 				int nloop=(xe-xs)/lod+1;
 				ma->EnlargeArrays(52*nloop, 14*nloop+1); //! includes one extra for final endstrip
 
@@ -361,19 +364,21 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 				int yhhdx = yhdx + hlod * heightDataX;
 
 				for (x = xs; x < xe; x += lod) {
+					int xlod = x + lod;
+					int xhlod = x + hlod;
 					//! info: all triangle quads start in the top left corner
 					if ((lod == 1) ||
 						(x > cx + vrhlod) || (x < cx - vrhlod) ||
 						(y > cy + vrhlod) || (y < cy - vrhlod)) {
 						//! normal terrain (all vertices in one LOD)
 						if (!inStrip) {
-							DrawVertexAQ(ma, x, y      );
-							DrawVertexAQ(ma, x, y + lod);
+							DrawVertexAQ(ma, x, y);
+							DrawVertexAQ(ma, x, ylod);
 							inStrip = true;
 						}
 
-						DrawVertexAQ(ma, x + lod, y      );
-						DrawVertexAQ(ma, x + lod, y + lod);
+						DrawVertexAQ(ma, xlod, y);
+						DrawVertexAQ(ma, xlod, ylod);
 					}
 					else {
 						//! border between 2 different LODs
@@ -392,21 +397,21 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 								inStrip = false;
 							}
 
-							DrawVertexAQ(ma, x,        y           );
-							DrawVertexAQ(ma, x,        y + hlod, h1);
-							DrawVertexAQ(ma, x + hlod, y,        h2);
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
+							DrawVertexAQ(ma, x, y);
+							DrawVertexAQ(ma, x, yhlod, h1);
+							DrawVertexAQ(ma, xhlod, y, h2);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x,        y + hlod, h1);
-							DrawVertexAQ(ma, x,        y +  lod    );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x + hlod, y +  lod, h4);
+							DrawVertexAQ(ma, x, yhlod, h1);
+							DrawVertexAQ(ma, x, ylod);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xhlod, ylod, h4);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x + hlod, y +  lod, h4);
-							DrawVertexAQ(ma, x +  lod, y +  lod    );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x +  lod, y           );
-							DrawVertexAQ(ma, x + hlod, y,        h2);
+							DrawVertexAQ(ma, xhlod, ylod, h4);
+							DrawVertexAQ(ma, xlod, ylod);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xlod, y);
+							DrawVertexAQ(ma, xhlod, y, h2);
 							EndStripQ(ma);
 						}
 						else if ((x <= cx - vrhlod)) {
@@ -424,21 +429,21 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 								inStrip = false;
 							}
 
-							DrawVertexAQ(ma, x +  lod, y + hlod, h1);
-							DrawVertexAQ(ma, x +  lod, y           );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x + hlod, y,        h2);
+							DrawVertexAQ(ma, xlod, yhlod, h1);
+							DrawVertexAQ(ma, xlod, y);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xhlod, y, h2);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x +  lod, y +  lod    );
-							DrawVertexAQ(ma, x +  lod, y + hlod, h1);
-							DrawVertexAQ(ma, x + hlod, y +  lod, h4);
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
+							DrawVertexAQ(ma, xlod, ylod);
+							DrawVertexAQ(ma, xlod, yhlod, h1);
+							DrawVertexAQ(ma, xhlod, ylod, h4);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x + hlod, y,        h2);
-							DrawVertexAQ(ma, x,        y           );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x,        y +  lod    );
-							DrawVertexAQ(ma, x + hlod, y +  lod, h4);
+							DrawVertexAQ(ma, xhlod, y, h2);
+							DrawVertexAQ(ma, x, y);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, x, ylod);
+							DrawVertexAQ(ma, xhlod, ylod, h4);
 							EndStripQ(ma);
 						}
 
@@ -457,18 +462,18 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 								inStrip = false;
 							}
 
-							DrawVertexAQ(ma, x,        y           );
-							DrawVertexAQ(ma, x,        y + hlod, h2);
-							DrawVertexAQ(ma, x + hlod, y,        h1);
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x +  lod, y           );
-							DrawVertexAQ(ma, x +  lod, y + hlod, h4);
+							DrawVertexAQ(ma, x, y);
+							DrawVertexAQ(ma, x, yhlod, h2);
+							DrawVertexAQ(ma, xhlod, y, h1);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xlod, y);
+							DrawVertexAQ(ma, xlod, yhlod, h4);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x,        y + hlod, h2);
-							DrawVertexAQ(ma, x,        y +  lod    );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x +  lod, y +  lod    );
-							DrawVertexAQ(ma, x +  lod, y + hlod, h4);
+							DrawVertexAQ(ma, x, yhlod, h2);
+							DrawVertexAQ(ma, x, ylod);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xlod, ylod);
+							DrawVertexAQ(ma, xlod, yhlod, h4);
 							EndStripQ(ma);
 						}
 						else if ((y <= cy - vrhlod)) {
@@ -486,18 +491,18 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 								inStrip = false;
 							}
 
-							DrawVertexAQ(ma, x,        y + hlod, h2);
-							DrawVertexAQ(ma, x,        y +  lod    );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x + hlod, y +  lod, h1);
-							DrawVertexAQ(ma, x +  lod, y + hlod, h4);
-							DrawVertexAQ(ma, x +  lod, y +  lod    );
+							DrawVertexAQ(ma, x, yhlod, h2);
+							DrawVertexAQ(ma, x, ylod);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, xhlod, ylod, h1);
+							DrawVertexAQ(ma, xlod, yhlod, h4);
+							DrawVertexAQ(ma, xlod, ylod);
 							EndStripQ(ma);
-							DrawVertexAQ(ma, x +  lod, y + hlod, h4);
-							DrawVertexAQ(ma, x +  lod, y           );
-							DrawVertexAQ(ma, x + hlod, y + hlod, h3);
-							DrawVertexAQ(ma, x,        y           );
-							DrawVertexAQ(ma, x,        y + hlod, h2);
+							DrawVertexAQ(ma, xlod, yhlod, h4);
+							DrawVertexAQ(ma, xlod, y);
+							DrawVertexAQ(ma, xhlod, yhlod, h3);
+							DrawVertexAQ(ma, x, y);
+							DrawVertexAQ(ma, x, yhlod, h2);
 							EndStripQ(ma);
 						}
 					}
@@ -514,11 +519,12 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 			int nloop=(yed-yst)/lod+1;
 			ma->EnlargeArrays(8*nloop, 2*nloop);
 
-			// rita yttre begr?snings yta mot n?ta lod
+			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
 				x = maxlx;
+				int xlod = x + lod;
 				for (y = yst; y < yed; y += lod) {
-					DrawVertexAQ(ma, x, y      );
+					DrawVertexAQ(ma, x, y);
 					DrawVertexAQ(ma, x, y + lod);
 
 					if (y % dlod) {
@@ -527,8 +533,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 						int idx3 = CLAMP((y - lod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
 						float h = (heightData[idx3LOD] + heightData[idx2LOD]) * hmcxp +	heightData[idx1LOD] * camxpart;
 
-						DrawVertexAQ(ma, x + lod, y,       h);
-						DrawVertexAQ(ma, x + lod, y + lod   );
+						DrawVertexAQ(ma, xlod, y, h);
+						DrawVertexAQ(ma, xlod, y + lod);
 					}
 					else {
 						int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
@@ -536,8 +542,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 						int idx3 = CLAMP((y + dlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
 						float h = (heightData[idx1LOD] + heightData[idx3LOD]) * hmcxp + heightData[idx2LOD] * camxpart;
 
-						DrawVertexAQ(ma, x + lod, y);
-						DrawVertexAQ(ma, x + lod, y + lod, h);
+						DrawVertexAQ(ma, xlod, y);
+						DrawVertexAQ(ma, xlod, y + lod, h);
 					}
 					EndStripQ(ma);
 				}
@@ -545,6 +551,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 
 			if (minlx > mintx && minlx < maxtx) {
 				x = minlx - lod;
+				int xlod = x + lod;
 				for (y = yst; y < yed; y += lod) {
 					if (y % dlod) {
 						int idx1 = CLAMP((y      ) * heightDataX + x);
@@ -552,8 +559,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 						int idx3 = CLAMP((y - lod) * heightDataX + x);
 						float h = (heightData[idx3] + heightData[idx2]) * hcxp + heightData[idx1] * mcxp;
 
-						DrawVertexAQ(ma, x, y,       h);
-						DrawVertexAQ(ma, x, y + lod   );
+						DrawVertexAQ(ma, x, y, h);
+						DrawVertexAQ(ma, x, y + lod);
 					}
 					else {
 						int idx1 = CLAMP((y       ) * heightDataX + x);
@@ -564,8 +571,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 						DrawVertexAQ(ma, x, y);
 						DrawVertexAQ(ma, x, y + lod, h);
 					}
-					DrawVertexAQ(ma, x + lod, y      );
-					DrawVertexAQ(ma, x + lod, y + lod);
+					DrawVertexAQ(ma, xlod, y);
+					DrawVertexAQ(ma, xlod, y + lod);
 					EndStripQ(ma);
 				}
 			}
@@ -578,7 +585,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 
 				if (xs < xe) {
 					x = xs;
-					int nloop=(xe-xs)/lod+2; // one extra for if statment
+					int ylod = y + lod;
+					int nloop=(xe-xs)/lod+2; //! one extra for if statment
 					ma->EnlargeArrays(2*nloop, 1);
 					int ylhdx=(y + lod) * heightDataX;
 					if (x % dlod) {
@@ -586,23 +594,23 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 						float h = (heightData[idx2MLOD] + heightData[idx2PLOD]) * hmcyp + heightData[idx2] * camypart;
 
 						DrawVertexAQ(ma, x, y);
-						DrawVertexAQ(ma, x, y + lod, h);
+						DrawVertexAQ(ma, x, ylod, h);
 					}
 					else {
-						DrawVertexAQ(ma, x, y      );
-						DrawVertexAQ(ma, x, y + lod);
+						DrawVertexAQ(ma, x, y);
+						DrawVertexAQ(ma, x, ylod);
 					}
 					for (x = xs; x < xe; x += lod) {
 						if (x % dlod) {
-							DrawVertexAQ(ma, x + lod, y      );
-							DrawVertexAQ(ma, x + lod, y + lod);
+							DrawVertexAQ(ma, x + lod, y);
+							DrawVertexAQ(ma, x + lod, ylod);
 						}
 						else {
 							int idx2 = CLAMP(ylhdx + x), idx2PLOD  = CLAMP(idx2 +  lod), idx2PLOD2 = CLAMP(idx2 + dlod);
 							float h = (heightData[idx2PLOD2] + heightData[idx2]) * hmcyp + heightData[idx2PLOD] * camypart;
 
 							DrawVertexAQ(ma, x + lod, y);
-							DrawVertexAQ(ma, x + lod, y + lod, h);
+							DrawVertexAQ(ma, x + lod, ylod, h);
 						}
 					}
 					EndStripQ(ma);
@@ -617,32 +625,33 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 
 				if (xs < xe) {
 					x = xs;
-					int nloop=(xe-xs)/lod+2; // one extra for if statment
+					int ylod = y + lod;
+					int nloop=(xe-xs)/lod+2; //! one extra for if statment
 					ma->EnlargeArrays(2*nloop, 1);
 					int yhdx=y * heightDataX;
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
 						float h = (heightData[idx1MLOD] + heightData[idx1PLOD]) * hcyp + heightData[idx1] * mcyp;
 
-						DrawVertexAQ(ma, x, y,       h);
-						DrawVertexAQ(ma, x, y + lod   );
+						DrawVertexAQ(ma, x, y, h);
+						DrawVertexAQ(ma, x, ylod);
 					}
 					else {
-						DrawVertexAQ(ma, x, y      );
-						DrawVertexAQ(ma, x, y + lod);
+						DrawVertexAQ(ma, x, y);
+						DrawVertexAQ(ma, x, ylod);
 					}
 
 					for (x = xs; x < xe; x+= lod) {
 						if (x % dlod) {
-							DrawVertexAQ(ma, x + lod, y      );
-							DrawVertexAQ(ma, x + lod, y + lod);
+							DrawVertexAQ(ma, x + lod, y);
+							DrawVertexAQ(ma, x + lod, ylod);
 						}
 						else {
 							int idx1 = CLAMP(yhdx + x), idx1PLOD  = CLAMP(idx1 +  lod), idx1PLOD2 = CLAMP(idx1 + dlod);
 							float h = (heightData[idx1PLOD2] + heightData[idx1]) * hcyp + heightData[idx1PLOD] * mcyp;
 
-							DrawVertexAQ(ma, x + lod, y,       h);
-							DrawVertexAQ(ma, x + lod, y + lod   );
+							DrawVertexAQ(ma, x + lod, y, h);
+							DrawVertexAQ(ma, x + lod, ylod);
 						}
 					}
 					EndStripQ(ma);
@@ -848,21 +857,25 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	for (y = ystart; y < yend; y += lod) {
 		int xs = xstart;
 		int xe = xend;
+		int ylod = y + lod;
+		int yhlod = y + hlod;
 
 		int nloop=(xe-xs)/lod+1;
 		ma->EnlargeArrays(52*nloop, 14*nloop+1); //! includes one extra for final endstrip
 		int ydx=y*heightDataX;
 		for (x = xs; x < xe; x += lod) {
+			int xlod = x + lod;
+			int xhlod = x + hlod;
 			if ((lod == 1) ||
 				(x > cx + vrhlod) || (x < cx - vrhlod) ||
 				(y > cy + vrhlod) || (y < cy - vrhlod)) {
 					if (!inStrip) {
 						DrawVertexAQ(ma, x, y      );
-						DrawVertexAQ(ma, x, y + lod);
+						DrawVertexAQ(ma, x, ylod);
 						inStrip = true;
 					}
-					DrawVertexAQ(ma, x + lod, y      );
-					DrawVertexAQ(ma, x + lod, y + lod);
+					DrawVertexAQ(ma, xlod, y      );
+					DrawVertexAQ(ma, xlod, ylod);
 			} 
 			else {  //! inre begr?sning mot f?eg?nde lod
 				int yhdx=ydx+x;
@@ -880,20 +893,20 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 						inStrip=false;
 					}
 					DrawVertexAQ(ma, x,y);
-					DrawVertexAQ(ma, x,y+hlod,h1);
-					DrawVertexAQ(ma, x+hlod,y,h2);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
+					DrawVertexAQ(ma, x,yhlod,h1);
+					DrawVertexAQ(ma, xhlod,y,h2);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x,y+hlod,h1);
-					DrawVertexAQ(ma, x,y+lod);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+hlod,y+lod,h4);
+					DrawVertexAQ(ma, x,yhlod,h1);
+					DrawVertexAQ(ma, x,ylod);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xhlod,ylod,h4);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x+hlod,y+lod,h4);
-					DrawVertexAQ(ma, x+lod,y+lod);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+hlod,y,h2);
+					DrawVertexAQ(ma, xhlod,ylod,h4);
+					DrawVertexAQ(ma, xlod,ylod);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xlod,y);
+					DrawVertexAQ(ma, xhlod,y,h2);
 					EndStripQ(ma);
 				}
 				if(x<=cx-vrhlod){
@@ -906,21 +919,21 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 						EndStripQ(ma);
 						inStrip=false;
 					}
-					DrawVertexAQ(ma, x+lod,y+hlod,h1);
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+hlod,y,h2);
+					DrawVertexAQ(ma, xlod,yhlod,h1);
+					DrawVertexAQ(ma, xlod,y);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xhlod,y,h2);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x+lod,y+lod);
-					DrawVertexAQ(ma, x+lod,y+hlod,h1);
-					DrawVertexAQ(ma, x+hlod,y+lod,h4);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
+					DrawVertexAQ(ma, xlod,ylod);
+					DrawVertexAQ(ma, xlod,yhlod,h1);
+					DrawVertexAQ(ma, xhlod,ylod,h4);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x+hlod,y,h2);
+					DrawVertexAQ(ma, xhlod,y,h2);
 					DrawVertexAQ(ma, x,y);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x,y+lod);
-					DrawVertexAQ(ma, x+hlod,y+lod,h4);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, x,ylod);
+					DrawVertexAQ(ma, xhlod,ylod,h4);
 					EndStripQ(ma);
 				}
 				if(y>=cy+vrhlod){
@@ -934,17 +947,17 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 						inStrip=false;
 					}
 					DrawVertexAQ(ma, x,y);
-					DrawVertexAQ(ma, x,y+hlod,h2);
-					DrawVertexAQ(ma, x+hlod,y,h1);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+lod,y+hlod,h4);
+					DrawVertexAQ(ma, x,yhlod,h2);
+					DrawVertexAQ(ma, xhlod,y,h1);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xlod,y);
+					DrawVertexAQ(ma, xlod,yhlod,h4);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x,y+hlod,h2);
-					DrawVertexAQ(ma, x,y+lod);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+lod,y+lod);
-					DrawVertexAQ(ma, x+lod,y+hlod,h4);
+					DrawVertexAQ(ma, x,yhlod,h2);
+					DrawVertexAQ(ma, x,ylod);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xlod,ylod);
+					DrawVertexAQ(ma, xlod,yhlod,h4);
 					EndStripQ(ma);
 				}
 				if(y<=cy-vrhlod){
@@ -957,18 +970,18 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 						EndStripQ(ma);
 						inStrip=false;
 					}
-					DrawVertexAQ(ma, x,y+hlod,h2);
-					DrawVertexAQ(ma, x,y+lod);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
-					DrawVertexAQ(ma, x+hlod,y+lod,h1);
-					DrawVertexAQ(ma, x+lod,y+hlod,h4);
-					DrawVertexAQ(ma, x+lod,y+lod);
+					DrawVertexAQ(ma, x,yhlod,h2);
+					DrawVertexAQ(ma, x,ylod);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
+					DrawVertexAQ(ma, xhlod,ylod,h1);
+					DrawVertexAQ(ma, xlod,yhlod,h4);
+					DrawVertexAQ(ma, xlod,ylod);
 					EndStripQ(ma);
-					DrawVertexAQ(ma, x+lod,y+hlod,h4);
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+hlod,y+hlod,h3);
+					DrawVertexAQ(ma, xlod,yhlod,h4);
+					DrawVertexAQ(ma, xlod,y);
+					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, x,y);
-					DrawVertexAQ(ma, x,y+hlod,h2);
+					DrawVertexAQ(ma, x,yhlod,h2);
 					EndStripQ(ma);
 				}
 			}
@@ -987,25 +1000,27 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	//!rita yttre begr?snings yta mot n?ta lod
 	if(maxlx<maxtx && maxlx>=mintx){
 		x=maxlx;
+		int xlod = x + lod;
 		for(y=yst;y<yed;y+=lod){
 			DrawVertexAQ(ma, x,y);
 			DrawVertexAQ(ma, x,y+lod);
 			int yhdx=y*heightDataX+x; 
 			if(y%dlod){
 				float h=(heightData[yhdx-lhdx+lod]+heightData[yhdx+lhdx+lod]) * hmcxp + heightData[yhdx+lod] * camxpart;
-				DrawVertexAQ(ma, x+lod,y,h);
-				DrawVertexAQ(ma, x+lod,y+lod);
+				DrawVertexAQ(ma, xlod,y,h);
+				DrawVertexAQ(ma, xlod,y+lod);
 			} 
 			else {
-				DrawVertexAQ(ma, x+lod,y);
+				DrawVertexAQ(ma, xlod,y);
 				float h=(heightData[yhdx+lod]+heightData[yhdx+dhdx+lod]) * hmcxp + heightData[yhdx+lhdx+lod] * camxpart;
-				DrawVertexAQ(ma, x+lod,y+lod,h);
+				DrawVertexAQ(ma, xlod,y+lod,h);
 			}
 			EndStripQ(ma);
 		}
 	}
 	if(minlx>mintx && minlx<maxtx){
 		x=minlx-lod;
+		int xlod = x + lod;
 		for(y=yst;y<yed;y+=lod){
 			int yhdx=y*heightDataX+x; 
 			if(y%dlod){
@@ -1018,8 +1033,8 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 				float h=(heightData[yhdx]+heightData[yhdx+dhdx]) * hcxp + heightData[yhdx+lhdx] * mcxp;
 				DrawVertexAQ(ma, x,y+lod,h);
 			}
-			DrawVertexAQ(ma, x+lod,y);
-			DrawVertexAQ(ma, x+lod,y+lod);
+			DrawVertexAQ(ma, xlod,y);
+			DrawVertexAQ(ma, xlod,y+lod);
 			EndStripQ(ma);
 		}
 	}
@@ -1029,6 +1044,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		int xe=min(xend+lod,maxtx);
 		if(xs<xe){
 			x=xs;
+			int ylod = y + lod;
 			int nloop=(xe-xs)/lod+2; //! one extra for if statment
 			ma->EnlargeArrays(2*nloop, 1);
 			int ydx=y*heightDataX;
@@ -1036,22 +1052,22 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 				DrawVertexAQ(ma, x,y);
 				int ylhdx=ydx+x+lhdx; 
 				float h=(heightData[ylhdx-lod]+heightData[ylhdx+lod]) * hmcyp + heightData[ylhdx] * camypart;
-				DrawVertexAQ(ma, x,y+lod,h);
+				DrawVertexAQ(ma, x,ylod,h);
 			} 
 			else {
 				DrawVertexAQ(ma, x,y);
-				DrawVertexAQ(ma, x,y+lod);
+				DrawVertexAQ(ma, x,ylod);
 			}
 			for(x=xs;x<xe;x+=lod){
 				if(x%dlod){
 					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+lod,y+lod);
+					DrawVertexAQ(ma, x+lod,ylod);
 				} 
 				else {
 					DrawVertexAQ(ma, x+lod,y);
 					int ylhdx=ydx+x+lhdx; 
 					float h=(heightData[ylhdx+dlod]+heightData[ylhdx]) * hmcyp + heightData[ylhdx+lod] * camypart;
-					DrawVertexAQ(ma, x+lod,y+lod,h);
+					DrawVertexAQ(ma, x+lod,ylod,h);
 				}
 			}
 			EndStripQ(ma);
@@ -1063,29 +1079,30 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		int xe=min(xend+lod,maxtx);
 		if(xs<xe){
 			x=xs;
-			int nloop=(xe-xs)/lod+2; // one extra for if statment
+			int ylod = y + lod;
+			int nloop=(xe-xs)/lod+2; //! one extra for if statment
 			ma->EnlargeArrays(2*nloop, 1);
 			int ydx=y*heightDataX;
 			if(x%dlod){
 				int yhdx=ydx+x;
 				float h=(heightData[yhdx-lod]+heightData[yhdx+lod]) * hcyp + heightData[yhdx] * mcyp;
 				DrawVertexAQ(ma, x,y,h);
-				DrawVertexAQ(ma, x,y+lod);
+				DrawVertexAQ(ma, x,ylod);
 			} 
 			else {
 				DrawVertexAQ(ma, x,y);
-				DrawVertexAQ(ma, x,y+lod);
+				DrawVertexAQ(ma, x,ylod);
 			}
 			for(x=xs;x<xe;x+=lod){
 				if(x%dlod){
 					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+lod,y+lod);
+					DrawVertexAQ(ma, x+lod,ylod);
 				} 
 				else {
 					int yhdx=ydx+x;
 					float h=(heightData[yhdx+dlod]+heightData[yhdx]) * hcyp + heightData[yhdx+lod] * mcyp;
 					DrawVertexAQ(ma, x+lod,y,h);
-					DrawVertexAQ(ma, x+lod,y+lod);
+					DrawVertexAQ(ma, x+lod,ylod);
 				}
 			}
 			EndStripQ(ma);

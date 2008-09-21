@@ -112,13 +112,13 @@ void gmlInit() {
 	if(gmlInited)
 		return;
 	for(int i=0; i<sizeof(gmlIntParams)/sizeof(GLenum); ++i) {
-   	GLint gi;
- 	  glGetIntegerv(gmlIntParams[i],&gi);
+		GLint gi;
+		glGetIntegerv(gmlIntParams[i],&gi);
 		gmlGetIntegervCache[gmlIntParams[i]]=gi;
 	}
 	for(int i=0; i<sizeof(gmlFloatParams)/sizeof(GLenum); ++i) {
-   	GLfloat fi;
- 	  glGetFloatv(gmlFloatParams[i],&fi);
+		GLfloat fi;
+		glGetFloatv(gmlFloatParams[i],&fi);
 		gmlGetFloatvCache[gmlFloatParams[i]]=fi;
 	}
 	for(int i=0; i<sizeof(gmlStringParams)/sizeof(GLenum); ++i) {
@@ -206,7 +206,7 @@ BYTE *gmlQueue::Realloc(BYTE **e) {
 	else {
 		*(BYTE * volatile *)&Write=Queue2=(BYTE *)realloc(Queue2,newsize);
 		Size2=Queue2+newsize;
-	}  
+	}
 	*(BYTE * volatile *)&WritePos=Write+oldpos;
 	*(BYTE * volatile *)&WriteSize=Write+newsize;
 
@@ -338,7 +338,7 @@ BOOL_ gmlQueue::GetWrite(BOOL_ critical) {
 		if(!critical)
 			return FALSE;
 		boost::thread::yield();
-	} 
+	}
 }
 
 void gmlQueue::ReleaseRead() {
@@ -385,7 +385,7 @@ BOOL_ gmlQueue::GetRead(BOOL_ critical) {
 
 void gmlQueue::SyncRequest() {
 #if GML_ALTERNATE_SYNCMODE
-  // make sure server is finished with other queue
+	// make sure server is finished with other queue
 	if(Write==Queue1) {
 		while(*(BYTE * volatile *)&Pos2!=Queue2)
 			boost::thread::yield();
@@ -586,23 +586,23 @@ void gmlQueue::SyncRequest() {
 //glLight
 #define GML_MAKESUBHANDLER2(flag,fun,arg,name)\
 	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
- 		fun(0,(GLboolean *)((GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr));\
+		fun(0,(GLboolean *)((GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr));\
 		ptr+=GML_D(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLER3(flag,fun,arg,name)\
 	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
- 		fun(GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
+		fun(GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
 		ptr+=GML_D(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLER4(flag,fun,arg,name)\
 	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
- 		fun(GML_D(name,arg##size),GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
+		fun(GML_D(name,arg##size),GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
 		ptr+=GML_D(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLERVA(name)\
 	for(int i=0; i<GML_D(name,VAcount); ++i) {\
 		VAstruct *va=(VAstruct *)ptr;\
- 		glVertexAttribPointer(va->target,va->size,va->type,va->normalized,0,va->buffer?va->pointer:(ptr+sizeof(VAstruct)));\
+		glVertexAttribPointer(va->target,va->size,va->type,va->normalized,0,va->buffer?va->pointer:(ptr+sizeof(VAstruct)));\
 		ptr+=va->totalsize;\
 	}
 
@@ -915,7 +915,7 @@ void gmlQueue::Execute() {
 	BYTE *ptr=NULL;
 
 	while(p<e) {
-//	 	GML_DEBUG("Cmd ",*(int *)p, 2);
+//		GML_DEBUG("Cmd ",*(int *)p, 2);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
@@ -998,7 +998,7 @@ void gmlQueue::ExecuteSynced() {
 			if(p==e)
 				break;
 		}
-//	 	GML_DEBUG("CmdSync ",*(int *)p, 2);
+//		GML_DEBUG("CmdSync ",*(int *)p, 2);
 		QueueHandler(p,ptr);
 //		++procs;
 	}

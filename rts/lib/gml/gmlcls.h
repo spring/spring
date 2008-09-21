@@ -122,7 +122,7 @@
 #if GML_ENABLE
 #	ifdef _MSC_VER
 #		if GML_MSC_TLS_OPT
-static inline int get_threadnum(void) {
+inline int get_threadnum(void) {
 	int val;
 	__asm {
 #			if !defined(_WIN64) || !GML_64BIT_USE_GS
@@ -136,7 +136,7 @@ static inline int get_threadnum(void) {
 }
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
-static inline void set_threadnum(int val) {
+inline void set_threadnum(int val) {
 	__asm {
 		mov EAX, [val]
 #			if !defined(_WIN64) || !GML_64BIT_USE_GS
@@ -151,7 +151,7 @@ extern __declspec(thread) int gmlThreadNumber;
 #		endif
 #	else
 #		if GML_GCC_TLS_FIX || GML_USE_SPEEDY_TLS
-static inline int get_threadnum(void) {
+inline int get_threadnum(void) {
 	int val;
 #			if GML_USE_SPEEDY_TLS
 	speedy_tls_get_int32(0, 0, 4, val);
@@ -166,7 +166,7 @@ static inline int get_threadnum(void) {
 }
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
-static inline void set_threadnum(int val) {
+inline void set_threadnum(int val) {
 #			if GML_USE_SPEEDY_TLS
 	if (speedy_tls_init(sizeof(int))<0) { // this works because we only set the thread number once per thread
 		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);
