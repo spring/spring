@@ -16,7 +16,6 @@
 
 #include <set>
 #include <map>
-#include <GL/glew.h>
 
 #include "gmlcls.h"
 
