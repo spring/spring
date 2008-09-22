@@ -1,5 +1,5 @@
 IF (MINGW)
-	set (unitsync_libs glew32 opengl32 glu32 devil ilu)
+	set (unitsync_libs glew32 opengl32 glu32 devil ilu python25)
 	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/python2.5)
 	set (JNI_FOUND TRUE)
@@ -12,9 +12,12 @@ ELSE (MINGW)
 	
 	FIND_PACKAGE(GLEW REQUIRED)
 	
+	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
+	
 	FIND_PACKAGE(PythonLibs)
 	if (PYTHONLIBS_FOUND)
 		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+		list (APPEND unitsync_libs ${PYTHON_LIBRARIES})
 	else (PYTHONLIBS_FOUND)
 		message ("No python libraries found, python bindings disabled")
 	endif (PYTHONLIBS_FOUND)
@@ -27,7 +30,6 @@ ELSE (MINGW)
 		message ("No Java includes found, java bindings disabled")
 	endif (JAVA_INCLUDE_PATH)
 	
-	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
 ENDIF (MINGW)
 
 ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
