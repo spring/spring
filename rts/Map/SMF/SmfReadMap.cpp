@@ -35,6 +35,7 @@ CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer ()
 
 
 CSmfReadMap::CSmfReadMap(std::string mapname)
+	: file(mapname)
 {
 	PrintLoadMsg("Opening map file");
 
@@ -49,16 +50,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 		waterHeightColors[a*4+3]=1;
 	}
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
-	ifs=SAFE_NEW CFileHandler(string("maps/")+mapname);
-	if(!ifs->FileExists())
-		throw content_error("Couldn't open map file " + mapname);
-	POP_CODE_MODE;
-	READPTR_MAPHEADER(header,ifs);
-
-	if(strcmp(header.magic,"spring map file")!=0 || header.version!=1 || header.tilesize!=32 || header.texelPerSquare!=8 || header.squareSize!=8)
-		throw content_error("Incorrect map file " + mapname);
+	const SMFHeader& header = file.GetHeader();
 
 	width=header.mapx;
 	height=header.mapy;
@@ -85,17 +77,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	const float base = minH;
 	const float mod = (maxH - minH) / 65536.0f;
 
-	const int hmx = gs->mapx + 1;
-	const int hmy = gs->mapy + 1;
-	unsigned short* temphm = SAFE_NEW unsigned short[hmx * hmy];
-	ifs->Seek(header.heightmapPtr);
-	ifs->Read(temphm, hmx * hmy * 2);
-
-	for (int y = 0; y < hmx * hmy; ++y) {
-		heightmap[y] = base + swabword(temphm[y]) * mod;
-	}
-
-	delete[] temphm;
+	file.ReadHeightmap(heightmap, base, mod);
 
 	CReadMap::Initialize();
 
@@ -124,8 +106,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	PrintLoadMsg("Creating overhead texture");
 
 	unsigned char* buf=SAFE_NEW unsigned char[MINIMAP_SIZE];
-	ifs->Seek(header.minimapPtr);
-	ifs->Read(buf,MINIMAP_SIZE);
+	file.ReadMinimap(buf);
+
 	glGenTextures(1, &minimapTex);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -163,19 +145,19 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	groundDrawer=SAFE_NEW CBFGroundDrawer(this);
 
-	ReadFeatureInfo ();
+	file.ReadFeatureInfo ();
 }
 
-CSmfReadMap::~CSmfReadMap(void)
+
+CSmfReadMap::~CSmfReadMap()
 {
-	delete[] featureTypes;
 	delete groundDrawer;
-	delete ifs;
 	delete[] heightmap;
 	if (detailTex) glDeleteTextures (1, &detailTex);
 	if (minimapTex) glDeleteTextures (1, &minimapTex);
 	if (shadowTex) glDeleteTextures (1, &shadowTex);
 }
+
 
 void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 {
@@ -228,6 +210,7 @@ void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	delete[] tempMem;
 
 }
+
 
 float3 CSmfReadMap::GetLightValue(int x, int y)
 {
@@ -315,8 +298,11 @@ void CSmfReadMap::DrawMinimap ()
 	glDisable(GL_TEXTURE_2D);
 }
 
+
 void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
 {
+	const SMFHeader& header = file.GetHeader();
+
 	int cx=(int)(cam->pos.x/(SQUARE_SIZE*quadSize));
 	int cy=(int)(cam->pos.z/(SQUARE_SIZE*quadSize));
 
@@ -337,7 +323,7 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 	int exi=cx+drawSquare;
 	if(exi>drawQuadsX-1)
 		exi=drawQuadsX-1;
- 
+
 	for(int y=sy;y<=ey;y++){
 		int sx=sxi;
 		int ex=exi;
@@ -367,115 +353,47 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 	}
 }
 
+
 int CSmfReadMap::GetNumFeatures ()
 {
-	return featureHeader.numFeatures;
+	return file.GetNumFeatures();
 }
+
 
 int CSmfReadMap::GetNumFeatureTypes ()
 {
-	return featureHeader.numFeatureType;
+	return file.GetNumFeatureTypes();
 }
+
 
 void CSmfReadMap::GetFeatureInfo (MapFeatureInfo* f)
 {
-	ifs->Seek (featureFileOffset);
-	for(int a=0;a<featureHeader.numFeatures;++a){
-		MapFeatureStruct ffs;
-		READ_MAPFEATURESTRUCT(ffs, ifs);
-
-		f[a].featureType = ffs.featureType;
-		f[a].pos = float3(ffs.xpos, ffs.ypos, ffs.zpos);
-		f[a].rotation = ffs.rotation;
-	}
+	file.ReadFeatureInfo(f);
 }
+
 
 const char *CSmfReadMap::GetFeatureType (int typeID)
 {
-	assert (typeID >= 0 && typeID < featureHeader.numFeatureType);
-	return featureTypes[typeID].c_str();
+	return file.GetFeatureType(typeID);
 }
+
 
 unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bmInfo)
 {
-	if (name == "grass") {
-		bmInfo->width = header.mapx / 4;
-		bmInfo->height = header.mapy / 4;
+	// get size
+	if (!file.ReadInfoMap(name, NULL, bmInfo))
+		return NULL;
 
-		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
-		ReadGrassMap (data);
-		return data;
-	}
-	else if(name == "metal") {
-		bmInfo->width = header.mapx/2;
-		bmInfo->height = header.mapy/2;
-
-		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
-		ifs->Seek(header.metalmapPtr);
-		ifs->Read(data,header.mapx/2*header.mapy/2);
-        return data;
-	}
-	else if(name == "type") {
-		bmInfo->width = header.mapx/2;
-		bmInfo->height = header.mapy/2;
-		unsigned char *data = SAFE_NEW unsigned char[bmInfo->width*bmInfo->height];
-		ifs->Seek(header.typeMapPtr);
-		ifs->Read(data,gs->mapx*gs->mapy/4);
-		return data;
-	}
-
-	return false;
+	// get data
+	unsigned char* data = SAFE_NEW unsigned char[bmInfo->width * bmInfo->height];
+	file.ReadInfoMap(name, data, bmInfo);
+	return data;
 }
+
 
 void CSmfReadMap::FreeInfoMap (const std::string& name, unsigned char *data)
 {
 	delete[] data;
-}
-
-
-void CSmfReadMap::ReadGrassMap(void *data)
-{
-	CFileHandler* fh=ifs;
-	fh->Seek(sizeof(SMFHeader));
-
-	for(int a=0;a<header.numExtraHeaders;++a){
-		int size;
-		fh->Read(&size,4);
-		size=swabdword(size);
-		int type;
-		fh->Read(&type,4);
-		type=swabdword(type);
-		if(type==MEH_Vegetation){
-			int pos;
-			fh->Read(&pos,4);
-			pos=swabdword(pos);
-			fh->Seek(pos);
-			fh->Read(data,gs->mapx*gs->mapy/16);
-			/* char; no swabbing. */
-			break;	//we arent interested in other extensions anyway
-		} else {
-			unsigned char buf[100];	//todo: fix this if we create larger extensions
-			fh->Read(buf,size-8);
-		}
-	}
-}
-
-void CSmfReadMap::ReadFeatureInfo()
-{
-	ifs->Seek(header.featurePtr);
-	READ_MAPFEATUREHEADER(featureHeader, ifs);
-
-	featureTypes=SAFE_NEW string[featureHeader.numFeatureType];
-
-	for(int a=0;a<featureHeader.numFeatureType;++a){
-		char c;
-		ifs->Read(&c,1);
-		while(c){
-			featureTypes[a]+=c;
-			ifs->Read(&c,1);
-		}
-	}
-	featureFileOffset = ifs->GetPos();
 }
 
 

@@ -26,10 +26,11 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		usePBO = true;
 	}
 
-	CFileHandler* ifs = rm->ifs;
+	// todo: refactor: put reading code in CSmfFile and keep errorhandling/progress reporting here..
+	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	map = rm;
 
-	SMFHeader* header = &map->header;
+	const SMFHeader* header = &map->GetFile().GetHeader();
 	ifs->Seek(header->tilesPtr);
 
 	tileSize = header->tilesize;
