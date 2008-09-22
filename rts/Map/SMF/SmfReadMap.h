@@ -1,9 +1,7 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
-#include "Map/ReadMap.h"
-#include <string>
-#include "mapfile.h"
+#include "SmfMapFile.h"
 
 class CBFGroundDrawer;
 
@@ -13,7 +11,7 @@ public:
 	CR_DECLARE(CSmfReadMap)
 
 	CSmfReadMap(std::string mapname);
-	~CSmfReadMap(void);
+	~CSmfReadMap();
 
 	void HeightmapUpdated(int x1, int x2, int y1, int y2);
 	GLuint GetShadingTexture () { return shadowTex; }
@@ -38,33 +36,30 @@ public:
 	int GetNumFeatures ();
 	void GetFeatureInfo (MapFeatureInfo* f);// returns all feature info in MapFeatureInfo[NumFeatures]
 	const char *GetFeatureType (int typeID);
-	
+
 	unsigned char *GetInfoMap (const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char *data);
 
-	std::string detailTexName;
-	GLuint detailTex;
-	SMFHeader header;
-	CFileHandler *ifs;
+	// todo: do not use, just here for backward compatibility with BFGroundTextures.cpp
+	CSmfMapFile& GetFile() { return file; }
 
 	bool usePBO;
 	float anisotropy;
 
-	unsigned char waterHeightColors[1024*4];
 protected:
-	void ReadGrassMap (void *data);
-	void ReadFeatureInfo ();
-
 	void ConfigureAnisotropy();
+
+	CSmfMapFile file;
+
+	std::string detailTexName;
+	GLuint detailTex;
+
+	unsigned char waterHeightColors[1024*4];
 
 	GLuint shadowTex;
 	GLuint minimapTex;
 
 	float* heightmap;
-
-	MapFeatureHeader featureHeader;
-	std::string* featureTypes;
-	int featureFileOffset;
 
 	CBFGroundDrawer *groundDrawer;
 

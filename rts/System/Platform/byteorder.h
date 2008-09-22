@@ -20,6 +20,8 @@
 #ifndef BYTEORDER_H
 #define BYTEORDER_H
 
+#include <string.h>
+
 /*
  * The swabbing stuff looks backwards, but the files
  * are _originally_ little endian (win32 x86).
@@ -33,10 +35,10 @@
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define swabword(w)	(bswap_16(w))
 #define swabdword(w)	(bswap_32(w))
-/* 
+/*
    My brother tells me that a C compiler must store floats in memory
    by a particular standard, except for the endianness; hence, this
-   will work on all C compilers. 
+   will work on all C compilers.
  */
 static inline float swabfloat(float w) {
 	char octets[4];
