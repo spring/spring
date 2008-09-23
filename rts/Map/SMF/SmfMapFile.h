@@ -21,7 +21,8 @@ public:
 	void ReadHeightmap(float* heightmap, float base, float mod);
 	void ReadFeatureInfo();
 	void ReadFeatureInfo(MapFeatureInfo* f);
-	bool ReadInfoMap(const std::string& name, unsigned char* infomap, MapBitmapInfo* bmInfo);
+	MapBitmapInfo GetInfoMapSize(const std::string& name) const;
+	bool ReadInfoMap(const std::string& name, void* data);
 
 	int GetNumFeatures()     const { return featureHeader.numFeatures; }
 	int GetNumFeatureTypes() const { return featureHeader.numFeatureType; }

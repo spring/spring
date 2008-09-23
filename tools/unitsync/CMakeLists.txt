@@ -61,6 +61,7 @@ set(unitsync_files
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO
 	../../rts/Map/MapParser
+	../../rts/Map/SMF/SmfMapFile
 	../../rts/Rendering/Textures/Bitmap
 	../../rts/Rendering/Textures/nv_dds)
 

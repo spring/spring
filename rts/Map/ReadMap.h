@@ -17,6 +17,7 @@ class CFileHandler;
 class CLoadSaveInterface;
 class CBaseGroundDrawer;
 
+
 struct MapFeatureInfo
 {
 	float3 pos;
@@ -24,9 +25,14 @@ struct MapFeatureInfo
 	float rotation;
 };
 
+
 struct MapBitmapInfo
 {
-	int width,height;
+	MapBitmapInfo() {}
+	MapBitmapInfo(int w, int h) : width(w), height(h) {}
+
+	int width;
+	int height;
 };
 
 

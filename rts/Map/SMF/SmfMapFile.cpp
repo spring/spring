@@ -104,38 +104,44 @@ const char* CSmfMapFile::GetFeatureType(int typeID) const
 }
 
 
-bool CSmfMapFile::ReadInfoMap(const string& name, unsigned char* data, MapBitmapInfo* bmInfo)
+MapBitmapInfo CSmfMapFile::GetInfoMapSize(const string& name) const
 {
-	if (name == "grass") {
-		bmInfo->width = header.mapx / 4;
-		bmInfo->height = header.mapy / 4;
+	if (name == "height") {
+		return MapBitmapInfo(header.mapx + 1, header.mapy + 1);
+	}
+	else if (name == "grass") {
+		return MapBitmapInfo(header.mapx / 4, header.mapy / 4);
+	}
+	else if (name == "metal") {
+		return MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+	}
+	else if (name == "type") {
+		return MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+	}
+	return MapBitmapInfo(0, 0);
+}
 
-		if (data != NULL) {
-			ReadGrassMap(data);
-		}
+
+bool CSmfMapFile::ReadInfoMap(const string& name, void* data)
+{
+	if (name == "height") {
+		ReadHeightmap((unsigned short*)data);
+		return true;
+	}
+	else if (name == "grass") {
+		ReadGrassMap(data);
 		return true;
 	}
 	else if(name == "metal") {
-		bmInfo->width = header.mapx / 2;
-		bmInfo->height = header.mapy / 2;
-
-		if (data != NULL) {
-			ifs.Seek(header.metalmapPtr);
-			ifs.Read(data, bmInfo->width * bmInfo->height);
-		}
+		ifs.Seek(header.metalmapPtr);
+		ifs.Read(data, header.mapx / 2 * header.mapy / 2);
 		return true;
 	}
 	else if(name == "type") {
-		bmInfo->width = header.mapx / 2;
-		bmInfo->height = header.mapy / 2;
-
-		if (data != NULL) {
-			ifs.Seek(header.typeMapPtr);
-			ifs.Read(data, bmInfo->width * bmInfo->height);
-		}
+		ifs.Seek(header.typeMapPtr);
+		ifs.Read(data, header.mapx / 2 * header.mapy / 2);
 		return true;
 	}
-
 	return false;
 }
 
@@ -156,13 +162,13 @@ void CSmfMapFile::ReadGrassMap(void *data)
 			ifs.Read(&pos, 4);
 			pos = swabdword(pos);
 			ifs.Seek(pos);
-			ifs.Read(data, header.mapx * header.mapy / 16);
+			ifs.Read(data, header.mapx / 4 * header.mapy / 4);
 			/* char; no swabbing. */
 			break; //we arent interested in other extensions anyway
 		}
 		else {
 			// assumes we can use data as scratch memory
-			assert(size - 8 <= header.mapx * header.mapy / 16);
+			assert(size - 8 <= header.mapx / 4 * header.mapy / 4);
 			ifs.Read(data, size - 8);
 		}
 	}

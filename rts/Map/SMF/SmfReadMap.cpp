@@ -381,12 +381,12 @@ const char *CSmfReadMap::GetFeatureType (int typeID)
 unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bmInfo)
 {
 	// get size
-	if (!file.ReadInfoMap(name, NULL, bmInfo))
-		return NULL;
+	*bmInfo = file.GetInfoMapSize(name);
+	if (bmInfo->width <= 0) return NULL;
 
 	// get data
 	unsigned char* data = SAFE_NEW unsigned char[bmInfo->width * bmInfo->height];
-	file.ReadInfoMap(name, data, bmInfo);
+	file.ReadInfoMap(name, data);
 	return data;
 }
 
