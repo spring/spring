@@ -54,21 +54,13 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
-		CR_MEMBER(losMipLevel),
-		CR_MEMBER(airMipLevel),
-		CR_MEMBER(invLosDiv),
-		CR_MEMBER(invAirDiv),
-		CR_MEMBER(airSizeX),
-		CR_MEMBER(airSizeY),
-		CR_MEMBER(losSizeX),
-		CR_MEMBER(losSizeY),
+		CR_RESERVED(32),
 		CR_MEMBER(instanceHash),
 		CR_MEMBER(toBeDeleted),
 		CR_MEMBER(delayQue),
 //		CR_MEMBER(Points),
 		CR_MEMBER(terrainHeight),
 //		CR_MEMBER(lostables)
-		CR_MEMBER(requireSonarUnderWater),
 		CR_RESERVED(31),
 		CR_POSTLOAD(PostLoad)
 		));
@@ -89,21 +81,19 @@ CR_REG_METADATA_SUB(CLosHandler,CPoint,(
 CLosHandler* loshandler;
 
 
-CLosHandler::CLosHandler()
+CLosHandler::CLosHandler() :
+	losMipLevel(modInfo.losMipLevel),
+	airMipLevel(modInfo.airMipLevel),
+	losDiv(SQUARE_SIZE * (1 << losMipLevel)),
+	airDiv(SQUARE_SIZE * (1 << airMipLevel)),
+	invLosDiv(1.0f / losDiv),
+	invAirDiv(1.0f / airDiv),
+	airSizeX(std::max(1, gs->mapx >> airMipLevel)),
+	airSizeY(std::max(1, gs->mapy >> airMipLevel)),
+	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
+	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
+	requireSonarUnderWater(modInfo.requireSonarUnderWater)
 {
-	losMipLevel = modInfo.losMipLevel;
-	airMipLevel = modInfo.airMipLevel;
-	airSizeX = std::max(1, gs->mapx >> airMipLevel);
-	airSizeY = std::max(1, gs->mapy >> airMipLevel);
-	losSizeX = std::max(1, gs->mapx >> losMipLevel);
-	losSizeY = std::max(1, gs->mapy >> losMipLevel);
-	losDiv = (SQUARE_SIZE * (1 << losMipLevel));
-	airDiv = (SQUARE_SIZE * (1 << airMipLevel));
-	invLosDiv = 1.0f / losDiv;
-	invAirDiv = 1.0f / airDiv;
-
-	requireSonarUnderWater = modInfo.requireSonarUnderWater;
-
 	for (int a = 0; a < gs->activeAllyTeams; ++a) {
 		losMap[a].resize(losSizeX * losSizeY, 0);
 		airLosMap[a].resize(airSizeX * airSizeY, 0);
@@ -219,10 +209,7 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	LosAddAir(instance);
 
-	int tablenum = instance->losSize;
-	if (tablenum > MAX_LOS_TABLE) {
-		tablenum = MAX_LOS_TABLE;
-	}
+	const int tablenum = std::min(instance->losSize, MAX_LOS_TABLE);
 	LosTable& table = lostables[tablenum - 1];
 
 	instance->losSquares.push_back(mapSquare);
