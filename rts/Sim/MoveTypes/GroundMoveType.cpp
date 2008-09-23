@@ -174,9 +174,9 @@ CGroundMoveType::CGroundMoveType(CUnit* owner)
 	mainHeadingPos(0,0,0),
 	useMainHeading(false)
 {
-	if (owner){
-		moveSquareX=(int)owner->pos.x/(SQUARE_SIZE*2);
-		moveSquareY=(int)owner->pos.z/(SQUARE_SIZE*2);
+	if (owner) {
+		moveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
+		moveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
 	} else {
 		moveSquareX = 0;
 		moveSquareY = 0;
@@ -203,25 +203,26 @@ void CGroundMoveType::PostLoad()
 
 void CGroundMoveType::Update()
 {
-	//Update mobility.
+	// Update mobility.
 	owner->mobility->maxSpeed = maxSpeed;
 
-	if(owner->transporter) {
+	if (owner->transporter) {
 		return;
 	}
-	if(OnSlope()
-		&& (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
+
+	if (OnSlope() &&
+		(!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
 	{
 		skidding = true;
 	}
 
-	if(skidding){
+	if (skidding) {
 		UpdateSkid();
 		return;
 	}
 
 	//set drop height when we start to drop
-	if(owner->falling) {
+	if (owner->falling) {
 		UpdateControlledDrop();
 		return;
 	}
@@ -279,7 +280,7 @@ void CGroundMoveType::Update()
 					etaWaypoint2 += 100;
 				} else {
 					if (DEBUG_CONTROLLER)
-						logOutput.Print("Goal clogged up2 %i", owner->id);
+						logOutput.Print("Goal clogged up for unit %i", owner->id);
 					Fail();
 				}
 			}
@@ -343,7 +344,6 @@ void CGroundMoveType::Update()
 			}
 		}
 	}
-
 
 	if (owner->pos != oldPos) {
 		// these checks must be executed even when we are stunned
@@ -430,7 +430,7 @@ void CGroundMoveType::SlowUpdate()
 		owner->pos.y = wh;
 	}
 
-	if (!(owner->pos == oldSlowUpdatePos)) {
+	if (owner->pos != oldSlowUpdatePos) {
 		oldSlowUpdatePos = owner->pos;
 
 		int newmapSquare = ground->GetSquare(owner->pos);
@@ -824,8 +824,8 @@ void CGroundMoveType::UpdateControlledDrop(void)
 
 void CGroundMoveType::CheckCollisionSkid(void)
 {
-	float3& pos=owner->pos;
-	SyncedFloat3& midPos=owner->midPos;
+	float3& pos = owner->pos;
+	SyncedFloat3& midPos = owner->midPos;
 
 	vector<CUnit*> nearUnits=qf->GetUnitsExact(midPos,owner->radius);
 	for(vector<CUnit*>::iterator ui=nearUnits.begin();ui!=nearUnits.end();++ui){
@@ -1681,7 +1681,7 @@ void CGroundMoveType::DeleteLineTable(void)
 
 void CGroundMoveType::TestNewTerrainSquare(void)
 {
-	// first make sure we dont go into any terrain we cant get out of
+	// first make sure we don't go into any terrain we cant get out of
 	int newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
 	int newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
 
