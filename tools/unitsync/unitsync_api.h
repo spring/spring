@@ -42,6 +42,8 @@ DLL_EXPORT int          __stdcall GetMapArchiveCount(const char* mapName);
 DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
 DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel);
+DLL_EXPORT int          __stdcall GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
+DLL_EXPORT int          __stdcall GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
 
 DLL_EXPORT int          __stdcall GetPrimaryModCount();
 DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);

@@ -44,6 +44,12 @@ enum OptionType {
 };
 
 
+enum BitmapType {
+	bm_grayscale_8 = 1,
+	bm_grayscale_16 = 2
+};
+
+
 const char *GetStr(std::string str);
 
 
