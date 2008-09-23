@@ -180,6 +180,36 @@ typedef SyncedPrimitive<         Sint64 > SyncedSint64;
 typedef SyncedPrimitive<         Uint64 > SyncedUint64;
 #endif // UPCAST_USE_64_BIT_TYPES
 
+
+// overload some useful functions
+// this is barely legal
+// can't just put template functions in namespace std, this confuses several things
+namespace std {
+	inline float min(SyncedFloat& a, float b)
+	{
+		if (a < b) return a;
+		else return b;
+	}
+
+	inline float min(float a, SyncedFloat& b)
+	{
+		if (a < b) return a;
+		else return b;
+	}
+
+	inline float max(SyncedFloat& a, float b)
+	{
+		if (a > b) return a;
+		else return b;
+	}
+
+	inline float max(float a, SyncedFloat& b)
+	{
+		if (a > b) return a;
+		else return b;
+	}
+}
+
 #else // SYNCDEBUG || SYNCCHECK
 
 // 64 bit types are missing here because they made AIs depend on SDL
@@ -198,5 +228,12 @@ typedef         double SyncedDouble;
 typedef    long double SyncedLongDouble;
 
 #endif // !SYNCDEBUG && !SYNCCHECK
+
+// this macro looks like a noop, but causes checksum update
+#if defined(SYNCDEBUG) && defined(__GNUC__)
+#define ASSERT_SYNCED_PRIMITIVE(x) { SyncedPrimitive<typeof(x)>(x); }
+#else
+#define ASSERT_SYNCED_PRIMITIVE(x)
+#endif
 
 #endif // SYNCEDPRIMITIVE_H

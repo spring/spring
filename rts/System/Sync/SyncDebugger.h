@@ -41,6 +41,7 @@ class CSyncDebugger {
 		 */
 		struct HistItem {
 			unsigned chk; ///< Checksum (XOR of 32 bit dwords of the data).
+			unsigned data; ///< First four bytes of data
 		};
 
 		/**

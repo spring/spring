@@ -2333,6 +2333,11 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 #ifdef DEBUG
 	else if (action.command == "desync" && gs->cheatEnabled) {
+		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
+		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123);
+		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
+		ASSERT_SYNCED_FLOAT3(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
+
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (playernum == gu->myPlayerNum) {
@@ -4226,7 +4231,7 @@ void CGame::DrawDirectControlHud(void)
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", unit->health, unit->maxHealth);
+		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
 
 		if(gs->players[gu->myPlayerNum]->myControl.mouse2){
 			font->glPrintAt(0.02f, 0.7f, 1.0f, "Free fire mode");
