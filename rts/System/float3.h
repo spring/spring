@@ -441,7 +441,8 @@ public:
 	 */
 	static float maxzpos;
 
-	bool CheckInBounds(); //!< Check if this vector is in bounds
+	bool IsInBounds() const; //!< Check if this vector is in bounds without clamping x and z
+	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
 };
 
 #endif /* FLOAT3_H */

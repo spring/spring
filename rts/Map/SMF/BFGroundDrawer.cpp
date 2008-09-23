@@ -146,7 +146,7 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 
 inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
-		const bool camOutOfMap = (camera->pos.x < 0 || camera->pos.z < 0 || camera->pos.x > float3::maxxpos || camera->pos.z > float3::maxzpos);
+		const bool camOutOfMap = !camera->pos.IsInBounds();
 		glCallList(camOutOfMap ? waterPlaneCamOutDispList : waterPlaneCamInDispList);
 	}
 }

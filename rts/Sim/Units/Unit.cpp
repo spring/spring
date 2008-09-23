@@ -837,15 +837,15 @@ void CUnit::SlowUpdate()
 	}
 
 	if (uh->waterDamage) {
-		if (pos.x >= 0.0f && pos.x <= float3::maxxpos && pos.z >= 0.0f && pos.z <= float3::maxzpos) {
+		if (pos.IsInBounds()) {
 			bool inWater = (pos.y <= -3);
 			bool isFloating = (physicalState == CSolidObject::Floating);
 			bool onGround = (physicalState == CSolidObject::OnGround);
-			bool waterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
+			bool isWaterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
 
 			// old: "floating or (on ground and height < -3 and mapheight < -1)"
 			// new: "height < -3 and (floating or on ground) and mapheight < -1"
-			if (inWater && (isFloating || onGround) && waterSquare) {
+			if (inWater && (isFloating || onGround) && isWaterSquare) {
 				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
 			}
 		}
@@ -1469,15 +1469,15 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	if(gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)){
+	if (gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)) {
 		return;
 	}
-	if(lastAttacker && lastAttacker!=userTarget)
+	if (lastAttacker && lastAttacker != userTarget)
 		DeleteDeathDependence(lastAttacker);
 
-	lastAttack=gs->frameNum;
-	lastAttacker=attacker;
-	if(attacker)
+	lastAttack = gs->frameNum;
+	lastAttacker = attacker;
+	if (attacker)
 		AddDeathDependence(attacker);
 }
 
@@ -1489,7 +1489,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
 
-	incomingMissiles.remove((CMissileProjectile*)o);
+	incomingMissiles.remove((CMissileProjectile*) o);
 
 	CSolidObject::DependentDied(o);
 }
