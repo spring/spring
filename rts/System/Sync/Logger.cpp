@@ -131,7 +131,7 @@ void CLogger::FlushBuffer()
 	std::vector<std::string>::iterator it;
 	bool runTheCommand = false;
 
-	command << ADDR2LINE << " \"--exe=" << exename << "\" --functions --demangle";
+	command << ADDR2LINE << " \"--exe=" << exename << "\" --functions --demangle --inline";
 
 	for (it = buffer.begin(); it != buffer.end(); ++it) {
 		int open = it->find('{');

@@ -4,11 +4,15 @@
 
 #ifdef SYNCDEBUG
 
+#include <boost/format.hpp>
+
 #include "LogOutput.h"
 #include "System/GlobalStuff.h"
 #include "System/BaseNetProtocol.h"
 #include "System/NetProtocol.h"
 #include "SyncDebugger.h"
+#include "SyncChecker.h"
+#include "SyncTracer.h"
 #include "Logger.h"
 
 #include <map>
@@ -88,6 +92,7 @@ CSyncDebugger::~CSyncDebugger()
  * Initialize the sync debugger. Pass true for a server (this requires approx.
  * 144 megabytes on 32 bit systems and 240 megabytes on 64 bit systems) and
  * false for a client (requires only 16 megabytes extra).
+ * FIXME update this comment to reflect new values
  */
 void CSyncDebugger::Initialize(bool useBacktrace)
 {
@@ -143,8 +148,8 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 
 #ifdef HAVE_BACKTRACE
 	if (historybt) {
-		// dirty hack to skip the uppermost 2 or 4 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
-		const int frameskip = (12 + sizeof(void*)) / sizeof(void*);
+		// dirty hack to skip the uppermost 2 or 3 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
+		const int frameskip = (8 + sizeof(void*)) / sizeof(void*);
 		historybt[historyIndex].bt_size = backtrace(historybt[historyIndex].bt - frameskip, MAX_STACK + frameskip) - frameskip;
 		historybt[historyIndex].op = op;
 		historybt[historyIndex].frameNum = gs->frameNum;
@@ -152,12 +157,31 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
+	// if data fits and has even size, it's probably a POD type, store it verbatim
+	// TODO: transfer offending blocks from clients to the server
+	if (size == 1) {
+		h->data = *(unsigned char*)p;
+	} else if (size == sizeof(short)) {
+		h->data = *(unsigned short*)p;
+	} else if (size >= sizeof(unsigned)) {
+		h->data = *(unsigned *)p;
+	} else {
+		h->data = -1;
+	}
+
+	// xor is dangerous in that every bit is independent of any other, this is bad
+#ifdef SD_USE_SIMPLE_CHECKSUM
 	unsigned i = 0;
 	h->chk = 0;
 	for (; i < (size & ~3); i += 4)
 		h->chk ^= *(unsigned*) ((unsigned char*) p + i);
 	for (; i < size; ++i)
 		h->chk ^= *((unsigned char*) p + i);
+#else
+	// 33*flop + gs->frameNum is enough to prevent zero slurping
+	// using CSyncChecker::g_checksum here will cause cascade false positives
+	h->chk = CSyncChecker::HsiehHash((char*)p, size, 33*flop + gs->frameNum);
+#endif
 
 	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
 		historyIndex = 0; // wrap around
@@ -197,11 +221,15 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
  */
 unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 {
+#ifdef SD_USE_SIMPLE_CHECKSUM
 	unsigned checksum = 0;
 	const unsigned* p = (const unsigned*) historybt[index].bt;
 	for (unsigned i = 0; i < (sizeof(void*)/sizeof(unsigned)) * historybt[index].bt_size; ++i, ++p)
 		checksum = 33 * checksum + *p;
 	return checksum;
+#else
+	return CSyncChecker::HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
+#endif
 }
 
 
@@ -344,12 +372,21 @@ void CSyncDebugger::ClientSendChecksumResponse()
 {
 	std::vector<unsigned> checksums;
 	for (unsigned i = 0; i < HISTORY_SIZE; ++i) {
+#ifdef SD_USE_SIMPLE_CHECKSUM
 		unsigned checksum = 0;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt)
 				checksum = 33 * checksum + historybt[BLOCK_SIZE * i + j].chk;
 			else  checksum = 33 * checksum + history[BLOCK_SIZE * i + j].chk;
 		}
+#else
+		unsigned checksum = 123456789;
+		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
+			if (historybt)
+				checksum = CSyncChecker::HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
+			else  checksum = CSyncChecker::HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
+		}
+#endif
 		checksums.push_back(checksum);
 	}
 	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
@@ -428,11 +465,22 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 void CSyncDebugger::ClientSendBlockResponse(int block)
 {
 	std::vector<unsigned> checksums;
+#ifdef TRACE_SYNC
+	tracefile << "Sending block response for block " << block << "\n";
+#endif
 	for (unsigned i = 0; i < BLOCK_SIZE; ++i) {
 		if (historybt)
 			checksums.push_back(historybt[BLOCK_SIZE * block + i].chk);
 		else  checksums.push_back(history[BLOCK_SIZE * block + i].chk);
+#ifdef TRACE_SYNC
+		if (historybt)
+			tracefile << historybt[BLOCK_SIZE * block + i].chk << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
+		else  tracefile << history[BLOCK_SIZE * block + i].chk << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+#endif
 	}
+#ifdef TRACE_SYNC
+	tracefile << "done\n";
+#endif
 	net->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
 }
 
@@ -501,9 +549,9 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e, frame %06u, backtrace %u in \"%s\"", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum, historybt[histPos].frameNum, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", remoteHistory[j][i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
-					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum);
+					logger.AddLine("Server: chk %08X instead of %08X", remoteHistory[j][i], correctChecksum);
 				}
 				err = true;
 			} else {
@@ -519,6 +567,7 @@ void CSyncDebugger::ServerDumpStack()
 	else
 		// This is impossible (internal error).
 		// Server first finds there are differing blocks, then all checksums equal??
+		// Turns out this can happen if the checksum function is weak.
 		logger.AddLine("Server: huh, all checksums equal?!? (INTERNAL ERROR)");
 
 	//cleanup
