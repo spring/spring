@@ -61,6 +61,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
+#include "Sync/SyncDebugger.h"
 
 using namespace std;
 
@@ -593,11 +594,11 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	}
 	else if ((type == "ms") || (type == "metalStorage")) {
 		team->metalStorage = value;
-		team->metal = min(team->metal, team->metalStorage);
+		team->metal = min((float)team->metal, team->metalStorage);
 	}
 	else if ((type == "es") || (type == "energyStorage")) {
 		team->energyStorage = value;
-		team->energy = min(team->energy, team->energyStorage);
+		team->energy = min((float)team->energy, team->energyStorage);
 	}
 	return 0;
 }
@@ -2004,7 +2005,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 	else {
 		luaL_error(L, "Incorrect arguments to UseUnitResource()");
 	}
-		
+
 	return 0;
 }
 
@@ -2755,7 +2756,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	if (heightMapx2 > -1) {
 		mapDamage->RecalcArea(heightMapx1, heightMapx2, heightMapz1, heightMapz2);
 	}
-	
+
 	lua_pushnumber(L, heightMapAmountChanged);
 	return 1;
 }
