@@ -624,9 +624,15 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 
 	deltaHeading = wantedHeading - heading;
 
+	ASSERT_SYNCED_PRIMITIVE(deltaHeading);
+	ASSERT_SYNCED_PRIMITIVE(turnRate);
+	ASSERT_SYNCED_PRIMITIVE((short)turnRate);
+
 	if (deltaHeading > 0) {
+		ASSERT_SYNCED_PRIMITIVE((short)std::min(deltaHeading, (short)turnRate));
 		heading += std::min(deltaHeading, (short)turnRate);
 	} else {
+		ASSERT_SYNCED_PRIMITIVE((short)std::max((short) - turnRate, deltaHeading));
 		heading += std::max((short) - turnRate, deltaHeading);
 	}
 
@@ -1932,9 +1938,14 @@ void CGroundMoveType::SetMainHeading(){
 		dir2.y = 0;
 		dir2.Normalize();
 
+		ASSERT_SYNCED_FLOAT3(dir1);
+		ASSERT_SYNCED_FLOAT3(dir2);
+
 		if (dir2 != ZeroVector) {
 			short heading = GetHeadingFromVector(dir2.x, dir2.z)
 				- GetHeadingFromVector(dir1.x, dir1.z);
+
+			ASSERT_SYNCED_PRIMITIVE(heading);
 
 			if (progressState == Active && owner->heading == heading) {
 				// stop turning
@@ -1942,6 +1953,9 @@ void CGroundMoveType::SetMainHeading(){
 				progressState = Done;
 			} else if (progressState == Active) {
 				ChangeHeading(heading);
+#ifdef TRACE_SYNC
+				tracefile << "Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
+#endif
 				//logOutput.Print("Test heading: %d,  Real heading: %d", heading, owner->heading);
 			} else if (progressState != Active
 			  && owner->heading != heading
@@ -1950,6 +1964,9 @@ void CGroundMoveType::SetMainHeading(){
 				progressState = Active;
 				owner->cob->Call(COBFN_StartMoving);
 				ChangeHeading(heading);
+#ifdef TRACE_SYNC
+				tracefile << "Start moving; Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
+#endif
 			} else {
 				//logOutput.Print("No set main headding");
 			}
