@@ -398,7 +398,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
-#ifdef GML_ENABLE_DRAWUNIT
+#if defined(USE_GML) && GML_ENABLE_DRAWUNIT
 	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
 	mt_drawRefraction=drawRefraction;
   #ifdef DIRECT_CONTROL_ALLOWED
@@ -665,7 +665,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
-#ifdef GML_ENABLE_DRAWUNITSHADOW
+#if defined(USE_GML) && GML_ENABLE_DRAWUNITSHADOW
 	gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
 	  &uh->activeUnits, uh->activeUnits.size(),50,100,TRUE);
 #else
@@ -1509,7 +1509,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 {
-#ifdef GML_ENABLE
+#ifdef USE_GML
 	quedS3Os.acquire(textureType).push_back(object);
 	quedS3Os.release();
 #else
@@ -1524,20 +1524,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 {
 	SetupForS3ODrawing();
 
-#if !GML_ENABLE
-	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
-		const int tex = *uti;
-		texturehandler->SetS3oTexture(tex);
-
-		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-			DrawWorldObjectS3O(*ui);
-		}
-
-		quedS3Os[tex].clear();
-	}
-
-	usedS3OTextures.clear();
-#else
+#ifdef USE_GML
 	int sz=quedS3Os.size();
 	for(int tex=0; tex<sz;++tex) {
 		if(quedS3Os[tex].size()>0) {
@@ -1550,6 +1537,19 @@ void CUnitDrawer::DrawQuedS3O(void)
 			quedS3Os[tex].clear();
 		}
 	}
+#else
+	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
+		const int tex = *uti;
+		texturehandler->SetS3oTexture(tex);
+
+		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
+			DrawWorldObjectS3O(*ui);
+		}
+
+		quedS3Os[tex].clear();
+	}
+
+	usedS3OTextures.clear();
 #endif
 	CleanUpS3ODrawing();
 }

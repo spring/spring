@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-//#include <windows.h>
 #include "mmgr.h"
 
 #include "DynWater.h"
@@ -839,6 +838,11 @@ static inline void DrawVertexA(int x,int y)
 	va->AddVertex0(float3(x*WSQUARE_SIZE,0,y*WSQUARE_SIZE));
 }
 
+static inline void DrawVertexAQ(int x,int y)
+{
+	va->AddVertexQ0(x*WSQUARE_SIZE,0,y*WSQUARE_SIZE);
+}
+
 void CDynWater::DrawWaterSurface(void)
 {
 	int viewRadius=40;
@@ -875,126 +879,136 @@ void CDynWater::DrawWaterSurface(void)
 		int ystart=std::max(minly,minty);
 		int yend=std::min(maxly,maxty);
 
+		int vrhlod=viewRadius*hlod;
+
 		for(int y=ystart;y<yend;y+=lod){
 			int xs=xstart;
 			int xe=xend;
 			int xtest,xtest2;
 			std::vector<fline>::iterator fli;
 			for(fli=left.begin();fli!=left.end();fli++){
-				xtest=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*y))/lod*lod-lod;
-				xtest2=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod-lod;
+				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+				xtest = ((int)xtf) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if(xtest>xtest2)
 					xtest=xtest2;
 				if(xtest>xs)
 					xs=xtest;
 			}
 			for(fli=right.begin();fli!=right.end();fli++){
-				xtest=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*y))/lod*lod+lod;
-				xtest2=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod+lod;
+				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+				xtest = ((int)xtf) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if(xtest<xtest2)
 					xtest=xtest2;
 				if(xtest<xe)
 					xe=xtest;
 			}
 
+			int ylod = y + lod;
+			int yhlod = y + hlod;
+
+			int nloop=(xe-xs)/lod+1;
+			va->EnlargeArrays(nloop*13,4*nloop+1);
 			for(int x=xs;x<xe;x+=lod){
-				if((lod==1) ||
-					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrain
-						if(!inStrip){
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+lod);
-							inStrip=true;
-						}
-						DrawVertexA(x+lod,y);
-						DrawVertexA(x+lod,y+lod);
-					} else {  //inre begr�sning mot f�eg�nde lod
-						if((x>=(cx)+viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y);
-							va->EndStrip();
-						}
-						else if((x<=(cx)-viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y);
-							va->EndStrip();
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();
-						}
-						else if((y>=(cy)+viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();
-						}
-						else if((y<=(cy)-viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y+lod);
-							va->EndStrip();
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							va->EndStrip();
-						}
+				int xlod = x + lod;
+				int xhlod = x + hlod;
+
+				if((lod==1) || (x>cx+vrhlod) || (x<cx-vrhlod) || (y>cy+vrhlod) || (y<cy-vrhlod)) {  //normal terrain
+					if(!inStrip){
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,ylod);
+						inStrip=true;
 					}
+					DrawVertexAQ(xlod,y);
+					DrawVertexAQ(xlod,ylod);
+				} else {  //inre begr?sning mot f?eg?nde lod
+					if(x>=cx+vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						va->EndStripQ();
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,y);
+						va->EndStripQ();
+					}
+					else if(x<=cx-vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,y);
+						va->EndStripQ();
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,ylod);
+						va->EndStripQ();
+					}
+					else if(y>=cy+vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						va->EndStripQ();
+					}
+					else if(y<=cy-vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,ylod);
+						va->EndStripQ();
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						va->EndStripQ();
+					}
+				}
 			}
 			if(inStrip){
-				va->EndStrip();
+				va->EndStripQ();
 				inStrip=false;
 			}
 		}

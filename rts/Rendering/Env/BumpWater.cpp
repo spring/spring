@@ -911,16 +911,24 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 	glBegin(GL_QUADS);
 		unsigned char offset,tx,ty;
+		unsigned char *to=tileOffsets;
+		unsigned char yts=0;
 		for (unsigned char y=0; y<tiles; ++y) {
+			unsigned char yts1=yts+tilesize;
+			unsigned char xts=0;
 			for (unsigned char x=0; x<tiles; ++x) {
-				offset = tileOffsets[y * tiles + x];
+				unsigned char xts1=xts+tilesize;
+				offset = *to++;
 				tx = offset % tiles;
-				ty = (offset - tx)/tiles;
-				glTexCoord2f(     tx * tilesize,     ty * tilesize ); glVertex2f(     x * tilesize,     y * tilesize );
-				glTexCoord2f(     tx * tilesize, (ty+1) * tilesize ); glVertex2f(     x * tilesize, (y+1) * tilesize );
-				glTexCoord2f( (tx+1) * tilesize, (ty+1) * tilesize ); glVertex2f( (x+1) * tilesize, (y+1) * tilesize );
-				glTexCoord2f( (tx+1) * tilesize,     ty * tilesize ); glVertex2f( (x+1) * tilesize,     y * tilesize );
+				ty = ((offset - tx)/tiles)*tilesize;
+				tx*=tilesize;
+				glTexCoord2f(tx,          ty         ); glVertex2f(xts,  yts );
+				glTexCoord2f(tx,          ty+tilesize); glVertex2f(xts,  yts1);
+				glTexCoord2f(tx+tilesize, ty+tilesize); glVertex2f(xts1, yts1);
+				glTexCoord2f(tx+tilesize, ty         ); glVertex2f(xts1, yts );
+				xts=xts1;
 			}
+			yts=yts1;
 		}
 	glEnd();
 

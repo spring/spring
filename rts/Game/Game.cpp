@@ -2632,23 +2632,19 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-#ifndef USE_GML
+#if defined(USE_GML) && GML_ENABLE_DRAWALL
 bool CGame::Draw() {
-#else // USE_GML
-#  if GML_ENABLE_DRAWALL
-bool CGame::Draw() {
-#  else
-bool CGame::DrawMT() {
-#  endif
 	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
+#else
+bool CGame::DrawMT() {
+#endif
 	return TRUE;
 }
-#  if GML_ENABLE_DRAWALL
+#if defined(USE_GML) && GML_ENABLE_DRAWALL
 bool CGame::DrawMT() {
-#  else
+#else
 bool CGame::Draw() {
-#  endif
-#endif // USE_GML
+#endif
 
 	ASSERT_UNSYNCED_MODE;
 
@@ -3051,22 +3047,18 @@ void CGame::UnsyncedStuff() {
 }
 
 
-#ifndef USE_GML
+#  if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
-#else // USE_GML
-#  if GML_ENABLE_SIM
-void CGame::SimFrame() {
-#  else
-void CGame::SimFrameMT() {
-#  endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
+#  else
+void CGame::SimFrameMT() {
+#  endif
 }
-#  if GML_ENABLE_SIM
+#  if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrameMT() {
 #  else
 void CGame::SimFrame() {
 #  endif
-#endif // USE_GML
 
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
@@ -3093,7 +3085,7 @@ void CGame::SimFrame() {
 	ENTER_UNSYNCED;
 
 	if (!skipping) {
-#if !GML_ENABLE_SIM
+#if !defined(USE_GML) || !GML_ENABLE_SIM
     UnsyncedStuff();
 #endif
 //		infoConsole->Update();

@@ -704,7 +704,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
 
-#if GML_ENABLE_DRAWGROUND
+#if defined(USE_GML) && GML_ENABLE_DRAWGROUND
 	mt_overrideVP=overrideVP;
 	gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 #else
@@ -1123,7 +1123,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundShadowVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
 
-#if GML_ENABLE_DRAWGROUNDSHADOW
+#if defined(USE_GML) && GML_ENABLE_DRAWGROUNDSHADOW
 	gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
 #else
 	for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
