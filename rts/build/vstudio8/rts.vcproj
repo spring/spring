@@ -6235,6 +6235,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Map\SMF\SmfMapFile.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SmfMapFile.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Map\Smf\SmfReadMap.cpp"
 					>
 				</File>

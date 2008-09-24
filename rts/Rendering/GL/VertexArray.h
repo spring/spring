@@ -1,5 +1,6 @@
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
+#include "myGL.h"
 // VertexArray.h: interface for the CVertexArray class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -44,12 +45,22 @@ public:
 	int* stripArraySize;
 
 protected:
-	void DrawArrays(int drawType, int stride);
+	inline void DrawArrays(int drawType, int stride);
 	inline void CheckEnlargeDrawArray();
 	void EnlargeStripArray();
 	void EnlargeDrawArray();
 	void CheckEndStrip();
 };
+
+inline void CVertexArray::DrawArrays(int drawType, int stride) {
+	int newIndex,oldIndex=0;
+	int *stripArrayPtr=stripArray;
+	while(stripArrayPtr<stripArrayPos) {
+		newIndex=(*stripArrayPtr++)/stride;
+		glDrawArrays(drawType,oldIndex,newIndex-oldIndex);
+		oldIndex=newIndex;
+	}
+}
 
 inline void CVertexArray::CheckEnlargeDrawArray() {
 	if((char *)drawArrayPos>(char *)drawArraySize-10*sizeof(float))

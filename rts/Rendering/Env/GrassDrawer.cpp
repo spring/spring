@@ -21,8 +21,13 @@
 //#include "TimeProfiler.h"
 
 static const float turfSize=20;				//single turf size
+static const float partTurfSize=turfSize*0.6f;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square
 static const int grassBlockSize=4;		//grass squares per grass block
+static const int gSSsq=SQUARE_SIZE*grassSquareSize;
+static const int blockMapSize=grassSquareSize*grassBlockSize;
+static const int bMSsq=SQUARE_SIZE*blockMapSize;
+
 
 inline float fRand(float size)
 {
@@ -62,7 +67,7 @@ CGrassDrawer::CGrassDrawer()
 
 	maxGrassDist=800+sqrt((float)detail)*240;
 	maxDetailedDist=146+detail*24;
-	detailedBlocks=(int)((maxDetailedDist-24)/(SQUARE_SIZE*grassSquareSize*grassBlockSize))+1;
+	detailedBlocks=(int)((maxDetailedDist-24)/bMSsq)+1;
 	numTurfs=3+(int)(detail*0.5f);
 	strawPerTurf=50+(int)sqrt((float)detail)*10;
 
@@ -168,26 +173,31 @@ public:
 
 void CGrassBlockDrawer::DrawQuad (int x,int y)
 {
-	const int blockMapSize=grassSquareSize*grassBlockSize;
 	float maxDetailedDist = gd->maxDetailedDist;
 	CGrassDrawer::NearGrassStruct *nearGrass = gd->nearGrass;
 
-	if(abs(x-cx)<=gd->detailedBlocks && abs(y-cy)<=gd->detailedBlocks){	//blocks close to the camera
-		for(int y2=0;y2<grassBlockSize;y2++){
-			for(int x2=0;x2<grassBlockSize;x2++){//loop over all squares in block
-				if(gd->grassMap[(y*grassBlockSize+y2)*gs->mapx/grassSquareSize+(x*grassBlockSize+x2)]){
-					srand((y*grassBlockSize+y2)*1025+(x*grassBlockSize+x2));
-					rand();
-					rand();
-					float3 squarePos((x*grassBlockSize+x2+0.5f)*SQUARE_SIZE*grassSquareSize, 0, (y*grassBlockSize+y2+0.5f)*SQUARE_SIZE*grassSquareSize);
+	int xgbs=x*grassBlockSize;
+	int ygbs=y*grassBlockSize;
+
+	if(abs(x-cx)<=gd->detailedBlocks && abs(y-cy)<=gd->detailedBlocks){	//!blocks close to the camera
+		int ygbsy=ygbs;
+		for(int y2=0; y2<grassBlockSize; ++y2){
+			int xgbsx=xgbs;
+			unsigned char* gm=gd->grassMap+ygbsy*gs->mapx/grassSquareSize+xgbsx;
+			for(int x2=0; x2<grassBlockSize; ++x2){ //!loop over all squares in block
+				if(*gm) {
+					float3 squarePos((xgbsx+0.5f)*gSSsq, 0, (ygbsy+0.5f)*gSSsq);
 					squarePos.y=ground->GetHeight2(squarePos.x,squarePos.z);
-					if(camera->InView(squarePos,SQUARE_SIZE*grassSquareSize)){
+					if(camera->InView(squarePos,gSSsq)){
 						float sqdist=(camera->pos-squarePos).SqLength();
-						if(sqdist<maxDetailedDist*maxDetailedDist){//close grass, draw directly
+						if(sqdist<maxDetailedDist*maxDetailedDist){ //!close grass, draw directly
+							srand(ygbsy*1025+xgbsx);
+							rand();
+							rand();
 							int numGrass=gd->numTurfs;
 							for(int a=0;a<numGrass;a++){
-								float dx=(x*grassBlockSize+x2+fRand(1))*SQUARE_SIZE*grassSquareSize;
-								float dy=(y*grassBlockSize+y2+fRand(1))*SQUARE_SIZE*grassSquareSize;
+								float dx=(xgbsx+fRand(1))*gSSsq;
+								float dy=(ygbsy+fRand(1))*gSSsq;
 								float3 pos(dx,ground->GetHeight2(dx,dy),dy);
 								pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
 								float col=0.62f;
@@ -195,11 +205,11 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 								if(camera->InView(pos,turfSize*0.7f)){
 									glPushMatrix();
 									glTranslatef3(pos);
-									CGrassDrawer::NearGrassStruct* ng=&nearGrass[((y*grassBlockSize+y2)&31)*32+((x*grassBlockSize+x2)&31)];
-									if(ng->square!=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2)){
+									CGrassDrawer::NearGrassStruct* ng=&nearGrass[(ygbsy&31)*32+(xgbsx&31)];
+									if(ng->square!=ygbsy*2048+xgbsx){
 										float3 v=squarePos-camera->pos;
 										ng->rotation=GetHeadingFromVector(v.x,v.z)*180.0f/32768+180;
-										ng->square=(y*grassBlockSize+y2)*2048+(x*grassBlockSize+x2);
+										ng->square=ygbsy*2048+xgbsx;
 									}
 									glRotatef(ng->rotation,0,1,0);
 									glCallList(gd->grassDL);
@@ -209,63 +219,72 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 						} else {//near but not close, save for later drawing
 							InviewNearGrass iv;
 							iv.dist=sqdist;
-							iv.x=x*grassBlockSize+x2;
-							iv.y=y*grassBlockSize+y2;
+							iv.x=xgbsx;
+							iv.y=ygbsy;
 							inviewNearGrass.push_back(iv);
-							nearGrass[((y*grassBlockSize+y2)&31)*32+((x*grassBlockSize+x2)&31)].square=-1;
+							nearGrass[(ygbsy&31)*32+(xgbsx&31)].square=-1;
 						}
 					}
 				}
+				++gm;
+				++xgbsx;
 			}
+			++ygbsy;
 		}
 		return;
 	}
+
 	float3 dif;
-	dif.x=camera->pos.x-((x+0.5f)*SQUARE_SIZE*blockMapSize);
+	dif.x=camera->pos.x-((x+0.5f)*bMSsq);
 	dif.y=0;
-	dif.z=camera->pos.z-((y+0.5f)*SQUARE_SIZE*blockMapSize);
+	dif.z=camera->pos.z-((y+0.5f)*bMSsq);
 	float dist=dif.Length2D();
 	dif/=dist;
-
-	CGrassDrawer::GrassStruct *grass = gd->grass;
 				
 	if(dist<gd->maxGrassDist){
 		int curSquare=y*gd->blocksX+x;
 		int curModSquare=(y&31)*32+(x&31);
-		grass[curModSquare].lastSeen=gs->frameNum;
-		if(grass[curModSquare].square!=curSquare){
-			grass[curModSquare].square=curSquare;
-			if(grass[curModSquare].va){
-				delete grass[curModSquare].va;
-				grass[curModSquare].va=0;
+		CGrassDrawer::GrassStruct *grass = gd->grass+curModSquare;
+		grass->lastSeen=gs->frameNum;
+		if(grass->square!=curSquare){
+			grass->square=curSquare;
+			if(grass->va){
+				delete grass->va;
+				grass->va=0;
 			}
 		}
-		if(!grass[curModSquare].va){
-			grass[curModSquare].va=SAFE_NEW CVertexArray;;
-			grass[curModSquare].pos=float3((x+0.5f)*SQUARE_SIZE*blockMapSize,ground->GetHeight2((x+0.5f)*SQUARE_SIZE*blockMapSize,(y+0.5f)*SQUARE_SIZE*blockMapSize),(y+0.5f)*SQUARE_SIZE*blockMapSize);
-			va=grass[curModSquare].va;
+		if(!grass->va){
+			grass->va=SAFE_NEW CVertexArray;;
+			grass->pos=float3((x+0.5f)*bMSsq,ground->GetHeight2((x+0.5f)*bMSsq,(y+0.5f)*bMSsq),(y+0.5f)*bMSsq);
+			va=grass->va;
 			va->Initialize();
-			for(int y2=0;y2<grassBlockSize;y2++){
-				for(int x2=0;x2<grassBlockSize;x2++){
-					if(gd->grassMap[(y*grassBlockSize+y2)*gs->mapx/grassSquareSize+(x*grassBlockSize+x2)]){
-						srand((y*grassBlockSize+y2)*1025+(x*grassBlockSize+x2));
+			int ygbsy=ygbs;
+			for(int y2=0; y2<grassBlockSize; ++y2){
+				int xgbsx=xgbs;
+				unsigned char* gm=gd->grassMap+ygbsy*gs->mapx/grassSquareSize+xgbsx;
+				for(int x2=0; x2<grassBlockSize; ++x2){
+					if(*gm){
+						srand(ygbsy*1025+xgbsx);
 						rand();
 						rand();
 						int numGrass=gd->numTurfs;
 						for(int a=0;a<numGrass;a++){
-							float dx=(x*grassBlockSize+x2+fRand(1))*SQUARE_SIZE*grassSquareSize;
-							float dy=(y*grassBlockSize+y2+fRand(1))*SQUARE_SIZE*grassSquareSize;
+							float dx=(xgbsx+fRand(1))*gSSsq;
+							float dy=(ygbsy+fRand(1))*gSSsq;
 							float3 pos(dx,ground->GetHeight2(dx,dy)+0.5f,dy);
 							float col=1;
 
 							pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
-							va->AddVertexTN(pos,0,0,float3(-turfSize*0.6f,-turfSize*0.6f,col));
-							va->AddVertexTN(pos,1/16.0f,0,float3(turfSize*0.6f,-turfSize*0.6f,col));
-							va->AddVertexTN(pos,1/16.0f,1,float3(turfSize*0.6f,turfSize*0.6f,col));
-							va->AddVertexTN(pos,0,1,float3(-turfSize*0.6f,turfSize*0.6f,col));
+							va->AddVertexTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
+							va->AddVertexTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
+							va->AddVertexTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
+							va->AddVertexTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
 						}
 					}
+					++gm;
+					++xgbsx;
 				}
+				++ygbsy;
 			}
 		}
 		InviewGrass ig;
@@ -392,12 +411,10 @@ void CGrassDrawer::Draw(void)
 	glEnable(GL_FOG);
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 
-	const int blockMapSize=grassSquareSize*grassBlockSize;
-
 	CGrassBlockDrawer drawer;
 
-	drawer.cx=(int)(camera->pos.x/(SQUARE_SIZE*blockMapSize));
-	drawer.cy=(int)(camera->pos.z/(SQUARE_SIZE*blockMapSize));
+	drawer.cx=(int)(camera->pos.x/bMSsq);
+	drawer.cy=(int)(camera->pos.z/bMSsq);
 	drawer.gd = this;
 
 	readmap->GridVisibility (camera, blockMapSize, maxGrassDist, &drawer);
@@ -472,7 +489,7 @@ void CGrassDrawer::Draw(void)
 		int y = (*gi).y;
 		if(grassMap[(y)*gs->mapx/grassSquareSize+(x)]){
 
-			float3 squarePos((x+0.5f)*SQUARE_SIZE*grassSquareSize, 0, (y+0.5f)*SQUARE_SIZE*grassSquareSize);
+			float3 squarePos((x+0.5f)*gSSsq, 0, (y+0.5f)*gSSsq);
 			squarePos.y=ground->GetHeight2(squarePos.x,squarePos.z);
 			float3 v=squarePos-camera->pos;
 			v.Normalize();
@@ -493,16 +510,16 @@ void CGrassDrawer::Draw(void)
 			va=GetVertexArray();
 			va->Initialize();
 			for(int a=0;a<numGrass;a++){
-				float dx=(x+fRand(1))*SQUARE_SIZE*grassSquareSize;
-				float dy=(y+fRand(1))*SQUARE_SIZE*grassSquareSize;
+				float dx=(x+fRand(1))*gSSsq;
+				float dy=(y+fRand(1))*gSSsq;
 				float3 pos(dx,ground->GetHeight2(dx,dy)+0.5f,dy);
 				pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
 				float col=1;
 				if(camera->InView(pos,turfSize*0.7f)){
-					va->AddVertexTN(pos,0,0,float3(-turfSize*0.6f,-turfSize*0.6f,col));
-					va->AddVertexTN(pos,1/16.0f,0,float3(turfSize*0.6f,-turfSize*0.6f,col));
-					va->AddVertexTN(pos,1/16.0f,1,float3(turfSize*0.6f,turfSize*0.6f,col));
-					va->AddVertexTN(pos,0,1,float3(-turfSize*0.6f,turfSize*0.6f,col));
+					va->AddVertexTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
+					va->AddVertexTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
+					va->AddVertexTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
+					va->AddVertexTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
 				}
 			}
 			va->DrawArrayTN(GL_QUADS);
@@ -548,23 +565,23 @@ void CGrassDrawer::Draw(void)
 	lastListClean=gs->frameNum;
 	int endClean=gs->frameNum*20%(32*32);
 	if(startClean>endClean){
-		for(int a=startClean;a<32*32;a++){
-			if(grass[a].lastSeen<gs->frameNum-50 && grass[a].va){
-				delete grass[a].va;
-				grass[a].va=0;
+		for(GrassStruct *pGS=grass+startClean; pGS<grass+32*32; ++pGS) {
+			if(pGS->lastSeen<gs->frameNum-50 && pGS->va){
+				delete pGS->va;
+				pGS->va=0;
 			}
 		}
-		for(int a=0;a<endClean;a++){
-			if(grass[a].lastSeen<gs->frameNum-50 && grass[a].va){
-				delete grass[a].va;
-				grass[a].va=0;
+		for(GrassStruct *pGS=grass; pGS<grass+endClean; ++pGS) {
+			if(pGS->lastSeen<gs->frameNum-50 && pGS->va){
+				delete pGS->va;
+				pGS->va=0;
 			}
 		}
 	} else {
-		for(int a=startClean;a<endClean;a++){
-			if(grass[a].lastSeen<gs->frameNum-50 && grass[a].va){
-				delete grass[a].va;
-				grass[a].va=0;
+		for(GrassStruct *pGS=grass+startClean; pGS<grass+endClean; ++pGS) {
+			if(pGS->lastSeen<gs->frameNum-50 && pGS->va){
+				delete pGS->va;
+				pGS->va=0;
 			}
 		}
 	}
@@ -574,7 +591,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 {
 	if(grassOff)
 		return;
-	int a=(int(pos.z/(SQUARE_SIZE*grassSquareSize*grassBlockSize))&31)*32+(int(pos.x/(SQUARE_SIZE*grassSquareSize*grassBlockSize))&31);
+	int a=(int(pos.z/bMSsq)&31)*32+(int(pos.x/bMSsq)&31);
 	if(grass[a].va){
 		delete grass[a].va;
 		grass[a].va=0;
@@ -697,7 +714,7 @@ void CGrassDrawer::CreateFarTex(void)
 		glTranslatef(0,-0.5f,0);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(-turfSize*0.6f, turfSize*0.6f, -turfSize*0.6f, turfSize*0.6f, -turfSize, turfSize);
+		glOrtho(-partTurfSize, partTurfSize, -partTurfSize, partTurfSize, -turfSize, turfSize);
 
 		glCallList(grassDL);
 		

@@ -107,14 +107,12 @@
 #	define GML_TYPENAME
 #endif
 
-#if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__) //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#ifndef _WIN32 //defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #	define GML_USE_SPEEDY_TLS 1
-#include "System/Platform/errorhandler.h"
+#	include "System/Platform/errorhandler.h"
+#	include "speedy-tls.h"
 #else
 #	define GML_USE_SPEEDY_TLS 0
-#endif
-#if GML_USE_SPEEDY_TLS
-#	include "speedy-tls.h"
 #endif
 
 #define set_threadnum(val) gmlThreadNumber=val
@@ -210,8 +208,8 @@ typedef int BOOL_;
 #define GML_EFP_ARRAY_BUFFER (1<<(16+GL_EDGE_FLAG_ARRAY-GL_VERTEX_ARRAY)) //(1<<25)
 #define GML_ELEMENT_ARRAY_BUFFER (1<<29)
 
-#if defined(_WIN32)
-#	if defined(__MINGW32__)
+#ifdef _WIN32
+#	ifdef __MINGW32__
 #		define GML_APIENTRY __stdcall
 #	elif (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__BORLANDC__)
 #		define GML_APIENTRY __stdcall
@@ -290,7 +288,7 @@ public:
 	}
 };
 
-#if !defined(BOOST_HAS_THREADS) || (!defined(BOOST_AC_USE_PTHREADS) && (BOOST_VERSION<103500 || !(defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32__)))
+#if !defined(BOOST_HAS_THREADS) || (!defined(BOOST_AC_USE_PTHREADS) && (BOOST_VERSION<103500 || !(defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))) && defined(_WIN32))
 #	define gmlCount boost::detail::atomic_count
 #else
 class gmlCount : public boost::detail::atomic_count {
@@ -306,7 +304,7 @@ public:
 		return ++value_;
 	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
 		return atomic_exchange_and_add(&value_, 1)+1;
-//	#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+//	#elif defined(_WIN32)
 //		return BOOST_INTERLOCKED_INCREMENT(&value_);
 	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (__GNUC__*100+__GNUC_MINOR__>=401))
 		return __sync_add_and_fetch(&value_, 1);
@@ -333,7 +331,7 @@ inline void operator%=(gmlCount& a, long val) {
 		a.value_=val;
 	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
 		__asm__ __volatile__("lock\n\txchgl %0,%1\n\t" : "=r" (val) : "m" (a.value_), "0" (val) : "memory");
-	#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+	#elif defined(_WIN32)
 		return BOOST_INTERLOCKED_EXCHANGE(&a.value_,val);
 	#elif (BOOST_VERSION>=103500) && (defined(__GNUC__) && (__GNUC__*100+__GNUC_MINOR__>=401))
 		__sync_exchange_FIXME(&a.value_, val);

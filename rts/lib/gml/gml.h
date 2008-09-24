@@ -9,10 +9,7 @@
 #ifndef GML_H
 #define GML_H
 
-#ifndef USE_GML
-#  define GML_VECTOR      std::vector
-#  define GML_CLASSVECTOR std::vector
-#else
+#ifdef USE_GML
 
 #include <set>
 #include <map>
@@ -134,16 +131,14 @@ EXTERN inline GLuint gmlGenLists(GLsizei items) {
 	return gmlListServer.GetItems(items);
 }
 
-#if GML_ENABLE
 #include "gmlimp.h"
 #include "gmldef.h"
 #define GML_VECTOR gmlVector
 #define GML_CLASSVECTOR gmlClassVector
+
 #else
 #define GML_VECTOR std::vector
 #define GML_CLASSVECTOR std::vector
-#endif
-
 #endif // USE_GML
 
 #endif

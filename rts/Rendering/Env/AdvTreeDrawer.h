@@ -49,6 +49,7 @@ public:
 	TreeSquareStruct* trees;
 	int treesX;
 	int treesY;
+	int nTrees;
 
 	CGrassDrawer* grassDrawer;
 

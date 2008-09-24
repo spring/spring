@@ -3,7 +3,7 @@
 //Contains macros that can be used to very quickly (one instruction) access thread-local memory.
 
 #ifdef USE_GML
-#if !defined(WIN32) && !defined(_WIN32) && !defined(__WIN32__)
+#ifndef _WIN32
 
 #include "speedy-tls.h"
 #include <stdlib.h>
