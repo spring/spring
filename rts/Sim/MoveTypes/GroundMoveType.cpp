@@ -43,7 +43,7 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(turnRate),
 		CR_MEMBER(accRate),
 		CR_MEMBER(decRate),
-		
+
 		CR_MEMBER(wantedSpeed),
 		CR_MEMBER(currentSpeed),
 		CR_MEMBER(deltaSpeed),
@@ -267,6 +267,9 @@ void CGroundMoveType::Update()
 		if (pathId || currentSpeed > 0.0f) {
 			// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 			// Initial calculations.
+			ASSERT_SYNCED_FLOAT3(waypoint);
+			ASSERT_SYNCED_FLOAT3(owner->pos);
+
 			currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
 
 			if (pathId && !atGoal && gs->frameNum > etaWaypoint) {
@@ -287,6 +290,9 @@ void CGroundMoveType::Update()
 
 			// Set direction to waypoint.
 			float3 waypointDir = waypoint - owner->pos;
+
+			ASSERT_SYNCED_FLOAT3(waypointDir);
+
 			waypointDir.y = 0;
 			waypointDir.Normalize();
 
@@ -298,6 +304,8 @@ void CGroundMoveType::Update()
 			//-- Steering --//
 			// Apply obstacle avoidance.
 			float3 desiredVelocity = /* waypointDir / */ ObstacleAvoidance(waypointDir);
+
+			ASSERT_SYNCED_FLOAT3(desiredVelocity);
 
 			if (desiredVelocity != ZeroVector) {
 				ChangeHeading(GetHeadingFromVector(desiredVelocity.x, desiredVelocity.z));
@@ -609,6 +617,9 @@ void CGroundMoveType::SetDeltaSpeed(void)
 Changes the heading of the owner.
 */
 void CGroundMoveType::ChangeHeading(short wantedHeading) {
+#ifdef TRACE_SYNC
+	short _oldheading = owner->heading;
+#endif
 	SyncedSshort& heading = owner->heading;
 
 	deltaHeading = wantedHeading - heading;
@@ -618,6 +629,10 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	} else {
 		heading += std::max((short) - turnRate, deltaHeading);
 	}
+
+#ifdef TRACE_SYNC
+	tracefile << "Unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << "\n";
+#endif
 
 	owner->frontdir = GetVectorFromHeading(heading);
 	if (owner->upright) {
@@ -630,7 +645,6 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 		owner->frontdir = owner->updir.cross(owner->rightdir);
 	}
 
-	owner->heading = heading;
 	flatFrontDir = owner->frontdir;
 	flatFrontDir.y = 0;
 	flatFrontDir.Normalize();
@@ -1096,8 +1110,11 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 		// Return the resulting recommended velocity.
 		avoidanceDir = desiredDir + avoidanceVec;
-		if (avoidanceDir.Length2D() > 1.0f)
-			avoidanceDir.Normalize();
+		avoidanceDir.Normalize();
+
+#ifdef TRACE_SYNC
+		tracefile << __FUNCTION__ << " avoidanceVec = " << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << "\n";
+#endif
 
 		return avoidanceDir;
 	} else {
