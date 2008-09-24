@@ -631,7 +631,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "Unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << "\n";
+	tracefile << "Unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
 #endif
 
 	owner->frontdir = GetVectorFromHeading(heading);
