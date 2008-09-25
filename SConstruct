@@ -93,6 +93,7 @@ unitsync_extra_files = [
 	'rts/Lua/LuaIO.cpp',
 	'rts/Lua/LuaParser.cpp',
 	'rts/Map/MapParser.cpp',
+	'rts/Map/SMF/SmfMapFile.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/SideParser.cpp',
