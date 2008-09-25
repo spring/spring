@@ -1,6 +1,7 @@
 /* Author: Tobi Vollebregt */
 
 #include "StdAfx.h"     // ugh
+#include <assert.h>
 #include "SmfMapFile.h"
 #include "mapfile.h"
 #include "mmgr.h"
