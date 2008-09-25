@@ -365,6 +365,7 @@ def generate(env):
 
 		# gml library
 		if env['gml']:
+			env.AppendUnique(CCFLAGS = ['-mno-tls-direct-seg-refs'], CXXFLAGS = ['-mno-tls-direct-seg-refs'], LINKFLAGS = ['-mno-tls-direct-seg-refs'])		
 			spring_defines += ['USE_GML']
 			print 'GML OpenGL thread library is enabled'
 		else:
