@@ -14,7 +14,7 @@ class CMoveMath;
 class CPathManager {
 public:
 	CPathManager();
-	virtual ~CPathManager();
+	~CPathManager();
 
 	/*
 	Generate a path from startPos to the target defined by either peDef or (goalPos, goalRadius).

@@ -414,8 +414,8 @@ void CSyncDebugger::ServerQueueBlockRequests()
 			correctFlop = remoteFlop[j];
 		}
 	}
-	unsigned i = ((unsigned)(correctFlop % (HISTORY_SIZE * BLOCK_SIZE)) / BLOCK_SIZE) + 1, c = 0;
-	for (; c < HISTORY_SIZE; ++i, ++c) {
+	unsigned i = ((unsigned)(correctFlop % (HISTORY_SIZE * BLOCK_SIZE)) / BLOCK_SIZE) + 1;
+	for (unsigned c = 0; c < HISTORY_SIZE; ++i, ++c) {
 		unsigned correctChecksum = 0;
 		if (i == HISTORY_SIZE) i = 0;
 		for (int j = 0; j < gs->activePlayers; ++j) {
