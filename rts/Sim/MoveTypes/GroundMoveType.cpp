@@ -637,11 +637,11 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	short sTurnRate = short(turnRate);
 
 	if (deltaHeading > 0) {
-		short tmp = (deltaHeading < turnRate)? deltaHeading: sTurnRate;
+		short tmp = (deltaHeading < sTurnRate)? deltaHeading: sTurnRate;
 		ASSERT_SYNCED_PRIMITIVE(tmp);
 		heading += tmp;
 	} else {
-		short tmp = (deltaHeading > turnRate)? deltaHeading: sTurnRate;
+		short tmp = (deltaHeading > sTurnRate)? deltaHeading: sTurnRate;
 		ASSERT_SYNCED_PRIMITIVE(tmp);
 		heading += tmp;
 	}
