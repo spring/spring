@@ -916,7 +916,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	}
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
-	ASSERT_SYNCED_PRIMITIVE(facing);
+	ASSERT_SYNCED_PRIMITIVE((int)facing);
 	CUnit* unit = unitLoader.LoadUnit(unitDef->name, pos, teamID,
 	                                  false, facing, NULL);
 	inCreateUnit = false;
@@ -993,7 +993,7 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	}
 	inTransferUnit = true;
 	ASSERT_SYNCED_PRIMITIVE(unit->id);
-	ASSERT_SYNCED_PRIMITIVE(newTeam);
+	ASSERT_SYNCED_PRIMITIVE((int)newTeam);
 	ASSERT_SYNCED_PRIMITIVE(given);
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
 	                                : CUnit::ChangeCaptured);
@@ -1022,7 +1022,7 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		}
 		const string key = lua_tostring(L, -2);
 		const float value = lua_tonumber(L, -1);
-		ASSERT_SYNCED_PRIMITIVE(value);
+		ASSERT_SYNCED_PRIMITIVE((float)value);
 
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
@@ -1093,7 +1093,7 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 			}
 			const string key = lua_tostring(L, -2);
 			const float value = lua_tonumber(L, -1);
-			ASSERT_SYNCED_PRIMITIVE(value);
+			ASSERT_SYNCED_PRIMITIVE((float)value);
 
 			SetUnitResourceParam(unit, key, value);
 		}
