@@ -19,6 +19,11 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+static const float MAX_TREE_HEIGHT_25=MAX_TREE_HEIGHT*0.25f;
+static const float MAX_TREE_HEIGHT_3=MAX_TREE_HEIGHT*0.3f;
+static const float MAX_TREE_HEIGHT_36=MAX_TREE_HEIGHT*0.36f;
+static const float MAX_TREE_HEIGHT_6=MAX_TREE_HEIGHT*0.6f;
+
 CBasicTreeDrawer::CBasicTreeDrawer()
 {
 	lastListClean=0;
@@ -149,13 +154,12 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;
-	trees=SAFE_NEW TreeSquareStruct[treesX*treesY];
+	nTrees=treesX*treesY;
+	trees=SAFE_NEW TreeSquareStruct[nTrees];
 
-	for(int y=0;y<treesY;y++){
-		for(int x=0;x<treesX;x++){
-			trees[y*treesX+x].displist=0;
-			trees[y*treesX+x].farDisplist=0;
-		}
+	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
+		pTSS->displist=0;
+		pTSS->farDisplist=0;
 	}
 }
 
@@ -163,22 +167,21 @@ CBasicTreeDrawer::~CBasicTreeDrawer()
 {
 	glDeleteTextures (1, &treetex);
 
-	for(int y=0;y<treesY;y++){
-		for(int x=0;x<treesX;x++){
-			if(trees[y*treesX+x].displist)
-				glDeleteLists(trees[y*treesX+x].displist,1);
-			if(trees[y*treesX+x].farDisplist)
-				glDeleteLists(trees[y*treesX+x].farDisplist,1);
-		}
+	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
+		if(pTSS->displist)
+			glDeleteLists(pTSS->displist,1);
+		if(pTSS->farDisplist)
+			glDeleteLists(pTSS->farDisplist,1);
 	}
+
 	delete[] trees;
 }
 
 static CVertexArray* va;
 
-static void inline SetArray(float t1,float t2,float3 v)
+static void inline SetArrayQ(float t1,float t2,float3 v)
 {
-	va->AddVertexT(v,t1,t2);
+	va->AddVertexQT(v,t1,t2);
 }
 
 struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
@@ -190,6 +193,108 @@ struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
 	int cx,cy;
 	float treeDistance;
 };
+
+inline void DrawTreeVertexFar1(float3 pos, float3 swd) { 
+	va->EnlargeArrays(4,0,5);
+	float3 base=pos+swd;
+	SetArrayQ(0,0,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0,0.25f,base);
+	base-=swd;
+	base-=swd;
+	SetArrayQ(0.5f,0.25f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.5f,0,base);
+}
+
+inline void DrawTreeVertexFar2(float3 pos, float3 swd) { 
+	va->EnlargeArrays(4,0,5);
+	float3 base=pos+swd;
+	SetArrayQ(0,0.25f,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0,0.5f,base);
+	base-=swd;
+	base-=swd;
+	SetArrayQ(0.25f,0.5f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.25f,0.25f,base);
+}
+
+inline void DrawTreeVertexMid1(float3 pos) {
+	va->EnlargeArrays(12,0,5);
+	float3 base=pos;
+	base.x+=MAX_TREE_HEIGHT_3;
+
+	SetArrayQ(0,0,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0,0.25f,base);
+	base.x-=MAX_TREE_HEIGHT_6;
+	SetArrayQ(0.5f,0.25f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.5f,0,base);
+
+	base.x+=MAX_TREE_HEIGHT_3;
+	base.z+=MAX_TREE_HEIGHT_3;
+	SetArrayQ(0,0,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0,0.25f,base);
+	base.z-=MAX_TREE_HEIGHT_6;
+	SetArrayQ(0.5f,0.25f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.5f,0,base);
+
+	base.z+=MAX_TREE_HEIGHT_3;
+	base.x+=MAX_TREE_HEIGHT_36;
+	base.y+=MAX_TREE_HEIGHT_25;
+	SetArrayQ(0.5f,0,base);
+	base.x-=MAX_TREE_HEIGHT_36;
+	base.z-=MAX_TREE_HEIGHT_36;
+	SetArrayQ(0.5f,0.25f,base);
+	base.x-=MAX_TREE_HEIGHT_36;
+	base.z+=MAX_TREE_HEIGHT_36;
+	SetArrayQ(1,0.25f,base);
+	base.x+=MAX_TREE_HEIGHT_36;
+	base.z+=MAX_TREE_HEIGHT_36;
+	SetArrayQ(1,0,base);
+}
+
+inline void DrawTreeVertexMid2(float3 pos) {
+	va->EnlargeArrays(12,0,5);
+	float3 base=pos;
+	base.x+=MAX_TREE_HEIGHT_3;
+
+	SetArrayQ(0,0.25f,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0,0.5f,base);
+	base.x-=MAX_TREE_HEIGHT_6;
+	SetArrayQ(0.25f,0.5f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.25f,0.25f,base);
+
+	base.x+=MAX_TREE_HEIGHT_3;
+	base.z+=MAX_TREE_HEIGHT_3;
+	SetArrayQ(0.25f,0.25f,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(0.25f,0.5f,base);
+	base.z-=MAX_TREE_HEIGHT_6;
+	SetArrayQ(0.5f,0.5f,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(0.5f,0.25f,base);
+
+	base.z+=MAX_TREE_HEIGHT_3;
+	base.x+=MAX_TREE_HEIGHT_36;
+	base.y+=MAX_TREE_HEIGHT_3;
+	SetArrayQ(0.5f,0.25f,base);
+	base.x-=MAX_TREE_HEIGHT_36;
+	base.z-=MAX_TREE_HEIGHT_36;
+	SetArrayQ(0.5f,0.5f,base);
+	base.x-=MAX_TREE_HEIGHT_36;
+	base.z+=MAX_TREE_HEIGHT_36;
+	SetArrayQ(1,0.5f,base);
+	base.x+=MAX_TREE_HEIGHT_36;
+	base.z+=MAX_TREE_HEIGHT_36;
+	SetArrayQ(1,0.25f,base);
+}
 
 void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 {
@@ -217,26 +322,12 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
 				if(ts->type<8){
-					float3 base(ts->pos);
-					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3f;
-
-					SetArray(0,0,base+side*width);
-					SetArray(0,0.25f,base+side*width+float3(0,height,0));
-					SetArray(0.5f,0.25f,base-side*width+float3(0,height,0));
-					SetArray(0.5f,0,base-side*width);
+					DrawTreeVertexFar1(ts->pos, side*MAX_TREE_HEIGHT_3);
 				} else {
-					float3 base(ts->pos);
-					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3f;
-
-					SetArray(0,0.25f,base+side*width);
-					SetArray(0,0.5f,base+side*width+float3(0,height,0));
-					SetArray(0.25f,0.5f,base-side*width+float3(0,height,0));
-					SetArray(0.25f,0.25f,base-side*width);
+					DrawTreeVertexFar2(ts->pos, side*MAX_TREE_HEIGHT_3);
 				}
 			}
-			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
+			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
 			glEndList();
 		}
@@ -262,47 +353,10 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 
 			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
-				if(ts->type<8){
-					float3 base(ts->pos);
-					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3f;
-
-					SetArray(0,0,base+float3(width,0,0));
-					SetArray(0,0.25f,base+float3(width,height,0));
-					SetArray(0.5f,0.25f,base+float3(-width,height,0));
-					SetArray(0.5f,0,base+float3(-width,0,0));
-
-					SetArray(0,0,base+float3(0,0,width));
-					SetArray(0,0.25f,base+float3(0,height,width));
-					SetArray(0.5f,0.25f,base+float3(0,height,-width));
-					SetArray(0.5f,0,base+float3(0,0,-width));
-
-					width*=1.2f;
-					SetArray(0.5f,0,base+float3(width,height*0.25f,0));
-					SetArray(0.5f,0.25f,base+float3(0,height*0.25f,-width));
-					SetArray(1,0.25f,base+float3(-width,height*0.25f,0));
-					SetArray(1,0,base+float3(0,height*0.25f,width));
-				} else {
-					float3 base(ts->pos);
-					float height=MAX_TREE_HEIGHT;
-					float width=MAX_TREE_HEIGHT*0.3f;
-
-					SetArray(0,0.25f,base+float3(width,0,0));
-					SetArray(0,0.5f,base+float3(width,height,0));
-					SetArray(0.25f,0.5f,base+float3(-width,height,0));
-					SetArray(0.25f,0.25f,base+float3(-width,0,0));
-
-					SetArray(0.25f,0.25f,base+float3(0,0,width));
-					SetArray(0.25f,0.5f,base+float3(0,height,width));
-					SetArray(0.5f,0.5f,base+float3(0,height,-width));
-					SetArray(0.5f,0.25f,base+float3(0,0,-width));
-
-					width*=1.2f;
-					SetArray(0.5f,0.25f,base+float3(width,height*0.3f,0));
-					SetArray(0.5f,0.5f,base+float3(0,height*0.3f,-width));
-					SetArray(1,0.5f,base+float3(-width,height*0.3f,0));
-					SetArray(1,0.25f,base+float3(0,height*0.3f,width));
-				}
+				if(ts->type<8)
+					DrawTreeVertexMid1(ts->pos);
+				else
+					DrawTreeVertexMid2(ts->pos);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -331,40 +385,40 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer);
 
-	int startClean=lastListClean*20%(treesX*treesY);
+	int startClean=lastListClean*20%nTrees;
 	lastListClean=gs->frameNum;
-	int endClean=gs->frameNum*20%(treesX*treesY);
+	int endClean=gs->frameNum*20%nTrees;
 
 	if(startClean>endClean){
-		for(int a=startClean;a<treesX*treesY;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees+startClean; pTSS<trees+nTrees; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
-		for(int a=0;a<endClean;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees; pTSS<trees+endClean; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
 	} else {
-		for(int a=startClean;a<endClean;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees+startClean; pTSS<trees+endClean; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
 	}
@@ -390,14 +444,14 @@ void CBasicTreeDrawer::ResetPos(const float3& pos)
 {
 	int x=(int)(pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE);
 	int y=(int)(pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE);
-	int a=y*treesX+x;
-	if(trees[a].displist){
-		glDeleteLists(trees[a].displist,1);
-		trees[a].displist=0;
+	TreeSquareStruct* pTSS=trees+y*treesX+x;
+	if(pTSS->displist){
+		glDeleteLists(pTSS->displist,1);
+		pTSS->displist=0;
 	}
-	if(trees[a].farDisplist){
-		glDeleteLists(trees[a].farDisplist,1);
-		trees[a].farDisplist=0;
+	if(pTSS->farDisplist){
+		glDeleteLists(pTSS->farDisplist,1);
+		pTSS->farDisplist=0;
 	}
 }
 

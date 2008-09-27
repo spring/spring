@@ -2634,7 +2634,7 @@ bool CGame::DrawWorld()
 
 #if defined(USE_GML) && GML_ENABLE_DRAWALL
 bool CGame::Draw() {
-	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,true,NULL,1,2,2,false);
+	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
 #else
 bool CGame::DrawMT() {
 #endif

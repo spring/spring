@@ -899,46 +899,40 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 	glViewport(0,0, normalTextureX, normalTextureY);
 	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glOrtho(0,1,0,1,-1,1);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0,1,0,1,-1,1);
 	glMatrixMode(GL_TEXTURE);
-		glPushMatrix();
-		glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-		unsigned char offset,tx,ty;
-		unsigned char *to=tileOffsets;
-		unsigned char yts=0;
-		for (unsigned char y=0; y<tiles; ++y) {
-			unsigned char yts1=yts+tilesize;
-			unsigned char xts=0;
-			for (unsigned char x=0; x<tiles; ++x) {
-				unsigned char xts1=xts+tilesize;
-				offset = *to++;
-				tx = offset % tiles;
-				ty = ((offset - tx)/tiles)*tilesize;
-				tx*=tilesize;
-				glTexCoord2f(tx,          ty         ); glVertex2f(xts,  yts );
-				glTexCoord2f(tx,          ty+tilesize); glVertex2f(xts,  yts1);
-				glTexCoord2f(tx+tilesize, ty+tilesize); glVertex2f(xts1, yts1);
-				glTexCoord2f(tx+tilesize, ty         ); glVertex2f(xts1, yts );
-				xts=xts1;
-			}
-			yts=yts1;
+	unsigned char offset,tx,ty;
+	unsigned char *to=tileOffsets;
+	for(unsigned char yts=0,yts1=tilesize; yts<tiles*tilesize; yts=yts1,yts1=yts+tilesize) {
+		for(unsigned char xts=0,xts1=tilesize; xts<tiles*tilesize; xts=xts1,xts1=xts+tilesize) {
+			offset = *to++;
+			tx = offset % tiles;
+			ty = ((offset - tx)/tiles)*tilesize;
+			tx*=tilesize;
+			glTexCoord2f(tx,          ty         ); glVertex2f(xts,  yts );
+			glTexCoord2f(tx,          ty+tilesize); glVertex2f(xts,  yts1);
+			glTexCoord2f(tx+tilesize, ty+tilesize); glVertex2f(xts1, yts1);
+			glTexCoord2f(tx+tilesize, ty         ); glVertex2f(xts1, yts );
 		}
+	}
 	glEnd();
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glPopMatrix();
+	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
+	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+	glPopMatrix();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
