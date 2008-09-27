@@ -203,6 +203,8 @@ void CGroundMoveType::PostLoad()
 
 void CGroundMoveType::Update()
 {
+	ASSERT_SYNCED_FLOAT3(owner->pos);
+
 	// Update mobility.
 	owner->mobility->maxSpeed = maxSpeed;
 
@@ -221,11 +223,15 @@ void CGroundMoveType::Update()
 		return;
 	}
 
+	ASSERT_SYNCED_FLOAT3(owner->pos);
+
 	//set drop height when we start to drop
 	if (owner->falling) {
 		UpdateControlledDrop();
 		return;
 	}
+
+	ASSERT_SYNCED_FLOAT3(owner->pos);
 
 	if (owner->stunned) {
 		owner->cob->Call(COBFN_StopMoving);

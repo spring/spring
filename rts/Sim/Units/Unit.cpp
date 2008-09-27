@@ -47,6 +47,7 @@
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sync/SyncedPrimitive.h"
 #include "Sync/SyncTracer.h"
 #include "System/EventHandler.h"
 #include "System/LoadSaveInterface.h"
@@ -349,9 +350,10 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	posErrorVector = gs->randVector();
 	posErrorVector.y *= 0.2f;
 #ifdef TRACE_SYNC
-	tracefile << "New unit: ";
+	tracefile << "New unit: " << unitDefName.c_str() << " ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
+	ASSERT_SYNCED_FLOAT3(pos);
 }
 
 
@@ -488,6 +490,8 @@ void CUnit::DisableScriptMoveType()
 
 void CUnit::Update()
 {
+	ASSERT_SYNCED_FLOAT3(pos);
+
 	posErrorVector += posErrorDelta;
 
 	if (deathScriptFinished) {
@@ -1734,7 +1738,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		}
 
 		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
-	  
+
 		if (!builder->UseEnergy(-energyUseScaled)) {
 			gs->Team(builder->team)->energyPull += energyUseScaled;
 			return false;
@@ -1754,7 +1758,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 		}
 
-		
+
 		else {
 			if (health < 0) {
 				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency);
