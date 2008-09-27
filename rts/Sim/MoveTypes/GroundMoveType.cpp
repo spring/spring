@@ -634,12 +634,16 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	ASSERT_SYNCED_PRIMITIVE(turnRate);
 	ASSERT_SYNCED_PRIMITIVE((short)turnRate);
 
+	short sTurnRate = short(turnRate);
+
 	if (deltaHeading > 0) {
-		ASSERT_SYNCED_PRIMITIVE((short)std::min(deltaHeading, (short)turnRate));
-		heading += std::min(deltaHeading, (short)turnRate);
+		short tmp = (deltaHeading < turnRate)? deltaHeading: turnRate;
+		ASSERT_SYNCED_PRIMITIVE(tmp);
+		heading += tmp;
 	} else {
-		ASSERT_SYNCED_PRIMITIVE((short)std::max((short) - turnRate, deltaHeading));
-		heading += std::max((short) - turnRate, deltaHeading);
+		short tmp = (deltaHeading > turnRate)? deltaHeading: turnRate;
+		ASSERT_SYNCED_PRIMITIVE(tmp);
+		heading += tmp;
 	}
 
 #ifdef TRACE_SYNC
