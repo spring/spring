@@ -27,6 +27,8 @@ public:
 
 	//! same as AddVertex0, but without autmated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
+	//! same as AddVertexT, but without autmated CheckEnlargeDrawArray
+	inline void AddVertexQT(const float3& pos,float tx,float ty);
 
 	//! same as EndStrip, but without autmated EnlargeStripArray
 	inline void EndStripQ();
@@ -71,6 +73,14 @@ inline void CVertexArray::AddVertexQ0(float x, float y, float z) {
 	*drawArrayPos++=x;
 	*drawArrayPos++=y;
 	*drawArrayPos++=z;
+}
+
+inline void CVertexArray::AddVertexQT(const float3& pos,float tx,float ty) {
+	*drawArrayPos++=pos.x;
+	*drawArrayPos++=pos.y;
+	*drawArrayPos++=pos.z;
+	*drawArrayPos++=tx;
+	*drawArrayPos++=ty;
 }
 
 inline void CVertexArray::AddVertex0(const float3& pos) {
