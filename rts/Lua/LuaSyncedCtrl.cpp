@@ -915,6 +915,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "CreateUnit() recursion is not permitted");
 	}
 	inCreateUnit = true;
+	ASSERT_SYNCED_FLOAT3(pos);
+	ASSERT_SYNCED_PRIMITIVE(facing);
 	CUnit* unit = unitLoader.LoadUnit(unitDef->name, pos, teamID,
 	                                  false, facing, NULL);
 	inCreateUnit = false;
@@ -956,6 +958,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
 	}
 	inDestroyUnit = true;
+	ASSERT_SYNCED_PRIMITIVE(unit->id);
 	unit->KillUnit(selfd, reclaimed, attacker);
 	inDestroyUnit = false;
 
@@ -989,6 +992,9 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 		luaL_error(L, "TransferUnit() recursion is not permitted");
 	}
 	inTransferUnit = true;
+	ASSERT_SYNCED_PRIMITIVE(unit->id);
+	ASSERT_SYNCED_PRIMITIVE(newTeam);
+	ASSERT_SYNCED_PRIMITIVE(given);
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
 	                                : CUnit::ChangeCaptured);
 	inTransferUnit = false;
@@ -1016,6 +1022,8 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		}
 		const string key = lua_tostring(L, -2);
 		const float value = lua_tonumber(L, -1);
+		ASSERT_SYNCED_PRIMITIVE(value);
+
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
 		} else if (key == "metalCost") {
@@ -1085,6 +1093,7 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 			}
 			const string key = lua_tostring(L, -2);
 			const float value = lua_tonumber(L, -1);
+			ASSERT_SYNCED_PRIMITIVE(value);
 
 			SetUnitResourceParam(unit, key, value);
 		}
