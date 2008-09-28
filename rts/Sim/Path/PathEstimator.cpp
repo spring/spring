@@ -55,7 +55,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
-	moveMathOptions(mmOpt)
+	moveMathOptions(mmOpt),
+	pathChecksum(0)
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
@@ -179,7 +180,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 #if (BOOST_VERSION >= 103500)
 	int numThreads = boost::thread::hardware_concurrency();
 #else
-#  ifdef USE_GML	
+#  ifdef USE_GML
 	int numThreads = GML_CPU_COUNT;
 #  else
 	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
@@ -815,6 +816,8 @@ bool CPathEstimator::ReadFile(std::string name)
 	int fh = file.OpenFile("pathinfo");
 
 	if (fh) {
+		pathChecksum = file.GetCrc32("pathinfo");
+
 		unsigned int filehash = 0;
  		// Check hash.
 		file.ReadFile(fh, &filehash, 4);
@@ -872,6 +875,19 @@ void CPathEstimator::WriteFile(std::string name) {
 
 		zipCloseFileInZip(file);
 		zipClose(file, NULL);
+
+		///////////
+		// get crc
+		CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
+
+		if (!pfile || !pfile->IsOpen()) {
+			delete pfile;
+			return;
+		}
+
+		std::auto_ptr<CArchiveZip> auto_pfile(pfile);
+		CArchiveZip& file(*pfile);
+		pathChecksum = file.GetCrc32("pathinfo");
 	}
 }
 
@@ -884,6 +900,10 @@ unsigned int CPathEstimator::Hash()
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }
 
+uint32_t CPathEstimator::GetPathChecksum()
+{
+	return pathChecksum;
+}
 
 void CPathEstimator::Draw(void)
 {

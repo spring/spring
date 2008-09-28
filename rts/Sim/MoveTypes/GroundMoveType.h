@@ -29,12 +29,12 @@ public:
 	virtual void SetMaxSpeed(float speed);
 
 	void ImpulseAdded(void);
-	
+
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
 	bool OnSlope(void);
-	
+
 	float baseTurnRate;
 	float turnRate;
 	float accRate;
@@ -44,7 +44,7 @@ public:
 	float currentSpeed;
 	float deltaSpeed;
 	short int deltaHeading;
-	
+
 	float3 oldPos;
 	float3 oldSlowUpdatePos;
 	float3 flatFrontDir;
@@ -52,8 +52,8 @@ public:
 	unsigned int pathId;
 	float goalRadius;
 
-	float3 waypoint;
-	float3 nextWaypoint;
+	SyncedFloat3 waypoint;
+	SyncedFloat3 nextWaypoint;
 	int etaWaypoint;			//by this time it really should have gotten there genereate new path otherwise
 	int etaWaypoint2;			//by this time we get suspicious, check if goal is clogged if we are close
 	bool atGoal;
@@ -100,7 +100,7 @@ protected:
 
 	void StartEngine();
 	void StopEngine();
-	
+
 	void Arrived();
 	void Fail();
 	void CheckCollision(void);
@@ -128,7 +128,7 @@ protected:
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
 	static std::vector<int2> (*lineTable)[11];
-	
+
 	float3 mainHeadingPos;
 	bool useMainHeading;
 	void SetMainHeading();
@@ -139,7 +139,7 @@ public:
 	void TestNewTerrainSquare(void);
 	bool CheckGoalFeasability(void);
 	virtual void LeaveTransport(void);
-	
+
 	void StartSkidding(void);
 	void StartFlying(void);
 };

@@ -32,7 +32,7 @@ public:
 
 		peDef
 			A CPathEstimatorDef-object defining the target of the search.
-		
+
 		goalPos
 			The center of the path target area.
 
@@ -48,7 +48,7 @@ public:
 	Gives the next waypoint of the path.
 	Gives (-1,-1,-1) in case no new waypoint could be found.
 	Param:
-		pathId	
+		pathId
 			The path-id returned by RequestPath.
 
 		callerPos
@@ -113,10 +113,12 @@ public:
 	*/
 	void Draw();
 
-	
+
+	uint32_t GetPathChecksum();
+
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
-	
+
 private:
 	struct MultiPath {
 		MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData);

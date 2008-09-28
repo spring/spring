@@ -501,6 +501,13 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 	return;
 }
 
+
+uint32_t CPathManager::GetPathChecksum()
+{
+	return pe->GetPathChecksum() + pe2->GetPathChecksum();
+}
+
+
 CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData) :
 	start(start),
 	peDef(peDef),

@@ -9,6 +9,7 @@
 #include <list>
 #include "PathCache.h"
 
+#include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -92,6 +93,9 @@ class CPathEstimator: public IPath {
 		// find the best block to use for this pos
 		float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
+		/// Return a checksum that can be used to check if every player has the same path data
+		uint32_t GetPathChecksum();
+
 	private:
 		void InitEstimator(const std::string&);
 		void InitVerticesAndBlocks(int, int, int, int);
@@ -100,7 +104,7 @@ class CPathEstimator: public IPath {
 		void CalcOffsetsAndPathCosts(int, int, int threadID = -1);
 		void CalculateBlockOffsets(int, int, int);
 		void EstimatePathCosts(int, int, int);
-	
+
 		void SpawnThreads(int, int);
 		void JoinThreads(int, int);
 
@@ -149,7 +153,7 @@ class CPathEstimator: public IPath {
 		void FindOffset(const MoveData&, int, int);
 		void CalculateVertices(const MoveData&, int, int, int threadID = -1);
 		void CalculateVertex(const MoveData&, int, int, unsigned int, int threadID = -1);
-	
+
 		SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& peDef);
 		SearchResult StartSearch(const MoveData& moveData, const CPathFinderDef& peDef);
 		SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& peDef);
@@ -190,6 +194,8 @@ class CPathEstimator: public IPath {
 		int testedBlocks;
 
 		CPathCache* pathCache;
+
+		uint32_t pathChecksum; ///< currently crc from the zip
 };
 
 #endif
