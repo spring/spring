@@ -365,12 +365,17 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	}
 
 	const UnitDef* ud = owner->unitDef;
-	int maxHeightDiff = 200;
+	int maxHeightDiff = SQUARE_SIZE;
+
+	if (fromSynced)
+		maxHeightDiff = 200;
 
 	switch (c.id) {
+		case CMD_DGUN:
+			if (!owner->unitDef->canDGun)
+				return false;
 		case CMD_ATTACK:
-			maxHeightDiff = 10;
-		case CMD_DGUN: {
+		{
 			if (!isAttackCapable())
 				return false;
 
@@ -1338,7 +1343,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 void CCommandAI::FinishCommand(void)
 {
 	const Command& cmd = commandQue.front();
-	const int cmdID  = cmd.id;  // save 
+	const int cmdID  = cmd.id;  // save
 	const int cmdTag = cmd.tag; // save
 	const bool dontrepeat = (cmd.options & DONT_REPEAT) ||
 	                        (cmd.options & INTERNAL_ORDER);
@@ -1527,5 +1532,5 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 bool CCommandAI::CanChangeFireState(){
 	return owner->unitDef->canFireControl &&
 		(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" ||
-				owner->unitDef->canKamikaze); 
+				owner->unitDef->canKamikaze);
 }
