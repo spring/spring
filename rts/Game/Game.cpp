@@ -420,6 +420,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	// update the checksum with path data
 	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
 #endif
+	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
  	delete defsParser;
 	defsParser = NULL;
