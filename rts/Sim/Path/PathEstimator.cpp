@@ -212,8 +212,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		}
 	} else {
 		// no threading
-		InitVertices(0, nbrOfVertices);
-		InitBlocks(0, nbrOfBlocks);
+		InitVerticesAndBlocks(0, nbrOfVertices,   0, nbrOfBlocks);
 
 		PrintLoadMsg("Reading estimate path costs (1 thread)");
 
@@ -330,7 +329,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	float best = 100000000.0f;
 	int bestX = BLOCK_SIZE >> 1;
 	int bestZ = BLOCK_SIZE >> 1;
-	static int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
+	int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
 
 	// search for an accessible position
 	for (int z = 1; z < BLOCK_SIZE; z += 2) {
@@ -876,8 +875,8 @@ void CPathEstimator::WriteFile(std::string name) {
 		zipCloseFileInZip(file);
 		zipClose(file, NULL);
 
-		///////////
-		// get crc
+
+		// get the CRC over the written path data
 		CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
 
 		if (!pfile || !pfile->IsOpen()) {
