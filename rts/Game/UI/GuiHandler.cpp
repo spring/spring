@@ -939,15 +939,15 @@ void CGuiHandler::Update()
 	if (commandsChanged) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
-		fadein = 100;
+		//fadein = 100;
 	}
 	else if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
 
-	if (fadein > 0) {
+	/*if (fadein > 0) {
 		fadein -= 5;
-	}
+	}*/
 }
 
 

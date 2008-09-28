@@ -37,10 +37,6 @@ public:
 			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].y;
 		}
 #ifdef STREFLOP_H
-// 		fprintf(stderr, "headingToVectorTable checksum: %08x\n", checksum);
-		assert(checksum == 0x617a9968);
-
-		// release mode check
 		if (checksum != 0x617a9968)
 			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);
 #endif
