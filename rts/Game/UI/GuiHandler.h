@@ -153,7 +153,7 @@ class CGuiHandler : public CInputReceiver {
 		int maxPage;
 		int activePage;
 		int defaultCmdMemory;
-		int fadein;
+		//int fadein;
 		CglList* list;
 
 		int actionOffset;
