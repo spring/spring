@@ -912,8 +912,12 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	glBegin(GL_QUADS);
 	unsigned char offset,tx,ty;
 	unsigned char *to=tileOffsets;
-	for(unsigned char yts=0,yts1=tilesize; yts<tiles*tilesize; yts=yts1,yts1=yts+tilesize) {
-		for(unsigned char xts=0,xts1=tilesize; xts<tiles*tilesize; xts=xts1,xts1=xts+tilesize) {
+	unsigned char yts=0;
+	for (unsigned char y=0; y<tiles; ++y) {
+		unsigned char yts1=yts+tilesize;
+		unsigned char xts=0;
+		for (unsigned char x=0; x<tiles; ++x) {
+			unsigned char xts1=xts+tilesize;
 			offset = *to++;
 			tx = offset % tiles;
 			ty = ((offset - tx)/tiles)*tilesize;
@@ -922,17 +926,19 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 			glTexCoord2f(tx,          ty+tilesize); glVertex2f(xts,  yts1);
 			glTexCoord2f(tx+tilesize, ty+tilesize); glVertex2f(xts1, yts1);
 			glTexCoord2f(tx+tilesize, ty         ); glVertex2f(xts1, yts );
+			xts=xts1;
 		}
+		yts=yts1;
 	}
 	glEnd();
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glPopMatrix();
+		glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
+		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+		glPopMatrix();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
