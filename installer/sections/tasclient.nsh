@@ -42,6 +42,7 @@
   Delete "$INSTDIR\lobby\sidepics\core.bmp"
   Delete "$INSTDIR\lobby\sidepics\tll.bmp"
   Delete "$INSTDIR\lobby\var\groups.ini"
+  Delete "$INSTDIR\lobby\var\tips.txt"
   RmDir "$INSTDIR\lobby\cache\maps"
   RmDir "$INSTDIR\lobby\cache\mods"
   RmDir "$INSTDIR\lobby\cache\online"
