@@ -177,15 +177,21 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
+	int numThreads = configHandler.GetInt("HardwareThreadCount", 0);
+
+#if 0	// FIXME mantis #1033
 #if (BOOST_VERSION >= 103500)
-	int numThreads = boost::thread::hardware_concurrency();
+	if (numThreads == 0)
+		numThreads = boost::thread::hardware_concurrency();
 #else
 #  ifdef USE_GML
-	int numThreads = GML_CPU_COUNT;
-#  else
-	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
+	if (numThreads == 0)
+		numThreads = GML_CPU_COUNT;
 #  endif
 #endif
+#endif
+	if (numThreads == 0)
+		numThreads = 1;
 
 	if (numThreads > 1) {
 		// spawn the threads for InitVerticesAndBlocks()
@@ -294,8 +300,8 @@ void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock, int threadID)
 
 		if (threadID == -1) {
 			char calcMsg[512];
-			sprintf(calcMsg, "Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d, thread-ID %d)",
-				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size(), -1);
+			sprintf(calcMsg, "Blocks %d to %d (block-size %d, path-type %d of %d)",
+				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size());
 			PrintLoadMsg(calcMsg);
 		} else {
 			boost::mutex::scoped_lock lock(loadMsgMutex);
