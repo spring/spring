@@ -13,6 +13,7 @@ ELSE (MINGW)
 	FIND_PACKAGE(GLEW REQUIRED)
 	
 	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
+	list (APPEND unitsync_libs util) # sometimes this is needed (and I have no clue why)
 	
 	FIND_PACKAGE(PythonLibs)
 	if (PYTHONLIBS_FOUND)
