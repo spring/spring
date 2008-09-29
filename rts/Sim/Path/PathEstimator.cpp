@@ -189,9 +189,9 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		numThreads = GML_CPU_COUNT;
 #  endif
 #endif
+#else //if 0
+	numThreads = 1;
 #endif
-	if (numThreads == 0)
-		numThreads = 1;
 
 	if (numThreads > 1) {
 		// spawn the threads for InitVerticesAndBlocks()
