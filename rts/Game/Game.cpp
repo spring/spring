@@ -4452,8 +4452,14 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		if (!player) {
 			label = "> ";
 		} else if (player->spectator) {
-			label = "[" + player->name + "] ";
+			if (player->isFromDemo)
+				// make clear that the message is from the replay
+				label = "[" + player->name + " (replay)" + "] ";
+			else
+				// its from a spectator not from replay
+				label = "[" + player->name + "] ";
 		} else {
+			// players are always from a replay (if its a replay and not a game)
 			label = "<" + player->name + "> ";
 		}
 
