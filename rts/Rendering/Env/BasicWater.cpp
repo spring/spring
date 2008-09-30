@@ -36,12 +36,13 @@ CBasicWater::CBasicWater()
 
 CBasicWater::~CBasicWater()
 {
-	glDeleteTextures (1, &texture);
+	glDeleteTextures(1, &texture);
+	glDeleteLists(displist,1);
 }
 
 void CBasicWater::Draw()
 {
-	if (readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f)
 		return;
 
 	if(displist == 0) {

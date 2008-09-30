@@ -1078,7 +1078,7 @@ void CUnitTable::Init()
 					float weaponaoe=0;
 					for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i2=me->def->weapons.begin();i2!=me->def->weapons.end();i2++) {
 						if (weapondist<i2->def->range) weapondist = i2->def->range;
-						if (i2->def->vlaunch) vlaunchweapon = true;
+						if (i2->def->type == string("StarburstLauncher")) vlaunchweapon = true;
 						if (weaponaoe<i2->def->areaOfEffect) weapondist = i2->def->range;
 					}
 

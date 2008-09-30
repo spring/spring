@@ -278,7 +278,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
+	lua_checkstack(L, 9);
 	static const LuaHashString cmdStr("CommandFallback");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -309,8 +309,11 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
+	// push the command tag
+	lua_pushnumber(L, cmd.tag);
+
 	// call the function
-	if (!RunCallIn(cmdStr, 6, 1)) {
+	if (!RunCallIn(cmdStr, 7, 1)) {
 		return true;
 	}
 
@@ -336,7 +339,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 9);
+	lua_checkstack(L, 10);
 	static const LuaHashString cmdStr("AllowCommand");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return true; // the call is not defined
@@ -367,10 +370,13 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
 
+	// push the command tag
+	lua_pushnumber(L, cmd.tag);
+
 	lua_pushboolean(L, fromSynced);
 
 	// call the function
-	if (!RunCallIn(cmdStr, 7, 1)) {
+	if (!RunCallIn(cmdStr, 8, 1)) {
 		return true;
 	}
 

@@ -367,7 +367,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 						tohitprobability = 1;
 					}
 
-					if (!unit->weapons[i].def->guided && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
+					if (unit->weapons[i].def->turnrate == 0.0f && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
 						if (unit->weapons[i].def->type == string("Cannon")) {
 							timetoarrive = (2 * u * sin(firingangle)) / gravity;
 						} else {

@@ -498,7 +498,7 @@ namespace ntai {
 
 				if(p->GetUnitDef()->metalCost+p->GetUnitDef()->energyCost > (G->cb->GetEnergyStorage()+G->cb->GetMetalStorage())*atof(G->Get_mod_tdf()->SGetValueDef("2.1", "AI\\cheap_multiplier").c_str())) continue;
 				bool good = true;
-				if(p->GetUnitDef()->canfly ==false) good = false;
+				if(p->GetUnitDef()->canfly == false) good = false;
 				if(p->GetUnitDef()->weapons.empty() == true) good = false;
 				if(p->GetUnitDef()->builder == true) good = false;
 				if(p->GetUnitDef()->transportCapacity > 0) good = false;
@@ -507,7 +507,7 @@ namespace ntai {
 					if(i->def->interceptor > 0){
 						continue;
 					}
-					if(i->def->vlaunch == true){
+					if(i->def->type == string("StarburstLauncher")){
 						found = true;
 						break;
 					}

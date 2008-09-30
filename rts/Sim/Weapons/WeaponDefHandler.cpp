@@ -63,15 +63,10 @@ CWeaponDefHandler::~CWeaponDefHandler()
 
 void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
-	bool ballistic;
 	//bool twophase;
 	bool manualBombSettings; //Allow the user to manually specify the burst and burstrate for his AircraftBomb
-	//bool guided;
-	//bool vlaunch;
 	int color;
 	int color2;
-	//bool tracking;
-	//bool selfprop;
 	//bool turret;
 	//bool smokeTrail;
 	//string modelName;
@@ -96,13 +91,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 
-	wd.dropped  = wdTable.GetBool("dropped", false);
+	wd.dropped  = wdTable.GetBool("dropped", false); //FIXME: unused in the engine?
 	manualBombSettings = wdTable.GetBool("manualBombSettings", false);
-	ballistic   = wdTable.GetBool("ballistic",   false);
-	wd.twophase = wdTable.GetBool("twoPhase",    false);
-	wd.guided   = wdTable.GetBool("guidance",    false);
-	wd.vlaunch  = wdTable.GetBool("vlaunch",     false);
-	wd.selfprop = wdTable.GetBool("selfprop",    false);
 	wd.turret   = wdTable.GetBool("turret",      false);
 	wd.highTrajectory = wdTable.GetInt("highTrajectory", 2);
 	wd.noSelfDamage   = wdTable.GetBool("noSelfDamage", false);
@@ -142,10 +132,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.visuals.noGap         = wdTable.GetBool("noGap",         true);
 	wd.visuals.stages        = wdTable.GetInt("stages",         5);
 
-	wd.gravityAffected = false;
-	if (wd.dropped || ballistic) {
-		wd.gravityAffected = true;
-	}
+	wd.gravityAffected = wdTable.GetBool("gravityAffected", wd.dropped);
 
 	wd.type = wdTable.GetString("weaponType", "Cannon");
 
@@ -204,8 +191,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	
 	wd.damages.impulseFactor = wdTable.GetFloat("impulseFactor", 1.0f);
 	wd.damages.impulseBoost  = wdTable.GetFloat("impulseBoost",  0.0f);
-	wd.damages.craterMult    = wdTable.GetFloat("craterMult",  wd.damages.impulseFactor);
-	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost", 0.0f);
+	wd.damages.craterMult    = wdTable.GetFloat("craterMult",    wd.damages.impulseFactor);
+	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost",   0.0f);
 
 	wd.areaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
 	wd.edgeEffectiveness = wdTable.GetFloat("edgeEffectiveness", 0.0f);
@@ -295,9 +282,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.shieldRechargeDelay    = (int)(wdTable.GetFloat("shieldRechargeDelay", 0) * GAME_SPEED);
 		wd.shieldStartingPower    = wdTable.GetFloat("shieldStartingPower",    0.0f);
 		wd.shieldInterceptType    = wdTable.GetInt("shieldInterceptType", 0);
-		wd.shieldBadColor  = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);
-		wd.shieldGoodColor = wdTable.GetFloat3("shieldGoodColor", shieldGoodColor);
-		wd.shieldAlpha = wdTable.GetFloat("shieldAlpha", 0.2f);
+		wd.shieldBadColor         = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);
+		wd.shieldGoodColor        = wdTable.GetFloat3("shieldGoodColor", shieldGoodColor);
+		wd.shieldAlpha            = wdTable.GetFloat("shieldAlpha", 0.2f);
 	}
 
 

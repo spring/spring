@@ -448,6 +448,9 @@ static bool InitParamMap()
 	ADD_BOOL("floating",     fd.floating);
 	ADD_BOOL("geoThermal",   fd.geoThermal);
 	ADD_BOOL("noSelect",     fd.noSelect);
+	ADD_INT("resurrectable", fd.resurrectable);
+
+	ADD_INT("smokeTime",    fd.smokeTime);
 
 	// name of feature that this turn into when killed (not reclaimed)
 	ADD_STRING("deathFeature", fd.deathFeature);
