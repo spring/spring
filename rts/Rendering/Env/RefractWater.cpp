@@ -43,7 +43,7 @@ CRefractWater::~CRefractWater()
 
 void CRefractWater::Draw()
 {
-	if (!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);

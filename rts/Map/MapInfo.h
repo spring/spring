@@ -133,7 +133,7 @@ public:
 		float  perlinLacunarity;
 		float  perlinAmplitude;
 		bool   shoreWaves;
-		bool   alwaysRenderWater; ///< if false the renderers will render it only if currentMinMapHeight<0
+		bool   forceRendering; ///< if false the renderers will render it only if currentMinMapHeight<0
 		unsigned char numTiles;
 		std::string texture;
 		std::string foamTexture;

@@ -120,7 +120,7 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if (!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	float3 dir,zpos;
@@ -228,7 +228,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if ((!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
+	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
 	glViewport(0,0,128,128);

@@ -201,7 +201,7 @@ void CMapInfo::ReadWater()
 
 	water.shoreWaves = wt.GetBool("shoreWaves", true);
 
-	water.alwaysRenderWater = wt.GetBool("alwaysRenderWater", false);
+	water.forceRendering = wt.GetBool("forceRendering", false);
 
 	// use 'resources.lua' for missing fields  (our the engine defaults)
 	const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
