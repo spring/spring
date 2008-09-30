@@ -1065,10 +1065,10 @@ end
 
 
 function gadgetHandler:CommandFallback(unitID, unitDefID, unitTeam,
-                                       cmdID, cmdParams, cmdOptions)
+                                       cmdID, cmdParams, cmdOptions, cmdTag)
   for _,g in ipairs(self.CommandFallbackList) do
     local used, remove = g:CommandFallback(unitID, unitDefID, unitTeam,
-                                           cmdID, cmdParams, cmdOptions)
+                                           cmdID, cmdParams, cmdOptions, cmdTag)
     if (used) then
       return remove
     end
@@ -1078,10 +1078,10 @@ end
 
 
 function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
-                                    cmdID, cmdParams, cmdOptions, synced)
+                                    cmdID, cmdParams, cmdOptions, cmdTag, synced)
   for _,g in ipairs(self.AllowCommandList) do
     if (not g:AllowCommand(unitID, unitDefID, unitTeam,
-                           cmdID, cmdParams, cmdOptions, synced)) then
+                           cmdID, cmdParams, cmdOptions, cmdTag, synced)) then
       return false
     end
   end

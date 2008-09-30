@@ -643,7 +643,7 @@ CBumpWater::~CBumpWater()
 
 void CBumpWater::Update()
 {
-	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
+	if ((!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
 	float3 w = wind.GetCurrentWind();
@@ -686,7 +686,7 @@ void CBumpWater::Update()
 
 void CBumpWater::UpdateWater(CGame* game)
 {
-	if (readmap->currMinHeight > 1.0f || mapInfo->map.voidWater)
+	if ((!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
 	if (refraction>1) DrawRefraction(game);
@@ -954,7 +954,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 void CBumpWater::Draw()
 {
-	if (readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f)
 		return;
 
 	if (refraction == 1) {

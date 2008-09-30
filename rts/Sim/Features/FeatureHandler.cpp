@@ -55,12 +55,14 @@ CR_REG_METADATA(FeatureDef, (
 		//CR_MEMBER(model), FIXME
 		CR_MEMBER(modelname),
 		CR_MEMBER(modelType),
+		CR_MEMBER(resurrectable),
 		CR_MEMBER(destructable),
 		CR_MEMBER(blocking),
 		CR_MEMBER(burnable),
 		CR_MEMBER(floating),
 		CR_MEMBER(geoThermal),
 		CR_MEMBER(deathFeature),
+		CR_MEMBER(smokeTime),
 		CR_MEMBER(xsize),
 		CR_MEMBER(ysize)
 		));
@@ -206,10 +208,11 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	fd->description = fdTable.GetString("description", "");
 
-	fd->blocking     = fdTable.GetBool("blocking",       true);
-	fd->burnable     = fdTable.GetBool("flammable",      false);
-	fd->destructable = !fdTable.GetBool("indestructible", false);
-	fd->reclaimable  = fdTable.GetBool("reclaimable", fd->destructable);
+	fd->blocking      =  fdTable.GetBool("blocking",       true);
+	fd->burnable      =  fdTable.GetBool("flammable",      false);
+	fd->destructable  = !fdTable.GetBool("indestructible", false);
+	fd->reclaimable   =  fdTable.GetBool("reclaimable",    fd->destructable);
+	fd->resurrectable =  fdTable.GetInt("resurrectable",   -1);
 
 	//this seem to be the closest thing to floating that ta wreckage contains
 	fd->floating = fdTable.GetBool("nodrawundergray", true);
@@ -225,6 +228,8 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
 	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy));
+
+	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
 	fd->drawType = DRAWTYPE_3DO;
 	fd->modelname = fdTable.GetString("object", "");
@@ -422,31 +427,33 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	const float3& speed)
 {
 	ASSERT_SYNCED_MODE;
-	if (name.empty()) {
-		return NULL;
-	}
-	const FeatureDef* fd = GetFeatureDef(name);
+	const FeatureDef* fd;
+	const std::string* defname = &name;
 
-	if (!fd) {
-		return NULL;
-	}
+	int i = iter;
+	do {
+		if (name.empty()) return NULL;
+		fd = GetFeatureDef(*defname);
+		if (!fd) return NULL;
+		defname = &(fd->deathFeature);
+	}while (--i > 0);
 
-	if (iter > 1) {
-		return CreateWreckage(pos, fd->deathFeature, rot, facing, iter - 1, team, allyteam, emitSmoke, "", speed);
-	}
-	else {
-		if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos)) {
-			return NULL;
-		}
-		if (!fd->modelname.empty()) {
-			CFeature* f = SAFE_NEW CFeature;
-			f->Initialize(pos, fd, (short int) rot, facing, team, fromUnit, speed);
-			// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)
-			f->allyteam = allyteam;
-			if (emitSmoke && f->blocking)
-				f->emitSmokeTime = 300;
-			return f;
-		}
+	if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos))
+		return NULL;
+
+	if (!fd->modelname.empty()) {
+		if (fd->resurrectable==0 || (iter>1 && fd->resurrectable<0))
+			fromUnit = "";
+
+		CFeature* f = SAFE_NEW CFeature;
+		f->Initialize(pos, fd, (short int) rot, facing, team, fromUnit, speed);
+
+		// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)
+		f->allyteam = allyteam;
+		if (emitSmoke && fd->blocking)
+			f->emitSmokeTime = fd->smokeTime;
+
+		return f;
 	}
 	return NULL;
 }

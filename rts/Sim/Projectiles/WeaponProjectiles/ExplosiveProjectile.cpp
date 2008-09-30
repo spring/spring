@@ -73,10 +73,8 @@ void CExplosiveProjectile::Update()
 	if (ttl == 0) {
 		Collision();
 	} else {
-		if (ttl > 0) {
-			if (cegTag.size() > 0) {
-				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
-			}
+		if (cegTag.size() > 0 && ttl > 0) {
+			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
 		}
 	}
 
@@ -133,15 +131,18 @@ void CExplosiveProjectile::Draw(void)
 		col[3] = int(weaponDef->intensity * 255);
 	}
 
+	const AtlasedTexture* tex = weaponDef->visuals.texture1;
+	const float  alphaDecay = weaponDef->visuals.alphaDecay;
+	const float  sizeDecay  = weaponDef->visuals.sizeDecay;
+	const float  separation = weaponDef->visuals.separation;
+	const bool   noGap      = weaponDef->visuals.noGap;
+	const int    stages     = weaponDef->visuals.stages;
+	const float  invStages  = 1.0f / (float)stages;
+	const float3 interPos   = pos + (speed * gu->timeOffset);
+
 	float3 dir = speed;
 	dir.Normalize();
-
-	const float alphaDecay = weaponDef->visuals.alphaDecay;
-	const float sizeDecay  = weaponDef->visuals.sizeDecay;
-	const float separation = weaponDef->visuals.separation;
-	const bool  noGap      = weaponDef->visuals.noGap;
-	const int   stages     = weaponDef->visuals.stages;
-	const float invStages  = 1.0f / (float)stages;
+	dir *= separation * 0.6f;
 
 	for (int a = 0; a < stages; ++a) {
 		const float aDecay = (stages - (a * alphaDecay)) * invStages;
@@ -153,20 +154,12 @@ void CExplosiveProjectile::Draw(void)
 		const float  size  = drawRadius * (1.0f - (a * sizeDecay));
 		const float3 up    = camera->up    * size;
 		const float3 right = camera->right * size;
+		const float3 interPos2 = interPos - ((noGap)?(dir * size * a):(dir * drawRadius * a));
 
-		float3 interPos = pos + (speed * gu->timeOffset);
-		if (noGap) {
-			interPos -= (dir * separation * size * 0.6f * a);
-		} else {
-			interPos -= (dir * separation * drawRadius * 0.6f * a);
-		}
-
-		const AtlasedTexture* tex = weaponDef->visuals.texture1;
-
-		va->AddVertexTC(interPos - right - up, tex->xstart, tex->ystart, col);
-		va->AddVertexTC(interPos + right - up, tex->xend,   tex->ystart, col);
-		va->AddVertexTC(interPos + right + up, tex->xend,   tex->yend,   col);
-		va->AddVertexTC(interPos - right + up, tex->xstart, tex->yend,   col);
+		va->AddVertexTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
+		va->AddVertexTC(interPos2 + right - up, tex->xend,   tex->ystart, col);
+		va->AddVertexTC(interPos2 + right + up, tex->xend,   tex->yend,   col);
+		va->AddVertexTC(interPos2 - right + up, tex->xstart, tex->yend,   col);
 	}
 }
 

@@ -37,20 +37,20 @@ struct WeaponDef
 	std::string type;
 	std::string description;
 	std::string filename;
-	std::string cegTag;						// tag of CEG that projectiles fired by this weapon should use
+	std::string cegTag;        // tag of CEG that projectiles fired by this weapon should use
 
 	GuiSoundSet firesound;
 	GuiSoundSet soundhit;
 
 	float range;
 	float heightmod;
-	float accuracy;							// inaccuracy of whole burst
-	float sprayAngle;						// inaccuracy of individual shots inside burst
-	float movingAccuracy;					// inaccuracy while owner moving
-	float targetMoveError;					// fraction of targets move speed that is used as error offset
-	float leadLimit;                        // maximum distance the weapon will lead the target
-	float leadBonus;                        // factor for increasing the leadLimit with experience
-	float predictBoost;                     // replaces hardcoded behaviour for burnblow cannons
+	float accuracy;            // inaccuracy of whole burst
+	float sprayAngle;          // inaccuracy of individual shots inside burst
+	float movingAccuracy;      // inaccuracy while owner moving
+	float targetMoveError;     // fraction of targets move speed that is used as error offset
+	float leadLimit;           // maximum distance the weapon will lead the target
+	float leadBonus;           // factor for increasing the leadLimit with experience
+	float predictBoost;        // replaces hardcoded behaviour for burnblow cannons
 
 	DamageArray damages;
 	float areaOfEffect;
@@ -93,20 +93,20 @@ struct WeaponDef
 	bool fixedLauncher;
 	bool waterweapon;
 	bool fireSubmersed;
-	bool submissile;							// Lets a torpedo travel above water like it does below water
+	bool submissile;            // Lets a torpedo travel above water like it does below water
 	bool tracks;
 	bool dropped;
-	bool paralyzer;								// weapon will only paralyze not do real damage
-	bool impactOnly;                             // The weapon damages by impacting, not by exploding
+	bool paralyzer;             // weapon will only paralyze not do real damage
+	bool impactOnly;            // The weapon damages by impacting, not by exploding
 
-	bool noAutoTarget;							// cant target stuff (for antinuke,dgun)
-	bool manualfire;							// use dgun button
-	int interceptor;							// anti nuke
-	int targetable;								// nuke (can be shot by interceptor)
+	bool noAutoTarget;          // cant target stuff (for antinuke,dgun)
+	bool manualfire;            // use dgun button
+	int interceptor;            // anti nuke
+	int targetable;             // nuke (can be shot by interceptor)
 	bool stockpile;
-	float coverageRange;						// range of anti nuke
+	float coverageRange;        // range of anti nuke
 
-	float stockpileTime;						// builtime of a missile
+	float stockpileTime;        // builtime of a missile
 
 	float intensity;
 	float thickness;
@@ -121,12 +121,8 @@ struct WeaponDef
 
 	bool selfExplode;
 	bool gravityAffected;
-	int highTrajectory;                         //Per-weapon high traj setting, 0=low, 1=high, 2=unit
+	int highTrajectory;         //Per-weapon high traj setting, 0=low, 1=high, 2=unit
 	float myGravity;
-	bool twophase;
-	bool guided;
-	bool vlaunch;
-	bool selfprop;
 	bool noExplode;
 	float startvelocity;
 	float weaponacceleration;
@@ -153,7 +149,7 @@ struct WeaponDef
 
 		bool smokeTrail;
 		bool beamweapon;
-		bool hardStop;   //whether the shot should fade out or stop and contract at max range
+		bool hardStop;   // whether the shot should fade out or stop and contract at max range
 
 		AtlasedTexture *texture1;
 		AtlasedTexture *texture2;
@@ -177,43 +173,43 @@ struct WeaponDef
 
 	bool largeBeamLaser;
 
-	bool isShield;								// if the weapon is a shield rather than a weapon
-	bool shieldRepulser;						// if the weapon should be repulsed or absorbed
-	bool smartShield;							// only affect enemy projectiles
-	bool exteriorShield;						// only affect stuff coming from outside shield radius
-	bool visibleShield;							// if the shield should be graphically shown
-	bool visibleShieldRepulse;					// if a small graphic should be shown at each repulse
-	int  visibleShieldHitFrames;				// number of frames to draw the shield after it has been hit
-	float shieldEnergyUse;						// energy use per shot or per second depending on projectile
-	float shieldRadius;							// size of shielded area
-	float shieldForce;							// shield acceleration on plasma stuff
-	float shieldMaxSpeed;						// max speed shield can repulse plasma like weapons with
-	float shieldPower;							// how much damage the shield can reflect (0=infinite)
-	float shieldPowerRegen;						// how fast the power regenerates per second
-	float shieldPowerRegenEnergy;				// how much energy is needed to regenerate power per second
-	float shieldStartingPower;					// how much power the shield has when first created
-	int   shieldRechargeDelay;					// number of frames to delay recharging by after each hit
-	float3 shieldGoodColor;						// color when shield at full power
-	float3 shieldBadColor;						// color when shield is empty
-	float shieldAlpha;							// shield alpha value
+	bool isShield;                   // if the weapon is a shield rather than a weapon
+	bool shieldRepulser;             // if the weapon should be repulsed or absorbed
+	bool smartShield;                // only affect enemy projectiles
+	bool exteriorShield;             // only affect stuff coming from outside shield radius
+	bool visibleShield;              // if the shield should be graphically shown
+	bool visibleShieldRepulse;       // if a small graphic should be shown at each repulse
+	int  visibleShieldHitFrames;     // number of frames to draw the shield after it has been hit
+	float shieldEnergyUse;           // energy use per shot or per second depending on projectile
+	float shieldRadius;              // size of shielded area
+	float shieldForce;               // shield acceleration on plasma stuff
+	float shieldMaxSpeed;            // max speed shield can repulse plasma like weapons with
+	float shieldPower;               // how much damage the shield can reflect (0=infinite)
+	float shieldPowerRegen;          // how fast the power regenerates per second
+	float shieldPowerRegenEnergy;    // how much energy is needed to regenerate power per second
+	float shieldStartingPower;       // how much power the shield has when first created
+	int   shieldRechargeDelay;       // number of frames to delay recharging by after each hit
+	float3 shieldGoodColor;          // color when shield at full power
+	float3 shieldBadColor;           // color when shield is empty
+	float shieldAlpha;               // shield alpha value
 
-	unsigned int shieldInterceptType;			// type of shield (bitfield)
-	unsigned int interceptedByShieldType;		// weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+	unsigned int shieldInterceptType;      // type of shield (bitfield)
+	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
 
-	bool avoidFriendly;							// if true, try to avoid friendly units while aiming
-	bool avoidFeature;							// if true, try to avoid features while aiming
-	bool avoidNeutral;							// if true, try to avoid neutral units while aiming
+	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
+	bool avoidFeature;      // if true, try to avoid features while aiming
+	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
 
-	float targetBorder;							// if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
-	float cylinderTargetting;					// if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
-	float minIntensity;							// for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
-	float heightBoostFactor;					// controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
-	float proximityPriority;					// multiplier for the distance to the target for priority calculations
+	float targetBorder;          // if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
+	float cylinderTargetting;    // if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
+	float minIntensity;          // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
+	float heightBoostFactor;     // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	float proximityPriority;     // multiplier for the distance to the target for priority calculations
 
 	unsigned int collisionFlags;
 
-	CExplosionGenerator* explosionGenerator;	// can be zero for default explosions
-	CExplosionGenerator* bounceExplosionGenerator; //called when a projectile bounces
+	CExplosionGenerator* explosionGenerator;        // can be zero for default explosions
+	CExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
 
 	bool sweepFire;
 	bool canAttackGround;

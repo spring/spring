@@ -82,6 +82,11 @@ local function BackwardCompability(wdName,wd)
       wd.weapontype = "Cannon";
     end
   end
+
+  -- 
+  if (tobool(wd.ballistic) or tobool(wd.dropped)) then
+    wd.gravityaffected = true
+  end
 end
 
 --------------------------------------------------------------------------------
