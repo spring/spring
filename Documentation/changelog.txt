@@ -1,12 +1,14 @@
 Spring change log
 
-0.76b2
+0.77b1
 
 Spring Engine:
+ - lots of speed improvements
  - Keep units in various situations from deciding to attack units they 
    shouldn't (noChaseCatagory, neutral, under water without water weapons).
  - Added kamikazeFireControl fbi tag. Defaults to false. If true, a kamikaze
    unit, such as a mine, has CMD_FIRE_CONTROL as a valid command.
+ - new bumpmapped watershader
 
 LUA changes:
  - If Spring.SetDrawSky(false) is set, do not draw the sun.
@@ -36,6 +38,7 @@ Bugfixes:
  - Fix a dangling pointer when using ground decals. Could have caused desyncs
    and LuaUI bugs.
  - Fixed possible out of bounds map reads that could cause crashes
+ - lots of other fixes, lots of minor and some major ones
 
 
 0.76b1
