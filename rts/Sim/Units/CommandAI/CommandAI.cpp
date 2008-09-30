@@ -8,6 +8,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -366,6 +367,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 	const UnitDef* ud = owner->unitDef;
 	int maxHeightDiff = SQUARE_SIZE;
+	// AI's may do as they like
+	bool aiOrder = (gs->Team(owner->team) && gs->Team(owner->team)->isAI);
 
 	if (fromSynced)
 		maxHeightDiff = 200;
@@ -374,15 +377,14 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_DGUN:
 			if (!owner->unitDef->canDGun)
 				return false;
-		case CMD_ATTACK:
-		{
+		case CMD_ATTACK: {
 			if (!isAttackCapable())
 				return false;
 
 			if (c.params.size() == 3) {
 				// check if attack ground is really attack ground
-				if (!fromSynced && fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) >
-					maxHeightDiff) {
+				if (!aiOrder &&
+					fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > maxHeightDiff) {
 					return false;
 				}
 			}
