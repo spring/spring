@@ -42,7 +42,7 @@ CBasicWater::~CBasicWater()
 
 void CBasicWater::Draw()
 {
-	if (!mapInfo->water.alwaysRenderWater && readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	if(displist == 0) {
