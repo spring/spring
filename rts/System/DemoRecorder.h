@@ -38,7 +38,7 @@ public:
 	void SetTeamStats(int teamNum, const std::list< CTeam::Statistics >& stats);
 
 private:
-	void WriteFileHeader();
+	void WriteFileHeader(bool updateStreamLength = true);
 	void WritePlayerStats();
 	void WriteTeamStats();
 

@@ -60,7 +60,7 @@ CDemoRecorder::CDemoRecorder()
 	fileHeader.teamStatPeriod = CTeam::statsPeriod;
 	fileHeader.winningAllyTeam = -1;
 
-	WriteFileHeader();
+	WriteFileHeader(false);
 }
 
 CDemoRecorder::~CDemoRecorder()
@@ -129,7 +129,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 void CDemoRecorder::SetGameID(const unsigned char* buf)
 {
 	memcpy(&fileHeader.gameID, buf, sizeof(fileHeader.gameID));
-	WriteFileHeader();
+	WriteFileHeader(false);
 }
 
 void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
@@ -177,16 +177,18 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::list< CTeam::Statistics
 /** @brief Write DemoFileHeader
 Write the DemoFileHeader at the start of the file and restores the original
 position in the file afterwards. */
-void CDemoRecorder::WriteFileHeader()
+void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 {
 	int pos = recordDemo.tellp();
 
 	recordDemo.seekp(0);
 
-	fileHeader.swab(); // to little endian
-	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
-	fileHeader.swab(); // back to host endian
-
+	DemoFileHeader tmpHeader;
+	memcpy(&tmpHeader, &fileHeader, sizeof(fileHeader));
+	if (!updateStreamLength)
+		tmpHeader.demoStreamSize = 0;
+	tmpHeader.swab(); // to little endian
+	recordDemo.write((char*)&tmpHeader, sizeof(tmpHeader));
 	recordDemo.seekp(pos);
 }
 
