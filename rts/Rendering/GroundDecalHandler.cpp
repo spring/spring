@@ -114,12 +114,15 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 
 
 
-// inline void AddQuadVertices(CVertexArray* va, int x, float y, int z, float u, float v, float* color) {
-// 		va->AddVertexTC( VERTEX(xh    , htl, zh    ),   utl, vtl,   color);
-// 		va->AddVertexTC( VERTEX(xh + 1, htr, zh    ),   utr, vtr,   color);
-// 		va->AddVertexTC( VERTEX(xh + 1, hbr, zh + 1),   ubr, vbr,   color);
-// 		va->AddVertexTC( VERTEX(xh    , hbl, zh + 1),   ubl, vbl,   color);
-// }
+inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color) {
+	#define HEIGHT2WORLD(x) ((x) << 3)
+	#define WORLD2HEIGHT(x) ((x) >> 3)
+	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
+	va->AddVertexTC( VERTEX(x    , yv[0], z    ),   uv[0], uv[1],   color);
+	va->AddVertexTC( VERTEX(x + 1, yv[1], z    ),   uv[2], uv[3],   color);
+	va->AddVertexTC( VERTEX(x + 1, yv[2], z + 1),   uv[4], uv[5],   color);
+	va->AddVertexTC( VERTEX(x    , yv[3], z + 1),   uv[6], uv[7],   color);
+}
 
 inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 	const float* hm = readmap->GetHeightmap();
@@ -127,11 +130,10 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
 
+	float yv[4] = {0.0f};
+	float uv[8] = {0.0f};
 	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
 
-	#define HEIGHT2WORLD(x) ((x) << 3)
-	#define WORLD2HEIGHT(x) ((x) >> 3)
-	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
 	#define HEIGHT(x, z) (hm[((z) * gsmx1) + (x)])
 
 	if (!decal->va) {
@@ -163,19 +165,18 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
 
-						const float htl = HEIGHT(zh,     xh    );
-						const float htr = HEIGHT(zh,     xh + 1);
-						const float hbr = HEIGHT(zh + 1, xh + 1);
-						const float hbl = HEIGHT(zh + 1, xh    );
-						const float utl = (x    ) * xts, vtl = (z    ) * yts; // uv = (0, 0)
-						const float utr = (x + 1) * xts, vtr = (z    ) * yts; // uv = (1, 0)
-						const float ubr = (x + 1) * xts, vbr = (z + 1) * yts; // uv = (1, 1)
-						const float ubl = (x    ) * xts, vbl = (z + 1) * yts; // uv = (0, 1)
+						// (htl, htr, hbr, hbl)
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
 
-						decal->va->AddVertexTC( VERTEX(xh    , htl, zh    ),   utl, vtl,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, htr, zh    ),   utr, vtr,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, hbr, zh + 1),   ubr, vbr,   color);
-						decal->va->AddVertexTC( VERTEX(xh    , hbl, zh + 1),   ubl, vbl,   color);
+						// (utl, vtl),  (utr, vtr)
+						// (ubr, vbr),  (ubl, vbl)
+						uv[0] = (x    ) * xts; uv[1] = (z    ) * yts; // uv = (0, 0)
+						uv[2] = (x + 1) * xts; uv[3] = (z    ) * yts; // uv = (1, 0)
+						uv[4] = (x + 1) * xts; uv[5] = (z + 1) * yts; // uv = (1, 1)
+						uv[6] = (x    ) * xts; uv[7] = (z + 1) * yts; // uv = (0, 1)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
 					}
 				}
 			} break;
@@ -192,19 +193,15 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
 
-						const float htl = HEIGHT(zh,     xh    );
-						const float htr = HEIGHT(zh,     xh + 1);
-						const float hbr = HEIGHT(zh + 1, xh + 1);
-						const float hbl = HEIGHT(zh + 1, xh    );
-						const float utl = 1.0f - (z    ) * yts, vtl = (x    ) * xts; // uv = (1, 0)
-						const float utr = 1.0f - (z    ) * yts, vtr = (x + 1) * xts; // uv = (1, 1)
-						const float ubr = 1.0f - (z + 1) * yts, vbr = (x + 1) * xts; // uv = (0, 1)
-						const float ubl = 1.0f - (z + 1) * yts, vbl = (x    ) * xts; // uv = (0, 0)
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
 
-						decal->va->AddVertexTC( VERTEX(xh    , htl, zh    ),   utl, vtl,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, htr, zh    ),   utr, vtr,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, hbr, zh + 1),   ubr, vbr,   color);
-						decal->va->AddVertexTC( VERTEX(xh    , hbl, zh + 1),   ubl, vbl,   color);
+						uv[0] = 1.0f - (z    ) * yts; uv[1] = (x    ) * xts; // uv = (1, 0)
+						uv[2] = 1.0f - (z    ) * yts; uv[3] = (x + 1) * xts; // uv = (1, 1)
+						uv[4] = 1.0f - (z + 1) * yts; uv[5] = (x + 1) * xts; // uv = (0, 1)
+						uv[6] = 1.0f - (z + 1) * yts; uv[7] = (x    ) * xts; // uv = (0, 0)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
 					}
 				}
 			} break;
@@ -221,19 +218,15 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
 
-						const float htl = HEIGHT(zh,     xh    );
-						const float htr = HEIGHT(zh,     xh + 1);
-						const float hbr = HEIGHT(zh + 1, xh + 1);
-						const float hbl = HEIGHT(zh + 1, xh    );
-						const float utl = (xMax - x    ) * xts, vtl = (zMax - z    ) * yts; // uv = (1, 1)
-						const float utr = (xMax - x - 1) * xts, vtr = (zMax - z    ) * yts; // uv = (0, 1)
-						const float ubr = (xMax - x - 1) * xts, vbr = (zMax - z - 1) * yts; // uv = (0, 0)
-						const float ubl = (xMax - x    ) * xts, vbl = (zMax - z - 1) * yts; // uv = (1, 0)
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
 
-						decal->va->AddVertexTC( VERTEX(xh    , htl, zh    ),   utl, vtl,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, htr, zh    ),   utr, vtr,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, hbr, zh + 1),   ubr, vbr,   color);
-						decal->va->AddVertexTC( VERTEX(xh    , hbl, zh + 1),   ubl, vbl,   color);
+						uv[0] = (xMax - x    ) * xts; uv[1] = (zMax - z    ) * yts; // uv = (1, 1)
+						uv[2] = (xMax - x - 1) * xts; uv[3] = (zMax - z    ) * yts; // uv = (0, 1)
+						uv[4] = (xMax - x - 1) * xts; uv[5] = (zMax - z - 1) * yts; // uv = (0, 0)
+						uv[6] = (xMax - x    ) * xts; uv[7] = (zMax - z - 1) * yts; // uv = (1, 0)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
 					}
 				}
 			} break;
@@ -250,19 +243,15 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
 
-						const float htl = HEIGHT(zh,     xh    );
-						const float htr = HEIGHT(zh,     xh + 1);
-						const float hbr = HEIGHT(zh + 1, xh + 1);
-						const float hbl = HEIGHT(zh + 1, xh    );
-						const float utl = (z    ) * yts, vtl = 1.0f - (x    ) * xts; // uv = (0, 1)
-						const float utr = (z    ) * yts, vtr = 1.0f - (x + 1) * xts; // uv = (0, 0)
-						const float ubr = (z + 1) * yts, vbr = 1.0f - (x + 1) * xts; // uv = (1, 0)
-						const float ubl = (z + 1) * yts, vbl = 1.0f - (x    ) * xts; // uv = (1, 1)
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
 
-						decal->va->AddVertexTC( VERTEX(xh    , htl, zh    ),   utl, vtl,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, htr, zh    ),   utr, vtr,   color);
-						decal->va->AddVertexTC( VERTEX(xh + 1, hbr, zh + 1),   ubr, vbr,   color);
-						decal->va->AddVertexTC( VERTEX(xh    , hbl, zh + 1),   ubl, vbl,   color);
+						uv[0] = (z    ) * yts; uv[1] = 1.0f - (x    ) * xts; // uv = (0, 1)
+						uv[2] = (z    ) * yts; uv[3] = 1.0f - (x + 1) * xts; // uv = (0, 0)
+						uv[4] = (z + 1) * yts; uv[5] = 1.0f - (x + 1) * xts; // uv = (1, 0)
+						uv[6] = (z + 1) * yts; uv[7] = 1.0f - (x    ) * xts; // uv = (1, 1)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
 					}
 				}
 			} break;
