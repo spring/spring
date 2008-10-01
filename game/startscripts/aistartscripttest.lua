@@ -78,8 +78,8 @@ end
 
 -- Create a bunch of units for this simple mission
 function MissionTest:Setup()
-    AIs.CreateGlobalAI( 0, "AI/Bot-libs/TestGlobalAI.dll" )
-    AIs.CreateGlobalAI( 1, "AI/Bot-libs/TestGlobalAI.dll" )
+    AIs.CreateGlobalAI( 0, "AI/Skirmish/impls/TestGlobalAI.dll" )
+    AIs.CreateGlobalAI( 1, "AI/Skirmish/impls/TestGlobalAI.dll" )
 
     units.Load("ARM_Jeffy", float3(300, 80, 300), 0, false)
     units.Load("ARM_Jeffy", float3(340, 80, 300), 0, false)

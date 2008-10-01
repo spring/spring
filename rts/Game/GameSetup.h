@@ -72,7 +72,9 @@ public:
 		SFloat3 startPos;
 		int teamStartNum;
 		int teamAllyteam;
-		std::string aiDll;
+		std::string luaAI;
+		std::string skirmishAIShortName;
+		std::string skirmishAIVersion;
 	};
 	std::vector<TeamData> teamStartingData;
 	

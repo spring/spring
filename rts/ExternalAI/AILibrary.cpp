@@ -72,7 +72,7 @@ void CAILibrary::init() {
     }
 }
 
-int CAILibrary::handleEvent(int eventID, void* event) {
-    _handleEvent(team, eventID, event);
+int CAILibrary::handleEvent(int topic, void* data) {
+	return _handleEvent(team, topic, data);
 }
 

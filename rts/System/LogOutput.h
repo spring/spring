@@ -29,10 +29,10 @@ public:
 
 class CLogOutput
 {
-public:
 	CLogOutput();
 	~CLogOutput();
 
+public:
 	void Print(int zone, const char *fmt, ...) FORMATSTRING(3);
 	void Print(const char *fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
@@ -57,6 +57,11 @@ public:
 	void RemoveSubscriber(ILogSubscriber *ls);
 
 	void SetMirrorToStdout(bool);
+	
+	static CLogOutput& GetInstance();
+private:
+	static CLogOutput myLogOutput;
+	std::ofstream* filelog;
 
 protected:
 	void Output(int zone, const char *str);
@@ -65,7 +70,7 @@ protected:
 };
 
 
-extern CLogOutput logOutput;
+extern CLogOutput& logOutput;
 
 #undef FORMATSTRING
 

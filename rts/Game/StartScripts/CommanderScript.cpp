@@ -4,6 +4,7 @@
 #include <map>
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/Team.h"
@@ -54,8 +55,9 @@ void CCommanderScript::GameStart()
 			team->energyStorage = 20;
 
 			// create a GlobalAI if required
-			if (!team->dllAI.empty() && (gu->myPlayerNum == team->leader)) {
-				globalAI->CreateGlobalAI(a, team->dllAI.c_str());
+			if (!SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifyer) // is an AI specifyed?
+					&& (gu->myPlayerNum == team->leader)) {
+				globalAI->CreateSkirmishAI(a, team->skirmishAISpecifyer);
 			}
 
 			// get the team startup info

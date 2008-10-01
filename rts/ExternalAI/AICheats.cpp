@@ -1,7 +1,9 @@
+
+#include "AICheats.h"
+
 #include "StdAfx.h"
 #include <vector>
-#include "AICheats.h"
-#include "GlobalAI.h"
+#include "SkirmishAIWrapper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Misc/QuadField.h"
@@ -18,7 +20,7 @@
 
 using namespace std;
 
-CAICheats::CAICheats(CGlobalAI* ai): ai(ai)
+CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
 {
 }
 
@@ -43,32 +45,32 @@ bool CAICheats::OnlyPassiveCheats()
 
 void CAICheats::EnableCheatEvents(bool enable)
 {
-	ai->cheatevents = enable;
+	ai->SetCheatEventsEnabled(enable);
 }
 
 void CAICheats::SetMyHandicap(float handicap)
 {
 	if (!OnlyPassiveCheats()) {
-		gs->Team(ai->team)->handicap = 1 + handicap / 100;
+		gs->Team(ai->GetTeamId())->handicap = 1 + handicap / 100;
 	}
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
 	if (!OnlyPassiveCheats())
-		gs->Team(ai->team)->metal += amount;
+		gs->Team(ai->GetTeamId())->metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
 	if (!OnlyPassiveCheats())
-		gs->Team(ai->team)->energy += amount;
+		gs->Team(ai->GetTeamId())->energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, float3 pos)
 {
 	if (!OnlyPassiveCheats()) {
-		CUnit* u = unitLoader.LoadUnit(name, pos, ai->team, false, 0, NULL);
+		CUnit* u = unitLoader.LoadUnit(name, pos, ai->GetTeamId(), false, 0, NULL);
 		if (u)
 			return u->id;
 	}
@@ -105,7 +107,7 @@ int CAICheats::GetEnemyUnits(int* units)
 	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->team))) {
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
 				units[a++] = u->id;
 			}
@@ -124,7 +126,7 @@ int CAICheats::GetEnemyUnits(int* units, const float3& pos, float radius)
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->team))) {
+		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
 				units[a] = u->id;
 				++a;

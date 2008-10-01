@@ -3,12 +3,11 @@
  * @brief Linux shared object loader implementation
  * @author Christopher Han <xiphux@gmail.com>
  *
- * Linux Shared Object loader class implementation
+ * Linux, Unix and Mac OS X Shared Object loader class implementation
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
 #include <vector>
-#include "LogOutput.h"
 #include "SoLib.h"
 #include <dlfcn.h>
 
@@ -19,8 +18,24 @@
 SoLib::SoLib(const char *filename)
 {
 	so = dlopen(filename,RTLD_LAZY);
-	if (so == NULL)
-		logOutput.Print("%s:%d: SoLib::SoLib: %s", __FILE__, __LINE__, dlerror());
+	if (so == NULL) {
+		SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::SoLib");
+	}
+}
+
+/**
+ * Just dlcloses the shared object
+ */
+void SoLib::Unload() {
+	
+	if (so != NULL) {
+		dlclose(so);
+		so = NULL;
+	}
+}
+
+bool SoLib::LoadFailed() {
+	return so == NULL;
 }
 
 /**
@@ -28,8 +43,7 @@ SoLib::SoLib(const char *filename)
  */
 SoLib::~SoLib()
 {
-	if (so != NULL)
-		dlclose(so);
+	Unload();
 }
 
 /**
@@ -39,8 +53,9 @@ void *SoLib::FindAddress(const char *symbol)
 {
 	if (so != NULL) {
 		void* p = dlsym(so, symbol);
-		if (p == NULL)
-			logOutput.Print("%s:%d: SoLib::FindAddress: %s", __FILE__, __LINE__, dlerror());
+		if (p == NULL) {
+			SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::FindAddress");
+		}
 		return p;
 	}
 	return NULL;

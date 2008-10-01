@@ -11,6 +11,7 @@ class float3;
 class CUnit;
 class CFeature;
 struct UnitDef;
+struct SSAIKey;
 
 // This class is meant to contain COBject and its descendants only..
 template<class A>
@@ -27,7 +28,7 @@ public:
 
 namespace luafunctions
 {
-	void CreateGlobalAI( int teamnumber, std::string dllname);
+	void CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);

@@ -103,7 +103,7 @@ void BaseCmd::usage(std::string program, std::string version)
 		std::cout << std::endl;
 		std::cout << "This program is licensed under the GNU General Public License" << std::endl;
 	}
-	std::cout << "Usage: " << argv[0] << " [OPTIONS]" << std::endl;
+	std::cout << "Usage: " << argv[0] << " [OPTIONS] [SCRIPTFILE]" << std::endl;
 }
 
 /**

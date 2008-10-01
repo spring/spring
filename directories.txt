@@ -4,7 +4,10 @@ rts/build/scons                   Scons build files (for Linux & MinGW)
 rts/build/vstudio7                Visual Studio 7 project files
 rts/build/vstudio8                Visual Studio 8 project files
 rts/build/xcode                   xcode project file
-rts/ExternalAI                    AI interfaces
+rts/ExternalAI                    engine side AI interface
+rts/ExternalAI/Interface          AI side AI interface (also used by the engine)
+rts/ExternalAI/Interface/LegacyCppWrapper                 Legacy C++ AI side AI interface
+rts/ExternalAI/Interface/LegacyCppWrapper/Event           Legacy C++ AI side AI interface Event classes
 rts/Game                          General game code
 rts/Game/StartScripts             Hardcoded startscripts
 rts/Game/UI                       Game controls including current gui
@@ -49,11 +52,13 @@ rts/System/Script                 LUA bindings for scripts
 rts/System/Sync                   Sync debuggers
 
 AI                                AI sourcecode..
-AI/Global                         ..for GlobalAIs (Bot-libs)
+AI/Interfaces                     ..for interfaceing with Skirmish and Group AIs (Interfaces/impls)
+AI/Skirmish                       ..for SkirmishAIs (Skirmish/impls)
 AI/Group                          ..for GroupAIs (Helper-libs)
 
-game/AI/Bot-libs                  Output directory for global AI binaries
 game/AI                           Files related to AI
+game/AI/Interfaces/impls          Output directory for AI interface binaries
+game/AI/Skirmish/impls            Output directory for skirmish AI binaries
 game/AI/Helper-libs               Output directory for group AI binaries
 game/base                         Output directory for springcontent.sdz & bitmaps.sdz
 game/maps                         Map archives (sd7,sdz,sdd)

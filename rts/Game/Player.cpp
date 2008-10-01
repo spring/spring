@@ -110,7 +110,7 @@ void CPlayer::SetControlledTeams()
 	for (int t = 0; t < gs->activeTeams; t++) {
 		const CTeam* team = gs->Team(t);
 		if (team && team->isAI &&
-		    !team->dllAI.empty() && // luaAI does not require client control
+		    !SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifyer) && // is not empty? -> luaAI does not require client control
 		    (team->leader == playerNum)) {
 			controlledTeams.insert(t);
 		}

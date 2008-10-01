@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include <fstream>
-#include "ExternalAI/GlobalAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/GroupHandler.h"
 #include "LoadSaveHandler.h"
@@ -202,9 +201,8 @@ void CLoadSaveHandler::LoadGame()
 	globalAI->Load(ifs);
 	delete ifs;
 	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
-		if (gs->Team(a)->isDead && globalAI->ais[a]) {
-			delete globalAI->ais[a];
-			globalAI->ais[a] = 0;
+		if (gs->Team(a)->isDead && globalAI->IsSkirmishAI(a)) {
+			globalAI->DestroySkirmishAI(a);
 		}
 	}
 	gs->paused = false;

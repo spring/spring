@@ -11,6 +11,7 @@
 #include <list>
 #include "Platform/byteorder.h"
 #include "Sim/Units/UnitSet.h"
+#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 
 class CTeam
 {
@@ -67,7 +68,7 @@ public:
 
 	bool isAI;
 	std::string luaAI;
-	std::string dllAI;
+	SSAIKey skirmishAISpecifyer;
 
 	// color info is unsynced
 	unsigned char color[4];

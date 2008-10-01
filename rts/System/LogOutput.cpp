@@ -2,6 +2,9 @@
 #include "StdAfx.h"
 #include <assert.h>
 #include "LogOutput.h"
+#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#include "GlobalStuff.h"
+#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 #include <cstdarg>
 #include <fstream>
 #include <string.h>
@@ -12,19 +15,50 @@
 #include <windows.h>
 #endif
 
-static std::ofstream* filelog = 0;
-static bool initialized = false;
+//#if defined BUILDING_AI
+//static std::ofstream* ai_filelog = 0;
+/*
+#if defined BUILDING_AI_INTERFACE
+#define LOG_FILE_NAME "CAIInterface_infolog.txt"
+static std::ofstream* aiinterface_filelog = 0;
+static bool aiinterface_initialized = false;
+#define FILE_LOG aiinterface_filelog
+#define INITIALIZED aiinterface_initialized
+#else
+*/
+//#define LOG_FILE_NAME "infolog.txt"
+#if defined BUILDING_AI_INTERFACE
+#define LOG_FILE_PREFIX "infolog_aiinterface"
+#define LOG_FILE_PREFIX "infolog"
+#else
+#endif
+#define LOG_FILE_SUFFIX ".txt"
+//static std::ofstream* filelog = 0;
+//static bool initialized = false;
+static int infologIndex = 0;
+#define FILE_LOG filelog
+//#define INITIALIZED initialized
+//#endif
 static bool stdoutDebug = false;
-CLogOutput logOutput;
+//CLogOutput logOutput;
+CLogOutput& logOutput = CLogOutput::GetInstance();
 static boost::recursive_mutex tempstrMutex;
 static std::string tempstr;
 
 static const int bufferSize = 2048;
 
+CLogOutput CLogOutput::myLogOutput = CLogOutput();
+//std::ofstream* CLogOutput::filelog = NULL;
+
+CLogOutput& CLogOutput::GetInstance() {
+	return myLogOutput;
+}
+
 CLogOutput::CLogOutput()
 {
 	assert(this == &logOutput);
-	assert(!filelog); // multiple infologs can't exist together!
+	FILE_LOG = NULL;
+	//assert(!(FILE_LOG)); // multiple infologs can't exist together!
 }
 
 CLogOutput::~CLogOutput()
@@ -34,8 +68,8 @@ CLogOutput::~CLogOutput()
 
 void CLogOutput::End()
 {
-	delete filelog;
-	filelog = 0;
+	delete FILE_LOG;
+	FILE_LOG = 0;
 }
 
 void CLogOutput::SetMirrorToStdout(bool value)
@@ -45,14 +79,29 @@ void CLogOutput::SetMirrorToStdout(bool value)
 
 void CLogOutput::Output(int zone, const char *str)
 {
-	if (!initialized) {
-		filelog = new std::ofstream("infolog.txt");
-		initialized = true;
+/*
+	if (!INITIALIZED) {
+		FILE_LOG = new std::ofstream(LOG_FILE_NAME);
+		INITIALIZED = true;
+	}
+*/
+	#if !defined BUILDING_AI_INTERFACE
+	if (FILE_LOG == NULL) {
+		#if defined BUILDING_AI_INTERFACE
+		const int MAX_STR_LENGTH = 511;
+		char logFileName[MAX_STR_LENGTH + 1];
+		SNPRINTF(logFileName, MAX_STR_LENGTH, "infolog_aiinterface_%d.txt", infologIndex++);
+		#else
+		const char* logFileName = "infolog.txt";
+		#endif
+		FILE_LOG = new std::ofstream(logFileName);
 	}
 
 	// Output to subscribers
-	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
+#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin(); lsi!=subscribers.end();++lsi)
 		(*lsi)->NotifyLogMsg(zone, str);
+#endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 	int nl = strlen(str) - 1;
 
@@ -62,16 +111,16 @@ void CLogOutput::Output(int zone, const char *str)
 		OutputDebugString("\n");
 #endif
 
-	if (filelog) {
-#ifndef DEDICATED
+	if (FILE_LOG) {
+#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 		if (gs) {
-			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
+			(*FILE_LOG) << IntToString(gs->frameNum, "[%7d] ");
 		}
-#endif
-		(*filelog) << str;
+#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+		(*FILE_LOG) << str;
 		if (nl < 0 || str[nl] != '\n')
-			(*filelog) << "\n";
-		filelog->flush();
+			(*FILE_LOG) << "\n";
+		FILE_LOG->flush();
 	}
 
 	if (stdoutDebug) {
@@ -81,6 +130,7 @@ void CLogOutput::Output(int zone, const char *str)
 		}
 		fflush(stdout);
 	}
+	#endif	/* !defined BUILDING_AI_INTERFACE */
 }
 
 void CLogOutput::SetLastMsgPos(const float3& pos)

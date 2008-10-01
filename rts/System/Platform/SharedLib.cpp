@@ -8,6 +8,7 @@
  * GNU GPL, v2 or later.
  */
 #include "StdAfx.h"
+#include "LogOutput.h"
 #ifdef _WIN32
 #include "Win/DllLib.h"
 #else
@@ -17,13 +18,21 @@
 /**
  * Used to create a platform-specific shared library handler.
  */
-SharedLib *SharedLib::Instantiate(const char *filename)
+SharedLib* SharedLib::Instantiate(const char *filename)
 {
+	SharedLib* lib = NULL;
+	
 #ifdef _WIN32
-	return SAFE_NEW DllLib(filename);
+	lib = SAFE_NEW DllLib(filename);
 #else
-	return SAFE_NEW SoLib(filename);
+	lib = SAFE_NEW SoLib(filename);
 #endif
+	
+	if (lib == NULL || lib->LoadFailed()) {
+		lib = NULL;
+	}
+	
+	return lib;
 }
 
 /**
@@ -46,6 +55,17 @@ const char *SharedLib::GetLibExtension()
 #endif
 }
 
+void SharedLib::reportError(const char* errorMsg, const char* fileName, int lineNumber, const char* function) {
+	
+/*
+	const int MAX_MSG_LENGTH = 511;
+	char s_msg[MAX_MSG_LENGTH + 1];
+	SNPRINTF(s_msg, MAX_MSG_LENGTH, "%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
+	handleerror(NULL, s_msg, "Shared Library Error", MBF_OK | MBF_EXCL);
+*/
+	logOutput.Print("%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
+}
 
 SharedLib::~SharedLib() {
+    // subclasses will call Unload in thier destructors.
 }

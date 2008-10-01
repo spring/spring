@@ -27,8 +27,8 @@ RegHandler::~RegHandler()
 
 int RegHandler::GetInt(string name, int def)
 {
-	unsigned char regbuf[100];
-	DWORD regLength=100; // this is windows specific stuff, so no need to use sdl types
+	unsigned char regbuf[100]={'\0'};
+	DWORD regLength=sizeof(regbuf); // this is windows specific stuff, so no need to use sdl types
 	DWORD regType=REG_DWORD;
 
 	if(RegQueryValueEx(regkey,name.c_str(),0,&regType,regbuf,&regLength)==ERROR_SUCCESS)
@@ -41,12 +41,13 @@ int RegHandler::GetInt(string name, int def)
 
 string RegHandler::GetString(string name, string def)
 {
-	unsigned char regbuf[100];
-	DWORD regLength=100;
+	unsigned char regbuf[100]={'\0'};
+	DWORD regLength=sizeof(regbuf);
 	DWORD regType=REG_SZ;
 
-	if(RegQueryValueEx(regkey,name.c_str(),0,&regType,regbuf,&regLength)==ERROR_SUCCESS)
+	if(RegQueryValueEx(regkey,name.c_str(),0,&regType,regbuf,&regLength)==ERROR_SUCCESS) {
 		return string((char*)regbuf);
+	}
 	else
 		SetString(name, def);
 		

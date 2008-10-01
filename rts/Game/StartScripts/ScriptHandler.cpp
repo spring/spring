@@ -16,10 +16,12 @@
 #include "EmptyScript.h"
 #include "TestScript.h"
 #include "Platform/SharedLib.h"
+#include "ExternalAI/Interface/aidefines.h"
 #ifndef NO_LUA
 #  include "System/Platform/errorhandler.h"
 #endif
 #include "mmgr.h"
+#include "ExternalAI/IAILibraryManager.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -43,13 +45,14 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( SAFE_NEW CSpawnScript(true) );
 	loaded_scripts.push_back( SAFE_NEW CTestScript() );
 
-	const char *path = "AI/Bot-libs/";
-	std::vector<std::string> f = CFileHandler::FindFiles(path, std::string("*.") + SharedLib::GetLibExtension());
+	const std::vector<SSAIKey>* skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+	
+	std::vector<SSAIKey>::const_iterator ai, e;
+	for(ai=skirmishAIKeys->begin(), e=skirmishAIKeys->end(); ai != e; ++ai) {
+		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*ai));
+	}
 
-	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi)
-		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*fi));
-
-	f = CFileHandler::FindFiles("Saves/", "*.ssf");
+	std::vector<std::string> f = CFileHandler::FindFiles("Saves/", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
 	}

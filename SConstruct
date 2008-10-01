@@ -7,18 +7,23 @@ Each target has an equivalent install target. E.g. `CentralBuildAI' has
 `install-CentralBuildAI' and the default target has `install'.
 
 [default]
-
 	spring
 	unitsync
+	AIInterfaces
+		C
+		Java
 	GroupAI
 		CentralBuildAI
 		MetalMakerAI
 		SimpleFormationAI
-	GlobalAI
-		JCAI
+	SkirmishAI
+		RAI
 		NTAI
-		OTAI
-		TestGlobalAI
+		KAI
+		KAIK
+		AAI
+		TestSkirmishAI
+		NullAI
 """
 
 
@@ -32,6 +37,10 @@ if sys.platform == 'win32':
 else:
 	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
 
+
+################################################################################
+### Build spring(.exe)
+################################################################################
 spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon
@@ -69,7 +78,10 @@ Alias('install-spring', inst)
 if env['strip']:
 	env.AddPostAction(spring, Action([['strip','$TARGET']]))
 
-# Build unitsync shared object
+
+################################################################################
+### Build unitsync shared object
+################################################################################
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
@@ -140,27 +152,144 @@ if env['strip']:
 if env['platform'] != 'windows':
 	Default(unitsync)
 
-# Make a copy of the build environment for the AIs, but remove libraries and add include path.
+
+################################################################################
+### AIs
+################################################################################
+# Make a copy of the build environment for the AIs,
+# but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 aienv = env.Copy()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
+aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
+#aienv['CPPDEFINES'] += ['_DLL']
+aiinterfaceenv = aienv.Copy()
+print aienv['CPPDEFINES']
 
+aienv['CPPDEFINES'] += ['BUILDING_AI']
+
+aiinterfaceenv['CPPDEFINES'] += ['BUILDING_AI_INTERFACE']
+#aiinterfaceenv['LINKFLAGS'] += ['-llua']
+
+################################################################################
+### Build AI Interface shared objects
+################################################################################
+## Use subst() to substitute $installprefix in datadir.
+#install_dir = os.path.join(aiinterfaceenv['installprefix'], aiinterfaceenv.subst(aiinterfaceenv['libdir']), 'AI/Interfaces/impls')
+install_dir = os.path.join(aiinterfaceenv['installprefix'], aiinterfaceenv['libdir'], 'AI/Interfaces/impls')
+
+# store shared ai-interface objects so newer scons versions don't choke with
+# *** Two environments with different actions were specified for the same target
+aiinterfaceobjs = []
+for f in filelist.get_shared_AIInterface_source(aiinterfaceenv, True, True, False):
+	while isinstance(f, list):
+		f = f[0]
+	fpath, fbase = os.path.split(f)
+#	print "file: %s" % f
+#	print "base: %s" % fbase
+	fname, fext = fbase.rsplit('.', 1)
+	aiinterfaceobjs.append(aiinterfaceenv.SharedObject(os.path.join(fpath, fname + '-aiinterface'), f))
+
+# Build
+for f in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=['build']):
+	lib = aiinterfaceenv.SharedLibrary(os.path.join('game/AI/Interfaces/impls', f), aiinterfaceobjs + filelist.get_AIInterface_source(aiinterfaceenv, f))
+	Alias(f, lib)          # Allow e.g. `scons Java' to compile just that specific AI interface.
+	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
+	Default(lib)
+	inst = env.Install(install_dir, lib)
+	Alias('install', inst)
+	Alias('install-AIInterfaces', inst)
+	Alias('install-'+f, inst)
+	if aiinterfaceenv['strip']:
+		aiinterfaceenv.AddPostAction(lib, Action([['strip','$TARGET']]))
+
+################################################################################
+### Build Skirmish AI shared objects
+################################################################################
 # Use subst() to substitute $installprefix in datadir.
-install_dir = os.path.join(aienv['installprefix'], aienv['libdir'], 'AI/Helper-libs')
+install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']), 'AI/Skirmish/impls')
 
 # store shared ai objects so newer scons versions don't choke with
 # *** Two environments with different actions were specified for the same target
-aiobjs = []
-for f in filelist.get_shared_AI_source(aienv):
+skirmishaiobjs = []
+for f in filelist.get_shared_skirmishAI_source(aienv, True, False, True):
         while isinstance(f, list):
                 f = f[0]
         fpath, fbase = os.path.split(f)
         fname, fext = fbase.rsplit('.', 1)
-        aiobjs.append(aienv.SharedObject(os.path.join(fpath, fname + '-ai'), f))
+        skirmishaiobjs.append(aienv.SharedObject(os.path.join(fpath, fname + '-skirmishai'), f))
 
-#Build GroupAIs
+# Build
+ai_exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI', 'TestGlobalAI']
+for f in filelist.list_skirmishAIs(aienv, exclude_list=ai_exclude_list):
+	lib = aienv.SharedLibrary(os.path.join('game/AI/Skirmish/impls', f), skirmishaiobjs + filelist.get_skirmishAI_source(aienv, f))
+	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a skirmish AI.
+	Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
+	Default(lib)
+	inst = env.Install(install_dir, lib)
+	Alias('install', inst)
+	Alias('install-SkirmishAI', inst)
+	Alias('install-'+f, inst)
+	if aienv['strip']:
+		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
+
+# build TestABICAI
+# lib = aienv.SharedLibrary(os.path.join('game/AI/Skirmish/impls','TestABICAI'), ['game/spring.a'], CPPDEFINES = env# ['CPPDEFINES'] + ['BUILDING_AI'] )
+# Alias('TestABICAI', lib)
+# Alias('install-TestABICAI', inst)
+# if sys.platform == 'win32':
+# 	Alias('SkirmishAI', lib)
+# 	Default(lib)
+# 	inst = env.Install(install_dir, lib)
+# 	Alias('install', inst)
+# 	Alias('install-SkirmishAI', inst)
+# 	if env['strip']:
+# 		env.AddPostAction(lib, Action([['strip','$TARGET']]))
+
+# install Skirmish AI info and options files
+info_files=filelist.list_directories(env, 'AI/Skirmish', exclude_list=ai_exclude_list, recursively=False)
+for f in info_files:
+	#print "inspecting %s ..." % f
+	if os.path.exists(f + "/AIInfo.lua"):
+		print "exists: %s/AIInfo.lua" % f
+		print "installprefix: %s" % aienv['installprefix']
+		print "datadir: %s" % aienv['datadir']
+		print "copying to: %s" % "AI/Skirmish/data/" + os.path.basename(f) + "/AIInfo.lua"
+		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], "AI/Skirmish/data/" + os.path.basename(f)), f + "/AIInfo.lua")
+		Alias('install', inst)
+	if os.path.exists(f + "/AIOptions.lua"):
+		print "exists: %s/AIOptions.lua" % f
+		print "copying to: %s" % "AI/Skirmish/data/" + os.path.basename(f) + "/AIOptions.lua"
+		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], "AI/Skirmish/data/" + os.path.basename(f)), f + "/AIOptions.lua")
+		Alias('install', inst)
+	print ""
+
+# install AAI config files
+aai_data=filelist.list_files_recursive(env, 'game/AI/AAI')
+for f in aai_data:
+	if not os.path.isdir(f):
+		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
+		Alias('install', inst)
+
+################################################################################
+### Build Group AI shared objects
+################################################################################
+# Use subst() to substitute $installprefix in datadir.
+install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']), 'AI/Helper-libs')
+
+# store shared ai objects so newer scons versions don't choke with
+# *** Two environments with different actions were specified for the same target
+groupaiobjs = []
+for f in filelist.get_shared_skirmishAI_source(aienv, True, False, True):
+        while isinstance(f, list):
+                f = f[0]
+        fpath, fbase = os.path.split(f)
+        fname, fext = fbase.rsplit('.', 1)
+        groupaiobjs.append(aienv.SharedObject(os.path.join(fpath, fname + '-groupai'), f))
+
+# Build
 for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
-	lib = aienv.SharedLibrary(os.path.join('game/AI/Helper-libs', f), aiobjs + filelist.get_groupAI_source(aienv, f))
+	lib = aienv.SharedLibrary(os.path.join('game/AI/Helper-libs', f), groupaiobjs + filelist.get_groupAI_source(aienv, f))
 	Alias(f, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
 	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
 	Default(lib)
@@ -171,35 +300,10 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 	if aienv['strip']:
 		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
-install_dir = os.path.join(aienv['installprefix'], aienv.subst(aienv['libdir']), 'AI/Bot-libs')
 
-#Build GlobalAIs
-for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI']):
-	lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs', f), aiobjs + filelist.get_globalAI_source(aienv, f))
-	Alias(f, lib)          # Allow e.g. `scons JCAI' to compile just a global AI.
-	Alias('GlobalAI', lib) # Allow `scons GlobalAI' to compile all globalAIs.
-	Default(lib)
-	inst = env.Install(install_dir, lib)
-	Alias('install', inst)
-	Alias('install-GlobalAI', inst)
-	Alias('install-'+f, inst)
-	if aienv['strip']:
-		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
-
-# build TestABICAI
-# lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['game/spring.a'], CPPDEFINES = env# ['CPPDEFINES'] + ['BUILDING_AI'] )
-# Alias('TestABICAI', lib)
-# Alias('install-TestABICAI', inst)
-# if sys.platform == 'win32':
-# 	Alias('GlobalAI', lib)
-# 	Default(lib)
-# 	inst = env.Install(install_dir, lib)
-# 	Alias('install', inst)
-# 	Alias('install-GlobalAI', inst)
-# 	if env['strip']:
-# 		env.AddPostAction(lib, Action([['strip','$TARGET']]))
-
-# Build streflop (which has it's own Makefile-based build system)
+################################################################################
+### Build streflop (which has it's own Makefile-based build system)
+################################################################################
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
 	if env['fpmath'] == 'sse':
@@ -234,8 +338,9 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 				os.system(test)
 
 
-# Build gamedata zip archives
-
+################################################################################
+### Build gamedata zip archives
+################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript
 # ends up in the zip too... Bah. SCons sucks. Just like autoshit and everything else btw.
@@ -288,13 +393,6 @@ inst = env.Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spr
 Alias('install', inst)
 inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
 Alias('install', inst)
-
-# install AAI config files
-aai_data=filelist.list_files_recursive(env, 'game/AI/AAI')
-for f in aai_data:
-	if not os.path.isdir(f):
-		inst = env.Install(os.path.join(aienv['installprefix'], aienv['datadir'], os.path.dirname(f)[5:]), f)
-		Alias('install', inst)
 
 # install LuaUI files
 for f in ['luaui.lua']:

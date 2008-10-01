@@ -29,6 +29,14 @@ public:
 	DllLib(const char *filename);
 	
 	/**
+	 * Does a FreeLibrary on the given DLL
+	 * @brief unload
+	 */
+	virtual void Unload();
+	
+	virtual bool LoadFailed();
+	
+	/**
 	 * @brief Destructor
 	 */
 	~DllLib();

@@ -15,7 +15,13 @@
 #define MBF_INFO	2
 #define MBF_EXCL	4
 
+#if __GNUC__ >= 4
+	#define NO_RETURN __attribute__ ((noreturn))
+#else
+	#define NO_RETURN
+#endif
+
 #define handleerror(o, m, c, f) ErrorMessageBox(m, c, f)
-void ErrorMessageBox(const char *msg, const char *caption, unsigned int flags);
+void ErrorMessageBox(const char *msg, const char *caption, unsigned int flags) NO_RETURN;
 
 #endif

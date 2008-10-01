@@ -21,9 +21,20 @@ DllLib::DllLib(const char *filename)
 /**
  * Does a FreeLibrary on the given DLL
  */
+void DllLib::Unload() {
+	FreeLibrary(dll);
+}
+
+bool DllLib::LoadFailed() {
+	return dll == NULL;
+}
+
+/**
+ * Does a FreeLibrary on the given DLL
+ */
 DllLib::~DllLib()
 {
-	FreeLibrary(dll);
+	Unload();
 }
 
 /**

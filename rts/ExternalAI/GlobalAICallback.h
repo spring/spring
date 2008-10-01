@@ -1,25 +1,28 @@
-#ifndef GLOBALAICALLBACK_H
-#define GLOBALAICALLBACK_H
+#ifndef _GLOBALAICALLBACK_H
+#define _GLOBALAICALLBACK_H
 
 #include "IGlobalAICallback.h"
+
 #include "AICallback.h"
-class CGlobalAI;
+
+class CSkirmishAIWrapper;
 class CAICheats;
 
 class CGlobalAICallback :
 	public IGlobalAICallback
 {
-	CGlobalAI* ai;
+	CSkirmishAIWrapper* ai;
+	
 public:
-	CGlobalAICallback(CGlobalAI* ai);
-	~CGlobalAICallback(void);
+	CGlobalAICallback(CSkirmishAIWrapper* ai);
+	~CGlobalAICallback();
 
-	CAICheats* cheats;
+	CAICheats* cheatCallback;
 	bool noMessages;
-	CAICallback scb;
+	CAICallback callback;
 
-	IAICheats* GetCheatInterface();
-	IAICallback* GetAICallback();
+	virtual IAICheats* GetCheatInterface();
+	virtual IAICallback* GetAICallback();
 };
 
-#endif
+#endif /* _GLOBALAICALLBACK_H */

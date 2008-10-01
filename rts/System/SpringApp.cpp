@@ -24,6 +24,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
+#include "ExternalAI/IAILibraryManager.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/GL/myGL.h"
@@ -576,6 +577,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption('c', "client",         OPTPARM_NONE,   "",  "Run as a client");
 	cmdline->addoption('p', "projectiledump", OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
 	cmdline->addoption('t', "textureatlas",   OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->addoption('a', "list-skirmish-ais",   OPTPARM_NONE,   "",  "Dump a list of all available skirmish AIs");
 	cmdline->addoption('q', "quit",           OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
 	cmdline->addoption('n', "name",           OPTPARM_STRING, "",  "Set your player name");
 	cmdline->addoption('C', "config",         OPTPARM_STRING, "",  "Configuration file");
@@ -601,6 +603,9 @@ void SpringApp::ParseCmdLine()
 		exit(0);
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
+		exit(0);
+	} else if (cmdline->result("list-skirmish-ais")) {
+		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
 
@@ -700,7 +705,7 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 		{
 			string command(argv[i]);
 			int idx = command.rfind("sdf");
-			if (idx == command.size()-3) {
+			if (idx == (int)command.size()-3) {
 				demofile = command;
 				logOutput << "Using demofile " << demofile.c_str() << "\n";
 			} else if (command.rfind("ssf") == command.size()-3) {

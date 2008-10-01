@@ -30,7 +30,7 @@ ConfigHandler* ConfigHandler::instance = NULL;
 
 
 std::string ConfigHandler::configSource;
-extern const char* VERSION_STRING;
+extern const char* const VERSION_STRING;
 
 
 /**

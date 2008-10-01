@@ -98,8 +98,8 @@ ${EndIf}
   File "..\game\AI\Helper-libs\ReportIdleAI.dll"
 
 ; TODO: Fix the vc projects to use the same names.
-  SetOutPath "$INSTDIR\AI\Bot-libs"
-  File "..\game\AI\Bot-libs\TestGlobalAI.dll"
+  SetOutPath "$INSTDIR\AI\Skirmish/impls"
+  File "..\game\AI\Skirmish/impls\TestGlobalAI.dll"
 
 ; Default content
   SetOverWrite on
@@ -182,8 +182,8 @@ ${EndIf}
   RmDir "$INSTDIR\fonts"
   
   ; AI Bot dlls
-  Delete "$INSTDIR\AI\Bot-libs\TestGlobalAI.dll"
-  RmDir "$INSTDIR\AI\Bot-libs"
+  Delete "$INSTDIR\AI\Skirmish/impls\TestGlobalAI.dll"
+  RmDir "$INSTDIR\AI\Skirmish/impls"
 
   ; AI Helper dlls
   Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
