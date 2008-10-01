@@ -14,6 +14,8 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/SideParser.h"
+#include "ExternalAI/Interface/aidefines.h"
+#include "ExternalAI/Interface/SSAILibrary.h"
 
 #include "LuaParserAPI.h"
 #include "Syncer.h"
@@ -88,7 +90,7 @@ void ErrorMessageBox(const char *msg, const char *capt, unsigned int) {
 
 
 #ifdef WIN32
-BOOL __stdcall DllMain(HINSTANCE hInst,
+BOOL DllMain(HINSTANCE hInst,
                        DWORD dwReason,
                        LPVOID lpReserved) {
 	logOutput.Print("----\nunitsync loaded\n");
@@ -128,29 +130,17 @@ class ScopedMapLoader {
 };
 
 
-/**
- * @brief returns the version fo spring this was compiled with
- *
- * Returns a const char* string specifying the version of spring used to build this library with.
- * It was added to aid in lobby creation, where checks for updates to spring occur.
- */
-DLL_EXPORT const char* __stdcall GetSpringVersion()
+const char* GetSpringVersion()
 {
 	return VERSION_STRING;
 }
 
-/**
- * @brief Creates a messagebox with said message
- * @param p_szMessage const char* string holding the message
- *
- * Creates a messagebox with the title "Message from DLL", an OK button, and the specified message
- */
-DLL_EXPORT void __stdcall Message(const char* p_szMessage)
+void Message(const char* p_szMessage)
 {
 	MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
 }
 
-DLL_EXPORT void __stdcall UnInit()
+void UnInit()
 {
 	lpClose();
 
@@ -166,7 +156,7 @@ DLL_EXPORT void __stdcall UnInit()
 	ConfigHandler::Deallocate();
 }
 
-DLL_EXPORT int __stdcall Init(bool isServer, int id)
+int Init(bool isServer, int id)
 {
 	UnInit();
 	logOutput.Print("unitsync initialized\n");
@@ -191,32 +181,19 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 	return 1;
 }
 
-/**
- * @brief process another unit and return how many are left to process
- * @return int The number of unprocessed units to be handled
- *
- * Call this function repeatedly untill it returns 0 before calling any other function related to units.
- */
-DLL_EXPORT int __stdcall ProcessUnits(void)
+int ProcessUnits(void)
 {
 	logOutput.Print("syncer: process units\n");
 	return syncer->ProcessUnits();
 }
 
-/**
- * @brief process another unit and return how many are left to process without checksumming
- * @return int The number of unprocessed units to be handled
- *
- * Call this function repeatedly untill it returns 0 before calling any other function related to units.
- * This function performs the same operations as ProcessUnits() but it does not generate checksums.
- */
-DLL_EXPORT int __stdcall ProcessUnitsNoChecksum(void)
+int ProcessUnitsNoChecksum(void)
 {
 	logOutput.Print("syncer: process units\n");
 	return syncer->ProcessUnits(false);
 }
 
-DLL_EXPORT const char * __stdcall GetCurrentList()
+const char* GetCurrentList()
 {
 	logOutput.Print("syncer: get current list\n");
 	string tmp = syncer->GetCurrentList();
@@ -236,79 +213,52 @@ DLL_EXPORT const char * __stdcall GetCurrentList()
 	return GetStr(tmp);
 }
 
-DLL_EXPORT void __stdcall AddClient(int id, const char *unitList)
+void AddClient(int id, const char *unitList)
 {
 	logOutput.Print("syncer: add client\n");
 	((CSyncServer *)syncer)->AddClient(id, unitList);
 }
 
-DLL_EXPORT void __stdcall RemoveClient(int id)
+void RemoveClient(int id)
 {
 	logOutput.Print("syncer: remove client\n");
 	((CSyncServer *)syncer)->RemoveClient(id);
 }
 
-DLL_EXPORT const char * __stdcall GetClientDiff(int id)
+const char* GetClientDiff(int id)
 {
 	logOutput.Print("syncer: get client diff\n");
 	string tmp = ((CSyncServer *)syncer)->GetClientDiff(id);
 	return GetStr(tmp);
 }
 
-DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
+void InstallClientDiff(const char *diff)
 {
 	logOutput.Print("syncer: install client diff\n");
 	syncer->InstallClientDiff(diff);
 }
 
-/**
- * @brief returns the number of units
- * @return int number of units processed and available
- *
- * Will return the number of units. Remember to call processUnits() beforehand untill it returns 0
- * As ProcessUnits is called the number of processed units goes up, and so will the value returned
- * by this function.
- *
- * while(processUnits()){}
- * int unit_number = GetUnitCount();
- */
-DLL_EXPORT int __stdcall GetUnitCount()
+int GetUnitCount()
 {
 	logOutput.Print("syncer: get unit count\n");
 	return syncer->GetUnitCount();
 }
 
-/**
- * @brief returns the units internal mod name
- * @param int the units id number
- * @return const char* The units internal modname
- *
- * This function returns the units internal mod name. For example it would return armck and not
- * Arm Construction kbot.
- */
-DLL_EXPORT const char * __stdcall GetUnitName(int unit)
+const char* GetUnitName(int unit)
 {
 	logOutput.Print("syncer: get unit %d name\n", unit);
 	string tmp = syncer->GetUnitName(unit);
 	return GetStr(tmp);
 }
 
-/**
- * @brief returns The units human readable name
- * @param int The units id number
- * @return const char* The Units human readable name
- *
- * This function returns the units human name. For example it would return Arm Construction kbot
- * and not armck.
- */
-DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
+const char* GetFullUnitName(int unit)
 {
 	logOutput.Print("syncer: get full unit %d name\n", unit);
 	string tmp = syncer->GetFullUnitName(unit);
 	return GetStr(tmp);
 }
 
-DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
+int IsUnitDisabled(int unit)
 {
 	logOutput.Print("syncer: is unit %d disabled\n", unit);
 	if (syncer->IsUnitDisabled(unit))
@@ -317,7 +267,7 @@ DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
 		return 0;
 }
 
-DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
+int IsUnitDisabledByClient(int unit, int clientId)
 {
 	logOutput.Print("syncer: is unit %d disabled by client %d\n", unit, clientId);
 	if (syncer->IsUnitDisabledByClient(unit, clientId))
@@ -329,14 +279,14 @@ DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
 //////////////////////////
 //////////////////////////
 
-DLL_EXPORT void __stdcall AddArchive(const char* name)
+void AddArchive(const char* name)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before AddArchive.");
 	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to AddArchive.");
 	vfsHandler->AddArchive(name, false);
 }
 
-DLL_EXPORT void __stdcall AddAllArchives(const char* root)
+void AddAllArchives(const char* root)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before AddAllArchives.");
 	ASSERT(root && *root, "Don't pass a NULL pointer or an empty string to AddAllArchives.");
@@ -348,7 +298,7 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root)
 	}
 }
 
-DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
+unsigned int GetArchiveChecksum(const char* arname)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetArchiveChecksum.");
 	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchiveChecksum.");
@@ -356,7 +306,7 @@ DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
 	return archiveScanner->GetArchiveChecksum(arname);
 }
 
-DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
+const char* GetArchivePath(const char* arname)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetArchivePath.");
 	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchivePath.");
@@ -364,10 +314,10 @@ DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
 	return GetStr(archiveScanner->GetArchivePath(arname));
 }
 
-// Updated on every call to getmapcount
+// Updated on every call to GetMapCount
 static vector<string> mapNames;
 
-DLL_EXPORT int __stdcall GetMapCount()
+int GetMapCount()
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapCount.");
 	//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
@@ -391,7 +341,7 @@ DLL_EXPORT int __stdcall GetMapCount()
 	return mapNames.size();
 }
 
-DLL_EXPORT const char* __stdcall GetMapName(int index)
+const char* GetMapName(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapName.");
 	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapName.");
@@ -399,7 +349,7 @@ DLL_EXPORT const char* __stdcall GetMapName(int index)
 }
 
 
-DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+int GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapInfo.");
 	ASSERT(name && *name && outInfo, "Don't pass a NULL pointer or an empty string to GetMapInfo.");
@@ -497,35 +447,35 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
 }
 
 
-DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
+int GetMapInfo(const char* name, MapInfo* outInfo)
 {
 	return GetMapInfoEx(name, outInfo, 0);
 }
 
 static vector<string> mapArchives;
 
-DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName)
+int GetMapArchiveCount(const char* mapName)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapArchiveCount.");
 	mapArchives = archiveScanner->GetArchivesForMap(mapName);
 	return mapArchives.size();
 }
 
-DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
+const char* GetMapArchiveName(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapArchiveName.");
 	ASSERT((unsigned)index < mapArchives.size(), "Array index out of bounds. Call GetMapArchiveCount before GetMapArchiveName.");
 	return GetStr(mapArchives[index]);
 }
 
-DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
+unsigned int GetMapChecksum(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapChecksum.");
 	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapChecksum.");
 	return archiveScanner->GetMapChecksum(mapNames[index]);
 }
 
-DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName)
+unsigned int GetMapChecksumFromName(const char* mapName)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapChecksumFromName.");
 	return archiveScanner->GetMapChecksum(mapName);
@@ -695,23 +645,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	return (void*)ret;
 }
 
-/**
- * @brief Retrieves a minimap image for a map.
- * @param filename The name of the map, including extension.
- * @param miplevel Which miplevel of the minimap to extract from the file.
- * Set miplevel to 0 to get the largest, 1024x1024 minimap. Each increment
- * divides the width and height by 2. The maximum miplevel is 8, resulting in a
- * 4x4 image.
- * @return A pointer to a static memory area containing the minimap as a 16 bit
- * packed RGB-565 (MSB to LSB: 5 bits red, 6 bits green, 5 bits blue) linear
- * bitmap.
- *
- * An example usage would be GetMinimap("SmallDivide.smf", 2).
- * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
- *
- * Be sure you've made a calls to Init prior to using this.
- */
-DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
+void* GetMinimap(const char* filename, int miplevel)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMinimap.");
 	ASSERT(filename && *filename, "Don't pass a NULL pointer or an empty string to GetMinimap.");
@@ -740,14 +674,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
 vector<CArchiveScanner::ModData> modData;
 
 
-/**
- * @brief Retrieves the name of this mod
- * @return int The number of mods
- *
- * Returns the name of the mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT int __stdcall GetPrimaryModCount()
+int GetPrimaryModCount()
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModCount.");
 	modData = archiveScanner->GetPrimaryMods();
@@ -755,15 +682,7 @@ DLL_EXPORT int __stdcall GetPrimaryModCount()
 }
 
 
-/**
- * @brief Retrieves the name of this mod
- * @param index in The mods index/id
- * @return const char* The mods name
- *
- * Returns the name of the mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
+const char* GetPrimaryModName(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModName.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
@@ -772,15 +691,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
 }
 
 
-/**
- * @brief Retrieves the shortened name of this mod
- * @param index in The mods index/id
- * @return const char* The mods abbrieviated name
- *
- * Returns the shortened name of the mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
+const char* GetPrimaryModShortName(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModShortName.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortName.");
@@ -789,15 +700,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
 }
 
 
-/**
- * @brief Retrieves the version string of this mod
- * @param index in The mods index/id
- * @return const char* The mods version string
- *
- * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
+const char* GetPrimaryModVersion(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModVersion.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
@@ -806,15 +709,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
 }
 
 
-/**
- * @brief Retrieves the mutator name of this mod
- * @param index in The mods index/id
- * @return const char* The mods mutator name
- *
- * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
+const char* GetPrimaryModMutator(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModMutator.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
@@ -823,15 +718,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
 }
 
 
-/**
- * @brief Retrieves the game name of this mod
- * @param index in The mods index/id
- * @return const char* The mods game
- *
- * Returns the name of the game this mod belongs to usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
+const char* GetPrimaryModGame(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModName.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
@@ -840,15 +727,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
 }
 
 
-/**
- * @brief Retrieves the short game name of this mod
- * @param index in The mods index/id
- * @return const char* The mods abbrieviated game name
- *
- * Returns the abbrieviated name of the game this mod belongs to usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
+const char* GetPrimaryModShortGame(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModShortGame.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortGame.");
@@ -857,15 +736,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
 }
 
 
-/**
- * @brief Retrieves the description of this mod
- * @param index in The mods index/id
- * @return const char* The mods description
- *
- * Returns a description for the specified mod usually found in modinfo.tdf.
- * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModDescription(int index)
+const char* GetPrimaryModDescription(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModDescription.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModDescription.");
@@ -874,7 +745,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModDescription(int index)
 }
 
 
-DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
+const char* GetPrimaryModArchive(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchive.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchive.");
@@ -884,17 +755,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
 
 vector<string> primaryArchives;
 
-/**
- * @brief Retrieves the number of archives a mod requires
- * @param index int The index of the mod
- * @return the number of archives this mod depends on.
- *
- * This is used to get the entire list of archives that a mod requires.
- * Call GetPrimaryModArchiveCount() with selected mod first to get number of
- * archives, and then use GetPrimaryModArchiveList() for 0 to count-1 to get the
- * name of each archive.
- */
-DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
+int GetPrimaryModArchiveCount(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchiveCount.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchiveCount.");
@@ -902,21 +763,15 @@ DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
 	return primaryArchives.size();
 }
 
-/**
- * @brief Retrieves the name of the current mod's archive.
- * @param arnr The mod's archive index/id.
- * @return the name of the archive
- * @see GetPrimaryModArchiveCount()
- */
-DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
+const char* GetPrimaryModArchiveList(int archiveNr)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchiveList.");
-	ASSERT((unsigned)arnr < primaryArchives.size(), "Array index out of bounds. Call GetPrimaryModArchiveCount before GetPrimaryModArchiveList.");
-	logOutput.Print("primary mod archive list: %s\n", primaryArchives[arnr].c_str());
-	return GetStr(primaryArchives[arnr]);
+	ASSERT((unsigned)archiveNr < primaryArchives.size(), "Array index out of bounds. Call GetPrimaryModArchiveCount before GetPrimaryModArchiveList.");
+	logOutput.Print("primary mod archive list: %s\n", primaryArchives[archiveNr].c_str());
+	return GetStr(primaryArchives[archiveNr]);
 }
 
-DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
+int GetPrimaryModIndex(const char* name)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModIndex.");
 	string n(name);
@@ -928,14 +783,14 @@ DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
 	return -1;
 }
 
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
+unsigned int GetPrimaryModChecksum(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModChecksum.");
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModChecksum.");
 	return archiveScanner->GetModChecksum(GetPrimaryModArchive(index));
 }
 
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name)
+unsigned int GetPrimaryModChecksumFromName(const char* name)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModChecksumFromName.");
 	return archiveScanner->GetModChecksum(archiveScanner->ModNameToModArchive(name));
@@ -945,7 +800,7 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name
 //////////////////////////
 //////////////////////////
 
-DLL_EXPORT int __stdcall GetSideCount()
+int GetSideCount()
 {
 	if (!sideParser.Load()) {
 		logOutput.Print("failed: %s\n", sideParser.GetErrorLog().c_str());
@@ -955,7 +810,7 @@ DLL_EXPORT int __stdcall GetSideCount()
 }
 
 
-DLL_EXPORT const char* __stdcall GetSideName(int side)
+const char* GetSideName(int side)
 {
 	ASSERT((unsigned int)side < sideParser.GetCount(),
 	       "Array index out of bounds. Call GetSideCount before GetSideName.");
@@ -964,7 +819,7 @@ DLL_EXPORT const char* __stdcall GetSideName(int side)
 }
 
 
-DLL_EXPORT const char* __stdcall GetSideStartUnit(int side)
+const char* GetSideStartUnit(int side)
 {
 	ASSERT((unsigned int)side < sideParser.GetCount(),
 	       "Array index out of bounds. Call GetSideCount before GetSideStartUnit.");
@@ -1026,25 +881,25 @@ static void GetLuaAIOptions()
 }
 
 
-DLL_EXPORT int __stdcall GetLuaAICount()
+int GetLuaAICount()
 {
 	GetLuaAIOptions();
 	return luaAIOptions.size();
 }
 
 
-DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
+const char* GetLuaAIName(int aiIndex)
 {
-	if ((aiIndex < 0) || (aiIndex >= luaAIOptions.size())) {
+	if ((aiIndex < 0) || (aiIndex >= (int)luaAIOptions.size())) {
 		return NULL;
 	}
 	return GetStr(luaAIOptions[aiIndex].name);
 }
 
 
-DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
+const char* GetLuaAIDesc(int aiIndex)
 {
-	if ((aiIndex < 0) || (aiIndex >= luaAIOptions.size())) {
+	if ((aiIndex < 0) || (aiIndex >= (int)luaAIOptions.size())) {
 		return NULL;
 	}
 	return GetStr(luaAIOptions[aiIndex].desc);
@@ -1054,9 +909,10 @@ DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
 //////////////////////////
 //////////////////////////
 
-static const char* badKeyChars = " =;\r\n\t";
+//static const char* badKeyChars = " =;\r\n\t";
 
 
+/*
 struct ListItem {
 	string key;
 	string name;
@@ -1088,11 +944,12 @@ struct Option {
 	string listDef;
 	vector<ListItem> list;
 };
+*/
 
 
 static vector<Option> options;
-static set<string> optionsSet;
 
+/*
 
 static bool ParseOption(const LuaTable& root, int index, Option& opt)
 {
@@ -1102,42 +959,47 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 	}
 
 	// common options properties
-	opt.key = optTbl.GetString("key", "");
-	if (opt.key.empty() ||
-	    (opt.key.find_first_of(badKeyChars) != string::npos)) {
+	string opt_key = optTbl.GetString("key", "");
+	if (opt_key.empty() ||
+	    (opt_key.find_first_of(badKeyChars) != string::npos)) {
 		return false;
 	}
-	opt.key = StringToLower(opt.key);
-	if (optionsSet.find(opt.key) != optionsSet.end()) {
+	opt_key = StringToLower(opt_key);
+	if (optionsSet.find(opt_key) != optionsSet.end()) {
 		return false;
 	}
-	opt.name = optTbl.GetString("name", opt.key);
-	if (opt.name.empty()) {
+	opt.key = opt_key.c_str();
+	string opt_name = optTbl.GetString("name", opt_key);
+	if (opt_name.empty()) {
 		return false;
 	}
-	opt.desc = optTbl.GetString("desc", opt.name);
+	opt.name = opt_name.c_str();
+	string opt_desc = optTbl.GetString("desc", opt_name);
+	opt.desc = opt_desc.c_str();
+	
 
-	opt.type = optTbl.GetString("type", "");
-	opt.type = StringToLower(opt.type);
+	string opt_type = optTbl.GetString("type", "");
+	opt_type = StringToLower(opt_type);
+	opt.type = opt_type.c_str();
 
 	// option type specific properties
-	if (opt.type == "bool") {
+	if (opt_type == "bool") {
 		opt.typeCode = opt_bool;
 		opt.boolDef = optTbl.GetBool("def", false);
 	}
-	else if (opt.type == "number") {
+	else if (opt_type == "number") {
 		opt.typeCode = opt_number;
 		opt.numberDef  = optTbl.GetFloat("def",  0.0f);
 		opt.numberMin  = optTbl.GetFloat("min",  -1.0e30f);
 		opt.numberMax  = optTbl.GetFloat("max",  +1.0e30f);
 		opt.numberStep = optTbl.GetFloat("step", 0.0f);
 	}
-	else if (opt.type == "string") {
+	else if (opt_type == "string") {
 		opt.typeCode = opt_string;
-		opt.stringDef    = optTbl.GetString("def", "");
+		opt.stringDef    = optTbl.GetString("def", "").c_str();
 		opt.stringMaxLen = optTbl.GetInt("maxlen", 0);
 	}
-	else if (opt.type == "list") {
+	else if (opt_type == "list") {
 		opt.typeCode = opt_list;
 
 		const LuaTable& listTbl = optTbl.SubTable("items");
@@ -1145,16 +1007,18 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 			return false;
 		}
 
+		vector<OptionListItem> opt_list;
 		for (int i = 1; listTbl.KeyExists(i); i++) {
-			ListItem item;
+			OptionListItem item;
 
 			// string format
-			item.key = listTbl.GetString(i, "");
-			if (!item.key.empty() &&
-			    (item.key.find_first_of(badKeyChars) == string::npos)) {
+			string item_key = listTbl.GetString(i, "");
+			if (!item_key.empty() &&
+			    (item_key.find_first_of(badKeyChars) == string::npos)) {
+				item.key = item_key.c_str();
 				item.name = item.key;
 				item.desc = item.name;
-				opt.list.push_back(item);
+				opt_list.push_back(item);
 				continue;
 			}
 
@@ -1163,25 +1027,34 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 			if (!itemTbl.IsValid()) {
 				break;
 			}
-			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty() ||
-			    (item.key.find_first_of(badKeyChars) != string::npos)) {
+			item_key = itemTbl.GetString("key", "");
+			if (item_key.empty() ||
+			    (item_key.find_first_of(badKeyChars) != string::npos)) {
 				return false;
 			}
-			item.key = StringToLower(item.key);
-			item.name = itemTbl.GetString("name", item.key);
-			if (item.name.empty()) {
+			item_key = StringToLower(item_key);
+			item.key = item_key.c_str();
+			string item_name = itemTbl.GetString("name", item_key);
+			if (item_name.empty()) {
 				return false;
 			}
-			item.desc = itemTbl.GetString("desc", item.name);
-			opt.list.push_back(item);
+			item.name = item_name.c_str();
+			string item_desc = itemTbl.GetString("desc", item_name);
+			item.desc = item_desc.c_str();
+			opt_list.push_back(item);
 		}
 
-		if (opt.list.size() <= 0) {
+		if (opt_list.size() <= 0) {
 			return false; // no empty lists
 		}
+		
+		opt.numListItems = opt_list.size();
+		opt.list = (OptionListItem*) calloc(sizeof(OptionListItem), opt.numListItems);
+        for (int i=0; i < opt.numListItems; ++i) {
+            opt.list[i] = opt_list.at(i);
+        }
 
-		opt.listDef = optTbl.GetString("def", opt.list[0].name);
+		opt.listDef = optTbl.GetString("def", opt.list[0].name).c_str();
 	}
 	else {
 		return false; // unknown type
@@ -1234,8 +1107,9 @@ static void ParseOptions(const string& fileName,
 	optionsSet.clear();
 
 	return;
-};
+}
 
+*/
 
 static bool InvalidOptionIndex(int optIndex)
 {
@@ -1258,7 +1132,90 @@ static bool WrongOptionType(int optIndex, int type)
 }
 
 
-DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
+vector<InfoItem> infos;
+set<string> infosSet;
+/*
+static bool ParseInfo(const LuaTable& root, int index, InfoItem& info)
+{
+	const LuaTable& infoTbl = root.SubTable(index);
+	if (!infoTbl.IsValid()) {
+		return false;
+	}
+
+	// info properties
+	info.key = infoTbl.GetString("key", "");
+	if (info.key.empty() ||
+	    (info.key.find_first_of(badKeyChars) != string::npos)) {
+		return false;
+	}
+	string keyLower = StringToLower(info.key);
+	if (infosSet.find(keyLower) != infosSet.end()) {
+		return false;
+	}
+	
+	info.value = infoTbl.GetString("value", "");
+	if (info.value.empty()) {
+		return false;
+	}
+	
+	info.desc = infoTbl.GetString("desc", "");
+
+	infosSet.insert(keyLower);
+
+	return true;
+}
+
+static void ParseInfos(const string& fileName,
+                         const string& fileModes,
+                         const string& accessModes)
+{
+	infos.clear();
+	
+	LuaParser luaParser(fileName, fileModes, accessModes);
+		
+	if (!luaParser.Execute()) {
+		printf("ParseInfos(%s) ERROR: %s\n",
+		       fileName.c_str(), luaParser.GetErrorLog().c_str());
+		return;
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		return;
+	}
+
+	infosSet.clear();
+	for (int index = 1; root.KeyExists(index); index++) {
+		InfoItem info;
+		if (ParseInfo(root, index, info)) {
+			infos.push_back(info);
+		}
+	}
+	infosSet.clear();
+}
+*/
+
+
+std::vector<Option> ParseOptions(
+		const std::string& fileName,
+		const std::string& fileModes,
+		const std::string& accessModes,
+		const std::string& mapName = "")
+{
+	std::vector<Option> options;
+	
+	static const unsigned int MAX_OPTIONS = 128;
+	Option tmpOptions[MAX_OPTIONS];
+	unsigned int num = ParseOptions(fileName.c_str(), fileModes.c_str(),
+			accessModes.c_str(), mapName.c_str(), tmpOptions, MAX_OPTIONS);
+	for (unsigned int i=0; i < num; ++i) {
+		options.push_back(tmpOptions[i]);
+    }
+	
+	return options;
+}
+
+int GetMapOptionCount(const char* name)
 {
 	ASSERT(archiveScanner && vfsHandler,
 	       "Call InitArchiveScanner before GetMapOptionCount.");
@@ -1267,22 +1224,113 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 	ScopedMapLoader mapLoader(name);
 
-	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
+	options = ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
 
 	return (int)options.size();
 }
 
 
-DLL_EXPORT int __stdcall GetModOptionCount()
+int GetModOptionCount()
 {
-	ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+	options = ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
 	return (int)options.size();
 }
 
 
-// Common Parameters
+// Updated on every call to GetSkirmishAICount
+static vector<string> skirmishAIDataDirs;
 
-DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
+int GetSkirmishAICount() {
+	
+	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetSkirmishAICount.");
+	
+	skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*", SPRING_VFS_RAW);
+	
+	// filter out dirs not containing an AIInfo.lua file 
+	for (vector<string>::iterator i = skirmishAIDataDirs.begin(); i != skirmishAIDataDirs.end(); ++i) {
+		const string& possibleDataDir = *i;
+		vector<string> infoFile = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
+		if (infoFile.size() == 0) {
+			skirmishAIDataDirs.erase(i);
+		}
+	}
+	
+	sort(skirmishAIDataDirs.begin(), skirmishAIDataDirs.end());
+
+	return skirmishAIDataDirs.size();
+}
+
+struct SSAISpecifyer GetSkirmishAISpecifyer(int index) {
+	
+	SSAISpecifyer spec = {NULL, NULL};
+	
+	int num = GetSkirmishAIInfoCount(index);
+	
+	for (int i=0; i < num; ++i) {
+		string info_key = string(GetInfoKey(i));
+		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
+			spec.shortName = GetInfoValue(i);
+		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
+			spec.version = GetInfoValue(i);
+		}
+	}
+	
+	return spec;
+}
+
+std::vector<InfoItem> ParseInfos(
+		const std::string& fileName,
+		const std::string& fileModes,
+		const std::string& accessModes)
+{
+	std::vector<InfoItem> infos;
+	
+	static const unsigned int MAX_INFOS = 128;
+	InfoItem tmpInfos[MAX_INFOS];
+	unsigned int num = ParseInfos(fileName.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfos, MAX_INFOS);
+	for (unsigned int i=0; i < num; ++i) {
+		infos.push_back(tmpInfos[i]);
+    }
+	
+	return infos;
+}
+
+int GetSkirmishAIInfoCount(int index) {
+	
+	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetSkirmishAIInfoCount.");
+	infos = ParseInfos(skirmishAIDataDirs[index] + "/AIInfo.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+	return (int)infos.size();
+}
+const char* GetInfoKey(int index) {
+	
+	ASSERT(!infos.empty(), "Call GetSkirmishAIInfoCount before GetInfoKey.");
+	return infos.at(index).key;
+}
+const char* GetInfoValue(int index) {
+	
+	ASSERT(!infos.empty(), "Call GetSkirmishAIInfoCount before GetInfoValue.");
+	return infos.at(index).value;
+}
+const char* GetInfoDescription(int index) {
+	
+	ASSERT(!infos.empty(), "Call GetSkirmishAIInfoCount before GetInfoDescription.");
+	return infos.at(index).desc;
+}
+//struct LevelOfSupport GetSkirmishAILevelOfSupport(int index, const char* engineVersionString, int engineVersionNumber, const char* aiInterfaceShortName, const char* aiInterfaceVersion) {}
+
+
+
+int GetSkirmishAIOptionCount(int index) {
+//int GetSkirmishAIOptionCount(const char* shortName, const char* version = NULL) {
+	
+	ASSERT(!skirmishAIDataDirs.empty(), "Call GetSkirmishAICount before GetSkirmishAIOptionCount.");
+	//SSAISpecifyer spec = {shortName, version};
+	options = ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+	return (int)options.size();
+}
+
+
+const char* GetOptionKey(int optIndex)
 {
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
@@ -1291,7 +1339,7 @@ DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
+const char* GetOptionName(int optIndex)
 {
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
@@ -1300,7 +1348,7 @@ DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)
+const char* GetOptionDesc(int optIndex)
 {
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
@@ -1309,7 +1357,7 @@ DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)
 }
 
 
-DLL_EXPORT int __stdcall GetOptionType(int optIndex)
+int GetOptionType(int optIndex)
 {
 	if (InvalidOptionIndex(optIndex)) {
 		return 0;
@@ -1318,9 +1366,7 @@ DLL_EXPORT int __stdcall GetOptionType(int optIndex)
 }
 
 
-// Bool Options
-
-DLL_EXPORT int __stdcall GetOptionBoolDef(int optIndex)
+int GetOptionBoolDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_bool)) {
 		return 0;
@@ -1329,9 +1375,7 @@ DLL_EXPORT int __stdcall GetOptionBoolDef(int optIndex)
 }
 
 
-// Number Options
-
-DLL_EXPORT float __stdcall GetOptionNumberDef(int optIndex)
+float GetOptionNumberDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
 		return 0.0f;
@@ -1340,7 +1384,7 @@ DLL_EXPORT float __stdcall GetOptionNumberDef(int optIndex)
 }
 
 
-DLL_EXPORT float __stdcall GetOptionNumberMin(int optIndex)
+float GetOptionNumberMin(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
 		return -1.0e30f; // FIXME ?
@@ -1349,7 +1393,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMin(int optIndex)
 }
 
 
-DLL_EXPORT float __stdcall GetOptionNumberMax(int optIndex)
+float GetOptionNumberMax(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
 		return +1.0e30f; // FIXME ?
@@ -1358,7 +1402,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMax(int optIndex)
 }
 
 
-DLL_EXPORT float __stdcall GetOptionNumberStep(int optIndex)
+float GetOptionNumberStep(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
 		return 0.0f;
@@ -1367,9 +1411,7 @@ DLL_EXPORT float __stdcall GetOptionNumberStep(int optIndex)
 }
 
 
-// String Options
-
-DLL_EXPORT const char* __stdcall GetOptionStringDef(int optIndex)
+const char* GetOptionStringDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_string)) {
 		return NULL;
@@ -1378,7 +1420,7 @@ DLL_EXPORT const char* __stdcall GetOptionStringDef(int optIndex)
 }
 
 
-DLL_EXPORT int __stdcall GetOptionStringMaxLen(int optIndex)
+int GetOptionStringMaxLen(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_string)) {
 		return 0;
@@ -1387,18 +1429,16 @@ DLL_EXPORT int __stdcall GetOptionStringMaxLen(int optIndex)
 }
 
 
-// List Options
-
-DLL_EXPORT int __stdcall GetOptionListCount(int optIndex)
+int GetOptionListCount(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return 0;
 	}
-	return options[optIndex].list.size();
+	return options[optIndex].numListItems;
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
+const char* GetOptionListDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return 0;
@@ -1407,42 +1447,42 @@ DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemIndex)
+const char* GetOptionListItemKey(int optIndex, int itemIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = options[optIndex].list;
-	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
+	//const vector<OptionListItem>& list = options[optIndex].list;
+	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
-	return GetStr(list[itemIndex].key);
+	return GetStr(options[optIndex].list[itemIndex].key);
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionListItemName(int optIndex, int itemIndex)
+const char* GetOptionListItemName(int optIndex, int itemIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = options[optIndex].list;
-	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
+	//const vector<OptionListItem>& list = options[optIndex].list;
+	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
-	return GetStr(list[itemIndex].name);
+	return GetStr(options[optIndex].list[itemIndex].name);
 }
 
 
-DLL_EXPORT const char* __stdcall GetOptionListItemDesc(int optIndex, int itemIndex)
+const char* GetOptionListItemDesc(int optIndex, int itemIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	const vector<ListItem>& list = options[optIndex].list;
-	if ((itemIndex < 0) || (itemIndex >= (int)list.size())) {
+	//const vector<OptionListItem>& list = options[optIndex].list;
+	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
-	return GetStr(list[itemIndex].desc);
+	return GetStr(options[optIndex].list[itemIndex].desc);
 }
 
 
@@ -1527,9 +1567,7 @@ static int LuaGetMapInfo(lua_State* L)
 }
 
 
-// A return value of 0 means that any map can be selected
-// Map names should be complete  (including the .smf or .sm3 extension)
-DLL_EXPORT int __stdcall GetModValidMapCount()
+int GetModValidMapCount()
 {
 	modValidMaps.clear();
 
@@ -1558,9 +1596,9 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
 }
 
 
-DLL_EXPORT const char* __stdcall GetModValidMap(int index)
+const char* GetModValidMap(int index)
 {
-	if ((index < 0) || (index >= modValidMaps.size())) {
+	if ((index < 0) || (index >= (int)modValidMaps.size())) {
 		return NULL;
 	}
 	return GetStr(modValidMaps[index]);
@@ -1570,13 +1608,12 @@ DLL_EXPORT const char* __stdcall GetModValidMap(int index)
 //////////////////////////
 //////////////////////////
 
-// Map the wanted archives into the VFS with AddArchive before using these functions
 
 static map<int, CFileHandler*> openFiles;
 static int nextFile = 0;
 static vector<string> curFindFiles;
 
-DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
+int OpenFileVFS(const char* name)
 {
 	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenFileVFS.");
 	logOutput.Print("openfilevfs: %s\n", name);
@@ -1593,7 +1630,7 @@ DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
 	return nextFile;
 }
 
-DLL_EXPORT void __stdcall CloseFileVFS(int handle)
+void CloseFileVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to CloseFileVFS.");
 	logOutput.Print("closefilevfs: %d\n", handle);
@@ -1601,7 +1638,7 @@ DLL_EXPORT void __stdcall CloseFileVFS(int handle)
 	openFiles.erase(handle);
 }
 
-DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
+void ReadFileVFS(int handle, void* buf, int length)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to ReadFileVFS.");
 	ASSERT(buf, "Don't pass a NULL pointer to ReadFileVFS.");
@@ -1610,7 +1647,7 @@ DLL_EXPORT void __stdcall ReadFileVFS(int handle, void* buf, int length)
 	fh->Read(buf, length);
 }
 
-DLL_EXPORT int __stdcall FileSizeVFS(int handle)
+int FileSizeVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to FileSizeVFS.");
 	logOutput.Print("filesizevfs: %d\n", handle);
@@ -1619,9 +1656,7 @@ DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 }
 
 
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
+int InitFindVFS(const char* pattern)
 {
 	string path = filesystem.GetDirectory(pattern);
 	string patt = filesystem.GetFilename(pattern);
@@ -1630,9 +1665,7 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 	return 0;
 }
 
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitDirListVFS(const char* path, const char* pattern, const char* modes)
+int InitDirListVFS(const char* path, const char* pattern, const char* modes)
 {
 	if (path    == NULL) { path = "";              }
 	if (modes   == NULL) { modes = SPRING_VFS_ALL; }
@@ -1642,9 +1675,7 @@ DLL_EXPORT int __stdcall InitDirListVFS(const char* path, const char* pattern, c
 	return 0;
 }
 
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
+int InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
 {
 	if (path    == NULL) { path = "";              }
 	if (modes   == NULL) { modes = SPRING_VFS_ALL; }
@@ -1654,9 +1685,7 @@ DLL_EXPORT int __stdcall InitSubDirsVFS(const char* path, const char* pattern, c
 	return 0;
 }
 
-// On first call, pass handle from initfind. pass the return value of this function on subsequent calls
-// until 0 is returned. size should be set to max namebuffer size on call
-DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
+int FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
 	ASSERT(size > 0, "Negative or zero buffer length doesn't make sense.");
@@ -1674,8 +1703,7 @@ DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 static map<int, CArchiveBase*> openArchives;
 static int nextArchive = 0;
 
-// returns 0 on error, a handle otherwise
-DLL_EXPORT int __stdcall OpenArchive(const char* name)
+int OpenArchive(const char* name)
 {
 	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchive.");
 	CArchiveBase* a = CArchiveFactory::OpenArchive(name);
@@ -1689,8 +1717,7 @@ DLL_EXPORT int __stdcall OpenArchive(const char* name)
 	}
 }
 
-// returns 0 on error, a handle otherwise
-DLL_EXPORT int __stdcall OpenArchiveType(const char* name, const char* type)
+int OpenArchiveType(const char* name, const char* type)
 {
 	ASSERT(name && *name && type && *type,
 	       "Don't pass a NULL pointer or an empty string to OpenArchiveType.");
@@ -1705,14 +1732,14 @@ DLL_EXPORT int __stdcall OpenArchiveType(const char* name, const char* type)
 	}
 }
 
-DLL_EXPORT void __stdcall CloseArchive(int archive)
+void CloseArchive(int archive)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchive.");
 	delete openArchives[archive];
 	openArchives.erase(archive);
 }
 
-DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
+int FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to FindFilesArchive.");
 	ASSERT(nameBuf && size, "Don't pass a NULL pointer to FindFilesArchive.");
@@ -1730,7 +1757,7 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 	return ret;
 }
 
-DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
+int OpenArchiveFile(int archive, const char* name)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to OpenArchiveFile.");
 	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchiveFile.");
@@ -1738,7 +1765,7 @@ DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
 	return a->OpenFile(name);
 }
 
-DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
+int ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to ReadArchiveFile.");
 	ASSERT(buffer, "Don't pass a NULL pointer to ReadArchiveFile.");
@@ -1746,14 +1773,14 @@ DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, 
 	return a->ReadFile(handle, buffer, numBytes);
 }
 
-DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle)
+void CloseArchiveFile(int archive, int handle)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
 	return a->CloseFile(handle);
 }
 
-DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle)
+int SizeArchiveFile(int archive, int handle)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to SizeArchiveFile.");
 	CArchiveBase* a = openArchives[archive];
@@ -1788,66 +1815,33 @@ void PrintLoadMsg(const char* text)
 //////////////////////////
 //////////////////////////
 
-/**
- * @brief get string from Spring configuration
- * @param name name of key to get
- * @param defvalue default string value to use if key is not found, may not be NULL
- * @return string value
- */
-DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const char* defvalue )
+const char* GetSpringConfigString( const char* name, const char* defValue )
 {
-	string res = configHandler.GetString( name, defvalue );
+	string res = configHandler.GetString( name, defValue );
 	return GetStr(res);
 }
 
-/**
- * @brief get integer from Spring configuration
- * @param name name of key to get
- * @param defvalue default integer value to use if key is not found
- * @return integer value
- */
-DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalue )
+int GetSpringConfigInt( const char* name, const int defValue )
 {
-	return configHandler.GetInt( name, defvalue );
+	return configHandler.GetInt( name, defValue );
 }
 
-/**
- * @brief get float from Spring configuration
- * @param name name of key to get
- * @param defvalue default float value to use if key is not found
- * @return float value
- */
-DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float defvalue )
+float GetSpringConfigFloat( const char* name, const float defValue)
 {
-	return configHandler.GetFloat( name, defvalue );
+	return configHandler.GetFloat( name, defValue );
 }
 
-/**
- * @brief set string in Spring configuration
- * @param name name of key to set
- * @param value string value to set
- */
-DLL_EXPORT void __stdcall SetSpringConfigString(const char* name, const char* value)
+void SetSpringConfigString(const char* name, const char* value)
 {
 	configHandler.SetString( name, value );
 }
 
-/**
- * @brief set integer in Spring configuration
- * @param name name of key to set
- * @param value integer value to set
- */
-DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
+void SetSpringConfigInt(const char* name, const int value)
 {
 	configHandler.SetInt( name, value );
 }
 
-/**
- * @brief set float in Spring configuration
- * @param name name of key to set
- * @param value float value to set
- */
-DLL_EXPORT void __stdcall SetSpringConfigFloat(const char* name, const float value)
+void SetSpringConfigFloat(const char* name, const float value)
 {
 	configHandler.SetFloat( name, value );
 }

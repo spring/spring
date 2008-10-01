@@ -19,7 +19,7 @@ SPRINGFLAGS="--minimise --quit=600"
 [ -z "$SPRING_CLIENT" ] && SPRING_CLIENT="game/spring"
 
 # Where AIs are stored..
-AIDIR="AI/Bot-libs"
+AIDIR="AI/Skirmish/impls"
 
 # Some control of logging.
 LOGDIR="log"
