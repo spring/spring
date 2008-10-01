@@ -11,7 +11,7 @@ OPTS="0 2"
 
 # AI used for testing.. (used as compile target and to generate DLL/SO name)
 AI="AAI"
-AIDIR="AI/Bot-libs"  # relative to '$WINEDIR' or 'game'.
+AIDIR="AI/Skirmish/impls"  # relative to '$WINEDIR' or 'game'.
 
 # For crosscompiling MinGW builds.
 MINGDIR="/usr/i586-mingw32msvc"
