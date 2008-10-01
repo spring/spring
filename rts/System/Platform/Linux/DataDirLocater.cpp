@@ -228,11 +228,13 @@ void DataDirLocater::LocateDataDirs()
 	datadirs.clear();
 
 	// user defined (in spring config handler (Linux: ~/.spring, Windows: registry))
+	#if !defined WIN32 || !(defined BUILDING_AI || defined BUILDING_AI_INTERFACE)
 	std::string userDef = configHandler.GetString("SpringData", "");
 	if (!userDef.empty())
 	{
 		AddDirs(SubstEnvVars(userDef));
 	}
+	#endif	/* !defined WIN32 || !(defined BUILDING_AI || defined BUILDING_AI_INTERFACE) */
 	
 #ifdef WIN32
 	TCHAR currentDir[MAX_PATH];

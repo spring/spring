@@ -28,6 +28,14 @@ public:
 	SoLib(const char *filename);
 
 	/**
+	 * Just dlcloses the shared object
+	 * @brief unload
+	 */
+	virtual void Unload();
+	
+	virtual bool LoadFailed();
+
+	/**
 	 * @brief Destructor
 	 */
 	~SoLib();

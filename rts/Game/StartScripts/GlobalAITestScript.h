@@ -2,13 +2,14 @@
 #define GLOBALAITESTSCRIPT_H
 
 #include "Script.h"
+#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 
 class CGlobalAITestScript :
 	public CScript
 {
-	std::string dllName;
+	SSAIKey skirmishAISpecifyer;
 public:
-	CGlobalAITestScript(std::string dll);
+	CGlobalAITestScript(const SSAIKey& skirmishAISpecifyer);
 	~CGlobalAITestScript(void);
 
 	void GameStart(void);

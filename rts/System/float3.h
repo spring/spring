@@ -10,7 +10,7 @@
 #include "SFloat3.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
-#include "ExternalAI/SAIFloat3.h"
+#include "ExternalAI/Interface/SAIFloat3.h"
 
 /**
  * @brief float3 class

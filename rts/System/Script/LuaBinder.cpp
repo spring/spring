@@ -296,7 +296,7 @@ CLuaBinder::CLuaBinder(void)
 
         namespace_("AIs")
         [
-            def("CreateGlobalAI", &luafunctions::CreateGlobalAI )
+            def("CreateSkirmishAI", &luafunctions::CreateSkirmishAI )
         ],
 
 		namespace_("features")

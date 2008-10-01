@@ -11,7 +11,9 @@
 #include <string>
 using std::string;
 
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "LuaHandle.h"
+#endif
 #include "LuaInclude.h"
 #include "System/Platform/FileSystem.h"
 
@@ -65,7 +67,7 @@ bool LuaIO::SafeReadPath(const string& path)
 bool LuaIO::SafeWritePath(const string& path)
 {
 	string prefix = ""; // FIXME
-#if !defined UNITSYNC && !defined DEDICATED
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	if (lh != NULL) {
 		prefix = lh->GetName() + "/" + "Write";

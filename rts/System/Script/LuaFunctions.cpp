@@ -42,9 +42,9 @@ namespace luafunctions
 		eventHandler.GameOver();
 	}
 
-	void CreateGlobalAI( int teamnumber, std::string dllname )
+	void CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey)
 	{
-			globalAI->CreateGlobalAI( teamnumber, dllname.c_str() );
+			globalAI->CreateSkirmishAI(teamId, skirmishAIKey);
 	}
 
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)

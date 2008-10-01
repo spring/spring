@@ -42,8 +42,11 @@ public:
 
 		// release mode check
 		if (checksum != 0x617a9968)
-			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);
-#endif
+			handleerror(0, "Invalid headingToVectorTable checksum. Most likely"
+					" your streflop library was not compiled with the correct"
+					" options, or you are not using streflop at all.",
+					"Sync Error", 0);
+#endif	/* STREFLOP_H */
 	}
 };
 

@@ -29,6 +29,10 @@
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
+// This undef is needed, as somewhere there is a type interface specifyed,
+// which we need not!
+// (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
+#undef interface
 #include "Team.h"
 #include "Server/MsgStrings.h"
 
@@ -1199,7 +1203,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!setup || !gs->Team(a)->dllAI.empty())
+		if (!setup || !SSAIKey_Comparator::IsEmpty(gs->Team(a)->skirmishAISpecifyer)) // is not empty?
 			hasPlayer = true;
 
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)

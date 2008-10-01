@@ -6,6 +6,7 @@
  * unsynced global stuff
  */
 #include "StdAfx.h"
+#include "Platform/errorhandler.h"
 #include <cstring>
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
@@ -19,6 +20,7 @@
 #include "SDL_types.h"
 #include "SDL_timer.h"
 #include "mmgr.h"
+#include "ExternalAI/IAILibraryManager.h"
 
 /**
  * @brief global synced
@@ -191,17 +193,30 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		teams[i]->leader = setup->teamStartingData[i].leader;
 		teams[i]->side = setup->teamStartingData[i].side;
 		SetAllyTeam(i, setup->teamStartingData[i].teamAllyteam);
-		if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") {
-			teams[i]->luaAI = setup->teamStartingData[i].aiDll.substr(6);
+		if (!(setup->teamStartingData[i].luaAI.empty())) {
+			teams[i]->luaAI = setup->teamStartingData[i].luaAI;
 			teams[i]->isAI = true;
 		}
 		else {
-			if (setup->hostDemo)
-				teams[i]->dllAI = "";
+			if (setup->hostDemo) {
+				SSAIKey key = {{NULL, NULL}, {NULL, NULL}};
+				teams[i]->skirmishAISpecifyer = key;
+			}
 			else
 			{
-				teams[i]->dllAI = setup->teamStartingData[i].aiDll;
-				teams[i]->isAI = true;
+				const char* sn = setup->teamStartingData[i].skirmishAIShortName.c_str();
+				const char* v = setup->teamStartingData[i].skirmishAIVersion.empty() ? NULL : setup->teamStartingData[i].skirmishAIVersion.c_str();
+				SSAISpecifyer spec = {sn, v};
+				std::vector<SSAIKey> fittingKeys = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
+				if (fittingKeys.size() > 0) {
+					teams[i]->skirmishAISpecifyer = fittingKeys[0];
+					teams[i]->isAI = true;
+				} else {
+					const int MAX_MSG_LENGTH = 511;
+					char s_msg[MAX_MSG_LENGTH + 1];
+					SNPRINTF(s_msg, MAX_MSG_LENGTH, "Specifyed Skirmish AI could not be found: %s (version: %s)", spec.shortName, spec.version != NULL ? spec.version : "<not specifyed>");
+					handleerror(NULL, s_msg, "Game Script Error", MBF_OK | MBF_EXCL);
+				}
 			}
 		}
 		for (unsigned t = 0; t < static_cast<unsigned>(MAX_TEAMS); ++t)
@@ -278,6 +293,11 @@ int CGlobalSyncedStuff::Player(const std::string& name)
 		}
 	}
 	return -1;
+}
+
+CGlobalSyncedStuff* CGlobalSyncedStuff::instance = NULL;
+CGlobalSyncedStuff* CGlobalSyncedStuff::GetInstance() {
+	return instance;
 }
 
 /**
@@ -372,5 +392,10 @@ void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	spectating = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullSelect = setup->playerStartingData[myPlayerNum].spectator;
+}
+
+CGlobalUnsyncedStuff* CGlobalUnsyncedStuff::instance = NULL;
+CGlobalUnsyncedStuff* CGlobalUnsyncedStuff::GetInstance() {
+	return instance;
 }
 

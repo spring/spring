@@ -12,7 +12,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/GlobalAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "System/EventHandler.h"
 #include "creg/STL_List.h"
@@ -35,7 +34,7 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(side),
 				CR_MEMBER(isAI),
 				CR_MEMBER(luaAI),
-				CR_MEMBER(dllAI),
+				CR_MEMBER(skirmishAISpecifyer),
 				CR_MEMBER(units),
 				CR_MEMBER(startPos),
 				CR_MEMBER(metal),
@@ -129,7 +128,7 @@ CTeam::CTeam()
   side("arm"),
   isAI(false),
   luaAI(""),
-  dllAI(""),
+//  skirmishAISpecifyer(SSAIKey()),
   startPos(100,100,100),
   handicap(1),
   leader(-1),
@@ -279,9 +278,8 @@ void CTeam::Died()
 			gs->players[a]->StartSpectating();
 		}
 	}
-	if (globalAI->ais[teamNum]) {
-		delete globalAI->ais[teamNum];
-		globalAI->ais[teamNum] = NULL;
+	if (globalAI->IsSkirmishAI(teamNum)) {
+		globalAI->DestroySkirmishAI(teamNum);
 	}
 
 	CLuaUI::UpdateTeams();

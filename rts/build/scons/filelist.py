@@ -18,7 +18,7 @@ def fix_path(path):
 	return newpath
 
 
-def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.'):
+def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.', recursively = True):
 	path_stack = [path]
 	#walk through dir tree
 	exclude = re.compile(exclude_regexp)
@@ -31,7 +31,8 @@ def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.'):
 			if os.path.exists(g) and not f in exclude_list and not exclude.search(f):
 				if os.path.isdir(g):
 					dirs += [g]
-					path_stack += [g]
+					if recursively:
+						path_stack += [g]
 	return dirs
 
 
@@ -90,6 +91,7 @@ def get_spring_source(env):
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Mac', # Mac build uses XCode
 		'rts/System/Platform/Linux/DataDirLocater.cpp', # see SConstruct
+		'rts/ExternalAI/Interface/LegacyCppWrapper', # only needed by AI libraries using the legacy C++ interface to connect with spring
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
@@ -117,22 +119,103 @@ def get_spring_source(env):
 
 
 def get_AI_source(env, path, which):
-	return get_source(env, os.path.join(path, which))
+	return get_source(env, os.path.join(path, which)) #+ get_source(env, 'rts/ExternalAI/Interface')
 
 
-def get_globalAI_source(env, which):
-	return get_AI_source(env, 'AI/Global', which)
+def get_AIInterface_source(env, which):
+	return get_AI_source(env, 'AI/Interfaces', which)
+
+
+def get_skirmishAI_source(env, which):
+	return get_AI_source(env, 'AI/Skirmish', which)
 
 
 def get_groupAI_source(env, which):
 	return get_AI_source(env, 'AI/Group', which)
 
 
-def get_shared_AI_source(env):
-	result = get_source(env, 'rts/System/creg')
+def get_shared_AI_source(env, needLuaParsing = False, needCreg = False):
+	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
+		if needLuaParsing:
+			result += [os.path.join(env['builddir'], 'rts/Lua/LuaParser.cpp')]
+			#result += [os.path.join(env['builddir'], 'rts/Lua/LuaSyncedRead.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/Lua/LuaIO.cpp')]
+			#result += [os.path.join(env['builddir'], 'rts/Lua/LuaHandle.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/Lua/LuaUtils.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/Map/MapParser.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/LogOutput.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/FileHandler.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/VFSHandler.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveScanner.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveFactory.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveBase.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveBuffered.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/Archive7Zip.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveZip.cpp')]
+			result += get_source(env, 'rts/lib/minizip')
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveDir.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/ArchiveHPI.cpp')]
+			result += get_source(env, 'rts/lib/hpiutil2')
+			needCreg = True
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/CRC.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/FileSystem/FileFilter.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/System/Platform/FileSystem.cpp')]
+			if env['platform'] == 'windows':
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Win/WinFileSystemHandler.cpp')]
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Win/DataDirLocater.cpp')]
+			else:
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp')]
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/DataDirLocater.cpp')]
+			result += get_source(env, 'rts/lib/lua/src')
+			result += [os.path.join(env['builddir'], 'rts/System/Platform/ConfigHandler.cpp')]
+			if env['platform'] == 'windows':
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Win/RegHandler.cpp')]
+			else:
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp')]
+			result += get_source(env, 'rts/lib/7zip')
+
+		if needCreg:
+			result += get_source(env, 'rts/System/creg')
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SInfo.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SOption.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SGAILibrary.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SSAILibrary.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SAIInterfaceLibrary.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/Game/GameVersion.cpp')]
+		#result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
+		#result += [os.path.join(env['builddir'], 'rts/System/LogOutput.cpp')]
 	return result
+
+def get_shared_AIInterface_source(env, needSharedLib, needLuaParsing = False, needCreg = False):
+	result = get_shared_AI_source(env, needLuaParsing, needCreg)
+	if env.has_key('builddir') and env['builddir']:
+		result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
+		#if not needLuaParsing:
+			#result += [os.path.join(env['builddir'], 'rts/System/LogOutput.cpp')]
+		if needSharedLib:
+			result += [os.path.join(env['builddir'], 'rts/System/Platform/SharedLib.cpp')]
+			if env['platform'] == 'windows':
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Win/DllLib.cpp')]
+			else:
+				result += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/SoLib.cpp')]
+	return result
+
+def get_shared_skirmishAI_source(env, isLegacyCPP, needLuaParsing = False, needCreg = False):
+	result = get_shared_AI_source(env, needLuaParsing, needCreg)
+	if env.has_key('builddir') and env['builddir']:
+		if isLegacyCPP:
+			result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AISCommands.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICallback.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICheats.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGlobalAICallback.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGlobalAI.cpp')]
+			result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AI.cpp')]
+		#result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
+		#result += [os.path.join(env['builddir'], 'rts/System/LogOutput.cpp')]
+	return result
+
 
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	exclude = re.compile(exclude_regexp)
@@ -146,8 +229,12 @@ def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	return result
 
 
-def list_globalAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'AI/Global', exclude_list, exclude_regexp)
+def list_AIInterfaces(env, exclude_list = (), exclude_regexp = '^\.'):
+	return list_AIs(env, 'AI/Interfaces', exclude_list, exclude_regexp)
+
+
+def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.'):
+	return list_AIs(env, 'AI/Skirmish', exclude_list, exclude_regexp)
 
 
 def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):

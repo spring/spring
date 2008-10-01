@@ -47,6 +47,18 @@ public:
 	static SharedLib *Instantiate(std::string filename);
 
 	/**
+	 * Explicitly unload this shared library
+	 * @brief unload
+	 */
+	virtual void Unload() = 0;
+
+	/**
+	 * Returns true if loading of the native library failed.
+	 * @brief loadFailed
+	 */
+	virtual bool LoadFailed() = 0;
+
+	/**
 	 * @brief GetLibExtension
 	 * @return "dll", "dylib" or "so" depending on OS
 	 */
@@ -61,6 +73,9 @@ public:
 	virtual void *FindAddress(const char *symbol) = 0;
 
 	virtual ~SharedLib();
+
+protected:
+	static void reportError(const char* errorMsg, const char* fileName = "???", int lineNumber = -1, const char* function = "???");
 };
 
 #endif /* SHAREDLIB_H */

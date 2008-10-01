@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<project name="CSAILoader" default="deploy" basedir=".">
+   <description>CSAILoader</description>
+   
+   <uptodate property="csailoaderobjsources.unchanged">
+        <sourcefiles>
+            <include name="CSAIProxy.h" />
+            <include name="AICallbackProxy.h" />
+            <include name="UnitDefProxy.h" />
+            <include name="FeatureDefProxy.h" />
+            <include name="MoveDataProxy.h" />
+            <include name="CSAILoader.cpp" />
+        </sourcefiles>
+        <targetfiles>
+            <include name="CSAILoader.obj" />
+        </targetfiles>
+    </uptodate>
+   
+   <uptodate property="csaiproxyobjsources.unchanged">
+        <sourcefiles>
+            <include name="CSAIProxy.h" />
+            <include name="AICallbackProxy.h" />
+            <include name="UnitDefProxy.h" />
+            <include name="FeatureDefProxy.h" />
+            <include name="MoveDataProxy.h" />
+            <include name="CSAIProxy.cpp" />
+        </sourcefiles>
+        <targetfiles>
+            <include name="CSAIProxy.obj" />
+        </targetfiles>
+    </uptodate>
+   
+   <target name="compilecsailoader" if="${not csailoaderobjsources.unchanged}">
+      <cl outputdir="." managedextensions="true" options=" /MD /EHsc"  >
+          <sources>
+             <include name="CSAILoader.cpp" />
+          </sources>
+          <includedirs>
+             <include name="${taspring.sourcecodedirectory}/rts" />          
+             <include name="${taspring.sourcecodedirectory}/rts/system" />          
+             <include name="${platformsdk.include}" />          
+             <include name="../AbicWrappers" />          
+          </includedirs>
+          <forcedusingfiles>
+             <include name="../CSAIInterfaces/CSAIInterfaces.dll"/>
+          </forcedusingfiles>
+      </cl>
+   </target>
+   
+   <target name="compilecsaiproxy" if="${not csaiproxyobjsources.unchanged}">
+      <cl outputdir="." managedextensions="true" options=" /MD /EHsc" >
+          <sources>
+             <include name="CSAIProxy.cpp" />
+          </sources>
+          <includedirs>
+             <include name="${taspring.sourcecodedirectory}/rts" />          
+             <include name="${taspring.sourcecodedirectory}/rts/system" />          
+             <include name="${platformsdk.include}" />          
+             <include name="../AbicWrappers" />          
+          </includedirs>
+          <forcedusingfiles>
+             <include name="../CSAIInterfaces/CSAIInterfaces.dll"/>
+          </forcedusingfiles>
+      </cl>
+   </target>
+   
+   <target name="link" depends="compilecsaiproxy,compilecsailoader">
+      <link output="CSAILoader.dll" options="/dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj  /INCLUDE:__DllMainCRTStartup@12">
+          <sources>
+             <include name="CSAIProxy.obj" />
+             <include name="CSAILoader.obj" />
+         </sources>
+         <libdirs>
+             <include name="${platformsdk.lib}" />
+         </libdirs>
+      </link>
+   </target>
+   
+   <target name="deploy" depends="link">
+      <copy todir="${taspring.applicationdirectory}/AI/Skirmish/impls">
+          <fileset>
+              <include name="CSAILoader.dll" />
+              <include name="CSAILoader.xml" />
+          </fileset>
+      </copy>
+   </target>
+
+   <target name="clean" >
+      <delete>
+  	<fileset basedir="${taspring.applicationdirectory}">
+              <include name="CSAILoader.dll" />
+              <include name="CSAILoader.xml" />
+	</fileset>          
+      </delete>
+      <delete>
+  	<fileset basedir=".">
+           <include name="CSAILoader.dll" />
+           <include name="*.obj" />
+	</fileset>          
+      </delete>
+   </target>
+</project>

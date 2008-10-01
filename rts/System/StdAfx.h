@@ -1,6 +1,8 @@
 #ifndef __STD_AFX_H__
 #define __STD_AFX_H__
 
+#ifdef	__cplusplus
+
 #ifndef NOMINMAX
 #define NOMINMAX // avoid conflicts with std::min and std::max
 #endif
@@ -17,15 +19,21 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
 		#define SNPRINTF sprintf_s
 		#define VSNPRINTF vsprintf_s
+		#define STRCPY strcpy_s
+		#define FOPEN fopen_s
 	#else              // Visual Studio 2003
 		#define SNPRINTF _snprintf
 		#define VSNPRINTF _vsnprintf
+		#define STRCPY strcpy
+		#define FOPEN fopen
 	#endif
 	#define STRCASECMP stricmp
 #else
 	// assuming GCC
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf
+	#define STRCPY strcpy
+	#define FOPEN fopen
 	#define STRCASECMP strcasecmp
 #endif
 
@@ -72,6 +80,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include <stdexcept>
 #include <string>
 #include <cctype>
+#include <cassert>
 
 /**
  * content_error
@@ -106,5 +115,19 @@ static inline std::string IntToString(int i, const std::string& format = "%i")
 	return std::string(buf);
 }
 
+#endif	/* __cplusplus */
+
+static inline char* mallocCopyString(const char* const orig) {
+	
+	char* copy;
+	
+	copy = (char *) malloc(/*sizeof(char) * */strlen(orig) + 1);
+	STRCPY(copy, orig);
+	
+	return copy;
+}
+static inline void freeString(const char* const toFreeStr) {
+	free(const_cast<char*>(toFreeStr));
+}
 
 #endif // __STD_AFX_H__

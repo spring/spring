@@ -194,7 +194,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	int playerCount = -1;
 	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
 	
-	if (playerCount == -1 || playerStartingData.size() == playerCount)
+	if (playerCount == -1 || (int)playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
 		throw content_error("incorrect number of players in GameSetup script");
@@ -238,8 +238,15 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
-		const string aiDll = file.SGetValueDef("", s + "aidll");
-		data.aiDll = aiDll;
+		data.luaAI = file.SGetValueDef("", s + "aispecifyer");
+		if (data.luaAI.empty()) {
+			data.luaAI = file.SGetValueDef("", s + "luaai");
+		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
+			data.luaAI = data.luaAI.substr(6);
+		}
+		data.skirmishAIShortName = file.SGetValueDef("", s + "ainame");
+		data.skirmishAIVersion = file.SGetValueDef("", s + "aiversion");
+		
 		teamStartingData.push_back(data);
 
 		teamRemap[a] = i;
@@ -249,7 +256,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	int teamCount = -1;
 	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
 	
-	if (teamCount == -1 || teamStartingData.size() == teamCount)
+	if (teamCount == -1 || (int)teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
@@ -296,7 +303,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	int allyCount = -1;
 	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
 	
-	if (allyCount == -1 || allyStartingData.size() == allyCount)
+	if (allyCount == -1 || (int)allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");

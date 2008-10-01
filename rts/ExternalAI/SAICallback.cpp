@@ -1,4 +1,6 @@
 /*
+	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
+	
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -13,7 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "SAICallback.h"
+#include "Interface/SAICallback.h"
 
 #include "IGlobalAICallback.h"
 #include "IAICallback.h"
@@ -22,13 +24,13 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "AISCommands.h"
+#include "Interface/AISCommands.h"
 
 
-IGlobalAICallback* team_globalCallback[MAX_AIS];
-IAICallback* team_callback[MAX_AIS];
-bool team_cheatingEnabled[MAX_AIS];
-IAICheats* team_cheatCallback[MAX_AIS];
+IGlobalAICallback* team_globalCallback[MAX_SKIRMISH_AIS];
+IAICallback* team_callback[MAX_SKIRMISH_AIS];
+bool team_cheatingEnabled[MAX_SKIRMISH_AIS];
+IAICheats* team_cheatCallback[MAX_SKIRMISH_AIS];
 
 int fillCMap(const std::map<std::string,std::string>* map, const char* cMap[][2]) {
 	std::map<std::string,std::string>::const_iterator it;
@@ -92,7 +94,7 @@ int wrapper_HandleCommand(IAICallback* clb, IAICheats* clbCheat, int cmdId, void
 	return ret;
 }
 
-int _handleCommand(int teamId, int toId, int commandId, int commandTopic, void* commandData) {
+Export(int) _handleCommand(int teamId, int toId, int commandId, int commandTopic, void* commandData) {
 
 	int ret = 0;
 
@@ -1279,7 +1281,7 @@ int _handleCommand(int teamId, int toId, int commandId, int commandTopic, void* 
 
 
 //##############################################################################
-bool _Cheats_isEnabled(int teamId) {
+Export(bool) _Cheats_isEnabled(int teamId) {
 	team_cheatCallback[teamId] = NULL;
 	if (team_cheatingEnabled[teamId]) {
 		team_cheatCallback[teamId] = team_globalCallback[teamId]->GetCheatInterface();
@@ -1287,7 +1289,7 @@ bool _Cheats_isEnabled(int teamId) {
 	return team_cheatCallback[teamId] != NULL;
 }
 
-bool _Cheats_setEnabled(int teamId, bool enabled) {
+Export(bool) _Cheats_setEnabled(int teamId, bool enabled) {
 //	bool isEnabled = _Cheats_isEnabled(teamId);
 //	
 //	if (enabled != isEnabled) {
@@ -1307,7 +1309,7 @@ bool _Cheats_setEnabled(int teamId, bool enabled) {
 	return enabled == _Cheats_isEnabled(teamId);
 }
 
-bool _Cheats_setEventsEnabled(int teamId, bool enabled) {
+Export(bool) _Cheats_setEventsEnabled(int teamId, bool enabled) {
 	if (_Cheats_isEnabled(teamId)) {
 		team_cheatCallback[teamId]->EnableCheatEvents(enabled);
 		return true;
@@ -1316,7 +1318,7 @@ bool _Cheats_setEventsEnabled(int teamId, bool enabled) {
 	}
 }
 
-bool _Cheats_isOnlyPassive(int teamId) {
+Export(bool) _Cheats_isOnlyPassive(int teamId) {
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->OnlyPassiveCheats();
 	} else {
@@ -1324,31 +1326,31 @@ bool _Cheats_isOnlyPassive(int teamId) {
 	}
 }
 
-int _Game_getAiInterfaceVersion(int teamId) {
+Export(int) _Game_getAiInterfaceVersion(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return wrapper_HandleCommand(clb, NULL, AIHCQuerySubVersionId, NULL);
 }
 
-bool _Map_isPosInCamera(int teamId, SAIFloat3 pos, float radius) {
+Export(bool) _Map_isPosInCamera(int teamId, SAIFloat3 pos, float radius) {
 	IAICallback* clb = team_callback[teamId]; return clb->PosInCamera(SAIFloat3(pos), radius);
 }
 
-int _Game_getCurrentFrame(int teamId) {
+Export(int) _Game_getCurrentFrame(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetCurrentFrame();
 }
 
-int _Game_getMyTeam(int teamId) {
+Export(int) _Game_getMyTeam(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMyTeam();
 }
 
-int _Game_getMyAllyTeam(int teamId) {
+Export(int) _Game_getMyAllyTeam(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMyAllyTeam();
 }
 
-int _Game_getPlayerTeam(int teamId, int player) {
+Export(int) _Game_getPlayerTeam(int teamId, int player) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetPlayerTeam(player);
 }
 
-const char* _Game_getTeamSide(int teamId, int team) {
+Export(const char*) _Game_getTeamSide(int teamId, int team) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetTeamSide(team);
 }
 
@@ -1356,7 +1358,7 @@ const char* _Game_getTeamSide(int teamId, int team) {
 
 
 
-int _WeaponDef_STATIC_getNumDamageTypes(int teamId) {
+Export(int) _WeaponDef_STATIC_getNumDamageTypes(int teamId) {
     int numDamageTypes;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamageTypes);
@@ -1365,7 +1367,7 @@ int _WeaponDef_STATIC_getNumDamageTypes(int teamId) {
     }
     return numDamageTypes;
 }
-unsigned int _Map_getChecksum(int teamId) {
+Export(unsigned int) _Map_getChecksum(int teamId) {
     unsigned int checksum;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_MAP_CHECKSUM, &checksum);
@@ -1375,7 +1377,7 @@ unsigned int _Map_getChecksum(int teamId) {
     return checksum;
 }
 
-bool _Game_isExceptionHandlingEnabled(int teamId) {
+Export(bool) _Game_isExceptionHandlingEnabled(int teamId) {
     bool exceptionHandlingEnabled;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_EXCEPTION_HANDLING, &exceptionHandlingEnabled);
@@ -1384,7 +1386,7 @@ bool _Game_isExceptionHandlingEnabled(int teamId) {
     }
     return exceptionHandlingEnabled;
 }
-bool _Game_isDebugModeEnabled(int teamId) {
+Export(bool) _Game_isDebugModeEnabled(int teamId) {
     bool debugModeEnabled;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_DEBUG_MODE, &debugModeEnabled);
@@ -1393,7 +1395,7 @@ bool _Game_isDebugModeEnabled(int teamId) {
     }
     return debugModeEnabled;
 }
-int _Game_getMode(int teamId) {
+Export(int) _Game_getMode(int teamId) {
     int mode;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
@@ -1402,7 +1404,7 @@ int _Game_getMode(int teamId) {
     }
     return mode;
 }
-bool _Game_isPaused(int teamId) {
+Export(bool) _Game_isPaused(int teamId) {
     bool paused;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GAME_PAUSED, &paused);
@@ -1411,7 +1413,7 @@ bool _Game_isPaused(int teamId) {
     }
     return paused;
 }
-float _Game_getSpeedFactor(int teamId) {
+Export(float) _Game_getSpeedFactor(int teamId) {
     float speedFactor;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GAME_SPEED_FACTOR, &speedFactor);
@@ -1421,7 +1423,7 @@ float _Game_getSpeedFactor(int teamId) {
     return speedFactor;
 }
 
-float _Gui_getViewRange(int teamId) {
+Export(float) _Gui_getViewRange(int teamId) {
     float viewRange;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GUI_VIEW_RANGE, &viewRange);
@@ -1430,7 +1432,7 @@ float _Gui_getViewRange(int teamId) {
     }
     return viewRange;
 }
-float _Gui_getScreenX(int teamId) {
+Export(float) _Gui_getScreenX(int teamId) {
     float screenX;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENX, &screenX);
@@ -1439,7 +1441,7 @@ float _Gui_getScreenX(int teamId) {
     }
     return screenX;
 }
-float _Gui_getScreenY(int teamId) {
+Export(float) _Gui_getScreenY(int teamId) {
     float screenY;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENY, &screenY);
@@ -1448,7 +1450,7 @@ float _Gui_getScreenY(int teamId) {
     }
     return screenY;
 }
-SAIFloat3 _Gui_Camera_getDirection(int teamId) {
+Export(SAIFloat3) _Gui_Camera_getDirection(int teamId) {
     float3 cameraDir;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
@@ -1457,7 +1459,7 @@ SAIFloat3 _Gui_Camera_getDirection(int teamId) {
     }
     return cameraDir.toSAIFloat3();
 }
-SAIFloat3 _Gui_Camera_getPosition(int teamId) {
+Export(SAIFloat3) _Gui_Camera_getPosition(int teamId) {
     float3 cameraPosition;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
@@ -1467,16 +1469,16 @@ SAIFloat3 _Gui_Camera_getPosition(int teamId) {
     return cameraPosition.toSAIFloat3();
 }
 
-bool _File_locateForReading(int teamId, char* filename) {
+Export(bool) _File_locateForReading(int teamId, char* filename) {
 	IAICallback* clb = team_callback[teamId];
     return clb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 }
-bool _File_locateForWriting(int teamId, char* filename) {
+Export(bool) _File_locateForWriting(int teamId, char* filename) {
 	IAICallback* clb = team_callback[teamId];
     return clb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 }
 
-int _Unit_STATIC_getLimit(int teamId) {
+Export(int) _Unit_STATIC_getLimit(int teamId) {
     int unitLimit;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
@@ -1485,7 +1487,7 @@ int _Unit_STATIC_getLimit(int teamId) {
     }
     return unitLimit;
 }
-const char* _Game_getSetupScript(int teamId) {
+Export(const char*) _Game_getSetupScript(int teamId) {
     const char* setupScript;
 	IAICallback* clb = team_callback[teamId];
     bool fetchOk = clb->GetValue(AIVAL_SCRIPT, &setupScript);
@@ -1502,7 +1504,7 @@ const char* _Game_getSetupScript(int teamId) {
 
 
 //########### BEGINN UnitDef
-int _UnitDef_STATIC_getIds(int teamId, int* list) {
+Export(int) _UnitDef_STATIC_getIds(int teamId, int* list) {
 	IAICallback* clb = team_callback[teamId];
 	int numUnitDefs = clb->GetNumUnitDefs();
 	const UnitDef** defList = (const UnitDef**) new UnitDef*[numUnitDefs];
@@ -1514,236 +1516,244 @@ int _UnitDef_STATIC_getIds(int teamId, int* list) {
 	delete [] defList;
 	return numUnitDefs;
 }
-int _UnitDef_STATIC_getIdByName(int teamId, const char* unitName) {
+Export(int) _UnitDef_STATIC_getIdByName(int teamId, const char* unitName) {
+	
+	int unitDefId = -1;
+	
 	IAICallback* clb = team_callback[teamId];
-	return clb->GetUnitDef(unitName)->id;
+	const UnitDef* ud = clb->GetUnitDef(unitName);
+	if (ud != NULL) {
+		unitDefId = ud->id;
+	}
+	
+	return unitDefId;
 }
 
-float _UnitDef_getHeight(int teamId, int unitDefId) {
+Export(float) _UnitDef_getHeight(int teamId, int unitDefId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitDefHeight(unitDefId);
 }
-float _UnitDef_getRadius(int teamId, int unitDefId) {
+Export(float) _UnitDef_getRadius(int teamId, int unitDefId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitDefRadius(unitDefId);
 }
 
-bool _UnitDef_isValid(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->valid;}
-const char* _UnitDef_getName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->name.c_str();}
-const char* _UnitDef_getHumanName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->humanName.c_str();}
-const char* _UnitDef_getFilename(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->filename.c_str();}
-int _UnitDef_getId(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->id;}
-int _UnitDef_getAiHint(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->aihint;}
-int _UnitDef_getCobID(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cobID;}
-int _UnitDef_getTechLevel(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->techLevel;}
-const char* _UnitDef_getGaia(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->gaia.c_str();}
-float _UnitDef_getMetalUpkeep(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalUpkeep;}
-float _UnitDef_getEnergyUpkeep(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyUpkeep;}
-float _UnitDef_getMetalMake(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalMake;}
-float _UnitDef_getMakesMetal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->makesMetal;}
-float _UnitDef_getEnergyMake(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyMake;}
-float _UnitDef_getMetalCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalCost;}
-float _UnitDef_getEnergyCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyCost;}
-float _UnitDef_getBuildTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildTime;}
-float _UnitDef_getExtractsMetal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->extractsMetal;}
-float _UnitDef_getExtractRange(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->extractRange;}
-float _UnitDef_getWindGenerator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->windGenerator;}
-float _UnitDef_getTidalGenerator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->tidalGenerator;}
-float _UnitDef_getMetalStorage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalStorage;}
-float _UnitDef_getEnergyStorage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyStorage;}
-float _UnitDef_getAutoHeal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->autoHeal;}
-float _UnitDef_getIdleAutoHeal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->idleAutoHeal;}
-int _UnitDef_getIdleTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->idleTime;}
-float _UnitDef_getPower(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->power;}
-float _UnitDef_getHealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->health;}
-unsigned int _UnitDef_getCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->category;}
-float _UnitDef_getSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->speed;}
-float _UnitDef_getTurnRate(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRate;}
-int _UnitDef_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveType;}
-bool _UnitDef_isUpright(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->upright;}
-bool _UnitDef_isCollide(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collide;}
-float _UnitDef_getControlRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->controlRadius;}
-float _UnitDef_getLosRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->losRadius;}
-float _UnitDef_getAirLosRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->airLosRadius;}
-float _UnitDef_getLosHeight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->losHeight;}
-int _UnitDef_getRadarRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->radarRadius;}
-int _UnitDef_getSonarRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarRadius;}
-int _UnitDef_getJammerRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->jammerRadius;}
-int _UnitDef_getSonarJamRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarJamRadius;}
-int _UnitDef_getSeismicRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->seismicRadius;}
-float _UnitDef_getSeismicSignature(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->seismicSignature;}
-bool _UnitDef_isStealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->stealth;}
-bool _UnitDef_isSonarStealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarStealth;}
-bool _UnitDef_isBuildRange3D(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildRange3D;}
-float _UnitDef_getBuildDistance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildDistance;}
-float _UnitDef_getBuildSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildSpeed;}
-float _UnitDef_getReclaimSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->reclaimSpeed;}
-float _UnitDef_getRepairSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->repairSpeed;}
-float _UnitDef_getMaxRepairSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRepairSpeed;}
-float _UnitDef_getResurrectSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->resurrectSpeed;}
-float _UnitDef_getCaptureSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->captureSpeed;}
-float _UnitDef_getTerraformSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->terraformSpeed;}
-float _UnitDef_getMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->mass;}
-bool _UnitDef_isPushResistant(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->pushResistant;}
-bool _UnitDef_isStrafeToAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->strafeToAttack;}
-float _UnitDef_getMinCollisionSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minCollisionSpeed;}
-float _UnitDef_getSlideTolerance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->slideTolerance;}
-float _UnitDef_getMaxSlope(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxSlope;}
-float _UnitDef_getMaxHeightDif(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxHeightDif;}
-float _UnitDef_getMinWaterDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minWaterDepth;}
-float _UnitDef_getWaterline(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->waterline;}
-float _UnitDef_getMaxWaterDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxWaterDepth;}
-float _UnitDef_getArmoredMultiple(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->armoredMultiple;}
-int _UnitDef_getArmorType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->armorType;}
-int _UnitDef_getFlankingBonusMode(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMode;}
-SAIFloat3 _UnitDef_getFlankingBonusDir(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusDir.toSAIFloat3();}
-float _UnitDef_getFlankingBonusMax(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMax;}
-float _UnitDef_getFlankingBonusMin(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMin;}
-float _UnitDef_getFlankingBonusMobilityAdd(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMobilityAdd;}
-const char* _UnitDef_getCollisionVolumeType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeType.c_str();}
-SAIFloat3 _UnitDef_getCollisionVolumeScales(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeScales.toSAIFloat3();}
-SAIFloat3 _UnitDef_getCollisionVolumeOffsets(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeOffsets.toSAIFloat3();}
-int _UnitDef_getCollisionVolumeTest(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeTest;}
-float _UnitDef_getMaxWeaponRange(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxWeaponRange;}
-const char* _UnitDef_getType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->type.c_str();}
-const char* _UnitDef_getTooltip(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->tooltip.c_str();}
-const char* _UnitDef_getWreckName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wreckName.c_str();}
-const char* _UnitDef_getDeathExplosion(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->deathExplosion.c_str();}
-const char* _UnitDef_getSelfDExplosion(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDExplosion.c_str();}
-const char* _UnitDef_getTedClassString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->TEDClassString.c_str();}
-const char* _UnitDef_getCategoryString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->categoryString.c_str();}
-bool _UnitDef_isCanSelfD(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfD;}
-int _UnitDef_getSelfDCountdown(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDCountdown;}
-bool _UnitDef_isCanSubmerge(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSubmerge;}
-bool _UnitDef_isCanFly(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canfly;}
-bool _UnitDef_isCanMove(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canmove;}
-bool _UnitDef_isCanHover(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canhover;}
-bool _UnitDef_isFloater(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->floater;}
-bool _UnitDef_isBuilder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->builder;}
-bool _UnitDef_isActivateWhenBuilt(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->activateWhenBuilt;}
-bool _UnitDef_isOnOffable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->onoffable;}
-bool _UnitDef_isFullHealthFactory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fullHealthFactory;}
-bool _UnitDef_isFactoryHeadingTakeoff(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->factoryHeadingTakeoff;}
-bool _UnitDef_isReclaimable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->reclaimable;}
-bool _UnitDef_isCapturable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->capturable;}
-bool _UnitDef_isCanRestore(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRestore;}
-bool _UnitDef_isCanRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepair;}
-bool _UnitDef_isCanSelfRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfRepair;}
-bool _UnitDef_isCanReclaim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canReclaim;}
-bool _UnitDef_isCanAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAttack;}
-bool _UnitDef_isCanPatrol(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canPatrol;}
-bool _UnitDef_isCanFight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFight;}
-bool _UnitDef_isCanGuard(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canGuard;}
-bool _UnitDef_isCanBuild(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBuild;}
-bool _UnitDef_isCanAssist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAssist;}
-bool _UnitDef_isCanBeAssisted(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBeAssisted;}
-bool _UnitDef_isCanRepeat(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepeat;}
-bool _UnitDef_isCanFireControl(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFireControl;}
-int _UnitDef_getFireState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fireState;}
-int _UnitDef_getMoveState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveState;}
-float _UnitDef_getWingDrag(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wingDrag;}
-float _UnitDef_getWingAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wingAngle;}
-float _UnitDef_getDrag(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->drag;}
-float _UnitDef_getFrontToSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->frontToSpeed;}
-float _UnitDef_getSpeedToFront(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->speedToFront;}
-float _UnitDef_getMyGravity(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->myGravity;}
-float _UnitDef_getMaxBank(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxBank;}
-float _UnitDef_getMaxPitch(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxPitch;}
-float _UnitDef_getTurnRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRadius;}
-float _UnitDef_getWantedHeight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wantedHeight;}
-float _UnitDef_getVerticalSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->verticalSpeed;}
-bool _UnitDef_isCanCrash(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCrash;}
-bool _UnitDef_isHoverAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hoverAttack;}
-bool _UnitDef_isAirStrafe(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->airStrafe;}
-float _UnitDef_getDlHoverFactor(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->dlHoverFactor;}
-float _UnitDef_getMaxAcceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxAcc;}
-float _UnitDef_getMaxDeceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxDec;}
-float _UnitDef_getMaxAileron(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxAileron;}
-float _UnitDef_getMaxElevator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxElevator;}
-float _UnitDef_getMaxRudder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRudder;}
+Export(bool) _UnitDef_isValid(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->valid;}
+Export(const char*) _UnitDef_getName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->name.c_str();}
+Export(const char*) _UnitDef_getHumanName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->humanName.c_str();}
+Export(const char*) _UnitDef_getFilename(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->filename.c_str();}
+Export(int) _UnitDef_getId(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->id;}
+Export(int) _UnitDef_getAiHint(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->aihint;}
+Export(int) _UnitDef_getCobID(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cobID;}
+Export(int) _UnitDef_getTechLevel(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->techLevel;}
+Export(const char*) _UnitDef_getGaia(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->gaia.c_str();}
+Export(float) _UnitDef_getMetalUpkeep(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalUpkeep;}
+Export(float) _UnitDef_getEnergyUpkeep(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyUpkeep;}
+Export(float) _UnitDef_getMetalMake(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalMake;}
+Export(float) _UnitDef_getMakesMetal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->makesMetal;}
+Export(float) _UnitDef_getEnergyMake(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyMake;}
+Export(float) _UnitDef_getMetalCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalCost;}
+Export(float) _UnitDef_getEnergyCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyCost;}
+Export(float) _UnitDef_getBuildTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildTime;}
+Export(float) _UnitDef_getExtractsMetal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->extractsMetal;}
+Export(float) _UnitDef_getExtractRange(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->extractRange;}
+Export(float) _UnitDef_getWindGenerator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->windGenerator;}
+Export(float) _UnitDef_getTidalGenerator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->tidalGenerator;}
+Export(float) _UnitDef_getMetalStorage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->metalStorage;}
+Export(float) _UnitDef_getEnergyStorage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->energyStorage;}
+Export(float) _UnitDef_getAutoHeal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->autoHeal;}
+Export(float) _UnitDef_getIdleAutoHeal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->idleAutoHeal;}
+Export(int) _UnitDef_getIdleTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->idleTime;}
+Export(float) _UnitDef_getPower(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->power;}
+Export(float) _UnitDef_getHealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->health;}
+Export(unsigned int) _UnitDef_getCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->category;}
+Export(float) _UnitDef_getSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->speed;}
+Export(float) _UnitDef_getTurnRate(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRate;}
+Export(int) _UnitDef_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveType;}
+Export(bool) _UnitDef_isUpright(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->upright;}
+Export(bool) _UnitDef_isCollide(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collide;}
+Export(float) _UnitDef_getControlRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->controlRadius;}
+Export(float) _UnitDef_getLosRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->losRadius;}
+Export(float) _UnitDef_getAirLosRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->airLosRadius;}
+Export(float) _UnitDef_getLosHeight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->losHeight;}
+Export(int) _UnitDef_getRadarRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->radarRadius;}
+Export(int) _UnitDef_getSonarRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarRadius;}
+Export(int) _UnitDef_getJammerRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->jammerRadius;}
+Export(int) _UnitDef_getSonarJamRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarJamRadius;}
+Export(int) _UnitDef_getSeismicRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->seismicRadius;}
+Export(float) _UnitDef_getSeismicSignature(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->seismicSignature;}
+Export(bool) _UnitDef_isStealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->stealth;}
+Export(bool) _UnitDef_isSonarStealth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->sonarStealth;}
+Export(bool) _UnitDef_isBuildRange3D(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildRange3D;}
+Export(float) _UnitDef_getBuildDistance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildDistance;}
+Export(float) _UnitDef_getBuildSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildSpeed;}
+Export(float) _UnitDef_getReclaimSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->reclaimSpeed;}
+Export(float) _UnitDef_getRepairSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->repairSpeed;}
+Export(float) _UnitDef_getMaxRepairSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRepairSpeed;}
+Export(float) _UnitDef_getResurrectSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->resurrectSpeed;}
+Export(float) _UnitDef_getCaptureSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->captureSpeed;}
+Export(float) _UnitDef_getTerraformSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->terraformSpeed;}
+Export(float) _UnitDef_getMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->mass;}
+Export(bool) _UnitDef_isPushResistant(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->pushResistant;}
+Export(bool) _UnitDef_isStrafeToAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->strafeToAttack;}
+Export(float) _UnitDef_getMinCollisionSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minCollisionSpeed;}
+Export(float) _UnitDef_getSlideTolerance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->slideTolerance;}
+Export(float) _UnitDef_getMaxSlope(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxSlope;}
+Export(float) _UnitDef_getMaxHeightDif(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxHeightDif;}
+Export(float) _UnitDef_getMinWaterDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minWaterDepth;}
+Export(float) _UnitDef_getWaterline(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->waterline;}
+Export(float) _UnitDef_getMaxWaterDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxWaterDepth;}
+Export(float) _UnitDef_getArmoredMultiple(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->armoredMultiple;}
+Export(int) _UnitDef_getArmorType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->armorType;}
+Export(int) _UnitDef_getFlankingBonusMode(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMode;}
+Export(SAIFloat3) _UnitDef_getFlankingBonusDir(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusDir.toSAIFloat3();}
+Export(float) _UnitDef_getFlankingBonusMax(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMax;}
+Export(float) _UnitDef_getFlankingBonusMin(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMin;}
+Export(float) _UnitDef_getFlankingBonusMobilityAdd(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flankingBonusMobilityAdd;}
+Export(const char*) _UnitDef_getCollisionVolumeType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeType.c_str();}
+Export(SAIFloat3) _UnitDef_getCollisionVolumeScales(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeScales.toSAIFloat3();}
+Export(SAIFloat3) _UnitDef_getCollisionVolumeOffsets(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeOffsets.toSAIFloat3();}
+Export(int) _UnitDef_getCollisionVolumeTest(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collisionVolumeTest;}
+Export(float) _UnitDef_getMaxWeaponRange(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxWeaponRange;}
+Export(const char*) _UnitDef_getType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->type.c_str();}
+Export(const char*) _UnitDef_getTooltip(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->tooltip.c_str();}
+Export(const char*) _UnitDef_getWreckName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wreckName.c_str();}
+Export(const char*) _UnitDef_getDeathExplosion(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->deathExplosion.c_str();}
+Export(const char*) _UnitDef_getSelfDExplosion(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDExplosion.c_str();}
+Export(const char*) _UnitDef_getTedClassString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->TEDClassString.c_str();}
+Export(const char*) _UnitDef_getCategoryString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->categoryString.c_str();}
+Export(bool) _UnitDef_isCanSelfD(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfD;}
+Export(int) _UnitDef_getSelfDCountdown(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDCountdown;}
+Export(bool) _UnitDef_isCanSubmerge(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSubmerge;}
+Export(bool) _UnitDef_isCanFly(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canfly;}
+Export(bool) _UnitDef_isCanMove(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canmove;}
+Export(bool) _UnitDef_isCanHover(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canhover;}
+Export(bool) _UnitDef_isFloater(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->floater;}
+Export(bool) _UnitDef_isBuilder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->builder;}
+Export(bool) _UnitDef_isActivateWhenBuilt(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->activateWhenBuilt;}
+Export(bool) _UnitDef_isOnOffable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->onoffable;}
+Export(bool) _UnitDef_isFullHealthFactory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fullHealthFactory;}
+Export(bool) _UnitDef_isFactoryHeadingTakeoff(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->factoryHeadingTakeoff;}
+Export(bool) _UnitDef_isReclaimable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->reclaimable;}
+Export(bool) _UnitDef_isCapturable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->capturable;}
+Export(bool) _UnitDef_isCanRestore(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRestore;}
+Export(bool) _UnitDef_isCanRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepair;}
+Export(bool) _UnitDef_isCanSelfRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfRepair;}
+Export(bool) _UnitDef_isCanReclaim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canReclaim;}
+Export(bool) _UnitDef_isCanAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAttack;}
+Export(bool) _UnitDef_isCanPatrol(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canPatrol;}
+Export(bool) _UnitDef_isCanFight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFight;}
+Export(bool) _UnitDef_isCanGuard(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canGuard;}
+Export(bool) _UnitDef_isCanBuild(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBuild;}
+Export(bool) _UnitDef_isCanAssist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAssist;}
+Export(bool) _UnitDef_isCanBeAssisted(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBeAssisted;}
+Export(bool) _UnitDef_isCanRepeat(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepeat;}
+Export(bool) _UnitDef_isCanFireControl(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFireControl;}
+Export(int) _UnitDef_getFireState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fireState;}
+Export(int) _UnitDef_getMoveState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveState;}
+Export(float) _UnitDef_getWingDrag(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wingDrag;}
+Export(float) _UnitDef_getWingAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wingAngle;}
+Export(float) _UnitDef_getDrag(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->drag;}
+Export(float) _UnitDef_getFrontToSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->frontToSpeed;}
+Export(float) _UnitDef_getSpeedToFront(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->speedToFront;}
+Export(float) _UnitDef_getMyGravity(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->myGravity;}
+Export(float) _UnitDef_getMaxBank(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxBank;}
+Export(float) _UnitDef_getMaxPitch(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxPitch;}
+Export(float) _UnitDef_getTurnRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRadius;}
+Export(float) _UnitDef_getWantedHeight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wantedHeight;}
+Export(float) _UnitDef_getVerticalSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->verticalSpeed;}
+Export(bool) _UnitDef_isCanCrash(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCrash;}
+Export(bool) _UnitDef_isHoverAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hoverAttack;}
+Export(bool) _UnitDef_isAirStrafe(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->airStrafe;}
+Export(float) _UnitDef_getDlHoverFactor(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->dlHoverFactor;}
+Export(float) _UnitDef_getMaxAcceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxAcc;}
+Export(float) _UnitDef_getMaxDeceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxDec;}
+Export(float) _UnitDef_getMaxAileron(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxAileron;}
+Export(float) _UnitDef_getMaxElevator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxElevator;}
+Export(float) _UnitDef_getMaxRudder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRudder;}
 //const unsigned char** _UnitDef_getYardMaps(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->yardmaps;}
-int _UnitDef_getXSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->xsize;}
-int _UnitDef_getYSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->ysize;}
-int _UnitDef_getBuildAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildangle;}
-float _UnitDef_getLoadingRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->loadingRadius;}
-float _UnitDef_getUnloadSpread(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unloadSpread;}
-int _UnitDef_getTransportCapacity(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportCapacity;}
-int _UnitDef_getTransportSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportSize;}
-int _UnitDef_getMinTransportSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minTransportSize;}
-bool _UnitDef_isAirBase(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isAirBase;}
-float _UnitDef_getTransportMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportMass;}
-float _UnitDef_getMinTransportMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minTransportMass;}
-bool _UnitDef_isHoldSteady(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->holdSteady;}
-bool _UnitDef_isReleaseHeld(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->releaseHeld;}
-bool _UnitDef_isCantBeTransported(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cantBeTransported;}
-bool _UnitDef_isTransportByEnemy(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportByEnemy;}
-int _UnitDef_getTransportUnloadMethod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportUnloadMethod;}
-float _UnitDef_getFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fallSpeed;}
-float _UnitDef_getUnitFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unitFallSpeed;}
-bool _UnitDef_isCanCloak(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCloak;}
-bool _UnitDef_isStartCloaked(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->startCloaked;}
-float _UnitDef_getCloakCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCost;}
-float _UnitDef_getCloakCostMoving(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCostMoving;}
-float _UnitDef_getDecloakDistance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakDistance;}
-bool _UnitDef_isDecloakSpherical(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakSpherical;}
-bool _UnitDef_isDecloakOnFire(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakOnFire;}
-bool _UnitDef_isCanKamikaze(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canKamikaze;}
-float _UnitDef_getKamikazeDist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->kamikazeDist;}
-bool _UnitDef_isTargetingFacility(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->targfac;}
-bool _UnitDef_isCanDGun(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDGun;}
-bool _UnitDef_isNeedGeo(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->needGeo;}
-bool _UnitDef_isFeature(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isFeature;}
-bool _UnitDef_isHideDamage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hideDamage;}
-bool _UnitDef_isCommander(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isCommander;}
-bool _UnitDef_isShowPlayerName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->showPlayerName;}
-bool _UnitDef_isCanResurrect(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canResurrect;}
-bool _UnitDef_isCanCapture(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCapture;}
-int _UnitDef_getHighTrajectoryType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->highTrajectoryType;}
-unsigned int _UnitDef_getNoChaseCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->noChaseCategory;}
-bool _UnitDef_isLeaveTracks(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->leaveTracks;}
-float _UnitDef_getTrackWidth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackWidth;}
-float _UnitDef_getTrackOffset(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackOffset;}
-float _UnitDef_getTrackStrength(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStrength;}
-float _UnitDef_getTrackStretch(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStretch;}
-int _UnitDef_getTrackType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackType;}
-bool _UnitDef_isCanDropFlare(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDropFlare;}
-float _UnitDef_getFlareReloadTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareReloadTime;}
-float _UnitDef_getFlareEfficiency(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareEfficiency;}
-float _UnitDef_getFlareDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDelay;}
-SAIFloat3 _UnitDef_getFlareDropVector(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDropVector.toSAIFloat3();}
-int _UnitDef_getFlareTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareTime;}
-int _UnitDef_getFlareSalvoSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoSize;}
-int _UnitDef_getFlareSalvoDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoDelay;}
-bool _UnitDef_isSmoothAnim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->smoothAnim;}
-bool _UnitDef_isMetalMaker(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isMetalMaker;}
-bool _UnitDef_isCanLoopbackAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canLoopbackAttack;}
-bool _UnitDef_isLevelGround(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->levelGround;}
-bool _UnitDef_isUseBuildingGroundDecal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->useBuildingGroundDecal;}
-int _UnitDef_getBuildingDecalType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalType;}
-int _UnitDef_getBuildingDecalSizeX(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalSizeX;}
-int _UnitDef_getBuildingDecalSizeY(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalSizeY;}
-float _UnitDef_getBuildingDecalDecaySpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalDecaySpeed;}
-bool _UnitDef_isFirePlatform(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isFirePlatform;}
-float _UnitDef_getMaxFuel(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxFuel;}
-float _UnitDef_getRefuelTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->refuelTime;}
-float _UnitDef_getMinAirBasePower(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minAirBasePower;}
-int _UnitDef_getMaxThisUnit(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxThisUnit;}
-int _UnitDef_getDecoyDefId(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decoyDef->id;}
-bool _UnitDef_isDontLand(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->DontLand();}
-int _UnitDef_getShieldWeaponDefId(int teamId, int unitDefId) {
+Export(int) _UnitDef_getXSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->xsize;}
+Export(int) _UnitDef_getYSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->ysize;}
+Export(int) _UnitDef_getBuildAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildangle;}
+Export(float) _UnitDef_getLoadingRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->loadingRadius;}
+Export(float) _UnitDef_getUnloadSpread(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unloadSpread;}
+Export(int) _UnitDef_getTransportCapacity(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportCapacity;}
+Export(int) _UnitDef_getTransportSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportSize;}
+Export(int) _UnitDef_getMinTransportSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minTransportSize;}
+Export(bool) _UnitDef_isAirBase(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isAirBase;}
+Export(float) _UnitDef_getTransportMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportMass;}
+Export(float) _UnitDef_getMinTransportMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minTransportMass;}
+Export(bool) _UnitDef_isHoldSteady(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->holdSteady;}
+Export(bool) _UnitDef_isReleaseHeld(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->releaseHeld;}
+Export(bool) _UnitDef_isCantBeTransported(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cantBeTransported;}
+Export(bool) _UnitDef_isTransportByEnemy(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportByEnemy;}
+Export(int) _UnitDef_getTransportUnloadMethod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportUnloadMethod;}
+Export(float) _UnitDef_getFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fallSpeed;}
+Export(float) _UnitDef_getUnitFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unitFallSpeed;}
+Export(bool) _UnitDef_isCanCloak(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCloak;}
+Export(bool) _UnitDef_isStartCloaked(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->startCloaked;}
+Export(float) _UnitDef_getCloakCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCost;}
+Export(float) _UnitDef_getCloakCostMoving(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCostMoving;}
+Export(float) _UnitDef_getDecloakDistance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakDistance;}
+Export(bool) _UnitDef_isDecloakSpherical(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakSpherical;}
+Export(bool) _UnitDef_isDecloakOnFire(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakOnFire;}
+Export(bool) _UnitDef_isCanKamikaze(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canKamikaze;}
+Export(float) _UnitDef_getKamikazeDist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->kamikazeDist;}
+Export(bool) _UnitDef_isTargetingFacility(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->targfac;}
+Export(bool) _UnitDef_isCanDGun(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDGun;}
+Export(bool) _UnitDef_isNeedGeo(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->needGeo;}
+Export(bool) _UnitDef_isFeature(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isFeature;}
+Export(bool) _UnitDef_isHideDamage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hideDamage;}
+Export(bool) _UnitDef_isCommander(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isCommander;}
+Export(bool) _UnitDef_isShowPlayerName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->showPlayerName;}
+Export(bool) _UnitDef_isCanResurrect(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canResurrect;}
+Export(bool) _UnitDef_isCanCapture(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCapture;}
+Export(int) _UnitDef_getHighTrajectoryType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->highTrajectoryType;}
+Export(unsigned int) _UnitDef_getNoChaseCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->noChaseCategory;}
+Export(bool) _UnitDef_isLeaveTracks(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->leaveTracks;}
+Export(float) _UnitDef_getTrackWidth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackWidth;}
+Export(float) _UnitDef_getTrackOffset(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackOffset;}
+Export(float) _UnitDef_getTrackStrength(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStrength;}
+Export(float) _UnitDef_getTrackStretch(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStretch;}
+Export(int) _UnitDef_getTrackType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackType;}
+Export(bool) _UnitDef_isCanDropFlare(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDropFlare;}
+Export(float) _UnitDef_getFlareReloadTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareReloadTime;}
+Export(float) _UnitDef_getFlareEfficiency(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareEfficiency;}
+Export(float) _UnitDef_getFlareDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDelay;}
+Export(SAIFloat3) _UnitDef_getFlareDropVector(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDropVector.toSAIFloat3();}
+Export(int) _UnitDef_getFlareTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareTime;}
+Export(int) _UnitDef_getFlareSalvoSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoSize;}
+Export(int) _UnitDef_getFlareSalvoDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoDelay;}
+Export(bool) _UnitDef_isSmoothAnim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->smoothAnim;}
+Export(bool) _UnitDef_isMetalMaker(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isMetalMaker;}
+Export(bool) _UnitDef_isCanLoopbackAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canLoopbackAttack;}
+Export(bool) _UnitDef_isLevelGround(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->levelGround;}
+Export(bool) _UnitDef_isUseBuildingGroundDecal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->useBuildingGroundDecal;}
+Export(int) _UnitDef_getBuildingDecalType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalType;}
+Export(int) _UnitDef_getBuildingDecalSizeX(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalSizeX;}
+Export(int) _UnitDef_getBuildingDecalSizeY(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalSizeY;}
+Export(float) _UnitDef_getBuildingDecalDecaySpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalDecaySpeed;}
+Export(bool) _UnitDef_isFirePlatform(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isFirePlatform;}
+Export(float) _UnitDef_getMaxFuel(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxFuel;}
+Export(float) _UnitDef_getRefuelTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->refuelTime;}
+Export(float) _UnitDef_getMinAirBasePower(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minAirBasePower;}
+Export(int) _UnitDef_getMaxThisUnit(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxThisUnit;}
+Export(int) _UnitDef_getDecoyDefId(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decoyDef->id;}
+Export(bool) _UnitDef_isDontLand(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->DontLand();}
+Export(int) _UnitDef_getShieldWeaponDefId(int teamId, int unitDefId) {
 	const WeaponDef* wd = getUnitDefById(teamId, unitDefId)->shieldWeaponDef;
 	if (wd == NULL)
 		return -1;
 	else
 		return wd->id;
 }
-int _UnitDef_getStockpileWeaponDefId(int teamId, int unitDefId) {
+Export(int) _UnitDef_getStockpileWeaponDefId(int teamId, int unitDefId) {
 	const WeaponDef* wd = getUnitDefById(teamId, unitDefId)->stockpileWeaponDef;
 	if (wd == NULL)
 		return -1;
 	else
 		return wd->id;
 }
-int _UnitDef_getNumBuildOptions(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildOptions.size();}
-int _UnitDef_getBuildOptions(int teamId, int unitDefId, int* unitDefIds) {
+Export(int) _UnitDef_getNumBuildOptions(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildOptions.size();}
+Export(int) _UnitDef_getBuildOptions(int teamId, int unitDefId, int* unitDefIds) {
 	const std::map<int,std::string>* bo = &(getUnitDefById(teamId, unitDefId)->buildOptions);
 	int numBo = bo->size();
 	std::map<int,std::string>::const_iterator bb;
@@ -1753,38 +1763,38 @@ int _UnitDef_getBuildOptions(int teamId, int unitDefId, int* unitDefIds) {
 	}
 	return numBo;
 }
-int _UnitDef_getNumCustomParams(int teamId, int unitDefId) {
+Export(int) _UnitDef_getNumCustomParams(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->customParams.size();
 }
-int _UnitDef_getCustomParams(int teamId, int unitDefId, const char* map[][2]) {
+Export(int) _UnitDef_getCustomParams(int teamId, int unitDefId, const char* map[][2]) {
 	return fillCMap(&(getUnitDefById(teamId, unitDefId)->customParams), map);
 }
-bool _UnitDef_hasMoveData(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata != NULL;}
-int _UnitDef_MoveData_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->moveType;}
-int _UnitDef_MoveData_getMoveFamily(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->moveFamily;}
-int _UnitDef_MoveData_getSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->size;}
-float _UnitDef_MoveData_getDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->depth;}
-float _UnitDef_MoveData_getMaxSlope(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxSlope;}
-float _UnitDef_MoveData_getSlopeMod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->slopeMod;}
-float _UnitDef_MoveData_getDepthMod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->depthMod;}
-int _UnitDef_MoveData_getPathType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->pathType;}
-float _UnitDef_MoveData_getCrushStrength(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->crushStrength;}
-float _UnitDef_MoveData_getMaxSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxSpeed;}
-short _UnitDef_MoveData_getMaxTurnRate(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxTurnRate;}
-float _UnitDef_MoveData_getMaxAcceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxAcceleration;}
-float _UnitDef_MoveData_getMaxBreaking(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxBreaking;}
-bool _UnitDef_MoveData_isSubMarine(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->subMarine;}
-int _UnitDef_getNumUnitDefWeapons(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->weapons.size();}
-const char* _UnitDef_UnitDefWeapon_getName(int teamId, int unitDefId, int weaponIndex) {
+Export(bool) _UnitDef_hasMoveData(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata != NULL;}
+Export(int) _UnitDef_MoveData_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->moveType;}
+Export(int) _UnitDef_MoveData_getMoveFamily(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->moveFamily;}
+Export(int) _UnitDef_MoveData_getSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->size;}
+Export(float) _UnitDef_MoveData_getDepth(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->depth;}
+Export(float) _UnitDef_MoveData_getMaxSlope(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxSlope;}
+Export(float) _UnitDef_MoveData_getSlopeMod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->slopeMod;}
+Export(float) _UnitDef_MoveData_getDepthMod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->depthMod;}
+Export(int) _UnitDef_MoveData_getPathType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->pathType;}
+Export(float) _UnitDef_MoveData_getCrushStrength(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->crushStrength;}
+Export(float) _UnitDef_MoveData_getMaxSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxSpeed;}
+Export(short) _UnitDef_MoveData_getMaxTurnRate(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxTurnRate;}
+Export(float) _UnitDef_MoveData_getMaxAcceleration(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxAcceleration;}
+Export(float) _UnitDef_MoveData_getMaxBreaking(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxBreaking;}
+Export(bool) _UnitDef_MoveData_isSubMarine(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->subMarine;}
+Export(int) _UnitDef_getNumUnitDefWeapons(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->weapons.size();}
+Export(const char*) _UnitDef_UnitDefWeapon_getName(int teamId, int unitDefId, int weaponIndex) {
 	return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).name.c_str();
 }
-int _UnitDef_UnitDefWeapon_getWeaponDefId(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).def->id;}
-int _UnitDef_UnitDefWeapon_getSlavedTo(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).slavedTo;}
-SAIFloat3 _UnitDef_UnitDefWeapon_getMainDir(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).mainDir.toSAIFloat3();}
-float _UnitDef_UnitDefWeapon_getMaxAngleDif(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).maxAngleDif;}
-float _UnitDef_UnitDefWeapon_getFuelUsage(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).fuelUsage;}
-unsigned int _UnitDef_UnitDefWeapon_getBadTargetCat(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).badTargetCat;}
-unsigned int _UnitDef_UnitDefWeapon_getOnlyTargetCat(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).onlyTargetCat;}
+Export(int) _UnitDef_UnitDefWeapon_getWeaponDefId(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).def->id;}
+Export(int) _UnitDef_UnitDefWeapon_getSlavedTo(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).slavedTo;}
+Export(SAIFloat3) _UnitDef_UnitDefWeapon_getMainDir(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).mainDir.toSAIFloat3();}
+Export(float) _UnitDef_UnitDefWeapon_getMaxAngleDif(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).maxAngleDif;}
+Export(float) _UnitDef_UnitDefWeapon_getFuelUsage(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).fuelUsage;}
+Export(unsigned int) _UnitDef_UnitDefWeapon_getBadTargetCat(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).badTargetCat;}
+Export(unsigned int) _UnitDef_UnitDefWeapon_getOnlyTargetCat(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).onlyTargetCat;}
 //########### END UnitDef
 
 
@@ -1792,7 +1802,7 @@ unsigned int _UnitDef_UnitDefWeapon_getOnlyTargetCat(int teamId, int unitDefId, 
 
 
 //########### BEGINN Unit
-int _Unit_getDefId(int teamId, int unitId) {
+Export(int) _Unit_getDefId(int teamId, int unitId) {
 	const UnitDef* unitDef;
 	if (_Cheats_isEnabled(teamId)) {
 		unitDef = team_cheatCallback[teamId]->GetUnitDef(unitId);
@@ -1807,13 +1817,13 @@ int _Unit_getDefId(int teamId, int unitId) {
 		return -1;
 	}
 }
-int _Unit_getAiHint(int teamId, int unitId) {
+Export(int) _Unit_getAiHint(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitAiHint(unitId);
 }
-int _Unit_getGroup(int teamId, int unitId) {
+Export(int) _Unit_getGroup(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitGroup(unitId);
 }
-int _Unit_getTeam(int teamId, int unitId) {
+Export(int) _Unit_getTeam(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitTeam(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitTeam(unitId);
@@ -1821,7 +1831,7 @@ int _Unit_getTeam(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitTeam(unitId);
 	}
 }
-int _Unit_getAllyTeam(int teamId, int unitId) {
+Export(int) _Unit_getAllyTeam(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitAllyTeam(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitAllyTeam(unitId);
@@ -1829,11 +1839,11 @@ int _Unit_getAllyTeam(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitAllyTeam(unitId);
 	}
 }
-int _Unit_getNumSupportedCommands(int teamId, int unitId) {
+Export(int) _Unit_getNumSupportedCommands(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId];
 	return clb->GetUnitCommands(unitId)->size();
 }
-int _Unit_SupportedCommands_getId(int teamId, int unitId, int* ids) {
+Export(int) _Unit_SupportedCommands_getId(int teamId, int unitId, int* ids) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1842,7 +1852,7 @@ int _Unit_SupportedCommands_getId(int teamId, int unitId, int* ids) {
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_getName(int teamId, int unitId, const char** names) {
+Export(int) _Unit_SupportedCommands_getName(int teamId, int unitId, const char** names) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1851,7 +1861,7 @@ int _Unit_SupportedCommands_getName(int teamId, int unitId, const char** names) 
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_getToolTip(int teamId, int unitId, const char** toolTips) {
+Export(int) _Unit_SupportedCommands_getToolTip(int teamId, int unitId, const char** toolTips) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1860,7 +1870,7 @@ int _Unit_SupportedCommands_getToolTip(int teamId, int unitId, const char** tool
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_isShowUnique(int teamId, int unitId, bool* showUniques) {
+Export(int) _Unit_SupportedCommands_isShowUnique(int teamId, int unitId, bool* showUniques) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1869,7 +1879,7 @@ int _Unit_SupportedCommands_isShowUnique(int teamId, int unitId, bool* showUniqu
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_isDisabled(int teamId, int unitId, bool* disableds) {
+Export(int) _Unit_SupportedCommands_isDisabled(int teamId, int unitId, bool* disableds) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1878,7 +1888,7 @@ int _Unit_SupportedCommands_isDisabled(int teamId, int unitId, bool* disableds) 
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_getNumParams(int teamId, int unitId, int* numParams) {
+Export(int) _Unit_SupportedCommands_getNumParams(int teamId, int unitId, int* numParams) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1887,20 +1897,20 @@ int _Unit_SupportedCommands_getNumParams(int teamId, int unitId, int* numParams)
 	}
 	return numComDescs;
 }
-int _Unit_SupportedCommands_getParams(int teamId, int unitId, const char*** params) {
+Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, const char*** params) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
 	for (int c=0; c < numComDescs; c++) {
 		const std::vector<std::string> ps = comDescs->at(c).params;
-		for (int p=0; p < ps.size(); p++) {
+		for (unsigned int p=0; p < ps.size(); p++) {
 			params[c][p] = ps.at(p).c_str();
 		}
 	}
 	return numComDescs;
 }
 
-int _Unit_getStockpile(int teamId, int unitId) {
+Export(int) _Unit_getStockpile(int teamId, int unitId) {
     IAICallback* clb = team_callback[teamId];
     int stockpile;
     bool fetchOk = clb->GetProperty(AIVAL_STOCKPILED, unitId, &stockpile);
@@ -1909,7 +1919,7 @@ int _Unit_getStockpile(int teamId, int unitId) {
     }
     return stockpile;
 }
-int _Unit_getStockpileQueued(int teamId, int unitId) {
+Export(int) _Unit_getStockpileQueued(int teamId, int unitId) {
     IAICallback* clb = team_callback[teamId];
     int stockpileQueue;
     bool fetchOk = clb->GetProperty(AIVAL_STOCKPILE_QUED, unitId, &stockpileQueue);
@@ -1918,7 +1928,7 @@ int _Unit_getStockpileQueued(int teamId, int unitId) {
     }
     return stockpileQueue;
 }
-float _Unit_getCurrentFuel(int teamId, int unitId) {
+Export(float) _Unit_getCurrentFuel(int teamId, int unitId) {
     IAICallback* clb = team_callback[teamId];
     float currentFuel;
     bool fetchOk = clb->GetProperty(AIVAL_CURRENT_FUEL, unitId, &currentFuel);
@@ -1927,7 +1937,7 @@ float _Unit_getCurrentFuel(int teamId, int unitId) {
     }
     return currentFuel;
 }
-float _Unit_getMaxSpeed(int teamId, int unitId) {
+Export(float) _Unit_getMaxSpeed(int teamId, int unitId) {
     IAICallback* clb = team_callback[teamId];
     float maxSpeed;
     bool fetchOk = clb->GetProperty(AIVAL_UNIT_MAXSPEED, unitId, &maxSpeed);
@@ -1937,11 +1947,11 @@ float _Unit_getMaxSpeed(int teamId, int unitId) {
     return maxSpeed;
 }
 
-float _Unit_getMaxRange(int teamId, int unitId) {
+Export(float) _Unit_getMaxRange(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitMaxRange(unitId);
 }
 
-float _Unit_getMaxHealth(int teamId, int unitId) {
+Export(float) _Unit_getMaxHealth(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitMaxHealth(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitMaxHealth(unitId);
@@ -1950,7 +1960,7 @@ float _Unit_getMaxHealth(int teamId, int unitId) {
 	}
 }
 
-int _Unit_getNumCurrentCommands(int teamId, int unitId) {
+Export(int) _Unit_getNumCurrentCommands(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId];
 //	return clb->GetCurrentUnitCommands(unitId)->size();
 	if (_Cheats_isEnabled(teamId)) {
@@ -1959,7 +1969,7 @@ int _Unit_getNumCurrentCommands(int teamId, int unitId) {
 		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->size();
 	}
 }
-int _Unit_CurrentCommands_getType(int teamId, int unitId) {
+Export(int) _Unit_CurrentCommands_getType(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId];
 //	CCommandQueue::QueueType qt = clb->GetCurrentUnitCommands(unitId)->GetType();
 //	return qt;
@@ -1969,7 +1979,7 @@ int _Unit_CurrentCommands_getType(int teamId, int unitId) {
 		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->GetType();
 	}
 }
-int _Unit_CurrentCommands_getIds(int teamId, int unitId, int* ids) {
+Export(int) _Unit_CurrentCommands_getIds(int teamId, int unitId, int* ids) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -1984,7 +1994,7 @@ int _Unit_CurrentCommands_getIds(int teamId, int unitId, int* ids) {
 	}
 	return numCommands;
 }
-int _Unit_CurrentCommands_getOptions(int teamId, int unitId, unsigned char* options) {
+Export(int) _Unit_CurrentCommands_getOptions(int teamId, int unitId, unsigned char* options) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -1999,7 +2009,7 @@ int _Unit_CurrentCommands_getOptions(int teamId, int unitId, unsigned char* opti
 	}
 	return numCommands;
 }
-int _Unit_CurrentCommands_getTag(int teamId, int unitId, unsigned int* tags) {
+Export(int) _Unit_CurrentCommands_getTag(int teamId, int unitId, unsigned int* tags) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -2014,7 +2024,7 @@ int _Unit_CurrentCommands_getTag(int teamId, int unitId, unsigned int* tags) {
 	}
 	return numCommands;
 }
-int _Unit_CurrentCommands_getTimeOut(int teamId, int unitId, int* timeOuts) {
+Export(int) _Unit_CurrentCommands_getTimeOut(int teamId, int unitId, int* timeOuts) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -2029,7 +2039,7 @@ int _Unit_CurrentCommands_getTimeOut(int teamId, int unitId, int* timeOuts) {
 	}
 	return numCommands;
 }
-int _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int* numParams) {
+Export(int) _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int* numParams) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -2044,7 +2054,7 @@ int _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int* numParams) {
 	}
 	return numCommands;
 }
-int _Unit_CurrentCommands_getParams(int teamId, int unitId, float** params) {
+Export(int) _Unit_CurrentCommands_getParams(int teamId, int unitId, float** params) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -2056,14 +2066,14 @@ int _Unit_CurrentCommands_getParams(int teamId, int unitId, float** params) {
 	int numCommands = cc->size();
 	for (int c=0; c < numCommands; c++) {
 		const std::vector<float> ps = cc->at(c).params;
-		for (int p=0; p < ps.size(); p++) {
+		for (unsigned int p=0; p < ps.size(); p++) {
 			params[c][p] = ps.at(p);
 		}
 	}
 	return numCommands;
 }
 
-float _Unit_getExperience(int teamId, int unitId) {
+Export(float) _Unit_getExperience(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitExperience(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitExperience(unitId);
@@ -2072,7 +2082,7 @@ float _Unit_getExperience(int teamId, int unitId) {
 	}
 }
 
-float _Unit_getHealth(int teamId, int unitId) {
+Export(float) _Unit_getHealth(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitHealth(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitHealth(unitId);
@@ -2080,10 +2090,10 @@ float _Unit_getHealth(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitHealth(unitId);
 	}
 }
-float _Unit_getSpeed(int teamId, int unitId) {
+Export(float) _Unit_getSpeed(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetUnitSpeed(unitId);
 }
-float _Unit_getPower(int teamId, int unitId) {
+Export(float) _Unit_getPower(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId];return clb->GetUnitPower(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitPower(unitId);
@@ -2091,7 +2101,7 @@ float _Unit_getPower(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitPower(unitId);
 	}
 }
-SAIFloat3 _Unit_getPos(int teamId, int unitId) {
+Export(SAIFloat3) _Unit_getPos(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId];
 //	return clb->GetUnitPos(unitId).toSAIFloat3();
 	if (_Cheats_isEnabled(teamId)) {
@@ -2100,7 +2110,7 @@ SAIFloat3 _Unit_getPos(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitPos(unitId).toSAIFloat3();
 	}
 }
-float _Unit_ResourceInfo_Metal_getUse(int teamId, int unitId) {
+Export(float) _Unit_ResourceInfo_Metal_getUse(int teamId, int unitId) {
 	
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -2119,7 +2129,7 @@ float _Unit_ResourceInfo_Metal_getUse(int teamId, int unitId) {
 	
 	return res;
 }
-float _Unit_ResourceInfo_Metal_getMake(int teamId, int unitId) {
+Export(float) _Unit_ResourceInfo_Metal_getMake(int teamId, int unitId) {
 	
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -2138,7 +2148,7 @@ float _Unit_ResourceInfo_Metal_getMake(int teamId, int unitId) {
 	
 	return res;
 }
-float _Unit_ResourceInfo_Energy_getUse(int teamId, int unitId) {
+Export(float) _Unit_ResourceInfo_Energy_getUse(int teamId, int unitId) {
 	
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -2157,7 +2167,7 @@ float _Unit_ResourceInfo_Energy_getUse(int teamId, int unitId) {
 	
 	return res;
 }
-float _Unit_ResourceInfo_Energy_getMake(int teamId, int unitId) {
+Export(float) _Unit_ResourceInfo_Energy_getMake(int teamId, int unitId) {
 	
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -2176,7 +2186,7 @@ float _Unit_ResourceInfo_Energy_getMake(int teamId, int unitId) {
 	
 	return res;
 }
-bool _Unit_isActivated(int teamId, int unitId) {
+Export(bool) _Unit_isActivated(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->IsUnitActivated(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->IsUnitActivated(unitId);
@@ -2184,7 +2194,7 @@ bool _Unit_isActivated(int teamId, int unitId) {
 		return team_callback[teamId]->IsUnitActivated(unitId);
 	}
 }
-bool _Unit_isBeingBuilt(int teamId, int unitId) {
+Export(bool) _Unit_isBeingBuilt(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->UnitBeingBuilt(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->UnitBeingBuilt(unitId);
@@ -2192,7 +2202,7 @@ bool _Unit_isBeingBuilt(int teamId, int unitId) {
 		return team_callback[teamId]->UnitBeingBuilt(unitId);
 	}
 }
-bool _Unit_isCloaked(int teamId, int unitId) {
+Export(bool) _Unit_isCloaked(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->IsUnitCloaked(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->IsUnitCloaked(unitId);
@@ -2200,7 +2210,7 @@ bool _Unit_isCloaked(int teamId, int unitId) {
 		return team_callback[teamId]->IsUnitCloaked(unitId);
 	}
 }
-bool _Unit_isParalyzed(int teamId, int unitId) {
+Export(bool) _Unit_isParalyzed(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->IsUnitParalyzed(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->IsUnitParalyzed(unitId);
@@ -2208,7 +2218,7 @@ bool _Unit_isParalyzed(int teamId, int unitId) {
 		return team_callback[teamId]->IsUnitParalyzed(unitId);
 	}
 }
-bool _Unit_isNeutral(int teamId, int unitId) {
+Export(bool) _Unit_isNeutral(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->IsUnitNeutral(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->IsUnitNeutral(unitId);
@@ -2216,7 +2226,7 @@ bool _Unit_isNeutral(int teamId, int unitId) {
 		return team_callback[teamId]->IsUnitNeutral(unitId);
 	}
 }
-int _Unit_getBuildingFacing(int teamId, int unitId) {
+Export(int) _Unit_getBuildingFacing(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetBuildingFacing(unitId);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetBuildingFacing(unitId);
@@ -2226,7 +2236,7 @@ int _Unit_getBuildingFacing(int teamId, int unitId) {
 }
 //########### END Unit
 
-int _Unit_STATIC_getEnemies(int teamId, int* unitIds) {
+Export(int) _Unit_STATIC_getEnemies(int teamId, int* unitIds) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetEnemyUnits(unitIds);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetEnemyUnits(unitIds);
@@ -2235,7 +2245,7 @@ int _Unit_STATIC_getEnemies(int teamId, int* unitIds) {
 	}
 }
 
-int _Unit_STATIC_getEnemiesIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
+Export(int) _Unit_STATIC_getEnemiesIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetEnemyUnits(unitIds, float3(pos), radius);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetEnemyUnits(unitIds, float3(pos), radius);
@@ -2244,19 +2254,19 @@ int _Unit_STATIC_getEnemiesIn(int teamId, int* unitIds, SAIFloat3 pos, float rad
 	}
 }
 
-int _Unit_STATIC_getEnemiesInRadarAndLos(int teamId, int* unitIds) {
+Export(int) _Unit_STATIC_getEnemiesInRadarAndLos(int teamId, int* unitIds) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetEnemyUnitsInRadarAndLos(unitIds);
 }
 
-int _Unit_STATIC_getFriendlies(int teamId, int* unitIds) {
+Export(int) _Unit_STATIC_getFriendlies(int teamId, int* unitIds) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(unitIds);
 }
 
-int _Unit_STATIC_getFriendliesIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
+Export(int) _Unit_STATIC_getFriendliesIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(unitIds, float3(pos), radius);
 }
 
-int _Unit_STATIC_getNeutrals(int teamId, int* unitIds) {
+Export(int) _Unit_STATIC_getNeutrals(int teamId, int* unitIds) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetNeutralUnits(unitIds);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetNeutralUnits(unitIds);
@@ -2265,7 +2275,7 @@ int _Unit_STATIC_getNeutrals(int teamId, int* unitIds) {
 	}
 }
 
-int _Unit_STATIC_getNeutralsIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
+Export(int) _Unit_STATIC_getNeutralsIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetNeutralUnits(unitIds, float3(pos), radius);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetNeutralUnits(unitIds, float3(pos), radius);
@@ -2274,96 +2284,96 @@ int _Unit_STATIC_getNeutralsIn(int teamId, int* unitIds, SAIFloat3 pos, float ra
 	}
 }
 
-const char* _Mod_getName(int teamId) {
+Export(const char*) _Mod_getName(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetModName();
 }
 
 //########### BEGINN Map
-int _Map_getWidth(int teamId) {
+Export(int) _Map_getWidth(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMapWidth();
 }
 
-int _Map_getHeight(int teamId) {
+Export(int) _Map_getHeight(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMapHeight();
 }
 
-const float* _Map_getHeightMap(int teamId) {
+Export(const float*) _Map_getHeightMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetHeightMap();
 }
 
-float _Map_getMinHeight(int teamId) {
+Export(float) _Map_getMinHeight(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMinHeight();
 }
 
-float _Map_getMaxHeight(int teamId) {
+Export(float) _Map_getMaxHeight(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMaxHeight();
 }
 
-const float* _Map_getSlopeMap(int teamId) {
+Export(const float*) _Map_getSlopeMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetSlopeMap();
 }
 
-const unsigned short* _Map_getLosMap(int teamId) {
+Export(const unsigned short*) _Map_getLosMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetLosMap();
 }
 
-const unsigned short* _Map_getRadarMap(int teamId) {
+Export(const unsigned short*) _Map_getRadarMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetRadarMap();
 }
 
-const unsigned short* _Map_getJammerMap(int teamId) {
+Export(const unsigned short*) _Map_getJammerMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetJammerMap();
 }
 
-const unsigned char* _Map_getMetalMap(int teamId) {
+Export(const unsigned char*) _Map_getMetalMap(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMetalMap();
 }
 
-const char* _Map_getName(int teamId) {
+Export(const char*) _Map_getName(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMapName();
 }
 
-float _Map_getElevationAt(int teamId, float x, float z) {
+Export(float) _Map_getElevationAt(int teamId, float x, float z) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetElevation(x, z);
 }
 
-float _Map_getMaxMetal(int teamId) {
+Export(float) _Map_getMaxMetal(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMaxMetal();
 }
 
-float _Map_getExtractorRadius(int teamId) {
+Export(float) _Map_getExtractorRadius(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetExtractorRadius();
 }
 
-float _Map_getMinWind(int teamId) {
+Export(float) _Map_getMinWind(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMinWind();
 }
 
-float _Map_getMaxWind(int teamId) {
+Export(float) _Map_getMaxWind(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMaxWind();
 }
 
-float _Map_getTidalStrength(int teamId) {
+Export(float) _Map_getTidalStrength(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetTidalStrength();
 }
 
-float _Map_getGravity(int teamId) {
+Export(float) _Map_getGravity(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetGravity();
 }
 
-bool _Map_canBuildAt(int teamId, int unitDefId, SAIFloat3 pos, int facing) {
+Export(bool) _Map_canBuildAt(int teamId, int unitDefId, SAIFloat3 pos, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
 	return clb->CanBuildAt(unitDef, pos, facing);
 }
 
-SAIFloat3 _Map_findClosestBuildSite(int teamId, int unitDefId, SAIFloat3 pos, float searchRadius, int minDist, int facing) {
+Export(SAIFloat3) _Map_findClosestBuildSite(int teamId, int unitDefId, SAIFloat3 pos, float searchRadius, int minDist, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
 	return clb->ClosestBuildSite(unitDef, pos, searchRadius, minDist, facing).toSAIFloat3();
 }
 
-int _Map_getPoints(int teamId, SAIFloat3* positions, unsigned char** colors, const char** labels, int maxPoints) {
+Export(int) _Map_getPoints(int teamId, SAIFloat3* positions, unsigned char** colors, const char** labels, int maxPoints) {
 	IAICallback* clb = team_callback[teamId];
 	PointMarker* pm = new PointMarker[maxPoints];
 	int numPoints = clb->GetMapPoints(pm, maxPoints);
@@ -2376,7 +2386,7 @@ int _Map_getPoints(int teamId, SAIFloat3* positions, unsigned char** colors, con
 	return numPoints;
 }
 
-int _Map_getLines(int teamId, SAIFloat3* firstPositions, SAIFloat3* secondPositions, unsigned char** colors, int maxLines) {
+Export(int) _Map_getLines(int teamId, SAIFloat3* firstPositions, SAIFloat3* secondPositions, unsigned char** colors, int maxLines) {
 	IAICallback* clb = team_callback[teamId];
 	LineMarker* lm = new LineMarker[maxLines];
 	int numLines = clb->GetMapLines(lm, maxLines);
@@ -2392,7 +2402,7 @@ int _Map_getLines(int teamId, SAIFloat3* firstPositions, SAIFloat3* secondPositi
 
 
 /*
-bool _getProperty(int teamId, int id, int property, void* dst) {
+Export(bool) _getProperty(int teamId, int id, int property, void* dst) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetProperty(id, property, dst);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetProperty(id, property, dst);
@@ -2401,7 +2411,7 @@ bool _getProperty(int teamId, int id, int property, void* dst) {
 	}
 }
 
-bool _getValue(int teamId, int id, void* dst) {
+Export(bool) _getValue(int teamId, int id, void* dst) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetValue(id, dst);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetValue(id, dst);
@@ -2411,292 +2421,300 @@ bool _getValue(int teamId, int id, void* dst) {
 }
 */
 
-int _File_getSize(int teamId, const char* filename) {
+Export(int) _File_getSize(int teamId, const char* filename) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFileSize(filename);
 }
 
-bool _File_getContent(int teamId, const char* filename, void* buffer, int bufferLen) {
+Export(bool) _File_getContent(int teamId, const char* filename, void* buffer, int bufferLen) {
 	IAICallback* clb = team_callback[teamId]; return clb->ReadFile(filename, buffer, bufferLen);
 }
 
-int _Unit_STATIC_getSelected(int teamId, int* units) {
+Export(int) _Unit_STATIC_getSelected(int teamId, int* units) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetSelectedUnits(units);
 }
 
-SAIFloat3 _Map_getMousePos(int teamId) {
+Export(SAIFloat3) _Map_getMousePos(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMousePos().toSAIFloat3();
 }
 
-float _ResourceInfo_Metal_getCurrent(int teamId) {
+Export(float) _ResourceInfo_Metal_getCurrent(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMetal();
 }
 
-float _ResourceInfo_Metal_getIncome(int teamId) {
+Export(float) _ResourceInfo_Metal_getIncome(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMetalIncome();
 }
 
-float _ResourceInfo_Metal_getUsage(int teamId) {
+Export(float) _ResourceInfo_Metal_getUsage(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMetalUsage();
 }
 
-float _ResourceInfo_Metal_getStorage(int teamId) {
+Export(float) _ResourceInfo_Metal_getStorage(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMetalStorage();
 }
 
-float _ResourceInfo_Energy_getCurrent(int teamId) {
+Export(float) _ResourceInfo_Energy_getCurrent(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetEnergy();
 }
 
-float _ResourceInfo_Energy_getIncome(int teamId) {
+Export(float) _ResourceInfo_Energy_getIncome(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetEnergyIncome();
 }
 
-float _ResourceInfo_Energy_getUsage(int teamId) {
+Export(float) _ResourceInfo_Energy_getUsage(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetEnergyUsage();
 }
 
-float _ResourceInfo_Energy_getStorage(int teamId) {
+Export(float) _ResourceInfo_Energy_getStorage(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetEnergyStorage();
 }
 
-int _Feature_STATIC_getIds(int teamId, int *featureIds, int max) {
+Export(int) _Feature_STATIC_getIds(int teamId, int *featureIds, int max) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeatures(featureIds, max);
 }
 
-int _Feature_STATIC_getIdsIn(int teamId, int *featureIds, int max, SAIFloat3 pos, float radius) {
+Export(int) _Feature_STATIC_getIdsIn(int teamId, int *featureIds, int max, SAIFloat3 pos, float radius) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeatures(featureIds, max, pos, radius);
 }
 
 //########### BEGINN FeatureDef
-const char* _FeatureDef_getName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->myName.c_str();}
-const char* _FeatureDef_getDescription(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->description.c_str();}
-const char* _FeatureDef_getFilename(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->filename.c_str();}
-int _FeatureDef_getId(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->id;}
-float _FeatureDef_getMetal(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->metal;}
-float _FeatureDef_getEnergy(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->energy;}
-float _FeatureDef_getMaxHealth(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->maxHealth;}
-float _FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
-float _FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
-const char* _FeatureDef_getCollisionVolumeType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeType.c_str();}	
-SAIFloat3 _FeatureDef_getCollisionVolumeScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}		
-SAIFloat3 _FeatureDef_getCollisionVolumeOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}		
-int _FeatureDef_getCollisionVolumeTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}			
-bool _FeatureDef_isUpright(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->upright;}
-int _FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
-const char* _FeatureDef_getModelName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelname.c_str();}
-int _FeatureDef_getModelType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelType;}
-bool _FeatureDef_isDestructable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->destructable;}
-bool _FeatureDef_isReclaimable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimable;}
-bool _FeatureDef_isBlocking(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->blocking;}
-bool _FeatureDef_isBurnable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->burnable;}
-bool _FeatureDef_isFloating(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->floating;}
-bool _FeatureDef_isNoSelect(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->noSelect;}
-bool _FeatureDef_isGeoThermal(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->geoThermal;}
-const char* _FeatureDef_getDeathFeature(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->deathFeature.c_str();}
-int _FeatureDef_getXsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->xsize;}
-int _FeatureDef_getYsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->ysize;}
-int _FeatureDef_getNumCustomParams(int teamId, int featureDefId) {
+Export(const char*) _FeatureDef_getName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->myName.c_str();}
+Export(const char*) _FeatureDef_getDescription(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->description.c_str();}
+Export(const char*) _FeatureDef_getFilename(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->filename.c_str();}
+Export(int) _FeatureDef_getId(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->id;}
+Export(float) _FeatureDef_getMetal(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->metal;}
+Export(float) _FeatureDef_getEnergy(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->energy;}
+Export(float) _FeatureDef_getMaxHealth(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->maxHealth;}
+Export(float) _FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
+Export(float) _FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
+Export(const char*) _FeatureDef_getCollisionVolumeType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeType.c_str();}	
+Export(SAIFloat3) _FeatureDef_getCollisionVolumeScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}		
+Export(SAIFloat3) _FeatureDef_getCollisionVolumeOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}		
+Export(int) _FeatureDef_getCollisionVolumeTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}			
+Export(bool) _FeatureDef_isUpright(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->upright;}
+Export(int) _FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
+Export(const char*) _FeatureDef_getModelName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelname.c_str();}
+Export(int) _FeatureDef_getModelType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelType;}
+Export(bool) _FeatureDef_isDestructable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->destructable;}
+Export(bool) _FeatureDef_isReclaimable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimable;}
+Export(bool) _FeatureDef_isBlocking(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->blocking;}
+Export(bool) _FeatureDef_isBurnable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->burnable;}
+Export(bool) _FeatureDef_isFloating(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->floating;}
+Export(bool) _FeatureDef_isNoSelect(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->noSelect;}
+Export(bool) _FeatureDef_isGeoThermal(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->geoThermal;}
+Export(const char*) _FeatureDef_getDeathFeature(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->deathFeature.c_str();}
+Export(int) _FeatureDef_getXsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->xsize;}
+Export(int) _FeatureDef_getYsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->ysize;}
+Export(int) _FeatureDef_getNumCustomParams(int teamId, int featureDefId) {
 	return getFeatureDefById(teamId, featureDefId)->customParams.size();
 }
-int _FeatureDef_getCustomParams(int teamId, int featureDefId, const char* map[][2]) {
+Export(int) _FeatureDef_getCustomParams(int teamId, int featureDefId, const char* map[][2]) {
 	return fillCMap(&(getFeatureDefById(teamId, featureDefId)->customParams), map);
 }
 //########### END FeatureDef
 
-int _Feature_getDefId(int teamId, int featureId) {
+Export(int) _Feature_getDefId(int teamId, int featureId) {
 	IAICallback* clb = team_callback[teamId];
 	return clb->GetFeatureDef(featureId)->id;
 }
 
-float _Feature_getHealth(int teamId, int feature) {
+Export(float) _Feature_getHealth(int teamId, int feature) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeatureHealth(feature);
 }
 
-float _Feature_getReclaimLeft(int teamId, int feature) {
+Export(float) _Feature_getReclaimLeft(int teamId, int feature) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeatureReclaimLeft(feature);
 }
 
-SAIFloat3 _Feature_getPos(int teamId, int feature) {
+Export(SAIFloat3) _Feature_getPos(int teamId, int feature) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeaturePos(feature).toSAIFloat3();
 }
 
-int _UnitDef_STATIC_getNumIds(int teamId) {
+Export(int) _UnitDef_STATIC_getNumIds(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetNumUnitDefs();
 }
 
 //########### BEGINN WeaponDef
-int _WeaponDef_STATIC_getIdByName(int teamId, const char* weaponDefName) {
+Export(int) _WeaponDef_STATIC_getIdByName(int teamId, const char* weaponDefName) {
+	
+	int weaponDefId = -1;
+	
 	IAICallback* clb = team_callback[teamId];
-	return clb->GetWeapon(weaponDefName)->id;
+	const WeaponDef* wd = clb->GetWeapon(weaponDefName);
+	if (wd != NULL) {
+		weaponDefId = wd->id;
+	}
+	
+	return weaponDefId;
 }
 
-const char* _WeaponDef_getName(int teamId, int weaponDefId) {
+Export(const char*) _WeaponDef_getName(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->name.c_str();
 }
-const char* _WeaponDef_getType(int teamId, int weaponDefId) {
+Export(const char*) _WeaponDef_getType(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->type.c_str();
 }
-const char* _WeaponDef_getDescription(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->description.c_str();}
-const char* _WeaponDef_getFilename(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->filename.c_str();}
-const char* _WeaponDef_getCegTag(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cegTag.c_str();}
-float _WeaponDef_getRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->range;}
-float _WeaponDef_getHeightMod(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->heightmod;}
-float _WeaponDef_getAccuracy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->accuracy;}
-float _WeaponDef_getSprayAngle(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sprayAngle;}
-float _WeaponDef_getMovingAccuracy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->movingAccuracy;}
-float _WeaponDef_getTargetMoveError(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetMoveError;}
-float _WeaponDef_getLeadLimit(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->leadLimit;}
-float _WeaponDef_getLeadBonus(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->leadBonus;}
-float _WeaponDef_getPredictBoost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->predictBoost;}
-int _WeaponDef_Damages_getParalyzeDamageTime(int teamId, int weaponDefId) {
+Export(const char*) _WeaponDef_getDescription(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->description.c_str();}
+Export(const char*) _WeaponDef_getFilename(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->filename.c_str();}
+Export(const char*) _WeaponDef_getCegTag(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cegTag.c_str();}
+Export(float) _WeaponDef_getRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->range;}
+Export(float) _WeaponDef_getHeightMod(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->heightmod;}
+Export(float) _WeaponDef_getAccuracy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->accuracy;}
+Export(float) _WeaponDef_getSprayAngle(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sprayAngle;}
+Export(float) _WeaponDef_getMovingAccuracy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->movingAccuracy;}
+Export(float) _WeaponDef_getTargetMoveError(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetMoveError;}
+Export(float) _WeaponDef_getLeadLimit(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->leadLimit;}
+Export(float) _WeaponDef_getLeadBonus(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->leadBonus;}
+Export(float) _WeaponDef_getPredictBoost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->predictBoost;}
+Export(int) _WeaponDef_Damages_getParalyzeDamageTime(int teamId, int weaponDefId) {
 	DamageArray da = getWeaponDefById(teamId, weaponDefId)->damages;
 	return da.paralyzeDamageTime;
 }
-float _WeaponDef_Damages_getImpulseFactor(int teamId, int weaponDefId) {
+Export(float) _WeaponDef_Damages_getImpulseFactor(int teamId, int weaponDefId) {
 	DamageArray da = getWeaponDefById(teamId, weaponDefId)->damages;
 	return da.impulseFactor;
 }
-float _WeaponDef_Damages_getImpulseBoost(int teamId, int weaponDefId) {
+Export(float) _WeaponDef_Damages_getImpulseBoost(int teamId, int weaponDefId) {
 	DamageArray da = getWeaponDefById(teamId, weaponDefId)->damages;
 	return da.impulseBoost;
 }
-float _WeaponDef_Damages_getCraterMult(int teamId, int weaponDefId) {
+Export(float) _WeaponDef_Damages_getCraterMult(int teamId, int weaponDefId) {
 	DamageArray da = getWeaponDefById(teamId, weaponDefId)->damages;
 	return da.craterMult;
 }
-float _WeaponDef_Damages_getCraterBoost(int teamId, int weaponDefId) {
+Export(float) _WeaponDef_Damages_getCraterBoost(int teamId, int weaponDefId) {
 	DamageArray da = getWeaponDefById(teamId, weaponDefId)->damages;
 	return da.craterBoost;
 }
-int _WeaponDef_Damages_getNumTypes(int teamId, int weaponDefId) {
+Export(int) _WeaponDef_Damages_getNumTypes(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->damages.GetNumTypes();
 }
-void _WeaponDef_Damages_getTypeDamages(int teamId, int weaponDefId, float* typeDamages) {
+Export(void) _WeaponDef_Damages_getTypeDamages(int teamId, int weaponDefId, float* typeDamages) {
 	int numTypes = _WeaponDef_Damages_getNumTypes(teamId, weaponDefId);
 	const WeaponDef* weaponDef = getWeaponDefById(teamId, weaponDefId);
 	for (int i=0; i < numTypes; ++i) {
 		typeDamages[i] = weaponDef->damages[i];
 	}
 }
-float _WeaponDef_getAreaOfEffect(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->areaOfEffect;}
-bool _WeaponDef_isNoSelfDamage(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noSelfDamage;}
-float _WeaponDef_getFireStarter(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fireStarter;}
-float _WeaponDef_getEdgeEffectiveness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->edgeEffectiveness;}
-float _WeaponDef_getSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->size;}
-float _WeaponDef_getSizeGrowth(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sizeGrowth;}
-float _WeaponDef_getCollisionSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->collisionSize;}
-int _WeaponDef_getSalvoSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->salvosize;}
-float _WeaponDef_getSalvoDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->salvodelay;}
-float _WeaponDef_getReload(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->reload;}
-float _WeaponDef_getBeamTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->beamtime;}
-bool _WeaponDef_isBeamBurst(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->beamburst;}
-bool _WeaponDef_isWaterBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->waterBounce;}
-bool _WeaponDef_isGroundBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->groundBounce;}
-float _WeaponDef_getBounceRebound(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->bounceRebound;}
-float _WeaponDef_getBounceSlip(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->bounceSlip;}
-int _WeaponDef_getNumBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->numBounce;}
-float _WeaponDef_getMaxAngle(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->maxAngle;}
-float _WeaponDef_getRestTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->restTime;}
-float _WeaponDef_getUpTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->uptime;}
-int _WeaponDef_getFlightTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->flighttime;}
-float _WeaponDef_getMetalCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->metalcost;}
-float _WeaponDef_getEnergyCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->energycost;}
-float _WeaponDef_getSupplyCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->supplycost;}
-int _WeaponDef_getProjectilesPerShot(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->projectilespershot;}
-int _WeaponDef_getId(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->id;}
-int _WeaponDef_getTdfId(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->tdfId;}
-bool _WeaponDef_isTurret(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->turret;}
-bool _WeaponDef_isOnlyForward(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->onlyForward;}
-bool _WeaponDef_isFixedLauncher(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fixedLauncher;}
-bool _WeaponDef_isWaterWeapon(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->waterweapon;}
-bool _WeaponDef_isFireSubmersed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fireSubmersed;}
-bool _WeaponDef_isSubMissile(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->submissile;}
-bool _WeaponDef_isTracks(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->tracks;}
-bool _WeaponDef_isDropped(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dropped;}
-bool _WeaponDef_isParalyzer(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->paralyzer;}
-bool _WeaponDef_isImpactOnly(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->impactOnly;}
-bool _WeaponDef_isNoAutoTarget(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noAutoTarget;}
-bool _WeaponDef_isManualFire(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->manualfire;}
-int _WeaponDef_getInterceptor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->interceptor;}
-int _WeaponDef_getTargetable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetable;}
-bool _WeaponDef_isStockpileable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->stockpile;}
-float _WeaponDef_getCoverageRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->coverageRange;}
-float _WeaponDef_getIntensity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->intensity;}
-float _WeaponDef_getThickness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->thickness;}
-float _WeaponDef_getLaserFlareSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->laserflaresize;}
-float _WeaponDef_getCoreThickness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->corethickness;}
-float _WeaponDef_getDuration(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->duration;}
-int _WeaponDef_getLodDistance(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->lodDistance;}
-float _WeaponDef_getFalloffRate(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->falloffRate;}
-int _WeaponDef_getGraphicsType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->graphicsType;}
-bool _WeaponDef_isSoundTrigger(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->soundTrigger;}
-bool _WeaponDef_isSelfExplode(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->selfExplode;}
-bool _WeaponDef_isGravityAffected(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->gravityAffected;}
-int _WeaponDef_getHighTrajectory(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->highTrajectory;}
-float _WeaponDef_getMyGravity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->myGravity;}
-bool _WeaponDef_isTwoPhase(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->twophase;}
-bool _WeaponDef_isGuided(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->guided;}
-bool _WeaponDef_isVLaunched(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->vlaunch;}
-bool _WeaponDef_isSelfPropelled(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->selfprop;}
-bool _WeaponDef_isNoExplode(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noExplode;}
-float _WeaponDef_getStartVelocity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->startvelocity;}
-float _WeaponDef_getWeaponAcceleration(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->weaponacceleration;}
-float _WeaponDef_getTurnRate(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->turnrate;}
-float _WeaponDef_getMaxVelocity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->maxvelocity;}
-float _WeaponDef_getProjectileSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->projectilespeed;}
-float _WeaponDef_getExplosionSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->explosionSpeed;}
-unsigned int _WeaponDef_getOnlyTargetCategory(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->onlyTargetCategory;}
-float _WeaponDef_getWobble(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->wobble;}
-float _WeaponDef_getDance(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dance;}
-float _WeaponDef_getTrajectoryHeight(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->trajectoryHeight;}
-bool _WeaponDef_isLargeBeamLaser(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->largeBeamLaser;}
-bool _WeaponDef_isShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->isShield;}
-bool _WeaponDef_isShieldRepulser(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRepulser;}
-bool _WeaponDef_isSmartShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->smartShield;}
-bool _WeaponDef_isExteriorShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->exteriorShield;}
-bool _WeaponDef_isVisibleShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShield;}
-bool _WeaponDef_isVisibleShieldRepulse(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldRepulse;}
-int _WeaponDef_getVisibleShieldHitFrames(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldHitFrames;}
-float _WeaponDef_getShieldEnergyUse(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldEnergyUse;}
-float _WeaponDef_getShieldRadius(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRadius;}
-float _WeaponDef_getShieldForce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldForce;}
-float _WeaponDef_getShieldMaxSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldMaxSpeed;}
-float _WeaponDef_getShieldPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPower;}
-float _WeaponDef_getShieldPowerRegen(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPowerRegen;}
-float _WeaponDef_getShieldPowerRegenEnergy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPowerRegenEnergy;}
-float _WeaponDef_getShieldStartingPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldStartingPower;}
-int _WeaponDef_getShieldRechargeDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRechargeDelay;}
-SAIFloat3 _WeaponDef_getShieldGoodColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldGoodColor.toSAIFloat3();}
-SAIFloat3 _WeaponDef_getShieldBadColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldBadColor.toSAIFloat3();}
-float _WeaponDef_getShieldAlpha(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldAlpha;}
-unsigned int _WeaponDef_getShieldInterceptType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldInterceptType;}
-unsigned int _WeaponDef_getInterceptedByShieldType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->interceptedByShieldType;}
-bool _WeaponDef_isAvoidFriendly(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidFriendly;}
-bool _WeaponDef_isAvoidFeature(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidFeature;}
-bool _WeaponDef_isAvoidNeutral(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidNeutral;}
-float _WeaponDef_getTargetBorder(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetBorder;}
-float _WeaponDef_getCylinderTargetting(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cylinderTargetting;}
-float _WeaponDef_getMinIntensity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->minIntensity;}
-float _WeaponDef_getHeightBoostFactor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->heightBoostFactor;}
-float _WeaponDef_getProximityPriority(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->proximityPriority;}
-unsigned int _WeaponDef_getCollisionFlags(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->collisionFlags;}
-bool _WeaponDef_isSweepFire(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sweepFire;}
-bool _WeaponDef_isCanAttackGround(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->canAttackGround;}
-float _WeaponDef_getCameraShake(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cameraShake;}
-float _WeaponDef_getDynDamageExp(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageExp;}
-float _WeaponDef_getDynDamageMin(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageMin;}
-float _WeaponDef_getDynDamageRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageRange;}
-bool _WeaponDef_isDynDamageInverted(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageInverted;}
-int _WeaponDef_getNumCustomParams(int teamId, int weaponDefId) {
+Export(float) _WeaponDef_getAreaOfEffect(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->areaOfEffect;}
+Export(bool) _WeaponDef_isNoSelfDamage(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noSelfDamage;}
+Export(float) _WeaponDef_getFireStarter(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fireStarter;}
+Export(float) _WeaponDef_getEdgeEffectiveness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->edgeEffectiveness;}
+Export(float) _WeaponDef_getSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->size;}
+Export(float) _WeaponDef_getSizeGrowth(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sizeGrowth;}
+Export(float) _WeaponDef_getCollisionSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->collisionSize;}
+Export(int) _WeaponDef_getSalvoSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->salvosize;}
+Export(float) _WeaponDef_getSalvoDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->salvodelay;}
+Export(float) _WeaponDef_getReload(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->reload;}
+Export(float) _WeaponDef_getBeamTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->beamtime;}
+Export(bool) _WeaponDef_isBeamBurst(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->beamburst;}
+Export(bool) _WeaponDef_isWaterBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->waterBounce;}
+Export(bool) _WeaponDef_isGroundBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->groundBounce;}
+Export(float) _WeaponDef_getBounceRebound(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->bounceRebound;}
+Export(float) _WeaponDef_getBounceSlip(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->bounceSlip;}
+Export(int) _WeaponDef_getNumBounce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->numBounce;}
+Export(float) _WeaponDef_getMaxAngle(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->maxAngle;}
+Export(float) _WeaponDef_getRestTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->restTime;}
+Export(float) _WeaponDef_getUpTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->uptime;}
+Export(int) _WeaponDef_getFlightTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->flighttime;}
+Export(float) _WeaponDef_getMetalCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->metalcost;}
+Export(float) _WeaponDef_getEnergyCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->energycost;}
+Export(float) _WeaponDef_getSupplyCost(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->supplycost;}
+Export(int) _WeaponDef_getProjectilesPerShot(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->projectilespershot;}
+Export(int) _WeaponDef_getId(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->id;}
+Export(int) _WeaponDef_getTdfId(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->tdfId;}
+Export(bool) _WeaponDef_isTurret(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->turret;}
+Export(bool) _WeaponDef_isOnlyForward(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->onlyForward;}
+Export(bool) _WeaponDef_isFixedLauncher(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fixedLauncher;}
+Export(bool) _WeaponDef_isWaterWeapon(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->waterweapon;}
+Export(bool) _WeaponDef_isFireSubmersed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->fireSubmersed;}
+Export(bool) _WeaponDef_isSubMissile(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->submissile;}
+Export(bool) _WeaponDef_isTracks(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->tracks;}
+Export(bool) _WeaponDef_isDropped(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dropped;}
+Export(bool) _WeaponDef_isParalyzer(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->paralyzer;}
+Export(bool) _WeaponDef_isImpactOnly(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->impactOnly;}
+Export(bool) _WeaponDef_isNoAutoTarget(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noAutoTarget;}
+Export(bool) _WeaponDef_isManualFire(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->manualfire;}
+Export(int) _WeaponDef_getInterceptor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->interceptor;}
+Export(int) _WeaponDef_getTargetable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetable;}
+Export(bool) _WeaponDef_isStockpileable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->stockpile;}
+Export(float) _WeaponDef_getCoverageRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->coverageRange;}
+Export(float) _WeaponDef_getIntensity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->intensity;}
+Export(float) _WeaponDef_getThickness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->thickness;}
+Export(float) _WeaponDef_getLaserFlareSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->laserflaresize;}
+Export(float) _WeaponDef_getCoreThickness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->corethickness;}
+Export(float) _WeaponDef_getDuration(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->duration;}
+Export(int) _WeaponDef_getLodDistance(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->lodDistance;}
+Export(float) _WeaponDef_getFalloffRate(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->falloffRate;}
+Export(int) _WeaponDef_getGraphicsType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->graphicsType;}
+Export(bool) _WeaponDef_isSoundTrigger(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->soundTrigger;}
+Export(bool) _WeaponDef_isSelfExplode(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->selfExplode;}
+Export(bool) _WeaponDef_isGravityAffected(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->gravityAffected;}
+Export(int) _WeaponDef_getHighTrajectory(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->highTrajectory;}
+Export(float) _WeaponDef_getMyGravity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->myGravity;}
+Export(bool) _WeaponDef_isTwoPhase(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->twophase;}
+Export(bool) _WeaponDef_isGuided(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->guided;}
+Export(bool) _WeaponDef_isVLaunched(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->vlaunch;}
+Export(bool) _WeaponDef_isSelfPropelled(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->selfprop;}
+Export(bool) _WeaponDef_isNoExplode(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noExplode;}
+Export(float) _WeaponDef_getStartVelocity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->startvelocity;}
+Export(float) _WeaponDef_getWeaponAcceleration(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->weaponacceleration;}
+Export(float) _WeaponDef_getTurnRate(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->turnrate;}
+Export(float) _WeaponDef_getMaxVelocity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->maxvelocity;}
+Export(float) _WeaponDef_getProjectileSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->projectilespeed;}
+Export(float) _WeaponDef_getExplosionSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->explosionSpeed;}
+Export(unsigned int) _WeaponDef_getOnlyTargetCategory(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->onlyTargetCategory;}
+Export(float) _WeaponDef_getWobble(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->wobble;}
+Export(float) _WeaponDef_getDance(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dance;}
+Export(float) _WeaponDef_getTrajectoryHeight(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->trajectoryHeight;}
+Export(bool) _WeaponDef_isLargeBeamLaser(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->largeBeamLaser;}
+Export(bool) _WeaponDef_isShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->isShield;}
+Export(bool) _WeaponDef_isShieldRepulser(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRepulser;}
+Export(bool) _WeaponDef_isSmartShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->smartShield;}
+Export(bool) _WeaponDef_isExteriorShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->exteriorShield;}
+Export(bool) _WeaponDef_isVisibleShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShield;}
+Export(bool) _WeaponDef_isVisibleShieldRepulse(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldRepulse;}
+Export(int) _WeaponDef_getVisibleShieldHitFrames(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldHitFrames;}
+Export(float) _WeaponDef_getShieldEnergyUse(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldEnergyUse;}
+Export(float) _WeaponDef_getShieldRadius(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRadius;}
+Export(float) _WeaponDef_getShieldForce(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldForce;}
+Export(float) _WeaponDef_getShieldMaxSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldMaxSpeed;}
+Export(float) _WeaponDef_getShieldPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPower;}
+Export(float) _WeaponDef_getShieldPowerRegen(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPowerRegen;}
+Export(float) _WeaponDef_getShieldPowerRegenEnergy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPowerRegenEnergy;}
+Export(float) _WeaponDef_getShieldStartingPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldStartingPower;}
+Export(int) _WeaponDef_getShieldRechargeDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRechargeDelay;}
+Export(struct SAIFloat3) _WeaponDef_getShieldGoodColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldGoodColor.toSAIFloat3();}
+Export(struct SAIFloat3) _WeaponDef_getShieldBadColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldBadColor.toSAIFloat3();}
+Export(float) _WeaponDef_getShieldAlpha(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldAlpha;}
+Export(unsigned int) _WeaponDef_getShieldInterceptType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldInterceptType;}
+Export(unsigned int) _WeaponDef_getInterceptedByShieldType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->interceptedByShieldType;}
+Export(bool) _WeaponDef_isAvoidFriendly(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidFriendly;}
+Export(bool) _WeaponDef_isAvoidFeature(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidFeature;}
+Export(bool) _WeaponDef_isAvoidNeutral(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->avoidNeutral;}
+Export(float) _WeaponDef_getTargetBorder(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetBorder;}
+Export(float) _WeaponDef_getCylinderTargetting(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cylinderTargetting;}
+Export(float) _WeaponDef_getMinIntensity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->minIntensity;}
+Export(float) _WeaponDef_getHeightBoostFactor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->heightBoostFactor;}
+Export(float) _WeaponDef_getProximityPriority(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->proximityPriority;}
+Export(unsigned int) _WeaponDef_getCollisionFlags(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->collisionFlags;}
+Export(bool) _WeaponDef_isSweepFire(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sweepFire;}
+Export(bool) _WeaponDef_isCanAttackGround(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->canAttackGround;}
+Export(float) _WeaponDef_getCameraShake(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cameraShake;}
+Export(float) _WeaponDef_getDynDamageExp(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageExp;}
+Export(float) _WeaponDef_getDynDamageMin(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageMin;}
+Export(float) _WeaponDef_getDynDamageRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageRange;}
+Export(bool) _WeaponDef_isDynDamageInverted(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageInverted;}
+Export(int) _WeaponDef_getNumCustomParams(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->customParams.size();
 }
-int _WeaponDef_getCustomParams(int teamId, int weaponDefId, const char* map[][2]) {
+Export(int) _WeaponDef_getCustomParams(int teamId, int weaponDefId, const char* map[][2]) {
 	return fillCMap(&(getWeaponDefById(teamId, weaponDefId)->customParams), map);
 }
 //########### END WeaponDef
 
 
-SAIFloat3 _Map_getStartPos(int teamId) {
+Export(SAIFloat3) _Map_getStartPos(int teamId) {
 	IAICallback* clb = team_callback[teamId];
 	return clb->GetStartPos()->toSAIFloat3();
 }
@@ -2712,23 +2730,23 @@ SAIFloat3 _Map_getStartPos(int teamId) {
 
 
 /*
-void _sendTextMsg(int teamId, const char* text, int zone) {
+Export(void) _sendTextMsg(int teamId, const char* text, int zone) {
 	IAICallback* clb = team_callback[teamId]; clb->SendTextMsg(text, zone);
 }
 
-void _setLastMsgPos(int teamId, SAIFloat3 pos) {
+Export(void) _setLastMsgPos(int teamId, SAIFloat3 pos) {
 	IAICallback* clb = team_callback[teamId]; clb->SetLastMsgPos(pos);
 }
 
-void _addNotification(int teamId, SAIFloat3 pos, SAIFloat3 color, float alpha) {
+Export(void) _addNotification(int teamId, SAIFloat3 pos, SAIFloat3 color, float alpha) {
 	IAICallback* clb = team_callback[teamId]; clb->AddNotification(pos, color, alpha);
 }
 
-bool _sendResources(int teamId, float mAmount, float eAmount, int receivingTeam) {
+Export(bool) _sendResources(int teamId, float mAmount, float eAmount, int receivingTeam) {
 	IAICallback* clb = team_callback[teamId]; return clb->SendResources(mAmount, eAmount, receivingTeam);
 }
 
-int _sendUnits(int teamId, int numUnitIds, const int* unitIds, int receivingTeam) {
+Export(int) _sendUnits(int teamId, int numUnitIds, const int* unitIds, int receivingTeam) {
 	IAICallback* clb = team_callback[teamId];
 	std::vector<int> unitIdVector(numUnitIds);
 	int i;
@@ -2738,28 +2756,28 @@ int _sendUnits(int teamId, int numUnitIds, const int* unitIds, int receivingTeam
 	return clb->SendUnits(unitIdVector, receivingTeam);
 }
 
-void* _createSharedMemArea(int teamId, char* name, int size) {
+Export(void*) _createSharedMemArea(int teamId, char* name, int size) {
 	IAICallback* clb = team_callback[teamId]; return clb->CreateSharedMemArea(name, size);
 }
 
-void _releasedSharedMemArea(int teamId, char* name) {
+Export(void) _releasedSharedMemArea(int teamId, char* name) {
 	IAICallback* clb = team_callback[teamId]; clb->ReleasedSharedMemArea(name);
 }
 
-int _Group_create(int teamId, char* dll, unsigned aiNumber) {
+Export(int) _Group_create(int teamId, char* dll, unsigned aiNumber) {
 	IAICallback* clb = team_callback[teamId]; return clb->CreateGroup(dll, aiNumber);
 }
 
-void _Group_erase(int teamId, int groupId) {
+Export(void) _Group_erase(int teamId, int groupId) {
 	IAICallback* clb = team_callback[teamId]; clb->EraseGroup(groupId);
 }
 */
 
-int _Group_getNumSupportedCommands(int teamId, int groupId) {
+Export(int) _Group_getNumSupportedCommands(int teamId, int groupId) {
 	IAICallback* clb = team_callback[teamId];
 	return clb->GetGroupCommands(groupId)->size();
 }
-int _Group_SupportedCommands_getId(int teamId, int groupId, int* ids) {
+Export(int) _Group_SupportedCommands_getId(int teamId, int groupId, int* ids) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2768,7 +2786,7 @@ int _Group_SupportedCommands_getId(int teamId, int groupId, int* ids) {
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_getName(int teamId, int groupId, const char** names) {
+Export(int) _Group_SupportedCommands_getName(int teamId, int groupId, const char** names) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2777,7 +2795,7 @@ int _Group_SupportedCommands_getName(int teamId, int groupId, const char** names
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_getToolTip(int teamId, int groupId, const char** toolTips) {
+Export(int) _Group_SupportedCommands_getToolTip(int teamId, int groupId, const char** toolTips) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2786,7 +2804,7 @@ int _Group_SupportedCommands_getToolTip(int teamId, int groupId, const char** to
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_isShowUnique(int teamId, int groupId, bool* showUniques) {
+Export(int) _Group_SupportedCommands_isShowUnique(int teamId, int groupId, bool* showUniques) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2795,7 +2813,7 @@ int _Group_SupportedCommands_isShowUnique(int teamId, int groupId, bool* showUni
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_isDisabled(int teamId, int groupId, bool* disableds) {
+Export(int) _Group_SupportedCommands_isDisabled(int teamId, int groupId, bool* disableds) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2804,7 +2822,7 @@ int _Group_SupportedCommands_isDisabled(int teamId, int groupId, bool* disableds
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_getNumParams(int teamId, int groupId, int* numParams) {
+Export(int) _Group_SupportedCommands_getNumParams(int teamId, int groupId, int* numParams) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2813,13 +2831,13 @@ int _Group_SupportedCommands_getNumParams(int teamId, int groupId, int* numParam
 	}
 	return numComDescs;
 }
-int _Group_SupportedCommands_getParams(int teamId, int groupId, const char*** params) {
+Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, const char*** params) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
 	for (int c=0; c < numComDescs; c++) {
 		const std::vector<std::string> ps = comDescs->at(c).params;
-		for (int p=0; p < ps.size(); p++) {
+		for (unsigned int p=0; p < ps.size(); p++) {
 			params[c][p] = ps.at(p).c_str();
 		}
 	}
@@ -2827,11 +2845,11 @@ int _Group_SupportedCommands_getParams(int teamId, int groupId, const char*** pa
 }
 
 /*
-bool _Unit_addToGroup(int teamId, int unitId, int groupId) {
+Export(bool) _Unit_addToGroup(int teamId, int unitId, int groupId) {
 	IAICallback* clb = team_callback[teamId]; return clb->AddUnitToGroup(unitId, groupId);
 }
 
-bool _Unit_removeFromGroup(int teamId, int unitId) {
+Export(bool) _Unit_removeFromGroup(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId]; return clb->RemoveUnitFromGroup(unitId);
 }
 */
@@ -2845,63 +2863,63 @@ bool _Unit_removeFromGroup(int teamId, int unitId) {
 //}
 /*
 
-int _initPath(int teamId, SAIFloat3 start, SAIFloat3 end, int pathType) {
+Export(int) _initPath(int teamId, SAIFloat3 start, SAIFloat3 end, int pathType) {
 	IAICallback* clb = team_callback[teamId]; return clb->InitPath(start, end, pathType);
 }
 
-void _freePath(int teamId, int pathid) {
+Export(void) _freePath(int teamId, int pathid) {
 	IAICallback* clb = team_callback[teamId]; clb->FreePath(pathid);
 }
 
-void _LineDrawer_startPath(int teamId, SAIFloat3 pos, const float* color) {
+Export(void) _LineDrawer_startPath(int teamId, SAIFloat3 pos, const float* color) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerStartPath(pos, color);
 }
 
-void _LineDrawer_finishPath(int teamId) {
+Export(void) _LineDrawer_finishPath(int teamId) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerFinishPath();
 }
 
-void _LineDrawer_drawLine(int teamId, SAIFloat3 endPos, const float* color) {
+Export(void) _LineDrawer_drawLine(int teamId, SAIFloat3 endPos, const float* color) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerDrawLine(endPos, color);
 }
 
-void _LineDrawer_drawLineAndIcon(int teamId, int cmdID, SAIFloat3 endPos, const float* color) {
+Export(void) _LineDrawer_drawLineAndIcon(int teamId, int cmdID, SAIFloat3 endPos, const float* color) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerDrawLineAndIcon(cmdID, endPos, color);
 }
 
-void _LineDrawer_drawIconAtLastPos(int teamId, int cmdID) {
+Export(void) _LineDrawer_drawIconAtLastPos(int teamId, int cmdID) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerDrawIconAtLastPos(cmdID);
 }
 
-void _LineDrawer_break(int teamId, SAIFloat3 endPos, const float* color) {
+Export(void) _LineDrawer_break(int teamId, SAIFloat3 endPos, const float* color) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerBreak(endPos, color);
 }
 
-void _LineDrawer_restart(int teamId) {
+Export(void) _LineDrawer_restart(int teamId) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerRestart();
 }
 
-void _LineDrawer_restartSameColor(int teamId) {
+Export(void) _LineDrawer_restartSameColor(int teamId) {
 	IAICallback* clb = team_callback[teamId]; clb->LineDrawerRestartSameColor();
 }
 
-int _createSplineFigure(int teamId, SAIFloat3 pos1, SAIFloat3 pos2, SAIFloat3 pos3, SAIFloat3 pos4, float width, int arrow, int lifetime, int figureGroupId) {
+Export(int) _createSplineFigure(int teamId, SAIFloat3 pos1, SAIFloat3 pos2, SAIFloat3 pos3, SAIFloat3 pos4, float width, int arrow, int lifetime, int figureGroupId) {
 	IAICallback* clb = team_callback[teamId]; return clb->CreateSplineFigure(pos1, pos2, pos3, pos4, width, arrow, lifetime, figureGroupId);
 }
 
-int _createLineFigure(int teamId, SAIFloat3 pos1, SAIFloat3 pos2, float width, int arrow, int lifetime, int figureGroupId) {
+Export(int) _createLineFigure(int teamId, SAIFloat3 pos1, SAIFloat3 pos2, float width, int arrow, int lifetime, int figureGroupId) {
 	IAICallback* clb = team_callback[teamId]; return clb->CreateLineFigure(pos1, pos2, width, arrow, lifetime, figureGroupId);
 }
 
-void _setFigureColor(int teamId, int group, float red, float green, float blue, float alpha) {
+Export(void) _setFigureColor(int teamId, int group, float red, float green, float blue, float alpha) {
 	IAICallback* clb = team_callback[teamId]; clb->SetFigureColor(group, red, green, blue, alpha);
 }
 
-void _deleteFigureGroup(int teamId, int figureGroupId) {
+Export(void) _deleteFigureGroup(int teamId, int figureGroupId) {
 	IAICallback* clb = team_callback[teamId]; clb->DeleteFigureGroup(figureGroupId);
 }
 
-void _drawUnit(int teamId, const char* name, SAIFloat3 pos, float rotation, int lifetime, int team, bool transparent, bool drawBorder, int facing) {
+Export(void) _drawUnit(int teamId, const char* name, SAIFloat3 pos, float rotation, int lifetime, int team, bool transparent, bool drawBorder, int facing) {
 	IAICallback* clb = team_callback[teamId]; clb->DrawUnit(name, pos, rotation, lifetime, team, transparent, drawBorder, facing);
 }
 */
@@ -2911,11 +2929,11 @@ void _drawUnit(int teamId, const char* name, SAIFloat3 pos, float rotation, int 
 //}
 
 /*
-bool _readFile(int teamId, const char* name, void* buffer, int bufferLen) {
+Export(bool) _readFile(int teamId, const char* name, void* buffer, int bufferLen) {
 	IAICallback* clb = team_callback[teamId]; return clb->ReadFile(name, buffer, bufferLen);
 }
 
-const char* _callLuaRules(int teamId, const char* data, int inSize, int* outSize) {
+Export(const char*) _callLuaRules(int teamId, const char* data, int inSize, int* outSize) {
 	IAICallback* clb = team_callback[teamId]; return clb->CallLuaRules(data, inSize, outSize);
 }
 */

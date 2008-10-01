@@ -123,6 +123,7 @@ const float3 UpVector(0,1,0);
  */
 const float3 ZeroVector(0,0,0);
 
+#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 class CTeam;
 class CUnit;
 class CPlayer;
@@ -153,6 +154,11 @@ public:
 	}
 	unsigned int GetRandSeed()     const { return randSeed; }
 	unsigned int GetInitRandSeed() const { return initRandSeed; }
+	
+	static CGlobalSyncedStuff* GetInstance();
+private:
+	static CGlobalSyncedStuff* instance;
+public:
 
 	/**
 	 * @brief frame number
@@ -471,6 +477,11 @@ public:
 	float3 usRandVector(); //!< Unsynced random vector
 
 	void LoadFromSetup(const CGameSetup*);
+	
+	static CGlobalUnsyncedStuff* GetInstance();
+private:
+	static CGlobalUnsyncedStuff* instance;
+public:
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?
@@ -666,7 +677,7 @@ public:
 	 * this player
 	 */
 	CUnit* directControl;
-#endif
+#endif	/* DIRECT_CONTROL_ALLOWED */
 	
 private:
 	/**
@@ -681,5 +692,6 @@ private:
 extern CGlobalSyncedStuff* gs;
 extern CGlobalUnsyncedStuff* gu;
 extern bool fullscreen;
+#endif /* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 #endif /* GLOBALSTUFF_H */

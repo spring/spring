@@ -18,14 +18,14 @@
 extern std::string stupidGlobalMapname;
 
 
-CGlobalAITestScript::CGlobalAITestScript(std::string dll):
-	CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
-	dllName(dll)
+CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifyer):
+	CScript(std::string("GlobalAI test (") + std::string(skirmishAISpecifyer.ai.shortName) + std::string(")")),
+	skirmishAISpecifyer(skirmishAISpecifyer)
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
 	gs->Team(1)->isAI = true;
-	gs->Team(1)->dllAI = dllName;
+	gs->Team(1)->skirmishAISpecifyer = skirmishAISpecifyer;
 	gs->Team(1)->leader = 0;
 }
 
@@ -37,7 +37,7 @@ CGlobalAITestScript::~CGlobalAITestScript(void)
 
 void CGlobalAITestScript::GameStart(void)
 {
-	globalAI->CreateGlobalAI(1, dllName.c_str());
+	globalAI->CreateSkirmishAI(1, skirmishAISpecifyer);
 
 	gs->Team(0)->energy        = 1000;
 	gs->Team(0)->energyStorage = 1000;

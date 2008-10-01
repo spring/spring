@@ -28,12 +28,12 @@
 class CAILibrary {
 public:
     
-    CAILibrary(const char* libName,  int team);
+    CAILibrary(const char* libName, int team);
     ~CAILibrary();
     
     void init();
     
-    int handleEvent(int eventID, void* event);
+    int handleEvent(int topic, void* data);
     
     typedef void (*AI_INIT)(int);
     AI_INIT _init;

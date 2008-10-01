@@ -41,7 +41,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "AICheats.h"
 #include "GlobalAICallback.h"
-#include "GlobalAI.h"
+#include "SkirmishAIWrapper.h"
 #include "GlobalAIHandler.h"
 #include "Group.h"
 #include "GroupHandler.h"
@@ -188,9 +188,15 @@ bool CAICallback::PosInCamera(float3 pos, float radius)
 // (still completely insecure ofcourse, but it filters out the easiest way of cheating)
 void CAICallback::verify()
 {
-	CGlobalAI *gai = globalAI->ais [team];
-	if (gai && (((group && group->handler != /*gai->gh*/grouphandlers[gai->team] /*&& group->handler != grouphandler*/) || gai->team != team))) {
-		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
+	const CSkirmishAIWrapper* skirmishAI = globalAI->GetSkirmishAI(team);
+	if (
+			skirmishAI
+			&& (((group
+					&& group->handler != /*skirmishAI->gh*/grouphandlers[skirmishAI->GetTeamId()]
+					/*&& group->handler != grouphandler*/)
+			|| skirmishAI->GetTeamId() != team))) {
+		handleerror (0, "AI has modified spring components(possible cheat)",
+				"Spring is closing:", MBF_OK | MBF_EXCL);
 		exit (-1);
 	}
 }
@@ -236,12 +242,14 @@ const char* CAICallback::GetTeamSide(int teamId)
 
 void* CAICallback::CreateSharedMemArea(char* name, int size)
 {
-	return globalAI->GetAIBuffer(team,name,size);
+	handleerror (0, "AI wants to use deprecated function \"CreateSharedMemArea\"",
+				"Spring is closing:", MBF_OK | MBF_EXCL);
 }
 
 void CAICallback::ReleasedSharedMemArea(char* name)
 {
-	globalAI->ReleaseAIBuffer(team,name);
+	handleerror (0, "AI wants to use deprecated function \"ReleasedSharedMemArea\"",
+				"Spring is closing:", MBF_OK | MBF_EXCL);
 }
 
 int CAICallback::CreateGroup(char* libraryName, unsigned aiNumber)
