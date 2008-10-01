@@ -38,25 +38,13 @@ struct MapInfo
 };
 
 
-//enum OptionType {
-//	opt_error  = 0,
-//	opt_bool   = 1,
-//	opt_list   = 2,
-//	opt_number = 3,
-//	opt_string = 4
-//};
-
-
 const char *GetStr(std::string str);
 
 
 #ifdef WIN32
-//	#define DLL_EXPORT extern "C" __declspec(dllexport)
 	#include <windows.h>
 #else
 	#include <iostream>
-//	#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-//	#define __stdcall
 	#define MB_OK 0
 	static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
 	{
@@ -65,7 +53,7 @@ const char *GetStr(std::string str);
 #endif	/* WIN32 */
 
 /**
- * @brief returns the version fo spring this was compiled with
+ * @brief returns the version of spring this was compiled with
  *
  * Returns a const char* string specifying the version of spring used to build this library with.
  * It was added to aid in lobby creation, where checks for updates to spring occur.
