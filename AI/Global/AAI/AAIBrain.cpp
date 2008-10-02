@@ -793,7 +793,7 @@ void AAIBrain::BuildUnits()
 					{
 						air_eff = 4;
 
-						if(anti_air_urgency > 1.5 * anti_ground_urgency)
+						if(anti_air_urgency > 2.0f * anti_ground_urgency)
 							urgent = true;
 					}
 					else
@@ -890,7 +890,7 @@ void AAIBrain::BuildUnits()
 					{
 						air_eff = 4;
 
-						if(anti_air_urgency > anti_ground_urgency)
+						if(anti_air_urgency > 2.0f * anti_ground_urgency)
 							urgent = true;
 					}
 					else if(k < anti_ground_urgency + anti_air_urgency + anti_hover_urgency)

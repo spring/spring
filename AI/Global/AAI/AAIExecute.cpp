@@ -300,18 +300,18 @@ void AAIExecute::UpdateRecon()
 
 		if(period == 0)
 		{
-			cost = 2;
-			los = 0.5;
+			cost = 2.0f;
+			los = 0.5f;
 		}
 		else if(period == 1)
 		{
-			cost = 1;
-			los = 2;
+			cost = 1.0f;
+			los = 2.0f;
 		}
 		else 
 		{
-			cost = 0.5;
-			los = 4.0;
+			cost = 0.5f;
+			los = 4.0f;
 		}
 
 		// determine movement type of scout based on map
@@ -337,7 +337,12 @@ void AAIExecute::UpdateRecon()
 
 		if(scout)
 		{
-			if(AddUnitToBuildque(scout, 1, false))
+			bool urgent = true;
+
+			if(ai->activeScouts >= 2)
+				urgent = false;
+
+			if(AddUnitToBuildqueue(scout, 1, urgent))
 			{
 				++ai->futureScouts;
 				++bt->units_dynamic[scout].requested;
@@ -550,7 +555,7 @@ float AAIExecute::GetTotalAirPower()
 	return power;
 }
 
-list<int>* AAIExecute::GetBuildqueOfFactory(int def_id)
+list<int>* AAIExecute::GetBuildqueueOfFactory(int def_id)
 {
 	for(int i = 0; i < numOfFactories; ++i)
 	{
@@ -561,16 +566,13 @@ list<int>* AAIExecute::GetBuildqueOfFactory(int def_id)
 	return 0;
 }
 
-bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
+bool AAIExecute::AddUnitToBuildqueue(int def_id, int number, bool urgent)
 {
 	urgent = false;
 
 	UnitCategory category = bt->units_static[def_id].category;
 
-	if(category == UNKNOWN)
-		return false;
-
-	list<int> *buildque = 0, *temp = 0;
+	list<int> *buildqueue = 0, *temp_buildqueue = 0;
 	
 	float my_rating, best_rating = 0;
 
@@ -578,11 +580,11 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 	{
 		if(bt->units_dynamic[*fac].active > 0)
 		{
-			temp = GetBuildqueOfFactory(*fac);
+			temp_buildqueue = GetBuildqueueOfFactory(*fac);
 
-			if(temp)
+			if(temp_buildqueue)
 			{
-				my_rating = (1 + 2 * (float) bt->units_dynamic[*fac].active) / (temp->size() + 3);
+				my_rating = (1 + 2 * (float) bt->units_dynamic[*fac].active) / (temp_buildqueue->size() + 3);
 
 				if(map->mapType == WATER_MAP && !bt->CanPlacedWater(*fac))
 					my_rating /= 10.0;
@@ -596,59 +598,25 @@ bool AAIExecute::AddUnitToBuildque(int def_id, int number, bool urgent)
 		if(my_rating > best_rating)
 		{
 			best_rating = my_rating;
-			buildque = temp;
+			buildqueue = temp_buildqueue;
 		}
 	}
-
-	
 
 	// determine position
-	if(buildque)
+	if(buildqueue)
 	{
-		//fprintf(ai->file, "Found builque for %s\n", bt->unitList[def_id-1]->humanName.c_str());
-
-		if(bt->IsBuilder(def_id))
-		{	
-			buildque->insert(buildque->begin(), number, def_id);
-			return true;	
-		}
-		else if(category == SCOUT)
+		if(urgent)
 		{
-			if(ai->activeScouts < 2)
-			{
-				buildque->insert(buildque->begin(), number, def_id);
+				buildqueue->insert(buildqueue->begin(), number, def_id);
 				return true;
-			}
-			else
-			{
-				/*// insert after the last builder
-				for(list<int>::iterator unit = buildque->begin(); unit != buildque->end();  ++unit)
-				{
-					if(!bt->IsBuilder(*unit))
-					{
-						buildque->insert(unit, number, def_id);
-						return true;
-					}
-				}*/
-				buildque->insert(buildque->begin(), number, def_id);
-				return true;
-			}
 		}
-		else if(buildque->size() < cfg->MAX_BUILDQUE_SIZE)
+		else if(buildqueue->size() < cfg->MAX_BUILDQUE_SIZE)
 		{
-			if(urgent)
-				buildque->insert(buildque->begin(), number, def_id);
-			else
-				buildque->insert(buildque->end(), number, def_id);
-
-			//fprintf(ai->file, "Added %s to buildque with length %i\n", bt->unitList[def_id-1]->humanName.c_str(), buildque->size());
-
+			buildqueue->insert(buildqueue->end(), number, def_id);
 			return true;
-		}
+		}	
 	}
-	//else
-	//	fprintf(ai->file, "Could not find builque for %s\n", bt->unitList[def_id-1]->humanName.c_str());
-
+	
 	return false;
 }
 
@@ -838,9 +806,9 @@ bool AAIExecute::BuildExtractor()
 		// get id of an extractor and look for suitable builder
 		land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
 
-		if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
+		if(land_mex && bt->units_dynamic[land_mex].constructorsAvailable <= 0 && bt->units_dynamic[land_mex].constructorsRequested <= 0)
 		{
-			bt->BuildBuilderFor(land_mex);
+			bt->BuildConstructorFor(land_mex);
 			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
 		}
 
@@ -870,17 +838,17 @@ bool AAIExecute::BuildExtractor()
 			// get id of an extractor and look for suitable builder
 			land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, false);
 
-			if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
+			if(land_mex && bt->units_dynamic[land_mex].constructorsAvailable <= 0 && bt->units_dynamic[land_mex].constructorsRequested <= 0)
 			{
-				bt->BuildBuilderFor(land_mex);
+				bt->BuildConstructorFor(land_mex);
 				land_mex = bt->GetMex(ai->side, cost, efficiency, false, false, true);
 			}
 
 			water_mex = bt->GetMex(ai->side, cost, efficiency, false, true, false);
 
-			if(water_mex && bt->units_dynamic[water_mex].buildersAvailable <= 0)
+			if(water_mex && bt->units_dynamic[water_mex].constructorsAvailable <= 0 && bt->units_dynamic[water_mex].constructorsRequested <= 0)
 			{
-				bt->BuildBuilderFor(water_mex);
+				bt->BuildConstructorFor(water_mex);
 				water_mex = bt->GetMex(ai->side, cost, efficiency, false, true, true);
 			}
 
@@ -975,9 +943,9 @@ bool AAIExecute::BuildExtractor()
 
 				int mex = bt->GetMex(ai->side, cost, efficiency, armed, water, false);
 
-				if(mex && bt->units_dynamic[mex].buildersAvailable <= 0)
+				if(mex && bt->units_dynamic[mex].constructorsAvailable <= 0 && bt->units_dynamic[mex].constructorsAvailable <= 0)
 				{
-					bt->BuildBuilderFor(mex);
+					bt->BuildConstructorFor(mex);
 
 					mex = bt->GetMex(ai->side, cost, efficiency, armed, water, true);
 				}
@@ -1015,6 +983,8 @@ bool AAIExecute::BuildExtractor()
 bool AAIExecute::BuildPowerPlant()
 {	
 	if(ai->futureUnits[POWER_PLANT] + ai->requestedUnits[POWER_PLANT] > 1)
+		return true;
+	else if(ai->futureUnits[POWER_PLANT] <= 0 && ai->requestedUnits[POWER_PLANT] > 0)
 		return true;
 	else if(ai->futureUnits[POWER_PLANT] > 0)
 	{
@@ -1099,20 +1069,20 @@ bool AAIExecute::BuildPowerPlant()
 	// get water and ground plant
 	ground_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, false, false, false);
 	// currently aai cannot build this building
-	if(ground_plant && bt->units_dynamic[ground_plant].buildersAvailable <= 0)
+	if(ground_plant && bt->units_dynamic[ground_plant].constructorsAvailable <= 0)
 	{
-		if( bt->units_dynamic[water_plant].buildersRequested <= 0)
-			bt->AddBuilder(ground_plant);
+		if( bt->units_dynamic[water_plant].constructorsRequested <= 0)
+			bt->BuildConstructorFor(ground_plant);
 
 		ground_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, false, false, true);
 	}
 
 	water_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, true, false, false);
 	// currently aai cannot build this building
-	if(water_plant && bt->units_dynamic[water_plant].buildersAvailable <= 0)
+	if(water_plant && bt->units_dynamic[water_plant].constructorsAvailable <= 0)
 	{
-		if( bt->units_dynamic[water_plant].buildersRequested <= 0)
-			bt->AddBuilder(water_plant);
+		if( bt->units_dynamic[water_plant].constructorsRequested <= 0)
+			bt->BuildConstructorFor(water_plant);
 
 		water_plant = bt->GetPowerPlant(ai->side, eff, urgency, max_power, energy, true, false, true);
 	}
@@ -1264,10 +1234,10 @@ bool AAIExecute::BuildMetalMaker()
 			maker = bt->GetMetalMaker(ai->side, cost,  efficiency, metal, urgency, false, false); 
 	
 			// currently aai cannot build this building
-			if(maker && bt->units_dynamic[maker].buildersAvailable <= 0)
+			if(maker && bt->units_dynamic[maker].constructorsAvailable <= 0)
 			{
-				if(bt->units_dynamic[maker].buildersRequested <= 0)
-					bt->BuildBuilderFor(maker);
+				if(bt->units_dynamic[maker].constructorsRequested <= 0)
+					bt->BuildConstructorFor(maker);
 				
 				maker = bt->GetMetalMaker(ai->side, cost, efficiency, metal, urgency, false, true);
 			}
@@ -1305,10 +1275,10 @@ bool AAIExecute::BuildMetalMaker()
 			maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, true, false); 
 	
 			// currently aai cannot build this building
-			if(maker && bt->units_dynamic[maker].buildersAvailable <= 0)
+			if(maker && bt->units_dynamic[maker].constructorsAvailable <= 0)
 			{
-				if(bt->units_dynamic[maker].buildersRequested <= 0)
-					bt->BuildBuilderFor(maker);
+				if(bt->units_dynamic[maker].constructorsRequested <= 0)
+					bt->BuildConstructorFor(maker);
 				
 				maker = bt->GetMetalMaker(ai->side, brain->Affordable(),  8.0/(urgency+2.0), 64.0/(16*urgency+2.0), urgency, true, true);
 			}
@@ -1386,9 +1356,11 @@ bool AAIExecute::BuildStorage()
 		{		
 			storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, false, false); 
 	
-			if(storage && bt->units_dynamic[storage].buildersAvailable <= 0 && bt->units_dynamic[storage].buildersRequested <= 0)
+			if(storage && bt->units_dynamic[storage].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(storage);
+				if(bt->units_dynamic[storage].constructorsRequested <= 0)
+					bt->BuildConstructorFor(storage);
+
 				storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, false, true); 
 			}
 
@@ -1423,9 +1395,11 @@ bool AAIExecute::BuildStorage()
 		{
 			storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, true, false); 
 	
-			if(storage && bt->units_dynamic[storage].buildersAvailable <= 0 && bt->units_dynamic[storage].buildersRequested <= 0)
+			if(storage && bt->units_dynamic[storage].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(storage);
+				if( bt->units_dynamic[storage].constructorsRequested <= 0)
+					bt->BuildConstructorFor(storage);
+
 				storage = bt->GetStorage(ai->side, brain->Affordable(),  metal, energy, 1, true, true); 
 			}
 
@@ -1493,10 +1467,10 @@ bool AAIExecute::BuildAirBase()
 
 			airbase = bt->GetAirBase(ai->side, brain->Affordable(), false, false); 
 	
-			if(airbase && bt->units_dynamic[airbase].buildersAvailable <= 0)
+			if(airbase && bt->units_dynamic[airbase].constructorsAvailable <= 0)
 			{
-				if(bt->units_dynamic[airbase].buildersRequested <= 0)
-					bt->BuildBuilderFor(airbase);
+				if(bt->units_dynamic[airbase].constructorsRequested <= 0)
+					bt->BuildConstructorFor(airbase);
 
 				airbase = bt->GetAirBase(ai->side, brain->Affordable(), false, true);
 			}
@@ -1532,10 +1506,10 @@ bool AAIExecute::BuildAirBase()
 		{
 			airbase = bt->GetAirBase(ai->side, brain->Affordable(), true, false); 
 	
-			if(airbase && bt->units_dynamic[airbase].buildersAvailable <= 0 )
+			if(airbase && bt->units_dynamic[airbase].constructorsAvailable <= 0 )
 			{
-				if(bt->units_dynamic[airbase].buildersRequested <= 0)
-					bt->BuildBuilderFor(airbase);
+				if(bt->units_dynamic[airbase].constructorsRequested <= 0)
+					bt->BuildConstructorFor(airbase);
 
 				airbase = bt->GetAirBase(ai->side, brain->Affordable(), true, true);  
 			}
@@ -1691,9 +1665,11 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		else
 			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, range, 8, false, false);
 
-		if(building && bt->units_dynamic[building].buildersAvailable <= 0 && bt->units_dynamic[building].buildersRequested <= 0)
+		if(building && bt->units_dynamic[building].constructorsAvailable <= 0)
 		{
-			bt->BuildBuilderFor(building);
+			if(bt->units_dynamic[building].constructorsRequested <= 0)
+				bt->BuildConstructorFor(building);
+
 			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, range, 8, false, true);
 		}
 
@@ -1748,9 +1724,11 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		else
 			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1, 8, true, false);
 
-		if(building && bt->units_dynamic[building].buildersAvailable <= 0 && bt->units_dynamic[building].buildersRequested <= 0)
+		if(building && bt->units_dynamic[building].constructorsAvailable <= 0)
 		{
-			bt->BuildBuilderFor(building);
+			if(bt->units_dynamic[building].constructorsRequested <= 0)
+				bt->BuildConstructorFor(building);
+
 			building = bt->GetDefenceBuilding(ai->side, eff, power, cost, gr_eff, air_eff, hover_eff, sea_eff, submarine_eff, urgency, 1,  8, true, true);
 		}
 
@@ -1837,10 +1815,10 @@ bool AAIExecute::BuildArty()
 		
 			if(arty)
 			{
-				if(bt->units_dynamic[arty].buildersAvailable <= 0)
+				if(bt->units_dynamic[arty].constructorsAvailable <= 0)
 				{
-					if(bt->units_dynamic[arty].buildersRequested <= 0)
-						bt->BuildBuilderFor(arty);
+					if(bt->units_dynamic[arty].constructorsRequested <= 0)
+						bt->BuildConstructorFor(arty);
 					
 					return true;
 				}
@@ -1871,10 +1849,10 @@ bool AAIExecute::BuildArty()
 		
 			if(arty)
 			{
-				if(bt->units_dynamic[arty].buildersAvailable <= 0)
+				if(bt->units_dynamic[arty].constructorsAvailable <= 0)
 				{
-					if(bt->units_dynamic[arty].buildersRequested <= 0)
-						bt->BuildBuilderFor(arty);
+					if(bt->units_dynamic[arty].constructorsRequested <= 0)
+						bt->BuildConstructorFor(arty);
 
 					return true;
 				}
@@ -1919,7 +1897,7 @@ bool AAIExecute::BuildFactory()
 		if(bt->units_dynamic[*fac].requested > 0)	
 		{
 			my_rating = bt->GetFactoryRating(*fac) / pow( (float) (1 + bt->units_dynamic[*fac].active), 2.0f);
-			my_rating *= (1 + sqrt(2.0 + (float) GetBuildqueOfFactory(*fac)->size())); 
+			my_rating *= (1 + sqrt(2.0 + (float) GetBuildqueueOfFactory(*fac)->size())); 
 
 			if(ai->activeFactories < 1)
 				my_rating /= bt->units_static[*fac].cost;
@@ -2029,8 +2007,8 @@ bool AAIExecute::BuildFactory()
 			}
 			else
 			{
-				if(bt->units_dynamic[building].buildersRequested <= 0 && bt->units_dynamic[building].buildersAvailable <= 0)
-					bt->BuildBuilderFor(building);
+				if(bt->units_dynamic[building].constructorsRequested <= 0 && bt->units_dynamic[building].constructorsAvailable <= 0)
+					bt->BuildConstructorFor(building);
 					
 				return false;
 			}
@@ -2075,9 +2053,9 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 		{
 			unit = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, false);
 
-			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
+			if(unit && bt->units_dynamic[unit].constructorsAvailable <= 0)
 			{
-				bt->BuildFactoryFor(unit);
+				bt->BuildConstructorFor(unit);
 				unit = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, true);
 			}
 		}
@@ -2090,9 +2068,9 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 		{
 			unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
+			if(unit && bt->units_dynamic[unit].constructorsAvailable <= 0)
 			{
-				bt->BuildFactoryFor(unit);
+				bt->BuildConstructorFor(unit);
 				unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
 			}
 		}
@@ -2105,9 +2083,9 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 		{
 			unit = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
+			if(unit && bt->units_dynamic[unit].constructorsAvailable <= 0)
 			{
-				bt->BuildFactoryFor(unit);
+				bt->BuildConstructorFor(unit);
 				unit = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
 			}
 		}
@@ -2120,9 +2098,9 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 		{
 			unit = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
+			if(unit && bt->units_dynamic[unit].constructorsAvailable <= 0)
 			{
-				bt->BuildFactoryFor(unit);
+				bt->BuildConstructorFor(unit);
 				unit = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 			}
 		}
@@ -2135,9 +2113,9 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 		{
 			unit = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(unit && bt->units_dynamic[unit].buildersAvailable <= 0)
+			if(unit && bt->units_dynamic[unit].constructorsAvailable <= 0)
 			{
-				bt->BuildFactoryFor(unit);
+				bt->BuildConstructorFor(unit);
 				unit = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 			}
 		}
@@ -2146,26 +2124,26 @@ void AAIExecute::BuildUnit(UnitCategory category, float speed, float cost, float
 
 	if(unit)
 	{
-		if(bt->units_dynamic[unit].buildersAvailable > 0)
+		if(bt->units_dynamic[unit].constructorsAvailable > 0)
 		{	
 			if(bt->units_static[unit].cost < cfg->MAX_COST_LIGHT_ASSAULT * bt->max_cost[category][ai->side-1])
 			{
-				if(AddUnitToBuildque(unit, 3, urgent))
+				if(AddUnitToBuildqueue(unit, 3, urgent))
 					bt->units_dynamic[unit].requested += 3;
 			}
 			else if(bt->units_static[unit].cost < cfg->MAX_COST_MEDIUM_ASSAULT * bt->max_cost[category][ai->side-1])
 			{
-				if(AddUnitToBuildque(unit, 2, urgent))
+				if(AddUnitToBuildqueue(unit, 2, urgent))
 					bt->units_dynamic[unit].requested += 2;
 			}
 			else
 			{
-				if(AddUnitToBuildque(unit, 1, urgent))
+				if(AddUnitToBuildqueue(unit, 1, urgent))
 					bt->units_dynamic[unit].requested += 1;
 			}
 		}
-		else
-			bt->BuildFactoryFor(unit);
+		else if(bt->units_dynamic[unit].constructorsRequested <= 0)
+			bt->BuildConstructorFor(unit);
 	}
 }
 
@@ -2210,9 +2188,11 @@ bool AAIExecute::BuildRecon()
 			// find radar
 			radar = bt->GetRadar(ai->side, cost, range, false, false);
 
-			if(radar && bt->units_dynamic[radar].buildersAvailable <= 0 && bt->units_dynamic[radar].buildersRequested <= 0)
+			if(radar && bt->units_dynamic[radar].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(radar);
+				if(bt->units_dynamic[radar].constructorsRequested <= 0)
+					bt->BuildConstructorFor(radar);
+
 				radar = bt->GetRadar(ai->side, cost, range, false, true);
 			}
 		
@@ -2243,9 +2223,11 @@ bool AAIExecute::BuildRecon()
 			// find radar
 			radar = bt->GetRadar(ai->side, cost, range, true, false);
 
-			if(radar && bt->units_dynamic[radar].buildersAvailable <= 0 && bt->units_dynamic[radar].buildersRequested <= 0)
+			if(radar && bt->units_dynamic[radar].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(radar);
+				if(bt->units_dynamic[radar].constructorsRequested <= 0)
+					bt->BuildConstructorFor(radar);
+				
 				radar = bt->GetRadar(ai->side, cost, range, true, true);
 			}
 		
@@ -2316,9 +2298,11 @@ bool AAIExecute::BuildJammer()
 			// find jammer
 			jammer = bt->GetJammer(ai->side, cost, range, false, false);
 
-			if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0 && bt->units_dynamic[jammer].buildersRequested <= 0)
+			if(jammer && bt->units_dynamic[jammer].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(jammer);
+				if(bt->units_dynamic[jammer].constructorsRequested <= 0)
+					bt->BuildConstructorFor(jammer);
+
 				jammer = bt->GetRadar(ai->side, cost, range, false, true);
 			}
 		
@@ -2349,9 +2333,11 @@ bool AAIExecute::BuildJammer()
 			// find radar
 			jammer = bt->GetJammer(ai->side, cost, range, true, false);
 
-			if(jammer && bt->units_dynamic[jammer].buildersAvailable <= 0 && bt->units_dynamic[jammer].buildersRequested <= 0)
+			if(jammer && bt->units_dynamic[jammer].constructorsAvailable <= 0)
 			{
-				bt->BuildBuilderFor(jammer);
+				if(bt->units_dynamic[jammer].constructorsRequested <= 0)
+					bt->BuildConstructorFor(jammer);
+
 				jammer = bt->GetJammer(ai->side, cost, range, true, true);
 			}
 		
@@ -2511,7 +2497,7 @@ void AAIExecute::CheckStationaryArty()
 		urgency[STATIONARY_ARTY] = temp;
 }
 
-void AAIExecute::CheckBuildques()
+void AAIExecute::CheckBuildqueues()
 {
 	int req_units = 0;
 	int active_factory_types = 0;
@@ -2731,18 +2717,18 @@ void AAIExecute::CheckMexUpgrade()
 
 	int land_mex = bt->GetMex(ai->side, cost, eff, false, false, false);
 
-	if(land_mex && bt->units_dynamic[land_mex].buildersAvailable <= 0)
+	if(land_mex && bt->units_dynamic[land_mex].constructorsAvailable <= 0)
 	{
-		bt->BuildBuilderFor(land_mex);
+		bt->BuildConstructorFor(land_mex);
 
 		land_mex = bt->GetMex(ai->side, cost, eff, false, false, true);
 	}
 
 	int water_mex = bt->GetMex(ai->side, cost, eff, false, true, false);
 
-	if(water_mex && bt->units_dynamic[water_mex].buildersAvailable <= 0)
+	if(water_mex && bt->units_dynamic[water_mex].constructorsAvailable <= 0)
 	{
-		bt->BuildBuilderFor(water_mex);
+		bt->BuildConstructorFor(water_mex);
 
 		water_mex = bt->GetMex(ai->side, cost, eff, false, true, true);
 	}
@@ -3347,7 +3333,7 @@ void AAIExecute::ConstructionFailed(float3 build_pos, int def_id)
 		--ai->futureFactories;
 
 		for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
-			bt->units_dynamic[*unit].buildersRequested -= 1;
+			bt->units_dynamic[*unit].constructorsRequested -= 1;
 
 		// remove future ressource demand now factory has been finished
 		futureRequestedMetal -= bt->units_static[def->id].efficiency[0];
@@ -3386,10 +3372,10 @@ void AAIExecute::AddStartFactory()
 
 	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][ai->side-1].end(); ++fac)
 	{
-		if(bt->units_dynamic[*fac].buildersAvailable > 0)
+		if(bt->units_dynamic[*fac].constructorsAvailable > 0)
 		{
 			my_rating = bt->GetFactoryRating(*fac);
-			my_rating *= (1 - (bt->units_static[*fac].cost / bt->max_cost[STATIONARY_CONSTRUCTOR][ai->side-1]));
+			my_rating *= (2.0 - (bt->units_static[*fac].cost / bt->max_cost[STATIONARY_CONSTRUCTOR][ai->side-1]));
 
 			if(my_rating > best_rating)
 			{
@@ -3406,7 +3392,7 @@ void AAIExecute::AddStartFactory()
 		fprintf(ai->file, "%s requested\n", bt->unitList[best_factory-1]->humanName.c_str());
 
 		for(list<int>::iterator j = bt->units_static[best_factory].canBuildList.begin(); j != bt->units_static[best_factory].canBuildList.end(); ++j)
-			bt->units_dynamic[*j].buildersRequested += 1;
+			bt->units_dynamic[*j].constructorsRequested += 1;
 	}
 }
 
