@@ -1114,42 +1114,49 @@ void CDynWater::AddShipWakes()
 	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
 	va2->Initialize();
 
+	int nadd=uh->activeUnits.size()*4;
+	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
+	va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
+
 	for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin(); ui!=uh->activeUnits.end();++ui){
 		CUnit* unit=*ui;
-		if(unit->moveType && unit->floatOnWater && unit->mobility && !unit->unitDef->canhover){	//boat
-			float speedf=unit->speed.Length2D();
-			float3 pos=unit->pos;
-			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-				continue;
-			if(pos.y>-4 && pos.y<1){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-				float3 sideAdd=unit->rightdir*unit->radius*0.18f;
-				float depth=sqrt(sqrt(unit->mass));
-				float3 n(depth, 0.04f*speedf*depth, depth);
+		if(unit->moveType && unit->mobility) {
+			if(unit->unitDef->canhover){	//hover
+				float3 pos=unit->pos;
+				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+					continue;
+				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+					continue;
+				if(pos.y>-4 && pos.y<4){
+					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+					float3 sideAdd=unit->rightdir*unit->radius*0.75f;
+					float depth=sqrt(sqrt(unit->mass))*0.4f;
+					float3 n(depth, 0.05f*depth, depth);
 
-				va->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
-				va->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
-				va->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
-				va->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
+					va2->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+					va2->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+					va2->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+					va2->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+				}
 			}
-		} else if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
-			float3 pos=unit->pos;
-			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-				continue;
-			if(pos.y>-4 && pos.y<4){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-				float3 sideAdd=unit->rightdir*unit->radius*0.75f;
-				float depth=sqrt(sqrt(unit->mass))*0.4f;
-				float3 n(depth, 0.05f*depth, depth);
+			else if(unit->floatOnWater){	//boat
+				float speedf=unit->speed.Length2D();
+				float3 pos=unit->pos;
+				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+					continue;
+				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+					continue;
+				if(pos.y>-4 && pos.y<1){
+					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+					float3 sideAdd=unit->rightdir*unit->radius*0.18f;
+					float depth=sqrt(sqrt(unit->mass));
+					float3 n(depth, 0.04f*speedf*depth, depth);
 
-				va2->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
-				va2->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
-				va2->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
-				va2->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
+					va->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+					va->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+					va->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+					va->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+				}
 			}
 		}
 	}
@@ -1211,6 +1218,9 @@ void CDynWater::AddExplosions()
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 
+	int nadd=explosions.size()*4;
+	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
+
 	for(std::vector<Explosion>::iterator ei=explosions.begin(); ei!=explosions.end();++ei){
 		Explosion& explo=*ei;
 		float3 pos=explo.pos;
@@ -1230,10 +1240,10 @@ void CDynWater::AddExplosions()
 
 		float3 n(strength, strength*0.005f, strength*inv);
 
-		va->AddVertexTN(pos+float3(1,0,1)*size,0,0,n);
-		va->AddVertexTN(pos+float3(-1,0,1)*size,1,0,n);
-		va->AddVertexTN(pos+float3(-1,0,-1)*size,1,1,n);
-		va->AddVertexTN(pos+float3(1,0,-1)*size,0,1,n);
+		va->AddVertexQTN(pos+float3(1,0,1)*size,0,0,n);
+		va->AddVertexQTN(pos+float3(-1,0,1)*size,1,0,n);
+		va->AddVertexQTN(pos+float3(-1,0,-1)*size,1,1,n);
+		va->AddVertexQTN(pos+float3(1,0,-1)*size,0,1,n);
 	}
 	explosions.clear();
 
@@ -1293,11 +1303,14 @@ void CDynWater::DrawSingleUpdateSquare(float startx,float starty,float endx,floa
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
+#if VA_INIT_VERTEXES < 4*VA_SIZE_T
+#error "Vertex array too small"
+#endif
 
-	va->AddVertexT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
-	va->AddVertexT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
-	va->AddVertexT(float3(endx,endy,0),texstart + endx*texdif,texstart + endy*texdif  );
-	va->AddVertexT(float3(endx,starty,0),texstart + endx*texdif,texstart + starty*texdif);
+	va->AddVertexQT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
+	va->AddVertexQT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
+	va->AddVertexQT(float3(endx,endy,0),texstart + endx*texdif,texstart + endy*texdif  );
+	va->AddVertexQT(float3(endx,starty,0),texstart + endx*texdif,texstart + starty*texdif);
 
 	va->DrawArrayT(GL_QUADS);
 }
@@ -1307,23 +1320,29 @@ void CDynWater::DrawOuterSurface(void)
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 
-	float size=WF_SIZE;
-	float size2=WF_SIZE/16;
-	float posx=camPosBig2.x-WH_SIZE;
-	float posy=camPosBig2.z-WH_SIZE;
+	va->EnlargeArrays(3*3*16*16*4,0);
+	float posx=camPosBig2.x-WH_SIZE-WF_SIZE;
+	float posy=camPosBig2.z-WH_SIZE-WF_SIZE;
 
-	for(int y=-1;y<=1;++y){
-		for(int x=-1;x<=1;++x){
+	float ys=posy;
+	for(int y=-1;y<=1;++y,ys+=WF_SIZE){
+		float xs=posx;
+		for(int x=-1;x<=1;++x,xs+=WF_SIZE){
 			if(x==0 && y==0)
 				continue;
-
+			float pys=ys;
 			for(int y2=0;y2<16;++y2){
+				float pxs=xs;
+				float pys1=pys+WF_SIZE/16;
 				for(int x2=0;x2<16;++x2){
-					va->AddVertex0(float3(posx+x*size+(x2+0)*size2,0,posy+y*size+(y2+0)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+1)*size2,0,posy+y*size+(y2+0)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+1)*size2,0,posy+y*size+(y2+1)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+0)*size2,0,posy+y*size+(y2+1)*size2));
+					float pxs1=pxs+WF_SIZE/16;
+					va->AddVertexQ0(pxs, 0,pys);
+					va->AddVertexQ0(pxs1,0,pys);
+					va->AddVertexQ0(pxs1,0,pys1);
+					va->AddVertexQ0(pxs, 0,pys1);
+					pxs=pxs1;
 				}
+				pys=pys1;
 			}
 		}
 	}

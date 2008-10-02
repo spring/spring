@@ -585,6 +585,7 @@ void CFeatureHandler::Draw()
 	if (drawFar.size()>0) {
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
+		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 		glAlphaFunc(GL_GREATER, 0.8f);
 		glEnable(GL_ALPHA_TEST);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
@@ -707,10 +708,13 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 	float tx=(feature->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
 	float ty=(feature->model->farTextureNum/8)*(1.0f/64.0f);
 	float offset=0;
-	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)+camera->right*feature->radius,tx,ty,unitDrawer->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)+camera->right*feature->radius,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
-	va->AddVertexTN(interPos+(camera->up*feature->radius*1.4f+offset)-camera->right*feature->radius,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
-	va->AddVertexTN(interPos-(camera->up*feature->radius*1.4f-offset)-camera->right*feature->radius,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
+
+	float3 curad=camera->up*feature->radius*1.4f;
+	float3 crrad=camera->right*feature->radius;
+	va->AddVertexQTN(interPos-(curad-offset)+crrad,tx,ty,unitDrawer->camNorm);
+	va->AddVertexQTN(interPos+(curad+offset)+crrad,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
+	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
+	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
 }
 
 

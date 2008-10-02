@@ -174,6 +174,7 @@ void CAdvWater::Draw(bool useBlending)
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
+	va->EnlargeArrays(5*numDivs*(numDivs+1)*2,5*numDivs,VA_SIZE_TC); //!alloc room for all vertexes and strips
 	for(int a=0;a<5;++a){
 		bool maxReached=false;
 		for(int y=0;y<numDivs;++y){
@@ -192,18 +193,18 @@ void CAdvWater::Draw(bool useBlending)
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
-				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
+				va->AddVertexQTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
 
 				dir=xbase;
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
-				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY,col);
+				va->AddVertexQTC(zpos,x*(1.0f/numDivs),screenY,col);
 
 				xbase+=dh;
 			}
-			va->EndStrip();
+			va->EndStripQ();
 			base+=dv;
 			screenY-=yInc;
 		}

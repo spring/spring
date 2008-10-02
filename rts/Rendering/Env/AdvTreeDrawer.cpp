@@ -121,8 +121,9 @@ inline void DrawTreeVertexA(float3 &ftpos, float dx, float dy) {
 	ftpos.y+=PART_MAX_TREE_HEIGHT;
 }
 
-inline void DrawTreeVertex(float3 pos, float dx, float dy) {
-	va->EnlargeArrays(12,0,5);
+inline void DrawTreeVertex(float3 pos, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
 	float3 ftpos=pos;
 	ftpos.x+=HALF_MAX_TREE_HEIGHT;
 	DrawTreeVertexA(ftpos, dx, dy);
@@ -136,8 +137,9 @@ inline void DrawTreeVertex(float3 pos, float dx, float dy) {
 	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
 }
 
-inline void DrawTreeVertexMid(const float3 pos, float dx, float dy) {
-	va->EnlargeArrays(12,0,5);
+inline void DrawTreeVertexMid(const float3 pos, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
 	float3 ftpos=pos;
 	ftpos.x+=HALF_MAX_TREE_HEIGHT;
 	DrawTreeVertexA(ftpos, dx, dy);
@@ -154,8 +156,9 @@ inline void DrawTreeVertexMid(const float3 pos, float dx, float dy) {
 	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
 }
 
-inline void DrawTreeVertexFar(float3 pos, float3 swd, float dx, float dy) {
-	va->EnlargeArrays(4,0,5);
+inline void DrawTreeVertexFar(float3 pos, float3 swd, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(4,0,VA_SIZE_T);
 	float3 base=pos+swd;
 	SetArrayQ(TEX_LEAF_START_X1+dx,TEX_LEAF_START_Y4+dy,base);
 	base.y+=MAX_TREE_HEIGHT;
@@ -198,6 +201,7 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector=dif;
 			if(!tss->farDisplist)
 				tss->farDisplist=glGenLists(1);
@@ -208,9 +212,9 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
 				if(ts->type<8)
-					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f);
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f, false);
 				else
-					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0);
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -234,15 +238,17 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->displist){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
+
 			tss->displist=glGenLists(1);
 
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
 				if(ts->type<8)
-					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f);
+					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f, false);
 				else
-					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0);
+					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -375,6 +381,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
 			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
 				tss->lastSeen=gs->frameNum;
+				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 					TreeStruct* ts=&ti->second;
 					float3 pos(ts->pos);
@@ -406,7 +413,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 							pFT->relDist=relDist;
 							++pFT;
 						} else {																//draw undetailed tree
-							DrawTreeVertex(pos, type*0.125f, dy);
+							DrawTreeVertex(pos, type*0.125f, dy, false);
 						}
 					}
 				}
@@ -460,8 +467,10 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-
-			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY);
+#if VA_INIT_VERTEXES < 12*VA_SIZE_T
+#error "Vertex array too small"
+#endif
+			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
 			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
 			va->DrawArrayT(GL_QUADS);
@@ -550,6 +559,7 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector=dif;
 			if(!tss->farDisplist)
 				tss->farDisplist=glGenLists(1);
@@ -560,9 +570,9 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
 				if(ts->type<8)
-					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f);
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f, false);
 				else
-					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0);
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -584,15 +594,16 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 		if(!tss->displist){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->displist=glGenLists(1);
 
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
 				if(ts->type<8)
-					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f);
+					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f, false);
 				else
-					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0);
+					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -665,6 +676,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
 			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
 				tss->lastSeen=gs->frameNum;
+				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 					TreeStruct* ts=&ti->second;
 					float3 pos(ts->pos);
@@ -696,7 +708,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 							pFT->relDist=relDist;
 							++pFT;
 						} else {																//draw undetailed tree
-							DrawTreeVertex(pos, type*0.125f, dy);
+							DrawTreeVertex(pos, type*0.125f, dy, false);
 						}
 					}
 				}
@@ -737,8 +749,10 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-
-			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY);
+#if VA_INIT_VERTEXES < 12*VA_SIZE_T
+#error "Vertex array too small"
+#endif
+			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
 			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
 			va->DrawArrayT(GL_QUADS);

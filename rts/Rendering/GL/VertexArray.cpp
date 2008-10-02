@@ -13,11 +13,11 @@
 //////////////////////////////////////////////////////////////////////
 
 CVertexArray::CVertexArray() {
-	drawArray=SAFE_NEW float[1000];
-	stripArray=SAFE_NEW int[100];
+	drawArray=SAFE_NEW float[VA_INIT_VERTEXES]; // please don't change this, some files rely on specific initial sizes
+	stripArray=SAFE_NEW int[VA_INIT_STRIPS];
 	Initialize();
-	drawArraySize=drawArray+1000;
-	stripArraySize=stripArray+100;
+	drawArraySize=drawArray+VA_INIT_VERTEXES;
+	stripArraySize=stripArray+VA_INIT_STRIPS;
 }
 
 CVertexArray::~CVertexArray() {
@@ -39,14 +39,6 @@ void CVertexArray::EndStrip() {
 		EnlargeStripArray();
 
 	*stripArrayPos++=((char *)drawArrayPos-(char *)drawArray);
-}
-
-void CVertexArray::EnlargeArrays(int vertexes, int strips, int stripsize) {
-	while((char *)drawArrayPos>(char *)drawArraySize-stripsize*sizeof(float)*vertexes)
-		EnlargeDrawArray();
-
-	while((char *)stripArrayPos>(char *)stripArraySize-sizeof(int)*strips)
-		EnlargeStripArray();
 }
 
 void CVertexArray::DrawArray0(int drawType,int stride) {

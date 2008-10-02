@@ -194,8 +194,9 @@ struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
 	float treeDistance;
 };
 
-inline void DrawTreeVertexFar1(float3 pos, float3 swd) { 
-	va->EnlargeArrays(4,0,5);
+inline void DrawTreeVertexFar1(float3 pos, float3 swd, bool enlarge=true) { 
+	if(enlarge)
+		va->EnlargeArrays(4,0,VA_SIZE_T);
 	float3 base=pos+swd;
 	SetArrayQ(0,0,base);
 	base.y+=MAX_TREE_HEIGHT;
@@ -207,8 +208,9 @@ inline void DrawTreeVertexFar1(float3 pos, float3 swd) {
 	SetArrayQ(0.5f,0,base);
 }
 
-inline void DrawTreeVertexFar2(float3 pos, float3 swd) { 
-	va->EnlargeArrays(4,0,5);
+inline void DrawTreeVertexFar2(float3 pos, float3 swd, bool enlarge=true) { 
+	if(enlarge)
+		va->EnlargeArrays(4,0,VA_SIZE_T);
 	float3 base=pos+swd;
 	SetArrayQ(0,0.25f,base);
 	base.y+=MAX_TREE_HEIGHT;
@@ -220,8 +222,9 @@ inline void DrawTreeVertexFar2(float3 pos, float3 swd) {
 	SetArrayQ(0.25f,0.25f,base);
 }
 
-inline void DrawTreeVertexMid1(float3 pos) {
-	va->EnlargeArrays(12,0,5);
+inline void DrawTreeVertexMid1(float3 pos, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
@@ -258,8 +261,9 @@ inline void DrawTreeVertexMid1(float3 pos) {
 	SetArrayQ(1,0,base);
 }
 
-inline void DrawTreeVertexMid2(float3 pos) {
-	va->EnlargeArrays(12,0,5);
+inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
@@ -313,6 +317,7 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector=dif;
 			if(!tss->farDisplist)
 				tss->farDisplist=glGenLists(1);
@@ -322,9 +327,9 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
 				if(ts->type<8){
-					DrawTreeVertexFar1(ts->pos, side*MAX_TREE_HEIGHT_3);
+					DrawTreeVertexFar1(ts->pos, side*MAX_TREE_HEIGHT_3, false);
 				} else {
-					DrawTreeVertexFar2(ts->pos, side*MAX_TREE_HEIGHT_3);
+					DrawTreeVertexFar2(ts->pos, side*MAX_TREE_HEIGHT_3, false);
 				}
 			}
 			glNewList(tss->farDisplist,GL_COMPILE);
@@ -349,14 +354,15 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->displist){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->displist=glGenLists(1);
 
 			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
 				if(ts->type<8)
-					DrawTreeVertexMid1(ts->pos);
+					DrawTreeVertexMid1(ts->pos, false);
 				else
-					DrawTreeVertexMid2(ts->pos);
+					DrawTreeVertexMid2(ts->pos, false);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);

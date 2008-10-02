@@ -10,6 +10,7 @@
 #define GMLSRV_H
 
 #ifdef USE_GML
+#define GML_MT_TEST 0
 
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
@@ -303,6 +304,57 @@ public:
 			gmlClientSub();
 		}
 	}
+
+	void GetQueue() {
+		int thread=gmlThreadNumber;
+		int processed=1;
+
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+
+		gmlQueue *qd=&gmlQueues[thread];
+
+		BOOL_ isq1=qd->Write==qd->Queue1;
+
+#if GML_ALTERNATE_SYNCMODE
+		if(qd->WasSynced && qd->GetWrite(ex->syncmode?TRUE:2))
+#else
+		if(qd->WasSynced && qd->GetWrite(TRUE))
+#endif
+			processed=0;
+		if(processed && qd->GetWrite(TRUE))
+			processed=0;
+
+		if(isq1) {
+			while(qd->Locked1)
+				boost::thread::yield();
+		}
+		else {
+			while(qd->Locked2)
+				boost::thread::yield();
+		}
+	}
+
+	void Pump(int thread) {
+		int updsrv=0;
+		gmlUpdateServers();
+		BOOL_ processed=FALSE;
+
+//		for(int i=1; i<gmlThreadCount; ++i) {
+			gmlQueue *qd=&gmlQueues[thread];
+			if(qd->Reloc)
+				qd->Realloc();
+			if(qd->GetRead()) {
+				qd->Execute();
+				qd->ReleaseRead();
+				processed=TRUE;
+			}
+			if(qd->Sync) {
+				qd->ExecuteSynced();
+				processed=TRUE;
+			}
+//		}
+	}
+
 };
 
 #endif // USE_GML
