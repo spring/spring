@@ -91,8 +91,7 @@ public:
 	int GetJammer(int side, float cost, float range, bool water, bool canBuild);
 
 	// checks which factory is needed for a specific unit and orders it to be built
-	void BuildFactoryFor(int def_id);
-	void BuildBuilderFor(int building_id);
+	void BuildConstructorFor(int def_id);
 
 	// tries to build another builder for a certain building
 	void AddBuilder(int building_id);

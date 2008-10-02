@@ -30,7 +30,7 @@ AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, b
 	this->builder = builder;
 	this->assistant = assistant;
 
-	buildque = ai->execute->GetBuildqueOfFactory(def_id);
+	buildque = ai->execute->GetBuildqueueOfFactory(def_id);
 }
 
 AAIConstructor::~AAIConstructor(void)
@@ -239,7 +239,7 @@ void AAIConstructor::CheckAssistance()
 					ai->execute->urgency[STATIONARY_CONSTRUCTOR] = 1;
 
 				for(list<int>::iterator j = bt->units_static[def_id].canBuildList.begin(); j != bt->units_static[def_id].canBuildList.end(); ++j)
-					bt->units_dynamic[*j].buildersRequested += 1;
+					bt->units_dynamic[*j].constructorsRequested += 1;
 			}
 		}
 		
