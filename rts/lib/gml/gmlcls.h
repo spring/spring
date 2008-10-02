@@ -34,11 +34,7 @@
 #endif
 
 #define GML_ENABLE_SIM (GML_ENABLE && 1) // runs the sim in a separate thread
-#define GML_ENABLE_DRAWALL (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
-#define GML_ENABLE_DRAWUNIT (GML_ENABLE && 1) // draws units using multithreading
-#define GML_ENABLE_DRAWUNITSHADOW (GML_ENABLE && 1) // draws unit shadows using multithreading
-#define GML_ENABLE_DRAWGROUND (GML_ENABLE && 1) // draws ground using multithreading
-#define GML_ENABLE_DRAWGROUNDSHADOW (GML_ENABLE && 1) // draws ground shadows using multithreading
+#define GML_ENABLE_DRAW (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
 #define GML_SERVER_GLCALL 1 // allow the server thread (0) to make direct GL calls
 #define GML_INIT_QUEUE_SIZE 10 // initial queue size, will be reallocated, but must be >= 1
 #define GML_USE_NO_ERROR 1 // glGetError always returns success (to improve performance)

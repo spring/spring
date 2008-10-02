@@ -2636,7 +2636,7 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-#if defined(USE_GML) && GML_ENABLE_DRAWALL
+#if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
 	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
 #else
@@ -2644,7 +2644,7 @@ bool CGame::DrawMT() {
 #endif
 	return true;
 }
-#if defined(USE_GML) && GML_ENABLE_DRAWALL
+#if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::DrawMT() {
 #else
 bool CGame::Draw() {
@@ -3042,28 +3042,44 @@ void CGame::StartPlaying()
 }
 
 
+#if defined(USE_GML) && GML_MT_TEST
+int oldgsframe;
+#endif
 // This will be run by a separate thread in parallel with the Sim
 // ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
 void CGame::UnsyncedStuff() {
 	if (!skipping) {
 		infoConsole->Update();
 	}
+#if defined(USE_GML) && GML_MT_TEST
+	while(oldgsframe==*(volatile int *)&(gs->frameNum)) {
+		gmlProcessor.Pump(1);
+		boost::thread::yield();
+	}
+	gu->drawFrame++;
+	if (gu->drawFrame == 0) {
+		gu->drawFrame++;
+	}
+	Draw();
+#endif
 }
 
 
-#  if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
+#		if defined(USE_GML) && GML_MT_TEST
+	oldgsframe=gs->frameNum;
+#		endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
-#  else
+#else
 void CGame::SimFrameMT() {
-#  endif
+#endif
 }
-#  if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrameMT() {
-#  else
+#else
 void CGame::SimFrame() {
-#  endif
-
+#endif
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 	ASSERT_SYNCED_MODE;
@@ -3084,6 +3100,9 @@ void CGame::SimFrame() {
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
 
+#if defined(USE_GML) && GML_MT_TEST
+	gmlProcessor.GetQueue();
+#endif
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;

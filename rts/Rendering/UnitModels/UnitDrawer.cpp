@@ -150,6 +150,10 @@ CUnitDrawer::CUnitDrawer(void)
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 	}
+#ifdef USE_GML
+	multiThreadDrawUnit=configHandler.GetInt("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow=configHandler.GetInt("MultiThreadDrawUnitShadow", 1);
+#endif
 }
 
 
@@ -188,6 +192,10 @@ CUnitDrawer::~CUnitDrawer(void)
 		delete *gbi;
 		gbi = ghostBuildingsS3O.erase(gbi);
 	}
+#ifdef USE_GML
+	configHandler.SetInt("MultiThreadDrawUnit", multiThreadDrawUnit);
+	configHandler.SetInt("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
+#endif
 }
 
 
@@ -398,23 +406,28 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
-#if defined(USE_GML) && GML_ENABLE_DRAWUNIT
-	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
-	mt_drawRefraction=drawRefraction;
-  #ifdef DIRECT_CONTROL_ALLOWED
-	mt_excludeUnit=excludeUnit;
-  #endif
-	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
-#else
-	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
-		CUnit* unit = *usi;
-		DoDrawUnit(unit,drawReflection,drawRefraction,
-  #ifdef DIRECT_CONTROL_ALLOWED
-								excludeUnit
-  #else
-								NULL
-  #endif
-							);
+#ifdef USE_GML
+	if(multiThreadDrawUnit) {
+		mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
+		mt_drawRefraction=drawRefraction;
+	#ifdef DIRECT_CONTROL_ALLOWED
+		mt_excludeUnit=excludeUnit;
+	#endif
+		gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+	}
+	else {
+#endif
+		for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+			CUnit* unit = *usi;
+			DoDrawUnit(unit,drawReflection,drawRefraction,
+		#ifdef DIRECT_CONTROL_ALLOWED
+									excludeUnit
+		#else
+									NULL
+		#endif
+								);
+		}
+#ifdef USE_GML
 	}
 #endif
 
@@ -435,6 +448,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	va = GetVertexArray();
 	va->Initialize();
+	va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
 	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
@@ -665,14 +679,19 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
-#if defined(USE_GML) && GML_ENABLE_DRAWUNITSHADOW
-	gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
-	  &uh->activeUnits, uh->activeUnits.size(),50,100,TRUE);
-#else
-	std::list<CUnit*>::iterator usi;
-	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
-		CUnit* unit = *usi;
-		DoDrawUnitShadow(unit);
+#ifdef USE_GML
+	if(multiThreadDrawUnitShadow) {
+		gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
+		  &uh->activeUnits, uh->activeUnits.size(),50,100,TRUE);
+	}
+	else {
+#endif
+		std::list<CUnit*>::iterator usi;
+		for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+			CUnit* unit = *usi;
+			DoDrawUnitShadow(unit);
+		}
+#ifdef USE_GML
 	}
 #endif
 
@@ -702,10 +721,12 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	float ty = (unit->model->farTextureNum / 8) * r;
 	float offset = 0;
 
-	va->AddVertexTN(interPos - (camera->up * unit->radius * 1.4f - offset) + camera->right * unit->radius, tx,     ty,     camNorm);
-	va->AddVertexTN(interPos + (camera->up * unit->radius * 1.4f + offset) + camera->right * unit->radius, tx,     ty + r, camNorm);
-	va->AddVertexTN(interPos + (camera->up * unit->radius * 1.4f + offset) - camera->right * unit->radius, tx + r, ty + r, camNorm);
-	va->AddVertexTN(interPos - (camera->up * unit->radius * 1.4f - offset) - camera->right * unit->radius, tx + r, ty,     camNorm);
+	float3 curad=camera->up * unit->radius * 1.4f;
+	float3 crrad=camera->right * unit->radius;
+	va->AddVertexQTN(interPos - (curad - offset) + crrad, tx,     ty,     camNorm);
+	va->AddVertexQTN(interPos + (curad + offset) + crrad, tx,     ty + r, camNorm);
+	va->AddVertexQTN(interPos + (curad + offset) - crrad, tx + r, ty + r, camNorm);
+	va->AddVertexQTN(interPos - (curad - offset) - crrad, tx + r, ty,     camNorm);
 }
 
 

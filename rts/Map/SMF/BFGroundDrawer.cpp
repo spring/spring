@@ -67,6 +67,11 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 		CreateWaterPlanes(true);
 		glEndList();
 	}
+
+#ifdef USE_GML
+	multiThreadDrawGround=configHandler.GetInt("MultiThreadDrawGround", 1);
+	multiThreadDrawGroundShadow=configHandler.GetInt("MultiThreadDrawGroundShadow", 0);
+#endif
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -88,6 +93,11 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 		glDeleteLists(waterPlaneCamInDispList,1);
 		glDeleteLists(waterPlaneCamOutDispList,1);
 	}
+
+#ifdef USE_GML
+	configHandler.SetInt("MultiThreadDrawGround", multiThreadDrawGround);
+	configHandler.SetInt("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
+#endif
 }
 
 void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
@@ -704,12 +714,17 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
 
-#if defined(USE_GML) && GML_ENABLE_DRAWGROUND
-	mt_overrideVP=overrideVP;
-	gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
-#else
-	for (int bty = 0; bty < numBigTexY; ++bty) {
-		DoDrawGroundRow(bty,overrideVP);
+#ifdef USE_GML
+	if(multiThreadDrawGround) {
+		mt_overrideVP=overrideVP;
+		gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
+	}
+	else {
+#endif
+		for (int bty = 0; bty < numBigTexY; ++bty) {
+			DoDrawGroundRow(bty,overrideVP);
+		}
+#ifdef USE_GML
 	}
 #endif
 
@@ -1123,11 +1138,16 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundShadowVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
 
-#if defined(USE_GML) && GML_ENABLE_DRAWGROUNDSHADOW
-	gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
-#else
-	for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
-		DoDrawGroundShadowLOD(nlod);
+#ifdef USE_GML
+	if(multiThreadDrawGroundShadow) {
+		gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
+	}
+	else {
+#endif
+		for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
+			DoDrawGroundShadowLOD(nlod);
+		}
+#ifdef USE_GML
 	}
 #endif
 

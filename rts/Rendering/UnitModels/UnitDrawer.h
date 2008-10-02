@@ -42,8 +42,10 @@ public:
 	void SetupForGhostDrawing();
 	void SetupForGhostDrawingS3O();
 
+#ifdef USE_GML
+	int multiThreadDrawUnit;
+	int multiThreadDrawUnitShadow;
 
-#if defined(USE_GML) && GML_ENABLE_DRAWUNIT
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
   #ifdef DIRECT_CONTROL_ALLOWED
@@ -58,9 +60,7 @@ public:
 		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, NULL);
 		#endif
 	}
-#endif
 
-#if defined(USE_GML) && GML_ENABLE_DRAWUNITSHADOW
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 #endif
 

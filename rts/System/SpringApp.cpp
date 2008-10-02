@@ -53,6 +53,11 @@
 	#include "Platform/Win/WinVersion.h"
 #endif // WIN32
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+#endif
+
 using std::string;
 
 CGameController* activeController = 0;
@@ -857,14 +862,23 @@ int SpringApp::Update ()
 
 	int ret = 1;
 	if (activeController) {
+#if defined(USE_GML) && GML_MT_TEST
+		int frame=gu->drawFrame;
+#endif
 		if (!activeController->Update()) {
 			ret = 0;
 		} else {
-			gu->drawFrame++;
-			if (gu->drawFrame == 0) {
+#if defined(USE_GML) && GML_MT_TEST
+			if(frame==gu->drawFrame) {
+#endif
 				gu->drawFrame++;
+				if (gu->drawFrame == 0) {
+					gu->drawFrame++;
+				}
+				ret = activeController->Draw();
+#if defined(USE_GML) && GML_MT_TEST
 			}
-			ret = activeController->Draw();
+#endif
 		}
 	}
 

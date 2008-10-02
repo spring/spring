@@ -258,6 +258,8 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 			grass->pos=float3((x+0.5f)*bMSsq,ground->GetHeight2((x+0.5f)*bMSsq,(y+0.5f)*bMSsq),(y+0.5f)*bMSsq);
 			va=grass->va;
 			va->Initialize();
+			int numGrass=gd->numTurfs;
+			va->EnlargeArrays(grassBlockSize*grassBlockSize*numGrass*4,0,VA_SIZE_TN);
 			int ygbsy=ygbs;
 			for(int y2=0; y2<grassBlockSize; ++y2){
 				int xgbsx=xgbs;
@@ -267,7 +269,6 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 						srand(ygbsy*1025+xgbsx);
 						rand();
 						rand();
-						int numGrass=gd->numTurfs;
 						for(int a=0;a<numGrass;a++){
 							float dx=(xgbsx+fRand(1))*gSSsq;
 							float dy=(ygbsy+fRand(1))*gSSsq;
@@ -275,10 +276,10 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 							float col=1;
 
 							pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
-							va->AddVertexTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
-							va->AddVertexTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
-							va->AddVertexTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
-							va->AddVertexTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
+							va->AddVertexQTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
+							va->AddVertexQTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
+							va->AddVertexQTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
+							va->AddVertexQTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
 						}
 					}
 					++gm;
@@ -509,6 +510,7 @@ void CGrassDrawer::Draw(void)
 			int numGrass=numTurfs;
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(numGrass*4,0,VA_SIZE_TN);
 			for(int a=0;a<numGrass;a++){
 				float dx=(x+fRand(1))*gSSsq;
 				float dy=(y+fRand(1))*gSSsq;
@@ -516,10 +518,10 @@ void CGrassDrawer::Draw(void)
 				pos.y-=ground->GetSlope(dx,dy)*10+0.03f;
 				float col=1;
 				if(camera->InView(pos,turfSize*0.7f)){
-					va->AddVertexTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
-					va->AddVertexTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
-					va->AddVertexTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
-					va->AddVertexTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
+					va->AddVertexQTN(pos,0,0,float3(-partTurfSize,-partTurfSize,col));
+					va->AddVertexQTN(pos,1/16.0f,0,float3(partTurfSize,-partTurfSize,col));
+					va->AddVertexQTN(pos,1/16.0f,1,float3(partTurfSize,partTurfSize,col));
+					va->AddVertexQTN(pos,0,1,float3(-partTurfSize,partTurfSize,col));
 				}
 			}
 			va->DrawArrayTN(GL_QUADS);

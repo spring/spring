@@ -5,6 +5,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
+#define VA_INIT_STRIPS 100
+#define VA_SIZE_0 3
+#define VA_SIZE_T 5
+#define VA_SIZE_TN 8
+#define VA_SIZE_TC 6
+
 class CVertexArray  
 {
 public:
@@ -29,6 +36,10 @@ public:
 	inline void AddVertexQ0(float x, float y, float z);
 	//! same as AddVertexT, but without autmated CheckEnlargeDrawArray
 	inline void AddVertexQT(const float3& pos,float tx,float ty);
+	//! same as AddVertexTN, but without autmated CheckEnlargeDrawArray
+	inline void AddVertexQTN(const float3 &pos,float tx,float ty,const float3& norm);
+	//! same as AddVertexTC, but without autmated CheckEnlargeDrawArray
+	inline void AddVertexQTC(const float3 &pos,float tx,float ty,unsigned char* color);
 
 	//! same as EndStrip, but without autmated EnlargeStripArray
 	inline void EndStripQ();
@@ -36,7 +47,7 @@ public:
 	bool IsReady();
 	inline int drawIndex();
 	void EndStrip();
-	void EnlargeArrays(int vertexes, int strips, int stripsize=3);
+	inline void EnlargeArrays(int vertexes, int strips, int stripsize=VA_SIZE_0);
 
 	float* drawArray;
 	float* drawArrayPos;
@@ -69,6 +80,14 @@ inline void CVertexArray::CheckEnlargeDrawArray() {
 		EnlargeDrawArray();
 }
 
+inline void CVertexArray::EnlargeArrays(int vertexes, int strips, int stripsize) {
+	while((char *)drawArrayPos>(char *)drawArraySize-stripsize*sizeof(float)*vertexes)
+		EnlargeDrawArray();
+
+	while((char *)stripArrayPos>(char *)stripArraySize-sizeof(int)*strips)
+		EnlargeStripArray();
+}
+
 inline void CVertexArray::AddVertexQ0(float x, float y, float z) {
 	*drawArrayPos++=x;
 	*drawArrayPos++=y;
@@ -81,6 +100,26 @@ inline void CVertexArray::AddVertexQT(const float3& pos,float tx,float ty) {
 	*drawArrayPos++=pos.z;
 	*drawArrayPos++=tx;
 	*drawArrayPos++=ty;
+}
+
+inline void CVertexArray::AddVertexQTN(const float3& pos,float tx,float ty,const float3& norm) {
+	*drawArrayPos++=pos.x;
+	*drawArrayPos++=pos.y;
+	*drawArrayPos++=pos.z;
+	*drawArrayPos++=tx;
+	*drawArrayPos++=ty;
+	*drawArrayPos++=norm.x;
+	*drawArrayPos++=norm.y;
+	*drawArrayPos++=norm.z;
+}
+
+inline void CVertexArray::AddVertexQTC(const float3& pos,float tx,float ty,unsigned char* col) {
+	*drawArrayPos++=pos.x;
+	*drawArrayPos++=pos.y;
+	*drawArrayPos++=pos.z;
+	*drawArrayPos++=tx;
+	*drawArrayPos++=ty;
+	*drawArrayPos++=*((float*)(col));
 }
 
 inline void CVertexArray::AddVertex0(const float3& pos) {

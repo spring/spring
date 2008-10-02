@@ -3,6 +3,8 @@
 
 #include <map>
 #include "IPath.h"
+#include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+using boost::uint32_t;
 
 class CSolidObject;
 class CPathFinder;

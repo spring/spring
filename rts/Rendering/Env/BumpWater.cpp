@@ -189,8 +189,12 @@ static void DrawRadialDisc()
 
 	CVertexArray *va = GetVertexArray();
 	va->Initialize();
+#if VA_INIT_VERTEXES < 4*34*2*VA_SIZE_0
+#error "Vertex array too small"
+#endif
 
 	const float alphainc = fastmath::PI2 / 32;
+	const float alphaincpi2 = alphainc + fastmath::PI2;	
 	float alpha,r1,r2;
 	float3 p(0.0f,0.0f,0.0f);
 	const float size = std::min(xsize,ysize);
@@ -201,13 +205,13 @@ static void DrawRadialDisc()
 		}else{
 			r2 = (n+1)*(n+1) * size;
 		}
-		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
+		for (alpha = 0.0f; alpha < alphaincpi2 ; alpha+=alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertex0(p);
+			va->AddVertexQ0(p.x,p.y,p.z);
 			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertex0(p);
+			va->AddVertexQ0(p.x,p.y,p.z);
 		}
 	}
 
