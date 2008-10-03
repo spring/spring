@@ -22,8 +22,7 @@ module Entry = struct
 end  
 
 module In = struct
-  let load data_dir rev =
-    let store_dir = Filename.concat data_dir "store" in
+  let load store_dir rev =
     let revs_dir = Filename.concat store_dir "revs" in
     let pool_dir = Filename.concat store_dir "pool" in
     let path = Filename.concat revs_dir rev in
