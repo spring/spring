@@ -1021,7 +1021,7 @@ void CGuiHandler::SetCursorIcon() const
 	    (mouse->cursorText == "Fight")) {
 		newCursor = "GatherWait";
 	}
-	
+
 	mouse->SetCursor(newCursor);
 }
 
@@ -3108,7 +3108,9 @@ void CGuiHandler::DrawButtons()
 
 	DrawMenuName();
 
-	DrawSelectionInfo();
+	// LuaUI can handle this
+	if (luaUI == NULL)
+		DrawSelectionInfo();
 
 	DrawNumberInput();
 }
