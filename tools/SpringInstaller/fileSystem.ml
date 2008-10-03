@@ -57,3 +57,19 @@ let make_dir path =
                       "Error creating directory %s: %s"
                       path
                       (Unix.error_message error)))
+
+module Base64 = struct
+  let encoding_table =
+    [|'A';'B';'C';'D';'E';'F';'G';'H';'I';'J';'K';'L';'M';'N';'O';'P';'Q';'R';
+      'S';'T';'U';'V';'W';'X';'Y';'Z';'a';'b';'c';'d';'e';'f';'g';'h';'i';'j';
+      'k';'l';'m';'n';'o';'p';'q';'r';'s';'t';'u';'v';'w';'x';'y';'z';'0';'1';
+      '2';'3';'4';'5';'6';'7';'8';'9';'-';'_'|]
+      
+  let decoding_table = Base64.make_decoding_table encoding_table
+    
+  let encode string =
+    Base64.str_encode ~tbl:encoding_table string
+      
+  let decode string =
+    Base64.str_decode ~tbl:decoding_table string
+end
