@@ -1,8 +1,6 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
-#include "StdAfx.h"
-
 /**
  * @file FastMath.cpp
  * @brief Fast math routines
@@ -60,7 +58,7 @@ namespace fastmath {
 		x = x * (1.5f - xh * (x * x));
 		x = x * (1.5f - xh * (x * x));
 		return x;
-	
+
 	}
 
 	/**

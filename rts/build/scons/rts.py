@@ -365,6 +365,13 @@ def generate(env):
 		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])
 		spring_defines = []
 
+		if env['use_gch']:
+			env.AppendUnique(CCFLAGS = ['-DUSE_PRECOMPILED_HEADER'],
+				CXXFLAGS = ['-DUSE_PRECOMPILED_HEADER'])
+			print 'Precompiled header enabled'
+		else:
+			print 'Precompiled header disabled'
+
 		# gml library
 		if env['gml']:
 			env.AppendUnique(CCFLAGS = ['-mno-tls-direct-seg-refs'], CXXFLAGS = ['-mno-tls-direct-seg-refs'], LINKFLAGS = ['-mno-tls-direct-seg-refs'])		

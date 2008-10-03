@@ -10,6 +10,7 @@
 #include "SFloat3.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
+#include "FastMath.h"
 
 /**
  * @brief float3 class
@@ -378,11 +379,17 @@ public:
 	 * x/y/z component by the vector's approx.
 	 * length.
 	 *
-	 * note: inlining this would require including
-	 * FastMath.h, probably not the best idea since
-	 * float3 is used everywhere (compilation time)
+	 * Measured compile time hit: statistically insignificant (1%)
 	 */
-	float3& ANormalize();
+	inline float3& ANormalize() {
+		float invL = fastmath::isqrt(SqLength());
+		if (invL != 0.f) {
+			x *= invL;
+			y *= invL;
+			z *= invL;
+		}
+		return *this;
+	}
 
 	/**
 	 * @brief normalizes the vector
