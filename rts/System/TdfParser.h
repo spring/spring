@@ -8,7 +8,6 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
-#include "StdAfx.h"
 #include "Sync/SyncedPrimitiveIO.h"
 
 class TdfParser

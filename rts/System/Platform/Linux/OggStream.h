@@ -1,8 +1,6 @@
 #ifndef OGGSTREAM_H
 #define OGGSTREAM_H
 
-#include "StdAfx.h"
-
 #include <AL/al.h>
 #include <ogg/ogg.h>
 #include <vorbis/vorbisfile.h>
