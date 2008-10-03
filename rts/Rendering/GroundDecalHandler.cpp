@@ -47,13 +47,13 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
 	}
-	
+
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
 	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 0,   0);
 	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256, 0);
 	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   256);
 	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
-	
+
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -180,7 +180,7 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 					}
 				}
 			} break;
-	
+
 			case 1: { // East
 				if (tlx <    0) { zMin -= tlx       ; tlx =    0; blx = tlx; }
 				if (trx > gsmx) { zMax -= trx - gsmx; trx = gsmx; brx = trx; }
@@ -302,7 +302,7 @@ inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
 		// create the scar texture-quads
 		float px1 = sx * 16;
 		for (int x = sx; x <= ex; ++x) {
-			const float* hm2 = hm;
+			//const float* hm2 = hm;
 			float px2 = px1 + 16;
 			float pz1 = sz * 16;
 
@@ -312,16 +312,20 @@ inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
 				float tx2 = max(0.0f, (pos.x - px2) / radius4 + 0.25f);
 				float tz1 = min(0.5f, (pos.z - pz1) / radius4 + 0.25f);
 				float tz2 = max(0.0f, (pos.z - pz2) / radius4 + 0.25f);
+				float h1 = ground->GetHeight2(px1, pz1);
+				float h2 = ground->GetHeight2(px2, pz1);
+				float h3 = ground->GetHeight2(px2, pz2);
+				float h4 = ground->GetHeight2(px1, pz2);
 
-				scar->va->AddVertexTC(float3(px1, * (hm2             ) + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
-				scar->va->AddVertexTC(float3(px2, * (hm2 +          2) + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
-				scar->va->AddVertexTC(float3(px2, * (hm2 + gsmx12 + 2) + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
-				scar->va->AddVertexTC(float3(px1, * (hm2 + gsmx12    ) + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
-				hm2 += gsmx12;
+				scar->va->AddVertexTC(float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color);
+				scar->va->AddVertexTC(float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color);
+				scar->va->AddVertexTC(float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color);
+				scar->va->AddVertexTC(float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color);
+				//hm2 += gsmx12;
 				pz1 = pz2;
 			}
 
-			hm2 += 2;
+			//hm2 += 2;
 			px1 = px2;
 		}
 	} else {
