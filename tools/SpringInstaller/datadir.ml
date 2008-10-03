@@ -18,8 +18,10 @@ let detect_springrc home_dir =
                 loop (Some value)
               else
                 loop option
-          with Invalid_string -> loop option
-      with End_of_file -> option in
+          with
+              Invalid_string -> loop option
+      with
+          End_of_file -> option in
     let option = loop None in
       close_in in_file;
       option

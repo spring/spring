@@ -1,8 +1,5 @@
 module Entry = struct
   let make zip entry = object (self)
-    val zip = zip
-    val entry = entry
-
     method name = entry.Zip.filename
     method size = entry.Zip.uncompressed_size
     method read = Zip.read_entry zip entry
@@ -13,9 +10,6 @@ end
 module In = struct
 
   let make zip path = object
-    val zip = zip
-    val path: string = path
-      
     method unload = Zip.close_in zip
       
     method entries =
@@ -38,8 +32,6 @@ end
 module Out = struct
 
   let make zip = object
-    val zip = zip
-      
     method unload = Zip.close_out zip
       
     method add_entry entry =
