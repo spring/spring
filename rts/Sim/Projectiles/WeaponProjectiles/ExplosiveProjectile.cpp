@@ -144,7 +144,8 @@ void CExplosiveProjectile::Draw(void)
 	dir.Normalize();
 	dir *= separation * 0.6f;
 
-	for (int a = 0; a < stages; ++a) {
+	va->EnlargeArrays(stages*4,0,VA_SIZE_TC);
+	for (int a = 0; a < stages; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		const float aDecay = (stages - (a * alphaDecay)) * invStages;
 		col[0] = int(aDecay * col[0]);
 		col[1] = int(aDecay * col[1]);
@@ -156,10 +157,10 @@ void CExplosiveProjectile::Draw(void)
 		const float3 right = camera->right * size;
 		const float3 interPos2 = interPos - ((noGap)?(dir * size * a):(dir * drawRadius * a));
 
-		va->AddVertexTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
-		va->AddVertexTC(interPos2 + right - up, tex->xend,   tex->ystart, col);
-		va->AddVertexTC(interPos2 + right + up, tex->xend,   tex->yend,   col);
-		va->AddVertexTC(interPos2 - right + up, tex->xstart, tex->yend,   col);
+		va->AddVertexQTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
+		va->AddVertexQTC(interPos2 + right - up, tex->xend,   tex->ystart, col);
+		va->AddVertexQTC(interPos2 + right + up, tex->xend,   tex->yend,   col);
+		va->AddVertexQTC(interPos2 - right + up, tex->xstart, tex->yend,   col);
 	}
 }
 

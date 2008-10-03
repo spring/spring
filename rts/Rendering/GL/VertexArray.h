@@ -1,6 +1,7 @@
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
 #include "myGL.h"
+#include "System/Platform/errorhandler.h"
 // VertexArray.h: interface for the CVertexArray class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -8,6 +9,7 @@
 #define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
 #define VA_INIT_STRIPS 100
 #define VA_SIZE_0 3
+#define VA_SIZE_C 4
 #define VA_SIZE_T 5
 #define VA_SIZE_TN 8
 #define VA_SIZE_TC 6
@@ -18,6 +20,7 @@ public:
 	CVertexArray();
 	~CVertexArray();
 	void Initialize();
+	inline void CheckInitSize(int vertexes, int strips=0);
 
 	inline void AddVertexTC(const float3 &pos,float tx,float ty,unsigned char* color);
 	void DrawArrayTC(int drawType,int stride=24);
@@ -32,16 +35,18 @@ public:
 	inline void AddVertexC(const float3& pos,unsigned char* color);
 	void DrawArrayC(int drawType,int stride=16);
 
-	//! same as AddVertex0, but without autmated CheckEnlargeDrawArray
+	//! same as AddVertex0, but without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
-	//! same as AddVertexT, but without autmated CheckEnlargeDrawArray
+	//! same as AddVertexC, but without automated CheckEnlargeDrawArray
+	inline void AddVertexQC(const float3& pos,unsigned char* color);
+	//! same as AddVertexT, but without automated CheckEnlargeDrawArray
 	inline void AddVertexQT(const float3& pos,float tx,float ty);
-	//! same as AddVertexTN, but without autmated CheckEnlargeDrawArray
+	//! same as AddVertexTN, but without automated CheckEnlargeDrawArray
 	inline void AddVertexQTN(const float3 &pos,float tx,float ty,const float3& norm);
-	//! same as AddVertexTC, but without autmated CheckEnlargeDrawArray
+	//! same as AddVertexTC, but without automated CheckEnlargeDrawArray
 	inline void AddVertexQTC(const float3 &pos,float tx,float ty,unsigned char* color);
 
-	//! same as EndStrip, but without autmated EnlargeStripArray
+	//! same as EndStrip, but without automated EnlargeStripArray
 	inline void EndStripQ();
 
 	bool IsReady();
@@ -75,6 +80,13 @@ inline void CVertexArray::DrawArrays(int drawType, int stride) {
 	}
 }
 
+// calls to this function will be removed by the optimizer unless the size is too small
+inline void CVertexArray::CheckInitSize(int vertexes, int strips) {
+	if(vertexes>VA_INIT_VERTEXES || strips>VA_INIT_STRIPS) { 
+		handleerror(drawArrayPos=NULL, "Vertex array initial size is too small", "Rendering error", MBF_OK | MBF_EXCL);
+	}
+}
+
 inline void CVertexArray::CheckEnlargeDrawArray() {
 	if((char *)drawArrayPos>(char *)drawArraySize-10*sizeof(float))
 		EnlargeDrawArray();
@@ -92,6 +104,13 @@ inline void CVertexArray::AddVertexQ0(float x, float y, float z) {
 	*drawArrayPos++=x;
 	*drawArrayPos++=y;
 	*drawArrayPos++=z;
+}
+
+inline void CVertexArray::AddVertexQC(const float3& pos,unsigned char* color) {
+	*drawArrayPos++=pos.x;
+	*drawArrayPos++=pos.y;
+	*drawArrayPos++=pos.z;
+	*drawArrayPos++=*((float*)(color));
 }
 
 inline void CVertexArray::AddVertexQT(const float3& pos,float tx,float ty) {

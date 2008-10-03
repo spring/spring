@@ -1303,9 +1303,7 @@ void CDynWater::DrawSingleUpdateSquare(float startx,float starty,float endx,floa
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-#if VA_INIT_VERTEXES < 4*VA_SIZE_T
-#error "Vertex array too small"
-#endif
+	va->CheckInitSize(4*VA_SIZE_T);
 
 	va->AddVertexQT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
 	va->AddVertexQT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
@@ -1325,13 +1323,13 @@ void CDynWater::DrawOuterSurface(void)
 	float posy=camPosBig2.z-WH_SIZE-WF_SIZE;
 
 	float ys=posy;
-	for(int y=-1;y<=1;++y,ys+=WF_SIZE){
+	for(int y=-1;y<=1;++y,ys+=WF_SIZE){ //! CAUTION: loop count must match EnlargeArrays above
 		float xs=posx;
 		for(int x=-1;x<=1;++x,xs+=WF_SIZE){
 			if(x==0 && y==0)
 				continue;
 			float pys=ys;
-			for(int y2=0;y2<16;++y2){
+			for(int y2=0;y2<16;++y2){ //! CAUTION: loop count must match EnlargeArrays above
 				float pxs=xs;
 				float pys1=pys+WF_SIZE/16;
 				for(int x2=0;x2<16;++x2){

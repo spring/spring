@@ -482,6 +482,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	unitDrawer->SetupForUnitDrawing();
 
 	va->Initialize();
+	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
 	numFlyingPieces += flying3doPieces->size();
 	for(list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
 		CMatrix44f m;
@@ -495,25 +496,25 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		float3 tp=m.Mul(v->pos);
 		float3 tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xstart,tex->ystart,tn);
+		va->AddVertexQTN(tp,tex->xstart,tex->ystart,tn);
 
 		v=&vertices[verticesIdx[1]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xend,tex->ystart,tn);
+		va->AddVertexQTN(tp,tex->xend,tex->ystart,tn);
 
 		v=&vertices[verticesIdx[2]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xend,tex->yend,tn);
+		va->AddVertexQTN(tp,tex->xend,tex->yend,tn);
 
 		v=&vertices[verticesIdx[3]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xstart,tex->yend,tn);
+		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
 	}
 	drawnPieces+=va->drawIndex()/32;
 	va->DrawArrayTN(GL_QUADS);
@@ -534,6 +535,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			unitDrawer->SetS3OTeamColour(team);
 
 			va->Initialize();
+			va->EnlargeArrays(fpl->size()*4,0,VA_SIZE_TN);
 
 			numFlyingPieces += fpl->size();
 
@@ -550,7 +552,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					tp=m.Mul(verts[i].pos);
 					tn=m.Mul(verts[i].normal);
 					tp+=interPos;
-					va->AddVertexTN(tp,verts[i].textureX,verts[i].textureY,tn);
+					va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
 				}
 			}
 			drawnPieces+=va->drawIndex()/32;
@@ -832,6 +834,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
+	CGroundFlash::va->EnlargeArrays(8*groundFlashes.size(),0,VA_SIZE_TC);
 
 	vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
@@ -971,13 +974,14 @@ void CProjectileHandler::UpdatePerlin()
 
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
+		va->CheckInitSize(4*VA_SIZE_TC,0);
 		for(int b=0;b<4;++b)
 			col[b]=int((1-perlinBlend[a])*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2]);
-		va->AddVertexTC(float3(0,0,0),0,0,col);
-		va->AddVertexTC(float3(0,1,0),0,tsize,col);
-		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
-		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->AddVertexQTC(float3(0,0,0),0,0,col);
+		va->AddVertexQTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexQTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexQTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
 
 		if(a==0)
@@ -985,13 +989,14 @@ void CProjectileHandler::UpdatePerlin()
 
 		va=GetVertexArray();
 		va->Initialize();
+		va->CheckInitSize(4*VA_SIZE_TC,0);
 		for(int b=0;b<4;++b)
 			col[b]=int(perlinBlend[a]*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2+1]);
-		va->AddVertexTC(float3(0,0,0),0,0,col);
-		va->AddVertexTC(float3(0,1,0),0,tsize,col);
-		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
-		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->AddVertexQTC(float3(0,0,0),0,0,col);
+		va->AddVertexQTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexQTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexQTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
 
 		speed*=0.6f;

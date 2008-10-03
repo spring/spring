@@ -188,44 +188,47 @@ void CTorpedoProjectile::Draw(void)
 	float3 u=dir.cross(r);
 	const float h=12;
 	const float w=2;
-	va->AddVertexTC(interPos+r*w, texx,texy,col);
-	va->AddVertexTC(interPos+u*w, texx,texy,col);
-	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
 
-	va->AddVertexTC(interPos+u*w, texx,texy,col);
-	va->AddVertexTC(interPos-r*w, texx,texy,col);
-	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
+	va->EnlargeArrays(32,0,VA_SIZE_TC);
 
-	va->AddVertexTC(interPos-r*w, texx,texy,col);
-	va->AddVertexTC(interPos-u*w, texx,texy,col);
-	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w+dir*h, texx,texy,col);
 
-	va->AddVertexTC(interPos-u*w, texx,texy,col);
-	va->AddVertexTC(interPos+r*w, texx,texy,col);
-	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w, texx,texy,col);
+	va->AddVertexQTC(interPos-r*w, texx,texy,col);
+	va->AddVertexQTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w+dir*h, texx,texy,col);
+
+	va->AddVertexQTC(interPos-r*w, texx,texy,col);
+	va->AddVertexQTC(interPos-u*w, texx,texy,col);
+	va->AddVertexQTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos-r*w+dir*h, texx,texy,col);
+
+	va->AddVertexQTC(interPos-u*w, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos-u*w+dir*h, texx,texy,col);
 
 
-	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
 
-	va->AddVertexTC(interPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
 
-	va->AddVertexTC(interPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
 
-	va->AddVertexTC(interPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(interPos+dir*h*1.2f, texx,texy,col);
 }

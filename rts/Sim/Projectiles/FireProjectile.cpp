@@ -129,6 +129,7 @@ void CFireProjectile::Draw(void)
 	unsigned char col[4];
 	col[3]=1;
 	unsigned char col2[4];
+	va->EnlargeArrays(subParticles2.size()*4+subParticles.size()*8,0,VA_SIZE_TC);
 	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*(age);
@@ -145,10 +146,10 @@ void CFireProjectile::Draw(void)
 		col[1]=(unsigned char)((1-age)*255);
 		col[2]=(unsigned char)((1-age)*255);
 
-		va->AddVertexTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
-		va->AddVertexTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
-		va->AddVertexTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
-		va->AddVertexTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
+		va->AddVertexQTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
+		va->AddVertexQTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
+		va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
+		va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 	}
 	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
@@ -168,10 +169,10 @@ void CFireProjectile::Draw(void)
 			col[2]=(unsigned char)((1-age*1.3f)*255);
 			col[3]=1;
 
-			va->AddVertexTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
-			va->AddVertexTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
-			va->AddVertexTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
+			va->AddVertexQTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
+			va->AddVertexQTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
+			va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
+			va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 		}
 
 		unsigned char c;
@@ -185,10 +186,10 @@ void CFireProjectile::Draw(void)
 		col2[2]=(unsigned char)(c*0.6f);
 		col2[3]=c;
 
-		va->AddVertexTC(interPos-dir1-dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].ystart,col2);
-		va->AddVertexTC(interPos+dir1-dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].ystart,col2);
-		va->AddVertexTC(interPos+dir1+dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].yend,col2);
-		va->AddVertexTC(interPos-dir1+dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].yend,col2);
+		va->AddVertexQTC(interPos-dir1-dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].ystart,col2);
+		va->AddVertexQTC(interPos+dir1-dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].ystart,col2);
+		va->AddVertexQTC(interPos+dir1+dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].yend,col2);
+		va->AddVertexQTC(interPos-dir1+dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].yend,col2);
 	}
 }
 

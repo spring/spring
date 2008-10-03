@@ -261,15 +261,15 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 			int numGrass=gd->numTurfs;
 			va->EnlargeArrays(grassBlockSize*grassBlockSize*numGrass*4,0,VA_SIZE_TN);
 			int ygbsy=ygbs;
-			for(int y2=0; y2<grassBlockSize; ++y2){
+			for(int y2=0; y2<grassBlockSize; ++y2){ //! CAUTION: loop count must match EnlargeArrays above
 				int xgbsx=xgbs;
 				unsigned char* gm=gd->grassMap+ygbsy*gs->mapx/grassSquareSize+xgbsx;
-				for(int x2=0; x2<grassBlockSize; ++x2){
+				for(int x2=0; x2<grassBlockSize; ++x2){ //! CAUTION: loop count must match EnlargeArrays above
 					if(*gm){
 						srand(ygbsy*1025+xgbsx);
 						rand();
 						rand();
-						for(int a=0;a<numGrass;a++){
+						for(int a=0;a<numGrass;a++){ //! CAUTION: loop count must match EnlargeArrays above
 							float dx=(xgbsx+fRand(1))*gSSsq;
 							float dy=(ygbsy+fRand(1))*gSSsq;
 							float3 pos(dx,ground->GetHeight2(dx,dy)+0.5f,dy);
@@ -511,7 +511,7 @@ void CGrassDrawer::Draw(void)
 			va=GetVertexArray();
 			va->Initialize();
 			va->EnlargeArrays(numGrass*4,0,VA_SIZE_TN);
-			for(int a=0;a<numGrass;a++){
+			for(int a=0;a<numGrass;a++){ //! CAUTION: loop count must match EnlargeArrays above
 				float dx=(x+fRand(1))*gSSsq;
 				float dy=(y+fRand(1))*gSSsq;
 				float3 pos(dx,ground->GetHeight2(dx,dy)+0.5f,dy);

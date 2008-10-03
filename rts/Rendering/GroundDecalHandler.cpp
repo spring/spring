@@ -493,13 +493,14 @@ void CGroundDecalHandler::Draw(void)
 					list<TrackPart>::iterator ppi = track->parts.begin();
 					color2[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
 
+					va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
 					for (list<TrackPart>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
 						color[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
 						if (pi->connected) {
-							va->AddVertexTC(ppi->pos1, ppi->texPos, 0, color2);
-							va->AddVertexTC(ppi->pos2, ppi->texPos, 1, color2);
-							va->AddVertexTC(pi->pos2, pi->texPos, 1, color);
-							va->AddVertexTC(pi->pos1, pi->texPos, 0, color);
+							va->AddVertexQTC(ppi->pos1, ppi->texPos, 0, color2);
+							va->AddVertexQTC(ppi->pos2, ppi->texPos, 1, color2);
+							va->AddVertexQTC(pi->pos2, pi->texPos, 1, color);
+							va->AddVertexQTC(pi->pos1, pi->texPos, 0, color);
 						}
 						color2[3] = color[3];
 						ppi = pi;

@@ -781,9 +781,7 @@ void CAdvSky::CreateDetailTex(void)
 //		logOutput.Print("%f",c);
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
-#if VA_INIT_VERTEXES < 4*VA_SIZE_T
-#error "Vertex array too small"
-#endif
+		va->CheckInitSize(4*VA_SIZE_T);
 		va->AddVertexQT(ZeroVector,0,0);
 		va->AddVertexQT(float3(1,0,0),tSize,0);
 		va->AddVertexQT(float3(1,1,0),tSize,tSize);
