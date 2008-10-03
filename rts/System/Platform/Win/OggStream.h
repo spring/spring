@@ -1,7 +1,10 @@
 #ifndef OGGSTREAM_H
 #define OGGSTREAM_H
 
+#ifndef __GNUC__
 #include "StdAfx.h"
+#endif
+
 #include "DxSound.h"
 
 #include <ogg/ogg.h>

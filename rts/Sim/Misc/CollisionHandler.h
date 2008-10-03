@@ -1,7 +1,6 @@
 #ifndef COLLISION_HANDLER_H
 #define COLLISION_HANDLER_H
 
-#include "StdAfx.h"
 #include "creg/creg.h"
 
 struct CollisionVolume;

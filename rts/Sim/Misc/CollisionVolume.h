@@ -1,7 +1,6 @@
 #ifndef COLLISION_VOLUME_H
 #define COLLISION_VOLUME_H
 
-#include "StdAfx.h"
 #include "creg/creg.h"
 
 #define EPS 0.000001f
