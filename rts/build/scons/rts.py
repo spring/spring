@@ -110,6 +110,7 @@ def generate(env):
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
+		('use_gch',           'Use gcc precompiled header', True),
 		('dc_allowed',        'Specifies whether FPS mode (Direct Control) is allowed in game', True),
 		('cachedir',          'Cache directory (see scons manual)', None))
 
@@ -150,7 +151,7 @@ def generate(env):
 		# be paranoid, unset existing variables
 		for key in ['platform', 'gml', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
 			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
-			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
+			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines']:
 			if env.has_key(key): env.__delitem__(key)
 
@@ -351,6 +352,7 @@ def generate(env):
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
 		bool_opt('use_mmgr', False)
+		bool_opt('use_gch', True)
 		bool_opt('dc_allowed', True)
 		string_opt('prefix', '/usr/local')
 		string_opt('installprefix', '$prefix')
