@@ -1,6 +1,8 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
+#include "lib/streflop/streflop_cond.h"
+
 /**
  * @file FastMath.cpp
  * @brief Fast math routines
