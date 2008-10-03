@@ -1,7 +1,6 @@
 #ifndef UNIT_DEF_IMAGE
 #define UNIT_DEF_IMAGE
 
-#include "StdAfx.h"
 #include "creg/creg.h"
 #include "Rendering/GL/myGL.h"
 
@@ -13,7 +12,7 @@ struct UnitDefImage
 	int imageSizeX;
 	int imageSizeY;
 	GLuint textureID;
-	bool textureOwner; 
+	bool textureOwner;
 };
 
 #endif // UNIT_DEF_IMAGE

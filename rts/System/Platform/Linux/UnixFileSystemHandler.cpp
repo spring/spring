@@ -9,7 +9,6 @@
  * Licensed under the terms of the GNU GPL, v2 or later
  */
 
-#include "StdAfx.h"
 #include "UnixFileSystemHandler.h"
 #include <limits.h>
 #include <boost/regex.hpp>
@@ -246,7 +245,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 					}
 				}
 			}
-		} while (FindNextFile(hFind, &wfd)); 
+		} while (FindNextFile(hFind, &wfd));
 		FindClose(hFind);
 	}
 #else
