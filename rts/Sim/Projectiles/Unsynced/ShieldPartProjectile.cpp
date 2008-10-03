@@ -73,7 +73,8 @@ void CShieldPartProjectile::Draw(void)
 	inArray = true;
 	unsigned char col[4];
 
-	for (int y = 0; y < 4; ++y) {
+	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
+	for (int y = 0; y < 4; ++y) { //! CAUTION: loop count must match EnlargeArrays above
 		for (int x = 0; x < 4; ++x) {
 			float alpha = baseAlpha * 255;
 
@@ -81,10 +82,10 @@ void CShieldPartProjectile::Draw(void)
 			col[1] = (unsigned char) (color.y * alpha);
 			col[2] = (unsigned char) (color.z * alpha);
 			col[3] = (unsigned char) (alpha);
-			va->AddVertexTC(centerPos + vectors[(y    ) * 5 + x    ] * sphereSize, texCoords[(y    ) * 5 + x    ].x, texCoords[(y    ) * 5 + x    ].y, col);
-			va->AddVertexTC(centerPos + vectors[(y    ) * 5 + x + 1] * sphereSize, texCoords[(y    ) * 5 + x + 1].x, texCoords[(y    ) * 5 + x + 1].y, col);
-			va->AddVertexTC(centerPos + vectors[(y + 1) * 5 + x + 1] * sphereSize, texCoords[(y + 1) * 5 + x + 1].x, texCoords[(y + 1) * 5 + x + 1].y, col);
-			va->AddVertexTC(centerPos + vectors[(y + 1) * 5 + x    ] * sphereSize, texCoords[(y + 1) * 5 + x    ].x, texCoords[(y + 1) * 5 + x    ].y, col);
+			va->AddVertexQTC(centerPos + vectors[(y    ) * 5 + x    ] * sphereSize, texCoords[(y    ) * 5 + x    ].x, texCoords[(y    ) * 5 + x    ].y, col);
+			va->AddVertexQTC(centerPos + vectors[(y    ) * 5 + x + 1] * sphereSize, texCoords[(y    ) * 5 + x + 1].x, texCoords[(y    ) * 5 + x + 1].y, col);
+			va->AddVertexQTC(centerPos + vectors[(y + 1) * 5 + x + 1] * sphereSize, texCoords[(y + 1) * 5 + x + 1].x, texCoords[(y + 1) * 5 + x + 1].y, col);
+			va->AddVertexQTC(centerPos + vectors[(y + 1) * 5 + x    ] * sphereSize, texCoords[(y + 1) * 5 + x    ].x, texCoords[(y + 1) * 5 + x    ].y, col);
 		}
 	}
 }

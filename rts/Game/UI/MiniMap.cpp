@@ -1101,7 +1101,9 @@ void CMiniMap::DrawForReal()
 		CVertexArray* lines=GetVertexArray();
 		CVertexArray* points=GetVertexArray();
 		lines->Initialize();
+		lines->EnlargeArrays(ph->ps.size()*2,0,VA_SIZE_C);
 		points->Initialize();
+		points->EnlargeArrays(ph->ps.size(),0,VA_SIZE_C);
 
 		static unsigned char red[4]    = {255,0,0,255};
 		static unsigned char redA[4]   = {255,0,0,128};
@@ -1118,30 +1120,30 @@ void CMiniMap::DrawForReal()
 
 				if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
 				} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
-					points->AddVertexC(p->pos,green);
+					points->AddVertexQC(p->pos,green);
 				} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
 					CBeamLaserProjectile& beam = *(CBeamLaserProjectile*)p;
 					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-					lines->AddVertexC(beam.startPos,color);
-					lines->AddVertexC(beam.endPos,color);
+					lines->AddVertexQC(beam.startPos,color);
+					lines->AddVertexQC(beam.endPos,color);
 				} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
 					CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
 					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-					lines->AddVertexC(beam.startPos,color);
-					lines->AddVertexC(beam.endPos,color);
+					lines->AddVertexQC(beam.startPos,color);
+					lines->AddVertexQC(beam.endPos,color);
 				} else if (dynamic_cast<CLightingProjectile*>(p)) {
 					CLightingProjectile& beam = *(CLightingProjectile*)p;
 					unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
-					lines->AddVertexC(beam.pos,color);
-					lines->AddVertexC(beam.endPos,color);
+					lines->AddVertexQC(beam.pos,color);
+					lines->AddVertexQC(beam.endPos,color);
 				} else if (dynamic_cast<CPieceProjectile*>(p)) {
-					points->AddVertexC(p->pos,red);
+					points->AddVertexQC(p->pos,red);
 				} else if (dynamic_cast<CWreckProjectile*>(p)) {
-					points->AddVertexC(p->pos,redA);
+					points->AddVertexQC(p->pos,redA);
 				} else if (dynamic_cast<CWeaponProjectile*>(p)) {
-					points->AddVertexC(p->pos,yellow);
+					points->AddVertexQC(p->pos,yellow);
 				} else {
-					points->AddVertexC(p->pos,white);
+					points->AddVertexQC(p->pos,white);
 				}
 			}
 		}

@@ -467,9 +467,8 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-#if VA_INIT_VERTEXES < 12*VA_SIZE_T
-#error "Vertex array too small"
-#endif
+			va->CheckInitSize(12*VA_SIZE_T);
+
 			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
 			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
@@ -749,9 +748,8 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-#if VA_INIT_VERTEXES < 12*VA_SIZE_T
-#error "Vertex array too small"
-#endif
+			va->CheckInitSize(12*VA_SIZE_T);
+
 			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
 			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);

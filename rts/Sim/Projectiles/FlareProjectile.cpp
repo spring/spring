@@ -105,12 +105,13 @@ void CFlareProjectile::Draw(void)
 	col[3]=1;
 
 	float rad=6.0;
-	for(int a=0;a<numSub;++a){
+	va->EnlargeArrays(numSub*4,0,VA_SIZE_TC);
+	for(int a=0;a<numSub;++a){ //! CAUTION: loop count must match EnlargeArrays above
 		float3 interPos=subPos[a]+subSpeed[a]*gu->timeOffset;
 
-		va->AddVertexTC(interPos-camera->right*rad-camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*rad-camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.ystart,col);
-		va->AddVertexTC(interPos+camera->right*rad+camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.yend,col);
-		va->AddVertexTC(interPos-camera->right*rad+camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.yend,col);
+		va->AddVertexQTC(interPos-camera->right*rad-camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.ystart,col);
+		va->AddVertexQTC(interPos+camera->right*rad-camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.ystart,col);
+		va->AddVertexQTC(interPos+camera->right*rad+camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.yend,col);
+		va->AddVertexQTC(interPos-camera->right*rad+camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.yend,col);
 	}
 }

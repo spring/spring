@@ -91,16 +91,17 @@ void CRepulseGfx::Draw(void)
 	float txs=et.xend-et.xstart;
 	float tys=et.yend-et.ystart;
 
-	for(int y=0;y<4;++y){
+	va->EnlargeArrays(4*4*4+16,0,VA_SIZE_TC);
+	for(int y=0;y<4;++y){ //! CAUTION: loop count must match EnlargeArrays above
 		float dy=y-2;
 		float ry=y*0.25f;
 		for(int x=0;x<4;++x){
 			float dx=x-2;
 			float rx=x*0.25f;
-			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25f)*txs	,tyo+(rx)*tys			,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25f)*txs	,tyo+(rx+0.25f)*tys,col);
-			va->AddVertexTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25f)*tys,col);
+			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
+			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25f)*txs	,tyo+(rx)*tys			,col);
+			va->AddVertexQTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25f)*txs	,tyo+(rx+0.25f)*tys,col);
+			va->AddVertexQTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25f)*tys,col);
 		}
 	}
 	drawsize=7;
@@ -120,25 +121,25 @@ void CRepulseGfx::Draw(void)
 	col2[2]=0;
 	col2[3]=0;
 
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 
-	va->AddVertexTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
+	va->AddVertexQTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
 }
 
 void CRepulseGfx::Update(void)

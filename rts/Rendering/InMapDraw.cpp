@@ -235,6 +235,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	int drawQuadsX = imd->drawQuadsX;
 	CInMapDraw::DrawQuad* dq = &imd->drawQuads[y * drawQuadsX + x];
 
+	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
 	// draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
 		const int allyteam = pi->senderAllyTeam;
@@ -262,20 +263,20 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			float3 pos2 = pos1;
 			pos2.y += 100;
 
-			va->AddVertexTC(pos1 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexTC(pos1 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
-			va->AddVertexTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
+			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
+			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
+			va->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
+			va->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
 
-			va->AddVertexTC(pos1 - dir1 * size,               0.75f, 0, col);
-			va->AddVertexTC(pos1 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexTC(pos2 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexTC(pos2 - dir1 * size,               0.75f, 0, col);
+			va->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
+			va->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
+			va->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
+			va->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
 
-			va->AddVertexTC(pos2 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexTC(pos2 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
-			va->AddVertexTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
+			va->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
+			va->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
+			va->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
+			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
 
 			if (pi->label.size() > 0) {
 				glPushMatrix();
@@ -288,6 +289,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		}
 	}
 
+	va->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
 	// draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		const int allyteam = li->senderAllyTeam;
@@ -296,8 +298,8 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
-			lineva->AddVertexC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
-			lineva->AddVertexC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
+			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
+			lineva->AddVertexQC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
 		}
 	}
 }
