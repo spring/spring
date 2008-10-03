@@ -78,7 +78,8 @@ CGuiHandler::CGuiHandler()
   buildSpacing(0),
   buildFacing(0),
   actionOffset(0),
-  gatherMode(false)
+  gatherMode(false),
+  drawSelectionInfo(true)
 {
 	icons = SAFE_NEW IconInfo[16];
 	iconsSize = 16;
@@ -3109,7 +3110,7 @@ void CGuiHandler::DrawButtons()
 	DrawMenuName();
 
 	// LuaUI can handle this
-	if (luaUI == NULL)
+	if (luaUI == NULL || drawSelectionInfo)
 		DrawSelectionInfo();
 
 	DrawNumberInput();

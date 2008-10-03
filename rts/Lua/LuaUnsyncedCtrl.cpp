@@ -184,6 +184,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MarkerAddLine);
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
 
+	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
+	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
+
 	return true;
 }
 
@@ -683,7 +686,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	}
 
 	const float camTime = luaL_checkfloat(L, 2);
-	
+
 	CCameraController::StateMap camState;
 
 	const int table = 1;
@@ -867,7 +870,7 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	else {
 		luaL_error(L, "Incorrect arguments to SetCustomCommandDrawData");
 	}
-	
+
 	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	const int table = 3;
@@ -1095,7 +1098,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 static inline bool CheckModUICtrl()
 {
-	return CLuaHandle::GetModUICtrl() || 
+	return CLuaHandle::GetModUICtrl() ||
 	       CLuaHandle::GetActiveHandle()->GetUserMode();
 }
 
@@ -2093,3 +2096,34 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+
+int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDrawSelectionInfo(bool)");
+	}
+
+	guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
+
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::GetDrawSelectionInfo(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
+	}
+
+	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
+	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
