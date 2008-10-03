@@ -52,7 +52,7 @@ let install_revision revision fail progress status success =
               fail "Error downloading file index"
             
   and get_pool () =
-    let store = Store.In.load data_dir revision in
+    let store = Store.In.load ca_dir revision in
       
     (* Only download repeat digests once *)
     let uniq compare entries =
