@@ -28,9 +28,17 @@ import filelist
 
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
-	env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['mingw', 'rts', 'gch'], toolpath = ['.', 'rts/build/scons'])
 else:
-	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['default', 'rts',  'gch'], toolpath = ['.', 'rts/build/scons'])
+
+if env['use_gch']:
+	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
+else:
+	import os.path
+	if os.path.exists('rts/System/StdAfx.h.gch'):
+		os.unlink('rts/System/StdAfx.h.gch')
+
 
 spring_files = filelist.get_spring_source(env)
 
