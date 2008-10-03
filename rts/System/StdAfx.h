@@ -77,13 +77,11 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include <stdexcept>
 #include <string>
 #include <cctype>
-#include <string>
 #include <cstring>
 #include <cmath>
 
 #include "Sync/Syncify.h"
 #include "creg/creg.h"
-#include "FastMath.h"
 #include "float3.h"
 #include "GlobalStuff.h"
 

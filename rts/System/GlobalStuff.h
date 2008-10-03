@@ -67,7 +67,6 @@ const int MAX_PLAYERS = 32;
  */
 const float NEAR_PLANE = 2.8f;
 
-#include "float3.h"
 
 /**
  * @brief int2 struct
