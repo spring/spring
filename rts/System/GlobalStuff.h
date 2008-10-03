@@ -8,6 +8,8 @@
 #ifndef GLOBALSTUFF_H
 #define GLOBALSTUFF_H
 
+#include "float3.h"
+
 /**
  * @brief pi
  *
@@ -620,7 +622,7 @@ public:
 	 * Whether fog (of war) is drawn or not
 	 */
 	bool drawFog;
-	
+
 	/**
 	 * @brief compressTextures
 	 *
@@ -674,7 +676,7 @@ public:
 	 */
 	CUnit* directControl;
 #endif
-	
+
 private:
 	/**
 	* @brief rand seed

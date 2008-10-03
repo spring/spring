@@ -48,14 +48,3 @@ bool float3::CheckInBounds()
 
 	return in;
 }
-
-float3& float3::ANormalize()
-{
-	float invL = fastmath::isqrt(SqLength());
-	if (invL != 0.f) {
-		x *= invL;
-		y *= invL;
-		z *= invL;
-	}
-	return *this;
-}

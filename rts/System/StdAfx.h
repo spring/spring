@@ -56,8 +56,8 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 
 
 // This reduces compile-time with precompiled headers on msvc
-// It increases compile-time with precompiled headers on gcc
-#ifdef _MSC_VER
+// It used to increase compile-time with precompiled headers on gcc
+#if defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 #include <vector>
 #include <map>
 #include <set>
@@ -73,18 +73,20 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 # endif
 #endif
 
-#include "Sync/Syncify.h"
-#include "creg/creg.h"
-#include "float3.h"
-#include "GlobalStuff.h"
-
 #include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <cctype>
 #include <string>
 #include <cstring>
-#include <cctype>
+#include <cmath>
+
+#include "Sync/Syncify.h"
+#include "creg/creg.h"
+#include "FastMath.h"
+#include "float3.h"
+#include "GlobalStuff.h"
+
 
 /**
  * content_error
