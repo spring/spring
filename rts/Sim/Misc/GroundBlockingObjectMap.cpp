@@ -5,6 +5,7 @@
 #include "GroundBlockingObjectMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Path/PathManager.h"
+#include "creg/STL_Map.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap;
 

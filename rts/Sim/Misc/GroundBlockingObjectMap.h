@@ -1,8 +1,9 @@
 #ifndef GROUNDBLOCKINGOBJECTMAP_H
 #define GROUNDBLOCKINGOBJECTMAP_H
 
+#include <map>
+
 #include "creg/creg.h"
-#include "creg/STL_Map.h"
 #include "float3.h"
 
 class CSolidObject;
