@@ -79,6 +79,7 @@ void FileSystemHandler::Cleanup()
 
 FileSystemHandler::~FileSystemHandler()
 {
+	Cleanup();
 	delete archiveScanner;
 	delete vfsHandler;
 	archiveScanner = NULL;
