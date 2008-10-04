@@ -1,6 +1,14 @@
 #include "StdAfx.h"
 #include "unitsync.h"
 
+#include <string>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <cstdio>
+#include <cstdarg>
+
 #include "LuaInclude.h"
 #include "FileSystem/ArchiveFactory.h"
 #include "FileSystem/ArchiveScanner.h"
@@ -14,19 +22,14 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/SideParser.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 #include "LuaParserAPI.h"
 #include "Syncer.h"
 #include "SyncServer.h"
 #include "unitsyncLogOutput.h"
 
-#include <string>
-#include <string.h>
-#include <vector>
-#include <set>
-#include <algorithm>
-#include <cstdio>
-#include <cstdarg>
 
 using std::string;
 

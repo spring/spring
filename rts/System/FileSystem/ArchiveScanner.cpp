@@ -18,6 +18,8 @@
 #include "System/FileSystem/FileFilter.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using std::string;
 using std::vector;

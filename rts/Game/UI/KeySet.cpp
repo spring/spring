@@ -12,6 +12,7 @@
 #include "SDL_types.h"
 
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 extern Uint8* keys; // from System/Main.cpp
 

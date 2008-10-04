@@ -24,6 +24,7 @@ using namespace std;
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

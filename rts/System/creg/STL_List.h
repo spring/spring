@@ -1,6 +1,9 @@
 #ifndef CR_LIST_TYPE_IMPL_H
 #define CR_LIST_TYPE_IMPL_H
+
 #include <list>
+
+#include "creg.h"
 
 namespace creg {
 

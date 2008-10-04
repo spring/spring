@@ -22,6 +22,7 @@ using std::vector;
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 LuaMatHandler LuaMatHandler::handler;

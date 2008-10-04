@@ -18,7 +18,10 @@ CCamera* cam2;
 
 unsigned int CCamera::billboardList = 0;
 
-CCamera::CCamera() : forward(1.0f, 0.0f, 0.0f), rot(0.0f, 0.0f, 0.0f), pos(2000.0f, 70.0f, 1800.0f), posOffset(0.0f, 0.0f, 0.0f), tiltOffset(0.0f, 0.0f, 0.0f), lppScale(0.0f)
+CCamera::CCamera() :
+	pos(2000.0f, 70.0f, 1800.0f),
+	rot(0.0f, 0.0f, 0.0f),
+	forward(1.0f, 0.0f, 0.0f),   posOffset(0.0f, 0.0f, 0.0f), tiltOffset(0.0f, 0.0f, 0.0f), lppScale(0.0f)
 {
 	// stuff that wont change can be initialised here, it doesn't need to be reinitialised every update
 	modelview[ 3] =  0.0f;

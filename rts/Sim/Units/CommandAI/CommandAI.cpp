@@ -33,8 +33,9 @@
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
 #include <assert.h>
+#include "System/Util.h"
 
-#define TARGET_LOST_TIMER 120	// in calls to SlowUpdate() (approx. once every second)
+const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)
 
 CR_BIND(CCommandQueue, );
 

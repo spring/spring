@@ -10,6 +10,8 @@
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 

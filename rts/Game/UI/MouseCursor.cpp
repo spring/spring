@@ -6,6 +6,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
+#include "System/Util.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
 #include "myMath.h"

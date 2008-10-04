@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
+#include "System/GlobalStuff.h"
 
 CBaseTreeDrawer* treeDrawer=0;
 

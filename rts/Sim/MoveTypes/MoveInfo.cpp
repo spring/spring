@@ -11,6 +11,7 @@
 #include "MoveMath/MoveMath.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;

@@ -10,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "System/Exceptions.h"
 
 CSkyBox::CSkyBox(std::string texture)
 {

@@ -3,10 +3,13 @@ creg - Code compoment registration system
 Copyright 2005 Jelmer Cnossen 
 */
 #include "StdAfx.h"
+
+#include "creg.h"
+
 #include <map>
 #include <string.h>
 
-#include "creg.h"
+#include "System/Util.h"
 
 using namespace creg;
 using namespace std;

@@ -38,6 +38,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
+#include "System/Exceptions.h"
 
 
 CProjectileHandler* ph;

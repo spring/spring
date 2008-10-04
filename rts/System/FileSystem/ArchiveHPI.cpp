@@ -4,6 +4,7 @@
 
 #include "ArchiveHPI.h"
 
+#include "Util.h"
 using namespace hpiutil;
 
 CArchiveHPI::CArchiveHPI(const std::string& name):

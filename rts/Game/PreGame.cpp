@@ -36,6 +36,7 @@
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
+#include "Exceptions.h"
 
 // msvc behaves really strange
 #if _MSC_VER

@@ -2,6 +2,9 @@
 #include "mmgr.h"
 
 #include "BuilderCAI.h"
+
+#include <assert.h>
+
 #include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
@@ -33,7 +36,8 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "creg/STL_Map.h"
-#include <assert.h>
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );

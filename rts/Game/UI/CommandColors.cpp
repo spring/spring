@@ -15,21 +15,13 @@ using namespace std;
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/
 
 
 CCommandColors cmdColors;
-
-
-static void InitColor(float color[4], float r, float g, float b, float a)
-{
-	color[0] = r;
-	color[1] = g;
-	color[2] = b;
-	color[3] = a;
-}
 
 
 CCommandColors::CCommandColors()

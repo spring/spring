@@ -4,6 +4,8 @@
 
 #include "ArchiveZip.h"
 
+#include "Util.h"
+
 CArchiveZip::CArchiveZip(const std::string& name):
 	CArchiveBuffered(name),
 	curSearchHandle(1)

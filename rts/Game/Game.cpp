@@ -117,6 +117,8 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 #include "System/EventHandler.h"
 #include "System/Sound.h"
 #include "System/FileSystem/SimpleParser.h"

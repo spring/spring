@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <boost/noncopyable.hpp>
+#include "creg/creg.h"
 
 class CCategoryHandler : public boost::noncopyable
 {

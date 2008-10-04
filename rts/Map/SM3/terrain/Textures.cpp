@@ -39,6 +39,7 @@
 #include "Textures.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/FileSystem.h"
+#include "System/float3.h"
 
 
 namespace terrain {

@@ -27,6 +27,7 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 CLuaGaia* luaGaia = NULL;

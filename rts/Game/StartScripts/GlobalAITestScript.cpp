@@ -14,6 +14,7 @@
 #include "System/Platform/FileSystem.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
+#include "Exceptions.h"
 
 
 extern std::string stupidGlobalMapname;

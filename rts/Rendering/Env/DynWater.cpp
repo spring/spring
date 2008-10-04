@@ -23,15 +23,16 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 
 #define W_SIZE 5
 #define WF_SIZE 5120
 #define WH_SIZE 2560
-/*/
+/*
 #define W_SIZE 4
 #define WF_SIZE 4096
 #define WH_SIZE 2048
-/**/
+*/
 CDynWater::CDynWater(void)
 {
 	lastWaveFrame=0;

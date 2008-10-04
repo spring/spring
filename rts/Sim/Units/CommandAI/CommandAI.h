@@ -1,12 +1,14 @@
 #ifndef __COMMAND_AI_H__
 #define __COMMAND_AI_H__
 
-#include "Object.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include <vector>
 #include <deque>
 #include <set>
+
+#include "Object.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "CommandQueue.h"
+#include "float3.h"
 
 class CUnit;
 class CFeature;

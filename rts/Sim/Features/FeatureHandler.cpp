@@ -30,6 +30,7 @@
 #include "System/Platform/ConfigHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 

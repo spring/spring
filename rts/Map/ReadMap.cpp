@@ -25,6 +25,7 @@
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 

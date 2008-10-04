@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "Matrix44f.h"
+#include "System/GlobalStuff.h"
 
 struct S3DO;
 struct SS3O;

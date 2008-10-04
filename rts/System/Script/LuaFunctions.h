@@ -9,6 +9,7 @@
 struct Command;
 class float3;
 class CUnit;
+class CTeam;
 class CFeature;
 struct UnitDef;
 

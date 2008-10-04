@@ -5,6 +5,7 @@
 
 #include <list>
 #include <boost/noncopyable.hpp>
+#include "float3.h"
 
 class CWeapon;
 class CWeaponProjectile;

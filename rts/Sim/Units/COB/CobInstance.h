@@ -4,19 +4,20 @@
 #include <string>
 #include <vector>
 #include <list>
-#include "SDL_types.h"
+#include <SDL_types.h>
 
-#define TAANG2RAD 10430.219207445624753419256949178f
-#define RAD2TAANG 9.587526207370107576104371709781e-5f
+const float TAANG2RAD = 10430.219207445624753419256949178f;
+const float  RAD2TAANG = 9.587526207370107576104371709781e-5f;
 
 #include "Object.h"
+#include "GlobalStuff.h"
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
 #define UNPACKX(xz) ((signed short)((Uint32)(xz) >> 16))
 #define UNPACKZ(xz) ((signed short)((Uint32)(xz) & 0xffff))
 
-#define COBSCALE 65536
+const int COBSCALE = 65536;
 
 
 class CCobThread;

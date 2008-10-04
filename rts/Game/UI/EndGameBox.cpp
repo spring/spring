@@ -14,6 +14,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
+#include "System/Exceptions.h"
 
 
 extern bool globalQuit;

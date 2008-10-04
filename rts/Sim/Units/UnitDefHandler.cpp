@@ -32,6 +32,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
+#include "System/Exceptions.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 

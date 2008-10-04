@@ -7,6 +7,7 @@ Copyright 2005 Jelmer Cnossen
 #include "mmgr.h"
 
 #include "VarTypes.h"
+#include "Util.h"
 
 using namespace std;
 using namespace creg;

@@ -3,6 +3,8 @@
 
 #include <deque>
 
+#include "creg.h"
+
 namespace creg
 {
 	// Deque type (uses vector implementation)

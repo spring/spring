@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Game/GameVersion.h"
+#include "Exceptions.h"
 
 
 /**

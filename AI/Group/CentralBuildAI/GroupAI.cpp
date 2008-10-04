@@ -9,6 +9,7 @@
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
+#include "System/Util.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

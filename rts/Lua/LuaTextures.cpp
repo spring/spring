@@ -8,6 +8,7 @@
 #include "LuaTextures.h"
 
 #include "Rendering/GL/myGL.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

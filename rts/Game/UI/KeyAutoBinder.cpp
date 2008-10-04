@@ -26,6 +26,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

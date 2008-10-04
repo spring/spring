@@ -8,6 +8,8 @@
 
 #include "StdAfx.h"
 #include "DataDirLocater.h"
+
+#include <cstdlib>
 #ifdef WIN32
 	#include <io.h>
   #include <direct.h>
@@ -25,6 +27,7 @@
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
 #include "mmgr.h"
+#include "Exceptions.h"
 
 /**
  * @brief construct a data directory object

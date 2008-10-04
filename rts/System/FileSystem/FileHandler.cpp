@@ -10,6 +10,7 @@
 #include "VFSHandler.h"
 #include "Platform/FileSystem.h"
 
+#include "Util.h"
 using namespace std;
 
 

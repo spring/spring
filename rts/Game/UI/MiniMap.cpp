@@ -56,6 +56,7 @@
 #include "System/EventHandler.h"
 #include "System/Sound.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Util.h"
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
 

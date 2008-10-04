@@ -4,9 +4,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <list>
+
 #include "Object.h"
 #include "Sim/Misc/DamageArray.h"
-#include <list>
+#include "float3.h"
 
 class CUnit;
 class CWeaponProjectile;

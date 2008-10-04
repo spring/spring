@@ -52,6 +52,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 using namespace std;
 

@@ -7,8 +7,9 @@
 #include <vector>
 #include <map>
 #include <sstream>
-#include <stdexcept>
 #include "Sync/SyncedPrimitiveIO.h"
+#include "Exceptions.h"
+#include "float3.h"
 
 class TdfParser
 {

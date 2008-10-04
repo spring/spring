@@ -23,6 +23,7 @@
 #include "Sim/Units/UnitDef.h" // MAX_UNITS
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

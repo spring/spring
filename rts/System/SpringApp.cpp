@@ -39,6 +39,8 @@
 #include "MouseInput.h"
 #include "bitops.h"
 #include "Sync/Syncify.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 #include "mmgr.h"
 

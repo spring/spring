@@ -11,6 +11,7 @@
 #include "LuaUtils.h"
 
 #include "LogOutput.h"
+#include "System/Util.h"
 
 
 static       int depth = 0;
