@@ -8,6 +8,7 @@
 #include "ExternalAI/IAICallback.h"
 #include "GroupAI.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/Util.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
