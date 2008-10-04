@@ -15,6 +15,7 @@
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
 #include "System/Platform/errorhandler.h"
+#include "lib/streflop/streflop_cond.h"
 
 EXTERN inline void gmlUpdateServers() {
 	gmlItemsConsumed=0;
