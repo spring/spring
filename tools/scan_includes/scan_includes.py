@@ -19,6 +19,8 @@ def main():
     for root, dirs, files in os.walk('rts'):
         if root.startswith(join('rts', 'lib')):
             continue
+        if '.svn' in root:
+            continue
         for f in files:
             if any(f.endswith(x) for x in ('.cpp', '.hpp', '.h', '.c')):
                 analyze(join(root, f), local, stdlib)
@@ -27,8 +29,8 @@ def main():
     print '\nProject headers:'
     print '\n'.join('%s %s'%x for x in sorted(local.items(), key=operator.itemgetter(1)))
 
-_localinc = re.compile(r'^\s*#\s*include\s+"([\.a-zA-Z0-9]+)"')
-_systeminc = re.compile(r'^\s*#\s*include\s+<([\.a-zA-Z0-9]+)>')
+_localinc = re.compile(r'^\s*#\s*include\s+"([\./\\a-zA-Z0-9]+)"')
+_systeminc = re.compile(r'^\s*#\s*include\s+<([\./\\a-zA-Z0-9]+)>')
 
 def analyze(filename, local, stdlib):
     print 'processing',filename
