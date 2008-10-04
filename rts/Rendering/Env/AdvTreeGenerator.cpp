@@ -15,6 +15,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 using std::max;
 using std::min;

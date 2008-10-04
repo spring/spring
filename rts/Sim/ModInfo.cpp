@@ -12,6 +12,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/Exceptions.h"
 
 
 CModInfo modInfo;

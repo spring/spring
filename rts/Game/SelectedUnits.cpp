@@ -37,6 +37,7 @@
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"
+#include "Util.h"
 
 extern Uint8 *keys;
 
@@ -50,8 +51,8 @@ CSelectedUnits selectedUnits;
 CSelectedUnits::CSelectedUnits()
 : selectionChanged(false),
 	possibleCommandsChanged(true),
-	selectedGroup(-1),
-	buildIconsFirst(false)
+	buildIconsFirst(false),
+	selectedGroup(-1)
 {
 }
 

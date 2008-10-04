@@ -12,6 +12,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
+#include "System/Util.h"
 
 #include "LogOutput.h"
 

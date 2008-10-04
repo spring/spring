@@ -16,6 +16,8 @@
 #include "LogOutput.h"
 #include "FPUCheck.h"
 #include "System/GlobalStuff.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 #include "IFramebuffer.h"
 

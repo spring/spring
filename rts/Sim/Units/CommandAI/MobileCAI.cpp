@@ -24,6 +24,7 @@
 #include "System/LogOutput.h"
 #include "myMath.h"
 #include <assert.h>
+#include "System/Util.h"
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 

@@ -37,6 +37,7 @@
 #include "System/Net/LocalConnection.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
+#include "System/Util.h"
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"

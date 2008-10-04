@@ -18,6 +18,8 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 //#include "TimeProfiler.h"
 
 static const float turfSize=20;				//single turf size

@@ -6,6 +6,7 @@
 
 #include <deque>
 #include "Script.h"
+#include "float3.h"
 
 class CAirScript :
 	public CScript

@@ -20,6 +20,8 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
 #include "creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 

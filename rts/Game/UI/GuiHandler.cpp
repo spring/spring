@@ -54,6 +54,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
+#include "System/Util.h"
 
 extern Uint8 *keys;
 

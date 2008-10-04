@@ -24,6 +24,7 @@
 #include <boost/spirit/phoenix/binders.hpp>
 #include <boost/spirit/error_handling/exceptions.hpp>
 #include "mmgr.h"
+#include "Util.h"
 
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"

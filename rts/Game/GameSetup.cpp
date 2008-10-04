@@ -18,7 +18,8 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
-#include "LogOutput.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
 
 
 using namespace std;

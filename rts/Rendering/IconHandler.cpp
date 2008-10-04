@@ -14,6 +14,7 @@
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/Exceptions.h"
 
 using std::string;
 

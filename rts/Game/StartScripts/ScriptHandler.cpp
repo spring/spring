@@ -18,6 +18,7 @@
 #include "EmptyScript.h"
 #include "TestScript.h"
 #include "Platform/SharedLib.h"
+#include "Exceptions.h"
 #ifndef NO_LUA
 #  include "System/Platform/errorhandler.h"
 #endif

@@ -19,6 +19,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::list;
 using std::min;

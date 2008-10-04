@@ -10,6 +10,7 @@
 #include "LogOutput.h"
 #include "DynWater.h"
 #include "RefractWater.h"
+#include "System/Exceptions.h"
 
 CBaseWater* water=0;
 

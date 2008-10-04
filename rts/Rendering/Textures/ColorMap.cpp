@@ -6,6 +6,8 @@
 #include "Bitmap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 std::vector<CColorMap *> CColorMap::colorMaps;
 std::map<std::string, CColorMap *> CColorMap::colorMapsMap;

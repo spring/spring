@@ -5,7 +5,7 @@
 #include "SmfMapFile.h"
 #include "mapfile.h"
 #include "mmgr.h"
-#include <assert.h>
+#include "System/Exceptions.h"
 
 using std::string;
 

@@ -20,6 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Platform/ConfigHandler.h"
+#include "System/Util.h"
 
 
 CTooltipConsole* tooltip = 0;

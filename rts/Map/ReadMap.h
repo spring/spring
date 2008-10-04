@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
+#include "GlobalStuff.h"
 
 class CMetalMap;
 class CCamera;

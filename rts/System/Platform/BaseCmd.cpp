@@ -11,6 +11,7 @@
 #include "BaseCmd.h"
 
 #include <iostream>
+#include <cstdlib>
 
 #ifdef _WIN32
 #include "Win/Win32Cmd.h"

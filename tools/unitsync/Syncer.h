@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <string>
 
 typedef unsigned int crc_t;
 

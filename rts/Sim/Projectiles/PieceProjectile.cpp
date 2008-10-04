@@ -21,6 +21,7 @@
 #include "Sync/SyncTracer.h"
 #include "Unsynced/SmokeProjectile.h"
 #include "Unsynced/SmokeTrailProjectile.h"
+#include "System/Util.h"
 
 static const float Smoke_Time = 40;
 

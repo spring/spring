@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 #include <map>
+
+#include "float3.h"
+
 using std::string;
 using std::vector;
 using std::map;

@@ -51,6 +51,7 @@
 #include "Sound.h"
 #include "myMath.h"
 #include "LogOutput.h"
+#include "Exceptions.h"
 #include "TimeProfiler.h"
 
 //////////////////////////////////////////////////////////////////////

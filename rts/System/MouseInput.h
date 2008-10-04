@@ -3,6 +3,8 @@
 
 #include <SDL_events.h>
 
+#include "GlobalStuff.h"
+
 class IMouseInput
 {
 public:

@@ -14,6 +14,7 @@
 #define FPUCHECK_H
 
 #include "LogOutput.h"
+#include "lib/streflop/streflop_cond.h"
 
 /**
 	@brief checks FPU control registers.

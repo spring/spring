@@ -8,6 +8,7 @@
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
 #include "Platform/FileSystem.h"
+#include "Util.h"
 
 
 CVFSHandler* vfsHandler = NULL;

@@ -2,10 +2,9 @@
 #define COLLISION_VOLUME_H
 
 #include "creg/creg.h"
+#include "Util.h"
 
-#define EPS 0.000001f
-#define MIN(a, b) std::min((a), (b))
-#define MAX(a, b) std::max((a), (b))
+const float EPS = 0.000001f;
 
 enum COLVOL_TYPES {COLVOL_TYPE_ELLIPSOID, COLVOL_TYPE_CYLINDER, COLVOL_TYPE_BOX};
 enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
@@ -126,17 +125,17 @@ struct CollisionVolume {
 				const float prhs = axisHScales[primaryAxis     ];	// primary axis half-scale
 				const float sahs = axisHScales[secondaryAxes[0]];	// 1st secondary axis half-scale
 				const float sbhs = axisHScales[secondaryAxes[1]];	// 2nd secondary axis half-scale
-				const float mshs = MAX(sahs, sbhs);					// max. secondary axis half-scale
+				const float mshs = std::max(sahs, sbhs);					// max. secondary axis half-scale
 
 				volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
 				volumeBoundingRadius = streflop::sqrtf(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_ELLIPSOID: {
 				if (spherical) {
-					// MAX(x, y, z) would suffice here too
+					// std::max(x, y, z) would suffice here too
 					volumeBoundingRadius = axisHScales.x;
 				} else {
-					volumeBoundingRadius = MAX(axisHScales.x, MAX(axisHScales.y, axisHScales.z));
+					volumeBoundingRadius = std::max(axisHScales.x, std::max(axisHScales.y, axisHScales.z));
 				}
 
 				volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;

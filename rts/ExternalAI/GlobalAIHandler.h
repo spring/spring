@@ -3,6 +3,8 @@
 
 #include "Object.h"
 #include "Platform/ConfigHandler.h"
+#include "float3.h"
+#include "GlobalStuff.h"
 #include <map>
 #include <string>
 

@@ -1,6 +1,9 @@
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
+#include <algorithm>
+#include "creg/creg.h"
+
 struct DamageArray
 {
 	CR_DECLARE_STRUCT(DamageArray);
@@ -18,8 +21,7 @@ public:
 		craterMult = other.craterMult;
 		craterBoost = other.craterBoost;
 		numTypes = other.numTypes;
-		for(int a = 0; a < numTypes; ++a)
-			damages[a] = other.damages[a];
+		std::copy(other.damages, other.damages + numTypes, damages);
 	}
 	float& operator[](int i) { return damages[i]; }
 	float operator[](int i) const { return damages[i]; }

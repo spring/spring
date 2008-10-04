@@ -9,6 +9,7 @@
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CKeyCodes* keyCodes = NULL;

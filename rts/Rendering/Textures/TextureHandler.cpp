@@ -22,6 +22,8 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

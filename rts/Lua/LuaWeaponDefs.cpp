@@ -26,6 +26,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/GlobalStuff.h"
 
 using namespace std;
 

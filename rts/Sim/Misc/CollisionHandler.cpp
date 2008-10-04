@@ -237,8 +237,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	bool intersect = false;
 
 	// minimum and maximum (x, y, z) coordinates of transformed ray
-	const float rminx = MIN(pi0.x, pi1.x), rminy = MIN(pi0.y, pi1.y), rminz = MIN(pi0.z, pi1.z);
-	const float rmaxx = MAX(pi0.x, pi1.x), rmaxy = MAX(pi0.y, pi1.y), rmaxz = MAX(pi0.z, pi1.z);
+	const float rminx = std::min(pi0.x, pi1.x), rminy = std::min(pi0.y, pi1.y), rminz = std::min(pi0.z, pi1.z);
+	const float rmaxx = std::max(pi0.x, pi1.x), rmaxy = std::max(pi0.y, pi1.y), rmaxz = std::max(pi0.z, pi1.z);
 
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
 	const float vminx = -v->axisHScales.x, vminy = -v->axisHScales.y, vminz = -v->axisHScales.z;

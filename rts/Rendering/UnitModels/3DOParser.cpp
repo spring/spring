@@ -29,6 +29,8 @@
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 

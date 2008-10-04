@@ -1,5 +1,7 @@
-
 #include "StdAfx.h"
+
+#include "LogOutput.h"
+
 #include <assert.h>
 #include <cstdarg>
 #include <fstream>
@@ -11,8 +13,10 @@
 #endif
 
 #include "mmgr.h"
+#include "Util.h"
+#include "float3.h"
+#include "GlobalStuff.h"
 
-#include "LogOutput.h"
 
 static std::ofstream* filelog = 0;
 static bool initialized = false;

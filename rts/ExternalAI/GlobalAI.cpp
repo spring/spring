@@ -14,6 +14,9 @@
 
 #include <sstream>
 
+#include "System/Util.h"
+#include "System/Exceptions.h"
+
 CR_BIND_DERIVED(CGlobalAI, CObject, (0, NULL))
 CR_REG_METADATA(CGlobalAI, (
 	CR_MEMBER(team),

@@ -24,6 +24,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

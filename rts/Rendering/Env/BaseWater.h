@@ -1,6 +1,7 @@
 #ifndef __BASE_WATER_H__
 #define __BASE_WATER_H__
 
+#include "float3.h"
 class CGame;
 
 class CBaseWater

@@ -18,6 +18,8 @@
 #include "System/LogOutput.h"
 #include "System/Sound.h"
 #include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;

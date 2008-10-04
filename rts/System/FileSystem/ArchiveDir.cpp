@@ -7,6 +7,7 @@
 #include "ArchiveDir.h"
 #include "Platform/FileSystem.h"
 
+#include "Util.h"
 
 inline CFileHandler* CArchiveDir::GetFileHandler(int handle)
 {

@@ -1,6 +1,19 @@
 #ifndef CR_MAP_TYPE_IMPL_H
 #define CR_MAP_TYPE_IMPL_H
 
+#include "creg.h"
+
+///@TODO gcc hash_map declared as deprecated, port to hash_map
+#ifdef _MSC_VER
+	#define SPRING_HASH_MAP stdext::hash_map
+	#define SPRING_HASH_MAP_H <hash_map>
+#elif __GNUG__
+	#define SPRING_HASH_MAP __gnu_cxx::hash_map
+	#define SPRING_HASH_MAP_H <ext/hash_map>
+#else
+	#error Unsupported compiler
+#endif
+
 #include <map>
 // hash_map, defined in stdafx.h
 #include SPRING_HASH_MAP_H
@@ -33,7 +46,7 @@ namespace creg
 	template<typename T>
 	struct MapType : public IType
 	{
-		IType *mappedType, *keyType;
+		IType *keyType, *mappedType;
 		typedef typename T::iterator iterator;
 
 		MapType (IType *keyType,IType *mappedType) :

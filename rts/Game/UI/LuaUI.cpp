@@ -74,6 +74,7 @@ using namespace std;
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

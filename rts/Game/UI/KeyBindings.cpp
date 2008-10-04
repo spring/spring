@@ -19,6 +19,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CKeyBindings* keyBindings = NULL;

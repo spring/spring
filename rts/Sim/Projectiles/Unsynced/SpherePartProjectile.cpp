@@ -6,6 +6,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SpherePartProjectile.h"
+#include "System/GlobalStuff.h"
 
 using std::min;
 
