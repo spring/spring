@@ -1,5 +1,7 @@
 ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../CMakeLists.txt
 
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
+
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
@@ -54,7 +56,6 @@ if (USE_GML)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} System)
 INCLUDE_DIRECTORIES(lib/lua/include lib/luabind)
 
 ### all spring source directories
