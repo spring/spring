@@ -9,6 +9,7 @@
 #include "FPUCheck.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
+#include "Exceptions.h"
 
 #include "SpringApp.h"
 
