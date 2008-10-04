@@ -6,6 +6,8 @@
 
 #include "DGunController.hpp"
 
+#include "System/Exceptions.h"
+
 CR_BIND(DGunController ,(NULL))
 
 CR_REG_METADATA(DGunController,(

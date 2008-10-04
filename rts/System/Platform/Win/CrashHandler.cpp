@@ -10,6 +10,7 @@
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Rendering/GL/myGL.h"
+#include "Util.h"
 
 namespace CrashHandler {
 

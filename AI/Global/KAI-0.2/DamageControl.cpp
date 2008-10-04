@@ -1,5 +1,7 @@
 #include "DamageControl.h"
 
+#include "System/GlobalStuff.h"
+
 CDamageControl::CDamageControl(AIClasses* ai)
 {
 	this->ai=ai;

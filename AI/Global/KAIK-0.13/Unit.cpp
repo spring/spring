@@ -1,6 +1,7 @@
 #include "Unit.h"
 #include "GlobalAI.h"
 
+#include "System/GlobalStuff.h"
 
 CR_BIND(CUNIT, )
 CR_REG_METADATA(CUNIT, (

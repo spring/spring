@@ -2,6 +2,8 @@
 
 #include "UnitTable.h"
 
+#include "System/GlobalStuff.h"
+#include "System/Util.h"
 
 /// CR_BIND(CUnitTable, );
 /// CR_REG_METADATA(CUnitTable, (
