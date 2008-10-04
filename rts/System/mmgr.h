@@ -15,6 +15,23 @@
 
 #ifdef USE_MMGR
 
+
+#ifndef WIN32
+/* for backtrace() function */
+# include <execinfo.h>
+# define HAVE_BACKTRACE
+#elif defined __MINGW32__
+/* from backtrace.c: */
+extern "C" int backtrace (void **array, int size);
+# define HAVE_BACKTRACE
+#else
+# undef HAVE_BACKTRACE
+#endif
+
+#ifdef HAVE_BACKTRACE
+#define MMGR_MAX_STACK 11
+#endif
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // For systems that don't have the __FUNCTION__ variable, we can just define it here
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -38,6 +55,10 @@ typedef	struct tag_au
 	bool		breakOnDealloc;
 	bool		breakOnRealloc;
 	unsigned int	allocationNumber;
+#ifdef HAVE_BACKTRACE
+	unsigned int	backtraceSize;
+	void*		backtrace[MMGR_MAX_STACK];
+#endif
 	struct tag_au	*next;
 	struct tag_au	*prev;
 } sAllocUnit;
