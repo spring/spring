@@ -498,7 +498,11 @@ static	void	dumpAllocations(FILE *fp)
 #			ifdef HAVE_BACKTRACE
 			fprintf(fp, "\t");
 			for (int j = 0; j<ptr->backtraceSize; ++j) {
+				#ifdef WIN32
 				fprintf(fp, " %08x", (unsigned)ptr->backtrace[j]);
+				#else
+				fprintf(fp, " %p", ptr->backtrace[j]);
+				#endif
 			}
 #			endif
 			fprintf(fp, "\n");
