@@ -48,7 +48,8 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/spring-installer.
-	$(MAKE) DESTDIR=$(CURDIR)/debian/spring-installer install
+	$(MAKE) DESTDIR=$(CURDIR)/debian/spring-installer install_spring-installer
+	$(MAKE) DESTDIR=$(CURDIR)/debian/ca-installer install_ca-installer
 
 
 # Build architecture-independent files here.

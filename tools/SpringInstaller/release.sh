@@ -11,6 +11,7 @@ cd "$TMPDIR"
 tar -zcvf "$SOURCETARGZ" "$SOURCEDIR"
 cd "$SOURCEDIR"
 debuild -S -sa
+#debuild -i -us -uc -b
 cd "$TMPDIR"
 rm -rf "$SOURCEDIR"
 cd $TARGET
