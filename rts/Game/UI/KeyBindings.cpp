@@ -3,8 +3,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
+#include <cstdio>
 #include <cctype>
+#include <cstring>
 
 #include "mmgr.h"
 
@@ -246,7 +247,7 @@ CKeyBindings::CKeyBindings()
 	statefulCommands.insert("movedown");
 	statefulCommands.insert("moveslow");
 	statefulCommands.insert("movefast");
-	
+
 	RegisterAction("bind");
 	RegisterAction("unbind");
 	RegisterAction("unbindall");

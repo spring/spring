@@ -3,6 +3,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <list>
+#include <cstdlib>
+#include <cstring>
 #include "mmgr.h"
 
 #include "LosHandler.h"

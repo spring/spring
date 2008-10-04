@@ -27,13 +27,14 @@
 ---------------------------------------------------------------------
 */
 #include "StdAfx.h"
+#include <cstdarg>
+#include <cstring>
 
 #include "Rendering/GL/myGL.h"
 
 #include "TerrainBase.h"
 #include "Terrain.h"
 #include "TerrainVertexBuffer.h"
-#include <cstdarg>
 
 #include "TdfParser.h"
 
