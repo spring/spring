@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <cstdlib>
 
 #include "mmgr.h"
 

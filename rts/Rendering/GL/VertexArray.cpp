@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <cstring>
 #include "mmgr.h"
 
 #include "VertexArray.h"
@@ -46,7 +47,7 @@ void CVertexArray::DrawArray0(int drawType,int stride) {
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3,GL_FLOAT,stride,drawArray);
 	DrawArrays(drawType, stride);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void CVertexArray::DrawArrayC(int drawType,int stride) {
@@ -56,7 +57,7 @@ void CVertexArray::DrawArrayC(int drawType,int stride) {
 	glVertexPointer(3,GL_FLOAT,stride,drawArray);
 	glColorPointer(4,GL_UNSIGNED_BYTE,stride,drawArray+3);
 	DrawArrays(drawType, stride);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
@@ -68,7 +69,7 @@ void CVertexArray::DrawArrayT(int drawType,int stride) {
 	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+3);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void CVertexArray::DrawArrayT2(int drawType,int stride) {
@@ -88,7 +89,7 @@ void CVertexArray::DrawArrayT2(int drawType,int stride) {
 	glClientActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void CVertexArray::DrawArrayTN(int drawType, int stride) {
@@ -101,7 +102,7 @@ void CVertexArray::DrawArrayTN(int drawType, int stride) {
 	glNormalPointer(GL_FLOAT,stride,drawArray+5);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
@@ -115,7 +116,7 @@ void CVertexArray::DrawArrayTC(int drawType, int stride) {
 	glColorPointer(4,GL_UNSIGNED_BYTE,stride,drawArray+5);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);                                          
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 

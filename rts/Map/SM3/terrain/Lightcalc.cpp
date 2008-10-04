@@ -27,6 +27,7 @@
 ---------------------------------------------------------------------
 */
 #include "StdAfx.h"
+#include <cstring>
 #include "TerrainBase.h"
 #include "Terrain.h"
 #include "TerrainNode.h"

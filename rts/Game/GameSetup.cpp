@@ -1,9 +1,10 @@
 #include "StdAfx.h"
 
 #include <algorithm>
-#include <cctype>
 #include <map>
 #include <SDL_timer.h>
+#include <cctype>
+#include <cstring>
 
 #include "mmgr.h"
 

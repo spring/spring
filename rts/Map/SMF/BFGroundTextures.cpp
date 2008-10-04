@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include <cstdlib>
+
 #include "BFGroundTextures.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/GL/myGL.h"

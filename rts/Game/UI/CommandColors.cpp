@@ -3,7 +3,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include "CommandColors.h"
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <map>

@@ -1,6 +1,7 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
+#include <cstdlib>
 #include "IPath.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -64,11 +65,11 @@ public:
 
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
 	                     const CPathFinderDef& pfDef, Path& path);
-	
+
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
 
-private:  
+private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
 
 	class OpenSquare {
@@ -171,7 +172,7 @@ private:
 	float3 start;
 	int startxSqr, startzSqr;
 	int startSquare;
-	
+
 	int goalSquare;					//Is sat during the search as the square closest to the goal.
 	float goalHeuristic;			//The heuristic value of goalSquare.
 
