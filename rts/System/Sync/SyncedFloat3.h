@@ -7,10 +7,11 @@
 #ifndef SYNCEDFLOAT3_H
 #define SYNCEDFLOAT3_H
 
+#include "float3.h"
+
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 #include "lib/streflop/streflop_cond.h"
-#include "float3.h"
 
 /**
  * @brief SyncedFloat3 class
