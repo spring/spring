@@ -1,7 +1,16 @@
 /* Author: Tobi Vollebregt */
 /* Python bindings for unitsync library */
 
+// do not use debug Python since that causes link errors
+// need a different set of Python libs for that
+#if defined(WIN32) && defined(_DEBUG)
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
+
 #include <cstring>
 #include "unitsync.h"
 #include "Rendering/Textures/Bitmap.h"
