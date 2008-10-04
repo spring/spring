@@ -1,27 +1,328 @@
 Spring change log
 
-0.77b1
+0.76b2
+
+User Interface:
+ - FIXME: .cheat -> /cheat
+ - Added /mapmarks [0|1]
+ - Added /allmapmarks [0|1]
+ - Added /forcestart command
+ - Added /ally teamID [0|1] (Ingame alliances)
+ - multithreaded avi-generator
+ - Adde /commands (shows all registered commands in the console)
+ - FIXME: whisper chat (w:?)
+ - Added new camera controller: SmoothCamera
+   behaves like overview controller, but feels much smoother
+ - Added possibility to specify files that should be excluded from Spring's
+   archive checksumming routines ('springignore.txt').
+ - Added commandline resolution change:
+   ./spring -xresolution 800 -yresolution 600
+ - Added /unitreplyvolume [0.0-1.0]
+ - Added /hardwarecursor [0|1]
+ - Added /minimap drawprojectiles [0|1]
+   (you can turn off drawing of projectiles on the minimap now)
+ - Added /grounddecals [0|1]
+ - Added /movewarnings [0|1]
+ - Added /globalLOS [0|1] (needs cheats on)
+ - Added the /luamoduictrl [0|1] command. Enables LuaRules/LuaGaia access
+   to many LuaUI callins/functions.
+ - Added ground rendering detail factors:
+   GroundLODScaleReflection
+   GroundLODScaleUnitReflection
+   (GroundLODScaleRefraction unused atm)
+ - Added TextureLODBias to settings (global mipmapping bias)
+ - Added CompressTextures to settings (it compress textures on runtime)
+ - Added UsePBO to settings (enables PixelBufferObject usage for smf texture loading)
+ - Added CamModeName as an alternate for CamMode
+   (should still be backwards compatible for settings programs)
+ - Added SPRING_DATADIR variable on linux
+ - Added option "AtiHacks" to settings. This fixes an issue with severe
+   display corruption during building, on ati drivers, where multiple
+   colored lines criss-cross the screen. It also fixes issues with the
+   new texture mipmap generation.
+ - You can now cycle through the last 10 message positions with F3.
+
 
 Spring Engine:
- - lots of speed improvements
+ (- FIXME: GML)
+ - FIXME: Overall speed up (fastmath,SMF render code, minimap renderer, ..)
+ - FIXME: Network code optimizations
+ - FIXME: Functionality of Sensors.tdf and Particles.tdf moved to modrules. removed Sensors.tdf or Particles.tdf
+   Transfers resources.tdf to resources.lua, and resources_map.tdf to resources_map.lua.
+   Sidedata.tdf -> sidedata.lua
+   icontypes.lua
+   changed SideData 'commander' tag to 'startUnit'
+   Replaced 'messages.tdf' with 'messages.lua'
+   modinfo.tdf --> modinfo.lua
+   ArchiveCacheV6.txt --> ArchiveCacheV7.lua
+ - FIXME: Custom collision volumes (collisionVolumeTest..)
+ - FIXME: Ingame alliances.
+ - FIXME: Multithreaded Pathing.
+ - FIXME: new bumpwater shader (/water 4).
  - Keep units in various situations from deciding to attack units they 
    shouldn't (noChaseCatagory, neutral, under water without water weapons).
- - Added kamikazeFireControl fbi tag. Defaults to false. If true, a kamikaze
-   unit, such as a mine, has CMD_FIRE_CONTROL as a valid command.
- - new bumpmapped watershader
+ - Added canFireControl unitdef tag.
+ - Fixed the stop-turn-move-stop-turn behavior for ground units (new udef tag, turnInPlace)
+ - Made MeleeWeapon obey impulseFactor.
+ - Font rendering system overhaul, 
+ - Added maxRepairSpeed tag for builders. Limits the rate a con swarm of any
+   size can repair a single target.
+ - Made accuracy, sprayangle and similar tags work for starburst missiles.
+   The inaccuracy is applied when the missile turns toward its target.
+ - Added capturable tag.
+ - Allow any key binding to a CMDTYPE_ICON command to use the 'queued' keyword
+   (except for build and stockpile commands, which already have special handling)
+ - Implemented 'y' value for yardmaps which means this square is not blocked.
+ - Made the groundplate decals follow their parent building's facing.
+ - Have fighting, patrolling and guarding aircraft and guarding ground units
+   follow noChaseCatagory.
+ - Added per-weapon highTrajectory tag (int, default 2). It acts like the unit
+   tag, 0 is always low trajectory, 1 always high and 2 uses the unit's setting
+   (whether the unit uses a switch or fixed setting).
+ - Added impactOnly weapon tag (bool, default false), if set the weapon does damage
+   by colliding with units instead of causing an explosion (the CEG will still run)
+   to avoid the shortcomings of small AOEs. It's only implemented for projectile weapons
+   so far.
+ - Added shieldRechargeDelay weapon tag (float, default 0). The delay is the number
+   of seconds the shield won't charge after being hit (kinda like the idle autoheal
+   for hitpoints)
+ - Added 'sonarStealth' unitDef tag.
+ - Added new stockpileTime weapondef tag. It allows seperate reload and stockpile
+   times for stockpile weapons.
+ - Allow for square metal extraction areas (use the new extractSquare unitdef tag).
+ - Added moveState and fixed fireState unitdef tags.
+ - Added strafeToAttack tag. Moving sideways when in range but not shooting optional
+   behaviour, the behaviour fails if the unit just takes its time for aiming (or
+   cannot shoot at all) or has any other reason not to shoot.
+ - Added avoidNeutral (targetting) and collideNeutral (projectiles) weapon tags.
+ - Added unit FBI tag verticalSpeed (float, default: 3.0) for non-fighter/bomber
+   planes to define the speed of takeoff and landing (or loading).
+ - Removed 50% capture progress after an unit got captured.
+ - Allow modnames (e.g. "OTA Content") in dependX tag (modinfo).
+ - Made units transfer their speed to their wrecks.
+ - submarines can now travel directly underneath surface vessels and floating obstacles
+   (and conversely; ships can move across underwater objects), EDIT your mod's MoveInfo
+   entries so that the classes used by submarine-style units have "subMarine=1;" set if
+   you want to enable this fully
+ - Made missiles obey burnblow=1 (existing tag), the missile will explode in midair
+   instead of turning away or falling down when its flighttime expires if the tag is set.
+ - Increased weapon limit per unit to 32.
+ - Added the 'customParams' table to both featureDefs and weaponDefs
+   (accessible via the lua FeatureDefs and WeaponDefs' tables).
+ - Added the following new tags to modrules.{lua,tdf}
+   - repair.energyCostFactor
+   - capture.energyCostFactor
+   - resurrect.energyCostFactor
+   - reclaim.unitEnergyCostFactor
+   - reclaim.featureEnergyCostFactor
+   - reclaim.unitMethod
+   - reclaim.unitEfficiency
+   - reclaim.allowEnemies
+   - reclaim.allowAllies
+ - add 'springcontent.sdz' as the last dependency for all primary mod archives
+ - only add ".wav" extension for unitdef sounds if it is missing
+
+Maps:
+ - converted map config scripts to lua format (LuaParser / MapParser)
+   - MapOptions.lua is now handed the 'Map' table information as well
+     (allows one to write a generic MapOptions.lua file that accesses
+     the SMD/SM3 files to retrieve the defaults)
+   - the SM3 format is yet to be converted to the lua format
+     (but its MapInfo information is)
+ - added SMF height overrides in the SMD file, example:
+    smf = {
+      minheight = -100.0f,
+      maxheight =  200.0f,
+    }
+   (note:  these values can be changed by MapOptions)
+
+COB:
+ - Added new COB get constants MIN (131), MAX(132) and ABS(133).
+ - Added the SONAR_STEALTH (108) COB get/set parameter
 
 LUA changes:
- - If Spring.SetDrawSky(false) is set, do not draw the sun.
- - Spring.SendCommands() can use a bunch of string arguments as well as the old
-  table format. e.g Spring.SendCommands('echo aoeu', 'info 2', 'specteam 0')
- - Added some water color and fog color constants to the lua Game{} table.
-   waterTexture, waterVoid, waterPlane, waterAbsorb, waterBaseColor,
-   waterMinColor, waterSurfaceColor, waterPlaneColor, fogColor
- - Added gl.ActiveShader(shaderID, function(), ...) safe way to set shader 
-   uniforms in non-drawing code
+ - FIXME (r5960): added some untested code for proxied gadget events
+  (KeyPress, KeyRelease, etc...)  there's also a little widget
+  that goes along with this so that the user can control whether
+  or not the gadget code can steal their clicks
+ - Added 'teamcolors.lua' to the installers
+ - Renamed 'gui.lua' to 'luaui.lua'
+ - Removed LuaCob, and redirected Cob2Lua calls to LuaRules
+ - removed the following compatibility defines from luaconf.h
+   (can break compability with old lua scripts):
+    LUA_COMPAT_GETN
+    LUA_COMPAT_VARARG
+    LUA_COMPAT_MOD
+    LUA_COMPAT_LSTR
+    LUA_COMPAT_GFIND
+    LUA_COMPAT_OPENLIB
+ - Moved most of the LuaUI call-outs into LuaUnsyncedRead
+   and LuaUnsyncedCtrl. The LuaUnsyncedCtrl call-outs require
+   that the modUICtrl variable be enabled for non-user scripts
+   to use them.
+ - Moved most of the LuaUI call-ins into LuaCallInHandler and
+   LuaHandle. The moved call-ins require that the modUICtrl
+   variable be enabled for non-user scripts to receive them.
+ - Added UnitEnteredWater(unitID, unitDefID, unitTeam) call-in
+ - Added UnitEnteredAir(unitID, unitDefID, unitTeam) call-in
+ - Added UnitLeftWater(unitID, unitDefID, unitTeam) call-in
+ - Added UnitLeftAir(unitID, unitDefID, unitTeam) call-in
+ - Added the new call-ins:
+   - PlayerChanged(playerID)  (player changed team or spectating state)
+   - TeamChanged(teamID)      (team changed allyteam, not useful yet)
+   - UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdOpts, cmdParams)
+     (note that cmdOpts is a number)
+ - Added Spring.ValidUnitID(number id)    -> boolean
+ - Added Spring.ValidFeatureID(number id) -> boolean
+ - Added a real ViewResize() call-in
+ - Added Spring.GetModUICtrl()
+ - Added Spring.GetViewGeometry()   -> sizeX, sizeY, posX, posY
+ - Added Spring.GetWindowGeometry() -> sizeX, sizeY, posX, posY
+ - Added Spring.GetScreenGeometry() -> sizeX, sizeY, posX, posY
+ - Modified Spring.GetVisibleUnits() so that the team specifier can
+   use the ALL_UNITS, ALLY_UNITS, ENEMY_UNITS, and MY_UNITS values.
+ - Replaced Spring.GetMouseMiniMapState() with:
+    Spring.GetMiniMapGeometry() ->
+      posX, posY, sizeX, sizeY, minimized, maximized, <false | "left" | "right">
+ - Added Spring.IsAboveMiniMap(x, y) -> boolean
+ - Added LuaSyncedRead Spring.GetUnitLastAttacker()
+ - Added LuaSyncedRead Spring.GetUnitFuel()
+ - Added LuaSyncedCtrl Spring.SetUnitFuel()
+ - Added LuaSyncedRead Spring.GetUnitSensorRadius(unitID, <type>)
+ - Added LuaSyncedCtrl Spring.SetUnitSensorRadius(unitID, <type>, radius)
+ - lua unit 'facing' parameters can now use long strings:
+    'north', 'south', 'east', 'west'
+ - the Spring.UnitCreated() call-out now accepts unitDef names and unitDef IDs
+ - Added the UnitMoveFailed() call-in
+ - new call-ins:
+     ProjectileCreated(projectileID, projectileOwnerID) (arg #2 is -1 if no owner)
+     ProjectileDestroyed(projectileID)
+ - new call-outs:
+     GetProjectilePosition(projectileID) -> px, py, pz
+     GetProjectileVelocity(projectileID) -> vx, vy, vz
+     SetProjectilePosition(projectileID, px, py, pz) -> nil
+     SetProjectileVelocity(projectileID, vx, vy, vz) -> nil
+     SetProjectileDetonate(projectileID) -> nil
+ - added the GL evaluator functions to the lua GL interface
+   (note the gl.EvalEnable() and gl.EvalDisable() can only be
+   called in a gl.Eval(func) block).
+ - Removed the unused CommandDesc 'hotkey' member
+ - Renamed CommandDescription's  onlyKey  to  hidden
+ - lua scripts now get first crack at all mouse events
+ - Treat SDD file sizes as dynamic, so that lua scripts can
+   be reloaded while dev'ing without having file size mismatches
+   (LuaRules, LuaGaia, mod widgets, etc...)
+ - Added the Spring.GetUnitIsDead() call-out
+ - Added 2 new lua callins:
+   - GamePreload: Called at the end of the loading process
+   - GameStart:   Called when the game is about to start
+ - Added the unicode values to the lua KeyPress() and KeyRelease() call-ins
+ - Changed the GetUnitNearestEnemy() lua call-out to:
+               GetUnitNearestEnemy(number unitID[, number range[, boolean useLos=true]])
+ - Added two Lua synced callouts for controlling the collision volume properties:
+   SetUnitCollisionVolumeData(id, xs, ys, zs, xo, yo, zo, vtype, ptype, paxis)
+   and SetFeatureCollisionVolumeData() (same args)
+ - Added new luaRules callin:
+   TerraformComplete(UnitID, UnitDefID, UnitTeam, BuildUnitID, BuildUnitDefID, BuildUnitTeam)
+   it gets called after the terraforming for a construction is complete (once
+   per terraforming builder), the return value is whether the con should stop
+   building.
+ - Added Spring.SetLastMessagePosition(x,y,z)
+ - Added new LuaRules  MoveCtrlNotify(unitID, unitDefID, unitTeam, data)  call-in
+  - currently called with data = 1 if the unit hits the ground and stops
+  - return true to disable the unit's MoveCtrl
+ - Added the dynamic HeightMapTexture
+  - FLOAT32/LUMINANCE format, NEAREST/NEAREST filtering
+  - can be accessed by lua scripts using '$heightmap'
+  - can be disable by clients with 'HeightMapTex=0' (config parameter)
+ - Added the following LuaSyncedCtrl call-outs:
+    - SetUnitLosMask(unitID, allyTeamID, number | table) -> nil
+    - SetUnitLosState(unitID, allyTeamID, number | table) -> nil
+ - Added Spring.FixedAllies() -> bool
+ - Reverted the GetPositionLosState() to its original configuration (no air los),
+  (and made it faster)
+ - Added the  IsPosInLos()    call-out
+ - Added the  IsPosInRadar()  call-out
+ - Added the  IsPosInAirLos() call-out
  - New PauseSoundStream(), GetSoundStreamTime() (how long it has been playing, 
    SetSoundStreamVolume(number) call-outs
- - Add an unsynced ExtractModArchiveFile(path) callout to enable LuaUI
+ - Added burst, burstRate and projectiles to SetUnitWeaponState
+ - Added the DrawGenesis() call-in
+   - called immediately following Update()
+   - called even when the game window is minimized
+   - modelview and projection matrices are identities
+   - can be used to update GPU-side physics simulation
+    textures and custom per-unit textures
+ - Updated included gadgetHandler
+ - fonts.lua can load fonts from the VFS
+   (and will create LuaUI/Fonts/ if it does not exist)
+ - added the following LuaUnsyncedCtrl call-outs:
+    AddUnitIcon(string name, string texture
+                [, number size[, number distance[, bool radiusAdjust]]])
+    FreeUnitIcon(string name)
+ - Added gl.ActiveShader(shaderID, function(), ...)
+   - safe way to set shader uniforms in non-drawing code
+ - Added the  gl.DepthClamp(bool)      call-out  (not always available)
+ - Added the  gl.UnsafeState(number, [bool reverse, ] function, ...)  call-out
+   (glEnable() / glDisable() for unknown states; considered 'unsafe')
+ - Added Occlusion Queries:
+   - Added gl.CreateQuery() -> query
+   - Added gl.DeleteQuery(query)
+   - Added gl.RunQuery(query, function, ...)
+   - Added gl.GetQuery(query) -> number
+ - Added the following unsynced query call-outs:
+   - Spring.GetUnitLuaDraw()
+   - Spring.GetUnitNoDraw()  
+   - Spring.GetUnitNoMinimap()
+   - Spring.GetUnitNoSelect()
+ - Added geometry shader support to LuaOpenGL
+ - Added the fbo 'readbuffer' parameter
+ - Added gl.ReadPixels(x, y, w, h [,format])
+ - Added StencilTests:
+   NOTES: The engine expects that the stencil buffer be left in a
+   state of all 0's when a task has finished with it. This
+   is not enforced by the lua backend.
+   - Added gl.StencilTest(bool)
+   - Added gl.StencilMask(bits)
+   - Added gl.StencilFunc(func, ref, mask)
+   - Added gl.StencilOp(fail, zfail, zpass)
+   - Added gl.StencilMaskSeparate()
+   - Added gl.StencilFuncSeparate()
+   - Added gl.StencilOpSeparate()
+ - Added  gl.BlendEquation()
+ - Added  gl.BlendEquationSeparate()
+ - Added  gl.BlendFunc()  -- redundant
+ - Added  gl.BlendFuncSeparate()
+ - Added  gl.Blending() convenience names:
+    name           blend_src    blend_dst             enabled
+    "add"          ONE          ONE                   true
+    "add_alpha"    SRC_ALPHA    ONE                   true
+    "alpha"        SRC_ALPHA    ONE_MINUS_SRC_ALPHA   true
+    "reset"        SRC_ALPHA    ONE_MINUS_SRC_ALPHA   true
+    "disable"      SRC_ALPHA    ONE_MINUS_SRC_ALPHA   false
+    "color"        SRC_COLOR    ONE_MINUS_SRC_COLOR   true
+    "modulate"     DST_COLOR    ZERO                  true
+ - Added Picking support:
+     gl.RenderMode()
+     gl.SelectBuffer()
+     gl.SelectBufferData()
+     gl.InitNames()
+     gl.PushName()
+     gl.PopName()
+     gl.LoadName()
+ - Added GL evaluator functions to the lua GL interface.
+ - If Spring.SetDrawSky(false) is set, do not draw the sun.
+ - Spring.SendCommands() can use a bunch of string arguments as well as the old
+   table format. e.g Spring.SendCommands('echo aoeu', 'info 2', 'specteam 0')
+ - Added some new constants to the lua Game{} table.
+ - Added gl.ActiveShader(shaderID, function(), ...) safe way to set shader 
+   uniforms in non-drawing code
+ - Added the Spring.SetUnitSonarStealth() lua call-out
+ - Added SpawnCEG(tag, px, py, pz, dx, dy, dz, rad, dmg) synced callout
+ - Added Spring.SetHeightMapFunc(lua_func,arg1,arg2,..),
+     Spring.AddHeightMap(x, y, h) -> `final height`
+     Spring.SetHeightMap(x, y, h [,t]) -> `absolute value changed`
+ - Added an unsynced ExtractModArchiveFile(path) callout to enable LuaUI
    widgets to extract files from mod archives.
    For example, Spring.ExtractModArchiveFile("sounds/boom.wav")
    will create a directory "sounds/" and extract "boom.wav" to it.
@@ -29,16 +330,75 @@ LUA changes:
    the global position and forward vector of the given piece (6 return values
    in total). The emphasis is on global, the previous call-outs only deliver 
    relative values.
+ - Added Spring.GetUnitVectors(unitID) -> {front_x,front_y,front_z},{up_x,up_y,up_z},{right_x,right_y,right_z}
+ - Added Spring.GetUnitWeaponVectors(unitID,weaponNum) -> wpos_x,wpos_y,wpos_z, wdir_x,wdir_y,wdir_z
+ - Added gl.Texture($shading) & gl.Texture($grass)
+ - Allowed to use gl.CopyToTexture with non GL_TEXTURE2D, i.e. GL_TEXTURE_RECTANGLE
+ - Fixed Spring.UnitRendering interface to make it possible to emulate the default 3do/s3o shaders
+   - fixed $shadows texture params (you can now use shadow2DProj() in glsl)
+   - fixed wrong (!=0) check if uniform locations are set (they begin with 0!)
+   - added new uniforms: cameraposloc,shadowloc,shadowparamsloc
+   - added new culling tag, so you can enable s3o backface culling w/o using a displaylist
+   - auto enable alphatest (+blending in case of cloaked stuff) for luaUnitMaterials
+     (alphatest: 0.5 for opaque and 0.1 for cloaked stuff)
+ - Fixed missing return;'s in gl.LoadMatrix() and gl.MulMatrix()
+ - Fixed WarpMouse() for dual mode (minimap on the left).
+ - Fixed the 'frame' table value returned by Spring.GetTeamStatsHistory()
+   (and added the 'time' value, which is in seconds).
+ - Fixed full-view spectators get all LuaUI  RecvLuaMsg()  messages now.
+ - Fixed Spring.SetFeaturePosition().
+ - Fixed Spring.SetFeatureDirection().
+ - Fixed s3o recognition in LuaUnitDefs
+ - Removed unwanted/confusing widgets.
+
+AI:
+ - Added new ai value AIVAL_SCRIPT returning start script text.
+ - Removed ABIC AI stuff that no-one is using.
+ - Added AIHCGetUnitDefById, AIHCGetWeaponDefById, AIHCGetFeatureDefById
+
+Unitsync:
+ - Added LuaParser API to unitsync.
+ - Added OpenArchiveType(name, type) to unitsync
+   (type can be "zip", "7z", "dir", or "hpi").
+ - Added 'const char* GetSideStartUnit(int side)' to unitsync.
+ - Added InitDirListVFS(path, pattern, modes) and
+         InitSubDirsVFS(path, pattern, modes)
+ - Mod/Map Options : 'section' option type added
+ - Mod/Map Options : 'style' option added, syntax not defined yet
 
 Bugfixes:
+ - Fixed Aircraft units that can't land not stopping when reaching the final waypoint.
  - Fixed display of times in the EndGameBox (For example 9:07 displayed as 9: 7)
  - Fixed the grey flashing that sometimes happened when making new buildings
+ - Prevent decay when the builder or factory is waiting (executing a wait command).
+ - Fixed positions occupied by units with a maxspeed of zero (hubs, etc) being considered
+   valid build-sites.
  - Fixed division by zero if two units are in the exact same spot and collide.
  - Fixed negative pings
  - Fix a dangling pointer when using ground decals. Could have caused desyncs
    and LuaUI bugs.
  - Fixed possible out of bounds map reads that could cause crashes
- - lots of other fixes, lots of minor and some major ones
+ - Fixed /cheat and /skip not working in demo-playback mode
+ - Fixed /noSpectatorChat
+ - Fixed /fpshud polarity
+ - Randomize unitIDs
+ - Fixed dds mipmapping filter (was GL_NEAREST_MIPMAP_LINEAR).
+ - Fixed dynamic water with geforce 8x00
+ - Fixed it so that units using ScriptMoveType can not be pushed
+ - Fixed an infinite recursion in the LuaUI layout handler
+ - Fixed the Lua SendToUnsynced() stack check bug
+ - Fixed ScriptMoveType vs. unit pushing
+ - Fixed "cloaked units were invisble underwater" with DynWater
+ - Blocked team changes for dead units
+ - Fixed beamlaser damage vs shields
+ - Fixed smoke textures loading from resource.tdf (resources/graphics/smoke/smoke00 .. smoke11).
+ - Fixed clipping issue with units begin built.
+ - Don't show two statistic windows after demo watching.
+ - Always create/update the perlin texture used by shields and not only if shadows are enabled.
+ - Fixed ctrl+c, it searches now for the iscommander tag instead for the commander category.
+ - Fixed a wrong rotation in ApplyTransform() (which is used by lua's gl.UnitPieceMultMatrix).
+ - Fixed black lines on CEGs when AntiAliasing is enabled.
+
 
 
 0.76b1
