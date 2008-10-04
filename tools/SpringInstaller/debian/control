@@ -2,11 +2,19 @@ Source: spring-installer
 Section: games
 Priority: optional
 Maintainer: Chris Clearwater <chris@detrino.org>
-Build-Depends: debhelper, ocaml, libzip-ocaml-dev, libextlib-ocaml-dev, liblablgtk2-ocaml-dev
+Build-Depends: debhelper, ocaml, libzip-ocaml-dev, libextlib-ocaml-dev, liblablgtk2-ocaml-dev, libocamlnet-ocaml-dev
 Standards-Version: 3.7.2
 
 Package: spring-installer
 Architecture: any
 Depends: ${shlibs:Depends}
 Description: Spring Archive Installer
- Spring Installer is a GTK program that will install your Spring mods and maps for you.
+ Spring Installer is a GTK+ program that will install your Spring mods
+ and maps for you.
+
+Package: ca-installer
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: CA Installer
+ CA Installer is a GTK+ program that will install and keep up to
+ date, the Spring, Complete Annihilation mod.
