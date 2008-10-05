@@ -11,13 +11,12 @@
 
 #include "mmgr.h"
 
-using namespace std;
-
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Util.h"
 
+using namespace std;
 
 /******************************************************************************/
 
