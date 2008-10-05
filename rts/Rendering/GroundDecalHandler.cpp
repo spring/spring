@@ -523,9 +523,6 @@ void CGroundDecalHandler::Draw(void)
 		Scar* scar = *si;
 
 		if (scar->lifeTime < gs->frameNum) {
-			delete scar->va;
-			scar->va = 0x0;
-
 			RemoveScar(*si, false);
 			si = scars.erase(si);
 			continue;
