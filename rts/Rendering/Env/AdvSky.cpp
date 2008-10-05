@@ -59,9 +59,6 @@ CAdvSky::CAdvSky()
 	for(int a=0;a<5;a++)
 		cloudDetailDown[a]=false;
 
-	dynamicSky=false;
-	lastCloudUpdate=-30;
-
 	cloudDensity = mapInfo->atmosphere.cloudDensity;
 	cloudColor = mapInfo->atmosphere.cloudColor;
 	skyColor = mapInfo->atmosphere.skyColor;
@@ -69,7 +66,11 @@ CAdvSky::CAdvSky()
 	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart>0.99f) gu->drawFog = false;
 
+	lastCloudUpdate=-30;
+	dynamicSky=true;
 	CreateClouds();
+	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
+
 	InitSun();
 	oldCoverBaseX=-5;
 
@@ -333,10 +334,8 @@ void CAdvSky::CreateClouds()
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
   delete [] scrap;
 
-	dynamicSky=true;
 	CreateTransformVectors();
 	Update();
-	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
 }
 
 inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
@@ -366,7 +365,7 @@ void CAdvSky::Update()
 
 	CreateDetailTex();
 
-	if(lastCloudUpdate>gs->frameNum-3)
+	if(lastCloudUpdate>gs->frameNum-10)
 		return;
 
 	lastCloudUpdate=gs->frameNum;

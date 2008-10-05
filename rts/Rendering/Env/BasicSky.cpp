@@ -67,9 +67,13 @@ CBasicSky::CBasicSky()
 	for(int a=0;a<CLOUD_DETAIL;a++)
 		cloudDown[a]=false;
 
-	lastCloudUpdate=-30;
 	cloudThickness=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
+
+	lastCloudUpdate=-30;
+	dynamicSky=true;
 	CreateClouds();
+	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
+
 	InitSun();
 	oldCoverBaseX=-5;
 
@@ -226,7 +230,6 @@ CBasicSky::CBasicSky()
   glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glEndList();
-	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
 }
 
 CBasicSky::~CBasicSky()
@@ -383,10 +386,8 @@ void CBasicSky::CreateClouds()
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
   delete [] scrap;
 
-	dynamicSky=true;
 	CreateTransformVectors();
 	Update();
-	dynamicSky=false;
 }
 
 inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
