@@ -8,9 +8,10 @@
 
 #include <string>
 #include <GL/glew.h>
-#include "float3.h"
-
 #include "lib/gml/gml.h"
+
+// includes boost now!
+#include "float3.h"
 
 
 inline void glVertexf3(const float3 &v)
