@@ -19,6 +19,8 @@ class IHwCursor {
 		virtual bool IsValid() = 0;
 		virtual void Bind() = 0;
 
+		virtual ~IHwCursor() {};
+
 		CMouseCursor::HotSpot hotSpot;
 };
 
