@@ -8,6 +8,7 @@
 #include <string>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 
 class CUnit;
 class CBuilding;

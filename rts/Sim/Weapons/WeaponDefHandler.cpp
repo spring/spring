@@ -38,7 +38,7 @@ CWeaponDefHandler::CWeaponDefHandler()
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading WeaponDefs");
 	}
-	
+
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
@@ -110,7 +110,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
-		
+
 	wd.waterBounce   = wdTable.GetBool("waterBounce",    false);
 	wd.groundBounce  = wdTable.GetBool("groundBounce",   false);
 	wd.bounceSlip    = wdTable.GetFloat("bounceSlip",    1.0f);
@@ -177,7 +177,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	map<string, float> damages;
 	dmgTable.GetMap(damages);
-	
+
 	map<string, float>::const_iterator di;
 	for (di = damages.begin(); di != damages.end(); ++di) {
 		const int type = damageArrayHandler->GetTypeFromName(di->first);
@@ -190,7 +190,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 			}
 		}
 	}
-	
+
 	wd.damages.impulseFactor = wdTable.GetFloat("impulseFactor", 1.0f);
 	wd.damages.impulseBoost  = wdTable.GetFloat("impulseBoost",  0.0f);
 	wd.damages.craterMult    = wdTable.GetFloat("craterMult",    wd.damages.impulseFactor);
@@ -432,7 +432,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	} else if (wd.type == "EmgCannon") {
 		// CEmgProjectile
 		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f)); 
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f));
 		wd.size = wdTable.GetFloat("size", 3.0f);
 	} else if (wd.type == "DGun") {
 		// CFireBallProjectile
@@ -686,4 +686,5 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 
 WeaponDef::~WeaponDef()
 {
+	delete explosionGenerator; explosionGenerator = 0;
 }
