@@ -27,9 +27,9 @@ struct AtlasedTexture;
 struct WeaponDef
 {
 	CR_DECLARE_STRUCT(WeaponDef);
-        
-        WeaponDef() {}
-        WeaponDef(DamageArray damages) : damages(damages) {}
+
+        WeaponDef():explosionGenerator(0) {}
+        WeaponDef(DamageArray damages) : damages(damages), explosionGenerator(0) {}
 
 	~WeaponDef();
 
@@ -66,7 +66,7 @@ struct WeaponDef
 	float reload;
 	float beamtime;
 	bool beamburst;
-	
+
 	bool waterBounce;
 	bool groundBounce;
 	float bounceRebound;
@@ -166,7 +166,7 @@ struct WeaponDef
 		float sizeDecay;
 		float separation;
 		bool noGap;
-		
+
 		bool alwaysVisible;
 	};
 	Visuals visuals;
