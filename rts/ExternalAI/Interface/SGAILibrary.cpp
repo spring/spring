@@ -17,7 +17,8 @@
 
 #include "SGAILibrary.h"
 
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
 
 SGAISpecifyer copySGAISpecifyer(const struct SGAISpecifyer* const orig) {

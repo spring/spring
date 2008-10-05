@@ -17,8 +17,8 @@
 
 #include "SSAILibrary.h"
 
-#include "string.h"
-//#include "LogOutput.h"
+#include <string.h>
+#include <stdlib.h>
 
 
 SSAISpecifyer copySSAISpecifyer(const struct SSAISpecifyer* const orig) {
