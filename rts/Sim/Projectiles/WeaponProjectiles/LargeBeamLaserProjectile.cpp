@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "LargeBeamLaserProjectile.h"
 #include "Rendering/GL/VertexArray.h"
