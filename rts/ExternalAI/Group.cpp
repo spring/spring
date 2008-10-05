@@ -47,7 +47,7 @@ CGroup::CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler)
 	id(id),
 	ai(0),
 	currentAiNum(0),
-	handler(grouphandler)//,
+	handler(grouphandler),
 	lib(0)
 {
 	if (grouphandler) callback=SAFE_NEW CGroupAICallback(this); else callback=0;
