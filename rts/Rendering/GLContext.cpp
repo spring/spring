@@ -3,13 +3,17 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+
+#ifdef free
+#undef free
+#endif
+
 #include "GLContext.h"
 
 #include <list>
 
 
 using namespace std;
-
 
 struct HookSet {
 	HookSet()
