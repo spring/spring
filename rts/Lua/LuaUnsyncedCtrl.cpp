@@ -8,7 +8,6 @@
 #include <cctype>
 
 #include <fstream>
-using namespace std;
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -61,6 +60,8 @@ using namespace std;
 
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+
+using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
