@@ -997,8 +997,8 @@ unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
 	SetUnitDefImage(unitDef, unitDef->buildPicName);
 	return unitDef->buildPic->textureID;
 }
-	
-	
+
+
 void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
@@ -1007,7 +1007,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 	} else if (unitDef->buildPic->textureOwner) {
 		glDeleteTextures(1, &unitDef->buildPic->textureID);
 	}
-		
+
 	CBitmap bitmap;
 
 	if (!texName.empty()) {
@@ -1124,6 +1124,8 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 
 UnitDef::~UnitDef()
 {
+	for (std::vector<CExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it)
+		delete *it;
 }
 
 
