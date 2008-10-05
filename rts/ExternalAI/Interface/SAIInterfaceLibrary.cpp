@@ -17,7 +17,8 @@
 
 #include "SAIInterfaceLibrary.h"
 
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
 
 SAIInterfaceSpecifyer copySAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const orig) {
