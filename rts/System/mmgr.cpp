@@ -982,7 +982,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		if (alwaysLogAll) {
 			log("%05d %-40s %8s            : %s", currentAllocationCount, ownerString(sourceFile, sourceLine, sourceFunc), allocationTypes[allocationType], memorySizeString(reportedSize));
 
-#ifdef __linux__
+#if defined(__linux__) || defined(HAVE_BACKTRACE)
 			if (fp_log) {
 				void* buffer[10];
 				int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
@@ -1072,9 +1072,12 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 #ifdef HAVE_BACKTRACE
 		// skip some useless frames
 		const int frameskip = 2;
-		au->backtraceSize = backtrace(au->backtrace - frameskip, MMGR_MAX_STACK + frameskip);
-		if (au->backtraceSize > frameskip)
+		void *tmp[MMGR_MAX_STACK + frameskip];
+		au->backtraceSize = backtrace(tmp, MMGR_MAX_STACK + frameskip);
+		if (au->backtraceSize > frameskip) {
 			au->backtraceSize -= frameskip;
+			memcpy(au->backtrace, tmp + frameskip, sizeof(void*) * au->backtraceSize);
+		}
 #endif
 
 		// We don't want to assert with random failures, because we want the application to deal with them.
@@ -1277,9 +1280,12 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 #ifdef HAVE_BACKTRACE
 		// skip some useless frames
 		const int frameskip = 2;
-		au->backtraceSize = backtrace(au->backtrace - frameskip, MMGR_MAX_STACK + frameskip);
-		if (au->backtraceSize > frameskip)
+		void *tmp[MMGR_MAX_STACK + frameskip];
+		au->backtraceSize = backtrace(tmp, MMGR_MAX_STACK + frameskip);
+		if (au->backtraceSize > frameskip) {
 			au->backtraceSize -= frameskip;
+			memcpy(au->backtrace, tmp + frameskip, sizeof(void*) * au->backtraceSize);
+		}
 #endif
 
 		// The reallocation may cause the address to change, so we should relocate our allocation unit within the hash table
