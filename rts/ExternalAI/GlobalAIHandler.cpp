@@ -17,8 +17,6 @@
 #include "System/Platform/errorhandler.h"
 #include "mmgr.h"
 
-#include "AILibraryGlobalAI.h"
-
 CGlobalAIHandler* globalAI=0;
 
 CR_BIND_DERIVED(CGlobalAIHandler,CObject,)
