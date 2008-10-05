@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include <iostream>
 
@@ -29,7 +30,6 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"

@@ -12,6 +12,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+using boost::uint32_t;
 
 class CPathEstimatorDef;
 class CPathFinderDef;

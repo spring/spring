@@ -101,12 +101,14 @@ inline void CVertexArray::EnlargeArrays(int vertexes, int strips, int stripsize)
 }
 
 inline void CVertexArray::AddVertexQ0(float x, float y, float z) {
+	assert(drawArraySize>=drawArrayPos+VA_SIZE_0);
 	*drawArrayPos++=x;
 	*drawArrayPos++=y;
 	*drawArrayPos++=z;
 }
 
 inline void CVertexArray::AddVertexQC(const float3& pos,unsigned char* color) {
+	assert(drawArraySize>=drawArrayPos+VA_SIZE_C);
 	*drawArrayPos++=pos.x;
 	*drawArrayPos++=pos.y;
 	*drawArrayPos++=pos.z;
@@ -114,6 +116,7 @@ inline void CVertexArray::AddVertexQC(const float3& pos,unsigned char* color) {
 }
 
 inline void CVertexArray::AddVertexQT(const float3& pos,float tx,float ty) {
+	assert(drawArraySize>=drawArrayPos+VA_SIZE_T);
 	*drawArrayPos++=pos.x;
 	*drawArrayPos++=pos.y;
 	*drawArrayPos++=pos.z;
@@ -122,6 +125,7 @@ inline void CVertexArray::AddVertexQT(const float3& pos,float tx,float ty) {
 }
 
 inline void CVertexArray::AddVertexQTN(const float3& pos,float tx,float ty,const float3& norm) {
+	assert(drawArraySize>=drawArrayPos+VA_SIZE_TN);
 	*drawArrayPos++=pos.x;
 	*drawArrayPos++=pos.y;
 	*drawArrayPos++=pos.z;
@@ -133,6 +137,7 @@ inline void CVertexArray::AddVertexQTN(const float3& pos,float tx,float ty,const
 }
 
 inline void CVertexArray::AddVertexQTC(const float3& pos,float tx,float ty,unsigned char* col) {
+	assert(drawArraySize>=drawArrayPos+VA_SIZE_TC);
 	*drawArrayPos++=pos.x;
 	*drawArrayPos++=pos.y;
 	*drawArrayPos++=pos.z;
@@ -211,6 +216,7 @@ inline int CVertexArray::drawIndex() {
 }
 
 inline void CVertexArray::EndStripQ() {
+	assert(stripArraySize>=stripArrayPos+1);
 	*stripArrayPos++=((char *)drawArrayPos-(char *)drawArray);
 }
 

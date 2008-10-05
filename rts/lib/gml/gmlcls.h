@@ -13,7 +13,7 @@
 
 #ifndef GML_COMPATIBLE_ATOMIC_COUNT
 #	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
-#		error "Please make sure StdAfx.h is included before anything that includes boost"
+#		error "Please make sure myGL.h is included before anything that includes boost"
 #	endif
 #	define GML_COMPATIBLE_ATOMIC_COUNT
 #	define private public

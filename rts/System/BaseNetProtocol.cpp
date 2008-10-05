@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "BaseNetProtocol.h"
 
 #include <boost/cstdint.hpp>
