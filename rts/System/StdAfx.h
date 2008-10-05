@@ -61,7 +61,6 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
-#include "LogOutput.h"
 #endif // USE_PRECOMPILED_HEADER
 
 #endif // __STD_AFX_H__
