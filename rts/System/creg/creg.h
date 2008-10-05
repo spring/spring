@@ -8,6 +8,7 @@ Copyright 2005 Jelmer Cnossen
 
 #include <vector>
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 #include "ISerializer.h"
 #include "Sync/SyncedPrimitive.h"
@@ -48,10 +49,10 @@ namespace creg {
 		virtual void Serialize (ISerializer* s, void *instance) = 0;
 		virtual std::string GetName () = 0;
 
-		static IType* CreateBasicType (BasicTypeID t);
-		static IType* CreateStringType ();
-		static IType* CreateObjInstanceType (Class *objectType);
-		static IType* CreateEnumeratedType (size_t size);
+		static boost::shared_ptr<IType> CreateBasicType (BasicTypeID t);
+		static boost::shared_ptr<IType> CreateStringType ();
+		static boost::shared_ptr<IType> CreateObjInstanceType (Class *objectType);
+		static boost::shared_ptr<IType> CreateEnumeratedType (size_t size);
 	};
 
 	class IMemberRegistrator
@@ -120,7 +121,7 @@ namespace creg {
 		struct Member
 		{
 			const char* name;
-			IType* type;
+			boost::shared_ptr<IType> type;
 			unsigned int offset;
 			int flags; // combination of ClassMemberFlag's
 		};
@@ -135,6 +136,7 @@ namespace creg {
 		void* CreateInstance ();
 		/// Calculate a checksum from the class metadata
 		void CalculateChecksum (unsigned int& checksum);
+		void AddMember (const char *name, boost::shared_ptr<IType> type, unsigned int offset);
 		void AddMember (const char *name, IType* type, unsigned int offset);
 		void SetMemberFlag (const char *name, ClassMemberFlag f);
 		Member* FindMember (const char *name);
@@ -169,10 +171,10 @@ namespace creg {
 		typedef typename T::iterator iterator;
 		typedef typename T::value_type ElemT;
 
-		IType *elemType;
+		boost::shared_ptr<IType> elemType;
 
-		DynamicArrayType (IType *elemType) : elemType(elemType) {}
-		~DynamicArrayType () { if (elemType) delete elemType; }
+		DynamicArrayType (boost::shared_ptr<IType> elemType) : elemType(elemType) {}
+		~DynamicArrayType () {}
 
 		void Serialize (ISerializer *s, void *inst) {
 			T& ct = *(T*)inst;
@@ -195,12 +197,12 @@ namespace creg {
 	class StaticArrayBaseType : public IType
 	{
 	public:
-		IType *elemType;
+		boost::shared_ptr<IType> elemType;
 		int size, elemSize;
 
-		StaticArrayBaseType(IType *et, int Size, int ElemSize) :
+		StaticArrayBaseType(boost::shared_ptr<IType> et, int Size, int ElemSize) :
 			elemType(et), size(Size), elemSize(ElemSize) {}
-		~StaticArrayBaseType() { if (elemType) delete elemType; }
+		~StaticArrayBaseType() {}
 
 		std::string GetName();
 	};
@@ -210,7 +212,7 @@ namespace creg {
 	{
 	public:
 		typedef T ArrayType[Size];
-		StaticArrayType(IType *elemType) : StaticArrayBaseType(elemType, Size, sizeof(ArrayType)/Size) {}
+		StaticArrayType(boost::shared_ptr<IType> elemType) : StaticArrayBaseType(elemType, Size, sizeof(ArrayType)/Size) {}
 		void Serialize (ISerializer *s, void *instance)
 		{
 			T* array = (T*)instance;
