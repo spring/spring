@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
@@ -31,7 +32,6 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glList.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"

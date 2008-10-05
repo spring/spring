@@ -1,6 +1,7 @@
 /* Author: Tobi Vollebregt */
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>

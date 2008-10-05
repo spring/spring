@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -25,7 +26,6 @@
 
 #include "mmgr.h"
 
-#include "Rendering/GL/myGL.h"
 #include "Game.h"
 #include "float.h"
 #include "Camera.h"

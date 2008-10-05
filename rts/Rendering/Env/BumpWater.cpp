@@ -8,6 +8,7 @@
  */
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <boost/format.hpp>
 #include "mmgr.h"
 
@@ -16,7 +17,6 @@
 #include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

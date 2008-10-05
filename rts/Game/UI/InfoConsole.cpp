@@ -2,6 +2,7 @@
 // InfoConsole.cpp: implementation of the CInfoConsole class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "Rendering/GL/myGL.h"
 #include <fstream>
 
 #include "mmgr.h"
@@ -9,7 +10,6 @@
 #include "InfoConsole.h"
 #include "GuiHandler.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 
 #ifdef WIN32
 #  include "Platform/Win/win32.h"

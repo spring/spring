@@ -436,9 +436,7 @@ void CBasicSky::Update()
 		int ifade=(int)(fade*fade*(3-2*fade)*256);
 		int ifade2=256-ifade;
 
-		int **bm=blendMatrix[a], **rm=randMatrix[a], **rm8=randMatrix[a+8];
-
-		for(int y=0; y<32; ++y, ++bm, ++rm, ++rm8) {
+		for(int y=0, **bm=blendMatrix[a], **rm=randMatrix[a], **rm8=randMatrix[a+8]; y<32; ++y, ++bm, ++rm, ++rm8) {
 			int *bmx=*bm, *rmx=*rm, *rm8x=*rm8;
 			for(int x=0; x<32; ++x) {
 				(*bmx++)=((*rmx++)*ifade+(*rm8x++)*ifade2)>>8;
@@ -470,54 +468,33 @@ void CBasicSky::Update()
 		}
 		--cs4a; //!
 		int **bm=blendMatrix[a];
-		int **prc=rawClouds;
-		unsigned int by=0,bx=0;
-		for(int y=0; y<cmcs8a; y+=cs8a, ++by, prc+=cs8a) {
+		for(int y=0, by=0, bx=0, **prc=rawClouds; y<cmcs8a; y+=cs8a, ++by, prc+=cs8a) {
 			for(int x=0; x<cmcs8a; x+=cs8a, ++bx) {
-				int blend=bm[by&31][bx&31];
-				int **prcy=prc;
-				int *pkernel=kernel;
+				int blend=bm[by&31][bx&31], **prcy=prc, *pkernel=kernel;
 				for(int y2=0; y2<cs4a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
-					int *prcx=(*prcy)+x;
-					int *pkrn=pkernel;
-					for(int x2=0; x2<cs4a; ++x2) {
-						(*prcx++)+=blend*(*pkrn++);
-					}
+					int *prcx=(*prcy)+x, *pkrn=pkernel; // pkrn = kernel[y2*CLOUD_SIZE/4+x2];
+					for(int x2=0; x2<cs4a; ++x2)
+						(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+x]
 				}
 			}
 		}
-		by=0;
-		bx=31;
-		prc=rawClouds;
-		for(int y=0; y<cmcs8a; y+=cs8a, ++by, prc+=cs8a) {
-			int blend=bm[by&31][bx&31];
-			int **prcy=prc;
-			int *pkernel=kernel;
+		for(int y=0, by=0, **prc=rawClouds; y<cmcs8a; y+=cs8a, ++by, prc+=cs8a) {
+			int blend=bm[by&31][31&31], **prcy=prc, *pkernel=kernel;
 			for(int y2=0; y2<cs4a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
-				int *prcx=(*prcy)+cmcs8a;
-				int *prcx2=prcx-CLOUD_SIZE;
-				int *pkrn=pkernel;
-				for(int x2=cmcs8a; x2<cs4a+cmcs8a; ++x2, ++prcx, ++prcx2, ++pkrn) {
-					if(x2<CLOUD_SIZE)
-						(*prcx)+=blend*(*pkrn);
-					else
-						(*prcx2)+=blend*(*pkrn);
-				}
+				int *prcx=(*prcy)+cmcs8a, *pkrn=pkernel;
+				for(int x2=cmcs8a; x2<std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
+						(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+cmcs8a], x2<CLOUD_SIZE
+				prcx-=CLOUD_SIZE;
+				for(int x2=std::max(CLOUD_SIZE,cmcs8a); x2<cs4a+cmcs8a; ++x2)
+						(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2-cs8a], x2>=CLOUD_SIZE
 			}
 		}
-		bx=0;
-		by=31;
-		prc=rawClouds+cmcs8a;
-		for(int x=0; x<cmcs8a; x+=cs8a, ++bx) {
-			int blend=bm[by&31][bx&31];
-			int **prcy=prc;
-			int *pkernel=kernel;
+		for(int x=0, bx=0, **prc=rawClouds+cmcs8a; x<cmcs8a; x+=cs8a, ++bx) {
+			int blend=bm[31&31][bx&31], **prcy=prc, *pkernel=kernel;
 			for(int y2=cmcs8a; y2<cs4a+cmcs8a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
-				int *pkrn=pkernel;
-				int *prcx=(y2<CLOUD_SIZE)?(*prcy)+x:(*(prcy-CLOUD_SIZE))+x;
-				for(int x2=0; x2<cs4a; ++x2, ++prcx, ++pkrn) {
-					(*prcx)+=blend*(*pkrn);
-				}
+				int *prcx=(y2<CLOUD_SIZE) ? (*prcy)+x : (*(prcy-CLOUD_SIZE))+x, *pkrn=pkernel;
+				for(int x2=0; x2<cs4a; ++x2) // prcx = rawClouds[y2+cmcs8a][x2+x], y2<CLOUD_SIZE
+					(*prcx++)+=blend*(*pkrn++); // prcx =  rawClouds[y2-cs8a][x2+x], y2>=CLOUD_SIZE
 			}
 		}
 	}
@@ -561,8 +538,7 @@ void CBasicSky::Update()
 
 void CBasicSky::CreateRandMatrix(int **matrix,float mod)
 {
-	int *pmat=*matrix;
-	for(int a=0; a<32*32; ++a) {
+	for(int a=0, *pmat=*matrix; a<32*32; ++a) {
 		float r = ((float)( rand() )) / (float)RAND_MAX;
 		*pmat++=((int)( r * 255.0f ));
 	}
