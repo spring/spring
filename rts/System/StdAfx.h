@@ -49,7 +49,6 @@
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
 #endif // USE_PRECOMPILED_HEADER
 
 
