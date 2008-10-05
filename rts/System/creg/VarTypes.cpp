@@ -99,9 +99,9 @@ std::string BasicType::GetName()
 	return std::string();
 }
 
-IType* IType::CreateBasicType (BasicTypeID t)
+boost::shared_ptr<IType> IType::CreateBasicType (BasicTypeID t)
 {
-	return SAFE_NEW BasicType (t);
+	return boost::shared_ptr<IType>(SAFE_NEW BasicType (t));
 }
 
 std::string StringType::GetName()
@@ -109,12 +109,12 @@ std::string StringType::GetName()
 	return "string";
 }
 
-StringType::StringType(IType *charType) : DynamicArrayType<string> (charType) {}
+StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string> (charType) {}
 
-IType* IType::CreateStringType ()
+boost::shared_ptr<IType> IType::CreateStringType ()
 {
 	DeduceType<char> charType;
-	return new StringType(charType.Get());
+	return boost::shared_ptr<IType>(new StringType(charType.Get()));
 }
 
 void ObjectInstanceType::Serialize (ISerializer *s, void *inst)
@@ -127,20 +127,20 @@ std::string ObjectInstanceType::GetName()
 	return objectClass->name;
 }
 
-IType* IType::CreateObjInstanceType (Class *objectType)
+boost::shared_ptr<IType> IType::CreateObjInstanceType (Class *objectType)
 {
-	return SAFE_NEW ObjectInstanceType (objectType);
+	return boost::shared_ptr<IType>(SAFE_NEW ObjectInstanceType (objectType));
 }
 
-IType* IType::CreateEnumeratedType (size_t size)
+boost::shared_ptr<IType> IType::CreateEnumeratedType (size_t size)
 {
 	switch (size) {
-		case 1: return SAFE_NEW BasicType (crUChar);
-		case 2: return SAFE_NEW BasicType (crUShort);
-		case 4: return SAFE_NEW BasicType (crUInt);
+		case 1: return boost::shared_ptr<IType>(SAFE_NEW BasicType (crUChar));
+		case 2: return boost::shared_ptr<IType>(SAFE_NEW BasicType (crUShort));
+		case 4: return boost::shared_ptr<IType>(SAFE_NEW BasicType (crUInt));
 		default: assert(false); break;
 	}
-	return 0;
+	return boost::shared_ptr<IType>(SAFE_NEW EmptyType(0));
 }
 
 string StaticArrayBaseType::GetName()

@@ -1,6 +1,6 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 
 Implementations of IType for specific types
 */
@@ -34,11 +34,11 @@ namespace creg
 
 		Class* objectClass;
 	};
-	
+
 	class StringType : public DynamicArrayType<std::string>
 	{
 	public:
-		StringType(IType *charType);
+		StringType(boost::shared_ptr<IType> charType);
 		std::string GetName();
 	};
 

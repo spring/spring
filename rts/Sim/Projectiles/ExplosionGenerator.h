@@ -22,7 +22,7 @@ public:
 };
 
 
-class ClassAliasList 
+class ClassAliasList
 {
 public:
 	ClassAliasList();
@@ -112,7 +112,7 @@ protected:
 	};
 
 	CEGData* currentCEG;
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, creg::IType* type, const std::string& script, std::string& code);
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode (const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 public:

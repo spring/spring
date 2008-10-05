@@ -158,6 +158,18 @@ void Class::AddMember (const char *name, IType* type, unsigned int offset)
 
 	member->name = name;
 	member->offset = offset;
+	member->type = boost::shared_ptr<IType>(type);
+	member->flags = currentMemberFlags;
+
+	members.push_back (member);
+}
+
+void Class::AddMember (const char *name, boost::shared_ptr<IType> type, unsigned int offset)
+{
+	Member *member = new Member;
+
+	member->name = name;
+	member->offset = offset;
 	member->type = type;
 	member->flags = currentMemberFlags;
 
