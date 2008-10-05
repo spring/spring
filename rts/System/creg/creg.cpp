@@ -9,6 +9,17 @@ Copyright 2005 Jelmer Cnossen
 
 #include "mmgr.h"
 
+// creg has to be made aware of mmgr explicitly
+#ifdef USE_MMGR
+# undef new
+# undef delete
+# define	operator_new		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? NULL : ::operator new
+# define	operator_delete		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? m_setOwner("",0,"") : ::operator delete
+#else
+# define	operator_new		::operator new
+# define	operator_delete		::operator delete
+#endif
+
 #include "System/Util.h"
 #include "creg.h"
 
@@ -175,11 +186,8 @@ void Class::SetMemberFlag (const char *name, ClassMemberFlag f)
 
 void* Class::CreateInstance()
 {
-#ifndef USE_MMGR
-	void *inst = ::operator new(binder->size);
-#else
-	void *inst = (void*)new char[binder->size];
-#endif
+	void *inst = operator_new(binder->size);
+
 	if (binder->constructor) binder->constructor (inst);
 	return inst;
 }
@@ -187,11 +195,8 @@ void* Class::CreateInstance()
 void Class::DeleteInstance (void *inst)
 {
 	if (binder->destructor) binder->destructor(inst);
-#ifndef USE_MMGR
-	::operator delete(inst);
-#else
-	delete[] (char*)inst;
-#endif
+
+	operator_delete(inst);
 }
 
 static void StringHash(const std::string &str, unsigned int hash)
