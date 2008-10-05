@@ -38,18 +38,4 @@
 // maybe we should remove syncify altogether?
 #include "Sync/Syncify.h"
 
-
-#if defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
-// top included files without lots of dependencies
-// also, they shouldn't get in the way of mmgr
-#include "float3.h"
-#include "GlobalStuff.h"
-#include "System/Util.h"
-#include "Map/Ground.h"
-#include "Map/ReadMap.h"
-#include "Game/Camera.h"
-#include "LogOutput.h"
-#endif // USE_PRECOMPILED_HEADER
-
-
 #endif // __STD_AFX_H__
