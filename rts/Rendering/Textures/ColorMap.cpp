@@ -24,7 +24,7 @@ CColorMap::CColorMap(std::vector<float> &vec)
 	map=0;
 
 	if(vec.size()<8) //needs at least two colors
-		throw content_error("To few colors in colormap.");
+		throw content_error("Too few colors in colormap.");
 
 	unsigned char *lmap = new unsigned char[vec.size() - vec.size()%4];
 	xsize = (vec.size() - vec.size()%4)/4;
@@ -72,23 +72,21 @@ CColorMap::CColorMap(const unsigned char *buf, int num)
 
 CColorMap::~CColorMap(void)
 {
-	if(map)
-		delete [] map;
+	delete [] map;
 }
 
 void CColorMap::DeleteColormaps()
 {
 	for(int i=0; i<colorMaps.size(); i++)
 	{
-		delete colorMaps.back();
-		colorMaps.pop_back();
+		delete colorMaps[i];
 	}
+	colorMaps.clear();
 }
 
 void CColorMap::LoadMap(const unsigned char *buf, int num)
 {
-	if(map)
-		delete [] map;
+	delete [] map;
 
 	map = new unsigned char[num];
 	memcpy(map, buf, num);
