@@ -38,4 +38,30 @@
 // maybe we should remove syncify altogether?
 #include "Sync/Syncify.h"
 
+#if defined(_WIN32) && defined(USE_GML)
+# ifndef GML_COMPATIBLE_ATOMIC_COUNT
+#	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
+#		error "Please make sure myGL.h is included before anything that includes boost"
+#	endif
+#	define GML_COMPATIBLE_ATOMIC_COUNT
+#	define private public
+#	include <boost/detail/atomic_count.hpp>
+#	undef private
+# endif
+#endif
+
+
+#if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
+// top included files without lots of dependencies
+// also, they shouldn't get in the way of mmgr
+#include "Rendering/GL/myGL.h"
+#include "float3.h"
+#include "GlobalStuff.h"
+#include "System/Util.h"
+#include "Map/Ground.h"
+#include "Map/ReadMap.h"
+#include "Game/Camera.h"
+#include "LogOutput.h"
+#endif // USE_PRECOMPILED_HEADER
+
 #endif // __STD_AFX_H__
