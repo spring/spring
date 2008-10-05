@@ -88,6 +88,7 @@ public:
 	struct Scar {
 		Scar(): va(0x0) {
 		}
+		~Scar() { delete va; va = 0; }
 
 		float3 pos;
 		float radius;
@@ -100,7 +101,7 @@ public:
 
 		int x1, x2;
 		int y1, y2;
-		
+
 		float basesize;
 		float overdrawn;
 
