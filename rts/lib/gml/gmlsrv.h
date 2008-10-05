@@ -208,7 +208,7 @@ public:
 	}
 
 	void WorkInit() {
-		set_threadnum(0);
+//		set_threadnum(0);
 		gmlInit();
 
 		for(int i=1; i<gmlThreadCount; ++i)
