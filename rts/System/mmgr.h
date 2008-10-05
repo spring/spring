@@ -29,7 +29,7 @@ extern "C" int backtrace (void **array, int size);
 #endif
 
 #ifdef HAVE_BACKTRACE
-#define MMGR_MAX_STACK 11
+#define MMGR_MAX_STACK 8
 #endif
 
 // ---------------------------------------------------------------------------------------------------------------------------------
