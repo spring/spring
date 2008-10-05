@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "SDL_timer.h"
 #include <vector>
+#include <boost/cstdint.hpp>
 #include "mmgr.h"
 
 #include "PathManager.h"
