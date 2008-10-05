@@ -19,6 +19,7 @@
 #define	_ISKIRMISHAILIBRARY_H
 
 #include "Interface/ELevelOfSupport.h"
+#include <string>
 #include <vector>
 #include <map>
 

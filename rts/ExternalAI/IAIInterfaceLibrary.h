@@ -20,6 +20,7 @@
 
 #include "ISkirmishAILibrary.h"
 #include "IGroupAILibrary.h"
+#include <string>
 
 class IAIInterfaceLibrary {
 public:
