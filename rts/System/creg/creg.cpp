@@ -1,15 +1,16 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 */
 #include "StdAfx.h"
-
-#include "creg.h"
 
 #include <map>
 #include <string.h>
 
+#include "mmgr.h"
+
 #include "System/Util.h"
+#include "creg.h"
 
 using namespace creg;
 using namespace std;
@@ -76,7 +77,7 @@ void System::FreeClasses ()
 Class* System::GetClass (const string& name)
 {
 	map<string, Class*>::iterator c = mapNameToClass.find (name);
-	if (c == mapNameToClass.end()) 
+	if (c == mapNameToClass.end())
 		return 0;
 	return c->second;
 }
@@ -91,7 +92,7 @@ void System::AddClassBinder(ClassBinder *cb)
 // creg::Class: Class description
 // ------------------------------------------------------------------
 
-Class::Class () : 
+Class::Class () :
 	binder (0),
 	base (0),
 	serializeProc(0),
@@ -154,7 +155,7 @@ void Class::AddMember (const char *name, IType* type, unsigned int offset)
 
 Class::Member* Class::FindMember (const char *name)
 {
-	for (Class *c = this; c; c=c->base) 
+	for (Class *c = this; c; c=c->base)
 		for (uint a=0;a<c->members.size();a++) {
 			Member *member = c->members[a];
 			if (!STRCASECMP(member->name, name))
@@ -174,7 +175,11 @@ void Class::SetMemberFlag (const char *name, ClassMemberFlag f)
 
 void* Class::CreateInstance()
 {
+#ifndef USE_MMGR
 	void *inst = ::operator new(binder->size);
+#else
+	void *inst = (void*)new char[binder->size];
+#endif
 	if (binder->constructor) binder->constructor (inst);
 	return inst;
 }
@@ -182,7 +187,11 @@ void* Class::CreateInstance()
 void Class::DeleteInstance (void *inst)
 {
 	if (binder->destructor) binder->destructor(inst);
+#ifndef USE_MMGR
 	::operator delete(inst);
+#else
+	delete[] (char*)inst;
+#endif
 }
 
 static void StringHash(const std::string &str, unsigned int hash)
