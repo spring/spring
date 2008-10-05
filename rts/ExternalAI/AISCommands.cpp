@@ -18,6 +18,7 @@
 #include "Interface/AISCommands.h"
 
 #include <limits.h>
+#include <stdlib.h>
 
 void initSUnitCommand(void* sUnitCommand) {
 	
