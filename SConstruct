@@ -211,6 +211,8 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 # Build streflop (which has it's own Makefile-based build system)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
+	if env.has_key('streflop_extra'):
+		cmd += " " + env['streflop_extra']
 	if env['fpmath'] == 'sse':
 		cmd = "STREFLOP_SSE=1 " + cmd
 	else:
@@ -219,6 +221,7 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		cmd += " WIN32=1"
 	if env.GetOption('clean'):
 		cmd += " clean"
+	print 'streflop options:', cmd
 	if env['platform'] == 'freebsd':
 		status = os.system("gmake " + cmd)
 	else:

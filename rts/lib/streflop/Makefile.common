@@ -20,6 +20,10 @@ CXXFLAGS = -O3 -pipe -g -mno-tls-direct-seg-refs
 ifdef WIN32
 	CXXFLAGS += -mthreads
 endif
+ifdef ARCH
+	CXXFLAGS += -march=$(ARCH)
+endif
+
 #CXXFLAGS = -O0 -pipe -g
 
 
