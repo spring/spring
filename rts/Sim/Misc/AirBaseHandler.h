@@ -62,6 +62,11 @@ public:
 private:
 	std::list<AirBase*> freeBases[MAX_TEAMS];
 	std::list<AirBase*> bases[MAX_TEAMS];
+
+	typedef std::list<AirBase*> airBaseLst;
+	typedef std::list<AirBase*>::iterator airBaseLstIt;
+	typedef std::list<LandingPad*> padLst;
+	typedef std::list<LandingPad*>::iterator padLstIt;
 };
 
 extern CAirBaseHandler* airBaseHandler;
