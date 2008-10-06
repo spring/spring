@@ -82,6 +82,7 @@ Microsoft Visual C++ 7.0: MSC_VER = 1300
 #include <cctype>
 #include <cassert>
 #include <string.h>
+#include <stdlib.h>
 
 /**
  * content_error
