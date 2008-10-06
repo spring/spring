@@ -230,11 +230,11 @@ string CSunParser::SGetValueDef(string defaultvalue, string location) {
 
 //finds a value in the file, if not found returns false
 // errormessages is returned in value
-bool CSunParser::GetValue(string &value, ...) {
+bool CSunParser::GetValue(string &value, void* amJustHereForIntelCompilerCompatibility, ...) {
 	string searchpath;
 
 	va_list loc;
-	va_start(loc, value);
+	va_start(loc, amJustHereForIntelCompilerCompatibility);
 	int numargs = 0;
 
 	while (va_arg(loc, char*)) {
@@ -242,7 +242,7 @@ bool CSunParser::GetValue(string &value, ...) {
 		numargs++;
 	}
 
-	va_start(loc, value);
+	va_start(loc, amJustHereForIntelCompilerCompatibility);
 	SSection* sectionptr = 0x0;
 
 	for (int i = 0; i < numargs - 1; i++) {

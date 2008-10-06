@@ -18,10 +18,11 @@ class CSunParser {
 
 		  /**
 			*  @param value pointer to string to store the value in.
+			*  @param amJustHereForIntelCompilerCompatibility should always be NULL
 			*  @param ... location of value, terminate with NULL.
 			*  @return true on success.
 			*/
-		bool GetValue(string &value, ...);
+		bool GetValue(string &value, void* amJustHereForIntelCompilerCompatibility, ...);
 
 		  /**
 			*  Retreive a specific value from the file and returns it, gives an error messagebox if value not found.
