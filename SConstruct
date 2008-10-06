@@ -215,6 +215,8 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		cmd = "STREFLOP_SSE=1 " + cmd
 	else:
 		cmd = "STREFLOP_X87=1 " + cmd
+	if env['platform'] == 'windows':
+		cmd += " WIN32=1"
 	if env.GetOption('clean'):
 		cmd += " clean"
 	if env['platform'] == 'freebsd':

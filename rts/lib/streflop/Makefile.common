@@ -16,7 +16,10 @@
 #STREFLOP_NO_DENORMALS = 1
 
 # 3. Set optimization options. You may add -march=you_cpu here for example
-CXXFLAGS = -O3 -pipe -g -mno-tls-direct-seg-refs -mthreads
+CXXFLAGS = -O3 -pipe -g -mno-tls-direct-seg-refs
+ifdef WIN32
+	CXXFLAGS += -mthreads
+endif
 #CXXFLAGS = -O0 -pipe -g
 
 
