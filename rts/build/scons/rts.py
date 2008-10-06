@@ -213,7 +213,7 @@ def generate(env):
 		# Use single precision constants only.
 		# This should be redundant with the modifications done by tools/double_to_single_precision.sed.
 		# Other options copied from streflop makefiles.
-		env['CCFLAGS'] = ['-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp', '-mthreads']
+		env['CCFLAGS'] = ['-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp']
 
 		# profile?
 		bool_opt('profile', False)
