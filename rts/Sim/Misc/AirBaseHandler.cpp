@@ -6,7 +6,11 @@
 #include "Sim/Units/UnitDef.h"
 #include "creg/STL_List.h"
 
-CAirBaseHandler* airBaseHandler=0;
+CAirBaseHandler* airBaseHandler = 0;
+typedef std::list<AirBase*> airBaseLst;
+typedef std::list<AirBase*>::iterator airBaseLstIt;
+typedef std::list<LandingPad*> padLst;
+typedef std::list<LandingPad*>::iterator padLstIt;
 
 CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler,(
@@ -40,9 +44,9 @@ CAirBaseHandler::CAirBaseHandler(void)
 CAirBaseHandler::~CAirBaseHandler(void)
 {
 	//shouldnt be any bases left here...
-	for(int a=0;a<gs->activeAllyTeams;++a){
-		for(std::list<AirBase*>::iterator bi=bases[a].begin();bi!=bases[a].end();++bi){
-			for(std::list<LandingPad*>::iterator pi=(*bi)->pads.begin();pi!=(*bi)->pads.end();++pi){
+	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+		for (airBaseLstIt bi = bases[a].begin(); bi != bases[a].end(); ++bi) {
+			for (padLstIt pi = (*bi)->pads.begin(); pi !=(*bi)->pads.end(); ++pi) {
 				delete *pi;
 			}
 			delete *bi;
@@ -76,7 +80,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 		if ((piece < 0) || (piece >= base->cob->pieces.size())) {
 			continue;
 		}
-		LandingPad* pad=SAFE_NEW LandingPad(base, piece, ab);
+		LandingPad* pad = SAFE_NEW LandingPad(base, piece, ab);
 
 		ab->pads.push_back(pad);
 		ab->freePads.push_back(pad);
@@ -89,16 +93,17 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 
 void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 {
-	for(std::list<AirBase*>::iterator bi=freeBases[base->allyteam].begin();bi!=freeBases[base->allyteam].end();++bi){
-		if((*bi)->unit==base){
+	for (airBaseLstIt bi = freeBases[base->allyteam].begin(); bi != freeBases[base->allyteam].end(); ++bi) {
+		if ((*bi)->unit == base) {
 			freeBases[base->allyteam].erase(bi);
 			break;
 		}
 	}
-	for(std::list<AirBase*>::iterator bi=bases[base->allyteam].begin();bi!=bases[base->allyteam].end();++bi){
-		if((*bi)->unit==base){
-			for(std::list<LandingPad*>::iterator pi=(*bi)->pads.begin();pi!=(*bi)->pads.end();++pi){
-				delete *pi;		//its the unit that has reserved a pads responsibility to see if the pad is gone so just delete it
+	for (airBaseLstIt bi = bases[base->allyteam].begin(); bi != bases[base->allyteam].end(); ++bi) {
+		if ((*bi)->unit == base) {
+			for (padLstIt pi = (*bi)->pads.begin(); pi != (*bi)->pads.end(); ++pi) {
+				// the unit that has reserved a pad is responsible to see if the pad is gone so just delete it
+				delete *pi;
 			}
 			delete *bi;
 			bases[base->allyteam].erase(bi);
@@ -112,26 +117,36 @@ Caller must call LeaveLandingPad if it gets one and is finished with it or dies
 it's the callers responsibility to detect if the base dies while its reserved. */
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
-	float closest=1e6f;
-	std::list<LandingPad*>::iterator foundPad;
-	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
+	float closest = 1e6f;
+	padLstIt foundPad;
+	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
-	for(std::list<AirBase*>::iterator bi=freeBases[unit->allyteam].begin();bi!=freeBases[unit->allyteam].end();++bi){
-		if((*bi)->unit->pos.distance(unit->pos)>=closest || (*bi)->unit->unitDef->buildSpeed < minPower)
+	for (airBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
+		CUnit* baseUnit = (*bi)->unit;
+
+		if (unit == baseUnit) {
+			// don't pick ourselves as a landing pad
 			continue;
-		for(std::list<LandingPad*>::iterator pi=(*bi)->freePads.begin();pi!=(*bi)->freePads.end();++pi){
-			closest=(*bi)->unit->pos.distance(unit->pos);
-			foundPad=pi;
-			foundBase=bi;
+		}
+
+		if (baseUnit->pos.distance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+			continue;
+		}
+
+		for (padLstIt pi = (*bi)->freePads.begin(); pi != (*bi)->freePads.end(); ++pi) {
+			closest = baseUnit->pos.distance(unit->pos);
+			foundPad = pi;
+			foundBase = bi;
 		}
 	}
 
 
-	if(foundBase!=freeBases[unit->allyteam].end()){
-		LandingPad* found=*foundPad;
+	if (foundBase != freeBases[unit->allyteam].end()) {
+		LandingPad* found = *foundPad;
 		(*foundBase)->freePads.erase(foundPad);
 		return found;
 	}
+
 	return 0;
 }
 
@@ -145,18 +160,28 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 /** @brief Try to find the closest airbase even if its reserved */
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
-	float closest=1e6f;
-	std::list<AirBase*>::iterator foundBase=freeBases[unit->allyteam].end();
+	float closest = 1e6f;
+	airBaseLst::iterator foundBase = freeBases[unit->allyteam].end();
 
-	for(std::list<AirBase*>::iterator bi=freeBases[unit->allyteam].begin();bi!=freeBases[unit->allyteam].end();++bi){
-		if((*bi)->unit->pos.distance(unit->pos)>=closest || (*bi)->unit->unitDef->buildSpeed < minPower)
+	for (airBaseLst::iterator bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
+		CUnit* baseUnit = (*bi)->unit;
+
+		if (unit == baseUnit) {
+			// don't pick ourselves as a landing pad
 			continue;
-		closest=(*bi)->unit->pos.distance(unit->pos);
-		foundBase=bi;
+		}
+
+		if (baseUnit->pos.distance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+			continue;
+		}
+
+		closest = baseUnit->pos.distance(unit->pos);
+		foundBase = bi;
 	}
 
-	if(foundBase!=freeBases[unit->allyteam].end()){
+	if (foundBase != freeBases[unit->allyteam].end()) {
 		return (*foundBase)->unit->pos;
 	}
+
 	return ZeroVector;
 }
