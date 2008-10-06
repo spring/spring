@@ -16,7 +16,7 @@
 #STREFLOP_NO_DENORMALS = 1
 
 # 3. Set optimization options. You may add -march=you_cpu here for example
-CXXFLAGS = -O3 -pipe -g
+CXXFLAGS = -O3 -pipe -g -mno-tls-direct-seg-refs -mthreads -march=i686
 #CXXFLAGS = -O0 -pipe -g
 
 
@@ -25,7 +25,7 @@ CXXFLAGS = -O3 -pipe -g
 ############################################################
 
 # 4. Optional, removes false dependency on libm
-LDFLAGS=-Wl,--as-needed
+LDFLAGS=-Wl,--as-needed -mno-tls-direct-seg-refs -mthreads
 
 # Options for correctness of code.
 # -ffloat-store is not needed since the FPU flags are set by the streflop_init functions
