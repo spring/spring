@@ -7,10 +7,6 @@
 #include "creg/STL_List.h"
 
 CAirBaseHandler* airBaseHandler = 0;
-typedef std::list<AirBase*> airBaseLst;
-typedef std::list<AirBase*>::iterator airBaseLstIt;
-typedef std::list<LandingPad*> padLst;
-typedef std::list<LandingPad*>::iterator padLstIt;
 
 CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler,(
@@ -161,9 +157,9 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
 	float closest = 1e6f;
-	airBaseLst::iterator foundBase = freeBases[unit->allyteam].end();
+	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
-	for (airBaseLst::iterator bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
+	for (airBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
 		CUnit* baseUnit = (*bi)->unit;
 
 		if (unit == baseUnit) {
