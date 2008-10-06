@@ -57,10 +57,20 @@ extern "C" {
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#elif __GNUC__
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
+	#elif __INTEL_COMPILER
+		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#else
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#endif
 #endif	/* CALLING_CONV */
+	
+#ifndef CALLING_CONV_FUNC_POINTER
+	#ifdef __INTEL_COMPILER
+		#define CALLING_CONV_FUNC_POINTER
+	#else
+		#define CALLING_CONV_FUNC_POINTER CALLING_CONV
+	#endif
+#endif	/* CALLING_CONV_FUNC_POINTER */
 
 
 #define Export(type) SHARED_EXPORT type CALLING_CONV
