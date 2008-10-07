@@ -16,7 +16,7 @@ if (EXISTS Global/RAI-0.553)
 	aux_source_directory(Global/RAI-0.553/KrogsMetalClass rai)
 	add_library(RAI_0.553 SHARED ${rai})
 	install (TARGETS RAI_0.553 DESTINATION ${DATADIR}/AI/Bot-libs)
-endif (EXISTS Global/JCAI)
+endif (EXISTS Global/RAI-0.553)
 
 aux_source_directory(Global/AAI aai)
 add_library(AAI SHARED ${aai})
