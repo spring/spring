@@ -19,8 +19,8 @@
   CreateDirectory "$INSTDIR\lobby\python\"
 
   SetOutPath "$INSTDIR\lobby\var"
-  File "..\Lobby\TASClient\lobby\var\groups.ini"
-  File "..\Lobby\TASClient\lobby\var\tips.txt"
+  File "..\external\groups.ini"
+  File "..\external\tips.txt"
 
   Call GetDotNETVersion
   Pop $0
