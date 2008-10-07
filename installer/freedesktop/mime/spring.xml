@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+	<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
 	<mime-type type="application/x-spring-demo">
 		<comment>Spring demofile</comment>
 		<glob pattern="*.sdf"/>
@@ -7,9 +7,17 @@
 			<match value="spring demofile" type="string" offset="0:16"/>
 		</magic>
 	</mime-type>
-	<mime-type type="application/x-spring-data">
-		<comment>Spring data file (map or mod)</comment>
+
+	<mime-type type="application/x-spring-sdz">
+		<sub-class-of type="application/zip"/>
+		<comment>Spring Archive</comment>
 		<glob pattern="*.sdz"/>
+	</mime-type>
+
+	<mime-type type="application/x-spring-sd7">
+		<sub-class-of type="application/x-7z-compressed"/>
+		<comment>Spring Archive</comment>
 		<glob pattern="*.sd7"/>
-		</mime-type>
+	</mime-type>
+
 </mime-info>
