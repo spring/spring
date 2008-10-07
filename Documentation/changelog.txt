@@ -43,9 +43,9 @@ User Interface:
 
 Spring Engine:
  - multithreaded avi-generator
- - new water renderer: bumpwater ("/water 4"), pretty and fast
+ - new water renderer: bumpwater ("/water 4"), pretty and fast 
  - the usual speedups and performance improvements
- - Font rendering system overhaul, 
+ - Font rendering system overhaul 
  - Functionality of Sensors.tdf and Particles.tdf moved to modrules. removed Sensors.tdf or Particles.tdf
    Transfers resources.tdf to resources.lua, and resources_map.tdf to resources_map.lua.
    Sidedata.tdf -> sidedata.lua
@@ -139,16 +139,34 @@ Maps:
       maxheight =  200.0f,
     }
    (note:  these values can be changed by MapOptions)
+ - new water tags (mostly used by the BumpWater renderer):
+  - shoreWaves           (true)
+  - forceRendering       (false)
+  - ambientFactor        (1.0)
+  - diffuseFactor        (1.0)
+  - specularFactor       (1.0)
+  - specularPower        (20.0)
+  - diffuseColor         float3(1.0, 1.0, 1.0)
+  - specularColor        float3(light.groundSunColor)
+  - fresnelMin           (0.2)
+  - fresnelMax           (0.8)
+  - fresnelPower         (4.0)
+  - reflectionDistortion (1.0)
+  - blurBase             (2.0)
+  - blurExponent         (1.5)
+  - perlinStartFreq      (8.0)
+  - perlinLacunarity     (3.0)
+  - perlinAmplitude      (0.9)
+  - foamTexture
+  - normalTexture
+  - numTiles
+  - caustics (texture table)
 
 COB:
  - Added new COB get constants MIN (131), MAX(132) and ABS(133).
  - Added the SONAR_STEALTH (108) COB get/set parameter
 
 LUA changes:
- - added some untested code for proxied gadget events
-  (KeyPress, KeyRelease, etc...)  there's also a little widget
-  that goes along with this so that the user can control whether
-  or not the gadget code can steal their clicks
  - Added 'teamcolors.lua' to the installers
  - Renamed 'gui.lua' to 'luaui.lua'
  - Removed LuaCob, and redirected Cob2Lua calls to LuaRules
@@ -162,112 +180,112 @@ LUA changes:
     LUA_COMPAT_OPENLIB
  - Moved most of the LuaUI call-outs into LuaUnsyncedRead
    and LuaUnsyncedCtrl. The LuaUnsyncedCtrl call-outs require
-   that the modUICtrl variable be enabled for non-user scripts
+   that the modUICtrl variable be enabled for gadget scripts
    to use them.
  - Moved most of the LuaUI call-ins into LuaCallInHandler and
    LuaHandle. The moved call-ins require that the modUICtrl
-   variable be enabled for non-user scripts to receive them.
- - Added UnitEnteredWater(unitID, unitDefID, unitTeam) call-in
- - Added UnitEnteredAir(unitID, unitDefID, unitTeam) call-in
- - Added UnitLeftWater(unitID, unitDefID, unitTeam) call-in
- - Added UnitLeftAir(unitID, unitDefID, unitTeam) call-in
- - Added the new call-ins:
-   - PlayerChanged(playerID)  (player changed team or spectating state)
-   - TeamChanged(teamID)      (team changed allyteam, not useful yet)
-   - UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdOpts, cmdParams)
-     (note that cmdOpts is a number)
- - Added Spring.ValidUnitID(number id)    -> boolean
- - Added Spring.ValidFeatureID(number id) -> boolean
- - Added a real ViewResize() call-in
- - Added Spring.GetModUICtrl()
- - Added Spring.GetViewGeometry()   -> sizeX, sizeY, posX, posY
- - Added Spring.GetWindowGeometry() -> sizeX, sizeY, posX, posY
- - Added Spring.GetScreenGeometry() -> sizeX, sizeY, posX, posY
- - Modified Spring.GetVisibleUnits() so that the team specifier can
-   use the ALL_UNITS, ALLY_UNITS, ENEMY_UNITS, and MY_UNITS values.
- - Replaced Spring.GetMouseMiniMapState() with:
-    Spring.GetMiniMapGeometry() ->
-      posX, posY, sizeX, sizeY, minimized, maximized, <false | "left" | "right">
- - Added Spring.IsAboveMiniMap(x, y) -> boolean
- - Added LuaSyncedRead Spring.GetUnitLastAttacker()
- - Added LuaSyncedRead Spring.GetUnitFuel()
- - Added LuaSyncedCtrl Spring.SetUnitFuel()
- - Added LuaSyncedRead Spring.GetUnitSensorRadius(unitID, <type>)
- - Added LuaSyncedCtrl Spring.SetUnitSensorRadius(unitID, <type>, radius)
- - lua unit 'facing' parameters can now use long strings:
-    'north', 'south', 'east', 'west'
- - the Spring.UnitCreated() call-out now accepts unitDef names and unitDef IDs
- - Added the UnitMoveFailed() call-in
- - new call-ins:
-     ProjectileCreated(projectileID, projectileOwnerID) (arg #2 is -1 if no owner)
-     ProjectileDestroyed(projectileID)
- - new call-outs:
-     GetProjectilePosition(projectileID) -> px, py, pz
-     GetProjectileVelocity(projectileID) -> vx, vy, vz
-     SetProjectilePosition(projectileID, px, py, pz) -> nil
-     SetProjectileVelocity(projectileID, vx, vy, vz) -> nil
-     SetProjectileDetonate(projectileID) -> nil
- - added the GL evaluator functions to the lua GL interface
-   (note the gl.EvalEnable() and gl.EvalDisable() can only be
-   called in a gl.Eval(func) block).
+   variable be enabled for gadget scripts to receive them.
+ - Updated included gadgetHandler
+ - Removed unwanted/confusing widgets.
+ - fonts.lua can load fonts from the VFS
+   (and will create LuaUI/Fonts/ if it does not exist)
  - Removed the unused CommandDesc 'hotkey' member
- - Renamed CommandDescription's  onlyKey  to  hidden
+ - Renamed CommandDescription's  'onlyKey'  to  'hidden'
  - lua scripts now get first crack at all mouse events
  - Treat SDD file sizes as dynamic, so that lua scripts can
    be reloaded while dev'ing without having file size mismatches
    (LuaRules, LuaGaia, mod widgets, etc...)
- - Added the Spring.GetUnitIsDead() call-out
- - Added 2 new lua callins:
-   - GamePreload: Called at the end of the loading process
-   - GameStart:   Called when the game is about to start
- - Added the unicode values to the lua KeyPress() and KeyRelease() call-ins
- - Changed the GetUnitNearestEnemy() lua call-out to:
-               GetUnitNearestEnemy(number unitID[, number range[, boolean useLos=true]])
- - Added two Lua synced callouts for controlling the collision volume properties:
-   SetUnitCollisionVolumeData(id, xs, ys, zs, xo, yo, zo, vtype, ptype, paxis)
-   and SetFeatureCollisionVolumeData() (same args)
- - Added new luaRules callin:
-   TerraformComplete(UnitID, UnitDefID, UnitTeam, BuildUnitID, BuildUnitDefID, BuildUnitTeam)
-   it gets called after the terraforming for a construction is complete (once
-   per terraforming builder), the return value is whether the con should stop
-   building.
- - Added Spring.SetLastMessagePosition(x,y,z)
- - Added new LuaRules  MoveCtrlNotify(unitID, unitDefID, unitTeam, data)  call-in
-  - currently called with data = 1 if the unit hits the ground and stops
-  - return true to disable the unit's MoveCtrl
+ - Added some new constants to the lua Game{} table.
  - Added the dynamic HeightMapTexture
   - FLOAT32/LUMINANCE format, NEAREST/NEAREST filtering
   - can be accessed by lua scripts using '$heightmap'
   - can be disable by clients with 'HeightMapTex=0' (config parameter)
- - Added the following LuaSyncedCtrl call-outs:
-    - SetUnitLosMask(unitID, allyTeamID, number | table) -> nil
-    - SetUnitLosState(unitID, allyTeamID, number | table) -> nil
- - Added Spring.FixedAllies() -> bool
- - Reverted the GetPositionLosState() to its original configuration (no air los),
-  (and made it faster)
- - Added the  IsPosInLos()    call-out
- - Added the  IsPosInRadar()  call-out
- - Added the  IsPosInAirLos() call-out
- - New PauseSoundStream(), GetSoundStreamTime() (how long it has been playing, 
-   SetSoundStreamVolume(number) call-outs
- - Added burst, burstRate and projectiles to SetUnitWeaponState
- - Added the DrawGenesis() call-in
-   - called immediately following Update()
-   - called even when the game window is minimized
-   - modelview and projection matrices are identities
-   - can be used to update GPU-side physics simulation
-    textures and custom per-unit textures
- - Updated included gadgetHandler
- - fonts.lua can load fonts from the VFS
-   (and will create LuaUI/Fonts/ if it does not exist)
- - added the following LuaUnsyncedCtrl call-outs:
-    AddUnitIcon(string name, string texture
-                [, number size[, number distance[, bool radiusAdjust]]])
-    FreeUnitIcon(string name)
- - Added gl.ActiveShader(shaderID, function(), ...)
-   - safe way to set shader uniforms in non-drawing code
- - Added the  gl.DepthClamp(bool)      call-out  (not always available)
- - Added the  gl.UnsafeState(number, [bool reverse, ] function, ...)  call-out
+ - Added multiple new callins:
+   - UnitEnteredWater(unitID, unitDefID, unitTeam)
+   - UnitEnteredAir(unitID, unitDefID, unitTeam)
+   - UnitLeftWater(unitID, unitDefID, unitTeam)
+   - UnitLeftAir(unitID, unitDefID, unitTeam)
+   - PlayerChanged(playerID)  (player changed team or spectating state)
+   - TeamChanged(teamID)      (team changed allyteam, not useful yet)
+   - UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdOpts, cmdParams) (note that cmdOpts is a number)
+   - UnitMoveFailed()
+   - MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
+     - currently called with data = 1 if the unit hits the ground and stops
+     - return true to disable the unit's MoveCtrl
+   - ProjectileCreated(projectileID, projectileOwnerID) (arg #2 is -1 if no owner)
+   - ProjectileDestroyed(projectileID)
+   - GamePreload() (Called at the end of the loading process)
+   - GameStart()   (Called when the game is about to start)
+   - TerraformComplete(UnitID, UnitDefID, UnitTeam, BuildUnitID, BuildUnitDefID, BuildUnitTeam)
+     (it gets called after the terraforming for a construction is complete (once
+      per terraforming builder), the return value is whether the con should stop
+      building.)
+   - DrawGenesis()
+     - called immediately following Update()
+     - called even when the game window is minimized
+     - modelview and projection matrices are identities
+     - can be used to update GPU-side physics simulation
+     textures and custom per-unit textures
+   - a real ViewResize() call-in
+ - Added the unicode values to the lua KeyPress() and KeyRelease() call-ins
+ - Replaced Spring.GetMouseMiniMapState() with:
+    Spring.GetMiniMapGeometry() ->
+      posX, posY, sizeX, sizeY, minimized, maximized, <false | "left" | "right">
+ - Changed the GetUnitNearestEnemy() lua call-out to:
+               GetUnitNearestEnemy(number unitID[, number range[, boolean useLos=true]])
+ - Added geometry shader support to LuaOpenGL
+ - Added Spring.ValidUnitID(number id)    -> boolean
+ - Added Spring.ValidFeatureID(number id) -> boolean
+ - Added Spring.GetUnitIsDead()
+ - Added Spring.GetModUICtrl()
+ - Added Spring.GetViewGeometry()   -> sizeX, sizeY, posX, posY
+ - Added Spring.GetWindowGeometry() -> sizeX, sizeY, posX, posY
+ - Added Spring.GetScreenGeometry() -> sizeX, sizeY, posX, posY
+ - Added Spring.IsAboveMiniMap(x, y) -> boolean
+ - Added Spring.GetUnitLastAttacker()
+ - Added Spring.GetUnitFuel()
+ - Added Spring.SetUnitFuel()
+ - Added Spring.GetUnitSensorRadius(unitID, <type>)
+ - Added Spring.SetUnitSensorRadius(unitID, <type>, radius)
+ - new projectile call-outs:
+     Spring.GetProjectilePosition(projectileID) -> px, py, pz
+     Spring.GetProjectileVelocity(projectileID) -> vx, vy, vz
+     Spring.SetProjectilePosition(projectileID, px, py, pz) -> nil
+     Spring.SetProjectileVelocity(projectileID, vx, vy, vz) -> nil
+     Spring.SetProjectileDetonate(projectileID) -> nil
+ - added the GL evaluator functions to the lua GL interface
+   (note the gl.EvalEnable() and gl.EvalDisable() can only be
+   called in a gl.Eval(func) block).
+ - Added Spring.SetUnitCollisionVolumeData(id, xs, ys, zs, xo, yo, zo, vtype, ptype, paxis)
+     and Spring.SetFeatureCollisionVolumeData() (same args)
+ - Added Spring.SetLastMessagePosition(x,y,z)
+ - Added Spring.SetUnitLosMask(unitID, allyTeamID, number | table) -> nil
+     and Spring.SetUnitLosState(unitID, allyTeamID, number | table) -> nil
+ - Added Spring.FixedAllies()
+ - Reverted the GetPositionLosState() to its original configuration (no air los)
+ - Added Spring.IsPosInLos()
+ - Added Spring.IsPosInRadar()
+ - Added Spring.IsPosInAirLos()
+ - Added Spring.PauseSoundStream(), Spring.GetSoundStreamTime(),
+         Spring.SetSoundStreamVolume(number)
+ - Added burst, burstRate and projectiles to Spring.SetUnitWeaponState
+ - Added Spring.AddUnitIcon(string name, string texture
+                            [, number size[, number distance[, bool radiusAdjust]]])
+         Spring.FreeUnitIcon(string name)
+ - Added Spring.SetUnitSonarStealth()
+ - Added Spring.SpawnCEG(tag, px, py, pz, dx, dy, dz, rad, dmg) synced callout
+ - Added Spring.SetHeightMapFunc(lua_func,arg1,arg2,..),
+         Spring.AddHeightMap(x, y, h) -> `final height`
+         Spring.SetHeightMap(x, y, h [,t]) -> `absolute value changed`
+ - Added Spring.ExtractModArchiveFile(path) callout
+   For example, Spring.ExtractModArchiveFile("sounds/boom.wav")
+   will create a directory "sounds/" and extract "boom.wav" to it.
+ - Added Spring.GetUnitPiecePosDir(unitID, piece) -> posx,posy,posz, dirx,diry,dirz
+ - Added Spring.GetUnitVectors(unitID) -> {front_x,front_y,front_z},{up_x,up_y,up_z},{right_x,right_y,right_z}
+ - Added Spring.GetUnitWeaponVectors(unitID,weaponNum) -> wpos_x,wpos_y,wpos_z, wdir_x,wdir_y,wdir_z
+ - Added gl.ActiveShader(shaderID, function(), ...) (safe way to set shader uniforms in non-drawing code)
+ - Added gl.DepthClamp(bool)  (not always available)
+ - Added gl.UnsafeState(number, [bool reverse, ] function, ...)
    (glEnable() / glDisable() for unknown states; considered 'unsafe')
  - Added Occlusion Queries:
    - Added gl.CreateQuery() -> query
@@ -279,7 +297,6 @@ LUA changes:
    - Spring.GetUnitNoDraw()  
    - Spring.GetUnitNoMinimap()
    - Spring.GetUnitNoSelect()
- - Added geometry shader support to LuaOpenGL
  - Added the fbo 'readbuffer' parameter
  - Added gl.ReadPixels(x, y, w, h [,format])
  - Added StencilTests:
@@ -293,11 +310,11 @@ LUA changes:
    - Added gl.StencilMaskSeparate()
    - Added gl.StencilFuncSeparate()
    - Added gl.StencilOpSeparate()
- - Added  gl.BlendEquation()
- - Added  gl.BlendEquationSeparate()
- - Added  gl.BlendFunc()  -- redundant
- - Added  gl.BlendFuncSeparate()
- - Added  gl.Blending() convenience names:
+ - Added gl.BlendEquation()
+ - Added gl.BlendEquationSeparate()
+ - Added gl.BlendFunc()  -- redundant
+ - Added gl.BlendFuncSeparate()
+ - Added gl.Blending() convenience names:
     name           blend_src    blend_dst             enabled
     "add"          ONE          ONE                   true
     "add_alpha"    SRC_ALPHA    ONE                   true
@@ -314,30 +331,14 @@ LUA changes:
      gl.PushName()
      gl.PopName()
      gl.LoadName()
- - Added GL evaluator functions to the lua GL interface.
- - If Spring.SetDrawSky(false) is set, do not draw the sun.
- - Spring.SendCommands() can use a bunch of string arguments as well as the old
-   table format. e.g Spring.SendCommands('echo aoeu', 'info 2', 'specteam 0')
- - Added some new constants to the lua Game{} table.
- - Added gl.ActiveShader(shaderID, function(), ...) safe way to set shader 
-   uniforms in non-drawing code
- - Added the Spring.SetUnitSonarStealth() lua call-out
- - Added SpawnCEG(tag, px, py, pz, dx, dy, dz, rad, dmg) synced callout
- - Added Spring.SetHeightMapFunc(lua_func,arg1,arg2,..),
-     Spring.AddHeightMap(x, y, h) -> `final height`
-     Spring.SetHeightMap(x, y, h [,t]) -> `absolute value changed`
- - Added an unsynced ExtractModArchiveFile(path) callout to enable LuaUI
-   widgets to extract files from mod archives.
-   For example, Spring.ExtractModArchiveFile("sounds/boom.wav")
-   will create a directory "sounds/" and extract "boom.wav" to it.
- - Added SyncedRead call-out GetUnitPiecePosDir(unitID, piece), this returns
-   the global position and forward vector of the given piece (6 return values
-   in total). The emphasis is on global, the previous call-outs only deliver 
-   relative values.
- - Added Spring.GetUnitVectors(unitID) -> {front_x,front_y,front_z},{up_x,up_y,up_z},{right_x,right_y,right_z}
- - Added Spring.GetUnitWeaponVectors(unitID,weaponNum) -> wpos_x,wpos_y,wpos_z, wdir_x,wdir_y,wdir_z
  - Added gl.Texture($shading) & gl.Texture($grass)
  - Allowed to use gl.CopyToTexture with non GL_TEXTURE2D, i.e. GL_TEXTURE_RECTANGLE
+ - Modified Spring.GetVisibleUnits() so that the team specifier can
+   use the ALL_UNITS, ALLY_UNITS, ENEMY_UNITS, and MY_UNITS values.
+ - 'facing' parameters can now use long strings: 'north', 'south', 'east', 'west'
+ - Spring.UnitCreated() call-out now accepts unitDef names and unitDef IDs
+ - Spring.SendCommands() can use a bunch of string arguments as well as the old
+   table format. e.g Spring.SendCommands('echo aoeu', 'info 2', 'specteam 0')
  - Fixed Spring.UnitRendering interface to make it possible to emulate the default 3do/s3o shaders
    - fixed $shadows texture params (you can now use shadow2DProj() in glsl)
    - fixed wrong (!=0) check if uniform locations are set (they begin with 0!)
@@ -352,8 +353,8 @@ LUA changes:
  - Fixed full-view spectators get all LuaUI  RecvLuaMsg()  messages now.
  - Fixed Spring.SetFeaturePosition().
  - Fixed Spring.SetFeatureDirection().
+ - If Spring.SetDrawSky(false) is set, do not draw the sun.
  - Fixed s3o recognition in LuaUnitDefs
- - Removed unwanted/confusing widgets.
 
 AI:
  - Added new ai value AIVAL_SCRIPT returning start script text.
