@@ -300,7 +300,7 @@ for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'tea
 # install menu entry & icon
 inst = env.Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spring.png')
 Alias('install', inst)
-inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
+inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'installer/freedesktop/applications/spring.desktop')
 Alias('install', inst)
 
 # install AAI config files
