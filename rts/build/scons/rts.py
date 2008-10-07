@@ -87,7 +87,7 @@ def generate(env):
 	usropts.AddOptions(
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
-		('gml',               'Set to false to disable OpenGL thread library', True),
+		('gml',               'Set to false to disable OpenGL thread library', False),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
@@ -370,7 +370,7 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
-		bool_opt('gml', True)
+		bool_opt('gml', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
