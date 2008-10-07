@@ -54,7 +54,7 @@ Spring Engine:
    Replaced 'messages.tdf' with 'messages.lua'
    modinfo.tdf --> modinfo.lua
    ArchiveCacheV6.txt --> ArchiveCacheV7.lua
- - FIXME: Custom collision volumes (collisionVolumeTest..)
+ - Custom collision volumes (collisionVolumeTest..)
  - you can ally / unally other teams ingame using the "/ally [teamnumber] [0|1]" command (needs to be activated in lobby)
  - Keep units in various situations from deciding to attack units they 
    shouldn't (noChaseCatagory, neutral, under water without water weapons).
@@ -138,7 +138,7 @@ COB:
  - Added the SONAR_STEALTH (108) COB get/set parameter
 
 LUA changes:
- - FIXME (r5960): added some untested code for proxied gadget events
+ - added some untested code for proxied gadget events
   (KeyPress, KeyRelease, etc...)  there's also a little widget
   that goes along with this so that the user can control whether
   or not the gadget code can steal their clicks
