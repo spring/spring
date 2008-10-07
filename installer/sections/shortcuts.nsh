@@ -5,7 +5,7 @@
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
   ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe -server 82.239.138.44:8300"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
   ${EndIf}
   ${If} ${SectionIsSelected} ${SEC_CA}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk" "$INSTDIR\CaDownloader.exe"
