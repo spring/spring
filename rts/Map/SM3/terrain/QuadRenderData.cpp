@@ -28,6 +28,8 @@
 */
 
 #include "StdAfx.h"
+#include <cstring>
+#include <assert.h>
 #include "Rendering/GL/myGL.h"
 
 #include "TerrainBase.h"

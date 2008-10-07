@@ -19,6 +19,9 @@ while [ ! -d installer ]; do
 	cd ..
 done
 
+# Ensure directories exist (some VCSes do not support empty directories)
+mkdir -p game/base/spring
+
 # Zip up the stuff.
 
 cd installer/builddata/

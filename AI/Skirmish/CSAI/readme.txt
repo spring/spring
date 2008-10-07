@@ -38,7 +38,7 @@ buildabic csaiabic.dll csailoader.dll
 - csaiabic.dll will load csailoader.dll
 - csailoader.dll should have a C interface conform to what the ABIC layer is expecting
 
-There are copied into root of game\AI\Skirmish/impls bot-libs directory
+There are copied into root of game\AI\Skirmish\impls bot-libs directory
 
 3. abicwrappers
 

@@ -1,6 +1,8 @@
 
 #include "CoverageHandler.h"
 
+#include "System/GlobalStuff.h"
+
 #define COVERAGE_SQUARE 4.0
 #define COVERAGE_SQUARE2 32.0
 

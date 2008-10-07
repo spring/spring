@@ -1,9 +1,11 @@
 #ifndef PATHCACHE_H
 #define PATHCACHE_H
 
-#include "IPath.h"
 #include <map>
 #include <list>
+
+#include "IPath.h"
+#include "System/GlobalStuff.h"
 
 class CPathCache
 {

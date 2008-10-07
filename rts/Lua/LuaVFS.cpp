@@ -1,15 +1,19 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 // LuaVFS.cpp: implementation of the LuaVFS class.
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaVFS.h"
 #include <set>
 #include <list>
 #include <cctype>
 #include <limits.h>
 #include <boost/regex.hpp>
 using namespace std;
+
+#include "mmgr.h"
+
+#include "LuaVFS.h"
 
 #include "LuaInclude.h"
 
@@ -21,6 +25,7 @@ using namespace std;
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

@@ -61,6 +61,7 @@ FileSystemHandler& FileSystemHandler::GetInstance()
 void FileSystemHandler::Initialize(bool verbose)
 {
 	if (!instance) {
+		// FIXME this leaks memory
 #ifdef WIN32
 		instance = new UnixFileSystemHandler(verbose);
 #elif defined(__APPLE__)

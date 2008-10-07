@@ -434,6 +434,9 @@ static	void	resetGlobals()
 	sourceFunc = "??";
 }
 
+void m_resetGlobals() { resetGlobals(); }
+
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 static FILE *fp_log;
 
@@ -483,7 +486,7 @@ static	void	dumpAllocations(FILE *fp)
 		sAllocUnit *ptr = hashTable[i];
 		while(ptr)
 		{
-			fprintf(fp, "%06d 0x%08lX 0x%08X 0x%08lX 0x%08X 0x%08X %-8s    %c       %c    %s\n",
+			fprintf(fp, "%06d 0x%08lX 0x%08X 0x%08lX 0x%08X 0x%08X %-8s    %c       %c    %s",
 				ptr->allocationNumber,
 				(unsigned long) ptr->reportedAddress, ptr->reportedSize,
 				(unsigned long) ptr->actualAddress, ptr->actualSize,
@@ -492,6 +495,17 @@ static	void	dumpAllocations(FILE *fp)
 				ptr->breakOnDealloc ? 'Y':'N',
 				ptr->breakOnRealloc ? 'Y':'N',
 				ownerString(ptr->sourceFile, ptr->sourceLine, ptr->sourceFunc));
+#			ifdef HAVE_BACKTRACE
+			fprintf(fp, "\t");
+			for (int j = 0; j<ptr->backtraceSize; ++j) {
+				#ifdef WIN32
+				fprintf(fp, " %08x", (unsigned)ptr->backtrace[j]);
+				#else
+				fprintf(fp, " %p", ptr->backtrace[j]);
+				#endif
+			}
+#			endif
+			fprintf(fp, "\n");
 			ptr = ptr->next;
 		}
 	}
@@ -968,7 +982,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		if (alwaysLogAll) {
 			log("%05d %-40s %8s            : %s", currentAllocationCount, ownerString(sourceFile, sourceLine, sourceFunc), allocationTypes[allocationType], memorySizeString(reportedSize));
 
-#ifdef __linux__
+#if defined(__linux__) || defined(HAVE_BACKTRACE)
 			if (fp_log) {
 				void* buffer[10];
 				int size = backtrace(buffer, sizeof(buffer) / sizeof(buffer[0]));
@@ -1054,6 +1068,17 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		else		strcpy (au->sourceFile, "??");
 		if (sourceFunc) strncpy(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
 		else		strcpy (au->sourceFunc, "??");
+
+#ifdef HAVE_BACKTRACE
+		// skip some useless frames
+		const int frameskip = 2;
+		void *tmp[MMGR_MAX_STACK + frameskip];
+		au->backtraceSize = backtrace(tmp, MMGR_MAX_STACK + frameskip);
+		if (au->backtraceSize > frameskip) {
+			au->backtraceSize -= frameskip;
+			memcpy(au->backtrace, tmp + frameskip, sizeof(void*) * au->backtraceSize);
+		}
+#endif
 
 		// We don't want to assert with random failures, because we want the application to deal with them.
 
@@ -1251,6 +1276,17 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		else		strcpy (au->sourceFile, "??");
 		if (sourceFunc) strncpy(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
 		else		strcpy (au->sourceFunc, "??");
+
+#ifdef HAVE_BACKTRACE
+		// skip some useless frames
+		const int frameskip = 2;
+		void *tmp[MMGR_MAX_STACK + frameskip];
+		au->backtraceSize = backtrace(tmp, MMGR_MAX_STACK + frameskip);
+		if (au->backtraceSize > frameskip) {
+			au->backtraceSize -= frameskip;
+			memcpy(au->backtrace, tmp + frameskip, sizeof(void*) * au->backtraceSize);
+		}
+#endif
 
 		// The reallocation may cause the address to change, so we should relocate our allocation unit within the hash table
 

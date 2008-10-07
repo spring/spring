@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "UnitDrawer.h"
 #include "myMath.h"
 #include "LogOutput.h"
@@ -84,9 +86,6 @@ CUnitDrawer::CUnitDrawer(void)
 	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
 	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
 
-	// Some Ati mobility cards dont like clipping wireframes...
-	usingAtiHacks = !!configHandler.GetInt("AtiHacks", 0);
-
 	CBitmap white;
 	white.Alloc(1, 1);
 	for (int a = 0; a < 4; ++a) {
@@ -151,6 +150,10 @@ CUnitDrawer::CUnitDrawer(void)
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 	}
+#ifdef USE_GML
+	multiThreadDrawUnit=configHandler.GetInt("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow=configHandler.GetInt("MultiThreadDrawUnitShadow", 1);
+#endif
 }
 
 
@@ -189,6 +192,10 @@ CUnitDrawer::~CUnitDrawer(void)
 		delete *gbi;
 		gbi = ghostBuildingsS3O.erase(gbi);
 	}
+#ifdef USE_GML
+	configHandler.SetInt("MultiThreadDrawUnit", multiThreadDrawUnit);
+	configHandler.SetInt("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
+#endif
 }
 
 
@@ -399,23 +406,28 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
-#if GML_ENABLE_DRAWUNIT
-	mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
-	mt_drawRefraction=drawRefraction;
-#ifdef DIRECT_CONTROL_ALLOWED
-	mt_excludeUnit=excludeUnit;
+#ifdef USE_GML
+	if(multiThreadDrawUnit) {
+		mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
+		mt_drawRefraction=drawRefraction;
+	#ifdef DIRECT_CONTROL_ALLOWED
+		mt_excludeUnit=excludeUnit;
+	#endif
+		gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+	}
+	else {
 #endif
-	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
-#else
-	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
-		CUnit* unit = *usi;
-		DoDrawUnit(unit,drawReflection,drawRefraction,
-#ifdef DIRECT_CONTROL_ALLOWED
-								excludeUnit
-#else
-								NULL
-#endif
-							);
+		for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+			CUnit* unit = *usi;
+			DoDrawUnit(unit,drawReflection,drawRefraction,
+		#ifdef DIRECT_CONTROL_ALLOWED
+									excludeUnit
+		#else
+									NULL
+		#endif
+								);
+		}
+#ifdef USE_GML
 	}
 #endif
 
@@ -436,6 +448,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	va = GetVertexArray();
 	va->Initialize();
+	va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 	glAlphaFunc(GL_GREATER, 0.8f);
 	glEnable(GL_ALPHA_TEST);
 	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
@@ -483,7 +496,16 @@ static void DrawBins(LuaMatType type)
 
 	luaDrawing = true;
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+	if (type==LUAMAT_ALPHA || type==LUAMAT_ALPHA_REFLECT) {
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.1f);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}else{
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
+	}
 
 	const LuaMaterial* currMat = &LuaMaterial::defMat;
 
@@ -657,13 +679,19 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
-#if GML_ENABLE_DRAWUNITSHADOW
-	gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitShadowMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
-#else
-	std::list<CUnit*>::iterator usi;
-	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
-		CUnit* unit = *usi;
-		DoDrawUnitShadow(unit);
+#ifdef USE_GML
+	if(multiThreadDrawUnitShadow) {
+		gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
+		  &uh->activeUnits, uh->activeUnits.size(),50,100,TRUE);
+	}
+	else {
+#endif
+		std::list<CUnit*>::iterator usi;
+		for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+			CUnit* unit = *usi;
+			DoDrawUnitShadow(unit);
+		}
+#ifdef USE_GML
 	}
 #endif
 
@@ -693,10 +721,12 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	float ty = (unit->model->farTextureNum / 8) * r;
 	float offset = 0;
 
-	va->AddVertexTN(interPos - (camera->up * unit->radius * 1.4f - offset) + camera->right * unit->radius, tx,     ty,     camNorm);
-	va->AddVertexTN(interPos + (camera->up * unit->radius * 1.4f + offset) + camera->right * unit->radius, tx,     ty + r, camNorm);
-	va->AddVertexTN(interPos + (camera->up * unit->radius * 1.4f + offset) - camera->right * unit->radius, tx + r, ty + r, camNorm);
-	va->AddVertexTN(interPos - (camera->up * unit->radius * 1.4f - offset) - camera->right * unit->radius, tx + r, ty,     camNorm);
+	float3 curad=camera->up * unit->radius * 1.4f;
+	float3 crrad=camera->right * unit->radius;
+	va->AddVertexQTN(interPos - (curad - offset) + crrad, tx,     ty,     camNorm);
+	va->AddVertexQTN(interPos + (curad + offset) + crrad, tx,     ty + r, camNorm);
+	va->AddVertexQTN(interPos + (curad + offset) - crrad, tx + r, ty + r, camNorm);
+	va->AddVertexQTN(interPos - (curad - offset) - crrad, tx + r, ty,     camNorm);
 }
 
 
@@ -1500,7 +1530,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 {
-#if GML_ENABLE
+#ifdef USE_GML
 	quedS3Os.acquire(textureType).push_back(object);
 	quedS3Os.release();
 #else
@@ -1515,7 +1545,20 @@ void CUnitDrawer::DrawQuedS3O(void)
 {
 	SetupForS3ODrawing();
 
-#if !GML_ENABLE
+#ifdef USE_GML
+	int sz=quedS3Os.size();
+	for(int tex=0; tex<sz;++tex) {
+		if(quedS3Os[tex].size()>0) {
+			texturehandler->SetS3oTexture(tex);
+
+			for(GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
+				DrawWorldObjectS3O(*ui);
+			}
+
+			quedS3Os[tex].clear();
+		}
+	}
+#else
 	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
 		const int tex = *uti;
 		texturehandler->SetS3oTexture(tex);
@@ -1528,17 +1571,6 @@ void CUnitDrawer::DrawQuedS3O(void)
 	}
 
 	usedS3OTextures.clear();
-#else
-	int sz=quedS3Os.size();
-	for(int tex=0; tex<sz;++tex) {
-		if(quedS3Os[tex].size()>0) {
-			texturehandler->SetS3oTexture(tex);
-			for(GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
-				DrawWorldObjectS3O(*ui);
-			}
-			quedS3Os[tex].clear();
-		}
-	}
 #endif
 	CleanUpS3ODrawing();
 }
@@ -1832,12 +1864,12 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
-	if (!usingAtiHacks) {
+	if (!gu->atiHacks) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		DrawUnitModel(unit);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-	else {
+	} else {
+		//! some ATi mobility cards/drivers dont like clipping wireframes...
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
 
@@ -1866,16 +1898,12 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
 		glClipPlane(GL_CLIP_PLANE0, plane0);
 
-		//if (shadowHandler->drawShadows && !water->drawReflection) {
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-		//}
+		glPolygonOffset(1.0f, 1.0f);
+		glEnable(GL_POLYGON_OFFSET_FILL);
 
 		DrawUnitModel(unit);
 
-		//if (shadowHandler->drawShadows && !water->drawReflection) {
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		//}
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	glDisable(GL_CLIP_PLANE0);
@@ -1884,7 +1912,12 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
+#ifdef USE_GML
 	CMatrix44f m;
+#else
+	static CMatrix44f m;
+	m.LoadIdentity();
+#endif
 	unit->GetTransformMatrix(m);
 	glMultMatrixf(&m[0]);
 }
@@ -2090,7 +2123,7 @@ void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
 }
 
 
-void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* S3OObj)
+inline void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* S3OObj)
 {
 	if (S3OObj) {
 		// calls back to DrawUnitS3O() for units and

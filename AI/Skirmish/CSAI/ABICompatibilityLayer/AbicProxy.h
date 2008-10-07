@@ -45,9 +45,9 @@ const char AI_NAME[]="ABIC"; // probably should read this from config file or so
 using namespace std;
 
 #ifdef WIN32
-	#define AILOG_PATH "AI\\Skirmish/impls\\"
+	#define AILOG_PATH "AI\\Skirmish\\data\\"
 #else
-	#define AILOG_PATH "AI/Skirmish/impls/"
+	#define AILOG_PATH "AI/Skirmish/data/"
 #endif
 
 class AbicProxy : public ::IGlobalAI  

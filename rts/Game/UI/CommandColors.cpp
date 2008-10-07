@@ -3,30 +3,25 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include "CommandColors.h"
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <map>
-using namespace std;
+
+#include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Util.h"
 
+using namespace std;
 
 /******************************************************************************/
 
 
 CCommandColors cmdColors;
-
-
-static void InitColor(float color[4], float r, float g, float b, float a)
-{
-	color[0] = r;
-	color[1] = g;
-	color[2] = b;
-	color[3] = a;
-}
 
 
 CCommandColors::CCommandColors()

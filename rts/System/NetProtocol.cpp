@@ -1,6 +1,16 @@
-#include "NetProtocol.h"
-
+#include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <SDL_timer.h>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <deque>
+
+#include "mmgr.h"
+
+#include "NetProtocol.h"
 
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
@@ -31,7 +41,6 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	server.reset(conn);
 	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
 	server->Flush(true);
-	isLocal = false;
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
 	{
@@ -45,7 +54,6 @@ void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 {
 	server.reset(new netcode::CLocalConnection);
 	server->Flush();
-	isLocal = true;
 	if (!localDemoPlayback)
 	{
 		record.reset(new CDemoRecorder());

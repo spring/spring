@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "UnitLoader.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -49,6 +51,7 @@
 #include "Sound.h"
 #include "myMath.h"
 #include "LogOutput.h"
+#include "Exceptions.h"
 #include "TimeProfiler.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -302,14 +305,16 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->energyTickMake += ud->tidalGenerator * mapInfo->map.tidalStrength;
 
 
+
+
 	unit->model = ud->LoadModel(team);
 	unit->SetRadius(unit->model->radius);
 
 	// copy the UnitDef volume archetype data
 	unit->collisionVolume = SAFE_NEW CollisionVolume(ud->collisionVolume);
 
-	// CUnitDefHandler left this volume's axis-scales uninitialized
-	// (ie. no "collisionVolumeScales" tag was defined in UnitDef)
+	// if no "collisionVolumeScales" tag was defined in UnitDef,
+	// the default scale for this volume will be a ZeroVector
 	if (unit->collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
 		unit->collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
 		unit->collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
@@ -318,6 +323,12 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		// unit->radius themselves are no longer altered)
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
 		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
+
+		if (unit->collisionVolume->volumeBoundingRadius <= 30.0f) {
+			// the interval-based method fails too easily for units
+			// with small default volumes, force use of raytracing
+			unit->collisionVolume->testType = COLVOL_TEST_CONT;
+		}
 	}
 
 	if (ud->floater) {
@@ -327,8 +338,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
+//FIXME: add unitdef tag cob/cobscript/cobfilename
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
 	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+
 
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
@@ -446,6 +459,8 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	weapon->accuracy = weapondef->accuracy;
 	weapon->sprayAngle = weapondef->sprayAngle;
 
+	weapon->stockpileTime = (int) (weapondef->stockpileTime * GAME_SPEED);
+
 	weapon->salvoSize = weapondef->salvosize;
 	weapon->salvoDelay = (int) (weapondef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weapondef->projectilespershot;
@@ -507,12 +522,13 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
 		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
 		const int tz2 = std::min(gs->mapy, tz1 + bi.GetYSize());
-		float* heightmap = readmap->GetHeightmap();
-		for(int z = tz1; z <= tz2; z++){
-			for(int x = tx1; x <= tx2; x++){
-				heightmap[z * (gs->mapx + 1) + x] = bi.pos.y;
+
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				readmap->SetHeight(z * (gs->mapx + 1) + x, bi.pos.y);
 			}
 		}
+
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
 }

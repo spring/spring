@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "MobileCAI.h"
 #include "TransportCAI.h"
 #include "LineDrawer.h"
@@ -21,7 +23,8 @@
 #include "Sim/Weapons/DGunWeapon.h"
 #include "System/LogOutput.h"
 #include "myMath.h"
-#include "mmgr.h"
+#include <assert.h>
+#include "System/Util.h"
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
@@ -186,7 +189,7 @@ CMobileCAI::~CMobileCAI()
 
 }
 
-void CMobileCAI::GiveCommandReal(const Command &c)
+void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
 	if (!AllowedCommand(c))
 		return;
@@ -288,9 +291,8 @@ void CMobileCAI::RefuelIfNeeded()
 				}
 			}
 		} else if(owner->currentFuel <
-				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel)
-				&& commandQue.empty() || commandQue.front().id == CMD_PATROL
-				|| commandQue.front().id == CMD_FIGHT) {
+				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && 
+				(commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT)) {
 			CAirBaseHandler::LandingPad* lp =
 				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 			if(lp) {
@@ -1022,7 +1024,7 @@ void CMobileCAI::IdleCheck(void)
 			&& !owner->weapons.empty() && owner->haveTarget) {
 		if(!owner->userTarget) {
 			owner->haveTarget = false;
-		} else if(owner->pos.distance2D(owner->userTarget->pos) < 
+		} else if(owner->pos.distance2D(owner->userTarget->pos) <
 				owner->maxRange + 200*owner->moveState*owner->moveState) {
 			Command c;
 			c.id = CMD_ATTACK;

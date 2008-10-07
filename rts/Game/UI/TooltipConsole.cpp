@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -18,7 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
+#include "System/Util.h"
 
 
 CTooltipConsole* tooltip = 0;
@@ -207,7 +209,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
 		if (gs->Team(unit->team)->leader >= 0) {
-			s = gs->players[gs->Team(unit->team)->leader]->playerName.c_str();
+			s = gs->players[gs->Team(unit->team)->leader]->name.c_str();
 		} else {
 			s = "Uncontrolled";
 		}

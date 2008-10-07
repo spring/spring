@@ -80,7 +80,8 @@ class LuaMatTexture {
 
 		void Finalize();
 
-		void Execute(const LuaMatTexture& prev) const;
+		void Bind(const LuaMatTexture& prev) const;
+		void Unbind() const;
 
 		void Print(const string& indent) const;
 
@@ -128,7 +129,9 @@ class LuaMaterial {
 		: type(LuaMatType(-1)), // invalid
 		  order(0), texCount(0),
 		  preList(0), postList(0),
-		  useCamera(true), cameraLoc(0)
+		  useCamera(true), culling(0),
+		  cameraLoc(-1), cameraPosLoc(-1),
+		  shadowLoc(-1), shadowParamsLoc(-1)
 		{}
 
 		void Finalize();
@@ -159,7 +162,11 @@ class LuaMaterial {
 		GLuint postList;
 
 		bool useCamera;
+		GLenum culling;
 		GLint cameraLoc;
+		GLint cameraPosLoc;
+		GLint shadowLoc;
+		GLint shadowParamsLoc;
 
 		static const LuaMaterial defMat;
 };
@@ -173,7 +180,9 @@ class LuaMatBuilder {
 		: type(LuaMatType(-1)), // invalid
 		  order(0), texCount(0),
 		  preList(0), postList(0),
-		  useCamera(true), cameraLoc(0)
+		  useCamera(true), culling(0),
+		  cameraLoc(-1), cameraPosLoc(-1),
+		  shadowLoc(-1), shadowParamsLoc(-1)
 		{}
 
 		LuaMatRef GetRef() const;
@@ -189,7 +198,11 @@ class LuaMatBuilder {
 		GLuint postList;
 
 		bool useCamera;
+		GLenum culling;
 		GLint cameraLoc;
+		GLint cameraPosLoc;
+		GLint shadowLoc;
+		GLint shadowParamsLoc;
 };
 
 

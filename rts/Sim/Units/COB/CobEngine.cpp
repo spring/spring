@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CobEngine.h"
 #include "CobThread.h"
 #include "CobInstance.h"
@@ -6,7 +8,6 @@
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
-#include "mmgr.h"
 
 #ifndef _CONSOLE
 #include "TimeProfiler.h"

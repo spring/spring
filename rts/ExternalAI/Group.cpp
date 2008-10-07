@@ -82,10 +82,12 @@ void CGroup::PostLoad()
 		a++;
 	}
 	currentAiNum=a;
+/*
 	if(ai) {
 		ReleaseAI(currentAiKey.aiNumber,ai);
 		ai = 0;
 	}
+*/
 	if(lib) {
 		delete lib;
 		lib = 0;

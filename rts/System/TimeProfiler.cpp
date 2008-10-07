@@ -6,6 +6,8 @@
 #include <SDL_timer.h>
 #include <cstring>
 
+#include "mmgr.h"
+
 #include "UnsyncedRNG.h"
 
 

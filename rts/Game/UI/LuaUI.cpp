@@ -3,14 +3,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUI.h"
-
 #include <stdio.h>
 #include <set>
 #include <cctype>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaUI.h"
+
+
 using namespace std;
 
 #include "LuaInclude.h"
@@ -70,6 +74,7 @@ using namespace std;
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

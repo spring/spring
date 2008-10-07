@@ -72,7 +72,9 @@ void CMissileLauncher::Fire(void)
 
 	SAFE_NEW CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
 			projectileSpeed,
-			weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
+			weaponDef->flighttime == 0
+                ? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode)
+                : weaponDef->flighttime,
 			targetUnit, weaponDef, targetPos);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))

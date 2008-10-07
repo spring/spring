@@ -2,6 +2,7 @@
 // Projectile.cpp: implementation of the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
 #include "Projectile.h"
@@ -12,7 +13,6 @@
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -41,8 +41,7 @@ CProjectile::CProjectile():
 	deleteMe(false),
 	castShadow(false),
 	s3domodel(0),
-	collisionFlags(0),
-	id(0)
+	collisionFlags(0)
 {}
 
 
@@ -51,6 +50,7 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner)
 	pos += explosionPos;
 	SetRadius(1.7f);
 	ph->AddProjectile(this);
+
 	if (owner) {
 		AddDeathDependence(owner);
 	}
@@ -132,10 +132,10 @@ void CProjectile::DrawArray()
 }
 
 
-void CProjectile::DependentDied(CObject *o)
+void CProjectile::DependentDied(CObject* o)
 {
-	if(o==owner)
-		owner=0;
+	if (o == owner)
+		owner = 0;
 }
 
 void CProjectile::DrawCallback(void)

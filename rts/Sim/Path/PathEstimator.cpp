@@ -1,22 +1,25 @@
 #include "StdAfx.h"
+#include <fstream>
+#include <boost/bind.hpp>
+#include <boost/version.hpp>
+#include "lib/minizip/zip.h"
+#include "mmgr.h"
+
 #include "PathEstimator.h"
+
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/ConfigHandler.h"
-#include <fstream>
 
 #include "Map/Ground.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
-#include "lib/minizip/zip.h"
 #include "FileSystem/ArchiveZip.h"
 #include "Platform/FileSystem.h"
 
-#include <boost/bind.hpp>
-#include <boost/version.hpp>
 
 #define PATHDEBUG false
 
@@ -37,7 +40,7 @@ const unsigned int PATHOPT_BLOCKED = 64;
 const unsigned int PATHOPT_SEARCHRELATED = (PATHOPT_OPEN | PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED);
 const unsigned int PATHOPT_OBSOLETE = 128;
 
-const unsigned int PATHESTIMATOR_VERSION = 35;
+const unsigned int PATHESTIMATOR_VERSION = 38;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
@@ -52,7 +55,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
-	moveMathOptions(mmOpt)
+	moveMathOptions(mmOpt),
+	pathChecksum(0)
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
@@ -173,14 +177,20 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
+	int numThreads = configHandler.GetInt("HardwareThreadCount", 0);
+
+#if 0	// FIXME mantis #1033
 #if (BOOST_VERSION >= 103500)
-	int numThreads = boost::thread::hardware_concurrency();
+	if (numThreads == 0)
+		numThreads = boost::thread::hardware_concurrency();
 #else
-#  ifdef USE_GML	
-	int numThreads = GML_CPU_COUNT;
-#  else
-	int numThreads = configHandler.GetInt("HardwareThreadCount", 2);
+#  ifdef USE_GML
+	if (numThreads == 0)
+		numThreads = GML_CPU_COUNT;
 #  endif
+#endif
+#else //if 0
+	numThreads = 1;
 #endif
 
 	if (numThreads > 1) {
@@ -208,8 +218,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		}
 	} else {
 		// no threading
-		InitVertices(0, nbrOfVertices);
-		InitBlocks(0, nbrOfBlocks);
+		InitVerticesAndBlocks(0, nbrOfVertices,   0, nbrOfBlocks);
 
 		PrintLoadMsg("Reading estimate path costs (1 thread)");
 
@@ -291,8 +300,8 @@ void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock, int threadID)
 
 		if (threadID == -1) {
 			char calcMsg[512];
-			sprintf(calcMsg, "Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d, thread-ID %d)",
-				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size(), -1);
+			sprintf(calcMsg, "Blocks %d to %d (block-size %d, path-type %d of %d)",
+				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size());
 			PrintLoadMsg(calcMsg);
 		} else {
 			boost::mutex::scoped_lock lock(loadMsgMutex);
@@ -326,7 +335,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	float best = 100000000.0f;
 	int bestX = BLOCK_SIZE >> 1;
 	int bestZ = BLOCK_SIZE >> 1;
-	static int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
+	int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
 
 	// search for an accessible position
 	for (int z = 1; z < BLOCK_SIZE; z += 2) {
@@ -812,6 +821,8 @@ bool CPathEstimator::ReadFile(std::string name)
 	int fh = file.OpenFile("pathinfo");
 
 	if (fh) {
+		pathChecksum = file.GetCrc32("pathinfo");
+
 		unsigned int filehash = 0;
  		// Check hash.
 		file.ReadFile(fh, &filehash, 4);
@@ -869,6 +880,19 @@ void CPathEstimator::WriteFile(std::string name) {
 
 		zipCloseFileInZip(file);
 		zipClose(file, NULL);
+
+
+		// get the CRC over the written path data
+		CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
+
+		if (!pfile || !pfile->IsOpen()) {
+			delete pfile;
+			return;
+		}
+
+		std::auto_ptr<CArchiveZip> auto_pfile(pfile);
+		CArchiveZip& file(*pfile);
+		pathChecksum = file.GetCrc32("pathinfo");
 	}
 }
 
@@ -881,6 +905,10 @@ unsigned int CPathEstimator::Hash()
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }
 
+uint32_t CPathEstimator::GetPathChecksum()
+{
+	return pathChecksum;
+}
 
 void CPathEstimator::Draw(void)
 {

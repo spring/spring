@@ -1,11 +1,12 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
 		(float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
@@ -112,55 +113,55 @@ void CBeamLaserProjectile::Draw(void)
 	float3 pos1=startPos;
 	float3 pos2=endPos;
 
-
+  va->EnlargeArrays(32,0,VA_SIZE_TC);
 	if(camDist<1000){
-		va->AddVertexTC(pos1-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    kocolstart);
-		va->AddVertexTC(pos1+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,kocolstart);
-		va->AddVertexTC(pos1+dir1*size-dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
-		va->AddVertexTC(pos1-dir1*size-dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,kocolstart);
-		va->AddVertexTC(pos1-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    corecolstart);
-		va->AddVertexTC(pos1+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,corecolstart);
-		va->AddVertexTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
-		va->AddVertexTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
+		va->AddVertexQTC(pos1-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    kocolstart);
+		va->AddVertexQTC(pos1+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,kocolstart);
+		va->AddVertexQTC(pos1+dir1*size-dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
+		va->AddVertexQTC(pos1-dir1*size-dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,kocolstart);
+		va->AddVertexQTC(pos1-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    corecolstart);
+		va->AddVertexQTC(pos1+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,corecolstart);
+		va->AddVertexQTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
+		va->AddVertexQTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
 
-		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		kocolstart);
-		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			kocolstart);
-		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			kocolend);
-		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			kocolend);
-		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	corecolstart);
-		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	corecolstart);
-		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		corecolend);
-		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		corecolend);
+		va->AddVertexQTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		kocolstart);
+		va->AddVertexQTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			kocolstart);
+		va->AddVertexQTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			kocolend);
+		va->AddVertexQTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			kocolend);
+		va->AddVertexQTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	corecolstart);
+		va->AddVertexQTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	corecolstart);
+		va->AddVertexQTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		corecolend);
+		va->AddVertexQTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		corecolend);
 
-		va->AddVertexTC(pos2-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    kocolstart);
-		va->AddVertexTC(pos2+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,kocolstart);
-		va->AddVertexTC(pos2+dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
-		va->AddVertexTC(pos2-dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,kocolstart);
-		va->AddVertexTC(pos2-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    corecolstart);
-		va->AddVertexTC(pos2+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,corecolstart);
-		va->AddVertexTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
-		va->AddVertexTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
+		va->AddVertexQTC(pos2-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    kocolstart);
+		va->AddVertexQTC(pos2+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,kocolstart);
+		va->AddVertexQTC(pos2+dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,kocolstart);
+		va->AddVertexQTC(pos2-dir1*size+dir2*size, weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,kocolstart);
+		va->AddVertexQTC(pos2-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    corecolstart);
+		va->AddVertexQTC(pos2+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,corecolstart);
+		va->AddVertexQTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
+		va->AddVertexQTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
 	} else {
-		va->AddVertexTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		kocolstart);
-		va->AddVertexTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			kocolstart);
-		va->AddVertexTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			kocolend);
-		va->AddVertexTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			kocolend);
-		va->AddVertexTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	corecolstart);
-		va->AddVertexTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	corecolstart);
-		va->AddVertexTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		corecolend);
-		va->AddVertexTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		corecolend);
+		va->AddVertexQTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,		kocolstart);
+		va->AddVertexQTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,			kocolstart);
+		va->AddVertexQTC(pos2+dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,			kocolend);
+		va->AddVertexQTC(pos2-dir1*size,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,			kocolend);
+		va->AddVertexQTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,	corecolstart);
+		va->AddVertexQTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,	corecolstart);
+		va->AddVertexQTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,		corecolend);
+		va->AddVertexQTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,		corecolend);
 	}
 
 	//draw flare
 	float fsize = size*flaresize;
-	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,kocolstart);
-	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,kocolstart);
-	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,kocolstart);
-	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,kocolstart);
+	va->AddVertexQTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,kocolstart);
+	va->AddVertexQTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,kocolstart);
+	va->AddVertexQTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,kocolstart);
+	va->AddVertexQTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,kocolstart);
 
 	fsize = fsize*corethickness;
-	va->AddVertexTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,corecolstart);
-	va->AddVertexTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,corecolstart);
-	va->AddVertexTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,corecolstart);
-	va->AddVertexTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,corecolstart);
+	va->AddVertexQTC(pos1-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,corecolstart);
+	va->AddVertexQTC(pos1+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,corecolstart);
+	va->AddVertexQTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,corecolstart);
+	va->AddVertexQTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,corecolstart);
 }

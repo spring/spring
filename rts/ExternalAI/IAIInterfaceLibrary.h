@@ -22,6 +22,9 @@
 #include "IGroupAILibrary.h"
 #include <string>
 
+class CSkirmishAILibraryInfo;
+class CGroupAILibraryInfo;
+
 class IAIInterfaceLibrary {
 public:
 	virtual ~IAIInterfaceLibrary() {}
@@ -48,7 +51,7 @@ public:
 	/**
 	 * Returns the specifyers for all Skirmish AIs available through this interface.
 	 */
-	virtual std::vector<SSAISpecifyer> GetSkirmishAILibrarySpecifyers() const = 0;
+	//virtual std::vector<SSAISpecifyer> GetSkirmishAILibrarySpecifyers() const = 0;
 	/**
 	 * @brief	loads the AI library
 	 * This only loads the AI library, and does not yet create an instance
@@ -56,7 +59,9 @@ public:
 	 * For the C and C++ AI interface eg, this will load a shared library.
 	 * Increments the load counter.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer) = 0;
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer) = 0;
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
+	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* skirmishAIInfo) = 0;
 	/**
 	 * @brief	unloads the Skirmish AI library
 	 * This unloads the Skirmish AI library.
@@ -87,8 +92,10 @@ public:
 	
 	
 //	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfos(bool forceLoadFromLibrary = false) const;
-	virtual std::vector<SGAISpecifyer> GetGroupAILibrarySpecifyers() const = 0;
-	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifyer& gAISpecifyer) = 0;
+	//virtual std::vector<SGAISpecifyer> GetGroupAILibrarySpecifyers() const = 0;
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifyer& gAISpecifyer) = 0;
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
+	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) = 0;
 	virtual int ReleaseGroupAILibrary(const SGAISpecifyer& gAISpecifyer) = 0;
 	virtual int GetGroupAILibraryLoadCount(const SGAISpecifyer& gAISpecifyer) const = 0;
 	bool IsGroupAILibraryLoaded(const SGAISpecifyer& gAISpecifyer) const {

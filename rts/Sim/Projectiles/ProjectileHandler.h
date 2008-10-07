@@ -26,7 +26,7 @@ class IFramebuffer;
 
 typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
-typedef std::map<unsigned int, ProjectileMapPair> ProjectileMap;
+typedef std::map<int, ProjectileMapPair> ProjectileMap;
 
 
 class CProjectileHandler
@@ -128,8 +128,10 @@ private:
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex,int size);
 	struct FlyingPiece{
+#if !defined(USE_MMGR)
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+#endif
 
 		S3DOPrimitive* prim;
 		S3DO* object;

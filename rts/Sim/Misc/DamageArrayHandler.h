@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <boost/noncopyable.hpp>
+#include "creg/creg.h"
 
 class CDamageArrayHandler : public boost::noncopyable
 {

@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+#include "Util.h"
+
 /**
  * Just stores the arguments
  */

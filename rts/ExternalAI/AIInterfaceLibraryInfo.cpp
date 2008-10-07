@@ -21,7 +21,7 @@
 #include "IAIInterfaceLibrary.h"
 #include "Interface/aidefines.h"
 #include "Interface/SInfo.h"
-#include "StdAfx.h"
+#include "Util.h"
 #include "LogOutput.h"
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(const IAIInterfaceLibrary& interface) {

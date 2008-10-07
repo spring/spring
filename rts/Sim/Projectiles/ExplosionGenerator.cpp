@@ -2,6 +2,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <SDL_types.h>
+#include "mmgr.h"
+
 #include "creg/VarTypes.h"
 #include "ExplosionGenerator.h"
 #include "FileSystem/FileHandler.h"
@@ -21,7 +23,8 @@
 #include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
-#include "mmgr.h"
+#include <assert.h>
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;
@@ -458,7 +461,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 
 void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
-	int offset, creg::IType *type, const string& script, string& code)
+	int offset, boost::shared_ptr<creg::IType> type, const string& script, string& code)
 {
 
 	string::size_type end = script.find(';', 0);
@@ -471,8 +474,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		Uint16 ofs = offset;
 		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
-	else if (dynamic_cast<creg::BasicType*>(type)) {
-		creg::BasicType *bt = (creg::BasicType*)type;
+	else if (dynamic_cast<creg::BasicType*>(type.get())) {
+		creg::BasicType *bt = (creg::BasicType*)type.get();
 
 		if (bt->id != creg::crInt && bt->id != creg::crFloat && bt->id != creg::crUChar && bt->id != creg::crBool) {
 			throw content_error("Projectile properties other than int, float and uchar, are not supported (" + script + ")");
@@ -530,8 +533,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		Uint16 ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
-	else if (dynamic_cast<creg::ObjectInstanceType*>(type)) {
-		creg::ObjectInstanceType *oit = (creg::ObjectInstanceType *)type;
+	else if (dynamic_cast<creg::ObjectInstanceType*>(type.get())) {
+		creg::ObjectInstanceType *oit = (creg::ObjectInstanceType *)type.get();
 
 		string::size_type start = 0;
 		for (creg::Class* c = oit->objectClass; c; c=c->base) {
@@ -544,8 +547,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			if (start >= script.length()) break;
 		}
 	}
-	else if (dynamic_cast<creg::StaticArrayBaseType*>(type)) {
-		creg::StaticArrayBaseType *sat = (creg::StaticArrayBaseType*)type;
+	else if (dynamic_cast<creg::StaticArrayBaseType*>(type.get())) {
+		creg::StaticArrayBaseType *sat = (creg::StaticArrayBaseType*)type.get();
 
 		string::size_type start = 0;
 		for (unsigned int i=0; i < sat->size; i++) {

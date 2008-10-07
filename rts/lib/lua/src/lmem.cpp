@@ -7,6 +7,8 @@
 
 #include <stddef.h>
 
+#include "mmgr.h"
+
 #define lmem_c
 #define LUA_CORE
 

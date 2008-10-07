@@ -38,6 +38,12 @@ struct MapInfo
 };
 
 
+enum BitmapType {
+	bm_grayscale_8 = 1,
+	bm_grayscale_16 = 2
+};
+
+
 const char *GetStr(std::string str);
 
 
@@ -258,7 +264,7 @@ Export(const char*) GetLuaAIDesc(int aiIndex);
 Export(int) GetSkirmishAICount();
 /**
  * Returns the specifyer of a Skirmish AI.
- * It contians all hte info needed to specify an AI in script.txt eg.
+ * It contians all the info needed to specify an AI in script.txt eg.
  */
 Export(struct SSAISpecifyer) GetSkirmishAISpecifyer(int index);
 /**

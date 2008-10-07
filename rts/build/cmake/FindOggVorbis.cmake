@@ -75,6 +75,8 @@ else (OGGVORBIS_FOUND)
    endif (NOT OggVorbis_FIND_QUITELY)
 endif (OGGVORBIS_FOUND)
 
+mark_as_advanced(VORBIS_INCLUDE_DIR OGG_INCLUDE_DIR OGG_LIBRARY VORBIS_LIBRARY VORBISFILE_LIBRARY VORBISENC_LIBRARY)
+
 #check_include_files(vorbis/vorbisfile.h HAVE_VORBISFILE_H)
 #check_library_exists(ogg ogg_page_version "" HAVE_LIBOGG)
 #check_library_exists(vorbis vorbis_info_init "" HAVE_LIBVORBIS)

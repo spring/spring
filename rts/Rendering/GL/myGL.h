@@ -8,9 +8,9 @@
 
 #include <string>
 #include <GL/glew.h>
-
 #include "lib/gml/gml.h"
 
+// includes boost now!
 #include "float3.h"
 
 

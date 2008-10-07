@@ -1,8 +1,11 @@
 #include "StdAfx.h"
-#include "GameInfo.h"
 #include <string>
 #include <vector>
+#include <SDL_keysym.h>
 
+#include "mmgr.h"
+
+#include "GameInfo.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
@@ -13,7 +16,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/ModInfo.h"
-#include <SDL_keysym.h>
+
 
 using namespace std;
 
@@ -162,8 +165,13 @@ void CGameInfo::Draw()
 	}
 	
 	labels.push_back("Game Version:");
+#ifdef USE_GML
+	char ver[64];
+	sprintf(ver, "%s MT (%d threads)", VERSION_STRING, gmlThreadCount);
+	values.push_back(ver);
+#else
 	values.push_back(VERSION_STRING);
-
+#endif
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 

@@ -26,7 +26,7 @@ public:
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
 
-	void GiveCommandReal(const Command& c);
+	void GiveCommandReal(const Command& c, bool fromSynced = true);
 
 	void InsertBuildCommand(CCommandQueue::iterator& it, const Command& c);
 	void RemoveBuildCommand(CCommandQueue::iterator& it);

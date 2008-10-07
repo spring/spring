@@ -1,10 +1,22 @@
-#include "AIExport.h"
+/*
+    Copyright 2008  Nicolas Wu
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-#include <map>
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-#include "ExternalAI/Interface/LegacyCppWrapper/AI.h"
-#include "ExternalAI/Interface/LegacyCppWrapper/AIGlobalAI.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	
+	@author Nicolas Wu
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
+*/
 
 /*
 If we do not have an init() method, then we would instead pass
@@ -14,7 +26,7 @@ the team in question would not yet exist.
 
 Therefore, the handleEvent code would look like this:
 [code]
-DLL_EXPORT int handleEvent(int team, int eventID, void* event) {
+Export(int) handleEvent(int team, int eventID, void* event) {
     if (eventID == INIT_EVENT) {
         ais[team] = CAIObject();
     }
@@ -69,59 +81,26 @@ to address lookups and so there is no increase in cost if there are more switch
 cases. 
 */
 
-std::map<int, CAI*> ais;
 
-/*
-DLL_EXPORT int version() {
-    return 1;
-}
-*/
+#include "AIExport.h"
+
+//#include "ExternalAI/Interface/SSAILibrary.h"
 
 // Since this is a C interface, we can only be told by the engine
 // to set up an AI with the number team that indicates a receiver
 // of any handleEvent() call.
 Export(int) init(int teamId) {
-	
-    if (ais.count(teamId) > 0) {
-		// the map already has an AI for this team.
-		// raise an error, since it's probably a mistake if we're trying
-		// reinitialise a team that's already had init() called on it.
-        return -1;
-    }
-	
-    //TODO:
-    // Change the line below so that CAI is 
-    // your AI, which should be a subclass of CAI that
-    // overrides the handleEvent() method.
-    ais[teamId] = new CAI(teamId, NULL);
+	// TODO: do something
+	return 0;
 }
 
 Export(int) release(int teamId) {
-	
-    if (ais.count(teamId) == 0) {
-		// the map has no AI for this team.
-		// raise an error, since it's probably a mistake if we're trying to
-		// release a team that's not initialized.
-        return -1;
-    }
-	
-    delete ais[teamId];
-	ais.erase(teamId);
-	
+	// TODO: do something
 	return 0;
 }
 
 Export(int) handleEvent(int teamId, int topic, const void* data) {
-	
-	if (ais.count(teamId) > 0) {
-        // allow the AI instance to handle the event.
-        return ais[teamId]->handleEvent(topic, data);
-    } else {
-		// events sent to team -1 will always be to the AI object itself,
-		// not to a particular team.
-		
-		// no ai with value, so return error.
-		return -1;
-	}
+	// TODO: do something
+	return 0;
 }
 

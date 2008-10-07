@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include <cstdlib>
+
 #include "BFGroundTextures.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -14,7 +16,10 @@
 using std::string;
 using std::max;
 
-CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
+CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
+	bigSquareSize(128),
+	numBigTexX(gs->mapx / bigSquareSize),
+	numBigTexY(gs->mapy / bigSquareSize)
 {
 	usePBO = false;
 	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
@@ -23,14 +28,11 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm)
 		usePBO = true;
 	}
 
-	CFileHandler* ifs = rm->ifs;
+	// todo: refactor: put reading code in CSmfFile and keep errorhandling/progress reporting here..
+	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	map = rm;
 
-	bigSquareSize = 128;
-	numBigTexX = gs->mapx / bigSquareSize;
-	numBigTexY = gs->mapy / bigSquareSize;
-
-	SMFHeader* header = &map->header;
+	const SMFHeader* header = &map->GetFile().GetHeader();
 	ifs->Seek(header->tilesPtr);
 
 	tileSize = header->tilesize;

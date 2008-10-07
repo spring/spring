@@ -10,9 +10,34 @@
 #define GMLSRV_H
 
 #ifdef USE_GML
+#define GML_MT_TEST 0
 
 #include <boost/thread/barrier.hpp>
-#include  <boost/bind.hpp>
+#include <boost/bind.hpp>
+#include "System/Platform/errorhandler.h"
+#include "lib/streflop/streflop_cond.h"
+
+EXTERN inline void gmlUpdateServers() {
+	gmlItemsConsumed=0;
+	gmlProgramServer.GenerateItems();
+	gmlProgramObjectARBServer.GenerateItems();
+	gmlShaderServer_VERTEX.GenerateItems();
+	gmlShaderServer_FRAGMENT.GenerateItems();
+	gmlShaderObjectARBServer_VERTEX.GenerateItems();
+	gmlShaderObjectARBServer_FRAGMENT.GenerateItems();
+	gmlQuadricServer.GenerateItems();
+
+	gmlTextureServer.GenerateItems();
+	gmlBufferARBServer.GenerateItems();
+	gmlFencesNVServer.GenerateItems();
+	gmlProgramsARBServer.GenerateItems();
+	gmlRenderbuffersEXTServer.GenerateItems();
+	gmlFramebuffersEXTServer.GenerateItems();
+	gmlQueryServer.GenerateItems();
+	gmlBufferServer.GenerateItems();
+
+	gmlListServer.GenerateItems();
+}
 
 #define GML_MAX_EXEC_DEPTH 4
 
@@ -40,7 +65,7 @@ struct gmlExecState {
 
 	void ExecServerFun() {
 		if(serverfun)
-		  (*serverfun)(workerclass);
+			(*serverfun)(workerclass);
 	}
 
 	void ExecAll(int &pos, typename std::list<U>::iterator &it) {
@@ -49,20 +74,20 @@ struct gmlExecState {
 			return;
 		if(workeriter) {
 			while(++i<num_units) {
-  			(*workeriter)(workerclass,*it);
+				(*workeriter)(workerclass,*it);
 				++it;
 				++pos;
 			}
 		}
 		else if(worker) {
 			while(++i<num_units)
-  			(*worker)(workerclass);
+				(*worker)(workerclass);
 		}
 		else if(workerarg) {
 			while(++i<num_units)
-  			(*workerarg)(workerclass,i);
+				(*workerarg)(workerclass,i);
 		}
-    UnitCounter%=num_units;
+		UnitCounter%=num_units;
 	}
 
 	BOOL_ Exec(int &pos, typename std::list<U>::iterator &it) {
@@ -92,18 +117,28 @@ class gmlClientServer {
 public:
 	int ExecDepth;
 	GML_TYPENAME gmlExecState<R,A,U> ExecState[GML_MAX_EXEC_DEPTH];
-  boost::barrier Barrier; 
+	boost::barrier Barrier; 
 	boost::thread *threads[GML_MAX_NUM_THREADS];
+	volatile BOOL_ dorun;
 	BOOL_ inited;
 	gmlCount threadcnt;
 	gmlCount ClientsReady;
 	BOOL_ newwork;
 
-	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE) {
-		inited=FALSE;
+	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE),inited(FALSE),dorun(TRUE) {
 	}
 
 	~gmlClientServer() {
+		if(inited) {
+			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+			ex->maxthreads=0;
+			dorun=FALSE;
+			Barrier.wait();
+			for(int i=1; i<gmlThreadCount; ++i) {
+				threads[i]->join();
+				delete threads[i];
+			}
+		}
 	}
 
 	void gmlServer() {
@@ -119,21 +154,22 @@ public:
 			newwork=0;
 
 			Barrier.wait();
-      
+			
 			if(execswf)
-			  ex->ExecServerFun();
+				ex->ExecServerFun();
 
 			typename std::list<U>::iterator it;
 			if(ex->workeriter)
 				it=ex->iter->begin();
 			int pos=0;
-//      int nproc=0;
+//			int nproc=0;
 			int updsrv=0;
 			if(gmlThreadCount>1) {
 				while(ClientsReady<=gmlThreadCount+1) {
 					if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
-  					gmlUpdateServers();
+						gmlUpdateServers();
 					BOOL_ processed=FALSE;
+
 					for(int i=1; i<gmlThreadCount; ++i) {
 						gmlQueue *qd=&gmlQueues[i];
 						if(qd->Reloc)
@@ -153,6 +189,7 @@ public:
 							//						++nproc;
 						}
 					}
+
 					if(ClientsReady>=gmlThreadCount-1)
 						++ClientsReady;
 				}
@@ -160,7 +197,8 @@ public:
 			else {
 				ex->ExecAll(pos,it);
 			}
-//			GML_DEBUG("server ",nproc)
+
+//			GML_DEBUG("server ",nproc, 3)
 			if(ExecDepth>0 && !*(volatile int *)&newwork) {
 				--ExecDepth;
 				newwork=-1;
@@ -170,23 +208,30 @@ public:
 	}
 
 	void WorkInit() {
-		if(!inited) {
-  		gmlInit();
-			for(int i=1; i<gmlThreadCount; ++i)
-				threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
-			inited=TRUE;
+//		set_threadnum(0);
+		gmlInit();
+
+		for(int i=1; i<gmlThreadCount; ++i)
+			threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
+#if GML_ENABLE_TLS_CHECK
+		for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
+			boost::thread::yield();
+		if(gmlThreadNumber!=0) {
+			handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 		}
+#endif
+		inited=TRUE;
 	}
 
 	void Work(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, GML_TYPENAME std::list<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
+		if(!inited)
+			WorkInit();
 		if(gmlThreadNumber!=0) {
 			NewWork(wrk,wrka,wrkit,cls,mt,sm,it,nu,l1,l2,sw,swf);
 			return;
 		}
-  	GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState;
 		new (ex) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
-		if(!inited)
-			WorkInit();
 		gmlServer();
 	}
 
@@ -194,7 +239,7 @@ public:
 		gmlQueue *qd=&gmlQueues[gmlThreadNumber];
 		qd->ReleaseWrite();
 
-  	GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 		new (ex+1) GML_TYPENAME gmlExecState<R,A,U>(wrk,wrka,wrkit,cls,mt,sm,nu,it,l1,l2,sw,swf);
 		newwork=TRUE;
 
@@ -213,10 +258,10 @@ public:
 		Barrier.wait();
 
 		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
-    
+		
 		int thread=gmlThreadNumber;
 		if(thread>=ex->maxthreads) {
-  		++ClientsReady;	
+			++ClientsReady;	
 			return;
 		}
 
@@ -246,7 +291,7 @@ public:
 			if(processed>=ex->limit1 && qd->GetWrite(processed>=ex->limit2))
 				processed=0;
 //			if(exproc!=processed) {
-//				GML_DEBUG("client ",exproc)
+//				GML_DEBUG("client ",exproc, 3)
 //			}
 		}
 		qd->ReleaseWrite();
@@ -254,12 +299,63 @@ public:
 	}
 
 	void gmlClient() {
-		gmlThreadNumber=++threadcnt;
+		set_threadnum(++threadcnt);
 		streflop_init<streflop::Simple>();
-		while(1) {
-      gmlClientSub();
+		while(dorun) {
+			gmlClientSub();
 		}
 	}
+
+	void GetQueue() {
+		int thread=gmlThreadNumber;
+		int processed=1;
+
+		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+
+		gmlQueue *qd=&gmlQueues[thread];
+
+		BOOL_ isq1=qd->Write==qd->Queue1;
+
+#if GML_ALTERNATE_SYNCMODE
+		if(qd->WasSynced && qd->GetWrite(ex->syncmode?TRUE:2))
+#else
+		if(qd->WasSynced && qd->GetWrite(TRUE))
+#endif
+			processed=0;
+		if(processed && qd->GetWrite(TRUE))
+			processed=0;
+
+		if(isq1) {
+			while(qd->Locked1)
+				boost::thread::yield();
+		}
+		else {
+			while(qd->Locked2)
+				boost::thread::yield();
+		}
+	}
+
+	void Pump(int thread) {
+		int updsrv=0;
+		gmlUpdateServers();
+		BOOL_ processed=FALSE;
+
+//		for(int i=1; i<gmlThreadCount; ++i) {
+			gmlQueue *qd=&gmlQueues[thread];
+			if(qd->Reloc)
+				qd->Realloc();
+			if(qd->GetRead()) {
+				qd->Execute();
+				qd->ReleaseRead();
+				processed=TRUE;
+			}
+			if(qd->Sync) {
+				qd->ExecuteSynced();
+				processed=TRUE;
+			}
+//		}
+	}
+
 };
 
 #endif // USE_GML

@@ -1,10 +1,11 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "RadarHandler.h"
 #include "TimeProfiler.h"
 #include "LosHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Map/ReadMap.h"
-#include "mmgr.h"
 
 
 CR_BIND(CRadarHandler, (false));

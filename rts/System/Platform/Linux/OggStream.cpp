@@ -1,5 +1,7 @@
 #include <SDL.h>
 
+// LogOutput.h needs this
+#include "float3.h"
 #include "LogOutput.h"
 #include "OggStream.h"
 

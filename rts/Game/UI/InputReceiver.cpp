@@ -1,7 +1,8 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
-#include "mmgr.h"
 
 
 float CInputReceiver::guiAlpha = 0.8f;

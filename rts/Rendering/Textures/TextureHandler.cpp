@@ -3,13 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "TextureHandler.h"
 
 #include <algorithm>
 #include <cctype>
 #include <set>
 #include <sstream>
+#include "mmgr.h"
 
+#include "TextureHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "Game/Team.h"
@@ -21,7 +22,8 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
-#include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -297,7 +299,8 @@ int CTextureHandler::LoadS3OTexture(const std::string& tex1, const std::string& 
 	tex.tex2=0;
 	tex.tex2SizeX = 0;
 	tex.tex2SizeY = 0;
-	if(unitDrawer->advShading){
+	//if(unitDrawer->advShading)
+{
 		CBitmap bm;
 		// No error checking here... other code relies on an empty texture
 		// being generated if it couldn't be loaded.
@@ -310,7 +313,7 @@ int CTextureHandler::LoadS3OTexture(const std::string& tex1, const std::string& 
 		tex.tex2 = bm.CreateTexture(true);
 		tex.tex2SizeX = bm.xsize;
 		tex.tex2SizeY = bm.ysize;
-	}
+}
 	s3oTextures.push_back(tex);
 	s3oTextureNames[totalName]=newNum;
 	return newNum;
@@ -322,11 +325,11 @@ void CTextureHandler::SetS3oTexture(int num)
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
 	} else {
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
-		if(unitDrawer->advShading){
+		//if(unitDrawer->advShading){
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
+		//}
 	}
 }
 

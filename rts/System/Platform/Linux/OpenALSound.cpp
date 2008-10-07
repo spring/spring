@@ -16,6 +16,7 @@
 #include "OpenALSound.h"
 #include "OggStream.h"
 #include "mmgr.h"
+#include "System/Exceptions.h"
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;

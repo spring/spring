@@ -53,7 +53,10 @@ public:
 	bool drawLineOfSight;
 	bool wireframe;
 
-	int striptype;
+	float LODScaleReflection;
+	float LODScaleRefraction;
+	float LODScaleUnitReflection;
+
 	GLuint infoTex;
 
 	unsigned char* infoTexMem;
@@ -66,16 +69,16 @@ public:
 
 	int updateTextureState;
 
-	float infoTexAlpha;
-
 	DrawMode drawMode;
+
+	float infoTexAlpha;
 
 	int jamColor[3];
 	int losColor[3];
 	int radarColor[3];
 	int alwaysColor[3];
 	static const int losColorScale = 10000;
-	
+
 	bool highResLosTex;
 // 	bool smoothLosTex;
 

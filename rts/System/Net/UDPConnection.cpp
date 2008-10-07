@@ -1,8 +1,10 @@
-#include "UDPConnection.h"
-
 #include <SDL_timer.h>
 #include <boost/version.hpp>
 #include <boost/format.hpp>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <deque>
 
 #ifdef _WIN32
  #include "Platform/Win/win32.h"
@@ -10,6 +12,10 @@
  #include <arpa/inet.h>
  #include <sys/socket.h>
 #endif
+
+#include "mmgr.h"
+
+#include "UDPConnection.h"
 
 #include "ProtocolDef.h"
 #include "Exception.h"

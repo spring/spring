@@ -32,7 +32,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.869"
+#define AAI_VERSION "0.87"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_86"
 #define MAP_DATA_VERSION "MAP_DATA_0_86"
@@ -77,7 +77,7 @@ public:
 #define MOVE_TYPE_STATIC_WATER (unsigned int) 512
 
 
-#define MOVE_TYPE_UNIT (unsigned int) 31	// used to filter out unit movement typ (e.g. only MOVE_TYPE_SEA for sumarines (that also have MOVE_TYPE_UNDERWATER set))
+#define MOVE_TYPE_UNIT (unsigned int) 31	// used to filter out unit movement type (e.g. only MOVE_TYPE_SEA for sumarines (that also have MOVE_TYPE_UNDERWATER set))
 #define MOVE_TYPE_CONTINENT_BOUND (unsigned int) 9
 
 
@@ -136,8 +136,8 @@ struct UnitTypeDynamic
 	int under_construction;	// how many units of that type are under construction
 	int requested;			// how many units of that type have been requested
 	int active;				// how many units of that type are currently alive
-	int buildersAvailable;	// how many factories/builders available being able to build that unit
-	int buildersRequested;	// how many factories/builders requested being able to build that unit
+	int constructorsAvailable;	// how many factories/builders available being able to build that unit
+	int constructorsRequested;	// how many factories/builders requested being able to build that unit
 };
 
 struct UnitTypeStatic

@@ -9,6 +9,10 @@
 #include <list>
 #include <boost/noncopyable.hpp>
 
+#include "creg/creg.h"
+#include "float3.h"
+#include "GlobalStuff.h"
+
 class CUnit;
 class CWorldObject;
 class CFeature;

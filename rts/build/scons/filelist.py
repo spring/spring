@@ -119,12 +119,10 @@ def get_spring_source(env):
 
 
 def get_AI_source(env, path, which):
-	return get_source(env, os.path.join(path, which)) #+ get_source(env, 'rts/ExternalAI/Interface')
-
+	return get_source(env, os.path.join(path, which))
 
 def get_AIInterface_source(env, which):
 	return get_AI_source(env, 'AI/Interfaces', which)
-
 
 def get_skirmishAI_source(env, which):
 	return get_AI_source(env, 'AI/Skirmish', which)
@@ -215,7 +213,6 @@ def get_shared_skirmishAI_source(env, isLegacyCPP, needLuaParsing = False, needC
 		#result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
 		#result += [os.path.join(env['builddir'], 'rts/System/LogOutput.cpp')]
 	return result
-
 
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	exclude = re.compile(exclude_regexp)

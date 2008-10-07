@@ -1,6 +1,19 @@
 #ifndef CR_MAP_TYPE_IMPL_H
 #define CR_MAP_TYPE_IMPL_H
 
+#include "creg.h"
+
+///@TODO gcc hash_map declared as deprecated, port to hash_map
+#ifdef _MSC_VER
+	#define SPRING_HASH_MAP stdext::hash_map
+	#define SPRING_HASH_MAP_H <hash_map>
+#elif __GNUG__
+	#define SPRING_HASH_MAP __gnu_cxx::hash_map
+	#define SPRING_HASH_MAP_H <ext/hash_map>
+#else
+	#error Unsupported compiler
+#endif
+
 #include <map>
 // hash_map, defined in stdafx.h
 #include SPRING_HASH_MAP_H
@@ -33,14 +46,12 @@ namespace creg
 	template<typename T>
 	struct MapType : public IType
 	{
-		IType *mappedType, *keyType;
+		boost::shared_ptr<IType> keyType, mappedType;
 		typedef typename T::iterator iterator;
 
-		MapType (IType *keyType,IType *mappedType) :
+		MapType (boost::shared_ptr<IType> keyType, boost::shared_ptr<IType> mappedType) :
 			keyType (keyType), mappedType(mappedType) {}
 		~MapType () {
-			delete keyType;
-			delete mappedType;
 		}
 
 		void Serialize (ISerializer *s, void *instance)
@@ -71,40 +82,39 @@ namespace creg
 	// Map type
 	template<typename TKey, typename TValue>
 	struct DeduceType < std::map<TKey, TValue> > {
-		IType* Get () {
+		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return SAFE_NEW MapType < std::map <TKey, TValue> > (keytype.Get(), valuetype.Get());
+			return boost::shared_ptr<IType>(SAFE_NEW MapType < std::map <TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 	// Multimap
 	template<typename TKey, typename TValue>
 	struct DeduceType < std::multimap<TKey, TValue> > {
-		IType* Get () {
+		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return SAFE_NEW MapType < std::multimap<TKey, TValue> > (keytype.Get(), valuetype.Get());
+			return boost::shared_ptr<IType>(SAFE_NEW MapType < std::multimap<TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 	// Hash map
 	template<typename TKey, typename TValue>
 	struct DeduceType < SPRING_HASH_MAP<TKey, TValue> > {
-		IType* Get () {
+		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return SAFE_NEW MapType < SPRING_HASH_MAP<TKey, TValue> > (keytype.Get(), valuetype.Get());
+			return boost::shared_ptr<IType>(SAFE_NEW MapType < SPRING_HASH_MAP<TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 
 	template<typename T>
 	struct PairType : public IType
 	{
-		PairType (IType *first, IType *second) { firstType=first; secondType=second; }
-		~PairType () { 
-			delete firstType;
-			delete secondType;
+		PairType (boost::shared_ptr<IType> first, boost::shared_ptr<IType> second):
+				firstType(first), secondType(second) {}
+		~PairType () {
 		}
-		IType *firstType, *secondType;
+		boost::shared_ptr<IType> firstType, secondType;
 
 		void Serialize (ISerializer *s, void *instance)
 		{
@@ -119,11 +129,10 @@ namespace creg
 	template<typename TFirst, typename TSecond>
 	struct DeduceType < std::pair<TFirst, TSecond> >
 	{
-		IType* Get () {
+		boost::shared_ptr<IType> Get () {
 			DeduceType<TFirst> first;
 			DeduceType<TSecond> second;
-			PairType <std::pair<TFirst, TSecond> > *pt = SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get());
-			return pt;
+			return boost::shared_ptr<IType>(SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get()));
 		}
 	};
 };

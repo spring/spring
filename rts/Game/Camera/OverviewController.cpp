@@ -1,3 +1,6 @@
+#include "StdAfx.h"
+#include "mmgr.h"
+
 #include "OverviewController.h"
 
 #include "Map/Ground.h"

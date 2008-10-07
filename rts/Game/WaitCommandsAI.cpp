@@ -3,8 +3,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "WaitCommandsAI.h"
+#include "mmgr.h"
+
 #include <SDL_timer.h>
+#include "WaitCommandsAI.h"
 #include "SelectedUnits.h"
 #include "Team.h"
 #include "Game/GameHelper.h"
@@ -22,7 +24,8 @@
 #include "UI/CursorIcons.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_List.h"
-
+#include "Util.h"
+#include <assert.h>
 
 CWaitCommandsAI waitCommandsAI;
 

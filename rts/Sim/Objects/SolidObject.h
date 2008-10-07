@@ -30,10 +30,10 @@ public:
 
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {};
 	virtual void Kill(float3& impulse) {};
+	virtual int GetBlockingMapID() const { return -1; }
 
 	void Block();
 	void UnBlock();
-
 
 	// Static properties.
 	float mass;									// The physical mass of this object.
@@ -45,7 +45,7 @@ public:
 	int xsize;									// The x-size of this object, according to its footprint.
 	int ysize;									// The z-size of this object, according to its footprint. (NOTE: This one should have been called zsize!)
 	float height;								// The height of this object.
-	short heading;								// Contains the same information as frontdir, but in a short signed integer.
+	SyncedSshort heading;								// Contains the same information as frontdir, but in a short signed integer.
 	
 	// Positional properties.
 	PhysicalState physicalState;				// The current state of the object within the gameworld. I.e Flying or OnGround.
@@ -64,7 +64,7 @@ public:
 	int2 mapPos;								// Current position on GroundBlockingMap.
 	unsigned char* yardMap;						// Current active yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;							// Orientation of footprint, 4 different states
-	bool isMarkedOnBlockingMap;					// Tells if this object are marked on the GroundBlockingMap.
+	bool isMarkedOnBlockingMap;					// true if this object is currently marked on the GroundBlockingMap
 
 	// Old stuff. Used for back-compability. NOTE: Don't use these!
 	float3 speed;

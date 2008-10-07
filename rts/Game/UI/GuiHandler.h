@@ -59,7 +59,7 @@ class CGuiHandler : public CInputReceiver {
 
  		bool GetGatherMode() const { return gatherMode; }
  		void SetGatherMode(bool value) { gatherMode = value; }
-		
+
 		bool GetOutlineFonts() const { return outlineFonts; }
 
 		int  GetDefaultCommand(int x, int y) const;
@@ -69,6 +69,9 @@ class CGuiHandler : public CInputReceiver {
 		                      int button, bool lmb, bool rmb,
 		                      bool alt, bool ctrl, bool meta, bool shift);
 		bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
+
+		void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
+		bool GetDrawSelectionInfo() { return drawSelectionInfo; }
 
 	public:
 		std::vector<CommandDescription> commands;
@@ -153,7 +156,7 @@ class CGuiHandler : public CInputReceiver {
 		int maxPage;
 		int activePage;
 		int defaultCmdMemory;
-		int fadein;
+		//int fadein;
 		CglList* list;
 
 		int actionOffset;
@@ -175,6 +178,8 @@ class CGuiHandler : public CInputReceiver {
 		bool selectGaps;
 		bool selectThrough;
 		bool outlineFonts;
+		bool drawSelectionInfo;
+
 		float frameAlpha;
 		float textureAlpha;
 		std::vector<int> fillOrder;

@@ -2,6 +2,7 @@
 // DrawWater.cpp: implementation of the CBasicWater class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "BasicWater.h"
 #include "Rendering/GL/myGL.h"
@@ -9,7 +10,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -36,12 +37,13 @@ CBasicWater::CBasicWater()
 
 CBasicWater::~CBasicWater()
 {
-	glDeleteTextures (1, &texture);
+	glDeleteTextures(1, &texture);
+	glDeleteLists(displist,1);
 }
 
 void CBasicWater::Draw()
 {
-	if(readmap->minheight > 10)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	if(displist == 0) {

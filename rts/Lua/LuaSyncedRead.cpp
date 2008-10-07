@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaSyncedRead.h"
 #include <set>
 #include <list>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaSyncedRead.h"
 
 #include "LuaInclude.h"
 
@@ -65,6 +68,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 using namespace std;
 
@@ -1228,7 +1232,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NONAME");
 	} else {
-		lua_pushstring(L, player->playerName.c_str());
+		lua_pushstring(L, player->name.c_str());
 	}
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
@@ -2342,7 +2346,7 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* decoyDef = IsAllyUnit(unit) ? NULL : unitDef->decoyDef;
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
-		tooltip = gs->players[gs->Team(unit->team)->leader]->playerName;
+		tooltip = gs->players[gs->Team(unit->team)->leader]->name;
 	} else {
 		if (!decoyDef) {
 			tooltip = unit->tooltip;
@@ -2573,12 +2577,10 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 	}
 
 #define PACK_VECTOR(n) \
-	HSTR_PUSH(L, #n);           \
 	lua_newtable(L);            \
 	lua_pushnumber(L, 1); lua_pushnumber(L, unit-> n .x); lua_rawset(L, -3); \
 	lua_pushnumber(L, 2); lua_pushnumber(L, unit-> n .y); lua_rawset(L, -3); \
-	lua_pushnumber(L, 3); lua_pushnumber(L, unit-> n .z); lua_rawset(L, -3); \
-	lua_rawset(L, -3)
+	lua_pushnumber(L, 3); lua_pushnumber(L, unit-> n .z); lua_rawset(L, -3)
 
 	PACK_VECTOR(frontdir);
 	PACK_VECTOR(updir);

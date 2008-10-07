@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
@@ -17,8 +19,9 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
-#include "mmgr.h"
 #include "creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 
@@ -150,7 +153,7 @@ void CFactoryCAI::PostLoad()
 }
 
 
-void CFactoryCAI::GiveCommandReal(const Command& c)
+void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	// move is always allowed for factories (passed to units it produces)
 	if ((c.id == CMD_SET_WANTED_MAX_SPEED) ||

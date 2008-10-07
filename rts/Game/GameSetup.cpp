@@ -1,12 +1,13 @@
 #include "StdAfx.h"
 
 #include <algorithm>
-#include <cctype>
+#include <map>
 #include <SDL_timer.h>
+#include <cctype>
+#include <cstring>
 
-#ifndef DEDICATED
-	#include "Team.h"
-#endif
+#include "mmgr.h"
+
 #include "GameSetup.h"
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
@@ -18,6 +19,8 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
 
 
 using namespace std;
@@ -119,7 +122,7 @@ void CGameSetup::LoadStartPositions()
 		for (int i = 0; i < MAX_TEAMS; ++i)
 			teamStartNum[i] = i;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
-		for (int i = 0; i < MAX_TEAMS; ++i)
+		for (int i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 
@@ -164,36 +167,42 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
-		sprintf(section, "GAME\\PLAYER%i\\", a);
+		sprintf(section, "GAME\\PLAYER%i", a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
+		if (!file.SectionExist(s)) {
 			continue;
 		}
-		PlayerData data;
+		PlayerBase data;
 
 		// expects lines of form team=x rather than team=TEAMx
-		// team field is relocated in RemapTeams		
-		data.team = static_cast<unsigned>(atoi(file.SGetValueDef("0",   s + "team").c_str()));
-		data.rank = atoi(file.SGetValueDef("-1",  s + "rank").c_str());
-		data.name  = file.SGetValueDef("no name", s + "name");
-		data.countryCode = file.SGetValueDef("",  s + "countryCode");
-		data.spectator = static_cast<bool>(atoi(file.SGetValueDef("0", s + "spectator").c_str()));
-		data.isFromDemo = static_cast<bool>(atoi(file.SGetValueDef("0",  s + "IsFromDemo").c_str()));
-		playerStartingData.push_back(data);
+		// team field is relocated in RemapTeams
+		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		std::map<std::string, std::string>::iterator it;
+		if ((it = setup.find("team")) != setup.end())
+			data.team = atoi(it->second.c_str());
+		if ((it = setup.find("rank")) != setup.end())
+			data.rank = atoi(it->second.c_str());
+		if ((it = setup.find("name")) != setup.end())
+			data.name = it->second;
+		if ((it = setup.find("countryCode")) != setup.end())
+			data.countryCode = it->second;
+		if ((it = setup.find("spectator")) != setup.end())
+			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
+		if ((it = setup.find("isfromdemo")) != setup.end())
+			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
 
-		int fromDemo;
-		file.GetDef(fromDemo, "0", s + "IsFromDemo");
-		if (fromDemo)
+		if (data.isFromDemo)
 			numDemoPlayers++;
 
+		playerStartingData.push_back(data);
 		playerRemap[a] = i;
 		++i;
 	}
 
 	int playerCount = -1;
 	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
-	
+
 	if (playerCount == -1 || (int)playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
@@ -255,7 +264,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 	int teamCount = -1;
 	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
-	
+
 	if (teamCount == -1 || (int)teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
@@ -286,6 +295,9 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
+		for (int otherAllyTeam = 0; otherAllyTeam < MAX_TEAMS; ++otherAllyTeam) {
+			data.allies[otherAllyTeam] = (i == otherAllyTeam);
+		}
 		for (int b = 0; b < numAllies; ++b) {
 			char key[100];
 			sprintf(key, "GAME\\ALLYTEAM%i\\Ally%i", a, b);
@@ -299,10 +311,10 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		++i;
 	}
 
-	
+
 	int allyCount = -1;
 	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
-	
+
 	if (allyCount == -1 || (int)allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else

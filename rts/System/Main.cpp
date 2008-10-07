@@ -6,9 +6,11 @@
  * everything else
  */
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "FPUCheck.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
+#include "Exceptions.h"
 
 #include "SpringApp.h"
 
@@ -41,6 +43,15 @@ int Run(int argc, char *argv[])
 	streflop_init<streflop::Simple>();
 #endif
 	good_fpu_control_registers("::Run");
+
+#ifdef USE_GML
+	set_threadnum(0);
+#	if GML_ENABLE_TLS_CHECK
+	if(gmlThreadNumber!=0) {
+		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
+	}
+#	endif
+#endif
 
 // It's nice to be able to disable catching when you're debugging
 #ifndef NO_CATCH_EXCEPTIONS
@@ -95,7 +106,7 @@ int Run(int argc, char *argv[])
  *
  * Main entry point function
  */
-int main( int argc, char *argv[]) // , char *envp[ ] <- not used
+int main(int argc, char *argv[])
 {
 	return Run (argc,argv);
 }

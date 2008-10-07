@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
+#include "GlobalStuff.h"
 
 class CMetalMap;
 class CCamera;
@@ -17,6 +18,7 @@ class CFileHandler;
 class CLoadSaveInterface;
 class CBaseGroundDrawer;
 
+
 struct MapFeatureInfo
 {
 	float3 pos;
@@ -24,9 +26,14 @@ struct MapFeatureInfo
 	float rotation;
 };
 
+
 struct MapBitmapInfo
 {
-	int width,height;
+	MapBitmapInfo() {}
+	MapBitmapInfo(int w, int h) : width(w), height(h) {}
+
+	int width;
+	int height;
 };
 
 
@@ -44,9 +51,14 @@ public:
 protected:
 	void Initialize(); // called by implementations of CReadMap
 public:
-	void CalcHeightfieldData(); /// Calculates derived heightmap information such as normals, centerheightmap and slopemap
+	// calculates derived heightmap information such as normals, centerheightmap and slopemap
+	void CalcHeightfieldData();
 
-	virtual float* GetHeightmap() = 0; // if you modify the heightmap, call HeightmapUpdated
+	virtual const float* GetHeightmap() = 0;
+	// if you modify the heightmap, call HeightmapUpdated
+	virtual void SetHeight(int idx, float h) = 0;
+	virtual void AddHeight(int idx, float a) = 0;
+
 	float* orgheightmap;
 	float* centerheightmap;
 	static const int numHeightMipMaps = 7;	//number of heightmap mipmaps, including full resolution
@@ -67,7 +79,6 @@ public:
 	virtual void HeightmapUpdated(int x1, int x2, int y1, int y2)=0;
 	virtual void Update(){};
 	virtual void Explosion(float x,float y,float strength){};
-	virtual void ExplosionUpdate(int x1,int x2,int y1,int y2){};
 	virtual GLuint GetShadingTexture () = 0; // a texture with RGB for shading and A for height
 	static inline unsigned char EncodeHeight(float h) { return std::max(0, (int)(255+10.0f*h)); }
 
@@ -97,6 +108,7 @@ public:
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;
 
 	float minheight, maxheight;
+	float currMinHeight, currMaxHeight;
 };
 
 extern CReadMap* readmap;

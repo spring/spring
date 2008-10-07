@@ -8,6 +8,8 @@
 #include "Rendering/GL/myGL.h"
 #include "BaseSky.h"
 
+#define CLOUD_SIZE 256 // must be divisible by 4 and 8
+
 class CAdvSky : public CBaseSky
 {
 public:
@@ -16,12 +18,13 @@ public:
 	void CreateCover(int baseX,int baseY,float* buf);
 	void InitSun();
 	void CreateTransformVectors();
-	void CreateRandMatrix(int matrix[32][32],float mod);
+	void CreateRandMatrix(int **matrix,float mod);
 	void CreateRandDetailMatrix(unsigned char* matrix,int size);
 	void DrawShafts();
 	void ResetCloudShadow(int texunit);
 	void SetCloudShadow(int texunit);
 	void CreateClouds();
+	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
 	void Update();
 	void DrawSun();
 	void Draw();
@@ -40,7 +43,13 @@ public:
 
 	unsigned int cloudFP;
 
-	int randMatrix[16][32][32];
+	int ***randMatrix;
+	int **rawClouds;
+	int ***blendMatrix;
+
+	int ydif[CLOUD_SIZE];
+	int ydif1[CLOUD_SIZE]; // ydif >> 1
+	int ydif2[CLOUD_SIZE]; // ydif >> 2
 
 	unsigned char alphaTransform[1024];
 	unsigned char thicknessTransform[1024];
@@ -52,7 +61,7 @@ public:
 	GLuint detailTextures[12];
 	bool cloudDetailDown[5];
 
-	unsigned char *cloudThickness2;
+	unsigned char *cloudThickness;
 	unsigned char *cloudTexMem;
 
 	float covers[4][32];

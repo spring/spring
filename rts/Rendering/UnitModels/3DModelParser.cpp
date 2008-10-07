@@ -1,10 +1,13 @@
 #include "StdAfx.h"
+#include <algorithm>
+#include <cctype>
+#include "mmgr.h"
+
 #include "3DModelParser.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include <algorithm>
-#include <cctype>
+#include "System/Util.h"
 
 C3DModelParser* modelParser=0;
 

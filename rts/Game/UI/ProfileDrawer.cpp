@@ -1,7 +1,8 @@
-#include "ProfileDrawer.h"
-
+#include "StdAfx.h"
 #include <assert.h>
+#include "mmgr.h"
 
+#include "ProfileDrawer.h"
 #include "TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"

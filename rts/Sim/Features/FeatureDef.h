@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 
+#include "float3.h"
 
 #define DRAWTYPE_3DO 0
 #define DRAWTYPE_TREE 1
@@ -20,7 +21,7 @@ struct FeatureDef
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
 		upright(false), drawType(0), modelType(0),
-		destructable(false), reclaimable(true), blocking(false),
+		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), ysize(0) {}
 
@@ -40,16 +41,11 @@ struct FeatureDef
 
 	/// used to see if the object can be overrun
 	float mass;
-	/*
-	float collisionSphereScale;
-	float3 collisionSphereOffset;
-	bool useCSOffset;
-	*/
 
-	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
-	float3 collisionVolumeScales;		// the collision volume's full axis lengths
-	float3 collisionVolumeOffsets;		// relative to the feature's center position
-	int collisionVolumeTest;			// 0: discrete, 1: continuous
+	std::string collisionVolumeType;  /// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
+	float3 collisionVolumeScales;     /// the collision volume's full axis lengths
+	float3 collisionVolumeOffsets;    /// relative to the feature's center position
+	int collisionVolumeTest;          /// 0: discrete, 1: continuous
 
 	bool upright;
 	int drawType;
@@ -57,6 +53,11 @@ struct FeatureDef
 	std::string modelname;
 	/// used by tree etc
 	int modelType;
+
+	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
+	int  resurrectable;
+
+	int smokeTime;
 
 	bool destructable;
 	bool reclaimable;

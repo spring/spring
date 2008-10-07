@@ -7,10 +7,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdexcept>
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
-#include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 
@@ -62,7 +65,7 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 CFontTextureRenderer::~CFontTextureRenderer()
 {
 	if (buffer)
-		delete buffer;
+		delete [] buffer;
 }
 
 void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
@@ -118,7 +121,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA,
 		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
 	delete [] buffer;
 	buffer = 0;
@@ -153,7 +156,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 
 	// clamp the char range
 	end = min(254, end);
-	start = max(32, start);	
+	start = max(32, start);
 
 	chars = (end - start) + 1;
 
@@ -161,10 +164,10 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 	charstart = start;
 
 	glyphs = SAFE_NEW GlyphInfo[chars];
-	
+
 	const float toX = gu->pixelX;
 	const float toY = gu->pixelY;
-		
+
 	float descender = FT_MulFix(face->descender, face->size->metrics.y_scale) / 64.0f;	// max font descender in pixels
 	fontHeight = FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f * toY;	// distance between baselines in screen units
 
@@ -175,7 +178,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 
 		// retrieve glyph index from character code
 		FT_UInt glyph_index = FT_Get_Char_Index(face, i);
-		
+
 		error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
 		if ( error ) {
 			string msg = "FT_Load_Glyph failed:";
@@ -200,7 +203,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 			delete [] glyphs;
 			throw;
 		}
-		
+
 		int bitmap_width = slot->bitmap.width;
 		int bitmap_rows = slot->bitmap.rows;
 		int bitmap_pitch = slot->bitmap.pitch;
@@ -222,7 +225,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 		g->x1 = (xbearing + bitmap_width) * toX;
 		g->y1 = g->y0 - (slot->metrics.height / 64.0f) * toY;
 	}
-	
+
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 
@@ -335,7 +338,7 @@ void CglFont::OutlineS(bool enable, const float *outlineColor)
 
 float CglFont::RenderString(float x, float y, float s, const unsigned char *text) const
 {
-//	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
+//	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
@@ -438,7 +441,7 @@ float CglFont::RenderStringOutlined(float x, float y, float s, const unsigned ch
 	glEnd();
 
 	glPopAttrib();
-	
+
 	outline = false;		// outlining is valid only for one drawing operation
 	return x;
 }
@@ -600,7 +603,7 @@ const float* CglFont::ChooseOutlineColor(const float *textColor)
 	const float luminance = (textColor[0] * 0.299f) +
 	                        (textColor[1] * 0.587f) +
 	                        (textColor[2] * 0.114f);
-	                        
+
 	if (luminance > 0.25f) {
 		return darkOutline;
 	} else {

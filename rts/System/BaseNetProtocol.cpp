@@ -1,4 +1,10 @@
+#include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "BaseNetProtocol.h"
+
+#include <boost/cstdint.hpp>
+using boost::uint16_t;
+#include "mmgr.h"
 
 #include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"
@@ -262,7 +268,7 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode,
                                   const std::string& msg)
 {
-	unsigned short size = 6 + msg.size()+1;
+	uint16_t size = 6 + msg.size()+1;
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
 	return PacketType(packet);
@@ -310,16 +316,49 @@ PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTea
 	return PacketType(packet);
 }
 
-/* FIXME: add these:
-
 #ifdef SYNCDEBUG
+PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
+{
+	PackPacket* packet = new PackPacket(5, NETMSG_SD_CHKREQUEST);
+	*packet << frameNum;
+	return PacketType(packet);
+}
+
+PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, Uint64 flop, std::vector<unsigned> checksums)
+{
+	unsigned size = 1 + 2 + 1 + 8 + checksums.size() * 4;
+	PackPacket* packet = new PackPacket(size, NETMSG_SD_CHKRESPONSE);
+	*packet << static_cast<uint16_t>(size) << myPlayerNum << flop << checksums;
+	return PacketType(packet);
+}
+
+PacketType CBaseNetProtocol::SendSdReset()
+{
+	return PacketType(new PackPacket(1, NETMSG_SD_RESET));
+}
+
+PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize)
+{
+	PackPacket* packet = new PackPacket(7, NETMSG_SD_BLKREQUEST);
+	*packet << begin << length << requestSize;
+	return PacketType(packet);
+	
+}
+
+PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums)
+{
+	unsigned size = 1 + 2 + 1 + checksums.size() * 4;
+	PackPacket* packet = new PackPacket(size, NETMSG_SD_BLKRESPONSE);
+	*packet << static_cast<uint16_t>(size) << myPlayerNum << checksums;
+	return PacketType(packet);
+}
+#endif
+/* FIXME: add these:
  NETMSG_SD_CHKREQUEST    = 41,
  NETMSG_SD_CHKRESPONSE   = 42,
  NETMSG_SD_BLKREQUEST    = 43,
  NETMSG_SD_BLKRESPONSE   = 44,
  NETMSG_SD_RESET         = 45,
-#endif // SYNCDEBUG
-
 */
 
 CBaseNetProtocol::CBaseNetProtocol()
@@ -369,6 +408,14 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
+	
+#ifdef SYNCDEBUG
+	proto->AddType(NETMSG_SD_CHKREQUEST, 5);
+	proto->AddType(NETMSG_SD_CHKRESPONSE, -2);
+	proto->AddType(NETMSG_SD_RESET, 1);
+	proto->AddType(NETMSG_SD_BLKREQUEST, 7);
+	proto->AddType(NETMSG_SD_BLKRESPONSE, -2);
+#endif
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()

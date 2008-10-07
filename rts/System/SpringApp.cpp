@@ -1,11 +1,15 @@
 #include "StdAfx.h"
-#include "SpringApp.h"
+#include "Rendering/GL/myGL.h"
 
 #include <iostream>
 
 #include <signal.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
+
+#include "mmgr.h"
+
+#include "SpringApp.h"
 
 #undef KeyPress
 #undef KeyRelease
@@ -27,7 +31,6 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -37,6 +40,8 @@
 #include "MouseInput.h"
 #include "bitops.h"
 #include "Sync/Syncify.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 #include "mmgr.h"
 
@@ -48,7 +53,13 @@
 	#include <winreg.h>
 	#include <direct.h>
 	#include "Platform/Win/seh.h"
+	#include "Platform/Win/WinVersion.h"
 #endif // WIN32
+
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+#endif
 
 using std::string;
 
@@ -140,6 +151,34 @@ bool crashCallback(void* crState)
 }
 #endif
 
+#ifdef WIN32
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+/** @brief checks if the current process is running in 32bit emulation mode
+    @return FALSE, TRUE, -1 on error (usually no permissions) */
+static int GetWow64Status()
+{
+	BOOL bIsWow64 = FALSE;
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
+		{
+			return -1;
+		}
+	}
+	return bIsWow64;
+}
+
+
+#endif
+
+
 /**
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
@@ -167,6 +206,25 @@ bool SpringApp::Initialize()
 	ParseCmdLine();
 
 	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
+
+	// log OS version
+	// TODO: improve version logging of non-Windows OSes
+#if defined(WIN32)
+	logOutput.Print("OS: %s\n", GetOSDisplayString().c_str());
+	if (GetWow64Status() == TRUE) {
+		logOutput.Print("OS: WOW64 detected\n");
+	}
+	logOutput.Print("Hardware: %s\n", GetHardwareInfoString().c_str());
+#elif defined(__linux__)
+	logOutput.Print("OS: Linux\n");
+#elif defined(__FreeBSD__)
+	logOutput.Print("OS: FreeBSD\n");
+#elif defined(MACOS_X)
+	logOutput.Print("OS: MacOS X\n");
+#else
+	logOutput.Print("OS: unknown\n");
+#endif
+
 
 	FileSystemHandler::Initialize(true);
 
@@ -240,6 +298,9 @@ bool SpringApp::Initialize()
 		// default to off because it reduces quality (smallest mipmap level is bigger)
 		gu->compressTextures = !!configHandler.GetInt("CompressTextures", 0);
 	}
+
+	// use some ATI bugfixes?
+	gu->atiHacks = !!configHandler.GetInt("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -335,7 +396,7 @@ bool SpringApp::SetSDLVideoMode ()
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
 	int bitsPerPixel = configHandler.GetInt("BitsPerPixel", 0);
-	
+
 	if (bitsPerPixel == 32)
 	{
 		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -588,6 +649,8 @@ void SpringApp::ParseCmdLine()
 		ConfigHandler::SetConfigSource(configSource);
 	}
 
+	logOutput.Print("using configuration source \"" + configHandler.GetConfigSource() + "\"");
+
 #ifdef _DEBUG
 	fullscreen = false;
 #else
@@ -631,13 +694,13 @@ void SpringApp::ParseCmdLine()
 	} else {
 		screenWidth = std::max(screenWidth, 1);
 	}
-	
+
 	if (!cmdline->result("yresolution", screenHeight)) {
 		screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
 	} else {
 		screenHeight = std::max(screenHeight, 1);
 	}
-	
+
 }
 
 /**
@@ -667,8 +730,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 
 	// If there are any options, they will start before the demo file name.
 
-   if (win_lpCmdLine == 0)
-   logOutput.Print("ERROR");
+	if (win_lpCmdLine == 0) {
+		logOutput.Print("ERROR: invalid commandline ptr");
+	}
+
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
 	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
@@ -804,14 +869,23 @@ int SpringApp::Update ()
 
 	int ret = 1;
 	if (activeController) {
+#if defined(USE_GML) && GML_MT_TEST
+		int frame=gu->drawFrame;
+#endif
 		if (!activeController->Update()) {
 			ret = 0;
 		} else {
-			gu->drawFrame++;
-			if (gu->drawFrame == 0) {
+#if defined(USE_GML) && GML_MT_TEST
+			if(frame==gu->drawFrame) {
+#endif
 				gu->drawFrame++;
+				if (gu->drawFrame == 0) {
+					gu->drawFrame++;
+				}
+				ret = activeController->Draw();
+#if defined(USE_GML) && GML_MT_TEST
 			}
-			ret = activeController->Draw();
+#endif
 		}
 	}
 

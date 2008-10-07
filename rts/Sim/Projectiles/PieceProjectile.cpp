@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "GlobalStuff.h"
@@ -19,7 +21,7 @@
 #include "Sync/SyncTracer.h"
 #include "Unsynced/SmokeProjectile.h"
 #include "Unsynced/SmokeTrailProjectile.h"
-#include "mmgr.h"
+#include "System/Util.h"
 
 static const float Smoke_Time = 40;
 
@@ -340,6 +342,8 @@ void CPieceProjectile::Draw()
 			float3 dir = speed;
 			dir.Normalize();
 
+			int numParts = age & 7;
+			va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 			if (drawTrail) {
 				// draw the trail as a single quad if camera close enough
 				float3 dif(interPos - camera->pos);
@@ -374,18 +378,17 @@ void CPieceProjectile::Draw()
 				float size2 = 1 + (age2 * (1 / Smoke_Time)) * 14;
 				float txs = ph->smoketrailtex.xstart - (ph->smoketrailtex.xend - ph->smoketrailtex.xstart) * (age2 / 8.0f);
 
-				va->AddVertexTC(interPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
-				va->AddVertexTC(interPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
-				va->AddVertexTC(oldSmoke + dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend,   col2);
-				va->AddVertexTC(oldSmoke - dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
+				va->AddVertexQTC(interPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
+				va->AddVertexQTC(interPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
+				va->AddVertexQTC(oldSmoke + dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend,   col2);
+				va->AddVertexQTC(oldSmoke - dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
 			} else {
 				// draw the trail as particles
 				float dist = pos.distance(oldSmoke);
 				float3 dirpos1 = pos - dir * dist * 0.33f;
 				float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
 
-				int numParts = age & 7;
-				for (int a = 0; a < numParts; ++a) {
+				for (int a = 0; a < numParts; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 					float alpha = 255;
 					col[0] = (unsigned char) (color * alpha);
 					col[1] = (unsigned char) (color * alpha);
@@ -394,10 +397,10 @@ void CPieceProjectile::Draw()
 					float size = 1 + ((a) * (1 / Smoke_Time)) * 14;
 					float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
-					va->AddVertexTC(pos1 + ( camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-					va->AddVertexTC(pos1 + ( camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-					va->AddVertexTC(pos1 + (-camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-					va->AddVertexTC(pos1 + (-camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+					va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+					va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
+					va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
+					va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 				}
 			}
 		}
@@ -422,6 +425,7 @@ void CPieceProjectile::DrawCallback(void)
 	unsigned char col[4];
 
 	if (flags & PP_Fire) {
+		va->EnlargeArrays(8*4,0,VA_SIZE_TC);
 		for (int age = 0; age < 8; ++age) {
 			float modage = age;
 			float3 interPos = oldInfos[age]->pos;
@@ -434,10 +438,10 @@ void CPieceProjectile::DrawCallback(void)
 			col[3] = (unsigned char) (alpha * 50);
 			float drawsize = (0.5f + modage) * size;
 
-			va->AddVertexTC(interPos - camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.ystart, col);
-			va->AddVertexTC(interPos + camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.ystart, col);
-			va->AddVertexTC(interPos + camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.yend,   col);
-			va->AddVertexTC(interPos - camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.yend,   col);
+			va->AddVertexQTC(interPos - camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.yend,   col);
+			va->AddVertexQTC(interPos - camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.yend,   col);
 		}
 	}
 }

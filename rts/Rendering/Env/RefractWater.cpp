@@ -1,8 +1,11 @@
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Rendering/GL/myGL.h"
 #include "RefractWater.h"
 #include "LogOutput.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "bitops.h"
 
@@ -40,7 +43,7 @@ CRefractWater::~CRefractWater()
 
 void CRefractWater::Draw()
 {
-	if(readmap->minheight>10)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -67,6 +70,8 @@ void CRefractWater::Draw()
 
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glDisable(target);

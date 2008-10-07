@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TestScript.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
@@ -13,7 +15,7 @@
 #include "Game/Team.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/UnitHandler.h"
-#include "mmgr.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

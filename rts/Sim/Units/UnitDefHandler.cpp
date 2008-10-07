@@ -1,11 +1,12 @@
 #include "StdAfx.h"
-#include "UnitDefHandler.h"
 #include <stdio.h>
 #include <algorithm>
 #include <iostream>
 #include <locale>
 #include <cctype>
+#include "mmgr.h"
 
+#include "UnitDefHandler.h"
 #include "UnitDef.h"
 #include "UnitDefImage.h"
 
@@ -31,7 +32,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/LogOutput.h"
 #include "System/Sound.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
 
@@ -374,8 +375,10 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;
 	ud.maxAcc   = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f*ud.maxAcc)) * (ud.canfly ? 0.1f : 1.f); // no negative values
-	ud.turnRate = udTable.GetFloat("turnRate",     0.0f);
+	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
+
+	ud.turnRate    = udTable.GetFloat("turnRate",     0.0f);
+	ud.turnInPlace = udTable.GetBool( "turnInPlace",  true);
 
 	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
@@ -852,9 +855,15 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 
 
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
-                                const string& fileName, float volume)
+                                const string& fileName, const float volume)
 {
-	const string soundFile = "sounds/" + fileName + ".wav";
+	string soundFile = "sounds/" + fileName;
+
+	if (soundFile.find(".wav") == -1) {
+	 	// .wav extension missing, add it
+		soundFile += ".wav";
+	}
+
 	CFileHandler fh(soundFile);
 
 	if (fh.FileExists()) {
@@ -988,8 +997,8 @@ unsigned int CUnitDefHandler::GetUnitDefImage(const UnitDef* unitDef)
 	SetUnitDefImage(unitDef, unitDef->buildPicName);
 	return unitDef->buildPic->textureID;
 }
-	
-	
+
+
 void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
@@ -998,7 +1007,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 	} else if (unitDef->buildPic->textureOwner) {
 		glDeleteTextures(1, &unitDef->buildPic->textureID);
 	}
-		
+
 	CBitmap bitmap;
 
 	if (!texName.empty()) {
@@ -1115,6 +1124,8 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 
 UnitDef::~UnitDef()
 {
+	for (std::vector<CExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it)
+		delete *it;
 }
 
 

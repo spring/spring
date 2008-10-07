@@ -1,6 +1,8 @@
-#include "AutohostInterface.h"
-
+#include "StdAfx.h"
 #include <string.h>
+#include "mmgr.h"
+
+#include "AutohostInterface.h"
 #include "Net/UDPConnectedSocket.h" 
 
 namespace {

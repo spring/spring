@@ -20,7 +20,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 SAIInterfaceSpecifyer copySAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const orig) {
 	
 	struct SAIInterfaceSpecifyer copy;
@@ -42,11 +41,12 @@ void deleteSAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const spec)
 
 
 #ifdef	__cplusplus
+
+#ifdef	__USE_CREG
 CR_BIND(SSAIKey,)
 CR_BIND(SGAIKey,)
-#endif /* __cplusplus */
+#endif /* __USE_CREG */
 
-#ifdef	__cplusplus
 bool SAIInterfaceSpecifyer_Comparator::operator()(const struct SAIInterfaceSpecifyer& a, const struct SAIInterfaceSpecifyer& b) const {
 
 	bool isLess = false;
@@ -74,23 +74,7 @@ bool SAIInterfaceSpecifyer_Comparator::IsEmpty(const struct SAIInterfaceSpecifye
 	
 	return empty;
 }
-#endif /* __cplusplus */
 
-
-
-/*
-struct SSAIKey SSAIKey_init(struct SAIInterfaceSpecifyer _interface, struct SSAISpecifyer _ai) {
-	
-	struct SSAIKey key;
-	
-	key.interface = _interface;
-	key.ai = _ai;
-	
-	return key;
-}
-*/
-
-#ifdef	__cplusplus
 bool SSAIKey_Comparator::operator()(const struct SSAIKey& a, const struct SSAIKey& b) const {
 	
 	bool isLess = false;
@@ -119,36 +103,9 @@ bool SSAIKey_Comparator::IsEmpty(const struct SSAIKey& key) {
 	
 	return empty;
 }
-#endif /* __cplusplus */
-
-
-
-/*
-struct SGAIKey SGAIKey_init(struct SAIInterfaceSpecifyer _interface, struct SGAISpecifyer _ai) {
-	
-	struct SGAIKey key;
-	
-	key.interface = _interface;
-	key.ai = _ai;
-	
-	return key;
-}
-*/
-
-#ifdef	__cplusplus
-#include "string.h"
 
 bool SGAIKey_Comparator::operator()(const struct SGAIKey& a, const struct SGAIKey& b) const {
 
-/*
-	bool interfaceEqual = SAIInterfaceSpecifyer_Comparator()(a.interface, b.interface);
-	if (interfaceEqual) {
-		bool aiEqual = SGAISpecifyer_Comparator()(a.ai, b.ai);
-		return aiEqual;
-	}
-
-	return false;
-*/
 	bool isLess = false;
 	
 	bool interfaceLess = SAIInterfaceSpecifyer_Comparator()(a.interface, b.interface);
@@ -175,41 +132,6 @@ bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
 	
 	return empty;
 }
+
 #endif /* __cplusplus */
-
-
-
-//struct SAIInterfaceLibraryInfo {
-//	const char* libFileName; // the library file name, eg "C-1.0.dll", "CppLegacy-1.0.so" or "Java-1.0.dylib"
-//	
-//	const char* name; // [may not contain: spaces, '_', '#']
-//	const char* version; // [may not contain: spaces, '_', '#']
-//	const char* description;
-//	const char* infoUrl; // usually a link to a spring wiki page
-//	
-//	const SAIInfo* aiInfos;
-//	int numAiInfos;
-//};
-
-
-//SAIInterfaceLibraryInfo* initAIInterfaceInfo(const SAIInterfaceLibrary* interface) {
-//	
-//	SAIInterfaceLibraryInfo* interfaceInfo = (SAIInterfaceLibraryInfo*) malloc(sizeof(SAIInterfaceLibraryInfo));
-//	
-//	interfaceInfo->libFileName = interface->libFileName;
-//	interfaceInfo->name = interface->getName();
-//	interfaceInfo->version = interface->getVersion();
-//	interfaceInfo->description = interface->getDescription();
-//	interfaceInfo->infoUrl = interface->getInfoUrl();
-//	interfaceInfo->aiInfos = (SAIInfo*) calloc(MAX_AI_INFOS, sizeof(SAIInfo));
-//	interfaceInfo->numAiInfos = interface->getAIInfos(interfaceInfo->aiInfos, MAX_AI_INFOS);
-//	
-//	return interfaceInfo;
-//}
-//
-//void deleteAIInterfaceInfo(const SAIInterfaceLibraryInfo* interfaceInfo) {
-//	
-//	free((void*)interfaceInfo->aiInfos);
-//	free((void*)interfaceInfo);
-//}
 

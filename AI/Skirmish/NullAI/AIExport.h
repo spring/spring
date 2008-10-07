@@ -13,6 +13,9 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	
+	@author Nicolas Wu
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
 #ifndef _AIEXPORT_H
@@ -35,11 +38,11 @@
 // see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
 
 // static AI library methods (OPTIONAL TO IMPLEMENT)
-//Export(int) getInfos(InfoItem infos[], int max); // static properties
+//Export(unsigned int) getInfos(InfoItem infos[], unsigned int max); // static properties
 //Export(enum LevelOfSupport) getLevelOfSupportFor(
 //		const char* engineVersionString, int engineVersionNumber,
 //		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-//Export(int) getOptions(struct Option options[], int max);
+//Export(unsigned int) getOptions(struct Option options[], unsigned int max);
 
 // team instance functions
 Export(int) init(int teamId);

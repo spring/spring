@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <cctype>
 #include <map>
+
+#include "mmgr.h"
+
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
@@ -18,7 +21,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
+#include "Exceptions.h"
+
 
 
 extern std::string stupidGlobalMapname;
@@ -61,10 +65,16 @@ void CCommanderScript::GameStart()
 			}
 
 			// get the team startup info
-			const std::string& side = team->side;
-			const std::string& startUnit = sideParser.GetStartUnit(side);
+			// NOTE: team->side isn't set when playing GameSetup-type demos
+			// (CGlobalStuff::LoadFromSetup() doesn't get called for them),
+			// this needs to be sorted out properly
+			const std::string& tside = team->side;
+			const std::string& gside = gameSetup->teamStartingData[a].side;
+			const std::string& rside = (tside == gside)? tside: gside;
+			const std::string& startUnit = sideParser.GetStartUnit(rside);
+
 			if (startUnit.empty()) {
-				throw content_error( "Unable to load a commander for side: " + side);
+				throw content_error( "Unable to load a commander for side: " + rside);
 			}
 
 			CUnit* unit =
@@ -74,8 +84,7 @@ void CCommanderScript::GameStart()
 
 			// FIXME this shouldn't be here, but no better place exists currently
 			if (a == gu->myTeam) {
-				minimap->AddNotification(team->startPos,
-																 float3(1.0f, 1.0f, 1.0f), 1.0f);
+				minimap->AddNotification(team->startPos, float3(1.0f, 1.0f, 1.0f), 1.0f);
 				game->infoConsole->SetLastMsgPos(team->startPos);
 			}
 		}

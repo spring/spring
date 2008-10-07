@@ -154,7 +154,7 @@ int CMoveMath::IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bo
  * objects block iif their mass exceeds the movedata's crush-strength).
  * NOTE: modify for selective blocking
  */
-bool CMoveMath::IsBlocking(const MoveData& moveData, const CSolidObject* object) {
+bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object) {
 	return
 		(object->blocking && (!dynamic_cast<const CFeature*>(object) ||
 		object->mass > moveData.crushStrength));
@@ -171,12 +171,18 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 		const int x = int(obstacle->pos.x / SQUARE_SIZE);
 		const int z = int(obstacle->pos.z / SQUARE_SIZE);
 		const int i = (x >> 1) + (z >> 1) * gs->hmapx;
+		const int j = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(mipHeightmap[1])
+
 		const bool iss = moveData.subMarine;
 		const bool oss = (obstacle->mobility && obstacle->mobility->subMarine);
 
+		// some objects appear to have negative model heights
+		// (the S3DO parsers allow it for some reason), take
+		// the absolute value to prevent them being regarded
+		// as non-blocking
 		const float oy = obstacle->pos.y;
-		const float oh = obstacle->height;
-		const float gy = readmap->mipHeightmap[1][i];
+		const float oh = std::max(obstacle->height, -obstacle->height);
+		const float gy = (i < 0 || i >= j)? 0.0f: readmap->mipHeightmap[1][i];
 
 		// note that these conditions can lead to
 		// a certain degree of clipping, for full
@@ -218,13 +224,14 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 	BlockingMapCellIt it;
 
 	for (it = c.begin(); it != c.end(); it++) {
-		CSolidObject* obstacle = *it;
+		CSolidObject* obstacle = it->second;
 
 		if (IsNonBlocking(moveData, obstacle)) {
 			continue;
 		}
 
-		if (obstacle->mobility) {
+		// mobility implies canmove, but not (speed > 0.0f)
+		if (obstacle->mobility && !obstacle->immobile) {
 			// mobile obstacle
 			if (obstacle->isMoving) {
 				r |= BLOCK_MOVING;
@@ -238,7 +245,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 				}
 			}
 		} else {
-			if (IsBlocking(moveData, obstacle)) {
+			if (CrushResistant(moveData, obstacle)) {
 				r |= BLOCK_STRUCTURE;
 			}
 		}

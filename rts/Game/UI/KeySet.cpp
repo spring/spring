@@ -2,14 +2,17 @@
 // CKeyBindings.cpp: implementation of the CKeyBindings class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <stdlib.h>
+
+#include "mmgr.h"
 
 #include "KeySet.h"
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
 #include "SDL_types.h"
-#include <stdlib.h>
 
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 extern Uint8* keys; // from System/Main.cpp
 

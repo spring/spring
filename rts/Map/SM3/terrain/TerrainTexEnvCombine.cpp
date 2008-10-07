@@ -32,6 +32,7 @@
 
 #include "TerrainTexture.h"
 #include "TerrainTexEnvCombine.h"
+#include <assert.h>
 
 namespace terrain {
 

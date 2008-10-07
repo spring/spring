@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
@@ -17,7 +19,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 
 static const float Smoke_Time=60;
 
@@ -280,7 +281,7 @@ void CMissileProjectile::Update(void)
 		} else {
 			// only when TTL <= 0 do projectiles
 			// get influenced by gravity and drag
-			speed *= 0.995f;
+			speed *= 0.98f;
 			speed.y += mapInfo->map.gravity;
 			dir = speed;
 			dir.Normalize();
@@ -333,6 +334,7 @@ void CMissileProjectile::Draw(void)
 	float color = 0.6f;
 	unsigned char col[4];
 
+	va->EnlargeArrays(8+4*numParts,0,VA_SIZE_TC);
 	if (weaponDef->visuals.smokeTrail) {
 		if (drawTrail) {
 			// draw the trail as a single quad
@@ -370,17 +372,17 @@ void CMissileProjectile::Draw(void)
 			float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
 			float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
 
-			va->AddVertexTC(interPos - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexTC(interPos + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
+			va->AddVertexQTC(interPos - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(interPos + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
+			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
+			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {
 			// draw the trail as particles
 			float dist = pos.distance(oldSmoke);
 			float3 dirpos1 = pos - dir * dist * 0.33f;
 			float3 dirpos2 = oldSmoke + oldDir * dist * 0.33f;
 
-			for (int a = 0; a < numParts; ++a) {
+			for (int a = 0; a < numParts; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 				float alpha = 255.0f;
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
@@ -390,10 +392,10 @@ void CMissileProjectile::Draw(void)
 				float size = (1 + (a * (1 / Smoke_Time)) * 7);
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
-				va->AddVertexTC(pos1 + ( camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1 + ( camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1 + (-camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1 + (-camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 			}
 		}
 	}
@@ -404,10 +406,10 @@ void CMissileProjectile::Draw(void)
 	col[2] = 180;
 	col[3] = 1;
 	float fsize = radius * 0.4f;
-	va->AddVertexTC(interPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(interPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(interPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexTC(interPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(interPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(interPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(interPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(interPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 
 /*	col[0]=200;
 	col[1]=200;

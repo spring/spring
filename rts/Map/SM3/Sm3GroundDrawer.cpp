@@ -69,8 +69,9 @@ void CSm3GroundDrawer::Update()
 
 void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
 {
-	if(drawUnitReflection || drawWaterReflection)
-		return;
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 
 	terrain::RenderContext *currc = rc;
 
@@ -136,6 +137,9 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	glDisable(GL_LIGHT0);
 	glDisable(GL_LIGHTING);
 
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	if (drawMode != drawNormal)
 	{

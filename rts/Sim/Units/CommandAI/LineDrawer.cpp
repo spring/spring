@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "LineDrawer.h"
 #include "Game/UI/CommandColors.h"
+#include "GlobalStuff.h"
 
 CLineDrawer lineDrawer;
 

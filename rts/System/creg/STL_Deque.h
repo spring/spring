@@ -3,14 +3,16 @@
 
 #include <deque>
 
+#include "creg.h"
+
 namespace creg
 {
 	// Deque type (uses vector implementation)
 	template<typename T>
 	struct DeduceType < std::deque <T> > {
-		IType* Get () { 
+		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return SAFE_NEW DynamicArrayType < std::deque<T> > (elemtype.Get());
+			return boost::shared_ptr<IType>(SAFE_NEW DynamicArrayType < std::deque<T> > (elemtype.Get()));
 		}
 	};
 };

@@ -3,9 +3,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TracerProjectile.h"
 #include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
-#include "mmgr.h"
+#include "System/GlobalStuff.h"
 
 CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
 

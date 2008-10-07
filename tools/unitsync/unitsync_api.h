@@ -42,6 +42,15 @@ Export(int) GetMapArchiveCount(const char* mapName);
 Export(const char*) GetMapArchiveName(int index);
 Export(unsigned int) GetMapChecksum(int index);
 Export(void*) GetMinimap(const char* filename, int miplevel);
+Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
+Export(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
+
+Export(int) GetSkirmishAICount();
+Export(struct SSAISpecifyer) GetSkirmishAISpecifyer(int index);
+Export(int) GetSkirmishAIInfoCount(int index);
+Export(const char*) GetInfoKey(int index);
+Export(const char*) GetInfoValue(int index);
+Export(const char*) GetInfoDescription(int index);
 
 Export(int) GetPrimaryModCount();
 Export(const char*) GetPrimaryModName(int index);
@@ -66,6 +75,8 @@ Export(int) GetMapOptionCount(const char* name);
 Export(int) GetModOptionCount();
 Export(const char*) GetOptionKey(int optIndex);
 Export(const char*) GetOptionName(int optIndex);
+Export(const char*) GetOptionSection(int optIndex);
+Export(const char*) GetOptionStyle(int optIndex);
 Export(const char*) GetOptionDesc(int optIndex);
 Export(int) GetOptionType(int optIndex);
 Export(int) GetOptionBoolDef(int optIndex);

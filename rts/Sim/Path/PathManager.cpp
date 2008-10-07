@@ -1,4 +1,9 @@
 #include "StdAfx.h"
+#include "SDL_timer.h"
+#include <vector>
+#include <boost/cstdint.hpp>
+#include "mmgr.h"
+
 #include "PathManager.h"
 #include "LogOutput.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -7,12 +12,9 @@
 #include "Sim/MoveTypes/MoveMath/ShipMoveMath.h"
 #include "Rendering/GL/myGL.h"
 #include "TimeProfiler.h"
-#include <vector>
 #include "PathFinder.h"
 #include "PathEstimator.h"
-#include "SDL_timer.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 const float ESTIMATE_DISTANCE = 55;
 const float MIN_ESTIMATE_DISTANCE = 40;
@@ -499,6 +501,13 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 
 	return;
 }
+
+
+uint32_t CPathManager::GetPathChecksum()
+{
+	return pe->GetPathChecksum() + pe2->GetPathChecksum();
+}
+
 
 CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData) :
 	start(start),

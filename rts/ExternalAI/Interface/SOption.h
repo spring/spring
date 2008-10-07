@@ -15,11 +15,12 @@ struct OptionListItem {
 };
 
 enum OptionType {
-	opt_error  = 0,
-	opt_bool   = 1,
-	opt_list   = 2,
-	opt_number = 3,
-	opt_string = 4
+	opt_error   = 0,
+	opt_bool    = 1,
+	opt_list    = 2,
+	opt_number  = 3,
+	opt_string  = 4,
+	opt_section = 5
 };
 
 struct Option {
@@ -30,6 +31,8 @@ struct Option {
 	const char* key;
 	const char* name;
 	const char* desc;
+	const char* section;
+	const char* style;
 
 	const char* type; // "bool", "number", "string", "list", ... (see enum OptionType)
 

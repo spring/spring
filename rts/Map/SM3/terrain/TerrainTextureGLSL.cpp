@@ -37,9 +37,13 @@
 #include "FileSystem/FileHandler.h"
 #include "Platform/FileSystem.h"
 #include "bitops.h"
+#include "System/Util.h"
+#include "System/GlobalStuff.h"
+#include "System/Exceptions.h"
 
 #include <fstream>
 #include <list>
+#include <assert.h>
 
 namespace terrain {
 using namespace std;

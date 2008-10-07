@@ -1,0 +1,376 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "..\wtl70\include\atlres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""atlres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""res\\\\CrashRpt.exe.manifest""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 187, 102
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Please send comments, suggestions, and bug reports to ",
+                    IDC_STATIC,7,32,173,18
+    CTEXT           "mcarruth@email.com.",IDC_EMAIL_LINK,13,40,72,8
+    DEFPUSHBUTTON   "OK",IDOK,69,81,50,14
+    CTEXT           "(c) Copyright 2003 Michael Carruth",IDC_STATIC,7,59,173,
+                    13
+    LTEXT           "You are free to use, modify and distribute this library as you see fit subject to the terms of this",
+                    IDC_STATIC,7,7,173,18
+    LTEXT           "license.",IDC_LICENSE_LINK,125,15,25,8
+END
+
+IDD_MAINDLG DIALOG DISCARDABLE  0, 0, 270, 255
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "",IDC_RICHEDIT1,"RICHEDIT",WS_DISABLED,0,0,272,32
+    //EDITTEXT        IDC_EMAIL,20,128,230,14,ES_AUTOHSCROLL
+    //EDITTEXT        IDC_DESCRIPTION,20,162,230,44,ES_MULTILINE | 
+	EDITTEXT        IDC_DESCRIPTION,20,128,230,78,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    PUSHBUTTON      "&Send",IDOK,152,233,50,14,NOT WS_VISIBLE
+    PUSHBUTTON      "E&xit",IDCANCEL,205,233,50,14
+    CONTROL         "",IDC_HEADING_TEXT,"RICHEDIT",ES_MULTILINE | 
+                    WS_DISABLED,15,6,214,20
+    ICON            "",IDI_APPICON,234,6,20,20
+    LTEXT           "click here.",IDC_LINK,124,213,34,8,NOT WS_GROUP
+    LTEXT           "If you were in the middle of something, the information you were working on might be lost.",
+                    IDC_STATIC,20,39,230,20
+    LTEXT           "We have created an error report that you can send to us.  We will treat this report as confidential and anonymous.",
+                    IDC_STATIC,20,63,230,20
+    LTEXT           "To help us diagnose the cause of this error and improve this software, please describe what you were doing when this error occurred, and send this report to us.",
+                    IDC_STATIC,20,87,230,29
+    LTEXT           "To see what this report contains",IDC_STATIC,20,213,101,
+                    8
+    //LTEXT           "Your EMail Address (optional):",IDC_STATIC,20,117,230,8
+    LTEXT           "Describe what you were doing when the error occurred (optional):",
+                    //IDC_STATIC,20,150,230,8
+					IDC_STATIC,20,117,230,8
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,226,272,1
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,32,272,1
+    PUSHBUTTON      "Sa&ve",IDC_SAVE,99,233,50,14
+    PUSHBUTTON      "&Debug",IDC_DEBUG,47,233,50,14,NOT WS_VISIBLE
+END
+
+IDD_DETAILDLG DIALOGEX 0, 0, 318, 231
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Crash Report"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "List4",IDC_FILE_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,3,3,312,68
+    GROUPBOX        "",IDC_STATIC,3,68,312,160
+    EDITTEXT        IDC_FILE_EDIT,4,103,310,124,ES_MULTILINE | ES_NOHIDESEL | 
+                    ES_READONLY | NOT WS_BORDER | WS_VSCROLL | WS_HSCROLL,
+                    WS_EX_TRANSPARENT | WS_EX_STATICEDGE
+    LTEXT           "Name:",IDC_STATIC,6,78,22,8
+    LTEXT           "Description:",IDC_STATIC,6,89,38,8
+    CONTROL         "Static",IDC_NAME,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,
+                    56,78,253,8
+    CONTROL         "Static",IDC_DESCRIPTION,"Static",SS_LEFTNOWORDWRAP | 
+                    WS_GROUP,56,89,253,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 95
+    END
+
+    IDD_MAINDLG, DIALOG
+    BEGIN
+        VERTGUIDE, 15
+        VERTGUIDE, 20
+        VERTGUIDE, 250
+        VERTGUIDE, 255
+        BOTTOMMARGIN, 249
+        HORZGUIDE, 6
+        HORZGUIDE, 26
+        HORZGUIDE, 32
+        HORZGUIDE, 227
+        HORZGUIDE, 233
+    END
+
+    IDD_DETAILDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS PRELOAD MOVEABLE PURE 
+BEGIN
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
+    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT
+    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL
+    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 3,0,2,3
+ PRODUCTVERSION 3,0,2,3
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Crash Report Module\0"
+            VALUE "FileVersion", "3.0.2.3\0"
+            VALUE "InternalName", "CrashRpt\0"
+            VALUE "LegalCopyright", "Copyright 2003\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "CrashRpt.exe\0"
+            VALUE "PrivateBuild", "Cedara\0"
+            VALUE "ProductName", "Crash Report Module\0"
+            VALUE "ProductVersion", "3.0.2.3\0"
+            VALUE "SpecialBuild", "0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXT
+//
+
+IDR_LICENSE             TEXT    DISCARDABLE     "license.txt"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE PRELOAD DISCARDABLE 
+BEGIN
+    IDR_MAINFRAME           "CrashRpt"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_FILE_NEW             "Create a new document\nNew"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+    ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
+    ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
+    ID_FILE_PRINT           "Print the active document\nPrint"
+    ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
+    IDS_HEADER              "{\\bnsi\\bnsicpg1252\\deff0\\deflang1033{\\fonttbl{\\f0\\fswiss\\fcharset0 Microsoft Sans Serif;}}\n{\\*\\generator Msftedit 5.41.15.1503;}\\viewkind4\\uc1\\pard\\b\\f0\\fs17 %s has encountered a problem and needs to close.  We are sorry for the inconvenience.\\b0}\n "
+    IDS_INVALID_EMAIL       "Please enter a valid email address"
+    IDS_ZIP_FILTER          "Zip Files (*.zip)"
+    IDS_HTTP_HEADER_CONTENT_TYPE 
+                            "Content-Type: Multipart/form-data; boundary=%s"
+    IDS_HTTP_HEADER_BOUNDARY "-----------------7d31389b0426"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_TILE_VERT     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+    IDS_ABOUTBOX            "About..."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    IDS_FORM_DATA           "module=%s&exception=%s&address=%s"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_VIEW_TOOLBAR         "Show or hide the toolbar\nToggle ToolBar"
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle StatusBar"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ATL_IDS_SCSIZE          "Change the window size"
+    ATL_IDS_SCMOVE          "Change the window position"
+    ATL_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    ATL_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    ATL_IDS_SCNEXTWINDOW    "Switch to the next document window"
+    ATL_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    ATL_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ATL_IDS_SCRESTORE       "Restore the window to normal size"
+    ATL_IDS_SCTASKLIST      "Activate Task List"
+    ATL_IDS_MDICHILD        "Activate this window"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ATL_IDS_IDLEMESSAGE     "Ready"
+    IDS_CONTENT_TYPE        "Content-Type: Multipart/form-data; boundary=""crash-report-boundary"""
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ATL_IDS_MRU_FILE        "Open this document"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_NAME                "Name"
+    IDS_DESC                "Description"
+    IDS_TYPE                "Type"
+    IDS_SIZE                "Size"
+    IDS_CRASH_DUMP          "Crash Dump"
+    IDS_CRASH_LOG           "Crash Log"
+    IDS_SYMBOL_FILE         "Symbol File"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_USER_DATA           "Your e-mail and description"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "res\\CrashRpt.exe.manifest"
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

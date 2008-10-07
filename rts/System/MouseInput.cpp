@@ -10,6 +10,8 @@
 */
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Platform/Win/win32.h"
 #include "MouseInput.h"
 #include "Game/UI/MouseHandler.h"
@@ -49,7 +51,8 @@ public:
 	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	{
 		if (msg==WM_MOUSEMOVE) {
-			inst->mousepos = int2(LOWORD(lparam),HIWORD(lparam));
+			// cast to short to preserve sign
+			inst->mousepos = int2((short)LOWORD(lparam),(short)HIWORD(lparam));
 			inst->mousemoved = true;
 			return FALSE;
 		}else if (msg==WM_SETCURSOR) {
@@ -74,7 +77,7 @@ public:
 		sdl_wndproc = GetWindowLongPtr(wnd, GWLP_WNDPROC);
 		SetWindowLongPtr(wnd,GWLP_WNDPROC,(LONG_PTR)SpringWndProc);
 	}
-	
+
 	CWin32MouseInput()
 	{
 		inst = this;
@@ -86,7 +89,7 @@ public:
 
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if(!SDL_GetWMInfo(&info)) 
+		if(!SDL_GetWMInfo(&info))
 			return;
 
 		wnd = info.window;
@@ -135,7 +138,7 @@ public:
 					mouse->MousePress (mousepos.x, mousepos.y, 5);
 			}
 			break;}
-		/*case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode 
+		/*case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode
 			if(!fullscreen) {
 				mousepos = int2(event.motion.x, event.motion.y);
 				mouse->MouseMove(mousepos.x, mousepos.y);

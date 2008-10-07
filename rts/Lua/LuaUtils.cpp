@@ -3,11 +3,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUtils.h"
 #include <set>
 #include <cctype>
 
+#include "mmgr.h"
+
+#include "LuaUtils.h"
+
 #include "LogOutput.h"
+#include "System/Util.h"
 
 
 static       int depth = 0;

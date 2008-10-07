@@ -1,11 +1,17 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "LightingProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
+#include "System/GlobalStuff.h"
+
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
 
 CR_BIND_DERIVED(CLightingProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
 
@@ -92,23 +98,24 @@ void CLightingProjectile::Draw(void)
 	dir1.Normalize();
 	float3 tempPos=pos;
 
+	va->EnlargeArrays(18*4,0,VA_SIZE_TC);
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111f;
-		va->AddVertexTC(tempPos+dir1*(displacements[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
+		va->AddVertexQTC(tempPos+dir1*(displacements[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexTC(tempPos+dir1*(displacements[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
 	}
 
 	tempPos=pos;
 	for(int a=0;a<9;++a){
 		float f=(a+1)*0.111f;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements2[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
+		va->AddVertexQTC(tempPos+dir1*(displacements2[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexTC(tempPos+dir1*(displacements2[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements2[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+		va->AddVertexQTC(tempPos+dir1*(displacements2[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
 	}
 }
 

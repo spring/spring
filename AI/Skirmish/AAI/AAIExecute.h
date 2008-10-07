@@ -65,8 +65,8 @@ public:
 	void CheckJammer();
 	void CheckStationaryArty();
 
-	// checks length of buildques and adjusts rate of unit production
-	void CheckBuildques();
+	// checks length of buildqueues and adjusts rate of unit production
+	void CheckBuildqueues();
 
 	//
 	void CheckDefences();
@@ -108,10 +108,10 @@ public:
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
 
 	// adds a unit to the correct wishlist
-	bool AddUnitToBuildque(int def_id, int number = 1, bool urgent = false);
+	bool AddUnitToBuildqueue(int def_id, int number, bool urgent);
 
 	// returns buildque for a certain factory
-	list<int>* GetBuildqueOfFactory(int def_id);
+	list<int>* GetBuildqueueOfFactory(int def_id);
 
 	// returns the the total ground offensive power of all units
 	float GetTotalGroundPower();

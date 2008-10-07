@@ -19,10 +19,6 @@
 #define	_SGAILIBRARY_H
 
 #ifdef	__cplusplus
-#include "creg/creg.h"
-#endif /* __cplusplus */
-
-#ifdef	__cplusplus
 extern "C" {
 #endif
 
@@ -76,7 +72,6 @@ struct SGAILibrary {
 	 * Level of Support for a specific engine version.
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
-	 * @return 0: perfectly supported, > 0: some issues, < 0: crashing/not supported
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber,
@@ -87,7 +82,7 @@ struct SGAILibrary {
 	 * valid.
 	 * @return number of elements stored into parameter infos
 	 */
-	int (CALLING_CONV *getInfos)(InfoItem infos[], int max);
+	int (CALLING_CONV *getInfos)(struct InfoItem infos[], int max);
 	/**
 	 * Returns options that can be set on this AI.
 	 * NOTE: this method is optional. An AI not exporting this function is still

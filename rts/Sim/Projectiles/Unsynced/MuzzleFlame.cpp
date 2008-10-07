@@ -1,9 +1,12 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "MuzzleFlame.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
+#include "System/GlobalStuff.h"
+
 
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),0));
 
@@ -66,7 +69,9 @@ void CMuzzleFlame::Draw(void)
 	float alpha=std::max(0.f,1-age/(4+size*30));
 	float modAge=sqrt(static_cast<float>(age+2));
 
-	for (int a = 0; a < numSmoke; ++a) {
+	va->EnlargeArrays(numSmoke*8,0,VA_SIZE_TC);
+
+	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		int tex = a % ph->smoketex.size();
 		//float xmod=0.125f+(float(int(tex%6)))/16;
 		//float ymod=(int(tex/6))/16.0f;
@@ -80,10 +85,10 @@ void CMuzzleFlame::Draw(void)
 		col[2]=(unsigned char) (180*alpha*fade);
 		col[3]=(unsigned char) (alpha*255*fade);
 
-		va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].ystart,col);
-		va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].yend,col);
-		va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].yend,col);
+		va->AddVertexQTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].ystart,col);
+		va->AddVertexQTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].ystart,col);
+		va->AddVertexQTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].yend,col);
+		va->AddVertexQTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].yend,col);
 
 		if(fade<1){
 			float ifade= 1-fade;
@@ -92,10 +97,10 @@ void CMuzzleFlame::Draw(void)
 			col[2]=(unsigned char)(ifade*255);
 			col[3]=(unsigned char)(1);
 
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.yend ,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.yend ,col);
+			va->AddVertexQTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.ystart,col);
+			va->AddVertexQTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.ystart,col);
+			va->AddVertexQTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.yend ,col);
+			va->AddVertexQTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.yend ,col);
 		}
 	}
 }

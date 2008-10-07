@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "creg/creg.h"
 
 class CMoveMath;
 

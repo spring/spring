@@ -1,14 +1,16 @@
 #include "StdAfx.h"
-#include "FileHandler.h"
 #include <fstream>
 #include <algorithm>
 #include <cctype>
 #include <limits.h>
 #include <boost/regex.hpp>
-#include "VFSHandler.h"
-#include "Platform/FileSystem.h"
 #include "mmgr.h"
 
+#include "FileHandler.h"
+#include "VFSHandler.h"
+#include "Platform/FileSystem.h"
+
+#include "Util.h"
 using namespace std;
 
 

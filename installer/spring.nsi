@@ -108,42 +108,43 @@ Function .onInit
   ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ${EndIf}
-  ;!insertmacro SetSectionFlag 2 32 ; expand (32) maps section (2)
+  !insertmacro UnselectSection 3 ; unselect springlobby section (3) by default
+  ;!insertmacro SetSectionFlag 4 32 ; expand (32) maps section (4)
   ${If} ${FileExists} "$INSTDIR\spring.exe"
-    !insertmacro UnselectSection 3 ; unselect default section (3) by default
+    !insertmacro UnselectSection 6 ; unselect default section (6) by default
   ${EndIf}
-  !insertmacro UnselectSection 4 ; unselect 1v1maps section (4) by default
-  !insertmacro UnselectSection 5 ; unselect teammaps section by (5) default
-  ;!insertmacro SetSectionFlag 8 32 ; expand (32) mods section (8)
-  !insertmacro UnselectSection 8 ; unselect BA section (8) by default
-  ${If} ${FileExists} "$INSTDIR\mods\BA591.sd7"
-    !insertmacro SelectSection 8 ; Select BA section (8) if BA is already installed
+  !insertmacro UnselectSection 7 ; unselect 1v1maps section (7) by default
+  !insertmacro UnselectSection 8 ; unselect teammaps section by (8) default
+  ;!insertmacro SetSectionFlag 10 32 ; expand (32) mods section (10)
+  !insertmacro UnselectSection 11 ; unselect BA section (11) by default
+  ${If} ${FileExists} "$INSTDIR\mods\BA631.sd7"
+    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
   ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
-    !insertmacro SelectSection 8 ; Select BA section (8) if BA is already installed
+    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
   ${EndIf}
-  !insertmacro UnselectSection 9 ; unselect XTA section (9) by default
+  !insertmacro UnselectSection 12 ; unselect XTA section (12) by default
   ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
-    !insertmacro SelectSection 9 ; Select XTA section (9) if XTA is already installed
+    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
   ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
-    !insertmacro SelectSection 9 ; Select XTA section (9) if XTA is already installed
+    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
   ${EndIf}
-  !insertmacro UnselectSection 10 ; unselect Gundam section (10) by default
-  !insertmacro UnselectSection 11 ; unselect Kernel Panic section (11) by default
-  !insertmacro UnselectSection 12 ; unselect EvolutionRTS section (12) by default
-  !insertmacro UnselectSection 13 ; unselect Spring:1944 section (13) by default
-  !insertmacro UnselectSection 14 ; unselect Simbase section (14) by default
-  !insertmacro UnselectSection 15 ; unselect CA section (15) by default
+  !insertmacro UnselectSection 13 ; unselect Gundam section (13) by default
+  !insertmacro UnselectSection 14 ; unselect Kernel Panic section (14) by default
+  !insertmacro UnselectSection 15 ; unselect EvolutionRTS section (15) by default
+  !insertmacro UnselectSection 16 ; unselect Spring:1944 section (16) by default
+  !insertmacro UnselectSection 17 ; unselect Simbase section (17) by default
+  !insertmacro UnselectSection 18 ; unselect CA section (18) by default
 FunctionEnd
 
 ; For CA and Evolution: BEGIN
 
-Var CA
+;Var CA
 Var EVO
 
 Function  .onGUIEnd
-${If} $CA == 'true'
-  Call LaunchUpdater
-${EndIf}
+;${If} $CA == 'true'
+  ;Call LaunchUpdater
+;${EndIf}
 ${If} $EVO == 'true'
   Call LaunchEvoUpdater
 ${EndIf}
@@ -190,16 +191,16 @@ false:
 next:
 FunctionEnd
 
-Function LaunchUpdater
-  MessageBox MB_YESNO \
-  "Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
-  IDYES true IDNO false
-true:
-  Exec '"$INSTDIR\CaDownloader.exe"'
-  Goto next
-false:
-  next:
-FunctionEnd
+;Function LaunchUpdater
+  ;MessageBox MB_YESNO \
+  ;"Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
+  ;IDYES true IDNO false
+;true:
+  ;Exec '"$INSTDIR\CaDownloader.exe"'
+  ;Goto next
+;false:
+  ;next:
+;FunctionEnd
 
 Function LaunchEvoUpdater
   MessageBox MB_YESNO \
@@ -275,11 +276,19 @@ Section "Main application (req)" SEC_MAIN
 SectionEnd
 
 
-Section "Multiplayer battleroom" SEC_BATTLEROOM
+SectionGroup "Multiplayer battlerooms" 
+  Section "TASClient" SEC_TASCLIENT
   !define INSTALL
   !include "sections\tasclient.nsh"
   !undef INSTALL
-SectionEnd
+  SectionEnd
+
+  Section "SpringLobby" SEC_SPRINGLOBBY
+  !define INSTALL
+  !include "sections\springlobby.nsh"
+  !undef INSTALL
+  SectionEnd  
+SectionGroupEnd
 
 
 SectionGroup "Map Packs"
@@ -367,7 +376,7 @@ SectionGroup "Mods"
         Call CheckTATextures
         Call CheckOTAContent
         Call CheckTAContent
-        AddSize 393
+        AddSize 54400
 	!include "sections\ca.nsh"
 	!undef INSTALL
 	SectionEnd
@@ -380,7 +389,7 @@ Section "Start menu shortcuts" SEC_START
 SectionEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
-${If} ${SectionIsSelected} ${SEC_BATTLEROOM}
+${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 ${EndIf}
@@ -455,6 +464,7 @@ Section Uninstall
   !include "sections\aai.nsh"
   !include "sections\kai.nsh"
   !include "sections\tasclient.nsh"
+  !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
 
   !include "sections\BA.nsh"

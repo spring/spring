@@ -3,9 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
+#include <assert.h>
+
 #include "PlayerRoster.h"
 #include "Player.h"
 #include "Team.h"
+#include "Util.h"
 
 static int CompareAllies     (const void* a, const void* b);
 static int CompareTeamIDs    (const void* a, const void* b);
@@ -238,8 +243,8 @@ static int ComparePlayerNames(const void* a, const void* b)
 	}
 
 	// sort by player name
-	const std::string aName = StringToLower(aP->playerName);
-	const std::string bName = StringToLower(bP->playerName);
+	const std::string aName = StringToLower(aP->name);
+	const std::string bName = StringToLower(bP->name);
 	return strcmp(aName.c_str(), bName.c_str());
 }
 

@@ -11,6 +11,7 @@
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
+#include "FastMath.h"
 
 /**
  * @brief float3 class
@@ -273,7 +274,7 @@ public:
 	 * checking each x/y/z component individually.
 	 */
 	inline bool operator== (const float3 &f) const {
-		return fabs(x-f.x) <= fabs(1.0E-4f*x) && fabs(y-f.y) <= fabs(1.0E-4f*y) && fabs(z-f.z) <= fabs(1.0E-4f*z);
+		return math::fabs(x-f.x) <= math::fabs(1.0E-4f*x) && math::fabs(y-f.y) <= math::fabs(1.0E-4f*y) && math::fabs(z-f.z) <= math::fabs(1.0E-4f*z);
 	}
 
 	/**
@@ -352,7 +353,7 @@ public:
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
-		return (float) sqrt(dx*dx + dy*dy + dz*dz);
+		return (float) math::sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
 	/**
@@ -369,7 +370,7 @@ public:
 	inline float distance2D(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
-		return (float)sqrt(dx*dx + dz*dz);
+		return (float) math::sqrt(dx*dx + dz*dz);
 	}
 
 	/**
@@ -381,7 +382,7 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length() const{
-		return (float)sqrt(x*x+y*y+z*z);
+		return (float) math::sqrt(x*x+y*y+z*z);
 	}
 
 	/**
@@ -393,7 +394,7 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length2D() const {
-		return (float) sqrt(x * x + z * z);
+		return (float) math::sqrt(x * x + z * z);
 	}
 
 	/**
@@ -404,11 +405,17 @@ public:
 	 * x/y/z component by the vector's approx.
 	 * length.
 	 *
-	 * note: inlining this would require including
-	 * FastMath.h, probably not the best idea since
-	 * float3 is used everywhere (compilation time)
+	 * Measured compile time hit: statistically insignificant (1%)
 	 */
-	float3& ANormalize();
+	inline float3& ANormalize() {
+		float invL = fastmath::isqrt(SqLength());
+		if (invL != 0.f) {
+			x *= invL;
+			y *= invL;
+			z *= invL;
+		}
+		return *this;
+	}
 
 	/**
 	 * @brief normalizes the vector
@@ -418,7 +425,7 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& Normalize() {
-		const float L = sqrt(x * x + y * y + z * z);
+		const float L = math::sqrt(x * x + y * y + z * z);
 		if (L != 0.f) {
 			const float invL = (float) 1.f / L;
 			x *= invL;
@@ -467,8 +474,9 @@ public:
 	 */
 	static float maxzpos;
 
-	bool CheckInBounds(); //!< Check if this vector is in bounds
-
+	bool IsInBounds() const; //!< Check if this vector is in bounds without clamping x and z
+	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
+	
 	SAIFloat3 toSAIFloat3() const;
 };
 

@@ -3,7 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUnsyncedRead.h"
 #include <set>
 #include <list>
 #include <cctype>
@@ -13,6 +12,10 @@ using namespace std;
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
+
+#include "mmgr.h"
+
+#include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
 
@@ -1099,7 +1102,7 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	const CPlayer* p = gs->players[playerID];
 	int index = 1;
 	lua_newtable(L);
-	PUSH_ROSTER_ENTRY(string, p->playerName.c_str());
+	PUSH_ROSTER_ENTRY(string, p->name.c_str());
 	PUSH_ROSTER_ENTRY(number, playerID);
 	PUSH_ROSTER_ENTRY(number, p->team);
 	PUSH_ROSTER_ENTRY(number, gs->AllyTeam(p->team));

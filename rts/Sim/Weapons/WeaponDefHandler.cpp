@@ -18,6 +18,8 @@
 #include "System/LogOutput.h"
 #include "System/Sound.h"
 #include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;
@@ -36,7 +38,7 @@ CWeaponDefHandler::CWeaponDefHandler()
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading WeaponDefs");
 	}
-	
+
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
@@ -50,7 +52,7 @@ CWeaponDefHandler::CWeaponDefHandler()
 		weaponID[wd.name] = wid;
 
 		const LuaTable wdTable = rootTable.SubTable(wd.name);
-		ParseTAWeapon(wdTable, wd);
+		ParseWeapon(wdTable, wd);
 	}
 }
 
@@ -61,29 +63,21 @@ CWeaponDefHandler::~CWeaponDefHandler()
 }
 
 
-void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
+void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
-	bool lineofsight;
-	bool ballistic;
 	//bool twophase;
-	bool beamweapon;
 	bool manualBombSettings; //Allow the user to manually specify the burst and burstrate for his AircraftBomb
-	//bool guided;
-	//bool vlaunch;
-	int rendertype;
 	int color;
-	int beamlaser;
-	//bool tracking;
-	//bool selfprop;
+	int color2;
 	//bool turret;
 	//bool smokeTrail;
 	//string modelName;
 
 	wd.tdfId = wdTable.GetInt("id", 0);
 
-	wd.filename = wdTable.GetString("filename", "unknown");
-	wd.description = wdTable.GetString("name", "Weapon");
-	wd.cegTag = wdTable.GetString("cegTag", "");
+	wd.filename    = wdTable.GetString("filename", "unknown");
+	wd.description = wdTable.GetString("name",     "Weapon");
+	wd.cegTag      = wdTable.GetString("cegTag",   "");
 
 	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
@@ -99,25 +93,12 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 
-	wd.dropped  = wdTable.GetBool("dropped", false);
+	wd.dropped  = wdTable.GetBool("dropped", false); //FIXME: unused in the engine?
 	manualBombSettings = wdTable.GetBool("manualBombSettings", false);
-	lineofsight = wdTable.GetBool("lineOfSight", false);
-	ballistic   = wdTable.GetBool("ballistic",  false);
-	wd.twophase = wdTable.GetBool("twoPhase",   false);
-	beamweapon  = wdTable.GetBool("beamWeapon", false);
-	wd.guided   = wdTable.GetBool("guidance",   false);
-	rendertype  = wdTable.GetInt("renderType",  0);
-	color       = wdTable.GetInt("color",       0);
-	beamlaser   = wdTable.GetInt("beamlaser",   0);
-	wd.vlaunch  = wdTable.GetBool("vlaunch",    false);
-	wd.selfprop = wdTable.GetBool("selfprop",   false);
-	wd.turret   = wdTable.GetBool("turret",     false);
+	wd.turret   = wdTable.GetBool("turret",      false);
 	wd.highTrajectory = wdTable.GetInt("highTrajectory", 2);
-	wd.noSelfDamage = wdTable.GetBool("noSelfDamage", false);
-	wd.impactOnly   = wdTable.GetBool("impactOnly",   false);
-	wd.visuals.modelName = wdTable.GetString("model", "");
-	wd.visuals.smokeTrail = wdTable.GetBool("smokeTrail", false);
-	wd.visuals.alwaysVisible = wdTable.GetBool("alwaysVisible", false);
+	wd.noSelfDamage   = wdTable.GetBool("noSelfDamage", false);
+	wd.impactOnly     = wdTable.GetBool("impactOnly",   false);
 
 	wd.waterweapon   = wdTable.GetBool("waterWeapon",     false);
 	wd.fireSubmersed = wdTable.GetBool("fireSubmersed",   wd.waterweapon);
@@ -129,86 +110,33 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
-		
-	wd.waterBounce = wdTable.GetBool("waterBounce", false);
-	wd.groundBounce = wdTable.GetBool("groundBounce", false);
-	wd.bounceSlip = wdTable.GetFloat("bounceSlip", 1);
-	wd.bounceRebound = wdTable.GetFloat("bounceRebound", 1);
-	wd.numBounce = wdTable.GetInt("numBounce", -1);
 
-	wd.thickness      = wdTable.GetFloat("thickness",       2.0f);
-	wd.corethickness  = wdTable.GetFloat("coreThickness",   0.25f);
+	wd.waterBounce   = wdTable.GetBool("waterBounce",    false);
+	wd.groundBounce  = wdTable.GetBool("groundBounce",   false);
+	wd.bounceSlip    = wdTable.GetFloat("bounceSlip",    1.0f);
+	wd.bounceRebound = wdTable.GetFloat("bounceRebound", 1.0f);
+	wd.numBounce     = wdTable.GetInt("numBounce",       -1);
+
+	wd.thickness      = wdTable.GetFloat("thickness",      2.0f);
+	wd.corethickness  = wdTable.GetFloat("coreThickness",  0.25f);
 	wd.laserflaresize = wdTable.GetFloat("laserFlareSize", 15.0f);
-	wd.intensity      = wdTable.GetFloat("intensity",       0.9f);
-	wd.duration       = wdTable.GetFloat("duration",        0.05f);
-	wd.falloffRate    = wdTable.GetFloat("fallOffRate",     0.5f);
-	wd.lodDistance    = wdTable.GetInt("lodDistance", 1000);
+	wd.intensity      = wdTable.GetFloat("intensity",      0.9f);
+	wd.duration       = wdTable.GetFloat("duration",       0.05f);
+	wd.falloffRate    = wdTable.GetFloat("fallOffRate",    0.5f);
+	wd.lodDistance    = wdTable.GetInt("lodDistance",      1000);
 
-	wd.visuals.sizeDecay  = wdTable.GetFloat("sizeDecay",  0.0f);
-	wd.visuals.alphaDecay = wdTable.GetFloat("alphaDecay", 1.0f);
-	wd.visuals.separation = wdTable.GetFloat("separation", 1.0f);
-	wd.visuals.noGap  = wdTable.GetBool("noGap", true);
-	wd.visuals.stages = wdTable.GetInt("stages", 5);
+	wd.visuals.modelName     = wdTable.GetString("model",       "");
+	wd.visuals.smokeTrail    = wdTable.GetBool("smokeTrail",    false);
+	wd.visuals.alwaysVisible = wdTable.GetBool("alwaysVisible", false);
+	wd.visuals.sizeDecay     = wdTable.GetFloat("sizeDecay",    0.0f);
+	wd.visuals.alphaDecay    = wdTable.GetFloat("alphaDecay",   1.0f);
+	wd.visuals.separation    = wdTable.GetFloat("separation",   1.0f);
+	wd.visuals.noGap         = wdTable.GetBool("noGap",         true);
+	wd.visuals.stages        = wdTable.GetInt("stages",         5);
 
-	if (wd.name.find("disintegrator") != string::npos) {	//fulhack
-		wd.visuals.renderType = WEAPON_RENDERTYPE_FIREBALL;
-	} else if (wd.visuals.modelName.compare("") != 0) {
-		wd.visuals.renderType = WEAPON_RENDERTYPE_MODEL;
-	} else if (beamweapon) {
-		wd.visuals.renderType = WEAPON_RENDERTYPE_LASER;
-	} else {
-		wd.visuals.renderType = WEAPON_RENDERTYPE_PLASMA;
-	}
+	wd.gravityAffected = wdTable.GetBool("gravityAffected", wd.dropped);
 
-	wd.gravityAffected = false;
-	if (wd.dropped || ballistic) {
-		wd.gravityAffected = true;
-	}
-
-	if (wd.dropped) {
-		wd.type = "AircraftBomb";
-
-	}	else if (wd.vlaunch) {
-		wd.type = "StarburstLauncher";
-
-	}	else if (beamlaser) {
-		wd.type = "BeamLaser";
-
-	}	else if (wd.isShield) {
-		wd.type = "Shield";
-
-	} else if (wd.waterweapon) {
-		wd.type = "TorpedoLauncher";
-
-	} else if (wd.name.find("disintegrator") != string::npos) {
-		wd.type = "DGun";
-
-	} else if (lineofsight) {
-		if (rendertype==7) {
-			wd.type = "LightingCannon";
-		} else if (beamweapon) {
-			wd.type = "LaserCannon";
-		} else if (wd.visuals.modelName.find("laser") != string::npos) {
-			wd.type = "LaserCannon";		//swta fix
-		} else if (/*selfprop && */wd.visuals.smokeTrail) {
-			wd.type = "MissileLauncher";
-		} else if (rendertype == 4 && color == 2) {
-			wd.type = "EmgCannon";
-		} else if (rendertype == 5) {
-			wd.type = "Flame";
-		//	} else if(rendertype == 1) {
-		//		wd.type = "MissileLauncher";
-		} else {
-			wd.type = "Cannon";
-		}
-	} else {
-		wd.type = "Cannon";
-	}
-
-	string ttype = wdTable.GetString("weaponType", "");
-	if (ttype != "") {
-		wd.type = ttype;
-	}
+	wd.type = wdTable.GetString("weaponType", "Cannon");
 
 //	logOutput.Print("%s as %s",weaponname.c_str(),wd.type.c_str());
 
@@ -249,7 +177,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	map<string, float> damages;
 	dmgTable.GetMap(damages);
-	
+
 	map<string, float>::const_iterator di;
 	for (di = damages.begin(); di != damages.end(); ++di) {
 		const int type = damageArrayHandler->GetTypeFromName(di->first);
@@ -262,11 +190,11 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 			}
 		}
 	}
-	
+
 	wd.damages.impulseFactor = wdTable.GetFloat("impulseFactor", 1.0f);
 	wd.damages.impulseBoost  = wdTable.GetFloat("impulseBoost",  0.0f);
-	wd.damages.craterMult    = wdTable.GetFloat("craterMult",  wd.damages.impulseFactor);
-	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost", 0.0f);
+	wd.damages.craterMult    = wdTable.GetFloat("craterMult",    wd.damages.impulseFactor);
+	wd.damages.craterBoost   = wdTable.GetFloat("craterBoost",   0.0f);
 
 	wd.areaOfEffect = wdTable.GetFloat("areaOfEffect", 8.0f) * 0.5f;
 	wd.edgeEffectiveness = wdTable.GetFloat("edgeEffectiveness", 0.0f);
@@ -308,6 +236,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
 	wd.stockpile     = wdTable.GetBool("stockpile", false);
+	wd.stockpileTime = wdTable.GetFloat("stockpileTime", wd.reload);
 	wd.interceptor   = wdTable.GetInt("interceptor", 0);
 	wd.targetable    = wdTable.GetInt("targetable",  0);
 	wd.manualfire    = wdTable.GetBool("commandfire", false);
@@ -355,9 +284,9 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.shieldRechargeDelay    = (int)(wdTable.GetFloat("shieldRechargeDelay", 0) * GAME_SPEED);
 		wd.shieldStartingPower    = wdTable.GetFloat("shieldStartingPower",    0.0f);
 		wd.shieldInterceptType    = wdTable.GetInt("shieldInterceptType", 0);
-		wd.shieldBadColor  = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);
-		wd.shieldGoodColor = wdTable.GetFloat3("shieldGoodColor", shieldGoodColor);
-		wd.shieldAlpha = wdTable.GetFloat("shieldAlpha", 0.2f);
+		wd.shieldBadColor         = wdTable.GetFloat3("shieldBadColor",  shieldBadColor);
+		wd.shieldGoodColor        = wdTable.GetFloat3("shieldGoodColor", shieldGoodColor);
+		wd.shieldAlpha            = wdTable.GetFloat("shieldAlpha", 0.2f);
 	}
 
 
@@ -403,7 +332,8 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.onlyForward = !wd.turret && (wd.type != "StarburstLauncher");
 
-	const int color2 = wdTable.GetInt("color2", 0);
+	color  = wdTable.GetInt("color",  0);
+	color2 = wdTable.GetInt("color2", 0);
 
 	const float3 rgbcol = hs2rgb(color / float(255), color2 / float(255));
 	wd.visuals.color  = wdTable.GetFloat3("rgbColor",  rgbcol);
@@ -502,7 +432,7 @@ void CWeaponDefHandler::ParseTAWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	} else if (wd.type == "EmgCannon") {
 		// CEmgProjectile
 		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f)); 
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f));
 		wd.size = wdTable.GetFloat("size", 3.0f);
 	} else if (wd.type == "DGun") {
 		// CFireBallProjectile
@@ -756,4 +686,5 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 
 WeaponDef::~WeaponDef()
 {
+	delete explosionGenerator; explosionGenerator = 0;
 }

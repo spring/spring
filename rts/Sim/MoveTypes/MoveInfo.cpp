@@ -1,4 +1,8 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
+#include <boost/lexical_cast.hpp>
+#include "mmgr.h"
+
 #include "MoveInfo.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
@@ -6,10 +10,9 @@
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
-#include <boost/lexical_cast.hpp>
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;

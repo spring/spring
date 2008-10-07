@@ -11,11 +11,11 @@
 
 //SPRING#include <math.h>
 #include "streflop_cond.h" // FIXME -- should always be compiled with streflop
-#if defined UNITSYNC || defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#ifdef UNITSYNC
 using std::isfinite;
 using std::isnan;
 using std::isinf;
-#endif	/* defined UNITSYNC || defined BUILDING_AI || defined BUILDING_AI_INTERFACE */
+#endif
 
 #define lvm_c
 #define LUA_CORE

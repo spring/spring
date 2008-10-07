@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "creg/STL_Deque.h"
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
@@ -7,7 +9,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,float3(0,0,0),NULL));
 CR_BIND(CFireBallProjectile::Spark, );
@@ -54,30 +55,31 @@ void CFireBallProjectile::Draw()
 	float size = radius*1.3f;
 
 	int numSparks=sparks.size();
-	for(int i=0; i<numSparks; i++)
+	int numFire=std::min(10,numSparks);
+	va->EnlargeArrays((numSparks+numFire)*4,0,VA_SIZE_TC);
+	for(int i=0; i<numSparks; i++) //! CAUTION: loop count must match EnlargeArrays above
 	{
 		col[0]=(numSparks-i)*12;
 		col[1]=(numSparks-i)*6;
 		col[2]=(numSparks-i)*4;
-		va->AddVertexTC(sparks[i].pos-camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.ystart,col);
-		va->AddVertexTC(sparks[i].pos+camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.ystart,col);
-		va->AddVertexTC(sparks[i].pos+camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.yend ,col);
-		va->AddVertexTC(sparks[i].pos-camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.yend ,col);
+		va->AddVertexQTC(sparks[i].pos-camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.ystart,col);
+		va->AddVertexQTC(sparks[i].pos+camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.ystart,col);
+		va->AddVertexQTC(sparks[i].pos+camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.yend ,col);
+		va->AddVertexQTC(sparks[i].pos-camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.yend ,col);
 	}
 
-	int numFire=std::min(10,numSparks);
 	int maxCol=numFire;
 	if(checkCol)
 		maxCol=10;
-	for(int i=0; i<numFire; i++)
+	for(int i=0; i<numFire; i++) //! CAUTION: loop count must match EnlargeArrays above
 	{
 		col[0]=(maxCol-i)*25;
 		col[1]=(maxCol-i)*15;
 		col[2]=(maxCol-i)*10;
-		va->AddVertexTC(interPos-camera->right*size-camera->up*size,ph->dguntex.xstart ,ph->dguntex.ystart ,col);
-		va->AddVertexTC(interPos+camera->right*size-camera->up*size,ph->dguntex.xend ,ph->dguntex.ystart ,col);
-		va->AddVertexTC(interPos+camera->right*size+camera->up*size,ph->dguntex.xend ,ph->dguntex.yend ,col);
-		va->AddVertexTC(interPos-camera->right*size+camera->up*size,ph->dguntex.xstart ,ph->dguntex.yend ,col);
+		va->AddVertexQTC(interPos-camera->right*size-camera->up*size,ph->dguntex.xstart ,ph->dguntex.ystart ,col);
+		va->AddVertexQTC(interPos+camera->right*size-camera->up*size,ph->dguntex.xend ,ph->dguntex.ystart ,col);
+		va->AddVertexQTC(interPos+camera->right*size+camera->up*size,ph->dguntex.xend ,ph->dguntex.yend ,col);
+		va->AddVertexQTC(interPos-camera->right*size+camera->up*size,ph->dguntex.xstart ,ph->dguntex.yend ,col);
 		interPos = interPos-speed*0.5f;
 	}
 }

@@ -30,6 +30,7 @@ class ISkirmishAILibrary;
 struct InfoItem;
 struct Option;
 struct SAIInterfaceSpecifyer;
+struct SSAISpecifyer;
 
 class CSkirmishAILibraryInfo {
 public:
@@ -44,6 +45,9 @@ public:
 //    virtual LevelOfSupport GetLevelOfSupportForCurrentEngineAndSetInterface() const;
 //    virtual LevelOfSupport GetLevelOfSupportForCurrentEngine(SAIInterfaceSpecifyer interfaceSpecifyer) const;
 	
+    virtual SSAISpecifyer GetSpecifier() const;
+	
+    virtual std::string GetFileName() const;
     virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
     virtual std::string GetName() const;
     virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
@@ -54,9 +58,12 @@ public:
     virtual std::string GetInfo(const std::string& key) const;
     virtual const std::map<std::string, InfoItem>* GetInfos() const;
 //    virtual std::vector<std::string> GetPropertyNames() const;
+	virtual unsigned int GetInfosCReference(InfoItem cInfos[], unsigned int max) const;
+	virtual unsigned int GetOptionsCReference(Option cOptions[], unsigned int max) const;
 	
 	virtual const std::vector<Option>* GetOptions() const;
 	
+	virtual void SetFileName(const std::string& fileName);
     virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
     virtual void SetName(const std::string& name);
     virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'

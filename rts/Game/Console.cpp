@@ -1,3 +1,8 @@
+#include "StdAfx.h"
+#include <assert.h>
+
+#include "mmgr.h"
+
 #include "Console.h" 
 
 #include "LogOutput.h"

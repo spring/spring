@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CobEngine.h"
 #include "CobFile.h"
 #include "CobInstance.h"
@@ -7,6 +9,7 @@
 #ifndef _CONSOLE
 
 #include <SDL_types.h>
+
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -37,7 +40,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 
 #endif
 
@@ -129,6 +131,7 @@
 #define MIN                      131 // get
 #define MAX                      132 // get
 #define ABS                      133 // get
+#define GAME_FRAME               134 // get
 
 // NOTE: shared variables use codes [1024 - 5119]
 
@@ -891,6 +894,8 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
+                    // FIXME: this is a memory leak
+                    // a comment in FlyingPiece says it deletes, but mmgr says otherwise
 					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
@@ -1372,6 +1377,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return -1;
 		}
 	}
+	case GAME_FRAME: {
+		return gs->frameNum;	                 		
+	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
 			return globalVars[val - GLOBAL_VAR_START];
@@ -1501,38 +1509,44 @@ void CCobInstance::SetUnitVal(int val, int param)
 			break;
 		}
 		case YARD_OPEN: {
-			if (param == 0) {
-				if (groundBlockingObjectMap->CanCloseYard(unit)) {
-					yardOpen = false;
+			if (unit->yardMap != 0x0) {
+				// note: if this unit is a factory, engine-controlled
+				// OpenYard() and CloseYard() calls can interfere with
+				// the yardOpen state (they probably should be removed
+				// at some point)
+				if (param == 0) {
+					if (groundBlockingObjectMap->CanCloseYard(unit)) {
+						groundBlockingObjectMap->CloseBlockingYard(unit, unit->yardMap);
+						yardOpen = false;
+					}
+				} else {
+					groundBlockingObjectMap->OpenBlockingYard(unit, unit->yardMap);
+					yardOpen = true;
 				}
-			}
-			else {
-				yardOpen = true;
 			}
 			break;
 		}
 		case BUGGER_OFF: {
 			if (param != 0) {
-				helper->BuggerOff(unit->pos+unit->frontdir*unit->radius,unit->radius*1.5f);
+				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f);
 			}
-			//yardOpen = (param != 0);
 			break;
 		}
 		case ARMORED: {
-			if(param){
-				unit->curArmorMultiple=unit->armoredMultiple;
+			if (param) {
+				unit->curArmorMultiple = unit->armoredMultiple;
 			} else {
-				unit->curArmorMultiple=1;
+				unit->curArmorMultiple = 1;
 			}
 			unit->armoredState = (param != 0);
 			break;
 		}
 		case VETERAN_LEVEL: {
-			unit->experience=param*0.01f;
+			unit->experience = param * 0.01f;
 			break;
 		}
 		case MAX_SPEED: {
-			if(unit->moveType && param > 0){
+			if (unit->moveType && param > 0) {
 				// find the first CMD_SET_WANTED_MAX_SPEED and modify it if need be
 				for (CCommandQueue::iterator it = unit->commandAI->commandQue.begin();
 						it != unit->commandAI->commandQue.end(); ++it) {

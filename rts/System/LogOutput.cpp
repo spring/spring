@@ -1,46 +1,35 @@
-
 #include "StdAfx.h"
-#include <assert.h>
+
 #include "LogOutput.h"
-#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#include "GlobalStuff.h"
-#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#include <assert.h>
 #include <cstdarg>
 #include <fstream>
 #include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
 
-
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
 
-//#if defined BUILDING_AI
-//static std::ofstream* ai_filelog = 0;
-/*
-#if defined BUILDING_AI_INTERFACE
-#define LOG_FILE_NAME "CAIInterface_infolog.txt"
-static std::ofstream* aiinterface_filelog = 0;
-static bool aiinterface_initialized = false;
-#define FILE_LOG aiinterface_filelog
-#define INITIALIZED aiinterface_initialized
-#else
-*/
-//#define LOG_FILE_NAME "infolog.txt"
+#include "mmgr.h"
+#include "Util.h"
+#include "float3.h"
+#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#include "GlobalStuff.h"
+#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+
+
 #if defined BUILDING_AI_INTERFACE
 #define LOG_FILE_PREFIX "infolog_aiinterface"
-#define LOG_FILE_PREFIX "infolog"
 #else
+#define LOG_FILE_PREFIX "infolog"
 #endif
 #define LOG_FILE_SUFFIX ".txt"
 //static std::ofstream* filelog = 0;
 //static bool initialized = false;
 static int infologIndex = 0;
 #define FILE_LOG filelog
-//#define INITIALIZED initialized
-//#endif
 static bool stdoutDebug = false;
-//CLogOutput logOutput;
 CLogOutput& logOutput = CLogOutput::GetInstance();
 static boost::recursive_mutex tempstrMutex;
 static std::string tempstr;

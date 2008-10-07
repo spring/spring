@@ -3,19 +3,26 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaIO.h"
-
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
+
+#ifndef _MSC_VER	// this header file does not exist for the microsoft compiler
+ #include <unistd.h>
+#endif
+
 #include <string>
 using std::string;
+
+#include "mmgr.h"
+
+#include "LuaIO.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "LuaHandle.h"
 #endif
 #include "LuaInclude.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

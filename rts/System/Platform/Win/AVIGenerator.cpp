@@ -1,10 +1,11 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "AVIGenerator.h"
 #include "Game/GameVersion.h"
 #include "LogOutput.h"
+#include "SpringApp.h"
 
 #include <windows.h>
-#include "Rendering/GL/myGL.h"
 #if defined(_WIN32) && defined(__MINGW32__)
 #include <GL/glext.h>
 #endif
@@ -17,6 +18,7 @@
 #pragma message("Adding library: vfw32.lib")
 #pragma comment(lib, "vfw32.lib")
 #endif
+
 
 
 

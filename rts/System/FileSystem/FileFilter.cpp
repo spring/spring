@@ -1,9 +1,12 @@
-#include "FileFilter.h"
+#include "StdAfx.h"
 #include <limits.h>
 #include <boost/regex.hpp>
 #include <ctype.h>
 #include <sstream>
 #include <vector>
+#include "mmgr.h"
+
+#include "FileFilter.h"
 
 
 using std::string;

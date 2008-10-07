@@ -2,6 +2,7 @@
 // LuaBitOps.cpp: implementation of the LuaBitOps class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaBitOps.h"
 

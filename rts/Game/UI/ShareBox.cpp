@@ -1,4 +1,7 @@
 #include "StdAfx.h"
+#include <SDL_keysym.h>
+#include "mmgr.h"
+
 #include "ShareBox.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -7,7 +10,7 @@
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/SelectedUnits.h"
-#include <SDL_keysym.h>
+
 
 int CShareBox::lastShareTeam=0;
 
@@ -186,7 +189,7 @@ void CShareBox::Draw(void)
 		std::string teamName;
 
 		if (gs->Team(actualTeam)->leader >= 0) {
-			teamName = gs->players[gs->Team(actualTeam)->leader]->playerName;
+			teamName = gs->players[gs->Team(actualTeam)->leader]->name;
 		} else {
 			teamName = "Uncontrolled";
 		}

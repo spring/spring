@@ -2,7 +2,8 @@
 #define __DAMAGE_ARRAY_H__
 
 #include "StdAfx.h"
-#include "DamageArrayHandler.h"
+#include <algorithm>
+#include "creg/creg.h"
 
 struct DamageArray
 {
@@ -51,8 +52,7 @@ DamageArray(const DamageArray& other)
 		craterMult = other.craterMult;
 		craterBoost = other.craterBoost;
 		numTypes = other.numTypes;
-		for(int a = 0; a < numTypes; ++a)
-			damages[a] = other.damages[a];
+		std::copy(other.damages, other.damages + numTypes, damages);
 	}
 	float& operator[](int i) { return damages[i]; }
 	float operator[](int i) const { return damages[i]; }

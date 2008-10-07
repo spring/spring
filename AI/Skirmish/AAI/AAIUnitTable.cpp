@@ -123,8 +123,8 @@ void AAIUnitTable::AddConstructor(int unit_id, int def_id)
 	// increase/decrease number of available/requested builders for all buildoptions of the builder
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)	
 	{	
-		bt->units_dynamic[*unit].buildersAvailable += 1;
-		bt->units_dynamic[*unit].buildersRequested -= 1;
+		bt->units_dynamic[*unit].constructorsAvailable += 1;
+		bt->units_dynamic[*unit].constructorsRequested -= 1;
 	}
 
 	if(builder)
@@ -154,7 +154,7 @@ void AAIUnitTable::RemoveConstructor(int unit_id, int def_id)
 	
 	// decrease number of available builders for all buildoptions of the builder
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
-		bt->units_dynamic[*unit].buildersAvailable -= 1;
+		bt->units_dynamic[*unit].constructorsAvailable -= 1;
 
 	// erase from builders list
 	constructors.erase(unit_id);
@@ -194,7 +194,7 @@ void AAIUnitTable::AddCommander(int unit_id, int def_id)
 
 	// increase number of builders for all buildoptions of the commander 
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
-		++bt->units_dynamic[*unit].buildersAvailable;
+		++bt->units_dynamic[*unit].constructorsAvailable;
 	
 }
 
@@ -202,7 +202,7 @@ void AAIUnitTable::RemoveCommander(int unit_id, int def_id)
 {
 	// decrease number of builders for all buildoptions of the commander 
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)	
-		--bt->units_dynamic[*unit].buildersAvailable;
+		--bt->units_dynamic[*unit].constructorsAvailable;
 
 	// erase from builders list
 	constructors.erase(unit_id);

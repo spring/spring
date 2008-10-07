@@ -11,6 +11,21 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/spirit/utility/confix.hpp>
+#include <boost/spirit/core.hpp>
+#include <boost/spirit/symbols.hpp>
+#include <boost/spirit/attribute.hpp>
+#include <boost/spirit/dynamic.hpp>
+#include <boost/spirit/phoenix.hpp>
+#include <boost/spirit/utility/chset.hpp>
+#include <boost/spirit/utility/lists.hpp>
+#include <boost/spirit/iterator/file_iterator.hpp>
+#include <boost/spirit/utility/grammar_def.hpp>
+#include <boost/spirit/iterator/position_iterator.hpp>
+#include <boost/spirit/phoenix/binders.hpp>
+#include <boost/spirit/error_handling/exceptions.hpp>
+#include "mmgr.h"
+#include "Util.h"
+
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
 #include "FileSystem/FileHandler.h"

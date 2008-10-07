@@ -5,7 +5,7 @@
 
 #include "Object.h"
 #include "Sim/Units/Unit.h"
-
+#include <assert.h>
 
 #define RADAR_SIZE 8
 

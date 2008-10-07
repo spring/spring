@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "GroundFlash.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Map/Ground.h"
@@ -6,7 +8,6 @@
 #include "GL/VertexArray.h"
 #include "LogOutput.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 
@@ -141,10 +142,10 @@ void CStandardGroundFlash::Draw()
 		float3 p3=pos+( side1+side2)*iSize;
 		float3 p4=pos+(-side1+side2)*iSize;
 
-		va->AddVertexTC(p1,ph->groundringtex.xstart,ph->groundringtex.ystart,col);
-		va->AddVertexTC(p2,ph->groundringtex.xend,ph->groundringtex.ystart,col);
-		va->AddVertexTC(p3,ph->groundringtex.xend,ph->groundringtex.yend,col);
-		va->AddVertexTC(p4,ph->groundringtex.xstart,ph->groundringtex.yend,col);
+		va->AddVertexQTC(p1,ph->groundringtex.xstart,ph->groundringtex.ystart,col);
+		va->AddVertexQTC(p2,ph->groundringtex.xend,ph->groundringtex.ystart,col);
+		va->AddVertexQTC(p3,ph->groundringtex.xend,ph->groundringtex.yend,col);
+		va->AddVertexQTC(p4,ph->groundringtex.xstart,ph->groundringtex.yend,col);
 	}
 
 	float iAge=flashAge+flashAgeSpeed*gu->timeOffset;
@@ -166,10 +167,10 @@ void CStandardGroundFlash::Draw()
 		float3 p3=pos+( side1+side2)*iSize;
 		float3 p4=pos+(-side1+side2)*iSize;
 
-		va->AddVertexTC(p1,ph->groundflashtex.xstart,ph->groundflashtex.yend,col);
-		va->AddVertexTC(p2,ph->groundflashtex.xend,ph->groundflashtex.yend,col);
-		va->AddVertexTC(p3,ph->groundflashtex.xend,ph->groundflashtex.ystart,col);
-		va->AddVertexTC(p4,ph->groundflashtex.xstart,ph->groundflashtex.ystart,col);
+		va->AddVertexQTC(p1,ph->groundflashtex.xstart,ph->groundflashtex.yend,col);
+		va->AddVertexQTC(p2,ph->groundflashtex.xend,ph->groundflashtex.yend,col);
+		va->AddVertexQTC(p3,ph->groundflashtex.xend,ph->groundflashtex.ystart,col);
+		va->AddVertexQTC(p4,ph->groundflashtex.xstart,ph->groundflashtex.ystart,col);
 	}
 }
 
@@ -229,10 +230,10 @@ void CSeismicGroundFlash::Draw()
 	float3 p3=pos+( side1+side2)*size;
 	float3 p4=pos+(-side1+side2)*size;
 
-	va->AddVertexTC(p1,texture.xstart,texture.ystart,color);
-	va->AddVertexTC(p2,texture.xend,texture.ystart,color);
-	va->AddVertexTC(p3,texture.xend,texture.yend,color);
-	va->AddVertexTC(p4,texture.xstart,texture.yend,color);
+	va->AddVertexQTC(p1,texture.xstart,texture.ystart,color);
+	va->AddVertexQTC(p2,texture.xend,texture.ystart,color);
+	va->AddVertexQTC(p3,texture.xend,texture.yend,color);
+	va->AddVertexQTC(p4,texture.xstart,texture.yend,color);
 }
 
 bool CSeismicGroundFlash::Update()
@@ -297,10 +298,10 @@ void CSimpleGroundFlash::Draw()
 	float3 p3=pos+( side1+side2)*size;
 	float3 p4=pos+(-side1+side2)*size;
 
-	va->AddVertexTC(p1,texture->xstart,texture->ystart,color);
-	va->AddVertexTC(p2,texture->xend,texture->ystart,color);
-	va->AddVertexTC(p3,texture->xend,texture->yend,color);
-	va->AddVertexTC(p4,texture->xstart,texture->yend,color);
+	va->AddVertexQTC(p1,texture->xstart,texture->ystart,color);
+	va->AddVertexQTC(p2,texture->xend,texture->ystart,color);
+	va->AddVertexQTC(p3,texture->xend,texture->yend,color);
+	va->AddVertexQTC(p4,texture->xstart,texture->yend,color);
 }
 
 bool CSimpleGroundFlash::Update()

@@ -19,7 +19,7 @@
 #include <string>
 #include <iostream>
 
-#include "StdAfx.h"
+#include "Util.h"
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"

@@ -41,6 +41,7 @@ void deleteSGAISpecifyer(const struct SGAISpecifyer* const spec) {
 }
 
 #ifdef	__cplusplus
+
 bool SGAISpecifyer_Comparator::operator()(const struct SGAISpecifyer& a, const struct SGAISpecifyer& b) const {
 
 	bool isLess = false;
@@ -68,4 +69,5 @@ bool SGAISpecifyer_Comparator::IsEmpty(const struct SGAISpecifyer& spec) {
 	
 	return empty;
 }
+
 #endif /* __cplusplus */

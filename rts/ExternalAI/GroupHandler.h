@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include "ExternalAI/aikey.h"
+#include "System/GlobalStuff.h"
 
 class CGroup;
 class CUnitSet;

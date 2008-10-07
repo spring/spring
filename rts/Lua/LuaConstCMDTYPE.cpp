@@ -2,6 +2,7 @@
 // LuaConstCMDTYPE.cpp: implementation of the LuaConstCMDTYPE class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaConstCMDTYPE.h"
 

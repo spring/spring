@@ -15,6 +15,7 @@
 #include "Platform/byteorder.h"
 #include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
+#include "System/Util.h"
 
 #include "terrain/TerrainNode.h"
 #include "Game/Camera.h"
@@ -173,15 +174,8 @@ void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
 	renderer->HeightmapUpdated(x1,y1,x2-x1,y2-y1);
 }
 
-float* CSm3ReadMap::GetHeightmap()
-{
-	return renderer->GetHeightmap();
-}
-
-
 void CSm3ReadMap::Update() {}
 void CSm3ReadMap::Explosion(float x,float y,float strength) {}
-void CSm3ReadMap::ExplosionUpdate(int x1,int x2,int y1,int y2) {}
 GLuint CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height
 void CSm3ReadMap::DrawMinimap ()
 {

@@ -1,11 +1,13 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "WakeProjectile.h"
-#include "mmgr.h"
+#include "System/GlobalStuff.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,NULL,0,0,0));
 

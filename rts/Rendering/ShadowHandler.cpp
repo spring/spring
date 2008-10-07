@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "ShadowHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
@@ -15,7 +17,6 @@
 #include "Rendering/GL/IFramebuffer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/EventHandler.h"
-#include "mmgr.h"
 
 CShadowHandler* shadowHandler=0;
 

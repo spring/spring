@@ -2,6 +2,9 @@
 // Player.cpp: implementation of the CPlayer class.
 //
 //////////////////////////////////////////////////////////////////////
+#include <assert.h>
+
+#include "mmgr.h"
 
 #include "Player.h"
 #include "Team.h"
@@ -9,16 +12,14 @@
 #  include "UI/MouseHandler.h"
 #  include "CameraHandler.h"
 #  include "Camera.h"
-#  include <assert.h>
 #endif
 #include "System/EventHandler.h"
-#include "mmgr.h"
 
 CR_BIND(CPlayer,);
 
 CR_REG_METADATA(CPlayer, (
 				CR_MEMBER(active),
-				CR_MEMBER(playerName),
+				CR_MEMBER(name),
 				CR_MEMBER(countryCode),
 				CR_MEMBER(rank),
 				CR_MEMBER(spectator),
@@ -56,13 +57,9 @@ CPlayer::CPlayer()
 	POP_CODE_MODE;
 
 	active = false;
-	playerName = "Player";
-	spectator = false;
-	team = 0;
 	readyToStart = false;
 	cpuUsage = 0;
 	ping = 0;
-	rank=-1;
 
 
 #ifdef DIRECT_CONTROL_ALLOWED
