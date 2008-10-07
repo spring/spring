@@ -8,7 +8,6 @@ User Interface:
  - Added /allmapmarks [0|1]
  - Added /forcestart command
  - Added /ally teamID [0|1] (Ingame alliances)
- - multithreaded avi-generator
  - Adde /commands (shows all registered commands in the console)
  - whisper private messages to any other player ingame (excluding spectators) by typing "/w Playername Your secret message"
  - Added new camera controller: SmoothCamera
@@ -42,10 +41,11 @@ User Interface:
    new texture mipmap generation.
  - You can now cycle through the last 10 message positions with F3.
 
-
 Spring Engine:
+ - multithreaded avi-generator
  - new water renderer: bumpwater ("/water 4"), pretty and fast
  - the usual speedups and performance improvements
+ - Font rendering system overhaul, 
  - Functionality of Sensors.tdf and Particles.tdf moved to modrules. removed Sensors.tdf or Particles.tdf
    Transfers resources.tdf to resources.lua, and resources_map.tdf to resources_map.lua.
    Sidedata.tdf -> sidedata.lua
@@ -54,23 +54,43 @@ Spring Engine:
    Replaced 'messages.tdf' with 'messages.lua'
    modinfo.tdf --> modinfo.lua
    ArchiveCacheV6.txt --> ArchiveCacheV7.lua
- - Custom collision volumes (collisionVolumeTest..)
+ - Add 'springcontent.sdz' as the last dependency for all primary mod archives
+ - Custom collision volumes
  - you can ally / unally other teams ingame using the "/ally [teamnumber] [0|1]" command (needs to be activated in lobby)
+ - Made the groundplate decals follow their parent building's facing.
+ - Allow modnames (e.g. "OTA Content") in dependX tag (modinfo).
+ - Removed 50% capture progress after an unit got captured.
+ - Made units transfer their speed to their wrecks.
+ - submarines can now travel directly underneath surface vessels and floating obstacles
+   (and conversely; ships can move across underwater objects), EDIT your mod's MoveInfo
+   entries so that the classes used by submarine-style units have "subMarine=1;" set if
+   you want to enable this fully
+ - Increased weapon limit per unit to 32.
+ - Added the following new tags to modrules.{lua,tdf}
+   - repair.energyCostFactor
+   - capture.energyCostFactor
+   - resurrect.energyCostFactor
+   - reclaim.unitEnergyCostFactor
+   - reclaim.featureEnergyCostFactor
+   - reclaim.unitMethod
+   - reclaim.unitEfficiency
+   - reclaim.allowEnemies
+   - reclaim.allowAllies
+ - Allow any key binding to a CMDTYPE_ICON command to use the 'queued' keyword
+   (except for build and stockpile commands, which already have special handling)
  - Keep units in various situations from deciding to attack units they 
    shouldn't (noChaseCatagory, neutral, under water without water weapons).
+   
+
+Units & Weapons:
  - Added canFireControl unitdef tag.
- - Fixed the stop-turn-move-stop-turn behavior for ground units (new udef tag, turnInPlace)
- - Made MeleeWeapon obey impulseFactor.
- - Font rendering system overhaul, 
+ - Fixed the stop-turn-move-stop-turn behavior for ground units (new udef tag, turnInPlace) 
  - Added maxRepairSpeed tag for builders. Limits the rate a con swarm of any
    size can repair a single target.
  - Made accuracy, sprayangle and similar tags work for starburst missiles.
    The inaccuracy is applied when the missile turns toward its target.
  - Added capturable tag.
- - Allow any key binding to a CMDTYPE_ICON command to use the 'queued' keyword
-   (except for build and stockpile commands, which already have special handling)
  - Implemented 'y' value for yardmaps which means this square is not blocked.
- - Made the groundplate decals follow their parent building's facing.
  - Have fighting, patrolling and guarding aircraft and guarding ground units
    follow noChaseCatagory.
  - Added per-weapon highTrajectory tag (int, default 2). It acts like the unit
@@ -80,6 +100,11 @@ Spring Engine:
    by colliding with units instead of causing an explosion (the CEG will still run)
    to avoid the shortcomings of small AOEs. It's only implemented for projectile weapons
    so far.
+ - Custom collision volumes:
+   - collisionVolumeType (either: "ellipsoid","cylinder","box")
+   - collisionVolumeScales (float3)
+   - collisionVolumeOffsets (float3)
+   - collisionVolumeTest (0: per frame, 1: continous)
  - Added shieldRechargeDelay weapon tag (float, default 0). The delay is the number
    of seconds the shield won't charge after being hit (kinda like the idle autoheal
    for hitpoints)
@@ -92,32 +117,14 @@ Spring Engine:
    behaviour, the behaviour fails if the unit just takes its time for aiming (or
    cannot shoot at all) or has any other reason not to shoot.
  - Added avoidNeutral (targetting) and collideNeutral (projectiles) weapon tags.
- - Added unit FBI tag verticalSpeed (float, default: 3.0) for non-fighter/bomber
+ - Added verticalSpeed (float, default: 3.0) unitDef tag  for non-fighter/bomber
    planes to define the speed of takeoff and landing (or loading).
- - Removed 50% capture progress after an unit got captured.
- - Allow modnames (e.g. "OTA Content") in dependX tag (modinfo).
- - Made units transfer their speed to their wrecks.
- - submarines can now travel directly underneath surface vessels and floating obstacles
-   (and conversely; ships can move across underwater objects), EDIT your mod's MoveInfo
-   entries so that the classes used by submarine-style units have "subMarine=1;" set if
-   you want to enable this fully
  - Made missiles obey burnblow=1 (existing tag), the missile will explode in midair
    instead of turning away or falling down when its flighttime expires if the tag is set.
- - Increased weapon limit per unit to 32.
  - Added the 'customParams' table to both featureDefs and weaponDefs
    (accessible via the lua FeatureDefs and WeaponDefs' tables).
- - Added the following new tags to modrules.{lua,tdf}
-   - repair.energyCostFactor
-   - capture.energyCostFactor
-   - resurrect.energyCostFactor
-   - reclaim.unitEnergyCostFactor
-   - reclaim.featureEnergyCostFactor
-   - reclaim.unitMethod
-   - reclaim.unitEfficiency
-   - reclaim.allowEnemies
-   - reclaim.allowAllies
- - add 'springcontent.sdz' as the last dependency for all primary mod archives
  - only add ".wav" extension for unitdef sounds if it is missing
+ - Made MeleeWeapon obey impulseFactor.
 
 Maps:
  - converted map config scripts to lua format (LuaParser / MapParser)
