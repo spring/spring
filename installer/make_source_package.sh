@@ -50,7 +50,10 @@ include=" \
  $dir/rts/ \
  $dir/SConstruct \
  $dir/tools/SelectionEditor/ \
- $dir/tools/unitsync/"
+ $dir/CMakeLists.txt \
+ $dir/AI/CMakeLists.txt \
+ $dir/tools/unitsync/ \
+ $dir/tools/DedicatedServer/"
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
