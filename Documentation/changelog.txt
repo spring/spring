@@ -55,7 +55,7 @@ Spring Engine:
    modinfo.tdf --> modinfo.lua
    ArchiveCacheV6.txt --> ArchiveCacheV7.lua
  - Add 'springcontent.sdz' as the last dependency for all primary mod archives
- - Custom collision volumes
+ - Custom collision volumes for Units and Features
  - you can ally / unally other teams ingame using the "/ally [teamnumber] [0|1]" command (needs to be activated in lobby)
  - Made the groundplate decals follow their parent building's facing.
  - Allow modnames (e.g. "OTA Content") in dependX tag (modinfo).
@@ -101,10 +101,11 @@ Units & Weapons:
    to avoid the shortcomings of small AOEs. It's only implemented for projectile weapons
    so far.
  - Custom collision volumes:
-   - collisionVolumeType (either: "ellipsoid","cylinder","box")
+   - collisionVolumeType (either: "ellipsoid","cylT" where 'T' is one of {X, Y, Z}, "box")
    - collisionVolumeScales (float3)
    - collisionVolumeOffsets (float3)
-   - collisionVolumeTest (0: per frame, 1: continous)
+   - collisionVolumeTest (0: per-frame hit detection, 1: raytraced)
+   - all these tags are the same for Features
  - Added shieldRechargeDelay weapon tag (float, default 0). The delay is the number
    of seconds the shield won't charge after being hit (kinda like the idle autoheal
    for hitpoints)
