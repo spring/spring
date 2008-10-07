@@ -17,6 +17,7 @@
 #include "Platform/errorhandler.h"
 #include "Platform/NullSound.h"
 #include "FileSystem/FileHandler.h"
+#include "Exceptions.h"
 #include <SDL_syswm.h>
 
 #define SAFE_DELETE(p)  { if(p) { delete (p);     (p) = NULL; } }

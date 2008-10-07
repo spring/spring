@@ -41,6 +41,7 @@ class CSyncDebugger {
 		 */
 		struct HistItem {
 			unsigned chk; ///< Checksum (XOR of 32 bit dwords of the data).
+			unsigned data; ///< First four bytes of data
 		};
 
 		/**
@@ -127,29 +128,12 @@ class CSyncDebugger {
 
 		void Initialize(bool useBacktrace);
 		void ServerTriggerSyncErrorHandling(int serverframenum);
-		int ServerReceived(const unsigned char* inbuf);
+		bool ServerReceived(const unsigned char* inbuf);
 		void ServerHandlePendingBlockRequests();
-		int ClientReceived(const unsigned char* inbuf);
-		int GetMessageLength(const unsigned char* inbuf) const;
+		bool ClientReceived(const unsigned char* inbuf);
 		void Reset();
 
 		friend class CSyncedPrimitiveBase;
-};
-
-
-/**
- * @brief base class to use for synced classes
- */
-class CSyncedPrimitiveBase {
-
-	protected:
-
-		/**
-		 * @brief wrapper to call the private CSyncDebugger::Sync()
-		 */
-		void Sync(void* p, unsigned size, const char* op) {
-			CSyncDebugger::GetInstance()->Sync(p, size, op);
-		}
 };
 
 #endif // SYNCDEBUG

@@ -7,6 +7,7 @@ Each target has an equivalent install target. E.g. `CentralBuildAI' has
 `install-CentralBuildAI' and the default target has `install'.
 
 [default]
+
 	spring
 	unitsync
 	AIInterfaces
@@ -33,9 +34,16 @@ import filelist
 
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
-	env = Environment(tools = ['mingw', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['mingw', 'rts', 'gch'], toolpath = ['.', 'rts/build/scons'])
 else:
-	env = Environment(tools = ['default', 'rts'], toolpath = ['.', 'rts/build/scons'])
+	env = Environment(tools = ['default', 'rts',  'gch'], toolpath = ['.', 'rts/build/scons'])
+
+if env['use_gch']:
+	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
+else:
+	import os.path
+	if os.path.exists('rts/System/StdAfx.h.gch'):
+		os.unlink('rts/System/StdAfx.h.gch')
 
 
 ################################################################################
@@ -105,6 +113,7 @@ unitsync_extra_files = [
 	'rts/Lua/LuaIO.cpp',
 	'rts/Lua/LuaParser.cpp',
 	'rts/Map/MapParser.cpp',
+	'rts/Map/SMF/SmfMapFile.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/SideParser.cpp',
@@ -157,12 +166,10 @@ if env['platform'] != 'windows':
 ### AIs
 ################################################################################
 # Make a copy of the build environment for the AIs,
-# but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 aienv = env.Copy()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
 aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
-#aienv['CPPDEFINES'] += ['_DLL']
 aiinterfaceenv = aienv.Copy()
 print aienv['CPPDEFINES']
 
@@ -303,7 +310,6 @@ for f in filelist.list_groupAIs(aienv, exclude_list=['build']):
 
 ################################################################################
 ### Build streflop (which has it's own Makefile-based build system)
-################################################################################
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
 	if env['fpmath'] == 'sse':
@@ -339,7 +345,7 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 
 
 ################################################################################
-### Build gamedata zip archives
+# Build gamedata zip archives
 ################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript

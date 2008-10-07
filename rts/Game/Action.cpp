@@ -1,8 +1,10 @@
-#include "Action.h"
-
+#include "StdAfx.h"
 #include <vector>
 #include <algorithm>
 
+#include "mmgr.h"
+
+#include "Action.h"
 #include "System/FileSystem/SimpleParser.h"
 
 Action::Action(const std::string& line)

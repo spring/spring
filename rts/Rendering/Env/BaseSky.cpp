@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BaseSky.h"
 #include "BasicSky.h"
 #include "AdvSky.h"
@@ -7,7 +9,6 @@
 #include "SkyBox.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "mmgr.h"
 
 CBaseSky* sky=0;
 

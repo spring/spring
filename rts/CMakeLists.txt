@@ -1,8 +1,6 @@
-### Cmake 2.4 lacks some cross-compiling features and fails on windows
-cmake_minimum_required(VERSION 2.6)
-PROJECT(Spring)
+ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../CMakeLists.txt
 
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
 if (NOT COMPLETE_BUILD)
 	### Compiler flags and defines based on build type
@@ -27,58 +25,27 @@ if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
 endif (USE_MMGR)
 
-SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
-if (SYNCCHECK)
-	ADD_DEFINITIONS(-DSYNCCHECK)
-endif (SYNCCHECK)
-
-SET(DIRECT_CONTROL TRUE CACHE BOOL "Allow controling units in first-person-mode")
-if (DIRECT_CONTROL)
-	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
-endif (DIRECT_CONTROL)
-
 SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
 if (USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML)
 endif (USE_GML)
 
-SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
-if (SPRING_DATADIR)
-	if (COMPLETE_BUILD)
-		ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}:${CMAKE_INSTALL_PREFIX}/${DATADIR}")
-	else (COMPLETE_BUILD)
-		ADD_DEFINITIONS(-D"SPRING_DATADIR=${SPRING_DATADIR}")
-	endif (COMPLETE_BUILD)
-endif (SPRING_DATADIR)
+SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
+if (TRACE_SYNC)
+	ADD_DEFINITIONS(-DTRACE_SYNC)
+endif (TRACE_SYNC)
 
-IF (UNIX)
-	ADD_DEFINITIONS(-DNO_AVI)
-ELSEIF (UNIX)
-	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
-	if (NO_AVI)
-		ADD_DEFINITIONS(-DNO_AVI)
-	endif (NO_AVI)
-ENDIF(UNIX)
-
-ADD_DEFINITIONS(-DSTREFLOP_X87)
+SET(SYNCDEBUG FALSE CACHE BOOL "Enable sync debugger (needs SYNCCHECK=true)")
+if (SYNCDEBUG)
+	ADD_DEFINITIONS(-DSYNCDEBUG)
+endif (SYNCDEBUG)
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
-	if (NOT COMPLETE_BUILD)
-		SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
-		
-		### add mingwlibs to link- and include-directories
-		INCLUDE_DIRECTORIES(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
-		LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	endif (NOT COMPLETE_BUILD)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
-
 	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
 ELSE (MINGW)
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
 	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex filesystem REQUIRED)
 
 	FIND_PACKAGE(X11 REQUIRED)
@@ -106,7 +73,6 @@ if (USE_GML)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} System)
 INCLUDE_DIRECTORIES(lib/lua/include lib/luabind)
 
 ### all spring source directories

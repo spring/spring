@@ -1,6 +1,7 @@
 /* Author: Tobi Vollebregt */
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>
@@ -9,6 +10,8 @@
 #include "Game/GameVersion.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
+#include "Rendering/GL/myGL.h"
+#include "Util.h"
 
 namespace CrashHandler {
 
@@ -120,8 +123,11 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
 	logOutput.RemoveAllSubscribers();
+#ifdef USE_GML
+	PRINT("Spring %s MT (%d threads) has crashed.", VERSION_STRING, gmlThreadCount);
+#else
 	PRINT("Spring %s has crashed.", VERSION_STRING);
-
+#endif
 	// Initialize IMAGEHLP.DLL.
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
 

@@ -8,11 +8,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "mmgr.h"
+
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "Messages.h"
 #include "Lua/LuaParser.h"
-#include "mmgr.h"
+#include "System/Util.h"
 
 using std::string;
 using std::vector;

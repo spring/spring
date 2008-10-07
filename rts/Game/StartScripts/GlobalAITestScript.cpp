@@ -12,7 +12,9 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/LogOutput.h"
 #include "System/Platform/FileSystem.h"
+#include "Game/GameSetup.h"
 #include "mmgr.h"
+#include "Exceptions.h"
 
 
 extern std::string stupidGlobalMapname;
@@ -22,11 +24,13 @@ CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifyer):
 	CScript(std::string("GlobalAI test (") + std::string(skirmishAISpecifyer.ai.shortName) + std::string(")")),
 	skirmishAISpecifyer(skirmishAISpecifyer)
 {
-	// make sure CSelectedUnits::AiOrder()
-	// still works without a setup script
-	gs->Team(1)->isAI = true;
-	gs->Team(1)->skirmishAISpecifyer = skirmishAISpecifyer;
-	gs->Team(1)->leader = 0;
+	if (!gameSetup) {
+		// make sure CSelectedUnits::AiOrder()
+		// still works without a setup script
+		gs->Team(1)->isAI = true;
+		gs->Team(1)->skirmishAISpecifyer = skirmishAISpecifyer;
+		gs->Team(1)->leader = 0;
+	}
 }
 
 

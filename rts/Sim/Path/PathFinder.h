@@ -1,6 +1,7 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
+#include <cstdlib>
 #include "IPath.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -15,10 +16,12 @@ void pfDealloc(void *p,size_t n);
 class CPathFinder : public IPath {
 public:
 	CPathFinder();
-	virtual ~CPathFinder();
+	~CPathFinder();
 
+#if !defined(USE_MMGR)
 	void* operator new(size_t size){return pfAlloc(size);};
 	inline void operator delete(void* p,size_t size){pfDealloc(p,size);};
+#endif
 
 	/**
 	Gives a detailed path from given starting location to target defined in CPathFinderDef,
@@ -62,11 +65,11 @@ public:
 
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
 	                     const CPathFinderDef& pfDef, Path& path);
-	
+
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
 
-private:  
+private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
 
 	class OpenSquare {
@@ -169,7 +172,7 @@ private:
 	float3 start;
 	int startxSqr, startzSqr;
 	int startSquare;
-	
+
 	int goalSquare;					//Is sat during the search as the square closest to the goal.
 	float goalHeuristic;			//The heuristic value of goalSquare.
 

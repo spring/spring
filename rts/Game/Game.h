@@ -11,6 +11,7 @@
 #include "SDL_types.h"
 
 #include "GameController.h"
+#include "creg/creg.h"
 
 class CScript;
 class CBaseWater;

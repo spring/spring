@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "InterceptHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -7,7 +9,6 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
-#include "mmgr.h"
 
 CR_BIND(CInterceptHandler, )
 CR_REG_METADATA(CInterceptHandler, (

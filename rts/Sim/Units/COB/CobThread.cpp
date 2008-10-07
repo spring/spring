@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 #include <sstream>
+#include "mmgr.h"
+
 #include "CobThread.h"
 #include "CobFile.h"
 #include "CobInstance.h"
@@ -7,7 +9,6 @@
 #include "Lua/LuaRules.h"
 
 #include "LogOutput.h"
-#include "mmgr.h"
 
 #ifdef _CONSOLE
 #include "GlobalStuff.h"

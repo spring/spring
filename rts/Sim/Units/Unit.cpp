@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "COB/CobFile.h"
 #include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
@@ -45,6 +47,7 @@
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sync/SyncedPrimitive.h"
 #include "Sync/SyncTracer.h"
 #include "System/EventHandler.h"
 #include "System/LoadSaveInterface.h"
@@ -58,7 +61,6 @@
 #include "UnitLoader.h"
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
-#include "mmgr.h"
 
 #include "COB/CobEngine.h"
 #include "CommandAI/AirCAI.h"
@@ -239,12 +241,16 @@ CUnit::CUnit ()
 
 CUnit::~CUnit()
 {
+	// not all unit deletions run through KillUnit(),
+	// but we always want to call this for ourselves
+	UnBlock();
+
 	if (delayedWreckLevel >= 0) {
 		// note: could also do this in Update() or even in CUnitKilledCB()
 		// where we wouldn't need deathSpeed, but not in KillUnit() since
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
-		// to be as short as possible to prevent visual position jumps)
+		// to be as short as possible to prevent position jumps)
 		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
 		                               delayedWreckLevel, team, -1, true,
 		                               unitDef->name, deathSpeed);
@@ -344,9 +350,10 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	posErrorVector = gs->randVector();
 	posErrorVector.y *= 0.2f;
 #ifdef TRACE_SYNC
-	tracefile << "New unit: ";
+	tracefile << "New unit: " << unitDefName.c_str() << " ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
+	ASSERT_SYNCED_FLOAT3(pos);
 }
 
 
@@ -483,6 +490,8 @@ void CUnit::DisableScriptMoveType()
 
 void CUnit::Update()
 {
+	ASSERT_SYNCED_FLOAT3(pos);
+
 	posErrorVector += posErrorDelta;
 
 	if (deathScriptFinished) {
@@ -832,15 +841,15 @@ void CUnit::SlowUpdate()
 	}
 
 	if (uh->waterDamage) {
-		if (pos.x >= 0.0f && pos.x <= float3::maxxpos && pos.z >= 0.0f && pos.z <= float3::maxzpos) {
+		if (pos.IsInBounds()) {
 			bool inWater = (pos.y <= -3);
 			bool isFloating = (physicalState == CSolidObject::Floating);
 			bool onGround = (physicalState == CSolidObject::OnGround);
-			bool waterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
+			bool isWaterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
 
 			// old: "floating or (on ground and height < -3 and mapheight < -1)"
 			// new: "height < -3 and (floating or on ground) and mapheight < -1"
-			if (inWater && (isFloating || onGround) && waterSquare) {
+			if (inWater && (isFloating || onGround) && isWaterSquare) {
 				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
 			}
 		}
@@ -1464,15 +1473,15 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	if(gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)){
+	if (gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)) {
 		return;
 	}
-	if(lastAttacker && lastAttacker!=userTarget)
+	if (lastAttacker && lastAttacker != userTarget)
 		DeleteDeathDependence(lastAttacker);
 
-	lastAttack=gs->frameNum;
-	lastAttacker=attacker;
-	if(attacker)
+	lastAttack = gs->frameNum;
+	lastAttacker = attacker;
+	if (attacker)
 		AddDeathDependence(attacker);
 }
 
@@ -1484,7 +1493,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)  { transporter  = NULL; }
 	if (o == lastAttacker) { lastAttacker = NULL; }
 
-	incomingMissiles.remove((CMissileProjectile*)o);
+	incomingMissiles.remove((CMissileProjectile*) o);
 
 	CSolidObject::DependentDied(o);
 }
@@ -1519,7 +1528,7 @@ void CUnit::Init(const CUnit* builder)
 	//       or UnitLoader! // why this is always called in unitloader
 	currentFuel = unitDef->maxFuel;
 
-	// all ships starts on water, all other on ground.
+	// all ships starts on water, all others on ground.
 	// TODO: Improve this. There might be cases when this is not correct.
 	if (unitDef->movedata &&
 	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
@@ -1530,8 +1539,12 @@ void CUnit::Init(const CUnit* builder)
 		physicalState = OnGround;
 	}
 
-	// all units are set as ground-blocking.
+	// all units are set as ground-blocking by default,
+	// units that pretend to be "pseudo-buildings" (ie.
+	// hubs, etc) are flagged as immobile so that their
+	// positions are not considered valid for building
 	blocking = true;
+	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
 
 	// some torp launchers etc are exactly in the surface and should be considered uw anyway
 	if ((pos.y + model->height) < 0.0f) {
@@ -1550,7 +1563,7 @@ void CUnit::Init(const CUnit* builder)
 	Command c;
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState < 0) {
-			if (builder!=NULL) {
+			if (builder != NULL) {
 				moveState = builder->moveState;
 			} else {
 				moveState = 1;
@@ -1725,7 +1738,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		}
 
 		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
-	  
+
 		if (!builder->UseEnergy(-energyUseScaled)) {
 			gs->Team(builder->team)->energyPull += energyUseScaled;
 			return false;
@@ -1745,7 +1758,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			}
 		}
 
-		
+
 		else {
 			if (health < 0) {
 				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency);
@@ -1900,10 +1913,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		// start running the unit's kill-script
 		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
-		UnBlock();
 		delayedWreckLevel = args[1];
-	}
-	else {
+	} else {
 		deathScriptFinished = true;
 	}
 
@@ -2236,212 +2247,211 @@ void CUnit::DrawS3O()
 
 // Member bindings
 CR_REG_METADATA(CUnit, (
-				//CR_MEMBER(unitDef),
-				CR_MEMBER(unitDefName),
-				CR_MEMBER(id),
-				CR_MEMBER(team),
-				CR_MEMBER(allyteam),
-				CR_MEMBER(lineage),
-				CR_MEMBER(aihint),
-				CR_MEMBER(frontdir),
-				CR_MEMBER(rightdir),
-				CR_MEMBER(updir),
-				CR_MEMBER(upright),
-				CR_MEMBER(relMidPos),
-				CR_MEMBER(power),
-				CR_MEMBER(luaDraw),
-				CR_MEMBER(noDraw),
-				CR_MEMBER(noSelect),
-				CR_MEMBER(noMinimap),
-				CR_MEMBER(travel),
-				CR_MEMBER(travelPeriod),
-				CR_RESERVED(8),
+	//CR_MEMBER(unitDef),
+	CR_MEMBER(unitDefName),
+	CR_MEMBER(team),
+	CR_MEMBER(allyteam),
+	CR_MEMBER(lineage),
+	CR_MEMBER(aihint),
+	CR_MEMBER(frontdir),
+	CR_MEMBER(rightdir),
+	CR_MEMBER(updir),
+	CR_MEMBER(upright),
+	CR_MEMBER(relMidPos),
+	CR_MEMBER(power),
+	CR_MEMBER(luaDraw),
+	CR_MEMBER(noDraw),
+	CR_MEMBER(noSelect),
+	CR_MEMBER(noMinimap),
+	CR_MEMBER(travel),
+	CR_MEMBER(travelPeriod),
+	CR_RESERVED(8),
 
-				CR_MEMBER(maxHealth),
-				CR_MEMBER(health),
-				CR_MEMBER(paralyzeDamage),
-				CR_MEMBER(captureProgress),
-				CR_MEMBER(experience),
-				CR_MEMBER(limExperience),
-				CR_MEMBER(neutral),
-				CR_MEMBER(soloBuilder),
-				CR_MEMBER(beingBuilt),
-				CR_MEMBER(lastNanoAdd),
-				CR_MEMBER(repairAmount),
-				CR_MEMBER(transporter),
-				CR_MEMBER(toBeTransported),
-				CR_MEMBER(buildProgress),
-				CR_MEMBER(realLosRadius),
-				CR_MEMBER(realAirLosRadius),
-				CR_MEMBER(losStatus),
-				CR_MEMBER(inBuildStance),
-				CR_MEMBER(stunned),
-				CR_MEMBER(useHighTrajectory),
-				CR_MEMBER(groundLevelled),
-				CR_MEMBER(terraformLeft),
-				CR_RESERVED(11),
+	CR_MEMBER(maxHealth),
+	CR_MEMBER(health),
+	CR_MEMBER(paralyzeDamage),
+	CR_MEMBER(captureProgress),
+	CR_MEMBER(experience),
+	CR_MEMBER(limExperience),
+	CR_MEMBER(neutral),
+	CR_MEMBER(soloBuilder),
+	CR_MEMBER(beingBuilt),
+	CR_MEMBER(lastNanoAdd),
+	CR_MEMBER(repairAmount),
+	CR_MEMBER(transporter),
+	CR_MEMBER(toBeTransported),
+	CR_MEMBER(buildProgress),
+	CR_MEMBER(realLosRadius),
+	CR_MEMBER(realAirLosRadius),
+	CR_MEMBER(losStatus),
+	CR_MEMBER(inBuildStance),
+	CR_MEMBER(stunned),
+	CR_MEMBER(useHighTrajectory),
+	CR_MEMBER(groundLevelled),
+	CR_MEMBER(terraformLeft),
+	CR_RESERVED(11),
 
-				CR_MEMBER(deathCountdown),
-				CR_MEMBER(delayedWreckLevel),
-				CR_MEMBER(restTime),
+	CR_MEMBER(deathCountdown),
+	CR_MEMBER(delayedWreckLevel),
+	CR_MEMBER(restTime),
 
-				CR_MEMBER(weapons),
-				CR_MEMBER(shieldWeapon),
-				CR_MEMBER(stockpileWeapon),
-				CR_MEMBER(reloadSpeed),
-				CR_MEMBER(maxRange),
-				CR_MEMBER(haveTarget),
-				CR_MEMBER(haveUserTarget),
-				CR_MEMBER(haveDGunRequest),
-				CR_MEMBER(lastMuzzleFlameSize),
-				CR_MEMBER(lastMuzzleFlameDir),
-				CR_RESERVED(16),
+	CR_MEMBER(weapons),
+	CR_MEMBER(shieldWeapon),
+	CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(reloadSpeed),
+	CR_MEMBER(maxRange),
+	CR_MEMBER(haveTarget),
+	CR_MEMBER(haveUserTarget),
+	CR_MEMBER(haveDGunRequest),
+	CR_MEMBER(lastMuzzleFlameSize),
+	CR_MEMBER(lastMuzzleFlameDir),
+	CR_RESERVED(16),
 
-				CR_MEMBER(armorType),
-				CR_MEMBER(category),
+	CR_MEMBER(armorType),
+	CR_MEMBER(category),
 
-				CR_MEMBER(quads),
-				CR_MEMBER(los),
-				CR_MEMBER(tempNum),
-				CR_MEMBER(lastSlowUpdate),
-				CR_MEMBER(mapSquare),
+	CR_MEMBER(quads),
+	CR_MEMBER(los),
+	CR_MEMBER(tempNum),
+	CR_MEMBER(lastSlowUpdate),
+	CR_MEMBER(mapSquare),
 
-				CR_MEMBER(controlRadius),
-				CR_MEMBER(losRadius),
-				CR_MEMBER(airLosRadius),
-				CR_MEMBER(losHeight),
-				CR_MEMBER(lastLosUpdate),
-				CR_RESERVED(16),
+	CR_MEMBER(controlRadius),
+	CR_MEMBER(losRadius),
+	CR_MEMBER(airLosRadius),
+	CR_MEMBER(losHeight),
+	CR_MEMBER(lastLosUpdate),
+	CR_RESERVED(16),
 
-				CR_MEMBER(radarRadius),
-				CR_MEMBER(sonarRadius),
-				CR_MEMBER(jammerRadius),
-				CR_MEMBER(sonarJamRadius),
-				CR_MEMBER(hasRadarCapacity),
-				CR_MEMBER(radarSquares),
-				CR_MEMBER(oldRadarPos),
-				CR_MEMBER(stealth),
-				CR_MEMBER(sonarStealth),
-				CR_RESERVED(15),
+	CR_MEMBER(radarRadius),
+	CR_MEMBER(sonarRadius),
+	CR_MEMBER(jammerRadius),
+	CR_MEMBER(sonarJamRadius),
+	CR_MEMBER(hasRadarCapacity),
+	CR_MEMBER(radarSquares),
+	CR_MEMBER(oldRadarPos),
+	CR_MEMBER(stealth),
+	CR_MEMBER(sonarStealth),
+	CR_RESERVED(15),
 
-				CR_MEMBER(commandAI),
-				CR_MEMBER(moveType),
-				CR_MEMBER(prevMoveType),
-				CR_MEMBER(usingScriptMoveType),
-				CR_MEMBER(group),
-				CR_RESERVED(16),
+	CR_MEMBER(commandAI),
+	CR_MEMBER(moveType),
+	CR_MEMBER(prevMoveType),
+	CR_MEMBER(usingScriptMoveType),
+	CR_MEMBER(group),
+	CR_RESERVED(16),
 
-				CR_MEMBER(condUseMetal),
-				CR_MEMBER(condUseEnergy),
-				CR_MEMBER(condMakeMetal),
-				CR_MEMBER(condMakeEnergy),
-				CR_MEMBER(uncondUseMetal),
-				CR_MEMBER(uncondUseEnergy),
-				CR_MEMBER(uncondMakeMetal),
-				CR_MEMBER(uncondMakeEnergy),
+	CR_MEMBER(condUseMetal),
+	CR_MEMBER(condUseEnergy),
+	CR_MEMBER(condMakeMetal),
+	CR_MEMBER(condMakeEnergy),
+	CR_MEMBER(uncondUseMetal),
+	CR_MEMBER(uncondUseEnergy),
+	CR_MEMBER(uncondMakeMetal),
+	CR_MEMBER(uncondMakeEnergy),
 
-				CR_MEMBER(metalUse),
-				CR_MEMBER(energyUse),
-				CR_MEMBER(metalMake),
-				CR_MEMBER(energyMake),
+	CR_MEMBER(metalUse),
+	CR_MEMBER(energyUse),
+	CR_MEMBER(metalMake),
+	CR_MEMBER(energyMake),
 
-				CR_MEMBER(metalUseI),
-				CR_MEMBER(energyUseI),
-				CR_MEMBER(metalMakeI),
-				CR_MEMBER(energyMakeI),
+	CR_MEMBER(metalUseI),
+	CR_MEMBER(energyUseI),
+	CR_MEMBER(metalMakeI),
+	CR_MEMBER(energyMakeI),
 
-				CR_MEMBER(metalUseold),
-				CR_MEMBER(energyUseold),
-				CR_MEMBER(metalMakeold),
-				CR_MEMBER(energyMakeold),
-				CR_MEMBER(energyTickMake),
+	CR_MEMBER(metalUseold),
+	CR_MEMBER(energyUseold),
+	CR_MEMBER(metalMakeold),
+	CR_MEMBER(energyMakeold),
+	CR_MEMBER(energyTickMake),
 
-				CR_MEMBER(metalExtract),
-				CR_MEMBER(metalCost),
-				CR_MEMBER(energyCost),
-				CR_MEMBER(buildTime),
-				CR_RESERVED(16),
+	CR_MEMBER(metalExtract),
+	CR_MEMBER(metalCost),
+	CR_MEMBER(energyCost),
+	CR_MEMBER(buildTime),
+	CR_RESERVED(16),
 
-				CR_MEMBER(metalStorage),
-				CR_MEMBER(energyStorage),
+	CR_MEMBER(metalStorage),
+	CR_MEMBER(energyStorage),
 
-				CR_MEMBER(lastAttacker),
-				CR_MEMBER(lastAttack),
-				CR_MEMBER(lastDamage),
-				CR_MEMBER(lastFireWeapon),
-				CR_MEMBER(recentDamage),
-				CR_MEMBER(userTarget),
-				CR_MEMBER(userAttackPos),
+	CR_MEMBER(lastAttacker),
+	CR_MEMBER(lastAttack),
+	CR_MEMBER(lastDamage),
+	CR_MEMBER(lastFireWeapon),
+	CR_MEMBER(recentDamage),
+	CR_MEMBER(userTarget),
+	CR_MEMBER(userAttackPos),
 
-				CR_MEMBER(userAttackGround),
-				CR_MEMBER(commandShotCount),
-				CR_MEMBER(fireState),
-				CR_MEMBER(dontFire),
-				CR_MEMBER(moveState),
+	CR_MEMBER(userAttackGround),
+	CR_MEMBER(commandShotCount),
+	CR_MEMBER(fireState),
+	CR_MEMBER(dontFire),
+	CR_MEMBER(moveState),
 
-				CR_MEMBER(activated),
+	CR_MEMBER(activated),
 
-				CR_RESERVED(32),
-				//CR_MEMBER(model),
-				//CR_MEMBER(cob),
-				//CR_MEMBER(script),
-				//CR_MEMBER(localmodel),
+	CR_RESERVED(32),
+	//CR_MEMBER(model),
+	//CR_MEMBER(cob),
+	//CR_MEMBER(script),
+	//CR_MEMBER(localmodel),
 
-				CR_MEMBER(tooltip),
-				CR_MEMBER(crashing),
-				CR_MEMBER(isDead),
-				CR_MEMBER(falling),
-				CR_MEMBER(fallSpeed),
-				CR_MEMBER(fallSpeed),
-				CR_MEMBER(fallSpeed),
+	CR_MEMBER(tooltip),
+	CR_MEMBER(crashing),
+	CR_MEMBER(isDead),
+	CR_MEMBER(falling),
+	CR_MEMBER(fallSpeed),
+	CR_MEMBER(fallSpeed),
+	CR_MEMBER(fallSpeed),
 
-				CR_MEMBER(flankingBonusMode),
-				CR_MEMBER(flankingBonusDir),
-				CR_MEMBER(flankingBonusAvgDamage),
-				CR_MEMBER(flankingBonusDifDamage),
-				CR_MEMBER(flankingBonusMobility),
-				CR_MEMBER(flankingBonusMobilityAdd),
+	CR_MEMBER(flankingBonusMode),
+	CR_MEMBER(flankingBonusDir),
+	CR_MEMBER(flankingBonusAvgDamage),
+	CR_MEMBER(flankingBonusDifDamage),
+	CR_MEMBER(flankingBonusMobility),
+	CR_MEMBER(flankingBonusMobilityAdd),
 
-				CR_MEMBER(armoredState),
-				CR_MEMBER(armoredMultiple),
-				CR_MEMBER(curArmorMultiple),
-				CR_RESERVED(16),
+	CR_MEMBER(armoredState),
+	CR_MEMBER(armoredMultiple),
+	CR_MEMBER(curArmorMultiple),
+	CR_RESERVED(16),
 
-				CR_MEMBER(wreckName),
-				CR_MEMBER(posErrorVector),
-				CR_MEMBER(posErrorDelta),
-				CR_MEMBER(nextPosErrorUpdate),
+	CR_MEMBER(wreckName),
+	CR_MEMBER(posErrorVector),
+	CR_MEMBER(posErrorDelta),
+	CR_MEMBER(nextPosErrorUpdate),
 
-				CR_MEMBER(hasUWWeapons),
+	CR_MEMBER(hasUWWeapons),
 
-				CR_MEMBER(wantCloak),
-				CR_MEMBER(scriptCloak),
-				CR_MEMBER(cloakTimeout),
-				CR_MEMBER(curCloakTimeout),
-				CR_MEMBER(isCloaked),
-				CR_MEMBER(decloakDistance),
+	CR_MEMBER(wantCloak),
+	CR_MEMBER(scriptCloak),
+	CR_MEMBER(cloakTimeout),
+	CR_MEMBER(curCloakTimeout),
+	CR_MEMBER(isCloaked),
+	CR_MEMBER(decloakDistance),
 
-				CR_MEMBER(lastTerrainType),
-				CR_MEMBER(curTerrainType),
+	CR_MEMBER(lastTerrainType),
+	CR_MEMBER(curTerrainType),
 
-				CR_MEMBER(alphaThreshold),
+	CR_MEMBER(alphaThreshold),
 
-				CR_MEMBER(selfDCountdown),
-				CR_RESERVED(16),
+	CR_MEMBER(selfDCountdown),
+	CR_RESERVED(16),
 
-				//CR_MEMBER(directControl),
-				//CR_MEMBER(myTrack),       //unused
-				CR_MEMBER(incomingMissiles),
-				CR_MEMBER(lastFlareDrop),
-				CR_MEMBER(seismicRadius),
-				CR_MEMBER(seismicSignature),
-				CR_MEMBER(maxSpeed),
-				CR_MEMBER(weaponHitMod),
+	//CR_MEMBER(directControl),
+	//CR_MEMBER(myTrack),       //unused
+	CR_MEMBER(incomingMissiles),
+	CR_MEMBER(lastFlareDrop),
+	CR_MEMBER(seismicRadius),
+	CR_MEMBER(seismicSignature),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(weaponHitMod),
 
-				CR_MEMBER(inAir),
-				CR_MEMBER(inWater),
+	CR_MEMBER(inAir),
+	CR_MEMBER(inWater),
 
-				CR_RESERVED(126),
+	CR_RESERVED(126),
 
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_POSTLOAD(PostLoad)
+	));

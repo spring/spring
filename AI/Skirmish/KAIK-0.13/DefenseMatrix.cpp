@@ -1,5 +1,6 @@
 #include "DefenseMatrix.h"
 
+#include "System/GlobalStuff.h"
 
 CR_BIND(CDefenseMatrix, (NULL));
 CR_REG_METADATA(CDefenseMatrix, (

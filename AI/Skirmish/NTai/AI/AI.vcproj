@@ -58,7 +58,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\..\..\game\AI\Skirmish/impls\$(ProjectName)-debug.dll"
+				OutputFile="..\..\..\..\game\AI\Skirmish\impls\$(ProjectName)-debug.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				LargeAddressAware="2"
@@ -131,7 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\..\..\game\AI\Skirmish/impls\$(ProjectName)-release.dll"
+				OutputFile="..\..\..\..\game\AI\Skirmish\impls\$(ProjectName)-release.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
@@ -205,7 +205,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\..\..\game\AI\Skirmish/impls\$(ProjectName)-release-ecatch.dll"
+				OutputFile="..\..\..\..\game\AI\Skirmish\impls\$(ProjectName)-release-ecatch.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"

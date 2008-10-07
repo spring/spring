@@ -5,7 +5,7 @@
 #include "SOption.h"
 
 #if	defined(__cplusplus) && !defined(BUILDING_AI)
-#include "System/StdAfx.h"
+#include "System/Util.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 
@@ -31,22 +31,25 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 	if (optionsSet.find(opt_key) != optionsSet.end()) {
 		return false;
 	}
-	//opt.key = opt_key.c_str();
 	opt.key = mallocCopyString(opt_key.c_str());
+	
 	std::string opt_name = optTbl.GetString("name", opt_key);
 	if (opt_name.empty()) {
 		return false;
 	}
-	//opt.name = opt_name.c_str();
 	opt.name = mallocCopyString(opt_name.c_str());
+	
 	std::string opt_desc = optTbl.GetString("desc", opt_name);
-	//opt.desc = opt_desc.c_str();
 	opt.desc = mallocCopyString(opt_desc.c_str());
 	
+	std::string opt_section = optTbl.GetString("section", "");
+	opt.section = mallocCopyString(opt_section.c_str());
+	
+	std::string opt_style = optTbl.GetString("style", "");
+	opt.style = mallocCopyString(opt_style.c_str());
 
 	std::string opt_type = optTbl.GetString("type", "");
 	opt_type = StringToLower(opt_type);
-	//opt.type = opt_type.c_str();
 	opt.type = mallocCopyString(opt_type.c_str());
 
 	// option type specific properties
@@ -63,7 +66,6 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 	}
 	else if (opt_type == "string") {
 		opt.typeCode = opt_string;
-		//opt.stringDef    = optTbl.GetString("def", "").c_str();
 		opt.stringDef    = mallocCopyString(optTbl.GetString("def", "").c_str());
 		opt.stringMaxLen = optTbl.GetInt("maxlen", 0);
 	}
@@ -83,7 +85,6 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 			std::string item_key = listTbl.GetString(i, "");
 			if (!item_key.empty() &&
 			    (item_key.find_first_of(badKeyChars) == string::npos)) {
-				//item.key = item_key.c_str();
 				item.key = mallocCopyString(item_key.c_str());
 				item.name = item.key;
 				item.desc = item.name;

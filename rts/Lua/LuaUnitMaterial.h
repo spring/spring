@@ -64,11 +64,11 @@ class LuaUnitUniforms {
 	public:
 		LuaUnitUniforms()
 		: haveUniforms(false),
-		  speedLoc(0),
-		  healthLoc(0),
-		  unitIDLoc(0),
-		  teamIDLoc(0),
-		  customLoc(0),
+		  speedLoc(-1),
+		  healthLoc(-1),
+		  unitIDLoc(-1),
+		  teamIDLoc(-1),
+		  customLoc(-1),
 		  customCount(0),
 		  customData(NULL)
 		{}
@@ -83,9 +83,9 @@ class LuaUnitUniforms {
 	public:
 		bool haveUniforms;
 		GLint speedLoc;	
-		GLint healthLoc;	
-		GLint unitIDLoc;	
-		GLint teamIDLoc;	
+		GLint healthLoc;
+		GLint unitIDLoc;
+		GLint teamIDLoc;
 		GLint customLoc;
 		int customCount;
 		GLfloat* customData;

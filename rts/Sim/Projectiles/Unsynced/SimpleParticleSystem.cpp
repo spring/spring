@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "GenericParticleProjectile.h"
 #include "GlobalStuff.h"
@@ -6,7 +8,6 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "SimpleParticleSystem.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "mmgr.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
@@ -70,6 +71,7 @@ void CSimpleParticleSystem::Draw()
 {
 	inArray=true;
 
+	va->EnlargeArrays(numParticles*4,0,VA_SIZE_TC);
 	if(directional)
 	{
 		for(int i=0; i<numParticles; i++)
@@ -88,10 +90,10 @@ void CSimpleParticleSystem::Draw()
 				colorMap->GetColor(color, particles[i].life);
 				float3 interPos=particles[i].pos+particles[i].speed*gu->timeOffset;
 				float size = particles[i].size;
-				va->AddVertexTC(interPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
-				va->AddVertexTC(interPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
-				va->AddVertexTC(interPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
-				va->AddVertexTC(interPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
+				va->AddVertexQTC(interPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
+				va->AddVertexQTC(interPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
+				va->AddVertexQTC(interPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
+				va->AddVertexQTC(interPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
 			}
 		}
 	}
@@ -107,10 +109,10 @@ void CSimpleParticleSystem::Draw()
 				float3 interPos=particles[i].pos+particles[i].speed*gu->timeOffset;
 				float size = particles[i].size;
 
-				va->AddVertexTC(interPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
-				va->AddVertexTC(interPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
-				va->AddVertexTC(interPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
-				va->AddVertexTC(interPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
+				va->AddVertexQTC(interPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
+				va->AddVertexQTC(interPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
+				va->AddVertexQTC(interPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
+				va->AddVertexQTC(interPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
 			}
 		}
 	}

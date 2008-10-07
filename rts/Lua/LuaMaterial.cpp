@@ -3,12 +3,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaMaterial.h"
-
 #include <string>
 #include <vector>
+#include <cstring>
+
 using std::string;
 using std::vector;
+
+#include "mmgr.h"
+
+#include "LuaMaterial.h"
 
 #include "LuaHashString.h"
 #include "LuaHandle.h"
@@ -20,6 +24,7 @@ using std::vector;
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 LuaMatHandler LuaMatHandler::handler;
@@ -39,22 +44,23 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 
 void LuaUnitUniforms::Execute(CUnit* unit) const
 {
+	//FIXME use vertex attributes
 	if (!haveUniforms) {
 		return;
 	}
-	if (speedLoc != 0) {
-		glUniform3f(speedLoc, unit->speed.x, unit->speed.y, unit->speed.z);
+	if (speedLoc >= 0) {
+		glUniformf3(speedLoc, unit->speed);
 	}
-	if (healthLoc != 0) {
+	if (healthLoc >= 0) {
 		glUniform1f(healthLoc, unit->health / unit->maxHealth);
 	}
-	if (unitIDLoc != 0) {
+	if (unitIDLoc >= 0) {
 		glUniform1i(unitIDLoc, unit->id);
 	}
-	if (teamIDLoc != 0) {
+	if (teamIDLoc >= 0) {
 		glUniform1i(teamIDLoc, unit->id);
 	}
-	if (customLoc != 0) {
+	if (customLoc >= 0) {
 		if (customCount > 0) {
 			glUniform1fv(customLoc, customCount, customData);
 		}
@@ -236,13 +242,10 @@ int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 }
 
 
-void LuaMatTexture::Execute(const LuaMatTexture& prev) const
+void LuaMatTexture::Bind(const LuaMatTexture& prev) const
 {
 	// blunt force -- poor form
-	if (prev.enable) {
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	}
+	prev.Unbind();
 
 	if (type == LUATEX_GL) {
 		glBindTexture(GL_TEXTURE_2D, openglID);
@@ -252,6 +255,9 @@ void LuaMatTexture::Execute(const LuaMatTexture& prev) const
 	}
 	else if (type == LUATEX_SHADOWMAP) {
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 		if (enable) {
 			glEnable(GL_TEXTURE_2D);
 		}
@@ -267,6 +273,28 @@ void LuaMatTexture::Execute(const LuaMatTexture& prev) const
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}
+	}
+}
+
+
+void LuaMatTexture::Unbind() const
+{
+	if (type == LUATEX_NONE || (!enable && (type != LUATEX_SHADOWMAP)))
+        return;
+
+	if (type == LUATEX_GL) {
+		glDisable(GL_TEXTURE_2D);
+	}
+	else if (type == LUATEX_SHADOWMAP) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		glDisable(GL_TEXTURE_2D);
+	}
+	else if (type == LUATEX_REFLECTION) {
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+	}
+	else if (type == LUATEX_SPECULAR) {
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 	}
 }
 
@@ -321,7 +349,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 
 	shader.Execute(prev.shader);
 
-	if (cameraLoc) {
+	if (cameraLoc>=0) {
 		// FIXME: this is happening too much, just use floats?
 		GLfloat array[16];
 		const GLdouble* modelview = camera->GetModelview();
@@ -331,10 +359,22 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
 	}
 
+	if (cameraPosLoc>=0) {
+		glUniformf3(cameraPosLoc, camera->pos);
+	}
+
+	if (shadowLoc>=0) {
+		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->shadowMatrix.m);
+	}
+
+	if (shadowParamsLoc>=0) {
+		glUniform4f(shadowParamsLoc, shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
+	}
+
 	const int maxTex = std::max(texCount, prev.texCount);
 	for (int t = (maxTex - 1); t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
-		textures[t].Execute(prev.textures[t]);
+		textures[t].Bind(prev.textures[t]);
 	}
 
 	if (useCamera != prev.useCamera) {
@@ -343,6 +383,15 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		} else {
 			glPushMatrix();
 			glLoadIdentity();
+		}
+	}
+
+	if (culling != prev.culling) {
+		if (culling) {
+			glEnable(GL_CULL_FACE);
+			glCullFace(culling);
+		} else {
+			glDisable(GL_CULL_FACE);
 		}
 	}
 }
@@ -374,7 +423,7 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		}
 	}
 	if (a.texCount != b.texCount) {
-		return (a.texCount < b.texCount) ? -1 : + 1;
+		return (a.texCount < b.texCount) ? -1 : +1;
 	}
 
 	if (a.preList != b.preList) {
@@ -389,8 +438,24 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return a.useCamera ? -1 : +1;
 	}
 
+	if (a.culling != b.culling) {
+		return (a.culling < b.culling) ? -1 : +1;
+	}
+
 	if (a.cameraLoc != b.cameraLoc) {
-		return (a.cameraLoc < a.cameraLoc) ? -1 : +1;
+		return (a.cameraLoc < b.cameraLoc) ? -1 : +1;
+	}
+
+	if (a.cameraPosLoc != b.cameraPosLoc) {
+		return (a.cameraPosLoc < b.cameraPosLoc) ? -1 : +1;
+	}
+
+	if (a.shadowLoc != b.shadowLoc) {
+		return (a.shadowLoc < b.shadowLoc) ? -1 : +1;
+	}
+
+	if (a.shadowParamsLoc != b.shadowParamsLoc) {
+		return (a.shadowParamsLoc < b.shadowParamsLoc) ? -1 : +1;
 	}
 
 	return 0;
@@ -413,6 +478,9 @@ static const char* GetMatTypeName(LuaMatType type)
 
 void LuaMaterial::Print(const string& indent) const
 {
+#define CULL_TO_STR(x) \
+	(x==GL_FRONT) ? "front" : (x==GL_BACK) ? "back" : (x!=0) ? "false" : "unknown"
+
 	PRINTF("%s%s\n", indent.c_str(), GetMatTypeName(type));
 	PRINTF("%sorder = %i\n", indent.c_str(), order);
 	shader.Print(indent);
@@ -425,7 +493,11 @@ void LuaMaterial::Print(const string& indent) const
 	PRINTF("%spreList  = %i\n",  indent.c_str(), preList);
 	PRINTF("%spostList = %i\n",  indent.c_str(), postList);
 	PRINTF("%suseCamera = %s\n", indent.c_str(), useCamera ? "true" : "false");
+	PRINTF("%sculling = %s\n", indent.c_str(), CULL_TO_STR(culling));
 	PRINTF("%scameraLoc = %i\n", indent.c_str(), cameraLoc);
+	PRINTF("%scameraPosLoc = %i\n", indent.c_str(), cameraPosLoc);
+	PRINTF("%sshadowLoc = %i\n", indent.c_str(), shadowLoc);
+	PRINTF("%sshadowParamsLoc = %i\n", indent.c_str(), shadowParamsLoc);
 }
 
 

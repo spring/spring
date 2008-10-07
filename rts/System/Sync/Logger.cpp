@@ -10,7 +10,10 @@
 #include <string.h>
 #include <sstream>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "Logger.h"
+
 
 #ifdef WIN32
 // msvcrt doesn't have thread safe ctime_r
@@ -119,10 +122,24 @@ void CLogger::FlushBuffer()
 
 	if (exename.empty()) {
 		get_executable_name(buf1, sizeof(buf1));
-		exename = buf1;
+		int len = strlen(buf1);
+		strncpy(buf2, buf1, sizeof(buf2));
+		if (len > 4 && buf2[len-4] == '.')
+			buf2[len-4] = 0;
+		strncat(buf2, ".dbg", sizeof(buf2));
+
+		fprintf(logfile, "trying debug symbols file: '%s'\n", buf2);
+
+		struct stat tmp;
+		if (stat(buf2, &tmp) == 0) {
+			exename = buf2;
+		} else {
+			exename = buf1;
+		}
+
 		if (exename.empty())
 			return;
-		fprintf(logfile, "executable name   : '%s'\n", buf1);
+		fprintf(logfile, "executable name: '%s'\n", exename.c_str());
 	}
 
 	// Compose addr2line command.
@@ -131,7 +148,7 @@ void CLogger::FlushBuffer()
 	std::vector<std::string>::iterator it;
 	bool runTheCommand = false;
 
-	command << ADDR2LINE << " \"--exe=" << exename << "\" --functions --demangle";
+	command << ADDR2LINE << " \"--exe=" << exename << "\" --functions --demangle --inline";
 
 	for (it = buffer.begin(); it != buffer.end(); ++it) {
 		int open = it->find('{');

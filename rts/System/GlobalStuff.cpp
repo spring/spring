@@ -8,6 +8,8 @@
 #include "StdAfx.h"
 #include "Platform/errorhandler.h"
 #include <cstring>
+#include "mmgr.h"
+#include "Util.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -19,7 +21,7 @@
 #include "Lua/LuaRules.h"
 #include "SDL_types.h"
 #include "SDL_timer.h"
-#include "mmgr.h"
+#include <assert.h>
 #include "ExternalAI/IAILibraryManager.h"
 
 /**
@@ -127,7 +129,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	for(int a = 0; a < MAX_PLAYERS; ++a) {
 		players[a] = SAFE_NEW CPlayer();
 		players[a]->playerNum = a;
-		players[a]->team = 0;
 	}
 
 	for (int a = 0; a < MAX_TEAMS; ++a) {
@@ -150,7 +151,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 	for(int a = 0; a < MAX_TEAMS; a++) {
 		delete teams[a];
 	}
-	for(int a = 0; a < gs->activePlayers; a++) {
+	for(int a = 0; a < MAX_PLAYERS; a++) {
 		delete players[a];
 	}
 }
@@ -163,19 +164,16 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
 	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
 
+	activePlayers = setup->numPlayers;
 	activeTeams = setup->numTeams;
 	activeAllyTeams = setup->numAllyTeams;
 	
 	assert(activeTeams <= MAX_TEAMS);
 	assert(activeAllyTeams <= MAX_TEAMS);
 	
-	for (unsigned i = 0; i < static_cast<unsigned>(setup->numPlayers); ++i)
+	for (unsigned i = 0; i < static_cast<unsigned>(activePlayers); ++i)
 	{
-		gs->players[i]->team = setup->playerStartingData[i].team;
-		gs->players[i]->rank = setup->playerStartingData[i].rank;
-		gs->players[i]->playerName  = setup->playerStartingData[i].name;
-		gs->players[i]->countryCode = setup->playerStartingData[i].countryCode;
-		gs->players[i]->spectator = setup->playerStartingData[i].spectator;
+		*static_cast<PlayerBase*>(players[i]) = setup->playerStartingData[i];
 	}
 	
 	for (unsigned i = 0; i < static_cast<unsigned>(activeTeams); ++i)
@@ -219,10 +217,12 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 				}
 			}
 		}
-		for (unsigned t = 0; t < static_cast<unsigned>(MAX_TEAMS); ++t)
-		{
-			allies[i][t] = setup->allyStartingData[i].allies[t];
-		}
+	}
+
+	for (unsigned allyTeam1 = 0; allyTeam1 < static_cast<unsigned>(activeAllyTeams); ++allyTeam1)
+	{
+		for (unsigned allyTeam2 = 0; allyTeam2 < static_cast<unsigned>(activeAllyTeams); ++allyTeam2)
+			allies[allyTeam1][allyTeam2] = setup->allyStartingData[allyTeam1].allies[allyTeam2];
 	}
 
 	if (useLuaGaia) {
@@ -288,7 +288,7 @@ float3 CGlobalSyncedStuff::randVector()
 int CGlobalSyncedStuff::Player(const std::string& name)
 {
 	for (int i = 0; i < MAX_PLAYERS; ++i) {
-		if (players[i] && players[i]->playerName == name) {
+		if (players[i] && players[i]->name == name) {
 			return i;
 		}
 	}
@@ -329,6 +329,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	timeOffset = 0;
 	drawFog = true;
 	compressTextures = false;
+	atiHacks = false;
 	teamNanospray = false;
 	autoQuit = false;
 	quitTime = 0;
@@ -387,11 +388,15 @@ void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
 	myPlayerNum = setup->myPlayerNum;
 	myTeam = setup->playerStartingData[myPlayerNum].team;
-	myAllyTeam = setup->teamStartingData[myPlayerNum].teamAllyteam;
+	myAllyTeam = setup->teamStartingData[myTeam].teamAllyteam;
 
 	spectating = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
 	spectatingFullSelect = setup->playerStartingData[myPlayerNum].spectator;
+	
+	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
+			setup->playerStartingData.size() >= myPlayerNum &&
+			setup->teamStartingData.size() >= myTeam);
 }
 
 CGlobalUnsyncedStuff* CGlobalUnsyncedStuff::instance = NULL;

@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "creg/creg.h"
+
 struct AIKey
 {
 	CR_DECLARE_STRUCT(AIKey);

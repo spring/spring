@@ -1,5 +1,8 @@
 IF (MINGW)
-	set (unitsync_libs glew32 opengl32 glu32 devil ilu)
+	set (unitsync_libs glew32 opengl32 glu32 devil ilu python25)
+	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
+	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/python2.5)
+	set (JNI_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
@@ -9,20 +12,31 @@ ELSE (MINGW)
 	
 	FIND_PACKAGE(GLEW REQUIRED)
 	
+	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
+	list (APPEND unitsync_libs util) # sometimes this is needed (and I have no clue why)
+	
 	FIND_PACKAGE(PythonLibs)
 	if (PYTHONLIBS_FOUND)
 		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+		list (APPEND unitsync_libs ${PYTHON_LIBRARIES})
 	else (PYTHONLIBS_FOUND)
 		message ("No python libraries found, python bindings disabled")
 	endif (PYTHONLIBS_FOUND)
 	
-	set (unitsync_libs ${GLEW_LIBRARIES} IL openal GL GLU)
+	FIND_PACKAGE(JNI)
+	if (JAVA_INCLUDE_PATH)
+		include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
+		set (JAVA_FOUND TRUE)
+	else (JAVA_INCLUDE_PATH)
+		message ("No Java includes found, java bindings disabled")
+	endif (JAVA_INCLUDE_PATH)
+	
 ENDIF (MINGW)
 
-ADD_DEFINITIONS( -D_SZ_ONE_DIRECTORY -DNO_AVI -DSYNCCHECK -DUNITSYNC -DBITMAP_NO_OPENGL)
+ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
 
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
-INCLUDE_DIRECTORIES(../../rts ../../rts/Game ../../rts/lib/7zip ../../rts/System)
+INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
 
 IF (UNIX)
 	SET(platformfiles
@@ -48,19 +62,21 @@ set(unitsync_files
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO
 	../../rts/Map/MapParser
+	../../rts/Map/SMF/SmfMapFile
 	../../rts/Rendering/Textures/Bitmap
 	../../rts/Rendering/Textures/nv_dds)
 
 if (PYTHONLIBS_FOUND)
 	list(APPEND unitsync_files pybind)
 endif (PYTHONLIBS_FOUND)
-
+if (JAVA_FOUND)
+	list(APPEND unitsync_files javabind)
+endif (JAVA_FOUND)
 ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer SyncServer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua boost_regex-mt ILU SDL)
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})
 endif (PYTHONLIBS_FOUND)
-SET_TARGET_PROPERTIES( unitsync PROPERTIES COMPILE_FLAGS -fPIC)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 

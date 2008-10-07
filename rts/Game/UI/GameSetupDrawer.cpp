@@ -1,10 +1,14 @@
-#include "GameSetupDrawer.h"
-
+#include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <assert.h>
 #include <string>
 #include <map>
 #include <SDL_timer.h>
 #include <SDL_keysym.h>
+
+#include "mmgr.h"
+
+#include "GameSetupDrawer.h"
 
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
@@ -144,7 +148,7 @@ void GameSetupDrawer::Draw()
 		if (a == gameSetup->numPlayers) {
 			name = "Players:";
 		} else {
-			name = gs->players[a]->playerName.c_str();
+			name = gs->players[a]->name.c_str();
 		}
 		const float fontScale = 1.0f;
 		const float yScale = fontScale * font->GetHeight();

@@ -116,7 +116,7 @@ public:
 		float3 minColor;
 		float3 surfaceColor;
 		float  surfaceAlpha;
-		float3 planeColor;
+		float4 planeColor;
 		float3 diffuseColor;
 		float3 specularColor;
 		float  ambientFactor;
@@ -132,6 +132,9 @@ public:
 		float  perlinStartFreq;
 		float  perlinLacunarity;
 		float  perlinAmplitude;
+		bool   shoreWaves;
+		bool   forceRendering; ///< if false the renderers will render it only if currentMinMapHeight<0
+		unsigned char numTiles;
 		std::string texture;
 		std::string foamTexture;
 		std::string normalTexture;

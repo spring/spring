@@ -8,6 +8,8 @@
 #ifndef GLOBALSTUFF_H
 #define GLOBALSTUFF_H
 
+#include "float3.h"
+
 /**
  * @brief pi
  *
@@ -65,7 +67,6 @@ const int MAX_PLAYERS = 32;
  */
 const float NEAR_PLANE = 2.8f;
 
-#include "float3.h"
 
 /**
  * @brief int2 struct
@@ -412,13 +413,13 @@ public:
 
 	/**
 	 * @brief set ally
-	 * @param teamA first team
-	 * @param teamB second team
+	 * @param allyteamA first allyteam
+	 * @param allyteamB second allyteam
 	 * @param allied whether or not these two teams are allied
 	 *
-	 * Sets two teams to be allied or not
+	 * Sets two allyteams to be allied or not
 	 */
-	void SetAlly(int teamA,int teamB, bool allied) { allies[teamA][teamB]=allied; }
+	void SetAlly(int allyteamA,int allyteamB, bool allied) { allies[allyteamA][allyteamB]=allied; }
 
 private:
 	/**
@@ -631,13 +632,20 @@ public:
 	 * Whether fog (of war) is drawn or not
 	 */
 	bool drawFog;
-	
+
 	/**
 	 * @brief compressTextures
 	 *
 	 * If set, many (not all) textures will compressed on run-time.
 	*/
 	bool compressTextures;
+
+	/**
+	 * @brief collection of some ATI bugfixes
+	 *
+	 * enables some ATI bugfixes
+	 */
+	bool atiHacks;
 
 	/**
 	 * @brief quit automatically?
@@ -678,7 +686,7 @@ public:
 	 */
 	CUnit* directControl;
 #endif	/* DIRECT_CONTROL_ALLOWED */
-	
+
 private:
 	/**
 	* @brief rand seed

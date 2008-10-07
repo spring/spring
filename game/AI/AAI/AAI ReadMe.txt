@@ -105,13 +105,16 @@ Thanks to: 	- Yuritch for testing and providing me with improved mod config file
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.87	- Proper detection of amphibious ground units (was causing AAI to freeze on water maps)
+
+		- Prevent AAI from blocking buildqueues for combat units by requesting too many scouts
+
 
 AAI v0.869	- Added proper handling of resurrected units (however AAI does not build resurrectors atm)
 		
 		- Fixed a bug that could prevent AAI from rebuilding destroyed factories	
 
-
-AAI v0.868	- Added some unit specific combat behaviour: Units with high ranged weapons  will now try to keep enemies distant (if 
+		- Added some unit specific combat behaviour: Units with high ranged weapons  will now try to keep enemies distant (if 
 		  their turnrate is not too low)
 
 		- Added some new variables to mod config file:

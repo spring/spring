@@ -1,5 +1,7 @@
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "GlobalStuff.h"
 #include "ModInfo.h"
 #include "Game/GameSetup.h"
@@ -10,6 +12,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/Exceptions.h"
 
 
 CModInfo modInfo;

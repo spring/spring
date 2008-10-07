@@ -13,6 +13,7 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "RadarHandler.h"
+#include <assert.h>
 
 #define MAX_LOS_TABLE 110
 
@@ -148,18 +149,18 @@ public:
 
 	friend class CRadarHandler;
 
-	int losMipLevel;
-	int airMipLevel;
-	int losDiv;
-	int airDiv;
-	float invLosDiv;
-	float invAirDiv;
-	int airSizeX;
-	int airSizeY;
-	int losSizeX;
-	int losSizeY;
+	const int losMipLevel;
+	const int airMipLevel;
+	const int losDiv;
+	const int airDiv;
+	const float invLosDiv;
+	const float invAirDiv;
+	const int airSizeX;
+	const int airSizeY;
+	const int losSizeX;
+	const int losSizeY;
 
-	bool requireSonarUnderWater;
+	const bool requireSonarUnderWater;
 
 private:
 

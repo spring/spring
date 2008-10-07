@@ -4,6 +4,8 @@
 
 #include "StdAfx.h"
 #include <assert.h>
+#include "System/mmgr.h"
+
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
@@ -30,7 +32,6 @@
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
-#include "System/mmgr.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
@@ -302,7 +303,7 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	float maxh=5000;
 	int numBorder=0;
 	float borderh=0;
-	float* heightmap=readmap->GetHeightmap();
+	const float* heightmap=readmap->GetHeightmap();
 
 	int xsize=1;
 	int ysize=1;
@@ -412,7 +413,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	}
 
 	if (!unitdef->floater) {
-		float* heightmap = readmap->GetHeightmap();
+		const float* heightmap = readmap->GetHeightmap();
 		int x = (int) (pos.x / SQUARE_SIZE);
 		int z = (int) (pos.z / SQUARE_SIZE);
 		float orgh = readmap->orgheightmap[z * (gs->mapx + 1) + x];
@@ -430,7 +431,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		return 0;
 	}
 	if (groundheight > -unitdef->minWaterDepth) {
-		// round is shallower than our minWaterDepth, cannot build here
+		// ground is shallower than our minWaterDepth, cannot build here
 		return 0;
 	}
 

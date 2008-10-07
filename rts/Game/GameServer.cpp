@@ -1,19 +1,31 @@
 #include "StdAfx.h"
-#include "GameServer.h"
+#include "Rendering/GL/myGL.h"
+
 
 #include <stdarg.h>
 #include <ctime>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
+#include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/ptr_container/ptr_map.hpp>
+#include <boost/shared_ptr.hpp>
+#include <deque>
 #include <SDL_timer.h>
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
 #endif
+#include <malloc.h>
+
+#include "mmgr.h"
+
+#include "GameServer.h"
+
 #ifndef NO_AVI
 #include "Game.h"
 #endif
 
+#include "LogOutput.h"
 #include "GameSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
@@ -26,13 +38,16 @@
 #include "System/Net/LocalConnection.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
+#include "System/Util.h"
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
 // This undef is needed, as somewhere there is a type interface specifyed,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
-#undef interface
+#ifdef interface
+	#undef interface
+#endif
 #include "Team.h"
 #include "Server/MsgStrings.h"
 
@@ -61,11 +76,9 @@ const unsigned serverKeyframeIntervall = 16;
 using boost::format;
 
 GameParticipant::GameParticipant(bool local)
-: name("unnamed")
-, readyToStart(false)
+: readyToStart(false)
 , cpuUsage (0.0f)
 , ping (0)
-, team(0)
 , isLocal(local)
 {
 }
@@ -210,7 +223,7 @@ void CGameServer::SkipTo(int targetframe)
 		CommandMessage msg(str( boost::format("skip start %d") %targetframe ), SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg.Pack()));
 		// fast-read and send demo data
-		while (serverframenum < targetframe)
+		while (serverframenum < targetframe && demoReader)
 		{
 			modGameTime = demoReader->GetNextReadTime()+0.1f; // skip time
 			SendDemoData(true);
@@ -222,6 +235,8 @@ void CGameServer::SkipTo(int targetframe)
 		
 		if (UDPNet)
 			UDPNet->Update();
+		lastUpdate = SDL_GetTicks();
+		IsPaused = true;
 	}
 	else
 	{
@@ -255,6 +270,7 @@ void CGameServer::SendDemoData(const bool skipping)
 #ifdef SYNCCHECK
 			if (!skipping)
 				outstandingSyncFrames.push_back(serverframenum);
+			CheckSync();
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
 			if (!skipping)
@@ -352,7 +368,12 @@ void CGameServer::CheckSync()
 
 				// TODO enable this when we have resync
 				//serverNet->SendPause(SERVER_PLAYER, true);
-
+#ifdef SYNCDEBUG
+				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
+				Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+				IsPaused = true;
+				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
+#endif
 				//For each group, output a message with list of playernames in it.
 				// TODO this should be linked to the resync system so it can roundrobin
 				// the resync checksum request packets to multiple clients in the same group.
@@ -419,7 +440,10 @@ void CGameServer::Update()
 				if(newSpeed<0.1f)
 					newSpeed=0.1f;
 				if(newSpeed!=internalSpeed)
+				{
+					internalSpeed = newSpeed;
 					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
+				}
 			}
 		}
 	}
@@ -790,7 +814,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					}
 					case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
 						unsigned char team = inbuf[3];
+#ifndef DEDICATED
 						if (teams[team] && players[player]->isLocal) // currently only host is allowed
+#else
+						if (teams[team])
+#endif
 						{
 							teams[fromTeam].reset();
 							for (int i = 0; i < MAX_PLAYERS; ++i)
@@ -856,6 +884,17 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 #endif
 			break;
+#ifdef SYNCDEBUG
+		case NETMSG_SD_CHKRESPONSE:
+		case NETMSG_SD_BLKRESPONSE:
+			CSyncDebugger::GetInstance()->ServerReceived(inbuf);
+			break;
+		case NETMSG_SD_CHKREQUEST:
+		case NETMSG_SD_BLKREQUEST:
+		case NETMSG_SD_RESET:
+			Broadcast(packet);
+			break;
+#endif
 		default:
 		{
 			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
@@ -967,7 +1006,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			if (!players[a] || !players[a]->readyToStart) {
 				allReady = false;
 				break;
-			} else if (!teams[players[a]->team]->readyToStart && !demoReader)
+			} else if (teams[players[a]->team] && !teams[players[a]->team]->readyToStart && !demoReader)
 			{
 				allReady = false;
 				break;
@@ -1101,7 +1140,7 @@ void CGameServer::PushAction(const Action& action)
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
-	else if (action.command == "setmaxspeed")
+	else if (action.command == "setmaxspeed" && !action.extra.empty())
 	{
 		float newUserSpeed = atof(action.extra.c_str());
 		if (newUserSpeed > 0.2)
@@ -1117,7 +1156,7 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
-	else if (action.command == "setminspeed")
+	else if (action.command == "setminspeed" && !action.extra.empty())
 	{
 		minUserSpeed = atof(action.extra.c_str());
 		if (userSpeedFactor < minUserSpeed) {
@@ -1190,11 +1229,11 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
-	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	unsigned numActiveAllyTeams = 0;
 
 #ifndef DEDICATED
+	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
+	memset(numActiveTeams, 0, sizeof(numActiveTeams));
 	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
 	{
 		bool hasPlayer = false;
@@ -1214,16 +1253,19 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 #else
-	int lastAllyTeam = -1;
+	int firstAllyTeam = -1;
 	for (unsigned i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (players[i])
+		if (players[i] && !players[i]->spectator)
 		{
-			if (lastAllyTeam < 0)
-				lastAllyTeam = i;
-			else if (lastAllyTeam != teams[players[i]->team]->allyTeam)
+			if (firstAllyTeam < 0)
 			{
+				firstAllyTeam = teams[players[i]->team]->allyTeam;
 				numActiveAllyTeams = 1;
+			}
+			else if (firstAllyTeam != teams[players[i]->team]->allyTeam)
+			{
+				numActiveAllyTeams = 2;
 				break;
 			}
 		}
@@ -1326,6 +1368,7 @@ void CGameServer::UpdateLoop()
 	}
 	if (hostif)
 		hostif->SendQuit();
+	Broadcast(CBaseNetProtocol::Get().SendQuit());
 }
 
 bool CGameServer::WaitsOnCon() const
@@ -1370,7 +1413,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
-	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers))
+	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers) && !demoReader)
 	{
 		// number not in setup, drop connection
 		Message(str(format("Connection rejected because of number %i not in setup (wanted number %i).") %hisNewNumber %wantedNumber));
@@ -1379,6 +1422,9 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 	
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
+	if (setup && hisNewNumber < setup->playerStartingData.size()) {
+		*static_cast<PlayerBase*>(players[hisNewNumber].get()) = setup->playerStartingData[hisNewNumber];
+	}
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 
@@ -1387,7 +1433,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 			Broadcast(CBaseNetProtocol::Get().SendPlayerName(a, players[a]->name));
 	}
 
-	if (setup)
+	if (setup && (!demoReader || setup->demoName.empty()) /* gamesetup from demo? */)
 	{
 		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team

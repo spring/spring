@@ -1,9 +1,11 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "Sound.h"
 #include "GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
+#include "System/Exceptions.h"
 
 #ifdef _WIN32
 #include "Platform/Win/DxSound.h"

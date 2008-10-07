@@ -23,6 +23,9 @@
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
 
+class CSkirmishAILibraryInfo;
+class CGroupAILibraryInfo;
+
 class CAIInterfaceLibrary : public IAIInterfaceLibrary {
 public:
 //	CAIInterfaceLibrary(const CAIInterfaceLibrary& interface);
@@ -43,15 +46,19 @@ public:
 	virtual int GetLoadCount() const;
 	
 	// Skirmish AI methods
-	virtual std::vector<SSAISpecifyer> GetSkirmishAILibrarySpecifyers() const;
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer);
+	//virtual std::vector<SSAISpecifyer> GetSkirmishAILibrarySpecifyers() const;
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer);
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos);
+	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo);
 	virtual int ReleaseSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer);
 	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifyer& sAISpecifyer) const;
 	virtual int ReleaseAllSkirmishAILibraries();
 	
 	// Group AI methods
-	virtual std::vector<SGAISpecifyer> GetGroupAILibrarySpecifyers() const;
-	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifyer& gAISpecifyer);
+	//virtual std::vector<SGAISpecifyer> GetGroupAILibrarySpecifyers() const;
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifyer& gAISpecifyer);
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* infos, unsigned int numInfos);
+	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo);
 	virtual int ReleaseGroupAILibrary(const SGAISpecifyer& gAISpecifyer);
 	virtual int GetGroupAILibraryLoadCount(const SGAISpecifyer& gAISpecifyer) const;
 	virtual int ReleaseAllGroupAILibraries();

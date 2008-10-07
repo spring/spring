@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "AdvWater.h"
 #include "Game/Game.h"
 #include "Rendering/GL/myGL.h"
@@ -17,7 +19,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "System/EventHandler.h"
 #include "Map/MapInfo.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -119,8 +120,9 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if(readmap->minheight>10)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
+
 	float3 dir,zpos;
 	float3 base=camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
 	float3 dv=camera->CalcPixelDir(gu->viewPosX,0)-camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
@@ -146,7 +148,6 @@ void CAdvWater::Draw(bool useBlending)
 		glDisable(GL_BLEND);
 	}
 	glDepthMask(0);
-	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, bumpTexture);
 		GLfloat plan[]={0.02f,0,0,0};
@@ -159,6 +160,7 @@ void CAdvWater::Draw(bool useBlending)
 		glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
 		glEnable(GL_TEXTURE_GEN_T);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 
 	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, waterFP );
 	glEnable( GL_FRAGMENT_PROGRAM_ARB );
@@ -172,7 +174,8 @@ void CAdvWater::Draw(bool useBlending)
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-	for(int a=0;a<5;++a){
+	va->EnlargeArrays(5*numDivs*(numDivs+1)*2,5*numDivs,VA_SIZE_TC); //!alloc room for all vertexes and strips
+	for(int a=0;a<5;++a){ //! CAUTION: loop count must match EnlargeArrays above
 		bool maxReached=false;
 		for(int y=0;y<numDivs;++y){
 			dir=base;
@@ -184,24 +187,24 @@ void CAdvWater::Draw(bool useBlending)
 			}
 
 			xbase=base;
-			for(int x=0;x<numDivs+1;++x){
+			for(int x=0;x<numDivs+1;++x){ //! CAUTION: loop count must match EnlargeArrays above
 				dir=xbase+dv;
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
-				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
+				va->AddVertexQTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
 
 				dir=xbase;
 				dir.Normalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
-				va->AddVertexTC(zpos,x*(1.0f/numDivs),screenY,col);
+				va->AddVertexQTC(zpos,x*(1.0f/numDivs),screenY,col);
 
 				xbase+=dh;
 			}
-			va->EndStrip();
+			va->EndStripQ();
 			base+=dv;
 			screenY-=yInc;
 		}
@@ -226,7 +229,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || mapInfo->map.voidWater)
+	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
 	glViewport(0,0,128,128);

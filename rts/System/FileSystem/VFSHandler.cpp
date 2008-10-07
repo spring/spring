@@ -1,12 +1,14 @@
 #include "StdAfx.h"
+#include <algorithm>
+#include <set>
+#include "mmgr.h"
+
 #include "VFSHandler.h"
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
-#include <algorithm>
-#include <set>
 #include "Platform/FileSystem.h"
-#include "mmgr.h"
+#include "Util.h"
 
 
 CVFSHandler* vfsHandler = NULL;

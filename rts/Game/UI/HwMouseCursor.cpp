@@ -1,25 +1,31 @@
-#include "StdAfx.h"
-#include "bitops.h"
-#include "CommandColors.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
-#include "MouseCursor.h"
-#include "HwMouseCursor.h"
-#include "myMath.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "mmgr.h"
-#include <SDL_syswm.h>
+#include "StdAfx.h"
 
 #ifdef WIN32
 #  include "windows.h"
 #  include "MouseInput.h"
+typedef unsigned char byte;
 #elif defined(__APPLE__)
 	/*do nothing (duno how to create cursors on runtime on macs)*/
 #else
 #  include <X11/Xcursor/Xcursor.h>
 #endif
+
+#include "mmgr.h"
+
+#include "Rendering/GL/myGL.h"
+#include "bitops.h"
+#include "MouseCursor.h"
+#include "HwMouseCursor.h"
+#include "CommandColors.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "LogOutput.h"
+#include "myMath.h"
+
+#include <SDL_syswm.h>
+
+
 
 //int savedcount=0;
 

@@ -198,7 +198,6 @@
 #undef glVertexAttribPointerARB
 #undef gluLookAt
 #undef glLightModelfv
-
 #undef glDeleteQueries
 #undef glBlendEquation
 #undef glStencilMaskSeparate
@@ -210,7 +209,6 @@
 #undef glBlendEquationSeparate
 #undef glBlendFuncSeparate
 #undef gluCylinder
-
 #undef glGenBuffers
 #undef glDeleteBuffers
 #undef glBindBuffer
@@ -220,7 +218,6 @@
 #undef glCompressedTexImage2D
 #undef glIsShader
 #undef glVertex3i
-
 #undef glGetIntegerv
 #undef glCheckFramebufferStatusEXT
 #undef glGetFloatv
@@ -247,13 +244,11 @@
 #undef glEdgeFlagPointer
 #undef glTrackMatrixNV
 #undef glTestFenceNV
-
 #undef glCreateProgram
 #undef glCreateProgramObjectARB
 #undef glCreateShader
 #undef glCreateShaderObjectARB
 #undef gluNewQuadric
-
 #undef glGenTextures
 #undef glGenBuffersARB
 #undef glGenFencesNV
@@ -261,11 +256,25 @@
 #undef glGenRenderbuffersEXT
 #undef glGenFramebuffersEXT
 #undef glGenQueries
-
 #undef glGenLists
-
-
-
+#undef glProgramParameteriEXT
+#undef glBlendColor
+#undef glMap1f
+#undef glMap2f
+#undef glMapGrid1f
+#undef glMapGrid2f
+#undef glEvalMesh1
+#undef glEvalMesh2
+#undef glEvalCoord1f
+#undef glEvalCoord2f
+#undef glEvalPoint1
+#undef glEvalPoint2
+#undef glRenderMode
+#undef glSelectBuffer
+#undef glInitNames
+#undef glLoadName
+#undef glPushName
+#undef glPopName
 
 
 
@@ -450,8 +459,8 @@
 #define glRasterPos2i gmlRasterPos2i
 #define glReadBuffer gmlReadBuffer
 #define glScissor gmlScissor
-#define glShaderSource
-#define glShaderSourceARB
+#define glShaderSource gmlShaderSource
+#define glShaderSourceARB gmlShaderSourceARB
 #define glTexCoord2fv gmlTexCoord2fv
 #define glTexParameterfv gmlTexParameterfv
 #define glTranslated gmlTranslated
@@ -461,7 +470,6 @@
 #define glVertexAttribPointerARB gmlVertexAttribPointerARB
 #define gluLookAt gmluLookAt
 #define glLightModelfv gmlLightModelfv
-
 #define glDeleteQueries gmlDeleteQueries
 #define glBlendEquation gmlBlendEquation
 #define glStencilMaskSeparate gmlStencilMaskSeparate
@@ -473,7 +481,6 @@
 #define glBlendEquationSeparate gmlBlendEquationSeparate
 #define glBlendFuncSeparate gmlBlendFuncSeparate
 #define gluCylinder gmluCylinder
-
 #define glGenBuffers gmlGenBuffers
 #define glDeleteBuffers gmlDeleteBuffers
 #define glBindBuffer gmlBindBuffer
@@ -483,7 +490,6 @@
 #define glCompressedTexImage2D gmlCompressedTexImage2D
 #define glIsShader gmlIsShader
 #define glVertex3i gmlVertex3i
-
 #define glGetIntegerv gmlGetIntegerv
 #define glCheckFramebufferStatusEXT gmlCheckFramebufferStatusEXT
 #define glGetFloatv gmlGetFloatv
@@ -510,13 +516,11 @@
 #define glEdgeFlagPointer gmlEdgeFlagPointer
 #define glTrackMatrixNV gmlTrackMatrixNV
 #define glTestFenceNV gmlTestFenceNV
-
 #define glCreateProgram gmlCreateProgram
 #define glCreateProgramObjectARB gmlCreateProgramObjectARB
 #define glCreateShader gmlCreateShader
 #define glCreateShaderObjectARB gmlCreateShaderObjectARB
 #define gluNewQuadric gmluNewQuadric
-
 #define glGenTextures gmlGenTextures
 #define glGenBuffersARB gmlGenBuffersARB
 #define glGenFencesNV gmlGenFencesNV
@@ -524,5 +528,22 @@
 #define glGenRenderbuffersEXT gmlGenRenderbuffersEXT
 #define glGenFramebuffersEXT gmlGenFramebuffersEXT
 #define glGenQueries gmlGenQueries
-
 #define glGenLists gmlGenLists
+#define glProgramParameteriEXT gmlProgramParameteriEXT
+#define glBlendColor gmlBlendColor
+#define glMap1f gmlMap1f
+#define glMap2f gmlMap2f
+#define glMapGrid1f gmlMapGrid1f
+#define glMapGrid2f gmlMapGrid2f
+#define glEvalMesh1 gmlEvalMesh1
+#define glEvalMesh2 gmlEvalMesh2
+#define glEvalCoord1f gmlEvalCoord1f
+#define glEvalCoord2f gmlEvalCoord2f
+#define glEvalPoint1 gmlEvalPoint1
+#define glEvalPoint2 gmlEvalPoint2
+#define glRenderMode gmlRenderMode
+#define glSelectBuffer gmlSelectBuffer
+#define glInitNames gmlInitNames
+#define glLoadName gmlLoadName
+#define glPushName gmlPushName
+#define glPopName gmlPopName

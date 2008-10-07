@@ -1,9 +1,8 @@
 #include "StdAfx.h"
 
-#include "GameController.h"
-
 #include "mmgr.h"
 
+#include "GameController.h"
 
 
 CGameController::CGameController(void)

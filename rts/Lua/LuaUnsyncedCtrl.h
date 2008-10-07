@@ -8,6 +8,8 @@
 
 struct lua_State;
 
+// MinGW defines this for a WINAPI function
+#undef SendMessage
 
 class LuaUnsyncedCtrl {
 	public:
@@ -113,9 +115,14 @@ class LuaUnsyncedCtrl {
 		static int SendLuaGaiaMsg(lua_State* L);
 		static int SendLuaRulesMsg(lua_State* L);
 
+		static int SetLastMessagePosition(lua_State* L);
+
 		static int MarkerAddPoint(lua_State* L);
 		static int MarkerAddLine(lua_State* L);
 		static int MarkerErasePosition(lua_State* L);
+
+		static int SetDrawSelectionInfo(lua_State* L);
+		static int GetDrawSelectionInfo(lua_State* L);
 };
 
 

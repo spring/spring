@@ -2,6 +2,7 @@
 // LuaCallInCheck.cpp: implementation of the LuaCallInCheck class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaCallInCheck.h"
 #include "LuaInclude.h"

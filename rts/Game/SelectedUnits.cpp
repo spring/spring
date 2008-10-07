@@ -3,11 +3,14 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "Game/Team.h"
-#include "SelectedUnits.h"
 #include <map>
 #include <SDL_types.h>
 #include <SDL_keysym.h>
+
+#include "mmgr.h"
+
+#include "Game/Team.h"
+#include "SelectedUnits.h"
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
 #include "NetProtocol.h"
@@ -34,7 +37,7 @@
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"
-#include "mmgr.h"
+#include "Util.h"
 
 extern Uint8 *keys;
 
@@ -48,8 +51,8 @@ CSelectedUnits selectedUnits;
 CSelectedUnits::CSelectedUnits()
 : selectionChanged(false),
 	possibleCommandsChanged(true),
-	selectedGroup(-1),
-	buildIconsFirst(false)
+	buildIconsFirst(false),
+	selectedGroup(-1)
 {
 }
 
@@ -711,7 +714,7 @@ std::string CSelectedUnits::GetTooltip(void)
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
 			if (gs->Team((*selectedUnits.begin())->team)->leader >= 0)
-				s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->playerName.c_str();
+				s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->name.c_str();
 			else
 				s = "Uncontrolled";
 		} else {

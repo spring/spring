@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
+#include "mmgr.h"
+
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -17,7 +19,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::list;
 using std::min;
@@ -46,13 +49,13 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
 	}
-	
+
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
 	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 0,   0);
 	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256, 0);
 	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   256);
 	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
-	
+
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -112,6 +115,252 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 }
 
 
+
+inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color) {
+	#define HEIGHT2WORLD(x) ((x) << 3)
+	#define WORLD2HEIGHT(x) ((x) >> 3)
+	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
+	va->AddVertexTC( VERTEX(x    , yv[0], z    ),   uv[0], uv[1],   color);
+	va->AddVertexTC( VERTEX(x + 1, yv[1], z    ),   uv[2], uv[3],   color);
+	va->AddVertexTC( VERTEX(x + 1, yv[2], z + 1),   uv[4], uv[5],   color);
+	va->AddVertexTC( VERTEX(x    , yv[3], z + 1),   uv[6], uv[7],   color);
+}
+
+inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
+	const float* hm = readmap->GetHeightmap();
+	const int gsmx = gs->mapx;
+	const int gsmx1 = gsmx + 1;
+	const int gsmy = gs->mapy;
+
+	float yv[4] = {0.0f};
+	float uv[8] = {0.0f};
+	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
+
+	#define HEIGHT(x, z) (hm[((z) * gsmx1) + (x)])
+
+	if (!decal->va) {
+		// NOTE: this really needs CLOD'ing
+		decal->va = SAFE_NEW CVertexArray();
+		decal->va->Initialize();
+
+		const float xts = 1.0f / decal->xsize;
+		const float yts = 1.0f / decal->ysize;
+
+		int xMin = 0, xMax = decal->xsize;			// x-extends in local decal-space (heightmap scale)
+		int zMin = 0, zMax = decal->ysize;			// z-extends in local decal-space (heightmap scale)
+		int tlx = decal->posx + xMin, blx = tlx;	// heightmap x-coor of {top, bottom}-left   quad vertex
+		int trx = decal->posx + xMax, brx = trx;	// heightmap x-coor of {top, bottom}-right  quad vertex
+		int tlz = decal->posy + zMin, trz = tlz;	// heightmap z-coor of top-{left, right}    quad vertex
+		int brz = decal->posy + zMax, blz = brz;	// heightmap z-coor of bottom-{left, right} quad vertex
+
+		switch (decal->facing) {
+			case 0: { // South (determines our reference texcoors)
+				// clip the quad vertices and texcoors against the map boundaries
+				if (tlx <    0) { xMin -= tlx       ;   tlx =    0; blx = tlx; }
+				if (trx > gsmx) { xMax -= trx - gsmx;   trx = gsmx; brx = trx; }
+				if (tlz <    0) { zMin -= tlz       ;   tlz =    0; trz = tlz; }
+				if (brz > gsmy) { zMax -= brz - gsmy;   brz = gsmy; blz = brz; }
+
+				for (int x = xMin; x < xMax; x++) {
+					const int xh = tlx + x;
+
+					for (int z = zMin; z < zMax; z++) {
+						const int zh = tlz + z;
+
+						// (htl, htr, hbr, hbl)
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
+
+						// (utl, vtl),  (utr, vtr)
+						// (ubr, vbr),  (ubl, vbl)
+						uv[0] = (x    ) * xts; uv[1] = (z    ) * yts; // uv = (0, 0)
+						uv[2] = (x + 1) * xts; uv[3] = (z    ) * yts; // uv = (1, 0)
+						uv[4] = (x + 1) * xts; uv[5] = (z + 1) * yts; // uv = (1, 1)
+						uv[6] = (x    ) * xts; uv[7] = (z + 1) * yts; // uv = (0, 1)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
+					}
+				}
+			} break;
+
+			case 1: { // East
+				if (tlx <    0) { zMin -= tlx       ; tlx =    0; blx = tlx; }
+				if (trx > gsmx) { zMax -= trx - gsmx; trx = gsmx; brx = trx; }
+				if (tlz <    0) { xMax += tlz       ; tlz =    0; trz = tlz; }
+				if (brz > gsmy) { xMin += brz - gsmy; brz = gsmy; blz = brz; }
+
+				for (int x = xMin; x < xMax; x++) {
+					const int xh = tlx + x;
+
+					for (int z = zMin; z < zMax; z++) {
+						const int zh = tlz + z;
+
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
+
+						uv[0] = 1.0f - (z    ) * yts; uv[1] = (x    ) * xts; // uv = (1, 0)
+						uv[2] = 1.0f - (z    ) * yts; uv[3] = (x + 1) * xts; // uv = (1, 1)
+						uv[4] = 1.0f - (z + 1) * yts; uv[5] = (x + 1) * xts; // uv = (0, 1)
+						uv[6] = 1.0f - (z + 1) * yts; uv[7] = (x    ) * xts; // uv = (0, 0)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
+					}
+				}
+			} break;
+
+			case 2: { // North
+				if (tlx <    0) { xMax += tlx       ; tlx =    0; blx = tlx; }
+				if (trx > gsmx) { xMin += trx - gsmx; trx = gsmx; brx = trx; }
+				if (tlz <    0) { zMax += tlz       ; tlz =    0; trz = tlz; }
+				if (brz > gsmy) { zMin += brz - gsmy; brz = gsmy; blz = brz; }
+
+				for (int x = xMin; x < xMax; x++) {
+					const int xh = tlx + x;
+
+					for (int z = zMin; z < zMax; z++) {
+						const int zh = tlz + z;
+
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
+
+						uv[0] = (xMax - x    ) * xts; uv[1] = (zMax - z    ) * yts; // uv = (1, 1)
+						uv[2] = (xMax - x - 1) * xts; uv[3] = (zMax - z    ) * yts; // uv = (0, 1)
+						uv[4] = (xMax - x - 1) * xts; uv[5] = (zMax - z - 1) * yts; // uv = (0, 0)
+						uv[6] = (xMax - x    ) * xts; uv[7] = (zMax - z - 1) * yts; // uv = (1, 0)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
+					}
+				}
+			} break;
+
+			case 3: { // West
+				if (tlx <    0) { zMax += tlx       ; tlx =    0; blx = tlx; }
+				if (trx > gsmx) { zMin += trx - gsmx; trx = gsmx; brx = trx; }
+				if (tlz <    0) { xMin -= tlz       ; tlz =    0; trz = tlz; }
+				if (brz > gsmy) { xMax -= brz - gsmy; brz = gsmy; blz = brz; }
+
+				for (int x = xMin; x < xMax; x++) {
+					const int xh = tlx + x;
+
+					for (int z = zMin; z < zMax; z++) {
+						const int zh = tlz + z;
+
+						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
+						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
+
+						uv[0] = (z    ) * yts; uv[1] = 1.0f - (x    ) * xts; // uv = (0, 1)
+						uv[2] = (z    ) * yts; uv[3] = 1.0f - (x + 1) * xts; // uv = (0, 0)
+						uv[4] = (z + 1) * yts; uv[5] = 1.0f - (x + 1) * xts; // uv = (1, 0)
+						uv[6] = (z + 1) * yts; uv[7] = 1.0f - (x    ) * xts; // uv = (1, 1)
+
+						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
+					}
+				}
+			} break;
+		}
+	} else {
+		const float c = *((float*) (color));
+		const int start = 0;
+		const int stride = 6;
+		const int sdi = decal->va->drawIndex();
+
+		for (int i = start; i < sdi; i += stride) {
+			const int x = int(decal->va->drawArray[i + 0]) >> 3;
+			const int z = int(decal->va->drawArray[i + 2]) >> 3;
+			const float h = hm[z * gsmx1 + x];
+
+			// update the height and alpha
+			decal->va->drawArray[i + 1] = h;
+			decal->va->drawArray[i + 5] = c;
+		}
+
+		decal->va->DrawArrayTC(GL_QUADS);
+	}
+}
+
+inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
+	const float* hm = readmap->GetHeightmap();
+	const int gsmx = gs->mapx;
+	const int gsmx1 = gsmx + 1;
+	const int gsmx12 = (gs->mapx + 1) * 2;
+
+	unsigned char color[4] = {255, 255, 255, 255};
+
+	if (!scar->va) {
+		scar->va = SAFE_NEW CVertexArray();
+		scar->va->Initialize();
+
+		float3 pos = scar->pos;
+		const float radius = scar->radius;
+		const float radius4 = radius * 4.0f;
+		const float tx = scar->texOffsetX;
+		const float ty = scar->texOffsetY;
+
+		int sx = (int) max(0.0f,                 (pos.x - radius) * 0.0625f);
+		int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) * 0.0625f);
+		int sz = (int) max(0.0f,                 (pos.z - radius) * 0.0625f);
+		int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) * 0.0625f);
+
+		// create the scar texture-quads
+		float px1 = sx * 16;
+		for (int x = sx; x <= ex; ++x) {
+			//const float* hm2 = hm;
+			float px2 = px1 + 16;
+			float pz1 = sz * 16;
+
+			for (int z = sz; z <= ez; ++z) {
+				float pz2 = pz1 + 16;
+				float tx1 = min(0.5f, (pos.x - px1) / radius4 + 0.25f);
+				float tx2 = max(0.0f, (pos.x - px2) / radius4 + 0.25f);
+				float tz1 = min(0.5f, (pos.z - pz1) / radius4 + 0.25f);
+				float tz2 = max(0.0f, (pos.z - pz2) / radius4 + 0.25f);
+				float h1 = ground->GetHeight2(px1, pz1);
+				float h2 = ground->GetHeight2(px2, pz1);
+				float h3 = ground->GetHeight2(px2, pz2);
+				float h4 = ground->GetHeight2(px1, pz2);
+
+				scar->va->AddVertexTC(float3(px1, h1, pz1), tx1 + tx, tz1 + ty, color);
+				scar->va->AddVertexTC(float3(px2, h2, pz1), tx2 + tx, tz1 + ty, color);
+				scar->va->AddVertexTC(float3(px2, h3, pz2), tx2 + tx, tz2 + ty, color);
+				scar->va->AddVertexTC(float3(px1, h4, pz2), tx1 + tx, tz2 + ty, color);
+				//hm2 += gsmx12;
+				pz1 = pz2;
+			}
+
+			//hm2 += 2;
+			px1 = px2;
+		}
+	} else {
+		if (fade) {
+			if (scar->creationTime + 10 > gs->frameNum) {
+				color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
+			} else {
+				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
+			}
+
+			const float c = *((float*) (color));
+			const int start = 0;
+			const int stride = 6;
+			const int sdi = scar->va->drawIndex();
+
+			for (int i = start; i < sdi; i += stride) {
+				const int x = int(scar->va->drawArray[i + 0]) >> 3;
+				const int z = int(scar->va->drawArray[i + 2]) >> 3;
+				const float h = hm[z * gsmx1 + x];
+
+				// update the height and alpha
+				scar->va->drawArray[i + 1] = h;
+				scar->va->drawArray[i + 5] = c;
+			}
+		}
+
+		scar->va->DrawArrayTC(GL_QUADS);
+	}
+}
+
+
+
+
 void CGroundDecalHandler::Draw(void)
 {
 	if (!drawDecals) {
@@ -126,12 +375,6 @@ void CGroundDecalHandler::Draw(void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-10, -200);
 	glDepthMask(0);
-
-	unsigned char color[4];
-	color[0] = 255;
-	color[1] = 255;
-	color[2] = 255;
-	color[3] = 255;
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -166,11 +409,10 @@ void CGroundDecalHandler::Draw(void)
 		glMatrixMode(GL_MODELVIEW);
 	}
 
+
 	// create and draw the quads for each building decal
 	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
 		if (!(*bdi)->buildingDecals.empty()) {
-			CVertexArray* va = GetVertexArray();
-			va->Initialize();
 			glBindTexture(GL_TEXTURE_2D, (*bdi)->texture);
 
 			for (set<BuildingGroundDecal*>::iterator bi = (*bdi)->buildingDecals.begin(); bi != (*bdi)->buildingDecals.end(); ) {
@@ -181,129 +423,28 @@ void CGroundDecalHandler::Draw(void)
 				} else if (!decal->gbOwner) {
 					decal->alpha -= decal->AlphaFalloff * gu->lastFrameTime * gs->speedFactor;
 				}
-				if (decal->alpha < 0) {
+
+				if (decal->alpha < 0.0f) {
 					// make sure RemoveBuilding() won't try to modify this decal
 					if (decal->owner) {
 						decal->owner->buildingDecal = 0;
 					}
+
+					delete decal->va;
+					decal->va = 0x0;
 					delete decal;
+
 					(*bdi)->buildingDecals.erase(bi++);
 					continue;
 				}
 
 				if (camera->InView(decal->pos, decal->radius) &&
 					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView)) {
-					color[3] = int(decal->alpha * 255);
-					float* heightmap = readmap->GetHeightmap();
-					float xts = 1.0f / decal->xsize;
-					float yts = 1.0f / decal->ysize;
 
-					int xMin = 0, xMax = decal->xsize;
-					int zMin = 0, zMax = decal->ysize;
-					int tlx = (decal->posx + xMin);			// heightmap x-coor of top-left quad vertex
-					int trx = (decal->posx + xMax);			// heightmap x-coor of top-right quad vertex
-					int brx = trx;							// heightmap x-coor of bottom-right quad vertex
-					int blx = tlx;							// heightmap x-coor of bottom-left quad vertex
-					int tlz = (decal->posy + zMin);			// heightmap z-coor of top-left quad vertex
-					int trz = tlz;							// heightmap z-coor of top-right quad vertex
-					int brz = (decal->posy + zMax);			// heightmap z-coor of bottom-right quad vertex
-					int blz = brz;							// heightmap z-coor of bottom-left quad vertex
-
-					switch (decal->facing) {
-						case 0: { // South (determines our reference texcoors)
-							// clip the quad vertices and texcoors against the map boundaries
-							if (tlx <        0) { xMin -= (tlx           );   tlx = (       0);   blx = tlx; }
-							if (trx > gs->mapx) { xMax -= (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
-							if (tlz <        0) { zMin -= (tlz           );   tlz = (       0);   trz = tlz; }
-							if (brz > gs->mapy) { zMax -= (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
-
-							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
-							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
-							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
-							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
-
-							// get the maximum heightmap-value of the four vertices
-							// and draw the quad at that height (after terraforming
-							// the ground can be assumed to be mostly flat directly
-							// below a factory, so this is preferable to splitting
-							// the texture quad into quadratically many tiles every
-							// frame just so it follows the terrain slightly better)
-							// TODO: do split the quad, but use VA buffers to draw
-							// them (as with the groundscars)?
-							const float mt = max(tlh, trh);
-							const float mb = max(brh, blh);
-							const float h = max(mt, mb);
-
-							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
-							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
-							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
-						} break;
-
-						case 1: { // East
-							if (tlx <        0) { zMin -= (tlx           );   tlx = (       0);   blx = tlx; }
-							if (trx > gs->mapx) { zMax -= (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
-							if (tlz <        0) { xMax += (tlz           );   tlz = (0       );   trz = tlz; }
-							if (brz > gs->mapy) { xMin += (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
-
-							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
-							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
-							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
-							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
-							const float mt = max(tlh, trh);
-							const float mb = max(brh, blh);
-							const float h = max(mt, mb);
-
-							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
-							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
-							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
-						} break;
-
-						case 2: { // North
-							if (tlx <        0) { xMax += (tlx           );   tlx = (       0);   blx = tlx; }
-							if (trx > gs->mapx) { xMin += (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
-							if (tlz <        0) { zMax += (tlz           );   tlz = (       0);   trz = tlz; }
-							if (brz > gs->mapy) { zMin += (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
-
-							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
-							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
-							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
-							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
-							const float mt = max(tlh, trh);
-							const float mb = max(brh, blh);
-							const float h = max(mt, mb);
-
-							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMax * xts, zMax * yts,  color); // tc = (1, 1)
-							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMin * xts, zMax * yts,  color); // tc = (0, 1)
-							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMin * xts, zMin * yts,  color); // tc = (0, 0)
-							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMax * xts, zMin * yts,  color); // tc = (1, 0)
-						} break;
-
-						case 3: { // West
-							if (tlx <        0) { zMax += (tlx           );   tlx = (       0);   blx = tlx; }
-							if (trx > gs->mapx) { zMin += (trx - gs->mapx);   trx = (gs->mapx);   brx = trx; }
-							if (tlz <        0) { xMin -= (tlz           );   tlz = (       0);   trz = tlz; }
-							if (brz > gs->mapy) { xMax -= (brz - gs->mapy);   brz = (gs->mapy);   blz = brz; }
-
-							const int tlhi = (tlz) * (gs->mapx + 1) + (tlx); const float tlh = heightmap[tlhi];
-							const int trhi = (trz) * (gs->mapx + 1) + (trx); const float trh = heightmap[trhi];
-							const int brhi = (brz) * (gs->mapx + 1) + (brx); const float brh = heightmap[brhi];
-							const int blhi = (blz) * (gs->mapx + 1) + (blx); const float blh = heightmap[blhi];
-							const float mt = max(tlh, trh);
-							const float mb = max(brh, blh);
-							const float h = max(mt, mb);
-
-							va->AddVertexTC(float3(tlx * 8, h + 0.2f, tlz * 8),   xMin * xts, zMax * yts,   color); // tc = (0, 1)
-							va->AddVertexTC(float3(trx * 8, h + 0.2f, trz * 8),   xMin * xts, zMin * yts,   color); // tc = (0, 0)
-							va->AddVertexTC(float3(brx * 8, h + 0.2f, brz * 8),   xMax * xts, zMin * yts,   color); // tc = (1, 0)
-							va->AddVertexTC(float3(blx * 8, h + 0.2f, blz * 8),   xMax * xts, zMax * yts,   color); // tc = (1, 1)
-						} break;
-					}
+					DrawBuildingDecal(decal);
 				}
 				++bi;
 			}
-			va->DrawArrayTC(GL_QUADS);
 		}
 	}
 
@@ -311,6 +452,8 @@ void CGroundDecalHandler::Draw(void)
 		glDisable(GL_FRAGMENT_PROGRAM_ARB);
 		glDisable(GL_VERTEX_PROGRAM_ARB);
 		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 		glDisable(GL_TEXTURE_2D);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -321,13 +464,11 @@ void CGroundDecalHandler::Draw(void)
 	}
 
 
+
 	glPolygonOffset(-10, -20);
 
-	unsigned char color2[4];
-	color2[0] = 255;
-	color2[1] = 255;
-	color2[2] = 255;
-	color2[3] = 255;
+	unsigned char color[4] = {255, 255, 255, 255};
+	unsigned char color2[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
@@ -354,13 +495,14 @@ void CGroundDecalHandler::Draw(void)
 					list<TrackPart>::iterator ppi = track->parts.begin();
 					color2[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
 
+					va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
 					for (list<TrackPart>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
 						color[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
 						if (pi->connected) {
-							va->AddVertexTC(ppi->pos1, ppi->texPos, 0, color2);
-							va->AddVertexTC(ppi->pos2, ppi->texPos, 1, color2);
-							va->AddVertexTC(pi->pos2, pi->texPos, 1, color);
-							va->AddVertexTC(pi->pos1, pi->texPos, 0, color);
+							va->AddVertexQTC(ppi->pos1, ppi->texPos, 0, color2);
+							va->AddVertexQTC(ppi->pos2, ppi->texPos, 1, color2);
+							va->AddVertexQTC(pi->pos2, pi->texPos, 1, color);
+							va->AddVertexQTC(pi->pos1, pi->texPos, 0, color);
 						}
 						color2[3] = color[3];
 						ppi = pi;
@@ -372,6 +514,7 @@ void CGroundDecalHandler::Draw(void)
 		}
 	}
 
+
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glPolygonOffset(-10, -400);
 
@@ -380,72 +523,18 @@ void CGroundDecalHandler::Draw(void)
 		Scar* scar = *si;
 
 		if (scar->lifeTime < gs->frameNum) {
-			delete scar->scarQuads;
 			RemoveScar(*si, false);
 			si = scars.erase(si);
 			continue;
 		}
 
 		if (camera->InView(scar->pos, scar->radius + 16)) {
-			if (!scar->scarQuads) {
-				scar->scarQuads = SAFE_NEW CVertexArray();
-				scar->scarQuads->Initialize();
-
-				float3 pos = scar->pos;
-				float radius = scar->radius;
-				float tx = scar->texOffsetX;
-				float ty = scar->texOffsetY;
-
-				int sx = (int) max(0.f,                  (pos.x - radius) / 16.0f);
-				int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) / 16.0f);
-				int sz = (int) max(0.f,                  (pos.z - radius) / 16.0f);
-				int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) / 16.0f);
-				float* heightmap = readmap->GetHeightmap();
-
-				// create the scar texture-quads
-				for (int x = sx; x <= ex; ++x) {
-					for (int z = sz; z <= ez; ++z) {
-						float px1 = x * 16;
-						float pz1 = z * 16;
-						float px2 = px1 + 16;
-						float pz2 = pz1 + 16;
-
-						float tx1 = min(0.5f, (pos.x - px1) / (radius * 4.0f) + 0.25f);
-						float tx2 = max(0.0f, (pos.x - px2) / (radius * 4.0f) + 0.25f);
-						float tz1 = min(0.5f, (pos.z - pz1) / (radius * 4.0f) + 0.25f);
-						float tz2 = max(0.0f, (pos.z - pz2) / (radius * 4.0f) + 0.25f);
-
-						scar->scarQuads->AddVertexTC(float3(px1, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2    ] + 0.5f, pz1), tx1 + tx, tz1 + ty, color);
-						scar->scarQuads->AddVertexTC(float3(px2, heightmap[(z * 2)     * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz1), tx2 + tx, tz1 + ty, color);
-						scar->scarQuads->AddVertexTC(float3(px2, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2 + 2] + 0.5f, pz2), tx2 + tx, tz2 + ty, color);
-						scar->scarQuads->AddVertexTC(float3(px1, heightmap[(z * 2 + 2) * (gs->mapx + 1) + x * 2    ] + 0.5f, pz2), tx1 + tx, tz2 + ty, color);
-					}
-				}
-			}
-			else {
-				if (groundScarAlphaFade == 1) {
-					if (scar->creationTime + 10 > gs->frameNum) {
-						color[3] = (int) (scar->startAlpha * (gs->frameNum - scar->creationTime) * 0.1f);
-					} else {
-						color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
-					}
-
-					const float c = *((float*) (color));
-					const int start = 5;
-					const int stride = 6;
-
-					int sdi=scar->scarQuads->drawIndex();
-					for (int i = start; i < sdi; i += stride) {
-						scar->scarQuads->drawArray[i] = c;
-					}
-				}
-
-				scar->scarQuads->DrawArrayTC(GL_QUADS);
-			}
+			DrawGroundScar(scar, groundScarAlphaFade);
 		}
 
 		++si;
 	}
+
 
 
 	glDisable(GL_POLYGON_OFFSET_FILL);

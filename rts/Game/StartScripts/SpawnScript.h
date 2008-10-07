@@ -6,6 +6,8 @@
 #include <list>
 #include <vector>
 #include "FileSystem/FileHandler.h"
+#include "float3.h"
+#include "Exceptions.h"
 
 class CSpawnScript :
 	public CScript

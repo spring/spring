@@ -5,6 +5,8 @@
 #include "ISkirmishAI.h"
 #include "Object.h"
 #include "Platform/ConfigHandler.h"
+#include "float3.h"
+#include "GlobalStuff.h"
 #include <map>
 #include <string>
 
@@ -34,6 +36,7 @@ public:
 	void UnitEnteredRadar(CUnit* unit, int allyTeam);
 	void UnitLeftRadar(CUnit* unit, int allyTeam);
 	void SeismicPing(int allyteam, CUnit *unit, const float3 &pos, float strength);
+
 	void UnitIdle(CUnit* unit);
 	void UnitCreated(CUnit* unit);
 	void UnitFinished(CUnit* unit);
@@ -47,24 +50,15 @@ public:
 	void Load(std::istream *s);
 	void Save(std::ostream *s);
 	void GotChatMsg(const char* msg, int player);
-//	void* GetAIBuffer(int teamId, std::string name, int length);
-//	void ReleaseAIBuffer(int teamId, std::string name);
 
 	bool CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
 	bool IsSkirmishAI(int teamId);
 	void DestroySkirmishAI(int teamId);
 	const CSkirmishAIWrapper* GetSkirmishAI(int teamId);
-	
+
 private:
 	CSkirmishAIWrapper* ais[MAX_TEAMS];
 	bool hasAI;
-	
-//	struct AIMemBuffer{
-////		CR_DECLARE_STRUCT(AIMemBuffer);
-//		char* mem;
-//		int usage;
-//	};
-//	std::map<std::string,AIMemBuffer> memBuffers[MAX_TEAMS];
 };
 
 extern CGlobalAIHandler* globalAI;

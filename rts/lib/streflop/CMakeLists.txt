@@ -3,7 +3,7 @@ AUX_SOURCE_DIRECTORY(libm/dbl-64 libm_dbl64_source)
 AUX_SOURCE_DIRECTORY(libm/ldbl-96 libm_ldbl96_source)
 
 # FIXME: Random.cpp fails if it libm/headers is in include directory
-# th<ts why it is set in cxxflags as a workaround
+# thats why it is set in cxxflags as a workaround
 #INCLUDE_DIRECTORIES(libm/headers)
 
 SET(cxxflags "-w -O3 -DSTREFLOP_X87 -fsingle-precision-constant -fno-strict-aliasing -fsignaling-nans -frounding-math -mieee-fp -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
@@ -22,4 +22,3 @@ ADD_LIBRARY(streflop STATIC EXCLUDE_FROM_ALL
 #	${libm_dbl64_source}
 #	${libm_ldbl96_source}
 )
-SET_TARGET_PROPERTIES(streflop PROPERTIES COMPILE_FLAGS -fpic)

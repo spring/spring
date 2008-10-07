@@ -1,27 +1,6 @@
 #include "StdAfx.h"
 #include "unitsync.h"
 
-#include "LuaInclude.h"
-#include "FileSystem/ArchiveFactory.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "Game/GameVersion.h"
-#include "Lua/LuaParser.h"
-#include "Map/MapParser.h"
-#include "Map/SMF/mapfile.h"
-#include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Sim/SideParser.h"
-#include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
-
-#include "LuaParserAPI.h"
-#include "Syncer.h"
-#include "SyncServer.h"
-#include "unitsyncLogOutput.h"
-
 #include <string>
 #include <string.h>
 #include <vector>
@@ -30,6 +9,30 @@
 #include <cstdio>
 #include <cstdarg>
 
+#include "LuaInclude.h"
+#include "FileSystem/ArchiveFactory.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "Game/GameVersion.h"
+#include "Lua/LuaParser.h"
+#include "Map/MapParser.h"
+#include "Map/SMF/SmfMapFile.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/FileSystem.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Sim/SideParser.h"
+#include "ExternalAI/Interface/aidefines.h"
+#include "ExternalAI/Interface/SSAILibrary.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
+
+#include "LuaParserAPI.h"
+#include "Syncer.h"
+#include "SyncServer.h"
+#include "unitsyncLogOutput.h"
+
+
 using std::string;
 
 
@@ -37,11 +40,20 @@ using std::string;
 	do { \
 		if (!(condition)) { \
 			char buf[256]; \
-			sprintf(buf, "%s:%d: %s", __FILE__, __LINE__, message); \
+			sprintf(buf, "%s:%d: %s: %s", __FILE__, __LINE__, __FUNCTION__, message); \
 			MessageBox(0, buf, "Unitsync assertion failed", MB_OK); \
 		} \
 		assert(condition); /* just crash after the error in release mode */ \
 	} while(0)
+
+#define CHECK_INIT() \
+	ASSERT(archiveScanner && vfsHandler, "Call Init first.")
+
+#define CHECK_NULL(condition) \
+	ASSERT((condition) != NULL, #condition " may not be null.")
+
+#define CHECK_NULL_OR_EMPTY(condition) \
+	ASSERT((condition) != NULL && *(condition) != 0, #condition " may not be null or empty.")
 
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer *syncer = NULL;
@@ -173,7 +185,8 @@ Export(int) Init(bool isServer, int id)
 			logOutput.Print("unitsync: joining\n");
 			syncer = new CSyncer(id);
 		}
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		Message(e.what());
 		return 0;
 	}
@@ -281,15 +294,17 @@ Export(int) IsUnitDisabledByClient(int unit, int clientId)
 
 Export(void) AddArchive(const char* name)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before AddArchive.");
-	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to AddArchive.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(name);
+
 	vfsHandler->AddArchive(name, false);
 }
 
 Export(void) AddAllArchives(const char* root)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before AddAllArchives.");
-	ASSERT(root && *root, "Don't pass a NULL pointer or an empty string to AddAllArchives.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(root);
+
 	vector<string> ars = archiveScanner->GetArchives(root);
 //	Message(root);
 	for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
@@ -300,16 +315,18 @@ Export(void) AddAllArchives(const char* root)
 
 Export(unsigned int) GetArchiveChecksum(const char* arname)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetArchiveChecksum.");
-	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchiveChecksum.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(arname);
+
 	logOutput.Print("archive checksum: %s\n", arname);
 	return archiveScanner->GetArchiveChecksum(arname);
 }
 
 Export(const char*) GetArchivePath(const char* arname)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetArchivePath.");
-	ASSERT(arname && *arname, "Don't pass a NULL pointer or an empty string to GetArchivePath.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(arname);
+
 	logOutput.Print("archive path: %s\n", arname);
 	return GetStr(archiveScanner->GetArchivePath(arname));
 }
@@ -345,14 +362,16 @@ Export(const char*) GetMapName(int index)
 {
 	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapName.");
 	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapName.");
+
 	return GetStr(mapNames[index]);
 }
 
 
 Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapInfo.");
-	ASSERT(name && *name && outInfo, "Don't pass a NULL pointer or an empty string to GetMapInfo.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(name);
+	CHECK_NULL(outInfo);
 
 	const string mapName = name;
 	ScopedMapLoader mapLoader(mapName);
@@ -363,23 +382,22 @@ Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	if (!mapParser.IsValid()) {
 		err = mapParser.GetErrorLog();
 	}
-	const	LuaTable mapTable = mapParser.GetRoot();
+	const LuaTable mapTable = mapParser.GetRoot();
 
 	// Retrieve the map header as well
 	if (err.empty()) {
 		const string extension = mapName.substr(mapName.length() - 3);
 		if (extension == "smf") {
-			SMFHeader mh;
-			string origName = name;
-			mh.mapx = -1;
-			{
-				CFileHandler in("maps/" + origName);
-				if (in.FileExists()) {
-					in.Read(&mh, sizeof(mh));
-				}
+			try {
+				CSmfMapFile file(name);
+				const SMFHeader& mh = file.GetHeader();
+
+				outInfo->width  = mh.mapx * SQUARE_SIZE;
+				outInfo->height = mh.mapy * SQUARE_SIZE;
 			}
-			outInfo->width  = mh.mapx * SQUARE_SIZE;
-			outInfo->height = mh.mapy * SQUARE_SIZE;
+			catch (content_error&) {
+				outInfo->width  = -1;
+			}
 		}
 		else {
 			int w = mapTable.GetInt("gameAreaW", 0);
@@ -449,6 +467,10 @@ Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 
 Export(int) GetMapInfo(const char* name, MapInfo* outInfo)
 {
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(name);
+	CHECK_NULL(outInfo);
+
 	return GetMapInfoEx(name, outInfo, 0);
 }
 
@@ -456,28 +478,33 @@ static vector<string> mapArchives;
 
 Export(int) GetMapArchiveCount(const char* mapName)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapArchiveCount.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(mapName);
+
 	mapArchives = archiveScanner->GetArchivesForMap(mapName);
 	return mapArchives.size();
 }
 
 Export(const char*) GetMapArchiveName(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapArchiveName.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < mapArchives.size(), "Array index out of bounds. Call GetMapArchiveCount before GetMapArchiveName.");
+
 	return GetStr(mapArchives[index]);
 }
 
 Export(unsigned int) GetMapChecksum(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapChecksum.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < mapNames.size(), "Array index out of bounds. Call GetMapCount before GetMapChecksum.");
+
 	return archiveScanner->GetMapChecksum(mapNames[index]);
 }
 
 Export(unsigned int) GetMapChecksumFromName(const char* mapName)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMapChecksumFromName.");
+	CHECK_INIT();
+
 	return archiveScanner->GetMapChecksum(mapName);
 }
 
@@ -549,31 +576,17 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 
 	// Read the map data
 	CFileHandler in("maps/" + mapName);
-	char* buffer = (char*)malloc(size);
-	bool done = false;
-	if (in.FileExists()) {
+	unsigned char* buffer = (unsigned char*)malloc(size);
 
+	if (in.FileExists()) {
 		SMFHeader mh;
 		in.Read(&mh, sizeof(mh));
 		in.Seek(mh.minimapPtr + offset);
 		in.Read(buffer, size);
-
-		done = true;
 	}
-/*	ifstream inFile;
-	inFile.open(filename, ios_base::binary);
-	if ( !inFile.is_open() )
-		return 0;
-	SM2Header sm2;
-	inFile.read(reinterpret_cast<char*>(&sm2), sizeof(sm2));
-	inFile.seekg(sm2.minimapPtr+offset);
-
-	char* buffer = (char*)malloc(size);
-	inFile.read(buffer, size); */
-
-	if (!done) {
+	else {
 		free(buffer);
-		return 0;
+		return NULL;
 	}
 
 	// Do stuff
@@ -582,7 +595,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 	void* ret = (void*)imgbuf;
 	unsigned short* colors = (unsigned short*)ret;
 
-	unsigned char* temp = (unsigned char*)buffer;
+	unsigned char* temp = buffer;
 
 	for ( int i = 0; i < numblocks; i++ )
 	{
@@ -647,8 +660,8 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 
 Export(void*) GetMinimap(const char* filename, int miplevel)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetMinimap.");
-	ASSERT(filename && *filename, "Don't pass a NULL pointer or an empty string to GetMinimap.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(filename);
 	ASSERT(miplevel >= 0 && miplevel <= 8, "Miplevel must be between 0 and 8 (inclusive) in GetMinimap.");
 
 	const string mapName = filename;
@@ -668,6 +681,106 @@ Export(void*) GetMinimap(const char* filename, int miplevel)
 }
 
 
+/**
+ * @brief Retrieves dimensions of infomap for a map.
+ * @param filename The name of the map, including extension.
+ * @param name     Of which infomap to retrieve the dimensions.
+ * @param width    This is set to the width of the infomap, or 0 on error.
+ * @param height   This is set to the height of the infomap, or 0 on error.
+ * @return 1 when the infomap was found with a nonzero size, 0 on error.
+ * @see GetInfoMap
+ */
+Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
+{
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(filename);
+	CHECK_NULL_OR_EMPTY(name);
+	CHECK_NULL(width);
+	CHECK_NULL(height);
+
+	try {
+		ScopedMapLoader mapLoader(filename);
+		CSmfMapFile file(filename);
+		MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
+
+		*width = bmInfo.width;
+		*height = bmInfo.height;
+
+		return bmInfo.width > 0;
+	}
+	catch (content_error&) {
+	}
+
+	return 0;
+}
+
+
+/**
+ * @brief Retrieves infomap data of a map.
+ * @param filename The name of the map, including extension.
+ * @param name     Which infomap to extract from the file.
+ * @param data     Pointer to memory location with enough room to hold the infomap data.
+ * @param typeHint One of bm_grayscale_8 (or 1) and bm_grayscale_16 (or 2).
+ * @return 1 if the infomap was succesfully extracted (and optionally converted),
+ * or 0 on error (map wasn't found, infomap wasn't found, or typeHint could not
+ * be honoured.)
+ *
+ * This function extracts an infomap from a map. This can currently be one of:
+ * "height", "metal", "grass", "type". The heightmap is natively in 16 bits per
+ * pixel, the others are in 8 bits pixel. Using typeHint one can give a hint to
+ * this function to convert from one format to another. Currently only the
+ * conversion from 16 bpp to 8 bpp is implemented.
+ */
+Export(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
+{
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(filename);
+	CHECK_NULL_OR_EMPTY(name);
+	CHECK_NULL(data);
+
+	string n = name;
+
+	try {
+		ScopedMapLoader mapLoader(filename);
+		CSmfMapFile file(filename);
+		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
+
+		if (actualType == typeHint) {
+			return file.ReadInfoMap(n, data);
+		}
+		else if (actualType == bm_grayscale_16 && typeHint == bm_grayscale_8) {
+			// convert from 16 bits per pixel to 8 bits per pixel
+			MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
+			const int size = bmInfo.width * bmInfo.height;
+			if (size <= 0) return 0;
+
+			unsigned short* temp = new unsigned short[size];
+			if (!file.ReadInfoMap(n, temp)) {
+				delete[] temp;
+				return 0;
+			}
+
+			const unsigned short* inp = temp;
+			const unsigned short* inp_end = temp + size;
+			unsigned char* outp = (unsigned char*) data;
+			for (; inp < inp_end; ++inp, ++outp) {
+				*outp = *inp >> 8;
+			}
+			delete[] temp;
+			return 1;
+		}
+		else if (actualType == bm_grayscale_8 && typeHint == bm_grayscale_16) {
+			// converting from 8 bits per pixel to 16 bits per pixel is unsupported
+			return 0;
+		}
+	}
+	catch (content_error&) {
+	}
+
+	return 0;
+}
+
+
 //////////////////////////
 //////////////////////////
 
@@ -676,7 +789,8 @@ vector<CArchiveScanner::ModData> modData;
 
 Export(int) GetPrimaryModCount()
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModCount.");
+	CHECK_INIT();
+
 	modData = archiveScanner->GetPrimaryMods();
 	return modData.size();
 }
@@ -684,17 +798,27 @@ Export(int) GetPrimaryModCount()
 
 Export(const char*) GetPrimaryModName(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModName.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
+
 	string x = modData[index].name;
 	return GetStr(x);
 }
 
 
+/**
+ * @brief Retrieves the shortened name of this mod
+ * @param index in The mods index/id
+ * @return const char* The mods abbrieviated name
+ *
+ * Returns the shortened name of the mod usually found in modinfo.tdf.
+ * Be sure you've made calls to Init and GetPrimaryModCount prior to using this.
+ */
 Export(const char*) GetPrimaryModShortName(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModShortName.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortName.");
+
 	string x = modData[index].shortName;
 	return GetStr(x);
 }
@@ -702,8 +826,9 @@ Export(const char*) GetPrimaryModShortName(int index)
 
 Export(const char*) GetPrimaryModVersion(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModVersion.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
+
 	string x = modData[index].version;
 	return GetStr(x);
 }
@@ -711,8 +836,9 @@ Export(const char*) GetPrimaryModVersion(int index)
 
 Export(const char*) GetPrimaryModMutator(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModMutator.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModMutator.");
+
 	string x = modData[index].mutator;
 	return GetStr(x);
 }
@@ -720,8 +846,9 @@ Export(const char*) GetPrimaryModMutator(int index)
 
 Export(const char*) GetPrimaryModGame(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModName.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModName.");
+
 	string x = modData[index].game;
 	return GetStr(x);
 }
@@ -729,8 +856,9 @@ Export(const char*) GetPrimaryModGame(int index)
 
 Export(const char*) GetPrimaryModShortGame(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModShortGame.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModShortGame.");
+
 	string x = modData[index].shortGame;
 	return GetStr(x);
 }
@@ -738,8 +866,9 @@ Export(const char*) GetPrimaryModShortGame(int index)
 
 Export(const char*) GetPrimaryModDescription(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModDescription.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModDescription.");
+
 	string x = modData[index].description;
 	return GetStr(x);
 }
@@ -747,8 +876,9 @@ Export(const char*) GetPrimaryModDescription(int index)
 
 Export(const char*) GetPrimaryModArchive(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchive.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchive.");
+
 	return GetStr(modData[index].dependencies[0]);
 }
 
@@ -757,23 +887,26 @@ vector<string> primaryArchives;
 
 Export(int) GetPrimaryModArchiveCount(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchiveCount.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModArchiveCount.");
+
 	primaryArchives = archiveScanner->GetArchives(modData[index].dependencies[0]);
 	return primaryArchives.size();
 }
 
 Export(const char*) GetPrimaryModArchiveList(int archiveNr)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModArchiveList.");
+	CHECK_INIT();
 	ASSERT((unsigned)archiveNr < primaryArchives.size(), "Array index out of bounds. Call GetPrimaryModArchiveCount before GetPrimaryModArchiveList.");
+
 	logOutput.Print("primary mod archive list: %s\n", primaryArchives[archiveNr].c_str());
 	return GetStr(primaryArchives[archiveNr]);
 }
 
 Export(int) GetPrimaryModIndex(const char* name)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModIndex.");
+	CHECK_INIT();
+
 	string n(name);
 	for (unsigned i = 0; i < modData.size(); ++i) {
 		if (modData[i].name == n)
@@ -785,14 +918,16 @@ Export(int) GetPrimaryModIndex(const char* name)
 
 Export(unsigned int) GetPrimaryModChecksum(int index)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModChecksum.");
+	CHECK_INIT();
 	ASSERT((unsigned)index < modData.size(), "Array index out of bounds. Call GetPrimaryModCount before GetPrimaryModChecksum.");
+
 	return archiveScanner->GetModChecksum(GetPrimaryModArchive(index));
 }
 
 Export(unsigned int) GetPrimaryModChecksumFromName(const char* name)
 {
-	ASSERT(archiveScanner && vfsHandler, "Call InitArchiveScanner before GetPrimaryModChecksumFromName.");
+	CHECK_INIT();
+
 	return archiveScanner->GetModChecksum(archiveScanner->ModNameToModArchive(name));
 }
 
@@ -957,10 +1092,8 @@ std::vector<Option> ParseOptions(
 
 Export(int) GetMapOptionCount(const char* name)
 {
-	ASSERT(archiveScanner && vfsHandler,
-	       "Call InitArchiveScanner before GetMapOptionCount.");
-	ASSERT(name && *name,
-				 "Don't pass a NULL pointer or an empty string to GetMapOptionCount.");
+	CHECK_INIT();
+	CHECK_NULL_OR_EMPTY(name);
 
 	ScopedMapLoader mapLoader(name);
 
@@ -1076,7 +1209,7 @@ Export(const char*) GetOptionKey(int optIndex)
 }
 
 
-const char* GetOptionName(int optIndex)
+Export(const char*) GetOptionName(int optIndex)
 {
 	if (InvalidOptionIndex(optIndex)) {
 		return NULL;
@@ -1084,6 +1217,21 @@ const char* GetOptionName(int optIndex)
 	return GetStr(options[optIndex].name);
 }
 
+Export(const char*) GetOptionSection(int optIndex)
+{
+	if (InvalidOptionIndex(optIndex)) {
+		return NULL;
+	}
+	return GetStr(options[optIndex].section);
+}
+
+Export(const char*) GetOptionStyle(int optIndex)
+{
+	if (InvalidOptionIndex(optIndex)) {
+		return NULL;
+	}
+	return GetStr(options[optIndex].style);
+}
 
 Export(const char*) GetOptionDesc(int optIndex)
 {
@@ -1130,7 +1278,7 @@ Export(float) GetOptionNumberMin(int optIndex)
 }
 
 
-float GetOptionNumberMax(int optIndex)
+Export(float) GetOptionNumberMax(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
 		return +1.0e30f; // FIXME ?
@@ -1166,7 +1314,7 @@ Export(int) GetOptionStringMaxLen(int optIndex)
 }
 
 
-int GetOptionListCount(int optIndex)
+Export(int) GetOptionListCount(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_list)) {
 		return 0;
@@ -1189,7 +1337,6 @@ Export(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	//const vector<OptionListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
@@ -1202,7 +1349,6 @@ Export(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	//const vector<OptionListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
@@ -1215,7 +1361,6 @@ Export(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 	if (WrongOptionType(optIndex, opt_list)) {
 		return NULL;
 	}
-	//const vector<OptionListItem>& list = options[optIndex].list;
 	if ((itemIndex < 0) || (itemIndex >= options[optIndex].numListItems)) {
 		return NULL;
 	}
@@ -1352,7 +1497,8 @@ static vector<string> curFindFiles;
 
 Export(int) OpenFileVFS(const char* name)
 {
-	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenFileVFS.");
+	CHECK_NULL_OR_EMPTY(name);
+
 	logOutput.Print("openfilevfs: %s\n", name);
 
 	CFileHandler* fh = new CFileHandler(name);
@@ -1370,6 +1516,7 @@ Export(int) OpenFileVFS(const char* name)
 Export(void) CloseFileVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to CloseFileVFS.");
+
 	logOutput.Print("closefilevfs: %d\n", handle);
 	delete openFiles[handle];
 	openFiles.erase(handle);
@@ -1378,7 +1525,8 @@ Export(void) CloseFileVFS(int handle)
 Export(void) ReadFileVFS(int handle, void* buf, int length)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to ReadFileVFS.");
-	ASSERT(buf, "Don't pass a NULL pointer to ReadFileVFS.");
+	CHECK_NULL(buf);
+
 	logOutput.Print("readfilevfs: %d\n", handle);
 	CFileHandler* fh = openFiles[handle];
 	fh->Read(buf, length);
@@ -1387,6 +1535,7 @@ Export(void) ReadFileVFS(int handle, void* buf, int length)
 Export(int) FileSizeVFS(int handle)
 {
 	ASSERT(openFiles.find(handle) != openFiles.end(), "Unregistered handle. Pass the handle returned by OpenFileVFS to FileSizeVFS.");
+
 	logOutput.Print("filesizevfs: %d\n", handle);
 	CFileHandler* fh = openFiles[handle];
 	return fh->FileSize();
@@ -1424,8 +1573,9 @@ Export(int) InitSubDirsVFS(const char* path, const char* pattern, const char* mo
 
 Export(int) FindFilesVFS(int handle, char* nameBuf, int size)
 {
-	ASSERT(nameBuf, "Don't pass a NULL pointer to FindFilesVFS.");
+	CHECK_NULL(nameBuf);
 	ASSERT(size > 0, "Negative or zero buffer length doesn't make sense.");
+
 	logOutput.Print("findfilesvfs: %d\n", handle);
 	if ((unsigned)handle >= curFindFiles.size())
 		return 0;
@@ -1442,7 +1592,8 @@ static int nextArchive = 0;
 
 Export(int) OpenArchive(const char* name)
 {
-	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchive.");
+	CHECK_NULL_OR_EMPTY(name);
+
 	CArchiveBase* a = CArchiveFactory::OpenArchive(name);
 	if (a) {
 		nextArchive++;
@@ -1456,8 +1607,9 @@ Export(int) OpenArchive(const char* name)
 
 Export(int) OpenArchiveType(const char* name, const char* type)
 {
-	ASSERT(name && *name && type && *type,
-	       "Don't pass a NULL pointer or an empty string to OpenArchiveType.");
+	CHECK_NULL_OR_EMPTY(name);
+	CHECK_NULL_OR_EMPTY(type);
+
 	CArchiveBase* a = CArchiveFactory::OpenArchive(name, type);
 	if (a) {
 		nextArchive++;
@@ -1472,6 +1624,7 @@ Export(int) OpenArchiveType(const char* name, const char* type)
 Export(void) CloseArchive(int archive)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchive.");
+
 	delete openArchives[archive];
 	openArchives.erase(archive);
 }
@@ -1479,7 +1632,9 @@ Export(void) CloseArchive(int archive)
 Export(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to FindFilesArchive.");
-	ASSERT(nameBuf && size, "Don't pass a NULL pointer to FindFilesArchive.");
+	CHECK_NULL(nameBuf);
+	CHECK_NULL(size);
+
 	CArchiveBase* a = openArchives[archive];
 
 	logOutput.Print("findfilesarchive: %d\n", archive);
@@ -1497,7 +1652,8 @@ Export(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 Export(int) OpenArchiveFile(int archive, const char* name)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to OpenArchiveFile.");
-	ASSERT(name && *name, "Don't pass a NULL pointer or an empty string to OpenArchiveFile.");
+	CHECK_NULL_OR_EMPTY(name);
+
 	CArchiveBase* a = openArchives[archive];
 	return a->OpenFile(name);
 }
@@ -1505,7 +1661,8 @@ Export(int) OpenArchiveFile(int archive, const char* name)
 Export(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to ReadArchiveFile.");
-	ASSERT(buffer, "Don't pass a NULL pointer to ReadArchiveFile.");
+	CHECK_NULL(buffer);
+
 	CArchiveBase* a = openArchives[archive];
 	return a->ReadFile(handle, buffer, numBytes);
 }
@@ -1513,6 +1670,7 @@ Export(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 Export(void) CloseArchiveFile(int archive, int handle)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to CloseArchiveFile.");
+
 	CArchiveBase* a = openArchives[archive];
 	return a->CloseFile(handle);
 }
@@ -1520,6 +1678,7 @@ Export(void) CloseArchiveFile(int archive, int handle)
 Export(int) SizeArchiveFile(int archive, int handle)
 {
 	ASSERT(openArchives.find(archive) != openArchives.end(), "Unregistered archive. Pass the handle returned by OpenArchive to SizeArchiveFile.");
+
 	CArchiveBase* a = openArchives[archive];
 	return a->FileSize(handle);
 }

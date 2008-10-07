@@ -1567,6 +1567,7 @@ Export(float) _UnitDef_getHealth(int teamId, int unitDefId) {return getUnitDefBy
 Export(unsigned int) _UnitDef_getCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->category;}
 Export(float) _UnitDef_getSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->speed;}
 Export(float) _UnitDef_getTurnRate(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRate;}
+Export(bool) _UnitDef_isTurnInPlace(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnInPlace;}
 Export(int) _UnitDef_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveType;}
 Export(bool) _UnitDef_isUpright(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->upright;}
 Export(bool) _UnitDef_isCollide(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->collide;}
@@ -2495,6 +2496,8 @@ Export(bool) _FeatureDef_isUpright(int teamId, int featureDefId) {return getFeat
 Export(int) _FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
 Export(const char*) _FeatureDef_getModelName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelname.c_str();}
 Export(int) _FeatureDef_getModelType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelType;}
+Export(int) _FeatureDef_getResurrectable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->resurrectable;}
+Export(int) _FeatureDef_getSmokeTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->smokeTime;}
 Export(bool) _FeatureDef_isDestructable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->destructable;}
 Export(bool) _FeatureDef_isReclaimable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimable;}
 Export(bool) _FeatureDef_isBlocking(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->blocking;}
@@ -2639,6 +2642,7 @@ Export(int) _WeaponDef_getInterceptor(int teamId, int weaponDefId) {return getWe
 Export(int) _WeaponDef_getTargetable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->targetable;}
 Export(bool) _WeaponDef_isStockpileable(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->stockpile;}
 Export(float) _WeaponDef_getCoverageRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->coverageRange;}
+Export(float) _WeaponDef_getStockpileTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->stockpileTime;}
 Export(float) _WeaponDef_getIntensity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->intensity;}
 Export(float) _WeaponDef_getThickness(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->thickness;}
 Export(float) _WeaponDef_getLaserFlareSize(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->laserflaresize;}
@@ -2652,10 +2656,6 @@ Export(bool) _WeaponDef_isSelfExplode(int teamId, int weaponDefId) {return getWe
 Export(bool) _WeaponDef_isGravityAffected(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->gravityAffected;}
 Export(int) _WeaponDef_getHighTrajectory(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->highTrajectory;}
 Export(float) _WeaponDef_getMyGravity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->myGravity;}
-Export(bool) _WeaponDef_isTwoPhase(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->twophase;}
-Export(bool) _WeaponDef_isGuided(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->guided;}
-Export(bool) _WeaponDef_isVLaunched(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->vlaunch;}
-Export(bool) _WeaponDef_isSelfPropelled(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->selfprop;}
 Export(bool) _WeaponDef_isNoExplode(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->noExplode;}
 Export(float) _WeaponDef_getStartVelocity(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->startvelocity;}
 Export(float) _WeaponDef_getWeaponAcceleration(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->weaponacceleration;}
@@ -3019,6 +3019,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->UnitDef_getCategory = _UnitDef_getCategory;
 	sAICallback->UnitDef_getSpeed = _UnitDef_getSpeed;
 	sAICallback->UnitDef_getTurnRate = _UnitDef_getTurnRate;
+	sAICallback->UnitDef_isTurnInPlace = _UnitDef_isTurnInPlace;
 	sAICallback->UnitDef_getMoveType = _UnitDef_getMoveType;
 	sAICallback->UnitDef_isUpright = _UnitDef_isUpright;
 	sAICallback->UnitDef_isCollide = _UnitDef_isCollide;
@@ -3320,6 +3321,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->FeatureDef_getDrawType = _FeatureDef_getDrawType;
 	sAICallback->FeatureDef_getModelName = _FeatureDef_getModelName;
 	sAICallback->FeatureDef_getModelType = _FeatureDef_getModelType;
+	sAICallback->FeatureDef_getResurrectable = _FeatureDef_getResurrectable;
+	sAICallback->FeatureDef_getSmokeTime = _FeatureDef_getSmokeTime;
 	sAICallback->FeatureDef_isDestructable = _FeatureDef_isDestructable;
 	sAICallback->FeatureDef_isReclaimable = _FeatureDef_isReclaimable;
 	sAICallback->FeatureDef_isBlocking = _FeatureDef_isBlocking;
@@ -3403,6 +3406,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->WeaponDef_getTargetable = _WeaponDef_getTargetable;
 	sAICallback->WeaponDef_isStockpileable = _WeaponDef_isStockpileable;
 	sAICallback->WeaponDef_getCoverageRange = _WeaponDef_getCoverageRange;
+	sAICallback->WeaponDef_getStockpileTime = _WeaponDef_getStockpileTime;
 	sAICallback->WeaponDef_getIntensity = _WeaponDef_getIntensity;
 	sAICallback->WeaponDef_getThickness = _WeaponDef_getThickness;
 	sAICallback->WeaponDef_getLaserFlareSize = _WeaponDef_getLaserFlareSize;
@@ -3416,10 +3420,6 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->WeaponDef_isGravityAffected = _WeaponDef_isGravityAffected;
 	sAICallback->WeaponDef_getHighTrajectory = _WeaponDef_getHighTrajectory;
 	sAICallback->WeaponDef_getMyGravity = _WeaponDef_getMyGravity;
-	sAICallback->WeaponDef_isTwoPhase = _WeaponDef_isTwoPhase;
-	sAICallback->WeaponDef_isGuided = _WeaponDef_isGuided;
-	sAICallback->WeaponDef_isVLaunched = _WeaponDef_isVLaunched;
-	sAICallback->WeaponDef_isSelfPropelled = _WeaponDef_isSelfPropelled;
 	sAICallback->WeaponDef_isNoExplode = _WeaponDef_isNoExplode;
 	sAICallback->WeaponDef_getStartVelocity = _WeaponDef_getStartVelocity;
 	sAICallback->WeaponDef_getWeaponAcceleration = _WeaponDef_getWeaponAcceleration;

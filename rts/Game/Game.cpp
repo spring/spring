@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -10,7 +11,11 @@
 #include <locale>
 #include <sstream>
 
-#include "Rendering/GL/myGL.h"
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
+
+#include <boost/thread/barrier.hpp>
+
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -18,6 +23,8 @@
 #include <SDL_types.h>
 #include <SDL_events.h>
 #include <SDL_video.h>
+
+#include "mmgr.h"
 
 #include "Game.h"
 #include "float.h"
@@ -110,6 +117,8 @@
 #include "StartScripts/Script.h"
 #include "StartScripts/ScriptHandler.h"
 #include "Sync/SyncedPrimitiveIO.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 #include "System/EventHandler.h"
 #include "System/Sound.h"
 #include "System/FileSystem/SimpleParser.h"
@@ -148,11 +157,6 @@
 #  include "Sim/Weapons/WeaponDefHandler.h"
 #endif
 
-#include "mmgr.h"
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
-
-#include <boost/thread/barrier.hpp>
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -283,7 +287,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
-	  wordCompletion->AddWord(gs->players[pp]->playerName, false, false, false);
+	  wordCompletion->AddWord(gs->players[pp]->name, false, false, false);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -317,7 +321,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	helper = SAFE_NEW CGameHelper(this);
 
 	ENTER_SYNCED;
-
 	modInfo.Init(modName.c_str());
 
 	if (!sideParser.Load()) {
@@ -415,6 +418,11 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
  	ENTER_SYNCED;
  	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
  	pathManager = SAFE_NEW CPathManager();
+#ifdef SYNCCHECK
+	// update the checksum with path data
+	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
+#endif
+	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
  	delete defsParser;
 	defsParser = NULL;
@@ -435,7 +443,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
 	if(!gameSetup || net->localDemoPlayback) {
-		p->playerName = configHandler.GetString("name", "");
+		p->name = configHandler.GetString("name", "");
 	} else {
 		GameSetupDrawer::Enable();
 	}
@@ -498,12 +506,16 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	if (!saveFile) {
 		UnloadStartPicture();
 	}
-	
+
 	net->loading = false;
 	thread.join();
+#ifdef USE_GML
+	logOutput.Print("Spring %s MT (%d threads)",VERSION_STRING, gmlThreadCount);
+#else
 	logOutput.Print("Spring %s",VERSION_STRING);
+#endif
 	//sending your playername to the server indicates that you are finished loading
-	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->playerName));
+	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 
 	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
 		net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
@@ -568,7 +580,7 @@ CGame::~CGame()
 	delete pathManager;        pathManager        = NULL;
 	delete groundDecals;       groundDecals       = NULL;
 	delete ground;             ground             = NULL;
-	delete luaInputReceiver;   luaInputReceiver   = NULL; 
+	delete luaInputReceiver;   luaInputReceiver   = NULL;
 	delete inMapDrawer;        inMapDrawer        = NULL;
 	delete net;                net                = NULL;
 	delete radarhandler;       radarhandler       = NULL;
@@ -1154,7 +1166,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (ks.Key() != SDLK_RETURN || !(gameServer && gameServer->WaitsOnCon()))) {
+				  (ks.Key() != SDLK_RETURN || (gameSetup || playing ))) {
 
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
@@ -2327,6 +2339,11 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 #ifdef DEBUG
 	else if (action.command == "desync" && gs->cheatEnabled) {
+		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
+		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123);
+		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
+		ASSERT_SYNCED_FLOAT3(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
+
 		for (int i = MAX_UNITS - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (playernum == gu->myPlayerNum) {
@@ -2378,6 +2395,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (action.extra == "end") {
 			skipping = false;
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
 	else if (gs->frameNum > 1) {
@@ -2499,7 +2517,7 @@ bool CGame::DrawWorld()
 	SCOPED_TIMER("Draw world");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	
+
 	if (drawSky) {
 		sky->Draw();
 	}
@@ -2620,23 +2638,19 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-#ifndef USE_GML
+#if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
-#else // USE_GML
-#  if GML_ENABLE_DRAWALL
-bool CGame::Draw() {
-#  else
-bool CGame::DrawMT() {
-#  endif
 	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
-	return TRUE;
-}
-#  if GML_ENABLE_DRAWALL
+#else
 bool CGame::DrawMT() {
-#  else
+#endif
+	return true;
+}
+#if defined(USE_GML) && GML_ENABLE_DRAW
+bool CGame::DrawMT() {
+#else
 bool CGame::Draw() {
-#  endif
-#endif // USE_GML
+#endif
 
 	ASSERT_UNSYNCED_MODE;
 
@@ -2731,7 +2745,7 @@ bool CGame::Draw() {
 		}
 	}
 
-	camera->Update(false);
+	camera->Update(false); //FIXME: after UpdateWater?
 
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 
@@ -2903,7 +2917,7 @@ bool CGame::Draw() {
 			}
 			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-						p->team, prefix, p->playerName.c_str(), p->cpuUsage * 100.0f,
+						p->team, prefix, p->name.c_str(), p->cpuUsage * 100.0f,
 						(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 
 			if (!guihandler->GetOutlineFonts()) {
@@ -3030,39 +3044,51 @@ void CGame::StartPlaying()
 }
 
 
+#if defined(USE_GML) && GML_MT_TEST
+int oldgsframe;
+#endif
 // This will be run by a separate thread in parallel with the Sim
 // ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
 void CGame::UnsyncedStuff() {
 	if (!skipping) {
 		infoConsole->Update();
 	}
+#if defined(USE_GML) && GML_MT_TEST
+	while(oldgsframe==*(volatile int *)&(gs->frameNum)) {
+		gmlProcessor.Pump(1);
+		boost::thread::yield();
+	}
+	gu->drawFrame++;
+	if (gu->drawFrame == 0) {
+		gu->drawFrame++;
+	}
+	Draw();
+#endif
 }
 
 
-#ifndef USE_GML
+#if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
-#else // USE_GML
-#  if GML_ENABLE_SIM
-void CGame::SimFrame() {
-#  else
-void CGame::SimFrameMT() {
-#  endif
+#		if defined(USE_GML) && GML_MT_TEST
+	oldgsframe=gs->frameNum;
+#		endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
-}
-#  if GML_ENABLE_SIM
+#else
 void CGame::SimFrameMT() {
-#  else
+#endif
+}
+#if defined(USE_GML) && GML_ENABLE_SIM
+void CGame::SimFrameMT() {
+#else
 void CGame::SimFrame() {
-#  endif
-#endif // USE_GML
-
+#endif
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 	ASSERT_SYNCED_MODE;
 
 #ifdef TRACE_SYNC
-	uh->CreateChecksum();
-	tracefile << "New frame:" << gs->frameNum << " " << gs->randSeed << "\n";
+	//uh->CreateChecksum();
+	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
 #endif
 
 #ifdef USE_MMGR
@@ -3076,12 +3102,15 @@ void CGame::SimFrame() {
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
 
+#if defined(USE_GML) && GML_MT_TEST
+	gmlProcessor.GetQueue();
+#endif
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;
 
 	if (!skipping) {
-#if !GML_ENABLE_SIM
+#if !defined(USE_GML) || !GML_ENABLE_SIM
     UnsyncedStuff();
 #endif
 //		infoConsole->Update();
@@ -3294,20 +3323,20 @@ void CGame::ClientReadNet()
 					switch (inbuf[2]) {
 						case 1: {
 							if (gs->players[player]->spectator) {
-								logOutput.Print("Spectator %s left", gs->players[player]->playerName.c_str());
+								logOutput.Print("Spectator %s left", gs->players[player]->name.c_str());
 							} else {
-								logOutput.Print("Player %s left", gs->players[player]->playerName.c_str());
+								logOutput.Print("Player %s left", gs->players[player]->name.c_str());
 							}
 							break;
 						}
 						case 2:
-							logOutput.Print("Player %s has been kicked", gs->players[player]->playerName.c_str());
+							logOutput.Print("Player %s has been kicked", gs->players[player]->name.c_str());
 							break;
 						case 0:
-							logOutput.Print("Lost connection to %s", gs->players[player]->playerName.c_str());
+							logOutput.Print("Lost connection to %s", gs->players[player]->name.c_str());
 							break;
 						default:
-							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->playerName.c_str(), inbuf[2]);
+							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->name.c_str(), inbuf[2]);
 					}
 					gs->players[player]->active = false;
 				}
@@ -3386,9 +3415,9 @@ void CGame::ClientReadNet()
 				else if (!skipping) {
 					gs->paused=!!inbuf[2];
 					if(gs->paused){
-						logOutput.Print("%s paused the game",gs->players[player]->playerName.c_str());
+						logOutput.Print("%s paused the game",gs->players[player]->name.c_str());
 					} else {
-						logOutput.Print("%s unpaused the game",gs->players[player]->playerName.c_str());
+						logOutput.Print("%s unpaused the game",gs->players[player]->name.c_str());
 					}
 					lastframe = SDL_GetTicks();
 				}
@@ -3407,7 +3436,7 @@ void CGame::ClientReadNet()
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				unsigned char pNum = *(unsigned char*) &inbuf[1];
-				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->playerName.c_str();
+				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->name.c_str();
 
 				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, pName);
 				AddTraffic(pNum, packetCode, dataLength);
@@ -3434,13 +3463,13 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERNAME: {
 				int player = inbuf[2];
-				gs->players[player]->playerName=(char*)(&inbuf[3]);
+				gs->players[player]->name=(char*)(&inbuf[3]);
 				gs->players[player]->readyToStart=true;
 				gs->players[player]->active=true;
 				if (net->GetDemoRecorder()) {
 					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
 				}
-				wordCompletion->AddWord(gs->players[player]->playerName, false, false, false); // required?
+				wordCompletion->AddWord(gs->players[player]->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -3522,8 +3551,11 @@ void CGame::ClientReadNet()
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 #ifdef SYNCCHECK
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
-				if ((gs->frameNum & 4095) == 0) // reset checksum every ~2.5 minute gametime
+				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
+					// update the checksum with path data
+					SyncedUint tmp(pathManager->GetPathChecksum());
+				}
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
@@ -3563,8 +3595,8 @@ void CGame::ClientReadNet()
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
-						if (uh->units[unitid] &&
-						    (uh->units[unitid]->team == gs->players[player]->team) ||
+						if ((uh->units[unitid] &&
+						    (uh->units[unitid]->team == gs->players[player]->team)) ||
 						    gs->godMode) {
 							selected.push_back(unitid);
 						}
@@ -3746,7 +3778,10 @@ void CGame::ClientReadNet()
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
 						if (unit && unit->team==team1 && !unit->beingBuilt) {
-							unit->ChangeTeam(team2, CUnit::ChangeGiven);
+#ifdef DIRECT_CONTROL_ALLOWED
+							if (!unit->directControl)
+#endif
+								unit->ChangeTeam(team2, CUnit::ChangeGiven);
 						}
 					}
 					netSelUnits.clear();
@@ -3889,7 +3924,7 @@ void CGame::ClientReadNet()
 				CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
 				if (ctrlUnit) {
 					CUnit* unit=gs->players[player]->playerControlledUnit;
-				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
+				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
 					unit->directControl=0;
 					unit->AttackUnit(0,true);
@@ -3898,7 +3933,7 @@ void CGame::ClientReadNet()
 				else {
 					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
 						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->playerName.c_str(),unit->id,unit->unitDef->humanName.c_str());
+						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 						if (unit->directControl) {
 							if (player == gu->myPlayerNum) {
 								logOutput.Print("Sorry someone already controls that unit");
@@ -3965,8 +4000,7 @@ void CGame::ClientReadNet()
 			}
 			default: {
 #ifdef SYNCDEBUG
-				lastLength = CSyncDebugger::GetInstance()->ClientReceived(&inbuf[inbufpos]);
-				if (!lastLength)
+				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
 #endif
 				{
 					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
@@ -4217,7 +4251,7 @@ void CGame::DrawDirectControlHud(void)
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", unit->health, unit->maxHealth);
+		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
 
 		if(gs->players[gu->myPlayerNum]->myControl.mouse2){
 			font->glPrintAt(0.02f, 0.7f, 1.0f, "Free fire mode");
@@ -4439,9 +4473,15 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		if (!player) {
 			label = "> ";
 		} else if (player->spectator) {
-			label = "[" + player->playerName + "] ";
+			if (player->isFromDemo)
+				// make clear that the message is from the replay
+				label = "[" + player->name + " (replay)" + "] ";
+			else
+				// its from a spectator not from replay
+				label = "[" + player->name + "] ";
 		} else {
-			label = "<" + player->playerName + "> ";
+			// players are always from a replay (if its a replay and not a game)
+			label = "<" + player->name + "> ";
 		}
 
 		/*
@@ -4767,7 +4807,7 @@ void CGame::ReColorTeams()
 	for(int p = 0; p < gs->activePlayers; ++p) {
 		luaParser.GetTable(p); {
 			const CPlayer* player = gs->players[p];
-			luaParser.AddString("name",     player->playerName);
+			luaParser.AddString("name",     player->name);
 			luaParser.AddInt("team",        player->team);
 			luaParser.AddBool("active",     player->active);
 			luaParser.AddBool("spectating", player->spectator);

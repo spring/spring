@@ -1,7 +1,8 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "DynWater.h"
 #include "Game/Game.h"
-//#include <windows.h>
 #include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
@@ -22,15 +23,16 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 
 #define W_SIZE 5
 #define WF_SIZE 5120
 #define WH_SIZE 2560
-/*/
+/*
 #define W_SIZE 4
 #define WF_SIZE 4096
 #define WH_SIZE 2048
-/**/
+*/
 CDynWater::CDynWater(void)
 {
 	lastWaveFrame=0;
@@ -264,7 +266,7 @@ CDynWater::~CDynWater(void)
 
 void CDynWater::Draw()
 {
-	if(readmap->minheight>10)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	glDisable(GL_BLEND);
@@ -354,7 +356,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if (readmap->minheight > 10 || mapInfo->map.voidWater)
+	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
 	glDisable(GL_DEPTH_TEST);
@@ -377,7 +379,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if(readmap->minheight>10)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
 		return;
 
 	oldCamPosBig=camPosBig;
@@ -500,6 +502,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
+	unitDrawer->DrawCloakedUnits();
 	drawReflection=false;
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
@@ -836,6 +839,11 @@ static inline void DrawVertexA(int x,int y)
 	va->AddVertex0(float3(x*WSQUARE_SIZE,0,y*WSQUARE_SIZE));
 }
 
+static inline void DrawVertexAQ(int x,int y)
+{
+	va->AddVertexQ0(x*WSQUARE_SIZE,0,y*WSQUARE_SIZE);
+}
+
 void CDynWater::DrawWaterSurface(void)
 {
 	int viewRadius=40;
@@ -872,126 +880,136 @@ void CDynWater::DrawWaterSurface(void)
 		int ystart=std::max(minly,minty);
 		int yend=std::min(maxly,maxty);
 
+		int vrhlod=viewRadius*hlod;
+
 		for(int y=ystart;y<yend;y+=lod){
 			int xs=xstart;
 			int xe=xend;
 			int xtest,xtest2;
 			std::vector<fline>::iterator fli;
 			for(fli=left.begin();fli!=left.end();fli++){
-				xtest=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*y))/lod*lod-lod;
-				xtest2=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod-lod;
+				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+				xtest = ((int)xtf) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if(xtest>xtest2)
 					xtest=xtest2;
 				if(xtest>xs)
 					xs=xtest;
 			}
 			for(fli=right.begin();fli!=right.end();fli++){
-				xtest=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*y))/lod*lod+lod;
-				xtest2=((int)(fli->base/(WSQUARE_SIZE)+fli->dir*(y+lod)))/lod*lod+lod;
+				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+				xtest = ((int)xtf) / lod * lod - lod;
+				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if(xtest<xtest2)
 					xtest=xtest2;
 				if(xtest<xe)
 					xe=xtest;
 			}
 
+			int ylod = y + lod;
+			int yhlod = y + hlod;
+
+			int nloop=(xe-xs)/lod+1;
+			va->EnlargeArrays(nloop*13,4*nloop+1);
 			for(int x=xs;x<xe;x+=lod){
-				if((lod==1) ||
-					(x>(cx)+viewRadius*hlod) || (x<(cx)-viewRadius*hlod) ||
-					(y>(cy)+viewRadius*hlod) || (y<(cy)-viewRadius*hlod)){  //normal terrain
-						if(!inStrip){
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+lod);
-							inStrip=true;
-						}
-						DrawVertexA(x+lod,y);
-						DrawVertexA(x+lod,y+lod);
-					} else {  //inre begr�sning mot f�eg�nde lod
-						if((x>=(cx)+viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y);
-							va->EndStrip();
-						}
-						else if((x<=(cx)-viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y);
-							va->EndStrip();
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+lod);
-							va->EndStrip();
-						}
-						else if((y>=(cy)+viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x+hlod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+lod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							va->EndStrip();
-						}
-						else if((y<=(cy)-viewRadius*hlod)){
-							if(inStrip){
-								va->EndStrip();
-								inStrip=false;
-							}
-							DrawVertexA(x,y+hlod);
-							DrawVertexA(x,y+lod);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x+hlod,y+lod);
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y+lod);
-							va->EndStrip();
-							DrawVertexA(x+lod,y+hlod);
-							DrawVertexA(x+lod,y);
-							DrawVertexA(x+hlod,y+hlod);
-							DrawVertexA(x,y);
-							DrawVertexA(x,y+hlod);
-							va->EndStrip();
-						}
+				int xlod = x + lod;
+				int xhlod = x + hlod;
+
+				if((lod==1) || (x>cx+vrhlod) || (x<cx-vrhlod) || (y>cy+vrhlod) || (y<cy-vrhlod)) {  //normal terrain
+					if(!inStrip){
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,ylod);
+						inStrip=true;
 					}
+					DrawVertexAQ(xlod,y);
+					DrawVertexAQ(xlod,ylod);
+				} else {  //inre begr?sning mot f?eg?nde lod
+					if(x>=cx+vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						va->EndStripQ();
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,y);
+						va->EndStripQ();
+					}
+					else if(x<=cx-vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,y);
+						va->EndStripQ();
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,ylod);
+						va->EndStripQ();
+					}
+					else if(y>=cy+vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(xhlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xlod,yhlod);
+						va->EndStripQ();
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						va->EndStripQ();
+					}
+					else if(y<=cy-vrhlod){
+						if(inStrip){
+							va->EndStripQ();
+							inStrip=false;
+						}
+						DrawVertexAQ(x,yhlod);
+						DrawVertexAQ(x,ylod);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(xhlod,ylod);
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,ylod);
+						va->EndStripQ();
+						DrawVertexAQ(xlod,yhlod);
+						DrawVertexAQ(xlod,y);
+						DrawVertexAQ(xhlod,yhlod);
+						DrawVertexAQ(x,y);
+						DrawVertexAQ(x,yhlod);
+						va->EndStripQ();
+					}
+				}
 			}
 			if(inStrip){
-				va->EndStrip();
+				va->EndStripQ();
 				inStrip=false;
 			}
 		}
@@ -1097,42 +1115,49 @@ void CDynWater::AddShipWakes()
 	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
 	va2->Initialize();
 
+	int nadd=uh->activeUnits.size()*4;
+	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
+	va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
+
 	for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin(); ui!=uh->activeUnits.end();++ui){
 		CUnit* unit=*ui;
-		if(unit->moveType && unit->floatOnWater && unit->mobility && !unit->unitDef->canhover){	//boat
-			float speedf=unit->speed.Length2D();
-			float3 pos=unit->pos;
-			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-				continue;
-			if(pos.y>-4 && pos.y<1){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-				float3 sideAdd=unit->rightdir*unit->radius*0.18f;
-				float depth=sqrt(sqrt(unit->mass));
-				float3 n(depth, 0.04f*speedf*depth, depth);
+		if(unit->moveType && unit->mobility) {
+			if(unit->unitDef->canhover){	//hover
+				float3 pos=unit->pos;
+				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+					continue;
+				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+					continue;
+				if(pos.y>-4 && pos.y<4){
+					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+					float3 sideAdd=unit->rightdir*unit->radius*0.75f;
+					float depth=sqrt(sqrt(unit->mass))*0.4f;
+					float3 n(depth, 0.05f*depth, depth);
 
-				va->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
-				va->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
-				va->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
-				va->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
+					va2->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+					va2->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+					va2->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+					va2->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+				}
 			}
-		} else if(unit->moveType && unit->unitDef->canhover && unit->mobility){		//hover
-			float3 pos=unit->pos;
-			if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-				continue;
-			if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-				continue;
-			if(pos.y>-4 && pos.y<4){
-				float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-				float3 sideAdd=unit->rightdir*unit->radius*0.75f;
-				float depth=sqrt(sqrt(unit->mass))*0.4f;
-				float3 n(depth, 0.05f*depth, depth);
+			else if(unit->floatOnWater){	//boat
+				float speedf=unit->speed.Length2D();
+				float3 pos=unit->pos;
+				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+					continue;
+				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+					continue;
+				if(pos.y>-4 && pos.y<1){
+					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+					float3 sideAdd=unit->rightdir*unit->radius*0.18f;
+					float depth=sqrt(sqrt(unit->mass));
+					float3 n(depth, 0.04f*speedf*depth, depth);
 
-				va2->AddVertexTN(pos+frontAdd+sideAdd,0,0,n);
-				va2->AddVertexTN(pos+frontAdd-sideAdd,1,0,n);
-				va2->AddVertexTN(pos-frontAdd-sideAdd,1,1,n);
-				va2->AddVertexTN(pos-frontAdd+sideAdd,0,1,n);
+					va->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+					va->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+					va->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+					va->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+				}
 			}
 		}
 	}
@@ -1194,6 +1219,9 @@ void CDynWater::AddExplosions()
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 
+	int nadd=explosions.size()*4;
+	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
+
 	for(std::vector<Explosion>::iterator ei=explosions.begin(); ei!=explosions.end();++ei){
 		Explosion& explo=*ei;
 		float3 pos=explo.pos;
@@ -1213,10 +1241,10 @@ void CDynWater::AddExplosions()
 
 		float3 n(strength, strength*0.005f, strength*inv);
 
-		va->AddVertexTN(pos+float3(1,0,1)*size,0,0,n);
-		va->AddVertexTN(pos+float3(-1,0,1)*size,1,0,n);
-		va->AddVertexTN(pos+float3(-1,0,-1)*size,1,1,n);
-		va->AddVertexTN(pos+float3(1,0,-1)*size,0,1,n);
+		va->AddVertexQTN(pos+float3(1,0,1)*size,0,0,n);
+		va->AddVertexQTN(pos+float3(-1,0,1)*size,1,0,n);
+		va->AddVertexQTN(pos+float3(-1,0,-1)*size,1,1,n);
+		va->AddVertexQTN(pos+float3(1,0,-1)*size,0,1,n);
 	}
 	explosions.clear();
 
@@ -1276,11 +1304,12 @@ void CDynWater::DrawSingleUpdateSquare(float startx,float starty,float endx,floa
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
+	va->CheckInitSize(4*VA_SIZE_T);
 
-	va->AddVertexT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
-	va->AddVertexT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
-	va->AddVertexT(float3(endx,endy,0),texstart + endx*texdif,texstart + endy*texdif  );
-	va->AddVertexT(float3(endx,starty,0),texstart + endx*texdif,texstart + starty*texdif);
+	va->AddVertexQT(float3(startx,starty,0),texstart + startx*texdif,texstart + starty*texdif);
+	va->AddVertexQT(float3(startx,endy,0),texstart + startx*texdif,texstart + endy*texdif  );
+	va->AddVertexQT(float3(endx,endy,0),texstart + endx*texdif,texstart + endy*texdif  );
+	va->AddVertexQT(float3(endx,starty,0),texstart + endx*texdif,texstart + starty*texdif);
 
 	va->DrawArrayT(GL_QUADS);
 }
@@ -1290,23 +1319,29 @@ void CDynWater::DrawOuterSurface(void)
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 
-	float size=WF_SIZE;
-	float size2=WF_SIZE/16;
-	float posx=camPosBig2.x-WH_SIZE;
-	float posy=camPosBig2.z-WH_SIZE;
+	va->EnlargeArrays(3*3*16*16*4,0);
+	float posx=camPosBig2.x-WH_SIZE-WF_SIZE;
+	float posy=camPosBig2.z-WH_SIZE-WF_SIZE;
 
-	for(int y=-1;y<=1;++y){
-		for(int x=-1;x<=1;++x){
+	float ys=posy;
+	for(int y=-1;y<=1;++y,ys+=WF_SIZE){ //! CAUTION: loop count must match EnlargeArrays above
+		float xs=posx;
+		for(int x=-1;x<=1;++x,xs+=WF_SIZE){
 			if(x==0 && y==0)
 				continue;
-
-			for(int y2=0;y2<16;++y2){
+			float pys=ys;
+			for(int y2=0;y2<16;++y2){ //! CAUTION: loop count must match EnlargeArrays above
+				float pxs=xs;
+				float pys1=pys+WF_SIZE/16;
 				for(int x2=0;x2<16;++x2){
-					va->AddVertex0(float3(posx+x*size+(x2+0)*size2,0,posy+y*size+(y2+0)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+1)*size2,0,posy+y*size+(y2+0)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+1)*size2,0,posy+y*size+(y2+1)*size2));
-					va->AddVertex0(float3(posx+x*size+(x2+0)*size2,0,posy+y*size+(y2+1)*size2));
+					float pxs1=pxs+WF_SIZE/16;
+					va->AddVertexQ0(pxs, 0,pys);
+					va->AddVertexQ0(pxs1,0,pys);
+					va->AddVertexQ0(pxs1,0,pys1);
+					va->AddVertexQ0(pxs, 0,pys1);
+					pxs=pxs1;
 				}
+				pys=pys1;
 			}
 		}
 	}

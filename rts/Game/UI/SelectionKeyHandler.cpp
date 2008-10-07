@@ -2,6 +2,8 @@
 #include <fstream>
 #include <SDL_keysym.h>
 #include <SDL_types.h>
+#include "mmgr.h"
+
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -18,7 +20,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "mmgr.h"
 
 CSelectionKeyHandler *selectionKeys;
 
@@ -256,12 +257,10 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 				}
 			}
 		} else if(s=="Commander"){
-			unsigned int comCat=CCategoryHandler::Instance()->GetCategory("COMMANDER");
-
 			std::list<CUnit*>::iterator ui=selection.begin();
 			while (ui!=selection.end()) {
 				bool filterTrue=false;
-				if ((*ui)->category & comCat){	//fix with better test for commander
+				if((*ui)->unitDef->isCommander){
 					filterTrue=true;
 				}
 				if (filterTrue ^ _not) {
@@ -286,12 +285,11 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 				}
 			}
 		} else if(s=="Aircraft"){
-			unsigned int acCat=CCategoryHandler::Instance()->GetCategory("VTOL");
 
 			std::list<CUnit*>::iterator ui=selection.begin();
 			while (ui != selection.end()) {
 				bool filterTrue=false;
-				if ((*ui)->category & acCat){
+				if ((*ui)->unitDef->canfly){
 					filterTrue=true;
 				}
 				if (filterTrue ^ _not) {

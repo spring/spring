@@ -51,7 +51,7 @@ AAI::~AAI()
 	// save several ai data
 	fprintf(file, "\nShutting down....\n\n");
 	fprintf(file, "Unit category	active / under construction\n");
-	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
+	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 	{
 		fprintf(file, "%-20s: %i / %i\n", bt->GetCategoryString2((UnitCategory)i), activeUnits[i], futureUnits[i]); 
 	}
@@ -60,12 +60,19 @@ AAI::~AAI()
 	fprintf(file, "\nAir Groups:       %i\n", group_list[AIR_ASSAULT].size());
 	fprintf(file, "\nHover Groups:     %i\n", group_list[HOVER_ASSAULT].size());
 	fprintf(file, "\nSea Groups:       %i\n", group_list[SEA_ASSAULT].size());
-	fprintf(file, "\nSubmarine Groups: %i\n", group_list[SUBMARINE_ASSAULT].size());
+	fprintf(file, "\nSubmarine Groups: %i\n\n", group_list[SUBMARINE_ASSAULT].size());
 	
-	fprintf(file, "\nFuture metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
-	fprintf(file, "Future metal/energy supply:  %i / %i\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
+	fprintf(file, "Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
+	fprintf(file, "Future metal/energy supply:    %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
 
-	fprintf(file, "\nFuture/active scouts: %i / %i\n", futureScouts, activeScouts);
+	fprintf(file, "Future/active scouts:      %i / %i\n", futureScouts, activeScouts);
+	fprintf(file, "Future/active builders:    %i / %i\n", futureBuilders, activeBuilders);
+	fprintf(file, "Future/active factories:   %i / %i\n\n", futureFactories, activeFactories);
+
+	fprintf(file, "Factory ratings:\n");
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac)
+		fprintf(file, "%-20s: %f\n", bt->unitList[*fac-1]->humanName.c_str(), bt->GetFactoryRating(*fac));
+		
 
 	// delete buildtasks
 	for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); task++)
@@ -259,7 +266,7 @@ void AAI::UnitCreated(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get unit´s id
+	// get unitï¿½s id
 	const UnitDef *def = cb->GetUnitDef(unit);
 	UnitCategory category = bt->units_static[def->id].category;
 
@@ -277,6 +284,7 @@ void AAI::UnitCreated(int unit)
 	{
 		// UnitFinished() will decrease it later -> prevents AAI from having -1 future commanders 
 		requestedUnits[COMMANDER] += 1;
+		futureBuilders += 1;
 		bt->units_dynamic[def->id].under_construction += 1;
 
 		execute->InitAI(unit, def);
@@ -341,7 +349,7 @@ void AAI::UnitFinished(int unit)
 	if(!initialized)
 		return;
 
-	// get unit´s id
+	// get unitï¿½s id
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	UnitCategory category = bt->units_static[def->id].category;
@@ -453,7 +461,7 @@ void AAI::UnitFinished(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker) 
 {
-	// get unit´s id 
+	// get unitï¿½s id 
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	// get unit's category
@@ -514,7 +522,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 				--futureBuilders;
 
 				for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
-					--bt->units_dynamic[*unit].buildersRequested;
+					--bt->units_dynamic[*unit].constructorsRequested;
 			}
 			else if(bt->IsFactory(def->id))
 			{
@@ -522,7 +530,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 					--futureFactories;
 	
 				for(list<int>::iterator unit = bt->units_static[def->id].canBuildList.begin();  unit != bt->units_static[def->id].canBuildList.end(); ++unit)		
-					--bt->units_dynamic[*unit].buildersRequested;
+					--bt->units_dynamic[*unit].constructorsRequested;
 			}
 		}
 	}
@@ -797,7 +805,7 @@ void AAI::EnemyDestroyed(int enemy, int attacker)
 
 	if(attacker)
 	{	
-		// get unit´s id 
+		// get unitï¿½s id 
 		const UnitDef *def = cb->GetUnitDef(enemy);
 		const UnitDef *def_att = cb->GetUnitDef(attacker);
 
@@ -852,7 +860,7 @@ void AAI::Update()
 	// unit management 
 	if(!(tick%649))
 	{
-		execute->CheckBuildques();
+		execute->CheckBuildqueues();
 		brain->BuildUnits();
 	}
 

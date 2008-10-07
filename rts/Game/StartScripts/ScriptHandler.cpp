@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "ScriptHandler.h"
 #include "Game/Game.h"
 #include "FileSystem/FileHandler.h"
@@ -17,11 +19,12 @@
 #include "TestScript.h"
 #include "Platform/SharedLib.h"
 #include "ExternalAI/Interface/aidefines.h"
+#include "ExternalAI/IAILibraryManager.h"
+#include "Exceptions.h"
 #ifndef NO_LUA
 #  include "System/Platform/errorhandler.h"
 #endif
-#include "mmgr.h"
-#include "ExternalAI/IAILibraryManager.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "mmgr.h"
 
 #include "TAAirMoveType.h"
 
@@ -527,7 +528,7 @@ void CTAAirMoveType::UpdateHeading()
 		return;
 	}
 
-	short& heading = owner->heading;
+	SyncedSshort& heading = owner->heading;
 	short deltaHeading = wantedHeading - heading;
 
 	if (forceHeading) {
@@ -923,7 +924,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 	if (!autoLand)
 		return false;
 
-	if (pos.x < 0 || pos.z < 0 || pos.x > float3::maxxpos || pos.z > float3::maxzpos)
+	if (!pos.IsInBounds())
 		return false;
 
 	float h = ground->GetApproximateHeight(pos.x, pos.z);

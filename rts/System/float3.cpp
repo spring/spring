@@ -14,6 +14,11 @@ CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 float float3::maxxpos = 2048.0f; /**< Maximum x position is 2048 */
 float float3::maxzpos = 2048.0f; /**< Maximum z position is 2048 */
 
+bool float3::IsInBounds() const
+{
+	return ((x >= 0.0f && x <= maxxpos) && (z >= 0.0f && z <= maxzpos));
+}
+
 /**
  * @return whether or not it's in bounds
  *
@@ -24,12 +29,12 @@ bool float3::CheckInBounds()
 {
 	bool in = true;
 
-	if (x < 1) {
-		x = 1;
+	if (x < 1.0f) {
+		x = 1.0f;
 		in = false;
 	}
-	if (z < 1) {
-		z = 1;
+	if (z < 1.0f) {
+		z = 1.0f;
 		in = false;
 	}
 	if (x > maxxpos) {
@@ -42,17 +47,6 @@ bool float3::CheckInBounds()
 	}
 
 	return in;
-}
-
-float3& float3::ANormalize()
-{
-	float invL = fastmath::isqrt(SqLength());
-	if (invL != 0.f) {
-		x *= invL;
-		y *= invL;
-		z *= invL;
-	}
-	return *this;
 }
 
 SAIFloat3 float3::toSAIFloat3() const {

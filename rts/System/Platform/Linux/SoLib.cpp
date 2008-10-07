@@ -54,7 +54,7 @@ void *SoLib::FindAddress(const char *symbol)
 	if (so != NULL) {
 		void* p = dlsym(so, symbol);
 		if (p == NULL) {
-			SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::FindAddress");
+			//SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::FindAddress");
 		}
 		return p;
 	}

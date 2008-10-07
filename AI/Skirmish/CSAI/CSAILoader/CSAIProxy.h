@@ -48,9 +48,9 @@ const char AI_NAME[]=".Net Interface";
 using namespace std;
 
 #ifdef WIN32
-	#define AILOG_PATH "AI\\Skirmish/impls\\"
+	#define AILOG_PATH "AI\\Skirmish\\data\\"
 #else
-	#define AILOG_PATH "AI/Skirmish/impls/"
+	#define AILOG_PATH "AI/Skirmish/data/"
 #endif
 
 struct AbicAICallbackWrapper;

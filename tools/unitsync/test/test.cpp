@@ -2,9 +2,8 @@
 ################################################################################
 file=test.cpp
 
-g++ -g -I../../../rts/System $file ../../../game/unitsync.so
-
-echo ./a.out Castles.smf ba621.sd7
+g++ -g -I../../../rts/System $file ../../../game/unitsync.so && \
+echo ./a.out Castles.smf ba621.sd7 && \
 ./a.out Castles.smf ba621.sd7
 
 exit
@@ -71,6 +70,24 @@ static bool PrintMapInfo(const string& mapName)
       const StartPos& sp = mi.positions[p];
       printf("    pos %i:     <%5i, %5i>\n", p, sp.x, sp.z);
     }
+
+    char* infomaps[] = { "height", "grass", "metal", "type", NULL };
+    int width, height;
+    for (int i = 0; infomaps[i]; ++i) {
+      if (GetInfoMapSize(mapName.c_str(), infomaps[i], &width, &height)) {
+        printf("    %smap: %i x %i\n", infomaps[i], width, height);
+        /*void* data = malloc(width*height);
+        GetInfoMap(mapName.c_str(), infomaps[i], data, 1);
+        FILE* f = fopen(infomaps[i], "w");
+        if (f == NULL) {
+          perror(infomaps[i]);
+        } else {
+          fwrite(data, 1, width*height, f);
+          fclose(f);
+        }
+        free(data);*/
+      }
+    }
   }
 }
 
@@ -109,7 +126,7 @@ int main(int argc, char** argv)
   for (int a = 0; a < mapArcCount; a++) {
     printf("      arc %i: %s\n", a, GetMapArchiveName(a));
   }
-  
+
   // map info
   PrintMapInfo(map);
 
@@ -118,7 +135,7 @@ int main(int argc, char** argv)
       PrintMapInfo(mapNames[i]);
     }
   }
-    
+
   // mod names
   printf("  MODS\n");
   const int modCount = GetPrimaryModCount();
@@ -301,7 +318,7 @@ static bool TestLuaParser()
     lpEndTable();
     lpAddIntKeyStrVal(6, "hello");
     lpAddIntKeyStrVal(7, "world");
-  lpEndTable();  
+  lpEndTable();
 
   if (!lpExecute()) {
     printf("LuaParser API test failed: %s\n", lpErrorLog());
@@ -349,8 +366,8 @@ static bool TestLuaParser()
       printf("SubTable root-expr: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
   lpRootTableExpr("[12].four");
       printf("SubTable root-expr: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));
-  
-  return true;  
+
+  return true;
 }
 
 

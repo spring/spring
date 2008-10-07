@@ -1,10 +1,14 @@
 #include "StdAfx.h"
-#include "PreGame.h"
+#include "Rendering/GL/myGL.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
+
+#include "mmgr.h"
+
+#include "PreGame.h"
 #include "Game.h"
 #include "Team.h"
 #include "FPUCheck.h"
@@ -28,12 +32,11 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glList.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/MouseHandler.h"
-#include "mmgr.h"
+#include "Exceptions.h"
 
 // msvc behaves really strange
 #if _MSC_VER
@@ -86,7 +89,12 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 
 	if(server){
 		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
-		if(gameSetup){
+		if (!demoFile.empty())
+		{
+			ReadDataFromDemo(demoFile);
+			state = WAIT_CONNECTING;
+		}
+		else if(gameSetup){
 			StartServer(gameSetup->mapName, gameSetup->baseMod, gameSetup->scriptName);
 			state = WAIT_CONNECTING;
 		} else if (hasSave) {
@@ -232,9 +240,9 @@ bool CPreGame::Draw()
 				break;
 			case WAIT_CONNECTING:
 				if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-					PrintLoadMsg("Connecting to server .");
+					PrintLoadMsg("Connecting to server .", false);
 				else
-					PrintLoadMsg("Connecting to server  ");
+					PrintLoadMsg("Connecting to server  ", false);
 				break;
 			case UNKNOWN:
 			case WAIT_ON_ADDRESS:
@@ -471,10 +479,20 @@ void CPreGame::UpdateClientNet()
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
+	assert(!gameServer);
 	logOutput.Print("Pre-scanning demo file for game data...");
+	bool hasSetup = static_cast<bool>(gameSetup);
 	CDemoReader scanner(demoName, 0);
+	bool demoSetup = static_cast<bool>(gameSetup);
+	if (demoSetup && ! hasSetup)
+	{
+		//HACK: make gs read the setup if we just read it out of the demofile
+		gs->LoadFromSetup(gameSetup);
+		gu->LoadFromSetup(gameSetup);
+	}
 
-	gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
+	if (!hasSetup)
+		gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
 
 	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(INT_MAX)));
 	while ( buf )
@@ -483,7 +501,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(springDefaultPort, false, data, gameSetup, demoName);
+			gameServer = new CGameServer(hasSetup ? gameSetup->hostport : springDefaultPort, false, data, gameSetup, demoName);
 			gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
 			good_fpu_control_registers("after CGameServer creation");
 			break;
@@ -495,6 +513,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		}
 		buf.reset(scanner.GetData(static_cast<float>(INT_MAX)));
 	}
+	assert(gameServer);
 }
 
 
@@ -654,6 +673,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());
+		logOutput << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameData->GetMap());
 	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());

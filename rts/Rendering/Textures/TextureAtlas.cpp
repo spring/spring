@@ -1,10 +1,15 @@
 #include "StdAfx.h"
+#include <list>
+#include "mmgr.h"
+
 #include "TextureAtlas.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
-#include <list>
+#include "System/Util.h"
+#include "System/Exceptions.h"
+#include "System/GlobalStuff.h"
 
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );

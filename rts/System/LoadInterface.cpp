@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "LoadInterface.h"
 
 CLoadInterface::CLoadInterface(std::ifstream* ifs)

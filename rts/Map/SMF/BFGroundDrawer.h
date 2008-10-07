@@ -36,11 +36,15 @@ protected:
 	const int bigSquareSize;
 	const int numBigTexX;
 	const int numBigTexY;
+	const int maxIdx;
+
+	int mapWidth;
+	int bigTexH;
+
+	int neededLod;
 
 	float* heightData;
 	const int heightDataX;
-
-	CVertexArray* va;
 
 	struct fline {
 		float base;
@@ -55,23 +59,31 @@ protected:
 	unsigned int groundFPShadow;
 	bool waterDrawn;
 
-	volatile unsigned int mt_overrideVP;
+#ifdef USE_GML
+	int multiThreadDrawGround;
+	int multiThreadDrawGroundShadow;
 
-	void DoDrawGroundRow(int bty, unsigned int overrideVP);
+	volatile unsigned int mt_overrideVP;
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
+	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
+#endif
+
+	GLuint waterPlaneCamOutDispList;
+	GLuint waterPlaneCamInDispList;
+
+protected:
+	void CreateWaterPlanes(const bool &camOufOfMap);
+	inline void DrawWaterPlane(bool);
+
+	void FindRange(int &xs, int &xe, std::vector<fline> &left, std::vector<fline> &right, int y, int lod);
+	void DoDrawGroundRow(int bty, unsigned int overrideVP);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
 	void EndStripQ(CVertexArray *ma);
 	void DrawGroundVertexArrayQ(CVertexArray * &ma);
 	void DoDrawGroundShadowLOD(int nlod);
-	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 
-	inline void DrawVertexA(int x, int y);
-	inline void DrawVertexA(int x, int y, float height);
-	inline void EndStrip();
-	inline void DrawWaterPlane(bool);
 	inline bool BigTexSquareRowVisible(int);
-	inline void DrawGroundVertexArray();
 	void SetupTextureUnits(bool drawReflection, unsigned int overrideVP);
 	void ResetTextureUnits(bool drawReflection, unsigned int overrideVP);
 
@@ -80,3 +92,4 @@ protected:
 };
 
 #endif // __BF_GROUND_DRAWER_H__
+

@@ -3,6 +3,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "mmgr.h"
+
 #include "LuaUnitRendering.h"
 #include "LuaMaterial.h"
 
@@ -23,6 +25,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "LogOutput.h"
+#include "System/Util.h"
 
 
 using std::min;
@@ -443,9 +446,29 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 				mat.useCamera = lua_toboolean(L, -1);
 			}
 		}
+		else if (key == "culling") {
+			if (lua_isnumber(L, -1)) {
+				mat.culling = (GLenum)lua_tonumber(L, -1);
+			}
+		}
 		else if (key == "cameraloc") {
 			if (lua_isnumber(L, -1)) {
 				mat.cameraLoc = (GLint)lua_tonumber(L, -1);
+			}
+		}
+		else if (key == "cameraposloc") {
+			if (lua_isnumber(L, -1)) {
+				mat.cameraPosLoc = (GLint)lua_tonumber(L, -1);
+			}
+		}
+		else if (key == "shadowloc") {
+			if (lua_isnumber(L, -1)) {
+				mat.shadowLoc = (GLint)lua_tonumber(L, -1);
+			}
+		}
+		else if (key == "shadowparamsloc") {
+			if (lua_isnumber(L, -1)) {
+				mat.shadowParamsLoc = (GLint)lua_tonumber(L, -1);
 			}
 		}
 	}

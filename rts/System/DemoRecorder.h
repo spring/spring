@@ -23,9 +23,10 @@ public:
 	@brief assign a map name for the demo file
 	When this function is called, we can rename our demo file so that
 	map name / game time are visible. The demo file will be renamed by the
-	destructor. Otherwise the name unnamed.sdf will be used.
+	destructor. Otherwise the name "DATE_TIME_unnamed_VERSION.sdf" will be used.
 	*/
 	void SetName(const std::string& mapname);
+	const std::string& GetName() { return wantedName; };
 
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
@@ -37,7 +38,7 @@ public:
 	void SetTeamStats(int teamNum, const std::list< CTeam::Statistics >& stats);
 
 private:
-	void WriteFileHeader();
+	void WriteFileHeader(bool updateStreamLength = true);
 	void WritePlayerStats();
 	void WriteTeamStats();
 

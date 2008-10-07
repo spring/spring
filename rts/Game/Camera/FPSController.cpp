@@ -1,3 +1,6 @@
+#include "StdAfx.h"
+#include "mmgr.h"
+
 #include "FPSController.h"
 
 #include "Platform/ConfigHandler.h"

@@ -51,4 +51,4 @@ set OBJECTS=AbicLoader.o AbicProxy.o AbicAICallback.o SharedLib.o DllLib.o
 dllwrap --driver-name g++ --dllname %ABICDLLNAME% %OBJECTS% --output-def abicdef.def
 
 copy /y GlobalAIInterfaces.dll %SPRINGAPPLICATION%
-copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Skirmish/impls"
+copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Skirmish\impls"

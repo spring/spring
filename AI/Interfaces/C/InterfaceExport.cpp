@@ -127,24 +127,27 @@ CInterface myInterface;
 */
 //#include "<iostream>"
 
-Export(int) getInfos(InfoItem infos[], int max) {
-/*
-	printf("in getProperties here.");
-*/
-	return myInterface.GetInfos(infos, max);
-}
 Export(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
 	return myInterface.GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 }
 
+Export(int) getInfos(InfoItem infos[], unsigned int max) {
+	return myInterface.GetInfos(infos, max);
+}
+
 
 // skirmish AI methods
+/*
 Export(int) getSkirmishAISpecifyers(struct SSAISpecifyer* sAISpecifyers, int max) {
 	return myInterface.GetSkirmishAISpecifyers(sAISpecifyers, max);
 }
 Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifyer* const sAISpecifyer) {
 	return myInterface.LoadSkirmishAILibrary(sAISpecifyer);
+}
+*/
+Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
+	return myInterface.LoadSkirmishAILibrary(infos, numInfos);
 }
 Export(int) unloadSkirmishAILibrary(const struct SSAISpecifyer* const sAISpecifyer) {
 	return myInterface.UnloadSkirmishAILibrary(sAISpecifyer);
@@ -156,11 +159,16 @@ Export(int) unloadAllSkirmishAILibraries() {
 
 
 // group AI methods
+/*
 Export(int) getGroupAISpecifyers(struct SGAISpecifyer* gAISpecifyers, int max) {
 	return myInterface.GetGroupAISpecifyers(gAISpecifyers, max);
 }
 Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifyer* const gAISpecifyer) {
 	return myInterface.LoadGroupAILibrary(gAISpecifyer);
+}
+*/
+Export(const struct SGAILibrary*) loadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
+	return myInterface.LoadGroupAILibrary(infos, numInfos);
 }
 Export(int) unloadGroupAILibrary(const struct SGAISpecifyer* const gAISpecifyer) {
 	return myInterface.UnloadGroupAILibrary(gAISpecifyer);

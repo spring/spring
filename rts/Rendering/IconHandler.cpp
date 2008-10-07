@@ -7,12 +7,14 @@
 #include <cctype>
 #include <vector>
 #include <string>
+#include "mmgr.h"
+
 #include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 using std::string;
 

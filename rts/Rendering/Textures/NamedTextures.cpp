@@ -3,9 +3,13 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
+#include "bitops.h"
 #include "NamedTextures.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/GlobalStuff.h"
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;
@@ -48,7 +52,7 @@ bool CNamedTextures::Bind(const string& texName)
 		}
 	}
 
-	// strip off the qualifiers
+	//! strip off the qualifiers
 	string filename = texName;
 	bool border  = false;
 	bool clamped = false;
@@ -98,7 +102,7 @@ bool CNamedTextures::Bind(const string& texName)
 		}
 	}
 
-	// get the image
+	//! get the image
 	CBitmap bitmap;
 	TexInfo texInfo;
 	if (!bitmap.Load(filename)) {
@@ -117,42 +121,54 @@ bool CNamedTextures::Bind(const string& texName)
 		bitmap.Tint(tintColor);
 	}
 
-	// make the texture
+	//! make the texture
 	GLuint texID;
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
+
 	if (clamped) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
-	if (nearest) {
+
+	if (nearest || linear) {
 		if (border) {
 			GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
 		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		if (GLEW_ARB_texture_non_power_of_two) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-			             bitmap.xsize, bitmap.ysize, border ? 1 : 0,
-			             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+
+		if (nearest) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		} else {
-			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-			                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		}
-	}
-	else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		if (linear) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		}
 
-//		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-//									 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-		                  GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		//! Note: NPOTs + nearest filtering seems broken on ATIs
+		if ( !(count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) &&
+		     (!GLEW_ARB_texture_non_power_of_two || (gu->atiHacks && nearest)) )
+		{
+			bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+		             bitmap.xsize, bitmap.ysize, border ? 1 : 0,
+		             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+	} else {
+		//! MIPMAPPING (default)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		if ((count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) ||
+		    GLEW_ARB_texture_non_power_of_two)
+		{
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+			               GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		} else {
+			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+		      	            GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		}
 	}
 
 	if (aniso && GLEW_EXT_texture_filter_anisotropic) {

@@ -21,9 +21,9 @@ public:
 protected:
 	CSmfReadMap* map;
 
-	int bigSquareSize;
-	int numBigTexX;
-	int numBigTexY;
+	const int bigSquareSize;
+	const int numBigTexX;
+	const int numBigTexY;
 
 	int* textureOffsets;
 
@@ -41,7 +41,7 @@ protected:
 	int tileMapXSize;
 	int tileMapYSize;
 
-	//! use Pixel Buffer Objects for async. uploading (DMA)?
+	//! use Pixel Buffer Objects for async. uploading (DMA)
 	bool usePBO;
 	GLuint pboIDs[10];
 	int currentPBO;

@@ -1,24 +1,23 @@
 !ifdef INSTALL
-  StrCpy $CA "true"
-  SetOutPath "$INSTDIR"
+  ;StrCpy $CA "true"
+  SetOutPath "$INSTDIR\mods"
   
   inetc::get \
-             "http://installer.clan-sy.com/CaDownloader.exe" "$INSTDIR\CaDownloader.exe" \         
+             "http://files.caspring.org/installer/CA_Installer_Version.sdz" "$INSTDIR\mods\CA_Installer_Version.sdz" \         
 
-  Call GetDotNETVersion
-  Pop $0
-  StrCpy $0 $0 "" 1 ; Remove the starting "v" so $0 contains only the version number.
-  ${VersionCompare} $0 "2.0" $1
-  ${If} $0 == "ot found" ; not a typo
-    Call NoDotNet
-  ${ElseIf} $1 == 2
-    Call OldDotNet
-  ${EndIf}
+  ;Call GetDotNETVersion
+  ;Pop $0
+  ;StrCpy $0 $0 "" 1 ; Remove the starting "v" so $0 contains only the version number.
+  ;${VersionCompare} $0 "2.0" $1
+  ;${If} $0 == "ot found" ; not a typo
+    ;Call NoDotNet
+  ;${ElseIf} $1 == 2
+    ;Call OldDotNet
+  ;${EndIf}
   
  
 !else
-  ExecWait  "$INSTDIR\CaDownloader.exe -uninstall"
-  Delete "$INSTDIR\CaDownloader.exe"
+  Delete "$INSTDIR\mods\CA_Installer_Version.sdz"
   Delete "$INSTDIR\base\tatextures_v062.sdz"
   Delete "$INSTDIR\base\tacontent_v2.sdz"
   Delete "$INSTDIR\base\otacontent.sdz"

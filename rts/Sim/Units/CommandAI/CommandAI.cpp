@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CommandAI.h"
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
@@ -6,6 +8,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -27,11 +30,12 @@
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
-#include "mmgr.h"
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
+#include <assert.h>
+#include "System/Util.h"
 
-#define TARGET_LOST_TIMER 120	// in calls to SlowUpdate() (approx. once every second)
+const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)
 
 CR_BIND(CCommandQueue, );
 
@@ -338,7 +342,7 @@ static inline bool isCommandInMap(const Command& c)
 	return true;
 }
 
-bool CCommandAI::AllowedCommand(const Command& c)
+bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 {
 	// check if the command is in the map first
 	switch (c.id) {
@@ -363,19 +367,25 @@ bool CCommandAI::AllowedCommand(const Command& c)
 	}
 
 	const UnitDef* ud = owner->unitDef;
-	int maxHeightDiff = 200;
+	int maxHeightDiff = SQUARE_SIZE;
+	// AI's may do as they like
+	bool aiOrder = (gs->Team(owner->team) && gs->Team(owner->team)->isAI);
+
+	if (fromSynced)
+		maxHeightDiff = 200;
 
 	switch (c.id) {
-		case CMD_ATTACK:
-			maxHeightDiff = 10;
-		case CMD_DGUN: {
+		case CMD_DGUN:
+			if (!owner->unitDef->canDGun)
+				return false;
+		case CMD_ATTACK: {
 			if (!isAttackCapable())
 				return false;
 
 			if (c.params.size() == 3) {
 				// check if attack ground is really attack ground
-				if (fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) >
-					maxHeightDiff) {
+				if (!aiOrder &&
+					fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > maxHeightDiff) {
 					return false;
 				}
 			}
@@ -458,17 +468,17 @@ void CCommandAI::GiveCommand(const Command& c, bool fromSynced)
 		return;
 	}
 	eventHandler.UnitCommand(owner, c);
-	this->GiveCommandReal(c); // send to the sub-classes
+	this->GiveCommandReal(c, fromSynced); // send to the sub-classes
 }
 
 
-void CCommandAI::GiveCommandReal(const Command& c)
+void CCommandAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	if (!AllowedCommand(c)) {
+	if (!AllowedCommand(c, fromSynced)) {
 		return;
 	}
 
-	GiveAllowedCommand(c);
+	GiveAllowedCommand(c, fromSynced);
 }
 
 
@@ -551,7 +561,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 }
 
 
-void CCommandAI::GiveAllowedCommand(const Command& c)
+void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 {
 	if (ExecuteStateCommand(c)) {
 		return;
@@ -594,7 +604,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c)
 			return;
 		}
 		case CMD_INSERT: {
-			ExecuteInsert(c);
+			ExecuteInsert(c, fromSynced);
 			return;
 		}
 		case CMD_REMOVE: {
@@ -738,7 +748,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 }
 
 
-void CCommandAI::ExecuteInsert(const Command& c)
+void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 {
 	if (c.params.size() < 3) {
 		return;
@@ -753,7 +763,7 @@ void CCommandAI::ExecuteInsert(const Command& c)
 	}
 
 	// validate the command
-	if (!AllowedCommand(newCmd)) {
+	if (!AllowedCommand(newCmd, fromSynced)) {
 		return;
 	}
 
@@ -1336,7 +1346,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 void CCommandAI::FinishCommand(void)
 {
 	const Command& cmd = commandQue.front();
-	const int cmdID  = cmd.id;  // save 
+	const int cmdID  = cmd.id;  // save
 	const int cmdTag = cmd.tag; // save
 	const bool dontrepeat = (cmd.options & DONT_REPEAT) ||
 	                        (cmd.options & INTERNAL_ORDER);
@@ -1525,5 +1535,5 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 bool CCommandAI::CanChangeFireState(){
 	return owner->unitDef->canFireControl &&
 		(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" ||
-				owner->unitDef->canKamikaze); 
+				owner->unitDef->canKamikaze);
 }

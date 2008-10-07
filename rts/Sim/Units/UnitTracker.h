@@ -2,7 +2,7 @@
 #define UNITTRACKER_H
 
 #include <set>
-#include "float.h"
+#include "float3.h"
 
 class CUnit;
 

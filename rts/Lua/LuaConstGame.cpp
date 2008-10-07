@@ -2,6 +2,7 @@
 // LuaConstGame.cpp: implementation of the LuaConstGame class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include "LuaConstGame.h"
 
@@ -22,6 +23,7 @@
 #include "Sim/Units/UnitDef.h" // MAX_UNITS
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/
@@ -126,8 +128,23 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "modDesc",         modInfo.description);
 
 	LuaPushNamedBool(L,   "allowTeamColors", modInfo.allowTeamColors);
-	LuaPushNamedNumber(L, "multiReclaim",    modInfo.multiReclaim);
-	LuaPushNamedNumber(L, "reclaimMethod",   modInfo.reclaimMethod);
+
+	LuaPushNamedBool(L,   "constructionDecay",      modInfo.constructionDecay);
+	LuaPushNamedNumber(L, "constructionDecayTime",  modInfo.constructionDecayTime);
+	LuaPushNamedNumber(L, "constructionDecaySpeed", modInfo.constructionDecaySpeed);
+
+	LuaPushNamedNumber(L, "multiReclaim",                   modInfo.multiReclaim);
+	LuaPushNamedNumber(L, "reclaimMethod",                  modInfo.reclaimMethod);
+	LuaPushNamedNumber(L, "reclaimUnitMethod",              modInfo.reclaimUnitMethod);
+	LuaPushNamedNumber(L, "reclaimUnitEnergyCostFactor",    modInfo.reclaimUnitEnergyCostFactor);
+	LuaPushNamedNumber(L, "reclaimUnitEfficiency",          modInfo.reclaimUnitEfficiency);
+	LuaPushNamedNumber(L, "reclaimFeatureEnergyCostFactor", modInfo.reclaimFeatureEnergyCostFactor);
+	LuaPushNamedBool(L,   "reclaimAllowEnemies",            modInfo.reclaimAllowEnemies);
+	LuaPushNamedBool(L,   "reclaimAllowAllies",             modInfo.reclaimAllowAllies);
+	LuaPushNamedNumber(L, "repairEnergyCostFactor",         modInfo.repairEnergyCostFactor);
+	LuaPushNamedNumber(L, "resurrectEnergyCostFactor",      modInfo.resurrectEnergyCostFactor);
+	LuaPushNamedNumber(L, "captureEnergyCostFactor",        modInfo.captureEnergyCostFactor);
+
 	LuaPushNamedNumber(L, "transportAir",    modInfo.transportAir);
 	LuaPushNamedNumber(L, "transportShip",   modInfo.transportShip);
 	LuaPushNamedNumber(L, "transportHover",  modInfo.transportHover);

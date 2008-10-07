@@ -6,7 +6,6 @@
 
 #include "aibase.h"
 #include "Sim/Units/CommandAI/Command.h"
-//#include "Interface/SGAI.h"
 
 class IGroupAICallback;
 class IAICallback;

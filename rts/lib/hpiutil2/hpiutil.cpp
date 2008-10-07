@@ -22,6 +22,8 @@
 
 #include "hpiutil.h"
 
+#include <string.h>
+
 #ifdef _MSC_VER
 #define STRCASECMP stricmp
 #else

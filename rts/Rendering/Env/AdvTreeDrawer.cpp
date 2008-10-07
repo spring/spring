@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "AdvTreeDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -17,7 +18,6 @@
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -39,6 +39,10 @@ static const float TEX_LEAF_END_X2=0.125f;
 static const float TEX_LEAF_START_X3=0.0f;
 static const float TEX_LEAF_END_X3=0.125f;
 
+static const float PART_MAX_TREE_HEIGHT=MAX_TREE_HEIGHT*0.4f;
+static const float HALF_MAX_TREE_HEIGHT=MAX_TREE_HEIGHT*0.5f;
+static const float DOUBLE_MAX_TREE_HEIGHT=MAX_TREE_HEIGHT*2.0f;
+
 CAdvTreeDrawer::CAdvTreeDrawer()
 {
 	oldTreeDistance=4;
@@ -48,28 +52,25 @@ CAdvTreeDrawer::CAdvTreeDrawer()
 	lastListClean=0;
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;
-	trees=SAFE_NEW TreeSquareStruct[treesX*treesY];
+	nTrees=treesX*treesY;
+	trees=SAFE_NEW TreeSquareStruct[nTrees];
 
-	for(int y=0;y<treesY;y++){
-		for(int x=0;x<treesX;x++){
-			trees[y*treesX+x].lastSeen=0;
-			trees[y*treesX+x].lastSeenFar=0;
-			trees[y*treesX+x].viewVector=UpVector;
-			trees[y*treesX+x].displist=0;
-			trees[y*treesX+x].farDisplist=0;
-		}
+	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
+		pTSS->lastSeen=0;
+		pTSS->lastSeenFar=0;
+		pTSS->viewVector=UpVector;
+		pTSS->displist=0;
+		pTSS->farDisplist=0;
 	}
 }
 
 CAdvTreeDrawer::~CAdvTreeDrawer()
 {
-	for(int y=0;y<treesY;y++){
-		for(int x=0;x<treesX;x++){
-			if(trees[y*treesX+x].displist)
-				glDeleteLists(trees[y*treesX+x].displist,1);
-			if(trees[y*treesX+x].farDisplist)
-				glDeleteLists(trees[y*treesX+x].farDisplist,1);
-		}
+	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
+		if(pTSS->displist)
+			glDeleteLists(pTSS->displist,1);
+		if(pTSS->farDisplist)
+			glDeleteLists(pTSS->farDisplist,1);
 	}
 	delete[] trees;
 	delete treeGen;
@@ -93,9 +94,80 @@ void CAdvTreeDrawer::Update()
 
 static CVertexArray *va;
 
-static void inline SetArray(float t1,float t2,float3 v)
+static void inline SetArrayQ(float t1,float t2,float3 v)
 {
-	va->AddVertexT(v,t1,t2);
+	va->AddVertexQT(v,t1,t2);
+}
+
+inline void DrawTreeVertexA(float3 &ftpos, float dx, float dy) {
+	SetArrayQ(TEX_LEAF_START_X1+dx,TEX_LEAF_START_Y1+dy,ftpos);
+	ftpos.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X1+dx,TEX_LEAF_END_Y1+dy,ftpos);
+	ftpos.x-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X1+dx,TEX_LEAF_END_Y1+dy,ftpos);
+	ftpos.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X1+dx,TEX_LEAF_START_Y1+dy,ftpos);
+	ftpos.x+=HALF_MAX_TREE_HEIGHT;
+	ftpos.z+=HALF_MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X2+dx,TEX_LEAF_START_Y2+dy,ftpos);
+	ftpos.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X2+dx,TEX_LEAF_END_Y2+dy,ftpos);
+	ftpos.z-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X2+dx,TEX_LEAF_END_Y2+dy,ftpos);
+	ftpos.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X2+dx,TEX_LEAF_START_Y2+dy,ftpos);
+	//width*=1.41f;
+	ftpos.x+=HALF_MAX_TREE_HEIGHT;
+	ftpos.y+=PART_MAX_TREE_HEIGHT;
+}
+
+inline void DrawTreeVertex(float3 pos, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
+	float3 ftpos=pos;
+	ftpos.x+=HALF_MAX_TREE_HEIGHT;
+	DrawTreeVertexA(ftpos, dx, dy);
+	ftpos.z+=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
+	ftpos.z-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X3+dx,TEX_LEAF_END_Y3+dy,ftpos);
+	ftpos.x-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_END_Y3+dy,ftpos);
+	ftpos.z+=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
+}
+
+inline void DrawTreeVertexMid(const float3 pos, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(12,0,VA_SIZE_T);
+	float3 ftpos=pos;
+	ftpos.x+=HALF_MAX_TREE_HEIGHT;
+	DrawTreeVertexA(ftpos, dx, dy);
+	ftpos.z+=HALF_MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
+	ftpos.x-=HALF_MAX_TREE_HEIGHT;
+	ftpos.z-=HALF_MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X3+dx,TEX_LEAF_END_Y3+dy,ftpos);
+	ftpos.x-=HALF_MAX_TREE_HEIGHT;
+	ftpos.z+=HALF_MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_END_Y3+dy,ftpos);
+	ftpos.x+=HALF_MAX_TREE_HEIGHT;
+	ftpos.z+=HALF_MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X3+dx,TEX_LEAF_START_Y3+dy,ftpos);
+}
+
+inline void DrawTreeVertexFar(float3 pos, float3 swd, float dx, float dy, bool enlarge=true) {
+	if(enlarge)
+		va->EnlargeArrays(4,0,VA_SIZE_T);
+	float3 base=pos+swd;
+	SetArrayQ(TEX_LEAF_START_X1+dx,TEX_LEAF_START_Y4+dy,base);
+	base.y+=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_START_X1+dx,TEX_LEAF_END_Y4+dy,base);
+	base-=swd;
+	base-=swd;
+	SetArrayQ(TEX_LEAF_END_X1+dx,TEX_LEAF_END_Y4+dy,base);
+	base.y-=MAX_TREE_HEIGHT;
+	SetArrayQ(TEX_LEAF_END_X1+dx,TEX_LEAF_START_Y4+dy,base);
 }
 
 struct CAdvTreeSquareDrawer : CReadMap::IQuadDrawer
@@ -114,7 +186,7 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 {
 	int treesX = td->treesX;
 	CAdvTreeDrawer::TreeSquareStruct* tss=&td->trees[y*treesX+x];
-	if(abs(cy-y)<=2 && abs(cx-x)<=2)	//skip the closest squares
+	if(abs(cy-y)<=2 && abs(cx-x)<=2 && drawDetailed)	//skip the closest squares
 		return;
 
 	float3 dif;
@@ -129,6 +201,7 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector=dif;
 			if(!tss->farDisplist)
 				tss->farDisplist=glGenLists(1);
@@ -138,25 +211,10 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
-				float3 base(ts->pos);
-				int type=ts->type;
-
-				float height=MAX_TREE_HEIGHT;
-				float width=MAX_TREE_HEIGHT*0.5f;
-
-				float xdif;
-				float ydif;
-				if(ts->type<8){
-					xdif=type*0.125f;
-					ydif=0.5f;
-				} else {
-					xdif=(type-8)*0.125f;
-					ydif=0;
-				}
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y4+ydif,base+side*width);
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y4+ydif  ,base+side*width+float3(0,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_END_Y4+ydif  ,base-side*width+float3(0,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_START_Y4+ydif,base-side*width);
+				if(ts->type<8)
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f, false);
+				else
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -180,39 +238,17 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 		if(!tss->displist){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
+
 			tss->displist=glGenLists(1);
 
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
-				float3 pos(ts->pos);
-				int type=ts->type;
 
-				float height=MAX_TREE_HEIGHT;
-				float width=MAX_TREE_HEIGHT*0.5f;
-				float xdif;
-				float ydif;
-				if(ts->type<8){
-					xdif=type*0.125f;
-					ydif=0.5f;
-				} else {
-					xdif=(type-8)*0.125f;
-					ydif=0;
-				}
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+ydif,pos+float3(width,0,0));
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+ydif,pos+float3(width,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+ydif,pos+float3(-width,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+ydif,pos+float3(-width,0,0));
-
-				SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+ydif,pos+float3(0,0,width));
-				SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+ydif,pos+float3(0,height,width));
-				SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+ydif,pos+float3(0,height,-width));
-				SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+ydif,pos+float3(0,0,-width));
-
-				//width*=1.41f;
-				SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+ydif,pos+float3(width,height*0.4f,0));
-				SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+ydif,pos+float3(0,height*0.4f,-width));
-				SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+ydif,pos+float3(-width,height*0.4f,0));
-				SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+ydif,pos+float3(0,height*0.4f,width));
+				if(ts->type<8)
+					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f, false);
+				else
+					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -303,6 +339,11 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer);
 
 	if(drawDetailed){
+		int xstart=std::max(0,cx-2);
+		int xend=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
+		int ystart=std::max(0,cy-2);
+		int yend=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
+
 		if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeVP );
 
@@ -335,12 +376,12 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 			int type;
 		};
 		static FadeTree fadeTrees[3000];
-		int curFade=0;
+		FadeTree *pFT=fadeTrees;
 
-		for(int y=std::max(0,cy-2);y<=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);++y){	//close trees
-			for(int x=std::max(0,cx-2);x<=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);++x){
-				TreeSquareStruct* tss=&trees[y*treesX+x];
+		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
+			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
 				tss->lastSeen=gs->frameNum;
+				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 					TreeStruct* ts=&ti->second;
 					float3 pos(ts->pos);
@@ -366,29 +407,13 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
 							glCallList(displist);
 							glAlphaFunc(GL_GREATER,0.5f);
-							fadeTrees[curFade].pos=pos;
-							fadeTrees[curFade].deltaY=dy;
-							fadeTrees[curFade].type=type;
-							fadeTrees[curFade++].relDist=relDist;
+							pFT->pos=pos;
+							pFT->deltaY=dy;
+							pFT->type=type;
+							pFT->relDist=relDist;
+							++pFT;
 						} else {																//draw undetailed tree
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.5f;
-							float xdif=type*0.125f;
-							SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+dy,pos+float3(width,0,0));
-							SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+dy,pos+float3(width,height,0));
-							SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+dy,pos+float3(-width,height,0));
-							SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+dy,pos+float3(-width,0,0));
-
-							SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+dy,pos+float3(0,0,width));
-							SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+dy,pos+float3(0,height,width));
-							SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+dy,pos+float3(0,height,-width));
-							SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+dy,pos+float3(0,0,-width));
-
-							//width*=1.41f;
-							SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+dy,pos+float3(width,height*0.4f,width));
-							SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+dy,pos+float3(width,height*0.4f,-width));
-							SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+dy,pos+float3(-width,height*0.4f,-width));
-							SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+dy,pos+float3(-width,height*0.4f,width));
+							DrawTreeVertex(pos, type*0.125f, dy, false);
 						}
 					}
 				}
@@ -398,7 +423,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-		for(std::list<FallingTree>::iterator fti=fallingTrees.begin();fti!=fallingTrees.end();){
+		for(std::list<FallingTree>::iterator fti=fallingTrees.begin(); fti!=fallingTrees.end(); ++fti){
 			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
 			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
 				float ang=fti->fallPos*PI;
@@ -423,7 +448,6 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 				glPopMatrix();
 			}
-			++fti;
 		}
 
 		glDisable( GL_VERTEX_PROGRAM_ARB );
@@ -440,32 +464,14 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		}
 		va->DrawArrayT(GL_QUADS);
 
-		for(int a=0;a<curFade;++a){	//faded close trees
+		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-			int type=fadeTrees[a].type;
-			float dy=fadeTrees[a].deltaY;
+			va->CheckInitSize(12*VA_SIZE_T);
 
-			float height=MAX_TREE_HEIGHT;
-			float width=MAX_TREE_HEIGHT*0.5f;
-			float xdif=type*0.125f;
-			SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+dy,fadeTrees[a].pos+float3(width,0,0));
-			SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+dy,fadeTrees[a].pos+float3(width,height,0));
-			SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+dy,fadeTrees[a].pos+float3(-width,height,0));
-			SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+dy,fadeTrees[a].pos+float3(-width,0,0));
+			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
-			SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+dy,fadeTrees[a].pos+float3(0,0,width));
-			SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+dy,fadeTrees[a].pos+float3(0,height,width));
-			SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+dy,fadeTrees[a].pos+float3(0,height,-width));
-			SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+dy,fadeTrees[a].pos+float3(0,0,-width));
-
-			//width*=1.41f;
-			SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+dy,fadeTrees[a].pos+float3(width,height*0.4f,width));
-			SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+dy,fadeTrees[a].pos+float3(width,height*0.4f,-width));
-			SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+dy,fadeTrees[a].pos+float3(-width,height*0.4f,-width));
-			SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+dy,fadeTrees[a].pos+float3(-width,height*0.4f,width));
-
-			glAlphaFunc(GL_GREATER,1-fadeTrees[a].relDist*0.5f);
+			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
 			va->DrawArrayT(GL_QUADS);
 		}
 	}
@@ -484,40 +490,40 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	glDisable(GL_ALPHA_TEST);
 
 	//clean out squares from memory that are no longer visible
-	int startClean=lastListClean*20%(treesX*treesY);
+	int startClean=lastListClean*20%(nTrees);
 	lastListClean=gs->frameNum;
-	int endClean=gs->frameNum*20%(treesX*treesY);
+	int endClean=gs->frameNum*20%(nTrees);
 
 	if(startClean>endClean){
-		for(int a=startClean;a<treesX*treesY;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees+startClean; pTSS<trees+nTrees; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
-		for(int a=0;a<endClean;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees; pTSS<trees+endClean; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
 	} else {
-		for(int a=startClean;a<endClean;a++){
-			if(trees[a].lastSeen<gs->frameNum-50 && trees[a].displist){
-				glDeleteLists(trees[a].displist,1);
-				trees[a].displist=0;
+		for(TreeSquareStruct *pTSS=trees+startClean; pTSS<trees+endClean; ++pTSS) {
+			if(pTSS->lastSeen<gs->frameNum-50 && pTSS->displist){
+				glDeleteLists(pTSS->displist,1);
+				pTSS->displist=0;
 			}
-			if(trees[a].lastSeenFar<gs->frameNum-50 && trees[a].farDisplist){
-				glDeleteLists(trees[a].farDisplist,1);
-				trees[a].farDisplist=0;
+			if(pTSS->lastSeenFar<gs->frameNum-50 && pTSS->farDisplist){
+				glDeleteLists(pTSS->farDisplist,1);
+				pTSS->farDisplist=0;
 			}
 		}
 	}
@@ -552,6 +558,7 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector=dif;
 			if(!tss->farDisplist)
 				tss->farDisplist=glGenLists(1);
@@ -561,27 +568,12 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
 
-				float3 base(ts->pos);
-				int type=ts->type;
-
-				float height=MAX_TREE_HEIGHT;
-				float width=MAX_TREE_HEIGHT*0.5f;
-
-				float xdif;
-				float ydif;
-				if(ts->type<8){
-					xdif=type*0.125f;
-					ydif=0.5f;
-				} else {
-					xdif=(type-8)*0.125f;
-					ydif=0;
-				}
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y4+ydif,base+side*width);
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y4+ydif  ,base+side*width+float3(0,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_END_Y4+ydif  ,base-side*width+float3(0,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif  ,TEX_LEAF_START_Y4+ydif,base-side*width);
+				if(ts->type<8)
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, ts->type*0.125f, 0.5f, false);
+				else
+					DrawTreeVertexFar(ts->pos, side*HALF_MAX_TREE_HEIGHT, (ts->type-8)*0.125f, 0, false);
 			}
-			glNewList(td->trees[y*treesX+x].farDisplist,GL_COMPILE);
+			glNewList(tss->farDisplist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
 			glEndList();
 		}
@@ -601,40 +593,16 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 		if(!tss->displist){
 			va=GetVertexArray();
 			va->Initialize();
+			va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->displist=glGenLists(1);
 
 			for(std::map<int,CAdvTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 				CAdvTreeDrawer::TreeStruct* ts=&ti->second;
-				float3 pos(ts->pos);
-				int type=ts->type;
 
-				float height=MAX_TREE_HEIGHT;
-				float width=MAX_TREE_HEIGHT*0.5f;
-				float xdif;
-				float ydif;
-				if(ts->type<8){
-					xdif=type*0.125f;
-					ydif=0.5f;
-
-				} else {
-					xdif=(type-8)*0.125f;
-					ydif=0;
-				}
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+ydif,pos+float3(width,0,0));
-				SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+ydif,pos+float3(width,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+ydif,pos+float3(-width,height,0));
-				SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+ydif,pos+float3(-width,0,0));
-
-				SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+ydif,pos+float3(0,0,width));
-				SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+ydif,pos+float3(0,height,width));
-				SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+ydif,pos+float3(0,height,-width));
-				SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+ydif,pos+float3(0,0,-width));
-
-				//width*=1.41f;
-				SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+ydif,pos+float3(width,height*0.4f,0));
-				SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+ydif,pos+float3(0,height*0.4f,-width));
-				SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+ydif,pos+float3(-width,height*0.4f,0));
-				SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+ydif,pos+float3(0,height*0.4f,width));
+				if(ts->type<8)
+					DrawTreeVertexMid(ts->pos, ts->type*0.125f, 0.5f, false);
+				else
+					DrawTreeVertexMid(ts->pos, (ts->type-8)*0.125f, 0, false);
 			}
 			glNewList(tss->displist,GL_COMPILE);
 			va->DrawArrayT(GL_QUADS);
@@ -667,6 +635,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	CAdvTreeSquareDrawer_SP drawer;
 	int cx = drawer.cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy = drawer.cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
+
 	drawer.drawDetailed = drawDetailed;
 	drawer.td = this;
 	drawer.treeDistance = treeDistance;
@@ -675,6 +644,11 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer, 1);
 
 	if(drawDetailed){
+		int xstart=std::max(0,cx-2);
+		int xend=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
+		int ystart=std::max(0,cy-2);
+		int yend=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
+
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeShadowVP );
@@ -696,12 +670,12 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 			int type;
 		};
 		static FadeTree fadeTrees[3000];
-		int curFade=0;
+		FadeTree *pFT=fadeTrees;
 
-		for(int y=std::max(0,cy-2);y<=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);++y){	//close trees
-			for(int x=std::max(0,cx-2);x<=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);++x){
-				TreeSquareStruct* tss=&trees[y*treesX+x];
+		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
+			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
 				tss->lastSeen=gs->frameNum;
+				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
 				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
 					TreeStruct* ts=&ti->second;
 					float3 pos(ts->pos);
@@ -727,29 +701,13 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
 							glCallList(displist);
 							glAlphaFunc(GL_GREATER,0.5f);
-							fadeTrees[curFade].pos=pos;
-							fadeTrees[curFade].deltaY=dy;
-							fadeTrees[curFade].type=type;
-							fadeTrees[curFade++].relDist=relDist;
+							pFT->pos=pos;
+							pFT->deltaY=dy;
+							pFT->type=type;
+							pFT->relDist=relDist;
+							++pFT;
 						} else {																//draw undetailed tree
-							float height=MAX_TREE_HEIGHT;
-							float width=MAX_TREE_HEIGHT*0.5f;
-							float xdif=type*0.125f;
-							SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+dy,pos+float3(width,0,0));
-							SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+dy,pos+float3(width,height,0));
-							SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+dy,pos+float3(-width,height,0));
-							SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+dy,pos+float3(-width,0,0));
-
-							SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+dy,pos+float3(0,0,width));
-							SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+dy,pos+float3(0,height,width));
-							SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+dy,pos+float3(0,height,-width));
-							SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+dy,pos+float3(0,0,-width));
-
-							//width*=1.41f;
-							SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+dy,pos+float3(width,height*0.4f,width));
-							SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+dy,pos+float3(width,height*0.4f,-width));
-							SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+dy,pos+float3(-width,height*0.4f,-width));
-							SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+dy,pos+float3(-width,height*0.4f,width));
+							DrawTreeVertex(pos, type*0.125f, dy, false);
 						}
 					}
 				}
@@ -757,7 +715,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		}
 		//draw trees that have been marked as falling
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
-		for(std::list<FallingTree>::iterator fti=fallingTrees.begin();fti!=fallingTrees.end();){
+		for(std::list<FallingTree>::iterator fti=fallingTrees.begin(); fti!=fallingTrees.end(); ++fti){
 			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
 			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
 				float ang=fti->fallPos*PI;
@@ -782,38 +740,19 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 
 				glPopMatrix();
 			}
-			++fti;
 		}
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarShadowVP );
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		va->DrawArrayT(GL_QUADS);
 
-		for(int a=0;a<curFade;++a){	//faded close trees
+		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
 			va=GetVertexArray();
 			va->Initialize();
-			int type=fadeTrees[a].type;
-			float dy=fadeTrees[a].deltaY;
+			va->CheckInitSize(12*VA_SIZE_T);
 
-			float height=MAX_TREE_HEIGHT;
-			float width=MAX_TREE_HEIGHT*0.5f;
-			float xdif=type*0.125f;
-			SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_START_Y1+dy,fadeTrees[a].pos+float3(width,0,0));
-			SetArray(TEX_LEAF_START_X1+xdif,TEX_LEAF_END_Y1+dy,fadeTrees[a].pos+float3(width,height,0));
-			SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_END_Y1+dy,fadeTrees[a].pos+float3(-width,height,0));
-			SetArray(TEX_LEAF_END_X1+xdif,TEX_LEAF_START_Y1+dy,fadeTrees[a].pos+float3(-width,0,0));
+			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
 
-			SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_START_Y2+dy,fadeTrees[a].pos+float3(0,0,width));
-			SetArray(TEX_LEAF_START_X2+xdif,TEX_LEAF_END_Y2+dy,fadeTrees[a].pos+float3(0,height,width));
-			SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_END_Y2+dy,fadeTrees[a].pos+float3(0,height,-width));
-			SetArray(TEX_LEAF_END_X2+xdif,TEX_LEAF_START_Y2+dy,fadeTrees[a].pos+float3(0,0,-width));
-
-			//width*=1.41f;
-			SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_START_Y3+dy,fadeTrees[a].pos+float3(width,height*0.4f,width));
-			SetArray(TEX_LEAF_START_X3+xdif,TEX_LEAF_END_Y3+dy,fadeTrees[a].pos+float3(width,height*0.4f,-width));
-			SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_END_Y3+dy,fadeTrees[a].pos+float3(-width,height*0.4f,-width));
-			SetArray(TEX_LEAF_END_X3+xdif,TEX_LEAF_START_Y3+dy,fadeTrees[a].pos+float3(-width,height*0.4f,width));
-
-			glAlphaFunc(GL_GREATER,1-fadeTrees[a].relDist*0.5f);
+			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
 			va->DrawArrayT(GL_QUADS);
 		}
 	}
@@ -832,14 +771,14 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	int x=(int)pos.x/TREE_SQUARE_SIZE/SQUARE_SIZE;
 	int y=(int)pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE;
-	int a=y*treesX+x;
-	if(trees[a].displist){
-		glDeleteLists(trees[a].displist,1);
-		trees[a].displist=0;
+	TreeSquareStruct* pTSS=trees+y*treesX+x;
+	if(pTSS->displist){
+		glDeleteLists(pTSS->displist,1);
+		pTSS->displist=0;
 	}
-	if(trees[a].farDisplist){
-		glDeleteLists(trees[a].farDisplist,1);
-		trees[a].farDisplist=0;
+	if(pTSS->farDisplist){
+		glDeleteLists(pTSS->farDisplist,1);
+		pTSS->farDisplist=0;
 	}
 	grassDrawer->ResetPos(pos);
 }

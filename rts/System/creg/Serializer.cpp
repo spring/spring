@@ -15,6 +15,8 @@ Classes for serialization of registrated class instances
 #include <string.h>
 //#include "LogOutput.h"
 
+#include "Exceptions.h"
+
 using namespace std;
 using namespace creg;
 

@@ -1,8 +1,6 @@
-
-#include "AICheats.h"
-
 #include "StdAfx.h"
 #include <vector>
+#include "AICheats.h"
 #include "SkirmishAIWrapper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

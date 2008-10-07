@@ -1,4 +1,8 @@
 #include "StdAfx.h"
+#include "SDL_mouse.h"
+#include "SDL_keyboard.h"
+#include "mmgr.h"
+
 #include "InMapDraw.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
@@ -17,8 +21,6 @@
 #include "System/LogOutput.h"
 #include "System/Sound.h"
 #include "creg/STL_List.h"
-#include "SDL_mouse.h"
-#include "SDL_keyboard.h"
 
 
 #define DRAW_QUAD_SIZE 32
@@ -89,15 +91,29 @@ CInMapDraw::CInMapDraw(void)
 			tex[y][x][3] = 0;
 		}
 	}
+
+	#define SMOOTHSTEP(x,y,a) (unsigned char)(x * (1.0f - a) + y * a)
+
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
 			float dist = sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
-			if (dist > 31.875f) {
+			if (dist > 31.0f) {
 				// do nothing - leave transparent
-			} else if (dist > 24.5f) {
+			} else if (dist > 30.0f) {
+				// interpolate (outline -> nothing)
+				float a = (dist - 30.0f);
+				tex[y][x][3] = SMOOTHSTEP(255,0,a);
+			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
+			} else if (dist > 23.0f) {
+				// interpolate (inner -> outline)
+				float a = (dist - 23.0f);
+				tex[y][x][0] = SMOOTHSTEP(255,0,a);
+				tex[y][x][1] = SMOOTHSTEP(255,0,a);
+				tex[y][x][2] = SMOOTHSTEP(255,0,a);
+				tex[y][x][3] = SMOOTHSTEP(200,255,a);
 			} else {
 				tex[y][x][0] = 255;
 				tex[y][x][1] = 255;
@@ -108,16 +124,29 @@ CInMapDraw::CInMapDraw(void)
 	}
 	for (int y = 0; y < 64; y++) {
 		// linear falloff
-		for (int x = 0; x < 64; x++) {
+		for (int x = 64; x < 128; x++) {
 			float dist = abs(y - 32);
-			if (dist > 24.5f) {
+			if (dist > 31.0f) {
+				// do nothing - leave transparent
+			} else if (dist > 30.0f) {
+				// interpolate (outline -> nothing)
+				float a = (dist - 30.0f);
+				tex[y][x][3] = SMOOTHSTEP(255,0,a);
+			} else if (dist > 24.0f) {
 				// black outline
-				tex[y][x + 64][3] = 255;
+				tex[y][x][3] = 255;
+			} else if (dist > 23.0f) {
+				// interpolate (inner -> outline)
+				float a = (dist - 23.0f);
+				tex[y][x][0] = SMOOTHSTEP(255,0,a);
+				tex[y][x][1] = SMOOTHSTEP(255,0,a);
+				tex[y][x][2] = SMOOTHSTEP(255,0,a);
+				tex[y][x][3] = SMOOTHSTEP(200,255,a);
 			} else {
-				tex[y][x + 64][0] = 255;
-				tex[y][x + 64][1] = 255;
-				tex[y][x + 64][2] = 255;
-				tex[y][x + 64][3] = 200;
+				tex[y][x][0] = 255;
+				tex[y][x][1] = 255;
+				tex[y][x][2] = 255;
+				tex[y][x][3] = 200;
 			}
 		}
 	}
@@ -126,6 +155,8 @@ CInMapDraw::CInMapDraw(void)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
 	blippSound=sound->GetWaveId("sounds/beep6.wav");
@@ -204,6 +235,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	int drawQuadsX = imd->drawQuadsX;
 	CInMapDraw::DrawQuad* dq = &imd->drawQuads[y * drawQuadsX + x];
 
+	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
 	// draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
 		const int allyteam = pi->senderAllyTeam;
@@ -231,20 +263,20 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			float3 pos2 = pos1;
 			pos2.y += 100;
 
-			va->AddVertexTC(pos1 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexTC(pos1 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
-			va->AddVertexTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
+			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
+			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
+			va->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
+			va->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
 
-			va->AddVertexTC(pos1 - dir1 * size,               0.75f, 0, col);
-			va->AddVertexTC(pos1 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexTC(pos2 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexTC(pos2 - dir1 * size,               0.75f, 0, col);
+			va->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
+			va->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
+			va->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
+			va->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
 
-			va->AddVertexTC(pos2 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexTC(pos2 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
-			va->AddVertexTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
+			va->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
+			va->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
+			va->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
+			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
 
 			if (pi->label.size() > 0) {
 				glPushMatrix();
@@ -253,11 +285,11 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 				glColor4ub(pi->color[0], pi->color[1], pi->color[2], 250);
 				font->glWorldPrint(pi->label.c_str());
 				glPopMatrix();
-				glBindTexture(GL_TEXTURE_2D, texture);
 			}
 		}
 	}
 
+	va->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
 	// draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		const int allyteam = li->senderAllyTeam;
@@ -266,8 +298,8 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
 
 		if (maySee) {
-			lineva->AddVertexC(li->pos - (li->pos - camera->pos).Normalize() * 26, li->color);
-			lineva->AddVertexC(li->pos2 - (li->pos2 - camera->pos).Normalize() * 26, li->color);
+			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
+			lineva->AddVertexQC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
 		}
 	}
 }
@@ -284,10 +316,9 @@ void CInMapDraw::Draw(void)
 	CVertexArray* lineva = GetVertexArray();
 	lineva->Initialize();
 
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-	glBindTexture(GL_TEXTURE_2D, texture);
 
 	InMapDraw_QuadDrawer drawer;
 	drawer.imd = this;
@@ -302,7 +333,9 @@ void CInMapDraw::Draw(void)
 	lineva->DrawArrayC(GL_LINES);
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture);
 	va->DrawArrayTC(GL_QUADS);
+
 	glDepthMask(1);
 }
 
@@ -444,7 +477,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 		// if we happen to be in drawAll mode, notify us now
 		// even if this message is not intented for our ears
 		logOutput.Print("%s added point: %s",
-		                sender->playerName.c_str(), point.label.c_str());
+		                sender->name.c_str(), point.label.c_str());
 		logOutput.SetLastMsgPos(pos);
 		sound->PlaySample(blippSound);
 		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);

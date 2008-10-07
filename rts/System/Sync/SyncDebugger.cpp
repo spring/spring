@@ -4,13 +4,18 @@
 
 #ifdef SYNCDEBUG
 
+#include <boost/format.hpp>
+
 #include "LogOutput.h"
 #include "System/GlobalStuff.h"
-#include "System/Net.h"
+#include "System/BaseNetProtocol.h"
+#include "System/NetProtocol.h"
 #include "SyncDebugger.h"
+#include "SyncChecker.h"
+#include "SyncTracer.h"
 #include "Logger.h"
 
-
+#include <map>
 #ifndef WIN32
 /* for backtrace() function */
 # include <execinfo.h>
@@ -87,6 +92,7 @@ CSyncDebugger::~CSyncDebugger()
  * Initialize the sync debugger. Pass true for a server (this requires approx.
  * 144 megabytes on 32 bit systems and 240 megabytes on 64 bit systems) and
  * false for a client (requires only 16 megabytes extra).
+ * FIXME update this comment to reflect new values
  */
 void CSyncDebugger::Initialize(bool useBacktrace)
 {
@@ -121,6 +127,8 @@ void CSyncDebugger::Initialize(bool useBacktrace)
 
 	// init logger
 	logger.SetFilename(useBacktrace ? LOGFILE_SERVER : LOGFILE_CLIENT);
+	logger.AddLine("Syncdebugger initialised");
+	logger.FlushBuffer();
 }
 
 
@@ -140,8 +148,8 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 
 #ifdef HAVE_BACKTRACE
 	if (historybt) {
-		// dirty hack to skip the uppermost 2 or 4 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
-		const int frameskip = (12 + sizeof(void*)) / sizeof(void*);
+		// dirty hack to skip the uppermost 2 or 3 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
+		const int frameskip = (8 + sizeof(void*)) / sizeof(void*);
 		historybt[historyIndex].bt_size = backtrace(historybt[historyIndex].bt - frameskip, MAX_STACK + frameskip) - frameskip;
 		historybt[historyIndex].op = op;
 		historybt[historyIndex].frameNum = gs->frameNum;
@@ -149,12 +157,31 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
+	// if data fits and has even size, it's probably a POD type, store it verbatim
+	// TODO: transfer offending blocks from clients to the server
+	if (size == 1) {
+		h->data = *(unsigned char*)p;
+	} else if (size == sizeof(short)) {
+		h->data = *(unsigned short*)p;
+	} else if (size >= sizeof(unsigned)) {
+		h->data = *(unsigned *)p;
+	} else {
+		h->data = -1;
+	}
+
+	// xor is dangerous in that every bit is independent of any other, this is bad
+#ifdef SD_USE_SIMPLE_CHECKSUM
 	unsigned i = 0;
 	h->chk = 0;
 	for (; i < (size & ~3); i += 4)
 		h->chk ^= *(unsigned*) ((unsigned char*) p + i);
 	for (; i < size; ++i)
 		h->chk ^= *((unsigned char*) p + i);
+#else
+	// 33*flop + gs->frameNum is enough to prevent zero slurping
+	// using CSyncChecker::g_checksum here will cause cascade false positives
+	h->chk = CSyncChecker::HsiehHash((char*)p, size, 33*flop + gs->frameNum);
+#endif
 
 	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
 		historyIndex = 0; // wrap around
@@ -174,7 +201,14 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 		for (unsigned i = 0; i < historybt[index].bt_size; ++i) {
 			// the "{%p}" part is resolved to "functionname [filename:lineno]"
 			// by the CLogger class.
+#ifndef _WIN32
 			logger.AddLine("%s#%u {%p}", prefix, i, historybt[index].bt[i]);
+#else
+			if (sizeof(void*) == 8)
+				logger.AddLine("%s#%u {%llx}", prefix, i, (uint64_t)historybt[index].bt[i]);
+			else
+				logger.AddLine("%s#%u {%x}", prefix, i, (uint32_t)historybt[index].bt[i]);
+#endif
 		}
 	}
 }
@@ -187,11 +221,15 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
  */
 unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 {
+#ifdef SD_USE_SIMPLE_CHECKSUM
 	unsigned checksum = 0;
 	const unsigned* p = (const unsigned*) historybt[index].bt;
 	for (unsigned i = 0; i < (sizeof(void*)/sizeof(unsigned)) * historybt[index].bt_size; ++i, ++p)
 		checksum = 33 * checksum + *p;
 	return checksum;
+#else
+	return CSyncChecker::HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
+#endif
 }
 
 
@@ -201,39 +239,41 @@ unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
  * Plugin for the CGameServer network code in GameServer.cpp.
  * @return the number of bytes read from the network stream
  */
-int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
+bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 {
-	int length = 0;
+	bool syncDebugPacket = false;
 	switch (inbuf[0]) {
 		case NETMSG_SD_CHKRESPONSE:
 			if (*(short*)&inbuf[1] != HISTORY_SIZE * sizeof(unsigned) + 12) {
 				logger.AddLine("Server: received checksum response of %d instead of %d bytes", *(short*)&inbuf[1], HISTORY_SIZE * 4 + 12);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activeTeams || player < 0) {
+				if(player >= gs->activePlayers || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in checksum response", player);
 				} else {
+					logger.AddLine("Server: got checksum response from %d", player);
 					const unsigned* begin = (unsigned*)&inbuf[12];
 					const unsigned* end = begin + HISTORY_SIZE;
 					checksumResponses[player].resize(HISTORY_SIZE);
 					std::copy(begin, end, checksumResponses[player].begin());
 					remoteFlop[player] = *(Uint64*)&inbuf[4];
+					assert(!checksumResponses[player].empty());
 					int i = 0;
-					while (i < gs->activeTeams && !checksumResponses[i].empty()) ++i;
-					if (i == gs->activeTeams) {
+					while (i < gs->activePlayers && !checksumResponses[i].empty()) ++i;
+					if (i == gs->activePlayers) {
 						ServerQueueBlockRequests();
 						logger.AddLine("Server: checksum responses received; %d block requests queued", pendingBlocksToRequest.size());
 					}
 				}
 			}
-			length = *(short*)&inbuf[1];
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_BLKRESPONSE:
 			if (*(short*)&inbuf[1] != BLOCK_SIZE * sizeof(unsigned) + 4) {
 				logger.AddLine("Server: received block response of %d instead of %d bytes", *(short*)&inbuf[1], BLOCK_SIZE * 4 + 4);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activeTeams || player < 0) {
+				if(player >= gs->activePlayers || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in block response", player);
 				} else {
 					const unsigned* begin = (unsigned*)&inbuf[4];
@@ -243,21 +283,21 @@ int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					std::copy(begin, end, remoteHistory[player].begin() + size);
 					int i = 0;
 					size += BLOCK_SIZE;
-					while (i < gs->activeTeams && size == remoteHistory[i].size()) ++i;
-					if (i == gs->activeTeams) {
+					while (i < gs->activePlayers && size == remoteHistory[i].size()) ++i;
+					if (i == gs->activePlayers) {
 						logger.AddLine("Server: block responses received");
 						ServerReceivedBlockResponses();
 					}
 				}
 			}
-			length = *(short*)&inbuf[1];
+			syncDebugPacket = true;
 			break;
 		default:
-			logger.AddLine("Server: invalid msg");
-			length = 0;
+			logger.AddLine("Server: unknown packet");
 			break;
 	}
-	return length;
+	logger.FlushBuffer();
+	return syncDebugPacket;
 }
 
 
@@ -267,9 +307,9 @@ int CSyncDebugger::ServerReceived(const unsigned char* inbuf)
  * Plugin for the CGame network code in Game.cpp.
  * @return the number of bytes read from the network stream
  */
-int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
+bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 {
-	int length = 0;
+	bool syncDebugPacket = false;
 	switch (inbuf[0]) {
 		case NETMSG_SD_CHKREQUEST:
 			if (gs->frameNum != *(int*)&inbuf[1]) {
@@ -280,7 +320,7 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				ClientSendChecksumResponse();
 				logger.AddLine("Client: checksum response sent");
 			}
-			length = 5;
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_BLKREQUEST:
 			if (*(unsigned short*)&inbuf[1] >= HISTORY_SIZE) {
@@ -291,7 +331,7 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				// simple progress indication
 				logOutput.Print("[SD] Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
 			}
-			length = 7;
+			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_RESET:
 			logger.CloseSession();
@@ -302,29 +342,23 @@ int CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				logOutput.Print("[SD] Client: Automatical quit enforced from commandline");
 				globalQuit = true;
 			}
-			length = 1;
-			break;
-		default:
-			logOutput.Print("[SD] Client: invalid msg");
-			length = 0;
+			syncDebugPacket = true;
 			break;
 	}
-	return length;
+	logger.FlushBuffer();
+	return syncDebugPacket;
 }
 
 
 /**
  * @brief first step after desync
  *
- * Called by server to trigger sync error handling.
- * It pauses the game and sends a checksum request to all clients.
+ * Does nothing
  */
 void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
-		serverNet->SendPause(gu->myPlayerNum, true);
-		serverNet->SendData< int >(NETMSG_SD_CHKREQUEST, serverframenum);
 	}
 }
 
@@ -338,15 +372,24 @@ void CSyncDebugger::ClientSendChecksumResponse()
 {
 	std::vector<unsigned> checksums;
 	for (unsigned i = 0; i < HISTORY_SIZE; ++i) {
+#ifdef SD_USE_SIMPLE_CHECKSUM
 		unsigned checksum = 0;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt)
 				checksum = 33 * checksum + historybt[BLOCK_SIZE * i + j].chk;
 			else  checksum = 33 * checksum + history[BLOCK_SIZE * i + j].chk;
 		}
+#else
+		unsigned checksum = 123456789;
+		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
+			if (historybt)
+				checksum = CSyncChecker::HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
+			else  checksum = CSyncChecker::HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
+		}
+#endif
 		checksums.push_back(checksum);
 	}
-	net->SendSTLData< unsigned char, Uint64, std::vector<unsigned> >(NETMSG_SD_CHKRESPONSE, gu->myPlayerNum, flop, checksums);
+	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
 }
 
 
@@ -361,8 +404,9 @@ void CSyncDebugger::ClientSendChecksumResponse()
  */
 void CSyncDebugger::ServerQueueBlockRequests()
 {
+	logger.AddLine("Server: queuing block requests");
 	Uint64 correctFlop = 0;
-	for (int j = 0; j < gs->activeTeams; ++j) {
+	for (int j = 0; j < gs->activePlayers; ++j) {
 		if (correctFlop) {
 			if (remoteFlop[j] != correctFlop)
 				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", remoteFlop[j], correctFlop, j);
@@ -370,11 +414,11 @@ void CSyncDebugger::ServerQueueBlockRequests()
 			correctFlop = remoteFlop[j];
 		}
 	}
-	unsigned i = ((unsigned)(correctFlop % (HISTORY_SIZE * BLOCK_SIZE)) / BLOCK_SIZE) + 1, c = 0;
-	for (; c < HISTORY_SIZE; ++i, ++c) {
+	unsigned i = ((unsigned)(correctFlop % (HISTORY_SIZE * BLOCK_SIZE)) / BLOCK_SIZE) + 1;
+	for (unsigned c = 0; c < HISTORY_SIZE; ++i, ++c) {
 		unsigned correctChecksum = 0;
 		if (i == HISTORY_SIZE) i = 0;
-		for (int j = 0; j < gs->activeTeams; ++j) {
+		for (int j = 0; j < gs->activePlayers; ++j) {
 			if (correctChecksum && checksumResponses[j][i] != correctChecksum) {
 				pendingBlocksToRequest.push_back(i);
 				break;
@@ -389,7 +433,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 // 		serverNet->SendData<unsigned> (NETMSG_SD_BLKREQUEST, ii);
 	} else {
 		logger.AddLine("Server: huh, all blocks equal?!?");
-		serverNet->SendData(NETMSG_SD_RESET);
+		net->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
 	for (int j = 0; j < MAX_PLAYERS; ++j)
@@ -407,7 +451,7 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 {
 	if (!pendingBlocksToRequest.empty() && !waitingForBlockResponse) {
 		// last two shorts are for progress indication
-		serverNet->SendData<unsigned short, unsigned short, unsigned short> (NETMSG_SD_BLKREQUEST, pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size());
+		net->Send(CBaseNetProtocol::Get().SendSdBlockrequest(pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size()));
 		waitingForBlockResponse = true;
 	}
 }
@@ -421,12 +465,23 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 void CSyncDebugger::ClientSendBlockResponse(int block)
 {
 	std::vector<unsigned> checksums;
+#ifdef TRACE_SYNC
+	tracefile << "Sending block response for block " << block << "\n";
+#endif
 	for (unsigned i = 0; i < BLOCK_SIZE; ++i) {
 		if (historybt)
 			checksums.push_back(historybt[BLOCK_SIZE * block + i].chk);
 		else  checksums.push_back(history[BLOCK_SIZE * block + i].chk);
+#ifdef TRACE_SYNC
+		if (historybt)
+			tracefile << historybt[BLOCK_SIZE * block + i].chk << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
+		else  tracefile << history[BLOCK_SIZE * block + i].chk << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+#endif
 	}
-	net->SendSTLData< unsigned char, std::vector<unsigned> >(NETMSG_SD_BLKRESPONSE, gu->myPlayerNum, checksums);
+#ifdef TRACE_SYNC
+	tracefile << "done\n";
+#endif
+	net->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
 }
 
 
@@ -481,7 +536,7 @@ void CSyncDebugger::ServerDumpStack()
 		unsigned correctChecksum = 0;
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
-		for (int j = 0; j < gs->activeTeams; ++j) {
+		for (int j = 0; j < gs->activePlayers; ++j) {
 			if (correctChecksum && remoteHistory[j][i] != correctChecksum) {
 				if (historybt) {
 					virtualBlockNr = i / BLOCK_SIZE;
@@ -494,9 +549,9 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e, frame %06u, backtrace %u in \"%s\"", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum, historybt[histPos].frameNum, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", remoteHistory[j][i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
-					logger.AddLine("Server: chk %08X, %15.8e instead of %08X, %15.8e", remoteHistory[j][i], *(float*)&remoteHistory[j][i], correctChecksum, *(float*)&correctChecksum);
+					logger.AddLine("Server: chk %08X instead of %08X", remoteHistory[j][i], correctChecksum);
 				}
 				err = true;
 			} else {
@@ -512,6 +567,7 @@ void CSyncDebugger::ServerDumpStack()
 	else
 		// This is impossible (internal error).
 		// Server first finds there are differing blocks, then all checksums equal??
+		// Turns out this can happen if the checksum function is weak.
 		logger.AddLine("Server: huh, all checksums equal?!? (INTERNAL ERROR)");
 
 	//cleanup
@@ -527,36 +583,11 @@ void CSyncDebugger::ServerDumpStack()
 	}
 
 	// and reset
-	serverNet->SendData(NETMSG_SD_RESET);
+	net->Send(CBaseNetProtocol::Get().SendSdReset());
 	logger.AddLine("Server: Done!");
 	logger.CloseSession();
 	logOutput.Print("[SD] Server: Done!");
 }
-
-
-/**
- * @brief helper network plugin function
- *
- * @return the size of the sync debugger related net message in inbuf
- * at index 0 (if any), zero otherwise.
- */
-int CSyncDebugger::GetMessageLength(const unsigned char* inbuf) const
-{
-	switch (inbuf[0]) {
-		case NETMSG_SD_CHKREQUEST:
-			return 5;
-		case NETMSG_SD_BLKREQUEST:
-			return 7;
-		case NETMSG_SD_CHKRESPONSE:
-		case NETMSG_SD_BLKRESPONSE:
-			return *(short*)&inbuf[1];
-		case NETMSG_SD_RESET:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
 
 /**
  * @brief re-enable the history

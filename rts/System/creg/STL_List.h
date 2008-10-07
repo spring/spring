@@ -1,6 +1,9 @@
 #ifndef CR_LIST_TYPE_IMPL_H
 #define CR_LIST_TYPE_IMPL_H
+
 #include <list>
+
+#include "creg.h"
 
 namespace creg {
 
@@ -8,8 +11,8 @@ namespace creg {
 	template<typename T>
 	struct ListType : public IType
 	{
-		ListType (IType *t) { elemType = t; }
-		~ListType () { delete elemType; }
+		ListType (boost::shared_ptr<IType> t):elemType(t) {}
+		~ListType () {}
 
 		void Serialize (ISerializer *s, void *inst) {
 			T& ct = *(T*)inst;
@@ -28,16 +31,16 @@ namespace creg {
 		}
 		std::string GetName() { return "list<" + elemType->GetName() + ">"; }
 
-		IType *elemType;
+		boost::shared_ptr<IType> elemType;
 	};
 
 
 	// List type
 	template<typename T>
 	struct DeduceType < std::list <T> > {
-		IType* Get () { 
+		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return SAFE_NEW ListType < std::list<T> > (elemtype.Get());
+			return boost::shared_ptr<IType>(SAFE_NEW ListType < std::list<T> > (elemtype.Get()));
 		}
 	};
 };

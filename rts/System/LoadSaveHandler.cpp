@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 #include <fstream>
+#include "mmgr.h"
+
 #include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/GroupHandler.h"
 #include "LoadSaveHandler.h"
@@ -27,7 +29,7 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Game/GameServer.h"
 #include "Rendering/InMapDraw.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 extern std::string stupidGlobalMapname;
 

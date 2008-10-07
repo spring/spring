@@ -3,9 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "KeyBindings.h"
-#include <stdio.h>
+#include <cstdio>
 #include <cctype>
+#include <cstring>
+
+#include "mmgr.h"
+
+#include "KeyBindings.h"
 #include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
@@ -16,6 +20,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CKeyBindings* keyBindings = NULL;
@@ -242,7 +247,7 @@ CKeyBindings::CKeyBindings()
 	statefulCommands.insert("movedown");
 	statefulCommands.insert("moveslow");
 	statefulCommands.insert("movefast");
-	
+
 	RegisterAction("bind");
 	RegisterAction("unbind");
 	RegisterAction("unbindall");

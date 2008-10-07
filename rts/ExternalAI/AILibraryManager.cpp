@@ -24,7 +24,7 @@
 #include "SkirmishAILibraryInfo.h"
 
 #include <boost/filesystem.hpp>
-#include "StdAfx.h"
+#include "Util.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
@@ -477,7 +477,13 @@ std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const std::string& 
 }
 
 const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey) {
-	return FetchInterface(skirmishAIKey.interface)->FetchSkirmishAILibrary(skirmishAIKey.ai);
+	
+	//return FetchInterface(skirmishAIKey.interface)->FetchSkirmishAILibrary(skirmishAIKey.ai);
+	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
+	if (aiInfo == skirmishAIInfos.end()) {
+		return NULL;
+	}
+	return FetchInterface(skirmishAIKey.interface)->FetchSkirmishAILibrary(aiInfo->second);
 }
 
 void CAILibraryManager::ReleaseSkirmishAILibrary(const SSAIKey& skirmishAIKey) {
@@ -540,7 +546,13 @@ std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& gro
 }
 
 const IGroupAILibrary* CAILibraryManager::FetchGroupAILibrary(const SGAIKey& groupAIKey) {
-	return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(groupAIKey.ai);
+	
+	//return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(groupAIKey.ai);
+	T_groupAIInfos::const_iterator aiInfo = groupAIInfos.find(groupAIKey);
+	if (aiInfo == groupAIInfos.end()) {
+		return NULL;
+	}
+	return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(aiInfo->second);
 }
 
 void CAILibraryManager::ReleaseGroupAILibrary(const SGAIKey& groupAIKey) {

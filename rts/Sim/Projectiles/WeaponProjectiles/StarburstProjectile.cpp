@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
@@ -15,7 +17,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "StarburstProjectile.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
 
 static const float Smoke_Time=70;
 
@@ -265,7 +266,8 @@ void CStarburstProjectile::Draw(void)
 	unsigned char col[4];
 	unsigned char col2[4];
 
-	if (weaponDef->visuals.smokeTrail)
+	if (weaponDef->visuals.smokeTrail) {
+		va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 		if(drawTrail){		//draw the trail as a single quad
 
 			float3 dif(interPos-camera->pos);
@@ -300,16 +302,16 @@ void CStarburstProjectile::Draw(void)
 			float size2=(1+age2*(1/Smoke_Time)*7);
 
 			float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0f);//(1-age2/8.0f);
-			va->AddVertexTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
-			va->AddVertexTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
-			va->AddVertexTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
+			va->AddVertexQTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
+			va->AddVertexQTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
+			va->AddVertexQTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {	//draw the trail as particles
 			float dist=pos.distance(oldSmoke);
 			float3 dirpos1=pos-dir*dist*0.33f;
 			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
-			for(int a=0;a<numParts;++a){
+			for(int a=0;a<numParts;++a){ //! CAUTION: loop count must match EnlargeArrays above
 				//float a1=1-float(a)/Smoke_Time;
 				col[0]=(unsigned char) (color*255);
 				col[1]=(unsigned char) (color*255);
@@ -318,13 +320,13 @@ void CStarburstProjectile::Draw(void)
 				float size=(1+(a)*(1/Smoke_Time)*7);
 
 				float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);
-				va->AddVertexTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-				va->AddVertexTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
+				va->AddVertexQTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 			}
-
 		}
+	}
 	DrawCallback();
 	if(curCallback==0)
 		DrawCallback();

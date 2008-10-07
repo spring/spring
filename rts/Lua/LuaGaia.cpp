@@ -3,9 +3,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaGaia.h"
 #include <set>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaGaia.h"
 
 #include "LuaInclude.h"
 
@@ -24,6 +27,7 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Util.h"
 
 
 CLuaGaia* luaGaia = NULL;

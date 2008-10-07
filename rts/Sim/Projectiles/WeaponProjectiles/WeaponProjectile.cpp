@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sound.h"
@@ -17,7 +19,10 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "System/LogOutput.h"
-#include "mmgr.h"
+#ifdef TRACE_SYNC
+	#include "Sync/SyncTracer.h"
+#endif
+
 
 #include "Sim/Weapons/WeaponDefHandler.h"
 
@@ -111,29 +116,6 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 CWeaponProjectile::~CWeaponProjectile(void)
 {
-}
-
-CWeaponProjectile *CWeaponProjectile::CreateWeaponProjectile(const float3& pos,
-		const float3& speed, CUnit* owner, CUnit *target,
-		const float3 &targetPos, const WeaponDef* weaponDef)
-{
-	switch(weaponDef->visuals.renderType)
-	{
-	case WEAPON_RENDERTYPE_LASER:
-		return SAFE_NEW CLaserProjectile(pos, speed, owner, 30,
-				weaponDef->visuals.color, weaponDef->visuals.color2,
-				weaponDef->intensity, weaponDef,
-				(int)(weaponDef->range/weaponDef->projectilespeed));
-		break;
-	case WEAPON_RENDERTYPE_PLASMA:
-		break;
-	case WEAPON_RENDERTYPE_FIREBALL:
-		return SAFE_NEW CFireBallProjectile(pos,speed,owner,target,targetPos,weaponDef);
-		break;
-	}
-
-	//gniarf!
-	return NULL;
 }
 
 void CWeaponProjectile::Collision()
@@ -305,10 +287,8 @@ void CWeaponProjectile::UpdateGroundBounce()
 
 bool CWeaponProjectile::TraveledRange()
 {
-	float trange = (pos-startpos).Length();
-	if(trange>weaponDef->range)
-		return true;
-	return false;
+	float trangeSq = (pos - startpos).SqLength();
+	return (trangeSq > (weaponDef->range * weaponDef->range));
 }
 
 

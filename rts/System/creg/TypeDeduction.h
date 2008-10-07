@@ -1,6 +1,6 @@
 /*
 creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen 
+Copyright 2005 Jelmer Cnossen
 
 Type matching using class templates (only class template support partial specialization)
 */
@@ -8,7 +8,7 @@ Type matching using class templates (only class template support partial special
 // Undefined types return 0
 template<typename T>
 struct DeduceType {
-	IType* Get () { return IType::CreateObjInstanceType(T::StaticClass()); }
+	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
 template<typename T>
@@ -19,7 +19,7 @@ struct IsBasicType {
 // Support for a number of fundamental types
 #define CREG_SUPPORT_BASIC_TYPE(T, typeID)			\
 	template <>	 struct DeduceType <T> {		\
-		IType* Get () { return IType::CreateBasicType (typeID); }	\
+		boost::shared_ptr<IType> Get () { return IType::CreateBasicType (typeID); }	\
 	};																\
 	template <> struct IsBasicType <T> {							\
 		enum {Yes=1, No=0 };										\
@@ -70,41 +70,41 @@ public:
 // Pointer type
 template<typename T>
 struct DeduceType <T *> {
-	IType* Get () { return new ObjectPointerType <T>(); }
+	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(new ObjectPointerType <T>()); }
 };
 
 // Reference type, handled as a pointer
 template<typename T>
 struct DeduceType <T&> {
-	IType* Get () { return new ObjectPointerType <T>(); }
+	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(new ObjectPointerType <T>()); }
 };
 
 // Static array type
 template<typename T, size_t ArraySize>
 struct DeduceType <T[ArraySize]> {
-	IType* Get () { 
+	boost::shared_ptr<IType> Get () {
 		DeduceType<T> subtype;
-		return new StaticArrayType <T, ArraySize> (subtype.Get());
+		return boost::shared_ptr<IType>(new StaticArrayType <T, ArraySize> (subtype.Get()));
 	}
 };
 
 // Vector type (vector<T>)
 template<typename T>
 struct DeduceType < std::vector <T> > {
-	IType* Get () { 
+	boost::shared_ptr<IType> Get () {
 		DeduceType<T> elemtype;
-		return new DynamicArrayType < std::vector<T> > (elemtype.Get());
+		return boost::shared_ptr<IType>(new DynamicArrayType < std::vector<T> > (elemtype.Get()));
 	}
 };
 
 // String type
 template<> struct DeduceType < std::string > {
-	IType* Get () { return IType::CreateStringType (); }
+	boost::shared_ptr<IType> Get () { return IType::CreateStringType (); }
 };
 
 // GetType allows to use parameter type deduction to get the template argument for DeduceType
 template<typename T>
-IType* GetType (T& var) {
+boost::shared_ptr<IType> GetType (T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }

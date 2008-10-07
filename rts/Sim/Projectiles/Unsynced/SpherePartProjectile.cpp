@@ -1,10 +1,12 @@
 #include "StdAfx.h"
 #include <algorithm>
+#include "mmgr.h"
+
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SpherePartProjectile.h"
-#include "mmgr.h"
+#include "System/GlobalStuff.h"
 
 using std::min;
 
@@ -71,6 +73,7 @@ void CSpherePartProjectile::Update(void)
 void CSpherePartProjectile::Draw(void)
 {
 	unsigned char col[4];
+	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
 
 	float interSize=sphereSize+expansionSpeed*gu->timeOffset;
 	for(int y=0;y<4;++y){
@@ -81,16 +84,16 @@ void CSpherePartProjectile::Draw(void)
 			col[1]=(unsigned char) (color.y*255.0f*alpha);
 			col[2]=(unsigned char) (color.z*255.0f*alpha);
 			col[3]=((unsigned char) (40*alpha))+1;
-			va->AddVertexTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
-			va->AddVertexTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
+			va->AddVertexQTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
+			va->AddVertexQTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
 			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+gu->timeOffset)/(float)ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
 
 			col[0]=(unsigned char) (color.x*255.0f*alpha);
 			col[1]=(unsigned char) (color.y*255.0f*alpha);
 			col[2]=(unsigned char) (color.z*255.0f*alpha);
 			col[3]=((unsigned char) (40*alpha))+1;
-			va->AddVertexTC(centerPos+vectors[(y+1)*5+x+1]*interSize,texx,texy,col);
-			va->AddVertexTC(centerPos+vectors[(y+1)*5+x]*interSize,texx,texy,col);
+			va->AddVertexQTC(centerPos+vectors[(y+1)*5+x+1]*interSize,texx,texy,col);
+			va->AddVertexQTC(centerPos+vectors[(y+1)*5+x]*interSize,texx,texy,col);
 		}
 	}
 }

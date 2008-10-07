@@ -1,5 +1,10 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "BuilderCAI.h"
+
+#include <assert.h>
+
 #include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
@@ -30,8 +35,9 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
-#include "mmgr.h"
 #include "creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
@@ -236,7 +242,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	if (obj == NULL) {
 		return false;
 	}
-	
+
 	switch (cmd.id) {
 		case CMD_REPAIR:
 		case CMD_RECLAIM:
@@ -278,7 +284,7 @@ void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 }
 
 
-void CBuilderCAI::GiveCommandReal(const Command& c)
+void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	if (!AllowedCommand(c))
 		return;
@@ -359,7 +365,7 @@ void CBuilderCAI::SlowUpdate()
 	}
 
 	map<int, string>::iterator boi = buildOptions.find(c.id);
-	if (boi != buildOptions.end()) {
+	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitByName(boi->second);
 		const float radius = GetUnitDefRadius(ud, c.id);
 		if (inCommand) {

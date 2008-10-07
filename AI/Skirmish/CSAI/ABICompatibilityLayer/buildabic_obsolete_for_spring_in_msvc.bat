@@ -48,4 +48,4 @@ cl /MD /D BUILDING_ABIC /DAIDLLNAME=%AIDLLNAME% /c AbicProxy.cpp
 link /dll /out:%ABICDLLNAME% %OBJECTS%
 
 copy /y CSAIInterfaces.dll %SPRINGAPPLICATION%
-copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Skirmish/impls"
+copy /y %ABICDLLNAME% "%SPRINGAPPLICATION%\AI\Skirmish\impls"

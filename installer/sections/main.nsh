@@ -32,7 +32,7 @@
 ;New Settings Program
 
   inetc::get \
-  "http://installer.clan-sy.com/springsettings.exe" "$INSTDIR\springsettings.exe" 
+  "http://www.springlobby.info/installer/springsettings.exe" "$INSTDIR\springsettings.exe" 
 
   File "..\external\mingwm10.dll"
   File "..\external\wxbase28u_gcc_custom.dll"
@@ -98,8 +98,8 @@ ${EndIf}
   File "..\game\AI\Helper-libs\ReportIdleAI.dll"
 
 ; TODO: Fix the vc projects to use the same names.
-  SetOutPath "$INSTDIR\AI\Skirmish/impls"
-  File "..\game\AI\Skirmish/impls\TestGlobalAI.dll"
+  SetOutPath "$INSTDIR\AI\Skirmish\impls"
+  File "..\game\AI\Skirmish\impls\TestGlobalAI.dll"
 
 ; Default content
   SetOverWrite on
@@ -160,6 +160,7 @@ ${EndIf}
   Delete "$INSTDIR\wxbase28u_net_gcc_custom.dll"
   Delete "$INSTDIR\wxmsw28u_adv_gcc_custom.dll"
   Delete "$INSTDIR\wxmsw28u_core_gcc_custom.dll"
+  Delete "$INSTDIR\springsettings.conf"
 
   ; DLLs
   Delete "$INSTDIR\DevIL.dll"
@@ -182,8 +183,8 @@ ${EndIf}
   RmDir "$INSTDIR\fonts"
   
   ; AI Bot dlls
-  Delete "$INSTDIR\AI\Skirmish/impls\TestGlobalAI.dll"
-  RmDir "$INSTDIR\AI\Skirmish/impls"
+  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
+  RmDir "$INSTDIR\AI\Skirmish\impls"
 
   ; AI Helper dlls
   Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
@@ -224,6 +225,8 @@ ${EndIf}
   Delete "$INSTDIR\ArchiveCacheV4.txt"
   Delete "$INSTDIR\ArchiveCacheV5.txt"
   Delete "$INSTDIR\ArchiveCacheV6.txt"
+  Delete "$INSTDIR\ArchiveCacheV7.lua"
+  Delete "$INSTDIR\unitsync.log"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
   Delete "$INSTDIR\demos\test.sdf"

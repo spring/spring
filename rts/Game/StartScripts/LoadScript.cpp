@@ -1,6 +1,9 @@
 #include "StdAfx.h"
 #include <iostream>
 #include <vector>
+
+#include "mmgr.h"
+
 #include "LoadScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/GameSetup.h"

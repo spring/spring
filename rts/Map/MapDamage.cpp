@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "MapDamage.h"
 #include "BasicMapDamage.h"
 #include "NoMapDamage.h"

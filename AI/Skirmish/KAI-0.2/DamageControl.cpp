@@ -1,5 +1,7 @@
 #include "DamageControl.h"
 
+#include "System/GlobalStuff.h"
+
 CDamageControl::CDamageControl(AIClasses* ai)
 {
 	this->ai=ai;
@@ -287,8 +289,8 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 					float accuracy = unit->weapons[i].def->accuracy *2.8;
 					if(victim->speed > 0){ // Better not use !=  as floats can have many forms of 0
 						accuracy *= 1-(unit->weapons[i].def->targetMoveError);
-					}					
-					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;	
+					}
+					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize * unit->weapons[i].def->projectilespershot / unit->weapons[i].def->reload;
 					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
 					float tohitprobability;
 					float impactarea;
@@ -303,7 +305,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 						u = 0.00000001;
 					//L("Type: " << unit->weapons[i].def->type);
 					if(unit->weapons[i].def->type == string("Cannon")){ // Do ballistic calculations to account for increased flight time
-						//L("Is ballistic! Gravity: " << gravity);						
+						//L("Is ballistic! Gravity: " << gravity);
 						//L("u = " << u << " distancetravelled*gravity)/(u*u) = " << (distancetravelled*gravity)/(u*u));
 						float sinoid = (distancetravelled*gravity)/(u*u);
 						sinoid = min(sinoid,1.0f);
@@ -319,7 +321,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 					}
 					
 					//L("Name: " << unit->weapons[i].name << " AOE: " << AOE << " Accuracy: " << unit->weapons[i].def->accuracy << " range: " << unit->weapons[i].def->range);
-					if((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly){					
+					if((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly){
 						impactarea = pow((accuracy*distancetravelled)+AOE,2);
 						targetarea = ((victim->xsize * 16) + AOE) * ((victim->ysize * 16) + AOE);
 					}
@@ -335,14 +337,15 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 						tohitprobability = 1;
 					}
 					//L("Guidance: " << unit->weapons[i].def->guided << " Turning: " << unit->weapons[i].def->turnrate);
-					if((!unit->weapons[i].def->guided || unit->weapons[i].def->vlaunch) && (unit->weapons[i].def->projectilespeed > 0 || unit->weapons[i].def->dropped) && victim->speed != 0 && unit->weapons[i].def->beamtime == 1){
+				//FIXME turnrate can be set for weapons that don't support it (only StarburstLauncher and MissileLauncher support it)!
+					if((unit->weapons[i].def->turnrate == 0.0f  ||  unit->weapons[i].def->type == string("StarburstLauncher")) && (unit->weapons[i].def->projectilespeed > 0 || unit->weapons[i].def->dropped) && victim->speed != 0 && unit->weapons[i].def->beamtime == 1){
 						if(unit->weapons[i].def->type == string("Cannon")){
 							timetoarrive = (2*u*sin(firingangle))/gravity;
 						}
 						else{
 							if(!unit->weapons[i].def->dropped){
 								timetoarrive = distancetravelled / (unit->weapons[i].def->projectilespeed * 30);
-								if(unit->weapons[i].def->vlaunch){
+								if(unit->weapons[i].def->type == string("StarburstLauncher")){
 									timetoarrive += unit->weapons[i].def->uptime;
 								}
 							}

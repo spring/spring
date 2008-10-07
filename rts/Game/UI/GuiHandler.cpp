@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "GuiHandler.h"
 #include <map>
 #include <set>
 #include <list>
+
+#include "mmgr.h"
+
+#include "GuiHandler.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 #include "CommandColors.h"
@@ -51,7 +54,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
-#include "mmgr.h"
+#include "System/Util.h"
 
 extern Uint8 *keys;
 
@@ -76,7 +79,8 @@ CGuiHandler::CGuiHandler()
   buildSpacing(0),
   buildFacing(0),
   actionOffset(0),
-  gatherMode(false)
+  gatherMode(false),
+  drawSelectionInfo(true)
 {
 	icons = SAFE_NEW IconInfo[16];
 	iconsSize = 16;
@@ -937,15 +941,15 @@ void CGuiHandler::Update()
 	if (commandsChanged) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
-		fadein = 100;
+		//fadein = 100;
 	}
 	else if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
 
-	if (fadein > 0) {
+	/*if (fadein > 0) {
 		fadein -= 5;
-	}
+	}*/
 }
 
 
@@ -1019,7 +1023,7 @@ void CGuiHandler::SetCursorIcon() const
 	    (mouse->cursorText == "Fight")) {
 		newCursor = "GatherWait";
 	}
-	
+
 	mouse->SetCursor(newCursor);
 }
 
@@ -3106,7 +3110,9 @@ void CGuiHandler::DrawButtons()
 
 	DrawMenuName();
 
-	DrawSelectionInfo();
+	// LuaUI can handle this
+	if (luaUI == NULL || drawSelectionInfo)
+		DrawSelectionInfo();
 
 	DrawNumberInput();
 }

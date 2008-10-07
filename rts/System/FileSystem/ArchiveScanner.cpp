@@ -1,4 +1,4 @@
-#include "ArchiveScanner.h"
+#include "StdAfx.h"
 
 #include <list>
 #include <algorithm>
@@ -6,7 +6,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "StdAfx.h"
+#include "mmgr.h"
+
+#include "ArchiveScanner.h"
+
 #include "Lua/LuaParser.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/ArchiveFactory.h"
@@ -15,7 +18,8 @@
 #include "System/FileSystem/FileFilter.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
-#include "mmgr.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using std::string;
 using std::vector;
@@ -429,7 +433,7 @@ bool CArchiveScanner::ScanModLua(CArchiveBase* ar, const string& fileName,
 	char* buf = SAFE_NEW char[fsize];
 	ar->ReadFile(fh, buf, fsize);
 	ar->CloseFile(fh);
-	
+
 	const string cleanbuf(buf, fsize);
 	delete [] buf;
 	LuaParser p(cleanbuf, SPRING_VFS_MOD);
@@ -461,7 +465,7 @@ bool CArchiveScanner::ScanModTdf(CArchiveBase* ar, const string& fileName,
 	const string luaCode =
 			parse_tdf_code + "\n\n"
 		+ scanutils_code + "\n\n"
-		+ "local tdfModinfo, err = TDFparser.ParseText([[\n" 
+		+ "local tdfModinfo, err = TDFparser.ParseText([[\n"
 		+ cleanbuf + "]])\n\n"
 		+ "if (tdfModinfo == nil) then\n"
 		+ "    error('Error parsing modinfo.tdf: ' .. err)\n"
@@ -557,13 +561,13 @@ unsigned int CArchiveScanner::GetCRC(const string& arcName)
 void CArchiveScanner::ReadCacheData(const string& filename)
 {
   LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
-	
+
 	if (!p.Execute()) {
 		logOutput.Print("ERROR in " + filename + ": " + p.GetErrorLog());
 	}
 	const LuaTable archiveCache = p.GetRoot();
 	const LuaTable archives = archiveCache.SubTable("archives");
-	
+
 	// Do not load old version caches
 	const int ver = archiveCache.GetInt("internalVer", (INTERNAL_VER + 1));
 	if (ver != INTERNAL_VER) {
@@ -651,7 +655,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 
 		fprintf(out, "\t\t{\n");
 		SafeStr(out, "\t\t\tname = ",              arcInfo.origName);
-		SafeStr(out, "\t\t\tpath = ",              arcInfo.path); 
+		SafeStr(out, "\t\t\tpath = ",              arcInfo.path);
 		fprintf(out, "\t\t\tmodified = \"%u\",\n", arcInfo.modified);
 		fprintf(out, "\t\t\tchecksum = \"%u\",\n", arcInfo.checksum);
 		SafeStr(out, "\t\t\treplaced = ",          arcInfo.replaced);
@@ -701,7 +705,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 				}
 				fprintf(out, "\t\t\t\t},\n");
 			}
-			
+
 			const vector<string>& modReps = modData.replaces;
 			const int repCount = (int)modReps.size();
 			if (repCount > 0)  {
@@ -884,7 +888,7 @@ string CArchiveScanner::GetArchivePath(const string& name)
 
 	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
-		return 0;
+		return "";
 	}
 
 	return aii->second.path;

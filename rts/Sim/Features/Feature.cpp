@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Feature.h"
 #include "FeatureHandler.h"
 #include "Game/Team.h"
@@ -22,7 +24,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "mmgr.h"
+#include <assert.h>
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
@@ -33,7 +35,6 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(resurrectProgress),
 				CR_MEMBER(health),
 				CR_MEMBER(reclaimLeft),
-				CR_MEMBER(id),
 				CR_MEMBER(allyteam),
 				CR_MEMBER(team),
 				CR_MEMBER(noSelect),
@@ -70,7 +71,6 @@ CFeature::CFeature():
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0),
 	health(0),
-	id(0),
 	finalHeight(0),
 	reachedFinalPos(false),
 	solidOnTop(0),
@@ -79,7 +79,6 @@ CFeature::CFeature():
 	immobile=true;
 	physicalState = OnGround;
 }
-
 
 CFeature::~CFeature(void)
 {
@@ -112,18 +111,18 @@ void CFeature::PostLoad()
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
-	}
-	else if (def->drawType == DRAWTYPE_TREE){
+	} else if (def->drawType == DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
-	}
-	else {
+	} else {
 		midPos = pos;
 	}
+
 	if (def->drawType == DRAWTYPE_TREE) {
 		treeDrawer->AddTree(def->modelType, pos, 1);
 	}
 }
+
 
 void CFeature::ChangeTeam(int newTeam)
 {

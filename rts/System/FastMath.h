@@ -1,7 +1,7 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
-#include "StdAfx.h"
+#include "lib/streflop/streflop_cond.h"
 
 /**
  * @file FastMath.cpp
@@ -60,7 +60,7 @@ namespace fastmath {
 		x = x * (1.5f - xh * (x * x));
 		x = x * (1.5f - xh * (x * x));
 		return x;
-	
+
 	}
 
 	/**
@@ -159,7 +159,7 @@ namespace fastmath {
 			x = -x - PI;
 		}
 		/* approximation */
-		x = (PIU4) * x + (PISUN4) * x * fabs(x);
+		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
 		x = 0.225 * (x * fabs(x) - x) + x;
 		return x;
 	}
@@ -172,6 +172,11 @@ namespace fastmath {
 	inline float cos(float x) {
 		return sin(x + HALFPI);
 	}
+}
+
+namespace math {
+	using fastmath::isqrt;
+	using fastmath::isqrt2;
 }
 
 #endif

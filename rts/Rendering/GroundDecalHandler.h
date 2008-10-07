@@ -8,6 +8,7 @@
 #include <string>
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 
 class CUnit;
 class CBuilding;
@@ -21,7 +22,7 @@ struct TrackPart {
 	int creationTime;
 };
 
-struct UnitTrackStruct{
+struct UnitTrackStruct {
 	CUnit* owner;
 	int lifeTime;
 	int trackAlpha;
@@ -29,7 +30,11 @@ struct UnitTrackStruct{
 	std::list<TrackPart> parts;
 };
 
-struct BuildingGroundDecal{
+struct BuildingGroundDecal {
+	BuildingGroundDecal(): va(0x0), owner(0x0), gbOwner(0x0), alpha(1.0f) {
+	}
+
+	CVertexArray* va;
 	CBuilding* owner;
 	CUnitDrawer::GhostBuilding* gbOwner;
 	int posx, posy;
@@ -43,7 +48,8 @@ struct BuildingGroundDecal{
 	float AlphaFalloff;
 };
 
-class CGroundDecalHandler :
+
+class CGroundDecalHandler:
 	public CObject
 {
 public:
@@ -81,7 +87,10 @@ public:
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 
 	struct Scar {
-		Scar() { scarQuads = 0; }
+		Scar(): va(0x0) {
+		}
+		~Scar() { delete va; va = 0; }
+
 		float3 pos;
 		float radius;
 		int creationTime;
@@ -91,14 +100,14 @@ public:
 		float texOffsetX;
 		float texOffsetY;
 
-		int x1,x2;
-		int y1,y2;
-		
+		int x1, x2;
+		int y1, y2;
+
 		float basesize;
 		float overdrawn;
 
 		int lastTest;
-		CVertexArray* scarQuads;
+		CVertexArray* va;
 	};
 
 	std::list<Scar*> scars;

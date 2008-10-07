@@ -1,14 +1,17 @@
 #include "StdAfx.h"
+#include <algorithm>
+#include <locale>
+#include <cctype>
+#include "mmgr.h"
+
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
 #include "LogOutput.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
-#include <algorithm>
-#include <locale>
-#include <cctype>
 #include "creg/STL_Map.h"
-#include "mmgr.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 

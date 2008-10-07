@@ -38,7 +38,7 @@
 	NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
 	LuaGaia=1;          // Use LuaGaia?
 	LuaRules=1;         // Use LuaRules?
-	FixedAllies=1;		// Are ingame alliances allowed?
+	FixedAllies=1;      // Are ingame alliances allowed?
 
 	MaxSpeed=3;         // speed limits at game start
 	MinSpeed=0.3;
@@ -49,13 +49,13 @@
 	HostIP=xxx.xxx.xxx.xxx;
 	HostPort=xxx;       // usually 8452
 	SourcePort=0;       // set this if you want a different source port (as client)
-	AutohostPort=X;		// communicate with spring, specify the port you are listening (as host)
+	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerNum=x;      //only variable that should vary between different players
 
-	NumPlayers=x;		// not mandatory, but can be used for debugging purposes
-	NumTeams=y;			// same here, set this to check if the script is right
-	NumAllyTeams=z;		// see above
+	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
+	NumTeams=y;         // same here, set this to check if the script is right
+	NumAllyTeams=z;     // see above
 
 	// a player (player 0 is the host)
 	[PLAYER0]

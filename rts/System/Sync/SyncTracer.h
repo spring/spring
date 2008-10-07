@@ -22,6 +22,7 @@ public:
 
 	CSyncTracer& operator<<(const char* c);
 	CSyncTracer& operator<<(const int i);
+	CSyncTracer& operator<<(const unsigned i);
 	CSyncTracer& operator<<(const float f);
 
 	std::ofstream* file;

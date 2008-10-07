@@ -23,6 +23,9 @@
 #include "ISkirmishAILibrary.h"
 
 #include "Platform/errorhandler.h"
+#include <string>
+#include <vector>
+#include <map>
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifyer& interfaceSpecifyer) {
 	infos = ai.GetInfos();
@@ -68,7 +71,18 @@ LevelOfSupport CSkirmishAILibraryInfo::GetLevelOfSupportForCurrentEngineAndSetIn
 	return levelOfSupport;
 }
 */
+
+SSAISpecifyer CSkirmishAILibraryInfo::GetSpecifier() const {
 	
+	const char* sn = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
+	const char* v = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
+	SSAISpecifyer specifier = {sn, v};
+	return specifier;
+}
+
+std::string CSkirmishAILibraryInfo::GetFileName() const {
+	return GetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME);
+}
 std::string CSkirmishAILibraryInfo::GetShortName() const { // restrictions: none of the following: spaces, '_', '#'
 	return GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 }
@@ -119,6 +133,33 @@ const std::vector<Option>* CSkirmishAILibraryInfo::GetOptions() const {
 }
 
 
+unsigned int CSkirmishAILibraryInfo::GetInfosCReference(InfoItem cInfos[], unsigned int max) const {
+	
+	unsigned int i=0;
+	
+	std::map<std::string, InfoItem>::const_iterator infs;
+	for (infs=infos.begin(); infs != infos.end() && i < max; ++infs) {
+		cInfos[i++] = infs->second;
+    }
+	
+	return i;
+}
+unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[], unsigned int max) const {
+	
+	unsigned int i=0;
+	
+	std::vector<Option>::const_iterator ops;
+	for (ops=options.begin(); ops != options.end() && i < max; ++ops) {
+		cOptions[i++] = *ops;
+    }
+	
+	return i;
+}
+
+
+void CSkirmishAILibraryInfo::SetFileName(const std::string& fileName) {
+	SetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME, fileName);
+}
 void CSkirmishAILibraryInfo::SetShortName(const std::string& shortName) { // restrictions: none of the following: spaces, '_', '#'
 	SetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME, shortName);
 }

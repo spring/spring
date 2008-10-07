@@ -3,8 +3,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <algorithm>
 #include "StdAfx.h"
+#include <algorithm>
+#include "mmgr.h"
+
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
@@ -25,6 +27,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
@@ -35,7 +38,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
-#include "mmgr.h"
+#include "System/Exceptions.h"
 
 
 CProjectileHandler* ph;
@@ -421,7 +424,7 @@ void CProjectileHandler::Update()
 
 			delete p;
 		} else {
-			(*psi)->Update();
+			p->Update();
 			++psi;
 		}
 	}
@@ -480,36 +483,39 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	unitDrawer->SetupForUnitDrawing();
 
 	va->Initialize();
+	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
 	numFlyingPieces += flying3doPieces->size();
 	for(list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
 		CMatrix44f m;
 		m.Rotate((*pi)->rot,(*pi)->rotAxis);
 		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
 		CTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
+		const std::vector<S3DOVertex>& vertices    = (*pi)->object->vertices;
+		const std::vector<int>&        verticesIdx = (*pi)->prim->vertices;
 
-		S3DOVertex* v=&(*pi)->object->vertices[(*pi)->prim->vertices[0]];
+		const S3DOVertex* v=&vertices[verticesIdx[0]];
 		float3 tp=m.Mul(v->pos);
 		float3 tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xstart,tex->ystart,tn);
+		va->AddVertexQTN(tp,tex->xstart,tex->ystart,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[1]];
+		v=&vertices[verticesIdx[1]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xend,tex->ystart,tn);
+		va->AddVertexQTN(tp,tex->xend,tex->ystart,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[2]];
+		v=&vertices[verticesIdx[2]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xend,tex->yend,tn);
+		va->AddVertexQTN(tp,tex->xend,tex->yend,tn);
 
-		v=&(*pi)->object->vertices[(*pi)->prim->vertices[3]];
+		v=&vertices[verticesIdx[3]];
 		tp=m.Mul(v->pos);
 		tn=m.Mul(v->normal);
 		tp+=interPos;
-		va->AddVertexTN(tp,tex->xstart,tex->yend,tn);
+		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
 	}
 	drawnPieces+=va->drawIndex()/32;
 	va->DrawArrayTN(GL_QUADS);
@@ -530,6 +536,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			unitDrawer->SetS3OTeamColour(team);
 
 			va->Initialize();
+			va->EnlargeArrays(fpl->size()*4,0,VA_SIZE_TN);
 
 			numFlyingPieces += fpl->size();
 
@@ -546,7 +553,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					tp=m.Mul(verts[i].pos);
 					tn=m.Mul(verts[i].normal);
 					tp+=interPos;
-					va->AddVertexTN(tp,verts[i].textureX,verts[i].textureY,tn);
+					va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
 				}
 			}
 			drawnPieces+=va->drawIndex()/32;
@@ -617,14 +624,14 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	sort(distlist.begin(), distlist.end(), CompareProjDist);
 
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
 	textureAtlas->BindTexture();
-	glEnable(GL_BLEND);
-	glDepthMask(0);
 	glColor4f(1,1,1,0.2f);
 	glAlphaFunc(GL_GREATER,0.0f);
 	glEnable(GL_ALPHA_TEST);
+	glDepthMask(0);
 //	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glDisable(GL_FOG);
 
@@ -637,8 +644,13 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	}
 	if(CProjectile::inArray)
 		CProjectile::DrawArray();
-	glDisable(GL_TEXTURE_2D);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+	glColor4f(1,1,1,1.0f);
 	glDepthMask(1);
+
 	currentParticles=(int)(ps.size()*0.8f+currentParticles*0.2f);
 	currentParticles+=(int)(0.2f*drawnPieces+0.3f*numFlyingPieces);
 	particleSaturation=(float)currentParticles/(float)maxParticles;
@@ -724,29 +736,35 @@ void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;
 
-	CUnit* tempUnits[MAX_UNITS];
-	CFeature* tempFeatures[MAX_UNITS];
+	static CUnit* tempUnits[MAX_UNITS] = {0x0};
+	static CFeature* tempFeatures[MAX_UNITS] = {0x0};
+	CollisionQuery q;
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* p = (*psi);
+		const float3 ppos = p->pos;
 
 		if (p->checkCol && !p->deleteMe) {
 			float speedf = p->speed.Length();
 
 			CUnit** endUnit = tempUnits;
 			CFeature** endFeature = tempFeatures;
-
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
-
 
 			for (CUnit** ui = tempUnits; ui != endUnit; ++ui) {
 				CUnit* unit = *ui;
+				const bool friendlyShot = (p->owner && (unit->allyteam == p->owner->allyteam));
+				const bool raytraced =
+					(unit->collisionVolume &&
+					unit->collisionVolume->testType == COLVOL_TEST_CONT);
 
 				// if this unit fired this projectile or (this unit is in the
 				// same allyteam as the unit that shot this projectile and we
 				// are ignoring friendly collisions)
-				if (p->owner == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && p->owner && (unit->allyteam == p->owner->allyteam)))
+				if (p->owner == unit || !unit->collisionVolume ||
+					((p->collisionFlags & COLLISION_NOFRIENDLY) && friendlyShot)) {
 					continue;
+				}
 
 				if (p->collisionFlags & COLLISION_NONEUTRAL) {
 					if (unit->IsNeutral()) {
@@ -754,8 +772,17 @@ void CProjectileHandler::CheckUnitCol()
 					}
 				}
 
-				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed)) {
+				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed, &q)) {
+					// this projectile won't reach the raytraced surface impact pos
+					// until Update() is called (right after we return, same frame)
+					// which is a problem when dealing with fast low-AOE projectiles
+					// since they would do almost no damage if detonated outside the
+					// volume, so smuggle a bit ("rolling back" its pos in Update()
+					// and waiting for the next-frame CheckUnitCol() is problematic
+					// for noExplode projectiles)
+					p->pos = (raytraced)? q.p0: p->pos;
 					p->Collision(unit);
+					p->pos = (raytraced)? ppos: p->pos;
 					break;
 				}
 			}
@@ -763,12 +790,19 @@ void CProjectileHandler::CheckUnitCol()
 			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
 				for (CFeature** fi = tempFeatures; fi != endFeature; ++fi) {
 					CFeature* feature = *fi;
-					// geothermals do not have a collision volume, skip
-					if (!feature->blocking || feature->def->geoThermal)
-						continue;
+					const bool raytraced =
+						(feature->collisionVolume &&
+						feature->collisionVolume->testType == COLVOL_TEST_CONT);
 
-					if (CCollisionHandler::DetectHit(feature, p->pos, p->pos + p->speed)) {
+					// geothermals do not have a collision volume, skip them
+					if (!feature->blocking || feature->def->geoThermal || !feature->collisionVolume) {
+						continue;
+					}
+
+					if (CCollisionHandler::DetectHit(feature, p->pos, p->pos + p->speed, &q)) {
+						p->pos = (raytraced)? q.p0: p->pos;
 						p->Collision(feature);
+						p->pos = (raytraced)? ppos: p->pos;
 						break;
 					}
 				}
@@ -801,6 +835,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
+	CGroundFlash::va->EnlargeArrays(8*groundFlashes.size(),0,VA_SIZE_TC);
 
 	vector<CGroundFlash*>::iterator gfi;
 	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
@@ -940,13 +975,14 @@ void CProjectileHandler::UpdatePerlin()
 
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
+		va->CheckInitSize(4*VA_SIZE_TC,0);
 		for(int b=0;b<4;++b)
 			col[b]=int((1-perlinBlend[a])*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2]);
-		va->AddVertexTC(float3(0,0,0),0,0,col);
-		va->AddVertexTC(float3(0,1,0),0,tsize,col);
-		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
-		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->AddVertexQTC(float3(0,0,0),0,0,col);
+		va->AddVertexQTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexQTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexQTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
 
 		if(a==0)
@@ -954,13 +990,14 @@ void CProjectileHandler::UpdatePerlin()
 
 		va=GetVertexArray();
 		va->Initialize();
+		va->CheckInitSize(4*VA_SIZE_TC,0);
 		for(int b=0;b<4;++b)
 			col[b]=int(perlinBlend[a]*16*size);
 		glBindTexture(GL_TEXTURE_2D, perlinTex[a*2+1]);
-		va->AddVertexTC(float3(0,0,0),0,0,col);
-		va->AddVertexTC(float3(0,1,0),0,tsize,col);
-		va->AddVertexTC(float3(1,1,0),tsize,tsize,col);
-		va->AddVertexTC(float3(1,0,0),tsize,0,col);
+		va->AddVertexQTC(float3(0,0,0),0,0,col);
+		va->AddVertexQTC(float3(0,1,0),0,tsize,col);
+		va->AddVertexQTC(float3(1,1,0),tsize,tsize,col);
+		va->AddVertexQTC(float3(1,0,0),tsize,0,col);
 		va->DrawArrayTC(GL_QUADS);
 
 		speed*=0.6f;
@@ -969,6 +1006,7 @@ void CProjectileHandler::UpdatePerlin()
 	perlinFB->deselect();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);

@@ -195,8 +195,7 @@ void CAICallback::verify()
 					&& group->handler != /*skirmishAI->gh*/grouphandlers[skirmishAI->GetTeamId()]
 					/*&& group->handler != grouphandler*/)
 			|| skirmishAI->GetTeamId() != team))) {
-		handleerror (0, "AI has modified spring components(possible cheat)",
-				"Spring is closing:", MBF_OK | MBF_EXCL);
+		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
 		exit (-1);
 	}
 }

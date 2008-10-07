@@ -12,27 +12,20 @@
 #include <set>
 #include <map>
 
+#define GML_ENABLE_DEBUG 0
 
-#define GML_NERROR_FUN(str,val)\
-f=fopen("C:\\GMLERR.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
+#if GML_ENABLE_DEBUG
+#define GML_DEBUG(str,val,type)\
+if(type==GML_ENABLE_DEBUG) {\
+	FILE *f=fopen("C:\\GMLDBG.TXT","a");\
+	if(f) {\
+		fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
+		fclose(f);\
+	}\
 }
-
-#define GML_ERROR_FUN(str,val)\
-FILE *f=fopen("C:\\GMLERR.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
-}
-
-#define GML_DEBUG_FUN(str,val)\
-FILE *f=fopen("C:\\GMLDBG.TXT","a");\
-if(f) {\
-	fprintf(f,"%s line %d: %s %d\n",__FILE__,__LINE__,str,val);\
-	fclose(f);\
-}
+#else
+#define GML_DEBUG(str,val,type)
+#endif
 
 extern std::map<GLenum,GLint> gmlGetIntegervCache;
 extern std::map<GLenum,GLfloat> gmlGetFloatvCache;
@@ -43,10 +36,9 @@ extern std::map<GLenum,std::string> gmlGetStringCache;
 #define GML_DEFAULT_RET(c,r) if(GML_USE_DEFAULT && (c)) {return r;}
 #define GML_DEFAULT_ERROR() if(GML_USE_NO_ERROR) return GL_NO_ERROR;
 
+//teximage, build2dmip
 EXTERN inline int gmlNumArgsTexImage(int datatype) {
-//	FILE *f;
 	switch(datatype) {
-		//teximage, build2dmip
 		case GL_COLOR_INDEX:
 		case GL_RED:
 		case GL_GREEN:
@@ -64,15 +56,14 @@ EXTERN inline int gmlNumArgsTexImage(int datatype) {
 		case GL_BGRA_EXT:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsTexImage", datatype)
+			GML_DEBUG("gmlNumArgsTexImage", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsLightMat(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 // glLight, glMaterial
+EXTERN inline int gmlNumArgsLightMat(int datatype) {
+	switch(datatype) {
 		case GL_AMBIENT:
 		case GL_DIFFUSE:
 		case GL_SPECULAR:
@@ -91,15 +82,14 @@ EXTERN inline int gmlNumArgsLightMat(int datatype) {
 		case GL_QUADRATIC_ATTENUATION:
 			return 1;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsLightMat", datatype)
+			GML_DEBUG("gmlNumArgsLightMat", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsFog(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glFog
+EXTERN inline int gmlNumArgsFog(int datatype) {
+	switch(datatype) {
 		case GL_FOG_MODE:
 		case GL_FOG_DENSITY:
 		case GL_FOG_START:
@@ -109,44 +99,41 @@ EXTERN inline int gmlNumArgsFog(int datatype) {
 		case GL_FOG_COLOR:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsFog", datatype)
+			GML_DEBUG("gmlNumArgsFog", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexGen(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexGen
+EXTERN inline int gmlNumArgsTexGen(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_GEN_MODE:
 			return 1;
 		case GL_OBJECT_PLANE:
 		case GL_EYE_PLANE:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsTexGen", datatype)
+			GML_DEBUG("gmlNumArgsTexGen", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexEnv(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexEnv
+EXTERN inline int gmlNumArgsTexEnv(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_ENV_MODE:
 			return 1;
 		case GL_TEXTURE_ENV_COLOR:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsTexEnv", datatype)
+			GML_DEBUG("gmlNumArgsTexEnv", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsPointParam(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glPointParametefv
+EXTERN inline int gmlNumArgsPointParam(int datatype) {
+	switch(datatype) {
 		case GL_POINT_SIZE_MIN:
 		case GL_POINT_SIZE_MAX:
 		case GL_POINT_FADE_THRESHOLD_SIZE:
@@ -155,15 +142,14 @@ EXTERN inline int gmlNumArgsPointParam(int datatype) {
 		case GL_POINT_DISTANCE_ATTENUATION:
 			return 3;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsPointParam", datatype)
+			GML_DEBUG("gmlNumArgsPointParam", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsTexParam(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glTexParameterfv
+EXTERN inline int gmlNumArgsTexParam(int datatype) {
+	switch(datatype) {
 		case GL_TEXTURE_MIN_FILTER:
 		case GL_TEXTURE_MAG_FILTER:
 		case GL_TEXTURE_WRAP_S:
@@ -173,28 +159,70 @@ EXTERN inline int gmlNumArgsTexParam(int datatype) {
 		case GL_TEXTURE_BORDER_COLOR:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsTexParam", datatype)
+			GML_DEBUG("gmlNumArgsTexParam", datatype, 1)
 			return 0;
 	}
 }
 
-EXTERN inline int gmlNumArgsLightModel(int datatype) {
-//	FILE *f;
-	switch(datatype) {
 //glLightModelfv
+EXTERN inline int gmlNumArgsLightModel(int datatype) {
+	switch(datatype) {
 		case GL_LIGHT_MODEL_LOCAL_VIEWER:
 		case GL_LIGHT_MODEL_TWO_SIDE:
 			return 1;
 		case GL_LIGHT_MODEL_AMBIENT:
 			return 4;
 		default:
-//      GML_NERROR_FUN("gmlNumArgsLightModel", datatype)
+			GML_DEBUG("gmlNumArgsLightModel", datatype, 1)
+			return 0;
+	}
+}
+
+//glMap1f
+EXTERN inline int gmlNumArgsMap1(int datatype) {
+	switch(datatype) {
+		case GL_MAP1_INDEX:
+		case GL_MAP1_TEXTURE_COORD_1:
+			return 1;
+		case GL_MAP1_TEXTURE_COORD_2:
+			return 2;
+		case GL_MAP1_VERTEX_3:
+		case GL_MAP1_NORMAL:
+		case GL_MAP1_TEXTURE_COORD_3:
+			return 3;
+		case GL_MAP1_VERTEX_4:
+		case GL_MAP1_COLOR_4:
+		case GL_MAP1_TEXTURE_COORD_4:
+			return 4;
+		default:
+			GML_DEBUG("gmlNumArgsMap1", datatype, 1)
+			return 0;
+	}
+}
+
+//glMap2f
+EXTERN inline int gmlNumArgsMap2(int datatype) {
+	switch(datatype) {
+		case GL_MAP2_INDEX:
+		case GL_MAP2_TEXTURE_COORD_1:
+			return 1;
+		case GL_MAP2_TEXTURE_COORD_2:
+			return 2;
+		case GL_MAP2_VERTEX_3:
+		case GL_MAP2_NORMAL:
+		case GL_MAP2_TEXTURE_COORD_3:
+			return 3;
+		case GL_MAP2_VERTEX_4:
+		case GL_MAP2_COLOR_4:
+		case GL_MAP2_TEXTURE_COORD_4:
+			return 4;
+		default:
+			GML_DEBUG("gmlNumArgsMap2", datatype, 1)
 			return 0;
 	}
 }
 
 EXTERN inline int gmlSizeOf(int datatype) {
-//	FILE *f;
 	switch(datatype) {
 		case GL_UNSIGNED_BYTE:
 			return sizeof(GLubyte);
@@ -215,7 +243,7 @@ EXTERN inline int gmlSizeOf(int datatype) {
 		case GL_DOUBLE:
 			return sizeof(GLdouble);
 		default:
-//      GML_NERROR_FUN("gmlSizeOf", datatype)
+			GML_DEBUG("gmlSizeOf", datatype, 1)
 			return 0;
 	}
 }
@@ -249,44 +277,44 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #define GML_RETVAL(ft) return (ft)*(volatile ft *)&(p->ret);
 
 #define GML_RELOC()\
-     while(qd->WritePos+datasize>=qd->WriteSize)\
-       qd->WaitRealloc();
+	while(qd->WritePos+datasize>=qd->WriteSize)\
+		qd->WaitRealloc();
 
 #define GML_PREP_FIXED(name)\
-     gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
-     int datasize=sizeof(gml##name##Data);\
-     GML_RELOC()\
-     gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
-	 p->type=gml##name##Enum;
+	gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
+	int datasize=sizeof(gml##name##Data);\
+	GML_RELOC()\
+	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	p->type=gml##name##Enum;
 
 #define GML_UPD_POS()\
-     qd->WritePos+=datasize;
+	qd->WritePos+=datasize;
 
 #define GML_UPD_SIZE()\
-  	 p->size=datasize;\
+	p->size=datasize;\
 
 #define GML_PREP_VAR(name,sizefun)\
-     gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
-	 int size=sizefun;\
-     int datasize=sizeof(gml##name##Data)+size;\
-     GML_RELOC()\
-     gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
-     p->type=gml##name##Enum;
+	gmlQueue *qd=&gmlQueues[gmlThreadNumber];\
+	int size=sizefun;\
+	int datasize=sizeof(gml##name##Data)+size;\
+	GML_RELOC()\
+	gml##name##Data *p=(gml##name##Data *)qd->WritePos;\
+	p->type=gml##name##Enum;
 
 #define GML_PREP_VAR_SIZE(name,sizefun)\
- 	 GML_PREP_VAR(name,sizefun)\
-	 GML_UPD_SIZE()
+	GML_PREP_VAR(name,sizefun)\
+	GML_UPD_SIZE()
 
 #define GML_COND(stmt)\
-  GML_IF_SERVER_THREAD() {\
-    stmt;\
-	return;\
-  }
+	GML_IF_SERVER_THREAD() {\
+		stmt;\
+		return;\
+	}
 
 #define GML_COND_RET(stmt)\
-  GML_IF_SERVER_THREAD() {\
-    return stmt;\
-  }
+	GML_IF_SERVER_THREAD() {\
+		return stmt;\
+	}
 
 EXTERN inline void gmlSync(gmlQueue *qd) {
 	qd->SyncRequest();
@@ -296,692 +324,713 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 
 #define GML_SYNC() gmlSync(qd)
 
+#define GML_FUN(name,ftype) EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
+	EXTERN inline ftype gml##name
+
+#define GML_RETFUN(name,ftr) EXTERN inline ftr gml##name
+
 #define GML_MAKEFUN0(name) struct gml##name##Data {\
-  GML_MAKEVAR()\
+	GML_MAKEVAR()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name() {\
-  GML_COND(gl##name())\
-  GML_PREP_FIXED(name)\
-  GML_UPD_POS()\
+GML_FUN(name,void)() {\
+	GML_COND(gl##name())\
+	GML_PREP_FIXED(name)\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN0R(name,ftypeR,cache) struct gml##name##Data {\
-  GML_MAKEVAR()\
-  GML_MAKEVAR_RET(ftypeR)\
+	GML_MAKEVAR()\
+	GML_MAKEVAR_RET(ftypeR)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline ftypeR gml##name() {\
-  GML_COND_RET(gl##name())\
+GML_FUN(name,ftypeR)() {\
+	GML_COND_RET(gl##name())\
 	cache\
-  GML_PREP_FIXED(name)\
-  GML_UPD_POS()\
-  GML_SYNC();\
-  GML_RETVAL(ftypeR)\
+	GML_PREP_FIXED(name)\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(ftypeR)\
 }
 
 #define GML_MAKEFUN1(name,ftype1) struct gml##name##Data {\
-  GML_MAKEVAR_A(ftype1)\
+	GML_MAKEVAR_A(ftype1)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A) {\
-  GML_COND(gl##name(A))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_A()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A) {\
+	GML_COND(gl##name(A))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_A()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN1R(name,ftype1,ftypeR,cache) struct gml##name##Data {\
-  GML_MAKEVAR_A(ftype1)\
-  GML_MAKEVAR_RET(ftypeR)\
+	GML_MAKEVAR_A(ftype1)\
+	GML_MAKEVAR_RET(ftypeR)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline ftypeR gml##name(ftype1 A) {\
-  GML_COND_RET(gl##name(A))\
+GML_FUN(name,ftypeR)(ftype1 A) {\
+	GML_COND_RET(gl##name(A))\
 	cache\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_A()\
-  GML_UPD_POS()\
-  GML_SYNC();\
-  GML_RETVAL(ftypeR)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_A()\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(ftypeR)\
 }
 
 #define GML_MAKEFUN2(name,ftype1,ftype2,cache,...) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
+	GML_MAKEVAR_B(ftype1,ftype2)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B) {\
-  GML_COND(gl##name(A,B))\
+GML_FUN(name,void)(ftype1 A, ftype2 B) {\
+	GML_COND(gl##name(A,B))\
 	cache\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_B()\
-  GML_UPD_POS()\
-  GML_SYNC_COND(__VA_ARGS__,)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_B()\
+	GML_UPD_POS()\
+	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
 #define GML_MAKEFUN2B(name,ftype1,ftype2) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
+	GML_MAKEVAR_B(ftype1,ftype2)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B) {\
-  GML_COND(gl##name(A,B))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_B()\
+GML_FUN(name,void)(ftype1 A, ftype2 B) {\
+	GML_COND(gl##name(A,B))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_B()\
 	switch(A) {\
-	  case GL_ARRAY_BUFFER:\
-		  qd->ArrayBuffer=B; break;\
-	  case GL_ELEMENT_ARRAY_BUFFER:\
-      qd->ElementArrayBuffer=B; break;\
-	  case GL_PIXEL_PACK_BUFFER:\
-      qd->PixelPackBuffer=B; break;\
-	  case GL_PIXEL_UNPACK_BUFFER:\
-      qd->PixelUnpackBuffer=B; break;\
-  }\
-  GML_UPD_POS()\
+		case GL_ARRAY_BUFFER:\
+			qd->ArrayBuffer=B; break;\
+		case GL_ELEMENT_ARRAY_BUFFER:\
+			qd->ElementArrayBuffer=B; break;\
+		case GL_PIXEL_PACK_BUFFER:\
+			qd->PixelPackBuffer=B; break;\
+		case GL_PIXEL_UNPACK_BUFFER:\
+			qd->PixelUnpackBuffer=B; break;\
+	}\
+	GML_UPD_POS()\
 }
 
 
 #define GML_MAKEFUN2R(name,ftype1,ftype2,ftypeR) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
-  GML_MAKEVAR_RET(ftypeR)\
+	GML_MAKEVAR_B(ftype1,ftype2)\
+	GML_MAKEVAR_RET(ftypeR)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline ftypeR gml##name(ftype1 A,ftype2 B) {\
-  GML_COND_RET(gl##name(A,B))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_B()\
-  GML_UPD_POS()\
-  GML_SYNC();\
-  GML_RETVAL(ftypeR)\
+GML_FUN(name,ftypeR)(ftype1 A,ftype2 B) {\
+	GML_COND_RET(gl##name(A,B))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_B()\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(ftypeR)\
 }
 
 #define GML_MAKEFUN3(name,ftype1,ftype2,ftype3,cache,...) struct gml##name##Data {\
-  GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
+	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C) {\
-  GML_COND(gl##name(A,B,C))\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
+	GML_COND(gl##name(A,B,C))\
 	cache\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_C()\
-  GML_UPD_POS()\
-  GML_SYNC_COND(__VA_ARGS__,)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_C()\
+	GML_UPD_POS()\
+	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
 #define GML_MAKEFUN4(name,ftype1,ftype2,ftype3,ftype4,...) struct gml##name##Data {\
-  GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4)\
+	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_D()\
-  GML_UPD_POS()\
-  GML_SYNC_COND(__VA_ARGS__,)\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_D()\
+	GML_UPD_POS()\
+	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
 #define GML_MAKEFUN5(name,ftype1,ftype2,ftype3,ftype4,ftype5) struct gml##name##Data {\
-  GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5)\
+	GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E) {\
-  GML_COND(gl##name(A,B,C,D,E))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_E()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E) {\
+	GML_COND(gl##name(A,B,C,D,E))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_E()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN6(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6) struct gml##name##Data {\
-  GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
+	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F) {\
-  GML_COND(gl##name(A,B,C,D,E,F))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_F()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F) {\
+	GML_COND(gl##name(A,B,C,D,E,F))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_F()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN7(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,...) struct gml##name##Data {\
-  GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
+	GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_G()\
-  GML_UPD_POS()\
-  GML_SYNC_COND(__VA_ARGS__,)\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_G()\
+	GML_UPD_POS()\
+	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
 #define GML_MAKEFUN8(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8) struct gml##name##Data {\
-  GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
+	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_H()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_H()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN9(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9) struct gml##name##Data {\
-  GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
+	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_I()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_I()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN9R(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftypeR) struct gml##name##Data {\
-  GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
-  GML_MAKEVAR_RET(ftypeR)\
+	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
+	GML_MAKEVAR_RET(ftypeR)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline ftypeR gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
-  GML_COND_RET(gl##name(A,B,C,D,E,F,G,H,I))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_I()\
-  GML_UPD_POS()\
-  GML_SYNC();\
-  GML_RETVAL(ftypeR)\
+GML_FUN(name,ftypeR)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
+	GML_COND_RET(gl##name(A,B,C,D,E,F,G,H,I))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_I()\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(ftypeR)\
 }
 
 
 #define GML_MAKEFUN10(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10) struct gml##name##Data {\
-  GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10)\
+	GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 J) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_J()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 J) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_J()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN7S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,sizefun) struct gml##name##Data {\
-  GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G))\
-  GML_PREP_VAR_SIZE(name,sizefun)\
-  GML_MAKEASS_F()\
-  memcpy(p+1,G,size);\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G))\
+	GML_PREP_VAR_SIZE(name,sizefun)\
+	GML_MAKEASS_F()\
+	memcpy(p+1,G,size);\
+	GML_UPD_POS()\
 }
 
 #define GML_PUB_COPY(name,var,ftype)\
 	p->var=NULL;\
 	if(qd->PixelUnpackBuffer) {\
-	  datasize=sizeof(gml##name##Data);\
+		datasize=sizeof(gml##name##Data);\
 		p->var=(ftype)((BYTE *)var+1);\
 	}\
 	else if(var!=NULL)\
-    memcpy(p+1,var,size);
+		memcpy(p+1,var,size);
 
 #define GML_MAKEFUN8S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,sizefun) struct gml##name##Data {\
-  GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8 *)\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8 *)\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H))\
-  GML_PREP_VAR(name,sizefun)\
-  GML_MAKEASS_G()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
+	GML_PREP_VAR(name,sizefun)\
+	GML_MAKEASS_G()\
 	GML_PUB_COPY(name,H,ftype8 *)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN9S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,sizefun) struct gml##name##Data {\
-  GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9 *)\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9 *)\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
-  GML_PREP_VAR(name,sizefun)\
-  GML_MAKEASS_H()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
+	GML_PREP_VAR(name,sizefun)\
+	GML_MAKEASS_H()\
 	GML_PUB_COPY(name,I,ftype9 *)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN10S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10,sizefun) struct gml##name##Data {\
-  GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10 *)\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10 *)\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 *J) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
-  GML_PREP_VAR(name,sizefun)\
-  GML_MAKEASS_I()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 *J) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+	GML_PREP_VAR(name,sizefun)\
+	GML_MAKEASS_I()\
 	GML_PUB_COPY(name,J,ftype10 *)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN1V(name,ftype1,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR()\
-  GML_MAKEVAR_SIZE()\
-  ftypeX A;\
+	GML_MAKEVAR()\
+	GML_MAKEVAR_SIZE()\
+	ftypeX A;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1* A) {\
-  GML_COND(gl##name(A))\
-  GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-  memcpy(&(p->A),A,size+sizeof(ftypeX));\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1* A) {\
+	GML_COND(gl##name(A))\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	memcpy(&(p->A),A,size+sizeof(ftypeX));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN2V(name,ftype1,ftype2,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_A(ftype1)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX B;\
+	GML_MAKEVAR_A(ftype1)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX B;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2* B) {\
-  GML_COND(gl##name(A,B))\
-  GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_A()\
-  memcpy(&(p->B),B,size+sizeof(ftypeX));\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2* B) {\
+	GML_COND(gl##name(A,B))\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_A()\
+	memcpy(&(p->B),B,size+sizeof(ftypeX));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN3V(name,ftype1,ftype2,ftype3,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX C;\
+	GML_MAKEVAR_B(ftype1,ftype2)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX C;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3* C) {\
-  GML_COND(gl##name(A,B,C))\
-  GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_B()\
-  memcpy(&(p->C),C,size+sizeof(ftypeX));\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3* C) {\
+	GML_COND(gl##name(A,B,C))\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_B()\
+	memcpy(&(p->C),C,size+sizeof(ftypeX));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN4V(name,ftype1,ftype2,ftype3,ftype4,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX D;\
+	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX D;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_C()\
-  memcpy(&(p->D),D,size+sizeof(ftypeX));\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_C()\
+	memcpy(&(p->D),D,size+sizeof(ftypeX));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN4VS(name,ftype1,ftype2,ftype3,ftype4,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
-  ftype4 D;\
-  GML_MAKEVAR_SIZE()\
-  ftypeX C;\
+	GML_MAKEVAR_B(ftype1,ftype2)\
+	ftype4 D;\
+	GML_MAKEVAR_SIZE()\
+	ftypeX C;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 *C, ftype4 D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_B()\
-  p->D=D;\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 *C, ftype4 D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_B()\
+	p->D=D;\
 	if(C!=NULL)\
-    memcpy(&(p->C),C,size+sizeof(ftypeX));\
-  GML_UPD_POS()\
+		memcpy(&(p->C),C,size+sizeof(ftypeX));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN4VSS(name,ftype1,ftype2,ftype3,ftype4,count) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2)\
-  int lensize;\
-  GML_MAKEVAR_SIZE()\
-  ftype3 *C;\
+	GML_MAKEVAR_B(ftype1,ftype2)\
+	int lensize;\
+	GML_MAKEVAR_SIZE()\
+	ftype3 *C;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 **C, ftype4 *D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_VAR(name,(count-1)*sizeof(ftype3 *))\
-  GML_MAKEASS_B()\
-  p->lensize=datasize;\
-  BYTE *e=(BYTE *)p+datasize;\
-  for(int i=0; i<B; ++i) {\
-	  BOOL_ len=!D || D[i]<0;\
-	  GLint sl=(len?strlen(C[i]):D[i])+1;\
-	  datasize+=sl;\
-	  ((intptr_t *)&(p->C))[i]=sl;\
-      --sl;\
-    while(qd->WritePos+datasize>=qd->WriteSize)\
-      p=(gml##name##Data *)qd->WaitRealloc(&e);\
-    memcpy(e,C[i],sl);\
-	  e+=sl;\
-	  *e='\0';\
-    ++e;\
-  }\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 **C, ftype4 *D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_VAR(name,(count-1)*sizeof(ftype3 *))\
+	GML_MAKEASS_B()\
+	p->lensize=datasize;\
+	BYTE *e=(BYTE *)p+datasize;\
+	for(int i=0; i<B; ++i) {\
+		BOOL_ len=!D || D[i]<0;\
+		GLint sl=(len?strlen(C[i]):D[i])+1;\
+		datasize+=sl;\
+		((intptr_t *)&(p->C))[i]=sl;\
+		--sl;\
+		while(qd->WritePos+datasize>=qd->WriteSize)\
+			p=(gml##name##Data *)qd->WaitRealloc(&e);\
+		memcpy(e,C[i],sl);\
+		e+=sl;\
+		*e='\0';\
+		++e;\
+	}\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_PUB_PCOPY(name,var,pvar,ftype)\
 	p->pvar=NULL;\
 	if(qd->PixelUnpackBuffer) {\
-	  datasize=sizeof(gml##name##Data);\
+		datasize=sizeof(gml##name##Data);\
 		p->pvar=(ftype *)var+1;\
 	}\
 	else if(var!=NULL)\
-    memcpy(&(p->var),var,size+sizeof(ftype));
+		memcpy(&(p->var),var,size+sizeof(ftype));
+
+#define GML_STDCOPY1(type,count,stride,nargs)\
+	for(int i=0; i<count; ++i) {\
+		type *v2=v;\
+		for(int j=0; j<nargs; ++j) {\
+			*e=*v2;\
+			++e;\
+			++v2;\
+		}\
+		v+=stride;\
+	}
+
+#define GML_MAKEFUN6VST(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftypeX,count,stride,numargs) struct gml##name##Data {\
+	GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX F;\
+};\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) {\
+	GML_COND(gl##name(A,B,C,D,E,F))\
+	int nargs=numargs;\
+	GML_PREP_VAR_SIZE(name,(nargs*count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_E()\
+	p->stride=nargs;\
+	ftypeX *e=&(p->F);\
+	ftype6 *v=F;\
+	GML_STDCOPY1(ftype6,count,stride,nargs)\
+	GML_UPD_POS()\
+}
+
+#define GML_STDCOPY2(type,count1,stride1,count2,stride2,nargs)\
+	for(int i=0; i<count1; ++i) {\
+		type *v2=v;\
+		for(int j=0; j<count2; ++j) {\
+			type *v3=v2;\
+			for(int k=0; k<nargs; ++k) {\
+				*e=*v3;\
+				++e;\
+				++v3;\
+			}\
+			v2+=stride2;\
+		}\
+		v+=stride1;\
+	}
+
+#define GML_MAKEFUN10VST(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10,ftypeX,count1,stride1,count2,stride2,numargs) struct gml##name##Data {\
+	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX J;\
+};\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 *J) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+	int nargs=numargs;\
+	GML_PREP_VAR_SIZE(name,(nargs*count1*count2-1)*sizeof(ftypeX))\
+	GML_MAKEASS_I()\
+	p->stride1=nargs*count2;\
+	p->stride2=nargs;\
+	ftypeX *e=&(p->J);\
+	ftype10 *v=J;\
+	GML_STDCOPY2(ftype10,count1,stride1,count2,stride2,nargs)\
+	GML_UPD_POS()\
+}
 
 #define GML_MAKEFUN7VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX *GP;\
-  ftypeX G;\
+	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX *GP;\
+	ftypeX G;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G))\
-  GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_F()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G))\
+	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_F()\
 	GML_PUB_PCOPY(name,G,GP,ftypeX)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN8VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX *HP;\
-  ftypeX H;\
+	GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX *HP;\
+	ftypeX H;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H))\
-  GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_G()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
+	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_G()\
 	GML_PUB_PCOPY(name,H,HP,ftypeX)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN9VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftypeX,count) struct gml##name##Data {\
-  GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
-  GML_MAKEVAR_SIZE()\
-  ftypeX *IP;\
-  ftypeX I;\
+	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
+	GML_MAKEVAR_SIZE()\
+	ftypeX *IP;\
+	ftypeX I;\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
-  GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
-  GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
-  GML_MAKEASS_H()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
+	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
+	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	GML_MAKEASS_H()\
 	GML_PUB_PCOPY(name,I,IP,ftypeX)\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN1CS(name,ftype1,arg) struct gml##name##Data {\
-  GML_MAKEVAR_A(ftype1)\
+	GML_MAKEVAR_A(ftype1)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A) {\
-  GML_COND(gl##name(A))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_A()\
-  qd->ClientState arg (1<<(A-GL_VERTEX_ARRAY));\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A) {\
+	GML_COND(gl##name(A))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_A()\
+	qd->ClientState arg (1<<(A-GL_VERTEX_ARRAY));\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN1VA(name,ftype1,arg,fun) struct gml##name##Data {\
-  GML_MAKEVAR_A(ftype1)\
+	GML_MAKEVAR_A(ftype1)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A) {\
-  GML_COND(gl##name(A))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_A()\
-  qd->arg##set.fun(A);\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A) {\
+	GML_COND(gl##name(A))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_A()\
+	qd->arg##set.fun(A);\
+	GML_UPD_POS()\
 }
 
 #define GML_UPD_CS(arg)\
 	if(qd->ArrayBuffer)\
-  	qd->ClientState |= GML_##arg##_ARRAY_BUFFER;\
+		qd->ClientState |= GML_##arg##_ARRAY_BUFFER;\
 	else\
-  	qd->ClientState &= ~GML_##arg##_ARRAY_BUFFER;
+		qd->ClientState &= ~GML_##arg##_ARRAY_BUFFER;
 
 #define GML_MAKEFUN2P(name,ftype1,ftype2,arg) struct gml##name##Data {\
-  GML_MAKEVAR_B(ftype1,ftype2 *)\
+	GML_MAKEVAR_B(ftype1,ftype2 *)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 *B) {\
-  GML_COND(gl##name(A,B))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_B()\
-  qd->arg##stride=A;\
-  qd->arg##pointer=B;\
+GML_FUN(name,void)(ftype1 A, ftype2 *B) {\
+	GML_COND(gl##name(A,B))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_B()\
+	qd->arg##stride=A;\
+	qd->arg##pointer=B;\
 	GML_UPD_CS(arg)\
-  GML_UPD_POS()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN3P(name,ftype1,ftype2,ftype3,arg) struct gml##name##Data {\
-  GML_MAKEVAR_C(ftype1,ftype2,ftype3 *)\
+	GML_MAKEVAR_C(ftype1,ftype2,ftype3 *)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 *C) {\
-  GML_COND(gl##name(A,B,C))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_C()\
-  qd->arg##type=A;\
-  qd->arg##stride=B;\
-  qd->arg##pointer=C;\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 *C) {\
+	GML_COND(gl##name(A,B,C))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_C()\
+	qd->arg##type=A;\
+	qd->arg##stride=B;\
+	qd->arg##pointer=C;\
 	GML_UPD_CS(arg)\
-  GML_UPD_POS()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN4P(name,ftype1,ftype2,ftype3,ftype4,arg) struct gml##name##Data {\
-  GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
+	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_D()\
-  qd->arg##size=A;\
-  qd->arg##type=B;\
-  qd->arg##stride=C;\
-  qd->arg##pointer=D;\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_D()\
+	qd->arg##size=A;\
+	qd->arg##type=B;\
+	qd->arg##stride=C;\
+	qd->arg##pointer=D;\
 	GML_UPD_CS(arg)\
-  GML_UPD_POS()\
+	GML_UPD_POS()\
 }
 
 #define GML_MAKEFUN6P(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,arg) struct gml##name##Data {\
-  GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6 *)\
+	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6 *)\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) {\
-  GML_COND(gl##name(A,B,C,D,E,F))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_F()\
-  qd->arg##map[A]=arg##data(B,C,D,E,F,qd->ArrayBuffer);\
-  GML_UPD_POS()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) {\
+	GML_COND(gl##name(A,B,C,D,E,F))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_F()\
+	qd->arg##map[A]=arg##data(B,C,D,E,F,qd->ArrayBuffer);\
+	GML_UPD_POS()\
 }
 
 #define GML_MEMCOPY()\
 	for(int i=0; i<C; ++i) {\
-  	BYTE *e2=e;\
-  	BYTE *v2=v;\
-	  for(int j=0; j<itemsize; ++j) {\
-	    *e2=*v2;\
-		  ++e2;\
-		  ++v2;\
-	  }\
-	  e+=itemsize;\
-	  v+=itemstride;\
-  }\
+		BYTE *v2=v;\
+		for(int j=0; j<itemsize; ++j) {\
+			*e=*v2;\
+			++e;\
+			++v2;\
+		}\
+		v+=itemstride;\
+	}
 
 #define GML_IDXLOOP(ltype)\
 	for(int i=0; i<B; ++i) {\
-  	BYTE *e2=e;\
-  	BYTE *v2=v+(*(ltype *)dt)*itemstride;\
+		BYTE *v2=v+(*(ltype *)dt)*itemstride;\
 		dt+=sizeof(ltype);\
-	  for(int j=0; j<itemsize; ++j) {\
-	    *e2=*v2;\
-		  ++e2;\
-		  ++v2;\
-	  }\
-	  e+=itemsize;\
-  }
+		for(int j=0; j<itemsize; ++j) {\
+			*e=*v2;\
+			++e;\
+			++v2;\
+		}\
+	}
 
 #define GML_IDXCOPY()\
 	BYTE *dt=(BYTE *)D;\
-  switch(C) {\
-    case GL_UNSIGNED_INT:\
-      GML_IDXLOOP(GLuint)\
-      break;\
-    case GL_UNSIGNED_SHORT:\
-	    GML_IDXLOOP(GLushort)\
-	    break;\
-    case GL_UNSIGNED_BYTE:\
-	    GML_IDXLOOP(GLubyte)\
-	    break;\
-  }
+	switch(C) {\
+		case GL_UNSIGNED_INT:\
+			GML_IDXLOOP(GLuint)\
+			break;\
+		case GL_UNSIGNED_SHORT:\
+			GML_IDXLOOP(GLushort)\
+			break;\
+		case GL_UNSIGNED_BYTE:\
+			GML_IDXLOOP(GLubyte)\
+			break;\
+	}
 
 #define GML_MAKESUBFUNDA(name,pre,arg,sizefun,sizeass,typeass,first,count,copyfun)\
 	if(clientstate & (1<<(pre-GL_VERTEX_ARRAY))) {\
-  	int itemsize=sizefun;\
-	  int itemstride=qd->arg##stride;\
-    if(itemstride==0)\
-      itemstride=itemsize;\
-  	p->arg##totalsize=0;\
-    p->arg##pointer=(GLvoid *)((BYTE *)qd->arg##pointer+first*itemstride);\
-    sizeass;\
-    typeass;\
-	  if(!(qd->ClientState & GML_##arg##_ARRAY_BUFFER)) {\
-	    p->arg##totalsize=itemsize*count;\
-      datasize+=p->arg##totalsize;\
-      while(qd->WritePos+datasize>=qd->WriteSize)\
-        p=(gml##name##Data *)qd->WaitRealloc(&e);\
-      BYTE *v=(BYTE *)p->arg##pointer;\
-	    copyfun\
-    }\
+		int itemsize=sizefun;\
+		int itemstride=qd->arg##stride;\
+		if(itemstride==0)\
+			itemstride=itemsize;\
+		p->arg##totalsize=0;\
+		p->arg##pointer=(GLvoid *)((BYTE *)qd->arg##pointer+first*itemstride);\
+		sizeass;\
+		typeass;\
+		if(!(qd->ClientState & GML_##arg##_ARRAY_BUFFER)) {\
+			p->arg##totalsize=itemsize*count;\
+			datasize+=p->arg##totalsize;\
+			while(qd->WritePos+datasize>=qd->WriteSize)\
+				p=(gml##name##Data *)qd->WaitRealloc(&e);\
+			BYTE *v=(BYTE *)p->arg##pointer;\
+			copyfun\
+		}\
 	}
 
 #define GML_MAKEPOINTERDATA()\
-  GLenum ClientState;\
-  GLint VPsize;\
-  GLenum VPtype;\
-  GLvoid * VPpointer;\
-  int VPtotalsize;\
-  GLint CPsize;\
-  GLenum CPtype;\
-  GLvoid * CPpointer;\
-  int CPtotalsize;\
-  GLint TCPsize;\
-  GLenum TCPtype;\
-  GLvoid * TCPpointer;\
-  int TCPtotalsize;\
-  GLenum IPtype;\
-  GLvoid * IPpointer;\
-  int IPtotalsize;\
-  GLenum NPtype;\
-  GLvoid *NPpointer;\
-  int NPtotalsize;\
-  GLvoid * EFPpointer;\
-  int EFPtotalsize;\
-  int VAcount;
+	GLenum ClientState;\
+	GLint VPsize;\
+	GLenum VPtype;\
+	GLvoid * VPpointer;\
+	int VPtotalsize;\
+	GLint CPsize;\
+	GLenum CPtype;\
+	GLvoid * CPpointer;\
+	int CPtotalsize;\
+	GLint TCPsize;\
+	GLenum TCPtype;\
+	GLvoid * TCPpointer;\
+	int TCPtotalsize;\
+	GLenum IPtype;\
+	GLvoid * IPpointer;\
+	int IPtotalsize;\
+	GLenum NPtype;\
+	GLvoid *NPpointer;\
+	int NPtotalsize;\
+	GLvoid * EFPpointer;\
+	int EFPtotalsize;\
+	int VAcount;
 
 #define GML_MAKESUBFUNVA(name,first,count,copyfun)\
 	p->VAcount=qd->VAset.size();\
-  std::set<GLuint>::iterator si=qd->VAset.begin();\
-  while(si!=qd->VAset.end()) {\
-    std::map<GLuint,VAdata>::iterator mi=qd->VAmap.find(*si);\
-\
-    VAdata *vd=&(mi->second);\
-	  int itemstride=vd->stride;\
- 	  int itemsize=vd->size*gmlSizeOf(vd->type);\
+	std::set<GLuint>::iterator si=qd->VAset.begin();\
+	while(si!=qd->VAset.end()) {\
+		std::map<GLuint,VAdata>::iterator mi=qd->VAmap.find(*si);\
+		VAdata *vd=&(mi->second);\
+		int itemstride=vd->stride;\
+ 		int itemsize=vd->size*gmlSizeOf(vd->type);\
 		if(itemstride==0)\
-      itemstride=itemsize;\
+			itemstride=itemsize;\
 		if(vd->buffer)\
-      itemsize=0;\
-	  int totalsize=itemsize*count+sizeof(VAstruct);\
-    datasize+=totalsize;\
-	  while(qd->WritePos+datasize>=qd->WriteSize)\
-      p=(gml##name##Data *)qd->WaitRealloc(&e);\
-\
-    VAstruct *vs=(VAstruct *)e;\
-    e+=sizeof(VAstruct);\
-    vs->target=*si;\
-    vs->size=vd->size;\
-    vs->type=vd->type;\
-    vs->normalized=vd->normalized;\
-    vs->totalsize=totalsize;\
-    vs->pointer=(GLvoid *)((BYTE *)vd->pointer+first*itemstride);\
+			itemsize=0;\
+		int totalsize=itemsize*count+sizeof(VAstruct);\
+		datasize+=totalsize;\
+		while(qd->WritePos+datasize>=qd->WriteSize)\
+			p=(gml##name##Data *)qd->WaitRealloc(&e);\
+		VAstruct *vs=(VAstruct *)e;\
+		e+=sizeof(VAstruct);\
+		vs->target=*si;\
+		vs->size=vd->size;\
+		vs->type=vd->type;\
+		vs->normalized=vd->normalized;\
+		vs->totalsize=totalsize;\
+		vs->pointer=(GLvoid *)((BYTE *)vd->pointer+first*itemstride);\
 		vs->buffer=vd->buffer;\
-\
-	  if(!vd->buffer) {\
-      BYTE *v=(BYTE *)vs->pointer;\
-  	  copyfun\
-	  }\
-\
-    ++si;\
-  }
+		if(!vd->buffer) {\
+			BYTE *v=(BYTE *)vs->pointer;\
+			copyfun\
+		}\
+		++si;\
+	}
 
 
 #define GML_MAKEFUN3VDA(name,ftype1,ftype2,ftype3) struct gml##name##Data {\
-  GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
-  GML_MAKEPOINTERDATA()\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
+	GML_MAKEPOINTERDATA()\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C) {\
-  GML_COND(gl##name(A,B,C))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_C()\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
+	GML_COND(gl##name(A,B,C))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_C()\
 	GLenum clientstate=qd->ClientState & ~(qd->ClientState>>16);\
-  p->ClientState=qd->ClientState;\
-  BYTE *e=(BYTE *)(p+1);\
-  GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,B,C,GML_MEMCOPY())\
-  GML_MAKESUBFUNVA(name,B,C,GML_MEMCOPY())\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+	p->ClientState=qd->ClientState;\
+	BYTE *e=(BYTE *)(p+1);\
+	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,B,C,GML_MEMCOPY())\
+	GML_MAKESUBFUNVA(name,B,C,GML_MEMCOPY())\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 
 #define GML_MAKEFUN4VDE(name,ftype1,ftype2,ftype3,ftype4) struct gml##name##Data {\
-  GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
-  GML_MAKEPOINTERDATA()\
-  GML_MAKEVAR_SIZE()\
+	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
+	GML_MAKEPOINTERDATA()\
+	GML_MAKEVAR_SIZE()\
 };\
-EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
-EXTERN inline void gml##name(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-  GML_COND(gl##name(A,B,C,D))\
-  GML_PREP_FIXED(name)\
-  GML_MAKEASS_D()\
-  BYTE *e=(BYTE *)(p+1);\
+GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
+	GML_COND(gl##name(A,B,C,D))\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_D()\
+	BYTE *e=(BYTE *)(p+1);\
 	GLenum clientstate=qd->ClientState & ~(qd->ClientState>>16);\
-  p->ClientState=qd->ClientState;\
+	p->ClientState=qd->ClientState;\
 	if(qd->ElementArrayBuffer)\
-	  p->ClientState |= GML_ELEMENT_ARRAY_BUFFER;\
-  GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,0,B,GML_IDXCOPY())\
-  GML_MAKESUBFUNVA(name,0,B,GML_IDXCOPY())\
-  GML_UPD_SIZE()\
-  GML_UPD_POS()\
+		p->ClientState |= GML_ELEMENT_ARRAY_BUFFER;\
+	GML_MAKESUBFUNDA(name,GL_VERTEX_ARRAY,VP,qd->VPsize*gmlSizeOf(qd->VPtype),p->VPsize=qd->VPsize,p->VPtype=qd->VPtype,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_COLOR_ARRAY,CP,qd->CPsize*gmlSizeOf(qd->CPtype),p->CPsize=qd->CPsize,p->CPtype=qd->CPtype,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_TEXTURE_COORD_ARRAY,TCP,qd->TCPsize*gmlSizeOf(qd->TCPtype),p->TCPsize=qd->TCPsize,p->TCPtype=qd->TCPtype,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_INDEX_ARRAY,IP,gmlSizeOf(qd->IPtype),,p->IPtype=qd->IPtype,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_NORMAL_ARRAY,NP,3*gmlSizeOf(qd->NPtype),,p->NPtype=qd->NPtype,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNDA(name,GL_EDGE_FLAG_ARRAY,EFP,sizeof(GLboolean),,,0,B,GML_IDXCOPY())\
+	GML_MAKESUBFUNVA(name,0,B,GML_IDXCOPY())\
+	GML_UPD_SIZE()\
+	GML_UPD_POS()\
 }
 
 
@@ -1224,5 +1273,23 @@ GML_MAKEFUN1R(TestFenceNV,GLuint,GLboolean,)
 GML_MAKEFUN3P(IndexPointer,GLenum,GLsizei,GLvoid, IP)//
 GML_MAKEFUN2P(EdgeFlagPointer,GLsizei,GLboolean, EFP)
 GML_MAKEFUN4(TrackMatrixNV,GLenum,GLuint,GLenum,GLenum)
+GML_MAKEFUN3(ProgramParameteriEXT,GLuint,GLenum,GLint,)
+GML_MAKEFUN4(BlendColor,GLclampf,GLclampf,GLclampf,GLclampf)
+GML_MAKEFUN6VST(Map1f,GLenum,GLfloat,GLfloat,GLint,GLint,const GLfloat,GLfloat,E,D,gmlNumArgsMap1(A))
+GML_MAKEFUN10VST(Map2f,GLenum,GLfloat,GLfloat,GLint,GLint,GLfloat,GLfloat,GLint,GLint,const GLfloat,GLfloat,E,D,I,H,gmlNumArgsMap2(A))
+GML_MAKEFUN3(MapGrid1f,GLint,GLfloat,GLfloat,)
+GML_MAKEFUN6(MapGrid2f,GLint,GLfloat,GLfloat,GLint,GLfloat,GLfloat)
+GML_MAKEFUN3(EvalMesh1,GLenum,GLint,GLint,)
+GML_MAKEFUN5(EvalMesh2,GLenum,GLint,GLint,GLint,GLint)
+GML_MAKEFUN1(EvalCoord1f,GLfloat)
+GML_MAKEFUN2(EvalCoord2f,GLfloat,GLfloat,)
+GML_MAKEFUN1(EvalPoint1,GLint)
+GML_MAKEFUN2(EvalPoint2,GLint,GLint,)
+GML_MAKEFUN1R(RenderMode,GLenum,GLint,)
+GML_MAKEFUN2(SelectBuffer,GLsizei,GLuint *,,GML_SYNC())
+GML_MAKEFUN0(InitNames)
+GML_MAKEFUN1(LoadName,GLuint)
+GML_MAKEFUN1(PushName,GLuint)
+GML_MAKEFUN0(PopName)
 
 #endif

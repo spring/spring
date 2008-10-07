@@ -10,7 +10,11 @@
 #include "UDPSocket.h"
 
 namespace netcode {
+#ifndef SYNCDEBUG
 const unsigned UDPBufferSize = 8192;
+#else
+const unsigned UDPBufferSize = 40000;
+#endif
 
 /**
 How Spring protocolheader looks like (size in bytes):

@@ -7,6 +7,8 @@
 #ifndef SYNCEDFLOAT3_H
 #define SYNCEDFLOAT3_H
 
+#include "float3.h"
+
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 #include "lib/streflop/streflop_cond.h"
@@ -28,7 +30,7 @@ public:
 */
 	/**
 	 * @brief Constructor
-	 * 
+	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
 	inline SyncedFloat3() : x(0), y(0), z(0) {};
@@ -38,7 +40,7 @@ public:
 	 * @param x float x
 	 * @param y float y
 	 * @param z float z
-	 * 
+	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
 	inline SyncedFloat3(const float x,const float y,const float z) : x(x),y(y),z(z) {}
@@ -52,7 +54,7 @@ public:
 
 	/**
 	 * @brief Destructor
-	 * 
+	 *
 	 * Does nothing
 	 */
 	inline ~SyncedFloat3(){}
@@ -61,7 +63,7 @@ public:
 	 * @brief operator +
 	 * @param f SyncedFloat3 reference to add.
 	 * @return sum of float3s
-	 * 
+	 *
 	 * When adding another SyncedFloat3, will
 	 * calculate the sum of the positions in
 	 * space (adds the x/y/z components individually)
@@ -80,7 +82,7 @@ public:
 	 * @brief operator +
 	 * @return sum of SyncedFloat3+float
 	 * @param f single float to add
-	 * 
+	 *
 	 * When adding just a float, the point is
 	 * increased in all directions by that float.
 	 */
@@ -91,7 +93,7 @@ public:
 	/**
 	 * @brief operator +=
 	 * @param SyncedFloat3
-	 * 
+	 *
 	 * Just like adding a SyncedFloat3, but updates this
 	 * float with the new sum.
 	 */
@@ -110,7 +112,7 @@ public:
 	 * @brief operator -
 	 * @param f SyncedFloat3 to subtract
 	 * @return difference of float3s
-	 * 
+	 *
 	 * Decreases the SyncedFloat3 by another SyncedFloat3,
 	 * subtracting each x/y/z component individually.
 	 */
@@ -127,7 +129,7 @@ public:
 	/**
 	 * @brief operator -
 	 * @return inverted SyncedFloat3
-	 * 
+	 *
 	 * When negating the SyncedFloat3, inverts all three
 	 * x/y/z components.
 	 */
@@ -139,7 +141,7 @@ public:
 	 * @brief operator -
 	 * @return difference of SyncedFloat3 and float
 	 * @param f float to subtract
-	 * 
+	 *
 	 * When subtracting a single fixed float,
 	 * decreases all three x/y/z components by that amount.
 	 */
@@ -150,7 +152,7 @@ public:
 	/**
 	 * @brief operator -=
 	 * @param f SyncedFloat3 to subtract
-	 * 
+	 *
 	 * Same as subtracting a SyncedFloat3, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
@@ -169,7 +171,7 @@ public:
 	 * @brief operator *
 	 * @param f SyncedFloat3 to multiply
 	 * @return product of float3s
-	 * 
+	 *
 	 * When multiplying by another SyncedFloat3,
 	 * multiplies each x/y/z component individually.
 	 */
@@ -187,7 +189,7 @@ public:
 	 * @brief operator *
 	 * @param f float to multiply
 	 * @return product of SyncedFloat3 and float
-	 * 
+	 *
 	 * When multiplying by a single float, multiplies
 	 * each x/y/z component by that float.
 	 */
@@ -198,7 +200,7 @@ public:
 	/**
 	 * @brief operator *=
 	 * @param f SyncedFloat3 to multiply
-	 * 
+	 *
 	 * Same as multiplying a SyncedFloat3, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
@@ -216,7 +218,7 @@ public:
 	/**
 	 * @brief operator *=
 	 * @param f float to multiply
-	 * 
+	 *
 	 * Same as multiplying a float, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
@@ -230,7 +232,7 @@ public:
 	 * @brief operator /
 	 * @param f SyncedFloat3 to divide
 	 * @return divided SyncedFloat3
-	 * 
+	 *
 	 * When dividing by a SyncedFloat3, divides
 	 * each x/y/z component individually.
 	 */
@@ -248,7 +250,7 @@ public:
 	 * @brief operator /
 	 * @param f float to divide
 	 * @return SyncedFloat3 divided by float
-	 * 
+	 *
 	 * When dividing by a single float, divides
 	 * each x/y/z component by that float.
 	 */
@@ -260,7 +262,7 @@ public:
 	/**
 	 * @brief operator /=
 	 * @param f SyncedFloat3 to divide
-	 * 
+	 *
 	 * Same as dividing by a SyncedFloat3, but stores
 	 * the new values inside this SyncedFloat3.
 	 */
@@ -278,7 +280,7 @@ public:
 	/**
 	 * @brief operator /=
 	 * @param f float to divide
-	 * 
+	 *
 	 * Same as dividing by a single float, but stores
 	 * the new values inside this SyncedFloat3.
 	 */
@@ -293,7 +295,7 @@ public:
 	 * @brief operator ==
 	 * @param f SyncedFloat3 to test
 	 * @return whether float3s are equal
-	 * 
+	 *
 	 * Tests if this SyncedFloat3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
@@ -311,7 +313,7 @@ public:
 	 * @brief operator !=
 	 * @param f SyncedFloat3 to test
 	 * @return whether float3s are not equal
-	 * 
+	 *
 	 * Tests if this SyncedFloat3 is not equal to another, by
 	 * checking each x/y/z component individually.
 	 */
@@ -329,7 +331,7 @@ public:
 	 * @brief operator[]
 	 * @param t index in xyz array
 	 * @return float component at index
-	 * 
+	 *
 	 * Array access for x/y/z components
 	 * (index 0 is x, index 1 is y, index 2 is z)
 	 */
@@ -341,7 +343,7 @@ public:
 	 * @brief operator [] const
 	 * @param t index in xyz array
 	 * @return const float component at index
-	 * 
+	 *
 	 * Same as plain [] operator but used in
 	 * a const context
 	 */
@@ -353,7 +355,7 @@ public:
 	 * @brief dot product
 	 * @param f SyncedFloat3 to use
 	 * @return dot product of float3s
-	 * 
+	 *
 	 * Calculates the dot product of this and
 	 * another SyncedFloat3 (sums the products of each
 	 * x/y/z component).
@@ -369,7 +371,7 @@ public:
 	 * @brief cross product
 	 * @param f SyncedFloat3 to use
 	 * @return cross product of two float3s
-	 * 
+	 *
 	 * Calculates the cross product of this and
 	 * another SyncedFloat3 (y1*z2-z1*y2,z1*x2-x1*z2,x1*y2-y1*x2)
 	 */
@@ -388,7 +390,7 @@ public:
 	 * @brief distance between float3s
 	 * @param f SyncedFloat3 to compare against
 	 * @return float distance between float3s
-	 * 
+	 *
 	 * Calculates the distance between this SyncedFloat3
 	 * and another SyncedFloat3 (sums the differences in each
 	 * x/y/z component, square root for pythagorean theorem)
@@ -410,7 +412,7 @@ public:
 	 * @brief distance2D between float3s (only x and y)
 	 * @param f SyncedFloat3 to compare against
 	 * @return 2D distance between float3s
-	 * 
+	 *
 	 * Calculates the distance between this SyncedFloat3
 	 * and another SyncedFloat3 2-dimensionally (that is,
 	 * only using the x and y components).  Sums the
@@ -431,7 +433,7 @@ public:
 	/**
 	 * @brief Length of this vector
 	 * @return float length of vector
-	 * 
+	 *
 	 * Returns the length of this vector
 	 * (squares and sums each x/y/z component,
 	 * square root for pythagorean theorem)
@@ -443,7 +445,7 @@ public:
 	/**
 	 * @brief 2-dimensional length of this vector
 	 * @return 2D float length of vector
-	 * 
+	 *
 	 * Returns the 2-dimensional length of this vector
 	 * (squares and sums only the x and z components,
 	 * square root for pythagorean theorem)
@@ -455,7 +457,7 @@ public:
 	/**
 	 * @brief normalizes the vector
 	 * @return pointer to self
-	 * 
+	 *
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
@@ -476,7 +478,7 @@ public:
 	/**
 	 * @brief length squared
 	 * @return length squared
-	 * 
+	 *
 	 * Returns the length of this vector squared.
 	 */
 	inline float SqLength() const{
@@ -486,7 +488,7 @@ public:
 	/**
 	 * @brief 2-dimensional length squared
 	 * @return 2D length squared
-	 * 
+	 *
 	 * Returns the 2-dimensional length of this
 	 * vector squared.
 	 */
@@ -513,5 +515,12 @@ public:
 typedef float3 SyncedFloat3;
 
 #endif // !SYNCDEBUG && !SYNCCHECK
+
+// this macro looks like a noop, but causes checksum update
+#ifdef SYNCDEBUG
+#define ASSERT_SYNCED_FLOAT3(x) { SyncedFloat3(x); }
+#else
+#define ASSERT_SYNCED_FLOAT3(x)
+#endif
 
 #endif // SYNCEDFLOAT3_H

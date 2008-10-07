@@ -19,8 +19,12 @@ bool CSyncTracer::init()
 #ifdef TRACE_SYNC
 	if (logfile == 0) {
 		char c[100];
-		sprintf(c, "trace%i.log", gu->myTeam);
+		if (gu)
+			sprintf(c, "trace%i.log", gu->myTeam);
+		else
+			sprintf(c, "trace_early.log");
 		logfile = SAFE_NEW std::ofstream(c);
+		logOutput.Print("Sync trace log: %s\n", c);
 	}
 #endif
 	return logfile != 0;
@@ -47,7 +51,10 @@ void CSyncTracer::Commit()
 #ifdef TRACE_SYNC
 	if(file == 0){
 		char c[100];
-		sprintf(c, "trace%i.txt", gu->myTeam);
+		if (gu)
+			sprintf(c, "trace%i.log", gu->myTeam);
+		else
+			sprintf(c, "trace_early.log");
 		file = SAFE_NEW std::ofstream(c);
 	}
 #endif
@@ -89,6 +96,15 @@ CSyncTracer& CSyncTracer::operator<<(const char* c)
 }
 
 CSyncTracer& CSyncTracer::operator<<(const int i)
+{
+	char t[20];
+	sprintf(t,"%d",i);
+	traces[nowActive]+=t;
+	if (init()) (*logfile) << i;
+	return *this;
+}
+
+CSyncTracer& CSyncTracer::operator<<(const unsigned i)
 {
 	char t[20];
 	sprintf(t,"%d",i);

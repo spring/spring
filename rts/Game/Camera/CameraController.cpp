@@ -1,3 +1,6 @@
+#include "StdAfx.h"
+#include "mmgr.h"
+
 #include "CameraController.h"
 
 #include "Platform/ConfigHandler.h"

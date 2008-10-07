@@ -15,6 +15,23 @@
 
 #ifdef USE_MMGR
 
+
+#ifndef WIN32
+/* for backtrace() function */
+# include <execinfo.h>
+# define HAVE_BACKTRACE
+#elif defined __MINGW32__
+/* from backtrace.c: */
+extern "C" int backtrace (void **array, int size);
+# define HAVE_BACKTRACE
+#else
+# undef HAVE_BACKTRACE
+#endif
+
+#ifdef HAVE_BACKTRACE
+#define MMGR_MAX_STACK 8
+#endif
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // For systems that don't have the __FUNCTION__ variable, we can just define it here
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -38,6 +55,10 @@ typedef	struct tag_au
 	bool		breakOnDealloc;
 	bool		breakOnRealloc;
 	unsigned int	allocationNumber;
+#ifdef HAVE_BACKTRACE
+	unsigned int	backtraceSize;
+	void*		backtrace[MMGR_MAX_STACK];
+#endif
 	struct tag_au	*next;
 	struct tag_au	*prev;
 } sAllocUnit;
@@ -74,6 +95,7 @@ extern	const	unsigned int	m_alloc_free;
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 void		m_setOwner(const char *file, const unsigned int line, const char *func);
+void		m_resetGlobals();
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Allocation breakpoints
@@ -137,7 +159,7 @@ void	operator delete[](void *reportedAddress);
 #define	malloc(sz)	m_allocator  (__FILE__,__LINE__,__FUNCTION__,m_alloc_malloc,sz)
 #define	calloc(sz)	m_allocator  (__FILE__,__LINE__,__FUNCTION__,m_alloc_calloc,sz)
 #define	realloc(ptr,sz)	m_reallocator(__FILE__,__LINE__,__FUNCTION__,m_alloc_realloc,sz,ptr)
-#define	free(ptr)	m_deallocator(__FILE__,__LINE__,__FUNCTION__,m_alloc_free,ptr)
+#define	free(ptr)	if (ptr != NULL) m_deallocator(__FILE__,__LINE__,__FUNCTION__,m_alloc_free,ptr)
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // mmgr.h - End of file

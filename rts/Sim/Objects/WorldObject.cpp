@@ -3,11 +3,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
-#include "WorldObject.h"
 #include "mmgr.h"
+#include "WorldObject.h"
 
 CR_BIND_DERIVED(CWorldObject, CObject, )
 CR_REG_METADATA(CWorldObject, (
+	CR_MEMBER(id),
 	CR_MEMBER(radius),
 	CR_MEMBER_BEGINFLAG(CM_Config), // the projectile system needs to know that 'pos' is accessible by script
 		CR_MEMBER(pos),

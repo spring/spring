@@ -18,7 +18,7 @@ public:
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
 	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	void SlowUpdate();
-	void GiveCommandReal(const Command &c);
+	void GiveCommandReal(const Command &c, bool fromSynced = true);
 	void DrawCommands(void);
 	void BuggerOff(float3 pos, float radius);
 	void NonMoving(void);
@@ -30,7 +30,7 @@ public:
 	void ExecuteAttack(Command &c);
 	void ExecuteDGun(Command &c);
 	void ExecuteStop(Command &c);
-	
+
 	void RefuelIfNeeded();
 
 	virtual void Execute();
@@ -66,11 +66,11 @@ protected:
 	int lastCloseInTry;
 	bool slowGuard;
 	bool moveDir;
-	
+
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
-	
+
 	virtual bool IsValidTarget(const CUnit* enemy) const;
 };
 

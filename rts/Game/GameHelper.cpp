@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Camera.h"
 #include "Game/GameSetup.h"
 #include "Game.h"
@@ -33,7 +35,6 @@
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "System/EventHandler.h"
-#include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

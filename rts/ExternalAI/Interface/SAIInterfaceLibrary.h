@@ -18,9 +18,10 @@
 #ifndef _SAIINTERFACELIBRARY_H
 #define	_SAIINTERFACELIBRARY_H
 
-#ifdef	__cplusplus
+#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#define __USE_CREG
 #include "creg/creg.h"
-#endif /* __cplusplus */
+#endif /* __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 #ifdef	__cplusplus
 extern "C" {
@@ -69,9 +70,9 @@ struct SAIInterfaceSpecifyer_Comparator {
  * Compleetly specifies a skirmish AI together with an interface.
  */
 struct SSAIKey {
-#ifdef	__cplusplus
+#ifdef	__USE_CREG
 	CR_DECLARE_STRUCT(SSAIKey);
-#endif /* __cplusplus */
+#endif /* __USE_CREG */
 	struct SAIInterfaceSpecifyer interface;
 	struct SSAISpecifyer ai;
 };
@@ -94,9 +95,9 @@ struct SSAIKey_Comparator {
  * Compleetly specifies a group AI together with an interface.
  */
 struct SGAIKey {
-#ifdef	__cplusplus
+#ifdef	__USE_CREG
 	CR_DECLARE_STRUCT(SGAIKey);
-#endif /* __cplusplus */
+#endif /* __USE_CREG */
 	struct SAIInterfaceSpecifyer interface;
 	struct SGAISpecifyer ai;
 };
@@ -118,26 +119,42 @@ struct SGAIKey_Comparator {
  * @brief struct Artificial Intelligence Interface
  */
 struct SAIInterfaceLibrary {
-	// static interface library methods
-	int (CALLING_CONV *getInfos)(InfoItem infos[], int max); // static properties
+	// static AI interface library functions
+	/**
+	 * Level of Support for a specific engine version.
+	 * NOTE: this method is optional. An AI Interface not exporting this
+	 * function is still valid.
+	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber);
+	/**
+	 * Returns static properties with info about this AI Interface library.
+	 * NOTE: this method is optional. An AI Interface not exporting this
+	 * function is still valid.
+	 * @return number of elements stored into parameter infos
+	 */
+	int (CALLING_CONV *getInfos)(struct InfoItem infos[], unsigned int max);
 	
 	// skirmish AI methods
-	int (CALLING_CONV *getSkirmishAISpecifyers)(struct SSAISpecifyer* sAISpecifyers, int max);
-	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifyer* const sAISpecifyer);
+	//int (CALLING_CONV *getSkirmishAISpecifyers)(struct SSAISpecifyer* sAISpecifyers, int max);
+	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifyer* const sAISpecifyer);
+	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
 	int (CALLING_CONV *unloadSkirmishAILibrary)(const struct SSAISpecifyer* const sAISpecifyer);
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 	
 	// group AI methods
-	int (CALLING_CONV *getGroupAISpecifyers)(struct SGAISpecifyer* gAISpecifyers, int max);
-	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifyer* const gAISpecifyer);
+	//int (CALLING_CONV *getGroupAISpecifyers)(struct SGAISpecifyer* gAISpecifyers, int max);
+	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifyer* const gAISpecifyer);
+	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
 	int (CALLING_CONV *unloadGroupAILibrary)(const struct SGAISpecifyer* const gAISpecifyer);
 	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 
 #ifdef	__cplusplus
 }
+//#ifdef __USE_CREG
+//#undef __USE_CREG
+//#endif
 #endif
 
 #endif	/* _SAIINTERFACELIBRARY_H */

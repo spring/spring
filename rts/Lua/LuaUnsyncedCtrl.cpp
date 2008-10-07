@@ -3,17 +3,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaUnsyncedCtrl.h"
 #include <set>
 #include <list>
 #include <cctype>
 
 #include <fstream>
-using namespace std;
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+
+#include "mmgr.h"
+
+#include "LuaUnsyncedCtrl.h"
 
 #include "LuaInclude.h"
 
@@ -58,6 +60,8 @@ using namespace std;
 
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+
+using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
@@ -175,9 +179,14 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetShareLevel);
 	REGISTER_LUA_CFUNC(ShareResources);
 
+	REGISTER_LUA_CFUNC(SetLastMessagePosition);
+
 	REGISTER_LUA_CFUNC(MarkerAddPoint);
 	REGISTER_LUA_CFUNC(MarkerAddLine);
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
+
+	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
+	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	return true;
 }
@@ -375,14 +384,14 @@ static string ParseMessage(lua_State* L, const string& msg)
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
 	const CPlayer* player = gs->players[playerID];
-	if ((player == NULL) || !player->active || player->playerName.empty()) {
+	if ((player == NULL) || !player->active || player->name.empty()) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
 
 	const string head = msg.substr(0, start);
 	const string tail = msg.substr(endPtr - msg.c_str() + 1);
 
-	return head + player->playerName + ParseMessage(L, tail);
+	return head + player->name + ParseMessage(L, tail);
 }
 
 
@@ -678,7 +687,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 	}
 
 	const float camTime = luaL_checkfloat(L, 2);
-	
+
 	CCameraController::StateMap camState;
 
 	const int table = 1;
@@ -862,7 +871,7 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 	else {
 		luaL_error(L, "Incorrect arguments to SetCustomCommandDrawData");
 	}
-	
+
 	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	const int table = 3;
@@ -1090,7 +1099,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 static inline bool CheckModUICtrl()
 {
-	return CLuaHandle::GetModUICtrl() || 
+	return CLuaHandle::GetModUICtrl() ||
 	       CLuaHandle::GetActiveHandle()->GetUserMode();
 }
 
@@ -1985,6 +1994,26 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+
+int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 3) ||
+	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to SetLastMessagePosition(x, y, z)");
+	}
+	const float3 pos(lua_tofloat(L, 1),
+	                 lua_tofloat(L, 2),
+	                 lua_tofloat(L, 3));
+
+	logOutput.SetLastMsgPos(pos);
+
+	return 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -2068,3 +2097,34 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+
+int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetDrawSelectionInfo(bool)");
+	}
+
+	guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
+
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::GetDrawSelectionInfo(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
+	}
+
+	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
+	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/

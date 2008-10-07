@@ -96,8 +96,9 @@ enum TEAMMSG {
 };
 
 /**
-@brief High level network code layer
-Provides protocoldependent functions over our CNet-Class. It includes all functions needed to send stuff without handling with the internals.
+@brief A factory used to make often-used network messages.
+
+Use this if you want to create a network message. Implemented as a singleton.
  */
 class CBaseNetProtocol
 {
@@ -155,6 +156,13 @@ public:
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 	
+#ifdef SYNCDEBUG
+	PacketType SendSdCheckrequest(int frameNum);
+	PacketType SendSdCheckresponse(uchar myPlayerNum, Uint64 flop, std::vector<unsigned> checksums);
+	PacketType SendSdReset();
+	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
+	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
+#endif
 private:
 	CBaseNetProtocol();
 	~CBaseNetProtocol();

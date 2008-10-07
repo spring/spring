@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "Messages.h"
 #include "Team.h"
 #include "LogOutput.h"
@@ -17,7 +19,6 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
-#include "mmgr.h"
 #include "NetProtocol.h"
 
 CR_BIND(CTeam,);
@@ -264,7 +265,7 @@ void CTeam::Died()
 {
 	if (leader >= 0) {
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
-		                teamNum, gs->players[leader]->playerName.c_str());
+		                teamNum, gs->players[leader]->name.c_str());
 	} else {
 		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
 	}
@@ -330,7 +331,7 @@ void CTeam::SlowUpdate()
 
 	float eShare = 0.0f, mShare = 0.0f;
 	for (int a = 0; a < gs->activeTeams; ++a) {
-		if ((a != teamNum) && gs->AlliedTeams(teamNum, a)) {
+		if ((a != teamNum) && (gs->AllyTeam(teamNum) == gs->AllyTeam(a))) {
 			CTeam* team = gs->Team(a);
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
 			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
@@ -353,7 +354,7 @@ void CTeam::SlowUpdate()
 		dm = std::min(1.0f, mExcess/mShare);
 	}
 	for (int a = 0; a < gs->activeTeams; ++a) {
-		if ((a != teamNum) && gs->AlliedTeams(teamNum, a)) {
+		if ((a != teamNum) && (gs->AllyTeam(teamNum) == gs->AllyTeam(a))) {
 			CTeam* team = gs->Team(a);
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;

@@ -12,7 +12,7 @@ class CGlobalAICallback :
 	public IGlobalAICallback
 {
 	CSkirmishAIWrapper* ai;
-	
+
 public:
 	CGlobalAICallback(CSkirmishAIWrapper* ai);
 	~CGlobalAICallback();

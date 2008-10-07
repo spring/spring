@@ -4,12 +4,12 @@
 
 #include "../../rts/System/DemoReader.h"
 #include "System/Platform/FileSystem.h"
-#include "Game/GameSetupData.h"
+#include "Game/GameSetup.h"
 #include "BaseNetProtocol.h"
 #include "../../rts/System/Net/RawPacket.h"
 
-CGameSetupData* gameSetup = 0;
 using namespace std;
+using namespace netcode;
 
 /*
 Usage:
@@ -26,7 +26,6 @@ int main (int argc, char* argv[])
 	CDemoReader reader(string(argv[1]), 0.0f);
 	DemoFileHeader header = reader.GetFileHeader();
 	
-	unsigned unknownMessages = 0;
 	while (!reader.ReachedEnd())
 	{
 		RawPacket* packet;
@@ -58,14 +57,22 @@ int main (int argc, char* argv[])
 				cout << "SYSTEMMSG: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+3) << endl;
 				break;
 			case NETMSG_CHAT:
-				cout << "CHAT: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+3) << endl;
+				cout << "CHAT: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+4) << endl;
+				break;
+			case NETMSG_KEYFRAME:
+				cout << "KEYFRAME: " << *(int*)(buffer+1) << endl;
+				break;
+			case NETMSG_NEWFRAME:
+				cout << "NEWFRAME" << endl;
+				break;
+			case NETMSG_LUAMSG:
+				cout << "LUAMSG length:" << packet->length << endl;
 				break;
 			default:
-				unknownMessages++;
+				cout << "MSG: " << (unsigned)buffer[0] << endl;
 		}
 		delete packet;
 	}
-	cout << endl << "There had been " << unknownMessages << " unknown NETMSGs" << endl;
 	FileSystemHandler::Cleanup();
 	return 0;
 }

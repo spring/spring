@@ -3,12 +3,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaShaders.h"
-
 #include <string>
 #include <vector>
 using std::string;
 using std::vector;
+
+#include "mmgr.h"
+
+#include "LuaShaders.h"
 
 #include "LuaInclude.h"
 
@@ -20,6 +22,7 @@ using std::vector;
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 int LuaShaders::activeShaderDepth = 0;

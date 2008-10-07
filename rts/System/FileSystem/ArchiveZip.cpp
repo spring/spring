@@ -1,7 +1,10 @@
 #include "StdAfx.h"
-#include "ArchiveZip.h"
 #include <algorithm>
 #include "mmgr.h"
+
+#include "ArchiveZip.h"
+
+#include "Util.h"
 
 CArchiveZip::CArchiveZip(const std::string& name):
 	CArchiveBuffered(name),

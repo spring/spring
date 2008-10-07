@@ -61,7 +61,7 @@ struct SMFHeader {
 	int heightmapPtr;    ///< File offset to elevation data (short int[(mapy+1)*(mapx+1)])
 	int typeMapPtr;      ///< File offset to typedata (unsigned char[mapy/2 * mapx/2])
 	int tilesPtr;        ///< File offset to tile data (see MapTileHeader)
-	int minimapPtr;      ///< File offset to minimap (always 1024*1024 dxt1 compresed data with 9 mipmap sublevels)
+	int minimapPtr;      ///< File offset to minimap (always 1024*1024 dxt1 compresed data plus 8 mipmap sublevels)
 	int metalmapPtr;     ///< File offset to metalmap (unsigned char[mapx/2 * mapy/2])
 	int featurePtr;      ///< File offset to feature data (see MapFeatureHeader)
 

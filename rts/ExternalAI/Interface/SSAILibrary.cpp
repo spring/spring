@@ -41,6 +41,7 @@ void deleteSSAISpecifyer(const struct SSAISpecifyer* const spec) {
 }
 
 #ifdef	__cplusplus
+
 bool SSAISpecifyer_Comparator::operator()(const struct SSAISpecifyer& a, const struct SSAISpecifyer& b) const {
 
 	bool isLess = false;
@@ -68,16 +69,5 @@ bool SSAISpecifyer_Comparator::IsEmpty(const struct SSAISpecifyer& spec) {
 	
 	return empty;
 }
-#endif /* __cplusplus */
 
-//char* SSAISpecifyer_toString(const SSAISpecifyer* sSAISpecifyer) {
-//
-//	char *spec = (char *)calloc(strlen(sSAISpecifyer->shortName) +
-//			strlen(sSAISpecifyer->version) + 1 + 1, sizeof(char));
-//
-//	strcpy(spec, sSAISpecifyer->shortName);
-//	strcat(spec, "#");
-//	strcat(spec, sSAISpecifyer->version);
-//
-//	return spec;
-//}
+#endif /* __cplusplus */

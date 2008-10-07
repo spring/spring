@@ -7,6 +7,7 @@
 #ifndef C_MATHLIB_H
 #define C_MATHLIB_H
 
+#include "float3.h"
 typedef float3 Vector3;
 
 #define EPSILON (0.01f)

@@ -1,13 +1,15 @@
 #include "StdAfx.h"
+#include <algorithm>
+#include "mmgr.h"
+
 #include "ArchiveFactory.h"
 #include "ArchiveDir.h"
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
 #include "Platform/FileSystem.h"
-#include <algorithm>
-#include "mmgr.h"
 
+#include "Util.h"
 
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsScanArchive(const std::string& fileName)

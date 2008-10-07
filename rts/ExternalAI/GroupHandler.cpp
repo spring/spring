@@ -44,7 +44,7 @@ CGroupHandler::CGroupHandler(int team)
 	defaultKey.dllName="default";
 	defaultKey.aiNumber=0;
 
-	FindDlls();
+	//FindDlls();
 
 	for(int a=0;a<10;++a){
 		groups.push_back(SAFE_NEW CGroup(defaultKey,a,this));

@@ -21,7 +21,7 @@
 #include "SInfo.h"
 
 #include "string.h"
-#include "System/StdAfx.h"
+#include "System/Util.h"
 
 
 InfoItem copyInfoItem(const struct InfoItem* const orig) {

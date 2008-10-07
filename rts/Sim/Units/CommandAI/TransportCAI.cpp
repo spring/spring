@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include "TransportCAI.h"
 #include "LineDrawer.h"
 #include "Sim/Units/UnitHandler.h"
@@ -16,7 +18,6 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/ModInfo.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "mmgr.h"
 #include "creg/STL_List.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16
@@ -392,6 +393,38 @@ bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload) {
 
 	return true;
 }
+
+/** this is a version of SpotIsClear that ignores the tranport and all
+	units it carries. */
+bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload) {
+	float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
+
+	if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
+ 		return false;
+	if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
+		return false;
+	if(ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
+		return false;
+
+	vector<CUnit*> units = qf->GetUnitsExact(pos,unitToUnload->radius+8);
+	CTransportUnit* me = (CTransportUnit*)owner;
+	for (vector<CUnit*>::iterator it = units.begin(); it != units.end(); ++it) {
+		// check if the units are in the transport
+		bool found = false;
+		for (std::list<CTransportUnit::TransportedUnit>::iterator it2 = me->transported.begin();
+				it2 != me->transported.end(); ++it2) {
+			if (it2->unit == *it) {
+				found = true;
+				break;
+			}
+		}
+		if (!found && *it != owner)
+			return false;
+	}
+
+	return true;
+}
+
 bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots) {
 	//should only be used by air
 
@@ -631,11 +664,25 @@ void CTransportCAI::UnloadLand(Command& c) {
 				am->SetWantedAltitude(unit->model->height);
 				am->maxDrift = 1;
 				if ((owner->pos.distance(wantedPos) < 8) &&
-					(owner->updir.dot(UpVector) > 0.99f)) {
-					transport->DetachUnit(unit);
-					if (transport->transported.empty()) {
-						am->dontLand = false;
-						owner->cob->Call("EndTransport");
+						(owner->updir.dot(UpVector) > 0.99f)) {
+					if (!SpotIsClearIgnoreSelf(wantedPos, unit)) {
+						// chosen spot is no longer clear to land, choose a new one
+						// if a new spot cannot be found, don't unload at all
+						float3 newpos;
+						if (FindEmptySpot(wantedPos, std::max(128.f, unit->radius*4),
+								unit->radius, newpos, unit)) {
+							c.params[0] = newpos.x;
+							c.params[1] = newpos.y;
+							c.params[2] = newpos.z;
+							SetGoal(newpos + UpVector * unit->model->height, owner->pos);
+							return;
+						}
+					} else {
+						transport->DetachUnit(unit);
+						if (transport->transported.empty()) {
+							am->dontLand = false;
+							owner->cob->Call("EndTransport");
+						}
 					}
 					const float3 fix = owner->pos + owner->frontdir * 20;
 					SetGoal(fix, owner->pos);		//move the transport away slightly

@@ -3,10 +3,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaSyncedMoveCtrl.h"
 #include <set>
 #include <list>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaSyncedMoveCtrl.h"
 
 #include "LuaInclude.h"
 
@@ -76,7 +79,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCollideStop);
 
 	lua_rawset(L, -3);
-	
+
 	return true;
 }
 
@@ -289,6 +292,9 @@ int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 	const float3 rot(luaL_checkfloat(L, 8),
 	                 luaL_checkfloat(L, 9),
 	                 luaL_checkfloat(L, 10));
+	ASSERT_SYNCED_FLOAT3(pos);
+	ASSERT_SYNCED_FLOAT3(vel);
+	ASSERT_SYNCED_FLOAT3(rot);
 	moveType->SetPhysics(pos, vel, rot);
 	return 0;
 }
@@ -303,6 +309,7 @@ int LuaSyncedMoveCtrl::SetPosition(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(pos);
 	moveType->SetPosition(pos);
 	return 0;
 }
@@ -317,6 +324,7 @@ int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 	const float3 vel(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(vel);
 	moveType->SetVelocity(vel);
 	return 0;
 }
@@ -331,6 +339,7 @@ int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
 	const float3 relVel(luaL_checkfloat(L, 2),
 	                    luaL_checkfloat(L, 3),
 	                    luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(relVel);
 	moveType->SetRelativeVelocity(relVel);
 	return 0;
 }
@@ -345,6 +354,7 @@ int LuaSyncedMoveCtrl::SetRotation(lua_State* L)
 	const float3 rot(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(rot);
 	moveType->SetRotation(rot);
 	return 0;
 }
@@ -359,6 +369,7 @@ int LuaSyncedMoveCtrl::SetRotationOffset(lua_State* L)
 	const float3 rotOff(luaL_checkfloat(L, 2),
 	                    luaL_checkfloat(L, 3),
 	                    luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(rotOff);
 	moveType->SetRotationOffset(rotOff);
 	return 0;
 }
@@ -373,6 +384,7 @@ int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
 	const float3 rotVel(luaL_checkfloat(L, 2),
 	                    luaL_checkfloat(L, 3),
 	                    luaL_checkfloat(L, 4));
+	ASSERT_SYNCED_FLOAT3(rotVel);
 	moveType->SetRotationVelocity(rotVel);
 	return 0;
 }
@@ -385,6 +397,7 @@ int LuaSyncedMoveCtrl::SetHeading(lua_State* L)
 		return 0;
 	}
 	const short heading = (short)luaL_checknumber(L, 2);
+	ASSERT_SYNCED_PRIMITIVE((short)heading);
 	moveType->SetHeading(heading);
 	return 0;
 }

@@ -1,4 +1,5 @@
-#include <iostream>
+#include "StdAfx.h"
+#include "mmgr.h"
 
 #include "System/FastMath.h"
 #include "System/float3.h"
@@ -224,14 +225,20 @@ bool CCollisionHandler::IntersectAlt(const collisionVolume* d, const CMatrix44f&
 // the volume whose transformation matrix is given by <m>
 bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q)
 {
+	if (q) {
+		// reset the query
+		q->b0 = false; q->t0 = 0.0f; q->p0 = ZVec;
+		q->b1 = false; q->t1 = 0.0f; q->p1 = ZVec;
+	}
+
 	CMatrix44f mInv = m.Invert();
 	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
 	bool intersect = false;
 
 	// minimum and maximum (x, y, z) coordinates of transformed ray
-	const float rminx = MIN(pi0.x, pi1.x), rminy = MIN(pi0.y, pi1.y), rminz = MIN(pi0.z, pi1.z);
-	const float rmaxx = MAX(pi0.x, pi1.x), rmaxy = MAX(pi0.y, pi1.y), rmaxz = MAX(pi0.z, pi1.z);
+	const float rminx = std::min(pi0.x, pi1.x), rminy = std::min(pi0.y, pi1.y), rminz = std::min(pi0.z, pi1.z);
+	const float rmaxx = std::max(pi0.x, pi1.x), rmaxy = std::max(pi0.y, pi1.y), rmaxz = std::max(pi0.z, pi1.z);
 
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
 	const float vminx = -v->axisHScales.x, vminy = -v->axisHScales.y, vminz = -v->axisHScales.z;
@@ -257,8 +264,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 
 	if (q) {
 		// transform the intersection points
-		q->p0 = m.Mul(q->p0);
-		q->p1 = m.Mul(q->p1);
+		if (q->b0) { q->p0 = m.Mul(q->p0); }
+		if (q->b1) { q->p1 = m.Mul(q->p1); }
 	}
 
 	return intersect;
@@ -275,12 +282,9 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	if (pii0.dot(pii0) <= rSq /* && pii1.dot(pii1) <= rSq */) {
 		// terminate early in the special case
 		// that shot originated within volume
-		if (q) {
-			q->b0 = true; q->b1 = true;
-			q->t0 = 0.0f; q->t1 = 0.0f;
-			q->p0 = ZVec; q->p1 = ZVec;
-		}
-		return true;
+		// (note: can mean missed impacts when
+		// two units are very close together)
+		return false;
 	}
 
 	// get the ray direction in unit-sphere space
@@ -367,7 +371,10 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		((pi0[sAx1] * pi0[sAx1]) / ahsq[sAx1]);
 
 	if ((pi0[pAx] > -ahs[pAx] && pi0[pAx] < ahs[pAx]) && ratio <= 1.0f) {
-		// ray originated inside volume, disregard
+		// terminate early in the special case
+		// that shot originated within volume
+		// (note: can mean missed impacts when
+		// two units are very close together)
 		return false;
 	}
 
@@ -530,12 +537,10 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	if ((ba && bb && bc) /* && (bd && be && bf) */) {
 		// terminate early in the special case
 		// that shot originated within volume
-		if (q) {
-			q->b0 = true; q->b1 = true;
-			q->t0 = 0.0f; q->t1 = 0.0f;
-			q->p0 = ZVec; q->p1 = ZVec;
-		}
-		return true;
+		// (note: can mean missed impacts when
+		// two units are very close together)
+		// FIXME: results in undetected hits?
+		// return false;
 	}
 
 	float tn = -9999999.9f;

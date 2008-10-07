@@ -3,14 +3,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "LuaWeaponDefs.h"
-
 #include <set>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
 #include <cctype>
+
+#include "mmgr.h"
+
+#include "LuaWeaponDefs.h"
 
 #include "LuaInclude.h"
 
@@ -24,6 +26,8 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/GlobalStuff.h"
 
 using namespace std;
 
@@ -282,7 +286,6 @@ static int VisualsTable(lua_State* L, const void* data)
 		*((const struct WeaponDef::Visuals*)data);
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "modelName",   v.modelName);
-	HSTR_PUSH_NUMBER(L, "renderType",  v.renderType);
 	HSTR_PUSH_NUMBER(L, "colorR",      v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",      v.color.y);
 	HSTR_PUSH_NUMBER(L, "colorB",      v.color.z);
@@ -492,6 +495,8 @@ static bool InitParamMap()
 	ADD_INT("interceptor",     wd.interceptor);
 	ADD_FLOAT("coverageRange", wd.coverageRange);
 
+	ADD_FLOAT("stockpileTime", wd.stockpileTime);
+
 	ADD_FLOAT("intensity", wd.intensity);
 	ADD_FLOAT("thickness", wd.thickness);
 	ADD_FLOAT("laserFlareSize", wd.laserflaresize);
@@ -503,10 +508,6 @@ static bool InitParamMap()
 
 	ADD_BOOL("selfExplode", wd.selfExplode);
 	ADD_BOOL("gravityAffected", wd.gravityAffected);
-	ADD_BOOL("twoPhase", wd.twophase);
-	ADD_BOOL("guided", wd.guided);
-	ADD_BOOL("vlaunch", wd.vlaunch);
-	ADD_BOOL("selfprop", wd.selfprop);
 	ADD_BOOL("noExplode", wd.noExplode);
 	ADD_FLOAT("startvelocity", wd.startvelocity);
 	ADD_FLOAT("weaponAcceleration", wd.weaponacceleration);
