@@ -1,16 +1,16 @@
 Spring change log
 
-0.76b2
+0.77b1
 
 User Interface:
- - FIXME: .cheat -> /cheat
+ - all commands are prefixed with '/' instead of '.' (".cheat" becomes "/cheat", etc.)
  - Added /mapmarks [0|1]
  - Added /allmapmarks [0|1]
  - Added /forcestart command
  - Added /ally teamID [0|1] (Ingame alliances)
  - multithreaded avi-generator
  - Adde /commands (shows all registered commands in the console)
- - FIXME: whisper chat (w:?)
+ - whisper private messages to any other player ingame (excluding spectators) by typing "/w Playername Your secret message"
  - Added new camera controller: SmoothCamera
    behaves like overview controller, but feels much smoother
  - Added possibility to specify files that should be excluded from Spring's
@@ -44,10 +44,9 @@ User Interface:
 
 
 Spring Engine:
- (- FIXME: GML)
- - FIXME: Overall speed up (fastmath,SMF render code, minimap renderer, ..)
- - FIXME: Network code optimizations
- - FIXME: Functionality of Sensors.tdf and Particles.tdf moved to modrules. removed Sensors.tdf or Particles.tdf
+ - new water renderer: bumpwater ("/water 4"), pretty and fast
+ - the usual speedups and performance improvements
+ - Functionality of Sensors.tdf and Particles.tdf moved to modrules. removed Sensors.tdf or Particles.tdf
    Transfers resources.tdf to resources.lua, and resources_map.tdf to resources_map.lua.
    Sidedata.tdf -> sidedata.lua
    icontypes.lua
@@ -56,9 +55,7 @@ Spring Engine:
    modinfo.tdf --> modinfo.lua
    ArchiveCacheV6.txt --> ArchiveCacheV7.lua
  - FIXME: Custom collision volumes (collisionVolumeTest..)
- - FIXME: Ingame alliances.
- - FIXME: Multithreaded Pathing.
- - FIXME: new bumpwater shader (/water 4).
+ - you can ally / unally other teams ingame using the "/ally [teamnumber] [0|1]" command (needs to be activated in lobby)
  - Keep units in various situations from deciding to attack units they 
    shouldn't (noChaseCatagory, neutral, under water without water weapons).
  - Added canFireControl unitdef tag.
