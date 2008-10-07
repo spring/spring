@@ -1580,7 +1580,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	else if (lua_istable(L, 2)) {
 		const int table = 2;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (!lua_isnumber(L, -1)) {
+			if (lua_isnumber(L, -1)) {
 				const int unitDefID = lua_toint(L, -1);
 				const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
 				InsertSearchUnitDefs(ud, allied, defs);
@@ -2758,7 +2758,7 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 		lua_pushnumber(L, unit->flankingBonusDir.z);
 		return 7;
 	}
-	
+
 	return 0;
 }
 
@@ -2964,7 +2964,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 		lua_pushnumber(L, losStatus); // return a numberic value
 		return 1;
 	}
-	
+
 	lua_newtable(L);
 	if (losStatus & LOS_INLOS) {
 		HSTR_PUSH_BOOL(L, "los", true);
@@ -4541,7 +4541,7 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 	}
 	lua_pushnumber(L, value);
 	return 1;
-	 		
+
 }
 
 
