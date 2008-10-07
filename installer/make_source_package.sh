@@ -49,17 +49,15 @@ include=" \
  $dir/README.* \
  $dir/rts/ \
  $dir/SConstruct \
- $dir/tools/RtsSettings/ \
  $dir/tools/SelectionEditor/ \
- $dir/tools/unitsync/ \
- $dir/Lobby/TASServer/"
+ $dir/tools/unitsync/"
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
-linux_exclude="$dir/installer/pkzip.exe $dir/Lobby/TASClient/brcc32.exe"
+linux_exclude="$dir/installer/pkzip.exe"
 linux_include=""
 windows_exclude=""
-windows_include="$dir/Lobby/TASClient/"
+windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'
