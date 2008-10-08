@@ -1,10 +1,10 @@
 !ifdef TEST_BUILD
  !define PRODUCT_NAME "Spring - Test Build"
- !define PRODUCT_VERSION "0.77b1+svn${REVISION}"
+ !define PRODUCT_VERSION "0.77b2+svn${REVISION}"
  !define SP_BASENAME "spring_${PRODUCT_VERSION}"
 !else
  !define PRODUCT_NAME "Spring"
- !define PRODUCT_VERSION "0.77b1"
+ !define PRODUCT_VERSION "0.77b2"
  !define SP_BASENAME "spring_${PRODUCT_VERSION}"
 !endif
 
