@@ -247,7 +247,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 		// Is this team (Lua) AI controlled?
 		// If this is a demo replay, non-Lua AIs aren't loaded.
-		data.luaAI = file.SGetValueDef("", s + "aispecifyer");
+		data.luaAI = file.SGetValueDef("", s + "aispecifier");
 		if (data.luaAI.empty()) {
 			data.luaAI = file.SGetValueDef("", s + "luaai");
 		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {

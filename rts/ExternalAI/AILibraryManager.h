@@ -30,7 +30,7 @@ private:
 //	typedef s_cont<ISkirmishAILibraryInterfaceInfo>::vector T_interfaceInfos;
 //	typedef s_cont<CSkirmishAILibraryInfoKey>::vector T_infoKeys;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::vector T_aiInfos;
-//	typedef s_cont<std::string>::vector T_specifyers;
+//	typedef s_cont<std::string>::vector T_specifiers;
 //	
 //	typedef s_assoc<ISkirmishAILibraryInterfaceInfo, std::string>::map T_fileNames;
 //	typedef s_assoc<ISkirmishAILibraryInterfaceInfo, ISkirmishAILibraryInterface>::map T_loadedInterfaces;
@@ -39,7 +39,7 @@ public:
 	CAILibraryManager(); // looks for interface and AIs supported by them (ret != 0: error)
 	~CAILibraryManager(); // unloads all shared libraries that are currently loaded (interfaces and implementations)
 	
-	virtual const std::vector<SAIInterfaceSpecifyer>* GetInterfaceSpecifyers() const;
+	virtual const std::vector<SAIInterfaceSpecifier>* GetInterfaceSpecifiers() const;
 	virtual const std::vector<SSAIKey>* GetSkirmishAIKeys() const;
 	virtual const std::vector<SGAIKey>* GetGroupAIKeys() const;
 	
@@ -47,8 +47,8 @@ public:
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const;
 
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifyer& skirmishAISpecifyer) const;
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifyer) const;
+	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const;
+	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const;
 	// a Skirmish AI (its library) is only really loaded when it is not yet loaded.
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey);
 	// a Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -58,7 +58,7 @@ public:
 	virtual void ReleaseSkirmishAILibrary(const SSAIKey& skirmishAIKey);
 	virtual void ReleaseAllSkirmishAILibraries(); // unloads all currently Skirmish loaded AIs
 	
-	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifyer) const;
+	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifier) const;
 	// a Group AI (its library) is only really loaded when it is not yet loaded.
 	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAIKey& groupAIKey);
 	// a Group AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -71,16 +71,16 @@ public:
 	virtual void ReleaseEverything(); // unloads all currently loaded AIs and interfaces
 	
 private:
-	typedef std::map<const SAIInterfaceSpecifyer, IAIInterfaceLibrary*, SAIInterfaceSpecifyer_Comparator> T_loadedInterfaces;
+	typedef std::map<const SAIInterfaceSpecifier, IAIInterfaceLibrary*, SAIInterfaceSpecifier_Comparator> T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 	
-	std::vector<SAIInterfaceSpecifyer> interfaceSpecifyers;
+	std::vector<SAIInterfaceSpecifier> interfaceSpecifiers;
 	std::vector<SSAIKey> skirmishAIKeys;
 	std::vector<SGAIKey> groupAIKeys;
-//	std::vector<const SAIInterfaceSpecifyer> interfaceLibrarySpecifyers;
-//	std::vector<const SSAIKey> skirmishAILibrarySpecifyers;
-//	std::vector<const SGAIKey> groupAILibrarySpecifyers;
-	//std::map<const SAIInterfaceSpecifyer, std::string, SAIInterfaceSpecifyer_Comparator> interfaceFileNames; // file name of the AI interface library and (LUA-)info cache file (these two have to be the same [without extension])
+//	std::vector<const SAIInterfaceSpecifier> interfaceLibrarySpecifiers;
+//	std::vector<const SSAIKey> skirmishAILibrarySpecifiers;
+//	std::vector<const SGAIKey> groupAILibrarySpecifiers;
+	//std::map<const SAIInterfaceSpecifier, std::string, SAIInterfaceSpecifier_Comparator> interfaceFileNames; // file name of the AI interface library and (LUA-)info cache file (these two have to be the same [without extension])
 	
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
@@ -90,7 +90,7 @@ private:
 ////	typedef s_cont<ISkirmishAILibraryInfo>::vector T_aiInfos;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::const_vector T_aiInfos_const;
 ////	T_aiInfos aiInfos;
-//	T_specifyers specifyers;
+//	T_specifiers specifiers;
 //	T_fileNames fileNames; // file name of the library and (LUA-)info cache file (without extension)
 //	
 //	T_loadedInterfaces loadedInterfaces;
@@ -106,11 +106,11 @@ private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
-	IAIInterfaceLibrary* FetchInterface(const SAIInterfaceSpecifyer& interfaceSpecifyer);
+	IAIInterfaceLibrary* FetchInterface(const SAIInterfaceSpecifier& interfaceSpecifier);
 	/**
 	 * Unloads the interface if its load count reaches 0.
 	 */
-	void ReleaseInterface(const SAIInterfaceSpecifyer& interfaceSpecifyer);
+	void ReleaseInterface(const SAIInterfaceSpecifier& interfaceSpecifier);
 //	// the interface has to be loaded already. if it is not, a pointer to NULL will be returned.
 //	s_p<ISkirmishAILibraryInterface> GetInterface(const s_p<const ISkirmishAILibraryInterfaceInfo>& interfaceInfo) const;
 //	// if the filename is not found, a pointer to NULL will be returned.
@@ -160,10 +160,10 @@ private:
 	 * available: 0.1, 0.3, 0.5
 	 * chosen: 0.3
 	 */
-	static SAIInterfaceSpecifyer findFittingInterfaceSpecifyer(
+	static SAIInterfaceSpecifier findFittingInterfaceSpecifier(
 			const std::string& shortName,
 			const std::string& minVersion,
-			const std::vector<SAIInterfaceSpecifyer>& specs);
+			const std::vector<SAIInterfaceSpecifier>& specs);
 	static int versionCompare(
 			const std::string& version1,
 			const std::string& version2);

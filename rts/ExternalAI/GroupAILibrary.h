@@ -28,14 +28,14 @@ public:
 	CGroupAILibrary(const SGAILibrary& ai);
 	virtual ~CGroupAILibrary();
 	
-	virtual SGAISpecifyer GetSpecifyer() const;
+	virtual SGAISpecifier GetSpecifier() const;
 	/**
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
-			const SAIInterfaceSpecifyer& interfaceSpecifyer) const;
+			const SAIInterfaceSpecifier& interfaceSpecifier) const;
 	
     virtual std::map<std::string, InfoItem> GetInfos() const;
 	virtual std::vector<Option> GetOptions() const;
@@ -47,7 +47,7 @@ public:
 	
 private:
 	SGAILibrary sGAI;
-	SGAISpecifyer specifyer;
+	SGAISpecifier specifier;
 	
 private:
 //	void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);

@@ -20,9 +20,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-SAIInterfaceSpecifyer copySAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const orig) {
+SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig) {
 	
-	struct SAIInterfaceSpecifyer copy;
+	struct SAIInterfaceSpecifier copy;
 	
 	char* tmpStr = (char *) malloc(sizeof(char) * strlen(orig->shortName) + 1);
 	strcpy(tmpStr, orig->shortName);
@@ -34,7 +34,7 @@ SAIInterfaceSpecifyer copySAIInterfaceSpecifyer(const struct SAIInterfaceSpecify
 	
 	return copy;
 }
-void deleteSAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const spec) {
+void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec) {
 	free(const_cast<char*>(spec->shortName));
 	free(const_cast<char*>(spec->version));
 }
@@ -47,7 +47,7 @@ CR_BIND(SSAIKey,)
 CR_BIND(SGAIKey,)
 #endif /* __USE_CREG */
 
-bool SAIInterfaceSpecifyer_Comparator::operator()(const struct SAIInterfaceSpecifyer& a, const struct SAIInterfaceSpecifyer& b) const {
+bool SAIInterfaceSpecifier_Comparator::operator()(const struct SAIInterfaceSpecifier& a, const struct SAIInterfaceSpecifier& b) const {
 
 	bool isLess = false;
 	
@@ -64,7 +64,7 @@ bool SAIInterfaceSpecifyer_Comparator::operator()(const struct SAIInterfaceSpeci
 
 	return isLess;
 }
-bool SAIInterfaceSpecifyer_Comparator::IsEmpty(const struct SAIInterfaceSpecifyer& spec) {
+bool SAIInterfaceSpecifier_Comparator::IsEmpty(const struct SAIInterfaceSpecifier& spec) {
 	
 	bool empty = false;
 	
@@ -79,11 +79,11 @@ bool SSAIKey_Comparator::operator()(const struct SSAIKey& a, const struct SSAIKe
 	
 	bool isLess = false;
 	
-	bool interfaceLess = SAIInterfaceSpecifyer_Comparator()(a.interface, b.interface);
+	bool interfaceLess = SAIInterfaceSpecifier_Comparator()(a.interface, b.interface);
 	if (interfaceLess) {
 		isLess = true;
-	} else if (!(SAIInterfaceSpecifyer_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
-		bool aiLess = SSAISpecifyer_Comparator()(a.ai, b.ai);
+	} else if (!(SAIInterfaceSpecifier_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
+		bool aiLess = SSAISpecifier_Comparator()(a.ai, b.ai);
 		
 		if (aiLess) {
 			isLess = true;
@@ -96,8 +96,8 @@ bool SSAIKey_Comparator::IsEmpty(const struct SSAIKey& key) {
 	
 	bool empty = false;
 	
-	if (SAIInterfaceSpecifyer_Comparator::IsEmpty(key.interface)
-			|| SSAISpecifyer_Comparator::IsEmpty(key.ai)) {
+	if (SAIInterfaceSpecifier_Comparator::IsEmpty(key.interface)
+			|| SSAISpecifier_Comparator::IsEmpty(key.ai)) {
 		empty = true;
 	}
 	
@@ -108,11 +108,11 @@ bool SGAIKey_Comparator::operator()(const struct SGAIKey& a, const struct SGAIKe
 
 	bool isLess = false;
 	
-	bool interfaceLess = SAIInterfaceSpecifyer_Comparator()(a.interface, b.interface);
+	bool interfaceLess = SAIInterfaceSpecifier_Comparator()(a.interface, b.interface);
 	if (interfaceLess) {
 		isLess = true;
-	} else if (!(SAIInterfaceSpecifyer_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
-		bool aiLess = SGAISpecifyer_Comparator()(a.ai, b.ai);
+	} else if (!(SAIInterfaceSpecifier_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
+		bool aiLess = SGAISpecifier_Comparator()(a.ai, b.ai);
 		
 		if (aiLess) {
 			isLess = true;
@@ -125,8 +125,8 @@ bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
 	
 	bool empty = false;
 	
-	if (SAIInterfaceSpecifyer_Comparator::IsEmpty(key.interface)
-			|| SGAISpecifyer_Comparator::IsEmpty(key.ai)) {
+	if (SAIInterfaceSpecifier_Comparator::IsEmpty(key.interface)
+			|| SGAISpecifier_Comparator::IsEmpty(key.ai)) {
 		empty = true;
 	}
 	

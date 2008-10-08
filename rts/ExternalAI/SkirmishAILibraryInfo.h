@@ -29,12 +29,12 @@
 class ISkirmishAILibrary;
 struct InfoItem;
 struct Option;
-struct SAIInterfaceSpecifyer;
-struct SSAISpecifyer;
+struct SAIInterfaceSpecifier;
+struct SSAISpecifier;
 
 class CSkirmishAILibraryInfo {
 public:
-	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifyer& interfaceSpecifyer);
+	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier);
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
 	CSkirmishAILibraryInfo(
 			const std::string& aiInfoFile,
@@ -43,9 +43,9 @@ public:
 			const std::string& accessModes);
     
 //    virtual LevelOfSupport GetLevelOfSupportForCurrentEngineAndSetInterface() const;
-//    virtual LevelOfSupport GetLevelOfSupportForCurrentEngine(SAIInterfaceSpecifyer interfaceSpecifyer) const;
+//    virtual LevelOfSupport GetLevelOfSupportForCurrentEngine(SAIInterfaceSpecifier interfaceSpecifier) const;
 	
-    virtual SSAISpecifyer GetSpecifier() const;
+    virtual SSAISpecifier GetSpecifier() const;
 	
     virtual std::string GetFileName() const;
     virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'

@@ -1242,7 +1242,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!setup || !SSAIKey_Comparator::IsEmpty(gs->Team(a)->skirmishAISpecifyer)) // is not empty?
+		if (!setup || !SSAIKey_Comparator::IsEmpty(gs->Team(a)->skirmishAISpecifier)) // is not empty?
 			hasPlayer = true;
 
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)

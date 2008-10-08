@@ -46,7 +46,7 @@ Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
 Export(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
 
 Export(int) GetSkirmishAICount();
-Export(struct SSAISpecifyer) GetSkirmishAISpecifyer(int index);
+Export(struct SSAISpecifier) GetSkirmishAISpecifier(int index);
 Export(int) GetSkirmishAIInfoCount(int index);
 Export(const char*) GetInfoKey(int index);
 Export(const char*) GetInfoValue(int index);

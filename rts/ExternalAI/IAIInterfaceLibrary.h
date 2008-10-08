@@ -29,7 +29,7 @@ class IAIInterfaceLibrary {
 public:
 	virtual ~IAIInterfaceLibrary() {}
 	
-	virtual SAIInterfaceSpecifyer GetSpecifyer() const = 0;
+	virtual SAIInterfaceSpecifier GetSpecifier() const = 0;
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const = 0;
 	
@@ -49,9 +49,9 @@ public:
 	
 //	virtual std::vector<ISkirmishAILibraryInfo*> GetSkirmishAILibraryInfos(bool forceLoadFromLibrary = false) const;
 	/**
-	 * Returns the specifyers for all Skirmish AIs available through this interface.
+	 * Returns the specifiers for all Skirmish AIs available through this interface.
 	 */
-	//virtual std::vector<SSAISpecifyer> GetSkirmishAILibrarySpecifyers() const = 0;
+	//virtual std::vector<SSAISpecifier> GetSkirmishAILibrarySpecifiers() const = 0;
 	/**
 	 * @brief	loads the AI library
 	 * This only loads the AI library, and does not yet create an instance
@@ -59,7 +59,7 @@ public:
 	 * For the C and C++ AI interface eg, this will load a shared library.
 	 * Increments the load counter.
 	 */
-	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer) = 0;
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) = 0;
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* skirmishAIInfo) = 0;
 	/**
@@ -70,19 +70,19 @@ public:
 	 * of that AI are still in use, as it will result in a crash.
 	 * Decrements the load counter.
 	 */
-	virtual int ReleaseSkirmishAILibrary(const SSAISpecifyer& sAISpecifyer) = 0;
+	virtual int ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier) = 0;
 	/**
 	 * @brief	is the Skirmish AI library loaded
 	 */
-	bool IsSkirmishAILibraryLoaded(const SSAISpecifyer& sAISpecifyer) const {
-		return GetSkirmishAILibraryLoadCount(sAISpecifyer) > 0;
+	bool IsSkirmishAILibraryLoaded(const SSAISpecifier& sAISpecifier) const {
+		return GetSkirmishAILibraryLoadCount(sAISpecifier) > 0;
 	}
 	/**
 	 * @brief	how many times is the Skirmish AI loaded
 	 * Thought the AI library may be loaded only once, it can be logically
 	 * loaded multiple times (load counter).
 	 */
-	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifyer& sAISpecifyer) const = 0;
+	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const = 0;
 	/**
 	 * @brief	unloads all AIs
 	 * Unloads all AI libraries currently loaded through this interface.
@@ -92,14 +92,14 @@ public:
 	
 	
 //	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfos(bool forceLoadFromLibrary = false) const;
-	//virtual std::vector<SGAISpecifyer> GetGroupAILibrarySpecifyers() const = 0;
-	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifyer& gAISpecifyer) = 0;
+	//virtual std::vector<SGAISpecifier> GetGroupAILibrarySpecifiers() const = 0;
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
 	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
 	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) = 0;
-	virtual int ReleaseGroupAILibrary(const SGAISpecifyer& gAISpecifyer) = 0;
-	virtual int GetGroupAILibraryLoadCount(const SGAISpecifyer& gAISpecifyer) const = 0;
-	bool IsGroupAILibraryLoaded(const SGAISpecifyer& gAISpecifyer) const {
-		return GetGroupAILibraryLoadCount(gAISpecifyer) > 0;
+	virtual int ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
+	virtual int GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const = 0;
+	bool IsGroupAILibraryLoaded(const SGAISpecifier& gAISpecifier) const {
+		return GetGroupAILibraryLoadCount(gAISpecifier) > 0;
 	}
 	virtual int ReleaseAllGroupAILibraries() = 0;
 };

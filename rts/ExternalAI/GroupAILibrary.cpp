@@ -25,23 +25,23 @@ CGroupAILibrary::CGroupAILibrary(const SGAILibrary& ai) {
 	sGAI = ai;
 	
 	std::map<std::string, InfoItem> infos = GetInfos();
-	specifyer.shortName = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
-	specifyer.version = infos.at(GROUP_AI_PROPERTY_VERSION).value;
+	specifier.shortName = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
+	specifier.version = infos.at(GROUP_AI_PROPERTY_VERSION).value;
 }
 
 CGroupAILibrary::~CGroupAILibrary() {}
 	
-SGAISpecifyer CGroupAILibrary::GetSpecifyer() const {
-	return specifyer;
+SGAISpecifier CGroupAILibrary::GetSpecifier() const {
+	return specifier;
 }
 
 LevelOfSupport CGroupAILibrary::GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
-		const SAIInterfaceSpecifyer& interfaceSpecifyer) const {
+		const SAIInterfaceSpecifier& interfaceSpecifier) const {
 	
 	if (sGAI.getLevelOfSupportFor != NULL) {
 		return sGAI.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber,
-			interfaceSpecifyer.shortName, interfaceSpecifyer.version);
+			interfaceSpecifier.shortName, interfaceSpecifier.version);
 	} else {
 		return LOS_Unknown;
 	}

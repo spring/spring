@@ -98,37 +98,37 @@ void CAILibraryManager::GetAllInfosFromLibraries() {
 					libFile->c_str());
 		}
 		
-		SAIInterfaceSpecifyer interfaceSpecifyer = interfaceLib->GetSpecifyer();
-		interfaceSpecifyer = copySAIInterfaceSpecifyer(&interfaceSpecifyer);
-		interfaceSpecifyers.push_back(interfaceSpecifyer);
+		SAIInterfaceSpecifier interfaceSpecifier = interfaceLib->GetSpecifier();
+		interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
+		interfaceSpecifiers.push_back(interfaceSpecifier);
 		
 		// generate and store the interface info
 		CAIInterfaceLibraryInfo* interfaceInfo = new CAIInterfaceLibraryInfo(*interfaceLib);
-		interfaceInfos[interfaceSpecifyer] = interfaceInfo;
+		interfaceInfos[interfaceSpecifier] = interfaceInfo;
 		
 		// generate and store the pure file name
-		//interfaceFileNames[interfaceSpecifyer] = fileName;
+		//interfaceFileNames[interfaceSpecifier] = fileName;
 		interfaceInfo->SetFileName(fileName);
 		
 		// fetch the info of all Skirmish AIs available through the interface
-		std::vector<SSAISpecifyer> sass = interfaceLib->GetSkirmishAILibrarySpecifyers();
-		std::vector<SSAISpecifyer>::const_iterator sas;
+		std::vector<SSAISpecifier> sass = interfaceLib->GetSkirmishAILibrarySpecifiers();
+		std::vector<SSAISpecifier>::const_iterator sas;
 		for (sas=sass.begin(); sas!=sass.end(); sas++) { // AIs
 			const ISkirmishAILibrary* skirmishAI = interfaceLib->FetchSkirmishAILibrary(*sas);
-			CSkirmishAILibraryInfo* skirmishAIInfo = new CSkirmishAILibraryInfo(*skirmishAI, interfaceSpecifyer);
-			SSAIKey skirmishAIKey = {interfaceSpecifyer, copySSAISpecifyer(&(*sas))};
+			CSkirmishAILibraryInfo* skirmishAIInfo = new CSkirmishAILibraryInfo(*skirmishAI, interfaceSpecifier);
+			SSAIKey skirmishAIKey = {interfaceSpecifier, copySSAISpecifier(&(*sas))};
 			skirmishAIKeys.push_back(skirmishAIKey);
 			skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 			interfaceLib->ReleaseSkirmishAILibrary(*sas);
 		}
 		
 		// fetch the info of all Group AIs available through the interface
-		std::vector<SGAISpecifyer> gass = interfaceLib->GetGroupAILibrarySpecifyers();
-		std::vector<SGAISpecifyer>::const_iterator gas;
+		std::vector<SGAISpecifier> gass = interfaceLib->GetGroupAILibrarySpecifiers();
+		std::vector<SGAISpecifier>::const_iterator gas;
 		for (gas=gass.begin(); gas!=gass.end(); gas++) { // AIs
 			const IGroupAILibrary* groupAI = interfaceLib->FetchGroupAILibrary(*gas);
-			CGroupAILibraryInfo* groupAIInfo = new CGroupAILibraryInfo(*groupAI, interfaceSpecifyer);
-			SGAIKey groupAIKey = {interfaceSpecifyer, copySGAISpecifyer(&(*gas))};
+			CGroupAILibraryInfo* groupAIInfo = new CGroupAILibraryInfo(*groupAI, interfaceSpecifier);
+			SGAIKey groupAIKey = {interfaceSpecifier, copySGAISpecifier(&(*gas))};
 			groupAIKeys.push_back(groupAIKey);
 			groupAIInfos[groupAIKey] = groupAIInfo;
 			interfaceLib->ReleaseGroupAILibrary(*gas);
@@ -189,17 +189,17 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			
 			std::string sn = interfaceInfo->GetShortName();
 			std::string v = interfaceInfo->GetVersion();
-			SAIInterfaceSpecifyer interfaceSpecifyer = {sn.c_str(), v.c_str()};
-			interfaceSpecifyer = copySAIInterfaceSpecifyer(&interfaceSpecifyer);
-			//interfaceSpecifyer = copySAIInterfaceSpecifyer(&interfaceSpecifyer);
-			interfaceSpecifyers.push_back(interfaceSpecifyer);
+			SAIInterfaceSpecifier interfaceSpecifier = {sn.c_str(), v.c_str()};
+			interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
+			//interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
+			interfaceSpecifiers.push_back(interfaceSpecifier);
 /*
 
 			// generate and store the pure file name
 			std::string fileName = std::string(extractFileName(*libFile, false));
-			interfaceFileNames[interfaceSpecifyer] = fileName;
+			interfaceFileNames[interfaceSpecifier] = fileName;
 */
-			interfaceInfos[interfaceSpecifyer] = interfaceInfo;
+			interfaceInfos[interfaceSpecifier] = interfaceInfo;
 		}
 	}
 	
@@ -221,11 +221,11 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			
 			std::string sn = skirmishAIInfo->GetShortName();
 			std::string v = skirmishAIInfo->GetVersion();
-			SSAISpecifyer skirmishAISpecifyer = {sn.c_str(), v.c_str()};
-			SAIInterfaceSpecifyer interfaceSpecifyer = findFittingInterfaceSpecifyer(skirmishAIInfo->GetInterfaceShortName(), skirmishAIInfo->GetInterfaceVersion(), interfaceSpecifyers);
-			if (interfaceSpecifyer.shortName != NULL) {
-				skirmishAISpecifyer = copySSAISpecifyer(&skirmishAISpecifyer);
-				SSAIKey skirmishAIKey = {interfaceSpecifyer, skirmishAISpecifyer};
+			SSAISpecifier skirmishAISpecifier = {sn.c_str(), v.c_str()};
+			SAIInterfaceSpecifier interfaceSpecifier = findFittingInterfaceSpecifier(skirmishAIInfo->GetInterfaceShortName(), skirmishAIInfo->GetInterfaceVersion(), interfaceSpecifiers);
+			if (interfaceSpecifier.shortName != NULL) {
+				skirmishAISpecifier = copySSAISpecifier(&skirmishAISpecifier);
+				SSAIKey skirmishAIKey = {interfaceSpecifier, skirmishAISpecifier};
 				skirmishAIKeys.push_back(skirmishAIKey);
 
 				skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
@@ -250,11 +250,11 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			
 			std::string sn = groupAIInfo->GetShortName();
 			std::string v = groupAIInfo->GetVersion();
-			SGAISpecifyer groupAISpecifyer = {sn.c_str(), v.c_str()};
-			SAIInterfaceSpecifyer interfaceSpecifyer = findFittingInterfaceSpecifyer(groupAIInfo->GetInterfaceShortName(), groupAIInfo->GetInterfaceVersion(), interfaceSpecifyers);
-			if (interfaceSpecifyer.shortName != NULL) {
-				groupAISpecifyer = copySGAISpecifyer(&groupAISpecifyer);
-				SGAIKey groupAIKey = {interfaceSpecifyer, groupAISpecifyer};
+			SGAISpecifier groupAISpecifier = {sn.c_str(), v.c_str()};
+			SAIInterfaceSpecifier interfaceSpecifier = findFittingInterfaceSpecifier(groupAIInfo->GetInterfaceShortName(), groupAIInfo->GetInterfaceVersion(), interfaceSpecifiers);
+			if (interfaceSpecifier.shortName != NULL) {
+				groupAISpecifier = copySGAISpecifier(&groupAISpecifier);
+				SGAIKey groupAIKey = {interfaceSpecifier, groupAISpecifier};
 				groupAIKeys.push_back(groupAIKey);
 
 				groupAIInfos[groupAIKey] = groupAIInfo;
@@ -283,36 +283,36 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					libFile->c_str());
 		}
 		
-		SAIInterfaceSpecifyer interfaceSpecifyer = interfaceLib->GetSpecifyer();
-		interfaceSpecifyer = copySAIInterfaceSpecifyer(&interfaceSpecifyer);
-		interfaceSpecifyers.push_back(interfaceSpecifyer);
+		SAIInterfaceSpecifier interfaceSpecifier = interfaceLib->GetSpecifier();
+		interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
+		interfaceSpecifiers.push_back(interfaceSpecifier);
 		
 		// generate and store the interface info
 		CAIInterfaceLibraryInfo* interfaceInfo = new CAIInterfaceLibraryInfo(*interfaceLib);
-		interfaceInfos[interfaceSpecifyer] = interfaceInfo;
+		interfaceInfos[interfaceSpecifier] = interfaceInfo;
 		
 		// generate and store the pure file name
-		interfaceFileNames[interfaceSpecifyer] = fileName;
+		interfaceFileNames[interfaceSpecifier] = fileName;
 		
 		// fetch the info of all Skirmish AIs available through the interface
-		std::vector<SSAISpecifyer> sass = interfaceLib->GetSkirmishAILibrarySpecifyers();
-		std::vector<SSAISpecifyer>::const_iterator sas;
+		std::vector<SSAISpecifier> sass = interfaceLib->GetSkirmishAILibrarySpecifiers();
+		std::vector<SSAISpecifier>::const_iterator sas;
 		for (sas=sass.begin(); sas!=sass.end(); sas++) { // AIs
 			const ISkirmishAILibrary* skirmishAI = interfaceLib->FetchSkirmishAILibrary(*sas);
-			CSkirmishAILibraryInfo* skirmishAIInfo = new CSkirmishAILibraryInfo(*skirmishAI, interfaceSpecifyer);
-			SSAIKey skirmishAIKey = {interfaceSpecifyer, copySSAISpecifyer(&(*sas))};
+			CSkirmishAILibraryInfo* skirmishAIInfo = new CSkirmishAILibraryInfo(*skirmishAI, interfaceSpecifier);
+			SSAIKey skirmishAIKey = {interfaceSpecifier, copySSAISpecifier(&(*sas))};
 			skirmishAIKeys.push_back(skirmishAIKey);
 			skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 			interfaceLib->ReleaseSkirmishAILibrary(*sas);
 		}
 		
 		// fetch the info of all Group AIs available through the interface
-		std::vector<SGAISpecifyer> gass = interfaceLib->GetGroupAILibrarySpecifyers();
-		std::vector<SGAISpecifyer>::const_iterator gas;
+		std::vector<SGAISpecifier> gass = interfaceLib->GetGroupAILibrarySpecifiers();
+		std::vector<SGAISpecifier>::const_iterator gas;
 		for (gas=gass.begin(); gas!=gass.end(); gas++) { // AIs
 			const IGroupAILibrary* groupAI = interfaceLib->FetchGroupAILibrary(*gas);
-			CGroupAILibraryInfo* groupAIInfo = new CGroupAILibraryInfo(*groupAI, interfaceSpecifyer);
-			SGAIKey groupAIKey = {interfaceSpecifyer, copySGAISpecifyer(&(*gas))};
+			CGroupAILibraryInfo* groupAIInfo = new CGroupAILibraryInfo(*groupAI, interfaceSpecifier);
+			SGAIKey groupAIKey = {interfaceSpecifier, copySGAISpecifier(&(*gas))};
 			groupAIKeys.push_back(groupAIKey);
 			groupAIInfos[groupAIKey] = groupAIInfo;
 			interfaceLib->ReleaseGroupAILibrary(*gas);
@@ -324,7 +324,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 }
 void CAILibraryManager::ClearAllInfos() {
 	
-	std::map<const SAIInterfaceSpecifyer, CAIInterfaceLibraryInfo*>::iterator iii;
+	std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*>::iterator iii;
 	for (iii=interfaceInfos.begin(); iii!=interfaceInfos.end(); iii++) {
 		delete iii->second;
 		iii->second = NULL;
@@ -346,7 +346,7 @@ void CAILibraryManager::ClearAllInfos() {
 	skirmishAIInfos.clear();
 	groupAIInfos.clear();
 	
-	interfaceSpecifyers.clear();
+	interfaceSpecifiers.clear();
 	skirmishAIKeys.clear();
 	groupAIKeys.clear();
 }
@@ -355,27 +355,27 @@ CAILibraryManager::~CAILibraryManager() {
 	
 	ReleaseEverything();
 
-	// delete all strings contained in skirmish AI specifyers
+	// delete all strings contained in skirmish AI specifiers
 	std::vector<SSAIKey>::iterator sSpec;
 	for (sSpec=skirmishAIKeys.begin(); sSpec!=skirmishAIKeys.end(); sSpec++) {
-		deleteSSAISpecifyer(&(sSpec->ai));
+		deleteSSAISpecifier(&(sSpec->ai));
 	}
 	
-	// delete all strings contained in group AI specifyers
+	// delete all strings contained in group AI specifiers
 	std::vector<SGAIKey>::iterator gSpec;
 	for (gSpec=groupAIKeys.begin(); gSpec!=groupAIKeys.end(); gSpec++) {
-		deleteSGAISpecifyer(&(gSpec->ai));
+		deleteSGAISpecifier(&(gSpec->ai));
 	}
 	
-	// delete all strings contained in interface specifyers
-	std::vector<SAIInterfaceSpecifyer>::iterator iSpec;
-	for (iSpec=interfaceSpecifyers.begin(); iSpec!=interfaceSpecifyers.end(); iSpec++) {
-		deleteSAIInterfaceSpecifyer(&(*iSpec));
+	// delete all strings contained in interface specifiers
+	std::vector<SAIInterfaceSpecifier>::iterator iSpec;
+	for (iSpec=interfaceSpecifiers.begin(); iSpec!=interfaceSpecifiers.end(); iSpec++) {
+		deleteSAIInterfaceSpecifier(&(*iSpec));
 	}
 }
 
-const std::vector<SAIInterfaceSpecifyer>* CAILibraryManager::GetInterfaceSpecifyers() const {
-	return &interfaceSpecifyers;
+const std::vector<SAIInterfaceSpecifier>* CAILibraryManager::GetInterfaceSpecifiers() const {
+	return &interfaceSpecifiers;
 }
 const std::vector<SSAIKey>* CAILibraryManager::GetSkirmishAIKeys() const {
 	return &skirmishAIKeys;
@@ -396,20 +396,20 @@ const IAILibraryManager::T_groupAIInfos* CAILibraryManager::GetGroupAIInfos() co
 
 
 
-std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const SSAISpecifyer& skirmishAISpecifyer) const {
+std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const {
 	
 	std::vector<SSAIKey> applyingKeys;
 	
-	if (skirmishAISpecifyer.shortName == NULL || strlen(skirmishAISpecifyer.shortName) == 0) {
+	if (skirmishAISpecifier.shortName == NULL || strlen(skirmishAISpecifier.shortName) == 0) {
 		return applyingKeys;
 	}
 	
-	std::string aiName(skirmishAISpecifyer.shortName);
+	std::string aiName(skirmishAISpecifier.shortName);
 	
 	bool checkVersion = false;
 	std::string aiVersion;
-	if (skirmishAISpecifyer.version != NULL && strlen(skirmishAISpecifyer.version) > 0) {
-		aiVersion = std::string(skirmishAISpecifyer.version);
+	if (skirmishAISpecifier.version != NULL && strlen(skirmishAISpecifier.version) > 0) {
+		aiVersion = std::string(skirmishAISpecifier.version);
 		checkVersion = true;
 	}
 	
@@ -432,7 +432,7 @@ std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const SSAISpecifyer
 	
 	return applyingKeys;
 }
-std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const std::string& skirmishAISpecifyer) const {
+std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const {
 	
 	std::vector<SSAIKey> applyingKeys;
 	
@@ -440,9 +440,9 @@ std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const std::string& 
 	std::string* aiVersion;
 	std::string* interfaceName;
 	std::string* interfaceVersion;
-	bool isValid = SplittAIKey(skirmishAISpecifyer, aiName, aiVersion, interfaceName, interfaceVersion);
+	bool isValid = SplittAIKey(skirmishAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
 	if (!isValid) {
-		reportError1("AI Library Error", "Invalid Skirmish AI Key: %s", skirmishAISpecifyer.c_str());
+		reportError1("AI Library Error", "Invalid Skirmish AI Key: %s", skirmishAISpecifier.c_str());
 		return applyingKeys;
 	}
 	
@@ -501,7 +501,7 @@ void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
 }
 
 
-std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& groupAISpecifyer) const {
+std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& groupAISpecifier) const {
 	
 	std::vector<SGAIKey> applyingKeys;
 	
@@ -509,9 +509,9 @@ std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& gro
 	std::string* aiVersion;
 	std::string* interfaceName;
 	std::string* interfaceVersion;
-	bool isValid = SplittAIKey(groupAISpecifyer, aiName, aiVersion, interfaceName, interfaceVersion);
+	bool isValid = SplittAIKey(groupAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
 	if (!isValid) {
-		reportError1("AI Library Error", "Invalid Group AI Key: %s", groupAISpecifyer.c_str());
+		reportError1("AI Library Error", "Invalid Group AI Key: %s", groupAISpecifier.c_str());
 		return applyingKeys;
 	}
 	
@@ -572,14 +572,14 @@ void CAILibraryManager::ReleaseAllGroupAILibraries() {
 
 
 
-IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const SAIInterfaceSpecifyer& interfaceSpecifyer) {
+IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const SAIInterfaceSpecifier& interfaceSpecifier) {
 	
 	IAIInterfaceLibrary* interfaceLib;
 	
-	T_loadedInterfaces::const_iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceSpecifyer);
+	T_loadedInterfaces::const_iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceSpecifier);
 	if (interfacePos == loadedAIInterfaceLibraries.end()) { // interface not yet loaded
-		interfaceLib = new CAIInterfaceLibrary(interfaceSpecifyer);
-		loadedAIInterfaceLibraries[interfaceSpecifyer] = interfaceLib;
+		interfaceLib = new CAIInterfaceLibrary(interfaceSpecifier);
+		loadedAIInterfaceLibraries[interfaceSpecifier] = interfaceLib;
 	} else {
 		interfaceLib = interfacePos->second;
 	}
@@ -587,9 +587,9 @@ IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const SAIInterfaceSpecify
 	return interfaceLib;
 }
 
-void CAILibraryManager::ReleaseInterface(const SAIInterfaceSpecifyer& interfaceSpecifyer) {
+void CAILibraryManager::ReleaseInterface(const SAIInterfaceSpecifier& interfaceSpecifier) {
 	
-	T_loadedInterfaces::iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceSpecifyer);
+	T_loadedInterfaces::iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceSpecifier);
 	if (interfacePos != loadedAIInterfaceLibraries.end()) {
 		IAIInterfaceLibrary* interfaceLib = interfacePos->second;
 		if (interfaceLib->GetLoadCount() == 0) {
@@ -625,12 +625,12 @@ std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, c
 	return found;
 }
 
-SAIInterfaceSpecifyer CAILibraryManager::findFittingInterfaceSpecifyer(
+SAIInterfaceSpecifier CAILibraryManager::findFittingInterfaceSpecifier(
 		const std::string& shortName,
 		const std::string& minVersion,
-		const std::vector<SAIInterfaceSpecifyer>& specs) {
+		const std::vector<SAIInterfaceSpecifier>& specs) {
 	
-	std::vector<SAIInterfaceSpecifyer>::const_iterator spec;
+	std::vector<SAIInterfaceSpecifier>::const_iterator spec;
 	int minDiff = INT_MAX;
 	const char* chosenShortName = NULL;
 	const char* chosenVersion = NULL;
@@ -645,7 +645,7 @@ SAIInterfaceSpecifyer CAILibraryManager::findFittingInterfaceSpecifyer(
 		}
 	}
 	
-	SAIInterfaceSpecifyer found = {chosenShortName, chosenVersion};
+	SAIInterfaceSpecifier found = {chosenShortName, chosenVersion};
 	return found;
 }
 
