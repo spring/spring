@@ -63,7 +63,8 @@ void COrbitController::Update()
 	// pos at this point
 	int x = 0;
 	int y = 0;
-	int s = SDL_GetMouseState(&x, &y);
+
+	SDL_GetMouseState(&x, &y);
 
 	const int pdx = lastMousePressX - x;
 	const int pdy = lastMousePressY - y;
@@ -108,7 +109,7 @@ void COrbitController::MouseRelease(int x, int y, int button)
 
 void COrbitController::MouseMove(float3 move)
 {
-	// only triggers on SLD_BUTTON_MIDDLE (see CMouseHandler::MouseMove())
+	// only triggers on SDL_BUTTON_MIDDLE (see CMouseHandler::MouseMove())
 }
 
 void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
