@@ -2,6 +2,7 @@
 #define __ORBIT_CONTROLLER_H__
 
 #include "CameraController.h"
+#include "GlobalStuff.h"
 
 class COrbitController: public CCameraController {
 	public:
