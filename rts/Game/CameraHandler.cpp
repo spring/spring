@@ -15,6 +15,7 @@
 #include "Game/Camera/FreeController.h"
 #include "Game/Camera/OverviewController.h"
 #include "Game/Camera/TWController.h"
+#include "Game/Camera/OrbitController.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "GlobalStuff.h"
@@ -37,6 +38,7 @@ CCameraHandler::CCameraHandler()
 	camCtrls.push_back(new CFreeController());        // 4
 	camCtrls.push_back(new SmoothController());       // 5
 	camCtrls.push_back(new COverviewController());    // 6
+	camCtrls.push_back(new COrbitController());       // 7
 
 	for (unsigned int i = 0; i < camCtrls.size(); i++) {
 		nameMap[camCtrls[i]->GetName()] = i;
@@ -65,6 +67,7 @@ CCameraHandler::CCameraHandler()
 	RegisterAction("viewfree");
 	RegisterAction("viewov");
 	RegisterAction("viewlua");
+	RegisterAction("vieworbit");
 
 	RegisterAction("viewtaflip");
 
@@ -296,6 +299,7 @@ const std::string CCameraHandler::GetCurrentControllerName() const
 void CCameraHandler::PushAction(const Action& action)
 {
 	const std::string cmd = action.command;
+
 	if (cmd == "viewfps") {
 		SetCameraMode(0);
 	}
@@ -317,6 +321,10 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewlua") {
 		SetCameraMode(6);
 	}
+	else if (cmd == "vieworb") {
+		SetCameraMode(7);
+	}
+
 	else if (cmd == "viewtaflip") {
 		COverheadController* taCam =
 				dynamic_cast<COverheadController*>(camControllers[1]);

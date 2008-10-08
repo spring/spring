@@ -19,23 +19,26 @@ public:
 
 	virtual const std::string GetName() const = 0;
 
-	virtual void KeyMove(float3 move)=0;
-	virtual void MouseMove(float3 move)=0;
-	virtual void ScreenEdgeMove(float3 move)=0;
-	virtual void MouseWheelMove(float move)=0;
+	virtual void KeyMove(float3 move) = 0;
+	virtual void MousePress(int x, int y, int button) = 0;
+	virtual void MouseRelease(int x, int y, int button) = 0;
+	virtual void MouseMove(float3 move) = 0;
+	virtual void ScreenEdgeMove(float3 move) = 0;
+	virtual void MouseWheelMove(float move) = 0;
 
 	virtual void Update() {}
 
-	virtual float3 GetPos()=0;
-	virtual float3 GetDir()=0;
+	virtual float3 GetPos() = 0;
+	virtual float3 GetDir() = 0;
 
 	float GetFOV() const { return fov; };
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; };
 	virtual bool DisableTrackingByKey() { return true; }
 
-	virtual float3 SwitchFrom() const =0;			//return pos that to send to new controllers SetPos
-	virtual void SwitchTo(bool showText=true)=0;
+	// return the position to send to new controllers SetPos
+	virtual float3 SwitchFrom() const = 0;
+	virtual void SwitchTo(bool showText = true) = 0;
 	
 	virtual void GetState(StateMap& sm) const = 0;
 	virtual bool SetState(const StateMap& sm) = 0;

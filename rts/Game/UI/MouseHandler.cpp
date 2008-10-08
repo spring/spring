@@ -205,6 +205,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
+	camHandler->GetCurrentController().MousePress(x, y, button);
+
 	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
 
 	if (!game->gameOver)
@@ -287,6 +289,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 {
 	if (button > NUM_BUTTONS)
 		return;
+
+	camHandler->GetCurrentController().MouseRelease(x, y, button);
 
 	dir = hide ? camera->forward: camera->CalcPixelDir(x, y);
 	buttons[button].pressed = false;
