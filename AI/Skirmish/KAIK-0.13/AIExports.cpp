@@ -1,58 +1,43 @@
+/*
+    Copyright 2008  Nicolas Wu
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	
+	@author Nicolas Wu
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
+*/
+
 #include "AIExport.h"
 
 #include <map>
 
+// AI interface stuff
+#include "ExternalAI/Interface/SSAILibrary.h"
 #include "ExternalAI/Interface/LegacyCppWrapper/AI.h"
 #include "ExternalAI/Interface/LegacyCppWrapper/AIGlobalAI.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
 
+// KAIK stuff
 #include "GlobalAI.h"
 
-/*
-std::set<IGlobalAI*> ais;
 
-
-DLL_EXPORT int GetGlobalAiVersion() {
-	return GLOBAL_AI_INTERFACE_VERSION;
-}
-
-DLL_EXPORT void GetAiName(char* name) {
-	strcpy(name, AI_VERSION);
-}
-
-DLL_EXPORT IGlobalAI* GetNewAI() {
-	if (ais.empty())
-		creg::System::InitializeClasses();
-
-	CGlobalAI* ai = new CGlobalAI();
-	ais.insert(ai);
-	return ai;
-}
-
-DLL_EXPORT void ReleaseAI(IGlobalAI* i) {
-	ais.erase(i);
-	delete (CGlobalAI*) i;
-
-	if (ais.empty())
-		creg::System::FreeClasses();
-}
-
-DLL_EXPORT int IsCInterface(void) {
-	return 0;
-}
-
-DLL_EXPORT int IsLoadSupported() {
-	return 1;
-}
-*/
-
-
-std::map<int, CAI*> ais;
+std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 std::vector<InfoItem> myInfos;
 
-int getInfos(InfoItem infos[], int max) {
+
+Export(unsigned int) getInfos(InfoItem infos[], unsigned int max) {
 	
-	int i = 0;
+	unsigned int i = 0;
 	
 	// initialize the myInfos
 	if (myInfos.empty()) {
@@ -71,11 +56,11 @@ int getInfos(InfoItem infos[], int max) {
 		i++;
 	}
 
-	// return the number of key-value pairs copied into properties
+	// return the number of elements copied to infos 
 	return i;
 }
 
-enum LevelOfSupport getLevelOfSupportFor(
+Export(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 	
@@ -87,50 +72,52 @@ enum LevelOfSupport getLevelOfSupportFor(
 	return LOS_None;
 }
 
-int getOptions(struct Option options[], int max) {
+Export(unsigned int) getOptions(struct Option options[], unsigned int max) {
 	return 0;
 }
 
-// Since this is a C interface, we can only be told by the engine
-// to set up an AI with the number team that indicates a receiver
-// of any handleEvent() call.
 Export(int) init(int teamId) {
-    // the map already has an AI for this team.
-    // raise an error, since it's probably a mistake if we're trying
-    // reinitialise a team that's already had init() called on it.
-    if (ais.count(teamId) > 0) {
+	
+    if (myAIs.count(teamId) > 0) {
+		// the map already has an AI for this team.
+		// raise an error, since it's probably a mistake if we're trying
+		// to reinitialise a team that already had init() called on it.
         return -1;
     }
-    //TODO:
-    // Change the line below so that CAI is 
-    // your AI, which should be a subclass of CAI that
-    // overrides the handleEvent() method.
-    ais[teamId] = new CAIGlobalAI(teamId, new CGlobalAI());
 	
+    // CAIGlobalAI is the Legacy C++ wrapper, CGlobalAI is KAIK
+    myAIs[teamId] = new CAIGlobalAI(teamId, new CGlobalAI());
+	
+	// signal: everything went ok
 	return 0;
 }
 
 Export(int) release(int teamId) {
-    // the map has no AI for this team.
-    // raise an error, since it's probably a mistake if we're trying to
-    // release a team that's not initialized.
-    if (ais.count(teamId) == 0) {
+	
+    if (myAIs.count(teamId) == 0) {
+		// the map has no AI for this team.
+		// raise an error, since it's probably a mistake if we're trying to
+		// release a team that's not initialized.
         return -1;
     }
 	
-    delete ais[teamId];
-	ais.erase(teamId);
+    delete myAIs[teamId];
+	myAIs.erase(teamId);
 	
+	// signal: everything went ok
 	return 0;
 }
 
 Export(int) handleEvent(int teamId, int topic, const void* data) {
-    // events sent to team -1 will always be to the AI object itself,
-    // not to a particular team.
-    if (ais.count(teamId) > 0){
+	
+    if (teamId < 0) {
+		// events sent to team -1 will always be to the AI object itself,
+		// not to a particular team.
+	} else if (myAIs.count(teamId) > 0) {
         // allow the AI instance to handle the event.
-        return ais[teamId]->handleEvent(topic, data);
-    }
-    // no ai with value, so return error.
-    else return -1;
+        return myAIs[teamId]->handleEvent(topic, data);
+	}
+	
+	// no AI for that team, so return error.
+	return -1;
 }

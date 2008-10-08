@@ -57,44 +57,74 @@ struct SGAISpecifier_Comparator {
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SGAISpecifier& a, const struct SGAISpecifier& b) const;
+	bool operator()(const struct SGAISpecifier& a,
+			const struct SGAISpecifier& b) const;
 	static bool IsEmpty(const struct SGAISpecifier& spec);
 };
 #endif /* __cplusplus */
 
 /**
+ * This is the interface between the engine and an implementation of a Group AI.
+ *
  * @brief struct Group Artificial Intelligence
- * This is the interface between the engine and an implementation of a Skirmish AI.
  */
 struct SGAILibrary {
+	
 	// static AI library functions
+	
 	/**
-	 * Level of Support for a specific engine version.
+	 * Level of Support for a specific engine version and AI interface version.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @return	the level of support for the supplied engine and AI interface
+	 *			versions
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
+	
 	/**
-	 * Returns static properties with info about this AI library.
+	 * Returns info about this AI library.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @param	infos	where the info about this AI library shall be stored to
+	 * @param	max	the maximum number of elements to store into param infos
 	 * @return number of elements stored into parameter infos
 	 */
-	int (CALLING_CONV *getInfos)(struct InfoItem infos[], int max);
+	unsigned int (CALLING_CONV *getInfos)(struct InfoItem infos[],
+			unsigned int max);
+	
 	/**
 	 * Returns options that can be set on this AI.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @param	infos	where the options of this AI library shall be stored to
+	 * @param	max	the maximum number of elements to store into param options
 	 * @return number of elements stored into parameter options
 	 */
-	int (CALLING_CONV *getOptions)(struct Option optionsInfo[], int max);
+	unsigned int (CALLING_CONV *getOptions)(struct Option options[],
+			unsigned int max);
 
 	// team and group instance functions
+	
+	/**
+	 * NOTE: this method is optional. An AI not exporting this function is still
+	 * valid.
+	 */
 	int (CALLING_CONV *init)(int teamId, int groupId);
+	/**
+	 * NOTE: this method is optional. An AI not exporting this function is still
+	 * valid.
+	 */
 	int (CALLING_CONV *release)(int teamId, int groupId);
-	int (CALLING_CONV *handleEvent)(int teamId, int groupId, int topic, const void* data);
+	int (CALLING_CONV *handleEvent)(int teamId, int groupId, int topic,
+			const void* data);
 };
 
 #ifdef	__cplusplus

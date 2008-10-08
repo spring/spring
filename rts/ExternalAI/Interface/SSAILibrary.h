@@ -57,43 +57,139 @@ struct SSAISpecifier_Comparator {
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SSAISpecifier& a, const struct SSAISpecifier& b) const;
+	bool operator()(const struct SSAISpecifier& a,
+			const struct SSAISpecifier& b) const;
 	static bool IsEmpty(const struct SSAISpecifier& spec);
 };
 #endif /* __cplusplus */
 
 /**
+ * This is the interface between the engine and an implementation of a
+ * Skirmish AI.
+ *
  * @brief struct Skirmish Artificial Intelligence
- * This is the interface between the engine and an implementation of a Skirmish AI.
  */
 struct SSAILibrary {
+	
 	// static AI library functions
+	
 	/**
-	 * Level of Support for a specific engine version.
+	 * Level of Support for a specific engine version and AI interface version.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @return	the level of support for the supplied engine and AI interface
+	 *			versions
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
+	
 	/**
-	 * Returns static properties with info about this AI library.
+	 * Returns info about this AI library.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
-	 * @return number of elements stored into parameter infos
+	 *
+	 * @param	infos	where the info about this AI library shall be stored to
+	 * @param	max	the maximum number of elements to store into param infos
+	 * @return	number of elements stored into parameter infos
 	 */
-	int (CALLING_CONV *getInfos)(struct InfoItem infos[], int max);
+	unsigned int (CALLING_CONV *getInfos)(struct InfoItem infos[],
+			unsigned int max);
+	
 	/**
 	 * Returns options that can be set on this AI.
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
-	 * @return number of elements stored into parameter options
+	 *
+	 * @param	infos	where the options of this AI library shall be stored to
+	 * @param	max	the maximum number of elements to store into param options
+	 * @return	number of elements stored into parameter options
 	 */
-	int (CALLING_CONV *getOptions)(struct Option options[], int max);
+	unsigned int (CALLING_CONV *getOptions)(struct Option options[],
+			unsigned int max);
 
+	
 	// team instance functions
+	
+	/**
+	 * This function is called, when an AI instance shall be created for teamId.
+	 * It is called before the first call to handleEvent() for teamId.
+	 *
+	 * A typical series of events (engine point of view, conceptual):
+	 * [code]
+	 * KAIK.init(1)
+	 * KAIK.handleEvent(EVENT_INIT, InitEvent(1))
+	 * RAI.init(2)
+	 * RAI.handleEvent(EVENT_INIT, InitEvent(2))
+	 * KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+	 * RAI.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+	 * KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+	 * RAI.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+	 * ...
+	 * [/code]
+	 *
+	 * This method exists only for performance reasons, which come into play on
+	 * OO languages. For non-OO language AIs, this method can be ignored,
+	 * because using only EVENT_INIT will cause no performance decrease.
+	 * 
+	 * NOTE: this method is optional. An AI not exporting this function is still
+	 * valid.
+	 *
+	 * @param	teamId	the teamId this library shall create an instance for
+	 * @return	init ok: 0, on error: any other value then 0
+	 */
 	int (CALLING_CONV *init)(int teamId);
+	
+	/**
+	 * This function is called, when an AI instance shall be deleted.
+	 * It is called after the last call to handleEvent() for teamId.
+	 *
+	 * A typical series of events (engine point of view, conceptual):
+	 * [code]
+	 * ...
+	 * KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+	 * RAI.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+	 * KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+	 * RAI.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+	 * KAIK.handleEvent(EVENT_RELEASE, ReleaseEvent(1))
+	 * KAIK.release(1)
+	 * RAI.handleEvent(EVENT_RELEASE, ReleaseEvent(2))
+	 * RAI.release(2)
+	 * [/code]
+	 *
+	 * This method exists only for performance reasons, which come into play on
+	 * OO languages. For non-OO language AIs, this method can be ignored,
+	 * because using only EVENT_RELEASE will cause no performance decrease.
+	 * 
+	 * NOTE: this method is optional. An AI not exporting this function is still
+	 * valid.
+	 *
+	 * @param	teamId	the teamId this library shall create an instance for
+	 * @return	init ok: 0, on error: any other value then 0
+	 */
 	int (CALLING_CONV *release)(int teamId);
+	
+	/**
+	 * Through this function, the AI receives events from the engine.
+	 * For details about events that may arrive here, see file AISEvents.h.
+	 *
+	 * @param	teamId	the instance of the AI that the event is addressed to
+//	 * @param	fromId	the id of the AI the event comes from, or FROM_ENGINE_ID
+//	 *					if it comes from spring
+//	 * @param	eventId	used on asynchronous events. this allows the AI to
+//	 *					identify a possible result message, which was sent with
+//	 *					the same eventId
+	 * @param	topic	unique identifyer of a message
+	 *					(see EVENT_* defines in AISEvents.h)
+	 * @param	data	an topic specific struct, which contains the data
+	 *					associatedwith the event
+	 *					(see S*Event structs in AISEvents.h)
+	 * @return	event was handled: 0, on error: any other value then 0
+	 */
 	int (CALLING_CONV *handleEvent)(int teamId, int topic, const void* data);
 };
 

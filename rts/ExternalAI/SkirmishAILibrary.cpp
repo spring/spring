@@ -18,6 +18,7 @@
 #include "SkirmishAILibrary.h"
 
 #include "Interface/SAIInterfaceLibrary.h"
+#include "LogOutput.h"
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
@@ -84,11 +85,25 @@ std::vector<Option> CSkirmishAILibrary::GetOptions() const {
 
 
 void CSkirmishAILibrary::Init(int teamId) const {
-	sSAI.init(teamId);
+	
+	if (sSAI.init != NULL) {
+		int error = sSAI.init(teamId);
+		if (error != 0) {
+			// init failed
+			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);
+		}
+	}
 }
 
 void CSkirmishAILibrary::Release(int teamId) const {
-	sSAI.release(teamId);
+	
+	if (sSAI.release != NULL) {
+		int error = sSAI.release(teamId);
+		if (error != 0) {
+			// release failed
+			logOutput.Print("Failed to release the AI for team %d, error: %d", teamId, error);
+		}
+	}
 }
 
 int CSkirmishAILibrary::HandleEvent(int teamId, int topic, const void* data) const {

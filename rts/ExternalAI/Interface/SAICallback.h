@@ -25,7 +25,7 @@ extern "C" {
 #include "aidefines.h"
 
 /**
- * Global AI Callback function pointers.
+ * Skirmish AI Callback function pointers.
  */
 struct SAICallback {
 

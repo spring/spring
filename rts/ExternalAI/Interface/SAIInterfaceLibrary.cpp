@@ -20,6 +20,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#define __USE_CREG_HERE
+#include "creg/creg.h"
+#endif /* __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+
 SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig) {
 	
 	struct SAIInterfaceSpecifier copy;
@@ -42,10 +47,10 @@ void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec)
 
 #ifdef	__cplusplus
 
-#ifdef	__USE_CREG
+#ifdef	__USE_CREG_HERE
 CR_BIND(SSAIKey,)
 CR_BIND(SGAIKey,)
-#endif /* __USE_CREG */
+#endif /* __USE_CREG_HERE */
 
 bool SAIInterfaceSpecifier_Comparator::operator()(const struct SAIInterfaceSpecifier& a, const struct SAIInterfaceSpecifier& b) const {
 
@@ -132,6 +137,10 @@ bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
 	
 	return empty;
 }
+
+#ifdef __USE_CREG_HERE
+#undef __USE_CREG_HERE
+#endif	/* __USE_CREG_HERE */
 
 #endif /* __cplusplus */
 

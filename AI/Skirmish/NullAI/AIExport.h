@@ -21,11 +21,12 @@
 #ifndef _AIEXPORT_H
 #define _AIEXPORT_H
 
+// check if build system uses correct defines
 #if	!defined BUILDING_AI
-#error BUILDING_AI should be defined when building AIs
+	#error BUILDING_AI should be defined when building AIs
 #endif
 #if	defined BUILDING_AI_INTERFACE
-#error BUILDING_AI_INTERFACE should not be defined when building AIs
+	#error BUILDING_AI_INTERFACE should not be defined when building AIs
 #endif
 
 #include "ExternalAI/Interface/aidefines.h"
@@ -37,16 +38,16 @@
 // for a list of the functions that have to be exported,
 // see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
 
-// static AI library methods (OPTIONAL TO IMPLEMENT)
-//Export(unsigned int) getInfos(InfoItem infos[], unsigned int max); // static properties
+// static AI library methods (optional to implement)
+//Export(unsigned int) getInfos(InfoItem infos[], unsigned int max);
 //Export(enum LevelOfSupport) getLevelOfSupportFor(
 //		const char* engineVersionString, int engineVersionNumber,
 //		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 //Export(unsigned int) getOptions(struct Option options[], unsigned int max);
 
 // team instance functions
-Export(int) init(int teamId);
-Export(int) release(int teamId);
+//Export(int) init(int teamId);
+//Export(int) release(int teamId);
 Export(int) handleEvent(int teamId, int topic, const void* data);
 
 #endif /* _AIEXPORT_H */

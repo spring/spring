@@ -92,6 +92,7 @@ void CSkirmishAIWrapper::PreDestroy() {
 CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 	
 	if (ai) {
+		Release();
 /*
 		if (!IsCInterface) {
 			try {
@@ -260,6 +261,14 @@ void CSkirmishAIWrapper::Init() {
 	
 	SInitEvent evtData = {teamId, c_callback};
 	ai->HandleEvent(EVENT_INIT, &evtData);
+}
+
+void CSkirmishAIWrapper::Release() {
+	
+	SReleaseEvent evtData = {teamId};
+	ai->HandleEvent(EVENT_RELEASE, &evtData);
+	
+	// further cleanup is done in the destructor
 }
 
 

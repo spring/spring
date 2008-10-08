@@ -18,6 +18,7 @@
 #include "GroupAILibrary.h"
 
 #include "Interface/SAIInterfaceLibrary.h"
+#include "LogOutput.h"
 #include <string>
 
 CGroupAILibrary::CGroupAILibrary(const SGAILibrary& ai) {
@@ -83,11 +84,25 @@ std::vector<Option> CGroupAILibrary::GetOptions() const {
 
 
 void CGroupAILibrary::Init(int teamId, int groupId) const {
-	sGAI.init(teamId, groupId);
+	
+	if (sGAI.init != NULL) {
+		int error = sGAI.init(teamId, groupId);
+		if (error != 0) {
+			// init failed
+			logOutput.Print("Failed to initialize an AI for team %d and group %d, error: %d", teamId, groupId, error);
+		}
+	}
 }
 
 void CGroupAILibrary::Release(int teamId, int groupId) const {
-	sGAI.release(teamId, groupId);
+	
+	if (sGAI.release != NULL) {
+		int error = sGAI.release(teamId, groupId);
+		if (error != 0) {
+			// release failed
+			logOutput.Print("Failed to release the AI for team %d and group %d, error: %d", teamId, groupId, error);
+		}
+	}
 }
 
 int CGroupAILibrary::HandleEvent(int teamId, int groupId, int topic, const void* data) const {
