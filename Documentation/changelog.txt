@@ -1,6 +1,16 @@
 Spring change log
 
-0.77b1
+0.next
+
+User Interface
+  - added a simple Orbit-Camera controller
+       META-key + LMB + drag ==> alter elevation, rotation
+       META-key + MMB + drag ==> pan up/down/left/right
+       META-key + RMB + drag ==> zoom
+
+
+
+0.77b1, 0.77b2
 
 User Interface:
  - all commands are prefixed with '/' instead of '.' (".cheat" becomes "/cheat", etc.)
