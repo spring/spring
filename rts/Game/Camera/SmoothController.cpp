@@ -206,7 +206,7 @@ float3 SmoothController::SwitchFrom() const
 void SmoothController::SwitchTo(bool showText)
 {
 	if(showText)
-		logOutput.Print("Switching to smooth camera");
+		logOutput.Print("Switching to Smooth style camera");
 }
 
 

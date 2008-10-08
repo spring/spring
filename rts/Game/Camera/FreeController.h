@@ -14,6 +14,8 @@ public:
 	void Move(const float3& move, bool tilt, bool strafe, bool upDown);
 
 	void KeyMove(float3 move);
+	void MousePress(int, int, int) { /* empty */ }
+	void MouseRelease(int, int, int) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
