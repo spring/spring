@@ -33,7 +33,7 @@ SET(system_files
 	../../rts/System/UnsyncedRNG )
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
-ADD_LIBRARY(server SHARED
+ADD_LIBRARY(springserver SHARED
 	${system_files}
 	${serverfiles}
 	../../rts/Game/GameServer
@@ -50,15 +50,15 @@ ADD_LIBRARY(server SHARED
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser
 	../../rts/Rendering/Textures/TAPalette)
-TARGET_LINK_LIBRARIES(server SDL hpiutil2 7zip minizip lua)
+TARGET_LINK_LIBRARIES(springserver SDL hpiutil2 7zip minizip lua)
 if (MINGW)
-	TARGET_LINK_LIBRARIES (server ws2_32 boost_thread-mt boost_regex-mt)
+	TARGET_LINK_LIBRARIES (springserver ws2_32 boost_thread-mt boost_regex-mt)
 else (MINGW)
-	TARGET_LINK_LIBRARIES (server ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+	TARGET_LINK_LIBRARIES (springserver ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
 	ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
 endif (MINGW)
 
-ADD_EXECUTABLE(dedicated main)
-TARGET_LINK_LIBRARIES(dedicated server)
+ADD_EXECUTABLE(spring-dedicated main)
+TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
-install (TARGETS server dedicated RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
+install (TARGETS springserver spring-dedicated RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
