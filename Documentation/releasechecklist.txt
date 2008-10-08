@@ -24,12 +24,11 @@ Spring engine:
 - enable automatic builds in buildbot again
 
 TASServer (when only spring update):
-- NOTE: this section is still "untested"
 - update updates.xml with OFFERFILE entries for current Spring version.
 - as admin, do "reloadupdateproperties" in TASServer ($Local in TASClient)
 - as admin, do "setlatestspringversion 0.76b1"  (replace version!)
 - as admin, "broadcast" a message that everyone will be kicked due to upgrade
-- as admin, kick all users from the server (I forgot the command for this)
+- as admin, kick all users from the server ("killall [reason]")
 - set correct Spring version in the shell script that starts server, so it
   won't boot people if it ever gets restarted (e.g. power outage)
 
