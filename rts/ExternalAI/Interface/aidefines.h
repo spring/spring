@@ -33,9 +33,9 @@ extern "C" {
 
 // TODO: comment toggle the two following lines
 // !!!absolute paths are needed when debugging!!!
-#define PATH_TO_SPRING_HOME "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/"
+//#define PATH_TO_SPRING_HOME "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/"
 //#define PATH_TO_SPRING_HOME "P:/svn_work/robin/Development/Projects/Others/spring_current/game/"
-//#define PATH_TO_SPRING_HOME ""
+#define PATH_TO_SPRING_HOME ""
 
 /**
  * @brief max skirmish AIs
