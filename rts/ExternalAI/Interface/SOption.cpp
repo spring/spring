@@ -1,10 +1,27 @@
+/*
+	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #ifndef _SOPTION_CPP
 #define	_SOPTION_CPP
 
 #include "SOption.h"
 
-#if	defined(__cplusplus) && !defined(BUILDING_AI)
+#if	defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
+
 #include "System/Util.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
@@ -12,7 +29,6 @@
 #include <set>
 
 static const char* badKeyChars = " =;\r\n\t";
-
 
 bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::string> optionsSet)
 {
@@ -189,6 +205,7 @@ int ParseOptions(
 
 	return i;
 }
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) */
+
+#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
 
 #endif	/* _SOPTION_CPP */

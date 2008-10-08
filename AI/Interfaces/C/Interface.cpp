@@ -287,14 +287,14 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath, SSAILib
 	std::string funcName;
 	
 	funcName = "getInfos";
-    skirmishAILibrary->getInfos = (int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], int)) sharedLib->FindAddress(funcName.c_str());
+    skirmishAILibrary->getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
     if (skirmishAILibrary->getInfos == NULL) {
 		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "getOptions";
-    skirmishAILibrary->getOptions = (int (CALLING_CONV_FUNC_POINTER *)(Option*, int max)) sharedLib->FindAddress(funcName.c_str());
+    skirmishAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
     if (skirmishAILibrary->getOptions == NULL) {
 		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
@@ -310,13 +310,17 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath, SSAILib
 	funcName = "init";
     skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int)) sharedLib->FindAddress(funcName.c_str());
     if (skirmishAILibrary->init == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
+		// do nothing: it is permitted that an AI does not export this function,
+		// as it can still use EVENT_INIT instead
+		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "release";
     skirmishAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int)) sharedLib->FindAddress(funcName.c_str());
     if (skirmishAILibrary->release == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
+		// do nothing: it is permitted that an AI does not export this function,
+		// as it can still use EVENT_RELEASE instead
+		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "handleEvent";
@@ -340,7 +344,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrar
 	std::string funcName;
 	
 	funcName = "getInfos";
-    groupAILibrary->getInfos = (int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], int)) sharedLib->FindAddress(funcName.c_str());
+    groupAILibrary->getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
     if (groupAILibrary->getInfos == NULL) {
 		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
@@ -349,11 +353,12 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrar
 	funcName = "getLevelOfSupportFor";
     groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
     if (groupAILibrary->getLevelOfSupportFor == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
+		// do nothing: it is permitted that an AI does not export this function
+		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "getOptions";
-    groupAILibrary->getOptions = (int (CALLING_CONV_FUNC_POINTER *)(Option*, int max)) sharedLib->FindAddress(funcName.c_str());
+    groupAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
     if (groupAILibrary->getOptions == NULL) {
 		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
@@ -362,13 +367,17 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrar
 	funcName = "init";
     groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
     if (groupAILibrary->init == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
+		// do nothing: it is permitted that an AI does not export this function,
+		// as it can still use EVENT_INIT instead
+		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "release";
     groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
     if (groupAILibrary->release == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
+		// do nothing: it is permitted that an AI does not export this function,
+		// as it can still use EVENT_RELEASE instead
+		//reportInterfaceFunctionError(libFilePath, funcName);
     }
 	
 	funcName = "handleEvent";

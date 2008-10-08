@@ -26,15 +26,15 @@ the team in question would not yet exist.
 
 Therefore, the handleEvent code would look like this:
 [code]
-Export(int) handleEvent(int team, int eventID, void* event) {
-    if (eventID == INIT_EVENT) {
-        ais[team] = CAIObject();
+Export(int) handleEvent(int teamId, int topic, const void* data) {
+    if (topic == INIT_EVENT) {
+        myAIs[teamId] = CAIObject();
     }
-    if (ais.count(team) > 0){
+    if (myAIs.count(teamId) > 0){
         // allow the AI instance to handle the event.
-        return ais[team].handleEvent(eventID, event);
+        return myAIs[teamId].handleEvent(topic, data);
     }
-    // no ai with value, so return error.
+    // no AI for that team, so return error.
     else return -1;
 }
 [/code]
@@ -72,35 +72,24 @@ and granted, that's true; but this doesn't change the fact that we're checking
 for a special case that we know only happens once at the beginning of the game, before
 every single event after.
 
-Of course, we still need an INIT_EVENT, since initialising the existance of a team
+Of course, we still need an EVENT_INIT, since initialising the existance of a team
 member is not the same as initialising its state.
 
 You might also argue that we do this check in the handleEvent switch within each
 team. This is true, although the difference there is that a switch is translated
 to address lookups and so there is no increase in cost if there are more switch
-cases. 
-*/
+cases.
 
+The same issues and reasonins described here for init() and EVENT_INIT applies
+to release() and EVENT_RELEASE.
+*/
 
 #include "AIExport.h"
 
-//#include "ExternalAI/Interface/SSAILibrary.h"
-
-// Since this is a C interface, we can only be told by the engine
-// to set up an AI with the number team that indicates a receiver
-// of any handleEvent() call.
-Export(int) init(int teamId) {
-	// TODO: do something
-	return 0;
-}
-
-Export(int) release(int teamId) {
-	// TODO: do something
-	return 0;
-}
-
 Export(int) handleEvent(int teamId, int topic, const void* data) {
+	
 	// TODO: do something
+	
+	// signal: ok
 	return 0;
 }
-

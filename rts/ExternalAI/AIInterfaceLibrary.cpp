@@ -288,7 +288,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 	std::string funcName;
 	
 	funcName = "getInfos";
-    sAIInterfaceLibrary.getInfos = (int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+    sAIInterfaceLibrary.getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
     if (sAIInterfaceLibrary.getInfos == NULL) {
 		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
 		//reportInterfaceFunctionError(&libFilePath, &funcName);

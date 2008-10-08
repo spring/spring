@@ -82,6 +82,7 @@ public:
 
 private:
 	virtual void Init();
+	virtual void Release();
 	
 private:
 	int teamId;

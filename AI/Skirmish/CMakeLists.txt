@@ -39,7 +39,7 @@ aux_source_directory(NTai/AI/NTai/Agents ntai)
 
 ## Null Legacy C++ AI
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Skirmish/NullLegacyCppAI nullLegacyCppAI)
-add_library(NullLegacyCppAI-0.1 MODULE ${nullLegacyCppAI} ${legacycppaienv})
+add_library(NullLegacyCppAI-0.1 MODULE ${nullLegacyCppAI} ${legacycppaienv} ${creg})
 install (FILES ${CMAKE_SOURCE_DIR}/AI/Skirmish/NullLegacyCppAI/AIInfo.lua DESTINATION ${DATADIR}/AI/Skirmish/data/NullLegacyCppAI-0.1)
 install (FILES ${CMAKE_SOURCE_DIR}/AI/Skirmish/NullLegacyCppAI/AIOptions.lua DESTINATION ${DATADIR}/AI/Skirmish/data/NullLegacyCppAI-0.1)
 

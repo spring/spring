@@ -15,14 +15,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifndef _SINFO_CPP
-//#define	_SINFO_CPP
-
 #include "SInfo.h"
 
 #include "string.h"
 #include "System/Util.h"
-
+#include <cstdlib>
 
 InfoItem copyInfoItem(const struct InfoItem* const orig) {
 	
@@ -52,9 +49,8 @@ void deleteInfoItem(const struct InfoItem* const info) {
 	mutableInfo->desc = NULL;
 }
 
-#if	defined(__cplusplus) && !defined(BUILDING_AI)
-#include "StdAfx.h"
-#include <cstdlib>
+#if	defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
+
 #include "Lua/LuaParser.h"
 
 #include <set>
@@ -98,38 +94,6 @@ bool ParseInfo(const LuaTable& root, int index, InfoItem& info, std::set<std::st
 	return true;
 }
 
-/*
-std::vector<InfoItem> ParseInfos(
-		const std::string& fileName,
-		const std::string& fileModes,
-		const std::string& accessModes)
-{
-	std::vector<InfoItem> infos;
-	
-	LuaParser luaParser(fileName, fileModes, accessModes);
-		
-	if (!luaParser.Execute()) {
-		printf("ParseInfos(%s) ERROR: %s\n",
-		       fileName.c_str(), luaParser.GetErrorLog().c_str());
-		return infos;
-	}
-
-	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		return infos;
-	}
-
-	std::set<std::string> infosSet;
-	for (int index = 1; root.KeyExists(index); index++) {
-		InfoItem info;
-		if (ParseInfo(root, index, info, infosSet)) {
-			infos.push_back(info);
-		}
-	}
-	
-	return infos;
-}
-*/
 unsigned int ParseInfos(
 		const char* fileName,
 		const char* fileModes,
@@ -165,6 +129,6 @@ unsigned int ParseInfosRawFileSystem(
 		InfoItem infos[], unsigned int max) {
 	return ParseInfos(fileName, SPRING_VFS_RAW, SPRING_VFS_RAW, infos, max);
 }
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) */
 
-//#endif	/* _SINFO_CPP */
+#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
+
