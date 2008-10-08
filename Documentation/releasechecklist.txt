@@ -11,8 +11,8 @@ Spring engine:
 - test source package windows (ditto)
 - test installer (NEVER EVER SKIP THIS NO MATTER HOW SMALL THE CHANGES)
 - upload installer to fnord.clan-sy.com
-- upload installer to unknown files (watch out for notification bots, it can
-  create chaos if you upload early in release process and the upload gets
+- upload installer to the big Spring file sites (watch out for notification bots,
+  it can create chaos if you upload early in release process and the upload gets
   widely announced already.)
 - upload spring_X.XXbX_src.tar.bz2 to fnord.clan-sy.com
 - upload spring_X.XXbX_src.zip to fnord.clan-sy.com
