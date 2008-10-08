@@ -39,26 +39,26 @@ extern "C" {
 #define GROUP_AI_PROPERTY_INTERFACE_VERSION "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
 /**
- * @brief struct Group Artificial Intelligence Specifyer
+ * @brief struct Group Artificial Intelligence Specifier
  */
-struct SGAISpecifyer {
+struct SGAISpecifier {
 	const char* shortName; // [may not contain: spaces, '_', '#']
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-SGAISpecifyer copySGAISpecifyer(const struct SGAISpecifyer* const orig);
-void deleteSGAISpecifyer(const struct SGAISpecifyer* const spec);
+SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig);
+void deleteSGAISpecifier(const struct SGAISpecifier* const spec);
 
 #ifdef	__cplusplus
-struct SGAISpecifyer_Comparator {
+struct SGAISpecifier_Comparator {
 	/**
 	 * The key comparison function, a Strict Weak Ordering;
 	 * it returns true if its first argument is less
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SGAISpecifyer& a, const struct SGAISpecifyer& b) const;
-	static bool IsEmpty(const struct SGAISpecifyer& spec);
+	bool operator()(const struct SGAISpecifier& a, const struct SGAISpecifier& b) const;
+	static bool IsEmpty(const struct SGAISpecifier& spec);
 };
 #endif /* __cplusplus */
 

@@ -105,16 +105,16 @@ const int numMyProperties = 6;
 
 /*
 // Skirmish AI vars
-const struct SSAISpecifyer* mySAISpecifyers = NULL;
-const int numMySAISpecifyers;
+const struct SSAISpecifier* mySAISpecifiers = NULL;
+const int numMySAISpecifiers;
 
 const struct SSAILibrary* mySAILibraries;
 const int numMySAILibraries;
 
 
 // Group AI vars
-const struct SGAISpecifyer* myGAISpecifyers = NULL;
-const int numMyGAISpecifyers;
+const struct SGAISpecifier* myGAISpecifiers = NULL;
+const int numMyGAISpecifiers;
 
 const struct SGAILibrary* myGAILibraries;
 const int numMyGAILibraries;
@@ -139,18 +139,18 @@ Export(int) getInfos(InfoItem infos[], unsigned int max) {
 
 // skirmish AI methods
 /*
-Export(int) getSkirmishAISpecifyers(struct SSAISpecifyer* sAISpecifyers, int max) {
-	return myInterface.GetSkirmishAISpecifyers(sAISpecifyers, max);
+Export(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max) {
+	return myInterface.GetSkirmishAISpecifiers(sAISpecifiers, max);
 }
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifyer* const sAISpecifyer) {
-	return myInterface.LoadSkirmishAILibrary(sAISpecifyer);
+Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
+	return myInterface.LoadSkirmishAILibrary(sAISpecifier);
 }
 */
 Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
 	return myInterface.LoadSkirmishAILibrary(infos, numInfos);
 }
-Export(int) unloadSkirmishAILibrary(const struct SSAISpecifyer* const sAISpecifyer) {
-	return myInterface.UnloadSkirmishAILibrary(sAISpecifyer);
+Export(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
+	return myInterface.UnloadSkirmishAILibrary(sAISpecifier);
 }
 Export(int) unloadAllSkirmishAILibraries() {
 	return myInterface.UnloadAllSkirmishAILibraries();
@@ -160,18 +160,18 @@ Export(int) unloadAllSkirmishAILibraries() {
 
 // group AI methods
 /*
-Export(int) getGroupAISpecifyers(struct SGAISpecifyer* gAISpecifyers, int max) {
-	return myInterface.GetGroupAISpecifyers(gAISpecifyers, max);
+Export(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max) {
+	return myInterface.GetGroupAISpecifiers(gAISpecifiers, max);
 }
-Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifyer* const gAISpecifyer) {
-	return myInterface.LoadGroupAILibrary(gAISpecifyer);
+Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
+	return myInterface.LoadGroupAILibrary(gAISpecifier);
 }
 */
 Export(const struct SGAILibrary*) loadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
 	return myInterface.LoadGroupAILibrary(infos, numInfos);
 }
-Export(int) unloadGroupAILibrary(const struct SGAISpecifyer* const gAISpecifyer) {
-	return myInterface.UnloadGroupAILibrary(gAISpecifyer);
+Export(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
+	return myInterface.UnloadGroupAILibrary(gAISpecifier);
 }
 Export(int) unloadAllGroupAILibraries() {
 	return myInterface.UnloadAllGroupAILibraries();

@@ -37,7 +37,7 @@ class IAILibraryManager {
 //	typedef s_cont<ISkirmishAILibraryInterfaceInfo>::const_vector T_interfaceInfos_const;
 //	typedef s_cont<CSkirmishAILibraryInfoKey>::const_vector T_infoKeys_const;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::const_vector T_aiInfos_const;
-//	typedef s_cont<std::string>::const_vector T_specifyers_const;
+//	typedef s_cont<std::string>::const_vector T_specifiers_const;
 	
 public:
 	virtual ~IAILibraryManager() {}
@@ -49,15 +49,15 @@ public:
 ////	virtual const std::vector<const ISkirmishAILibraryInfo*>* GetAIInfos() const = 0;
 ////	virtual const std::vector<const ISkirmishAILibraryInfo*>* GetInterfaceAIs(const SAIInterfaceLibraryInfo& interfaceInfo) const = 0;
 //
-//	virtual T_specifyers_const GetSpecifyers() const = 0;
-//	virtual T_infoKeys_const GetApplyingInfoKeys(const std::string& specifyer) const {
+//	virtual T_specifiers_const GetSpecifiers() const = 0;
+//	virtual T_infoKeys_const GetApplyingInfoKeys(const std::string& specifier) const {
 //		
 //		T_infoKeys_const applyingInfoKeys;
 //		
 //		const T_infoKeys_const infoKeys = GetInfoKeys();
 //		T_infoKeys_const::const_iterator infoKey;
 //		for (infoKey=infoKeys.begin(); infoKey!=infoKeys.end(); infoKey++) {
-//			if ((*infoKey)->IsApplyingSpecifyer(specifyer)) {
+//			if ((*infoKey)->IsApplyingSpecifier(specifier)) {
 //				applyingInfoKeys.push_back(*infoKey);
 //			}
 //		}
@@ -77,14 +77,14 @@ public:
 //	virtual int UnloadEverything() = 0; // unloads all currently loaded AIs and interfaces
 //	faces and implementations)
 	
-	virtual const std::vector<SAIInterfaceSpecifyer>* GetInterfaceSpecifyers() const = 0;
+	virtual const std::vector<SAIInterfaceSpecifier>* GetInterfaceSpecifiers() const = 0;
 	virtual const std::vector<SSAIKey>* GetSkirmishAIKeys() const = 0;
 	virtual const std::vector<SGAIKey>* GetGroupAIKeys() const = 0;
 	
-//	virtual const std::map<const SAIInterfaceSpecifyer, CAIInterfaceLibraryInfo*>* GetInterfaceInfos() const = 0;
+//	virtual const std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*>* GetInterfaceInfos() const = 0;
 //	virtual const std::map<const SSAIKey, CSkirmishAILibraryInfo*>* GetSkirmishAIInfos() const = 0;
 //	virtual const std::map<const SGAIKey, CGroupAILibraryInfo*>* GetGroupAIInfos() const = 0;
-	typedef std::map<const SAIInterfaceSpecifyer, CAIInterfaceLibraryInfo*, SAIInterfaceSpecifyer_Comparator> T_interfaceInfos;
+	typedef std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*, SAIInterfaceSpecifier_Comparator> T_interfaceInfos;
 	typedef std::map<const SSAIKey, CSkirmishAILibraryInfo*, SSAIKey_Comparator> T_skirmishAIInfos;
 	typedef std::map<const SGAIKey, CGroupAILibraryInfo*, SGAIKey_Comparator> T_groupAIInfos;
 	
@@ -92,8 +92,8 @@ public:
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const = 0;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const = 0;
 
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifyer& skirmishAISpecifyer) const = 0;
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifyer) const = 0;
+	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const = 0;
+	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const = 0;
 	// a Skirmish AI (its library) is only really loaded when it is not yet loaded.
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey) = 0;
 	// a Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -103,7 +103,7 @@ public:
 	virtual void ReleaseSkirmishAILibrary(const SSAIKey& skirmishAIKey) = 0;
 	virtual void ReleaseAllSkirmishAILibraries() = 0; // unloads all currently Skirmish loaded AIs
 	
-	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifyer) const = 0;
+	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifier) const = 0;
 	// a Group AI (its library) is only really loaded when it is not yet loaded.
 	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAIKey& groupAIKey) = 0;
 	// a Group AI is only unloaded when ReleaseSkirmishAILibrary() is called

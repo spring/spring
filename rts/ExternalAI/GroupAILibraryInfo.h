@@ -28,12 +28,12 @@
 class IGroupAILibrary;
 struct InfoItem;
 struct Option;
-struct SAIInterfaceSpecifyer;
-struct SGAISpecifyer;
+struct SAIInterfaceSpecifier;
+struct SGAISpecifier;
 
 class CGroupAILibraryInfo {
 public:
-	CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifyer& interfaceSpecifyer);
+	CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier);
 	CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo);
 	CGroupAILibraryInfo(
 			const std::string& aiInfoFile,
@@ -41,7 +41,7 @@ public:
 			const std::string& fileModes,
 			const std::string& accessModes);
     
-    virtual SGAISpecifyer GetSpecifier() const;
+    virtual SGAISpecifier GetSpecifier() const;
 	
     virtual std::string GetFileName() const;
     virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'

@@ -20,15 +20,15 @@
 extern std::string stupidGlobalMapname;
 
 
-CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifyer):
-	CScript(std::string("GlobalAI test (") + std::string(skirmishAISpecifyer.ai.shortName) + std::string(")")),
-	skirmishAISpecifyer(skirmishAISpecifyer)
+CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifier):
+	CScript(std::string("GlobalAI test (") + std::string(skirmishAISpecifier.ai.shortName) + std::string(")")),
+	skirmishAISpecifier(skirmishAISpecifier)
 {
 	if (!gameSetup) {
 		// make sure CSelectedUnits::AiOrder()
 		// still works without a setup script
 		gs->Team(1)->isAI = true;
-		gs->Team(1)->skirmishAISpecifyer = skirmishAISpecifyer;
+		gs->Team(1)->skirmishAISpecifier = skirmishAISpecifier;
 		gs->Team(1)->leader = 0;
 	}
 }
@@ -41,7 +41,7 @@ CGlobalAITestScript::~CGlobalAITestScript(void)
 
 void CGlobalAITestScript::GameStart(void)
 {
-	globalAI->CreateSkirmishAI(1, skirmishAISpecifyer);
+	globalAI->CreateSkirmishAI(1, skirmishAISpecifier);
 
 	gs->Team(0)->energy        = 1000;
 	gs->Team(0)->energyStorage = 1000;

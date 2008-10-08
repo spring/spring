@@ -198,16 +198,16 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		else {
 			if (setup->hostDemo) {
 				SSAIKey key = {{NULL, NULL}, {NULL, NULL}};
-				teams[i]->skirmishAISpecifyer = key;
+				teams[i]->skirmishAISpecifier = key;
 			}
 			else
 			{
 				const char* sn = setup->teamStartingData[i].skirmishAIShortName.c_str();
 				const char* v = setup->teamStartingData[i].skirmishAIVersion.empty() ? NULL : setup->teamStartingData[i].skirmishAIVersion.c_str();
-				SSAISpecifyer spec = {sn, v};
+				SSAISpecifier spec = {sn, v};
 				std::vector<SSAIKey> fittingKeys = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
 				if (fittingKeys.size() > 0) {
-					teams[i]->skirmishAISpecifyer = fittingKeys[0];
+					teams[i]->skirmishAISpecifier = fittingKeys[0];
 					teams[i]->isAI = true;
 				} else {
 					const int MAX_MSG_LENGTH = 511;

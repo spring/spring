@@ -38,33 +38,33 @@ public:
 			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
-	//int GetSkirmishAISpecifyers(SSAISpecifyer* sAISpecifyers, int max) const;
+	//int GetSkirmishAISpecifiers(SSAISpecifier* sAISpecifiers, int max) const;
 	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos);
-	int UnloadSkirmishAILibrary(const SSAISpecifyer* const sAISpecifyer);
+	int UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier);
 	int UnloadAllSkirmishAILibraries();
 
 	// group AI methods
-	//int GetGroupAISpecifyers(SGAISpecifyer* gAISpecifyers, int max) const;
+	//int GetGroupAISpecifiers(SGAISpecifier* gAISpecifiers, int max) const;
 	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos);
-	int UnloadGroupAILibrary(const SGAISpecifyer* const gAISpecifyer);
+	int UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier);
 	int UnloadAllGroupAILibraries();
 	
 private:
 	// these functions actually load and unload the libraries
-	SharedLib* Load(const SSAISpecifyer* const sAISpecifyer, SSAILibrary* ai);
+	SharedLib* Load(const SSAISpecifier* const sAISpecifier, SSAILibrary* ai);
 	SharedLib* LoadSkirmishAILib(const std::string& libFilePath, SSAILibrary* ai);
 	
-	SharedLib* Load(const SGAISpecifyer* const gAISpecifyer, SGAILibrary* ai);
+	SharedLib* Load(const SGAISpecifier* const gAISpecifier, SGAILibrary* ai);
 	SharedLib* LoadGroupAILib(const std::string& libFilePath, SGAILibrary* ai);
 	
 	static void reportInterfaceFunctionError(const std::string& libFileName, const std::string& functionName);
 	static void reportError(const std::string& msg);
-	std::string GenerateLibFilePath(const SSAISpecifyer& sAISpecifyer);
-	std::string GenerateLibFilePath(const SGAISpecifyer& gAISpecifyer);
+	std::string GenerateLibFilePath(const SSAISpecifier& sAISpecifier);
+	std::string GenerateLibFilePath(const SGAISpecifier& gAISpecifier);
 	//static std::string GenerateLibFilePath(const std::string& basePath, const std::string& libFileName);
 #define MAX_INFOS 128
-	static SSAISpecifyer extractSpecifyer(const SSAILibrary& skirmishAILib);
-	static SGAISpecifyer extractSpecifyer(const SGAILibrary& groupAILib);
+	static SSAISpecifier extractSpecifier(const SSAILibrary& skirmishAILib);
+	static SGAISpecifier extractSpecifier(const SGAILibrary& groupAILib);
 	
 	//static std::vector<std::string> FindDirs(const std::string& path, const std::string& pattern = ".*");
 	/**
@@ -81,24 +81,24 @@ private:
 //	std::map<std::string, std::string> myProperties;
 	std::vector<InfoItem> myInfos;
 	
-	std::vector<SSAISpecifyer> mySkirmishAISpecifyers;
-//	typedef std::map<SSAISpecifyer, std::string, SSAISpecifyer_Comparator> T_skirmishAIFileNames;
+	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
+//	typedef std::map<SSAISpecifier, std::string, SSAISpecifier_Comparator> T_skirmishAIFileNames;
 //	T_skirmishAIFileNames mySkirmishAIFileNames;
-	typedef std::map<SSAISpecifyer, std::map<std::string, InfoItem>, SSAISpecifyer_Comparator> T_skirmishAIInfos;
+	typedef std::map<SSAISpecifier, std::map<std::string, InfoItem>, SSAISpecifier_Comparator> T_skirmishAIInfos;
 	T_skirmishAIInfos mySkirmishAIInfos;
-	typedef std::map<SSAISpecifyer, SSAILibrary*, SSAISpecifyer_Comparator> T_skirmishAIs;
+	typedef std::map<SSAISpecifier, SSAILibrary*, SSAISpecifier_Comparator> T_skirmishAIs;
 	T_skirmishAIs myLoadedSkirmishAIs;
-	typedef std::map<SSAISpecifyer, SharedLib*, SSAISpecifyer_Comparator> T_skirmishAILibs;
+	typedef std::map<SSAISpecifier, SharedLib*, SSAISpecifier_Comparator> T_skirmishAILibs;
 	T_skirmishAILibs myLoadedSkirmishAILibs;
 	
-	std::vector<SGAISpecifyer> myGroupAISpecifyers;
-//	typedef std::map<SGAISpecifyer, std::string, SGAISpecifyer_Comparator> T_groupAIFileNames;
+	std::vector<SGAISpecifier> myGroupAISpecifiers;
+//	typedef std::map<SGAISpecifier, std::string, SGAISpecifier_Comparator> T_groupAIFileNames;
 //	T_groupAIFileNames myGroupAIFileNames;
-	typedef std::map<SGAISpecifyer, std::map<std::string, InfoItem>, SGAISpecifyer_Comparator> T_groupAIInfos;
+	typedef std::map<SGAISpecifier, std::map<std::string, InfoItem>, SGAISpecifier_Comparator> T_groupAIInfos;
 	T_groupAIInfos myGroupAIInfos;
-	typedef std::map<SGAISpecifyer, SGAILibrary*, SGAISpecifyer_Comparator> T_groupAIs;
+	typedef std::map<SGAISpecifier, SGAILibrary*, SGAISpecifier_Comparator> T_groupAIs;
 	T_groupAIs myLoadedGroupAIs;
-	typedef std::map<SGAISpecifyer, SharedLib*, SGAISpecifyer_Comparator> T_groupAILibs;
+	typedef std::map<SGAISpecifier, SharedLib*, SGAISpecifier_Comparator> T_groupAILibs;
 	T_groupAILibs myLoadedGroupAILibs;
 };
 

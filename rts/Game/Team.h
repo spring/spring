@@ -67,7 +67,7 @@ public:
 
 	bool isAI;
 	std::string luaAI;
-	SSAIKey skirmishAISpecifyer;
+	SSAIKey skirmishAISpecifier;
 
 	// color info is unsynced
 	unsigned char color[4];

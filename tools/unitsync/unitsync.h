@@ -263,10 +263,10 @@ Export(const char*) GetLuaAIDesc(int aiIndex);
  */
 Export(int) GetSkirmishAICount();
 /**
- * Returns the specifyer of a Skirmish AI.
+ * Returns the specifier of a Skirmish AI.
  * It contians all the info needed to specify an AI in script.txt eg.
  */
-Export(struct SSAISpecifyer) GetSkirmishAISpecifyer(int index);
+Export(struct SSAISpecifier) GetSkirmishAISpecifier(int index);
 /**
  * Returns a list of static properties of a skirmish AI.
  * For a list of standard properties, see the SKIRMISH_AI_PROPERTY_* defines

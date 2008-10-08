@@ -21,28 +21,28 @@
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
-		const SSAISpecifyer& specifyer) : sSAI(ai), specifyer(specifyer) {
+		const SSAISpecifier& specifier) : sSAI(ai), specifier(specifier) {
 	
 /*
 	std::map<std::string, InfoItem> infos = GetInfos();
-	specifyer.shortName = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
-	specifyer.version = infos.at(SKIRMISH_AI_PROPERTY_VERSION).value;
+	specifier.shortName = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
+	specifier.version = infos.at(SKIRMISH_AI_PROPERTY_VERSION).value;
 */
 }
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {}
 	
-SSAISpecifyer CSkirmishAILibrary::GetSpecifyer() const {
-	return specifyer;
+SSAISpecifier CSkirmishAILibrary::GetSpecifier() const {
+	return specifier;
 }
 
 LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
-		const SAIInterfaceSpecifyer& interfaceSpecifyer) const {
+		const SAIInterfaceSpecifier& interfaceSpecifier) const {
 	
 	if (sSAI.getLevelOfSupportFor != NULL) {
 		return sSAI.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber,
-			interfaceSpecifyer.shortName, interfaceSpecifyer.version);
+			interfaceSpecifier.shortName, interfaceSpecifier.version);
 	} else {
 		return LOS_Unknown;
 	}

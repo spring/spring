@@ -42,26 +42,26 @@ extern "C" {
 #define AI_INTERFACE_PROPERTY_ENGINE_VERSION "engineVersion"           // [int] the engine version number the AI was compiled, but may work with newer or older ones too
 
 /**
- * @brief struct Artificial Intelligence Interface Specifyer
+ * @brief struct Artificial Intelligence Interface Specifier
  */
-struct SAIInterfaceSpecifyer {
+struct SAIInterfaceSpecifier {
 	const char* shortName; // [may not contain: spaces, '_', '#']
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-SAIInterfaceSpecifyer copySAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const orig);
-void deleteSAIInterfaceSpecifyer(const struct SAIInterfaceSpecifyer* const spec);
+SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig);
+void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec);
 
 #ifdef	__cplusplus
-struct SAIInterfaceSpecifyer_Comparator {
+struct SAIInterfaceSpecifier_Comparator {
 	/**
 	 * The key comparison function, a Strict Weak Ordering;
 	 * it returns true if its first argument is less
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SAIInterfaceSpecifyer& a, const struct SAIInterfaceSpecifyer& b) const;
-	static bool IsEmpty(const struct SAIInterfaceSpecifyer& spec);
+	bool operator()(const struct SAIInterfaceSpecifier& a, const struct SAIInterfaceSpecifier& b) const;
+	static bool IsEmpty(const struct SAIInterfaceSpecifier& spec);
 };
 #endif /* __cplusplus */
 
@@ -73,8 +73,8 @@ struct SSAIKey {
 #ifdef	__USE_CREG
 	CR_DECLARE_STRUCT(SSAIKey);
 #endif /* __USE_CREG */
-	struct SAIInterfaceSpecifyer interface;
-	struct SSAISpecifyer ai;
+	struct SAIInterfaceSpecifier interface;
+	struct SSAISpecifier ai;
 };
 
 #ifdef	__cplusplus
@@ -98,8 +98,8 @@ struct SGAIKey {
 #ifdef	__USE_CREG
 	CR_DECLARE_STRUCT(SGAIKey);
 #endif /* __USE_CREG */
-	struct SAIInterfaceSpecifyer interface;
-	struct SGAISpecifyer ai;
+	struct SAIInterfaceSpecifier interface;
+	struct SGAISpecifier ai;
 };
 
 #ifdef	__cplusplus
@@ -136,17 +136,17 @@ struct SAIInterfaceLibrary {
 	int (CALLING_CONV *getInfos)(struct InfoItem infos[], unsigned int max);
 	
 	// skirmish AI methods
-	//int (CALLING_CONV *getSkirmishAISpecifyers)(struct SSAISpecifyer* sAISpecifyers, int max);
-	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifyer* const sAISpecifyer);
+	//int (CALLING_CONV *getSkirmishAISpecifiers)(struct SSAISpecifier* sAISpecifiers, int max);
+	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
-	int (CALLING_CONV *unloadSkirmishAILibrary)(const struct SSAISpecifyer* const sAISpecifyer);
+	int (CALLING_CONV *unloadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 	
 	// group AI methods
-	//int (CALLING_CONV *getGroupAISpecifyers)(struct SGAISpecifyer* gAISpecifyers, int max);
-	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifyer* const gAISpecifyer);
+	//int (CALLING_CONV *getGroupAISpecifiers)(struct SGAISpecifier* gAISpecifiers, int max);
+	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
 	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
-	int (CALLING_CONV *unloadGroupAILibrary)(const struct SGAISpecifyer* const gAISpecifyer);
+	int (CALLING_CONV *unloadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
 	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 

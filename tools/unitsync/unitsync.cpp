@@ -1133,9 +1133,9 @@ Export(int) GetSkirmishAICount() {
 	return skirmishAIDataDirs.size();
 }
 
-Export(struct SSAISpecifyer) GetSkirmishAISpecifyer(int index) {
+Export(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
 	
-	SSAISpecifyer spec = {NULL, NULL};
+	SSAISpecifier spec = {NULL, NULL};
 	
 	int num = GetSkirmishAIInfoCount(index);
 	

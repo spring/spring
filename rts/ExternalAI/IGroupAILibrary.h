@@ -23,23 +23,23 @@
 #include <vector>
 #include <map>
 
-struct SGAISpecifyer;
+struct SGAISpecifier;
 struct InfoItem;
 struct Option;
-struct SAIInterfaceSpecifyer;
+struct SAIInterfaceSpecifier;
 
 class IGroupAILibrary {
 public:
 	virtual ~IGroupAILibrary() {}
 	
-	virtual SGAISpecifyer GetSpecifyer() const = 0;
+	virtual SGAISpecifier GetSpecifier() const = 0;
 	/**
 	 * Level of Support for a specific engine version and AI interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
-			const SAIInterfaceSpecifyer& interfaceSpecifyer) const = 0;
+			const SAIInterfaceSpecifier& interfaceSpecifier) const = 0;
 	
     virtual std::map<std::string, InfoItem> GetInfos() const = 0;
 	virtual std::vector<Option> GetOptions() const = 0;

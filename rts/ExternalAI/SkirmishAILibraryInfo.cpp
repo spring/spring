@@ -27,11 +27,11 @@
 #include <vector>
 #include <map>
 
-CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifyer& interfaceSpecifyer) {
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier) {
 	infos = ai.GetInfos();
 	options = ai.GetOptions();
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
-	//		ENGINE_VERSION_NUMBER, interfaceSpecifyer);
+	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo) {
@@ -72,11 +72,11 @@ LevelOfSupport CSkirmishAILibraryInfo::GetLevelOfSupportForCurrentEngineAndSetIn
 }
 */
 
-SSAISpecifyer CSkirmishAILibraryInfo::GetSpecifier() const {
+SSAISpecifier CSkirmishAILibraryInfo::GetSpecifier() const {
 	
 	const char* sn = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
 	const char* v = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
-	SSAISpecifyer specifier = {sn, v};
+	SSAISpecifier specifier = {sn, v};
 	return specifier;
 }
 

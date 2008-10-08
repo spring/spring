@@ -24,11 +24,11 @@
 
 #include "Platform/errorhandler.h"
 
-CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifyer& interfaceSpecifyer) {
+CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier) {
 	infos = ai.GetInfos();
 	options = ai.GetOptions();
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
-	//		ENGINE_VERSION_NUMBER, interfaceSpecifyer);
+	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
 
 CGroupAILibraryInfo::CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo) {
@@ -68,11 +68,11 @@ LevelOfSupport CGroupAILibraryInfo::GetLevelOfSupportForCurrentEngine() const {
 }
 */
 
-SGAISpecifyer CGroupAILibraryInfo::GetSpecifier() const {
+SGAISpecifier CGroupAILibraryInfo::GetSpecifier() const {
 	
 	const char* sn = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
 	const char* v = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
-	SGAISpecifyer specifier = {sn, v};
+	SGAISpecifier specifier = {sn, v};
 	return specifier;
 }
 

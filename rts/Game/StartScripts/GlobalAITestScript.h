@@ -7,9 +7,9 @@
 class CGlobalAITestScript :
 	public CScript
 {
-	SSAIKey skirmishAISpecifyer;
+	SSAIKey skirmishAISpecifier;
 public:
-	CGlobalAITestScript(const SSAIKey& skirmishAISpecifyer);
+	CGlobalAITestScript(const SSAIKey& skirmishAISpecifier);
 	~CGlobalAITestScript(void);
 
 	void GameStart(void);

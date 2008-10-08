@@ -21,9 +21,9 @@
 #include <stdlib.h>
 
 
-SGAISpecifyer copySGAISpecifyer(const struct SGAISpecifyer* const orig) {
+SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig) {
 	
-	struct SGAISpecifyer copy;
+	struct SGAISpecifier copy;
 	
 	char* tmpStr = (char *) malloc(sizeof(char) * (strlen(orig->shortName) + 1));
 	strcpy(tmpStr, orig->shortName);
@@ -35,14 +35,14 @@ SGAISpecifyer copySGAISpecifyer(const struct SGAISpecifyer* const orig) {
 	
 	return copy;
 }
-void deleteSGAISpecifyer(const struct SGAISpecifyer* const spec) {
+void deleteSGAISpecifier(const struct SGAISpecifier* const spec) {
 	free(const_cast<char*>(spec->shortName));
 	free(const_cast<char*>(spec->version));
 }
 
 #ifdef	__cplusplus
 
-bool SGAISpecifyer_Comparator::operator()(const struct SGAISpecifyer& a, const struct SGAISpecifyer& b) const {
+bool SGAISpecifier_Comparator::operator()(const struct SGAISpecifier& a, const struct SGAISpecifier& b) const {
 
 	bool isLess = false;
 	
@@ -59,7 +59,7 @@ bool SGAISpecifyer_Comparator::operator()(const struct SGAISpecifyer& a, const s
 
 	return isLess;
 }
-bool SGAISpecifyer_Comparator::IsEmpty(const struct SGAISpecifyer& spec) {
+bool SGAISpecifier_Comparator::IsEmpty(const struct SGAISpecifier& spec) {
 	
 	bool empty = false;
 	

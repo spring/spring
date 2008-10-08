@@ -39,26 +39,26 @@ extern "C" {
 #define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
 /**
- * @brief struct Skirmish Artificial Intelligence Specifyer
+ * @brief struct Skirmish Artificial Intelligence Specifier
  */
-struct SSAISpecifyer {
+struct SSAISpecifier {
 	const char* shortName; // [may not contain: spaces, '_', '#']
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-SSAISpecifyer copySSAISpecifyer(const struct SSAISpecifyer* const orig);
-void deleteSSAISpecifyer(const struct SSAISpecifyer* const spec);
+SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
+void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
 
 #ifdef	__cplusplus
-struct SSAISpecifyer_Comparator {
+struct SSAISpecifier_Comparator {
 	/**
 	 * The key comparison function, a Strict Weak Ordering;
 	 * it returns true if its first argument is less
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SSAISpecifyer& a, const struct SSAISpecifyer& b) const;
-	static bool IsEmpty(const struct SSAISpecifyer& spec);
+	bool operator()(const struct SSAISpecifier& a, const struct SSAISpecifier& b) const;
+	static bool IsEmpty(const struct SSAISpecifier& spec);
 };
 #endif /* __cplusplus */
 
