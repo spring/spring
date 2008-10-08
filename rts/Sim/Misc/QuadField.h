@@ -55,7 +55,7 @@ public:
 		std::list<CFeature*> features;
 	};
 
-	const Quad& GetQuad(int i) const { return baseQuads[i]; }
+	const Quad& GetQuad(int i) const { assert(static_cast<unsigned>(i) < baseQuads.size()); return baseQuads[i]; }
 	const Quad& GetQuadAt(int x, int z) const { return baseQuads[numQuadsX * z + x]; }
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
