@@ -321,7 +321,7 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewlua") {
 		SetCameraMode(6);
 	}
-	else if (cmd == "vieworb") {
+	else if (cmd == "vieworbit") {
 		SetCameraMode(7);
 	}
 
