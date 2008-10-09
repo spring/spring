@@ -24,6 +24,9 @@
 #if	defined BUILDING_AI
 #error BUILDING_AI should not be defined when building AI interfaces
 #endif
+#if	defined SYNCIFY
+#error SYNCIFY should not be defined when building AI interfaces
+#endif
 
 #include "ExternalAI/Interface/aidefines.h"
 

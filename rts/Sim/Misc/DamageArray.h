@@ -1,9 +1,8 @@
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
-#include "StdAfx.h"
 #include <algorithm>
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 struct DamageArray
 {
@@ -12,38 +11,13 @@ struct DamageArray
 public:
 
 	DamageArray();
-
 	/**
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.
 	 */
-	DamageArray(int numTypes, const float* typeDamages) :
-			numTypes(numTypes)
-	{
-		damages = new float[numTypes];
-		for(int a = 0; a < numTypes; ++a) {
-			damages[a] = typeDamages[a];
-		}
-	}
-
-DamageArray(const DamageArray& other)
-{
-	paralyzeDamageTime = other.paralyzeDamageTime;
-	impulseBoost = other.impulseBoost;
-	craterBoost = other.craterBoost;
-	impulseFactor = other.impulseFactor;
-	craterMult = other.craterMult;
-	numTypes = other.numTypes;
-	damages = SAFE_NEW float[numTypes];
-	for(int a = 0; a < numTypes; ++a)
-		damages[a] = other.damages[a];
-}
-
-
-	~DamageArray()
-	{
-		delete[] damages;
-	}
+	DamageArray(int numTypes, const float* typeDamages);
+	DamageArray(const DamageArray& other);
+	~DamageArray();
 
 	void operator=(const DamageArray& other) {
 		paralyzeDamageTime = other.paralyzeDamageTime;
@@ -72,7 +46,9 @@ DamageArray(const DamageArray& other)
 	float impulseFactor, impulseBoost, craterMult, craterBoost;
 
 private:
+	#ifdef USING_CREG
 	void creg_Serialize(creg::ISerializer& s);
+	#endif /* USING_CREG */
 
 	int numTypes;
 	float* damages;

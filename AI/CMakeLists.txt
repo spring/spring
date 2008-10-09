@@ -1,7 +1,5 @@
 include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
 
-#FIND_PACKAGE(SDL REQUIRED)
-
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
 #list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
@@ -19,8 +17,9 @@ endif (UNIX AND NOT MINGW)
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface/LegacyCppWrapper legacycppaienv)
 list (APPEND legacycppaienv ${aienv})
-list (APPEND legacycppaienv ${errorhandler})
 list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/float3)
+list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
+#list (APPEND legacycppaienv ${errorhandler})
 #list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/LogOutput)
 
 
