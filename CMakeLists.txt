@@ -60,7 +60,11 @@ endif (MINGW)
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
 set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
-SET(CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+if (MARCH_FLAG)
+	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG}")
+endif (MARCH_FLAG)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -mfpmath=387 -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 # ADD_DEFINITIONS(-DSTREFLOP_X87) breaks AI compiling
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
