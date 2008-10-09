@@ -780,6 +780,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							teams[fromTeam].reset();
 						}
 						players[player]->team = 0;
+						players[player]->spectator = true;
 						break;
 					}
 					case TEAMMSG_GIVEAWAY: {
@@ -790,11 +791,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							teams[fromTeam].reset();
 						}
 						players[player]->team = 0;
+						players[player]->spectator = true;
 						break;
 					}
 					case TEAMMSG_RESIGN: {
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
 						players[player]->team = 0;
+						players[player]->spectator = true;
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
@@ -826,6 +829,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 								if (players[i] && players[i]->team == team)
 								{
 									players[i]->team = 0;
+									players[player]->spectator = true;
 								}
 							}
 						}

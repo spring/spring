@@ -28,6 +28,7 @@ set_target_properties("KAIK-${KAIK_VERS}" PROPERTIES COMPILE_FLAGS "-DUSING_CREG
 
 
 ## RAI
+if (EXISTS ${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553)
 set(RAI_VERS "UNKNOWN_VERSION")
 if (EXISTS ${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553/VERSION)
 	file(STRINGS "${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553/VERSION" RAI_VERS LIMIT_COUNT 1)
@@ -38,6 +39,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553 rai)
 add_library(RAI-${RAI_VERS} MODULE ${rai} ${legacycppaienv} RAI-0.553/KrogsMetalClass/MetalMap)
 install (FILES ${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553/AIInfo.lua DESTINATION ${DATADIR}/AI/Skirmish/data/RAI-${RAI_VERS})
 install (FILES ${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553/AIOptions.lua DESTINATION ${DATADIR}/AI/Skirmish/data/RAI-${RAI_VERS})
+endif (EXISTS ${CMAKE_SOURCE_DIR}/AI/Skirmish/RAI-0.553)
 
 
 ## AAI
