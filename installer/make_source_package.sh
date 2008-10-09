@@ -67,9 +67,9 @@ mkdir lf || exit 1
 cd lf
 /usr/bin/svn export .. "$dir" --native-eol LF
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
-[ -n "$tbz" ] && echo 'Creating .tar.bz2 archive' && \
+[ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
 	tar cfj "../$tbz" $include $linux_include
-[ -n "$tgz" ] && echo 'Creating .tar.gz archive' && \
+[ -n "$tgz" ] && echo "Creating .tar.gz archive ($tgz)" && \
 	tar cfz "../$tgz" $include $linux_include
 cd ..
 echo 'Cleaning'
@@ -81,9 +81,9 @@ mkdir crlf || exit 1
 cd crlf
 /usr/bin/svn export .. "$dir" --native-eol CRLF
 [ -n "$windows_exclude" ] && rm -rf $windows_exclude
-[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo 'Creating .zip archive' && \
+[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
 	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
-[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo 'Creating .7z archive' && \
+[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo "Creating .7z archive ($seven_zip)" && \
 	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
 cd ..
 echo 'Cleaning'

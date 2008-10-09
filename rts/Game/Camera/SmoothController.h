@@ -17,6 +17,8 @@ public:
 	const std::string GetName() const { return "sm"; }
 
 	void KeyMove(float3 move);
+	void MousePress(int, int, int) { /* empty */ }
+	void MouseRelease(int, int, int) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);

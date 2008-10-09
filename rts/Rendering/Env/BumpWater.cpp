@@ -190,10 +190,8 @@ static void DrawRadialDisc()
 
 	CVertexArray *va = GetVertexArray();
 	va->Initialize();
-	va->CheckInitSize(4*34*2*VA_SIZE_0);
 
 	const float alphainc = fastmath::PI2 / 32;
-	const float alphaincpi2 = alphainc + fastmath::PI2;	
 	float alpha,r1,r2;
 	float3 p(0.0f,0.0f,0.0f);
 	const float size = std::min(xsize,ysize);
@@ -204,13 +202,13 @@ static void DrawRadialDisc()
 		}else{
 			r2 = (n+1)*(n+1) * size;
 		}
-		for (alpha = 0.0f; alpha < alphaincpi2 ; alpha+=alphainc) {
+		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexQ0(p.x,p.y,p.z);
+			va->AddVertex0(p);
 			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexQ0(p.x,p.y,p.z);
+			va->AddVertex0(p);
 		}
 	}
 
@@ -812,8 +810,8 @@ void CBumpWater::UpdateCoastmap(const int x1, const int y1, const int x2, const 
 		int xmax = min(x2 + 10*2,gs->mapx);
 		int ymin = max(y1 - 10*2,0);
 		int ymax = min(y2 + 10*2,gs->mapy);
-		//int xsize = xmax - xmin;
-		//int ysize = ymax - ymin;
+		int xsize = xmax - xmin;
+		int ysize = ymax - ymin;
 
 		glUniform2f(blurDirLoc,1.0f/gs->mapx,0.0f);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
@@ -902,37 +900,29 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 	glViewport(0,0, normalTextureX, normalTextureY);
 	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+		glPushMatrix();
+		glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0,1,0,1,-1,1);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0,1,0,1,-1,1);
 	glMatrixMode(GL_TEXTURE);
-	glPushMatrix();
-	glLoadIdentity();
+		glPushMatrix();
+		glLoadIdentity();
 
 	glBegin(GL_QUADS);
-	unsigned char offset,tx,ty;
-	unsigned char *to=tileOffsets;
-	unsigned char yts=0;
-	for (unsigned char y=0; y<tiles; ++y) {
-		unsigned char yts1=yts+tilesize;
-		unsigned char xts=0;
-		for (unsigned char x=0; x<tiles; ++x) {
-			unsigned char xts1=xts+tilesize;
-			offset = *to++;
-			tx = offset % tiles;
-			ty = ((offset - tx)/tiles)*tilesize;
-			tx*=tilesize;
-			glTexCoord2f(tx,          ty         ); glVertex2f(xts,  yts );
-			glTexCoord2f(tx,          ty+tilesize); glVertex2f(xts,  yts1);
-			glTexCoord2f(tx+tilesize, ty+tilesize); glVertex2f(xts1, yts1);
-			glTexCoord2f(tx+tilesize, ty         ); glVertex2f(xts1, yts );
-			xts=xts1;
+		unsigned char offset,tx,ty;
+		for (unsigned char y=0; y<tiles; ++y) {
+			for (unsigned char x=0; x<tiles; ++x) {
+				offset = tileOffsets[y * tiles + x];
+				tx = offset % tiles;
+				ty = (offset - tx)/tiles;
+				glTexCoord2f(     tx * tilesize,     ty * tilesize ); glVertex2f(     x * tilesize,     y * tilesize );
+				glTexCoord2f(     tx * tilesize, (ty+1) * tilesize ); glVertex2f(     x * tilesize, (y+1) * tilesize );
+				glTexCoord2f( (tx+1) * tilesize, (ty+1) * tilesize ); glVertex2f( (x+1) * tilesize, (y+1) * tilesize );
+				glTexCoord2f( (tx+1) * tilesize,     ty * tilesize ); glVertex2f( (x+1) * tilesize,     y * tilesize );
+			}
 		}
-		yts=yts1;
-	}
 	glEnd();
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

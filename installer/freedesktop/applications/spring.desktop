@@ -9,3 +9,4 @@ Icon=spring.png
 Terminal=false
 Type=Application
 Categories=Application;Game;StrategyGame;
+NoDisplay=true
