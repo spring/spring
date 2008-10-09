@@ -7,4 +7,4 @@
 #include "GameVersion.h"
 
 /** The game version. */
-const char* const VERSION_STRING = "0.77b2+";
+const char* const VERSION_STRING = "0.77b3";
