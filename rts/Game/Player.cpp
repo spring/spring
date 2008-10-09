@@ -117,7 +117,7 @@ void CPlayer::SetControlledTeams()
 
 void CPlayer::UpdateControlledTeams()
 {
-	for (int p = 0; p < gs->activeTeams; p++) {
+	for (int p = 0; p < gs->activePlayers; p++) {
 		CPlayer* player = gs->players[p];
 		if (player) {
 			player->SetControlledTeams();
