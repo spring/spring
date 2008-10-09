@@ -264,30 +264,33 @@ void CWeapon::Update()
 			/* to prevent runaway prediction (happens sometimes when a missile is moving *away* from it's target), we may need to disable missiles in case they fly around too long */
 			predict = 50000;
 		}
-		float3 lead = targetUnit->speed*(weaponDef->predictBoost+predictSpeedMod*(1.0f - weaponDef->predictBoost))*predict;
-		if (weaponDef->leadLimit >= 0.0f && lead.Length() > weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) {
-			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / lead.Length();
+
+		float3 lead = targetUnit->speed * (weaponDef->predictBoost+predictSpeedMod * (1.0f - weaponDef->predictBoost)) * predict;
+
+		if (weaponDef->leadLimit >= 0.0f && lead.Length() > weaponDef->leadLimit + weaponDef->leadBonus * owner->experience) {
+			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 
-		targetPos=helper->GetUnitErrorPos(targetUnit,owner->allyteam)+lead;
-		targetPos+=errorVector*(weaponDef->targetMoveError*30*targetUnit->speed.Length()*(1.0f-owner->limExperience));
-		float appHeight=ground->GetApproximateHeight(targetPos.x,targetPos.z)+2;
-		if(targetPos.y < appHeight)
-			targetPos.y=appHeight;
+		targetPos = helper->GetUnitErrorPos(targetUnit, owner->allyteam) + lead;
+		targetPos += errorVector * (weaponDef->targetMoveError * 30 * targetUnit->speed.Length() * (1.0f - owner->limExperience));
+		float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2;
 
-		if(!weaponDef->waterweapon && targetPos.y<1)
-			targetPos.y=1;
+		if (targetPos.y < appHeight)
+			targetPos.y = appHeight;
+
+		if (!weaponDef->waterweapon && targetPos.y < 1.0f)
+			targetPos.y = 1.0f;
 	}
 
-	if(weaponDef->interceptor) {
+	if (weaponDef->interceptor) {
 		CheckIntercept();
 	}
-	if(targetType!=Target_None){
-		if(onlyForward){
-			float3 goaldir=targetPos-owner->pos;
+	if (targetType != Target_None){
+		if (onlyForward) {
+			float3 goaldir = targetPos - owner->pos;
 			goaldir.Normalize();
-			angleGood=owner->frontdir.dot(goaldir) > maxAngleDif;
-		} else if(lastRequestedDir.dot(wantedDir)<maxAngleDif || lastRequest+15<gs->frameNum){
+			angleGood = (owner->frontdir.dot(goaldir) > maxAngleDif);
+		} else if (lastRequestedDir.dot(wantedDir) < maxAngleDif || lastRequest + 15 < gs->frameNum) {
 			angleGood=false;
 			lastRequestedDir=wantedDir;
 			lastRequest=gs->frameNum;

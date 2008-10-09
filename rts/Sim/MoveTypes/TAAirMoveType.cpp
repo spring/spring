@@ -838,7 +838,10 @@ void CTAAirMoveType::Update()
 				if (sqDist < totRad * totRad && sqDist != 0) {
 					float dist = sqrt(sqDist);
 					float3 dif = pos - (*ui)->pos;
-					dif /= dist;
+
+					if (dist > 0.0f) {
+						dif /= dist;
+					}
 
 					if ((*ui)->mass >= 100000 || (*ui)->immobile) {
 						pos -= dif * (dist - totRad);

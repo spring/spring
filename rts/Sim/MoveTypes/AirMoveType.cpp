@@ -301,7 +301,10 @@ EndNormalControl:
 				if (sqDist < totRad * totRad && sqDist != 0) {
 					float dist = sqrt(sqDist);
 					float3 dif = pos - (*ui)->pos;
-					dif /= dist;
+
+					if (dist > 0.0f) {
+						dif /= dist;
+					}
 
 					if ((*ui)->immobile) {
 						pos -= dif * (dist - totRad);
