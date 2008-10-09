@@ -433,9 +433,7 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					set<BuildingGroundDecal*>::iterator prev = bi;
-					bi++;
-					(*bdi)->buildingDecals.erase(prev);
+					(*bdi)->buildingDecals.erase(bi++);
 					continue;
 				}
 
