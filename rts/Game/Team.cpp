@@ -253,9 +253,11 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		energy = 0;
 	}
 	
-	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
+	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ) {
 		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
+		CUnitSet::iterator next = ui; ++next;
 		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
+		ui = next;
 	}
 
 	Died();
