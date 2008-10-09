@@ -593,33 +593,37 @@ void CTAAirMoveType::UpdateAirPhysics()
 	}
 
 	float yspeed = speed.y;
-	speed.y = 0;
+	speed.y = 0.0f;
 
 	float3 delta = wantedSpeed - speed;
 	float dl = delta.Length();
 
-	if (delta.dot(speed) > 0) {
+	if (delta.dot(speed) > 0.0f) {
 		// accelerate
 		if (dl < accRate) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / dl * accRate;
+			if (dl > 0.0f) {
+				speed += delta / dl * accRate;
+			}
 		}
 	} else {
 		// break
 		if (dl < decRate) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / dl * decRate;
+			if (dl > 0.0f) {
+				speed += delta / dl * decRate;
+			}
 		}
 	}
 
 	speed.y = yspeed;
 	float h = pos.y - std::max(
 		ground->GetHeight(pos.x, pos.z),
-		ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40));
+		ground->GetHeight(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
 
-	if (h < 4) {
+	if (h < 4.0f) {
 		speed.x *= 0.95f;
 		speed.z *= 0.95f;
 	}
@@ -632,29 +636,31 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 		if (speed.dot(dir + sdir * 20.0f) < 0.0f) {
 			if (lastColWarning->midPos.y > owner->pos.y) {
-				wh -= 30;
+				wh -= 30.0f;
 			} else {
-				wh += 50;
+				wh += 50.0f;
 			}
 		}
 	}
 
-	float ws;
+
+	float ws = 0.0f;
+
 	if (h < wh) {
 		ws = altitudeRate;
-		if (speed.y > 0 && (wh - h) / speed.y * accRate * 1.5f < speed.y)
-			ws = 0;
+		if (speed.y > 0.0f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
+			ws = 0.0f;
 	} else {
 		ws = -altitudeRate;
-		if (speed.y < 0 && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
-			ws = 0;
+		if (speed.y < 0.0f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
+			ws = 0.0f;
 	}
 
 	if (speed.y > ws) {
 		speed.y = std::max(ws, speed.y - accRate * 1.5f);
 	} else {
 		// let them accelerate upward faster if close to ground
-		speed.y = std::min(ws, speed.y + accRate * (h < 20? 2.0f: 0.7f));
+		speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 	}
 
 	pos += speed;
