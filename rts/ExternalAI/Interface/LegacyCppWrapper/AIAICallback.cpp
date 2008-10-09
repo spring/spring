@@ -19,12 +19,14 @@
 
 #include "ExternalAI/Interface/AISCommands.h"
 
-
+#include "creg/creg_cond.h"
+#ifdef USING_CREG
 creg::Class* CCommandQueue::GetClass() { return NULL; }
+#endif
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 UnitDef::~UnitDef() {
-    delete movedata;
+	delete movedata;
 }
 CIcon::CIcon() {}
 CIcon::~CIcon() {}
@@ -32,7 +34,6 @@ UnitDef::UnitDefWeapon::UnitDefWeapon() {}
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 WeaponDef::~WeaponDef() {}
-DamageArray::DamageArray() {}
 
 #include <string>
 

@@ -9,8 +9,8 @@
  */
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-#include "Util.h"
-#include "errorhandler.h"
+//#include "Util.h"
+//#include "errorhandler.h"
 #define SAFE_NEW new
 #else	/* defined BUILDING_AI || defined BUILDING_AI_INTERFACE */
 #include "StdAfx.h"
@@ -67,10 +67,15 @@ const char *SharedLib::GetLibExtension()
 void SharedLib::reportError(const char* errorMsg, const char* fileName, int lineNumber, const char* function) {
 	
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-	const int MAX_MSG_LENGTH = 511;
-	char s_msg[MAX_MSG_LENGTH + 1];
-	SNPRINTF(s_msg, MAX_MSG_LENGTH, "%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
-	handleerror(NULL, s_msg, "Shared Library Error", MBF_OK | MBF_EXCL);
+	#if defined EXTERNAL_LOGGER
+		const int MAX_MSG_LENGTH = 511;
+		char s_msg[MAX_MSG_LENGTH + 1];
+		SNPRINTF(s_msg, MAX_MSG_LENGTH, "%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
+		//handleerror(NULL, s_msg, "Shared Library Error", MBF_OK | MBF_EXCL);
+		EXTERNAL_LOGGER(s_msg)
+	#else	/* defined EXTERNAL_LOGGER */
+		// DO NOTHING
+	#endif	/* defined EXTERNAL_LOGGER */
 #else	/* defined BUILDING_AI || defined BUILDING_AI_INTERFACE */
 	logOutput.Print("%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
 #endif	/* defined BUILDING_AI || defined BUILDING_AI_INTERFACE */

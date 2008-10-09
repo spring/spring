@@ -18,10 +18,9 @@
 #ifndef _SAIINTERFACELIBRARY_H
 #define	_SAIINTERFACELIBRARY_H
 
-#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#define __USE_CREG_HERE
-#include "creg/creg.h"
-#endif /* __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#ifdef __cplusplus
+#include "creg/creg_cond.h"
+#endif
 
 
 #ifdef	__cplusplus
@@ -71,9 +70,7 @@ struct SAIInterfaceSpecifier_Comparator {
  * Compleetly specifies a skirmish AI together with an interface.
  */
 struct SSAIKey {
-#ifdef	__USE_CREG_HERE
 	CR_DECLARE_STRUCT(SSAIKey);
-#endif /* __USE_CREG_HERE */
 	struct SAIInterfaceSpecifier interface;
 	struct SSAISpecifier ai;
 };
@@ -96,9 +93,7 @@ struct SSAIKey_Comparator {
  * Compleetly specifies a group AI together with an interface.
  */
 struct SGAIKey {
-#ifdef	__USE_CREG_HERE
 	CR_DECLARE_STRUCT(SGAIKey);
-#endif /* __USE_CREG_HERE */
 	struct SAIInterfaceSpecifier interface;
 	struct SGAISpecifier ai;
 };
@@ -159,10 +154,6 @@ struct SAIInterfaceLibrary {
 	int (CALLING_CONV *unloadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
 	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
-
-#ifdef __USE_CREG_HERE
-#undef __USE_CREG_HERE
-#endif	/* __USE_CREG_HERE */
 
 #ifdef	__cplusplus
 }

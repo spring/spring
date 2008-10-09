@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <limits.h> // for INT_MAX
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0

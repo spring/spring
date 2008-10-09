@@ -7,7 +7,7 @@
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
-#include "StdAfx.h"
+
 #include "DllLib.h"
 
 /**

@@ -17,9 +17,9 @@
 
 #include "SInfo.h"
 
-#include "string.h"
-#include "System/Util.h"
-#include <cstdlib>
+#include "Util.h"
+#include <string.h>
+#include <stdlib.h>
 
 InfoItem copyInfoItem(const struct InfoItem* const orig) {
 	

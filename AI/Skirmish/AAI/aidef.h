@@ -17,7 +17,6 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "GlobalStuff.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "AAIConfig.h"
 

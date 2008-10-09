@@ -60,9 +60,11 @@
 #include "float3.h"
 #include "GlobalStuff.h"
 #include "System/Util.h"
+#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
+#endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 #endif // USE_PRECOMPILED_HEADER
 
 #endif	/* __cplusplus */
