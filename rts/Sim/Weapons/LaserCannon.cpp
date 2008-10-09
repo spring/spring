@@ -53,7 +53,7 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	}
 
 	float3 dir = pos - weaponMuzzlePos;
-	float length = dir.Length();
+	const float length = dir.Length();
 	if (length == 0)
 		return true;
 
@@ -66,7 +66,7 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 			return false;
 	}
 
-	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
+	const float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;

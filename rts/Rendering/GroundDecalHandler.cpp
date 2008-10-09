@@ -282,7 +282,6 @@ inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
-	const int gsmx12 = (gs->mapx + 1) * 2;
 
 	unsigned char color[4] = {255, 255, 255, 255};
 
@@ -434,7 +433,9 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					(*bdi)->buildingDecals.erase(bi++);
+					set<BuildingGroundDecal*>::iterator prev = bi;
+					bi++;
+					(*bdi)->buildingDecals.erase(prev);
 					continue;
 				}
 
