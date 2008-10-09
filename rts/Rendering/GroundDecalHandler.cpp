@@ -136,7 +136,7 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 	float uv[8] = {0.0f};
 	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
 
-	#define HEIGHT(x, z) (hm[((z) * gsmx1) + (x)])
+	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
 
 	if (!decal->va) {
 		// NOTE: this really needs CLOD'ing
