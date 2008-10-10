@@ -795,6 +795,8 @@ void CProjectileHandler::CheckUnitCol()
 					}
 				}
 
+				printf("[CProjectileHandler::CheckUnitCol()] frame: %d, pro: %p, unit: %p\n", gs->frameNum, p, unit);
+
 				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed, &q)) {
 					// this projectile won't reach the raytraced surface impact pos
 					// until Update() is called (right after we return, same frame)
@@ -803,7 +805,9 @@ void CProjectileHandler::CheckUnitCol()
 					// volume, so smuggle a bit ("rolling back" its pos in Update()
 					// and waiting for the next-frame CheckUnitCol() is problematic
 					// for noExplode projectiles)
-					p->pos = (raytraced)? q.p0: p->pos;
+					const float3& pimp = (q.b0)? q.p0: q.p1;
+
+					p->pos = (raytraced)? pimp: p->pos;
 					p->Collision(unit);
 					p->pos = (raytraced)? ppos: p->pos;
 					break;

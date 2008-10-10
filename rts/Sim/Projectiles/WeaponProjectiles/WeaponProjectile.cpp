@@ -120,8 +120,9 @@ CWeaponProjectile::~CWeaponProjectile(void)
 
 void CWeaponProjectile::Collision()
 {
-	if(!weaponDef->noExplode || gs->frameNum&1)
-	{
+	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
+		// don't do damage only on odd-numbered frames
+		// for noExplode projectiles (it breaks coldet)
 		float3 impactDir = speed;
 		impactDir.Normalize();
 
@@ -138,10 +139,11 @@ void CWeaponProjectile::Collision()
 		if (weaponDef->impactOnly) {
 			weaponDef->explosionGenerator->Explosion(pos,((weaponDef->dynDamageExp>0)
 					? dynDamages : weaponDef->damages)[0],weaponDef->areaOfEffect,owner,0,NULL,impactDir);
-		}
-		else {
-			helper->Explosion(pos, (weaponDef->dynDamageExp>0)
-					? dynDamages : weaponDef->damages,
+		} else {
+			helper->Explosion(pos,
+				(weaponDef->dynDamageExp > 0)?
+					dynDamages:
+					weaponDef->damages,
 				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
 				weaponDef->explosionSpeed, owner, true,
 				weaponDef->noExplode ? 0.3f : 1,
@@ -152,14 +154,13 @@ void CWeaponProjectile::Collision()
 
 	if (weaponDef->soundhit.getID(0) > 0) {
 		sound->PlaySample(weaponDef->soundhit.getID(0), this,
-				weaponDef->soundhit.getVolume(0));
+			weaponDef->soundhit.getVolume(0));
 	}
 
 	if (!weaponDef->noExplode){
 		CProjectile::Collision();
 	} else {
-		if (TraveledRange())
-		{
+		if (TraveledRange()) {
 			CProjectile::Collision();
 		}
 	}
@@ -176,19 +177,20 @@ void CWeaponProjectile::Collision(CFeature* feature)
 
 void CWeaponProjectile::Collision(CUnit* unit)
 {
-	if (!weaponDef->noExplode || gs->frameNum & 1) {
+	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
+		// don't do damage only on odd-numbered frames
+		// for noExplode projectiles (it breaks coldet)
 		float3 impactDir = speed;
 		impactDir.Normalize();
 
 		// Dynamic Damage
 		DamageArray damages;
-		if (weaponDef->dynDamageExp > 0)
-		{
+		if (weaponDef->dynDamageExp > 0) {
 			damages = weaponDefHandler->DynamicDamages(weaponDef->damages,
 					startpos, pos,
-					weaponDef->dynDamageRange>0 ?
-							weaponDef->dynDamageRange :
-							weaponDef->range,
+					weaponDef->dynDamageRange > 0?
+						weaponDef->dynDamageRange:
+						weaponDef->range,
 					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
 					weaponDef->dynDamageInverted);
 		} else {
