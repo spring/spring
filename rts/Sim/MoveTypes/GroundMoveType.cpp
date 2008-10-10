@@ -1252,7 +1252,7 @@ starting from given speed.
 float CGroundMoveType::BreakingDistance(float speed)
 {
 	if (!owner->mobility->maxBreaking) {
-		logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
+		// logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
 		return 0.0f;
 	}
 	return fabs(speed * speed / owner->mobility->maxBreaking);
