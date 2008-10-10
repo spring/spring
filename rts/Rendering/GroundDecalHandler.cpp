@@ -22,6 +22,13 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+boost::mutex decalmutex;
+#	endif
+#endif
+
 using std::list;
 using std::min;
 using std::max;
@@ -408,6 +415,9 @@ void CGroundDecalHandler::Draw(void)
 		glMatrixMode(GL_MODELVIEW);
 	}
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
 
 	// create and draw the quads for each building decal
 	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
@@ -554,10 +564,22 @@ void CGroundDecalHandler::Draw(void)
 
 void CGroundDecalHandler::Update(void)
 {
+#if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
+	for(std::vector<CUnit *>::iterator i=moveUnits.begin(); i!=moveUnits.end(); ++i)
+		UnitMovedNow(*i);
+	moveUnits.clear();
 }
 
 
 void CGroundDecalHandler::UnitMoved(CUnit* unit)
+{
+	moveUnits.push_back(unit);
+}
+
+
+void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 {
 	if(decalLevel==0)
 		return;
@@ -629,6 +651,7 @@ void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 
 int CGroundDecalHandler::GetTrackType(const std::string& name)
 {
+
 	if (decalLevel == 0) {
 		return 0;
 	}
@@ -643,6 +666,10 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 		}
 		++a;
 	}
+
+#if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
 
 	TrackType* tt = SAFE_NEW TrackType;
 	tt->name = lowerName;
@@ -687,6 +714,10 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 {
 	if (decalLevel == 0)
 		return;
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
 
 	float height = pos.y - ground->GetHeight2(pos.x, pos.z);
 	if (height >= radius)
@@ -853,6 +884,10 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	if (decalLevel == 0)
 		return;
 
+#if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
+
 	BuildingDecalType* type = buildingDecalTypes[building->unitDef->buildingDecalType];
 	BuildingGroundDecal* decal = SAFE_NEW BuildingGroundDecal;
 
@@ -889,6 +924,10 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
 {
+#if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
+
 	BuildingGroundDecal* decal = building->buildingDecal;
 	if (!decal)
 		return;
@@ -915,6 +954,10 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 		}
 		++a;
 	}
+
+#if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock decallock(decalmutex);
+#endif
 
 	BuildingDecalType* tt = SAFE_NEW BuildingDecalType;
 	tt->name = lowerName;

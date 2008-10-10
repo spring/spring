@@ -169,6 +169,9 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
+#if defined(USE_GML) && GML_MT_TEST
+	LUA_CALL_IN_CHECK(L);
+#endif
 	const int top = lua_gettop(L);
 	if (top != 0) {
 		logOutput.Print("WARNING: %s stack check: top = %i\n", GetName().c_str(), top);

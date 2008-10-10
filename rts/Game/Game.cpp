@@ -2475,6 +2475,7 @@ bool CGame::Update()
 	}
 
 	ClientReadNet();
+
 	if (!net->Active() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		gameOver = true;
@@ -2511,6 +2512,13 @@ bool CGame::Update()
 	return true;
 }
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+boost::recursive_mutex luamutex;
+#	endif
+#endif
 
 bool CGame::DrawWorld()
 {
@@ -3044,39 +3052,48 @@ void CGame::StartPlaying()
 }
 
 
-#if defined(USE_GML) && GML_MT_TEST
-int oldgsframe;
-#endif
 // This will be run by a separate thread in parallel with the Sim
 // ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
 void CGame::UnsyncedStuff() {
 	if (!skipping) {
 		infoConsole->Update();
 	}
-#if defined(USE_GML) && GML_MT_TEST
-	while(oldgsframe==*(volatile int *)&(gs->frameNum)) {
-		gmlProcessor.Pump(1);
-		boost::thread::yield();
-	}
-	gu->drawFrame++;
-	if (gu->drawFrame == 0) {
-		gu->drawFrame++;
-	}
-	Draw();
-#endif
 }
 
+#	if defined(USE_GML) && GML_MT_TEST
+int numNewFrames=0;
+#endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
-#		if defined(USE_GML) && GML_MT_TEST
-	oldgsframe=gs->frameNum;
-#		endif
+#	if defined(USE_GML) && GML_MT_TEST
+	if(gmlThreadCount>1) { // if there is more than one cpu, run draw in parallel with sim
+		int oldgsframe=gs->frameNum;
+		gmlProcessor.AuxWork(&CGame::SimFrameMTcb,this); // start sim thread
+		UnsyncedStuff();
+		while(oldgsframe==*(volatile int *)&(gs->frameNum)) { // wait until GL calls in script.update() have finished (ugly hack)
+			gmlProcessor.PumpAux();
+			boost::thread::yield();
+		}
+		if(--numNewFrames==0) {
+			gu->drawFrame++;
+			if (gu->drawFrame == 0)
+				gu->drawFrame++;
+			Draw(); // GML will use one thread less for this draw because sim is running
+		}
+		while(!gmlProcessor.PumpAux()) {
+			// could possibly make more calls to Draw here
+			boost::thread::yield(); 
+		}
+	}
+	else
+#	endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
 #else
 void CGame::SimFrameMT() {
 #endif
 }
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrameMT() {
 #else
@@ -3101,10 +3118,10 @@ void CGame::SimFrame() {
 	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
-
+/*
 #if defined(USE_GML) && GML_MT_TEST
 	gmlProcessor.GetQueue();
-#endif
+#endif*/
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;
@@ -3158,6 +3175,7 @@ void CGame::SimFrame() {
 	mapDamage->Update();
 	pathManager->Update();
 	uh->Update();
+	groundDecals->Update();
 
 	{
 		SCOPED_TIMER("Collisions");
@@ -3249,7 +3267,6 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 	}
 }
 
-
 void CGame::ClientReadNet()
 {
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
@@ -3263,6 +3280,9 @@ void CGame::ClientReadNet()
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
+#	if defined(USE_GML) && GML_MT_TEST
+	numNewFrames=0;
+#endif
 	if(!gameServer){
 		const unsigned int currentFrame = SDL_GetTicks();
 
@@ -3277,8 +3297,11 @@ void CGame::ClientReadNet()
 		// we still have to process (in variable "que")
 		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
 		unsigned ahead = 0;
-		while ((packet = net->Peek(ahead)))
-		{
+		while ((packet = net->Peek(ahead))) {
+#	if defined(USE_GML) && GML_MT_TEST
+			if (packet->data[0] == NETMSG_NEWFRAME)
+				++numNewFrames;
+#endif
 			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
 				++que;
 			++ahead;
@@ -3289,6 +3312,14 @@ void CGame::ClientReadNet()
 	}
 	else
 	{
+#	if defined(USE_GML) && GML_MT_TEST
+		unsigned ahead = 0;
+		while ((packet = net->Peek(ahead))) {
+			if (packet->data[0] == NETMSG_NEWFRAME)
+				++numNewFrames;
+			++ahead;
+		}
+#endif
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
 		timeLeft = 15.0f;

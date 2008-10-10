@@ -871,7 +871,7 @@ int SpringApp::Update ()
 			ret = 0;
 		} else {
 #if defined(USE_GML) && GML_MT_TEST
-			if(frame==gu->drawFrame) {
+			if(frame==gu->drawFrame) { // only draw if it was not done in parallel with sim
 #endif
 				gu->drawFrame++;
 				if (gu->drawFrame == 0) {

@@ -49,6 +49,14 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex unitmutex;
+#	endif
+#endif
+
 /* Cast id to unsigned to catch negative ids in the same operations,
 cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
@@ -996,6 +1004,11 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 	tdu.drawBorder=drawBorder;
 	tdu.facing=facing;
 	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex); // maybe superfluous
+#endif
+
 	if(transparent)
 		unitDrawer->tempTransparentDrawUnits.insert(tp);
 	else

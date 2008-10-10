@@ -12,6 +12,14 @@
 #include "LogOutput.h"
 #include "creg/STL_List.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex featmutex;
+boost::recursive_mutex quadmutex;
+#	endif
+#endif
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
@@ -125,6 +133,11 @@ void CQuadField::MovedUnit(CUnit *unit)
 		if(qi2==newQuads.end())
 			return;
 	}
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock quadlock(quadmutex); // possible performance hog
+#endif
+
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
@@ -361,6 +374,9 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 
 void CQuadField::RemoveUnit(CUnit* unit)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock quadlock(quadmutex);
+#endif
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
@@ -381,6 +397,10 @@ void CQuadField::RemoveUnit(CUnit* unit)
 
 void CQuadField::AddFeature(CFeature* feature)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock featlock(featmutex);
+#endif
+
 	vector<int> newQuads=GetQuads(feature->pos,feature->radius);
 
 	vector<int>::iterator qi;
@@ -391,6 +411,10 @@ void CQuadField::AddFeature(CFeature* feature)
 
 void CQuadField::RemoveFeature(CFeature* feature)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock featlock(featmutex);
+#endif
+
 	vector<int> quads=GetQuads(feature->pos,feature->radius);
 
 	std::vector<int>::iterator qi;

@@ -46,6 +46,10 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex unitmutex;
+#	endif
 extern gmlClientServer<void, int,CUnit*> gmlProcessor;
 #endif
 
@@ -215,6 +219,10 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 
 void CUnitDrawer::Update(void)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
+
 	while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
 		tempDrawUnits.erase(tempDrawUnits.begin());
 	}
@@ -404,6 +412,10 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
+#endif
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
 #endif
 
 #ifdef USE_GML
@@ -679,6 +691,10 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
+
 #ifdef USE_GML
 	if(multiThreadDrawUnitShadow) {
 		gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
@@ -848,6 +864,10 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glEnable(GL_ALPHA_TEST);
 	glColor4f(1, 1, 1, 0.3f);
 	glDepthMask(0);
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
 
 	// units drawn by AI, these aren't really
 	// cloaked but the effect is the same

@@ -79,6 +79,8 @@ private:
 
 	float farDist;
 
+	std::vector<CFeature*> drawFar;
+
 	void DrawFar(CFeature* feature, CVertexArray* va);
 
 	void Serialize(creg::ISerializer *s);
