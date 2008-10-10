@@ -40,6 +40,13 @@
 #include "System/creg/STL_List.h"
 #include "System/Exceptions.h"
 
+#ifdef USE_GML
+#	include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+boost::recursive_mutex projmutex;
+#	endif
+#endif
 
 CProjectileHandler* ph;
 
@@ -400,6 +407,10 @@ void CProjectileHandler::SetMaxParticles(int value)
 
 void CProjectileHandler::Update()
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
+
 	SCOPED_TIMER("Projectile handler");
 
 	Projectile_List::iterator psi = ps.begin();
@@ -481,6 +492,10 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	/* 3DO */
 	unitDrawer->SetupForUnitDrawing();
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
 
 	va->Initialize();
 	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
@@ -665,6 +680,10 @@ void CProjectileHandler::DrawShadowPass(void)
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
+
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		if ((gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
 			((*psi)->owner && gs->Ally((*psi)->owner->allyteam, gu->myAllyTeam)))) {
@@ -706,6 +725,10 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
+
 	ps.push_back(p);
 
 	if (p->synced && p->weapon) {
@@ -880,11 +903,19 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
+
 	flying3doPieces->push_back(fp);
 }
 
 void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts){
 	FlyingPiece_List * pieceList = NULL;
+
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
 
 	while(flyings3oPieces.size()<=textureType)
 		flyings3oPieces.push_back(vector<FlyingPiece_List*>());

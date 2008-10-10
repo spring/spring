@@ -20,6 +20,12 @@
 #include "FileSystem/ArchiveZip.h"
 #include "Platform/FileSystem.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+extern boost::mutex selmutex;
+#	endif
+#endif
 
 #define PATHDEBUG false
 
@@ -912,6 +918,9 @@ uint32_t CPathEstimator::GetPathChecksum()
 
 void CPathEstimator::Draw(void)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+					boost::mutex::scoped_lock sellock(selmutex);
+#endif
 	MoveData* md = moveinfo->GetMoveDataFromName("TANKSH2");
 	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
 		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;

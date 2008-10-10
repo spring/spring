@@ -44,7 +44,7 @@ ConfigHandler& ConfigHandler::GetInstance()
 #ifdef _WIN32
 			configSource = "Software\\SJ\\Spring";
 			std::string version(VERSION_STRING);
-			if (*version.end() == '+')
+			if (version.size()>0 && version[version.size()-1] == '+')
 				configSource += " SVN";
 #elif defined(__APPLE__)
 			configSource = "this string is not currently used";
