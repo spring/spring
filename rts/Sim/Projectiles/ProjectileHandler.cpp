@@ -795,8 +795,6 @@ void CProjectileHandler::CheckUnitCol()
 					}
 				}
 
-				printf("[CProjectileHandler::CheckUnitCol()] frame: %d, pro: %p, unit: %p\n", gs->frameNum, p, unit);
-
 				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed, &q)) {
 					// this projectile won't reach the raytraced surface impact pos
 					// until Update() is called (right after we return, same frame)
