@@ -38,7 +38,7 @@ CCameraHandler::CCameraHandler()
 	camCtrls.push_back(new CFreeController());        // 4
 	camCtrls.push_back(new SmoothController());       // 5
 	camCtrls.push_back(new COrbitController());       // 6
-	camCtrls.push_back(new COverviewController());    // 7, needs to be last
+	camCtrls.push_back(new COverviewController());    // 7, needs to be last (ToggleOverviewCamera())
 
 	for (unsigned int i = 0; i < camCtrls.size(); i++) {
 		nameMap[camCtrls[i]->GetName()] = i;
