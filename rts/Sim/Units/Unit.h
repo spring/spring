@@ -131,11 +131,11 @@ public:
 
 	void CalculateTerrainType();
 	void UpdateTerrainType();
-	
+
 	void UpdateMidPos();
 
 	bool IsNeutral() const {
-		return ((gs->useLuaGaia && team == gs->gaiaTeamID) || (team == MAX_TEAMS - 1) || neutral);
+		return neutral;
 	}
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
@@ -323,7 +323,7 @@ public:
 	bool crashing;
 	bool isDead;    // prevent damage from hitting an already dead unit (causing multi wreck etc)
 	bool	falling;  // for units being dropped from transports (parachute drops)
-	float	fallSpeed; 
+	float	fallSpeed;
 
 	bool inAir;
 	bool inWater;
