@@ -194,8 +194,8 @@ void COrbitController::SetPos(const float3& newPos)
 	}
 
 	// support minimap position hopping
-	const float dx = newPos.x - cam->pos.x;
-	const float dz = newPos.z - cam->pos.z;
+	const float dx = newPos.x - camera->pos.x;
+	const float dz = newPos.z - camera->pos.z;
 
 	cen.x += dx;
 	cen.z += dz;
