@@ -384,29 +384,47 @@ void CBasicSky::CreateClouds()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
-  delete [] scrap;
+	delete [] scrap;
 
 	CreateTransformVectors();
 	Update();
 }
 
 inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
-	int *rc=*rawClouds+ast;
-	unsigned char *ct=cloudThickness+4*ast;
+	int* rc = *rawClouds + ast;
+	unsigned char* ct = cloudThickness + 4 * ast;
 
-	int am2=(ast-2)&CLOUD_MASK, am1=(ast-1)&CLOUD_MASK, aa=(ast)&CLOUD_MASK, ap1=(ast+1)&CLOUD_MASK;
-	aed=aed*4+3;
-	ast=ast*4+3;
-	int a3c=ast+a3cstart*4, a4c=ast+a4cstart*4;
-	for(int a=ast; a<aed; ++rc, ++ct){
-		ydif[ap1]+=(int)cloudThickness[a3c+=4] - cloudThickness[a+=4] * 2 + cloudThickness[a4c+=4];
-		ydif2[ap1]=(ydif1[ap1]=ydif[ap1]>>1)>>1;
-		int dif=(ydif2[am2] + ydif1[am2=am1] + ydif[am1=aa] + ydif1[aa=ap1] + ydif2[++ap1]) / 16;
-		if(ap1>=CLOUD_SIZE)
-			ap1=0;
-		*ct++=128+dif;
-		*ct++=thicknessTransform[(*rc)>>7];
-		*ct++=255;
+	int
+		am2 = (ast - 2) & CLOUD_MASK,
+		am1 = (ast - 1) & CLOUD_MASK,
+		aa  = (ast) & CLOUD_MASK,
+		ap1 = (ast + 1) & CLOUD_MASK,
+		dif = 0;
+
+	aed = aed * 4 + 3;
+	ast = ast * 4 + 3;
+
+	int
+		a3c = ast + a3cstart * 4,
+		a4c = ast + a4cstart * 4;
+
+	for (int a = ast; a < aed; ++rc, ++ct) {
+		ydif[ap1] += (int) cloudThickness[a3c += 4] - cloudThickness[a += 4] * 2 + cloudThickness[a4c += 4];
+		ydif2[ap1] = (ydif1[ap1] = ydif[ap1] >> 1) >> 1;
+
+		dif = ydif2[am2];
+		am2 = am1; dif += ydif1[am2];
+		am1 = aa;  dif += ydif[am1];
+		aa = ap1;  dif += ydif1[aa];
+		ap1 += 1;  dif += ydif2[ap1];
+		dif >>= 4;
+
+		if (ap1 >= CLOUD_SIZE)
+			ap1 = 0;
+
+		*ct++ = 128 + dif;
+		*ct++ = thicknessTransform[(*rc) >> 7];
+		*ct++ = 255;
 	}
 }
 
