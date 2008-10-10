@@ -16,7 +16,7 @@
   CreateDirectory "$INSTDIR\lobby\var"
   CreateDirectory "$INSTDIR\lobby\var\replayFilters"
   CreateDirectory "$INSTDIR\lobby\logs"
-  CreateDirectory "$INSTDIR\lobby\python\"
+  CreateDirectory "$INSTDIR\lobby\python"
 
   SetOutPath "$INSTDIR\lobby\var"
   File "..\external\TASClient\groups.ini"
@@ -48,7 +48,7 @@
   RmDir "$INSTDIR\lobby\cache\online"
   RmDir "$INSTDIR\lobby\cache"
   RmDir "$INSTDIR\lobby\logs"
-  RmDir "$INSTDIR\lobby\python\"
+  RmDir "$INSTDIR\lobby\python"
   RmDir "$INSTDIR\lobby\var\replayFilters"
   RmDir "$INSTDIR\lobby\var"
   RmDir "$INSTDIR\lobby"
