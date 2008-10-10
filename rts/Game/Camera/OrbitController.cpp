@@ -79,6 +79,7 @@ void COrbitController::Update()
 
 void COrbitController::KeyMove(float3 move)
 {
+	// todo
 }
 
 
@@ -192,14 +193,18 @@ void COrbitController::SetPos(const float3& newPos)
 		return;
 	}
 
-	CCamera* cam = camera;
-
 	// support minimap position hopping
-	cen = newPos;
-	cen.y = ground->GetHeight2(cen.x, cen.z);
-	cam->pos = cen - (cam->forward * (cam->pos - cen).Length());
+	const float dx = newPos.x - cam->pos.x;
+	const float dz = newPos.z - cam->pos.z;
 
-	Init(cam->pos, cen);
+	cen.x += dx;
+	cen.z += dz;
+	cen.y = ground->GetHeight2(cen.x, cen.z);
+
+	camera->pos.x += dx;
+	camera->pos.z += dz;
+
+	Init(camera->pos, cen);
 }
 
 float3 COrbitController::GetDir()
