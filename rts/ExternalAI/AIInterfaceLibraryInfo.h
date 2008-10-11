@@ -34,7 +34,9 @@ public:
 			const std::string& fileModes,
 			const std::string& accessModes);
     
-    virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
+    //virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
+	
+    virtual SAIInterfaceSpecifier GetSpecifier() const;
     
     virtual std::string GetFileName() const; // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
     virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
@@ -43,7 +45,7 @@ public:
     virtual std::string GetDescription() const;
     virtual std::string GetURL() const;
     virtual std::string GetInfo(const std::string& key) const;
-    virtual const std::map<std::string, InfoItem>* GetInfos() const;
+    virtual const std::map<std::string, InfoItem>* GetInfo() const;
 	
     virtual void SetFileName(const std::string& fileName); // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
     virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
@@ -55,8 +57,8 @@ public:
 	
 private:
 	static const unsigned int MAX_INFOS = 128;
-	std::map<std::string, InfoItem> infos;
-	LevelOfSupport levelOfSupport;
+	std::map<std::string, InfoItem> infoItems;
+	//LevelOfSupport levelOfSupport;
 };
 
 #endif	/* _AIINTERFACELIBRARYINFO_H */

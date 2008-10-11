@@ -20,9 +20,9 @@
 
 #ifdef	__cplusplus
 extern "C" {
-#endif
+#endif	/* __cplusplus */
 
-#include "exportdefines.h"
+#include "System/exportdefines.h"
 
 #include "SAIFloat3.h"
 
@@ -35,7 +35,7 @@ extern "C" {
 // !!!absolute paths are needed when debugging!!!
 //#define PATH_TO_SPRING_HOME "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/"
 //#define PATH_TO_SPRING_HOME "P:/svn_work/robin/Development/Projects/Others/spring_current/game/"
-#define PATH_TO_SPRING_HOME ""
+//#define PATH_TO_SPRING_HOME ""
 
 /**
  * @brief max skirmish AIs
@@ -60,7 +60,7 @@ extern "C" {
 #define GROUP_AI_DATA_DIR "AI/Group/data"
 
 #ifdef	__cplusplus
-}
-#endif
+}		/* extern "C" */
+#endif	/* __cplusplus */
 
 #endif	/* _AIDEFINES_H */

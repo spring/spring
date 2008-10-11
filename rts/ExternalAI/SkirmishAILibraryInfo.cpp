@@ -27,17 +27,18 @@
 #include <vector>
 #include <map>
 
-CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier) {
-	infos = ai.GetInfos();
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
+		const SAIInterfaceSpecifier& interfaceSpecifier) {
+	info = ai.GetInfo();
 	options = ai.GetOptions();
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
 	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo) {
-	infos = std::map<std::string, InfoItem>(
-			aiInfo.infos.begin(),
-			aiInfo.infos.end());
+	info = std::map<std::string, InfoItem>(
+			aiInfo.info.begin(),
+			aiInfo.info.end());
 	options = std::vector<Option>(
 			aiInfo.options.begin(),
 			aiInfo.options.end());
@@ -50,10 +51,10 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& fileModes,
 		const std::string& accessModes) {
 	
-	InfoItem tmpInfos[MAX_INFOS];
-	unsigned int num = ParseInfos(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfos, MAX_INFOS);
+	InfoItem tmpInfo[MAX_INFOS];
+	unsigned int num = ParseInfo(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfo, MAX_INFOS);
     for (unsigned int i=0; i < num; ++i) {
-		infos[std::string(tmpInfos[i].key)] = tmpInfos[i];
+		info[std::string(tmpInfo[i].key)] = tmpInfo[i];
     }
 	
 	if (!aiOptionFile.empty()) {
@@ -74,8 +75,8 @@ LevelOfSupport CSkirmishAILibraryInfo::GetLevelOfSupportForCurrentEngineAndSetIn
 
 SSAISpecifier CSkirmishAILibraryInfo::GetSpecifier() const {
 	
-	const char* sn = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
-	const char* v = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
+	const char* sn = info.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
+	const char* v = info.at(SKIRMISH_AI_PROPERTY_VERSION).value;
 	SSAISpecifier specifier = {sn, v};
 	return specifier;
 }
@@ -105,51 +106,34 @@ std::string CSkirmishAILibraryInfo::GetInterfaceVersion() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_INTERFACE_VERSION);
 }
 std::string CSkirmishAILibraryInfo::GetInfo(const std::string& key) const {
-	return infos.at(key).value;
+	return info.at(key).value;
 }
-const std::map<std::string, InfoItem>* CSkirmishAILibraryInfo::GetInfos() const {
-	return &infos;
+const std::map<std::string, InfoItem>* CSkirmishAILibraryInfo::GetInfo() const {
+	return &info;
 }
 
 const std::vector<Option>* CSkirmishAILibraryInfo::GetOptions() const {
-//	return &optionInfos;
-/*
-	std::vector<const ISkirmishAIOption*> opInfs;
-	
-	std::vector<CSkirmishAIOption>::const_iterator  opInf;
-	for (opInf=optionInfos.begin(); opInf != optionInfos.end(); opInf++) {
-//		opInfs.push_back((const ISkirmishAIOption*) opInf);
-		const CSkirmishAIOption* cop = &(*opInf);
-		const ISkirmishAIOption* iop = cop;
-		opInfs.push_back(iop);
-	}
-	
-	return opInfs;
-*/
-/*
-	ISkirmishAIOption::const_vector c_optionInfos(optionInfos.begin(), optionInfos.end()); // implicit convertible types -> range-ctor can be used
-*/
 	return &options;
 }
 
 
-unsigned int CSkirmishAILibraryInfo::GetInfosCReference(InfoItem cInfos[], unsigned int max) const {
+unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const {
 	
 	unsigned int i=0;
 	
 	std::map<std::string, InfoItem>::const_iterator infs;
-	for (infs=infos.begin(); infs != infos.end() && i < max; ++infs) {
-		cInfos[i++] = infs->second;
+	for (infs=info.begin(); infs != info.end() && i < maxInfoItems; ++infs) {
+		cInfo[i++] = infs->second;
     }
 	
 	return i;
 }
-unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[], unsigned int max) const {
+unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[], unsigned int maxOptions) const {
 	
 	unsigned int i=0;
 	
 	std::vector<Option>::const_iterator ops;
-	for (ops=options.begin(); ops != options.end() && i < max; ++ops) {
+	for (ops=options.begin(); ops != options.end() && i < maxOptions; ++ops) {
 		cOptions[i++] = *ops;
     }
 	
@@ -192,17 +176,10 @@ bool CSkirmishAILibraryInfo::SetInfo(const std::string& key, const std::string& 
 	}
 	
 	InfoItem ii = {key.c_str(), value.c_str(), NULL};
-	infos[key] = ii;
+	info[key] = ii;
 	return true;
 }
 
 void CSkirmishAILibraryInfo::SetOptions(const std::vector<Option>& _options) {
-/*
-	optionInfos.clear();
-	ISkirmishAIOption::const_vector::const_iterator opInf;
-	for (opInf=_optionInfos.begin(); opInf != _optionInfos.end(); opInf++) {
-		optionInfos.push_back(**opInf);
-	}
-*/
 	options = std::vector<Option>(_options.begin(), _options.end()); // implicit convertible types -> range-ctor can be used
 }

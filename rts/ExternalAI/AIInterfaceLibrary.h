@@ -23,6 +23,7 @@
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
 
+class CAIInterfaceLibraryInfo;
 class CSkirmishAILibraryInfo;
 class CGroupAILibraryInfo;
 
@@ -30,8 +31,9 @@ class CAIInterfaceLibrary : public IAIInterfaceLibrary {
 public:
 //	CAIInterfaceLibrary(const CAIInterfaceLibrary& interface);
 //	CAIInterfaceLibrary(const std::string& libFileName);
-	CAIInterfaceLibrary(const SAIInterfaceSpecifier& interfaceSpecifier, const std::string& libFileName = "");
 	//CAIInterfaceLibrary(const std::string& libFileName, const SAIInterfaceSpecifier& interfaceSpecifier);
+	//CAIInterfaceLibrary(const SAIInterfaceSpecifier& interfaceSpecifier, const std::string& libFileName = "");
+	CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* info);
 	virtual ~CAIInterfaceLibrary();
 	
 //	static CAIInterfaceLibrary* Load(const std::string& libFileName); // increments load counter
@@ -42,13 +44,13 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber) const;
 	
 //    virtual std::string GetProperty(const std::string& propertyName) const;
-    virtual std::map<std::string, InfoItem> GetInfos() const;
+    virtual std::map<std::string, InfoItem> GetInfo() const;
 	virtual int GetLoadCount() const;
 	
 	// Skirmish AI methods
 	//virtual std::vector<SSAISpecifier> GetSkirmishAILibrarySpecifiers() const;
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier);
-	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos);
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo);
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo);
 	virtual int ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier);
 	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const;
@@ -57,20 +59,23 @@ public:
 	// Group AI methods
 	//virtual std::vector<SGAISpecifier> GetGroupAILibrarySpecifiers() const;
 	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifier& gAISpecifier);
-	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* infos, unsigned int numInfos);
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* info, unsigned int numInfo);
 	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo);
 	virtual int ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier);
 	virtual int GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const;
 	virtual int ReleaseAllGroupAILibraries();
 	
 private:
-//	static s_assoc<const std::string, const std::string> specifiers; // "libFileName" -> "shortName#version"
-//	static s_assoc<const std::string, CSkirmishAILibraryInterface>::map interfaces; // "shortName#version" -> interface
+	SStaticGlobalData* staticGlobalData;
+	void InitStatic();
+	void ReleaseStatic();
 	
 private:
+	std::string aiInterfacesLibDir;
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
-	SAIInterfaceSpecifier specifier;
+	//SAIInterfaceSpecifier specifier;
+	const CAIInterfaceLibraryInfo* info;
 	std::map<const SSAISpecifier, ISkirmishAILibrary*, SSAISpecifier_Comparator> loadedSkirmishAILibraries;
 	std::map<const SSAISpecifier, int, SSAISpecifier_Comparator> skirmishAILoadCount;
 	std::map<const SGAISpecifier, IGroupAILibrary*, SGAISpecifier_Comparator> loadedGroupAILibraries;
@@ -79,11 +84,14 @@ private:
 private:
 	static const int MAX_INFOS = 128;
 	
-	static void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
+	static void reportInterfaceFunctionError(const std::string* libFileName,
+			const std::string* functionName);
 	int InitializeFromLib(const std::string& libFilePath);
 	
-	static std::string GenerateLibFilePath(const SAIInterfaceSpecifier& interfaceSpecifier);
-	static std::string GenerateLibFilePath(const std::string& libFileName);
+	//static std::string GenerateLibFilePath(const SAIInterfaceSpecifier& interfaceSpecifier, const std::string& libPathPrefix = "");
+	//static std::string GenerateLibFilePath(const InfoItem& interfaceSpecifier, const std::string& libPathPrefix = "");
+	static std::string GenerateLibFilePath(const std::string& fileNameMainPart,
+			const std::string& aiInterfacesLibDir);
 };
 
 #endif	/* _AIINTERFACELIBRARY_H */

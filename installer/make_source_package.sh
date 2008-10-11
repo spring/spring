@@ -38,9 +38,10 @@ zip="spring_${version}_src.zip"
 # (directories are included recursively)
 include=" \
  $dir/AI/Group/ \
- $dir/AI/Global/AAI/ \
- $dir/AI/Global/KAIK-0.13/ \
- $dir/AI/Global/TestGlobalAI/ \
+ $dir/AI/Interfaces/C/ \
+ $dir/AI/Skirmish/AAI/ \
+ $dir/AI/Skirmish/KAIK/ \
+ $dir/AI/Skirmish/NullAI/ \
  $dir/Documentation/ \
  $dir/Doxyfile \
  $dir/game/ \
@@ -49,17 +50,20 @@ include=" \
  $dir/README.* \
  $dir/rts/ \
  $dir/SConstruct \
- $dir/tools/RtsSettings/ \
  $dir/tools/SelectionEditor/ \
+ $dir/CMakeLists.txt \
+ $dir/AI/CMakeLists.txt \
+ $dir/AI/Interfaces/CMakeLists.txt \
+ $dir/AI/Skirmish/CMakeLists.txt \
  $dir/tools/unitsync/ \
- $dir/Lobby/TASServer/"
+ $dir/tools/DedicatedServer/"
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
-linux_exclude="$dir/installer/pkzip.exe $dir/Lobby/TASClient/brcc32.exe"
+linux_exclude="$dir/installer/pkzip.exe"
 linux_include=""
 windows_exclude=""
-windows_include="$dir/Lobby/TASClient/"
+windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'

@@ -17,30 +17,59 @@
 
 #include "Interface.h"
 
+#include "Log.h"
+
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#include "ExternalAI/Interface/SStaticGlobalData.h"
+#include "System/Platform/SharedLib.h"
 
-#include "Log.h"
-#include "Platform/SharedLib.h"
+#define MY_SHORT_NAME "C"
+#define MY_VERSION "0.1"
 
-CInterface::CInterface() {}
+CInterface::CInterface(const SStaticGlobalData* _staticGlobalData)
+		: staticGlobalData(_staticGlobalData) {
+	
+	std::string mainLibDir = std::string(staticGlobalData->libDir);
+	if (!mainLibDir.empty()) {
+		mainLibDir = mainLibDir + '/';
+	}
+	
+	// will look about like this: "C:/Games/spring/AI/Interfaces/impls"
+	//std::string myLibDir = mainLibDir + AI_INTERFACES_IMPLS_DIR;
+	// will look about like this: "C:/Games/spring/AI/Skirmish/impls"
+	skirmishAIsLibDir = mainLibDir + SKIRMISH_AI_IMPLS_DIR;
+	// will look about like this: "C:/Games/spring/AI/Skirmish/impls"
+	groupAIsLibDir = mainLibDir + GROUP_AI_IMPLS_DIR;
+	
+	std::string mainDataDir = "";
+	if (staticGlobalData->numDataDirs >= 1) {
+		mainDataDir = std::string(staticGlobalData->dataDirs[0]) + '/';
+	}
+	// will look about like this: "C:/Games/spring/AI/Interfaces/data/C/0.1"
+	std::string myDataDir = mainDataDir + AI_INTERFACES_DATA_DIR"/"MY_SHORT_NAME"/"MY_VERSION;
+	
+	std::string logFileName = myDataDir + "/log.txt";
+	
+	initLog(logFileName.c_str());
+}
 
-int CInterface::GetInfos(InfoItem infos[], unsigned int max) {
+unsigned int CInterface::GetInfo(InfoItem info[], unsigned int maxInfoItems) {
 	
 	unsigned int i = 0;
 	
-	if (myInfos.empty()) {
-		InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, "C", NULL}; myInfos.push_back(ii_0);
-		InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, "0.1", NULL}; myInfos.push_back(ii_1);
-		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, "default C & C++ (legacy and new)", NULL}; myInfos.push_back(ii_2);
-		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++.", NULL}; myInfos.push_back(ii_3);
-		InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:C", NULL}; myInfos.push_back(ii_4);
-		InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "C, C++", NULL}; myInfos.push_back(ii_5);
+	if (myInfo.empty()) {
+		InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL}; myInfo.push_back(ii_0);
+		InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, MY_VERSION, NULL}; myInfo.push_back(ii_1);
+		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, "default C & C++ (legacy and new)", NULL}; myInfo.push_back(ii_2);
+		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++.", NULL}; myInfo.push_back(ii_3);
+		InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:C", NULL}; myInfo.push_back(ii_4);
+		InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "C, C++", NULL}; myInfo.push_back(ii_5);
 	}
 	
 	std::vector<InfoItem>::const_iterator inf;
-	for (inf=myInfos.begin(); inf!=myInfos.end() && i < max; inf++) {
-		infos[i] = *inf;
+	for (inf=myInfo.begin(); inf!=myInfo.end() && i < maxInfoItems; inf++) {
+		info[i] = *inf;
 		i++;
 	}
 	
@@ -52,10 +81,10 @@ LevelOfSupport CInterface::GetLevelOfSupportFor(
 	return LOS_Working;
 }
 
-void copyToInfoMap(std::map<std::string, InfoItem>& infoMap, const InfoItem infos[], unsigned int numInfos) {
+void copyToInfoMap(std::map<std::string, InfoItem>& infoMap, const InfoItem info[], unsigned int numInfoItems) {
 
-	for (unsigned int i=0; i < numInfos; ++i) {
-		infoMap[infos[i].key] = copyInfoItem(&(infos[i]));
+	for (unsigned int i=0; i < numInfoItems; ++i) {
+		infoMap[info[i].key] = copyInfoItem(&(info[i]));
 	}
 }
 SSAISpecifier extractSSAISpecifier(const std::map<std::string, InfoItem>& infoMap) {
@@ -77,12 +106,13 @@ SGAISpecifier extractSGAISpecifier(const std::map<std::string, InfoItem>& infoMa
 	return specifier;
 }
 
-const SSAILibrary* CInterface::LoadSkirmishAILibrary(const InfoItem infos[], unsigned int numInfos) {
+const SSAILibrary* CInterface::LoadSkirmishAILibrary(const InfoItem info[],
+		unsigned int numInfoItems) {
 
 	SSAILibrary* ai;
 
 	std::map<std::string, InfoItem> infoMap;
-	copyToInfoMap(infoMap, infos, numInfos);
+	copyToInfoMap(infoMap, info, numInfoItems);
 	SSAISpecifier sAISpecifier = extractSSAISpecifier(infoMap);
 	mySkirmishAISpecifiers.push_back(sAISpecifier);
 	mySkirmishAIInfos[sAISpecifier] = infoMap;
@@ -126,12 +156,12 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 
 
-const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
+const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[], unsigned int numInfoItems) {
 
 	SGAILibrary* ai = NULL;
 
 	std::map<std::string, InfoItem> infoMap;
-	copyToInfoMap(infoMap, infos, numInfos);
+	copyToInfoMap(infoMap, info, numInfoItems);
 	SGAISpecifier gAISpecifier = extractSGAISpecifier(infoMap);
 	myGroupAISpecifiers.push_back(gAISpecifier);
 	myGroupAIInfos[gAISpecifier] = infoMap;
@@ -189,10 +219,10 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath, SSAILib
 	// initialize the AI library
 	std::string funcName;
 
-	funcName = "getInfos";
-	skirmishAILibrary->getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
-	if (skirmishAILibrary->getInfos == NULL) {
-		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
+	funcName = "getInfo";
+	skirmishAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(struct InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+	if (skirmishAILibrary->getInfo == NULL) {
+		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 
@@ -246,10 +276,10 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrar
 	// initialize the AI library
 	std::string funcName;
 	
-	funcName = "getInfos";
-	groupAILibrary->getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->getInfos == NULL) {
-		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
+	funcName = "getInfo";
+	groupAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
+	if (groupAILibrary->getInfo == NULL) {
+		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
@@ -308,8 +338,8 @@ void CInterface::reportError(const std::string& msg) {
 
 std::string CInterface::GenerateLibFilePath(const SSAISpecifier& sAISpecifier) {
 	
-	static const std::string path = std::string(PATH_TO_SPRING_HOME""SKIRMISH_AI_IMPLS_DIR"/");
-	
+	// fetch the file from the info about this interface
+	// which were supplied to us by the engine
 	T_skirmishAIInfos::const_iterator info = mySkirmishAIInfos.find(sAISpecifier);
 	if (info == mySkirmishAIInfos.end()) {
 		reportError(std::string("Missing Skirmish-AI info for ") + sAISpecifier.shortName + " " + sAISpecifier.version);
@@ -320,20 +350,19 @@ std::string CInterface::GenerateLibFilePath(const SSAISpecifier& sAISpecifier) {
 	}
 	
 	std::string libFileName = fileName->second.value; // eg. RAI-0.600
-#ifndef _WIN32
-	libFileName = "lib" + libFileName; // eg. libRAI-0.600
-#endif
+	#ifndef _WIN32
+		libFileName = "lib" + libFileName; // eg. libRAI-0.600
+	#endif
 	
-	libFileName.append("."); // eg. libRAI-0.600.
-	libFileName.append(SharedLib::GetLibExtension()); // eg. libRAI-0.600.so
+	libFileName = libFileName + "." + SharedLib::GetLibExtension(); // eg. libRAI-0.600.so
 	
-	return path + libFileName;
+	return skirmishAIsLibDir + "/" + libFileName;
 }
 
 std::string CInterface::GenerateLibFilePath(const SGAISpecifier& gAISpecifier) {
 	
-	static const std::string path = std::string(PATH_TO_SPRING_HOME""GROUP_AI_IMPLS_DIR"/");
-	
+	// fetch the file from the info about this interface
+	// which were supplied to us by the engine
 	T_groupAIInfos::const_iterator info = myGroupAIInfos.find(gAISpecifier);
 	if (info == myGroupAIInfos.end()) {
 		reportError(std::string("Missing Group-AI info for ") + gAISpecifier.shortName + " " + gAISpecifier.version);
@@ -343,32 +372,31 @@ std::string CInterface::GenerateLibFilePath(const SGAISpecifier& gAISpecifier) {
 		reportError(std::string("Missing Group-AI file name for ") + gAISpecifier.shortName + " " + gAISpecifier.version);
 	}
 	
-	std::string libFileName = fileName->second.value; // eg. RAI-0.600
-#ifndef _WIN32
-	libFileName = "lib" + libFileName; // eg. libRAI-0.600
-#endif
+	std::string libFileName = fileName->second.value; // eg. MetalMaker-1.0
+	#ifndef _WIN32
+		libFileName = "lib" + libFileName; // eg. libMetalMaker-1.0
+	#endif
 	
-	libFileName.append("."); // eg. libRAI-0.600.
-	libFileName.append(SharedLib::GetLibExtension()); // eg. libRAI-0.600.so
+	libFileName = libFileName + "." + SharedLib::GetLibExtension(); // eg. libMetalMaker-1.0.so
 	
-	return path + libFileName;
+	return groupAIsLibDir + "/" + libFileName;
 }
 
 SSAISpecifier CInterface::extractSpecifier(const SSAILibrary& skirmishAILib) {
 	
 	SSAISpecifier skirmishAISpecifier;
 	
-	InfoItem infos[MAX_INFOS];
-	int numInfos =  skirmishAILib.getInfos(infos, MAX_INFOS);
+	InfoItem info[MAX_INFOS];
+	int numInfo =  skirmishAILib.getInfo(info, MAX_INFOS);
 
 	std::string spsn = std::string(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 	std::string spv = std::string(SKIRMISH_AI_PROPERTY_VERSION);
-	for (int i=0; i < numInfos; ++i) {
-		std::string key = std::string(infos[i].key);
+	for (int i=0; i < numInfo; ++i) {
+		std::string key = std::string(info[i].key);
 		if (key == spsn) {
-			skirmishAISpecifier.shortName = infos[i].value;
+			skirmishAISpecifier.shortName = info[i].value;
 		} else if (key == spv) {
-			skirmishAISpecifier.version = infos[i].value;
+			skirmishAISpecifier.version = info[i].value;
 		}
 	}
 	
@@ -379,17 +407,17 @@ SGAISpecifier CInterface::extractSpecifier(const SGAILibrary& groupAILib) {
 	
 	SGAISpecifier groupAISpecifier;
 	
-	InfoItem infos[MAX_INFOS];
-	int numInfos =  groupAILib.getInfos(infos, MAX_INFOS);
+	InfoItem info[MAX_INFOS];
+	int numInfo =  groupAILib.getInfo(info, MAX_INFOS);
 
 	std::string spsn = std::string(GROUP_AI_PROPERTY_SHORT_NAME);
 	std::string spv = std::string(GROUP_AI_PROPERTY_VERSION);
-	for (int i=0; i < numInfos; ++i) {
-		std::string key = std::string(infos[i].key);
+	for (int i=0; i < numInfo; ++i) {
+		std::string key = std::string(info[i].key);
 		if (key == spsn) {
-			groupAISpecifier.shortName = infos[i].value;
+			groupAISpecifier.shortName = info[i].value;
 		} else if (key == spv) {
-			groupAISpecifier.version = infos[i].value;
+			groupAISpecifier.version = info[i].value;
 		}
 	}
 	
@@ -401,18 +429,18 @@ bool CInterface::FitsThisInterface(const std::string& requestedShortName, const 
 	bool shortNameFits = false;
 	bool versionFits = false;
 	
-	InfoItem infos[MAX_INFOS];
-	int num = GetInfos(infos, MAX_INFOS);
+	InfoItem info[MAX_INFOS];
+	int num = GetInfo(info, MAX_INFOS);
 	
 	std::string shortNameKey(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	std::string versionKey(AI_INTERFACE_PROPERTY_VERSION);
 	for (int i=0; i < num; ++i) {
-		if (shortNameKey == infos[i].key) {
-			if (requestedShortName == infos[i].value) {
+		if (shortNameKey == info[i].key) {
+			if (requestedShortName == info[i].value) {
 				shortNameFits = true;
 			}
-		} else if (versionKey == infos[i].key) {
-			if (requestedVersion == infos[i].value) {
+		} else if (versionKey == info[i].key) {
+			if (requestedVersion == info[i].value) {
 				versionFits = true;
 			}
 		}

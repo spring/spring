@@ -30,7 +30,9 @@ extern "C" {
 #include "ELevelOfSupport.h"
 #include "SSAILibrary.h"
 #include "SGAILibrary.h"
-#include "exportdefines.h"
+#include "System/exportdefines.h"
+
+struct SStaticGlobalData;
 
 #define AI_INTERFACE_PROPERTY_FILE_NAME "fileName"                     // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
 #define AI_INTERFACE_PROPERTY_SHORT_NAME "shortName"                   // [string: [a-zA-Z0-9_.]*]
@@ -119,6 +121,32 @@ struct SAIInterfaceLibrary {
 	// static AI interface library functions
 	
 	/**
+	 * This function is called right after the library is dynamically loaded.
+	 * It can be used to initialize variables and to check or prepare
+	 * the environment (os, engine, filesystem, ...).
+	 * See also releaseStatic().
+	 *
+	 * NOTE: this method is optional. An AI Interface not exporting this
+	 * function is still valid.
+	 *
+	 * @return	init ok: 0, on error: != 0
+	 */
+	int (CALLING_CONV *initStatic)(const SStaticGlobalData* staticGlobalData);
+	
+	/**
+	 * This function is called right right before the library is unloaded.
+	 * It can be used to deinitialize variables and to cleanup the environment,
+	 * for example the filesystem.
+	 * See also initStatic().
+	 *
+	 * NOTE: this method is optional. An AI Interface not exporting this
+	 * function is still valid.
+	 *
+	 * @return	release ok: 0, on error: != 0
+	 */
+	int (CALLING_CONV *releaseStatic)();
+	
+	/**
 	 * Level of Support for a specific engine version.
 	 *
 	 * NOTE: this method is optional. An AI Interface not exporting this
@@ -132,17 +160,20 @@ struct SAIInterfaceLibrary {
 	 * NOTE: this method is optional. An AI Interface not exporting this
 	 * function is still valid.
 	 *
-	 * @return number of elements stored into parameter infos
+	 * @return number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfos)(struct InfoItem infos[], unsigned int max);
+	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
+			unsigned int maxInfoItems);
 	
 	
 	// skirmish AI methods
 	
 	//int (CALLING_CONV *getSkirmishAISpecifiers)(struct SSAISpecifier* sAISpecifiers, int max);
 	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
-	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
-	int (CALLING_CONV *unloadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
+	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
+			const struct InfoItem info[], unsigned int numInfoItems);
+	int (CALLING_CONV *unloadSkirmishAILibrary)(
+			const struct SSAISpecifier* const sAISpecifier);
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 	
 	
@@ -150,8 +181,10 @@ struct SAIInterfaceLibrary {
 	
 	//int (CALLING_CONV *getGroupAISpecifiers)(struct SGAISpecifier* gAISpecifiers, int max);
 	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
-	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct InfoItem infos[], unsigned int numInfos);
-	int (CALLING_CONV *unloadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
+	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
+			const struct InfoItem info[], unsigned int numInfoItems);
+	int (CALLING_CONV *unloadGroupAILibrary)(
+			const struct SGAISpecifier* const gAISpecifier);
 	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 

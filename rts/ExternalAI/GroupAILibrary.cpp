@@ -21,14 +21,8 @@
 #include "LogOutput.h"
 #include <string>
 
-CGroupAILibrary::CGroupAILibrary(const SGAILibrary& ai) {
-	
-	sGAI = ai;
-	
-	std::map<std::string, InfoItem> infos = GetInfos();
-	specifier.shortName = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
-	specifier.version = infos.at(GROUP_AI_PROPERTY_VERSION).value;
-}
+CGroupAILibrary::CGroupAILibrary(const SGAILibrary& ai,
+		const SGAISpecifier& specifier) : sGAI(ai), specifier(specifier) {}
 
 CGroupAILibrary::~CGroupAILibrary() {}
 	
@@ -48,22 +42,22 @@ LevelOfSupport CGroupAILibrary::GetLevelOfSupportFor(
 	}
 }
 	
-std::map<std::string, InfoItem> CGroupAILibrary::GetInfos() const {
+std::map<std::string, InfoItem> CGroupAILibrary::GetInfo() const {
 	
-	std::map<std::string, InfoItem> infos;
+	std::map<std::string, InfoItem> info;
 	
-	if (sGAI.getInfos != NULL) {
+	if (sGAI.getInfo != NULL) {
 		InfoItem infs[MAX_INFOS];
-		int num = sGAI.getInfos(infs, MAX_INFOS);
+		int num = sGAI.getInfo(infs, MAX_INFOS);
 
 		int i;
 		for (i=0; i < num; ++i) {
 			InfoItem newII = copyInfoItem(&infs[i]);
-			infos[std::string(newII.key)] = newII;
+			info[std::string(newII.key)] = newII;
 		}
 	}
 
-	return infos;
+	return info;
 }
 std::vector<Option> CGroupAILibrary::GetOptions() const {
 	

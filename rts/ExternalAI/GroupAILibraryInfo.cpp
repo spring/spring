@@ -25,16 +25,16 @@
 #include "Platform/errorhandler.h"
 
 CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier) {
-	infos = ai.GetInfos();
+	info = ai.GetInfo();
 	options = ai.GetOptions();
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
 	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
 
 CGroupAILibraryInfo::CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo) {
-	infos = std::map<std::string, InfoItem>(
-			aiInfo.infos.begin(),
-			aiInfo.infos.end());
+	info = std::map<std::string, InfoItem>(
+			aiInfo.info.begin(),
+			aiInfo.info.end());
 	options = std::vector<Option>(
 			aiInfo.options.begin(),
 			aiInfo.options.end());
@@ -47,10 +47,10 @@ CGroupAILibraryInfo::CGroupAILibraryInfo(
 		const std::string& fileModes,
 		const std::string& accessModes) {
 	
-	InfoItem tmpInfos[MAX_INFOS];
-	unsigned int num = ParseInfos(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfos, MAX_INFOS);
+	InfoItem tmpInfo[MAX_INFOS];
+	unsigned int num = ParseInfo(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfo, MAX_INFOS);
     for (unsigned int i=0; i < num; ++i) {
-		infos[std::string(tmpInfos[i].key)] = tmpInfos[i];
+		info[std::string(tmpInfo[i].key)] = tmpInfo[i];
     }
 	
 	if (!aiOptionFile.empty()) {
@@ -70,8 +70,8 @@ LevelOfSupport CGroupAILibraryInfo::GetLevelOfSupportForCurrentEngine() const {
 
 SGAISpecifier CGroupAILibraryInfo::GetSpecifier() const {
 	
-	const char* sn = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
-	const char* v = infos.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
+	const char* sn = info.at(GROUP_AI_PROPERTY_SHORT_NAME).value;
+	const char* v = info.at(GROUP_AI_PROPERTY_VERSION).value;
 	SGAISpecifier specifier = {sn, v};
 	return specifier;
 }
@@ -101,10 +101,10 @@ std::string CGroupAILibraryInfo::GetInterfaceVersion() const {
 	return GetInfo(GROUP_AI_PROPERTY_INTERFACE_VERSION);
 }
 std::string CGroupAILibraryInfo::GetInfo(const std::string& key) const {
-	return infos.at(key).value;
+	return info.at(key).value;
 }
-const std::map<std::string, InfoItem>* CGroupAILibraryInfo::GetInfos() const {
-	return &infos;
+const std::map<std::string, InfoItem>* CGroupAILibraryInfo::GetInfo() const {
+	return &info;
 }
 
 const std::vector<Option>* CGroupAILibraryInfo::GetOptions() const {
@@ -112,13 +112,13 @@ const std::vector<Option>* CGroupAILibraryInfo::GetOptions() const {
 }
 
 
-unsigned int CGroupAILibraryInfo::GetInfosCReference(InfoItem cInfos[], unsigned int max) const {
+unsigned int CGroupAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const {
 	
 	unsigned int i=0;
 	
 	std::map<std::string, InfoItem>::const_iterator infs;
-	for (infs=infos.begin(); infs != infos.end() && i < max; ++infs) {
-		cInfos[i++] = infs->second;
+	for (infs=info.begin(); infs != info.end() && i < maxInfoItems; ++infs) {
+		cInfo[i++] = infs->second;
     }
 	
 	return i;
@@ -171,7 +171,7 @@ bool CGroupAILibraryInfo::SetInfo(const std::string& key, const std::string& val
 	}
 	
 	InfoItem ii = {key.c_str(), value.c_str(), NULL};
-	infos[key] = ii;
+	info[key] = ii;
 	return true;
 }
 

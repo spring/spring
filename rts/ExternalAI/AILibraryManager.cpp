@@ -574,12 +574,18 @@ void CAILibraryManager::ReleaseAllGroupAILibraries() {
 
 IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const SAIInterfaceSpecifier& interfaceSpecifier) {
 	
-	IAIInterfaceLibrary* interfaceLib;
+	IAIInterfaceLibrary* interfaceLib = NULL;
 	
 	T_loadedInterfaces::const_iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceSpecifier);
 	if (interfacePos == loadedAIInterfaceLibraries.end()) { // interface not yet loaded
-		interfaceLib = new CAIInterfaceLibrary(interfaceSpecifier);
-		loadedAIInterfaceLibraries[interfaceSpecifier] = interfaceLib;
+		T_interfaceInfos::const_iterator interfaceInfo = interfaceInfos.find(interfaceSpecifier);
+		if (interfaceInfo != interfaceInfos.end()) {
+			//interfaceLib = new CAIInterfaceLibrary(interfaceSpecifier);
+			interfaceLib = new CAIInterfaceLibrary(interfaceInfo->second);
+			loadedAIInterfaceLibraries[interfaceSpecifier] = interfaceLib;
+		} else {
+			// unavailable interface requested, returning NULL
+		}
 	} else {
 		interfaceLib = interfacePos->second;
 	}

@@ -27,23 +27,25 @@
 
 enum LevelOfSupport;
 class SharedLib;
+struct SStaticGlobalData;
 
 class CInterface {
 public:
-	CInterface();
+	//CInterface();
+	CInterface(const SStaticGlobalData* staticGlobalData);
 	
 	// static properties
-	int GetInfos(InfoItem infos[], unsigned int max);
+	unsigned int GetInfo(InfoItem info[], unsigned int maxInfoItems);
 	LevelOfSupport GetLevelOfSupportFor(
 			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
-	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos);
+	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
 	int UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier);
 	int UnloadAllSkirmishAILibraries();
 
 	// group AI methods
-	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos);
+	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
 	int UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier);
 	int UnloadAllGroupAILibraries();
 
@@ -65,7 +67,10 @@ private:
 
 	bool FitsThisInterface(const std::string& requestedShortName, const std::string& requestedVersion);
 private:
-	std::vector<InfoItem> myInfos;
+	const SStaticGlobalData* staticGlobalData;
+	std::string skirmishAIsLibDir;
+	std::string groupAIsLibDir;
+	std::vector<InfoItem> myInfo;
 
 	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
 	typedef std::map<SSAISpecifier, std::map<std::string, InfoItem>, SSAISpecifier_Comparator> T_skirmishAIInfos;

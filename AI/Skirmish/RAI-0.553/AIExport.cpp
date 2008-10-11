@@ -34,42 +34,42 @@
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 
 
-Export(unsigned int) getInfos(InfoItem infos[], unsigned int max) {
+Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
 	
 	unsigned int i = 0;
 	
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_SHORT_NAME, "RAI", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_VERSION, "0.553", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_NAME, "Reths Skirmish AI", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_DESCRIPTION, "This Skirmish AI supports most mods and plays decently.", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AI:RAI", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
-	if (i < max) {
+	if (i < maxInfoItems) {
 		InfoItem ii = {SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED, "no", NULL};
-		infos[i] = ii;
+		info[i] = ii;
 		i++;
 	}
 	
-	// return the number of elements copied to infos 
+	// return the number of elements copied to info
 	return i;
 }
 

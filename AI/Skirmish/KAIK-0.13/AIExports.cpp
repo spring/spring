@@ -32,31 +32,32 @@
 
 
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
-std::vector<InfoItem> myInfos;
+std::vector<InfoItem> myInfo;
 
 
-Export(unsigned int) getInfos(InfoItem infos[], unsigned int max) {
+Export(unsigned int) getInfo(struct InfoItem info[],
+		unsigned int maxInfoItems) {
 	
 	unsigned int i = 0;
 	
-	// initialize the myInfos
-	if (myInfos.empty()) {
-		InfoItem ii_0 = {SKIRMISH_AI_PROPERTY_SHORT_NAME, "KAIK", NULL}; myInfos.push_back(ii_0);
-		InfoItem ii_1 = {SKIRMISH_AI_PROPERTY_VERSION, "0.13", NULL}; myInfos.push_back(ii_1);
-		InfoItem ii_2 = {SKIRMISH_AI_PROPERTY_NAME, "Kloots Skirmish AI", NULL}; myInfos.push_back(ii_2);
-		InfoItem ii_3 = {SKIRMISH_AI_PROPERTY_DESCRIPTION, "This Skirmish AI supports most TA based mods and plays decently.", NULL}; myInfos.push_back(ii_3);
-		InfoItem ii_4 = {SKIRMISH_AI_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AI:KAIK", NULL}; myInfos.push_back(ii_4);
-		InfoItem ii_5 = {SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED, "no", NULL}; myInfos.push_back(ii_5);
+	// initialize the myInfo
+	if (myInfo.empty()) {
+		InfoItem ii_0 = {SKIRMISH_AI_PROPERTY_SHORT_NAME, "KAIK", NULL}; myInfo.push_back(ii_0);
+		InfoItem ii_1 = {SKIRMISH_AI_PROPERTY_VERSION, "0.13", NULL}; myInfo.push_back(ii_1);
+		InfoItem ii_2 = {SKIRMISH_AI_PROPERTY_NAME, "Kloots Skirmish AI", NULL}; myInfo.push_back(ii_2);
+		InfoItem ii_3 = {SKIRMISH_AI_PROPERTY_DESCRIPTION, "This Skirmish AI supports most TA based mods and plays decently.", NULL}; myInfo.push_back(ii_3);
+		InfoItem ii_4 = {SKIRMISH_AI_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AI:KAIK", NULL}; myInfo.push_back(ii_4);
+		InfoItem ii_5 = {SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED, "no", NULL}; myInfo.push_back(ii_5);
 	}
 	
-	// copy myInfos to the argument container infos
+	// copy myInfo to the argument container info
 	std::vector<InfoItem>::const_iterator inf;
-	for (inf=myInfos.begin(); inf!=myInfos.end() && i < max; inf++) {
-		infos[i] = *inf;
+	for (inf=myInfo.begin(); inf!=myInfo.end() && i < maxInfoItems; inf++) {
+		info[i] = *inf;
 		i++;
 	}
 
-	// return the number of elements copied to infos 
+	// return the number of elements copied to info 
 	return i;
 }
 
@@ -72,7 +73,8 @@ Export(enum LevelOfSupport) getLevelOfSupportFor(
 	return LOS_None;
 }
 
-Export(unsigned int) getOptions(struct Option options[], unsigned int max) {
+Export(unsigned int) getOptions(struct Option options[],
+		unsigned int maxOptions) {
 	return 0;
 }
 

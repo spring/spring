@@ -22,14 +22,7 @@
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
-		const SSAISpecifier& specifier) : sSAI(ai), specifier(specifier) {
-	
-/*
-	std::map<std::string, InfoItem> infos = GetInfos();
-	specifier.shortName = infos.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
-	specifier.version = infos.at(SKIRMISH_AI_PROPERTY_VERSION).value;
-*/
-}
+		const SSAISpecifier& specifier) : sSAI(ai), specifier(specifier) {}
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {}
 	
@@ -49,22 +42,22 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
 	}
 }
 	
-std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfos() const {
+std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfo() const {
 	
-	std::map<std::string, InfoItem> infos;
+	std::map<std::string, InfoItem> info;
 	
-	if (sSAI.getInfos != NULL) {
+	if (sSAI.getInfo != NULL) {
 		InfoItem infs[MAX_INFOS];
-		int num = sSAI.getInfos(infs, MAX_INFOS);
+		int num = sSAI.getInfo(infs, MAX_INFOS);
 
 		int i;
 		for (i=0; i < num; ++i) {
 			InfoItem newII = copyInfoItem(&infs[i]);
-			infos[std::string(newII.key)] = newII;
+			info[std::string(newII.key)] = newII;
 		}
 	}
 
-	return infos;
+	return info;
 }
 std::vector<Option> CSkirmishAILibrary::GetOptions() const {
 	

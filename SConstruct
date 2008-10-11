@@ -404,12 +404,17 @@ for baseName in filelist.list_groupAIs(groupaienv, exclude_list=groupai_exclude_
 ### Build streflop (which has it's own Makefile-based build system)
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
+	if env.has_key('streflop_extra'):
+		cmd += " " + env['streflop_extra']
 	if env['fpmath'] == 'sse':
 		cmd = "STREFLOP_SSE=1 " + cmd
 	else:
 		cmd = "STREFLOP_X87=1 " + cmd
+	if env['platform'] == 'windows':
+		cmd += " WIN32=1"
 	if env.GetOption('clean'):
 		cmd += " clean"
+	print 'streflop options:', cmd
 	if env['platform'] == 'freebsd':
 		status = os.system("gmake " + cmd)
 	else:
@@ -489,7 +494,7 @@ for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'tea
 # install menu entry & icon
 inst = env.Install(os.path.join(env['installprefix'], 'share/pixmaps'), 'rts/spring.png')
 Alias('install', inst)
-inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'rts/spring.desktop')
+inst = env.Install(os.path.join(env['installprefix'], 'share/applications'), 'installer/freedesktop/applications/spring.desktop')
 Alias('install', inst)
 
 # install LuaUI files

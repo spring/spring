@@ -20,140 +20,51 @@
 #include "Interface.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-/*
-#include "ExternalAI/Interface/ELevelOfSupport.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
-#include "ExternalAI/Interface/SGAILibrary.h"
-*/
+#include "ExternalAI/Interface/SStaticGlobalData.h"
 
-/*
-If we do not have an init() method, then we would instead pass
-an event InitEvent to handleEvent. However, we would have to make
-handleEvent have to wait for an InitEvent as a special case, since
-the team in question would not yet exist. 
+CInterface* myInterface = NULL;
 
-Therefore, the handleEvent code would look like this:
-[code]
-SHARED_EXPORT int handleEvent(int team, int eventID, void* event) {
-    if (eventID == INIT_EVENT) {
-        ais[team] = CAIObject();
-    }
-    if (ais.count(team) > 0){
-        // allow the AI instance to handle the event.
-        return ais[team].handleEvent(eventID, event);
-    }
-    // no ai with value, so return error.
-    else return -1;
+Export(int) initStatic(const SStaticGlobalData* staticGlobalData) {
+	
+	myInterface = new CInterface(staticGlobalData);
+	return 0;
 }
-[/code]
-Advantages:
-* All events to AI go through handleEvent.
-* People don't get confused and start adding bananaSplitz() functions.
 
-Disadvantages:
-* We need to check for INIT_EVENT before *every message*.
-* These events will happen only once per game -- after that the check becomes a necessary waste of time.
-* Handling events is no longer about getting the right object to deal with an event, it also includes initialising object properly.
-
-I understand that we want to keep the interface simple. In fact,
-I think we should keep it as minimal as possible, and ideally everything
-would go through handleEvent. Practically though, it does not make sense
-to do this: we'll be wasting our own time for no good reason in the
-case of initialisation. 
-
-The (in my opinion much cleaner) alternative is the one I've implemented.
-Advantages:
-* One function that initialises a team before everything is passed to handlEvent
-* No redundant if statements.
-* Simple design.
-
-Disadvantage:
-* People might start adding other functions to the interface.
-
-I don't think that the disadvantage is a real one: it's pretty standard to 
-see initialisation as a special case. It's pretty clear that everything
-else goes through handleEvent. 
-
-The advantage is clear: a more efficient, simpler design. Of course, you could
-argue that the efficiency is nominal, one extra if per event is very little cost,
-and granted, that's true; but this doesn't change the fact that we're checking
-for a special case that we know only happens once at the beginning of the game, before
-every single event after.
-
-Of course, we still need an INIT_EVENT, since initialising the existance of a team
-member is not the same as initialising its state.
-
-You might also argue that we do this check in the handleEvent switch within each
-team. This is true, although the difference there is that a switch is translated
-to address lookups and so there is no increase in cost if there are more switch
-cases. 
-*/
-
-// AI Interface vars
-/*
-const char* const myProperties[][2] = {
-	{AI_INTERFACE_PROPERTY_SHORT_NAME, "C"},
-	{AI_INTERFACE_PROPERTY_VERSION, "0.1"},
-	{AI_INTERFACE_PROPERTY_NAME, "C & C++"},
-	{AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++."},
-	{AI_INTERFACE_PROPERTY_URL, "http://sy.spring.com/Wiki/CInterface"},
-	{"supportedLanguages", "C, C++"}
-};
-const int numMyProperties = 6;
-*/
-
-
-/*
-// Skirmish AI vars
-const struct SSAISpecifier* mySAISpecifiers = NULL;
-const int numMySAISpecifiers;
-
-const struct SSAILibrary* mySAILibraries;
-const int numMySAILibraries;
-
-
-// Group AI vars
-const struct SGAISpecifier* myGAISpecifiers = NULL;
-const int numMyGAISpecifiers;
-
-const struct SGAILibrary* myGAILibraries;
-const int numMyGAILibraries;
-*/
-
-CInterface myInterface;
-
-/*
-#include "stdio.h"
-*/
-//#include "<iostream>"
+Export(int) releaseStatic() {
+	
+	delete myInterface;
+	myInterface = NULL;
+	return 0;
+}
 
 Export(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
-	return myInterface.GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
+	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 }
 
-Export(int) getInfos(InfoItem infos[], unsigned int max) {
-	return myInterface.GetInfos(infos, max);
+Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
+	return myInterface->GetInfo(info, maxInfoItems);
 }
 
 
 // skirmish AI methods
 /*
 Export(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max) {
-	return myInterface.GetSkirmishAISpecifiers(sAISpecifiers, max);
+	return myInterface->GetSkirmishAISpecifiers(sAISpecifiers, max);
 }
 Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
-	return myInterface.LoadSkirmishAILibrary(sAISpecifier);
+	return myInterface->LoadSkirmishAILibrary(sAISpecifier);
 }
 */
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
-	return myInterface.LoadSkirmishAILibrary(infos, numInfos);
+Export(const struct SSAILibrary*) loadSkirmishAILibrary(
+const struct InfoItem info[], unsigned int numInfoItems) {
+	return myInterface->LoadSkirmishAILibrary(info, numInfoItems);
 }
 Export(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
-	return myInterface.UnloadSkirmishAILibrary(sAISpecifier);
+	return myInterface->UnloadSkirmishAILibrary(sAISpecifier);
 }
 Export(int) unloadAllSkirmishAILibraries() {
-	return myInterface.UnloadAllSkirmishAILibraries();
+	return myInterface->UnloadAllSkirmishAILibraries();
 }
 
 
@@ -161,19 +72,20 @@ Export(int) unloadAllSkirmishAILibraries() {
 // group AI methods
 /*
 Export(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max) {
-	return myInterface.GetGroupAISpecifiers(gAISpecifiers, max);
+	return myInterface->GetGroupAISpecifiers(gAISpecifiers, max);
 }
 Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
-	return myInterface.LoadGroupAILibrary(gAISpecifier);
+	return myInterface->LoadGroupAILibrary(gAISpecifier);
 }
 */
-Export(const struct SGAILibrary*) loadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos) {
-	return myInterface.LoadGroupAILibrary(infos, numInfos);
+Export(const struct SGAILibrary*) loadGroupAILibrary(
+const struct InfoItem info[], unsigned int numInfoItems) {
+	return myInterface->LoadGroupAILibrary(info, numInfoItems);
 }
 Export(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
-	return myInterface.UnloadGroupAILibrary(gAISpecifier);
+	return myInterface->UnloadGroupAILibrary(gAISpecifier);
 }
 Export(int) unloadAllGroupAILibraries() {
-	return myInterface.UnloadAllGroupAILibraries();
+	return myInterface->UnloadAllGroupAILibraries();
 }
 

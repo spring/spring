@@ -1,6 +1,7 @@
 # Copyright (C) 2006  Tobi Vollebregt
 
 import os, sys
+import platform
 import SCons.Util
 from SCons.Options import Options
 import config, detect, filelist
@@ -86,13 +87,14 @@ def generate(env):
 	usropts.AddOptions(
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
-		('gml',               'Set to false to disable OpenGL thread library', True),
+		('gml',               'Set to false to disable OpenGL thread library', False),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
 		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
 		('synctrace',         'Enable sync tracing', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
+		('arch',	      'CPU architecture to use', 'auto'),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('profile_generate',  'Set to yes to compile with -fprofile-generate to generate profiling information', False),
 		('profile_use',       'Set to yes to compile with -fprofile-use to use profiling information', False),
@@ -126,6 +128,7 @@ def generate(env):
 		('CC',            'c compiler'),
 		('CXX',           'c++ compiler'),
 		('spring_defines','extra c preprocessor defines for spring'),
+		('streflop_extra','extra options for streflop Makefile'),
 		('is_configured', 'configuration version stamp'))
 
 	usropts.Update(env)
@@ -152,7 +155,7 @@ def generate(env):
 		for key in ['platform', 'gml', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
 			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
 			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
-			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines']:
+			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines', 'arch']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -214,6 +217,26 @@ def generate(env):
 		# This should be redundant with the modifications done by tools/double_to_single_precision.sed.
 		# Other options copied from streflop makefiles.
 		env['CCFLAGS'] = ['-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-mieee-fp']
+
+		# set architecture
+		if 'arch' in args and args['arch'] != 'auto':
+			arch = args['arch']
+			if not arch or arch == 'none':
+				print 'Configuring for default architecture'
+				env['streflop_extra'] = ''
+			else:
+				print 'Configuring for', arch
+				env['CCFLAGS'] += ['-march=' + arch]
+				env['streflop_extra'] = 'ARCH=' + arch
+		else:
+			bits, archname = platform.architecture()
+			if bits == '32bit' or env['platform'] == 'windows':
+				print 'Configuring for i686'
+				env['CCFLAGS'] += ['-march=i686']
+				env['streflop_extra'] = 'ARCH=i686'
+			else:
+				print 'Configuring for default architecture'
+				env['streflop_extra'] = ''
 
 		# profile?
 		bool_opt('profile', False)
@@ -349,7 +372,7 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
-		bool_opt('gml', True)
+		bool_opt('gml', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
