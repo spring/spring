@@ -1,6 +1,0 @@
-Lobby moderator guidelines:
-
-* Don't use /chanmsg unless really neccessary (greeting your friends with /chanmsg is an example of bad usage) as channel messages are primarly used for various channel and server notifications.
-* Don't use /ban unless absolutely neccessary since banning a player means he can't play the game anymore. You should always have a good reason to use it, but before using it you should always try to resolve the situation first by warning the player or by using /kick command so that the player gets the message.
-* It is recommended that you do not discuss your decisions publicly too much, since moderating is not a democracy and moderators should retain some authority (it doesn't matter whether players agree with your decisions or not)
-* Players should be warned (or muted) if flaming (being disrespectful towards other players) or using inappropriate vocabulary etc., talking in UPPER CASE is not *bad* or repeating a message in the main channel (unless it actually becomes spamming). Other rules are not fixed, instead some common sense should be applied when moderating.
