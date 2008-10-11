@@ -132,5 +132,5 @@ void CSpherePartSpawner::Init(const float3& pos, CUnit *owner)
 {
 	CProjectile::Init(pos, owner);
 	deleteMe = true;
-	CSpherePartProjectile::CreateSphere(pos + this->pos, alpha, ttl, expansionSpeed, owner, color);
+	CSpherePartProjectile::CreateSphere(pos, alpha, ttl, expansionSpeed, owner, color);
 }
