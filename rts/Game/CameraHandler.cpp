@@ -26,8 +26,8 @@ CCameraHandler* camHandler = NULL;
 
 CCameraHandler::CCameraHandler()
 {
-	cameraTime=0.0f;
-	cameraTimeLeft=0.0f;
+	cameraTime = 0.0f;
+	cameraTimeLeft = 0.0f;
 
 	// FPS camera must always be the first one in the list
 	std::vector<CCameraController*>& camCtrls = camControllers;
@@ -37,8 +37,8 @@ CCameraHandler::CCameraHandler()
 	camCtrls.push_back(new CRotOverheadController()); // 3
 	camCtrls.push_back(new CFreeController());        // 4
 	camCtrls.push_back(new SmoothController());       // 5
-	camCtrls.push_back(new COverviewController());    // 6
-	camCtrls.push_back(new COrbitController());       // 7
+	camCtrls.push_back(new COrbitController());       // 6
+	camCtrls.push_back(new COverviewController());    // 7, needs to be last (ToggleOverviewCamera())
 
 	for (unsigned int i = 0; i < camCtrls.size(); i++) {
 		nameMap[camCtrls[i]->GetName()] = i;

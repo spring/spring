@@ -1390,7 +1390,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	if (players[playerNum]) {
 		Message(str(format(PlayerLeft) %playerNum %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		Broadcast(CBaseNetProtocol::Get().SendQuit());
+		players[playerNum]->link->SendData(CBaseNetProtocol::Get().SendQuit());
 		if (hostif)
 		{
 			hostif->SendPlayerLeft(playerNum, 2);

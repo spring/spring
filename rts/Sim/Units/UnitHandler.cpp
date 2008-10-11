@@ -41,6 +41,14 @@
 using std::min;
 using std::max;
 
+#ifdef USE_GML
+#	include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+boost::recursive_mutex unitmutex;
+boost::mutex caimutex;
+#	endif
+#endif
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
@@ -186,6 +194,9 @@ CUnitHandler::~CUnitHandler()
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
 	ASSERT_SYNCED_MODE;
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -264,12 +275,21 @@ void CUnitHandler::Update()
 	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Unit handler");
 
+#	if defined(USE_GML) && GML_MT_TEST
+	{
+		boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
+
 	while (!toBeRemoved.empty()) {
 		CUnit* delUnit = toBeRemoved.back();
 		toBeRemoved.pop_back();
 
 		DeleteUnitNow(delUnit);
 	}
+
+#	if defined(USE_GML) && GML_MT_TEST
+	}
+#endif
 
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
@@ -586,12 +606,18 @@ void CUnitHandler::PushNewWind(float x, float z, float strength)
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock cailock(caimutex);
+#endif
 	builderCAIs.insert(builderCAIs.end(),b);
 }
 
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock cailock(caimutex);
+#endif
 	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
 

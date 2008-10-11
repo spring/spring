@@ -339,20 +339,37 @@ void CAdvSky::CreateClouds()
 }
 
 inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
-	int *rc=*rawClouds+ast;
-	unsigned char *ct=cloudTexMem+4*ast;
+	int* rc = *rawClouds + ast;
+	unsigned char* ct = cloudTexMem + 4 * ast;
 
-	int am2=(ast-2)&CLOUD_MASK, am1=(ast-1)&CLOUD_MASK, aa=(ast)&CLOUD_MASK, ap1=(ast+1)&CLOUD_MASK;
-	int a3c=ast+a3cstart, a4c=ast+a4cstart;
-	for(int a=ast; a<aed; ++rc, ++ct){
-		ydif[ap1]+=(int)cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
-		ydif2[ap1]=(ydif1[ap1]=ydif[ap1]>>1)>>1;
-		int dif=(ydif2[am2] + ydif1[am2=am1] + ydif[am1=aa] + ydif1[aa=ap1] + ydif2[++ap1]) / 16;
-		if(ap1>=CLOUD_SIZE)
-			ap1=0;
-		*ct++=128+dif;
-		*ct++=thicknessTransform[(*rc)>>7];
-		*ct++=255;
+	int
+		am2 = (ast - 2) & CLOUD_MASK,
+		am1 = (ast - 1) & CLOUD_MASK,
+		aa  = (ast) & CLOUD_MASK,
+		ap1 = (ast + 1) & CLOUD_MASK,
+		dif = 0;
+
+	int
+		a3c = ast + a3cstart,
+		a4c = ast + a4cstart;
+
+	for (int a = ast; a < aed; ++rc, ++ct) {
+		ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
+		ydif2[ap1] = (ydif1[ap1] = ydif[ap1] >> 1) >> 1;
+
+		dif = ydif2[am2];
+		am2 = am1; dif += ydif1[am2];
+		am1 = aa;  dif += ydif[am1];
+		aa = ap1;  dif += ydif1[aa];
+		ap1 += 1;  dif += ydif2[ap1];
+		dif >>= 4;
+
+		if (ap1 >= CLOUD_SIZE)
+			ap1 = 0;
+
+		*ct++ = 128 + dif;
+		*ct++ = thicknessTransform[(*rc) >> 7];
+		*ct++ = 255;
 	}
 }
 

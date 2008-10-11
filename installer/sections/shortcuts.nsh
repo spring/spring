@@ -3,25 +3,29 @@
   SetOutPath "$INSTDIR"
   ; Main shortcuts
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+  CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
   ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
-    CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+  ${EndIf}
+  ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
   ${EndIf}
   ${If} ${SectionIsSelected} ${SEC_CA}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk" "$INSTDIR\CaDownloader.exe"
   ${EndIf}  
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\Settings.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 
   WriteIniStr "$INSTDIR\Spring.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-  WriteIniStr "$INSTDIR\unknown-files.url" "InternetShortcut" "URL" "http://spring.unknown-files.net"
+  WriteIniStr "$INSTDIR\jobjol.url" "InternetShortcut" "URL" "http://spring.jobjol.nl"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\Spring.url"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\unknown-files.url"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\jobjol.url"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 !else
   ; Shortcuts
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"

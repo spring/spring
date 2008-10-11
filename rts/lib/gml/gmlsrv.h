@@ -10,7 +10,7 @@
 #define GMLSRV_H
 
 #ifdef USE_GML
-#define GML_MT_TEST 0
+#define GML_MT_TEST 0 // run Draw() parallel with SimFrame(). Highly experimental, not fully working yet.
 
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
@@ -125,7 +125,15 @@ public:
 	gmlCount ClientsReady;
 	BOOL_ newwork;
 
-	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE),inited(FALSE),dorun(TRUE) {
+	BOOL auxinited;
+	R (*auxworker)(void *);
+	void* auxworkerclass;
+	boost::barrier AuxBarrier; 
+	gmlCount AuxClientsReady;
+
+
+	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE),
+				inited(FALSE),dorun(TRUE),auxinited(FALSE),auxworker(NULL),AuxBarrier(2),AuxClientsReady(0) {
 	}
 
 	~gmlClientServer() {
@@ -138,6 +146,13 @@ public:
 				threads[i]->join();
 				delete threads[i];
 			}
+		}
+		if(auxinited) {
+			auxworker=NULL;
+			dorun=FALSE;
+			AuxBarrier.wait();
+			threads[gmlThreadCount]->join();
+			delete threads[gmlThreadCount];
 		}
 	}
 
@@ -226,6 +241,8 @@ public:
 	void Work(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, GML_TYPENAME std::list<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
 		if(!inited)
 			WorkInit();
+		if(auxworker)
+			--mt;
 		if(gmlThreadNumber!=0) {
 			NewWork(wrk,wrka,wrkit,cls,mt,sm,it,nu,l1,l2,sw,swf);
 			return;
@@ -308,52 +325,97 @@ public:
 
 	void GetQueue() {
 		int thread=gmlThreadNumber;
-		int processed=1;
+//		int processed=1;
 
-		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+//		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 
 		gmlQueue *qd=&gmlQueues[thread];
 
 		BOOL_ isq1=qd->Write==qd->Queue1;
 
-#if GML_ALTERNATE_SYNCMODE
+	qd->GetWrite(TRUE);
+/*#if GML_ALTERNATE_SYNCMODE
 		if(qd->WasSynced && qd->GetWrite(ex->syncmode?TRUE:2))
 #else
 		if(qd->WasSynced && qd->GetWrite(TRUE))
 #endif
 			processed=0;
 		if(processed && qd->GetWrite(TRUE))
-			processed=0;
+			processed=0;*/
 
 		if(isq1) {
-			while(qd->Locked1)
+			while(!qd->Locked1 && *(BYTE * volatile *)&qd->Pos1!=qd->Queue1)
 				boost::thread::yield();
 		}
 		else {
-			while(qd->Locked2)
+			while(!qd->Locked2 && *(BYTE * volatile *)&qd->Pos2!=qd->Queue2)
 				boost::thread::yield();
 		}
 	}
 
-	void Pump(int thread) {
-		int updsrv=0;
-		gmlUpdateServers();
-		BOOL_ processed=FALSE;
+	BOOL_ PumpAux() {
+		static int updsrvaux=0;
+		if((updsrvaux++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
+			gmlUpdateServers();
 
-//		for(int i=1; i<gmlThreadCount; ++i) {
-			gmlQueue *qd=&gmlQueues[thread];
+		while(AuxClientsReady<=3) {
+			gmlQueue *qd=&gmlQueues[gmlThreadCount];
 			if(qd->Reloc)
 				qd->Realloc();
 			if(qd->GetRead()) {
 				qd->Execute();
 				qd->ReleaseRead();
-				processed=TRUE;
 			}
 			if(qd->Sync) {
 				qd->ExecuteSynced();
-				processed=TRUE;
 			}
-//		}
+			if(AuxClientsReady==0)
+				return FALSE;
+			else
+				++AuxClientsReady;
+		}
+//		auxworker=NULL; // move to auxsub?
+		return TRUE;
+	}
+
+	void AuxWork(R (*wrk)(void *),void *cls) {
+		auxworker=wrk;
+		auxworkerclass=cls;
+		AuxClientsReady%=0;
+		if(!auxinited) {
+			if(!inited)
+				WorkInit();
+			threads[gmlThreadCount]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClientAux, this));
+			auxinited=TRUE;
+		}
+		AuxBarrier.wait();
+	}
+
+
+	void gmlClientAuxSub() {
+		AuxBarrier.wait();
+
+		if(!auxworker)
+			return;
+		
+		gmlQueue *qd=&gmlQueues[gmlThreadCount];
+
+		qd->GetWrite(TRUE); 
+
+		(*auxworker)(auxworkerclass);
+
+		qd->ReleaseWrite();
+
+		++AuxClientsReady;	
+		auxworker=NULL; // move to auxsub?
+	}
+
+	void gmlClientAux() {
+		set_threadnum(gmlThreadCount);
+		streflop_init<streflop::Simple>();
+		while(dorun) {
+			gmlClientAuxSub();
+		}
 	}
 
 };

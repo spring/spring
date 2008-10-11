@@ -39,6 +39,14 @@
 #include "Sound.h"
 #include "Util.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+extern boost::mutex caimutex;
+boost::mutex selmutex;
+#	endif
+#endif
+
 extern Uint8 *keys;
 
 
@@ -367,6 +375,10 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 		return;
 	}
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
+
 	selectedUnits.insert(unit);
 	AddDeathDependence(unit);
 	selectionChanged = true;
@@ -384,6 +396,10 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 
 void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
+
 	selectedUnits.erase(unit);
 	DeleteDeathDependence(unit);
 	selectionChanged=true;
@@ -398,6 +414,10 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 
 void CSelectedUnits::ClearSelected()
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
+
 	CUnitSet::iterator ui;
 	ENTER_MIXED;
 	for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
@@ -415,6 +435,10 @@ void CSelectedUnits::ClearSelected()
 
 void CSelectedUnits::SelectGroup(int num)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
+
 	ClearSelected();
 	selectedGroup=num;
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
@@ -475,6 +499,9 @@ void CSelectedUnits::Draw()
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < guihandler->commands.size()) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
+#	if defined(USE_GML) && GML_MT_TEST
+			boost::mutex::scoped_lock cailock(caimutex);
+#endif
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 			std::list<CBuilderCAI*>::const_iterator bi;
@@ -507,6 +534,10 @@ void CSelectedUnits::Draw()
 
 void CSelectedUnits::DependentDied(CObject *o)
 {
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
+
 	selectedUnits.erase((CUnit*)o);
 	selectionChanged=true;
 	possibleCommandsChanged=true;
@@ -690,6 +721,9 @@ void CSelectedUnits::DrawCommands()
 			(*ui)->commandAI->DrawCommands();
 		}
 	} else {
+#	if defined(USE_GML) && GML_MT_TEST
+		boost::mutex::scoped_lock sellock(selmutex);
+#endif
 		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 			(*ui)->commandAI->DrawCommands();
 		}

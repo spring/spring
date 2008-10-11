@@ -60,7 +60,16 @@
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
 
-
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex unitmutex;
+extern boost::recursive_mutex quadmutex;
+extern boost::recursive_mutex projmutex;
+extern boost::mutex selmutex;
+#	endif
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -1041,12 +1050,17 @@ void CMiniMap::DrawForReal()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
+#endif
 	// draw the units
 	std::list<CUnit*>::iterator ui;
 	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
-
+#	if defined(USE_GML) && GML_MT_TEST
+		boost::recursive_mutex::scoped_lock quadlock(quadmutex); // getselectunit accesses quadfield
+#endif
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
@@ -1097,6 +1111,9 @@ void CMiniMap::DrawForReal()
 
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::recursive_mutex::scoped_lock projlock(projmutex);
+#endif
 	// draw the projectiles
 	if (drawProjectiles && ph->ps.size()>0) {
 		CVertexArray* lines=GetVertexArray();
@@ -1169,6 +1186,9 @@ void CMiniMap::DrawForReal()
 		guihandler->DrawMapStuff(!!drawCommands);
 	}
 
+#	if defined(USE_GML) && GML_MT_TEST
+	boost::mutex::scoped_lock sellock(selmutex);
+#endif
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
 	CUnitSet& selUnits = selectedUnits.selectedUnits;
