@@ -15,7 +15,7 @@
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
 #endif
-#include <malloc.h>
+#include <stdlib.h> // why is this here?
 
 #include "mmgr.h"
 
