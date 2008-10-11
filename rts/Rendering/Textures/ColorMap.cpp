@@ -101,12 +101,12 @@ CColorMap* CColorMap::LoadFromBitmapFile(std::string filename)
 	{
 		map = new CColorMap(filename);
 		colorMapsMap[lowfilename] = map;
+		colorMaps.push_back(map);
 	}
 	else
 	{
 		map = colorMapsMap.find(lowfilename)->second;
 	}
-	colorMaps.push_back(map);
 	return map;
 }
 
