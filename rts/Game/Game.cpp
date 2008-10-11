@@ -2376,12 +2376,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 					}
 				}
 				if (!hasPlayer) {
-					for (std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui) {
-						CUnit* unit = *ui;
-						if ((unit->team == a) && (unit->selfDCountdown == 0)) {
-							unit->ChangeTeam(sendTeam, CUnit::ChangeGiven);
-						}
-					}
+					gs->Team(a)->GiveEverythingTo(sendTeam);
 				}
 			}
 		}
