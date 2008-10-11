@@ -21,7 +21,14 @@
 #include "System/Platform/ConfigHandler.h"
 #include "System/FastMath.h"
 
-
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex featmutex;
+extern boost::mutex selmutex;
+#	endif
+#endif
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
@@ -248,6 +255,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							} else {
 								const UnitDef* unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 								CFeature* f;
+#	if defined(USE_GML) && GML_MT_TEST
+								boost::recursive_mutex::scoped_lock featlock(featmutex); // testunitbuildsquare accesses features in the quadfield
+#endif
 								if(uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y*16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
 									if (f) {
 										m = 0.5f;
@@ -267,6 +277,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				else {
 					// use the first selected unit
+#	if defined(USE_GML) && GML_MT_TEST
+					boost::mutex::scoped_lock sellock(selmutex);
+#endif
 					if (selectedUnits.selectedUnits.empty()) {
 						return true;
 					}

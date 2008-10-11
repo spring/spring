@@ -1,12 +1,17 @@
 Spring change log
 
-0.next
-
+0.77b3:
 User Interface
-  - added a simple Orbit-Camera controller
+ - added a simple Orbit-Camera controller
        META-key + LMB + drag ==> alter elevation, rotation
        META-key + MMB + drag ==> pan up/down/left/right
        META-key + RMB + drag ==> zoom
+ - fix transports not killing their transportees when they should
+ - update installer shortcuts
+ - when kicking a player, kick only the player and don't disconnect everyone
+ - fix invalid command spam
+ - fix some divisions through 0
+ - fix crash for all players when someone gives away all his units
 
 
 

@@ -56,6 +56,16 @@
 #include "System/Platform/ConfigHandler.h"
 #include "System/Util.h"
 
+#ifdef USE_GML
+#include "lib/gml/gmlsrv.h"
+#	if GML_MT_TEST
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::mutex caimutex;
+extern boost::mutex selmutex;
+extern boost::recursive_mutex quadmutex;
+#	endif
+#endif
+
 extern Uint8 *keys;
 
 
@@ -3568,6 +3578,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	CUnit* pointedAt = NULL;
 	if (GetQueueKeystate()) {
 		CUnit* unit = NULL;
+#	if defined(USE_GML) && GML_MT_TEST
+		boost::recursive_mutex::scoped_lock quadlock(quadmutex); // getselectunit, guitraceray accesses quadfield
+#endif
 		if (minimapCoords) {
 			unit = minimap->GetSelectUnit(camera->pos);
 		} else {
@@ -3662,7 +3675,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	// draw buildings we are about to build
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-
+#	if defined(USE_GML) && GML_MT_TEST
+		boost::mutex::scoped_lock cailock(caimutex);
+#endif
 		// draw build distance for all immobile builders during build commands
 		std::list<CBuilderCAI*>::const_iterator bi;
 		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
@@ -3690,6 +3705,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				float3 pos = camera->pos+mouse->dir*dist;
 				std::vector<BuildInfo> buildPos;
 				const CMouseHandler::ButtonPress& bp = mouse->buttons[SDL_BUTTON_LEFT];
+#	if defined(USE_GML) && GML_MT_TEST
+			boost::recursive_mutex::scoped_lock quadlock(quadmutex); // getbuildpos accesses quadfield
+#endif
 				if (GetQueueKeystate() && bp.pressed) {
 					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * gu->viewRange * 1.4f);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
@@ -3749,6 +3767,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 					std::vector<Command> cv;
 					if (GetQueueKeystate()) {
+#	if defined(USE_GML) && GML_MT_TEST
+						boost::mutex::scoped_lock sellock(selmutex);
+#endif
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
@@ -3782,6 +3803,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+#	if defined(USE_GML) && GML_MT_TEST
+		boost::mutex::scoped_lock sellock(selmutex);
+#endif
 		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
 			CUnit* unit = *si;
 			if (unit == pointedAt) {

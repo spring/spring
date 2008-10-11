@@ -59,6 +59,7 @@ public:
 	void Update(void);
 
 	void UnitMoved(CUnit* unit);
+	void UnitMovedNow(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
 
@@ -111,6 +112,8 @@ public:
 	};
 
 	std::list<Scar*> scars;
+
+	std::vector<CUnit *> moveUnits;
 
 	int lastTest;
 	float maxOverlap;

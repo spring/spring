@@ -37,7 +37,9 @@ end
 --
 
 -- disable the loathed demo feature
-local drawGroundQuads = false
+local drawGroundQuadsFancy = false
+-- enable simple version by default though
+local drawGroundQuads = true
 
 
 --------------------------------------------------------------------------------
@@ -182,7 +184,7 @@ function widget:DrawWorld()
   local time = Spring.DiffTimers(Spring.GetTimer(), startTimer)
 
   -- show all start boxes
-  if (drawGroundQuads) then
+  if (drawGroundQuadsFancy) then
 
     gl.PolygonOffset(-25, -2)
     gl.Culling(GL.BACK)
@@ -216,6 +218,27 @@ function widget:DrawWorld()
     gl.DepthTest(false)
     gl.Culling(false)
     gl.PolygonOffset(false)
+  elseif (drawGroundQuads) then
+    gl.PolygonOffset(-25, -2)
+    gl.Culling(GL.BACK)
+    gl.DepthTest(true)
+    for _,at in ipairs(Spring.GetAllyTeamList()) do
+      if (true or at ~= gaiaAllyTeamID) then
+        local xn, zn, xp, zp = Spring.GetAllyTeamStartBox(at)
+        if (xn and ((xn ~= 0) or (zn ~= 0) or (xp ~= msx) or (zp ~= msz))) then
+          local alpha = 0.2 + 0.1*math.sin(time/10)
+          local color
+          alpha = 0.25
+          if (at == Spring.GetMyAllyTeamID()) then
+            color = { 0, 1, 0, alpha }  --  green
+          else
+            color = { 1, 0, 0, alpha }  --  red
+          end
+          gl.Color(color)
+          gl.CallList(allyTeamGndLists[at])
+        end
+      end
+    end
   end
 
   -- show the team start positions

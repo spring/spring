@@ -81,7 +81,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.avoidFriendly = wdTable.GetBool("avoidFriendly", true);
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
-	wd.avoidNeutral  = wdTable.GetBool("avoidNeutral",  true);
+	wd.avoidNeutral  = wdTable.GetBool("avoidNeutral",  false);
 
 	wd.collisionFlags = 0;
 	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
