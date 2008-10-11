@@ -76,9 +76,9 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 		if (v->spherical) {
 			return true;
 		} else {
-			// NOTE: we have to translate by relMidPos (which is where
-			// collision volume gets drawn) since GetTransformMatrix()
-			// does not
+			// NOTE: we have to translate by relMidPos to get to midPos
+			// (which is where the collision volume gets drawn) because
+			// GetTransformMatrix() only uses pos
 			CMatrix44f m;
 			u->GetTransformMatrix(m, true);
 			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
@@ -99,8 +99,12 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 		if (v->spherical) {
 			return true;
 		} else {
-			// NOTE: CFeature does not have a relMidPos member
+			// NOTE: CFeature does not have a relMidPos member so
+			// calculate and apply the translation from pos (used
+			// by transMatrix) to midPos manually
 			CMatrix44f m(f->transMatrix);
+			float3 frelMidPos(f->midPos - f->pos);
+			m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
 			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -198,6 +202,8 @@ bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const flo
 	const CollisionVolume* v = f->collisionVolume;
 
 	CMatrix44f m(f->transMatrix);
+	float3 frelMidPos(f->midPos - f->pos);
+	m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
