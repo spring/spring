@@ -731,7 +731,11 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		} else if (goalDot > maxRudder * speedf * 2) {
 			rudder = 1;
 		} else {
-			rudder = goalDot / (maxRudder * speedf * 2);
+			if (speedf > 0.0f) {
+				rudder = goalDot / (maxRudder * speedf * 2);
+			} else {
+				rudder = 0;
+			}
 		}
 	}
 
