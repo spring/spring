@@ -91,7 +91,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	glLoadIdentity();
 	glOrtho(-model->radius,model->radius,-model->radius,model->radius,-model->radius*1.5f,model->radius*1.5f);
 	glMatrixMode(GL_MODELVIEW);
-	glClearColor(0.5f,0.5f,0.5f,0);
+	glClearColor(1.0f,0.0f,1.0f,0.0f); // image transparency key
 	glDisable(GL_BLEND);
 
 	glEnable(GL_LIGHTING);
@@ -124,7 +124,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 				farTextureMem[(baseX+x+(y)*128)*4]=buf[(x+y*16)*4];
 				farTextureMem[(baseX+x+(y)*128)*4+1]=buf[(x+y*16)*4+1];
 				farTextureMem[(baseX+x+(y)*128)*4+2]=buf[(x+y*16)*4+2];
-				if(buf[(x+y*16)*4]==128 && buf[(x+y*16)*4+1]==128 && buf[(x+y*16)*4+2]==128)
+				if(buf[(x+y*16)*4]==255 && buf[(x+y*16)*4+1]==0 && buf[(x+y*16)*4+2]==255)
 					farTextureMem[(baseX+x+(y)*128)*4+3]=0;
 				else
 					farTextureMem[(baseX+x+(y)*128)*4+3]=255;
