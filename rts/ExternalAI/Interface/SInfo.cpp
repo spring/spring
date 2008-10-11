@@ -17,7 +17,7 @@
 
 #include "SInfo.h"
 
-#include "Util.h"
+#include "System/Util.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -57,7 +57,7 @@ void deleteInfoItem(const struct InfoItem* const info) {
 
 static const char* badKeyChars = " =;\r\n\t";
 
-bool ParseInfo(const LuaTable& root, int index, InfoItem& info, std::set<std::string> infosSet)
+bool ParseInfo(const LuaTable& root, int index, InfoItem& info, std::set<std::string> infoSet)
 {
 	const LuaTable& infoTbl = root.SubTable(index);
 	if (!infoTbl.IsValid()) {
@@ -71,7 +71,7 @@ bool ParseInfo(const LuaTable& root, int index, InfoItem& info, std::set<std::st
 		return false;
 	}
 	std::string keyLower = StringToLower(info_key);
-	if (infosSet.find(keyLower) != infosSet.end()) {
+	if (infoSet.find(keyLower) != infoSet.end()) {
 		return false;
 	}
 	info.key = mallocCopyString(info_key.c_str());
@@ -89,21 +89,21 @@ bool ParseInfo(const LuaTable& root, int index, InfoItem& info, std::set<std::st
 		info.desc = mallocCopyString(info_desc.c_str());
 	}
 
-	infosSet.insert(keyLower);
+	infoSet.insert(keyLower);
 
 	return true;
 }
 
-unsigned int ParseInfos(
+unsigned int ParseInfo(
 		const char* fileName,
 		const char* fileModes,
 		const char* accessModes,
-		InfoItem infos[], unsigned int max)
+		InfoItem info[], unsigned int max)
 {
 	LuaParser luaParser(fileName, fileModes, accessModes);
 		
 	if (!luaParser.Execute()) {
-		printf("ParseInfos(%s) ERROR: %s\n",
+		printf("ParseInfo(%s) ERROR: %s\n",
 		       fileName, luaParser.GetErrorLog().c_str());
 		return 0;
 	}
@@ -114,20 +114,20 @@ unsigned int ParseInfos(
 	}
 
 	unsigned int i = 0;
-	std::set<std::string> infosSet;
+	std::set<std::string> infoSet;
 	for (int index = 1; root.KeyExists(index) && i < max; index++) {
-		InfoItem info;
-		if (ParseInfo(root, index, info, infosSet)) {
-			infos[i++] = info;
+		InfoItem infoItem;
+		if (ParseInfo(root, index, infoItem, infoSet)) {
+			info[i++] = infoItem;
 		}
 	}
 	
 	return i;
 }
-unsigned int ParseInfosRawFileSystem(
+unsigned int ParseInfoRawFileSystem(
 		const char* fileName,
-		InfoItem infos[], unsigned int max) {
-	return ParseInfos(fileName, SPRING_VFS_RAW, SPRING_VFS_RAW, infos, max);
+		InfoItem info[], unsigned int max) {
+	return ParseInfo(fileName, SPRING_VFS_RAW, SPRING_VFS_RAW, info, max);
 }
 
 #endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */

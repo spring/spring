@@ -39,11 +39,11 @@
 // see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
 
 // static AI library methods (optional to implement)
-//Export(unsigned int) getInfos(InfoItem infos[], unsigned int max);
+//Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
 //Export(enum LevelOfSupport) getLevelOfSupportFor(
 //		const char* engineVersionString, int engineVersionNumber,
 //		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-//Export(unsigned int) getOptions(struct Option options[], unsigned int max);
+//Export(unsigned int) getOptions(struct Option options[], unsigned int maxOptions);
 
 // team instance functions
 Export(int) init(int teamId);

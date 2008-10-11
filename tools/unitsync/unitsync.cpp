@@ -1156,16 +1156,17 @@ std::vector<InfoItem> ParseInfos(
 		const std::string& fileModes,
 		const std::string& accessModes)
 {
-	std::vector<InfoItem> infos;
+	std::vector<InfoItem> info;
 	
 	static const unsigned int MAX_INFOS = 128;
-	InfoItem tmpInfos[MAX_INFOS];
-	unsigned int num = ParseInfos(fileName.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfos, MAX_INFOS);
+	InfoItem tmpInfo[MAX_INFOS];
+	unsigned int num = ParseInfo(fileName.c_str(), fileModes.c_str(),
+			accessModes.c_str(), tmpInfo, MAX_INFOS);
 	for (unsigned int i=0; i < num; ++i) {
-		infos.push_back(tmpInfos[i]);
+		info.push_back(tmpInfo[i]);
     }
 	
-	return infos;
+	return info;
 }
 
 Export(int) GetSkirmishAIInfoCount(int index) {

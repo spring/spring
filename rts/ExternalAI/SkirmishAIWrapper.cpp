@@ -123,7 +123,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(int teamId, const SSAIKey& skirmishAIKey
 	ai = SAFE_NEW CSkirmishAI(teamId, skirmishAIKey);
 	
 	const ISkirmishAILibrary* skirmishAILibrary = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(skirmishAIKey);
-	//bool loadSupported = std::string(skirmishAILibrary->GetInfos()[SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED].value) == "yes";
+	//bool loadSupported = std::string(skirmishAILibrary->GetInfo()[SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED].value) == "yes";
 	bool loadSupported = IAILibraryManager::GetInstance()->GetSkirmishAIInfos()->at(skirmishAIKey)->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(skirmishAIKey);
 

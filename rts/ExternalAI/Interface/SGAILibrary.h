@@ -91,12 +91,12 @@ struct SGAILibrary {
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
-	 * @param	infos	where the info about this AI library shall be stored to
-	 * @param	max	the maximum number of elements to store into param infos
-	 * @return number of elements stored into parameter infos
+	 * @param	info	where the info about this AI library shall be stored to
+	 * @param	maxInfoItems	the maximum number of elements to store into param info
+	 * @return	number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfos)(struct InfoItem infos[],
-			unsigned int max);
+	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
+			unsigned int maxInfoItems);
 	
 	/**
 	 * Returns options that can be set on this AI.
@@ -104,12 +104,12 @@ struct SGAILibrary {
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
-	 * @param	infos	where the options of this AI library shall be stored to
-	 * @param	max	the maximum number of elements to store into param options
-	 * @return number of elements stored into parameter options
+	 * @param	options	where the options of this AI library shall be stored to
+	 * @param	maxOptions	the maximum number of elements to store into param options
+	 * @return	number of elements stored into parameter options
 	 */
 	unsigned int (CALLING_CONV *getOptions)(struct Option options[],
-			unsigned int max);
+			unsigned int maxOptions);
 
 	// team and group instance functions
 	

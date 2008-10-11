@@ -19,37 +19,47 @@
 
 #include "Interface/aidefines.h"
 #include "Interface/SAIInterfaceLibrary.h"
+#include "Interface/SStaticGlobalData.h"
 #include "SkirmishAILibrary.h"
 #include "GroupAILibrary.h"
+#include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 #include "GroupAILibraryInfo.h"
 
-#include "Util.h"
-#include "Platform/errorhandler.h"
+#include "System/Util.h"
+#include "System/Platform/errorhandler.h"
 
 #include <string>
 
 
 /*
-CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibrary& interface) {
-	int loadCount = 0;
-	SAIInterfaceLibrary sAIInterfaceLibrary;wecd
-}
-CAIInterfaceLibrary::CAIInterfaceLibrary(SharedLib* sharedLib) {TODO;}
-*/
-
 CAIInterfaceLibrary::CAIInterfaceLibrary(
 		const SAIInterfaceSpecifier& interfaceSpecifier,
 		const std::string& libFileName)
 		: specifier(interfaceSpecifier) {
+*/
+CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
+		: info(_info) {
+	
+	staticGlobalData = createStaticGlobalData();
+	
+	std::string mainLibDir = std::string(staticGlobalData->libDir);
+	if (!mainLibDir.empty()) {
+		mainLibDir = mainLibDir + '/';
+	}
+	
+	// will look about like this: "C:/Games/spring/AI/Interfaces/impls"
+	aiInterfacesLibDir = mainLibDir + AI_INTERFACES_IMPLS_DIR;
 	
 	std::string libFilePath;
-	
+
+	std::string libFileName = info->GetFileName();
 	if (libFileName.empty()) {
-		libFilePath = GenerateLibFilePath(specifier);
-	} else {
-		libFilePath = GenerateLibFilePath(libFileName);
+		handleerror(NULL, "Error while loading AI Interface Library."
+				" No file name specified in AIInterface.lua",
+				"AI Interface Error", MBF_OK | MBF_EXCL);
 	}
+	libFilePath = GenerateLibFilePath(libFileName, aiInterfacesLibDir);
 	
 	sharedLib = SharedLib::Instantiate(libFilePath);
 	if (sharedLib == NULL) {
@@ -62,32 +72,32 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(
 	}
 	
 	InitializeFromLib(libFilePath);
+	
+	InitStatic();
 }
-/*
-CAIInterfaceLibrary::CAIInterfaceLibrary(const std::string& libFileName,
-		const SAIInterfaceSpecifier& interfaceSpecifier)
-		: specifier(interfaceSpecifier) {
-	
-	std::string libFilePath = GenerateLibFilePath(libFileName);
-	
-	sharedLib = SharedLib::Instantiate(libFilePath);
-	
-	InitializeFromLib(libFilePath);
-*/
-	
-/*
-	std::map<std::string, InfoItem> infos = GetInfos();
-	specifier.shortName = infos.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
-	specifier.version = infos.at(AI_INTERFACE_PROPERTY_VERSION).value;
-*/
-//}
 
 CAIInterfaceLibrary::~CAIInterfaceLibrary() {
+	
+	ReleaseStatic();
+	freeStaticGlobalData(staticGlobalData);
 	delete sharedLib;
 }
 
+void CAIInterfaceLibrary::InitStatic() {
+	
+	if (sAIInterfaceLibrary.initStatic != NULL) {
+		sAIInterfaceLibrary.initStatic(staticGlobalData);
+	}
+}
+void CAIInterfaceLibrary::ReleaseStatic() {
+	
+	if (sAIInterfaceLibrary.releaseStatic != NULL) {
+		sAIInterfaceLibrary.releaseStatic();
+	}
+}
+
 SAIInterfaceSpecifier CAIInterfaceLibrary::GetSpecifier() const {
-	return specifier;
+	return info->GetSpecifier();
 }
 
 LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
@@ -100,22 +110,22 @@ LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 	}
 }
 
-std::map<std::string, InfoItem> CAIInterfaceLibrary::GetInfos() const {
+std::map<std::string, InfoItem> CAIInterfaceLibrary::GetInfo() const {
 	
-	std::map<std::string, InfoItem> infos;
+	std::map<std::string, InfoItem> info;
 	
-	if (sAIInterfaceLibrary.getInfos != NULL) {
+	if (sAIInterfaceLibrary.getInfo != NULL) {
 		InfoItem infs[MAX_INFOS];
-		int num = sAIInterfaceLibrary.getInfos(infs, MAX_INFOS);
+		int num = sAIInterfaceLibrary.getInfo(infs, MAX_INFOS);
 
 		int i;
 		for (i=0; i < num; ++i) {
 			InfoItem newII = copyInfoItem(&infs[i]);
-			infos[std::string(newII.key)] = newII;
+			info[std::string(newII.key)] = newII;
 		}
 	}
 
-	return infos;
+	return info;
 }
 
 int CAIInterfaceLibrary::GetLoadCount() const {
@@ -153,19 +163,19 @@ std::vector<SSAISpecifier> CAIInterfaceLibrary::GetSkirmishAILibrarySpecifiers()
 }
 */
 //const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) {
-//const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos) {
+//const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo) {
 const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo) {
 	
 	ISkirmishAILibrary* ai = NULL;
 	
 	const unsigned int MAX_INFOS = 128;
-	InfoItem infos[MAX_INFOS];
-	unsigned int num = aiInfo->GetInfosCReference(infos, MAX_INFOS);
+	InfoItem info[MAX_INFOS];
+	unsigned int num = aiInfo->GetInfoCReference(info, MAX_INFOS);
 	
 	SSAISpecifier sAISpecifier = aiInfo->GetSpecifier();
 	if (skirmishAILoadCount[sAISpecifier] == 0) {
 		//const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(&sAISpecifier);
-		const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(infos, num);
+		const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(info, num);
 		ai = new CSkirmishAILibrary(*sLib, sAISpecifier);
 		loadedSkirmishAILibraries[sAISpecifier] = ai;
 	} else {
@@ -227,13 +237,13 @@ const IGroupAILibrary* CAIInterfaceLibrary::FetchGroupAILibrary(const CGroupAILi
 	IGroupAILibrary* ai = NULL;
 	
 	const unsigned int MAX_INFOS = 128;
-	InfoItem infos[MAX_INFOS];
-	unsigned int num = aiInfo->GetInfosCReference(infos, MAX_INFOS);
+	InfoItem info[MAX_INFOS];
+	unsigned int num = aiInfo->GetInfoCReference(info, MAX_INFOS);
 	
 	SGAISpecifier gAISpecifier = aiInfo->GetSpecifier();
 	if (groupAILoadCount[gAISpecifier] == 0) {
-		const SGAILibrary* gLib = sAIInterfaceLibrary.loadGroupAILibrary(infos, num);
-		ai = new CGroupAILibrary(*gLib);
+		const SGAILibrary* gLib = sAIInterfaceLibrary.loadGroupAILibrary(info, num);
+		ai = new CGroupAILibrary(*gLib, gAISpecifier);
 		loadedGroupAILibraries[gAISpecifier] = ai;
 	} else {
 		ai = loadedGroupAILibraries[gAISpecifier];
@@ -287,10 +297,18 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 	
 	std::string funcName;
 	
-	funcName = "getInfos";
-    sAIInterfaceLibrary.getInfos = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.getInfos == NULL) {
-		// do nothing: this is permitted, if the AI supplies infos through an AIInfo.lua file
+	funcName = "initStatic";
+    sAIInterfaceLibrary.initStatic = (int (CALLING_CONV_FUNC_POINTER *)(const SStaticGlobalData* staticGlobalData)) sharedLib->FindAddress(funcName.c_str());
+    if (sAIInterfaceLibrary.initStatic == NULL) {
+		// do nothing: it is permitted that an AI does not export this function
+		//reportInterfaceFunctionError(&libFilePath, &funcName);
+        //return -1;
+    }
+	
+	funcName = "releaseStatic";
+    sAIInterfaceLibrary.releaseStatic = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
+    if (sAIInterfaceLibrary.releaseStatic == NULL) {
+		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
         //return -1;
     }
@@ -303,6 +321,14 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
         //return -2;
     }
 	
+	funcName = "getInfo";
+    sAIInterfaceLibrary.getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+    if (sAIInterfaceLibrary.getInfo == NULL) {
+		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
+		//reportInterfaceFunctionError(&libFilePath, &funcName);
+        //return -1;
+    }
+	
 /*
 	funcName = "getSkirmishAISpecifiers";
     sAIInterfaceLibrary.getSkirmishAISpecifiers = (int (CALLING_CONV_FUNC_POINTER *)(SSAISpecifier*, int max)) sharedLib->FindAddress(funcName.c_str());
@@ -313,7 +339,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 */
 	
 	funcName = "loadSkirmishAILibrary";
-    sAIInterfaceLibrary.loadSkirmishAILibrary = (const SSAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem infos[], unsigned int numInfos)) sharedLib->FindAddress(funcName.c_str());
+    sAIInterfaceLibrary.loadSkirmishAILibrary = (const SSAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
     if (sAIInterfaceLibrary.loadSkirmishAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
         return -4;
@@ -343,7 +369,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 */
 	
 	funcName = "loadGroupAILibrary";
-    sAIInterfaceLibrary.loadGroupAILibrary = (const SGAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem infos[], unsigned int numInfos)) sharedLib->FindAddress(funcName.c_str());
+    sAIInterfaceLibrary.loadGroupAILibrary = (const SGAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
     if (sAIInterfaceLibrary.loadGroupAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
         return -8;
@@ -367,17 +393,23 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 }
 
 
-std::string CAIInterfaceLibrary::GenerateLibFilePath(const std::string& libFileName) {
-	return std::string(PATH_TO_SPRING_HOME) +
-			std::string(AI_INTERFACES_IMPLS_DIR) // eg AI/Interfaces/impls
-			.append("/")
-			.append(libFileName) // eg. Java-0.600
-			.append(".")
-			.append(SharedLib::GetLibExtension()); // eg. dll
+std::string CAIInterfaceLibrary::GenerateLibFilePath(
+		const std::string& fileNameMainPart,
+		const std::string& aiInterfacesLibDir) {
+	
+	std::string libFileName = fileNameMainPart + "." + SharedLib::GetLibExtension();
+	#ifndef _WIN32
+		libFileName = "lib" + libFileName;
+	#endif
+	// libFileName should now look about like this: libJava-0.600.so or Java-0.600.dll
+	
+	// generate a path like this: "C:/Games/spring/AI/Interfaces/impls/Java-0.600.dll"
+	return aiInterfacesLibDir + "/" + libFileName;
 }
 
+/*
 std::string CAIInterfaceLibrary::GenerateLibFilePath(const SAIInterfaceSpecifier& interfaceSpecifier) {
-	
+	REDO THIS (use filename attribute, instead of shortName and version)
 	std::string libFileName = std::string(interfaceSpecifier.shortName) // eg. Java
 			.append("-")
 			.append(interfaceSpecifier.version); // eg. 0.600
@@ -386,4 +418,5 @@ std::string CAIInterfaceLibrary::GenerateLibFilePath(const SAIInterfaceSpecifier
 #endif
 	return GenerateLibFilePath(libFileName);
 }
+*/
 

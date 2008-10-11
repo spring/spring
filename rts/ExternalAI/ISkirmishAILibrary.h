@@ -41,7 +41,7 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber,
 			const SAIInterfaceSpecifier& interfaceSpecifier) const = 0;
 	
-    virtual std::map<std::string, InfoItem> GetInfos() const = 0;
+    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
 	virtual std::vector<Option> GetOptions() const = 0;
 	
 	

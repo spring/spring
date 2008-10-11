@@ -371,9 +371,6 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	// AI's may do as they like
 	bool aiOrder = (gs->Team(owner->team) && gs->Team(owner->team)->isAI);
 
-	if (fromSynced)
-		maxHeightDiff = 200;
-
 	switch (c.id) {
 		case CMD_DGUN:
 			if (!owner->unitDef->canDGun)
@@ -384,7 +381,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 			if (c.params.size() == 3) {
 				// check if attack ground is really attack ground
-				if (!aiOrder &&
+				if (!aiOrder && !fromSynced &&
 					fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > maxHeightDiff) {
 					return false;
 				}

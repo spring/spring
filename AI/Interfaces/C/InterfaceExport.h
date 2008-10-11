@@ -40,26 +40,30 @@ struct SSAISpecifier;
 struct SSAILibrary;
 struct SGAISpecifier;
 struct SGAILibrary;
+struct SStaticGlobalData;
 
 // for a list of the functions that have to be exported,
 // see struct SAIInterfaceLibrary in "ExternalAI/Interface/SAIInterfaceLibrary.h"
 
 // static AI interface library functions
+
+Export(int) initStatic(const SStaticGlobalData* staticGlobalData);
+Export(int) releaseStatic();
 Export(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
-Export(int) getInfos(struct InfoItem infos[], unsigned int max);
+Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
 	
 // skirmish AI methods
 //Export(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max);
 //Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct InfoItem infos[], unsigned int numInfos);
+Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
 Export(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
 Export(int) unloadAllSkirmishAILibraries();
 	
 // group AI methods
 //Export(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max);
 //Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
-Export(const struct SGAILibrary*) loadGroupAILibrary(const struct InfoItem infos[], unsigned int numInfos);
+Export(const struct SGAILibrary*) loadGroupAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
 Export(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
 Export(int) unloadAllGroupAILibraries();
 

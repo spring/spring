@@ -15,18 +15,18 @@
 /nospectatorchat [0|1]
 /setmaxspeed <number>
 /setminspeed <number>
-/skip <[+|f]seconds>  -- requires .cheat if not in a replay
-/take                 -- requires .cheat when used by spectators
+/skip <[+|f]seconds>  -- requires /cheat if not in a replay
+/take                 -- requires /cheat when used by spectators
+/forcestart
 
 -- lua scripts
-/luacob   < "reload" | "disable" | <custom command> >
 /luagaia  < "reload" | "disable" | <custom command> >
 /luarules < "reload" | "disable" | <custom command> >
-/devlua   [0|1]  -- requires .cheat, allows loading non-archived scripts
-/editdefs [0|1]  -- requires .cheat,
+/devlua   [0|1]  -- requires /cheat, allows loading non-archived scripts
+/editdefs [0|1]  -- requires /cheat,
                  -- allows lua writing to UnitDefs, FeatureDefs, and WeaponDefs
 
--- the following require .cheat
+-- the following require /cheat
 /atm
 /team <number>
 /spectator
@@ -34,6 +34,7 @@
 /reloadcob <unit_name>
 /give [count] <unit_name | "all"> [team]   {{ @x,y,z }}
 /godmode [0|1]
+/globalLOS [0|1] (needs cheats on)
 
 -- debugging
 /crash
@@ -48,205 +49,205 @@
 --
 --  LOCAL COMMANDS
 --
---  These commands can be bound to keysets, or sent on the
---  text input line by adding a slash prefix.
---
---    ex:  /water 3
 --
 --
 
-select <select_string>
+/commands
 
-selectunits ["clear"] [+unitID] [-unitID] ...
+/select <select_string>
+/selectunits ["clear"] [+unitID] [-unitID] ...
+/selectcycle ["restore"]
+/deselect
 
-selectcycle ["restore"]
+/info     [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+/tooltip  [0|1]
+/resbar   [0|1]
+/console  [0|1]
+/clock    [0|1]
+/fps      [0|1]
+/endgraph [0|1]
 
-deselect
+/setf <name> <float value>		-- Set a config variable (.springrc linux, Registry windows)
+/seti <name> <integer value>
+/sets <name> <string value>
 
-info     [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
-tooltip  [0|1]
-resbar   [0|1]
-console  [0|1]
-clock    [0|1]
-fps      [0|1]
-endgraph [0|1]
+/quit
+/quitwarn
+/pause
 
-setf <name> <float value>		-- Set a config variable (.springrc linux, Registry windows)
-seti <name> <integer value>
-sets <name> <string value>
-
-quit
-quitwarn
-pause
-
-shadows [<0|1> [mapsize]]
-water   [0|1|2|3|4]
-vsync   [-1|0|1|2|...]  --  -1 will use default setting in windows,
+/shadows [<0|1> [mapsize]]
+/water   [0|1|2|3|4]
+/vsync   [-1|0|1|2|...]  --  -1 will use default setting in windows,
                         --  numbers higher then 1 will result in
                         --  rendering every N frames.
 
-say  <message>
-echo <message>
-w <playername> <message> -- Private Message
+/say  <message>
+/echo <message>
+/w <playername> <message> -- Private Message
 
-drawinmap
-drawlabel
+/ally teamID [0|1]
 
-mouse1
-mouse2
-mouse3
-mouse4
-mouse5
+/drawinmap
+/drawlabel
 
-mousestate
+/mouse1
+/mouse2
+/mouse3
+/mouse4
+/mouse5
 
-fpshud [0|1]
+/mousestate
 
-viewfps
-viewta
-viewtw
-viewrot
-viewsave view_name
-viewload view_name
-viewselection
+/fpshud [0|1]
 
-specteam <int>
+/viewfps
+/viewta
+/viewtw
+/viewrot
+/viewsave view_name
+/viewload view_name
+/viewselection
 
-group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]
+/specteam <int>
 
-group0
-group1
-group2
-group3
-group4
-group5
-group6
-group7
-group8
-group9
+/group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]
 
-chat
-chatall
-chatally
-chatspec
-chatswitchall
-chatswitchally
-chatswitchspec
+/group0
+/group1
+/group2
+/group3
+/group4
+/group5
+/group6
+/group7
+/group8
+/group9
 
-lastmsgpos
+/chat
+/chatall
+/chatally
+/chatspec
+/chatswitchall
+/chatswitchally
+/chatswitchspec
 
-track
-trackoff
-trackmode [0|1|2]
+/lastmsgpos
+/movewarnings [0|1]
 
-gameinfo
-gameinfoclose
+/track
+/trackoff
+/trackmode [0|1|2]
 
-cross <size>  -- locked mouse cross size
+/gameinfo
+/gameinfoclose
 
-volume <float>  -- 0.0 to 1.0
-unitreplyvolume <float>  -- 0.0 to 1.0
+/cross <size>  -- locked mouse cross size
 
-toggleoverview
-showhealthbars
-singlestep
-debug
-nosound
-savegame
-createvideo
-updatefov
-drawtrees
-dynamicsky
+/volume <float>  -- 0.0 to 1.0
+/unitreplyvolume <float>  -- 0.0 to 1.0
 
-hideinterface
-increaseviewradius
-decreaseviewradius
-moretrees
-lesstrees
-moreclouds
-lessclouds
-speedup
-slowdown
-controlunit
-showshadowmap
-showstandard
-showelevation
-showmetalmap
-showpathmap
-toggleradarandjammer
-yardmap4
-wiremap [0|1]
-lodscale ["shadow"|"reflection"|"refraction"] <value>
+/toggleoverview
+/showhealthbars
+/singlestep
+/debug
+/nosound
+/savegame
+/createvideo
+/updatefov
+/drawtrees
+/dynamicsky
 
-mapmarks [0|1]
+/hideinterface
+/increaseviewradius
+/decreaseviewradius
+/moretrees
+/lesstrees
+/moreclouds
+/lessclouds
+/speedup
+/slowdown
+/controlunit
+/showshadowmap
+/showstandard
+/showelevation
+/showmetalmap
+/showpathmap
+/toggleradarandjammer
+/yardmap4
+/wiremap [0|1]
+/lodscale ["shadow"|"reflection"|"refraction"] <value>
 
-togglelos
-sharedialog
+/mapmarks [0|1]
+/allmapmarks [0|1]
 
-incguiopacity
-decguiopacity
+/togglelos
+/sharedialog
 
-screenshot ["png"]
+/incguiopacity
+/decguiopacity
 
-grabinput
-hardwarecursor [0|1]
+/screenshot ["png"]
 
-bind
-unbind
-unbindall
-unbindkeyset
-unbindaction
-fakemeta
+/grabinput
+/hardwarecursor [0|1]
 
-keydebug
-keyload
-keyreload
-keysave
-keyprint
-keysyms
-keycodes
+/bind
+/unbind
+/unbindall
+/unbindkeyset
+/unbindaction
+/fakemeta
 
-cmdcolors [filename]
-ctrlpanel [filename]
-font      <filename>
+/keydebug
+/keyload
+/keyreload
+/keysave
+/keyprint
+/keysyms
+/keycodes
 
-gathermode [0|1]
+/cmdcolors [filename]
+/ctrlpanel [filename]
+/font      <filename>
 
-moveforward
-moveback
-moveleft
-moveright
-moveup
-movedown
-movefast
-moveslow
+/gathermode [0|1]
 
-minimap <"fullproxy">    [0|1]
-minimap <"icons">        [0|1]
-minimap <"drawcommands"> [0|1]
-minimap <"drawprojectiles"> [0|1]
-minimap <"simplecolors"> [0|1]
-minimap <"min" | "minimize"> [0|1]
-minimap <"max" | "maximize"> [0|1]
-minimap <"maxspect"> [0|1]
-minimap <"unitexp"> <float>
-minimap <"unitsize"> <float>
-minimap <"geo" | "geometry"> px py sx sy
-minimap <"slavemode"> [0|1]
-minimap <"draw">
+/moveforward
+/moveback
+/moveleft
+/moveright
+/moveup
+/movedown
+/movefast
+/moveslow
 
-luaui < "reload" | "disable" | <custom command> >
-safegl [0|1]
+/minimap <"fullproxy">    [0|1]
+/minimap <"icons">        [0|1]
+/minimap <"drawcommands"> [0|1]
+/minimap <"drawprojectiles"> [0|1]
+/minimap <"simplecolors"> [0|1]
+/minimap <"min" | "minimize"> [0|1]
+/minimap <"max" | "maximize"> [0|1]
+/minimap <"maxspect"> [0|1]
+/minimap <"unitexp"> <float>
+/minimap <"unitsize"> <float>
+/minimap <"geo" | "geometry"> px py sx sy
+/minimap <"slavemode"> [0|1]
+/minimap <"draw">
 
-pastetext  <text>  -- inserts the text into the text input  (ex: ctrl+v)
-buffertext <text>  -- inserts the text into the console history
+/luaui < "reload" | "disable" | <custom command> >
+/luamoduictrl [0|1] -- Enables LuaRules/LuaGaia access to many LuaUI callins/functions.
+/safegl [0|1]
 
-techlevels
+/pastetext  <text>  -- inserts the text into the text input  (ex: ctrl+v)
+/buffertext <text>  -- inserts the text into the console history
 
-grounddecals [0|1]
-maxparticles <number>
+/techlevels
 
-aiselect [ai_name]  -- ai_name required if used as a slash command
+/grounddecals [0|1]
+/maxparticles <number>
+
+/aiselect [ai_name]  -- ai_name required if used as a slash command
 
 
 --------------------------------------------------------------------------------

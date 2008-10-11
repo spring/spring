@@ -280,6 +280,9 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 {
+	if (mixedCase.empty())
+		return NULL;
+
 	const string name = StringToLower(mixedCase);
 	std::map<std::string, const FeatureDef*>::iterator fi = featureDefs.find(name);
 

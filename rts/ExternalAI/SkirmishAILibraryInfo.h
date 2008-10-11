@@ -56,10 +56,10 @@ public:
     virtual std::string GetInterfaceShortName() const;
     virtual std::string GetInterfaceVersion() const;
     virtual std::string GetInfo(const std::string& key) const;
-    virtual const std::map<std::string, InfoItem>* GetInfos() const;
+    virtual const std::map<std::string, InfoItem>* GetInfo() const;
 //    virtual std::vector<std::string> GetPropertyNames() const;
-	virtual unsigned int GetInfosCReference(InfoItem cInfos[], unsigned int max) const;
-	virtual unsigned int GetOptionsCReference(Option cOptions[], unsigned int max) const;
+	virtual unsigned int GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const;
+	virtual unsigned int GetOptionsCReference(Option cOptions[], unsigned int maxOptions) const;
 	
 	virtual const std::vector<Option>* GetOptions() const;
 	
@@ -78,7 +78,7 @@ public:
 private:
 	static const unsigned int MAX_INFOS = 128;
 	static const unsigned int MAX_OPTIONS = 128;
-	std::map<std::string, InfoItem> infos;
+	std::map<std::string, InfoItem> info;
 	std::vector<Option> options;
 	//LevelOfSupport levelOfSupport;
 };

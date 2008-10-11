@@ -15,39 +15,33 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// The structs in this files relate to *Info.lua files
-// They are used for AIs eg (-> AIInfo.lua)
-
-#ifndef _SINFO_H
-#define	_SINFO_H
+#ifndef _LOG_H
+#define	_LOG_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-struct InfoItem {
-	const char* key;
-	const char* value;
-	const char* desc;
-};
+#define EXTERNAL_LOGGER(msg)	log(msg);
 
-InfoItem copyInfoItem(const struct InfoItem* const orig);
-void deleteInfoItem(const struct InfoItem* const info);
+/**
+ * Initializes the log.
+ */
+void initLog(const char* logFileName);
 
-#if	defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
-unsigned int ParseInfo(
-		const char* fileName,
-		const char* fileModes,
-		const char* accessModes,
-		InfoItem info[], unsigned int max);
-unsigned int ParseInfoRawFileSystem(
-		const char* fileName,
-		InfoItem info[], unsigned int max);
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
+/**
+ * Logs a text message.
+ */
+void log(const char* msg);
+
+/**
+ * Logs a text message and exits.
+ */
+void logFatalError(const char* msg, int error = -1);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* _SINFO_H */
+#endif	/* _LOG_H */
 

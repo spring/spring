@@ -25,7 +25,7 @@
 
 class CGroupAILibrary : public IGroupAILibrary {
 public:
-	CGroupAILibrary(const SGAILibrary& ai);
+	CGroupAILibrary(const SGAILibrary& ai, const SGAISpecifier& specifier);
 	virtual ~CGroupAILibrary();
 	
 	virtual SGAISpecifier GetSpecifier() const;
@@ -37,7 +37,7 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber,
 			const SAIInterfaceSpecifier& interfaceSpecifier) const;
 	
-    virtual std::map<std::string, InfoItem> GetInfos() const;
+    virtual std::map<std::string, InfoItem> GetInfo() const;
 	virtual std::vector<Option> GetOptions() const;
 	
 	

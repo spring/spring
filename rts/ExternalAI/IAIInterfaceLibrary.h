@@ -34,7 +34,7 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber) const = 0;
 	
 //    virtual std::string GetProperty(const std::string& propertyName) const = 0;
-    virtual std::map<std::string, InfoItem> GetInfos() const = 0;
+    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
 	
 	/**
 	 * @brief	how many times is this interface loaded
@@ -47,7 +47,7 @@ public:
 	
 	
 	
-//	virtual std::vector<ISkirmishAILibraryInfo*> GetSkirmishAILibraryInfos(bool forceLoadFromLibrary = false) const;
+//	virtual std::vector<ISkirmishAILibraryInfo*> GetSkirmishAILibraryInfo(bool forceLoadFromLibrary = false) const;
 	/**
 	 * Returns the specifiers for all Skirmish AIs available through this interface.
 	 */
@@ -60,7 +60,7 @@ public:
 	 * Increments the load counter.
 	 */
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) = 0;
-	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
+	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo) = 0;
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* skirmishAIInfo) = 0;
 	/**
 	 * @brief	unloads the Skirmish AI library
@@ -91,10 +91,10 @@ public:
 	
 	
 	
-//	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfos(bool forceLoadFromLibrary = false) const;
+//	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfo(bool forceLoadFromLibrary = false) const;
 	//virtual std::vector<SGAISpecifier> GetGroupAILibrarySpecifiers() const = 0;
 	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
-	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* infos, unsigned int numInfos) = 0;
+	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* info, unsigned int numInfo) = 0;
 	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) = 0;
 	virtual int ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
 	virtual int GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const = 0;
