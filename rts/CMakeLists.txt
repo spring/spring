@@ -27,10 +27,12 @@ endif (SYNCDEBUG)
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
-	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
+	#TODO make FindLibraryX work with mingwlibs
+	set (VORBISFILE_LIBRARY vorbisfile)
+	set(VORBIS_LIBRARY vorbis)
+	set (OGG_LIBRARY ogg)
+	set(FREETYPE_LIBRARIES freetype)
 ELSE (MINGW)
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
-
 	FIND_PACKAGE(X11 REQUIRED)
 	FIND_PACKAGE(OpenAL REQUIRED)
 	FIND_PACKAGE(OpenGL REQUIRED)
@@ -42,11 +44,11 @@ ELSE (MINGW)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	LIST(APPEND spring_libraries openal GL GLU ${DEVIL_LIBRARIES} X11 Xcursor ${GLEW_LIBRARIES} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+	LIST(APPEND spring_libraries ${OPENAL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${DEVIL_LIBRARIES} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
 ENDIF (MINGW)
 
 ### libraries needed on all platforms
-LIST(APPEND spring_libraries SDL vorbisfile vorbis ogg freetype)
+LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES})
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
@@ -56,7 +58,7 @@ if (USE_GML)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(lib/lua/include lib/luabind)
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include lib/luabind)
 
 ### all spring source directories
 ### each directorie which contains source has to be here

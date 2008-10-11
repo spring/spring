@@ -42,7 +42,7 @@ if (EXISTS Global/NTai)
 	aux_source_directory(Global/NTai/AI/NTai/Core ntai)
 	aux_source_directory(Global/NTai/AI/NTai/Agents ntai)
 	add_library(NTai SHARED ${ntai})
-	target_link_libraries(NTai boost_thread-mt)
+	target_link_libraries(NTai ${Boost_THREAD_LIBRARY})
 	install (TARGETS NTai DESTINATION ${DATADIR}/AI/Bot-libs)
 endif (EXISTS Global/NTai)
 
