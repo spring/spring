@@ -52,12 +52,17 @@ if (MINGW)
 	set (SDL_LIBRARY SDL)
 	set (Boost_REGEX_LIBRARY boost_regex-mt)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
+	set (IL_ILU_LIBRARY ILU)
+	set (DEVIL_LIBRARIES "devil ${IL_ILU_LIBRARY}")
 else (MINGW)
 	# AIs need it
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 
 	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
+	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+	
+	FIND_PACKAGE(Devil REQUIRED)
 endif (MINGW)
 
 ### Compiler flags and defines based on build type
