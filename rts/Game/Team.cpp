@@ -195,9 +195,9 @@ bool CTeam::UseEnergyUpkeep(float amount)
 }
 
 
-void CTeam::AddMetal(float amount, bool handicap)
+void CTeam::AddMetal(float amount, bool hc)
 {
-	if (handicap) {	amount *= handicap; }
+	if (hc) { amount *= handicap; }
 	metal += amount;
 	metalIncome += amount;
 	if (metal > metalStorage) {
@@ -207,9 +207,9 @@ void CTeam::AddMetal(float amount, bool handicap)
 }
 
 
-void CTeam::AddEnergy(float amount, bool handicap)
+void CTeam::AddEnergy(float amount, bool hc)
 {
-	if (handicap) {	amount *= handicap; }
+	if (hc) { amount *= handicap; }
 	energy += amount;
 	energyIncome += amount;
 	if (energy > energyStorage) {
@@ -252,7 +252,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		target->energy += energy;
 		energy = 0;
 	}
-	
+
 	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ) {
 		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
 		CUnitSet::iterator next = ui; ++next;
@@ -425,7 +425,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 		case AddCaptured: {
 			currentStats.unitsCaptured++;
 			break;
-		}	
+		}
 	}
 	if (unit->unitDef->isCommander) {
 		numCommanders++;
