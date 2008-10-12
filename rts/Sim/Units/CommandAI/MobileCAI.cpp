@@ -705,7 +705,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		bool b3 = false;
 		bool b4 = false;
 		float edgeFactor = 0.f; // percent offset to target center
-		float3 diff = owner->pos - orderTarget->pos;
+		float3 diff = owner->pos - orderTarget->midPos;
 
 		if (owner->weapons.size() > 0) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
@@ -743,7 +743,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				StopMove();
 				// FIXME kill magic frame number
 				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
-					owner->moveType->KeepPointingTo(orderTarget,
+					owner->moveType->KeepPointingTo(orderTarget->midPos,
 							std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
 									owner->maxRange * 0.9f), true);
 				}
@@ -758,7 +758,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 					|| (diff.SqLength2D() < 1024))
 			{
 				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget,
+				owner->moveType->KeepPointingTo(orderTarget->midPos,
 						std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
 								owner->maxRange * 0.9f), true);
 			} else if(tempOrder && owner->moveState == 0){
