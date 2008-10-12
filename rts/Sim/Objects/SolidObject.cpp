@@ -65,34 +65,50 @@ CSolidObject::CSolidObject():
 CSolidObject::~CSolidObject() {
 	if (mobility) {
 		delete mobility;
-		mobility = 0x0;
 	}
+
+	mobility = 0x0;
+	blocking = false;
 }
 
 
 
-/* Removes this object from the GroundBlockingMap. */
+/*
+ * removes this object from the GroundBlockingMap
+ * if it is currently marked on it, does nothing
+ * otherwise
+ */
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
 		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
+		// isMarkedOnBlockingMap is now false
 	}
 }
 
-/* Adds this object to the GroundBlockingMap. */
+/*
+ * adds this object to the GroundBlockingMap
+ * if and only if its collidable property is
+ * set (blocking), else does nothing (except
+ * call UnBlock())
+ */
 void CSolidObject::Block() {
 	UnBlock();
 
-	if (blocking && (physicalState == OnGround ||
-	                 physicalState == Floating ||
-	                 physicalState == Hovering ||
-	                 physicalState == Submarine)) {
-		// use the object's yardmap if available
-		if (yardMap) {
-			groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);
-		} else {
-			groundBlockingObjectMap->AddGroundBlockingObject(this);
-		}
+	if (!blocking) {
+		return;
 	}
+	if (physicalState == Ghost || physicalState == Flying) {
+		return;
+	}
+
+	// use the object's yardmap if available
+	if (yardMap) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);
+	} else {
+		groundBlockingObjectMap->AddGroundBlockingObject(this);
+	}
+
+	// isMarkedOnBlockingMap is now true
 }
 
 

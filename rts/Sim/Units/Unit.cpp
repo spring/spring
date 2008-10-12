@@ -241,6 +241,9 @@ CUnit::CUnit ()
 
 CUnit::~CUnit()
 {
+	// clean up if we are still under movectrl here
+	DisableScriptMoveType();
+
 	// not all unit deletions run through KillUnit(),
 	// but we always want to call this for ourselves
 	UnBlock();
@@ -481,6 +484,8 @@ void CUnit::DisableScriptMoveType()
 		moveType->SetGoal(pos);
 		moveType->StopMoving();
 	}
+
+	// ??
 	CMobileCAI* mobile = dynamic_cast<CMobileCAI*>(moveType);
 	if (mobile) {
 		mobile->lastUserGoal = pos;

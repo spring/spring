@@ -509,6 +509,9 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 	if ((args < 2) || !lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetNoBlocking()");
 	}
+
+	// marks or unmarks the unit on the blocking-map, but
+	// does not change its blocking (collidable) state
 	moveType->SetNoBlocking(lua_toboolean(L, 2));
 	return 0;
 }
