@@ -1,4 +1,3 @@
-
 #include "StdAfx.h"
 #include "System/mmgr.h"
 
@@ -34,7 +33,6 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(trackGround),
 	CR_MEMBER(hasDecal),
 	CR_MEMBER(isBuilding),
-	CR_MEMBER(isBlocking),
 	CR_MEMBER(gravityFactor),
 	CR_MEMBER(windFactor),
 	CR_MEMBER(trackSlope),
@@ -42,7 +40,8 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(groundOffset),
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
-	CR_MEMBER(noBlocking),
+	CR_MEMBER(isBlocking), // copy of CSolidObject::blocking (no longer used)
+	CR_MEMBER(noBlocking), // copy of CSolidObject::isMarkedOnBlockingMap
 	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
@@ -94,19 +93,18 @@ CScriptMoveType::CScriptMoveType(CUnit* owner)
 	if (owner) {
 		const UnitDef* unitDef = owner->unitDef;
 		isBuilding = (unitDef->type == "Building");
-		isBlocking = (!unitDef->canKamikaze || !isBuilding);
 	} else {
 		isBuilding = false;
-		isBlocking = false;
 	}
 }
 
 
 CScriptMoveType::~CScriptMoveType(void)
 {
-	if (isBlocking && noBlocking) {
-		owner->Block();
-	}
+	// clean up if noBlocking was made true at
+	// some point during this script's lifetime
+	// and not reset
+	owner->Block();
 }
 
 inline void CScriptMoveType::CalcDirections()
@@ -137,7 +135,7 @@ void CScriptMoveType::SlowUpdate()
 	const float3& pos = owner->pos;
 
 	// make sure the unit is in the map
-//	pos.CheckInBounds();
+	// pos.CheckInBounds();
 
 	// don't need the rest if the pos hasn't changed
 	if (pos == oldSlowUpdatePos) {
@@ -227,8 +225,7 @@ void CScriptMoveType::Update()
 
 	oldPos = owner->pos;
 
-	if (isBlocking && !noBlocking) {
-		owner->UnBlock();
+	if (!noBlocking) {
 		owner->Block();
 	}
 
@@ -321,15 +318,16 @@ void CScriptMoveType::SetHeading(short heading)
 
 void CScriptMoveType::SetNoBlocking(bool state)
 {
+	// if false, forces blocking-map updates
 	noBlocking = state;
+
 	if (noBlocking) {
 		owner->UnBlock();
 	} else {
-		if (isBlocking) {
-			owner->Block();
-		}
+		owner->Block();
 	}
 }
+
 void CScriptMoveType::TrackSlope()
 {
 	owner->frontdir = GetVectorFromHeading(owner->heading);
@@ -338,5 +336,3 @@ void CScriptMoveType::TrackSlope()
 	owner->rightdir.Normalize();
 	owner->frontdir = owner->updir.cross(owner->rightdir);
 }
-
-
