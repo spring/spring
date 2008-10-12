@@ -21,8 +21,8 @@ public:
 	void SlowUpdate();
 
 
-	void AddMetal(float amount);
-	void AddEnergy(float amount);
+	void AddMetal(float amount, bool handicap = true);
+	void AddEnergy(float amount, bool handicap = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
 	bool UseEnergyUpkeep(float amount);

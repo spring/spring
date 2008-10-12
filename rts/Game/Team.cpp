@@ -195,9 +195,9 @@ bool CTeam::UseEnergyUpkeep(float amount)
 }
 
 
-void CTeam::AddMetal(float amount)
+void CTeam::AddMetal(float amount, bool handicap)
 {
-	amount *= handicap;
+	if (handicap) {	amount *= handicap; }
 	metal += amount;
 	metalIncome += amount;
 	if (metal > metalStorage) {
@@ -207,9 +207,9 @@ void CTeam::AddMetal(float amount)
 }
 
 
-void CTeam::AddEnergy(float amount)
+void CTeam::AddEnergy(float amount, bool handicap)
 {
-	amount *= handicap;
+	if (handicap) {	amount *= handicap; }
 	energy += amount;
 	energyIncome += amount;
 	if (energy > energyStorage) {
