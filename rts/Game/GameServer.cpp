@@ -817,7 +817,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						if (teams[team])
 #endif
 						{
-							teams[fromTeam].reset();
+							teams[team].reset();
 							for (int i = 0; i < MAX_PLAYERS; ++i)
 							{
 								if (players[i] && players[i]->team == team)
