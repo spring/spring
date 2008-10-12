@@ -211,7 +211,7 @@ void CLoadSaveHandler::LoadGame()
 	}
 	gs->paused = false;
 	if (gameServer) {
-		gameServer->IsPaused = false;
+		gameServer->isPaused = false;
 		gameServer->syncErrorFrame = 0;
 	}
 	UnloadStartPicture();

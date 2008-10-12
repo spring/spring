@@ -150,7 +150,7 @@ private:
 	unsigned lastUpdate;
 	float modGameTime;
 
-	bool IsPaused;
+	bool isPaused;
 	float userSpeedFactor;
 	float internalSpeed;
 	bool cheating;
