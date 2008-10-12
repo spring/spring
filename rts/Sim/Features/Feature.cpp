@@ -325,13 +325,13 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 		if ((modInfo.reclaimMethod == 1) && (reclaimLeft == 0)) {
 			// All-at-end method
-			builder->AddMetal(def->metal);
-			builder->AddEnergy(def->energy);
+			builder->AddMetal(def->metal, false);
+			builder->AddEnergy(def->energy, false);
 		}
 		else if (modInfo.reclaimMethod == 0) {
 			// Gradual reclaim
-			builder->AddMetal(metalFraction);
-			builder->AddEnergy(energyFraction);
+			builder->AddMetal(metalFraction, false);
+			builder->AddEnergy(energyFraction, false);
 		}
 		else {
 			// Chunky reclaiming, work out how many chunk boundaries we crossed
@@ -340,8 +340,8 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			const int newChunk = ChunkNumber(reclaimLeft);
 			if (oldChunk != newChunk) {
 				const float noChunks = (float)oldChunk - (float)newChunk;
-				builder->AddMetal(noChunks * def->metal * chunkSize);
-				builder->AddEnergy(noChunks * def->energy * chunkSize);
+				builder->AddMetal(noChunks * def->metal * chunkSize, false);
+				builder->AddEnergy(noChunks * def->energy * chunkSize, false);
 			}
 		}
 

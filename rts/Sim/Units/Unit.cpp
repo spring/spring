@@ -734,7 +734,7 @@ void CUnit::SlowUpdate()
 			const float buildDecay = 1.0f / (buildTime * modInfo.constructionDecaySpeed);
 			health -= maxHealth * buildDecay;
 			buildProgress -= buildDecay;
-			AddMetal(metalCost * buildDecay);
+			AddMetal(metalCost * buildDecay, false);
 			if (health < 0.0f) {
 				KillUnit(false, true, NULL);
 			}
@@ -1755,7 +1755,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		health += maxHealth * part;
 		if (beingBuilt) {
-			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency);
+			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
 			buildProgress+=part;
 			if(buildProgress<0 || health<0){
 				KillUnit(false, true, NULL);
@@ -1766,7 +1766,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		else {
 			if (health < 0) {
-				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency);
+				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
 				KillUnit(false, true, NULL);
 				return false;
 			}
@@ -1966,14 +1966,14 @@ bool CUnit::UseMetal(float metal)
 }
 
 
-void CUnit::AddMetal(float metal)
+void CUnit::AddMetal(float metal, bool handicap)
 {
 	if (metal < 0) {
 		UseMetal(-metal);
 		return;
 	}
 	metalMakeI += metal;
-	gs->Team(team)->AddMetal(metal);
+	gs->Team(team)->AddMetal(metal, handicap);
 }
 
 
@@ -1991,14 +1991,14 @@ bool CUnit::UseEnergy(float energy)
 }
 
 
-void CUnit::AddEnergy(float energy)
+void CUnit::AddEnergy(float energy, bool handicap)
 {
 	if (energy < 0) {
 		UseEnergy(-energy);
 		return;
 	}
 	energyMakeI += energy;
-	gs->Team(team)->AddEnergy(energy);
+	gs->Team(team)->AddEnergy(energy, handicap);
 }
 
 
