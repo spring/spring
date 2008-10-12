@@ -195,10 +195,11 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 {
 	int size = 1024 >> level;
 
-	GLubyte* buf=NULL; bool usedPBO=false;
+	GLubyte* buf = NULL;
+	bool usedPBO = false;
 
 	if (usePBO) {
-		if (currentPBO > 9) currentPBO=0;
+		if (currentPBO > 9) currentPBO = 0;
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboIDs[currentPBO++]);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, size * size / 2, 0, GL_STREAM_DRAW);
 
@@ -207,7 +208,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		usedPBO = true;
 	}
 
-	if(buf==NULL) {
+	if (buf == NULL) {
 		buf = SAFE_NEW GLubyte[size * size / 2];
 		usedPBO = false;
 	}
@@ -251,7 +252,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, 0);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //free it
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-	}else{
+	} else {
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);
 		delete[] buf;
 	}
