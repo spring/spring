@@ -26,7 +26,7 @@ endif (SYNCDEBUG)
 ### Find include directories and add platform specific libraries
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
+	LIST(APPEND spring_libraries glu32 opengl32 ${WIN32_LIBRARIES} glew32 mingw32)
 	#TODO make FindLibraryX work with mingwlibs
 	set (VORBISFILE_LIBRARY vorbisfile)
 	set(VORBIS_LIBRARY vorbis)
@@ -39,16 +39,15 @@ ELSE (MINGW)
 	FIND_PACKAGE(GLU REQUIRED)
 	FIND_PACKAGE(GLUT REQUIRED)
 	FIND_PACKAGE(GLEW REQUIRED)
-	FIND_PACKAGE(Devil REQUIRED)
 	FIND_PACKAGE(OggVorbis REQUIRED)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	LIST(APPEND spring_libraries ${OPENAL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${DEVIL_LIBRARIES} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
+	LIST(APPEND spring_libraries ${OPENAL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
 ENDIF (MINGW)
 
 ### libraries needed on all platforms
-LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES})
+LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES} ${DEVIL_LIBRARIES} )
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
