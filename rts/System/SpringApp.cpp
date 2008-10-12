@@ -1065,8 +1065,13 @@ int SpringApp::Run (int argc, char *argv[])
 		if (globalQuit)
 			break;
 
-		if (!Update())
-			break;
+		try {
+			if (!Update())
+				break;
+		} catch (content_error &e) {
+			logOutput << "Caught content exception: " << e.what() << "\n";
+			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
+		}
 	}
 	ENTER_MIXED;
 
