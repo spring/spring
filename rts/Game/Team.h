@@ -30,8 +30,7 @@ public:
 
 	void SetBaseMetalStorage(float storage) {metalStorage = storage;};
 	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
-	
-	void SelfDestruct();
+
 	void GiveEverythingTo(const unsigned toTeam);
 	
 	void Died();

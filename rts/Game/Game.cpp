@@ -3854,16 +3854,6 @@ void CGame::ClientReadNet()
 
 				switch (action)
 				{
-					case TEAMMSG_SELFD: {
-						if (numPlayersInTeam == 1) {
-							gs->Team(fromTeam)->SelfDestruct();
-							gs->Team(fromTeam)->leader = -1;
-						} else {
-							gs->players[player]->StartSpectating();
-						}
-						CPlayer::UpdateControlledTeams();
-						break;
-					}
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
 						if (numPlayersInTeam == 1) {

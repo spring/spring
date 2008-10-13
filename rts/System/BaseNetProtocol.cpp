@@ -274,13 +274,6 @@ PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, uchar script, uchar m
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSelfD(uchar myPlayerNum)
-{
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_SELFD) << static_cast<uchar>(0);
-	return PacketType(packet);
-}
-
 PacketType CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);

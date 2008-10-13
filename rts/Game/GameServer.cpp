@@ -767,16 +767,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							
 				switch (action)
 				{
-					case TEAMMSG_SELFD: {
-						Broadcast(CBaseNetProtocol::Get().SendSelfD(player));
-						if (numPlayersInTeam <= 1 && teams[fromTeam])
-						{
-							teams[fromTeam].reset();
-						}
-						players[player]->team = 0;
-						players[player]->spectator = true;
-						break;
-					}
 					case TEAMMSG_GIVEAWAY: {
 						const unsigned toTeam = inbuf[3];
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam));
