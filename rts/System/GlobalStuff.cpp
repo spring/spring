@@ -189,17 +189,22 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		teams[i]->leader = setup->teamStartingData[i].leader;
 		teams[i]->side = setup->teamStartingData[i].side;
 		SetAllyTeam(i, setup->teamStartingData[i].teamAllyteam);
-		if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") {
-			teams[i]->luaAI = setup->teamStartingData[i].aiDll.substr(6);
-			teams[i]->isAI = true;
-		}
-		else {
-			if (setup->hostDemo)
-				teams[i]->dllAI = "";
-			else
+		if (!setup->teamStartingData[i].aiDll.empty())
+		{
+			if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") // its a LuaAI
 			{
-				teams[i]->dllAI = setup->teamStartingData[i].aiDll;
+				teams[i]->luaAI = setup->teamStartingData[i].aiDll.substr(6);
 				teams[i]->isAI = true;
+			}
+			else // no LuaAI
+			{
+				if (setup->hostDemo) // in demo replay, we don't need AI's to load again
+					teams[i]->dllAI = "";
+				else
+				{
+					teams[i]->dllAI = setup->teamStartingData[i].aiDll;
+					teams[i]->isAI = true;
+				}
 			}
 		}
 	}
