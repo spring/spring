@@ -44,7 +44,7 @@ struct SStaticGlobalData;
 
 // for a list of the functions that have to be exported,
 // see struct SAIInterfaceLibrary in:
-// "ExternalAI/Interface/SAIInterfaceLibrary.h"
+// "rts/ExternalAI/Interface/SAIInterfaceLibrary.h"
 
 
 // static AI interface library functions
@@ -82,5 +82,5 @@ Export(int) unloadAllGroupAILibraries();
 }
 #endif
 
-#endif	/* _INTERFACEEXPORT_H */
+#endif	// _INTERFACEEXPORT_H
 
