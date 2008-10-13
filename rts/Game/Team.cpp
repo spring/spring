@@ -218,23 +218,6 @@ void CTeam::AddEnergy(float amount, bool hc)
 	}
 }
 
-
-void CTeam::SelfDestruct()
-{
-	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = (*ui);
-		if (unit != NULL && unit->unitDef->canSelfD) {
-			if (unit->beingBuilt) {
-				unit->KillUnit(false, true, NULL); // kill units under construction without explosion
-			} else {
-				unit->KillUnit(true, false, NULL);
-			}
-		}
-	}
-	Died();
-}
-
-
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
 	CTeam* target = gs->Team(toTeam);

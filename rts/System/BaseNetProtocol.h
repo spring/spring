@@ -86,7 +86,6 @@ enum NETMSG {
 // action to do with NETMSG_TEAM 
 enum TEAMMSG {
 //	TEAMMSG_NAME			= number	   parameter1
-	TEAMMSG_SELFD           = 0,		// not used 
 	TEAMMSG_GIVEAWAY        = 1,		// team to give stuff to
 	TEAMMSG_RESIGN			= 2,		// not used
 	TEAMMSG_JOIN_TEAM		= 3,		// team to join
@@ -146,7 +145,6 @@ public:
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
 	
-	PacketType SendSelfD(uchar myPlayerNum);
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	PacketType SendResign(uchar myPlayerNum);
 	PacketType SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
