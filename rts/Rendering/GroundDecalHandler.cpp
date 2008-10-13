@@ -426,8 +426,9 @@ void CGroundDecalHandler::Draw(void)
 		if (!bdt->buildingDecals.empty()) {
 			glBindTexture(GL_TEXTURE_2D, bdt->texture);
 
+			set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin();
 
-			for (set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin(); bgdi != bdt->buildingDecals.end(); bgdi++) {
+			while (bgdi != bdt->buildingDecals.end()) {
 				BuildingGroundDecal* decal = *bgdi;
 				const bool beg = (bgdi == bdt->buildingDecals.begin());
 
@@ -447,13 +448,11 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					bdt->buildingDecals.erase(bgdi);
+					set<BuildingGroundDecal*>::iterator next(bgdi);
+					++next;
 
-					if (!beg) {
-						bgdi--;
-					} else {
-						bgdi = bdt->buildingDecals.begin();
-					}
+					bdt->buildingDecals.erase(bgdi);
+					bgdi = next;
 
 					continue;
 				}
