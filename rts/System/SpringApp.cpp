@@ -227,7 +227,7 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
-	if (!InitWindow(("Spring " + std::string(VERSION_STRING)).c_str())) {
+	if (!InitWindow(("Spring " + std::string(VERSION_STRING_DETAILED)).c_str())) {
 		SDL_Quit();
 		return false;
 	}

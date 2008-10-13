@@ -510,10 +510,11 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	net->loading = false;
 	thread.join();
 #ifdef USE_GML
-	logOutput.Print("Spring %s MT (%d threads)",VERSION_STRING, gmlThreadCount);
+	logOutput.Print("Spring %s MT (%d threads)",VERSION_STRING_DETAILED, gmlThreadCount);
 #else
-	logOutput.Print("Spring %s",VERSION_STRING);
+	logOutput.Print("Spring %s",VERSION_STRING_DETAILED);
 #endif
+	logOutput.Print("Build date/time: %s", BUILD_DATETIME);
 	//sending your playername to the server indicates that you are finished loading
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 
