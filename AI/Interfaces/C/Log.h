@@ -27,17 +27,17 @@ extern "C" {
 /**
  * Initializes the log.
  */
-void initLog(const char* logFileName);
+void simpleLog_init(const char* logFileName, bool useTimeStamps);
 
 /**
- * Logs a text message.
+ * Logs a text message. Works like printf(fmt, ...)
  */
-void log(const char* msg);
+void simpleLog_log(const char* fmt, ...);
 
 /**
- * Logs a text message and exits.
+ * Logs a text message and exits. Works like printf(fmt, ...)
  */
-void logFatalError(const char* msg, int error = -1);
+void simpleLog_error(int error, const char* msg, ...);
 
 #ifdef	__cplusplus
 }

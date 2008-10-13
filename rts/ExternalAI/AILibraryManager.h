@@ -133,8 +133,21 @@ private:
 	 */
 	//void GetAllInfosFromLibraries();
 	/**
-	 * Loads info about available AIs from cached LUA files.
+	 * Loads info about available AI Interfaces and AIs from LUA Info files.
 	 * -> interface and AI libraries can not corrupt the engines memory
+	 *
+	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
+	 * in the following sub-dirs:
+	 * AI/Interfaces/data/ * /InterfaceInfo.lua
+	 * AI/Interfaces/data/ * / * /InterfaceInfo.lua
+	 * AI/Skirmish/data/ * /AIInfo.lua
+	 * AI/Skirmish/data/ * / * /AIInfo.lua
+	 * AI/Group/data/ * /AIInfo.lua
+	 * AI/Group/data/ * / * /AIInfo.lua
+	 *
+	 * examples:
+	 * AI/Skirmish/data/KAIK-0.13/AIInfo.lua
+	 * AI/Skirmish/data/RAI/0.601/AIInfo.lua
 	 */
 	void GetAllInfosFromCache();
 	/**
@@ -150,6 +163,7 @@ private:
 	static void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
 	static std::string extractFileName(const std::string& libFile, bool includeExtension);
 	static std::vector<std::string> FindFiles(const std::string& path, const std::string& fileExtension);
+	static std::vector<std::string> FindDirsAndDirectSubDirs(const std::string& path);
 	/**
 	 * Finds the best fitting interface.
 	 * The  short name has to fit perfectly, and the version of the interface
@@ -160,7 +174,7 @@ private:
 	 * available: 0.1, 0.3, 0.5
 	 * chosen: 0.3
 	 */
-	static SAIInterfaceSpecifier findFittingInterfaceSpecifier(
+	static SAIInterfaceSpecifier FindFittingInterfaceSpecifier(
 			const std::string& shortName,
 			const std::string& minVersion,
 			const std::vector<SAIInterfaceSpecifier>& specs);

@@ -29,10 +29,17 @@ extern "C" {
 struct SStaticGlobalData {
 	unsigned int maxTeams;
 	const char* springVersion;
-	const char* libDir;
+	/** The first entry is the writeable data-dir */
 	unsigned int numDataDirs;
 	const char** dataDirs;
 };
+
+// define the OS specific path separator
+#ifdef WIN32
+#define PS '\\'
+#else	/* WIN32 */
+#define PS '/'
+#endif	/* WIN32 */
 
 #ifdef	__cplusplus
 }		/* extern "C" */

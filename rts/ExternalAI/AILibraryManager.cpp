@@ -160,45 +160,41 @@ std::vector<InfoItem> ParseInfos(
 */
 
 void CAILibraryManager::GetAllInfosFromCache() {
-	//reportError("NOT YET IMPLEMENTED", "CAILibraryManager::GetAllInfosFromCache() is not yet implemented.");
 	
 	ClearAllInfos();
 	
-	// look for AI data files (AIInfo.lua & AIOptions.lua)
-	//int GetSkirmishAICount() {
-	
 /*
 	if (!(vfsHandler)) {
-		reportError("Initialization Error", Call InitArchiveScanner before GetSkirmishAICount.");
+		reportError("Initialization Error", Call InitArchiveScanner before GetAllInfosFromCache.");
 	}
 */
+	typedef std::vector<std::string> T_dirs;
+	
+	// cause we use CFileHandler for searching files,
+	// we are automatically searching in all data-dirs
 	
 	// Read from AI Interface info files
-	std::vector<std::string> aiInterfaceDataDirs = CFileHandler::SubDirs(AI_INTERFACES_DATA_DIR, "*", SPRING_VFS_RAW);
-	for (std::vector<std::string>::iterator dir = aiInterfaceDataDirs.begin(); dir != aiInterfaceDataDirs.end(); ++dir) {
+	// we are looking for:
+	// AI/Interfaces/data/ * /InterfaceInfo.lua
+	// AI/Interfaces/data/ * / * /InterfaceInfo.lua
+	T_dirs aiInterfaceDataDirs =
+			FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
+	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
+			dir != aiInterfaceDataDirs.end(); ++dir) {
 		const std::string& possibleDataDir = *dir;
-		std::vector<std::string> infoFile = CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
+		T_dirs infoFile =
+				CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
 		if (infoFile.size() > 0) { // interface info is available
-			//aiInterfaceDataDirs.erase(dir);
 			
 			// generate and store the interface info
-			CAIInterfaceLibraryInfo* interfaceInfo = new CAIInterfaceLibraryInfo(infoFile.at(0), SPRING_VFS_RAW, SPRING_VFS_RAW);
-			
-			//std::vector<InfoItem> infos = ParseInfos(infoFile.at(0), SPRING_VFS_RAW, SPRING_VFS_RAW);
-			//options = ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+			CAIInterfaceLibraryInfo* interfaceInfo =
+					new CAIInterfaceLibraryInfo(infoFile.at(0));
 			
 			std::string sn = interfaceInfo->GetShortName();
 			std::string v = interfaceInfo->GetVersion();
 			SAIInterfaceSpecifier interfaceSpecifier = {sn.c_str(), v.c_str()};
 			interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
-			//interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
 			interfaceSpecifiers.push_back(interfaceSpecifier);
-/*
-
-			// generate and store the pure file name
-			std::string fileName = std::string(extractFileName(*libFile, false));
-			interfaceFileNames[interfaceSpecifier] = fileName;
-*/
 			interfaceInfos[interfaceSpecifier] = interfaceInfo;
 		}
 	}
@@ -206,28 +202,38 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	
 	
 	// Read from Skirmish AI info and option files
-	std::vector<std::string> skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*", SPRING_VFS_RAW);
-	for (std::vector<std::string>::iterator dir = skirmishAIDataDirs.begin(); dir != skirmishAIDataDirs.end(); ++dir) {
+	// we are looking for:
+	// AI/Skirmish/data/ * /AIInfo.lua
+	// AI/Skirmish/data/ * / * /AIInfo.lua
+	T_dirs skirmishAIDataDirs = FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
+			dir != skirmishAIDataDirs.end(); ++dir) {
 		const std::string& possibleDataDir = *dir;
-		std::vector<std::string> infoFile = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
+		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
+				"AIInfo.lua");
 		if (infoFile.size() > 0) { // skirmish AI info is available
 			std::string optionFileName = "";
-			std::vector<std::string> optionFile = CFileHandler::FindFiles(possibleDataDir, "AIOptions.lua");
+			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
+					"AIOptions.lua");
 			if (optionFile.size() > 0) {
 				optionFileName = optionFile.at(0);
 			}
 			// generate and store the ai info
-			CSkirmishAILibraryInfo* skirmishAIInfo = new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName, SPRING_VFS_RAW, SPRING_VFS_RAW);
+			CSkirmishAILibraryInfo* skirmishAIInfo =
+					new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName);
 			
 			std::string sn = skirmishAIInfo->GetShortName();
 			std::string v = skirmishAIInfo->GetVersion();
-			SSAISpecifier skirmishAISpecifier = {sn.c_str(), v.c_str()};
-			SAIInterfaceSpecifier interfaceSpecifier = findFittingInterfaceSpecifier(skirmishAIInfo->GetInterfaceShortName(), skirmishAIInfo->GetInterfaceVersion(), interfaceSpecifiers);
+			SSAISpecifier aiSpecifier = {sn.c_str(), v.c_str()};
+			SAIInterfaceSpecifier interfaceSpecifier =
+					FindFittingInterfaceSpecifier(
+							skirmishAIInfo->GetInterfaceShortName(),
+							skirmishAIInfo->GetInterfaceVersion(),
+							interfaceSpecifiers);
 			if (interfaceSpecifier.shortName != NULL) {
-				skirmishAISpecifier = copySSAISpecifier(&skirmishAISpecifier);
-				SSAIKey skirmishAIKey = {interfaceSpecifier, skirmishAISpecifier};
+				aiSpecifier = copySSAISpecifier(&aiSpecifier);
+				SSAIKey skirmishAIKey = {interfaceSpecifier, aiSpecifier};
 				skirmishAIKeys.push_back(skirmishAIKey);
-
 				skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 			}
 		}
@@ -235,28 +241,38 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	
 	
 	// Read from Group AI info and option files
-	std::vector<std::string> groupAIDataDirs = CFileHandler::SubDirs(GROUP_AI_DATA_DIR, "*", SPRING_VFS_RAW);
-	for (std::vector<std::string>::iterator dir = groupAIDataDirs.begin(); dir != groupAIDataDirs.end(); ++dir) {
+	// we are looking for:
+	// AI/Group/data/ * /AIInfo.lua
+	// AI/Group/data/ * / * /AIInfo.lua
+	T_dirs groupAIDataDirs = FindDirsAndDirectSubDirs(GROUP_AI_DATA_DIR);
+	for (T_dirs::iterator dir = groupAIDataDirs.begin();
+			dir != groupAIDataDirs.end(); ++dir) {
 		const std::string& possibleDataDir = *dir;
-		std::vector<std::string> infoFile = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
+		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
+				"AIInfo.lua");
 		if (infoFile.size() > 0) { // group AI info is available
 			std::string optionFileName = "";
-			std::vector<std::string> optionFile = CFileHandler::FindFiles(possibleDataDir, "AIOptions.lua");
+			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
+					"AIOptions.lua");
 			if (optionFile.size() > 0) {
 				optionFileName = optionFile.at(0);
 			}
 			// generate and store the ai info
-			CGroupAILibraryInfo* groupAIInfo = new CGroupAILibraryInfo(infoFile.at(0), optionFileName, SPRING_VFS_RAW, SPRING_VFS_RAW);
+			CGroupAILibraryInfo* groupAIInfo =
+					new CGroupAILibraryInfo(infoFile.at(0), optionFileName);
 			
 			std::string sn = groupAIInfo->GetShortName();
 			std::string v = groupAIInfo->GetVersion();
-			SGAISpecifier groupAISpecifier = {sn.c_str(), v.c_str()};
-			SAIInterfaceSpecifier interfaceSpecifier = findFittingInterfaceSpecifier(groupAIInfo->GetInterfaceShortName(), groupAIInfo->GetInterfaceVersion(), interfaceSpecifiers);
+			SGAISpecifier aiSpecifier = {sn.c_str(), v.c_str()};
+			SAIInterfaceSpecifier interfaceSpecifier =
+					FindFittingInterfaceSpecifier(
+							groupAIInfo->GetInterfaceShortName(),
+							groupAIInfo->GetInterfaceVersion(),
+							interfaceSpecifiers);
 			if (interfaceSpecifier.shortName != NULL) {
-				groupAISpecifier = copySGAISpecifier(&groupAISpecifier);
-				SGAIKey groupAIKey = {interfaceSpecifier, groupAISpecifier};
+				aiSpecifier = copySGAISpecifier(&aiSpecifier);
+				SGAIKey groupAIKey = {interfaceSpecifier, aiSpecifier};
 				groupAIKeys.push_back(groupAIKey);
-
 				groupAIInfos[groupAIKey] = groupAIInfo;
 			}
 		}
@@ -631,7 +647,27 @@ std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, c
 	return found;
 }
 
-SAIInterfaceSpecifier CAILibraryManager::findFittingInterfaceSpecifier(
+std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
+		const std::string& path) {
+	
+	 std::string pattern = "*";
+	
+	// find dirs
+	std::vector<std::string> found = CFileHandler::SubDirs(path, pattern,
+			SPRING_VFS_RAW);
+	
+	// find sub-dirs
+	for (std::vector<std::string>::iterator dir = found.begin();
+			dir != found.end(); ++dir) {
+		std::vector<std::string> sub_dirs = CFileHandler::SubDirs(*dir, pattern,
+				SPRING_VFS_RAW);
+		found.insert(found.end(), sub_dirs.begin(), sub_dirs.end());
+	}
+	
+	return found;
+}
+
+SAIInterfaceSpecifier CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,
 		const std::string& minVersion,
 		const std::vector<SAIInterfaceSpecifier>& specs) {

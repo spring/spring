@@ -33,13 +33,11 @@ struct SGAISpecifier;
 
 class CGroupAILibraryInfo {
 public:
-	CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier);
+	CGroupAILibraryInfo(const IGroupAILibrary& ai,
+			const SAIInterfaceSpecifier& interfaceSpecifier);
 	CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo);
-	CGroupAILibraryInfo(
-			const std::string& aiInfoFile,
-			const std::string& aiOptionFile,
-			const std::string& fileModes,
-			const std::string& accessModes);
+	CGroupAILibraryInfo(const std::string& aiInfoFile,
+			const std::string& aiOptionFile);
     
     virtual SGAISpecifier GetSpecifier() const;
 	
@@ -53,8 +51,10 @@ public:
     virtual std::string GetInterfaceVersion() const;
     virtual std::string GetInfo(const std::string& key) const;
     virtual const std::map<std::string, InfoItem>* GetInfo() const;
-	virtual unsigned int GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const;
-	virtual unsigned int GetOptionsCReference(Option cOptions[], unsigned int maxOptions) const;
+	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
+			unsigned int maxInfoItems) const;
+	virtual unsigned int GetOptionsCReference(Option cOptions[],
+			unsigned int maxOptions) const;
 	
 	virtual const std::vector<Option>* GetOptions() const;
 	

@@ -23,8 +23,10 @@
 #include "IGroupAILibrary.h"
 
 #include "Platform/errorhandler.h"
+#include "FileSystem/VFSModes.h"
 
-CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier) {
+CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai,
+		const SAIInterfaceSpecifier& interfaceSpecifier) {
 	info = ai.GetInfo();
 	options = ai.GetOptions();
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
@@ -43,19 +45,19 @@ CGroupAILibraryInfo::CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo) {
 
 CGroupAILibraryInfo::CGroupAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile,
-		const std::string& fileModes,
-		const std::string& accessModes) {
+		const std::string& aiOptionFile) {
 	
 	InfoItem tmpInfo[MAX_INFOS];
-	unsigned int num = ParseInfo(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfo, MAX_INFOS);
+	unsigned int num = ParseInfo(aiInfoFile.c_str(), SPRING_VFS_RAW,
+			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
     for (unsigned int i=0; i < num; ++i) {
 		info[std::string(tmpInfo[i].key)] = tmpInfo[i];
     }
 	
 	if (!aiOptionFile.empty()) {
 		Option tmpOptions[MAX_OPTIONS];
-		num = ParseOptions(aiOptionFile.c_str(), fileModes.c_str(), accessModes.c_str(), "", tmpOptions, MAX_OPTIONS);
+		num = ParseOptions(aiOptionFile.c_str(), SPRING_VFS_RAW, SPRING_VFS_RAW,
+				"", tmpOptions, MAX_OPTIONS);
 		for (unsigned int i=0; i < num; ++i) {
 			options.push_back(tmpOptions[i]);
 		}
@@ -112,7 +114,8 @@ const std::vector<Option>* CGroupAILibraryInfo::GetOptions() const {
 }
 
 
-unsigned int CGroupAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const {
+unsigned int CGroupAILibraryInfo::GetInfoCReference(InfoItem cInfo[],
+		unsigned int maxInfoItems) const {
 	
 	unsigned int i=0;
 	
@@ -123,12 +126,13 @@ unsigned int CGroupAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigned i
 	
 	return i;
 }
-unsigned int CGroupAILibraryInfo::GetOptionsCReference(Option cOptions[], unsigned int max) const {
+unsigned int CGroupAILibraryInfo::GetOptionsCReference(Option cOptions[],
+		unsigned int maxOptions) const {
 	
 	unsigned int i=0;
 	
 	std::vector<Option>::const_iterator ops;
-	for (ops=options.begin(); ops != options.end() && i < max; ++ops) {
+	for (ops=options.begin(); ops != options.end() && i < maxOptions; ++ops) {
 		cOptions[i++] = *ops;
     }
 	
@@ -154,18 +158,24 @@ void CGroupAILibraryInfo::SetDescription(const std::string& description) {
 void CGroupAILibraryInfo::SetURL(const std::string& url) {
 	SetInfo(GROUP_AI_PROPERTY_URL, url);
 }
-void CGroupAILibraryInfo::SetInterfaceShortName(const std::string& interfaceShortName) {
+void CGroupAILibraryInfo::SetInterfaceShortName(
+		const std::string& interfaceShortName) {
 	SetInfo(GROUP_AI_PROPERTY_INTERFACE_SHORT_NAME, interfaceShortName);
 }
-void CGroupAILibraryInfo::SetInterfaceVersion(const std::string& interfaceVersion) {
+void CGroupAILibraryInfo::SetInterfaceVersion(
+		const std::string& interfaceVersion) {
 	SetInfo(GROUP_AI_PROPERTY_INTERFACE_VERSION, interfaceVersion);
 }
-bool CGroupAILibraryInfo::SetInfo(const std::string& key, const std::string& value) {
+bool CGroupAILibraryInfo::SetInfo(const std::string& key,
+		const std::string& value) {
 	
 	if (key == GROUP_AI_PROPERTY_SHORT_NAME ||
 			key == GROUP_AI_PROPERTY_VERSION) {
 		if (value.find_first_of("\t _#") != std::string::npos) {
-			handleerror(NULL, "Error", "Group AI info (shortName or version) contains illegal characters ('_', '#' or white spaces)", MBF_OK | MBF_EXCL);
+			handleerror(NULL, "Error",
+					"Group AI info (shortName or version) contains"
+					" illegal characters ('_', '#' or white spaces)",
+					MBF_OK | MBF_EXCL);
 			return false;
 		}
 	}
@@ -176,5 +186,6 @@ bool CGroupAILibraryInfo::SetInfo(const std::string& key, const std::string& val
 }
 
 void CGroupAILibraryInfo::SetOptions(const std::vector<Option>& _options) {
-	options = std::vector<Option>(_options.begin(), _options.end()); // implicit convertible types -> range-ctor can be used
+	// implicit convertible types -> range-ctor can be used
+	options = std::vector<Option>(_options.begin(), _options.end());
 }

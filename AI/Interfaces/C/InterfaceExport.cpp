@@ -57,7 +57,7 @@ Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifi
 }
 */
 Export(const struct SSAILibrary*) loadSkirmishAILibrary(
-const struct InfoItem info[], unsigned int numInfoItems) {
+		const struct InfoItem info[], unsigned int numInfoItems) {
 	return myInterface->LoadSkirmishAILibrary(info, numInfoItems);
 }
 Export(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
