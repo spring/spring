@@ -308,6 +308,7 @@ SharedLib* CInterface::Load(const SGAISpecifier* const gAISpecifier,
 SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		SGAILibrary* groupAILibrary) {
 	
+	simpleLog_log("LoadGroupAILib: %s", libFilePath);
 	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
 	
 	if (sharedLib == NULL) {
@@ -317,6 +318,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 	// initialize the AI library
 	std::string funcName;
 	
+	simpleLog_log("getInfo...");
 	funcName = "getInfo";
 	groupAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->getInfo == NULL) {
@@ -324,6 +326,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
+	simpleLog_log("getLevelOfSupportFor...");
 	funcName = "getLevelOfSupportFor";
 	groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->getLevelOfSupportFor == NULL) {
@@ -331,6 +334,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
+	simpleLog_log("getOptions...");
 	funcName = "getOptions";
 	groupAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->getOptions == NULL) {
@@ -338,6 +342,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
+	simpleLog_log("init...");
 	funcName = "init";
 	groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->init == NULL) {
@@ -346,6 +351,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
+	simpleLog_log("release...");
 	funcName = "release";
 	groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->release == NULL) {
@@ -354,6 +360,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
+	simpleLog_log("handleEvent...");
 	funcName = "handleEvent";
 	groupAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int, int, int, const void*)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->handleEvent == NULL) {

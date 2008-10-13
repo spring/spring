@@ -650,15 +650,18 @@ std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, c
 std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
 		const std::string& path) {
 	
+	std::vector<std::string> found;
+	
 	 std::string pattern = "*";
 	
 	// find dirs
-	std::vector<std::string> found = CFileHandler::SubDirs(path, pattern,
+	std::vector<std::string> mainDirs = CFileHandler::SubDirs(path, pattern,
 			SPRING_VFS_RAW);
+	found = mainDirs;
 	
 	// find sub-dirs
-	for (std::vector<std::string>::iterator dir = found.begin();
-			dir != found.end(); ++dir) {
+	for (std::vector<std::string>::iterator dir = mainDirs.begin();
+			dir != mainDirs.end(); ++dir) {
 		std::vector<std::string> sub_dirs = CFileHandler::SubDirs(*dir, pattern,
 				SPRING_VFS_RAW);
 		found.insert(found.end(), sub_dirs.begin(), sub_dirs.end());
