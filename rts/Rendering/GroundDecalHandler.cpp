@@ -420,12 +420,15 @@ void CGroundDecalHandler::Draw(void)
 #endif
 
 	// create and draw the quads for each building decal
-	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
-		if (!(*bdi)->buildingDecals.empty()) {
-			glBindTexture(GL_TEXTURE_2D, (*bdi)->texture);
+	for (std::vector<BuildingDecalType*>::iterator bdti = buildingDecalTypes.begin(); bdti != buildingDecalTypes.end(); ++bdti) {
+		BuildingDecalType* bdt = *bdti;
 
-			for (set<BuildingGroundDecal*>::iterator bi = (*bdi)->buildingDecals.begin(); bi != (*bdi)->buildingDecals.end(); ) {
-				BuildingGroundDecal* decal = *bi;
+		if (!bdt->buildingDecals.empty()) {
+			glBindTexture(GL_TEXTURE_2D, bdt->texture);
+
+
+			for (set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin(); bgdi != bdt->buildingDecals.end(); bgdi++) {
+				BuildingGroundDecal* decal = *bgdi;
 
 				if (decal->owner && decal->owner->buildProgress >= 0) {
 					decal->alpha = decal->owner->buildProgress;
@@ -443,11 +446,9 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					(*bdi)->buildingDecals.erase(bi++);
-					if (bi == (*bdi)->buildingDecals.end())
-						break;
-					else
-						continue;
+					bdt->buildingDecals.erase(bgdi);
+					bgdi--;
+					continue;
 				}
 
 				if (camera->InView(decal->pos, decal->radius) &&
@@ -455,8 +456,8 @@ void CGroundDecalHandler::Draw(void)
 
 					DrawBuildingDecal(decal);
 				}
-				++bi;
 			}
+
 		}
 	}
 
