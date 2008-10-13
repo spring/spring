@@ -270,42 +270,54 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 
 void CMobileCAI::RefuelIfNeeded()
 {
-	if(!owner->moveType->reservedPad) {
-		if(owner->currentFuel <= 0){
+	if (!owner->moveType->reservedPad) {
+		// we don't have a pad yet
+		if (owner->currentFuel <= 0) {
+			// we're out of fuel
 			StopMove();
-			owner->userAttackGround=false;
-			owner->userTarget=0;
-			inCommand=false;
+			owner->userAttackGround = false;
+			owner->userTarget = 0;
+			inCommand = false;
+
 			CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
 				owner, owner->unitDef->minAirBasePower);
-			if(lp){
+
+			if (lp) {
+				// found a pad
 				owner->moveType->ReservePad(lp);
 			} else {
 				float3 landingPos = airBaseHandler->FindClosestAirBasePos(
-						owner, owner->unitDef->minAirBasePower);
-				if(landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 800){
-					SetGoal(landingPos,owner->pos);
-					//myPlane->goalPos = landingPos;
+					owner, owner->unitDef->minAirBasePower);
+
+				if (landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 800) {
+					// didn't find a pad, but we have an in-range ('>' ?) landing pos
+					SetGoal(landingPos, owner->pos);
 				} else {
 					owner->moveType->StopMoving();
 				}
 			}
-		} else if(owner->currentFuel <
-				(owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && 
-				(commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT)) {
+		} else if (owner->currentFuel < (owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && true
+			/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
+			// current fuel level is below our bingo threshold
+			// note: force the refuel attempt (irrespective of
+			// what our currently active command is)
+
 			CAirBaseHandler::LandingPad* lp =
 				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-			if(lp) {
+
+			if (lp) {
 				StopMove();
 				owner->userAttackGround = false;
 				owner->userTarget = 0;
 				inCommand = false;
 				owner->moveType->ReservePad(lp);
 			}
-		} else if(owner->health < owner->maxHealth*owner->moveType->repairBelowHealth) {
+		} else if (owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
+			// we're damaged, just seek a pad for repairs
 			CAirBaseHandler::LandingPad* lp =
 				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-			if(lp) {
+
+			if (lp) {
 				owner->moveType->ReservePad(lp);
 			}
 		}
@@ -314,20 +326,19 @@ void CMobileCAI::RefuelIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
-	if(owner->unitDef->maxFuel>0 && dynamic_cast<AAirMoveType*>(owner->moveType)){
+	if (owner->unitDef->maxFuel > 0 && dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		RefuelIfNeeded();
 	}
 
-	if(!commandQue.empty() && commandQue.front().timeOut < gs->frameNum){
+	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMove();
 		FinishCommand();
 		return;
 	}
 
-	if(commandQue.empty()) {
-//		if(!owner->ai || owner->ai->State() != CHasState::Active) {
-			IdleCheck();
-//		}
+	if (commandQue.empty()) {
+		IdleCheck();
+
 		//the attack order could terminate directly and thus cause a loop
 		if(commandQue.empty() || commandQue.front().id == CMD_ATTACK) {
 			return;
