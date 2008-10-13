@@ -71,11 +71,6 @@ void AIException(const char *what);
 		} else throw;						\
 	}
 
-/*
-CSkirmishAIWrapper::CSkirmishAIWrapper() {
-    
-}
-*/
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& skirmishAIKey)
 		: teamId(teamId), cheatEvents(false), skirmishAIKey(skirmishAIKey) {
@@ -93,14 +88,6 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 	
 	if (ai) {
 		Release();
-/*
-		if (!IsCInterface) {
-			try {
-				_ReleaseAIFunc(ai);
-			} HANDLE_EXCEPTION;
-		}
-*/
-
 		delete c_callback;
 		delete callback;
 		delete ai;
@@ -110,22 +97,24 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {}
 
 
-
-
 void CSkirmishAIWrapper::PostLoad() {
 	LoadSkirmishAI(teamId, skirmishAIKey, true);
 }
 
 
 
-void CSkirmishAIWrapper::LoadSkirmishAI(int teamId, const SSAIKey& skirmishAIKey, bool postLoad) {
+void CSkirmishAIWrapper::LoadSkirmishAI(int teamId,
+		const SSAIKey& skirmishAIKey, bool postLoad) {
 	
 	ai = SAFE_NEW CSkirmishAI(teamId, skirmishAIKey);
 	
-	const ISkirmishAILibrary* skirmishAILibrary = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(skirmishAIKey);
-	//bool loadSupported = std::string(skirmishAILibrary->GetInfo()[SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED].value) == "yes";
-	bool loadSupported = IAILibraryManager::GetInstance()->GetSkirmishAIInfos()->at(skirmishAIKey)->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
-	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(skirmishAIKey);
+	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
+	libManager->FetchSkirmishAILibrary(skirmishAIKey);
+	const CSkirmishAILibraryInfo* infos =
+			libManager->GetSkirmishAIInfos()->at(skirmishAIKey);
+	bool loadSupported =
+			infos->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
+	libManager->ReleaseSkirmishAILibrary(skirmishAIKey);
 
 	if (postLoad && !loadSupported) {
 		// fallback code to help the AI if it
@@ -143,8 +132,9 @@ void CSkirmishAIWrapper::LoadSkirmishAI(int teamId, const SSAIKey& skirmishAIKey
 						UnitFinished(a);
 					} HANDLE_EXCEPTION;
 			} else {
-				if ((uh->units[a]->allyteam == gs->AllyTeam(teamId)) || gs->Ally(gs->AllyTeam(teamId), uh->units[a]->allyteam)) {
-					/* do nothing */
+				if ((uh->units[a]->allyteam == gs->AllyTeam(teamId))
+						|| gs->Ally(gs->AllyTeam(teamId), uh->units[a]->allyteam)) {
+					// do nothing
 				} else {
 					if (uh->units[a]->losStatus[gs->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
@@ -161,98 +151,6 @@ void CSkirmishAIWrapper::LoadSkirmishAI(int teamId, const SSAIKey& skirmishAIKey
 		}
 	}
 }
-/*
-
-void CSkirmishAIWrapper::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool loadSupported, bool isJavaAI)
-{
-	if (isJavaAI) {
-		logOutput << botLibName << " is a Java archive\n";
-	} else {
-		logOutput << botLibName << " has a C++ interface\n";
-	}
-
-	_GetGlobalAiVersionFunc = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
-
-	if (_GetGlobalAiVersionFunc == 0) {
-		char msg[512];
-		SNPRINTF(msg, 511, "Incorrect GlobalAI library \"%s\" (no \"GetGlobalAiVersion\" function exported)", botLibName);
-		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
-		return;
-	}
-
-	const int botInterfaceVersion = _GetGlobalAiVersionFunc();
-
-	if (botInterfaceVersion != GLOBAL_AI_INTERFACE_VERSION) {
-		char msg[1024];
-		SNPRINTF(msg, 1023,
-			"Incorrect GlobalAI library \"%s\"\n"
-			"(lib interface version %d, engine interface version %d)",
-			botLibName, botInterfaceVersion, GLOBAL_AI_INTERFACE_VERSION);
-		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
-		return;
-	}
-
-
-	if (isJavaAI) {
-		// we want to load a Java AI inside a jar,
-		// pass the name of the actual .jar to the
-		// proxy library so it can spawn a JVM for
-		// that AI
-		_GetNewAIByNameFunc = (GETNEWAIBYNAME) lib->FindAddress("GetNewAIByName");
-
-		if (_GetNewAIByNameFunc == 0) {
-			throw std::runtime_error("JAI proxy does not export \"GetNewAIByName\"");
-		}
-
-		// note: team parameter is unnecessary
-		ai = _GetNewAIByNameFunc(botLibName, team);
-	} else {
-		_GetNewAIFunc = (GETNEWAI) lib->FindAddress("GetNewAI");
-
-		if (_GetNewAIFunc == 0) {
-			char msg[512];
-			SNPRINTF(msg, 511, "GlobalAI library \"%s\" does not export \"GetNewAI\"", botLibName);
-			throw std::runtime_error(msg);
-		}
-
-		ai = _GetNewAIFunc();
-	}
-
-	// note: verify that this is really exported too?
-	_ReleaseAIFunc = (RELEASEAI) lib->FindAddress("ReleaseAI");
-	callback = SAFE_NEW CGlobalAICallback(this);
-
-	if (!postLoad || (postLoad && !loadSupported)) {
-		try {
-			ai->InitAI(callback, team);
-		} HANDLE_EXCEPTION;
-	}
-}
-
-
-void CSkirmishAIWrapper::LoadJavaProxyAI()
-{
-	// TODO: Mac support? non-hardcoded proxy?
-	#ifdef WIN32
-	const char* javaProxyAI = "AI\\Skirmish\\impls\\JAI\\JAI.dll";
-	#else
-	const char* javaProxyAI = "AI/Skirmish/impls/JAI/JAI.so";
-	#endif
-
-	if (!filesystem.GetFilesize(javaProxyAI)) {
-		char msg[512];
-		SNPRINTF(msg, 511, "Could not find Java GlobalAI proxy library \"%s\"", javaProxyAI);
-		handleerror(NULL, msg, "Error", MBF_OK | MBF_EXCL);
-		return;
-	}
-
-	lib = SharedLib::Instantiate(javaProxyAI);
-}
-*/
-
-
-
-
 
 void CSkirmishAIWrapper::Init() {
 	
@@ -312,9 +210,11 @@ void CSkirmishAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
 	ai->HandleEvent(EVENT_UNIT_DESTROYED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir) {
+void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
+		float damage, const float3& dir) {
 	
-	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage, dir.toSAIFloat3()};
+	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage,
+			dir.toSAIFloat3()};
 	ai->HandleEvent(EVENT_UNIT_DAMAGED, &evtData);
 }
 
@@ -366,9 +266,11 @@ void CSkirmishAIWrapper::EnemyDestroyed(int enemyUnitId, int attackerUnitId) {
 	ai->HandleEvent(EVENT_ENEMY_DESTROYED, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir) {
+void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
+		float damage, const float3& dir) {
 	
-	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage, dir.toSAIFloat3()};
+	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage,
+			dir.toSAIFloat3()};
 	ai->HandleEvent(EVENT_ENEMY_DAMAGED, &evtData);
 }
 
@@ -390,38 +292,28 @@ void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {
 	ai->HandleEvent(EVENT_WEAPON_FIRED, &evtData);
 }
 
-void CSkirmishAIWrapper::PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId) {
+void CSkirmishAIWrapper::PlayerCommandGiven(
+		const std::vector<int>& selectedUnits, const Command& c, int playerId) {
 	
-	int numUnits = selectedUnits.size();
+	unsigned int numUnits = selectedUnits.size();
 	int unitIds[numUnits];
-	int i;
-	for (i=0; i < numUnits; ++i) {
+	for (unsigned int i=0; i < numUnits; ++i) {
 		unitIds[i] = selectedUnits.at(i);
 	}
 	int sCommandId;
 	void* sCommandData = mallocSUnitCommand(-1, -1, &c, &sCommandId);
 	
-	SPlayerCommandEvent evtData = {unitIds, numUnits, sCommandId, sCommandData, playerId};
+	SPlayerCommandEvent evtData = {unitIds, numUnits, sCommandId, sCommandData,
+			playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
 }
 
-void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId, const float3& pos, float strength) {
+void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
+		const float3& pos, float strength) {
 	
 	SSeismicPingEvent evtData = {pos.toSAIFloat3(), strength};
 	ai->HandleEvent(EVENT_SEISMIC_PING, &evtData);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 int CSkirmishAIWrapper::GetTeamId() const {
@@ -440,4 +332,3 @@ int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const
 	return ai->HandleEvent(topic, data);
 }
 
-//IMPLEMENT_PURE_VIRTUAL(CSkirmishAIWrapper::~CSkirmishAIWrapper())
