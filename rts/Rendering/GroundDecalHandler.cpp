@@ -462,6 +462,8 @@ void CGroundDecalHandler::Draw(void)
 
 					DrawBuildingDecal(decal);
 				}
+
+				bgdi++;
 			}
 
 		}
