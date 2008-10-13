@@ -225,6 +225,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
+	REGISTER_LUA_CFUNC(Screenshot);
 	if (GLEW_EXT_framebuffer_object) {
 		// FIXME: obsolete
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
@@ -1039,6 +1040,13 @@ void LuaOpenGL::ResetMiniMapMatrices()
 
 /******************************************************************************/
 /******************************************************************************/
+
+static inline bool CheckModUICtrl()
+{
+	return CLuaHandle::GetModUICtrl() ||
+	       CLuaHandle::GetActiveHandle()->GetUserMode();
+}
+
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
@@ -4030,6 +4038,28 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 }
 
 
+int LuaOpenGL::Screenshot(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	const GLint x = (GLint)luaL_checknumber(L, 1);
+	const GLint y = (GLint)luaL_checknumber(L, 2);
+	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
+	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
+	const string fileName = luaL_checkstring(L, 5);
+
+	unsigned char* buf = SAFE_NEW unsigned char[width * height * 4];
+	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+	CBitmap b(buf, width, height);
+	b.ReverseYAxis();
+
+	b.Save(fileName,false);
+	delete[] buf;
+}
+
+
 // FIXME: obsolete
 int LuaOpenGL::RenderToTexture(lua_State* L)
 {
@@ -5266,7 +5296,6 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	return 0;
 }
-
 
 /******************************************************************************/
 /******************************************************************************/

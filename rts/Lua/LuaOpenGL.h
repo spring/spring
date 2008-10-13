@@ -178,6 +178,7 @@ class LuaOpenGL {
 		static int DeleteTextureFBO(lua_State* L);
 		static int TextureInfo(lua_State* L);
 		static int CopyToTexture(lua_State* L);
+		static int Screenshot(lua_State* L);
 		static int RenderToTexture(lua_State* L);
 		static int GenerateMipmap(lua_State* L);
 		static int ActiveTexture(lua_State* L);
