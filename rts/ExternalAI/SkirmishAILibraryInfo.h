@@ -19,8 +19,6 @@
 #define	_SKIRMISHAILIBRARYINFO_H
 
 #include "Interface/ELevelOfSupport.h"
-//#include "Interface/SAIInfo.h"
-//#include "Interface/SAIOption.h"
 
 #include <vector>
 #include <map>
@@ -34,13 +32,11 @@ struct SSAISpecifier;
 
 class CSkirmishAILibraryInfo {
 public:
-	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai, const SAIInterfaceSpecifier& interfaceSpecifier);
+	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
+			const SAIInterfaceSpecifier& interfaceSpecifier);
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
-	CSkirmishAILibraryInfo(
-			const std::string& aiInfoFile,
-			const std::string& aiOptionFile,
-			const std::string& fileModes,
-			const std::string& accessModes);
+	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
+			const std::string& aiOptionFile);
     
 //    virtual LevelOfSupport GetLevelOfSupportForCurrentEngineAndSetInterface() const;
 //    virtual LevelOfSupport GetLevelOfSupportForCurrentEngine(SAIInterfaceSpecifier interfaceSpecifier) const;
@@ -58,8 +54,10 @@ public:
     virtual std::string GetInfo(const std::string& key) const;
     virtual const std::map<std::string, InfoItem>* GetInfo() const;
 //    virtual std::vector<std::string> GetPropertyNames() const;
-	virtual unsigned int GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const;
-	virtual unsigned int GetOptionsCReference(Option cOptions[], unsigned int maxOptions) const;
+	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
+			unsigned int maxInfoItems) const;
+	virtual unsigned int GetOptionsCReference(Option cOptions[],
+			unsigned int maxOptions) const;
 	
 	virtual const std::vector<Option>* GetOptions() const;
 	
@@ -83,5 +81,5 @@ private:
 	//LevelOfSupport levelOfSupport;
 };
 
-#endif	/* _SKIRMISHAILIBRARYINFO_H */
+#endif	// _SKIRMISHAILIBRARYINFO_H
 

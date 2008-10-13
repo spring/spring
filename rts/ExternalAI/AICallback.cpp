@@ -1045,7 +1045,7 @@ bool SearchOffsetComparator (const SearchOffset& a, const SearchOffset& b)
 const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 {
 	static vector <SearchOffset> searchOffsets;
-	int size = radius*radius*4;
+	unsigned int size = radius*radius*4;
 	if (size > searchOffsets.size()) {
 		searchOffsets.resize (size);
 
@@ -1220,7 +1220,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 	int allyteam = gs->AllyTeam(team);
 	int n = 0;
 
-	for (int a=0;a<ft.size();a++)
+	for (unsigned int a=0;a<ft.size();a++)
 	{
 		CFeature *f = ft[a];
 

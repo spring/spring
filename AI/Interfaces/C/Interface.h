@@ -40,40 +40,85 @@ public:
 			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
-	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
+	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem info[],
+			unsigned int numInfoItems);
 	int UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier);
 	int UnloadAllSkirmishAILibraries();
 
 	// group AI methods
-	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem info[], unsigned int numInfoItems);
+	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem info[],
+			unsigned int numInfoItems);
 	int UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier);
 	int UnloadAllGroupAILibraries();
 
 private:
 	// these functions actually load and unload the libraries
 	SharedLib* Load(const SSAISpecifier* const sAISpecifier, SSAILibrary* ai);
-	SharedLib* LoadSkirmishAILib(const std::string& libFilePath, SSAILibrary* ai);
+	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
+			SSAILibrary* ai);
 
 	SharedLib* Load(const SGAISpecifier* const gAISpecifier, SGAILibrary* ai);
 	SharedLib* LoadGroupAILib(const std::string& libFilePath, SGAILibrary* ai);
 
-	static void reportInterfaceFunctionError(const std::string& libFileName, const std::string& functionName);
+	static void reportInterfaceFunctionError(const std::string& libFileName,
+			const std::string& functionName);
 	static void reportError(const std::string& msg);
-	std::string GenerateLibFilePath(const SSAISpecifier& sAISpecifier);
-	std::string GenerateLibFilePath(const SGAISpecifier& gAISpecifier);
-	#define MAX_INFOS 128
-	static SSAISpecifier extractSpecifier(const SSAILibrary& skirmishAILib);
-	static SGAISpecifier extractSpecifier(const SGAILibrary& groupAILib);
+	std::string FindLibFile(const SSAISpecifier& sAISpecifier);
+	std::string FindLibFile(const SGAISpecifier& gAISpecifier);
+	/**
+	 * Searches for a file in all data-dirs.
+	 * If not found, the input param relativeFilePath is returned.
+	 */
+	std::string FindFile(const std::string& relativeFilePath);
+	/**
+	 * Searches for a dir in all data-dirs.
+	 * @param	create	if true, and the dir can not be found, it is created
+	 */
+	std::string FindDir(const std::string& relativeDirPath,
+			bool searchOnlyWriteable, bool pretendAvailable);
+	/**
+	 * Returns true if the file or directory exists.
+	 */
+	static bool FileExists(const std::string& filePath);
+	/**
+	 * Creates the directory if it does not yet exist.
+	 * 
+	 * @return	true if the directory was created or already existed
+	 */
+	static bool MakeDir(const std::string& dirPath);
+	/**
+	 * Creates the directory and all parent directories that do not yet exist.
+	 * 
+	 * @return	true if the directory was created or already existed
+	 */
+	static bool MakeDirRecursive(const std::string& dirPath);
+	static SSAISpecifier ExtractSpecifier(const SSAILibrary& skirmishAILib);
+	static SGAISpecifier ExtractSpecifier(const SGAILibrary& groupAILib);
 
-	bool FitsThisInterface(const std::string& requestedShortName, const std::string& requestedVersion);
+	bool FitsThisInterface(const std::string& requestedShortName,
+			const std::string& requestedVersion);
 private:
-	const SStaticGlobalData* staticGlobalData;
-	std::string skirmishAIsLibDir;
-	std::string groupAIsLibDir;
+	static std::string relSkirmishAIImplsDir;
+	static std::string relGroupAIImplsDir;
+	
+	std::vector<std::string> springDataDirs;
+	/**
+	 * All accompanying data for this interface that is not version specifc
+	 * should go in here.
+	 */
+	std::string myDataDir;
+	/**
+	 * All accompanying data for this interface that is version specifc
+	 * should go in here.
+	 */
+	std::string myDataDirVers;
+	//const SStaticGlobalData* staticGlobalData;
+	//std::string skirmishAIsLibDir;
+	//std::string groupAIsLibDir;
 	std::vector<InfoItem> myInfo;
 
 	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
-	typedef std::map<SSAISpecifier, std::map<std::string, InfoItem>, SSAISpecifier_Comparator> T_skirmishAIInfos;
+	typedef std::map<SSAISpecifier, std::map<std::string, InfoItem>,SSAISpecifier_Comparator> T_skirmishAIInfos;
 	T_skirmishAIInfos mySkirmishAIInfos;
 	typedef std::map<SSAISpecifier, SSAILibrary*, SSAISpecifier_Comparator> T_skirmishAIs;
 	T_skirmishAIs myLoadedSkirmishAIs;

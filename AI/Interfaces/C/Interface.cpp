@@ -22,36 +22,62 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
+
 #include "System/Platform/SharedLib.h"
+#include "System/Util.h"
+
+#include <sys/stat.h>	// used for check if a file exists
+#ifdef	WIN32
+#include <direct.h>	// mkdir()
+#else	// WIN32
+#include <sys/stat.h>	// mkdir()
+#include <sys/types.h>	// mkdir()
+#endif	// WIN32
 
 #define MY_SHORT_NAME "C"
 #define MY_VERSION "0.1"
+#define MY_NAME "C & C++ AI Interface"
 
-CInterface::CInterface(const SStaticGlobalData* _staticGlobalData)
-		: staticGlobalData(_staticGlobalData) {
+#define MAX_INFOS 128
+
+std::string CInterface::relSkirmishAIImplsDir =
+		std::string(SKIRMISH_AI_IMPLS_DIR) + PS;
+std::string CInterface::relGroupAIImplsDir =
+		std::string(GROUP_AI_IMPLS_DIR) + PS;
 	
-	std::string mainLibDir = std::string(staticGlobalData->libDir);
-	if (!mainLibDir.empty()) {
-		mainLibDir = mainLibDir + '/';
+CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
+	
+	for (unsigned int i=0; i < staticGlobalData->numDataDirs; ++i) {
+		springDataDirs.push_back(staticGlobalData->dataDirs[i]);
 	}
 	
-	// will look about like this: "C:/Games/spring/AI/Interfaces/impls"
-	//std::string myLibDir = mainLibDir + AI_INTERFACES_IMPLS_DIR;
-	// will look about like this: "C:/Games/spring/AI/Skirmish/impls"
-	skirmishAIsLibDir = mainLibDir + SKIRMISH_AI_IMPLS_DIR;
-	// will look about like this: "C:/Games/spring/AI/Skirmish/impls"
-	groupAIsLibDir = mainLibDir + GROUP_AI_IMPLS_DIR;
+	// example: "AI/Interfaces/data/C"
+	std::string myDataDirRelative =
+			std::string(AI_INTERFACES_DATA_DIR) + PS + MY_SHORT_NAME;
+	// example: "AI/Interfaces/data/C/0.1"
+	std::string myDataDirVersRelative = myDataDirRelative + PS + MY_VERSION;
 	
-	std::string mainDataDir = "";
-	if (staticGlobalData->numDataDirs >= 1) {
-		mainDataDir = std::string(staticGlobalData->dataDirs[0]) + '/';
+	// "C:/Games/spring/AI/Interfaces/data/C"
+	myDataDir = FindDir(myDataDirRelative, true, true);
+	if (!FileExists(myDataDir)) {
+		MakeDirRecursive(myDataDir);
 	}
-	// will look about like this: "C:/Games/spring/AI/Interfaces/data/C/0.1"
-	std::string myDataDir = mainDataDir + AI_INTERFACES_DATA_DIR"/"MY_SHORT_NAME"/"MY_VERSION;
+	// "C:/Games/spring/AI/Interfaces/data/C/0.1"
+	myDataDirVers = FindDir(myDataDirVersRelative, true, true);
+	if (!FileExists(myDataDirVers)) {
+		MakeDirRecursive(myDataDirVers);
+	}
 	
-	std::string logFileName = myDataDir + "/log.txt";
+	std::string logFileName = myDataDirVers + PS + "log.txt";
+	simpleLog_init(logFileName.c_str(), true);
 	
-	initLog(logFileName.c_str());
+	simpleLog_log("This is the log-file of the %s version %s", MY_NAME,
+			MY_VERSION);
+	simpleLog_log("Using data-directory (version-less): %s",
+			myDataDir.c_str());
+	simpleLog_log("Using data-directory (version specific): %s",
+			myDataDirVers.c_str());
+	simpleLog_log("Using log file: %s", logFileName.c_str());
 }
 
 unsigned int CInterface::GetInfo(InfoItem info[], unsigned int maxInfoItems) {
@@ -61,8 +87,8 @@ unsigned int CInterface::GetInfo(InfoItem info[], unsigned int maxInfoItems) {
 	if (myInfo.empty()) {
 		InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL}; myInfo.push_back(ii_0);
 		InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, MY_VERSION, NULL}; myInfo.push_back(ii_1);
-		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, "default C & C++ (legacy and new)", NULL}; myInfo.push_back(ii_2);
-		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++.", NULL}; myInfo.push_back(ii_3);
+		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, MY_NAME, NULL}; myInfo.push_back(ii_2);
+		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++. It is neded for legacy C++ AIs as well.", NULL}; myInfo.push_back(ii_3);
 		InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:C", NULL}; myInfo.push_back(ii_4);
 		InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "C, C++", NULL}; myInfo.push_back(ii_5);
 	}
@@ -81,13 +107,15 @@ LevelOfSupport CInterface::GetLevelOfSupportFor(
 	return LOS_Working;
 }
 
-void copyToInfoMap(std::map<std::string, InfoItem>& infoMap, const InfoItem info[], unsigned int numInfoItems) {
+void copyToInfoMap(std::map<std::string, InfoItem>& infoMap,
+		const InfoItem info[], unsigned int numInfoItems) {
 
 	for (unsigned int i=0; i < numInfoItems; ++i) {
 		infoMap[info[i].key] = copyInfoItem(&(info[i]));
 	}
 }
-SSAISpecifier extractSSAISpecifier(const std::map<std::string, InfoItem>& infoMap) {
+SSAISpecifier extractSSAISpecifier(
+		const std::map<std::string, InfoItem>& infoMap) {
 
 	const char* sn = infoMap.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.value;
 	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.value;
@@ -96,7 +124,8 @@ SSAISpecifier extractSSAISpecifier(const std::map<std::string, InfoItem>& infoMa
 
 	return specifier;
 }
-SGAISpecifier extractSGAISpecifier(const std::map<std::string, InfoItem>& infoMap) {
+SGAISpecifier extractSGAISpecifier(
+		const std::map<std::string, InfoItem>& infoMap) {
 
 	const char* sn = infoMap.find(GROUP_AI_PROPERTY_SHORT_NAME)->second.value;
 	const char* v = infoMap.find(GROUP_AI_PROPERTY_VERSION)->second.value;
@@ -132,8 +161,10 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(const InfoItem info[],
 }
 int CInterface::UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier) {
 
-	T_skirmishAIs::iterator skirmishAI = myLoadedSkirmishAIs.find(*sAISpecifier);
-	T_skirmishAILibs::iterator skirmishAILib = myLoadedSkirmishAILibs.find(*sAISpecifier);
+	T_skirmishAIs::iterator skirmishAI =
+			myLoadedSkirmishAIs.find(*sAISpecifier);
+	T_skirmishAILibs::iterator skirmishAILib =
+			myLoadedSkirmishAILibs.find(*sAISpecifier);
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
 		// to unload AI is not loaded -> no problem, do nothing
 	} else {
@@ -156,7 +187,8 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 
 
-const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[], unsigned int numInfoItems) {
+const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[],
+		unsigned int numInfoItems) {
 
 	SGAILibrary* ai = NULL;
 
@@ -182,7 +214,8 @@ const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[], 
 int CInterface::UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier) {
 
 	T_groupAIs::iterator groupAI = myLoadedGroupAIs.find(*gAISpecifier);
-	T_groupAILibs::iterator groupAILib = myLoadedGroupAILibs.find(*gAISpecifier);
+	T_groupAILibs::iterator groupAILib =
+			myLoadedGroupAILibs.find(*gAISpecifier);
 	if (groupAI == myLoadedGroupAIs.end()) {
 		// to unload AI is not loaded -> no problem, do nothing
 	} else {
@@ -205,10 +238,12 @@ int CInterface::UnloadAllGroupAILibraries() {
 
 // private functions following
 
-SharedLib* CInterface::Load(const SSAISpecifier* const sAISpecifier, SSAILibrary* skirmishAILibrary) {
-	return LoadSkirmishAILib(GenerateLibFilePath(*sAISpecifier), skirmishAILibrary);
+SharedLib* CInterface::Load(const SSAISpecifier* const sAISpecifier,
+		SSAILibrary* skirmishAILibrary) {
+	return LoadSkirmishAILib(FindLibFile(*sAISpecifier), skirmishAILibrary);
 }
-SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath, SSAILibrary* skirmishAILibrary) {
+SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
+		SSAILibrary* skirmishAILibrary) {
 
 	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
 
@@ -266,12 +301,18 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath, SSAILib
 }
 
 
-SharedLib* CInterface::Load(const SGAISpecifier* const gAISpecifier, SGAILibrary* groupAILibrary) {
-	return LoadGroupAILib(GenerateLibFilePath(*gAISpecifier), groupAILibrary);
+SharedLib* CInterface::Load(const SGAISpecifier* const gAISpecifier,
+		SGAILibrary* groupAILibrary) {
+	return LoadGroupAILib(FindLibFile(*gAISpecifier), groupAILibrary);
 }
-SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrary* groupAILibrary) {
+SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
+		SGAILibrary* groupAILibrary) {
 	
 	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
+	
+	if (sharedLib == NULL) {
+		reportError(std::string("Failed loading shared library: ") + libFilePath);
+	}
 	
 	// initialize the AI library
 	std::string funcName;
@@ -323,7 +364,8 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath, SGAILibrar
 }
 
 
-void CInterface::reportInterfaceFunctionError(const std::string& libFilePath, const std::string& functionName) {
+void CInterface::reportInterfaceFunctionError(const std::string& libFilePath,
+		const std::string& functionName) {
 	
 	std::string msg("Failed loading AI Library from file \"");
 	msg += libFilePath + "\": no \"" + functionName + "\" function exported";
@@ -332,21 +374,25 @@ void CInterface::reportInterfaceFunctionError(const std::string& libFilePath, co
 
 void CInterface::reportError(const std::string& msg) {
 	///handleerror(NULL, msg.c_str(), "C AI Interface Error", MBF_OK | MBF_EXCL);
-	logFatalError(msg.c_str());
+	simpleLog_error(-1, msg.c_str());
 }
 
 
-std::string CInterface::GenerateLibFilePath(const SSAISpecifier& sAISpecifier) {
+std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
 	
 	// fetch the file from the info about this interface
 	// which were supplied to us by the engine
-	T_skirmishAIInfos::const_iterator info = mySkirmishAIInfos.find(sAISpecifier);
+	T_skirmishAIInfos::const_iterator info =
+			mySkirmishAIInfos.find(sAISpecifier);
 	if (info == mySkirmishAIInfos.end()) {
-		reportError(std::string("Missing Skirmish-AI info for ") + sAISpecifier.shortName + " " + sAISpecifier.version);
+		reportError(std::string("Missing Skirmish-AI info for ")
+				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
-	std::map<std::string, InfoItem>::const_iterator fileName = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
+	std::map<std::string, InfoItem>::const_iterator fileName =
+			info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
 	if (fileName == info->second.end()) {
-		reportError(std::string("Missing Skirmish-AI file name for ") + sAISpecifier.shortName + " " + sAISpecifier.version);
+		reportError(std::string("Missing Skirmish-AI file name for ")
+				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
 	
 	std::string libFileName = fileName->second.value; // eg. RAI-0.600
@@ -354,22 +400,26 @@ std::string CInterface::GenerateLibFilePath(const SSAISpecifier& sAISpecifier) {
 		libFileName = "lib" + libFileName; // eg. libRAI-0.600
 	#endif
 	
-	libFileName = libFileName + "." + SharedLib::GetLibExtension(); // eg. libRAI-0.600.so
+	// eg. libRAI-0.600.so
+	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 	
-	return skirmishAIsLibDir + "/" + libFileName;
+	return FindFile(relSkirmishAIImplsDir + libFileName);
 }
 
-std::string CInterface::GenerateLibFilePath(const SGAISpecifier& gAISpecifier) {
+std::string CInterface::FindLibFile(const SGAISpecifier& gAISpecifier) {
 	
 	// fetch the file from the info about this interface
 	// which were supplied to us by the engine
 	T_groupAIInfos::const_iterator info = myGroupAIInfos.find(gAISpecifier);
 	if (info == myGroupAIInfos.end()) {
-		reportError(std::string("Missing Group-AI info for ") + gAISpecifier.shortName + " " + gAISpecifier.version);
+		reportError(std::string("Missing Group-AI info for ")
+				+ gAISpecifier.shortName + " " + gAISpecifier.version);
 	}
-	std::map<std::string, InfoItem>::const_iterator fileName = info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
+	std::map<std::string, InfoItem>::const_iterator fileName =
+			info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
 	if (fileName == info->second.end()) {
-		reportError(std::string("Missing Group-AI file name for ") + gAISpecifier.shortName + " " + gAISpecifier.version);
+		reportError(std::string("Missing Group-AI file name for ")
+				+ gAISpecifier.shortName + " " + gAISpecifier.version);
 	}
 	
 	std::string libFileName = fileName->second.value; // eg. MetalMaker-1.0
@@ -377,12 +427,118 @@ std::string CInterface::GenerateLibFilePath(const SGAISpecifier& gAISpecifier) {
 		libFileName = "lib" + libFileName; // eg. libMetalMaker-1.0
 	#endif
 	
-	libFileName = libFileName + "." + SharedLib::GetLibExtension(); // eg. libMetalMaker-1.0.so
+	// eg. libMetalMaker-1.0.so
+	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 	
-	return groupAIsLibDir + "/" + libFileName;
+	return FindFile(relGroupAIImplsDir + libFileName);
 }
 
-SSAISpecifier CInterface::extractSpecifier(const SSAILibrary& skirmishAILib) {
+bool CInterface::FileExists(const std::string& filePath) {
+	
+	struct stat fileInfo;
+	bool exists;
+	int intStat;
+
+	// Attempt to get the file attributes 
+	intStat = stat(filePath.c_str(), &fileInfo);
+	if (intStat == 0) {
+		// We were able to get the file attributes 
+		// so the file obviously exists. 
+		exists = true;
+	} else {
+		// We were not able to get the file attributes. 
+		// This may mean that we don't have permission to 
+		// access the folder which contains this file. If you 
+		// need to do that level of checking, lookup the 
+		// return values of stat which will give you 
+		// more details on why stat failed. 
+		exists = false;
+	}
+
+	return exists;
+}
+
+bool CInterface::MakeDir(const std::string& dirPath) {
+	
+	#ifdef	WIN32
+	int mkStat = _mkdir(dirPath.c_str());
+	if (mkStat == 0) {
+		return true;
+	} else {
+		return false;
+	}
+	#else	// WIN32
+	// with read/write/search permissions for owner and group,
+	// and with read/search permissions for others
+	int mkStat = mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if (mkStat == 0) {
+		return true;
+	} else {
+		return false;
+	}
+	#endif	// WIN32
+}
+
+bool CInterface::MakeDirRecursive(const std::string& dirPath) {
+	
+	if (!FileExists(dirPath)) {
+		std::string::size_type pos = dirPath.find_last_of("/\\");
+		if (pos != std::string::npos) {
+			std::string parentDir = dirPath.substr(0, pos);
+			bool parentExists = MakeDirRecursive(parentDir);
+			if (parentExists) {
+				return MakeDir(dirPath);
+			}
+		}
+		return false;
+	}
+	
+	return true;
+}
+
+std::string CInterface::FindFile(const std::string& relativeFilePath) {
+	
+	std::string path = relativeFilePath;
+	
+	for (unsigned int i=0; i < springDataDirs.size(); ++i) {
+		std::string tmpPath = springDataDirs.at(i);
+		tmpPath += PS + relativeFilePath;
+		if (FileExists(tmpPath)) {
+			path = tmpPath;
+			break;
+		}
+	}
+	
+	return path;
+}
+std::string CInterface::FindDir(const std::string& relativeDirPath,
+		bool searchOnlyWriteable, bool pretendAvailable) {
+	
+	std::string path = relativeDirPath;
+	
+	unsigned int numDds = springDataDirs.size();
+	if (searchOnlyWriteable && numDds > 1) {
+		numDds = 1;
+	}
+	
+	bool found = false;
+	for (unsigned int i=0; i < numDds; ++i) {
+		std::string tmpPath = springDataDirs.at(i) + PS + relativeDirPath;
+		if (FileExists(tmpPath)) {
+			path = tmpPath;
+			found = true;
+			break;
+		}
+	}
+	
+	if (!found && pretendAvailable && numDds >= 1) {
+		path = springDataDirs.at(0) + PS + relativeDirPath;
+	}
+	
+	return path;
+}
+
+SSAISpecifier CInterface::ExtractSpecifier(const SSAILibrary& skirmishAILib) {
 	
 	SSAISpecifier skirmishAISpecifier;
 	
@@ -403,7 +559,7 @@ SSAISpecifier CInterface::extractSpecifier(const SSAILibrary& skirmishAILib) {
 	return skirmishAISpecifier;
 }
 
-SGAISpecifier CInterface::extractSpecifier(const SGAILibrary& groupAILib) {
+SGAISpecifier CInterface::ExtractSpecifier(const SGAILibrary& groupAILib) {
 	
 	SGAISpecifier groupAISpecifier;
 	
@@ -424,7 +580,8 @@ SGAISpecifier CInterface::extractSpecifier(const SGAILibrary& groupAILib) {
 	return groupAISpecifier;
 }
 
-bool CInterface::FitsThisInterface(const std::string& requestedShortName, const std::string& requestedVersion) {
+bool CInterface::FitsThisInterface(const std::string& requestedShortName,
+		const std::string& requestedVersion) {
 	
 	bool shortNameFits = false;
 	bool versionFits = false;

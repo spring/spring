@@ -23,6 +23,9 @@
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
 
+#include <string>
+#include <map>
+
 class CAIInterfaceLibraryInfo;
 class CSkirmishAILibraryInfo;
 class CGroupAILibraryInfo;
@@ -71,7 +74,7 @@ private:
 	void ReleaseStatic();
 	
 private:
-	std::string aiInterfacesLibDir;
+	//std::string aiInterfacesLibDir;
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
 	//SAIInterfaceSpecifier specifier;
@@ -88,10 +91,7 @@ private:
 			const std::string* functionName);
 	int InitializeFromLib(const std::string& libFilePath);
 	
-	//static std::string GenerateLibFilePath(const SAIInterfaceSpecifier& interfaceSpecifier, const std::string& libPathPrefix = "");
-	//static std::string GenerateLibFilePath(const InfoItem& interfaceSpecifier, const std::string& libPathPrefix = "");
-	static std::string GenerateLibFilePath(const std::string& fileNameMainPart,
-			const std::string& aiInterfacesLibDir);
+	static std::string FindLibFile(const std::string& fileNameMainPart);
 };
 
 #endif	/* _AIINTERFACELIBRARY_H */

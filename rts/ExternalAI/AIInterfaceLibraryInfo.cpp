@@ -17,12 +17,12 @@
 
 #include "AIInterfaceLibraryInfo.h"
 
-#include "Platform/errorhandler.h"
 #include "IAIInterfaceLibrary.h"
 #include "Interface/aidefines.h"
 #include "Interface/SInfo.h"
-#include "Util.h"
-#include "LogOutput.h"
+
+#include "Platform/errorhandler.h"
+#include "FileSystem/VFSModes.h"
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const IAIInterfaceLibrary& interface) {
@@ -42,13 +42,11 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 }
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const std::string& interfaceInfoFile,
-		const std::string& fileModes,
-		const std::string& accessModes) {
+		const std::string& interfaceInfoFile) {
 	
 	InfoItem tmpInfo[MAX_INFOS];
-	unsigned int num = ParseInfo(interfaceInfoFile.c_str(), fileModes.c_str(),
-			accessModes.c_str(), tmpInfo, MAX_INFOS);
+	unsigned int num = ParseInfo(interfaceInfoFile.c_str(), SPRING_VFS_RAW,
+			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
     for (unsigned int i=0; i < num; ++i) {
 /*
 		logOutput.Print("info %i: %s / %s / %s", i, tmpInfo[i].key,

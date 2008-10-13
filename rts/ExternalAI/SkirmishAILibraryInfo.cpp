@@ -23,9 +23,7 @@
 #include "ISkirmishAILibrary.h"
 
 #include "Platform/errorhandler.h"
-#include <string>
-#include <vector>
-#include <map>
+#include "FileSystem/VFSModes.h"
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
 		const SAIInterfaceSpecifier& interfaceSpecifier) {
@@ -35,7 +33,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
 	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
 
-CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo) {
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
+		const CSkirmishAILibraryInfo& aiInfo) {
 	info = std::map<std::string, InfoItem>(
 			aiInfo.info.begin(),
 			aiInfo.info.end());
@@ -47,19 +46,19 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiI
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile,
-		const std::string& fileModes,
-		const std::string& accessModes) {
+		const std::string& aiOptionFile) {
 	
 	InfoItem tmpInfo[MAX_INFOS];
-	unsigned int num = ParseInfo(aiInfoFile.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfo, MAX_INFOS);
+	unsigned int num = ParseInfo(aiInfoFile.c_str(), SPRING_VFS_RAW,
+			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
     for (unsigned int i=0; i < num; ++i) {
 		info[std::string(tmpInfo[i].key)] = tmpInfo[i];
     }
 	
 	if (!aiOptionFile.empty()) {
 		Option tmpOptions[MAX_OPTIONS];
-		num = ParseOptions(aiOptionFile.c_str(), fileModes.c_str(), accessModes.c_str(), "", tmpOptions, MAX_OPTIONS);
+		num = ParseOptions(aiOptionFile.c_str(), SPRING_VFS_RAW, SPRING_VFS_RAW,
+				"", tmpOptions, MAX_OPTIONS);
 		for (unsigned int i=0; i < num; ++i) {
 			options.push_back(tmpOptions[i]);
 		}
@@ -117,7 +116,8 @@ const std::vector<Option>* CSkirmishAILibraryInfo::GetOptions() const {
 }
 
 
-unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigned int maxInfoItems) const {
+unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[],
+		unsigned int maxInfoItems) const {
 	
 	unsigned int i=0;
 	
@@ -128,7 +128,8 @@ unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[], unsigne
 	
 	return i;
 }
-unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[], unsigned int maxOptions) const {
+unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[],
+		unsigned int maxOptions) const {
 	
 	unsigned int i=0;
 	
