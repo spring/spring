@@ -448,9 +448,13 @@ void CGroundDecalHandler::Draw(void)
 					delete decal;
 
 					bdt->buildingDecals.erase(bgdi);
+
 					if (!beg) {
 						bgdi--;
+					} else {
+						bgdi = bdt->buildingDecals.begin();
 					}
+
 					continue;
 				}
 
