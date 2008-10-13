@@ -37,6 +37,7 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(wingDrag),
 		CR_MEMBER(wingAngle),
 		CR_MEMBER(invDrag),
+		CR_MEMBER(crashDrag),
 		CR_MEMBER(frontToSpeed),
 		CR_MEMBER(speedToFront),
 		CR_MEMBER(myGravity),
@@ -100,6 +101,7 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	maxElevator(0.02f),
 	maxRudder(0.01f),
 	invDrag(0.995f),
+	crashDrag(0.995f),
 	inSupply(0),
 	subState(0),
 	myGravity(0.8f),
@@ -976,7 +978,12 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	speed += engineVector * maxAcc * engine;
 	speed.y += mapInfo->map.gravity * myGravity;
-	speed *= invDrag;
+	if (aircraftState == AIRCRAFT_CRASHING) {
+		speed *= crashDrag;
+	}
+	else {
+		speed *= invDrag;
+	}
 
 	float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	float wingForce = wingDir.dot(speed) * wingDrag;

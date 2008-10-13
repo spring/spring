@@ -487,6 +487,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.frontToSpeed = udTable.GetFloat("frontToSpeed", 0.1f);   // fudge factor for lining up speed and front of plane
 	ud.speedToFront = udTable.GetFloat("speedToFront", 0.07f);  // fudge factor for lining up speed and front of plane
 	ud.myGravity    = udTable.GetFloat("myGravity",    0.4f);   // planes are slower than real airplanes so lower gravity to compensate
+	ud.crashDrag    = udTable.GetFloat("crashDrag",0.005f);     // drag used when crashing
 
 	ud.maxBank = udTable.GetFloat("maxBank", 0.8f);         // max roll
 	ud.maxPitch = udTable.GetFloat("maxPitch", 0.45f);      // max pitch this plane tries to keep
