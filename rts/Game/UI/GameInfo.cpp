@@ -167,10 +167,10 @@ void CGameInfo::Draw()
 	labels.push_back("Game Version:");
 #ifdef USE_GML
 	char ver[64];
-	sprintf(ver, "%s MT (%d threads)", VERSION_STRING, gmlThreadCount);
+	sprintf(ver, "%s MT (%d threads)", VERSION_STRING_DETAILED, gmlThreadCount);
 	values.push_back(ver);
 #else
-	values.push_back(VERSION_STRING);
+	values.push_back(VERSION_STRING_DETAILED);
 #endif
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);

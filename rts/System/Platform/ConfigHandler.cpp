@@ -18,6 +18,7 @@ extern "C" void PreInitMac();
 #include "Linux/DotfileHandler.h"
 #endif
 #include <sstream>
+#include "Game/GameVersion.h"
 
 
 /**
@@ -30,7 +31,6 @@ ConfigHandler* ConfigHandler::instance = NULL;
 
 
 std::string ConfigHandler::configSource;
-extern const char* const VERSION_STRING;
 
 
 /**
