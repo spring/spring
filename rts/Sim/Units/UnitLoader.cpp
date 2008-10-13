@@ -269,6 +269,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->collide = ud->collide;
 
 			mt->wingAngle = ud->wingAngle;
+			mt->crashDrag = 1 - ud->crashDrag;
 			mt->invDrag = 1 - ud->drag;
 			mt->frontToSpeed = ud->frontToSpeed;
 			mt->speedToFront = ud->speedToFront;

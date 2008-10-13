@@ -56,6 +56,7 @@ public:
 	float wingDrag;
 	float wingAngle;
 	float invDrag;
+	float crashDrag;    //actually the invDrag of crashDrag
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
