@@ -444,7 +444,10 @@ void CGroundDecalHandler::Draw(void)
 					delete decal;
 
 					(*bdi)->buildingDecals.erase(bi++);
-					continue;
+					if (bi == (*bdi)->buildingDecals.end())
+						break;
+					else
+						continue;
 				}
 
 				if (camera->InView(decal->pos, decal->radius) &&
