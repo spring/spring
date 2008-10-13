@@ -429,6 +429,7 @@ void CGroundDecalHandler::Draw(void)
 
 			for (set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin(); bgdi != bdt->buildingDecals.end(); bgdi++) {
 				BuildingGroundDecal* decal = *bgdi;
+				const bool beg = (bgdi == bdt->buildingDecals.begin());
 
 				if (decal->owner && decal->owner->buildProgress >= 0) {
 					decal->alpha = decal->owner->buildProgress;
@@ -447,7 +448,9 @@ void CGroundDecalHandler::Draw(void)
 					delete decal;
 
 					bdt->buildingDecals.erase(bgdi);
-					bgdi--;
+					if (!beg) {
+						bgdi--;
+					}
 					continue;
 				}
 
@@ -490,7 +493,8 @@ void CGroundDecalHandler::Draw(void)
 			va->Initialize();
 			glBindTexture(GL_TEXTURE_2D, (*tti)->texture);
 
-			for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end();) {
+
+			for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ti++) {
 				UnitTrackStruct* track = *ti;
 
 				while (!track->parts.empty() && track->parts.front().creationTime < gs->frameNum - track->lifeTime) {
@@ -499,8 +503,10 @@ void CGroundDecalHandler::Draw(void)
 				if (track->parts.empty()) {
 					if (track->owner)
 						track->owner->myTrack = 0;
+
 					delete track;
-					(*tti)->tracks.erase(ti++);
+					(*tti)->tracks.erase(ti);
+					ti--;
 					continue;
 				}
 
@@ -521,8 +527,8 @@ void CGroundDecalHandler::Draw(void)
 						ppi = pi;
 					}
 				}
-				++ti;
 			}
+
 			va->DrawArrayTC(GL_QUADS);
 		}
 	}
