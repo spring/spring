@@ -22,7 +22,7 @@ ELSE (MINGW)
 	
 	FIND_PACKAGE(JNI)
 	if (JAVA_INCLUDE_PATH)
-		include_directories(${JAVA_INCLUDE_PATH} ${JNI_INCLUDE_DIRS})
+		include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
 		set (JAVA_FOUND TRUE)
 	else (JAVA_INCLUDE_PATH)
 		message ("No Java includes found, java bindings disabled")

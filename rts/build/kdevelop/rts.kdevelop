@@ -376,35 +376,35 @@
       <path>AI/Global/NTai/AI/NTai/Units/IBehaviour.h</path>
       <path>AI/Global/NTai/AI/NTai/Units/ITaskManagerFactory.h</path>
       <path>AI/Global/NTai/AI/NTai/Units/ITaskManager.h</path>
-      <path>AI/Global/RAI-0.553</path>
-      <path>AI/Global/RAI-0.553/Builder.cpp</path>
-      <path>AI/Global/RAI-0.553/Builder.h</path>
-      <path>AI/Global/RAI-0.553/BuilderPlacement.cpp</path>
-      <path>AI/Global/RAI-0.553/BuilderPlacement.h</path>
-      <path>AI/Global/RAI-0.553/CombatManager.cpp</path>
-      <path>AI/Global/RAI-0.553/CombatManager.h</path>
-      <path>AI/Global/RAI-0.553/GlobalAIs.cpp</path>
-      <path>AI/Global/RAI-0.553/Global.cpp</path>
-      <path>AI/Global/RAI-0.553/Global.h</path>
-      <path>AI/Global/RAI-0.553/GMetalMap.cpp</path>
-      <path>AI/Global/RAI-0.553/GMetalMap.h</path>
-      <path>AI/Global/RAI-0.553/GTerrainMap.cpp</path>
-      <path>AI/Global/RAI-0.553/GTerrainMap.h</path>
-      <path>AI/Global/RAI-0.553/KrogsMetalClass</path>
-      <path>AI/Global/RAI-0.553/KrogsMetalClass/MetalMap.cpp</path>
-      <path>AI/Global/RAI-0.553/KrogsMetalClass/MetalMap.h</path>
-      <path>AI/Global/RAI-0.553/LogFile.cpp</path>
-      <path>AI/Global/RAI-0.553/LogFile.h</path>
-      <path>AI/Global/RAI-0.553/PowerManager.cpp</path>
-      <path>AI/Global/RAI-0.553/PowerManager.h</path>
-      <path>AI/Global/RAI-0.553/RAI.cpp</path>
-      <path>AI/Global/RAI-0.553/RAI.h</path>
-      <path>AI/Global/RAI-0.553/SWeaponManager.cpp</path>
-      <path>AI/Global/RAI-0.553/SWeaponManager.h</path>
-      <path>AI/Global/RAI-0.553/UnitDef.cpp</path>
-      <path>AI/Global/RAI-0.553/UnitDef.h</path>
-      <path>AI/Global/RAI-0.553/UnitManager.cpp</path>
-      <path>AI/Global/RAI-0.553/UnitManager.h</path>
+      <path>AI/Global/RAI</path>
+      <path>AI/Global/RAI/Builder.cpp</path>
+      <path>AI/Global/RAI/Builder.h</path>
+      <path>AI/Global/RAI/BuilderPlacement.cpp</path>
+      <path>AI/Global/RAI/BuilderPlacement.h</path>
+      <path>AI/Global/RAI/CombatManager.cpp</path>
+      <path>AI/Global/RAI/CombatManager.h</path>
+      <path>AI/Global/RAI/GlobalAIs.cpp</path>
+      <path>AI/Global/RAI/Global.cpp</path>
+      <path>AI/Global/RAI/Global.h</path>
+      <path>AI/Global/RAI/GMetalMap.cpp</path>
+      <path>AI/Global/RAI/GMetalMap.h</path>
+      <path>AI/Global/RAI/GTerrainMap.cpp</path>
+      <path>AI/Global/RAI/GTerrainMap.h</path>
+      <path>AI/Global/RAI/KrogsMetalClass</path>
+      <path>AI/Global/RAI/KrogsMetalClass/MetalMap.cpp</path>
+      <path>AI/Global/RAI/KrogsMetalClass/MetalMap.h</path>
+      <path>AI/Global/RAI/LogFile.cpp</path>
+      <path>AI/Global/RAI/LogFile.h</path>
+      <path>AI/Global/RAI/PowerManager.cpp</path>
+      <path>AI/Global/RAI/PowerManager.h</path>
+      <path>AI/Global/RAI/RAI.cpp</path>
+      <path>AI/Global/RAI/RAI.h</path>
+      <path>AI/Global/RAI/SWeaponManager.cpp</path>
+      <path>AI/Global/RAI/SWeaponManager.h</path>
+      <path>AI/Global/RAI/UnitDef.cpp</path>
+      <path>AI/Global/RAI/UnitDef.h</path>
+      <path>AI/Global/RAI/UnitManager.cpp</path>
+      <path>AI/Global/RAI/UnitManager.h</path>
       <path>AI/Global/TestGlobalAI</path>
       <path>AI/Global/TestGlobalAI/TestAI.cpp</path>
       <path>AI/Global/TestGlobalAI/TestGlobalAI.cpp</path>
