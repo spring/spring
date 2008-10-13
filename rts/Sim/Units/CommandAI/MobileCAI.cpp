@@ -428,7 +428,8 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 		tran->commandAI->GiveCommandReal(newCommand);
 	}
 	if (owner->transporter) {
-		FinishCommand();
+		if (!commandQue.empty())
+			FinishCommand();
 		return;
 	}
 
