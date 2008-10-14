@@ -20,8 +20,10 @@
 extern std::string stupidGlobalMapname;
 
 
-CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifier):
-	CScript(std::string("GlobalAI test (") + std::string(skirmishAISpecifier.ai.shortName) + std::string(")")),
+CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifier)
+		: CScript(std::string("GlobalAI test (")
+		+ std::string(skirmishAISpecifier.ai.shortName) + std::string(" v")
+		+ std::string(skirmishAISpecifier.ai.version) + std::string(")")),
 	skirmishAISpecifier(skirmishAISpecifier)
 {
 	if (!gameSetup) {
