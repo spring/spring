@@ -48,7 +48,8 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( SAFE_NEW CSpawnScript(true) );
 	loaded_scripts.push_back( SAFE_NEW CTestScript() );
 
-	const IAILibraryManager::T_skirmishAIKeys* skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+	const IAILibraryManager::T_skirmishAIKeys* skirmishAIKeys =
+			IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
 	
 	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
 	for(ai=skirmishAIKeys->begin(), e=skirmishAIKeys->end(); ai != e; ++ai) {

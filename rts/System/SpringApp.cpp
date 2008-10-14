@@ -638,12 +638,12 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption('c', "client",             OPTPARM_NONE,   "",  "Run as a client");
 	cmdline->addoption('p', "projectiledump",     OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
 	cmdline->addoption('t', "textureatlas",       OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->addoption('i', "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
-	cmdline->addoption('a', "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
-	cmdline->addoption('g', "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
 	cmdline->addoption('q', "quit",               OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
 	cmdline->addoption('n', "name",               OPTPARM_STRING, "",  "Set your player name");
 	cmdline->addoption('C', "config",             OPTPARM_STRING, "",  "Configuration file");
+	cmdline->addoption(0,   "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
+	cmdline->addoption(0,   "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
+	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
 	cmdline->parse();
 
 	string configSource;
