@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
 #pragma once
 
 #include "aidef.h"
@@ -10,10 +19,10 @@ class AAIAttack;
 class AAIGroup
 {
 public:
-	AAIGroup(IAICallback *cb, AAI* ai, const UnitDef *def, UnitType unit_type);
+	AAIGroup(AAI* ai, const UnitDef *def, UnitType unit_type, int continent_id);
 	~AAIGroup(void);
 
-	bool AddUnit(int unit_id, int def_id, UnitType type);
+	bool AddUnit(int unit_id, int def_id, UnitType type, int continent_id);
 
 	bool RemoveUnit(int unit, int attacker);
 
@@ -85,6 +94,9 @@ public:
 
 	// rally point of the group, ZeroVector if none...
 	float3 rally_point;
+
+	// id of the continent the units of this group are stationed on (only matters if group_movement_type is continent bound)
+	int continent;
 
 private:
 	

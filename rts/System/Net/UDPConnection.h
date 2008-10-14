@@ -11,7 +11,7 @@
 
 namespace netcode {
 #ifndef SYNCDEBUG
-const unsigned UDPBufferSize = 8192;
+const unsigned UDPBufferSize = 16384;
 #else
 const unsigned UDPBufferSize = 40000;
 #endif

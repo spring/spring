@@ -38,8 +38,6 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(
 */
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
 		: info(_info) {
-	
-	std::string libFilePath;
 
 	std::string libFileName = info->GetFileName();
 	if (libFileName.empty()) {
@@ -74,7 +72,17 @@ void CAIInterfaceLibrary::InitStatic() {
 	
 	if (sAIInterfaceLibrary.initStatic != NULL) {
 		staticGlobalData = createStaticGlobalData();
-		sAIInterfaceLibrary.initStatic(staticGlobalData);
+		int ret = sAIInterfaceLibrary.initStatic(staticGlobalData);
+		if (ret != 0) {
+			// initializing the library failed!
+			const int MAX_MSG_LENGTH = 511;
+			char s_msg[MAX_MSG_LENGTH + 1];
+			SNPRINTF(s_msg, MAX_MSG_LENGTH,
+					"Error initializing AI Interface library from file\n\"%s\".\n"
+					"The call to initStatic() returned unsuccessfuly.",
+					libFilePath.c_str());
+			handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
+		}
 	} else {
 		staticGlobalData = NULL;
 	}
@@ -82,7 +90,17 @@ void CAIInterfaceLibrary::InitStatic() {
 void CAIInterfaceLibrary::ReleaseStatic() {
 	
 	if (sAIInterfaceLibrary.releaseStatic != NULL) {
-		sAIInterfaceLibrary.releaseStatic();
+		int ret = sAIInterfaceLibrary.releaseStatic();
+		if (ret != 0) {
+			// releasing the library failed!
+			const int MAX_MSG_LENGTH = 511;
+			char s_msg[MAX_MSG_LENGTH + 1];
+			SNPRINTF(s_msg, MAX_MSG_LENGTH,
+					"Error releasing AI Interface Library from file\n\"%s\".\n"
+					"The call to releaseStatic() returned unsuccessfuly.",
+					libFilePath.c_str());
+			handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
+		}
 	}
 	if (staticGlobalData != NULL) {
 		freeStaticGlobalData(staticGlobalData);

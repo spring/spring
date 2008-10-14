@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
 #pragma once
 
 #include "aidef.h"

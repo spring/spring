@@ -12,11 +12,12 @@
 #include "AAIBuildTable.h"
 #include "AAIAttack.h"
 
-AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_type)
+AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id)
 {
-	this->cb = cb;
+	
 	this->ai = ai;
-	this->bt = ai->bt;
+	cb = ai->cb;
+	bt = ai->bt;
 
 	attack = 0;
 	rally_point = ZeroVector;
@@ -29,6 +30,8 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 
 	// set movement type of group (filter out add. movement info like underwater, floater, etc.)
 	group_movement_type = bt->units_static[def->id].movement_type & MOVE_TYPE_UNIT;
+	
+	continent = continent_id;
 
 	// now we know type and category, determine max group size
 	if(cfg->AIR_ONLY_MOD)
@@ -87,8 +90,8 @@ AAIGroup::AAIGroup(IAICallback *cb, AAI *ai, const UnitDef *def, UnitType unit_t
 	}
 
 	avg_speed = bt->unitList[def->id-1]->speed;
-	//fprintf(ai->file, "Creating new group - max size: %i move type: %i speed group: %i\n", maxSize, (int)move_type, speed_group);
-	//fprintf(ai->file, "speedgroup: %i,  min: %f,  avg: %f,  this: %f\n", speed_group, val1, val2, bt->unitList[def->id-1]->speed);
+	
+	//fprintf(ai->file, "Creating new group - max size: %i   move type: %i   speed group: %i   continent: %i\n", maxSize, group_movement_type, speed_group, continent);
 }
 
 AAIGroup::~AAIGroup(void)
@@ -108,49 +111,54 @@ AAIGroup::~AAIGroup(void)
 	}
 }
 
-bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type)
+bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type, int continent_id)
 {
-	// check the type match && current size
-	if(type == group_unit_type && units.size() < maxSize && !attack && (task == GROUP_IDLE || task == GROUP_RETREATING))
+	// for continent bound units: check if unit is on the same continent as the group
+	if(continent_id == -1 || continent_id == continent)
 	{
-		// check if speed group is matching
-		if(cfg->AIR_ONLY_MOD)
+		//check if type match && current size
+		if(type == group_unit_type && units.size() < maxSize && !attack && (task == GROUP_IDLE || task == GROUP_RETREATING))
 		{
-			if(category == AIR_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[1][ai->side-1])/bt->group_speed[1][ai->side-1]))
-				return false;
-		}
-		else
-		{
-			if(category == GROUND_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[0][ai->side-1])/bt->group_speed[0][ai->side-1]))
-				return false;
+			// check if speed group is matching
+			if(cfg->AIR_ONLY_MOD)
+			{
+				if(category == AIR_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[1][ai->side-1])/bt->group_speed[1][ai->side-1]))
+					return false;
+			}
+			else
+			{
+				if(category == GROUND_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[0][ai->side-1])/bt->group_speed[0][ai->side-1]))
+					return false;
 			
-			if(category == SEA_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[3][ai->side-1])/bt->group_speed[3][ai->side-1]))
-				return false;
+				if(category == SEA_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[3][ai->side-1])/bt->group_speed[3][ai->side-1]))
+					return false;
+			}
+
+			units.push_back(int2(unit_id, def_id));
+
+			++size;
+
+			// send unit to rally point of the group
+			if(rally_point.x > 0)
+			{
+				Command c;
+				c.id = CMD_MOVE;
+				c.params.resize(3);
+				c.params[0] = rally_point.x;
+				c.params[1] = rally_point.y;
+				c.params[2] = rally_point.z;
+
+				if(category != AIR_ASSAULT)
+					c.options |= SHIFT_KEY;
+
+				//cb->GiveOrder(unit_id, &c);
+				ai->execute->GiveOrder(&c, unit_id, "Group::AddUnit");
+			}
+
+			return true;
 		}
-
-		units.push_back(int2(unit_id, def_id));
-
-		size++;
-
-		// send unit to rally point of the group
-		if(rally_point.x > 0)
-		{
-			Command c;
-			c.id = CMD_MOVE;
-			c.params.resize(3);
-			c.params[0] = rally_point.x;
-			c.params[1] = rally_point.y;
-			c.params[2] = rally_point.z;
-
-			if(category != AIR_ASSAULT)
-				c.options |= SHIFT_KEY;
-
-			//cb->GiveOrder(unit_id, &c);
-			ai->execute->GiveOrder(&c, unit_id, "Group::AddUnit");
-		}
-
-		return true;
 	}
+
 	return false;
 }
 
@@ -637,7 +645,7 @@ void AAIGroup::GetNewRallyPoint()
 		--sector->rally_points;
 	}
 
-	rally_point = ai->execute->GetRallyPoint(group_movement_type, 1, 1);
+	rally_point = ai->execute->GetRallyPoint(group_movement_type, continent, 1, 1);
 
 	if(rally_point.x > 0)
 	{

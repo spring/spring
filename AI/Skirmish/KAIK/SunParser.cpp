@@ -1,8 +1,5 @@
 #include "SunParser.h"
 
-using std::ifstream;
-
-
 CSunParser::CSunParser(AIClasses* ai) {
 	this->ai = ai;
 }
@@ -46,7 +43,7 @@ void CSunParser::LoadRealFile(string filename) {
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
 
 	this->filename = filename_buf;
-	ifstream RealFile(filename_buf);
+	std::ifstream RealFile(filename_buf);
 
 	if (RealFile.fail()) {
 		return;

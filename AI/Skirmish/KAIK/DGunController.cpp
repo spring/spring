@@ -32,12 +32,11 @@ DGunController::DGunController(AIClasses* ai) {
 	if (ai)
 		CALLOUT = ai->cb;
 
-	units = (int*) calloc(MAX_UNITS, sizeof(int));
+	units.resize(MAX_UNITS, 0);
 	srand((unsigned) time(0));
 }
 
 DGunController::~DGunController(void) {
-	free(units);
 }
 
 void DGunController::PostLoad() {
@@ -46,14 +45,18 @@ void DGunController::PostLoad() {
 
 
 void DGunController::init(int commID) {
-	commanderID		= commID;
-	commanderUD		= CALLOUT->GetUnitDef(commID);
-	state.inited	= true;
+	commanderID  = commID;
+	commanderUD  = CALLOUT->GetUnitDef(commID);
+	state.inited = true;
 
-	// set commander to hold fire
-	setFireState(0);
+	// set the commander to hold fire (we need this since
+	// FAW and RF interfere with dgun and reclaim orders)
+	CUNIT* commander = ai->MyUnits[commanderID];
+	commander->SetFireState(0);
 
-	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = commanderUD->weapons.begin(); i != commanderUD->weapons.end(); i++) {
+	std::vector<UnitDef::UnitDefWeapon>::const_iterator i = commanderUD->weapons.begin();
+
+	for (; i != commanderUD->weapons.end(); i++) {
 		if (i->def->type == "DGun") {
 			commanderWD = i->def;
 			break;
@@ -122,7 +125,7 @@ void DGunController::selectTarget(unsigned int currentFrame) {
 
 	// get all units within immediate (non-walking) dgun range
 	float maxRange = CALLOUT->GetUnitMaxRange(commanderID);
-	int numUnits = CALLOUT->GetEnemyUnits(units, commanderPos, maxRange * 0.9f);
+	int numUnits = CALLOUT->GetEnemyUnits(&units[0], commanderPos, maxRange * 0.9f);
 
 	for (int i = 0; i < numUnits; i++) {
 		// if enemy unit with valid ID found in array
@@ -181,17 +184,6 @@ void DGunController::issueOrder(int target, int orderType, int keyMod) {
 	c.id = orderType;
 	c.options |= keyMod;
 	c.params.push_back(target);
-
-	CALLOUT->GiveOrder(commanderID, &c);
-}
-
-
-// we need this since FAW and RF interfere with dgun and reclaim orders
-// (fireState can be 0: hold fire, 1: return fire, 2: fire at will)
-void DGunController::setFireState(int fireState) {
-	Command c;
-	c.id = CMD_FIRE_STATE;
-	c.params.push_back(fireState);
 
 	CALLOUT->GiveOrder(commanderID, &c);
 }

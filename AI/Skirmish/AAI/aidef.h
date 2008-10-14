@@ -1,6 +1,11 @@
-// AAI          alexander.seizinger@gmx.net	 
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
 // 
-// standard headers 
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
 
 #include <list>
 #include <vector>
@@ -31,9 +36,9 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.87"
+#define AAI_VERSION "0.872"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
-#define TABLE_FILE_VERSION "MOD_LEARN_0_86"
+#define TABLE_FILE_VERSION "MOD_LEARN_0_87"
 #define MAP_DATA_VERSION "MAP_DATA_0_86"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_86"
 
