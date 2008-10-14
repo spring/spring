@@ -125,6 +125,10 @@ CGlobalAI::CGlobalAI() {
 }
 
 CGlobalAI::~CGlobalAI() {
+	for (int i = 0; i < MAX_UNITS; i++) {
+		delete ai->MyUnits[i]; ai->MyUnits[i] = 0x0;
+	}
+
 	delete ai->LOGGER;
 	delete ai->ah;
 	delete ai->bu;
@@ -195,22 +199,23 @@ void CGlobalAI::PostLoad(void) {
 }
 
 void CGlobalAI::Serialize(creg::ISerializer* s) {
-	if (!s->IsWriting())
-		MyUnits.resize(MAX_UNITS, CUNIT(ai));
+	if (!s->IsWriting()) {
+		// if de-serializing a saved state, allocate
+		// here instead of in InitAI() which we skip
+		ai->MyUnits.resize(MAX_UNITS, new CUNIT(ai));
+	}
 
 	for (int i = 0; i < MAX_UNITS; i++) {
 		if (ai->cheat->GetUnitDef(i)) {
 			// do not save non-existing units
-			s->SerializeObjectInstance(&(MyUnits[i]), MyUnits[i].GetClass());
+			s->SerializeObjectInstance(ai->MyUnits[i], ai->MyUnits[i]->GetClass());
 			if (!s->IsWriting()) {
-				MyUnits[i].myid = i;
+				ai->MyUnits[i]->myid = i;
 			}
 		} else if (!s->IsWriting()) {
-			MyUnits[i].myid = i;
-			MyUnits[i].groupID = -1;
+			ai->MyUnits[i]->myid = i;
+			ai->MyUnits[i]->groupID = -1;
 		}
-		if (!s->IsWriting())
-			ai->MyUnits.push_back(&MyUnits[i]);
 	}
 
 	s->SerializeObjectInstance(ai, ai->GetClass());
@@ -243,17 +248,16 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, cfgFolder);
 
-	MyUnits.reserve(MAX_UNITS);
-	ai->MyUnits.reserve(MAX_UNITS);
+
+	ai->MyUnits.resize(MAX_UNITS, 0x0);
 
 	// initialize MAX_UNITS CUNIT objects
 	for (int i = 0; i < MAX_UNITS; i++) {
-		MyUnits.push_back(CUNIT(ai));
-		MyUnits[i].myid = i;
-		MyUnits[i].groupID = -1;
-
-		ai->MyUnits.push_back(&MyUnits[i]);
+		ai->MyUnits[i] = new CUNIT(ai);
+		ai->MyUnits[i]->myid = i;
+		ai->MyUnits[i]->groupID = -1;
 	}
+
 
 	ai->debug			= new CDebug(ai);
 	ai->math			= new CMaths(ai);
@@ -279,24 +283,18 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 }
 
 
-void CGlobalAI::UnitCreated(int unit) {
-	ai->uh->UnitCreated(unit);
-	ai->econTracker->UnitCreated(unit);
-
-	const UnitDef* ud = ai->cb->GetUnitDef(unit);
-
-	if (ud && ud->isCommander && ud->canDGun) {
-		ai->dgunController->init(unit);
-	}
+void CGlobalAI::UnitCreated(int unitID) {
+	ai->uh->UnitCreated(unitID);
+	ai->econTracker->UnitCreated(unitID);
 }
 
 void CGlobalAI::UnitFinished(int unit) {
-	// let attackhandler handle cat_g_attack units
 	ai->econTracker->UnitFinished(unit);
 	int frame = ai->cb->GetCurrentFrame();
 	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
 	if (udef) {
+		// let attackhandler handle cat_g_attack units
 		if (GCAT(unit) == CAT_G_ATTACK) {
 			ai->ah->AddUnit(unit);
 		} else {
@@ -333,7 +331,7 @@ void CGlobalAI::UnitIdle(int unit) {
 	}
 
 	// AttackHandler handles cat_g_attack units
-	if (GCAT(unit) == CAT_G_ATTACK && ai->MyUnits.at(unit)->groupID != -1) {
+	if (GCAT(unit) == CAT_G_ATTACK && ai->MyUnits[unit]->groupID != -1) {
 		// attackHandler->UnitIdle(unit);
 	} else {
 		ai->uh->IdleUnitAdd(unit, ai->cb->GetCurrentFrame());

@@ -89,7 +89,7 @@ class CUNIT {
 
 		// special abilities
 		bool SelfDestruct();
-		bool SetFiringMode(int mode);
+		bool SetFireState(int state);
 		bool Stop();
 		bool SetMaxSpeed(float speed);
 
@@ -99,8 +99,8 @@ class CUNIT {
 		AIClasses *ai;
 
 		// command generators
-		Command MakePosCommand(int id, float3 pos, float radius = -1.0f, int facing = -1);
-		Command MakeIntCommand(int id, int number, int maxnum = 4999);
+		Command MakePosCommand(int cmdID, float3 pos, float radius = -1.0f, int facing = -1);
+		Command MakeIntCommand(int cmdID, int param, int maxParam = 4999);
 };
 
 

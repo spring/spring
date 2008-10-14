@@ -275,22 +275,26 @@ void CMobileCAI::RefuelIfNeeded()
 		if (owner->currentFuel <= 0) {
 			// we're out of fuel
 			StopMove();
+
 			owner->userAttackGround = false;
 			owner->userTarget = 0;
 			inCommand = false;
 
-			CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
-				owner, owner->unitDef->minAirBasePower);
+			CAirBaseHandler::LandingPad* lp =
+				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
 			if (lp) {
 				// found a pad
 				owner->moveType->ReservePad(lp);
 			} else {
-				float3 landingPos = airBaseHandler->FindClosestAirBasePos(
-					owner, owner->unitDef->minAirBasePower);
+				// no pads available, search for a landing
+				// spot near any that are currently occupied
+				float3 landingPos =
+					airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
 
-				if (landingPos != ZeroVector && owner->pos.distance2D(landingPos) > 800) {
-					// didn't find a pad, but we have an in-range ('>' ?) landing pos
+				if (landingPos != ZeroVector) {
+					// NOTE: owner->userAttackGround is wrongly reset to
+					// true in CUnit::AttackGround() via ExecuteAttack()
 					SetGoal(landingPos, owner->pos);
 				} else {
 					owner->moveType->StopMoving();

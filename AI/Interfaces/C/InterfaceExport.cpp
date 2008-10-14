@@ -79,7 +79,7 @@ Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier*
 }
 */
 Export(const struct SGAILibrary*) loadGroupAILibrary(
-const struct InfoItem info[], unsigned int numInfoItems) {
+		const struct InfoItem info[], unsigned int numInfoItems) {
 	return myInterface->LoadGroupAILibrary(info, numInfoItems);
 }
 Export(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {

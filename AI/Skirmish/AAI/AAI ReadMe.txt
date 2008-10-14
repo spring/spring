@@ -1,4 +1,5 @@
-Author: 	Alexander 'submarine' Seizinger		icq: 138100896		alexander.seizinger@gmx.net
+Author: 	Alexander 		Icq: 138100896					email:	alexander.seizinger
+		Seizinger		Jabber: alexander.seizinger@jabber.org				@gmx.net
 
 
 Installation: 	Windows users:
@@ -105,14 +106,19 @@ Thanks to: 	- Yuritch for testing and providing me with improved mod config file
 		- Brandon Potter for his TBT 12 cfg file
 
 
+
+AAI v0.872	- Refactored code for getting rally points and positions to withdraw units and made 
+
+		- Construction units that are member of the DONT_BUILD list will not be built anymore
+		
+		- Fixed two bugs that have been introduced in v0.87 and could cripple AAI's economy a lot
+
+
 AAI v0.87	- Proper detection of amphibious ground units (was causing AAI to freeze on water maps)
 
 		- Prevent AAI from blocking buildqueues for combat units by requesting too many scouts
 
-
-AAI v0.869	- Added proper handling of resurrected units (however AAI does not build resurrectors atm)
-		
-		- Fixed a bug that could prevent AAI from rebuilding destroyed factories	
+		- Added proper handling of resurrected units (however AAI does not build resurrectors atm)	
 
 		- Added some unit specific combat behaviour: Units with high ranged weapons  will now try to keep enemies distant (if 
 		  their turnrate is not too low)
@@ -140,6 +146,7 @@ AAI v0.869	- Added proper handling of resurrected units (however AAI does not bu
 
 		- Fixed various freezes that have been caused by AAI flooding the ai interface with thousands of orders per frame
 
+		- Fixed a bug that could prevent AAI from rebuilding destroyed factories
 
 		- Bumped mod learning file version to 0.86 due to some changes in handling of amphibious units
 

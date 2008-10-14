@@ -2598,7 +2598,7 @@ bool AAIBuildTable::CanBuildUnit(int id_builder, int id_unit)
 void AAIBuildTable::CalcBuildTree(int unit)
 {
 	// go through all possible build options and set side if necessary
-	for(list<int>::iterator i = units_static[unit].canBuildList.begin(); i != units_static[unit].canBuildList.end(); i++)
+	for(list<int>::iterator i = units_static[unit].canBuildList.begin(); i != units_static[unit].canBuildList.end(); ++i)
 	{
 		// add this unit to targets builtby-list
 		units_static[*i].builtByList.push_back(unit);
@@ -2608,7 +2608,7 @@ void AAIBuildTable::CalcBuildTree(int unit)
 			units_static[*i].builder_cost = units_static[unit].cost;
 
 		// continue with all builldoptions (if they have not been visited yet)
-		if(!units_static[*i].side)
+		if(!units_static[*i].side && AllowedToBuild(*i))
 		{
 			// unit has not been checked yet, set side as side of its builder and continue 
 			units_static[*i].side = units_static[unit].side;

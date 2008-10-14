@@ -770,12 +770,12 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 
 
 void CUnitTable::Init() {
-	// get unit defs from game and stick them in the unitTypes[] array
+	// get the unitdefs and stick them in the unitTypes[] array
 	numOfUnits = ai->cb->GetNumUnitDefs();
 	unitList = new const UnitDef*[numOfUnits];
 	ai->cb->GetUnitDefList(unitList);
 
-	// one more than needed because 0 is dummy object (so
+	// one more than needed because [0] is a dummy object (so
 	// UnitDef->id can be used to adress that unit in array)
 	unitTypes = new UnitType[numOfUnits + 1];
 
@@ -785,12 +785,18 @@ void CUnitTable::Init() {
 		// side has not been assigned - will be done later
 		unitTypes[i].category = -1;
 
+		// GetUnitDefList() filled our unitList
+		// partially with null UnitDef*'s (bad,
+		// nothing much to do if this happens)
+		assert(unitTypes[i].def != 0x0);
+
 		// get build options
 		for (map<int, string>::const_iterator j = unitTypes[i].def->buildOptions.begin(); j != unitTypes[i].def->buildOptions.end(); j++) {
-			unitTypes[i].canBuildList.push_back(ai->cb->GetUnitDef(j->second.c_str())->id);
+			const char* buildOptionName = j->second.c_str();
+			const UnitDef* buildOptionDef = ai->cb->GetUnitDef(buildOptionName);
+			unitTypes[i].canBuildList.push_back(buildOptionDef->id);
 		}
 	}
-
 
 	// now set sides and create buildtree for each
 	// note: this skips Lua commanders completely!

@@ -75,6 +75,7 @@ private:
 	
 private:
 	//std::string aiInterfacesLibDir;
+	std::string libFilePath;
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
 	//SAIInterfaceSpecifier specifier;

@@ -326,17 +326,12 @@ Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) {
 	return c;
 }
 
-Command CUNIT::MakeIntCommand(int id, int number, int maxnum) {
+Command CUNIT::MakeIntCommand(int cmdID, int param, int) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 
-	if (number > maxnum)
-		number = maxnum;
-	if (number < 0)
-		number = 0;
-
 	Command c;
-	c.id = id;
-	c.params.push_back(number);
+	c.id = cmdID;
+	c.params.push_back(param);
 
 	ai->uh->IdleUnitRemove(myid);
 	return c;
@@ -639,9 +634,11 @@ bool CUNIT::SelfDestruct() {
 	return true;
 }
 
-bool CUNIT::SetFiringMode(int mode) {
+// state can be 0: hold fire, 1: return fire, 2: fire at will
+bool CUNIT::SetFireState(int state) {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command c = MakeIntCommand(CMD_FIRE_STATE, mode, 2);
+	Command c = MakeIntCommand(CMD_FIRE_STATE, state);
+
 	if (c.id != 0) {
 		ai->cb->GiveOrder(myid, &c);
 		return true;
