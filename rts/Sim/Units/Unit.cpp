@@ -811,7 +811,7 @@ void CUnit::SlowUpdate()
 	else if (wantCloak || (scriptCloak >= 1)) {
 		if ((decloakDistance > 0.0f) &&
 		    helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
-		                                         allyteam, unitDef->decloakSpherical)) {
+		                                         allyteam, unitDef->decloakSpherical, false)) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 			isCloaked = false;
 		}
@@ -862,7 +862,7 @@ void CUnit::SlowUpdate()
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
-			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false);
+			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false, true);
 			if (u && u->physicalState != CSolidObject::Flying && u->speed.dot(pos - u->pos) <= 0) {
 				// self destruct when unit start moving away from mine, should maximize damage
 				KillUnit(true, false, NULL);
