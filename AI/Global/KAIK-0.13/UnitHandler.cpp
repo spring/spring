@@ -117,24 +117,24 @@ void CUnitHandler::UnitMoveFailed(int unit) {
 
 // called when unit nanoframe first created
 // (CEconomyTracker deals with UnitFinished())
-void CUnitHandler::UnitCreated(int unit) {
-	int category = ai->ut->GetCategory(unit);
-	const UnitDef* newUnitDef = ai->cb->GetUnitDef(unit);
+void CUnitHandler::UnitCreated(int unitID) {
+	int ucat = ai->ut->GetCategory(unitID);
+	const UnitDef* udef = ai->cb->GetUnitDef(unitID);
 
-	if (category != -1) {
-		AllUnitsByCat[category].push_back(unit);
-		AllUnitsByType[newUnitDef->id].push_back(unit);
+	if (ucat != -1) {
+		AllUnitsByCat[ucat].push_back(unitID);
+		AllUnitsByType[udef->id].push_back(unitID);
 
-		if (category == CAT_FACTORY) {
-			FactoryAdd(unit);
+		if (ucat == CAT_FACTORY) {
+			FactoryAdd(unitID);
 		}
 
-		BuildTaskCreate(unit);
+		BuildTaskCreate(unitID);
 
-		if (category == CAT_BUILDER) {
+		if (ucat == CAT_BUILDER) {
 			// add the new builder
 			BuilderTracker* builderTracker = new BuilderTracker;
-			builderTracker->builderID = unit;
+			builderTracker->builderID = unitID;
 			builderTracker->buildTaskId = 0;
 			builderTracker->taskPlanId = 0;
 			builderTracker->factoryId = 0;
@@ -148,16 +148,23 @@ void CUnitHandler::UnitCreated(int unit) {
 			BuilderTrackers.push_back(builderTracker);
 		}
 
-		if (category == CAT_MMAKER) {
-			MMakerAdd(unit);
+		if (ucat == CAT_MMAKER) {
+			MMakerAdd(unitID);
 		}
-		if (category == CAT_MEX) {
-			MetalExtractorAdd(unit);
+		if (ucat == CAT_MEX) {
+			MetalExtractorAdd(unitID);
 		}
 
-		if (category == CAT_NUKE) {
-			NukeSiloAdd(unit);
+		if (ucat == CAT_NUKE) {
+			NukeSiloAdd(unitID);
 		}
+	}
+
+	if (udef->isCommander && udef->canDGun) {
+		ai->dgunController->init(unitID);
+	} else {
+		CUNIT* u = ai->MyUnits[unitID];
+		u->SetFireState(2);
 	}
 }
 
