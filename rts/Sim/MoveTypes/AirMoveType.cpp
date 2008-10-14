@@ -219,7 +219,7 @@ void CAirMoveType::Update(void)
 			owner->pos = pos;
 
 			owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
-			owner->currentFuel = std::min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
+			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
 			if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
 				// repaired and filled up, leave the pad
@@ -234,7 +234,7 @@ void CAirMoveType::Update(void)
 
 
 	switch (aircraftState) {
-		case AIRCRAFT_FLYING:
+		case AIRCRAFT_FLYING: {
 	#ifdef DEBUG_AIRCRAFT
 			if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
 				logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
@@ -243,7 +243,13 @@ void CAirMoveType::Update(void)
 
 			owner->restTime = 0;
 
-			if (!reservedPad && (owner->userTarget || owner->userAttackGround)) {
+			// somewhat hackish, but planes that have attack orders
+			// while no pad is available would otherwise continue
+			// attacking even if out of fuel
+			bool continueAttack =
+				(!reservedPad && ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f));
+
+			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
 
 				if (owner->userTarget) {
@@ -265,7 +271,7 @@ void CAirMoveType::Update(void)
 				inefficientAttackTime = 0;
 				UpdateFlying(wantedHeight, 1);
 			}
-			break;
+		} break;
 		case AIRCRAFT_LANDED:
 			inefficientAttackTime = 0;
 			UpdateLanded();
@@ -615,44 +621,18 @@ void CAirMoveType::UpdateFighterAttack(void)
 	}
 #endif
 
-	if(groundTarget)
+	if (groundTarget)
 		engine = 1;
 	else
 		engine = std::min(1.f, (float)(goalLength / owner->maxRange + 1 - goalDir.dot(frontdir) * 0.7f));
 
 	UpdateAirPhysics(rudder, aileron, elevator, engine, owner->frontdir);
-/*
-	std::vector<CWeapon*>::iterator wi;
-	for(wi=owner->weapons.begin();wi!=owner->weapons.end();++wi){
-		(*wi)->targetPos=goalPos;
-		if(owner->userTarget){
-			(*wi)->AttackUnit(owner->userTarget,true);
-		}
-	}*/
-/*	DrawLine dl;
-	dl.color=UpVector;
-	dl.pos1=pos;
-	dl.pos2=goalPos;
-	lines.push_back(dl);
-	dl.color=float3(1,0,0);
-	dl.pos1=pos;
-	dl.pos2=pos+frontdir*maxRange;
-	lines.push_back(dl);/**/
 }
 
 
 
 void CAirMoveType::UpdateAttack(void)
 {
-	/*
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = owner->weapons.begin(); wi != owner->weapons.end(); ++wi) {
-		(*wi)->targetPos = goalPos;
-		if (owner->userTarget) {
-			(*wi)->AttackUnit(owner->userTarget, true);
-		}
-	}
-	*/
 	UpdateFlying(wantedHeight, 1);
 }
 
@@ -660,16 +640,16 @@ void CAirMoveType::UpdateAttack(void)
 
 void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 {
-	float3 &pos = owner->pos;
-	SyncedFloat3 &rightdir = owner->rightdir;
-	SyncedFloat3 &frontdir = owner->frontdir;
-	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	float3& pos = owner->pos;
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir = owner->updir;
+	float3& speed = owner->speed;
 
 	float speedf = speed.Length();
 	float goalLength = (goalPos - pos).Length2D() + 0.01f;
 	float3 goalDir = (goalPos - pos) / goalLength;
-	float3 adjustedGoalDir = float3(goalPos.x,0,goalPos.z) - float3(pos.x,0,pos.z);
+	float3 adjustedGoalDir = float3(goalPos.x, 0, goalPos.z) - float3(pos.x, 0, pos.z);
 	goalDir.Normalize();
 	adjustedGoalDir.Normalize();
 
@@ -686,8 +666,8 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3 otherDir;
 	if (lastColWarning) {
 		float3 otherDif = lastColWarning->pos - pos;
-		float otherLength = otherDif.Length();
-		otherDir = otherDif / (otherLength + 0.01f);
+		float otherLength = otherDif.Length() + 0.01f;
+		otherDir = otherDif / (otherLength);
 		otherThreat = std::max(1200.0f, goalLength) / otherLength * 0.036f;
 	}
 
@@ -886,7 +866,10 @@ void CAirMoveType::UpdateLanding(void)
 	// update our speed
 	float3 dif = reservedLandingPos - pos;
 	float dist = dif.Length();
-	dif /= dist;
+
+	if (dist > 0.0f) {
+		dif /= dist;
+	}
 
 	float wsf = std::min(owner->maxSpeed, dist / speedf * 1.8f * maxAcc);
 	float3 wantedSpeed = dif * wsf;
@@ -894,10 +877,13 @@ void CAirMoveType::UpdateLanding(void)
 	float3 delta = wantedSpeed - speed;
 	float dl = delta.Length();
 
-	if (dl < maxAcc * 3)
+	if (dl < maxAcc * 3) {
 		speed = wantedSpeed;
-	else
-		speed += delta / dl * maxAcc * 3;
+	} else {
+		if (dl > 0.0f) {
+			speed += delta / dl * maxAcc * 3;
+		}
+	}
 
 	pos += speed;
 

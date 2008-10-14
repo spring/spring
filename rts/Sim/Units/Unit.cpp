@@ -244,10 +244,6 @@ CUnit::~CUnit()
 	// clean up if we are still under movectrl here
 	DisableScriptMoveType();
 
-	// not all unit deletions run through KillUnit(),
-	// but we always want to call this for ourselves
-	UnBlock();
-
 	if (delayedWreckLevel >= 0) {
 		// note: could also do this in Update() or even in CUnitKilledCB()
 		// where we wouldn't need deathSpeed, but not in KillUnit() since
@@ -286,6 +282,10 @@ CUnit::~CUnit()
 	delete moveType;        moveType        = NULL;
 	delete prevMoveType;    prevMoveType    = NULL;
 	delete collisionVolume; collisionVolume = NULL;
+
+	// not all unit deletions run through KillUnit(),
+	// but we always want to call this for ourselves
+	UnBlock();
 
 	if (group) {
 		group->RemoveUnit(this);
@@ -1445,12 +1445,13 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	userAttackGround = false;
 	commandShotCount = 0;
 	SetUserTarget(unit);
+
 	std::vector<CWeapon*>::iterator wi;
-	for(wi = weapons.begin(); wi != weapons.end(); ++wi){
+	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
 		(*wi)->targetType = Target_None;
-		if(dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
-			if((*wi)->AttackUnit(unit, true))
+		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+			if ((*wi)->AttackUnit(unit, true))
 				r = true;
 	}
 	return r;
@@ -1459,18 +1460,19 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 
 bool CUnit::AttackGround(const float3 &pos, bool dgun)
 {
-	bool r=false;
-	haveDGunRequest=dgun;
+	bool r = false;
+	haveDGunRequest = dgun;
 	SetUserTarget(0);
-	userAttackPos=pos;
-	userAttackGround=true;
-	commandShotCount=0;
+	userAttackPos = pos;
+	userAttackGround = true;
+	commandShotCount = 0;
+
 	std::vector<CWeapon*>::iterator wi;
-	for(wi=weapons.begin();wi!=weapons.end();++wi){
-		(*wi)->haveUserTarget=false;
-		if(dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
-			if((*wi)->AttackGround(pos,true))
-				r=true;
+	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		(*wi)->haveUserTarget = false;
+		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+			if ((*wi)->AttackGround(pos, true))
+				r = true;
 	}
 	return r;
 }
