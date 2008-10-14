@@ -125,6 +125,10 @@ CGlobalAI::CGlobalAI() {
 }
 
 CGlobalAI::~CGlobalAI() {
+	for (int i = 0; i < MAX_UNITS; i++) {
+		delete ai->MyUnits[i]; ai->MyUnits[i] = 0x0;
+	}
+
 	delete ai->LOGGER;
 	delete ai->ah;
 	delete ai->bu;
@@ -139,10 +143,6 @@ CGlobalAI::~CGlobalAI() {
 	delete ai->uh;
 	delete ai->dgunController;
 	delete ai;
-
-	for (int i = 0; i < MAX_UNITS; i++) {
-		delete ai->MyUnits[i]; ai->MyUnits[i] = 0x0;
-	}
 }
 
 
