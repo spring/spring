@@ -36,7 +36,7 @@ public:
 	void GetEnemyUnits(const float3& pos,float radius,int searchAllyteam,std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos,float radius);
 	CUnit* GetClosestEnemyUnit(const float3& pos,float radius,int searchAllyteam);
-	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos,float radius,int searchAllyteam,bool sphere);
+	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos,float radius,int searchAllyteam,bool sphere,bool canBeBlind);
 	CUnit* GetClosestFriendlyUnit(const float3& pos,float radius,int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos,float radius,int searchAllyteam);
 	void GenerateTargets(const CWeapon *attacker, CUnit* lastTarget,std::map<float,CUnit*> &targets);

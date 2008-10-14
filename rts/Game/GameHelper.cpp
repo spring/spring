@@ -24,6 +24,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -531,11 +532,13 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3 &pos, float radius,int sear
 }
 
 CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,
-                                                 int searchAllyteam, bool sphere)
+                                                 int searchAllyteam, bool sphere, bool canBeBlind)
 {
 	const int tempNum = gs->tempNum++;
 
 	CUnit* closeUnit = NULL;
+
+	float losFactor = (SQUARE_SIZE * (1 << modInfo.losMipLevel));
 
 	if (sphere) {  // includes target radius
 		float closeDist = radius;
@@ -550,7 +553,8 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 				    !gs->Ally(searchAllyteam, unit->allyteam)) {
 					unit->tempNum = tempNum;
 					const float dist = (pos - unit->midPos).Length() - unit->radius;
-					if (dist <= closeDist){
+					if (dist <= closeDist &&
+						(canBeBlind || unit->losRadius * losFactor > dist)){
 						closeDist = dist;
 						closeUnit = unit;
 					}
@@ -571,7 +575,8 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 				    !gs->Ally(searchAllyteam, unit->allyteam)) {
 					unit->tempNum = tempNum;
 					const float sqDist = (pos - unit->midPos).SqLength2D();
-					if (sqDist <= closeDistSq){
+					if (sqDist <= closeDistSq &&
+						(canBeBlind || unit->losRadius * losFactor > sqDist)){
 						closeDistSq = sqDist;
 						closeUnit = unit;
 					}
