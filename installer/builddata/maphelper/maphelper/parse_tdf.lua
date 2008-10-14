@@ -112,13 +112,13 @@ end
 
 ParseValue = function()
   -- look for quoted string
-  local s, e, v, p = text:find('^"([^\n"]*)"[ \t]*;()', pos)
+  local s, e, v, p = text:find('^"([^\n"]*)"[ \t]*;+()', pos)
   if (v) then
     pos = p
     return v
   end
   -- unquoted string (can not contain ';')
-  local s, e, v, p = text:find('^([^\n;]*);()', pos)
+  local s, e, v, p = text:find('^([^\n;]*);+()', pos)
   if (v) then
     pos = p
     return v

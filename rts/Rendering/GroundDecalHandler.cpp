@@ -420,12 +420,16 @@ void CGroundDecalHandler::Draw(void)
 #endif
 
 	// create and draw the quads for each building decal
-	for (std::vector<BuildingDecalType*>::iterator bdi = buildingDecalTypes.begin(); bdi != buildingDecalTypes.end(); ++bdi) {
-		if (!(*bdi)->buildingDecals.empty()) {
-			glBindTexture(GL_TEXTURE_2D, (*bdi)->texture);
+	for (std::vector<BuildingDecalType*>::iterator bdti = buildingDecalTypes.begin(); bdti != buildingDecalTypes.end(); ++bdti) {
+		BuildingDecalType* bdt = *bdti;
 
-			for (set<BuildingGroundDecal*>::iterator bi = (*bdi)->buildingDecals.begin(); bi != (*bdi)->buildingDecals.end(); ) {
-				BuildingGroundDecal* decal = *bi;
+		if (!bdt->buildingDecals.empty()) {
+			glBindTexture(GL_TEXTURE_2D, bdt->texture);
+
+			set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin();
+
+			while (bgdi != bdt->buildingDecals.end()) {
+				BuildingGroundDecal* decal = *bgdi;
 
 				if (decal->owner && decal->owner->buildProgress >= 0) {
 					decal->alpha = decal->owner->buildProgress;
@@ -443,11 +447,11 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					(*bdi)->buildingDecals.erase(bi++);
-					if (bi == (*bdi)->buildingDecals.end())
-						break;
-					else
-						continue;
+					set<BuildingGroundDecal*>::iterator next(bgdi); ++next;
+					bdt->buildingDecals.erase(bgdi);
+					bgdi = next;
+
+					continue;
 				}
 
 				if (camera->InView(decal->pos, decal->radius) &&
@@ -455,8 +459,10 @@ void CGroundDecalHandler::Draw(void)
 
 					DrawBuildingDecal(decal);
 				}
-				++bi;
+
+				bgdi++;
 			}
+
 		}
 	}
 
@@ -485,21 +491,31 @@ void CGroundDecalHandler::Draw(void)
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		if (!(*tti)->tracks.empty()) {
+			TrackType* tt = *tti;
+			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
+
 			CVertexArray* va = GetVertexArray();
 			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D, (*tti)->texture);
+			glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-			for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end();) {
-				UnitTrackStruct* track = *ti;
+
+			while (utsi != tt->tracks.end()) {
+				UnitTrackStruct* track = *utsi;
 
 				while (!track->parts.empty() && track->parts.front().creationTime < gs->frameNum - track->lifeTime) {
 					track->parts.pop_front();
 				}
+
 				if (track->parts.empty()) {
 					if (track->owner)
 						track->owner->myTrack = 0;
+
 					delete track;
-					(*tti)->tracks.erase(ti++);
+
+					set<UnitTrackStruct*>::iterator next(utsi); ++next;
+					tt->tracks.erase(utsi);
+					utsi = next;
+
 					continue;
 				}
 
@@ -520,8 +536,10 @@ void CGroundDecalHandler::Draw(void)
 						ppi = pi;
 					}
 				}
-				++ti;
+
+				utsi++;
 			}
+
 			va->DrawArrayTC(GL_QUADS);
 		}
 	}
@@ -863,21 +881,23 @@ void CGroundDecalHandler::TestOverlaps(Scar* scar)
 }
 
 
-void CGroundDecalHandler::RemoveScar(Scar* scar,bool removeFromScars)
+void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 {
-	int x1=scar->x1/16;
-	int x2=min(scarFieldX-1,scar->x2/16);
-	int y1=scar->y1/16;
-	int y2=min(scarFieldY-1,scar->y2/16);
+	int x1 = scar->x1 / 16;
+	int x2 = min(scarFieldX - 1, scar->x2 / 16);
+	int y1 = scar->y1 / 16;
+	int y2 = min(scarFieldY - 1, scar->y2 / 16);
 
-	for(int y=y1;y<=y2;++y){
-		for(int x=x1;x<=x2;++x){
-			std::set<Scar*>* quad=&scarField[y*scarFieldX+x];
+	for (int y = y1;y <= y2; ++y) {
+		for (int x = x1; x <= x2; ++x) {
+			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
 			quad->erase(scar);
 		}
 	}
-	if(removeFromScars)
+
+	if (removeFromScars)
 		scars.remove(scar);
+
 	delete scar;
 }
 
