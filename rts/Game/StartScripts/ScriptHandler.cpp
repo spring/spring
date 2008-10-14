@@ -48,9 +48,9 @@ void CScriptHandler::LoadScripts() {
 	loaded_scripts.push_back( SAFE_NEW CSpawnScript(true) );
 	loaded_scripts.push_back( SAFE_NEW CTestScript() );
 
-	const std::vector<SSAIKey>* skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+	const IAILibraryManager::T_skirmishAIKeys* skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
 	
-	std::vector<SSAIKey>::const_iterator ai, e;
+	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
 	for(ai=skirmishAIKeys->begin(), e=skirmishAIKeys->end(); ai != e; ++ai) {
 		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*ai));
 	}

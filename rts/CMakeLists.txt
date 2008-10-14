@@ -2,23 +2,6 @@ ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../CMakeLists.txt
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
-if (NOT COMPLETE_BUILD)
-	### Compiler flags and defines based on build type
-	INCLUDE(TestCXXAcceptsVisibilityFlag)
-	SET(BASE_FLAGS "-fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing")
-	IF (NOT $ENV{CXX} MATCHES "icpc")
-		SET(BASE_FLAGS "${BASE_FLAGS} -march=i686 -mfpmath=387")
-	ENDIF (NOT $ENV{CXX} MATCHES "icpc")
-	IF (UNIX)
-		SET(BASE_FLAGS "${BASE_FLAGS} -pthread")
-	ENDIF (UNIX)
-	SET(CMAKE_CXX_FLAGS_DEBUG   "${BASE_FLAGS} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_DEBUG2  "${BASE_FLAGS} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_DEBUG3  "${BASE_FLAGS} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	SET(CMAKE_CXX_FLAGS_RELEASE "${BASE_FLAGS} ${VISIBILITY_HIDDEN} -O2 -DNDEBUG -fomit-frame-pointer")
-	SET(CMAKE_CXX_FLAGS_PROFILE   "${BASE_FLAGS} -O2 -pg -Wall -DNDEBUG")
-endif (NOT COMPLETE_BUILD)
-
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
@@ -43,27 +26,31 @@ endif (SYNCDEBUG)
 ### Find include directories and add platform specific libraries
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND spring_libraries glu32 ilu opengl32 ${WIN32_LIBRARIES} glew32 mingw32 devil)
-	LIST(APPEND spring_libraries boost_thread-mt boost_regex-mt)
+	LIST(APPEND spring_libraries glu32 opengl32 ${WIN32_LIBRARIES} glew32 mingw32)
+	#TODO make FindLibraryX work with mingwlibs
+	set (VORBISFILE_LIBRARY vorbisfile)
+	set(VORBIS_LIBRARY vorbis)
+	set (OGG_LIBRARY ogg)
+	set(FREETYPE_LIBRARIES freetype)
 ELSE (MINGW)
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex filesystem REQUIRED)
-
 	FIND_PACKAGE(X11 REQUIRED)
 	FIND_PACKAGE(OpenAL REQUIRED)
+	if (NOT OPENAL_FOUND)
+		message (SEND_ERROR "OpenAL libraries not found")
+	endif (NOT OPENAL_FOUND)
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(GLU REQUIRED)
 	FIND_PACKAGE(GLUT REQUIRED)
 	FIND_PACKAGE(GLEW REQUIRED)
-	FIND_PACKAGE(Devil REQUIRED)
 	FIND_PACKAGE(OggVorbis REQUIRED)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	LIST(APPEND spring_libraries openal GL GLU ${DEVIL_LIBRARIES} X11 Xcursor ${GLEW_LIBRARIES} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+	LIST(APPEND spring_libraries ${OPENAL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
 ENDIF (MINGW)
 
 ### libraries needed on all platforms
-LIST(APPEND spring_libraries SDL vorbisfile vorbis ogg freetype)
+LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES} ${DEVIL_LIBRARIES} )
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
@@ -73,7 +60,7 @@ if (USE_GML)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(lib/lua/include lib/luabind)
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include lib/luabind)
 
 ### all spring source directories
 ### each directorie which contains source has to be here

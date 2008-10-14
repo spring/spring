@@ -22,8 +22,8 @@ public:
 	void SlowUpdate();
 
 
-	void AddMetal(float amount);
-	void AddEnergy(float amount);
+	void AddMetal(float amount, bool handicap = true);
+	void AddEnergy(float amount, bool handicap = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
 	bool UseEnergyUpkeep(float amount);
@@ -31,8 +31,7 @@ public:
 
 	void SetBaseMetalStorage(float storage) {metalStorage = storage;};
 	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
-	
-	void SelfDestruct();
+
 	void GiveEverythingTo(const unsigned toTeam);
 	
 	void Died();

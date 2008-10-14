@@ -25,6 +25,10 @@
 #include "SkirmishAILibraryInfo.h"
 #include "GroupAILibraryInfo.h"
 
+#include <vector>
+#include <map>
+#include <set>
+
 class CAILibraryManager : public IAILibraryManager {
 private:
 //	typedef s_cont<ISkirmishAILibraryInterfaceInfo>::vector T_interfaceInfos;
@@ -39,13 +43,17 @@ public:
 	CAILibraryManager(); // looks for interface and AIs supported by them (ret != 0: error)
 	~CAILibraryManager(); // unloads all shared libraries that are currently loaded (interfaces and implementations)
 	
-	virtual const std::vector<SAIInterfaceSpecifier>* GetInterfaceSpecifiers() const;
-	virtual const std::vector<SSAIKey>* GetSkirmishAIKeys() const;
-	virtual const std::vector<SGAIKey>* GetGroupAIKeys() const;
+	virtual const T_interfaceSpecs* GetInterfaceSpecifiers() const;
+	virtual const T_skirmishAIKeys* GetSkirmishAIKeys() const;
+	virtual const T_groupAIKeys* GetGroupAIKeys() const;
 	
 	virtual const T_interfaceInfos* GetInterfaceInfos() const;
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const;
+	
+	virtual const T_dupInt* GetDuplicateInterfaceInfos() const;
+	virtual const T_dupSkirm* GetDuplicateSkirmishAIInfos() const;
+	virtual const T_dupGroup* GetDuplicateGroupAIInfos() const;
 
 	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const;
 	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const;
@@ -74,9 +82,9 @@ private:
 	typedef std::map<const SAIInterfaceSpecifier, IAIInterfaceLibrary*, SAIInterfaceSpecifier_Comparator> T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 	
-	std::vector<SAIInterfaceSpecifier> interfaceSpecifiers;
-	std::vector<SSAIKey> skirmishAIKeys;
-	std::vector<SGAIKey> groupAIKeys;
+	T_interfaceSpecs interfaceSpecifiers;
+	T_skirmishAIKeys skirmishAIKeys;
+	T_groupAIKeys groupAIKeys;
 //	std::vector<const SAIInterfaceSpecifier> interfaceLibrarySpecifiers;
 //	std::vector<const SSAIKey> skirmishAILibrarySpecifiers;
 //	std::vector<const SGAIKey> groupAILibrarySpecifiers;
@@ -85,6 +93,10 @@ private:
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 	T_groupAIInfos groupAIInfos;
+	
+	T_dupInt duplicateInterfaceInfos;
+	T_dupSkirm duplicateSkirmishAIInfos;
+	T_dupGroup duplicateGroupAIInfos;
 //	T_interfaceInfos interfaceInfos;
 //	T_infoKeys infoKeys;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::vector T_aiInfos;
@@ -177,7 +189,7 @@ private:
 	static SAIInterfaceSpecifier FindFittingInterfaceSpecifier(
 			const std::string& shortName,
 			const std::string& minVersion,
-			const std::vector<SAIInterfaceSpecifier>& specs);
+			const T_interfaceSpecs& specs);
 	static int versionCompare(
 			const std::string& version1,
 			const std::string& version2);

@@ -1508,14 +1508,24 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitBlocking()");
 	}
-	const bool longTerm = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+
 	if (lua_toboolean(L, 2)) {
-		if (longTerm) { unit->blocking = true; }
 		unit->Block();
 	} else {
 		unit->UnBlock();
-		if (longTerm) { unit->blocking = false; }
 	}
+
+	if (lua_isboolean(L, 3)) {
+		// change the collidable state
+		unit->blocking = lua_toboolean(L, 3);
+
+		// run this again so that we are removed from
+		// the blocking map if unit->blocking was set
+		// to false but arg. #2 was true (no point in
+		// being registered on the map then)
+		unit->Block();
+	}
+
 	return 0;
 }
 

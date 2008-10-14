@@ -20,77 +20,56 @@
 
 #include "IAIInterfaceLibrary.h"
 #include "ISkirmishAILibrary.h"
-//#include "SkirmishAILibraryKey.h"
-
-//#include "AIInterfaceLibraryInfo.h"
-struct SSAIKey;
-struct SGAIKey;
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 #include "GroupAILibraryInfo.h"
+
+#include <vector>
+#include <map>
+#include <set>
+
+struct SSAIKey;
+struct SGAIKey;
 
 /**
  * @brief manages AIs and AI interfaces
  */
 class IAILibraryManager {
-//public:
-//	typedef s_cont<ISkirmishAILibraryInterfaceInfo>::const_vector T_interfaceInfos_const;
-//	typedef s_cont<CSkirmishAILibraryInfoKey>::const_vector T_infoKeys_const;
-////	typedef s_cont<ISkirmishAILibraryInfo>::const_vector T_aiInfos_const;
-//	typedef s_cont<std::string>::const_vector T_specifiers_const;
 	
 public:
 	virtual ~IAILibraryManager() {}
-////	virtual ISkirmishAILibraryManager() = 0; // looks for interface and AIs supported by them (ret != 0: error)
-////	virtual ~ISkirmishAILibraryManager() = 0; // unloads all shared libraries that are currently loaded (interfaces and implementations)
-//
-//	virtual T_interfaceInfos_const GetInterfaceInfos() const = 0;
-//	virtual T_infoKeys_const GetInfoKeys() const = 0;
-////	virtual const std::vector<const ISkirmishAILibraryInfo*>* GetAIInfos() const = 0;
-////	virtual const std::vector<const ISkirmishAILibraryInfo*>* GetInterfaceAIs(const SAIInterfaceLibraryInfo& interfaceInfo) const = 0;
-//
-//	virtual T_specifiers_const GetSpecifiers() const = 0;
-//	virtual T_infoKeys_const GetApplyingInfoKeys(const std::string& specifier) const {
-//		
-//		T_infoKeys_const applyingInfoKeys;
-//		
-//		const T_infoKeys_const infoKeys = GetInfoKeys();
-//		T_infoKeys_const::const_iterator infoKey;
-//		for (infoKey=infoKeys.begin(); infoKey!=infoKeys.end(); infoKey++) {
-//			if ((*infoKey)->IsApplyingSpecifier(specifier)) {
-//				applyingInfoKeys.push_back(*infoKey);
-//			}
-//		}
-//		
-//		return applyingInfoKeys;
-//	}
-//
-//	// an AI is only really loaded when it is not yet loaded.
-//	virtual const s_p<const CSkirmishAILibraryKey> LoadAI(const CSkirmishAILibraryInfoKey& infoKey) = 0;
-//	// an AI is only unloaded when UnloadAI() is called
-//	// as many times as LoadAI() was.
-//	// loading and unloading of the interfaces
-//	// is handled internally/automatically.
-////	virtual int UnloadAI(const CSkirmishAILibraryKey& key) = 0;
-//	virtual void UnloadAI(const CSkirmishAILibraryInfoKey& infoKey) = 0;
-//	
-//	virtual int UnloadEverything() = 0; // unloads all currently loaded AIs and interfaces
-//	faces and implementations)
 	
-	virtual const std::vector<SAIInterfaceSpecifier>* GetInterfaceSpecifiers() const = 0;
-	virtual const std::vector<SSAIKey>* GetSkirmishAIKeys() const = 0;
-	virtual const std::vector<SGAIKey>* GetGroupAIKeys() const = 0;
+	typedef std::set<SAIInterfaceSpecifier, SAIInterfaceSpecifier_Comparator> T_interfaceSpecs;
+	typedef std::set<SSAIKey, SSAIKey_Comparator> T_skirmishAIKeys;
+	typedef std::set<SGAIKey, SGAIKey_Comparator> T_groupAIKeys;
 	
-//	virtual const std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*>* GetInterfaceInfos() const = 0;
-//	virtual const std::map<const SSAIKey, CSkirmishAILibraryInfo*>* GetSkirmishAIInfos() const = 0;
-//	virtual const std::map<const SGAIKey, CGroupAILibraryInfo*>* GetGroupAIInfos() const = 0;
-	typedef std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*, SAIInterfaceSpecifier_Comparator> T_interfaceInfos;
-	typedef std::map<const SSAIKey, CSkirmishAILibraryInfo*, SSAIKey_Comparator> T_skirmishAIInfos;
-	typedef std::map<const SGAIKey, CGroupAILibraryInfo*, SGAIKey_Comparator> T_groupAIInfos;
+	virtual const T_interfaceSpecs* GetInterfaceSpecifiers() const = 0;
+	virtual const T_skirmishAIKeys* GetSkirmishAIKeys() const = 0;
+	virtual const T_groupAIKeys* GetGroupAIKeys() const = 0;
+	
+	typedef std::map<const SAIInterfaceSpecifier, CAIInterfaceLibraryInfo*,
+			SAIInterfaceSpecifier_Comparator> T_interfaceInfos;
+	typedef std::map<const SSAIKey, CSkirmishAILibraryInfo*, SSAIKey_Comparator>
+			T_skirmishAIInfos;
+	typedef std::map<const SGAIKey, CGroupAILibraryInfo*, SGAIKey_Comparator>
+			T_groupAIInfos;
 	
 	virtual const T_interfaceInfos* GetInterfaceInfos() const = 0;
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const = 0;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const = 0;
+	
+	typedef std::map<const SAIInterfaceSpecifier, std::set<std::string>,
+			SAIInterfaceSpecifier_Comparator> T_dupInt;
+	typedef std::map<const SSAIKey, std::set<std::string>, SSAIKey_Comparator>
+			T_dupSkirm;
+	typedef std::map<const SGAIKey, std::set<std::string>, SGAIKey_Comparator>
+			T_dupGroup;
+	
+	// The following three methods return sets of files which contain duplicate
+	// infos. These methods can be used for issueing warnings.
+	virtual const T_dupInt* GetDuplicateInterfaceInfos() const = 0;
+	virtual const T_dupSkirm* GetDuplicateSkirmishAIInfos() const = 0;
+	virtual const T_dupGroup* GetDuplicateGroupAIInfos() const = 0;
 
 	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const = 0;
 	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const = 0;
@@ -118,7 +97,9 @@ public:
 public:
 	/* guaranteed to not return NULL */
 	static IAILibraryManager* GetInstance();
+	static void OutputAIInterfacesInfo();
 	static void OutputSkirmishAIInfo();
+	static void OutputGroupAIInfo();
 private:
 	static IAILibraryManager* myAILibraryManager;
 	

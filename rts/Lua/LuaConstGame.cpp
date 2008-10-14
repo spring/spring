@@ -57,7 +57,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	lua_pushlstring(L, (const char*)game->gameID, sizeof(game->gameID));
 	lua_rawset(L, -3);
 
-	LuaPushNamedString(L, "version",       VERSION_STRING);
+	LuaPushNamedString(L, "version",       VERSION_STRING_DETAILED);
 
 	LuaPushNamedNumber(L, "maxUnits",      MAX_UNITS);
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);

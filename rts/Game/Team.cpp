@@ -194,9 +194,9 @@ bool CTeam::UseEnergyUpkeep(float amount)
 }
 
 
-void CTeam::AddMetal(float amount)
+void CTeam::AddMetal(float amount, bool hc)
 {
-	amount *= handicap;
+	if (hc) { amount *= handicap; }
 	metal += amount;
 	metalIncome += amount;
 	if (metal > metalStorage) {
@@ -206,9 +206,9 @@ void CTeam::AddMetal(float amount)
 }
 
 
-void CTeam::AddEnergy(float amount)
+void CTeam::AddEnergy(float amount, bool hc)
 {
-	amount *= handicap;
+	if (hc) { amount *= handicap; }
 	energy += amount;
 	energyIncome += amount;
 	if (energy > energyStorage) {
@@ -216,23 +216,6 @@ void CTeam::AddEnergy(float amount)
 		energy = energyStorage;
 	}
 }
-
-
-void CTeam::SelfDestruct()
-{
-	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = (*ui);
-		if (unit != NULL && unit->unitDef->canSelfD) {
-			if (unit->beingBuilt) {
-				unit->KillUnit(false, true, NULL); // kill units under construction without explosion
-			} else {
-				unit->KillUnit(true, false, NULL);
-			}
-		}
-	}
-	Died();
-}
-
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
@@ -251,7 +234,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		target->energy += energy;
 		energy = 0;
 	}
-	
+
 	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ) {
 		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
 		CUnitSet::iterator next = ui; ++next;
@@ -423,7 +406,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 		case AddCaptured: {
 			currentStats.unitsCaptured++;
 			break;
-		}	
+		}
 	}
 	if (unit->unitDef->isCommander) {
 		numCommanders++;

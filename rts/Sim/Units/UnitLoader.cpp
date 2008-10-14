@@ -91,7 +91,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
  			pos.y = -ud->waterline;
 		}
 	}
-	bool blocking = false;	//Used to tell if ground area shall be blocked of not.
 
 	if (team < 0) {
 		team = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
@@ -99,24 +98,18 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	if (type == "GroundUnit") {
 		unit = SAFE_NEW CUnit;
-		blocking = true;
 	} else if (type == "Transport") {
 		unit = SAFE_NEW CTransportUnit;
-		blocking = true;
 	} else if (type == "Building") {
 		unit = SAFE_NEW CBuilding;
-		blocking = true;
 	} else if (type == "Factory") {
 		unit = SAFE_NEW CFactory;
-		blocking = true;
 	} else if (type == "Builder") {
 		unit = SAFE_NEW CBuilder;
-		blocking = true;
 	} else if (type == "Bomber" || type == "Fighter") {
 		unit = SAFE_NEW CUnit;
 	} else if (type == "MetalExtractor") {
 		unit = SAFE_NEW CExtractorBuilding;
-		blocking = true;
 	} else {
 		logOutput << "Unknown unit type " << type.c_str() << "\n";
 		return NULL;
@@ -276,6 +269,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->collide = ud->collide;
 
 			mt->wingAngle = ud->wingAngle;
+			mt->crashDrag = 1 - ud->crashDrag;
 			mt->invDrag = 1 - ud->drag;
 			mt->frontToSpeed = ud->frontToSpeed;
 			mt->speedToFront = ud->speedToFront;
