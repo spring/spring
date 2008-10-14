@@ -430,7 +430,6 @@ void CGroundDecalHandler::Draw(void)
 
 			while (bgdi != bdt->buildingDecals.end()) {
 				BuildingGroundDecal* decal = *bgdi;
-				const bool beg = (bgdi == bdt->buildingDecals.begin());
 
 				if (decal->owner && decal->owner->buildProgress >= 0) {
 					decal->alpha = decal->owner->buildProgress;
@@ -448,9 +447,7 @@ void CGroundDecalHandler::Draw(void)
 					decal->va = 0x0;
 					delete decal;
 
-					set<BuildingGroundDecal*>::iterator next(bgdi);
-					++next;
-
+					set<BuildingGroundDecal*>::iterator next(bgdi); ++next;
 					bdt->buildingDecals.erase(bgdi);
 					bgdi = next;
 
@@ -494,24 +491,31 @@ void CGroundDecalHandler::Draw(void)
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		if (!(*tti)->tracks.empty()) {
+			TrackType* tt = *tti;
+			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
+
 			CVertexArray* va = GetVertexArray();
 			va->Initialize();
-			glBindTexture(GL_TEXTURE_2D, (*tti)->texture);
+			glBindTexture(GL_TEXTURE_2D, tt->texture);
 
 
-			for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ti++) {
-				UnitTrackStruct* track = *ti;
+			while (utsi != tt->tracks.end()) {
+				UnitTrackStruct* track = *utsi;
 
 				while (!track->parts.empty() && track->parts.front().creationTime < gs->frameNum - track->lifeTime) {
 					track->parts.pop_front();
 				}
+
 				if (track->parts.empty()) {
 					if (track->owner)
 						track->owner->myTrack = 0;
 
 					delete track;
-					(*tti)->tracks.erase(ti);
-					ti--;
+
+					set<UnitTrackStruct*>::iterator next(utsi); ++next;
+					tt->tracks.erase(utsi);
+					utsi = next;
+
 					continue;
 				}
 
@@ -532,6 +536,8 @@ void CGroundDecalHandler::Draw(void)
 						ppi = pi;
 					}
 				}
+
+				utsi++;
 			}
 
 			va->DrawArrayTC(GL_QUADS);
@@ -875,21 +881,23 @@ void CGroundDecalHandler::TestOverlaps(Scar* scar)
 }
 
 
-void CGroundDecalHandler::RemoveScar(Scar* scar,bool removeFromScars)
+void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 {
-	int x1=scar->x1/16;
-	int x2=min(scarFieldX-1,scar->x2/16);
-	int y1=scar->y1/16;
-	int y2=min(scarFieldY-1,scar->y2/16);
+	int x1 = scar->x1 / 16;
+	int x2 = min(scarFieldX - 1, scar->x2 / 16);
+	int y1 = scar->y1 / 16;
+	int y2 = min(scarFieldY - 1, scar->y2 / 16);
 
-	for(int y=y1;y<=y2;++y){
-		for(int x=x1;x<=x2;++x){
-			std::set<Scar*>* quad=&scarField[y*scarFieldX+x];
+	for (int y = y1;y <= y2; ++y) {
+		for (int x = x1; x <= x2; ++x) {
+			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
 			quad->erase(scar);
 		}
 	}
-	if(removeFromScars)
+
+	if (removeFromScars)
 		scars.remove(scar);
+
 	delete scar;
 }
 
