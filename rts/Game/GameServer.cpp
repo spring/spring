@@ -423,12 +423,13 @@ void CGameServer::Update()
 				}
 			}
 
-			if (maxCpu != 0.0f) {
-				float wantedCpu=0.35f+(1-internalSpeed/userSpeedFactor)*0.5f;
+			if (maxCpu > 0.3f) {
+				float wantedCpu=0.5f+(1-internalSpeed/userSpeedFactor)*0.5f;
 				//float speedMod=1+wantedCpu-maxCpu;
 				float newSpeed=internalSpeed*wantedCpu/maxCpu;
 				//logOutput.Print("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed=(newSpeed+internalSpeed)*0.5f;
+				newSpeed = (newSpeed+internalSpeed)*0.5f;
+				newSpeed = std::max(newSpeed, userSpeedFactor*0.5f);
 				if(newSpeed>userSpeedFactor)
 					newSpeed=userSpeedFactor;
 				if(newSpeed<0.1f)
