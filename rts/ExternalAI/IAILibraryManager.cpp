@@ -22,7 +22,6 @@
 #include "AILibraryManager.h"
 
 #include <iostream>
-#include <c++/4.2/bits/basic_string.h>
 
 IAILibraryManager* IAILibraryManager::myAILibraryManager = NULL;
 
