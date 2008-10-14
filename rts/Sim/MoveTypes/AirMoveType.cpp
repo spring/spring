@@ -151,7 +151,8 @@ void CAirMoveType::Update(void)
 {
 	float3 &pos = owner->pos;
 
-	//This is only set to false after the plane has finished constructing
+	// note: this is only set to false after
+	// the plane has finished constructing
 	if (useHeading) {
 		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
@@ -183,7 +184,7 @@ void CAirMoveType::Update(void)
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 			maneuver = 0;
 
-			goto EndNormalControl;		//ok so goto is bad i know
+			goto EndNormalControl; // bad
 		}
 	}
 #endif
@@ -194,8 +195,9 @@ void CAirMoveType::Update(void)
 		float3 pos = unit->pos + (unit->frontdir * relPos.z) + (unit->updir * relPos.y) + (unit->rightdir * relPos.x);
 
 		if (padStatus == 0) {
-			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
+			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
 				SetState(AIRCRAFT_FLYING);
+			}
 
 			goalPos = pos;
 
@@ -203,8 +205,9 @@ void CAirMoveType::Update(void)
 				padStatus = 1;
 			}
 		} else if (padStatus == 1) {
-			if (aircraftState != AIRCRAFT_LANDING)
+			if (aircraftState != AIRCRAFT_LANDING) {
 				SetState(AIRCRAFT_LANDING);
+			}
 
 			goalPos = pos;
 			reservedLandingPos = pos;
@@ -213,11 +216,11 @@ void CAirMoveType::Update(void)
 				padStatus = 2;
 			}
 		} else {
-			if (aircraftState != AIRCRAFT_LANDED)
+			if (aircraftState != AIRCRAFT_LANDED) {
 				SetState(AIRCRAFT_LANDED);
+			}
 
 			owner->pos = pos;
-
 			owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
 			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
@@ -230,6 +233,10 @@ void CAirMoveType::Update(void)
 				SetState(AIRCRAFT_TAKEOFF);
 			}
 		}
+	} else if (padStatus == 0 && owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) {
+		// keep us in the air to reach our landing goalPos
+		// (which is hopefully in the vicinity of a pad)
+		SetState(AIRCRAFT_FLYING);
 	}
 
 
@@ -790,8 +797,9 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 	else
 		h = pos.y - ground->GetHeight(pos.x,pos.z);
 
-	if (h > wantedHeight)
+	if (h > wantedHeight) {
 		SetState(AIRCRAFT_FLYING);
+	}
 
 	if ((h + speed.y * 20) < (wantedHeight * 1.02f))
 		speed.y += maxAcc;
@@ -926,8 +934,9 @@ void CAirMoveType::UpdateLanding(void)
 			reservedLandingPos.y = gh;
 		}
 
-		if (alt <= 1)
+		if (alt <= 1) {
 			SetState(AIRCRAFT_LANDED);
+		}
 	}
 }
 
@@ -1201,9 +1210,9 @@ void CAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
 
 
 
-void CAirMoveType::StartMoving(float3 pos, float goalRadius)
+void CAirMoveType::StartMoving(float3 gpos, float goalRadius)
 {
-	SetGoal(pos);
+	SetGoal(gpos);
 }
 
 
@@ -1219,8 +1228,9 @@ void CAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 void CAirMoveType::StopMoving()
 {
 	SetGoal(owner->pos);
-	if ((aircraftState == AAirMoveType::AIRCRAFT_FLYING)
-	   && !owner->unitDef->DontLand() && autoLand) {
+
+	if ((aircraftState == AAirMoveType::AIRCRAFT_FLYING) &&
+		!owner->unitDef->DontLand() && autoLand) {
 		SetState(AAirMoveType::AIRCRAFT_LANDING);
 	}
 }
