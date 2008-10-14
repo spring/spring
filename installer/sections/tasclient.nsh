@@ -21,8 +21,9 @@
   SetOutPath "$INSTDIR\lobby\var"
   File "..\external\TASClient\groups.ini"
   File "..\external\TASClient\tips.txt"
-  
-  CopyFiles "..\external\TASClient\python" "$INSTDIR\lobby\python" 
+
+  SetOutPath "$INSTDIR\lobby\python"
+  File /r /x .svn "..\external\TASClient\python\*.*"
 
   Call GetDotNETVersion
   Pop $0
