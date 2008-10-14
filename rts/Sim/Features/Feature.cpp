@@ -497,6 +497,8 @@ bool CFeature::UpdatePosition()
 				// position) if it's still greater than 0
 				pos += deathSpeed;
 				midPos += deathSpeed;
+				// NOTE: apply more drag if we were a tank or bot?
+				// (would require passing extra data to Initialize())
 				deathSpeed *= 0.95f;
 
 				haveForwardSpeed = true;
@@ -514,7 +516,7 @@ bool CFeature::UpdatePosition()
 			if (!reachedGround) {
 				if (pos.y > 0.0f) {
 					// quadratic acceleration if not in water
-					deathSpeed.y += mapInfo->map.gravity * 0.25f;
+					deathSpeed.y += mapInfo->map.gravity;
 				} else {
 					// constant downward speed otherwise
 					deathSpeed.y = mapInfo->map.gravity;
