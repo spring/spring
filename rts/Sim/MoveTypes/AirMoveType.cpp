@@ -37,6 +37,7 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(wingDrag),
 		CR_MEMBER(wingAngle),
 		CR_MEMBER(invDrag),
+		CR_MEMBER(crashDrag),
 		CR_MEMBER(frontToSpeed),
 		CR_MEMBER(speedToFront),
 		CR_MEMBER(myGravity),
@@ -100,6 +101,7 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	maxElevator(0.02f),
 	maxRudder(0.01f),
 	invDrag(0.995f),
+	crashDrag(0.995f),
 	inSupply(0),
 	subState(0),
 	myGravity(0.8f),
@@ -200,7 +202,6 @@ void CAirMoveType::Update(void)
 			if (pos.distance2D(owner->pos) < 400) {
 				padStatus = 1;
 			}
-			//			geometricObjects->AddLine(owner->pos,pos,1,0,1);
 		} else if (padStatus == 1) {
 			if (aircraftState != AIRCRAFT_LANDING)
 				SetState(AIRCRAFT_LANDING);
@@ -208,24 +209,24 @@ void CAirMoveType::Update(void)
 			goalPos = pos;
 			reservedLandingPos = pos;
 
-			if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED){
+			if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = 2;
 			}
-			//			geometricObjects->AddLine(owner->pos,pos,10,0,1);
 		} else {
 			if (aircraftState != AIRCRAFT_LANDED)
 				SetState(AIRCRAFT_LANDED);
 
 			owner->pos = pos;
 
-			owner->AddBuildPower(unit->unitDef->buildSpeed/30,unit);
+			owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
 			owner->currentFuel = std::min (owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
 			if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
+				// repaired and filled up, leave the pad
 				airBaseHandler->LeaveLandingPad(reservedPad);
-				reservedPad=0;
-				padStatus=0;
-				goalPos=oldGoalPos;
+				reservedPad = 0;
+				padStatus = 0;
+				goalPos = oldGoalPos;
 				SetState(AIRCRAFT_TAKEOFF);
 			}
 		}
@@ -233,54 +234,57 @@ void CAirMoveType::Update(void)
 
 
 	switch (aircraftState) {
-	case AIRCRAFT_FLYING:
-#ifdef DEBUG_AIRCRAFT
-		if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
-			logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
-		}
-#endif
-		owner->restTime = 0;
-		if (owner->userTarget || owner->userAttackGround) {
-			inefficientAttackTime = std::min(inefficientAttackTime, (float)gs->frameNum - owner->lastFireWeapon);
-			if (owner->userTarget) {
-				goalPos = owner->userTarget->pos;
-			} else {
-				goalPos = owner->userAttackPos;
+		case AIRCRAFT_FLYING:
+	#ifdef DEBUG_AIRCRAFT
+			if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
+				logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
 			}
-			if(maneuver) {
-				UpdateManeuver();
-				inefficientAttackTime = 0;
-			} else if(isFighter && goalPos.distance(pos) < owner->maxRange * 4) {
-				inefficientAttackTime++;
-				UpdateFighterAttack();
+	#endif
+
+			owner->restTime = 0;
+
+			if (!reservedPad && (owner->userTarget || owner->userAttackGround)) {
+				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);
+
+				if (owner->userTarget) {
+					goalPos = owner->userTarget->pos;
+				} else {
+					goalPos = owner->userAttackPos;
+				}
+				if (maneuver) {
+					UpdateManeuver();
+					inefficientAttackTime = 0;
+				} else if (isFighter && goalPos.distance(pos) < owner->maxRange * 4) {
+					inefficientAttackTime++;
+					UpdateFighterAttack();
+				} else {
+					inefficientAttackTime = 0;
+					UpdateAttack();
+				}
 			} else {
 				inefficientAttackTime = 0;
-				UpdateAttack();
+				UpdateFlying(wantedHeight, 1);
 			}
-		} else {
+			break;
+		case AIRCRAFT_LANDED:
 			inefficientAttackTime = 0;
-			UpdateFlying(wantedHeight, 1);
-		}
-		break;
-	case AIRCRAFT_LANDED:
-		inefficientAttackTime = 0;
-		UpdateLanded();
-		break;
-	case AIRCRAFT_LANDING:
-		inefficientAttackTime = 0;
-		UpdateLanding();
-		break;
-	case AIRCRAFT_CRASHING:
-		owner->crashing = true;
-		UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
-		SAFE_NEW CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
-		if (!(gs->frameNum & 3) && std::max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
-			owner->KillUnit(true, false, 0);
-		break;
-	case AIRCRAFT_TAKEOFF:
-		UpdateTakeOff(wantedHeight);
-	default:
-		break;
+			UpdateLanded();
+			break;
+		case AIRCRAFT_LANDING:
+			inefficientAttackTime = 0;
+			UpdateLanding();
+			break;
+		case AIRCRAFT_CRASHING:
+			owner->crashing = true;
+			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
+			SAFE_NEW CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+			if (!(gs->frameNum & 3) && std::max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
+				owner->KillUnit(true, false, 0);
+			break;
+		case AIRCRAFT_TAKEOFF:
+			UpdateTakeOff(wantedHeight);
+		default:
+			break;
 	}
 
 EndNormalControl:
@@ -731,7 +735,11 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		} else if (goalDot > maxRudder * speedf * 2) {
 			rudder = 1;
 		} else {
-			rudder = goalDot / (maxRudder * speedf * 2);
+			if (speedf > 0.0f) {
+				rudder = goalDot / (maxRudder * speedf * 2);
+			} else {
+				rudder = 0;
+			}
 		}
 	}
 
@@ -972,7 +980,12 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	speed += engineVector * maxAcc * engine;
 	speed.y += mapInfo->map.gravity * myGravity;
-	speed *= invDrag;
+	if (aircraftState == AIRCRAFT_CRASHING) {
+		speed *= crashDrag;
+	}
+	else {
+		speed *= invDrag;
+	}
 
 	float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	float wingForce = wingDir.dot(speed) * wingDrag;

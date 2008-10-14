@@ -297,6 +297,7 @@ struct UnitDef
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
+	float crashDrag;
 
 	MoveData* movedata;
 //	unsigned char* yardmapLevels[6];

@@ -11,7 +11,7 @@
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
 
-#define ZVec ZeroVector
+#define ZVEC ZeroVector
 
 CR_BIND(CCollisionHandler, );
 CR_BIND(CollisionVolume, );
@@ -70,15 +70,15 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 {
 	const CollisionVolume* v = u->collisionVolume;
 
-	if ((u->midPos - p).SqLength() > v->volumeBoundingRadiusSq) {
+	if (((u->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
 		return false;
 	} else {
 		if (v->spherical) {
 			return true;
 		} else {
-			// NOTE: we have to translate by relMidPos (which is where
-			// collision volume gets drawn) since GetTransformMatrix()
-			// does not
+			// NOTE: we have to translate by relMidPos to get to midPos
+			// (which is where the collision volume gets drawn) because
+			// GetTransformMatrix() only uses pos
 			CMatrix44f m;
 			u->GetTransformMatrix(m, true);
 			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
@@ -93,14 +93,18 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
-	if ((f->midPos - p).SqLength() > v->volumeBoundingRadiusSq) {
+	if (((f->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
 		return false;
 	} else {
 		if (v->spherical) {
 			return true;
 		} else {
-			// NOTE: CFeature does not have a relMidPos member
+			// NOTE: CFeature does not have a relMidPos member so
+			// calculate and apply the translation from pos (used
+			// by transMatrix) to midPos manually
 			CMatrix44f m(f->transMatrix);
+			float3 frelMidPos(f->midPos - f->pos);
+			m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
 			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -175,7 +179,8 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& e, const float3& 
 {
 	CMatrix44f m;
 	u->GetTransformMatrix(m, true);
-	m.Translate(u->relMidPos.x + e.x, u->relMidPos.y + e.y, u->relMidPos.z + e.z);
+	float3 midPos(u->midPos - u->pos);
+	m.Translate(midPos.x + e.x, midPos.y + e.y, midPos.z + e.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
@@ -198,6 +203,8 @@ bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const flo
 	const CollisionVolume* v = f->collisionVolume;
 
 	CMatrix44f m(f->transMatrix);
+	float3 frelMidPos(f->midPos - f->pos);
+	m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
@@ -227,8 +234,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 {
 	if (q) {
 		// reset the query
-		q->b0 = false; q->t0 = 0.0f; q->p0 = ZVec;
-		q->b1 = false; q->t1 = 0.0f; q->p1 = ZVec;
+		q->b0 = false; q->t0 = 0.0f; q->p0 = ZVEC;
+		q->b1 = false; q->t1 = 0.0f; q->p1 = ZVEC;
 	}
 
 	CMatrix44f mInv = m.Invert();
@@ -282,9 +289,9 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	if (pii0.dot(pii0) <= rSq /* && pii1.dot(pii1) <= rSq */) {
 		// terminate early in the special case
 		// that shot originated within volume
-		// (note: can mean missed impacts when
-		// two units are very close together)
-		return false;
+		q->b0 = true; q->p0 = ZVEC;
+		q->b1 = true; q->p1 = ZVEC;
+		return true;
 	}
 
 	// get the ray direction in unit-sphere space
@@ -322,7 +329,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			if (q) {
 				q->b0 = b0; q->b1 = false;
 				q->t0 = t0; q->t1 = 0.0f;
-				q->p0 = p0; q->p1 = ZVec;
+				q->p0 = p0; q->p1 = ZVEC;
 			}
 
 			return b0;
@@ -373,24 +380,24 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	if ((pi0[pAx] > -ahs[pAx] && pi0[pAx] < ahs[pAx]) && ratio <= 1.0f) {
 		// terminate early in the special case
 		// that shot originated within volume
-		// (note: can mean missed impacts when
-		// two units are very close together)
-		return false;
+		q->b0 = true; q->p0 = ZVEC;
+		q->b1 = true; q->p1 = ZVEC;
+		return true;
 	}
 
 	// ray direction in volume-space
 	const float3 dir = (pi1 - pi0).Normalize();
 
 	// ray direction in (unit) cylinder-space
-	float3 diir = ZVec;
+	float3 diir = ZVEC;
 
 	// ray terminals in (unit) cylinder-space
 	float3 pii0 = pi0;
 	float3 pii1 = pi1;
 
 	// end-cap plane normals in volume-space
-	float3 n0 = ZVec;
-	float3 n1 = ZVec;
+	float3 n0 = ZVEC;
+	float3 n1 = ZVEC;
 
 	// (unit) cylinder-space to volume-space transformation
 	float3 inv(1.0f, 1.0f, 1.0f);
@@ -459,10 +466,11 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 	float d = (b * b) - (4.0f * a * c);
 	float rd = 0.0f;
+	float dp = 0.0f, rdp = 0.0f;
 
 	// volume-space intersection points
-	float3 p0 = ZVec;
-	float3 p1 = ZVec;
+	float3 p0 = ZVEC;
+	float3 p1 = ZVEC;
 
 	bool b0 = false;
 	bool b1 = false;
@@ -496,8 +504,11 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		// p0 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through front cap (plane)
-		// NOTE: DIV0 if normal and dir are orthogonal?
-		t0 = -(n0.dot(pi0) - ahs[pAx]) / n0.dot(dir);
+		// NOTE: normal n0 and dir should not be orthogonal
+		dp = n0.dot(dir);
+		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+
+		t0 = -(n0.dot(pi0) - ahs[pAx]) * rdp;
 		p0 = pi0 + (dir * t0);
 		s0 = (p0 - pi0).SqLength();
 		r0 =
@@ -509,8 +520,11 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		// p1 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through rear cap (plane)
-		// NOTE: DIV0 if normal and dir are orthogonal?
-		t1 = -(n1.dot(pi0) - ahs[pAx]) / n1.dot(dir);
+		// NOTE: normal n1 and dir should not be orthogonal
+		dp = n1.dot(dir);
+		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+
+		t1 = -(n1.dot(pi0) - ahs[pAx]) * rdp;
 		p1 = pi0 + (dir * t1);
 		s1 = (p1 - pi0).SqLength();
 		r1 =
@@ -537,10 +551,9 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	if ((ba && bb && bc) /* && (bd && be && bf) */) {
 		// terminate early in the special case
 		// that shot originated within volume
-		// (note: can mean missed impacts when
-		// two units are very close together)
-		// FIXME: results in undetected hits?
-		// return false;
+		q->b0 = true; q->p0 = ZVEC;
+		q->b1 = true; q->p1 = ZVEC;
+		return true;
 	}
 
 	float tn = -9999999.9f;

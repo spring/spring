@@ -50,11 +50,10 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser
 	../../rts/Rendering/Textures/TAPalette)
-TARGET_LINK_LIBRARIES(springserver SDL hpiutil2 7zip minizip lua)
+TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} hpiutil2 7zip minizip lua)
 if (MINGW)
-	TARGET_LINK_LIBRARIES (springserver ws2_32 boost_thread-mt boost_regex-mt)
+	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)
-	TARGET_LINK_LIBRARIES (springserver ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
 	ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
 endif (MINGW)
 

@@ -122,17 +122,17 @@ struct CollisionVolume {
 				volumeBoundingRadius = streflop::sqrt(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_CYLINDER: {
-				const float prhs = axisHScales[primaryAxis     ];	// primary axis half-scale
-				const float sahs = axisHScales[secondaryAxes[0]];	// 1st secondary axis half-scale
-				const float sbhs = axisHScales[secondaryAxes[1]];	// 2nd secondary axis half-scale
-				const float mshs = std::max(sahs, sbhs);					// max. secondary axis half-scale
+				const float prhs = axisHScales[primaryAxis     ];   // primary axis half-scale
+				const float sahs = axisHScales[secondaryAxes[0]];   // 1st secondary axis half-scale
+				const float sbhs = axisHScales[secondaryAxes[1]];   // 2nd secondary axis half-scale
+				const float mshs = std::max(sahs, sbhs);            // max. secondary axis half-scale
 
 				volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
 				volumeBoundingRadius = streflop::sqrtf(volumeBoundingRadiusSq);
 			} break;
 			case COLVOL_TYPE_ELLIPSOID: {
 				if (spherical) {
-					// std::max(x, y, z) would suffice here too
+					// max{x, y, z} would suffice here too
 					volumeBoundingRadius = axisHScales.x;
 				} else {
 					volumeBoundingRadius = std::max(axisHScales.x, std::max(axisHScales.y, axisHScales.z));

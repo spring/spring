@@ -271,7 +271,7 @@ void CFactory::StopBuild()
 	cob->Call("StopBuilding");
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
-			AddMetal(curBuild->metalCost * curBuild->buildProgress);
+			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
 			curBuild->KillUnit(false, true, NULL);
 		}
 		DeleteDeathDependence(curBuild);

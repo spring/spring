@@ -36,9 +36,9 @@ public:
 	void UnBlock();
 
 	// Static properties.
-	float mass;									// The physical mass of this object.
-	bool blocking;								// If this object is blocking/collidable. (NOTE: Some objects could be flat => not collidable.)
-	bool floatOnWater;							// If the object will float or not in water. (TODO: "float density;" would be more dynamic.)
+	float mass;									// the physical mass of this object
+	bool blocking;								// if this object can be collided with at all (NOTE: Some objects could be flat => not collidable.)
+	bool floatOnWater;							// if the object will float on water (TODO: "float density;" would be more dynamic.)
 	bool isUnderWater;
 	bool immobile;								// Immobile objects can not be moved. (Except perhaps along y-axis, to make them stay on ground.)
 	bool blockHeightChanges;					// map height cannot change under this object

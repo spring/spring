@@ -15,7 +15,7 @@
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
 #endif
-#include <malloc.h>
+#include <stdlib.h> // why is this here?
 
 #include "mmgr.h"
 
@@ -121,7 +121,7 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 #endif
 	hasLocalClient = false;
 	localClientNumber = 0;
-	IsPaused = false;
+	isPaused = false;
 	userSpeedFactor = 1.0f;
 	internalSpeed = 1.0f;
 	gamePausable = true;
@@ -236,7 +236,7 @@ void CGameServer::SkipTo(int targetframe)
 		if (UDPNet)
 			UDPNet->Update();
 		lastUpdate = SDL_GetTicks();
-		IsPaused = true;
+		isPaused = true;
 	}
 	else
 	{
@@ -261,7 +261,7 @@ void CGameServer::SendDemoData(const bool skipping)
 	netcode::RawPacket* buf = 0;
 	while ( (buf = demoReader->GetData(modGameTime)) )
 	{
-		unsigned msgCode = static_cast<unsigned>(buf->data[0]);
+		unsigned msgCode = buf->data[0];
 		if (msgCode == NETMSG_NEWFRAME || msgCode == NETMSG_KEYFRAME)
 		{
 			// we can't use CreateNewFrame() here
@@ -297,7 +297,7 @@ void CGameServer::SendDemoData(const bool skipping)
 
 void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	for (unsigned p = 0; p < static_cast<unsigned>(MAX_PLAYERS); ++p)
+	for (int p = 0; p < MAX_PLAYERS; ++p)
 	{
 		if (players[p])
 			players[p]->link->SendData(packet);
@@ -371,7 +371,7 @@ void CGameServer::CheckSync()
 #ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
 				Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
-				IsPaused = true;
+				isPaused = true;
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 #endif
 				//For each group, output a message with list of playernames in it.
@@ -408,7 +408,7 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if (!IsPaused && !WaitsOnCon())
+	if (!isPaused && !WaitsOnCon())
 	{
 		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
 	}
@@ -484,7 +484,7 @@ void CGameServer::Update()
 	if ((SDL_GetTicks() - serverStartTime) > serverTimeout)
 	{
 		bool hasPlayers = false;
-		for (unsigned i = 0; i < static_cast<unsigned>(MAX_PLAYERS); ++i)
+		for (int i = 0; i < MAX_PLAYERS; ++i)
 		{
 			if (players[i])
 				hasPlayers = true;
@@ -517,8 +517,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				if(gamePausable || players[a]->isLocal) // allow host to pause even if nopause is set
 				{
 					timeLeft=0;
-					if (IsPaused != !!inbuf[2]) {
-						IsPaused ? IsPaused = false : IsPaused = true;
+					if (isPaused != !!inbuf[2]) {
+						isPaused = !isPaused;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendPause(inbuf[1],inbuf[2]));
 				}
@@ -580,7 +580,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_CHAT: {
 			ChatMessage msg(packet);
-			if (static_cast<unsigned>(msg.fromPlayer) != a ) {
+			if (msg.fromPlayer != a ) {
 				Warning(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
 			} else {
 				GotChatMessage(msg);
@@ -773,16 +773,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							
 				switch (action)
 				{
-					case TEAMMSG_SELFD: {
-						Broadcast(CBaseNetProtocol::Get().SendSelfD(player));
-						if (numPlayersInTeam <= 1 && teams[fromTeam])
-						{
-							teams[fromTeam].reset();
-						}
-						players[player]->team = 0;
-						players[player]->spectator = true;
-						break;
-					}
 					case TEAMMSG_GIVEAWAY: {
 						const unsigned toTeam = inbuf[3];
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam));
@@ -823,7 +813,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						if (teams[team])
 #endif
 						{
-							teams[fromTeam].reset();
+							teams[team].reset();
 							for (int i = 0; i < MAX_PLAYERS; ++i)
 							{
 								if (players[i] && players[i]->team == team)
@@ -857,7 +847,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_CCOMMAND: {
 			CommandMessage msg(packet);
-			if (static_cast<unsigned>(msg.player) == a)
+			if (msg.player == a)
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a]->isLocal)
 				{
@@ -1006,7 +996,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		if (setup && (unsigned)setup->myPlayerNum == start)
 			start++;
 #endif
-		for (unsigned a = start; a < (unsigned)setup->numPlayers; a++) {
+		for (int a = start; a < setup->numPlayers; a++) {
 			if (!players[a] || !players[a]->readyToStart) {
 				allReady = false;
 				break;
@@ -1202,7 +1192,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "singlestep")
 	{
-		if (IsPaused && !demoReader)
+		if (isPaused && !demoReader)
 			gameServer->CreateNewFrame(true, true);
 	}
 	else
@@ -1233,15 +1223,15 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	unsigned numActiveAllyTeams = 0;
+	int numActiveAllyTeams = 0;
 
 #ifndef DEDICATED
-	unsigned numActiveTeams[MAX_TEAMS]; // active teams per ally team
+	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
-	for (unsigned a = 0; (int)a < gs->activeTeams; ++a)
+	for (int a = 0; a < gs->activeTeams; ++a)
 	{
 		bool hasPlayer = false;
-		for (unsigned b = 0; b < static_cast<unsigned>(gs->activePlayers); ++b) {
+		for (int b = 0; b < gs->activePlayers; ++b) {
 			if (gs->players[b]->active && gs->players[b]->team == static_cast<int>(a) && !gs->players[b]->spectator) {
 				hasPlayer = true;
 			}
@@ -1253,12 +1243,12 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[gs->AllyTeam(a)];
 	}
 
-	for (unsigned a = 0; (int)a < gs->activeAllyTeams; ++a)
+	for (int a = 0; a < gs->activeAllyTeams; ++a)
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 #else
 	int firstAllyTeam = -1;
-	for (unsigned i = 0; i < MAX_PLAYERS; ++i)
+	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		if (players[i] && !players[i]->spectator)
 		{
@@ -1320,8 +1310,8 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 #ifndef NO_AVI
 		rec = game && game->creatingVideo;
 #endif
-		bool normalFrame = !IsPaused && !rec;
-		bool videoFrame = !IsPaused && fixedFrameTime;
+		bool normalFrame = !isPaused && !rec;
+		bool videoFrame = !isPaused && fixedFrameTime;
 		bool singleStep = fixedFrameTime && !rec;
 	
 		if(normalFrame || videoFrame || singleStep){
@@ -1407,7 +1397,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 	}
 	if (players[hisNewNumber])
 	{
-		for (unsigned p = 0; p < static_cast<unsigned>(MAX_PLAYERS); ++p)
+		for (int p = 0; p < MAX_PLAYERS; ++p)
 		{
 			if (!players[p])
 			{
@@ -1480,7 +1470,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
 	Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
-	if (hostif && static_cast<unsigned>(msg.fromPlayer) != SERVER_PLAYER) {
+	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
 		// don't echo packets to autohost
 		hostif->SendPlayerChat(msg.fromPlayer, msg.msg);
 	}

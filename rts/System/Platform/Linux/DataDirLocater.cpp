@@ -297,11 +297,20 @@ void DataDirLocater::LocateDataDirs()
 
 	if (!writedir) {
 		// bail out
-		throw content_error("Not a single writable data directory found!\n\n"
+#ifdef WIN32
+		const std::string errstr = "Not a single writable data directory found!\n\n"
+				"Configure a writable data directory using either:\n"
+				"- the SPRING_DATADIR environment variable,\n"
+				"- a SpringData=C:/path/to/data declaration in spring's registry entry or\n"
+				"- by giving you write access to the installation directory";
+#else
+		const std::string errstr = "Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
-				"- the configuration file /etc/spring/datadir");
+				"- the configuration file /etc/spring/datadir";
+#endif
+		throw content_error(errstr);
 	}
 
 	// for now, chdir to the datadirectory as a safety measure:

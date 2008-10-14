@@ -108,7 +108,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
         newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
-	name += std::string("_") + VERSION_STRING;
+	name += std::string("_") + VERSION_STRING_DETAILED;
 	// games without gameSetup should have different names
 	if (!gameSetup) {
 	    name = "local_" + name;

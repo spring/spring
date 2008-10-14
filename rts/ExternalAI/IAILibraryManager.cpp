@@ -22,6 +22,7 @@
 #include "AILibraryManager.h"
 
 #include <iostream>
+#include <c++/4.2/bits/basic_string.h>
 
 IAILibraryManager* IAILibraryManager::myAILibraryManager = NULL;
 
@@ -34,25 +35,110 @@ IAILibraryManager* IAILibraryManager::GetInstance() {
 	return myAILibraryManager;
 }
 
-void IAILibraryManager::OutputSkirmishAIInfo() {
+std::string fillUpTo(const std::string& str, unsigned int numChars) {
+	
+	std::string filler = "";
+	
+	filler.append(numChars - str.size(), ' ');
+
+	return filler;
+}
+
+void IAILibraryManager::OutputAIInterfacesInfo() {
 
 	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
-	const std::vector<SSAIKey>* keys = myLibManager->GetSkirmishAIKeys();
+	const T_interfaceSpecs* specs =
+			myLibManager->GetInterfaceSpecifiers();
 	
 	std::cout << "#" << std::endl;
 	std::cout << "# Available Spring Skirmish AIs" << std::endl;
 	std::cout << "# -----------------------------" << std::endl;
-	std::cout << "# [Name]\t[Version]\t[Interface-name]\t[Interface-version]" << std::endl;
+	std::cout << "# [Name]              [Version]" << std::endl;
 	
-	std::vector<SSAIKey>::const_iterator key;
+	T_interfaceSpecs::const_iterator spec;
+    for (spec=specs->begin(); spec != specs->end(); spec++) {
+		std::cout << "  ";
+		std::cout << spec->shortName << fillUpTo(spec->shortName, 20);
+		std::cout << spec->version << fillUpTo(spec->version, 20) << std::endl;
+    }
+	
+	std::cout << "#" << std::endl;
+}
+
+void IAILibraryManager::OutputSkirmishAIInfo() {
+
+	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
+	const T_skirmishAIKeys* keys = myLibManager->GetSkirmishAIKeys();
+	
+	std::cout << "#" << std::endl;
+	std::cout << "# Available Spring Skirmish AIs" << std::endl;
+	std::cout << "# -----------------------------" << std::endl;
+	std::cout << "# [Name]              [Version]           "
+			"[Interface-name]    [Interface-version]" << std::endl;
+	
+	T_skirmishAIKeys::const_iterator key;
     for (key=keys->begin(); key != keys->end(); key++) {
 		std::cout << "  ";
-		std::cout << key->ai.shortName << "\t\t";
-		std::cout << key->ai.version << "\t\t";
-		std::cout << key->interface.shortName << "\t\t\t";
-		std::cout << key->interface.version;
-		std::cout << std::endl;
+		std::cout << key->ai.shortName << fillUpTo(key->ai.shortName, 20);
+		std::cout << key->ai.version << fillUpTo(key->ai.version, 20);
+		std::cout << key->interface.shortName
+				<< fillUpTo(key->interface.shortName, 20);
+		std::cout << key->interface.version << std::endl;
     }
+	
+	const T_dupSkirm* duplicateSkirmishAIInfos =
+			myLibManager->GetDuplicateSkirmishAIInfos();
+	for (T_dupSkirm::const_iterator info = duplicateSkirmishAIInfos->begin();
+			info != duplicateSkirmishAIInfos->end(); ++info) {
+		std::cout << "# WARNING: Duplicate Skirmish AI Info found:"
+				<< std::endl;
+		std::cout << "# \tfor Skirmish AI: " << info->first.ai.shortName
+				<< " " << info->first.ai.version << std::endl;
+		std::cout << "# \tin files:" << std::endl;
+		std::set<std::string>::const_iterator dir;
+		for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
+			std::cout << "# \t" << dir->c_str() << std::endl;
+		}
+	}
+	
+	std::cout << "#" << std::endl;
+}
+
+void IAILibraryManager::OutputGroupAIInfo() {
+	
+	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
+	const T_groupAIKeys* keys = myLibManager->GetGroupAIKeys();
+	
+	std::cout << "#" << std::endl;
+	std::cout << "# Available Spring Group AIs" << std::endl;
+	std::cout << "# --------------------------" << std::endl;
+	std::cout << "# [Name]              [Version]           "
+			"[Interface-name]    [Interface-version]" << std::endl;
+	
+	T_groupAIKeys::const_iterator key;
+    for (key=keys->begin(); key != keys->end(); key++) {
+		std::cout << "  ";
+		std::cout << key->ai.shortName << fillUpTo(key->ai.shortName, 20);
+		std::cout << key->ai.version << fillUpTo(key->ai.version, 20);
+		std::cout << key->interface.shortName
+				<< fillUpTo(key->interface.shortName, 20);
+		std::cout << key->interface.version << std::endl;
+    }
+	
+	const T_dupGroup* duplicateGroupAIInfos =
+			myLibManager->GetDuplicateGroupAIInfos();
+	for (T_dupGroup::const_iterator info = duplicateGroupAIInfos->begin();
+			info != duplicateGroupAIInfos->end(); ++info) {
+		std::cout << "# WARNING: Duplicate Group AI Info found:"
+				<< std::endl;
+		std::cout << "# \tfor Group AI: " << info->first.ai.shortName
+				<< " " << info->first.ai.version << std::endl;
+		std::cout << "# \tin files:" << std::endl;
+		std::set<std::string>::const_iterator dir;
+		for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
+			std::cout << "# \t" << dir->c_str() << std::endl;
+		}
+	}
 	
 	std::cout << "#" << std::endl;
 }

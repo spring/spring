@@ -170,13 +170,14 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	
 	assert(activeTeams <= MAX_TEAMS);
 	assert(activeAllyTeams <= MAX_TEAMS);
-	
-	for (unsigned i = 0; i < static_cast<unsigned>(activePlayers); ++i)
+
+	for (int i = 0; i < activePlayers; ++i)
 	{
+		// TODO: refactor
 		*static_cast<PlayerBase*>(players[i]) = setup->playerStartingData[i];
 	}
-	
-	for (unsigned i = 0; i < static_cast<unsigned>(activeTeams); ++i)
+
+	for (int i = 0; i < activeTeams; ++i)
 	{
 		teams[i]->metal = setup->startMetal;
 		teams[i]->metalIncome = setup->startMetal; // for the endgame statistics
@@ -219,9 +220,9 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		}
 	}
 
-	for (unsigned allyTeam1 = 0; allyTeam1 < static_cast<unsigned>(activeAllyTeams); ++allyTeam1)
+	for (int allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
 	{
-		for (unsigned allyTeam2 = 0; allyTeam2 < static_cast<unsigned>(activeAllyTeams); ++allyTeam2)
+		for (int allyTeam2 = 0; allyTeam2 < activeAllyTeams; ++allyTeam2)
 			allies[allyTeam1][allyTeam2] = setup->allyStartingData[allyTeam1].allies[allyTeam2];
 	}
 

@@ -347,7 +347,7 @@ bool CAVIGenerator::InitEngine(){
 		freeImageBuffers.push_back(tmpBuf);
 	}
 
-	HWND mainWindow = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING)).c_str());
+	HWND mainWindow = FindWindow(NULL, ("Spring " + std::string(VERSION_STRING_DETAILED)).c_str());
 	if(fullscreen){
 		ShowWindow(mainWindow, SW_SHOWMINNOACTIVE);
 	}

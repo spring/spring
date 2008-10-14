@@ -228,7 +228,7 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
-	if (!InitWindow(("Spring " + std::string(VERSION_STRING)).c_str())) {
+	if (!InitWindow(("Spring " + std::string(VERSION_STRING_DETAILED)).c_str())) {
 		SDL_Quit();
 		return false;
 	}
@@ -629,19 +629,21 @@ void SpringApp::InitOpenGL ()
  */
 void SpringApp::ParseCmdLine()
 {
-	cmdline->addoption('f', "fullscreen",     OPTPARM_NONE,   "",  "Run in fullscreen mode");
-	cmdline->addoption('w', "window",         OPTPARM_NONE,   "",  "Run in windowed mode");
-	cmdline->addoption('x', "xresolution",    OPTPARM_INT,    "",  "Set X resolution");
-	cmdline->addoption('y', "yresolution",    OPTPARM_INT,    "",  "Set Y resolution");
-	cmdline->addoption('m', "minimise",       OPTPARM_NONE,   "",  "Start minimised");
-	cmdline->addoption('s', "server",         OPTPARM_NONE,   "",  "Run as a server");
-	cmdline->addoption('c', "client",         OPTPARM_NONE,   "",  "Run as a client");
-	cmdline->addoption('p', "projectiledump", OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
-	cmdline->addoption('t', "textureatlas",   OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->addoption('a', "list-skirmish-ais",   OPTPARM_NONE,   "",  "Dump a list of all available skirmish AIs");
-	cmdline->addoption('q', "quit",           OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
-	cmdline->addoption('n', "name",           OPTPARM_STRING, "",  "Set your player name");
-	cmdline->addoption('C', "config",         OPTPARM_STRING, "",  "Configuration file");
+	cmdline->addoption('f', "fullscreen",         OPTPARM_NONE,   "",  "Run in fullscreen mode");
+	cmdline->addoption('w', "window",             OPTPARM_NONE,   "",  "Run in windowed mode");
+	cmdline->addoption('x', "xresolution",        OPTPARM_INT,    "",  "Set X resolution");
+	cmdline->addoption('y', "yresolution",        OPTPARM_INT,    "",  "Set Y resolution");
+	cmdline->addoption('m', "minimise",           OPTPARM_NONE,   "",  "Start minimised");
+	cmdline->addoption('s', "server",             OPTPARM_NONE,   "",  "Run as a server");
+	cmdline->addoption('c', "client",             OPTPARM_NONE,   "",  "Run as a client");
+	cmdline->addoption('p', "projectiledump",     OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
+	cmdline->addoption('t', "textureatlas",       OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->addoption('i', "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
+	cmdline->addoption('a', "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
+	cmdline->addoption('g', "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
+	cmdline->addoption('q', "quit",               OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
+	cmdline->addoption('n', "name",               OPTPARM_STRING, "",  "Set your player name");
+	cmdline->addoption('C', "config",             OPTPARM_STRING, "",  "Configuration file");
 	cmdline->parse();
 
 	string configSource;
@@ -667,8 +669,14 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
+	} else if (cmdline->result("list-ai-interfaces")) {
+		IAILibraryManager::OutputAIInterfacesInfo();
+		exit(0);
 	} else if (cmdline->result("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
+		exit(0);
+	} else if (cmdline->result("list-group-ais")) {
+		IAILibraryManager::OutputGroupAIInfo();
 		exit(0);
 	}
 
@@ -1070,8 +1078,13 @@ int SpringApp::Run (int argc, char *argv[])
 		if (globalQuit)
 			break;
 
-		if (!Update())
-			break;
+		try {
+			if (!Update())
+				break;
+		} catch (content_error &e) {
+			logOutput << "Caught content exception: " << e.what() << "\n";
+			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
+		}
 	}
 	ENTER_MIXED;
 
