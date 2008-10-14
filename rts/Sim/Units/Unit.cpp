@@ -1587,7 +1587,8 @@ void CUnit::Init(const CUnit* builder)
 
 	if (commandAI->CanChangeFireState()) {
 		if (unitDef->fireState < 0) {
-			if (builder != NULL) {
+			if (builder != NULL && (builder->unitDef->type == "Factory"
+						|| dynamic_cast<CFactoryCAI*>(builder->commandAI))) {
 				fireState = builder->fireState;
 			} else {
 				fireState = 2;
