@@ -110,8 +110,6 @@ void AAIConstructor::Update()
 					construction_def_id = def_id;
 					task = BUILDING;
 
-					++ai->futureUnits[cat];
-
 					//if(bt->IsFactory(def_id))
 					//	++ai->futureFactories;
 
@@ -568,7 +566,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 		
 
 		// get safe position
-		pos = ai->execute->GetSafePos(def_id);
+		pos = ai->execute->GetSafePos(def_id, pos);
 
 		if(pos.x > 0)
 		{

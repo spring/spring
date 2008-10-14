@@ -198,7 +198,7 @@ void AAIBrain::GetNewScoutDest(float3 *dest, int scout)
 					// possible scout dest, try to find pos in sector
 					pos = ZeroVector;
 
-					sector->GetMovePos(&pos, scout_movement_type, continent); 
+					sector->GetMovePosOnContinent(&pos, scout_movement_type, continent); 
 					
 					if(pos.x > 0)
 					{

@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
 #pragma once
 
 #include "AAI.h"
@@ -36,8 +45,7 @@ public:
 	void UpdateRecon(); 
 
 	// returns a position to retreat unit of certain type
-	float3 GetSafePos(int def_id);
-	float3 GetSafePos(bool land, bool water);
+	float3 GetSafePos(int def_id, float3 unit_pos);
 
 	// updates average ressource usage
 	void UpdateRessources();
@@ -125,8 +133,8 @@ public:
 	// 
 	AAIGroup* GetClosestGroupOfCategory(UnitCategory category, UnitType type, float3 pos, int importance); 
 
-	float3 GetRallyPoint(unsigned int unit_movement_type, int min_dist, int max_dist);
-	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, float3 pos, int min_dist, int max_dist);
+	float3 GetRallyPoint(unsigned int unit_movement_type, int continent_id, int min_dist, int max_dist);
+	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist);
 
 	AAIMetalSpot* FindMetalSpotClosestToBuilder(int land_mex, int water_mex);
 	AAIMetalSpot* FindMetalSpot(bool land, bool water);

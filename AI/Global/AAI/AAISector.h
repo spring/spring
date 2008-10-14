@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+// 
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
 #pragma once
 
 #include "aidef.h"
@@ -87,16 +96,16 @@ public:
 	// returns center of the sector
 	float3 GetCenter();
 
-	// returns a position in sector for the movement type (ZeroVector if none found)
-	float3 GetMovePos(unsigned int unit_movement_type);
+	// returns a free position in sector where units can be send to regardless of movement_type (ZeroVector if none found)
+	void GetMovePos(float3 *pos);
 
-	// returns a position in sector on specified continent for the movement type (ZeroVector if none found)
-	void GetMovePos(float3 *pos, unsigned int movement_type, int continent); 
+	// returns a free position in sector on specified continent for the movement type (ZeroVector if none found)
+	void GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent); 
 
 	// returns true is pos is within sector
 	bool PosInSector(float3 *pos);
 
-	// get water/flat gorund ratio
+	// get water/flat ground ratio
 	float GetWaterRatio();
 	float GetFlatRatio();
 

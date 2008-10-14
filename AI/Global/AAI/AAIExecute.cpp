@@ -252,9 +252,16 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 {
 	UnitType unit_type = bt->GetUnitType(def_id);
 
+	// determine continent if necessary
+	int continent_id = -1;
+
+	if(bt->units_static[def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
+		continent_id = map->GetContinentID(&cb->GetUnitPos(unit_id));
+
+	// try to add unit to an existing group 
 	for(list<AAIGroup*>::iterator group = ai->group_list[category].begin(); group != ai->group_list[category].end(); ++group)
 	{
-		if((*group)->AddUnit(unit_id, def_id, unit_type))
+		if((*group)->AddUnit(unit_id, def_id, unit_type, continent_id))
 		{
 			ai->ut->units[unit_id].group = *group;
 			return;
@@ -262,21 +269,16 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 	}
 
 	// end of grouplist has been reached and unit has not been assigned to any group
-	// -> create newone
-	AAIGroup *new_group;
+	// -> create new one
 
-	try
-	{
-		new_group = new AAIGroup(cb, ai, bt->unitList[def_id-1], unit_type);
-	}
-	catch(...) //catches everything
-	{
-		fprintf(ai->file, "Exception thrown when allocating memory for new group");
-		return;
-	}
+	// get continent for ground assault units, even if they are amphibious (otherwise non amphib ground units will be added no matter which continent they are on)
+	if(category == GROUND_ASSAULT  && continent_id == 1)
+		continent_id = map->GetContinentID(&cb->GetUnitPos(unit_id));
+
+	AAIGroup *new_group = new AAIGroup(ai, bt->unitList[def_id-1], unit_type, continent_id);
 
 	ai->group_list[category].push_back(new_group);
-	new_group->AddUnit(unit_id, def_id, unit_type);
+	new_group->AddUnit(unit_id, def_id, unit_type, continent_id);
 	ai->ut->units[unit_id].group = new_group;
 }
 
@@ -681,73 +683,95 @@ void AAIExecute::InitBuildques()
 	}
 }
 
-float3 AAIExecute::GetRallyPoint(unsigned int unit_movement_type, int min_dist, int max_dist)
+float3 AAIExecute::GetRallyPoint(unsigned int unit_movement_type, int continent_id, int min_dist, int max_dist)
 {
 	float3 pos;
 
-	// check neighbouring sectors
-	for(int i = min_dist; i <= max_dist; ++i)
+	// continent bound units must get a rally point on their current continent
+	if(unit_movement_type & MOVE_TYPE_CONTINENT_BOUND)
 	{
-		if(unit_movement_type & MOVE_TYPE_GROUND)
-			brain->sectors[i].sort(suitable_for_ground_rallypoint);
-		else if(unit_movement_type & MOVE_TYPE_SEA)
-			brain->sectors[i].sort(suitable_for_sea_rallypoint);
-		else 
+		// check neighbouring sectors
+		for(int i = min_dist; i <= max_dist; ++i)
+		{
+			if(unit_movement_type & MOVE_TYPE_GROUND)
+				brain->sectors[i].sort(suitable_for_ground_rallypoint);
+			else if(unit_movement_type & MOVE_TYPE_SEA)
+				brain->sectors[i].sort(suitable_for_sea_rallypoint);
+
+			for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); ++sector)
+			{
+				(*sector)->GetMovePosOnContinent(&pos, unit_movement_type, continent_id);
+
+				if(pos.x > 0)
+					return pos;
+			}
+		}
+	}
+	else // non continent bound units may get rally points at any pos (sea or ground)
+	{
+		// check neighbouring sectors
+		for(int i = min_dist; i <= max_dist; ++i)
+		{
 			brain->sectors[i].sort(suitable_for_all_rallypoint);
 
-		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
-		{
-			pos = (*sector)->GetMovePos(unit_movement_type);
+			for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); ++sector)
+			{
+				(*sector)->GetMovePos(&pos);
 
-			if(pos.x > 0)
-				return pos;
+				if(pos.x > 0)
+					return pos;
+			}
 		}
 	}
 
 	return ZeroVector;	
 }
 
-float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, float3 pos, int min_dist, int max_dist)
+float3 AAIExecute::GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist)
 {
-	//float3 pos;
+	float3 move_pos;
+	
 
-	// check neighbouring sectors
-	for(int i = min_dist; i <= max_dist; ++i)
+	if(unit_movement_type & MOVE_TYPE_CONTINENT_BOUND)
 	{
-		if(unit_movement_type & MOVE_TYPE_GROUND)
-			brain->sectors[i].sort(suitable_for_ground_rallypoint);
-		else if(unit_movement_type & MOVE_TYPE_SEA)
-			brain->sectors[i].sort(suitable_for_sea_rallypoint);
-		else 
-			brain->sectors[i].sort(suitable_for_all_rallypoint);
-
-		for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); sector++)
+		for(int i = min_dist; i <= max_dist; ++i)
 		{
-			pos = (*sector)->GetMovePos(unit_movement_type);
+			if(unit_movement_type & MOVE_TYPE_GROUND)
+				brain->sectors[i].sort(suitable_for_ground_rallypoint);
+			else if(unit_movement_type & MOVE_TYPE_SEA)
+				brain->sectors[i].sort(suitable_for_sea_rallypoint);
 
-			if(pos.x > 0)
-				return pos;
+			for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); ++sector)
+			{
+				(*sector)->GetMovePosOnContinent(&move_pos, unit_movement_type, continent_id);
+
+				if(move_pos.x > 0)
+					return move_pos;
+			}
 		}
 	}
+	else
+	{
+		for(int i = min_dist; i <= max_dist; ++i)
+		{
+			brain->sectors[i].sort(suitable_for_all_rallypoint);
+
+			for(list<AAISector*>::iterator sector = brain->sectors[i].begin(); sector != brain->sectors[i].end(); ++sector)
+			{
+				(*sector)->GetMovePos(&move_pos);
+
+				if(move_pos.x > 0)
+					return move_pos;
+			}
+		}
+	}
+
 
 	return ZeroVector;	
 
 	/*AAISector* best_sector = 0;
 	float best_rating = 0, my_rating;
 	float3 center;
-
-	int combat_cat = bt->GetIDOfAssaultCategory(category);
-
-	bool land = true; 
-	bool water = true;
-
-	if(!cfg->AIR_ONLY_MOD)
-	{
-		if(category == GROUND_ASSAULT)
-			water = false;
-		else if(category == SEA_ASSAULT || category == SUBMARINE_ASSAULT)
-			land = false;
-	}	
 
 	// check neighbouring sectors
 	for(int i = min_dist; i <= max_dist; i++)
@@ -962,12 +986,14 @@ bool AAIExecute::BuildExtractor()
 						builder->GiveConstructionOrder(mex, spot->pos, water);
 						spot->occupied = true;
 					}
+					else //try to request more builders if none available	
+						bt->AddBuilder(mex);
 				}
 			}
 			else
 			{	
 				// check mex upgrade
-				if(ai->futureUnits[EXTRACTOR] + ai->requestedUnits[EXTRACTOR] < 1)
+				if(ai->futureUnits[EXTRACTOR] + ai->requestedUnits[EXTRACTOR] + ai->requestedUnits[EXTRACTOR] < 1)
 					CheckMexUpgrade();
 
 				// request metal makers if no spot found
@@ -2595,7 +2621,7 @@ void AAIExecute::CheckDefences()
 
 		if(status == BUILDORDER_NOBUILDER)
 		{
-			float temp = 0.05 + 2.0 / ( (float) first->defences.size() + 0.5f); 
+			float temp = 0.05f + 1.5f / ( (float) first->defences.size() + 0.5f); 
 
 			if(urgency[STATIONARY_DEF] < temp)
 				urgency[STATIONARY_DEF] = temp;
@@ -3419,7 +3445,6 @@ AAIGroup* AAIExecute::GetClosestGroupOfCategory(UnitCategory category, UnitType 
 					best_rating = my_rating;
 				}
 			}
-
 		}
 	}
 
@@ -3579,54 +3604,49 @@ void AAIExecute::DefendUnitVS(int unit, const UnitDef *def, UnitCategory categor
 	}
 }
 
-float3 AAIExecute::GetSafePos(int def_id)
+float3 AAIExecute::GetSafePos(int def_id, float3 unit_pos)
 {
-	// determine if land or water pos needed
-	bool land = false;
-	bool water = false;
+	float3 best_pos = ZeroVector;
+	float my_rating, best_rating = 10000.0f;
 
-	if(cfg->AIR_ONLY_MOD)
+	if(bt->units_static[def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND)
 	{
-		land = true; 
-		water = true;
-	}
-	else
-	{
-		if(bt->unitList[def_id-1]->movedata)
+		// get continent id of the unit pos 
+		float3 pos;
+		int cont_id = map->GetContinentID(&unit_pos);
+
+		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 		{
-			if(bt->unitList[def_id-1]->movedata->moveType == MoveData::Ground_Move)
-				land = true;
-			else if(bt->unitList[def_id-1]->movedata->moveType == MoveData::Ship_Move)
-				water = true;
-			else // hover 
+			pos = (*sector)->GetCenter();
+
+			if(map->GetContinentID(&pos) == cont_id)
 			{
-				land = true; 
-				water = true;
+				my_rating = (*sector)->threat - (*sector)->GetMapBorderDist();
+
+				if((*sector)->threat < best_rating)
+				{
+					best_rating = my_rating;
+					best_pos = pos;
+				}
 			}
 		}
-		else // air
-		{
-			land = true; 
-			water = true;
-		}
+
 	}
-
-	return GetSafePos(land, water);
-}
-
-float3 AAIExecute::GetSafePos(bool land, bool water)
-{
-	// check all base sectors
-	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
+	else // non continent bound movement types (air, hover, amphibious)
 	{
-		if((*sector)->threat < 1)
+		for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); ++sector)
 		{
-			if( (land && (*sector)->water_ratio < 0.7) || (water && (*sector)->water_ratio > 0.35)) 
-				return (*sector)->GetCenter();
+			my_rating = (*sector)->threat - (*sector)->GetMapBorderDist();
+
+			if((*sector)->threat < best_rating)
+			{
+				best_rating = my_rating;
+				best_pos = (*sector)->GetCenter();
+			}
 		}
 	}
 
-	return ZeroVector;
+	return best_pos;
 }
 
 void AAIExecute::ChooseDifferentStartingSector(int x, int y)
@@ -3762,8 +3782,8 @@ void AAIExecute::GiveOrder(Command *c, int unit, const char *owner)
 {
 	++issued_orders;
 
-	if(issued_orders%50 == 0)
-		fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
+	//if(issued_orders%50 == 0)
+	//	fprintf(ai->file, "%i th order has been given by %s in frame %i\n", issued_orders, owner,  cb->GetCurrentFrame());
 
 	cb->GiveOrder(unit, c);
 }
