@@ -1,5 +1,29 @@
 Spring change log
 
+0.77b4:
+Crashes:
+ - fixed a crash (on exit) in colormap.cpp
+ - fixed another division /0
+ - fix crashes on "/take"
+ - fix crash when loading units into transporters
+
+User Interface:
+ - fix tabulator toggling overview mode
+ - reduce the maxBreaking-is-zero message spam
+ - fix far textures showing up as gray rectangles
+ - the error message "no writable directories found" now has a windows version too
+ - Fix explosion spheres appearing at wrong position
+ - fix attackorder for radar dots
+
+ Engine:
+ - fix attacking gaia units
+ - fix the collision detection for dgun (and other noExplode) projectiles
+ - Made gunships (and possibly other units too) point their noses at the midPos of their target instead of the pos, the old behaviour could cause trouble with units where midPos and pos differ much.
+ - added crashDrag tag (float, default 0.005) to fighter/bomber planes, when the plane is crashing it uses this drag instead of the automatically calculated drag it uses when flying. The calculated drag is no longer used when crashing, even if no crashDrag tag is present in the unit fbi
+ - fix (AirMoveType) aircraft refueling
+ - fix gameend detected not propperly
+ - gameslowdown triggers at higher CPU usage and is limited to half the userspeed
+
 0.77b3:
 User Interface
  - added a simple Orbit-Camera controller
