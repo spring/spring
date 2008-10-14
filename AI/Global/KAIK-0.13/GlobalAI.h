@@ -39,7 +39,6 @@ class CGlobalAI: public IGlobalAI {
 		void Serialize(creg::ISerializer* s);
 
 		AIClasses* ai;
-		std::vector<CUNIT> MyUnits;
 
 		char c[1024];
 };

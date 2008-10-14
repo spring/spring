@@ -80,13 +80,12 @@ class DGunController {
 
 		void issueOrder(int, int, int);
 		void issueOrder(float3, int, int);
-		void setFireState(int);
 
 		IAICallback* gAICallback;
 		AIClasses* ai;
 		const UnitDef* commanderUD;
 		const WeaponDef* commanderWD;
-		int* units;
+		std::vector<int> units;
 		ControllerState state;
 		int commanderID;
 };
