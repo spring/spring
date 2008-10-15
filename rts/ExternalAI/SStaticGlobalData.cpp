@@ -46,7 +46,7 @@ std::string ensureNoPathSeparatorAtTail(const std::string& inPath) {
 }
 
 #include <stdio.h>	// for file IO
-SStaticGlobalData* createStaticGlobalData() {
+struct SStaticGlobalData* createStaticGlobalData() {
 	
 	const std::vector<std::string> dds =
 			FileSystemHandler::GetInstance().GetDataDirectories();
@@ -72,7 +72,7 @@ SStaticGlobalData* createStaticGlobalData() {
 	return staticGlobalData;
 }
 
-void freeStaticGlobalData(SStaticGlobalData* staticGlobalData) {
+void freeStaticGlobalData(struct SStaticGlobalData* staticGlobalData) {
 	
 	free(const_cast<char*>(staticGlobalData->springVersion));
 	for(unsigned int i=0; i < staticGlobalData->numDataDirs; ++i)

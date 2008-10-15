@@ -124,11 +124,10 @@ struct SAIInterfaceLibrary {
 	 * This function is called right after the library is dynamically loaded.
 	 * It can be used to initialize variables and to check or prepare
 	 * the environment (os, engine, filesystem, ...).
-	 *
-	 * CAUTION: param staticGlobalData is only guaranteed to be valid
-	 * during the runtime of this function!
-	 *
 	 * See also releaseStatic().
+	 *
+	 * NOTE: param staticGlobalData is guaranteed to be valid till
+	 * releaseStatic() is called.
 	 *
 	 * NOTE: this method is optional. An AI Interface not exporting this
 	 * function is still valid.
@@ -137,7 +136,7 @@ struct SAIInterfaceLibrary {
 	 *								and the environment
 	 * @return	init ok: 0, on error: != 0
 	 */
-	int (CALLING_CONV *initStatic)(const SStaticGlobalData* staticGlobalData);
+	int (CALLING_CONV *initStatic)(const struct SStaticGlobalData* staticGlobalData);
 	
 	/**
 	 * This function is called right right before the library is unloaded.
