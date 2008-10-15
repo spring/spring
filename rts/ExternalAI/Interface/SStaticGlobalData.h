@@ -46,8 +46,8 @@ struct SStaticGlobalData {
 #endif	/* __cplusplus */
 
 #if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-SStaticGlobalData* createStaticGlobalData();
-void freeStaticGlobalData(SStaticGlobalData* staticGlobalData);
+struct SStaticGlobalData* createStaticGlobalData();
+void freeStaticGlobalData(struct SStaticGlobalData* staticGlobalData);
 #endif	/* defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 #endif	/* _SSTATICGLOBALDATA_H */
