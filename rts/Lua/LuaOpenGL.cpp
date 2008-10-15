@@ -4057,6 +4057,8 @@ int LuaOpenGL::Screenshot(lua_State* L)
 
 	b.Save(fileName,false);
 	delete[] buf;
+
+	return 0;
 }
 
 

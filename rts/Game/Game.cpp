@@ -672,7 +672,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
 
 	if (userWriting) {
-		int actionIndex;
+		unsigned int actionIndex;
 		for (actionIndex = 0; actionIndex < (int)actionList.size(); actionIndex++) {
 			const Action& action = actionList[actionIndex];
 
@@ -724,7 +724,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 				writingPos = (int)head.length();
 				if (!partials.empty()) {
 					string msg;
-					for (int i = 0; i < partials.size(); i++) {
+					for (unsigned int i = 0; i < partials.size(); i++) {
 						msg += "  ";
 						msg += partials[i];
 					}
@@ -975,7 +975,7 @@ bool CGame::ActionPressed(const Action& action,
 		SendNetChat(action.extra);
 	}
 	else if (cmd == "w") {
-		const int pos = action.extra.find_first_of(" ");
+		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const int playernum = gs->Player(action.extra.substr(0, pos));
 			if (playernum >= 0) {
@@ -989,21 +989,21 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput.Print(action.extra);
 	}
 	else if (cmd == "setf") {
-		const int pos = action.extra.find_first_of(" ");
+		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
 			configHandler.SetFloat(varName, atof(action.extra.substr(pos+1).c_str()));
 		}
 	}
 	else if (cmd == "seti") {
-		const int pos = action.extra.find_first_of(" ");
+		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
 			configHandler.SetInt(varName, atoi(action.extra.substr(pos+1).c_str()));
 		}
 	}
 	else if (cmd == "sets") {
-		const int pos = action.extra.find_first_of(" ");
+		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
 			configHandler.SetString(varName, action.extra.substr(pos+1));
@@ -3203,7 +3203,7 @@ void CGame::SimFrame() {
 
 		std::vector<int> args;
 		args.push_back(0);
-		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/**/,args);
+		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
 		float3 relPos=unit->localmodel->GetPiecePos(args[0]);
 		float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
 		pos+=UpVector*7;
@@ -4043,7 +4043,7 @@ void CGame::UpdateUI()
 
 		std::vector<int> args;
 		args.push_back(0);
-		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/**/,args);
+		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
 		float3 relPos = owner->localmodel->GetPiecePos(args[0]);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
 		                        + owner->updir    * relPos.y
@@ -4275,7 +4275,7 @@ void CGame::DrawDirectControlHud(void)
 		}
 
 		int numWeaponsToPrint = 0;
-		for (int a = 0; a < unit->weapons.size(); ++a) {
+		for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
 			const WeaponDef* wd = unit->weapons[a]->weaponDef;
 			if (!wd->isShield) {
 				++numWeaponsToPrint;
@@ -4291,7 +4291,7 @@ void CGame::DrawDirectControlHud(void)
 			const float fontSize = 1.2f * (lineHeight / maxLineHeight);
 			float yPos = yTop;
 
-			for (int a = 0; a < unit->weapons.size(); ++a) {
+			for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
 				const CWeapon* w = unit->weapons[a];
 				const WeaponDef* wd = w->weaponDef;
 				if (!wd->isShield) {
@@ -4331,7 +4331,7 @@ void CGame::DrawDirectControlHud(void)
 	camera->Update(false);		//draw some stuff in world coordinates
 	glDisable(GL_TEXTURE_2D);
 
-	for(int a=0;a<unit->weapons.size();++a){
+	for(unsigned int a=0;a<unit->weapons.size();++a){
 		const CWeapon* w = unit->weapons[a];
 		if(!w){
 			logOutput.Print("Null weapon in vector?");
@@ -4475,7 +4475,7 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-	    ((msg.fromPlayer >= MAX_PLAYERS) && (msg.fromPlayer != SERVER_PLAYER))) {
+		((msg.fromPlayer >= MAX_PLAYERS) && (msg.fromPlayer != SERVER_PLAYER))) {
 		return;
 	}
 
