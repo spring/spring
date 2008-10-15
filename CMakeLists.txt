@@ -53,7 +53,7 @@ if (MINGW)
 	set (Boost_REGEX_LIBRARY boost_regex-mt)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
 	set (DEVIL_ILU_LIBRARY ilu)
-	set (DEVIL_LIBRARIES "devil ${DEVIL_ILU_LIBRARY}")
+	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
 else (MINGW)
 	# AIs need it
 	FIND_PACKAGE(SDL REQUIRED)
