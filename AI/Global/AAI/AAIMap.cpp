@@ -15,28 +15,28 @@
 // all the static vars
 int AAIMap::aai_instances = 0;
 int AAIMap::xSize;
-int AAIMap::ySize;	
+int AAIMap::ySize;
 int AAIMap::xMapSize;
-int AAIMap::yMapSize;				
+int AAIMap::yMapSize;
 int AAIMap::xDefMapSize;
 int AAIMap::yDefMapSize;
 int AAIMap::xContMapSize;
-int AAIMap::yContMapSize;	
+int AAIMap::yContMapSize;
 int AAIMap::xSectors;
-int AAIMap::ySectors;				
+int AAIMap::ySectors;
 int AAIMap::xSectorSize; 
-int AAIMap::ySectorSize;		
+int AAIMap::ySectorSize;
 int AAIMap::xSectorSizeMap; 
 int AAIMap::ySectorSizeMap;
 
 list<AAIMetalSpot>  AAIMap::metal_spots;
 
 bool AAIMap::metalMap;
-MapType AAIMap::mapType;	
+MapType AAIMap::mapType;
 
 vector< vector<int> > AAIMap::team_sector_map;
-vector<int> AAIMap::buildmap;	
-vector<int> AAIMap::blockmap;	
+vector<int> AAIMap::buildmap;
+vector<int> AAIMap::blockmap;
 vector<float> AAIMap::plateau_map;
 vector<int> AAIMap::continent_map;	
 
