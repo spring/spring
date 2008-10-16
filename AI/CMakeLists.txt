@@ -6,26 +6,26 @@ list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
 
 ### Global AIs
 aux_source_directory(Global/KAI-0.2 kai02)
-add_library(KAI-0.2 SHARED ${kai02} ${creg})
+add_library(KAI-0.2 MODULE ${kai02} ${creg})
 
 aux_source_directory(Global/KAIK-0.13 kai013)
-add_library(KAIK-0.13 SHARED ${kai013} ${creg})
+add_library(KAIK-0.13 MODULE ${kai013} ${creg})
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/RAI)
 	aux_source_directory(Global/RAI rai)
 	#aux_source_directory(Global/RAI/KrogsMetalClass rai)
-	add_library(RAI-0.601 SHARED ${rai})
+	add_library(RAI-0.601 MODULE ${rai})
 	install (TARGETS RAI-0.601 DESTINATION ${DATADIR}/AI/Bot-libs)
 endif (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/RAI)
 
 aux_source_directory(Global/AAI aai)
-add_library(AAI SHARED ${aai})
+add_library(AAI MODULE ${aai})
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/JCAI)
 	if (UNIX)
 		# doesn't build in win32currently
 		aux_source_directory(Global/JCAI jcai)
-		add_library(JCAI SHARED ${jcai})
+		add_library(JCAI MODULE ${jcai})
 		install (TARGETS JCAI DESTINATION ${DATADIR}/AI/Bot-libs)
 	endif (UNIX)
 endif (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/JCAI)
@@ -41,13 +41,13 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/NTai)
 	aux_source_directory(Global/NTai/AI/NTai/Engine ntai)
 	aux_source_directory(Global/NTai/AI/NTai/Core ntai)
 	aux_source_directory(Global/NTai/AI/NTai/Agents ntai)
-	add_library(NTai SHARED ${ntai})
+	add_library(NTai MODULE ${ntai})
 	target_link_libraries(NTai ${Boost_THREAD_LIBRARY})
 	install (TARGETS NTai DESTINATION ${DATADIR}/AI/Bot-libs)
 endif (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/NTai)
 
 aux_source_directory(Global/TestGlobalAI testai)
-add_library(TestGlobalAI SHARED ${testai})
+add_library(TestGlobalAI MODULE ${testai})
 
 
 if (UNIX)
@@ -58,25 +58,25 @@ endif (UNIX)
 
 ### Group AIs
 aux_source_directory(Group/CentralBuildAI central)
-add_library(CentralBuildAI SHARED ${central})
+add_library(CentralBuildAI MODULE ${central})
 
 aux_source_directory(Group/EconomyAI economy)
-add_library(EconomyAI SHARED ${economy} ${creg})
+add_library(EconomyAI MODULE ${economy} ${creg})
 
 aux_source_directory(Group/MetalMakerAI metal)
-add_library(MetalMakerAI SHARED ${metal})
+add_library(MetalMakerAI MODULE ${metal})
 
 aux_source_directory(Group/MexUpgraderAI mex)
-add_library(MexUpgraderAI SHARED ${mex} ${creg})
+add_library(MexUpgraderAI MODULE ${mex} ${creg})
 
 aux_source_directory(Group/RadarAI radar)
-add_library(RadarAI SHARED ${radar})
+add_library(RadarAI MODULE ${radar})
 
 aux_source_directory(Group/ReportIdleAI idle)
-add_library(ReportIdleAI SHARED ${idle})
+add_library(ReportIdleAI MODULE ${idle})
 
 aux_source_directory(Group/SimpleFormationAI formation)
-add_library(SimpleFormationAI SHARED ${formation})
+add_library(SimpleFormationAI MODULE ${formation})
 
 
 install (TARGETS CentralBuildAI EconomyAI MetalMakerAI MexUpgraderAI RadarAI ReportIdleAI SimpleFormationAI DESTINATION ${DATADIR}/AI/Helper-libs)
