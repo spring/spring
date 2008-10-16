@@ -724,11 +724,11 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 			0.0f;
 	}
 
-	float goalDotFront = rightdir.dot(adjustedGoalDir);
-	float goalDotRight = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
+	float goalDotRight = rightdir.dot(adjustedGoalDir);
+	float goalDotFront = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
 
-	if (goalDotRight > 0.0f) {
-		goalDotFront /= goalDotRight;
+	if (goalDotFront > 0.0f) {
+		goalDotRight /= goalDotFront;
 	}
 
 
@@ -737,14 +737,14 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		&& (!owner->directControl || owner->directControl->mouse2)
 #endif
 		)
-		goalDotFront = -goalDotFront;
+		goalDotRight = -goalDotRight;
 	if (lastColWarning) {
-		goalDotFront -= otherDir.dot(rightdir) * otherThreat;
+		goalDotRight -= otherDir.dot(rightdir) * otherThreat;
 	}
 
 	// roll
 	if (speedf > 1.5f && pos.y + speed.y * 10 > gHeight + wantedHeight * 0.6f) {
-		float goalBankDif = goalDotFront + rightdir.y * 0.5f;
+		float goalBankDif = goalDotRight + rightdir.y * 0.5f;
 		if (goalBankDif > maxAileron*speedf * 4 && rightdir.y > -maxBank) {
 			aileron = 1;
 		} else if (goalBankDif < -maxAileron * speedf * 4 && rightdir.y < maxBank) {
@@ -770,13 +770,13 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// yaw
 	if (pos.y > gHeight + 15) {
-		if (goalDotFront < -maxRudder * speedf * 2) {
+		if (goalDotRight < -maxRudder * speedf * 2) {
 			rudder = -1;
-		} else if (goalDotFront > maxRudder * speedf * 2) {
+		} else if (goalDotRight > maxRudder * speedf * 2) {
 			rudder = 1;
 		} else {
 			if (speedf > 0.0f && maxRudder > 0.0f) {
-				rudder = goalDotFront / (maxRudder * speedf * 2);
+				rudder = goalDotRight / (maxRudder * speedf * 2);
 			} else {
 				rudder = 0;
 			}
