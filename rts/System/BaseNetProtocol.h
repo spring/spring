@@ -143,7 +143,7 @@ public:
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, uchar script, uchar mode, const std::string& msg);
+	PacketType SendLuaMsg(uchar myPlayerNum, short script, uchar mode, const std::string& msg);
 	
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	PacketType SendResign(uchar myPlayerNum);
