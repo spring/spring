@@ -96,73 +96,9 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
-!include fileassoc.nsh
-
-Function CheckTASClientRunning
-  FindProcDLL::FindProc "TASClient.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Please close TASClient before installing."
-  Abort
-proceed:
-  Return
-FunctionEnd
-
-Function CheckSpringLobbyRunning
-  FindProcDLL::FindProc "springlobby.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Please close Spring Lobby before installing."
-  Abort
-proceed:
-  Return
-FunctionEnd
-
-Function CheckSpringDownloaderRunning
-  FindProcDLL::FindProc "SpringDownloader.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Please close Spring Downloader before installing."
-  Abort
-proceed:
-  Return
-FunctionEnd
-
-Function CheckCADownloaderRunning
-  FindProcDLL::FindProc "CADownloader.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Please close CA Downloader before installing."
-  Abort
-proceed:
-  Return
-FunctionEnd
-
-
-Function CheckSpringSettingsRunning
-  FindProcDLL::FindProc "springsettings.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Please close Spring Settings before installing."
-  Abort
-proceed:
-  Return
-FunctionEnd
+!include "include\fileassoc.nsh"
+!include "include\otacontent.nsh"
+!include "include\checkrunning.nsh"
 
 
 Function .onInit
@@ -179,7 +115,7 @@ Function .onInit
   ;SectionGetFlags 0 $0 ; Get the current selection of the first component and store in variable $0
   ;IntOp $0 $0 | 16 ; Change the selection flag in variable $0 to read only (16)
   ;SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
-  
+
   ;Pop $0 ; Delete variable $0
   ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
@@ -229,10 +165,10 @@ FunctionEnd
 Function GetDotNETVersion
   Push $0 ; Create variable 0 (version number).
   Push $1 ; Create variable 1 (error).
-  
+
   ; Request the version number from the Microsoft .NET Runtime Execution Engine DLL
   System::Call "mscoree::GetCORVersion(w .r0, i ${NSIS_MAX_STRLEN}, *i) i .r1 ?u"
- 
+
  ; If error, set "not found" as the top element of the stack. Otherwise, set the version number.
   StrCmp $1 "error" 0 +2 ; If variable 1 is equal to "error", continue, otherwise skip the next couple of lines.
   StrCpy $0 "not found"
@@ -250,7 +186,7 @@ true:
     Delete   "$INSTDIR\dotnetfx.exe"
   Goto next
 false:
-next:  
+next:
 FunctionEnd
 
 Function OldDotNet
@@ -292,52 +228,6 @@ FunctionEnd
 ; For CA and Evolution: END
 
 
-;Three functions which check to make sure OTA Content is installed before installing Mods that depend on it.
-Function CheckTATextures
-  ClearErrors
-  FileOpen $0 "$INSTDIR\base\tatextures_v062.sdz" r
-  IfErrors Fail
-  FileSeek $0 0 END $1
-
-  IntCmp $1 1245637 Done              
-Fail:
-  inetc::get \
-             "http://installer.clan-sy.com/base/tatextures_v062.sdz" "$INSTDIR\base\tatextures_v062.sdz" 
-Done:
-  FileClose $0
-
-FunctionEnd
-
-Function CheckOTAContent
-  ClearErrors
-  FileOpen $0 "$INSTDIR\base\otacontent.sdz" r
-  IfErrors Fail
-  FileSeek $0 0 END $1
-
-  IntCmp $1 7421640 Done              
-Fail:
-  inetc::get \
-             "http://installer.clan-sy.com/base/otacontent.sdz" "$INSTDIR\base\otacontent.sdz" 
-Done:
-  FileClose $0
-
-FunctionEnd
-
-Function CheckTAContent
-  ClearErrors
-  FileOpen $0 "$INSTDIR\base\tacontent_v2.sdz" r
-  IfErrors Fail
-  FileSeek $0 0 END $1
-
-  IntCmp $1 284 Done              
-Fail:
-  inetc::get \
-             "http://installer.clan-sy.com/base/tacontent_v2.sdz" "$INSTDIR\base\tacontent_v2.sdz"
-Done:
-  FileClose $0
-
-FunctionEnd
-
 
 Section "Main application (req)" SEC_MAIN
 !ifdef SP_UPDATE
@@ -352,7 +242,7 @@ Section "Main application (req)" SEC_MAIN
 SectionEnd
 
 
-SectionGroup "Multiplayer battlerooms" 
+SectionGroup "Multiplayer battlerooms"
   Section "TASClient" SEC_TASCLIENT
   !define INSTALL
   !include "sections\tasclient.nsh"
@@ -363,7 +253,7 @@ SectionGroup "Multiplayer battlerooms"
   !define INSTALL
   !include "sections\springlobby.nsh"
   !undef INSTALL
-  SectionEnd  
+  SectionEnd
 SectionGroupEnd
 
 
@@ -411,7 +301,7 @@ SectionGroup "Mods"
 	!include "sections\xta.nsh"
 	!undef INSTALL
 	SectionEnd
- 
+
 	Section "Gundam" SEC_GUNDAM
 	!define INSTALL
 	AddSize 51000
@@ -425,7 +315,7 @@ SectionGroup "Mods"
 	!include "sections\kp.nsh"
 	!undef INSTALL
 	SectionEnd
-	
+
 	Section "Evolution RTS" SEC_EVOLUTION
 	!define INSTALL
 	AddSize 38700
