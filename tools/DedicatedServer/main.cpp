@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 			std::cout << "Failed to load script" << std::endl;
 			return 1;
 		}
+		gameSetup->LoadStartPositions();
 		
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
