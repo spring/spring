@@ -388,6 +388,14 @@ bool CGameSetup::Init(const char* buf, int size)
 
 	// Game parameters
 	scriptName  = file.SGetValueDef("Commanders", "GAME\\ScriptName");
+
+	// Used by dedicated server only
+	int tempMapHash, tempModHash;
+	file.GetDef(tempMapHash, "0", "GAME\\MapHash");
+	file.GetDef(tempModHash, "0", "GAME\\ModHash");
+	mapHash = (int) tempMapHash;
+	modHash = (int) tempModHash;
+
 	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	luaGaiaStr  = file.SGetValueDef("1", "GAME\\LuaGaia");
