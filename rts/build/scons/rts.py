@@ -259,9 +259,9 @@ def generate(env):
 		elif int(level) >= 1 and int(level) <= 3:
 			print "level", level, "debugging enabled,",
 			env['debug'] = level
-			# MinGW gdb chokes on the dwarf debugging format produced by '-ggdb',
-			# so use the more generic '-g' instead.
-			if env['platform'] == 'windows' or env['syncdebug']:
+			# MinGW gdb used to choke on the dwarf debugging format produced by '-ggdb',
+			# not true as of gdb 6.8
+			if env['syncdebug']:
 				env.AppendUnique(CCFLAGS=['-g'])
 			else:
 				env.AppendUnique(CCFLAGS=['-ggdb'+level])
