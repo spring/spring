@@ -403,7 +403,7 @@ EndNormalControl:
 void CAirMoveType::SlowUpdate(void)
 {
 	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0.0f) {
-		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.f / GAME_SPEED));
+		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.0f / GAME_SPEED));
 	}
 
 	if (owner->pos != oldSlowUpdatePos) {
@@ -448,7 +448,7 @@ void CAirMoveType::UpdateManeuver(void)
 			// Immelman
 			int aileron = 0, elevator = 0;
 
-			if (owner->updir.y > 0) {
+			if (owner->updir.y > 0.0f) {
 				if (owner->rightdir.y > maxAileron * speedf) {
 					aileron = 1;
 				} else if (owner->rightdir.y < -maxAileron * speedf) {
@@ -456,14 +456,14 @@ void CAirMoveType::UpdateManeuver(void)
 				}
 			}
 
-			if (fabs(owner->rightdir.y) < maxAileron * 3 * speedf || owner->updir.y < 0)
+			if (fabs(owner->rightdir.y) < maxAileron * 3.0f * speedf || owner->updir.y < 0.0f)
 				elevator = 1;
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 
-			if ((owner->updir.y < 0 && owner->frontdir.y < 0) || speedf < 0.8f)
+			if ((owner->updir.y < 0.0f && owner->frontdir.y < 0.0f) || speedf < 0.8f)
 				maneuver = 0;
 			// some seem to report that the "unlimited altitude" thing is because of these maneuvers
-			if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4)
+			if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 4.0f)
 				maneuver = 0;
 			break;
 		}
@@ -472,7 +472,7 @@ void CAirMoveType::UpdateManeuver(void)
 			// inverted Immelman
 			int aileron = 0, elevator = 0;
 			if (maneuverSubState == 0) {
-				if (owner->rightdir.y >= 0) {
+				if (owner->rightdir.y >= 0.0f) {
 					aileron = -1;
 				} else {
 					aileron = 1;
@@ -481,12 +481,12 @@ void CAirMoveType::UpdateManeuver(void)
 
 			if (owner->frontdir.y < -0.7f)
 				maneuverSubState = 1;
-			if (maneuverSubState == 1 || owner->updir.y < 0)
+			if (maneuverSubState == 1 || owner->updir.y < 0.0f)
 				elevator = 1;
 
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 	
-			if ((owner->updir.y > 0 && owner->frontdir.y > 0 && maneuverSubState == 1) || speedf < 0.2f)
+			if ((owner->updir.y > 0.0f && owner->frontdir.y > 0.0f && maneuverSubState == 1) || speedf < 0.2f)
 				maneuver = 0;
 			break;
 		}
@@ -540,7 +540,10 @@ void CAirMoveType::UpdateFighterAttack(void)
 	goalPos = tgp;
 
 	float goalLength = (goalPos - pos).Length();
-	float3 goalDir = (goalPos - pos) / goalLength;
+	float3 goalDir =
+		(goalLength > 0.0f)?
+		(goalPos - pos) / goalLength:
+		ZeroVector;
 
 	float aileron = 0;
 	float rudder = 0;
@@ -564,22 +567,27 @@ void CAirMoveType::UpdateFighterAttack(void)
 		float goalBankDif = goalDot + rightdir.y * 0.2f;
 		if (goalBankDif > maxAileron * speedf * 4) {
 			aileron = 1;
-		} else if(goalBankDif < -maxAileron * speedf * 4) {
+		} else if (goalBankDif < -maxAileron * speedf * 4) {
 			aileron = -1;
 		} else {
 			aileron = goalBankDif / (maxAileron * speedf * 4);
 		}
 	} else {
-		if (rightdir.y > 0) {
-			if (rightdir.y > maxAileron * speedf || frontdir.y < -0.7f)
+		if (rightdir.y > 0.0f) {
+			if (rightdir.y > maxAileron * speedf || frontdir.y < -0.7f) {
 				aileron = 1;
-			else
-				aileron = rightdir.y / (maxAileron * speedf);
+			} else {
+				if (speedf > 0.0f) {
+					aileron = rightdir.y / (maxAileron * speedf);
+				}
+			}
 		} else {
-			if (rightdir.y < -maxAileron * speedf || frontdir.y < -0.7f)
+			if (rightdir.y < -maxAileron * speedf || frontdir.y < -0.7f) {
 				aileron = -1;
-			else
-				aileron = rightdir.y / (maxAileron * speedf);
+			} else {
+				if (speedf > 0.0f) {
+					aileron = rightdir.y / (maxAileron * speedf);
+				}
 		}
 	}
 
@@ -590,7 +598,9 @@ void CAirMoveType::UpdateFighterAttack(void)
 		} else if (goalDot > maxRudder * speedf) {
 			rudder = 1;
 		} else {
-			rudder = goalDot / (maxRudder * speedf);
+			if (speedf > 0.0f) {
+				rudder = goalDot / (maxRudder * speedf);
+			}
 		}
 	}
 
@@ -601,14 +611,14 @@ void CAirMoveType::UpdateFighterAttack(void)
 	// pitch
 	if (speedf < 1.5f) {
 		if (frontdir.y < 0.0f) {
-			elevator=upside;
-		} else if(frontdir.y > 0.0f) {
-			elevator=-upside;
+			elevator = upside;
+		} else if (frontdir.y > 0.0f) {
+			elevator = -upside;
 		}
 	} else {
 		float gHeight2 = ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40);
 		float hdif = std::max(gHeight, gHeight2) + 60 - pos.y - frontdir.y * speedf * 20;
-		float minPitch;//=min(1.0f,hdif/(maxElevator*speedf*speedf*20));
+		float minPitch = 1.0f; // min(1.0f, hdif / (maxElevator * speedf * speedf * 20));
 
 		if (hdif < -(maxElevator * speedf * speedf * 20)) {
 			minPitch = -1;
@@ -617,21 +627,17 @@ void CAirMoveType::UpdateFighterAttack(void)
 		} else {
 			minPitch = hdif / (maxElevator * speedf * speedf * 20);
 		}
-
-/*		if(pos.y+min(0,owner->speed.y)*70*fabs(frontdir.y)+min(0,updir.y)*50<gHeight+50){
-		if(frontdir.y<0.5f){
-			elevator=upside;
-		} else if(frontdir.y>0.55f){
-			elevator=-upside;
-		}*/
 //	} else {
 		if (lastColWarning && lastColWarningType == 2 && frontdir.dot(lastColWarning->pos + lastColWarning->speed * 20 - pos-owner->speed * 20) < 0) {
-/*			float pitchMod=updir.y>0?1:-1;
-			if(lastColWarning->pos.y>pos.y)
-				elevator=-pitchMod;
+			/*
+			float pitchMod = (updir.y > 0.0f)? 1: -1;
+			if (lastColWarning->pos.y > pos.y)
+				elevator = -pitchMod;
 			else
-				elevator=pitchMod;
-/*/			elevator = updir.dot(lastColWarning->midPos - owner->midPos) > 0 ? -1 : 1;/**/
+				elevator = pitchMod;
+			*/
+
+			elevator = (updir.dot(lastColWarning->midPos - owner->midPos) > 0.0f)? -1 : 1;
 		} else {
 			float hdif = goalDir.dot(updir);
 			if (hdif < -maxElevator * speedf) {
@@ -677,8 +683,13 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3& speed = owner->speed;
 
 	float speedf = speed.Length();
-	float goalLength = (goalPos - pos).Length2D() + 0.01f;
-	float3 goalDir = (goalPos - pos) / goalLength;
+	float goalLength = (goalPos - pos).Length2D();
+
+	float3 goalDir =
+		(goalLength > 0.0f)?
+		((goalPos - pos) / goalLength).Normalize():
+		ZeroVector;
+
 	float3 adjustedGoalDir = float3(goalPos.x, 0, goalPos.z) - float3(pos.x, 0, pos.z);
 	goalDir.Normalize();
 	adjustedGoalDir.Normalize();
@@ -691,42 +702,56 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	if (!((gs->frameNum + owner->id) & 3))
 		CheckForCollision();
 
-	float otherThreat = 0;
+	float otherThreat = 0.0f;
 	float3 otherDir;
 	if (lastColWarning) {
 		float3 otherDif = lastColWarning->pos - pos;
-		float otherLength = otherDif.Length() + 0.01f;
-		otherDir = otherDif / (otherLength);
-		otherThreat = std::max(1200.0f, goalLength) / otherLength * 0.036f;
+		float otherLength = otherDif.Length();
+
+		otherDir =
+			(otherLength > 0.0f)?
+			(otherDif / otherLength):
+			ZeroVector;
+		otherThreat =
+			(otherLength > 0.0f)?
+			std::max(1200.0f, goalLength) / otherLength * 0.036f:
+			0.0f;
 	}
 
-	float goalDot = rightdir.dot(adjustedGoalDir);
-	goalDot /= adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
+	float goalDotFront = rightdir.dot(adjustedGoalDir);
+	float goalDotRight = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
+
+	if (goalDotRight > 0.0f) {
+		goalDotFront /= goalDotRight;
+	}
+
+
 	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius
 #ifdef DIRECT_CONTROL_ALLOWED
 		&& (!owner->directControl || owner->directControl->mouse2)
 #endif
 		)
-		goalDot =- goalDot;
+		goalDotFront = -goalDotFront;
 	if (lastColWarning) {
-		goalDot -= otherDir.dot(rightdir) * otherThreat;
+		goalDotFront -= otherDir.dot(rightdir) * otherThreat;
 	}
 
 	// roll
 	if (speedf > 1.5f && pos.y + speed.y * 10 > gHeight + wantedHeight * 0.6f) {
-		float goalBankDif = goalDot + rightdir.y * 0.5f;
+		float goalBankDif = goalDotFront + rightdir.y * 0.5f;
 		if (goalBankDif > maxAileron*speedf * 4 && rightdir.y > -maxBank) {
 			aileron = 1;
 		} else if (goalBankDif < -maxAileron * speedf * 4 && rightdir.y < maxBank) {
 			aileron = -1;
 		} else {
-			if (fabs(rightdir.y) < maxBank)
+			if (fabs(rightdir.y) < maxBank) {
 				aileron = goalBankDif / (maxAileron * speedf * 4);
-			else {
-				if (rightdir.y < 0 && goalBankDif < 0)
+			} else {
+				if (rightdir.y < 0.0f && goalBankDif < 0.0f) {
 					aileron = -1;
-				else if (rightdir.y > 0 && goalBankDif > 0)
+				} else if (rightdir.y > 0.0f && goalBankDif > 0.0f) {
 					aileron = 1;
+				}
 			}
 		}
 	} else {
@@ -739,13 +764,13 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// yaw
 	if (pos.y > gHeight + 15) {
-		if (goalDot < -maxRudder * speedf * 2) {
+		if (goalDotFront < -maxRudder * speedf * 2) {
 			rudder = -1;
-		} else if (goalDot > maxRudder * speedf * 2) {
+		} else if (goalDotFront > maxRudder * speedf * 2) {
 			rudder = 1;
 		} else {
-			if (speedf > 0.0f) {
-				rudder = goalDot / (maxRudder * speedf * 2);
+			if (speedf > 0.0f && maxRudder > 0.0f) {
+				rudder = goalDotFront / (maxRudder * speedf * 2);
 			} else {
 				rudder = 0;
 			}
@@ -791,11 +816,11 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 void CAirMoveType::UpdateLanded(void)
 {
-	float3 &pos = owner->pos;
-	SyncedFloat3 &rightdir = owner->rightdir;
-	SyncedFloat3 &frontdir = owner->frontdir;
-	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	float3& pos = owner->pos;
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir = owner->updir;
+	float3& speed = owner->speed;
 
 	speed = ZeroVector;
 
@@ -846,18 +871,18 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 
 void CAirMoveType::UpdateLanding(void)
 {
-	float3 &pos = owner->pos;
-	SyncedFloat3 &rightdir = owner->rightdir;
-	SyncedFloat3 &frontdir = owner->frontdir;
-	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	float3& pos = owner->pos;
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir = owner->updir;
+	float3& speed = owner->speed;
 	float speedf = speed.Length();
 
 	// find a landing spot if we dont have one
-	if (reservedLandingPos.x < 0) {
+	if (reservedLandingPos.x < 0.0f) {
 		reservedLandingPos = FindLandingPos();
 
-		if (reservedLandingPos.x > 0) {
+		if (reservedLandingPos.x > 0.0f) {
 			reservedLandingPos.y += wantedHeight;
 			float3 tp = pos;
 			pos = reservedLandingPos;
@@ -896,22 +921,25 @@ void CAirMoveType::UpdateLanding(void)
 	// update our speed
 	float3 dif = reservedLandingPos - pos;
 	float dist = dif.Length();
+	float landingSpeed =
+		(speedf > 0.0f && maxAcc > 0.0f)?
+		(dist / speedf * 1.8f * maxAcc):
+		0.0f;
+	float wsf = std::min(owner->maxSpeed, landingSpeed);
 
 	if (dist > 0.0f) {
 		dif /= dist;
 	}
 
-	float wsf = std::min(owner->maxSpeed, dist / speedf * 1.8f * maxAcc);
 	float3 wantedSpeed = dif * wsf;
-
 	float3 delta = wantedSpeed - speed;
 	float dl = delta.Length();
 
-	if (dl < maxAcc * 3) {
+	if (dl < maxAcc * 3.0f) {
 		speed = wantedSpeed;
 	} else {
-		if (dl > 0.0f) {
-			speed += delta / dl * maxAcc * 3;
+		if (dl > 0.0f && maxAcc > 0.0f) {
+			speed += delta / dl * maxAcc * 3.0f;
 		}
 	}
 
@@ -965,11 +993,11 @@ void CAirMoveType::UpdateLanding(void)
 
 void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator, float engine, const float3& engineVector)
 {
-	float3 &pos = owner->pos;
-	SyncedFloat3 &rightdir = owner->rightdir;
-	SyncedFloat3 &frontdir = owner->frontdir;
-	SyncedFloat3 &updir = owner->updir;
-	float3 &speed = owner->speed;
+	float3& pos = owner->pos;
+	SyncedFloat3& rightdir = owner->rightdir;
+	SyncedFloat3& frontdir = owner->frontdir;
+	SyncedFloat3& updir = owner->updir;
+	float3& speed = owner->speed;
 	bool nextPosInBounds = true;
 
 	lastRudderPos = rudder;
