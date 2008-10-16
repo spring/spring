@@ -6,9 +6,11 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Exceptions.h"
+#include "System/UnsyncedRNG.h"
 
 #include <string>
 #include <iostream>
+#include <SDL_timer.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -54,6 +56,10 @@ int main(int argc, char *argv[])
 		}
 
 		data->SetScript(gameSetup->scriptName);
+		UnsyncedRNG rng;
+		rng.Seed(SDL_GetTicks());
+		rng.Seed(gameSetup->gameSetupTextLength);
+		data->SetRandomSeed(SDL_GetTicks());
 
 		CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
 		if (!f->FileExists()) {
