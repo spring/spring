@@ -11,6 +11,7 @@ public:
 	CMatrix44f(void);
 	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
 	CMatrix44f(const CMatrix44f& n);
+	CMatrix44f(const float3& pos);
 	~CMatrix44f(void);
 
 	void LoadIdentity();

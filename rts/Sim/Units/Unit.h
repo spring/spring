@@ -108,7 +108,7 @@ public:
 	void SetDirectionFromHeading();
 
 	void ApplyTransformMatrix() const;
-	void GetTransformMatrix(CMatrix44f& matrix, bool synced = false) const;
+	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
 	void SetLastAttacker(CUnit* attacker);
 	void DependentDied(CObject* o);
