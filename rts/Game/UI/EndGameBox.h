@@ -52,7 +52,7 @@ protected:
 	};
 
 	struct Stat {
-		Stat(std::string s):max(1),maxdif(1),name(s){}
+		Stat(std::string s) : name(s),max(1),maxdif(1){}
 
 		void AddStat(int team,float value){
 			if(value>max)
