@@ -79,8 +79,7 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			// NOTE: we have to translate by relMidPos to get to midPos
 			// (which is where the collision volume gets drawn) because
 			// GetTransformMatrix() only uses pos
-			CMatrix44f m;
-			u->GetTransformMatrix(m, true);
+			CMatrix44f m = u->GetTransformMatrix(true);
 			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 
@@ -175,13 +174,10 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 
 
-bool CCollisionHandler::MouseHit(const CUnit* u, const float3& e, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
+bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
 {
-	CMatrix44f m;
-	u->GetTransformMatrix(m, true);
-	float3 relMidPos(u->midPos - u->pos);
-	m.Translate(relMidPos.x + e.x, relMidPos.y + e.y, relMidPos.z + e.z);
-	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+	CMatrix44f m = u->GetTransformMatrix(false,true);
+	m.Translate(u->relMidPos + v->axisOffsets);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
 }
@@ -190,8 +186,7 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 {
 	const CollisionVolume* v = u->collisionVolume;
 
-	CMatrix44f m;
-	u->GetTransformMatrix(m, true);
+	CMatrix44f m = u->GetTransformMatrix(true);
 	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
 	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
 

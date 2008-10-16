@@ -1932,13 +1932,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
-#ifdef USE_GML
-	CMatrix44f m;
-#else
-	static CMatrix44f m;
-	m.LoadIdentity();
-#endif
-	unit->GetTransformMatrix(m);
+	CMatrix44f m = unit->GetTransformMatrix();
 	glMultMatrixf(&m[0]);
 }
 

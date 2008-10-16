@@ -304,10 +304,6 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam))) {
 
 				CollisionVolume* cv = 0x0;
-				float3 error = (!gu->spectatingFullView)?
-					// relative error, since MouseHit() translates by relMidPos
-					(GetUnitErrorPos(unit, gu->myAllyTeam) - unit->midPos):
-					ZeroVector;
 
 				if (unit->isIcon) {
 					// for iconified units, just pretend the collision
@@ -319,7 +315,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 					cv = unit->collisionVolume;
 				}
 
-				if (CCollisionHandler::MouseHit(unit, error, start, start + dir * length, cv, &cq)) {
+				if (CCollisionHandler::MouseHit(unit, start, start + dir * length, cv, &cq)) {
 					// get the distance to the ray-volume egress point
 					// so we can still select stuff inside factories
 					const float len = (cq.p1 - start).Length();
