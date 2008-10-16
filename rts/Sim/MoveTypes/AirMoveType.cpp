@@ -551,8 +551,13 @@ void CAirMoveType::UpdateFighterAttack(void)
 	float engine = 0;
 	float gHeight = ground->GetHeight(pos.x, pos.z);
 
-	float goalDot = rightdir.dot(goalDir);
-	goalDot /= goalDir.dot(frontdir) * 0.5f + 0.501f;
+	float goalDotRight = rightdir.dot(goalDir);
+	float goalDotFront = goalDir.dot(frontdir) * 0.5f + 0.501f;
+
+	if (goalDotFront > 0.0f) {
+		goalDotRight /= goalDotFront;
+	}
+
 
 	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && frontdir.y > -0.2f && speedf > 2.0f && gs->randFloat() > 0.996f)
 		maneuver = 1;
@@ -564,13 +569,13 @@ void CAirMoveType::UpdateFighterAttack(void)
 
 	// roll
 	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeight + 60 + fabs(rightdir.y) * 150) {
-		float goalBankDif = goalDot + rightdir.y * 0.2f;
-		if (goalBankDif > maxAileron * speedf * 4) {
+		float goalBankDif = goalDotRight + rightdir.y * 0.2f;
+		if (goalBankDif > maxAileron * speedf * 4.0f) {
 			aileron = 1;
-		} else if (goalBankDif < -maxAileron * speedf * 4) {
+		} else if (goalBankDif < -maxAileron * speedf * 4.0f) {
 			aileron = -1;
 		} else {
-			aileron = goalBankDif / (maxAileron * speedf * 4);
+			aileron = goalBankDif / (maxAileron * speedf * 4.0f);
 		}
 	} else {
 		if (rightdir.y > 0.0f) {
@@ -593,13 +598,13 @@ void CAirMoveType::UpdateFighterAttack(void)
 
 	// yaw
 	if (pos.y > gHeight + 30) {
-		if (goalDot < -maxRudder * speedf) {
+		if (goalDotRight < -maxRudder * speedf) {
 			rudder = -1;
-		} else if (goalDot > maxRudder * speedf) {
+		} else if (goalDotRight > maxRudder * speedf) {
 			rudder = 1;
 		} else {
 			if (speedf > 0.0f) {
-				rudder = goalDot / (maxRudder * speedf);
+				rudder = goalDotRight / (maxRudder * speedf);
 			}
 		}
 	}
