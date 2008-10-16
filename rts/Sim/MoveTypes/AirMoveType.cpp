@@ -554,7 +554,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 	float goalDotRight = rightdir.dot(goalDir);
 	float goalDotFront = goalDir.dot(frontdir) * 0.5f + 0.501f;
 
-	if (goalDotFront > 0.0f) {
+	if (goalDotFront != 0.0f) {
 		goalDotRight /= goalDotFront;
 	}
 
@@ -727,7 +727,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float goalDotRight = rightdir.dot(adjustedGoalDir);
 	float goalDotFront = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
 
-	if (goalDotFront > 0.0f) {
+	if (goalDotFront != 0.0f) {
 		goalDotRight /= goalDotFront;
 	}
 
