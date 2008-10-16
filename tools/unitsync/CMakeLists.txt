@@ -9,7 +9,7 @@ ELSE (MINGW)
 	
 	FIND_PACKAGE(GLEW REQUIRED)
 	
-	set (unitsync_libs ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${OPENAL_LIBRARY} ${GL_gl_LIBRARY} ${GL_glu_LIBRARY})
+	set (unitsync_libs ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${GL_gl_LIBRARY} ${GL_glu_LIBRARY})
 	list (APPEND unitsync_libs util) # sometimes this is needed (and I have no clue why)
 	
 	FIND_PACKAGE(PythonLibs)
