@@ -3,6 +3,9 @@
 #include "GameData.h"
 #include "System/Platform/FileSystem.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Exceptions.h"
 
 #include <string>
 #include <iostream>
@@ -31,7 +34,6 @@ int main(int argc, char *argv[])
 			std::cout << "Failed to load script" << std::endl;
 			return 1;
 		}
-		gameSetup->LoadStartPositions();
 		
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
@@ -52,6 +54,23 @@ int main(int argc, char *argv[])
 		}
 
 		data->SetScript(gameSetup->scriptName);
+
+		CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
+		if (!f->FileExists()) {
+			std::vector<std::string> ars = archiveScanner->GetArchivesForMap(gameSetup->mapName);
+			if (ars.empty()) {
+				throw content_error("Couldn't find any archives for map '" + gameSetup->mapName + "'.");
+			}
+			for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+				if (!vfsHandler->AddArchive(*i, false)) {
+					throw content_error("Couldn't load archive '" + *i + "' for map '" + gameSetup->mapName + "'.");
+				}
+			}
+		}
+		delete f;
+		
+		gameSetup->LoadStartPositions();
+		
 
 		server = new CGameServer(gameSetup->hostport, false, data, gameSetup);
 		
