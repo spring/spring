@@ -1,5 +1,12 @@
 Spring change log
 
+0.77b5
+Crashes:
+
+Engine:
+ - new fbi tag: bankingAllowed - only affects hoverAttack=1 units; controls if the aircraft can bank.
+
+
 0.77b4:
 Crashes:
  - fixed a crash (on exit) in colormap.cpp
