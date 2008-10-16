@@ -593,6 +593,7 @@ void CAirMoveType::UpdateFighterAttack(void)
 				if (speedf > 0.0f) {
 					aileron = rightdir.y / (maxAileron * speedf);
 				}
+			}
 		}
 	}
 
