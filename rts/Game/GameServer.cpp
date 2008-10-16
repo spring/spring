@@ -1190,6 +1190,12 @@ void CGameServer::PushAction(const Action& action)
 		if (isPaused && !demoReader)
 			gameServer->CreateNewFrame(true, true);
 	}
+#ifdef DEDICATED // we already have a quit command in the client
+	else if (action.command == "kill")
+	{
+		quitServer = true;
+	}
+#endif
 	else
 	{
 		// only forward to players (send over network)
