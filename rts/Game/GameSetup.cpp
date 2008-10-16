@@ -392,8 +392,8 @@ bool CGameSetup::Init(const char* buf, int size)
 	int tempMapHash, tempModHash;
 	file.GetDef(tempMapHash, "0", "GAME\\MapHash");
 	file.GetDef(tempModHash, "0", "GAME\\ModHash");
-	mapHash = (int) tempMapHash;
-	modHash = (int) tempModHash;
+	mapHash = (unsigned int) tempMapHash;
+	modHash = (unsigned int) tempModHash;
 
 	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
