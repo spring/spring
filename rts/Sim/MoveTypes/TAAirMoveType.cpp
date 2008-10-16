@@ -67,6 +67,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	wantToStop(false),
 	forceHeading(false),
 	dontCheckCol(false),
+	bankingAllowed(true),
 	dontLand(false),
 	lastMoveRate(0),
 	waitCounter(0),
@@ -563,7 +564,7 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	rightdir.Normalize();
 
 	float wantedBank = 0.0f;
-	if (!noBanking) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
+	if (!noBanking && bankingAllowed) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
 	float limit = std::min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
 	if(wantedBank>limit)
@@ -891,7 +892,7 @@ void CTAAirMoveType::SlowUpdate(void)
 	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0)
 		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
 
-	if (!reservedPad && aircraftState == AIRCRAFT_FLYING 
+	if (!reservedPad && aircraftState == AIRCRAFT_FLYING
 			&& owner->health < owner->maxHealth * repairBelowHealth) {
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
 				owner, owner->unitDef->minAirBasePower);

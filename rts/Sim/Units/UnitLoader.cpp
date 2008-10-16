@@ -257,6 +257,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->dontLand = ud->DontLand();
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
+			mt->bankingAllowed = ud->bankingAllowed;
 
 			unit->moveType = mt;
 		}
