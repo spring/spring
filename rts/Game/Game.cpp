@@ -3752,10 +3752,10 @@ void CGame::ClientReadNet()
 				if ((player < 0) || (player >= MAX_PLAYERS)) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
 				}
-				const int script = inbuf[4];
-				const int mode = inbuf[5];
-				const int msglen = *((short*)(inbuf + 1)) - 6;
-				const string msg((char*)&inbuf[6], msglen); // allow embedded 0's
+				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
+				const int mode = inbuf[6];
+				const int msglen = *((short*)(inbuf + 1)) - 7;
+				const string msg((char*)&inbuf[7], msglen); // allow embedded 0's
 				CLuaHandle::HandleLuaMsg(player, script, mode, msg);
 				AddTraffic(player, packetCode, dataLength);
 				break;
