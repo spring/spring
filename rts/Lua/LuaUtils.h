@@ -14,6 +14,11 @@ using std::vector;
 #include "LuaDefs.h"
 #include "Sim/Units/CommandAI/Command.h"
 
+// is defined as macro on FreeBSD (wtf)
+#ifdef isnumber
+	#undef isnumber
+#endif
+
 class LuaUtils {
 	public:
 		static int CopyData(lua_State* dst, lua_State* src, int count);
