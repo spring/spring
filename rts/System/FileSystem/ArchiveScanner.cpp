@@ -142,7 +142,7 @@ void CArchiveScanner::PreScan(const string& curPath)
 
 	string name;
 	int size;
-	for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+	for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */) {
 		if (name == "gamedata/parse_tdf.lua") {
 			const int fh = ar->OpenFile(name);
 			if (fh != 0) {
@@ -356,7 +356,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 			string name;
 			int size;
-			for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+			for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */) {
 				const string lowerName = StringToLower(name);
 				const string ext = lowerName.substr(lowerName.find_last_of('.') + 1);
 
@@ -526,7 +526,7 @@ unsigned int CArchiveScanner::GetCRC(const string& arcName)
 	string name;
 	int size;
 	// Sort all file paths for deterministic behaviour
-	for (int cur = 0; cur = ar->FindFiles(cur, &name, &size); /* no-op */) {
+	for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */) {
 		if (ignore->Match(name)) {
 			continue;
 		}
@@ -803,8 +803,15 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 	// add depth-first
 	for (vector<string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
 		vector<string> dep = GetArchives(*i, depth + 1);
+
 		for (vector<string>::iterator j = dep.begin(); j != dep.end(); ++j) {
-			ret.push_back(*j);
+			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
+				// add only if this dependency is not already somewhere
+				// in the chain (which can happen if ArchiveCacheV* has
+				// not been written yet) so its checksum is not XOR'ed
+				// with the running one multiple times (Get*Checksum())
+				ret.push_back(*j);
+			}
 		}
 	}
 
@@ -900,6 +907,7 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 {
 	const vector<string> ars = GetArchives(root);
 	unsigned int checksum = 0;
+
 	for (unsigned int a = 0; a < ars.size(); a++) {
 		const unsigned int tmp = GetArchiveChecksum(ars[a]);
 		if (debugChecksums) {
@@ -931,6 +939,7 @@ unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 {
 	unsigned localChecksum = GetModChecksum(root);
+
 	if (localChecksum != checksum) {
 		char msg[1024];
 		sprintf(
