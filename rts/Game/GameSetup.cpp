@@ -92,7 +92,8 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(int a = 0; a < numTeams; ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		mapParser.GetStartPos(a, pos);
+		if (!mapParser.GetStartPos(a, pos))
+			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
 	}
 }
@@ -109,8 +110,6 @@ void CGameSetup::LoadStartPositions()
 	TdfParser file;
 	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
 	for (int a = 0; a < numTeams; ++a) {
-		// Ready up automatically unless startPosType is choose in game
-		//teamStartingData[a].readyTeams = (startPosType != StartPos_ChooseInGame);
 		teamStartingData[a].teamStartNum = a;
 	}
 
