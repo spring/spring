@@ -279,7 +279,25 @@ void CTextureHandler::SetTATexture()
 	glBindTexture(GL_TEXTURE_2D, globalTex);
 }
 
-int CTextureHandler::LoadS3OTexture(const std::string& tex1, const std::string& tex2)
+void CTextureHandler::LoadS3OTexture(S3DOModel *model) {
+	string totalName=model->tex1+model->tex2;
+
+	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){
+		model->textureType=s3oTextureNames[totalName];
+	}
+	model->textureType=0;
+	GML_STDMUTEX_LOCK(model); // LoadS3OTexture
+	loadTextures.push_back(model);
+}
+
+void CTextureHandler::Update() {
+	GML_STDMUTEX_LOCK(model); // Update
+	for(std::vector<S3DOModel *>::iterator i=loadTextures.begin(); i!=loadTextures.end();++i)
+		(*i)->textureType=LoadS3OTextureNow((char*)(*i)->tex1.c_str(),(char*)(*i)->tex2.c_str());
+	loadTextures.clear();
+}
+
+int CTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2)
 {
 	string totalName=tex1+tex2;
 

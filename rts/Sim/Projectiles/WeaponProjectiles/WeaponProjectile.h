@@ -43,7 +43,6 @@ protected:
 	float3 startpos;
 	int ttl;
 	int colorTeam;
-	unsigned int modelDispList;
 	int bounces;
 	
 	virtual void UpdateGroundBounce();

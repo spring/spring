@@ -169,7 +169,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-#if defined(USE_GML) && GML_MT_TEST
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW // Add mutex to avoid bogus errors due to concurrency
 	LUA_CALL_IN_CHECK(L);
 #endif
 	const int top = lua_gettop(L);

@@ -13,7 +13,7 @@ public:
 	CSmfReadMap(std::string mapname);
 	~CSmfReadMap();
 
-	void HeightmapUpdated(int x1, int x2, int y1, int y2);
+	void HeightmapUpdatedNow(int x1, int x2, int y1, int y2);
 	GLuint GetShadingTexture () { return shadowTex; }
 	GLuint GetGrassShadingTexture () { return minimapTex; }
 	void DrawMinimap ();

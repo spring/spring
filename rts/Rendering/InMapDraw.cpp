@@ -308,6 +308,8 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDraw::Draw(void)
 {
+	GML_STDMUTEX_LOCK(inmap); // Draw
+
 	glDepthMask(0);
 
 	CVertexArray* va = GetVertexArray();
@@ -433,6 +435,8 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
                             int playerID)
 {
+	GML_STDMUTEX_LOCK(inmap); // LocalPoint
+
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		return;
 	}
@@ -488,6 +492,8 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
                            int playerID)
 {
+	GML_STDMUTEX_LOCK(inmap); // LocalLine
+
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		return;
 	}
@@ -526,6 +532,8 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 
 void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 {
+	GML_STDMUTEX_LOCK(inmap); // LocalErase
+
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		return;
 	}

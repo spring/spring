@@ -333,6 +333,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
+	GML_STDMUTEX_LOCK(cai);
 	const CUnitSet& units = drawCmdQueueUnits;
 	CUnitSet::const_iterator ui;
 	for (ui = units.begin(); ui != units.end(); ++ui) {

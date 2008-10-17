@@ -36,7 +36,6 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
 	CR_MEMBER(ttl),
-	CR_MEMBER(modelDispList),
 	CR_MEMBER(colorTeam),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
@@ -55,7 +54,6 @@ CWeaponProjectile::CWeaponProjectile()
 	target = 0;
 	ttl = 0;
 	colorTeam = 0;
-	modelDispList = 0;
 	interceptTarget = 0;
 	bounces = 0;
 	keepBouncing = true;
@@ -103,11 +101,6 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 			S3DOModel* model = modelParser->Load3DModel(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
 			if (model) {
 				s3domodel = model;
-
-				if (s3domodel->rootobject3do)
-					modelDispList = model->rootobject3do->displist;
-				else
-					modelDispList = model->rootobjects3o->displist;
 			}
 		}
 		collisionFlags = weaponDef->collisionFlags;
@@ -314,7 +307,8 @@ void CWeaponProjectile::DrawUnitPart()
 	CMatrix44f transMatrix(interPos,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
-	glCallList(modelDispList);
+//	glCallList(modelDispList);
+	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 
@@ -349,10 +343,10 @@ void CWeaponProjectile::PostLoad()
 				string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
 		if(model){
 			s3domodel = model;
-			if(s3domodel->rootobject3do)
+/*			if(s3domodel->rootobject3do)
 				modelDispList= model->rootobject3do->displist;
 			else
-				modelDispList= model->rootobjects3o->displist;
+				modelDispList= model->rootobjects3o->displist;*/
 		}
 	}
 //	collisionFlags = weaponDef->collisionFlags;

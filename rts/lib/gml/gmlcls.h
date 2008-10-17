@@ -34,9 +34,12 @@
 #endif
 
 #define GML_ENABLE_SIM (GML_ENABLE && 1) // runs the sim in a separate thread
+#define GML_ENABLE_SIMDRAW (GML_ENABLE_SIM && 0) // runs Draw() in parallel with ceratain SimFrame() calls. Highly experimental, not fully working yet.
+#define GML_ENABLE_SIMLOOP (GML_ENABLE_SIMDRAW && 0) // runs a completely independent loop for the Sim. Highly experimental, not fully working yet.
+
 #define GML_ENABLE_DRAW (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
-#define GML_SERVER_GLCALL 1 // allow the server thread (0) to make direct GL calls
-#define GML_INIT_QUEUE_SIZE 10 // initial queue size, will be reallocated, but must be >= 1
+#define GML_SERVER_GLCALL 1 // allows the server thread (0) to make direct GL calls
+#define GML_INIT_QUEUE_SIZE 10 // initial queue size, will be reallocated, but must be >= 4
 #define GML_USE_NO_ERROR 1 // glGetError always returns success (to improve performance)
 #define GML_USE_DEFAULT 1// compile/link/buffer status always returns TRUE/COMPLETE (to improve performance)
 #define GML_USE_CACHE 1 // certain glGet calls may use data cached during gmlInit (to improve performance)
@@ -803,7 +806,8 @@ struct gmlQueue {
 	BOOL_ GetRead(BOOL_ critical=FALSE);
 	void SyncRequest();
 	void Execute();
-	void ExecuteSynced();
+	void ExecuteSynced(void (gmlQueue::*execfun)() =&gmlQueue::Execute);
+	void ExecuteDebug();
 };
 
 

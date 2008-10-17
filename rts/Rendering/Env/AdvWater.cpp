@@ -229,6 +229,8 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
+	DeleteOldWater(this);
+
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 
@@ -319,8 +321,10 @@ void CAdvWater::UpdateWater(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, bumpTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,128,128);
 
-	CCamera *realCam = camera;
-	camera = new CCamera(*realCam);
+//	CCamera *realCam = camera;
+//	camera = new CCamera(*realCam);
+	char realCam[sizeof(CCamera)];
+	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
 	camera->up.x=0;
 	camera->up.y=1;
@@ -361,7 +365,10 @@ void CAdvWater::UpdateWater(CGame* game)
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
-	delete camera;
-	camera = realCam;
+//	delete camera;
+//	camera = realCam;
+	camera->~CCamera();
+	new (camera) CCamera(*(CCamera *)realCam);
+
 	camera->Update(false);
 }

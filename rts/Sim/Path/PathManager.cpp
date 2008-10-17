@@ -460,9 +460,11 @@ void CPathManager::Draw() {
 		path->peDef->Draw();
 	}
 	glLineWidth(1);
+#if !defined(USE_GML) || !GML_ENABLE_SIMDRAW // making this threadsafe might be too costly performance wise
 	pf->Draw();
 	pe->Draw();
 	pe2->Draw();
+#endif
 }
 
 

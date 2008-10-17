@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 // QuadField.cpp: implementation of the CQuadField class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -11,15 +12,6 @@
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
-
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex featmutex;
-boost::recursive_mutex quadmutex;
-#	endif
-#endif
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
@@ -134,9 +126,7 @@ void CQuadField::MovedUnit(CUnit *unit)
 			return;
 	}
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock quadlock(quadmutex); // possible performance hog
-#endif
+	GML_RECMUTEX_LOCK(quad); // MovedUnit, possible performance hog
 
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
@@ -374,9 +364,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 
 void CQuadField::RemoveUnit(CUnit* unit)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock quadlock(quadmutex);
-#endif
+	GML_RECMUTEX_LOCK(quad); // RemoveUnit
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
@@ -397,9 +385,7 @@ void CQuadField::RemoveUnit(CUnit* unit)
 
 void CQuadField::AddFeature(CFeature* feature)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(quad); //feat); // AddFeature
 
 	vector<int> newQuads=GetQuads(feature->pos,feature->radius);
 
@@ -411,9 +397,7 @@ void CQuadField::AddFeature(CFeature* feature)
 
 void CQuadField::RemoveFeature(CFeature* feature)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(quad); //feat); // RemoveFeature
 
 	vector<int> quads=GetQuads(feature->pos,feature->radius);
 

@@ -1968,10 +1968,11 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	}
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	if (unit->transporter == NULL) {
+	CTransportUnit *trans=unit->transporter;
+	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {
-		pos += (unit->transporter->speed * gu->timeOffset);
+		pos += (trans->speed * gu->timeOffset);
 	}
 
 	const float3 scale(luaL_optnumber(L, 4, 1.0f),
@@ -2016,10 +2017,11 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	}
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	if (unit->transporter == NULL) {
+	CTransportUnit *trans=unit->transporter;
+	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {
-		pos += (unit->transporter->speed * gu->timeOffset);
+		pos += (trans->speed * gu->timeOffset);
 	}
 
 	const int args = lua_gettop(L); // number of arguments

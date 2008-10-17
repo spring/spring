@@ -142,6 +142,8 @@ void CGroup::PostLoad()
 
 bool CGroup::AddUnit(CUnit *unit)
 {
+	GML_STDMUTEX_LOCK(group); // AddUnit
+
 	eventHandler.GroupChanged(id);
 
 	units.insert(unit);
@@ -162,6 +164,8 @@ bool CGroup::AddUnit(CUnit *unit)
 
 void CGroup::RemoveUnit(CUnit *unit)
 {
+	GML_STDMUTEX_LOCK(group); // RemoveUnit
+
 	eventHandler.GroupChanged(id);
 	if(ai)
 		ai->RemoveUnit(unit->id);
@@ -233,6 +237,7 @@ void CGroup::Update()
 
 void CGroup::DrawCommands()
 {
+//	GML_STDMUTEX_LOCK(cai); // DrawCommands. Not needed, protected via CGroupHandler
 	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam){		//last check is a hack so globalai groups dont get erased
 		handler->RemoveGroup(this);
 		return;
@@ -341,6 +346,8 @@ void CGroup::CommandFinished(int unit,int type)
 
 void CGroup::ClearUnits(void)
 {
+	GML_STDMUTEX_LOCK(group); // ClearUnits
+
 	eventHandler.GroupChanged(id);
 	while(!units.empty()){
 		(*units.begin())->SetGroup(0);

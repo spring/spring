@@ -19,6 +19,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
+#include "Rendering/UnitModels/s3oParser.h"
+#include "Rendering/UnitModels/3DOParser.h"
 
 static const float Smoke_Time=60;
 
@@ -447,7 +449,7 @@ void CMissileProjectile::DrawUnitPart(void)
 	CMatrix44f transMatrix(interPos + dir * radius * 0.9f,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
-	glCallList(modelDispList);
+	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
 
 	glPopMatrix();
 }

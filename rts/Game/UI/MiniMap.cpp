@@ -60,17 +60,6 @@
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex unitmutex;
-extern boost::recursive_mutex quadmutex;
-extern boost::recursive_mutex projmutex;
-extern boost::mutex selmutex;
-#	endif
-#endif
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -845,10 +834,10 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 {
 	// is this really needed?
-	CCamera *c = camera;
-	camera = new CCamera(*c);
+//	CCamera *c = camera;
+//	camera = new CCamera(*c);
 
-	const float3 tmpMouseDir = mouse->dir;
+//	const float3 tmpMouseDir = mouse->dir; 
 
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
@@ -861,15 +850,15 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 		}
 	}
 
-	mouse->dir = float3(0.0f, -1.0f, 0.0f);
-	camera->pos = mapPos;
-	camera->forward = mouse->dir;
+	float3 mousedir = float3(0.0f, -1.0f, 0.0f);
+	float3 campos = mapPos;
+//	float3 camfwd = mousedir; // not used?
 
-	guihandler->MouseRelease(x, y, -button);
+	guihandler->MouseRelease(x, y, -button, campos, mousedir);
 
-	mouse->dir = tmpMouseDir;
-	delete camera;
-	camera = c;
+//	mouse->dir = tmpMouseDir;
+//	delete camera;
+//	camera = c;
 }
 
 
@@ -923,6 +912,8 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	if (!buildTip.empty()) {
 		return buildTip;
 	}
+
+	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
@@ -1050,17 +1041,13 @@ void CMiniMap::DrawForReal()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_RECMUTEX_LOCK(unit); // DrawForReal
 	// draw the units
 	std::list<CUnit*>::iterator ui;
 	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
-#	if defined(USE_GML) && GML_MT_TEST
-		boost::recursive_mutex::scoped_lock quadlock(quadmutex); // getselectunit accesses quadfield
-#endif
+//	GML_RECMUTEX_LOCK(quad);  // getselectunit accesses quadfield
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
@@ -1111,62 +1098,63 @@ void CMiniMap::DrawForReal()
 
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+
 	// draw the projectiles
-	if (drawProjectiles && ph->ps.size()>0) {
-		CVertexArray* lines=GetVertexArray();
-		CVertexArray* points=GetVertexArray();
-		lines->Initialize();
-		lines->EnlargeArrays(ph->ps.size()*2,0,VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(ph->ps.size(),0,VA_SIZE_C);
+	if (drawProjectiles) {
+		GML_RECMUTEX_LOCK(proj); // DrawForReal
+		if(ph->ps.size()>0) {
+			CVertexArray* lines=GetVertexArray();
+			CVertexArray* points=GetVertexArray();
+			lines->Initialize();
+			lines->EnlargeArrays(ph->ps.size()*2,0,VA_SIZE_C);
+			points->Initialize();
+			points->EnlargeArrays(ph->ps.size(),0,VA_SIZE_C);
 
-		static unsigned char red[4]    = {255,0,0,255};
-		static unsigned char redA[4]   = {255,0,0,128};
-		static unsigned char yellow[4] = {255,255,0,255};
-		static unsigned char green[4]  = {0,255,0,25};
-		static unsigned char white[4]  = {255,255,255,25};
+			static unsigned char red[4]    = {255,0,0,255};
+			static unsigned char redA[4]   = {255,0,0,128};
+			static unsigned char yellow[4] = {255,255,0,255};
+			static unsigned char green[4]  = {0,255,0,25};
+			static unsigned char white[4]  = {255,255,255,25};
 
-		Projectile_List::iterator psi;
-		for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
-			CProjectile* p = *psi;
+			Projectile_List::iterator psi;
+			for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
+				CProjectile* p = *psi;
 
-			if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+				if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
+					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
 
-				if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
-				} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
-					points->AddVertexQC(p->pos,green);
-				} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
-					CBeamLaserProjectile& beam = *(CBeamLaserProjectile*)p;
-					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-					lines->AddVertexQC(beam.startPos,color);
-					lines->AddVertexQC(beam.endPos,color);
-				} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
-					CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
-					unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-					lines->AddVertexQC(beam.startPos,color);
-					lines->AddVertexQC(beam.endPos,color);
-				} else if (dynamic_cast<CLightingProjectile*>(p)) {
-					CLightingProjectile& beam = *(CLightingProjectile*)p;
-					unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
-					lines->AddVertexQC(beam.pos,color);
-					lines->AddVertexQC(beam.endPos,color);
-				} else if (dynamic_cast<CPieceProjectile*>(p)) {
-					points->AddVertexQC(p->pos,red);
-				} else if (dynamic_cast<CWreckProjectile*>(p)) {
-					points->AddVertexQC(p->pos,redA);
-				} else if (dynamic_cast<CWeaponProjectile*>(p)) {
-					points->AddVertexQC(p->pos,yellow);
-				} else {
-					points->AddVertexQC(p->pos,white);
+						if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
+						} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
+							points->AddVertexQC(p->pos,green);
+						} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
+							CBeamLaserProjectile& beam = *(CBeamLaserProjectile*)p;
+							unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
+							lines->AddVertexQC(beam.startPos,color);
+							lines->AddVertexQC(beam.endPos,color);
+						} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
+							CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
+							unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
+							lines->AddVertexQC(beam.startPos,color);
+							lines->AddVertexQC(beam.endPos,color);
+						} else if (dynamic_cast<CLightingProjectile*>(p)) {
+							CLightingProjectile& beam = *(CLightingProjectile*)p;
+							unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
+							lines->AddVertexQC(beam.pos,color);
+							lines->AddVertexQC(beam.endPos,color);
+						} else if (dynamic_cast<CPieceProjectile*>(p)) {
+							points->AddVertexQC(p->pos,red);
+						} else if (dynamic_cast<CWreckProjectile*>(p)) {
+							points->AddVertexQC(p->pos,redA);
+						} else if (dynamic_cast<CWeaponProjectile*>(p)) {
+							points->AddVertexQC(p->pos,yellow);
+						} else {
+							points->AddVertexQC(p->pos,white);
+						}
 				}
 			}
+			lines->DrawArrayC(GL_LINES);
+			points->DrawArrayC(GL_POINTS);
 		}
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
 	}
 
 	// draw the queued commands
@@ -1186,9 +1174,7 @@ void CMiniMap::DrawForReal()
 		guihandler->DrawMapStuff(!!drawCommands);
 	}
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); // DrawForReal
 	// draw unit ranges
 	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
 	CUnitSet& selUnits = selectedUnits.selectedUnits;

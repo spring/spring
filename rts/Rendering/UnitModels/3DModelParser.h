@@ -5,6 +5,7 @@
 #include <string>
 #include "Matrix44f.h"
 #include "System/GlobalStuff.h"
+#include "Sim/Units/Unit.h"
 
 struct S3DO;
 struct SS3O;
@@ -20,8 +21,14 @@ public:
 	C3DModelParser(void);
 	~C3DModelParser(void);
 
+	void Update();
 	S3DOModel* Load3DModel(std::string name, float scale = 1.0f, int side = 1);
 	// S3DOModel* Load3DO(string name,float scale,int side,const float3& offsets);
+	std::set<CUnit *> fixLocalModels;
+	std::vector<LocalS3DOModel *> deleteLocalModels;
+	void DeleteLocalModel(CUnit *unit);
+	void CreateLocalModel(CUnit *unit);
+	void FixLocalModel(CUnit *unit);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
 
 	C3DOParser* unit3doparser;
@@ -44,7 +51,8 @@ struct S3DOModel
 	float minx,miny,minz;
 	float3 relMidPos;
 	int textureType;		//0=3do, otherwise s3o
-
+	std::string tex1;
+	std::string tex2;
 	void DrawStatic();
 };
 

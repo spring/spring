@@ -156,7 +156,7 @@ CSmfReadMap::~CSmfReadMap()
 }
 
 
-void CSmfReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
+void CSmfReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
 {
 	x1-=x1&3;
 	x2+=(20004-x2)&3;

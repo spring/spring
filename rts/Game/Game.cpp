@@ -435,7 +435,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	keyBindings = SAFE_NEW CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 
-	water=CBaseWater::GetWater();
+	water=CBaseWater::GetWater(NULL);
 	for(int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
 
@@ -637,8 +637,7 @@ void CGame::ResizeEvent()
 	}
 
 	// Fix water renderer, they depend on screen resolution...
-	delete water;
-	water = CBaseWater::GetWater();
+	water = CBaseWater::GetWater(water);
 
 	eventHandler.ViewResize();
 }
@@ -944,8 +943,6 @@ bool CGame::ActionPressed(const Action& action,
 		shadowHandler = SAFE_NEW CShadowHandler();
 	}
 	else if (cmd == "water") {
-		delete water;
-
 		static char rmodes[5][32] = {"basic", "reflective", "dynamic", "reflective&refractive", "bumpmapped"};
 		int next = 0;
 
@@ -957,7 +954,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler.SetInt("ReflectiveWater", next);
 		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
-		water = CBaseWater::GetWater();
+		water = CBaseWater::GetWater(water);
 	}
 	else if (cmd == "advshading") {
 		static bool canUse = unitDrawer->advShading;
@@ -2405,7 +2402,6 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	mouse->EmptyMsgQueUpdate();
-	thisFps++;
 
 	unsigned timeNow = SDL_GetTicks();
 
@@ -2508,13 +2504,6 @@ bool CGame::Update()
 	return true;
 }
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-boost::recursive_mutex luamutex;
-#	endif
-#endif
 
 bool CGame::DrawWorld()
 {
@@ -2540,6 +2529,7 @@ bool CGame::DrawWorld()
 
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
+
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
 
@@ -2656,6 +2646,8 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
+	thisFps++;
+
 	ASSERT_UNSYNCED_MODE;
 
 	SetDrawMode(normalDraw);
@@ -2667,6 +2659,11 @@ bool CGame::Draw() {
  	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
+
+	texturehandler->Update(); // delayed loading of textures
+	modelParser->Update(); // delayed fixup of models
+	treeDrawer->UpdateDraw(); // delete disp lists
+	readmap->UpdateDraw(); // update heightmap texture
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 
@@ -3056,21 +3053,20 @@ void CGame::UnsyncedStuff() {
 	}
 }
 
-#	if defined(USE_GML) && GML_MT_TEST
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
 int numNewFrames=0;
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
-#	if defined(USE_GML) && GML_MT_TEST
+#	if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	SimFrameMT();
+#	else
+#		if defined(USE_GML) && GML_ENABLE_SIMDRAW
 	if(gmlThreadCount>1) { // if there is more than one cpu, run draw in parallel with sim
 		int oldgsframe=gs->frameNum;
 		gmlProcessor.AuxWork(&CGame::SimFrameMTcb,this); // start sim thread
 		UnsyncedStuff();
-		while(oldgsframe==*(volatile int *)&(gs->frameNum)) { // wait until GL calls in script.update() have finished (ugly hack)
-			gmlProcessor.PumpAux();
-			boost::thread::yield();
-		}
 		if(--numNewFrames==0) {
 			gu->drawFrame++;
 			if (gu->drawFrame == 0)
@@ -3083,8 +3079,9 @@ void CGame::SimFrame() {
 		}
 	}
 	else
-#	endif
+#		endif
 	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
+#	endif
 #else
 void CGame::SimFrameMT() {
 #endif
@@ -3114,16 +3111,13 @@ void CGame::SimFrame() {
 	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
 	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
-/*
-#if defined(USE_GML) && GML_MT_TEST
-	gmlProcessor.GetQueue();
-#endif*/
+
 	gs->frameNum++;
 
 	ENTER_UNSYNCED;
 
 	if (!skipping) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM
+#if !defined(USE_GML) || !GML_ENABLE_SIM || GML_ENABLE_SIMLOOP
     UnsyncedStuff();
 #endif
 //		infoConsole->Update();
@@ -3276,7 +3270,7 @@ void CGame::ClientReadNet()
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
-#	if defined(USE_GML) && GML_MT_TEST
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
 	numNewFrames=0;
 #endif
 	if(!gameServer){
@@ -3294,7 +3288,7 @@ void CGame::ClientReadNet()
 		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
 		unsigned ahead = 0;
 		while ((packet = net->Peek(ahead))) {
-#	if defined(USE_GML) && GML_MT_TEST
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
 			if (packet->data[0] == NETMSG_NEWFRAME)
 				++numNewFrames;
 #endif
@@ -3308,7 +3302,7 @@ void CGame::ClientReadNet()
 	}
 	else
 	{
-#	if defined(USE_GML) && GML_MT_TEST
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
 		unsigned ahead = 0;
 		while ((packet = net->Peek(ahead))) {
 			if (packet->data[0] == NETMSG_NEWFRAME)
@@ -4644,9 +4638,8 @@ void CGame::ReloadCOB(const string& msg, int player)
 				count++;
 				delete unit->cob;
 				unit->cob = SAFE_NEW CCobInstance(*newScript, unit);
-				delete unit->localmodel;
-				unit->localmodel =
-					modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+				modelParser->DeleteLocalModel(unit);
+				modelParser->CreateLocalModel(unit);
 				unit->cob->Call("Create");
 			}
 		}
