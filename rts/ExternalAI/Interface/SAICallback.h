@@ -657,16 +657,15 @@ int (CALLING_CONV *WeaponDef_getCustomParams)(int teamId, int weaponDefId, const
 
 };
 
+#ifdef	__cplusplus
+}	// extern "C"
+#endif
+
 
 #ifdef	__cplusplus
 class IGlobalAICallback;
 SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
-#endif /* __cplusplus */
+#endif	// __cplusplus
 
 
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* _SAICALLBACK_H */
-
+#endif	// _SAICALLBACK_H

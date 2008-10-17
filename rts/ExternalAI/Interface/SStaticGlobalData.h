@@ -20,7 +20,7 @@
 
 #ifdef	__cplusplus
 extern "C" {
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
 // paths/dirs stored in this struct are guaranteed
 // to come with no '/' or '\\' at the end.
@@ -28,6 +28,7 @@ extern "C" {
 // NOT like this:		/home/username/.spring/
 struct SStaticGlobalData {
 	unsigned int maxTeams;
+	unsigned int maxGroups; // maximum number of groups per team
 	const char* springVersion;
 	/** The first entry is the writeable data-dir */
 	unsigned int numDataDirs;
@@ -37,18 +38,20 @@ struct SStaticGlobalData {
 // define the OS specific path separator
 #ifdef WIN32
 #define PS '\\'
-#else	/* WIN32 */
+#define sPS "\\"
+#else	// WIN32
 #define PS '/'
-#endif	/* WIN32 */
+#define sPS "/"
+#endif	// WIN32
 
 #ifdef	__cplusplus
-}		/* extern "C" */
-#endif	/* __cplusplus */
+}		// extern "C"
+#endif	// __cplusplus
 
 #if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 struct SStaticGlobalData* createStaticGlobalData();
 void freeStaticGlobalData(struct SStaticGlobalData* staticGlobalData);
-#endif	/* defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#endif	// defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 
-#endif	/* _SSTATICGLOBALDATA_H */
+#endif	// _SSTATICGLOBALDATA_H
 

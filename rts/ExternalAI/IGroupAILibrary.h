@@ -37,15 +37,16 @@ public:
 	 * Level of Support for a specific engine version and AI interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
-	virtual LevelOfSupport GetLevelOfSupportFor(
+	virtual LevelOfSupport GetLevelOfSupportFor(int teamId, int groupId,
 			const std::string& engineVersionString, int engineVersionNumber,
 			const SAIInterfaceSpecifier& interfaceSpecifier) const = 0;
 	
-    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
-	virtual std::vector<Option> GetOptions() const = 0;
+//    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
+//	virtual std::vector<Option> GetOptions() const = 0;
 	
 	
-    virtual void Init(int teamId, int groupId) const = 0;
+    virtual void Init(int teamId, int groupId, const InfoItem info[],
+			unsigned int numInfoItems) const = 0;
     virtual void Release(int teamId, int groupId) const = 0;
     virtual int HandleEvent(int teamId, int groupId, int topic, const void* data) const = 0;
 };

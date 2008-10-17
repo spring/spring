@@ -432,7 +432,11 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		}
 	}
 
-	if (!unitdef->floater) {
+	const float groundheight = ground->GetHeight2(pos.x, pos.z);
+
+	if (!unitdef->floater || groundheight > 0.0f) {
+		// if we are capable of floating, only test local
+		// height difference if terrain is above sea-level
 		const float* heightmap = readmap->GetHeightmap();
 		int x = (int) (pos.x / SQUARE_SIZE);
 		int z = (int) (pos.z / SQUARE_SIZE);
@@ -443,8 +447,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		if (pos.y > orgh + hdif && pos.y > h + hdif) { return 0; }
 		if (pos.y < orgh - hdif && pos.y < h - hdif) { return 0; }
 	}
-
-	const float groundheight = ground->GetHeight2(pos.x, pos.z);
 
 	if (!unitdef->floater && groundheight < -unitdef->maxWaterDepth) {
 		// ground is deeper than our maxWaterDepth, cannot build here

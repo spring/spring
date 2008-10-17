@@ -22,6 +22,9 @@
   File "..\external\TASClient\groups.ini"
   File "..\external\TASClient\tips.txt"
 
+  SetOutPath "$INSTDIR\lobby\python"
+  File /r /x .svn "..\external\TASClient\python\*.*"
+
   Call GetDotNETVersion
   Pop $0
   StrCpy $0 $0 "" 1 ; Remove the starting "v" so $0 contains only the version number.

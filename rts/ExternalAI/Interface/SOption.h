@@ -53,9 +53,10 @@ struct Option {
 
 	const char* type; // "bool", "number", "string", "list", ... (see enum OptionType)
 
-	OptionType typeCode;
+	enum OptionType typeCode;
 
-	bool   boolDef;
+//	bool   boolDef;
+	int   boolDef; // 0 -> false, 1 -> true
 
 	float  numberDef;
 	float  numberMin;
@@ -67,8 +68,9 @@ struct Option {
 
 	const char* listDef;
 	int numListItems;
-	OptionListItem* list;
+	struct OptionListItem* list;
 };
+
 
 #if	defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
 int ParseOptions(
@@ -77,11 +79,11 @@ int ParseOptions(
 		const char* accessModes,
 		const char* mapName,
 		Option options[], unsigned int max);
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
+#endif	// defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
 
 #ifdef	__cplusplus
-}
+}	// extern "C"
 #endif
 
-#endif	/* _SOPTION_H */
+#endif	// _SOPTION_H */
 

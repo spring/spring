@@ -15,8 +15,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AISEVENTS_H
-#define AISEVENTS_H
+#ifndef _AISEVENTS_H
+#define _AISEVENTS_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 #include "SAIFloat3.h"
 #include "SAICallback.h"
@@ -151,4 +155,8 @@ struct SSeismicPingEvent {
 	float strength;
 };
 
-#endif /*AISEVENTS_H*/
+#ifdef	__cplusplus
+}	// extern "C"
+#endif
+
+#endif	// _AISEVENTS_H

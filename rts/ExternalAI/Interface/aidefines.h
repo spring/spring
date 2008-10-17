@@ -20,7 +20,7 @@
 
 #ifdef	__cplusplus
 extern "C" {
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
 #include "System/exportdefines.h"
 
@@ -60,7 +60,7 @@ extern "C" {
 #define GROUP_AI_DATA_DIR "AI/Group/data"
 
 #ifdef	__cplusplus
-}		/* extern "C" */
-#endif	/* __cplusplus */
+}		// extern "C"
+#endif	// __cplusplus
 
-#endif	/* _AIDEFINES_H */
+#endif	// _AIDEFINES_H

@@ -630,7 +630,7 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 
 			HSTR_PUSH(L, "params");
 			lua_newtable(L);
-			for (int p = 0; p < cmds[i].params.size(); p++) {
+			for (unsigned int p = 0; p < cmds[i].params.size(); p++) {
 				lua_pushnumber(L, p + 1);
 				lua_pushstring(L, cmds[i].params[p].c_str());
 				lua_rawset(L, -3);

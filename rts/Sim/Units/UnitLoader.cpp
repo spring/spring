@@ -507,8 +507,14 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	if (!mapDamage->disabled && unitDef->levelGround && !unitDef->floater &&
-	    !(unitDef->canmove && (unitDef->speed > 0.0f))) {
+	const float groundheight = ground->GetHeight2(unit->pos.x, unit->pos.z);
+
+	if (!mapDamage->disabled && unitDef->levelGround &&
+		!(unitDef->floater && groundheight <= 0) &&
+		!(unitDef->canmove && (unitDef->speed > 0.0f))) {
+		// if we are float-capable, only flatten
+		// if the terrain here is above sea level
+
 		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
 		bi.pos = helper->Pos2BuildPos(bi);
 		const float hss = 0.5f * SQUARE_SIZE;

@@ -16,9 +16,9 @@ AAISector::AAISector()
 }
 
 AAISector::~AAISector(void)
-{	
+{
 	defences.clear();
-	
+
 	attacked_by_this_game.clear(); 
 	attacked_by_learned.clear(); 
 
@@ -52,14 +52,14 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	distance_to_base = -1;
 	last_scout = 1;
 	rally_points = 0;
-	
+
 	// nothing sighted in that sector
 	enemy_structures = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	threat = 0;
 	failed_defences = 0;
-	
+
 	int categories = ai->bt->assault_categories.size();
 
 	combats_learned.resize(categories, 0);

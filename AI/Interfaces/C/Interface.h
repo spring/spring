@@ -92,8 +92,8 @@ private:
 	 * @return	true if the directory was created or already existed
 	 */
 	static bool MakeDirRecursive(const std::string& dirPath);
-	static SSAISpecifier ExtractSpecifier(const SSAILibrary& skirmishAILib);
-	static SGAISpecifier ExtractSpecifier(const SGAILibrary& groupAILib);
+//	static SSAISpecifier ExtractSpecifier(const SSAILibrary& skirmishAILib);
+//	static SGAISpecifier ExtractSpecifier(const SGAILibrary& groupAILib);
 
 	bool FitsThisInterface(const std::string& requestedShortName,
 			const std::string& requestedVersion);

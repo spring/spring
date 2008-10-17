@@ -32,8 +32,8 @@ struct SSAISpecifier;
 
 class CSkirmishAILibraryInfo {
 public:
-	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
-			const SAIInterfaceSpecifier& interfaceSpecifier);
+//	CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
+//			const SAIInterfaceSpecifier& interfaceSpecifier);
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
 	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
 			const std::string& aiOptionFile);

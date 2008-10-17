@@ -820,7 +820,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 								if (players[i] && players[i]->team == team)
 								{
 									players[i]->team = 0;
-									players[player]->spectator = true;
+									players[i]->spectator = true;
 								}
 							}
 						}

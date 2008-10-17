@@ -31,8 +31,9 @@ struct InfoItem {
 	const char* desc;
 };
 
-InfoItem copyInfoItem(const struct InfoItem* const orig);
+struct InfoItem copyInfoItem(const struct InfoItem* const orig);
 void deleteInfoItem(const struct InfoItem* const info);
+
 
 #if	defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
 unsigned int ParseInfo(
@@ -43,11 +44,11 @@ unsigned int ParseInfo(
 unsigned int ParseInfoRawFileSystem(
 		const char* fileName,
 		InfoItem info[], unsigned int max);
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
+#endif	// defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)
 
 #ifdef	__cplusplus
-}
+}	// extern "C"
 #endif
 
-#endif	/* _SINFO_H */
+#endif	// _SINFO_H
 

@@ -46,7 +46,7 @@ struct SSAISpecifier {
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
+struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
 void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
 
 #ifdef	__cplusplus
@@ -82,7 +82,7 @@ struct SSAILibrary {
 	 * @return	the level of support for the supplied engine and AI interface
 	 *			versions
 	 */
-	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
+	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(int teamId,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 	
@@ -96,7 +96,7 @@ struct SSAILibrary {
 	 * @param	max	the maximum number of elements to store into param info
 	 * @return	number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
+	unsigned int (CALLING_CONV *getInfo)(int teamId, struct InfoItem info[],
 			unsigned int maxInfoItems);
 	
 	/**
@@ -109,7 +109,7 @@ struct SSAILibrary {
 	 * @param	max	the maximum number of elements to store into param options
 	 * @return	number of elements stored into parameter options
 	 */
-	unsigned int (CALLING_CONV *getOptions)(struct Option options[],
+	unsigned int (CALLING_CONV *getOptions)(int teamId, struct Option options[],
 			unsigned int maxOptions);
 
 	
@@ -140,9 +140,12 @@ struct SSAILibrary {
 	 * valid.
 	 *
 	 * @param	teamId	the teamId this library shall create an instance for
+	 * @param	info	info about this AI (a technical nessecity for non C/C++ AIs)
+	 * @param	numInfoItems	now many items are stored in info
 	 * @return	init ok: 0, on error: any other value then 0
 	 */
-	int (CALLING_CONV *init)(int teamId);
+	int (CALLING_CONV *init)(int teamId, const struct InfoItem info[],
+			unsigned int numInfoItems);
 	
 	/**
 	 * This function is called, when an AI instance shall be deleted.

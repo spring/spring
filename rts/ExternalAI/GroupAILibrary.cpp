@@ -30,18 +30,20 @@ SGAISpecifier CGroupAILibrary::GetSpecifier() const {
 	return specifier;
 }
 
-LevelOfSupport CGroupAILibrary::GetLevelOfSupportFor(
+LevelOfSupport CGroupAILibrary::GetLevelOfSupportFor(int teamId, int groupId,
 			const std::string& engineVersionString, int engineVersionNumber,
 		const SAIInterfaceSpecifier& interfaceSpecifier) const {
 	
 	if (sGAI.getLevelOfSupportFor != NULL) {
-		return sGAI.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber,
-			interfaceSpecifier.shortName, interfaceSpecifier.version);
+		return sGAI.getLevelOfSupportFor(teamId, groupId,
+				engineVersionString.c_str(), engineVersionNumber,
+				interfaceSpecifier.shortName, interfaceSpecifier.version);
 	} else {
 		return LOS_Unknown;
 	}
 }
 	
+/*
 std::map<std::string, InfoItem> CGroupAILibrary::GetInfo() const {
 	
 	std::map<std::string, InfoItem> info;
@@ -75,12 +77,14 @@ std::vector<Option> CGroupAILibrary::GetOptions() const {
 
 	return ops;
 }
+*/
 
 
-void CGroupAILibrary::Init(int teamId, int groupId) const {
+void CGroupAILibrary::Init(int teamId, int groupId, const InfoItem info[],
+		unsigned int numInfoItems) const {
 	
 	if (sGAI.init != NULL) {
-		int error = sGAI.init(teamId, groupId);
+		int error = sGAI.init(teamId, groupId, info, numInfoItems);
 		if (error != 0) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d and group %d, error: %d", teamId, groupId, error);

@@ -20,7 +20,7 @@
 
 #ifdef	__cplusplus
 extern "C" {
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
 #define SPRING_CALLING_CONVENTION stdcall
 #define SPRING_CALLING_CONVENTION_2 __stdcall
@@ -28,23 +28,28 @@ extern "C" {
 // extern declaration that will work across
 // different platforms and compilers
 #ifndef SHARED_EXPORT
-	#ifdef _WIN32
-		#define SHARED_EXPORT extern "C" __declspec(dllexport)
-		#define SPRING_API
-	#elif __GNUC__ >= 4
-		// Support for '-fvisibility=hidden'.
-		#define SHARED_EXPORT extern "C" __attribute__ ((visibility("default")))
-		#define SPRING_API __attribute__ ((visibility("default")))
-	#else
-		// Older versions of gcc have everything visible; no need for fancy stuff.
-		#define SHARED_EXPORT extern "C"
-		#define SPRING_API
-	#endif
-#endif	/* SHARED_EXPORT */
+	#ifdef	__cplusplus
+		#ifdef _WIN32
+			#define SHARED_EXPORT extern "C" __declspec(dllexport)
+			#define SPRING_API
+		#elif __GNUC__ >= 4
+			// Support for '-fvisibility=hidden'.
+			#define SHARED_EXPORT extern "C" __attribute__ ((visibility("default")))
+			#define SPRING_API __attribute__ ((visibility("default")))
+		#else
+			// Older versions of gcc have everything visible; no need for fancy stuff.
+			#define SHARED_EXPORT extern "C"
+			#define SPRING_API
+		#endif
+	#else	// __cplusplus
+		// we dont have t oexport if we are in C already
+		#define SHARED_EXPORT
+	#endif	// __cplusplus
+#endif	// SHARED_EXPORT
 
 #ifndef DLL_EXPORT
 	#define DLL_EXPORT SHARED_EXPORT
-#endif	/* DLL_EXPORT */
+#endif	// DLL_EXPORT
 
 
 // calling convention declaration that will work across
@@ -62,7 +67,7 @@ extern "C" {
 	#else
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#endif
-#endif	/* CALLING_CONV */
+#endif	// CALLING_CONV
 	
 #ifndef CALLING_CONV_FUNC_POINTER
 	#ifdef __INTEL_COMPILER
@@ -70,7 +75,7 @@ extern "C" {
 	#else
 		#define CALLING_CONV_FUNC_POINTER CALLING_CONV
 	#endif
-#endif	/* CALLING_CONV_FUNC_POINTER */
+#endif	// CALLING_CONV_FUNC_POINTER
 
 
 #define Export(type) SHARED_EXPORT type CALLING_CONV
@@ -78,7 +83,7 @@ extern "C" {
 
 #ifdef	__cplusplus
 }
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
-#endif	/* _EXPORTDEFINES_H */
+#endif	// _EXPORTDEFINES_H
 

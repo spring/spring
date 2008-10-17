@@ -94,7 +94,7 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 
 GLuint LuaShaders::GetProgramName(unsigned int progID) const
 {
-	if ((progID <= 0) || (progID >= (int)programs.size())) {
+	if ((progID <= 0) || (progID >= programs.size())) {
 		return 0;
 	}
 	return programs[progID].id;
@@ -126,7 +126,7 @@ unsigned int LuaShaders::AddProgram(const Program& p)
 
 void LuaShaders::RemoveProgram(unsigned int progID)
 {
-	if ((progID <= 0) || (progID >= (int)programs.size())) {
+	if ((progID <= 0) || (progID >= programs.size())) {
 		return;
 	}
 	Program& p = programs[progID];

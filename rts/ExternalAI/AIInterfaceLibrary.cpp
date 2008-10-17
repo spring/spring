@@ -181,13 +181,14 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 	
 	const unsigned int MAX_INFOS = 128;
 	InfoItem info[MAX_INFOS];
-	unsigned int num = aiInfo->GetInfoCReference(info, MAX_INFOS);
+	unsigned int numInfoItems = aiInfo->GetInfoCReference(info, MAX_INFOS);
 	
 	SSAISpecifier sAISpecifier = aiInfo->GetSpecifier();
 	if (skirmishAILoadCount[sAISpecifier] == 0) {
 		//const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(&sAISpecifier);
-		const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(info, num);
-		ai = new CSkirmishAILibrary(*sLib, sAISpecifier);
+		const SSAILibrary* sLib =
+				sAIInterfaceLibrary.loadSkirmishAILibrary(info, numInfoItems);
+		ai = new CSkirmishAILibrary(*sLib, sAISpecifier, info, numInfoItems);
 		loadedSkirmishAILibraries[sAISpecifier] = ai;
 	} else {
 		ai = loadedSkirmishAILibraries[sAISpecifier];
