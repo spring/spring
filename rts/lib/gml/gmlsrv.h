@@ -10,7 +10,6 @@
 #define GMLSRV_H
 
 #ifdef USE_GML
-#define GML_MT_TEST 0 // run Draw() parallel with SimFrame(). Highly experimental, not fully working yet.
 
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
@@ -111,6 +110,7 @@ struct gmlExecState {
 	}
 
 };
+
 
 template<class R,class A, typename U>
 class gmlClientServer {
@@ -324,24 +324,14 @@ public:
 	}
 
 	void GetQueue() {
-		int thread=gmlThreadNumber;
-//		int processed=1;
+		gmlQueue *qd=&gmlQueues[gmlThreadCount];
 
-//		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
-
-		gmlQueue *qd=&gmlQueues[thread];
+		if(!qd->WasSynced && qd->Write==qd->WritePos)
+			return;
 
 		BOOL_ isq1=qd->Write==qd->Queue1;
 
-	qd->GetWrite(TRUE);
-/*#if GML_ALTERNATE_SYNCMODE
-		if(qd->WasSynced && qd->GetWrite(ex->syncmode?TRUE:2))
-#else
-		if(qd->WasSynced && qd->GetWrite(TRUE))
-#endif
-			processed=0;
-		if(processed && qd->GetWrite(TRUE))
-			processed=0;*/
+		qd->GetWrite(qd->WasSynced?2:TRUE);
 
 		if(isq1) {
 			while(!qd->Locked1 && *(BYTE * volatile *)&qd->Pos1!=qd->Queue1)
@@ -363,18 +353,17 @@ public:
 			if(qd->Reloc)
 				qd->Realloc();
 			if(qd->GetRead()) {
-				qd->Execute();
+				qd->ExecuteDebug();
 				qd->ReleaseRead();
 			}
 			if(qd->Sync) {
-				qd->ExecuteSynced();
+				qd->ExecuteSynced(&gmlQueue::ExecuteDebug);
 			}
 			if(AuxClientsReady==0)
 				return FALSE;
 			else
 				++AuxClientsReady;
 		}
-//		auxworker=NULL; // move to auxsub?
 		return TRUE;
 	}
 
@@ -407,7 +396,7 @@ public:
 		qd->ReleaseWrite();
 
 		++AuxClientsReady;	
-		auxworker=NULL; // move to auxsub?
+		auxworker=NULL;
 	}
 
 	void gmlClientAux() {

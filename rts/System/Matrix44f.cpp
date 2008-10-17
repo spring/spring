@@ -32,6 +32,18 @@ CMatrix44f::CMatrix44f(const CMatrix44f& n)
 }
 
 
+CMatrix44f::CMatrix44f(const float3& pos)
+{
+	m[0]  = m[5]  = m[10] = m[15] = 1.0f;
+
+	m[1]  = m[2]  = m[3]  = 0.0f;
+	m[4]  = m[6]  = m[7]  = 0.0f;
+	m[8]  = m[9]  = m[11] = 0.0f;
+
+	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z;
+}
+
+
 CMatrix44f::~CMatrix44f(void)
 {
 }
@@ -186,9 +198,9 @@ void CMatrix44f::Translate(const float3& pos)
 	*this = Mul(tm);
 */
 
-	const float x=pos.x;
-	const float y=pos.y;
-	const float z=pos.z;
+	const float& x=pos.x;
+	const float& y=pos.y;
+	const float& z=pos.z;
 	m[12] += x*m[0] + y*m[4] + z*m[8];
 	m[13] += x*m[1] + y*m[5] + z*m[9];
 	m[14] += x*m[2] + y*m[6] + z*m[10];

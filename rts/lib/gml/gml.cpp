@@ -34,6 +34,8 @@
 #include "StdAfx.h"
 #ifdef USE_GML
 #include "gmlcls.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -54,7 +56,7 @@ __thread int gmlThreadNumber=0;
 int gmlThreadNumber=0;
 #endif
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
-int gmlThreadCountOverride=0; // number of threads to use (can be manually overridden here)
+int gmlThreadCountOverride=0; //configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
 int gmlItemsConsumed=0;
 
 // gmlCPUCount returns the number of CPU cores
@@ -172,6 +174,29 @@ gmlMultiItemServer<GLuint, GLsizei, PFNGLGENFRAMEBUFFERSEXTPROC *> gmlFramebuffe
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENQUERIESPROC *> gmlQueryServer(&glGenQueries, 20, 5);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSPROC *> gmlBufferServer(&glGenBuffers, 2, 0);
 
+
+#if GML_ENABLE_SIMDRAW
+#include <boost/thread/mutex.hpp>
+boost::mutex caimutex;
+boost::mutex decalmutex;
+boost::mutex treemutex;
+boost::mutex modelmutex;
+boost::mutex texmutex;
+boost::mutex mapmutex;
+boost::mutex groupmutex;
+boost::mutex inmapmutex;
+boost::mutex tempmutex;
+
+#include <boost/thread/recursive_mutex.hpp>
+boost::recursive_mutex unitmutex;
+boost::recursive_mutex quadmutex;
+boost::recursive_mutex selmutex;
+boost::recursive_mutex luamutex;
+boost::recursive_mutex featmutex;
+boost::recursive_mutex projmutex;
+boost::recursive_mutex grassmutex;
+boost::recursive_mutex guimutex;
+#endif
 
 // GMLqueue implementation
 gmlQueue::gmlQueue():
@@ -882,7 +907,6 @@ void gmlQueue::Execute() {
 	BYTE *p=Read;
 	BYTE *e=ReadPos;
 	BYTE *ptr=NULL;
-
 	while(p<e) {
 //		GML_DEBUG("Cmd ",*(int *)p, 2);
 		QueueHandler(p,ptr);
@@ -891,12 +915,28 @@ void gmlQueue::Execute() {
 //	GML_DEBUG("Execute ",procs, 2);
 }
 
+void gmlQueue::ExecuteDebug() {
+	int procs=0;
+	BYTE *p=Read;
+	BYTE *e=ReadPos;
+	BYTE *ptr=NULL;
+
+	while(p<e) {
+		if(*(int *)p!=0)
+			logOutput.Print("GML error: OpenGL call #%d in SimFrame()",*(int *)p);
+		QueueHandler(p,ptr);
+		++procs;
+	}
+	if(procs>1 || (procs==1 && *(int *)Read!=0))
+		logOutput.Print("GML error: %d OpenGL calls detected in SimFrame()",procs);
+}
+
 #include "gmlsrv.h"
 
-// Execute - executes all GL commands in the current read queue.
+// ExecuteSynced - executes all GL commands in the current read queue.
 // Execution is synced (this means it will stop at certain points
 // to return values to the worker thread)
-void gmlQueue::ExecuteSynced() {
+void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 //int procs=0;
 #if GML_ALTERNATE_SYNCMODE
 	BYTE *s;
@@ -908,7 +948,7 @@ void gmlQueue::ExecuteSynced() {
 			if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
 				gmlUpdateServers();
 			if(GetRead()) {
-				Execute();
+				(this->*execfun)();
 				ReleaseRead();
 			}
 			boost::thread::yield();
@@ -918,14 +958,14 @@ void gmlQueue::ExecuteSynced() {
 			Sync=EXEC_SYNC; //NEW
 			GetRead(TRUE);
 			Sync=EXEC_RUN; // cannot allow worker to continue before right queue acquired
-			Execute();
+			(this->*execfun)();
 			ReleaseRead();
 			break;
 		}
 
 		Sync=EXEC_RUN; // sync confirmed
 		GetRead(TRUE);
-		Execute();
+		(this->*execfun)();
 		Sync=EXEC_RES; // result available
 		ReleaseRead();
 		while(Sync==EXEC_RES) // waiting for worker to acquire result

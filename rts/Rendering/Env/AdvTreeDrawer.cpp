@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 #include "AdvTreeDrawer.h"
 #include "Map/BaseGroundDrawer.h"
@@ -19,12 +20,6 @@
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-boost::mutex treemutex;
-#	endif
-#endif
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -85,9 +80,7 @@ CAdvTreeDrawer::~CAdvTreeDrawer()
 
 void CAdvTreeDrawer::Update()
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // Update
 
 	for(std::list<FallingTree>::iterator fti=fallingTrees.begin();fti!=fallingTrees.end();){
 		fti->fallPos+=fti->speed*0.1f;
@@ -344,9 +337,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	drawer.treeDistance = treeDistance;
 	drawer.drawDetailed = drawDetailed;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // Draw
 
 	// draw far away trees using the map dependent grid visibility
 	oldTreeDistance=treeDistance;
@@ -654,9 +645,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	drawer.td = this;
 	drawer.treeDistance = treeDistance;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // DrawShadowPass
 
 	// draw with extraSize=1
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer, 1);
@@ -791,11 +780,13 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 	int y=(int)pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE;
 	TreeSquareStruct* pTSS=trees+y*treesX+x;
 	if(pTSS->displist){
-		glDeleteLists(pTSS->displist,1);
+//		glDeleteLists(pTSS->displist,1);
+		delDispLists.push_back(pTSS->displist);
 		pTSS->displist=0;
 	}
 	if(pTSS->farDisplist){
-		glDeleteLists(pTSS->farDisplist,1);
+//		glDeleteLists(pTSS->farDisplist,1);
+		delDispLists.push_back(pTSS->farDisplist);
 		pTSS->farDisplist=0;
 	}
 	grassDrawer->ResetPos(pos);
@@ -803,9 +794,7 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 
 void CAdvTreeDrawer::AddTree(int type, float3 pos, float size)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // AddTree
 
 	TreeStruct ts;
 	ts.pos=pos;
@@ -818,9 +807,7 @@ void CAdvTreeDrawer::AddTree(int type, float3 pos, float size)
 
 void CAdvTreeDrawer::DeleteTree(float3 pos)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // DeleteTree
 
 	int hash=(int)pos.x+((int)(pos.z))*20000;
 	int square=((int)pos.x)/(SQUARE_SIZE*TREE_SQUARE_SIZE)+((int)pos.z)/(SQUARE_SIZE*TREE_SQUARE_SIZE)*treesX;
@@ -832,9 +819,7 @@ void CAdvTreeDrawer::DeleteTree(float3 pos)
 
 int CAdvTreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // AddFallingTree
 
 	FallingTree ft;
 
@@ -854,18 +839,14 @@ int CAdvTreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
 
 void CAdvTreeDrawer::AddGrass(float3 pos)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // AddGrass
 
 	grassDrawer->AddGrass(pos);
 }
 
 void CAdvTreeDrawer::RemoveGrass(int x, int z)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // RemoveGrass
 
 	grassDrawer->RemoveGrass(x,z);
 }

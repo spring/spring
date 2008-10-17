@@ -12,7 +12,7 @@ class CBasicWater : public CBaseWater
 {
 public:
 	void Draw();
-	void UpdateWater(CGame* game){};
+	void UpdateWater(CGame* game);
 	CBasicWater();
 	virtual ~CBasicWater();
 	int GetID() const { return 0; }

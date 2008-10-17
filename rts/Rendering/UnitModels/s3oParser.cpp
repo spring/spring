@@ -92,7 +92,9 @@ S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
 	model->rootobject3do=0;
 	object->isEmpty=true;
 	model->name=name;
-	model->textureType=texturehandler->LoadS3OTexture((char*)&fileBuf[header.texture1],(char*)&fileBuf[header.texture2]);
+	model->tex1=(char*)&fileBuf[header.texture1];
+	model->tex2=(char*)&fileBuf[header.texture2];
+	texturehandler->LoadS3OTexture(model);
 
 	FindMinMax(object);
 
@@ -203,6 +205,22 @@ void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vect
 
 	POP_CODE_MODE;
 }
+
+
+void CS3OParser::FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces) {
+	int piecenum=0;
+	FixLocalModel(model->rootobjects3o, lmodel, pieces, &piecenum);
+}
+
+void CS3OParser::FixLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum) {
+	lmodel->pieces[*piecenum].displist = model->displist;
+
+	for (unsigned int i=0; i<model->childs.size(); i++) {
+		(*piecenum)++;
+		FixLocalModel(model->childs[i], lmodel, pieces, piecenum);
+	}
+}
+
 
 SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 {
@@ -317,8 +335,19 @@ void CS3OParser::DrawSub(SS3O* o)
 
 }
 
+void CS3OParser::Update() {
+//	GML_STDMUTEX_LOCK(model); // Update
+	for(std::vector<SS3O *>::iterator i=createLists.begin(); i!=createLists.end(); ++i)
+		CreateListsNow(*i);
+	createLists.clear();
+}
 
-void CS3OParser::CreateLists(SS3O *o)
+void CS3OParser::CreateLists(SS3O *o) {
+	GML_STDMUTEX_LOCK(model); // CreateLists
+	createLists.push_back(o);
+}
+
+void CS3OParser::CreateListsNow(SS3O *o)
 {
 	o->displist = glGenLists(1);
 	PUSH_CODE_MODE;
@@ -329,7 +358,7 @@ void CS3OParser::CreateLists(SS3O *o)
 	POP_CODE_MODE;
 
 	for(std::vector<SS3O*>::iterator bs=o->childs.begin();bs!=o->childs.end();bs++){
-		CreateLists(*bs);
+		CreateListsNow(*bs);
 	}
 }
 

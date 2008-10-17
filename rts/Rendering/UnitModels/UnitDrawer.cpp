@@ -46,10 +46,6 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex unitmutex;
-#	endif
 extern gmlClientServer<void, int,CUnit*> gmlProcessor;
 #endif
 
@@ -219,9 +215,7 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 
 void CUnitDrawer::Update(void)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_STDMUTEX_LOCK(temp); //unit); // Update
 
 	while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
 		tempDrawUnits.erase(tempDrawUnits.begin());
@@ -414,9 +408,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
 #endif
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_RECMUTEX_LOCK(unit); // Draw
 
 #ifdef USE_GML
 	if(multiThreadDrawUnit) {
@@ -443,14 +435,18 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 #endif
 
-	std::multimap<int, TempDrawUnit>::iterator ti;
-	for (ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
-		if (camera->InView(ti->second.pos, 100)) {
-			glPushMatrix();
-			glTranslatef3(ti->second.pos);
-			glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-			ti->second.unitdef->LoadModel(ti->second.team)->DrawStatic();
-			glPopMatrix();
+	{
+		GML_STDMUTEX_LOCK(temp); // Draw
+
+		std::multimap<int, TempDrawUnit>::iterator ti;
+		for (ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
+			if (camera->InView(ti->second.pos, 100)) {
+				glPushMatrix();
+				glTranslatef3(ti->second.pos);
+				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+				ti->second.unitdef->LoadModel(ti->second.team)->DrawStatic();
+				glPopMatrix();
+			}
 		}
 	}
 
@@ -691,9 +687,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
 
 #ifdef USE_GML
 	if(multiThreadDrawUnitShadow) {
@@ -865,44 +859,44 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glColor4f(1, 1, 1, 0.3f);
 	glDepthMask(0);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
-	// units drawn by AI, these aren't really
-	// cloaked but the effect is the same
-	for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
-		if (camera->InView(ti->second.pos, 100)) {
-			glPushMatrix();
-			glTranslatef3(ti->second.pos);
-			glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-			S3DOModel* model = ti->second.unitdef->LoadModel(ti->second.team);
-			model->DrawStatic();
-			glPopMatrix();
-		}
-		if (ti->second.drawBorder) {
-			float3 pos = ti->second.pos;
-			const UnitDef *unitdef = ti->second.unitdef;
+	{
+		GML_STDMUTEX_LOCK(temp); // DrawCloakedUnits
+		// units drawn by AI, these aren't really
+		// cloaked but the effect is the same
+		for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
+			if (camera->InView(ti->second.pos, 100)) {
+				glPushMatrix();
+				glTranslatef3(ti->second.pos);
+				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+				S3DOModel* model = ti->second.unitdef->LoadModel(ti->second.team);
+				model->DrawStatic();
+				glPopMatrix();
+			}
+			if (ti->second.drawBorder) {
+				float3 pos = ti->second.pos;
+				const UnitDef *unitdef = ti->second.unitdef;
 
-			BuildInfo bi(unitdef, pos, ti->second.facing);
-			pos = helper->Pos2BuildPos(bi);
+				BuildInfo bi(unitdef, pos, ti->second.facing);
+				pos = helper->Pos2BuildPos(bi);
 
-			float xsize = bi.GetXSize() * 4;
-			float ysize = bi.GetYSize() * 4;
-			glColor4f(0.2f, 1, 0.2f, 0.7f);
-			glDisable(GL_TEXTURE_2D);
-			glBegin(GL_LINE_STRIP);
-			glVertexf3(pos+float3( xsize, 1,  ysize));
-			glVertexf3(pos+float3(-xsize, 1,  ysize));
-			glVertexf3(pos+float3(-xsize, 1, -ysize));
-			glVertexf3(pos+float3( xsize, 1, -ysize));
-			glVertexf3(pos+float3( xsize, 1,  ysize));
-			glEnd();
-			glColor4f(1, 1, 1, 0.3f);
-			glEnable(GL_TEXTURE_2D);
+				float xsize = bi.GetXSize() * 4;
+				float ysize = bi.GetYSize() * 4;
+				glColor4f(0.2f, 1, 0.2f, 0.7f);
+				glDisable(GL_TEXTURE_2D);
+				glBegin(GL_LINE_STRIP);
+				glVertexf3(pos+float3( xsize, 1,  ysize));
+				glVertexf3(pos+float3(-xsize, 1,  ysize));
+				glVertexf3(pos+float3(-xsize, 1, -ysize));
+				glVertexf3(pos+float3( xsize, 1, -ysize));
+				glVertexf3(pos+float3( xsize, 1,  ysize));
+				glEnd();
+				glColor4f(1, 1, 1, 0.3f);
+				glEnable(GL_TEXTURE_2D);
+			}
 		}
 	}
-
 
 	// 3dos
 	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
@@ -1514,8 +1508,11 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
 	glViewport(0, 0, reflTexSize, reflTexSize);
 
-	CCamera *realCam = camera;
-	camera = new CCamera(*realCam);
+//	CCamera *realCam = camera;
+//	camera = new CCamera(*realCam);
+	char realCam[sizeof(CCamera)];
+	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
+
 	camera->SetFov(90);
 	camera->forward = camdir;
 	camera->up = -UpVector;
@@ -1544,8 +1541,10 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
-	delete camera;
-	camera = realCam;
+//	delete camera;
+//	camera = realCam;
+	camera->~CCamera();
+	new (camera) CCamera(*(CCamera *)realCam);
 }
 
 void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
@@ -1932,13 +1931,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
-#ifdef USE_GML
-	CMatrix44f m;
-#else
-	static CMatrix44f m;
-	m.LoadIdentity();
-#endif
-	unit->GetTransformMatrix(m);
+	CMatrix44f m = unit->GetTransformMatrix();
 	glMultMatrixf(&m[0]);
 }
 
@@ -2045,10 +2038,11 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 
 	float3 interPos;
 
-	if (!unit->transporter) {
+	CTransportUnit *trans=unit->transporter;
+	if (!trans) {
 		interPos = unit->pos + (unit->speed * gu->timeOffset);
 	} else {
-		interPos = unit->pos + (unit->transporter->speed * gu->timeOffset);
+		interPos = unit->pos + (trans->speed * gu->timeOffset);
 	}
 
 	interPos.y += unit->model->height + 5.0f;

@@ -40,14 +40,19 @@ public:
 
 	S3DOModel* LoadS3O(std::string name, float scale = 1, int side = 1);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
+	void FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces);
+	void Update();
 
 private:
 	SS3O* LoadPiece(unsigned char* buf, int offset,S3DOModel* model);
 	void DeleteSS3O(SS3O* o);
 	void FindMinMax(SS3O *object);
 	void DrawSub(SS3O* o);
+	std::vector<SS3O *> createLists;
 	void CreateLists(SS3O *o);
+	void CreateListsNow(SS3O *o);
 	void CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
+	void FixLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
 
 	std::map<std::string,S3DOModel*> units;
 };

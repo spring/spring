@@ -38,8 +38,15 @@ enum EVENT
  
 	/// Player has updated its ready-state (uchar playernumber, uchar state (0: not ready, 1: ready, 2: state not changed) )
 	PLAYER_READY = 12,
- 
-	/// Player has sent a chat message (uchar playernumber, string text)
+
+	/**
+	@brief Player has sent a chat message (uchar playernumber, uchar destination, string text)
+	Destination can be any of: a playernumber [0-32]
+	static const int TO_ALLIES = 127;
+	static const int TO_SPECTATORS = 126;
+	static const int TO_EVERYONE = 125;
+	(copied from Game/ChatMessage.h)
+	*/
 	PLAYER_CHAT = 13,
  
 	/// Player has been defeated (uchar playernumber)
@@ -104,13 +111,14 @@ void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState) const
 	autohost->Send(msg, 3);
 }
 
-void AutohostInterface::SendPlayerChat(uchar playerNum, const std::string& chatmsg) const
+void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg) const
 {
-	unsigned msgsize = 2*sizeof(uchar)+chatmsg.size();
+	unsigned msgsize = 3*sizeof(uchar)+chatmsg.size();
 	uchar* msg = new uchar[msgsize];
 	msg[0] = PLAYER_CHAT;
 	msg[1] = playerNum;
-	strncpy((char*)msg+2, chatmsg.c_str(), chatmsg.size());
+	msg[2] = destination;
+	strncpy((char*)msg+3, chatmsg.c_str(), chatmsg.size());
 	autohost->Send(msg, msgsize);
 	delete[] msg;
 }

@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
 #include "FartextureHandler.h"
@@ -8,7 +9,6 @@
 #include "UnitModels/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
-
 
 CFartextureHandler* fartextureHandler = NULL;
 
@@ -43,6 +43,7 @@ CFartextureHandler::~CFartextureHandler(void)
  */
 void CFartextureHandler::CreateFarTexture(S3DOModel* model)
 {
+	GML_STDMUTEX_LOCK(tex); // CreateFarTexture
 	pending.push_back(model);
 }
 
@@ -54,6 +55,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel* model)
  */
 void CFartextureHandler::CreateFarTextures()
 {
+	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
 	for(std::vector<S3DOModel*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
 		ReallyCreateFarTexture(*it);
 	}

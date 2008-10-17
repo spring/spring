@@ -92,6 +92,8 @@ public:
 	S3DOModel* Load3DO(std::string name, float scale = 1, int side = 1);
 	// S3DOModel* Load3DO(std::string name,float scale,int side,const float3& offsets);
 	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
+	void Update();
+	void FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces);
 
 private:
 	void FindCenter(S3DO* object);
@@ -100,7 +102,9 @@ private:
 	void CalcNormals(S3DO* o);
 
 	void DeleteS3DO(S3DO* o);
+	std::vector<S3DO*> createLists;
 	void CreateLists(S3DO* o);
+	void CreateListsNow(S3DO* o);
 	float scaleFactor;
 
 	void GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int excludePrim,int side);
@@ -109,6 +113,7 @@ private:
 	bool ReadChild(int pos,S3DO* root,int side, int *numobj);
 	void DrawSub(S3DO* o);
 	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
+	void FixLocalModel(S3DO *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
 
 	std::map<std::string, S3DOModel*> units;
 	std::set<std::string> teamtex;

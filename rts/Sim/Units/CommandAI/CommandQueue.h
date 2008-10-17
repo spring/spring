@@ -1,9 +1,9 @@
 #ifndef __COMMAND_QUEUE_H__
 #define __COMMAND_QUEUE_H__
 
+#include "Rendering/GL/myGL.h"
 #include <deque>
 #include "Sim/Units/CommandAI/Command.h"
-
 
 // A wrapper class for  std::deque<Command>  to keep track of commands
 
@@ -45,16 +45,18 @@ class CCommandQueue {
 
 		inline iterator insert(iterator pos, const Command& cmd);
 
-		inline void pop_back()  { queue.pop_back(); }
-		inline void pop_front() { queue.pop_front(); }
+		inline void pop_back()  { GML_STDMUTEX_LOCK(cai); queue.pop_back(); }
+		inline void pop_front() { GML_STDMUTEX_LOCK(cai); queue.pop_front(); }
 
 		inline iterator erase(iterator pos) {
+			GML_STDMUTEX_LOCK(cai); // Erase
 			return queue.erase(pos);
 		}
 		inline iterator erase(iterator first, iterator last) {
+			GML_STDMUTEX_LOCK(cai); // Erase
 			return queue.erase(first, last);
 		}
-		inline void clear() { queue.clear(); }
+		inline void clear() { GML_STDMUTEX_LOCK(cai); queue.clear(); }
 
 		inline iterator       end()         { return queue.end(); }
 		inline const_iterator end()   const { return queue.end(); }
@@ -105,6 +107,7 @@ inline int CCommandQueue::GetNextTag()
 
 inline void CCommandQueue::push_back(const Command& cmd)
 {
+	GML_STDMUTEX_LOCK(cai); // push_back
 	queue.push_back(cmd);
 	queue.back().tag = GetNextTag();
 }
@@ -112,6 +115,7 @@ inline void CCommandQueue::push_back(const Command& cmd)
 
 inline void CCommandQueue::push_front(const Command& cmd)
 {
+	GML_STDMUTEX_LOCK(cai); // push_front
 	queue.push_front(cmd);
 	queue.front().tag = GetNextTag();
 }
@@ -122,6 +126,7 @@ inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
 {
 	Command tmpCmd = cmd;
 	tmpCmd.tag = GetNextTag();
+	GML_STDMUTEX_LOCK(cai); // insert
 	return queue.insert(pos, tmpCmd);
 }
 

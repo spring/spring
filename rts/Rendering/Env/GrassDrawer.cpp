@@ -22,14 +22,6 @@
 #include "System/Exceptions.h"
 //#include "TimeProfiler.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-boost::recursive_mutex grassmutex;
-#	endif
-#endif
-
 static const float turfSize=20;				//single turf size
 static const float partTurfSize=turfSize*0.6f;				//single turf size
 static const int grassSquareSize=4;		//mapsquares per grass square
@@ -428,9 +420,7 @@ void CGrassDrawer::Draw(void)
 	drawer.cy=(int)(camera->pos.z/bMSsq);
 	drawer.gd = this;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock grasslock(grassmutex);
-#endif
+	GML_RECMUTEX_LOCK(grass); // Draw
 
 	readmap->GridVisibility (camera, blockMapSize, maxGrassDist, &drawer);
 	CVertexArray *va = drawer.va;
@@ -608,9 +598,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 	if(grassOff)
 		return;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock grasslock(grassmutex);
-#endif
+	GML_RECMUTEX_LOCK(grass); // ResetPos
 
 	int a=(int(pos.z/bMSsq)&31)*32+(int(pos.x/bMSsq)&31);
 	if(grass[a].va){
@@ -803,9 +791,7 @@ void CGrassDrawer::AddGrass(float3 pos)
 	if(grassOff)
 		return;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock grasslock(grassmutex);
-#endif
+	GML_RECMUTEX_LOCK(grass); // AddGrass
 
 	grassMap[(int(pos.z)/SQUARE_SIZE/grassSquareSize)*gs->mapx/grassSquareSize+int(pos.x)/SQUARE_SIZE/grassSquareSize]=1;
 }
@@ -815,9 +801,7 @@ void CGrassDrawer::RemoveGrass(int x, int z)
 	if(grassOff)
 		return;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock grasslock(grassmutex);
-#endif
+	GML_RECMUTEX_LOCK(grass); // RemoveGrass
 
 	grassMap[(z/grassSquareSize)*gs->mapx/grassSquareSize+x/grassSquareSize]=0;
 	ResetPos(float3(x*SQUARE_SIZE,0,z*SQUARE_SIZE));

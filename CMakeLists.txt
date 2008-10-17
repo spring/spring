@@ -54,7 +54,7 @@ if (MINGW)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
 	set (Boost_FILESYSTEM_LIBRARY boost_filesystem-mt)
 	set (DEVIL_ILU_LIBRARY ilu)
-	set (DEVIL_LIBRARIES "devil ${DEVIL_ILU_LIBRARY}")
+	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
 else (MINGW)
 	# AIs need it
 	FIND_PACKAGE(SDL REQUIRED)

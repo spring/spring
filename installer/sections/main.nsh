@@ -23,7 +23,7 @@
   Delete "$INSTDIR\python24.dll"
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
-  
+
   ; Delete Previous settings.exe
   Delete "..\game\settings.exe"
   File "..\external\SelectionEditor.exe"
@@ -32,7 +32,7 @@
 ;New Settings Program
 
   inetc::get \
-  "http://www.springlobby.info/installer/springsettings.exe" "$INSTDIR\springsettings.exe" 
+  "http://www.springlobby.info/installer/springsettings.exe" "$INSTDIR\springsettings.exe"
 
   File "..\external\mingwm10.dll"
   File "..\external\wxbase28u_gcc_custom.dll"
@@ -115,29 +115,10 @@ ${EndIf}
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
-  !insertmacro UPDATEFILEASSOC 
+  !insertmacro UPDATEFILEASSOC
 ${EndIf}
 ;!endif ; SP_UPDATE
 
-; Fix issue with riverdale maps by deleting old versions and installing the latest one (if riverdale is already present)
-${If} ${FileExists} "$INSTDIR\maps\River_Dalev01.sd7"
-  Delete "$INSTDIR\maps\River_Dalev01.sd7"
-${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
-  inetc::get \
-	     "http://installer.clan-sy.com/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
-${OrIf} ${FileExists} "$INSTDIR\maps\River_Dale-v01.sd7"
-  Delete "$INSTDIR\maps\River_Dale-v01.sd7"
-${AndIfNot} ${FileExists} "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
-  inetc::get \
-	     "http://installer.clan-sy.com/maps/River_Dale-V01(onlyRiverdale).sd7" "$INSTDIR\maps\River_Dale-V01(onlyRiverdale).sd7" 
-${EndIf}
-
-; Fix small divide desync
-${If} ${FileExists} "$INSTDIR\maps\SmallDivide.sd7"
-  Delete "$INSTDIR\maps\SmallDivide.sd7"
-    inetc::get \
-	     "http://installer.clan-sy.com/maps/SmallDivide.sd7" "$INSTDIR\maps\SmallDivide.sd7" 
-${EndIf}
 !else
 
   ; Main files
@@ -181,7 +162,7 @@ ${EndIf}
   ; Fonts
   Delete "$INSTDIR\fonts\Luxi.ttf"
   RmDir "$INSTDIR\fonts"
-  
+
   ; AI Bot dlls
   Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
   RmDir "$INSTDIR\AI\Skirmish\impls"

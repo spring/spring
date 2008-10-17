@@ -40,14 +40,6 @@
 #include "System/creg/STL_List.h"
 #include "System/Exceptions.h"
 
-#ifdef USE_GML
-#	include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-boost::recursive_mutex projmutex;
-#	endif
-#endif
-
 CProjectileHandler* ph;
 
 using namespace std;
@@ -407,9 +399,7 @@ void CProjectileHandler::SetMaxParticles(int value)
 
 void CProjectileHandler::Update()
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // Update
 
 	SCOPED_TIMER("Projectile handler");
 
@@ -493,9 +483,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	/* 3DO */
 	unitDrawer->SetupForUnitDrawing();
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // Draw
 
 	va->Initialize();
 	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
@@ -680,9 +668,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		if ((gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
@@ -725,9 +711,7 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // AddProjectile
 
 	ps.push_back(p);
 
@@ -840,6 +824,7 @@ void CProjectileHandler::CheckUnitCol()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
+	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
 	groundFlashes.push_back(flash);
 }
 
@@ -860,14 +845,20 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	CGroundFlash::va=GetVertexArray();
 	CGroundFlash::va->Initialize();
-	CGroundFlash::va->EnlargeArrays(8*groundFlashes.size(),0,VA_SIZE_TC);
 
-	vector<CGroundFlash*>::iterator gfi;
-	for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
-		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
-		    loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
-			(*gfi)->Draw();
+	{
+		GML_RECMUTEX_LOCK(proj); // DrawGroundFlashes
+
+		CGroundFlash::va->EnlargeArrays(8*groundFlashes.size(),0,VA_SIZE_TC);
+
+		vector<CGroundFlash*>::iterator gfi;
+		for(gfi=groundFlashes.begin();gfi!=groundFlashes.end();++gfi){
+			if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
+				loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+				(*gfi)->Draw();
+		}
 	}
+
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
@@ -905,9 +896,7 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // AddFlyingPiece
 
 	flying3doPieces->push_back(fp);
 }
@@ -915,9 +904,7 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts){
 	FlyingPiece_List * pieceList = NULL;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock projlock(projmutex);
-#endif
+	GML_RECMUTEX_LOCK(proj); // AddFlyingPiece
 
 	while(flyings3oPieces.size()<=textureType)
 		flyings3oPieces.push_back(vector<FlyingPiece_List*>());

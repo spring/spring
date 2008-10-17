@@ -21,15 +21,6 @@
 #include "System/Platform/ConfigHandler.h"
 #include "System/FastMath.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex featmutex;
-extern boost::mutex selmutex;
-#	endif
-#endif
-
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
 	updateFov = true;
@@ -244,6 +235,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		switch(drawMode) {
 			case drawPath: {
+				GML_RECMUTEX_LOCK(gui); // UpdateExtraTexture
 				if (guihandler->inCommand > 0 && guihandler->inCommand < guihandler->commands.size() &&
 						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
 					// use the current build order
@@ -255,9 +247,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							} else {
 								const UnitDef* unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 								CFeature* f;
-#	if defined(USE_GML) && GML_MT_TEST
-								boost::recursive_mutex::scoped_lock featlock(featmutex); // testunitbuildsquare accesses features in the quadfield
-#endif
+								GML_RECMUTEX_LOCK(quad); //feat); // UpdateExtraTexture: testunitbuildsquare accesses features in the quadfield
 								if(uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y*16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
 									if (f) {
 										m = 0.5f;
@@ -277,9 +267,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				else {
 					// use the first selected unit
-#	if defined(USE_GML) && GML_MT_TEST
-					boost::mutex::scoped_lock sellock(selmutex);
-#endif
+					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 					if (selectedUnits.selectedUnits.empty()) {
 						return true;
 					}

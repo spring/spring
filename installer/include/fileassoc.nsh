@@ -46,60 +46,60 @@
 ;             <verb> = <"menu-item text">
 ;                 command = <"command string">
 ;
- 
+
 !macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
   ; Backup the previously associated file class
   ReadRegStr $R0 HKCR ".${EXT}" ""
   WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
- 
+
   WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
- 
+
   WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
   WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
   WriteRegStr HKCR "${FILECLASS}\shell" "" "open"
   WriteRegStr HKCR "${FILECLASS}\shell\open" "" `${COMMANDTEXT}`
   WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_EX EXT FILECLASS DESCRIPTION ICON VERB DEFAULTVERB SHELLNEW COMMANDTEXT COMMAND
   ; Backup the previously associated file class
   ReadRegStr $R0 HKCR ".${EXT}" ""
   WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
- 
+
   WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
   StrCmp "${SHELLNEW}" "0" +2
   WriteRegStr HKCR ".${EXT}\ShellNew" "NullFile" ""
- 
+
   WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
   WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
   WriteRegStr HKCR "${FILECLASS}\shell" "" `${DEFAULTVERB}`
   WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
   WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_ADDVERB FILECLASS VERB COMMANDTEXT COMMAND
   WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
   WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_REMOVEVERB FILECLASS VERB
   DeleteRegKey HKCR `${FILECLASS}\shell\${VERB}`
 !macroend
- 
- 
+
+
 !macro APP_UNASSOCIATE EXT FILECLASS
   ; Backup the previously associated file class
   ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
   WriteRegStr HKCR ".${EXT}" "" "$R0"
- 
+
   DeleteRegKey HKCR `${FILECLASS}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_GETFILECLASS OUTPUT EXT
   ReadRegStr ${OUTPUT} HKCR ".${EXT}" ""
 !macroend
- 
- 
+
+
 ; !defines for use with SHChangeNotify
 !ifdef SHCNE_ASSOCCHANGED
 !undef SHCNE_ASSOCCHANGED
@@ -109,11 +109,11 @@
 !undef SHCNF_FLUSH
 !endif
 !define SHCNF_FLUSH        0x1000
- 
+
 !macro UPDATEFILEASSOC
 ; Using the system.dll plugin to call the SHChangeNotify Win32 API function so we
 ; can update the shell.
   System::Call "shell32::SHChangeNotify(i,i,i,i) (${SHCNE_ASSOCCHANGED}, ${SHCNF_FLUSH}, 0, 0)"
 !macroend
- 
+
 ;EOF

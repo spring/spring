@@ -22,7 +22,6 @@
 #include "System/Platform/ConfigHandler.h"
 #include "System/Util.h"
 
-
 CTooltipConsole* tooltip = 0;
 
 
@@ -68,6 +67,8 @@ void CTooltipConsole::Draw(void)
 	if (disabled) {
 		return;
 	}
+
+//	GML_RECMUTEX_LOCK(quad); // getcurrenttooltip accesses guitraceray which accesses quadfield
 
 	const std::string s = mouse->GetCurrentTooltip();
 

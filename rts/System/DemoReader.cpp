@@ -61,6 +61,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 			temp->Init(buf, fileHeader.scriptSize);
 			temp->demoName = filename;
 			temp->numDemoPlayers = GetFileHeader().maxPlayerNum+1;
+			temp->maxSpeed = 10;
 			gameSetup = temp;
 		}
 		delete[] buf;
