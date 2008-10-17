@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 	{
 		std::string script = argv[1];
 		std::cout << "Loading script: " << script << std::endl;
+
 		gameSetup = new CGameSetup();	// to store the gamedata inside
 		if (!gameSetup->Init(script))	// read the script provided by cmdline
 		{
@@ -40,12 +41,32 @@ int main(int argc, char *argv[])
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
 		GameData* data = new GameData();
+		UnsyncedRNG rng;
+		rng.Seed(SDL_GetTicks());
+		rng.Seed(gameSetup->gameSetupTextLength);
+		data->SetRandomSeed(SDL_GetTicks());
 
 		//  Use script provided hashes if they exist
 		if (gameSetup->mapHash != 0) {
 			data->SetMap(gameSetup->mapName, gameSetup->mapHash);
 		} else {
 			data->SetMap(gameSetup->mapName, archiveScanner->GetMapChecksum(gameSetup->mapName));
+
+			CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
+			if (!f->FileExists()) {
+				std::vector<std::string> ars = archiveScanner->GetArchivesForMap(gameSetup->mapName);
+				if (ars.empty()) {
+					throw content_error("Couldn't find any archives for map '" + gameSetup->mapName + "'.");
+				}
+				for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
+					if (!vfsHandler->AddArchive(*i, false)) {
+						throw content_error("Couldn't load archive '" + *i + "' for map '" + gameSetup->mapName + "'.");
+					}
+				}
+			}
+			delete f;
+		
+			gameSetup->LoadStartPositions();
                 }
 
 		if (gameSetup->modHash != 0) {
@@ -56,28 +77,6 @@ int main(int argc, char *argv[])
 		}
 
 		data->SetScript(gameSetup->scriptName);
-		UnsyncedRNG rng;
-		rng.Seed(SDL_GetTicks());
-		rng.Seed(gameSetup->gameSetupTextLength);
-		data->SetRandomSeed(SDL_GetTicks());
-
-		CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
-		if (!f->FileExists()) {
-			std::vector<std::string> ars = archiveScanner->GetArchivesForMap(gameSetup->mapName);
-			if (ars.empty()) {
-				throw content_error("Couldn't find any archives for map '" + gameSetup->mapName + "'.");
-			}
-			for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-				if (!vfsHandler->AddArchive(*i, false)) {
-					throw content_error("Couldn't load archive '" + *i + "' for map '" + gameSetup->mapName + "'.");
-				}
-			}
-		}
-		delete f;
-		
-		gameSetup->LoadStartPositions();
-		
-
 		server = new CGameServer(gameSetup->hostport, false, data, gameSetup);
 		
 		if (gameSetup->autohostport > 0)
