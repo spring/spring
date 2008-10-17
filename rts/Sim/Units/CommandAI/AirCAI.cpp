@@ -455,13 +455,14 @@ void CAirCAI::ExecuteAttack(Command &c)
 			return;
 		}
 	}
+
 	if (inCommand) {
 		if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 			FinishCommand();
 			return;
 		}
-		if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
-			owner->AttackUnit(0, true);
+		if ((c.params.size() == 3) && (owner->commandShotCount < 0) && (commandQue.size() > 1)) {
+			owner->AttackGround(float3(c.params[0], c.params[1], c.params[2]), true);
 			FinishCommand();
 			return;
 		}

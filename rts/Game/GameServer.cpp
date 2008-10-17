@@ -429,7 +429,7 @@ void CGameServer::Update()
 				}
 			}
 
-			if (maxCpu > 0.3f) {
+			if (maxCpu > 0.0f) {
 				float wantedCpu=0.5f+(1-internalSpeed/userSpeedFactor)*0.5f;
 				//float speedMod=1+wantedCpu-maxCpu;
 				float newSpeed=internalSpeed*wantedCpu/maxCpu;
@@ -1196,6 +1196,12 @@ void CGameServer::PushAction(const Action& action)
 		if (isPaused && !demoReader)
 			gameServer->CreateNewFrame(true, true);
 	}
+#ifdef DEDICATED // we already have a quit command in the client
+	else if (action.command == "kill")
+	{
+		quitServer = true;
+	}
+#endif
 	else
 	{
 		// only forward to players (send over network)
@@ -1473,7 +1479,7 @@ void CGameServer::GotChatMessage(const ChatMessage& msg)
 	Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
 		// don't echo packets to autohost
-		hostif->SendPlayerChat(msg.fromPlayer, msg.msg);
+		hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
 	}
 }
 

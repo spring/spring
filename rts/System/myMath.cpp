@@ -10,7 +10,7 @@ CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
 CR_BIND(int2, );
 CR_REG_METADATA(int2, (CR_MEMBER(x),CR_MEMBER(y)));
 
-float2 headingToVectorTable[1024];
+float2 headingToVectorTable[NUM_HEADINGS];
 
 class CMyMath
 {
@@ -23,21 +23,21 @@ public:
 		streflop_init<streflop::Simple>();
 #endif
 
-		for(int a=0;a<1024;++a){
-			float ang=(a-512)*2*PI/1024;
+		for(int a=0;a<NUM_HEADINGS;++a){
+			float ang=(a-(NUM_HEADINGS/2))*2*PI/NUM_HEADINGS;
 			float2 v;
 			v.x=sin(ang);
 			v.y=cos(ang);
 			headingToVectorTable[a]=v;
 		}
 		unsigned checksum = 0;
-		for (int a = 0; a < 1024; ++a) {
+		for (int a = 0; a < NUM_HEADINGS; ++a) {
 			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].x;
 			checksum *= 33;
 			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].y;
 		}
 #ifdef STREFLOP_H
-		if (checksum != 0x617a9968)
+		if (checksum != HEADING_CHECKSUM)
 			handleerror(0, "Invalid headingToVectorTable checksum. Most likely"
 					" your streflop library was not compiled with the correct"
 					" options, or you are not using streflop at all.",

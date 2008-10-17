@@ -506,7 +506,20 @@ void C3DOParser::DrawSub(S3DO* o)
 }
 
 
-void C3DOParser::CreateLists(S3DO *o)
+void C3DOParser::Update() {
+//	GML_STDMUTEX_LOCK(model); // Update
+	for(std::vector<S3DO *>::iterator i=createLists.begin(); i!=createLists.end(); ++i)
+		CreateListsNow(*i);
+	createLists.clear();
+}
+
+void C3DOParser::CreateLists(S3DO *o) {
+	GML_STDMUTEX_LOCK(model); // CreateLists
+	createLists.push_back(o);
+}
+
+
+void C3DOParser::CreateListsNow(S3DO *o)
 {
 	o->displist = glGenLists(1);
 	PUSH_CODE_MODE;
@@ -517,7 +530,7 @@ void C3DOParser::CreateLists(S3DO *o)
 	POP_CODE_MODE;
 
 	for(std::vector<S3DO*>::iterator bs=o->childs.begin();bs!=o->childs.end();bs++){
-		CreateLists(*bs);
+		CreateListsNow(*bs);
 	}
 }
 
@@ -679,6 +692,21 @@ void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<st
 		CreateLocalModel(model->childs[i], lmodel, pieces, piecenum);
 	}
 	POP_CODE_MODE;
+}
+
+
+void C3DOParser::FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces) {
+	int piecenum=0;
+	FixLocalModel(model->rootobject3do, lmodel, pieces, &piecenum);
+}
+
+void C3DOParser::FixLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum) {
+	lmodel->pieces[*piecenum].displist = model->displist;
+
+	for(unsigned int i=0; i<model->childs.size(); i++) {
+		(*piecenum)++;
+		FixLocalModel(model->childs[i], lmodel, pieces, piecenum);
+	}
 }
 
 

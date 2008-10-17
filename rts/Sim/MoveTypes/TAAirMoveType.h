@@ -18,14 +18,15 @@ public:
 	//needed to get transport close enough to what is going to be transported.
 	//better way ?
 	bool dontCheckCol;
+	bool bankingAllowed;
 
 	float orgWantedHeight;	//to reset altitude back
-	
+
 	float3 circlingPos;
 	float goalDistance;			//Used when circling something
 	int waitCounter;			//need to pause between circling steps
 	bool wantToStop;			//Set to true on StopMove, to be able to not stop if a new order comes directly after
-	
+
 	//Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;
 
@@ -56,7 +57,7 @@ public:
 	CTAAirMoveType(CUnit* owner);
 	~CTAAirMoveType(void);
 
-	//MoveType interface	
+	//MoveType interface
 	virtual void Update();
 	virtual void SlowUpdate();
 	virtual void StartMoving(float3 pos, float goalRadius);
@@ -78,7 +79,7 @@ public:
 	void UpdateBanking(bool noBanking);
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
-	
+
 	void SetGoal(float3 newPos, float distance);
 	void SetState(AircraftState newState);
 
@@ -88,7 +89,7 @@ public:
 	void SetWantedAltitude(float altitude);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
-	
+
 	void Takeoff();
 	bool IsFighter();
 };

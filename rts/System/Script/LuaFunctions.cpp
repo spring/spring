@@ -113,7 +113,7 @@ namespace luafunctions
 		object o = newtable(L);
 
 		int count = 1;
-		for (int a=0;a<ft.size();a++)
+		for (unsigned int a=0;a<ft.size();a++)
 		{
 			CFeature *f = ft[a];
 			o[count++] = SAFE_NEW CObject_pointer<CFeature>(f);
@@ -160,7 +160,7 @@ namespace luafunctions
 	{
 		object o = newtable(L);
 
-		for (int i = 0; i < selectedUnits.netSelected[player].size(); ++i)
+		for (unsigned int i = 0; i < selectedUnits.netSelected[player].size(); ++i)
 			o[i+1] = SAFE_NEW CObject_pointer<CUnit>(uh->units[selectedUnits.netSelected[player][i]]);
 
 		return o;

@@ -7,8 +7,19 @@
 
 #define SHORTINT_MAXVALUE 32768
 
+#define HEADING_CHECKSUM_1024 0x617a9968
+#define HEADING_CHECKSUM_4096 0x3d51b476
+#define NUM_HEADINGS 4096
 
-extern float2 headingToVectorTable[1024];
+#if (NUM_HEADINGS == 1024)
+#  define HEADING_CHECKSUM	HEADING_CHECKSUM_1024
+#elif (NUM_HEADINGS == 4096)
+#  define HEADING_CHECKSUM	HEADING_CHECKSUM_4096
+#else
+#  error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
+#endif
+
+extern float2 headingToVectorTable[NUM_HEADINGS];
 
 inline short int GetHeadingFromFacing(int facing)
 {
@@ -93,7 +104,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 
 inline float3 GetVectorFromHeading(short int heading)
 {
-	float2 v = headingToVectorTable[heading / 64 + 512];
+	float2 v = headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
 	return float3(v.x, 0.0f, v.y);
 }
 

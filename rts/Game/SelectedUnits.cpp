@@ -39,14 +39,6 @@
 #include "Sound.h"
 #include "Util.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-extern boost::mutex caimutex;
-boost::mutex selmutex;
-#	endif
-#endif
-
 extern Uint8 *keys;
 
 
@@ -375,9 +367,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 		return;
 	}
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); // AddUnit
 
 	selectedUnits.insert(unit);
 	AddDeathDependence(unit);
@@ -396,9 +386,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 
 void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); //RemoveUnit
 
 	selectedUnits.erase(unit);
 	DeleteDeathDependence(unit);
@@ -414,9 +402,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 
 void CSelectedUnits::ClearSelected()
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); // ClearSelected
 
 	CUnitSet::iterator ui;
 	ENTER_MIXED;
@@ -435,9 +421,8 @@ void CSelectedUnits::ClearSelected()
 
 void CSelectedUnits::SelectGroup(int num)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); // SelectGroup
+//	GML_STDMUTEX_LOCK(group); // SelectGroup. not needed? only reading group
 
 	ClearSelected();
 	selectedGroup=num;
@@ -464,6 +449,9 @@ void CSelectedUnits::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
+
+	GML_RECMUTEX_LOCK(sel); // Draw
+	GML_STDMUTEX_LOCK(group); // Draw
 
 	if (cmdColors.unitBox[3] > 0.0f) {
 		glColor4fv(cmdColors.unitBox);
@@ -499,9 +487,7 @@ void CSelectedUnits::Draw()
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < guihandler->commands.size()) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
-#	if defined(USE_GML) && GML_MT_TEST
-			boost::mutex::scoped_lock cailock(caimutex);
-#endif
+			GML_STDMUTEX_LOCK(cai); // Draw
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 			std::list<CBuilderCAI*>::const_iterator bi;
@@ -534,9 +520,7 @@ void CSelectedUnits::Draw()
 
 void CSelectedUnits::DependentDied(CObject *o)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock sellock(selmutex);
-#endif
+	GML_RECMUTEX_LOCK(sel); // DependentDied, maybe superfluous - too late anyway
 
 	selectedUnits.erase((CUnit*)o);
 	selectionChanged=true;
@@ -645,8 +629,14 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 }
 
 
+// CALLINFO: 
+// DrawMapStuff --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
+// CMouseHandler::DrawCursor --> DrawCentroidCursor --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
+// LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 {
+	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
+	GML_STDMUTEX_LOCK(group); // GetDefaultCmd
 	// NOTE: the unitDef->aihint value is being ignored
 	int luaCmd;
 	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
@@ -696,7 +686,9 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 		possibleCommandsChanged = true;
 }
 
-
+// CALLINFO: 
+// CGame::Draw --> DrawCommands
+// CMiniMap::DrawForReal --> DrawCommands
 void CSelectedUnits::DrawCommands()
 {
 	glDisable(GL_TEXTURE_2D);
@@ -714,6 +706,10 @@ void CSelectedUnits::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
+	GML_RECMUTEX_LOCK(sel); // DrawCommands
+	GML_STDMUTEX_LOCK(group); // DrawCommands
+	GML_STDMUTEX_LOCK(cai); // DrawCommands
+
 	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
 		CUnitSet& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
@@ -721,9 +717,6 @@ void CSelectedUnits::DrawCommands()
 			(*ui)->commandAI->DrawCommands();
 		}
 	} else {
-#	if defined(USE_GML) && GML_MT_TEST
-		boost::mutex::scoped_lock sellock(selmutex);
-#endif
 		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 			(*ui)->commandAI->DrawCommands();
 		}
@@ -739,8 +732,15 @@ void CSelectedUnits::DrawCommands()
 }
 
 
+// CALLINFO:
+// CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
+// LuaUnsyncedRead::GetCurrentTooltip --> CMouseHandler::GetCurrentTooltip
+// CMouseHandler::GetCurrentTooltip --> CMiniMap::GetToolTip --> GetTooltip
+// CMouseHandler::GetCurrentTooltip --> GetTooltip
 std::string CSelectedUnits::GetTooltip(void)
 {
+	GML_RECMUTEX_LOCK(sel); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_STDMUTEX_LOCK(group); // GetTooltip
 	std::string s;
 	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
 		s = "Group selected";
@@ -816,6 +816,8 @@ std::string CSelectedUnits::GetTooltip(void)
 
 void CSelectedUnits::SetCommandPage(int page)
 {
+	GML_RECMUTEX_LOCK(sel); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc --> SetCommandPage
+	GML_STDMUTEX_LOCK(group); // SetCommandPage
 	if(selectedGroup!=-1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai){
 		grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage=page;
 	}

@@ -307,7 +307,7 @@ CUnit::~CUnit()
 
 	delete cob;
 	//FIXME delete script;
-	delete localmodel;
+	modelParser->DeleteLocalModel(this);
 }
 
 
@@ -1116,7 +1116,7 @@ void CUnit::Kill(float3& impulse) {
 /******************************************************************************/
 /******************************************************************************/
 
-void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
+CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 {
 	float3 interPos;
 	if (!transporter) {
@@ -1125,13 +1125,16 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 		interPos = (synced? pos: pos + (transporter->speed * gu->timeOffset));
 	}
 
+	if (!synced && error) {
+		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
+	}
+
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		// note: (CAirMoveType) aircraft under construction should not
 		// use this matrix, or their nanoframes won't spin on pad
-		CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
-		matrix = transMatrix;
+		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
 	else if (transporter && transporter->unitDef->holdSteady) {
 		// making local copies of vectors
@@ -1140,13 +1143,11 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 		float3 rightDir = frontDir.cross(upDir);
 		rightDir.Normalize();
 		frontDir = upDir.cross(rightDir);
-		CMatrix44f transMatrix(interPos, -rightDir, upDir, frontDir);
-		matrix = transMatrix;
+		return CMatrix44f(interPos, -rightDir, upDir, frontDir);
 	}
 	else if (upright || !unitDef->canmove) {
 		if (heading == 0) {
-			matrix.LoadIdentity();
-			matrix.Translate(interPos);
+			return CMatrix44f(interPos);
 		} else {
 			// making local copies of vectors
 			float3 frontDir = GetVectorFromHeading(heading);
@@ -1154,8 +1155,7 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 			float3 rightDir = frontDir.cross(upDir);
 			rightDir.Normalize();
 			frontDir = upDir.cross(rightDir);
-			CMatrix44f transMatrix(interPos, -rightdir, updir, frontdir);
-			matrix = transMatrix;
+			return CMatrix44f(interPos, -rightdir, updir, frontdir);
 		}
 	}
 	else {
@@ -1165,8 +1165,7 @@ void CUnit::GetTransformMatrix(CMatrix44f& matrix, bool synced) const
 		float3 rightDir = frontDir.cross(upDir);
 		rightDir.Normalize();
 		frontDir = upDir.cross(rightDir);
-		CMatrix44f transMatrix(interPos, -rightDir, upDir, frontDir);
-		matrix = transMatrix;
+		return CMatrix44f(interPos, -rightDir, upDir, frontDir);
 	}
 }
 
@@ -1358,8 +1357,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	model = unitDef->LoadModel(newteam);
 
-	delete localmodel;
-	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+	modelParser->DeleteLocalModel(this);
+	modelParser->CreateLocalModel(this);
 	SetLODCount(0);
 
 	if (unitDef->isAirBase) {
@@ -2205,7 +2204,7 @@ void CUnit::PostLoad()
 	//FIXME script = SAFE_NEW CUnitScript(this);
 	//FIXME localmodel = modelParser->CreateLocalModel(model, script->GetPieces());
 	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
-	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+	modelParser->CreateLocalModel(this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

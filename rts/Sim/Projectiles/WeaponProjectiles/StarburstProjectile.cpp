@@ -17,6 +17,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "StarburstProjectile.h"
 #include "Sync/SyncTracer.h"
+#include "Rendering/UnitModels/s3oParser.h"
 
 static const float Smoke_Time=70;
 
@@ -410,7 +411,7 @@ void CStarburstProjectile::DrawUnitPart(void)
 	CMatrix44f transMatrix(interPos,-rightdir,updir,dir);
 	glMultMatrixf(&transMatrix[0]);
 
-	glCallList(modelDispList);
+	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 

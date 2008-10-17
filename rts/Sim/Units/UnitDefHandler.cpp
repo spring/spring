@@ -456,6 +456,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.hoverAttack   = udTable.GetBool("hoverAttack", false);
 	ud.wantedHeight  = udTable.GetFloat("cruiseAlt", 0.0f);
 	ud.dlHoverFactor = udTable.GetFloat("airHoverFactor", -1.0f);
+	ud.bankingAllowed = udTable.GetBool("bankingAllowed", true);
 
 	ud.transportSize     = udTable.GetInt("transportSize",      0);
 	ud.minTransportSize  = udTable.GetInt("minTransportSize",   0);

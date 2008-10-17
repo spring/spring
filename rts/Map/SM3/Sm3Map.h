@@ -21,7 +21,7 @@ public:
 	void Initialize(const char* mapname); // throws std::runtime_exception on errors
 
 	CBaseGroundDrawer* GetGroundDrawer();
-	void HeightmapUpdated(int x1, int x2, int y1, int y2);
+	void HeightmapUpdatedNow(int x1, int x2, int y1, int y2);
 	const float* GetHeightmap() { return renderer->GetHeightmap(); }
 
 	inline void SetHeight(int idx, float h) {

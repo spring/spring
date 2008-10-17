@@ -26,14 +26,16 @@ class LuaCallInCheck {
 #  define LUA_CALL_IN_CHECK(L)
 #endif
 
-#ifdef USE_GML
-#include "Rendering/GL/myGL.h"
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex luamutex;
-#undef LUA_CALL_IN_CHECK
-#define LUA_CALL_IN_CHECK(L) boost::recursive_mutex::scoped_lock lualock(luamutex);
+#ifdef USE_GML // hack to add some degree of thread safety to LUA
+#	include "Rendering/GL/myGL.h"
+#	include "lib/gml/gmlsrv.h"
+#	if GML_ENABLE_SIMDRAW
+#		undef LUA_CALL_IN_CHECK
+#		if DEBUG_LUA
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); LuaCallInCheck ciCheck((L), __FUNCTION__);
+#		else
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua);
+#		endif
 #	endif
 #endif
 

@@ -861,7 +861,6 @@ void SpringApp::CreateGameSetup()
 	}
 }
 
-
 /**
  * @return return code of activecontroller draw function
  *
@@ -873,28 +872,43 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
+#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
 	mouseInput->Update();
-
+#endif
 	int ret = 1;
 	if (activeController) {
-#if defined(USE_GML) && GML_MT_TEST
+#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
 		int frame=gu->drawFrame;
-#endif
+#	endif
 		if (!activeController->Update()) {
 			ret = 0;
 		} else {
-#if defined(USE_GML) && GML_MT_TEST
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
 			if(frame==gu->drawFrame) { // only draw if it was not done in parallel with sim
+#	endif
+#else
+				if(!gs->frameNum) {
+					mouseInput->Update();
+					activeController->Update();
+					if(gs->frameNum)
+						startsim=1;
+				}
 #endif
 				gu->drawFrame++;
 				if (gu->drawFrame == 0) {
 					gu->drawFrame++;
 				}
 				ret = activeController->Draw();
-#if defined(USE_GML) && GML_MT_TEST
-			}
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+				gmlProcessor.PumpAux(); 
 #endif
+#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
+#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
+			}
+#	endif
 		}
+#endif
 	}
 
 	VSync.Delay();
@@ -905,6 +919,28 @@ int SpringApp::Update ()
 
 	return ret;
 }
+
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+int SpringApp::Sim() {
+	while(keeprunning && !startsim)
+		boost::thread::yield();
+	unsigned lastSim = SDL_GetTicks();
+	while(keeprunning) {
+		mouseInput->Update();
+		if (activeController) {
+			if (!activeController->Update()) {
+				return 0;
+			}
+			gmlProcessor.GetQueue();
+		}
+		unsigned lastSimDiff=SDL_GetTicks()-lastSim;
+		if(lastSimDiff<=10)
+			SDL_Delay(10-lastSimDiff);
+		lastSim = SDL_GetTicks();
+	}
+	return 1;
+}
+#endif
 
 /**
  * Tests SDL keystates and sets values
@@ -951,6 +987,12 @@ int SpringApp::Run (int argc, char *argv[])
 
 #ifdef WIN32
 	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
+#endif
+
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	keeprunning=1;
+	startsim=0;
+	gmlProcessor.AuxWork(&SpringApp::Simcb,this); // start sim thread
 #endif
 
 	SDL_Event event;
@@ -1087,6 +1129,12 @@ int SpringApp::Run (int argc, char *argv[])
 		}
 	}
 	ENTER_MIXED;
+
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	keeprunning=0; // wait for sim to finish
+	while(!gmlProcessor.PumpAux())
+		boost::thread::yield();
+#endif
 
 	// Shutdown
 	Shutdown();

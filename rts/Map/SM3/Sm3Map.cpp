@@ -155,7 +155,7 @@ CBaseGroundDrawer *CSm3ReadMap::GetGroundDrawer ()
 	return groundDrawer;
 }
 
-void CSm3ReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2)
+void CSm3ReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
 {
 	// heightmap is [width+1][height+1]
 	x1-=2; x2+=2;

@@ -41,6 +41,10 @@ CBasicWater::~CBasicWater()
 	glDeleteLists(displist,1);
 }
 
+void CBasicWater::UpdateWater(CGame* game) {
+	DeleteOldWater(this);
+}
+
 void CBasicWater::Draw()
 {
 	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)

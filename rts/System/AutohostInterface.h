@@ -32,7 +32,7 @@ public:
 	void SendPlayerJoined(uchar playerNum, const std::string& name) const;
 	void SendPlayerLeft(uchar playerNum, uchar reason) const;
 	void SendPlayerReady(uchar playerNum, uchar readyState) const;
-	void SendPlayerChat(uchar playerNum, const std::string& msg) const;
+	void SendPlayerChat(uchar playerNum, uchar destination, const std::string& msg) const;
 	void SendPlayerDefeated(uchar playerNum) const;
 	
 	void Message(const std::string& message);

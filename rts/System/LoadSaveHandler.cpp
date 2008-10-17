@@ -68,7 +68,7 @@ static void SerializeString(creg::ISerializer& s, std::string& str)
 static void WriteString(std::ostream& s, std::string& str)
 {
 	char c;
-	for (int a=0;a<str.length();a++) {
+	for (unsigned int a=0;a<str.length();a++) {
 		c = str[a];
 		s.write(&c,sizeof(char));
 	}

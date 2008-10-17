@@ -2,14 +2,21 @@ Checklist of stuff that needs to be doing at release time,
 not necessarily in the optimal order, but I tried to make it pretty much right.
 
 Spring engine:
+Before you start:
 - make sure changelog is up to date (including version number!)
+- talk to people to fix their apps which get included in the installer (Lobby, Downloader...)
+
+Then proceed:
+- make sure all packages build correctly (test building on buildbot, test-generate source packages (and check them if they work))
 - set buildbot to only produce builds if forced to (comment out schedulers)
-- bump version number in installer/springsettings.nsh to e.g. "0.76b1"
-- bump version number in rts/Game/GameVersion.cpp
-- have buildbot compile installer and make source packages
 - test source package linux (or not if you feel brave)
 - test source package windows (ditto)
 - test installer (NEVER EVER SKIP THIS NO MATTER HOW SMALL THE CHANGES)
+
+- bump version number in installer/springsettings.nsh to e.g. "0.76b1"
+- bump version number in rts/Game/GameVersion.cpp
+- tag the released revision in SVN as e.g. "tags/spring_0.76b1"
+- have buildbot compile installer and make source packages
 - upload installer to fnord.clan-sy.com
 - upload installer to the big Spring file sites (watch out for notification bots,
   it can create chaos if you upload early in release process and the upload gets
@@ -19,7 +26,6 @@ Spring engine:
 - upload spring_X.XXbX_src.tar.bz2 to Berlios (not too important)
 - upload spring_X.XXbX_src.zip to Berlios (ditto)
 - make news post (don't forget to thank contributors, link to installer and source)
-- tag the released revision in SVN as e.g. "tags/spring_0.76b1"
 - bump version number in rts/Game/GameVersion.cpp to e.g. "0.76b1+" (note the plus)
 - enable automatic builds in buildbot again
 

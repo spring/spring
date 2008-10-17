@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
 #include "UnitLoader.h"
@@ -73,6 +74,9 @@ CUnitLoader::~CUnitLoader()
 CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
+	GML_RECMUTEX_LOCK(unit); // LoadUnit. Unitinit puts unit in the quadfield and activeUnits -
+	GML_RECMUTEX_LOCK(quad); // LoadUnit. - make sure other threads cannot access an incomplete unit
+
 	CUnit* unit;
 
 	SCOPED_TIMER("Unit loader");
@@ -257,6 +261,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			mt->dontLand = ud->DontLand();
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
+			mt->bankingAllowed = ud->bankingAllowed;
 
 			unit->moveType = mt;
 		}
@@ -334,7 +339,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 //FIXME: add unitdef tag cob/cobscript/cobfilename
 	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
-	unit->localmodel = modelParser->CreateLocalModel(unit->model, &unit->cob->pieces);
+	modelParser->CreateLocalModel(unit);
 
 
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {

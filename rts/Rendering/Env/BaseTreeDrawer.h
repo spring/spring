@@ -1,6 +1,7 @@
 #ifndef __BASE_TREE_DRAWER_H__
 #define __BASE_TREE_DRAWER_H__
 
+#include "Rendering/GL/myGL.h"
 #include "float3.h"
 
 #define TREE_SQUARE_SIZE 64
@@ -19,6 +20,9 @@ public:
 	static CBaseTreeDrawer* GetTreeDrawer(void);
 	virtual void AddTree(int type, float3 pos, float size)=0;
 	virtual void DeleteTree(float3 pos)=0;
+
+	std::vector<GLuint> delDispLists;
+  virtual void UpdateDraw();
 
 	float baseTreeDistance;
 	bool drawTrees;

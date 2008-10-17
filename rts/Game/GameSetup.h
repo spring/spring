@@ -34,6 +34,8 @@ public:
 	int numTeams;
 	int numAllyTeams;
 	bool fixedAllies;
+	unsigned int mapHash;
+	unsigned int modHash;
 	std::string mapName;
 	std::string baseMod;
 	std::string scriptName;

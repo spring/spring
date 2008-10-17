@@ -291,6 +291,7 @@ struct UnitDef
 	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot
 	bool DontLand () const { return dlHoverFactor >= 0.0f; }
+	bool bankingAllowed;
 
 	float maxAcc;
 	float maxDec;
