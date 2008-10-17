@@ -311,6 +311,7 @@ local function Draw(text, x, y)
 
   local cacheTextData = activeFont.cache[text]
   if (not cacheTextData) then
+    glTexture(activeFont.image) -- else we would _recreate_ the texture each call to the displaylist!
     local textList = glCreateList(function()
       glTexture(activeFont.image)
       RawColorDraw(text)
