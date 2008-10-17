@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "Rendering/GL/myGL.h"
+#include "Rendering/UnitModels/3DModelParser.h"
 
 struct TexFile;
 class CFileHandler;
@@ -38,7 +39,10 @@ public:
 	UnitTexture* GetTATexture(std::string name, int team, int teamTex);
 	UnitTexture* GetTATexture(const std::string& name);
 
-	int LoadS3OTexture(const std::string& tex1, const std::string& tex2);
+	std::vector<S3DOModel *> loadTextures;
+	void Update();
+	void LoadS3OTexture(S3DOModel *model);
+	int LoadS3OTextureNow(const std::string& tex1, const std::string& tex2);
 	void SetS3oTexture(int num);
 
 	const S3oTex* GetS3oTex(int num) {

@@ -16,13 +16,6 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-extern boost::mutex treemutex;
-#	endif
-#endif
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -397,9 +390,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	drawer.cy = cy;
 	drawer.treeDistance = treeDistance;
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // Draw
 
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer);
 
@@ -446,9 +437,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 void CBasicTreeDrawer::Update()
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // Update
 
 }
 
@@ -467,20 +456,18 @@ void CBasicTreeDrawer::ResetPos(const float3& pos)
 	int y=(int)(pos.z/TREE_SQUARE_SIZE/SQUARE_SIZE);
 	TreeSquareStruct* pTSS=trees+y*treesX+x;
 	if(pTSS->displist){
-		glDeleteLists(pTSS->displist,1);
+		delDispLists.push_back(pTSS->displist);
 		pTSS->displist=0;
 	}
 	if(pTSS->farDisplist){
-		glDeleteLists(pTSS->farDisplist,1);
+		delDispLists.push_back(pTSS->farDisplist);
 		pTSS->farDisplist=0;
 	}
 }
 
 void CBasicTreeDrawer::AddTree(int type, float3 pos, float size)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // AddTree
 
 	TreeStruct ts;
 	ts.pos=pos;
@@ -493,9 +480,7 @@ void CBasicTreeDrawer::AddTree(int type, float3 pos, float size)
 
 void CBasicTreeDrawer::DeleteTree(float3 pos)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock treelock(treemutex);
-#endif
+	GML_STDMUTEX_LOCK(tree); // DeleteTree
 
 	int hash=(int)pos.x+((int)(pos.z))*20000;
 	int square=((int)pos.x)/(SQUARE_SIZE*TREE_SQUARE_SIZE)+((int)pos.z)/(SQUARE_SIZE*TREE_SQUARE_SIZE)*treesX;

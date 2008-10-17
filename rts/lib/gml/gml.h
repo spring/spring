@@ -133,12 +133,50 @@ EXTERN inline GLuint gmlGenLists(GLsizei items) {
 
 #include "gmlimp.h"
 #include "gmldef.h"
+
 #define GML_VECTOR gmlVector
 #define GML_CLASSVECTOR gmlClassVector
 
+#if GML_ENABLE_SIMDRAW
+#include <boost/thread/mutex.hpp>
+extern boost::mutex caimutex;
+extern boost::mutex decalmutex;
+extern boost::mutex treemutex;
+extern boost::mutex modelmutex;
+extern boost::mutex texmutex;
+extern boost::mutex mapmutex;
+extern boost::mutex groupmutex;
+extern boost::mutex inmapmutex;
+extern boost::mutex tempmutex;
+
+#include <boost/thread/recursive_mutex.hpp>
+extern boost::recursive_mutex unitmutex;
+extern boost::recursive_mutex quadmutex;
+extern boost::recursive_mutex selmutex;
+extern boost::recursive_mutex luamutex;
+extern boost::recursive_mutex featmutex;
+extern boost::recursive_mutex projmutex;
+extern boost::recursive_mutex grassmutex;
+extern boost::recursive_mutex guimutex;
+
+#define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
+#define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
+
 #else
+
+#define GML_STDMUTEX_LOCK(name)
+#define GML_RECMUTEX_LOCK(name)
+
+#endif
+
+#else
+
 #define GML_VECTOR std::vector
 #define GML_CLASSVECTOR std::vector
+
+#define GML_STDMUTEX_LOCK(name)
+#define GML_RECMUTEX_LOCK(name)
+
 #endif // USE_GML
 
 #endif

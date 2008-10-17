@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
 #include "mmgr.h"
@@ -43,6 +44,44 @@ S3DOModel* C3DModelParser::Load3DO(string name,float scale,int side,const float3
 		return unit3doparser->Load3DO(name,scale,side,offsets);
 }
 */
+
+void C3DModelParser::Update() {
+	GML_STDMUTEX_LOCK(model); // Update
+	units3oparser->Update();
+	unit3doparser->Update();
+
+	for(std::set<CUnit *>::iterator i=fixLocalModels.begin(); i!=fixLocalModels.end(); ++i)
+		FixLocalModel(*i);
+	fixLocalModels.clear();
+
+	for(std::vector<LocalS3DOModel *>::iterator i=deleteLocalModels.begin(); i!=deleteLocalModels.end(); ++i)
+		delete *i;
+	deleteLocalModels.clear();
+}
+
+void C3DModelParser::CreateLocalModel(CUnit *unit)
+{
+	GML_STDMUTEX_LOCK(model); // CreateLocalModel
+	unit->localmodel=CreateLocalModel(unit->model, &unit->cob->pieces);
+	fixLocalModels.insert(unit);
+}
+
+void C3DModelParser::DeleteLocalModel(CUnit *unit)
+{
+	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
+	fixLocalModels.erase(unit);
+	deleteLocalModels.push_back(unit->localmodel);
+}
+
+void C3DModelParser::FixLocalModel(CUnit *unit)
+{
+	if (unit->model->rootobject3do) {
+		unit3doparser->FixLocalModel(unit->model,unit->localmodel,&unit->cob->pieces);
+	} else {
+		units3oparser->FixLocalModel(unit->model,unit->localmodel,&unit->cob->pieces);
+	}
+}
+
 
 LocalS3DOModel *C3DModelParser::CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces)
 {

@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
 #include "Camera.h"
@@ -286,6 +287,8 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	hit = 0x0;
 	CollisionQuery cq;
 
+	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
+
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
 
@@ -470,6 +473,9 @@ CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 {
 	float closeDist = (radius * radius);
 	CUnit* closeUnit = NULL;
+
+	GML_RECMUTEX_LOCK(quad); //GetClosestUnit
+
 	vector<int> quads = qf->GetQuads(pos, radius);
 
 	int tempNum = gs->tempNum++;
@@ -689,6 +695,9 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
 {
 	float nearHit = length;
+
+	GML_RECMUTEX_LOCK(quad); //GuiTraceRayFeature
+
 	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	std::vector<int>::iterator qi;
 

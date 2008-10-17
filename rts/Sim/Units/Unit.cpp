@@ -307,7 +307,7 @@ CUnit::~CUnit()
 
 	delete cob;
 	//FIXME delete script;
-	delete localmodel;
+	modelParser->DeleteLocalModel(this);
 }
 
 
@@ -1357,8 +1357,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	model = unitDef->LoadModel(newteam);
 
-	delete localmodel;
-	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+	modelParser->DeleteLocalModel(this);
+	modelParser->CreateLocalModel(this);
 	SetLODCount(0);
 
 	if (unitDef->isAirBase) {
@@ -2204,7 +2204,7 @@ void CUnit::PostLoad()
 	//FIXME script = SAFE_NEW CUnitScript(this);
 	//FIXME localmodel = modelParser->CreateLocalModel(model, script->GetPieces());
 	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
-	localmodel = modelParser->CreateLocalModel(model, &cob->pieces);
+	modelParser->CreateLocalModel(this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

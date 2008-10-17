@@ -41,8 +41,8 @@ void COrbitController::Init(const float3& p, const float3& tar)
 	const float3 w = (v / v.Length()); // do not normalize v in-place
 
 	const float d = v.Length();
-	const float e = RAD2DEG(acosf(v.Length2D() / d));
-	const float r = RAD2DEG(acosf(w.x));
+	const float e = RAD2DEG(acos(v.Length2D() / d));
+	const float r = RAD2DEG(acos(w.x));
 
 	distance  = cDistance = d;
 	elevation = cElevation = e;
@@ -223,12 +223,12 @@ float3 COrbitController::GetOrbitPos() const
 	float tx = cx;
 
 	tx = cx;
-	cx = cx * cosf(beta) + cy * sinf(beta);
-	cy = tx * sinf(beta) + cy * cosf(beta);
+	cx = cx * cos(beta) + cy * sin(beta);
+	cy = tx * sin(beta) + cy * cos(beta);
 
 	tx = cx;
-	cx = cx * cosf(gamma) - cz * sinf(gamma);
-	cz = tx * sinf(gamma) + cz * cosf(gamma);
+	cx = cx * cos(gamma) - cz * sin(gamma);
+	cz = tx * sin(gamma) + cz * cos(gamma);
 
 	return float3(cx, cy, cz);
 }

@@ -32,14 +32,6 @@
 #include "creg/STL_Set.h"
 #include "System/Exceptions.h"
 
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-boost::recursive_mutex featmutex;
-#	endif
-#endif
-
 using namespace std;
 
 
@@ -398,9 +390,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(feat); // AddFeature
 
 	ASSERT_SYNCED_MODE;
 
@@ -431,9 +421,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex); // maybe superfluous
-#endif
+	GML_RECMUTEX_LOCK(feat); // DeleteFeature, maybe superfluous
 
 	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(feature->id);
@@ -482,10 +470,6 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 
 void CFeatureHandler::Update()
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
-
 	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Feature::Update");
 
@@ -503,24 +487,29 @@ void CFeatureHandler::Update()
 			freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
 	}
 
-	while (!toBeRemoved.empty()) {
-		CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
-		toBeRemoved.pop_back();
-		if (it != activeFeatures.end()) {
-			CFeature* feature = *it;
-			toBeFreedIDs.push_back(feature->id);
-			activeFeatures.erase(feature);
-
-			if (feature->drawQuad >= 0) {
-				DrawQuad* dq = &drawQuads[feature->drawQuad];
-				dq->features.erase(feature);
+	if(!toBeRemoved.empty()) {
+		GML_RECMUTEX_LOCK(feat); // Update
+		GML_RECMUTEX_LOCK(quad); // Update
+		
+		while (!toBeRemoved.empty()) {
+			CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
+			toBeRemoved.pop_back();
+			if (it != activeFeatures.end()) {
+				CFeature* feature = *it;
+				toBeFreedIDs.push_back(feature->id);
+				activeFeatures.erase(feature);
+				
+				if (feature->drawQuad >= 0) {
+					DrawQuad* dq = &drawQuads[feature->drawQuad];
+					dq->features.erase(feature);
+				}
+				
+				if (feature->inUpdateQue) {
+					updateFeatures.erase(feature);
+				}
+				
+				delete feature;
 			}
-
-			if (feature->inUpdateQue) {
-				updateFeatures.erase(feature);
-			}
-
-			delete feature;
 		}
 	}
 
@@ -540,9 +529,7 @@ void CFeatureHandler::Update()
 
 void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(feat); // UpdateDrawQuad
 
 	const int oldDrawQuad = feature->drawQuad;
 	if (oldDrawQuad >= 0) {
@@ -604,9 +591,7 @@ void CFeatureHandler::Draw()
 	ASSERT_UNSYNCED_MODE;
 	drawFar.clear();
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(feat); // Draw
 
 	unitDrawer->SetupForUnitDrawing();
 	DrawRaw(0, &drawFar);
@@ -639,9 +624,7 @@ void CFeatureHandler::DrawShadowPass()
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock featlock(featmutex);
-#endif
+	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 
 	unitDrawer->SetupForUnitDrawing();
 	DrawRaw(1, NULL);

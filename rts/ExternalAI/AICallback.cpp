@@ -1,5 +1,6 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -48,14 +49,6 @@
 #include "IGroupAI.h"
 #include "LogOutput.h"
 #include "mmgr.h"
-
-#ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-extern boost::recursive_mutex unitmutex;
-#	endif
-#endif
 
 /* Cast id to unsigned to catch negative ids in the same operations,
 cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */
@@ -1005,9 +998,7 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 	tdu.facing=facing;
 	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
 
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex); // maybe superfluous
-#endif
+	GML_STDMUTEX_LOCK(temp); //unit); // maybe superfluous
 
 	if(transparent)
 		unitDrawer->tempTransparentDrawUnits.insert(tp);

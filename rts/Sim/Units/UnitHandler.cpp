@@ -41,15 +41,6 @@
 using std::min;
 using std::max;
 
-#ifdef USE_GML
-#	include "lib/gml/gmlsrv.h"
-#	if GML_MT_TEST
-#include <boost/thread/recursive_mutex.hpp>
-boost::recursive_mutex unitmutex;
-boost::mutex caimutex;
-#	endif
-#endif
-
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
 	def = unitDefHandler->GetUnitByName(name);
@@ -194,9 +185,7 @@ CUnitHandler::~CUnitHandler()
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	GML_RECMUTEX_LOCK(unit); // AddUnit
 	ASSERT_SYNCED_MODE;
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -275,21 +264,18 @@ void CUnitHandler::Update()
 	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Unit handler");
 
-#	if defined(USE_GML) && GML_MT_TEST
-	{
-		boost::recursive_mutex::scoped_lock unitlock(unitmutex);
-#endif
+	if(!toBeRemoved.empty()) {
+		GML_RECMUTEX_LOCK(unit); // Update. Possibly not needed, activeUnits.erase is synchronized.
+		GML_RECMUTEX_LOCK(quad); // Update. Make sure unit does not get partially deleted before before being removed from the quadfield
+		GML_RECMUTEX_LOCK(sel); // Update. Unit is removed from selectedUnits in ~CObject, which is too late.
 
-	while (!toBeRemoved.empty()) {
-		CUnit* delUnit = toBeRemoved.back();
-		toBeRemoved.pop_back();
+		while (!toBeRemoved.empty()) {
+			CUnit* delUnit = toBeRemoved.back();
+			toBeRemoved.pop_back();
 
-		DeleteUnitNow(delUnit);
+			DeleteUnitNow(delUnit);
+		}
 	}
-
-#	if defined(USE_GML) && GML_MT_TEST
-	}
-#endif
 
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
@@ -608,18 +594,14 @@ void CUnitHandler::PushNewWind(float x, float z, float strength)
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock cailock(caimutex);
-#endif
+	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
 	builderCAIs.insert(builderCAIs.end(),b);
 }
 
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
-#	if defined(USE_GML) && GML_MT_TEST
-	boost::mutex::scoped_lock cailock(caimutex);
-#endif
+	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
 	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
 
@@ -670,6 +652,7 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
 	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
+	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 	CCommandQueue::iterator ci;
 	for(; ui != this->activeUnits.end(); ui++){
 		if((*ui)->team == gu->myTeam){

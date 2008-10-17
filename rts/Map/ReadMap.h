@@ -36,6 +36,13 @@ struct MapBitmapInfo
 	int height;
 };
 
+struct HeightmapUpdate {
+	HeightmapUpdate(int x, int xx, int y, int yy) : x1(x),x2(xx),y1(y),y2(yy) {}
+	int x1;
+	int x2;
+	int y1;
+	int y2;
+};
 
 class CReadMap
 {
@@ -76,7 +83,10 @@ protected:
 	CReadMap(); // use LoadMap
 public:
 	virtual CBaseGroundDrawer *GetGroundDrawer () { return 0; }
-	virtual void HeightmapUpdated(int x1, int x2, int y1, int y2)=0;
+	std::vector<HeightmapUpdate> heightmapUpdates;
+	void HeightmapUpdated(int x1, int x2, int y1, int y2);
+	virtual void HeightmapUpdatedNow(int x1, int x2, int y1, int y2)=0;
+	void UpdateDraw();
 	virtual void Update(){};
 	virtual void Explosion(float x,float y,float strength){};
 	virtual GLuint GetShadingTexture () = 0; // a texture with RGB for shading and A for height

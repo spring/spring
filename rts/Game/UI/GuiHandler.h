@@ -11,6 +11,8 @@
 #include "KeySet.h"
 #include "KeyBindings.h"
 #include "InputReceiver.h"
+#include "Game/Camera.h"
+#include "Game/UI/MouseHandler.h"
 
 class CUnit;
 class CglList;
@@ -32,15 +34,16 @@ class CGuiHandler : public CInputReceiver {
 		bool KeyPressed(unsigned short key, bool isRepeat);
 		bool KeyReleased(unsigned short key);
 		bool MousePress(int x, int y, int button);
-		void MouseRelease(int x, int y, int button);
+		void MouseRelease(int x, int y, int button) {MouseRelease(x,y,button, ::camera->pos, ::mouse->dir);}
+		void MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir);
 		bool IsAbove(int x, int y);
 		std::string GetTooltip(int x, int y);
 		std::string GetBuildTooltip() const;
 
 		Command GetOrderPreview();
-		Command GetCommand(int mousex, int mousey, int buttonHint, bool preview);
+		Command GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir);
 		std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		                                   const BuildInfo& endInfo);
+			const BuildInfo& endInfo, float3& camerapos, float3& mousedir);
 		                                   // start.def has to be end.def
 
 		bool ReloadConfig(const std::string& filename);
@@ -62,7 +65,7 @@ class CGuiHandler : public CInputReceiver {
 
 		bool GetOutlineFonts() const { return outlineFonts; }
 
-		int  GetDefaultCommand(int x, int y) const;
+		int  GetDefaultCommand(int x, int y, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir) const;
 
 		bool SetActiveCommand(int cmdIndex, bool rmb);
 		bool SetActiveCommand(int cmdIndex,
@@ -122,10 +125,10 @@ class CGuiHandler : public CInputReceiver {
 		void DrawMenuName();
 		void DrawSelectionInfo();
 		void DrawNumberInput();
-		void DrawMiniMapMarker();
-		void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap);
+		void DrawMiniMapMarker(float3& camerapos);
+		void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir);
 		void DrawArea(float3 pos, float radius, const float* color);
-		void DrawSelectBox(const float3& start, const float3& end);
+		void DrawSelectBox(const float3& start, const float3& end, float3& camerapos);
 		void DrawSelectCircle(const float3& pos, float radius,
 		                      const float* color);
 
