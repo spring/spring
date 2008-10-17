@@ -5,6 +5,7 @@ Crashes:
 
 Engine:
  - new fbi tag: bankingAllowed - only affects hoverAttack=1 units; controls if the aircraft can bank.
+ - fbi tag upright now affects gunships
 
 
 0.77b4:

@@ -548,13 +548,16 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 {
 	SyncedFloat3 &frontdir = owner->frontdir;
 	SyncedFloat3 &updir = owner->updir;
-	float wantedPitch = 0;
 
-	if (aircraftState == AIRCRAFT_FLYING && flyState == FLY_ATTACKING && circlingPos.y < owner->pos.y) {
-		wantedPitch = (circlingPos.y - owner->pos.y) / circlingPos.distance(owner->pos);
+	if (!owner->upright) {
+		float wantedPitch = 0;
+
+		if (aircraftState == AIRCRAFT_FLYING && flyState == FLY_ATTACKING && circlingPos.y < owner->pos.y) {
+			wantedPitch = (circlingPos.y - owner->pos.y) / circlingPos.distance(owner->pos);
+		}
+
+		currentPitch = currentPitch * 0.95f + wantedPitch * 0.05f;
 	}
-
-	currentPitch = currentPitch * 0.95f + wantedPitch * 0.05f;
 
 	frontdir = GetVectorFromHeading(owner->heading);
 	frontdir.y = currentPitch;
