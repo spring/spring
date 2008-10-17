@@ -176,7 +176,7 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
 {
-	CMatrix44f m = u->GetTransformMatrix(false,true);
+	CMatrix44f m = u->GetTransformMatrix(false, true);
 	m.Translate(u->relMidPos + v->axisOffsets);
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);

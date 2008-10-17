@@ -213,10 +213,20 @@ bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			BlockingMapCellIt it = cell.find(objID);
 
-			if (it != cell.end() && cell.size() >= 2) {
-				// something else besides us present
-				// at this position, cannot close yet
-				return false;
+			if (it == cell.end()) {
+				// we are non-blocking in this part of
+				// our yardmap footprint, but something
+				// might be inside us
+				if (cell.size() >= 1) {
+					return false;
+				}
+			} else {
+				// this part of our yardmap is blocking, we
+				// can't close if something else present on
+				// it besides us
+				if (cell.size() >= 2) {
+					return false;
+				}
 			}
 		}
 	}
