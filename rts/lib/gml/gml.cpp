@@ -56,7 +56,7 @@ __thread int gmlThreadNumber=0;
 int gmlThreadNumber=0;
 #endif
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
-int gmlThreadCountOverride=configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
+int gmlThreadCountOverride=0; //configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
 int gmlItemsConsumed=0;
 
 // gmlCPUCount returns the number of CPU cores
