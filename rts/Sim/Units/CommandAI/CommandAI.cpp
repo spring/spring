@@ -790,7 +790,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (c.options & ALT_KEY) {
 		// treat param0 as a position
 		int pos = (int)c.params[0];
-		const int qsize = (int)queue->size();
+		const unsigned int qsize = queue->size();
 		if (pos < 0) {
 			pos = qsize + pos + 1; // convert the negative index
 			if (pos < 0) {
@@ -804,7 +804,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	}
 	else {
 		// treat param0 as a command tag
-		const int tag = (int)c.params[0];
+		const unsigned int tag = (unsigned int)c.params[0];
 		CCommandQueue::iterator ci;
 		bool found = false;
 		for (ci = queue->begin(); ci != queue->end(); ++ci) {
@@ -881,7 +881,7 @@ void CCommandAI::ExecuteRemove(const Command& c)
 
 	// erase commands by a list of command types
 	bool active = false;
-	for (int p = 0; p < (int)c.params.size(); p++) {
+	for (unsigned int p = 0; p < c.params.size(); p++) {
 		const int removeValue = (int)c.params[p]; // tag or id
 
 		if (facBuildQueue && (removeValue == 0) && !(c.options & ALT_KEY)) {

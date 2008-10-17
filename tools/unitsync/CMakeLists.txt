@@ -2,7 +2,7 @@ IF (MINGW)
 	set (unitsync_libs glew32 opengl32 glu32 devil ilu python25)
 	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/python2.5)
-	set (JNI_FOUND TRUE)
+	set (JAVA_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
