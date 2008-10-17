@@ -772,11 +772,15 @@ struct SCustomUnitCommand {
 	int numParams;
 };
 
-
 /**
  * @brief Sets default values
  */
 void initSUnitCommand(void* sUnitCommand);
+
+#ifdef	__cplusplus
+}	// extern "C"
+#endif
+
 
 #ifdef	__cplusplus
 struct Command;
@@ -794,11 +798,8 @@ void freeSUnitCommand(void* sCommandData, int sCommandId);
  * @brief creates - with new - an engine C++ Command struct
  */
 Command* newCommand(void* sUnitCommandData, int sCommandId);
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
-#ifdef	__cplusplus
-}
-#endif
 
-#endif	/* _AISCOMMANDS_H */
+#endif	// _AISCOMMANDS_H
 

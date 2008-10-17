@@ -308,17 +308,18 @@ void CTAAirMoveType::UpdateTakeoff()
 // it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
-	float driftSpeed = owner->unitDef->dlHoverFactor;	
-	float3 dir = goalPos - owner->pos;
+	float driftSpeed = owner->unitDef->dlHoverFactor;
+	float3 deltaVec = goalPos - owner->pos;
+	float3 deltaDir = float3(deltaVec).Normalize();
 
-	// move towards goal position if it's not immediately behind us when we have
-	// more waypoints to get to
+	// move towards goal position if it's not immediately
+	// behind us when we have more waypoints to get to
 	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-		dir.Length2D() < 120) && (goalPos - owner->pos).Normalize().distance(dir) > 1) {
-		dir = owner->frontdir;
+		deltaVec.Length2D() < 120) && deltaDir.distance(deltaVec) > 1.0f) {
+		deltaDir = owner->frontdir;
 	}
 
-	wantedSpeed += float3(dir.x, 0.0f, dir.z) * driftSpeed * 0.03f;
+	wantedSpeed += float3(deltaDir.x, 0.0f, deltaDir.z) * driftSpeed * 0.03f;
 	// damping
 	wantedSpeed *= 0.97f;
 	// random movement (a sort of fake wind effect)
@@ -363,10 +364,10 @@ void CTAAirMoveType::UpdateFlying()
 							wantedHeight = orgWantedHeight;
 						}
 					} else {
-						//wantedSpeed = ZeroVector;
+						wantedSpeed = ZeroVector;
 						if (!owner->commandAI->HasMoreMoveCommands())
-							wantToStop=true;
-						// SetState(AIRCRAFT_HOVERING);
+							wantToStop = true;
+						SetState(AIRCRAFT_HOVERING);
 					}
 				} else {
 					wantedHeight = orgWantedHeight;

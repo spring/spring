@@ -22,7 +22,10 @@
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
-		const SSAISpecifier& specifier) : sSAI(ai), specifier(specifier) {}
+		const SSAISpecifier& specifier,
+		const InfoItem info[], unsigned int numInfoItems)
+		: sSAI(ai), specifier(specifier), info(info),
+		numInfoItems(numInfoItems) {}
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {}
 	
@@ -30,25 +33,27 @@ SSAISpecifier CSkirmishAILibrary::GetSpecifier() const {
 	return specifier;
 }
 
-LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
+LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
 		const SAIInterfaceSpecifier& interfaceSpecifier) const {
 	
 	if (sSAI.getLevelOfSupportFor != NULL) {
-		return sSAI.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber,
-			interfaceSpecifier.shortName, interfaceSpecifier.version);
+		return sSAI.getLevelOfSupportFor(teamId, engineVersionString.c_str(),
+				engineVersionNumber, interfaceSpecifier.shortName,
+				interfaceSpecifier.version);
 	} else {
 		return LOS_Unknown;
 	}
 }
 	
-std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfo() const {
+/*
+std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfo(unsigned int teamId) const {
 	
 	std::map<std::string, InfoItem> info;
 	
 	if (sSAI.getInfo != NULL) {
 		InfoItem infs[MAX_INFOS];
-		int num = sSAI.getInfo(infs, MAX_INFOS);
+		int num = sSAI.getInfo(teamId, infs, MAX_INFOS);
 
 		int i;
 		for (i=0; i < num; ++i) {
@@ -59,13 +64,13 @@ std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfo() const {
 
 	return info;
 }
-std::vector<Option> CSkirmishAILibrary::GetOptions() const {
+std::vector<Option> CSkirmishAILibrary::GetOptions(unsigned int teamId) const {
 	
 	std::vector<Option> ops;
 	
 	if (sSAI.getOptions != NULL) {
 		Option options[MAX_OPTIONS];
-		int num = sSAI.getOptions(options, MAX_OPTIONS);
+		int num = sSAI.getOptions(teamId, options, MAX_OPTIONS);
 
 		int i;
 		for (i=0; i < num; ++i) {
@@ -75,12 +80,13 @@ std::vector<Option> CSkirmishAILibrary::GetOptions() const {
 
 	return ops;
 }
+*/
 
 
 void CSkirmishAILibrary::Init(int teamId) const {
 	
 	if (sSAI.init != NULL) {
-		int error = sSAI.init(teamId);
+		int error = sSAI.init(teamId, info, numInfoItems);
 		if (error != 0) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);

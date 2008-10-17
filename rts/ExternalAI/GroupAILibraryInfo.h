@@ -33,8 +33,8 @@ struct SGAISpecifier;
 
 class CGroupAILibraryInfo {
 public:
-	CGroupAILibraryInfo(const IGroupAILibrary& ai,
-			const SAIInterfaceSpecifier& interfaceSpecifier);
+//	CGroupAILibraryInfo(const IGroupAILibrary& ai,
+//			const SAIInterfaceSpecifier& interfaceSpecifier);
 	CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo);
 	CGroupAILibraryInfo(const std::string& aiInfoFile,
 			const std::string& aiOptionFile);

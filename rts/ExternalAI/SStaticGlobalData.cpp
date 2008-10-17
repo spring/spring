@@ -22,6 +22,7 @@
 
 #if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "System/GlobalStuff.h"			// for MAX_TEAMS
+#define MAX_GROUPS	10	// 0..9
 #include "System/Platform/FileSystem.h"	// for data directories
 #include "Game/GameVersion.h"			// for VERSION_STRING
 
@@ -62,6 +63,7 @@ struct SStaticGlobalData* createStaticGlobalData() {
 	
 	const SStaticGlobalData sgd = {
 		MAX_TEAMS,
+		MAX_GROUPS,
 		VERSION_STRING,	// spring version string
 		numDataDirs,
 		(const char**) dataDirs};

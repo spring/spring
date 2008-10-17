@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-InfoItem copyInfoItem(const struct InfoItem* const orig) {
+struct InfoItem copyInfoItem(const struct InfoItem* const orig) {
 	
 	struct InfoItem copy;
 	

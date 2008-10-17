@@ -20,7 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig) {
+struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig) {
 	
 	struct SAIInterfaceSpecifier copy;
 	

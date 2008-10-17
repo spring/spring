@@ -25,6 +25,7 @@
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
+/*
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
 		const SAIInterfaceSpecifier& interfaceSpecifier) {
 	info = ai.GetInfo();
@@ -32,6 +33,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(const ISkirmishAILibrary& ai,
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
 	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
+*/
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const CSkirmishAILibraryInfo& aiInfo) {

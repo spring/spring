@@ -34,8 +34,8 @@ enum LevelOfSupport {
 };
 
 #ifdef	__cplusplus
-}
+}	// extern "C"
 #endif
 
-#endif	/* _ELEVELOFSUPPORT_H */
+#endif	// _ELEVELOFSUPPORT_H
 

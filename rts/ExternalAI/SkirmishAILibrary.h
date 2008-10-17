@@ -24,7 +24,8 @@
 
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:
-	CSkirmishAILibrary(const SSAILibrary& ai, const SSAISpecifier& specifier);
+	CSkirmishAILibrary(const SSAILibrary& ai, const SSAISpecifier& specifier,
+			const InfoItem info[], unsigned int numInfoItems);
 	virtual ~CSkirmishAILibrary();
 	
 	virtual SSAISpecifier GetSpecifier() const;
@@ -32,12 +33,12 @@ public:
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
-	virtual LevelOfSupport GetLevelOfSupportFor(
+	virtual LevelOfSupport GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
 			const SAIInterfaceSpecifier& interfaceSpecifier) const;
 	
-    virtual std::map<std::string, InfoItem> GetInfo() const;
-	virtual std::vector<Option> GetOptions() const;
+//    virtual std::map<std::string, InfoItem> GetInfo(int teamId) const;
+//	virtual std::vector<Option> GetOptions(int teamId) const;
 	
 	
     virtual void Init(int teamId) const;
@@ -47,6 +48,8 @@ public:
 private:
 	SSAILibrary sSAI;
 	SSAISpecifier specifier;
+	const InfoItem* info;
+	unsigned int numInfoItems;
 	
 private:
 //	void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);

@@ -560,9 +560,13 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	CUnit* b = unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
 	                               true, buildInfo.buildFacing, this);
 
-	if (mapDamage->disabled || !unitDef->levelGround || unitDef->floater ||
+	// floating structures don't terraform the seabed
+	const float groundheight = ground->GetHeight2(b->pos.x, b->pos.z);
+	const bool onWater = (unitDef->floater && groundheight <= 0.0f);
+
+	if (mapDamage->disabled || !unitDef->levelGround || onWater ||
 	    (unitDef->canmove && (unitDef->speed > 0.0f))) {
-		// skip the terraforming job.
+		// skip the terraforming job
 		b->terraformLeft = 0;
 		b->groundLevelled=true;
 	}
@@ -600,8 +604,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 		 * Duplicated from CMoveType::SlowUpdate(), which
 		 * is why we use the regular code for floating things.
 		 */
-		curBuild->pos.y=ground->GetHeight2(curBuild->pos.x,curBuild->pos.z);
-		curBuild->midPos.y=curBuild->pos.y+curBuild->relMidPos.y;
+		curBuild->pos.y = groundheight;
+		curBuild->midPos.y = groundheight + curBuild->relMidPos.y;
 	}
 	else {
 		float d=nextBuildPos.y-curBuild->pos.y;

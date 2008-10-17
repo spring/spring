@@ -25,6 +25,7 @@
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
+/*
 CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai,
 		const SAIInterfaceSpecifier& interfaceSpecifier) {
 	info = ai.GetInfo();
@@ -32,6 +33,7 @@ CGroupAILibraryInfo::CGroupAILibraryInfo(const IGroupAILibrary& ai,
 	//levelOfSupport = ai.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
 	//		ENGINE_VERSION_NUMBER, interfaceSpecifier);
 }
+*/
 
 CGroupAILibraryInfo::CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo) {
 	info = std::map<std::string, InfoItem>(

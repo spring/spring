@@ -254,29 +254,35 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 	// initialize the AI library
 	std::string funcName;
 
+/*
 	funcName = "getInfo";
-	skirmishAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(struct InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(int teamId, struct InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->getInfo == NULL) {
 		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
+*/
+	skirmishAILibrary->getInfo = NULL;
 
+/*
 	funcName = "getOptions";
-	skirmishAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(int teamId, Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->getOptions == NULL) {
 		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
+*/
+	skirmishAILibrary->getOptions = NULL;
 
 	funcName = "getLevelOfSupportFor";
-	skirmishAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId, const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->getLevelOfSupportFor == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 	
 	funcName = "init";
-	skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int, const struct InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->init == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_INIT instead
@@ -317,29 +323,35 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 	// initialize the AI library
 	std::string funcName;
 	
+/*
 	funcName = "getInfo";
 	groupAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->getInfo == NULL) {
 		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
+*/
+	groupAILibrary->getInfo = NULL;
 	
-	funcName = "getLevelOfSupportFor";
-	groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->getLevelOfSupportFor == NULL) {
-		// do nothing: it is permitted that an AI does not export this function
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-	
+/*
 	funcName = "getOptions";
 	groupAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->getOptions == NULL) {
 		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
+*/
+	groupAILibrary->getOptions = NULL;
+	
+	funcName = "getLevelOfSupportFor";
+	groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
+	if (groupAILibrary->getLevelOfSupportFor == NULL) {
+		// do nothing: it is permitted that an AI does not export this function
+		//reportInterfaceFunctionError(libFilePath, funcName);
+	}
 	
 	funcName = "init";
-	groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
+	groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const struct InfoItem info[], unsigned int maxInfoItems)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->init == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_INIT instead
@@ -347,7 +359,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 	}
 	
 	funcName = "release";
-	groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int, int)) sharedLib->FindAddress(funcName.c_str());
+	groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->release == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_RELEASE instead
@@ -355,7 +367,7 @@ SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
 	}
 	
 	funcName = "handleEvent";
-	groupAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int, int, int, const void*)) sharedLib->FindAddress(funcName.c_str());
+	groupAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, int topic, const void* data)) sharedLib->FindAddress(funcName.c_str());
 	if (groupAILibrary->handleEvent == NULL) {
 		reportInterfaceFunctionError(libFilePath, funcName);
 	}
@@ -538,6 +550,7 @@ std::string CInterface::FindDir(const std::string& relativeDirPath,
 	return path;
 }
 
+/*
 SSAISpecifier CInterface::ExtractSpecifier(const SSAILibrary& skirmishAILib) {
 	
 	SSAISpecifier skirmishAISpecifier;
@@ -558,7 +571,9 @@ SSAISpecifier CInterface::ExtractSpecifier(const SSAILibrary& skirmishAILib) {
 	
 	return skirmishAISpecifier;
 }
+*/
 
+/*
 SGAISpecifier CInterface::ExtractSpecifier(const SGAILibrary& groupAILib) {
 	
 	SGAISpecifier groupAISpecifier;
@@ -579,6 +594,7 @@ SGAISpecifier CInterface::ExtractSpecifier(const SGAILibrary& groupAILib) {
 	
 	return groupAISpecifier;
 }
+*/
 
 bool CInterface::FitsThisInterface(const std::string& requestedShortName,
 		const std::string& requestedVersion) {

@@ -604,10 +604,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		allyTeamID = gs->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
-		allyTeamID = 0; // safety
-	}
-	if (!fullRead) {
-		if (allyTeamID < 0) {
+		if (!fullRead) {
 			return 0;
 		}
 	}

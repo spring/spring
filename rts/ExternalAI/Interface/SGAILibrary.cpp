@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 
-SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig) {
+struct SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig) {
 	
 	struct SGAISpecifier copy;
 	

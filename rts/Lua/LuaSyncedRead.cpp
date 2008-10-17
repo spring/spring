@@ -2137,7 +2137,7 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 		target = helper->GetClosestEnemyUnit(unit->pos, range, unit->allyteam);
 	} else {
 		target = helper->GetClosestEnemyUnitNoLosTest(unit->pos, range,
-		                                              unit->allyteam, false);
+		                                              unit->allyteam, false, true);
 	}
 	if (target) {
 		lua_pushnumber(L, target->id);

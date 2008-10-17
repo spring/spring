@@ -34,7 +34,8 @@
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 
 
-Export(int) init(int teamId) {
+Export(int) init(int teamId,
+		const struct InfoItem info[], unsigned int numInfoItems) {
 	
     if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.

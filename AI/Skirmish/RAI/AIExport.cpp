@@ -35,7 +35,8 @@
 
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 
-Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
+Export(unsigned int) getInfo(int teamId,
+		struct InfoItem info[], unsigned int maxInfoItems) {
 
 	unsigned int i = 0;
 
@@ -74,7 +75,7 @@ Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) 
 	return i;
 }
 
-Export(enum LevelOfSupport) getLevelOfSupportFor(
+Export(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
@@ -86,11 +87,13 @@ Export(enum LevelOfSupport) getLevelOfSupportFor(
 	return LOS_None;
 }
 
-Export(unsigned int) getOptions(struct Option options[], unsigned int max) {
+Export(unsigned int) getOptions(int teamId,
+		struct Option options[], unsigned int maxOptions) {
 	return 0;
 }
 
-Export(int) init(int teamId) {
+Export(int) init(int teamId,
+		const struct InfoItem info[], unsigned int numInfoItems) {
 
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.

@@ -23,7 +23,7 @@ while [ ! -d installer ]; do
 done
 
 # This regex matches regexes in buildbot etc.
-version=`grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?' rts/Game/GameVersion.cpp`
+version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
 
 # Each one of these that is set is build when running this script.
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.

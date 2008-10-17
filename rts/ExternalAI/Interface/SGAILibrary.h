@@ -46,22 +46,8 @@ struct SGAISpecifier {
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig);
+struct SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig);
 void deleteSGAISpecifier(const struct SGAISpecifier* const spec);
-
-#ifdef	__cplusplus
-struct SGAISpecifier_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SGAISpecifier& a,
-			const struct SGAISpecifier& b) const;
-	static bool IsEmpty(const struct SGAISpecifier& spec);
-};
-#endif /* __cplusplus */
 
 /**
  * This is the interface between the engine and an implementation of a Group AI.
@@ -82,6 +68,7 @@ struct SGAILibrary {
 	 *			versions
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
+			int teamId, int groupId,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 	
@@ -95,8 +82,8 @@ struct SGAILibrary {
 	 * @param	maxInfoItems	the maximum number of elements to store into param info
 	 * @return	number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
-			unsigned int maxInfoItems);
+	unsigned int (CALLING_CONV *getInfo)(int teamId, int groupId,
+			struct InfoItem info[], unsigned int maxInfoItems);
 	
 	/**
 	 * Returns options that can be set on this AI.
@@ -108,8 +95,8 @@ struct SGAILibrary {
 	 * @param	maxOptions	the maximum number of elements to store into param options
 	 * @return	number of elements stored into parameter options
 	 */
-	unsigned int (CALLING_CONV *getOptions)(struct Option options[],
-			unsigned int maxOptions);
+	unsigned int (CALLING_CONV *getOptions)(int teamId, int groupId,
+			struct Option options[], unsigned int maxOptions);
 
 	// team and group instance functions
 	
@@ -117,7 +104,8 @@ struct SGAILibrary {
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 */
-	int (CALLING_CONV *init)(int teamId, int groupId);
+	int (CALLING_CONV *init)(int teamId, int groupId,
+			const struct InfoItem info[], unsigned int numInfoItems);
 	/**
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
@@ -128,7 +116,21 @@ struct SGAILibrary {
 };
 
 #ifdef	__cplusplus
-}
+}	// extern "C"
 #endif
 
-#endif	/* _SGAILIBRARY_H */
+#ifdef	__cplusplus
+struct SGAISpecifier_Comparator {
+	/**
+	 * The key comparison function, a Strict Weak Ordering;
+	 * it returns true if its first argument is less
+	 * than its second argument, and false otherwise.
+	 * This is also defined as map::key_compare.
+	 */
+	bool operator()(const struct SGAISpecifier& a,
+			const struct SGAISpecifier& b) const;
+	static bool IsEmpty(const struct SGAISpecifier& spec);
+};
+#endif	// __cplusplus
+
+#endif	// _SGAILIBRARY_H

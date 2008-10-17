@@ -27,8 +27,8 @@ struct SAIFloat3 {
 };
 
 #ifdef	__cplusplus
-}
+}	// extern "C"
 #endif
 
-#endif	/* _SAIFLOAT3_H */
+#endif	// _SAIFLOAT3_H
 
