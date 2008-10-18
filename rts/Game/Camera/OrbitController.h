@@ -32,6 +32,7 @@ class COrbitController: public CCameraController {
 
 	private:
 		void MyMouseMove(int, int, int, int, int);
+		void Pan(int, int);
 		float3 GetOrbitPos() const;
 
 		int lastMouseMoveX;

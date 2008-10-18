@@ -58,13 +58,8 @@ void COrbitController::Update()
 		return;
 	}
 
-	// can't use mouse->last{x, y}, since they
-	// have already been updated to the current
-	// pos at this point
-	int x = 0;
-	int y = 0;
-
-	SDL_GetMouseState(&x, &y);
+	const int x = mouse->lastx;
+	const int y = mouse->lasty;
 
 	const int pdx = lastMousePressX - x;
 	const int pdy = lastMousePressY - y;
@@ -77,9 +72,12 @@ void COrbitController::Update()
 	MyMouseMove(pdx, pdy, rdx, rdy, lastMouseButton);
 }
 
+
 void COrbitController::KeyMove(float3 move)
 {
-	// todo
+	// higher framerate means we take smaller steps per frame
+	// (x and y are lastFrameTime in secs., 200FPS ==> 0.005s)
+	Pan(int(move.x * -1000), int(move.y * 1000));
 }
 
 
@@ -145,30 +143,37 @@ void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 		} break;
 
 		case SDL_BUTTON_MIDDLE: {
-			// horizontal pan
-			cam->pos += (cam->right * -rdx * 2);
-			cen += (cam->right * -rdx * 2);
-
-			// vertical pan
-			cam->pos += (cam->up * rdy * 2);
-			cen += (cam->up * rdy * 2);
-
-
-			// don't allow orbit center or ourselves to drop below the terrain
-			const float camGH = ground->GetHeight2(cam->pos.x, cam->pos.z);
-			const float cenGH = ground->GetHeight2(cen.x, cen.z);
-
-			if (cam->pos.y < camGH) {
-				cam->pos.y = camGH;
-			}
-
-			if (cen.y < cenGH) {
-				cen.y = cenGH;
-				cam->forward = (cen - cam->pos).Normalize();
-
-				Init(cam->pos, cen);
-			}
+			Pan(rdx, rdy);
 		} break;
+	}
+}
+
+void COrbitController::Pan(int rdx, int rdy)
+{
+	CCamera* cam = camera;
+
+	// horizontal pan
+	cam->pos += (cam->right * -rdx * 2);
+	cen += (cam->right * -rdx * 2);
+
+	// vertical pan
+	cam->pos += (cam->up * rdy * 2);
+	cen += (cam->up * rdy * 2);
+
+
+	// don't allow orbit center or ourselves to drop below the terrain
+	const float camGH = ground->GetHeight2(cam->pos.x, cam->pos.z);
+	const float cenGH = ground->GetHeight2(cen.x, cen.z);
+
+	if (cam->pos.y < camGH) {
+		cam->pos.y = camGH;
+	}
+
+	if (cen.y < cenGH) {
+		cen.y = cenGH;
+		cam->forward = (cen - cam->pos).Normalize();
+
+		Init(cam->pos, cen);
 	}
 }
 
