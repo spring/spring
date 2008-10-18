@@ -3075,7 +3075,7 @@ void CGame::SimFrame() {
 		}
 		while(!gmlProcessor.PumpAux()) {
 			// could possibly make more calls to Draw here
-			boost::thread::yield(); 
+			boost::thread::yield();
 		}
 	}
 	else
@@ -3180,6 +3180,9 @@ void CGame::SimFrame() {
 	loshandler->Update();
 
 	if (!(gs->frameNum & 31)) {
+		for (int a = 0; a < gs->activeTeams; ++a) {
+			gs->Team(a)->ResetFrameVariables();
+		}
 		for (int a = 0; a < gs->activeTeams; ++a) {
 			gs->Team(a)->SlowUpdate();
 		}
