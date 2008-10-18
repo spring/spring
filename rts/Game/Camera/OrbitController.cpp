@@ -26,6 +26,14 @@ COrbitController::COrbitController():
 	elevation(0.0f), cElevation(0.0f)
 {
 	enabled = !!configHandler.GetInt("OrbitControllerEnabled", 1);
+
+	orbitSpeedFact = configHandler.GetFloat("OrbitControllerOrbitSpeed", 0.25f);
+	panSpeedFact   = configHandler.GetFloat("OrbitControllerPanSpeed",   2.00f);
+	zoomSpeedFact  = configHandler.GetFloat("OrbitControllerZoomSpeed",  5.00f);
+
+	orbitSpeedFact = std::max(0.1f, std::min(10.0f, orbitSpeedFact));
+	panSpeedFact   = std::max(0.1f, std::min(10.0f, panSpeedFact));
+	zoomSpeedFact  = std::max(0.1f, std::min(10.0f, zoomSpeedFact));
 }
 
 void COrbitController::Init(const float3& p, const float3& tar)
@@ -73,13 +81,6 @@ void COrbitController::Update()
 }
 
 
-void COrbitController::KeyMove(float3 move)
-{
-	// higher framerate means we take smaller steps per frame
-	// (x and y are lastFrameTime in secs., 200FPS ==> 0.005s)
-	Pan(int(move.x * -1000), int(move.y * 1000));
-}
-
 
 void COrbitController::MousePress(int x, int y, int button)
 {
@@ -113,16 +114,14 @@ void COrbitController::MouseMove(float3 move)
 
 void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 {
-	CCamera* cam = camera;
-
 	switch (button) {
 		case SDL_BUTTON_LEFT: {
-			rotation = cRotation - (dx * 0.25f);
-			elevation = cElevation - (dy * 0.25f);
+			rotation = cRotation - (dx * orbitSpeedFact);
+			elevation = cElevation - (dy * orbitSpeedFact);
 		} break;
 
 		case SDL_BUTTON_RIGHT: {
-			distance = cDistance - (dy * 0.5f * 10.0f);
+			distance = cDistance - (dy * zoomSpeedFact);
 		} break;
 	}
 
@@ -132,20 +131,29 @@ void COrbitController::MyMouseMove(int dx, int dy, int rdx, int rdy, int button)
 
 	switch (button) {
 		case SDL_BUTTON_LEFT: {
-			cam->pos = cen + GetOrbitPos();
-			cam->pos.y = std::max(cam->pos.y, ground->GetHeight2(cam->pos.x, cam->pos.z));
-			cam->forward = (cen - cam->pos).Normalize();
-			cam->up = YVEC;
-		} break;
-
-		case SDL_BUTTON_RIGHT: {
-			cam->pos = cen - (cam->forward * distance);
+			Orbit();
 		} break;
 
 		case SDL_BUTTON_MIDDLE: {
 			Pan(rdx, rdy);
 		} break;
+
+		case SDL_BUTTON_RIGHT: {
+			Zoom();
+		} break;
 	}
+}
+
+
+
+void COrbitController::Orbit()
+{
+	CCamera* cam = camera;
+
+	cam->pos = cen + GetOrbitPos();
+	cam->pos.y = std::max(cam->pos.y, ground->GetHeight2(cam->pos.x, cam->pos.z));
+	cam->forward = (cen - cam->pos).Normalize();
+	cam->up = YVEC;
 }
 
 void COrbitController::Pan(int rdx, int rdy)
@@ -153,12 +161,12 @@ void COrbitController::Pan(int rdx, int rdy)
 	CCamera* cam = camera;
 
 	// horizontal pan
-	cam->pos += (cam->right * -rdx * 2);
-	cen += (cam->right * -rdx * 2);
+	cam->pos += (cam->right * -rdx * panSpeedFact);
+	cen += (cam->right * -rdx * panSpeedFact);
 
 	// vertical pan
-	cam->pos += (cam->up * rdy * 2);
-	cen += (cam->up * rdy * 2);
+	cam->pos += (cam->up * rdy * panSpeedFact);
+	cen += (cam->up * rdy * panSpeedFact);
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
@@ -177,8 +185,23 @@ void COrbitController::Pan(int rdx, int rdy)
 	}
 }
 
+void COrbitController::Zoom()
+{
+	camera->pos = cen - (camera->forward * distance);
+}
+
+
+
+void COrbitController::KeyMove(float3 move)
+{
+	// higher framerate means we take smaller steps per frame
+	// (x and y are lastFrameTime in secs., 200FPS ==> 0.005s)
+	Pan(int(move.x * -1000), int(move.y * 1000));
+}
+
 void COrbitController::ScreenEdgeMove(float3 move)
 {
+	Pan(int(move.x * -1000), int(move.y * 1000));
 }
 
 void COrbitController::MouseWheelMove(float move)
