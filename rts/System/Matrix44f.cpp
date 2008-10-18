@@ -8,7 +8,7 @@ CR_BIND(CMatrix44f, );
 CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
 
 
-CMatrix44f::CMatrix44f(void)
+CMatrix44f::CMatrix44f()
 {
 	LoadIdentity();
 }
@@ -32,6 +32,16 @@ CMatrix44f::CMatrix44f(const CMatrix44f& n)
 }
 
 
+CMatrix44f& CMatrix44f::operator=(const CMatrix44f& n)
+{
+	m[0]  = n[0];   m[1]  = n[1];   m[2]  = n[2];   m[3]  = n[3];
+	m[4]  = n[4];   m[5]  = n[5];   m[6]  = n[6];   m[7]  = n[7];
+	m[8]  = n[8];   m[9]  = n[9];   m[10] = n[10];  m[11] = n[11];
+	m[12] = n[12];  m[13] = n[13];  m[14] = n[14];  m[15] = n[15];
+	return *this;
+}
+
+
 CMatrix44f::CMatrix44f(const float3& pos)
 {
 	m[0]  = m[5]  = m[10] = m[15] = 1.0f;
@@ -41,11 +51,6 @@ CMatrix44f::CMatrix44f(const float3& pos)
 	m[8]  = m[9]  = m[11] = 0.0f;
 
 	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z;
-}
-
-
-CMatrix44f::~CMatrix44f(void)
-{
 }
 
 
@@ -208,7 +213,7 @@ void CMatrix44f::Translate(const float3& pos)
 }
 
 
-CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const 
+CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const
 {
 	CMatrix44f res;
 
@@ -268,7 +273,7 @@ void CMatrix44f::SetUpVector(float3& up)
 }
 
 
-void CMatrix44f::Rotate(float rad, float3& axis)
+void CMatrix44f::Rotate(float rad, const float3& axis)
 {
 	const float sr = sin(rad);
 	const float cr = cos(rad);
