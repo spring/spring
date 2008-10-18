@@ -265,26 +265,7 @@ bool SpringApp::Initialize()
 	keys = SAFE_NEW Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
-	// Initialize font
-	const int charFirst = configHandler.GetInt("FontCharFirst", 32);
-	const int charLast  = configHandler.GetInt("FontCharLast", 255);
-	std::string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
-
-	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
-	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
-
-	try {
-		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
-		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
-	} catch(content_error&) {
-		// If the standard location fails, retry in fonts directory or vice versa.
-		if (fontFile.substr(0, 6) == "fonts/")
-			fontFile = fontFile.substr(6);
-		else
-			fontFile = "fonts/" + fontFile;
-		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
-		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
-	}
+	LoadFonts();
 
 	// Initialize GLEW
 	LoadExtensions();
@@ -619,6 +600,31 @@ void SpringApp::InitOpenGL ()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+}
+
+
+void SpringApp::LoadFonts()
+{
+	// Initialize font
+	const int charFirst = configHandler.GetInt("FontCharFirst", 32);
+	const int charLast  = configHandler.GetInt("FontCharLast", 255);
+	std::string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
+
+	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
+	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
+
+	try {
+		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
+		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
+	} catch(content_error&) {
+		// If the standard location fails, retry in fonts directory or vice versa.
+		if (fontFile.substr(0, 6) == "fonts/")
+			fontFile = fontFile.substr(6);
+		else
+			fontFile = "fonts/" + fontFile;
+		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
+		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
+	}
 }
 
 /**
@@ -998,6 +1004,7 @@ int SpringApp::Run (int argc, char *argv[])
 					SetSDLVideoMode();
 #endif
 					InitOpenGL();
+					LoadFonts();
 					activeController->ResizeEvent();
 					break;
 				}

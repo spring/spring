@@ -29,6 +29,7 @@ protected:
 	void CreateGameSetup (); 			//!< Creates GameSetup
 	bool InitWindow (const char* title); 		//!< Initializes window
 	void InitOpenGL (); 				//!< Initializes OpenGL
+	void LoadFonts();
 	bool SetSDLVideoMode(); 			//!< Sets SDL video mode
 	void Shutdown (); 				//!< Shuts down application
 	int Update (); 					//!< Run simulation and draw
