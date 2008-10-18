@@ -33,7 +33,7 @@ protected:
 	};
 
 	float extractionRange, extractionDepth;
-	std::list<MetalSquareOfControl*> metalAreaOfControl;
+	std::vector<MetalSquareOfControl> metalAreaOfControl;
 	std::list<CExtractorBuilding*> neighbours;
 
 	static float maxExtractionRange;
