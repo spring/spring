@@ -8,6 +8,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "NetProtocol.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"

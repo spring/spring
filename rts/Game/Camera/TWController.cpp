@@ -12,6 +12,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
+#include "System/GlobalUnsynced.h"
 
 extern Uint8 *keys;
 

@@ -312,7 +312,7 @@ void UnitGroup::SetNewGoal ()
 bool UnitGroup::CalcPositioning (float2& pmin, float2& pmax, float2& mid, int2& cs)
 {
 	const float l=10000000;
-	float2 sum= {0.0f,0.0f};
+	float2 sum(0.0f,0.0f);
 	pmin.x=pmin.y=l;pmax.x=pmax.y=-l;
 
 	int bestdis=10000000;

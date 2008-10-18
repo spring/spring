@@ -33,6 +33,7 @@
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
 #include <assert.h>
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 
 const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)

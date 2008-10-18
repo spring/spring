@@ -24,6 +24,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "System/GlobalUnsynced.h"
 #include <assert.h>
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )

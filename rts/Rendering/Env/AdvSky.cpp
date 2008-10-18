@@ -17,6 +17,7 @@
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
+#include "System/GlobalUnsynced.h"
 
 #define Y_PART 10.0
 #define X_PART 10.0

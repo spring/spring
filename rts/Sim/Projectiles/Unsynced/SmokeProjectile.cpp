@@ -5,12 +5,14 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "SmokeProjectile.h"
+
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "SmokeProjectile.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
 

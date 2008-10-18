@@ -25,6 +25,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sync/SyncTracer.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "Sound.h"
 #include "LogOutput.h"

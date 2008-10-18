@@ -1,12 +1,14 @@
 #ifndef SOUNDSYSTEM_INTERFACE_H
 #define SOUNDSYSTEM_INTERFACE_H
 
-#include "float3.h"
-#include "GlobalStuff.h"
 #include <set>
+#include <string>
+
+#include "System/float3.h" // for zerovector
 
 class CWorldObject;
 class CUnit;
+class float3;
 
 // Sound system interface
 class CSound

@@ -1,7 +1,7 @@
 #include "Unit.h"
 #include "GlobalAI.h"
 
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 
 CR_BIND(CUNIT, )
 CR_REG_METADATA(CUNIT, (

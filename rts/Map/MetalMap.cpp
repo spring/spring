@@ -2,7 +2,6 @@
 #include "mmgr.h"
 
 #include "MetalMap.h"
-#include "GlobalStuff.h"
 #include "ReadMap.h"
 #include "Platform/ConfigHandler.h"
 

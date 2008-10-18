@@ -2,6 +2,7 @@
 #include "GlobalAIHandler.h"
 #include "GlobalAI.h"
 #include "IGlobalAI.h"
+#include "Game/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/Team.h"

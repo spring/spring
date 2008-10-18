@@ -19,6 +19,7 @@
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
 
+#include "Game/GlobalSynced.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

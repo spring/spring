@@ -7,7 +7,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

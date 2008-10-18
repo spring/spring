@@ -14,6 +14,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

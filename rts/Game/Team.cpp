@@ -5,10 +5,13 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Messages.h"
 #include "Team.h"
+
+#include "Messages.h"
+#include "GlobalSynced.h"
 #include "LogOutput.h"
 #include "Player.h"
+#include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
@@ -17,6 +20,7 @@
 #include "ExternalAI/GlobalAI.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"

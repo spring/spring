@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"

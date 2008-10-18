@@ -10,6 +10,7 @@
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "System/GlobalUnsynced.h"
 
 using std::max;
 using std::min;

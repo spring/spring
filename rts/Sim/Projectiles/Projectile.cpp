@@ -13,6 +13,7 @@
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Map/MapInfo.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 

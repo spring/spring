@@ -5,7 +5,6 @@
 #include <string>
 #include <set>
 #include "Matrix44f.h"
-#include "System/GlobalStuff.h"
 #include "Sim/Units/Unit.h"
 
 struct S3DO;

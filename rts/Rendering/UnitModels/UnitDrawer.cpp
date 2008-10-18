@@ -42,6 +42,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/GlobalUnsynced.h"
 #include "mmgr.h"
 
 #ifdef USE_GML

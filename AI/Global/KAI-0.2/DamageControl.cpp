@@ -1,6 +1,6 @@
 #include "DamageControl.h"
 
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 
 CDamageControl::CDamageControl(AIClasses* ai)
 {

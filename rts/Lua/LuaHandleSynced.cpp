@@ -35,6 +35,7 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
+#include "Game/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/COB/CobInstance.h"

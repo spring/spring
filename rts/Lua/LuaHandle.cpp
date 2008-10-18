@@ -26,6 +26,7 @@
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/GlobalSynced.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

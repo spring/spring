@@ -5,6 +5,7 @@
 
 #include "mmgr.h"
 
+#include "System/GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
 

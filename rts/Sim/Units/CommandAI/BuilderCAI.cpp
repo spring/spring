@@ -36,6 +36,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "creg/STL_Map.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 

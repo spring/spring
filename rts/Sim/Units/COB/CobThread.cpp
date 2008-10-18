@@ -10,11 +10,7 @@
 
 #include "LogOutput.h"
 
-#ifdef _CONSOLE
-#include "GlobalStuff.h"
-#else
-#include "GlobalStuff.h"
-#endif
+#include "Game/GlobalSynced.h"
 
 CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
 : owner(owner), script(script)

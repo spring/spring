@@ -9,6 +9,7 @@
 #include "Platform/SharedLib.h"
 #include "LogOutput.h"
 #include "mmgr.h"
+#include "Game/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 
