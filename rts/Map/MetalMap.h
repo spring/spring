@@ -17,10 +17,10 @@ public:
 	CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale);
 	virtual ~CMetalMap(void);
 
-	float getMetalAmount(int x1, int z1, int x2, int z2);
-	float getMetalAmount(int x, int z);
-	float requestExtraction(int x, int z, float toDepth);
-	void  removeExtraction(int x, int z, float depth);
+	float GetMetalAmount(int x1, int z1, int x2, int z2);
+	float GetMetalAmount(int x, int z);
+	float RequestExtraction(int x, int z, float toDepth);
+	void  RemoveExtraction(int x, int z, float depth);
 
 	unsigned char* metalMap;
 	unsigned char  metalPal[768];

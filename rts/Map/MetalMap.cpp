@@ -29,7 +29,7 @@ CMetalMap::CMetalMap(unsigned char* map,
 //	for(i = 0; i < (sizeX * sizeZ); i++) {
 //		extractionMap[i] = 0.0f;
 //	}
-	
+
 	int whichPalette = configHandler.GetInt("MetalMapPalette", 0);
 
 	if (whichPalette == 1){
@@ -49,12 +49,12 @@ CMetalMap::CMetalMap(unsigned char* map,
 			metalPal[a * 3 + 2] = std::max(0, a * 2 - 255);
 		}
 	}
-	
+
 }
 
 
 /*
-Destrcutor
+Destructor
 Free the memory used by maps.
 */
 CMetalMap::~CMetalMap(void)
@@ -77,13 +77,13 @@ static inline void ClampInt(int& var, int min, int maxPlusOne)
 /*
 Gives the amount of metal over an area.
 */
-float CMetalMap::getMetalAmount(int x1, int z1, int x2, int z2) 
+float CMetalMap::GetMetalAmount(int x1, int z1, int x2, int z2)
 {
 	ClampInt(x1, 0, sizeX);
 	ClampInt(x2, 0, sizeX);
 	ClampInt(z1, 0, sizeZ);
 	ClampInt(z2, 0, sizeZ);
-	
+
 	float metal = 0.0f;
 	int x, z;
 	for (x = x1; x < x2; x++) {
@@ -98,7 +98,7 @@ float CMetalMap::getMetalAmount(int x1, int z1, int x2, int z2)
 /*
 Gives the amount of metal on a single square.
 */
-float CMetalMap::getMetalAmount(int x, int z) 
+float CMetalMap::GetMetalAmount(int x, int z)
 {
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);
@@ -108,14 +108,14 @@ float CMetalMap::getMetalAmount(int x, int z)
 
 
 /*
-Makes a reqest for extracting metal from a given square.
+Makes a request for extracting metal from a given square.
 If there is metal left to extract to the requested depth,
 the amount available will be returned and the requested
 depth will be sat as new extraction-depth on the extraction-map.
-If the requested depth is grounder than the current
+If the requested depth is greater than the current
 extraction-depth 0.0 will be returned and nothing changed.
 */
-float CMetalMap::requestExtraction(int x, int z, float toDepth) 
+float CMetalMap::RequestExtraction(int x, int z, float toDepth)
 {
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);
@@ -139,7 +139,7 @@ When a extraction ends, the digged depth should be left
 back to the extraction-map. To be available for other
 extractors to use.
 */
-void CMetalMap::removeExtraction(int x, int z, float depth) 
+void CMetalMap::RemoveExtraction(int x, int z, float depth)
 {
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);
