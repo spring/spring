@@ -12,13 +12,16 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Platform/Win/win32.h"
-#include "MouseInput.h"
 #include "Game/UI/MouseHandler.h"
-#include "LogOutput.h"
 
 #include <SDL_events.h>
 #include <SDL_syswm.h>
+
+#include "System/GlobalUnsynced.h"
+#include "Platform/Win/win32.h"
+#include "MouseInput.h"
+#include "LogOutput.h"
+
 
 
 IMouseInput* mouseInput = NULL;
