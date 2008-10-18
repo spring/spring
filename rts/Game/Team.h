@@ -18,6 +18,7 @@ public:
 	CR_DECLARE_SUB(Statistics);
 	CTeam();
 	~CTeam();
+	void ResetFrameVariables();
 	void SlowUpdate();
 
 
@@ -32,12 +33,12 @@ public:
 	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
 
 	void GiveEverythingTo(const unsigned toTeam);
-	
+
 	void Died();
 
 	void StartposMessage(const float3& pos, const bool isReady);
 	void StartposMessage(const float3& pos);
-	
+
 	inline bool IsReadyToStart() const {return readyToStart;};
 	enum AddType{
 		AddBuilt,
