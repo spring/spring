@@ -25,6 +25,7 @@ CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
 
 CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(dontCheckCol),
+	CR_MEMBER(bankingAllowed),
 
 	CR_MEMBER(orgWantedHeight),
 
