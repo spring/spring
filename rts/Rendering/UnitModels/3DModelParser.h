@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 #include "Matrix44f.h"
 #include "System/GlobalStuff.h"
 #include "Sim/Units/Unit.h"
@@ -79,7 +80,7 @@ struct LocalS3DO
 
 
 struct LocalS3DOModel
-{	
+{
 	int numpieces;
 	//LocalS3DO *rootobject;
 	LocalS3DO *pieces;
