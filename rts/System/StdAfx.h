@@ -56,10 +56,12 @@
 // also, they shouldn't get in the way of mmgr
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
-#include "GlobalSynced.h"
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Game/GlobalSynced.h"
+#include "Game/GlobalConstants.h"
 #include "Game/Camera.h"
 #endif // USE_PRECOMPILED_HEADER
 
