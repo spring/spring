@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "AirBaseHandler.h"
+
+#include "Game/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"

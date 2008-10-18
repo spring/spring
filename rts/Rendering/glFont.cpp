@@ -12,6 +12,7 @@
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 

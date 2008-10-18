@@ -15,6 +15,7 @@
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "GameData.h"
+#include "GlobalSynced.h"
 #include "NetProtocol.h"
 #include "Net/RawPacket.h"
 #include "DemoRecorder.h"

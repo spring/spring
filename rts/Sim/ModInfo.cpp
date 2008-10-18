@@ -2,7 +2,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "GlobalStuff.h"
+#include "GlobalUnsynced.h"
 #include "ModInfo.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"

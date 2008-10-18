@@ -5,7 +5,7 @@
 #include <string>
 
 #include "Object.h"
-#include "GlobalStuff.h"
+#include "GlobalUnsynced.h"
 
 class CInputReceiver :
 	public CObject

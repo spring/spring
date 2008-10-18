@@ -10,6 +10,7 @@
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "LogOutput.h"
 
 

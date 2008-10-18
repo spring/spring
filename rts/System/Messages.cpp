@@ -10,7 +10,7 @@
 #include <map>
 #include "mmgr.h"
 
-#include "GlobalStuff.h"
+#include "GlobalUnsynced.h"
 #include "LogOutput.h"
 #include "Messages.h"
 #include "Lua/LuaParser.h"

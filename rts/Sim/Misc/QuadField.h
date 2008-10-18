@@ -11,7 +11,7 @@
 
 #include "creg/creg.h"
 #include "float3.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 
 class CUnit;
 class CWorldObject;

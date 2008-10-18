@@ -2,6 +2,8 @@
 #include "mmgr.h"
 
 #include "InterceptHandler.h"
+
+#include "Game/GlobalSynced.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"

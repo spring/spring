@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL));
 

@@ -11,6 +11,8 @@
 #include "Player.h"
 #include "Team.h"
 #include "Util.h"
+#include "GlobalSynced.h"
+#include "GlobalUnsynced.h"
 
 static int CompareAllies     (const void* a, const void* b);
 static int CompareTeamIDs    (const void* a, const void* b);

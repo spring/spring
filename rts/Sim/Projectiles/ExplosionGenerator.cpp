@@ -24,6 +24,7 @@
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 #include <assert.h>
+#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 
 using std::min;

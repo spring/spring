@@ -4,11 +4,11 @@
 
 #include "MapInfo.h"
 
+#include "Game/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/GlobalStuff.h"
 #include "System/Exceptions.h"
 
 

@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
-#include "GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

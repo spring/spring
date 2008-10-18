@@ -8,7 +8,7 @@
 #include "HeatCloudProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
 

@@ -32,6 +32,7 @@
 #include "System/Platform/ConfigHandler.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 
 using std::string;

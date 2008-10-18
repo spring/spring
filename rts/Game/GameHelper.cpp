@@ -6,6 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
+#include "System/GlobalUnsynced.h"
 #include "Camera.h"
 #include "Game/GameSetup.h"
 #include "Game.h"

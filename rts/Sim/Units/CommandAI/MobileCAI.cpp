@@ -25,6 +25,7 @@
 #include "myMath.h"
 #include <assert.h>
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 

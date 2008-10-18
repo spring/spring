@@ -14,6 +14,7 @@
 #undef KeyPress
 #undef KeyRelease
 
+#include "Game/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"
@@ -39,6 +40,7 @@
 #include "MouseInput.h"
 #include "bitops.h"
 #include "Sync/Syncify.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 

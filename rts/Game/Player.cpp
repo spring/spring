@@ -8,12 +8,14 @@
 
 #include "Player.h"
 #include "Team.h"
+#include "GlobalSynced.h"
 #ifdef DIRECT_CONTROL_ALLOWED
 #  include "UI/MouseHandler.h"
 #  include "CameraHandler.h"
 #  include "Camera.h"
 #endif
 #include "System/EventHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND(CPlayer,);
 

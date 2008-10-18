@@ -61,7 +61,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
-#include "Sync/SyncDebugger.h"
 
 using namespace std;
 

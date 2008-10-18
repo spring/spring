@@ -17,6 +17,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "Map/MapInfo.h"
 

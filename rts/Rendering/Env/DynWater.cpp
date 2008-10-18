@@ -22,6 +22,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 

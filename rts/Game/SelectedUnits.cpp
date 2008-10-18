@@ -10,6 +10,7 @@
 #include "mmgr.h"
 
 #include "Game/Team.h"
+#include "Game/GlobalSynced.h"
 #include "SelectedUnits.h"
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"

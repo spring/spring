@@ -15,7 +15,7 @@
 #include "mmgr.h"
 #include "Util.h"
 #include "float3.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 
 
 static std::ofstream* filelog = 0;

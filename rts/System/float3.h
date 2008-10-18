@@ -452,4 +452,21 @@ public:
 	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
 };
 
+/**
+ * @brief upwards vector
+ *
+ * Defines constant upwards vector
+ * (0,1,0)
+ */
+const float3 UpVector(0,1,0);
+
+/**
+ * @brief zero vector
+ *
+ * Defines constant zero vector
+ * (0,0,0)
+ */
+const float3 ZeroVector(0,0,0);
+
+
 #endif /* FLOAT3_H */

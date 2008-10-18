@@ -1,8 +1,10 @@
 #ifndef METALMAP_H
 #define METALMAP_H
 
-#include "GlobalStuff.h"
+#include <vector>
 
+#include "creg/creg.h"
+#include "Game/GlobalConstants.h"
 
 // Each square on metalmap is a 2x2 square on normal map.
 const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;

@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "PlasmaRepulser.h"

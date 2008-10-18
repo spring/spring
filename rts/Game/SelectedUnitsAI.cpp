@@ -13,7 +13,8 @@
 #include "SelectedUnits.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "GlobalStuff.h"
+#include "GlobalSynced.h"
+#include "GlobalUnsynced.h"
 #include "Player.h"
 #include "WaitCommandsAI.h"
 #include "Map/Ground.h"
@@ -37,28 +38,6 @@ CSelectedUnitsAI::CSelectedUnitsAI()
 	columnDist = 64;
 	lineDist = 64;
 }
-
-/*
-Group-AI.
-Processing commands given to selected group.
-*/
-
-
-/*
-void CSelectedUnitsAI::AddUnit(int unit)
-{
-	myUnits.insert(unit);
-	unitsChanged=true;
-	return true;
-}
-
-
-void CSelectedUnitsAI::RemoveUnit(int unit)
-{
-	myUnits.erase(unit);
-	unitsChanged=true;
-}
-*/
 
 
 inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,

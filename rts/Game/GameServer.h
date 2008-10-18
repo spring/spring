@@ -12,7 +12,7 @@
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 #include "System/UnsyncedRNG.h"
 #include "SFloat3.h"
 

@@ -2,7 +2,7 @@
 
 #include "UnitTable.h"
 
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 #include "System/Util.h"
 
 /// CR_BIND(CUnitTable, );

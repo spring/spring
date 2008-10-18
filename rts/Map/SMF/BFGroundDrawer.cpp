@@ -13,6 +13,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "System/FastMath.h"
+#include "System/GlobalUnsynced.h"
 #include "mmgr.h"
 
 #ifdef USE_GML

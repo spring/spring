@@ -27,7 +27,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 
 using namespace std;
 

@@ -8,6 +8,7 @@
 
 #include "QuadField.h"
 
+#include "Game/GlobalSynced.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
