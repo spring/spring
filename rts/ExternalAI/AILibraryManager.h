@@ -51,6 +51,8 @@ public:
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const;
 	
+	virtual const T_skirmishAIInfos* GetUsedSkirmishAIInfos();
+	
 	virtual const T_dupInt* GetDuplicateInterfaceInfos() const;
 	virtual const T_dupSkirm* GetDuplicateSkirmishAIInfos() const;
 	virtual const T_dupGroup* GetDuplicateGroupAIInfos() const;
@@ -93,6 +95,9 @@ private:
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 	T_groupAIInfos groupAIInfos;
+	
+	T_skirmishAIInfos usedSkirmishAIInfos;
+	bool usedSkirmishAIInfos_initialized;
 	
 	T_dupInt duplicateInterfaceInfos;
 	T_dupSkirm duplicateSkirmishAIInfos;

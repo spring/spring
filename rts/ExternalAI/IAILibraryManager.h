@@ -58,6 +58,8 @@ public:
 	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const = 0;
 	virtual const T_groupAIInfos* GetGroupAIInfos() const = 0;
 	
+	virtual const T_skirmishAIInfos* GetUsedSkirmishAIInfos() = 0;
+	
 	typedef std::map<const SAIInterfaceSpecifier, std::set<std::string>,
 			SAIInterfaceSpecifier_Comparator> T_dupInt;
 	typedef std::map<const SSAIKey, std::set<std::string>, SSAIKey_Comparator>
