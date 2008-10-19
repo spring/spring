@@ -750,7 +750,7 @@ void CProjectileHandler::CheckUnitCol()
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* p = (*psi);
-		const float3 ppos = p->pos;
+		const float3& ppos = p->pos;
 
 		if (p->checkCol && !p->deleteMe) {
 			float speedf = p->speed.Length();

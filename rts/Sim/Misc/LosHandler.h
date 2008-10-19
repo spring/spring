@@ -8,7 +8,6 @@
 #include <list>
 #include <deque>
 #include <boost/noncopyable.hpp>
-#include "MemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
