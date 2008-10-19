@@ -4,8 +4,7 @@
 #include "unitsync.h"
 
 
-/******************************************************************************/
-/******************************************************************************/
+// from unitsync.cpp:
 
 DLL_EXPORT const char*  __stdcall GetSpringVersion();
 
@@ -33,6 +32,7 @@ DLL_EXPORT int          __stdcall IsUnitDisabledByClient(int unit, int clientId)
 DLL_EXPORT void         __stdcall AddArchive(const char* name);
 DLL_EXPORT void         __stdcall AddAllArchives(const char* root);
 DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
+DLL_EXPORT const char*  __stdcall GetArchivePath(const char* arname);
 
 DLL_EXPORT int          __stdcall GetMapCount();
 DLL_EXPORT const char*  __stdcall GetMapName(int index);
@@ -41,6 +41,7 @@ DLL_EXPORT int          __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
 DLL_EXPORT int          __stdcall GetMapArchiveCount(const char* mapName);
 DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
 DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
+DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName);
 DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel);
 DLL_EXPORT int          __stdcall GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
 DLL_EXPORT int          __stdcall GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
@@ -50,11 +51,15 @@ DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModShortName(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModVersion(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModMutator(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModGame(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModShortGame(int index);
+DLL_EXPORT const char*  __stdcall GetPrimaryModDescription(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
 DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
 DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
 DLL_EXPORT int          __stdcall GetPrimaryModIndex(const char* name);
 DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
+DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name);
 
 DLL_EXPORT int          __stdcall GetSideCount();
 DLL_EXPORT const char*  __stdcall GetSideName(int side);
@@ -68,8 +73,8 @@ DLL_EXPORT int          __stdcall GetMapOptionCount(const char* name);
 DLL_EXPORT int          __stdcall GetModOptionCount();
 DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
-DLL_EXPORT const char* __stdcall GetOptionSection(int optIndex);
-DLL_EXPORT const char* __stdcall GetOptionStyle(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionSection(int optIndex);
+DLL_EXPORT const char*  __stdcall GetOptionStyle(int optIndex);
 DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
 DLL_EXPORT int          __stdcall GetOptionBoolDef(int optIndex);
@@ -94,12 +99,8 @@ DLL_EXPORT void         __stdcall ReadFileVFS(int handle, void* buf, int length)
 DLL_EXPORT int          __stdcall FileSizeVFS(int handle);
 
 DLL_EXPORT int          __stdcall InitFindVFS(const char* pattern);
-DLL_EXPORT int          __stdcall InitDirListVFS(const char* path,
-                                                 const char* pattern,
-                                                 const char* modes);
-DLL_EXPORT int          __stdcall InitSubDirsVFS(const char* path,
-                                                 const char* pattern,
-                                                 const char* modes);
+DLL_EXPORT int          __stdcall InitDirListVFS(const char* path, const char* pattern, const char* modes);
+DLL_EXPORT int          __stdcall InitSubDirsVFS(const char* path, const char* pattern, const char* modes);
 DLL_EXPORT int          __stdcall FindFilesVFS(int handle, char* nameBuf, int size);
 
 DLL_EXPORT int          __stdcall OpenArchive(const char* name);
@@ -111,12 +112,19 @@ DLL_EXPORT int          __stdcall ReadArchiveFile(int archive, int handle, void*
 DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
 
+DLL_EXPORT const char*  __stdcall GetSpringConfigString(const char* name, const char* defvalue);
+DLL_EXPORT int          __stdcall GetSpringConfigInt(const char* name, const int defvalue);
+DLL_EXPORT float        __stdcall GetSpringConfigFloat( const char* name, const float defvalue );
+DLL_EXPORT void         __stdcall SetSpringConfigString(const char* name, const char* value);
+DLL_EXPORT void         __stdcall SetSpringConfigInt(const char* name, const int value);
+DLL_EXPORT void         __stdcall SetSpringConfigFloat(const char* name, const float value);
+
+
+// from LuaParserAPI.cpp:
+
 DLL_EXPORT void        __stdcall lpClose();
-DLL_EXPORT int         __stdcall lpOpenFile(const char* filename,
-                                            const char* fileModes,
-                                            const char* accessModes);
-DLL_EXPORT int         __stdcall lpOpenSource(const char* source,
-                                              const char* accessModes);
+DLL_EXPORT int         __stdcall lpOpenFile(const char* filename, const char* fileModes, const char* accessModes);
+DLL_EXPORT int         __stdcall lpOpenSource(const char* source, const char* accessModes);
 DLL_EXPORT int         __stdcall lpExecute();
 DLL_EXPORT const char* __stdcall lpErrorLog();
 

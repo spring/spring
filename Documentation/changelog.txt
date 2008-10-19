@@ -30,6 +30,11 @@ Engine:
  - fixed map defined detailtex
  - fix LUA Spring.GetTeamResources does not return "received" for one player on each team
 
+Unitsync / Lobby interface:
+ - engine now loads many start script options from GAME\ModOptions\ section in start script, instead of just GAME\
+ - added EngineOptions.lua to springcontent.sdz, this contains the default engine options for backward compatibility
+ - GetModOptions unitsync call parses both EngineOptions.lua and ModOptions.lua, and returns combined list of options
+
 Random:
  - lots of fixes to CMake and dedicated server (already released)
 

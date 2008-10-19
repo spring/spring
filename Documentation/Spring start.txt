@@ -26,22 +26,7 @@
 	Mapname=;           //with .smf extension
 	Gametype=xtape.sd7; //the primary mod archive
 	Scriptname=Commanders;
-	StartMetal=1000;
-	StartEnergy=1000;
-	MaxUnits=500;       // per team
 	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
-	GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage
-	LimitDgun=0;        // limit dgun to fixed radius around startpos?
-	DiminishingMMs=0;   // diminish metal maker's metal production for every new one of them?
-	DisableMapDamage=0; // disable map craters?
-	GhostedBuildings=1; // ghost enemy buildings after losing los on them
-	NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
-	LuaGaia=1;          // Use LuaGaia?
-	LuaRules=1;         // Use LuaRules?
-	FixedAllies=1;      // Are ingame alliances allowed?
-
-	MaxSpeed=3;         // speed limits at game start
-	MinSpeed=0.3;
 
 	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
 	Savefile=save.ssf;  // if set this game is a continuation of a saved game
@@ -108,5 +93,22 @@
 		Unit1=corvp;
 		Limit1=50;      // >0 can be used for limiting, like build restrictions in TA
 		//...
+	}
+	[MODOPTIONS]
+	{
+		StartMetal=1000;
+		StartEnergy=1000;
+		MaxUnits=500;       // per team
+		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage
+		LimitDgun=0;        // limit dgun to fixed radius around startpos?
+		DiminishingMMs=0;   // diminish metal maker's metal production for every new one of them?
+		DisableMapDamage=0; // disable map craters?
+		GhostedBuildings=1; // ghost enemy buildings after losing los on them
+		NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
+		LuaGaia=1;          // Use LuaGaia?
+		LuaRules=1;         // Use LuaRules?
+		FixedAllies=1;      // Are ingame alliances allowed?
+		MaxSpeed=3;         // speed limits at game start
+		MinSpeed=0.3;
 	}
 }
