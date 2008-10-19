@@ -186,15 +186,15 @@ namespace terrain {
 				Vector3 tangent, binormal;
 				CalculateTangents (hm, x,y, tangent, binormal);
 				Vector3 normal = binormal.cross(tangent);
-				normal.Normalize ();
+				normal.ANormalize ();
 
 				if (vda & VRT_Normal)
 					*(v++) = normal;
 
 				if (vda & VRT_TangentSpaceMatrix)
 				{
-					tangent.Normalize ();
-					binormal.Normalize ();
+					tangent.ANormalize ();
+					binormal.ANormalize ();
 
 					// orthonormal matrix, so inverse=transpose
 					// Take the inverse of the tangent space -> world space transformation

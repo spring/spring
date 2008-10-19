@@ -564,7 +564,7 @@ namespace terrain {
 	void TerrainTexture::SetShaderParams (const Vector3& lightDir, const Vector3& eyePos)
 	{
 		wsLightDir = lightDir;
-		wsLightDir.Normalize ();
+		wsLightDir.ANormalize ();
 		wsEyePos = eyePos;
 	}
 

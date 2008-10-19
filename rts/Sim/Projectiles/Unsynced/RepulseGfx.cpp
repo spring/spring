@@ -68,12 +68,12 @@ void CRepulseGfx::Draw(void)
 		return;
 
 	float3 dir=repulsed->pos-owner->pos;
-	dir.Normalize();
+	dir.ANormalize();
 
 	pos=repulsed->pos-dir*10+repulsed->speed*gu->timeOffset;
 
 	float3 dir1=dir.cross(UpVector);
-	dir1.Normalize();
+	dir1.ANormalize();
 	float3 dir2=dir1.cross(dir);
 
 	inArray=true;

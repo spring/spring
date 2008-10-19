@@ -29,7 +29,7 @@ void CTWController::KeyMove(float3 move)
 {
 	float3 flatForward=camera->forward;
 	flatForward.y=0;
-	flatForward.Normalize();
+	flatForward.ANormalize();
 
 	move*=sqrt(move.z)*200;
 	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
@@ -43,7 +43,7 @@ void CTWController::MouseMove(float3 move)
 	move*=(1+keys[SDLK_LSHIFT]*3)*pixelsize;
 	float3 flatForward=camera->forward;
 	flatForward.y=0;
-	flatForward.Normalize();
+	flatForward.ANormalize();
 
 	pos+=-(flatForward*move.y-camera->right*move.x)*scrollSpeed;
 }
@@ -86,7 +86,7 @@ float3 CTWController::GetPos()
 	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
 	dir.y=(float)(sin(camera->rot.x));
 	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-	dir.Normalize();
+	dir.ANormalize();
 
 	float dist=-camera->rot.x*1500;
 
@@ -105,7 +105,7 @@ float3 CTWController::GetDir()
 	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
 	dir.y=(float)(sin(camera->rot.x));
 	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-	dir.Normalize();
+	dir.ANormalize();
 	return dir;
 }
 

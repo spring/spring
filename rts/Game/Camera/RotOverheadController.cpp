@@ -27,7 +27,7 @@ void CRotOverheadController::KeyMove(float3 move)
 	if(camera->forward.y<-0.9f)
 		flatForward+=camera->up;
 	flatForward.y=0;
-	flatForward.Normalize();
+	flatForward.ANormalize();
 
 	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
 }
@@ -86,7 +86,7 @@ float3 CRotOverheadController::GetDir()
 	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
 	dir.y=(float)(sin(camera->rot.x));
 	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-	dir.Normalize();
+	dir.ANormalize();
 	return dir;
 }
 

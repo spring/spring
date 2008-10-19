@@ -571,9 +571,9 @@ namespace terrain {
 				CalculateTangents(hm, x,y, tangent, binormal);
 
 				Vector3 normal = binormal.cross(tangent);
-				normal.Normalize();
-				binormal.Normalize ();
-				tangent.Normalize ();
+				normal.ANormalize();
+				binormal.ANormalize ();
+				tangent.ANormalize ();
 
 				glColor3f (1,1,0);
 				glVertex3fv(&origin[0]);

@@ -2306,7 +2306,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				if (!commands[tempInCommand].params.empty() &&
 				    pos.distance2D(pos2) > atof(commands[tempInCommand].params[0].c_str())) {
 					float3 dif=pos2-pos;
-					dif.Normalize();
+					dif.ANormalize();
 					pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
 				}
 
@@ -4027,7 +4027,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	ProcessFrontPositions(pos1, pos2);
 
 	float3 forward=(pos1-pos2).cross(UpVector);
-	forward.Normalize();
+	forward.ANormalize();
 	float3 side=forward.cross(UpVector);
 	if(pos1.distance2D(pos2)>maxSize){
 		pos2=pos1+side*maxSize;

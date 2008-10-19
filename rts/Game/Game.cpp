@@ -4346,8 +4346,8 @@ void CGame::DrawDirectControlHud(void)
 		}
 		if(w->targetType!=Target_None){
 			float3 pos=w->targetPos;
-			float3 v1=(pos-camera->pos).Normalize();
-			float3 v2=(v1.cross(UpVector)).Normalize();
+			float3 v1=(pos-camera->pos).ANormalize();
+			float3 v2=(v1.cross(UpVector)).ANormalize();
 			float3 v3=(v2.cross(v1)).Normalize();
 			float radius=10;
 			if(w->targetType==Target_Unit)
@@ -4362,9 +4362,9 @@ void CGame::DrawDirectControlHud(void)
 			if(!w->onlyForward){
 				float dist=std::min(w->owner->directControl->targetDist,w->range*0.9f);
 				pos=w->weaponPos+w->wantedDir*dist;
-				v1=(pos-camera->pos).Normalize();
-				v2=(v1.cross(UpVector)).Normalize();
-				v3=(v2.cross(v1)).Normalize();
+				v1=(pos-camera->pos).ANormalize();
+				v2=(v1.cross(UpVector)).ANormalize();
+				v3=(v2.cross(v1)).ANormalize();
 				radius=dist/100;
 
 				glBegin(GL_LINE_STRIP);
@@ -4384,7 +4384,7 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos+(v2*streflop::sin(PI*-0.25f)+v3*streflop::cos(PI*-0.25f))*radius);
 				glVertexf3(pos+(v2*streflop::sin(PI*-1.25f)+v3*streflop::cos(PI*-1.25f))*radius);
 			}
-			if((w->targetPos-camera->pos).Normalize().dot(camera->forward)<0.7f){
+			if((w->targetPos-camera->pos).ANormalize().dot(camera->forward)<0.7f){
 				glVertexf3(w->targetPos);
 				glVertexf3(camera->pos+camera->forward*100);
 			}

@@ -121,7 +121,7 @@ namespace terrain {
 				CalculateTangents(this, x,y,tangent,binormal);
 
 				Vector3 normal = binormal.cross(tangent);
-				normal.Normalize ();
+				normal.ANormalize ();
 
 				*(cnorm++) = (uchar)((normal.x * 0.5f + 0.5f) * 255);
 				*(cnorm++) = (uchar)((normal.y * 0.5f + 0.5f) * 255);
