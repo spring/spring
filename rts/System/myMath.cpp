@@ -32,8 +32,8 @@ public:
 			checksum = 33 * checksum + *(unsigned*)&headingToVectorTable[a].y;
 		}
 #ifdef STREFLOP_H
-/*		if (checksum != HEADING_CHECKSUM)
-			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);*/
+		if (checksum != HEADING_CHECKSUM)
+			handleerror(0, "invalid headingToVectorTable checksum", "Sync Error", 0);
 #endif
 	}
 };
