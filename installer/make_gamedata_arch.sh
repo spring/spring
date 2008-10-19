@@ -36,6 +36,7 @@ cd ..
 echo Updating springcontent.sdz
 cd springcontent/
 zip -qu ../../../game/base/springcontent.sdz modinfo.tdf
+zip -qu ../../../game/base/springcontent.sdz EngineOptions.lua
 zip -qu ../../../game/base/springcontent.sdz gamedata/*
 zip -qu ../../../game/base/springcontent.sdz gamedata/*/*
 zip -qu ../../../game/base/springcontent.sdz bitmaps/*

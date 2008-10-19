@@ -1334,9 +1334,6 @@ static void ParseOptions(const string& fileName,
                          const string& accessModes,
                          const string& mapName = "")
 {
-	options.clear();
-	optionsSet.clear();
-
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
 	const string configName = MapParser::GetMapConfigName(mapName);
@@ -1350,7 +1347,7 @@ static void ParseOptions(const string& fileName,
 	}
 
 	if (!luaParser.Execute()) {
-		printf("ParseOptions(%s) ERROR: %s\n",
+		logOutput.Print("ParseOptions(%s) ERROR: %s\n",
 		       fileName.c_str(), luaParser.GetErrorLog().c_str());
 		return;
 	}
@@ -1366,8 +1363,6 @@ static void ParseOptions(const string& fileName,
 			options.push_back(opt);
 		}
 	}
-
-	optionsSet.clear();
 
 	return;
 };
@@ -1401,7 +1396,12 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 	ScopedMapLoader mapLoader(name);
 
+	options.clear();
+	optionsSet.clear();
+
 	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
+
+	optionsSet.clear();
 
 	return (int)options.size();
 }
@@ -1409,7 +1409,16 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 DLL_EXPORT int __stdcall GetModOptionCount()
 {
+	options.clear();
+	optionsSet.clear();
+
+	// EngineOptions must be read first, so accidentally "overloading" engine
+	// options with mod options with identical names is not possible.
+	ParseOptions("EngineOptions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+
+	optionsSet.clear();
+
 	return (int)options.size();
 }
 

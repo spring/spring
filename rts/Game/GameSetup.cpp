@@ -397,31 +397,31 @@ bool CGameSetup::Init(const char* buf, int size)
 
 	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
-	luaGaiaStr  = file.SGetValueDef("1", "GAME\\LuaGaia");
+	luaGaiaStr  = file.SGetValueDef("1", "GAME\\ModOptions\\LuaGaia");
 	if (luaGaiaStr == "0")
 		useLuaGaia = false;
 	else
 		useLuaGaia = true;
-	luaRulesStr = file.SGetValueDef("1", "GAME\\LuaRules");
+	luaRulesStr = file.SGetValueDef("1", "GAME\\ModOptions\\LuaRules");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 
-	file.GetDef(gameMode,         "0", "GAME\\GameMode");
-	file.GetDef(noHelperAIs,      "0", "GAME\\NoHelperAIs");
-	file.GetDef(maxUnits,       "500", "GAME\\MaxUnits");
-	file.GetDef(limitDgun,        "0", "GAME\\LimitDgun");
-	file.GetDef(diminishingMMs,   "0", "GAME\\DiminishingMMs");
-	file.GetDef(disableMapDamage, "0", "GAME\\DisableMapDamage");
-	file.GetDef(ghostedBuildings, "1", "GAME\\GhostedBuildings");
-	file.GetDef(startMetal,    "1000", "GAME\\StartMetal");
-	file.GetDef(startEnergy,   "1000", "GAME\\StartEnergy");
+	file.GetDef(gameMode,         "0", "GAME\\ModOptions\\GameMode");
+	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
+	file.GetDef(maxUnits,       "500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(limitDgun,        "0", "GAME\\ModOptions\\LimitDgun");
+	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
+	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
+	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
+	file.GetDef(startMetal,    "1000", "GAME\\ModOptions\\StartMetal");
+	file.GetDef(startEnergy,   "1000", "GAME\\ModOptions\\StartEnergy");
 
-	file.GetDef(maxSpeed, "3.0", "GAME\\MaxSpeed");
-	file.GetDef(minSpeed, "0.3", "GAME\\MinSpeed");
+	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
+	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");
 
 	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
-	file.GetDef(fixedAllies, "1", "GAME\\FixedAllies");
+	file.GetDef(fixedAllies, "1", "GAME\\ModOptions\\FixedAllies");
 
 	// Read the map & mod options
 	if (file.SectionExist("GAME\\MapOptions")) {
