@@ -28,7 +28,9 @@
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
+#include "GlobalStuff.h"
 #include "LogOutput.h"
+#include "Game/Team.h"
 
 #include <string>
 #include <set>
@@ -67,7 +69,7 @@ std::string CAILibraryManager::extractFileName(const std::string& libFile, bool 
 	return libFile.substr(firstChar+1, lastChar - firstChar -1);
 }
 
-CAILibraryManager::CAILibraryManager() {
+CAILibraryManager::CAILibraryManager() : usedSkirmishAIInfos_initialized(false) {
 	//GetAllInfosFromLibraries();
 	GetAllInfosFromCache();
 }
@@ -469,6 +471,41 @@ const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetSkirmishAIInfo
 }
 const IAILibraryManager::T_groupAIInfos* CAILibraryManager::GetGroupAIInfos() const {
 	return &groupAIInfos;
+}
+
+const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetUsedSkirmishAIInfos() {
+	
+	if (!usedSkirmishAIInfos_initialized) {
+/*
+		std::vector<CGameSetup::TeamData>::const_iterator td;
+		for (td = gameSetup->teamStartingData.begin(); td != gameSetup->teamStartingData.end(); ++td) {
+*/
+		const CTeam* team = NULL;
+		for (unsigned int t = 0; t < (unsigned int)MAX_TEAMS; ++t) {
+			team = gs->Team(t);
+			if (team != NULL && team->isAI) {
+				IAILibraryManager::T_skirmishAIInfos::const_iterator aiInfo;
+/*
+				const std::string& t_sn = td->skirmishAIShortName;
+				const std::string& t_v = td->skirmishAIVersion;
+*/
+				const char * tmpStr = team->skirmishAISpecifier.ai.shortName;
+				const std::string& t_sn = tmpStr != NULL ? tmpStr : "";
+				tmpStr = team->skirmishAISpecifier.ai.version;
+				const std::string& t_v = tmpStr != NULL ? tmpStr : "";
+				for (aiInfo = skirmishAIInfos.begin(); aiInfo != skirmishAIInfos.end(); ++aiInfo) {
+					const std::string& ai_sn = aiInfo->second->GetShortName();
+					const std::string& ai_v = aiInfo->second->GetVersion();
+					// add this AI info if it is used in the current game
+					if (ai_sn == t_sn && (t_sn.empty() || ai_v == t_v)) {
+						usedSkirmishAIInfos[aiInfo->first] = aiInfo->second;
+					}
+				}
+			}
+        }
+	}
+	
+	return &usedSkirmishAIInfos;
 }
 
 const IAILibraryManager::T_dupInt* CAILibraryManager::GetDuplicateInterfaceInfos() const {

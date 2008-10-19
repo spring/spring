@@ -22,6 +22,8 @@
 extern "C" {
 #endif	// __cplusplus
 
+struct InfoItem;
+
 // paths/dirs stored in this struct are guaranteed
 // to come with no '/' or '\\' at the end.
 // they come like this:	/home/username/.spring
@@ -33,6 +35,20 @@ struct SStaticGlobalData {
 	/** The first entry is the writeable data-dir */
 	unsigned int numDataDirs;
 	const char** dataDirs;
+	// The following three members define the Skirmish AI libraries
+	// that will be used in the currently running game.
+	// This is used by AI Interface libs to prepare the environment.
+	// The Java AI Interface needs this info to prepare the classpath eg.
+	unsigned int numSkirmishAIs;
+	unsigned int* numsSkirmishAIInfo;
+	const struct InfoItem** skirmishAIInfos;
+	// The following three members define the Group AI libraries
+	// that are available.
+	// This is used by AI Interface libs to prepare the environment.
+	// The Java AI Interface needs this info to prepare the classpath eg.
+	unsigned int numGroupAIs;
+	unsigned int* numsGroupAIInfo;
+	const struct InfoItem** groupAIInfos;
 };
 
 // define the OS specific path separator

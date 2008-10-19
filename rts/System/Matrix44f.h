@@ -2,6 +2,7 @@
 #define MATRIX44F_H
 
 #include "float3.h"
+#include "Sync/Syncify.h"
 
 class CMatrix44f
 {

@@ -23,8 +23,10 @@
 #if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "System/GlobalStuff.h"			// for MAX_TEAMS
 #define MAX_GROUPS	10	// 0..9
-#include "System/Platform/FileSystem.h"	// for data directories
 #include "Game/GameVersion.h"			// for VERSION_STRING
+#include "System/Platform/FileSystem.h"	// for data directories
+#include "ExternalAI/IAILibraryManager.h"
+#include "IAILibraryManager.h"	// for AI info
 
 #include <string>
 
@@ -55,10 +57,39 @@ struct SStaticGlobalData* createStaticGlobalData() {
 	
 	// converting the data-dirs vector to a C strings array (char*[])
 	char** dataDirs = (char**) calloc(numDataDirs, sizeof(char*));
-	for (unsigned int i=0; i < numDataDirs; ++i) {
+	unsigned int i;
+	for (i=0; i < numDataDirs; ++i) {
 		std::string cleanPath = ensureNoPathSeparatorAtTail(dds.at(i));
 		dataDirs[i] = (char*) calloc(cleanPath.size()+1, sizeof(char));
 		strcpy(dataDirs[i], cleanPath.c_str());
+	}
+	
+	IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
+	
+	// fetch infos for the Skirmish AI libraries that will be used
+	// in the current game
+	const IAILibraryManager::T_skirmishAIInfos* sAIInfos = aiLibMan->GetUsedSkirmishAIInfos();
+	unsigned int numSkirmishAIs = sAIInfos->size();
+	unsigned int* numsSkirmishAIInfo = (unsigned int*) calloc(numSkirmishAIs, sizeof(unsigned int));
+	InfoItem** skirmishAIInfos = (InfoItem**) calloc(numSkirmishAIs, sizeof(InfoItem*));
+	IAILibraryManager::T_skirmishAIInfos::const_iterator sInfs;
+	for (i=0, sInfs=sAIInfos->begin(); sInfs != sAIInfos->end(); ++i, ++sInfs) {
+		numsSkirmishAIInfo[i] = sInfs->second->GetInfo()->size();
+		skirmishAIInfos[i] = (InfoItem*) calloc(numsSkirmishAIInfo[i], sizeof(InfoItem));
+		numsSkirmishAIInfo[i] = sInfs->second->GetInfoCReference(skirmishAIInfos[i], numsSkirmishAIInfo[i]);
+	}
+	
+	// fetch infos for the Group AI libraries that will be used
+	// in the current game
+	const IAILibraryManager::T_groupAIInfos* gAIInfos = aiLibMan->GetGroupAIInfos();
+	unsigned int numGroupAIs = gAIInfos->size();
+	unsigned int* numsGroupAIInfo = (unsigned int*) calloc(numGroupAIs, sizeof(unsigned int));
+	InfoItem** groupAIInfos = (InfoItem**) calloc(numGroupAIs, sizeof(InfoItem*));
+	IAILibraryManager::T_groupAIInfos::const_iterator gInfs;
+	for (i=0, gInfs=gAIInfos->begin(); gInfs != gAIInfos->end(); ++i, ++gInfs) {
+		numsGroupAIInfo[i] = gInfs->second->GetInfo()->size();
+		groupAIInfos[i] = (InfoItem*) calloc(numsGroupAIInfo[i], sizeof(InfoItem));
+		numsGroupAIInfo[i] = gInfs->second->GetInfoCReference(groupAIInfos[i], numsGroupAIInfo[i]);
 	}
 	
 	const SStaticGlobalData sgd = {
@@ -66,7 +97,15 @@ struct SStaticGlobalData* createStaticGlobalData() {
 		MAX_GROUPS,
 		VERSION_STRING,	// spring version string
 		numDataDirs,
-		(const char**) dataDirs};
+		(const char**) dataDirs,
+		numSkirmishAIs,
+		numsSkirmishAIInfo,
+		(const InfoItem**) skirmishAIInfos,
+		numGroupAIs,
+		numsGroupAIInfo,
+		(const InfoItem**) groupAIInfos
+	};
+	
 	SStaticGlobalData* staticGlobalData = (struct SStaticGlobalData*)
 			malloc(sizeof(struct SStaticGlobalData));
 	*staticGlobalData = sgd;
