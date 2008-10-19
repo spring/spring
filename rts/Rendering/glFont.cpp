@@ -57,7 +57,7 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 	this->width = width;
 	this->height = height;
 	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
-	memset(buffer, 0, 2*width*height);
+	memset(buffer, 0xFF00, width*height);
 	cur = buffer;
 	curX = curY = 0;
 	curHeight = 0;
