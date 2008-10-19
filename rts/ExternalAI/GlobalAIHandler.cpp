@@ -304,7 +304,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 			if(ais[attacked->team])
 				if(attacker){
 					float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
-					dir.Normalize();
+					dir.ANormalize();
 					ais[attacked->team]->ai->UnitDamaged(attacked->id,attacker->id,damage,dir);
 				} else {
 					ais[attacked->team]->ai->UnitDamaged(attacked->id,-1,damage,ZeroVector);
@@ -314,7 +314,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 				int a = attacker->team;
 				if(ais[attacker->team] && !gs->Ally(gs->AllyTeam(a),attacked->allyteam) && (ais[a]->cheatevents || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
 					float3 dir=attacker->pos-helper->GetUnitErrorPos(attacked,attacker->allyteam);
-					dir.Normalize();
+					dir.ANormalize();
 					ais[a]->ai->EnemyDamaged(attacked->id,attacker->id,damage,dir);
 				}
 			}

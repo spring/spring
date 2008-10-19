@@ -36,7 +36,7 @@ CFreeController::CFreeController()
   gndLock(false)
 {
 	dir = float3(0.0f, -2.0f, -1.0f);
-	dir.Normalize();
+	dir.ANormalize();
 	if (camera) {
 		const float hDist = sqrt((dir.x * dir.x) + (dir.z * dir.z));
 		camera->rot.y = atan2(dir.x, dir.z);
@@ -144,7 +144,7 @@ void CFreeController::Update()
 		}
 		else {
 			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
-			forwardNoY.Normalize();
+			forwardNoY.ANormalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
 			                    (UpVector      * vel.y) +
 			                    (camera->right * vel.z));
@@ -383,7 +383,7 @@ float3 CFreeController::GetDir()
 	dir.x = (float)(sin(camera->rot.y) * cos(camera->rot.x));
 	dir.z = (float)(cos(camera->rot.y) * cos(camera->rot.x));
 	dir.y = (float)(sin(camera->rot.x));
-	dir.Normalize();
+	dir.ANormalize();
 	return dir;
 }
 

@@ -164,12 +164,12 @@ void CAirScript::SetCamera(void)
 	float3 modPlanePos=u->pos-u->frontdir*25+u->speed*gu->timeOffset;
 	tcp+=(modPlanePos-tcp)*(1-pow(0.95f,deltaTime));
 	tcf+=(u->frontdir-tcf)*(1-pow(0.9f,deltaTime));
-	tcf.Normalize();
+	tcf.ANormalize();
 
 	camera->pos=tcp;
-	//camera->forward=((u->pos+u->speed*gu->timeOffset-camera->pos).Normalize()+u->frontdir).Normalize();
-	camera->forward=((u->pos+u->speed*gu->timeOffset-camera->pos).Normalize()+tcf.Normalize());
-	camera->forward.Normalize();
+	//camera->forward=((u->pos+u->speed*gu->timeOffset-camera->pos).Normalize()+u->frontdir).ANormalize();
+	camera->forward=((u->pos+u->speed*gu->timeOffset-camera->pos).ANormalize()+tcf.ANormalize());
+	camera->forward.ANormalize();
 
 	if(doRoll){
 		oldUp[gs->frameNum%32]=u->updir;

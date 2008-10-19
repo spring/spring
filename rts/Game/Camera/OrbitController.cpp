@@ -152,7 +152,7 @@ void COrbitController::Orbit()
 
 	cam->pos = cen + GetOrbitPos();
 	cam->pos.y = std::max(cam->pos.y, ground->GetHeight2(cam->pos.x, cam->pos.z));
-	cam->forward = (cen - cam->pos).Normalize();
+	cam->forward = (cen - cam->pos).ANormalize();
 	cam->up = YVEC;
 }
 
@@ -179,7 +179,7 @@ void COrbitController::Pan(int rdx, int rdy)
 
 	if (cen.y < cenGH) {
 		cen.y = cenGH;
-		cam->forward = (cen - cam->pos).Normalize();
+		cam->forward = (cen - cam->pos).ANormalize();
 
 		Init(cam->pos, cen);
 	}
@@ -237,7 +237,7 @@ void COrbitController::SetPos(const float3& newPos)
 
 float3 COrbitController::GetDir()
 {
-	return (cen - camera->pos).Normalize();
+	return (cen - camera->pos).ANormalize();
 }
 
 float3 COrbitController::GetOrbitPos() const

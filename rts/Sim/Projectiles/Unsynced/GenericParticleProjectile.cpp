@@ -60,7 +60,7 @@ void CGenericParticleProjectile::Draw()
 		float camDist=dif.Length();
 		dif/=camDist;
 		float3 dir1(dif.cross(speed));
-		dir1.Normalize();
+		dir1.ANormalize();
 		float3 dir2(dif.cross(dir1));
 
 		unsigned char color[4];

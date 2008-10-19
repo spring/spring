@@ -54,10 +54,10 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.aspect = gu->viewSizeX / (float)gu->viewSizeY;
 
 	tc.right = tc.front.cross(tc.up);
-	tc.right.Normalize();
+	tc.right.ANormalize();
 
 	tc.up=tc.right.cross(tc.front);
-	tc.up.Normalize();
+	tc.up.ANormalize();
 }
 
 void CSm3GroundDrawer::Update()

@@ -434,7 +434,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 				float ang=fti->fallPos*PI;
 				float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
 				float3 z(up.cross(float3(-1,0,0)));
-				z.Normalize();
+				z.ANormalize();
 				float3 x(up.cross(z));
 				CMatrix44f transMatrix(pos,x,up,z);
 
@@ -728,7 +728,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 				float ang=fti->fallPos*PI;
 				float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
 				float3 z(up.cross(float3(1,0,0)));
-				z.Normalize();
+				z.ANormalize();
 				float3 x(z.cross(up));
 				CMatrix44f transMatrix(pos,x,up,z);
 

@@ -42,7 +42,7 @@ float3 COverviewController::GetPos()
 
 float3 COverviewController::GetDir()
 {
-	return float3(0.0f, -1.0f, -0.001f).Normalize();
+	return float3(0.0f, -1.0f, -0.001f).ANormalize();
 }
 
 void COverviewController::SetPos(const float3& newPos)

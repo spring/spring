@@ -133,7 +133,7 @@ float3 COverheadController::GetPos()
 	}
 
 	pos.y = ground->GetHeight(pos.x,pos.z);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).Normalize();
+	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
 

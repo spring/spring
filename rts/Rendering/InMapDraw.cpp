@@ -249,7 +249,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			float camDist = dif.Length();
 			dif /= camDist;
 			float3 dir1(dif.cross(UpVector));
-			dir1.Normalize();
+			dir1.ANormalize();
 			float3 dir2(dif.cross(dir1));
 
 			unsigned char col[4];

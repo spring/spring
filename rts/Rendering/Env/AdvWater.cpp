@@ -168,7 +168,7 @@ void CAdvWater::Draw(bool useBlending)
 
 	float3 forward=camera->forward;
 	forward.y=0;
-	forward.Normalize();
+	forward.ANormalize();
 
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,0, forward.z,forward.x,0,0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,1, -forward.x,forward.z,0,0);
@@ -180,7 +180,7 @@ void CAdvWater::Draw(bool useBlending)
 		bool maxReached=false;
 		for(int y=0;y<numDivs;++y){
 			dir=base;
-			dir.Normalize();
+			dir.ANormalize();
 
 			if(dir.y>=maxY){
 				maxReached=true;
@@ -190,14 +190,14 @@ void CAdvWater::Draw(bool useBlending)
 			xbase=base;
 			for(int x=0;x<numDivs+1;++x){ //! CAUTION: loop count must match EnlargeArrays above
 				dir=xbase+dv;
-				dir.Normalize();
+				dir.ANormalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);
 				va->AddVertexQTC(zpos,x*(1.0f/numDivs),screenY-yInc,col);
 
 				dir=xbase;
-				dir.Normalize();
+				dir.ANormalize();
 				zpos=camera->pos+dir*(camera->pos.y/-dir.y);
 				zpos.y=sin(zpos.z*0.1f+gs->frameNum*0.06f)*0.06f+0.05f;
 				col[3]=(unsigned char)((0.8f+0.7f*(dir.y))*255);

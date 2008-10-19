@@ -34,7 +34,7 @@ void CGeoThermSmokeProjectile::Update()
 				float speedlen = speed.Length();
 				float3 right(d.z, 0.0f, -d.x);
 				speed = d.cross(right);
-				speed.Normalize();
+				speed.ANormalize();
 				speed *= speedlen;
 			}
 		}

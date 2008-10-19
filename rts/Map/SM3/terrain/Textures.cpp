@@ -267,7 +267,7 @@ namespace terrain {
 					Vector3 tangent, binormal;
 					CalculateTangents(heightmap, x,y,tangent,binormal);
 					Vector3 normal = tangent.cross(binormal);
-					normal.Normalize();
+					normal.ANormalize();
 					norm_y = normal.y;
 				}
 
@@ -333,7 +333,7 @@ namespace terrain {
 				if (sx*sx + sy*sy < 32*32) {
 					int sz = (int)sqrt(static_cast<float>(32 * 32 - sx*sx - sy*sy));
 					n = Vector3(sx,sy,sz);
-					n.Normalize ();
+					n.ANormalize ();
 				}
 
 				// compress it into a color

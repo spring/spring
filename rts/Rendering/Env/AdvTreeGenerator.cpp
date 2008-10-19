@@ -189,7 +189,7 @@ void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 		float angle=baseAngle+a*3.88f+fRand(0.5f);
 		float3 dir=orto1*sin(angle)+orto2*cos(angle);
 		dir.y=0.3f+fRand(0.4f);
-		dir.Normalize();
+		dir.ANormalize();
 		float3 start(0,(a+5)*height/(numBranch+5),0);
 		float length=(height*(0.4f+fRand(0.1f)))*sqrt(float(numBranch-a)/numBranch);
 		TrunkIterator(start,dir,length,length*0.05f,1);
@@ -198,7 +198,7 @@ void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 		float angle=a*3.88f+fRand(0.5f);
 		float3 dir=orto1*sin(angle)+orto2*cos(angle);
 		dir.y=0.8f;
-		dir.Normalize();
+		dir.ANormalize();
 		float3 start(0,height-0.3f,0);
 		float length=MAX_TREE_HEIGHT*0.1f;
 		TrunkIterator(start,dir,length,length*0.05f,0);
@@ -212,9 +212,9 @@ void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, 
 		orto1=dir.cross(UpVector);
 	else
 		orto1=dir.cross(float3(1,0,0));
-	orto1.Normalize();
+	orto1.ANormalize();
 	float3 orto2=dir.cross(orto1);
-	orto2.Normalize();
+	orto2.ANormalize();
 
 	DrawTrunk(start,start+dir*length,orto1,orto2,size);
 
@@ -230,7 +230,7 @@ void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, 
 		float angle=PI+float(a)*PI+fRand(0.3f);
 		float3 newbase=start+dir*length*(float(a+1)/(numTrunks+1));
 		float3 newDir=dir+orto1*cos(angle)*dirDif+orto2*sin(angle)*dirDif;
-		newDir.Normalize();
+		newDir.ANormalize();
 		float newLength=length*(float(numTrunks-a)/(numTrunks+1));
 		TrunkIterator(newbase,newDir,newLength,newLength*0.05f,depth-1);
 	}
@@ -256,7 +256,7 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 
 		float3 npos=pos;
 		npos.y=0;
-		npos.Normalize();
+		npos.ANormalize();
 		float col=0.5f+npos.dot(flatSun)*0.3f+fRand(0.1f);
 		va->AddVertexTN(pos,0.126f+tex+flipTex,0.98f,float3(0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
 		va->AddVertexTN(pos,0.249f+tex-flipTex,0.98f,float3(-0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
@@ -270,7 +270,7 @@ void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,fl
 
 	float3 npos=pos;
 	npos.y=0;
-	npos.Normalize();
+	npos.ANormalize();
 	float col=0.5f+npos.dot(flatSun)*0.3f+fRand(0.1f);
 	va->AddVertexTN(pos,0.126f+tex+flipTex,0.98f,float3(0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
 	va->AddVertexTN(pos,0.249f+tex-flipTex,0.98f,float3(-0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
@@ -622,7 +622,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 {
 	float3 dir=end-start;
 	float length=dir.Length();
-	dir.Normalize();
+	dir.ANormalize();
 	float3 orto=dir.cross(float3(0,0,1));
 
 	glBegin(GL_QUADS);
@@ -645,7 +645,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 	while(tipDist<length*(0.83f+fRand(0.15f))){
 		float3 bstart=start+dir*(length-tipDist);
 		float3 bdir=dir+orto*side*(1.0f+fRand(0.7f));
-		bdir.Normalize();
+		bdir.ANormalize();
 		float3 bend=bstart+bdir*tipDist*((6-tipDist)*(0.10f+fRand(0.05f)));
 		CreateGranTexBranch(bstart,bend);
 		side*=-1;
@@ -666,7 +666,7 @@ void CAdvTreeGenerator::PineTree(int numBranch, float height)
 		float angle=baseAngle+(a*0.618f+fRand(0.1f))*2*PI;
 		float3 dir(orto1*sin(angle)+orto2*cos(angle));
 		dir.y=(a-numBranch)*0.01f-fRand(0.2f)-0.2f;
-		dir.Normalize();
+		dir.ANormalize();
 		float size=sqrt((float)numBranch-a+5)*0.08f*MAX_TREE_HEIGHT;
 		DrawPineBranch(float3(0,h,0),dir,size);
 	}
@@ -711,7 +711,7 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	flatSun.y=0;
 
 	float3 orto1=dir.cross(UpVector);
-	orto1.Normalize();
+	orto1.ANormalize();
 	float3 orto2=dir.cross(orto1);
 
 	float tex=float(int(rand()*3.0f/(float)RAND_MAX))*0.125f;
