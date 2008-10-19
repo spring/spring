@@ -1,11 +1,37 @@
 Spring change log
 
 0.77b5
+Installer:
+ - check if common unitsync users are running, abort installation if any is found
+ - don't download and install RiverDale and SmallDivide when the user already has it
+
 Crashes:
+ - even more preventions of DIV0
+
+User Interface:
+ - whe watching a demo with a setup locally, overwrite maxspeed with 10
+ - fix mousehover detection for radar icons
+ - fixed performance of Lua fontHandler
+ - make the orbit-controller actually do something on win32
+ - make the orbit-controller speeds configurable
+ - rescale fonts on window resize so they don't look ugly
+ - fixed black border blending of fonts
 
 Engine:
  - new fbi tag: bankingAllowed - only affects hoverAttack=1 units; controls if the aircraft can bank.
  - fbi tag upright now affects gunships
+ - fix CAirMoveType using an uninitialized variable (maxSpeed)
+ - fix Aircraft fuel not working properly on units with multiple weapons
+ - fix SendLuaMsg
+ - improve heading table resolution, this makes huge units less jerky
+ - fix the gamespeed not going back up after it was slowed down
+ - when ArchiveCache has not been written yet, do not add archive dependencies that are already in the chain (was breaking demos)
+ - fix factories switching their yardmap to fully-blocked when a unit is present inside (so units don't getstuck inside)
+ - fixed map defined detailtex
+ - fix LUA Spring.GetTeamResources does not return "received" for one player on each team
+
+Random:
+ - lots of fixes to CMake and dedicated server (already released)
 
 
 0.77b4:

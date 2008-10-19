@@ -18,7 +18,6 @@ struct UnitDef;
 #include <vector>
 #include "Sim/Misc/DamageArray.h"
 #include <list>
-#include "MemPool.h"
 #include "Sim/Units/UnitDef.h"
 
 class CExplosionGenerator;
