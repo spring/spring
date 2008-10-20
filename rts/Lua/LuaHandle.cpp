@@ -266,28 +266,38 @@ void CLuaHandle::Shutdown()
 void CLuaHandle::GamePreload()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	lua_checkstack(L, 3);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("GamePreload");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
+	RunCallInTraceback(cmdStr, 0, 0, errfunc);
 	return;
 }
 
 void CLuaHandle::GameStart()
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	lua_checkstack(L, 3);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("GameStart");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
+	RunCallInTraceback(cmdStr, 0, 0, errfunc);
 	return;
 }
 
@@ -295,13 +305,18 @@ void CLuaHandle::GameOver()
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("GameOver");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	// call the routine
-	RunCallIn(cmdStr, 0, 0);
+	RunCallInTraceback(cmdStr, 0, 0, errfunc);
 	return;
 }
 
@@ -309,16 +324,21 @@ void CLuaHandle::GameOver()
 void CLuaHandle::TeamDied(int teamID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("TeamDied");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, teamID);
 
 	// call the routine
-	RunCallIn(cmdStr, 1, 0);
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 
@@ -326,16 +346,21 @@ void CLuaHandle::TeamDied(int teamID)
 void CLuaHandle::TeamChanged(int teamID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("TeamChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, teamID);
 
 	// call the routine
-	RunCallIn(cmdStr, 1, 0);
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 
@@ -343,16 +368,21 @@ void CLuaHandle::TeamChanged(int teamID)
 void CLuaHandle::PlayerChanged(int playerID)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("PlayerChanged");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
 	lua_pushnumber(L, playerID);
 
 	// call the routine
-	RunCallIn(cmdStr, 1, 0);
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 
@@ -747,9 +777,14 @@ void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 7);
+	lua_checkstack(L, 8);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("UnitLoaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -760,7 +795,7 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 	lua_pushnumber(L, transport->team);
 
 	// call the routine
-	RunCallIn(cmdStr, 5, 0);
+	RunCallInTraceback(cmdStr, 5, 0, errfunc);
 	return;
 }
 
@@ -768,9 +803,14 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 7);
+	lua_checkstack(L, 8);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("UnitUnloaded");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -781,7 +821,7 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 	lua_pushnumber(L, transport->team);
 
 	// call the routine
-	RunCallIn(cmdStr, 5, 0);
+	RunCallInTraceback(cmdStr, 5, 0, errfunc);
 	return;
 }
 
@@ -851,9 +891,14 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 5);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("FeatureCreated");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -861,7 +906,7 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	lua_pushnumber(L, feature->allyteam);
 
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+	RunCallInTraceback(cmdStr, 2, 0, errfunc);
 	return;
 }
 
@@ -869,9 +914,14 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 5);
+
+	int errfunc = SetupTraceback();
+
 	static const LuaHashString cmdStr("FeatureDestroyed");
 	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
 		return; // the call is not defined
 	}
 
@@ -879,7 +929,7 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 	lua_pushnumber(L, feature->allyteam);
 
 	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+	RunCallInTraceback(cmdStr, 2, 0, errfunc);
 	return;
 }
 
