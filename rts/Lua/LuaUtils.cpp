@@ -488,7 +488,6 @@ int LuaUtils::Echo(lua_State* L)
 		lua_call(L, 1, 1);
 		s = lua_tostring(L, -1);  // get result
 		if (s == NULL) {
-			logOutput.Print("Echo: tostring returned NULL");
 			return luaL_error(L, "`tostring' must return a string to `print'");
 		}
 		if (i > 1) {
