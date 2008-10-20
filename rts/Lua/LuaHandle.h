@@ -48,7 +48,7 @@ class CLuaHandle : public CEventClient
 		void CheckStack();
 		int GetCallInErrors() const { return callinErrors; }
 		void ResetCallinErrors() { callinErrors = 0; }
-		
+
 	public:
 		inline bool CanCtrlTeam(int team) {
 			if (ctrlTeam < 0) {
@@ -223,8 +223,12 @@ class CLuaHandle : public CEventClient
 		bool AddEntriesToTable(lua_State* L, const char* name,
 		                       bool (*entriesFunc)(lua_State*));
 
+		/// returns stack index of traceback function
+		int SetupTraceback();
+		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
 		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
 		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
+
 		void LosCallIn(const LuaHashString& hs, const CUnit* unit, int allyTeam);
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 		bool PushUnsyncedCallIn(const LuaHashString& hs);
@@ -242,6 +246,8 @@ class CLuaHandle : public CEventClient
 
 		bool fullCtrl;
 		bool fullRead;
+		bool printTracebacks;
+
 		int  ctrlTeam;
 		int  readTeam;
 		int  readAllyTeam;
