@@ -792,6 +792,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\GlobalConstants.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\GlobalSynced.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\GlobalSynced.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Player.cpp"
 				>
 			</File>
@@ -3652,11 +3664,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\GlobalStuff.cpp"
+				RelativePath="..\..\System\GlobalUnsynced.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\GlobalStuff.h"
+				RelativePath="..\..\System\GlobalUnsynced.h"
 				>
 			</File>
 			<File
@@ -3757,10 +3769,6 @@
 			</File>
 			<File
 				RelativePath="..\..\System\NetProtocol.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\nommgr.h"
 				>
 			</File>
 			<File
@@ -3945,6 +3953,10 @@
 			</File>
 			<File
 				RelativePath="..\..\System\UnsyncedRNG.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Vec2.h"
 				>
 			</File>
 			<Filter
