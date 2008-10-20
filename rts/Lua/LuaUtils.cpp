@@ -608,12 +608,10 @@ int LuaUtils::PushDebugTraceback(lua_State *L)
 {
 	lua_getglobal(L, DEBUG_TABLE);
 	if (!lua_istable(L, -1)) {
-		logOutput << "'" DEBUG_TABLE "' is not a global table";
 		return 0;
 	}
 	lua_getfield(L, -1, DEBUG_FUNC);
 	if (!lua_isfunction(L, -1)) {
-		logOutput << "'" DEBUG_FUNC "' is not a function in '" DEBUG_TABLE "'";
 		return 0;
 	}
 	lua_remove(L, -2);
