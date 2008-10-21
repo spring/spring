@@ -477,8 +477,6 @@ int LuaUtils::Echo(lua_State* L)
 	string msg = "";
 	const int args = lua_gettop(L); // number of arguments
 
-	logOutput.Print("echo called with %d args", args);
-
 	lua_getglobal(L, "tostring");
 
 	for (int i = 1; i <= args; i++) {
