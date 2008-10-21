@@ -618,12 +618,13 @@ void SpringApp::LoadFonts()
 	try {
 		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
 		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
-	} catch(content_error&) {
+	} catch (content_error&) {
 		// If the standard location fails, retry in fonts directory or vice versa.
 		if (fontFile.substr(0, 6) == "fonts/")
 			fontFile = fontFile.substr(6);
 		else
 			fontFile = "fonts/" + fontFile;
+
 		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
 		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
 	}
