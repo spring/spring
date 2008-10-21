@@ -165,7 +165,7 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 
 	int team = ai->cb->GetMyTeam();
 
-	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
+	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
 
 	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
@@ -236,7 +236,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	struct tm* now2 = localtime(&now1);
 
 	// timestamp logfile name
-	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (%d).log",
+	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
 
 	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
