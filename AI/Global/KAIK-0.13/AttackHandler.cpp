@@ -17,7 +17,7 @@ CR_BIND(CAttackHandler, (NULL));
 CR_REG_METADATA(CAttackHandler, (
 	CR_MEMBER(ai),
 
-	CR_MEMBER(units),
+	CR_MEMBER(attackUnits),
 	CR_MEMBER(stuckUnits),
 	CR_MEMBER(unarmedAirUnits),
 	CR_MEMBER(armedAirUnits),
@@ -81,14 +81,13 @@ void CAttackHandler::AddUnit(int unitID) {
 
 		// patrol orders need to be updated
 		airPatrolOrdersGiven = false;
-	}
-	else {
+	} else {
 		// the groupID of this "group" is 0, to separate them from other idle units
 		ai->MyUnits[unitID]->groupID = IDLE_GROUP_ID;
 		// this might be a new unit with the same id as an older dead unit
 		ai->MyUnits[unitID]->stuckCounter = 0;
 		// do some checking then essentially add it to defense group
-		units.push_back(unitID);
+		attackUnits.push_back(unitID);
 		// TODO: not that good
 		this->PlaceIdleUnit(unitID);
 	}
@@ -102,14 +101,20 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 	if (attackGroupID == IDLE_GROUP_ID) {
 		bool found_dead_unit_in_attackHandler = false;
 
-		for (list<int>::iterator it = units.begin(); it != units.end(); it++) {
+		for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 			if (*it == unitID) {
-				units.erase(it);
+				attackUnits.erase(it);
 				found_dead_unit_in_attackHandler = true;
 				break;
 			}
 		}
-		assert(found_dead_unit_in_attackHandler);
+
+		if (!found_dead_unit_in_attackHandler) {
+			// one of our (idle) attack units died but
+			// we somehow have lost track of it before
+			L("[CAttackHandler::UnitDestroyed(" << unitID << ")] idle attacker destroyed but already erased");
+			return;
+		}
 	}
 
 	else if (attackGroupID >= GROUND_GROUP_ID_START) {
@@ -961,7 +966,7 @@ void CAttackHandler::Update(int frameNr) {
 
 	// check if we have any new units, add them to a
 	// nearby defending group of less than 16 units
-	if (frameNr % 30 == 0 && units.size() > 0) {
+	if (frameNr % 30 == 0 && attackUnits.size() > 0) {
 		CAttackGroup* existingGroup = NULL;
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			if (it->Size() < 16 && it->defending && this->DistanceToBase(it->GetGroupPos()) < 300) {
@@ -973,14 +978,14 @@ void CAttackHandler::Update(int frameNr) {
 
 		if (existingGroup != NULL) {
 			// add all new units to found group
-			for (list<int>::iterator it = units.begin(); it != units.end(); it++) {
+			for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 				int unit = *it;
 				if (ai->cb->GetUnitDef(unit) != NULL) {
 					existingGroup->AddUnit(unit);
 				}
 			}
 
-			units.clear();
+			attackUnits.clear();
 		}
 		else {
 			// no suitable group found, make new defending one
@@ -988,14 +993,14 @@ void CAttackHandler::Update(int frameNr) {
 			CAttackGroup newGroup(ai, newGroupID);
 			newGroup.defending = true;
 
-			for (list<int>::iterator it = units.begin(); it != units.end(); it++) {
+			for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 				int unit = *it;
 				if (ai->cb->GetUnitDef(unit) != NULL) {
 					newGroup.AddUnit(unit);
 				}
 			}
 
-			units.clear();
+			attackUnits.clear();
 			attackGroups.push_back(newGroup);
 		}
 	}

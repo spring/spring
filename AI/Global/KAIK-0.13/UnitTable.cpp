@@ -79,6 +79,8 @@ CUnitTable::~CUnitTable() {
 
 
 int CUnitTable::BuildModSideMap() {
+	L("[CUnitTable::BuildModSideMap()]");
+
 	// get all sides and commanders
 	std::string commKey;	// eg. "SIDE4\\commander"
 	std::string commName;	// eg. "arm_commander"
@@ -86,12 +88,13 @@ int CUnitTable::BuildModSideMap() {
 	std::string sideName;	// eg. "Arm"
 	char sideNum[64] = {0};
 
+	// FIXME: can be a .lua script now
 	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
 
 	// look at SIDE0 through SIDE9
 	// (should be enough for any mod)
-	for (int i = 0; i < 10; i++) {
-		sprintf(sideNum, "%i", i);
+	for (int side = 0; side < 10; side++) {
+		sprintf(sideNum, "%i", side);
 
 		commKey = "SIDE" + std::string(sideNum) + "\\commander";
 		sideKey = "SIDE" + std::string(sideNum) + "\\name";
@@ -108,8 +111,12 @@ int CUnitTable::BuildModSideMap() {
 			StringToLowerInPlace(sideName);
 
 			sideNames.push_back(sideName);
-			modSideMap[sideName] = i;
-			numOfSides = i + 1;
+			modSideMap[sideName] = side;
+			numOfSides = side + 1;
+
+			L("\tside index: " << side << ", root unit: " << udef->name << ", side name: " << sideName << ", " << sideName << " ==> " << side);
+		} else {
+			L("\tside " << side << " not defined");
 		}
 	}
 
@@ -117,18 +124,24 @@ int CUnitTable::BuildModSideMap() {
 }
 
 int CUnitTable::ReadTeamSides() {
+	L("[CUnitTable::ReadTeamSides()]");
+
 	teamSides.resize(MAX_TEAMS, 0);
 	teamSides[0] = 0;	// team 0 defaults to side 0 (in GlobalAI startscript)
 	teamSides[1] = 1;	// team 1 defaults to side 1 (in GlobalAI startscript)
 
-	for (int i = 0; i < MAX_TEAMS; i++) {
-		const char* sideKey = ai->cb->GetTeamSide(i);
+	for (int team = 0; team < MAX_TEAMS; team++) {
+		const char* sideKey = ai->cb->GetTeamSide(team);
 
 		if (sideKey) {
 			// FIXME: Gaia-team side?
 			// team index was valid (and we are in a GameSetup-type
 			// game), override the default side index for this team
-			teamSides[i] = modSideMap[sideKey];
+			teamSides[team] = modSideMap[sideKey];
+
+			L("\tteam: " << team << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
+		} else {
+			L("\tno \"game\\team\\side\" value found for team " << team);
 		}
 	}
 
@@ -137,6 +150,8 @@ int CUnitTable::ReadTeamSides() {
 
 // called at the end of Init()
 void CUnitTable::ReadModConfig() {
+	L("[CUnitTable::ReadModConfig()]");
+
 	const char* modName = ai->cb->GetModName();
 	char configFileName[1024] = {0};
 	char logMsg[2048] = {0};
@@ -146,6 +161,8 @@ void CUnitTable::ReadModConfig() {
 	FILE* f = fopen(configFileName, "r");
 
 	if (f) {
+		L("\tparsing existing mod configuration file " << configFileName);
+
 		// read the mod's .cfg file
 		char str[1024];
 		char name[512];
@@ -166,13 +183,17 @@ void CUnitTable::ReadModConfig() {
 				utype->costMultiplier = costMult;
 				utype->techLevel = techLvl;
 
+				L("\t\tudef->id: " << udef->id << ", udef->name: " << udef->name << ", utype->category: " << utype->category << ", .cfg category: " << category);
+
 				// TODO: look for any possible side-effects that might arise
 				// from overriding categories like this, then enable overrides
-				// other than builder --> attacker
+				// other than builder --> attacker?
 				// FIXME: SEGV when unarmed CAT_BUILDER units masquerading as
 				// CAT_G_ATTACK'ers want to or are attacked
 				if (category >= 0 && category < LASTCATEGORY) {
 					if (category == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
+						L("\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)");
+
 						// maps unit categories to indices into all_lists
 						// FIXME: hackish, poorly maintainable, bad style
 						int catLstIdx[11] = {0, 5, 3, 4, 1, 8, 7, 0, 6, 2, 9};
@@ -211,6 +232,8 @@ void CUnitTable::ReadModConfig() {
 
 		sprintf(logMsg, "read mod configuration file %s", configFileName);
 	} else {
+		L("\tcreating new mod configuration file " << configFileName);
+
 		// write a new .cfg file with default values
 		f = fopen(configFileName, "w");
 		fprintf(f, "// unitName costMultiplier techLevel category\n");
@@ -222,6 +245,8 @@ void CUnitTable::ReadModConfig() {
 			utype->costMultiplier = 1.0f;
 			utype->techLevel = -1;
 			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel, utype->category);
+
+			L("\t\tname: " << (utype->def->name) << ", .cfg category: " << (utype->category));
 		}
 
 		sprintf(logMsg, "wrote mod configuration file %s", configFileName);
@@ -245,9 +270,14 @@ int CUnitTable::GetCategory(const UnitDef* unitdef) {
 }
 
 int CUnitTable::GetCategory(int unit) {
-	assert(ai->cb->GetUnitDef(unit) != NULL);
+	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
-	return (unitTypes[ai->cb->GetUnitDef(unit)->id].category);
+	if (udef != NULL) {
+		UnitType& utype = unitTypes[udef->id];
+		return (utype.category);
+	} else {
+		return -1;
+	}
 }
 
 
