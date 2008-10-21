@@ -32,7 +32,7 @@ local options =
     name   = 'Game end condition',
     desc   = 'Determines what condition triggers the defeat of a player',
     type   = 'list',
-    def    = 'normal',
+    def    = '0',
     items  = 
     {
       { 
