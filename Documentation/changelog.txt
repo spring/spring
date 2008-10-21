@@ -16,6 +16,7 @@ User Interface:
  - make the orbit-controller speeds configurable
  - rescale fonts on window resize so they don't look ugly
  - fixed black border blending of fonts
+ - ATI drivers lie about not supporting extensions required by shadows. we ignore that extension now
 
 Engine:
  - new fbi tag: bankingAllowed - only affects hoverAttack=1 units; controls if the aircraft can bank.
@@ -37,6 +38,7 @@ Unitsync / Lobby interface:
 
 Random:
  - lots of fixes to CMake and dedicated server (already released)
+ - minor KAIK stability fixes
 
 
 0.77b4:
