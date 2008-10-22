@@ -33,6 +33,7 @@
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
@@ -892,7 +893,7 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3D
 	fp->verts=NULL;
 
 	fp->rotAxis=gu->usRandVector();
-	fp->rotAxis.Normalize();
+	fp->rotAxis.ANormalize();
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
@@ -928,7 +929,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 
 	/* Duplicated with AddFlyingPiece. */
 	fp->rotAxis=gu->usRandVector();
-	fp->rotAxis.Normalize();
+	fp->rotAxis.ANormalize();
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 

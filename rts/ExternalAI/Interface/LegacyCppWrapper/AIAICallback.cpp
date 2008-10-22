@@ -1753,7 +1753,7 @@ void CAIAICallback::ReleasedSharedMemArea(char* name) {
 	SReleaseSharedMemAreaCommand cmd = {name}; sAICallback->handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
 }
 
-int CAIAICallback::CreateGroup(char* libraryName, unsigned aiNumber) {
+int CAIAICallback::CreateGroup(const char* libraryName, unsigned aiNumber) {
 		SCreateGroupCommand cmd = {libraryName, aiNumber}; sAICallback->handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_CREATE, &cmd); return cmd.ret_groupId;
 }
 

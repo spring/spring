@@ -25,6 +25,8 @@ class LuaUtils {
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);
 
+		static int PushDebugTraceback(lua_State *L);
+
 		// lower case all keys in the table, with recursion
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
@@ -61,7 +63,7 @@ class LuaUtils {
 		static int isfunction(lua_State* L);
 		static int isuserdata(lua_State* L);
 
-		// not implemented...		
+		// not implemented...
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);
 		static int ParseFloatArray(lua_State* L, int tableIndex,

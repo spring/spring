@@ -349,9 +349,9 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			float3 pos2=camera->pos+dir*dist;
 
 			float3 dir1=pos1-camera->pos;
-			dir1.Normalize();
+			dir1.ANormalize();
 			float3 dir2=pos2-camera->pos;
-			dir2.Normalize();
+			dir2.ANormalize();
 
 			float rl1=(dir1.dot(camera->right))/dir1.dot(camera->forward);
 			float ul1=(dir1.dot(camera->up))/dir1.dot(camera->forward);

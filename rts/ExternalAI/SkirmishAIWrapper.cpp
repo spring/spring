@@ -18,6 +18,7 @@
 #include "SkirmishAIWrapper.h"
 
 #include "StdAfx.h"
+#include "Game/GlobalSynced.h"
 #include "IGlobalAI.h"
 #include "SkirmishAI.h"
 #include "GlobalAICallback.h"

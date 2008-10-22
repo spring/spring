@@ -174,6 +174,7 @@ namespace fastmath {
 	}
 }
 
+using fastmath::PI;
 namespace math {
 	using fastmath::isqrt;
 	using fastmath::isqrt2;

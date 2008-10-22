@@ -7,7 +7,8 @@
 #include <boost/format.hpp>
 
 #include "LogOutput.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
+#include "GlobalSynced.h"
 #include "System/BaseNetProtocol.h"
 #include "System/NetProtocol.h"
 #include "SyncDebugger.h"
@@ -63,13 +64,6 @@ CSyncDebugger::CSyncDebugger():
 		disable_history(false), may_enable_history(false),
 		flop(0), waitingForBlockResponse(false)
 {
-	// Need to allocate those here instead of having them inlined in the class,
-	// because of #include dependency: MAX_PLAYERS is in GlobalStuff.h, which
-	// needs creg.h. But creg.h needs SyncedPrimitive.h, which needs
-	// SyncDebugger.h. Hence we can't use MAX_PLAYERS in SyncDebugger.h.  :-)
-	checksumResponses = new std::vector<unsigned> [MAX_PLAYERS];
-	remoteHistory     = new std::vector<unsigned> [MAX_PLAYERS];
-	remoteFlop = new Uint64 [MAX_PLAYERS];
 }
 
 
@@ -80,9 +74,6 @@ CSyncDebugger::~CSyncDebugger()
 {
 	delete[] history;
 	delete[] historybt;
-	delete[] checksumResponses;
-	delete[] remoteHistory;
-	delete[] remoteFlop;
 }
 
 

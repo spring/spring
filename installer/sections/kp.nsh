@@ -1,13 +1,15 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR\mods"
   inetc::get \
-             "http://installer.clan-sy.com/mods/Kernel_Panic.sd7" "$INSTDIR\mods\Kernel_Panic.sd7" \
-	     "http://installer.clan-sy.com/mods/Kernel_Panic_Evilless.sd7" "$INSTDIR\mods\Kernel_Panic_Evilless.sd7" \
+             "http://installer.clan-sy.com/mods/Kernel_Panic.sd7" "$INSTDIR\mods\Kernel_Panic_Installer_Version.sd7" \
+	     "http://installer.clan-sy.com/Kernel_Panic_Launcher.exe" "$INSTDIR\Kernel_Panic_Launcher.exe" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Direct_Memory_Access_0.5c_beta.sd7" "$INSTDIR\maps\Direct_Memory_Access_0.5c_beta.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Direct_Memory_Access_0.5e_beta.sd7" "$INSTDIR\maps\Direct_Memory_Access_0.5e_beta.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Major_Madness3.0.sd7" "$INSTDIR\maps\Major_Madness3.0.sd7" \
 	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Marble_Madness_Map.sd7" "$INSTDIR\maps\Marble_Madness_Map.sd7" \
-	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Speed_Balls_16_Way.sdz" "$INSTDIR\maps\Speed_Balls_16_Way.sdz" 
+	     "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Speed_Balls_16_Way.sdz" "$INSTDIR\maps\Speed_Balls_16_Way.sdz" \
+             "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/Spooler_Buffer_0.5_beta.sd7" "$INSTDIR\maps\Spooler_Buffer_0.5_beta.sd7" \
+             "http://installer.clan-sy.com/maps/modspecificmaps/kernel_panic/DigitalDivide_PT2.sd7" "$INSTDIR\maps\DigitalDivide_PT2.sd7"              
 
   SetOutPath "$INSTDIR\AI\NTai"
   inetc::get \

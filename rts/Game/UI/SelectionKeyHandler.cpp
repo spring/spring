@@ -522,7 +522,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			wantedCamDir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
 			wantedCamDir.y=(float)(sin(camera->rot.x));
 			wantedCamDir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
-			wantedCamDir.Normalize();
+			wantedCamDir.ANormalize();
 
 			camHandler->GetCurrentController().SetPos(sel->pos - wantedCamDir*800);
 		}

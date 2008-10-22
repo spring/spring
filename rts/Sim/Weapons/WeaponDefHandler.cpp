@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "WeaponDefHandler.h"
+#include "Game/GlobalConstants.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"

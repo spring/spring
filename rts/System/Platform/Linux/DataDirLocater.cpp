@@ -235,11 +235,10 @@ void DataDirLocater::LocateDataDirs()
 	if (env && *env)
 		AddDirs(SubstEnvVars(env));
 
-	// user defined (in spring config handler (Linux: ~/.spring, Windows: registry))
+	// user defined (in spring config handler (Linux: ~/.springrc, Windows: registry))
 	#if !defined WIN32 || !(defined BUILDING_AI || defined BUILDING_AI_INTERFACE)
 	std::string userDef = configHandler.GetString("SpringData", "");
-	if (!userDef.empty())
-	{
+	if (!userDef.empty()) {
 		AddDirs(SubstEnvVars(userDef));
 	}
 	#endif	/* !defined WIN32 || !(defined BUILDING_AI || defined BUILDING_AI_INTERFACE) */
@@ -249,7 +248,7 @@ void DataDirLocater::LocateDataDirs()
 	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
 	std::string curPath = currentDir;
 	AddDirs(std::string(currentDir));
-	
+
 	// my documents
 	TCHAR strPath[MAX_PATH];
 	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);

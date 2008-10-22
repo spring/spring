@@ -146,7 +146,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 				uchar* normal = hm->GetNormal (x,y);
 				Vector3 normv((2 * (int)normal[0] - 256)/255.0f, (2 * (int)normal[1] - 256)/255.0f, (2 * (int)normal[2] - 256)/255.0f);
 
-				wp.Normalize();
+				wp.ANormalize();
 				float dot = wp.dot(normv);
 				if(dot < 0.0f) dot = 0.0f;
 				if(dot > 1.0f) dot = 1.0f;

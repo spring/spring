@@ -26,6 +26,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "Sound.h"
 #include "mmgr.h"

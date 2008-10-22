@@ -56,7 +56,7 @@ class CAttackHandler {
 	private:
 		AIClasses* ai;
 
-		list<int> units;
+		list<int> attackUnits;
 		list< pair<int, float3> > stuckUnits;
 		// TODO: should be sets
 		list<int> unarmedAirUnits;

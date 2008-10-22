@@ -16,6 +16,7 @@
 
 #include "LuaInclude.h"
 
+#include "Game/GlobalSynced.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"

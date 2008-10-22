@@ -6,7 +6,9 @@
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 #include "SyncChecker.h"  // for CSyncedPrimitiveBase (if SYNCCHECK is defined)
-#include "SyncDebugger.h" // for CSyncedPrimitiveBase (if SYNCDEBUG is defined)
+#ifdef SYNCDEBUG
+	#include "SyncDebugger.h" // for CSyncedPrimitiveBase (if SYNCDEBUG is defined)
+#endif // SYNCDEBUG
 #include "SyncedPrimitiveBase.h"
 #include "Upcast.h"       // for UPCAST macro
 

@@ -17,6 +17,7 @@
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
 #include "Matrix44f.h"
+#include "System/GlobalUnsynced.h"
 
 #define Y_PART 10.0
 #define X_PART 10.0
@@ -44,7 +45,7 @@ CAdvSky::CAdvSky()
 	sundir2.y=0;
 	if(sundir2.Length()==0)
 		sundir2.x=1;
-	sundir2.Normalize();
+	sundir2.ANormalize();
 	sundir1=sundir2.cross(UpVector);
 
 	modSunDir.y=mapInfo->light.sunDir.y;
@@ -659,7 +660,7 @@ void CAdvSky::InitSun()
 	delete [] mem;
 
 	float3 ldir=modSunDir.cross(UpVector);
-	ldir.Normalize();
+	ldir.ANormalize();
 	float3 udir=modSunDir.cross(ldir);
 
 	sunFlareList=glGenLists(1);
@@ -812,7 +813,7 @@ float3 CAdvSky::GetDirFromTexCoord(float x, float y)
 	float fy=asin(hdist/400);
 	dir.y=(cos(fy)-domeheight)*400;
 
-	dir.Normalize();
+	dir.ANormalize();
 
 	return dir;
 }

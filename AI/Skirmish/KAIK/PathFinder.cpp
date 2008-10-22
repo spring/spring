@@ -72,7 +72,6 @@ void CPathFinder::Init() {
 	}
 
 	// get all the different movetypes
-	// L("Getting Movearrays");
 	vector<int> moveslopes;
 	vector<int> maxwaterdepths;
 	vector<int>	minwaterdepths;
@@ -81,26 +80,23 @@ void CPathFinder::Init() {
 	string Valuestring = "0";
 	char k[50];
 
-	// L("Loading sidedata");
+	// FIXME: can be a .lua script now
 	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
 
-	// L("Starting Loop");
 	while(Valuestring != errorstring) {
-		// L("Run Number: " << NumOfMoveTypes);
 		sprintf(k, "%i", NumOfMoveTypes);
 		ai->parser->GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
-		// L("Movetype: " << Valuestring);
 
 		if (Valuestring != errorstring) {
 			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxWaterDepth"));
 			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
-			// L("Max water depth: " << Valuestring);
+
 			ai->parser->GetDef(Valuestring, string("-10000"), string(sectionstring + k + "\\MinWaterDepth"));
 			minwaterdepths.push_back(atoi(Valuestring.c_str()));
-			// L("minwaterdepths: " << Valuestring);
+
 			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxSlope"));
 			moveslopes.push_back(atoi(Valuestring.c_str()));
-			// L("moveslopes: " << Valuestring);
+
 			NumOfMoveTypes++;
 		}
 	}
@@ -124,7 +120,6 @@ void CPathFinder::Init() {
 			if (SlopeMap[i] > moveslopes[m] || HeightMap[i] <= -maxwaterdepths[m] || HeightMap[i] >= -minwaterdepths[m]) {
 				MoveArrays[m][i] = false;
 				TestMoveArray[i] = true;
-				// L("false");
 			}
 			else {
 				MoveArrays[m][i] = true;
@@ -242,7 +237,6 @@ void CPathFinder::CreateDefenseMatrix() {
 
 void CPathFinder::PrintData(string s) {
 	s = s;
-	// L(s);
 }
 
 void CPathFinder::ClearPath() {
@@ -275,7 +269,6 @@ float3 CPathFinder::Node2Pos(void* node) {
 }
 
 void* CPathFinder::Pos2Node(float3 pos) {
-	// L("pos.x = " << pos.x << " pos.z= " << pos.z << " node: " << (pos.z / (8 * THREATRES)) * PathMapXSize +  (pos.x / (8 * THREATRES)));
 	return ((void*) (int(pos.z / 8 / THREATRES) * PathMapXSize + int((pos.x / 8 / THREATRES))));
 }
 
@@ -326,7 +319,6 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 	pair<int, int>* offsets;
 
 	{
-		// L("radius: " << radius);
 		int DoubleRadius = radius * 2;
 		// used to speed up loops so no recalculation needed
 		int SquareRadius = radius * radius;
@@ -346,7 +338,6 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 		index++;
 
 		for (int a = 1; a < radius + 1; a++) {
-			// L("a: " << a);
 			int endPos = xend[a];
 			int startPos = xend[a - 1];
 
@@ -387,7 +378,6 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 	for (unsigned i = 0; i < possibleTargets->size(); i++) {
 		float3 f = (*possibleTargets)[i];
 		int x, y;
-		// L("Added: x: " << f.x << ", z: " << f.z);
 		// TODO: make the circle here
 
 		ai->math->F3MapBound(&f);

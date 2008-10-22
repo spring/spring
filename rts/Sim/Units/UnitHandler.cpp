@@ -27,6 +27,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/Unit.h"
+#include "System/GlobalUnsynced.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"

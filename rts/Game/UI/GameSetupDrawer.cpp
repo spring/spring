@@ -16,6 +16,7 @@
 #include "../Player.h"
 #include "../Team.h"
 #include "../GameSetup.h"
+#include "Game/GlobalSynced.h"
 #include "StartPosSelecter.h"
 #include "Rendering/glFont.h"
 #include "System/EventHandler.h"

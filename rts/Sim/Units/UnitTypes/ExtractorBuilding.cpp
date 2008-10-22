@@ -62,9 +62,8 @@ void CExtractorBuilding::PostLoad()
 void CExtractorBuilding::ResetExtraction()
 {
 	// undo the extraction-area
-	for(std::list<MetalSquareOfControl*>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
-		readmap->metalMap->removeExtraction((*si)->x, (*si)->z, (*si)->extractionDepth);
-		delete *si;
+	for(std::vector<MetalSquareOfControl>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
+		readmap->metalMap->RemoveExtraction(si->x, si->z, si->extractionDepth);
 	}
 
 	metalAreaOfControl.clear();
@@ -154,6 +153,8 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	int zBegin = std::max(0,                (int) ((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
 	int zEnd   = std::min(gs->mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
 
+	metalAreaOfControl.reserve((xEnd - xBegin + 1) * (zEnd - zBegin + 1));
+
 	// go through the whole (x, z)-square
 	for (int x = xBegin; x <= xEnd; x++) {
 		for (int z = zBegin; z <= zEnd; z++) {
@@ -163,13 +164,13 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 			const float sqrCenterDistance = msqrPos.distance2D(this->pos);
 
 			if (unitDef->extractSquare || sqrCenterDistance < extractionRange) {
-				MetalSquareOfControl* msqr = SAFE_NEW MetalSquareOfControl;
-				msqr->x = x;
-				msqr->z = z;
+				MetalSquareOfControl msqr;
+				msqr.x = x;
+				msqr.z = z;
 				// extraction is done in a cylinder of height <depth>
-				msqr->extractionDepth = readmap->metalMap->requestExtraction(x, z, depth);
+				msqr.extractionDepth = readmap->metalMap->RequestExtraction(x, z, depth);
 				metalAreaOfControl.push_back(msqr);
-				metalExtract += msqr->extractionDepth * readmap->metalMap->getMetalAmount(msqr->x, msqr->z);
+				metalExtract += msqr.extractionDepth * readmap->metalMap->GetMetalAmount(msqr.x, msqr.z);
 			}
 		}
 	}
@@ -206,13 +207,13 @@ void CExtractorBuilding::RemoveNeighbour(CExtractorBuilding* neighboor)
 void CExtractorBuilding::ReCalculateMetalExtraction()
 {
 	metalExtract = 0;
-	for (std::list<MetalSquareOfControl*>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
-		MetalSquareOfControl* msqr = *si;
-		readmap->metalMap->removeExtraction(msqr->x, msqr->z, msqr->extractionDepth);
+	for (std::vector<MetalSquareOfControl>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
+		MetalSquareOfControl& msqr = *si;
+		readmap->metalMap->RemoveExtraction(msqr.x, msqr.z, msqr.extractionDepth);
 
 		// extraction is done in a cylinder
-		msqr->extractionDepth = readmap->metalMap->requestExtraction(msqr->x, msqr->z, extractionDepth);
-		metalExtract += msqr->extractionDepth * readmap->metalMap->getMetalAmount(msqr->x, msqr->z);
+		msqr.extractionDepth = readmap->metalMap->RequestExtraction(msqr.x, msqr.z, extractionDepth);
+		metalExtract += msqr.extractionDepth * readmap->metalMap->GetMetalAmount(msqr.x, msqr.z);
 	}
 
 	// set the new rotation-speed

@@ -13,6 +13,7 @@
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h"
 
 #include "LogOutput.h"
 

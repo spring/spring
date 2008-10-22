@@ -1,11 +1,44 @@
 Spring change log
 
 0.77b5
+Installer:
+ - check if common unitsync users are running, abort installation if any is found
+ - don't download and install RiverDale and SmallDivide when the user already has it
+
 Crashes:
+ - even more preventions of DIV0
+
+User Interface:
+ - whe watching a demo with a setup locally, overwrite maxspeed with 10
+ - fix mousehover detection for radar icons
+ - fixed performance of Lua fontHandler
+ - make the orbit-controller actually do something on win32
+ - make the orbit-controller speeds configurable
+ - rescale fonts on window resize so they don't look ugly
+ - fixed black border blending of fonts
+ - ATI drivers lie about not supporting extensions required by shadows. we ignore that extension now
 
 Engine:
  - new fbi tag: bankingAllowed - only affects hoverAttack=1 units; controls if the aircraft can bank.
  - fbi tag upright now affects gunships
+ - fix CAirMoveType using an uninitialized variable (maxSpeed)
+ - fix Aircraft fuel not working properly on units with multiple weapons
+ - fix SendLuaMsg
+ - improve heading table resolution, this makes huge units less jerky
+ - fix the gamespeed not going back up after it was slowed down
+ - when ArchiveCache has not been written yet, do not add archive dependencies that are already in the chain (was breaking demos)
+ - fix factories switching their yardmap to fully-blocked when a unit is present inside (so units don't getstuck inside)
+ - fixed map defined detailtex
+ - fix LUA Spring.GetTeamResources does not return "received" for one player on each team
+
+Unitsync / Lobby interface:
+ - engine now loads many start script options from GAME\ModOptions\ section in start script, instead of just GAME\
+ - added EngineOptions.lua to springcontent.sdz, this contains the default engine options for backward compatibility
+ - GetModOptions unitsync call parses both EngineOptions.lua and ModOptions.lua, and returns combined list of options
+
+Random:
+ - lots of fixes to CMake and dedicated server (already released)
+ - minor KAIK stability fixes
 
 
 0.77b4:
@@ -55,7 +88,7 @@ User Interface:
  - Added /allmapmarks [0|1]
  - Added /forcestart command
  - Added /ally teamID [0|1] (Ingame alliances)
- - Adde /commands (shows all registered commands in the console)
+ - Added /commands (shows all registered commands in the console)
  - whisper private messages to any other player ingame (excluding spectators) by typing "/w Playername Your secret message"
  - Added new camera controller: SmoothCamera
    behaves like overview controller, but feels much smoother
@@ -175,6 +208,7 @@ Units & Weapons:
  - Made MeleeWeapon obey impulseFactor.
 
 Maps:
+ - Maps have their own resource_map.lua/resource_map.tdf now.
  - converted map config scripts to lua format (LuaParser / MapParser)
    - MapOptions.lua is now handed the 'Map' table information as well
      (allows one to write a generic MapOptions.lua file that accesses

@@ -12,6 +12,7 @@
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
@@ -56,7 +57,7 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 	this->width = width;
 	this->height = height;
 	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
-	memset(buffer, 0, 2*width*height);
+	memset(buffer, 0xFF00, width*height);
 	cur = buffer;
 	curX = curY = 0;
 	curHeight = 0;
@@ -114,6 +115,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
 	if (GLEW_EXT_texture_edge_clamp) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -121,12 +123,17 @@ GLuint CFontTextureRenderer::CreateTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
+
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA,
 		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
+
 	delete [] buffer;
 	buffer = 0;
-	if (glGetError() != GL_NO_ERROR)
+
+	int glError = glGetError();
+	if (glError != GL_NO_ERROR && glError != GL_INVALID_ENUM) {
 		throw std::runtime_error("Could not allocate font texture.");
+	}
 	return tex;
 }
 
@@ -233,18 +240,25 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 
 	outline = false;
 	color = outlineColor = 0;
+
+	defaultColor[0] = 1.0f;
+	defaultColor[1] = 1.0f;
+	defaultColor[2] = 1.0f;
+	defaultColor[3] = 1.0f;
 }
 
 
-CglFont *CglFont::TryConstructFont(std::string fontFile, int start, int end, float size)
+CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, float size)
 {
-	CglFont *newFont = 0;
+	CglFont* newFont = 0;
 	int texWidth = 128, texHeight = 128;
+
 	while (true) {
 		try {
+			// warning: this resets color* and outlineColor* to 0
 			newFont = SAFE_NEW CglFont(start, end, fontFile.c_str(), size, texWidth, texHeight);
 			return newFont;
-		} catch(texture_size_exception&) {
+		} catch (texture_size_exception&) {
 			// texture size too small; make higher or wider
 			if (texHeight <= texWidth)
 				texHeight *= 2;
@@ -317,22 +331,23 @@ float CglFont::CalcTextHeight(const char *text) const
 }
 
 
-void CglFont::Outline(bool enable, const float *color, const float *outlineColor)
+void CglFont::Outline(bool enable, const float* col, const float* outlineCol)
 {
 	this->outline = enable;
 	if (enable) {
-		if (color) {		// if color is null, we keep the old settings (which should better not be null)
-			this->color = color;
-			this->outlineColor = outlineColor ? outlineColor : ChooseOutlineColor(color);
+		if (col) {
+			// if color is null, we keep the old settings (which should better not be null)
+			this->color = col;
+			this->outlineColor = outlineCol? outlineCol: ChooseOutlineColor(col);
 		}
 	}
 }
 
-void CglFont::OutlineS(bool enable, const float *outlineColor)
+void CglFont::OutlineS(bool enable, const float* outlineCol)
 {
 	this->outline = enable;
 	if (enable) {;
-		this->outlineColor = outlineColor ? outlineColor : ChooseOutlineColor(color);
+		this->outlineColor = outlineCol? outlineCol: ChooseOutlineColor(color);
 	}
 }
 
@@ -393,6 +408,9 @@ float CglFont::RenderStringOutlined(float x, float y, float s, const unsigned ch
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	if (       color == 0x0) {        color = &defaultColor[0]; }
+	if (outlineColor == 0x0) { outlineColor = &defaultColor[0]; }
 
 	glBegin(GL_QUADS);
 	for (int i = 0; i < strlen((const char*)text); i++) {
@@ -559,33 +577,39 @@ void CglFont::glPrintRight (float x, float y, float s, const char *fmt, ...)
 
 void CglFont::glPrintColorAt(GLfloat x, GLfloat y, float s, const char *str)
 {
-	//TODO both glColor and float* color is set, make RenderString respect the float *color
-	const float *oldcolor = color;
-	float newcolor[4] = {1.0, 1.0, 1.0, 1.0};
-	color = const_cast<const float*>(newcolor);
+	// TODO both glColor and float* color set, make RenderString respect the float *color
+	const float* oldColor = color;
+	float newColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+	color = const_cast<const float*>(newColor);
 	glColor4fv(color);
+
 	size_t lf;
-	string temp=str;
-	while((lf=temp.find("\xff"))!=string::npos) {
-		if (outline)
-		{
-			x = RenderStringOutlined(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
+	string temp = str;
+
+	while ((lf = temp.find("\xff")) != string::npos) {
+		if (outline) {
+			x = RenderStringOutlined(x, y, s, (const unsigned char*) temp.substr(0, lf).c_str());
 			outline = true; //HACK RenderStringOutlined resets outline
+		} else {
+			x = RenderString(x, y, s, (const unsigned char*) temp.substr(0, lf).c_str());
 		}
-		else
-			x = RenderString(x, y, s, (const unsigned char*)temp.substr(0, lf).c_str());
-		temp=temp.substr(lf, string::npos);
-		newcolor[0] = ((unsigned char)temp[1])/255.0f;
-		newcolor[1] = ((unsigned char)temp[2])/255.0f;
-		newcolor[2] = ((unsigned char)temp[3])/255.0f;
+
+		temp = temp.substr(lf, string::npos);
+		newColor[0] = ((unsigned char) temp[1]) / 255.0f;
+		newColor[1] = ((unsigned char) temp[2]) / 255.0f;
+		newColor[2] = ((unsigned char) temp[3]) / 255.0f;
 		glColor4fv(color);
-		temp=temp.substr(4, string::npos);
+		temp = temp.substr(4, string::npos);
 	}
-	if (outline)
-		RenderStringOutlined(x, y, s, (const unsigned char*)temp.c_str());
-	else
-		RenderString(x, y, s, (const unsigned char*)temp.c_str());
-	color = oldcolor;
+
+	if (outline) {
+		RenderStringOutlined(x, y, s, (const unsigned char*) temp.c_str());
+	} else {
+		RenderString(x, y, s, (const unsigned char*) temp.c_str());
+	}
+
+	color = oldColor;
 }
 
 void CglFont::glFormatAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)

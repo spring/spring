@@ -9,7 +9,7 @@
 #include "NamedTextures.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;

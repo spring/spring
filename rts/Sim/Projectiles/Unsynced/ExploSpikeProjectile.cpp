@@ -5,7 +5,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, );
 
@@ -66,9 +66,9 @@ void CExploSpikeProjectile::Draw(void)
 	inArray=true;
 
 	float3 dif(pos-camera->pos2);
-	dif.Normalize();
+	dif.ANormalize();
 	float3 dir2(dif.cross(dir));
-	dir2.Normalize();
+	dir2.ANormalize();
 
 	unsigned char col[4];
 	float a=std::max(0.f,alpha-alphaDecay*gu->timeOffset)*255;

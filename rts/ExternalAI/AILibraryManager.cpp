@@ -28,7 +28,7 @@
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 #include "LogOutput.h"
 #include "Game/Team.h"
 

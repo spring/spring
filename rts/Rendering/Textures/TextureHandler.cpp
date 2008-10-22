@@ -13,6 +13,7 @@
 #include "TextureHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"

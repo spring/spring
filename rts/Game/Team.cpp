@@ -5,10 +5,13 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Messages.h"
 #include "Team.h"
+
+#include "Messages.h"
+#include "GlobalSynced.h"
 #include "LogOutput.h"
 #include "Player.h"
+#include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
@@ -16,6 +19,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
@@ -284,13 +288,10 @@ void CTeam::StartposMessage(const float3& pos)
 	startPos = pos;
 }
 
-void CTeam::SlowUpdate()
+/** This has to be called for every team before SlowUpdates start,
+	otherwise values get overwritten. */
+void CTeam::ResetFrameVariables()
 {
-	currentStats.metalProduced  += metalIncome;
-	currentStats.energyProduced += energyIncome;
-	currentStats.metalUsed  += metalUpkeep + metalExpense;
-	currentStats.energyUsed += energyUpkeep + energyExpense;
-
 	prevMetalPull     = metalPull;
 	prevMetalIncome   = metalIncome;
 	prevMetalExpense  = metalExpense;
@@ -313,6 +314,14 @@ void CTeam::SlowUpdate()
 	energySent = 0;
 	metalReceived = 0;
 	energyReceived = 0;
+}
+
+void CTeam::SlowUpdate()
+{
+	currentStats.metalProduced  += metalIncome;
+	currentStats.energyProduced += energyIncome;
+	currentStats.metalUsed  += metalUpkeep + metalExpense;
+	currentStats.energyUsed += energyUpkeep + energyExpense;
 
 	float eShare = 0.0f, mShare = 0.0f;
 	for (int a = 0; a < gs->activeTeams; ++a) {

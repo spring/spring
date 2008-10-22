@@ -58,16 +58,18 @@
 // also, they shouldn't get in the way of mmgr
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
-#include "GlobalStuff.h"
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h"
 #if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Game/GlobalSynced.h"
+#include "Game/GlobalConstants.h"
 #include "Game/Camera.h"
 #endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 #endif // USE_PRECOMPILED_HEADER
 
-#endif	/* __cplusplus */
+#endif	// __cplusplus
 
 
 #endif // __STD_AFX_H__

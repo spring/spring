@@ -11,6 +11,7 @@
 #define FILESYSTEM_H
 
 #include <vector>
+#include <string>
 
 // winapi redifines this which breaks things
 #if defined(CreateDirectory)

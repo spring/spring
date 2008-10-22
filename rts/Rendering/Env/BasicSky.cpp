@@ -18,6 +18,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "Matrix44f.h"
 #include "LogOutput.h"
 
@@ -47,7 +48,7 @@ CBasicSky::CBasicSky()
 	sundir2.y=0;
 	if(sundir2.Length()==0)
 		sundir2.x=1;
-	sundir2.Normalize();
+	sundir2.ANormalize();
 	sundir1=sundir2.cross(UpVector);
 
 	modSunDir.y=mapInfo->light.sunDir.y;
@@ -139,7 +140,7 @@ CBasicSky::CBasicSky()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,sunTex);
 	float3 sundir(0,0.5f,1);
-	sundir.Normalize();
+	sundir.ANormalize();
 
 	float3 ldir=sundir.cross(UpVector);
 	float3 udir=sundir.cross(ldir);
@@ -767,7 +768,7 @@ float3 CBasicSky::GetDirFromTexCoord(float x, float y)
 	float fy=asin(hdist/400);
 	dir.y=(cos(fy)-domeheight)*400;
 
-	dir.Normalize();
+	dir.ANormalize();
 
 	return dir;
 }

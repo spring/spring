@@ -18,6 +18,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

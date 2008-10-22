@@ -13,7 +13,8 @@
 #include "SelectedUnits.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "GlobalStuff.h"
+#include "GlobalSynced.h"
+#include "GlobalUnsynced.h"
 #include "Player.h"
 #include "WaitCommandsAI.h"
 #include "Map/Ground.h"
@@ -37,28 +38,6 @@ CSelectedUnitsAI::CSelectedUnitsAI()
 	columnDist = 64;
 	lineDist = 64;
 }
-
-/*
-Group-AI.
-Processing commands given to selected group.
-*/
-
-
-/*
-void CSelectedUnitsAI::AddUnit(int unit)
-{
-	myUnits.insert(unit);
-	unitsChanged=true;
-	return true;
-}
-
-
-void CSelectedUnitsAI::RemoveUnit(int unit)
-{
-	myUnits.erase(unit);
-	unitsChanged=true;
-}
-*/
 
 
 inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
@@ -185,7 +164,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		float3 frontdir = pos - centerCoor;
 		frontdir.y = 0.0f;
-		frontdir.Normalize();
+		frontdir.ANormalize();
 		const float3 sideDir = frontdir.cross(UpVector);
 
 		// calculate so that the units form in an aproximate square
@@ -348,7 +327,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	sideDir.y=0;
 	float3 sd = sideDir;
 	sd.y=frontLength/2;
-	sideDir.Normalize();
+	sideDir.ANormalize();
 	frontDir=sideDir.cross(float3(0,1,0));
 
 	numColumns=(int)(frontLength/columnDist);

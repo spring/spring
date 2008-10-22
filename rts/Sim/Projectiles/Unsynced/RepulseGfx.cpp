@@ -6,6 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL,NULL,0,float3(0,0,0)));
 
@@ -67,12 +68,12 @@ void CRepulseGfx::Draw(void)
 		return;
 
 	float3 dir=repulsed->pos-owner->pos;
-	dir.Normalize();
+	dir.ANormalize();
 
 	pos=repulsed->pos-dir*10+repulsed->speed*gu->timeOffset;
 
 	float3 dir1=dir.cross(UpVector);
-	dir1.Normalize();
+	dir1.ANormalize();
 	float3 dir2=dir1.cross(dir);
 
 	inArray=true;

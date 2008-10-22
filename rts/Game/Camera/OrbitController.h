@@ -2,7 +2,6 @@
 #define __ORBIT_CONTROLLER_H__
 
 #include "CameraController.h"
-#include "GlobalStuff.h"
 
 class COrbitController: public CCameraController {
 	public:
@@ -32,6 +31,10 @@ class COrbitController: public CCameraController {
 
 	private:
 		void MyMouseMove(int, int, int, int, int);
+		void Orbit();
+		void Pan(int, int);
+		void Zoom();
+
 		float3 GetOrbitPos() const;
 
 		int lastMouseMoveX;
@@ -43,9 +46,12 @@ class COrbitController: public CCameraController {
 		float distance, cDistance;
 		float rotation, cRotation;
 		float elevation, cElevation;
+		float orbitSpeedFact;
+		float panSpeedFact;
+		float zoomSpeedFact;
 		float3 cen;
 
-		enum States {None, Orbiting, Zooming, Panning};
+		enum States {None, Orbiting, Panning, Zooming};
 };
 
 #endif

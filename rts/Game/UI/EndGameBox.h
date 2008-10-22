@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include "Rendering/GL/myGL.h"
+#include "Game/GlobalConstants.h"
 
 
 // msvc behaves really strange

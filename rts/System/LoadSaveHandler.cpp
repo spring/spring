@@ -29,6 +29,7 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Game/GameServer.h"
 #include "Rendering/InMapDraw.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 
 extern std::string stupidGlobalMapname;

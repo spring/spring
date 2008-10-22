@@ -51,8 +51,8 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	shadowMapSize=configHandler.GetInt("ShadowMapSize",DEFAULT_SHADOWMAPSIZE);
 
 	if (tmpFirstInstance) {
-		if(!(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow)){
-			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program_shadow)");
+		if(!(GLEW_ARB_fragment_program)){
+			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program)");
 			return;
 		}
 
@@ -62,7 +62,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		}
 
 		if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-			if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+			if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program){
 				//logOutput.Print("Using ARB_fragment_program_shadow");
 				useFPShadows=true; // FIXME -- always true
 			} else {
@@ -72,7 +72,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		}
 
 		if(!GLEW_ARB_shadow_ambient){
-			if(GLEW_ARB_fragment_program && GLEW_ARB_fragment_program_shadow){
+			if(GLEW_ARB_fragment_program){
 				if(!useFPShadows){
 					//logOutput.Print("Using ARB_fragment_program_shadow");
 				}
@@ -203,7 +203,7 @@ void CShadowHandler::CreateShadows(void)
 	glLoadIdentity();
 
 	float3 sundir=mapInfo->light.sunDir;
-	cross1=(sundir.cross(UpVector)).Normalize();
+	cross1=(sundir.cross(UpVector)).ANormalize();
 	cross2=cross1.cross(sundir);
 	centerPos=camera->pos;
 //	centerPos.x=((int)((centerPos.x+4)/8))*8;
@@ -380,7 +380,7 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
-		c.Normalize();
+		c.ANormalize();
 		float3 colpoint;				//a point on the collision line
 
 		if(side.y>0){

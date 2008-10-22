@@ -27,6 +27,7 @@
 
 #include "LogOutput.h"
 #include "GameSetup.h"
+#include "GlobalSynced.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -39,6 +40,7 @@
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h" // for syncdebug
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"

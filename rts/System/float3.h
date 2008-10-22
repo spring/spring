@@ -480,4 +480,21 @@ public:
 	SAIFloat3 toSAIFloat3() const;
 };
 
+/**
+ * @brief upwards vector
+ *
+ * Defines constant upwards vector
+ * (0,1,0)
+ */
+const float3 UpVector(0,1,0);
+
+/**
+ * @brief zero vector
+ *
+ * Defines constant zero vector
+ * (0,0,0)
+ */
+const float3 ZeroVector(0,0,0);
+
+
 #endif /* FLOAT3_H */

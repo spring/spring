@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 
 #include "LogOutput.h"
+
 #include <assert.h>
 #include <cstdarg>
 #include <fstream>
@@ -15,7 +16,7 @@
 #include "Util.h"
 #include "float3.h"
 #if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#include "GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 #endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 

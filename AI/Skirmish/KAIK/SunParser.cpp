@@ -90,7 +90,7 @@ void CSunParser::Parse(char* buf, int size) {
 			}
 		}
 		else if (buf[0] == '/' && buf[1] == '*') {
-			//comment
+			// comment
 			while ((buf != endptr) && buf[0] != '*' || buf[1] != '/') {
 				buf++;
 			}

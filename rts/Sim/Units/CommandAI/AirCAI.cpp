@@ -18,6 +18,7 @@
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include <assert.h>
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 
 
@@ -549,7 +550,8 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
 				owner->AttackGround(attackPos, false);
 			} else {
-				int num = (int) (gs->randFloat() * eu.size());
+				// the range of randFloat() is inclusive of 1.0f
+				int num = (int) (gs->randFloat() * (eu.size() - 1));
 				orderTarget = uh->units[eu[num]];
 				owner->AttackUnit(orderTarget, false);
 				AddDeathDependence(orderTarget);

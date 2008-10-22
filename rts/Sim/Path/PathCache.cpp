@@ -3,6 +3,8 @@
 #include "mmgr.h"
 
 #include "PathCache.h"
+
+#include "Game/GlobalSynced.h"
 #include "LogOutput.h"
 
 using namespace std;

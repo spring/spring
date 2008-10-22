@@ -42,6 +42,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/GlobalUnsynced.h"
 #include "mmgr.h"
 
 #ifdef USE_GML
@@ -462,7 +463,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 	camNorm = camera->forward;
 	camNorm.y = -0.1f;
-	camNorm.Normalize();
+	camNorm.ANormalize();
 	glColor3f(1, 1, 1);
 	glEnable(GL_FOG);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
@@ -1457,7 +1458,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 	for (int y = 0; y < size; ++y) {
 		for (int x = 0; x < size; ++x) {
 			float3 vec = baseDir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size;
-			vec.Normalize();
+			vec.ANormalize();
 			float dot = vec.dot(sundir);
 
 			if (dot < 0)

@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "System/GlobalUnsynced.h"
 
 using std::min;
 using std::max;
@@ -82,7 +83,7 @@ float3 CFPSController::GetDir()
 	dir.x = (float)(cos(camera->rot.x) * sin(camera->rot.y));
 	dir.z = (float)(cos(camera->rot.x) * cos(camera->rot.y));
 	dir.y = (float)(sin(camera->rot.x));
-	dir.Normalize();
+	dir.ANormalize();
 	return dir;
 }
 

@@ -219,7 +219,7 @@ static bool LowerKeysReal(lua_State* L, int depth)
 	for (lua_pushnil(L); lua_next(L, changed) != 0; lua_pop(L, 1)) {
 		lua_pushvalue(L, -2); // copy the key to the top
 		lua_pushvalue(L, -2); // copy the value to the top
-		lua_rawset(L, table);		
+		lua_rawset(L, table);
 	}
 
 	lua_pop(L, 1); // pop the changed table
@@ -592,6 +592,28 @@ int LuaUtils::isuserdata(lua_State* L)
 	lua_pushboolean(L, (type == LUA_TUSERDATA) ||
 	                   (type == LUA_TLIGHTUSERDATA));
 	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+#define DEBUG_TABLE "debug"
+#define DEBUG_FUNC "traceback"
+
+int LuaUtils::PushDebugTraceback(lua_State *L)
+{
+	lua_getglobal(L, DEBUG_TABLE);
+	if (!lua_istable(L, -1)) {
+		return 0;
+	}
+	lua_getfield(L, -1, DEBUG_FUNC);
+	if (!lua_isfunction(L, -1)) {
+		return 0;
+	}
+	lua_remove(L, -2);
+
+	return lua_gettop(L);
 }
 
 

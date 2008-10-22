@@ -7,6 +7,7 @@
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "System/Util.h"
+#include "System/GlobalUnsynced.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
 #include "myMath.h"

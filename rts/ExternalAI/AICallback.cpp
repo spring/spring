@@ -252,7 +252,7 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 				"Spring is closing:", MBF_OK | MBF_EXCL);
 }
 
-int CAICallback::CreateGroup(char* libraryName, unsigned aiNumber)
+int CAICallback::CreateGroup(const char* libraryName, unsigned aiNumber)
 {
 	AIKey key;
 	key.dllName=libraryName;

@@ -18,7 +18,6 @@ using namespace std;
 #include "LuaUtils.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
-#include "GlobalStuff.h"
 
 
 static void CreatePathMetatable(lua_State* L);

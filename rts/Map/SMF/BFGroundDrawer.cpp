@@ -13,6 +13,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "System/FastMath.h"
+#include "System/GlobalUnsynced.h"
 #include "mmgr.h"
 
 #ifdef USE_GML
@@ -1376,7 +1377,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
 	camHorizontal.y = 0;
-	camHorizontal.Normalize();
+	camHorizontal.ANormalize();
 	// get vector for collision between frustum and horizontal plane
 	float3 b = up.cross(camHorizontal);
 

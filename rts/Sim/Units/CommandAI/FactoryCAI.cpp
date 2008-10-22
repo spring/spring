@@ -4,6 +4,7 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
+#include "Game/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/Team.h"
@@ -20,6 +21,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
 #include "creg/STL_Map.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 

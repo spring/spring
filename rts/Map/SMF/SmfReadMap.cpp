@@ -213,7 +213,7 @@ float3 CSmfReadMap::GetLightValue(int x, int y)
 {
 	float3 n1 = facenormals[((y * gs->mapx) + x) * 2] +
 	            facenormals[((y * gs->mapx) + x) * 2 + 1];
-	n1.Normalize();
+	n1.ANormalize();
 
 	float3 light = mapInfo->light.groundSunColor*mapInfo->light.sunDir.dot(n1);
 	for (int a = 0; a < 3; ++a) {
