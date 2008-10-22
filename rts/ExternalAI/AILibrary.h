@@ -33,6 +33,17 @@ public:
     
     void init();
     
+	/**
+	 * Through this function, the AI receives events from the engine.
+	 * For details about events that may arrive here, see file AISEvents.h.
+	 *
+	 * @param	topic	unique identifyer of a message
+	 *					(see EVENT_* defines in AISEvents.h)
+	 * @param	data	an topic specific struct, which contains the data
+	 *					associatedwith the event
+	 *					(see S*Event structs in AISEvents.h)
+	 * @return	ok: 0, error: != 0
+	 */
     int handleEvent(int topic, void* data);
     
     typedef void (*AI_INIT)(int);

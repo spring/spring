@@ -47,7 +47,7 @@ Export(int) init(int teamId,
     // CAIGlobalAI is the Legacy C++ wrapper, TestGlobalAI is NullLegacyCppAI
     myAIs[teamId] = new CAIGlobalAI(teamId, new TestGlobalAI());
 	
-	// signal: everything went ok
+	// signal: ok
 	return 0;
 }
 
@@ -63,7 +63,7 @@ Export(int) release(int teamId) {
     delete myAIs[teamId];
 	myAIs.erase(teamId);
 	
-	// signal: everything went ok
+	// signal: ok
 	return 0;
 }
 

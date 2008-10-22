@@ -1,6 +1,6 @@
 /*
 	Copyright 2008  Nicolas Wu
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -20,17 +20,17 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAI::CAI() : team(0), ai(NULL) { 
-	
+CAI::CAI() : team(0), ai(NULL) {
+
 }
 
 
 CAI::CAI(int team, IGlobalAI* ai) : team(team), ai(ai) {
-	
+
 }
 
 int CAI::handleEvent(int topic, const void* data) {
-	
+
 	if (ai != NULL) {
 		CAIEvent* e;
 
@@ -106,6 +106,7 @@ int CAI::handleEvent(int topic, const void* data) {
 		e->run(ai);
 		delete e;
 	}
-	
+
+	// signal: ok
 	return 0;
 }

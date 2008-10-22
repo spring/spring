@@ -93,7 +93,7 @@ struct SAIInterfaceLibrary {
 	 *
 	 * @param	staticGlobalData	contains global data about hte engine
 	 *								and the environment
-	 * @return	init ok: 0, on error: != 0
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *initStatic)(const struct SStaticGlobalData* staticGlobalData);
 	
@@ -107,7 +107,7 @@ struct SAIInterfaceLibrary {
 	 * NOTE: this method is optional. An AI Interface not exporting this
 	 * function is still valid.
 	 *
-	 * @return	release ok: 0, on error: != 0
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *releaseStatic)();
 	
@@ -133,23 +133,57 @@ struct SAIInterfaceLibrary {
 	
 	// skirmish AI methods
 	
+	/**
+	 * Loads the specified Skirmish AI.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	//int (CALLING_CONV *getSkirmishAISpecifiers)(struct SSAISpecifier* sAISpecifiers, int max);
 	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
 			const struct InfoItem info[], unsigned int numInfoItems);
+	
+	/**
+	 * Unloads the specified Skirmish AI.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	int (CALLING_CONV *unloadSkirmishAILibrary)(
 			const struct SSAISpecifier* const sAISpecifier);
+	
+	/**
+	 * Unloads all Skirmish AI libraries currently loaded by this interface.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 	
 	
 	// group AI methods
 	
+	/**
+	 * Loads the specified Group AI.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	//int (CALLING_CONV *getGroupAISpecifiers)(struct SGAISpecifier* gAISpecifiers, int max);
 	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
 	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
 			const struct InfoItem info[], unsigned int numInfoItems);
+	
+	/**
+	 * Unloads the specified Group AI.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	int (CALLING_CONV *unloadGroupAILibrary)(
 			const struct SGAISpecifier* const gAISpecifier);
+	
+	/**
+	 * Unloads all Group AI libraries currently loaded by this interface.
+	 *
+	 * @return	ok: 0, error: != 0
+	 */
 	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 

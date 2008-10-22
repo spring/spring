@@ -110,12 +110,19 @@ static const char* fileSelectorSuffix = NULL;
 static void util_initFileSelector(const char* suffix) {
 	fileSelectorSuffix = suffix;
 }
-static int util_fileSelector(struct dirent* fileDesc) {
+static int util_fileSelector(const struct dirent* fileDesc) {
 	return util_endsWith(fileDesc->d_name, fileSelectorSuffix);
 }
 
-static int util_listFilesU(const char* dir, struct dirent* files[]) {
-	return scandir(dir, &files, util_fileSelector, alphasort);
+static unsigned int util_listFilesU(const char* dir, struct dirent*** files) {
+	
+	int foundDirs = scandir(dir, files, util_fileSelector, alphasort);
+	
+	if (foundDirs < 0) { // error, act as if no file found
+		foundDirs = 0;
+	}
+	
+	return (unsigned int) foundDirs;
 }
 
 unsigned int util_listFiles(const char* dir, const char* suffix,
@@ -123,16 +130,26 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 
 	unsigned int numFiles;
 	
-	struct dirent* files[maxFileNames];
+	//struct dirent* files[maxFileNames];
+	struct dirent** files;
 	util_initFileSelector(suffix);
-	numFiles = util_listFilesU(dir, files);
-
+	numFiles = util_listFilesU(dir, &files);
 	if (numFiles > 0) {
 		unsigned int cnt;
 		for (cnt = 0; cnt < numFiles; ++cnt) {
 			fileNames[cnt] = util_allocStrCpy(files[cnt]->d_name);
 		}
 	}
+/*
+	DIR *dir_p;
+	struct dirent* dir_entry_p = NULL;
+	dir_p = opendir(dir);
+	for (numFiles = 0; (dir_entry_p = readdir(dir_p)) != NULL; ) {
+		if (util_endsWith(dir_entry_p->d_name, suffix)) {
+			fileNames[numFiles++] = util_allocStrCpy(dir_entry_p->d_name);
+		}
+	}
+*/
 
 	return numFiles;
 }
