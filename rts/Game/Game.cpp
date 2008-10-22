@@ -539,13 +539,12 @@ CGame::~CGame()
 
 	ENTER_MIXED;
 
-	delete guihandler;
-	guihandler = NULL;
+	SafeDelete(guihandler);
 
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
-		delete aviGenerator;
+		SafeDelete(aviGenerator;
 		aviGenerator = NULL;
 	}
 #endif
@@ -559,63 +558,62 @@ CGame::~CGame()
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
 
-	if (gameServer)delete gameServer;gameServer         = NULL;
+	SafeDelete(gameServer);
 
 	globalAI->PreDestroy ();
-	delete globalAI;           globalAI           = NULL;
+	SafeDelete(globalAI);
 
 	for(int a=0;a<MAX_TEAMS;a++) {
-		delete grouphandlers[a]; grouphandlers[a] = NULL;
+		SafeDelete(grouphandlers[a]);
 	}
 
-	delete water;              water              = NULL;
-	delete sky;                sky                = NULL;
-	delete resourceBar;        resourceBar        = NULL;
+	SafeDelete(water);
+	SafeDelete(sky);
+	SafeDelete(resourceBar);
 
-	delete uh;                 uh                 = NULL;
-	delete unitDrawer;         unitDrawer         = NULL;
-	delete featureHandler;     featureHandler     = NULL;
-	delete geometricObjects;   geometricObjects   = NULL;
-	delete ph;                 ph                 = NULL;
-	delete minimap;            minimap            = NULL;
-	delete pathManager;        pathManager        = NULL;
-	delete groundDecals;       groundDecals       = NULL;
-	delete ground;             ground             = NULL;
-	delete luaInputReceiver;   luaInputReceiver   = NULL;
-	delete inMapDrawer;        inMapDrawer        = NULL;
-	delete net;                net                = NULL;
-	delete radarhandler;       radarhandler       = NULL;
-	delete loshandler;         loshandler         = NULL;
-	delete mapDamage;          mapDamage          = NULL;
-	delete qf;                 qf                 = NULL;
-	delete tooltip;            tooltip            = NULL;
-	delete keyBindings;        keyBindings        = NULL;
-	delete keyCodes;           keyCodes           = NULL;
-	delete sound;              sound              = NULL;
-	delete selectionKeys;      selectionKeys      = NULL;
-	delete mouse;              mouse              = NULL;
-	delete camHandler;         camHandler         = NULL;
-	delete helper;             helper             = NULL;
-	delete shadowHandler;      shadowHandler      = NULL;
-	delete moveinfo;           moveinfo           = NULL;
-	delete unitDefHandler;     unitDefHandler     = NULL;
-	delete damageArrayHandler; damageArrayHandler = NULL;
-	delete vfsHandler;         vfsHandler         = NULL;
-	delete archiveScanner;     archiveScanner     = NULL;
-	delete modelParser;        modelParser        = NULL;
-	delete iconHandler;        iconHandler        = NULL;
-	delete fartextureHandler;  fartextureHandler  = NULL;
-	delete camera;             camera             = NULL;
-	delete cam2;               cam2               = NULL;
-	delete infoConsole;        infoConsole        = NULL;
-	delete consoleHistory;     consoleHistory     = NULL;
-	delete wordCompletion;     wordCompletion     = NULL;
-	delete explGenHandler;     explGenHandler     = NULL;
+	SafeDelete(uh);
+	SafeDelete(unitDrawer);
+	SafeDelete(featureHandler);
+	SafeDelete(geometricObjects);
+	SafeDelete(ph);
+	SafeDelete(minimap);
+	SafeDelete(pathManager);
+	SafeDelete(groundDecals);
+	SafeDelete(ground);
+	SafeDelete(luaInputReceiver);
+	SafeDelete(inMapDrawer);
+	SafeDelete(net);
+	SafeDelete(radarhandler);
+	SafeDelete(loshandler);
+	SafeDelete(mapDamage);
+	SafeDelete(qf);
+	SafeDelete(tooltip);
+	SafeDelete(keyBindings);
+	SafeDelete(keyCodes);
+	SafeDelete(sound);
+	SafeDelete(selectionKeys);
+	SafeDelete(mouse);
+	SafeDelete(camHandler);
+	SafeDelete(helper);
+	SafeDelete(shadowHandler);
+	SafeDelete(moveinfo);
+	SafeDelete(unitDefHandler);
+	SafeDelete(damageArrayHandler);
+	SafeDelete(vfsHandler);
+	SafeDelete(archiveScanner);
+	SafeDelete(modelParser);
+	SafeDelete(iconHandler);
+	SafeDelete(fartextureHandler);
+	SafeDelete(camera);
+	SafeDelete(cam2);
+	SafeDelete(infoConsole);
+	SafeDelete(consoleHistory);
+	SafeDelete(wordCompletion);
+	SafeDelete(explGenHandler);
 
 	delete const_cast<CMapInfo*>(mapInfo);
 	mapInfo = NULL;
-	delete groundBlockingObjectMap;
-	groundBlockingObjectMap = NULL;
+	SafeDelete(groundBlockingObjectMap);
 
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
