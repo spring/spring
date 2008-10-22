@@ -5,6 +5,7 @@
 
 #include "mmgr.h"
 
+#include "System/GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
 
@@ -128,13 +129,13 @@ static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
 void CCamera::Update(bool freeze)
 {
 	pos2 = pos;
-	up.Normalize();
+	up.ANormalize();
 
 	right = forward.cross(up);
-	right.Normalize();
+	right.ANormalize();
 	
 	up = right.cross(forward);
-	up.Normalize();
+	up.ANormalize();
 
 	const float aspect = (float) gu->viewSizeX / (float) gu->viewSizeY;
 	const float viewx = tan(aspect * halfFov);
@@ -150,15 +151,15 @@ void CCamera::Update(bool freeze)
 
 	const float3 forwardy = (-forward * viewy);
 	top    = forwardy + up;
-	top.Normalize();
+	top.ANormalize();
 	bottom = forwardy - up;
-	bottom.Normalize();
+	bottom.ANormalize();
 	
 	const float3 forwardx = (-forward * viewx);
 	rightside = forwardx + right;
-	rightside.Normalize();
+	rightside.ANormalize();
 	leftside  = forwardx - right;
-	leftside.Normalize();
+	leftside.ANormalize();
 
 	if (!freeze) {
 		cam2->bottom    = bottom;
@@ -197,7 +198,7 @@ void CCamera::Update(bool freeze)
 	                (up      * tiltOffset.y);
 
 	const float3 camPos = pos + posOffset;
-	const float3 center = camPos + fShake.Normalize();
+	const float3 center = camPos + fShake.ANormalize();
 
 	// apply and store the transform, should be faster
 	// than calling glGetDoublev(GL_MODELVIEW_MATRIX)
@@ -281,7 +282,7 @@ void CCamera::UpdateForward()
 	forward.z = cos(rot.y) * cos(rot.x);
 	forward.x = sin(rot.y) * cos(rot.x);
 	forward.y = sin(rot.x);
-	forward.Normalize();
+	forward.ANormalize();
 }
 
 
@@ -290,7 +291,7 @@ float3 CCamera::CalcPixelDir(int x, int y)
 	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY * tanHalfFov * 2;
 	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY * tanHalfFov * 2;
 	float3 dir = forward - up * dy + right * dx;
-	dir.Normalize();
+	dir.ANormalize();
 	return dir;
 }
 
@@ -325,7 +326,7 @@ inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
 }
 
 inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const float3& up) {
-	float3 f = (center - eye).Normalize();
+	float3 f = (center - eye).ANormalize();
 	float3 s = f.cross(up);
 	float3 u = s.cross(f);
 

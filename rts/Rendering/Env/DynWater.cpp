@@ -22,6 +22,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 
@@ -816,7 +817,7 @@ void CDynWater::UpdateCamRestraints(void)
 	float3 side=cam2->forward;
 	float3 camHorizontal=cam2->forward;
 	camHorizontal.y=0;
-	camHorizontal.Normalize();
+	camHorizontal.ANormalize();
 	float3 b=up.cross(camHorizontal);			//get vector for collision between frustum and horizontal plane
 	if(fabs(b.z)>0.0001f){
 		temp.dir=b.x/b.z;				//set direction to that

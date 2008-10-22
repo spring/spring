@@ -14,6 +14,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "System/GlobalUnsynced.h"
 
 
 
@@ -183,7 +184,7 @@ float3 SmoothController::GetPos()
 	}
 
 	pos.y = ground->GetHeight(pos.x,pos.z);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).Normalize();
+	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
 

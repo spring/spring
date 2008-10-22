@@ -18,6 +18,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 //#include "TimeProfiler.h"
@@ -476,9 +477,9 @@ void CGrassDrawer::Draw(void)
 			glColor4f(0.62f,0.62f,0.62f,1-((*gi).dist+128-grassDistance)/128.0f);			
 
 		float3 v=grass[(*gi).num].pos-camera->pos;
-		v.Normalize();
+		v.ANormalize();
 		float3 side(v.cross(UpVector));
-		side.Normalize();
+		side.ANormalize();
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  side.x,side.y,side.z,0);
 		float3 up(side.cross(v));
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
@@ -497,9 +498,9 @@ void CGrassDrawer::Draw(void)
 			float3 squarePos((x+0.5f)*gSSsq, 0, (y+0.5f)*gSSsq);
 			squarePos.y=ground->GetHeight2(squarePos.x,squarePos.z);
 			float3 v=squarePos-camera->pos;
-			v.Normalize();
+			v.ANormalize();
 			float3 side(v.cross(UpVector));
-			side.Normalize();
+			side.ANormalize();
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,8,  side.x,side.y,side.z,0);
 			float3 up(side.cross(v));
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  up.x,up.y,up.z,0);
@@ -617,7 +618,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 	for(int a=0;a<strawPerTurf;++a){
 		float maxAng=fRand(PI/2);
 		float3 sideVect(fRand(1)-0.5f,0,fRand(1)-0.5f);
-		sideVect.Normalize();
+		sideVect.ANormalize();
 		float3 forwardVect=sideVect.cross(UpVector);
 		sideVect*=0.32f;
 

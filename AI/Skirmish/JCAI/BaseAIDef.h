@@ -9,7 +9,8 @@
 #ifndef JC_BASE_AI_DEF_H
 #define JC_BASE_AI_DEF_H
 
-#include "GlobalStuff.h"
+#include "System/Vec2.h"
+#include "Game/GlobalConstants.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 #include "ExternalAI/IAICallback.h"

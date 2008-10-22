@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "SFloat3.h"
-#include "GlobalStuff.h"
+#include "GlobalConstants.h"
 #include "PlayerBase.h"
 
 class TdfParser;

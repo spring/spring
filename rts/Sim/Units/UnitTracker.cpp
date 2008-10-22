@@ -10,6 +10,7 @@
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
 #include "Platform/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "LogOutput.h"
 
 
@@ -291,14 +292,14 @@ void CUnitTracker::SetCam()
 
 	trackPos += (modPlanePos - trackPos) * (1 - pow(0.95f, deltaTime));
 	trackDir += (u->frontdir - trackDir) * (1 - pow(0.90f, deltaTime));
-	trackDir.Normalize();
+	trackDir.ANormalize();
 
 	camera->pos=trackPos;
 
 	camera->forward = u->pos + (u->speed * gu->timeOffset) - camera->pos;
-	camera->forward.Normalize();
+	camera->forward.ANormalize();
 	camera->forward += trackDir;
-	camera->forward.Normalize();
+	camera->forward.ANormalize();
 	if (camHandler->GetCurrentControllerNum() == 0)
 	{
 		CFPSController& fpsCamera = dynamic_cast<CFPSController&>(camHandler->GetCurrentController());

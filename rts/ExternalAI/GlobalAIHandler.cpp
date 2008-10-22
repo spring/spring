@@ -7,6 +7,7 @@
 #include "SkirmishAI.h"
 #include "SkirmishAIWrapper.h"
 #include "IGlobalAI.h"
+#include "Game/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/Team.h"
@@ -268,7 +269,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked, CUnit* attacker, float damag
 			if(ais[attacked->team])
 				if(attacker){
 					float3 dir=helper->GetUnitErrorPos(attacker,attacked->allyteam)-attacked->pos;
-					dir.Normalize();
+					dir.ANormalize();
 					ais[attacked->team]->UnitDamaged(attacked->id,attacker->id,damage,dir);
 				} else {
 					ais[attacked->team]->UnitDamaged(attacked->id,-1,damage,ZeroVector);
@@ -278,7 +279,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked, CUnit* attacker, float damag
 				int a = attacker->team;
 				if(ais[attacker->team] && !gs->Ally(gs->AllyTeam(a),attacked->allyteam) && (ais[a]->IsCheatEventsEnabled() || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
 					float3 dir=attacker->pos-helper->GetUnitErrorPos(attacked,attacker->allyteam);
-					dir.Normalize();
+					dir.ANormalize();
 					ais[a]->EnemyDamaged(attacked->id,attacker->id,damage,dir);
 				}
 			}

@@ -18,7 +18,7 @@
 #include "Game/Camera/OrbitController.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
-#include "GlobalStuff.h"
+#include "GlobalUnsynced.h"
 
 
 CCameraHandler* camHandler = NULL;
@@ -116,7 +116,7 @@ void CCameraHandler::UpdateCam()
 		camera->SetFov(camera->GetFov() + (deltaFOV * ratio));
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
-		camera->forward.Normalize();
+		camera->forward.ANormalize();
 	}
 }
 

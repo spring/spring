@@ -13,7 +13,7 @@
 #include "creg/STL_Set.h"
 #include "creg/Serializer.h"
 #include "creg/cregex.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 
 #define CMD_CHANGE_MODE 	160
 #define CMD_AREA_UPGRADE 	165

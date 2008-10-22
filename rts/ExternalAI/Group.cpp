@@ -9,6 +9,7 @@
 #include "GroupHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"

@@ -13,7 +13,6 @@
 
 #include "3DOParser.h"
 #include "Rendering/GL/myGL.h"
-#include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "Rendering/GL/VertexArray.h"
 #include "FileSystem/VFSHandler.h"

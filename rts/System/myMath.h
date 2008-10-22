@@ -1,7 +1,9 @@
 #ifndef MYMATH_H
 #define MYMATH_H
 
-#include "GlobalStuff.h"
+#include "Game/GlobalConstants.h"
+#include "Vec2.h"
+#include "float3.h"
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 

@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+#define Option_badKeyChars " =;\r\n\t"
+
 struct OptionListItem {
 	const char* key;
 	const char* name;

@@ -19,7 +19,12 @@
   CreateDirectory "$INSTDIR\lobby\python"
 
   SetOutPath "$INSTDIR\lobby\var"
+
+${IfNot} ${FileExists} "$INSTDIR\lobby\var\groups.ini"
   File "..\external\TASClient\groups.ini"
+${EndIf}
+  
+
   File "..\external\TASClient\tips.txt"
 
   SetOutPath "$INSTDIR\lobby\python"

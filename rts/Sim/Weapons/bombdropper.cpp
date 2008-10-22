@@ -5,6 +5,7 @@
 #include "StdAfx.h"
 #include "bombdropper.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "LogOutput.h"
 #include "Map/MapInfo.h"

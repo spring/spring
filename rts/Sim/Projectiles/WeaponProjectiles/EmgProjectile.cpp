@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
 

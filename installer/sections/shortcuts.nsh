@@ -10,8 +10,8 @@
   ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
   ${EndIf}
-  ${If} ${SectionIsSelected} ${SEC_CA}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk" "$INSTDIR\CaDownloader.exe"
+  ${If} ${SectionIsSelected} ${SEC_KP}
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
   ${EndIf}  
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
@@ -32,7 +32,7 @@
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk"
   
   ; delete the old shortcuts if they're present from a prior installation
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
@@ -40,6 +40,7 @@
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring test.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring multiplayer battleroom.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
 
   ; delete the .url files
   Delete "$INSTDIR\Spring.url"

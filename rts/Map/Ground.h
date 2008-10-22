@@ -4,7 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "GlobalStuff.h"
+#include "float3.h"
+#include "Game/GlobalConstants.h"
+#include "Game/GlobalSynced.h"
 
 class CProjectileHandler;
 class CProjectile;

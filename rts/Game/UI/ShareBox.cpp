@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/Team.h"
 #include "Game/Player.h"
+#include "Game/GlobalSynced.h"
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/SelectedUnits.h"

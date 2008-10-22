@@ -9,7 +9,6 @@
 #include <string>
 #include "mmgr.h"
 
-#include "GlobalStuff.h"
 #include "LogOutput.h"
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"

@@ -28,7 +28,7 @@ typedef unsigned short ushort;
 #include "ExternalAI/IAICallback.h" // AI Callback
 #include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
 #include "ExternalAI/IAICheats.h" // Cheat Interface
-#include "GlobalStuff.h" // Common definitions in spring
+#include "Game/GlobalConstants.h" // Common definitions in spring
 #include "Sim/Weapons/WeaponDefHandler.h" // Needed for WeaponDef
 #include "Sim/Misc/DamageArray.h" // Needed for WeaponDef
 #include "Sim/MoveTypes/MoveInfo.h"

@@ -58,6 +58,7 @@ private:
 	float fontHeight;
 	bool outline;
 	const float *color, *outlineColor;
+	float defaultColor[4];
 	GlyphInfo *glyphs;
 
 	static const float* ChooseOutlineColor(const float *textColor);

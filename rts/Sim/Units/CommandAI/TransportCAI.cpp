@@ -19,6 +19,7 @@
 #include "Sim/ModInfo.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
+#include "System/GlobalUnsynced.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50

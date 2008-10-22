@@ -38,6 +38,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/GlobalUnsynced.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
 

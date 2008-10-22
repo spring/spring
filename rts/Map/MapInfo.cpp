@@ -4,11 +4,11 @@
 
 #include "MapInfo.h"
 
+#include "Game/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/GlobalStuff.h"
 #include "System/Exceptions.h"
 
 
@@ -139,7 +139,7 @@ void CMapInfo::ReadLight()
 	const LuaTable lightTable = mapRoot->SubTable("lighting");
 
 	light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
-	light.sunDir.Normalize();
+	light.sunDir.ANormalize();
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor",
 	                                                float3(0.5f, 0.5f, 0.5f));

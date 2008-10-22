@@ -3,7 +3,7 @@
 
 #include "WorldObject.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "GlobalStuff.h"
+#include "Vec2.h"
 #include "Sync/SyncedFloat3.h"
 
 class CUnit;

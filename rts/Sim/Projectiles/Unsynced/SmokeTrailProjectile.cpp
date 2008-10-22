@@ -5,6 +5,9 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "SmokeTrailProjectile.h"
+
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "myMath.h"
@@ -12,7 +15,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "SmokeTrailProjectile.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL,NULL));
 
@@ -78,7 +81,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& po
 		dirpos2=pos2+dir2*dist*0.33f;
 		float3 mp=(pos1+pos2)/2;
 		midpos=CalcBeizer(0.5f,pos1,dirpos1,dirpos2,pos2);
-		middir=(dir1+dir2).Normalize();
+		middir=(dir1+dir2).ANormalize();
 		drawSegmented=true;
 	}
 	SetRadius(pos1.distance(pos2));
@@ -100,13 +103,13 @@ void CSmokeTrailProjectile::Draw()
 
 	if(drawTrail){
 		float3 dif(pos1-camera->pos2);
-		dif.Normalize();
+		dif.ANormalize();
 		float3 odir1(dif.cross(dir1));
-		odir1.Normalize();
+		odir1.ANormalize();
 		float3 dif2(pos2-camera->pos2);
-		dif2.Normalize();
+		dif2.ANormalize();
 		float3 odir2(dif2.cross(dir2));
-		odir2.Normalize();
+		odir2.ANormalize();
 
 		unsigned char col[4];
 		float a1=(1-float(age)/(lifeTime))*255;
@@ -135,9 +138,9 @@ void CSmokeTrailProjectile::Draw()
 
 		if(drawSegmented){
 			float3 dif3(midpos-camera->pos2);
-			dif3.Normalize();
+			dif3.ANormalize();
 			float3 odir3(dif3.cross(middir));
-			odir3.Normalize();
+			odir3.ANormalize();
 			float size3=0.2f+((age+4)*(1.0f/lifeTime))*orgSize;
 
 			unsigned char col3[4];

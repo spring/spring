@@ -8,10 +8,12 @@
 #include <vector>
 #include <string>
 #include <deque>
+
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalConstants.h"
+#include "Vec2.h"
 
 class CCobInstance;
 class CCommandAI;

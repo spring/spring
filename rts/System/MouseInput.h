@@ -3,7 +3,7 @@
 
 #include <SDL_events.h>
 
-#include "GlobalStuff.h"
+#include "Vec2.h"
 
 class IMouseInput
 {

@@ -15,6 +15,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
+#include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 

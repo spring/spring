@@ -3,7 +3,8 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "GlobalStuff.h"
+#include "GlobalUnsynced.h"
+#include "Game/GlobalSynced.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"

@@ -5,7 +5,7 @@
 #include "GeoSquareProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),0,0));
 
@@ -55,13 +55,13 @@ void CGeoSquareProjectile::Draw(void)
 	col[3]=(unsigned char) (a*255);
 
 	float3 dif(p1-camera->pos);
-	dif.Normalize();
+	dif.ANormalize();
 	float3 dir1(dif.cross(v1));
-	dir1.Normalize();
+	dir1.ANormalize();
 	float3 dif2(p2-camera->pos);
-	dif2.Normalize();
+	dif2.ANormalize();
 	float3 dir2(dif2.cross(v2));
-	dir2.Normalize();
+	dir2.ANormalize();
 
 
 	float u = (ph->geosquaretex.xstart + ph->geosquaretex.xend) / 2;

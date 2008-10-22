@@ -2,8 +2,9 @@
 #include "mmgr.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalConstants.h"
 #include "GenericParticleProjectile.h"
-#include "GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "SimpleParticleSystem.h"
@@ -82,7 +83,7 @@ void CSimpleParticleSystem::Draw()
 				float camDist=dif.Length();
 				dif/=camDist;
 				float3 dir1(dif.cross(particles[i].speed));
-				dir1.Normalize();
+				dir1.ANormalize();
 				float3 dir2(dif.cross(dir1));
 
 				unsigned char color[4];

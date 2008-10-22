@@ -3,6 +3,7 @@
 #include "mmgr.h"
 
 #include "Game/Team.h"
+#include "Game/GlobalSynced.h"
 #include "LogOutput.h"
 #include "MouseHandler.h"
 #include "NetProtocol.h"

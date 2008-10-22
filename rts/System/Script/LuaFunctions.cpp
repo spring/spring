@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "LuaFunctions.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 #include "float3.h"
 #include "LogOutput.h"
 #include "ExternalAI/GlobalAIHandler.h"

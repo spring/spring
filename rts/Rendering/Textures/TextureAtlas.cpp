@@ -9,7 +9,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/GlobalStuff.h"
+#include "System/Vec2.h"
 
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );

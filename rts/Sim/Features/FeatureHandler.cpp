@@ -25,6 +25,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/Platform/ConfigHandler.h"

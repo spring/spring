@@ -10,6 +10,8 @@
 #include <vector>
 #include <SDL_types.h>
 
+#include "Game/GlobalConstants.h"
+
 /**
  * @brief sync debugger class
  *
@@ -100,12 +102,12 @@ class CSyncDebugger {
 
 		// server thread
 
-		std::vector<unsigned>* checksumResponses;    ///< Received checksums after a checkum request.
-		Uint64* remoteFlop;                          ///< Received operation number.
+		std::vector<unsigned> checksumResponses[MAX_PLAYERS];    ///< Received checksums after a checkum request.
+		Uint64 remoteFlop[MAX_PLAYERS];                          ///< Received operation number.
 		std::deque<unsigned> requestedBlocks;        ///< We are processing these blocks.
 		std::deque<unsigned> pendingBlocksToRequest; ///< We still need to receive these blocks (slowly emptied).
 		bool waitingForBlockResponse;                ///< Are we still waiting for a block response?
-		std::vector<unsigned>* remoteHistory;        ///< Chk field of history of clients (only of differing blocks).
+		std::vector<unsigned> remoteHistory[MAX_PLAYERS];        ///< Chk field of history of clients (only of differing blocks).
 
 	private:
 

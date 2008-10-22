@@ -8,11 +8,12 @@
 #include <map>
 #include <deque>
 #include <set>
+#include <vector>
 
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 #include "System/UnsyncedRNG.h"
 #include "SFloat3.h"
 
@@ -90,7 +91,7 @@ public:
 #ifdef DEBUG
 	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
 #endif
-	
+
 private:
 	/**
 	@brief catch commands from chat messages and handle them
@@ -118,19 +119,19 @@ private:
 
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
-	
+
 	/// read data from demo and send it to clients
 	void SendDemoData(const bool skipping=false);
-	
+
 	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
-	
+
 	/**
 	@brief skip frames
-	
+
 	If you are watching a demo, this will push out all data until targetframe to all clients
 	*/
 	void SkipTo(int targetframe);
-	
+
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
 
@@ -181,12 +182,12 @@ private:
 	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
-	
+
 	bool hasLocalClient;
 	unsigned localClientNumber;
-	
+
 	void RestrictedAction(const std::string& action);
-	
+
 	/// If the server recieves a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;

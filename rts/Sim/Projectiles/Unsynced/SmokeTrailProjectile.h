@@ -6,6 +6,8 @@
 
 #include "Sim/Projectiles/Projectile.h"
 
+class AtlasedTexture;
+
 class CSmokeTrailProjectile : public CProjectile
 {
 	CR_DECLARE(CSmokeTrailProjectile);

@@ -2,11 +2,12 @@
 #include "mmgr.h"
 
 #include "BitmapMuzzleFlame.h"
+#include "Game/GlobalSynced.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalStuff.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 
@@ -51,8 +52,8 @@ void CBitmapMuzzleFlame::Draw(void)
 	float isize = size + size * igrowth;
 	float ilength = length + length * igrowth;
 
-	float3 sidedir = dir.cross(float3(0, 1, 0)).Normalize();
-	float3 updir = dir.cross(sidedir).Normalize();
+	float3 sidedir = dir.cross(float3(0, 1, 0)).ANormalize();
+	float3 updir = dir.cross(sidedir).ANormalize();
 
 	va->AddVertexTC(pos + updir * isize,                 sideTexture->xstart, sideTexture->ystart, col);
 	va->AddVertexTC(pos + updir * isize + dir * ilength, sideTexture->xend,   sideTexture->ystart, col);

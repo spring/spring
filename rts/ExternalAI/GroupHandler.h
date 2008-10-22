@@ -9,7 +9,7 @@
 #include <vector>
 #include <set>
 #include "ExternalAI/aikey.h"
-#include "System/GlobalStuff.h"
+#include "Game/GlobalConstants.h"
 
 class CGroup;
 class CUnitSet;

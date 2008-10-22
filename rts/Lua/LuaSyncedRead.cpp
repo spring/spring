@@ -3874,7 +3874,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int ix = (int)(max(0.0f, min(float3::maxxpos, x)) / 16.0f);
 	const int iz = (int)(max(0.0f, min(float3::maxzpos, z)) / 16.0f);
 
-	const float metal = readmap->metalMap->getMetalAmount(ix, iz);
+	const float metal = readmap->metalMap->GetMetalAmount(ix, iz);
 
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int index = min(maxIndex, (gs->hmapx * iz) + ix);

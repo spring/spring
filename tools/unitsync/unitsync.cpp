@@ -1046,6 +1046,173 @@ Export(const char*) GetLuaAIDesc(int aiIndex)
 
 
 static vector<Option> options;
+static set<string> optionsSet;
+
+
+static bool ParseOption(const LuaTable& root, int index, Option& opt)
+{
+	const LuaTable& optTbl = root.SubTable(index);
+	if (!optTbl.IsValid()) {
+		return false;
+	}
+
+	// common options properties
+	std::string opt_key = optTbl.GetString("key", "");
+	if (opt_key.empty() ||
+	    (opt_key.find_first_of(Option_badKeyChars) != std::string::npos)) {
+		return false;
+	}
+	opt_key = StringToLower(opt_key);
+	if (optionsSet.find(opt_key) != optionsSet.end()) {
+		return false;
+	}
+	opt.key = mallocCopyString(opt_key.c_str());
+	
+	std::string opt_name = optTbl.GetString("name", opt_key);
+	if (opt_name.empty()) {
+		return false;
+	}
+	opt.name = mallocCopyString(opt_name.c_str());
+	
+	std::string opt_desc = optTbl.GetString("desc", opt_name);
+	opt.desc = mallocCopyString(opt_desc.c_str());
+	
+	std::string opt_section = optTbl.GetString("section", "");
+	opt.section = mallocCopyString(opt_section.c_str());
+	
+	std::string opt_style = optTbl.GetString("style", "");
+	opt.style = mallocCopyString(opt_style.c_str());
+
+	std::string opt_type = optTbl.GetString("type", "");
+	opt_type = StringToLower(opt_type);
+	opt.type = mallocCopyString(opt_type.c_str());
+
+	// option type specific properties
+	if (opt_type == "bool") {
+		opt.typeCode = opt_bool;
+		opt.boolDef = optTbl.GetBool("def", false);
+	}
+	else if (opt_type == "number") {
+		opt.typeCode = opt_number;
+		opt.numberDef  = optTbl.GetFloat("def",  0.0f);
+		opt.numberMin  = optTbl.GetFloat("min",  -1.0e30f);
+		opt.numberMax  = optTbl.GetFloat("max",  +1.0e30f);
+		opt.numberStep = optTbl.GetFloat("step", 0.0f);
+	}
+	else if (opt_type == "string") {
+		opt.typeCode = opt_string;
+		opt.stringDef    = mallocCopyString(optTbl.GetString("def", "").c_str());
+		opt.stringMaxLen = optTbl.GetInt("maxlen", 0);
+	}
+	else if (opt_type == "list") {
+		opt.typeCode = opt_list;
+
+		const LuaTable& listTbl = optTbl.SubTable("items");
+		if (!listTbl.IsValid()) {
+			return false;
+		}
+
+		vector<OptionListItem> opt_list;
+		for (int i = 1; listTbl.KeyExists(i); i++) {
+			OptionListItem item;
+
+			// string format
+			std::string item_key = listTbl.GetString(i, "");
+			if (!item_key.empty() &&
+			    (item_key.find_first_of(Option_badKeyChars) == string::npos)) {
+				item.key = mallocCopyString(item_key.c_str());
+				item.name = item.key;
+				item.desc = item.name;
+				opt_list.push_back(item);
+				continue;
+			}
+
+			// table format  (name & desc)
+			const LuaTable& itemTbl = listTbl.SubTable(i);
+			if (!itemTbl.IsValid()) {
+				break;
+			}
+			item_key = itemTbl.GetString("key", "");
+			if (item_key.empty() ||
+			    (item_key.find_first_of(Option_badKeyChars) != string::npos)) {
+				return false;
+			}
+			item_key = StringToLower(item_key);
+			//item.key = item_key.c_str();
+			item.key = mallocCopyString(item_key.c_str());
+			std::string item_name = itemTbl.GetString("name", item_key);
+			if (item_name.empty()) {
+				return false;
+			}
+			//item.name = item_name.c_str();
+			item.name = mallocCopyString(item_name.c_str());
+			std::string item_desc = itemTbl.GetString("desc", item_name);
+			//item.desc = item_desc.c_str();
+			item.desc = mallocCopyString(item_desc.c_str());
+			opt_list.push_back(item);
+		}
+
+		if (opt_list.size() <= 0) {
+			return false; // no empty lists
+		}
+		
+		opt.numListItems = opt_list.size();
+		opt.list = (OptionListItem*) calloc(sizeof(OptionListItem), opt.numListItems);
+        for (int i=0; i < opt.numListItems; ++i) {
+            opt.list[i] = opt_list.at(i);
+        }
+
+		//opt.listDef = optTbl.GetString("def", opt.list[0].name).c_str();
+		opt.listDef = mallocCopyString(optTbl.GetString("def", opt.list[0].name).c_str());
+	}
+	else {
+		return false; // unknown type
+	}
+
+	optionsSet.insert(opt.key);
+
+	return true;
+}
+
+
+static void ParseOptions(const string& fileName,
+                         const string& fileModes,
+                         const string& accessModes,
+                         const string& mapName = "")
+{
+	LuaParser luaParser(fileName, fileModes, accessModes);
+
+	const string configName = MapParser::GetMapConfigName(mapName);
+
+	if (!mapName.empty() && !configName.empty()) {
+		luaParser.GetTable("Map");
+		luaParser.AddString("fileName", mapName);
+		luaParser.AddString("fullName", "maps/" + mapName);
+		luaParser.AddString("configFile", configName);
+		luaParser.EndTable();
+	}
+
+	if (!luaParser.Execute()) {
+		logOutput.Print("ParseOptions(%s) ERROR: %s\n",
+		       fileName.c_str(), luaParser.GetErrorLog().c_str());
+		return;
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		return;
+	}
+
+	for (int index = 1; root.KeyExists(index); index++) {
+		Option opt;
+		if (ParseOption(root, index, opt)) {
+			options.push_back(opt);
+		}
+	}
+
+	return;
+};
+
 
 static bool InvalidOptionIndex(int optIndex)
 {
@@ -1068,28 +1235,6 @@ static bool WrongOptionType(int optIndex, int type)
 }
 
 
-vector<InfoItem> infos;
-set<string> infosSet;
-
-std::vector<Option> ParseOptions(
-		const std::string& fileName,
-		const std::string& fileModes,
-		const std::string& accessModes,
-		const std::string& mapName = "")
-{
-	std::vector<Option> options;
-	
-	static const unsigned int MAX_OPTIONS = 128;
-	Option tmpOptions[MAX_OPTIONS];
-	unsigned int num = ParseOptions(fileName.c_str(), fileModes.c_str(),
-			accessModes.c_str(), mapName.c_str(), tmpOptions, MAX_OPTIONS);
-	for (unsigned int i=0; i < num; ++i) {
-		options.push_back(tmpOptions[i]);
-	}
-	
-	return options;
-}
-
 Export(int) GetMapOptionCount(const char* name)
 {
 	CHECK_INIT();
@@ -1097,7 +1242,12 @@ Export(int) GetMapOptionCount(const char* name)
 
 	ScopedMapLoader mapLoader(name);
 
-	options = ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
+	options.clear();
+	optionsSet.clear();
+
+	ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
+
+	optionsSet.clear();
 
 	return (int)options.size();
 }
@@ -1105,10 +1255,22 @@ Export(int) GetMapOptionCount(const char* name)
 
 Export(int) GetModOptionCount()
 {
-	options = ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+	options.clear();
+	optionsSet.clear();
+
+	// EngineOptions must be read first, so accidentally "overloading" engine
+	// options with mod options with identical names is not possible.
+	ParseOptions("EngineOptions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+
+	optionsSet.clear();
+
 	return (int)options.size();
 }
 
+
+vector<InfoItem> infos;
+set<string> infosSet;
 
 // Updated on every call to GetSkirmishAICount
 static vector<string> skirmishAIDataDirs;
@@ -1192,11 +1354,15 @@ Export(const char*) GetInfoDescription(int index) {
 }
 
 
-
 Export(int) GetSkirmishAIOptionCount(int index) {
-	
-	ASSERT(!skirmishAIDataDirs.empty(), "Call GetSkirmishAICount before GetSkirmishAIOptionCount.");
-	options = ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+
+	options.clear();
+	optionsSet.clear();
+
+	ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+
+	optionsSet.clear();
+
 	return (int)options.size();
 }
 
@@ -1261,6 +1427,8 @@ Export(int) GetOptionBoolDef(int optIndex)
 }
 
 
+// Number Options
+
 Export(float) GetOptionNumberDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_number)) {
@@ -1297,6 +1465,8 @@ Export(float) GetOptionNumberStep(int optIndex)
 }
 
 
+// String Options
+
 Export(const char*) GetOptionStringDef(int optIndex)
 {
 	if (WrongOptionType(optIndex, opt_string)) {
@@ -1314,6 +1484,8 @@ Export(int) GetOptionStringMaxLen(int optIndex)
 	return options[optIndex].stringMaxLen;
 }
 
+
+// List Options
 
 Export(int) GetOptionListCount(int optIndex)
 {
@@ -1491,6 +1663,7 @@ Export(const char*) GetModValidMap(int index)
 //////////////////////////
 //////////////////////////
 
+// Map the wanted archives into the VFS with AddArchive before using these functions
 
 static map<int, CFileHandler*> openFiles;
 static int nextFile = 0;

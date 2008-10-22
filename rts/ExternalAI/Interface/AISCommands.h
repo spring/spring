@@ -180,7 +180,7 @@ struct SReleaseSharedMemAreaCommand {
 };
 
 struct SCreateGroupCommand {
-	char* libraryName;
+	const char* libraryName;
 	unsigned int aiNumber;
 	int ret_groupId;
 };
@@ -244,7 +244,7 @@ struct SAddNotificationDrawerCommand {
 struct SAddPointDrawCommand ///< result of HandleCommand is 1 - ok supported
 {
 	struct SAIFloat3 pos; ///< on this position, only x and z matter
-	char* label; ///< create this text on pos in my team color
+	const char* label; ///< create this text on pos in my team color
 };
 struct SRemovePointDrawCommand ///< result of HandleCommand is 1 - ok supported
 {

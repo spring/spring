@@ -4,11 +4,6 @@
 #include "myMath.h"
 #include "mmgr.h"
 
-CR_BIND(float2, );
-CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
-
-CR_BIND(int2, );
-CR_REG_METADATA(int2, (CR_MEMBER(x),CR_MEMBER(y)));
 
 float2 headingToVectorTable[NUM_HEADINGS];
 

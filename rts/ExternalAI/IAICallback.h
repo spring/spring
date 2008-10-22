@@ -74,7 +74,7 @@ struct LineMarker {
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
 	float3 pos; ///< on this position, only x and z matter
-	char* label; ///< create this text on pos in my team color
+	const char* label; ///< create this text on pos in my team color
 };
 
 struct AIHCAddMapLine ///< result of HandleCommand is 1 - ok supported
@@ -154,7 +154,7 @@ public:
 	// release your reference to a memory area
 	virtual void ReleasedSharedMemArea(char* name) = 0;
 
-	virtual int CreateGroup(char* libraryName, unsigned aiNumber) = 0;							// creates a group and return the id it was given, return -1 on
+	virtual int CreateGroup(const char* libraryName, unsigned aiNumber) = 0;			// creates a group and return the id it was given, return -1 on
 																						// failure (dll didn't exist, etc)
 	virtual void EraseGroup(int groupId) = 0;											// erases a specified group
 	virtual bool AddUnitToGroup(int unitId, int groupId) = 0;							// adds a unit to a specific group, if it was previously in a group

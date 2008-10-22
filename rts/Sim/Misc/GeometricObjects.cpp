@@ -43,8 +43,8 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 	old2=CalcSpline( 0.05f,b1,b2,b3,b4);
 	for(int a=0;a<20;++a){
 		float3 np=CalcSpline(a*0.05f+0.1f,b1,b2,b3,b4);
-		float3 dir1=(old2-old1).Normalize();
-		float3 dir2=(np-old2).Normalize();
+		float3 dir1=(old2-old1).ANormalize();
+		float3 dir2=(np-old2).ANormalize();
 
 		if(arrow==1 && a==19){
 			CGeoSquareProjectile* gsp=SAFE_NEW CGeoSquareProjectile(old1,old2,dir1,dir2,width,0);
@@ -108,7 +108,7 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 	if(group==0)
 		group=firstFreeGroup++;
 
-	float3 dir=(end-start).Normalize();
+	float3 dir=(end-start).ANormalize();
 	if(arrow){
 		CGeoSquareProjectile* gsp=SAFE_NEW CGeoSquareProjectile(start,start*0.2f+end*0.8f,dir,dir,width*0.5f,width*0.5f);
 		geoGroups[group].squares.push_back(gsp);

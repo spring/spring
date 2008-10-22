@@ -3,7 +3,7 @@
 #include "Game/StartScripts/Script.h"
 #include "float3.h"
 #include "LogOutput.h"
-#include "GlobalStuff.h"
+#include "Game/GlobalSynced.h"
 #include "Game/Team.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"

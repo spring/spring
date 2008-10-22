@@ -10,6 +10,7 @@
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/Game.h"
+#include "Game/GlobalSynced.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
