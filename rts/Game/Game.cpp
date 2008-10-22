@@ -544,7 +544,7 @@ CGame::~CGame()
 #ifndef NO_AVI
 	if(creatingVideo){
 		creatingVideo=false;
-		SafeDelete(aviGenerator;
+		SafeDelete(aviGenerator);
 		aviGenerator = NULL;
 	}
 #endif
