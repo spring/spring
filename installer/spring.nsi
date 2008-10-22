@@ -359,9 +359,9 @@ ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 ${EndIf}
-${If} ${SectionIsSelected} ${SEC_CA}
+${If} ${SectionIsSelected} ${SEC_KP}
   SetOutPath "$INSTDIR"
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME} Update CA.lnk" "$INSTDIR\CaDownloader.exe"
+  CreateShortCut "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
 ${EndIf}
 SectionEnd
 
@@ -443,7 +443,7 @@ Section Uninstall
   !include "sections\CA.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
-  Delete "$DESKTOP\${PRODUCT_NAME} Update CA.lnk"
+  Delete "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk"
 
   ; All done
   RMDir "$INSTDIR"
