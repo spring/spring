@@ -45,4 +45,14 @@ static inline std::string IntToString(int i, const std::string& format = "%i")
 	return std::string(buf);
 }
 
+/** @brief Safely delete object by first setting pointer to NULL and then deleting.
+	This way it is guaranteed other objects can not access the object through the
+	pointer while the object is running it's destructor. */
+template<class T> void SafeDelete(T &a)
+{
+	T tmp = a;
+	a = NULL;
+	delete tmp;
+}
+
 #endif

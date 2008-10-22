@@ -615,10 +615,9 @@ void SpringApp::LoadFonts()
 	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
 	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
 
-	if (font)
-		delete font;
-	if (smallFont)
-		delete smallFont;
+	SafeDelete(font);
+	SafeDelete(smallFont);
+
 	try {
 		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
 		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
@@ -901,7 +900,7 @@ int SpringApp::Update ()
 				}
 				ret = activeController->Draw();
 #if defined(USE_GML) && GML_ENABLE_SIMLOOP
-				gmlProcessor.PumpAux(); 
+				gmlProcessor.PumpAux();
 #endif
 #if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
 #	if defined(USE_GML) && GML_ENABLE_SIMDRAW

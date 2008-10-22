@@ -65,8 +65,7 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 
 CFontTextureRenderer::~CFontTextureRenderer()
 {
-	if (buffer)
-		delete [] buffer;
+	delete [] buffer;
 }
 
 void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
@@ -141,6 +140,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 
 
 CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWidth, int texHeight)
+: color(NULL), outlineColor(NULL), glyphs(NULL)
 {
 	FT_Library library;
 	FT_Face face;
@@ -206,7 +206,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 		try {
 			texRenderer.AddGlyph(slot, texture_x, texture_y);
 		} catch (texture_size_exception&) {
-			FT_Done_Face(face);			// destructor does not run when re-throwing
+			FT_Done_Face(face);			// destructor does not run when throwing from constructor
 			FT_Done_FreeType(library);
 			delete [] glyphs;
 			throw;
@@ -240,7 +240,6 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 	fontTexture = texRenderer.CreateTexture();
 
 	outline = false;
-	color = outlineColor = 0;
 
 	defaultColor[0] = 1.0f;
 	defaultColor[1] = 1.0f;
@@ -271,7 +270,7 @@ CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, flo
 
 CglFont::~CglFont()
 {
-	glDeleteTextures(1,&fontTexture);
+	glDeleteTextures(1, &fontTexture);
 	delete[] glyphs;
 }
 

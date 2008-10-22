@@ -60,9 +60,8 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
-	if (disabled) {
-		return;
-	}
+	if (disabled) return;
+	if (!font) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
@@ -147,6 +146,8 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 
 void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 {
+	if (!font) return;
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
