@@ -109,6 +109,7 @@ void CFontTextureRenderer::BreakLine()
 
 GLuint CFontTextureRenderer::CreateTexture()
 {
+	glGetError();
 	GLuint tex;
 	glGenTextures(1, &tex);
 
@@ -270,6 +271,7 @@ CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, flo
 
 CglFont::~CglFont()
 {
+	glDeleteTextures(1,&fontTexture);
 	delete[] glyphs;
 }
 
