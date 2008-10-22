@@ -53,7 +53,7 @@ extern "C" {
 
 struct SInitEvent {
 	int team;
-	SAICallback* c_callback;
+	struct SAICallback* c_callback;
 };
 
 struct SReleaseEvent {
@@ -89,7 +89,7 @@ struct SUnitDamagedEvent {
 	int unit;
 	int attacker;
 	float damage;
-	SAIFloat3 dir;
+	struct SAIFloat3 dir;
 };
 
 struct SUnitDestroyedEvent {
@@ -129,7 +129,7 @@ struct SEnemyDamagedEvent {
 	int enemy;
 	int attacker;
 	float damage;
-	SAIFloat3 dir;
+	struct SAIFloat3 dir;
 };
 
 struct SEnemyDestroyedEvent {
@@ -151,7 +151,7 @@ struct SPlayerCommandEvent {
 };
 
 struct SSeismicPingEvent {
-	SAIFloat3 pos;
+	struct SAIFloat3 pos;
 	float strength;
 };
 

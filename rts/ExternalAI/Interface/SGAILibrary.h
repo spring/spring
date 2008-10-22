@@ -98,19 +98,85 @@ struct SGAILibrary {
 	unsigned int (CALLING_CONV *getOptions)(int teamId, int groupId,
 			struct Option options[], unsigned int maxOptions);
 
+	
 	// team and group instance functions
 	
 	/**
+	 * This function is called, when an AI instance shall be created for teamId.
+	 * It is called before the first call to handleEvent() for teamId.
+	 *
+	 * A typical series of events (engine point of view, conceptual):
+	 * [code]
+	 * MetalMaker.init(1)
+	 * MetalMaker.handleEvent(EVENT_INIT, InitEvent(1))
+	 * MexUpgrader.init(2)
+	 * MexUpgrader.handleEvent(EVENT_INIT, InitEvent(2))
+	 * MetalMaker.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+	 * MexUpgrader.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+	 * MetalMaker.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+	 * MexUpgrader.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+	 * ...
+	 * [/code]
+	 *
+	 * This method exists only for performance reasons, which come into play on
+	 * OO languages. For non-OO language AIs, this method can be ignored,
+	 * because using only EVENT_INIT will cause no performance decrease.
+	 * 
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @param	teamId	the teamId this library shall create an instance for
+	 * @param	groupId	the groupId this library shall create an instance for
+	 * @param	info	info about this AI (a technical nessecity for non C/C++ AIs)
+	 * @param	numInfoItems	now many items are stored in info
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *init)(int teamId, int groupId,
 			const struct InfoItem info[], unsigned int numInfoItems);
+	
 	/**
+	 * This function is called, when an AI instance shall be deleted.
+	 * It is called after the last call to handleEvent() for teamId.
+	 *
+	 * A typical series of events (engine point of view, conceptual):
+	 * [code]
+	 * ...
+	 * MetalMaker.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+	 * MexUpgrader.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+	 * MetalMaker.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+	 * MexUpgrader.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+	 * MetalMaker.handleEvent(EVENT_RELEASE, ReleaseEvent(1))
+	 * MetalMaker.release(1)
+	 * MexUpgrader.handleEvent(EVENT_RELEASE, ReleaseEvent(2))
+	 * MexUpgrader.release(2)
+	 * [/code]
+	 *
+	 * This method exists only for performance reasons, which come into play on
+	 * OO languages. For non-OO language AIs, this method can be ignored,
+	 * because using only EVENT_RELEASE will cause no performance decrease.
+	 * 
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
+	 *
+	 * @param	teamId	the teamId the library shall release the instance of
+	 * @param	groupId	the groupId the library shall release the instance of
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *release)(int teamId, int groupId);
+	
+	/**
+	 * Through this function, the AI receives events from the engine.
+	 * For details about events that may arrive here, see file AISEvents.h.
+	 *
+	 * @param	teamId	the team the AI belongs to which the event is addressed to
+	 * @param	groupId	the instance of the AI that the event is addressed to
+	 * @param	topic	unique identifyer of a message
+	 *					(see EVENT_* defines in AISEvents.h)
+	 * @param	data	an topic specific struct, which contains the data
+	 *					associatedwith the event
+	 *					(see S*Event structs in AISEvents.h)
+	 * @return	ok: 0, error: != 0
+	 */
 	int (CALLING_CONV *handleEvent)(int teamId, int groupId, int topic,
 			const void* data);
 };

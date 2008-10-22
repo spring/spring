@@ -22,13 +22,24 @@ class IGlobalAI;
 
 class CAI { 
 public:
-    CAI();
-    CAI(int team, IGlobalAI* ai);
-    virtual int handleEvent(int topic, const void* data);
+	CAI();
+	CAI(int team, IGlobalAI* ai);
+	
+	/**
+	 * Through this function, the AI receives events from the engine.
+	 * For details about events that may arrive here, see file AISEvents.h.
+	 *
+	 * @param	topic	unique identifyer of a message
+	 *					(see EVENT_* defines in AISEvents.h)
+	 * @param	data	an topic specific struct, which contains the data
+	 *					associatedwith the event
+	 *					(see S*Event structs in AISEvents.h)
+	 * @return	ok: 0, error: != 0
+	 */
+	virtual int handleEvent(int topic, const void* data);
 
-    int team;
-    IGlobalAI* ai;
+	int team;
+	IGlobalAI* ai;
 };
 
-
-#endif /*AI_H*/
+#endif	// AI_H

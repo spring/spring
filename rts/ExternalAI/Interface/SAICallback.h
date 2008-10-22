@@ -24,6 +24,8 @@ extern "C" {
     
 #include "aidefines.h"
 
+#include <stdbool.h>
+
 /**
  * Skirmish AI Callback function pointers.
  */

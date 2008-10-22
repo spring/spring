@@ -142,7 +142,7 @@ struct SSAILibrary {
 	 * @param	teamId	the teamId this library shall create an instance for
 	 * @param	info	info about this AI (a technical nessecity for non C/C++ AIs)
 	 * @param	numInfoItems	now many items are stored in info
-	 * @return	init ok: 0, on error: any other value then 0
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *init)(int teamId, const struct InfoItem info[],
 			unsigned int numInfoItems);
@@ -171,8 +171,8 @@ struct SSAILibrary {
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
-	 * @param	teamId	the teamId this library shall create an instance for
-	 * @return	init ok: 0, on error: any other value then 0
+	 * @param	teamId	the teamId the library shall release the instance of
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *release)(int teamId);
 	
@@ -191,7 +191,7 @@ struct SSAILibrary {
 	 * @param	data	an topic specific struct, which contains the data
 	 *					associatedwith the event
 	 *					(see S*Event structs in AISEvents.h)
-	 * @return	event was handled: 0, on error: any other value then 0
+	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *handleEvent)(int teamId, int topic, const void* data);
 };
