@@ -615,6 +615,10 @@ void SpringApp::LoadFonts()
 	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
 	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
 
+	if (font)
+		delete font;
+	if (smallFont)
+		delete smallFont;
 	try {
 		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
 		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
