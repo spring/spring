@@ -92,7 +92,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(int a = 0; a < numTeams; ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(a, pos))
+		if (!mapParser.GetStartPos(a, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
 	}
