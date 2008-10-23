@@ -33,8 +33,8 @@
 
 #include "StdAfx.h"
 #include "Platform/ConfigHandler.h"
-ConfigHandler* ConfigHandler::instance = NULL;
-std::string ConfigHandler::configSource;
+//ConfigHandler* ConfigHandler::instance = NULL;
+//std::string ConfigHandler::configSource;
 
 #ifdef USE_GML
 #include "gmlcls.h"
@@ -218,10 +218,10 @@ boost::recursive_mutex filemutex;
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),
 ClientState(0),
-CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL), 
-EFPstride(0), EFPpointer(NULL), 
-IPtype(0), IPstride(0), IPpointer(NULL), 
-NPtype(0), NPstride(0), NPpointer(NULL), 
+CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL),
+EFPstride(0), EFPpointer(NULL),
+IPtype(0), IPstride(0), IPpointer(NULL),
+NPtype(0), NPstride(0), NPpointer(NULL),
 TCPsize(0), TCPtype(0), TCPstride(0), TCPpointer(NULL),
 ArrayBuffer(0), ElementArrayBuffer(0), PixelPackBuffer(0),PixelUnpackBuffer(0)
 {
