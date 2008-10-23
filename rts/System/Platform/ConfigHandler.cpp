@@ -27,10 +27,10 @@ extern "C" void PreInitMac();
  * Default instantiation of ConfigHandler instance
  * is NULL.
  */
-ConfigHandler* ConfigHandler::instance = NULL;
+//ConfigHandler* ConfigHandler::instance = NULL;
 
 
-std::string ConfigHandler::configSource;
+//std::string ConfigHandler::configSource;
 
 
 /**

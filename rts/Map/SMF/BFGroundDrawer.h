@@ -60,9 +60,6 @@ protected:
 	bool waterDrawn;
 
 #ifdef USE_GML
-	int multiThreadDrawGround;
-	int multiThreadDrawGroundShadow;
-
 	volatile unsigned int mt_overrideVP;
 	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}

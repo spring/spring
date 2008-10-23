@@ -104,6 +104,10 @@ SpringApp::SpringApp ()
 	FSAA = false;
 
 	signal(SIGABRT, SigAbrtHandler);
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	extern volatile int multiThreadSim;
+	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
+#endif
 }
 
 /**
@@ -860,6 +864,45 @@ void SpringApp::CreateGameSetup()
 	}
 }
 
+
+
+
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+volatile int multiThreadSim;
+volatile int startsim;
+
+int SpringApp::Sim() {
+	while(keeprunning && !startsim)
+		SDL_Delay(100);
+//		boost::thread::yield();
+	while(keeprunning) {
+		if(!multiThreadSim) {
+//			startsim=0;
+			while(!multiThreadSim && keeprunning)
+				SDL_Delay(100);
+//			simBarrier.wait();
+//			startsim=1;
+		}
+		else if (activeController) {
+			GML_STDMUTEX_LOCK(sim);
+
+			gmlProcessor.ExpandAuxQueue();
+			if (!activeController->Update()) {
+				return 0;
+			}
+			gmlProcessor.GetQueue();
+		}
+//		while(!startsim)
+//			SDL_Delay(100);
+		boost::thread::yield();
+	}
+	return 1;
+}
+#endif
+
+
+
+
 /**
  * @return return code of activecontroller draw function
  *
@@ -871,9 +914,8 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
 	mouseInput->Update();
-#endif
+
 	int ret = 1;
 	if (activeController) {
 #if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
@@ -887,11 +929,19 @@ int SpringApp::Update ()
 			if(frame==gu->drawFrame) { // only draw if it was not done in parallel with sim
 #	endif
 #else
-				if(!gs->frameNum) {
-					mouseInput->Update();
+				if(multiThreadSim) {
+					if(!gs->frameNum) {
+						GML_STDMUTEX_LOCK(sim);
+
+						activeController->Update();
+						if(gs->frameNum)
+							startsim=1;
+					}
+				}
+				else {
+					GML_STDMUTEX_LOCK(sim);
+
 					activeController->Update();
-					if(gs->frameNum)
-						startsim=1;
 				}
 #endif
 				gu->drawFrame++;
@@ -919,27 +969,6 @@ int SpringApp::Update ()
 	return ret;
 }
 
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-int SpringApp::Sim() {
-	while(keeprunning && !startsim)
-		boost::thread::yield();
-	unsigned lastSim = SDL_GetTicks();
-	while(keeprunning) {
-		mouseInput->Update();
-		if (activeController) {
-			if (!activeController->Update()) {
-				return 0;
-			}
-			gmlProcessor.GetQueue();
-		}
-		unsigned lastSimDiff=SDL_GetTicks()-lastSim;
-		if(lastSimDiff<=10)
-			SDL_Delay(10-lastSimDiff);
-		lastSim = SDL_GetTicks();
-	}
-	return 1;
-}
-#endif
 
 /**
  * Tests SDL keystates and sets values
@@ -1002,6 +1031,8 @@ int SpringApp::Run (int argc, char *argv[])
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
+					GML_STDMUTEX_LOCK(sim);
+
 					screenWidth = event.resize.w;
 					screenHeight = event.resize.h;
 #ifndef WIN32
@@ -1015,6 +1046,8 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_VIDEOEXPOSE: {
+					GML_STDMUTEX_LOCK(sim);
+
 					// re-initialize the stencil
 					glClearStencil(0);
 					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();

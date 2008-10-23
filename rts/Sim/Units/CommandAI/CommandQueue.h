@@ -44,18 +44,27 @@ class CCommandQueue {
 
 		inline iterator insert(iterator pos, const Command& cmd);
 
-		inline void pop_back()  { GML_STDMUTEX_LOCK(cai); queue.pop_back(); }
-		inline void pop_front() { GML_STDMUTEX_LOCK(cai); queue.pop_front(); }
+		inline void pop_back()  { 
+			GML_STDMUTEX_LOCK(cai); // pop_back
+			queue.pop_back(); 
+		}
+		inline void pop_front() { 
+			GML_STDMUTEX_LOCK(cai); // pop_front
+			queue.pop_front(); 
+		}
 
 		inline iterator erase(iterator pos) {
-			GML_STDMUTEX_LOCK(cai); // Erase
+			GML_STDMUTEX_LOCK(cai); // erase
 			return queue.erase(pos);
 		}
 		inline iterator erase(iterator first, iterator last) {
-			GML_STDMUTEX_LOCK(cai); // Erase
+			GML_STDMUTEX_LOCK(cai); // erase
 			return queue.erase(first, last);
 		}
-		inline void clear() { GML_STDMUTEX_LOCK(cai); queue.clear(); }
+		inline void clear() { 
+			GML_STDMUTEX_LOCK(cai); // clear 
+			queue.clear(); 
+		}
 
 		inline iterator       end()         { return queue.end(); }
 		inline const_iterator end()   const { return queue.end(); }

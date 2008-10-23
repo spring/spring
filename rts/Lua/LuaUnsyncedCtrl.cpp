@@ -333,7 +333,8 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_STDMUTEX_LOCK(cai);
+	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
+
 	const CUnitSet& units = drawCmdQueueUnits;
 	CUnitSet::const_iterator ui;
 	for (ui = units.begin(); ui != units.end(); ++ui) {
@@ -979,6 +980,8 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
+
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
 	}
@@ -1590,6 +1593,8 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // SetUnitGroup
+
 	if (!CheckModUICtrl()) {
 		return 0;
 	}

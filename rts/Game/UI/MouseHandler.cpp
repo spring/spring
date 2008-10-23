@@ -287,6 +287,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
+	GML_RECMUTEX_LOCK(sel); // MouseRelease
+
 	if (button > NUM_BUTTONS)
 		return;
 
@@ -571,7 +573,9 @@ void CMouseHandler::WarpMouse(int x, int y)
 	}
 }
 
-
+// CALLINFO:
+// LuaUnsyncedRead::GetCurrentTooltip
+// CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
 	std::string s;
@@ -591,7 +595,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
+	GML_RECMUTEX_LOCK(sel); // anti deadlock
 	GML_RECMUTEX_LOCK(quad); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
+
 	const float range = (gu->viewRange * 1.4f);
 	CUnit* unit = NULL;
 //	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip

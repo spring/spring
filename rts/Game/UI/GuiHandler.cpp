@@ -451,7 +451,7 @@ void CGuiHandler::AppendPrevAndNext(std::vector<CommandDescription>& cmds)
 
 int CGuiHandler::FindInCommandPage()
 {
-	GML_RECMUTEX_LOCK(gui); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> FindInCommandPage
+//	GML_RECMUTEX_LOCK(gui); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> FindInCommandPage. Not needed, Draw thread.
 
 	if ((inCommand < 0) || (inCommand >= commands.size())) {
 		return -1;
@@ -469,7 +469,7 @@ int CGuiHandler::FindInCommandPage()
 void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
                                   bool defaultCommand, bool samePage)
 {
-	GML_RECMUTEX_LOCK(gui); // updates inCommand, CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
+//	GML_RECMUTEX_LOCK(gui); // updates inCommand, CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc. Not needed, protected via other func.
 
 	for (int a = 0; a < commands.size(); ++a) {
 		if (commands[a].id == cmdDesc.id) {
@@ -966,6 +966,7 @@ void CGuiHandler::Update()
 
 void CGuiHandler::SetCursorIcon() const
 {
+//	GML_RECMUTEX_LOCK(gui); // SetCursorIcon. Not needed, protected via Update
 	string newCursor = "cursornormal";
 	mouse->cursorScale = 1.0f;
 
@@ -1081,6 +1082,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
+//	GML_RECMUTEX_LOCK(gui); // not needed, draw thread + read only
 	int iconCmd = -1;
 
 	if (activeMousePress) {
@@ -1398,6 +1400,8 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 
 void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
 {
+	GML_RECMUTEX_LOCK(gui); // LuaUnsyncedCtrl::SendCommands --> RunCustomCommands
+
 	static int depth = 0;
 	if (depth > 8) {
 		return; // recursion protection
@@ -1513,6 +1517,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		return -1;
 	}
 
+	GML_RECMUTEX_LOCK(sel); // anti deadlock
 	GML_RECMUTEX_LOCK(quad); // GetDefaultCommand
 	CUnit* unit = NULL;
 //	GML_RECMUTEX_LOCK(unit); // GetDefaultCommand
@@ -1560,6 +1565,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 
 bool CGuiHandler::ProcessLocalActions(const Action& action)
 {
+//	GML_RECMUTEX_LOCK(gui); // not needed, protected via other functions
 	// do not process these actions if the control panel is not visible
 	if (iconsCount <= 0) {
 		return false;
@@ -1817,7 +1823,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 bool CGuiHandler::SetActiveCommand(const Action& action,
                                    const CKeySet& ks, int actionIndex)
 {
-	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand
+	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand, called by LuaUnsyncedCtrl
 
 	if (ProcessLocalActions(action)) {
 		return true;
@@ -2092,7 +2098,7 @@ bool CGuiHandler::IsAbove(int x, int y)
 
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
-	GML_RECMUTEX_LOCK(gui); // GetTooltip
+	GML_RECMUTEX_LOCK(gui); // LuaUnsyncedRead::GetCurrentTooltip --> CMouseHandler::GetCurrentTooltip --> GetTooltip
 
 	std::string s;
 
@@ -2119,11 +2125,13 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 }
 
 // CALLINFO:
-// tooltipconsole::draw --> mousehandler::getcurrenttooltip --> GetBuildTooltip
-// tooltipconsole::draw --> mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
+// luaunsyncedread::getcurrenttooltip --> mousehandler::getcurrenttooltip
+// tooltipconsole::draw --> mousehandler::getcurrenttooltip
+// mousehandler::getcurrenttooltip --> GetBuildTooltip
+// mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
 std::string CGuiHandler::GetBuildTooltip() const
 {
-	GML_RECMUTEX_LOCK(gui); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> GetBuildTooltip
+	GML_RECMUTEX_LOCK(gui); // luaunsyncedread::getcurrenttooltip --> mousehandler::getcurrenttooltip --> GetBuildTooltip
 
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
@@ -2133,7 +2141,7 @@ std::string CGuiHandler::GetBuildTooltip() const
 }
 
 
-Command CGuiHandler::GetOrderPreview(void)
+Command CGuiHandler::GetOrderPreview(void) // Called from GroupAICallback
 {
 	return GetCommand(mouse->lastx, mouse->lasty, -1, true);
 }
@@ -2426,9 +2434,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 
 static bool WouldCancelAnyQueued(const BuildInfo& b) {
+	GML_RECMUTEX_LOCK(sel); //drawmapstuff -> getbuildpos --> fillrowofbuildpos -> wouldcancelanyqueued
+
 	Command c;
 	b.FillCmd(c);
-	GML_RECMUTEX_LOCK(sel); //drawmapstuff -> getbuildpos --> fillrowofbuildpos -> wouldcancelanyqueued
 	CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
@@ -2462,7 +2471,9 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	if(GetQueueKeystate() && keys[SDLK_LCTRL])
 	{
 		CUnit* unit=0;
-		GML_RECMUTEX_LOCK(unit); // GetBuildCommand accesses activeunits. drawmapstuff -> getbuildpos
+
+		GML_RECMUTEX_LOCK(quad); //unit); // GetBuildCommand accesses activeunits. drawmapstuff -> getbuildpos
+
 		helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
 		if(unit){
 			other.def = unit->unitDef;
@@ -2562,7 +2573,7 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
 
 void CGuiHandler::Draw()
 {
-	GML_RECMUTEX_LOCK(gui); // accesses iconsCount. Draw
+//	GML_RECMUTEX_LOCK(gui); // accesses iconsCount. Draw
 //	GML_RECMUTEX_LOCK(quad); // update accesses setcursoricon->getdefaultcommand->guitraceray which accesses the quadfield
 
 	Update();
@@ -3232,7 +3243,8 @@ void CGuiHandler::DrawSelectionInfo()
 
 void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 {
-	GML_RECMUTEX_LOCK(gui); // DrawNumberInput
+//	GML_RECMUTEX_LOCK(gui); // DrawNumberInput
+
 	// draw the value for CMDTYPE_NUMBER commands
 	if ((inCommand >= 0) && (inCommand < commands.size())) {
 		const CommandDescription& cd = commands[inCommand];
@@ -3456,7 +3468,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 
 void CGuiHandler::DrawMapStuff(int onMinimap)
 {
-	GML_RECMUTEX_LOCK(gui); // DrawMapStuff
+//	GML_RECMUTEX_LOCK(gui); // DrawMapStuff
 
 	if (!onMinimap) {
 		glEnable(GL_DEPTH_TEST);
@@ -3804,7 +3816,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 					std::vector<Command> cv;
 					if (GetQueueKeystate()) {
+
 						GML_RECMUTEX_LOCK(sel); // DrawMapStuff
+
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
@@ -3839,7 +3853,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
 	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+
 		GML_RECMUTEX_LOCK(sel); // DrawMapStuff
+
 		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
 			CUnit* unit = *si;
 			if (unit == pointedAt) {
@@ -3923,12 +3939,14 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 void CGuiHandler::DrawCentroidCursor()
 {
 	GML_RECMUTEX_LOCK(sel); // CMouseHandler::DrawCursor --> DrawCentroidCursor
+
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 	if (selUnits.size() < 2) {
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(gui); // DrawCentroidCursor
+//	GML_RECMUTEX_LOCK(gui); // DrawCentroidCursor. Not needed, Draw thread.
+
 	int cmd = -1;
 	if ((inCommand >= 0) && (inCommand < commands.size())) {
 		cmd = commands[inCommand].id;

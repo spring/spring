@@ -249,6 +249,8 @@ void CAirMoveType::Update(void)
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
 	#ifdef DEBUG_AIRCRAFT
+			GML_RECMUTEX_LOCK(sel); // Update
+
 			if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
 				logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
 			}
@@ -437,6 +439,8 @@ void CAirMoveType::SlowUpdate(void)
 void CAirMoveType::UpdateManeuver(void)
 {
 #ifdef DEBUG_AIRCRAFT
+	GML_RECMUTEX_LOCK(sel); // UpdateManuever
+
 	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
 		logOutput.Print("UpdataMan %i %i", maneuver, maneuverSubState);
 	}
@@ -658,6 +662,8 @@ void CAirMoveType::UpdateFighterAttack(void)
 			elevator = minPitch * upside;
 	}
 #ifdef DEBUG_AIRCRAFT
+	GML_RECMUTEX_LOCK(sel); // UpdateFighterAttack
+
 	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()){
 		logOutput.Print("FAttack %.1f %.1f %.2f", pos.y - gHeight, goalLength, goalDir.dot(frontdir));
 	}
@@ -1084,6 +1090,8 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	owner->UpdateMidPos();
 
 #ifdef DEBUG_AIRCRAFT
+	GML_RECMUTEX_LOCK(sel); // UpdateAirPhysics
+
 	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
 		logOutput.Print("UpdataAP %.1f %.1f %.1f %.1f", speedf, pos.x, pos.y, pos.z);
 		// logOutput.Print("Rudders %.1f %.1f %.1f %.1f", rudder, aileron, elevator, engine);
