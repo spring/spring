@@ -27,11 +27,10 @@ extern "C" void PreInitMac();
  * Default instantiation of ConfigHandler instance
  * is NULL.
  */
+#ifndef USE_GML // GML calls GetInstance() from a global scope and needs these to be initialized in gml.cpp instead to avoid crash
 ConfigHandler* ConfigHandler::instance = NULL;
-
-
 std::string ConfigHandler::configSource;
-
+#endif
 
 /**
  * Returns reference to the current platform's config class.

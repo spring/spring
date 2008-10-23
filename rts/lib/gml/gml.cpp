@@ -32,13 +32,13 @@
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
 #include "StdAfx.h"
-#include "Platform/ConfigHandler.h"
-//ConfigHandler* ConfigHandler::instance = NULL;
-//std::string ConfigHandler::configSource;
 
 #ifdef USE_GML
 #include "gmlcls.h"
 #include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
+ConfigHandler* ConfigHandler::instance = NULL;
+std::string ConfigHandler::configSource;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
