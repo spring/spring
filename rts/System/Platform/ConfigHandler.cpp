@@ -2,7 +2,7 @@
  * @file ConfigHandler.cpp
  * @brief config implementation
  * @author Christopher Han <xiphux@gmail.com>
- * 
+ *
  * Implementation of config structure class
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
@@ -27,10 +27,10 @@ extern "C" void PreInitMac();
  * Default instantiation of ConfigHandler instance
  * is NULL.
  */
-//ConfigHandler* ConfigHandler::instance = NULL;
+ConfigHandler* ConfigHandler::instance = NULL;
 
 
-//std::string ConfigHandler::configSource;
+std::string ConfigHandler::configSource;
 
 
 /**
@@ -86,7 +86,7 @@ float ConfigHandler::GetFloat(const std::string& name, const float def)
 {
 	std::ostringstream buf1;
 	buf1 << def;
-	
+
 	std::istringstream buffer(GetString(name, buf1.str()));
 	float val;
 	buffer >> val;
