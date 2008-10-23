@@ -11,6 +11,7 @@
 
 #include <set>
 #include <map>
+#include "LogOutput.h"
 
 #define GML_ENABLE_DEBUG 0
 
@@ -324,10 +325,27 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 
 #define GML_SYNC() gmlSync(qd)
 
-#define GML_FUN(name,ftype) EXTERN const int gml##name##Enum=__LINE__-__FIRSTLINE__;\
+#ifndef GML_MAKENAME
+#	define GML_MAKENAME(name)
+#endif
+#define GML_FUN(name,ftype) EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
+	GML_MAKENAME(name)\
 	EXTERN inline ftype gml##name
 
-#define GML_RETFUN(name,ftr) EXTERN inline ftr gml##name
+#ifdef _MSC_VER
+#define GML_FUNCTION __FUNCTION__
+#else
+#define GML_FUNCTION __func__
+#endif
+
+#if GML_ENABLE_ITEMSERVER_CHECK
+#define GML_ITEMSERVER_CHECK()\
+    if(gmlThreadNumber==gmlThreadCount)\
+        logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
+#else
+#define GML_ITEMSERVER_CHECK()
+#endif
+//#define GML_RETFUN(name,ftr) EXTERN inline ftr gml##name
 
 #define GML_MAKEFUN0(name) struct gml##name##Data {\
 	GML_MAKEVAR()\

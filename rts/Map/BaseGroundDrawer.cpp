@@ -235,7 +235,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		switch(drawMode) {
 			case drawPath: {
-				GML_RECMUTEX_LOCK(gui); // UpdateExtraTexture
+
+//				GML_RECMUTEX_LOCK(gui); // UpdateExtraTexture. Not needed in draw thread
+
 				if (guihandler->inCommand > 0 && guihandler->inCommand < guihandler->commands.size() &&
 						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
 					// use the current build order
@@ -267,7 +269,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				else {
 					// use the first selected unit
+
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+
 					if (selectedUnits.selectedUnits.empty()) {
 						return true;
 					}

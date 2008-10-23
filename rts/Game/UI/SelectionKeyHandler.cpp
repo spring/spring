@@ -140,6 +140,8 @@ std::string CSelectionKeyHandler::ReadDelimiter(std::string& s)
 
 void CSelectionKeyHandler::DoSelection(std::string selectString)
 {
+	GML_RECMUTEX_LOCK(sel); // DoSelection
+
 	std::list<CUnit*> selection;
 
 //	guicontroller->AddText(selectString.c_str());

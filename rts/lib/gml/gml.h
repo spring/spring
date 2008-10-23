@@ -74,12 +74,15 @@ extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectAR
 extern void gmlInit();
 
 EXTERN inline GLhandleARB gmlCreateProgram() {
+	GML_ITEMSERVER_CHECK();
 	return gmlProgramServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateProgramObjectARB() {
+	GML_ITEMSERVER_CHECK();
 	return gmlProgramObjectARBServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
+	GML_ITEMSERVER_CHECK();
 	if(type==GL_VERTEX_SHADER)
 		return gmlShaderServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER)
@@ -89,6 +92,7 @@ EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 	return 0;
 }
 EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
+	GML_ITEMSERVER_CHECK();
 	if(type==GL_VERTEX_SHADER_ARB)
 		return gmlShaderObjectARBServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER_ARB)
@@ -98,36 +102,46 @@ EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 	return 0;
 }
 EXTERN inline GLUquadric *gmluNewQuadric() {
+	GML_ITEMSERVER_CHECK();
 	return gmlQuadricServer.GetItems();
 }
 
 
 EXTERN inline void gmlGenTextures(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlTextureServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenBuffersARB(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlBufferARBServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenFencesNV(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlFencesNVServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenProgramsARB(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlProgramsARBServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenRenderbuffersEXT(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlRenderbuffersEXTServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenFramebuffersEXT(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlFramebuffersEXTServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenQueries(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlQueryServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenBuffers(GLsizei n, GLuint *items) {
+	GML_ITEMSERVER_CHECK();
 	gmlBufferServer.GetItems(n, items);
 }
 
 EXTERN inline GLuint gmlGenLists(GLsizei items) {
+	GML_ITEMSERVER_CHECK();
 	return gmlListServer.GetItems(items);
 }
 
@@ -148,16 +162,20 @@ extern boost::mutex mapmutex;
 extern boost::mutex groupmutex;
 extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;
+extern boost::mutex posmutex;
+extern boost::mutex rendermutex;
+extern boost::mutex simmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
 extern boost::recursive_mutex quadmutex;
 extern boost::recursive_mutex selmutex;
-extern boost::recursive_mutex luamutex;
+extern boost::recursive_mutex &luamutex;
 extern boost::recursive_mutex featmutex;
 extern boost::recursive_mutex projmutex;
 extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex guimutex;
+extern boost::recursive_mutex filemutex;
 
 #define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)

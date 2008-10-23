@@ -71,6 +71,8 @@ public:
 	unsigned int fps;
 	unsigned int thisFps;
 
+	int lastSimFrame;
+
 	time_t fpstimer, starttime;
 	unsigned lastUpdate;
 	unsigned lastMoveUpdate;
@@ -181,7 +183,7 @@ protected:
 
 private:
 	void ClientReadNet();
-	void UpdateUI();
+	void UpdateUI(bool cam);
 	bool DrawWorld();
 	
 	void SimFrame();

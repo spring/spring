@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="rts"
 	ProjectGUID="{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
 	RootNamespace="rts"
@@ -419,7 +419,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML;USE_GML_SIM"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;&quot;../../../vclibs/freetype-2.1.10/include&quot;;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;&quot;../../../vclibs/SDL-1.2.9/include&quot;;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;USE_GML"
+				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;USE_GML;USE_GML_SIM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

@@ -911,7 +911,8 @@ uint32_t CPathEstimator::GetPathChecksum()
 
 void CPathEstimator::Draw(void)
 {
-//	GML_RECMUTEX_LOCK(sel); // Draw
+	GML_RECMUTEX_LOCK(sel); // Draw
+
 	MoveData* md = moveinfo->GetMoveDataFromName("TANKSH2");
 	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
 		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;

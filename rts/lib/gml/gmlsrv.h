@@ -407,6 +407,12 @@ public:
 		}
 	}
 
+	void ExpandAuxQueue() {
+		gmlQueue *qd=&gmlQueues[gmlThreadNumber];
+		while(qd->WriteSize<qd->Write+GML_AUX_PREALLOC)
+			qd->WaitRealloc();
+	}
+
 };
 
 #endif // USE_GML

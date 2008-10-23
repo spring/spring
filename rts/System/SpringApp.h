@@ -37,7 +37,6 @@ protected:
 	int Sim (); 					//!< Simulation  loop
 	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
 	volatile int keeprunning;
-	volatile int startsim;
 #endif
 	void UpdateSDLKeys (); 				//!< Update SDL key array
 	bool GetDisplayGeometry();

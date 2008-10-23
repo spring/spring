@@ -160,7 +160,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
 #endif
 
 extern Uint8 *keys;
@@ -249,6 +249,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	fps = 0;
 	thisFps = 0;
 	totalGameTime = 0;
+
+	lastSimFrame=-1;
 
 	creatingVideo = false;
 
@@ -840,7 +842,8 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->KeyPressed(k, isRepeat)) {
+		CInputReceiver* recv=*ri;
+		if (recv && recv->KeyPressed(k, isRepeat)) {
 			return 0;
 		}
 	}
@@ -869,7 +872,8 @@ int CGame::KeyReleased(unsigned short k)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->KeyReleased(k)) {
+		CInputReceiver* recv=*ri;
+		if (recv && recv->KeyReleased(k)) {
 			return 0;
 		}
 	}
@@ -1033,6 +1037,8 @@ bool CGame::ActionPressed(const Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewselection") {
+		GML_RECMUTEX_LOCK(sel); // ActionPressed
+
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
 			float3 pos(0.0f, 0.0f, 0.0f);
@@ -1321,6 +1327,60 @@ bool CGame::ActionPressed(const Action& action,
 			sky->dynamicSky = !!atoi(action.extra.c_str());
 		}
 	}
+#ifdef USE_GML
+	else if (cmd == "multithreaddrawground") {
+		if (action.extra.empty()) {
+			gd->multiThreadDrawGround = !gd->multiThreadDrawGround;
+		} else {
+			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawgroundshadow") {
+		if (action.extra.empty()) {
+			gd->multiThreadDrawGroundShadow = !gd->multiThreadDrawGroundShadow;
+		} else {
+			gd->multiThreadDrawGroundShadow = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawunit") {
+		if (action.extra.empty()) {
+			unitDrawer->multiThreadDrawUnit = !unitDrawer->multiThreadDrawUnit;
+		} else {
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawunitshadow") {
+		if (action.extra.empty()) {
+			unitDrawer->multiThreadDrawUnitShadow = !unitDrawer->multiThreadDrawUnitShadow;
+		} else {
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithread") {
+		if (action.extra.empty()) {
+			int mtenabled=gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+			gd->multiThreadDrawGround = !mtenabled;
+			unitDrawer->multiThreadDrawUnit = !mtenabled;
+			unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
+		} else {
+			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+		}
+	}
+#endif
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	else if (cmd == "multithreadsim") {
+		extern volatile int multiThreadSim;
+		extern volatile int startsim;
+		if (action.extra.empty()) {
+			multiThreadSim = !multiThreadSim;
+		} else {
+			multiThreadSim = !!atoi(action.extra.c_str());
+		}
+		startsim=1;
+	}
+#endif
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
 			CGameInfo::Enable();
@@ -2399,8 +2459,6 @@ bool CGame::Update()
 {
 	good_fpu_control_registers("CGame::Update");
 
-	mouse->EmptyMsgQueUpdate();
-
 	unsigned timeNow = SDL_GetTicks();
 
 	const unsigned difTime = (timeNow - lastModGameTimeMeasure);
@@ -2439,12 +2497,10 @@ bool CGame::Update()
 		tracefile.DeleteInterval();
 		tracefile.NewInterval();
 #endif
-		CInputReceiver::CollectGarbage();
 	}
 
-	if (!skipping) {
-		UpdateUI();
-	}
+	if (!skipping)
+		UpdateUI(false);
 
 	net->Update();
 
@@ -2644,6 +2700,10 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
+	mouse->EmptyMsgQueUpdate();
+	if(!skipping)
+		UpdateUI(true);
+
 	thisFps++;
 
 	ASSERT_UNSYNCED_MODE;
@@ -2750,6 +2810,11 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Water");
+		if(lastSimFrame!=gs->frameNum) {
+			CInputReceiver::CollectGarbage();
+			water->Update();
+			lastSimFrame=gs->frameNum;
+		}
 		water->UpdateWater(this);
 	}
 
@@ -3152,7 +3217,6 @@ void CGame::SimFrame() {
 			}
 		}
 #endif
-		water->Update();
 	}
 
 	ENTER_SYNCED;
@@ -4027,13 +4091,17 @@ void CGame::ClientReadNet()
 	return;
 }
 
+#ifdef DIRECT_CONTROL_ALLOWED
+float3 lastDCpos;
+float3 *plastDCpos=NULL;
+#endif
 
-void CGame::UpdateUI()
+void CGame::UpdateUI(bool cam)
 {
 	ASSERT_UNSYNCED_MODE;
 	//move camera if arrow keys pressed
 #ifdef DIRECT_CONTROL_ALLOWED
-	if (gu->directControl) {
+	if (gu->directControl && !cam) {
 		CUnit* owner = gu->directControl;
 
 		std::vector<int> args;
@@ -4041,12 +4109,22 @@ void CGame::UpdateUI()
 		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
 		float3 relPos = owner->localmodel->GetPiecePos(args[0]);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
-		                        + owner->updir    * relPos.y
-		                        + owner->rightdir * relPos.x;
+			+ owner->updir    * relPos.y
+			+ owner->rightdir * relPos.x;
 		pos += UpVector * 7;
-
-		camHandler->GetCurrentController().SetPos(pos);
-	} else
+		//camHandler->GetCurrentController().SetPos(pos); // in case of multithreading, avoid setting the cam from sim thread
+		GML_STDMUTEX_LOCK(pos); // UpdateUI
+		lastDCpos=pos;
+		plastDCpos=&lastDCpos;
+	}
+	if (plastDCpos && cam) {
+		GML_STDMUTEX_LOCK(pos); // UpdateUI
+		if(plastDCpos) {
+			camHandler->GetCurrentController().SetPos(*plastDCpos);
+			plastDCpos=NULL;
+		}
+	}
+	if (!gu->directControl)
 #endif
 	{
 		float cameraSpeed=1;
@@ -4076,73 +4154,82 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
+		if (!cam && disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
-		movement.z = cameraSpeed;
-		camHandler->GetCurrentController().KeyMove(movement);
-
+		if(cam) {
+			movement.z = cameraSpeed;
+			camHandler->GetCurrentController().KeyMove(movement);
+		}
 		movement=float3(0,0,0);
 
 		if (( fullscreen && fullscreenEdgeMove) ||
 		    (!fullscreen && windowedEdgeMove)) {
 			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
+			disableTracker = false;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lasty > (gu->viewSizeY - 2)){
 				movement.y-=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lastx > (screenW - 2)){
 				movement.x+=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lastx < 2){
 				movement.x-=gu->lastFrameTime;
+				disableTracker = true;
+			}
+			if (!cam && disableTracker) {
 				unitTracker.Disable();
 			}
 		}
-		movement.z=cameraSpeed;
-		camHandler->GetCurrentController().ScreenEdgeMove(movement);
-
-		if(camMove[4])
-			camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
-		if(camMove[5])
-			camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+		if(cam) {
+			movement.z=cameraSpeed;
+			camHandler->GetCurrentController().ScreenEdgeMove(movement);
+			if(camMove[4])
+				camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			if(camMove[5])
+				camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+		}
 	}
 
-	camHandler->GetCurrentController().Update();
+	if(cam)
+		camHandler->GetCurrentController().Update();
 
-	if (chatting && !userWriting) {
-		consoleHistory->AddLine(userInput);
-		string msg = userInput;
-		string pfx = "";
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-			pfx = userInput.substr(0, 2);
-			msg = userInput.substr(2);
+	if(!cam) {
+		if (chatting && !userWriting) {
+			consoleHistory->AddLine(userInput);
+			string msg = userInput;
+			string pfx = "";
+			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+				pfx = userInput.substr(0, 2);
+				msg = userInput.substr(2);
+			}
+			if ((msg[0] == '/') && (msg[1] == '/')) {
+				msg = msg.substr(1);
+			}
+			userInput = pfx + msg;
+			SendNetChat(userInput);
+			chatting=false;
+			userInput="";
+			writingPos = 0;
 		}
-		if ((msg[0] == '/') && (msg[1] == '/')) {
-			msg = msg.substr(1);
-		}
-		userInput = pfx + msg;
-		SendNetChat(userInput);
-		chatting=false;
-		userInput="";
-		writingPos = 0;
-	}
 
-	if (inMapDrawer->wantLabel && !userWriting) {
-		if (userInput.size() > 200) {	//avoid troubles with to long lines
-			userInput = userInput.substr(0, 200);
-			writingPos = (int)userInput.length();
+		if (inMapDrawer->wantLabel && !userWriting) {
+			if (userInput.size() > 200) {	//avoid troubles with to long lines
+				userInput = userInput.substr(0, 200);
+				writingPos = (int)userInput.length();
+			}
+			inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
+			inMapDrawer->wantLabel = false;
+			userInput = "";
+			writingPos = 0;
+			ignoreChar = 0;
 		}
-		inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
-		inMapDrawer->wantLabel = false;
-		userInput = "";
-		writingPos = 0;
-		ignoreChar = 0;
 	}
 }
 
@@ -4693,6 +4780,8 @@ void CGame::SelectCycle(const string& command)
 {
 	static set<int> unitIDs;
 	static int lastID = -1;
+
+	GML_RECMUTEX_LOCK(sel); // SelectCycle
 
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 

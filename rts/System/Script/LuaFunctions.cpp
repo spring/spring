@@ -168,6 +168,8 @@ namespace luafunctions
 
 	void SendSelectedUnits()
 	{
+		GML_RECMUTEX_LOCK(sel); // SendSelectedUnits
+
 		if (selectedUnits.selectionChanged)
 			selectedUnits.SendSelection();
 	}

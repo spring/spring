@@ -499,6 +499,8 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // IsUnitSelected
+
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
@@ -729,6 +731,8 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
+
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
@@ -747,6 +751,8 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted
+
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
@@ -780,6 +786,8 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts
+
 	CheckNoArgs(L, __FUNCTION__);
 
 	// tally the types
@@ -1235,6 +1243,8 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCommand
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1257,6 +1267,8 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1309,6 +1321,8 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1328,6 +1342,8 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1349,6 +1365,8 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1659,6 +1677,8 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupList
+
 	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandlers[gu->myTeam] == NULL) {
 		return 0;
@@ -1691,6 +1711,8 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupAIList
+
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
@@ -1711,6 +1733,8 @@ int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupAIName(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupAIName
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to GetGroupAIName(groupID)");
@@ -1757,6 +1781,8 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnits
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1782,6 +1808,8 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsSorted
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1821,6 +1849,8 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsCounts
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1857,6 +1887,8 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsCount
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||

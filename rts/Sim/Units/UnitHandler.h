@@ -61,6 +61,9 @@ public:
 
 	std::vector<CUnit*> toBeRemoved;			//units that will be removed at start of next update
 
+	std::set<CUnit*> toBeAdded;			//rendering units that will be added at start of next draw
+	std::list<CUnit*> renderUnits;				//units being rendered
+
 	std::list<CUnit*>::iterator slowUpdateIterator;
 
 	std::list<CBuilderCAI*> builderCAIs;

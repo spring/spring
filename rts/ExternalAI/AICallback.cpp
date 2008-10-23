@@ -988,7 +988,7 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(unitName);
 	if(!tdu.unitdef){
-		logOutput.Print("Uknown unit in CAICallback::DrawUnit %s",unitName);
+		logOutput.Print("Unknown unit in CAICallback::DrawUnit %s",unitName);
 		return;
 	}
 	tdu.pos=pos;
@@ -1528,6 +1528,7 @@ int CAICallback::GetSelectedUnits(int *unitIds)
 	verify();
 	int a = 0;
 
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnit
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == gs->AllyTeam(team)) {

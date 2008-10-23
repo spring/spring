@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GlobalSynced.h"
 
 #include <assert.h>

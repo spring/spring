@@ -224,6 +224,12 @@ void CUnitDrawer::Update(void)
 	while (!tempTransparentDrawUnits.empty() && tempTransparentDrawUnits.begin()->first <= gs->frameNum) {
 		tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
 	}
+
+	GML_STDMUTEX_LOCK(render);
+
+	for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
+		uh->renderUnits.push_back(*ui);
+	uh->toBeAdded.clear();
 }
 
 
@@ -418,11 +424,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	#ifdef DIRECT_CONTROL_ALLOWED
 		mt_excludeUnit=excludeUnit;
 	#endif
-		gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->activeUnits,uh->activeUnits.size(),50,100,TRUE);
+		gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
 	}
 	else {
 #endif
-		for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnit(unit,drawReflection,drawRefraction,
 		#ifdef DIRECT_CONTROL_ALLOWED
@@ -693,12 +699,12 @@ void CUnitDrawer::DrawShadowPass(void)
 #ifdef USE_GML
 	if(multiThreadDrawUnitShadow) {
 		gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
-		  &uh->activeUnits, uh->activeUnits.size(),50,100,TRUE);
+		  &uh->renderUnits, uh->renderUnits.size(),50,100,TRUE);
 	}
 	else {
 #endif
 		std::list<CUnit*>::iterator usi;
-		for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
+		for (usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnitShadow(unit);
 		}

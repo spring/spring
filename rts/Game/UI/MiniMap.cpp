@@ -662,6 +662,8 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
+	GML_RECMUTEX_LOCK(sel); // SelectUnits
+
 	if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
 		selectedUnits.ClearSelected();
 	}
@@ -913,7 +915,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_RECMUTEX_LOCK(quad); //unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
@@ -1044,7 +1046,7 @@ void CMiniMap::DrawForReal()
 	GML_RECMUTEX_LOCK(unit); // DrawForReal
 	// draw the units
 	std::list<CUnit*>::iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
+	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
 //	GML_RECMUTEX_LOCK(quad);  // getselectunit accesses quadfield

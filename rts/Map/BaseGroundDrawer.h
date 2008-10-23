@@ -24,6 +24,11 @@ public:
 	virtual void IncreaseDetail()=0;
 	virtual void DecreaseDetail()=0;
 
+#ifdef USE_GML
+	int multiThreadDrawGround;
+	int multiThreadDrawGroundShadow;
+#endif
+
 	enum DrawMode
 	{
 		drawNormal,
