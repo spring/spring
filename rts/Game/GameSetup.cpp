@@ -92,7 +92,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(int a = 0; a < numTeams; ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(a, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
 	}
@@ -109,9 +109,6 @@ void CGameSetup::LoadStartPositions()
 {
 	TdfParser file;
 	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
-	for (int a = 0; a < numTeams; ++a) {
-		teamStartingData[a].teamStartNum = a;
-	}
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
@@ -123,6 +120,12 @@ void CGameSetup::LoadStartPositions()
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
 		for (int i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
+	}
+	else
+	{
+		for (int a = 0; a < numTeams; ++a) {
+		teamStartingData[a].teamStartNum = a;
+		}
 	}
 
 	LoadStartPositionsFromMap();
