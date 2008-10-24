@@ -512,21 +512,21 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
-	if(targetDied){
+	if (targetDied){
 		targetDied = false;
 		inCommand = false;
 	}
 	const float3 pos(c.params[0], c.params[1], c.params[2]);
 	const float radius = c.params[3];
-	if(inCommand){
-		if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
+	if (inCommand) {
+		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
-		if(orderTarget && orderTarget->pos.distance2D(pos) > radius){
+		if (orderTarget && orderTarget->pos.distance2D(pos) > radius) {
 			inCommand = false;
 			DeleteDeathDependence(orderTarget);
 			orderTarget = 0;
 		}
-		if (owner->commandShotCount > 0) {
+		if (owner->commandShotCount < 0) {
 			if ((c.params.size() == 4) && (commandQue.size() > 1)) {
 				owner->AttackUnit(0, true);
 				FinishCommand();
@@ -541,11 +541,13 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 		}
 	} else {
 		owner->commandShotCount = -1;
-		if(myPlane->aircraftState != AAirMoveType::AIRCRAFT_LANDED){
+
+		if (myPlane->aircraftState != AAirMoveType::AIRCRAFT_LANDED) {
 			inCommand = true;
 			std::vector<int> eu;
 			helper->GetEnemyUnits(pos, radius, owner->allyteam, eu);
-			if(eu.empty()){
+
+			if (eu.empty()) {
 				float3 attackPos = pos + gs->randVector() * radius;
 				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
 				owner->AttackGround(attackPos, false);
