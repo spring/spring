@@ -122,7 +122,6 @@ class LuaUnsyncedCtrl {
 		static int MarkerErasePosition(lua_State* L);
 
 		static int SetDrawSelectionInfo(lua_State* L);
-		static int GetDrawSelectionInfo(lua_State* L);
 };
 
 

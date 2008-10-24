@@ -310,8 +310,8 @@ void CTAAirMoveType::UpdateTakeoff()
 // it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
-	float driftSpeed = owner->unitDef->dlHoverFactor;
-	float3 deltaVec = goalPos - owner->pos;
+	const float driftSpeed = owner->unitDef->dlHoverFactor;
+	float3 deltaVec = goalPos - owner->pos ;
 	float3 deltaDir = float3(deltaVec).Normalize();
 
 	// move towards goal position if it's not immediately
@@ -321,7 +321,7 @@ void CTAAirMoveType::UpdateHovering()
 		deltaDir = owner->frontdir;
 	}
 
-	wantedSpeed += float3(deltaDir.x, 0.0f, deltaDir.z) * driftSpeed * 0.03f;
+	wantedSpeed += float3(deltaDir.x, 0.0f, deltaDir.z) * driftSpeed * 0.015f;
 	// damping
 	wantedSpeed *= 0.97f;
 	// random movement (a sort of fake wind effect)

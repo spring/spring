@@ -42,6 +42,9 @@ public:
 
 		return p;
 	}
+	int GetMsgPosCount() const{
+		return lastMsgPositions.size();
+	}
 
 
 	int lifetime;
@@ -53,6 +56,8 @@ public:
 	bool disabled;
 
 public:
+	static const int maxLastMsgPos;
+
 	static const int maxRawLines;
 	struct RawLine {
 		std::string text;

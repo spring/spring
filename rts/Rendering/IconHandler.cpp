@@ -184,7 +184,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 				si[index + 2] = 0;
 				si[index + 3] = 0;
 			} else {
-				const unsigned char val = (255 - (r * r * r * 255));
+				const unsigned char val = (unsigned char)(255 - (r * r * r * 255));
 				si[index + 0] = val;
 				si[index + 1] = val;
 				si[index + 2] = val;

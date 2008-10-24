@@ -177,6 +177,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
+	REGISTER_LUA_CFUNC(GetLastMessagePositions);
+
 	REGISTER_LUA_CFUNC(GetConsoleBuffer);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 
@@ -197,6 +199,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnitsCount);
 
 	REGISTER_LUA_CFUNC(GetPlayerTraffic);
+
+	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	return true;
 }
@@ -1537,6 +1541,30 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 	return 1;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_newtable(L);
+	for (int i=1; i<=game->infoConsole->GetMsgPosCount(); i++) {
+		lua_pushnumber(L, i);
+		lua_newtable(L); {
+			const float3 msgpos = game->infoConsole->GetMsgPos();
+			lua_pushnumber(L, 1);
+			lua_pushnumber(L, msgpos.x);
+			lua_rawset(L, -3);
+			lua_pushnumber(L, 2);
+			lua_pushnumber(L, msgpos.y);
+			lua_rawset(L, -3);
+			lua_pushnumber(L, 3);
+			lua_pushnumber(L, msgpos.z);
+			lua_rawset(L, -3);
+		}
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
 
 /******************************************************************************/
 
@@ -1968,6 +1996,21 @@ int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 		return 1;
 	}
 	lua_pushnumber(L, pit->second);
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
+	}
+
+	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
 	return 1;
 }
 
