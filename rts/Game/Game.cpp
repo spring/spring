@@ -573,7 +573,7 @@ CGame::~CGame()
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
 
-	SafeDelete(uh);
+	delete uh; uh = 0;
 	SafeDelete(unitDrawer);
 	SafeDelete(featureHandler);
 	SafeDelete(geometricObjects);
