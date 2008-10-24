@@ -58,7 +58,7 @@ __thread int gmlThreadNumber=0;
 #else
 int gmlThreadNumber=0;
 #endif
-//ConfigHandler *dummyConfigHandler=ConfigHandler::instance = NULL;
+
 int gmlThreadCountOverride=configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
 int gmlItemsConsumed=0;

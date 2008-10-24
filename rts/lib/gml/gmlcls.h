@@ -197,7 +197,7 @@ extern int gmlThreadCount;
 extern int gmlThreadCountOverride;
 extern unsigned gmlCPUCount();
 #define GML_CPU_COUNT (gmlThreadCountOverride?gmlThreadCountOverride:gmlCPUCount())
-#define GML_MAX_NUM_THREADS 32
+#define GML_MAX_NUM_THREADS (32+1) // one extra for the aux (Sim) thread
 #define GML_IF_SERVER_THREAD() if(GML_SERVER_GLCALL && (!GML_ENABLE || gmlThreadNumber==0))
 extern int gmlItemsConsumed;
 
@@ -207,12 +207,12 @@ typedef int BOOL_;
 #define TRUE 1
 #define FALSE 0
 #define EXTERN
-#define GML_VP_ARRAY_BUFFER (1<<(16+GL_VERTEX_ARRAY-GL_VERTEX_ARRAY)) //(1<<20)
-#define GML_CP_ARRAY_BUFFER (1<<(16+GL_COLOR_ARRAY-GL_VERTEX_ARRAY)) //(1<<21)
-#define GML_TCP_ARRAY_BUFFER (1<<(16+GL_TEXTURE_COORD_ARRAY-GL_VERTEX_ARRAY)) //(1<<22)
-#define GML_IP_ARRAY_BUFFER (1<<(16+GL_INDEX_ARRAY-GL_VERTEX_ARRAY)) //(1<<23)
-#define GML_NP_ARRAY_BUFFER (1<<(16+GL_NORMAL_ARRAY-GL_VERTEX_ARRAY)) //(1<<24)
-#define GML_EFP_ARRAY_BUFFER (1<<(16+GL_EDGE_FLAG_ARRAY-GL_VERTEX_ARRAY)) //(1<<25)
+#define GML_VP_ARRAY_BUFFER (1<<(16+GL_VERTEX_ARRAY-GL_VERTEX_ARRAY))
+#define GML_CP_ARRAY_BUFFER (1<<(16+GL_COLOR_ARRAY-GL_VERTEX_ARRAY))
+#define GML_TCP_ARRAY_BUFFER (1<<(16+GL_TEXTURE_COORD_ARRAY-GL_VERTEX_ARRAY))
+#define GML_IP_ARRAY_BUFFER (1<<(16+GL_INDEX_ARRAY-GL_VERTEX_ARRAY))
+#define GML_NP_ARRAY_BUFFER (1<<(16+GL_NORMAL_ARRAY-GL_VERTEX_ARRAY))
+#define GML_EFP_ARRAY_BUFFER (1<<(16+GL_EDGE_FLAG_ARRAY-GL_VERTEX_ARRAY))
 #define GML_ELEMENT_ARRAY_BUFFER (1<<29)
 
 #ifdef _WIN32
@@ -836,7 +836,7 @@ class gmlItemSequenceServer {
 	int pregen_large;	
 	int large_arr_size;
 	T *large_item_arr;
-	T *large_size_arr;
+	S *large_size_arr;
 	GML_MUTEX;
 	
 public:
@@ -851,9 +851,9 @@ public:
 		pregen_large=pg_l;
 		large_arr_size=sz_l;
 		large_item_arr=new T[large_arr_size];
-		large_size_arr=new T[large_arr_size];
+		large_size_arr=new S[large_arr_size];
 		memset(large_item_arr,0,large_arr_size*sizeof(T));
-		memset(large_size_arr,0,large_arr_size*sizeof(T));
+		memset(large_size_arr,0,large_arr_size*sizeof(S));
 	}
 	
 	virtual ~gmlItemSequenceServer() {
@@ -874,11 +874,11 @@ public:
 		}
 		// large
 		while(avail_large<req_large+pregen_large && large_size_arr[i=(avail_large%large_arr_size)]==0) {
-			int gensize=size_large;
+			S gensize=(S)size_large;
 			GML_MUTEX_LOCK();
 			*(volatile T *)(large_item_arr+i)=(*genfun)(gensize);
 			GML_MEMBAR;
-			*(volatile T *)(large_size_arr+i)=gensize;
+			*(volatile S *)(large_size_arr+i)=gensize;
 			GML_MEMBAR; // perhaps not needed, because ++avail_large acts as a barrier
 			GML_MUTEX_UNLOCK();
 			++avail_large;
@@ -912,16 +912,16 @@ public:
 			int idx=(num-1)%large_arr_size;
 			GML_MUTEX_LOCK();
 			T ip=*(volatile T *)(large_item_arr+idx);
-			T *sz=large_size_arr+idx;
-			T szv=*(volatile T *)sz;
+			S *sz=large_size_arr+idx;
+			S szv=*(volatile S *)sz;
 			GML_MEMBAR;
-			*(volatile T *)sz=0;
+			*(volatile S *)sz=0;
 			GML_MUTEX_UNLOCK();
-			if(szv>static_cast<T>(n))
-				(*delfun)(ip+szv,szv-n); // del excessive
-			if(szv<static_cast<T>(n))
+			if(szv>n)
+				(*delfun)(ip+n,szv-n); // del excessive
+			if(szv<n)
 				(*delfun)(ip,szv); // del all
-			if(szv>=static_cast<T>(n))
+			if(szv>=n)
 				return ip;
 		}
 	}
