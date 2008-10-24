@@ -2701,6 +2701,14 @@ bool CGame::Draw() {
 #endif
 
 	mouse->EmptyMsgQueUpdate();
+
+	if(lastSimFrame!=gs->frameNum) {
+		CInputReceiver::CollectGarbage();
+		if(!skipping)
+			water->Update();
+		lastSimFrame=gs->frameNum;
+	}
+
 	if(!skipping)
 		UpdateUI(true);
 
@@ -2810,11 +2818,6 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Water");
-		if(lastSimFrame!=gs->frameNum) {
-			CInputReceiver::CollectGarbage();
-			water->Update();
-			lastSimFrame=gs->frameNum;
-		}
 		water->UpdateWater(this);
 	}
 
