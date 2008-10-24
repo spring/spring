@@ -692,8 +692,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
 	//}
 
+	viewRadius = max(4, viewRadius);
+
 	float zoom = 45.0f / camera->GetFov();
-	viewRadius = (int) (viewRadius * sqrt(zoom));
+	viewRadius = (int) (viewRadius * fastmath::sqrt(zoom));
 	viewRadius += (viewRadius & 1);
 
 	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;

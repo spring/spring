@@ -322,7 +322,9 @@ CProjectileHandler::CProjectileHandler()
 		perlinFB = instantiate_fb(512, 512, FBO_NEED_COLOR);
 		if (perlinFB && perlinFB->valid()) {
 			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+			perlinFB->select();
 			drawPerlinTex=perlinFB->checkFBOStatus();
+			perlinFB->deselect();
 		}
 	}
 	else {
@@ -362,9 +364,9 @@ CProjectileHandler::~CProjectileHandler()
 		delete fpl;
 	}
 	ph=0;
-	delete perlinFB;
 	delete textureAtlas;
 	delete groundFXAtlas;
+	delete perlinFB;
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer *s)

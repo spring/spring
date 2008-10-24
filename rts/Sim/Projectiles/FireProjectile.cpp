@@ -137,8 +137,8 @@ void CFireProjectile::Draw(void)
 		float size=pi->maxSize*(age);
 		float rot=pi->rotSpeed*age;
 
-		float sinRot=sin(rot);
-		float cosRot=cos(rot);
+		float sinRot=fastmath::sin(rot);
+		float cosRot=fastmath::cos(rot);
 		float3 dir1=(camera->right*cosRot+camera->up*sinRot)*size;
 		float3 dir2=(camera->right*sinRot-camera->up*cosRot)*size;
 
@@ -155,11 +155,11 @@ void CFireProjectile::Draw(void)
 	}
 	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
-		float size=pi->maxSize*sqrt(age);
+		float size=pi->maxSize*fastmath::sqrt(age);
 		float rot=pi->rotSpeed*age;
 
-		float sinRot=sin(rot);
-		float cosRot=cos(rot);
+		float sinRot=fastmath::sin(rot);
+		float cosRot=fastmath::cos(rot);
 		float3 dir1=(camera->right*cosRot+camera->up*sinRot)*size;
 		float3 dir2=(camera->right*sinRot-camera->up*cosRot)*size;
 

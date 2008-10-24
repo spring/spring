@@ -767,7 +767,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	} else {
 		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
-	float dist = sqrt((pos - camera->pos).Length());
+	float dist = fastmath::sqrt2((pos - camera->pos).Length());
 	float scale = 0.4f * iconData->GetSize() * dist;
 	if (iconData->GetRadiusAdjust() && !asRadarBlip) {
 		// I take the standard unit radius to be 30

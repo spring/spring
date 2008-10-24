@@ -39,8 +39,8 @@ CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3
 		float yp=(y/4.0f-0.5f);
 		for(int x=0;x<5;++x){
 			float xp=(x/4.0f-0.5f);
-			float d=sqrt(xp*xp+yp*yp);
-			difs[y*5+x]=(1-cos(d*2))*20;
+			float d=fastmath::sqrt2(xp*xp+yp*yp);
+			difs[y*5+x]=(1-fastmath::cos(d*2))*20;
 		}
 	}
 }
