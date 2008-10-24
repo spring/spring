@@ -577,7 +577,7 @@ CGame::~CGame()
 	SafeDelete(unitDrawer);
 	SafeDelete(featureHandler);
 	SafeDelete(geometricObjects);
-	SafeDelete(ph);
+	delete ph; ph = 0;
 	SafeDelete(minimap);
 	SafeDelete(pathManager);
 	SafeDelete(groundDecals);
