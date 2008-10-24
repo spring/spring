@@ -267,8 +267,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	std::deque<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-			if ((*ri) && (*ri)->MousePress(x, y, button)) {
-				activeReceiver = *ri;
+			CInputReceiver* recv=*ri;
+			if (recv && recv->MousePress(x, y, button)) {
+				activeReceiver = recv;
 				return;
 			}
 		}
@@ -582,8 +583,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->IsAbove(lastx, lasty)) {
-			s = (*ri)->GetTooltip(lastx, lasty);
+		CInputReceiver* recv=*ri;
+		if (recv && recv->IsAbove(lastx, lasty)) {
+			s = recv->GetTooltip(lastx, lasty);
 			if (s != "") {
 				return s;
 			}

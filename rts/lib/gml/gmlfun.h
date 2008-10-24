@@ -328,6 +328,7 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #ifndef GML_MAKENAME
 #	define GML_MAKENAME(name)
 #endif
+
 #define GML_FUN(name,ftype) EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
 	GML_MAKENAME(name)\
 	EXTERN inline ftype gml##name
@@ -345,7 +346,6 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #else
 #define GML_ITEMSERVER_CHECK()
 #endif
-//#define GML_RETFUN(name,ftr) EXTERN inline ftr gml##name
 
 #define GML_MAKEFUN0(name) struct gml##name##Data {\
 	GML_MAKEVAR()\
