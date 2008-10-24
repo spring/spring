@@ -42,13 +42,13 @@ static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
 CVertexArray* GetVertexArray()
 {
 #ifdef USE_GML // each thread gets its own array to avoid conflicts
-		int thread=gmlThreadNumber;
-		if(currentVertexArrays[thread]==&vertexArrays1[thread]){
-			currentVertexArrays[thread]=&vertexArrays2[thread];
-		} else {
-			currentVertexArrays[thread]=&vertexArrays1[thread];
-		}
-		return currentVertexArrays[thread];
+	int thread=gmlThreadNumber;
+	if(currentVertexArrays[thread]==&vertexArrays1[thread]){
+		currentVertexArrays[thread]=&vertexArrays2[thread];
+	} else {
+		currentVertexArrays[thread]=&vertexArrays1[thread];
+	}
+	return currentVertexArrays[thread];
 #else
 	if(currentVertexArray==vertexArray1){
 		currentVertexArray=vertexArray2;

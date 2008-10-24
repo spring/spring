@@ -67,7 +67,7 @@ void CMuzzleFlame::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 	float alpha=std::max(0.f,1-age/(4+size*30));
-	float modAge=sqrt(static_cast<float>(age+2));
+	float modAge=fastmath::sqrt(static_cast<float>(age+2));
 
 	va->EnlargeArrays(numSmoke*8,0,VA_SIZE_TC);
 

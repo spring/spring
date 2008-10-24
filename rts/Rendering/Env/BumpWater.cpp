@@ -119,7 +119,7 @@ static string LoadShaderSource(const string& file)
 {
 	CFileHandler fh(file);
 	if (!fh.FileExists())
-		throw content_error("Can't load shader " + file);
+		throw content_error("BumpWater: Can't load shader " + file);
 	string text;
 	text.resize(fh.FileSize());
 	fh.Read(&text[0], text.length());

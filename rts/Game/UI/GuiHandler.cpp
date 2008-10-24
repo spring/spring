@@ -3578,8 +3578,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							for(int i = 0; i <= divs; ++i) {
 								const float radians = (2 * PI) * (float)i / (float)divs;
 								float3 p(pos.x, 0.0f, pos.z);
-								p.x += sin(radians) * radius;
-								p.z += cos(radians) * radius;
+								p.x += fastmath::sin(radians) * radius;
+								p.z += fastmath::cos(radians) * radius;
 								if (!onMinimap) {
 									p.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
 								}
@@ -4014,7 +4014,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
-			float3 p(cos(a*2*PI/40)*radius,0,sin(a*2*PI/40)*radius);
+			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
 			p+=pos;
 			p.y=ground->GetHeight(p.x,p.z);
 			glVertexf3(p);
@@ -4307,8 +4307,8 @@ static void DrawCylinderShape(const void* data)
 	for (i = 0; i <= cyl.divs; i++) {
 		const float radians =
 		  float(2.0 * PI) * float(i % cyl.divs) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
 		glVertex3f(x, cyl.yn, z);
 	}
@@ -4316,16 +4316,16 @@ static void DrawCylinderShape(const void* data)
 	glBegin(GL_TRIANGLE_FAN); // the top
 	for (i = 0; i < cyl.divs; i++) {
 		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
 	}
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the bottom
 	for (i = (cyl.divs - 1); i >= 0; i--) {
 		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yn, z);
 	}
 	glEnd();
