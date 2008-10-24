@@ -3058,7 +3058,7 @@ void CGame::DrawInputText()
 	const float cw = fontScale * font->CalcCharWidth(c);
 	const float csx = inputTextPosX + (fontScale * caretWidth);
 	glDisable(GL_TEXTURE_2D);
-	const float f = 0.5f * (1.0f + streflop::sin((float)SDL_GetTicks() * 0.015f));
+	const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
 	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + font->GetHeight() * fontScale);
 	glEnable(GL_TEXTURE_2D);
@@ -3813,7 +3813,7 @@ void CGame::ClientReadNet()
 				}
 				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
 				const int mode = inbuf[6];
-				const int msglen = *((short*)(inbuf + 1)) - 7;
+				const int msglen = *((short*)(inbuf + 1)) - 8;
 				const string msg((char*)&inbuf[7], msglen); // allow embedded 0's
 				CLuaHandle::HandleLuaMsg(player, script, mode, msg);
 				AddTraffic(player, packetCode, dataLength);
@@ -4440,7 +4440,7 @@ void CGame::DrawDirectControlHud(void)
 
 			glBegin(GL_LINE_STRIP);
 			for(int b=0;b<=80;++b){
-				glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
 			}
 			glEnd();
 
@@ -4454,7 +4454,7 @@ void CGame::DrawDirectControlHud(void)
 
 				glBegin(GL_LINE_STRIP);
 				for(int b=0;b<=80;++b){
-					glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
+					glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
 				}
 				glEnd();
 			}
@@ -4463,11 +4463,11 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos);
 				glVertexf3(w->targetPos);
 
-				glVertexf3(pos+(v2*streflop::sin(PI*0.25f)+v3*streflop::cos(PI*0.25f))*radius);
-				glVertexf3(pos+(v2*streflop::sin(PI*1.25f)+v3*streflop::cos(PI*1.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*0.25f)+v3*fastmath::cos(PI*0.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*1.25f)+v3*fastmath::cos(PI*1.25f))*radius);
 
-				glVertexf3(pos+(v2*streflop::sin(PI*-0.25f)+v3*streflop::cos(PI*-0.25f))*radius);
-				glVertexf3(pos+(v2*streflop::sin(PI*-1.25f)+v3*streflop::cos(PI*-1.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*-0.25f)+v3*fastmath::cos(PI*-0.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*-1.25f)+v3*fastmath::cos(PI*-1.25f))*radius);
 			}
 			if((w->targetPos-camera->pos).ANormalize().dot(camera->forward)<0.7f){
 				glVertexf3(w->targetPos);

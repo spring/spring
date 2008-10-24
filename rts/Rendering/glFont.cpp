@@ -65,7 +65,8 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 
 CFontTextureRenderer::~CFontTextureRenderer()
 {
-	delete [] buffer;
+	if (buffer)
+		delete [] buffer;
 }
 
 void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
@@ -115,14 +116,10 @@ GLuint CFontTextureRenderer::CreateTexture()
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	if (GLEW_EXT_texture_edge_clamp) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA,
 		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
@@ -130,10 +127,6 @@ GLuint CFontTextureRenderer::CreateTexture()
 	delete [] buffer;
 	buffer = 0;
 
-	int glError = glGetError();
-	if (glError != GL_NO_ERROR && glError != GL_INVALID_ENUM) {
-		throw std::runtime_error("Could not allocate font texture.");
-	}
 	return tex;
 }
 
@@ -159,8 +152,8 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 		throw content_error(msg);
 	}
 
-	const float height = gu->viewSizeY*size*64.0f;
-	FT_Set_Char_Size(face, (int)(height * gu->aspectRatio/(4.0f/3.0f)), (int)height, 72, 72);
+	const float height = gu->viewSizeY * size * 64.0f;
+	FT_Set_Char_Size(face, (int)(height * gu->aspectRatio / (4.0f/3.0f)), (int)height, 72, 72);
 
 	// clamp the char range
 	end = min(254, end);
@@ -622,8 +615,8 @@ void CglFont::glFormatAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 
 const float* CglFont::ChooseOutlineColor(const float *textColor)
 {
-	static const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
-	static const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
+	static const GLfloat darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+	static const GLfloat lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
 
 	const float luminance = (textColor[0] * 0.299f) +
 	                        (textColor[1] * 0.587f) +

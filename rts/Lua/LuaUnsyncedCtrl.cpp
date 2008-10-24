@@ -186,7 +186,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
 
 	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
-	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	return true;
 }
@@ -2103,7 +2102,6 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -2120,17 +2118,6 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 	return 0;
 }
 
-
-int LuaUnsyncedCtrl::GetDrawSelectionInfo(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
-	}
-
-	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
-	return 1;
-}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -24,8 +24,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-const int CInfoConsole::maxRawLines = 1024;
-
+const int CInfoConsole::maxRawLines   = 1024;
+const int CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole():
 	disabled(false), newLines(0), rawId(0),
@@ -211,7 +211,7 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 
 void CInfoConsole::SetLastMsgPos(const float3& pos)
 {
-	if (lastMsgPositions.size() < 10) {
+	if (lastMsgPositions.size() < maxLastMsgPos) {
 		lastMsgPositions.push_front(pos);
 	} else {
 		lastMsgPositions.push_front(pos);
