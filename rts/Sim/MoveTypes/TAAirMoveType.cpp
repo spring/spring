@@ -310,7 +310,7 @@ void CTAAirMoveType::UpdateTakeoff()
 // it switches to normal flying instead
 void CTAAirMoveType::UpdateHovering()
 {
-	const float driftSpeed = owner->unitDef->dlHoverFactor;
+	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos ;
 	float3 deltaDir = float3(deltaVec).Normalize();
 
