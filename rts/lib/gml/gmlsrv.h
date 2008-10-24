@@ -125,7 +125,7 @@ public:
 	gmlCount ClientsReady;
 	BOOL_ newwork;
 
-	BOOL auxinited;
+	BOOL_ auxinited;
 	R (*auxworker)(void *);
 	void* auxworkerclass;
 	boost::barrier AuxBarrier; 
