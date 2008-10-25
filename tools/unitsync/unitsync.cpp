@@ -465,7 +465,7 @@ DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
 		return GetStr(archiveScanner->GetArchivePath(arname));
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+	return NULL;
 }
 
 
@@ -580,7 +580,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 
 	// If the map didn't parse, say so now
 	if (!err.empty()) {
-		lastError = err;
+		SetLastError(err);
 		safe_strzcpy(outInfo->description, err, 255);
 
 		// Fill in stuff so tasclient won't crash
@@ -917,6 +917,10 @@ DLL_EXPORT int __stdcall GetInfoMapSize(const char* filename, const char* name, 
 		return bmInfo.width > 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
+
+	if (width)  *width  = 0;
+	if (height) *height = 0;
+
 	return 0;
 }
 
@@ -1917,6 +1921,7 @@ static int LuaGetMapInfo(lua_State* L)
 	mi.description[0] = 0;
 
 	if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
+		logOutput.Print(LOG_UNITSYNC, "LuaGetMapInfo: _GetMapInfoEx(\"%s\") failed", mapName.c_str());
 		return 0;
 	}
 
@@ -2143,7 +2148,7 @@ DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 		logOutput.Print(LOG_UNITSYNC, "findfilesvfs: %d\n", handle);
 		if ((unsigned)handle >= curFindFiles.size())
 			return 0;
-		strncpy(nameBuf, curFindFiles[handle].c_str(), size);
+		safe_strzcpy(nameBuf, curFindFiles[handle], size);
 		return handle + 1;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2234,7 +2239,7 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
 		int s;
 
 		int ret = a->FindFiles(cur, &name, &s);
-		strcpy(nameBuf, name.c_str());
+		strcpy(nameBuf, name.c_str()); // FIXME: oops, buffer overflow
 		*size = s;
 		return ret;
 	}
