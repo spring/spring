@@ -1732,7 +1732,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 }
 
 
-bool CLuaHandle::AddConsoleLine(const string& msg, int zone)
+bool CLuaHandle::AddConsoleLine(const string& msg, CLogSubsystem& /**/)
 {
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?
@@ -1745,7 +1745,8 @@ bool CLuaHandle::AddConsoleLine(const string& msg, int zone)
 	}
 
 	lua_pushstring(L, msg.c_str());
-	lua_pushnumber(L, zone);
+	// FIXME: makes no sense now, but *gets might expect this
+	lua_pushnumber(L, 0);
 
 	// call the function
 	if (!RunCallIn(cmdStr, 2, 0)) {

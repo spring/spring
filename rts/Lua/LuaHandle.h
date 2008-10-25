@@ -37,6 +37,7 @@ class CProjectile;
 struct Command;
 struct LuaHashString;
 struct lua_State;
+class CLogSubsystem;
 
 
 typedef void (*LuaCobCallback)(int retCode, void* unitID, void* data);
@@ -170,7 +171,7 @@ class CLuaHandle : public CEventClient
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const string& msg, int zone);
+		bool AddConsoleLine(const string& msg, CLogSubsystem&);
 
 		bool GroupChanged(int groupID);
 
