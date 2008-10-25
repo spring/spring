@@ -57,7 +57,9 @@ CShieldPartProjectile::CShieldPartProjectile(
 
 CShieldPartProjectile::~CShieldPartProjectile(void)
 {
-	ph->numPerlinProjectiles--;
+	if (ph) {
+		ph->numPerlinProjectiles--;
+	}
 }
 
 void CShieldPartProjectile::Update(void)

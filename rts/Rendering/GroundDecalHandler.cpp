@@ -117,17 +117,20 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 
 
 
-inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color) {
+static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color)
+{
 	#define HEIGHT2WORLD(x) ((x) << 3)
-	#define WORLD2HEIGHT(x) ((x) >> 3)
 	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
 	va->AddVertexTC( VERTEX(x    , yv[0], z    ),   uv[0], uv[1],   color);
 	va->AddVertexTC( VERTEX(x + 1, yv[1], z    ),   uv[2], uv[3],   color);
 	va->AddVertexTC( VERTEX(x + 1, yv[2], z + 1),   uv[4], uv[5],   color);
 	va->AddVertexTC( VERTEX(x    , yv[3], z + 1),   uv[6], uv[7],   color);
+	#undef VERTEX
+	#undef HEIGHT2WORLD
 }
 
-inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
+static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
+{
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -277,9 +280,12 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 		decal->va->DrawArrayTC(GL_QUADS);
 	}
+
+	#undef HEIGHT
 }
 
-inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
+static inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
+{
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -916,9 +922,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 	if (building->buildFacing == 1 || building->buildFacing == 3) {
 		// swap xsize and ysize if building faces East or West
-		int tmp = decal->xsize;
-		decal->xsize = decal->ysize;
-		decal->ysize = tmp;
+		std::swap(decal->xsize, decal->ysize);
 	}
 
 	decal->posx = posx - (decal->xsize / 2);
@@ -929,7 +933,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 }
 
 
-void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
+void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb)
 {
 	GML_STDMUTEX_LOCK(decal); // RemoveBuilding
 

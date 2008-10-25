@@ -49,7 +49,10 @@ CExtractorBuilding::CExtractorBuilding():
 
 CExtractorBuilding::~CExtractorBuilding()
 {
-	ResetExtraction();
+	// if uh == NULL then all pointers to units should be considered dangling pointers
+	if (uh) {
+		ResetExtraction();
+	}
 }
 
 /* CReg PostLoad */

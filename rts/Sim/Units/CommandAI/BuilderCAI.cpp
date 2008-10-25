@@ -186,9 +186,12 @@ CBuilderCAI::CBuilderCAI(CUnit* owner)
 
 CBuilderCAI::~CBuilderCAI()
 {
-	RemoveUnitFromReclaimers(owner);
-	RemoveUnitFromFeatureReclaimers(owner);
-	uh->RemoveBuilderCAI(this);
+	// if uh == NULL then all pointers to units should be considered dangling pointers
+	if (uh) {
+		RemoveUnitFromReclaimers(owner);
+		RemoveUnitFromFeatureReclaimers(owner);
+		uh->RemoveBuilderCAI(this);
+	}
 }
 
 void CBuilderCAI::PostLoad()
