@@ -15,7 +15,7 @@ struct StartPos
 
 struct MapInfo
 {
-	char* description;
+	char* description; // max 255 chars
 	int tidalStrength;
 	int gravity;
 	float maxMetal;
@@ -54,17 +54,11 @@ const char *GetStr(std::string str);
 
 
 #ifdef WIN32
-#define DLL_EXPORT extern "C" __declspec(dllexport)
-#include <windows.h>
+#  define DLL_EXPORT extern "C" __declspec(dllexport)
+#  include <windows.h>
 #else
-#include <iostream>
-#define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-#define __stdcall
-#define MB_OK 0
-static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
-{
-	std::cerr << "unitsync: " << capt << ": " << msg << std::endl;
-}
+#  define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
+#  define __stdcall
 #endif
 
 #endif

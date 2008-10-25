@@ -6,6 +6,7 @@
 
 // from unitsync.cpp:
 
+DLL_EXPORT const char*  __stdcall GetNextError();
 DLL_EXPORT const char*  __stdcall GetSpringVersion();
 
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
@@ -13,21 +14,12 @@ DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
 
-DLL_EXPORT int          __stdcall ProcessUnits(void);
-DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
-DLL_EXPORT const char*  __stdcall GetCurrentList();
-
-DLL_EXPORT void         __stdcall AddClient(int id, const char *unitList);
-DLL_EXPORT void         __stdcall RemoveClient(int id);
-
-DLL_EXPORT const char*  __stdcall GetClientDiff(int id);
-DLL_EXPORT void         __stdcall InstallClientDiff(const char *diff);
+DLL_EXPORT int          __stdcall ProcessUnits();
+DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum();
 
 DLL_EXPORT int          __stdcall GetUnitCount();
 DLL_EXPORT const char*  __stdcall GetUnitName(int unit);
 DLL_EXPORT const char*  __stdcall GetFullUnitName(int unit);
-DLL_EXPORT int          __stdcall IsUnitDisabled(int unit);
-DLL_EXPORT int          __stdcall IsUnitDisabledByClient(int unit, int clientId);
 
 DLL_EXPORT void         __stdcall AddArchive(const char* name);
 DLL_EXPORT void         __stdcall AddAllArchives(const char* root);
