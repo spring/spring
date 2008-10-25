@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArchiveBuffered.h"
-#include <string.h>
 #include <stdexcept>
+#include <stdlib.h>
+#include <string.h>
 #include "mmgr.h"
 
 
