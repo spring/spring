@@ -53,20 +53,16 @@ private:
 };
 
 CFontTextureRenderer::CFontTextureRenderer(int width, int height)
+: width(width), height(height), buffer(NULL), cur(NULL), curX(0), curY(0), curHeight(0)
 {
-	this->width = width;
-	this->height = height;
 	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
 	memset(buffer, 0xFF00, width*height);
 	cur = buffer;
-	curX = curY = 0;
-	curHeight = 0;
 }
 
 CFontTextureRenderer::~CFontTextureRenderer()
 {
-	if (buffer)
-		delete [] buffer;
+	delete [] buffer;
 }
 
 void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
@@ -125,7 +121,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
 
 	delete [] buffer;
-	buffer = 0;
+	buffer = NULL;
 
 	return tex;
 }

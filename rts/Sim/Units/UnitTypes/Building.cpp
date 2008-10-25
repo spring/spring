@@ -40,7 +40,7 @@ CBuilding::~CBuilding()
 {
 	CUnitDrawer::GhostBuilding* gb = NULL;
 
-	if (!gameSetup || gameSetup->ghostedBuildings) {
+	if (unitDrawer && (!gameSetup || gameSetup->ghostedBuildings)) {
 		if (!(losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		     (losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
 		    !gu->spectatingFullView) {
@@ -63,7 +63,7 @@ CBuilding::~CBuilding()
 		}
 	}
 
-	if (buildingDecal) {
+	if (groundDecals && buildingDecal) {
 		groundDecals->RemoveBuilding(this, gb);
 	}
 }

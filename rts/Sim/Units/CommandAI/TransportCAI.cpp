@@ -87,10 +87,11 @@ CTransportCAI::CTransportCAI(CUnit* owner)
 
 CTransportCAI::~CTransportCAI(void)
 {
-	if(toBeTransportedUnitId!=-1){
-		if(uh->units[toBeTransportedUnitId])
-			uh->units[toBeTransportedUnitId]->toBeTransported=false;
-		toBeTransportedUnitId=-1;
+	// if uh == NULL then all pointers to units should be considered dangling pointers
+	if (uh && toBeTransportedUnitId != -1) {
+		if (uh->units[toBeTransportedUnitId])
+			uh->units[toBeTransportedUnitId]->toBeTransported = false;
+		toBeTransportedUnitId = -1;
 	}
 }
 
