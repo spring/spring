@@ -1257,6 +1257,7 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name
 		return archiveScanner->GetModChecksum(archiveScanner->ModNameToModArchive(name));
 	}
 	UNITSYNC_CATCH_BLOCKS;
+	return 0;
 }
 
 
@@ -1323,12 +1324,12 @@ static void GetLuaAIOptions()
 
 	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
-		return;
+		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
 	}
 
 	const LuaTable root = luaParser.GetRoot();
 	if (!root.IsValid()) {
-		return;
+		throw content_error("root table invalid");
 	}
 
 	for (int i = 1; root.KeyExists(i); i++) {
@@ -1354,8 +1355,6 @@ static void GetLuaAIOptions()
 		aiData.desc = optTbl.GetString("desc", aiData.name);
 		luaAIOptions.push_back(aiData);
 	}
-
-	return;
 }
 
 
@@ -1447,21 +1446,24 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 {
 	const LuaTable& optTbl = root.SubTable(index);
 	if (!optTbl.IsValid()) {
+		logOutput.Print(LOG_UNITSYNC, "ParseOption: subtable %d invalid", index);
 		return false;
 	}
 
 	// common options properties
 	opt.key = optTbl.GetString("key", "");
-	if (opt.key.empty() ||
-	    (opt.key.find_first_of(badKeyChars) != string::npos)) {
+	if (opt.key.empty() || (opt.key.find_first_of(badKeyChars) != string::npos)) {
+		logOutput.Print(LOG_UNITSYNC, "ParseOption: empty key or key contains bad characters");
 		return false;
 	}
 	opt.key = StringToLower(opt.key);
 	if (optionsSet.find(opt.key) != optionsSet.end()) {
+		logOutput.Print(LOG_UNITSYNC, "ParseOption: key %s exists already", opt.key.c_str());
 		return false;
 	}
 	opt.name = optTbl.GetString("name", opt.key);
 	if (opt.name.empty()) {
+		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key.c_str());
 		return false;
 	}
 	opt.desc = optTbl.GetString("desc", opt.name);
@@ -1494,6 +1496,7 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 
 		const LuaTable& listTbl = optTbl.SubTable("items");
 		if (!listTbl.IsValid()) {
+			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable items invalid", opt.key.c_str());
 			return false;
 		}
 
@@ -1513,16 +1516,18 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 			// table format  (name & desc)
 			const LuaTable& itemTbl = listTbl.SubTable(i);
 			if (!itemTbl.IsValid()) {
+				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable %d of subtable items invalid", opt.key.c_str(), i);
 				break;
 			}
 			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty() ||
-			    (item.key.find_first_of(badKeyChars) != string::npos)) {
+			if (item.key.empty() || (item.key.find_first_of(badKeyChars) != string::npos)) {
+				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty key or key contains bad characters", opt.key.c_str());
 				return false;
 			}
 			item.key = StringToLower(item.key);
 			item.name = itemTbl.GetString("name", item.key);
 			if (item.name.empty()) {
+				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key.c_str());
 				return false;
 			}
 			item.desc = itemTbl.GetString("desc", item.name);
@@ -1530,6 +1535,7 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 		}
 
 		if (opt.list.size() <= 0) {
+			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty list", opt.key.c_str());
 			return false; // no empty lists
 		}
 
@@ -1539,6 +1545,7 @@ static bool ParseOption(const LuaTable& root, int index, Option& opt)
 		opt.typeCode = opt_section;
 	}
 	else {
+		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: unknown type %s", opt.key.c_str(), opt.type.c_str());
 		return false; // unknown type
 	}
 
@@ -1566,14 +1573,12 @@ static void ParseOptions(const string& fileName,
 	}
 
 	if (!luaParser.Execute()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOptions(%s) ERROR: %s\n",
-		       fileName.c_str(), luaParser.GetErrorLog().c_str());
-		return;
+		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
 	}
 
 	const LuaTable root = luaParser.GetRoot();
 	if (!root.IsValid()) {
-		return;
+		throw content_error("root table invalid");
 	}
 
 	for (int index = 1; root.KeyExists(index); index++) {
@@ -1582,8 +1587,6 @@ static void ParseOptions(const string& fileName,
 			options.push_back(opt);
 		}
 	}
-
-	return;
 };
 
 
@@ -1617,7 +1620,7 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
 
 		optionsSet.clear();
 
-		return (int)options.size();
+		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1643,7 +1646,7 @@ DLL_EXPORT int __stdcall GetModOptionCount()
 
 		optionsSet.clear();
 
-		return (int)options.size();
+		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -2144,7 +2147,7 @@ DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
 		return handle + 1;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return -1;
+	return 0;
 }
 
 
@@ -2413,6 +2416,7 @@ class CMessageOnce
 		bool alreadyDone;
 
 	public:
+		CMessageOnce() : alreadyDone(false) {}
 		void operator() (const string& msg)
 		{
 			if (alreadyDone) return;
