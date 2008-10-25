@@ -19,6 +19,7 @@ class CWeapon;
 class CFeature;
 class CProjectile;
 struct Command;
+class CLogSubsystem;
 
 
 class CEventClient
@@ -27,7 +28,7 @@ class CEventClient
 		enum SpecialTeams {
 			NoAccessTeam   = -1,
 			AllAccessTeam  = -2,
-			MinSpecialTeam = AllAccessTeam 
+			MinSpecialTeam = AllAccessTeam
 		};
 
 	public:
@@ -108,7 +109,7 @@ class CEventClient
 
 		virtual void StockpileChanged(const CUnit* unit,
 		                              const CWeapon* weapon, int oldCount);
-	
+
 		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		// Unsynced events
@@ -127,7 +128,7 @@ class CEventClient
 
 		virtual bool CommandNotify(const Command& cmd);
 
-		virtual bool AddConsoleLine(const std::string& msg, int zone);
+		virtual bool AddConsoleLine(const std::string& msg, CLogSubsystem& subsystem);
 
 		virtual bool GroupChanged(int groupID);
 
