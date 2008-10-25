@@ -544,10 +544,9 @@ CGame::~CGame()
 	SafeDelete(guihandler);
 
 #ifndef NO_AVI
-	if(creatingVideo){
-		creatingVideo=false;
+	if(creatingVideo) {
+		creatingVideo = false;
 		SafeDelete(aviGenerator);
-		aviGenerator = NULL;
 	}
 #endif
 
@@ -2535,7 +2534,7 @@ bool CGame::Update()
 		infoConsole->GetNewRawLines(lines);
 		for (unsigned int i = 0; i < lines.size(); i++) {
 			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, rawLine.zone);
+			eventHandler.AddConsoleLine(rawLine.text, *rawLine.subsystem);
 		}
 	}
 

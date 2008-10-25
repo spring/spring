@@ -360,7 +360,7 @@ int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 
 	lua_pushboolean(L, (x >= x0) && (x < x1) &&
 	                   (y >= y0) && (y < y1));
-		
+
 	return 1;
 }
 
@@ -676,7 +676,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 
-			const float testRadius = fixedRadius ? radius : (unit->radius + radius); 
+			const float testRadius = fixedRadius ? radius : (unit->radius + radius);
 			if (!camera->InView(unit->midPos, testRadius)) {
 				continue;
 			}
@@ -838,7 +838,7 @@ int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, game->hideInterface);
-	return 1;	
+	return 1;
 }
 
 
@@ -849,7 +849,7 @@ int LuaUnsyncedRead::HaveShadows(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, shadowHandler->drawShadows);
-	return 1;	
+	return 1;
 }
 
 
@@ -860,7 +860,7 @@ int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, unitDrawer->advShading);
-	return 1;	
+	return 1;
 }
 
 
@@ -881,7 +881,7 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 	}
 	lua_pushnumber(L, mode);
 	lua_pushstring(L, modeName);
-	return 2;	
+	return 2;
 }
 
 
@@ -1602,9 +1602,10 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 			lua_pushstring(L, "text");
 			lua_pushstring(L, lines[i].text.c_str());
 			lua_rawset(L, -3);
-			// FIXME: how to migrate 'priority' to 'zone', will it break widgets?
+			// FIXME: migrate priority to subsystem...
 			lua_pushstring(L, "priority");
-			lua_pushnumber(L, lines[i].zone);
+			lua_pushnumber(L, 0 /*priority*/ );
+			//lua_pushstring(L, lines[i].subsystem->name);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
