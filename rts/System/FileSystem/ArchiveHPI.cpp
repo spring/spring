@@ -1,11 +1,11 @@
 #include "StdAfx.h"
-#include <algorithm>
-#include "mmgr.h"
-
 #include "ArchiveHPI.h"
-
+#include <algorithm>
+#include <stdexcept>
 #include "Util.h"
+#include "mmgr.h"
 using namespace hpiutil;
+
 
 CArchiveHPI::CArchiveHPI(const std::string& name):
 	CArchiveBuffered(name),
@@ -66,6 +66,9 @@ int CArchiveHPI::FindFiles(int cur, std::string* name, int* size)
 		cur = curSearchHandle;
 		searchHandles[cur] = fileSizes.begin();
 	}
+
+	if (searchHandles.find(cur) == searchHandles.end())
+		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveHPI::FindFiles.");
 
 	if (searchHandles[cur] == fileSizes.end()) {
 		searchHandles.erase(cur);

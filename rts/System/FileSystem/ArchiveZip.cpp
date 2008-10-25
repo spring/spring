@@ -1,10 +1,10 @@
 #include "StdAfx.h"
+#include "ArchiveZip.h"
 #include <algorithm>
+#include <stdexcept>
+#include "Util.h"
 #include "mmgr.h"
 
-#include "ArchiveZip.h"
-
-#include "Util.h"
 
 CArchiveZip::CArchiveZip(const std::string& name):
 	CArchiveBuffered(name),
@@ -75,7 +75,7 @@ ABOpenFile_t* CArchiveZip::GetEntireFile(const std::string& fName)
 
 	std::string fileName = StringToLower(fName);
 
-	//if (unzLocateFile(zip, fileName.c_str(), 2) != UNZ_OK) 
+	//if (unzLocateFile(zip, fileName.c_str(), 2) != UNZ_OK)
 	//	return 0;
 
 	if (fileData.find(fileName) == fileData.end())
@@ -90,16 +90,16 @@ ABOpenFile_t* CArchiveZip::GetEntireFile(const std::string& fName)
 	ABOpenFile_t* of = SAFE_NEW ABOpenFile_t;
 	of->pos = 0;
 	of->size = fi.uncompressed_size;
-	of->data = (char*)malloc(of->size); 
+	of->data = (char*)malloc(of->size);
 
 	// If anything fails, we abort
 	try {
 		if (unzOpenCurrentFile(zip) != UNZ_OK)
 			throw zip_exception();
-		if (unzReadCurrentFile(zip, of->data, of->size) < 0) 
+		if (unzReadCurrentFile(zip, of->data, of->size) < 0)
 			throw zip_exception();
 		if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
-			throw zip_exception(); 
+			throw zip_exception();
 	}
 	catch (zip_exception) {
 		free(of->data);
@@ -117,6 +117,9 @@ int CArchiveZip::FindFiles(int cur, std::string* name, int* size)
 		cur = curSearchHandle;
 		searchHandles[cur] = fileData.begin();
 	}
+
+	if (searchHandles.find(cur) == searchHandles.end())
+		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveZip::FindFiles.");
 
 	if (searchHandles[cur] == fileData.end()) {
 		searchHandles.erase(cur);
