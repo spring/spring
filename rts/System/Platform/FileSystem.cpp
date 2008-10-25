@@ -29,6 +29,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "LogOutput.h"
+#include "Util.h"
 #include "mmgr.h"
 
 
@@ -69,29 +70,41 @@ void FileSystemHandler::Initialize(bool verbose)
 #else
 		instance = new UnixFileSystemHandler(verbose);
 #endif
+		try {
+			instance->Initialize();
+		}
+		catch (...) {
+			SafeDelete(instance);
+			throw;
+		}
 	}
 }
 
 void FileSystemHandler::Cleanup()
 {
-	delete instance;
-	instance = NULL;
+	SafeDelete(instance);
 }
 
 FileSystemHandler::~FileSystemHandler()
 {
-	delete archiveScanner;
-	delete vfsHandler;
-	archiveScanner = NULL;
-	vfsHandler = NULL;
+	SafeDelete(archiveScanner);
+	SafeDelete(vfsHandler);
 }
 
 FileSystemHandler::FileSystemHandler(int native_path_sep): native_path_separator(native_path_sep)
 {
-	// need to set this here already or we get stuck in an infinite loop
-	// because WinFileSystemHandler/UnixFileSystemHandler ctor initializes the
-	// ArchiveScanner (which uses FileSystemHandler::GetInstance again...).
-	instance = this;
+	// NOTE TO SELF: NEVER EVAR DO THIS AGAIN THIS WAY
+
+	// combined with init code in constructor and exceptions being thrown
+	// when this init code fails it results in dangling pointers.
+
+	// (if constructor throws exception object doesn't exist, by definition,
+	//  but global variable instance would still point to it....)
+
+//	// need to set this here already or we get stuck in an infinite loop
+//	// because WinFileSystemHandler/UnixFileSystemHandler ctor initializes the
+//	// ArchiveScanner (which uses FileSystemHandler::GetInstance again...).
+//	instance = this;
 }
 
 ////////////////////////////////////////
