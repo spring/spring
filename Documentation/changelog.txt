@@ -1,5 +1,52 @@
 Spring change log
 
+0.77b6:
+
+Crashes:
+ - fix crash on windows resizing
+
+Engine:
+ - if in Choose ingame startposition mode its possible to play a map with more players than startpositions
+ - fix the aircraft hovering / drifting
+ - fix random start positions not beeing random
+ - fix area-attack for aircraft (#1144 again)
+
+User Interface:
+ - enable startboxes by default
+ - decreased CPU laod and increase drawing speed lines
+ - fix small memleak when resizing the window
+
+Lua:
+ - added Spring.GetLastMessagePositions() (returns the 10 last message positions)
+ - moved Spring.GetDrawSelectionInfo() LuaUnsyncedCtrl -> LuaUnsyncedRead
+
+Unitsync:
+ - Don't crash/abort() on invalid handles, but throw exception instead
+ - Fix crash bug in unitsync when UnInit/Init was called after an earlier Init which returned error code
+ - Doesn't leak exceptions anymore over C interface.
+ - Doesn't just crash by design anymore after something goes wrong.
+ - Added API GetNextError, can be used to get error queue (currently limited to 1 error)
+ -Deprecated APIs:
+   - GetCurrentList
+   - AddClient
+   - RemoveClient
+   - GetClientDiff
+   - InstallClientDiff
+   - IsUnitDisabled
+   - IsUnitDisabledByClient
+ - Removed all code supporting those functions.
+ - These deprecated functions pop up MessageBox once on windows to nag lobby devs.
+ - Use engine's logOutput, still writes to unitsync.log (overwrites, doesn't append)
+ - ProcessUnitsNoChecksum is now identical to ProcessUnits.
+ - ProcessUnits now returns 0 immediately (but should still be called in loop until it returns 0, in case it's changed sometime later)
+
+Installer:
+ - Fix groups.ini being overwritten by installer
+ - Update to Kernel Panic 3.0
+ - Remove old CA shortcuts
+
+
+
 0.77b5
 Installer:
  - check if common unitsync users are running, abort installation if any is found
