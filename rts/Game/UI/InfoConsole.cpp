@@ -144,7 +144,7 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(int zone, const char *text)
+void CInfoConsole::NotifyLogMsg(CLogSubsystem& subsystem, const char* text)
 {
 	if (!font) return;
 
@@ -152,11 +152,7 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	RawLine rl;
-	rl.text = text;
-	rl.zone = zone;
-	rl.time = 0; // filled in later
-	rl.id = rawId;
+	RawLine rl(text, &subsystem, rawId);
 	rawId++;
 	rawData.push_back(rl);
 	if (rawData.size() > maxRawLines) {

@@ -405,8 +405,10 @@ bool CLuaUI::AddConsoleLines()
 			return true; // the call is not defined
 		}
 
+		// FIXME: migrate priority to subsystem...
 		lua_pushstring(L, rl.text.c_str());
-		lua_pushnumber(L, rl.zone);
+		lua_pushnumber(L, 0 /*priority*/ );
+		//lua_pushstring(L, rl.subsystem->name);
 
 		// call the function
 		if (!RunCallIn(cmdStr, 2, 0)) {

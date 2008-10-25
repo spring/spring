@@ -43,7 +43,7 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
 
-#define d_puts(_C) logOutput.Print(0, std::string(_C));
+#define d_puts(_C) logOutput.Print(std::string(_C));
 #define d_trace logOutput.Print
 
 
