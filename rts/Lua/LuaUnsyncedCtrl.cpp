@@ -2113,7 +2113,8 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawSelectionInfo(bool)");
 	}
 
-	guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
+	if (guihandler)
+		guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
 
 	return 0;
 }
