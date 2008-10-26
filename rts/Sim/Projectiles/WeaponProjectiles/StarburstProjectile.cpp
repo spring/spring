@@ -260,7 +260,6 @@ void CStarburstProjectile::Update(void)
 
 void CStarburstProjectile::Draw(void)
 {
-	float3 interPos=pos+speed*gu->timeOffset;
 	inArray=true;
 	float age2=(age&7)+gu->timeOffset;
 
@@ -272,7 +271,7 @@ void CStarburstProjectile::Draw(void)
 		va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 		if(drawTrail){		//draw the trail as a single quad
 
-			float3 dif(interPos-camera->pos);
+			float3 dif(drawPos-camera->pos);
 			dif.Normalize();
 			float3 dir1(dif.cross(dir));
 			dir1.Normalize();
@@ -304,8 +303,8 @@ void CStarburstProjectile::Draw(void)
 			float size2=(1+age2*(1/Smoke_Time)*7);
 
 			float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0f);//(1-age2/8.0f);
-			va->AddVertexQTC(interPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(interPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
+			va->AddVertexQTC(drawPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(drawPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
 			va->AddVertexQTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
 			va->AddVertexQTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {	//draw the trail as particles
@@ -336,8 +335,6 @@ void CStarburstProjectile::Draw(void)
 
 void CStarburstProjectile::DrawCallback(void)
 {
-	float3 interPos=pos+speed*gu->timeOffset;
-
 	(*numCallback)++;
 	if(*numCallback<2)
 		return;
@@ -391,15 +388,14 @@ void CStarburstProjectile::DrawCallback(void)
 	col[2]=180;
 	col[3]=1;
 	float fsize = 25.0f;
-	va->AddVertexTC(interPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(interPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(interPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-	va->AddVertexTC(interPos-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(drawPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(drawPos-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 }
 
 void CStarburstProjectile::DrawUnitPart(void)
 {
-	float3 interPos=pos+speed*gu->timeOffset;
 	glPushMatrix();
 	float3 rightdir;
 	if(dir.y!=1)
@@ -409,7 +405,7 @@ void CStarburstProjectile::DrawUnitPart(void)
 	rightdir.Normalize();
 	float3 updir=rightdir.cross(dir);
 
-	CMatrix44f transMatrix(interPos,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
 	glMultMatrixf(&transMatrix[0]);
 
 	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading

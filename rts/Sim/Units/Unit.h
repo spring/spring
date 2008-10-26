@@ -314,6 +314,19 @@ public:
 
 	bool activated;					//if the unit is in it's 'on'-state
 
+	inline CTransportUnit *GetTransporter() const {
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+		return *(CTransportUnit * volatile *)&transporter; // transporter may suddenly be changed to NULL by sim
+#else
+		return transporter;
+#endif
+	}
+
+	void UpdateDrawPos();
+	float3 drawPos;
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	unsigned lastUnitUpdate;
+#endif
 	//CUnit3DLoader::UnitModel* model;
 	S3DOModel *model;
 	CCobInstance *cob;

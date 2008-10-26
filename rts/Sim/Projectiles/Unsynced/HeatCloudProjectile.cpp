@@ -87,9 +87,8 @@ void CHeatCloudProjectile::Draw()
 	col[2]=(unsigned char)alpha;
 	col[3]=1;//(dheat/maxheat)*255.0f;
 	float drawsize=(size+sizeGrowth*gu->timeOffset)*(1-sizemod);
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,texture->xstart,texture->ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,texture->xend,texture->ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,texture->xend,texture->yend,col);
-	va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,texture->xstart,texture->yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawsize-camera->up*drawsize,texture->xstart,texture->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawsize-camera->up*drawsize,texture->xend,texture->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawsize+camera->up*drawsize,texture->xend,texture->yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawsize+camera->up*drawsize,texture->xstart,texture->yend,col);
 }

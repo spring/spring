@@ -50,9 +50,7 @@ void CFireBallProjectile::Draw()
 	inArray=true;
 	unsigned char col[4] = {255,150, 100, 1};
 
-	float3 interPos = pos;
-	if(checkCol)
-		interPos+=speed*gu->timeOffset;
+	float3 interPos = checkCol ? drawPos : pos;
 	float size = radius*1.3f;
 
 	int numSparks=sparks.size();

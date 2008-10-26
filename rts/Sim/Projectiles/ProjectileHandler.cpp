@@ -429,6 +429,9 @@ void CProjectileHandler::Update()
 			delete p;
 		} else {
 			p->Update();
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+			p->lastProjUpdate=gu->lastFrameStart;
+#endif
 			++psi;
 		}
 	}
@@ -580,11 +583,13 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* pro = *psi;
 
+		pro->UpdateDrawPos();
+
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
 			(pro->owner && gs->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner;
-			CUnit* trans = owner? (CUnit*) owner->transporter: 0;
+			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
 			bool stunned = owner? owner->stunned: false;
 
 			if (owner && trans && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {

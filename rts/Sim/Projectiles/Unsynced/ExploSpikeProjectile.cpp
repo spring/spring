@@ -77,14 +77,13 @@ void CExploSpikeProjectile::Draw(void)
 	col[2]=(unsigned char)(a*color.z);
 	col[3]=1;
 
-	float3 interpos=pos+speed*gu->timeOffset;
 	float3 l=dir*length+lengthGrowth*gu->timeOffset;
 	float3 w=dir2*width;
 
-	va->AddVertexTC(interpos+l+w, ph->laserendtex.xend, ph->laserendtex.yend, col);
-	va->AddVertexTC(interpos+l-w, ph->laserendtex.xend, ph->laserendtex.ystart, col);
-	va->AddVertexTC(interpos-l-w, ph->laserendtex.xstart, ph->laserendtex.ystart, col);
-	va->AddVertexTC(interpos-l+w, ph->laserendtex.xstart, ph->laserendtex.yend, col);
+	va->AddVertexTC(drawPos+l+w, ph->laserendtex.xend, ph->laserendtex.yend, col);
+	va->AddVertexTC(drawPos+l-w, ph->laserendtex.xend, ph->laserendtex.ystart, col);
+	va->AddVertexTC(drawPos-l-w, ph->laserendtex.xstart, ph->laserendtex.ystart, col);
+	va->AddVertexTC(drawPos-l+w, ph->laserendtex.xstart, ph->laserendtex.yend, col);
 }
 
 void CExploSpikeProjectile::Init(const float3& pos, CUnit *owner)

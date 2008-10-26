@@ -291,7 +291,6 @@ bool CWeaponProjectile::TraveledRange()
 
 void CWeaponProjectile::DrawUnitPart()
 {
-	float3 interPos = pos + speed * gu->timeOffset;
 	float3 dir(speed);
 	dir.Normalize();
 	glPushMatrix();
@@ -305,7 +304,7 @@ void CWeaponProjectile::DrawUnitPart()
 	rightdir.Normalize();
 	float3 updir(rightdir.cross(dir));
 
-	CMatrix44f transMatrix(interPos,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
 //	glCallList(modelDispList);

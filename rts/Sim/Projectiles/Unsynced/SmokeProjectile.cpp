@@ -108,12 +108,11 @@ void CSmokeProjectile::Draw()
 	//float xmod=0.125f+(float(int(frame%6)))/16;
 	//float ymod=(int(frame/6))/16.0f;
 
-	const float3 interPos(pos+speed*gu->timeOffset);
 	const float interSize=size+sizeExpansion*gu->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
-	va->AddVertexTC(interPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
-	va->AddVertexTC(interPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
+	va->AddVertexTC(drawPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(drawPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(drawPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
+	va->AddVertexTC(drawPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
 }

@@ -366,7 +366,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	CTransportUnit *trans=unit->transporter;
+	CTransportUnit *trans=unit->GetTransporter();
 	if (trans != NULL && !trans->unitDef->isFirePlatform) {
 		return;
 	}
@@ -478,11 +478,11 @@ void CSelectedUnits::Draw()
 			if (unit->isIcon) {
 				continue;
 			}
-			const float3 pos(unit->pos + unit->speed * gu->timeOffset);
-			glVertexf3(pos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(pos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(pos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
-			glVertexf3(pos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
+
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
 		}
 		glEnd();
 	}

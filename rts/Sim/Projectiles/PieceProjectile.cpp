@@ -334,7 +334,6 @@ void CPieceProjectile::Draw()
 	if (flags & PP_NoCEGTrail) {
 		if (flags & PP_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
-			float3 interPos = pos + speed * gu->timeOffset;
 			inArray = true;
 			float age2 = (age & 7) + gu->timeOffset;
 			float color = 0.5f;
@@ -347,7 +346,7 @@ void CPieceProjectile::Draw()
 			va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
 			if (drawTrail) {
 				// draw the trail as a single quad if camera close enough
-				float3 dif(interPos - camera->pos);
+				float3 dif(drawPos - camera->pos);
 				dif.Normalize();
 				float3 dir1(dif.cross(dir));
 				dir1.Normalize();
@@ -379,8 +378,8 @@ void CPieceProjectile::Draw()
 				float size2 = 1 + (age2 * (1 / Smoke_Time)) * 14;
 				float txs = ph->smoketrailtex.xstart - (ph->smoketrailtex.xend - ph->smoketrailtex.xstart) * (age2 / 8.0f);
 
-				va->AddVertexQTC(interPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
-				va->AddVertexQTC(interPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
+				va->AddVertexQTC(drawPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
+				va->AddVertexQTC(drawPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
 				va->AddVertexQTC(oldSmoke + dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend,   col2);
 				va->AddVertexQTC(oldSmoke - dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
 			} else {

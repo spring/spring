@@ -84,7 +84,6 @@ void CRepulseGfx::Draw(void)
 	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.2f);
 	float drawsize=10;
-	float3 interPos=pos+speed*gu->timeOffset;
 
 	AtlasedTexture& et=ph->repulsetex;
 	float txo=et.xstart;

@@ -204,6 +204,8 @@ CR_REG_METADATA(CGame,(
 
 	CR_MEMBER(moveWarnings),
 
+	CR_MEMBER(lastSimFrame),
+
 //	CR_MEMBER(script),
 	CR_RESERVED(64),
 	CR_POSTLOAD(PostLoad)
@@ -2756,9 +2758,9 @@ bool CGame::Draw() {
 
 //	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		unsigned startDraw = SDL_GetTicks();
-		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
-		                 * (float)(GAME_SPEED * gs->speedFactor);
+		gu->lastFrameStart = SDL_GetTicks();
+		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -4322,7 +4324,7 @@ void CGame::DrawDirectControlHud(void)
 			             float3(camera->right.z, camera->up.z, camera->forward.z));
 			glMultMatrixf(m.m);
 		}
-		glTranslatef3(-unit->pos - (unit->speed * gu->timeOffset));
+		glTranslatef3(-unit->drawPos);
 		glDisable(GL_BLEND);
 		unit->currentLOD = 0;
 		unitDrawer->DrawIndividual(unit); // draw the unit

@@ -63,6 +63,12 @@ public:
 	 */
 	float lastFrameTime;
 
+	// the starting time in tick for last draw frame
+	unsigned lastFrameStart;
+
+	// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
+	float weightedSpeedFactor;
+
 	// the draw frame number (never 0)
 	unsigned int drawFrame;
 

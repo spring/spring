@@ -568,10 +568,11 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	if (unit->transporter == NULL) {
+	CTransportUnit *trans=unit->GetTransporter();
+	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {
-		pos += (unit->transporter->speed * gu->timeOffset);
+		pos += (trans->speed * gu->timeOffset);
 	}
 
 	lua_pushnumber(L, pos.x);

@@ -65,9 +65,8 @@ void CGfxProjectile::Draw()
 {
 	inArray=true;
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.ystart,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.ystart,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.yend,color);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.yend,color);
+	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.ystart,color);
+	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.ystart,color);
+	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.yend,color);
+	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.yend,color);
 }

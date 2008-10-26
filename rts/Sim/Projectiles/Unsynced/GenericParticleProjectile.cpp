@@ -65,23 +65,21 @@ void CGenericParticleProjectile::Draw()
 		unsigned char color[4];
 
 		colorMap->GetColor(color, life);
-		float3 interPos=pos+speed*gu->timeOffset;
 
-		va->AddVertexTC(interPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(interPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(interPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(interPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
+		va->AddVertexTC(drawPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
+		va->AddVertexTC(drawPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
+		va->AddVertexTC(drawPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
+		va->AddVertexTC(drawPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
 	}
 	else
 	{
 		unsigned char color[4];
 
 		colorMap->GetColor(color, life);
-		float3 interPos=pos+speed*gu->timeOffset;
 
-		va->AddVertexTC(interPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(interPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(interPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(interPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
+		va->AddVertexTC(drawPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
+		va->AddVertexTC(drawPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
+		va->AddVertexTC(drawPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
+		va->AddVertexTC(drawPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
 	}
 }
