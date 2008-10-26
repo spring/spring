@@ -17,6 +17,7 @@
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "mmgr.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
 
@@ -270,7 +271,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	}
 	float3 closeVect=dif-dir*closeLength;
 
-	if (closeVect.Length2D() < (radius * 1.5f + 400)) {
+	if (closeVect.SqLength2D() < Square(radius * 1.5f + 400)) {
 		incoming.push_back(p);
 		AddDeathDependence(p);
 	}

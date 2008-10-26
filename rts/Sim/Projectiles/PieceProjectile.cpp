@@ -181,7 +181,7 @@ CPieceProjectile::~CPieceProjectile(void)
 
 void CPieceProjectile::Collision()
 {
-	if (speed.Length() > gs->randFloat() * 5 + 1 && pos.y > radius + 2) {
+	if (speed.SqLength() > Square(gs->randFloat() * 5 + 1) && pos.y > radius + 2) {
 		float3 norm = ground->GetNormal(pos.x, pos.z);
 		float ns = speed.dot(norm);
 		speed -= norm * ns * 1.6f;

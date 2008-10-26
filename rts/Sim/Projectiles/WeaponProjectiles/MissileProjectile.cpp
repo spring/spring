@@ -263,7 +263,7 @@ void CMissileProjectile::Update(void)
 		float3 dif2 = dif - dir;
 		float tracking = weaponDef->turnrate;
 
-		if (dif2.Length() < tracking) {
+		if (dif2.SqLength() < Square(tracking)) {
 			dir = dif;
 		} else {
 			dif2 -= (dir * (dif2.dot(dir)));
@@ -465,7 +465,7 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 		float3 dif2 = sdir - dir;
 		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
 
-		if (dif2.Length() < tracking) {
+		if (dif2.SqLength() < Square(tracking)) {
 			dir = sdir;
 		} else {
 			dif2 -= dir * (dif2.dot(dir));

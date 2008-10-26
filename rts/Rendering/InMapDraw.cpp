@@ -246,8 +246,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		if (maySee) {
 			float3 pos = pi->pos;
 			float3 dif(pos - camera->pos);
-			float camDist = dif.Length();
-			dif /= camDist;
+			dif.ANormalize();
 			float3 dir1(dif.cross(UpVector));
 			dir1.ANormalize();
 			float3 dir2(dif.cross(dir1));
