@@ -14,29 +14,33 @@
 
 // all the static vars
 int AAIMap::aai_instances = 0;
+char AAIMap::map_filename[500];
 int AAIMap::xSize;
-int AAIMap::ySize;
+int AAIMap::ySize;	
 int AAIMap::xMapSize;
-int AAIMap::yMapSize;
+int AAIMap::yMapSize;				
 int AAIMap::xDefMapSize;
 int AAIMap::yDefMapSize;
 int AAIMap::xContMapSize;
-int AAIMap::yContMapSize;
+int AAIMap::yContMapSize;	
 int AAIMap::xSectors;
-int AAIMap::ySectors;
+int AAIMap::ySectors;				
 int AAIMap::xSectorSize; 
-int AAIMap::ySectorSize;
+int AAIMap::ySectorSize;		
 int AAIMap::xSectorSizeMap; 
 int AAIMap::ySectorSizeMap;
 
 list<AAIMetalSpot>  AAIMap::metal_spots;
 
+int AAIMap::land_metal_spots;
+int AAIMap::water_metal_spots;
+
 bool AAIMap::metalMap;
-MapType AAIMap::mapType;
+MapType AAIMap::map_type;	
 
 vector< vector<int> > AAIMap::team_sector_map;
-vector<int> AAIMap::buildmap;
-vector<int> AAIMap::blockmap;
+vector<int> AAIMap::buildmap;	
+vector<int> AAIMap::blockmap;	
 vector<float> AAIMap::plateau_map;
 vector<int> AAIMap::continent_map;	
 
@@ -45,6 +49,11 @@ int AAIMap::land_continents;
 int AAIMap::water_continents;
 int AAIMap::avg_land_continent_size;
 int AAIMap::avg_water_continent_size;
+int AAIMap::max_land_continent_size;
+int AAIMap::max_water_continent_size;
+int AAIMap::min_land_continent_size;
+int AAIMap::min_water_continent_size;
+
 
 list<UnitCategory> AAIMap::map_categories;
 list<int> AAIMap::map_categories_id;
@@ -82,23 +91,12 @@ AAIMap::~AAIMap(void)
 		Learn();
 
 		// save map data
-		char filename[500];
-		char buffer[500];
-		strcpy(buffer, MAIN_PATH);
-		strcat(buffer, MAP_LEARN_PATH);
-		strcat(buffer, cb->GetMapName());
-		ReplaceExtension(buffer, filename, sizeof(filename), "_");
-		strcat(filename, cb->GetModName());
-		ReplaceExtension(filename, buffer, sizeof(filename), ".dat");
-
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
-	
-		FILE *save_file = fopen(buffer, "w+");
+		FILE *save_file = fopen(map_filename, "w+");
 
 		fprintf(save_file, "%s \n",MAP_FILE_VERSION);
 
 		// save map type
-		fprintf(save_file, "%s \n", GetMapTypeString(mapType));
+		fprintf(save_file, "%s \n", GetMapTypeString(map_type));
 
 		// save units map_usefulness
 		float sum;
@@ -106,13 +104,13 @@ AAIMap::~AAIMap(void)
 		for(int i = 0; i < cfg->SIDES; ++i)
 		{
 			// rebalance map_usefulness
-			if(mapType == LAND_MAP)
+			if(map_type == LAND_MAP)
 			{
 				sum = map_usefulness[0][i] + map_usefulness[2][i];
 				map_usefulness[0][i] *= (100.0/sum);
 				map_usefulness[2][i] *= (100.0/sum);
 			}
-			else if(mapType == LAND_WATER_MAP)
+			else if(map_type == LAND_WATER_MAP)
 			{
 				sum = map_usefulness[0][i] + map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
 				map_usefulness[0][i] *= (100.0/sum);
@@ -120,7 +118,7 @@ AAIMap::~AAIMap(void)
 				map_usefulness[3][i] *= (100.0/sum);
 				map_usefulness[4][i] *= (100.0/sum);
 			}
-			else if(mapType == WATER_MAP)
+			else if(map_type == WATER_MAP)
 			{
 				sum = map_usefulness[2][i] + map_usefulness[3][i] + map_usefulness[4][i];
 				map_usefulness[2][i] *= (100.0/sum);
@@ -202,9 +200,9 @@ void AAIMap::Init()
 		for(int x = 0; x < xSectors; ++x)
 			team_sector_map[x].resize(ySectors, -1);
 
-		ReadCacheFile();
-
 		ReadContinentFile();
+
+		ReadMapCacheFile();
 	}
 
 	// create field of sectors
@@ -245,12 +243,13 @@ void AAIMap::Init()
 
 	// for log file
 	fprintf(ai->file, "Map: %s\n",cb->GetMapName());
+	fprintf(ai->file, "Maptype: %s\n", GetMapTypeTextString(map_type));
 	fprintf(ai->file, "Mapsize is %i x %i\n", cb->GetMapWidth(),cb->GetMapHeight());
 	fprintf(ai->file, "%i sectors in x direction\n", xSectors);
 	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
 	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
 	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
-	fprintf(ai->file, "%i metal spots found \n \n",metal_spots.size());
+	fprintf(ai->file, "%i metal spots found (%i are on land, %i under water) \n \n",metal_spots.size(), land_metal_spots, water_metal_spots);
 	fprintf(ai->file, "%i continents found on map\n", continents.size());
 	fprintf(ai->file, "%i land and %i water continents\n", land_continents, water_continents);
 	fprintf(ai->file, "Average land continent size is %i\n", avg_land_continent_size);
@@ -273,31 +272,30 @@ void AAIMap::Init()
 	}*/
 }
 
-void AAIMap::ReadCacheFile()
+void AAIMap::ReadMapCacheFile()
 {
 	// try to read cache file
 	bool loaded = false;
 	
-	char filename[500];
 	char buffer[500];
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_CACHE_PATH);
 	strcat(buffer, cb->GetMapName());
-	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, map_filename);
 
 	FILE *file;
 
-	if(file = fopen(filename, "r"))
+	if(file = fopen(map_filename, "r"))
 	{
 		// check if correct version
 		fscanf(file, "%s ", buffer);
 
-		if(strcmp(buffer, MAP_DATA_VERSION))
+		if(strcmp(buffer, MAP_CACHE_VERSION))
 		{
 			cb->SendTextMsg("Mapcache out of date - creating new one", 0);
-			fprintf(ai->file, "Map cache-file out of date - new one has been created\n");
+			fprintf(ai->file, "Map cache file out of date - new one has been created\n");
 			fclose(file);
 		}
 		else
@@ -336,6 +334,8 @@ void AAIMap::ReadCacheFile()
 				metal_spots.push_back(spot);
 			}
 
+			fscanf(file, "%i %i ", &land_metal_spots, &water_metal_spots); 
+
 			fclose(file);
 
 			fprintf(ai->file, "Map cache file succesfully loaded\n");
@@ -357,13 +357,13 @@ void AAIMap::ReadCacheFile()
 		strcpy(buffer, MAIN_PATH);
 		strcat(buffer, MAP_CACHE_PATH);
 		strcat(buffer, cb->GetMapName());
-		ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+		ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
 
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
 
-		file = fopen(filename, "w+");
+		file = fopen(map_filename, "w+");
 
-		fprintf(file, "%s\n", MAP_DATA_VERSION);
+		fprintf(file, "%s\n", MAP_CACHE_VERSION);
 
 		// save if its a metal map
 		fprintf(file, "%i\n", (int)metalMap);
@@ -379,10 +379,22 @@ void AAIMap::ReadCacheFile()
 			fprintf(file, "%f ", plateau_map[i]); 
 
 		// save mex spots
+		land_metal_spots = 0;
+		water_metal_spots = 0;
+
 		fprintf(file, "\n%i \n", metal_spots.size());
 
-		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); spot++)
+		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); ++spot)
+		{
 			fprintf(file, "%f %f %f %f \n", spot->pos.x, spot->pos.y, spot->pos.z, spot->amount);
+
+			if(spot->pos.y >= 0)
+				++land_metal_spots;
+			else
+				++water_metal_spots;
+		}
+
+		fprintf(file, "%i %i\n", land_metal_spots, water_metal_spots);
 
 		fclose(file);
 
@@ -391,6 +403,9 @@ void AAIMap::ReadCacheFile()
 
 	// determine map type
 	loaded = true;
+
+	char filename[500];
+
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_CFG_PATH);
 	strcat(buffer, cb->GetMapName());
@@ -404,26 +419,22 @@ void AAIMap::ReadCacheFile()
 		fscanf(file, "%s ", buffer);
 
 		if(!strcmp(buffer, "LAND_MAP"))
-			mapType = LAND_MAP;
+			map_type = LAND_MAP;
 		else if(!strcmp(buffer, "AIR_MAP"))
-			mapType = AIR_MAP;
+			map_type = AIR_MAP;
 		else if(!strcmp(buffer, "LAND_WATER_MAP"))
-			mapType = LAND_WATER_MAP;
+			map_type = LAND_WATER_MAP;
 		else if(!strcmp(buffer, "WATER_MAP"))
-			mapType = WATER_MAP;
+			map_type = WATER_MAP;
 		else
-			mapType = UNKNOWN_MAP;
+			map_type = UNKNOWN_MAP;
 
-		if(mapType >= 0 && mapType <= WATER_MAP)
+		if(map_type >= 0 && map_type <= WATER_MAP)
 		{
-			this->mapType = (MapType) mapType;
+			this->map_type = (MapType) map_type;
 
-			// logging
-			sprintf(buffer, "%s detected", GetMapTypeTextString(mapType));
-			fprintf(ai->file, "\nLoading map type:\n");
-			fprintf(ai->file, buffer);
-			fprintf(ai->file, "\n\n");
-
+			sprintf(buffer, "%s detected", GetMapTypeTextString(map_type));
+	
 			if(bt->aai_instances == 1)
 				ai->cb->SendTextMsg(buffer, 0);
 		}
@@ -450,16 +461,18 @@ void AAIMap::ReadCacheFile()
 
 		water_ratio = water_ratio / ((float)(xMapSize*yMapSize));
 
-		if(water_ratio > 0.80f)
-			this->mapType = WATER_MAP;
+
+		//
+		if( (float)max_land_continent_size < 0.5f * (float)max_water_continent_size || water_ratio > 0.80f)
+			this->map_type = WATER_MAP;
 		else if(water_ratio > 0.25f)
-			this->mapType = LAND_WATER_MAP;
+			this->map_type = LAND_WATER_MAP;
 		else
-			this->mapType = LAND_MAP;
+			this->map_type = LAND_MAP;
 
 
 		// logging
-		sprintf(buffer, "%s detected", GetMapTypeTextString(this->mapType));
+		sprintf(buffer, "%s detected", GetMapTypeTextString(this->map_type));
 		ai->cb->SendTextMsg(buffer, 0);
 		fprintf(ai->file, "\nAutodetecting map type:\n");
 		fprintf(ai->file, buffer);
@@ -474,7 +487,7 @@ void AAIMap::ReadCacheFile()
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 		file = fopen(filename, "w+");
-		fprintf(file, "%s\n", GetMapTypeString(this->mapType));
+		fprintf(file, "%s\n", GetMapTypeString(this->map_type));
 		fclose(file);
 	}
 
@@ -493,7 +506,7 @@ void AAIMap::ReadCacheFile()
 	}
 	else
 	{
-		if(mapType == LAND_MAP)
+		if(map_type == LAND_MAP)
 		{
 			map_categories.push_back(GROUND_ASSAULT);
 			map_categories.push_back(AIR_ASSAULT);
@@ -503,7 +516,7 @@ void AAIMap::ReadCacheFile()
 			map_categories_id.push_back(1);
 			map_categories_id.push_back(2);
 		}
-		else if(mapType == LAND_WATER_MAP)
+		else if(map_type == LAND_WATER_MAP)
 		{
 			map_categories.push_back(GROUND_ASSAULT);
 			map_categories.push_back(AIR_ASSAULT);
@@ -517,7 +530,7 @@ void AAIMap::ReadCacheFile()
 			map_categories_id.push_back(3);
 			map_categories_id.push_back(4);
 		}
-		else if(mapType == WATER_MAP)
+		else if(map_type == WATER_MAP)
 		{
 			map_categories.push_back(AIR_ASSAULT);
 			map_categories.push_back(HOVER_ASSAULT);
@@ -592,7 +605,9 @@ void AAIMap::ReadContinentFile()
 			}
 
 			// load statistical data
-			fscanf(file, "%i %i %i %i", &land_continents, &water_continents, &avg_land_continent_size, &avg_water_continent_size);
+			fscanf(file, "%i %i %i %i %i %i %i %i", &land_continents, &water_continents, &avg_land_continent_size, &avg_water_continent_size, 
+																			&max_land_continent_size, &max_water_continent_size, 
+																			&min_land_continent_size, &min_water_continent_size);
 
 			fclose(file);
 
@@ -639,7 +654,9 @@ void AAIMap::ReadContinentFile()
 		fprintf(file, "%i %i \n", continents[c].size, (int)continents[c].water);
 
 	// save statistical data
-	fprintf(file, "%i %i %i %i\n", land_continents, water_continents, avg_land_continent_size, avg_water_continent_size);
+	fprintf(file, "%i %i %i %i %i %i %i %i\n", land_continents, water_continents, avg_land_continent_size, avg_water_continent_size, 
+																	max_land_continent_size, max_water_continent_size, 
+																	min_land_continent_size, min_water_continent_size);
 
 	fclose(file);
 }
@@ -681,7 +698,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			fscanf(load_file, "%s", buffer);
 
 			// map type does not match
-			if(strcmp(buffer, GetMapTypeString(mapType)))
+			if(strcmp(buffer, GetMapTypeString(map_type)))
 			{
 				cb->SendTextMsg("Map type has changed - creating new map learning file", 0);
 				fclose(load_file);
@@ -728,7 +745,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 		for(int i = 0; i < cfg->SIDES; ++i)
 		{
 			for(int j = 0; j < bt->assault_categories.size(); ++j)
-				map_usefulness[j][i] = bt->mod_usefulness[j][i][mapType];
+				map_usefulness[j][i] = bt->mod_usefulness[j][i][map_type];
 		}
 	}
 
@@ -1239,9 +1256,9 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 	// check horizontal space
 	if(xPos+xSize+cfg->MAX_XROW <= xMapSize && xPos - cfg->MAX_XROW >= 0)
 	{
-		for(int y = yPos; y < yPos + ySize; y++)
+		for(int y = yPos; y < yPos + ySize; ++y)
 		{
-			if(y>= yMapSize)
+			if(y >= yMapSize)
 			{
 				fprintf(ai->file, "ERROR: y = %i index out of range when checking horizontal rows", y);
 				return;
@@ -1380,10 +1397,6 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 
 void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, bool water)
 {
-	// check range
-	if(xPos < 0 || yPos < 0 || xPos+width > xMapSize || yPos + height > yMapSize)
-		return;
-
 	//float3 my_pos;
 	int empty, cell;
 
@@ -1394,59 +1407,58 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 
 	if(block)	// block cells
 	{
-		for(int x = xPos; x < xPos + width; x++)
+		for(int x = xPos; x < xPos + width; ++x)
 		{
-			for(int y = yPos; y < yPos + height; y++)
+			for(int y = yPos; y < yPos + height; ++y)
 			{
 				cell = x + xMapSize*y;
 
 				// if no building ordered that cell to be blocked, update buildmap
 				// (only if space is not already occupied by a building)
-				if(!(blockmap[cell]++))
+				if(blockmap[cell] == 0 && buildmap[cell] == empty)
 				{
-					if(buildmap[cell] == empty)
-					{
-						buildmap[cell] = 2;
+					buildmap[cell] = 2;
 
-						/*// debug
-						if(x%2 == 0 && y%2 == 0)
+					// debug
+					/*if(x%2 == 0 && y%2 == 0)
+					{
+						my_pos.x = x * 8;
+						my_pos.z = y * 8;
+						my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
+						cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
+					}*/
+				}
+
+				++blockmap[cell];
+			}
+		}
+	}
+	else		// unblock cells
+	{
+		for(int x = xPos; x < xPos + width; ++x)
+		{
+			for(int y = yPos; y < yPos + height; ++y)
+			{
+				cell = x + xMapSize*y;
+
+				if(blockmap[cell] > 0)
+				{
+					--blockmap[cell];
+
+					// if cell is not blocked anymore, mark cell on buildmap as empty (only if it has been marked bloked 
+					//					- if it is not marked as blocked its occupied by another building or unpassable)
+					if(blockmap[cell] == 0 && buildmap[cell] == 2)
+					{
+						buildmap[cell] = empty;
+
+						// debug
+						/*if(x%2 == 0 && y%2 == 0)
 						{
 							my_pos.x = x * 8;
 							my_pos.z = y * 8;
 							my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
 							cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
 						}*/
-					}
-				}
-			}
-		}
-	}
-	else		// unblock cells
-	{
-		for(int x = xPos; x < xPos + width; x++)
-		{
-			for(int y = yPos; y < yPos + height; y++)
-			{
-				cell = x + xMapSize*y;
-
-				if(blockmap[cell])
-				{
-					// if cell is not blocked anymore, update buildmap
-					if(!(--blockmap[cell]))
-					{
-						if(buildmap[cell] == 2)
-						{
-							buildmap[cell] = empty;
-
-							// debug
-							/*if(x%2 == 0 && y%2 == 0)
-							{
-								my_pos.x = x * 8;
-								my_pos.z = y * 8;
-								my_pos.y = cb->GetElevation(my_pos.x, my_pos.z);
-								cb->DrawUnit("ARMMINE1", my_pos, 0.0f, 1500, cb->GetMyAllyTeam(), true, true);
-							}*/
-						}
 					}
 				}
 			}
@@ -1475,9 +1487,9 @@ int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 	while(buildmap[x+yPos*xMapSize] == value)
 	{
 		if(direction)
-			x++;
+			++x;
 		else
-			x--;
+			--x;
 
 		// search went out of map
 		if(x < 0 || x >= xMapSize)
@@ -1494,9 +1506,9 @@ int AAIMap::GetNextY(int direction, int xPos, int yPos, int value)
 	while(buildmap[xPos+y*xMapSize] == value)
 	{
 		if(direction)
-			y++;
+			++y;
 		else
-			y--;
+			--y;
 
 		// search went out of map
 		if(y < 0 || y >= yMapSize)
@@ -1792,7 +1804,6 @@ void AAIMap::CalculateContinentMaps()
 						y = ((*cell) - x) / xContMapSize;
 
 						// check edges
-						
 						if(x > 0 && continent_map[y * xContMapSize + x - 1] < 0)
 						{
 							if(height_map[4 * (y * xMapSize + x - 1)] < 0)
@@ -1860,8 +1871,13 @@ void AAIMap::CalculateContinentMaps()
 	// calculate some statistical data
 	land_continents = 0;
 	water_continents = 0;
+
 	avg_land_continent_size = 0;
 	avg_water_continent_size = 0;
+	max_land_continent_size = 0;
+	max_water_continent_size = 0;
+	min_land_continent_size = xContMapSize * yContMapSize;
+	min_water_continent_size = xContMapSize * yContMapSize;
 
 	for(int i = 0; i < continents.size(); ++i)
 	{
@@ -1869,11 +1885,23 @@ void AAIMap::CalculateContinentMaps()
 		{
 			++water_continents;
 			avg_water_continent_size += continents[i].size;
+
+			if(continents[i].size > max_water_continent_size)
+				max_water_continent_size = continents[i].size;
+
+			if(continents[i].size < min_water_continent_size)
+				min_water_continent_size = continents[i].size;
 		}
 		else
 		{
 			++land_continents;
 			avg_land_continent_size += continents[i].size;
+
+			if(continents[i].size > max_land_continent_size)
+				max_land_continent_size = continents[i].size;
+
+			if(continents[i].size < min_land_continent_size)
+				min_land_continent_size = continents[i].size;
 		}
 	}
 
@@ -1884,8 +1912,7 @@ void AAIMap::CalculateContinentMaps()
 		avg_land_continent_size /= land_continents;
 }
 
-// algorithm more or less by krogothe
-// thx very much
+// algorithm more or less by krogothe - thx very much
 void AAIMap::SearchMetalSpots()
 {
 	const UnitDef* def = bt->unitList[bt->GetBiggestMex()-1];
@@ -2060,24 +2087,11 @@ void AAIMap::SearchMetalSpots()
 		fprintf(ai->file, "Map is considered to be a metal map\n",0);
 	}
 	else
-	{
 		metalMap = false;
-
-		// debug
-		/*for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); spot++)
-		{
-			cb->DrawUnit("ARMMEX", spot->pos, 0.0f, 200000, cb->GetMyAllyTeam(), false, true);
-		}*/
-	}
-
 
 	delete [] MexArrayA;
 	delete [] MexArrayB;
 	delete [] TempAverage;
-}
-
-void AAIMap::GetMapData()
-{
 }
 
 void AAIMap::UpdateRecon()
@@ -2257,47 +2271,47 @@ void AAIMap::UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, con
 
 	if(killer < 5)
 	{
-		bt->mod_usefulness[killer][killer_type->side-1][mapType] += change;
+		bt->mod_usefulness[killer][killer_type->side-1][map_type] += change;
 		map_usefulness[killer][killer_type->side-1] += change;
 	}
 
 	if(killed < 5)
 	{
 		map_usefulness[killed][killed_type->side-1] -= change;
-		bt->mod_usefulness[killed][killed_type->side-1][mapType] -= change;
+		bt->mod_usefulness[killed][killed_type->side-1][map_type] -= change;
 
 		if(map_usefulness[killed][killed_type->side-1] < 1)
 			map_usefulness[killed][killed_type->side-1] = 1;
 
-		if(bt->mod_usefulness[killed][killed_type->side-1][mapType] < 1)
-			bt->mod_usefulness[killed][killed_type->side-1][mapType] = 1;
+		if(bt->mod_usefulness[killed][killed_type->side-1][map_type] < 1)
+			bt->mod_usefulness[killed][killed_type->side-1][map_type] = 1;
 	}
 }
 
 
-const char* AAIMap::GetMapTypeString(int mapType)
+const char* AAIMap::GetMapTypeString(int map_type)
 {
-	if(mapType == 1)
+	if(map_type == 1)
 		return "LAND_MAP";
-	else if(mapType == 2)
+	else if(map_type == 2)
 		return "AIR_MAP";
-	else if(mapType == 3)
+	else if(map_type == 3)
 		return "LAND_WATER_MAP";
-	else if(mapType == 4)
+	else if(map_type == 4)
 		return "WATER_MAP";
 	else
 		return "UNKNOWN_MAP";
 }
 
-const char* AAIMap::GetMapTypeTextString(int mapType)
+const char* AAIMap::GetMapTypeTextString(int map_type)
 {
-	if(mapType == 1)
+	if(map_type == 1)
 		return "land map";
-	else if(mapType == 2)
+	else if(map_type == 2)
 		return "air map";
-	else if(mapType == 3)
+	else if(map_type == 3)
 		return "land-water map";
-	else if(mapType == 4)
+	else if(map_type == 4)
 		return "water map";
 	else
 		return "unknown map type";

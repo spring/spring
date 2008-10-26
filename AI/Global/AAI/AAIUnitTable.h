@@ -17,6 +17,9 @@ public:
 
 	bool AddUnit(int unit_id, int def_id, AAIGroup *group = 0, AAIConstructor *cons = 0);
 	void RemoveUnit(int unit_id);
+	
+	void AddScout(int unit_id);
+	void RemoveScout(int unit_id);
 
 	void AddConstructor(int unit_id, int def_id);
 	void RemoveConstructor(int unit_id, int def_id);
@@ -43,7 +46,10 @@ public:
 	void RemoveStationaryArty(int unit_id);
 
 	AAIConstructor* FindBuilder(int building, bool commander);
-	AAIConstructor* FindClosestBuilder(int building, float3 pos, bool commander);
+
+	// finds closest builder and stores its distance to pos in min_dist
+	AAIConstructor* FindClosestBuilder(int building, float3 *pos, bool commander, float *min_dist);
+
 	AAIConstructor* FindClosestAssistant(float3 pos, int importance, bool commander);
 
 	void EnemyKilled(int unit);
@@ -62,12 +68,18 @@ public:
 	AAIBuildTable *bt;
 	IAICallback* cb;
 
-	vector<AAIUnit> units;
 	// units[i].unitId = -1 -> not used , -2 -> enemy unit
+	vector<AAIUnit> units;
+
+	// number of active/under construction units of all different types
+	int activeScouts, futureScouts;
+	int activeBuilders, futureBuilders;
+	int activeFactories, futureFactories;
 
 	// commanders id
 	int cmdr;
-
+		
+	set<int> scouts;
 	set<int> constructors;
 	set<int> metal_makers;
 	set<int> jammers; 

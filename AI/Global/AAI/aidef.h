@@ -18,10 +18,10 @@
 #include "ExternalAI/IGlobalAICallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "ExternalAI/aibase.h"
-#include "System/Vec2.h"
-#include "Game/GlobalConstants.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "System/vec2.h"
+#include "Game/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
@@ -38,11 +38,11 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION "0.872"
+#define AAI_VERSION "0.875"
 #define MAP_FILE_VERSION "MAP_LEARN_0_80"
 #define TABLE_FILE_VERSION "MOD_LEARN_0_87"
-#define MAP_DATA_VERSION "MAP_DATA_0_86"
-#define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_86"
+#define MAP_CACHE_VERSION "MAP_DATA_0_87"
+#define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
 // all paths 
 #define MAIN_PATH "AI/AAI/"
