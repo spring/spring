@@ -2011,7 +2011,7 @@ int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
 	}
 
-	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
+	lua_pushboolean(L, guihandler ? guihandler->GetDrawSelectionInfo() : 0);
 	return 1;
 }
 
