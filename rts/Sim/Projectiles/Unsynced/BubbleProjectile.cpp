@@ -67,10 +67,9 @@ void CBubbleProjectile::Draw()
 	col[2]=(unsigned char)(255*alpha);
 	col[3]=(unsigned char)(255*alpha);
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+sizeExpansion*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.ystart    ,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.ystart    ,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.yend,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*interSize-camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.ystart    ,col);
+	va->AddVertexTC(drawPos+camera->right*interSize-camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.ystart    ,col);
+	va->AddVertexTC(drawPos+camera->right*interSize+camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*interSize+camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.yend,col);
 }

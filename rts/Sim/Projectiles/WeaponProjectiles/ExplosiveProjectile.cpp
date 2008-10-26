@@ -139,7 +139,6 @@ void CExplosiveProjectile::Draw(void)
 	const bool   noGap      = weaponDef->visuals.noGap;
 	const int    stages     = weaponDef->visuals.stages;
 	const float  invStages  = 1.0f / (float)stages;
-	const float3 interPos   = pos + (speed * gu->timeOffset);
 
 	float3 dir = speed;
 	dir.Normalize();
@@ -156,7 +155,7 @@ void CExplosiveProjectile::Draw(void)
 		const float  size  = drawRadius * (1.0f - (a * sizeDecay));
 		const float3 up    = camera->up    * size;
 		const float3 right = camera->right * size;
-		const float3 interPos2 = interPos - ((noGap)?(dir * size * a):(dir * drawRadius * a));
+		const float3 interPos2 = drawPos - ((noGap)?(dir * size * a):(dir * drawRadius * a));
 
 		va->AddVertexQTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
 		va->AddVertexQTC(interPos2 + right - up, tex->xend,   tex->ystart, col);

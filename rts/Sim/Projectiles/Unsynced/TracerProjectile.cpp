@@ -76,11 +76,10 @@ void CTracerProjectile::Draw()
 	if(drawLength>3)
 		drawLength=3;
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	glTexCoord2f(1.0f/16,1.0f/16);
 	glColor4f(1,1,0.1f,0.4f);
 	glBegin(GL_LINES);
-		glVertexf3( interPos);				
-		glVertexf3( interPos-dir*drawLength);				
+		glVertexf3( drawPos);				
+		glVertexf3( drawPos-dir*drawLength);				
 	glEnd();
 }

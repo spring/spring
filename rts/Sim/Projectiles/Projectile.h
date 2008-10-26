@@ -1,5 +1,6 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
+#include "Rendering/GL/myGL.h"
 // Projectile.h: interface for the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -47,6 +48,12 @@ public:
 	bool deleteMe;
 	bool castShadow;
 	unsigned int collisionFlags;
+
+	void UpdateDrawPos();
+	float3 drawPos;
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	unsigned lastProjUpdate;
+#endif
 
 	CUnit* owner;
 	float3 speed;

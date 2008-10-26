@@ -237,6 +237,9 @@ CUnit::CUnit ()
 	directControl = NULL;
 #endif
 	activated = false;
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	lastUnitUpdate=gu->lastFrameStart;
+#endif
 }
 
 CUnit::~CUnit()
@@ -530,6 +533,9 @@ void CUnit::Update()
 	const bool oldInWater = inWater;
 
 	moveType->Update();
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	lastUnitUpdate=gu->lastFrameStart;
+#endif
 
 	inAir   = ((pos.y + height) >= 0.0f);
 	inWater =  (pos.y           <= 0.0f);
@@ -1112,22 +1118,34 @@ void CUnit::Kill(float3& impulse) {
 }
 
 
-
+void CUnit::UpdateDrawPos() {
+	CTransportUnit *trans=GetTransporter(); 
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	if (trans) {
+		drawPos = pos + (trans->speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
+	} else {
+		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
+	}
+#else
+	if (trans) {
+		drawPos = pos + (trans->speed * gu->timeOffset);
+	} else {
+		drawPos = pos + (speed * gu->timeOffset);
+	}
+#endif
+}
 /******************************************************************************/
 /******************************************************************************/
 
 CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 {
-	float3 interPos;
-	if (!transporter) {
-		interPos = (synced? pos: pos + (speed * gu->timeOffset));
-	} else {
-		interPos = (synced? pos: pos + (transporter->speed * gu->timeOffset));
-	}
+	float3 interPos = synced ? pos : drawPos;
 
 	if (!synced && error) {
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
+
+	CTransportUnit *trans;
 
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == Flying) && unitDef->canmove)) {
@@ -1136,7 +1154,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		// use this matrix, or their nanoframes won't spin on pad
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
-	else if (transporter && transporter->unitDef->holdSteady) {
+	else if ((trans=GetTransporter()) && trans->unitDef->holdSteady) {
 		// making local copies of vectors
 		float3 frontDir = GetVectorFromHeading(heading);
 		float3 upDir    = updir;
@@ -2460,6 +2478,8 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(inAir),
 	CR_MEMBER(inWater),
+	CR_MEMBER(drawPos),
+	CR_RESERVED(4),
 
 	CR_RESERVED(126),
 

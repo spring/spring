@@ -231,8 +231,7 @@ void CLaserProjectile::Draw(void)
 
 	va->EnlargeArrays(32,0,VA_SIZE_TC);
 	if(camDist<weaponDef->lodDistance){
-		float3 pos1=pos+speed*gu->timeOffset;
-		float3 pos2=pos1-dir*curLength;
+		float3 pos2=drawPos-dir*curLength;
 		float texStartOffset;
 		float texEndOffset;
 		if (checkCol) { //expanding or contracting?
@@ -244,21 +243,21 @@ void CLaserProjectile::Draw(void)
 			texEndOffset= ((float)stayTime * speedf/length)*(weaponDef->visuals.texture1->xstart - weaponDef->visuals.texture1->xend);
 		}
 
-		va->AddVertexQTC(pos1-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    col);
-		va->AddVertexQTC(pos1+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,col);
-		va->AddVertexQTC(pos1+dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col);
-		va->AddVertexQTC(pos1-dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col);
-		va->AddVertexQTC(pos1-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    col2);
-		va->AddVertexQTC(pos1+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,col2);
-		va->AddVertexQTC(pos1+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col2);
-		va->AddVertexQTC(pos1-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col2);
+		va->AddVertexQTC(drawPos-dir1*size,	midtexx,weaponDef->visuals.texture2->ystart,    col);
+		va->AddVertexQTC(drawPos+dir1*size,	midtexx,weaponDef->visuals.texture2->yend,col);
+		va->AddVertexQTC(drawPos+dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col);
+		va->AddVertexQTC(drawPos-dir1*size-dir2*size, weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col);
+		va->AddVertexQTC(drawPos-dir1*coresize,midtexx,weaponDef->visuals.texture2->ystart,    col2);
+		va->AddVertexQTC(drawPos+dir1*coresize,midtexx,weaponDef->visuals.texture2->yend,col2);
+		va->AddVertexQTC(drawPos+dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->yend,col2);
+		va->AddVertexQTC(drawPos-dir1*coresize-dir2*coresize,weaponDef->visuals.texture2->xstart,weaponDef->visuals.texture2->ystart,col2);
 
-		va->AddVertexQTC(pos1-dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,		col);
-		va->AddVertexQTC(pos1+dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,			col);
+		va->AddVertexQTC(drawPos-dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,		col);
+		va->AddVertexQTC(drawPos+dir1*size,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,			col);
 		va->AddVertexQTC(pos2+dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,			col);
 		va->AddVertexQTC(pos2-dir1*size,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,			col);
-		va->AddVertexQTC(pos1-dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,	col2);
-		va->AddVertexQTC(pos1+dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,	col2);
+		va->AddVertexQTC(drawPos-dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->ystart,	col2);
+		va->AddVertexQTC(drawPos+dir1*coresize,weaponDef->visuals.texture1->xstart + texStartOffset,weaponDef->visuals.texture1->yend,	col2);
 		va->AddVertexQTC(pos2+dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->yend,		col2);
 		va->AddVertexQTC(pos2-dir1*coresize,weaponDef->visuals.texture1->xend + texEndOffset,weaponDef->visuals.texture1->ystart,		col2);
 
@@ -271,7 +270,7 @@ void CLaserProjectile::Draw(void)
 		va->AddVertexQTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,col2);
 		va->AddVertexQTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,col2);
 	} else {
-		float3 pos1=pos+speed*gu->timeOffset+dir*(size*0.5f);
+		float3 pos1=drawPos+dir*(size*0.5f);
 		float3 pos2=pos1-dir*(curLength+size);
 		float texStartOffset;
 		float texEndOffset;

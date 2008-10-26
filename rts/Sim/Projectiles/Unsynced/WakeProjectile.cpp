@@ -81,14 +81,13 @@ void CWakeProjectile::Draw()
 	col[2]=(unsigned char) (255*alpha);
 	col[3]=(unsigned char) (255*alpha)/*-alphaFalloff*gu->timeOffset*/;
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+sizeExpansion*gu->timeOffset;
 	float interRot=rotation+rotSpeed*gu->timeOffset;
 
 	float3 dir1=float3(cos(interRot),0,sin(interRot))*interSize;
 	float3 dir2=dir1.cross(UpVector);
-	va->AddVertexTC(interPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
-	va->AddVertexTC(interPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
-	va->AddVertexTC(interPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
-	va->AddVertexTC(interPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
+	va->AddVertexTC(drawPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
+	va->AddVertexTC(drawPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
+	va->AddVertexTC(drawPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
+	va->AddVertexTC(drawPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
 }

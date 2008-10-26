@@ -90,12 +90,11 @@ void CDirtProjectile::Draw()
 	col[2]=(unsigned char) (color.z*alpha);
 	col[3]=(unsigned char) (alpha)/*-gu->timeOffset*alphaFalloff*/;
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;
 	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5f);//0.25f*(1-partAbove)
 
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
+	va->AddVertexTC(drawPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
+	va->AddVertexTC(drawPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
+	va->AddVertexTC(drawPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
 }

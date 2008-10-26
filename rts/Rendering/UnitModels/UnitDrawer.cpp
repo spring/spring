@@ -298,6 +298,7 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 
 
 inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit) {
+	unit->UpdateDrawPos();
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (unit == excludeUnit) {
 		return;
@@ -724,7 +725,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
-	float3 interPos = unit->pos + unit->speed * gu->timeOffset + UpVector * unit->model->height * 0.5f;
+	float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
 	int snurr =- unit->heading + GetHeadingFromVector(camera->pos.x - unit->pos.x, camera->pos.z - unit->pos.z) + (0xffff >> 4);
 
 	if (snurr < 0)
@@ -2043,14 +2044,7 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 		return;
 	}
 
-	float3 interPos;
-
-	CTransportUnit *trans=unit->transporter;
-	if (!trans) {
-		interPos = unit->pos + (unit->speed * gu->timeOffset);
-	} else {
-		interPos = unit->pos + (trans->speed * gu->timeOffset);
-	}
+	float3 interPos = unit->drawPos;
 
 	interPos.y += unit->model->height + 5.0f;
 
