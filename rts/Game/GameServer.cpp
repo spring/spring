@@ -269,8 +269,6 @@ void CGameServer::SendDemoData(const bool skipping)
 			CheckSync();
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
-			if (!skipping)
-				return;
 		}
 		else if ( msgCode != NETMSG_GAMEDATA &&
 						msgCode != NETMSG_SETPLAYERNUM &&
