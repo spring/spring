@@ -437,10 +437,7 @@ void CGameServer::Update()
 				if(newSpeed<0.1f)
 					newSpeed=0.1f;
 				if(newSpeed!=internalSpeed)
-				{
-					internalSpeed = newSpeed;
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
-				}
+					InternalSpeedChange(newSpeed);
 			}
 		}
 	}
@@ -525,22 +522,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_USER_SPEED: {
 			unsigned char playerNum = inbuf[1];
 			float speed = *((float*) &inbuf[2]);
-
-			if (speed > maxUserSpeed)
-				speed = maxUserSpeed;
-			if (speed < minUserSpeed)
-				speed = minUserSpeed;
-			if (userSpeedFactor != speed)
-			{
-				if (internalSpeed == userSpeedFactor || internalSpeed>speed)
-				{
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(speed));
-					internalSpeed = speed;
-				}
-				// forward data
-				Broadcast(CBaseNetProtocol::Get().SendUserSpeed(playerNum, speed));
-				userSpeedFactor = speed;
-			}
+			UserSpeedChange(speed, playerNum);
 		} break;
 
 		case NETMSG_CPU_USAGE:
@@ -1045,17 +1027,8 @@ void CGameServer::StartGame()
 	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
-	if(userSpeedFactor>maxUserSpeed)
-	{
-		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
-		userSpeedFactor = maxUserSpeed;
-	}
-	else if(userSpeedFactor<minUserSpeed)
-	{
-		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, minUserSpeed));
-		userSpeedFactor = minUserSpeed;
-	}
-
+	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
+	
 	if (demoReader) {
 		// the client told us to start a demo
 		// no need to send startpos and startplaying since its in the demo
@@ -1133,31 +1106,17 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "setmaxspeed" && !action.extra.empty())
 	{
-		float newUserSpeed = atof(action.extra.c_str());
+		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
 		if (newUserSpeed > 0.2)
 		{
-			maxUserSpeed = atof(action.extra.c_str());
-			if (userSpeedFactor > maxUserSpeed) {
-				Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
-				userSpeedFactor = maxUserSpeed;
-				if (internalSpeed > maxUserSpeed) {
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
-					internalSpeed = userSpeedFactor;
-				}
-			}
+			maxUserSpeed = newUserSpeed;
+			UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
 		}
 	}
 	else if (action.command == "setminspeed" && !action.extra.empty())
 	{
-		minUserSpeed = atof(action.extra.c_str());
-		if (userSpeedFactor < minUserSpeed) {
-			Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, minUserSpeed));
-			userSpeedFactor = minUserSpeed;
-			if (internalSpeed < minUserSpeed) {
-				Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
-				internalSpeed = userSpeedFactor;
-			}
-		}
+		minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
+		UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
 	}
 	else if (action.command == "forcestart")
 	{
@@ -1476,6 +1435,28 @@ void CGameServer::GotChatMessage(const ChatMessage& msg)
 	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
 		// don't echo packets to autohost
 		hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+	}
+}
+
+void CGameServer::InternalSpeedChange(float newSpeed)
+{
+	if (internalSpeed == newSpeed)
+		; //TODO some error here
+	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
+	internalSpeed = newSpeed;
+}
+
+void CGameServer::UserSpeedChange(float newSpeed, int player)
+{
+	newSpeed = std::min(maxUserSpeed, std::max(newSpeed, minUserSpeed));
+	
+	if (userSpeedFactor != newSpeed)
+	{
+		if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
+			InternalSpeedChange(newSpeed);
+
+		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
+		userSpeedFactor = newSpeed;
 	}
 }
 

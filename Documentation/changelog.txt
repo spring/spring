@@ -3,18 +3,22 @@ Spring change log
 0.77b6:
 
 Crashes:
- - fix crash on windows resizing
+ - fix crash on window resizing
+ - do not force useFPShadows to true unless they are supported (to prevent crashes during map-loading)
 
 Engine:
  - if in Choose ingame startposition mode its possible to play a map with more players than startpositions
  - fix the aircraft hovering / drifting
  - fix random start positions not beeing random
  - fix area-attack for aircraft (#1144 again)
+ - GenerateTargets no longer has much information that the team requesting targets doesn't have
 
 User Interface:
  - enable startboxes by default
  - decreased CPU laod and increase drawing speed lines
  - fix small memleak when resizing the window
+ - The protection ring shows up for non-stockpile interceptors
+ - fix detection of units under mouse for spectators
 
 Lua:
  - added Spring.GetLastMessagePositions() (returns the 10 last message positions)

@@ -182,6 +182,8 @@ private:
 	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
+	void InternalSpeedChange(float newSpeed);
+	void UserSpeedChange(float newSpeed, int player);
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
