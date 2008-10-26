@@ -58,7 +58,7 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	shadowMapSize = configHandler.GetInt("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
 
 	if (tmpFirstInstance) {
-		// this already checks for GLEW_ARB_vertex_program
+		// this already checks for GLEW_ARB_fragment_program
 		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "unit.fp")) {
 			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
 			return;
