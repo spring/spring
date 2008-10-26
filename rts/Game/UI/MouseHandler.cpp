@@ -440,7 +440,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				sound->PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
-			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
+			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
 			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit) != selectedUnits.selectedUnits.end()) {
@@ -603,7 +603,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	const float range = (gu->viewRange * 1.4f);
 	CUnit* unit = NULL;
 //	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
-	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, 20, true);
+	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
 	CFeature* feature = NULL;
 //	GML_RECMUTEX_LOCK(feat); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
