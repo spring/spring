@@ -24,7 +24,7 @@ CShadowHandler* shadowHandler=0;
 
 
 bool CShadowHandler::canUseShadows = false;
-bool CShadowHandler::useFPShadows  = true;  // FIXME -- this was being forced to true
+bool CShadowHandler::useFPShadows  = false;
 bool CShadowHandler::firstInstance = true;
 
 
@@ -43,43 +43,38 @@ CShadowHandler::CShadowHandler(void): fb(0)
 		return;
 	}
 
+	const bool haveShadowExts =
+		GLEW_ARB_vertex_program &&
+		GLEW_ARB_shadow &&
+		GLEW_ARB_depth_texture &&
+		GLEW_ARB_texture_env_combine;
 	const int configValue = configHandler.GetInt("Shadows", 0);
-	if (configValue < 0) {
+
+	if (configValue < 0 || !haveShadowExts) {
+		logOutput.Print("shadows disabled or required OpenGL extension missing");
 		return;
 	}
 
-	shadowMapSize=configHandler.GetInt("ShadowMapSize",DEFAULT_SHADOWMAPSIZE);
+	shadowMapSize = configHandler.GetInt("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
 
 	if (tmpFirstInstance) {
-		if(!(GLEW_ARB_fragment_program)){
-			logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps (fragment_program)");
+		// this already checks for GLEW_ARB_vertex_program
+		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "unit.fp")) {
+			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
 			return;
 		}
 
-		if(!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"unit.fp")){
-			logOutput.Print("Your GFX card doesnt support the fragment programs needed to run in shadowed mode");
-			return;
-		}
+		// this was previously set to true (redundantly since
+		// it was actually never made false anywhere) if either
+		//      1. (!GLEW_ARB_texture_env_crossbar && haveShadowExts)
+		//      2. (!GLEW_ARB_shadow_ambient && GLEW_ARB_shadow)
+		// but the non-FP result isn't nice anyway so just always
+		// use the program if we are guaranteed of shadow support
+		useFPShadows = true;
 
-		if(!(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_texture_env_crossbar)){
-			if(GLEW_ARB_shadow && GLEW_ARB_depth_texture && GLEW_ARB_vertex_program && GLEW_ARB_texture_env_combine && GLEW_ARB_fragment_program){
-				//logOutput.Print("Using ARB_fragment_program_shadow");
-				useFPShadows=true; // FIXME -- always true
-			} else {
-				logOutput.Print("You are missing an OpenGL extension needed to use shadowmaps");
-				return;
-			}
-		}
-
-		if(!GLEW_ARB_shadow_ambient){
-			if(GLEW_ARB_fragment_program){
-				if(!useFPShadows){
-					//logOutput.Print("Using ARB_fragment_program_shadow");
-				}
-				useFPShadows = true; // FIXME -- always true
-			} else {
-				logOutput.Print("You are missing the extension ARB_shadow_ambient, this will make shadows darker than they should be");
-			}
+		if (!GLEW_ARB_shadow_ambient) {
+			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
+			logOutput.Print("You are missing the \"ARB_shadow_ambient\" extension (this will probably make shadows darker than they should be)");
 		}
 	}
 
@@ -101,7 +96,6 @@ CShadowHandler::CShadowHandler(void): fb(0)
 	}
 
 	drawShadows = true;
-//	useFPShadows = true; // FIXME -- why was this being forced?
 }
 
 
@@ -144,14 +138,14 @@ bool CShadowHandler::InitDepthTarget()
 
 CShadowHandler::~CShadowHandler(void)
 {
-	if(drawShadows)
+	if (drawShadows)
 		glDeleteTextures(1, &shadowTexture);
 	delete fb;
 }
 
 void CShadowHandler::DrawShadowPasses(void)
 {
-	inShadowPass=true;
+	inShadowPass = true;
 
 	ph->DrawShadowPass();
 	unitDrawer->DrawShadowPass();
@@ -160,17 +154,17 @@ void CShadowHandler::DrawShadowPasses(void)
 	treeDrawer->DrawShadowPass();
 	eventHandler.DrawWorldShadow();
 
-	inShadowPass=false;
+	inShadowPass = false;
 }
 
-void CShadowHandler::GetShadowMapSizeFactors (float &p17, float &p18)
+void CShadowHandler::GetShadowMapSizeFactors(float& p17, float& p18)
 {
-	if(shadowMapSize==2048){
-		p17=0.01f;
-		p18=-0.1f;
+	if (shadowMapSize == 2048) {
+		p17 =  0.01f;
+		p18 = -0.1f;
 	} else {
-		p17=0.0025f;
-		p18=-0.05f;
+		p17 =  0.0025f;
+		p18 = -0.05f;
 	}
 }
 
@@ -403,4 +397,3 @@ void CShadowHandler::GetFrustumSide(float3& side,bool upside)
 		left.push_back(temp);
 	}
 }
-
