@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include "mmgr.h"
 
+#include "LogOutput.h"
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
@@ -178,16 +179,22 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 
 		error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
 		if ( error ) {
-			string msg = "FT_Load_Glyph failed:";
-			msg += GetFTError(error);
-			throw std::runtime_error(msg);
+			// skip this glyph
+			g->advance = 1;
+			g->height = 1;
+			g->u0 = g->u1 = g->v0 = g->v1 = 0;
+			g->x0 = g->x1 = g->y0 = g->y1 = 0;
+			continue;
 		}
 		// convert to an anti-aliased bitmap
 		error = FT_Render_Glyph( face->glyph, ft_render_mode_normal);
 		if (error) {
-			string msg = "FT_Render_Glyph failed:";
-			msg += GetFTError(error);
-			throw std::runtime_error(msg);
+			// skip this glyph
+			g->advance = 1;
+			g->height = 0;
+			g->u0 = g->u1 = g->v0 = g->v1 = 0;
+			g->x0 = g->x1 = g->y0 = g->y1 = 0;
+			continue;
 		}
 		FT_GlyphSlot slot = face->glyph;
 
