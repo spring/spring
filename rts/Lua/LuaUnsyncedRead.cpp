@@ -1060,7 +1060,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
+	const float udist = helper->GuiTraceRay(pos, dir, range, unit, true);
 	const float fdist = helper->GuiTraceRayFeature(pos, dir, range, feature);
 //	gu->myAllyTeam = origAllyTeam;
 

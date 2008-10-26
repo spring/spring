@@ -1530,7 +1530,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		const float3 camPos = camerapos;
 		const float3 camDir = mousedir;
 		const float viewRange = gu->viewRange*1.4f;
-		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, 20, true);
+		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
 		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
 		const float3 hit = camPos + camDir*dist;
 
@@ -2253,7 +2253,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			Command c;
 
 			c.id=commands[tempInCommand].id;
-			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 			if (!unit){
 				return defaultRet;
 			}
@@ -2267,7 +2267,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 
 			CUnit* unit=0;
-			float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+			float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 			if(dist2>gu->viewRange*1.4f-300){
 				return defaultRet;
 			}
@@ -2338,7 +2338,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(mouse->buttons[button].movement<4){
 				CUnit* unit=0;
 				CFeature* feature=0;
-				float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+				float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 				float dist3=helper->GuiTraceRayFeature(camerapos,mousedir,gu->viewRange*1.4f,feature);
 
 				if(dist2>gu->viewRange*1.4f-300 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>gu->viewRange*1.4f-300)){
@@ -2382,8 +2382,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit=0;
 
-				float dist2=helper->GuiTraceRay(
-					camerapos, mousedir, gu->viewRange*1.4f, unit, 20, true);
+				float dist2=helper->GuiTraceRay(camerapos, mousedir, gu->viewRange*1.4f, unit, true);
 
 				if(dist2>gu->viewRange*1.4f-300) {
 					return defaultRet;
@@ -2474,7 +2473,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 		GML_RECMUTEX_LOCK(quad); //unit); // GetBuildCommand accesses activeunits. drawmapstuff -> getbuildpos
 
-		helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+		helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 		if(unit){
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
@@ -3638,7 +3637,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			unit = minimap->GetSelectUnit(camerapos);
 		} else {
 			// ignoring the returned distance
-			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,false);
+			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,false);
 		}
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;

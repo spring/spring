@@ -280,7 +280,7 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 	return length;
 }
 
-float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, float _, bool useRadar, CUnit* exclude)
+float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude)
 {
 	// distance from start to ground intersection point + fudge
 	float groundLen   = ground->LineGroundCol(start, start + dir * length);
@@ -746,7 +746,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 {
 	float3 pos = unit->midPos;
-	if (gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
+	if (gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS) || gu->spectatingFullView) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
 	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && (unit->losStatus[allyteam] & LOS_CONTRADAR) && !unit->mobility) {
 		// ^ this is a ghosted building, so don't add an error ^
