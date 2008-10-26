@@ -313,6 +313,7 @@ void CTAAirMoveType::UpdateHovering()
 	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos ;
 	float3 deltaDir = float3(deltaVec).Normalize();
+	const float3 &pos = owner->pos;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
@@ -324,8 +325,22 @@ void CTAAirMoveType::UpdateHovering()
 	wantedSpeed += float3(deltaDir.x, 0.0f, deltaDir.z) * driftSpeed * 0.015f;
 	// damping
 	wantedSpeed *= 0.97f;
+
 	// random movement (a sort of fake wind effect)
-	wantedSpeed += float3(gs->randFloat() - 0.5f, 0.0f, gs->randFloat() - 0.5f) * driftSpeed * 0.5f;
+	// random drift values are in range -0.5 ... 0.5
+	float3 random_drift = float3(gs->randFloat() - 0.5f, 0.0f, gs->randFloat() - 0.5f) * driftSpeed * 0.5f;
+	if (pos.x < 0) {
+		// When plane is off map, make random drift drift the plane onto map rather than off map.
+		random_drift.x=fabs(random_drift.x);
+	} else if (pos.x > float3::maxxpos) {
+		random_drift.x=-fabs(random_drift.x);
+	}
+	if (pos.z < 0) {
+		random_drift.z=fabs(random_drift.z);
+	} else if (pos.z > float3::maxzpos) {
+		random_drift.z=-fabs(random_drift.z);
+	}
+	wantedSpeed += random_drift;
 
 	UpdateAirPhysics();
 }
