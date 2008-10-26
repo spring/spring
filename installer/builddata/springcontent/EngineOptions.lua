@@ -38,7 +38,7 @@ local options =
       { 
         key  = '0',
         name = 'Kill everything',
-        desc = 'The player will lose when only after all units of the player will be killed',
+        desc = 'The player will lose only after all units of the player will be killed',
       },
       {
         key  = '1',
@@ -75,7 +75,7 @@ local options =
   {
     key    = 'StartEnergy',
     name   = 'Starting energy',
-    desc   = 'Determines amount of metal and metal storage that each player will start with',
+    desc   = 'Determines amount of energy and energy storage that each player will start with',
     type   = 'number',
     section= 'StartingResources',
     def    = 500,
@@ -88,7 +88,7 @@ local options =
   {
     key    = 'MaxUnits',
     name   = 'Max units',
-    desc   = 'Determines the ceiling of how many units and buildings a player is allowed  to own at the same time',
+    desc   = 'Determines the ceiling of how many units and buildings a player is allowed to own at the same time',
     type   = 'number',
     def    = 1000,
     min    = 1,
@@ -108,13 +108,13 @@ local options =
   {
     key    = 'GhostedBuildings',
     name   = 'Ghosted buildings',
-    desc   = "Once an enemy building will be spotted\n a ghost trail will be placed to memorize location even after the loss of the line of sight",
+    desc   = "Once an enemy building will be spotted\na ghost trail will be placed to memorize location even after the loss of the line of sight",
     type   = 'bool',
     def    = true,
   },
   {
     key    = 'DiminishingMMs',
-    name   = 'Diminishing efficiency MetalMakers',
+    name   = 'Diminishing metal makers efficiency',
     desc   = "Everytime a new metal maker will be built, the energy/metal efficiency ratio will decrease",
     type   = 'bool',
     def    = false,
@@ -123,7 +123,7 @@ local options =
   {
     key    = 'FixedAllies',
     name   = 'Fixed ingame alliances',
-    desc   = 'Disables the possibility of players to dynamically change allies ingame',
+    desc   = 'Disables the possibility of players to dynamically change alliances ingame',
     type   = 'bool',
     def    = true,
   },
@@ -163,7 +163,7 @@ local options =
   
   {
     key    = 'DisableMapDamage',
-    name   = 'Underformable map',
+    name   = 'Undeformable map',
     desc   = 'Prevents the map shape from being changed by weapons',
     type   = 'bool',
     def    = false,
