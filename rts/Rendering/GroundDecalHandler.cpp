@@ -140,7 +140,11 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 	float uv[8] = {0.0f};
 	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
 
+	#ifndef DEBUG
 	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
+	#else
+	#define HEIGHT(z, x) (assert((z) <= gsmy), assert((x) <= gsmx), (hm[((z) * gsmx1) + (x)]))
+	#endif
 
 	if (!decal->va) {
 		// NOTE: this really needs CLOD'ing
@@ -167,9 +171,13 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						// (htl, htr, hbr, hbl)
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
@@ -195,9 +203,13 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
@@ -220,9 +232,13 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
@@ -245,9 +261,13 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
