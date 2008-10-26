@@ -524,6 +524,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.stockpileWeaponDef = NULL;
 
 	ud.maxWeaponRange = 0.0f;
+	ud.maxCoverage = 0.0f;
 
 	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON");
 
@@ -583,6 +584,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 		if (wd->range > ud.maxWeaponRange) {
 			ud.maxWeaponRange = wd->range;
+		}
+		if (wd->interceptor && wd->coverageRange > ud.maxCoverage) {
+			ud.maxCoverage = wd->coverageRange;
 		}
 		if (wd->isShield) {
 			if (!ud.shieldWeaponDef || // use the biggest shield

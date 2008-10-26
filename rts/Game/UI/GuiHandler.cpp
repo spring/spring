@@ -3704,23 +3704,20 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
-			const WeaponDef* wd = NULL;
-			const CWeapon* w = NULL;
-			if (enemyUnit) {
-				wd = unitdef->stockpileWeaponDef;
-			} else {
-				w = unit->stockpileWeapon;
-				if (w != NULL) {
-					wd = w->weaponDef;
-				}
-			}
-			if ((wd != NULL) && wd->interceptor) {
-				if (enemyUnit || w->numStockpiled) {
+			if (unitdef->maxCoverage > 0.0f) {
+				const CWeapon* w = NULL; //will be checked if any missiles are ready
+				if (!enemyUnit) {
+					w = unit->stockpileWeapon;
+					if (w != NULL && !w->weaponDef->interceptor) {
+						w = NULL; //if this isn't the interceptor, then don't use it
+					}
+				} //shows as on if enemy, a non-stockpiled weapon, or if the stockpile has a missile
+				if (enemyUnit || (w == NULL) || w->numStockpiled) {
 					glColor4fv(cmdColors.rangeInterceptorOn);
 				} else {
 					glColor4fv(cmdColors.rangeInterceptorOff);
 				}
-				glSurfaceCircle(unit->pos, wd->coverageRange, 40);
+				glSurfaceCircle(unit->pos, unitdef->maxCoverage, 40);
 			}
 		}
 	}

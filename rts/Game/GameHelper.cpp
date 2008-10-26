@@ -421,9 +421,10 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 					}
 					float3 targPos;
 					float value = 1.0f;
-					if (unit->losStatus[attacker->allyteam] & LOS_INLOS) {
+					unsigned short unitLos = unit->losStatus[attacker->allyteam];
+					if (unitLos & LOS_INLOS) {
 						targPos = unit->midPos;
-					} else if (unit->losStatus[attacker->allyteam] & LOS_INRADAR) {
+					} else if (unitLos & LOS_INRADAR) {
 						const float radErr = radarhandler->radarErrorSize[attacker->allyteam];
 						targPos = unit->midPos + (unit->posErrorVector * radErr);
 						value *= 10.0f;
@@ -433,26 +434,31 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 					const float modRange = radius + (aHeight - targPos.y) * heightMod;
 					if ((pos - targPos).SqLength2D() <= modRange * modRange){
 						float dist2d = (pos - targPos).Length2D();
-						value *= (secDamage + unit->health);
 						value *= (dist2d * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-						value *= (0.01f + unit->crashing);
-						value /= weapon->weaponDef->damages[unit->armorType]
-										 * unit->curArmorMultiple
-						         * unit->power * (0.7f + gs->randFloat() * 0.6f);
-						if (unit == lastTarget) {
-							value *= weapon->avoidTarget ? 10.0f : 0.4f;
+						if (unitLos & LOS_INLOS) {
+							value *= (secDamage + unit->health);
+							if (unit == lastTarget) {
+								value *= weapon->avoidTarget ? 10.0f : 0.4f;
+							}
+							if (paralyzer && unit->health-unit->paralyzeDamage < unit->maxHealth * 0.09f) {
+								value *= 4.0f;
+							}
+							if (weapon->hasTargetWeight) {
+								value *= weapon->TargetWeight(unit);
+							}
+						} else {
+							value *= (secDamage + 10000.0f);
 						}
-						if (unit->category & weapon->badTargetCategory) {
-							value *= 100.0f;
-						}
-						if (paralyzer && unit->health-unit->paralyzeDamage < unit->maxHealth * 0.09f) {
-							value *= 4.0f;
-						}
-						if (unit->crashing) {
-							value *= 10.0f;
-						}
-						if (weapon->hasTargetWeight) {
-							value *= weapon->TargetWeight(unit);
+						if (unitLos & LOS_PREVLOS) {
+							value /= weapon->weaponDef->damages[unit->armorType]
+											 * unit->curArmorMultiple
+									 * unit->power * (0.7f + gs->randFloat() * 0.6f);
+							if (unit->category & weapon->badTargetCategory) {
+								value *= 100.0f;
+							}
+							if (unit->crashing) {
+								value *= 1000.0f;
+							}
 						}
 						targets.insert(std::pair<float, CUnit*>(value, unit));
 					}
