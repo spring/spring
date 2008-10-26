@@ -80,8 +80,7 @@ void CSimpleParticleSystem::Draw()
 			if(particles[i].life<1.0f)
 			{
 				float3 dif(particles[i].pos-camera->pos);
-				float camDist=dif.Length();
-				dif/=camDist;
+				dif.ANormalize();
 				float3 dir1(dif.cross(particles[i].speed));
 				dir1.ANormalize();
 				float3 dir2(dif.cross(dir1));

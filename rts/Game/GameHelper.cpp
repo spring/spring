@@ -38,6 +38,7 @@
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "System/EventHandler.h"
+#include "System/myMath.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -282,8 +283,8 @@ float CGameHelper::TraceRay(const float3 &start, const float3 &dir, float length
 float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, float _, bool useRadar, CUnit* exclude)
 {
 	// distance from start to ground intersection point + fudge
-	float groundLen = ground->LineGroundCol(start, start + dir * length);
-	float returnLen = (groundLen > 0.0f)? groundLen + 200.0f: length;
+	float groundLen   = ground->LineGroundCol(start, start + dir * length);
+	float returnLenSq = Square( (groundLen > 0.0f)? groundLen + 200.0f: length );
 
 	hit = 0x0;
 	CollisionQuery cq;
@@ -322,10 +323,10 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				if (CCollisionHandler::MouseHit(unit, start, start + dir * length, cv, &cq)) {
 					// get the distance to the ray-volume egress point
 					// so we can still select stuff inside factories
-					const float len = (cq.p1 - start).Length();
+					const float len = (cq.p1 - start).SqLength();
 
-					if (len < returnLen) {
-						returnLen = len;
+					if (len < returnLenSq) {
+						returnLenSq = len;
 						hit = unit;
 					}
 				}
@@ -333,7 +334,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 		}
 	}
 
-	return ((hit)? returnLen: (returnLen - 200.0f));
+	return ((hit)? math::sqrt(returnLenSq): (math::sqrt(returnLenSq) - 200.0f));
 }
 
 float CGameHelper::TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam)

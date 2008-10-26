@@ -119,4 +119,9 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
+inline float Square(const float& x)
+{
+	return x*x;
+}
+
 #endif /* MYMATH_H */

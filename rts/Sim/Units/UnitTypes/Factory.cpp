@@ -349,7 +349,7 @@ void CFactory::CreateNanoParticle(void)
 										 + (updir    * relWeaponFirePos.y)
 										 + (rightdir * relWeaponFirePos.x);
 			float3 dif = (curBuild->midPos - weaponPos);
-			const float l = dif.Length();
+			const float l = fastmath::sqrt2(dif.SqLength());
 			dif /= l;
 			dif += gu->usRandVector() * 0.15f;
 			float3 color = unitDef->nanoColor;

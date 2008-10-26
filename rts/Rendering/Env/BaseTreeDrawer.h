@@ -22,7 +22,7 @@ public:
 	virtual void DeleteTree(float3 pos)=0;
 
 	std::vector<GLuint> delDispLists;
-  virtual void UpdateDraw();
+	virtual void UpdateDraw();
 
 	float baseTreeDistance;
 	bool drawTrees;

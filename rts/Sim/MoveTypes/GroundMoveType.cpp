@@ -684,10 +684,10 @@ void CGroundMoveType::ImpulseAdded(void)
 	if(impulse.dot(groundNormal)<0)
 		impulse-=groundNormal*impulse.dot(groundNormal);
 
-	float strength=impulse.Length();
+	const float sqstrength=impulse.SqLength();
 //	logOutput.Print("strength %f",strength);
 
-	if(strength>3 || impulse.dot(groundNormal)>0.3f){
+	if(sqstrength>9 || impulse.dot(groundNormal)>0.3f){
 		skidding=true;
 		speed+=impulse;
 		impulse=ZeroVector;

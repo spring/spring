@@ -719,7 +719,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;
-		float l = dif.Length();
+		const float l = fastmath::sqrt2(dif.SqLength());
 		dif /= l;
 		float3 error = gu->usRandVector() * (radius / l);
 		float3 color = unitDef->nanoColor;

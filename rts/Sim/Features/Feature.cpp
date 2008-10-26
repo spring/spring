@@ -388,7 +388,7 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 		blockHeightChanges = false;
 
 		if (def->drawType == DRAWTYPE_TREE) {
-			if (impulse.Length2D() > 0.5f) {
+			if (impulse.SqLength2D() > 0.25f) {
 				treeDrawer->AddFallingTree(pos, impulse, def->modelType);
 			}
 		}
