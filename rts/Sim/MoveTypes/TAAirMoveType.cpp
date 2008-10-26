@@ -377,6 +377,7 @@ void CTAAirMoveType::UpdateFlying()
 					// transport aircraft need some time to detect that they can pickup
 					if (dynamic_cast<CTransportUnit*>(owner)) {
 						wantedSpeed = ZeroVector;
+						SetState(AIRCRAFT_HOVERING);
 						if (waitCounter > 60) {
 							wantedHeight = orgWantedHeight;
 						}
