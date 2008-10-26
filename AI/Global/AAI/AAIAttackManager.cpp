@@ -83,17 +83,17 @@ void AAIAttackManager::LaunchAttack()
 	}
 	else
 	{
-		if(map->mapType == LAND_MAP)
+		if(map->map_type == LAND_MAP)
 		{
 			land = true;
 			water = false;
 		}
-		else if(map->mapType == LAND_WATER_MAP)
+		else if(map->map_type == LAND_WATER_MAP)
 		{
 			land = true;
 			water = true;
 		}
-		else if(map->mapType == WATER_MAP)
+		else if(map->map_type == WATER_MAP)
 		{
 			land = false;
 			water = true;
@@ -167,16 +167,7 @@ void AAIAttackManager::LaunchAttack()
 		{
 			AAIAttack *attack;
 			
-			try
-			{
-				attack = new AAIAttack(ai);
-			}
-			catch(...)
-			{
-				fprintf(ai->file, "Exception thrown when allocating memory for AAIAttack");
-				return;
-			}
-
+			attack = new AAIAttack(ai);
 			attacks.push_back(attack);
 
 			attack->land = land;
