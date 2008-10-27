@@ -27,6 +27,7 @@ struct CollisionVolume {
 		secondaryAxes[0]       = src? src->secondaryAxes[0]:       COLVOL_AXIS_X;
 		secondaryAxes[1]       = src? src->secondaryAxes[1]:       COLVOL_AXIS_Y;
 		spherical              = src? src->spherical:              true;
+		disabled               = src? src->disabled:               false;
 	}
 
 	CollisionVolume(const std::string& typeStr, const float3& scales, const float3& offsets, int testType) {
@@ -70,6 +71,9 @@ struct CollisionVolume {
 
 
 	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis) {
+		disabled = (tType < 0);
+		tType = std::max(tType, 0);
+
 		// assign these here, since we can be
 		// called from outside the constructor
 		primaryAxis = pAxis % 3;
@@ -168,6 +172,7 @@ struct CollisionVolume {
 	int primaryAxis;
 	int secondaryAxes[2];
 	bool spherical;
+	bool disabled;
 };
 
 #endif
