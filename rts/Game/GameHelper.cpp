@@ -96,7 +96,6 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 	expRad = std::max(expRad, 1.0f);
 	float height = std::max(expPos.y - h2, 0.0f);
 
-
 	vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
 
 	// Damage Units
@@ -140,16 +139,13 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 		if (unit->isUnderWater && (expPos.y > -1.0f)) {
 			// should make it harder to damage subs with above-water weapons
 			expDist2 += volRad;
-
-			if (expDist2 > expRad) {
-				expDist2 = expRad;
-			}
+			expDist2 = std::min(expDist2, expRad);
 		}
 
 		// Clamp expDist to radius to prevent division by zero
 		// (expDist2 can never be > radius). We still need the
 		// original expDist later to normalize dif.
-		float expDist1 = std::min(expDist1, expRad);
+		float expDist1 = std::min(expDist, expRad);
 		float mod  = (expRad - expDist1) / (expRad - expDist1 * edgeEffectiveness);
 		float mod2 = (expRad - expDist2) / (expRad - expDist2 * edgeEffectiveness);
 		dif /= expDist;
