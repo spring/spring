@@ -4,21 +4,16 @@
 #include <ctype.h>
 using namespace std;
 
+#include "mmgr.h"
+
 #include "MapParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/FileSystem/FileHandler.h"
-#include "LogOutput.h"
-
-#include "mmgr.h"
-
-
-static CLogSubsystem LOG_MAPPARSER("MapParser");
 
 
 string MapParser::GetMapConfigName(const string& mapName)
 {
 	if (mapName.length() < 3) {
-		logOutput.Print(LOG_MAPPARSER, "map name too short");
 		return "";
 	}
 
@@ -32,7 +27,6 @@ string MapParser::GetMapConfigName(const string& mapName)
 		       mapName.substr(0, mapName.find_last_of('.')) + ".smd";
 	}
 	else {
-		logOutput.Print(LOG_MAPPARSER, "unknown extension");
 		return "";
 	}
 }
@@ -40,8 +34,6 @@ string MapParser::GetMapConfigName(const string& mapName)
 
 MapParser::MapParser(const string& mapName) : parser(NULL)
 {
-	logOutput.Print(LOG_MAPPARSER, "MapParser::MapParser(mapName = \"%s\")", mapName.c_str());
-
 	const string mapConfig = GetMapConfigName(mapName);
 
 	parser = SAFE_NEW LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
@@ -59,7 +51,6 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->EndTable();
 #endif
 	if (!parser->Execute()) {
-		logOutput.Print(LOG_MAPPARSER, "parser->Execute() failed: " + parser->GetErrorLog());
 		// do nothing
 	}
 }
@@ -67,21 +58,18 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 
 MapParser::~MapParser()
 {
-	logOutput.Print(LOG_MAPPARSER, "MapParser::~MapParser");
 	delete parser;
 }
 
 
 bool MapParser::GetStartPos(int team, float3& pos) const
 {
-	if (!IsValid()) {
-		logOutput.Print(LOG_MAPPARSER, "GetStartPos: parser invalid");
+	if (!parser->IsValid()) {
 		return false;
 	}
 	const LuaTable teamsTable = parser->GetRoot().SubTable("teams");
-	const LuaTable posTable = teamsTable.SubTable(team + 1).SubTable("startPos");
+	const LuaTable posTable = teamsTable.SubTable(team).SubTable("startPos");
 	if (!posTable.IsValid()) {
-		logOutput.Print(LOG_MAPPARSER, "GetStartPos: posTable invalid for team %d", team);
 		return false;
 	}
 
