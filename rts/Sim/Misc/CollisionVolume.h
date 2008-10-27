@@ -4,7 +4,7 @@
 #include "creg/creg.h"
 #include "Util.h"
 
-const float EPS = 0.000001f;
+const float EPS = 0.0000000001f;
 
 enum COLVOL_TYPES {COLVOL_TYPE_ELLIPSOID, COLVOL_TYPE_CYLINDER, COLVOL_TYPE_BOX};
 enum COLVOL_AXES {COLVOL_AXIS_X, COLVOL_AXIS_Y, COLVOL_AXIS_Z};
