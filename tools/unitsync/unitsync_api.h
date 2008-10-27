@@ -14,6 +14,8 @@ DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
 
+DLL_EXPORT const char*  __stdcall GetWritableDataDirectory();
+
 DLL_EXPORT int          __stdcall ProcessUnits();
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum();
 
