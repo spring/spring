@@ -330,10 +330,9 @@ void CTAAirMoveType::UpdateHovering()
 
 	wantedSpeed += deltaDir * moveFactor * driftSpeed * 0.05f;
 	// damping
-	wantedSpeed *= 0.90f;
+	wantedSpeed *= 0.97f;
 
 	// random movement (a sort of fake wind effect)
-	// random drift values are in range -0.5 ... 0.5
 	randomWind = float3(randomWind.x + (gs->randFloat() - 0.5f), 0,
 		randomWind.z + (gs->randFloat() - 0.5f)).Normalize();
 	float3 tempwind = randomWind;
@@ -694,8 +693,8 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speedNew = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 	}
 
-	if (fabs(wh - h) < 1.0f) {
-		speed.y = speed.y * 0.89 + speedNew / 10.0f;
+	if (fabs(wh - h) < 2.0f) {  //keep them from bobbing up and down when at the correct height
+		speed.y = speed.y * 0.89 + speedNew / 100.0f;
 	} else {
 		speed.y = speedNew;
 	}
