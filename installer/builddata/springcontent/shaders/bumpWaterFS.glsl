@@ -36,6 +36,8 @@
 // #define PerlinStartFreq  float
 // #define PerlinLacunarity float
 // #define PerlinAmp        float
+// #define TexGenPlane      vec4
+// #define ShadingPlane     vec2
 
 #define CausticDepth 0.5
 #define CausticRange 0.45
@@ -136,7 +138,8 @@ float waveIntensity(const float x) {
     if (waterdepth<0.0) discard;
 #else
     float waterdepth;
-    if ( any(greaterThanEqual(gl_TexCoord[0].pq,vec2(1.0,1.0))) ||
+
+    if ( any(greaterThanEqual(gl_TexCoord[0].pq,ShadingPlane.xy)) ||
          any(lessThanEqual(gl_TexCoord[0].pq,vec2(0.0,0.0)))
        )
     {

@@ -505,6 +505,7 @@ CBumpWater::CBumpWater()
 		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
 
 		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, shadingX/mapX, shadingZ/mapZ);
+		GLSLDefineConstf2(definitions, "ShadingPlane", shadingX,shadingZ);
 	}
 
 	/** LOAD SHADERS **/
