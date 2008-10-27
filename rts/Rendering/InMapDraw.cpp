@@ -566,7 +566,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 			std::list<MapPoint>::iterator pi;
 			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
-				if (pi->pos.distance2D(pos) < radius) {
+				if (pi->pos.SqDistance2D(pos) < (radius*radius)) {
 					pi = dq->points.erase(pi);
 				} else {
 					++pi;
@@ -574,7 +574,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 			}
 			std::list<MapLine>::iterator li;
 			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
-				if (li->pos.distance2D(pos) < radius) {
+				if (li->pos.SqDistance2D(pos) < (radius*radius)) {
 					li = dq->lines.erase(li);
 				} else {
 					++li;

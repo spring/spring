@@ -874,9 +874,9 @@ void CUnit::SlowUpdate()
 				KillUnit(true, false, NULL);
 			}
 		}
-		if (userTarget && userTarget->pos.distance(pos) < unitDef->kamikazeDist)
+		if (userTarget && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
 			KillUnit(true, false, NULL);
-		if (userAttackGround && userAttackPos.distance(pos) < unitDef->kamikazeDist)
+		if (userAttackGround && (userAttackPos.distance(pos)) < Square(unitDef->kamikazeDist))
 			KillUnit(true, false, NULL);
 	}
 

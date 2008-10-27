@@ -160,7 +160,7 @@ void CStarburstProjectile::Update(void)
 	}
 	if (interceptTarget) {
 		targetPos = interceptTarget->pos;
-		if (targetPos.distance(pos) < areaOfEffect * 2) {
+		if (targetPos.SqDistance(pos) < Square(areaOfEffect * 2)) {
 			interceptTarget->Collision();
 			Collision();
 		}

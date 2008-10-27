@@ -990,7 +990,7 @@ void CPathEstimator::Draw(void)
 					glColor3f(1, 1 / (cost/BLOCK_SIZE), blue);
 
 					p2 = (p1 + p2) / 2;
-					if (camera->pos.distance(p2) < 500) {
+					if (camera->pos.SqDistance(p2) < 250000) {
 						glPushMatrix();
 						glTranslatef3(p2);
 						glScalef(5, 5, 5);
@@ -1050,7 +1050,7 @@ void CPathEstimator::Draw(void)
 		p1.z=(ob->block.y * BLOCK_SIZE + blockState[blocknr].sqrCenter[md->pathType].y)*SQUARE_SIZE;
 		p1.y=ground->GetHeight(p1.x,p1.z)+15;
 
-		if(camera->pos.distance(p1)<500){
+		if(camera->pos.SqDistance(p1)<250000){
 			glPushMatrix();
 			glTranslatef3(p1);
 			glScalef(5,5,5);

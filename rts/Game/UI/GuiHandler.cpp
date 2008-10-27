@@ -55,6 +55,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Util.h"
+#include "System/myMath.h"
 
 extern Uint8 *keys;
 
@@ -2312,7 +2313,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params[2] = pos.z;
 
 				if (!commands[tempInCommand].params.empty() &&
-				    pos.distance2D(pos2) > atof(commands[tempInCommand].params[0].c_str())) {
+				    pos.SqDistance2D(pos2) > Square(atof(commands[tempInCommand].params[0].c_str()))) {
 					float3 dif=pos2-pos;
 					dif.ANormalize();
 					pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
@@ -4043,7 +4044,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	float3 forward=(pos1-pos2).cross(UpVector);
 	forward.ANormalize();
 	float3 side=forward.cross(UpVector);
-	if(pos1.distance2D(pos2)>maxSize){
+	if(pos1.SqDistance2D(pos2)>maxSize*maxSize){
 		pos2=pos1+side*maxSize;
 		pos2.y=ground->GetHeight(pos2.x,pos2.z);
 	}

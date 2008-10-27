@@ -521,7 +521,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 	if (inCommand) {
 		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
-		if (orderTarget && orderTarget->pos.distance2D(pos) > radius) {
+		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
 			inCommand = false;
 			DeleteDeathDependence(orderTarget);
 			orderTarget = 0;

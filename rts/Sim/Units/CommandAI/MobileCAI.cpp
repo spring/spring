@@ -633,7 +633,7 @@ void CMobileCAI::ExecuteStop(Command &c)
 void CMobileCAI::ExecuteDGun(Command &c)
 {
 	if (uh->limitDgun && owner->unitDef->isCommander
-			&& owner->pos.distance(gs->Team(owner->team)->startPos) > uh->dgunRadius) {
+			&& owner->pos.SqDistance(gs->Team(owner->team)->startPos) > Square(uh->dgunRadius)) {
 		StopMove();
 		return FinishCommand();
 	}
@@ -734,8 +734,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
 			b2 = w->TryTargetRotate(orderTarget, c.id == CMD_DGUN);
-			b3 = (w->range - (w->relWeaponPos).Length())
-					> (orderTarget->pos.distance(owner->pos));
+			b3 = Square(w->range - (w->relWeaponPos).Length())
+					> (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z),
 					orderTarget->pos, orderTarget != NULL);
 			edgeFactor = fabs(w->targetBorder);
@@ -804,8 +804,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// to goal position greater than
 		// (10 plus 20% of 2D distance between attacker and target) then we need to close
 		// in on target more
-		else if ((orderTarget->pos + owner->posErrorVector * 128).distance2D(goalPos)
-				> (10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
+		else if ((orderTarget->pos + owner->posErrorVector * 128).SqDistance2D(goalPos)
+				> Square(10 + orderTarget->pos.distance2D(owner->pos) * 0.2f)) {
 			// if the target isn't in LOS, go to its approximate position
 			// otherwise try to go precisely to the target
 			// this should fix issues with low range weapons (mainly melee)
@@ -866,7 +866,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 
 		// if we are more than 10 units distant from target position then keeping moving closer
-		else if (pos.distance2D(goalPos) > 10) {
+		else if (pos.SqDistance2D(goalPos) > 100) {
 			SetGoal(pos, owner->pos);
 		}
 	}
@@ -1041,8 +1041,8 @@ void CMobileCAI::IdleCheck(void)
 			&& !owner->weapons.empty() && owner->haveTarget) {
 		if(!owner->userTarget) {
 			owner->haveTarget = false;
-		} else if(owner->pos.distance2D(owner->userTarget->pos) <
-				owner->maxRange + 200*owner->moveState*owner->moveState) {
+		} else if(owner->pos.SqDistance2D(owner->userTarget->pos) <
+				Square(owner->maxRange + 200*owner->moveState*owner->moveState)) {
 			Command c;
 			c.id = CMD_ATTACK;
 			c.options=INTERNAL_ORDER;
@@ -1057,8 +1057,8 @@ void CMobileCAI::IdleCheck(void)
 		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
 				&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
 			float3 apos=owner->lastAttacker->pos;
-			float dist=apos.distance2D(owner->pos);
-			if(dist<owner->maxRange+200*owner->moveState*owner->moveState){
+			float dist=apos.SqDistance2D(owner->pos);
+			if(dist<Square(owner->maxRange+200*owner->moveState*owner->moveState)){
 				Command c;
 				c.id=CMD_ATTACK;
 				c.options=INTERNAL_ORDER;

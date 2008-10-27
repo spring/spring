@@ -20,6 +20,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
 #include "System/GlobalUnsynced.h"
+#include "System/myMath.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50
@@ -159,11 +160,11 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 				FinishCommand();
 				return;
 			}
-			if(goalPos.distance2D(unit->pos)>10){
+			if(goalPos.SqDistance2D(unit->pos)>100){
 				float3 fix = unit->pos;
 				SetGoal(fix,owner->pos,64);
 			}
-			if(unit->pos.distance2D(owner->pos)<owner->unitDef->loadingRadius*0.9f){
+			if(unit->pos.SqDistance2D(owner->pos)<Square(owner->unitDef->loadingRadius*0.9f)){
 				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
 					float3 wantedPos=unit->pos+UpVector*unit->model->height;
 					SetGoal(wantedPos,owner->pos);
@@ -172,7 +173,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 					am->SetWantedAltitude(unit->model->height);
 					am->maxDrift=1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
-					if(owner->pos.distance(wantedPos)<AIRTRANSPORT_DOCKING_RADIUS && abs(owner->heading-unit->heading)<AIRTRANSPORT_DOCKING_ANGLE && owner->updir.dot(UpVector)>0.995f){
+					if(owner->pos.SqDistance(wantedPos)<Square(AIRTRANSPORT_DOCKING_RADIUS) && abs(owner->heading-unit->heading)<AIRTRANSPORT_DOCKING_ANGLE && owner->updir.dot(UpVector)>0.995f){
 						am->dontCheckCol=false;
 						am->dontLand=true;
 						std::vector<int> args;
@@ -450,7 +451,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 
 	// remaining spots
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
-		while (ti != transport->transported.end() && startpos.distance(nextPos) < startpos.distance(endpos)) {
+		while (ti != transport->transported.end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
 			nextPos.y = ground->GetHeight(nextPos.x, nextPos.z);
 
@@ -633,7 +634,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 		}
 
 		float3 pos(c.params[0], c.params[1], c.params[2]);
-		if(goalPos.distance2D(pos) > 20){
+		if(goalPos.SqDistance2D(pos) > 400){
 			SetGoal(pos, owner->pos);
 		}
 
@@ -656,7 +657,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 			}
 		}
 
-		if (pos.distance2D(owner->pos) < (owner->unitDef->loadingRadius * 0.9f)) {
+		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
 			if (am != NULL) {
 				// handle air transports differently
@@ -665,7 +666,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 				SetGoal(wantedPos, owner->pos);
 				am->SetWantedAltitude(unit->model->height);
 				am->maxDrift = 1;
-				if ((owner->pos.distance(wantedPos) < 8) &&
+				if ((owner->pos.SqDistance(wantedPos) < 64) &&
 						(owner->updir.dot(UpVector) > 0.99f)) {
 					if (!SpotIsClearIgnoreSelf(wantedPos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
@@ -720,7 +721,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 		float3 pos(c.params[0],c.params[1],c.params[2]); //head towards goal
 
 		//note that taairmovetype must be modified to allow non stop movement through goals for this to work well
-		if(goalPos.distance2D(pos)>20){
+		if(goalPos.SqDistance2D(pos)>400){
 			SetGoal(pos,owner->pos);
 			lastDropPos = pos;
 		}
@@ -732,7 +733,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 			am->maxDrift=1;
 
 			//if near target or have past it accidentally- drop unit
-			if(owner->pos.distance2D(pos) < 40 || (((pos - owner->pos).Normalize()).distance(owner->frontdir.Normalize()) > 0.5 && owner->pos.distance2D(pos)< 205)) {
+			if(owner->pos.SqDistance2D(pos) < 1600 || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir.Normalize()) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
 				am->dontLand=true;
 				owner->cob->Call("EndTransport"); //test
 				((CTransportUnit*)owner)->DetachUnitFromAir(unit,pos);
@@ -798,11 +799,11 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 		//move to position
 		float3 pos(c.params[0], c.params[1], c.params[2]);
 		if (isFirstIteration) {
-			if(goalPos.distance2D(pos) > 20)
+			if(goalPos.SqDistance2D(pos) > 400)
 				SetGoal(startingDropPos, owner->pos);
 		}
 
-		if (startingDropPos.distance2D(owner->pos) < (owner->unitDef->loadingRadius * 0.9f)) {
+		if (startingDropPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			//create aircraft movetype instance
 			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
 
@@ -866,7 +867,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 	std::vector<CUnit*> units=qf->GetUnitsExact(center,radius);
 	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
 		CUnit* unit=(*ui);
-		float dist=unit->pos.distance2D(owner->pos);
+		float dist=unit->pos.SqDistance2D(owner->pos);
 		if(CanTransport(unit) && dist<bestDist && !unit->toBeTransported &&
 				 (unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))){
 			bestDist=dist;
@@ -1022,8 +1023,8 @@ bool CTransportCAI::LoadStillValid(CUnit* unit){
 	}
 	Command cmd = commandQue[1];
 	return !(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4
-		&& unit->pos.distance2D(
-		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > cmd.params[3]*2);
+		&& unit->pos.SqDistance2D(
+		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > Square(cmd.params[3]*2));
 }
 
 bool CTransportCAI::AllowedCommand(const Command& c)

@@ -662,7 +662,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 		--pi;
 		list<TrackPart>::iterator pi2=pi;
 		--pi;
-		if(((tp.pos1+pi->pos1)*0.5f).distance(pi2->pos1)<1){
+		if(((tp.pos1+pi->pos1)*0.5f).SqDistance(pi2->pos1)<1){
 			unit->myTrack->parts.back()=tp;
 			return;
 		}

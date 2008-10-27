@@ -6,6 +6,7 @@
 
 #include "PathManager.h"
 #include "LogOutput.h"
+#include "System/myMath.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/GroundMoveMath.h"
 #include "Sim/MoveTypes/MoveMath/HoverMoveMath.h"
@@ -235,7 +236,7 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) {
 	//Remove estimate waypoints until
 	//the next one is far enought.
 	while(!path.estimatedPath.path.empty()
-	&& path.estimatedPath.path.back().distance2D(startPos) < DETAILED_DISTANCE * SQUARE_SIZE)
+	&& path.estimatedPath.path.back().SqDistance2D(startPos) < Square(DETAILED_DISTANCE * SQUARE_SIZE))
 		path.estimatedPath.path.pop_back();
 
 	//Get the goal of the detailed search.
@@ -275,7 +276,7 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 	//Remove estimate2 waypoints until
 	//the next one is far enought.
 	while(!path.estimatedPath2.path.empty()
-	&& path.estimatedPath2.path.back().distance2D(startPos) < ESTIMATE_DISTANCE * SQUARE_SIZE)
+	&& path.estimatedPath2.path.back().SqDistance2D(startPos) < Square(ESTIMATE_DISTANCE * SQUARE_SIZE))
 		path.estimatedPath2.path.pop_back();
 
 	//Get the goal of the detailed search.
@@ -330,11 +331,11 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 
 	//check if detailed path need bettering
 	if(!multiPath->estimatedPath.path.empty()
-	&& (multiPath->estimatedPath.path.back().distance2D(callerPos) < MIN_DETAILED_DISTANCE * SQUARE_SIZE
+	&& (multiPath->estimatedPath.path.back().SqDistance2D(callerPos) < Square(MIN_DETAILED_DISTANCE * SQUARE_SIZE)
 	|| multiPath->detailedPath.path.size() <= 2)){
 
 		if(!multiPath->estimatedPath2.path.empty()		//if so check if estimated path also need bettering
-			&& (multiPath->estimatedPath2.path.back().distance2D(callerPos) < MIN_ESTIMATE_DISTANCE * SQUARE_SIZE
+			&& (multiPath->estimatedPath2.path.back().SqDistance2D(callerPos) < Square(MIN_ESTIMATE_DISTANCE * SQUARE_SIZE)
 			|| multiPath->estimatedPath.path.size() <= 2)){
 				Estimate2ToEstimate(*multiPath, callerPos);
 		}
@@ -359,7 +360,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 			waypoint = multiPath->detailedPath.path.back();
 			multiPath->detailedPath.path.pop_back();
 		}
-	} while(callerPos.distance2D(waypoint) < minDistance && waypoint != multiPath->detailedPath.pathGoal);
+	} while(callerPos.SqDistance2D(waypoint) < Square(minDistance) && waypoint != multiPath->detailedPath.pathGoal);
 
 	return waypoint;
 }
