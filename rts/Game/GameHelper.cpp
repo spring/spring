@@ -68,9 +68,102 @@ CGameHelper::~CGameHelper()
 }
 
 
+
+void CGameHelper::DoExplosionDamage(CUnit* unit,
+	const float3& expPos, float expRad, float expSpeed,
+	bool ignoreOwner, CUnit* owner, float edgeEffectiveness,
+	const DamageArray& damages, int weaponId)
+{
+	if (ignoreOwner && (unit == owner)) {
+		return;
+	}
+
+	// dist is equal to the maximum of "distance from center
+	// of unit to center of explosion" and "unit radius + 0.1",
+	// where "center of unit" is determined by the relative
+	// position of its collision volume and "unit radius" by
+	// the volume's minimally-bounding sphere
+	//
+	float3 dif = (unit->midPos + unit->collisionVolume->axisOffsets) - expPos;
+	float expDist = dif.Length();
+	const float volRad = unit->collisionVolume->volumeBoundingRadius;
+
+	expDist = std::max(expDist, volRad + 0.1f);
+
+	// expDist2 is the distance from the boundary of the
+	// _volume's_ minimally-bounding sphere (!) to the
+	// explosion center, unless unit->isUnderWater and
+	// the explosion is above water: then center2center
+	// distance is used
+	//
+	// NOTE #1: this will be only an approximation when
+	// the unit's collision volume is not a sphere, but
+	// a better one than when using unit->radius
+	//
+	// NOTE #2: if an explosion occurs right underneath
+	// a unit's map footprint, it can cause damage even
+	// if the unit's collision volume is greatly offset
+	// (because CQuadField is again based exclusively on
+	// unit->radius, so the iteration will include units
+	// that should not be touched)
+	float expDist2 = expDist - volRad;
+
+	if (unit->isUnderWater && (expPos.y > -1.0f)) {
+		// should make it harder to damage subs with above-water weapons
+		expDist2 += volRad;
+		expDist2 = std::min(expDist2, expRad);
+	}
+
+	// Clamp expDist to radius to prevent division by zero
+	// (expDist2 can never be > radius). We still need the
+	// original expDist later to normalize dif.
+	float expDist1 = std::min(expDist, expRad);
+	float mod  = (expRad - expDist1) / (expRad - expDist1 * edgeEffectiveness);
+	float mod2 = (expRad - expDist2) / (expRad - expDist2 * edgeEffectiveness);
+	dif /= expDist;
+	dif.y += 0.12f;
+
+	DamageArray damageDone = damages * mod2;
+	float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
+
+	if (expDist2 < (expSpeed * 4.0f)) { //damage directly
+		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
+	} else { //damage later
+		WaitingDamage* wd = SAFE_NEW WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
+		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
+	}
+}
+
+void CGameHelper::DoExplosionDamage(CFeature* feature,
+	const float3& expPos, float expRad, CUnit* owner, const DamageArray& damages)
+{
+	CollisionVolume* cv = feature->collisionVolume;
+
+	if (cv) {
+		float3 dif = (feature->midPos + cv->axisOffsets) - expPos;
+		float expDist = std::max(dif.Length(), 0.1f);
+		float expMod = (expRad - expDist) / expRad;
+
+		// always do some damage with explosive stuff
+		// (DDM wreckage etc. is too big to normally
+		// be damaged otherwise, even by BB shells)
+		// NOTE: this will also be only approximate
+		// for non-spherical volumes
+		if ((expRad > 8.0f) && (expDist < (cv->volumeBoundingRadius * 1.1f)) && (expMod < 0.1f)) {
+			expMod = 0.1f;
+		}
+		if (expMod > 0.0f) {
+			feature->DoDamage(damages * expMod, owner,
+				dif * (damages.impulseFactor * expMod / expDist *
+				(damages[0] + damages.impulseBoost)));
+		}
+	}
+}
+
+
 void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
                             float expRad, float edgeEffectiveness,
-                            float explosionSpeed, CUnit* owner,
+                            float expSpeed, CUnit* owner,
                             bool damageGround, float gfxMod, bool ignoreOwner,
                             CExplosionGenerator* explosionGraphics, CUnit* hit,
                             const float3& impactDir, int weaponId)
@@ -84,6 +177,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 			}
 		}
 	}
+
 	bool noGfx = eventHandler.Explosion(weaponId, expPos, owner);
 
 #ifdef TRACE_SYNC
@@ -96,101 +190,41 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 	expRad = std::max(expRad, 1.0f);
 	float height = std::max(expPos.y - h2, 0.0f);
 
-	vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
 
-	// Damage Units
-	for (vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
+	// damage all units within the explosion radius
+	vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
+	vector<CUnit*>::iterator ui;
+	bool hitUnitDamaged = false;
+
+	for (ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* unit = *ui;
 
-		if (ignoreOwner && (unit == owner)) {
-			continue;
+		if (unit == hit) {
+			hitUnitDamaged = true;
 		}
 
-		// dist is equal to the maximum of "distance from center
-		// of unit to center of explosion" and "unit radius + 0.1",
-		// where "center of unit" is determined by the relative
-		// position of its collision volume and "unit radius" by
-		// the volume's minimally-bounding sphere
-		//
-		float3 dif = (unit->midPos + unit->collisionVolume->axisOffsets) - expPos;
-		float expDist = dif.Length();
-		const float volRad = unit->collisionVolume->volumeBoundingRadius;
+		DoExplosionDamage(unit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+	}
 
-		expDist = std::max(expDist, volRad + 0.1f);
-
-		// expDist2 is the distance from the boundary of the
-		// _volume's_ minimally-bounding sphere (!) to the
-		// explosion center, unless unit->isUnderWater and
-		// the explosion is above water: then center2center
-		// distance is used
-		//
-		// NOTE #1: this will be only an approximation when
-		// the unit's collision volume is not a sphere, but
-		// a better one than when using unit->radius
-		//
-		// NOTE #2: if an explosion occurs right underneath
-		// a unit's map footprint, it can cause damage even
-		// if the unit's collision volume is greatly offset
-		// (because CQuadField is again based exclusively on
-		// unit->radius, so the iteration will include units
-		// that should not be touched)
-		float expDist2 = expDist - volRad;
-
-		if (unit->isUnderWater && (expPos.y > -1.0f)) {
-			// should make it harder to damage subs with above-water weapons
-			expDist2 += volRad;
-			expDist2 = std::min(expDist2, expRad);
-		}
-
-		// Clamp expDist to radius to prevent division by zero
-		// (expDist2 can never be > radius). We still need the
-		// original expDist later to normalize dif.
-		float expDist1 = std::min(expDist, expRad);
-		float mod  = (expRad - expDist1) / (expRad - expDist1 * edgeEffectiveness);
-		float mod2 = (expRad - expDist2) / (expRad - expDist2 * edgeEffectiveness);
-		dif /= expDist;
-		dif.y += 0.12f;
-
-		DamageArray damageDone = damages * mod2;
-		float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
-
-		if (expDist2 < (explosionSpeed * 4.0f)) { //damage directly
-			unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
-		} else { //damage later
-			WaitingDamage* wd = SAFE_NEW WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
-			waitingDamages[(gs->frameNum + int(expDist2 / explosionSpeed) - 3) & 127].push_front(wd);
-		}
+	// HACK: for a unit with an offset coldet volume, the explosion
+	// (from an impacting projectile) position might not correspond
+	// to its quadfield position so we need to damage it separately
+	if (hit && !hitUnitDamaged) {
+		DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
 	}
 
 
+	// damage all features within the explosion radius
 	vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
 	vector<CFeature*>::iterator fi;
 
 	for (fi = features.begin(); fi != features.end(); ++fi) {
 		CFeature* feature = *fi;
-		CollisionVolume* cv = feature->collisionVolume;
 
-		if (cv) {
-			float3 dif = (feature->midPos + cv->axisOffsets) - expPos;
-			float expDist = std::max(dif.Length(), 0.1f);
-			float expMod = (expRad - expDist) / expRad;
-
-			// always do some damage with explosive stuff
-			// (DDM wreckage etc. is too big to normally
-			// be damaged otherwise, even by BB shells)
-			// NOTE: this will also be only approximate
-			// for non-spherical volumes
-			if ((expRad > 8.0f) && (expDist < (cv->volumeBoundingRadius * 1.1f)) && (expMod < 0.1f)) {
-				expMod = 0.1f;
-			}
-			if (expMod > 0.0f) {
-				feature->DoDamage(damages * expMod, owner,
-				    dif * (damages.impulseFactor * expMod / expDist *
-					(damages[0] + damages.impulseBoost)));
-			}
-		}
+		DoExplosionDamage(feature, expPos, expRad, owner, damages);
 	}
 
+	// deform the map
 	if (damageGround && !mapDamage->disabled &&
 	    (expRad > height) && (damages.craterMult > 0.0f)) {
 		float damage = damages[0] * (1.0f - (height / expRad));
