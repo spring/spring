@@ -742,59 +742,22 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	if (mapInfo->hasWaterPlane) {
-		DrawWaterPlane(drawWaterReflection);
-	}
+	if (!(drawWaterReflection || drawUnitReflection)) {
+		if (mapInfo->hasWaterPlane) {
+			DrawWaterPlane(drawWaterReflection);
+		}
 
-	if (groundDecals && !(drawWaterReflection || drawUnitReflection)) {
-		groundDecals->Draw();
+		if (groundDecals) {
+			groundDecals->Draw();
+			ph->DrawGroundFlashes();
+			glDepthMask(1);
+		}
 	}
-
-	glEnable(GL_ALPHA_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
 
 //	sky->SetCloudShadow(1);
 //	if (drawWaterReflection)
 //		treeDistance *= 0.5f;
 
-	ph->DrawGroundFlashes();
-
-
-	if (treeDrawer->drawTrees) {
-		if (DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			glBindTexture(GL_TEXTURE_2D, infoTex);
-			SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
-
-		treeDrawer->Draw(drawWaterReflection || drawUnitReflection);
-
-		if (DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-			glDisable(GL_TEXTURE_GEN_S);
-			glDisable(GL_TEXTURE_GEN_T);
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
-	}
-
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
 	viewRadius = baseViewRadius;
 }
 
@@ -1178,7 +1141,15 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-			SetTexGen(0.02f,0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
+			//SetTexGen(0.02f,0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
+			GLfloat plan[]={0.02f,0.5f,0,0};
+			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGenfv(GL_S,GL_EYE_PLANE,plan);
+			glEnable(GL_TEXTURE_GEN_S);
+			GLfloat plan2[]={0,0.5f,0.02f,0};
+			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
+			glEnable(GL_TEXTURE_GEN_T);
 		} else {
 			glDisable (GL_TEXTURE_2D);
 		}
@@ -1263,7 +1234,15 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			SetTexGen(0.02f, 0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
+			//SetTexGen(0.02f, 0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
+			GLfloat plan[]={0.02f,0,0,0};
+			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGenfv(GL_S,GL_OBJECT_PLANE,plan);
+			glEnable(GL_TEXTURE_GEN_S);
+			GLfloat plan2[]={0,0,0.02f,0};
+			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGenfv(GL_T,GL_OBJECT_PLANE,plan2);
+			glEnable(GL_TEXTURE_GEN_T);
 		} else {
 			glDisable (GL_TEXTURE_2D);
 		}

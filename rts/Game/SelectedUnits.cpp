@@ -452,6 +452,8 @@ void CSelectedUnits::SelectGroup(int num)
 
 void CSelectedUnits::Draw()
 {
+	glDisable(GL_TEXTURE_2D);
+	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND); // for line smoothing
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -524,6 +526,8 @@ void CSelectedUnits::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+	glEnable(GL_TEXTURE_2D);
 }
 
 
