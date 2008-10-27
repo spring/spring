@@ -424,6 +424,7 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");
 
 	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
+
 	file.GetDef(fixedAllies, "1", "GAME\\ModOptions\\FixedAllies");
 
 	// Read the map & mod options
@@ -446,6 +447,18 @@ bool CGameSetup::Init(const char* buf, int size)
 	LoadTeams(file);
 	LoadAllyTeams(file);
 
+	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
+	if (!myPlayerName.empty())
+	{
+		for (int i = 0; i != playerStartingData.size(); ++i)
+		{
+			if (myPlayerName == playerStartingData[i].name)
+			{
+				myPlayerNum = i;
+				break;
+			}
+		}
+	}
 	// Relocate indices (for gap removing)
 	RemapPlayers();
 	RemapTeams();

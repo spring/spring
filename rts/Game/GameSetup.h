@@ -30,6 +30,7 @@ public:
 	};
 
 	int myPlayerNum;
+	std::string myPlayerName;
 	int numPlayers; //the expected amount of players
 	int numTeams;
 	int numAllyTeams;
