@@ -302,6 +302,22 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 
 
 /**
+ * @brief get the main, writable, data directory that's used by unitsync and Spring
+ */
+DLL_EXPORT const char* __stdcall GetWritableDataDirectory()
+{
+	try {
+		CheckInit();
+		return GetStr(FileSystemHandler::GetInstance().GetWriteDir());
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
+
+// TODO (when needed): GetDataDirectoryCount(), GetDataDirectory(int index)
+
+
+/**
  * @brief process another unit and return how many are left to process
  * @return int The number of unprocessed units to be handled
  *
