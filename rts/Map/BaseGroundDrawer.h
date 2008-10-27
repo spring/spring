@@ -41,7 +41,7 @@ public:
 protected:
 	virtual void SetDrawMode(DrawMode dm);
 public:
-	void CBaseGroundDrawer::DrawTrees(bool drawReflection=false) const;
+	void DrawTrees(bool drawReflection=false) const;
 
 	// Everything that deals with drawing extra textures on top
 	void DisableExtraTexture();
