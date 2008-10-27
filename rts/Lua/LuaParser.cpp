@@ -32,7 +32,7 @@
 #else
 #  define LUA_OPEN_LIB(L, lib) \
      lua_pushcfunction((L), lib); \
-     lua_pcall((L), 0, 0, 0); 
+     lua_pcall((L), 0, 0, 0);
 #endif
 
 
@@ -287,7 +287,7 @@ void LuaParser::GetTable(int index, bool overwrite)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 
-	lua_pushnumber(L, index); 
+	lua_pushnumber(L, index);
 
 	if (overwrite) {
 		lua_newtable(L);
@@ -423,7 +423,7 @@ int LuaParser::Echo(lua_State* L)
 
 
 int LuaParser::TimeCheck(lua_State* L)
-{	
+{
 	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2)) {
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
 	}
@@ -462,7 +462,7 @@ int LuaParser::DirList(lua_State* L)
 	const vector<string> files = CFileHandler::DirList(dir, pat, modes);
 
 	lua_newtable(L);
-	int count = 0;	
+	int count = 0;
 	vector<string>::const_iterator fi;
 	for (fi = files.begin(); fi != files.end(); ++fi) {
 		count++;
@@ -533,7 +533,7 @@ int LuaParser::Include(lua_State* L)
 		luaL_error(L, "Include(): error with setfenv");
 	}
 
-	const int paramTop = lua_gettop(L) - 1;	
+	const int paramTop = lua_gettop(L) - 1;
 
 	error = lua_pcall(L, 0, LUA_MULTRET, 0);
 
@@ -634,9 +634,9 @@ LuaTable::LuaTable(LuaParser* _parser)
 	isValid = _parser->IsValid();
 	path    = "ROOT";
 	parser  = _parser;
-  L       = parser->L;
+	L       = parser->L;
 	refnum  = parser->rootRef;
-	
+
 	if (PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -660,7 +660,7 @@ LuaTable::LuaTable(const LuaTable& tbl)
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
 	} else {
 		refnum = LUA_NOREF;
-	}	
+	}
 	isValid = (refnum != LUA_NOREF);
 
 	if (parser) {
@@ -691,13 +691,13 @@ LuaTable& LuaTable::operator=(const LuaTable& tbl)
 
 	L    = tbl.L;
 	path = tbl.path;
-	
+
 	if (tbl.PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
 	} else {
 		refnum = LUA_NOREF;
-	}	
+	}
 
 	isValid = (refnum != LUA_NOREF);
 
@@ -736,7 +736,7 @@ LuaTable LuaTable::SubTable(int key) const
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-	
+
 	const string key = !lowerCppKeys ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
@@ -866,7 +866,7 @@ bool LuaTable::PushValue(int key) const
 		lua_pop(L, 1);
 		return false;
 	}
-	return true;	
+	return true;
 }
 
 
@@ -882,7 +882,7 @@ bool LuaTable::PushValue(const string& mixedKey) const
 		lua_pop(L, 1);
 		return false;
 	}
-	return true;	
+	return true;
 }
 
 

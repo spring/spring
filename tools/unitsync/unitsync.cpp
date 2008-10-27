@@ -54,7 +54,11 @@ namespace
 {
 	struct COneTimeInit
 	{
-		COneTimeInit() { logOutput.SetFilename("unitsync.log"); }
+		COneTimeInit()
+		{
+			logOutput.SetFilename("unitsync.log");
+			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", VERSION_STRING_DETAILED);
+		}
 	};
 }
 static COneTimeInit global_initializer;
@@ -288,7 +292,7 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 		}
 
 		syncer = new CSyncer();
-		logOutput.Print(LOG_UNITSYNC, "initialized\n");
+		logOutput.Print(LOG_UNITSYNC, "initialized, %s\n", VERSION_STRING_DETAILED);
 		logOutput.Print(LOG_UNITSYNC, "%s\n", isServer ? "hosting" : "joining");
 		return 1;
 	}
@@ -535,6 +539,8 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	CheckNullOrEmpty(name);
 	CheckNull(outInfo);
 
+	logOutput.Print(LOG_UNITSYNC, "get map info: %s", name);
+
 	const string mapName = name;
 	ScopedMapLoader mapLoader(mapName);
 
@@ -617,6 +623,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 		}
 		outInfo->positions[curTeam].x = pos.x;
 		outInfo->positions[curTeam].z = pos.z;
+		logOutput.Print(LOG_UNITSYNC, "  startpos: %.0f, %.0f", pos.x, pos.z);
 	}
 
 	outInfo->posCount = curTeam;
