@@ -318,7 +318,6 @@ void CTAAirMoveType::UpdateHovering()
 	const float l   = deltaDir.Length2D();
 	deltaDir       /= std::max(l,0.0001f);
 	float moveFactor  = math::sqrt(l);
-	const float3 &pos = owner->pos;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
@@ -367,11 +366,16 @@ void CTAAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		// pretty close
 		switch (flyState) {
-			case FLY_CRUISING:
-				if (dontLand || (++waitCounter < 55 && dynamic_cast<CTransportUnit*>(owner))
-						|| !autoLand) {
+			case FLY_CRUISING: {
+				bool trans = dynamic_cast<CTransportUnit*>(owner);
+				bool noland = dontLand || !autoLand;
+				// should CMD_LOAD_ONTO be here?
+				bool hasLoadCmds = trans
+						&& (owner->commandAI->commandQue.front().id == CMD_LOAD_ONTO
+							|| owner->commandAI->commandQue.front().id == CMD_LOAD_UNITS);
+				if (noland || (trans && ++waitCounter < 55 && hasLoadCmds)) {
 					// transport aircraft need some time to detect that they can pickup
-					if (dynamic_cast<CTransportUnit*>(owner)) {
+					if (trans) {
 						wantedSpeed = ZeroVector;
 						SetState(AIRCRAFT_HOVERING);
 						if (waitCounter > 60) {
@@ -388,6 +392,7 @@ void CTAAirMoveType::UpdateFlying()
 					SetState(AIRCRAFT_LANDING);
 				}
 				return;
+			}
 			case FLY_CIRCLING:
 				// break;
 				waitCounter++;
