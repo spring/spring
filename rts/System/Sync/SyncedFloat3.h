@@ -496,6 +496,47 @@ public:
 		return x*x+z*z;
 	}
 
+
+	/**
+	 * @brief SqDistance between float3s squared
+	 * @param f float3 to compare against
+	 * @return float squared distance between float3s
+	 *
+	 * Returns the squared distance of 2 float3s
+	 */
+	inline float SqDistance(const SyncedFloat3 &f) const{
+		const float dx = x - f.x;
+		const float dy = y - f.y;
+		const float dz = z - f.z;
+		return (float) (dx*dx + dy*dy + dz*dz);
+	}
+	inline float SqDistance(const float3 &f) const{
+		const float dx = x - f.x;
+		const float dy = y - f.y;
+		const float dz = z - f.z;
+		return (float) (dx*dx + dy*dy + dz*dz);
+	}
+
+
+	/**
+	 * @brief SqDistance2D between float3s (only x and z)
+	 * @param f float3 to compare against
+	 * @return 2D squared distance between float3s
+	 *
+	 * Returns the squared 2d-distance of 2 float3s
+	 */
+	inline float SqDistance2D(const SyncedFloat3 &f) const{
+		const float dx = x - f.x;
+		const float dz = z - f.z;
+		return (float) (dx*dx + dz*dz);
+	}
+	inline float SqDistance2D(const float3 &f) const{
+		const float dx = x - f.x;
+		const float dz = z - f.z;
+		return (float) (dx*dx + dz*dz);
+	}
+
+
 	SyncedFloat x; ///< x component
 	SyncedFloat y; ///< y component
 	SyncedFloat z; ///< z component

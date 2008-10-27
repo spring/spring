@@ -205,7 +205,7 @@ void CAirMoveType::Update(void)
 
 			goalPos = pos;
 
-			if (pos.distance2D(owner->pos) < 400) {
+			if (pos.SqDistance2D(owner->pos) < (400*400)) {
 				padStatus = 1;
 			}
 		} else if (padStatus == 1) {
@@ -216,7 +216,7 @@ void CAirMoveType::Update(void)
 			goalPos = pos;
 			reservedLandingPos = pos;
 
-			if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED) {
+			if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = 2;
 			}
 		} else {
@@ -275,7 +275,7 @@ void CAirMoveType::Update(void)
 				if (maneuver) {
 					UpdateManeuver();
 					inefficientAttackTime = 0;
-				} else if (isFighter && goalPos.distance(pos) < owner->maxRange * 4) {
+				} else if (isFighter && goalPos.SqDistance(pos) < Square(owner->maxRange * 4)) {
 					inefficientAttackTime++;
 					UpdateFighterAttack();
 				} else {

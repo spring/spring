@@ -323,7 +323,7 @@ void CTAAirMoveType::UpdateHovering()
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
 	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(l < 120) && (deltaDir.distance(deltaVec) > 1.0f)) {
+		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f)) {
 		deltaDir = owner->frontdir;
 		moveFactor = 1.0f;
 	}
@@ -353,7 +353,7 @@ void CTAAirMoveType::UpdateFlying()
 
 	// don't change direction for waypoints we just flew over and missed slightly
 	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().distance(dir) < 1)) {
+		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().SqDistance(dir) < 1)) {
 		dir = owner->frontdir;
 	}
 
@@ -458,7 +458,7 @@ void CTAAirMoveType::UpdateFlying()
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
 	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-			   dist < 120) && (goalPos - pos).Normalize().distance(dir) > 1) {
+			   dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
 		dir = owner->frontdir;
 	} else {
 		dir = goalPos - pos;
@@ -499,7 +499,7 @@ void CTAAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->cob->Call(COBFN_StopMoving);
 		} else {
-			if (goalPos.distance2D(pos) < 30) {
+			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
 				goalPos.CheckInBounds();
 			}
@@ -784,7 +784,7 @@ void CTAAirMoveType::Update()
 
 					goalPos = pos;
 
-					if (pos.distance2D(owner->pos) < 400) {
+					if (pos.SqDistance2D(owner->pos) < 400*400) {
 						padStatus = 1;
 					}
 				} else if (padStatus == 1) {
@@ -796,7 +796,7 @@ void CTAAirMoveType::Update()
 					reservedLandingPos = pos;
 					wantedHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 
-					if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED) {
+					if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
 						padStatus = 2;
 					}
 				} else {

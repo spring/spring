@@ -20,6 +20,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
+#include "System/myMath.h"
 
 CSelectionKeyHandler *selectionKeys;
 
@@ -190,7 +191,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		  // team units in mouse range
 			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
 			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				if(mp.distance((*ui)->pos)<maxDist){
+				if(mp.SqDistance((*ui)->pos)<Square(maxDist)){
 					selection.push_back(*ui);
 				}
 			}
@@ -198,7 +199,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		  // all units in mouse range
 			std::list<CUnit*>* au=&uh->activeUnits;
 			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if(mp.distance((*ui)->pos)<maxDist){
+				if(mp.SqDistance((*ui)->pos)<Square(maxDist)){
 					selection.push_back(*ui);
 				}
 			}

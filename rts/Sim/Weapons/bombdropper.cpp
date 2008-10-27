@@ -16,6 +16,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
+#include "System/myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));
@@ -65,7 +66,7 @@ void CBombDropper::Update()
 				predict=0;
 			float3 hitpos=owner->pos+owner->speed*predict;
 			float speedf=owner->speed.Length();
-			if(hitpos.distance2D(targetPos)<std::max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange){
+			if(hitpos.SqDistance2D(targetPos)<Square(std::max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange)){
 				subClassReady=true;
 			}
 		}

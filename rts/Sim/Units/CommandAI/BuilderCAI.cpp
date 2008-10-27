@@ -374,7 +374,7 @@ void CBuilderCAI::SlowUpdate()
 		const float radius = GetUnitDefRadius(ud, c.id);
 		if (inCommand) {
 			if (building) {
-				if (f3Dist(build.pos, fac->pos) > fac->buildDistance + radius - 8.0f) {
+				if (f3SqDist(build.pos, fac->pos) > Square(fac->buildDistance + radius - 8.0f)) {
 					owner->moveType->StartMoving(build.pos, fac->buildDistance * 0.5f + radius);
 				} else {
 					StopMove();
@@ -407,10 +407,10 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build);
-					const float dist = f3Dist(build.pos, fac->pos);
+					const float sqdist = f3SqDist(build.pos, fac->pos);
 
-					if ((dist < (fac->buildDistance * 0.6f + radius)) ||
-						(!owner->unitDef->canmove && (dist <= (fac->buildDistance + radius - 8.0f)))) {
+					if ((sqdist < Square(fac->buildDistance * 0.6f + radius)) ||
+						(!owner->unitDef->canmove && (sqdist <= Square(fac->buildDistance + radius - 8.0f)))) {
 						StopMove();
 
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
@@ -531,12 +531,12 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
 		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
 		    UpdateTargetLostTimer((int)c.params[0])) {
-			if (f3Dist(unit->pos, fac->pos) < fac->buildDistance+unit->radius-8) {
+			if (f3SqDist(unit->pos, fac->pos) < Square(fac->buildDistance+unit->radius-8)) {
 				StopMove();
 				fac->SetRepairTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance*0.9f+unit->radius, false);
 			} else {
-				if (f3Dist(goalPos, unit->pos) > 1) {
+				if (f3SqDist(goalPos, unit->pos) > 1) {
 					SetGoal(unit->pos,owner->pos, fac->buildDistance*0.9f+unit->radius);
 				}
 			}
@@ -570,12 +570,12 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		CUnit* unit = uh->units[(int)c.params[0]];
 
 		if (unit && unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer((int) c.params[0])) {
-			if (f3Dist(unit->pos, fac->pos) < fac->buildDistance + unit->radius - 8) {
+			if (f3SqDist(unit->pos, fac->pos) < Square(fac->buildDistance + unit->radius - 8)) {
 				StopMove();
 				fac->SetCaptureTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance * 0.9f + unit->radius, false);
 			} else {
-				if (f3Dist(goalPos, unit->pos) > 1) {
+				if (f3SqDist(goalPos, unit->pos) > 1) {
 					SetGoal(unit->pos,owner->pos, fac->buildDistance * 0.9f + unit->radius);
 				}
 			}
@@ -608,8 +608,8 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 	if (guarded && guarded!=owner && UpdateTargetLostTimer((int)c.params[0])) {
 		if (CBuilder* b=dynamic_cast<CBuilder*>(guarded)) {
 			if (b->terraforming) {
-				if (f3Dist(fac->pos, b->terraformCenter) <
-						(fac->buildDistance * 0.8f) + (b->terraformRadius * 0.7f)) {
+				if (f3SqDist(fac->pos, b->terraformCenter) <
+						Square((fac->buildDistance * 0.8f) + (b->terraformRadius * 0.7f))) {
 					StopMove();
 					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
 					fac->HelpTerraform(b);
@@ -781,12 +781,12 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - MAX_UNITS);
 			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
 				CFeature* feature = *it;
-				if (f3Dist(feature->pos, fac->pos) < fac->buildDistance*0.9f+feature->radius) {
+				if (f3SqDist(feature->pos, fac->pos) < Square(fac->buildDistance*0.9f+feature->radius)) {
 					StopMove();
 					owner->moveType->KeepPointingTo(feature->pos, fac->buildDistance*0.9f+feature->radius, false);
 					fac->SetResurrectTarget(feature);
 				} else {
-					if (f3Dist(goalPos, feature->pos) > 1) {
+					if (f3SqDist(goalPos, feature->pos) > 1) {
 						SetGoal(feature->pos,owner->pos, fac->buildDistance*0.8f+feature->radius);
 					} else {
 						if(owner->moveType->progressState==AMoveType::Failed){
@@ -940,7 +940,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		pos.y = ground->GetHeight2(pos.x,pos.y);
 		float radius(c.params[3]);
 		if (radius>200) radius = 200;
-		if (f3Dist(fac->pos, pos) < fac->buildDistance-1) {
+		if (f3SqDist(fac->pos, pos) < Square(fac->buildDistance-1)) {
 			StopMove();
 			fac->StartRestore(pos,radius);
 			owner->moveType->KeepPointingTo(pos, fac->buildDistance*0.9f, false);
@@ -1083,12 +1083,12 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId)
 
 bool CBuilderCAI::ReclaimObject(CSolidObject* object){
 	CBuilder* fac=(CBuilder*)owner;
-	if (f3Dist(object->pos, fac->pos) < fac->buildDistance-1+object->radius) {
+	if (f3SqDist(object->pos, fac->pos) < Square(fac->buildDistance-1+object->radius)) {
 		StopMove();
 		owner->moveType->KeepPointingTo(object->pos, fac->buildDistance*0.9f+object->radius, false);
 		fac->SetReclaimTarget(object);
 	} else {
-		if (f3Dist(goalPos, object->pos) > 1) {
+		if (f3SqDist(goalPos, object->pos) > 1) {
 			SetGoal(object->pos, owner->pos);
 		} else {
 			if (owner->moveType->progressState == AMoveType::Failed) {

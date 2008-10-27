@@ -127,12 +127,12 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			continue;
 		}
 
-		if (baseUnit->pos.distance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+		if (baseUnit->pos.SqDistance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
 			continue;
 		}
 
+		closest = baseUnit->pos.SqDistance(unit->pos);
 		for (padLstIt pi = (*bi)->freePads.begin(); pi != (*bi)->freePads.end(); ++pi) {
-			closest = baseUnit->pos.distance(unit->pos);
 			foundPad = pi;
 			foundBase = bi;
 		}
@@ -169,11 +169,11 @@ float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 			continue;
 		}
 
-		if (baseUnit->pos.distance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+		if (baseUnit->pos.SqDistance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
 			continue;
 		}
 
-		closest = baseUnit->pos.distance(unit->pos);
+		closest = baseUnit->pos.SqDistance(unit->pos);
 		foundBase = bi;
 	}
 

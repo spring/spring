@@ -18,6 +18,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sync/SyncTracer.h"
 #include "creg/STL_List.h"
+#include "System/myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
@@ -108,10 +109,10 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 		const float3 p7 = circle->pos + float3(                    0.0f, 0.0f,  circle->extractionRange); // 270
 
 		// square corners must all lie outside circle
-		const bool b0 = (p0.distance2D(circle->pos) > circle->extractionRange);
-		const bool b1 = (p1.distance2D(circle->pos) > circle->extractionRange);
-		const bool b2 = (p2.distance2D(circle->pos) > circle->extractionRange);
-		const bool b3 = (p3.distance2D(circle->pos) > circle->extractionRange);
+		const bool b0 = (p0.SqDistance2D(circle->pos) > Square(circle->extractionRange));
+		const bool b1 = (p1.SqDistance2D(circle->pos) > Square(circle->extractionRange));
+		const bool b2 = (p2.SqDistance2D(circle->pos) > Square(circle->extractionRange));
+		const bool b3 = (p3.SqDistance2D(circle->pos) > Square(circle->extractionRange));
 		// circle "corners" must all lie outside square
 		const bool b4 = ((p4.x < p0.x || p4.x > p1.x) && (p4.z < p0.z || p4.z > p3.z));
 		const bool b5 = ((p5.x < p0.x || p5.x > p1.x) && (p5.z < p0.z || p5.z > p3.z));
@@ -122,7 +123,7 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 	}
 	if (sum == 0) {
 		// circle vs. circle
-		return (this->pos.distance2D(other->pos) < (this->extractionRange + other->extractionRange));
+		return (this->pos.SqDistance2D(other->pos) < Square(this->extractionRange + other->extractionRange));
 	}
 
 	return false;
@@ -164,9 +165,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 			// center of metalsquare at (x, z)
 			const float3 msqrPos((x + 0.5f) * METAL_MAP_SQUARE_SIZE, pos.y,
 			                     (z + 0.5f) * METAL_MAP_SQUARE_SIZE);
-			const float sqrCenterDistance = msqrPos.distance2D(this->pos);
+			const float sqrCenterDistance = msqrPos.SqDistance2D(this->pos);
 
-			if (unitDef->extractSquare || sqrCenterDistance < extractionRange) {
+			if (unitDef->extractSquare || sqrCenterDistance < Square(extractionRange)) {
 				MetalSquareOfControl msqr;
 				msqr.x = x;
 				msqr.z = z;
