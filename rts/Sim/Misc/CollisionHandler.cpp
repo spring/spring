@@ -27,7 +27,8 @@ CR_BIND(CollisionVolume, );
 		CR_MEMBER(testType),
 		CR_MEMBER(primaryAxis),
 		CR_MEMBER(secondaryAxes),
-		CR_MEMBER(spherical)
+		CR_MEMBER(spherical),
+		CR_MEMBER(disabled)
 	));
 
 unsigned int CCollisionHandler::numCollisionTests = 0;
@@ -39,10 +40,12 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 {
 	bool r = false;
 
-	switch (u->collisionVolume->testType) {
-		// Collision(CUnit*) does not need p1 or q
-		case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
-		case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
+	if (!u->collisionVolume->disabled) {
+		switch (u->collisionVolume->testType) {
+			// Collision(CUnit*) does not need p1 or q
+			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
+			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
+		}
 	}
 
 	return r;
@@ -52,10 +55,12 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 {
 	bool r = false;
 
-	switch (f->collisionVolume->testType) {
-		// Collision(CFeature*) does not need p1 or q
-		case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(f, p0       ); numCollisionTests    += 1; } break;
-		case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(f, p0, p1, q); numIntersectionTests += 1; } break;
+	if (!f->collisionVolume->disabled) {
+		switch (f->collisionVolume->testType) {
+			// Collision(CFeature*) does not need p1 or q
+			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(f, p0       ); numCollisionTests    += 1; } break;
+			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(f, p0, p1, q); numIntersectionTests += 1; } break;
+		}
 	}
 
 	return r;
