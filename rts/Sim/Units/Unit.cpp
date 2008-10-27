@@ -1141,7 +1141,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 {
 	float3 interPos = synced ? pos : drawPos;
 
-	if (!synced && error) {
+	if (error && !synced && !gu->spectatingFullView) {
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 

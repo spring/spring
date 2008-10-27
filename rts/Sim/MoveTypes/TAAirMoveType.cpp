@@ -309,45 +309,34 @@ void CTAAirMoveType::UpdateTakeoff()
 
 
 
-// Move the unit around a bit.. and when it gets too far away from goal position
-// it switches to normal flying instead
+// Move the unit around a bit..
 void CTAAirMoveType::UpdateHovering()
 {
 	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
-	float3 deltaVec2d = float3(deltaVec.x, 0, deltaVec.z);
-	float3 deltaDir = deltaVec2d.Normalize();
-	float moveFactor = pow(deltaVec2d.Length2D(), 0.5f);
+	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
+	const float l   = deltaDir.Length2D();
+	deltaDir       /= std::max(l,0.0001f);
+	float moveFactor  = math::sqrt(l);
 	const float3 &pos = owner->pos;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
-	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-		deltaVec.Length2D() < 120) && deltaDir.distance(deltaVec) > 1.0f) {
+	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
+		(l < 120) && (deltaDir.distance(deltaVec) > 1.0f)) {
 		deltaDir = owner->frontdir;
 		moveFactor = 1.0f;
 	}
 
 	wantedSpeed += deltaDir * moveFactor * driftSpeed * 0.05f;
 	// damping
-	wantedSpeed *= 0.97f;
+	wantedSpeed *= 0.95f;
 
 	// random movement (a sort of fake wind effect)
-	randomWind = float3(randomWind.x + (gs->randFloat() - 0.5f), 0,
-		randomWind.z + (gs->randFloat() - 0.5f)).Normalize();
-	float3 tempwind = randomWind;
-	if (pos.x < 0) {
-		// When plane is off map, make the wind drift the plane onto map rather than off map.
-		randomWind.x=fabs(randomWind.x);
-	} else if (pos.x > float3::maxxpos) {
-		randomWind.x=-fabs(randomWind.x);
-	}
-	if (pos.z < 0) {
-		randomWind.z=fabs(randomWind.z);
-	} else if (pos.z > float3::maxzpos) {
-		randomWind.z=-fabs(randomWind.z);
-	}
-	wantedSpeed += randomWind * 0.05f * driftSpeed;
+	// random drift values are in range -0.5 ... 0.5
+	randomWind = float3(randomWind.x * 0.8f + (gs->randFloat() - 0.5f) * 0.2f, 0,
+		            randomWind.z * 0.8f + (gs->randFloat() - 0.5f) * 0.2f) * driftSpeed * 0.5f;
+	wantedSpeed += randomWind;
 
 	UpdateAirPhysics();
 }
@@ -363,8 +352,8 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-		dir.Length2D() < 100) && (goalPos - pos).Normalize().distance(dir) < 1) {
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() &&
+		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().distance(dir) < 1)) {
 		dir = owner->frontdir;
 	}
 
@@ -693,8 +682,8 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speedNew = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 	}
 
-	if (fabs(wh - h) < 2.0f) {  //keep them from bobbing up and down when at the correct height
-		speed.y = speed.y * 0.89 + speedNew / 100.0f;
+	if (fabs(wh - h) < 1.0f) {
+		speed.y = speed.y * 0.89 + speedNew / 10.0f;
 	} else {
 		speed.y = speedNew;
 	}

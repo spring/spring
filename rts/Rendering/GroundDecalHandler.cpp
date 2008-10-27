@@ -584,9 +584,7 @@ void CGroundDecalHandler::Draw(void)
 	}
 
 
-
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDepthMask(1);
 	glDisable(GL_BLEND);
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);

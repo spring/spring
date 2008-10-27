@@ -2569,13 +2569,16 @@ bool CGame::DrawWorld()
 	if (drawSky) {
 		sky->Draw();
 	}
+
 	if (drawGround) {
 		{
 		SCOPED_TIMER("ExtraTexture");
 		gd->UpdateExtraTexture();
 		}
 		gd->Draw();
+		treeDrawer->DrawGrass();
 	}
+
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && water->drawSolid) {
 			water->Draw();
@@ -2584,6 +2587,10 @@ bool CGame::DrawWorld()
 
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
+
+	if (drawGround) {
+		gd->DrawTrees();
+	}
 
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
@@ -2596,11 +2603,6 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	if (drawGround) {
-		if (treeDrawer->drawTrees) {
-			treeDrawer->DrawGrass();
-		}
-	}
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && !water->drawSolid) {
 			water->Draw();
