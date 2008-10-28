@@ -795,7 +795,14 @@ void CProjectileHandler::CheckUnitCol()
 					// volume, so smuggle a bit ("rolling back" its pos in Update()
 					// and waiting for the next-frame CheckUnitCol() is problematic
 					// for noExplode projectiles)
-					const float3& pimp = (q.b0)? q.p0: q.p1;
+
+					// const float3& pimp = (q.b0)? q.p0: q.p1;
+					const float3 pimp =
+						(q.b0 && q.b1)?
+							(q.p0 + q.p1) * 0.5f:
+						(q.b0)?
+							(q.p0 + (p->pos + p->speed)) * 0.5f:
+							(p->pos + q.p1) * 0.5f;
 
 					p->pos = (raytraced)? pimp: p->pos;
 					p->Collision(unit);
@@ -817,7 +824,14 @@ void CProjectileHandler::CheckUnitCol()
 					}
 
 					if (CCollisionHandler::DetectHit(feature, p->pos, p->pos + p->speed, &q)) {
-						p->pos = (raytraced)? q.p0: p->pos;
+						const float3 pimp =
+							(q.b0 && q.b1)?
+								(q.p0 + q.p1) * 0.5f:
+							(q.b0)?
+								(q.p0 + (p->pos + p->speed)) * 0.5f:
+								(p->pos + q.p1) * 0.5f;
+
+						p->pos = (raytraced)? pimp: p->pos;
 						p->Collision(feature);
 						p->pos = (raytraced)? ppos: p->pos;
 						break;

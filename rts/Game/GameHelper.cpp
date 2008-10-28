@@ -760,6 +760,8 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 	int* endQuad = quads;
 	qf->GetQuadsOnRay(start, dir, length, endQuad);
 
+	CollisionQuery cq;
+
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
@@ -772,7 +774,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 				continue;
 			}
 
-			if (CCollisionHandler::Intersect(f, start, start + dir * length, 0x0)) {
+			if (CCollisionHandler::Intersect(f, start, start + dir * length, &cq)) {
 				return true;
 			}
 		}
