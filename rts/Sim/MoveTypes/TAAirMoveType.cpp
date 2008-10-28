@@ -317,7 +317,7 @@ void CTAAirMoveType::UpdateHovering()
 	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
 	const float l   = deltaDir.Length2D();
 	deltaDir       /= std::max(l,0.0001f);
-	float moveFactor  = math::sqrt(l);
+	float moveFactor  = math::sqrt(std::max(0.0f, l - 4.0f));
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
@@ -327,15 +327,16 @@ void CTAAirMoveType::UpdateHovering()
 		moveFactor = 1.0f;
 	}
 
-	wantedSpeed += deltaDir * moveFactor * driftSpeed * 0.05f;
 	// damping
-	wantedSpeed *= 0.95f;
+	wantedSpeed = owner->speed * 0.95f;
+
+	wantedSpeed += deltaDir * moveFactor * 0.05f;
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
-	randomWind = float3(randomWind.x * 0.8f + (gs->randFloat() - 0.5f) * 0.2f, 0,
-		            randomWind.z * 0.8f + (gs->randFloat() - 0.5f) * 0.2f) * driftSpeed * 0.5f;
-	wantedSpeed += randomWind;
+	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0,
+		            randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
+	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
 }
@@ -679,18 +680,15 @@ void CTAAirMoveType::UpdateAirPhysics()
 			ws = 0.0f;
 	}
 
-	float speedNew = 0.0f;
-	if (speed.y > ws) {
-		speedNew = std::max(ws, speed.y - accRate * 1.5f);
+	if (fabs(wh - h) > 2.0f) {
+		if (speed.y > ws) {
+			speed.y = std::max(ws, speed.y - accRate * 1.5f);
+		} else {
+			// let them accelerate upward faster if close to ground
+			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
+		}
 	} else {
-		// let them accelerate upward faster if close to ground
-		speedNew = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
-	}
-
-	if (fabs(wh - h) < 1.0f) {
-		speed.y = speed.y * 0.89 + speedNew / 10.0f;
-	} else {
-		speed.y = speedNew;
+		speed.y = speed.y * 0.95;
 	}
 
 	pos += speed;
