@@ -195,6 +195,8 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 {
 	assert(volume >= 0.0f);
 
+	if (volume == 0.0f || globalVolume == 0.0f) return;
+
 	ALuint source;
 	alGenSources(1, &source);
 
