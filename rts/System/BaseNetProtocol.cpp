@@ -156,10 +156,11 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 }
 
 
-PacketType CBaseNetProtocol::SendAttemptConnect(uchar myPlayerNum, uchar networkVersion)
+PacketType CBaseNetProtocol::SendAttemptConnect(const std::string name, const std::string version)
 {
-	PackPacket* packet = new PackPacket(3, NETMSG_ATTEMPTCONNECT);
-	*packet << myPlayerNum << networkVersion;
+	uint16_t size = 5 + name.size() + version.size();
+	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
+	*packet << size << name << version;
 	return PacketType(packet);
 }
 
@@ -382,7 +383,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CPU_USAGE, 5);
 	proto->AddType(NETMSG_DIRECT_CONTROL, 2);
 	proto->AddType(NETMSG_DC_UPDATE, 7);
-	proto->AddType(NETMSG_ATTEMPTCONNECT, 3);
+	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);
 	proto->AddType(NETMSG_SHARE, 12);
 	proto->AddType(NETMSG_SETSHARE, 11);
 	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);

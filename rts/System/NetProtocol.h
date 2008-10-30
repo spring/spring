@@ -27,12 +27,12 @@ public:
 	/**
 	@brief Initialise in client mode (remote server)
 	*/
-	void InitClient(const char* server,unsigned portnum,unsigned sourceport, const unsigned wantedNumber);
+	void InitClient(const char* server,unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion);
 	
 	/**
 	@brief Initialise in client mode (local server)
 	 */
-	void InitLocalClient(const unsigned wantedNumber);
+	void InitLocalClient();
 
 	/// Are we still connected (or did the connection timed out)?
 	bool Active() const;

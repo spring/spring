@@ -66,7 +66,7 @@ public:
 	CGameServer(int port, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup, const std::string& demoName = "");
 	virtual ~CGameServer();
 
-	void AddLocalClient(unsigned wantedNumber);
+	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 
 	void AddAutohostInterface(const int remotePort);
 
@@ -106,7 +106,7 @@ private:
 	*/
 	void KickPlayer(const int playerNum);
 
-	unsigned BindConnection(unsigned wantedNumber, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
+	unsigned BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
 
 	void CheckForGameStart(bool forced=false);
 	void StartGame();

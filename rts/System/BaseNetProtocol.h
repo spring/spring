@@ -52,7 +52,7 @@ enum NETMSG {
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
 	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
 	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
-	NETMSG_ATTEMPTCONNECT   = 25, // uchar myPlayerNum, networkVersion;
+	NETMSG_ATTEMPTCONNECT   = 25, // ushort msgsize, string playername, string VERSION_STRING_DETAILED
 	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
 	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
 	NETMSG_SENDPLAYERSTAT   = 28, //
@@ -128,7 +128,7 @@ public:
 	PacketType SendCPUUsage(float cpuUsage);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	PacketType SendAttemptConnect(uchar myPlayerNum, uchar networkVersion);
+	PacketType SendAttemptConnect(const std::string name, const std::string version);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();

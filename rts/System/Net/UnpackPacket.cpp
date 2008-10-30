@@ -3,7 +3,7 @@
 namespace netcode
 {
 
-UnpackPacket::UnpackPacket(boost::shared_ptr<const RawPacket> packet) : pckt(packet), pos(0)
+UnpackPacket::UnpackPacket(boost::shared_ptr<const RawPacket> packet, unsigned skipBytes) : pckt(packet), pos(skipBytes)
 {
 }
 

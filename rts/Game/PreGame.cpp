@@ -10,6 +10,7 @@
 
 #include "PreGame.h"
 #include "Game.h"
+#include "GameVersion.h"
 #include "Team.h"
 #include "FPUCheck.h"
 #include "GameServer.h"
@@ -89,7 +90,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	}
 
 	if(server){
-		net->InitLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+		net->InitLocalClient();
 		if (!demoFile.empty())
 		{
 			ReadDataFromDemo(demoFile);
@@ -110,14 +111,14 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup->myPlayerNum);
+			net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup ? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
 			state = WAIT_CONNECTING;
 		} else {
 			if (hasDemo) {
 				net->localDemoPlayback = true;
 				state = WAIT_CONNECTING;
 				ReadDataFromDemo(demoFile); // scan for GameData
-				net->InitLocalClient(0);
+				net->InitLocalClient();
 				if (gameSetup) {	// we read a gameSetup from the demofiles
 					logOutput.Print("Read GameSetup from Demofile");
 				}
@@ -306,7 +307,7 @@ bool CPreGame::Update()
 				break;
 
 			configHandler.SetString("address",userInput);
-			net->InitClient(userInput.c_str(),springDefaultPort,0, 0);
+			net->InitClient(userInput.c_str(),springDefaultPort,0, gameSetup ? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
 			state = WAIT_CONNECTING;
 			// fall trough
 		}
@@ -437,7 +438,7 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	if (gameSetup && gameSetup->autohostport > 0) {
 		gameServer->AddAutohostInterface(gameSetup->autohostport);
 	}
-	gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerNum : 0);
+	gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -503,7 +504,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(hasSetup ? gameSetup->hostport : springDefaultPort, false, data, gameSetup, demoName);
-			gameServer->AddLocalClient(gameSetup ? gameSetup->myPlayerNum : 0);
+			gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerName : gs->players[gu->myPlayerNum]->name, std::string(VERSION_STRING_DETAILED));
 			good_fpu_control_registers("after CGameServer creation");
 			break;
 		}
