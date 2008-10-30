@@ -16,14 +16,10 @@ ChatMessage::ChatMessage(int from, int dest, const std::string& chat) : fromPlay
 
 ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 {
-	UnpackPacket packet(data);
-	unsigned char ID;
-	unsigned char length;
+	assert(data->data[0] == NETMSG_CHAT);
+	UnpackPacket packet(data, 2);
 	unsigned char from;
 	unsigned char dest;
-	packet >> ID;
-	assert(ID == NETMSG_CHAT);
-	packet >> length;
 	packet >> from;
 	packet >> dest;
 	packet >> msg;
@@ -34,8 +30,7 @@ ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 const netcode::RawPacket* ChatMessage::Pack() const
 {
 	unsigned char size = 4*sizeof(unsigned char) + msg.size()+1;
-	PackPacket* buffer = new PackPacket(size);
-	*buffer << (unsigned char)NETMSG_CHAT;
+	PackPacket* buffer = new PackPacket(size, NETMSG_CHAT);
 	*buffer << size;
 	*buffer << (unsigned char)fromPlayer;
 	*buffer << (unsigned char)destination;

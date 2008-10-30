@@ -37,6 +37,7 @@
 #include "System/Net/Connection.h"
 #include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
+#include "System/Net/UnpackPacket.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Util.h"
@@ -186,12 +187,12 @@ CGameServer::~CGameServer()
 	delete thread;
 }
 
-void CGameServer::AddLocalClient(unsigned wantedNumber)
+void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
-	localClientNumber = BindConnection(wantedNumber, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(myName, myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
 void CGameServer::AddAutohostInterface(const int remotePort)
@@ -882,10 +883,13 @@ void CGameServer::ServerReadNet()
 		boost::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
 		boost::shared_ptr<const RawPacket> packet = prev->GetData();
 		
-		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT && packet->data[2] == NETWORK_VERSION)
+		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT)
 		{
-			const unsigned wantedNumber = packet->data[1];
-			BindConnection(wantedNumber, false, UDPNet->AcceptConnection());
+			netcode::UnpackPacket msg(packet, 3);
+			std::string name, version;
+			msg >> name;
+			msg >> version;
+			BindConnection(name, version, false, UDPNet->AcceptConnection());
 		}
 		else
 		{
@@ -1349,11 +1353,26 @@ void CGameServer::KickPlayer(const int playerNum)
 	}
 }
 
-unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
+unsigned CGameServer::BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
-	unsigned hisNewNumber = wantedNumber;
+	unsigned hisNewNumber = 0;
+	bool found = false;
+
+	if (setup)
+	{
+		for (unsigned i = 0; i < setup->numPlayers; ++i)
+		{
+			if (name == setup->playerStartingData[i].name)
+			{
+				hisNewNumber = i;
+				found = true;
+				break;
+			}
+		}
+	}
+
 	if (demoReader) {
-		hisNewNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
+		hisNewNumber = std::max(hisNewNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
 	}
 	if (players[hisNewNumber])
 	{
@@ -1367,10 +1386,10 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
-	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers) && !demoReader)
+	if (setup && (hisNewNumber >= static_cast<unsigned>(setup->numPlayers) || !found) && !demoReader)
 	{
-		// number not in setup, drop connection
-		Message(str(format("Connection rejected because of number %i not in setup (wanted number %i).") %hisNewNumber %wantedNumber));
+		// player not found
+		Message(str(format("Player %s not found, rejecting connection attempt") %name));
 		return 0;
 	}
 	
@@ -1421,7 +1440,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 			}
 		}
 	}
-	Message(str(format(NewConnection) %hisNewNumber %wantedNumber));
+	Message(str(format(NewConnection) %name %hisNewNumber %version));
 
 	link->Flush(true);
 	return hisNewNumber;

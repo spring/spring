@@ -448,17 +448,11 @@ bool CGameSetup::Init(const char* buf, int size)
 	LoadAllyTeams(file);
 
 	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
-	if (!myPlayerName.empty())
+	if (myPlayerName.empty())
 	{
-		for (int i = 0; i != playerStartingData.size(); ++i)
-		{
-			if (myPlayerName == playerStartingData[i].name)
-			{
-				myPlayerNum = i;
-				break;
-			}
-		}
+		myPlayerName = playerStartingData[myPlayerNum].name;
 	}
+
 	// Relocate indices (for gap removing)
 	RemapPlayers();
 	RemapTeams();
