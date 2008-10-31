@@ -237,9 +237,7 @@ CUnit::CUnit ()
 	directControl = NULL;
 #endif
 	activated = false;
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
-	lastUnitUpdate=gu->lastFrameStart;
-#endif
+	GML_GET_TICKS(lastUnitUpdate);
 }
 
 CUnit::~CUnit()
@@ -533,9 +531,7 @@ void CUnit::Update()
 	const bool oldInWater = inWater;
 
 	moveType->Update();
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
-	lastUnitUpdate=gu->lastFrameStart;
-#endif
+	GML_GET_TICKS(lastUnitUpdate);
 
 	inAir   = ((pos.y + height) >= 0.0f);
 	inWater =  (pos.y           <= 0.0f);
@@ -2478,8 +2474,8 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(inAir),
 	CR_MEMBER(inWater),
-	CR_MEMBER(drawPos),
-	CR_RESERVED(4),
+//	CR_MEMBER(drawPos),
+//	CR_RESERVED(4),
 
 	CR_RESERVED(126),
 

@@ -26,8 +26,8 @@ CR_REG_METADATA(CTracerProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed,const float range,CUnit* owner)
-: CProjectile(pos,speed,owner, false)
+CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed,const float range,CUnit* owner GML_PARG_C)
+: CProjectile(pos,speed,owner, false GML_PARG_P)
 {
 	SetRadius(1);
 	speedf=this->speed.Length();
@@ -44,13 +44,13 @@ CTracerProjectile::CTracerProjectile()
 	checkCol=false;
 }
 
-void CTracerProjectile::Init(const float3& pos, CUnit* owner)
+void CTracerProjectile::Init(const float3& pos, CUnit* owner GML_PARG_C)
 {
 	speedf=this->speed.Length();
 	if (speedf==0.0f) speed=float3(1.0f,0.0f,0.0f);
 	dir=this->speed/speedf;
 
-	CProjectile::Init (pos, owner);
+	CProjectile::Init (pos, owner GML_PARG_P);
 }
 
 CTracerProjectile::~CTracerProjectile()

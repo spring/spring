@@ -24,8 +24,8 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner) :
-	CProjectile(pos, speed, owner, false)
+CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner GML_PARG_C) :
+	CProjectile(pos, speed, owner, false GML_PARG_P)
 {
 	deleteMe=false;
 	checkCol=false;

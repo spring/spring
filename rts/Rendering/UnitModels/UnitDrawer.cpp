@@ -393,9 +393,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawFar.clear();
 	drawStat.clear();
 
-	drawCloaked.clear();
-	drawCloakedS3O.clear();
-
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
@@ -417,6 +414,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #endif
 
 	GML_RECMUTEX_LOCK(unit); // Draw
+
+	drawCloaked.clear();
+	drawCloakedS3O.clear();
 
 #ifdef USE_GML
 	if(multiThreadDrawUnit) {
@@ -927,6 +927,10 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 	// cloaked units and living ghosted buildings (stored in same vector)
 	for (GML_VECTOR<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
 		CUnit* unit = *ui;
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+		if(unit==NULL)
+			continue;
+#endif
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (is_s3o) {

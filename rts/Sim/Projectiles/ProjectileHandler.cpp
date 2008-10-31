@@ -406,6 +406,8 @@ void CProjectileHandler::Update()
 
 	SCOPED_TIMER("Projectile handler");
 
+	GML_UPDATE_TICKS();
+
 	Projectile_List::iterator psi = ps.begin();
 	while (psi != ps.end()) {
 		CProjectile* p = *psi;
@@ -429,9 +431,7 @@ void CProjectileHandler::Update()
 			delete p;
 		} else {
 			p->Update();
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
-			p->lastProjUpdate=gu->lastFrameStart;
-#endif
+			GML_GET_TICKS(p->lastProjUpdate);
 			++psi;
 		}
 	}
@@ -719,7 +719,7 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
-	GML_RECMUTEX_LOCK(proj); // AddProjectile
+//	GML_RECMUTEX_LOCK(proj); // AddProjectile
 
 	ps.push_back(p);
 
@@ -843,7 +843,7 @@ void CProjectileHandler::CheckUnitCol()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
-	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
+//	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
 	groundFlashes.push_back(flash);
 }
 

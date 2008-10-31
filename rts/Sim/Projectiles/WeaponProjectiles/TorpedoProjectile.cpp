@@ -36,8 +36,8 @@ CR_REG_METADATA(CTorpedoProjectile,(
 
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
-		const WeaponDef *weaponDef):
-	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true,  ttl),
+		const WeaponDef *weaponDef GML_PARG_C):
+	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
 	maxSpeed(maxSpeed),
 	tracking(tracking),
 	target(target),

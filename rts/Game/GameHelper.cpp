@@ -451,6 +451,8 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
                                   std::map<float,CUnit*> &targets)
 {
+	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
+
 	CUnit* attacker = weapon->owner;
 	float radius = weapon->range;
 	float3 pos = attacker->pos;
@@ -541,10 +543,12 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetClosestUnit
+
 	float closeDist = (radius * radius);
 	CUnit* closeUnit = NULL;
 
-	GML_RECMUTEX_LOCK(quad); //GetClosestUnit
+//	GML_RECMUTEX_LOCK(quad); //GetClosestUnit
 
 	vector<int> quads = qf->GetQuads(pos, radius);
 
@@ -580,6 +584,8 @@ CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 
 CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyUnit
+
 	float closeDist = searchRadius * searchRadius;
 	CUnit* closeUnit = 0;
 	vector<int> quads = qf->GetQuads(pos, searchRadius);
@@ -611,6 +617,8 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, i
 CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,
                                                  int searchAllyteam, bool sphere, bool canBeBlind)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyUnitNoLosTest
+
 	const int tempNum = gs->tempNum++;
 	CUnit* closeUnit = NULL;
 	float losFactor = (SQUARE_SIZE * (1 << modInfo.losMipLevel));
@@ -676,6 +684,8 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 
 CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int searchAllyteam)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetClosestFriendlyUnit
+
 	float closeDist=radius*radius;
 	CUnit* closeUnit=0;
 	std::vector<int> quads=qf->GetQuads(pos,radius);
@@ -701,6 +711,8 @@ CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int s
 
 CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int searchAllyteam)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyAircraft
+
 	float closeDist=radius*radius;
 	CUnit* closeUnit=0;
 	vector<int> quads=qf->GetQuads(pos,radius);
@@ -726,6 +738,8 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 
 void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyteam, vector<int> &found)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetEnemyUnits
+
 	float sqRadius = radius * radius;
 	std::vector<int> quads = qf->GetQuads(pos, radius);
 

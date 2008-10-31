@@ -13,9 +13,9 @@ public:
 
 	void Update();
 	void Draw();
-	void Init(const float3& pos, CUnit *owner);
+	void Init(const float3& pos, CUnit *owner GML_PARG_H);
 	CSmokeProjectile2();
-	CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color=0.7f);
+	CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color=0.7f GML_PARG_H);
 	virtual ~CSmokeProjectile2();
 
 	float color;

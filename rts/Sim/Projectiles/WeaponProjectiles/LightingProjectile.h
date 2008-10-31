@@ -11,7 +11,7 @@ class CLightingProjectile :
 	CR_DECLARE(CLightingProjectile);
 public:
 	CLightingProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color,
-		const WeaponDef *weaponDef, int ttl = 10, CWeapon* weap = 0);
+		const WeaponDef *weaponDef, int ttl = 10, CWeapon* weap = 0 GML_PARG_H);
 	~CLightingProjectile(void);
 
 	float3 color;

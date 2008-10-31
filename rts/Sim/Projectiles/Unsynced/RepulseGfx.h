@@ -10,7 +10,7 @@ class CRepulseGfx :
 {
 	CR_DECLARE(CRepulseGfx);
 public:
-	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color);
+	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color GML_PARG_H);
 	~CRepulseGfx(void);
 
 	void DependentDied(CObject* o);

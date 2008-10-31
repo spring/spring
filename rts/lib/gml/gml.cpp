@@ -63,6 +63,9 @@ int gmlThreadCountOverride=configHandler.GetInt("HardwareThreadCount", 0); // nu
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
 int gmlItemsConsumed=0;
 
+int gmlNextTickUpdate=0;
+unsigned gmlCurrentTicks;
+
 // gmlCPUCount returns the number of CPU cores
 // it was taken from the latest version of boost
 // boost::thread::hardware_concurrency()
@@ -212,6 +215,7 @@ boost::recursive_mutex projmutex;
 boost::recursive_mutex grassmutex;
 boost::recursive_mutex guimutex;
 boost::recursive_mutex filemutex;
+boost::recursive_mutex &qnummutex=quadmutex;
 #endif
 
 // GMLqueue implementation
