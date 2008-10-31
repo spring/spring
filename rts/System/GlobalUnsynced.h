@@ -33,7 +33,7 @@ public:
 	float  usRandFloat();  //!< Unsynced random float
 	float3 usRandVector(); //!< Unsynced random vector
 
-	void LoadFromSetup(const CGameSetup*);
+	void SetMyPlayer(const int mynumber);
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?

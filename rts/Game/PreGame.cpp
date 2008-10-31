@@ -62,8 +62,8 @@ std::string CPreGame::userMap;
 std::string CPreGame::userMod;
 
 
-CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
-: server(server),
+CPreGame::CPreGame(const LocalSetup* setup, const string& demo, const std::string& save)
+: settings(setup),
   state(UNKNOWN),
   hasDemo(!demo.empty()),
   hasSave(!save.empty()),
@@ -71,6 +71,11 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
   savefile(NULL)
 {
 	demoFile = gameSetup? gameSetup->demoName : demo;
+
+	if (!gameSetup && demoFile.empty()) {
+		gs->noHelperAIs = !!configHandler.GetInt("NoHelperAIs", 0);
+		LoadLua();
+	}
 
 	infoConsole = SAFE_NEW CInfoConsole;
 
@@ -89,7 +94,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 		}
 	}
 
-	if(server){
+	if(settings->isHost){
 		net->InitLocalClient();
 		if (!demoFile.empty())
 		{
@@ -111,7 +116,7 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 	} else {
 		if(gameSetup){
 			PrintLoadMsg("Connecting to server");
-			net->InitClient(gameSetup->hostip.c_str(),gameSetup->hostport,gameSetup->sourceport, gameSetup ? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
+			net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 			state = WAIT_CONNECTING;
 		} else {
 			if (hasDemo) {
@@ -124,33 +129,13 @@ CPreGame::CPreGame(bool server, const string& demo, const std::string& save)
 				}
 				else { // we dont read a GameSetup from demofile (this code was copied from CDemoReader)
 					logOutput.Print("Demo file does not contain a setupscript");
-					// Didn't get a CGameSetup script
-					// FIXME: duplicated in Main.cpp
-					const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
-					const string luaRulesStr = configHandler.GetString("LuaRules", "1");
-					gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-					gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-					if (gs->useLuaGaia) {
-						gs->gaiaTeamID = gs->activeTeams;
-						gs->gaiaAllyTeamID = gs->activeAllyTeams;
-						gs->activeTeams++;
-						gs->activeAllyTeams++;
-						CTeam* team = gs->Team(gs->gaiaTeamID);
-						team->color[0] = 255;
-						team->color[1] = 255;
-						team->color[2] = 255;
-						team->color[3] = 255;
-						team->gaia = true;
-						gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
-					}
+					LoadLua();
 				}
 			}
 			else {
-				userInput=configHandler.GetString("address","");
-				writingPos = userInput.length();
-				userPrompt = "Enter server address: ";
-				state = WAIT_ON_ADDRESS;
-				userWriting = true;
+				PrintLoadMsg("Connecting to server");
+				net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
+				state = WAIT_CONNECTING;
 			}
 		}
 	}
@@ -180,47 +165,6 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 		return 0;
 	}
 
-	if (userWriting) {
-		keys[k] = true;
-		if (k == SDLK_v && keys[SDLK_LCTRL]){
-			CClipboard clipboard;
-			const string text = clipboard.GetContents();
-			userInput.insert(writingPos, text);
-			writingPos += text.length();
-			return 0;
-		}
-		if(k == SDLK_BACKSPACE){
-			if (!userInput.empty() && (writingPos > 0)) {
-				userInput.erase(writingPos - 1, 1);
-				writingPos--;
-			}
-			return 0;
-		}
-		if (k == SDLK_DELETE) {
-			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, 1);
-			}
-			return 0;
-		}
-		else if (k == SDLK_LEFT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
-		}
-		else if (k == SDLK_RIGHT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
-		}
-		else if (k == SDLK_HOME) {
-			writingPos = 0;
-		}
-		else if (k == SDLK_END) {
-			writingPos = (int)userInput.length();
-		}
-		if (k == SDLK_RETURN){
-			userWriting = false;
-			return 0;
-		}
-		return 0;
-	}
-
 	return 0;
 }
 
@@ -247,7 +191,6 @@ bool CPreGame::Draw()
 					PrintLoadMsg("Connecting to server  ", false);
 				break;
 			case UNKNOWN:
-			case WAIT_ON_ADDRESS:
 			case WAIT_ON_USERINPUT:
 			case ALL_READY:
 			default:
@@ -257,32 +200,6 @@ bool CPreGame::Draw()
 	}
 
 	infoConsole->Draw();
-
-	if (userWriting) {
-		const std::string tempstring = userPrompt + userInput;
-
-		const float xStart = 0.10f;
-		const float yStart = 0.75f;
-
-		const float fontScale = 1.0f;
-
-		// draw the caret
-		const int caretPos = userPrompt.length() + writingPos;
-		const string caretStr = tempstring.substr(0, caretPos);
-		const float caretWidth = font->CalcTextWidth(caretStr.c_str());
-		char c = userInput[writingPos];
-		if (c == 0) { c = ' '; }
-		const float cw = fontScale * font->CalcCharWidth(c);
-		const float csx = xStart + (fontScale * caretWidth);
-		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
-		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, yStart, csx + cw, yStart + fontScale * font->GetHeight());
-		glEnable(GL_TEXTURE_2D);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		font->glPrintAt(xStart, yStart, fontScale, tempstring.c_str());
-	}
 
 	if (showList) {
 		showList->Draw();
@@ -301,16 +218,6 @@ bool CPreGame::Update()
 		case UNKNOWN:
 			logOutput.Print("Internal error in CPreGame");
 			return false;
-
-		case WAIT_ON_ADDRESS: {
-			if (userWriting)
-				break;
-
-			configHandler.SetString("address",userInput);
-			net->InitClient(userInput.c_str(),springDefaultPort,0, gameSetup ? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
-			state = WAIT_CONNECTING;
-			// fall trough
-		}
 
 		case WAIT_ON_USERINPUT: {
 			break;
@@ -357,7 +264,7 @@ bool CPreGame::Update()
 			break;
 	}
 
-	if(state > WAIT_ON_ADDRESS){
+	if(state >= WAIT_CONNECTING){
 		net->Update();
 		UpdateClientNet();
 	}
@@ -433,12 +340,12 @@ void CPreGame::StartServer(std::string map, std::string mod, std::string script)
 	}
 	
 	good_fpu_control_registers("before CGameServer creation");
-	int myPort = gameSetup? gameSetup->hostport : springDefaultPort;
+	int myPort = settings->hostport;
 	gameServer = new CGameServer(myPort, false, startupData, gameSetup, demoFile);
-	if (gameSetup && gameSetup->autohostport > 0) {
-		gameServer->AddAutohostInterface(gameSetup->autohostport);
+	if (settings->autohostport > 0) {
+		gameServer->AddAutohostInterface(settings->autohostport);
 	}
-	gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerName : configHandler.GetString("name", ""), std::string(VERSION_STRING_DETAILED));
+	gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -463,7 +370,7 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_SETPLAYERNUM: {
-				gu->myPlayerNum = packet->data[1];
+				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("Became player %i", gu->myPlayerNum);
 			} break;
 			case NETMSG_GAMEDATA: {
@@ -490,11 +397,11 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	{
 		//HACK: make gs read the setup if we just read it out of the demofile
 		gs->LoadFromSetup(gameSetup);
-		gu->LoadFromSetup(gameSetup);
+		gu->SetMyPlayer(0); //HACK load data for player 0
 	}
 
 	if (!hasSetup)
-		gu->myPlayerNum = scanner.GetFileHeader().maxPlayerNum + 1;
+		gu->SetMyPlayer(scanner.GetFileHeader().maxPlayerNum + 1); //HACK pt. #2: set real player num
 
 	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(INT_MAX)));
 	while ( buf )
@@ -503,8 +410,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(hasSetup ? gameSetup->hostport : springDefaultPort, false, data, gameSetup, demoName);
-			gameServer->AddLocalClient(gameSetup? gameSetup->myPlayerName : gs->players[gu->myPlayerNum]->name, std::string(VERSION_STRING_DETAILED));
+			gameServer = new CGameServer(settings->hostport, false, data, gameSetup, demoName);
+			gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 			good_fpu_control_registers("after CGameServer creation");
 			break;
 		}
@@ -664,6 +571,26 @@ void CPreGame::LoadMod(const std::string& modName)
 	}
 }
 
+void CPreGame::LoadLua()
+{
+	const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
+	const string luaRulesStr = configHandler.GetString("LuaRules", "1");
+	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
+	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
+	if (gs->useLuaGaia) {
+		gs->gaiaTeamID = gs->activeTeams;
+		gs->gaiaAllyTeamID = gs->activeAllyTeams;
+		gs->activeTeams++;
+		gs->activeAllyTeams++;
+		CTeam* team = gs->Team(gs->gaiaTeamID);
+		team->color[0] = 255;
+		team->color[1] = 255;
+		team->color[2] = 255;
+		team->color[3] = 255;
+		team->gaia = true;
+		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
+	}
+}
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {

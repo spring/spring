@@ -974,7 +974,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		// Lobby-protocol doesn't support creating games without players inside
 		// so in dedicated mode there will always be the host-player in the script
 		// which doesn't exist and will never join, so skip it in this case
-		if (setup && (unsigned)setup->myPlayerNum == start)
+		if (setup && 0 == start)
 			start++;
 #endif
 		for (int a = start; a < setup->numPlayers; a++) {

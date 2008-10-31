@@ -26,7 +26,7 @@ protected:
 	bool Initialize (); 	//!< Initialize app
 	void CheckCmdLineFile (int argc,char *argv[]); 	//!< Check command line for files
 	void ParseCmdLine(); 				//!< Parse command line
-	void CreateGameSetup (); 			//!< Creates GameSetup
+	void Startup (); 		//!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow (const char* title); 		//!< Initializes window
 	void InitOpenGL (); 				//!< Initializes OpenGL
 	void LoadFonts();
