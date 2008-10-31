@@ -13,9 +13,9 @@ public:
 
 	void Draw();
 	void Update();
-	void Init(const float3& pos, CUnit *owner);
+	void Init(const float3& pos, CUnit *owner GML_PARG_H);
 	CTracerProjectile();
-	CTracerProjectile(const float3 pos,const float3 speed,const float range,CUnit* owner);
+	CTracerProjectile(const float3 pos,const float3 speed,const float range,CUnit* owner GML_PARG_H);
 	virtual ~CTracerProjectile();
 	float speedf;
 	float length;

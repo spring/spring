@@ -140,9 +140,9 @@ void CSimpleParticleSystem::Update()
 
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
+void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
 {
-	CProjectile::Init(explosionPos, owner);
+	CProjectile::Init(explosionPos, owner GML_PARG_P);
 
 	particles = new Particle[numParticles];
 

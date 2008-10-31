@@ -9,7 +9,7 @@ class CFlareProjectile :
 {
 public:
 	CR_DECLARE(CFlareProjectile);
-	CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame);
+	CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame GML_PARG_H);
 	~CFlareProjectile();
 	void Update(void);
 	void Draw(void);

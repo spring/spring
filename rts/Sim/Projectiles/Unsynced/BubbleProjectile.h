@@ -8,7 +8,7 @@ class CBubbleProjectile :
 {
 	CR_DECLARE(CBubbleProjectile);
 public:
-	CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float alpha);
+	CBubbleProjectile(float3 pos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float alpha GML_PARG_H);
 	virtual ~CBubbleProjectile();
 	void Update();
 	void Draw();

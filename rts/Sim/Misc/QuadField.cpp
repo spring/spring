@@ -154,6 +154,8 @@ void CQuadField::MovedUnit(CUnit *unit)
 
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetUnits
+
 	std::vector<CUnit*> units;
 
 	int* endQuad=tempQuads;
@@ -176,6 +178,8 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
+
 	std::vector<CUnit*> units;
 
 	int* endQuad=tempQuads;
@@ -199,6 +203,8 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
+
 	std::vector<CUnit*> units;
 	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
@@ -410,6 +416,8 @@ void CQuadField::RemoveFeature(CFeature* feature)
 
 vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
+
 	vector<CFeature*> features;
 /*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
 		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
@@ -438,6 +446,8 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
                                                const float3& maxs)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
+
 	std::vector<CFeature*> features;
 	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
@@ -464,6 +474,8 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins,
 
 std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float radius)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
+
 	std::vector<CSolidObject*> solids;
 	std::vector<int> quads = GetQuads(pos,radius);
 	int tempNum = gs->tempNum++;
@@ -522,6 +534,8 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& p
 // optimization specifically for projectile collisions
 void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
 {
+	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesExact
+
 	int tempNum=gs->tempNum++;
 
 	int* endQuad = tempQuads;

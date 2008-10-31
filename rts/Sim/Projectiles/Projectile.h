@@ -33,14 +33,14 @@ public:
 
 	virtual void Draw();
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon = false);
+	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon = false GML_PARG_H);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual ~CProjectile();
 	virtual void Update();
 	void DependentDied(CObject* o);
-	virtual void Init(const float3& pos, CUnit* owner);
+	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H);
 
 	bool synced;
 	bool weapon;

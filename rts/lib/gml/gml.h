@@ -176,14 +176,45 @@ extern boost::recursive_mutex projmutex;
 extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex guimutex;
 extern boost::recursive_mutex filemutex;
+extern boost::recursive_mutex &qnummutex;
 
 #define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
+
+extern int gmlNextTickUpdate;
+extern unsigned gmlCurrentTicks;
+
+#include <SDL_timer.h>
+
+inline unsigned gmlUpdateTicks() {
+	gmlNextTickUpdate = 100;
+	return gmlCurrentTicks=SDL_GetTicks();
+}
+
+inline unsigned gmlGetTicks() {
+	if(--gmlNextTickUpdate > 0)
+		return gmlCurrentTicks;
+	return gmlUpdateTicks();
+}
+
+#define GML_GET_TICKS(var) var=gmlGetTicks()
+#define GML_UPDATE_TICKS() gmlUpdateTicks()
+
+#define GML_PARG_H , boost::recursive_mutex::scoped_lock& projlock = boost::recursive_mutex::scoped_lock(projmutex)
+#define GML_PARG_C , boost::recursive_mutex::scoped_lock& projlock
+#define GML_PARG_P , projlock
 
 #else
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
+
+#define GML_GET_TICKS(var)
+#define GML_UPDATE_TICKS()
+
+#define GML_PARG_H
+#define GML_PARG_C
+#define GML_PARG_P
 
 #endif
 
@@ -194,6 +225,13 @@ extern boost::recursive_mutex filemutex;
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
+
+#define GML_GET_TICKS(var)
+#define GML_UPDATE_TICKS()
+
+#define GML_PARG_H
+#define GML_PARG_C
+#define GML_PARG_P
 
 #endif // USE_GML
 

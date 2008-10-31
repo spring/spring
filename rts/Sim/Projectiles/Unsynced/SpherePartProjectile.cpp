@@ -29,8 +29,8 @@ CR_REG_METADATA(CSpherePartProjectile,(
 	CR_RESERVED(16)
 	));
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color)
-: CProjectile(centerPos,ZeroVector,owner, false),
+CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_C)
+: CProjectile(centerPos,ZeroVector,owner, false GML_PARG_P),
 	centerPos(centerPos),
 	expansionSpeed(expansionSpeed),
 	sphereSize(expansionSpeed),
@@ -129,9 +129,9 @@ CR_REG_METADATA(CSpherePartSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-void CSpherePartSpawner::Init(const float3& pos, CUnit *owner)
+void CSpherePartSpawner::Init(const float3& pos, CUnit *owner GML_PARG_C)
 {
-	CProjectile::Init(pos, owner);
+	CProjectile::Init(pos, owner GML_PARG_P);
 	deleteMe = true;
 	CSpherePartProjectile::CreateSphere(pos, alpha, ttl, expansionSpeed, owner, color);
 }

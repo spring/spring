@@ -38,6 +38,7 @@
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 
 using std::min;
 using std::max;
@@ -103,7 +104,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(metalMakerEfficiency),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
-	CR_MEMBER(toBeRemoved),
+//	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(toBeAdded),
 	CR_MEMBER(renderUnits),
 	CR_MEMBER(builderCAIs),
@@ -273,6 +274,17 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			break;
 		}
 	}
+
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloaked[i]==delUnit)
+			unitDrawer->drawCloaked[i]=NULL;
+
+	for(int i=0, dcs=unitDrawer->drawCloakedS3O.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedS3O[i]==delUnit)
+			unitDrawer->drawCloakedS3O[i]=NULL;
+#endif
+
 	toBeAdded.erase(delUnit);
 }
 
@@ -294,6 +306,8 @@ void CUnitHandler::Update()
 			DeleteUnitNow(delUnit);
 		}
 	}
+
+	GML_UPDATE_TICKS();
 
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {

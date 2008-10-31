@@ -13,7 +13,7 @@ public:
 	~CBitmapMuzzleFlame(void);
 	void Draw(void);
 	void Update(void);
-	virtual void Init(const float3 &pos, CUnit *owner);
+	virtual void Init(const float3 &pos, CUnit *owner GML_PARG_H);
 
 	AtlasedTexture *sideTexture;
 	AtlasedTexture *frontTexture;

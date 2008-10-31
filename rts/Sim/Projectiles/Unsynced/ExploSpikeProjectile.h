@@ -9,7 +9,7 @@ class CExploSpikeProjectile :
 	CR_DECLARE(CExploSpikeProjectile);
 public:
 	CExploSpikeProjectile();
-	CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner);
+	CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner GML_PARG_H);
 	~CExploSpikeProjectile(void);
 	void Update(void);
 	void Draw(void);
@@ -22,7 +22,7 @@ public:
 	float3 dir;
 	float3 color;
 
-	virtual void Init(const float3& pos, CUnit *owner);
+	virtual void Init(const float3& pos, CUnit *owner GML_PARG_H);
 };
 
 #endif

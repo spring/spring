@@ -15,7 +15,7 @@ public:
 	virtual void Draw();
 	virtual void Update();
 	CHeatCloudProjectile();
-	CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, CUnit* owner);  //projectile start at size 0 and ends at size size
+	CHeatCloudProjectile(const float3 pos,const float3 speed,const float temperature,const float size, CUnit* owner GML_PARG_H);  //projectile start at size 0 and ends at size size
 	virtual ~CHeatCloudProjectile();
 
 	float heat;

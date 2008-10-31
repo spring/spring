@@ -45,8 +45,8 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback,AtlasedTexture* texture)
-: CProjectile((pos1+pos2)*0.5f,ZeroVector,owner, false),
+CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback,AtlasedTexture* texture GML_PARG_C)
+: CProjectile((pos1+pos2)*0.5f,ZeroVector,owner, false GML_PARG_P),
 	pos1(pos1),
 	pos2(pos2),
 	creationTime(gs->frameNum),
