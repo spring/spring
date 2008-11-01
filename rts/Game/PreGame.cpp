@@ -256,6 +256,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 		}
 	}
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
+	setup->LoadStartPositions();
 
 	if (gameSetup) {
 		const_cast<CGameSetup*>(gameSetup)->LoadStartPositions(); // only host needs to do this, because
