@@ -66,7 +66,7 @@ void LocalSetup::Init(const std::string& setup)
 	}
 	
 	int tmp_isHost;
-	file.GetDef(myPlayerNum,  "-1", "GAME\\IsHost");
+	file.GetDef(tmp_isHost,  "-1", "GAME\\IsHost");
 	if (tmp_isHost == 1)
 		isHost = true;
 	else if (tmp_isHost == 0)
