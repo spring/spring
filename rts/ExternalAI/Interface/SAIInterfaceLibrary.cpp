@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if !defined BUILDING_AI
 #include "SAIInterfaceLibrary.h"
 
 #include <string.h>
@@ -131,5 +132,5 @@ bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
 	return empty;
 }
 
-#endif /* __cplusplus */
-
+#endif	// __cplusplus
+#endif	// !defined BUILDING_AI

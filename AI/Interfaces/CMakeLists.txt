@@ -18,7 +18,7 @@ if (EXISTS ${C_AIINTERFACE_SRC})
 		file(STRINGS "${C_AIINTERFACE_SRC}/VERSION" C_AIINTERFACE_VERS LIMIT_COUNT 1)
 	endif (EXISTS ${C_AIINTERFACE_SRC}/VERSION)
 	set(C_AIINTERFACE_TARGET "C-${C_AIINTERFACE_VERS}")
-	message("${C_AIINTERFACE_VERS}\t(C AI Interface Version)")
+	message(STATUS "${C_AIINTERFACE_VERS}\t(C AI Interface Version)")
 
 	aux_source_directory(${C_AIINTERFACE_SRC} cAIInterface)
 	list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/SharedLib)
@@ -57,12 +57,30 @@ if (JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC})
 		file(STRINGS "${Java_AIINTERFACE_SRC}/VERSION" Java_AIINTERFACE_VERS LIMIT_COUNT 1)
 	endif (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
 	set(Java_AIINTERFACE_TARGET "Java-${Java_AIINTERFACE_VERS}")
-	message("${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
+	message(STATUS "${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
 
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
 	install (FILES ${Java_AIINTERFACE_SRC}/InterfaceInfo.lua DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS})
 	install (TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${AI_INTERFACES_LIBS})
+	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
+	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
+	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES COMPILE_FLAGS "-DSTREFLOP_X87")
+
+	# Compile the Java sources of this interface and the test AI
+	IF (UNIX)
+		execute_process(COMMAND compile.sh WORKING_DIRECTORY ${Java_AIINTERFACE_SRC}/java)
+	ELSEIF (UNIX)
+		execute_process(COMMAND compile.bat WORKING_DIRECTORY ${Java_AIINTERFACE_SRC}/java)
+	ENDIF(UNIX)
+
+	# Install the Java part of the interface
+	install (FILES ${Java_AIINTERFACE_SRC}/java/interface.jar DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS}/jlib)
+	install (FILES ${Java_AIINTERFACE_SRC}/jlib/*.jar DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS}/jlib)
+
+	# Install the Java test Skirmish AI
+	install (FILES ${Java_AIINTERFACE_SRC}/java/ai.jar DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/jlib)
+	install (FILES ${Java_AIINTERFACE_SRC}/AIInfo.lua DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI)
 endif (JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC})
 

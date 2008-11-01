@@ -614,25 +614,26 @@ int CAIAICallback::GetUnitGroup(int unitId) {
 }
 
 
+/*
 const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int groupId) {
 	int numCmds = sAICallback->Group_getNumSupportedCommands(teamId, groupId);
-int ids[numCmds];
-const char* names[numCmds];
-const char* toolTips[numCmds];
-bool showUniques[numCmds];
-bool disableds[numCmds];
-int numParams[numCmds];
-const char** params[numCmds];
-sAICallback->Group_SupportedCommands_getId(teamId, groupId, ids);
-sAICallback->Group_SupportedCommands_getName(teamId, groupId, names);
-sAICallback->Group_SupportedCommands_getToolTip(teamId, groupId, toolTips);
-sAICallback->Group_SupportedCommands_isShowUnique(teamId, groupId, showUniques);
-sAICallback->Group_SupportedCommands_isDisabled(teamId, groupId, disableds);
-sAICallback->Group_SupportedCommands_getNumParams(teamId, groupId, numParams);
-for (int c=0; c < numCmds; c++) {
-	params[c] = new const char*[numParams[c]];
-}
-sAICallback->Group_SupportedCommands_getParams(teamId, groupId, params);
+	int ids[numCmds];
+	const char* names[numCmds];
+	const char* toolTips[numCmds];
+	bool showUniques[numCmds];
+	bool disableds[numCmds];
+	int numParams[numCmds];
+	const char** params[numCmds];
+	sAICallback->Group_SupportedCommands_getId(teamId, groupId, ids);
+	sAICallback->Group_SupportedCommands_getName(teamId, groupId, names);
+	sAICallback->Group_SupportedCommands_getToolTip(teamId, groupId, toolTips);
+	sAICallback->Group_SupportedCommands_isShowUnique(teamId, groupId, showUniques);
+	sAICallback->Group_SupportedCommands_isDisabled(teamId, groupId, disableds);
+	sAICallback->Group_SupportedCommands_getNumParams(teamId, groupId, numParams);
+	for (int c=0; c < numCmds; c++) {
+		params[c] = new const char*[numParams[c]];
+	}
+	sAICallback->Group_SupportedCommands_getParams(teamId, groupId, params);
 	std::vector<CommandDescription>* cmdDescVec = new std::vector<CommandDescription>();
 	for (int c=0; c < numCmds; c++) {
 		CommandDescription commandDescription;
@@ -655,29 +656,30 @@ sAICallback->Group_SupportedCommands_getParams(teamId, groupId, params);
 	
 	return cmdDescVec;
 }
-
-
-const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId) {
-	int numCmds = sAICallback->Unit_getNumSupportedCommands(teamId, unitId);
-int* ids = new int[numCmds];
-const char* names[numCmds];
-const char* toolTips[numCmds];
-bool showUniques[numCmds];
-bool disableds[numCmds];
-int numParams[numCmds];
-const char** params[numCmds];
-sAICallback->Unit_SupportedCommands_getId(teamId, unitId, ids);
-sAICallback->Unit_SupportedCommands_getName(teamId, unitId, names);
-sAICallback->Unit_SupportedCommands_getToolTip(teamId, unitId, toolTips);
-sAICallback->Unit_SupportedCommands_isShowUnique(teamId, unitId, showUniques);
-sAICallback->Unit_SupportedCommands_isDisabled(teamId, unitId, disableds);
-sAICallback->Unit_SupportedCommands_getNumParams(teamId, unitId, numParams);
-for (int c=0; c < numCmds; c++) {
-	params[c] = new const char*[numParams[c]];
-}
-sAICallback->Unit_SupportedCommands_getParams(teamId, unitId, params);
+*/
+const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int groupId) {
+	
+	int numCmds = sAICallback->Group_getNumSupportedCommands(teamId, groupId);
+	
+	int ids[numCmds];
+	const char* names[numCmds];
+	const char* toolTips[numCmds];
+	bool showUniques[numCmds];
+	bool disableds[numCmds];
+	int numParams[numCmds];
+	
+	sAICallback->Group_SupportedCommands_getId(teamId, groupId, ids);
+	sAICallback->Group_SupportedCommands_getName(teamId, groupId, names);
+	sAICallback->Group_SupportedCommands_getToolTip(teamId, groupId, toolTips);
+	sAICallback->Group_SupportedCommands_isShowUnique(teamId, groupId, showUniques);
+	sAICallback->Group_SupportedCommands_isDisabled(teamId, groupId, disableds);
+	sAICallback->Group_SupportedCommands_getNumParams(teamId, groupId, numParams);
+	
 	std::vector<CommandDescription>* cmdDescVec = new std::vector<CommandDescription>();
 	for (int c=0; c < numCmds; c++) {
+		const char* params[numParams[c]];
+		sAICallback->Group_SupportedCommands_getParams(teamId, groupId, c, params);
+		
 		CommandDescription commandDescription;
 		commandDescription.id = ids[c];
 		commandDescription.name = names[c];
@@ -685,7 +687,52 @@ sAICallback->Unit_SupportedCommands_getParams(teamId, unitId, params);
 		commandDescription.showUnique = showUniques[c];
 		commandDescription.disabled = disableds[c];
 		for (int p=0; p < numParams[c]; p++) {
-			commandDescription.params.push_back(params[c][p]);
+			commandDescription.params.push_back(params[p]);
+		}
+		cmdDescVec->push_back(commandDescription);
+	}
+	
+	// to prevent memory wholes
+	if (groupPossibleCommands[groupId] != NULL) {
+		delete groupPossibleCommands[groupId];
+	}
+	groupPossibleCommands[groupId] = cmdDescVec;
+	
+	return cmdDescVec;
+}
+
+
+const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId) {
+	
+	int numCmds = sAICallback->Unit_getNumSupportedCommands(teamId, unitId);
+	
+	int* ids = new int[numCmds];
+	const char* names[numCmds];
+	const char* toolTips[numCmds];
+	bool showUniques[numCmds];
+	bool disableds[numCmds];
+	int numParams[numCmds];
+	
+	sAICallback->Unit_SupportedCommands_getId(teamId, unitId, ids);
+	sAICallback->Unit_SupportedCommands_getName(teamId, unitId, names);
+	sAICallback->Unit_SupportedCommands_getToolTip(teamId, unitId, toolTips);
+	sAICallback->Unit_SupportedCommands_isShowUnique(teamId, unitId, showUniques);
+	sAICallback->Unit_SupportedCommands_isDisabled(teamId, unitId, disableds);
+	sAICallback->Unit_SupportedCommands_getNumParams(teamId, unitId, numParams);
+
+	std::vector<CommandDescription>* cmdDescVec = new std::vector<CommandDescription>();
+	for (int c=0; c < numCmds; c++) {
+		const char* params[numParams[c]];
+		sAICallback->Unit_SupportedCommands_getParams(teamId, unitId, c, params);
+		
+		CommandDescription commandDescription;
+		commandDescription.id = ids[c];
+		commandDescription.name = names[c];
+		commandDescription.tooltip = toolTips[c];
+		commandDescription.showUnique = showUniques[c];
+		commandDescription.disabled = disableds[c];
+		for (int p=0; p < numParams[c]; p++) {
+			commandDescription.params.push_back(params[p]);
 		}
 		cmdDescVec->push_back(commandDescription);
 	}
@@ -700,32 +747,34 @@ sAICallback->Unit_SupportedCommands_getParams(teamId, unitId, params);
 }
 
 const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
+
 	int numCmds = sAICallback->Unit_getNumCurrentCommands(teamId, unitId);
-int ids[numCmds];
-unsigned char options[numCmds];
-unsigned int tags[numCmds];
-int timeOuts[numCmds];
-int numParams[numCmds];
-float* params[numCmds];
-sAICallback->Unit_getNumCurrentCommands(teamId, unitId);
-sAICallback->Unit_CurrentCommands_getIds(teamId, unitId, ids);
-sAICallback->Unit_CurrentCommands_getOptions(teamId, unitId, options);
-sAICallback->Unit_CurrentCommands_getTag(teamId, unitId, tags);
-sAICallback->Unit_CurrentCommands_getTimeOut(teamId, unitId, timeOuts);
-sAICallback->Unit_CurrentCommands_getNumParams(teamId, unitId, numParams);
-for (int c=0; c < numCmds; c++) {
-	params[c] = new float[numParams[c]];
-}	
-sAICallback->Unit_CurrentCommands_getParams(teamId, unitId, params);
+
+	int ids[numCmds];
+	unsigned char options[numCmds];
+	unsigned int tags[numCmds];
+	int timeOuts[numCmds];
+	int numParams[numCmds];
+
+	sAICallback->Unit_getNumCurrentCommands(teamId, unitId);
+	sAICallback->Unit_CurrentCommands_getIds(teamId, unitId, ids);
+	sAICallback->Unit_CurrentCommands_getOptions(teamId, unitId, options);
+	sAICallback->Unit_CurrentCommands_getTag(teamId, unitId, tags);
+	sAICallback->Unit_CurrentCommands_getTimeOut(teamId, unitId, timeOuts);
+	sAICallback->Unit_CurrentCommands_getNumParams(teamId, unitId, numParams);
+
 	CCommandQueue* cc = new CCommandQueue();
 	for (int c=0; c < numCmds; c++) {
+		float params[numParams[c]];
+		sAICallback->Unit_CurrentCommands_getParams(teamId, unitId, c, params);
+
 		Command command;
 		command.id = ids[c];
 		command.options = options[c];
 		command.tag = tags[c];
 		command.timeOut = timeOuts[c];
 		for (int p=0; p < numParams[c]; p++) {
-			command.params.push_back(params[c][p]);
+			command.params.push_back(params[p]);
 		}
 		cc->push_back(command);
 	}
@@ -1050,11 +1099,13 @@ unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->UnitDef_getSto
 }
 {
 	int size = sAICallback->UnitDef_getNumCustomParams(teamId, unitDefId);
-	const char* cMap[size][2];
-	sAICallback->UnitDef_getCustomParams(teamId, unitDefId, cMap);
+	const char* cKeys[size];
+	const char* cValues[size];
+	sAICallback->UnitDef_getCustomParamKeys(teamId, unitDefId, cKeys);
+	sAICallback->UnitDef_getCustomParamValues(teamId, unitDefId, cValues);
 	int i;
 	for (i=0; i < size; ++i) {
-		unitDef->customParams[cMap[i][0]] = cMap[i][1];
+		unitDef->customParams[cKeys[i]] = cValues[i];
 	}
 }
 if (sAICallback->UnitDef_hasMoveData(teamId, unitDefId)) {
@@ -1323,13 +1374,20 @@ float3 CAIAICallback::GetMousePos() {
 }
 
 int CAIAICallback::GetMapPoints(PointMarker* pm, int maxPoints) {
+	
 	SAIFloat3* positions = new SAIFloat3[maxPoints];
-	unsigned char** colors = new unsigned char*[maxPoints];
+//	unsigned char** colors = new unsigned char*[maxPoints];
+	SAIFloat3* colors = new SAIFloat3[maxPoints];
 	const char** labels = new const char*[maxPoints];
+	
 	int numPoints = sAICallback->Map_getPoints(teamId, positions, colors, labels, maxPoints);
 	for (int i=0; i < numPoints; ++i) {
 		pm[i].pos = float3(positions[i]);
-		pm[i].color = colors[i];
+		//pm[i].color = colors[i];
+		pm[i].color = (unsigned char*) calloc(3, sizeof(unsigned char));
+		pm[i].color[0] = (unsigned char) colors[i].x;
+		pm[i].color[1] = (unsigned char) colors[i].y;
+		pm[i].color[2] = (unsigned char) colors[i].z;
 		pm[i].label = labels[i];
 	}
 	delete [] positions;
@@ -1339,14 +1397,19 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int maxPoints) {
 }
 
 int CAIAICallback::GetMapLines(LineMarker* lm, int maxLines) {
+	
 	SAIFloat3* firstPositions = new SAIFloat3[maxLines];
 	SAIFloat3* secondPositions = new SAIFloat3[maxLines];
-	unsigned char** colors = new unsigned char*[maxLines];
+	SAIFloat3* colors = new SAIFloat3[maxLines];
+	
 	int numLines = sAICallback->Map_getLines(teamId, firstPositions, secondPositions, colors, maxLines);
 	for (int i=0; i < numLines; ++i) {
 		lm[i].pos = float3(firstPositions[i]);
 		lm[i].pos2 = float3(secondPositions[i]);
-		lm[i].color = colors[i];
+		lm[i].color = (unsigned char*) calloc(3, sizeof(unsigned char));
+		lm[i].color[0] = (unsigned char) colors[i].x;
+		lm[i].color[1] = (unsigned char) colors[i].y;
+		lm[i].color[2] = (unsigned char) colors[i].z;
 	}
 	delete [] firstPositions;
 	delete [] secondPositions;
@@ -1442,11 +1505,13 @@ featureDef->ysize = sAICallback->FeatureDef_getYsize(teamId, featureDefId);
 {
 	int size = sAICallback->FeatureDef_getNumCustomParams(teamId, featureDefId);
 	featureDef->customParams = std::map<std::string,std::string>();
-	const char* cMap[size][2];
-	sAICallback->FeatureDef_getCustomParams(teamId, featureDefId, cMap);
+	const char* cKeys[size];
+	const char* cValues[size];
+	sAICallback->FeatureDef_getCustomParamKeys(teamId, featureDefId, cKeys);
+	sAICallback->FeatureDef_getCustomParamValues(teamId, featureDefId, cValues);
 	int i;
 	for (i=0; i < size; ++i) {
-		featureDef->customParams[cMap[i][0]] = cMap[i][1];
+		featureDef->customParams[cKeys[i]] = cValues[i];
 	}
 }
 	if (featureDefs[featureDefId] != NULL) {
@@ -1684,14 +1749,16 @@ weaponDef->dynDamageInverted = sAICallback->WeaponDef_isDynDamageInverted(teamId
 ////		free(entry);
 //	}
 //	const char*** cMap = (const char***) malloc(size*2*sizeof(char*));
-	const char* cMap[size][2];
-	sAICallback->WeaponDef_getCustomParams(teamId, weaponDefId, cMap);
+	const char* cKeys[size];
+	const char* cValues[size];
+	sAICallback->WeaponDef_getCustomParamKeys(teamId, weaponDefId, cKeys);
+	sAICallback->WeaponDef_getCustomParamValues(teamId, weaponDefId, cValues);
 //	logT("GetWeaponDefById 8");
 //	logI("GetWeaponDefById 8 size: %d", size);
 	int i;
 	for (i=0; i < size; ++i) {
 //	logI("GetWeaponDefById 8 i: %d", i);
-		weaponDef->customParams[cMap[i][0]] = cMap[i][1];
+		weaponDef->customParams[cKeys[i]] = cValues[i];
 	}
 //	free(cMap);
 }

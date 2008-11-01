@@ -230,8 +230,7 @@ struct SCallLuaRulesCommand {
 	const char* ret_outData;
 };
 
-struct SSendStartPosCommand ///< result of HandleCommand is 1 - ok supported
-{
+struct SSendStartPosCommand {///< result of HandleCommand is 1 - ok supported
 	bool ready;
 	struct SAIFloat3 pos;
 };
@@ -563,7 +562,7 @@ struct SLoadUnitsUnitCommand {
 	int unitId;
 	int groupId;
 	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
-	int timeOut; // command execution-time in ?seconds?
+	int timeOut; // command execution-time in ?milli-seconds?
 
 	int* toLoadUnitIds;
 	int numToLoadUnits;
@@ -789,7 +788,7 @@ struct Command;
 /**
  * @brief Allocates memory for a C Command struct
  */
-void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int sCommandId[0]);
+void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId);
 /**
  * @brief Frees memory of a C Command struct
  */

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -38,6 +38,7 @@ extern "C" {
 #define GROUP_AI_PROPERTY_INTERFACE_SHORT_NAME "interfaceShortName" // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
 #define GROUP_AI_PROPERTY_INTERFACE_VERSION "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
+#if !defined BUILDING_AI
 /**
  * @brief struct Group Artificial Intelligence Specifier
  */
@@ -48,6 +49,21 @@ struct SGAISpecifier {
 
 struct SGAISpecifier copySGAISpecifier(const struct SGAISpecifier* const orig);
 void deleteSGAISpecifier(const struct SGAISpecifier* const spec);
+
+#if defined __cplusplus
+struct SGAISpecifier_Comparator {
+	/**
+	 * The key comparison function, a Strict Weak Ordering;
+	 * it returns true if its first argument is less
+	 * than its second argument, and false otherwise.
+	 * This is also defined as map::key_compare.
+	 */
+	bool operator()(const struct SGAISpecifier& a,
+			const struct SGAISpecifier& b) const;
+	static bool IsEmpty(const struct SGAISpecifier& spec);
+};
+#endif	// defined __cplusplus
+#endif	// !defined BUILDING_AI
 
 /**
  * This is the interface between the engine and an implementation of a Group AI.
@@ -184,19 +200,5 @@ struct SGAILibrary {
 #ifdef	__cplusplus
 }	// extern "C"
 #endif
-
-#ifdef	__cplusplus
-struct SGAISpecifier_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SGAISpecifier& a,
-			const struct SGAISpecifier& b) const;
-	static bool IsEmpty(const struct SGAISpecifier& spec);
-};
-#endif	// __cplusplus
 
 #endif	// _SGAILIBRARY_H

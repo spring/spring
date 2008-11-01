@@ -112,7 +112,7 @@ bool (CALLING_CONV *File_getContent)(int teamId, const char* filename, void* buf
 
 
 // BEGINN OBJECT UnitDef
-int (CALLING_CONV *UnitDef_STATIC_getIds)(int teamId, int* unitDefIds);
+int (CALLING_CONV *UnitDef_STATIC_getIds)(int teamId, int unitDefIds[]);
 int (CALLING_CONV *UnitDef_STATIC_getNumIds)(int teamId);
 int (CALLING_CONV *UnitDef_STATIC_getIdByName)(int teamId, const char* unitName);
 
@@ -254,7 +254,7 @@ float (CALLING_CONV *UnitDef_getMaxAileron)(int teamId, int unitDefId);
 float (CALLING_CONV *UnitDef_getMaxElevator)(int teamId, int unitDefId);
 float (CALLING_CONV *UnitDef_getMaxRudder)(int teamId, int unitDefId);
 ///* returned size is 4 */
-//const unsigned char** (CALLING_CONV *UnitDef_getYardMaps)(int teamId, int unitDefId);
+//const unsigned char*[] (CALLING_CONV *UnitDef_getYardMaps)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getXSize)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getYSize)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getBuildAngle)(int teamId, int unitDefId);
@@ -326,9 +326,11 @@ bool (CALLING_CONV *UnitDef_isDontLand)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getShieldWeaponDefId)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getStockpileWeaponDefId)(int teamId, int unitDefId);
 int (CALLING_CONV *UnitDef_getNumBuildOptions)(int teamId, int unitDefId);
-int (CALLING_CONV *UnitDef_getBuildOptions)(int teamId, int unitDefId, int* unitDefIds);
+int (CALLING_CONV *UnitDef_getBuildOptions)(int teamId, int unitDefId, int unitDefIds[]);
 int (CALLING_CONV *UnitDef_getNumCustomParams)(int teamId, int unitDefId);
-int (CALLING_CONV *UnitDef_getCustomParams)(int teamId, int unitDefId, const char* map[][2]);
+//int (CALLING_CONV *UnitDef_getCustomParams)(int teamId, int unitDefId, const char* map[][2]);
+int (CALLING_CONV *UnitDef_getCustomParamKeys)(int teamId, int unitDefId, const char* keys[]);
+int (CALLING_CONV *UnitDef_getCustomParamValues)(int teamId, int unitDefId, const char* values[]);
 bool (CALLING_CONV *UnitDef_hasMoveData)(int teamId, int unitDefId);
 /* enum MoveType { Ground_Move, Hover_Move, Ship_Move }; */
 int (CALLING_CONV *UnitDef_MoveData_getMoveType)(int teamId, int unitDefId);
@@ -360,14 +362,14 @@ unsigned int (CALLING_CONV *UnitDef_UnitDefWeapon_getOnlyTargetCat)(int teamId, 
 
 
 // BEGINN OBJECT Unit
-int (CALLING_CONV *Unit_STATIC_getEnemies)(int teamId, int* unitIds);
-int (CALLING_CONV *Unit_STATIC_getEnemiesIn)(int teamId, int* unitIds, struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Unit_STATIC_getEnemiesInRadarAndLos)(int teamId, int* units);
-int (CALLING_CONV *Unit_STATIC_getFriendlies)(int teamId, int* unitIds);
-int (CALLING_CONV *Unit_STATIC_getFriendliesIn)(int teamId, int* unitIds, struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Unit_STATIC_getNeutrals)(int teamId, int* unitIds);
-int (CALLING_CONV *Unit_STATIC_getNeutralsIn)(int teamId, int* unitIds, struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Unit_STATIC_getSelected)(int teamId, int* unitIds);
+int (CALLING_CONV *Unit_STATIC_getEnemies)(int teamId, int unitIds[]);
+int (CALLING_CONV *Unit_STATIC_getEnemiesIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Unit_STATIC_getEnemiesInRadarAndLos)(int teamId, int unitIds[]);
+int (CALLING_CONV *Unit_STATIC_getFriendlies)(int teamId, int unitIds[]);
+int (CALLING_CONV *Unit_STATIC_getFriendliesIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Unit_STATIC_getNeutrals)(int teamId, int unitIds[]);
+int (CALLING_CONV *Unit_STATIC_getNeutralsIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Unit_STATIC_getSelected)(int teamId, int unitIds[]);
 
 int (CALLING_CONV *Unit_getDefId)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getAiHint)(int teamId, int unitId);
@@ -386,21 +388,23 @@ int (CALLING_CONV *Unit_getNumCurrentCommands)(int teamId, int unitId);
 /* for the type of the command queue, see CCommandQueue::CommandQueueType CommandQueue.h */
 int (CALLING_CONV *Unit_CurrentCommands_getType)(int teamId, int unitId);
 /* for the id, see CMD_xxx codes in Command.h  (custom codes can also be used) */
-int (CALLING_CONV *Unit_CurrentCommands_getIds)(int teamId, int unitId, int* ids);
-int (CALLING_CONV *Unit_CurrentCommands_getOptions)(int teamId, int unitId, unsigned char* options);
-int (CALLING_CONV *Unit_CurrentCommands_getTag)(int teamId, int unitId, unsigned int* tags);
-int (CALLING_CONV *Unit_CurrentCommands_getTimeOut)(int teamId, int unitId, int* timeOuts);
-int (CALLING_CONV *Unit_CurrentCommands_getNumParams)(int teamId, int unitId, int* numParams);
-int (CALLING_CONV *Unit_CurrentCommands_getParams)(int teamId, int unitId, float** params);
+int (CALLING_CONV *Unit_CurrentCommands_getIds)(int teamId, int unitId, int ids[]);
+int (CALLING_CONV *Unit_CurrentCommands_getOptions)(int teamId, int unitId, unsigned char options[]);
+int (CALLING_CONV *Unit_CurrentCommands_getTag)(int teamId, int unitId, unsigned int tags[]);
+int (CALLING_CONV *Unit_CurrentCommands_getTimeOut)(int teamId, int unitId, int timeOuts[]);
+int (CALLING_CONV *Unit_CurrentCommands_getNumParams)(int teamId, int unitId, int numParams[]);
+//int (CALLING_CONV *Unit_CurrentCommands_getParams)(int teamId, int unitId, float params[][2]);
+int (CALLING_CONV *Unit_CurrentCommands_getParams)(int teamId, int unitId, unsigned int commandIndex, float params[]);
 int (CALLING_CONV *Unit_getNumSupportedCommands)(int teamId, int unitId);
 /* for the id, see CMD_xxx codes in Command.h  (custom codes can also be used) */
-int (CALLING_CONV *Unit_SupportedCommands_getId)(int teamId, int unitId, int* ids);
-int (CALLING_CONV *Unit_SupportedCommands_getName)(int teamId, int unitId, const char** names);
-int (CALLING_CONV *Unit_SupportedCommands_getToolTip)(int teamId, int unitId, const char** toolTips);
-int (CALLING_CONV *Unit_SupportedCommands_isShowUnique)(int teamId, int unitId, bool* showUniques);
-int (CALLING_CONV *Unit_SupportedCommands_isDisabled)(int teamId, int unitId, bool* disableds);
-int (CALLING_CONV *Unit_SupportedCommands_getNumParams)(int teamId, int unitId, int* numParams);
-int (CALLING_CONV *Unit_SupportedCommands_getParams)(int teamId, int unitId, const char*** params);
+int (CALLING_CONV *Unit_SupportedCommands_getId)(int teamId, int unitId, int ids[]);
+int (CALLING_CONV *Unit_SupportedCommands_getName)(int teamId, int unitId, const char* names[]);
+int (CALLING_CONV *Unit_SupportedCommands_getToolTip)(int teamId, int unitId, const char* toolTips[]);
+int (CALLING_CONV *Unit_SupportedCommands_isShowUnique)(int teamId, int unitId, bool showUniques[]);
+int (CALLING_CONV *Unit_SupportedCommands_isDisabled)(int teamId, int unitId, bool disableds[]);
+int (CALLING_CONV *Unit_SupportedCommands_getNumParams)(int teamId, int unitId, int numParams[]);
+//int (CALLING_CONV *Unit_SupportedCommands_getParams)(int teamId, int unitId, const char* params[][2]);
+int (CALLING_CONV *Unit_SupportedCommands_getParams)(int teamId, int unitId, unsigned int commandIndex, const char* params[]);
 float (CALLING_CONV *Unit_getHealth)(int teamId, int unitId);
 float (CALLING_CONV *Unit_getSpeed)(int teamId, int unitId);
 float (CALLING_CONV *Unit_getPower)(int teamId, int unitId);
@@ -421,13 +425,14 @@ int (CALLING_CONV *Unit_getBuildingFacing)(int teamId, int unitId);
 // BEGINN OBJECT Group
 int (CALLING_CONV *Group_getNumSupportedCommands)(int teamId, int groupId);
 /* for the id, see CMD_xxx codes in Command.h  (custom codes can also be used) */
-int (CALLING_CONV *Group_SupportedCommands_getId)(int teamId, int groupId, int* ids);
-int (CALLING_CONV *Group_SupportedCommands_getName)(int teamId, int groupId, const char** names);
-int (CALLING_CONV *Group_SupportedCommands_getToolTip)(int teamId, int groupId, const char** toolTips);
-int (CALLING_CONV *Group_SupportedCommands_isShowUnique)(int teamId, int groupId, bool* showUniques);
-int (CALLING_CONV *Group_SupportedCommands_isDisabled)(int teamId, int groupId, bool* disableds);
-int (CALLING_CONV *Group_SupportedCommands_getNumParams)(int teamId, int groupId, int* numParams);
-int (CALLING_CONV *Group_SupportedCommands_getParams)(int teamId, int groupId, const char*** params);
+int (CALLING_CONV *Group_SupportedCommands_getId)(int teamId, int groupId, int ids[]);
+int (CALLING_CONV *Group_SupportedCommands_getName)(int teamId, int groupId, const char* names[]);
+int (CALLING_CONV *Group_SupportedCommands_getToolTip)(int teamId, int groupId, const char* toolTips[]);
+int (CALLING_CONV *Group_SupportedCommands_isShowUnique)(int teamId, int groupId, bool showUniques[]);
+int (CALLING_CONV *Group_SupportedCommands_isDisabled)(int teamId, int groupId, bool disableds[]);
+int (CALLING_CONV *Group_SupportedCommands_getNumParams)(int teamId, int groupId, int numParams[]);
+//int (CALLING_CONV *Group_SupportedCommands_getParams)(int teamId, int groupId, const char* params[][2]);
+int (CALLING_CONV *Group_SupportedCommands_getParams)(int teamId, int groupId, unsigned int commandIndex, const char* params[]);
 // END OBJECT Group
 
 
@@ -460,8 +465,10 @@ float (CALLING_CONV *Map_getMinWind)(int teamId);
 float (CALLING_CONV *Map_getMaxWind)(int teamId);
 float (CALLING_CONV *Map_getTidalStrength)(int teamId);
 float (CALLING_CONV *Map_getGravity)(int teamId);
-int (CALLING_CONV *Map_getPoints)(int teamId, struct SAIFloat3* positions, unsigned char** colors, const char** labels, int maxPoints);
-int (CALLING_CONV *Map_getLines)(int teamId, struct SAIFloat3* firstPositions, struct SAIFloat3* secondPositions, unsigned char** colors, int maxLines);
+//int (CALLING_CONV *Map_getPoints)(int teamId, struct SAIFloat3 positions[], unsigned char colors[][3], const char* labels[], int maxPoints);
+//int (CALLING_CONV *Map_getLines)(int teamId, struct SAIFloat3 firstPositions[], struct SAIFloat3 secondPositions[], unsigned char colors[][3], int maxLines);
+int (CALLING_CONV *Map_getPoints)(int teamId, struct SAIFloat3 positions[], struct SAIFloat3 colors[], const char* labels[], int maxPoints);
+int (CALLING_CONV *Map_getLines)(int teamId, struct SAIFloat3 firstPositions[], struct SAIFloat3 secondPositions[], struct SAIFloat3 colors[], int maxLines);
 bool (CALLING_CONV *Map_canBuildAt)(int teamId, int unitDefId, struct SAIFloat3 pos, int facing);
 struct SAIFloat3 (CALLING_CONV *Map_findClosestBuildSite)(int teamId, int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist, int facing);
 // BEGINN OBJECT Map
@@ -479,10 +486,10 @@ float (CALLING_CONV *FeatureDef_getEnergy)(int teamId, int weaponDefId);
 float (CALLING_CONV *FeatureDef_getMaxHealth)(int teamId, int weaponDefId);
 float (CALLING_CONV *FeatureDef_getReclaimTime)(int teamId, int weaponDefId);
 float (CALLING_CONV *FeatureDef_getMass)(int teamId, int weaponDefId);
-const char* (CALLING_CONV *FeatureDef_getCollisionVolumeType)(int teamId, int weaponDefId);	
-struct SAIFloat3 (CALLING_CONV *FeatureDef_getCollisionVolumeScales)(int teamId, int weaponDefId);		
-struct SAIFloat3 (CALLING_CONV *FeatureDef_getCollisionVolumeOffsets)(int teamId, int weaponDefId);		
-int (CALLING_CONV *FeatureDef_getCollisionVolumeTest)(int teamId, int weaponDefId);			
+const char* (CALLING_CONV *FeatureDef_getCollisionVolumeType)(int teamId, int weaponDefId);
+struct SAIFloat3 (CALLING_CONV *FeatureDef_getCollisionVolumeScales)(int teamId, int weaponDefId);
+struct SAIFloat3 (CALLING_CONV *FeatureDef_getCollisionVolumeOffsets)(int teamId, int weaponDefId);
+int (CALLING_CONV *FeatureDef_getCollisionVolumeTest)(int teamId, int weaponDefId);
 bool (CALLING_CONV *FeatureDef_isUpright)(int teamId, int weaponDefId);
 int (CALLING_CONV *FeatureDef_getDrawType)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *FeatureDef_getModelName)(int teamId, int weaponDefId);
@@ -501,7 +508,9 @@ const char* (CALLING_CONV *FeatureDef_getDeathFeature)(int teamId, int weaponDef
 int (CALLING_CONV *FeatureDef_getXsize)(int teamId, int weaponDefId);
 int (CALLING_CONV *FeatureDef_getYsize)(int teamId, int weaponDefId);
 int (CALLING_CONV *FeatureDef_getNumCustomParams)(int teamId, int weaponDefId);
-int (CALLING_CONV *FeatureDef_getCustomParams)(int teamId, int weaponDefId, const char* map[][2]);
+//int (CALLING_CONV *FeatureDef_getCustomParams)(int teamId, int weaponDefId, const char* map[][2]);
+int (CALLING_CONV *FeatureDef_getCustomParamKeys)(int teamId, int weaponDefId, const char* keys[]);
+int (CALLING_CONV *FeatureDef_getCustomParamValues)(int teamId, int weaponDefId, const char* values[]);
 // END OBJECT FeatureDef
 
 
@@ -544,7 +553,7 @@ float (CALLING_CONV *WeaponDef_Damages_getCraterMult)(int teamId, int weaponDefI
 float (CALLING_CONV *WeaponDef_Damages_getCraterBoost)(int teamId, int weaponDefId);
 int (CALLING_CONV *WeaponDef_Damages_getNumTypes)(int teamId, int weaponDefId);
 //float (CALLING_CONV *WeaponDef_Damages_getType)(int teamId, int weaponDefId, int typeIndex);
-void (CALLING_CONV *WeaponDef_Damages_getTypeDamages)(int teamId, int weaponDefId, float* typeDamages);
+void (CALLING_CONV *WeaponDef_Damages_getTypeDamages)(int teamId, int weaponDefId, float typeDamages[]);
 
 float (CALLING_CONV *WeaponDef_getAreaOfEffect)(int teamId, int weaponDefId);
 bool (CALLING_CONV *WeaponDef_isNoSelfDamage)(int teamId, int weaponDefId);
@@ -653,8 +662,10 @@ float (CALLING_CONV *WeaponDef_getDynDamageMin)(int teamId, int weaponDefId);
 float (CALLING_CONV *WeaponDef_getDynDamageRange)(int teamId, int weaponDefId);
 bool (CALLING_CONV *WeaponDef_isDynDamageInverted)(int teamId, int weaponDefId);
 int (CALLING_CONV *WeaponDef_getNumCustomParams)(int teamId, int weaponDefId);
-//const char** (CALLING_CONV *WeaponDef_getCustomParam)(int teamId, int weaponDefId, int index);
-int (CALLING_CONV *WeaponDef_getCustomParams)(int teamId, int weaponDefId, const char* map[][2]);
+//const char*[] (CALLING_CONV *WeaponDef_getCustomParam)(int teamId, int weaponDefId, int index);
+//int (CALLING_CONV *WeaponDef_getCustomParams)(int teamId, int weaponDefId, const char* map[][2]);
+int (CALLING_CONV *WeaponDef_getCustomParamKeys)(int teamId, int weaponDefId, const char* keys[]);
+int (CALLING_CONV *WeaponDef_getCustomParamValues)(int teamId, int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
 };
@@ -663,11 +674,10 @@ int (CALLING_CONV *WeaponDef_getCustomParams)(int teamId, int weaponDefId, const
 }	// extern "C"
 #endif
 
-
-#ifdef	__cplusplus
+#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 class IGlobalAICallback;
 SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
-#endif	// __cplusplus
-
+#endif	// defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 
 #endif	// _SAICALLBACK_H
+
