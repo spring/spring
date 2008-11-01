@@ -223,10 +223,6 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 		return false;
 	}
 
-	if (net->localDemoPlayback) {
-		return false;
-	}
-
 	if (strncmp(dll, "LuaAI:", 6) == 0) {
 		CTeam* team = gs->Team(teamID);
 		if (team != NULL) {

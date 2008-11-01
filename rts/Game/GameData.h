@@ -16,11 +16,13 @@ public:
 	
 	const netcode::RawPacket* Pack() const;
 	
+	void SetSetup(const std::string& newSetup);
 	void SetScript(const std::string& newScript);
 	void SetMap(const std::string& newMap, const unsigned checksum);
 	void SetMod(const std::string& newMod, const unsigned checksum);
 	void SetRandomSeed(const unsigned seed);
 	
+	const std::string& GetSetup() const {return setupText;};
 	const std::string& GetScript() const {return script;};
 	const std::string& GetMap() const {return map;};
 	unsigned GetMapChecksum() const {return mapChecksum;};
@@ -29,6 +31,8 @@ public:
 	unsigned GetRandomSeed() const {return randomSeed;};
 
 private:
+	std::string setupText;
+
 	std::string script;
 	std::string map;
 	unsigned mapChecksum;

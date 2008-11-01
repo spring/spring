@@ -47,16 +47,6 @@ CDemoRecorder::CDemoRecorder()
 
 	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
 
-	if (gameSetup) {
-		// strip trailing null termination characters
-		int length = gameSetup->gameSetupTextLength;
-		while (gameSetup->gameSetupText[length - 1] == '\0')
-			--length;
-
-		fileHeader.scriptSize = length;
-		recordDemo.write(gameSetup->gameSetupText, length);
-	}
-
 	fileHeader.playerStatElemSize = sizeof(CPlayer::Statistics);
 	fileHeader.teamStatElemSize = sizeof(CTeam::Statistics);
 	fileHeader.teamStatPeriod = CTeam::statsPeriod;
@@ -83,6 +73,16 @@ CDemoRecorder::~CDemoRecorder()
 		//remove("demos/unnamed.sdf");
 		//rename(demoName.c_str(), "demos/unnamed.sdf");
 	}
+}
+
+void CDemoRecorder::WriteSetupText(const std::string& text)
+{
+	int length = gameSetup->gameSetupText.length();
+	while (gameSetup->gameSetupText.c_str()[length - 1] == '\0')
+		--length;
+
+	fileHeader.scriptSize = length;
+	recordDemo.write(gameSetup->gameSetupText.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)

@@ -97,9 +97,10 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup = 0, const std::string& demoName)
+CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
+	assert(setup);
 	serverStartTime = SDL_GetTicks();
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
@@ -134,22 +135,15 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 
 	lastTick = SDL_GetTicks();
 
-	if (setup) {
-		maxUserSpeed = setup->maxSpeed;
-		minUserSpeed = setup->minSpeed;
-		noHelperAIs = (bool)setup->noHelperAIs;
-	}
-	else
-	{
-		maxUserSpeed=5;
-		minUserSpeed=0.3f;
-	}
+	maxUserSpeed = setup->maxSpeed;
+	minUserSpeed = setup->minSpeed;
+	noHelperAIs = (bool)setup->noHelperAIs;
 
 	gameData.reset(newGameData);
-	if (!demoName.empty())
+	if (setup->hostDemo)
 	{
-		Message(str( format(PlayingDemo) %demoName ));
-		demoReader.reset(new CDemoReader(demoName, modGameTime+0.1f));
+		Message(str( format(PlayingDemo) %setup->demoName ));
+		demoReader.reset(new CDemoReader(setup->demoName, modGameTime+0.1f));
 	}
 
 	RestrictedAction("kick");			RestrictedAction("kickbynum");
@@ -577,7 +571,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if(inbuf[1] != a){
 				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			}
-			else if (setup && setup->startPosType == CGameSetup::StartPos_ChooseInGame)
+			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame)
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (teams[team])
@@ -814,7 +808,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned char player = inbuf[1];
 			const unsigned char whichAllyTeam = inbuf[2];
 			const unsigned char allied = inbuf[3];
-			if (setup && !setup->fixedAllies)
+			if (!setup->fixedAllies)
 			{
 				Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
 			}
@@ -948,11 +942,9 @@ void CGameServer::GenerateAndSendGameID()
 
 	// Third dword is CRC of setupText (if there is a setup)
 	// or pseudo random bytes (if there is no setup)
-	if (setup != NULL) {
-		CRC crc;
-		crc.Update(setup->gameSetupText, setup->gameSetupTextLength);
-		gameID.intArray[2] = crc.GetDigest();
-	}
+	CRC crc;
+	crc.Update(setup->gameSetupText.c_str(), setup->gameSetupText.length());
+	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
 	entropy.Update(lastTick);
@@ -966,41 +958,26 @@ void CGameServer::CheckForGameStart(bool forced)
 	assert(!gameStartTime);
 	bool allReady = true;
 	
-	if (setup)
-	{
-		unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
-		unsigned start = numDemoPlayers;
+	unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
+	unsigned start = numDemoPlayers;
 #ifdef DEDICATED
-		// Lobby-protocol doesn't support creating games without players inside
-		// so in dedicated mode there will always be the host-player in the script
-		// which doesn't exist and will never join, so skip it in this case
-		if (setup && 0 == start)
-			start++;
+	// Lobby-protocol doesn't support creating games without players inside
+	// so in dedicated mode there will always be the host-player in the script
+	// which doesn't exist and will never join, so skip it in this case
+	if (setup && 0 == start)
+		start++;
 #endif
-		for (int a = start; a < setup->numPlayers; a++) {
-			if (!players[a] || !players[a]->readyToStart) {
-				allReady = false;
-				break;
-			} else if (teams[players[a]->team] && !teams[players[a]->team]->readyToStart && !demoReader)
-			{
-				allReady = false;
-				break;
-			}
-		}
-	}
-	else
-	{
-		allReady = false;
-		// no setup, wait for host to send NETMSG_STARTPLAYING
-		// if this is the case, forced is true...
-		if (forced)
+	for (int a = setup->numDemoPlayers; a < setup->numPlayers; a++) {
+		if (!players[a] || !players[a]->readyToStart) {
+			allReady = false;
+			break;
+		} else if (teams[players[a]->team] && !teams[players[a]->team]->readyToStart && !demoReader)
 		{
-			// immediately start
-			readyTime = SDL_GetTicks();
-			rng.Seed(readyTime);
-			StartGame();
+			allReady = false;
+			break;
 		}
 	}
+
 
 	if (allReady || forced)
 	{
@@ -1039,14 +1016,12 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
-	if (setup) {
-		for (int a = 0; a < setup->numTeams; ++a)
-		{
-			if (teams[a]) // its a player
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
-			else // maybe an AI?
-				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->teamStartingData[a].startPos.x, setup->teamStartingData[a].startPos.y, setup->teamStartingData[a].startPos.z));
-		}
+	for (int a = 0; a < setup->numTeams; ++a)
+	{
+		if (teams[a]) // its a player
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
+		else // maybe an AI?
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->teamStartingData[a].startPos.x, setup->teamStartingData[a].startPos.y, setup->teamStartingData[a].startPos.z));
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
@@ -1200,7 +1175,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!setup || gs->Team(a)->isAI)
+		if (gs->Team(a)->isAI)
 			hasPlayer = true;
 
 		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)
@@ -1358,16 +1333,13 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 	unsigned hisNewNumber = 0;
 	bool found = false;
 
-	if (setup)
+	for (unsigned i = setup->numDemoPlayers; i < setup->numPlayers; ++i)
 	{
-		for (unsigned i = 0; i < setup->numPlayers; ++i)
+		if (name == setup->playerStartingData[i].name)
 		{
-			if (name == setup->playerStartingData[i].name)
-			{
-				hisNewNumber = i;
-				found = true;
-				break;
-			}
+			hisNewNumber = i;
+			found = true;
+			break;
 		}
 	}
 
@@ -1386,7 +1358,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 		}
 	}
 
-	if (setup && (hisNewNumber >= static_cast<unsigned>(setup->numPlayers) || !found) && !demoReader)
+	if ((hisNewNumber >= static_cast<unsigned>(setup->numPlayers) || !found) && !demoReader)
 	{
 		// player not found
 		Message(str(format("Player %s not found, rejecting connection attempt") %name));
@@ -1395,18 +1367,18 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 	
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
-	if (setup && hisNewNumber < setup->playerStartingData.size()) {
+	if (hisNewNumber < setup->playerStartingData.size()) {
 		*static_cast<PlayerBase*>(players[hisNewNumber].get()) = setup->playerStartingData[hisNewNumber];
 	}
-	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
+	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		if(players[a] && players[a]->readyToStart)
 			Broadcast(CBaseNetProtocol::Get().SendPlayerName(a, players[a]->name));
 	}
 
-	if (setup && (!demoReader || setup->demoName.empty()) /* gamesetup from demo? */)
+	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
 		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
@@ -1425,21 +1397,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, teams[a]->readyToStart, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
 		}
 	}
-	else
-	{
-		unsigned hisTeam = hisNewNumber;
-		if (!demoReader)
-		{
-			teams[hisTeam].reset(new GameTeam());
-			players[hisNewNumber]->team = hisTeam;
-			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
-			for (int a = 0; a < MAX_TEAMS; ++a)
-			{
-				if (teams[a] && a != (int)hisNewNumber)
-					Broadcast(CBaseNetProtocol::Get().SendJoinTeam(a, players[a]->team));
-			}
-		}
-	}
+	
 	Message(str(format(NewConnection) %name %hisNewNumber %version));
 
 	link->Flush(true);

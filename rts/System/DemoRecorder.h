@@ -17,6 +17,7 @@ public:
 	CDemoRecorder();
 	~CDemoRecorder();
 
+	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf,const unsigned length);
 	
 	/**

@@ -446,11 +446,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	globalAI = SAFE_NEW CGlobalAIHandler();
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
-	if(!gameSetup || net->localDemoPlayback) {
-		p->name = configHandler.GetString("name", "");
-	} else {
-		GameSetupDrawer::Enable();
-	}
+	GameSetupDrawer::Enable();
 
 	if (gs->useLuaRules) {
 		PrintLoadMsg("Loading LuaRules");
@@ -521,9 +517,6 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	logOutput.Print("Build date/time: %s", BUILD_DATETIME);
 	//sending your playername to the server indicates that you are finished loading
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
-
-	if (net->localDemoPlayback) // auto-start when playing a demo in local mode
-		net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
 
 	lastCpuUsageTime = gu->gameTime + 10;
 
@@ -1077,7 +1070,7 @@ bool CGame::ActionPressed(const Action& action,
 		camMove[7]=true;
 	}
 	else if (cmd == "team"){
-		if (gs->cheatEnabled || net->localDemoPlayback)
+		if (gs->cheatEnabled)
 		{
 			int team=atoi(action.extra.c_str());
 			if ((team >= 0) && (team <gs->activeTeams)) {
@@ -1110,7 +1103,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "ally"){
 		if (action.extra.size() > 0)
 		{
-			if (gameSetup && !gameSetup->fixedAllies)
+			if (!gameSetup->fixedAllies)
 			{
 				std::istringstream is(action.extra);
 				int otherAllyTeam = -1;
@@ -1784,7 +1777,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "allmapmarks") {
-		if (gs->cheatEnabled && !net->localDemoPlayback) {
+		if (gs->cheatEnabled) {
 			if (action.extra.empty()) {
 				inMapDrawer->ToggleAllVisible();
 			} else {
@@ -2540,22 +2533,6 @@ bool CGame::Update()
 		}
 	}
 
-	if (gameServer && !gameServer->GameHasStarted() && !gameSetup) {
-		bool allReady = true;
-		for (int a = 0; a < gs->activePlayers; a++) {
-			if(gs->players[a]->active && !gs->players[a]->readyToStart) {
-				allReady = false;
-				break;
-			}
-		}
-		if (allReady && (keys[SDLK_RETURN] || script->onlySinglePlayer)) {
-			chatting = false;
-			userWriting = false;
-			writingPos = 0;
-			net->Send(CBaseNetProtocol::Get().SendStartPlaying(0));
-		}
-	}
-
 	return true;
 }
 
@@ -2900,11 +2877,6 @@ bool CGame::Draw() {
 			font->glFormatAt(0.03f, 0.07f, 0.7f, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
 			                 camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
 		}
-	}
-
-	if (gameServer && gameServer->WaitsOnCon() && !gameSetup) {
-		glColor3f(1.0f, 1.0f, 1.0f);
-		font->glPrintCentered (0.5f, 0.5f, 1.5f, "Waiting for connections. Press return to start");
 	}
 
 	if (userWriting) {
@@ -3583,7 +3555,7 @@ void CGame::ClientReadNet()
 			case NETMSG_STARTPOS:{
 				unsigned player = inbuf[1];
 				int team = inbuf[2];
-				if ((team >= gs->activeTeams) || (team < 0) || !gameSetup) {
+				if ((team >= gs->activeTeams) || (team < 0)) {
 					logOutput.Print("Got invalid team num %i in startpos msg",team);
 				} else {
 					float3 pos(*(float*)&inbuf[4],
@@ -3651,7 +3623,7 @@ void CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if (creatingVideo && net->localDemoPlayback) {
+				if (creatingVideo) {
 					POP_CODE_MODE;
 					return;
 				}
@@ -4501,13 +4473,8 @@ void CGame::GameEnd()
 		// Write CPlayer::Statistics and CTeam::Statistics to demo
 		int numPlayers;
 		// FIXME: ugh, there should be a better way to figure out number of players ...
-		if (gameSetup != NULL) {
-			numPlayers = gameSetup->numPlayers;
-		} else {
-			numPlayers = 0;
-			while (gs->players[numPlayers]->currentStats->mousePixels != 0)
-				++numPlayers;
-		}
+		numPlayers = gameSetup->numPlayers;
+
 		int numTeams = gs->activeAllyTeams;
 		if (gs->useLuaGaia) {
 			--numTeams;
