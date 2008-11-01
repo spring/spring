@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
 			sleep(1);	// if so, wait 1  second
 #endif
 		delete server;	// delete the server after usage
-		delete gameSetup;
 	}
 	else
 	{

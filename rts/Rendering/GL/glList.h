@@ -4,11 +4,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Game/UI/InputReceiver.h"
 #include <string>
 #include <vector>
+#include <boost/function.hpp>
 
-typedef void (* ListSelectCallback) (std::string selected);
+#include "Game/UI/InputReceiver.h"
+
+typedef boost::function<void(const std::string&)> ListSelectCallback;
 
 class CglList : public CInputReceiver
 {

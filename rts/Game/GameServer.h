@@ -63,7 +63,7 @@ class CGameServer : public CommandReceiver
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(int port, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup, const std::string& demoName = "");
+	CGameServer(int port, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	virtual ~CGameServer();
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
@@ -160,7 +160,7 @@ private:
 	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
 
 	/////////////////// game settings ///////////////////
-	const CGameSetup* const setup;
+	boost::scoped_ptr<const CGameSetup> setup;
 	boost::scoped_ptr<const GameData> gameData;
 	/// Wheter the game is pausable for others than the host
 	bool gamePausable;

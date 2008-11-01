@@ -11,12 +11,7 @@
 #include "GameSetup.h"
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "TdfParser.h"
-#include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
-#include "Map/ReadMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
@@ -29,10 +24,10 @@ using namespace std;
 const CGameSetup* gameSetup = NULL;
 
 LocalSetup::LocalSetup() :
-		autohostport(0),
-		hostport(8452),
 		myPlayerNum(0),
+		hostport(8452),
 		sourceport(0),
+		autohostport(0),
 		isHost(true)
 {
 }
@@ -106,7 +101,6 @@ void LocalSetup::Init(const std::string& setup)
 
 CGameSetup::CGameSetup()
 {
-	gameSetupText=0;
 	startPosType=StartPos_Fixed;
 	numDemoPlayers=0;
 	hostDemo=false;
@@ -114,25 +108,11 @@ CGameSetup::CGameSetup()
 
 CGameSetup::~CGameSetup()
 {
-	if (gameSetupText)
-		delete[] gameSetupText;
 }
 
-bool CGameSetup::Init(std::string setupFile)
+bool CGameSetup::Init(std::string script)
 {
-	if(setupFile.empty())
-		return false;
-	CFileHandler fh(setupFile);
-	if (!fh.FileExists())
-		return false;
-	char* c=SAFE_NEW char[fh.FileSize()];
-	fh.Read(c,fh.FileSize());
-
-	bool ret=Init(c,fh.FileSize());
-
-	delete[] c;
-
-	return ret;
+	Init(script.c_str(), script.size());
 }
 
 /**
@@ -182,12 +162,12 @@ Unlike the other functions, this is not called on Init() , instead we wait for C
 void CGameSetup::LoadStartPositions()
 {
 	TdfParser file;
-	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
+	file.LoadBuffer(gameSetupText.c_str(), gameSetupText.length());
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
-		rng.Seed(gameSetupTextLength ^ SDL_GetTicks());
+		rng.Seed(gameSetupText.length()^ SDL_GetTicks());
 		int teamStartNum[MAX_TEAMS];
 		for (int i = 0; i < MAX_TEAMS; ++i)
 			teamStartNum[i] = i;
@@ -304,7 +284,8 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		}
 
 		// Get default color from palette (based on "color" tag)
-		int colorNum = atoi(file.SGetValueDef("0", s + "color").c_str());
+		int colorNum = atoi(file.SGetValueDef("-1", s + "color").c_str());
+		if (colorNum == -1) colorNum = a;
 		colorNum %= palette.NumTeamColors();
 		float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
 
@@ -438,10 +419,7 @@ void CGameSetup::RemapAllyteams()
 bool CGameSetup::Init(const char* buf, int size)
 {
 	// Copy buffer contents
-	gameSetupText = SAFE_NEW char[size+1];
-	memcpy(gameSetupText, buf, size);
-	gameSetupText[size] = 0;
-	gameSetupTextLength = size;
+	gameSetupText.assign(buf,size);
 
 	// Parse
 	TdfParser file;

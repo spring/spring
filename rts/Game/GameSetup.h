@@ -34,7 +34,7 @@ class CGameSetup
 public:
 	CGameSetup();
 	~CGameSetup();
-	bool Init(std::string setupFile);
+	bool Init(std::string script);
 	bool Init(const char* buf, int size);
 	void LoadStartPositions();
 	
@@ -60,8 +60,7 @@ public:
 	std::string luaGaiaStr;
 	std::string luaRulesStr;
 	
-	char* gameSetupText;
-	int gameSetupTextLength;
+	std::string gameSetupText;
 	
 	StartPosType startPosType;
 	
