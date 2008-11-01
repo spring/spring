@@ -17,6 +17,7 @@
 
 #ifndef _SAIINTERFACELIBRARY_H
 #define	_SAIINTERFACELIBRARY_H
+#if !defined BUILDING_AI
 
 #include "creg/creg_cond.h"
 
@@ -227,4 +228,5 @@ struct SGAIKey_Comparator {
 };
 #endif	// __cplusplus
 
+#endif	// !defined BUILDING_AI
 #endif	// _SAIINTERFACELIBRARY_H

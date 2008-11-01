@@ -32,12 +32,30 @@ IAICallback* team_callback[MAX_SKIRMISH_AIS];
 bool team_cheatingEnabled[MAX_SKIRMISH_AIS];
 IAICheats* team_cheatCallback[MAX_SKIRMISH_AIS];
 
+/*
 int fillCMap(const std::map<std::string,std::string>* map, const char* cMap[][2]) {
 	std::map<std::string,std::string>::const_iterator it;
 	int i;
 	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
 		cMap[i][0] = it->first.c_str();
 		cMap[i][1] = it->second.c_str();
+	}
+	return i;
+}
+*/
+int fillCMapKeys(const std::map<std::string,std::string>* map, const char* cMapKeys[]) {
+	std::map<std::string,std::string>::const_iterator it;
+	int i;
+	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
+		cMapKeys[i] = it->first.c_str();
+	}
+	return i;
+}
+int fillCMapValues(const std::map<std::string,std::string>* map, const char* cMapValues[]) {
+	std::map<std::string,std::string>::const_iterator it;
+	int i;
+	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
+		cMapValues[i] = it->second.c_str();
 	}
 	return i;
 }
@@ -1767,8 +1785,18 @@ Export(int) _UnitDef_getBuildOptions(int teamId, int unitDefId, int* unitDefIds)
 Export(int) _UnitDef_getNumCustomParams(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->customParams.size();
 }
+/*
 Export(int) _UnitDef_getCustomParams(int teamId, int unitDefId, const char* map[][2]) {
 	return fillCMap(&(getUnitDefById(teamId, unitDefId)->customParams), map);
+}
+*/
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _UnitDef_getCustomParamKeys(int teamId, int unitDefId, const char* keys[]) {
+	return fillCMapKeys(&(getUnitDefById(teamId, unitDefId)->customParams), keys);
+}
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _UnitDef_getCustomParamValues(int teamId, int unitDefId, const char* values[]) {
+	return fillCMapValues(&(getUnitDefById(teamId, unitDefId)->customParams), values);
 }
 Export(bool) _UnitDef_hasMoveData(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata != NULL;}
 Export(int) _UnitDef_MoveData_getMoveType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->moveType;}
@@ -1889,16 +1917,21 @@ Export(int) _Unit_SupportedCommands_isDisabled(int teamId, int unitId, bool* dis
 	}
 	return numComDescs;
 }
-Export(int) _Unit_SupportedCommands_getNumParams(int teamId, int unitId, int* numParams) {
+Export(int) _Unit_SupportedCommands_getNumParams(int teamId, int unitId, int numParams[]) {
+	
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
+	
 	int numComDescs = comDescs->size();
+	
 	for (int i=0; i < numComDescs; i++) {
 		numParams[i] = comDescs->at(i).params.size();
 	}
+	
 	return numComDescs;
 }
-Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, const char*** params) {
+/*
+Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, const char* params[][2]) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
 	int numComDescs = comDescs->size();
@@ -1909,6 +1942,26 @@ Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, const char
 		}
 	}
 	return numComDescs;
+}
+*/
+Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, unsigned int commandIndex, const char* params[]) {
+	
+	IAICallback* clb = team_callback[teamId];
+	const std::vector<CommandDescription>* comDescs = clb->GetUnitCommands(unitId);
+	
+	if (commandIndex >= comDescs->size()) {
+		return -1;
+	}
+	
+	const std::vector<std::string> ps = comDescs->at(commandIndex).params;
+	unsigned int size = ps.size();
+	
+	unsigned int p;
+	for (p=0; p < size; p++) {
+		params[p] = ps.at(p).c_str();
+	}
+	
+	return size;
 }
 
 Export(int) _Unit_getStockpile(int teamId, int unitId) {
@@ -2040,9 +2093,8 @@ Export(int) _Unit_CurrentCommands_getTimeOut(int teamId, int unitId, int* timeOu
 	}
 	return numCommands;
 }
-Export(int) _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int* numParams) {
-//	IAICallback* clb = team_callback[teamId];
-//	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
+Export(int) _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int numParams[]) {
+	
 	const CCommandQueue* cc = NULL;
 	if (_Cheats_isEnabled(teamId)) {
 		cc = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
@@ -2055,7 +2107,8 @@ Export(int) _Unit_CurrentCommands_getNumParams(int teamId, int unitId, int* numP
 	}
 	return numCommands;
 }
-Export(int) _Unit_CurrentCommands_getParams(int teamId, int unitId, float** params) {
+/*
+Export(int) _Unit_CurrentCommands_getParams(int teamId, int unitId, float params[][]) {
 //	IAICallback* clb = team_callback[teamId];
 //	const CCommandQueue* cc = clb->GetCurrentUnitCommands(unitId);
 	const CCommandQueue* cc = NULL;
@@ -2072,6 +2125,30 @@ Export(int) _Unit_CurrentCommands_getParams(int teamId, int unitId, float** para
 		}
 	}
 	return numCommands;
+}
+*/
+Export(int) _Unit_CurrentCommands_getParams(int teamId, int unitId, unsigned int commandIndex, float params[]) {
+
+	const CCommandQueue* cc = NULL;
+	if (_Cheats_isEnabled(teamId)) {
+		cc = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
+	} else {
+		cc = team_callback[teamId]->GetCurrentUnitCommands(unitId);
+	}
+
+	if (commandIndex >= cc->size()) {
+		return -1;
+	}
+
+	const std::vector<float> ps = cc->at(commandIndex).params;
+	unsigned int numParams = ps.size();
+
+	unsigned int p;
+	for (p=0; p < numParams; p++) {
+		params[p] = ps.at(p);
+	}
+
+	return numParams;
 }
 
 Export(float) _Unit_getExperience(int teamId, int unitId) {
@@ -2374,7 +2451,8 @@ Export(SAIFloat3) _Map_findClosestBuildSite(int teamId, int unitDefId, SAIFloat3
 	return clb->ClosestBuildSite(unitDef, pos, searchRadius, minDist, facing).toSAIFloat3();
 }
 
-Export(int) _Map_getPoints(int teamId, SAIFloat3* positions, unsigned char** colors, const char** labels, int maxPoints) {
+/*
+Export(int) _Map_getPoints(int teamId, SAIFloat3 positions[], unsigned char colors[][3], const char* labels[], int maxPoints) {
 	IAICallback* clb = team_callback[teamId];
 	PointMarker* pm = new PointMarker[maxPoints];
 	int numPoints = clb->GetMapPoints(pm, maxPoints);
@@ -2387,7 +2465,7 @@ Export(int) _Map_getPoints(int teamId, SAIFloat3* positions, unsigned char** col
 	return numPoints;
 }
 
-Export(int) _Map_getLines(int teamId, SAIFloat3* firstPositions, SAIFloat3* secondPositions, unsigned char** colors, int maxLines) {
+Export(int) _Map_getLines(int teamId, SAIFloat3 firstPositions[], SAIFloat3 secondPositions[], unsigned char colors[][3], int maxLines) {
 	IAICallback* clb = team_callback[teamId];
 	LineMarker* lm = new LineMarker[maxLines];
 	int numLines = clb->GetMapLines(lm, maxLines);
@@ -2395,6 +2473,36 @@ Export(int) _Map_getLines(int teamId, SAIFloat3* firstPositions, SAIFloat3* seco
 		firstPositions[i] = lm[i].pos.toSAIFloat3();
 		secondPositions[i] = lm[i].pos2.toSAIFloat3();
 		colors[i] = lm[i].color;
+	}
+	delete [] lm;
+	return numLines;
+}
+*/
+Export(int) _Map_getPoints(int teamId, SAIFloat3 positions[], SAIFloat3 colors[], const char* labels[], int maxPoints) {
+	
+	IAICallback* clb = team_callback[teamId];
+	PointMarker* pm = new PointMarker[maxPoints];
+	int numPoints = clb->GetMapPoints(pm, maxPoints);
+	for (int i=0; i < numPoints; ++i) {
+		positions[i] = pm[i].pos.toSAIFloat3();
+		SAIFloat3 f3color = {pm[i].color[0], pm[i].color[1], pm[i].color[2]};
+		colors[i] = f3color;
+		labels[i] = pm[i].label;
+	}
+	delete [] pm;
+	return numPoints;
+}
+
+Export(int) _Map_getLines(int teamId, SAIFloat3 firstPositions[], SAIFloat3 secondPositions[], SAIFloat3 colors[], int maxLines) {
+	
+	IAICallback* clb = team_callback[teamId];
+	LineMarker* lm = new LineMarker[maxLines];
+	int numLines = clb->GetMapLines(lm, maxLines);
+	for (int i=0; i < numLines; ++i) {
+		firstPositions[i] = lm[i].pos.toSAIFloat3();
+		secondPositions[i] = lm[i].pos2.toSAIFloat3();
+		SAIFloat3 f3color = {lm[i].color[0], lm[i].color[1], lm[i].color[2]};
+		colors[i] = f3color;
 	}
 	delete [] lm;
 	return numLines;
@@ -2511,8 +2619,18 @@ Export(int) _FeatureDef_getYsize(int teamId, int featureDefId) {return getFeatur
 Export(int) _FeatureDef_getNumCustomParams(int teamId, int featureDefId) {
 	return getFeatureDefById(teamId, featureDefId)->customParams.size();
 }
+/*
 Export(int) _FeatureDef_getCustomParams(int teamId, int featureDefId, const char* map[][2]) {
 	return fillCMap(&(getFeatureDefById(teamId, featureDefId)->customParams), map);
+}
+*/
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _FeatureDef_getCustomParamKeys(int teamId, int featureDefId, const char* keys[]) {
+	return fillCMapKeys(&(getFeatureDefById(teamId, featureDefId)->customParams), keys);
+}
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _FeatureDef_getCustomParamValues(int teamId, int featureDefId, const char* values[]) {
+	return fillCMapValues(&(getFeatureDefById(teamId, featureDefId)->customParams), values);
 }
 //########### END FeatureDef
 
@@ -2708,8 +2826,18 @@ Export(bool) _WeaponDef_isDynDamageInverted(int teamId, int weaponDefId) {return
 Export(int) _WeaponDef_getNumCustomParams(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->customParams.size();
 }
+/*
 Export(int) _WeaponDef_getCustomParams(int teamId, int weaponDefId, const char* map[][2]) {
 	return fillCMap(&(getWeaponDefById(teamId, weaponDefId)->customParams), map);
+}
+*/
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _WeaponDef_getCustomParamKeys(int teamId, int weaponDefId, const char* keys[]) {
+	return fillCMapKeys(&(getWeaponDefById(teamId, weaponDefId)->customParams), keys);
+}
+// UNSAFE: because the map may not iterate over its elements in the same order every time
+Export(int) _WeaponDef_getCustomParamValues(int teamId, int weaponDefId, const char* values[]) {
+	return fillCMapValues(&(getWeaponDefById(teamId, weaponDefId)->customParams), values);
 }
 //########### END WeaponDef
 
@@ -2831,7 +2959,8 @@ Export(int) _Group_SupportedCommands_getNumParams(int teamId, int groupId, int* 
 	}
 	return numComDescs;
 }
-Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, const char*** params) {
+/*
+Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, const char* params[][2]) {
 	IAICallback* clb = team_callback[teamId];
 	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
 	int numComDescs = comDescs->size();
@@ -2842,6 +2971,26 @@ Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, const ch
 		}
 	}
 	return numComDescs;
+}
+*/
+Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, unsigned int commandIndex, const char* params[]) {
+	
+	IAICallback* clb = team_callback[teamId];
+	const std::vector<CommandDescription>* comDescs = clb->GetGroupCommands(groupId);
+	
+	if (commandIndex >= comDescs->size()) {
+		return -1;
+	}
+	
+	const std::vector<std::string> ps = comDescs->at(commandIndex).params;
+	unsigned int size = ps.size();
+	
+	unsigned int p;
+	for (p=0; p < size; p++) {
+		params[p] = ps.at(p).c_str();
+	}
+	
+	return size;
 }
 
 /*
@@ -3195,7 +3344,9 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->UnitDef_getNumBuildOptions = _UnitDef_getNumBuildOptions;
 	sAICallback->UnitDef_getBuildOptions = _UnitDef_getBuildOptions;
 	sAICallback->UnitDef_getNumCustomParams = _UnitDef_getNumCustomParams;
-	sAICallback->UnitDef_getCustomParams = _UnitDef_getCustomParams;
+//	sAICallback->UnitDef_getCustomParams = _UnitDef_getCustomParams;
+	sAICallback->UnitDef_getCustomParamKeys = _UnitDef_getCustomParamKeys;
+	sAICallback->UnitDef_getCustomParamValues = _UnitDef_getCustomParamValues;
 	sAICallback->UnitDef_hasMoveData = _UnitDef_hasMoveData;
 	sAICallback->UnitDef_MoveData_getMoveType = _UnitDef_MoveData_getMoveType;
 	sAICallback->UnitDef_MoveData_getMoveFamily = _UnitDef_MoveData_getMoveFamily;
@@ -3334,7 +3485,9 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->FeatureDef_getXsize = _FeatureDef_getXsize;
 	sAICallback->FeatureDef_getYsize = _FeatureDef_getYsize;
 	sAICallback->FeatureDef_getNumCustomParams = _FeatureDef_getNumCustomParams;
-	sAICallback->FeatureDef_getCustomParams = _FeatureDef_getCustomParams;
+//	sAICallback->FeatureDef_getCustomParams = _FeatureDef_getCustomParams;
+	sAICallback->FeatureDef_getCustomParamKeys = _FeatureDef_getCustomParamKeys;
+	sAICallback->FeatureDef_getCustomParamValues = _FeatureDef_getCustomParamValues;
 	sAICallback->Feature_STATIC_getIds = _Feature_STATIC_getIds;
 	sAICallback->Feature_STATIC_getIdsIn = _Feature_STATIC_getIdsIn;
 	sAICallback->Feature_getDefId = _Feature_getDefId;
@@ -3470,7 +3623,9 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->WeaponDef_getDynDamageRange = _WeaponDef_getDynDamageRange;
 	sAICallback->WeaponDef_isDynDamageInverted = _WeaponDef_isDynDamageInverted;
 	sAICallback->WeaponDef_getNumCustomParams = _WeaponDef_getNumCustomParams;
-	sAICallback->WeaponDef_getCustomParams = _WeaponDef_getCustomParams;
+//	sAICallback->WeaponDef_getCustomParams = _WeaponDef_getCustomParams;
+	sAICallback->WeaponDef_getCustomParamKeys = _WeaponDef_getCustomParamKeys;
+	sAICallback->WeaponDef_getCustomParamValues = _WeaponDef_getCustomParamValues;
 	
 	team_globalCallback[teamId] = aiGlobalCallback;
 //	team_callback[teamId] = aiCallback;

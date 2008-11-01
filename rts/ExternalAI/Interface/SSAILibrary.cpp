@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 
+#if !defined BUILDING_AI
 struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig) {
 	
 	struct SSAISpecifier copy;
@@ -70,4 +71,5 @@ bool SSAISpecifier_Comparator::IsEmpty(const struct SSAISpecifier& spec) {
 	return empty;
 }
 
-#endif /* __cplusplus */
+#endif	// defined __cplusplus
+#endif	// !defined BUILDING_AI

@@ -28,8 +28,6 @@
 
 #include <set>
 
-static const char* badKeyChars = " =;\r\n\t";
-
 bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::string> optionsSet)
 {
 	const LuaTable& optTbl = root.SubTable(index);
@@ -40,7 +38,7 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 	// common options properties
 	std::string opt_key = optTbl.GetString("key", "");
 	if (opt_key.empty() ||
-	    (opt_key.find_first_of(badKeyChars) != std::string::npos)) {
+	    (opt_key.find_first_of(Option_badKeyChars) != std::string::npos)) {
 		return false;
 	}
 	opt_key = StringToLower(opt_key);
@@ -100,7 +98,7 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 			// string format
 			std::string item_key = listTbl.GetString(i, "");
 			if (!item_key.empty() &&
-			    (item_key.find_first_of(badKeyChars) == string::npos)) {
+			    (item_key.find_first_of(Option_badKeyChars) == string::npos)) {
 				item.key = mallocCopyString(item_key.c_str());
 				item.name = item.key;
 				item.desc = item.name;
@@ -115,7 +113,7 @@ bool ParseOption(const LuaTable& root, int index, Option& opt, std::set<std::str
 			}
 			item_key = itemTbl.GetString("key", "");
 			if (item_key.empty() ||
-			    (item_key.find_first_of(badKeyChars) != string::npos)) {
+				(item_key.find_first_of(Option_badKeyChars) != string::npos)) {
 				return false;
 			}
 			item_key = StringToLower(item_key);

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -38,6 +38,7 @@ extern "C" {
 #define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME "interfaceShortName" // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
 #define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
+#if !defined BUILDING_AI
 /**
  * @brief struct Skirmish Artificial Intelligence Specifier
  */
@@ -49,7 +50,7 @@ struct SSAISpecifier {
 struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
 void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
 
-#ifdef	__cplusplus
+#if defined __cplusplus
 struct SSAISpecifier_Comparator {
 	/**
 	 * The key comparison function, a Strict Weak Ordering;
@@ -61,7 +62,8 @@ struct SSAISpecifier_Comparator {
 			const struct SSAISpecifier& b) const;
 	static bool IsEmpty(const struct SSAISpecifier& spec);
 };
-#endif /* __cplusplus */
+#endif	// defined __cplusplus
+#endif	// !defined BUILDING_AI
 
 /**
  * This is the interface between the engine and an implementation of a
@@ -200,4 +202,4 @@ struct SSAILibrary {
 }
 #endif
 
-#endif	/* _SSAILIBRARY_H */
+#endif	// _SSAILIBRARY_H
