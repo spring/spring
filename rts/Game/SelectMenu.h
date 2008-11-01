@@ -6,6 +6,13 @@
 class LocalSetup;
 class CglList;
 
+/**
+@brief User prompt for options when no script is given
+
+When no setupscript is given, this will show a menu to select server address (when running in client ("-c")mode).
+If in host mode, it will show lists for Map, Mod and Script.
+When everything is selected, it will generate a gamesetup-script and start CPreGame
+*/
 class SelectMenu : public CGameController
 {
 public:
@@ -18,9 +25,8 @@ public:
 	void ShowMapList();
 	void ShowScriptList();
 	void ShowModList();
-	CglList* showList;
 	
-	/// Choose the script we will tell the server to start with
+	/// Callback functions for CglList
 	void SelectScript(const std::string& s);
 	void SelectMap(const std::string& s);
 	void SelectMod(const std::string& s);
@@ -32,6 +38,7 @@ private:
 	
 	bool addressKnown;
 	LocalSetup* mySettings;
+	CglList* showList;
 };
 
 #endif
