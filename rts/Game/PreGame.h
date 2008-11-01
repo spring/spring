@@ -64,14 +64,6 @@ private:
 	void LoadLua();
 
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
-	
-	enum State {
-		UNKNOWN,
-		WAIT_CONNECTING, // connecting to server
-		WAIT_ON_GAMEDATA, // wait for the server to send us the GameData
-		ALL_READY, // ready to start
-	};
-	State state;
 
 	/**
 	@brief GameData we recieved from server
