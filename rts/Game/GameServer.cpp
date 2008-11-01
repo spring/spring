@@ -543,7 +543,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			} else {
 				players[playerNum]->name = (std::string)((char*)inbuf+3);
 				players[playerNum]->readyToStart = true;
-				Message(str(format(PlayerJoined) %players[playerNum]->name %playerNum));
+				Message(str(format(PlayerJoined) %players[playerNum]->name));
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum]->name));
 				if (hostif)
 				{

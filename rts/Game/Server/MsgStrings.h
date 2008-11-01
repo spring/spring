@@ -18,10 +18,10 @@ const std::string DelayedSyncResponse = "Delayed response from %s for frame %d (
 const std::string SyncError = "Sync error for %s in frame %d (%x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 
-const std::string NewConnection = "Player %s with number %d connected (client version %s)";
+const std::string NewConnection = "Player %s connected with number %d (client version %s)";
 const std::string ConnectionReject = "Connection attempt rejected (Message ID: %d Network version: %d Datalength: %d)";
 const std::string WrongPlayer = "Got message %d from %d claiming to be from %d";
-const std::string PlayerJoined = "Player %s finished loading and joined as player %d";
+const std::string PlayerJoined = "Player %s finished loading and is now ingame";
 const std::string PlayerLeft = "Player %s left the game: %s";
 
 const std::string NoStartposChange = "%s tried to change his startposition illegally";

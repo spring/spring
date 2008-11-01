@@ -47,7 +47,6 @@ std::string stupidGlobalMapname;
 
 
 CPreGame::CPreGame(const LocalSetup* setup) :
-		gameData(0),
 		settings(setup),
 		savefile(NULL)
 {
@@ -60,7 +59,6 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 
 	if(!settings->isHost)
 	{
-		PrintLoadMsg("Connecting to server");
 		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 	}
 	else
@@ -72,7 +70,6 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 
 CPreGame::~CPreGame()
 {
-	delete gameData;
 	// don't delete infoconsole, its beeing reused by CGame
 }
 
@@ -389,7 +386,7 @@ void CPreGame::LoadLua()
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	gameData = new GameData(packet);
+	gameData.reset(new GameData(packet));
 	
 	CGameSetup* temp = new CGameSetup();
 	if (temp->Init(gameData->GetSetup()))
