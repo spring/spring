@@ -46,11 +46,10 @@ extern bool globalQuit;
 std::string stupidGlobalMapname;
 
 
-CPreGame::CPreGame(const LocalSetup* setup)
-: state(UNKNOWN),
-  settings(setup),
-  gameData(0),
-  savefile(NULL)
+CPreGame::CPreGame(const LocalSetup* setup) :
+		gameData(0),
+		settings(setup),
+		savefile(NULL)
 {
 	localDemoHack = false;
 	infoConsole = SAFE_NEW CInfoConsole;
@@ -68,15 +67,13 @@ CPreGame::CPreGame(const LocalSetup* setup)
 	{
 		net->InitLocalClient();
 	}
-	state = WAIT_CONNECTING;
 }
 
 
 CPreGame::~CPreGame()
 {
 	delete gameData;
-	delete infoConsole;
-	infoConsole = 0;
+	// don't delete infoconsole, its beeing reused by CGame
 }
 
 void CPreGame::LoadSetupscript(const std::string& script)
@@ -113,21 +110,16 @@ bool CPreGame::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	
-	switch (state) {
-		case WAIT_ON_GAMEDATA:
-			PrintLoadMsg("Waiting on game data", false);
-			break;
-		case WAIT_CONNECTING:
-			if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-				PrintLoadMsg("Connecting to server .", false);
-			else
-				PrintLoadMsg("Connecting to server  ", false);
-			break;
-		case UNKNOWN:
-		case ALL_READY:
-		default:
-			PrintLoadMsg("", false); // just clear screen and set up matrices etc.
-			break;
+	if (!net->Connected())
+	{
+		if ( ((SDL_GetTicks()/1000) % 2) == 0 )
+			PrintLoadMsg("Connecting to server .", false);
+		else
+			PrintLoadMsg("Connecting to server  ", false);
+	}
+	else
+	{
+		PrintLoadMsg("Awaiting server response", false);
 	}
 
 	infoConsole->Draw();
@@ -139,52 +131,8 @@ bool CPreGame::Draw()
 bool CPreGame::Update()
 {
 	good_fpu_control_registers("CPreGame::Update");
-
-	switch (state) {
-
-		case UNKNOWN:
-			logOutput.Print("Internal error in CPreGame");
-			return false;
-
-		case WAIT_CONNECTING:
-			if (net->Connected())
-				state = WAIT_ON_GAMEDATA; // fall through
-			else
-				break; // abort
-
-		case WAIT_ON_GAMEDATA: {
-			break;
-		}
-
-		case ALL_READY: {
-			ENTER_MIXED;
-			const int teamID = gs->players[gu->myPlayerNum]->team;
-			const CTeam* team = gs->Team(teamID);
-			assert(team);
-			LoadStartPicture(team->side);
-
-			game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole, savefile);
-
-			if (savefile) {
-				savefile->LoadGame();
-			}
-
-			infoConsole = 0;
-
-			ENTER_UNSYNCED;
-			pregame=0;
-			delete this;
-			return true;
-		}
-		default:
-			assert(false);
-			break;
-	}
-
-	if(state >= WAIT_CONNECTING){
-		net->Update();
-		UpdateClientNet();
-	}
+	net->Update();
+	UpdateClientNet();
 
 	return true;
 }
@@ -286,9 +234,22 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_SETPLAYERNUM: {
-				state = ALL_READY;
 				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("Became player %i", gu->myPlayerNum);
+				
+				const int teamID = gs->players[gu->myPlayerNum]->team;
+				const CTeam* team = gs->Team(teamID);
+				assert(team);
+				LoadStartPicture(team->side);
+
+				game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole, savefile);
+
+				if (savefile) {
+					savefile->LoadGame();
+				}
+
+				pregame=0;
+				delete this;
 				return;
 			}
 			case NETMSG_GAMEDATA: {
