@@ -113,7 +113,8 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return setup.Get();
 }
 
-SelectMenu::SelectMenu(bool server)
+SelectMenu::SelectMenu(bool server) :
+		showList(NULL)
 {
 	mySettings = new LocalSetup();
 	mySettings->isHost = server;
@@ -237,7 +238,6 @@ bool SelectMenu::Update()
 		if (!userWriting)
 		{
 			configHandler.SetString("address",userInput);
-			mySettings = new LocalSetup();
 			mySettings->hostip = userInput;
 			pregame = new CPreGame(mySettings);
 			delete this;
