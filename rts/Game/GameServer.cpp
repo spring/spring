@@ -97,7 +97,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -128,10 +128,13 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 	sentGameOverMsg = false;
 	
 	if (!onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(port));
+		UDPNet.reset(new netcode::UDPListener(settings->hostport));
 	
+	if (settings->autohostport > 0) {
+		AddAutohostInterface(settings->autohostport);
+	}
 	rng.Seed(SDL_GetTicks());
-	Message(str( format(ServerStart) %port) );
+	Message(str( format(ServerStart) %settings->hostport) );
 
 	lastTick = SDL_GetTicks();
 
@@ -164,6 +167,7 @@ CGameServer::CGameServer(int port, bool onlyLocal, const GameData* const newGame
 	RestrictedAction("editdefs");
 	RestrictedAction("luagaia");
 	RestrictedAction("singlestep");
+
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -193,7 +197,6 @@ void CGameServer::AddAutohostInterface(const int remotePort)
 {
 	if (!hostif)
 	{
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 		hostif.reset(new AutohostInterface(remotePort));
 		hostif->SendStart();
 		Message(str(format(ConnectAutohost) %remotePort));

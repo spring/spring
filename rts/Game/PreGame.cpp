@@ -5,6 +5,7 @@
 #include <SDL_timer.h>
 #include <SDL_types.h>
 #include <set>
+#include <cfloat>
 
 #include "mmgr.h"
 
@@ -262,12 +263,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 	}
 	
 	good_fpu_control_registers("before CGameServer creation");
-	int myPort = settings->hostport;
 	startupData->SetSetup(setup->gameSetupText);
-	gameServer = new CGameServer(myPort, false, startupData, setup);
-	if (settings->autohostport > 0) {
-		gameServer->AddAutohostInterface(settings->autohostport);
-	}
+	gameServer = new CGameServer(settings.get(), false, startupData, setup);
 	gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 	good_fpu_control_registers("after CGameServer creation");
 }
@@ -312,7 +309,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	logOutput.Print("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
 
-	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(INT_MAX)));
+	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX )));
 	while ( buf )
 	{
 		if (buf->data[0] == NETMSG_GAMEDATA)
@@ -346,7 +343,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 				throw content_error("Server sent us incorrect script");
 			}
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(settings->hostport, false, data, tempSetup);
+			gameServer = new CGameServer(settings.get(), false, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 			good_fpu_control_registers("after CGameServer creation");
 			break;
@@ -356,7 +353,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			throw content_error("End of demo reached and no game data found");
 		}
-		buf.reset(scanner.GetData(static_cast<float>(INT_MAX)));
+		buf.reset(scanner.GetData(static_cast<float>(FLT_MAX )));
 	}
 
 	assert(gameServer);
