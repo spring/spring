@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		GameData* data = new GameData();
 		UnsyncedRNG rng;
 		rng.Seed(SDL_GetTicks());
-		rng.Seed(gameSetup->gameSetupTextLength);
+		rng.Seed(gameSetup->gameSetupText.length());
 		data->SetRandomSeed(SDL_GetTicks());
 
 		//  Use script provided hashes if they exist
