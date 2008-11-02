@@ -165,6 +165,9 @@ extern boost::mutex tempmutex;
 extern boost::mutex posmutex;
 extern boost::mutex rendermutex;
 extern boost::mutex simmutex;
+extern boost::mutex netmutex;
+extern boost::mutex histmutex;
+extern boost::mutex logmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -200,8 +203,8 @@ inline unsigned gmlGetTicks() {
 #define GML_GET_TICKS(var) var=gmlGetTicks()
 #define GML_UPDATE_TICKS() gmlUpdateTicks()
 
-#define GML_PARG_H , boost::recursive_mutex::scoped_lock& projlock = boost::recursive_mutex::scoped_lock(projmutex)
-#define GML_PARG_C , boost::recursive_mutex::scoped_lock& projlock
+#define GML_PARG_H , boost::recursive_mutex::scoped_lock *projlock = &boost::recursive_mutex::scoped_lock(projmutex)
+#define GML_PARG_C , boost::recursive_mutex::scoped_lock *projlock
 #define GML_PARG_P , projlock
 
 #else

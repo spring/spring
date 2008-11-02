@@ -287,7 +287,7 @@ void CTextureHandler::LoadS3OTexture(S3DOModel *model) {
 		model->textureType=s3oTextureNames[totalName];
 	}
 	model->textureType=0;
-	GML_STDMUTEX_LOCK(model); // LoadS3OTexture
+//	GML_STDMUTEX_LOCK(model); // LoadS3OTexture
 	loadTextures.push_back(model);
 }
 

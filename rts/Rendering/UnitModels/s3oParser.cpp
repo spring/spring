@@ -61,6 +61,8 @@ void CS3OParser::DeleteSS3O(SS3O* o)
 
 S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
 {
+	GML_STDMUTEX_LOCK(model); // LoadS3O
+
 	if(name.find(".")==std::string::npos)
 		name+=".s3o";
 
@@ -343,7 +345,7 @@ void CS3OParser::Update() {
 }
 
 void CS3OParser::CreateLists(SS3O *o) {
-	GML_STDMUTEX_LOCK(model); // CreateLists
+//	GML_STDMUTEX_LOCK(model); // CreateLists
 	createLists.push_back(o);
 }
 

@@ -204,6 +204,9 @@ boost::mutex tempmutex;
 boost::mutex posmutex;
 boost::mutex rendermutex;
 boost::mutex simmutex;
+boost::mutex netmutex;
+boost::mutex histmutex;
+boost::mutex logmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;

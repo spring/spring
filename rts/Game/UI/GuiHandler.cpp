@@ -3725,22 +3725,24 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	// draw buildings we are about to build
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
-		GML_STDMUTEX_LOCK(cai); // DrawMapStuff
-		// draw build distance for all immobile builders during build commands
-		std::list<CBuilderCAI*>::const_iterator bi;
-		for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
-			const CUnit* unit = (*bi)->owner;
-			if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
-				continue;
-			}
-			const UnitDef* unitdef = unit->unitDef;
-			if (unitdef->builder && !unitdef->canmove) {
-				const float radius = unitdef->buildDistance;
-				if (radius > 0.0f) {
-					glDisable(GL_TEXTURE_2D);
-					const float* color = cmdColors.rangeBuild;
-					glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
-					glSurfaceCircle(unit->pos, radius, 40);
+		{ // limit the locking scope to avoid deadlock
+			GML_STDMUTEX_LOCK(cai); // DrawMapStuff
+			// draw build distance for all immobile builders during build commands
+			std::list<CBuilderCAI*>::const_iterator bi;
+			for (bi = uh->builderCAIs.begin(); bi != uh->builderCAIs.end(); ++bi) {
+				const CUnit* unit = (*bi)->owner;
+				if ((unit == pointedAt) || (unit->team != gu->myTeam)) {
+					continue;
+				}
+				const UnitDef* unitdef = unit->unitDef;
+				if (unitdef->builder && !unitdef->canmove) {
+					const float radius = unitdef->buildDistance;
+					if (radius > 0.0f) {
+						glDisable(GL_TEXTURE_2D);
+						const float* color = cmdColors.rangeBuild;
+						glColor4f(color[0], color[1], color[2], color[3] * 0.333f);
+						glSurfaceCircle(unit->pos, radius, 40);
+					}
 				}
 			}
 		}
