@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include "LogOutput.h"
 
@@ -85,18 +86,24 @@ CLogOutput::~CLogOutput()
 
 void CLogOutput::End()
 {
+	GML_STDMUTEX_LOCK(log);
+
 	SafeDelete(filelog);
 }
 
 
 void CLogOutput::SetMirrorToStdout(bool value)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	stdoutDebug = value;
 }
 
 
 void CLogOutput::SetFilename(const char* fname)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	assert(!initialized);
 	filename = fname;
 }
@@ -111,6 +118,8 @@ void CLogOutput::SetFilename(const char* fname)
  */
 void CLogOutput::Initialize()
 {
+//	GML_STDMUTEX_LOCK(log);
+
 	if (initialized) return;
 
 	filelog = new std::ofstream(filename);
@@ -198,6 +207,8 @@ void CLogOutput::InitializeSubsystems()
  */
 void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	if (!initialized) {
 		preInitLog().push_back(PreInitLogEntry(&subsystem, str));
 		return;
@@ -246,6 +257,8 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 
 void CLogOutput::SetLastMsgPos(const float3& pos)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
 		(*lsi)->SetLastMsgPos(pos);
 }
@@ -253,18 +266,24 @@ void CLogOutput::SetLastMsgPos(const float3& pos)
 
 void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.push_back(ls);
 }
 
 
 void CLogOutput::RemoveAllSubscribers()
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.clear();
 }
 
 
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
 

@@ -112,7 +112,7 @@ CGameSetup::~CGameSetup()
 
 bool CGameSetup::Init(std::string script)
 {
-	Init(script.c_str(), script.size());
+	return Init(script.c_str(), script.size());
 }
 
 /**

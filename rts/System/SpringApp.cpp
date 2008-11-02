@@ -1058,14 +1058,21 @@ int SpringApp::Run (int argc, char *argv[])
 					}
 					break;
 				}
-				case SDL_MOUSEMOTION:
+				case SDL_MOUSEMOTION: {
+					mouseInput->HandleSDLMouseEvent (event);
+					break;
+				}
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 				case SDL_SYSWMEVENT: {
+//					GML_STDMUTEX_LOCK(sim);
+
 					mouseInput->HandleSDLMouseEvent (event);
 					break;
 				}
 				case SDL_KEYDOWN: {
+//					GML_STDMUTEX_LOCK(sim);
+
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 
@@ -1114,6 +1121,7 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_KEYUP: {
+//					GML_STDMUTEX_LOCK(sim);
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 
