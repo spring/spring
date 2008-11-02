@@ -9,6 +9,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Util.h"
 
 class CUnit;
 class CBuilding;
@@ -31,8 +32,8 @@ struct UnitTrackStruct {
 };
 
 struct BuildingGroundDecal {
-	BuildingGroundDecal(): va(0x0), owner(0x0), gbOwner(0x0), alpha(1.0f) {
-	}
+	BuildingGroundDecal(): va(NULL), owner(NULL), gbOwner(NULL), alpha(1.0f) {}
+	~BuildingGroundDecal() { SafeDelete(va); }
 
 	CVertexArray* va;
 	CBuilding* owner;
@@ -45,7 +46,7 @@ struct BuildingGroundDecal {
 	float radius;
 
 	float alpha;
-	float AlphaFalloff;
+	float alphaFalloff;
 };
 
 
@@ -67,8 +68,13 @@ public:
 
 	void AddBuilding(CBuilding* building);
 	void RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb);
+	void ForceRemoveBuilding(CBuilding* building);
 	int GetBuildingDecalType(const std::string& name);
 
+	bool GetDrawDecals() const { return drawDecals; }
+	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
+
+private:
 	GLuint scarTex;
 	int decalLevel;
 	int groundScarAlphaFade;
@@ -88,9 +94,8 @@ public:
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 
 	struct Scar {
-		Scar(): va(0x0) {
-		}
-		~Scar() { delete va; va = 0; }
+		Scar(): va(NULL) {}
+		~Scar() { SafeDelete(va); }
 
 		float3 pos;
 		float radius;
@@ -118,10 +123,6 @@ public:
 	int lastTest;
 	float maxOverlap;
 
-	bool GetDrawDecals() const { return drawDecals; }
-	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
-
-protected:
 	bool drawDecals;
 
 	std::set<Scar*>* scarField;
@@ -130,6 +131,9 @@ protected:
 
 	unsigned int decalVP;
 	unsigned int decalFP;
+
+	void DrawBuildingDecal(BuildingGroundDecal* decal);
+	void DrawGroundScar(Scar* scar, bool fade);
 
 	int OverlapSize(Scar* s1, Scar* s2);
 	void TestOverlaps(Scar* scar);
