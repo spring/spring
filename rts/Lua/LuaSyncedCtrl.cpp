@@ -2037,24 +2037,7 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 		return 0;
 	}
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	if (building && building->buildingDecal) {
-		std::vector<CGroundDecalHandler::BuildingDecalType*>& types =
-			groundDecals->buildingDecalTypes;
-		std::vector<CGroundDecalHandler::BuildingDecalType*>::iterator bdt;
-		for (bdt = types.begin(); bdt != types.end(); ++bdt) {
-			std::set<BuildingGroundDecal*>& decals = (*bdt)->buildingDecals;
-			std::set<BuildingGroundDecal*>::iterator bgd;
-			for (bgd = decals.begin(); bgd != decals.end(); ++bgd) {
-				BuildingGroundDecal* decal = *bgd;
-				if (decal == building->buildingDecal) {
-					delete decal;
-					decals.erase(bgd);
-					building->buildingDecal = NULL;
-					return 0;
-				}
-			}
-		}
-	}
+	groundDecals->ForceRemoveBuilding(building);
 	return 0;
 }
 

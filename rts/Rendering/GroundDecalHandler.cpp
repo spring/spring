@@ -129,7 +129,8 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 	#undef HEIGHT2WORLD
 }
 
-static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
+
+inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 {
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
@@ -304,7 +305,8 @@ static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
 	#undef HEIGHT
 }
 
-static inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
+
+inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
 {
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
@@ -385,8 +387,6 @@ static inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
 }
 
 
-
-
 void CGroundDecalHandler::Draw(void)
 {
 	if (!drawDecals) {
@@ -452,7 +452,7 @@ void CGroundDecalHandler::Draw(void)
 				if (decal->owner && decal->owner->buildProgress >= 0) {
 					decal->alpha = decal->owner->buildProgress;
 				} else if (!decal->gbOwner) {
-					decal->alpha -= decal->AlphaFalloff * gu->lastFrameTime * gs->speedFactor;
+					decal->alpha -= decal->alphaFalloff * gu->lastFrameTime * gs->speedFactor;
 				}
 
 				if (decal->alpha < 0.0f) {
@@ -461,8 +461,6 @@ void CGroundDecalHandler::Draw(void)
 						decal->owner->buildingDecal = 0;
 					}
 
-					delete decal->va;
-					decal->va = 0x0;
 					delete decal;
 
 					set<BuildingGroundDecal*>::iterator next(bgdi); ++next;
@@ -929,7 +927,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 	decal->owner = building;
 	decal->gbOwner = 0;
-	decal->AlphaFalloff = building->unitDef->buildingDecalDecaySpeed;
+	decal->alphaFalloff = building->unitDef->buildingDecalDecaySpeed;
 	decal->alpha = 0;
 	decal->pos = building->pos;
 	decal->radius = sqrt((float) (sizex * sizex + sizey * sizey)) * 8 + 20;
@@ -962,6 +960,30 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::Ghost
 	decal->owner = 0;
 	decal->gbOwner = gb;
 	building->buildingDecal = 0;
+}
+
+
+/**
+ * @brief immediately remove a building's ground decal, if any (without fade out)
+ */
+void CGroundDecalHandler::ForceRemoveBuilding(CBuilding* building)
+{
+	if (!building || !building->buildingDecal)
+		return;
+
+	std::vector<BuildingDecalType*>& types = buildingDecalTypes;
+	std::vector<BuildingDecalType*>::iterator bdt;
+
+	for (bdt = types.begin(); bdt != types.end(); ++bdt) {
+		std::set<BuildingGroundDecal*>& decals = (*bdt)->buildingDecals;
+		std::set<BuildingGroundDecal*>::iterator bgd = decals.find(building->buildingDecal);
+		if (bgd != decals.end()) {
+			BuildingGroundDecal* decal = *bgd;
+			decals.erase(bgd);
+			building->buildingDecal = NULL;
+			delete decal;
+		}
+	}
 }
 
 
