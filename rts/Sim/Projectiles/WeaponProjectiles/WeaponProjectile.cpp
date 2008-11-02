@@ -203,7 +203,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
 				weaponDef->explosionSpeed, owner, true,
 				weaponDef->noExplode ? 0.3f : 1,
-				weaponDef->noExplode, weaponDef->explosionGenerator, unit,
+				weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator, unit,
 				impactDir, weaponDef->id);
 		}
 	}
