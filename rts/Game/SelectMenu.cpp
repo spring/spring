@@ -11,16 +11,13 @@
 #include "GameSetup.h"
 #include "PreGame.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glList.h"
 #include "System/LogOutput.h"
-#include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
-#include "System/Platform/Clipboard.h"
 #include "System/Platform/ConfigHandler.h"
 #include "StartScripts/ScriptHandler.h"
 
@@ -152,10 +149,7 @@ int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 	if (userWriting) {
 		keys[k] = true;
 		if (k == SDLK_v && keys[SDLK_LCTRL]){
-			CClipboard clipboard;
-			const string text = clipboard.GetContents();
-			userInput.insert(writingPos, text);
-			writingPos += text.length();
+			PasteClipboard();
 			return 0;
 		}
 		if(k == SDLK_BACKSPACE){
