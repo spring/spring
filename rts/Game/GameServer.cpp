@@ -965,10 +965,11 @@ void CGameServer::CheckForGameStart(bool forced)
 	// Lobby-protocol doesn't support creating games without players inside
 	// so in dedicated mode there will always be the host-player in the script
 	// which doesn't exist and will never join, so skip it in this case
-	if (setup && 0 == start)
-		start++;
+	for (int a = std::max(setup->numDemoPlayers,1); a < setup->numPlayers; a++)
+#else
+	for (int a = setup->numDemoPlayers; a < setup->numPlayers; a++)
 #endif
-	for (int a = setup->numDemoPlayers; a < setup->numPlayers; a++) {
+	{
 		if (!players[a] || !players[a]->readyToStart) {
 			allReady = false;
 			break;
