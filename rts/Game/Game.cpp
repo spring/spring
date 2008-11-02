@@ -124,7 +124,6 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/NullSound.h"
 #include "System/Net/RawPacket.h"
-#include "Platform/Clipboard.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
@@ -758,10 +757,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 					userInput.insert(writingPos, action.extra);
 					writingPos += action.extra.length();
 				} else {
-					CClipboard clipboard;
-					const string text = clipboard.GetContents();
-					userInput.insert(writingPos, text);
-					writingPos += text.length();
+					PasteClipboard();
 				}
 				break;
 			}
@@ -1841,10 +1837,7 @@ bool CGame::ActionPressed(const Action& action,
 				userInput.insert(writingPos, action.extra);
 				writingPos += action.extra.length();
 			} else {
-				CClipboard clipboard;
-				const string text = clipboard.GetContents();
-				userInput.insert(writingPos, text);
-				writingPos += text.length();
+				PasteClipboard();
 			}
 			return 0;
 		}

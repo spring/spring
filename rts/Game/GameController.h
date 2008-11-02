@@ -20,6 +20,9 @@ public:
 	char ignoreChar;
 	std::basic_string<char> userInput;
 	std::basic_string<char> userPrompt;
+
+protected:
+	void PasteClipboard();
 };
 
 extern CGameController* activeController;
