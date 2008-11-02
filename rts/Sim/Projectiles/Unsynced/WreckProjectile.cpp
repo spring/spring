@@ -25,8 +25,8 @@ CR_REG_METADATA(CWreckProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWreckProjectile::CWreckProjectile(float3 pos,float3 speed,float temperature,CUnit* owner)
-: CProjectile(pos,speed,owner, false)
+CWreckProjectile::CWreckProjectile(float3 pos,float3 speed,float temperature,CUnit* owner GML_PARG_C)
+: CProjectile(pos,speed,owner, false GML_PARG_P)
 {
 	checkCol=false;
 	drawRadius=2;
@@ -63,9 +63,8 @@ void CWreckProjectile::Draw(void)
 	col[2]=(unsigned char) (0.05f*200);
 	col[3]=200;
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.yend,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.yend,col);
 }

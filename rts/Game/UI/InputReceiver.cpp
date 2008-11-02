@@ -62,8 +62,9 @@ CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if((*ri) && (*ri)->IsAbove(x,y))
-			return *ri;
+		CInputReceiver* recv= *ri;
+		if(recv && recv->IsAbove(x,y))
+			return recv;
 	}
 	return 0;
 }

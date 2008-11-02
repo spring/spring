@@ -1968,7 +1968,7 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	}
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->transporter;
+	CTransportUnit *trans=unit->GetTransporter();
 	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {
@@ -2017,7 +2017,7 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	}
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->transporter;
+	CTransportUnit *trans=unit->GetTransporter();
 	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {

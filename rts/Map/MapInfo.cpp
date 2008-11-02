@@ -15,6 +15,9 @@
 using namespace std;
 
 
+static CLogSubsystem LOG_MAPINFO("mapinfo");
+
+
 float4::float4()
 {
 	float tmp[4];
@@ -78,7 +81,7 @@ CMapInfo::~CMapInfo()
 void CMapInfo::ReadGlobal()
 {
 	const LuaTable topTable = *mapRoot;
-	
+
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
 	map.wantedScript = topTable.GetString("script", "");
@@ -315,42 +318,3 @@ void CMapInfo::ReadTerrainTypes()
 		terrType.shipSpeed  = max(0.0f, terrType.shipSpeed);
 	}
 }
-
-
-void CMapInfo::ReadStartPos()
-{
-	const float defX = 1000.0f;
-	const float defZ = 1000.0f;
-	const float defXStep = 100.0f;
-	const float defZStep = 100.0f;
-
-	const LuaTable teamsTable = mapRoot->SubTable("teams");
-
-	for (int t = 0; t < MAX_TEAMS; ++t) {
-		float3 pos;
-		pos.x = defX + (defXStep * t);
-		pos.z = defZ + (defZStep * t);
-		pos.y = 0.0f;
-		const LuaTable posTable = teamsTable.SubTable(t).SubTable("startPos");
-		if (posTable.KeyExists("x") &&
-		    posTable.KeyExists("z")) {
-			pos.x = posTable.GetFloat("x", pos.x);
-			pos.z = posTable.GetFloat("z", pos.z);
-			havePos.push_back(true);
-		} else {
-			havePos.push_back(false);
-		}
-		startPos.push_back(pos);		
-	}
-}
-
-
-bool CMapInfo::GetStartPos(int team, float3& pos) const
-{
-	if ((team < 0) || (team >= startPos.size()) || !havePos[team]) {
-		return false;
-	}
-	pos = startPos[team];
-	return true;
-}
-

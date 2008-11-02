@@ -160,7 +160,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> gmlProcessor;
 #endif
 
 extern Uint8 *keys;
@@ -203,6 +203,8 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(unitReplyVolume),
 
 	CR_MEMBER(moveWarnings),
+
+	CR_MEMBER(lastSimFrame),
 
 //	CR_MEMBER(script),
 	CR_RESERVED(64),
@@ -249,6 +251,8 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	fps = 0;
 	thisFps = 0;
 	totalGameTime = 0;
+
+	lastSimFrame=-1;
 
 	creatingVideo = false;
 
@@ -539,14 +543,12 @@ CGame::~CGame()
 
 	ENTER_MIXED;
 
-	delete guihandler;
-	guihandler = NULL;
+	SafeDelete(guihandler);
 
 #ifndef NO_AVI
-	if(creatingVideo){
-		creatingVideo=false;
-		delete aviGenerator;
-		aviGenerator = NULL;
+	if(creatingVideo) {
+		creatingVideo = false;
+		SafeDelete(aviGenerator);
 	}
 #endif
 
@@ -559,63 +561,62 @@ CGame::~CGame()
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
 
-	if (gameServer)delete gameServer;gameServer         = NULL;
+	SafeDelete(gameServer);
 
 	globalAI->PreDestroy ();
-	delete globalAI;           globalAI           = NULL;
+	SafeDelete(globalAI);
 
 	for(int a=0;a<MAX_TEAMS;a++) {
-		delete grouphandlers[a]; grouphandlers[a] = NULL;
+		SafeDelete(grouphandlers[a]);
 	}
 
-	delete water;              water              = NULL;
-	delete sky;                sky                = NULL;
-	delete resourceBar;        resourceBar        = NULL;
+	SafeDelete(water);
+	SafeDelete(sky);
+	SafeDelete(resourceBar);
 
-	delete uh;                 uh                 = NULL;
-	delete unitDrawer;         unitDrawer         = NULL;
-	delete featureHandler;     featureHandler     = NULL;
-	delete geometricObjects;   geometricObjects   = NULL;
-	delete ph;                 ph                 = NULL;
-	delete minimap;            minimap            = NULL;
-	delete pathManager;        pathManager        = NULL;
-	delete groundDecals;       groundDecals       = NULL;
-	delete ground;             ground             = NULL;
-	delete luaInputReceiver;   luaInputReceiver   = NULL;
-	delete inMapDrawer;        inMapDrawer        = NULL;
-	delete net;                net                = NULL;
-	delete radarhandler;       radarhandler       = NULL;
-	delete loshandler;         loshandler         = NULL;
-	delete mapDamage;          mapDamage          = NULL;
-	delete qf;                 qf                 = NULL;
-	delete tooltip;            tooltip            = NULL;
-	delete keyBindings;        keyBindings        = NULL;
-	delete keyCodes;           keyCodes           = NULL;
-	delete sound;              sound              = NULL;
-	delete selectionKeys;      selectionKeys      = NULL;
-	delete mouse;              mouse              = NULL;
-	delete camHandler;         camHandler         = NULL;
-	delete helper;             helper             = NULL;
-	delete shadowHandler;      shadowHandler      = NULL;
-	delete moveinfo;           moveinfo           = NULL;
-	delete unitDefHandler;     unitDefHandler     = NULL;
-	delete damageArrayHandler; damageArrayHandler = NULL;
-	delete vfsHandler;         vfsHandler         = NULL;
-	delete archiveScanner;     archiveScanner     = NULL;
-	delete modelParser;        modelParser        = NULL;
-	delete iconHandler;        iconHandler        = NULL;
-	delete fartextureHandler;  fartextureHandler  = NULL;
-	delete camera;             camera             = NULL;
-	delete cam2;               cam2               = NULL;
-	delete infoConsole;        infoConsole        = NULL;
-	delete consoleHistory;     consoleHistory     = NULL;
-	delete wordCompletion;     wordCompletion     = NULL;
-	delete explGenHandler;     explGenHandler     = NULL;
+	SafeDelete(uh);
+	SafeDelete(unitDrawer);
+	SafeDelete(featureHandler);
+	SafeDelete(geometricObjects);
+	SafeDelete(ph);
+	SafeDelete(minimap);
+	SafeDelete(pathManager);
+	SafeDelete(groundDecals);
+	SafeDelete(ground);
+	SafeDelete(luaInputReceiver);
+	SafeDelete(inMapDrawer);
+	SafeDelete(net);
+	SafeDelete(radarhandler);
+	SafeDelete(loshandler);
+	SafeDelete(mapDamage);
+	SafeDelete(qf);
+	SafeDelete(tooltip);
+	SafeDelete(keyBindings);
+	SafeDelete(keyCodes);
+	SafeDelete(sound);
+	SafeDelete(selectionKeys);
+	SafeDelete(mouse);
+	SafeDelete(camHandler);
+	SafeDelete(helper);
+	SafeDelete(shadowHandler);
+	SafeDelete(moveinfo);
+	SafeDelete(unitDefHandler);
+	SafeDelete(damageArrayHandler);
+	SafeDelete(vfsHandler);
+	SafeDelete(archiveScanner);
+	SafeDelete(modelParser);
+	SafeDelete(iconHandler);
+	SafeDelete(fartextureHandler);
+	SafeDelete(camera);
+	SafeDelete(cam2);
+	SafeDelete(infoConsole);
+	SafeDelete(consoleHistory);
+	SafeDelete(wordCompletion);
+	SafeDelete(explGenHandler);
 
 	delete const_cast<CMapInfo*>(mapInfo);
 	mapInfo = NULL;
-	delete groundBlockingObjectMap;
-	groundBlockingObjectMap = NULL;
+	SafeDelete(groundBlockingObjectMap);
 
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
@@ -842,7 +843,8 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->KeyPressed(k, isRepeat)) {
+		CInputReceiver* recv=*ri;
+		if (recv && recv->KeyPressed(k, isRepeat)) {
 			return 0;
 		}
 	}
@@ -871,7 +873,8 @@ int CGame::KeyReleased(unsigned short k)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->KeyReleased(k)) {
+		CInputReceiver* recv=*ri;
+		if (recv && recv->KeyReleased(k)) {
 			return 0;
 		}
 	}
@@ -1035,6 +1038,8 @@ bool CGame::ActionPressed(const Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewselection") {
+		GML_RECMUTEX_LOCK(sel); // ActionPressed
+
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
 			float3 pos(0.0f, 0.0f, 0.0f);
@@ -1323,6 +1328,60 @@ bool CGame::ActionPressed(const Action& action,
 			sky->dynamicSky = !!atoi(action.extra.c_str());
 		}
 	}
+#ifdef USE_GML
+	else if (cmd == "multithreaddrawground") {
+		if (action.extra.empty()) {
+			gd->multiThreadDrawGround = !gd->multiThreadDrawGround;
+		} else {
+			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawgroundshadow") {
+		if (action.extra.empty()) {
+			gd->multiThreadDrawGroundShadow = !gd->multiThreadDrawGroundShadow;
+		} else {
+			gd->multiThreadDrawGroundShadow = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawunit") {
+		if (action.extra.empty()) {
+			unitDrawer->multiThreadDrawUnit = !unitDrawer->multiThreadDrawUnit;
+		} else {
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithreaddrawunitshadow") {
+		if (action.extra.empty()) {
+			unitDrawer->multiThreadDrawUnitShadow = !unitDrawer->multiThreadDrawUnitShadow;
+		} else {
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "multithread") {
+		if (action.extra.empty()) {
+			int mtenabled=gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+			gd->multiThreadDrawGround = !mtenabled;
+			unitDrawer->multiThreadDrawUnit = !mtenabled;
+			unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
+		} else {
+			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+		}
+	}
+#endif
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	else if (cmd == "multithreadsim") {
+		extern volatile int multiThreadSim;
+		extern volatile int startsim;
+		if (action.extra.empty()) {
+			multiThreadSim = !multiThreadSim;
+		} else {
+			multiThreadSim = !!atoi(action.extra.c_str());
+		}
+		startsim=1;
+	}
+#endif
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
 			CGameInfo::Enable();
@@ -2401,8 +2460,6 @@ bool CGame::Update()
 {
 	good_fpu_control_registers("CGame::Update");
 
-	mouse->EmptyMsgQueUpdate();
-
 	unsigned timeNow = SDL_GetTicks();
 
 	const unsigned difTime = (timeNow - lastModGameTimeMeasure);
@@ -2441,12 +2498,10 @@ bool CGame::Update()
 		tracefile.DeleteInterval();
 		tracefile.NewInterval();
 #endif
-		CInputReceiver::CollectGarbage();
 	}
 
-	if (!skipping) {
-		UpdateUI();
-	}
+	if (!skipping)
+		UpdateUI(false);
 
 	net->Update();
 
@@ -2481,7 +2536,7 @@ bool CGame::Update()
 		infoConsole->GetNewRawLines(lines);
 		for (unsigned int i = 0; i < lines.size(); i++) {
 			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, rawLine.zone);
+			eventHandler.AddConsoleLine(rawLine.text, *rawLine.subsystem);
 		}
 	}
 
@@ -2514,13 +2569,16 @@ bool CGame::DrawWorld()
 	if (drawSky) {
 		sky->Draw();
 	}
+
 	if (drawGround) {
 		{
 		SCOPED_TIMER("ExtraTexture");
 		gd->UpdateExtraTexture();
 		}
 		gd->Draw();
+		treeDrawer->DrawGrass();
 	}
+
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && water->drawSolid) {
 			water->Draw();
@@ -2529,6 +2587,10 @@ bool CGame::DrawWorld()
 
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
+
+	if (drawGround) {
+		gd->DrawTrees();
+	}
 
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
@@ -2541,11 +2603,6 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	if (drawGround) {
-		if (treeDrawer->drawTrees) {
-			treeDrawer->DrawGrass();
-		}
-	}
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && !water->drawSolid) {
 			water->Draw();
@@ -2646,6 +2703,18 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
+	mouse->EmptyMsgQueUpdate();
+
+	if(lastSimFrame!=gs->frameNum) {
+		CInputReceiver::CollectGarbage();
+		if(!skipping)
+			water->Update();
+		lastSimFrame=gs->frameNum;
+	}
+
+	if(!skipping)
+		UpdateUI(true);
+
 	thisFps++;
 
 	ASSERT_UNSYNCED_MODE;
@@ -2691,9 +2760,9 @@ bool CGame::Draw() {
 
 //	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		unsigned startDraw = SDL_GetTicks();
-		gu->timeOffset = ((float)(startDraw - lastUpdate) * 0.001f)
-		                 * (float)(GAME_SPEED * gs->speedFactor);
+		gu->lastFrameStart = SDL_GetTicks();
+		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
@@ -2995,7 +3064,7 @@ void CGame::DrawInputText()
 	const float cw = fontScale * font->CalcCharWidth(c);
 	const float csx = inputTextPosX + (fontScale * caretWidth);
 	glDisable(GL_TEXTURE_2D);
-	const float f = 0.5f * (1.0f + streflop::sin((float)SDL_GetTicks() * 0.015f));
+	const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
 	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + font->GetHeight() * fontScale);
 	glEnable(GL_TEXTURE_2D);
@@ -3154,7 +3223,6 @@ void CGame::SimFrame() {
 			}
 		}
 #endif
-		water->Update();
 	}
 
 	ENTER_SYNCED;
@@ -3751,7 +3819,7 @@ void CGame::ClientReadNet()
 				}
 				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
 				const int mode = inbuf[6];
-				const int msglen = *((short*)(inbuf + 1)) - 7;
+				const int msglen = *((short*)(inbuf + 1)) - 8;
 				const string msg((char*)&inbuf[7], msglen); // allow embedded 0's
 				CLuaHandle::HandleLuaMsg(player, script, mode, msg);
 				AddTraffic(player, packetCode, dataLength);
@@ -4029,13 +4097,17 @@ void CGame::ClientReadNet()
 	return;
 }
 
+#ifdef DIRECT_CONTROL_ALLOWED
+float3 lastDCpos;
+float3 *plastDCpos=NULL;
+#endif
 
-void CGame::UpdateUI()
+void CGame::UpdateUI(bool cam)
 {
 	ASSERT_UNSYNCED_MODE;
 	//move camera if arrow keys pressed
 #ifdef DIRECT_CONTROL_ALLOWED
-	if (gu->directControl) {
+	if (gu->directControl && !cam) {
 		CUnit* owner = gu->directControl;
 
 		std::vector<int> args;
@@ -4043,12 +4115,22 @@ void CGame::UpdateUI()
 		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
 		float3 relPos = owner->localmodel->GetPiecePos(args[0]);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
-		                        + owner->updir    * relPos.y
-		                        + owner->rightdir * relPos.x;
+			+ owner->updir    * relPos.y
+			+ owner->rightdir * relPos.x;
 		pos += UpVector * 7;
-
-		camHandler->GetCurrentController().SetPos(pos);
-	} else
+		//camHandler->GetCurrentController().SetPos(pos); // in case of multithreading, avoid setting the cam from sim thread
+		GML_STDMUTEX_LOCK(pos); // UpdateUI
+		lastDCpos=pos;
+		plastDCpos=&lastDCpos;
+	}
+	if (plastDCpos && cam) {
+		GML_STDMUTEX_LOCK(pos); // UpdateUI
+		if(plastDCpos) {
+			camHandler->GetCurrentController().SetPos(*plastDCpos);
+			plastDCpos=NULL;
+		}
+	}
+	if (!gu->directControl)
 #endif
 	{
 		float cameraSpeed=1;
@@ -4078,73 +4160,82 @@ void CGame::UpdateUI()
 			disableTracker = true;
 		}
 
-		if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
+		if (!cam && disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
 			unitTracker.Disable();
 		}
-		movement.z = cameraSpeed;
-		camHandler->GetCurrentController().KeyMove(movement);
-
+		if(cam) {
+			movement.z = cameraSpeed;
+			camHandler->GetCurrentController().KeyMove(movement);
+		}
 		movement=float3(0,0,0);
 
 		if (( fullscreen && fullscreenEdgeMove) ||
 		    (!fullscreen && windowedEdgeMove)) {
 			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
+			disableTracker = false;
 			if (mouse->lasty < 2){
 				movement.y+=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lasty > (gu->viewSizeY - 2)){
 				movement.y-=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lastx > (screenW - 2)){
 				movement.x+=gu->lastFrameTime;
-				unitTracker.Disable();
+				disableTracker = true;
 			}
 			if (mouse->lastx < 2){
 				movement.x-=gu->lastFrameTime;
+				disableTracker = true;
+			}
+			if (!cam && disableTracker) {
 				unitTracker.Disable();
 			}
 		}
-		movement.z=cameraSpeed;
-		camHandler->GetCurrentController().ScreenEdgeMove(movement);
-
-		if(camMove[4])
-			camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
-		if(camMove[5])
-			camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+		if(cam) {
+			movement.z=cameraSpeed;
+			camHandler->GetCurrentController().ScreenEdgeMove(movement);
+			if(camMove[4])
+				camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
+			if(camMove[5])
+				camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+		}
 	}
 
-	camHandler->GetCurrentController().Update();
+	if(cam)
+		camHandler->GetCurrentController().Update();
 
-	if (chatting && !userWriting) {
-		consoleHistory->AddLine(userInput);
-		string msg = userInput;
-		string pfx = "";
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-			pfx = userInput.substr(0, 2);
-			msg = userInput.substr(2);
+	if(!cam) {
+		if (chatting && !userWriting) {
+			consoleHistory->AddLine(userInput);
+			string msg = userInput;
+			string pfx = "";
+			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+				pfx = userInput.substr(0, 2);
+				msg = userInput.substr(2);
+			}
+			if ((msg[0] == '/') && (msg[1] == '/')) {
+				msg = msg.substr(1);
+			}
+			userInput = pfx + msg;
+			SendNetChat(userInput);
+			chatting=false;
+			userInput="";
+			writingPos = 0;
 		}
-		if ((msg[0] == '/') && (msg[1] == '/')) {
-			msg = msg.substr(1);
-		}
-		userInput = pfx + msg;
-		SendNetChat(userInput);
-		chatting=false;
-		userInput="";
-		writingPos = 0;
-	}
 
-	if (inMapDrawer->wantLabel && !userWriting) {
-		if (userInput.size() > 200) {	//avoid troubles with to long lines
-			userInput = userInput.substr(0, 200);
-			writingPos = (int)userInput.length();
+		if (inMapDrawer->wantLabel && !userWriting) {
+			if (userInput.size() > 200) {	//avoid troubles with to long lines
+				userInput = userInput.substr(0, 200);
+				writingPos = (int)userInput.length();
+			}
+			inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
+			inMapDrawer->wantLabel = false;
+			userInput = "";
+			writingPos = 0;
+			ignoreChar = 0;
 		}
-		inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
-		inMapDrawer->wantLabel = false;
-		userInput = "";
-		writingPos = 0;
-		ignoreChar = 0;
 	}
 }
 
@@ -4235,7 +4326,7 @@ void CGame::DrawDirectControlHud(void)
 			             float3(camera->right.z, camera->up.z, camera->forward.z));
 			glMultMatrixf(m.m);
 		}
-		glTranslatef3(-unit->pos - (unit->speed * gu->timeOffset));
+		glTranslatef3(-unit->drawPos);
 		glDisable(GL_BLEND);
 		unit->currentLOD = 0;
 		unitDrawer->DrawIndividual(unit); // draw the unit
@@ -4355,7 +4446,7 @@ void CGame::DrawDirectControlHud(void)
 
 			glBegin(GL_LINE_STRIP);
 			for(int b=0;b<=80;++b){
-				glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
 			}
 			glEnd();
 
@@ -4369,7 +4460,7 @@ void CGame::DrawDirectControlHud(void)
 
 				glBegin(GL_LINE_STRIP);
 				for(int b=0;b<=80;++b){
-					glVertexf3(pos+(v2*streflop::sin(b*2*PI/80)+v3*streflop::cos(b*2*PI/80))*radius);
+					glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
 				}
 				glEnd();
 			}
@@ -4378,11 +4469,11 @@ void CGame::DrawDirectControlHud(void)
 				glVertexf3(pos);
 				glVertexf3(w->targetPos);
 
-				glVertexf3(pos+(v2*streflop::sin(PI*0.25f)+v3*streflop::cos(PI*0.25f))*radius);
-				glVertexf3(pos+(v2*streflop::sin(PI*1.25f)+v3*streflop::cos(PI*1.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*0.25f)+v3*fastmath::cos(PI*0.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*1.25f)+v3*fastmath::cos(PI*1.25f))*radius);
 
-				glVertexf3(pos+(v2*streflop::sin(PI*-0.25f)+v3*streflop::cos(PI*-0.25f))*radius);
-				glVertexf3(pos+(v2*streflop::sin(PI*-1.25f)+v3*streflop::cos(PI*-1.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*-0.25f)+v3*fastmath::cos(PI*-0.25f))*radius);
+				glVertexf3(pos+(v2*fastmath::sin(PI*-1.25f)+v3*fastmath::cos(PI*-1.25f))*radius);
 			}
 			if((w->targetPos-camera->pos).ANormalize().dot(camera->forward)<0.7f){
 				glVertexf3(w->targetPos);
@@ -4695,6 +4786,8 @@ void CGame::SelectCycle(const string& command)
 {
 	static set<int> unitIDs;
 	static int lastID = -1;
+
+	GML_RECMUTEX_LOCK(sel); // SelectCycle
 
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 

@@ -171,12 +171,6 @@ public:
 	};
 	TerrainType terrainTypes[256];
 
-	bool GetStartPos(int team, float3& pos) const; // FIXME: MapParser duplicate?
-	
-private:
-	std::vector<bool>   havePos;
-	std::vector<float3> startPos;
-
 private:
 	void ReadGlobal();
 	void ReadGui();
@@ -186,7 +180,6 @@ private:
 	void ReadSmf();
 	void ReadSm3();
 	void ReadTerrainTypes();
-	void ReadStartPos();
 
 	LuaTable* mapRoot; // map       parser root table
 	LuaTable* resRoot; // resources parser root table

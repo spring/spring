@@ -18,17 +18,17 @@
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"
+#include "Game/SelectMenu.h"
 #include "Game/PreGame.h"
 #include "Game/Game.h"
 #include "Game/Team.h"
 #include "Game/UI/KeyBindings.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/FileSystem.h"
+#include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
@@ -105,6 +105,10 @@ SpringApp::SpringApp ()
 	FSAA = false;
 
 	signal(SIGABRT, SigAbrtHandler);
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+	extern volatile int multiThreadSim;
+	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
+#endif
 }
 
 /**
@@ -292,7 +296,7 @@ bool SpringApp::Initialize()
 	LuaOpenGL::Init();
 
 	// Create CGameSetup and CPreGame objects
-	CreateGameSetup ();
+	Startup ();
 
 	return true;
 }
@@ -616,6 +620,9 @@ void SpringApp::LoadFonts()
 	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
 	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
 
+	SafeDelete(font);
+	SafeDelete(smallFont);
+
 	try {
 		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
 		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
@@ -804,71 +811,108 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 /**
  * Initializes instance of GameSetup
  */
-void SpringApp::CreateGameSetup()
+void SpringApp::Startup()
 {
 	ENTER_SYNCED;
 
-	if (!startscript.empty()) {
+	LocalSetup* startsetup = 0;
+	startsetup = new LocalSetup();
+	if (!startscript.empty())
+	{
+		CFileHandler fh(startscript);
+		if (!fh.FileExists())
+			throw content_error("Setupscript doesn't exists in given location: "+startscript);
+		
+		std::string buf;
+		if (!fh.LoadStringData(buf))
+			throw content_error("Setupscript cannot be read: "+startscript);
+		startsetup->Init(buf);
+
+		// commandline parameters overwrite setup
+		if (cmdline->result("client"))
+			startsetup->isHost = false;
+		else if (cmdline->result("server"))
+			startsetup->isHost = true;
+
 		CGameSetup* temp = SAFE_NEW CGameSetup();
-		if (!temp->Init(startscript)) {
-			delete temp;
-			temp = 0;
-		}
-		else
+		if (temp->Init(startscript))
 		{
 			gameSetup = const_cast<const CGameSetup*>(temp);
 			gs->LoadFromSetup(gameSetup);
-			gu->LoadFromSetup(gameSetup);
 		}
-	}
-
-	if (!gameSetup && demofile.empty()) {
-		gs->noHelperAIs = !!configHandler.GetInt("NoHelperAIs", 0);
-		const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
-		const string luaRulesStr = configHandler.GetString("LuaRules", "1");
-		gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-		gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-		if (gs->useLuaGaia) {
-			gs->gaiaTeamID = gs->activeTeams;
-			gs->gaiaAllyTeamID = gs->activeAllyTeams;
-			gs->activeTeams++;
-			gs->activeAllyTeams++;
-			CTeam* team = gs->Team(gs->gaiaTeamID);
-			team->color[0] = 255;
-			team->color[1] = 255;
-			team->color[2] = 255;
-			team->color[3] = 255;
-			team->gaia = true;
-			gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
+		else
+		{
+			throw content_error("Setupscript parse error: "+startscript);
 		}
-	}
-
-	ENTER_MIXED;
-
-	bool server = true;
-
-	if (!demofile.empty()) {
-		server = false;
-	}
-	else if (gameSetup) {
-		// first real player is demo host
-		server = (gameSetup->myPlayerNum == gameSetup->numDemoPlayers) && !cmdline->result("client");
-	}
-	else {
-		server = !cmdline->result("client") || cmdline->result("server");
-	}
-
 #ifdef SYNCDEBUG
-	// initialize sync debugger as soon as we know whether we will be server
-	CSyncDebugger::GetInstance()->Initialize(server);
+		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost);
 #endif
-
-	if (!demofile.empty()) {
-		pregame = SAFE_NEW CPreGame(false, demofile, "");
-	} else {
-		pregame = SAFE_NEW CPreGame(server, "", savefile);
+		pregame = SAFE_NEW CPreGame(startsetup, "", "");
+	}
+	else if (!demofile.empty())
+	{
+		startsetup->isHost = false;
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(false);
+#endif
+		pregame = SAFE_NEW CPreGame(startsetup, demofile, "");
+	}
+	else if (!savefile.empty())
+	{
+		startsetup->isHost = false;
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(false);
+#endif
+		pregame = SAFE_NEW CPreGame(startsetup, "", savefile);
+	}
+	else
+	{
+		bool server = !cmdline->result("client") || cmdline->result("server");
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(server);
+#endif
+		activeController = new SelectMenu(server);
 	}
 }
+
+
+
+
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+volatile int multiThreadSim;
+volatile int startsim;
+
+int SpringApp::Sim() {
+	while(keeprunning && !startsim)
+		SDL_Delay(100);
+//		boost::thread::yield();
+	while(keeprunning) {
+		if(!multiThreadSim) {
+//			startsim=0;
+			while(!multiThreadSim && keeprunning)
+				SDL_Delay(100);
+//			simBarrier.wait();
+//			startsim=1;
+		}
+		else if (activeController) {
+			GML_STDMUTEX_LOCK(sim);
+
+			gmlProcessor.ExpandAuxQueue();
+			if (!activeController->Update()) {
+				return 0;
+			}
+			gmlProcessor.GetQueue();
+		}
+//		while(!startsim)
+//			SDL_Delay(100);
+		boost::thread::yield();
+	}
+	return 1;
+}
+#endif
+
+
+
 
 /**
  * @return return code of activecontroller draw function
@@ -881,9 +925,8 @@ int SpringApp::Update ()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
 	mouseInput->Update();
-#endif
+
 	int ret = 1;
 	if (activeController) {
 #if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
@@ -897,11 +940,19 @@ int SpringApp::Update ()
 			if(frame==gu->drawFrame) { // only draw if it was not done in parallel with sim
 #	endif
 #else
-				if(!gs->frameNum) {
-					mouseInput->Update();
+				if(multiThreadSim) {
+					if(!gs->frameNum) {
+						GML_STDMUTEX_LOCK(sim);
+
+						activeController->Update();
+						if(gs->frameNum)
+							startsim=1;
+					}
+				}
+				else {
+					GML_STDMUTEX_LOCK(sim);
+
 					activeController->Update();
-					if(gs->frameNum)
-						startsim=1;
 				}
 #endif
 				gu->drawFrame++;
@@ -910,7 +961,7 @@ int SpringApp::Update ()
 				}
 				ret = activeController->Draw();
 #if defined(USE_GML) && GML_ENABLE_SIMLOOP
-				gmlProcessor.PumpAux(); 
+				gmlProcessor.PumpAux();
 #endif
 #if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
 #	if defined(USE_GML) && GML_ENABLE_SIMDRAW
@@ -929,27 +980,6 @@ int SpringApp::Update ()
 	return ret;
 }
 
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-int SpringApp::Sim() {
-	while(keeprunning && !startsim)
-		boost::thread::yield();
-	unsigned lastSim = SDL_GetTicks();
-	while(keeprunning) {
-		mouseInput->Update();
-		if (activeController) {
-			if (!activeController->Update()) {
-				return 0;
-			}
-			gmlProcessor.GetQueue();
-		}
-		unsigned lastSimDiff=SDL_GetTicks()-lastSim;
-		if(lastSimDiff<=10)
-			SDL_Delay(10-lastSimDiff);
-		lastSim = SDL_GetTicks();
-	}
-	return 1;
-}
-#endif
 
 /**
  * Tests SDL keystates and sets values
@@ -1012,6 +1042,8 @@ int SpringApp::Run (int argc, char *argv[])
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
+					GML_STDMUTEX_LOCK(sim);
+
 					screenWidth = event.resize.w;
 					screenHeight = event.resize.h;
 #ifndef WIN32
@@ -1025,6 +1057,8 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_VIDEOEXPOSE: {
+					GML_STDMUTEX_LOCK(sim);
+
 					// re-initialize the stencil
 					glClearStencil(0);
 					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();

@@ -6,6 +6,7 @@
 
 // from unitsync.cpp:
 
+Export(const char*) GetNextError();
 Export(const char*) GetSpringVersion();
 
 Export(void) Message(const char* p_szMessage);
@@ -13,21 +14,23 @@ Export(void) Message(const char* p_szMessage);
 Export(int) Init(bool isServer, int id);
 Export(void) UnInit();
 
+Export(const char*) GetWritableDataDirectory();
+
 Export(int) ProcessUnits(void);
 Export(int) ProcessUnitsNoChecksum(void);
 Export(const char*) GetCurrentList();
 
-Export(void) AddClient(int id, const char *unitList);
-Export(void) RemoveClient(int id);
+//Export(void) AddClient(int id, const char *unitList);
+//Export(void) RemoveClient(int id);
 
-Export(const char*) GetClientDiff(int id);
-Export(void) InstallClientDiff(const char *diff);
+//Export(const char*) GetClientDiff(int id);
+//Export(void) InstallClientDiff(const char *diff);
 
 Export(int) GetUnitCount();
 Export(const char*) GetUnitName(int unit);
 Export(const char*) GetFullUnitName(int unit);
-Export(int) IsUnitDisabled(int unit);
-Export(int) IsUnitDisabledByClient(int unit, int clientId);
+//Export(int) IsUnitDisabled(int unit);
+//Export(int) IsUnitDisabledByClient(int unit, int clientId);
 
 Export(void) AddArchive(const char* name);
 Export(void) AddAllArchives(const char* root);

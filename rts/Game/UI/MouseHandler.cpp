@@ -267,8 +267,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	std::deque<CInputReceiver*>::iterator ri;
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-			if ((*ri) && (*ri)->MousePress(x, y, button)) {
-				activeReceiver = *ri;
+			CInputReceiver* recv=*ri;
+			if (recv && recv->MousePress(x, y, button)) {
+				activeReceiver = recv;
 				return;
 			}
 		}
@@ -287,6 +288,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
+	GML_RECMUTEX_LOCK(sel); // MouseRelease
+
 	if (button > NUM_BUTTONS)
 		return;
 
@@ -437,7 +440,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				sound->PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
-			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,20,false);
+			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
 			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
 				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
 					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit) != selectedUnits.selectedUnits.end()) {
@@ -571,15 +574,18 @@ void CMouseHandler::WarpMouse(int x, int y)
 	}
 }
 
-
+// CALLINFO:
+// LuaUnsyncedRead::GetCurrentTooltip
+// CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
 std::string CMouseHandler::GetCurrentTooltip(void)
 {
 	std::string s;
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		if ((*ri) && (*ri)->IsAbove(lastx, lasty)) {
-			s = (*ri)->GetTooltip(lastx, lasty);
+		CInputReceiver* recv=*ri;
+		if (recv && recv->IsAbove(lastx, lasty)) {
+			s = recv->GetTooltip(lastx, lasty);
 			if (s != "") {
 				return s;
 			}
@@ -591,11 +597,13 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
+	GML_RECMUTEX_LOCK(sel); // anti deadlock
 	GML_RECMUTEX_LOCK(quad); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
+
 	const float range = (gu->viewRange * 1.4f);
 	CUnit* unit = NULL;
 //	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
-	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, 20, true);
+	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
 	CFeature* feature = NULL;
 //	GML_RECMUTEX_LOCK(feat); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);

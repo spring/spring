@@ -71,17 +71,20 @@ void UnixFileSystemHandler::InitVFS() const
  *
  * Locates data directories and initializes the VFS.
  */
-UnixFileSystemHandler::UnixFileSystemHandler(bool verbose, bool initialize) :
+UnixFileSystemHandler::UnixFileSystemHandler(bool verbose) :
 #ifndef _WIN32
 		FileSystemHandler('/')
 #else
 		FileSystemHandler('\\')
 #endif
 {
-	if (initialize) {
-		locater.LocateDataDirs();
-		InitVFS();
-	}
+}
+
+
+void UnixFileSystemHandler::Initialize()
+{
+	locater.LocateDataDirs();
+	InitVFS();
 }
 
 

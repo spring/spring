@@ -18,6 +18,7 @@ class CWeapon;
 class CFeature;
 class CProjectile;
 struct Command;
+class CLogSubsystem;
 
 
 class CEventHandler
@@ -95,7 +96,7 @@ class CEventHandler
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
-	
+
 	public:
 		// Unsynced events
 		void Update();
@@ -113,7 +114,7 @@ class CEventHandler
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const std::string& msg, int zone);
+		bool AddConsoleLine(const std::string& msg, CLogSubsystem& zone);
 
 		bool GroupChanged(int groupID);
 
@@ -151,7 +152,7 @@ class CEventHandler
 			UNSYNCED_BIT = (1 << 1), // delivers unsynced information
 			CONTROL_BIT  = (1 << 2)  // controls synced information
 		};
-		
+
 		class EventInfo {
 			public:
 				EventInfo() : list(NULL), propBits(0) {}
@@ -163,7 +164,7 @@ class CEventHandler
 				inline EventClientList* GetList() const { return list; }
 				inline int GetPropBits() const { return propBits; }
 				inline bool HasPropBit(int bit) const { return propBits & bit; }
-				
+
 			private:
 				std::string name;
 				EventClientList* list;

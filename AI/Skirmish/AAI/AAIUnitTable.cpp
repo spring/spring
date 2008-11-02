@@ -18,7 +18,6 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 	this->bt = bt;
 	this->cb = ai->cb;
 
-//	units = new AAIUnit[cfg->MAX_UNITS];
 	units.resize(cfg->MAX_UNITS);
 
 	// fill buildtable 
@@ -30,6 +29,10 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 		units[i].cons = 0;
 		units[i].status = UNIT_KILLED;
 	}
+
+	activeScouts = futureScouts = 0;
+	activeBuilders = futureBuilders = 0;
+	activeFactories = futureFactories = 0;
 
 	cmdr = -1;
 }
@@ -129,14 +132,14 @@ void AAIUnitTable::AddConstructor(int unit_id, int def_id)
 
 	if(builder)
 	{
-		--ai->futureBuilders;
-		++ai->activeBuilders;
+		--futureBuilders;
+		++activeBuilders;
 	}
 
 	if(factory && bt->IsStatic(def_id))
 	{
-		--ai->futureFactories;
-		++ai->activeFactories;
+		--futureFactories;
+		++activeFactories;
 
 		// remove future ressource demand now factory has been finished
 		ai->execute->futureRequestedMetal -= bt->units_static[def_id].efficiency[0];
@@ -147,10 +150,10 @@ void AAIUnitTable::AddConstructor(int unit_id, int def_id)
 void AAIUnitTable::RemoveConstructor(int unit_id, int def_id)
 {
 	if(units[unit_id].cons->builder)
-		ai->activeBuilders -= 1;
+		activeBuilders -= 1;
 
 	if(units[unit_id].cons->factory && bt->IsStatic(def_id))
-		ai->activeFactories -= 1;
+		activeFactories -= 1;
 	
 	// decrease number of available builders for all buildoptions of the builder
 	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
@@ -224,8 +227,22 @@ void AAIUnitTable::AddExtractor(int unit_id)
 
 void AAIUnitTable::RemoveExtractor(int unit_id)
 {
-	// delete mex from list
 	extractors.erase(unit_id);
+}
+
+void AAIUnitTable::AddScout(int unit_id)
+{
+	++activeScouts;
+	--futureScouts;
+
+	scouts.insert(unit_id);
+}
+
+void AAIUnitTable::RemoveScout(int unit_id)
+{
+	--activeScouts;
+
+	scouts.erase(unit_id);
 }
 
 void AAIUnitTable::AddPowerPlant(int unit_id, int def_id)
@@ -320,14 +337,15 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 	return 0;
 }
 
-AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool commander)
+AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool commander, float *min_dist)
 {	
-	float min_dist = 1000000, my_dist;
+	float my_dist;
 	AAIConstructor *best_builder = 0, *builder;
 	float3 builder_pos;
 	bool suitable;
 
-	int continent = ai->map->GetContinentID(&pos);
+	int continent = ai->map->GetContinentID(pos);
+	*min_dist = 100000.0f;
 
 	// look for idle builder
 	for(set<int>::iterator i = constructors.begin(); i != constructors.end(); ++i)
@@ -356,15 +374,15 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 pos, bool 
 				// filter out commander
 				if(suitable && ( commander || !bt->IsCommander(builder->def_id) ) )
 				{
-					my_dist = fastmath::sqrt( (builder_pos.x - pos.x) * (builder_pos.x - pos.x) + (builder_pos.z - pos.z) * (builder_pos.z - pos.z) );
+					my_dist = fastmath::sqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
 					
 					if(bt->unitList[builder->def_id-1]->speed > 0)
 						my_dist /= bt->unitList[builder->def_id-1]->speed;
 
-					if(my_dist < min_dist)
+					if(my_dist < *min_dist)
 					{
 						best_builder = builder;
-						min_dist = my_dist;
+						*min_dist = my_dist;
 					}
 				}
 			}

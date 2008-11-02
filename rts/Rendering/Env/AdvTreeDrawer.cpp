@@ -771,7 +771,9 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 
 void CAdvTreeDrawer::DrawGrass(void)
 {
-	grassDrawer->Draw();
+	if (drawTrees) {
+		grassDrawer->Draw();
+	}
 }
 
 void CAdvTreeDrawer::ResetPos(const float3& pos)

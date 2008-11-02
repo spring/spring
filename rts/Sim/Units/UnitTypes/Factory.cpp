@@ -59,11 +59,13 @@ CFactory::CFactory()
 {
 }
 
+
 CFactory::~CFactory()
 {
-	if(curBuild){
-		curBuild->KillUnit(false,true,0);
-		curBuild=0;
+	// if uh == NULL then all pointers to units should be considered dangling pointers
+	if (uh && curBuild) {
+		curBuild->KillUnit(false, true, 0);
+		curBuild = 0;
 	}
 }
 
@@ -159,26 +161,26 @@ void CFactory::Update()
 			// factory not under construction and
 			// nanolathing unit: continue building
 			lastBuild = gs->frameNum;
-	
+
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
 			CMatrix44f mat = localmodel->GetPieceMatrix(buildPiece);
 			const int h = GetHeadingFromVector(mat[2], mat[10]);
-	
+
 			// rotate unit nanoframe with platform
 			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;
-	
+
 			const float3 buildPos = CalcBuildPos(buildPiece);
 			curBuild->pos = buildPos;
-	
+
 			if (curBuild->floatOnWater) {
 				curBuild->pos.y  = ground->GetHeight(buildPos.x, buildPos.z);
 				curBuild->pos.y -= curBuild->unitDef->waterline;
 			}
 			curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
-	
+
 			const CCommandQueue& queue = commandAI->commandQue;
-	
+
 			if(!queue.empty() && (queue.front().id == CMD_WAIT)) {
 				curBuild->AddBuildPower(0, this);
 			} else {
@@ -347,7 +349,7 @@ void CFactory::CreateNanoParticle(void)
 										 + (updir    * relWeaponFirePos.y)
 										 + (rightdir * relWeaponFirePos.x);
 			float3 dif = (curBuild->midPos - weaponPos);
-			const float l = dif.Length();
+			const float l = fastmath::sqrt2(dif.SqLength());
 			dif /= l;
 			dif += gu->usRandVector() * 0.15f;
 			float3 color = unitDef->nanoColor;

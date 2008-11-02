@@ -322,7 +322,9 @@ CProjectileHandler::CProjectileHandler()
 		perlinFB = instantiate_fb(512, 512, FBO_NEED_COLOR);
 		if (perlinFB && perlinFB->valid()) {
 			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
+			perlinFB->select();
 			drawPerlinTex=perlinFB->checkFBOStatus();
+			perlinFB->deselect();
 		}
 	}
 	else {
@@ -362,9 +364,9 @@ CProjectileHandler::~CProjectileHandler()
 		delete fpl;
 	}
 	ph=0;
-	delete perlinFB;
 	delete textureAtlas;
 	delete groundFXAtlas;
+	delete perlinFB;
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer *s)
@@ -404,6 +406,8 @@ void CProjectileHandler::Update()
 
 	SCOPED_TIMER("Projectile handler");
 
+	GML_UPDATE_TICKS();
+
 	Projectile_List::iterator psi = ps.begin();
 	while (psi != ps.end()) {
 		CProjectile* p = *psi;
@@ -427,6 +431,7 @@ void CProjectileHandler::Update()
 			delete p;
 		} else {
 			p->Update();
+			GML_GET_TICKS(p->lastProjUpdate);
 			++psi;
 		}
 	}
@@ -578,11 +583,13 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* pro = *psi;
 
+		pro->UpdateDrawPos();
+
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
 			(pro->owner && gs->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner;
-			CUnit* trans = owner? (CUnit*) owner->transporter: 0;
+			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
 			bool stunned = owner? owner->stunned: false;
 
 			if (owner && trans && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
@@ -712,7 +719,7 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
-	GML_RECMUTEX_LOCK(proj); // AddProjectile
+//	GML_RECMUTEX_LOCK(proj); // AddProjectile
 
 	ps.push_back(p);
 
@@ -750,7 +757,8 @@ void CProjectileHandler::CheckUnitCol()
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* p = (*psi);
-		const float3 ppos = p->pos;
+		const float3 ppos0 = p->pos;
+		const float3 ppos1 = p->pos + p->speed;
 
 		if (p->checkCol && !p->deleteMe) {
 			float speedf = p->speed.Length();
@@ -780,7 +788,7 @@ void CProjectileHandler::CheckUnitCol()
 					}
 				}
 
-				if (CCollisionHandler::DetectHit(unit, p->pos, p->pos + p->speed, &q)) {
+				if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
 					// this projectile won't reach the raytraced surface impact pos
 					// until Update() is called (right after we return, same frame)
 					// which is a problem when dealing with fast low-AOE projectiles
@@ -788,11 +796,16 @@ void CProjectileHandler::CheckUnitCol()
 					// volume, so smuggle a bit ("rolling back" its pos in Update()
 					// and waiting for the next-frame CheckUnitCol() is problematic
 					// for noExplode projectiles)
-					const float3& pimp = (q.b0)? q.p0: q.p1;
 
-					p->pos = (raytraced)? pimp: p->pos;
+					// const float3& pimpp = (q.b0)? q.p0: q.p1;
+					const float3 pimpp =
+						(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
+						(q.b0        )? (q.p0 + ppos1) * 0.5f:
+						                (ppos0 + q.p1) * 0.5f;
+
+					p->pos = (raytraced)? pimpp: ppos0;
 					p->Collision(unit);
-					p->pos = (raytraced)? ppos: p->pos;
+					p->pos = (raytraced)? ppos0: p->pos;
 					break;
 				}
 			}
@@ -809,10 +822,15 @@ void CProjectileHandler::CheckUnitCol()
 						continue;
 					}
 
-					if (CCollisionHandler::DetectHit(feature, p->pos, p->pos + p->speed, &q)) {
-						p->pos = (raytraced)? q.p0: p->pos;
+					if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
+						const float3 pimpp =
+							(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
+							(q.b0        )? (q.p0 + ppos1) * 0.5f:
+							                (ppos0 + q.p1) * 0.5f;
+
+						p->pos = (raytraced)? pimpp: ppos0;
 						p->Collision(feature);
-						p->pos = (raytraced)? ppos: p->pos;
+						p->pos = (raytraced)? ppos0: p->pos;
 						break;
 					}
 				}
@@ -825,7 +843,7 @@ void CProjectileHandler::CheckUnitCol()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
-	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
+//	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
 	groundFlashes.push_back(flash);
 }
 

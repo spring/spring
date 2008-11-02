@@ -46,7 +46,7 @@ class CPieceProjectile: public CProjectile
 	int colorTeam;
 	
 public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int flags, CUnit* owner, float radius);
+	CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int flags, CUnit* owner, float radius GML_PARG_H);
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();

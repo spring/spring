@@ -32,10 +32,13 @@
 // If a function is not yet supported by GML, a compile error pointing to 'GML_FUNCTION_NOT_IMPLEMENTED' will occur
 
 #include "StdAfx.h"
+
 #ifdef USE_GML
 #include "gmlcls.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
+ConfigHandler* ConfigHandler::instance = NULL;
+std::string ConfigHandler::configSource;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -55,9 +58,13 @@ __thread int gmlThreadNumber=0;
 #else
 int gmlThreadNumber=0;
 #endif
+
+int gmlThreadCountOverride=configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
-int gmlThreadCountOverride=0; //configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
 int gmlItemsConsumed=0;
+
+int gmlNextTickUpdate=0;
+unsigned gmlCurrentTicks;
 
 // gmlCPUCount returns the number of CPU cores
 // it was taken from the latest version of boost
@@ -96,6 +103,14 @@ unsigned gmlCPUCount() {
 #	endif
 #endif
 }
+
+const char *gmlFunctionNames[512];
+inline int gmlResetNames() {
+    for(int i=0; i<512; ++i)
+        gmlFunctionNames[i]="";
+    return 0;
+}
+int gmlNamesDummy=gmlResetNames();
 
 // cache maps for gmlInit
 std::map<GLenum,GLint> gmlGetIntegervCache;
@@ -186,26 +201,31 @@ boost::mutex mapmutex;
 boost::mutex groupmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
+boost::mutex posmutex;
+boost::mutex rendermutex;
+boost::mutex simmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
-boost::recursive_mutex quadmutex;
 boost::recursive_mutex selmutex;
-boost::recursive_mutex luamutex;
+boost::recursive_mutex &luamutex=selmutex;
+boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
 boost::recursive_mutex projmutex;
 boost::recursive_mutex grassmutex;
 boost::recursive_mutex guimutex;
+boost::recursive_mutex filemutex;
+boost::recursive_mutex &qnummutex=quadmutex;
 #endif
 
 // GMLqueue implementation
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),
 ClientState(0),
-CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL), 
-EFPstride(0), EFPpointer(NULL), 
-IPtype(0), IPstride(0), IPpointer(NULL), 
-NPtype(0), NPstride(0), NPpointer(NULL), 
+CPsize(0), CPtype(0), CPstride(0), CPpointer(NULL),
+EFPstride(0), EFPpointer(NULL),
+IPtype(0), IPstride(0), IPpointer(NULL),
+NPtype(0), NPstride(0), NPpointer(NULL),
 TCPsize(0), TCPtype(0), TCPstride(0), TCPpointer(NULL),
 ArrayBuffer(0), ElementArrayBuffer(0), PixelPackBuffer(0),PixelUnpackBuffer(0)
 {
@@ -630,7 +650,9 @@ void gmlQueue::SyncRequest() {
 		glDrawArrays(GML_D(name,A),0,GML_D(name,B));\
 	GML_NEXT_SIZE(name)
 
-
+const char *gmlNOPDummy=(gmlFunctionNames[0]="gmlNOP");
+#define GML_QUOTE(x) #x
+#define GML_MAKENAME(name) EXTERN const char *gml##name##Dummy=(gmlFunctionNames[gml##name##Enum]=GML_QUOTE(gml##name));
 #include "gmlfun.h"
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
@@ -916,22 +938,24 @@ void gmlQueue::Execute() {
 }
 
 void gmlQueue::ExecuteDebug() {
-	int procs=0;
+//	int procs=0;
 	BYTE *p=Read;
 	BYTE *e=ReadPos;
 	BYTE *ptr=NULL;
 
 	while(p<e) {
 		if(*(int *)p!=0)
-			logOutput.Print("GML error: OpenGL call #%d in SimFrame()",*(int *)p);
+			logOutput.Print("GML error: Sim thread called %s",gmlFunctionNames[*(int *)p]);
 		QueueHandler(p,ptr);
-		++procs;
+//		++procs;
 	}
-	if(procs>1 || (procs==1 && *(int *)Read!=0))
-		logOutput.Print("GML error: %d OpenGL calls detected in SimFrame()",procs);
+//	if(procs>1 || (procs==1 && *(int *)Read!=0))
+//		logOutput.Print("GML error: %d OpenGL calls detected in SimFrame()",procs);
 }
 
 #include "gmlsrv.h"
+class CUnit;
+gmlClientServer<void, int,CUnit*> gmlProcessor;
 
 // ExecuteSynced - executes all GL commands in the current read queue.
 // Execution is synced (this means it will stop at certain points

@@ -211,36 +211,11 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection))
+	if(groundDecals && !(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
-	ph->DrawGroundFlashes();
-	if(treeDrawer->drawTrees){
-		if(DrawExtraTex()){
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB,GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB,GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-			glBindTexture(GL_TEXTURE_2D, infoTex);
-			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
-		treeDrawer->Draw(drawWaterReflection || drawUnitReflection);
-		if(DrawExtraTex()){
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-			glDisable(GL_TEXTURE_GEN_S);
-			glDisable(GL_TEXTURE_GEN_T);
-			glDisable(GL_TEXTURE_2D);
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
+		ph->DrawGroundFlashes();
+		glDepthMask(1);
 	}
-	
-	glDisable(GL_ALPHA_TEST);
 }
 
 const int maxQuadDepth = 4;

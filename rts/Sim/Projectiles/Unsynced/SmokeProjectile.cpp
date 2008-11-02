@@ -41,7 +41,7 @@ CSmokeProjectile::CSmokeProjectile()
 	synced=false;
 }
 
-void CSmokeProjectile::Init(const float3& pos, CUnit *owner)
+void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
 {
 	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
 
@@ -51,11 +51,11 @@ void CSmokeProjectile::Init(const float3& pos, CUnit *owner)
 	if(!owner)
 		alwaysVisible=true;
 
-	CProjectile::Init(pos, owner);
+	CProjectile::Init(pos, owner GML_PARG_P);
 }
 
-CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
-: CProjectile(pos, speed, owner, false),
+CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C)
+: CProjectile(pos, speed, owner, false GML_PARG_P),
 	color(color),
 	age(0),
 	startSize(startSize),
@@ -108,12 +108,11 @@ void CSmokeProjectile::Draw()
 	//float xmod=0.125f+(float(int(frame%6)))/16;
 	//float ymod=(int(frame/6))/16.0f;
 
-	const float3 interPos(pos+speed*gu->timeOffset);
 	const float interSize=size+sizeExpansion*gu->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
-	va->AddVertexTC(interPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
-	va->AddVertexTC(interPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
+	va->AddVertexTC(drawPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(drawPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
+	va->AddVertexTC(drawPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
+	va->AddVertexTC(drawPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
 }

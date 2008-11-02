@@ -1,11 +1,11 @@
 #include "StdAfx.h"
-#include "mmgr.h"
 #include "Archive7Zip.h"
-
 #include <algorithm>
+#include <stdexcept>
 #include <string.h>
-
 #include "Util.h"
+#include "mmgr.h"
+
 
 // Most of this code is taken from 7zMain.c
 
@@ -96,7 +96,7 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 
 	// Figure out the file index
 	std::string fileName = StringToLower(fName);
-	
+
 	if (fileData.find(fileName) == fileData.end())
 		return NULL;
 
@@ -105,13 +105,13 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 	// Get 7zip to decompress it
 	size_t offset;
 	size_t outSizeProcessed;
-	
+
 	SZ_RESULT res;
 
 	// We don't really support solid archives anyway, so these can be reset for each file
-	UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0) 
-	Byte *outBuffer = 0; // it must be 0 before first call for each new archive. 
-	size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0) 
+	UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0)
+	Byte *outBuffer = 0; // it must be 0 before first call for each new archive.
+	size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0)
 
 	res = SzExtract(&archiveStream.InStream, &db, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
 
@@ -120,7 +120,7 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 		of = SAFE_NEW ABOpenFile_t;
 		of->pos = 0;
 		of->size = outSizeProcessed;
-		of->data = (char*)malloc(of->size); 
+		of->data = (char*)malloc(of->size);
 
 		memcpy(of->data, outBuffer + offset, outSizeProcessed);
 	}
@@ -148,6 +148,9 @@ int CArchive7Zip::FindFiles(int cur, std::string* name, int* size)
 		cur = curSearchHandle;
 		searchHandles[cur] = fileData.begin();
 	}
+
+	if (searchHandles.find(cur) == searchHandles.end())
+		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchive7Zip::FindFiles.");
 
 	if (searchHandles[cur] == fileData.end()) {
 		searchHandles.erase(cur);

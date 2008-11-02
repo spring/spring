@@ -12,7 +12,7 @@ namespace netcode
 class UnpackPacket
 {
 public:
-	UnpackPacket(boost::shared_ptr<const RawPacket>);
+	UnpackPacket(boost::shared_ptr<const RawPacket>, unsigned skipBytes = 0);
 	
 	template <typename T>
 	void operator>>(T& t) {t = *(T*)(pckt->data+pos); pos += sizeof(T);};

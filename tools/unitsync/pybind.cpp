@@ -516,6 +516,8 @@ static PyObject *unitsync_SizeArchiveFile(PyObject *self, PyObject *args)
 ////////////////////////////////////////////////////////////
 ////////// Functions not in other bindings (TODO)
 
+// GetWritableDataDirectory implements half of this now in C interface
+
 static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
 {
 	// unitsync.GetDataDirectories(bool write = False)

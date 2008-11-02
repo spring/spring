@@ -64,8 +64,8 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool synced, int ttl):
-	CProjectile(pos, speed, owner, synced, true),
+		bool synced, int ttl GML_PARG_C):
+	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
@@ -291,7 +291,6 @@ bool CWeaponProjectile::TraveledRange()
 
 void CWeaponProjectile::DrawUnitPart()
 {
-	float3 interPos = pos + speed * gu->timeOffset;
 	float3 dir(speed);
 	dir.Normalize();
 	glPushMatrix();
@@ -305,7 +304,7 @@ void CWeaponProjectile::DrawUnitPart()
 	rightdir.Normalize();
 	float3 updir(rightdir.cross(dir));
 
-	CMatrix44f transMatrix(interPos,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
 //	glCallList(modelDispList);

@@ -21,9 +21,6 @@ AAIBrain::AAIBrain(AAI *ai)
 	freeBaseSpots = false;
 	expandable = true;
 
-	land_sectors = 0;
-	water_sectors = 0;
-
 	// initialize random numbers generator
 	srand ( time(NULL) );
 
@@ -261,37 +258,45 @@ bool AAIBrain::RessourcesForConstr(int unit, int wokertime)
 
 void AAIBrain::AddSector(AAISector *sector)
 {
-	if(sector->water_ratio < 0.4)
-		++land_sectors;
-	else if(sector->water_ratio < 0.6)
-	{
-		++land_sectors;
-		++water_sectors;
-	}
-	else
-		++water_sectors;
-
 	sectors[0].push_back(sector);
-	
+
 	sector->SetBase(true);
+
+	// update base land/water ratio
+	baseLandRatio = 0;
+	baseWaterRatio = 0;
+
+	for(list<AAISector*>::iterator s = sectors[0].begin(); s != sectors[0].end(); ++s)
+	{
+		baseLandRatio += (*s)->GetFlatRatio();
+		baseWaterRatio += (*s)->GetWaterRatio();
+	}
+
+	baseLandRatio /= (float)sectors[0].size();
+	baseWaterRatio /= (float)sectors[0].size();
 }
 
 void AAIBrain::RemoveSector(AAISector *sector)
 {
-	if(sector->water_ratio < 0.4)
-		--land_sectors;
-	else if(sector->water_ratio < 0.6)
-	{
-		--land_sectors;
-		--water_sectors;
-	}
-	else
-		--water_sectors;
-
-
 	sectors[0].remove(sector);
 	
 	sector->SetBase(false);
+
+	// update base land/water ratio
+	baseLandRatio = 0;
+	baseWaterRatio = 0;
+
+	if(sectors[0].size() > 0)
+	{
+		for(list<AAISector*>::iterator s = sectors[0].begin(); s != sectors[0].end(); ++s)
+		{
+			baseLandRatio += (*s)->GetFlatRatio();
+			baseWaterRatio += (*s)->GetWaterRatio();
+		}
+
+		baseLandRatio /= (float)sectors[0].size();
+		baseWaterRatio /= (float)sectors[0].size();
+	}
 }
 
 
@@ -398,12 +403,42 @@ void AAIBrain::UpdateNeighbouringSectors()
 bool AAIBrain::SectorInList(list<AAISector*> mylist, AAISector *sector)
 {
 	// check if sector already added to list
-	for(list<AAISector*>::iterator t = mylist.begin(); t != mylist.end(); t++)
+	for(list<AAISector*>::iterator t = mylist.begin(); t != mylist.end(); ++t)
 	{
 		if(*t == sector)
 			return true;
 	}
 	return false;
+}
+
+float AAIBrain::GetBaseBuildspaceRatio(unsigned int building_move_type)
+{
+	if(building_move_type & MOVE_TYPE_STATIC_LAND)
+		return baseLandRatio;
+	else if(building_move_type & MOVE_TYPE_STATIC_WATER)
+		return baseWaterRatio;
+	else
+		return 1.0f;
+}
+
+bool AAIBrain::CommanderAllowedForConstructionAt(AAISector *sector, float3 *pos)
+{
+	// commander is always allowed in base
+	if(sector->distance_to_base <= 0)
+		return true;
+	// allow construction close to base for small bases 
+	else if(sectors[0].size() < 3 && sector->distance_to_base <= 1)
+		return true;
+	// allow construction on islands close to base on water maps
+	else if(map->map_type == WATER_MAP && cb->GetElevation(pos->x, pos->z) >= 0 && sector->distance_to_base <= 3)
+		return true;
+	else 
+		return false;
+}
+
+bool AAIBrain::MexConstructionAllowedInSector(AAISector *sector)
+{
+	return sector->freeMetalSpots && sector->enemy_structures <= 0  && sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 0.5 && sector->threat <= 0;
 }
 
 bool AAIBrain::ExpandBase(SectorType sectorType)
@@ -420,9 +455,9 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 
 	int max_search_dist = 1;
 
-	// if aai is looking for a water sector to expand into ocean, allow bigger serach_dist
-	if(sectorType == WATER_SECTOR &&  water_sectors == 0 && land_sectors > 1)
-		max_search_dist = 2;
+	// if aai is looking for a water sector to expand into ocean, allow greater search_dist
+	if(sectorType == WATER_SECTOR &&  baseWaterRatio < 0.1)
+		max_search_dist = 3;
 
 	for(int search_dist = 1; search_dist <= max_search_dist; ++search_dist)
 	{
@@ -454,16 +489,21 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				}
 				else if(sectorType == WATER_SECTOR)
 				{
-					my_rating += 8.0f * (*t)->water_ratio;
-					my_rating /= dist;
-
+					
 					// check for continent size (to prevent aai to expand into little ponds instead of big ocean)
-					if((*t)->water_ratio > 0.3 && !(*t)->ConnectedToOcean())
+					if((*t)->water_ratio > 0.1 &&  (*t)->ConnectedToOcean())
+					{
+						my_rating += 8.0f * (*t)->water_ratio;
+						my_rating /= dist;	
+					}
+					else
 						my_rating = 0;
 				}
-				else
-					my_rating = 0;
-
+				else // LAND_WATER_SECTOR
+				{
+					my_rating += ((*t)->flat_ratio + (*t)->water_ratio) * 8.0f;
+					my_rating /= dist;
+				}
 			
 				// choose higher rated sector
 				if(my_rating > best_rating)
@@ -482,9 +522,15 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
-			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
+		{
+			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
+		}
 		else
-			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i \n\n", best_sector->x, best_sector->y, sectors[0].size());
+		{
+			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
+		}
 
 		// update neighbouring sectors
 		UpdateNeighbouringSectors();
@@ -675,13 +721,13 @@ void AAIBrain::BuildUnits()
 	// todo: improve selection
 	category = UNKNOWN;
 
-	MapType mapType = map->mapType;
+	MapType map_type = map->map_type;
 
-	float ground_usefulness = map->map_usefulness[0][side] + bt->mod_usefulness[0][side][mapType];
-	float air_usefulness = map->map_usefulness[1][side] + bt->mod_usefulness[1][side][mapType];
-	float hover_usefulness = map->map_usefulness[2][side] + bt->mod_usefulness[2][side][mapType];
-	float sea_usefulness = map->map_usefulness[3][side] + bt->mod_usefulness[3][side][mapType];
-	float submarine_usefulness = map->map_usefulness[4][side] + bt->mod_usefulness[4][side][mapType];
+	float ground_usefulness = map->map_usefulness[0][side] + bt->mod_usefulness[0][side][map_type];
+	float air_usefulness = map->map_usefulness[1][side] + bt->mod_usefulness[1][side][map_type];
+	float hover_usefulness = map->map_usefulness[2][side] + bt->mod_usefulness[2][side][map_type];
+	float sea_usefulness = map->map_usefulness[3][side] + bt->mod_usefulness[3][side][map_type];
+	float submarine_usefulness = map->map_usefulness[4][side] + bt->mod_usefulness[4][side][map_type];
 
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -738,7 +784,7 @@ void AAIBrain::BuildUnits()
 	else
 	{
 		// choose unit category dependend on map type
-		if(mapType == LAND_MAP)
+		if(map_type == LAND_MAP)
 		{
 			// determine effectiveness vs several other units
 			anti_ground_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][0][t]) * ground_usefulness * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
@@ -813,7 +859,7 @@ void AAIBrain::BuildUnits()
 			fprintf(ai->file, "Air assault:    %f %f %f %i \n", defence_power_vs[1], attacked_by[1], max_units_spotted[1], anti_air_urgency);
 			fprintf(ai->file, "Hover assault:  %f %f %f %i \n", defence_power_vs[2], attacked_by[2], max_units_spotted[1], anti_hover_urgency);*/
 		}
-		else if(mapType == LAND_WATER_MAP)
+		else if(map_type == LAND_WATER_MAP)
 		{
 			// determine effectiveness vs several other units
 			anti_ground_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][0][t]) * ground_usefulness * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
@@ -913,7 +959,7 @@ void AAIBrain::BuildUnits()
 				BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 			}
 		}
-		else if(mapType == WATER_MAP)
+		else if(map_type == WATER_MAP)
 		{
 			// determine effectiveness vs several other units
 			anti_air_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][1][t]) * air_usefulness * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
@@ -1003,7 +1049,7 @@ void AAIBrain::BuildUnits()
 				BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 			}
 		}
-		else if(mapType == AIR_MAP)
+		else if(map_type == AIR_MAP)
 		{
 			category = AIR_ASSAULT;	
 

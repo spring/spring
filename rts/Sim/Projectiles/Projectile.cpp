@@ -23,7 +23,8 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(castShadow),
 	CR_MEMBER(owner),
 	CR_MEMBER(synced),
-
+//	CR_MEMBER(drawPos),
+//	CR_RESERVED(4),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
 	CR_MEMBER_ENDFLAG(CM_Config),
@@ -43,10 +44,12 @@ CProjectile::CProjectile():
 	castShadow(false),
 	s3domodel(0),
 	collisionFlags(0)
-{}
+{
+	GML_GET_TICKS(lastProjUpdate);
+}
 
 
-void CProjectile::Init(const float3& explosionPos, CUnit* owner)
+void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 {
 	pos += explosionPos;
 	SetRadius(1.7f);
@@ -58,7 +61,7 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner)
 }
 
 
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon)
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_C)
 :	CExpGenSpawnable(pos),
 	owner(owner),
 	speed(speed),
@@ -75,6 +78,8 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 
 	if (owner)
 		AddDeathDependence(owner);
+
+	GML_GET_TICKS(lastProjUpdate);
 }
 
 CProjectile::~CProjectile()
@@ -116,11 +121,10 @@ void CProjectile::Draw()
 	col[1]=(unsigned char) (0.5f*255);
 	col[2]=0*255;
 	col[3]=10;
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.yend,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.yend,col);
 }
 
 void CProjectile::DrawArray()
@@ -145,4 +149,12 @@ void CProjectile::DrawCallback(void)
 
 void CProjectile::DrawUnitPart(void)
 {
+}
+
+void CProjectile::UpdateDrawPos() {
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastProjUpdate) * gu->weightedSpeedFactor);
+#else
+		drawPos = pos + (speed * gu->timeOffset);
+#endif
 }

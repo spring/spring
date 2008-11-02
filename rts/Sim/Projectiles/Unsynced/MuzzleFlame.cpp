@@ -26,8 +26,8 @@ void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
 //	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }
 
-CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size)
-: CProjectile(pos,speed,0, false),
+CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size GML_PARG_C)
+: CProjectile(pos,speed,0, false GML_PARG_P),
 	size(size),
 	dir(dir),
 	age(0)
@@ -67,7 +67,7 @@ void CMuzzleFlame::Draw(void)
 	inArray=true;
 	unsigned char col[4];
 	float alpha=std::max(0.f,1-age/(4+size*30));
-	float modAge=sqrt(static_cast<float>(age+2));
+	float modAge=fastmath::sqrt(static_cast<float>(age+2));
 
 	va->EnlargeArrays(numSmoke*8,0,VA_SIZE_TC);
 

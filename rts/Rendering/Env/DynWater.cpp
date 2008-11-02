@@ -1123,11 +1123,13 @@ void CDynWater::AddShipWakes()
 	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
 	va2->Initialize();
 
-	int nadd=uh->activeUnits.size()*4;
+	GML_STDMUTEX_LOCK(render);
+
+	int nadd=uh->renderUnits.size()*4;
 	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
 	va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
 
-	for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin(); ui!=uh->activeUnits.end();++ui){
+	for(std::list<CUnit*>::iterator ui=uh->renderUnits.begin(); ui!=uh->renderUnits.end();++ui){
 		CUnit* unit=*ui;
 		if(unit->moveType && unit->mobility) {
 			if(unit->unitDef->canhover){	//hover

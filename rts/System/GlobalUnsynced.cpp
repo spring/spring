@@ -140,18 +140,20 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 	return ret;
 }
 
-void CGlobalUnsyncedStuff::LoadFromSetup(const CGameSetup* setup)
+void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 {
-	myPlayerNum = setup->myPlayerNum;
-	myTeam = setup->playerStartingData[myPlayerNum].team;
-	myAllyTeam = setup->teamStartingData[myTeam].teamAllyteam;
-
-	spectating = setup->playerStartingData[myPlayerNum].spectator;
-	spectatingFullView   = setup->playerStartingData[myPlayerNum].spectator;
-	spectatingFullSelect = setup->playerStartingData[myPlayerNum].spectator;
+	myPlayerNum = mynumber;
+	if (gameSetup && gameSetup->numPlayers < mynumber)
+	{
+		myTeam = gameSetup->playerStartingData[myPlayerNum].team;
+		myAllyTeam = gameSetup->teamStartingData[myTeam].teamAllyteam;
 	
-	assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
-			setup->playerStartingData.size() >= myPlayerNum &&
-			setup->teamStartingData.size() >= myTeam);
+		spectating = gameSetup->playerStartingData[myPlayerNum].spectator;
+		spectatingFullView   = gameSetup->playerStartingData[myPlayerNum].spectator;
+		spectatingFullSelect = gameSetup->playerStartingData[myPlayerNum].spectator;
+		
+		assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
+				gameSetup->playerStartingData.size() >= myPlayerNum &&
+				gameSetup->teamStartingData.size() >= myTeam);
+	}
 }
-

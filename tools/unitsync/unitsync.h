@@ -19,7 +19,7 @@ struct StartPos
 
 struct MapInfo
 {
-	char* description;
+	char* description; // max 255 chars
 	int tidalStrength;
 	int gravity;
 	float maxMetal;

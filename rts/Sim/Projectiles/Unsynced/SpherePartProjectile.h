@@ -8,7 +8,7 @@ class CSpherePartProjectile :
 {
 	CR_DECLARE(CSpherePartProjectile);
 public:
-	CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color);
+	CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_H);
 	~CSpherePartProjectile(void);
 
 	float3 centerPos;
@@ -44,7 +44,7 @@ public:
 	CSpherePartSpawner();
 	~CSpherePartSpawner();
 
-	virtual void Init(const float3& pos, CUnit *owner);
+	virtual void Init(const float3& pos, CUnit *owner GML_PARG_H);
 };
 
 #endif /* SPHEREPARTPROJECTILE_H */

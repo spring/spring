@@ -1,18 +1,21 @@
 /* Author: Tobi Vollebregt */
 
 #include "StdAfx.h"
+#include "ArchiveDir.h"
 #include <assert.h>
+#include <stdexcept>
+#include "Platform/FileSystem.h"
+#include "Util.h"
 #include "mmgr.h"
 
-#include "ArchiveDir.h"
-#include "Platform/FileSystem.h"
-
-#include "Util.h"
 
 inline CFileHandler* CArchiveDir::GetFileHandler(int handle)
 {
 	std::map<int, CFileHandler*>::iterator it = fileHandles.find(handle);
-	assert(it != fileHandles.end());
+
+	if (it == fileHandles.end())
+		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveDir::OpenFile.");
+
 	return it->second;
 }
 
@@ -20,7 +23,10 @@ inline CFileHandler* CArchiveDir::GetFileHandler(int handle)
 inline std::vector<std::string>::iterator& CArchiveDir::GetSearchHandle(int handle)
 {
 	std::map<int, std::vector<std::string>::iterator>::iterator it = searchHandles.find(handle);
-	assert(it != searchHandles.end());
+
+	if (it == searchHandles.end())
+		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveDir::FindFiles.");
+
 	return it->second;
 }
 

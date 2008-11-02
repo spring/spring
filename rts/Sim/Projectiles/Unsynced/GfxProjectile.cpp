@@ -35,8 +35,8 @@ CGfxProjectile::CGfxProjectile()
 	synced=false;
 }
 
-CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color)
-: CProjectile(pos,speed,0, false),
+CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_C)
+: CProjectile(pos,speed,0, false GML_PARG_P),
 	lifeTime(lifeTime),
 	creationTime(gs->frameNum)
 {
@@ -65,9 +65,8 @@ void CGfxProjectile::Draw()
 {
 	inArray=true;
 
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.ystart,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.ystart,color);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.yend,color);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.yend,color);
+	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.ystart,color);
+	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.ystart,color);
+	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.yend,color);
+	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.yend,color);
 }

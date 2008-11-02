@@ -55,6 +55,7 @@
 #include "System/LogOutput.h"
 #include "System/Platform/ConfigHandler.h"
 #include "System/Util.h"
+#include "System/myMath.h"
 
 extern Uint8 *keys;
 
@@ -451,7 +452,7 @@ void CGuiHandler::AppendPrevAndNext(std::vector<CommandDescription>& cmds)
 
 int CGuiHandler::FindInCommandPage()
 {
-	GML_RECMUTEX_LOCK(gui); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> FindInCommandPage
+//	GML_RECMUTEX_LOCK(gui); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> FindInCommandPage. Not needed, Draw thread.
 
 	if ((inCommand < 0) || (inCommand >= commands.size())) {
 		return -1;
@@ -469,7 +470,7 @@ int CGuiHandler::FindInCommandPage()
 void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
                                   bool defaultCommand, bool samePage)
 {
-	GML_RECMUTEX_LOCK(gui); // updates inCommand, CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
+//	GML_RECMUTEX_LOCK(gui); // updates inCommand, CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc. Not needed, protected via other func.
 
 	for (int a = 0; a < commands.size(); ++a) {
 		if (commands[a].id == cmdDesc.id) {
@@ -966,6 +967,7 @@ void CGuiHandler::Update()
 
 void CGuiHandler::SetCursorIcon() const
 {
+//	GML_RECMUTEX_LOCK(gui); // SetCursorIcon. Not needed, protected via Update
 	string newCursor = "cursornormal";
 	mouse->cursorScale = 1.0f;
 
@@ -1081,6 +1083,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
+//	GML_RECMUTEX_LOCK(gui); // not needed, draw thread + read only
 	int iconCmd = -1;
 
 	if (activeMousePress) {
@@ -1398,6 +1401,8 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 
 void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
 {
+	GML_RECMUTEX_LOCK(gui); // LuaUnsyncedCtrl::SendCommands --> RunCustomCommands
+
 	static int depth = 0;
 	if (depth > 8) {
 		return; // recursion protection
@@ -1513,6 +1518,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		return -1;
 	}
 
+	GML_RECMUTEX_LOCK(sel); // anti deadlock
 	GML_RECMUTEX_LOCK(quad); // GetDefaultCommand
 	CUnit* unit = NULL;
 //	GML_RECMUTEX_LOCK(unit); // GetDefaultCommand
@@ -1525,7 +1531,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		const float3 camPos = camerapos;
 		const float3 camDir = mousedir;
 		const float viewRange = gu->viewRange*1.4f;
-		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, 20, true);
+		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
 		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
 		const float3 hit = camPos + camDir*dist;
 
@@ -1560,6 +1566,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 
 bool CGuiHandler::ProcessLocalActions(const Action& action)
 {
+//	GML_RECMUTEX_LOCK(gui); // not needed, protected via other functions
 	// do not process these actions if the control panel is not visible
 	if (iconsCount <= 0) {
 		return false;
@@ -1817,7 +1824,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 bool CGuiHandler::SetActiveCommand(const Action& action,
                                    const CKeySet& ks, int actionIndex)
 {
-	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand
+	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand, called by LuaUnsyncedCtrl
 
 	if (ProcessLocalActions(action)) {
 		return true;
@@ -2092,7 +2099,7 @@ bool CGuiHandler::IsAbove(int x, int y)
 
 std::string CGuiHandler::GetTooltip(int x, int y)
 {
-	GML_RECMUTEX_LOCK(gui); // GetTooltip
+	GML_RECMUTEX_LOCK(gui); // LuaUnsyncedRead::GetCurrentTooltip --> CMouseHandler::GetCurrentTooltip --> GetTooltip
 
 	std::string s;
 
@@ -2119,11 +2126,13 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 }
 
 // CALLINFO:
-// tooltipconsole::draw --> mousehandler::getcurrenttooltip --> GetBuildTooltip
-// tooltipconsole::draw --> mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
+// luaunsyncedread::getcurrenttooltip --> mousehandler::getcurrenttooltip
+// tooltipconsole::draw --> mousehandler::getcurrenttooltip
+// mousehandler::getcurrenttooltip --> GetBuildTooltip
+// mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
 std::string CGuiHandler::GetBuildTooltip() const
 {
-	GML_RECMUTEX_LOCK(gui); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> GetBuildTooltip
+	GML_RECMUTEX_LOCK(gui); // luaunsyncedread::getcurrenttooltip --> mousehandler::getcurrenttooltip --> GetBuildTooltip
 
 	if ((inCommand >= 0) && (inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
@@ -2133,7 +2142,7 @@ std::string CGuiHandler::GetBuildTooltip() const
 }
 
 
-Command CGuiHandler::GetOrderPreview(void)
+Command CGuiHandler::GetOrderPreview(void) // Called from GroupAICallback
 {
 	return GetCommand(mouse->lastx, mouse->lasty, -1, true);
 }
@@ -2245,7 +2254,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			Command c;
 
 			c.id=commands[tempInCommand].id;
-			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 			if (!unit){
 				return defaultRet;
 			}
@@ -2259,7 +2268,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 
 			CUnit* unit=0;
-			float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+			float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 			if(dist2>gu->viewRange*1.4f-300){
 				return defaultRet;
 			}
@@ -2304,7 +2313,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params[2] = pos.z;
 
 				if (!commands[tempInCommand].params.empty() &&
-				    pos.distance2D(pos2) > atof(commands[tempInCommand].params[0].c_str())) {
+				    pos.SqDistance2D(pos2) > Square(atof(commands[tempInCommand].params[0].c_str()))) {
 					float3 dif=pos2-pos;
 					dif.ANormalize();
 					pos2=pos+dif*atoi(commands[tempInCommand].params[0].c_str());
@@ -2330,7 +2339,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(mouse->buttons[button].movement<4){
 				CUnit* unit=0;
 				CFeature* feature=0;
-				float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+				float dist2=helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 				float dist3=helper->GuiTraceRayFeature(camerapos,mousedir,gu->viewRange*1.4f,feature);
 
 				if(dist2>gu->viewRange*1.4f-300 && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>gu->viewRange*1.4f-300)){
@@ -2374,8 +2383,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit=0;
 
-				float dist2=helper->GuiTraceRay(
-					camerapos, mousedir, gu->viewRange*1.4f, unit, 20, true);
+				float dist2=helper->GuiTraceRay(camerapos, mousedir, gu->viewRange*1.4f, unit, true);
 
 				if(dist2>gu->viewRange*1.4f-300) {
 					return defaultRet;
@@ -2426,9 +2434,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 
 static bool WouldCancelAnyQueued(const BuildInfo& b) {
+	GML_RECMUTEX_LOCK(sel); //drawmapstuff -> getbuildpos --> fillrowofbuildpos -> wouldcancelanyqueued
+
 	Command c;
 	b.FillCmd(c);
-	GML_RECMUTEX_LOCK(sel); //drawmapstuff -> getbuildpos --> fillrowofbuildpos -> wouldcancelanyqueued
 	CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
@@ -2462,8 +2471,10 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	if(GetQueueKeystate() && keys[SDLK_LCTRL])
 	{
 		CUnit* unit=0;
-		GML_RECMUTEX_LOCK(unit); // GetBuildCommand accesses activeunits. drawmapstuff -> getbuildpos
-		helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,true);
+
+		GML_RECMUTEX_LOCK(quad); //unit); // GetBuildCommand accesses activeunits. drawmapstuff -> getbuildpos
+
+		helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
 		if(unit){
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
@@ -2562,7 +2573,7 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
 
 void CGuiHandler::Draw()
 {
-	GML_RECMUTEX_LOCK(gui); // accesses iconsCount. Draw
+//	GML_RECMUTEX_LOCK(gui); // accesses iconsCount. Draw
 //	GML_RECMUTEX_LOCK(quad); // update accesses setcursoricon->getdefaultcommand->guitraceray which accesses the quadfield
 
 	Update();
@@ -3232,7 +3243,8 @@ void CGuiHandler::DrawSelectionInfo()
 
 void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 {
-	GML_RECMUTEX_LOCK(gui); // DrawNumberInput
+//	GML_RECMUTEX_LOCK(gui); // DrawNumberInput
+
 	// draw the value for CMDTYPE_NUMBER commands
 	if ((inCommand >= 0) && (inCommand < commands.size())) {
 		const CommandDescription& cd = commands[inCommand];
@@ -3456,7 +3468,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 
 void CGuiHandler::DrawMapStuff(int onMinimap)
 {
-	GML_RECMUTEX_LOCK(gui); // DrawMapStuff
+//	GML_RECMUTEX_LOCK(gui); // DrawMapStuff
 
 	if (!onMinimap) {
 		glEnable(GL_DEPTH_TEST);
@@ -3566,8 +3578,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							for(int i = 0; i <= divs; ++i) {
 								const float radians = (2 * PI) * (float)i / (float)divs;
 								float3 p(pos.x, 0.0f, pos.z);
-								p.x += sin(radians) * radius;
-								p.z += cos(radians) * radius;
+								p.x += fastmath::sin(radians) * radius;
+								p.z += fastmath::cos(radians) * radius;
 								if (!onMinimap) {
 									p.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
 								}
@@ -3626,7 +3638,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			unit = minimap->GetSelectUnit(camerapos);
 		} else {
 			// ignoring the returned distance
-			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,20,false);
+			helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,false);
 		}
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
@@ -3692,23 +3704,20 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
-			const WeaponDef* wd = NULL;
-			const CWeapon* w = NULL;
-			if (enemyUnit) {
-				wd = unitdef->stockpileWeaponDef;
-			} else {
-				w = unit->stockpileWeapon;
-				if (w != NULL) {
-					wd = w->weaponDef;
-				}
-			}
-			if ((wd != NULL) && wd->interceptor) {
-				if (enemyUnit || w->numStockpiled) {
+			if (unitdef->maxCoverage > 0.0f) {
+				const CWeapon* w = NULL; //will be checked if any missiles are ready
+				if (!enemyUnit) {
+					w = unit->stockpileWeapon;
+					if (w != NULL && !w->weaponDef->interceptor) {
+						w = NULL; //if this isn't the interceptor, then don't use it
+					}
+				} //shows as on if enemy, a non-stockpiled weapon, or if the stockpile has a missile
+				if (enemyUnit || (w == NULL) || w->numStockpiled) {
 					glColor4fv(cmdColors.rangeInterceptorOn);
 				} else {
 					glColor4fv(cmdColors.rangeInterceptorOff);
 				}
-				glSurfaceCircle(unit->pos, wd->coverageRange, 40);
+				glSurfaceCircle(unit->pos, unitdef->maxCoverage, 40);
 			}
 		}
 	}
@@ -3804,7 +3813,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 					std::vector<Command> cv;
 					if (GetQueueKeystate()) {
+
 						GML_RECMUTEX_LOCK(sel); // DrawMapStuff
+
 						Command c;
 						bpi->FillCmd(c);
 						std::vector<Command> temp;
@@ -3839,7 +3850,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
 	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+
 		GML_RECMUTEX_LOCK(sel); // DrawMapStuff
+
 		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
 			CUnit* unit = *si;
 			if (unit == pointedAt) {
@@ -3923,12 +3936,14 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 void CGuiHandler::DrawCentroidCursor()
 {
 	GML_RECMUTEX_LOCK(sel); // CMouseHandler::DrawCursor --> DrawCentroidCursor
+
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 	if (selUnits.size() < 2) {
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(gui); // DrawCentroidCursor
+//	GML_RECMUTEX_LOCK(gui); // DrawCentroidCursor. Not needed, Draw thread.
+
 	int cmd = -1;
 	if ((inCommand >= 0) && (inCommand < commands.size())) {
 		cmd = commands[inCommand].id;
@@ -3996,7 +4011,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
-			float3 p(cos(a*2*PI/40)*radius,0,sin(a*2*PI/40)*radius);
+			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
 			p+=pos;
 			p.y=ground->GetHeight(p.x,p.z);
 			glVertexf3(p);
@@ -4029,7 +4044,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	float3 forward=(pos1-pos2).cross(UpVector);
 	forward.ANormalize();
 	float3 side=forward.cross(UpVector);
-	if(pos1.distance2D(pos2)>maxSize){
+	if(pos1.SqDistance2D(pos2)>maxSize*maxSize){
 		pos2=pos1+side*maxSize;
 		pos2.y=ground->GetHeight(pos2.x,pos2.z);
 	}
@@ -4289,8 +4304,8 @@ static void DrawCylinderShape(const void* data)
 	for (i = 0; i <= cyl.divs; i++) {
 		const float radians =
 		  float(2.0 * PI) * float(i % cyl.divs) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
 		glVertex3f(x, cyl.yn, z);
 	}
@@ -4298,16 +4313,16 @@ static void DrawCylinderShape(const void* data)
 	glBegin(GL_TRIANGLE_FAN); // the top
 	for (i = 0; i < cyl.divs; i++) {
 		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
 	}
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the bottom
 	for (i = (cyl.divs - 1); i >= 0; i--) {
 		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
-		const float x = cyl.xc + (cyl.radius * sin(radians));
-		const float z = cyl.zc + (cyl.radius * cos(radians));
+		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
+		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yn, z);
 	}
 	glEnd();

@@ -25,12 +25,8 @@ CommandMessage::CommandMessage(const Action& myaction, int playernum)
 
 CommandMessage::CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt)
 {
-	UnpackPacket packet(pckt);
-	unsigned char ID;
-	unsigned short length;
-	packet >> ID;
-	assert(ID == NETMSG_CCOMMAND);
-	packet >> length;
+	assert(pckt->data[0] == NETMSG_CCOMMAND);
+	UnpackPacket packet(pckt, 3);
 	packet >> player;
 	packet >> action.command;
 	packet >> action.extra;
@@ -39,8 +35,7 @@ CommandMessage::CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt)
 const netcode::RawPacket* CommandMessage::Pack() const
 {
 	unsigned short size = 3 + sizeof(player) + action.command.size() + action.extra.size() + 2;
-	PackPacket* buffer = new PackPacket(size);
-	*buffer << (unsigned char)NETMSG_CCOMMAND;
+	PackPacket* buffer = new PackPacket(size, NETMSG_CCOMMAND);
 	*buffer << size;
 	*buffer << player;
 	*buffer << action.command;

@@ -267,7 +267,7 @@ void CWeapon::Update()
 
 		float3 lead = targetUnit->speed * (weaponDef->predictBoost+predictSpeedMod * (1.0f - weaponDef->predictBoost)) * predict;
 
-		if (weaponDef->leadLimit >= 0.0f && lead.Length() > weaponDef->leadLimit + weaponDef->leadBonus * owner->experience) {
+		if (weaponDef->leadLimit >= 0.0f && lead.SqLength() > Square(weaponDef->leadLimit + weaponDef->leadBonus * owner->experience)) {
 			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 

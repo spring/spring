@@ -7,8 +7,13 @@
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
+#include "LogOutput.h"
 #include "Platform/FileSystem.h"
 #include "Util.h"
+
+
+static CLogSubsystem LOG_VFS("VFS");
+static CLogSubsystem LOG_VFS_DETAIL("VFS-detail");
 
 
 CVFSHandler* vfsHandler = NULL;
@@ -16,17 +21,21 @@ CVFSHandler* vfsHandler = NULL;
 
 CVFSHandler::CVFSHandler()
 {
+	logOutput.Print(LOG_VFS, "CVFSHandler::CVFSHandler()");
 }
 
 
 // Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
-bool CVFSHandler::AddArchive(const std::string& arName, bool override,
-                             const std::string& type)
+bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std::string& type)
 {
+	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
+	                arName.c_str(), override ? "true" : "false", type.c_str());
+
 	CArchiveBase* ar = archives[arName];
 	if (!ar) {
 		ar = CArchiveFactory::OpenArchive(arName, type);
 		if (!ar) {
+			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", arName.c_str());
 			return false;
 		}
 		archives[arName] = ar;
@@ -38,9 +47,17 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override,
 
 	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
 		StringToLowerInPlace(name);
-		if ((!override) && (files.find(name) != files.end())) {
-			continue;
+
+		if (!override) {
+			if (files.find(name) != files.end()) {
+				logOutput.Print(LOG_VFS_DETAIL, "%s (skipping, exists)", name.c_str());
+				continue;
+			}
+			else
+				logOutput.Print(LOG_VFS_DETAIL, "%s (adding, doesn't exist)", name.c_str());
 		}
+		else
+			logOutput.Print(LOG_VFS_DETAIL, "%s (overriding)", name.c_str());
 
 		FileData d;
 		d.ar = ar;
@@ -52,8 +69,10 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override,
 }
 
 
-CVFSHandler::~CVFSHandler(void)
+CVFSHandler::~CVFSHandler()
 {
+	logOutput.Print(LOG_VFS, "CVFSHandler::~CVFSHandler()");
+
 	for (std::map<std::string, CArchiveBase*>::iterator i = archives.begin(); i != archives.end(); ++i) {
 		delete i->second;
 	}
@@ -62,17 +81,21 @@ CVFSHandler::~CVFSHandler(void)
 
 int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 {
+	logOutput.Print(LOG_VFS, "LoadFile(rawName = \"%s\", )", rawName.c_str());
+
 	std::string name = StringToLower(rawName);
 	filesystem.ForwardSlashes(name);
 
 	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
+		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", rawName.c_str());
 		return -1;
 	}
 	FileData& fd = fi->second;
 
 	int fh = fd.ar->OpenFile(name);
 	if (!fh) {
+		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());
 		return -1;
 	}
 	const int fsize = fd.dynamic ? fd.ar->FileSize(fh) : fd.size;
@@ -86,13 +109,17 @@ int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 
 int CVFSHandler::GetFileSize(const std::string& rawName)
 {
+	logOutput.Print(LOG_VFS, "GetFileSize(rawName = \"%s\")", rawName.c_str());
+
 	std::string name = StringToLower(rawName);
 	filesystem.ForwardSlashes(name);
 
 	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
+		logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in VFS.", rawName.c_str());
 		return -1;
 	}
+
 	FileData& fd = fi->second;
 
 	if (!fd.dynamic) {
@@ -101,6 +128,7 @@ int CVFSHandler::GetFileSize(const std::string& rawName)
 	else {
 		const int fh = fd.ar->OpenFile(name);
 		if (fh == 0) {
+			logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in archive.", rawName.c_str());
 			return -1;
 		} else {
 			const int fsize = fd.ar->FileSize(fh);
@@ -108,13 +136,14 @@ int CVFSHandler::GetFileSize(const std::string& rawName)
 			return fsize;
 		}
 	}
-	return -1;
 }
 
 
 // Returns all the files in the given (virtual) directory without the preceeding pathname
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 {
+	logOutput.Print(LOG_VFS, "GetFilesInDir(rawDir = \"%s\")", rawDir.c_str());
+
 	std::vector<std::string> ret;
 	std::string dir = StringToLower(rawDir);
 	filesystem.ForwardSlashes(dir);
@@ -149,6 +178,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 			if ((name.find('/') == std::string::npos) &&
 			    (name.find('\\') == std::string::npos)) {
 				ret.push_back(name);
+				logOutput.Print(LOG_VFS_DETAIL, "%s", name.c_str());
 			}
 		}
 		filesStart++;
@@ -161,6 +191,8 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 // Returns all the sub-directories in the given (virtual) directory without the preceeding pathname
 std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 {
+	logOutput.Print(LOG_VFS, "GetDirsInDir(rawDir = \"%s\")", rawDir.c_str());
+
 	std::vector<std::string> ret;
 	std::string dir = StringToLower(rawDir);
 	filesystem.ForwardSlashes(dir);
@@ -200,6 +232,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 
 	for (std::set<std::string>::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
 		ret.push_back(*it);
+		logOutput.Print(LOG_VFS_DETAIL, "%s", it->c_str());
 	}
 
 	return ret;

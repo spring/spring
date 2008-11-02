@@ -33,7 +33,7 @@ public:
 	float  usRandFloat();  //!< Unsynced random float
 	float3 usRandVector(); //!< Unsynced random vector
 
-	void LoadFromSetup(const CGameSetup*);
+	void SetMyPlayer(const int mynumber);
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?
@@ -62,6 +62,12 @@ public:
 	 * How long the last draw cycle took in real time
 	 */
 	float lastFrameTime;
+
+	// the starting time in tick for last draw frame
+	unsigned lastFrameStart;
+
+	// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
+	float weightedSpeedFactor;
 
 	// the draw frame number (never 0)
 	unsigned int drawFrame;

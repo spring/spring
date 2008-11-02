@@ -16,9 +16,9 @@ AAISector::AAISector()
 }
 
 AAISector::~AAISector(void)
-{
+{	
 	defences.clear();
-
+	
 	attacked_by_this_game.clear(); 
 	attacked_by_learned.clear(); 
 
@@ -52,14 +52,14 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	distance_to_base = -1;
 	last_scout = 1;
 	rally_points = 0;
-
+	
 	// nothing sighted in that sector
 	enemy_structures = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	threat = 0;
 	failed_defences = 0;
-
+	
 	int categories = ai->bt->assault_categories.size();
 
 	combats_learned.resize(categories, 0);
@@ -498,7 +498,7 @@ float AAISector::GetThreatBy(UnitCategory category, float learned, float current
 
 float AAISector::GetThreatByID(int combat_cat_id, float learned, float current)
 {
-	return 1.0f + (learned * attacked_by_learned[combat_cat_id] + current * attacked_by_this_game[combat_cat_id] ) / (learned + current);
+	return 0.25f + (learned * attacked_by_learned[combat_cat_id] + current * attacked_by_this_game[combat_cat_id] ) / (learned + current);
 }
 
 float AAISector::GetThreatTo(float ground, float air, float hover, float sea, float submarine)

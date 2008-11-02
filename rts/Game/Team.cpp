@@ -318,10 +318,10 @@ void CTeam::ResetFrameVariables()
 
 void CTeam::SlowUpdate()
 {
-	currentStats.metalProduced  += metalIncome;
-	currentStats.energyProduced += energyIncome;
-	currentStats.metalUsed  += metalUpkeep + metalExpense;
-	currentStats.energyUsed += energyUpkeep + energyExpense;
+	currentStats.metalProduced  += prevMetalIncome;
+	currentStats.energyProduced += prevEnergyIncome;
+	currentStats.metalUsed  += prevMetalUpkeep + prevMetalExpense;
+	currentStats.energyUsed += prevEnergyUpkeep + prevEnergyExpense;
 
 	float eShare = 0.0f, mShare = 0.0f;
 	for (int a = 0; a < gs->activeTeams; ++a) {
@@ -370,11 +370,11 @@ void CTeam::SlowUpdate()
 	}
 
 	if (metal > metalStorage) {
-		currentStats.metalExcess+=metal-metalStorage;
+		currentStats.metalExcess += (metal - metalStorage);
 		metal = metalStorage;
 	}
 	if (energy > energyStorage) {
-		currentStats.energyExcess+=energy-energyStorage;
+		currentStats.energyExcess += (energy - energyStorage);
 		energy = energyStorage;
 	}
 

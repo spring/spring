@@ -38,6 +38,7 @@
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 
 using std::min;
 using std::max;
@@ -103,7 +104,9 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(metalMakerEfficiency),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
-	CR_MEMBER(toBeRemoved),
+//	CR_MEMBER(toBeRemoved),
+	CR_MEMBER(toBeAdded),
+	CR_MEMBER(renderUnits),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -186,7 +189,8 @@ CUnitHandler::~CUnitHandler()
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
-	GML_RECMUTEX_LOCK(unit); // AddUnit
+//	GML_RECMUTEX_LOCK(unit); // AddUnit. Not needed, protected via LoadUnit. 
+
 	ASSERT_SYNCED_MODE;
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
@@ -212,6 +216,10 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
+
+	GML_STDMUTEX_LOCK(render);
+
+	toBeAdded.insert(unit);
 
 	return unit->id;
 }
@@ -257,6 +265,27 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			++usi;
 		}
 	}
+
+	GML_STDMUTEX_LOCK(render);
+
+	for(usi=renderUnits.begin(); usi!=renderUnits.end(); ++usi) {
+		if(*usi==delUnit) {
+			renderUnits.erase(usi);
+			break;
+		}
+	}
+
+#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloaked[i]==delUnit)
+			unitDrawer->drawCloaked[i]=NULL;
+
+	for(int i=0, dcs=unitDrawer->drawCloakedS3O.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedS3O[i]==delUnit)
+			unitDrawer->drawCloakedS3O[i]=NULL;
+#endif
+
+	toBeAdded.erase(delUnit);
 }
 
 
@@ -266,9 +295,9 @@ void CUnitHandler::Update()
 	SCOPED_TIMER("Unit handler");
 
 	if(!toBeRemoved.empty()) {
-		GML_RECMUTEX_LOCK(unit); // Update. Possibly not needed, activeUnits.erase is synchronized.
-		GML_RECMUTEX_LOCK(quad); // Update. Make sure unit does not get partially deleted before before being removed from the quadfield
+		GML_RECMUTEX_LOCK(unit); // Update. For anti-deadlock purposes.
 		GML_RECMUTEX_LOCK(sel); // Update. Unit is removed from selectedUnits in ~CObject, which is too late.
+		GML_RECMUTEX_LOCK(quad); // Update. Make sure unit does not get partially deleted before before being removed from the quadfield
 
 		while (!toBeRemoved.empty()) {
 			CUnit* delUnit = toBeRemoved.back();
@@ -277,6 +306,8 @@ void CUnitHandler::Update()
 			DeleteUnitNow(delUnit);
 		}
 	}
+
+	GML_UPDATE_TICKS();
 
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {

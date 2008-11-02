@@ -10,9 +10,6 @@
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 
-#include "Syncer.h"
-#include "SyncServer.h"
-
 #include <string>
 #include <string.h>
 #include <vector>

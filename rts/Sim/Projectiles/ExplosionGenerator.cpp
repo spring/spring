@@ -311,7 +311,7 @@ CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
 {
-	currentCEG = 0;
+	currentCEG = cachedCEGs.end();
 }
 
 CCustomExplosionGenerator::~CCustomExplosionGenerator()
@@ -606,8 +606,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
 {
-	static std::map<string, CEGData> cachedCEGs;
-	std::map<string, CEGData>::iterator it = cachedCEGs.find(tag);
+	typedef std::map<string, CEGData> CEGMap;
+	typedef std::map<string, CEGData>::iterator CEGMapIt;
+
+	CEGMapIt it = cachedCEGs.find(tag);
 
 	if (it == cachedCEGs.end()) {
 		CEGData cegData;
@@ -686,19 +688,18 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 		}
 
 		cegData.useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
-
-		cachedCEGs[tag] = cegData;
-		currentCEG = &cachedCEGs[tag];
-	} else {
-		currentCEG = &(it->second);
+		it = cachedCEGs.insert(std::make_pair(tag, cegData)).first;
 	}
+
+	currentCEG = it;
 }
 
 
 void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir)
 {
-	if (currentCEG == 0) {
-		// Explosion() called before Load()'ing a CEG
+	if (currentCEG == cachedCEGs.end()) {
+		// Explosion() called before Load()'ing a CEG (after
+		// constructing a CCustomExplosionGenerator object)
 		return;
 	}
 
@@ -713,29 +714,29 @@ void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
 
-	for (int a = 0; a < currentCEG->projectileSpawn.size(); a++) {
-		ProjectileSpawnInfo* psi = &currentCEG->projectileSpawn[a];
+	for (int a = 0; a < (currentCEG->second).projectileSpawn.size(); a++) {
+		ProjectileSpawnInfo& psi = (currentCEG->second).projectileSpawn[a];
 
-		if (!(psi->flags & flags)) {
+		if (!(psi.flags & flags)) {
 			continue;
 		}
 
-		for (int c = 0; c < psi->count; c++) {
-			CExpGenSpawnable* projectile = (CExpGenSpawnable*) psi->projectileClass->CreateInstance();
+		for (int c = 0; c < psi.count; c++) {
+			CExpGenSpawnable* projectile = (CExpGenSpawnable*) (psi.projectileClass)->CreateInstance();
 
-			ExecuteExplosionCode(&psi->code[0], damage, (char*) projectile, c, dir);
+			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
 			projectile->Init(pos, owner);
 		}
 	}
 
-	const GroundFlashInfo& groundFlash = currentCEG->groundFlash;
+	const GroundFlashInfo& groundFlash = (currentCEG->second).groundFlash;
 
 	if ((flags & SPW_GROUND) && groundFlash.ttl > 0) {
 		SAFE_NEW CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
 			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
 	}
 
-	if (currentCEG->useDefaultExplosions) {
+	if ((currentCEG->second).useDefaultExplosions) {
 		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);
 	}
 }

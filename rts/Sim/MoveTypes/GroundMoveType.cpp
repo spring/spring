@@ -286,7 +286,7 @@ void CGroundMoveType::Update()
 					logOutput.Print("eta failure %i %i %i %i %i", owner->id, pathId, !atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
 			}
 			if (pathId && !atGoal && gs->frameNum > etaWaypoint2) {
-				if (owner->pos.distance2D(goalPos) > 200 || CheckGoalFeasability()) {
+				if (owner->pos.SqDistance2D(goalPos) > (200*200) || CheckGoalFeasability()) {
 					etaWaypoint2 += 100;
 				} else {
 					if (DEBUG_CONTROLLER)
@@ -402,7 +402,7 @@ void CGroundMoveType::SlowUpdate()
 
 	// if we've strayed too far away from path, then need to reconsider
 	if (progressState == Active && etaFailures > 8) {
-		if (owner->pos.distance2D(goalPos) > 200 || CheckGoalFeasability()) {
+		if (owner->pos.SqDistance2D(goalPos) > (200*200) || CheckGoalFeasability()) {
 			if (DEBUG_CONTROLLER)
 				logOutput.Print("ETA failure for unit %i", owner->id);
 
@@ -684,10 +684,10 @@ void CGroundMoveType::ImpulseAdded(void)
 	if(impulse.dot(groundNormal)<0)
 		impulse-=groundNormal*impulse.dot(groundNormal);
 
-	float strength=impulse.Length();
+	const float sqstrength=impulse.SqLength();
 //	logOutput.Print("strength %f",strength);
 
-	if(strength>3 || impulse.dot(groundNormal)>0.3f){
+	if(sqstrength>9 || impulse.dot(groundNormal)>0.3f){
 		skidding=true;
 		speed+=impulse;
 		impulse=ZeroVector;
@@ -1091,9 +1091,12 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 							(o->mobility || Distance2D(owner, o) >= 0)) {
 							// Avoid collision by turning the heading to left or right.
 							// Using the object thats needs the most adjustment.
-							if (DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
-								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
+#if DEBUG_CONTROLLER
+							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
+							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
+								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
+#endif
 							if (objectDistToAvoidDirCenter > 0.0f) {
 								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
 								avoidanceDir += (rightOfAvoid * avoidRight);
@@ -1116,13 +1119,18 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			// Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0.0f, 1.0f, 0.0f)) * (avoidRight - avoidLeft));
-			if (DEBUG_CONTROLLER && selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
+
+#if DEBUG_CONTROLLER
+			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
+
+			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
 				int a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + avoidanceVec * 40, 7, 1, 4);
 				geometricObjects->SetColor(a, 1, 0.3f, 0.3f, 0.6f);
 
 				a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
 				geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
 			}
+#endif
 		}
 
 		// Return the resulting recommended velocity.
@@ -1177,7 +1185,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 // Creates a path to the goal.
 void CGroundMoveType::GetNewPath()
 {
-	if (owner->pos.distance2D(lastGetPathPos) < 20) {
+	if (owner->pos.SqDistance2D(lastGetPathPos) < 400) {
 		if (DEBUG_CONTROLLER)
 			logOutput.Print("Non-moving path failures for unit %i: %i", owner->id, nonMovingFailures);
 		nonMovingFailures++;
@@ -1236,7 +1244,7 @@ void CGroundMoveType::GetNextWaypoint()
 			nextWaypoint = waypoint;
 		}
 		// If the waypoint is very close to the goal, then correct it into the goal.
-		if (waypoint.distance2D(goalPos) < CPathManager::PATH_RESOLUTION) {
+		if (waypoint.SqDistance2D(goalPos) < Square(CPathManager::PATH_RESOLUTION)) {
 			waypoint = goalPos;
 			haveFinalWaypoint = true;
 		}
@@ -1407,7 +1415,7 @@ void CGroundMoveType::Fail()
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}
 		if (!owner->commandAI->unimportantMove &&
-		    (owner->pos.distance(goalPos) > (goalRadius + 150.0f))) {
+		    (owner->pos.SqDistance(goalPos) > Square(goalRadius + 150.0f))) {
 			logOutput.Print(owner->unitDef->humanName + ": Can't reach destination!");
 			logOutput.SetLastMsgPos(owner->pos);
 		}

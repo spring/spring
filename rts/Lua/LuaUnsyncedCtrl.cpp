@@ -186,7 +186,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(MarkerErasePosition);
 
 	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
-	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	return true;
 }
@@ -333,7 +332,8 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	GML_STDMUTEX_LOCK(cai);
+	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
+
 	const CUnitSet& units = drawCmdQueueUnits;
 	CUnitSet::const_iterator ui;
 	for (ui = units.begin(); ui != units.end(); ++ui) {
@@ -979,6 +979,8 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
+
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
 	}
@@ -1590,6 +1592,8 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // SetUnitGroup
+
 	if (!CheckModUICtrl()) {
 		return 0;
 	}
@@ -2098,7 +2102,6 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -2110,22 +2113,12 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetDrawSelectionInfo(bool)");
 	}
 
-	guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
+	if (guihandler)
+		guihandler->SetDrawSelectionInfo(lua_toboolean(L, 1));
 
 	return 0;
 }
 
-
-int LuaUnsyncedCtrl::GetDrawSelectionInfo(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
-	}
-
-	lua_pushboolean(L, guihandler->GetDrawSelectionInfo());
-	return 1;
-}
 
 /******************************************************************************/
 /******************************************************************************/

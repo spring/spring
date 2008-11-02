@@ -80,8 +80,7 @@ void CSimpleParticleSystem::Draw()
 			if(particles[i].life<1.0f)
 			{
 				float3 dif(particles[i].pos-camera->pos);
-				float camDist=dif.Length();
-				dif/=camDist;
+				dif.ANormalize();
 				float3 dir1(dif.cross(particles[i].speed));
 				dir1.ANormalize();
 				float3 dir2(dif.cross(dir1));
@@ -141,9 +140,9 @@ void CSimpleParticleSystem::Update()
 
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
+void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
 {
-	CProjectile::Init(explosionPos, owner);
+	CProjectile::Init(explosionPos, owner GML_PARG_P);
 
 	particles = new Particle[numParticles];
 

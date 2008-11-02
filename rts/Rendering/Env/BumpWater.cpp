@@ -119,7 +119,7 @@ static string LoadShaderSource(const string& file)
 {
 	CFileHandler fh(file);
 	if (!fh.FileExists())
-		throw content_error("Can't load shader " + file);
+		throw content_error("BumpWater: Can't load shader " + file);
 	string text;
 	text.resize(fh.FileSize());
 	fh.Read(&text[0], text.length());
@@ -313,7 +313,7 @@ CBumpWater::CBumpWater()
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, coastFBO);
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, coastTexture[0], 0);
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_TEXTURE_2D, coastTexture[1], 0);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+		//glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 		//! initialize
 		UploadCoastline(0, 0, gs->mapx, gs->mapy);
@@ -421,7 +421,7 @@ CBumpWater::CBumpWater()
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectRBO);
 			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, reflectTexture, 0);
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			//glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
 				PrintFboError("reflection",status);
 				glDeleteRenderbuffersEXT(1, &reflectRBO);
@@ -440,7 +440,7 @@ CBumpWater::CBumpWater()
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, refractRBO);
 			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, target, refractTexture, 0);
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			//glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
 				PrintFboError("refraction",status);
 				glDeleteRenderbuffersEXT(1, &refractRBO);
@@ -454,7 +454,7 @@ CBumpWater::CBumpWater()
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, dynWavesFBO);
 			glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, normalTexture, 0);
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+			//glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 			if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
 				PrintFboError("dynamicWaves",status);
 				glDeleteFramebuffersEXT(1,  &dynWavesFBO);
@@ -463,7 +463,7 @@ CBumpWater::CBumpWater()
 				UpdateDynWaves(true); //! initialize
 			}
 		}
-
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	}
 
 
@@ -505,6 +505,7 @@ CBumpWater::CBumpWater()
 		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
 
 		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, shadingX/mapX, shadingZ/mapZ);
+		GLSLDefineConstf2(definitions, "ShadingPlane", shadingX,shadingZ);
 	}
 
 	/** LOAD SHADERS **/

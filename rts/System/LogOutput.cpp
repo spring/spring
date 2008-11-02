@@ -3,7 +3,6 @@
 #include "LogOutput.h"
 
 #include <assert.h>
-#include <cstdarg>
 #include <fstream>
 #include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
@@ -12,30 +11,77 @@
 #include <windows.h>
 #endif
 
-#include "mmgr.h"
 #include "Util.h"
 #include "float3.h"
-#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+//#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Game/GlobalSynced.h"
-#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+//#endif	// !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#include "Platform/ConfigHandler.h"
+#include "mmgr.h"
+
+using std::string;
+using std::vector;
+
+//#if defined BUILDING_AI_INTERFACE
+//#define LOG_FILE_PREFIX "infolog_aiinterface"
+//#else
+//#define LOG_FILE_PREFIX "infolog"
+//#endif
+//#define LOG_FILE_SUFFIX ".txt"
+////static std::ofstream* filelog = 0;
+////static bool initialized = false;
+//static int infologIndex = 0;
+//#define FILE_LOG filelog
+
+/******************************************************************************/
+/******************************************************************************/
+
+CLogSubsystem* CLogSubsystem::linkedList;
+static CLogSubsystem LOG_DEFAULT("", true);
 
 
-#if defined BUILDING_AI_INTERFACE
-#define LOG_FILE_PREFIX "infolog_aiinterface"
-#else
-#define LOG_FILE_PREFIX "infolog"
-#endif
-#define LOG_FILE_SUFFIX ".txt"
-//static std::ofstream* filelog = 0;
-//static bool initialized = false;
-static int infologIndex = 0;
-#define FILE_LOG filelog
+CLogSubsystem::CLogSubsystem(const char* name, bool enabled)
+: name(name), next(linkedList), enabled(enabled)
+{
+	linkedList = this;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+//CLogOutput logOutput;
+
+namespace
+{
+	struct PreInitLogEntry
+	{
+		PreInitLogEntry(CLogSubsystem* subsystem, string text)
+			: subsystem(subsystem), text(text) {}
+
+		CLogSubsystem* subsystem;
+		string text;
+	};
+}
+
+// wrapped in a function to prevent order of initialization problems
+// when logOutput is used before main() is entered.
+static vector<PreInitLogEntry>& preInitLog()
+{
+	static vector<PreInitLogEntry> preInitLog;
+	return preInitLog;
+}
+
+static vector<ILogSubscriber*> subscribers;
+static const char* filename = "infolog.txt";
+static std::ofstream* filelog = 0;
+static bool initialized = false;
 static bool stdoutDebug = false;
 CLogOutput& logOutput = CLogOutput::GetInstance();
 static boost::recursive_mutex tempstrMutex;
-static std::string tempstr;
+static string tempstr;
 
-static const int bufferSize = 2048;
+static const int BUFFER_SIZE = 2048;
+
 
 CLogOutput CLogOutput::myLogOutput = CLogOutput();
 //std::ofstream* CLogOutput::filelog = NULL;
@@ -46,28 +92,136 @@ CLogOutput& CLogOutput::GetInstance() {
 
 CLogOutput::CLogOutput()
 {
+	// multiple infologs can't exist together!
 	assert(this == &logOutput);
-	FILE_LOG = NULL;
-	//assert(!(FILE_LOG)); // multiple infologs can't exist together!
+//	FILE_LOG = NULL;
+//	assert(!(FILE_LOG)); // multiple infologs can't exist together!
+	assert(!filelog);
 }
+
 
 CLogOutput::~CLogOutput()
 {
 	End();
 }
 
+
 void CLogOutput::End()
 {
-	delete FILE_LOG;
-	FILE_LOG = 0;
+//	delete FILE_LOG;
+//	FILE_LOG = 0;
+	SafeDelete(filelog);
 }
+
 
 void CLogOutput::SetMirrorToStdout(bool value)
 {
 	stdoutDebug = value;
 }
 
-void CLogOutput::Output(int zone, const char *str)
+
+void CLogOutput::SetFilename(const char* fname)
+{
+	assert(!initialized);
+	filename = fname;
+}
+
+
+/**
+ * @brief initialize logOutput
+ *
+ * Only after calling this method, logOutput starts writing to disk.
+ * The log file is written in the current directory so this may only be called
+ * after the engine chdir'ed to the correct directory.
+ */
+void CLogOutput::Initialize()
+{
+	if (initialized) return;
+
+	filelog = new std::ofstream(filename);
+	if (filelog->bad())
+		SafeDelete(filelog);
+
+	initialized = true;
+	(*this) << "LogOutput initialized.\n";
+
+	InitializeSubsystems();
+
+	for (vector<PreInitLogEntry>::iterator it = preInitLog().begin(); it != preInitLog().end(); ++it)
+		Output(*it->subsystem, it->text.c_str());
+	preInitLog().clear();
+}
+
+
+/**
+ * @brief initialize the log subsystems
+ *
+ * This writes list of all available and all enabled subsystems to the log.
+ *
+ * Log subsystems can be enabled using the configuration key "LogSubsystems",
+ * or the environment variable "SPRING_LOG_SUBSYSTEMS".
+ *
+ * Both specify a comma separated list of subsystems that should be enabled.
+ * The lists from both sources are combined, there is no overriding.
+ *
+ * A subsystem that is by default enabled, can not be disabled.
+ */
+void CLogOutput::InitializeSubsystems()
+{
+	(*this) << "Available log subsystems: ";
+	for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
+		if (sys->name && *sys->name) {
+			(*this) << sys->name;
+			if (sys->next)
+				(*this) << ", ";
+		}
+	}
+	(*this) << "\n";
+
+	// enabled subsystems is superset of the ones specified in environment
+	// and the ones specified in the configuration file.
+	string subsystems = "," + StringToLower(configHandler.GetString("LogSubsystems", "")) + ",";
+
+	const char* const env = getenv("SPRING_LOG_SUBSYSTEMS");
+	if (env)
+		subsystems += StringToLower(env) + ",";
+
+	(*this) << "Enabled log subsystems: ";
+	for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
+		if (sys->name && *sys->name) {
+			const string name = StringToLower(sys->name);
+			const string::size_type index = subsystems.find("," + name + ",");
+
+			// log subsystems which are enabled by default can not be disabled
+			// ("enabled by default" wouldn't make sense otherwise...)
+			if (!sys->enabled && index != string::npos)
+				sys->enabled = true;
+
+			if (sys->enabled) {
+				(*this) << sys->name;
+				if (sys->next)
+					(*this) << ", ";
+			}
+		}
+	}
+	(*this) << "\n";
+
+	(*this) << "Enable or disable log subsystems using the LogSubsystems configuration key\n";
+	(*this) << "  or the SPRING_LOG_SUBSYSTEMS environment variable (both comma separated).\n";
+}
+
+
+/**
+ * @brief core log output method, used by all others
+ *
+ * Note that, when logOutput isn't initialized yet, the logging is done to the
+ * global std::vector preInitLog(), and is only written to disk in the call to
+ * Initialize().
+ *
+ * This method notifies all registered ILogSubscribers, calls OutputDebugString
+ * (for MSVC builds) and prints the message to stdout and the file log.
+ */
+void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 {
 /*
 	if (!INITIALIZED) {
@@ -75,8 +229,8 @@ void CLogOutput::Output(int zone, const char *str)
 		INITIALIZED = true;
 	}
 */
-	#if !defined BUILDING_AI_INTERFACE
-	if (FILE_LOG == NULL) {
+#if !defined BUILDING_AI_INTERFACE
+/*	if (FILE_LOG == NULL) {
 		#if defined BUILDING_AI_INTERFACE
 		const int MAX_STR_LENGTH = 511;
 		char logFileName[MAX_STR_LENGTH + 1];
@@ -85,111 +239,144 @@ void CLogOutput::Output(int zone, const char *str)
 		const char* logFileName = "infolog.txt";
 		#endif
 		FILE_LOG = new std::ofstream(logFileName);
+	}*/
+	if (!initialized) {
+		preInitLog().push_back(PreInitLogEntry(&subsystem, str));
+		return;
 	}
+
+	if (!subsystem.enabled) return;
 
 	// Output to subscribers
 #if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin(); lsi!=subscribers.end();++lsi)
-		(*lsi)->NotifyLogMsg(zone, str);
-#endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
+		(*lsi)->NotifyLogMsg(subsystem, str);
+#endif	// !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 
-	int nl = strlen(str) - 1;
+	int index = strlen(str) - 1;
+	bool newline = ((index < 0) || (str[index] != '\n'));
 
 #ifdef _MSC_VER
 	OutputDebugString(str);
-	if (nl < 0 || str[nl] != '\n')
+	if (newline)
 		OutputDebugString("\n");
 #endif
 
-	if (FILE_LOG) {
+//	if (FILE_LOG) {
+	if (filelog) {
 #if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 		if (gs) {
-			(*FILE_LOG) << IntToString(gs->frameNum, "[%7d] ");
+			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
+//			(*FILE_LOG) << IntToString(gs->frameNum, "[%7d] ");
 		}
 #endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
-		(*FILE_LOG) << str;
-		if (nl < 0 || str[nl] != '\n')
-			(*FILE_LOG) << "\n";
-		FILE_LOG->flush();
+//		(*FILE_LOG) << str;
+//		if (newline)
+//			(*FILE_LOG) << "\n";
+//		FILE_LOG->flush();
+		if (subsystem.name && *subsystem.name)
+			(*filelog) << subsystem.name << ": ";
+		(*filelog) << str;
+		if (newline)
+			(*filelog) << "\n";
+		filelog->flush();
 	}
 
 	if (stdoutDebug) {
-		fputs(str, stdout);
-		if (nl < 0 || str[nl] != '\n') {
-			putchar('\n');
+		if (subsystem.name && *subsystem.name) {
+			fputs(subsystem.name, stdout);
+			fputs(": ", stdout);
 		}
+		fputs(str, stdout);
+		if (newline)
+			putchar('\n');
 		fflush(stdout);
 	}
-	#endif	/* !defined BUILDING_AI_INTERFACE */
+#endif	// !defined BUILDING_AI_INTERFACE
 }
+
 
 void CLogOutput::SetLastMsgPos(const float3& pos)
 {
-	for(std::vector<ILogSubscriber*>::iterator lsi=subscribers.begin();lsi!=subscribers.end();++lsi)
+	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
 		(*lsi)->SetLastMsgPos(pos);
 }
+
 
 void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 {
 	subscribers.push_back(ls);
 }
 
+
 void CLogOutput::RemoveAllSubscribers()
 {
 	subscribers.clear();
 }
 
+
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
-	subscribers.erase(std::find(subscribers.begin(),subscribers.end(),ls));
+	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
+
 
 // ----------------------------------------------------------------------
 // Printing functions
 // ----------------------------------------------------------------------
 
-void CLogOutput::Print(int zone, const char *fmt, ...)
+
+void CLogOutput::Print(CLogSubsystem& subsystem, const char* fmt, ...)
 {
+	// if logOutput isn't initialized then subsystem.enabled still has it's default value
+	if (initialized && !subsystem.enabled) return;
+
 	va_list argp;
 
 	va_start(argp, fmt);
-	Printv(zone, fmt, argp);
+	Printv(subsystem, fmt, argp);
 	va_end(argp);
 }
 
-void CLogOutput::Printv(int zone, const char *fmt, va_list argp)
+
+void CLogOutput::Printv(CLogSubsystem& subsystem, const char* fmt, va_list argp)
 {
-	char text[bufferSize];
+	// if logOutput isn't initialized then subsystem.enabled still has it's default value
+	if (initialized && !subsystem.enabled) return;
+
+	char text[BUFFER_SIZE];
 
 	VSNPRINTF(text, sizeof(text), fmt, argp);
-	Output(zone, text);
+	Output(subsystem, text);
 }
 
-void CLogOutput::Print(const char *fmt, ...)
+
+void CLogOutput::Print(const char* fmt, ...)
 {
 	va_list argp;
 
 	va_start(argp, fmt);
-	Printv(0, fmt, argp);
+	Printv(LOG_DEFAULT, fmt, argp);
 	va_end(argp);
 }
+
 
 void CLogOutput::Print(const std::string& text)
 {
-	Output(0, text.c_str());
+	Output(LOG_DEFAULT, text.c_str());
 }
 
 
-void CLogOutput::Print(int zone, const std::string& text)
+void CLogOutput::Print(CLogSubsystem& subsystem, const std::string& text)
 {
-	Output(zone, text.c_str());
+	Output(subsystem, text.c_str());
 }
 
 
 CLogOutput& CLogOutput::operator<< (const int i)
 {
 	char t[50];
-	sprintf(t,"%d ",i);
+	sprintf(t, "%d ", i);
 	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
 	tempstr += t;
 	return *this;
@@ -199,7 +386,7 @@ CLogOutput& CLogOutput::operator<< (const int i)
 CLogOutput& CLogOutput::operator<< (const float f)
 {
 	char t[50];
-	sprintf(t,"%f ",f);
+	sprintf(t, "%f ", f);
 	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
 	tempstr += t;
 	return *this;
@@ -214,18 +401,19 @@ CLogOutput& CLogOutput::operator<< (const char* c)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
 
-	for(int a=0;c[a];a++) {
+	for(int a = 0; c[a]; ++a) {
 		if (c[a] == '\n') {
-			Output(0, tempstr.c_str());
+			Output(LOG_DEFAULT, tempstr.c_str());
 			tempstr.clear();
 			break;
-		} else
+		} else {
 			tempstr += c[a];
+		}
 	}
 	return *this;
 }
 
-CLogOutput& CLogOutput::operator<< (const std::string &s)
+CLogOutput& CLogOutput::operator<< (const std::string& s)
 {
-	return this->operator <<(s.c_str());
+	return this->operator<< (s.c_str());
 }

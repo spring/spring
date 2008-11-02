@@ -2,6 +2,8 @@
 #include "mmgr.h"
 
 #include "glExtra.h"
+#include "VertexArray.h"
+#include "myGL.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "LogOutput.h"
@@ -12,16 +14,17 @@
  */
 static void defSurfaceCircle(const float3& center, float radius, unsigned int res)
 {
-	glBegin(GL_LINE_LOOP);
+	CVertexArray* va=GetVertexArray();
+	va->Initialize();
 	for (int i = 0; i < res; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)res;
 		float3 pos;
-		pos.x = center.x + (sin(radians) * radius);
-		pos.z = center.z + (cos(radians) * radius);
+		pos.x = center.x + (fastmath::sin(radians) * radius);
+		pos.z = center.z + (fastmath::cos(radians) * radius);
 		pos.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
-		glVertexf3(pos);
+		va->AddVertex0(pos);
 	}
-	glEnd();
+	va->DrawArray0(GL_LINE_LOOP);
 }
 
 static void defSurfaceSquare(const float3& center, float xsize, float zsize)
@@ -32,12 +35,13 @@ static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 	const float3 p2 = center + float3( xsize, 0.0f,  zsize);
 	const float3 p3 = center + float3(-xsize, 0.0f,  zsize);
 
-	glBegin(GL_LINE_LOOP);
-		glVertex3f(p0.x, ground->GetHeight(p0.x, p0.z), p0.z);
-		glVertex3f(p1.x, ground->GetHeight(p1.x, p1.z), p1.z);
-		glVertex3f(p2.x, ground->GetHeight(p2.x, p2.z), p2.z);
-		glVertex3f(p3.x, ground->GetHeight(p3.x, p3.z), p3.z);
-	glEnd();
+	CVertexArray* va=GetVertexArray();
+	va->Initialize();
+		va->AddVertex0(p0.x, ground->GetHeight(p0.x, p0.z), p0.z);
+		va->AddVertex0(p1.x, ground->GetHeight(p1.x, p1.z), p1.z);
+		va->AddVertex0(p2.x, ground->GetHeight(p2.x, p2.z), p2.z);
+		va->AddVertex0(p3.x, ground->GetHeight(p3.x, p3.z), p3.z);
+	va->DrawArray0(GL_LINE_LOOP);
 }
 
 
@@ -63,13 +67,14 @@ void glBallisticCircle(const float3& center, const float radius,
                        const CWeapon* weapon,
                        unsigned int resolution, float slope)
 {
-	glBegin(GL_LINE_LOOP);
+	CVertexArray* va=GetVertexArray();
+	va->Initialize();
 	for (int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
 		float rad = radius;
 		float3 pos;
-		float sinR = sin(radians);
-		float cosR = cos(radians);
+		float sinR = fastmath::sin(radians);
+		float cosR = fastmath::cos(radians);
 		pos.x = center.x + (sinR * rad);
 		pos.z = center.z + (cosR * rad);
 		pos.y = ground->GetHeight(pos.x, pos.z);
@@ -97,9 +102,9 @@ void glBallisticCircle(const float3& center, const float radius,
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
 		pos.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
-		glVertexf3(pos);
+		va->AddVertex0(pos);
 	}
-	glEnd();
+	va->DrawArray0(GL_LINE_LOOP);
 }
 
 

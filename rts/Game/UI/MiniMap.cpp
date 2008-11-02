@@ -594,7 +594,7 @@ void CMiniMap::UpdateGeometry()
 
 	unitSizeX = dpr * (mapx / w);
 	unitSizeY = dpr * (mapy / h);
-	unitSelectRadius = sqrt(unitSizeX * unitSizeY);
+	unitSelectRadius = fastmath::sqrt(unitSizeX * unitSizeY);
 
 	// in mouse coordinates
 	mapBox.xmin = xpos;
@@ -662,6 +662,8 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
+	GML_RECMUTEX_LOCK(sel); // SelectUnits
+
 	if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
 		selectedUnits.ClearSelected();
 	}
@@ -913,7 +915,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_RECMUTEX_LOCK(quad); //unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
@@ -1044,7 +1046,7 @@ void CMiniMap::DrawForReal()
 	GML_RECMUTEX_LOCK(unit); // DrawForReal
 	// draw the units
 	std::list<CUnit*>::iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ui++) {
+	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
 //	GML_RECMUTEX_LOCK(quad);  // getselectunit accesses quadfield
@@ -1537,8 +1539,11 @@ void CMiniMap::DrawUnitHighlight(CUnit* unit)
 
 void CMiniMap::DrawNotes(void)
 {
+	if (notes.size()<=0) return;
+
 	const float baseSize = gs->mapx * SQUARE_SIZE;
-	glBegin(GL_LINES);
+	CVertexArray* va=GetVertexArray();
+	va->Initialize();
 	std::list<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
@@ -1546,7 +1551,6 @@ void CMiniMap::DrawNotes(void)
 			ni = notes.erase(ni);
 			continue;
 		}
-		glColor4fv(ni->color);
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
@@ -1560,21 +1564,27 @@ void CMiniMap::DrawNotes(void)
 					size = baseSize * 1.4f - modage * baseSize * 0.9f;
 				}
 			}
-			const float sinSize = sin(rot) * size;
-			const float cosSize = cos(rot) * size;
+			const float sinSize = fastmath::sin(rot) * size;
+			const float cosSize = fastmath::cos(rot) * size;
 
-			DrawInMap2D(ni->pos.x + sinSize, ni->pos.z + cosSize);
-			DrawInMap2D(ni->pos.x + cosSize, ni->pos.z - sinSize);
-			DrawInMap2D(ni->pos.x + cosSize, ni->pos.z - sinSize);
-			DrawInMap2D(ni->pos.x - sinSize, ni->pos.z - cosSize);
-			DrawInMap2D(ni->pos.x - sinSize, ni->pos.z - cosSize);
-			DrawInMap2D(ni->pos.x - cosSize, ni->pos.z + sinSize);
-			DrawInMap2D(ni->pos.x - cosSize, ni->pos.z + sinSize);
-			DrawInMap2D(ni->pos.x + sinSize, ni->pos.z + cosSize);
+			const unsigned char color[4]    = {
+			      (unsigned char)(ni->color[0] * 255),
+			      (unsigned char)(ni->color[1] * 255),
+			      (unsigned char)(ni->color[2] * 255),
+			      (unsigned char)(ni->color[3] * 255)
+			};
+			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x + cosSize, ni->pos.z - sinSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x - sinSize, ni->pos.z - cosSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x - cosSize, ni->pos.z + sinSize, 0.0f),color);
+			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
 		}
 		++ni;
 	}
-	glEnd();
+	va->DrawArrayC(GL_LINES);
 }
 
 

@@ -106,6 +106,18 @@ Thanks to: 	- Yuritch for testing and providing me with improved mod config file
 		- Brandon Potter for his TBT 12 cfg file
 
 
+AAI v0.875	- Current ammount of land/water within the base is taken into account when selecting factories (e.g. dont order 
+		  water factories on a land map anymore)
+
+		- Improved AAIs behaviour on water maps with start positions on islands/land masses
+
+		- Improved metal extractor construction algorithm (spots closer to available builder, faster algorithm, 
+		  works better if there are land and sea spots available at the same time)
+
+		- Continent file version bumped to 0.87
+
+		- Fixed a crash on shut down introduced in Spring v0.77
+
 
 AAI v0.872	- Refactored code for getting rally points and positions to withdraw units and made 
 
@@ -126,11 +138,11 @@ AAI v0.87	- Proper detection of amphibious ground units (was causing AAI to free
 		- Added some new variables to mod config file:
 
 		  FALLBACK_DIST_RATIO 0.9 - units will try keep enemies at this ratio of their maximum weapons' range
-		  
+
 		  MIN_FALLBACK_RANGE 500  - units with lower weapons' range will not try fall back at all
-		 
+
 		  MAX_FALLBACK_RANGE 800  - units with higher weapons' range will not try fall back at all   
-	
+
   		  MIN_FALLBACK_TURNRATE 250 - units with lower turnrate will not try fall back at all	
 
 		- Added submarine defence map -> AAI will now store its defence capabilities vs submarines separately from other 

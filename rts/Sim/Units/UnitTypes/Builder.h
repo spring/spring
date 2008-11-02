@@ -20,6 +20,9 @@ public:
 	inline float f3Dist(const float3& a, const float3& b) const {
 		return range3D ? a.distance(b) : a.distance2D(b);
 	}
+	inline float f3SqDist(const float3& a, const float3& b) const {
+		return range3D ? a.SqDistance(b) : a.SqDistance2D(b);
+	}
 	inline float f3Len(const float3& a) const {
 		return range3D ? a.Length() : a.Length2D();
 	}
