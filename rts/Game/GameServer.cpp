@@ -400,7 +400,7 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if (!isPaused && !WaitsOnCon())
+	if (!isPaused && gameStartTime > 0)
 	{
 		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
 	}
@@ -960,9 +960,7 @@ void CGameServer::CheckForGameStart(bool forced)
 {
 	assert(!gameStartTime);
 	bool allReady = true;
-	
-	unsigned numDemoPlayers = demoReader ? demoReader->GetFileHeader().maxPlayerNum+1 : 0;
-	unsigned start = numDemoPlayers;
+
 #ifdef DEDICATED
 	// Lobby-protocol doesn't support creating games without players inside
 	// so in dedicated mode there will always be the host-player in the script
@@ -980,7 +978,6 @@ void CGameServer::CheckForGameStart(bool forced)
 			break;
 		}
 	}
-
 
 	if (allReady || forced)
 	{
@@ -1283,7 +1280,7 @@ void CGameServer::UpdateLoop()
 	while (!quitServer)
 	{
 		bool hasData = false;
-		if (hasLocalClient)
+		if (hasLocalClient || !UDPNet)
 		{
 			SDL_Delay(10); // don't take 100% cpu time
 			hasData = true;

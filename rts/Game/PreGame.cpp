@@ -75,16 +75,19 @@ CPreGame::~CPreGame()
 
 void CPreGame::LoadSetupscript(const std::string& script)
 {
+	assert(settings->isHost);
 	StartServer(script);
 }
 
 void CPreGame::LoadDemo(const std::string& demo)
 {
+	assert(settings->isHost);
 	ReadDataFromDemo(demo);
 }
 
 void CPreGame::LoadSavefile(const std::string& save)
 {
+	assert(settings->isHost);
 	savefile = new CLoadSaveHandler();
 	savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
 	StartServer(savefile->scriptText);
@@ -302,7 +305,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 				throw content_error("Server sent us incorrect script");
 			}
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(settings.get(), false, data, tempSetup);
+			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
 			good_fpu_control_registers("after CGameServer creation");
 			break;
