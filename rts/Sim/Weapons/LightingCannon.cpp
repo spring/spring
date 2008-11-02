@@ -110,7 +110,7 @@ void CLightingCannon::Fire(void)
 	if (weaponDef->dynDamageExp > 0)
 		dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponMuzzlePos, targetPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
 
-	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,weaponDef->explosionGenerator, u,dir, weaponDef->id);
+	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,true,0.5f,weaponDef->noSelfDamage,weaponDef->explosionGenerator, u,dir, weaponDef->id);
 
 	SAFE_NEW CLightingProjectile(weaponMuzzlePos,
 		weaponMuzzlePos + dir * (r + 10), owner, color, weaponDef, 10, this);
