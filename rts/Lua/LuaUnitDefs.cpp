@@ -754,6 +754,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("slideTolerance",    ud.slideTolerance);
 
 	ADD_FLOAT("maxWeaponRange", ud.maxWeaponRange);
+	ADD_FLOAT("maxCoverage", ud.maxCoverage);
 
 	ADD_BOOL( "buildRange3D",   ud.buildRange3D);
 	ADD_FLOAT("buildDistance",  ud.buildDistance);

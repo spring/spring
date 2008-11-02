@@ -28,7 +28,7 @@ public:
 	void InitAI(int commander_unit_id, const UnitDef *commander_def);
 
 	// return true if building will be placed at a valid pos = inside sectors
-	bool InitBuildingAt(const UnitDef *def, float3 pos);
+	bool InitBuildingAt(const UnitDef *def, float3 pos, bool water);
 
 	void ConstructBuildingAt(int building, int builder, float3 position); 
 
@@ -110,7 +110,7 @@ public:
 	BuildOrderStatus BuildStationaryDefenceVS(UnitCategory category, AAISector *dest);
 
 	// tries to call support vs air (returns true if succesful)
-	void DefendUnitVS(int unit, const UnitDef *def, UnitCategory category, float3 *enemy_pos, int importance);
+	void DefendUnitVS(int unit, unsigned int enemy_movement_type, float3 *enemy_pos, int importance);
 
 	// returns true if succesfully assisting construction
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
@@ -127,17 +127,14 @@ public:
 	// returns the the total air defence power of all units
 	float GetTotalAirPower();
 	
-	// chooses a stzarting sector close to specified sector
+	// chooses a starting sector close to specified sector
 	void ChooseDifferentStartingSector(int x, int y);
 
-	// 
-	AAIGroup* GetClosestGroupOfCategory(UnitCategory category, UnitType type, float3 pos, int importance); 
+	// returns closest (taking into account movement speed) group with units of specified unit type that may reach the location 
+	AAIGroup* GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int importance);
 
 	float3 GetRallyPoint(unsigned int unit_movement_type, int continent_id, int min_dist, int max_dist);
 	float3 GetRallyPointCloseTo(UnitCategory category, unsigned int unit_movement_type, int continent_id, float3 pos, int min_dist, int max_dist);
-
-	AAIMetalSpot* FindMetalSpotClosestToBuilder(int land_mex, int water_mex);
-	AAIMetalSpot* FindMetalSpot(bool land, bool water);
 
 	float3 GetBuildsite(int builder, int building, UnitCategory category);
 	float3 GetUnitBuildsite(int builder, int unit);

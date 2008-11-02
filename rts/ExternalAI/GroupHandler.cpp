@@ -87,7 +87,7 @@ void CGroupHandler::Update()
 
 void CGroupHandler::DrawCommands()
 {
-	GML_STDMUTEX_LOCK(cai);
+//	GML_STDMUTEX_LOCK(cai); // not needed, protected via SelectedUnits::DrawCommands
 	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)!=0)
 			(*ai)->DrawCommands();
@@ -153,6 +153,9 @@ void CGroupHandler::TestDll(std::string name)
 
 void CGroupHandler::GroupCommand(int num)
 {
+	GML_RECMUTEX_LOCK(sel); // GroupCommand
+	GML_STDMUTEX_LOCK(group); // GroupCommand
+
 	if (keys[SDLK_LCTRL]) {
 		if (!keys[SDLK_LSHIFT]) {
 			groups[num]->ClearUnits();
@@ -199,6 +202,9 @@ void CGroupHandler::GroupCommand(int num)
 
 void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
+	GML_RECMUTEX_LOCK(sel); // GroupCommand
+	GML_STDMUTEX_LOCK(group); // GroupCommand
+
 	if ((cmd == "set") || (cmd == "add")) {
 		if (cmd == "set") {
 			groups[num]->ClearUnits();
@@ -263,6 +269,8 @@ void CGroupHandler::FindDlls(void)
 
 CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 {
+	GML_STDMUTEX_LOCK(group); // GroupCommand
+
 	if(freeGroups.empty()){
 		CGroup* group=SAFE_NEW CGroup(aiKey,firstUnusedGroup++,this);
 		groups.push_back(group);
@@ -281,6 +289,9 @@ CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
+	GML_RECMUTEX_LOCK(sel); // RemoveGroup
+	GML_STDMUTEX_LOCK(group); // RemoveGroup
+
 	if(group->id<10){
 		logOutput.Print("Warning trying to remove hotkey group %i",group->id);
 		return;
@@ -294,6 +305,8 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 std::map<AIKey, std::string> CGroupHandler::GetSuitedAis(const CUnitSet& units)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSuitedAis
+
 	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
 	ISUNITSUITED IsUnitSuited;
 

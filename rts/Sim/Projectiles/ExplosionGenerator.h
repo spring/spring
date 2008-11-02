@@ -1,6 +1,7 @@
 #ifndef EXPLOSION_GRAPHICS_H
 #define EXPLOSION_GRAPHICS_H
 
+#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Lua/LuaParser.h"
 #include "Sim/Objects/WorldObject.h"
@@ -18,7 +19,7 @@ public:
 	CExpGenSpawnable(): CWorldObject(){};
 	CExpGenSpawnable(const float3& pos): CWorldObject(pos) {};
 	virtual ~CExpGenSpawnable() {};
-	virtual void Init(const float3& pos, CUnit* owner) = 0;
+	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H) = 0;
 };
 
 
@@ -111,7 +112,9 @@ protected:
 		bool useDefaultExplosions;
 	};
 
-	CEGData* currentCEG;
+	std::map<string, CEGData> cachedCEGs;
+	std::map<string, CEGData>::iterator currentCEG;
+
 	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode (const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 

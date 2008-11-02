@@ -349,7 +349,7 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 	ai->map->Pos2FinalBuildPos(&pos, def);
 	
 	// give order if building can be placed at the desired position (position lies within a valid sector)
-	if(ai->execute->InitBuildingAt(def, pos))
+	if(ai->execute->InitBuildingAt(def, pos, water))
 	{
 		order_tick = cb->GetCurrentFrame();
 

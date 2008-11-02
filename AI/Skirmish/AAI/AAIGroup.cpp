@@ -14,7 +14,6 @@
 
 AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continent_id)
 {
-	
 	this->ai = ai;
 	cb = ai->cb;
 	bt = ai->bt;
@@ -165,7 +164,7 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type, int continent_id)
 bool AAIGroup::RemoveUnit(int unit, int attacker)
 {
 	// look for unit with that id
-	for(list<int2>::iterator i = units.begin(); i != units.end(); i++)
+	for(list<int2>::iterator i = units.begin(); i != units.end(); ++i)
 	{
 		if(i->x == unit)
 		{
@@ -210,11 +209,13 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 						ai->af->CheckTarget(attacker, def);
 					else if(category == AIR_ASSAULT)
 					{
+						float3 enemy_pos = cb->GetUnitPos(attacker);
+
 						// get a random unit of the group
 						int unit = GetRandomUnit();
 
 						if(unit)
-							ai->execute->DefendUnitVS(unit, cb->GetUnitDef(unit), category, NULL, 110);
+							ai->execute->DefendUnitVS(unit, bt->units_static[def->id].movement_type, &enemy_pos, 100);
 					}
 				}
 			}

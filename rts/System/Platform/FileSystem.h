@@ -31,6 +31,7 @@ class FileSystemHandler
 
 		virtual ~FileSystemHandler();
 		FileSystemHandler(int native_path_sep = '/');
+		virtual void Initialize() = 0;
 
 		// almost direct wrappers to system calls
 		virtual bool mkdir(const std::string& dir) const = 0;

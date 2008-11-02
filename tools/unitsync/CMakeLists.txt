@@ -54,6 +54,7 @@ list(APPEND platformfiles
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
+	../../rts/System/LogOutput
 	../../rts/System/TdfParser
 	../../rts/Sim/SideParser
 	../../rts/Game/GameVersion
@@ -71,8 +72,8 @@ endif (PYTHONLIBS_FOUND)
 if (JAVA_FOUND)
 	list(APPEND unitsync_files javabind)
 endif (JAVA_FOUND)
-ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer SyncServer stdafx)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
+ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
+TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})
 endif (PYTHONLIBS_FOUND)

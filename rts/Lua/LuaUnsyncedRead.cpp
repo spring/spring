@@ -177,6 +177,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetKeyBindings);
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
+	REGISTER_LUA_CFUNC(GetLastMessagePositions);
+
 	REGISTER_LUA_CFUNC(GetConsoleBuffer);
 	REGISTER_LUA_CFUNC(GetCurrentTooltip);
 
@@ -197,6 +199,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroupUnitsCount);
 
 	REGISTER_LUA_CFUNC(GetPlayerTraffic);
+
+	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	return true;
 }
@@ -356,7 +360,7 @@ int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 
 	lua_pushboolean(L, (x >= x0) && (x < x1) &&
 	                   (y >= y0) && (y < y1));
-		
+
 	return 1;
 }
 
@@ -499,6 +503,8 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // IsUnitSelected
+
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
@@ -562,10 +568,11 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
 
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	if (unit->transporter == NULL) {
+	CTransportUnit *trans=unit->GetTransporter();
+	if (trans == NULL) {
 		pos += (unit->speed * gu->timeOffset);
 	} else {
-		pos += (unit->transporter->speed * gu->timeOffset);
+		pos += (trans->speed * gu->timeOffset);
 	}
 
 	lua_pushnumber(L, pos.x);
@@ -670,7 +677,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 				}
 			}
 
-			const float testRadius = fixedRadius ? radius : (unit->radius + radius); 
+			const float testRadius = fixedRadius ? radius : (unit->radius + radius);
 			if (!camera->InView(unit->midPos, testRadius)) {
 				continue;
 			}
@@ -729,6 +736,8 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
+
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	int count = 0;
@@ -747,6 +756,8 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted
+
 	CheckNoArgs(L, __FUNCTION__);
 
 	map<int, vector<CUnit*> > unitDefMap;
@@ -780,6 +791,8 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts
+
 	CheckNoArgs(L, __FUNCTION__);
 
 	// tally the types
@@ -826,7 +839,7 @@ int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, game->hideInterface);
-	return 1;	
+	return 1;
 }
 
 
@@ -837,7 +850,7 @@ int LuaUnsyncedRead::HaveShadows(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, shadowHandler->drawShadows);
-	return 1;	
+	return 1;
 }
 
 
@@ -848,7 +861,7 @@ int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, unitDrawer->advShading);
-	return 1;	
+	return 1;
 }
 
 
@@ -869,7 +882,7 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 	}
 	lua_pushnumber(L, mode);
 	lua_pushstring(L, modeName);
-	return 2;	
+	return 2;
 }
 
 
@@ -1048,7 +1061,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float udist = helper->GuiTraceRay(pos, dir, range, unit, 20.0f, true);
+	const float udist = helper->GuiTraceRay(pos, dir, range, unit, true);
 	const float fdist = helper->GuiTraceRayFeature(pos, dir, range, feature);
 //	gu->myAllyTeam = origAllyTeam;
 
@@ -1235,6 +1248,8 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCommand
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1257,6 +1272,8 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1309,6 +1326,8 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1328,6 +1347,8 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1349,6 +1370,8 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
+	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex
+
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1519,6 +1542,30 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 	return 1;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
+{
+	CheckNoArgs(L, __FUNCTION__);
+	lua_newtable(L);
+	for (int i=1; i<=game->infoConsole->GetMsgPosCount(); i++) {
+		lua_pushnumber(L, i);
+		lua_newtable(L); {
+			const float3 msgpos = game->infoConsole->GetMsgPos();
+			lua_pushnumber(L, 1);
+			lua_pushnumber(L, msgpos.x);
+			lua_rawset(L, -3);
+			lua_pushnumber(L, 2);
+			lua_pushnumber(L, msgpos.y);
+			lua_rawset(L, -3);
+			lua_pushnumber(L, 3);
+			lua_pushnumber(L, msgpos.z);
+			lua_rawset(L, -3);
+		}
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
 
 /******************************************************************************/
 
@@ -1556,9 +1603,10 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 			lua_pushstring(L, "text");
 			lua_pushstring(L, lines[i].text.c_str());
 			lua_rawset(L, -3);
-			// FIXME: how to migrate 'priority' to 'zone', will it break widgets?
+			// FIXME: migrate priority to subsystem...
 			lua_pushstring(L, "priority");
-			lua_pushnumber(L, lines[i].zone);
+			lua_pushnumber(L, 0 /*priority*/ );
+			//lua_pushstring(L, lines[i].subsystem->name);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);
@@ -1659,6 +1707,8 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupList
+
 	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandlers[gu->myTeam] == NULL) {
 		return 0;
@@ -1691,6 +1741,8 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupAIList
+
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
 	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
@@ -1711,6 +1763,8 @@ int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupAIName(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupAIName
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isnumber(L, 1)) {
 		luaL_error(L, "Incorrect arguments to GetGroupAIName(groupID)");
@@ -1757,6 +1811,8 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnits
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1782,6 +1838,8 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsSorted
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1821,6 +1879,8 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsCounts
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1857,6 +1917,8 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(group); // GetGroupUnitsCount
+
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 	if ((groupID < 0) || (groupID >= groups.size()) ||
@@ -1936,6 +1998,21 @@ int LuaUnsyncedRead::GetPlayerTraffic(lua_State* L)
 		return 1;
 	}
 	lua_pushnumber(L, pit->second);
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "Incorrect arguments to GetDrawSelectionInfo()");
+	}
+
+	lua_pushboolean(L, guihandler ? guihandler->GetDrawSelectionInfo() : 0);
 	return 1;
 }
 

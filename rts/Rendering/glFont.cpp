@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include "mmgr.h"
 
+#include "LogOutput.h"
 #include "Game/Camera.h"
 #include "myMath.h"
 #include "Platform/FileSystem.h"
@@ -53,20 +54,16 @@ private:
 };
 
 CFontTextureRenderer::CFontTextureRenderer(int width, int height)
+: width(width), height(height), buffer(NULL), cur(NULL), curX(0), curY(0), curHeight(0)
 {
-	this->width = width;
-	this->height = height;
 	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
 	memset(buffer, 0xFF00, width*height);
 	cur = buffer;
-	curX = curY = 0;
-	curHeight = 0;
 }
 
 CFontTextureRenderer::~CFontTextureRenderer()
 {
-	if (buffer)
-		delete [] buffer;
+	delete [] buffer;
 }
 
 void CFontTextureRenderer::AddGlyph(FT_GlyphSlot slot, int &outX, int &outY)
@@ -109,37 +106,31 @@ void CFontTextureRenderer::BreakLine()
 
 GLuint CFontTextureRenderer::CreateTexture()
 {
+	glGetError();
 	GLuint tex;
 	glGenTextures(1, &tex);
 
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	if (GLEW_EXT_texture_edge_clamp) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA,
 		width, height, 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
 
 	delete [] buffer;
-	buffer = 0;
+	buffer = NULL;
 
-	int glError = glGetError();
-	if (glError != GL_NO_ERROR && glError != GL_INVALID_ENUM) {
-		throw std::runtime_error("Could not allocate font texture.");
-	}
 	return tex;
 }
 
 
 
 CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWidth, int texHeight)
+: color(NULL), outlineColor(NULL), glyphs(NULL)
 {
 	FT_Library library;
 	FT_Face face;
@@ -158,8 +149,8 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 		throw content_error(msg);
 	}
 
-	const float height = gu->viewSizeY*size*64.0f;
-	FT_Set_Char_Size(face, (int)(height * gu->aspectRatio/(4.0f/3.0f)), (int)height, 72, 72);
+	const float height = gu->viewSizeY * size * 64.0f;
+	FT_Set_Char_Size(face, (int)(height * gu->aspectRatio / (4.0f/3.0f)), (int)height, 72, 72);
 
 	// clamp the char range
 	end = min(254, end);
@@ -188,16 +179,22 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 
 		error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
 		if ( error ) {
-			string msg = "FT_Load_Glyph failed:";
-			msg += GetFTError(error);
-			throw std::runtime_error(msg);
+			// skip this glyph
+			g->advance = 1;
+			g->height = 1;
+			g->u0 = g->u1 = g->v0 = g->v1 = 0;
+			g->x0 = g->x1 = g->y0 = g->y1 = 0;
+			continue;
 		}
 		// convert to an anti-aliased bitmap
 		error = FT_Render_Glyph( face->glyph, ft_render_mode_normal);
 		if (error) {
-			string msg = "FT_Render_Glyph failed:";
-			msg += GetFTError(error);
-			throw std::runtime_error(msg);
+			// skip this glyph
+			g->advance = 1;
+			g->height = 0;
+			g->u0 = g->u1 = g->v0 = g->v1 = 0;
+			g->x0 = g->x1 = g->y0 = g->y1 = 0;
+			continue;
 		}
 		FT_GlyphSlot slot = face->glyph;
 
@@ -205,7 +202,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 		try {
 			texRenderer.AddGlyph(slot, texture_x, texture_y);
 		} catch (texture_size_exception&) {
-			FT_Done_Face(face);			// destructor does not run when re-throwing
+			FT_Done_Face(face);			// destructor does not run when throwing from constructor
 			FT_Done_FreeType(library);
 			delete [] glyphs;
 			throw;
@@ -239,7 +236,6 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 	fontTexture = texRenderer.CreateTexture();
 
 	outline = false;
-	color = outlineColor = 0;
 
 	defaultColor[0] = 1.0f;
 	defaultColor[1] = 1.0f;
@@ -270,6 +266,7 @@ CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, flo
 
 CglFont::~CglFont()
 {
+	glDeleteTextures(1, &fontTexture);
 	delete[] glyphs;
 }
 
@@ -621,8 +618,8 @@ void CglFont::glFormatAt(GLfloat x, GLfloat y, float s, const char *fmt, ...)
 
 const float* CglFont::ChooseOutlineColor(const float *textColor)
 {
-	static const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
-	static const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
+	static const GLfloat darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
+	static const GLfloat lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
 
 	const float luminance = (textColor[0] * 0.299f) +
 	                        (textColor[1] * 0.587f) +

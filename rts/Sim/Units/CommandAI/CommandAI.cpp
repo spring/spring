@@ -308,7 +308,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 
 CCommandAI::~CCommandAI()
 {
-	if(orderTarget){
+	if (orderTarget) {
 		DeleteDeathDependence(orderTarget);
 		orderTarget = 0;
 	}

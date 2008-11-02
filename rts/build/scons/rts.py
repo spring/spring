@@ -87,7 +87,8 @@ def generate(env):
 	usropts.AddOptions(
 		#permanent options
 		('platform',          'Set to linux, freebsd or windows', None),
-		('gml',               'Set to false to disable OpenGL thread library', False),
+		('gml',               'Set to yes to enable the OpenGL Multithreading Library', False),
+		('gmlsim',            'Set to yes to enable parallel threads for Sim/Draw', False),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
@@ -152,7 +153,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'gml', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
+		for key in ['platform', 'gml', 'gmlsim', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
 			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
 			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines', 'arch']:
@@ -373,6 +374,7 @@ def generate(env):
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
 		bool_opt('gml', False)
+		bool_opt('gmlsim', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
@@ -401,9 +403,14 @@ def generate(env):
 		if env['gml']:
 			env.AppendUnique(CCFLAGS = ['-mno-tls-direct-seg-refs'], CXXFLAGS = ['-mno-tls-direct-seg-refs'], LINKFLAGS = ['-mno-tls-direct-seg-refs'])		
 			spring_defines += ['USE_GML']
-			print 'GML OpenGL thread library is enabled'
+			print 'OpenGL Multithreading Library is enabled'
+			if env['gmlsim']:
+				spring_defines += ['USE_GML_SIM']
+				print 'Parallel threads for Sim/Draw is enabled'
+			else:
+				print 'Parallel threads for Sim/Draw is NOT enabled'
 		else:
-			print 'GML OpenGL thread library NOT enabled'
+			print 'OpenGL Multithreading Library and parallel threads for Sim/Draw are NOT enabled'
 
 		# Add define specifying type of floating point math to use.
 		if env['fpmath']:

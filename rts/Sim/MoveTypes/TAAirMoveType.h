@@ -51,7 +51,7 @@ public:
 
 	float maxDrift;
 
-
+	float3 randomWind;			//buffets the plane when idling
 
 
 	CTAAirMoveType(CUnit* owner);

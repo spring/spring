@@ -7,6 +7,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
+#include "System/myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
@@ -40,7 +41,7 @@ void CDGunWeapon::Update(void)
 
 void CDGunWeapon::Fire(void)
 {
-	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.distance(gs->Team(owner->team)->startPos)>uh->dgunRadius){
+	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(gs->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
 		return;		//prevents dgunning using fps view if outside dgunlimit
 	}
 

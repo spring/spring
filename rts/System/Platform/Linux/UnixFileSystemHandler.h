@@ -25,7 +25,8 @@ class UnixFileSystemHandler : public FileSystemHandler
 	public:
 
 		virtual ~UnixFileSystemHandler();
-		UnixFileSystemHandler(bool verbose, bool initialize = true);
+		UnixFileSystemHandler(bool verbose);
+		virtual void Initialize();
 
 		virtual bool mkdir(const std::string& dir) const;
 

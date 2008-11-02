@@ -85,22 +85,22 @@ CEventHandler::CEventHandler()
 	// unsynced call-ins
 	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
 
-  SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(KeyRelease,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseMove,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(DefaultCommand, MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
-  SETUP_EVENT(MapDrawCmd,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(MapDrawCmd,     MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT);
 
@@ -278,7 +278,7 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 	}
 	ecList = newList;
 }
-		
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -289,7 +289,7 @@ void CEventHandler::GamePreload()
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listGamePreload[i];
 		ec->GamePreload();
-	}	
+	}
 }
 
 void CEventHandler::GameStart()
@@ -298,7 +298,7 @@ void CEventHandler::GameStart()
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listGameStart[i];
 		ec->GameStart();
-	}	
+	}
 }
 
 void CEventHandler::GameOver()
@@ -519,12 +519,12 @@ string CEventHandler::GetTooltip(int x, int y)
 }
 
 
-bool CEventHandler::AddConsoleLine(const string& msg, int zone)
+bool CEventHandler::AddConsoleLine(const string& msg, CLogSubsystem& subsystem)
 {
 	const int count = listAddConsoleLine.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listAddConsoleLine[i];
-		ec->AddConsoleLine(msg, zone);
+		ec->AddConsoleLine(msg, subsystem);
 	}
 	return true;
 }

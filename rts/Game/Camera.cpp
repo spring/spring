@@ -5,6 +5,7 @@
 
 #include "mmgr.h"
 
+#include "System/myMath.h"
 #include "System/GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
@@ -256,13 +257,13 @@ bool CCamera::InView(const float3& mins, const float3& maxs)
 
 bool CCamera::InView(const float3 &p, float radius)
 {
-	const float3 t = (p - pos);
-	const float  l = t.Length();
+	const float3 t   = (p - pos);
+	const float  lsq = t.SqLength();
 
-	if (l < 50.0f) {
+	if (lsq < 2500.0f) {
 		return true;
 	}
-	else if (l > gu->viewRange) {
+	else if (lsq > Square(gu->viewRange)) {
 		return false;
 	}
 	

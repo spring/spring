@@ -10,7 +10,7 @@ class CFireProjectile :
 	CR_DECLARE(CFireProjectile);
 	CR_DECLARE_SUB(SubParticle);
 public:
-	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize);
+	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize GML_PARG_H);
 	~CFireProjectile(void);
 
 	void Draw(void);

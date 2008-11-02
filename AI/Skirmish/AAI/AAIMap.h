@@ -26,7 +26,7 @@ public:
 	int GetContinentID(int x, int y);
 	int GetContinentID(float3 *pos);
 
-	// returns continent id with respect to the units movement type (eg land, non amphib unit being in shallow water will return id of nearest land continent)
+	// returns continent id with respect to the units movement type (e.g. land, non amphib unit being in shallow water will return id of nearest land continent)
 	int GetSmartContinentID(float3 *pos, unsigned int unit_movement_type);
 
 	// true if x/y are a valid sector
@@ -52,7 +52,7 @@ public:
 	// prevents ai from building too many buildings in a row
 	void CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool water);
 
-	// adds or removes blocked cells (to prevent aai from packing buildings too close to each other)
+	// blocks/unblocks cells (to prevent AAI from packing buildings too close to each other)
 	void BlockCells(int xPos, int yPos, int width, int height, bool block, bool water);
 
 	// returns number of cells with big slope
@@ -67,8 +67,8 @@ public:
 	// increases/decreases usefulness of the category of the killer/killed unit 
 	void UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, const UnitDef *killed_def, int killed);
 
-	const char* GetMapTypeTextString(int mapType);
-	const char* GetMapTypeString(int mapType);
+	const char* GetMapTypeTextString(int map_type);
+	const char* GetMapTypeString(int map_type);
 
 	// return next cell in direction with a certain value
 	int GetNextX(int direction, int xPos, int yPos, int value);	// 0 means left, other right; returns -1 if not found 
@@ -78,7 +78,8 @@ public:
 	bool CanBuildAt(int xPos, int yPos, int xSize, int ySize, bool water = false);
 
 	// reads map cache file (and creates new one if necessary)
-	void ReadCacheFile();
+	// loads mex spots, cliffs etc. from file or creates new one
+	void ReadMapCacheFile();
 
 	// reads continent cache file (and creates new one if necessary)
 	void ReadContinentFile();
@@ -86,15 +87,13 @@ public:
 	// if auto_set == true, the loaded values are assigned to the current sectordata as well 
 	void ReadMapLearnFile(bool auto_set);
 
-	// loads mex spots, cliffs etc. from file or creates new one
-	void GetMapData();
-
 	// calculates learning effect
 	void Learn();
 
-	// get water, high slopes, defence map
+	// determines water, high slopes, defence map
 	void AnalyseMap();
 
+	// calculates which parts of the are connected
 	void CalculateContinentMaps();
 
 	// adds/removes a defence buidling to the defence map (air == true -> add to air defence map)
@@ -130,6 +129,7 @@ private:
 public:
 
 	static int aai_instances;	// how many aai instances have been initialized
+	static char map_filename[500];
 
 	static int xSize, ySize;					// x and y size of the map (unit coordinates)
 	static int xMapSize, yMapSize;				// x and y size of the map (map coordinates)
@@ -141,10 +141,13 @@ public:
 
 	static list<AAIMetalSpot> metal_spots;
 
+	static int land_metal_spots;
+	static int water_metal_spots;
+
 	static bool metalMap;
-	static MapType mapType;	// 0 -> unknown ,1-> land map (default), 2 -> air map, 
-							// 3 -> water map with land connections 
-							// 4 -> "full water map
+	static MapType map_type;	// 0 -> unknown ,1-> land map (default), 2 -> air map, 
+								// 3 -> water map with land connections 
+								// 4 -> "full water map
 
 	static vector< vector<int> > team_sector_map;	// stores the number of ai player which has taken that sector (-1 if none)
 											// this helps preventing aai from expanding into sectors of other aai players
@@ -170,8 +173,13 @@ public:
 	static vector<AAIContinent> continents;
 	static int land_continents;
 	static int water_continents;
+	
 	static int avg_land_continent_size;
 	static int avg_water_continent_size;
+	static int max_land_continent_size;
+	static int max_water_continent_size;
+	static int min_land_continent_size;
+	static int min_water_continent_size;
 
 	static list<UnitCategory> map_categories;
 	static list<int> map_categories_id;

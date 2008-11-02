@@ -205,6 +205,9 @@ public:
 	// how many aai instances have been initialized
 	static int aai_instances; 
 
+	// path/name of the file in which AAI stores the build table
+	static char buildtable_filename[500];
+
 	// all the unit defs
 	static const UnitDef **unitList;
 	

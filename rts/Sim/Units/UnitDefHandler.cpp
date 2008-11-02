@@ -524,6 +524,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.stockpileWeaponDef = NULL;
 
 	ud.maxWeaponRange = 0.0f;
+	ud.maxCoverage = 0.0f;
 
 	const WeaponDef* noWeaponDef = weaponDefHandler->GetWeapon("NOWEAPON");
 
@@ -583,6 +584,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 		if (wd->range > ud.maxWeaponRange) {
 			ud.maxWeaponRange = wd->range;
+		}
+		if (wd->interceptor && wd->coverageRange > ud.maxCoverage) {
+			ud.maxCoverage = wd->coverageRange;
 		}
 		if (wd->isShield) {
 			if (!ud.shieldWeaponDef || // use the biggest shield
@@ -830,7 +834,7 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 {
 	string fileName = soundsTable.GetString(soundName, "");
 	if (!fileName.empty()) {
-		LoadSound(gsound, fileName, 5.0f);
+		LoadSound(gsound, fileName, 1.0f);
 		return;
 	}
 
@@ -840,7 +844,7 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 		if (sndFileTable.IsValid()) {
 			fileName = sndFileTable.GetString("file", "");
 			if (!fileName.empty()) {
-				const float volume = sndFileTable.GetFloat("volume", 5.0f);
+				const float volume = sndFileTable.GetFloat("volume", 1.0f);
 				if (volume > 0.0f) {
 					LoadSound(gsound, fileName, volume);
 				}
@@ -850,7 +854,7 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 			if (fileName.empty()) {
 				break;
 			}
-			LoadSound(gsound, fileName, 5.0f);
+			LoadSound(gsound, fileName, 1.0f);
 		}
 	}
 }

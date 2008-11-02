@@ -81,6 +81,15 @@ public:
 	// returns how much ressources can be spent for unit construction atm 
 	float Affordable();
 
+	// returns true if commander is allowed for construction at the specified position in the sector 
+	bool CommanderAllowedForConstructionAt(AAISector *sector, float3 *pos);
+
+	// returns true if AAI may build a mex in this sector (e.g. safe sector)
+	bool MexConstructionAllowedInSector(AAISector *sector);
+
+	// returns ratio of cells in the current base sectors that match movement_type (e.g. 0.3 if 30% of base is covered with water and building is naval)
+	float GetBaseBuildspaceRatio(unsigned int building_move_type);
+
 	void DefendCommander(int attacker);
 
 	void BuildUnits();
@@ -93,11 +102,13 @@ public:
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
 	vector<list<AAISector*> > sectors; 
 
-	int land_sectors;
-	int water_sectors;
+	// ratio of land/water cells in all base sectors
+	float baseLandRatio;
+	float baseWaterRatio;
 
 	int max_distance;
 
+	// center of base (mean value of centers of all base sectors)
 	float3 base_center;
 
 	// are there any free metal spots within the base

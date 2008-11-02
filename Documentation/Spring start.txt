@@ -37,6 +37,7 @@
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerNum=x;      //only variable that should vary between different players
+	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
 
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right

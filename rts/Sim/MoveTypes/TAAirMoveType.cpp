@@ -55,7 +55,10 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(forceHeadingTo),
 
 	CR_MEMBER(maxDrift),
-	CR_RESERVED(63)
+
+	CR_MEMBER(randomWind),
+
+	CR_RESERVED(59)
 	));
 
 
@@ -306,26 +309,34 @@ void CTAAirMoveType::UpdateTakeoff()
 
 
 
-// Move the unit around a bit.. and when it gets too far away from goal position
-// it switches to normal flying instead
+// Move the unit around a bit..
 void CTAAirMoveType::UpdateHovering()
 {
-	float driftSpeed = owner->unitDef->dlHoverFactor;
+	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
-	float3 deltaDir = float3(deltaVec).Normalize();
+	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
+	const float l   = deltaDir.Length2D();
+	deltaDir       /= std::max(l,0.0001f);
+	float moveFactor  = math::sqrt(std::max(0.0f, l - 4.0f));
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
-	if (aircraftState != AIRCRAFT_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-		deltaVec.Length2D() < 120) && deltaDir.distance(deltaVec) > 1.0f) {
+	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
+		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f)) {
 		deltaDir = owner->frontdir;
+		moveFactor = 1.0f;
 	}
 
-	wantedSpeed += float3(deltaDir.x, 0.0f, deltaDir.z) * driftSpeed * 0.03f;
 	// damping
-	wantedSpeed *= 0.97f;
+	wantedSpeed = owner->speed * 0.95f;
+
+	wantedSpeed += deltaDir * moveFactor * 0.05f;
+
 	// random movement (a sort of fake wind effect)
-	wantedSpeed += float3(gs->randFloat() - 0.5f, 0.0f, gs->randFloat() - 0.5f) * driftSpeed * 0.5f;
+	// random drift values are in range -0.5 ... 0.5
+	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0,
+		            randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
+	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
 }
@@ -341,8 +352,8 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-		dir.Length2D() < 100) && (goalPos - pos).Normalize().distance(dir) < 1) {
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() &&
+		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().SqDistance(dir) < 1)) {
 		dir = owner->frontdir;
 	}
 
@@ -356,12 +367,18 @@ void CTAAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		// pretty close
 		switch (flyState) {
-			case FLY_CRUISING:
-				if (dontLand || (++waitCounter < 55 && dynamic_cast<CTransportUnit*>(owner))
-						|| !autoLand) {
+			case FLY_CRUISING: {
+				bool trans = dynamic_cast<CTransportUnit*>(owner);
+				bool noland = dontLand || !autoLand;
+				// should CMD_LOAD_ONTO be here?
+				bool hasLoadCmds = trans
+						&& (owner->commandAI->commandQue.front().id == CMD_LOAD_ONTO
+							|| owner->commandAI->commandQue.front().id == CMD_LOAD_UNITS);
+				if (noland || (trans && ++waitCounter < 55 && hasLoadCmds)) {
 					// transport aircraft need some time to detect that they can pickup
-					if (dynamic_cast<CTransportUnit*>(owner)) {
+					if (trans) {
 						wantedSpeed = ZeroVector;
+						SetState(AIRCRAFT_HOVERING);
 						if (waitCounter > 60) {
 							wantedHeight = orgWantedHeight;
 						}
@@ -376,6 +393,7 @@ void CTAAirMoveType::UpdateFlying()
 					SetState(AIRCRAFT_LANDING);
 				}
 				return;
+			}
 			case FLY_CIRCLING:
 				// break;
 				waitCounter++;
@@ -446,7 +464,7 @@ void CTAAirMoveType::UpdateFlying()
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
 	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-			   dist < 120) && (goalPos - pos).Normalize().distance(dir) > 1) {
+			   dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
 		dir = owner->frontdir;
 	} else {
 		dir = goalPos - pos;
@@ -487,7 +505,7 @@ void CTAAirMoveType::UpdateLanding()
 			owner->Deactivate();
 			owner->cob->Call(COBFN_StopMoving);
 		} else {
-			if (goalPos.distance2D(pos) < 30) {
+			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
 				goalPos.CheckInBounds();
 			}
@@ -662,11 +680,15 @@ void CTAAirMoveType::UpdateAirPhysics()
 			ws = 0.0f;
 	}
 
-	if (speed.y > ws) {
-		speed.y = std::max(ws, speed.y - accRate * 1.5f);
+	if (fabs(wh - h) > 2.0f) {
+		if (speed.y > ws) {
+			speed.y = std::max(ws, speed.y - accRate * 1.5f);
+		} else {
+			// let them accelerate upward faster if close to ground
+			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
+		}
 	} else {
-		// let them accelerate upward faster if close to ground
-		speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
+		speed.y = speed.y * 0.95;
 	}
 
 	pos += speed;
@@ -765,7 +787,7 @@ void CTAAirMoveType::Update()
 
 					goalPos = pos;
 
-					if (pos.distance2D(owner->pos) < 400) {
+					if (pos.SqDistance2D(owner->pos) < 400*400) {
 						padStatus = 1;
 					}
 				} else if (padStatus == 1) {
@@ -777,7 +799,7 @@ void CTAAirMoveType::Update()
 					reservedLandingPos = pos;
 					wantedHeight = pos.y - ground->GetHeight(pos.x, pos.z);
 
-					if (owner->pos.distance(pos) < 3 || aircraftState == AIRCRAFT_LANDED) {
+					if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
 						padStatus = 2;
 					}
 				} else {

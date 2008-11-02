@@ -257,7 +257,7 @@ void CBuilder::Update()
 				StopBuild(true);
 			}
 		}
-		else if (curBuild && f3Dist(curBuild->pos, pos) < buildDistance + curBuild->radius) {
+		else if (curBuild && f3SqDist(curBuild->pos, pos) < Square(buildDistance + curBuild->radius)) {
 			if (curBuild->soloBuilder && (curBuild->soloBuilder != this)) {
 				StopBuild();
 			} else {
@@ -292,7 +292,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if(curReclaim && f3Dist(curReclaim->pos, pos)<buildDistance+curReclaim->radius && inBuildStance){
+		else if(curReclaim && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance){
 			if (scriptCloak <= 2) {
 				if (isCloaked) {
 					isCloaked = false;
@@ -304,7 +304,7 @@ void CBuilder::Update()
 				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
 			}
 		}
-		else if(curResurrect && f3Dist(curResurrect->pos, pos)<buildDistance+curResurrect->radius && inBuildStance){
+		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
 			const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
 			if(ud){
 				if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
@@ -338,7 +338,7 @@ void CBuilder::Update()
 				StopBuild(true);
 			}
 		}
-		else if(curCapture && f3Dist(curCapture->pos, pos)<buildDistance+curCapture->radius && inBuildStance){
+		else if(curCapture && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance){
 			if(curCapture->team!=team){
 
 				float captureProgressTemp = curCapture->captureProgress + 1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
@@ -719,7 +719,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;
-		float l = dif.Length();
+		const float l = fastmath::sqrt2(dif.SqLength());
 		dif /= l;
 		float3 error = gu->usRandVector() * (radius / l);
 		float3 color = unitDef->nanoColor;

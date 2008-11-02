@@ -28,8 +28,8 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner, float alpha,float alphaFalloff,float fadeupTime)
-: CProjectile(pos,speed,owner, false),
+CWakeProjectile::CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner, float alpha,float alphaFalloff,float fadeupTime GML_PARG_C)
+: CProjectile(pos,speed,owner, false GML_PARG_P),
 	alpha(0),
 	alphaAdd(alpha/fadeupTime),
 	alphaAddTime((int)fadeupTime),
@@ -81,14 +81,13 @@ void CWakeProjectile::Draw()
 	col[2]=(unsigned char) (255*alpha);
 	col[3]=(unsigned char) (255*alpha)/*-alphaFalloff*gu->timeOffset*/;
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+sizeExpansion*gu->timeOffset;
 	float interRot=rotation+rotSpeed*gu->timeOffset;
 
 	float3 dir1=float3(cos(interRot),0,sin(interRot))*interSize;
 	float3 dir2=dir1.cross(UpVector);
-	va->AddVertexTC(interPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
-	va->AddVertexTC(interPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
-	va->AddVertexTC(interPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
-	va->AddVertexTC(interPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
+	va->AddVertexTC(drawPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
+	va->AddVertexTC(drawPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
+	va->AddVertexTC(drawPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
+	va->AddVertexTC(drawPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
 }

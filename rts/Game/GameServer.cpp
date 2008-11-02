@@ -37,6 +37,7 @@
 #include "System/Net/Connection.h"
 #include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
+#include "System/Net/UnpackPacket.h"
 #include "System/DemoReader.h"
 #include "System/AutohostInterface.h"
 #include "System/Util.h"
@@ -192,12 +193,12 @@ CGameServer::~CGameServer()
 	delete thread;
 }
 
-void CGameServer::AddLocalClient(unsigned wantedNumber)
+void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
-	localClientNumber = BindConnection(wantedNumber, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(myName, myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
 void CGameServer::AddAutohostInterface(const int remotePort)
@@ -275,8 +276,6 @@ void CGameServer::SendDemoData(const bool skipping)
 			CheckSync();
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
-			if (!skipping)
-				return;
 		}
 		else if ( msgCode != NETMSG_GAMEDATA &&
 						msgCode != NETMSG_SETPLAYERNUM &&
@@ -443,10 +442,7 @@ void CGameServer::Update()
 				if(newSpeed<0.1f)
 					newSpeed=0.1f;
 				if(newSpeed!=internalSpeed)
-				{
-					internalSpeed = newSpeed;
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
-				}
+					InternalSpeedChange(newSpeed);
 			}
 		}
 	}
@@ -531,22 +527,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_USER_SPEED: {
 			unsigned char playerNum = inbuf[1];
 			float speed = *((float*) &inbuf[2]);
-
-			if (speed > maxUserSpeed)
-				speed = maxUserSpeed;
-			if (speed < minUserSpeed)
-				speed = minUserSpeed;
-			if (userSpeedFactor != speed)
-			{
-				if (internalSpeed == userSpeedFactor || internalSpeed>speed)
-				{
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(speed));
-					internalSpeed = speed;
-				}
-				// forward data
-				Broadcast(CBaseNetProtocol::Get().SendUserSpeed(playerNum, speed));
-				userSpeedFactor = speed;
-			}
+			UserSpeedChange(speed, playerNum);
 		} break;
 
 		case NETMSG_CPU_USAGE:
@@ -908,10 +889,13 @@ void CGameServer::ServerReadNet()
 		boost::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
 		boost::shared_ptr<const RawPacket> packet = prev->GetData();
 		
-		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT && packet->data[2] == NETWORK_VERSION)
+		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT)
 		{
-			const unsigned wantedNumber = packet->data[1];
-			BindConnection(wantedNumber, false, UDPNet->AcceptConnection());
+			netcode::UnpackPacket msg(packet, 3);
+			std::string name, version;
+			msg >> name;
+			msg >> version;
+			BindConnection(name, version, false, UDPNet->AcceptConnection());
 		}
 		else
 		{
@@ -996,7 +980,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		// Lobby-protocol doesn't support creating games without players inside
 		// so in dedicated mode there will always be the host-player in the script
 		// which doesn't exist and will never join, so skip it in this case
-		if (setup && (unsigned)setup->myPlayerNum == start)
+		if (setup && 0 == start)
 			start++;
 #endif
 		for (int a = start; a < setup->numPlayers; a++) {
@@ -1051,17 +1035,8 @@ void CGameServer::StartGame()
 	}
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
-	if(userSpeedFactor>maxUserSpeed)
-	{
-		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
-		userSpeedFactor = maxUserSpeed;
-	}
-	else if(userSpeedFactor<minUserSpeed)
-	{
-		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, minUserSpeed));
-		userSpeedFactor = minUserSpeed;
-	}
-
+	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
+	
 	if (demoReader) {
 		// the client told us to start a demo
 		// no need to send startpos and startplaying since its in the demo
@@ -1139,31 +1114,17 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "setmaxspeed" && !action.extra.empty())
 	{
-		float newUserSpeed = atof(action.extra.c_str());
+		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
 		if (newUserSpeed > 0.2)
 		{
-			maxUserSpeed = atof(action.extra.c_str());
-			if (userSpeedFactor > maxUserSpeed) {
-				Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, maxUserSpeed));
-				userSpeedFactor = maxUserSpeed;
-				if (internalSpeed > maxUserSpeed) {
-					Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
-					internalSpeed = userSpeedFactor;
-				}
-			}
+			maxUserSpeed = newUserSpeed;
+			UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
 		}
 	}
 	else if (action.command == "setminspeed" && !action.extra.empty())
 	{
-		minUserSpeed = atof(action.extra.c_str());
-		if (userSpeedFactor < minUserSpeed) {
-			Broadcast(CBaseNetProtocol::Get().SendUserSpeed(SERVER_PLAYER, minUserSpeed));
-			userSpeedFactor = minUserSpeed;
-			if (internalSpeed < minUserSpeed) {
-				Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(userSpeedFactor));
-				internalSpeed = userSpeedFactor;
-			}
-		}
+		minUserSpeed = std::min(static_cast<float>(atof(action.extra.c_str())), maxUserSpeed);
+		UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
 	}
 	else if (action.command == "forcestart")
 	{
@@ -1398,11 +1359,26 @@ void CGameServer::KickPlayer(const int playerNum)
 	}
 }
 
-unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
+unsigned CGameServer::BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
-	unsigned hisNewNumber = wantedNumber;
+	unsigned hisNewNumber = 0;
+	bool found = false;
+
+	if (setup)
+	{
+		for (unsigned i = 0; i < setup->numPlayers; ++i)
+		{
+			if (name == setup->playerStartingData[i].name)
+			{
+				hisNewNumber = i;
+				found = true;
+				break;
+			}
+		}
+	}
+
 	if (demoReader) {
-		hisNewNumber = std::max(wantedNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
+		hisNewNumber = std::max(hisNewNumber, (unsigned)demoReader->GetFileHeader().maxPlayerNum+1);
 	}
 	if (players[hisNewNumber])
 	{
@@ -1416,10 +1392,10 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 		}
 	}
 
-	if (setup && hisNewNumber >= static_cast<unsigned>(setup->numPlayers) && !demoReader)
+	if (setup && (hisNewNumber >= static_cast<unsigned>(setup->numPlayers) || !found) && !demoReader)
 	{
-		// number not in setup, drop connection
-		Message(str(format("Connection rejected because of number %i not in setup (wanted number %i).") %hisNewNumber %wantedNumber));
+		// player not found
+		Message(str(format("Player %s not found, rejecting connection attempt") %name));
 		return 0;
 	}
 	
@@ -1470,7 +1446,7 @@ unsigned CGameServer::BindConnection(unsigned wantedNumber, bool isLocal, boost:
 			}
 		}
 	}
-	Message(str(format(NewConnection) %hisNewNumber %wantedNumber));
+	Message(str(format(NewConnection) %name %hisNewNumber %version));
 
 	link->Flush(true);
 	return hisNewNumber;
@@ -1482,6 +1458,28 @@ void CGameServer::GotChatMessage(const ChatMessage& msg)
 	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
 		// don't echo packets to autohost
 		hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+	}
+}
+
+void CGameServer::InternalSpeedChange(float newSpeed)
+{
+	if (internalSpeed == newSpeed)
+		; //TODO some error here
+	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
+	internalSpeed = newSpeed;
+}
+
+void CGameServer::UserSpeedChange(float newSpeed, int player)
+{
+	newSpeed = std::min(maxUserSpeed, std::max(newSpeed, minUserSpeed));
+	
+	if (userSpeedFactor != newSpeed)
+	{
+		if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
+			InternalSpeedChange(newSpeed);
+
+		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
+		userSpeedFactor = newSpeed;
 	}
 }
 

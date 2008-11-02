@@ -57,8 +57,8 @@ CR_REG_METADATA(CMissileProjectile,(
 
 CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef,
-		float3 targetPos):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  ttl),
+		float3 targetPos GML_PARG_C):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  ttl GML_PARG_P),
 	maxSpeed(maxSpeed),
 	target(target),
 	dir(speed),
@@ -263,7 +263,7 @@ void CMissileProjectile::Update(void)
 		float3 dif2 = dif - dir;
 		float tracking = weaponDef->turnrate;
 
-		if (dif2.Length() < tracking) {
+		if (dif2.SqLength() < Square(tracking)) {
 			dir = dif;
 		} else {
 			dif2 -= (dir * (dif2.dot(dir)));
@@ -330,7 +330,6 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 void CMissileProjectile::Draw(void)
 {
-	float3 interPos = pos + speed * gu->timeOffset;
 	inArray = true;
 	float age2 = (age & 7) + gu->timeOffset;
 
@@ -341,7 +340,7 @@ void CMissileProjectile::Draw(void)
 	if (weaponDef->visuals.smokeTrail) {
 		if (drawTrail) {
 			// draw the trail as a single quad
-			float3 dif(interPos - camera->pos);
+			float3 dif(drawPos - camera->pos);
 			dif.ANormalize();
 			float3 dir1(dif.cross(dir));
 			dir1.ANormalize();
@@ -375,8 +374,8 @@ void CMissileProjectile::Draw(void)
 			float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
 			float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
 
-			va->AddVertexQTC(interPos - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(interPos + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
+			va->AddVertexQTC(drawPos - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(drawPos + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
 			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
 			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {
@@ -409,10 +408,10 @@ void CMissileProjectile::Draw(void)
 	col[2] = 180;
 	col[3] = 1;
 	float fsize = radius * 0.4f;
-	va->AddVertexQTC(interPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(interPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(interPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexQTC(interPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 
 /*	col[0]=200;
 	col[1]=200;
@@ -434,7 +433,6 @@ void CMissileProjectile::Draw(void)
 
 void CMissileProjectile::DrawUnitPart(void)
 {
-	float3 interPos = pos + speed * gu->timeOffset;
 	glPushMatrix();
 	float3 rightdir;
 
@@ -447,7 +445,7 @@ void CMissileProjectile::DrawUnitPart(void)
 	rightdir.Normalize();
 	float3 updir = rightdir.cross(dir);
 
-	CMatrix44f transMatrix(interPos + dir * radius * 0.9f,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
 	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
@@ -465,7 +463,7 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 		float3 dif2 = sdir - dir;
 		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
 
-		if (dif2.Length() < tracking) {
+		if (dif2.SqLength() < Square(tracking)) {
 			dir = sdir;
 		} else {
 			dif2 -= dir * (dif2.dot(dir));

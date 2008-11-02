@@ -42,7 +42,7 @@ void CVertexArray::EndStrip() {
 	*stripArrayPos++=((char *)drawArrayPos-(char *)drawArray);
 }
 
-void CVertexArray::DrawArray0(int drawType,int stride) {
+void CVertexArray::DrawArray0(const int drawType,int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3,GL_FLOAT,stride,drawArray);
@@ -50,7 +50,7 @@ void CVertexArray::DrawArray0(int drawType,int stride) {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void CVertexArray::DrawArrayC(int drawType,int stride) {
+void CVertexArray::DrawArrayC(const int drawType,int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -61,7 +61,7 @@ void CVertexArray::DrawArrayC(int drawType,int stride) {
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void CVertexArray::DrawArrayT(int drawType,int stride) {
+void CVertexArray::DrawArrayT(const int drawType,int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -72,7 +72,7 @@ void CVertexArray::DrawArrayT(int drawType,int stride) {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void CVertexArray::DrawArrayT2(int drawType,int stride) {
+void CVertexArray::DrawArrayT2(const int drawType,int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -92,7 +92,7 @@ void CVertexArray::DrawArrayT2(int drawType,int stride) {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void CVertexArray::DrawArrayTN(int drawType, int stride) {
+void CVertexArray::DrawArrayTN(const int drawType, int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -106,7 +106,7 @@ void CVertexArray::DrawArrayTN(int drawType, int stride) {
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
-void CVertexArray::DrawArrayTC(int drawType, int stride) {
+void CVertexArray::DrawArrayTC(const int drawType, int stride) {
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);

@@ -19,12 +19,8 @@ GameData::GameData()
 
 GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
-	UnpackPacket packet(pckt);
-	unsigned char ID;
-	unsigned short length;
-	packet >> ID;
-	assert(ID == NETMSG_GAMEDATA);
-	packet >> length;
+	assert(pckt->data[0] == NETMSG_GAMEDATA);
+	UnpackPacket packet(pckt, 3);
 	packet >> script;
 	packet >> map;
 	packet >> mapChecksum;
@@ -36,8 +32,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 const netcode::RawPacket* GameData::Pack() const
 {
 	unsigned short size = 3 + 2*sizeof(unsigned) + map.size() + mod.size() + script.size() + 4 + 3;
-	PackPacket* buffer = new PackPacket(size);
-	*buffer << (unsigned char)NETMSG_GAMEDATA;
+	PackPacket* buffer = new PackPacket(size, NETMSG_GAMEDATA);
 	*buffer << size;
 	*buffer << script;
 	*buffer << map;

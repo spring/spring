@@ -24,7 +24,6 @@
 #define HPIUTIL2_H
 
 #include "hpifile.h"
-#include <SDL_types.h>
 
 namespace hpiutil
 {

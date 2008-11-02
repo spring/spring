@@ -32,14 +32,14 @@ CNetProtocol::~CNetProtocol()
 	logOutput.Print(server->Statistics());
 }
 
-void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const unsigned wantedNumber)
+void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion)
 {
 	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
 	sock->SetBlocking(false);
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
 	conn->SetMTU(configHandler.GetInt("MaximumTransmissionUnit", 0));
 	server.reset(conn);
-	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(wantedNumber, NETWORK_VERSION));
+	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
 	server->Flush(true);
 
 	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
@@ -47,10 +47,10 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 		record.reset(new CDemoRecorder());
 	}
 	
-	logOutput.Print("Connecting to %s:%i using number %i", server_addr, portnum, wantedNumber);
+	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
-void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
+void CNetProtocol::InitLocalClient()
 {
 	server.reset(new netcode::CLocalConnection);
 	server->Flush();
@@ -59,7 +59,7 @@ void CNetProtocol::InitLocalClient(const unsigned wantedNumber)
 		record.reset(new CDemoRecorder());
 	}
 	
-	logOutput.Print("Connecting to local server using number %i", wantedNumber);
+	logOutput.Print("Connecting to local server");
 }
 
 bool CNetProtocol::Active() const

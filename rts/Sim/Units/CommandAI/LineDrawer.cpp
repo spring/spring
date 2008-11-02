@@ -1,3 +1,5 @@
+// TODO: move this out of Sim, this is rendering code!
+
 #include "StdAfx.h"
 #include "LineDrawer.h"
 #include "Game/UI/CommandColors.h"

@@ -8,6 +8,11 @@
 #include "creg/STL_Set.h"
 #include "LogOutput.h"
 
+#ifndef USE_MMGR
+# define m_setOwner(file, line, func)
+# define m_resetGlobals()
+#endif
+
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
@@ -29,24 +34,16 @@ CObject::~CObject()
 {
 	std::list<CObject*>::iterator di;
 	for(di=listeners.begin();di!=listeners.end();++di){
-#ifdef USE_MMGR
  		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 		(*di)->DependentDied(this);
-#ifdef USE_MMGR
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 		ListErase<CObject*>((*di)->listening, this);
 	}
 	for(di=listening.begin();di!=listening.end();++di){
-#ifdef USE_MMGR
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 		ListErase<CObject*>((*di)->listeners, this);
 	}
-#ifdef USE_MMGR
 	m_resetGlobals();
-#endif
 }
 
 void CObject::Serialize(creg::ISerializer *s)
@@ -77,14 +74,10 @@ void CObject::Serialize(creg::ISerializer *s)
 void CObject::PostLoad()
 {
 	for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();i++) {
-#ifdef USE_MMGR
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 		(*i)->listeners.insert((*i)->listeners.end(),this);
 	}
-#ifdef USE_MMGR
 	m_resetGlobals();
-#endif
 }
 
 void CObject::DependentDied(CObject* o)
@@ -94,31 +87,19 @@ void CObject::DependentDied(CObject* o)
 
 void CObject::AddDeathDependence(CObject *o)
 {
-#ifdef USE_MMGR
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 	o->listeners.insert(o->listeners.end(),this);
-#ifdef USE_MMGR
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 	listening.insert(listening.end(),o);
-#ifdef USE_MMGR
 	m_resetGlobals();
-#endif
 }
 
 void CObject::DeleteDeathDependence(CObject *o)
 {
 	//note that we can be listening to a single object from several different places (like curreclaim in CBuilder and lastAttacker in CUnit, grr) so we should only remove one of them
-#ifdef USE_MMGR
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 	ListErase<CObject*>(listening, o);
-#ifdef USE_MMGR
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-#endif
 	ListErase<CObject*>(o->listeners, this);
-#ifdef USE_MMGR
 	m_resetGlobals();
-#endif
 }

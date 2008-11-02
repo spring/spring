@@ -43,7 +43,7 @@ CDamageArrayHandler::CDamageArrayHandler(void)
 		typeList.insert(typeList.begin(), "default");
 		name2type["default"] = 0;
 
-		logOutput.Print(1, "Number of damage types: %d", numTypes);
+		logOutput.Print("Number of damage types: %d", numTypes);
 
 		for (int armorID = 1; armorID < (int)typeList.size(); armorID++) {
 			const string armorName = StringToLower(typeList[armorID]);

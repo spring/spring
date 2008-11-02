@@ -19,6 +19,7 @@ protected:
 	int curFileHandle;
 	std::map<int, ABOpenFile_t*> fileHandles;
 	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName) = 0;
+	ABOpenFile_t* GetOpenFile(int handle);
 public:
 	CArchiveBuffered(const std::string& name);
 	virtual ~CArchiveBuffered(void);

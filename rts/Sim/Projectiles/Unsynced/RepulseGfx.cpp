@@ -19,8 +19,8 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_RESERVED(8)
 	));
 
-CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color)
-: CProjectile(repulsed?repulsed->pos:float3(0,0,0),repulsed?repulsed->speed:float3(0,0,0),owner, false),
+CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color GML_PARG_C)
+: CProjectile(repulsed?repulsed->pos:float3(0,0,0),repulsed?repulsed->speed:float3(0,0,0),owner, false GML_PARG_P),
 	repulsed(repulsed),
 	age(0),
 	sqMaxDist(maxDist*maxDist+100),
@@ -39,8 +39,8 @@ CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3
 		float yp=(y/4.0f-0.5f);
 		for(int x=0;x<5;++x){
 			float xp=(x/4.0f-0.5f);
-			float d=sqrt(xp*xp+yp*yp);
-			difs[y*5+x]=(1-cos(d*2))*20;
+			float d=fastmath::sqrt2(xp*xp+yp*yp);
+			difs[y*5+x]=(1-fastmath::cos(d*2))*20;
 		}
 	}
 }
@@ -84,7 +84,6 @@ void CRepulseGfx::Draw(void)
 	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.2f);
 	float drawsize=10;
-	float3 interPos=pos+speed*gu->timeOffset;
 
 	AtlasedTexture& et=ph->repulsetex;
 	float txo=et.xstart;

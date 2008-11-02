@@ -125,7 +125,7 @@ public:
 	gmlCount ClientsReady;
 	BOOL_ newwork;
 
-	BOOL auxinited;
+	BOOL_ auxinited;
 	R (*auxworker)(void *);
 	void* auxworkerclass;
 	boost::barrier AuxBarrier; 
@@ -405,6 +405,12 @@ public:
 		while(dorun) {
 			gmlClientAuxSub();
 		}
+	}
+
+	void ExpandAuxQueue() {
+		gmlQueue *qd=&gmlQueues[gmlThreadNumber];
+		while(qd->WriteSize<qd->Write+GML_AUX_PREALLOC)
+			qd->WaitRealloc();
 	}
 
 };

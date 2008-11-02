@@ -7,7 +7,6 @@ LogOutput - global object to write log info to.
 #define LOGOUTPUT_H
 
 #include <stdarg.h>
-#include <vector>
 #include <string>
 
 // format string error checking
@@ -19,31 +18,72 @@ LogOutput - global object to write log info to.
 
 class float3;
 
+
+/**
+ * @brief defines a logging subsystem
+ *
+ * Each logging subsystem can be independently enabled/disabled, this allows
+ * for adding e.g. very detailed logging that's by default off, but can be
+ * turned on when troubleshooting.  (example: the virtual file system)
+ *
+ * A logging subsystem should be defined as a global variable, so it can be
+ * used as argument to logOutput.Print similarly to a simple enum constant:
+ *
+ *	static CLogSubsystem LOG_MYSUBSYS("mysubsystem");
+ *
+ * ...then, in the actual code of your engine subsystem, use:
+ *
+ *		logOutput.Print(LOG_MYSUBSYS, "blah");
+ *
+ * All subsystems are linked together in a global list, allowing CLogOutput
+ * to enable/disable subsystems based on env var and configuration key.
+ */
+class CLogSubsystem
+{
+public:
+	static CLogSubsystem* GetList() { return linkedList; }
+	CLogSubsystem* GetNext() { return next; }
+
+	CLogSubsystem(const char* name, bool enabled = false);
+
+	const char* const name;
+	CLogSubsystem* const next;
+
+	bool enabled;
+
+private:
+	static CLogSubsystem* linkedList;
+};
+
+
+/** @brief implement this interface to be able to observe CLogOutput */
 class ILogSubscriber
 {
 public:
 	// Notification of log messages to subscriber
-	virtual void NotifyLogMsg(int zone, const char *str) = 0;
+	virtual void NotifyLogMsg(CLogSubsystem& subsystem, const char* str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
 };
 
+
+/** @brief logging class */
 class CLogOutput
 {
+public:
 	CLogOutput();
 	~CLogOutput();
 
-public:
-	void Print(int zone, const char *fmt, ...) FORMATSTRING(3);
-	void Print(const char *fmt, ...) FORMATSTRING(2);
+	void Print(CLogSubsystem& subsystem, const char* fmt, ...) FORMATSTRING(3);
+	void Print(const char* fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
-	void Print(int zone, const std::string& text);
-	void Printv(int zone, const char* fmt, va_list argp);
+	void Print(CLogSubsystem& subsystem, const std::string& text);
+	void Printv(CLogSubsystem& subsystem, const char* fmt, va_list argp);
 
 	CLogOutput& operator<<(const int i);
 	CLogOutput& operator<<(const float f);
 	CLogOutput& operator<<(const char* c);
 	CLogOutput& operator<<(const float3& f);
-	CLogOutput& operator<<(const std::string &f);	
+	CLogOutput& operator<<(const std::string &f);
 
 	void SetLastMsgPos(const float3& pos);
 
@@ -53,20 +93,20 @@ public:
 	// Close the output file, so the crash reporter can copy it
 	void End();
 
-	void AddSubscriber(ILogSubscriber *ls);
-	void RemoveSubscriber(ILogSubscriber *ls);
+	void AddSubscriber(ILogSubscriber* ls);
+	void RemoveSubscriber(ILogSubscriber* ls);
 
 	void SetMirrorToStdout(bool);
-	
+
 	static CLogOutput& GetInstance();
-private:
 	static CLogOutput myLogOutput;
-	std::ofstream* filelog;
+
+	void SetFilename(const char* filename);
+	void Initialize();
 
 protected:
-	void Output(int zone, const char *str);
-
-	std::vector<ILogSubscriber*> subscribers;
+	void InitializeSubsystems();
+	void Output(CLogSubsystem& subsystem, const char* str);
 };
 
 

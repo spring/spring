@@ -119,6 +119,7 @@ unitsync_extra_files = [
 	'rts/Sim/SideParser.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
+	'rts/System/LogOutput.cpp',
 ]
 for f in unitsync_fs_files:       unitsync_files += f
 for f in unitsync_lua_files:      unitsync_files += f

@@ -78,6 +78,9 @@ void CSelectedUnits::ToggleBuildIconsFirst()
 
 CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 {
+	GML_RECMUTEX_LOCK(sel); // GetAvailableCommands
+	GML_STDMUTEX_LOCK(group); // GetAvailableCommands
+
 	possibleCommandsChanged = false;
 
 	if (selectedGroup != -1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
@@ -248,6 +251,9 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 
 void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 {
+	GML_RECMUTEX_LOCK(sel); // GiveCommand
+	GML_STDMUTEX_LOCK(group); // GiveCommand
+
 //	logOutput.Print("Command given %i",c.id);
 	if ((gu->spectating && !gs->godMode) || selectedUnits.empty()) {
 		return;
@@ -360,7 +366,8 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	if (unit->transporter != NULL && !unit->transporter->unitDef->isFirePlatform) {
+	CTransportUnit *trans=unit->GetTransporter();
+	if (trans != NULL && !trans->unitDef->isFirePlatform) {
 		return;
 	}
 
@@ -423,7 +430,7 @@ void CSelectedUnits::ClearSelected()
 void CSelectedUnits::SelectGroup(int num)
 {
 	GML_RECMUTEX_LOCK(sel); // SelectGroup
-//	GML_STDMUTEX_LOCK(group); // SelectGroup. not needed? only reading group
+	GML_STDMUTEX_LOCK(group); // SelectGroup. not needed? only reading group
 
 	ClearSelected();
 	selectedGroup=num;
@@ -445,6 +452,8 @@ void CSelectedUnits::SelectGroup(int num)
 
 void CSelectedUnits::Draw()
 {
+	glDisable(GL_TEXTURE_2D);
+	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND); // for line smoothing
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -471,11 +480,11 @@ void CSelectedUnits::Draw()
 			if (unit->isIcon) {
 				continue;
 			}
-			const float3 pos(unit->pos + unit->speed * gu->timeOffset);
-			glVertexf3(pos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(pos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(pos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
-			glVertexf3(pos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
+
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
 		}
 		glEnd();
 	}
@@ -483,6 +492,7 @@ void CSelectedUnits::Draw()
 	// highlight queued build sites if we are about to build something
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
+		//GML_RECMUTEX_LOCK(gui); // Draw. Not needed because of draw thread.
 		if (!selectedUnits.empty() &&
 				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
 				 ((guihandler->inCommand >= 0) &&
@@ -516,6 +526,8 @@ void CSelectedUnits::Draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+	glEnable(GL_TEXTURE_2D);
 }
 
 
@@ -683,6 +695,8 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 
 void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 {
+	GML_RECMUTEX_LOCK(sel); // PossibleCommandChange
+
 	if (sender == NULL || selectedUnits.find(sender) != selectedUnits.end())
 		possibleCommandsChanged = true;
 }
@@ -742,6 +756,7 @@ std::string CSelectedUnits::GetTooltip(void)
 {
 	GML_RECMUTEX_LOCK(sel); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 	GML_STDMUTEX_LOCK(group); // GetTooltip
+
 	std::string s;
 	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
 		s = "Group selected";
@@ -819,6 +834,7 @@ void CSelectedUnits::SetCommandPage(int page)
 {
 	GML_RECMUTEX_LOCK(sel); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc --> SetCommandPage
 	GML_STDMUTEX_LOCK(group); // SetCommandPage
+
 	if(selectedGroup!=-1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai){
 		grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage=page;
 	}
@@ -832,6 +848,8 @@ void CSelectedUnits::SetCommandPage(int page)
 
 void CSelectedUnits::SendSelection(void)
 {
+	GML_RECMUTEX_LOCK(sel); // SendSelection
+
 	// first, convert CUnit* to unit IDs.
 	std::vector<short> selectedUnitIDs(selectedUnits.size());
 	std::vector<short>::iterator i = selectedUnitIDs.begin();

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "GameController.h"
 
@@ -10,6 +11,7 @@ class CglList;
 class CInfoConsole;
 class CLoadSaveHandler;
 class GameData;
+class LocalSetup;
 namespace netcode {
 	class RawPacket;
 }
@@ -32,7 +34,7 @@ namespace netcode {
 class CPreGame : public CGameController
 {
 public:
-	CPreGame(bool server, const std::string& demo, const std::string& save);
+	CPreGame(const LocalSetup* setup, const std::string& demo, const std::string& save);
 	virtual ~CPreGame();
 
 	bool Draw();
@@ -68,13 +70,13 @@ private:
 	
 	/// Map all required archives depending on selected mod(s)
 	static void LoadMod(const std::string& modName);
+	
+	void LoadLua();
 
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 	
-	const bool server;
 	enum State {
 		UNKNOWN,
-		WAIT_ON_ADDRESS, // wait for user to write server address
 		WAIT_ON_USERINPUT, // wait for user to set script, map, mod
 		WAIT_CONNECTING, // connecting to server
 		WAIT_ON_GAMEDATA, // wait for the server to send us the GameData
@@ -90,7 +92,7 @@ private:
 	We won't start until we recieved this
 	*/
 	const GameData* gameData;
-
+	boost::scoped_ptr<const LocalSetup> settings;
 	std::string modArchive;
 	std::string demoFile;
 	CLoadSaveHandler *savefile;

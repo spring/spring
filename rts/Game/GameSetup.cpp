@@ -28,6 +28,81 @@ using namespace std;
 
 const CGameSetup* gameSetup = NULL;
 
+LocalSetup::LocalSetup() :
+		autohostport(0),
+		hostport(8452),
+		myPlayerNum(0),
+		sourceport(0),
+		isHost(true)
+{
+}
+
+void LocalSetup::Init(const std::string& setup)
+{
+	TdfParser file;
+	file.LoadBuffer(setup.c_str(), setup.length());
+	
+	if(!file.SectionExist("GAME"))
+		throw content_error("GAME-section didn't exist in setupscript");
+
+	// Technical parameters
+	file.GetDef(hostip,     "0", "GAME\\HostIP");
+	file.GetDef(hostport,   "0", "GAME\\HostPort");
+	file.GetDef(sourceport, "0", "GAME\\SourcePort");
+	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
+	
+	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
+	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
+	if (myPlayerName.empty())
+	{
+		char section[50];
+		sprintf(section, "GAME\\PLAYER%i", myPlayerNum);
+		string s(section);
+
+		if (!file.SectionExist(s))
+			throw content_error("myPlayer not found");
+
+		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		std::map<std::string, std::string>::iterator it = setup.find("name");
+		if (it != setup.end())
+			myPlayerName = it->second;
+		else
+			throw content_error("Player doesn't have a name");
+	}
+	
+	int tmp_isHost;
+	file.GetDef(myPlayerNum,  "-1", "GAME\\IsHost");
+	if (tmp_isHost == 1)
+		isHost = true;
+	else if (tmp_isHost == 0)
+		isHost = false;
+	else
+	{
+		for (int a = 0; a < MAX_PLAYERS; ++a) {
+			char section[50];
+			sprintf(section, "GAME\\PLAYER%i", a);
+			string s(section);
+
+			if (!file.SectionExist(s)) {
+				continue;
+			}
+			bool fromdemo;
+			std::string name;
+			std::map<std::string, std::string> setup = file.GetAllValues(s);
+			std::map<std::string, std::string>::iterator it;
+			if ((it = setup.find("name")) != setup.end())
+				name = it->second;
+			if ((it = setup.find("isfromdemo")) != setup.end())
+				fromdemo = static_cast<bool>(atoi(it->second.c_str()));
+			
+			if (!fromdemo)
+			{
+				isHost = (myPlayerName == name);
+				break;
+			}
+		}
+	}
+}
 
 CGameSetup::CGameSetup()
 {
@@ -35,7 +110,6 @@ CGameSetup::CGameSetup()
 	startPosType=StartPos_Fixed;
 	numDemoPlayers=0;
 	hostDemo=false;
-	autohostport = 0;
 }
 
 CGameSetup::~CGameSetup()
@@ -92,7 +166,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(int a = 0; a < numTeams; ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(a, pos))
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
 	}
@@ -109,9 +183,6 @@ void CGameSetup::LoadStartPositions()
 {
 	TdfParser file;
 	file.LoadBuffer(gameSetupText, gameSetupTextLength-1);
-	for (int a = 0; a < numTeams; ++a) {
-		teamStartingData[a].teamStartNum = a;
-	}
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
@@ -123,6 +194,12 @@ void CGameSetup::LoadStartPositions()
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
 		for (unsigned int i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
+	}
+	else
+	{
+		for (int a = 0; a < numTeams; ++a) {
+		teamStartingData[a].teamStartNum = a;
+		}
 	}
 
 	LoadStartPositionsFromMap();
@@ -330,12 +407,6 @@ void CGameSetup::RemapPlayers()
 		};
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
-
-	// relocate myPlayerNum
-	if (playerRemap.find(myPlayerNum) == playerRemap.end()) {
-		throw content_error("invalid MyPlayerNum in GameSetup script");
-	}
-	myPlayerNum = playerRemap[myPlayerNum];
 }
 
 /** @brief Update all team indices to refer to the right team. */
@@ -386,12 +457,6 @@ bool CGameSetup::Init(const char* buf, int size)
 	if(!file.SectionExist("GAME"))
 		return false;
 
-	// Technical parameters
-	file.GetDef(hostip,     "0", "GAME\\HostIP");
-	file.GetDef(hostport,   "0", "GAME\\HostPort");
-	file.GetDef(sourceport, "0", "GAME\\SourcePort");
-	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
-
 	// Game parameters
 	scriptName  = file.SGetValueDef("Commanders", "GAME\\ScriptName");
 
@@ -427,7 +492,6 @@ bool CGameSetup::Init(const char* buf, int size)
 	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");
 
-	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
 	file.GetDef(fixedAllies, "1", "GAME\\ModOptions\\FixedAllies");
 
 	// Read the map & mod options

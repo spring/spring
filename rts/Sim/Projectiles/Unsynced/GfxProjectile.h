@@ -14,7 +14,7 @@ public:
 	void Update();
 	void Draw();
 	CGfxProjectile();
-	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color);
+	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_H);
 	virtual ~CGfxProjectile();
 
 	int creationTime;

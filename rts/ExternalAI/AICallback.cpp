@@ -87,9 +87,9 @@ void CAICallback::SendStartPos(bool ready, float3 startPos)
 void CAICallback::SendTextMsg(const char* text, int zone)
 {
 	if (group)
-		logOutput.Print(zone, "Group%i: %s", group->id, text);
+		logOutput.Print("Group%i: %s", group->id, text);
 	else
-		logOutput.Print(zone, "GlobalAI%i: %s", team, text);
+		logOutput.Print("GlobalAI%i: %s", team, text);
 }
 
 void CAICallback::SetLastMsgPos(float3 pos)
@@ -995,7 +995,7 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef=unitDefHandler->GetUnitByName(unitName);
 	if(!tdu.unitdef){
-		logOutput.Print("Uknown unit in CAICallback::DrawUnit %s",unitName);
+		logOutput.Print("Unknown unit in CAICallback::DrawUnit %s",unitName);
 		return;
 	}
 	tdu.pos=pos;
@@ -1535,6 +1535,7 @@ int CAICallback::GetSelectedUnits(int *unitIds)
 	verify();
 	int a = 0;
 
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnit
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == gs->AllyTeam(team)) {

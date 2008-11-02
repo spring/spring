@@ -32,8 +32,8 @@ CR_REG_METADATA(CDirtProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float ttl,const float size,const float expansion,float slowdown,CUnit* owner,const float3& color)
-: CProjectile(pos,speed,owner, false),
+CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float ttl,const float size,const float expansion,float slowdown,CUnit* owner,const float3& color GML_PARG_C)
+: CProjectile(pos,speed,owner, false GML_PARG_P),
 	alpha(255),
 	size(size),
 	sizeExpansion(expansion),
@@ -90,12 +90,11 @@ void CDirtProjectile::Draw()
 	col[2]=(unsigned char) (color.z*alpha);
 	col[3]=(unsigned char) (alpha)/*-gu->timeOffset*alphaFalloff*/;
 
-	float3 interPos=pos+speed*gu->timeOffset;
 	float interSize=size+gu->timeOffset*sizeExpansion;
 	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5f);//0.25f*(1-partAbove)
 
-	va->AddVertexTC(interPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
-	va->AddVertexTC(interPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
-	va->AddVertexTC(interPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
-	va->AddVertexTC(interPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
+	va->AddVertexTC(drawPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
+	va->AddVertexTC(drawPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
+	va->AddVertexTC(drawPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
 }

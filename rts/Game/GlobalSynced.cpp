@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GlobalSynced.h"
 
 #include <assert.h>
@@ -183,7 +184,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	}
 
 	if (useLuaGaia) {
-		//TODO duplicated in SpringApp::CreateGameSetup()
+		//TODO duplicated in SpringApp::Startup()
 		// Gaia adjustments
 		gaiaTeamID = activeTeams;
 		gaiaAllyTeamID = activeAllyTeams;

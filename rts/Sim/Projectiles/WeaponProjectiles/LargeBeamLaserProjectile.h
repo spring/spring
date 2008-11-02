@@ -9,7 +9,7 @@ class CLargeBeamLaserProjectile : public CWeaponProjectile
 	CR_DECLARE(CLargeBeamLaserProjectile);
 public:
 	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2,
-		CUnit* owner, const WeaponDef* weaponDef);
+		CUnit* owner, const WeaponDef* weaponDef GML_PARG_H);
 	~CLargeBeamLaserProjectile(void);
 
 	float3 startPos;

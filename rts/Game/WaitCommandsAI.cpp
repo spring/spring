@@ -159,6 +159,8 @@ void CWaitCommandsAI::DrawCommands() const
 
 void CWaitCommandsAI::AddTimeWait(const Command& cmd)
 {
+	GML_RECMUTEX_LOCK(sel); // AddTimeWait
+
 	// save the current selection
 	const CUnitSet tmpSet = selectedUnits.selectedUnits;
 	CUnitSet::const_iterator it;
@@ -464,6 +466,8 @@ bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit) const
 void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
 																				const CUnitSet& unitSet)
 {
+	GML_RECMUTEX_LOCK(sel); // SendCommand
+
 	if (unitSet.empty()) {
 		return;
 	}
@@ -694,6 +698,8 @@ CWaitCommandsAI::DeathWait*
 CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 : Wait(CMD_WAITCODE_DEATHWAIT)
 {
+	GML_RECMUTEX_LOCK(sel); // DeathWait
+
 	const CUnitSet& selUnits = selectedUnits.selectedUnits;
 
 	if (cmd.params.size() == 1) {
@@ -922,6 +928,8 @@ CWaitCommandsAI::SquadWait*
 CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 : Wait(CMD_WAITCODE_SQUADWAIT)
 {
+	GML_RECMUTEX_LOCK(sel); // SquadWait
+
 	if (cmd.params.size() != 1) {
 		return;
 	}
@@ -1093,6 +1101,8 @@ CWaitCommandsAI::GatherWait*
 CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 : Wait(CMD_WAITCODE_GATHERWAIT)
 {
+	GML_RECMUTEX_LOCK(sel); // GatherWait
+
 	if (cmd.params.size() != 0) {
 		return;
 	}

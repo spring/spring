@@ -103,6 +103,8 @@ class LuaUnsyncedRead {
 
 		static int GetActivePage(lua_State* L);
 
+		static int GetLastMessagePositions(lua_State* L);
+
 		static int GetConsoleBuffer(lua_State* L);
 		static int GetCurrentTooltip(lua_State* L);
 
@@ -128,6 +130,8 @@ class LuaUnsyncedRead {
 		static int GetGroupUnitsCount(lua_State* L);
 
 		static int GetPlayerTraffic(lua_State* L);
+
+		static int GetDrawSelectionInfo(lua_State* L);
 };
 
 

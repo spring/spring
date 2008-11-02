@@ -221,6 +221,7 @@ struct UnitDef
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;
 	float maxWeaponRange;
+	float maxCoverage;
 
 	std::map<int, std::string> buildOptions;
 

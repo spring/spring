@@ -230,6 +230,8 @@ void CDxSound::PlaySample(int id, float volume)
 		return;
 	}
 
+	if (volume == 0.0f || globalVolume == 0.0f) return;
+
 	const float v = 1.0f - (globalVolume * max(0.0f, min(1.0f, volume)));
 	int num = GetBuf(id, v);
 
@@ -264,6 +266,8 @@ void CDxSound::PlaySample(int id, const float3& p, float volume)
 		POP_CODE_MODE;
 		return;
 	}
+
+	if (volume == 0.0f || globalVolume == 0.0f) return;
 
 	float3 dif = p - camera->pos;
 	float dl = dif.Length();

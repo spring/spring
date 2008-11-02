@@ -117,17 +117,20 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 
 
 
-inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color) {
+static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color)
+{
 	#define HEIGHT2WORLD(x) ((x) << 3)
-	#define WORLD2HEIGHT(x) ((x) >> 3)
 	#define VERTEX(x, y, z) float3(HEIGHT2WORLD((x)), (y), HEIGHT2WORLD((z)))
 	va->AddVertexTC( VERTEX(x    , yv[0], z    ),   uv[0], uv[1],   color);
 	va->AddVertexTC( VERTEX(x + 1, yv[1], z    ),   uv[2], uv[3],   color);
 	va->AddVertexTC( VERTEX(x + 1, yv[2], z + 1),   uv[4], uv[5],   color);
 	va->AddVertexTC( VERTEX(x    , yv[3], z + 1),   uv[6], uv[7],   color);
+	#undef VERTEX
+	#undef HEIGHT2WORLD
 }
 
-inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
+static inline void DrawBuildingDecal(BuildingGroundDecal* decal)
+{
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -137,7 +140,11 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 	float uv[8] = {0.0f};
 	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
 
+	#ifndef DEBUG
 	#define HEIGHT(z, x) (hm[((z) * gsmx1) + (x)])
+	#else
+	#define HEIGHT(z, x) (assert((z) <= gsmy), assert((x) <= gsmx), (hm[((z) * gsmx1) + (x)]))
+	#endif
 
 	if (!decal->va) {
 		// NOTE: this really needs CLOD'ing
@@ -164,9 +171,13 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						// (htl, htr, hbr, hbl)
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
@@ -192,9 +203,13 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
@@ -217,9 +232,13 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
@@ -242,9 +261,13 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 				for (int x = xMin; x < xMax; x++) {
 					const int xh = tlx + x;
+					if (xh >= gsmx)
+						break;
 
 					for (int z = zMin; z < zMax; z++) {
 						const int zh = tlz + z;
+						if (zh >= gsmy)
+							break;
 
 						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
 						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
@@ -277,9 +300,12 @@ inline void DrawBuildingDecal(BuildingGroundDecal* decal) {
 
 		decal->va->DrawArrayTC(GL_QUADS);
 	}
+
+	#undef HEIGHT
 }
 
-inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade) {
+static inline void DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
+{
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -558,9 +584,7 @@ void CGroundDecalHandler::Draw(void)
 	}
 
 
-
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDepthMask(1);
 	glDisable(GL_BLEND);
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -638,7 +662,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 		--pi;
 		list<TrackPart>::iterator pi2=pi;
 		--pi;
-		if(((tp.pos1+pi->pos1)*0.5f).distance(pi2->pos1)<1){
+		if(((tp.pos1+pi->pos1)*0.5f).SqDistance(pi2->pos1)<1){
 			unit->myTrack->parts.back()=tp;
 			return;
 		}
@@ -916,9 +940,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 	if (building->buildFacing == 1 || building->buildFacing == 3) {
 		// swap xsize and ysize if building faces East or West
-		int tmp = decal->xsize;
-		decal->xsize = decal->ysize;
-		decal->ysize = tmp;
+		std::swap(decal->xsize, decal->ysize);
 	}
 
 	decal->posx = posx - (decal->xsize / 2);
@@ -929,7 +951,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 }
 
 
-void CGroundDecalHandler::RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb)
+void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb)
 {
 	GML_STDMUTEX_LOCK(decal); // RemoveBuilding
 

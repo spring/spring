@@ -24,8 +24,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-const int CInfoConsole::maxRawLines = 1024;
-
+const int CInfoConsole::maxRawLines   = 1024;
+const int CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole():
 	disabled(false), newLines(0), rawId(0),
@@ -60,9 +60,8 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
-	if (disabled) {
-		return;
-	}
+	if (disabled) return;
+	if (!font) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
@@ -145,17 +144,15 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(int zone, const char *text)
+void CInfoConsole::NotifyLogMsg(CLogSubsystem& subsystem, const char* text)
 {
+	if (!font) return;
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	RawLine rl;
-	rl.text = text;
-	rl.zone = zone;
-	rl.time = 0; // filled in later
-	rl.id = rawId;
+	RawLine rl(text, &subsystem, rawId);
 	rawId++;
 	rawData.push_back(rl);
 	if (rawData.size() > maxRawLines) {
@@ -210,7 +207,7 @@ void CInfoConsole::NotifyLogMsg(int zone, const char *text)
 
 void CInfoConsole::SetLastMsgPos(const float3& pos)
 {
-	if (lastMsgPositions.size() < 10) {
+	if (lastMsgPositions.size() < maxLastMsgPos) {
 		lastMsgPositions.push_front(pos);
 	} else {
 		lastMsgPositions.push_front(pos);

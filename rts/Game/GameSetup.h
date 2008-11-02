@@ -11,6 +11,24 @@
 
 class TdfParser;
 
+class LocalSetup
+{
+public:
+	LocalSetup();
+
+	void Init(const std::string& setup);
+
+	int myPlayerNum;
+	std::string myPlayerName;
+	
+	std::string hostip;
+	int hostport;
+	int sourceport; //the port clients will try to connect from
+	int autohostport;
+	
+	bool isHost;
+};
+
 class CGameSetup
 {
 public:
@@ -29,7 +47,6 @@ public:
 		StartPos_Last = 3  // last entry in enum (for user input check)
 	};
 
-	int myPlayerNum;
 	int numPlayers; //the expected amount of players
 	int numTeams;
 	int numAllyTeams;
@@ -42,11 +59,6 @@ public:
 	bool useLuaGaia;
 	std::string luaGaiaStr;
 	std::string luaRulesStr;
-	
-	std::string hostip;
-	int hostport;
-	int sourceport; //the port clients will try to connect from
-	int autohostport;
 	
 	char* gameSetupText;
 	int gameSetupTextLength;

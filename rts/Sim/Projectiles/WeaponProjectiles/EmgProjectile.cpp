@@ -20,8 +20,8 @@ CR_REG_METADATA(CEmgProjectile,(
 
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, const float3& color, float intensity, int ttl,
-		const WeaponDef* weaponDef):
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl),
+		const WeaponDef* weaponDef GML_PARG_C):
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
 	color(color),
 	intensity(intensity)
 {
@@ -82,11 +82,10 @@ void CEmgProjectile::Draw(void)
 	col[1]=(unsigned char) (color.y*intensity*255);
 	col[2]=(unsigned char) (color.z*intensity*255);
 	col[3]=5;//intensity*255;
-	float3 interPos=pos+speed*gu->timeOffset;
-	va->AddVertexTC(interPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(interPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-	va->AddVertexTC(interPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
+	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
+	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 }
 
 int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)

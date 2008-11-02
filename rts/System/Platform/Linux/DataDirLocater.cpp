@@ -321,8 +321,11 @@ void DataDirLocater::LocateDataDirs()
 #else
 	_chdir(GetWriteDir()->path.c_str());
 #endif
+	// Initialize the log. Only after this moment log will be written to file.
+	logOutput.Initialize();
 	// Logging MAY NOT start before the chdir, otherwise the logfile ends up
 	// in the wrong directory.
+	// Update: now it actually may start before, log has preInitLog.
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->writable)
 			logOutput.Print("Using read-write data directory: %s", d->path.c_str());

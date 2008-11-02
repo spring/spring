@@ -10,7 +10,7 @@ class CMuzzleFlame :
 
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size);
+	CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size GML_PARG_H);
 	~CMuzzleFlame(void);
 
 	void Draw(void);

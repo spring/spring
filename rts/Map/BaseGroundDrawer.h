@@ -24,6 +24,11 @@ public:
 	virtual void IncreaseDetail()=0;
 	virtual void DecreaseDetail()=0;
 
+#ifdef USE_GML
+	int multiThreadDrawGround;
+	int multiThreadDrawGroundShadow;
+#endif
+
 	enum DrawMode
 	{
 		drawNormal,
@@ -36,6 +41,8 @@ public:
 protected:
 	virtual void SetDrawMode(DrawMode dm);
 public:
+	void DrawTrees(bool drawReflection=false) const;
+
 	// Everything that deals with drawing extra textures on top
 	void DisableExtraTexture();
 	void SetHeightTexture();
@@ -46,7 +53,7 @@ public:
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() const { return drawMode!=drawNormal; };
 
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
+	void SetTexGen(float scalex,float scaley, float offsetx, float offsety) const;
 
 	bool updateFov;
 	bool drawRadarAndJammer;
