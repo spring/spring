@@ -250,7 +250,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 }
 
 
-// called by {CRifle, CBeamLaser, CLightingCannon}::Fire()
+// called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
 float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float power, CUnit* owner, CUnit *&hit, int collisionFlags)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
@@ -767,7 +767,7 @@ void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyt
 }
 
 
-// called by {CFlameThrower, CLaserCannon, CEmgCannon, CBeamLaser, CLightingCannon}::TryTarget()
+// called by {CFlameThrower, CLaserCannon, CEmgCannon, CBeamLaser, CLightningCannon}::TryTarget()
 bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float length)
 {
 	int quads[1000];

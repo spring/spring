@@ -1,18 +1,18 @@
-#ifndef LIGHTINGPROJECTILE_H
-#define LIGHTINGPROJECTILE_H
+#ifndef LIGHTNINGPROJECTILE_H
+#define LIGHTNINGPROJECTILE_H
 
 #include "WeaponProjectile.h"
 
 class CWeapon;
 
-class CLightingProjectile :
+class CLightningProjectile :
 	public CWeaponProjectile
 {
-	CR_DECLARE(CLightingProjectile);
+	CR_DECLARE(CLightningProjectile);
 public:
-	CLightingProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color,
+	CLightningProjectile(const float3& pos, const float3& end, CUnit* owner, const float3& color,
 		const WeaponDef *weaponDef, int ttl = 10, CWeapon* weap = 0 GML_PARG_H);
-	~CLightingProjectile(void);
+	~CLightningProjectile(void);
 
 	float3 color;
 	float3 endPos;
@@ -27,4 +27,4 @@ public:
 };
 
 
-#endif /* LIGHTINGPROJECTILE_H */
+#endif /* LIGHTNINGPROJECTILE_H */
