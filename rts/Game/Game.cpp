@@ -2497,12 +2497,6 @@ bool CGame::Update()
 	}
 #endif
 
-#ifdef SYNCIFY		//syncify doesnt support multithreading ...
-	if (gameServer) {
-		gameServer->Update();
-	}
-#endif
-
 	if(creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
 	}
