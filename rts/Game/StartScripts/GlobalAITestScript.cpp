@@ -24,13 +24,11 @@ CGlobalAITestScript::CGlobalAITestScript(std::string dll):
 	CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
 	dllName(dll)
 {
-	if (!gameSetup) {
-		// make sure CSelectedUnits::AiOrder()
-		// still works without a setup script
-		gs->Team(1)->isAI = true;
-		gs->Team(1)->dllAI = dllName;
-		gs->Team(1)->leader = 0;
-	}
+	// make sure CSelectedUnits::AiOrder()
+	// still works without a setup script
+	gs->Team(1)->isAI = true;
+	gs->Team(1)->dllAI = dllName;
+	gs->Team(1)->leader = 0;
 }
 
 
