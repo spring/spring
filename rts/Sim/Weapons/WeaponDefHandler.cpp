@@ -427,7 +427,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 			wd.visuals.texture2 = &ph->laserendtex;
 			wd.visuals.texture3 = &ph->beamlaserflaretex;
 		}
-	} else if (wd.type == "LightingCannon") {
+	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+		wd.type = "LightningCannon";
 		wd.visuals.texture1 = &ph->laserfallofftex;
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
 	} else if (wd.type == "EmgCannon") {

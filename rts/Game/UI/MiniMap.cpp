@@ -44,7 +44,7 @@
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/LightingProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -1138,8 +1138,8 @@ void CMiniMap::DrawForReal()
 							unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
 							lines->AddVertexQC(beam.startPos,color);
 							lines->AddVertexQC(beam.endPos,color);
-						} else if (dynamic_cast<CLightingProjectile*>(p)) {
-							CLightingProjectile& beam = *(CLightingProjectile*)p;
+						} else if (dynamic_cast<CLightningProjectile*>(p)) {
+							CLightningProjectile& beam = *(CLightningProjectile*)p;
 							unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
 							lines->AddVertexQC(beam.pos,color);
 							lines->AddVertexQC(beam.endPos,color);

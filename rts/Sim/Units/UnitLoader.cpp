@@ -40,7 +40,7 @@
 #include "Sim/Weapons/EmgCannon.h"
 #include "Sim/Weapons/FlameThrower.h"
 #include "Sim/Weapons/LaserCannon.h"
-#include "Sim/Weapons/LightingCannon.h"
+#include "Sim/Weapons/LightningCannon.h"
 #include "Sim/Weapons/MeleeWeapon.h"
 #include "Sim/Weapons/MissileLauncher.h"
 #include "Sim/Weapons/NoWeapon.h"
@@ -426,9 +426,9 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	} else if (weapondef->type == "BeamLaser") {
 		weapon = SAFE_NEW CBeamLaser(owner);
 		((CBeamLaser*) weapon)->color = weapondef->visuals.color;
-	} else if (weapondef->type == "LightingCannon") {
-		weapon = SAFE_NEW CLightingCannon(owner);
-		((CLightingCannon*) weapon)->color = weapondef->visuals.color;
+	} else if (weapondef->type == "LightningCannon") {
+		weapon = SAFE_NEW CLightningCannon(owner);
+		((CLightningCannon*) weapon)->color = weapondef->visuals.color;
 	} else if (weapondef->type == "EmgCannon") {
 		weapon = SAFE_NEW CEmgCannon(owner);
 	} else if (weapondef->type == "DGun") {
