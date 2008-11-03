@@ -14,6 +14,7 @@
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
@@ -179,7 +180,12 @@ void CBeamLaser::Fire(void)
 
 void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 {
-	float rangeMod=1.3f;
+	float rangeMod=1.0f;
+	CBuilding* building = dynamic_cast<CBuilding*>(owner);
+	if (!building) {
+		rangeMod=1.3f;  //help units fire while chasing
+	}
+
 #ifdef DIRECT_CONTROL_ALLOWED
 	if(owner->directControl)
 		rangeMod=0.95f;
