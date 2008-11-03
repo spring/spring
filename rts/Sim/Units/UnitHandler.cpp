@@ -149,21 +149,18 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 	waterDamage = mapInfo->water.damage;
 
-	if (gameSetup) {
-		maxUnits = gameSetup->maxUnits;
-	}
+	maxUnits = gameSetup->maxUnits;
+
 	if (maxUnits > ((MAX_UNITS / gs->activeTeams) - 5)) {
 		maxUnits = (MAX_UNITS / gs->activeTeams) -5;
 	}
 
-	if (gameSetup) {
-		if (gameSetup->limitDgun) {
-			limitDgun = true;
-			dgunRadius = gs->mapx * 3;
-		}
-		if (gameSetup->diminishingMMs) {
-			diminishingMetalMakers = true;
-		}
+	if (gameSetup->limitDgun) {
+		limitDgun = true;
+		dgunRadius = gs->mapx * 3;
+	}
+	if (gameSetup->diminishingMMs) {
+		diminishingMetalMakers = true;
 	}
 
 	if (!serializing) {

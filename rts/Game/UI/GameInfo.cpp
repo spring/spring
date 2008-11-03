@@ -190,13 +190,11 @@ void CGameInfo::Draw()
 	labels.push_back("Max Wind:");
 	values.push_back(wind.GetMaxWind());
 
-	if (gameSetup) {
-		labels.push_back("Limited DGun:");
-		values.push_back(gameSetup->limitDgun);
+	labels.push_back("Limited DGun:");
+	values.push_back(gameSetup->limitDgun);
 
-		labels.push_back("Diminishing Metal:");
-		values.push_back(gameSetup->diminishingMMs);
-	}
+	labels.push_back("Diminishing Metal:");
+	values.push_back(gameSetup->diminishingMMs);
 
 	labels.push_back("Map Size:");
 	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);
