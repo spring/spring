@@ -206,10 +206,6 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
 	setup->LoadStartPositions();
 
-	assert(gameSetup);
-	const_cast<CGameSetup*>(gameSetup)->LoadStartPositions(); // only host needs to do this, because
-		                                 // client will receive startpos msg from server
-	
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
 	gameServer = new CGameServer(settings.get(), false, startupData, setup);
