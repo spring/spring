@@ -228,7 +228,11 @@ void CPreGame::UpdateClientNet()
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
-			case NETMSG_SETPLAYERNUM: {
+			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.
+				GameDataReceived(packet);
+				break;
+			}
+			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have
 				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("Became player %i", gu->myPlayerNum);
 				
@@ -246,10 +250,6 @@ void CPreGame::UpdateClientNet()
 				pregame=0;
 				delete this;
 				return;
-			}
-			case NETMSG_GAMEDATA: {
-				GameDataReceived(packet);
-				break;
 			}
 			default: {
 				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(packet->data[0]));
@@ -361,27 +361,6 @@ void CPreGame::LoadMod(const std::string& modName)
 	}
 }
 
-void CPreGame::LoadLua()
-{
-	const string luaGaiaStr  = configHandler.GetString("LuaGaia",  "1");
-	const string luaRulesStr = configHandler.GetString("LuaRules", "1");
-	gs->useLuaGaia  = CLuaGaia::SetConfigString(luaGaiaStr);
-	gs->useLuaRules = CLuaRules::SetConfigString(luaRulesStr);
-	if (gs->useLuaGaia) {
-		gs->gaiaTeamID = gs->activeTeams;
-		gs->gaiaAllyTeamID = gs->activeAllyTeams;
-		gs->activeTeams++;
-		gs->activeAllyTeams++;
-		CTeam* team = gs->Team(gs->gaiaTeamID);
-		team->color[0] = 255;
-		team->color[1] = 255;
-		team->color[2] = 255;
-		team->color[3] = 255;
-		team->gaia = true;
-		gs->SetAllyTeam(gs->gaiaTeamID, gs->gaiaAllyTeamID);
-	}
-}
-
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	gameData.reset(new GameData(packet));
@@ -412,7 +391,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		}
 		gameSetup = const_cast<const CGameSetup*>(temp);
 		gs->LoadFromSetup(gameSetup);
-		LoadLua();
 	}
 	else
 	{
