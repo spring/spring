@@ -7,6 +7,7 @@
 
 #include <list>
 #include <map>
+#include <vector>
 #include "Object.h"
 class CGame;
 class CUnit;
@@ -15,9 +16,7 @@ class CSolidObject;
 class CFeature;
 
 struct UnitDef;
-#include <vector>
 #include "Sim/Misc/DamageArray.h"
-#include <list>
 #include "MemPool.h"
 #include "Sim/Units/UnitDef.h"
 
