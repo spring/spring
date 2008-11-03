@@ -60,8 +60,6 @@ private:
 	
 	/// Map all required archives depending on selected mod(s)
 	void LoadMod(const std::string& modName);
-	
-	void LoadLua();
 
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 
