@@ -220,10 +220,10 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	for(LosTable::iterator li=table.begin();li!=table.end();++li){
 		LosLine& line=*li;
 		const float baseHeight=readmap->mipHeightmap[losMipLevel][mapSquare]+instance->baseHeight-15;
-		float maxAng1 = -1000;
-		float maxAng2 = -1000;
-		float maxAng3 = -1000;
-		float maxAng4 = -1000;
+		float maxAng1 = -1e6f;
+		float maxAng2 = -1e6f;
+		float maxAng3 = -1e6f;
+		float maxAng4 = -1e6f;
 		float r = 1;
 		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
 			float invR=1.0f/r;
