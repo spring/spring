@@ -42,6 +42,14 @@ char* util_allocStrCpy(const char* toCopy) {
 	return copy;
 }
 
+char* util_allocStrCpyCat(const char* toPart1, const char* toPart2) {
+	
+	char* copy = (char*) calloc(strlen(toPart1)+strlen(toPart2)+1, sizeof(char));
+	STRCPY(copy, toPart1);
+	STRCAT(copy, toPart2);
+	return copy;
+}
+
 void util_strReplace(char* toChange, char toFind, char replacer) {
 	
 	const unsigned int len = strlen(toChange);

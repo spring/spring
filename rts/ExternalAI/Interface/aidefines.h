@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -31,12 +31,6 @@ extern "C" {
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000
 
-// TODO: comment toggle the two following lines
-// !!!absolute paths are needed when debugging!!!
-//#define PATH_TO_SPRING_HOME "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/"
-//#define PATH_TO_SPRING_HOME "P:/svn_work/robin/Development/Projects/Others/spring_current/game/"
-//#define PATH_TO_SPRING_HOME ""
-
 /**
  * @brief max skirmish AIs
  *
@@ -60,7 +54,7 @@ extern "C" {
 #define GROUP_AI_DATA_DIR "AI/Group/data"
 
 #ifdef	__cplusplus
-}		// extern "C"
+}	// extern "C"
 #endif	// __cplusplus
 
 #endif	// _AIDEFINES_H
