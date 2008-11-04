@@ -24,8 +24,8 @@
 
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "ExternalAI/Interface/LegacyCppWrapper/AI.h"
-#include "ExternalAI/Interface/LegacyCppWrapper/AIGlobalAI.h"
+#include "LegacyCpp/AI.h"
+#include "LegacyCpp/AIGlobalAI.h"
 
 // RAI stuff
 #include "RAI.h"

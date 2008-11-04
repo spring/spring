@@ -1,4 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/AI/Bindings ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
 
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
@@ -15,7 +15,7 @@ endif (UNIX AND NOT MINGW)
 #aux_source_directory(${CMAKE_SOURCE_DIR}/rts/Lua/LuaParser luaparsingenv)
 #aux_source_directory(${CMAKE_SOURCE_DIR}/rts/Map/MapParser luaparsingenv)
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface/LegacyCppWrapper legacycppaienv)
+aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Bindings/LegacyCpp legacycppaienv)
 list (APPEND legacycppaienv ${aienv})
 list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/float3)
 list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
