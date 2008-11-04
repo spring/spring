@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include "mmgr.h"
 
@@ -28,6 +29,8 @@ CConsoleHistory::~CConsoleHistory()
 
 void CConsoleHistory::ResetPosition()
 {
+	GML_STDMUTEX_LOCK(hist);
+
 	pos = lines.end();
 	return;
 }
@@ -35,6 +38,8 @@ void CConsoleHistory::ResetPosition()
 
 bool CConsoleHistory::AddLine(const std::string& msg)
 {
+	GML_STDMUTEX_LOCK(hist);
+
 	std::string message;
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {
 		message = msg.substr(2);
@@ -71,6 +76,8 @@ bool CConsoleHistory::AddLineRaw(const std::string& msg)
 
 std::string CConsoleHistory::NextLine(const std::string& current)
 {
+	GML_STDMUTEX_LOCK(hist);
+
 	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
 		prefix  = current.substr(0, 2);
@@ -108,6 +115,8 @@ std::string CConsoleHistory::NextLine(const std::string& current)
 
 std::string CConsoleHistory::PrevLine(const std::string& current)
 {
+	GML_STDMUTEX_LOCK(hist);
+
 	std::string prefix, message;
 	if ((current.find_first_of("aAsS") == 0) && (current[1] == ':')) {
 		prefix  = current.substr(0, 2);

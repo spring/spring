@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 
 #include "LogOutput.h"
 
@@ -49,7 +50,7 @@ CLogSubsystem::CLogSubsystem(const char* name, bool enabled)
 /******************************************************************************/
 /******************************************************************************/
 
-//CLogOutput logOutput;
+CLogOutput& logOutput = CLogOutput::GetInstance();
 
 namespace
 {
@@ -76,7 +77,6 @@ static const char* filename = "infolog.txt";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 static bool stdoutDebug = false;
-CLogOutput& logOutput = CLogOutput::GetInstance();
 static boost::recursive_mutex tempstrMutex;
 static string tempstr;
 
@@ -108,6 +108,8 @@ CLogOutput::~CLogOutput()
 
 void CLogOutput::End()
 {
+	GML_STDMUTEX_LOCK(log);
+
 //	delete FILE_LOG;
 //	FILE_LOG = 0;
 	SafeDelete(filelog);
@@ -116,12 +118,16 @@ void CLogOutput::End()
 
 void CLogOutput::SetMirrorToStdout(bool value)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	stdoutDebug = value;
 }
 
 
 void CLogOutput::SetFilename(const char* fname)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	assert(!initialized);
 	filename = fname;
 }
@@ -136,6 +142,8 @@ void CLogOutput::SetFilename(const char* fname)
  */
 void CLogOutput::Initialize()
 {
+//	GML_STDMUTEX_LOCK(log);
+
 	if (initialized) return;
 
 	filelog = new std::ofstream(filename);
@@ -223,6 +231,8 @@ void CLogOutput::InitializeSubsystems()
  */
 void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 {
+	GML_STDMUTEX_LOCK(log);
+
 /*
 	if (!INITIALIZED) {
 		FILE_LOG = new std::ofstream(LOG_FILE_NAME);
@@ -260,7 +270,7 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 	OutputDebugString(str);
 	if (newline)
 		OutputDebugString("\n");
-#endif
+#endif	// _MSC_VER
 
 //	if (FILE_LOG) {
 	if (filelog) {
@@ -269,7 +279,7 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
 //			(*FILE_LOG) << IntToString(gs->frameNum, "[%7d] ");
 		}
-#endif	/* !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#endif	// !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 //		(*FILE_LOG) << str;
 //		if (newline)
 //			(*FILE_LOG) << "\n";
@@ -298,6 +308,8 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 
 void CLogOutput::SetLastMsgPos(const float3& pos)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
 		(*lsi)->SetLastMsgPos(pos);
 }
@@ -305,18 +317,24 @@ void CLogOutput::SetLastMsgPos(const float3& pos)
 
 void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.push_back(ls);
 }
 
 
 void CLogOutput::RemoveAllSubscribers()
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.clear();
 }
 
 
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
+	GML_STDMUTEX_LOCK(log);
+
 	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
 

@@ -51,7 +51,8 @@ public:
 	void Save(std::ostream *s);
 	void GotChatMsg(const char* msg, int player);
 
-	bool CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
+	bool CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey,
+			const std::map<std::string, std::string>& skirmishAIOptions);
 	bool IsSkirmishAI(int teamId);
 	void DestroySkirmishAI(int teamId);
 	const CSkirmishAIWrapper* GetSkirmishAI(int teamId);

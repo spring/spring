@@ -8,7 +8,6 @@
 #include <time.h>
 #include <string>
 #include <map>
-#include "SDL_types.h"
 
 #include "GameController.h"
 #include "creg/creg.h"

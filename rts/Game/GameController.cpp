@@ -3,6 +3,7 @@
 #include "mmgr.h"
 
 #include "GameController.h"
+#include "System/Platform/Clipboard.h"
 
 
 CGameController::CGameController(void)
@@ -58,3 +59,11 @@ int CGameController::KeyReleased(unsigned short k)
 	return 0;
 }
 
+
+void CGameController::PasteClipboard()
+{
+	CClipboard clipboard;
+	const std::string text = clipboard.GetContents();
+	userInput.insert(writingPos, text);
+	writingPos += text.length();
+}

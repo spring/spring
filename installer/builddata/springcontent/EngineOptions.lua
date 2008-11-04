@@ -22,10 +22,10 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  Example EngineOptions.lua 
+--  Example EngineOptions.lua
 --
 
-local options = 
+local options =
 {
   {
     key    = 'GameMode',
@@ -33,9 +33,9 @@ local options =
     desc   = 'Determines what condition triggers the defeat of a player',
     type   = 'list',
     def    = '0',
-    items  = 
+    items  =
     {
-      { 
+      {
         key  = '0',
         name = 'Kill everything',
         desc = 'The player will lose only after all units of the player will be killed',
@@ -52,14 +52,14 @@ local options =
       },
     },
   },
-  
+
   {
     key    = 'StartingResources',
     name   = 'Starting Resources',
     desc   = 'Sets storage and amount of resources that players will start with',
     type   = 'section',
   },
-  
+
   {
     key    = 'StartMetal',
     name   = 'Starting metal',
@@ -78,25 +78,25 @@ local options =
     desc   = 'Determines amount of energy and energy storage that each player will start with',
     type   = 'number',
     section= 'StartingResources',
-    def    = 500,
+    def    = 1000,
     min    = 0,
     max    = 10000,
     step   = 1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
   },
-  
+
   {
     key    = 'MaxUnits',
     name   = 'Max units',
     desc   = 'Determines the ceiling of how many units and buildings a player is allowed to own at the same time',
     type   = 'number',
-    def    = 1000,
+    def    = 500,
     min    = 1,
     max    = 10000,
     step   = 1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
   },
-  
+
   {
     key    = 'LimitDgun',
     name   = 'Limit D-Gun range',
@@ -104,7 +104,7 @@ local options =
     type   = 'bool',
     def    = false,
   },
-  
+
   {
     key    = 'GhostedBuildings',
     name   = 'Ghosted buildings',
@@ -125,7 +125,7 @@ local options =
     name   = 'Fixed ingame alliances',
     desc   = 'Disables the possibility of players to dynamically change alliances ingame',
     type   = 'bool',
-    def    = true,
+    def    = false,
   },
 
   {
@@ -134,7 +134,7 @@ local options =
     desc   = 'Limits maximum and minimum speed that the players will be allowed to change to',
     type   = 'section',
   },
-  
+
   {
     key    = 'MaxSpeed',
     name   = 'Maximum game speed',
@@ -147,7 +147,7 @@ local options =
     step   = 0.1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
   },
-  
+
   {
     key    = 'MinSpeed',
     name   = 'Minimum game speed',
@@ -160,7 +160,7 @@ local options =
     step   = 0.1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
   },
-  
+
   {
     key    = 'DisableMapDamage',
     name   = 'Undeformable map',
@@ -170,7 +170,7 @@ local options =
   },
 --[[
 -- the following options can create problems and were never used by interface programs, thus are commented out for the moment
-  
+
   {
     key    = 'LuaGaia',
     name   = 'Enables gaia',
@@ -178,7 +178,7 @@ local options =
     type   = 'bool',
     def    = true,
   },
-  
+
   {
     key    = 'NoHelperAIs',
     name   = 'Disable helper AIs',
@@ -186,7 +186,7 @@ local options =
     type   = 'bool',
     def    = false,
   },
-  
+
   {
     key    = 'LuaRules',
     name   = 'Enable LuaRules',

@@ -41,12 +41,6 @@ public:
 	bool Connected() const;
 
 	/**
-	@brief Wheter a demo is played local
-	@todo remove
-	*/
-	bool localDemoPlayback;
-
-	/**
 	@brief Take a look at the messages in the recieve buffer (read-only)
 	@return A RawPacket holding the data, or 0 if no data
 	@param ahead How many packets to look ahead. A typical usage would be:

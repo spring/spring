@@ -40,7 +40,9 @@ CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SSAIKey()))
 CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
-	CR_MEMBER(skirmishAIKey),
+	CR_MEMBER(key),
+	CR_MEMBER(optionKeys),
+	CR_MEMBER(optionValues),
 /*
 	CR_MEMBER(libName),
 	CR_MEMBER(IsCInterface),
@@ -73,11 +75,18 @@ void AIException(const char *what);
 	}
 
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& skirmishAIKey)
-		: teamId(teamId), cheatEvents(false), skirmishAIKey(skirmishAIKey) {
+CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key,
+		const std::map<std::string, std::string>& options)
+		: teamId(teamId), cheatEvents(false), key(key) {
 	
-	LoadSkirmishAI(teamId, skirmishAIKey, false);
-	
+	std::map<std::string, std::string>::const_iterator op;
+    for (op = options.begin(); op != options.end(); ++op) {
+        optionKeys.push_back(op->first);
+        optionValues.push_back(op->second);
+    }
+
+	LoadSkirmishAI(teamId, key, false);
+
 	Init();
 }
 
@@ -99,7 +108,7 @@ void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {}
 
 
 void CSkirmishAIWrapper::PostLoad() {
-	LoadSkirmishAI(teamId, skirmishAIKey, true);
+	LoadSkirmishAI(teamId, key, true);
 }
 
 
@@ -107,15 +116,15 @@ void CSkirmishAIWrapper::PostLoad() {
 void CSkirmishAIWrapper::LoadSkirmishAI(int teamId,
 		const SSAIKey& skirmishAIKey, bool postLoad) {
 	
-	ai = SAFE_NEW CSkirmishAI(teamId, skirmishAIKey);
+	ai = SAFE_NEW CSkirmishAI(teamId, key);
 	
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
-	libManager->FetchSkirmishAILibrary(skirmishAIKey);
+	libManager->FetchSkirmishAILibrary(key);
 	const CSkirmishAILibraryInfo* infos =
-			libManager->GetSkirmishAIInfos()->at(skirmishAIKey);
+			libManager->GetSkirmishAIInfos()->at(key);
 	bool loadSupported =
 			infos->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
-	libManager->ReleaseSkirmishAILibrary(skirmishAIKey);
+	libManager->ReleaseSkirmishAILibrary(key);
 
 	if (postLoad && !loadSupported) {
 		// fallback code to help the AI if it
@@ -153,12 +162,28 @@ void CSkirmishAIWrapper::LoadSkirmishAI(int teamId,
 	}
 }
 
+static const char** allocCStrArray(std::vector<std::string> strVec) {
+
+	const char** strArr = NULL;
+
+	unsigned int size = strVec.size();
+	strArr = (const char**) calloc(size, sizeof(char*));
+	unsigned int i;
+    for (i = 0; i < size; ++i) {
+        strArr[i] = strVec[i].c_str();
+    }
+
+	return strArr;
+}
+
 void CSkirmishAIWrapper::Init() {
-	
+
 	callback = SAFE_NEW CGlobalAICallback(this);
 	c_callback = initSAICallback(teamId, callback);
-	
-	SInitEvent evtData = {teamId, c_callback};
+	optionKeys_c = allocCStrArray(optionKeys);
+	optionValues_c = allocCStrArray(optionValues);
+
+	SInitEvent evtData = {teamId, c_callback, optionKeys.size(), optionKeys_c, optionValues_c};
 	ai->HandleEvent(EVENT_INIT, &evtData);
 }
 
@@ -166,6 +191,9 @@ void CSkirmishAIWrapper::Release() {
 	
 	SReleaseEvent evtData = {teamId};
 	ai->HandleEvent(EVENT_RELEASE, &evtData);
+	
+	free(optionKeys_c);
+	free(optionValues_c);
 	
 	// further cleanup is done in the destructor
 }

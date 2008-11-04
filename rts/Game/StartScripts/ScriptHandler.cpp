@@ -13,7 +13,7 @@
 #include "CommanderScript.h"
 #include "CommanderScript2.h"
 #include "AirScript.h"
-#include "GlobalAITestScript.h"
+#include "SkirmishAITestScript.h"
 #include "SpawnScript.h"
 #include "EmptyScript.h"
 #include "TestScript.h"
@@ -53,7 +53,7 @@ void CScriptHandler::LoadScripts() {
 	
 	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
 	for(ai=skirmishAIKeys->begin(), e=skirmishAIKeys->end(); ai != e; ++ai) {
-		loaded_scripts.push_back(SAFE_NEW CGlobalAITestScript(*ai));
+		loaded_scripts.push_back(SAFE_NEW CSkirmishAITestScript(*ai));
 	}
 
 	std::vector<std::string> f = CFileHandler::FindFiles("Saves/", "*.ssf");

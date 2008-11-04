@@ -1351,7 +1351,7 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}
 		case AIVAL_SCRIPT: {
-			*(const char**) data = gameSetup ? gameSetup->gameSetupText : "";
+			*(const char**) data = gameSetup ? gameSetup->gameSetupText.c_str() : "";
 			return true;
 		}
 		default:

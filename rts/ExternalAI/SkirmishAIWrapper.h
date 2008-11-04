@@ -25,6 +25,9 @@
 #include "Interface/SAIInterfaceLibrary.h"
 #include "Platform/SharedLib.h"
 
+#include <map>
+#include <string>
+
 class CAICallback;
 struct Command;
 struct float3;
@@ -33,7 +36,8 @@ class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
 public:
 	CR_DECLARE(CSkirmishAIWrapper);
 //	CSkirmishAIWrapper();
-	CSkirmishAIWrapper(int teamId, const SSAIKey& skirmishAIKey);
+	CSkirmishAIWrapper(int teamId, const SSAIKey& key,
+			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
@@ -93,7 +97,11 @@ private:
 	ISkirmishAI* ai;
 	CGlobalAICallback* callback;
 	SAICallback* c_callback;
-	SSAIKey skirmishAIKey;
+	SSAIKey key;
+	std::vector<std::string> optionKeys;
+	std::vector<std::string> optionValues;
+	const char** optionKeys_c;
+	const char** optionValues_c;
 
 //	typedef bool (*ISCINTERFACE)();
 //	typedef int (*GETGLOBALAIVERSION)();

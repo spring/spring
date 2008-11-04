@@ -485,10 +485,6 @@ const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetUsedSkirmishAI
 			team = gs->Team(t);
 			if (team != NULL && team->isAI) {
 				IAILibraryManager::T_skirmishAIInfos::const_iterator aiInfo;
-/*
-				const std::string& t_sn = td->skirmishAIShortName;
-				const std::string& t_v = td->skirmishAIVersion;
-*/
 				const char * tmpStr = team->skirmishAISpecifier.ai.shortName;
 				const std::string& t_sn = tmpStr != NULL ? tmpStr : "";
 				tmpStr = team->skirmishAISpecifier.ai.version;

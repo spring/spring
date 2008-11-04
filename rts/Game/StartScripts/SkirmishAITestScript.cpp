@@ -1,7 +1,9 @@
+
+#include "SkirmishAITestScript.h"
+
 #include <algorithm>
 #include <cctype>
 #include "System/StdAfx.h"
-#include "GlobalAITestScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
@@ -20,30 +22,33 @@
 extern std::string stupidGlobalMapname;
 
 
-CGlobalAITestScript::CGlobalAITestScript(const SSAIKey& skirmishAISpecifier)
+CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
+		const std::map<std::string, std::string>& options)
 		: CScript(std::string("GlobalAI test (")
-		+ std::string(skirmishAISpecifier.ai.shortName) + std::string(" v")
-		+ std::string(skirmishAISpecifier.ai.version) + std::string(")")),
-	skirmishAISpecifier(skirmishAISpecifier)
+			+ std::string(key.ai.shortName) + std::string(" v")
+			+ std::string(key.ai.version) + std::string(")")),
+		key(key),
+		options(options)
 {
 	if (!gameSetup) {
 		// make sure CSelectedUnits::AiOrder()
 		// still works without a setup script
 		gs->Team(1)->isAI = true;
-		gs->Team(1)->skirmishAISpecifier = skirmishAISpecifier;
+		gs->Team(1)->skirmishAISpecifier = key;
+		gs->Team(1)->skirmishAIOptions = options;
 		gs->Team(1)->leader = 0;
 	}
 }
 
 
-CGlobalAITestScript::~CGlobalAITestScript(void)
+CSkirmishAITestScript::~CSkirmishAITestScript(void)
 {
 }
 
 
-void CGlobalAITestScript::GameStart(void)
+void CSkirmishAITestScript::GameStart(void)
 {
-	globalAI->CreateSkirmishAI(1, skirmishAISpecifier);
+	globalAI->CreateSkirmishAI(1, key, options);
 
 	gs->Team(0)->energy        = 1000;
 	gs->Team(0)->energyStorage = 1000;

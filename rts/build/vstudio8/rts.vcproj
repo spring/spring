@@ -852,6 +852,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\SelectMenu.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\SelectMenu.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Team.cpp"
 				>
 			</File>
