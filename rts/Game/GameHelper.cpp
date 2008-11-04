@@ -84,9 +84,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	// position of its collision volume and "unit radius" by
 	// the volume's minimally-bounding sphere
 	//
-	float3 dif = (unit->midPos + unit->collisionVolume->axisOffsets) - expPos;
+	float3 dif = (unit->midPos + unit->collisionVolume->GetOffsets()) - expPos;
 	float expDist = dif.Length();
-	const float volRad = unit->collisionVolume->volumeBoundingRadius;
+	const float volRad = unit->collisionVolume->GetBoundingRadius();
 
 	expDist = std::max(expDist, volRad + 0.1f);
 
@@ -140,7 +140,7 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 	CollisionVolume* cv = feature->collisionVolume;
 
 	if (cv) {
-		float3 dif = (feature->midPos + cv->axisOffsets) - expPos;
+		float3 dif = (feature->midPos + cv->GetOffsets()) - expPos;
 		float expDist = std::max(dif.Length(), 0.1f);
 		float expMod = (expRad - expDist) / expRad;
 
@@ -149,7 +149,7 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 		// be damaged otherwise, even by BB shells)
 		// NOTE: this will also be only approximate
 		// for non-spherical volumes
-		if ((expRad > 8.0f) && (expDist < (cv->volumeBoundingRadius * 1.1f)) && (expMod < 0.1f)) {
+		if ((expRad > 8.0f) && (expDist < (cv->GetBoundingRadius() * 1.1f)) && (expMod < 0.1f)) {
 			expMod = 0.1f;
 		}
 		if (expMod > 0.0f) {
@@ -353,7 +353,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
 				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam))) {
 
-				CollisionVolume* cv = 0x0;
+				const CollisionVolume* cv = NULL;
 
 				if (unit->isIcon) {
 					// for iconified units, just pretend the collision
@@ -406,10 +406,10 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 			if (u == exclude)
 				continue;
 
-			CollisionVolume* cv = u->collisionVolume;
+			const CollisionVolume* cv = u->collisionVolume;
 
 			if (gs->Ally(u->allyteam, allyteam) || (u->losStatus[allyteam] & LOS_INLOS)) {
-				float3 dif = (u->midPos + cv->axisOffsets) - start;
+				float3 dif = (u->midPos + cv->GetOffsets()) - start;
 				float closeLength = dif.dot(dir);
 
 				if (closeLength < 0)
@@ -419,13 +419,13 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 				float3 closeVect = dif - dir * closeLength;
 
-				if (closeVect.SqLength() < cv->volumeBoundingRadiusSq) {
+				if (closeVect.SqLength() < cv->GetBoundingRadiusSq()) {
 					length = closeLength;
 					hit = u;
 				}
 			} else if (useRadar && radarhandler->InRadar(u, allyteam)) {
 				float3 dif =
-					(u->midPos + cv->axisOffsets) +
+					(u->midPos + cv->GetOffsets()) +
 					u->posErrorVector * radarhandler->radarErrorSize[allyteam] -
 					start;
 				float closeLength = dif.dot(dir);
@@ -437,7 +437,7 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 				float3 closeVect = dif - dir * closeLength;
 
-				if (closeVect.SqLength() < cv->volumeBoundingRadiusSq) {
+				if (closeVect.SqLength() < cv->GetBoundingRadiusSq()) {
 					length = closeLength;
 					hit = u;
 				}
@@ -825,7 +825,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 			}
 
 			CollisionVolume* cv = f->collisionVolume;
-			const float3& midPosOffset = cv? cv->axisOffsets: ZeroVector;
+			const float3& midPosOffset = cv? cv->GetOffsets(): ZeroVector;
 			const float3 dif = (f->midPos + midPosOffset) - start;
 			float closeLength = dif.dot(dir);
 
@@ -976,7 +976,7 @@ bool CGameHelper::TestNeutralCone(const float3& from, const float3& weaponDir, f
 bool CGameHelper::TestConeHelper(const float3& from, const float3& weaponDir, float length, float spread, const CUnit* u)
 {
 	// account for any offset, since we want to know if our shots might hit
-	float3 unitDir = (u->midPos + u->collisionVolume->axisOffsets) - from;
+	float3 unitDir = (u->midPos + u->collisionVolume->GetOffsets()) - from;
 	// weaponDir defines the center of the cone
 	float closeLength = unitDir.dot(weaponDir);
 
@@ -989,7 +989,7 @@ bool CGameHelper::TestConeHelper(const float3& from, const float3& weaponDir, fl
 	// NOTE: same caveat wrt. use of volumeBoundingRadius
 	// as for ::Explosion(), this will result in somewhat
 	// over-conservative tests for non-spherical volumes
-	float r = u->collisionVolume->volumeBoundingRadius + spread * closeLength + 1;
+	float r = u->collisionVolume->GetBoundingRadius() + spread * closeLength + 1;
 
 	return (closeVect.SqLength() < r * r);
 }
@@ -1049,8 +1049,8 @@ bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& fl
     @return true if the unit u is in the firing trajectory, false otherwise */
 bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
 {
-	CollisionVolume* cv = u->collisionVolume;
-	float3 dif = (u->midPos + cv->axisOffsets) - from;
+	const CollisionVolume* cv = u->collisionVolume;
+	float3 dif = (u->midPos + cv->GetOffsets()) - from;
 	float3 flatdif(dif.x, 0, dif.z);
 	float closeFlatLength = flatdif.dot(flatdir);
 
@@ -1065,7 +1065,7 @@ bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& fla
 
 		// NOTE: overly conservative for non-spherical volumes
 		float3 closeVect = dif - flatdir * closeFlatLength;
-		float r = cv->volumeBoundingRadius + spread * closeFlatLength + baseSize;
+		float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
 		if (closeVect.SqLength() < r * r) {
 			return true;
 		}
@@ -1076,12 +1076,12 @@ bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& fla
 		dir.y = linear + quadratic * closeFlatLength;
 		dir.Normalize();
 
-		dif = (u->midPos + cv->axisOffsets) - newfrom;
+		dif = (u->midPos + cv->GetOffsets()) - newfrom;
 		float closeLength = dif.dot(dir);
 
 		// NOTE: overly conservative for non-spherical volumes
 		float3 closeVect = dif - dir * closeLength;
-		float r = cv->volumeBoundingRadius + spread * closeFlatLength + baseSize;
+		float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
 		if (closeVect.SqLength() < r * r) {
 			return true;
 		}
