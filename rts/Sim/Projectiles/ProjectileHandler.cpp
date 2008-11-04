@@ -102,7 +102,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	// add all texture from sections within projectiletextures section
-	vector<string> seclist; 
+	vector<string> seclist;
 	ptTable.GetKeys(seclist);
 	for (int i = 0; i < seclist.size(); i++) {
 		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
@@ -194,7 +194,7 @@ CProjectileHandler::CProjectileHandler()
 	if (mapResParser.IsValid()) {
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
-		//add all textures in projectiletextures section 
+		//add all textures in projectiletextures section
 		map<string, string> mptex;
 		mapTable.GetMap(mptex);
 		map<string, string>::iterator pi;
@@ -772,7 +772,7 @@ void CProjectileHandler::CheckUnitCol()
 				const bool friendlyShot = (p->owner && (unit->allyteam == p->owner->allyteam));
 				const bool raytraced =
 					(unit->collisionVolume &&
-					unit->collisionVolume->testType == COLVOL_TEST_CONT);
+					unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
 
 				// if this unit fired this projectile or (this unit is in the
 				// same allyteam as the unit that shot this projectile and we
@@ -815,7 +815,7 @@ void CProjectileHandler::CheckUnitCol()
 					CFeature* feature = *fi;
 					const bool raytraced =
 						(feature->collisionVolume &&
-						feature->collisionVolume->testType == COLVOL_TEST_CONT);
+						feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
 
 					// geothermals do not have a collision volume, skip them
 					if (!feature->blocking || feature->def->geoThermal || !feature->collisionVolume) {

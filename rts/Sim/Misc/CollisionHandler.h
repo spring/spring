@@ -39,10 +39,11 @@ class CCollisionHandler {
 		static bool Collision(const CUnit*, const float3&);
 		static bool Collision(const CFeature*, const float3&);
 		static bool Collision(const CollisionVolume*, const CMatrix44f&, const float3&);
+		static bool CollisionFootprint(const CSolidObject*, const float3&);
 
 	public:
-		static bool Intersect(const CUnit*, const float3& p1, const float3& p2, CollisionQuery* q);
-		static bool Intersect(const CFeature*, const float3& p1, const float3& p2, CollisionQuery* q);
+		static bool Intersect(const CUnit*, const float3& p0, const float3& p1, CollisionQuery* q);
+		static bool Intersect(const CFeature*, const float3& p0, const float3& p1, CollisionQuery* q);
 	private:
 		static bool Intersect(const CollisionVolume*, const CMatrix44f&, const float3&, const float3&, CollisionQuery* q);
 

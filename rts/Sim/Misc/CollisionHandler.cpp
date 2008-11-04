@@ -7,6 +7,9 @@
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
+#include "GroundBlockingObjectMap.h"
+
+#include "Game/GlobalSynced.h"
 
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
@@ -14,22 +17,6 @@
 #define ZVEC ZeroVector
 
 CR_BIND(CCollisionHandler, );
-CR_BIND(CollisionVolume, );
-	CR_REG_METADATA(CollisionVolume, (
-		CR_MEMBER(axisScales),
-		CR_MEMBER(axisHScales),
-		CR_MEMBER(axisHScalesSq),
-		CR_MEMBER(axisHIScales),
-		CR_MEMBER(axisOffsets),
-		CR_MEMBER(volumeBoundingRadius),
-		CR_MEMBER(volumeBoundingRadiusSq),
-		CR_MEMBER(volumeType),
-		CR_MEMBER(testType),
-		CR_MEMBER(primaryAxis),
-		CR_MEMBER(secondaryAxes),
-		CR_MEMBER(spherical),
-		CR_MEMBER(disabled)
-	));
 
 unsigned int CCollisionHandler::numCollisionTests = 0;
 unsigned int CCollisionHandler::numIntersectionTests = 0;
@@ -77,10 +64,16 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 
 	if (((u->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
 		return false;
-	} else {
-		if (v->spherical) {
+	}
+
+	switch (u->collisionVolume->volumeType) {
+		case COLVOL_TYPE_SPHERE: {
 			return true;
-		} else {
+		}
+		case COLVOL_TYPE_FOOTPRINT: {
+			return CCollisionHandler::CollisionFootprint(u, p);
+		}
+		default: {
 			// NOTE: we have to translate by relMidPos to get to midPos
 			// (which is where the collision volume gets drawn) because
 			// GetTransformMatrix() only uses pos
@@ -93,16 +86,23 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 	}
 }
 
+
 bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
 	if (((f->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
 		return false;
-	} else {
-		if (v->spherical) {
+	}
+
+	switch (f->collisionVolume->volumeType) {
+		case COLVOL_TYPE_SPHERE: {
 			return true;
-		} else {
+		}
+		case COLVOL_TYPE_FOOTPRINT: {
+			return CCollisionHandler::CollisionFootprint(f, p);
+		}
+		default: {
 			// NOTE: CFeature does not have a relMidPos member so
 			// calculate and apply the translation from pos (used
 			// by transMatrix) to midPos manually
@@ -116,6 +116,23 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 	}
 }
 
+
+bool CCollisionHandler::CollisionFootprint(const CSolidObject* o, const float3& p)
+{
+	if (o->isMarkedOnBlockingMap && o->physicalState != CSolidObject::Flying) {
+		const float invSquareSize = 1.0f / SQUARE_SIZE;
+		const int square = int(p.x * invSquareSize) + int(p.z * invSquareSize) * gs->mapx;
+
+		if (square >= 0 && square < gs->mapSquares) {
+			const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(square);
+			return cell.find(o->GetBlockingMapID()) != cell.end();
+		}
+	}
+	// If the object isn't marked on blocking map, or it is flying,
+	// effecively only the sphere check (in Collision(CUnit*) or
+	// Collision(CFeature*)) is performed.
+	return true;
+}
 
 
 // test if point <p> (in world-coors) lies inside the
@@ -131,15 +148,17 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 	bool hit = false;
 
 	switch (v->volumeType) {
+		case COLVOL_TYPE_SPHERE: {
+			// normally, this code is never executed, because the higher level
+			// Collision(CFeature*) and Collision(CUnit*) already optimize
+			// for volumeType == COLVOL_TYPE_SPHERE.
+			hit = (pi.dot(pi) <= v->axisHScalesSq.x);
+		} break;
 		case COLVOL_TYPE_ELLIPSOID: {
-			if (v->spherical) {
-				hit = (pi.dot(pi) <= v->axisHScalesSq.x);
-			} else {
-				const float f1 = (pi.x * pi.x) / v->axisHScalesSq.x;
-				const float f2 = (pi.y * pi.y) / v->axisHScalesSq.y;
-				const float f3 = (pi.z * pi.z) / v->axisHScalesSq.z;
-				hit = ((f1 + f2 + f3) <= 1.0f);
-			}
+			const float f1 = (pi.x * pi.x) / v->axisHScalesSq.x;
+			const float f2 = (pi.y * pi.y) / v->axisHScalesSq.y;
+			const float f3 = (pi.z * pi.z) / v->axisHScalesSq.z;
+			hit = ((f1 + f2 + f3) <= 1.0f);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			switch (v->primaryAxis) {
@@ -254,6 +273,11 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	if (rmaxz < vminz || rminz > vmaxz) { return false; }
 
 	switch (v->volumeType) {
+		case COLVOL_TYPE_FOOTPRINT:
+			// fall through, intersection with footprint collision volume
+			// is not supported yet, so only test against sphere/ellipsoid
+		case COLVOL_TYPE_SPHERE:
+			// fall through, sphere is special case of ellipsoid
 		case COLVOL_TYPE_ELLIPSOID: {
 			intersect = CCollisionHandler::IntersectEllipsoid(v, pi0, pi1, q);
 		} break;

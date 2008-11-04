@@ -324,10 +324,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
 		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 
-		if (unit->collisionVolume->volumeBoundingRadius <= 30.0f) {
+		if (unit->collisionVolume->GetBoundingRadius() <= 30.0f) {
 			// the interval-based method fails too easily for units
 			// with small default volumes, force use of raytracing
-			unit->collisionVolume->testType = COLVOL_TEST_CONT;
+			unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
 		}
 	}
 
