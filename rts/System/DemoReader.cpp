@@ -2,6 +2,7 @@
 
 #include <limits.h>
 #include <stdexcept>
+#include <assert.h>
 #include "mmgr.h"
 
 #include "DemoReader.h"
@@ -51,20 +52,6 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		delete playbackDemo;
 		playbackDemo = NULL;
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
-	}
-
-	if (fileHeader.scriptSize != 0) {
-		char* buf = new char[fileHeader.scriptSize];
-		playbackDemo->Read(buf, fileHeader.scriptSize);
-		if (!gameSetup) { // dont overwrite existing gamesetup (when hosting a demo)
-			CGameSetup* temp = new CGameSetup();
-			temp->Init(buf, fileHeader.scriptSize);
-			temp->demoName = filename;
-			temp->numDemoPlayers = GetFileHeader().maxPlayerNum+1;
-			temp->maxSpeed = 10;
-			gameSetup = temp;
-		}
-		delete[] buf;
 	}
 
 	playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));

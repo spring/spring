@@ -1,26 +1,19 @@
-// Send a file formated like this as the only command line argument to the
-// spring executable.  All players must get the exact same file except
-// MyPlayerNum, HostIP, SourcePort, PLAYER\CountryCode, PLAYER\Rank,
-// and possibly TEAM\AIDLL.
+// A clients example
+// If spring is started as client, it needs the following information to work properly
 
-// Since december 2007 the restrictions on player/team/allyteam numbering are
-// loosened:
+[GAME]
+{
+	HostIP=xxx.xxx.xxx.xxx;
+	HostPort=xxx;       // standard is 8452
+	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select
 
-// Players and teams must be in the same order on each client, but the
-// numbering does not need to be consecutive, or even identical on each client:
-// the sequences of players/teams/allyteams may contain gaps.
+	MyPlayerNum=x;      //only variable that should vary between different players, (deprecated, if you want to use this you need the full script, even as client)
+	MyPlayerName=somename; //can be used instead of MyPlayerNum
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server (if you don't set this, you need the full script and myPlayerNum to work)
+}
 
-// For example, one may define NumPlayers=2 and add a PLAYER10 and PLAYER14
-// section to the script, and Spring will automatically compress this
-// internally to PLAYER0 and PLAYER1. Same applies to teams and allyteams.
-
-// The used numbers must be lower than the maximum number of those sections.
-// At the time of this writing this is: 32/17/17 for players/teams/allyteams
-// respectively.
-
-// From now on, the Gametype, Mapname and the Scriptname-tags are only needed for the gamehost
-// a client will ignore these tags because he recieves everything from the server
-
+// A host example
+// note that the same values for clients also need to be set here
 [GAME]
 {
 	Mapname=;           //with .smf extension
@@ -31,19 +24,20 @@
 	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
 	Savefile=save.ssf;  // if set this game is a continuation of a saved game
 
-	HostIP=xxx.xxx.xxx.xxx;
+	HostIP=xxx.xxx.xxx.xxx; // you normally won't set this as host
 	HostPort=xxx;       // usually 8452
 	SourcePort=0;       // set this if you want a different source port (as client)
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
-	MyPlayerNum=x;      //only variable that should vary between different players
+	MyPlayerNum=x;      //only variable that should vary between different players, deprecated
 	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
 
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right
 	NumAllyTeams=z;     // see above
 
-	// a player (player 0 is the host)
+	// a player (player 0 is the host only if IsHost is not set)
 	[PLAYER0]
 	{
 		Name=name;
@@ -65,8 +59,19 @@
 		Handicap=0-100; // Percent bonus on all resources collected ?
 		StartPosX=0;    // Use these in combination with StartPosType=3
 		StartPosZ=0;    // range is in map coordinates as returned by unitsync (NOT like StartRectTop et al)
-		AiDLL=file;     // If this line exists the team will have a global ai loaded from
-		// the file, the teamleader field indicates which computer the ai will run on.
+		LuaAI=name;     // name of the LUA AI that controlls this team
+		[AI]            // [optional]Skirmish AI section
+		{
+			Name=RAI;     // name of the Skirmish AI that controlls this team
+			              // (see spring.exe --list-skirmish-ais for possible values))
+			Version=0.1;  // [optional] version of the Skirmish AI that controlls this team
+			[OPTIONS]     // [optional] contains AI implementaition specific option values
+			{
+				difficultyLevel=1;
+			}
+		}
+		// Either LuaAI is set, the [AI] section is defined or none of the two.
+		// The TeamLeader field indicates which computer the a Skirmish AI will run on.
 	}
 	//more teams
 

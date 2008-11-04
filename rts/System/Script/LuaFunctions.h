@@ -6,6 +6,9 @@
 #include "LuaBinder.h"
 #include "Object.h"
 
+#include <map>
+#include <string>
+
 struct Command;
 class float3;
 class CUnit;
@@ -29,7 +32,8 @@ public:
 
 namespace luafunctions
 {
-	void CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
+	void CreateSkirmishAI(int teamId, const SSAIKey& key,
+			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);
 	CObject_pointer<CUnit>* UnitGetTransporter(CObject_pointer<CUnit>* u);

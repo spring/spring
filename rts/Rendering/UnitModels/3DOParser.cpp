@@ -158,6 +158,8 @@ void C3DOParser::DeleteS3DO(S3DO *o)
 
 S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 {
+	GML_STDMUTEX_LOCK(model); // Load3DO
+
 	int color=team;
 
 	if(name.find(".")==string::npos)
@@ -513,7 +515,7 @@ void C3DOParser::Update() {
 }
 
 void C3DOParser::CreateLists(S3DO *o) {
-	GML_STDMUTEX_LOCK(model); // CreateLists
+//	GML_STDMUTEX_LOCK(model); // CreateLists
 	createLists.push_back(o);
 }
 

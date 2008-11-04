@@ -77,7 +77,7 @@ if (JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC})
 
 	# Install the Java part of the interface
 	install (FILES ${Java_AIINTERFACE_SRC}/java/interface.jar DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS}/jlib)
-	install (FILES ${Java_AIINTERFACE_SRC}/jlib/*.jar DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS}/jlib)
+	install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS}/jlib FILES_MATCHING PATTERN "*.jar")
 
 	# Install the Java test Skirmish AI
 	install (FILES ${Java_AIINTERFACE_SRC}/java/ai.jar DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/jlib)

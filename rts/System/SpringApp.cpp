@@ -834,36 +834,31 @@ void SpringApp::Startup()
 		else if (cmdline->result("server"))
 			startsetup->isHost = true;
 
-		CGameSetup* temp = SAFE_NEW CGameSetup();
-		if (temp->Init(startscript))
-		{
-			gameSetup = const_cast<const CGameSetup*>(temp);
-			gs->LoadFromSetup(gameSetup);
-		}
-		else
-		{
-			throw content_error("Setupscript parse error: "+startscript);
-		}
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup, "", "");
+		pregame = SAFE_NEW CPreGame(startsetup);
+		if (startsetup->isHost)
+			pregame->LoadSetupscript(buf);
 	}
 	else if (!demofile.empty())
 	{
-		startsetup->isHost = false;
+		startsetup->isHost = true; // local demo play
+		startsetup->myPlayerName = configHandler.GetString("name", "unnamed");
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(false);
+		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup, demofile, "");
+		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame->LoadDemo(demofile);
 	}
 	else if (!savefile.empty())
 	{
-		startsetup->isHost = false;
+		startsetup->isHost = true;
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(false);
+		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup, "", savefile);
+		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame->LoadSavefile(savefile);
 	}
 	else
 	{
@@ -1076,14 +1071,21 @@ int SpringApp::Run (int argc, char *argv[])
 					}
 					break;
 				}
-				case SDL_MOUSEMOTION:
+				case SDL_MOUSEMOTION: {
+					mouseInput->HandleSDLMouseEvent (event);
+					break;
+				}
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 				case SDL_SYSWMEVENT: {
+//					GML_STDMUTEX_LOCK(sim);
+
 					mouseInput->HandleSDLMouseEvent (event);
 					break;
 				}
 				case SDL_KEYDOWN: {
+//					GML_STDMUTEX_LOCK(sim);
+
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 
@@ -1132,6 +1134,7 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_KEYUP: {
+//					GML_STDMUTEX_LOCK(sim);
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 

@@ -26,7 +26,7 @@ public:
     void run(IGlobalAI* ai) {
         //((CAIGlobalAI*) ai)->gai->InitAI(event.callback, event.team);
         //((CAIGlobalAI*) ai)->InitAI(event.c_callback, event.team, event.callback);
-        IGlobalAICallback* wrappedGlobalAICallback = new CAIGlobalAICallback(event.c_callback, event.team);
+        IGlobalAICallback* wrappedGlobalAICallback = new CAIGlobalAICallback(event.callback, event.team);
         ai->InitAI(wrappedGlobalAICallback, event.team);
     }
 private:

@@ -53,7 +53,10 @@ extern "C" {
 
 struct SInitEvent {
 	int team;
-	struct SAICallback* c_callback;
+	struct SAICallback* callback;
+	unsigned int sizeOptions;
+	const char** optionKeys;
+	const char** optionValues;
 };
 
 struct SReleaseEvent {

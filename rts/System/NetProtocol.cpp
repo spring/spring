@@ -23,7 +23,6 @@
 
 CNetProtocol::CNetProtocol()
 {
-	localDemoPlayback = false;
 }
 
 CNetProtocol::~CNetProtocol()
@@ -54,10 +53,7 @@ void CNetProtocol::InitLocalClient()
 {
 	server.reset(new netcode::CLocalConnection);
 	server->Flush();
-	if (!localDemoPlayback)
-	{
-		record.reset(new CDemoRecorder());
-	}
+	record.reset(new CDemoRecorder()); //TODO don't record a new demo when already watching one
 	
 	logOutput.Print("Connecting to local server");
 }

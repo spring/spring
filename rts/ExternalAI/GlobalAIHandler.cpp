@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "StdAfx.h"
 #include "GlobalAIHandler.h"
 #include "Interface/SAIInterfaceLibrary.h"
@@ -73,7 +71,7 @@ void AIException(const char *what)
 //	exit(-1);
 }
 
-CGlobalAIHandler::CGlobalAIHandler()
+CGlobalAIHandler::CGlobalAIHandler(void)
 {
 	hasAI=false;
 
@@ -81,7 +79,7 @@ CGlobalAIHandler::CGlobalAIHandler()
 		ais[a]=0;
 }
 
-CGlobalAIHandler::~CGlobalAIHandler()
+CGlobalAIHandler::~CGlobalAIHandler(void)
 {
 	for(int a=0;a<MAX_TEAMS;++a)
 		delete ais[a];
@@ -346,15 +344,18 @@ void CGlobalAIHandler::SeismicPing(int allyTeam, CUnit* unit, const float3& pos,
 
 
 
-bool CGlobalAIHandler::CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey)
+bool CGlobalAIHandler::CreateSkirmishAI(
+		int teamId,
+		const SSAIKey& skirmishAIKey,
+		const std::map<std::string, std::string>& skirmishAIOptions)
 {
 	if ((teamId < 0) || (teamId >= gs->activeTeams)) {
 		return false;
 	}
 
-	if (net->localDemoPlayback) {
+	/*if (net->localDemoPlayback) {
 		return false;
-	}
+	}*/
 
 	//TODO: make this work again
 /*
@@ -383,7 +384,8 @@ bool CGlobalAIHandler::CreateSkirmishAI(int teamId, const SSAIKey& skirmishAIKey
 		const ISkirmishAILibrary* skirmishAILibrary = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(skirmishAIKey);
 		skirmishAIs[teamId] = SAFE_NEW CSkirmishAI(teamId, skirmishAILibrary);
 */
-		ais[teamId] = SAFE_NEW CSkirmishAIWrapper(teamId, skirmishAIKey);
+		ais[teamId] = SAFE_NEW CSkirmishAIWrapper(teamId, skirmishAIKey,
+				skirmishAIOptions);
 		
 /*
 		if (!ais[teamId]->ai) {

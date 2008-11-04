@@ -142,7 +142,9 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		teams[i]->energy = setup->startEnergy;
 		teams[i]->energyIncome = setup->startEnergy;
 
-		float3 start(setup->teamStartingData[i].startPos.x, setup->teamStartingData[i].startPos.y, setup->teamStartingData[i].startPos.z);
+		float3 start(setup->teamStartingData[i].startPos.x,
+				setup->teamStartingData[i].startPos.y,
+				setup->teamStartingData[i].startPos.z);
 		teams[i]->StartposMessage(start, (setup->startPosType != CGameSetup::StartPos_ChooseInGame));
 		std::memcpy(teams[i]->color, setup->teamStartingData[i].color, 4);
 		teams[i]->handicap = setup->teamStartingData[i].handicap;
@@ -152,25 +154,27 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 		if (!(setup->teamStartingData[i].luaAI.empty())) {
 			teams[i]->luaAI = setup->teamStartingData[i].luaAI;
 			teams[i]->isAI = true;
-		}
-		else {
+		} else if (!(setup->teamStartingData[i].skirmishAIShortName.empty())) {
 			if (setup->hostDemo) {
 				SSAIKey key = {{NULL, NULL}, {NULL, NULL}};
 				teams[i]->skirmishAISpecifier = key;
-			}
-			else
-			{
+			} else {
 				const char* sn = setup->teamStartingData[i].skirmishAIShortName.c_str();
-				const char* v = setup->teamStartingData[i].skirmishAIVersion.empty() ? NULL : setup->teamStartingData[i].skirmishAIVersion.c_str();
+				const char* v = setup->teamStartingData[i].skirmishAIVersion.empty()
+						? NULL : setup->teamStartingData[i].skirmishAIVersion.c_str();
 				SSAISpecifier spec = {sn, v};
-				std::vector<SSAIKey> fittingKeys = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
+				std::vector<SSAIKey> fittingKeys =
+						IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
 				if (fittingKeys.size() > 0) {
 					teams[i]->skirmishAISpecifier = fittingKeys[0];
+					teams[i]->skirmishAIOptions = setup->teamStartingData[i].skirmishAIOptions;
 					teams[i]->isAI = true;
 				} else {
 					const int MAX_MSG_LENGTH = 511;
 					char s_msg[MAX_MSG_LENGTH + 1];
-					SNPRINTF(s_msg, MAX_MSG_LENGTH, "Specifyed Skirmish AI could not be found: %s (version: %s)", spec.shortName, spec.version != NULL ? spec.version : "<not specifyed>");
+					SNPRINTF(s_msg, MAX_MSG_LENGTH,
+							"Specifyed Skirmish AI could not be found: %s (version: %s)",
+							spec.shortName, spec.version != NULL ? spec.version : "<not specifyed>");
 					handleerror(NULL, s_msg, "Game Script Error", MBF_OK | MBF_EXCL);
 				}
 			}

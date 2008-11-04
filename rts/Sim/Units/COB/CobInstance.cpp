@@ -733,7 +733,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 				helper->Explosion(
 					pos, weaponDef->damages, weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-					weaponDef->explosionSpeed, unit, true, 1.0f, false, weaponDef->explosionGenerator,
+					weaponDef->explosionSpeed, unit, true, 1.0f, weaponDef->noSelfDamage, weaponDef->explosionGenerator,
 					NULL, float3(0, 0, 0), weaponDef->id
 				);
 			}

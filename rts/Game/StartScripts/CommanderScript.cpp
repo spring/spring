@@ -58,10 +58,10 @@ void CCommanderScript::GameStart()
 			team->metalStorage = 20;
 			team->energyStorage = 20;
 
-			// create a GlobalAI if required
+			// create a Skirmish AI if required
 			if (!SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifier) // is an AI specifyed?
 					&& (gu->myPlayerNum == team->leader)) {
-				globalAI->CreateSkirmishAI(a, team->skirmishAISpecifier);
+				globalAI->CreateSkirmishAI(a, team->skirmishAISpecifier, team->skirmishAIOptions);
 			}
 
 			// get the team startup info

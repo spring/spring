@@ -19,7 +19,7 @@
 int main(int argc, char *argv[])
 {
 	try {
-	std::cout << "BIG FAT WARNING: this server is currently under development. If you find any errors (you most likely will)";
+	std::cout << "This server is currently under development. If you find any errors";
 	std::cout << " report them to mantis or the forums." << std::endl << std::endl;
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		GameData* data = new GameData();
 		UnsyncedRNG rng;
 		rng.Seed(SDL_GetTicks());
-		rng.Seed(gameSetup->gameSetupTextLength);
+		rng.Seed(gameSetup->gameSetupText.length());
 		data->SetRandomSeed(SDL_GetTicks());
 
 		//  Use script provided hashes if they exist
@@ -88,14 +88,7 @@ int main(int argc, char *argv[])
 		}
 
 		data->SetScript(gameSetup->scriptName);
-		server = new CGameServer(settings->hostport, false, data, gameSetup);
-		
-		if (settings->autohostport > 0)
-			server->AddAutohostInterface(settings->autohostport);
-		else
-		{
-			std::cout << "You should specify an AutohostPort in the script" << std::endl;
-		}
+		server = new CGameServer(settings, false, data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32
@@ -104,7 +97,6 @@ int main(int argc, char *argv[])
 			sleep(1);	// if so, wait 1  second
 #endif
 		delete server;	// delete the server after usage
-		delete gameSetup;
 	}
 	else
 	{
