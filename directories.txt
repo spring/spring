@@ -6,8 +6,6 @@ rts/build/vstudio8                Visual Studio 8 project files
 rts/build/xcode                   xcode project file
 rts/ExternalAI                    engine side AI interface
 rts/ExternalAI/Interface          AI side AI interface (also used by the engine)
-rts/ExternalAI/Interface/LegacyCppWrapper                 Legacy C++ AI side AI interface
-rts/ExternalAI/Interface/LegacyCppWrapper/Event           Legacy C++ AI side AI interface Event classes
 rts/Game                          General game code
 rts/Game/StartScripts             Hardcoded startscripts
 rts/Game/UI                       Game controls including current gui
@@ -53,6 +51,9 @@ rts/System/Sync                   Sync debuggers
 
 AI                                AI sourcecode..
 AI/Interfaces                     ..for interfaceing with Skirmish and Group AIs (Interfaces/impls)
+AI/Bindings                       meta AI interfaces (consist only of code that will be integrated into AI binaries)
+AI/Bindings/LegacyCpp             ..for letting Legacy C++ AIs interface with the C AI Interface
+AI/Bindings/LegacyCpp/Event             ..and Event classes needed for that
 AI/Skirmish                       ..for SkirmishAIs (Skirmish/impls)
 AI/Group                          ..for GroupAIs (Helper-libs)
 

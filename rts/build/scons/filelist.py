@@ -91,7 +91,7 @@ def get_spring_source(env):
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Mac', # Mac build uses XCode
 		'rts/System/Platform/Linux/DataDirLocater.cpp', # see SConstruct
-		'rts/ExternalAI/Interface/LegacyCppWrapper', # only needed by AI libraries using the legacy C++ interface to connect with spring
+		#'rts/ExternalAI/Interface/LegacyCppWrapper', # only needed by AI libraries using the legacy C++ interface to connect with spring
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
@@ -180,12 +180,12 @@ def get_shared_skirmishAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AISCommands.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICheats.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGlobalAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGlobalAI.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AI.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AISCommands.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIAICheats.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIGlobalAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIGlobalAI.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AI.cpp')]
 	return result
 # list Creg source files (used by some Skirmish AI libraries)
 def get_shared_skirmishAI_source_Creg(env):
@@ -204,12 +204,7 @@ def get_shared_groupAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AISCommands.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICallback.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIAICheats.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGroupAICallback.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AIGroupAI.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/LegacyCppWrapper/AI.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AISCommands.cpp')]
 	return result
 # list Creg source files (used by some Group AI libraries)
 def get_shared_groupAI_source_Creg(env):
