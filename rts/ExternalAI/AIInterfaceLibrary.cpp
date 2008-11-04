@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -236,9 +236,9 @@ std::vector<SGAISpecifier> CAIInterfaceLibrary::GetGroupAILibrarySpecifiers() co
 	int max = 128;
 	SGAISpecifier specifiers[max];
 	int num = sAIInterfaceLibrary.getGroupAISpecifiers(specifiers, max);
-    for (int i=0; i < num; ++i) {
-        specs.push_back(specifiers[i]);
-    }
+	for (int i=0; i < num; ++i) {
+		specs.push_back(specifiers[i]);
+	}
 	
 	return specs;
 }
@@ -318,28 +318,28 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
     }
 	
 	funcName = "releaseStatic";
-    sAIInterfaceLibrary.releaseStatic = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.releaseStatic == NULL) {
+	sAIInterfaceLibrary.releaseStatic = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.releaseStatic == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-        //return -1;
-    }
+		//return -1;
+	}
 	
 	funcName = "getLevelOfSupportFor";
-    sAIInterfaceLibrary.getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.getLevelOfSupportFor == NULL) {
+	sAIInterfaceLibrary.getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.getLevelOfSupportFor == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-        //return -2;
-    }
+		//return -2;
+	}
 	
 	funcName = "getInfo";
-    sAIInterfaceLibrary.getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.getInfo == NULL) {
+	sAIInterfaceLibrary.getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.getInfo == NULL) {
 		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-        //return -1;
-    }
+		//return -1;
+	}
 	
 /*
 	funcName = "getSkirmishAISpecifiers";
@@ -443,4 +443,3 @@ std::string CAIInterfaceLibrary::GenerateLibFilePath(const SAIInterfaceSpecifier
 	return GenerateLibFilePath(libFileName);
 }
 */
-

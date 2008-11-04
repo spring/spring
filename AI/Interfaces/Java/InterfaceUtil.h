@@ -33,6 +33,7 @@ extern "C" {
 		#define SNPRINTF sprintf_s
 		#define VSNPRINTF vsprintf_s
 		#define STRCPY strcpy_s
+		#define STRCAT strcat_s
 		#define FOPEN fopen_s
 	#else              // Visual Studio 2003
 		#define PRINTF _printf
@@ -40,6 +41,7 @@ extern "C" {
 		#define SNPRINTF _snprintf
 		#define VSNPRINTF _vsnprintf
 		#define STRCPY strcpy
+		#define STRCAT strcat
 		#define FOPEN fopen
 	#endif
 	#define STRCASECMP stricmp
@@ -50,6 +52,7 @@ extern "C" {
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf
 	#define STRCPY strcpy
+	#define STRCAT strcat
 	#define FOPEN fopen
 	#define STRCASECMP strcasecmp
 #endif	// _MSC_VER
@@ -57,6 +60,8 @@ extern "C" {
 char* util_allocStr(unsigned int length);
 
 char* util_allocStrCpy(const char* toCopy);
+
+char* util_allocStrCpyCat(const char* toPart1, const char* toPart2);
 
 void util_strReplace(char* toChange, char toFind, char replacer);
 

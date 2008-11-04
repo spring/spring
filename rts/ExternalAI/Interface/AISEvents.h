@@ -1,6 +1,6 @@
 /*
 	Copyright 2008  Nicolas Wu
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -13,10 +13,17 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	@author Nicolas Wu
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
 #ifndef _AISEVENTS_H
 #define _AISEVENTS_H
+
+// IMPORTANT NOTE: external systems parse this file,
+// so DO NOT CHANGE the style and format it uses without
+// major thought in advance, and deliberation with hoijui!
 
 #ifdef	__cplusplus
 extern "C" {
@@ -25,30 +32,31 @@ extern "C" {
 #include "SAIFloat3.h"
 #include "SAICallback.h"
 
-#define EVENT_NULL				0
-#define EVENT_INIT				1
-#define EVENT_RELEASE			2
-#define EVENT_UPDATE			3
-#define EVENT_MESSAGE			4
-#define EVENT_UNIT_CREATED		5
-#define EVENT_UNIT_FINISHED		6
-#define EVENT_UNIT_IDLE			7
-#define EVENT_UNIT_MOVE_FAILED	8
-#define EVENT_UNIT_DAMAGED		9
-#define EVENT_UNIT_DESTROYED	10
-#define EVENT_UNIT_GIVEN		11
-#define EVENT_UNIT_CAPTURED		12
-#define EVENT_ENEMY_ENTER_LOS	13
-#define EVENT_ENEMY_LEAVE_LOS	14
-#define EVENT_ENEMY_ENTER_RADAR 15
-#define EVENT_ENEMY_LEAVE_RADAR 16
-#define EVENT_ENEMY_DAMAGED		17
-#define EVENT_ENEMY_DESTROYED	18
-#define EVENT_WEAPON_FIRED		19
-#define EVENT_PLAYER_COMMAND	20
-#define EVENT_SEISMIC_PING		21
-
-#define NUM_EVENTS				22
+enum EventTopic {
+	EVENT_NULL                  =  0,
+	EVENT_INIT                  =  1,
+	EVENT_RELEASE               =  2,
+	EVENT_UPDATE                =  3,
+	EVENT_MESSAGE               =  4,
+	EVENT_UNIT_CREATED          =  5,
+	EVENT_UNIT_FINISHED         =  6,
+	EVENT_UNIT_IDLE             =  7,
+	EVENT_UNIT_MOVE_FAILED      =  8,
+	EVENT_UNIT_DAMAGED          =  9,
+	EVENT_UNIT_DESTROYED        = 10,
+	EVENT_UNIT_GIVEN            = 11,
+	EVENT_UNIT_CAPTURED         = 12,
+	EVENT_ENEMY_ENTER_LOS       = 13,
+	EVENT_ENEMY_LEAVE_LOS       = 14,
+	EVENT_ENEMY_ENTER_RADAR     = 15,
+	EVENT_ENEMY_LEAVE_RADAR     = 16,
+	EVENT_ENEMY_DAMAGED         = 17,
+	EVENT_ENEMY_DESTROYED       = 18,
+	EVENT_WEAPON_FIRED          = 19,
+	EVENT_PLAYER_COMMAND        = 20,
+	EVENT_SEISMIC_PING          = 21,
+};
+const unsigned int NUM_EVENTS   = 22;
 
 
 struct SInitEvent {
