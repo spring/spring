@@ -36,6 +36,7 @@
 #include <set>
 #include <stdio.h>
 
+#include "aidefines.h"
 #include "Platform/SharedLib.h"
 
 // #include "AICallbackProxy.h"
@@ -44,11 +45,7 @@ const char AI_NAME[]="ABIC"; // probably should read this from config file or so
 
 using namespace std;
 
-#ifdef WIN32
-	#define AILOG_PATH "AI\\Skirmish\\data\\"
-#else
-	#define AILOG_PATH "AI/Skirmish/data/"
-#endif
+#define AILOG_PATH SKIRMISH_AI_DATA_DIR
 
 class AbicProxy : public ::IGlobalAI  
 {

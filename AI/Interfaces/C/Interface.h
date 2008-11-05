@@ -98,8 +98,8 @@ private:
 	bool FitsThisInterface(const std::string& requestedShortName,
 			const std::string& requestedVersion);
 private:
-	static std::string relSkirmishAIImplsDir;
-	static std::string relGroupAIImplsDir;
+//	static std::string relSkirmishAIImplsDir;
+//	static std::string relGroupAIImplsDir;
 	
 	std::vector<std::string> springDataDirs;
 	/**

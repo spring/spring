@@ -41,17 +41,14 @@
 
 #include "CSAIProxyAICallback.h"
 
+#include "aidefines.h"
 #include "AbicAICallbackWrapper.h"
 
 const char AI_NAME[]=".Net Interface";
 
 using namespace std;
 
-#ifdef WIN32
-	#define AILOG_PATH "AI\\Skirmish\\data\\"
-#else
-	#define AILOG_PATH "AI/Skirmish/data/"
-#endif
+#define AILOG_PATH SKIRMISH_AI_DATA_DIR
 
 struct AbicAICallbackWrapper;
 

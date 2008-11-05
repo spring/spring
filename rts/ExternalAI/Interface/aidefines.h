@@ -41,17 +41,12 @@ extern "C" {
 //const unsigned int MAX_SKIRMISH_AIS = MAX_TEAMS - 1;
 #define MAX_SKIRMISH_AIS 16
 
-//const char* const AI_INTERFACES_DIR = "AI/interfaces";
-//#define AI_INTERFACES_DIR "AI/interfaces"
-#define AI_INTERFACES_IMPLS_DIR "AI/Interfaces/impls"
-#define AI_INTERFACES_DATA_DIR "AI/Interfaces/data"
-//#define AI_INTERFACES_LOGS_DIR "AI/Interfaces/logs"
+//const char* const AI_INTERFACES_DATA_DIR = "AI/Interfaces";
+#define AI_INTERFACES_DATA_DIR "AI/Interfaces"
 
-#define SKIRMISH_AI_IMPLS_DIR "AI/Skirmish/impls"
-#define SKIRMISH_AI_DATA_DIR "AI/Skirmish/data"
+#define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
 
-#define GROUP_AI_IMPLS_DIR "AI/Group/impls"
-#define GROUP_AI_DATA_DIR "AI/Group/data"
+#define GROUP_AI_DATA_DIR "AI/Group"
 
 #ifdef	__cplusplus
 }	// extern "C"

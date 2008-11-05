@@ -27,18 +27,25 @@
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const IAIInterfaceLibrary& interface) {
 	
-	infoItems = interface.GetInfo();
-	//levelOfSupport = interface.GetLevelOfSupportFor(std::string(ENGINE_VERSION_STRING),
-	//		ENGINE_VERSION_NUMBER);
+	info = interface.GetInfo();
+	
+	std::map<std::string, InfoItem>::iterator iip;
+    for (iip = info.begin(); iip != info.begin(); ++iip) {
+		iip->second = copyInfoItem(&(iip->second));
+    }
 }
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const CAIInterfaceLibraryInfo& interfaceInfo) {
 	
-	infoItems = std::map<std::string, InfoItem>(
-			interfaceInfo.infoItems.begin(),
-			interfaceInfo.infoItems.end());
-	//levelOfSupport = interfaceInfo.levelOfSupport;
+	info = std::map<std::string, InfoItem>(
+			interfaceInfo.info.begin(),
+			interfaceInfo.info.end());
+	
+	std::map<std::string, InfoItem>::iterator iip;
+    for (iip = info.begin(); iip != info.begin(); ++iip) {
+		iip->second = copyInfoItem(&(iip->second));
+    }
 }
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
@@ -52,10 +59,18 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		logOutput.Print("info %i: %s / %s / %s", i, tmpInfo[i].key,
 				tmpInfo[i].value, tmpInfo[i].desc);
 */
-		infoItems[std::string(tmpInfo[i].key)] = copyInfoItem(&(tmpInfo[i]));
+		info[std::string(tmpInfo[i].key)] = copyInfoItem(&(tmpInfo[i]));
     }
 	
 	//levelOfSupport = LOS_Unknown;
+}
+
+CAIInterfaceLibraryInfo::~CAIInterfaceLibraryInfo() {
+	
+	std::map<std::string, InfoItem>::const_iterator iip;
+    for (iip = info.begin(); iip != info.begin(); ++iip) {
+		deleteInfoItem(&(iip->second));
+    }
 }
 
 /*
@@ -66,12 +81,15 @@ LevelOfSupport CAIInterfaceLibraryInfo::GetLevelOfSupportForCurrentEngine() cons
 
 SAIInterfaceSpecifier CAIInterfaceLibraryInfo::GetSpecifier() const {
 	
-	const char* sn = infoItems.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
-	const char* v = infoItems.at(AI_INTERFACE_PROPERTY_VERSION).value;
+	const char* sn = info.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
+	const char* v = info.at(AI_INTERFACE_PROPERTY_VERSION).value;
 	SAIInterfaceSpecifier specifier = {sn, v};
 	return specifier;
 }
 
+std::string CAIInterfaceLibraryInfo::GetDataDir() const {
+	return GetInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
+}
 std::string CAIInterfaceLibraryInfo::GetFileName() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_FILE_NAME);
 }
@@ -92,19 +110,22 @@ std::string CAIInterfaceLibraryInfo::GetURL() const {
 }
 std::string CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 	
-	if (infoItems.find(key) == infoItems.end()) {
+	if (info.find(key) == info.end()) {
 		std::string errorMsg = std::string("AI interface property '") + key
 				+ "' could not be found.\n";
 		handleerror(NULL, errorMsg.c_str(), "AI Interface Info Error",
 				MBF_OK | MBF_EXCL);
 	}
-	return infoItems.at(key).value;
+	return info.at(key).value;
 }
 const std::map<std::string, InfoItem>* CAIInterfaceLibraryInfo::GetInfo() const {
-	return &infoItems;
+	return &info;
 }
 
 
+void CAIInterfaceLibraryInfo::SetDataDir(const std::string& dataDir) {
+	SetInfo(AI_INTERFACE_PROPERTY_DATA_DIR, dataDir);
+}
 void CAIInterfaceLibraryInfo::SetFileName(const std::string& fileName) {
 	SetInfo(AI_INTERFACE_PROPERTY_FILE_NAME, fileName);
 }
@@ -137,6 +158,8 @@ bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
 	}
 	
 	InfoItem ii = {key.c_str(), value.c_str(), NULL};
-	infoItems[key] = ii;
+	ii = copyInfoItem(&ii);
+	
+	info[key] = ii;
 	return true;
 }
