@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -32,14 +32,15 @@ extern "C" {
 
 struct SStaticGlobalData;
 
-#define AI_INTERFACE_PROPERTY_FILE_NAME "fileName"                     // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
-#define AI_INTERFACE_PROPERTY_SHORT_NAME "shortName"                   // [string: [a-zA-Z0-9_.]*]
-#define AI_INTERFACE_PROPERTY_VERSION "version"                        // [string: [a-zA-Z0-9_.]*]
-#define AI_INTERFACE_PROPERTY_NAME "name"                              // [string]
-#define AI_INTERFACE_PROPERTY_DESCRIPTION "description"                // [string]
-#define AI_INTERFACE_PROPERTY_URL "url"                                // [string]
-#define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES "supportedLanguages" // [string]
-#define AI_INTERFACE_PROPERTY_ENGINE_VERSION "engineVersion"           // [int] the engine version number the AI was compiled, but may work with newer or older ones too
+#define AI_INTERFACE_PROPERTY_DATA_DIR               "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
+#define AI_INTERFACE_PROPERTY_FILE_NAME              "fileName"              // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
+#define AI_INTERFACE_PROPERTY_SHORT_NAME             "shortName"             // [string: [a-zA-Z0-9_.]*]
+#define AI_INTERFACE_PROPERTY_VERSION                "version"               // [string: [a-zA-Z0-9_.]*]
+#define AI_INTERFACE_PROPERTY_NAME                   "name"                  // [string]
+#define AI_INTERFACE_PROPERTY_DESCRIPTION            "description"           // [string]
+#define AI_INTERFACE_PROPERTY_URL                    "url"                   // [string]
+#define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES    "supportedLanguages"    // [string]
+#define AI_INTERFACE_PROPERTY_ENGINE_VERSION         "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
 
 /**
  * @brief struct Artificial Intelligence Interface Specifier
@@ -77,9 +78,9 @@ struct SGAIKey {
  * @brief struct Artificial Intelligence Interface
  */
 struct SAIInterfaceLibrary {
-	
+
 	// static AI interface library functions
-	
+
 	/**
 	 * This function is called right after the library is dynamically loaded.
 	 * It can be used to initialize variables and to check or prepare
@@ -97,7 +98,7 @@ struct SAIInterfaceLibrary {
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *initStatic)(const struct SStaticGlobalData* staticGlobalData);
-	
+
 	/**
 	 * This function is called right right before the library is unloaded.
 	 * It can be used to deinitialize variables and to cleanup the environment,
@@ -111,7 +112,7 @@ struct SAIInterfaceLibrary {
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *releaseStatic)();
-	
+
 	/**
 	 * Level of Support for a specific engine version.
 	 *
@@ -130,10 +131,10 @@ struct SAIInterfaceLibrary {
 	 */
 	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
 			unsigned int maxInfoItems);
-	
-	
+
+
 	// skirmish AI methods
-	
+
 	/**
 	 * Loads the specified Skirmish AI.
 	 *
@@ -143,7 +144,7 @@ struct SAIInterfaceLibrary {
 	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
 			const struct InfoItem info[], unsigned int numInfoItems);
-	
+
 	/**
 	 * Unloads the specified Skirmish AI.
 	 *
@@ -151,17 +152,17 @@ struct SAIInterfaceLibrary {
 	 */
 	int (CALLING_CONV *unloadSkirmishAILibrary)(
 			const struct SSAISpecifier* const sAISpecifier);
-	
+
 	/**
 	 * Unloads all Skirmish AI libraries currently loaded by this interface.
 	 *
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
-	
-	
+
+
 	// group AI methods
-	
+
 	/**
 	 * Loads the specified Group AI.
 	 *
@@ -171,7 +172,7 @@ struct SAIInterfaceLibrary {
 	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
 	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
 			const struct InfoItem info[], unsigned int numInfoItems);
-	
+
 	/**
 	 * Unloads the specified Group AI.
 	 *
@@ -179,7 +180,7 @@ struct SAIInterfaceLibrary {
 	 */
 	int (CALLING_CONV *unloadGroupAILibrary)(
 			const struct SGAISpecifier* const gAISpecifier);
-	
+
 	/**
 	 * Unloads all Group AI libraries currently loaded by this interface.
 	 *

@@ -40,10 +40,12 @@
 
 #define MAX_INFOS 128
 
+/*
 std::string CInterface::relSkirmishAIImplsDir =
 		std::string(SKIRMISH_AI_IMPLS_DIR) + PS;
 std::string CInterface::relGroupAIImplsDir =
 		std::string(GROUP_AI_IMPLS_DIR) + PS;
+*/
 	
 CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
 	
@@ -51,18 +53,18 @@ CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
 		springDataDirs.push_back(staticGlobalData->dataDirs[i]);
 	}
 	
-	// example: "AI/Interfaces/data/C"
+	// example: "AI/Interfaces/C"
 	std::string myDataDirRelative =
 			std::string(AI_INTERFACES_DATA_DIR) + PS + MY_SHORT_NAME;
-	// example: "AI/Interfaces/data/C/0.1"
+	// example: "AI/Interfaces/C/0.1"
 	std::string myDataDirVersRelative = myDataDirRelative + PS + MY_VERSION;
 	
-	// "C:/Games/spring/AI/Interfaces/data/C"
+	// "C:/Games/spring/AI/Interfaces/C"
 	myDataDir = FindDir(myDataDirRelative, true, true);
 	if (!FileExists(myDataDir)) {
 		MakeDirRecursive(myDataDir);
 	}
-	// "C:/Games/spring/AI/Interfaces/data/C/0.1"
+	// "C:/Games/spring/AI/Interfaces/C/0.1"
 	myDataDirVers = FindDir(myDataDirVersRelative, true, true);
 	if (!FileExists(myDataDirVers)) {
 		MakeDirRecursive(myDataDirVers);
@@ -392,22 +394,31 @@ void CInterface::reportError(const std::string& msg) {
 
 std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
 	
-	// fetch the file from the info about this interface
-	// which were supplied to us by the engine
+	// fetch the data-dir and file-name from the info about the AI to load,
+	// which was supplied to us by the engine
 	T_skirmishAIInfos::const_iterator info =
 			mySkirmishAIInfos.find(sAISpecifier);
 	if (info == mySkirmishAIInfos.end()) {
 		reportError(std::string("Missing Skirmish-AI info for ")
 				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
-	std::map<std::string, InfoItem>::const_iterator fileName =
-			info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
-	if (fileName == info->second.end()) {
+	
+	std::map<std::string, InfoItem>::const_iterator prop =
+			info->second.find(SKIRMISH_AI_PROPERTY_DATA_DIR);
+	if (prop == info->second.end()) {
+		reportError(std::string("Missing Skirmish-AI data dir for ")
+				+ sAISpecifier.shortName + " " + sAISpecifier.version);
+	}
+	const std::string& dataDir(prop->second.value);
+	
+	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
+	if (prop == info->second.end()) {
 		reportError(std::string("Missing Skirmish-AI file name for ")
 				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
+	const std::string& fileName(prop->second.value);
 	
-	std::string libFileName = fileName->second.value; // eg. RAI-0.600
+	std::string libFileName(fileName); // eg. RAI-0.600
 	#ifndef _WIN32
 		libFileName = "lib" + libFileName; // eg. libRAI-0.600
 	#endif
@@ -415,26 +426,36 @@ std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
 	// eg. libRAI-0.600.so
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 	
-	return FindFile(relSkirmishAIImplsDir + libFileName);
+	//return FindFile(dataDir + PS + libFileName);
+	return dataDir + PS + libFileName;
 }
 
 std::string CInterface::FindLibFile(const SGAISpecifier& gAISpecifier) {
 	
-	// fetch the file from the info about this interface
-	// which were supplied to us by the engine
+	// fetch the data-dir and file-name from the info about the AI to load,
+	// which was supplied to us by the engine
 	T_groupAIInfos::const_iterator info = myGroupAIInfos.find(gAISpecifier);
 	if (info == myGroupAIInfos.end()) {
 		reportError(std::string("Missing Group-AI info for ")
 				+ gAISpecifier.shortName + " " + gAISpecifier.version);
 	}
-	std::map<std::string, InfoItem>::const_iterator fileName =
-			info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
-	if (fileName == info->second.end()) {
+	
+	std::map<std::string, InfoItem>::const_iterator prop =
+			info->second.find(GROUP_AI_PROPERTY_DATA_DIR);
+	if (prop == info->second.end()) {
+		reportError(std::string("Missing Group-AI data dir for ")
+				+ gAISpecifier.shortName + " " + gAISpecifier.version);
+	}
+	const std::string& dataDir(prop->second.value);
+	
+	prop = info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
+	if (prop == info->second.end()) {
 		reportError(std::string("Missing Group-AI file name for ")
 				+ gAISpecifier.shortName + " " + gAISpecifier.version);
 	}
+	const std::string& fileName(prop->second.value);
 	
-	std::string libFileName = fileName->second.value; // eg. MetalMaker-1.0
+	std::string libFileName(fileName); // eg. MetalMaker-1.0
 	#ifndef _WIN32
 		libFileName = "lib" + libFileName; // eg. libMetalMaker-1.0
 	#endif
@@ -442,7 +463,8 @@ std::string CInterface::FindLibFile(const SGAISpecifier& gAISpecifier) {
 	// eg. libMetalMaker-1.0.so
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 	
-	return FindFile(relGroupAIImplsDir + libFileName);
+	//return FindFile(dataDir + PS + libFileName);
+	return dataDir + PS + libFileName;
 }
 
 bool CInterface::FileExists(const std::string& filePath) {

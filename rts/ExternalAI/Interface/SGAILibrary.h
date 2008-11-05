@@ -27,16 +27,17 @@ extern "C" {
 #include "ELevelOfSupport.h"
 #include "exportdefines.h"
 
-#define GROUP_AI_PROPERTY_FILE_NAME "fileName"                      // [string] when the library file is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
-#define GROUP_AI_PROPERTY_SHORT_NAME "shortName"                    // [string: [a-zA-Z0-9_.]*]
-#define GROUP_AI_PROPERTY_VERSION "version"                         // [string: [a-zA-Z0-9_.]*]
-#define GROUP_AI_PROPERTY_NAME "name"                               // [string]
-#define GROUP_AI_PROPERTY_DESCRIPTION "description"                 // [string]
-#define GROUP_AI_PROPERTY_URL "url"                                 // [string]
-#define GROUP_AI_PROPERTY_LOAD_SUPPORTED "loadSupported"            // [bool: "yes" | "no"]
-#define GROUP_AI_PROPERTY_ENGINE_VERSION "engineVersion"            // [int] the engine version number the AI was compiled, but may work with newer or older ones too
-#define GROUP_AI_PROPERTY_INTERFACE_SHORT_NAME "interfaceShortName" // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
-#define GROUP_AI_PROPERTY_INTERFACE_VERSION "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
+#define GROUP_AI_PROPERTY_DATA_DIR                "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
+#define GROUP_AI_PROPERTY_FILE_NAME               "fileName"              // [string] when the library file is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
+#define GROUP_AI_PROPERTY_SHORT_NAME              "shortName"             // [string: [a-zA-Z0-9_.]*]
+#define GROUP_AI_PROPERTY_VERSION                 "version"               // [string: [a-zA-Z0-9_.]*]
+#define GROUP_AI_PROPERTY_NAME                    "name"                  // [string]
+#define GROUP_AI_PROPERTY_DESCRIPTION             "description"           // [string]
+#define GROUP_AI_PROPERTY_URL                     "url"                   // [string]
+#define GROUP_AI_PROPERTY_LOAD_SUPPORTED          "loadSupported"         // [bool: "yes" | "no"]
+#define GROUP_AI_PROPERTY_ENGINE_VERSION          "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
+#define GROUP_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"    // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
+#define GROUP_AI_PROPERTY_INTERFACE_VERSION       "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
 #if !defined BUILDING_AI
 /**
@@ -71,9 +72,9 @@ struct SGAISpecifier_Comparator {
  * @brief struct Group Artificial Intelligence
  */
 struct SGAILibrary {
-	
+
 	// static AI library functions
-	
+
 	/**
 	 * Level of Support for a specific engine version and AI interface version.
 	 *
@@ -87,7 +88,7 @@ struct SGAILibrary {
 			int teamId, int groupId,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-	
+
 	/**
 	 * Returns info about this AI library.
 	 *
@@ -100,7 +101,7 @@ struct SGAILibrary {
 	 */
 	unsigned int (CALLING_CONV *getInfo)(int teamId, int groupId,
 			struct InfoItem info[], unsigned int maxInfoItems);
-	
+
 	/**
 	 * Returns options that can be set on this AI.
 	 *
@@ -114,9 +115,9 @@ struct SGAILibrary {
 	unsigned int (CALLING_CONV *getOptions)(int teamId, int groupId,
 			struct Option options[], unsigned int maxOptions);
 
-	
+
 	// team and group instance functions
-	
+
 	/**
 	 * This function is called, when an AI instance shall be created for teamId.
 	 * It is called before the first call to handleEvent() for teamId.
@@ -149,7 +150,7 @@ struct SGAILibrary {
 	 */
 	int (CALLING_CONV *init)(int teamId, int groupId,
 			const struct InfoItem info[], unsigned int numInfoItems);
-	
+
 	/**
 	 * This function is called, when an AI instance shall be deleted.
 	 * It is called after the last call to handleEvent() for teamId.
@@ -179,7 +180,7 @@ struct SGAILibrary {
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *release)(int teamId, int groupId);
-	
+
 	/**
 	 * Through this function, the AI receives events from the engine.
 	 * For details about events that may arrive here, see file AISEvents.h.

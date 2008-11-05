@@ -155,16 +155,16 @@ private:
 	 *
 	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
 	 * in the following sub-dirs:
-	 * AI/Interfaces/data/ * /InterfaceInfo.lua
-	 * AI/Interfaces/data/ * / * /InterfaceInfo.lua
-	 * AI/Skirmish/data/ * /AIInfo.lua
-	 * AI/Skirmish/data/ * / * /AIInfo.lua
-	 * AI/Group/data/ * /AIInfo.lua
-	 * AI/Group/data/ * / * /AIInfo.lua
+	 * {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
+	 * {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
+	 * {SKIRMISH_AI_DATA_DIR}/{*}/AIInfo.lua
+	 * {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
+	 * {GROUP_AI_DATA_DIR}/{*}/AIInfo.lua
+	 * {GROUP_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
 	 *
 	 * examples:
-	 * AI/Skirmish/data/KAIK-0.13/AIInfo.lua
-	 * AI/Skirmish/data/RAI/0.601/AIInfo.lua
+	 * AI/Skirmish/KAIK-0.13/AIInfo.lua
+	 * AI/Skirmish/RAI/0.601/AIInfo.lua
 	 */
 	void GetAllInfosFromCache();
 	/**

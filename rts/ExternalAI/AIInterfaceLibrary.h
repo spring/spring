@@ -92,7 +92,8 @@ private:
 			const std::string* functionName);
 	int InitializeFromLib(const std::string& libFilePath);
 	
-	static std::string FindLibFile(const std::string& fileNameMainPart);
+	//static std::string FindLibFile(const std::string& fileNameMainPart);
+	std::string FindLibFile();
 };
 
 #endif	/* _AIINTERFACELIBRARY_H */

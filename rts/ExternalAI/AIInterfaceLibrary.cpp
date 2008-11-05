@@ -45,7 +45,7 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
 				" No file name specified in AIInterface.lua",
 				"AI Interface Error", MBF_OK | MBF_EXCL);
 	}
-	libFilePath = FindLibFile(libFileName);
+	libFilePath = FindLibFile();
 	
 	sharedLib = SharedLib::Instantiate(libFilePath);
 	if (sharedLib == NULL) {
@@ -405,30 +405,28 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 }
 
 
-std::string CAIInterfaceLibrary::FindLibFile(
-		const std::string& fileNameMainPart) {
+//std::string CAIInterfaceLibrary::FindLibFile(
+//		const std::string& fileNameMainPart) {
+std::string CAIInterfaceLibrary::FindLibFile() {
 	
-	std::string libFileName = fileNameMainPart + "." + SharedLib::GetLibExtension();
+	const std::string& dataDir = info->GetDataDir();
+	const std::string& fileName = info->GetFileName();
+	
+	std::string libFileName(fileName); // eg. C-0.1
 	#ifndef _WIN32
-		libFileName = "lib" + libFileName;
+		libFileName = "lib" + libFileName; // eg. libC-0.1
 	#endif
-	// libFileName should now look about like this: libJava-0.600.so or Java-0.600.dll
 	
+	// eg. libC-0.1.so
+	libFileName = libFileName + "." + SharedLib::GetLibExtension();
+	
+/*
 	std::vector<std::string> libFile =
-			CFileHandler::FindFiles(AI_INTERFACES_IMPLS_DIR, libFileName);
+			CFileHandler::FindFiles(dataDir, libFileName);
 	
-	// generate a path like this: "C:/Games/spring/AI/Interfaces/impls/Java-0.600.dll"
-	std::string path = "";
-	if (libFile.size() >= 1) {
-		path = libFile.at(0);
-	} else {
-		// though the file is not available, we still return the relative path
-		// when trying ot load the lib, the user will see through
-		// the error message, which file is missing where
-		path = std::string(AI_INTERFACES_IMPLS_DIR) + "/" + libFileName;
-	}
-	
-	return path;
+	return libFile.size() >= 1 ? libFile[0] : "";
+*/
+	return dataDir + PS + libFileName;
 }
 
 /*

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software {} you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation {} either version 2 of the License, or
@@ -33,43 +33,44 @@ struct SGAISpecifier;
 
 class CGroupAILibraryInfo {
 public:
-//	CGroupAILibraryInfo(const IGroupAILibrary& ai,
-//			const SAIInterfaceSpecifier& interfaceSpecifier);
 	CGroupAILibraryInfo(const CGroupAILibraryInfo& aiInfo);
 	CGroupAILibraryInfo(const std::string& aiInfoFile,
 			const std::string& aiOptionFile);
-    
-    virtual SGAISpecifier GetSpecifier() const;
-	
-    virtual std::string GetFileName() const;
-    virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
-    virtual std::string GetName() const;
-    virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
-    virtual std::string GetDescription() const;
-    virtual std::string GetURL() const;
-    virtual std::string GetInterfaceShortName() const;
-    virtual std::string GetInterfaceVersion() const;
-    virtual std::string GetInfo(const std::string& key) const;
-    virtual const std::map<std::string, InfoItem>* GetInfo() const;
+	~CGroupAILibraryInfo();
+
+	virtual SGAISpecifier GetSpecifier() const;
+
+	virtual std::string GetDataDir() const;
+	virtual std::string GetFileName() const;
+	virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
+	virtual std::string GetName() const;
+	virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
+	virtual std::string GetDescription() const;
+	virtual std::string GetURL() const;
+	virtual std::string GetInterfaceShortName() const;
+	virtual std::string GetInterfaceVersion() const;
+	virtual std::string GetInfo(const std::string& key) const;
+	virtual const std::map<std::string, InfoItem>* GetInfo() const;
 	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
 			unsigned int maxInfoItems) const;
 	virtual unsigned int GetOptionsCReference(Option cOptions[],
 			unsigned int maxOptions) const;
-	
+
 	virtual const std::vector<Option>* GetOptions() const;
-	
+
+	virtual void SetDataDir(const std::string& dataDir);
 	virtual void SetFileName(const std::string& fileName);
-    virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
-    virtual void SetName(const std::string& name);
-    virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'
-    virtual void SetDescription(const std::string& description);
-    virtual void SetURL(const std::string& url);
-    virtual void SetInterfaceShortName(const std::string& interfaceShortName);
-    virtual void SetInterfaceVersion(const std::string& interfaceVersion);
-    virtual bool SetInfo(const std::string& key, const std::string& value);
-	
+	virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
+	virtual void SetName(const std::string& name);
+	virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'
+	virtual void SetDescription(const std::string& description);
+	virtual void SetURL(const std::string& url);
+	virtual void SetInterfaceShortName(const std::string& interfaceShortName);
+	virtual void SetInterfaceVersion(const std::string& interfaceVersion);
+	virtual bool SetInfo(const std::string& key, const std::string& value);
+
 	virtual void SetOptions(const std::vector<Option>& options);
-	
+
 private:
 	static const unsigned int MAX_INFOS = 128;
 	static const unsigned int MAX_OPTIONS = 128;
@@ -77,5 +78,4 @@ private:
 	std::vector<Option> options;
 };
 
-#endif	/* _GROUPAILIBRARYINFO_H */
-
+#endif	// _GROUPAILIBRARYINFO_H
