@@ -1197,8 +1197,7 @@ void SpringApp::Shutdown()
 		delete pregame;			//in case we exit during init
 	if (game)
 		delete game;
-	if (gameSetup)
-		delete gameSetup;
+	delete gameSetup;
 	delete font;
 	CNamedTextures::Kill();
 	GLContext::Free();

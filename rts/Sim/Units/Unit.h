@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <deque>
 
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"

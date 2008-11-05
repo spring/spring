@@ -1,15 +1,15 @@
-#ifndef LIGHTINGCANNON_H
-#define LIGHTINGCANNON_H
+#ifndef LIGHTNINGCANNON_H
+#define LIGHTNINGCANNON_H
 
 #include "Weapon.h"
 
-class CLightingCannon :
+class CLightningCannon :
 	public CWeapon
 {
-	CR_DECLARE(CLightingCannon);
+	CR_DECLARE(CLightningCannon);
 public:
-	CLightingCannon(CUnit* owner);
-	~CLightingCannon(void);
+	CLightningCannon(CUnit* owner);
+	~CLightningCannon(void);
 
 	void Update(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
@@ -22,4 +22,4 @@ public:
 };
 
 
-#endif /* LIGHTINGCANNON_H */
+#endif /* LIGHTNINGCANNON_H */

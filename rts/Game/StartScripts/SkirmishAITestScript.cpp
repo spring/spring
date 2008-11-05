@@ -30,14 +30,12 @@ CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
 		key(key),
 		options(options)
 {
-	if (!gameSetup) {
-		// make sure CSelectedUnits::AiOrder()
-		// still works without a setup script
-		gs->Team(1)->isAI = true;
-		gs->Team(1)->skirmishAISpecifier = key;
-		gs->Team(1)->skirmishAIOptions = options;
-		gs->Team(1)->leader = 0;
-	}
+	// make sure CSelectedUnits::AiOrder()
+	// still works without a setup script
+	gs->Team(1)->isAI = true;
+	gs->Team(1)->skirmishAISpecifier = key;
+	gs->Team(1)->skirmishAIOptions = options;
+	gs->Team(1)->leader = 0;
 }
 
 

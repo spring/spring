@@ -870,8 +870,8 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 	}
 
 	const int allyTeam = (int)luaL_checkint(L, 1);
-	if ((allyTeam < 0) || (allyTeam >= gs->activeAllyTeams)) {
-		luaL_error(L, "Bad allyTeam (%i) in GetAllyTeamStartBox()", allyTeam);
+	if ((allyTeam < 0) || (allyTeam >= gameSetup->allyStartingData.size())) {
+		return 0;
 	}
 	const float xmin = (gs->mapx * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectLeft;
 	const float zmin = (gs->mapy * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectTop;

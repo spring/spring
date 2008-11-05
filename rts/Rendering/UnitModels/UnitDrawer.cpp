@@ -800,7 +800,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	const float3 vpn = vp - dy;
 	const float3 vnp = vn + dy;
 	const float3 vpp = vp + dy;
-	
+
 	// Draw the icon.
 	iconData->Draw(vnn, vpn, vnp, vpp);
 }
@@ -958,7 +958,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 			} else {
 				model = decoyDef->LoadModel(unitTeam);
 				is_s3o = (model->rootobjects3o != NULL);
-			}				
+			}
 
 			if (is_s3o) {
 				SetBasicS3OTeamColour(unitTeam);
@@ -1812,6 +1812,10 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 		CollisionVolume* vol = unit->collisionVolume;
 
 		switch (vol->GetVolumeType()) {
+			case COLVOL_TYPE_FOOTPRINT:
+				// fall through, this is too hard to render correctly so just render sphere :)
+			case COLVOL_TYPE_SPHERE:
+				// fall through, sphere is special case of ellipsoid
 			case COLVOL_TYPE_ELLIPSOID: {
 				// scaled sphere: radius, slices, stacks
 				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
