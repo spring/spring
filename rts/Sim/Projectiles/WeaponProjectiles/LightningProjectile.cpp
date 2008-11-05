@@ -2,7 +2,7 @@
 #include "mmgr.h"
 
 #include "Game/Camera.h"
-#include "LightingProjectile.h"
+#include "LightningProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -13,9 +13,9 @@
 	#include "Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLightingProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
+CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
 
-CR_REG_METADATA(CLightingProjectile,(
+CR_REG_METADATA(CLightningProjectile,(
 	CR_MEMBER(color),
 	CR_MEMBER(endPos),
 	CR_MEMBER(weapon),
@@ -24,7 +24,7 @@ CR_REG_METADATA(CLightingProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
+CLightningProjectile::CLightningProjectile(const float3& pos, const float3& end,
 		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
 		int ttl, CWeapon* weap GML_PARG_C):
 	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
@@ -47,7 +47,7 @@ CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
 		AddDeathDependence(weapon);
 
 #ifdef TRACE_SYNC
-	tracefile << "New lighting: ";
+	tracefile << "New lightning: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
 
@@ -56,11 +56,11 @@ CLightingProjectile::CLightingProjectile(const float3& pos, const float3& end,
 	}
 }
 
-CLightingProjectile::~CLightingProjectile(void)
+CLightningProjectile::~CLightningProjectile(void)
 {
 }
 
-void CLightingProjectile::Update(void)
+void CLightningProjectile::Update(void)
 {
 	ttl--;
 
@@ -81,7 +81,7 @@ void CLightingProjectile::Update(void)
 	}
 }
 
-void CLightingProjectile::Draw(void)
+void CLightningProjectile::Draw(void)
 {
 	inArray=true;
 	unsigned char col[4];
@@ -119,7 +119,7 @@ void CLightingProjectile::Draw(void)
 	}
 }
 
-void CLightingProjectile::DependentDied(CObject* o)
+void CLightningProjectile::DependentDied(CObject* o)
 {
 	if(o==weapon)
 		weapon=0;

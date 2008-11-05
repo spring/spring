@@ -59,7 +59,7 @@ local function BackwardCompability(wdName,wd)
       wd.weaponType = "DGun"
     elseif (tobool(wd.lineofsight)) then
       if (rendertype==7) then
-        wd.weapontype = "LightingCannon";
+        wd.weapontype = "LightningCannon";
 
       -- swta fix (outdated?)
       elseif (wd.model and wd.model:lower():find("laser",1,true)) then

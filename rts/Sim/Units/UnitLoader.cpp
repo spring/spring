@@ -40,7 +40,7 @@
 #include "Sim/Weapons/EmgCannon.h"
 #include "Sim/Weapons/FlameThrower.h"
 #include "Sim/Weapons/LaserCannon.h"
-#include "Sim/Weapons/LightingCannon.h"
+#include "Sim/Weapons/LightningCannon.h"
 #include "Sim/Weapons/MeleeWeapon.h"
 #include "Sim/Weapons/MissileLauncher.h"
 #include "Sim/Weapons/NoWeapon.h"
@@ -324,10 +324,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
 		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 
-		if (unit->collisionVolume->volumeBoundingRadius <= 30.0f) {
+		if (unit->collisionVolume->GetBoundingRadius() <= 30.0f) {
 			// the interval-based method fails too easily for units
 			// with small default volumes, force use of raytracing
-			unit->collisionVolume->testType = COLVOL_TEST_CONT;
+			unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
 		}
 	}
 
@@ -426,9 +426,9 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	} else if (weapondef->type == "BeamLaser") {
 		weapon = SAFE_NEW CBeamLaser(owner);
 		((CBeamLaser*) weapon)->color = weapondef->visuals.color;
-	} else if (weapondef->type == "LightingCannon") {
-		weapon = SAFE_NEW CLightingCannon(owner);
-		((CLightingCannon*) weapon)->color = weapondef->visuals.color;
+	} else if (weapondef->type == "LightningCannon") {
+		weapon = SAFE_NEW CLightningCannon(owner);
+		((CLightningCannon*) weapon)->color = weapondef->visuals.color;
 	} else if (weapondef->type == "EmgCannon") {
 		weapon = SAFE_NEW CEmgCannon(owner);
 	} else if (weapondef->type == "DGun") {

@@ -154,7 +154,7 @@ void CGroundBlockingObjectMap::MoveGroundBlockingObject(CSolidObject* object, fl
   */
 CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool topMost) {
 	if (groundBlockingMap[mapSquare].empty()) {
-		return 0x0;
+		return NULL;
 	}
 
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
@@ -174,7 +174,7 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool 
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare, bool topMost) {
 	if (mapSquare < 0 || mapSquare >= gs->mapSquares) {
-		return 0x0;
+		return NULL;
 	}
 
 	return GroundBlockedUnsafe(mapSquare);
