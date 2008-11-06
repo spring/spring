@@ -12,6 +12,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/GlobalUnsynced.h"
 
@@ -104,6 +105,12 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	__time64_t long_time;
 	_time64(&long_time);                /* Get time as long integer. */
 	newtime = _localtime64(&long_time); /* Convert to local time. */
+
+	// Don't see how this can happen (according to docs _localtime64 only returns
+	// NULL if long_time is before 1/1/1970...) but a user's stacktrace indicated
+	// NULL newtime in the snprintf line...
+	if (!newtime)
+		throw content_error("error: _localtime64 returned NULL");
 
 	char buf[1000];
 	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
