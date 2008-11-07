@@ -79,7 +79,7 @@ void COggStream::SetVolume(float volume, bool b) {
 }
 
 
-unsigned int COggStream::GetTime() {
+unsigned int COggStream::GetTime() const {
 	return ov_time_total(&oggStream,-1);
 }
 
