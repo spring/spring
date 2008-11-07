@@ -63,34 +63,35 @@ std::size_t TdfParser::parse_error::get_line() const {return line;}
 std::size_t TdfParser::parse_error::get_column() const {return column;}
 std::string const& TdfParser::parse_error::get_filename() const {return filename;}
 
-void TdfParser::TdfSection::print( std::ostream & out )  const{
-  for( std::map<std::string,TdfSection*>::const_iterator it = sections.begin(), e=sections.end(); it != e; ++it ) {
-    out << "[" << it->first << "] {\n";
-    it->second->print(out);
-    out << "};";
-  }
-  for( std::map<std::string,std::string>::const_iterator it = values.begin(), e=values.end(); it != e; ++it ) {
-    out << it->first  << "=" << it->second << ";\n";
-  }
+void TdfParser::TdfSection::print( std::ostream & out ) const
+{
+	for( std::map<std::string,TdfSection*>::const_iterator it = sections.begin(), e=sections.end(); it != e; ++it ) {
+		out << "[" << it->first << "]\n{\n";
+		it->second->print(out);
+		out << "}\n";
+	}
+	for( std::map<std::string,std::string>::const_iterator it = values.begin(), e=values.end(); it != e; ++it ) {
+		out << it->first  << "=" << it->second << ";\n";
+	}
 }
 
-TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection( std::string const& name )
+TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::string& name )
 {
-  std::string lowerd_name = StringToLower(name);
-  std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name);
-  if( it != sections.end() )
-    return it->second;
-  else {
-    TdfSection* ret = SAFE_NEW TdfSection;
-    sections[lowerd_name] = ret;
-    return ret;
-  }
+	std::string lowerd_name = StringToLower(name);
+	std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name);
+	if( it != sections.end() )
+		return it->second;
+	else {
+		TdfSection* ret = SAFE_NEW TdfSection;
+		sections[lowerd_name] = ret;
+		return ret;
+	}
 }
 
-void TdfParser::TdfSection::add_name_value(std::string const& name, std::string& value )
+void TdfParser::TdfSection::add_name_value(const std::string& name, const std::string& value )
 {
-  std::string lowerd_name = StringToLower(name);
-  values[lowerd_name] = value;
+	std::string lowerd_name = StringToLower(name);
+	values[lowerd_name] = value;
 }
 
 
@@ -219,49 +220,6 @@ std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string
 	return value;
 }
 
-//finds a value in the file, if not found returns false, and errormessages is returned in value
-/*bool TdfParser::GetValue(std::string &value, ...)
-{
-	std::string searchpath; //for errormessages
-	va_list loc;
-	va_start(loc, value);
-	int numargs=0;
-	while(va_arg(loc, char*)) //determine number of arguments
-		numargs++;
-	va_start(loc, value);
-	TdfSection *sectionptr;
-	for(int i=0; i<numargs-1; i++)
-	{
-		char *arg = va_arg(loc, char*);
-		searchpath += '\\';
-		searchpath += arg;
-		sectionptr = sections[arg];
-		if(sectionptr==NULL)
-		{
-			value = "Section " + searchpath + " missing in file " + filename;
-			return false;
-		}
-	}
-	char *arg = va_arg(loc, char*);
-	std::string svalue = sectionptr->values[arg];
-	searchpath += '\\';
-	searchpath += arg;
-	if(svalue == "")
-	{
-		value = "Value " + searchpath + " missing in file " + filename;
-		return false;
-	}
-	value = svalue;
-	return true;
-}*/
-
-/*void TdfParser::Test()
-{
-	TdfSection *unitinfo = sections["UNITINFO"];
-	TdfSection *weapons = unitinfo->sections["WEAPONS"];
-	std::string mo = weapons->values["weapon1"];
-}*/
-
 //finds a value in the file , if not found returns false, and errormessages is returned in value
 //location of value is sent as a string "section\section\value"
 bool TdfParser::SGetValue(std::string &value, std::string const& location) const
@@ -319,7 +277,6 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 		root_section.sections.find(loclist[0]);
 	if(sit == root_section.sections.end())
 	{
-//		handleerror(hWnd, ("Section " + loclist[0] + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 		logOutput.Print ("Section " + loclist[0] + " missing in file " + filename);
 		return emptymap;
 	}
@@ -332,7 +289,6 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 		sit = sectionptr->sections.find(loclist[i]);
 		if(sit == sectionptr->sections.end())
 		{
-//			handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 			logOutput.Print ("Section " + searchpath + " missing in file " + filename);
 			return emptymap;
 		}
@@ -356,7 +312,6 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 			searchpath += loclist[i];
 			if(sectionsptr->find(loclist[i]) == sectionsptr->end())
 			{
-//				handleerror(hWnd, ("Section " + searchpath + " missing in file " + filename).c_str(), "Sun parsing error", MBF_OK);
 				logOutput.Print ("Section " + searchpath + " missing in file " + filename);
 				return returnvec;
 			}
@@ -413,27 +368,6 @@ std::vector<std::string> TdfParser::GetLocationVector(std::string const& locatio
   return loclist;
 }
 
-/*
-template<typename T>
-void TdfParser::GetMsg(T& value, const std::string& key)
-{
-	std::string str;
-	str = SGetValueMSG(key);
-	std::stringstream stream;
-	stream << str;
-	stream >> value;
-}
-
-template<typename T>
-void TdfParser::GetDef(T& value, const std::string& key, const std::string& defvalue)
-{
-	std::string str;
-	str = SGetValueDef(key, defvalue);
-	std::stringstream stream;
-	stream << str;
-	stream >> value;
-}*/
-
 float3 TdfParser::GetFloat3(float3 def, std::string const& location) const
 {
 	std::string s=SGetValueDef("",location);
@@ -443,23 +377,3 @@ float3 TdfParser::GetFloat3(float3 def, std::string const& location) const
 	ParseArray(s,&ret.x,3);
 	return ret;
 }
-
-#ifdef TEST
-int main(int argc, char **argv) {
-  try{
-    while( --argc ) {
-      std::cout << "Parsing : " <<  argv[argc] << " ... ";
-      TdfParser p( argv[argc] );
-      p.print( std::cout );
-      std::cout <<" Ok." << std::endl;
-    }
-
-  }
-  catch( std::exception const& e){
-    std::cout << e.what();
-    return 1;
-  }
-  std::cout << "Fine" << std::endl;
-  return 0;
-}
-#endif
