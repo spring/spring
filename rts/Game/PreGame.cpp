@@ -23,6 +23,7 @@
 #include "DemoRecorder.h"
 #include "DemoReader.h"
 #include "LoadSaveHandler.h"
+#include "System/TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
@@ -50,7 +51,6 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
-	localDemoHack = false;
 	infoConsole = SAFE_NEW CInfoConsole;
 
 	net = SAFE_NEW CNetProtocol();
@@ -259,7 +259,6 @@ void CPreGame::UpdateClientNet()
 	}
 }
 
-
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	assert(!gameServer);
@@ -272,32 +271,42 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
-			CGameSetup* tempSetup = new CGameSetup();
-			if (tempSetup->Init(data->GetSetup()))
-			{
-				tempSetup->scriptName = data->GetScript();
-				tempSetup->mapName = data->GetMap();
-				tempSetup->baseMod = data->GetMod();
-				tempSetup->hostDemo = true;
-				tempSetup->demoName = demoName;
-				
-				// all players in the setupscript are from demo
-				for (std::vector<PlayerBase>::iterator it = tempSetup->playerStartingData.begin(); it != tempSetup->playerStartingData.end(); ++it)
-					it->isFromDemo = true;
-				
-				// add myself to the script
-				PlayerBase myPlayer;
-				myPlayer.name = settings->myPlayerName;
-				myPlayer.spectator = true;
-				tempSetup->playerStartingData.push_back(myPlayer);
-				tempSetup->numDemoPlayers = std::max(scanner.GetFileHeader().maxPlayerNum+1, tempSetup->numPlayers);
-				tempSetup->numPlayers = tempSetup->numDemoPlayers+1;
-				tempSetup->maxSpeed = 10;
-				localDemoHack = true;
+			
+			// modify the startscriptscript so it can be used to watch the demo
+			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
+			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
+			
+			tgame->AddPair("ScriptName", data->GetScript());
+			tgame->AddPair("MapName", data->GetMap());
+			tgame->AddPair("Gametype", data->GetMod());
+			
+			tgame->AddPair("Demofile", demoName);
+			int a = 0;
+			for (a = 0; a < MAX_PLAYERS; ++a) {
+				char section[50];
+				sprintf(section, "PLAYER%i", a);
+				string s(section);
+				std::map<std::string, TdfParser::TdfSection*>::iterator player = tgame->sections.find(s);
+				if (player != tgame->sections.end())
+					player->second->AddPair("isfromdemo", 1);
 			}
-			else
+			
+			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
+			char section[50];
+			sprintf(section, "PLAYER%i", MAX_PLAYERS);
+			string s(section);
+			TdfParser::TdfSection* me = tgame->construct_subsection(s);
+			me->AddPair("name", settings->myPlayerName);
+			me->AddPair("spectator", 1);
+			
+			std::ostringstream buf;
+			script.print(buf);
+			data->SetSetup(buf.str());
+			CGameSetup* tempSetup = new CGameSetup();
+			
+			if (!tempSetup->Init(buf.str()))
 			{
-				throw content_error("Server sent us incorrect script");
+				throw content_error("Demo contains incorrect script");
 			}
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
@@ -360,7 +369,7 @@ void CPreGame::LoadMod(const std::string& modName)
 		alreadyLoaded = true;
 	}
 }
-
+#include <iostream>
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	gameData.reset(new GameData(packet));
@@ -372,24 +381,8 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		temp->mapName = gameData->GetMap();
 		temp->baseMod = gameData->GetMod();
 		
-		if (localDemoHack)
-		{
-			temp->hostDemo = true;
-				
-				// all players in the setupscript are from demo
-			for (std::vector<PlayerBase>::iterator it = temp->playerStartingData.begin(); it != temp->playerStartingData.end(); ++it)
-				it->isFromDemo = true;
-				
-			// add myself to the script
-			PlayerBase myPlayer;
-			myPlayer.name = settings->myPlayerName;
-			myPlayer.spectator = true;
-			temp->playerStartingData.push_back(myPlayer);
-			temp->numDemoPlayers = temp->numPlayers;
-			temp->numPlayers = temp->numDemoPlayers+1;
-			temp->maxSpeed = 10;
-		}
 		gameSetup = const_cast<const CGameSetup*>(temp);
+		std::cout << gameSetup << std::endl;
 		gs->LoadFromSetup(gameSetup);
 	}
 	else

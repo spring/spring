@@ -34,8 +34,7 @@ LocalSetup::LocalSetup() :
 
 void LocalSetup::Init(const std::string& setup)
 {
-	TdfParser file;
-	file.LoadBuffer(setup.c_str(), setup.length());
+	TdfParser file(setup.c_str(), setup.length());
 	
 	if(!file.SectionExist("GAME"))
 		throw content_error("GAME-section didn't exist in setupscript");
@@ -110,11 +109,6 @@ CGameSetup::~CGameSetup()
 {
 }
 
-bool CGameSetup::Init(std::string script)
-{
-	return Init(script.c_str(), script.size());
-}
-
 /**
 @brief Load unit restrictions
 @post restrictedUnits initialized
@@ -161,8 +155,7 @@ Unlike the other functions, this is not called on Init() , instead we wait for C
  */
 void CGameSetup::LoadStartPositions()
 {
-	TdfParser file;
-	file.LoadBuffer(gameSetupText.c_str(), gameSetupText.length());
+	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
@@ -416,14 +409,13 @@ void CGameSetup::RemapAllyteams()
 	}
 }
 
-bool CGameSetup::Init(const char* buf, int size)
+bool CGameSetup::Init(const std::string& buf)
 {
 	// Copy buffer contents
-	gameSetupText.assign(buf,size);
+	gameSetupText = buf;
 
 	// Parse
-	TdfParser file;
-	file.LoadBuffer(buf, size);
+	TdfParser file(buf.c_str(),buf.size());
 
 	if(!file.SectionExist("GAME"))
 		return false;

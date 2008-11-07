@@ -173,7 +173,6 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	}
 
 	if (useLuaGaia) {
-		//TODO duplicated in SpringApp::Startup()
 		// Gaia adjustments
 		gaiaTeamID = activeTeams;
 		gaiaAllyTeamID = activeAllyTeams;

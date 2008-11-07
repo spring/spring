@@ -72,8 +72,6 @@ private:
 	boost::scoped_ptr<const LocalSetup> settings;
 	std::string modArchive;
 	CLoadSaveHandler *savefile;
-	
-	bool localDemoHack;
 };
 
 extern CPreGame* pregame;

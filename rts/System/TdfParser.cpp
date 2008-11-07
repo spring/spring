@@ -106,8 +106,6 @@ TdfParser::TdfSection::~TdfSection()
     delete it->second;
 }
 
-TdfParser::TdfParser() {
-}
 void TdfParser::print( std::ostream & out ) const {
   root_section.print( out );
 }

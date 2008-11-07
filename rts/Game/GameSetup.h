@@ -34,8 +34,7 @@ class CGameSetup
 public:
 	CGameSetup();
 	~CGameSetup();
-	bool Init(std::string script);
-	bool Init(const char* buf, int size);
+	bool Init(const std::string& script);
 	void LoadStartPositions();
 	
 	enum StartPosType
