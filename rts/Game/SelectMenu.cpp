@@ -14,6 +14,7 @@
 #include "Rendering/GL/glList.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
+#include "System/TdfParser.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -26,89 +27,47 @@ using std::string;
 extern Uint8* keys;
 extern bool globalQuit;
 
-
-class TdfWriter
-{
-public:
-	void PushSection(const std::string& section)
-	{
-		Indent();
-		str << "["<<section<<"]\n{\n";
-		sections.push(section);
-	};
-	void PopSection()
-	{
-		assert(!sections.empty());
-		Indent();
-		str << "} //"<< sections.top() << "\n";
-		sections.pop();
-	};
-	
-	template<typename T>
-	void AddPair(const std::string& key, const T& value)
-	{
-		Indent();
-		str << key << "=" << value << ";\n";
-	};
-	
-	std::string Get() const
-	{
-		return str.str();
-	};
-	
-private:
-	void Indent()
-	{
-		for (unsigned i = 0; i < sections.size(); ++i)
-		str << "    ";
-	};
-
-	std::ostringstream str;
-	std::stack<std::string> sections;
-};
+#include <iostream>
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script, const std::string& playername)
 {
-	TdfWriter setup;
-	setup.PushSection("GAME");
-	setup.AddPair("Mapname", map);
-	setup.AddPair("Gametype", mod);
-	setup.AddPair("Scriptname", script);
+	TdfParser::TdfSection setup;
+	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
+	game->add_name_value("Mapname", map);
+	game->add_name_value("Gametype", mod);
+	game->add_name_value("Scriptname", script);
 	
-	setup.AddPair("IsHost", 1);
-	setup.AddPair("MyPlayerName", playername);
+	game->AddPair("IsHost", 1);
+	game->add_name_value("MyPlayerName", playername);
 	
-	setup.AddPair("NoHelperAIs", configHandler.GetInt("NoHelperAIs", 0));
+	game->AddPair("NoHelperAIs", configHandler.GetInt("NoHelperAIs", 0));
 	
-	setup.PushSection("PLAYER0");
-	setup.AddPair("Name", playername);
-	setup.AddPair("Team", 0);
-	setup.PopSection();
+	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
+	player0->add_name_value("Name", playername);
+	player0->AddPair("Team", 0);
 	
-	setup.PushSection("PLAYER1");
-	setup.AddPair("Name", "Enemy");
-	setup.AddPair("Team", 1);
-	setup.PopSection();
+	TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
+	player1->add_name_value("Name", "Enemy");
+	player1->AddPair("Team", 1);
 	
-	setup.PushSection("TEAM0");
-	setup.AddPair("Leader", 0);
-	setup.AddPair("AllyTeam", 0);
-	setup.PopSection();
+	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
+	team0->AddPair("Leader", 0);
+	team0->AddPair("AllyTeam", 0);
 	
-	setup.PushSection("TEAM1");
-	setup.AddPair("AllyTeam", 1);
-	setup.PopSection();
+	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
+	team1->AddPair("AllyTeam", 1);
 	
-	setup.PushSection("ALLYTEAM0");
-	setup.AddPair("NumAllies", 0);
-	setup.PopSection();
+	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");
+	ally0->AddPair("NumAllies", 0);
 	
-	setup.PushSection("ALLYTEAM1");
-	setup.AddPair("NumAllies", 0);
-	setup.PopSection();
-	setup.PopSection();
+	TdfParser::TdfSection* ally1 = game->construct_subsection("ALLYTEAM1");
+	ally1->AddPair("NumAllies", 0);
 	
-	return setup.Get();
+	std::ostringstream str;
+	setup.print(str);
+	
+	std::cout << std::endl << str.str() << std::endl;
+	return str.str();
 }
 
 SelectMenu::SelectMenu(bool server) :
