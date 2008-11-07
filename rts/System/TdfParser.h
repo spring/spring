@@ -46,7 +46,7 @@ public:
 		}
 	};
 
-	TdfParser();
+	TdfParser() {};
 	TdfParser( std::string const& filename );
 	TdfParser( const char* buffer, std::size_t size );
 
@@ -147,7 +147,7 @@ public:
 		stream >> value;
 	}
 	
-	TdfSection& GetRootSection() {return root_section; };
+	TdfSection* GetRootSection() {return &root_section; };
 
 private:
 	TdfSection root_section;
