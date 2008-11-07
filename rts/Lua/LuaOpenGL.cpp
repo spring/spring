@@ -4499,7 +4499,7 @@ int LuaOpenGL::Light(lua_State* L)
 		array[0] = (GLfloat)luaL_checknumber(L, 3);
 		array[1] = (GLfloat)luaL_checknumber(L, 4);
 		array[2] = (GLfloat)luaL_checknumber(L, 5);
-		array[3] = (GLfloat)luaL_checknumber(L, 5);
+		array[3] = (GLfloat)luaL_checknumber(L, 6);
 		glLightfv(light, pname, array);
 	}
 	else {

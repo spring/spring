@@ -29,6 +29,7 @@ public:
 	virtual void StopStream() = 0;
 	virtual void PauseStream() = 0;
 	virtual unsigned int GetStreamTime() = 0;
+	virtual unsigned int GetStreamPlayTime() = 0;
 	virtual void SetStreamVolume(float) = 0;
 
 	virtual void SetVolume(float vol) = 0; // 1 = full volume

@@ -119,7 +119,12 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
-inline float Square(const float& x)
+#ifndef __GNUC__
+#  define  __attribute__(x)  /*NOTHING*/
+#endif
+
+float Square(const float x) __attribute__((const));
+inline float Square(const float x)
 {
 	return x*x;
 }

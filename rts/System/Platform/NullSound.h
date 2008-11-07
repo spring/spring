@@ -20,6 +20,7 @@ public:
 	void StopStream() { return; }
 	void PauseStream() { return; }
 	unsigned int GetStreamTime() { return 0; }
+	unsigned int GetStreamPlayTime() { return 0; }
 	void SetStreamVolume(float) { return; }
 
 	void SetVolume(float vol) { return; }
