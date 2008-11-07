@@ -30,13 +30,20 @@ public:
 	};
 	struct TdfSection
 	{
+		TdfSection* construct_subsection(const std::string& name );
+		~TdfSection();
+		
 		std::map<std::string, TdfSection*> sections;
 		std::map<std::string, std::string> values;
 		void print( std::ostream & out ) const;
-		void add_name_value( std::string const& name, std::string& value );
-		TdfSection* construct_subsection( std::string const& name );
-
-		~TdfSection();
+		void add_name_value(const std::string& name, const std::string& value );
+		template<typename T>
+		void AddPair(const std::string& key, const T& value)
+		{
+			std::ostringstream buf;
+			buf << value;
+			add_name_value(key, buf.str());
+		}
 	};
 
 	TdfParser();
@@ -139,6 +146,8 @@ public:
 		stream << str;
 		stream >> value;
 	}
+	
+	TdfSection& GetRootSection() {return root_section; };
 
 private:
 	TdfSection root_section;
