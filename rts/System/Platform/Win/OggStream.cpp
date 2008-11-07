@@ -145,7 +145,7 @@ void COggStream::TogglePause() {
 	}
 }
 
-unsigned int COggStream::GetTime() {
+unsigned int COggStream::GetTotalTime() {
 	return ov_time_total(&oggStream,-1);
 }
 
