@@ -78,6 +78,8 @@ class LuaUnsyncedRead {
 		static int GetTimer(lua_State* L);
 		static int DiffTimers(lua_State* L);
 
+		static int GetSoundStreamTime(lua_State* L);
+
 		// moved from LuaUI
 		static int GetFPS(lua_State* L);
 

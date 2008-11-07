@@ -101,7 +101,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
 	REGISTER_LUA_CFUNC(PauseSoundStream);
-	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 	REGISTER_LUA_CFUNC(SetSoundStreamVolume);
 
 	REGISTER_LUA_CFUNC(SetCameraState);
@@ -541,11 +540,6 @@ int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
 	sound->PauseStream();
 	return 0;
-}
-int LuaUnsyncedCtrl::GetSoundStreamTime(lua_State* L)
-{
-	lua_pushnumber(L, sound->GetStreamTime());
-	return 1;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {

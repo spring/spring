@@ -24,6 +24,7 @@ public:
 	void StopStream();
 	void PauseStream();
 	unsigned int GetStreamTime();
+	unsigned int GetStreamPlayTime();
 	void SetStreamVolume(float);
 
 	void SetVolume(float v);

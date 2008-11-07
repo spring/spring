@@ -26,7 +26,8 @@ class COggStream {
 		void Stop();
 		void TogglePause();
 		void Update();
-		unsigned int GetPlayTime() const { return ((!stopped)? secsPlayed: 0); }
+		unsigned int GetPlayTime() const { return ((stopped)? 0 : secsPlayed); }
+		unsigned int GetTime();
 		void SetVolume(float, bool b = false);
 
 	private:

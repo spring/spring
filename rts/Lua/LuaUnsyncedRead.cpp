@@ -56,6 +56,7 @@ using namespace std;
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Sound.h"
 
 
 extern Uint8 *keys;
@@ -145,6 +146,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
+
+	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 
 	// moved from LuaUI
 
@@ -1221,6 +1224,17 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const Uint32 diffTime = (t1 - t2);
 	lua_pushnumber(L, (float)diffTime * 0.001f); // return seconds
 	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
+{
+	lua_pushnumber(L, sound->GetStreamPlayTime());
+	lua_pushnumber(L, sound->GetStreamTime());
+	return 2;
 }
 
 
