@@ -23,6 +23,8 @@ User Interface:
 Lua:
  - added Spring.GetLastMessagePositions() (returns the 10 last message positions)
  - moved Spring.GetDrawSelectionInfo() LuaUnsyncedCtrl -> LuaUnsyncedRead
+ - moved Spring.GetSoundStreamTime() LuaUnsyncedCtrl -> LuaUnsyncedRead
+ - added a 2nd return value to Spring.GetSoundStreamTime() (total sound stream length in seconds)
 
 Unitsync:
  - Don't crash/abort() on invalid handles, but throw exception instead
