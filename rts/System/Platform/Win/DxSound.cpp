@@ -132,7 +132,7 @@ void CDxSound::PlayStream(const std::string& path, float volume,
 
 void CDxSound::StopStream() { oggStream.Stop(); }
 void CDxSound::PauseStream() { oggStream.TogglePause(); }
-unsigned int CDxSound::GetStreamTime() { return oggStream.GetTime(); }
+unsigned int CDxSound::GetStreamTime() { return oggStream.GetTotalTime(); }
 unsigned int CDxSound::GetStreamPlayTime() { return oggStream.GetPlayTime(); }
 void CDxSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
 

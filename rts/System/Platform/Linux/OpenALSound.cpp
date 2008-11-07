@@ -165,7 +165,7 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 
 void COpenALSound::StopStream() { oggStream.Stop(); }
 void COpenALSound::PauseStream() { oggStream.TogglePause(); }
-unsigned int COpenALSound::GetStreamTime() { return oggStream.GetTime(); }
+unsigned int COpenALSound::GetStreamTime() { return oggStream.GetTotalTime(); }
 unsigned int COpenALSound::GetStreamPlayTime() { return oggStream.GetPlayTime(); }
 void COpenALSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
 
