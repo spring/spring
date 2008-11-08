@@ -73,6 +73,19 @@ public:
 		*  @return returns true on success, false otherwise and error message in value.
 		*/
 	bool SGetValue(std::string &value, std::string const& location) const;
+	template <typename T>
+	bool GetValue(T& val, const std::string& location) const
+	{
+		std::string buf;
+		if (SGetValue(buf, location))
+		{
+			std::istringstream stream(buf);
+			stream >> val;
+			return true;
+		}
+		else
+			return false;
+	};
 
 	/**
 		*  Treat the value as a vector and fill out vec with the items.

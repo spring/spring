@@ -63,16 +63,14 @@ void LocalSetup::Init(const std::string& setup)
 		else
 			throw content_error("Player doesn't have a name");
 	}
-	
-	int tmp_isHost;
-	file.GetDef(tmp_isHost,  "-1", "GAME\\IsHost");
-	if (tmp_isHost == 1)
-		isHost = true;
-	else if (tmp_isHost == 0)
-		isHost = false;
+
+	int tmp_isHost = 0;
+	if (file.GetValue(tmp_isHost, "GAME\\IsHost"))
+		isHost = static_cast<bool>(tmp_isHost);
 	else
 	{
 		for (int a = 0; a < MAX_PLAYERS; ++a) {
+			// search for the first player not from the demo, if it is ourself, we are the host
 			char section[50];
 			sprintf(section, "GAME\\PLAYER%i", a);
 			string s(section);
@@ -80,7 +78,7 @@ void LocalSetup::Init(const std::string& setup)
 			if (!file.SectionExist(s)) {
 				continue;
 			}
-			bool fromdemo;
+			bool fromdemo = false;
 			std::string name;
 			std::map<std::string, std::string> setup = file.GetAllValues(s);
 			std::map<std::string, std::string>::iterator it;
@@ -165,7 +163,7 @@ void CGameSetup::LoadStartPositions()
 		for (int i = 0; i < MAX_TEAMS; ++i)
 			teamStartNum[i] = i;
 		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
-		for (int i = 0; i < teamStartingData.size(); ++i)
+		for (unsigned i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 	else
@@ -249,10 +247,8 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		++i;
 	}
 
-	int playerCount = -1;
-	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
-
-	if (playerCount == -1 || playerStartingData.size() == playerCount)
+	unsigned playerCount = 0;
+	if (!file.GetValue(playerCount, "GAME\\NumPlayers") || playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
 		throw content_error("incorrect number of players in GameSetup script");
@@ -305,10 +301,8 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		++i;
 	}
 
-	int teamCount = -1;
-	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
-
-	if (teamCount == -1 || teamStartingData.size() == teamCount)
+	unsigned teamCount = 0;
+	if (!file.GetValue(teamCount, "Game\\NumTeams") || teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
@@ -355,10 +349,8 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	}
 
 
-	int allyCount = -1;
-	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
-
-	if (allyCount == -1 || allyStartingData.size() == allyCount)
+	unsigned allyCount = 0;
+	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
