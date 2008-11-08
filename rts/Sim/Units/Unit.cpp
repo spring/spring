@@ -2219,7 +2219,7 @@ void CUnit::PostLoad()
 
 	//FIXME script = SAFE_NEW CUnitScript(this);
 	//FIXME localmodel = modelParser->CreateLocalModel(model, script->GetPieces());
-	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->name+".cob"), this);
+	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(unitDef->scriptPath), this);
 	modelParser->CreateLocalModel(this);
 
 	// Calculate the max() of the available weapon reloadtimes
