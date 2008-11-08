@@ -1,4 +1,4 @@
-ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../CMakeLists.txt
+ADD_DEFINITIONS(-DSTREFLOP_SSE) # should be in ../CMakeLists.txt
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
