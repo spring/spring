@@ -335,7 +335,7 @@ def generate(env):
 		bool_opt('syncdebug', False)
 		bool_opt('synccheck', True)
 		bool_opt('synctrace', False)
-		string_opt('fpmath', '387')
+		string_opt('fpmath', 'sse')
 
 		# If sync debugger is on, disable inlining, as it makes it much harder to follow backtraces.
 		if env['syncdebug']:
