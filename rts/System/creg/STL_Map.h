@@ -1,22 +1,28 @@
 #ifndef CR_MAP_TYPE_IMPL_H
 #define CR_MAP_TYPE_IMPL_H
 
-#include "creg.h"
-
-///@TODO gcc hash_map declared as deprecated, port to hash_map
 #ifdef _MSC_VER
 	#define SPRING_HASH_MAP stdext::hash_map
-	#define SPRING_HASH_MAP_H <hash_map>
+	#include <hash_map>
 #elif __GNUG__
-	#define SPRING_HASH_MAP __gnu_cxx::hash_map
-	#define SPRING_HASH_MAP_H <ext/hash_map>
+/* Test for GCC >= 4.3.2 */
+	#if __GNUC__ > 4 || \
+		(__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
+						(__GNUC_MINOR__ == 3 && \
+							__GNUC_PATCHLEVEL__ >= 2)))
+		#include <tr1/unordered_map>
+		#define SPRING_HASH_MAP std::tr1::unordered_map
+	#else
+		#define SPRING_HASH_MAP __gnu_cxx::hash_map
+		#include <ext/hash_map>
+	#endif
 #else
 	#error Unsupported compiler
 #endif
 
 #include <map>
-// hash_map, defined in stdafx.h
-#include SPRING_HASH_MAP_H
+
+#include "creg.h"
 
 namespace creg
 {

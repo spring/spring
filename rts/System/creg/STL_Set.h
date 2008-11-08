@@ -1,21 +1,26 @@
 #ifndef CR_SET_TYPE_IMPL_H
 #define CR_SET_TYPE_IMPL_H
 
-///@TODO gcc hash_set declared as deprecated, port to unordered_set
 #ifdef _MSC_VER
+	#include <hash_set>
 	#define SPRING_HASH_SET stdext::hash_set
-	#define SPRING_HASH_SET_H <hash_set>
 #elif __GNUG__
-	#define SPRING_HASH_SET __gnu_cxx::hash_set
-	#define SPRING_HASH_SET_H <ext/hash_set>
+	/* Test for GCC >= 4.3.2 */
+	#if __GNUC__ > 4 || \
+		(__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
+						(__GNUC_MINOR__ == 3 && \
+							__GNUC_PATCHLEVEL__ >= 2)))
+		#include <tr1/unordered_set>
+		#define SPRING_HASH_SET std::tr1::unordered_set
+	#else
+		#define SPRING_HASH_SET __gnu_cxx::hash_set
+		#include <ext/hash_set>
+	#endif
 #else
 	#error Unsupported compiler
 #endif
 
 #include <set>
-// hash_set, defined in stdafx.h
-#include "System/StdAfx.h"
-#include SPRING_HASH_SET_H
 
 namespace creg
 {
