@@ -509,11 +509,11 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	net->loading = false;
 	thread.join();
 #ifdef USE_GML
-	logOutput.Print("Spring %s MT (%d threads)",VERSION_STRING_DETAILED, gmlThreadCount);
+	logOutput.Print("Spring %s MT (%d threads)",SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	logOutput.Print("Spring %s",VERSION_STRING_DETAILED);
+	logOutput.Print("Spring %s",SpringVersion::GetFull().c_str());
 #endif
-	logOutput.Print("Build date/time: %s", BUILD_DATETIME);
+	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
 	//sending your playername to the server indicates that you are finished loading
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 

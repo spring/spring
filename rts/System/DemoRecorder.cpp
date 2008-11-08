@@ -40,7 +40,7 @@ CDemoRecorder::CDemoRecorder()
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	strcpy(fileHeader.versionString, VERSION_STRING);
+	strcpy(fileHeader.versionString, SpringVersion::Get().c_str());
 
 	__time64_t currtime;
 	_time64(&currtime);
@@ -116,7 +116,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
         newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
-	name += std::string("_") + VERSION_STRING_DETAILED;
+	name += std::string("_") + SpringVersion::Get();
 	// games without gameSetup should have different names
 	if (!gameSetup) {
 	    name = "local_" + name;

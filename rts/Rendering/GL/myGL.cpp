@@ -280,9 +280,9 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	}
 	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
 #ifdef USE_GML
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s MT (%d threads)", VERSION_STRING_DETAILED, gmlThreadCount);
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", VERSION_STRING_DETAILED);
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", SpringVersion::GetFull().c_str());
 #endif
 	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
 	if (swapbuffers) {

@@ -57,7 +57,7 @@ namespace
 		COneTimeInit()
 		{
 			logOutput.SetFilename("unitsync.log");
-			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", VERSION_STRING_DETAILED);
+			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 		}
 	};
 }
@@ -209,7 +209,7 @@ DLL_EXPORT const char* __stdcall GetNextError()
  */
 DLL_EXPORT const char* __stdcall GetSpringVersion()
 {
-	return VERSION_STRING;
+	return SpringVersion::Get().c_str();
 }
 
 
@@ -292,7 +292,7 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 		}
 
 		syncer = new CSyncer();
-		logOutput.Print(LOG_UNITSYNC, "initialized, %s\n", VERSION_STRING_DETAILED);
+		logOutput.Print(LOG_UNITSYNC, "initialized, %s\n", SpringVersion::GetFull().c_str());
 		logOutput.Print(LOG_UNITSYNC, "%s\n", isServer ? "hosting" : "joining");
 		return 1;
 	}
@@ -2331,7 +2331,7 @@ const char *GetStr(string str)
 	//static char strBuf[STRBUF_SIZE];
 
 	if (str.length() + 1 > STRBUF_SIZE) {
-		sprintf(strBuf, "Increase STRBUF_SIZE (needs %d bytes)", str.length() + 1);
+		sprintf(strBuf, "Increase STRBUF_SIZE (needs %ld bytes)", str.length() + 1);
 	}
 	else {
 		strcpy(strBuf, str.c_str());
