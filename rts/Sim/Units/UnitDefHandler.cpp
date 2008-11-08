@@ -684,6 +684,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.model.modelpath = "objects3d/" + objectname;
 	ud.model.modelname = objectname;
 
+	ud.scriptName = udTable.GetString("script", unitName + ".cob");
+	ud.scriptPath = "scripts/" + ud.scriptName;
+
 	ud.wreckName = udTable.GetString("corpse", "");
 	ud.deathExplosion = udTable.GetString("explodeAs", "");
 	ud.selfDExplosion = udTable.GetString("selfDestructAs", "");

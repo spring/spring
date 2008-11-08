@@ -4671,13 +4671,18 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Missing unit name");
 		return;
 	}
-	const string name = "scripts/" + unitName + ".cob";
-	const CCobFile* oldScript = GCobEngine.GetScriptAddr(name);
-	if (oldScript == NULL) {
-		logOutput.Print("Unknown cob script: %s", name.c_str());
+	const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+	if (unitDef == NULL) {
+		logOutput.Print("Unknown unit name");
 		return;
 	}
-	CCobFile* newScript = &GCobEngine.ReloadCobFile(name);
+	const string scriptPath = unitDef->scriptPath;
+	const CCobFile* oldScript = GCobEngine.GetScriptAddr(scriptPath);
+	if (oldScript == NULL) {
+		logOutput.Print("Unknown cob script: %s", scriptPath.c_str());
+		return;
+	}
+	CCobFile* newScript = &GCobEngine.ReloadCobFile(scriptPath);
 	int count = 0;
 	for (int i = 0; i < MAX_UNITS; i++) {
 		CUnit* unit = uh->units[i];

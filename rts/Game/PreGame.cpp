@@ -407,6 +407,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	logOutput << "Using mod " << gameData->GetMod() << "\n";
 	LoadMod(gameData->GetMod());
 	modArchive = archiveScanner->ModNameToModArchive(gameData->GetMod());
+	logOutput << "Using mod archive " << modArchive << "\n";
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
 	
 }

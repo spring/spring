@@ -921,6 +921,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("pieceTrailCEGTag",   ud.pieceTrailCEGTag);
 	ADD_INT(   "pieceTrailCEGRange", ud.pieceTrailCEGRange);
 
+	ADD_STRING("scriptName", ud.scriptName);
+	ADD_STRING("scriptPath", ud.scriptPath);
+
 	return true;
 }
 
