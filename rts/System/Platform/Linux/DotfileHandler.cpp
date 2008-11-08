@@ -228,7 +228,7 @@ string DotfileHandler::GetDefaultConfig()
 	const string home = getenv("HOME");
 
 	const string defCfg = home + "/" + base;
-	const string verCfg = defCfg + "-" + string(VERSION_STRING);
+	const string verCfg = defCfg + "-" + SpringVersion::Get();
 
 	string cfg;
 

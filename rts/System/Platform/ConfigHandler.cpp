@@ -42,7 +42,7 @@ ConfigHandler& ConfigHandler::GetInstance()
 		if (configSource.empty()) {
 #ifdef _WIN32
 			configSource = "Software\\SJ\\Spring";
-			std::string version(VERSION_STRING);
+			const std::string version = SpringVersion::Get();
 			if (version.size()>0 && version[version.size()-1] == '+')
 				configSource += " SVN";
 #elif defined(__APPLE__)

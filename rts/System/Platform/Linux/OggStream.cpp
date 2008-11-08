@@ -88,7 +88,7 @@ unsigned int COggStream::GetTotalTime() {
 void COggStream::DisplayInfo() {
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
-	logOutput.Print("time (sec):        %d", ov_time_total(&oggStream,-1));
+	logOutput.Print("time (sec):        %lf", ov_time_total(&oggStream,-1));
 	logOutput.Print("rate (Hz):         %ld", vorbisInfo->rate);
 	logOutput.Print("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
 	logOutput.Print("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);

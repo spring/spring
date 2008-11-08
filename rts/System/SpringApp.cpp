@@ -233,7 +233,7 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
-	if (!InitWindow(("Spring " + std::string(VERSION_STRING_DETAILED)).c_str())) {
+	if (!InitWindow(("Spring " + SpringVersion::GetFull()).c_str())) {
 		SDL_Quit();
 		return false;
 	}
@@ -673,10 +673,10 @@ void SpringApp::ParseCmdLine()
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->result("help")) {
-		cmdline->usage("Spring",VERSION_STRING);
+		cmdline->usage("Spring",SpringVersion::GetFull());
 		exit(0);
 	} else if (cmdline->result("version")) {
-		std::cout << "Spring " << VERSION_STRING << std::endl;
+		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();

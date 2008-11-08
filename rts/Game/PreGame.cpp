@@ -59,7 +59,7 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 
 	if(!settings->isHost)
 	{
-		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
+		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, SpringVersion::GetFull());
 	}
 	else
 	{
@@ -209,7 +209,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
 	gameServer = new CGameServer(settings.get(), false, startupData, setup);
-	gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
+	gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -310,7 +310,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
-			gameServer->AddLocalClient(settings->myPlayerName, std::string(VERSION_STRING_DETAILED));
+			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
 			break;
 		}

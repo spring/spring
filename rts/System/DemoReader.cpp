@@ -46,7 +46,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// debugging SVN demos impossible (because VERSION_STRING is different
 		// each build.)
 #ifndef _DEBUG
-		|| strcmp(fileHeader.versionString, VERSION_STRING)
+		|| strcmp(fileHeader.versionString, SpringVersion::Get().c_str())
 #endif
 	) {
 		delete playbackDemo;
