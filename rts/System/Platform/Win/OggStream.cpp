@@ -1,6 +1,6 @@
 #include <SDL.h>
 
-#include "OggStream.h"
+#include "Platform/Linux/OggStream.h"
 #include "LogOutput.h"
 
 

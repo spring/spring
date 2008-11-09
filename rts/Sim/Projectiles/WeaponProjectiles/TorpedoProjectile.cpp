@@ -13,7 +13,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "TorpedoProjectile.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

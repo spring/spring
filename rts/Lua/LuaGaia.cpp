@@ -19,16 +19,16 @@
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
+#include "Util.h"
 
 
 CLuaGaia* luaGaia = NULL;

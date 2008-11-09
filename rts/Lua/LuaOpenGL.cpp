@@ -60,9 +60,9 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
-#include "System/LogOutput.h"
-#include "System/Matrix44f.h"
-#include "System/Platform/ConfigHandler.h"
+#include "LogOutput.h"
+#include "Matrix44f.h"
+#include "Platform/ConfigHandler.h"
 
 using std::max;
 using std::string;

@@ -21,7 +21,7 @@
 #include "LuaUtils.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -48,11 +48,11 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "Platform/FileSystem.h"
+#include "Util.h"
 
 using namespace std;
 

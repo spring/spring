@@ -4,10 +4,10 @@
 
 #include "ColorMap.h"
 #include "Bitmap.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Bitmap.h"
 #include "FileSystem/FileHandler.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 std::vector<CColorMap *> CColorMap::colorMaps;
 std::map<std::string, CColorMap *> CColorMap::colorMapsMap;

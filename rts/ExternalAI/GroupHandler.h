@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "ExternalAI/aikey.h"
-#include "Game/GlobalConstants.h"
+#include "aikey.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 class CGroup;
 class CUnitSet;

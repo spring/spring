@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 using std::min;
 using std::max;

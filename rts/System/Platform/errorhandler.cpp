@@ -9,7 +9,7 @@
  * GNU GPL, v2 or later.
  */
 #include <StdAfx.h>
-#include "Platform/errorhandler.h"
+#include "errorhandler.h"
 
 #include <SDL.h>
 #ifdef _WIN32

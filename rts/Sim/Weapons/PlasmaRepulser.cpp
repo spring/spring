@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "PlasmaRepulser.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -17,7 +17,7 @@
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "mmgr.h"
-#include "System/myMath.h"
+#include "myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
 

@@ -5,16 +5,16 @@
 #include "EndGameBox.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/Player.h"
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/Game.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 
 extern bool globalQuit;

@@ -5,18 +5,18 @@
 #include "mmgr.h"
 
 #include "SpawnScript.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
-#include "Sim/SideParser.h"
+#include "Sim/Misc/SideParser.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
 
 
 extern std::string stupidGlobalMapname;

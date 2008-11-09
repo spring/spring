@@ -35,15 +35,15 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 
 
 static const LuaHashString unsyncedStr("UNSYNCED");

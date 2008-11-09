@@ -35,7 +35,7 @@
 #include "Lightcalc.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
-#include "System/Util.h"
+#include "Util.h"
 
 #include <SDL.h>
 #include <IL/il.h>

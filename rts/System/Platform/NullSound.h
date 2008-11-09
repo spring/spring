@@ -1,7 +1,7 @@
 #ifndef NULL_SOUND_H
 #define NULL_SOUND_H
 
-#include "../Sound.h"
+#include "Sound.h"
 
 // Null sound system
 class CNullSound: public CSound

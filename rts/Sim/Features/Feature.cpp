@@ -3,7 +3,7 @@
 
 #include "Feature.h"
 #include "FeatureHandler.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -16,7 +16,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -24,7 +24,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include <assert.h>
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )

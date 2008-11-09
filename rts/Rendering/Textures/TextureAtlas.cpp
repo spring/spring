@@ -3,13 +3,13 @@
 #include "mmgr.h"
 
 #include "TextureAtlas.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Bitmap.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
-#include "System/Vec2.h"
+#include "Util.h"
+#include "Exceptions.h"
+#include "Vec2.h"
 
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );

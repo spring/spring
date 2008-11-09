@@ -9,8 +9,8 @@
 
 #include "mmgr.h"
 
-#include "Game/Team.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "SelectedUnits.h"
 #include "WaitCommandsAI.h"
 #include "Rendering/GL/myGL.h"
@@ -33,8 +33,8 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/EventHandler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "EventHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "Player.h"
 #include "Camera.h"
 #include "Sound.h"

@@ -13,9 +13,9 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "System/UnsyncedRNG.h"
-#include "System/Exceptions.h"
-#include "System/Util.h"
+#include "UnsyncedRNG.h"
+#include "Exceptions.h"
+#include "Util.h"
 
 
 using namespace std;

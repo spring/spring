@@ -4,10 +4,10 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -21,9 +21,9 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
 #include "creg/STL_Map.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 

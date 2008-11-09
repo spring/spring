@@ -2,13 +2,13 @@
 #include "mmgr.h"
 
 #include "CommanderScript2.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
-#include "Sim/SideParser.h"
+#include "Sim/Misc/SideParser.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 #include "Exceptions.h"
 
 

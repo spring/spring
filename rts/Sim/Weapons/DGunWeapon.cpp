@@ -1,13 +1,13 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));

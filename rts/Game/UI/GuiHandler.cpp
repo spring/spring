@@ -50,12 +50,12 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/EventHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Util.h"
-#include "System/myMath.h"
+#include "EventHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
+#include "Util.h"
+#include "myMath.h"
 
 extern Uint8 *keys;
 

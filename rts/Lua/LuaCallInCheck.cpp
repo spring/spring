@@ -6,7 +6,7 @@
 
 #include "LuaCallInCheck.h"
 #include "LuaInclude.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 
 
 /******************************************************************************/

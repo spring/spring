@@ -4,7 +4,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "GlobalUnsynced.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -22,7 +22,7 @@
 #include "Sync/SyncTracer.h"
 #include "Unsynced/SmokeProjectile.h"
 #include "Unsynced/SmokeTrailProjectile.h"
-#include "System/Util.h"
+#include "Util.h"
 
 static const float Smoke_Time = 40;
 

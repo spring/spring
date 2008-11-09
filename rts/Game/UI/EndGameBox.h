@@ -5,7 +5,7 @@
 #include <list>
 #include <vector>
 #include "Rendering/GL/myGL.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Rendering/Textures/Bitmap.h"
 
 

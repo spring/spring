@@ -10,7 +10,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "LogOutput.h"
@@ -36,9 +36,9 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "myMath.h"
 #include "creg/STL_Map.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );

@@ -15,9 +15,9 @@
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 #include "IFramebuffer.h"
 

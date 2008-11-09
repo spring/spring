@@ -8,7 +8,7 @@ using namespace std;
 
 #include "MapParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "System/FileSystem/FileHandler.h"
+#include "FileSystem/FileHandler.h"
 
 
 string MapParser::GetMapConfigName(const string& mapName)

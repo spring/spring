@@ -8,7 +8,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"

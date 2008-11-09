@@ -22,14 +22,14 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/Player.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using namespace std;
 

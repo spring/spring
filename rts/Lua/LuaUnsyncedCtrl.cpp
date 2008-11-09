@@ -32,7 +32,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/Player.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -54,12 +54,12 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
-#include "System/LogOutput.h"
-#include "System/NetProtocol.h"
-#include "System/Sound.h"
+#include "LogOutput.h"
+#include "NetProtocol.h"
+#include "Sound.h"
 
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 
 using namespace std;
 

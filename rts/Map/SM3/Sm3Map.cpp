@@ -15,7 +15,7 @@
 #include "Platform/byteorder.h"
 #include "FileSystem/FileHandler.h"
 #include "TdfParser.h"
-#include "System/Util.h"
+#include "Util.h"
 
 #include "terrain/TerrainNode.h"
 #include "Game/Camera.h"

@@ -4,7 +4,7 @@
 #include "Object.h"
 #include "Platform/ConfigHandler.h"
 #include "float3.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include <map>
 #include <string>
 

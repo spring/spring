@@ -5,8 +5,8 @@
 
 #include "mmgr.h"
 
-#include "System/myMath.h"
-#include "System/GlobalUnsynced.h"
+#include "myMath.h"
+#include "GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
 

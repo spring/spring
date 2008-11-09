@@ -6,9 +6,9 @@
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h"
-#include "Map/Ground.h"
-#include "Map/HeightLinePalette.h"
-#include "Map/ReadMap.h"
+#include "Ground.h"
+#include "HeightLinePalette.h"
+#include "ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -18,8 +18,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/FastMath.h"
+#include "Platform/ConfigHandler.h"
+#include "FastMath.h"
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {

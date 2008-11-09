@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/GameSetup.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "NetProtocol.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"

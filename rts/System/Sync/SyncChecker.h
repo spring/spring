@@ -11,7 +11,7 @@
 #include <SDL_types.h>
 
 #ifdef TRACE_SYNC
-#include "Sync/SyncTracer.h"
+#include "SyncTracer.h"
 #endif
 
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */

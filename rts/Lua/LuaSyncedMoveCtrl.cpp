@@ -19,8 +19,8 @@
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "myMath.h"
+#include "LogOutput.h"
 
 using namespace std;
 

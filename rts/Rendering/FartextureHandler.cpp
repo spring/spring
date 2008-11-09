@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
+#include "GL/myGL.h"
 #include "mmgr.h"
 
 #include "FartextureHandler.h"
@@ -7,7 +7,7 @@
 #include "GL/myGL.h"
 #include "GlobalUnsynced.h"
 #include "UnitModels/UnitDrawer.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 
 CFartextureHandler* fartextureHandler = NULL;

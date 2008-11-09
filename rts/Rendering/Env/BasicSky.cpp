@@ -18,7 +18,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
 #include "Platform/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Matrix44f.h"
 #include "LogOutput.h"
 

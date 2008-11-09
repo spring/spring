@@ -8,7 +8,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "MouseHandler.h"
@@ -20,7 +20,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "System/myMath.h"
+#include "myMath.h"
 
 CSelectionKeyHandler *selectionKeys;
 

@@ -1,7 +1,7 @@
 #ifndef MYMATH_H
 #define MYMATH_H
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Vec2.h"
 #include "float3.h"
 

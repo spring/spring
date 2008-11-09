@@ -13,8 +13,8 @@
 #include "LuaHandle.h"
 
 #include "Game/UI/LuaUI.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
+#include "LuaGaia.h"
+#include "LuaRules.h"
 
 #include "LuaCallInCheck.h"
 #include "LuaHashString.h"
@@ -26,7 +26,7 @@
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -34,10 +34,10 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/SpringApp.h"
-#include "System/FileSystem/FileHandler.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "SpringApp.h"
+#include "FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
 

@@ -4,7 +4,7 @@
 
 #include "GroundBlockingObjectMap.h"
 
-#include "Game/GlobalSynced.h"
+#include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Path/PathManager.h"
 #include "creg/STL_Map.h"

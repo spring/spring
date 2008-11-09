@@ -13,18 +13,18 @@
 #include "TextureHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -4,10 +4,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Factory.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -25,8 +25,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
 #include "Sound.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"

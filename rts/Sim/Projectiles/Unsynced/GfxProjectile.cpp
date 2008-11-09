@@ -4,12 +4,12 @@
 //////////////////////////////////////////////////////////////////////
 #include "mmgr.h"
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/Camera.h"
 #include "GfxProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
 

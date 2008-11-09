@@ -6,7 +6,7 @@
 #include "CategoryHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_Map.h"
-#include "System/Util.h"
+#include "Util.h"
 
 CR_BIND(CCategoryHandler, );
 

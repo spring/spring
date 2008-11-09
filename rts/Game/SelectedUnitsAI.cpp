@@ -13,7 +13,7 @@
 #include "SelectedUnits.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"
 #include "Player.h"
 #include "WaitCommandsAI.h"
@@ -23,7 +23,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "GroundMoveType.h"
+//#include "Sim/MoveTypes/GroundMoveType.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

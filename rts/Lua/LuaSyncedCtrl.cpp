@@ -25,7 +25,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -59,8 +59,8 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "myMath.h"
+#include "LogOutput.h"
 
 using namespace std;
 

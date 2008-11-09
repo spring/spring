@@ -2,7 +2,7 @@
 
 #include "UnitTable.h"
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
 
 /// CR_BIND(CUnitTable, );
@@ -18,12 +18,12 @@
 /// 	CR_MEMBER(metal_storages),
 /// 	CR_MEMBER(energy_storages),
 /// 	CR_MEMBER(nuke_silos),
-/// 
+///
 /// 	CR_MEMBER(numOfSides),
 /// 	CR_MEMBER(sideNames),
 /// 	CR_MEMBER(modSideMap),
 /// 	CR_MEMBER(teamSides),
-/// 
+///
 /// 	CR_MEMBER(unitTypes)
 /// ));
 

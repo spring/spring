@@ -19,8 +19,8 @@ using std::string;
 
 #include "LuaHandle.h"
 #include "LuaInclude.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "Platform/FileSystem.h"
+#include "Util.h"
 
 
 /******************************************************************************/

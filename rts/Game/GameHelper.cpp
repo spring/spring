@@ -6,12 +6,12 @@
 #include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Camera.h"
-#include "Game/GameSetup.h"
+#include "GameSetup.h"
 #include "Game.h"
 #include "GameHelper.h"
-#include "Game/UI/LuaUI.h"
+#include "UI/LuaUI.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -26,7 +26,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -37,8 +37,8 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
-#include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "EventHandler.h"
+#include "myMath.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

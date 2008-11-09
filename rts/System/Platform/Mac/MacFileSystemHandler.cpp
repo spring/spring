@@ -9,7 +9,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "StdAfx.h"
 #include "LogOutput.h"
-#include "Platform/Mac/MacFileSystemHandler.h"
+#include "MacFileSystemHandler.h"
 
 /**
  * This does exactly the same as the constructor of UnixFileSystemHandler, but unfortunately

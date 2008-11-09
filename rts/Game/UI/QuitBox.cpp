@@ -2,8 +2,8 @@
 #include <SDL_keysym.h>
 #include "mmgr.h"
 
-#include "Game/Team.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 #include "MouseHandler.h"
 #include "NetProtocol.h"

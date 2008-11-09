@@ -8,7 +8,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL,0));
 

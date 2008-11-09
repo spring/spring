@@ -20,7 +20,7 @@ using namespace std;
 #include "LuaRules.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 
 
 /******************************************************************************/

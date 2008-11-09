@@ -14,14 +14,14 @@
 #undef KeyPress
 #undef KeyRelease
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"
 #include "Game/SelectMenu.h"
 #include "Game/PreGame.h"
 #include "Game/Game.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/UI/KeyBindings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
@@ -40,9 +40,9 @@
 #include "MouseInput.h"
 #include "bitops.h"
 #include "Sync/Syncify.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 #include "mmgr.h"
 

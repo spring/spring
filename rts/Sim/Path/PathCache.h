@@ -5,7 +5,7 @@
 #include <list>
 
 #include "IPath.h"
-#include "System/Vec2.h"
+#include "Vec2.h"
 
 class CPathCache
 {

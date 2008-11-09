@@ -18,7 +18,7 @@
 #include "StarburstProjectile.h"
 #include "Sync/SyncTracer.h"
 #include "Rendering/UnitModels/s3oParser.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 static const float Smoke_Time=70;
 
