@@ -10,7 +10,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Map/MapInfo.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Platform/ConfigHandler.h"
 
 #include <SDL_keysym.h>

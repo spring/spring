@@ -15,8 +15,8 @@
 #include "Game/Camera.h"
 #include "bitops.h"
 #include "mmgr.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using namespace std;
 

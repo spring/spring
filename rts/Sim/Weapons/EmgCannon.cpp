@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "EmgCannon.h"
 #include "Game/GameHelper.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/EmgProjectile.h"

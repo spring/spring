@@ -20,12 +20,12 @@
 #include "Sim/Units/Unit.h"
 #include "SM3/Sm3Map.h"
 #include "SMF/SmfReadMap.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/LoadSaveInterface.h"
-#include "System/LogOutput.h"
-#include "System/Platform/errorhandler.h"
-#include "System/Exceptions.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "LoadSaveInterface.h"
+#include "LogOutput.h"
+#include "Platform/errorhandler.h"
+#include "Exceptions.h"
 
 using namespace std;
 

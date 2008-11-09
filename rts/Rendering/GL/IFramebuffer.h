@@ -6,7 +6,7 @@
 #ifndef _IFRAMEBUFFER_H
 #define _IFRAMEBUFFER_H
 
-#include "Rendering/GL/myGL.h"
+#include "myGL.h"
 
 enum FramebufferAttachType
 {

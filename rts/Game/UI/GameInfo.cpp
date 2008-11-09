@@ -11,11 +11,11 @@
 #include "Rendering/glFont.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 
 
 using namespace std;

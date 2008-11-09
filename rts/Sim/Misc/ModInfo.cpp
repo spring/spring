@@ -9,10 +9,10 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
-#include "System/LogOutput.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/Exceptions.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "Exceptions.h"
 
 
 CModInfo modInfo;

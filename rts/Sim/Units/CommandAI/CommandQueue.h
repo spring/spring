@@ -3,7 +3,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include <deque>
-#include "Sim/Units/CommandAI/Command.h"
+#include "Command.h"
 
 // A wrapper class for  std::deque<Command>  to keep track of commands
 

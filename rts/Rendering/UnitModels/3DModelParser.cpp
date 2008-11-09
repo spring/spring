@@ -8,7 +8,7 @@
 #include "3DOParser.h"
 #include "s3oParser.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "System/Util.h"
+#include "Util.h"
 
 C3DModelParser* modelParser=0;
 

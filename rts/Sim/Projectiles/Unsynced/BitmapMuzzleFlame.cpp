@@ -2,12 +2,12 @@
 #include "mmgr.h"
 
 #include "BitmapMuzzleFlame.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 

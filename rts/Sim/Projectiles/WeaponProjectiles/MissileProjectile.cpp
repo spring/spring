@@ -21,7 +21,7 @@
 #include "Sync/SyncTracer.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 static const float Smoke_Time=60;
 

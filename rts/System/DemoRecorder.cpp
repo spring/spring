@@ -12,9 +12,9 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
-#include "System/Exceptions.h"
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
+#include "Exceptions.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
 
 #include "LogOutput.h"
 

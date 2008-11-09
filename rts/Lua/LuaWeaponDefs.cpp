@@ -24,10 +24,10 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
-#include "System/Util.h"
-#include "Game/GlobalSynced.h"
+#include "FileSystem/SimpleParser.h"
+#include "LogOutput.h"
+#include "Util.h"
+#include "Sim/Misc/GlobalSynced.h"
 
 using namespace std;
 

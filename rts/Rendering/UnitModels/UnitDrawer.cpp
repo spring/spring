@@ -9,7 +9,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Lua/LuaRules.h"
@@ -42,7 +42,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "mmgr.h"
 
 #ifdef USE_GML

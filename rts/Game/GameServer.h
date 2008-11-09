@@ -13,8 +13,8 @@
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
-#include "Game/GlobalConstants.h"
-#include "System/UnsyncedRNG.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "UnsyncedRNG.h"
 #include "SFloat3.h"
 
 class CBaseNetProtocol;

@@ -6,7 +6,7 @@
 
 #include "PathManager.h"
 #include "LogOutput.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/GroundMoveMath.h"
 #include "Sim/MoveTypes/MoveMath/HoverMoveMath.h"

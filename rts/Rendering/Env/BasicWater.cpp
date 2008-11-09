@@ -10,7 +10,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

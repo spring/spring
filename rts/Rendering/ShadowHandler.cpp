@@ -13,10 +13,10 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/IFramebuffer.h"
+#include "GL/myGL.h"
+#include "GL/IFramebuffer.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 
 CShadowHandler* shadowHandler=0;
 

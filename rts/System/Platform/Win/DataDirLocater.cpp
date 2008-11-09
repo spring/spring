@@ -1,1 +1,1 @@
-#include "Platform/Linux/DataDirLocater.cpp"
+#include "DataDirLocater.cpp"

@@ -33,7 +33,7 @@ using namespace std;
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
 #include "Game/CameraHandler.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
@@ -52,11 +52,11 @@ using namespace std;
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/NetProtocol.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Sound.h"
+#include "NetProtocol.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "Platform/FileSystem.h"
+#include "Sound.h"
 
 
 extern Uint8 *keys;

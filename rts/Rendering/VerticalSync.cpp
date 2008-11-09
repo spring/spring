@@ -11,9 +11,9 @@
 #include "mmgr.h"
 
 #include "VerticalSync.h"
-#include "Rendering/GL/myGL.h"
-#include "System/LogOutput.h"
-#include "System/Platform/ConfigHandler.h"
+#include "GL/myGL.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
 
 
 CVerticalSync VSync;

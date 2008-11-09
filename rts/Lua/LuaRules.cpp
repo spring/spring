@@ -24,8 +24,8 @@
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
-#include "Game/Team.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DModelParser.h"
@@ -37,9 +37,9 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 #include <assert.h>
 
 CLuaRules* luaRules = NULL;

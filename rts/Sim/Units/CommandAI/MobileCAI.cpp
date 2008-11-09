@@ -7,7 +7,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
@@ -21,11 +21,11 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/DGunWeapon.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 #include "myMath.h"
 #include <assert.h>
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 

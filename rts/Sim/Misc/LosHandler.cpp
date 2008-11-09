@@ -9,7 +9,7 @@
 
 #include "LosHandler.h"
 
-#include "Sim/ModInfo.h"
+#include "ModInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"

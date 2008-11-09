@@ -11,7 +11,7 @@
 
 #include "KeyBindings.h"
 #include "Game/GameSetup.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Lua/LuaConstGame.h"
 #include "Lua/LuaUnitDefs.h"
 #include "Lua/LuaWeaponDefs.h"
@@ -19,14 +19,14 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
-#include "System/Util.h"
+#include "FileSystem/SimpleParser.h"
+#include "LogOutput.h"
+#include "Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

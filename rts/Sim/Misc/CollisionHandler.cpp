@@ -1,15 +1,15 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "System/FastMath.h"
-#include "System/float3.h"
-#include "System/Matrix44f.h"
+#include "FastMath.h"
+#include "float3.h"
+#include "Matrix44f.h"
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "GroundBlockingObjectMap.h"
 
-#include "Game/GlobalSynced.h"
+#include "GlobalSynced.h"
 
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"

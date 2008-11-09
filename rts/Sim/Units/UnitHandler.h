@@ -13,7 +13,7 @@ class CUnit;
 
 #include "UnitDef.h"
 #include "UnitSet.h"
-#include "Sim/Units/CommandAI/Command.h"
+#include "CommandAI/Command.h"
 
 class CBuilderCAI;
 class CFeature;

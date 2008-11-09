@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <cstring>
 
-#include "GameSetup.h"
+#include "Game/GameSetup.h"
 #include "Team.h"
-#include "Player.h"
+#include "Game/Player.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 

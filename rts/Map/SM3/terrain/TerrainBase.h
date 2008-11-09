@@ -31,7 +31,7 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include "../Frustum.h"
+#include "Map/SM3/Frustum.h"
 #include "Matrix44f.h"
 
 #include "LogOutput.h"

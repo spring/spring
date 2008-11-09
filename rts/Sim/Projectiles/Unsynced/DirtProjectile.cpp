@@ -10,7 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
 

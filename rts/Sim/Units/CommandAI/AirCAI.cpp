@@ -15,11 +15,11 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "myMath.h"
+#include "LogOutput.h"
 #include <assert.h>
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
 
 
 CR_BIND_DERIVED(CAirCAI,CMobileCAI , );

@@ -12,8 +12,8 @@
 #include "LogOutput.h"
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "System/Exceptions.h"
+#include "Textures/Bitmap.h"
+#include "Exceptions.h"
 
 using std::string;
 

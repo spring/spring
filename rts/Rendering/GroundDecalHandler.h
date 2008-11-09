@@ -5,9 +5,9 @@
 #include <list>
 #include <vector>
 #include <string>
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "UnitModels/UnitDrawer.h"
+#include "GL/myGL.h"
+#include "GL/VertexArray.h"
 #include "Util.h"
 
 class CUnit;

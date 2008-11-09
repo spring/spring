@@ -16,15 +16,15 @@
 
 #include "LuaInclude.h"
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "Platform/FileSystem.h"
 
 using namespace std;
 

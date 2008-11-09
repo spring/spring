@@ -18,7 +18,7 @@
 #include <list>
 #include <SDL_types.h>
 
-#include "OggStream.h"
+#include "Platform/Linux/OggStream.h"
 
 class CWorldObject;
 

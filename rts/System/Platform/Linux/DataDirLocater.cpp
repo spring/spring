@@ -22,10 +22,10 @@
 #endif
 #include <sstream>
 #include <string.h>
-#include "System/FileSystem/VFSHandler.h"
-#include "System/LogOutput.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "FileSystem/VFSHandler.h"
+#include "LogOutput.h"
+#include "Platform/ConfigHandler.h"
+#include "Platform/FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 

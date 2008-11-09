@@ -4,7 +4,7 @@
 #include <set>
 #include <string>
 
-#include "System/float3.h" // for zerovector
+#include "float3.h" // for zerovector
 
 class CWorldObject;
 class CUnit;

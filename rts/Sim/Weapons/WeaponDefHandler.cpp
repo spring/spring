@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "WeaponDefHandler.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"
@@ -16,11 +16,11 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "System/LogOutput.h"
-#include "System/Sound.h"
+#include "LogOutput.h"
+#include "Sound.h"
 #include "mmgr.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using std::min;
 using std::max;

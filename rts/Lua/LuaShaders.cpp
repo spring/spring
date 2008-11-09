@@ -21,8 +21,8 @@ using std::vector;
 #include "Game/Camera.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
-#include "System/LogOutput.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "Util.h"
 
 
 int LuaShaders::activeShaderDepth = 0;

@@ -8,8 +8,8 @@
 #include "bitops.h"
 #include "NamedTextures.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "System/GlobalUnsynced.h"
+#include "Bitmap.h"
+#include "GlobalUnsynced.h"
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;

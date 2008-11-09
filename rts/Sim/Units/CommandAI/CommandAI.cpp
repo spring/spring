@@ -8,7 +8,7 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -26,15 +26,15 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 #include "LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
 #include "creg/STL_Set.h"
 #include "creg/STL_Deque.h"
 #include <assert.h>
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
 
 const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)
 

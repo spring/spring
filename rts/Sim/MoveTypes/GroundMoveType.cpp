@@ -30,11 +30,11 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/Sound.h"
-#include "System/FastMath.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "Sound.h"
+#include "FastMath.h"
 #include "myMath.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));

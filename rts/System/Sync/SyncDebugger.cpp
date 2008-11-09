@@ -7,10 +7,10 @@
 #include <boost/format.hpp>
 
 #include "LogOutput.h"
-#include "System/GlobalUnsynced.h"
-#include "GlobalSynced.h"
-#include "System/BaseNetProtocol.h"
-#include "System/NetProtocol.h"
+#include "GlobalUnsynced.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "BaseNetProtocol.h"
+#include "NetProtocol.h"
 #include "SyncDebugger.h"
 #include "SyncChecker.h"
 #include "SyncTracer.h"

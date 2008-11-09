@@ -12,7 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Units/UnitHandler.h"
 

@@ -12,9 +12,9 @@
 #include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/Util.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "Util.h"
 
 using namespace std;
 

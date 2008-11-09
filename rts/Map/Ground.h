@@ -5,8 +5,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "float3.h"
-#include "Game/GlobalConstants.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
 
 class CProjectileHandler;
 class CProjectile;

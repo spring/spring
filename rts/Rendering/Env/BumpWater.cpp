@@ -27,13 +27,13 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "FileSystem/FileHandler.h"
-#include "System/FastMath.h"
-#include "System/EventHandler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "FastMath.h"
+#include "EventHandler.h"
+#include "Platform/ConfigHandler.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Exceptions.h"
 
 using std::string;
 using std::vector;

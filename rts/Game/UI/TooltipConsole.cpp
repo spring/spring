@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/Player.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -18,9 +18,9 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/EventHandler.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Util.h"
+#include "EventHandler.h"
+#include "Platform/ConfigHandler.h"
+#include "Util.h"
 
 CTooltipConsole* tooltip = 0;
 

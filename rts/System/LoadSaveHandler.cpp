@@ -23,15 +23,15 @@
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/GameServer.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Game/GameServer.h"
 #include "Rendering/InMapDraw.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Exceptions.h"
 
 extern std::string stupidGlobalMapname;
 

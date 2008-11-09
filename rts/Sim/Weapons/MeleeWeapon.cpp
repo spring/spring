@@ -6,7 +6,7 @@
 #include "MeleeWeapon.h"
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "WeaponDefHandler.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL));

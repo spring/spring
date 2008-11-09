@@ -16,11 +16,11 @@
 #include "Rendering/GL/glExtra.h"
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
-#include "System/GlobalUnsynced.h"
-#include "System/myMath.h"
+#include "GlobalUnsynced.h"
+#include "myMath.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50

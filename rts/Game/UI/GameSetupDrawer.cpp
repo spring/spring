@@ -12,14 +12,14 @@
 
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
-#include "../CameraHandler.h"
-#include "../Player.h"
-#include "../Team.h"
-#include "../GameSetup.h"
-#include "Game/GlobalSynced.h"
+#include "Game/CameraHandler.h"
+#include "Game/Player.h"
+#include "Sim/Misc/Team.h"
+#include "Game/GameSetup.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "StartPosSelecter.h"
 #include "Rendering/glFont.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 
 extern Uint8 *keys;
 

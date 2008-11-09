@@ -3,14 +3,14 @@
 
 #include "InterceptHandler.h"
 
-#include "Game/GlobalSynced.h"
+#include "GlobalSynced.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "LogOutput.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "creg/STL_List.h"
 
 CR_BIND(CInterceptHandler, )

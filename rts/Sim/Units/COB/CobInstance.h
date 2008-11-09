@@ -10,7 +10,7 @@ const float TAANG2RAD = 10430.219207445624753419256949178f;
 const float  RAD2TAANG = 9.587526207370107576104371709781e-5f;
 
 #include "Object.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))

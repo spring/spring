@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 
 extern Uint8* keys;

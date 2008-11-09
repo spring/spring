@@ -14,7 +14,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 #include "mmgr.h"
 

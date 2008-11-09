@@ -2,9 +2,9 @@
 #include "mmgr.h"
 
 #include "Game/Camera.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "GenericParticleProjectile.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "SimpleParticleSystem.h"

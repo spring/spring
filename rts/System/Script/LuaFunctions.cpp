@@ -5,7 +5,7 @@
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "LuaFunctions.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "float3.h"
 #include "LogOutput.h"
 #include "ExternalAI/GlobalAIHandler.h"
@@ -25,7 +25,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 
 using namespace std;
 using namespace luabind;

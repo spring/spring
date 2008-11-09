@@ -11,7 +11,7 @@
 #include "Platform/SharedLib.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitSet.h"
-#include "ExternalAI/aikey.h"
+#include "aikey.h"
 class IGroupAI;
 class CUnit;
 class CFeature;

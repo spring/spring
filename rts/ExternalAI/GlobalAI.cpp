@@ -9,14 +9,14 @@
 #include "Platform/SharedLib.h"
 #include "LogOutput.h"
 #include "mmgr.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 
 #include <sstream>
 
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 CR_BIND_DERIVED(CGlobalAI, CObject, (0, NULL))
 CR_REG_METADATA(CGlobalAI, (

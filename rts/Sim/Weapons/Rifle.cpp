@@ -12,7 +12,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/Unsynced/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "WeaponDefHandler.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "mmgr.h"

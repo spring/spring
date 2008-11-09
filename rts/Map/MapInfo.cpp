@@ -4,12 +4,12 @@
 
 #include "MapInfo.h"
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Exceptions.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "Exceptions.h"
 
 
 using namespace std;

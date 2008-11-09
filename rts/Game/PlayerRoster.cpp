@@ -9,9 +9,9 @@
 
 #include "PlayerRoster.h"
 #include "Player.h"
-#include "Team.h"
+#include "Sim/Misc/Team.h"
 #include "Util.h"
-#include "GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"
 
 static int CompareAllies     (const void* a, const void* b);
