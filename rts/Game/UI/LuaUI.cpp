@@ -507,10 +507,10 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	const int top = lua_gettop(L);
-
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);
+	const int top = lua_gettop(L);
+
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;

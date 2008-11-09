@@ -176,9 +176,8 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW // Add mutex to avoid bogus errors due to concurrency
-	LUA_CALL_IN_CHECK(L);
-#endif
+	GML_RECMUTEX_LOCK(lua); // Add mutex to avoid bogus errors due to concurrency
+
 	const int top = lua_gettop(L);
 	if (top != 0) {
 		logOutput.Print("WARNING: %s stack check: top = %i\n", GetName().c_str(), top);
