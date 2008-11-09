@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <list>
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
 

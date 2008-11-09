@@ -4,11 +4,9 @@
 #include <deque>
 #include <string>
 
-#include "Object.h"
 #include "GlobalUnsynced.h"
 
-class CInputReceiver :
-	public CObject
+class CInputReceiver
 {
 protected:
 	enum Where {
