@@ -19,7 +19,7 @@
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/SideParser.h"
+#include "Sim/Misc/SideParser.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
