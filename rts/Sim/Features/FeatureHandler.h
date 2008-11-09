@@ -1,7 +1,6 @@
 #ifndef __FEATURE_HANDLER_H__
 #define __FEATURE_HANDLER_H__
 
-#include "Object.h"
 #include <string>
 #include <list>
 #include <vector>
@@ -18,7 +17,7 @@ class LuaTable;
 
 #define DRAW_QUAD_SIZE 32
 
-class CFeatureHandler : public CObject, public boost::noncopyable
+class CFeatureHandler : public boost::noncopyable
 {
 	CR_DECLARE(CFeatureHandler);
 	CR_DECLARE_SUB(DrawQuad);

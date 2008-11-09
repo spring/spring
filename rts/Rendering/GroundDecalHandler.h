@@ -1,7 +1,6 @@
 #ifndef GROUNDDECALHANDLER_H
 #define GROUNDDECALHANDLER_H
 
-#include "Object.h"
 #include <set>
 #include <list>
 #include <vector>
@@ -50,8 +49,7 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler:
-	public CObject
+class CGroundDecalHandler
 {
 public:
 	CGroundDecalHandler(void);

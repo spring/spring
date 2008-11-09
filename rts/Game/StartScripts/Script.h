@@ -4,10 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Object.h"
 #include <string>
 
-class CScript : public CObject  
+class CScript
 {
 public:
 	virtual void SetCamera();
