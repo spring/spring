@@ -31,7 +31,6 @@
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
-#include "StdAfx.h"
 #include "BaseNetProtocol.h"
 #include "Net/UDPListener.h"
 #include "Net/Connection.h"
