@@ -1324,6 +1324,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
 		}
+		logOutput.Print("Multithreaded ground rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
 	}
 	else if (cmd == "multithreaddrawgroundshadow") {
 		if (action.extra.empty()) {
@@ -1331,6 +1332,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			gd->multiThreadDrawGroundShadow = !!atoi(action.extra.c_str());
 		}
+		logOutput.Print("Multithreaded ground shadow rendering is %s", gd->multiThreadDrawGroundShadow?"enabled":"disabled");
 	}
 	else if (cmd == "multithreaddrawunit") {
 		if (action.extra.empty()) {
@@ -1338,6 +1340,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
 		}
+		logOutput.Print("Multithreaded unit rendering is %s", unitDrawer->multiThreadDrawUnit?"enabled":"disabled");
 	}
 	else if (cmd == "multithreaddrawunitshadow") {
 		if (action.extra.empty()) {
@@ -1345,30 +1348,37 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
 		}
+		logOutput.Print("Multithreaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
 	}
-	else if (cmd == "multithread") {
-		if (action.extra.empty()) {
-			int mtenabled=gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
-			gd->multiThreadDrawGround = !mtenabled;
-			unitDrawer->multiThreadDrawUnit = !mtenabled;
-			unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
-		} else {
-			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
-			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
-			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+	else if (cmd == "multithread" || cmd == "multithreaddraw" || cmd == "multithreadsim") {
+		int mtenabled=gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+		if (cmd == "multithread" || cmd == "multithreaddraw") {
+			if (action.extra.empty()) {
+				gd->multiThreadDrawGround = !mtenabled;
+				unitDrawer->multiThreadDrawUnit = !mtenabled;
+				unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
+			} else {
+				gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+				unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+				unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+			}
+			if(!gd->multiThreadDrawGround)
+				gd->multiThreadDrawGroundShadow=0;
+			logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
 		}
-	}
-#endif
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	else if (cmd == "multithreadsim") {
-		extern volatile int multiThreadSim;
-		extern volatile int startsim;
-		if (action.extra.empty()) {
-			multiThreadSim = !multiThreadSim;
-		} else {
-			multiThreadSim = !!atoi(action.extra.c_str());
+#	if GML_ENABLE_SIMLOOP
+		if (cmd == "multithread" || cmd == "multithreadsim") {
+			extern volatile int multiThreadSim;
+			extern volatile int startsim;
+			if (action.extra.empty()) {
+				multiThreadSim = (cmd == "multithread") ? !mtenabled : !multiThreadSim;
+			} else {
+				multiThreadSim = !!atoi(action.extra.c_str());
+			}
+			startsim=1;
+			logOutput.Print("Simulation threading is %s", multiThreadSim?"enabled":"disabled");
 		}
-		startsim=1;
+#	endif
 	}
 #endif
 	else if (!isRepeat && (cmd == "gameinfo")) {
@@ -4165,7 +4175,7 @@ void CGame::UpdateUI(bool cam)
 	if(cam)
 		camHandler->GetCurrentController().Update();
 
-	if(!cam) {
+	if(cam) {
 		if (chatting && !userWriting) {
 			consoleHistory->AddLine(userInput);
 			string msg = userInput;

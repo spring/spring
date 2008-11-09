@@ -12,7 +12,6 @@
 #include "Game/Game.h"
 #include "Game/GlobalSynced.h"
 #include "Game/SelectedUnits.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
 #include "System/Exceptions.h"
@@ -73,22 +72,21 @@ CEndGameBox::CEndGameBox(void)
 	stat1=1;
 	stat2=-1;
 
-	CBitmap bm;
 	if (!bm.Load("bitmaps/graphPaper.bmp"))
 		throw content_error("Could not load bitmaps/graphPaper.bmp");
-	graphTex=bm.CreateTexture();
+	graphTex=0;
 }
 
 CEndGameBox::~CEndGameBox(void)
 {
-	glDeleteTextures(1,&graphTex);
+	if(graphTex)
+		glDeleteTextures(1,&graphTex);
 }
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	if (disabled) {
+	if (disabled)
 		return false;
-	}
 
 	float mx=MouseX(x);
 	float my=MouseY(y);
@@ -111,9 +109,8 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	if (disabled) {
+	if (disabled)
 		return;
-	}
 
 	if(moveBox){
 		box.x1+=MouseMoveX(dx);
@@ -164,9 +161,8 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	if (disabled) {
+	if (disabled)
 		return false;
-	}
 
 	float mx=MouseX(x);
 	float my=MouseY(y);
@@ -177,9 +173,11 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	if (disabled) {
+	if(!graphTex)
+		graphTex=bm.CreateTexture();
+
+	if (disabled)
 		return;
-	}
 
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);
@@ -379,9 +377,8 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (disabled) {
+	if (disabled)
 		return "";
-	}
 
 	float mx=MouseX(x);
 
