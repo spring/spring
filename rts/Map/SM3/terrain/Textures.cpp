@@ -38,7 +38,7 @@
 #include "TerrainNode.h"
 #include "Textures.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "float3.h"
 
 

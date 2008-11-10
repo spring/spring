@@ -39,17 +39,12 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 
 IF (UNIX)
 	SET(platformfiles
-		../../rts/System/Platform/Linux/UnixFileSystemHandler
-		../../rts/System/Platform/Linux/DataDirLocater
 		../../rts/System/Platform/Linux/DotfileHandler)
 ELSE (UNIX)
 	SET(platformfiles
-		../../rts/System/Platform/Win/WinFileSystemHandler
-		../../rts/System/Platform/Linux/DataDirLocater
 		../../rts/System/Platform/Win/RegHandler)
 ENDIF (UNIX)
 list(APPEND platformfiles
-	../../rts/System/Platform/FileSystem
 	../../rts/System/Platform/ConfigHandler)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)

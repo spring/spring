@@ -1,7 +1,7 @@
 #include "Game/GameServer.h"
 #include "GameSetup.h"
 #include "GameData.h"
-#include "System/Platform/FileSystem.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"

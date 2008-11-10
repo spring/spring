@@ -7,13 +7,9 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 
 IF (UNIX)
 	SET(platformfiles
-		../../rts/System/Platform/Linux/UnixFileSystemHandler
-		../../rts/System/Platform/Linux/DataDirLocater
 		../../rts/System/Platform/Linux/DotfileHandler)
 ELSE (UNIX)
 	SET(platformfiles
-		../../rts/System/Platform/Win/WinFileSystemHandler
-		../../rts/System/Platform/Win/DataDirLocater
 		../../rts/System/Platform/Win/RegHandler)
 ENDIF (UNIX)
 
@@ -23,7 +19,6 @@ SET(system_files
 	${platformfiles}
 	 ${netfiles}
 	../../rts/System/TdfParser
-	../../rts/System/Platform/FileSystem
 	../../rts/System/Platform/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/BaseNetProtocol

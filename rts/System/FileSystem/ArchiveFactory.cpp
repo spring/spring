@@ -7,7 +7,7 @@
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
 #include "Archive7Zip.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem.h"
 
 #include "Util.h"
 

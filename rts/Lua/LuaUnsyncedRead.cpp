@@ -55,7 +55,7 @@ using namespace std;
 #include "NetProtocol.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Sound.h"
 
 

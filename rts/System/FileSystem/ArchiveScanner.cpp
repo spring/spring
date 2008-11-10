@@ -17,7 +17,7 @@
 #include "CRC.h"
 #include "FileFilter.h"
 #include "FileHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "Exceptions.h"
 

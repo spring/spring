@@ -18,7 +18,7 @@
 #include "Sim/Units/UnitDef.h"
 
 #include "FileSystem/ArchiveZip.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 
 #define PATHDEBUG false
 

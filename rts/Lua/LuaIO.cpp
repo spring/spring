@@ -19,7 +19,7 @@ using std::string;
 
 #include "LuaHandle.h"
 #include "LuaInclude.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 
 

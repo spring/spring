@@ -19,7 +19,7 @@
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

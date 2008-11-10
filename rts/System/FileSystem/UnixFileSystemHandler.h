@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 #include "DataDirLocater.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem.h"
 
 /**
  * @brief Unix file system / data directory handler

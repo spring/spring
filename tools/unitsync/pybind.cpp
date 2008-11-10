@@ -14,7 +14,7 @@
 #include <cstring>
 #include "unitsync.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 
 #define NAMEBUF_SIZE 4096
 

@@ -17,7 +17,7 @@
 #include "Map/MapParser.h"
 #include "Map/SMF/SmfMapFile.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "System/Exceptions.h"
