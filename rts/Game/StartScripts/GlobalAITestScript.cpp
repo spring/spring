@@ -11,7 +11,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "LogOutput.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
 #include "Exceptions.h"

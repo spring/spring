@@ -4,7 +4,7 @@
 #include "ArchiveDir.h"
 #include <assert.h>
 #include <stdexcept>
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "mmgr.h"
 

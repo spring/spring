@@ -27,7 +27,7 @@
 #include "Platform/BaseCmd.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"

@@ -15,7 +15,7 @@
 #include "Game/CameraHandler.h"
 #include "Platform/SharedLib.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "mmgr.h"

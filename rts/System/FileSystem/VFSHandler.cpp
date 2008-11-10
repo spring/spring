@@ -8,7 +8,7 @@
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
 #include "LogOutput.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 
 

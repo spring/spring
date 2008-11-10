@@ -18,7 +18,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Platform/ConfigHandler.h"
 #include "StartScripts/ScriptHandler.h"
 
@@ -26,8 +26,6 @@ using std::string;
 
 extern Uint8* keys;
 extern bool globalQuit;
-
-#include <iostream>
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script, const std::string& playername)
 {
@@ -66,7 +64,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	std::ostringstream str;
 	setup.print(str);
 	
-	std::cout << std::endl << str.str() << std::endl;
 	return str.str();
 }
 

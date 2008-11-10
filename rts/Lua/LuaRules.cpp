@@ -39,7 +39,7 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include <assert.h>
 
 CLuaRules* luaRules = NULL;

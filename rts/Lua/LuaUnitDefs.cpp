@@ -51,7 +51,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 
 using namespace std;

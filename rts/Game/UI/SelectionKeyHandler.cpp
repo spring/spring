@@ -12,7 +12,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "MouseHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "SelectionKeyHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

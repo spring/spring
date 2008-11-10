@@ -73,7 +73,7 @@ using namespace std;
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 
 

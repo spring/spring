@@ -32,7 +32,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"

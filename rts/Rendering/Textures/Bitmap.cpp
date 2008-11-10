@@ -24,7 +24,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Bitmap.h"
 #include "bitops.h"
 

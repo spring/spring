@@ -68,7 +68,7 @@
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
 #include "Platform/ConfigHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"

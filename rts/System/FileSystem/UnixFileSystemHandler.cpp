@@ -23,8 +23,8 @@
 #include <io.h>
 #include <direct.h>
 #endif
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/VFSHandler.h"
+#include "ArchiveScanner.h"
+#include "VFSHandler.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "mmgr.h"

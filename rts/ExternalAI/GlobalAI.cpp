@@ -4,7 +4,7 @@
 #include "GlobalAICallback.h"
 #include "GlobalAIHandler.h"
 #include "GroupHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "LogOutput.h"

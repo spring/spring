@@ -18,7 +18,7 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "creg/Serializer.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
