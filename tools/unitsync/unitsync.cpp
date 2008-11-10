@@ -342,7 +342,7 @@ DLL_EXPORT const char* __stdcall GetWritableDataDirectory()
  * It is advised to poll GetNextError() after calling this function.
  *
  * Before any units are available, you'll first need to map a mod's archives
- * into the VFS using AddArchive or AddAllArchives.
+ * into the VFS using AddArchive() or AddAllArchives().
  */
 DLL_EXPORT int __stdcall ProcessUnits()
 {
