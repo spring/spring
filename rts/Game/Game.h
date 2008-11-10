@@ -44,7 +44,7 @@ public:
 	bool Update();
 	int KeyReleased(unsigned short k);
 	int KeyPressed(unsigned short k,bool isRepeat);
-	CGame(std::string mapname, std::string modName, CInfoConsole *infoConsole, CLoadSaveHandler *saveFile);
+	CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile);
 	void ResizeEvent();
 	virtual ~CGame();
 

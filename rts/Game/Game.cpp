@@ -170,7 +170,7 @@ extern string stupidGlobalMapname;
 CGame* game = NULL;
 
 
-CR_BIND(CGame, (std::string(""), std::string(""), NULL, NULL));
+CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 	CR_RESERVED(4),//r3927
@@ -211,7 +211,7 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSaveHandler *saveFile)
+CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile)
 : lastFrameTime(0),
   drawMode(notDrawing),
   drawSky(true),
@@ -229,7 +229,7 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 
 	memset(gameID, 0, sizeof(gameID));
 
-	infoConsole = ic;
+	infoConsole = new CInfoConsole();
 
 	script = NULL;
 

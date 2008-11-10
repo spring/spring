@@ -40,8 +40,8 @@ void LocalSetup::Init(const std::string& setup)
 		throw content_error("GAME-section didn't exist in setupscript");
 
 	// Technical parameters
-	file.GetDef(hostip,     "0", "GAME\\HostIP");
-	file.GetDef(hostport,   "0", "GAME\\HostPort");
+	file.GetDef(hostip,     "localhost", "GAME\\HostIP");
+	file.GetDef(hostport,   "8452", "GAME\\HostPort");
 	file.GetDef(sourceport, "0", "GAME\\SourcePort");
 	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
 	

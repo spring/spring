@@ -232,6 +232,23 @@ void UnloadStartPicture()
 
 /******************************************************************************/
 
+void ClearScreen()
+{
+	glClearColor(0,0,0,1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
+	glLoadIdentity();									// Reset The Projection Matrix
+	gluOrtho2D(0,1,0,1);
+	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+
+	glLoadIdentity();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_TEXTURE_2D);
+	glColor3f(1,1,1);
+}
+
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	static char prevText[100];
@@ -254,21 +271,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 	// Draw loading screen & print load msg.
 	ENTER_UNSYNCED;
-
-	glClearColor(0,0,0,1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
-	glLoadIdentity();									// Reset The Projection Matrix
-	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-
-	glLoadIdentity();
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
-	glColor3f(1,1,1);
-
+	ClearScreen();
 	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
 		glBegin(GL_QUADS);
