@@ -1,4 +1,4 @@
-// A clients example
+// A clients example using the new syntax
 // If spring is started as client, it needs the following information to work properly
 
 [GAME]
@@ -7,12 +7,11 @@
 	HostPort=xxx;       // standard is 8452
 	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select
 
-	MyPlayerNum=x;      //only variable that should vary between different players, (deprecated, if you want to use this you need the full script, even as client)
-	MyPlayerName=somename; //can be used instead of MyPlayerNum
-	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server (if you don't set this, you need the full script and myPlayerNum to work)
+	MyPlayerName=somename;
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server
 }
 
-// A host example
+// A host example (or client using the old syntax)
 // note that the same values for clients also need to set here
 [GAME]
 {
@@ -29,10 +28,10 @@
 	SourcePort=0;       // set this if you want a different source port (as client)
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
-	MyPlayerNum=x;      //only variable that should vary between different players, deprecated
+	MyPlayerNum=x;      // deprecated, better use myPlayerName
 	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
 
-	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server (if not set, you need myPlayerNum)
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right
 	NumAllyTeams=z;     // see above
