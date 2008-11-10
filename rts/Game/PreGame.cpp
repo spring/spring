@@ -33,6 +33,7 @@
 #include "Map/MapParser.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/FileSystem.h"
+#include "Rendering/glFont.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
@@ -51,15 +52,13 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
-	infoConsole = SAFE_NEW CInfoConsole;
-
 	net = SAFE_NEW CNetProtocol();
-
 	activeController=this;
 
 	if(!settings->isHost)
 	{
 		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, SpringVersion::GetFull());
+		timer = SDL_GetTicks();
 	}
 	else
 	{
@@ -109,20 +108,33 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 bool CPreGame::Draw()
 {
 	SDL_Delay(10); // milliseconds
+	ClearScreen();
 	
 	if (!net->Connected())
 	{
-		if ( ((SDL_GetTicks()/1000) % 2) == 0 )
-			PrintLoadMsg("Connecting to server .", false);
+		if (settings->isHost)
+			font->glPrintCentered (0.5f,0.48f, 2.0f, "Waiting for server to start");
 		else
-			PrintLoadMsg("Connecting to server  ", false);
+		{
+			font->glPrintCentered (0.5f,0.48f, 2.0f, "Connecting to server (%d s)", (SDL_GetTicks()-timer)/1000);
+		}
 	}
 	else
 	{
-		PrintLoadMsg("Awaiting server response", false);
+		font->glPrintCentered (0.5f,0.48f, 2.0f, "Waiting for server response");
 	}
-
-	infoConsole->Draw();
+	
+	font->glFormatAt(0.60f,0.40f, 1.0f, "Server: %s:%d", settings->hostip.c_str(), settings->hostport);
+	if (!settings->isHost)
+		font->glFormatAt(0.60f,0.35f, 1.0f, "Local endpoint: port %d UDP%s", settings->sourceport, (settings->sourceport == 0) ? " (autoselect)" : "");
+	else
+		font->glFormatAt (0.60f,0.35f, 1.0f, "Local endpoint: shared memory");
+	
+	font->glFormatAt (0.60f,0.30f, 1.0f, "Using playername: %s", settings->myPlayerName.c_str());
+	
+	// credits
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", SpringVersion::GetFull().c_str());
+	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
 
 	return true;
 }
@@ -241,7 +253,7 @@ void CPreGame::UpdateClientNet()
 				assert(team);
 				LoadStartPicture(team->side);
 
-				game = SAFE_NEW CGame(gameData->GetMap(), modArchive, infoConsole, savefile);
+				game = SAFE_NEW CGame(gameData->GetMap(), modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();

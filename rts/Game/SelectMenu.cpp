@@ -149,7 +149,7 @@ int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 bool SelectMenu::Draw()
 {
 	SDL_Delay(10); // milliseconds
-	PrintLoadMsg("", false); // just clear screen and set up matrices etc.
+	ClearScreen();
 
 	if (userWriting) {
 		const std::string tempstring = userPrompt + userInput;
