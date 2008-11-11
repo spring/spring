@@ -104,7 +104,7 @@ unitsync_extra_files = [
 	'rts/Map/SMF/SmfMapFile.cpp',
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
-	'rts/Sim/SideParser.cpp',
+	'rts/Sim/Misc/SideParser.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
 	'rts/System/LogOutput.cpp',
