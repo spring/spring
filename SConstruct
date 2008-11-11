@@ -90,7 +90,7 @@ for d in filelist.list_directories(uenv, 'rts', exclude_list=["crashrpt"]):
 
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 unitsync_files          = filelist.get_source(uenv, 'tools/unitsync');
-unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/', 'DataDirLocater.cpp');
+unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/', exclude_list=('DataDirLocater.cpp'));
 unitsync_lua_files      = filelist.get_source(uenv, 'rts/lib/lua/src');
 unitsync_7zip_files     = filelist.get_source(uenv, 'rts/lib/7zip');
 unitsync_minizip_files  = filelist.get_source(uenv, 'rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
