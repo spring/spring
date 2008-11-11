@@ -63,26 +63,32 @@ void CGroupHandler::PostLoad()
 
 void CGroupHandler::Load(std::istream *s)
 {
+/*
 	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)&&((*ai)->ai)) {
 			(*ai)->ai->Load((IGroupAICallback*)(*ai)->callback,s);
 		}
+*/
 }
 
 void CGroupHandler::Save(std::ostream *s)
 {
+/*
 	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)&&((*ai)->ai)) {
 			(*ai)->ai->Save(s);
 		}
+*/
 }
 
 void CGroupHandler::Update()
 {
 	SCOPED_TIMER("Group AI");
+/*
 	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
 		if((*ai)!=0)
 			(*ai)->Update();
+*/
 }
 
 void CGroupHandler::DrawCommands()
@@ -119,11 +125,13 @@ void CGroupHandler::TestDll(std::string name)
 
 	int i=GetGroupAiVersion();
 
+/*
 	if (i!=AI_INTERFACE_VERSION){
 		logOutput.Print("AI dll %s has incorrect version", name.c_str());
 		delete lib;
 		return;
 	}
+*/
 
 	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
 	if (!IsUnitSuited){

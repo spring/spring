@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -18,17 +18,17 @@
 #ifndef _AIAICALLBACK_H
 #define	_AIAICALLBACK_H
 
-
-#include "ExternalAI/Interface/SAICallback.h"
 #include "ExternalAI/IAICallback.h"
+
+struct SAICallback;
 
 /**
  * The AI side wrapper over the C AI interface for IAICallback.
  */
 class CAIAICallback : public IAICallback {
 public:
-    CAIAICallback();
-    CAIAICallback(int teamId, SAICallback* sAICallback/*, IAICallback* aiCallback*/);
+	CAIAICallback();
+	CAIAICallback(int teamId, SAICallback* sAICallback/*, IAICallback* aiCallback*/);
 
 	virtual void SendTextMsg(const char* text, int zone);
 	virtual void SetLastMsgPos(float3 pos);
@@ -190,24 +190,24 @@ public:
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
 
 private:
-    int teamId;
-    SAICallback* sAICallback;
-//    IAICallback* aiCallback;
-//    int currentFrame;
-    void init();
-//    void setCurrentFrame(int frame) { currentFrame = frame; }
-    int Internal_GiveOrder(int unitId, int groupId, Command* c);
-    
+	int teamId;
+	SAICallback* sAICallback;
+//	IAICallback* aiCallback;
+//	int currentFrame;
+	void init();
+//	void setCurrentFrame(int frame) { currentFrame = frame; }
+	int Internal_GiveOrder(int unitId, int groupId, Command* c);
+
 	// caches
-    WeaponDef** weaponDefs;
-    int* weaponDefFrames;
-    UnitDef** unitDefs;
-    int* unitDefFrames;
+	WeaponDef** weaponDefs;
+	int* weaponDefFrames;
+	UnitDef** unitDefs;
+	int* unitDefFrames;
 	std::vector<CommandDescription>** groupPossibleCommands; // needed to prevent memory leacks
 	std::vector<CommandDescription>** unitPossibleCommands; // needed to prevent memory leacks
 	CCommandQueue** unitCurrentCommandQueues; // needed to prevent memory leacks
-    FeatureDef** featureDefs;
-    int* featureDefFrames;
+	FeatureDef** featureDefs;
+	int* featureDefFrames;
 };
 
 #endif	/* _AIAICALLBACK_H */

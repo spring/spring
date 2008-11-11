@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -15,33 +15,36 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AIGLOBALAICALLBACK_H
+#ifndef	_AIGLOBALAICALLBACK_H
 #define	_AIGLOBALAICALLBACK_H
 
-#include "ExternalAI/Interface/SAICallback.h"
+//#include "ExternalAI/Interface/SAICallback.h"
 #include "ExternalAI/IGlobalAICallback.h"
 
-#include "AIAICallback.h"
-#include "AIAICheats.h"
+//#include "AIAICallback.h"
+//#include "AIAICheats.h"
+
+struct SAICallback;
+class CAIAICallback;
+class CAIAICheats;
 
 /**
  * The AI side wrapper over the C AI interface for IGlobalAICallback.
  */
 class CAIGlobalAICallback : public IGlobalAICallback {
 public:
-    CAIGlobalAICallback();
-    CAIGlobalAICallback(SAICallback* sAICallback, int teamId);
-    ~CAIGlobalAICallback();
+	CAIGlobalAICallback();
+	CAIGlobalAICallback(SAICallback* sAICallback, int teamId);
+	~CAIGlobalAICallback();
 
-    virtual IAICheats* GetCheatInterface();
-    virtual IAICallback* GetAICallback();
-    
+	virtual IAICheats* GetCheatInterface();
+	virtual IAICallback* GetAICallback();
+
 private:
-    SAICallback* sAICallback;
-    int teamId;
-    CAIAICallback* wrappedAICallback;
-    CAIAICheats* wrappedAICheats;
+	SAICallback* sAICallback;
+	int teamId;
+	CAIAICallback* wrappedAICallback;
+	CAIAICheats* wrappedAICheats;
 };
 
-#endif	/* _AIGLOBALAICALLBACK_H */
-
+#endif	// _AIGLOBALAICALLBACK_H

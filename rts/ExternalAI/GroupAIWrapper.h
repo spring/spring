@@ -15,11 +15,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SKIRMISHAIWRAPPER_H
-#define _SKIRMISHAIWRAPPER_H
+#ifndef _GROUPAIWRAPPER_H
+#define _GROUPAIWRAPPER_H
 
 #include "Object.h"
-#include "ISkirmishAI.h"
+#include "IGroupAI.h"
 #include "GlobalAICallback.h"
 #include "Interface/SAICallback.h"
 #include "Interface/SAIInterfaceLibrary.h"
@@ -32,13 +32,13 @@ class CAICallback;
 struct Command;
 struct float3;
 
-class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
+class CGroupAIWrapper : public CObject, public IGroupAI {
 public:
-	CR_DECLARE(CSkirmishAIWrapper);
-//	CSkirmishAIWrapper();
-	CSkirmishAIWrapper(int teamId, const SSAIKey& key,
+	CR_DECLARE(CGroupAIWrapper);
+
+	CGroupAIWrapper(int teamId, int groupId, const SGAIKey& key,
 			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
-	~CSkirmishAIWrapper();
+	~CGroupAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
@@ -47,6 +47,7 @@ public:
 	virtual void Load(std::istream *s);
 	virtual void Save(std::ostream *s);
 
+	// Events in common with Skirmish AIs
 	virtual void UnitIdle(int unitId);
 	virtual void UnitCreated(int unitId);
 	virtual void UnitFinished(int unitId);
@@ -62,22 +63,34 @@ public:
 	virtual void EnemyDestroyed(int enemyUnitId, int attackerUnitId);
 	virtual void EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir);
 	virtual void Update(int frame);
+//	virtual void Update();				//called once a frame (30 times a second)
 	virtual void GotChatMsg(const char* msg, int fromPlayerId);
 	virtual void WeaponFired(int unitId, int weaponDefId);
 	virtual void PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId);
+//	virtual void GiveCommand(Command* c);		//the group is given a command by the player
 	virtual void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
+
+	// Group AI specific Events
+	virtual bool AddUnit(int unitId);		//group should return false if it doenst want the unit for some reason
+	virtual void RemoveUnit(int unitId);		//no way to refuse giving up a unit
+	//the ai tells the interface what commands it can take (note that it returns a reference so it must keep the vector in memory itself)
+	virtual const std::vector<CommandDescription>& GetPossibleCommands();
+	virtual int GetDefaultCmd(int unitId);	//the default command for the ai given that the mouse pointer hovers above unit unitid (or no unit if unitid=0)
+	virtual void CommandFinished(int unitId, int commandTopic);	//a specific unit has finished a specific command, might be a good idea to give new orders to it
+	virtual void DrawCommands();				//the place to use the LineDrawer interface functions
 
 
 	virtual void PreDestroy(); // called just before all the units are destroyed
 
 	virtual int GetTeamId() const;
+	virtual int GetGroupId() const;
 
 	virtual void SetCheatEventsEnabled(bool enable);
 	virtual bool IsCheatEventsEnabled() const;
 
 
 	/**
-	 * inherited form ISkirmishAI.
+	 * Inherited form IGroupAI.
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */
 	virtual int HandleEvent(int topic, const void* data) const;
@@ -88,35 +101,22 @@ private:
 
 private:
 	int teamId;
+	int groupId;
 	bool cheatEvents;
 
 //	bool loadSupported;
 
-	ISkirmishAI* ai;
-	CGlobalAICallback* callback;
+	IGroupAI* ai;
+	CGroupAICallback* callback;
 	SAICallback* c_callback;
-	SSAIKey key;
+	SGAIKey key;
 	std::vector<std::string> optionKeys;
 	std::vector<std::string> optionValues;
 	const char** optionKeys_c;
 	const char** optionValues_c;
 
-//	typedef bool (*ISCINTERFACE)();
-//	typedef int (*GETGLOBALAIVERSION)();
-//	typedef IGlobalAI* (*GETNEWAI)();
-//	typedef IGlobalAI* (*GETNEWAIBYNAME)(const char*, int);
-//	typedef void (*RELEASEAI)(IGlobalAI* i);
-//	typedef bool (*ISLOADSUPPORTED)();
-
-//	ISCINTERFACE _IsCInterfaceFunc;
-//	GETGLOBALAIVERSION _GetGlobalAiVersionFunc;
-//	GETNEWAI _GetNewAIFunc;
-//	GETNEWAIBYNAME _GetNewAIByNameFunc;
-//	RELEASEAI _ReleaseAIFunc;
-//	ISLOADSUPPORTED _IsLoadSupportedFunc;
-
 private:
-	void LoadSkirmishAI(bool postLoad);
+	void LoadGroupAI(bool postLoad);
 };
 
-#endif // _SKIRMISHAIWRAPPER_H
+#endif // _GROUPAIWRAPPER_H

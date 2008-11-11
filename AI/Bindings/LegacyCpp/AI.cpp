@@ -20,14 +20,10 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAI::CAI() : team(0), ai(NULL) {
+CAI::CAI() : team(0), ai(NULL) {}
 
-}
+CAI::CAI(int team, IGlobalAI* ai) : team(team), ai(ai) {}
 
-
-CAI::CAI(int team, IGlobalAI* ai) : team(team), ai(ai) {
-
-}
 
 int CAI::handleEvent(int topic, const void* data) {
 

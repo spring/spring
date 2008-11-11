@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -17,6 +17,8 @@
 
 #include "AIAICallback.h"
 
+
+#include "ExternalAI/Interface/SAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 #include "creg/creg_cond.h"
@@ -61,21 +63,21 @@ void fillWithMinusOne(int* arr, int size) {
 }
 
 void CAIAICallback::init() {
-	
+
 	// init caches
 	int maxCacheSize = 512;
 	int maxUnits = 10000;
 	int maxGroups = 100;
-	
+
 	weaponDefs = new WeaponDef*[maxCacheSize]; fillWithNULL((void**)weaponDefs, maxCacheSize);
 	weaponDefFrames = new int[maxCacheSize]; fillWithMinusOne(weaponDefFrames, maxCacheSize);
-	
+
 	unitDefs = new UnitDef*[maxCacheSize]; fillWithNULL((void**)unitDefs, maxCacheSize);
 	unitDefFrames = new int[maxCacheSize]; fillWithMinusOne(unitDefFrames, maxCacheSize);
 	groupPossibleCommands = new std::vector<CommandDescription>*[maxGroups]; fillWithNULL((void**)groupPossibleCommands, maxGroups);
 	unitPossibleCommands = new std::vector<CommandDescription>*[maxUnits]; fillWithNULL((void**)unitPossibleCommands, maxUnits);
 	unitCurrentCommandQueues = new CCommandQueue*[maxUnits]; fillWithNULL((void**)unitCurrentCommandQueues, maxUnits);
-	
+
 	featureDefs = new FeatureDef*[maxCacheSize]; fillWithNULL((void**)featureDefs, maxCacheSize);
 	featureDefFrames = new int[maxCacheSize]; fillWithMinusOne(featureDefFrames, maxCacheSize);
 }
@@ -647,39 +649,39 @@ const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int group
 		}
 		cmdDescVec->push_back(commandDescription);
 	}
-	
+
 	// to prevent memory wholes
 	if (groupPossibleCommands[groupId] != NULL) {
 		delete groupPossibleCommands[groupId];
 	}
 	groupPossibleCommands[groupId] = cmdDescVec;
-	
+
 	return cmdDescVec;
 }
 */
 const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int groupId) {
-	
+
 	int numCmds = sAICallback->Group_getNumSupportedCommands(teamId, groupId);
-	
+
 	int ids[numCmds];
 	const char* names[numCmds];
 	const char* toolTips[numCmds];
 	bool showUniques[numCmds];
 	bool disableds[numCmds];
 	int numParams[numCmds];
-	
+
 	sAICallback->Group_SupportedCommands_getId(teamId, groupId, ids);
 	sAICallback->Group_SupportedCommands_getName(teamId, groupId, names);
 	sAICallback->Group_SupportedCommands_getToolTip(teamId, groupId, toolTips);
 	sAICallback->Group_SupportedCommands_isShowUnique(teamId, groupId, showUniques);
 	sAICallback->Group_SupportedCommands_isDisabled(teamId, groupId, disableds);
 	sAICallback->Group_SupportedCommands_getNumParams(teamId, groupId, numParams);
-	
+
 	std::vector<CommandDescription>* cmdDescVec = new std::vector<CommandDescription>();
 	for (int c=0; c < numCmds; c++) {
 		const char* params[numParams[c]];
 		sAICallback->Group_SupportedCommands_getParams(teamId, groupId, c, params);
-		
+
 		CommandDescription commandDescription;
 		commandDescription.id = ids[c];
 		commandDescription.name = names[c];
@@ -691,28 +693,28 @@ const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int group
 		}
 		cmdDescVec->push_back(commandDescription);
 	}
-	
+
 	// to prevent memory wholes
 	if (groupPossibleCommands[groupId] != NULL) {
 		delete groupPossibleCommands[groupId];
 	}
 	groupPossibleCommands[groupId] = cmdDescVec;
-	
+
 	return cmdDescVec;
 }
 
 
 const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId) {
-	
+
 	int numCmds = sAICallback->Unit_getNumSupportedCommands(teamId, unitId);
-	
+
 	int* ids = new int[numCmds];
 	const char* names[numCmds];
 	const char* toolTips[numCmds];
 	bool showUniques[numCmds];
 	bool disableds[numCmds];
 	int numParams[numCmds];
-	
+
 	sAICallback->Unit_SupportedCommands_getId(teamId, unitId, ids);
 	sAICallback->Unit_SupportedCommands_getName(teamId, unitId, names);
 	sAICallback->Unit_SupportedCommands_getToolTip(teamId, unitId, toolTips);
@@ -724,7 +726,7 @@ const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId
 	for (int c=0; c < numCmds; c++) {
 		const char* params[numParams[c]];
 		sAICallback->Unit_SupportedCommands_getParams(teamId, unitId, c, params);
-		
+
 		CommandDescription commandDescription;
 		commandDescription.id = ids[c];
 		commandDescription.name = names[c];
@@ -736,13 +738,13 @@ const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId
 		}
 		cmdDescVec->push_back(commandDescription);
 	}
-	
+
 	// to prevent memory wholes
 	if (unitPossibleCommands[unitId] != NULL) {
 		delete unitPossibleCommands[unitId];
 	}
 	unitPossibleCommands[unitId] = cmdDescVec;
-	
+
 	return cmdDescVec;
 }
 
@@ -778,13 +780,13 @@ const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
 		}
 		cc->push_back(command);
 	}
-	
+
 	// to prevent memory wholes
 	if (unitCurrentCommandQueues[unitId] != NULL) {
 		delete unitCurrentCommandQueues[unitId];
 	}
 	unitCurrentCommandQueues[unitId] = cc;
-	
+
 	return cc;
 }
 
@@ -874,11 +876,11 @@ const UnitDef* CAIAICallback::GetUnitDef(const char* unitName) {
 
 const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 	//logT("entering: GetUnitDefById sAICallback");
-	
+
 	if (unitDefId < 0) {
 		return NULL;
 	}
-	
+
 	bool doRecreate = unitDefFrames[unitDefId] < 0;
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
@@ -1112,7 +1114,7 @@ if (sAICallback->UnitDef_hasMoveData(teamId, unitDefId)) {
 	unitDef->movedata = new MoveData(NULL, -1);
 		unitDef->movedata->moveType = (enum MoveData::MoveType)sAICallback->UnitDef_MoveData_getMoveType(teamId, unitDefId);
 		unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getMoveFamily(teamId, unitDefId);
-        unitDef->movedata->size = sAICallback->UnitDef_MoveData_getSize(teamId, unitDefId);
+		unitDef->movedata->size = sAICallback->UnitDef_MoveData_getSize(teamId, unitDefId);
 		unitDef->movedata->depth = sAICallback->UnitDef_MoveData_getDepth(teamId, unitDefId);
 		unitDef->movedata->maxSlope = sAICallback->UnitDef_MoveData_getMaxSlope(teamId, unitDefId);
 		unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(teamId, unitDefId);
@@ -1270,28 +1272,28 @@ bool CAIAICallback::GetProperty(int id, int property, void* dst) {
 */
 bool CAIAICallback::GetProperty(int unitId, int propertyId, void *data)
 {
-    switch (propertyId) {
-        case AIVAL_UNITDEF: {
-            return false;
-        }
-        case AIVAL_CURRENT_FUEL: {
-            (*(float*)data) = sAICallback->Unit_getCurrentFuel(teamId, unitId);
-            return (*(float*)data) != -1.0f;
-        }
-        case AIVAL_STOCKPILED: {
-            (*(int*)data) = sAICallback->Unit_getStockpile(teamId, unitId);
-            return (*(int*)data) != -1;
-        }
-        case AIVAL_STOCKPILE_QUED: {
-            (*(int*)data) = sAICallback->Unit_getStockpileQueued(teamId, unitId);
-            return (*(int*)data) != -1;
-        }
-        case AIVAL_UNIT_MAXSPEED: {
-            (*(float*) data) = sAICallback->Unit_getMaxSpeed(teamId, unitId);
-            return (*(float*)data) != -1.0f;
-        }
-        default:
-            return false;
+	switch (propertyId) {
+		case AIVAL_UNITDEF: {
+			return false;
+		}
+		case AIVAL_CURRENT_FUEL: {
+			(*(float*)data) = sAICallback->Unit_getCurrentFuel(teamId, unitId);
+			return (*(float*)data) != -1.0f;
+		}
+		case AIVAL_STOCKPILED: {
+			(*(int*)data) = sAICallback->Unit_getStockpile(teamId, unitId);
+			return (*(int*)data) != -1;
+		}
+		case AIVAL_STOCKPILE_QUED: {
+			(*(int*)data) = sAICallback->Unit_getStockpileQueued(teamId, unitId);
+			return (*(int*)data) != -1;
+		}
+		case AIVAL_UNIT_MAXSPEED: {
+			(*(float*) data) = sAICallback->Unit_getMaxSpeed(teamId, unitId);
+			return (*(float*)data) != -1.0f;
+		}
+		default:
+			return false;
 	}
 	return false;
 }
@@ -1342,10 +1344,10 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 			*(float3*)data = sAICallback->Gui_Camera_getPosition(teamId);
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
-            sAICallback->File_locateForReading(teamId, (char*) data);
+			sAICallback->File_locateForReading(teamId, (char*) data);
 			return true;
 		}case AIVAL_LOCATE_FILE_W:{
-            sAICallback->File_locateForWriting(teamId, (char*) data);
+			sAICallback->File_locateForWriting(teamId, (char*) data);
 			return true;
 		}
 		case AIVAL_UNIT_LIMIT: {
@@ -1374,12 +1376,12 @@ float3 CAIAICallback::GetMousePos() {
 }
 
 int CAIAICallback::GetMapPoints(PointMarker* pm, int maxPoints) {
-	
+
 	SAIFloat3* positions = new SAIFloat3[maxPoints];
 //	unsigned char** colors = new unsigned char*[maxPoints];
 	SAIFloat3* colors = new SAIFloat3[maxPoints];
 	const char** labels = new const char*[maxPoints];
-	
+
 	int numPoints = sAICallback->Map_getPoints(teamId, positions, colors, labels, maxPoints);
 	for (int i=0; i < numPoints; ++i) {
 		pm[i].pos = float3(positions[i]);
@@ -1397,11 +1399,11 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int maxPoints) {
 }
 
 int CAIAICallback::GetMapLines(LineMarker* lm, int maxLines) {
-	
+
 	SAIFloat3* firstPositions = new SAIFloat3[maxLines];
 	SAIFloat3* secondPositions = new SAIFloat3[maxLines];
 	SAIFloat3* colors = new SAIFloat3[maxLines];
-	
+
 	int numLines = sAICallback->Map_getLines(teamId, firstPositions, secondPositions, colors, maxLines);
 	for (int i=0; i < numLines; ++i) {
 		lm[i].pos = float3(firstPositions[i]);
@@ -1463,11 +1465,11 @@ const FeatureDef* CAIAICallback::GetFeatureDef(int featureId) {
 }
 
 const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
-	
+
 	if (featureDefId < 0) {
 		return NULL;
 	}
-	
+
 	bool doRecreate = featureDefFrames[featureDefId] < 0;
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
@@ -1563,12 +1565,12 @@ const WeaponDef* CAIAICallback::GetWeapon(const char* weaponName) {
 }
 
 const WeaponDef* CAIAICallback::GetWeaponDefById(int weaponDefId) {
-	
+
 //	logT("entering: GetWeaponDefById sAICallback");
 	if (weaponDefId < 0) {
 		return NULL;
 	}
-	
+
 	bool doRecreate = weaponDefFrames[weaponDefId] < 0;
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
@@ -1845,12 +1847,12 @@ int CAIAICallback::GiveOrder(int unitId, Command* c) {
 }
 
 int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
-	
+
 /*
 	int ret = -1;
-	
+
 	switch (c->id) {
-        case CMD_STOP:
+		case CMD_STOP:
 		{
 			SStopUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
 			ret = sAICallback->handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_STOP, &cmd);
@@ -2140,17 +2142,17 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 		}
 
 	}
-	
+
 	return ret;
 */
-    int sCommandId;
-    void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId);
-    
-    int ret = sAICallback->handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
-    
-    freeSUnitCommand(sCommandData, sCommandId);
-    
-    return ret;
+	int sCommandId;
+	void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId);
+
+	int ret = sAICallback->handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
+
+	freeSUnitCommand(sCommandData, sCommandId);
+
+	return ret;
 }
 
 int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
@@ -2231,10 +2233,10 @@ void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int l
 }
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
-	
+
 	int cmdTopicIndex = commandId;
 	int ret = -99;
-	
+
 	switch (commandId) {
 		case AIHCQuerySubVersionId: {
 //			SQuerySubVersionCommand cmd;
@@ -2267,7 +2269,7 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			break;
 		}
 	}
-	
+
 	return ret;
 }
 

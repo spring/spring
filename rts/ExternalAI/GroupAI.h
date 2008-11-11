@@ -15,24 +15,27 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "SkirmishAI.h"
+#ifndef _GROUPAI_H
+#define _GROUPAI_H
 
-#include "IAILibraryManager.h"
-#include "ISkirmishAILibrary.h"
+#include "IGroupAI.h"
+//#include "IGroupAILibrary.h"
+#include "Interface/SAIInterfaceLibrary.h"
 
-CSkirmishAI::CSkirmishAI(int teamId, const SSAIKey& key)
-		: teamId(teamId), skirmishAIKey(skirmishAIKey) {
+class IGroupAILibrary;
 
-	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(skirmishAIKey);
-	library->Init(teamId);
-}
+class CGroupAI : public IGroupAI {
+public:
+	CGroupAI(int teamId, int groupId, const SGAIKey& key);
+	virtual ~CGroupAI();
 
-CSkirmishAI::~CSkirmishAI() {
+	virtual int HandleEvent(int topic, const void* data) const;
 
-	library->Release(teamId);
-	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
-}
+private:
+	int teamId;
+	int groupId;
+	const SGAIKey key;
+	const IGroupAILibrary* library;
+};
 
-int CSkirmishAI::HandleEvent(int topic, const void* data) const {
-	return library->HandleEvent(teamId, topic, data);
-}
+#endif	// _GROUPAI_H

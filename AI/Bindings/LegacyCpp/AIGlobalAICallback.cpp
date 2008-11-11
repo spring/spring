@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -20,35 +20,31 @@
 #include "AIAICheats.h"
 
 CAIGlobalAICallback::CAIGlobalAICallback()
-    : IGlobalAICallback(), sAICallback(NULL), teamId(-1),
-        wrappedAICallback(NULL), wrappedAICheats(NULL) {
-    
-}
+	: IGlobalAICallback(), sAICallback(NULL), teamId(-1),
+		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
 CAIGlobalAICallback::CAIGlobalAICallback(SAICallback* sAICallback, int teamId)
-    : IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
-        wrappedAICallback(NULL), wrappedAICheats(NULL) {
-    
-}
+	: IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
+		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
-CAIGlobalAICallback::~CAIGlobalAICallback() {
-    
-}
+CAIGlobalAICallback::~CAIGlobalAICallback() {}
 
 
 IAICallback* CAIGlobalAICallback::GetAICallback() {
-    
-    if (wrappedAICallback == NULL) {
-        wrappedAICallback = new CAIAICallback(teamId, sAICallback);
-    }
-    return wrappedAICallback;
+
+	if (wrappedAICallback == NULL) {
+		wrappedAICallback = new CAIAICallback(teamId, sAICallback);
+	}
+
+	return wrappedAICallback;
 }
 
 IAICheats* CAIGlobalAICallback::GetCheatInterface() {
-    
-    if (wrappedAICheats == NULL) {
-        this->GetAICallback(); // to initialize
-        wrappedAICheats = new CAIAICheats(teamId, sAICallback, wrappedAICallback);
-    }
-    return wrappedAICheats;
+
+	if (wrappedAICheats == NULL) {
+		this->GetAICallback(); // to initialize
+		wrappedAICheats = new CAIAICheats(teamId, sAICallback, wrappedAICallback);
+	}
+
+	return wrappedAICheats;
 }

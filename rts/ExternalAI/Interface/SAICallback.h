@@ -55,28 +55,22 @@ int (CALLING_CONV *Game_getMyTeam)(int teamId);
 int (CALLING_CONV *Game_getMyAllyTeam)(int teamId);
 int (CALLING_CONV *Game_getPlayerTeam)(int teamId, int playerId);
 const char* (CALLING_CONV *Game_getTeamSide)(int teamId, int otherTeamId);
-// END misc callback functions
-
-int (CALLING_CONV *WeaponDef_STATIC_getNumDamageTypes)(int teamId);
-unsigned int (CALLING_CONV *Map_getChecksum)(int teamId);
-
 bool (CALLING_CONV *Game_isExceptionHandlingEnabled)(int teamId);
 bool (CALLING_CONV *Game_isDebugModeEnabled)(int teamId);
 int (CALLING_CONV *Game_getMode)(int teamId);
 bool (CALLING_CONV *Game_isPaused)(int teamId);
 float (CALLING_CONV *Game_getSpeedFactor)(int teamId);
+const char* (CALLING_CONV *Game_getSetupScript)(int teamId);
+// END misc callback functions
 
+
+// BEGINN Visualization related callback functions
 float (CALLING_CONV *Gui_getViewRange)(int teamId);
 float (CALLING_CONV *Gui_getScreenX)(int teamId);
 float (CALLING_CONV *Gui_getScreenY)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Gui_Camera_getDirection)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Gui_Camera_getPosition)(int teamId);
-
-bool (CALLING_CONV *File_locateForReading)(int teamId, char* filename);
-bool (CALLING_CONV *File_locateForWriting)(int teamId, char* filename);
-
-int (CALLING_CONV *Unit_STATIC_getLimit)(int teamId);
-const char* (CALLING_CONV *Game_getSetupScript)(int teamId);
+// END Visualization related callback functions
 
 
 // BEGINN kind of deprecated; it is recommended not to use these
@@ -108,6 +102,8 @@ float (CALLING_CONV *ResourceInfo_Energy_getStorage)(int teamId);
 // BEGINN OBJECT File
 int (CALLING_CONV *File_getSize)(int teamId, const char* fileName);
 bool (CALLING_CONV *File_getContent)(int teamId, const char* filename, void* buffer, int bufferLen);
+bool (CALLING_CONV *File_locateForReading)(int teamId, char* filename);
+bool (CALLING_CONV *File_locateForWriting)(int teamId, char* filename);
 // END OBJECT File
 
 
@@ -115,10 +111,8 @@ bool (CALLING_CONV *File_getContent)(int teamId, const char* filename, void* buf
 int (CALLING_CONV *UnitDef_STATIC_getIds)(int teamId, int unitDefIds[]);
 int (CALLING_CONV *UnitDef_STATIC_getNumIds)(int teamId);
 int (CALLING_CONV *UnitDef_STATIC_getIdByName)(int teamId, const char* unitName);
-
 float (CALLING_CONV *UnitDef_getHeight)(int teamId, int unitDefId);
 float (CALLING_CONV *UnitDef_getRadius)(int teamId, int unitDefId);
-
 bool (CALLING_CONV *UnitDef_isValid)(int teamId, int unitDefId);
 const char* (CALLING_CONV *UnitDef_getName)(int teamId, int unitDefId);
 const char* (CALLING_CONV *UnitDef_getHumanName)(int teamId, int unitDefId);
@@ -362,6 +356,7 @@ unsigned int (CALLING_CONV *UnitDef_UnitDefWeapon_getOnlyTargetCat)(int teamId, 
 
 
 // BEGINN OBJECT Unit
+int (CALLING_CONV *Unit_STATIC_getLimit)(int teamId);
 int (CALLING_CONV *Unit_STATIC_getEnemies)(int teamId, int unitIds[]);
 int (CALLING_CONV *Unit_STATIC_getEnemiesIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
 int (CALLING_CONV *Unit_STATIC_getEnemiesInRadarAndLos)(int teamId, int unitIds[]);
@@ -370,12 +365,12 @@ int (CALLING_CONV *Unit_STATIC_getFriendliesIn)(int teamId, int unitIds[], struc
 int (CALLING_CONV *Unit_STATIC_getNeutrals)(int teamId, int unitIds[]);
 int (CALLING_CONV *Unit_STATIC_getNeutralsIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
 int (CALLING_CONV *Unit_STATIC_getSelected)(int teamId, int unitIds[]);
+int (CALLING_CONV *Unit_STATIC_updateSelectedUnitsIcons)(int teamId);
 
 int (CALLING_CONV *Unit_getDefId)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getAiHint)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getTeam)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getAllyTeam)(int teamId, int unitId);
-
 int (CALLING_CONV *Unit_getStockpile)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getStockpileQueued)(int teamId, int unitId);
 float (CALLING_CONV *Unit_getCurrentFuel)(int teamId, int unitId);
@@ -419,6 +414,7 @@ bool (CALLING_CONV *Unit_isCloaked)(int teamId, int unitId);
 bool (CALLING_CONV *Unit_isParalyzed)(int teamId, int unitId);
 bool (CALLING_CONV *Unit_isNeutral)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getBuildingFacing)(int teamId, int unitId);
+int (CALLING_CONV *Unit_getLastUserOrderFrame)(int teamId, int unitId);
 // END OBJECT Unit
 
 
@@ -433,6 +429,13 @@ int (CALLING_CONV *Group_SupportedCommands_isDisabled)(int teamId, int groupId, 
 int (CALLING_CONV *Group_SupportedCommands_getNumParams)(int teamId, int groupId, int numParams[]);
 //int (CALLING_CONV *Group_SupportedCommands_getParams)(int teamId, int groupId, const char* params[][2]);
 int (CALLING_CONV *Group_SupportedCommands_getParams)(int teamId, int groupId, unsigned int commandIndex, const char* params[]);
+/* for the id, see CMD_xxx codes in Command.h  (custom codes can also be used) */
+int (CALLING_CONV *Group_OrderPreview_getId)(int teamId, int groupId);
+unsigned char (CALLING_CONV *Group_OrderPreview_getOptions)(int teamId, int groupId);
+unsigned int (CALLING_CONV *Group_OrderPreview_getTag)(int teamId, int groupId);
+int (CALLING_CONV *Group_OrderPreview_getTimeOut)(int teamId, int groupId);
+unsigned int (CALLING_CONV *Group_OrderPreview_getParams)(int teamId, int groupId, float params[], unsigned int maxParams);
+bool (CALLING_CONV *Group_isSelected)(int teamId, int groupId);
 // END OBJECT Group
 
 
@@ -444,6 +447,7 @@ const char* (CALLING_CONV *Mod_getName)(int teamId);
 
 
 // BEGINN OBJECT Map
+unsigned int (CALLING_CONV *Map_getChecksum)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Map_getStartPos)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Map_getMousePos)(int teamId);
 bool (CALLING_CONV *Map_isPosInCamera)(int teamId, struct SAIFloat3 pos, float radius);
@@ -528,6 +532,7 @@ struct SAIFloat3 (CALLING_CONV *Feature_getPos)(int teamId, int featureId);
 
 // BEGINN OBJECT WeaponDef
 int (CALLING_CONV *WeaponDef_STATIC_getIdByName)(int teamId, const char* weaponDefName);
+int (CALLING_CONV *WeaponDef_STATIC_getNumDamageTypes)(int teamId);
 
 //const SAIWeaponDef* (CALLING_CONV *getWeaponDef)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *WeaponDef_getName)(int teamId, int weaponDefId);
