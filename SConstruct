@@ -106,7 +106,7 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
-	'rts/System/Platform/FileSystem.cpp',
+	'rts/System/FileSystem/FileSystem.cpp',
 	'rts/System/LogOutput.cpp',
 ]
 for f in unitsync_fs_files:       unitsync_files += f
