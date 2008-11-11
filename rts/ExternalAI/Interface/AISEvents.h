@@ -23,7 +23,7 @@
 
 // IMPORTANT NOTE: external systems parse this file,
 // so DO NOT CHANGE the style and format it uses without
-// major thought in advance, and deliberation with hoijui!
+// major though in advance, and deliberation with hoijui!
 
 #ifdef	__cplusplus
 extern "C" {
@@ -65,93 +65,93 @@ struct SInitEvent {
 	unsigned int sizeOptions;
 	const char** optionKeys;
 	const char** optionValues;
-};
+}; // EVENT_INIT
 
 struct SReleaseEvent {
 	int team;
-};
+}; // EVENT_RELEASE
 
 struct SUpdateEvent {
 	int frame;
-};
+}; // EVENT_UPDATE
 
 struct SMessageEvent {
 	int player;
 	const char* message;
-};
+}; // EVENT_MESSAGE
 
 struct SUnitCreatedEvent {
 	int unit;
-};
+}; // EVENT_UNIT_CREATED
 
 struct SUnitFinishedEvent {
 	int unit;
-};
+}; // EVENT_UNIT_FINISHED
 
 struct SUnitIdleEvent {
 	int unit;
-};
+}; // EVENT_UNIT_IDLE
 
 struct SUnitMoveFailedEvent {
 	int unit;
-};
+}; // EVENT_UNIT_MOVE_FAILED
 
 struct SUnitDamagedEvent {
 	int unit;
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
-};
+}; // EVENT_UNIT_DAMAGED
 
 struct SUnitDestroyedEvent {
 	int unit;
 	int attacker;
-};
+}; // EVENT_UNIT_DESTROYED
 
 struct SUnitGivenEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-};
+}; // EVENT_UNIT_GIVEN
 
 struct SUnitCapturedEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-};
+}; // EVENT_UNIT_CAPTURED
 
 struct SEnemyEnterLOSEvent {
 	int enemy;
-};
+}; // EVENT_ENEMY_ENTER_LOS
 
 struct SEnemyLeaveLOSEvent {
 	int enemy;
-};
+}; // EVENT_ENEMY_LEAVE_LOS
 
 struct SEnemyEnterRadarEvent {
 	int enemy;
-};
+}; // EVENT_ENEMY_ENTER_RADAR
 
 struct SEnemyLeaveRadarEvent {
 	int enemy;
-};
+}; // EVENT_ENEMY_LEAVE_RADAR
 
 struct SEnemyDamagedEvent {
 	int enemy;
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
-};
+}; // EVENT_ENEMY_DAMAGED
 
 struct SEnemyDestroyedEvent {
 	int enemy;
 	int attacker;
-};
+}; // EVENT_ENEMY_DESTROYED
 
 struct SWeaponFiredEvent {
 	int unitId;
 	int weaponDefId;
-};
+}; // EVENT_WEAPON_FIRED
 
 struct SPlayerCommandEvent {
 	int* unitIds;
@@ -159,12 +159,12 @@ struct SPlayerCommandEvent {
 	int commandTopic; // see AISCommands.h COMMAND_* defines
 	void* commandData; // see AISCommands.h S*Command structs
 	int playerId;
-};
+}; // EVENT_PLAYER_COMMAND
 
 struct SSeismicPingEvent {
 	struct SAIFloat3 pos;
 	float strength;
-};
+}; // EVENT_SEISMIC_PING
 
 #ifdef	__cplusplus
 }	// extern "C"

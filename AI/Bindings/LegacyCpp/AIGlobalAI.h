@@ -1,37 +1,40 @@
 /*
-    Copyright 2008  Nicolas Wu
-    
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	Copyright 2008  Nicolas Wu
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	@author Nicolas Wu
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef AIGLOBALAI_H
-#define AIGLOBALAI_H
+#ifndef	AIGLOBALAI_H
+#define	AIGLOBALAI_H
 
-
-#include "ExternalAI/IGlobalAI.h"
 #include "AI.h"
-#include "ExternalAI/IGlobalAICallback.h" // Remove
+
+class IGlobalAI;
+class IGlobalAICallback;
 
 class CAIGlobalAI : public CAI {
 public:
-    CAIGlobalAI();
-    CAIGlobalAI(int team, IGlobalAI* gai);
-    ~CAIGlobalAI();
+	CAIGlobalAI();
+	CAIGlobalAI(int teamId, IGlobalAI* gai);
+	~CAIGlobalAI();
 
-    void InitAI(IGlobalAICallback* globalAICallback, int team);
-    
-    IGlobalAI* gai;
+	void InitAI(IGlobalAICallback* globalAICallback, int teamId);
+
+	IGlobalAI* gai;
 };
 
-#endif /*AIGLOBALAI_H*/
+#endif	// _AIGLOBALAI_H

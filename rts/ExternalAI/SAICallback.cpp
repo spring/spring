@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -24,6 +24,8 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Game/SelectedUnits.h"
+#include "Game/UI/GuiHandler.h"		//TODO: fix some switch for new gui
 #include "Interface/AISCommands.h"
 
 
@@ -33,7 +35,7 @@ bool team_cheatingEnabled[MAX_SKIRMISH_AIS];
 IAICheats* team_cheatCallback[MAX_SKIRMISH_AIS];
 
 /*
-int fillCMap(const std::map<std::string,std::string>* map, const char* cMap[][2]) {
+static int fillCMap(const std::map<std::string,std::string>* map, const char* cMap[][2]) {
 	std::map<std::string,std::string>::const_iterator it;
 	int i;
 	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
@@ -43,7 +45,7 @@ int fillCMap(const std::map<std::string,std::string>* map, const char* cMap[][2]
 	return i;
 }
 */
-int fillCMapKeys(const std::map<std::string,std::string>* map, const char* cMapKeys[]) {
+static int fillCMapKeys(const std::map<std::string,std::string>* map, const char* cMapKeys[]) {
 	std::map<std::string,std::string>::const_iterator it;
 	int i;
 	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
@@ -51,7 +53,7 @@ int fillCMapKeys(const std::map<std::string,std::string>* map, const char* cMapK
 	}
 	return i;
 }
-int fillCMapValues(const std::map<std::string,std::string>* map, const char* cMapValues[]) {
+static int fillCMapValues(const std::map<std::string,std::string>* map, const char* cMapValues[]) {
 	std::map<std::string,std::string>::const_iterator it;
 	int i;
 	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
@@ -59,19 +61,28 @@ int fillCMapValues(const std::map<std::string,std::string>* map, const char* cMa
 	}
 	return i;
 }
-void toFloatArr(const SAIFloat3* color, float alpha, float arrColor[4]) {
+static void toFloatArr(const SAIFloat3* color, float alpha, float arrColor[4]) {
 	arrColor[0] = color->x;
 	arrColor[1] = color->y;
 	arrColor[2] = color->z;
 	arrColor[3] = alpha;
 }
-void fillVector(std::vector<int>* vector_unitIds, int* unitIds, int numUnitIds) {
+static void fillVector(std::vector<int>* vector_unitIds, int* unitIds, int numUnitIds) {
 	for (int i=0; i < numUnitIds; ++i) {
 		vector_unitIds->push_back(unitIds[i]);
 	}
 }
 
-const UnitDef* getUnitDefById(int teamId, int unitDefId) {
+static bool isControlledByLocalPlayer(int teamId) {
+	//TODO
+	???
+		gs->players[i]->...;
+	bool gs->Team(teamId)->gaia;
+	bool gs->Team(teamId)->isAI;
+	bool gs->players[0]->;
+}
+
+static const UnitDef* getUnitDefById(int teamId, int unitDefId) {
 	AIHCGetUnitDefById cmd = {unitDefId, NULL};
 	int ret = team_callback[teamId]->HandleCommand(AIHCGetUnitDefByIdId, &cmd);
 	if (ret == 1) {
@@ -80,7 +91,7 @@ const UnitDef* getUnitDefById(int teamId, int unitDefId) {
 		return NULL;
 	}
 }
-const WeaponDef* getWeaponDefById(int teamId, int weaponDefId) {
+static const WeaponDef* getWeaponDefById(int teamId, int weaponDefId) {
 	AIHCGetWeaponDefById cmd = {weaponDefId, NULL};
 	int ret = team_callback[teamId]->HandleCommand(AIHCGetWeaponDefByIdId, &cmd);
 	if (ret == 1) {
@@ -89,7 +100,7 @@ const WeaponDef* getWeaponDefById(int teamId, int weaponDefId) {
 		return NULL;
 	}
 }
-const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
+static const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 	AIHCGetFeatureDefById cmd = {featureDefId, NULL};
 	int ret = team_callback[teamId]->HandleCommand(AIHCGetFeatureDefByIdId, &cmd);
 	if (ret == 1) {
@@ -99,7 +110,7 @@ const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 	}
 }
 
-int wrapper_HandleCommand(IAICallback* clb, IAICheats* clbCheat, int cmdId, void* cmdData) {
+static int wrapper_HandleCommand(IAICallback* clb, IAICheats* clbCheat, int cmdId, void* cmdData) {
 	
 	int ret;
 	
@@ -1377,142 +1388,142 @@ Export(const char*) _Game_getTeamSide(int teamId, int team) {
 
 
 Export(int) _WeaponDef_STATIC_getNumDamageTypes(int teamId) {
-    int numDamageTypes;
+	int numDamageTypes;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamageTypes);
-    if (!fetchOk) {
-        numDamageTypes = -1;
-    }
-    return numDamageTypes;
+	bool fetchOk = clb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamageTypes);
+	if (!fetchOk) {
+		numDamageTypes = -1;
+	}
+	return numDamageTypes;
 }
 Export(unsigned int) _Map_getChecksum(int teamId) {
-    unsigned int checksum;
+	unsigned int checksum;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_MAP_CHECKSUM, &checksum);
-    if (!fetchOk) {
-        checksum = -1;
-    }
-    return checksum;
+	bool fetchOk = clb->GetValue(AIVAL_MAP_CHECKSUM, &checksum);
+	if (!fetchOk) {
+		checksum = -1;
+	}
+	return checksum;
 }
 
 Export(bool) _Game_isExceptionHandlingEnabled(int teamId) {
-    bool exceptionHandlingEnabled;
+	bool exceptionHandlingEnabled;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_EXCEPTION_HANDLING, &exceptionHandlingEnabled);
-    if (!fetchOk) {
-        exceptionHandlingEnabled = false;
-    }
-    return exceptionHandlingEnabled;
+	bool fetchOk = clb->GetValue(AIVAL_EXCEPTION_HANDLING, &exceptionHandlingEnabled);
+	if (!fetchOk) {
+		exceptionHandlingEnabled = false;
+	}
+	return exceptionHandlingEnabled;
 }
 Export(bool) _Game_isDebugModeEnabled(int teamId) {
-    bool debugModeEnabled;
+	bool debugModeEnabled;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_DEBUG_MODE, &debugModeEnabled);
-    if (!fetchOk) {
-        debugModeEnabled = false;
-    }
-    return debugModeEnabled;
+	bool fetchOk = clb->GetValue(AIVAL_DEBUG_MODE, &debugModeEnabled);
+	if (!fetchOk) {
+		debugModeEnabled = false;
+	}
+	return debugModeEnabled;
 }
 Export(int) _Game_getMode(int teamId) {
-    int mode;
+	int mode;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
-    if (!fetchOk) {
-        mode = -1;
-    }
-    return mode;
+	bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
+	if (!fetchOk) {
+		mode = -1;
+	}
+	return mode;
 }
 Export(bool) _Game_isPaused(int teamId) {
-    bool paused;
+	bool paused;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GAME_PAUSED, &paused);
-    if (!fetchOk) {
-        paused = false;
-    }
-    return paused;
+	bool fetchOk = clb->GetValue(AIVAL_GAME_PAUSED, &paused);
+	if (!fetchOk) {
+		paused = false;
+	}
+	return paused;
 }
 Export(float) _Game_getSpeedFactor(int teamId) {
-    float speedFactor;
+	float speedFactor;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GAME_SPEED_FACTOR, &speedFactor);
-    if (!fetchOk) {
-        speedFactor = false;
-    }
-    return speedFactor;
+	bool fetchOk = clb->GetValue(AIVAL_GAME_SPEED_FACTOR, &speedFactor);
+	if (!fetchOk) {
+		speedFactor = false;
+	}
+	return speedFactor;
 }
 
 Export(float) _Gui_getViewRange(int teamId) {
-    float viewRange;
+	float viewRange;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GUI_VIEW_RANGE, &viewRange);
-    if (!fetchOk) {
-        viewRange = false;
-    }
-    return viewRange;
+	bool fetchOk = clb->GetValue(AIVAL_GUI_VIEW_RANGE, &viewRange);
+	if (!fetchOk) {
+		viewRange = false;
+	}
+	return viewRange;
 }
 Export(float) _Gui_getScreenX(int teamId) {
-    float screenX;
+	float screenX;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENX, &screenX);
-    if (!fetchOk) {
-        screenX = false;
-    }
-    return screenX;
+	bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENX, &screenX);
+	if (!fetchOk) {
+		screenX = false;
+	}
+	return screenX;
 }
 Export(float) _Gui_getScreenY(int teamId) {
-    float screenY;
+	float screenY;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENY, &screenY);
-    if (!fetchOk) {
-        screenY = false;
-    }
-    return screenY;
+	bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENY, &screenY);
+	if (!fetchOk) {
+		screenY = false;
+	}
+	return screenY;
 }
 Export(SAIFloat3) _Gui_Camera_getDirection(int teamId) {
-    float3 cameraDir;
+	float3 cameraDir;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
-    if (!fetchOk) {
-        cameraDir = float3(1.0f, 0.0f, 0.0f);
-    }
-    return cameraDir.toSAIFloat3();
+	bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
+	if (!fetchOk) {
+		cameraDir = float3(1.0f, 0.0f, 0.0f);
+	}
+	return cameraDir.toSAIFloat3();
 }
 Export(SAIFloat3) _Gui_Camera_getPosition(int teamId) {
-    float3 cameraPosition;
+	float3 cameraPosition;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
-    if (!fetchOk) {
-        cameraPosition = float3(1.0f, 0.0f, 0.0f);
-    }
-    return cameraPosition.toSAIFloat3();
+	bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
+	if (!fetchOk) {
+		cameraPosition = float3(1.0f, 0.0f, 0.0f);
+	}
+	return cameraPosition.toSAIFloat3();
 }
 
 Export(bool) _File_locateForReading(int teamId, char* filename) {
 	IAICallback* clb = team_callback[teamId];
-    return clb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	return clb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 }
 Export(bool) _File_locateForWriting(int teamId, char* filename) {
 	IAICallback* clb = team_callback[teamId];
-    return clb->GetValue(AIVAL_LOCATE_FILE_W, filename);
+	return clb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 }
 
 Export(int) _Unit_STATIC_getLimit(int teamId) {
-    int unitLimit;
+	int unitLimit;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
-    if (!fetchOk) {
-        unitLimit = -1;
-    }
-    return unitLimit;
+	bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
+	if (!fetchOk) {
+		unitLimit = -1;
+	}
+	return unitLimit;
 }
 Export(const char*) _Game_getSetupScript(int teamId) {
-    const char* setupScript;
+	const char* setupScript;
 	IAICallback* clb = team_callback[teamId];
-    bool fetchOk = clb->GetValue(AIVAL_SCRIPT, &setupScript);
-    if (!fetchOk) {
-        return NULL;
-    }
-    return setupScript;
+	bool fetchOk = clb->GetValue(AIVAL_SCRIPT, &setupScript);
+	if (!fetchOk) {
+		return NULL;
+	}
+	return setupScript;
 }
 
 
@@ -1965,40 +1976,40 @@ Export(int) _Unit_SupportedCommands_getParams(int teamId, int unitId, unsigned i
 }
 
 Export(int) _Unit_getStockpile(int teamId, int unitId) {
-    IAICallback* clb = team_callback[teamId];
-    int stockpile;
-    bool fetchOk = clb->GetProperty(AIVAL_STOCKPILED, unitId, &stockpile);
-    if (!fetchOk) {
-        stockpile = -1;
-    }
-    return stockpile;
+	IAICallback* clb = team_callback[teamId];
+	int stockpile;
+	bool fetchOk = clb->GetProperty(AIVAL_STOCKPILED, unitId, &stockpile);
+	if (!fetchOk) {
+		stockpile = -1;
+	}
+	return stockpile;
 }
 Export(int) _Unit_getStockpileQueued(int teamId, int unitId) {
-    IAICallback* clb = team_callback[teamId];
-    int stockpileQueue;
-    bool fetchOk = clb->GetProperty(AIVAL_STOCKPILE_QUED, unitId, &stockpileQueue);
-    if (!fetchOk) {
-        stockpileQueue = -1;
-    }
-    return stockpileQueue;
+	IAICallback* clb = team_callback[teamId];
+	int stockpileQueue;
+	bool fetchOk = clb->GetProperty(AIVAL_STOCKPILE_QUED, unitId, &stockpileQueue);
+	if (!fetchOk) {
+		stockpileQueue = -1;
+	}
+	return stockpileQueue;
 }
 Export(float) _Unit_getCurrentFuel(int teamId, int unitId) {
-    IAICallback* clb = team_callback[teamId];
-    float currentFuel;
-    bool fetchOk = clb->GetProperty(AIVAL_CURRENT_FUEL, unitId, &currentFuel);
-    if (!fetchOk) {
-        currentFuel = -1.0f;
-    }
-    return currentFuel;
+	IAICallback* clb = team_callback[teamId];
+	float currentFuel;
+	bool fetchOk = clb->GetProperty(AIVAL_CURRENT_FUEL, unitId, &currentFuel);
+	if (!fetchOk) {
+		currentFuel = -1.0f;
+	}
+	return currentFuel;
 }
 Export(float) _Unit_getMaxSpeed(int teamId, int unitId) {
-    IAICallback* clb = team_callback[teamId];
-    float maxSpeed;
-    bool fetchOk = clb->GetProperty(AIVAL_UNIT_MAXSPEED, unitId, &maxSpeed);
-    if (!fetchOk) {
-        maxSpeed = -1.0f;
-    }
-    return maxSpeed;
+	IAICallback* clb = team_callback[teamId];
+	float maxSpeed;
+	bool fetchOk = clb->GetProperty(AIVAL_UNIT_MAXSPEED, unitId, &maxSpeed);
+	if (!fetchOk) {
+		maxSpeed = -1.0f;
+	}
+	return maxSpeed;
 }
 
 Export(float) _Unit_getMaxRange(int teamId, int unitId) {
@@ -2312,6 +2323,12 @@ Export(int) _Unit_getBuildingFacing(int teamId, int unitId) {
 		return team_callback[teamId]->GetBuildingFacing(unitId);
 	}
 }
+Export(int) _Unit_getLastUserOrderFrame(int teamId, int unitId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return -1;
+	
+	return uh->units[unitId]->commandAI->lastUserCommand;
+}
 //########### END Unit
 
 Export(int) _Unit_STATIC_getEnemies(int teamId, int* unitIds) {
@@ -2353,13 +2370,20 @@ Export(int) _Unit_STATIC_getNeutrals(int teamId, int* unitIds) {
 	}
 }
 
-Export(int) _Unit_STATIC_getNeutralsIn(int teamId, int* unitIds, SAIFloat3 pos, float radius) {
+Export(int) _Unit_STATIC_getNeutralsIn(int teamId, int unitIds[], SAIFloat3 pos, float radius) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetNeutralUnits(unitIds, float3(pos), radius);
 	if (_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetNeutralUnits(unitIds, float3(pos), radius);
 	} else {
 		return team_callback[teamId]->GetNeutralUnits(unitIds, float3(pos), radius);
 	}
+}
+
+Export(void) _Unit_STATIC_updateSelectedUnitsIcons(int teamId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return;
+
+	selectedUnits.PossibleCommandChange(0);
 }
 
 Export(const char*) _Mod_getName(int teamId) {
@@ -2992,6 +3016,66 @@ Export(int) _Group_SupportedCommands_getParams(int teamId, int groupId, unsigned
 	
 	return size;
 }
+
+Export(int) _Group_OrderPreview_getId(int teamId, int groupId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return -1;
+
+	//TODO: need to add support for new gui
+	Command tmpCmd = guihandler->GetOrderPreview();
+	return tmpCmd.id;
+}
+Export(unsigned char) _Group_OrderPreview_getOptions(int teamId, int groupId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return '\0';
+
+	//TODO: need to add support for new gui
+	Command tmpCmd = guihandler->GetOrderPreview();
+	return tmpCmd.options;
+}
+Export(unsigned int) _Group_OrderPreview_getTag(int teamId, int groupId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return 0;
+
+	//TODO: need to add support for new gui
+	Command tmpCmd = guihandler->GetOrderPreview();
+	return tmpCmd.tag;
+}
+Export(int) _Group_OrderPreview_getTimeOut(int teamId, int groupId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return -1;
+
+	//TODO: need to add support for new gui
+	Command tmpCmd = guihandler->GetOrderPreview();
+	return tmpCmd.timeOut;
+}
+Export(unsigned int) _Group_OrderPreview_getParams(int teamId, int groupId,
+		float params[], unsigned int maxParams) {
+
+	if (!isControlledByLocalPlayer(teamId)) return 0;
+
+	//TODO: need to add support for new gui
+	Command tmpCmd = guihandler->GetOrderPreview();
+	unsigned int numParams = maxParams < tmpCmd.params.size() ? maxParams
+			: tmpCmd.params.size();
+
+	unsigned int i;
+	for (i = 0; i < numParams; i++) {
+		params[i] = tmpCmd.params[i];
+	}
+
+	return numParams;
+}
+
+Export(bool) _Group_isSelected(int teamId, int groupId) {
+
+	if (!isControlledByLocalPlayer(teamId)) return false;
+
+	return selectedUnits.selectedGroup == groupId;
+}
+
+
+
 
 /*
 Export(bool) _Unit_addToGroup(int teamId, int unitId, int groupId) {
@@ -3626,6 +3710,14 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 //	sAICallback->WeaponDef_getCustomParams = _WeaponDef_getCustomParams;
 	sAICallback->WeaponDef_getCustomParamKeys = _WeaponDef_getCustomParamKeys;
 	sAICallback->WeaponDef_getCustomParamValues = _WeaponDef_getCustomParamValues;
+	sAICallback->Unit_STATIC_updateSelectedUnitsIcons = _Unit_STATIC_updateSelectedUnitsIcons;
+	sAICallback->Group_OrderPreview_getId = _Group_OrderPreview_getId;
+	sAICallback->Group_OrderPreview_getOptions = _Group_OrderPreview_getOptions;
+	sAICallback->Group_OrderPreview_getTag = _Group_OrderPreview_getTag;
+	sAICallback->Group_OrderPreview_getTimeOut = _Group_OrderPreview_getTimeOut;
+	sAICallback->Group_OrderPreview_getParams = _Group_OrderPreview_getParams;
+	sAICallback->Group_isSelected = _Group_isSelected;
+	sAICallback->Unit_getLastUserOrderFrame = _Unit_getLastUserOrderFrame;
 	
 	team_globalCallback[teamId] = aiGlobalCallback;
 //	team_callback[teamId] = aiCallback;

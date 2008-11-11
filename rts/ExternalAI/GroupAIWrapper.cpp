@@ -15,12 +15,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "SkirmishAIWrapper.h"
+#include "GroupAIWrapper.h"
 
 #include "StdAfx.h"
 #include "Game/GlobalSynced.h"
 #include "IGlobalAI.h"
-#include "SkirmishAI.h"
+#include "GroupAI.h"
 #include "GlobalAICallback.h"
 #include "GlobalAIHandler.h"
 #include "Platform/FileSystem.h"
@@ -36,18 +36,14 @@
 
 #include <sstream>
 
-CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SSAIKey()))
-CR_REG_METADATA(CSkirmishAIWrapper, (
+CR_BIND_DERIVED(CGroupAIWrapper, CObject, (0, SSAIKey()))
+CR_REG_METADATA(CGroupAIWrapper, (
 	CR_MEMBER(teamId),
+	CR_MEMBER(groupId),
 	CR_MEMBER(cheatEvents),
 	CR_MEMBER(key),
 	CR_MEMBER(optionKeys),
 	CR_MEMBER(optionValues),
-/*
-	CR_MEMBER(libName),
-	CR_MEMBER(IsCInterface),
-	CR_MEMBER(IsLoadSupported),
-*/
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -75,9 +71,9 @@ void AIException(const char *what);
 	}
 
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key,
+CGroupAIWrapper::CGroupAIWrapper(int teamId, int groupId, const SSAIKey& key,
 		const std::map<std::string, std::string>& options)
-		: teamId(teamId), cheatEvents(false), key(key) {
+		: teamId(teamId), groupId(groupId), cheatEvents(false), key(key) {
 
 	std::map<std::string, std::string>::const_iterator op;
 	for (op = options.begin(); op != options.end(); ++op) {
@@ -85,16 +81,16 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key,
 		optionValues.push_back(op->second);
 	}
 
-	LoadSkirmishAI(false);
+	LoadGroupAI(false);
 
 	Init();
 }
 
-void CSkirmishAIWrapper::PreDestroy() {
+void CGroupAIWrapper::PreDestroy() {
 	callback->noMessages = true;
 }
 
-CSkirmishAIWrapper::~CSkirmishAIWrapper() {
+CGroupAIWrapper::~CGroupAIWrapper() {
 
 	if (ai) {
 		Release();
@@ -104,26 +100,25 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 	}
 }
 
-void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {}
+void CGroupAIWrapper::Serialize(creg::ISerializer* s) {}
 
 
-void CSkirmishAIWrapper::PostLoad() {
-	LoadSkirmishAI(true);
+void CGroupAIWrapper::PostLoad() {
+	LoadGroupAI(true);
 }
 
 
+void CGroupAIWrapper::LoadGroupAI(bool postLoad) {
 
-void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
-
-	ai = SAFE_NEW CSkirmishAI(teamId, key);
+	ai = SAFE_NEW CGroupAI(teamId, groupId, key);
 
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
-	libManager->FetchSkirmishAILibrary(key);
-	const CSkirmishAILibraryInfo* infos =
-			libManager->GetSkirmishAIInfos()->at(key);
+	libManager->FetchGroupAILibrary(key);
+	const CGroupAILibraryInfo* infos =
+			libManager->GetGroupAIInfos()->at(key);
 	bool loadSupported =
-			infos->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
-	libManager->ReleaseSkirmishAILibrary(key);
+			infos->GetInfo(GROUP_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
+	libManager->ReleaseGroupAILibrary(key);
 
 	if (postLoad && !loadSupported) {
 		// fallback code to help the AI if it
@@ -134,7 +129,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 			if (uh->units[a]->team == teamId) {
 				try {
-					UnitCreated(a);
+					AddUnit(a);
 				} HANDLE_EXCEPTION;
 				if (!uh->units[a]->beingBuilt)
 					try {
@@ -175,9 +170,9 @@ static const char** allocCStrArray(std::vector<std::string> strVec) {
 	return strArr;
 }
 
-void CSkirmishAIWrapper::Init() {
+void CGroupAIWrapper::Init() {
 
-	callback = SAFE_NEW CGlobalAICallback(this);
+	callback = SAFE_NEW CGroupAICallback(this);
 	c_callback = initSAICallback(teamId, callback);
 	optionKeys_c = allocCStrArray(optionKeys);
 	optionValues_c = allocCStrArray(optionValues);
@@ -186,7 +181,7 @@ void CSkirmishAIWrapper::Init() {
 	ai->HandleEvent(EVENT_INIT, &evtData);
 }
 
-void CSkirmishAIWrapper::Release() {
+void CGroupAIWrapper::Release() {
 
 	SReleaseEvent evtData = {teamId};
 	ai->HandleEvent(EVENT_RELEASE, &evtData);
@@ -198,7 +193,7 @@ void CSkirmishAIWrapper::Release() {
 }
 
 
-void CSkirmishAIWrapper::Load(std::istream* s) {
+void CGroupAIWrapper::Load(std::istream* s) {
 
 /* TODO
 	SLoadAIEvent evtData = {s.TO_FILENAME(TODO), callback};
@@ -206,7 +201,7 @@ void CSkirmishAIWrapper::Load(std::istream* s) {
 */
 }
 
-void CSkirmishAIWrapper::Save(std::ostream* s) {
+void CGroupAIWrapper::Save(std::ostream* s) {
 
 /* TODO
 	SSaveAIEvent evtData = {s.TO_FILENAME(TODO)};
@@ -214,31 +209,31 @@ void CSkirmishAIWrapper::Save(std::ostream* s) {
 */
 }
 
-void CSkirmishAIWrapper::UnitIdle(int unitId) {
+void CGroupAIWrapper::UnitIdle(int unitId) {
 
 	SUnitIdleEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_UNIT_IDLE, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitCreated(int unitId) {
+void CGroupAIWrapper::UnitCreated(int unitId) {
 
 	SUnitCreatedEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_UNIT_CREATED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitFinished(int unitId) {
+void CGroupAIWrapper::UnitFinished(int unitId) {
 
 	SUnitFinishedEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_UNIT_FINISHED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
+void CGroupAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
 
 	SUnitDestroyedEvent evtData = {unitId, attackerUnitId};
 	ai->HandleEvent(EVENT_UNIT_DESTROYED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
+void CGroupAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
 		float damage, const float3& dir) {
 
 	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage,
@@ -246,55 +241,55 @@ void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
 	ai->HandleEvent(EVENT_UNIT_DAMAGED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitMoveFailed(int unitId) {
+void CGroupAIWrapper::UnitMoveFailed(int unitId) {
 
 	SUnitMoveFailedEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_UNIT_MOVE_FAILED, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitGiven(int unitId, int oldTeam, int newTeam) {
+void CGroupAIWrapper::UnitGiven(int unitId, int oldTeam, int newTeam) {
 
 	SUnitGivenEvent evtData = {unitId, oldTeam, newTeam};
 	ai->HandleEvent(EVENT_UNIT_GIVEN, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitCaptured(int unitId, int oldTeam, int newTeam) {
+void CGroupAIWrapper::UnitCaptured(int unitId, int oldTeam, int newTeam) {
 
 	SUnitCapturedEvent evtData = {unitId, oldTeam, newTeam};
 	ai->HandleEvent(EVENT_UNIT_CAPTURED, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyEnterLOS(int unitId) {
+void CGroupAIWrapper::EnemyEnterLOS(int unitId) {
 
 	SEnemyEnterLOSEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_ENEMY_ENTER_LOS, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyLeaveLOS(int unitId) {
+void CGroupAIWrapper::EnemyLeaveLOS(int unitId) {
 
 	SEnemyLeaveLOSEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_ENEMY_LEAVE_LOS, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyEnterRadar(int unitId) {
+void CGroupAIWrapper::EnemyEnterRadar(int unitId) {
 
 	SEnemyEnterRadarEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_ENEMY_ENTER_RADAR, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyLeaveRadar(int unitId) {
+void CGroupAIWrapper::EnemyLeaveRadar(int unitId) {
 
 	SEnemyLeaveRadarEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_ENEMY_LEAVE_RADAR, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyDestroyed(int enemyUnitId, int attackerUnitId) {
+void CGroupAIWrapper::EnemyDestroyed(int enemyUnitId, int attackerUnitId) {
 
 	SEnemyDestroyedEvent evtData = {enemyUnitId, attackerUnitId};
 	ai->HandleEvent(EVENT_ENEMY_DESTROYED, &evtData);
 }
 
-void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
+void CGroupAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
 		float damage, const float3& dir) {
 
 	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage,
@@ -302,25 +297,25 @@ void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
 	ai->HandleEvent(EVENT_ENEMY_DAMAGED, &evtData);
 }
 
-void CSkirmishAIWrapper::Update(int frame) {
+void CGroupAIWrapper::Update(int frame) {
 
 	SUpdateEvent evtData = {frame};
 	ai->HandleEvent(EVENT_UPDATE, &evtData);
 }
 
-void CSkirmishAIWrapper::GotChatMsg(const char* msg, int fromPlayerId) {
+void CGroupAIWrapper::GotChatMsg(const char* msg, int fromPlayerId) {
 
 	SMessageEvent evtData = {fromPlayerId, msg};
 	ai->HandleEvent(EVENT_MESSAGE, &evtData);
 }
 
-void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {
+void CGroupAIWrapper::WeaponFired(int unitId, int weaponDefId) {
 
 	SWeaponFiredEvent evtData = {unitId, weaponDefId};
 	ai->HandleEvent(EVENT_WEAPON_FIRED, &evtData);
 }
 
-void CSkirmishAIWrapper::PlayerCommandGiven(
+void CGroupAIWrapper::PlayerCommandGiven(
 		const std::vector<int>& selectedUnits, const Command& c, int playerId) {
 
 	unsigned int numUnits = selectedUnits.size();
@@ -336,7 +331,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
 }
 
-void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
+void CGroupAIWrapper::SeismicPing(int allyTeam, int unitId,
 		const float3& pos, float strength) {
 
 	SSeismicPingEvent evtData = {pos.toSAIFloat3(), strength};
@@ -344,18 +339,21 @@ void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
 }
 
 
-int CSkirmishAIWrapper::GetTeamId() const {
+int CGroupAIWrapper::GetTeamId() const {
 	return teamId;
 }
+int CGroupAIWrapper::GetGroupId() const {
+	return groupId;
+}
 
-void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {
+void CGroupAIWrapper::SetCheatEventsEnabled(bool enable) {
 	cheatEvents = enable;
 }
-bool CSkirmishAIWrapper::IsCheatEventsEnabled() const {
+bool CGroupAIWrapper::IsCheatEventsEnabled() const {
 	return cheatEvents;
 }
 
-int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const
+int CGroupAIWrapper::HandleEvent(int topic, const void* data) const
 {
 	return ai->HandleEvent(topic, data);
 }

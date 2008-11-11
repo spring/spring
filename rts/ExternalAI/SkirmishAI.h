@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software {} you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation {} either version 2 of the License, or
@@ -16,24 +16,25 @@
 */
 
 #ifndef _SKIRMISHAI_H
-#define	_SKIRMISHAI_H
+#define _SKIRMISHAI_H
 
 #include "ISkirmishAI.h"
-#include "ISkirmishAILibrary.h"
+//#include "ISkirmishAILibrary.h"
 #include "Interface/SAIInterfaceLibrary.h"
+
+class ISkirmishAILibrary;
 
 class CSkirmishAI : public ISkirmishAI {
 public:
-    CSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
-    virtual ~CSkirmishAI();
-	
-    virtual int HandleEvent(int topic, const void* data) const;
-	
+	CSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
+	virtual ~CSkirmishAI();
+
+	virtual int HandleEvent(int topic, const void* data) const;
+
 private:
 	int teamId;
 	const SSAIKey skirmishAIKey;
 	const ISkirmishAILibrary* skirmishAILibrary;
 };
 
-#endif	/* _SKIRMISHAI_H */
-
+#endif	// _SKIRMISHAI_H
