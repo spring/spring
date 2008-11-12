@@ -1,4 +1,4 @@
-ADD_DEFINITIONS(-DSTREFLOP_X87) # should be in ../../CMakeLists.txt
+ADD_DEFINITIONS(-DSTREFLOP_SSE) # should be in ../../CMakeLists.txt
 ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
