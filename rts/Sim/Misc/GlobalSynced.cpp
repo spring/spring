@@ -5,10 +5,13 @@
 #include <cstring>
 
 #include "Game/GameSetup.h"
-#include "Team.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
+#include "Team.h"
+#include "TeamHandler.h"
+#include "Util.h"
+
 
 /**
  * @brief global synced
@@ -36,16 +39,8 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 	CR_MEMBER(editDefsEnabled),
 	CR_MEMBER(useLuaRules),
 	CR_MEMBER(useLuaGaia),
-	CR_MEMBER(gaiaTeamID),
-	CR_MEMBER(gaiaAllyTeamID),
 	CR_MEMBER(gameMode),
-	CR_MEMBER(players),
-	CR_MEMBER(activeTeams),
-	CR_MEMBER(activeAllyTeams),
-	CR_MEMBER(activePlayers),
-	CR_MEMBER(allies),
-	CR_MEMBER(team2allyteam),
-	CR_MEMBER(teams),
+	CR_MEMBER(activeTeamsBackwardCompatForLuaBinder),
 	CR_RESERVED(64)
 ));
 
@@ -71,44 +66,21 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	tempNum = 2;
 	gameMode = 0;
 	useLuaGaia = true;
-	gaiaTeamID = -1;
-	gaiaAllyTeamID = -1;
 	useLuaRules = true;
-	
-	for(int a = 0; a < MAX_TEAMS; ++a) {
-		teams[a] = SAFE_NEW CTeam();
-		teams[a]->teamNum = a;
-		team2allyteam[a] = a;
-	}
-	for(int a = 0; a < MAX_PLAYERS; ++a) {
-		players[a] = SAFE_NEW CPlayer();
-		players[a]->playerNum = a;
-	}
 
-	for (int a = 0; a < MAX_TEAMS; ++a) {
-		for (int b = 0; b < MAX_TEAMS; ++b) {
-			allies[a][b] = false;
-		}
-		allies[a][a] = true;
-	}
-
-	activeTeams = 2;
-	activeAllyTeams = 2;
-	activePlayers = MAX_PLAYERS;
+	// TODO: put this somewhere else (playerHandler is unsynced, even)
+	playerHandler = new CPlayerHandler();
+	teamHandler = new CTeamHandler();
 }
 
-/**
- * Destroys data inside CGlobalSyncedStuff
- */
+
 CGlobalSyncedStuff::~CGlobalSyncedStuff()
 {
-	for(int a = 0; a < MAX_TEAMS; a++) {
-		delete teams[a];
-	}
-	for(int a = 0; a < MAX_PLAYERS; a++) {
-		delete players[a];
-	}
+	// TODO: put this somewhere else (playerHandler is unsynced, even)
+	SafeDelete(playerHandler);
+	SafeDelete(teamHandler);
 }
+
 
 void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
@@ -118,78 +90,12 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
 	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
 
-	activePlayers = setup->numPlayers;
-	activeTeams = setup->numTeams;
-	activeAllyTeams = setup->numAllyTeams;
-	
-	assert(activeTeams <= MAX_TEAMS);
-	assert(activeAllyTeams <= MAX_TEAMS);
+	// TODO: this call is unsynced, technically
+	playerHandler->LoadFromSetup(setup);
 
-	for (int i = 0; i < activePlayers; ++i)
-	{
-		// TODO: refactor
-		*static_cast<PlayerBase*>(players[i]) = setup->playerStartingData[i];
-	}
+	teamHandler->LoadFromSetup(setup);
 
-	for (int i = 0; i < activeTeams; ++i)
-	{
-		teams[i]->metal = setup->startMetal;
-		teams[i]->metalIncome = setup->startMetal; // for the endgame statistics
-
-		teams[i]->energy = setup->startEnergy;
-		teams[i]->energyIncome = setup->startEnergy;
-
-		float3 start(setup->teamStartingData[i].startPos.x, setup->teamStartingData[i].startPos.y, setup->teamStartingData[i].startPos.z);
-		teams[i]->StartposMessage(start, (setup->startPosType != CGameSetup::StartPos_ChooseInGame));
-		std::memcpy(teams[i]->color, setup->teamStartingData[i].color, 4);
-		teams[i]->handicap = setup->teamStartingData[i].handicap;
-		teams[i]->leader = setup->teamStartingData[i].leader;
-		teams[i]->side = setup->teamStartingData[i].side;
-		SetAllyTeam(i, setup->teamStartingData[i].teamAllyteam);
-		if (!setup->teamStartingData[i].aiDll.empty())
-		{
-			if (setup->teamStartingData[i].aiDll.substr(0, 6) == "LuaAI:") // its a LuaAI
-			{
-				teams[i]->luaAI = setup->teamStartingData[i].aiDll.substr(6);
-				teams[i]->isAI = true;
-			}
-			else // no LuaAI
-			{
-				if (setup->hostDemo) // in demo replay, we don't need AI's to load again
-					teams[i]->dllAI = "";
-				else
-				{
-					teams[i]->dllAI = setup->teamStartingData[i].aiDll;
-					teams[i]->isAI = true;
-				}
-			}
-		}
-	}
-
-	for (int allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
-	{
-		for (int allyTeam2 = 0; allyTeam2 < activeAllyTeams; ++allyTeam2)
-			allies[allyTeam1][allyTeam2] = setup->allyStartingData[allyTeam1].allies[allyTeam2];
-	}
-
-	if (useLuaGaia) {
-		// Gaia adjustments
-		gaiaTeamID = activeTeams;
-		gaiaAllyTeamID = activeAllyTeams;
-		activeTeams++;
-		activeAllyTeams++;
-
-		// Setup the gaia team
-		CTeam* team = gs->Team(gs->gaiaTeamID);
-		team->color[0] = 255;
-		team->color[1] = 255;
-		team->color[2] = 255;
-		team->color[3] = 255;
-		team->gaia = true;
-		team->StartposMessage(float3(0.0, 0.0, 0.0), true);
-		//players[setup->numPlayers]->team = gaiaTeamID;
-		SetAllyTeam(gaiaTeamID, gaiaAllyTeamID);
-	}
+	activeTeamsBackwardCompatForLuaBinder = teamHandler->ActiveTeams();
 }
 
 /**
@@ -229,14 +135,4 @@ float3 CGlobalSyncedStuff::randVector()
 	} while(ret.SqLength()>1);
 
 	return ret;
-}
-
-int CGlobalSyncedStuff::Player(const std::string& name)
-{
-	for (int i = 0; i < MAX_PLAYERS; ++i) {
-		if (players[i] && players[i]->name == name) {
-			return i;
-		}
-	}
-	return -1;
 }

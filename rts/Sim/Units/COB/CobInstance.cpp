@@ -18,6 +18,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -1100,7 +1101,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return u ? unit->team : 0; }
 	case UNIT_ALLIED:{
 		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
-		if (u) return gs->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
+		if (u) return teamHandler->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
 		return 0;}
 	case UNIT_BUILD_PERCENT_LEFT:{
 		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
@@ -1379,7 +1380,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case GAME_FRAME: {
-		return gs->frameNum;	                 		
+		return gs->frameNum;
 	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {

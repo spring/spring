@@ -9,7 +9,7 @@
 
 #include "mmgr.h"
 
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "SelectedUnits.h"
 #include "WaitCommandsAI.h"
@@ -35,7 +35,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "EventHandler.h"
 #include "Platform/ConfigHandler.h"
-#include "Player.h"
+#include "PlayerHandler.h"
 #include "Camera.h"
 #include "Sound.h"
 #include "Util.h"
@@ -260,11 +260,11 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 
 	if (fromUser) {		//add some statistics
-		gs->players[gu->myPlayerNum]->currentStats->numCommands++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats->numCommands++;
 		if (selectedGroup!=-1) {
-			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
 		} else {
-			gs->players[gu->myPlayerNum]->currentStats->unitCommands+=selectedUnits.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=selectedUnits.size();
 		}
 	}
 
@@ -324,7 +324,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 	else if (c.id == CMD_DEATHWAIT) {
-		if (gs->activeAllyTeams <= 2) {
+		if (teamHandler->ActiveAllyTeams() <= 2) {
 			waitCommandsAI.AddDeathWait(c);
 		} else {
 			logOutput.Print("DeathWait can only be used when there are 2 Ally Teams");
@@ -496,7 +496,7 @@ void CSelectedUnits::Draw()
 		if (!selectedUnits.empty() &&
 				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
 				 ((guihandler->inCommand >= 0) &&
-					(guihandler->inCommand < guihandler->commands.size()) &&
+					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
 			GML_STDMUTEX_LOCK(cai); // Draw
 			bool myColor = true;
@@ -511,7 +511,7 @@ void CSelectedUnits::Draw()
 					}
 					builder->DrawQuedBuildingSquares();
 				}
-				else if (gs->AlliedTeams(builder->owner->team, gu->myTeam)) {
+				else if (teamHandler->AlliedTeams(builder->owner->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
@@ -564,7 +564,7 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 		return;
 	}
 
-	const CPlayer* player = gs->players[playerID];
+	const CPlayer* player = playerHandler->Player(playerID);
 	if (player == NULL) {
 		return;
 	}
@@ -573,7 +573,7 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 		                playerID, unitid, unit->team);
 		return;
 	}
-	
+
 	unit->commandAI->GiveCommand(c, false);
 }
 
@@ -642,7 +642,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 }
 
 
-// CALLINFO: 
+// CALLINFO:
 // DrawMapStuff --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
@@ -670,7 +670,7 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 	targetUnit = unit;
 	targetFeature = feature;
 	if (targetUnit) {
-		targetIsEnemy = !gs->Ally(gu->myAllyTeam, targetUnit->allyteam);
+		targetIsEnemy = !teamHandler->Ally(gu->myAllyTeam, targetUnit->allyteam);
 	}
 
 	// find the best leader to pick the command
@@ -701,7 +701,7 @@ void CSelectedUnits::PossibleCommandChange(CUnit* sender)
 		possibleCommandsChanged = true;
 }
 
-// CALLINFO: 
+// CALLINFO:
 // CGame::Draw --> DrawCommands
 // CMiniMap::DrawForReal --> DrawCommands
 void CSelectedUnits::DrawCommands()
@@ -763,8 +763,8 @@ std::string CSelectedUnits::GetTooltip(void)
 	} else if (!selectedUnits.empty()) {
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
-			if (gs->Team((*selectedUnits.begin())->team)->leader >= 0)
-				s = gs->players[gs->Team((*selectedUnits.begin())->team)->leader]->name.c_str();
+			if (teamHandler->Team((*selectedUnits.begin())->team)->leader >= 0)
+				s = playerHandler->Player(teamHandler->Team((*selectedUnits.begin())->team)->leader)->name.c_str();
 			else
 				s = "Uncontrolled";
 		} else {
@@ -906,7 +906,7 @@ void CSelectedUnits::SendCommandsToUnits(const vector<int>& unitIDs,
 	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS)
 	        << static_cast<unsigned short>(msgLen)
 	        << static_cast<unsigned char>(gu->myPlayerNum);
-	
+
 	*packet << static_cast<unsigned short>(unitIDCount);
 	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)
 	{

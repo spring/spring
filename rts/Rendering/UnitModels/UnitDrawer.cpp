@@ -9,7 +9,6 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Lua/LuaRules.h"
@@ -35,6 +34,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -782,7 +782,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	if (unit->commandAI->selected) {
 		glColor3ub(255, 255, 255);
 	} else {
-		glColor3ubv(gs->Team(unit->team)->color);
+		glColor3ubv(teamHandler->Team(unit->team)->color);
 	}
 
 	// If the icon is partly under the ground, move it up.
@@ -1112,7 +1112,7 @@ void CUnitDrawer::CleanUpUnitDrawing(void)
 void CUnitDrawer::SetS3OTeamColour(int team)
 {
 	if (advShading) {
-		unsigned char* col = gs->Team(team)->color;
+		unsigned char* col = teamHandler->Team(team)->color;
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1);
 		if (luaDrawing) { // FIXME?
 			SetBasicS3OTeamColour(team);
@@ -1125,7 +1125,7 @@ void CUnitDrawer::SetS3OTeamColour(int team)
 
 void CUnitDrawer::SetBasicS3OTeamColour(int team)
 {
-	unsigned char* col = gs->Team(team)->color;
+	unsigned char* col = teamHandler->Team(team)->color;
 	float texConstant[] = {col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1};
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 }
@@ -1885,7 +1885,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		fc = unit->unitDef->nanoColor;
 	}
 	else {
-		const unsigned char* tcol = gs->Team(unit->team)->color;
+		const unsigned char* tcol = teamHandler->Team(unit->team)->color;
 		fc = float3(tcol[0] * (1.0f / 255.0f),
 								tcol[1] * (1.0f / 255.0f),
 								tcol[2] * (1.0f / 255.0f));

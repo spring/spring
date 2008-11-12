@@ -25,6 +25,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -416,7 +417,7 @@ void CBuilderCAI::SlowUpdate()
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 							FinishCommand();
 						}
-						else if (uh->maxUnits > (int) gs->Team(owner->team)->units.size()) {
+						else if (uh->maxUnits > (int) teamHandler->Team(owner->team)->units.size()) {
 							// max unitlimit reached
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
@@ -956,7 +957,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack && (owner->maxRange > 0)) {
 				return CMD_ATTACK;
 			} else if (owner->unitDef->canReclaim && pointed->unitDef->reclaimable) {
@@ -1039,7 +1040,7 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 		}
 
 		const int cmdUnitId = (int)c.params[0];
-		if (cmdUnitId == unit->id && gs->Ally(unit->team, (*it)->team)) {
+		if (cmdUnitId == unit->id && teamHandler->Ally(unit->team, (*it)->team)) {
 			retval = true;
 			break;
 		}
@@ -1116,7 +1117,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
-	const CTeam* team = gs->Team(owner->team);
+	const CTeam* team = teamHandler->Team(owner->team);
 
 	for (fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
@@ -1204,7 +1205,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 
-		if (!gs->Ally(myAllyteam, unit->allyteam) && (unit != owner) &&
+		if (!teamHandler->Ally(myAllyteam, unit->allyteam) && (unit != owner) &&
 			!unit->beingBuilt && unit->unitDef->capturable) {
 			const float dist = f3SqLen(unit->pos - owner->pos);
 
@@ -1246,7 +1247,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
-		if (gs->Ally(owner->allyteam, unit->allyteam)) {
+		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
 				// dont lock-on to units outside of our reach (for immobile builders)
 				if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
@@ -1336,7 +1337,7 @@ void CBuilderCAI::DrawCommands(void)
 {
 	if(uh->limitDgun && owner->unitDef->isCommander) {
 		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
-		glSurfaceCircle(gs->Team(owner->team)->startPos, uh->dgunRadius, 40);
+		glSurfaceCircle(teamHandler->Team(owner->team)->startPos, uh->dgunRadius, 40);
 	}
 
 	lineDrawer.StartPath(owner->midPos, cmdColors.start);

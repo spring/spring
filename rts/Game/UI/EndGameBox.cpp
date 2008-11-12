@@ -5,8 +5,8 @@
 #include "EndGameBox.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Misc/Team.h"
-#include "Game/Player.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "Game/Game.h"
@@ -223,7 +223,7 @@ void CEndGameBox::Draw()
 	font->glPrintAt(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,"Team stats");
 	font->glPrintAt(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,"Team delta stats");
 
-	if(gs->Team(gu->myTeam)->isDead){
+	if(teamHandler->Team(gu->myTeam)->isDead){
 		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You lost the game");
 	} else {
 		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You won the game");
@@ -240,19 +240,19 @@ void CEndGameBox::Draw()
 		}
 
 		float ypos=0.5f;
-		for(int a=0;a<gs->activePlayers;++a){
-			if(gs->players[a]->currentStats->mousePixels==0)
+		for(int a=0;a<playerHandler->ActivePlayers();++a){
+			if(playerHandler->Player(a)->currentStats->mousePixels==0)
 				continue;
 			char values[6][100];
 
-			sprintf(values[0],"%s",	gs->players[a]->name.c_str());
-			sprintf(values[1],"%i",(int)(gs->players[a]->currentStats->mouseClicks*60/game->totalGameTime));
-			sprintf(values[2],"%i",(int)(gs->players[a]->currentStats->mousePixels*60/game->totalGameTime));
-			sprintf(values[3],"%i",(int)(gs->players[a]->currentStats->keyPresses*60/game->totalGameTime));
-			sprintf(values[4],"%i",(int)(gs->players[a]->currentStats->numCommands*60/game->totalGameTime));
+			sprintf(values[0],"%s",	playerHandler->Player(a)->name.c_str());
+			sprintf(values[1],"%i",(int)(playerHandler->Player(a)->currentStats->mouseClicks*60/game->totalGameTime));
+			sprintf(values[2],"%i",(int)(playerHandler->Player(a)->currentStats->mousePixels*60/game->totalGameTime));
+			sprintf(values[3],"%i",(int)(playerHandler->Player(a)->currentStats->keyPresses*60/game->totalGameTime));
+			sprintf(values[4],"%i",(int)(playerHandler->Player(a)->currentStats->numCommands*60/game->totalGameTime));
 			sprintf(values[5],"%i",(int)
-				( gs->players[a]->currentStats->numCommands != 0 ) ?
-				( gs->players[a]->currentStats->unitCommands/gs->players[a]->currentStats->numCommands) :
+				( playerHandler->Player(a)->currentStats->numCommands != 0 ) ?
+				( playerHandler->Player(a)->currentStats->unitCommands/playerHandler->Player(a)->currentStats->numCommands) :
 				( 0 ));
 
 			float xpos=0.01f;
@@ -337,9 +337,9 @@ void CEndGameBox::Draw()
 		glEnd();
 		glDisable(GL_LINE_STIPPLE);
 
-		for(int team=0; team<gs->activeTeams; team++){
-			if (gs->Team(team)->gaia) continue;
-			glColor4ubv(gs->Team(team)->color);
+		for(int team=0; team<teamHandler->ActiveTeams(); team++){
+			if (teamHandler->Team(team)->gaia) continue;
+			glColor4ubv(teamHandler->Team(team)->color);
 
 			glBegin(GL_LINE_STRIP);
 			for(int a=0;a<numPoints;++a){
@@ -427,9 +427,9 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Damage Dealt"));
 	stats.push_back(Stat("Damage Received"));
 
-	for(int team=0; team<gs->activeTeams; team++){
-		if (gs->Team(team)->gaia) continue;
-		for(std::list<CTeam::Statistics>::iterator si=gs->Team(team)->statHistory.begin(); si!=gs->Team(team)->statHistory.end(); si++){
+	for(int team=0; team<teamHandler->ActiveTeams(); team++){
+		if (teamHandler->Team(team)->gaia) continue;
+		for(std::list<CTeam::Statistics>::iterator si=teamHandler->Team(team)->statHistory.begin(); si!=teamHandler->Team(team)->statHistory.end(); si++){
 			stats[0].AddStat(team,0);
 
 			stats[1].AddStat(team, si->metalUsed);

@@ -10,6 +10,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -55,7 +56,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.tooltip="Sets the aircraft to attack enemy units within a circle";
 		possibleCommands.push_back(c);
 	}
-	
+
 	if(owner->unitDef->canLoopbackAttack){
 		c.params.clear();
 		c.id=CMD_LOOPBACKATTACK;
@@ -259,7 +260,7 @@ void CAirCAI::SlowUpdate()
 	if (c.id == CMD_WAIT) {
 		if ((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 		    && !owner->unitDef->DontLand() && myPlane->autoLand) {
-			StopMove(); 
+			StopMove();
 //			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
 		return;
@@ -597,7 +598,7 @@ void CAirCAI::ExecuteGuard(Command &c)
 int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack) {
 				return CMD_ATTACK;
 			}

@@ -21,47 +21,38 @@ extern "C" void PreInitMac();
 #include "Game/GameVersion.h"
 
 
-/**
- * @brief instance
- *
- * Default instantiation of ConfigHandler instance
- * is NULL.
- */
-#ifndef USE_GML // GML calls GetInstance() from a global scope and needs these to be initialized in gml.cpp instead to avoid crash
-ConfigHandler* ConfigHandler::instance = NULL;
-std::string ConfigHandler::configSource;
-#endif
+ConfigHandler* _configHandler;
+
 
 /**
- * Returns reference to the current platform's config class.
- * If none exists, create one.
+ * Instantiates a copy of the current platform's config class.
+ * Re-instantiates if the configHandler already existed.
  */
-ConfigHandler& ConfigHandler::GetInstance()
+void ConfigHandler::Instantiate(std::string configSource)
 {
-	if (!instance) {
-		if (configSource.empty()) {
-#ifdef _WIN32
-			configSource = "Software\\SJ\\Spring";
-			const std::string version = SpringVersion::Get();
-			if (version.size()>0 && version[version.size()-1] == '+')
-				configSource += " SVN";
-#elif defined(__APPLE__)
-			configSource = "this string is not currently used";
-#else
-			configSource = DotfileHandler::GetDefaultConfig();
-#endif
-		}
+	Deallocate();
 
+	if (configSource.empty()) {
 #ifdef _WIN32
-		instance = SAFE_NEW RegHandler(configSource);
+		configSource = "Software\\SJ\\Spring";
+		const std::string version = SpringVersion::Get();
+		if (version.size()>0 && version[version.size()-1] == '+')
+			configSource += " SVN";
 #elif defined(__APPLE__)
-		PreInitMac();
-		instance = SAFE_NEW UserDefsHandler(); // Config path is based on bundle id
+		configSource = "this string is not currently used";
 #else
-		instance = SAFE_NEW DotfileHandler(configSource);
+		configSource = DotfileHandler::GetDefaultConfig();
 #endif
 	}
-	return *instance;
+
+#ifdef _WIN32
+	_configHandler = SAFE_NEW RegHandler(configSource);
+#elif defined(__APPLE__)
+	PreInitMac();
+	_configHandler = SAFE_NEW UserDefsHandler(); // Config path is based on bundle id
+#else
+	_configHandler = SAFE_NEW DotfileHandler(configSource);
+#endif
 }
 
 
@@ -70,9 +61,9 @@ ConfigHandler& ConfigHandler::GetInstance()
  */
 void ConfigHandler::Deallocate()
 {
-	if (instance)
-		delete instance;
-	instance = 0;
+	// can not use SafeDelete because ~ConfigHandler is protected
+	delete _configHandler;
+	_configHandler = NULL;
 }
 
 
@@ -99,17 +90,4 @@ void ConfigHandler::SetFloat(const std::string& name, float value)
 	buffer << value;
 
 	SetString(name, buffer.str());
-}
-
-
-bool ConfigHandler::SetConfigSource(const std::string& source)
-{
-	configSource = source;
-	return true;
-}
-
-
-const std::string& ConfigHandler::GetConfigSource()
-{
-	return configSource;
 }

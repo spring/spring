@@ -38,7 +38,7 @@ public:
 	CR_DECLARE_SUB(Statistics);
 	CPlayer();
 	~CPlayer();
-	
+
 	std::set<int> controlledTeams;
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());
@@ -84,7 +84,7 @@ public:
 	DirectControlStruct myControl;
 
 	CUnit* playerControlledUnit;
-	
+
 	void StopControllingUnit();
 #endif
 

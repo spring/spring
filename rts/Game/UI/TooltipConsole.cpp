@@ -5,8 +5,8 @@
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-#include "Game/Player.h"
-#include "Sim/Misc/Team.h"
+#include "Game/PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -190,7 +190,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	std::string s;
 
-	const bool enemyUnit = (gs->AllyTeam(unit->team) != gu->myAllyTeam) &&
+	const bool enemyUnit = (teamHandler->AllyTeam(unit->team) != gu->myAllyTeam) &&
 	                       !gu->spectatingFullView;
 
 	const UnitDef* unitDef = unit->unitDef;
@@ -209,8 +209,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		if (gs->Team(unit->team)->leader >= 0) {
-			s = gs->players[gs->Team(unit->team)->leader]->name.c_str();
+		if (teamHandler->Team(unit->team)->leader >= 0) {
+			s = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name.c_str();
 		} else {
 			s = "Uncontrolled";
 		}

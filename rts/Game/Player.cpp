@@ -7,7 +7,8 @@
 #include "mmgr.h"
 
 #include "Player.h"
-#include "Sim/Misc/Team.h"
+#include "PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #ifdef DIRECT_CONTROL_ALLOWED
 #  include "UI/MouseHandler.h"
@@ -106,8 +107,8 @@ void CPlayer::SetControlledTeams()
 	}
 
 	// AI teams
-	for (int t = 0; t < gs->activeTeams; t++) {
-		const CTeam* team = gs->Team(t);
+	for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
+		const CTeam* team = teamHandler->Team(t);
 		if (team && team->isAI &&
 		    !team->dllAI.empty() && // luaAI does not require client control
 		    (team->leader == playerNum)) {
@@ -119,8 +120,8 @@ void CPlayer::SetControlledTeams()
 
 void CPlayer::UpdateControlledTeams()
 {
-	for (int p = 0; p < gs->activePlayers; p++) {
-		CPlayer* player = gs->players[p];
+	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
+		CPlayer* player = playerHandler->Player(p);
 		if (player) {
 			player->SetControlledTeams();
 		}
@@ -131,7 +132,7 @@ void CPlayer::UpdateControlledTeams()
 void CPlayer::StartSpectating()
 {
 	spectator = true;
-	if (gs->players[gu->myPlayerNum] == this) { //TODO bad hack
+	if (playerHandler->Player(gu->myPlayerNum) == this) { //TODO bad hack
 		gu->spectating           = true;
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
@@ -145,12 +146,12 @@ void CPlayer::StopControllingUnit()
 {
 	ENTER_UNSYNCED;
 	if (gu->directControl == playerControlledUnit) {
-		assert(gs->players[gu->myPlayerNum] == this);
+		assert(playerHandler->Player(gu->myPlayerNum) == this);
 		gu->directControl = 0;
 
 		/* Switch back to the camera we were using before. */
 		camHandler->PopMode();
-		
+
 		if (mouse->locked && !mouse->wasLocked){
 			mouse->locked = false;
 			mouse->ShowMouse();

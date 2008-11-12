@@ -6,6 +6,7 @@
 #include "LosHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/TeamHandler.h"
 
 
 CR_BIND(CRadarHandler, (false));
@@ -32,7 +33,7 @@ void CRadarHandler::Serialize(creg::ISerializer& s)
 	const int size = xsize*ysize*2;
 
 	// NOTE This could be tricky if gs is serialized after radarHandler.
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		s.Serialize(&radarMaps[a].front(), size);
 		if (!circularRadar) {
 			s.Serialize(&airRadarMaps[a].front(), size);
@@ -61,7 +62,7 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	commonJammerMap.resize(size, 0);
 	commonSonarJammerMap.resize(size, 0);
 
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		radarMaps[a].resize(size, 0);
 		sonarMaps[a].resize(size, 0);
 		seismicMaps[a].resize(size, 0);

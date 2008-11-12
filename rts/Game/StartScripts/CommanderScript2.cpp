@@ -2,7 +2,7 @@
 #include "mmgr.h"
 
 #include "CommanderScript2.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
@@ -28,19 +28,19 @@ CCommanderScript2::~CCommanderScript2()
 
 void CCommanderScript2::GameStart()
 {
-	gs->Team(0)->energy=1000;
-	gs->Team(0)->energyIncome=1000;	//for the endgame statistics
-	gs->Team(0)->energyStorage=1000;
-	gs->Team(0)->metal=1000;
-	gs->Team(0)->metalIncome=1000;
-	gs->Team(0)->metalStorage=1000;
+	teamHandler->Team(0)->energy=1000;
+	teamHandler->Team(0)->energyIncome=1000;	//for the endgame statistics
+	teamHandler->Team(0)->energyStorage=1000;
+	teamHandler->Team(0)->metal=1000;
+	teamHandler->Team(0)->metalIncome=1000;
+	teamHandler->Team(0)->metalStorage=1000;
 
-	gs->Team(1)->energy=1000;
-	gs->Team(1)->energyIncome=1000;
-	gs->Team(1)->energyStorage=1000;
-	gs->Team(1)->metal=1000;
-	gs->Team(1)->metalIncome=1000;
-	gs->Team(1)->metalStorage=1000;
+	teamHandler->Team(1)->energy=1000;
+	teamHandler->Team(1)->energyIncome=1000;
+	teamHandler->Team(1)->energyStorage=1000;
+	teamHandler->Team(1)->metal=1000;
+	teamHandler->Team(1)->metalIncome=1000;
+	teamHandler->Team(1)->metalStorage=1000;
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);

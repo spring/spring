@@ -10,6 +10,7 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 
@@ -159,15 +160,15 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 						ai->UnitFinished(a);
 					} HANDLE_EXCEPTION;
 			} else {
-				if ((uh->units[a]->allyteam == gs->AllyTeam(team)) || gs->Ally(gs->AllyTeam(team), uh->units[a]->allyteam)) {
+				if ((uh->units[a]->allyteam == teamHandler->AllyTeam(team)) || teamHandler->Ally(teamHandler->AllyTeam(team), uh->units[a]->allyteam)) {
 					/* do nothing */
 				} else {
-					if (uh->units[a]->losStatus[gs->AllyTeam(team)] & (LOS_INRADAR | LOS_INLOS)) {
+					if (uh->units[a]->losStatus[teamHandler->AllyTeam(team)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
 							ai->EnemyEnterRadar(a);
 						} HANDLE_EXCEPTION;
 					}
-					if (uh->units[a]->losStatus[gs->AllyTeam(team)] & LOS_INLOS) {
+					if (uh->units[a]->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS) {
 						try {
 							ai->EnemyEnterLOS(a);
 						} HANDLE_EXCEPTION;

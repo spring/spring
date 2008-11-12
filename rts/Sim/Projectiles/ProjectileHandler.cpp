@@ -30,6 +30,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Unsynced/ShieldPartProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -586,7 +587,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		pro->UpdateDrawPos();
 
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
-			(pro->owner && gs->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
+			(pro->owner && teamHandler->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner;
 			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
@@ -680,7 +681,7 @@ void CProjectileHandler::DrawShadowPass(void)
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		if ((gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
-			((*psi)->owner && gs->Ally((*psi)->owner->allyteam, gu->myAllyTeam)))) {
+			((*psi)->owner && teamHandler->Ally((*psi)->owner->allyteam, gu->myAllyTeam)))) {
 
 			if ((*psi)->s3domodel)
 				(*psi)->DrawUnitPart();

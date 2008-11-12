@@ -32,12 +32,13 @@
 #include "LuaOpenGL.h"
 #include "LuaVFS.h"
 
-#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "EventHandler.h"
@@ -1014,7 +1015,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
 		const int teamID = lua_toint(L, 1);
-		if ((teamID < MinSpecialTeam) || (teamID >= gs->activeTeams)) {
+		if ((teamID < MinSpecialTeam) || (teamID >= teamHandler->ActiveTeams())) {
 			luaL_error(L, "Bad teamID in SetCtrlTeam");
 		}
 		// ctrl
@@ -1022,7 +1023,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 		lhs->fullCtrl = (lhs->ctrlTeam == CEventClient::AllAccessTeam);
 		// read
 		lhs->readTeam = teamID;
-		lhs->readAllyTeam = (teamID < 0) ? teamID : gs->AllyTeam(teamID);
+		lhs->readAllyTeam = (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID);
 		lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
 		activeFullRead     = lhs->fullRead;
 		activeReadAllyTeam = lhs->readAllyTeam;
@@ -1037,7 +1038,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 			const string key = lua_tostring(L, -2);
 			const int teamID = lua_toint(L, -1);
-			if ((teamID < MinSpecialTeam) || (teamID >= gs->activeTeams)) {
+			if ((teamID < MinSpecialTeam) || (teamID >= teamHandler->ActiveTeams())) {
 				luaL_error(L, "Bad teamID in SetCtrlTeam");
 			}
 
@@ -1047,7 +1048,7 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 			else if (key == "read") {
 				lhs->readTeam = teamID;
-				lhs->readAllyTeam = (teamID < 0) ? teamID : gs->AllyTeam(teamID);
+				lhs->readAllyTeam = (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID);
 				lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
 				activeFullRead     = lhs->fullRead;
 				activeReadAllyTeam = lhs->readAllyTeam;

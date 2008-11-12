@@ -2,12 +2,13 @@
 #include <SDL_keysym.h>
 #include "mmgr.h"
 
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 #include "MouseHandler.h"
 #include "NetProtocol.h"
 #include "QuitBox.h"
+#include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
@@ -50,13 +51,13 @@ CQuitBox::CQuitBox(void)
 	noAlliesLeft=true;
 	shareTeam=0;
 	// if we have alive allies left, set the shareteam to an undead ally.
-	for(int team=0;team<gs->activeTeams;++team){
-		if (gs->Team(team)->gaia) continue;
-		if(team!=gu->myTeam && !gs->Team(team)->isDead)
+	for(int team=0;team<teamHandler->ActiveTeams();++team){
+		if (teamHandler->Team(team)->gaia) continue;
+		if(team!=gu->myTeam && !teamHandler->Team(team)->isDead)
 		{
-			if(shareTeam==gu->myTeam || gs->Team(shareTeam)->isDead)
+			if(shareTeam==gu->myTeam || teamHandler->Team(shareTeam)->isDead)
 				shareTeam=team;
-			if(gs->Ally(gu->myAllyTeam, gs->AllyTeam(team))){
+			if(teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(team))){
 				noAlliesLeft=false;
 				shareTeam=team;
 				break;
@@ -122,12 +123,12 @@ void CQuitBox::Draw(void)
 	font->glPrintAt(box.x1 + quitBox.x1       + 0.025f,
 	                box.y1 + quitBox.y1       + 0.005f, 1, "Quit");
 
-	for(int team=0;team<gs->activeTeams-1;++team){
+	for(int team=0;team<teamHandler->ActiveTeams()-1;++team){
 		int actualTeam=team;
 		if (team >= gu->myTeam) {
 			actualTeam++;
 		}
-		if (gs->Team(actualTeam)->gaia) continue;
+		if (teamHandler->Team(actualTeam)->gaia) continue;
 
 		if (shareTeam == actualTeam) {
 			glColor4f(1,1,1,0.8f);
@@ -136,21 +137,21 @@ void CQuitBox::Draw(void)
 		}
 
 		std::string teamName;
-		if (gs->Team(actualTeam)->leader >= 0)
-			teamName = gs->players[gs->Team(actualTeam)->leader]->name;
+		if (teamHandler->Team(actualTeam)->leader >= 0)
+			teamName = playerHandler->Player(teamHandler->Team(actualTeam)->leader)->name;
 		else
 			teamName = "uncontrolled";
 
 		std::string ally, dead;
-		if (gs->Ally(gu->myAllyTeam, gs->AllyTeam(actualTeam))) {
+		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
 			ally = " <Ally>)";
 		} else {
 			ally = " <Enemy>";
 		}
-		if(gs->Team(actualTeam)->isDead) {
+		if(teamHandler->Team(actualTeam)->isDead) {
 			dead = " <Dead>";
 		}
-		if (actualTeam == gs->gaiaTeamID) {
+		if (actualTeam == teamHandler->GaiaTeamID()) {
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
@@ -202,9 +203,9 @@ bool CQuitBox::MousePress(int x, int y, int button)
 			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 			if(team>=gu->myTeam)
 				team++;
-			if(team<gs->activeTeams && !gs->Team(team)->isDead){
+			if(team<teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead){
 				// we don't want to give everything to the enemy if there are allies left
-				if(noAlliesLeft || (!noAlliesLeft && gs->Ally(gu->myAllyTeam, gs->AllyTeam(team)))){
+				if(noAlliesLeft || (!noAlliesLeft && teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(team)))){
 					shareTeam=team;
 				}
 			}
@@ -219,15 +220,15 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !gs->Team(shareTeam)->isDead && !gs->Team(gu->myTeam)->isDead){
+	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead){
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox)) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam));
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
 			sprintf(givenAwayMsg,"%s gave everything to %s.",
-				gs->players[gu->myPlayerNum]->name.c_str(),
-				gs->players[gs->Team(shareTeam)->leader]->name.c_str());
+				playerHandler->Player(gu->myPlayerNum)->name.c_str(),
+				playerHandler->Player(teamHandler->Team(shareTeam)->leader)->name.c_str());
 			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg));
 		}
 		// resign, so self-d all units
@@ -262,9 +263,9 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 		int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 		if(team>=gu->myTeam)
 			team++;
-		if(team<gs->activeTeams && !gs->Team(team)->isDead){
+		if(team<teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead){
 			// we don't want to give everything to the enemy if there are allies left
-			if(noAlliesLeft || (!noAlliesLeft && gs->Ally(gu->myAllyTeam, gs->AllyTeam(team)))){
+			if(noAlliesLeft || (!noAlliesLeft && teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(team)))){
 				shareTeam=team;
 			}
 		}

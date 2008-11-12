@@ -3,6 +3,7 @@
 
 #include "TransportCAI.h"
 #include "LineDrawer.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -281,7 +282,7 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 	if(unit->mass>=100000 || unit->beingBuilt)
 		return false;
 	// don't transport cloaked enemies
-	if (unit->isCloaked && !gs->AlliedTeams(unit->team, owner->team))
+	if (unit->isCloaked && !teamHandler->AlliedTeams(unit->team, owner->team))
 		return false;
 	if(unit->xsize > owner->unitDef->transportSize*2)
 		return false;
@@ -880,7 +881,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 int CTransportCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canAttack) {
 				return CMD_ATTACK;
 			} else if (CanTransport(pointed)) {

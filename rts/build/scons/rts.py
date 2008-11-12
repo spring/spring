@@ -140,7 +140,7 @@ def generate(env):
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)
 
-	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 7) or env.GetOption('clean')):
+	if not 'configure' in sys.argv and not ((env.has_key('is_configured') and env['is_configured'] == 8) or env.GetOption('clean')):
 		print "Not configured or configure script updated.  Run `scons configure' first."
 		print "Use `scons --help' to show available configure options to `scons configure'."
 		env.Exit(1)
@@ -175,7 +175,7 @@ def generate(env):
 
 		args = makeHashTable(sys.argv)
 
-		env['is_configured'] = 7
+		env['is_configured'] = 8
 
 		if args.has_key('platform'): env['platform'] = args['platform']
 		else: env['platform'] = detect.platform()
@@ -352,6 +352,7 @@ def generate(env):
 			if env['fpmath'] == '387':
 				print "WARNING: SSE math vs X87 math is unsynced!"
 				print "WARNING: Do not go online with the binary you are currently building!"
+			else:
 				env['CCFLAGS'] += ['-msse']
 
 		env['CXXFLAGS'] = env['CCFLAGS']

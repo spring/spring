@@ -42,7 +42,7 @@ class CHwDummyCursor : public IHwCursor {
 		void PushFrame(int index, float delay){};
 		void Finish(){};
 
-		bool needsYFlip() {return false;};
+		bool NeedsYFlip() {return false;};
 
 		bool IsValid(){return false;};
 		void Bind(){};
@@ -58,7 +58,7 @@ class CHwWinCursor : public IHwCursor {
 		void PushFrame(int index, float delay);
 		void Finish();
 
-		bool needsYFlip() {return true;};
+		bool NeedsYFlip() {return true;};
 
 		void Bind();
 
@@ -111,7 +111,7 @@ class CHwX11Cursor : public IHwCursor {
 		void PushFrame(int index, float delay);
 		void Finish();
 
-		bool needsYFlip() {return false;};
+		bool NeedsYFlip() {return false;};
 
 		bool IsValid() {return (cursor!=0);};
 		void Bind();
@@ -142,7 +142,7 @@ IHwCursor* GetNewHwCursor()
 
 
 //////////////////////////////////////////////////////////////////////
-// Implementation 
+// Implementation
 //////////////////////////////////////////////////////////////////////
 
 
@@ -415,7 +415,7 @@ CHwWinCursor::~CHwWinCursor(void)
 
 void CHwX11Cursor::resizeImage(XcursorImage*& image, const int new_x, const int new_y)
 {
-	if (image->width==new_x && image->height==new_y)
+	if (int(image->width) == new_x && int(image->height) == new_y)
 		return;
 
 	const int old_x = image->width;
@@ -424,7 +424,7 @@ void CHwX11Cursor::resizeImage(XcursorImage*& image, const int new_x, const int 
 	XcursorImage* new_image = XcursorImageCreate(new_x, new_y);
 	new_image->delay = image->delay;
 
-	unsigned char* src = (unsigned char*)image->pixels;
+	const unsigned char* src = (unsigned char*)image->pixels;
 	unsigned char* dst = (unsigned char*)new_image->pixels;
 	memset(dst, 0, new_x*new_y*4);
 
@@ -466,15 +466,15 @@ void CHwX11Cursor::SetDelay(float delay)
 
 void CHwX11Cursor::PushFrame(int index, float delay)
 {
-	if (index>=cimages.size())
+	if (index >= int(cimages.size()))
 		return;
 
-	if (cimages[index]->delay!=delay) {
+	if (cimages[index]->delay != delay) {
 		// make a copy of the existing one
 		XcursorImage* ci = cimages[index];
 		PushImage( ci->width, ci->height, ci->pixels );
 		SetDelay(delay);
-	}else{
+	} else {
 		cimages.push_back( cimages[index] );
 	}
 }
@@ -485,12 +485,12 @@ void CHwX11Cursor::Finish()
 		return;
 
 	//resize images
-	for (std::vector<XcursorImage*>::iterator it=cimages.begin(); it<cimages.end(); it++)
-		resizeImage(*it,xmaxsize,ymaxsize);
+	for (std::vector<XcursorImage*>::iterator it = cimages.begin(); it < cimages.end(); ++it)
+		resizeImage(*it, xmaxsize, ymaxsize);
 
 	XcursorImages *cis = XcursorImagesCreate(cimages.size());
 	cis->nimage = cimages.size();
-	for (int i=0; i < cimages.size(); i++ ) {
+	for (int i = 0; i < int(cimages.size()); ++i) {
 		XcursorImage* ci = cimages[i];
 		ci->xhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ci->width/2;
 		ci->yhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ci->height/2;

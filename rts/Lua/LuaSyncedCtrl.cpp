@@ -19,11 +19,11 @@
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/GameServer.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
@@ -37,6 +37,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -52,6 +53,7 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -239,7 +241,7 @@ static inline int CtrlAllyTeam()
 	if (ctrlTeam < 0) {
 		return ctrlTeam;
 	}
-	return gs->AllyTeam(ctrlTeam);
+	return teamHandler->AllyTeam(ctrlTeam);
 }
 
 
@@ -259,7 +261,7 @@ static inline bool CanControlAllyTeam(int allyTeamID)
 	if (ctrlTeam < 0) {
 		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
-	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
@@ -280,9 +282,9 @@ static inline bool CanControlFeatureAllyTeam(int allyTeamID)
 		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
 	if (allyTeamID < 0) {
-		return (ctrlTeam == gs->gaiaTeamID);
+		return (ctrlTeam == teamHandler->GaiaTeamID());
 	}
-	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
@@ -301,7 +303,7 @@ static inline bool CanControlProjectileAllyTeam(int allyTeamID)
 	if (allyTeamID < 0) {
 		return false;
 	}
-	return (gs->AllyTeam(ctrlTeam) == allyTeamID);
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
@@ -385,10 +387,10 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return NULL;
 	}
@@ -418,7 +420,7 @@ static CPlayer* CheckPlayerID(lua_State* L, int index)
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
-	CPlayer* player = gs->players[playerID];
+	CPlayer* player = playerHandler->Player(playerID);
 	if (player == NULL) {
 		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
@@ -479,13 +481,13 @@ static int ParseFacing(lua_State* L, const char* caller, int index)
 int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!CanControlTeam(teamID)) {
 		return 0;
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -507,13 +509,13 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!CanControlTeam(teamID)) {
 		return 0;
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -570,13 +572,13 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!CanControlTeam(teamID)) {
 		return 0;
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -606,13 +608,13 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!CanControlTeam(teamID)) {
 		return 0;
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -892,7 +894,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
 	}
 
-	if (gs->AllyTeam(teamID) >= gs->activeAllyTeams) {
+	if (teamHandler->AllyTeam(teamID) >= teamHandler->ActiveAllyTeams()) {
 		// FIXME: there's a segv in CLosHandler::LosAddAir,
 		//        this is a dirty hack to avoid it
 		luaL_error(L, "CreateUnit(): inactive team: %d", teamID);
@@ -974,10 +976,10 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	}
 
 	const int newTeam = luaL_checkint(L, 2);
-	if ((newTeam < 0) || (newTeam >= gs->activeTeams)) {
+	if ((newTeam < 0) || (newTeam >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
-	const CTeam* team = gs->Team(newTeam);
+	const CTeam* team = teamHandler->Team(newTeam);
 	if (team == NULL) {
 		return 0;
 	}
@@ -2008,7 +2010,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 				}
 			}
 		}
-		CTeam* team = gs->Team(unit->team);
+		CTeam* team = teamHandler->Team(unit->team);
 		if ((team->metal >= metal) && (team->energy >= energy)) {
 			unit->UseMetal(metal);
 			unit->UseEnergy(energy);
@@ -2083,7 +2085,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		}
 	}
 
-	const int allyTeam = (team < 0) ? -1 : gs->AllyTeam(team);
+	const int allyTeam = (team < 0) ? -1 : teamHandler->AllyTeam(team);
 	if (!CanControlFeatureAllyTeam(allyTeam)) {
 		luaL_error(L, "CreateFeature() bad team permission %d", team);
 	}

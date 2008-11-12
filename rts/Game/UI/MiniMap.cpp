@@ -18,7 +18,7 @@
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "GuiHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
@@ -688,13 +688,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		if (gu->spectatingFullSelect) {
 			team = 0;
-			lastTeam = gs->activeTeams - 1;
+			lastTeam = teamHandler->ActiveTeams() - 1;
 		} else {
 			team = gu->myTeam;
 			lastTeam = gu->myTeam;
 		}
 		for (; team <= lastTeam; team++) {
-			CUnitSet& teamUnits = gs->Team(team)->units;
+			CUnitSet& teamUnits = teamHandler->Team(team)->units;
 			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 				const float3& midPos = (*ui)->midPos;
 
@@ -756,13 +756,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 					int team, lastTeam;
 					if (gu->spectatingFullSelect) {
 						team = 0;
-						lastTeam = gs->activeTeams - 1;
+						lastTeam = teamHandler->ActiveTeams() - 1;
 					} else {
 						team = gu->myTeam;
 						lastTeam = gu->myTeam;
 					}
 					for (; team <= lastTeam; team++) {
-						CUnitSet& myUnits = gs->Team(team)->units;
+						CUnitSet& myUnits = teamHandler->Team(team)->units;
 						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
 							if ((*ui)->aihint == unit->aihint) {
 								selectedUnits.AddUnit(*ui);
@@ -839,7 +839,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 //	CCamera *c = camera;
 //	camera = new CCamera(*c);
 
-//	const float3 tmpMouseDir = mouse->dir; 
+//	const float3 tmpMouseDir = mouse->dir;
 
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
@@ -1488,13 +1488,13 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		if (simpleColors) {
 			if (unit->team == gu->myTeam) {
 				glColor3ubv(myColor);
-			} else if (gs->Ally(gu->myAllyTeam, unit->allyteam)) {
+			} else if (teamHandler->Ally(gu->myAllyTeam, unit->allyteam)) {
 				glColor3ubv(allyColor);
 			} else {
 				glColor3ubv(enemyColor);
 			}
 		} else {
-			glColor3ubv(gs->Team(unit->team)->color);
+			glColor3ubv(teamHandler->Team(unit->team)->color);
 		}
 	}
 

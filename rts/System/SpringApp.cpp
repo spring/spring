@@ -104,10 +104,6 @@ SpringApp::SpringApp ()
 	FSAA = false;
 
 	signal(SIGABRT, SigAbrtHandler);
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	extern volatile int multiThreadSim;
-	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
-#endif
 }
 
 /**
@@ -659,11 +655,11 @@ void SpringApp::ParseCmdLine()
 	cmdline->parse();
 
 	string configSource;
-	if (cmdline->result("config", configSource)) {
-		ConfigHandler::SetConfigSource(configSource);
-	}
+	cmdline->result("config", configSource);
+	// it is not allowed to use configHandler before this line runs.
+	ConfigHandler::Instantiate(configSource);
 
-	logOutput.Print("using configuration source \"" + configHandler.GetConfigSource() + "\"");
+	logOutput.Print("using configuration source \"" + configSource + "\"");
 
 #ifdef _DEBUG
 	fullscreen = false;
@@ -712,6 +708,13 @@ void SpringApp::ParseCmdLine()
 		screenHeight = std::max(screenHeight, 1);
 	}
 
+#ifdef USE_GML
+	gmlThreadCountOverride = configHandler.GetInt("HardwareThreadCount", 0);
+#if GML_ENABLE_SIMLOOP
+	extern volatile int multiThreadSim;
+	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
+#endif
+#endif
 }
 
 /**
@@ -780,11 +783,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 		if (argv[i][0] != '-')
 		{
 			string command(argv[i]);
-			int idx = command.rfind("sdf");
-			if (idx == command.size()-3) {
+			if (command.rfind("sdf") == command.size() - 3) {
 				demofile = command;
 				logOutput << "Using demofile " << demofile.c_str() << "\n";
-			} else if (command.rfind("ssf") == command.size()-3) {
+			} else if (command.rfind("ssf") == command.size() - 3) {
 				savefile = command;
 				logOutput << "Using savefile " << savefile.c_str() << "\n";
 			} else {
@@ -809,7 +811,7 @@ void SpringApp::Startup()
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+startscript);
-		
+
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+startscript);

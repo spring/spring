@@ -23,7 +23,7 @@
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/GameServer.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/Wind.h"
@@ -124,7 +124,7 @@ void PrintSize(const char *txt, int size)
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	LoadStartPicture(gs->Team(gu->myTeam)->side);
+	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -189,7 +189,7 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 //this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
-	LoadStartPicture(gs->Team(gu->myTeam)->side);
+	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;
@@ -205,7 +205,7 @@ void CLoadSaveHandler::LoadGame()
 	globalAI->Load(ifs);
 	delete ifs;
 	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
-		if (gs->Team(a)->isDead && globalAI->ais[a]) {
+		if (teamHandler->Team(a)->isDead && globalAI->ais[a]) {
 			delete globalAI->ais[a];
 			globalAI->ais[a] = 0;
 		}

@@ -14,7 +14,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
@@ -87,7 +87,7 @@ CTextureHandler::CTextureHandler()
 			texfiles[numfiles++] = tex;
 			totalSize += tex->tex.xsize * tex->tex.ysize;
 		} else {
-			for(int a = 0; a < gs->activeTeams; ++a){
+			for(int a = 0; a < teamHandler->ActiveTeams(); ++a){
 				TexFile* tex = CreateTeamTex(s, s2, a);
 				texfiles[numfiles++] = tex;
 				totalSize += tex->tex.xsize * tex->tex.ysize;
@@ -360,7 +360,7 @@ TexFile* CTextureHandler::CreateTeamTex(const std::string& name, const std::stri
 	sprintf(tmp,"%s%02i",name2.c_str(),team);
 	tex->name=tmp;
 
-	unsigned char* teamCol=gs->Team(team)->color;
+	unsigned char* teamCol=teamHandler->Team(team)->color;
 	CBitmap* bm=&tex->tex;
 	for(int a=0;a<bm->ysize*bm->xsize;++a){
 		if(bm->mem[a*4]==bm->mem[a*4+2] && bm->mem[a*4+1]==0){

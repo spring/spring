@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "BeamLaser.h"
 #include "Game/GameHelper.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Matrix44f.h"
@@ -61,7 +61,7 @@ void CBeamLaser::Update(void)
 
 	if(lastFireFrame > gs->frameNum - 18 && lastFireFrame != gs->frameNum  && weaponDef->sweepFire)
 	{
-		if (gs->Team(owner->team)->metal>=metalFireCost && gs->Team(owner->team)->energy>=energyFireCost)
+		if (teamHandler->Team(owner->team)->metal>=metalFireCost && teamHandler->Team(owner->team)->energy>=energyFireCost)
 		{
 			owner->UseEnergy(energyFireCost / salvoSize);
 			owner->UseMetal(metalFireCost / salvoSize);

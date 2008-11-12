@@ -11,6 +11,7 @@
 
 #include "ModInfo.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
@@ -96,7 +97,7 @@ CLosHandler::CLosHandler() :
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater)
 {
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		losMap[a].resize(losSizeX * losSizeY, 0);
 		airLosMap[a].resize(airSizeX * airSizeY, 0);
 	}
@@ -203,7 +204,7 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 void CLosHandler::LosAdd(LosInstance* instance)
 {
 	assert(instance);
-	assert(instance->allyteam < gs->activeAllyTeams);
+	assert(instance->allyteam < teamHandler->ActiveAllyTeams());
 	assert(instance->allyteam >= 0);
 
 	const int allyteam  = instance->allyteam;

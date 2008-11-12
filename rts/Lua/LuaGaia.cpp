@@ -19,12 +19,13 @@
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
 
-#include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -88,10 +89,10 @@ CLuaGaia::CLuaGaia()
 
 	fullCtrl = false;
 	fullRead = false;
-	ctrlTeam = gs->gaiaTeamID;
-	readTeam = gs->gaiaTeamID;
-	readAllyTeam = gs->gaiaAllyTeamID;
-	selectTeam = gs->gaiaTeamID;
+	ctrlTeam = teamHandler->GaiaTeamID();
+	readTeam = teamHandler->GaiaTeamID();
+	readAllyTeam = teamHandler->GaiaAllyTeamID();
+	selectTeam = teamHandler->GaiaTeamID();
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
 }

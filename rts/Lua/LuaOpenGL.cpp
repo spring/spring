@@ -53,6 +53,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -1407,7 +1408,7 @@ int LuaOpenGL::Map1(lua_State* L)
 	const int fullSize = (order * dataSize);
 	float* points = SAFE_NEW float[fullSize];
 	if (ParseFloatArray(L, points, fullSize) == fullSize) {
-		glMap1f(target, u1, u2, stride, order, points);	
+		glMap1f(target, u1, u2, stride, order, points);
 	}
 	delete[] points;
 	return 0;
@@ -1441,9 +1442,9 @@ int LuaOpenGL::Map2(lua_State* L)
 	}
 	const int fullSize = (uorder * vorder * dataSize);
 	float* points = SAFE_NEW float[fullSize];
-	if (ParseFloatArray(L, points, fullSize) == fullSize) {			
+	if (ParseFloatArray(L, points, fullSize) == fullSize) {
 		glMap2f(target, u1, u2, ustride, uorder,
-										v1, v2, vstride, vorder, points);	
+										v1, v2, vstride, vorder, points);
 	}
 	delete[] points;
 	return 0;
@@ -1565,7 +1566,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 			return NULL;
 		}
 	} else {
-		if (!gs->Ally(readAllyTeam, unit->allyteam) &&
+		if (!teamHandler->Ally(readAllyTeam, unit->allyteam) &&
 		    !(unit->losStatus[readAllyTeam] & LOS_INLOS)) {
 			return NULL;
 		}
@@ -5080,7 +5081,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	if ((xsize <= 0) || (ysize <= 0)) {
 		return 0;
 	}
-	const int memsize = xsize * ysize * 4;	
+	const int memsize = xsize * ysize * 4;
 
 	unsigned char* img = SAFE_NEW unsigned char[memsize];
 	memset(img, 0, memsize);
