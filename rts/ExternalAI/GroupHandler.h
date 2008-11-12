@@ -10,11 +10,11 @@
 #include <string>
 #include <vector>
 #include <set>
-//#include "ExternalAI/aikey.h"
+#include "ExternalAI/aikey.h"
 #include "Game/GlobalConstants.h"
 
 class CGroup;
-//class CUnitSet;
+class CUnitSet;
 
 /**
  * Handles All Groups of a single team.
@@ -32,9 +32,9 @@ public:
 	 * This function initialized a singleton instance,
 	 * if not yet done by a call to GetInstance()
 	 */
-	static void Initialize(int teamId);
-	static CGroupHandler* GetInstance(int teamId);
-	static void Destroy(int teamId);
+//	static void Initialize(int teamId);
+//	static CGroupHandler* GetInstance(int teamId);
+//	static void Destroy(int teamId);
 
 	void PostLoad();
 
@@ -42,29 +42,30 @@ public:
 	void DrawCommands();
 	void GroupCommand(int num);
 	void GroupCommand(int num, const std::string& cmd);
-//	CGroup* CreateNewGroup(AIKey aiKey);
+	CGroup* CreateNewGroup(AIKey aiKey);
 	void RemoveGroup(CGroup* group);
 	void Load(std::istream *s);
 	void Save(std::ostream *s);
 
-//	std::map<AIKey, std::string> availableAI;
-
-//	std::map<AIKey, std::string> GetSuitedAis(const CUnitSet& units);
-//	std::map<AIKey, std::string> lastSuitedAis;
-
-protected:
-	int teamId;
 	std::vector<CGroup*> groups;
-//	void FindDlls(void);
-//	void TestDll(std::string name);
+	std::map<AIKey, std::string> availableAI;
+
+	std::map<AIKey, std::string> GetSuitedAis(const CUnitSet& units);
+	std::map<AIKey, std::string> lastSuitedAis;
+
+	int team;
+protected:
+//	std::vector<CGroup*> groups;
+	void FindDlls(void);
+	void TestDll(std::string name);
 
 	std::vector<int> freeGroups;
 	int firstUnusedGroup;
 private:
-//	AIKey defaultKey;
+	AIKey defaultKey;
 };
 
 //extern CGroupHandler* grouphandler;
-//extern CGroupHandler* grouphandlers[MAX_TEAMS];
+extern CGroupHandler* grouphandlers[MAX_TEAMS];
 
 #endif	// _GROUPHANDLER_H

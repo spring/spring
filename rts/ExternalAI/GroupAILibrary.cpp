@@ -22,7 +22,10 @@
 #include <string>
 
 CGroupAILibrary::CGroupAILibrary(const SGAILibrary& ai,
-		const SGAISpecifier& specifier) : sGAI(ai), specifier(specifier) {}
+		const SGAISpecifier& specifier,
+		const InfoItem info[], unsigned int numInfoItems)
+		: sGAI(ai), specifier(specifier),
+		info(info), numInfoItems(numInfoItems) {}
 
 CGroupAILibrary::~CGroupAILibrary() {}
 	
@@ -80,8 +83,7 @@ std::vector<Option> CGroupAILibrary::GetOptions() const {
 */
 
 
-void CGroupAILibrary::Init(int teamId, int groupId, const InfoItem info[],
-		unsigned int numInfoItems) const {
+void CGroupAILibrary::Init(int teamId, int groupId) const {
 	
 	if (sGAI.init != NULL) {
 		int error = sGAI.init(teamId, groupId, info, numInfoItems);

@@ -24,7 +24,6 @@
 #include "LuaUtils.h"
 #include "LuaTextures.h"
 
-#include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Game/Camera.h"
@@ -60,6 +59,7 @@
 
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/FileSystem.h"
+#include "System/Platform/ConfigHandler.h"
 
 using namespace std;
 

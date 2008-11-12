@@ -2,7 +2,7 @@
 #include <fstream>
 #include "mmgr.h"
 
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/GroupHandler.h"
 #include "LoadSaveHandler.h"
 #include "Rendering/GL/myGL.h"
@@ -108,7 +108,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(inMapDrawer,inMapDrawer->GetClass());
 	for (int a=0;a<MAX_TEAMS;a++)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
-	s.SerializeObjectInstance(globalAI, globalAI->GetClass());
+	s.SerializeObjectInstance(eoh, eoh->GetClass());
 	s.SerializeObjectInstance(&CBuilderCAI::reclaimers,CBuilderCAI::reclaimers.GetClass());
 //	s.Serialize()
 }
@@ -150,7 +150,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 		int aistart = ofs.tellp();
 		for (int a=0;a<MAX_TEAMS;a++)
 			grouphandlers[a]->Save(&ofs);
-		globalAI->Save(&ofs);
+		eoh->Save(&ofs);
 		PrintSize("AIs",((int)ofs.tellp())-aistart);
 	} catch (content_error &e) {
 		logOutput.Print("Save faild(content error): %s",e.what());
@@ -201,11 +201,11 @@ void CLoadSaveHandler::LoadGame()
 	delete gsc; // only job of gsc is to collect gamestate data
 	for (int a=0;a<MAX_TEAMS;a++)
 		grouphandlers[a]->Load(ifs);
-	globalAI->Load(ifs);
+	eoh->Load(ifs);
 	delete ifs;
 	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
-		if (gs->Team(a)->isDead && globalAI->IsSkirmishAI(a)) {
-			globalAI->DestroySkirmishAI(a);
+		if (gs->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
+			eoh->DestroySkirmishAI(a);
 		}
 	}
 	gs->paused = false;

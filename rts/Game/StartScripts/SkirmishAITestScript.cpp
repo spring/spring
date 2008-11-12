@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include "System/StdAfx.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Game/Team.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
@@ -24,11 +24,10 @@ extern std::string stupidGlobalMapname;
 
 CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
 		const std::map<std::string, std::string>& options)
-		: CScript(std::string("GlobalAI test (")
+		: CScript(std::string("Skirmish AI test (")
 			+ std::string(key.ai.shortName) + std::string(" v")
 			+ std::string(key.ai.version) + std::string(")")),
-		key(key),
-		options(options)
+		key(key), options(options)
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
@@ -39,14 +38,11 @@ CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
 }
 
 
-CSkirmishAITestScript::~CSkirmishAITestScript(void)
-{
-}
-
+CSkirmishAITestScript::~CSkirmishAITestScript(void) {}
 
 void CSkirmishAITestScript::GameStart(void)
 {
-	globalAI->CreateSkirmishAI(1, key, options);
+	eoh->CreateSkirmishAI(1, key, options);
 
 	gs->Team(0)->energy        = 1000;
 	gs->Team(0)->energyStorage = 1000;

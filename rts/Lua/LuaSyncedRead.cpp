@@ -19,7 +19,7 @@
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
 #include "LuaUtils.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -1016,7 +1016,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 
 	bool isAiTeam = false;
 	if (!team->luaAI.empty() ||
-	    ((globalAI != NULL) && globalAI->IsSkirmishAI(teamID))) {
+	    (eoh->IsSkirmishAI(teamID))) {
 		isAiTeam = true;
 	}
 

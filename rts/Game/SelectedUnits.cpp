@@ -18,7 +18,7 @@
 #include "Net/PackPacket.h"
 #include "ExternalAI/GroupHandler.h"
 #include "ExternalAI/Group.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
@@ -552,7 +552,7 @@ void CSelectedUnits::NetOrder(Command &c, int playerID)
 	selectedUnitsAI.GiveCommandNet(c, playerID);
 
 	if (netSelected[playerID].size() > 0) {
-		globalAI->PlayerCommandGiven(netSelected[playerID], c, playerID);
+		eoh->PlayerCommandGiven(netSelected[playerID], c, playerID);
 	}
 }
 

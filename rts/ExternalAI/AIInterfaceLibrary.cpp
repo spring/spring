@@ -255,7 +255,7 @@ const IGroupAILibrary* CAIInterfaceLibrary::FetchGroupAILibrary(const CGroupAILi
 	SGAISpecifier gAISpecifier = aiInfo->GetSpecifier();
 	if (groupAILoadCount[gAISpecifier] == 0) {
 		const SGAILibrary* gLib = sAIInterfaceLibrary.loadGroupAILibrary(info, num);
-		ai = new CGroupAILibrary(*gLib, gAISpecifier);
+		ai = new CGroupAILibrary(*gLib, gAISpecifier, info, num);
 		loadedGroupAILibraries[gAISpecifier] = ai;
 	} else {
 		ai = loadedGroupAILibraries[gAISpecifier];

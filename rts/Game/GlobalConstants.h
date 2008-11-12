@@ -38,14 +38,6 @@ const int MAX_VIEW_RANGE = 8000;
 const int MAX_TEAMS = 17;
 
 /**
- * @brief max groups
- *
- * Defines the maximum number of groups per team.
- * Normal groups go from 0 - 9, special groups are 10+.
- */
-const int MAX_GROUPS = 16;
-
-/**
  * @brief max players
  *
  * Defines the maximum number of players as 32

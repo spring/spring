@@ -1,30 +1,36 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
+#ifndef IGROUPAI_H
+#define IGROUPAI_H
+// IGroupAI.h: interface for the IGroupAI class.
+// Dont modify this file
+//////////////////////////////////////////////////////////////////////
 
-	This program is free software {} you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation {} either version 2 of the License, or
-	(at your option) any later version.
+#include "aibase.h"
+#include "Sim/Units/CommandAI/Command.h"
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY {} without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+class IGroupAICallback;
+class IAICallback;
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+#define AI_INTERFACE_VERSION (14 + AI_INTERFACE_GENERATED_VERSION)
 
-#ifndef	_IGROUPAI_H
-#define	_IGROUPAI_H
-
-class IGroupAI {
+class SPRING_API IGroupAI
+{
 public:
-	/**
-	 * Inherited form IGroupAILibrary.
-	 * CAUTION: takes C AI Interface events, not engine C++ ones!
-	 */
-	virtual int HandleEvent(int topic, const void* data) const = 0;
+	virtual void InitAi(IGroupAICallback* callback)=0;
+	virtual bool AddUnit(int unit)=0;									//group should return false if it doenst want the unit for some reason
+	virtual void RemoveUnit(int unit)=0;								//no way to refuse giving up a unit
+
+	virtual void GiveCommand(Command* c)=0;								//the group is given a command by the player
+	virtual const std::vector<CommandDescription>& GetPossibleCommands()=0;	//the ai tells the interface what commands it can take (note that it returns a reference so it must keep the vector in memory itself)
+	virtual int GetDefaultCmd(int unitid)=0;							//the default command for the ai given that the mouse pointer hovers above unit unitid (or no unit if unitid=0)
+
+	virtual void CommandFinished(int unit,int type)=0;					//a specific unit has finished a specific command, might be a good idea to give new orders to it
+
+	virtual void Update()=0;											//called once a frame (30 times a second)
+	virtual void DrawCommands()=0;										//the place to use the LineDrawer interface functions
+	virtual void Load(IGroupAICallback* callback,std::istream *s){};	//load ai from file
+	virtual void Save(std::ostream *s){};							//save ai to file
+
+	DECLARE_PURE_VIRTUAL(~IGroupAI())
 };
 
-#endif	// _IGROUPAI_H
+#endif /* IGROUPAI_H */

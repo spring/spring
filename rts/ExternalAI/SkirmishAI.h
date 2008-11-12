@@ -33,8 +33,8 @@ public:
 
 private:
 	int teamId;
-	const SSAIKey skirmishAIKey;
-	const ISkirmishAILibrary* skirmishAILibrary;
+	const SSAIKey key;
+	const ISkirmishAILibrary* library;
 };
 
 #endif	// _SKIRMISHAI_H

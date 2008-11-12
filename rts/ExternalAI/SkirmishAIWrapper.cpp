@@ -22,7 +22,8 @@
 #include "IGlobalAI.h"
 #include "SkirmishAI.h"
 #include "GlobalAICallback.h"
-#include "GlobalAIHandler.h"
+#include "EngineOutHandler.h"
+#include "IAILibraryManager.h"
 #include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
@@ -52,26 +53,24 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-void AIException(const char *what);
-
-#define HANDLE_EXCEPTION					\
-	catch (const std::exception& e) {		\
-		if (globalAI->CatchException()) {	\
-			AIException(e.what());			\
-			throw;							\
-		} else throw;						\
-	}										\
-	catch (const char *s) {	\
-		if (globalAI->CatchException()) {	\
-			AIException(s);					\
-			throw;							\
-		} else throw;						\
-	}										\
-	catch (...) {							\
-		if (globalAI->CatchException()) {	\
-			AIException(0);					\
-			throw;							\
-		} else throw;						\
+#define HANDLE_EXCEPTION								\
+	catch (const std::exception& e) {					\
+		if (CEngineOutHandler::IsCatchExceptions()) {	\
+			handleAIException(e.what());				\
+			throw;										\
+		} else throw;									\
+	}													\
+	catch (const char *s) {								\
+		if (CEngineOutHandler::IsCatchExceptions()) {	\
+			handleAIException(s);						\
+			throw;										\
+		} else throw;									\
+	}													\
+	catch (...) {										\
+		if (CEngineOutHandler::IsCatchExceptions()) {	\
+			handleAIException(0);						\
+			throw;										\
+		} else throw;									\
 	}
 
 
@@ -334,6 +333,12 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	SPlayerCommandEvent evtData = {unitIds, numUnits, sCommandId, sCommandData,
 			playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
+}
+
+void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
+
+	SCommandFinishedEvent evtData = {unitId, commandTopicId};
+	ai->HandleEvent(EVENT_COMMAND_FINISHED, &evtData);
 }
 
 void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,

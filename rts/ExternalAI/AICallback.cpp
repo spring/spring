@@ -43,7 +43,7 @@
 #include "AICheats.h"
 #include "GlobalAICallback.h"
 #include "SkirmishAIWrapper.h"
-#include "GlobalAIHandler.h"
+#include "EngineOutHandler.h"
 #include "Group.h"
 #include "GroupHandler.h"
 #include "IGroupAI.h"
@@ -89,7 +89,7 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	if (group)
 		logOutput.Print("Group%i: %s", group->id, text);
 	else
-		logOutput.Print("GlobalAI%i: %s", team, text);
+		logOutput.Print("SkirmishAI%i: %s", team, text);
 }
 
 void CAICallback::SetLastMsgPos(float3 pos)
@@ -189,16 +189,20 @@ bool CAICallback::PosInCamera(float3 pos, float radius)
 // (still completely insecure ofcourse, but it filters out the easiest way of cheating)
 void CAICallback::verify()
 {
-	const CSkirmishAIWrapper* skirmishAI = globalAI->GetSkirmishAI(team);
-	if (
-			skirmishAI
-			&& (((group
-					&& group->handler != /*skirmishAI->gh*/grouphandlers[skirmishAI->GetTeamId()]
-					/*&& group->handler != grouphandler*/)
-			|| skirmishAI->GetTeamId() != team))) {
-		handleerror (0, "AI has modified spring components(possible cheat)", "Spring is closing:", MBF_OK | MBF_EXCL);
-		exit (-1);
-	}
+//TODO: add checks
+// the old check (see code below) checks for something which is not possible
+// anymore with the C AI interface
+//	const CSkirmishAIWrapper* skirmishAI = eoh->GetSkirmishAI(team);
+//	if (
+//			skirmishAI
+//			&& (((group
+//					&& group->handler != /*skirmishAI->gh*/grouphandlers[skirmishAI->GetTeamId()]
+//					/*&& group->handler != grouphandler*/)
+//			|| skirmishAI->GetTeamId() != team))) {
+//		handleerror (0, "AI has modified spring components(possible cheat)",
+//				"Spring is closing:", MBF_OK | MBF_EXCL);
+//		exit (-1);
+//	}
 }
 
 int CAICallback::GetCurrentFrame()
@@ -230,12 +234,12 @@ const char* CAICallback::GetTeamSide(int teamId)
 		return gs->Team(teamId)->side.c_str();
 	} else {
 		// if this is not a GameSetup-type game but a
-		// GlobalAI-test one, the side-strings for all
+		// SkirmishAI-test one, the side-strings for all
 		// active teams (0, 1, 2) will always be "arm"
-		// since CGlobalAITestScript does not override
+		// since CSkirmishAITestScript does not override
 		// the CTeam defaults (unlike CGameSetup), so
 		// return 0 or AI's that rely on this function
-		// will break in GlobalAI tests
+		// will break in SkirmishAI tests
 		return 0;
 	}
 }
@@ -1303,7 +1307,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*((int*)data) = damageArrayHandler->GetNumTypes();
 			return true;
 		}case AIVAL_EXCEPTION_HANDLING:{
-			*(bool*)data = CGlobalAIHandler::CatchException();
+			*(bool*)data = CEngineOutHandler::IsCatchExceptions();
 			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = readmap->mapChecksum;

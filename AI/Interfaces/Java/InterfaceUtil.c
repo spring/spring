@@ -31,6 +31,21 @@
 #include <dirent.h>		// needed for dir listing
 #endif	// WIN32
 
+static const char* myDataDir = NULL;
+static const char* myDataDirVers = NULL;
+
+char* util_setDataDirs(const char* unversioned, const char* versioned) {
+
+	myDataDir = unversioned;
+	myDataDirVers = versioned;
+}
+const char* util_getDataDirUnversioned() {
+	return myDataDir;
+}
+const char* util_getDataDirVersioned() {
+	return myDataDirVers;
+}
+
 char* util_allocStr(unsigned int length) {
 	return (char*) calloc(length+1, sizeof(char));
 }
