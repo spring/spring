@@ -25,7 +25,8 @@
 
 class CGroupAILibrary : public IGroupAILibrary {
 public:
-	CGroupAILibrary(const SGAILibrary& ai, const SGAISpecifier& specifier);
+	CGroupAILibrary(const SGAILibrary& ai, const SGAISpecifier& specifier,
+			const InfoItem info[], unsigned int numInfoItems);
 	virtual ~CGroupAILibrary();
 	
 	virtual SGAISpecifier GetSpecifier() const;
@@ -41,14 +42,15 @@ public:
 //	virtual std::vector<Option> GetOptions() const;
 	
 	
-    virtual void Init(int teamId, int groupId, const InfoItem info[],
-			unsigned int numInfoItems) const;
+    virtual void Init(int teamId, int groupId) const;
     virtual void Release(int teamId, int groupId) const;
     virtual int HandleEvent(int teamId, int groupId, int topic, const void* data) const;
 	
 private:
 	SGAILibrary sGAI;
 	SGAISpecifier specifier;
+	const InfoItem* info;
+	unsigned int numInfoItems;
 	
 private:
 //	void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);

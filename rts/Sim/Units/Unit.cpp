@@ -10,7 +10,7 @@
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "creg/STL_List.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Group.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -601,20 +601,20 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 		if (diffBits & LOS_INLOS) {
 			if (newStatus & LOS_INLOS) {
 				eventHandler.UnitEnteredLos(this, at);
-				globalAI->UnitEnteredLos(this, at);
+				eoh->UnitEnteredLos(*this, at);
 			} else {
 				eventHandler.UnitLeftLos(this, at);
-				globalAI->UnitLeftLos(this, at);
+				eoh->UnitLeftLos(*this, at);
 			}
 		}
 
 		if (diffBits & LOS_INRADAR) {
 			if (newStatus & LOS_INRADAR) {
 				eventHandler.UnitEnteredRadar(this, at);
-				globalAI->UnitEnteredRadar(this, at);
+				eoh->UnitEnteredRadar(*this, at);
 			} else {
 				eventHandler.UnitLeftRadar(this, at);
-				globalAI->UnitLeftRadar(this, at);
+				eoh->UnitLeftRadar(*this, at);
 			}
 		}
 	}
@@ -1089,7 +1089,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 
 	eventHandler.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
-	globalAI->UnitDamaged(this, attacker, damage);
+	eoh->UnitDamaged(*this, attacker, damage);
 
 	if (health <= 0.0f) {
 		KillUnit(false, false, attacker);
@@ -1262,7 +1262,7 @@ void CUnit::DoSeismicPing(float pingSize)
 			                 errorScale[a] * (0.5f - rz));
 			const float3 pingPos = (pos + err);
 			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
-			globalAI->SeismicPing(a, this, pingPos, pingSize);
+			eoh->SeismicPing(a, *this, pingPos, pingSize);
 		}
 	}
 }
@@ -1309,7 +1309,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	SetGroup(0);
 
 	eventHandler.UnitTaken(this, newteam);
-	globalAI->UnitTaken(this, oldteam);
+	eoh->UnitCaptured(*this, oldteam);
 
 	// reset states and clear the queues
 	if (!gs->AlliedTeams(oldteam, newteam)) {
@@ -1380,7 +1380,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	eventHandler.UnitGiven(this, oldteam);
-	globalAI->UnitGiven(this, oldteam);
+	eoh->UnitGiven(*this, oldteam);
 
 	return true;
 }
@@ -1617,7 +1617,7 @@ void CUnit::Init(const CUnit* builder)
 	}
 
 	eventHandler.UnitCreated(this, builder);
-	globalAI->UnitCreated(this); // FIXME -- add builder?
+	eoh->UnitCreated(*this); // FIXME -- add builder?
 }
 
 
@@ -1844,7 +1844,7 @@ void CUnit::FinishedBuilding(void)
 	}
 
 	eventHandler.UnitFinished(this);
-	globalAI->UnitFinished(this);
+	eoh->UnitFinished(*this);
 
 	if (oldCloak != isCloaked) {
 		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
@@ -1891,7 +1891,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	deathSpeed = speed;
 
 	eventHandler.UnitDestroyed(this, attacker);
-	globalAI->UnitDestroyed(this, attacker);
+	eoh->UnitDestroyed(*this, attacker);
 
 	blockHeightChanges = false;
 	if (unitDef->isCommander) {

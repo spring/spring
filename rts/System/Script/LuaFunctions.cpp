@@ -8,7 +8,7 @@
 #include "Game/GlobalSynced.h"
 #include "float3.h"
 #include "LogOutput.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
@@ -46,7 +46,7 @@ namespace luafunctions
 	void CreateSkirmishAI(int teamId, const SSAIKey& key,
 			const std::map<std::string, std::string>& options)
 	{
-			globalAI->CreateSkirmishAI(teamId, key, options);
+			eoh->CreateSkirmishAI(teamId, key, options);
 	}
 
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)

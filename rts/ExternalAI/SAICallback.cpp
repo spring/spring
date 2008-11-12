@@ -21,6 +21,8 @@
 #include "IAICallback.h"
 #include "IAICheats.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -75,11 +77,12 @@ static void fillVector(std::vector<int>* vector_unitIds, int* unitIds, int numUn
 
 static bool isControlledByLocalPlayer(int teamId) {
 	//TODO
-	???
-		gs->players[i]->...;
-	bool gs->Team(teamId)->gaia;
-	bool gs->Team(teamId)->isAI;
-	bool gs->players[0]->;
+	//???
+	//bool gs->players[i]->CanControlTeam(int teamID);
+	//bool gs->Team(teamId)->gaia;
+	//bool gs->Team(teamId)->isAI;
+	//bool gs->players[0]->;
+	return true;
 }
 
 static const UnitDef* getUnitDefById(int teamId, int unitDefId) {
@@ -3186,22 +3189,17 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Game_getMyAllyTeam = _Game_getMyAllyTeam;
 	sAICallback->Game_getPlayerTeam = _Game_getPlayerTeam;
 	sAICallback->Game_getTeamSide = _Game_getTeamSide;
-	sAICallback->WeaponDef_STATIC_getNumDamageTypes = _WeaponDef_STATIC_getNumDamageTypes;
-	sAICallback->Map_getChecksum = _Map_getChecksum;
 	sAICallback->Game_isExceptionHandlingEnabled = _Game_isExceptionHandlingEnabled;
 	sAICallback->Game_isDebugModeEnabled = _Game_isDebugModeEnabled;
 	sAICallback->Game_getMode = _Game_getMode;
 	sAICallback->Game_isPaused = _Game_isPaused;
 	sAICallback->Game_getSpeedFactor = _Game_getSpeedFactor;
+	sAICallback->Game_getSetupScript = _Game_getSetupScript;
 	sAICallback->Gui_getViewRange = _Gui_getViewRange;
 	sAICallback->Gui_getScreenX = _Gui_getScreenX;
 	sAICallback->Gui_getScreenY = _Gui_getScreenY;
 	sAICallback->Gui_Camera_getDirection = _Gui_Camera_getDirection;
 	sAICallback->Gui_Camera_getPosition = _Gui_Camera_getPosition;
-	sAICallback->File_locateForReading = _File_locateForReading;
-	sAICallback->File_locateForWriting = _File_locateForWriting;
-	sAICallback->Unit_STATIC_getLimit = _Unit_STATIC_getLimit;
-	sAICallback->Game_getSetupScript = _Game_getSetupScript;
 	sAICallback->Cheats_isEnabled = _Cheats_isEnabled;
 	sAICallback->Cheats_setEnabled = _Cheats_setEnabled;
 	sAICallback->Cheats_setEventsEnabled = _Cheats_setEventsEnabled;
@@ -3216,6 +3214,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->ResourceInfo_Energy_getStorage = _ResourceInfo_Energy_getStorage;
 	sAICallback->File_getSize = _File_getSize;
 	sAICallback->File_getContent = _File_getContent;
+	sAICallback->File_locateForReading = _File_locateForReading;
+	sAICallback->File_locateForWriting = _File_locateForWriting;
 	sAICallback->UnitDef_STATIC_getIds = _UnitDef_STATIC_getIds;
 	sAICallback->UnitDef_STATIC_getNumIds = _UnitDef_STATIC_getNumIds;
 	sAICallback->UnitDef_STATIC_getIdByName = _UnitDef_STATIC_getIdByName;
@@ -3428,7 +3428,6 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->UnitDef_getNumBuildOptions = _UnitDef_getNumBuildOptions;
 	sAICallback->UnitDef_getBuildOptions = _UnitDef_getBuildOptions;
 	sAICallback->UnitDef_getNumCustomParams = _UnitDef_getNumCustomParams;
-//	sAICallback->UnitDef_getCustomParams = _UnitDef_getCustomParams;
 	sAICallback->UnitDef_getCustomParamKeys = _UnitDef_getCustomParamKeys;
 	sAICallback->UnitDef_getCustomParamValues = _UnitDef_getCustomParamValues;
 	sAICallback->UnitDef_hasMoveData = _UnitDef_hasMoveData;
@@ -3455,6 +3454,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->UnitDef_UnitDefWeapon_getFuelUsage = _UnitDef_UnitDefWeapon_getFuelUsage;
 	sAICallback->UnitDef_UnitDefWeapon_getBadTargetCat = _UnitDef_UnitDefWeapon_getBadTargetCat;
 	sAICallback->UnitDef_UnitDefWeapon_getOnlyTargetCat = _UnitDef_UnitDefWeapon_getOnlyTargetCat;
+	sAICallback->Unit_STATIC_getLimit = _Unit_STATIC_getLimit;
 	sAICallback->Unit_STATIC_getEnemies = _Unit_STATIC_getEnemies;
 	sAICallback->Unit_STATIC_getEnemiesIn = _Unit_STATIC_getEnemiesIn;
 	sAICallback->Unit_STATIC_getEnemiesInRadarAndLos = _Unit_STATIC_getEnemiesInRadarAndLos;
@@ -3463,6 +3463,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Unit_STATIC_getNeutrals = _Unit_STATIC_getNeutrals;
 	sAICallback->Unit_STATIC_getNeutralsIn = _Unit_STATIC_getNeutralsIn;
 	sAICallback->Unit_STATIC_getSelected = _Unit_STATIC_getSelected;
+	sAICallback->Unit_STATIC_updateSelectedUnitsIcons = _Unit_STATIC_updateSelectedUnitsIcons;
 	sAICallback->Unit_getDefId = _Unit_getDefId;
 	sAICallback->Unit_getAiHint = _Unit_getAiHint;
 	sAICallback->Unit_getTeam = _Unit_getTeam;
@@ -3505,6 +3506,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Unit_isParalyzed = _Unit_isParalyzed;
 	sAICallback->Unit_isNeutral = _Unit_isNeutral;
 	sAICallback->Unit_getBuildingFacing = _Unit_getBuildingFacing;
+	sAICallback->Unit_getLastUserOrderFrame = _Unit_getLastUserOrderFrame;
 	sAICallback->Group_getNumSupportedCommands = _Group_getNumSupportedCommands;
 	sAICallback->Group_SupportedCommands_getId = _Group_SupportedCommands_getId;
 	sAICallback->Group_SupportedCommands_getName = _Group_SupportedCommands_getName;
@@ -3513,7 +3515,14 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Group_SupportedCommands_isDisabled = _Group_SupportedCommands_isDisabled;
 	sAICallback->Group_SupportedCommands_getNumParams = _Group_SupportedCommands_getNumParams;
 	sAICallback->Group_SupportedCommands_getParams = _Group_SupportedCommands_getParams;
+	sAICallback->Group_OrderPreview_getId = _Group_OrderPreview_getId;
+	sAICallback->Group_OrderPreview_getOptions = _Group_OrderPreview_getOptions;
+	sAICallback->Group_OrderPreview_getTag = _Group_OrderPreview_getTag;
+	sAICallback->Group_OrderPreview_getTimeOut = _Group_OrderPreview_getTimeOut;
+	sAICallback->Group_OrderPreview_getParams = _Group_OrderPreview_getParams;
+	sAICallback->Group_isSelected = _Group_isSelected;
 	sAICallback->Mod_getName = _Mod_getName;
+	sAICallback->Map_getChecksum = _Map_getChecksum;
 	sAICallback->Map_getStartPos = _Map_getStartPos;
 	sAICallback->Map_getMousePos = _Map_getMousePos;
 	sAICallback->Map_isPosInCamera = _Map_isPosInCamera;
@@ -3569,7 +3578,6 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->FeatureDef_getXsize = _FeatureDef_getXsize;
 	sAICallback->FeatureDef_getYsize = _FeatureDef_getYsize;
 	sAICallback->FeatureDef_getNumCustomParams = _FeatureDef_getNumCustomParams;
-//	sAICallback->FeatureDef_getCustomParams = _FeatureDef_getCustomParams;
 	sAICallback->FeatureDef_getCustomParamKeys = _FeatureDef_getCustomParamKeys;
 	sAICallback->FeatureDef_getCustomParamValues = _FeatureDef_getCustomParamValues;
 	sAICallback->Feature_STATIC_getIds = _Feature_STATIC_getIds;
@@ -3579,6 +3587,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Feature_getReclaimLeft = _Feature_getReclaimLeft;
 	sAICallback->Feature_getPos = _Feature_getPos;
 	sAICallback->WeaponDef_STATIC_getIdByName = _WeaponDef_STATIC_getIdByName;
+	sAICallback->WeaponDef_STATIC_getNumDamageTypes = _WeaponDef_STATIC_getNumDamageTypes;
 	sAICallback->WeaponDef_getName = _WeaponDef_getName;
 	sAICallback->WeaponDef_getType = _WeaponDef_getType;
 	sAICallback->WeaponDef_getDescription = _WeaponDef_getDescription;
@@ -3707,17 +3716,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->WeaponDef_getDynDamageRange = _WeaponDef_getDynDamageRange;
 	sAICallback->WeaponDef_isDynDamageInverted = _WeaponDef_isDynDamageInverted;
 	sAICallback->WeaponDef_getNumCustomParams = _WeaponDef_getNumCustomParams;
-//	sAICallback->WeaponDef_getCustomParams = _WeaponDef_getCustomParams;
 	sAICallback->WeaponDef_getCustomParamKeys = _WeaponDef_getCustomParamKeys;
 	sAICallback->WeaponDef_getCustomParamValues = _WeaponDef_getCustomParamValues;
-	sAICallback->Unit_STATIC_updateSelectedUnitsIcons = _Unit_STATIC_updateSelectedUnitsIcons;
-	sAICallback->Group_OrderPreview_getId = _Group_OrderPreview_getId;
-	sAICallback->Group_OrderPreview_getOptions = _Group_OrderPreview_getOptions;
-	sAICallback->Group_OrderPreview_getTag = _Group_OrderPreview_getTag;
-	sAICallback->Group_OrderPreview_getTimeOut = _Group_OrderPreview_getTimeOut;
-	sAICallback->Group_OrderPreview_getParams = _Group_OrderPreview_getParams;
-	sAICallback->Group_isSelected = _Group_isSelected;
-	sAICallback->Unit_getLastUserOrderFrame = _Unit_getLastUserOrderFrame;
 	
 	team_globalCallback[teamId] = aiGlobalCallback;
 //	team_callback[teamId] = aiCallback;

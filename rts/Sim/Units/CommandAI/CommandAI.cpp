@@ -4,7 +4,7 @@
 #include "CommandAI.h"
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -737,7 +737,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 
 	if (commandQue.empty()) {
 		if (!owner->group) {
-			globalAI->UnitIdle(owner);
+			eoh->UnitIdle(*owner);
 		}
 		eventHandler.UnitIdle(owner);
 	}
@@ -1369,7 +1369,7 @@ void CCommandAI::FinishCommand(void)
 
 	if (commandQue.empty()) {
 		if (!owner->group) {
-			globalAI->UnitIdle(owner);
+			eoh->UnitIdle(*owner);
 		}
 		eventHandler.UnitIdle(owner);
 	}
@@ -1421,7 +1421,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 		&& (commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_DGUN) && inCommand)
 	{
 		owner->AttackUnit(0,true);
-		globalAI->WeaponFired(owner,weapon->weaponDef);
+		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 		FinishCommand();
 	}
 }

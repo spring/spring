@@ -33,30 +33,31 @@ extern "C" {
 #include "SAICallback.h"
 
 enum EventTopic {
-	EVENT_NULL                  =  0,
-	EVENT_INIT                  =  1,
-	EVENT_RELEASE               =  2,
-	EVENT_UPDATE                =  3,
-	EVENT_MESSAGE               =  4,
-	EVENT_UNIT_CREATED          =  5,
-	EVENT_UNIT_FINISHED         =  6,
-	EVENT_UNIT_IDLE             =  7,
-	EVENT_UNIT_MOVE_FAILED      =  8,
-	EVENT_UNIT_DAMAGED          =  9,
-	EVENT_UNIT_DESTROYED        = 10,
-	EVENT_UNIT_GIVEN            = 11,
-	EVENT_UNIT_CAPTURED         = 12,
-	EVENT_ENEMY_ENTER_LOS       = 13,
-	EVENT_ENEMY_LEAVE_LOS       = 14,
-	EVENT_ENEMY_ENTER_RADAR     = 15,
-	EVENT_ENEMY_LEAVE_RADAR     = 16,
-	EVENT_ENEMY_DAMAGED         = 17,
-	EVENT_ENEMY_DESTROYED       = 18,
-	EVENT_WEAPON_FIRED          = 19,
-	EVENT_PLAYER_COMMAND        = 20,
-	EVENT_SEISMIC_PING          = 21,
+	EVENT_NULL                         =  0,
+	EVENT_INIT                         =  1,
+	EVENT_RELEASE                      =  2,
+	EVENT_UPDATE                       =  3,
+	EVENT_MESSAGE                      =  4,
+	EVENT_UNIT_CREATED                 =  5,
+	EVENT_UNIT_FINISHED                =  6,
+	EVENT_UNIT_IDLE                    =  7,
+	EVENT_UNIT_MOVE_FAILED             =  8,
+	EVENT_UNIT_DAMAGED                 =  9,
+	EVENT_UNIT_DESTROYED               = 10,
+	EVENT_UNIT_GIVEN                   = 11,
+	EVENT_UNIT_CAPTURED                = 12,
+	EVENT_ENEMY_ENTER_LOS              = 13,
+	EVENT_ENEMY_LEAVE_LOS              = 14,
+	EVENT_ENEMY_ENTER_RADAR            = 15,
+	EVENT_ENEMY_LEAVE_RADAR            = 16,
+	EVENT_ENEMY_DAMAGED                = 17,
+	EVENT_ENEMY_DESTROYED              = 18,
+	EVENT_WEAPON_FIRED                 = 19,
+	EVENT_PLAYER_COMMAND               = 20,
+	EVENT_SEISMIC_PING                 = 21,
+	EVENT_COMMAND_FINISHED             = 22,
 };
-const unsigned int NUM_EVENTS   = 22;
+const unsigned int NUM_EVENTS          = 23;
 
 
 struct SInitEvent {
@@ -160,6 +161,11 @@ struct SPlayerCommandEvent {
 	void* commandData; // see AISCommands.h S*Command structs
 	int playerId;
 }; // EVENT_PLAYER_COMMAND
+
+struct SCommandFinishedEvent {
+	int unitId;
+	int commandTopicId;
+}; // EVENT_COMMAND_FINISHED
 
 struct SSeismicPingEvent {
 	struct SAIFloat3 pos;

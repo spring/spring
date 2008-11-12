@@ -440,7 +440,10 @@ CGame::CGame(std::string mapname, std::string modName, CInfoConsole *ic, CLoadSa
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater(NULL);
+	for(int a=0;a<MAX_TEAMS;a++)
+		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
 
+//	globalAI = SAFE_NEW CGlobalAIHandler();
 	CEngineOutHandler::Initialize();
 
 	CPlayer* p = gs->players[gu->myPlayerNum];
@@ -554,8 +557,14 @@ CGame::~CGame()
 
 	SafeDelete(gameServer);
 
+//	globalAI->PreDestroy ();
+//	SafeDelete(globalAI);
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
+
+	for(int a=0;a<MAX_TEAMS;a++) {
+		SafeDelete(grouphandlers[a]);
+	}
 
 	SafeDelete(water);
 	SafeDelete(sky);
@@ -1113,7 +1122,6 @@ bool CGame::ActionPressed(const Action& action,
 			const int team = (t - '0');
 			do { c++; } while ((c[0] != 0) && isspace(c[0]));
 			grouphandlers[gu->myTeam]->GroupCommand(team, c);
-			eoh->
 		}
 	}
 	else if (cmd == "group0") {
@@ -3151,7 +3159,11 @@ void CGame::SimFrame() {
 			sound->Update();
 		sound->NewFrame();
 		treeDrawer->Update();
+//		globalAI->Update();
 		eoh->Update();
+		for (int a = 0; a < MAX_TEAMS; a++) {
+			grouphandlers[a]->Update();
+		}
 		profiler.Update();
 		unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -4572,6 +4584,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		}
 	}
 
+//	globalAI->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
 	eoh->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
 }
 

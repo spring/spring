@@ -24,12 +24,12 @@ CGroupAI::CGroupAI(int teamId, int groupId, const SGAIKey& key)
 		: teamId(teamId), groupId(groupId), key(key) {
 
 	library = IAILibraryManager::GetInstance()->FetchGroupAILibrary(key);
-	library->Init(teamId);
+	library->Init(teamId, groupId);
 }
 
 CGroupAI::~CGroupAI() {
 
-	library->Release(teamId);
+	library->Release(teamId, groupId);
 	IAILibraryManager::GetInstance()->ReleaseGroupAILibrary(key);
 }
 

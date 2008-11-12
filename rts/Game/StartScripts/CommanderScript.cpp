@@ -6,7 +6,7 @@
 #include "mmgr.h"
 
 #include "CommanderScript.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -60,7 +60,7 @@ void CCommanderScript::GameStart()
 		// create a Skirmish AI if required
 		if (!SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifier) // is an AI specifyed?
 				&& (gu->myPlayerNum == team->leader)) {
-			globalAI->CreateSkirmishAI(a, team->skirmishAISpecifier, team->skirmishAIOptions);
+			eoh->CreateSkirmishAI(a, team->skirmishAISpecifier, team->skirmishAIOptions);
 		}
 
 		// get the team startup info

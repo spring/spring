@@ -19,6 +19,7 @@
 #define _ENGINEOUTHANDLER_H
 
 #include "Object.h"
+#include "Game/GlobalConstants.h"
 
 #include <map>
 #include <string>
@@ -27,10 +28,13 @@ struct Command;
 class float3;
 class CUnit;
 class CGroup;
+class WeaponDef;
 struct SSAIKey;
 class CSkirmishAIWrapper;
 struct SGAIKey;
 class CGroupAIWrapper;
+
+void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
 private:
@@ -84,10 +88,10 @@ public:
 
 
 	// Group AI stuff
-	bool CreateGroupAI(const CGroup& group, const SGAIKey& key,
-			const std::map<std::string, std::string>& options);
-	bool IsGroupAI(const CGroup& group) const;
-	void DestroyGroupAI(const CGroup& group);
+//	bool CreateGroupAI(const CGroup& group, const SGAIKey& key,
+//			const std::map<std::string, std::string>& options);
+//	bool IsGroupAI(const CGroup& group) const;
+//	void DestroyGroupAI(const CGroup& group);
 
 
 	void SetCheating(bool enable);
@@ -97,17 +101,19 @@ public:
 	void Load(std::istream* s);
 	void Save(std::ostream* s);
 
-private:
 	static bool IsCatchExceptions();
+private:
+	static CEngineOutHandler* singleton;
 
 private:
 	const unsigned int activeTeams;
 
 	CSkirmishAIWrapper* skirmishAIs[MAX_TEAMS];
 	bool hasSkirmishAIs;
-	CGroupAIWrapper* groupAIs[MAX_TEAMS][MAX_GROUPS];
-	bool hasGroupAIs;
-	bool hasTeamGroupAIs[MAX_TEAMS];
+	//CGroupAIWrapper* groupAIs[MAX_TEAMS][MAX_GROUPS];
+//	CGroupAIWrapper* groupAIs[MAX_TEAMS][16];
+//	bool hasGroupAIs;
+//	bool hasTeamGroupAIs[MAX_TEAMS];
 };
 
 #define eoh CEngineOutHandler::GetInstance()

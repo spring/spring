@@ -45,8 +45,7 @@ public:
 //	virtual std::vector<Option> GetOptions() const = 0;
 	
 	
-    virtual void Init(int teamId, int groupId, const InfoItem info[],
-			unsigned int numInfoItems) const = 0;
+    virtual void Init(int teamId, int groupId) const = 0;
     virtual void Release(int teamId, int groupId) const = 0;
     virtual int HandleEvent(int teamId, int groupId, int topic, const void* data) const = 0;
 };

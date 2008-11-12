@@ -65,7 +65,7 @@ void fillWithMinusOne(int* arr, int size) {
 void CAIAICallback::init() {
 
 	// init caches
-	int maxCacheSize = 512;
+	int maxCacheSize = 1024;
 	int maxUnits = 10000;
 	int maxGroups = 100;
 

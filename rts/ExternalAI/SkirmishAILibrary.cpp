@@ -24,8 +24,8 @@
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
 		const SSAISpecifier& specifier,
 		const InfoItem info[], unsigned int numInfoItems)
-		: sSAI(ai), specifier(specifier), info(info),
-		numInfoItems(numInfoItems) {}
+		: sSAI(ai), specifier(specifier),
+		info(info), numInfoItems(numInfoItems) {}
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {}
 	

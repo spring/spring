@@ -365,7 +365,7 @@ int (CALLING_CONV *Unit_STATIC_getFriendliesIn)(int teamId, int unitIds[], struc
 int (CALLING_CONV *Unit_STATIC_getNeutrals)(int teamId, int unitIds[]);
 int (CALLING_CONV *Unit_STATIC_getNeutralsIn)(int teamId, int unitIds[], struct SAIFloat3 pos, float radius);
 int (CALLING_CONV *Unit_STATIC_getSelected)(int teamId, int unitIds[]);
-int (CALLING_CONV *Unit_STATIC_updateSelectedUnitsIcons)(int teamId);
+void (CALLING_CONV *Unit_STATIC_updateSelectedUnitsIcons)(int teamId);
 
 int (CALLING_CONV *Unit_getDefId)(int teamId, int unitId);
 int (CALLING_CONV *Unit_getAiHint)(int teamId, int unitId);

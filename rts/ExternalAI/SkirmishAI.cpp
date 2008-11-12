@@ -21,9 +21,9 @@
 #include "ISkirmishAILibrary.h"
 
 CSkirmishAI::CSkirmishAI(int teamId, const SSAIKey& key)
-		: teamId(teamId), skirmishAIKey(skirmishAIKey) {
+		: teamId(teamId), key(key) {
 
-	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(skirmishAIKey);
+	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
 	library->Init(teamId);
 }
 

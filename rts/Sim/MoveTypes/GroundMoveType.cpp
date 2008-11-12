@@ -2,7 +2,7 @@
 #include "mmgr.h"
 
 #include "GroundMoveType.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
@@ -1402,7 +1402,7 @@ void CGroundMoveType::Fail()
 	progressState = Failed;
 
 	eventHandler.UnitMoveFailed(owner);
-	globalAI->UnitMoveFailed(owner);
+	eoh->UnitMoveFailed(*owner);
 
 	// sends a message to user.
 	ENTER_UNSYNCED;

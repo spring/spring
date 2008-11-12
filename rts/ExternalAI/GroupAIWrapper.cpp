@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
 #include "GroupAIWrapper.h"
 
 #include "StdAfx.h"
@@ -195,18 +196,16 @@ void CGroupAIWrapper::Release() {
 
 void CGroupAIWrapper::Load(std::istream* s) {
 
-/* TODO
-	SLoadAIEvent evtData = {s.TO_FILENAME(TODO), callback};
-	ai->HandleEvent(EVENT_LOAD_AI, &evtData);
-*/
+//TODO
+//	SLoadAIEvent evtData = {s.TO_FILENAME(TODO), callback};
+//	ai->HandleEvent(EVENT_LOAD_AI, &evtData);
 }
 
 void CGroupAIWrapper::Save(std::ostream* s) {
 
-/* TODO
-	SSaveAIEvent evtData = {s.TO_FILENAME(TODO)};
-	ai->HandleEvent(EVENT_SAVE_AI, &evtData);
-*/
+//TODO
+//	SSaveAIEvent evtData = {s.TO_FILENAME(TODO)};
+//	ai->HandleEvent(EVENT_SAVE_AI, &evtData);
 }
 
 void CGroupAIWrapper::UnitIdle(int unitId) {
@@ -357,3 +356,4 @@ int CGroupAIWrapper::HandleEvent(int topic, const void* data) const
 {
 	return ai->HandleEvent(topic, data);
 }
+*/

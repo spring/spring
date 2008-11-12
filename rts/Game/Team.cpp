@@ -17,7 +17,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/GlobalAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "creg/STL_List.h"
@@ -269,8 +269,8 @@ void CTeam::Died()
 			gs->players[a]->StartSpectating();
 		}
 	}
-	if (globalAI->IsSkirmishAI(teamNum)) {
-		globalAI->DestroySkirmishAI(teamNum);
+	if (eoh->IsSkirmishAI(teamNum)) {
+		eoh->DestroySkirmishAI(teamNum);
 	}
 
 	CLuaUI::UpdateTeams();
