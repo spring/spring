@@ -176,7 +176,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 		delete f;
 	}
 
-	while (frames.size() < lastFrame) {
+	while (int(frames.size()) < lastFrame) {
 		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
 		         name.c_str(), frames.size(), ext);
 		ImageData image;
@@ -212,7 +212,7 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 		setBitmapTransparency(b, 84, 84, 252);
 	}
 
-	if (hwCursor->needsYFlip()) {
+	if (hwCursor->NeedsYFlip()) {
 		//WINDOWS
 		b.ReverseYAxis();
 		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
@@ -357,7 +357,7 @@ void CMouseCursor::Update()
 
 	while (animTime > frames[currentFrame].endTime) {
 		currentFrame++;
-		if (currentFrame >= frames.size()) {
+		if (currentFrame >= int(frames.size())) {
 			currentFrame = 0;
 		}
 	}
@@ -372,5 +372,5 @@ void CMouseCursor::BindTexture()
 
 void CMouseCursor::BindHwCursor()
 {
-	hwCursor->Bind();	
+	hwCursor->Bind();
 }

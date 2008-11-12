@@ -24,8 +24,6 @@
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
-#include "Sim/Misc/Team.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DModelParser.h"
@@ -33,6 +31,8 @@
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -138,7 +138,7 @@ CLuaRules::~CLuaRules()
 {
 	if (L != NULL) {
 		Shutdown();
-		KillLua();		
+		KillLua();
 	}
 	luaRules = NULL;
 
@@ -849,7 +849,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	lua_pop(L, 1);
 	return retval;
 }
-	
+
 
 const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 {
@@ -889,8 +889,8 @@ const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 	}
 
 	lua_pop(L, 1);
-	
-	return outData;	
+
+	return outData;
 }
 
 
@@ -1166,7 +1166,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		luaL_error(L, "%s(): Bad teamID: %i\n", teamID);
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return NULL;
 	}

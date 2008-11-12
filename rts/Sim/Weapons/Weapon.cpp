@@ -8,7 +8,6 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
-#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "myMath.h"
@@ -17,6 +16,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/COB/CobFile.h"
@@ -305,14 +305,14 @@ void CWeapon::Update()
 	}
 	if(weaponDef->stockpile && numStockpileQued){
 		float p=1.0f/stockpileTime;
-		if(gs->Team(owner->team)->metal>=metalFireCost*p && gs->Team(owner->team)->energy>=energyFireCost*p){
+		if(teamHandler->Team(owner->team)->metal>=metalFireCost*p && teamHandler->Team(owner->team)->energy>=energyFireCost*p){
 			owner->UseEnergy(energyFireCost*p);
 			owner->UseMetal(metalFireCost*p);
 			buildPercent+=p;
 		} else {
 			// update the energy and metal required counts
-			gs->Team(owner->team)->energyPull += energyFireCost*p;
-			gs->Team(owner->team)->metalPull += metalFireCost*p;
+			teamHandler->Team(owner->team)->energyPull += energyFireCost*p;
+			teamHandler->Team(owner->team)->metalPull += metalFireCost*p;
 		}
 		if(buildPercent>=1){
 			const int oldCount = numStockpiled;
@@ -339,8 +339,8 @@ void CWeapon::Update()
 	   )
 	{
 		if ((weaponDef->stockpile ||
-		     (gs->Team(owner->team)->metal >= metalFireCost &&
-		      gs->Team(owner->team)->energy >= energyFireCost)))
+		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
+		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
 		{
 			std::vector<int> args;
 			args.push_back(0);
@@ -384,8 +384,8 @@ void CWeapon::Update()
 				// update the energy and metal required counts
 				const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
-				gs->Team(owner->team)->energyPull += averageFactor * energyFireCost;
-				gs->Team(owner->team)->metalPull += averageFactor * metalFireCost;
+				teamHandler->Team(owner->team)->energyPull += averageFactor * energyFireCost;
+				teamHandler->Team(owner->team)->metalPull += averageFactor * metalFireCost;
 			}
 		}
 	}
@@ -556,7 +556,7 @@ inline bool CWeapon::ShouldCheckForNewTarget() const
 	if (haveUserTarget)          { return false; }
 
 	if (targetType == Target_None) { return true; }
-	
+
 	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
@@ -829,7 +829,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 	return val;
-	
+
 }
 
 void CWeapon::Init(void)

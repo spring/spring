@@ -3,6 +3,7 @@
 #include "AirBaseHandler.h"
 
 #include "GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
@@ -14,7 +15,7 @@ CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler,(
 	CR_MEMBER(freeBases),
 	CR_MEMBER(bases),
-	CR_RESERVED(16)	
+	CR_RESERVED(16)
 	));
 
 CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (NULL, 0, NULL));
@@ -42,7 +43,7 @@ CAirBaseHandler::CAirBaseHandler(void)
 CAirBaseHandler::~CAirBaseHandler(void)
 {
 	//shouldnt be any bases left here...
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		for (airBaseLstIt bi = bases[a].begin(); bi != bases[a].end(); ++bi) {
 			for (padLstIt pi = (*bi)->pads.begin(); pi !=(*bi)->pads.end(); ++pi) {
 				delete *pi;

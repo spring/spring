@@ -4,10 +4,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Factory.h"
-#include "Sim/Misc/Team.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Sim/Misc/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -15,6 +13,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobFile.h"
@@ -355,7 +354,7 @@ void CFactory::CreateNanoParticle(void)
 			float3 color = unitDef->nanoColor;
 
 			if (gu->teamNanospray) {
-				unsigned char* tcol = gs->Team(team)->color;
+				unsigned char* tcol = teamHandler->Team(team)->color;
 				color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
 			}
 

@@ -13,10 +13,10 @@
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/CameraHandler.h"
-#include "Game/Player.h"
-#include "Sim/Misc/Team.h"
+#include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "StartPosSelecter.h"
 #include "Rendering/glFont.h"
 #include "EventHandler.h"
@@ -91,7 +91,7 @@ void GameSetupDrawer::Draw()
 		char buf[64];
 		sprintf(buf, "Starting in %i", readyCountdown / 1000);
 		state = buf;
-	} else if (!gs->Team(gu->myTeam)->IsReadyToStart()) {
+	} else if (!teamHandler->Team(gu->myTeam)->IsReadyToStart()) {
 		state = "Choose start pos";
 	} else if (gu->myPlayerNum==0) {
 		state = "Waiting for players, Ctrl+Return to force start";
@@ -102,9 +102,9 @@ void GameSetupDrawer::Draw()
 	// not the most efficent way to do this, but who cares?
 	std::map<int, std::string> playerStates;
 	for (int a = 0; a < gameSetup->numPlayers; a++) {
-		if (!gs->players[a]->readyToStart) {
+		if (!playerHandler->Player(a)->readyToStart) {
 			playerStates[a] = "missing";
-		} else if (!gs->Team(gs->players[a]->team)->IsReadyToStart()) {
+		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
@@ -137,9 +137,9 @@ void GameSetupDrawer::Draw()
 		const float  white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		if (a == gameSetup->numPlayers) {
 			color = white; //blue;
-		} else if (!gs->players[a]->readyToStart) {
+		} else if (!playerHandler->Player(a)->readyToStart) {
 			color = red;
-		} else if (!gs->Team(gs->players[a]->team)->IsReadyToStart()) {
+		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
 			color = yellow;
 		} else {
 			color = green;
@@ -149,7 +149,7 @@ void GameSetupDrawer::Draw()
 		if (a == gameSetup->numPlayers) {
 			name = "Players:";
 		} else {
-			name = gs->players[a]->name.c_str();
+			name = playerHandler->Player(a)->name.c_str();
 		}
 		const float fontScale = 1.0f;
 		const float yScale = fontScale * font->GetHeight();

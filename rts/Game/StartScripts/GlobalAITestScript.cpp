@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "GlobalAITestScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
@@ -26,9 +26,9 @@ CGlobalAITestScript::CGlobalAITestScript(std::string dll):
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
-	gs->Team(1)->isAI = true;
-	gs->Team(1)->dllAI = dllName;
-	gs->Team(1)->leader = 0;
+	teamHandler->Team(1)->isAI = true;
+	teamHandler->Team(1)->dllAI = dllName;
+	teamHandler->Team(1)->leader = 0;
 }
 
 
@@ -41,15 +41,15 @@ void CGlobalAITestScript::GameStart(void)
 {
 	globalAI->CreateGlobalAI(1, dllName.c_str());
 
-	gs->Team(0)->energy        = 1000;
-	gs->Team(0)->energyStorage = 1000;
-	gs->Team(0)->metal         = 1000;
-	gs->Team(0)->metalStorage  = 1000;
+	teamHandler->Team(0)->energy        = 1000;
+	teamHandler->Team(0)->energyStorage = 1000;
+	teamHandler->Team(0)->metal         = 1000;
+	teamHandler->Team(0)->metalStorage  = 1000;
 
-	gs->Team(1)->energy        = 1000;
-	gs->Team(1)->energyStorage = 1000;
-	gs->Team(1)->metal         = 1000;
-	gs->Team(1)->metalStorage  = 1000;
+	teamHandler->Team(1)->energy        = 1000;
+	teamHandler->Team(1)->energyStorage = 1000;
+	teamHandler->Team(1)->metal         = 1000;
+	teamHandler->Team(1)->metalStorage  = 1000;
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);

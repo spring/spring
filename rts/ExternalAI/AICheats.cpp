@@ -9,7 +9,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "NetProtocol.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
@@ -50,20 +50,20 @@ void CAICheats::EnableCheatEvents(bool enable)
 void CAICheats::SetMyHandicap(float handicap)
 {
 	if (!OnlyPassiveCheats()) {
-		gs->Team(ai->team)->handicap = 1 + handicap / 100;
+		teamHandler->Team(ai->team)->handicap = 1 + handicap / 100;
 	}
 }
 
 void CAICheats::GiveMeMetal(float amount)
 {
 	if (!OnlyPassiveCheats())
-		gs->Team(ai->team)->metal += amount;
+		teamHandler->Team(ai->team)->metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
 	if (!OnlyPassiveCheats())
-		gs->Team(ai->team)->energy += amount;
+		teamHandler->Team(ai->team)->energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, float3 pos)
@@ -106,7 +106,7 @@ int CAICheats::GetEnemyUnits(int* units)
 	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->team))) {
+		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->team))) {
 			if (!IsUnitNeutral(u->id)) {
 				units[a++] = u->id;
 			}
@@ -125,7 +125,7 @@ int CAICheats::GetEnemyUnits(int* units, const float3& pos, float radius)
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(ai->team))) {
+		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->team))) {
 			if (!IsUnitNeutral(u->id)) {
 				units[a] = u->id;
 				++a;

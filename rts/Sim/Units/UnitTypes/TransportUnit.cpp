@@ -8,6 +8,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
@@ -147,7 +148,7 @@ bool CTransportUnit::CanTransport(CUnit *unit)
 		return false;
 	}
 
-	if (!unit->unitDef->transportByEnemy && !gs->AlliedTeams(unit->team, team)) {
+	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team)) {
 		return false;
 	}
 

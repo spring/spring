@@ -8,7 +8,6 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -18,6 +17,7 @@
 #include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -370,7 +370,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const UnitDef* ud = owner->unitDef;
 	int maxHeightDiff = SQUARE_SIZE;
 	// AI's may do as they like
-	bool aiOrder = (gs->Team(owner->team) && gs->Team(owner->team)->isAI);
+	bool aiOrder = (teamHandler->Team(owner->team) && teamHandler->Team(owner->team)->isAI);
 
 	switch (c.id) {
 		case CMD_DGUN:
@@ -1224,7 +1224,7 @@ void CCommandAI::SlowUpdate()
 int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (!gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (isAttackCapable()) {
 				return CMD_ATTACK;
 			}

@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -41,7 +41,7 @@ void CDGunWeapon::Update(void)
 
 void CDGunWeapon::Fire(void)
 {
-	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(gs->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
+	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
 		return;		//prevents dgunning using fps view if outside dgunlimit
 	}
 

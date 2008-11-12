@@ -21,15 +21,16 @@
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
 #include "LuaUtils.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -1078,7 +1079,7 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 				sendMsg = gu->spectating;
 			}
 			else if (mode == 'a') {
-				const CPlayer* player = gs->players[playerID];
+				const CPlayer* player = playerHandler->Player(playerID);
 				if (player == NULL) {
 					return;
 				}
@@ -1088,8 +1089,8 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 				else if (player->spectator) {
 					sendMsg = gu->spectating;
 				} else {
-					const int msgAllyTeam = gs->AllyTeam(player->team);
-					sendMsg = gs->Ally(msgAllyTeam, gu->myAllyTeam);
+					const int msgAllyTeam = teamHandler->AllyTeam(player->team);
+					sendMsg = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 				}
 			}
 			if (sendMsg) {

@@ -42,9 +42,9 @@
 #include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
+#include "PlayerHandler.h"
 #include "PlayerRoster.h"
 #include "Sync/SyncTracer.h"
-#include "Sim/Misc/Team.h"
 #include "ChatMessage.h"
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
@@ -91,16 +91,17 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCtrl.h"
-#include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/SideParser.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -290,7 +291,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
-	  wordCompletion->AddWord(gs->players[pp]->name, false, false, false);
+	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -444,7 +445,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	globalAI = SAFE_NEW CGlobalAIHandler();
 
-	CPlayer* p = gs->players[gu->myPlayerNum];
+	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	GameSetupDrawer::Enable();
 
 	if (gs->useLuaRules) {
@@ -640,7 +641,7 @@ void CGame::ResizeEvent()
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
-		gs->players[gu->myPlayerNum]->currentStats->keyPresses++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats->keyPresses++;
 	}
 
 	if (!hotBinding.empty()) {
@@ -665,7 +666,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 
 	if (userWriting) {
 		unsigned int actionIndex;
-		for (actionIndex = 0; actionIndex < (int)actionList.size(); actionIndex++) {
+		for (actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
 			const Action& action = actionList[actionIndex];
 
 			if (action.command == "edit_return") {
@@ -966,7 +967,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "w") {
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
-			const int playernum = gs->Player(action.extra.substr(0, pos));
+			const int playernum = playerHandler->Player(action.extra.substr(0, pos));
 			if (playernum >= 0) {
 				SendNetChat(action.extra.substr(pos+1), playernum);
 			} else {
@@ -1069,7 +1070,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (gs->cheatEnabled)
 		{
 			int team=atoi(action.extra.c_str());
-			if ((team >= 0) && (team <gs->activeTeams)) {
+			if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
 				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, team));
 			}
 		}
@@ -1079,9 +1080,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
-		if ((team >= 0) && (team < gs->activeTeams)) {
+		if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
 			gu->myTeam = team;
-			gu->myAllyTeam = gs->AllyTeam(team);
+			gu->myAllyTeam = teamHandler->AllyTeam(team);
 		}
 		CLuaUI::UpdateTeams();
 	}
@@ -1519,7 +1520,7 @@ bool CGame::ActionPressed(const Action& action,
 		//  * If he's a spectator.
 		//  * If there are other active players on his team.
 		//  * If there are no other players
-		if (!playing || gameOver || gs->Team(gu->myTeam)->isDead || gu->spectating) {
+		if (!playing || gameOver || teamHandler->Team(gu->myTeam)->isDead || gu->spectating) {
 			userMayQuit = true;
 		}
 		else {
@@ -1527,9 +1528,9 @@ bool CGame::ActionPressed(const Action& action,
 			bool onlyActive = true;
 			for (int a = 0;a < MAX_PLAYERS; ++a) {
 				if (a != gu->myPlayerNum) {
-					if (gs->players[a]->active) {
+					if (playerHandler->Player(a)->active) {
 						onlyActive = false;
-						if (gs->players[a]->team == gu->myTeam) {
+						if (playerHandler->Player(a)->team == gu->myTeam) {
 							userMayQuit = true;
 							break;
 						}
@@ -2089,7 +2090,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		selectedUnits.PossibleCommandChange(NULL);
 		if (gs->noHelperAIs) {
 			// remove any current GroupAIs
-			CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
+			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
 			CUnitSet::iterator it;
 			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
 			{
@@ -2128,15 +2129,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 	}
 	else if (action.command == "nocost" && gs->cheatEnabled) {
-		for(unsigned i=0; i<unitDefHandler->numUnitDefs; i++)
-		{
+		for(int i = 0; i < unitDefHandler->numUnitDefs; ++i) {
 			unitDefHandler->unitDefs[i].metalCost = 1;
 			unitDefHandler->unitDefs[i].energyCost = 1;
 			unitDefHandler->unitDefs[i].buildTime = 10;
 			unitDefHandler->unitDefs[i].metalUpkeep = 0;
 			unitDefHandler->unitDefs[i].energyUpkeep = 0;
 		}
-		unitDefHandler->noCost=true;
+		unitDefHandler->noCost = true;
 		logOutput.Print("Everything is for free!");
 	}
 	else if (action.command == "give" && gs->cheatEnabled) {
@@ -2158,7 +2158,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 
 		int amount = 1;
-		int team = gs->players[playernum]->team;
+		int team = playerHandler->Player(playernum)->team;
 
 		int amountArg = -1;
 		int teamArg = -1;
@@ -2187,7 +2187,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		if (teamArg >= 0) {
 			const string& teamStr = args[teamArg];
 			team = atoi(teamStr.c_str());
-			if ((team < 0) || (team >= gs->activeTeams) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
+			if ((team < 0) || (team >= teamHandler->ActiveTeams()) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give team: %s", teamStr.c_str());
 				return;
 			}
@@ -2198,7 +2198,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		if (unitName == "all") {
 			// player entered ".give all"
 			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
-			int currentNumUnits = gs->Team(team)->units.size();
+			int currentNumUnits = teamHandler->Team(team)->units.size();
 			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
 			// make sure team unit-limit not exceeded
@@ -2227,7 +2227,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (!unitName.empty()) {
 			int numRequestedUnits = amount;
-			int currentNumUnits = gs->Team(team)->units.size();
+			int currentNumUnits = teamHandler->Team(team)->units.size();
 
 			if (currentNumUnits >= uh->maxUnits) {
 				logOutput.Print("Unable to give any more units to team %i", team);
@@ -2414,22 +2414,22 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 #endif
 	else if (action.command == "atm" && gs->cheatEnabled) {
-		int team = gs->players[playernum]->team;
-		gs->Team(team)->AddMetal(1000);
-		gs->Team(team)->AddEnergy(1000);
+		int team = playerHandler->Player(playernum)->team;
+		teamHandler->Team(team)->AddMetal(1000);
+		teamHandler->Team(team)->AddEnergy(1000);
 	}
-	else if (action.command == "take" && (!gs->players[playernum]->spectator || gs->cheatEnabled)) {
-		int sendTeam = gs->players[playernum]->team;
-		for (int a = 0; a < gs->activeTeams; ++a) {
-			if (gs->AlliedTeams(a, sendTeam)) {
+	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
+		int sendTeam = playerHandler->Player(playernum)->team;
+		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
-				for (int b = 0; b < gs->activePlayers; ++b) {
-					if (gs->players[b]->active && gs->players[b]->team==a && !gs->players[b]->spectator) {
+				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
+					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
 						hasPlayer = true;
 					}
 				}
 				if (!hasPlayer) {
-					gs->Team(a)->GiveEverythingTo(sendTeam);
+					teamHandler->Team(a)->GiveEverythingTo(sendTeam);
 				}
 			}
 		}
@@ -2932,7 +2932,7 @@ bool CGame::Draw() {
 		const int* indices = playerRoster.GetIndices(&count);
 
 		for (int a = 0; a < count; ++a) {
-			const CPlayer* p = gs->players[indices[a]];
+			const CPlayer* p = playerHandler->Player(indices[a]);
 			float color[4];
 			const char* prefix;
 			if (p->spectator) {
@@ -2942,14 +2942,14 @@ bool CGame::Draw() {
 				color[3] = 1.0f;
 				prefix = "S|";
 			} else {
-				const unsigned char* bColor = gs->Team(p->team)->color;
+				const unsigned char* bColor = teamHandler->Team(p->team)->color;
 				color[0] = (float)bColor[0] / 255.0f;
 				color[1] = (float)bColor[1] / 255.0f;
 				color[2] = (float)bColor[2] / 255.0f;
 				color[3] = (float)bColor[3] / 255.0f;
-				if (gu->myAllyTeam == gs->AllyTeam(p->team))
+				if (gu->myAllyTeam ==teamHandler->AllyTeam(p->team))
 					prefix = "A|";	// same AllyTeam
-				else if (gs->AlliedTeams(gu->myTeam, p->team))
+				else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
 					prefix = "E+|";	// different AllyTeams, but are allied
 				else
 					prefix = "E|";	//no alliance at all
@@ -3072,8 +3072,8 @@ void CGame::StartPlaying()
 	lastframe = SDL_GetTicks();
 
 	ENTER_MIXED;
-	gu->myTeam = gs->players[gu->myPlayerNum]->team;
-	gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
+	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
 
@@ -3217,23 +3217,24 @@ void CGame::SimFrame() {
 	loshandler->Update();
 
 	if (!(gs->frameNum & 31)) {
-		for (int a = 0; a < gs->activeTeams; ++a) {
-			gs->Team(a)->ResetFrameVariables();
+		// TODO: move to CTeamHandler
+		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+			teamHandler->Team(a)->ResetFrameVariables();
 		}
-		for (int a = 0; a < gs->activeTeams; ++a) {
-			gs->Team(a)->SlowUpdate();
+		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+			teamHandler->Team(a)->SlowUpdate();
 		}
 	}
 
 	lastUpdate = SDL_GetTicks();
 
 #ifdef DIRECT_CONTROL_ALLOWED
-	for(int a=0;a<gs->activePlayers;++a){
-		if(!gs->players[a]->active || !gs->players[a]->playerControlledUnit)
+	for(int a=0;a<playerHandler->ActivePlayers();++a){
+		if(!playerHandler->Player(a)->active || !playerHandler->Player(a)->playerControlledUnit)
 			continue;
 
-		CUnit* unit=gs->players[a]->playerControlledUnit;
-		DirectControlStruct* dc=&gs->players[a]->myControl;
+		CUnit* unit=playerHandler->Player(a)->playerControlledUnit;
+		DirectControlStruct* dc=&playerHandler->Player(a)->myControl;
 
 		std::vector<int> args;
 		args.push_back(0);
@@ -3243,7 +3244,7 @@ void CGame::SimFrame() {
 		pos+=UpVector*7;
 
 		CUnit* hit;
-		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,gs->AllyTeam(gs->players[a]->team));
+		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,teamHandler->AllyTeam(playerHandler->Player(a)->team));
 		dc->target=hit;
 
 		if(hit){
@@ -3383,23 +3384,23 @@ void CGame::ClientReadNet()
 				} else {
 					switch (inbuf[2]) {
 						case 1: {
-							if (gs->players[player]->spectator) {
-								logOutput.Print("Spectator %s left", gs->players[player]->name.c_str());
+							if (playerHandler->Player(player)->spectator) {
+								logOutput.Print("Spectator %s left", playerHandler->Player(player)->name.c_str());
 							} else {
-								logOutput.Print("Player %s left", gs->players[player]->name.c_str());
+								logOutput.Print("Player %s left", playerHandler->Player(player)->name.c_str());
 							}
 							break;
 						}
 						case 2:
-							logOutput.Print("Player %s has been kicked", gs->players[player]->name.c_str());
+							logOutput.Print("Player %s has been kicked", playerHandler->Player(player)->name.c_str());
 							break;
 						case 0:
-							logOutput.Print("Lost connection to %s", gs->players[player]->name.c_str());
+							logOutput.Print("Lost connection to %s", playerHandler->Player(player)->name.c_str());
 							break;
 						default:
-							logOutput.Print("Player %s left the game (reason unknown: %i)", gs->players[player]->name.c_str(), inbuf[2]);
+							logOutput.Print("Player %s left the game (reason unknown: %i)", playerHandler->Player(player)->name.c_str(), inbuf[2]);
 					}
-					gs->players[player]->active = false;
+					playerHandler->Player(player)->active = false;
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3445,7 +3446,7 @@ void CGame::ClientReadNet()
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *gs->players[gu->myPlayerNum]->currentStats));
+				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *playerHandler->Player(gu->myPlayerNum)->currentStats));
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -3457,11 +3458,11 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
 					break;
 				}
-				*gs->players[player]->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				*playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
-						record->SetPlayerStats(player, *gs->players[player]->currentStats);
+						record->SetPlayerStats(player, *playerHandler->Player(player)->currentStats);
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -3476,9 +3477,9 @@ void CGame::ClientReadNet()
 				else if (!skipping) {
 					gs->paused=!!inbuf[2];
 					if(gs->paused){
-						logOutput.Print("%s paused the game",gs->players[player]->name.c_str());
+						logOutput.Print("%s paused the game",playerHandler->Player(player)->name.c_str());
 					} else {
-						logOutput.Print("%s unpaused the game",gs->players[player]->name.c_str());
+						logOutput.Print("%s unpaused the game",playerHandler->Player(player)->name.c_str());
 					}
 					lastframe = SDL_GetTicks();
 				}
@@ -3497,7 +3498,7 @@ void CGame::ClientReadNet()
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				unsigned char pNum = *(unsigned char*) &inbuf[1];
-				const char* pName = (pNum == SERVER_PLAYER)? "server": gs->players[pNum]->name.c_str();
+				const char* pName = (pNum == SERVER_PLAYER)? "server": playerHandler->Player(pNum)->name.c_str();
 
 				logOutput.Print("Speed set to %.1f [%s]", gs->userSpeedFactor, pName);
 				AddTraffic(pNum, packetCode, dataLength);
@@ -3515,8 +3516,8 @@ void CGame::ClientReadNet()
 				if (player >= MAX_PLAYERS || player < 0) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
-					gs->players[player]->cpuUsage = *(float*) &inbuf[2];
-					gs->players[player]->ping = *(int*) &inbuf[6];
+					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
+					playerHandler->Player(player)->ping = *(int*) &inbuf[6];
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3524,13 +3525,13 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERNAME: {
 				int player = inbuf[2];
-				gs->players[player]->name=(char*)(&inbuf[3]);
-				gs->players[player]->readyToStart=true;
-				gs->players[player]->active=true;
+				playerHandler->Player(player)->name=(char*)(&inbuf[3]);
+				playerHandler->Player(player)->readyToStart=true;
+				playerHandler->Player(player)->active=true;
 				if (net->GetDemoRecorder()) {
 					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
 				}
-				wordCompletion->AddWord(gs->players[player]->name, false, false, false); // required?
+				wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -3552,7 +3553,7 @@ void CGame::ClientReadNet()
 			case NETMSG_STARTPOS:{
 				unsigned player = inbuf[1];
 				int team = inbuf[2];
-				if ((team >= gs->activeTeams) || (team < 0)) {
+				if ((team >= teamHandler->ActiveTeams()) || (team < 0)) {
 					logOutput.Print("Got invalid team num %i in startpos msg",team);
 				} else {
 					float3 pos(*(float*)&inbuf[4],
@@ -3560,10 +3561,10 @@ void CGame::ClientReadNet()
 					           *(float*)&inbuf[12]);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
 						if (inbuf[3] != 2) {
-							gs->Team(team)->StartposMessage(pos, !!inbuf[3]);
+							teamHandler->Team(team)->StartposMessage(pos, !!inbuf[3]);
 						}
 						else
-							gs->Team(team)->StartposMessage(pos);
+							teamHandler->Team(team)->StartposMessage(pos);
 						char label[128];
 						SNPRINTF(label, sizeof(label), "Start %i", team);
 						inMapDrawer->LocalPoint(pos, label, player);
@@ -3657,7 +3658,7 @@ void CGame::ClientReadNet()
 							break;
 						}
 						if ((uh->units[unitid] &&
-						    (uh->units[unitid]->team == gs->players[player]->team)) ||
+						    (uh->units[unitid]->team == playerHandler->Player(player)->team)) ||
 						    gs->godMode) {
 							selected.push_back(unitid);
 						}
@@ -3758,14 +3759,14 @@ void CGame::ClientReadNet()
 
 				if (metalShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
-						gs->Team(srcTeam)->metal -= metalShare;
-						gs->Team(dstTeam)->metal += metalShare;
+						teamHandler->Team(srcTeam)->metal -= metalShare;
+						teamHandler->Team(dstTeam)->metal += metalShare;
 					}
 				}
 				if (energyShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
-						gs->Team(srcTeam)->energy -= energyShare;
-						gs->Team(dstTeam)->energy += energyShare;
+						teamHandler->Team(srcTeam)->energy -= energyShare;
+						teamHandler->Team(dstTeam)->energy += energyShare;
 					}
 				}
 
@@ -3814,22 +3815,22 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in share msg",player);
 					break;
 				}
-				int team1 = gs->players[player]->team;
+				int team1 = playerHandler->Player(player)->team;
 				int team2 = inbuf[2];
 				bool shareUnits = !!inbuf[3];
-				float metalShare = std::min(*(float*)&inbuf[4], (float)gs->Team(team1)->metal);
-				float energyShare = std::min(*(float*)&inbuf[8], (float)gs->Team(team1)->energy);
+				float metalShare = std::min(*(float*)&inbuf[4], (float)teamHandler->Team(team1)->metal);
+				float energyShare = std::min(*(float*)&inbuf[8], (float)teamHandler->Team(team1)->energy);
 
 				if (metalShare != 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
-						gs->Team(team1)->metal -= metalShare;
-						gs->Team(team2)->metal += metalShare;
+						teamHandler->Team(team1)->metal -= metalShare;
+						teamHandler->Team(team2)->metal += metalShare;
 					}
 				}
 				if (energyShare != 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
-						gs->Team(team1)->energy -= energyShare;
-						gs->Team(team2)->energy += energyShare;
+						teamHandler->Team(team1)->energy -= energyShare;
+						teamHandler->Team(team2)->energy += energyShare;
 					}
 				}
 
@@ -3854,17 +3855,17 @@ void CGame::ClientReadNet()
 			case NETMSG_SETSHARE: {
 				int player=inbuf[1];
 				int team=inbuf[2];
-				if ((team >= gs->activeTeams) || (team < 0)) {
+				if ((team >= teamHandler->ActiveTeams()) || (team < 0)) {
 					logOutput.Print("Got invalid team num %i in setshare msg",team);
 				} else {
 					float metalShare=*(float*)&inbuf[3];
 					float energyShare=*(float*)&inbuf[7];
 
 					if (!luaRules || luaRules->AllowResourceLevel(team, "m", metalShare)) {
-						gs->Team(team)->metalShare = metalShare;
+						teamHandler->Team(team)->metalShare = metalShare;
 					}
 					if (!luaRules || luaRules->AllowResourceLevel(team, "e", energyShare)) {
-						gs->Team(team)->energyShare = energyShare;
+						teamHandler->Team(team)->energyShare = energyShare;
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -3878,11 +3879,11 @@ void CGame::ClientReadNet()
 			case NETMSG_TEAM: {
 				const int player = (int)inbuf[1];
 				const unsigned char action = inbuf[2];
-				const int fromTeam = gs->players[player]->team;
+				const int fromTeam = playerHandler->Player(player)->team;
 
 				unsigned numPlayersInTeam = 0;
 				for (int a = 0; a < MAX_PLAYERS; ++a) {
-					if (gs->players[a]->active && (gs->players[a]->team == fromTeam)) {
+					if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == fromTeam)) {
 						++numPlayersInTeam;
 					}
 				}
@@ -3892,23 +3893,23 @@ void CGame::ClientReadNet()
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
 						if (numPlayersInTeam == 1) {
-							gs->Team(fromTeam)->GiveEverythingTo(toTeam);
-							gs->Team(fromTeam)->leader = -1;
+							teamHandler->Team(fromTeam)->GiveEverythingTo(toTeam);
+							teamHandler->Team(fromTeam)->leader = -1;
 						} else {
-							gs->players[player]->StartSpectating();
+							playerHandler->Player(player)->StartSpectating();
 						}
 						CPlayer::UpdateControlledTeams();
 						break;
 					}
 					case TEAMMSG_RESIGN: {
-						gs->players[player]->StartSpectating();
+						playerHandler->Player(player)->StartSpectating();
 						if (player == gu->myPlayerNum) {
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
 						}
 						if (numPlayersInTeam == 1) {
-							gs->Team(fromTeam)->leader = -1;
+							teamHandler->Team(fromTeam)->leader = -1;
 						}
 						logOutput.Print("Player %i resigned and is now spectating!", player);
 						CPlayer::UpdateControlledTeams();
@@ -3916,11 +3917,11 @@ void CGame::ClientReadNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						int newTeam = int(inbuf[3]);
-						gs->players[player]->team = newTeam;
-						gs->players[player]->spectator = false;
+						playerHandler->Player(player)->team = newTeam;
+						playerHandler->Player(player)->spectator = false;
 						if (player == gu->myPlayerNum) {
 							gu->myTeam = newTeam;
-							gu->myAllyTeam = gs->AllyTeam(gu->myTeam);
+							gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 							gu->spectating           = false;
 							gu->spectatingFullView   = false;
 							gu->spectatingFullSelect = false;
@@ -3928,8 +3929,8 @@ void CGame::ClientReadNet()
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
 						}
-						if (gs->Team(newTeam)->leader == -1) {
-							gs->Team(newTeam)->leader = player;
+						if (teamHandler->Team(newTeam)->leader == -1) {
+							teamHandler->Team(newTeam)->leader = player;
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(player);
@@ -3950,11 +3951,11 @@ void CGame::ClientReadNet()
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
-					gs->SetAlly(gs->AllyTeam(gs->players[player]->team), whichAllyTeam, allied);
+					teamHandler->SetAlly(teamHandler->AllyTeam(playerHandler->Player(player)->team), whichAllyTeam, allied);
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 				}
-				eventHandler.TeamChanged(gs->players[player]->team);
+				eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				break;
 			}
 			case NETMSG_CCOMMAND: {
@@ -3972,27 +3973,27 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				CUnit* ctrlUnit = gs->players[player]->playerControlledUnit;
+				CUnit* ctrlUnit = playerHandler->Player(player)->playerControlledUnit;
 				if (ctrlUnit) {
-					CUnit* unit=gs->players[player]->playerControlledUnit;
-				//logOutput.Print("Player %s released control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
+					CUnit* unit=playerHandler->Player(player)->playerControlledUnit;
+				//logOutput.Print("Player %s released control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 
 					unit->directControl=0;
 					unit->AttackUnit(0,true);
-					gs->players[player]->StopControllingUnit();
+					playerHandler->Player(player)->StopControllingUnit();
 				}
 				else {
 					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
 						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-						//logOutput.Print("Player %s took control over unit %i type %s",gs->players[player]->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
+						//logOutput.Print("Player %s took control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
 						if (unit->directControl) {
 							if (player == gu->myPlayerNum) {
 								logOutput.Print("Sorry someone already controls that unit");
 							}
 						}
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl=&gs->players[player]->myControl;
-							gs->players[player]->playerControlledUnit=unit;
+							unit->directControl=&playerHandler->Player(player)->myControl;
+							playerHandler->Player(player)->playerControlledUnit=unit;
 							ENTER_UNSYNCED;
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;
@@ -4020,8 +4021,8 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in dc update msg",player);
 					break;
 				}
-				DirectControlStruct* dc = &gs->players[player]->myControl;
-				CUnit* unit = gs->players[player]->playerControlledUnit;
+				DirectControlStruct* dc = &playerHandler->Player(player)->myControl;
+				CUnit* unit = playerHandler->Player(player)->playerControlledUnit;
 
 				dc->forward    = !!(inbuf[2] & (1 << 0));
 				dc->back       = !!(inbuf[2] & (1 << 1));
@@ -4233,7 +4234,7 @@ void CGame::MakeMemDump(void)
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";
 		file << "  xspeed " << p->speed.x << " yspeed " << p->speed.y << " zspeed " << p->speed.z << "\n";
 	}
-	for(int a=0;a<gs->activeTeams;++a){
+	for(int a=0;a<teamHandler->ActiveTeams();++a){
 		file << "Losmap for team " << a << "\n";
 		for(int y=0;y<gs->mapy>>modInfo.losMipLevel;++y){
 			file << " ";
@@ -4327,7 +4328,7 @@ void CGame::DrawDirectControlHud(void)
 		glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
 		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
 
-		if(gs->players[gu->myPlayerNum]->myControl.mouse2){
+		if(playerHandler->Player(gu->myPlayerNum)->myControl.mouse2){
 			font->glPrintAt(0.02f, 0.7f, 1.0f, "Free fire mode");
 		}
 
@@ -4472,15 +4473,16 @@ void CGame::GameEnd()
 		// FIXME: ugh, there should be a better way to figure out number of players ...
 		numPlayers = gameSetup->numPlayers;
 
-		int numTeams = gs->activeAllyTeams;
+		// TODO: move this to a method in CTeamHandler
+		// Figure out who won the game.
+		int numTeams = teamHandler->ActiveAllyTeams();
 		if (gs->useLuaGaia) {
 			--numTeams;
 		}
-		// Figure out who won the game.
 		int winner = -1;
 		for (int i = 0; i < numTeams; ++i) {
-			if (!gs->Team(i)->isDead) {
-				winner = gs->AllyTeam(i);
+			if (!teamHandler->Team(i)->isDead) {
+				winner = teamHandler->AllyTeam(i);
 				break;
 			}
 		}
@@ -4488,10 +4490,10 @@ void CGame::GameEnd()
 		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
 		record->InitializeStats(numPlayers, numTeams, winner);
 		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, *gs->players[i]->currentStats);
+			record->SetPlayerStats(i, *playerHandler->Player(i)->currentStats);
 		}
 		for (int i = 0; i < numTeams; ++i) {
-			record->SetTeamStats(i, gs->Team(i)->statHistory);
+			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 		}
 	}
 }
@@ -4535,7 +4537,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	string s = msg.msg;
 
 	if (!s.empty()) {
-		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : gs->players[msg.fromPlayer];
+		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
 
 		string label;
@@ -4564,8 +4566,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		*/
 
 		if (msg.destination == ChatMessage::TO_ALLIES && player) {
-			const int msgAllyTeam = gs->AllyTeam(player->team);
-			const bool allied = gs->Ally(msgAllyTeam, gu->myAllyTeam);
+			const int msgAllyTeam = teamHandler->AllyTeam(player->team);
+			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
 				sound->PlaySample(chatSound, 5);
@@ -4734,7 +4736,7 @@ void CGame::SelectUnits(const string& line)
 				continue; // bad pointer
 			}
 			if (!gu->spectatingFullSelect) {
-				const CUnitSet& teamUnits = gs->Team(gu->myTeam)->units;
+				const CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
 				if (teamUnits.find(unit) == teamUnits.end()) {
 					continue; // not mine to select
 				}
@@ -4829,7 +4831,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 void CGame::ReColorTeams()
 {
 	for (int t = 0; t < MAX_TEAMS; t++) {
-		CTeam* team = gs->Team(t);
+		CTeam* team = teamHandler->Team(t);
 		team->origColor[0] = team->color[0];
 		team->origColor[1] = team->color[1];
 		team->origColor[2] = team->color[2];
@@ -4858,11 +4860,11 @@ void CGame::ReColorTeams()
 	luaParser.AddInt("gameMode", gs->gameMode);
 
 	luaParser.GetTable("teams");
-	for(int t = 0; t < gs->activeTeams; ++t) {
+	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		luaParser.GetTable(t); {
-			const CTeam* team = gs->Team(t);
-			const unsigned char* color = gs->Team(t)->color;
-			luaParser.AddInt("allyTeam", gs->AllyTeam(t));
+			const CTeam* team = teamHandler->Team(t);
+			const unsigned char* color = teamHandler->Team(t)->color;
+			luaParser.AddInt("allyTeam", teamHandler->AllyTeam(t));
 			luaParser.AddBool("gaia",    team->gaia);
 			luaParser.AddInt("leader",   team->leader);
 			luaParser.AddString("side",  team->side);
@@ -4879,9 +4881,9 @@ void CGame::ReColorTeams()
 	luaParser.EndTable(); // teams
 
 	luaParser.GetTable("players");
-	for(int p = 0; p < gs->activePlayers; ++p) {
+	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
 		luaParser.GetTable(p); {
-			const CPlayer* player = gs->players[p];
+			const CPlayer* player = playerHandler->Player(p);
 			luaParser.AddString("name",     player->name);
 			luaParser.AddInt("team",        player->team);
 			luaParser.AddBool("active",     player->active);
@@ -4900,10 +4902,10 @@ void CGame::ReColorTeams()
 		logOutput.Print("teamcolors.lua: root table is not valid\n");
 	}
 
-	for (int t = 0; t < gs->activeTeams; ++t) {
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		LuaTable teamTable = root.SubTable(t);
 		if (teamTable.IsValid()) {
-			unsigned char* color = gs->Team(t)->color;
+			unsigned char* color = teamHandler->Team(t)->color;
 			color[0] = GetLuaColor(teamTable, 1, color[0]);
 			color[1] = GetLuaColor(teamTable, 2, color[1]);
 			color[2] = GetLuaColor(teamTable, 3, color[2]);

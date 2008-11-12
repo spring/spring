@@ -19,6 +19,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -61,7 +62,7 @@ namespace luafunctions
 		CUnit* x = unitLoader.LoadUnit(name, pos, team, buil, 0, NULL);
 		return SAFE_NEW CObject_pointer<CUnit>(x);
 	}
-	
+
 	void RemoveUnit(CObject_pointer<CUnit>* u)
 	{
 		if (u->held)
@@ -173,10 +174,10 @@ namespace luafunctions
 		if (selectedUnits.selectionChanged)
 			selectedUnits.SendSelection();
 	}
-	
+
 	CTeam* GetTeam(int num)
 	{
-		return gs->Team(num);
+		return teamHandler->Team(num);
 	}
 
 	string MapGetTDFName()

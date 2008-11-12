@@ -5,7 +5,7 @@
 #include "mmgr.h"
 
 #include "SpawnScript.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
@@ -101,16 +101,16 @@ void CSpawnScript::Update()
 		}
 	}
 
-	if(!myUnits.empty() && !gs->Team(1 - curUnit->team)->units.empty()) {
+	if(!myUnits.empty() && !teamHandler->Team(1 - curUnit->team)->units.empty()) {
 		if(uh->units[curUnit->id]){
 			if(curUnit->target<0 || uh->units[curUnit->target]==0){
 				// We can't rely on the ordering of units in a std::set<CUnit*>,
 				// because they're sorted on memory address. Hence we must first
 				// build a set of IDs and then pick an unit from that.
 				// This guarantees the script doesn't desync in multiplayer games.
-				int num = gs->randInt() % gs->Team(1 - curUnit->team)->units.size();
+				int num = gs->randInt() % teamHandler->Team(1 - curUnit->team)->units.size();
 				std::set<int> unitids;
-				CUnitSet* tu = &gs->Team(1 - curUnit->team)->units;
+				CUnitSet* tu = &teamHandler->Team(1 - curUnit->team)->units;
 				for (CUnitSet::iterator u = tu->begin(); u != tu->end(); ++u)
 					unitids.insert((*u)->id);
 				std::set<int>::iterator ui = unitids.begin();

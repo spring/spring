@@ -4,8 +4,8 @@
 #include "IGlobalAI.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
-#include "Game/Player.h"
-#include "Sim/Misc/Team.h"
+#include "Game/PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "TimeProfiler.h"
@@ -95,7 +95,7 @@ void CGlobalAIHandler::PostLoad()
 void CGlobalAIHandler::Load(std::istream *s)
 {
 	try {
-		for(int a=0;a<gs->activeTeams;++a)
+		for(int a=0;a<teamHandler->ActiveTeams();++a)
 			if(ais[a])
 				ais[a]->Load(s);
 	} HANDLE_EXCEPTION;
@@ -104,7 +104,7 @@ void CGlobalAIHandler::Load(std::istream *s)
 void CGlobalAIHandler::Save(std::ostream *s)
 {
 	try {
-		for(int a=0;a<gs->activeTeams;++a)
+		for(int a=0;a<teamHandler->ActiveTeams();++a)
 			if(ais[a])
 				ais[a]->Save(s);
 	} HANDLE_EXCEPTION;
@@ -114,7 +114,7 @@ void CGlobalAIHandler::Update(void)
 {
 	SCOPED_TIMER("Global AI")
 	try {
-		for(int a=0;a<gs->activeTeams;++a)
+		for(int a=0;a<teamHandler->ActiveTeams();++a)
 			if(ais[a])
 				ais[a]->Update();
 	} HANDLE_EXCEPTION;
@@ -123,7 +123,7 @@ void CGlobalAIHandler::Update(void)
 void CGlobalAIHandler::PreDestroy ()
 {
 	try {
-		for(int a=0;a<gs->activeTeams;a++)
+		for(int a=0;a<teamHandler->ActiveTeams();a++)
 			if(ais[a])
 				ais[a]->PreDestroy ();
 	} HANDLE_EXCEPTION;
@@ -132,8 +132,8 @@ void CGlobalAIHandler::PreDestroy ()
 void CGlobalAIHandler::UnitEnteredLos(CUnit* unit, int allyteam)
 {
 	if (hasAI) {
-		for (int a = 0; a < gs->activeTeams; ++a) {
-			if (ais[a] && gs->AllyTeam(a) == allyteam && !gs->Ally(allyteam, unit->allyteam))
+		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+			if (ais[a] && teamHandler->AllyTeam(a) == allyteam && !teamHandler->Ally(allyteam, unit->allyteam))
 				try {
 					ais[a]->ai->EnemyEnterLOS(unit->id);
 				} HANDLE_EXCEPTION;
@@ -144,8 +144,8 @@ void CGlobalAIHandler::UnitEnteredLos(CUnit* unit, int allyteam)
 void CGlobalAIHandler::UnitLeftLos(CUnit* unit,int allyteam)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+		for(int a=0;a<teamHandler->ActiveTeams();++a){
+			if(ais[a] && teamHandler->AllyTeam(a)==allyteam && !teamHandler->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyLeaveLOS(unit->id);
 				} HANDLE_EXCEPTION;
@@ -156,8 +156,8 @@ void CGlobalAIHandler::UnitLeftLos(CUnit* unit,int allyteam)
 void CGlobalAIHandler::UnitEnteredRadar(CUnit* unit,int allyteam)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+		for(int a=0;a<teamHandler->ActiveTeams();++a){
+			if(ais[a] && teamHandler->AllyTeam(a)==allyteam && !teamHandler->Ally(allyteam,unit->allyteam))
 				try {
 					ais[a]->ai->EnemyEnterRadar(unit->id);
 				} HANDLE_EXCEPTION;
@@ -168,8 +168,8 @@ void CGlobalAIHandler::UnitEnteredRadar(CUnit* unit,int allyteam)
 void CGlobalAIHandler::UnitLeftRadar(CUnit* unit,int allyteam)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a) {
-			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+		for(int a=0;a<teamHandler->ActiveTeams();++a) {
+			if(ais[a] && teamHandler->AllyTeam(a)==allyteam && !teamHandler->Ally(allyteam,unit->allyteam))
 			{
 				try {
 					ais[a]->ai->EnemyLeaveRadar(unit->id);
@@ -207,8 +207,8 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 {
 	if(hasAI){
 		try {
-			for(int a=0;a<gs->activeTeams;++a){
-				if(ais[a] && !gs->Ally(gs->AllyTeam(a),unit->allyteam) && (ais[a]->cheatevents || (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))))
+			for(int a=0;a<teamHandler->ActiveTeams();++a){
+				if(ais[a] && !teamHandler->Ally(teamHandler->AllyTeam(a),unit->allyteam) && (ais[a]->cheatevents || (unit->losStatus[a] & (LOS_INLOS | LOS_INRADAR))))
 					ais[a]->ai->EnemyDestroyed(unit->id,attacker?attacker->id:0);
 			}
 			if(ais[unit->team])
@@ -219,12 +219,12 @@ void CGlobalAIHandler::UnitDestroyed(CUnit* unit,CUnit* attacker)
 
 bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 {
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return false;
 	}
 
 	if (strncmp(dll, "LuaAI:", 6) == 0) {
-		CTeam* team = gs->Team(teamID);
+		CTeam* team = teamHandler->Team(teamID);
 		if (team != NULL) {
 			team->luaAI = (dll + 6);
 			return true;
@@ -281,7 +281,7 @@ void CGlobalAIHandler::ReleaseAIBuffer(int team, std::string name)
 void CGlobalAIHandler::GotChatMsg(const char* msg, int player)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a)
+		for(int a=0;a<teamHandler->ActiveTeams();++a)
 		{
 			if(ais[a])
 			{
@@ -308,7 +308,7 @@ void CGlobalAIHandler::UnitDamaged(CUnit* attacked,CUnit* attacker,float damage)
 
 			if(attacker) {
 				int a = attacker->team;
-				if(ais[attacker->team] && !gs->Ally(gs->AllyTeam(a),attacked->allyteam) && (ais[a]->cheatevents || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
+				if(ais[attacker->team] && !teamHandler->Ally(teamHandler->AllyTeam(a),attacked->allyteam) && (ais[a]->cheatevents || (attacked->losStatus[a] & (LOS_INLOS | LOS_INRADAR)))) {
 					float3 dir=attacker->pos-helper->GetUnitErrorPos(attacked,attacker->allyteam);
 					dir.ANormalize();
 					ais[a]->ai->EnemyDamaged(attacked->id,attacker->id,damage,dir);
@@ -366,13 +366,13 @@ void CGlobalAIHandler::UnitTaken (CUnit *unit,int newteam)
 
 void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Command& c,int player)
 {
-	if(ais[gs->players[player]->team]){
+	if(ais[playerHandler->Player(player)->team]){
 		try {
 			IGlobalAI::PlayerCommandEvent pce;
 			pce.units = selectedunits;
 			pce.player = player;
 			pce.command = c;
-			ais[gs->players[player]->team]->ai->HandleEvent(AI_EVENT_PLAYER_COMMAND,&pce);
+			ais[playerHandler->Player(player)->team]->ai->HandleEvent(AI_EVENT_PLAYER_COMMAND,&pce);
 		}
 		HANDLE_EXCEPTION;
 	}
@@ -381,8 +381,8 @@ void CGlobalAIHandler::PlayerCommandGiven(std::vector<int>& selectedunits,Comman
 void CGlobalAIHandler::SeismicPing(int allyteam, CUnit *unit, const float3 &pos, float strength)
 {
 	if(hasAI){
-		for(int a=0;a<gs->activeTeams;++a){
-			if(ais[a] && gs->AllyTeam(a)==allyteam && !gs->Ally(allyteam,unit->allyteam))
+		for(int a=0;a<teamHandler->ActiveTeams();++a){
+			if(ais[a] && teamHandler->AllyTeam(a)==allyteam && !teamHandler->Ally(allyteam,unit->allyteam))
 				try {
 					IGlobalAI::SeismicPingEvent spe;
 					spe.pos = pos;

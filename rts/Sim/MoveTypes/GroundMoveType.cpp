@@ -21,6 +21,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -1523,7 +1524,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
-					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						// push the blocking unit out of the way
@@ -1608,7 +1609,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
-					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						// push the blocking unit out of the way

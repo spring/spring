@@ -17,7 +17,6 @@
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -36,6 +35,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -314,17 +314,17 @@ CUnit::~CUnit()
 
 void CUnit::SetMetalStorage(float newStorage)
 {
-	gs->Team(team)->metalStorage-=metalStorage;
+	teamHandler->Team(team)->metalStorage-=metalStorage;
 	metalStorage = newStorage;
-	gs->Team(team)->metalStorage+=metalStorage;
+	teamHandler->Team(team)->metalStorage+=metalStorage;
 }
 
 
 void CUnit::SetEnergyStorage(float newStorage)
 {
-	gs->Team(team)->energyStorage-=energyStorage;
+	teamHandler->Team(team)->energyStorage-=energyStorage;
 	energyStorage = newStorage;
-	gs->Team(team)->energyStorage+=energyStorage;
+	teamHandler->Team(team)->energyStorage+=energyStorage;
 }
 
 
@@ -332,7 +332,7 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 {
 	pos = position;
 	team = Team;
-	allyteam = gs->AllyTeam(Team);
+	allyteam = teamHandler->AllyTeam(Team);
 	lineage = Team;
 	unitDef = def;
 	unitDefName = unitDef->name;
@@ -677,7 +677,7 @@ void CUnit::SlowUpdate()
 		nextPosErrorUpdate = 16;
 	}
 
-	for (int at = 0; at < gs->activeAllyTeams; ++at) {
+	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		UpdateLosStatus(at);
 	}
 
@@ -1005,9 +1005,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
-				gs->Team(attacker->team)->currentStats.damageDealt += statsdamage;
+				teamHandler->Team(attacker->team)->currentStats.damageDealt += statsdamage;
 			}
-			gs->Team(team)->currentStats.damageReceived += statsdamage;
+			teamHandler->Team(team)->currentStats.damageReceived += statsdamage;
 			health -= damage;
 		}
 		else { // healing
@@ -1054,7 +1054,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	if (damage > 0.0f) {
 		recentDamage += damage;
-		if ((attacker != NULL) && !gs->Ally(allyteam, attacker->allyteam)) {
+		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
 			                             * (damage + std::min(0.0f, health)) / maxHealth);
@@ -1094,9 +1094,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	if (health <= 0.0f) {
 		KillUnit(false, false, attacker);
 		if (isDead && (attacker != 0) &&
-		    !gs->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
+		    !teamHandler->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			gs->Team(attacker->team)->currentStats.unitsKilled++;
+			teamHandler->Team(attacker->team)->currentStats.unitsKilled++;
 		}
 	}
 //	if(attacker!=0 && attacker->team==team)
@@ -1115,7 +1115,7 @@ void CUnit::Kill(float3& impulse) {
 
 
 void CUnit::UpdateDrawPos() {
-	CTransportUnit *trans=GetTransporter(); 
+	CTransportUnit *trans=GetTransporter();
 #if defined(USE_GML) && GML_ENABLE_SIMDRAW
 	if (trans) {
 		drawPos = pos + (trans->speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
@@ -1256,7 +1256,7 @@ void CUnit::DoSeismicPing(float pingSize)
 		                             ph->seismictex, 30, 15, 0, pingSize, 1,
 		                             float3(0.8f,0.0f,0.0f));
 	}
-	for (int a = 0; a < gs->activeAllyTeams; ++a) {
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		if (radarhandler->InSeismicDistance(this, a)) {
 			const float3 err(errorScale[a] * (0.5f - rx), 0.0f,
 			                 errorScale[a] * (0.5f - rz));
@@ -1312,7 +1312,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	globalAI->UnitTaken(this, oldteam);
 
 	// reset states and clear the queues
-	if (!gs->AlliedTeams(oldteam, newteam)) {
+	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
 		ChangeTeamReset();
 	}
 
@@ -1332,28 +1332,28 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	// Sharing commander in com ends game kills you.
 	// Note that this will kill the com too.
 	if (unitDef->isCommander) {
-		gs->Team(oldteam)->CommanderDied(this);
+		teamHandler->Team(oldteam)->CommanderDied(this);
 	}
 
 	if (type == ChangeGiven) {
-		gs->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
-		gs->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
+		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
+		teamHandler->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
 	} else {
-		gs->Team(oldteam)->RemoveUnit(this, CTeam::RemoveCaptured);
-		gs->Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
+		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveCaptured);
+		teamHandler->Team(newteam)->AddUnit(this,    CTeam::AddCaptured);
 	}
 
 	if (!beingBuilt) {
-		gs->Team(oldteam)->metalStorage  -= metalStorage;
-		gs->Team(oldteam)->energyStorage -= energyStorage;
+		teamHandler->Team(oldteam)->metalStorage  -= metalStorage;
+		teamHandler->Team(oldteam)->energyStorage -= energyStorage;
 
-		gs->Team(newteam)->metalStorage  += metalStorage;
-		gs->Team(newteam)->energyStorage += energyStorage;
+		teamHandler->Team(newteam)->metalStorage  += metalStorage;
+		teamHandler->Team(newteam)->energyStorage += energyStorage;
 	}
 
 
 	team = newteam;
-	allyteam = gs->AllyTeam(newteam);
+	allyteam = teamHandler->AllyTeam(newteam);
 
 	uh->unitsByDefs[oldteam][unitDef->id].erase(this);
 	uh->unitsByDefs[newteam][unitDef->id].insert(this);
@@ -1493,7 +1493,7 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	if (gs->Ally(team, attacker->team) || gs->AlliedTeams(team, attacker->team)) {
+	if (teamHandler->AlliedTeams(team, attacker->team)) {
 		return;
 	}
 	if (lastAttacker && lastAttacker != userTarget)
@@ -1699,8 +1699,8 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 
 		if (beingBuilt) { //build
-			if ((gs->Team(builder->team)->metal  >= metalUse) &&
-			    (gs->Team(builder->team)->energy >= energyUse) &&
+			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
+			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
 				if (builder->UseMetal(metalUse)) { //just because we checked doesn't mean they were deducted since upkeep can prevent deduction
 					if (builder->UseEnergy(energyUse)) {
@@ -1720,8 +1720,8 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 				return true;
 			} else {
 				// update the energy and metal required counts
-				gs->Team(builder->team)->metalPull  += metalUse;
-				gs->Team(builder->team)->energyPull += energyUse;
+				teamHandler->Team(builder->team)->metalPull  += metalUse;
+				teamHandler->Team(builder->team)->energyPull += energyUse;
 			}
 			return false;
 		}
@@ -1729,7 +1729,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				gs->Team(builder->team)->energyPull += energyUseScaled;
+				teamHandler->Team(builder->team)->energyPull += energyUseScaled;
 				return false;
 			}
 
@@ -1763,7 +1763,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		const float energyUseScaled = energyUse * modInfo.reclaimUnitEnergyCostFactor;
 
 		if (!builder->UseEnergy(-energyUseScaled)) {
-			gs->Team(builder->team)->energyPull += energyUseScaled;
+			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
 			return false;
 		}
 
@@ -1895,9 +1895,9 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	blockHeightChanges = false;
 	if (unitDef->isCommander) {
-		gs->Team(team)->CommanderDied(this);
+		teamHandler->Team(team)->CommanderDied(this);
 	}
-	gs->Team(this->lineage)->LeftLineage(this);
+	teamHandler->Team(this->lineage)->LeftLineage(this);
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		string exp;
@@ -1976,8 +1976,8 @@ bool CUnit::UseMetal(float metal)
 		AddMetal(-metal);
 		return true;
 	}
-	gs->Team(team)->metalPull += metal;
-	bool canUse = gs->Team(team)->UseMetal(metal);
+	teamHandler->Team(team)->metalPull += metal;
+	bool canUse = teamHandler->Team(team)->UseMetal(metal);
 	if (canUse)
 		metalUseI += metal;
 	return canUse;
@@ -1991,7 +1991,7 @@ void CUnit::AddMetal(float metal, bool handicap)
 		return;
 	}
 	metalMakeI += metal;
-	gs->Team(team)->AddMetal(metal, handicap);
+	teamHandler->Team(team)->AddMetal(metal, handicap);
 }
 
 
@@ -2001,8 +2001,8 @@ bool CUnit::UseEnergy(float energy)
 		AddEnergy(-energy);
 		return true;
 	}
-	gs->Team(team)->energyPull += energy;
-	bool canUse = gs->Team(team)->UseEnergy(energy);
+	teamHandler->Team(team)->energyPull += energy;
+	bool canUse = teamHandler->Team(team)->UseEnergy(energy);
 	if (canUse)
 		energyUseI += energy;
 	return canUse;
@@ -2016,7 +2016,7 @@ void CUnit::AddEnergy(float energy, bool handicap)
 		return;
 	}
 	energyMakeI += energy;
-	gs->Team(team)->AddEnergy(energy, handicap);
+	teamHandler->Team(team)->AddEnergy(energy, handicap);
 }
 
 
