@@ -383,7 +383,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 			MMXSize = cb->GetMapWidth()/2;
 			*l<<"\n   Metal-Map Size: "<<MMXSize*MMZSize<<" (x"<<MMXSize<<",z"<<MMZSize<<")";
 			const float MBtoBB = 2.0; // Metal-Block to Build-Block, * for Conversion, / for the reverse
-			const float MMMinExtractorRadius = sqrt(pow(float(udList[0]->xsize)/MBtoBB,2)+pow(float(udList[0]->ysize)/MBtoBB,2)); // If less then this value then sites could overlap
+			const float MMMinExtractorRadius = sqrt(pow(float(udList[0]->xsize)/MBtoBB,2)+pow(float(udList[0]->zsize)/MBtoBB,2)); // If less then this value then sites could overlap
 			*l<<"\n   Minimal Metal-Map Extractor Radius: "<<MMMinExtractorRadius;
 
 			// sorts the list so that the most unique size extractors are first
@@ -397,7 +397,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 					{
 						uniqueExtractorIndex = iud;
 						for( int iud2=0; iud2<uniqueExtractors; iud2++ )
-							if( udList[iud]->xsize == udList[iud2]->xsize && udList[iud]->ysize == udList[iud2]->ysize &&
+							if( udList[iud]->xsize == udList[iud2]->xsize && udList[iud]->zsize == udList[iud2]->zsize &&
 								udList[iud]->minWaterDepth == udList[iud2]->minWaterDepth && udList[iud]->maxWaterDepth == udList[iud2]->maxWaterDepth )
 							{
 								uniqueExtractorIndex = -1;
@@ -413,7 +413,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 					uniqueExtractors++;
 
 					// make udList[0] = the smallest extractor
-					for( int i=uniqueExtractors-1; i>0 && udList[i]->xsize*udList[i]->ysize < udList[i-1]->xsize*udList[i-1]->ysize; i-- )
+					for( int i=uniqueExtractors-1; i>0 && udList[i]->xsize*udList[i]->zsize < udList[i-1]->xsize*udList[i-1]->zsize; i-- )
 					{
 						const UnitDef* ud = udList[i-1];
 						udList[i-1] = udList[i];
@@ -421,7 +421,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 					}
 				}
 			}
-			*l<<"\n   Minimal Unit-Definition Size: (x"<<udList[0]->xsize<<",z"<<udList[0]->ysize<<")";
+			*l<<"\n   Minimal Unit-Definition Size: (x"<<udList[0]->xsize<<",z"<<udList[0]->zsize<<")";
 			*l<<"\n   Unique Extractor Unit-Definitions: "<<uniqueExtractors;
 
 			// Calculate the offsets
@@ -481,7 +481,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				const UnitDef *ud = 0;
 				for( int iud=0; iud<udSize; iud++ )
 					if( udList[iud]->needGeo )
-						if( ud == 0 || udList[iud]->xsize*udList[iud]->ysize < ud->xsize*ud->ysize )
+						if( ud == 0 || udList[iud]->xsize*udList[iud]->zsize < ud->xsize*ud->zsize )
 							ud = udList[iud];
 
 				const int MMtoMP = 16; // Metal-Map to Map-Position, * for conversion, / for the reverse
@@ -490,7 +490,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				{
 					xMin = int(R[1][iR]->position.x)/MMtoMP;
 					zMin = int(R[1][iR]->position.z)/MMtoMP;
-					SetLimitBoundary(xMin,xMax,ud->xsize/MBtoBB-1,zMin,zMax,ud->ysize/MBtoBB-1);
+					SetLimitBoundary(xMin,xMax,ud->xsize/MBtoBB-1,zMin,zMax,ud->zsize/MBtoBB-1);
 					for(int z=zMin; z<=zMax; z++)
 						for(int x=xMin; x<=xMax; x++)
 							if( MMS[x][z].assessing )
@@ -628,7 +628,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				// The Extractor Radius is small enough that Sites will overlap, remove the nearby indexes being assessed
 //				if( MMExtractorRadius < MMMinExtractorRadius )
 //				{
-				SetLimitBoundary((xMin=mms->x),xMax,udList[0]->xsize/MBtoBB -1,(zMin=mms->z),zMax,udList[0]->ysize/MBtoBB -1);
+				SetLimitBoundary((xMin=mms->x),xMax,udList[0]->xsize/MBtoBB -1,(zMin=mms->z),zMax,udList[0]->zsize/MBtoBB -1);
 				for(int z=zMin; z<=zMax; z++)
 					for(int x=xMin; x<=xMax; x++)
 						if( MMS[x][z].assessing )

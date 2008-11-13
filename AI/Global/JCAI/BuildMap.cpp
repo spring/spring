@@ -81,7 +81,7 @@ void BuildMap::Calc2DBuildPos(float3& pos, const UnitDef* ud)
 	else
 		pos.x=floor((pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
 
-	if(ud->ysize&2)
+	if(ud->zsize&2)
 		pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 	else
 		pos.z=floor((pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
@@ -99,9 +99,9 @@ void BuildMap::Mark (const UnitDef* def, const float3& opos, bool occupy)
 	int space = GetUnitSpace (def);
 
 	int xstart = max (0, (int(pos.x)/SQUARE_SIZE - def->xsize/2) / 4 - space);
-	int ystart = max (0, (int(pos.z)/SQUARE_SIZE - def->ysize/2) / 4 - space);
+	int ystart = max (0, (int(pos.z)/SQUARE_SIZE - def->zsize/2) / 4 - space);
 	int xend = min (w, (int(pos.x)/SQUARE_SIZE + def->xsize/2) / 4 + space);
-	int yend = min (h, (int(pos.z)/SQUARE_SIZE + def->ysize/2) / 4 + space);
+	int yend = min (h, (int(pos.z)/SQUARE_SIZE + def->zsize/2) / 4 + space);
 
 	for (int y=ystart;y<yend;y++)
 		for (int x=xstart;x<xend;x++)
@@ -140,9 +140,9 @@ bool BuildMap::FindBuildPosition (const UnitDef *def, const float3& startPos, fl
 		if (callback->CanBuildAt (def, pos))
 		{
 			int xstart = int(x*4 - def->xsize/2) / 4 - space;
-			int ystart = int(y*4 - def->ysize/2) / 4 - space;
+			int ystart = int(y*4 - def->zsize/2) / 4 - space;
 			int xend = int(x*4 + def->xsize/2) / 4 + space;
-			int yend = int(y*4 + def->ysize/2) / 4 + space;
+			int yend = int(y*4 + def->zsize/2) / 4 + space;
 
 			if (xstart < 0 || ystart < 0 || xend >= w || yend >= h)
 				continue;

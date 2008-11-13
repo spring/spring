@@ -1,5 +1,3 @@
-ADD_DEFINITIONS(-DSTREFLOP_SSE) # should be in ../CMakeLists.txt
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
 ### Spring defines

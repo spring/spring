@@ -622,19 +622,19 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				if(bt->CanPlacedLand(def->id))
 				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, false);
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 0);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
 					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, false);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, false);
-					map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
+					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, false);
+					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
 				}
 				else
 				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, true);	
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 4);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);	
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
 					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, true);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, true);
-					map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
+					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, true);
+					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
 				}
 			}
 			// hq
@@ -647,19 +647,19 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				if(def->minWaterDepth <= 0)
 				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, false);
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 0);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
 					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, false);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, false);
-					map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
+					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, false);
+					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
 				}
 				else
 				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, true);	
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 4);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);	
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
 					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, true);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, true);
-					map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
+					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, true);
+					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
 				}
 			}
 			// other building
@@ -670,13 +670,13 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				if(def->minWaterDepth <= 0)
 				{
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 0);
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, false);
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
 				}
 				else
 				{
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 4);
-					map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, false, true);
+					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
+					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);
 				}
 			}
 

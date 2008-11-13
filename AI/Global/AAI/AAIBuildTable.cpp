@@ -1673,9 +1673,9 @@ int AAIBuildTable::GetBiggestMex()
 	{
 		for(list<int>::iterator mex = units_of_category[EXTRACTOR][s].begin();  mex != units_of_category[EXTRACTOR][s].end(); ++mex)
 		{
-			if(unitList[*mex-1]->xsize * unitList[*mex-1]->ysize > biggest_yard_map)
+			if(unitList[*mex-1]->xsize * unitList[*mex-1]->zsize > biggest_yard_map)
 			{
-				biggest_yard_map = unitList[*mex-1]->xsize * unitList[*mex-1]->ysize;
+				biggest_yard_map = unitList[*mex-1]->xsize * unitList[*mex-1]->zsize;
 				biggest_mex = *mex;
 			}
 		}
