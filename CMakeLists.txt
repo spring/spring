@@ -69,11 +69,19 @@ endif (MINGW)
 INCLUDE(TestCXXAcceptsVisibilityFlag)
 set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
 if (MARCH_FLAG)
-	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG}")
+	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -msse -mfpmath=sse")
 endif (MARCH_FLAG)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -msse  -mfpmath=sse -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
-# ADD_DEFINITIONS(-DSTREFLOP_X87) breaks AI compiling
+# intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
+IF ($ENV{CXX} MATCHES "icpc")
+	SET(CMAKE_CXX_FLAGS " -axK")
+	SET(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
+ELSE ($ENV{CXX} MATCHES "icpc")
+	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
+ENDIF ($ENV{CXX} MATCHES "icpc")
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 ENDIF (UNIX)

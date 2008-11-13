@@ -785,7 +785,7 @@ void cRAI::Update()
 						eventList[0]->lastPosition->x = -1.0;
 						float3 conPosition = cb->GetUnitPos(eventList[0]->unitI->BuildQ->creationID.front());
 						if( abs(int(position.x-conPosition.x)) + 4.0 < 8.0*eventList[0]->unitI->ud->xsize/2.0 + 8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0 &&
-							abs(int(position.z-conPosition.z)) + 4.0 < 8.0*eventList[0]->unitI->ud->ysize/2.0 + 8.0*eventList[0]->unitI->BuildQ->creationUD->ud->ysize/2.0 )
+							abs(int(position.z-conPosition.z)) + 4.0 < 8.0*eventList[0]->unitI->ud->zsize/2.0 + 8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0 )
 						{	// most likely, the commander built something on top of himself
 							Command c;
 							c.id = CMD_RECLAIM;
@@ -802,9 +802,9 @@ void cRAI::Update()
 									c.params.push_back(position.x + ((position.x-conPosition.x)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->xsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->xsize/2.0) );
 								c.params.push_back(position.y);
 								if( position.z < conPosition.z )
-									c.params.push_back(position.z - ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->ysize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->ysize/2.0) );
+									c.params.push_back(position.z - ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
 								else
-									c.params.push_back(position.z + ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->ysize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->ysize/2.0) );
+									c.params.push_back(position.z + ((position.z-conPosition.z)/position.distance2D(conPosition))*(8.0*eventList[0]->unitI->ud->zsize/2.0 +8.0*eventList[0]->unitI->BuildQ->creationUD->ud->zsize/2.0) );
 								cb->GiveOrder(eventList[0]->unitID,&c);
 							}
 						}

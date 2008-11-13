@@ -227,7 +227,7 @@ void CAttackGroup::RecalcGroupProperties() {
 			this->highestAttackRange = max(this->highestAttackRange, this->ai->ut->GetMaxRange(ud));
 			this->lowestUnitSpeed = min(this->lowestUnitSpeed, ud->speed);
 			this->highestUnitSpeed = max(this->highestUnitSpeed, ud->speed);
-			this->groupPhysicalSize += (ud->xsize+ud->ysize) * 0.3f;
+			this->groupPhysicalSize += (ud->xsize+ud->zsize) * 0.3f;
 			this->groupDPS += ai->MyUnits[unitID]->GetAverageDPS();
 			if(ud->canfly)this->highestTurnRadius = max(this->highestTurnRadius, ud->turnRadius);
 		}

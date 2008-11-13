@@ -387,10 +387,10 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 					if ((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly) {
 						impactarea = pow((accuracy * distancetravelled) + AOE, 2);
-						targetarea = ((victim->xsize * 16) + AOE) * ((victim->ysize * 16) + AOE);
+						targetarea = ((victim->xsize * 16) + AOE) * ((victim->zsize * 16) + AOE);
 					} else {
 						impactarea = pow((accuracy) * (0.7f * distancetravelled), 2);
-						targetarea = (victim->xsize * victim->ysize * 256);
+						targetarea = (victim->xsize * victim->zsize * 256);
 					}
 
 					if (impactarea > targetarea) {
