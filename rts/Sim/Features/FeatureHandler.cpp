@@ -66,7 +66,7 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(deathFeature),
 		CR_MEMBER(smokeTime),
 		CR_MEMBER(xsize),
-		CR_MEMBER(ysize)
+		CR_MEMBER(zsize)
 		));
 
 
@@ -262,7 +262,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	// our resolution is double TA's
 	fd->xsize = fdTable.GetInt("footprintX", 1) * 2;
-	fd->ysize = fdTable.GetInt("footprintZ", 1) * 2;
+	fd->zsize = fdTable.GetInt("footprintZ", 1) * 2;
 
 	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
 	fd->mass = fdTable.GetFloat("mass", defMass);
@@ -328,7 +328,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->reclaimTime = 250;
 			fd->maxHealth = 5;
 			fd->xsize = 2;
-			fd->ysize = 2;
+			fd->zsize = 2;
 			fd->myName = name;
 			fd->description = "Tree";
 			fd->mass = 20;
@@ -351,7 +351,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->reclaimTime = 0;
 			fd->maxHealth = 0;
 			fd->xsize = 0;
-			fd->ysize = 0;
+			fd->zsize = 0;
 			fd->myName = name;
 			fd->mass = 100000;
 			// geothermals have no collision volume at all

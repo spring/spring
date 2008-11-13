@@ -842,7 +842,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 //	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 
 	ADD_INT("xsize", ud.xsize);
-	ADD_INT("ysize", ud.ysize);
+	ADD_INT("zsize", ud.zsize);
 
 	ADD_INT("buildangle", ud.buildangle);
 

@@ -1176,7 +1176,7 @@ float3 CAirMoveType::FindLandingPos(void)
 	int2 mp = owner->GetMapPos();
 	owner->pos = tpos;
 
-	for (int z = mp.y; z < mp.y + owner->ysize; z++) {
+	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
 			if (groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x)) {
 				return ret;

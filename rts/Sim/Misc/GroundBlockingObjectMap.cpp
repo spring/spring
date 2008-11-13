@@ -45,7 +45,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	const int minXSqr = bx;
 	const int minZSqr = bz;
 	const int maxXSqr = bx + object->xsize;
-	const int maxZSqr = bz + object->ysize;
+	const int maxZSqr = bz + object->zsize;
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
@@ -83,7 +83,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, uns
 	const int minXSqr = bx;
 	const int minZSqr = bz;
 	const int maxXSqr = bx + object->xsize;
-	const int maxZSqr = bz + object->ysize;
+	const int maxZSqr = bz + object->zsize;
 
 	for (int z = 0; minZSqr + z < maxZSqr; z++) {
 		for (int x = 0; minXSqr + x < maxXSqr; x++) {
@@ -113,7 +113,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	const int bx = object->mapPos.x;
 	const int bz = object->mapPos.y;
 	const int sx = object->xsize;
-	const int sz = object->ysize;
+	const int sz = object->zsize;
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
@@ -209,7 +209,7 @@ bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 {
 	const int objID = GetObjectID(yard);
 
-	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->ysize; ++z) {
+	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
 		for (int x = yard->mapPos.x; x < yard->mapPos.x + yard->xsize; ++x) {
 			const int idx = z * gs->mapx + x;
 			BlockingMapCell& cell = groundBlockingMap[idx];

@@ -973,7 +973,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 	int2 mp = owner->GetMapPos();
 	owner->pos = tpos;
 
-	for (int z = mp.y; z < mp.y + owner->ysize; z++) {
+	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
 			CObject* o = groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x);
 			if (o && o != owner) {

@@ -407,8 +407,8 @@ void CBuilder::SetRepairTarget(CUnit* target)
 		//resume levelling the ground
 		tx1 = (int)max((float)0,(target->pos.x - (target->unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 		tx2 = min(gs->mapx,tx1+target->unitDef->xsize);
-		tz1 = (int)max((float)0,(target->pos.z - (target->unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tz2 = min(gs->mapy,tz1+target->unitDef->ysize);
+		tz1 = (int)max((float)0,(target->pos.z - (target->unitDef->zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+		tz2 = min(gs->mapy,tz1+target->unitDef->zsize);
 		terraformCenter = target->pos;
 		terraformRadius = (tx1 - tx2) * SQUARE_SIZE;
 		terraformType=Terraform_Building;
@@ -574,8 +574,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	else {
 		tx1 = (int)max((float)0,(b->pos.x - (b->unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 		tx2 = min(gs->mapx,tx1+b->unitDef->xsize);
-		tz1 = (int)max((float)0,(b->pos.z - (b->unitDef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tz2 = min(gs->mapy,tz1+b->unitDef->ysize);
+		tz1 = (int)max((float)0,(b->pos.z - (b->unitDef->zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+		tz2 = min(gs->mapy,tz1+b->unitDef->zsize);
 
 		b->terraformLeft = CalculateBuildTerraformCost(buildInfo);
 		b->groundLevelled=false;
