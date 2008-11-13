@@ -18,7 +18,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(immobile),
 	CR_MEMBER(blockHeightChanges),
 	CR_MEMBER(xsize),
-	CR_MEMBER(ysize),
+	CR_MEMBER(zsize),
 	CR_MEMBER(height),
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
@@ -42,7 +42,7 @@ CSolidObject::CSolidObject():
 	blockHeightChanges(false),
 	floatOnWater(false),
 	xsize(1),
-	ysize(1),
+	zsize(1),
 	height(1),
 
 	physicalState(Ghost),
@@ -123,7 +123,7 @@ int2 CSolidObject::GetMapPos()
 {
 	int2 p;
 	p.x = (int(pos.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - xsize / 2;
-	p.y = (int(pos.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - ysize / 2;
+	p.y = (int(pos.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - zsize / 2;
 
 	if (p.x < 0)
 		p.x = 0;
@@ -132,8 +132,8 @@ int2 CSolidObject::GetMapPos()
 
 	if (p.y < 0)
 		p.y = 0;
-	if (p.y > gs->mapy - ysize)
-		p.y = gs->mapy - ysize;
+	if (p.y > gs->mapy - zsize)
+		p.y = gs->mapy - zsize;
 
 	return p;
 }

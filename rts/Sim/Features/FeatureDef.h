@@ -23,7 +23,7 @@ struct FeatureDef
 		upright(false), drawType(0), modelType(0),
 		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
-		xsize(0), ysize(0) {}
+		xsize(0), zsize(0) {}
 
 	S3DOModel* LoadModel(int team) const;
 	CollisionVolume* collisionVolume;
@@ -74,7 +74,7 @@ struct FeatureDef
 	/// each size is 8 units
 	int xsize;
 	/// each size is 8 units
-	int ysize;
+	int zsize;
 
 	std::map<std::string, std::string> customParams;
 };

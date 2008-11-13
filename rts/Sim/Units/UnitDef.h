@@ -309,7 +309,7 @@ struct UnitDef
 	unsigned char* yardmaps[4];						// Iterations of the Ymap for building rotation
 
 	int xsize;										// each size is 8 units
-	int ysize;										// each size is 8 units
+	int zsize;										// each size is 8 units
 
 	int buildangle;
 
@@ -423,8 +423,8 @@ struct BuildInfo
 	BuildInfo(const Command& c) { Parse(c); }
 	BuildInfo(const std::string& name, const float3& p, int facing);
 
-	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->ysize; }
-	int GetYSize() const { return (buildFacing&1)==1 ? def->xsize : def->ysize; }
+	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->zsize; }
+	int GetZSize() const { return (buildFacing&1)==1 ? def->xsize : def->zsize; }
 	bool Parse(const Command& c);
 	void FillCmd(Command& c) const;
 

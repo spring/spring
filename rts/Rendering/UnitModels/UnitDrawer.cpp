@@ -890,15 +890,15 @@ void CUnitDrawer::DrawCloakedUnits(void)
 				pos = helper->Pos2BuildPos(bi);
 
 				float xsize = bi.GetXSize() * 4;
-				float ysize = bi.GetYSize() * 4;
+				float zsize = bi.GetZSize() * 4;
 				glColor4f(0.2f, 1, 0.2f, 0.7f);
 				glDisable(GL_TEXTURE_2D);
 				glBegin(GL_LINE_STRIP);
-				glVertexf3(pos+float3( xsize, 1,  ysize));
-				glVertexf3(pos+float3(-xsize, 1,  ysize));
-				glVertexf3(pos+float3(-xsize, 1, -ysize));
-				glVertexf3(pos+float3( xsize, 1, -ysize));
-				glVertexf3(pos+float3( xsize, 1,  ysize));
+				glVertexf3(pos+float3( xsize, 1,  zsize));
+				glVertexf3(pos+float3(-xsize, 1,  zsize));
+				glVertexf3(pos+float3(-xsize, 1, -zsize));
+				glVertexf3(pos+float3( xsize, 1, -zsize));
+				glVertexf3(pos+float3( xsize, 1,  zsize));
 				glEnd();
 				glColor4f(1, 1, 1, 0.3f);
 				glEnable(GL_TEXTURE_2D);

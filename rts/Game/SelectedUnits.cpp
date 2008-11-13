@@ -481,10 +481,10 @@ void CSelectedUnits::Draw()
 				continue;
 			}
 
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->ysize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->ysize * 4));
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->ysize * 4));
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->zsize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->zsize * 4));
+			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->zsize * 4));
+			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->zsize * 4));
 		}
 		glEnd();
 	}

@@ -159,7 +159,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	health   = def->maxHealth;
 	blocking = def->blocking;
 	xsize    = def->xsize;
-	ysize    = def->ysize;
+	zsize    = def->zsize;
 	mass     = def->mass;
 	noSelect = def->noSelect;
 
