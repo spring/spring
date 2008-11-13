@@ -76,9 +76,9 @@ void TestGlobalAI::EnemyDestroyed(int enemy,int attacker)
 
 void TestGlobalAI::UnitIdle(int unit)
 {
-	const UnitDef* ud=callback->GetAICallback()->GetUnitDef(unit);
+	/*const UnitDef* ud=callback->GetAICallback()->GetUnitDef(unit);
 
-	/*char c[200];
+	char c[200];
 	sprintf(c,"Idle unit %s",ud->humanName.c_str());
 	callback->GetAICallback()->SendTextMsg(c,0);*/
 }

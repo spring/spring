@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@
 #include "ExternalAI/aibase.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "System/vec2.h"
+#include "System/Vec2.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -31,7 +31,7 @@
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
-#endif 
+#endif
 
 void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 
@@ -44,7 +44,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define MAP_CACHE_VERSION "MAP_DATA_0_87"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
-// all paths 
+// all paths
 #define MAIN_PATH "AI/AAI/"
 #define AILOG_PATH "log/"
 #define MOD_CFG_PATH "cfg/mod/"
@@ -62,7 +62,7 @@ class AAIMetalSpot
 public:
 	AAIMetalSpot(float3 pos, float amount) {this->pos = pos; this->amount = amount; occupied = false; extractor = -1; extractor_def = -1;}
 	AAIMetalSpot() {pos = ZeroVector; amount = 0; occupied = false; extractor = -1; extractor_def = -1;}
-	
+
 	float3 pos;
 	bool occupied;
 	int extractor;		// -1 if unocuppied
@@ -107,9 +107,9 @@ enum MapType {UNKNOWN_MAP, LAND_MAP, AIR_MAP, LAND_WATER_MAP, WATER_MAP};
 enum SectorType {UNKNOWN_SECTOR, LAND_SECTOR, LAND_WATER_SECTOR, WATER_SECTOR};
 
 enum UnitCategory {UNKNOWN, STATIONARY_DEF, STATIONARY_ARTY, STORAGE, STATIONARY_CONSTRUCTOR, AIR_BASE,
-STATIONARY_RECON, STATIONARY_JAMMER, STATIONARY_LAUNCHER, DEFLECTION_SHIELD, POWER_PLANT, EXTRACTOR, METAL_MAKER, 
-COMMANDER, GROUND_ASSAULT, AIR_ASSAULT, HOVER_ASSAULT, SEA_ASSAULT, SUBMARINE_ASSAULT, GROUND_ARTY, SEA_ARTY, HOVER_ARTY, 
-SCOUT, MOBILE_TRANSPORT, MOBILE_JAMMER, MOBILE_LAUNCHER, MOBILE_CONSTRUCTOR}; 
+STATIONARY_RECON, STATIONARY_JAMMER, STATIONARY_LAUNCHER, DEFLECTION_SHIELD, POWER_PLANT, EXTRACTOR, METAL_MAKER,
+COMMANDER, GROUND_ASSAULT, AIR_ASSAULT, HOVER_ASSAULT, SEA_ASSAULT, SUBMARINE_ASSAULT, GROUND_ARTY, SEA_ARTY, HOVER_ARTY,
+SCOUT, MOBILE_TRANSPORT, MOBILE_JAMMER, MOBILE_LAUNCHER, MOBILE_CONSTRUCTOR};
 
 enum GroupTask {GROUP_IDLE, GROUP_ATTACKING, GROUP_DEFENDING, GROUP_PATROLING, GROUP_BOMBING, GROUP_RETREATING};
 
@@ -149,7 +149,7 @@ struct UnitTypeDynamic
 struct UnitTypeStatic
 {
 	int def_id;
-	int side;				// 0 if side has not been set 
+	int side;				// 0 if side has not been set
 	list<int> canBuildList;
 	list<int> builtByList;
 	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
