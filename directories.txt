@@ -51,9 +51,9 @@ rts/System/Sync                   Sync debuggers
 
 AI                                AI sourcecode..
 AI/Interfaces                     ..for interfaceing with Skirmish and Group AIs (Interfaces/impls)
-AI/Bindings                       meta AI interfaces (consist only of code that will be integrated into AI binaries)
-AI/Bindings/LegacyCpp             ..for letting Legacy C++ AIs interface with the C AI Interface
-AI/Bindings/LegacyCpp/Event             ..and Event classes needed for that
+AI/Wrappers                       meta AI interfaces (consist only of code that will be integrated into AI binaries)
+AI/Wrappers/LegacyCpp             ..for letting Legacy C++ AIs interface with the C AI Interface
+AI/Wrappers/LegacyCpp/Event             ..and Event classes needed for that
 AI/Skirmish                       ..for SkirmishAIs (Skirmish/impls)
 AI/Group                          ..for GroupAIs (Helper-libs)
 

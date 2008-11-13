@@ -180,12 +180,12 @@ def get_shared_skirmishAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AISCommands.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIAICheats.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIGlobalAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AIGlobalAI.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AI.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AISCommands.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIAICheats.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIGlobalAI.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AI.cpp')]
 	return result
 # list Creg source files (used by some Skirmish AI libraries)
 def get_shared_skirmishAI_source_Creg(env):
@@ -204,7 +204,7 @@ def get_shared_groupAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Bindings/LegacyCpp/AISCommands.cpp')]
+		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AISCommands.cpp')]
 	return result
 # list Creg source files (used by some Group AI libraries)
 def get_shared_groupAI_source_Creg(env):
