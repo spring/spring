@@ -2,7 +2,7 @@
 #include "mmgr.h"
 
 #include "Wind.h"
-#include "Game/GlobalSynced.h"
+#include "GlobalSynced.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/MapInfo.h"
 

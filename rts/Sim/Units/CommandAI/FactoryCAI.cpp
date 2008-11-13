@@ -4,10 +4,9 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/Group.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
@@ -15,15 +14,16 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaRules.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "LogOutput.h"
 #include "creg/STL_Map.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 
@@ -386,7 +386,7 @@ void CFactoryCAI::SlowUpdate()
 				else if(uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit){ //unit restricted?
 					CancelRestrictedUnit(c, boi->second);
 				}
-				else if(uh->maxUnits>gs->Team(owner->team)->units.size()){  //max unitlimit reached?
+				else if(uh->maxUnits>teamHandler->Team(owner->team)->units.size()){  //max unitlimit reached?
 					fac->StartBuild(boi->second.fullName);
 					building=true;
 				}
@@ -423,7 +423,7 @@ void CFactoryCAI::ExecuteStop(Command &c)
 int CFactoryCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (gs->Ally(gu->myAllyTeam, pointed->allyteam)) {
+		if (teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
 			if (owner->unitDef->canGuard) {
 				return CMD_GUARD;
 			}

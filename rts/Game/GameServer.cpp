@@ -27,21 +27,20 @@
 
 #include "LogOutput.h"
 #include "GameSetup.h"
-#include "GlobalSynced.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
-#include "System/StdAfx.h"
-#include "System/BaseNetProtocol.h"
-#include "System/Net/UDPListener.h"
-#include "System/Net/Connection.h"
-#include "System/Net/UDPConnection.h"
-#include "System/Net/LocalConnection.h"
-#include "System/Net/UnpackPacket.h"
-#include "System/DemoReader.h"
-#include "System/AutohostInterface.h"
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h" // for syncdebug
+#include "BaseNetProtocol.h"
+#include "PlayerHandler.h"
+#include "Net/UDPListener.h"
+#include "Net/Connection.h"
+#include "Net/UDPConnection.h"
+#include "Net/LocalConnection.h"
+#include "Net/UnpackPacket.h"
+#include "DemoReader.h"
+#include "AutohostInterface.h"
+#include "Util.h"
+#include "GlobalUnsynced.h" // for syncdebug
 #include "Platform/ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
@@ -51,7 +50,8 @@
 #ifdef interface
 	#undef interface
 #endif
-#include "Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Server/MsgStrings.h"
 
 
@@ -132,10 +132,10 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	noHelperAIs = false;
 	cheating = false;
 	sentGameOverMsg = false;
-	
+
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
-	
+
 	if (settings->autohostport > 0) {
 		AddAutohostInterface(settings->autohostport);
 	}
@@ -232,7 +232,7 @@ void CGameServer::SkipTo(int targetframe)
 		}
 		CommandMessage msg2("skip end", SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg2.Pack()));
-		
+
 		if (UDPNet)
 			UDPNet->Update();
 		lastUpdate = SDL_GetTicks();
@@ -476,7 +476,7 @@ void CGameServer::Update()
 			}
 		}
 	}
-	
+
 	if ((SDL_GetTicks() - serverStartTime) > serverTimeout)
 	{
 		bool hasPlayers = false;
@@ -485,7 +485,7 @@ void CGameServer::Update()
 			if (players[i])
 				hasPlayers = true;
 		}
-		
+
 		if (!hasPlayers)
 		{
 			Message(NoClientsExit);
@@ -751,7 +751,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				for (int a = 0; a < MAX_PLAYERS; ++a)
 					if (players[a] && players[a]->team == fromTeam)
 						++numPlayersInTeam;
-							
+
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
@@ -885,7 +885,7 @@ void CGameServer::ServerReadNet()
 	{
 		boost::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
 		boost::shared_ptr<const RawPacket> packet = prev->GetData();
-		
+
 		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT)
 		{
 			netcode::UnpackPacket msg(packet, 3);
@@ -921,7 +921,7 @@ void CGameServer::ServerReadNet()
 				}
 				continue;
 			}
-			
+
 			boost::shared_ptr<const RawPacket> packet;
 			while (players[a] && (packet = players[a]->link->GetData()))
 			{
@@ -1003,7 +1003,7 @@ void CGameServer::CheckForGameStart(bool forced)
 void CGameServer::StartGame()
 {
 	gameStartTime = SDL_GetTicks();
-	
+
 	if (UDPNet)
 		UDPNet->Listen(false); // don't accept new connections
 
@@ -1014,7 +1014,7 @@ void CGameServer::StartGame()
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
 	UserSpeedChange(userSpeedFactor, SERVER_PLAYER);
-	
+
 	if (demoReader) {
 		// the client told us to start a demo
 		// no need to send startpos and startplaying since its in the demo
@@ -1174,22 +1174,22 @@ void CGameServer::CheckForGameEnd()
 #ifndef DEDICATED
 	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
-	for (int a = 0; a < gs->activeTeams; ++a)
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
 	{
 		bool hasPlayer = false;
-		for (int b = 0; b < gs->activePlayers; ++b) {
-			if (gs->players[b]->active && gs->players[b]->team == static_cast<int>(a) && !gs->players[b]->spectator) {
+		for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
+			if (playerHandler->Player(b)->active && playerHandler->Player(b)->team == static_cast<int>(a) && !playerHandler->Player(b)->spectator) {
 				hasPlayer = true;
 			}
 		}
-		if (!SSAIKey_Comparator::IsEmpty(gs->Team(a)->skirmishAISpecifier)) // is not empty?
+		if (!SSAIKey_Comparator::IsEmpty(teamHandler->Team(a)->skirmishAISpecifier)) // is not empty?
 			hasPlayer = true;
 
-		if (!gs->Team(a)->isDead && !gs->Team(a)->gaia && hasPlayer)
-			++numActiveTeams[gs->AllyTeam(a)];
+		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer)
+			++numActiveTeams[teamHandler->AllyTeam(a)];
 	}
 
-	for (int a = 0; a < gs->activeAllyTeams; ++a)
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a)
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 #else
@@ -1232,7 +1232,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 #endif
 		CheckSync();
 		int newFrames = 1;
-	
+
 		if(!fixedFrameTime){
 			unsigned currentTick = SDL_GetTicks();
 			unsigned timeElapsed = currentTick - lastTick;
@@ -1251,7 +1251,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			newFrames = (timeLeft > 0)? int(streflop::ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
 		}
-	
+
 		bool rec = false;
 #ifndef NO_AVI
 		rec = game && game->creatingVideo;
@@ -1259,7 +1259,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		bool normalFrame = !isPaused && !rec;
 		bool videoFrame = !isPaused && fixedFrameTime;
 		bool singleStep = fixedFrameTime && !rec;
-	
+
 		if(normalFrame || videoFrame || singleStep){
 			for(int i=0; i < newFrames; ++i){
 				assert(!demoReader);
@@ -1297,10 +1297,10 @@ void CGameServer::UpdateLoop()
 			assert(UDPNet);
 			hasData = UDPNet->HasIncomingData(10); // may block up to 10 ms if there is no data (don't need a lock)
 		}
-		
+
 		if (UDPNet)
 			UDPNet->Update();
-		
+
 		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 		if (hasData)
 			ServerReadNet(); // new data arrived, we may have new packets
@@ -1371,7 +1371,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 		Message(str(format("Player %s not found, rejecting connection attempt") %name));
 		return 0;
 	}
-	
+
 	players[hisNewNumber].reset(new GameParticipant(isLocal)); // give him rights to change speed, kick players etc
 	players[hisNewNumber]->link = link;
 	if (hisNewNumber < setup->playerStartingData.size()) {
@@ -1404,7 +1404,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 				Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, teams[a]->readyToStart, teams[a]->startpos.x, teams[a]->startpos.y, teams[a]->startpos.z));
 		}
 	}
-	
+
 	Message(str(format(NewConnection) %name %hisNewNumber %version));
 
 	link->Flush(true);
@@ -1431,7 +1431,7 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
 	newSpeed = std::min(maxUserSpeed, std::max(newSpeed, minUserSpeed));
-	
+
 	if (userSpeedFactor != newSpeed)
 	{
 		if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down

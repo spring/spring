@@ -5,8 +5,8 @@
 #include <boost/noncopyable.hpp>
 
 #include "Object.h"
-#include "System/float3.h"
-#include "Game/GlobalConstants.h"
+#include "float3.h"
+#include "GlobalConstants.h"
 
 class CUnit;
 

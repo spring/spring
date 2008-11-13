@@ -13,9 +13,9 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "System/UnsyncedRNG.h"
-#include "System/Exceptions.h"
-#include "System/Util.h"
+#include "UnsyncedRNG.h"
+#include "Exceptions.h"
+#include "Util.h"
 
 
 using namespace std;
@@ -34,15 +34,14 @@ LocalSetup::LocalSetup() :
 
 void LocalSetup::Init(const std::string& setup)
 {
-	TdfParser file;
-	file.LoadBuffer(setup.c_str(), setup.length());
+	TdfParser file(setup.c_str(), setup.length());
 	
 	if(!file.SectionExist("GAME"))
 		throw content_error("GAME-section didn't exist in setupscript");
 
 	// Technical parameters
-	file.GetDef(hostip,     "0", "GAME\\HostIP");
-	file.GetDef(hostport,   "0", "GAME\\HostPort");
+	file.GetDef(hostip,     "localhost", "GAME\\HostIP");
+	file.GetDef(hostport,   "8452", "GAME\\HostPort");
 	file.GetDef(sourceport, "0", "GAME\\SourcePort");
 	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
 	
@@ -64,16 +63,14 @@ void LocalSetup::Init(const std::string& setup)
 		else
 			throw content_error("Player doesn't have a name");
 	}
-	
-	int tmp_isHost;
-	file.GetDef(tmp_isHost,  "-1", "GAME\\IsHost");
-	if (tmp_isHost == 1)
-		isHost = true;
-	else if (tmp_isHost == 0)
-		isHost = false;
+
+	int tmp_isHost = 0;
+	if (file.GetValue(tmp_isHost, "GAME\\IsHost"))
+		isHost = static_cast<bool>(tmp_isHost);
 	else
 	{
 		for (int a = 0; a < MAX_PLAYERS; ++a) {
+			// search for the first player not from the demo, if it is ourself, we are the host
 			char section[50];
 			sprintf(section, "GAME\\PLAYER%i", a);
 			string s(section);
@@ -81,7 +78,7 @@ void LocalSetup::Init(const std::string& setup)
 			if (!file.SectionExist(s)) {
 				continue;
 			}
-			bool fromdemo;
+			bool fromdemo = false;
 			std::string name;
 			std::map<std::string, std::string> setup = file.GetAllValues(s);
 			std::map<std::string, std::string>::iterator it;
@@ -108,11 +105,6 @@ CGameSetup::CGameSetup()
 
 CGameSetup::~CGameSetup()
 {
-}
-
-bool CGameSetup::Init(std::string script)
-{
-	return Init(script.c_str(), script.size());
 }
 
 /**
@@ -161,8 +153,7 @@ Unlike the other functions, this is not called on Init() , instead we wait for C
  */
 void CGameSetup::LoadStartPositions()
 {
-	TdfParser file;
-	file.LoadBuffer(gameSetupText.c_str(), gameSetupText.length());
+	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
@@ -256,10 +247,8 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		++i;
 	}
 
-	int playerCount = -1;
-	file.GetDef(playerCount,   "-1", "GAME\\NumPlayers");
-
-	if (playerCount == -1 || (int)playerStartingData.size() == playerCount)
+	unsigned playerCount = 0;
+	if (!file.GetValue(playerCount, "GAME\\NumPlayers") || playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
 		throw content_error("incorrect number of players in GameSetup script");
@@ -325,10 +314,8 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		++i;
 	}
 
-	int teamCount = -1;
-	file.GetDef(teamCount, "-1", "GAME\\NumTeams");
-
-	if (teamCount == -1 || (int)teamStartingData.size() == teamCount)
+	unsigned teamCount = 0;
+	if (!file.GetValue(teamCount, "Game\\NumTeams") || teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
@@ -375,10 +362,8 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	}
 
 
-	int allyCount = -1;
-	file.GetDef(allyCount, "-1", "GAME\\NumAllyTeams");
-
-	if (allyCount == -1 || (int)allyStartingData.size() == allyCount)
+	unsigned allyCount = 0;
+	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
 		throw content_error("incorrect number of teams in GameSetup script");
@@ -429,14 +414,13 @@ void CGameSetup::RemapAllyteams()
 	}
 }
 
-bool CGameSetup::Init(const char* buf, int size)
+bool CGameSetup::Init(const std::string& buf)
 {
 	// Copy buffer contents
-	gameSetupText.assign(buf,size);
+	gameSetupText = buf;
 
 	// Parse
-	TdfParser file;
-	file.LoadBuffer(buf, size);
+	TdfParser file(buf.c_str(),buf.size());
 
 	if(!file.SectionExist("GAME"))
 		return false;

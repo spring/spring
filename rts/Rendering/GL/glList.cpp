@@ -12,7 +12,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/glFont.h"
 #include "Platform/ConfigHandler.h"
-#include "System/Util.h"
+#include "Util.h"
 
 const float itemFontScale = 1.5f;
 const float itemXMargin = 0.02f;

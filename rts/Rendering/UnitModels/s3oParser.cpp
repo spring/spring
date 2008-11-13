@@ -18,8 +18,8 @@
 #include "Rendering/Textures/TextureHandler.h"
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 void SS3O::DrawStatic()
 {

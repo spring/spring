@@ -8,11 +8,11 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "MouseHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "SelectionKeyHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -20,7 +20,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "System/myMath.h"
+#include "myMath.h"
 
 CSelectionKeyHandler *selectionKeys;
 
@@ -151,7 +151,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
 			// team units
-			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
 			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				selection.push_back(*ui);
 			}
@@ -165,7 +165,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	} else if(s=="Visible"){
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
 			for (CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if (camera->InView((*ui)->midPos,(*ui)->radius)){
 					selection.push_back(*ui);
@@ -189,7 +189,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
-			CUnitSet* tu=&gs->Team(gu->myTeam)->units;
+			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
 			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
 				if(mp.SqDistance((*ui)->pos)<Square(maxDist)){
 					selection.push_back(*ui);

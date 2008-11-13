@@ -18,7 +18,7 @@
 #include <list>
 #include <SDL_types.h>
 
-#include "OggStream.h"
+#include "Platform/Win/OggStream.h"
 
 class CWorldObject;
 
@@ -37,6 +37,7 @@ public:
 	void StopStream();
 	void PauseStream();
 	unsigned int GetStreamTime();
+	unsigned int GetStreamPlayTime();
 	void SetStreamVolume(float);
 
 	void SetVolume(float v);

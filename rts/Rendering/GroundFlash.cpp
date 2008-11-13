@@ -7,8 +7,8 @@
 #include "Game/Camera.h"
 #include "GL/VertexArray.h"
 #include "LogOutput.h"
-#include "Rendering/Textures/ColorMap.h"
-#include "System/GlobalUnsynced.h"
+#include "Textures/ColorMap.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 

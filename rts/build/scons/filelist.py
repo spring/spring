@@ -90,7 +90,7 @@ def get_spring_source(env):
 		'rts/lib/streflop', # streflop is compiled with it's own Makefiles
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Mac', # Mac build uses XCode
-		'rts/System/Platform/Linux/DataDirLocater.cpp', # see SConstruct
+		'rts/System/FileSystem/DataDirLocater.cpp', # see SConstruct
 		#'rts/ExternalAI/Interface/LegacyCppWrapper', # only needed by AI libraries using the legacy C++ interface to connect with spring
 	]
 	# we may be called before we were configured (e.g. when cleaning)

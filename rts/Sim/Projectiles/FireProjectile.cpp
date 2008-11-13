@@ -5,12 +5,12 @@
 #include "Sim/Misc/Wind.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Features/Feature.h"
 #include "ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "creg/STL_List.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));

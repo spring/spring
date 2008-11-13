@@ -5,7 +5,8 @@
 #include <list>
 #include <vector>
 #include "Rendering/GL/myGL.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Rendering/Textures/Bitmap.h"
 
 
 // msvc behaves really strange
@@ -72,6 +73,7 @@ protected:
 
 	std::vector<Stat> stats;
 	GLuint graphTex;
+	CBitmap bm;
 };
 
 #endif // __END_GAME_BOX_H__

@@ -18,13 +18,7 @@
 #include <sys/types.h>
 #include "FileSystem.h"
 
-#ifdef WIN32
-#	include "Win/WinFileSystemHandler.h"
-#elif defined(__APPLE__)
-#	include "Mac/MacFileSystemHandler.h"
-#else
-#	include "Linux/UnixFileSystemHandler.h"
-#endif
+#include "UnixFileSystemHandler.h"
 
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
@@ -63,13 +57,7 @@ void FileSystemHandler::Initialize(bool verbose)
 {
 	if (!instance) {
 		// FIXME this leaks memory
-#ifdef WIN32
 		instance = new UnixFileSystemHandler(verbose);
-#elif defined(__APPLE__)
-		instance = new MacFileSystemHandler(verbose);
-#else
-		instance = new UnixFileSystemHandler(verbose);
-#endif
 		try {
 			instance->Initialize();
 		}

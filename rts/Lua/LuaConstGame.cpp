@@ -16,14 +16,14 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitDef.h" // MAX_UNITS
 #include "Sim/Units/CommandAI/Command.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/Util.h"
+#include "FileSystem/ArchiveScanner.h"
+#include "Util.h"
 
 
 /******************************************************************************/
@@ -57,7 +57,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	lua_pushlstring(L, (const char*)game->gameID, sizeof(game->gameID));
 	lua_rawset(L, -3);
 
-	LuaPushNamedString(L, "version",       VERSION_STRING_DETAILED);
+	LuaPushNamedString(L, "version",       SpringVersion::GetFull());
 
 	LuaPushNamedNumber(L, "maxUnits",      MAX_UNITS);
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);

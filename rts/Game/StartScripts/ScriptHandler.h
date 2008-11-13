@@ -39,7 +39,7 @@ private:
 	CScriptHandler(CScriptHandler const&);
 	CScriptHandler& operator=(CScriptHandler const&);
 	void LoadScripts();
-	virtual ~CScriptHandler();
+	~CScriptHandler();
 };
 
 #endif /* SCRIPTHANDLER_H */

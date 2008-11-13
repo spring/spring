@@ -36,9 +36,6 @@
 #ifdef USE_GML
 #include "gmlcls.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
-ConfigHandler* ConfigHandler::instance = NULL;
-std::string ConfigHandler::configSource;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -59,7 +56,7 @@ __thread int gmlThreadNumber=0;
 int gmlThreadNumber=0;
 #endif
 
-int gmlThreadCountOverride=configHandler.GetInt("HardwareThreadCount", 0); // number of threads to use (can be manually overridden here)
+int gmlThreadCountOverride=0; // number of threads to use (can be manually overridden here)
 int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
 int gmlItemsConsumed=0;
 

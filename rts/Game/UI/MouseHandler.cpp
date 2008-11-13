@@ -20,8 +20,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Lua/LuaInputReceiver.h"
@@ -34,11 +33,12 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
-#include "System/EventHandler.h"
+#include "EventHandler.h"
 #include "Sound.h"
 
 // can't be up there since those contain conflicting definitions
@@ -181,7 +181,7 @@ void CMouseHandler::MouseMove(int x, int y)
 	buttons[SDL_BUTTON_RIGHT].movement += abs(dx) + abs(dy);
 
 	if (!game->gameOver) {
-		gs->players[gu->myPlayerNum]->currentStats->mousePixels+=abs(dx)+abs(dy);
+		playerHandler->Player(gu->myPlayerNum)->currentStats->mousePixels+=abs(dx)+abs(dy);
 	}
 
 	if(activeReceiver){
@@ -210,7 +210,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
 
 	if (!game->gameOver)
-		gs->players[gu->myPlayerNum]->currentStats->mouseClicks++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats->mouseClicks++;
 
 	if (button == 4) {
 		if (guihandler->buildSpacing > 0)
@@ -409,13 +409,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			int team, lastTeam;
 			if (gu->spectatingFullSelect) {
 				team = 0;
-				lastTeam = gs->activeTeams - 1;
+				lastTeam = teamHandler->ActiveTeams() - 1;
 			} else {
 				team = gu->myTeam;
 				lastTeam = gu->myTeam;
 			}
 			for (; team <= lastTeam; team++) {
-				for(ui=gs->Team(team)->units.begin();ui!=gs->Team(team)->units.end();++ui){
+				for(ui=teamHandler->Team(team)->units.begin();ui!=teamHandler->Team(team)->units.end();++ui){
 					float3 vec=(*ui)->midPos-camera->pos;
 					if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
 						if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui) != selectedUnits.selectedUnits.end()) {
@@ -459,14 +459,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 						int team, lastTeam;
 						if (gu->spectatingFullSelect) {
 							team = 0;
-							lastTeam = gs->activeTeams - 1;
+							lastTeam = teamHandler->ActiveTeams() - 1;
 						} else {
 							team = gu->myTeam;
 							lastTeam = gu->myTeam;
 						}
 						for (; team <= lastTeam; team++) {
 							CUnitSet::iterator ui;
-							CUnitSet& teamUnits = gs->Team(team)->units;
+							CUnitSet& teamUnits = teamHandler->Team(team)->units;
 							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 								if (((*ui)->aihint == unit->aihint) &&
 										(camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {

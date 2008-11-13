@@ -38,8 +38,8 @@
 #include "TerrainNode.h"
 #include "Textures.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Platform/FileSystem.h"
-#include "System/float3.h"
+#include "FileSystem/FileSystem.h"
+#include "float3.h"
 
 
 namespace terrain {

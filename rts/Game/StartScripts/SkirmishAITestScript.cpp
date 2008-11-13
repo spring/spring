@@ -3,17 +3,17 @@
 
 #include <algorithm>
 #include <cctype>
-#include "System/StdAfx.h"
+#include "StdAfx.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "Game/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
-#include "Sim/SideParser.h"
+#include "Sim/Misc/SideParser.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/LogOutput.h"
-#include "System/Platform/FileSystem.h"
+#include "LogOutput.h"
+#include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
 #include "Exceptions.h"
@@ -31,10 +31,10 @@ CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
-	gs->Team(1)->isAI = true;
-	gs->Team(1)->skirmishAISpecifier = key;
-	gs->Team(1)->skirmishAIOptions = options;
-	gs->Team(1)->leader = 0;
+	teamHandler->Team(1)->isAI = true;
+	teamHandler->Team(1)->skirmishAISpecifier = key;
+	teamHandler->Team(1)->skirmishAIOptions = options;
+	teamHandler->Team(1)->leader = 0;
 }
 
 
@@ -44,15 +44,15 @@ void CSkirmishAITestScript::GameStart(void)
 {
 	eoh->CreateSkirmishAI(1, key, options);
 
-	gs->Team(0)->energy        = 1000;
-	gs->Team(0)->energyStorage = 1000;
-	gs->Team(0)->metal         = 1000;
-	gs->Team(0)->metalStorage  = 1000;
+	teamHandler->Team(0)->energy        = 1000;
+	teamHandler->Team(0)->energyStorage = 1000;
+	teamHandler->Team(0)->metal         = 1000;
+	teamHandler->Team(0)->metalStorage  = 1000;
 
-	gs->Team(1)->energy        = 1000;
-	gs->Team(1)->energyStorage = 1000;
-	gs->Team(1)->metal         = 1000;
-	gs->Team(1)->metalStorage  = 1000;
+	teamHandler->Team(1)->energy        = 1000;
+	teamHandler->Team(1)->energyStorage = 1000;
+	teamHandler->Team(1)->metal         = 1000;
+	teamHandler->Team(1)->metalStorage  = 1000;
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);

@@ -5,8 +5,8 @@
 #include "StdAfx.h"
 #include "bombdropper.h"
 #include "Game/GameHelper.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/Team.h"
 #include "LogOutput.h"
 #include "Map/MapInfo.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -16,7 +16,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, false));

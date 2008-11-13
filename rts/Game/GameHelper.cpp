@@ -6,12 +6,12 @@
 #include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Camera.h"
-#include "Game/GameSetup.h"
+#include "GameSetup.h"
 #include "Game.h"
 #include "GameHelper.h"
-#include "Game/UI/LuaUI.h"
+#include "UI/LuaUI.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -25,8 +25,9 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -37,8 +38,8 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sound.h"
 #include "Sync/SyncTracer.h"
-#include "System/EventHandler.h"
-#include "System/myMath.h"
+#include "EventHandler.h"
+#include "myMath.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -331,7 +332,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	float groundLen   = ground->LineGroundCol(start, start + dir * length);
 	float returnLenSq = Square( (groundLen > 0.0f)? groundLen + 200.0f: length );
 
-	hit = 0x0;
+	hit = NULL;
 	CollisionQuery cq;
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
@@ -382,6 +383,8 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	return ((hit)? math::sqrt(returnLenSq): (math::sqrt(returnLenSq) - 200.0f));
 }
 
+
+#ifdef DIRECT_CONTROL_ALLOWED
 float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
@@ -408,7 +411,7 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 			const CollisionVolume* cv = u->collisionVolume;
 
-			if (gs->Ally(u->allyteam, allyteam) || (u->losStatus[allyteam] & LOS_INLOS)) {
+			if (teamHandler->Ally(u->allyteam, allyteam) || (u->losStatus[allyteam] & LOS_INLOS)) {
 				float3 dif = (u->midPos + cv->GetOffsets()) - start;
 				float closeLength = dif.dot(dir);
 
@@ -447,6 +450,8 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 	return length;
 }
+#endif
+
 
 void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
                                   std::map<float,CUnit*> &targets)
@@ -467,8 +472,8 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 	int tempNum = gs->tempNum++;
 	std::vector<int>::iterator qi;
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		for (int t = 0; t < gs->activeAllyTeams; ++t) {
-			if (gs->Ally(attacker->allyteam, t)) {
+		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+			if (teamHandler->Ally(attacker->allyteam, t)) {
 				continue;
 			}
 			std::list<CUnit*>::const_iterator ui;
@@ -598,7 +603,7 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, i
 		std::list<CUnit*>::const_iterator ui;
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum != tempNum && !gs->Ally(searchAllyteam, (*ui)->allyteam) &&
+			if ((*ui)->tempNum != tempNum && !teamHandler->Ally(searchAllyteam, (*ui)->allyteam) &&
 				(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
 
 				(*ui)->tempNum = tempNum;
@@ -636,7 +641,7 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 				CUnit* unit = *ui;
 
 				if (unit->tempNum != tempNum &&
-				    !gs->Ally(searchAllyteam, unit->allyteam)) {
+				    !teamHandler->Ally(searchAllyteam, unit->allyteam)) {
 					unit->tempNum = tempNum;
 
 					// FIXME: use volumeBoundingRadius?
@@ -666,7 +671,7 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 				CUnit* unit = *ui;
 
 				if (unit->tempNum != tempNum &&
-				    !gs->Ally(searchAllyteam, unit->allyteam)) {
+				    !teamHandler->Ally(searchAllyteam, unit->allyteam)) {
 					unit->tempNum = tempNum;
 					const float sqDist = (pos - unit->midPos).SqLength2D();
 
@@ -696,7 +701,7 @@ CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int s
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if((*ui)->tempNum!=tempNum && gs->Ally(searchAllyteam,(*ui)->allyteam)){
+			if((*ui)->tempNum!=tempNum && teamHandler->Ally(searchAllyteam,(*ui)->allyteam)){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -723,7 +728,7 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		std::list<CUnit*>::const_iterator ui;
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !gs->Ally(searchAllyteam,(*ui)->allyteam) && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
+			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !teamHandler->Ally(searchAllyteam,(*ui)->allyteam) && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
 				(*ui)->tempNum=tempNum;
 				float sqDist=(pos-(*ui)->midPos).SqLength2D();
 				if(sqDist <= closeDist){
@@ -753,7 +758,7 @@ void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyt
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
 
-			if (u->tempNum != tempNum && !gs->Ally(searchAllyteam, u->allyteam) &&
+			if (u->tempNum != tempNum && !teamHandler->Ally(searchAllyteam, u->allyteam) &&
 				((u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
 
 				u->tempNum = tempNum;
@@ -848,7 +853,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 {
 	float3 pos = unit->midPos;
-	if (gs->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
+	if (teamHandler->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
 	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && (unit->losStatus[allyteam] & LOS_CONTRADAR) && !unit->mobility) {
 		// ^ this is a ghosted building, so don't add an error ^
@@ -872,7 +877,7 @@ void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
 		if (exclude) {
 			const int eAllyTeam = exclude->allyteam;
 			const int uAllyTeam = u->allyteam;
-			allied = (gs->Ally(uAllyTeam, eAllyTeam) || gs->Ally(eAllyTeam, uAllyTeam));
+			allied = (teamHandler->Ally(uAllyTeam, eAllyTeam) || teamHandler->Ally(eAllyTeam, uAllyTeam));
 		}
 
 		if (u != exclude && allied && !u->unitDef->pushResistant && !u->usingScriptMoveType) {

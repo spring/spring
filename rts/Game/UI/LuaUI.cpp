@@ -46,16 +46,16 @@ using namespace std;
 #include "Game/GameHelper.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
-#include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
-#include "Game/UI/GuiHandler.h"
-#include "Game/UI/InfoConsole.h"
-#include "Game/UI/KeyCodes.h"
-#include "Game/UI/KeySet.h"
-#include "Game/UI/KeyBindings.h"
-#include "Game/UI/MiniMap.h"
-#include "Game/UI/MouseHandler.h"
+#include "Sim/Misc/Team.h"
+#include "CommandColors.h"
+#include "CursorIcons.h"
+#include "GuiHandler.h"
+#include "InfoConsole.h"
+#include "KeyCodes.h"
+#include "KeySet.h"
+#include "KeyBindings.h"
+#include "MiniMap.h"
+#include "MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -66,15 +66,15 @@ using namespace std;
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/NetProtocol.h"
-#include "System/SpringApp.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "NetProtocol.h"
+#include "SpringApp.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "Platform/ConfigHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)
@@ -507,10 +507,10 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	const int top = lua_gettop(L);
-
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);
+	const int top = lua_gettop(L);
+
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;

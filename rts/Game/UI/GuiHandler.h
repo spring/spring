@@ -12,7 +12,7 @@
 #include "KeyBindings.h"
 #include "InputReceiver.h"
 #include "Game/Camera.h"
-#include "Game/UI/MouseHandler.h"
+#include "MouseHandler.h"
 
 class CUnit;
 class CglList;

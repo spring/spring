@@ -19,12 +19,12 @@
 
 #include "Game/GameSetup.h"
 
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Platform/errorhandler.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "Platform/errorhandler.h"
+#include "Util.h"
 
 
 #if (LUA_VERSION_NUM < 500)

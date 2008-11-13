@@ -26,6 +26,7 @@
 #include "ExternalAI/Interface/SSAILibrary.h"
 #include "LegacyCpp/AI.h"
 #include "LegacyCpp/AIGlobalAI.h"
+#include "Game/GameVersion.h"
 
 // KAIK stuff
 #include "GlobalAI.h"
@@ -65,7 +66,7 @@ Export(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
-	if (strcmp(engineVersionString, ENGINE_VERSION_STRING) == 0 &&
+	if (strcmp(engineVersionString, SpringVersion::GetFull().c_str()) == 0 &&
 			engineVersionNumber <= ENGINE_VERSION_NUMBER) {
 		return LOS_Working;
 	}

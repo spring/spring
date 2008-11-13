@@ -21,8 +21,8 @@ using std::string;
 #include "LuaHandle.h"
 #endif
 #include "LuaInclude.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "FileSystem/FileSystem.h"
+#include "Util.h"
 
 
 /******************************************************************************/
@@ -89,9 +89,6 @@ bool LuaIO::SafeWritePath(const string& path)
 
 FILE* LuaIO::fopen(lua_State* L, const char* path, const char* mode)
 {
-	bool read  = false;
-	bool write = false;
-
 	// check the mode string
 	const string modeStr = StringToLower(mode);
 	if (modeStr.find_first_not_of("rwabt+") != string::npos) {
@@ -114,14 +111,14 @@ FILE* LuaIO::popen(lua_State* L, const char* command, const char* type)
 		errno = EINVAL;
 		return NULL;
 	}
-	errno = EINVAL;	
+	errno = EINVAL;
 	return NULL;
 }
 
 
 int LuaIO::pclose(lua_State* L, FILE* stream)
 {
-	errno = ECHILD;	
+	errno = ECHILD;
 	return -1;
 }
 

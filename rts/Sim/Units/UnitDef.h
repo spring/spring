@@ -197,6 +197,9 @@ struct UnitDef
 	bool useCSOffset;
 	*/
 
+	std::string scriptName;	// the name of the unit's script, e.g. "armjeth.cob"
+	std::string scriptPath;	// the path of the unit's script, e.g. "scripts/armjeth.cob"
+
 	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths
 	float3 collisionVolumeOffsets;		// relative to the unit's center position

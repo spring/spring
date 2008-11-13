@@ -3,7 +3,6 @@
 
 #include "Feature.h"
 #include "FeatureHandler.h"
-#include "Game/Team.h"
 #include "LogOutput.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -16,15 +15,16 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/ModInfo.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include <assert.h>
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
@@ -132,7 +132,7 @@ void CFeature::ChangeTeam(int newTeam)
 		allyteam = -1;
 	} else {
 		team = newTeam;
-		allyteam = gs->AllyTeam(newTeam);
+		allyteam = teamHandler->AllyTeam(newTeam);
 	}
 
 	if (def->drawType == DRAWTYPE_3DO){
@@ -265,8 +265,8 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		// Work out how much that will cost
 		const float metalUse  = part * def->metal;
 		const float energyUse = part * def->energy;
-		if ((gs->Team(builder->team)->metal  >= metalUse)  &&
-		    (gs->Team(builder->team)->energy >= energyUse) &&
+		if ((teamHandler->Team(builder->team)->metal  >= metalUse)  &&
+		    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 				(!luaRules || luaRules->AllowFeatureBuildStep(builder, this, part))) {
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
@@ -279,8 +279,8 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		}
 		else {
 			// update the energy and metal required counts
-			gs->Team(builder->team)->energyPull += energyUse;
-			gs->Team(builder->team)->metalPull  += metalUse;
+			teamHandler->Team(builder->team)->energyPull += energyUse;
+			teamHandler->Team(builder->team)->metalPull  += metalUse;
 		}
 		return false;
 	}
@@ -318,7 +318,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 		const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
 
 		if (!builder->UseEnergy(energyUseScaled)) {
-			gs->Team(builder->team)->energyPull += energyUseScaled;
+			teamHandler->Team(builder->team)->energyPull += energyUseScaled;
 			return false;
 		}
 

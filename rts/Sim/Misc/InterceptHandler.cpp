@@ -3,14 +3,15 @@
 
 #include "InterceptHandler.h"
 
-#include "Game/GlobalSynced.h"
+#include "GlobalSynced.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "creg/STL_List.h"
 
 CR_BIND(CInterceptHandler, )
@@ -54,7 +55,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 dest
 
 	for(std::list<CWeapon*>::iterator wi=interceptors.begin();wi!=interceptors.end();++wi){
 		CWeapon* w=*wi;
-		if ((targTeam==-1 || !gs->Ally(w->owner->allyteam,targTeam)) && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.SqDistance2D(destination) < Square(w->weaponDef->coverageRange)){
+		if ((targTeam==-1 || !teamHandler->Ally(w->owner->allyteam,targTeam)) && (target->weaponDef->targetable & w->weaponDef->interceptor) && w->weaponPos.SqDistance2D(destination) < Square(w->weaponDef->coverageRange)){
 			w->incoming.push_back(target);
 			w->AddDeathDependence(target);
 		}

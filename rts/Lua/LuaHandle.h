@@ -11,7 +11,7 @@ using std::string;
 using std::vector;
 using std::set;
 
-#include "System/EventClient.h"
+#include "EventClient.h"
 //FIXME#include "LuaArrays.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"

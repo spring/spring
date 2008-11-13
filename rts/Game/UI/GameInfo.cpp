@@ -11,11 +11,11 @@
 #include "Rendering/glFont.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 
 
 using namespace std;
@@ -167,10 +167,10 @@ void CGameInfo::Draw()
 	labels.push_back("Game Version:");
 #ifdef USE_GML
 	char ver[64];
-	sprintf(ver, "%s MT (%d threads)", VERSION_STRING_DETAILED, gmlThreadCount);
+	sprintf(ver, "%s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 	values.push_back(ver);
 #else
-	values.push_back(VERSION_STRING_DETAILED);
+	values.push_back(SpringVersion::GetFull());
 #endif
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);

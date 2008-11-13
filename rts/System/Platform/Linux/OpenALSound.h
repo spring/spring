@@ -5,11 +5,8 @@
 #include "Sound.h"
 
 #include <map>
-#include <vector>
 #include <AL/al.h>
-#include <AL/alc.h>
 #include "SDL_types.h"
-
 
 class COpenALSound: public CSound
 {
@@ -24,6 +21,7 @@ public:
 	void StopStream();
 	void PauseStream();
 	unsigned int GetStreamTime();
+	unsigned int GetStreamPlayTime();
 	void SetStreamVolume(float);
 
 	void SetVolume(float v);

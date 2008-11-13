@@ -1,13 +1,13 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sound.h"
 #include "WeaponDefHandler.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
@@ -41,7 +41,7 @@ void CDGunWeapon::Update(void)
 
 void CDGunWeapon::Fire(void)
 {
-	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(gs->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
+	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
 		return;		//prevents dgunning using fps view if outside dgunlimit
 	}
 

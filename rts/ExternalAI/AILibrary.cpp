@@ -15,6 +15,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
 #include "AILibrary.h"
 #include <string>
 #include <iostream>
@@ -75,4 +76,5 @@ void CAILibrary::init() {
 int CAILibrary::handleEvent(int topic, void* data) {
 	return _handleEvent(team, topic, data);
 }
+*/
 

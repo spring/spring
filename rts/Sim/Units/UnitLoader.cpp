@@ -338,8 +338,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
-//FIXME: add unitdef tag cob/cobscript/cobfilename
-	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + name + ".cob"), unit);
+	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
 	modelParser->CreateLocalModel(unit);
 
 

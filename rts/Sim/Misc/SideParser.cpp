@@ -11,8 +11,8 @@ using std::set;
 #include "SideParser.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "System/LogOutput.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "Util.h"
 
 
 SideParser sideParser;

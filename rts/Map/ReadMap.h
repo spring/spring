@@ -7,8 +7,8 @@
 #include "Rendering/GL/myGL.h"
 #include "creg/creg.h"
 #include "float3.h"
-#include "Game/GlobalConstants.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
 
 class CMetalMap;
 class CCamera;

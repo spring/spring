@@ -78,7 +78,7 @@ static inline float swabfloat(float w) {
 #elif defined(__APPLE__)
 // Should work for both x86 and ppc
 
-#include "CoreFoundation/CFByteOrder.h"
+#include "CFByteOrder.h"
 
 #define swabword(w) (CFSwapInt16LittleToHost((uint32_t)w))
 #define swabdword(w) (CFSwapInt32LittleToHost((uint32_t)w))

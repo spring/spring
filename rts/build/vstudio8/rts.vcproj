@@ -3231,6 +3231,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\CollisionVolume.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\CollisionVolume.h"
 					>
 				</File>
@@ -5749,7 +5753,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							useprecompiledheader="0"
+							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -5757,7 +5761,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							useprecompiledheader="0"
+							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -5765,7 +5769,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							useprecompiledheader="0"
+							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
 				</File>

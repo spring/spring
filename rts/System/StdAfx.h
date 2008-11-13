@@ -34,7 +34,7 @@
 #include <cassert>
 
 // do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
-#include "streflop_cond.h"
+#include "lib/streflop/streflop_cond.h"
 #endif
 
 // maybe we should remove syncify altogether?
@@ -58,13 +58,13 @@
 // also, they shouldn't get in the way of mmgr
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
 #if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Game/GlobalSynced.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Game/Camera.h"
 #endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 #endif // USE_PRECOMPILED_HEADER

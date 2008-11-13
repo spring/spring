@@ -6,11 +6,11 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 CSkyBox::CSkyBox(std::string texture)
 {

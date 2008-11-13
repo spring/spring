@@ -34,7 +34,6 @@ class LuaUnsyncedCtrl {
 		static int PlaySoundStream(lua_State* L);
 		static int StopSoundStream(lua_State* L);
 		static int PauseSoundStream(lua_State* L);
-		static int GetSoundStreamTime(lua_State* L);
 		static int SetSoundStreamVolume(lua_State* L);
 
 		static int SetCameraState(lua_State* L);

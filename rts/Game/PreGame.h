@@ -53,8 +53,6 @@ private:
 	/// receive network traffic
 	void UpdateClientNet();
 
-	CInfoConsole* infoConsole;
-
 	/// Load map and dependend archives into archive scanner
 	void LoadMap(const std::string& mapName, const bool forceReload = false);
 	
@@ -73,7 +71,7 @@ private:
 	std::string modArchive;
 	CLoadSaveHandler *savefile;
 	
-	bool localDemoHack;
+	unsigned timer;
 };
 
 extern CPreGame* pregame;

@@ -10,7 +10,7 @@
 #include <vector>
 #include <SDL_types.h>
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 /**
  * @brief sync debugger class

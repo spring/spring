@@ -18,7 +18,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sync/SyncTracer.h"
 #include "creg/STL_List.h"
-#include "System/myMath.h"
+#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );

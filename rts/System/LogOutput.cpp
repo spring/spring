@@ -15,7 +15,7 @@
 #include "Util.h"
 #include "float3.h"
 //#if !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 //#endif	// !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Platform/ConfigHandler.h"
 #include "mmgr.h"

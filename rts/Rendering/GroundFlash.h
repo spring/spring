@@ -1,7 +1,7 @@
 #ifndef GROUNDFLASH_H
 #define GROUNDFLASH_H
 
-#include "Rendering/Textures/TextureAtlas.h"
+#include "Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
 class CVertexArray;

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "SFloat3.h"
-#include "GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "PlayerBase.h"
 
 class TdfParser;
@@ -34,8 +34,7 @@ class CGameSetup
 public:
 	CGameSetup();
 	~CGameSetup();
-	bool Init(std::string script);
-	bool Init(const char* buf, int size);
+	bool Init(const std::string& script);
 	void LoadStartPositions();
 	
 	enum StartPosType

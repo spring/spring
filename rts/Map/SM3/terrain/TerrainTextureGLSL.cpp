@@ -35,11 +35,11 @@
 #include "TerrainTextureGLSL.h"
 #include "Rendering/GL/IFramebuffer.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "bitops.h"
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
+#include "Exceptions.h"
 
 #include <fstream>
 #include <list>

@@ -20,10 +20,12 @@
 #include "GroupHandler.h"
 #include "SkirmishAIWrapper.h"
 //#include "GroupAIWrapper.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -112,7 +114,7 @@ void CEngineOutHandler::Destroy() {
 	}
 }
 
-CEngineOutHandler::CEngineOutHandler() : activeTeams(gs->activeTeams) {
+CEngineOutHandler::CEngineOutHandler() : activeTeams(teamHandler->ActiveTeams()) {
 
 	for (int t=0; t < MAX_TEAMS; ++t) {
 		skirmishAIs[t] = NULL;
@@ -216,9 +218,9 @@ void CEngineOutHandler::Update() {
 
 
 #define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)	\
-	if (hasSkirmishAIs && !gs->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {		\
+	if (hasSkirmishAIs && !teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {		\
 		for (unsigned int t=0; t < activeTeams; ++t) {						\
-			if (skirmishAIs[t] && gs->AllyTeam(t) == ALLY_TEAM_ID) {		\
+			if (skirmishAIs[t] && teamHandler->AllyTeam(t) == ALLY_TEAM_ID) {		\
 				try {														\
 					skirmishAIs[t]->FUNC;									\
 				} HANDLE_EXCEPTION;											\
@@ -228,9 +230,9 @@ void CEngineOutHandler::Update() {
 
 /*
 #define DO_FOR_ALLIED_GROUP_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)		\
-	if (hasGroupAIs && !gs->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {		\
+	if (hasGroupAIs && !teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {		\
 		for (unsigned int t=0; t < activeTeams; ++t) {						\
-			if (hasTeamGroupAIs[t] && gs->AllyTeam(t) == ALLY_TEAM_ID) {	\
+			if (hasTeamGroupAIs[t] && teamHandler->AllyTeam(t) == ALLY_TEAM_ID) {	\
 				for (unsigned int g=0; g < MAX_GROUPS; ++g) {				\
 					if (groupAIs[t][g]) {									\
 						try {												\
@@ -258,7 +260,7 @@ void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 /*
 	if (hasSkirmishAIs) {
 		for (unsigned int t=0; t < activeTeams; ++t) {
-			if (skirmishAIs[t] && gs->AllyTeam(t) == allyTeamId && !gs->Ally(allyTeamId, unit->allyteam)) {
+			if (skirmishAIs[t] && teamHandler->AllyTeam(t) == allyTeamId && !teamHandler->Ally(allyTeamId, unit->allyteam)) {
 				try {
 					skirmishAIs[t]->EnemyEnterLOS(unitId);
 				} HANDLE_EXCEPTION;
@@ -268,7 +270,7 @@ void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 	
 	if (hasGroupAIs) {
 		for (unsigned int t=0; t < activeTeams; ++t) {
-			if (hasTeamGroupAIs[t] && gs->AllyTeam(t) == allyTeamId && !gs->Ally(allyTeamId, unit->allyteam)) {
+			if (hasTeamGroupAIs[t] && teamHandler->AllyTeam(t) == allyTeamId && !teamHandler->Ally(allyTeamId, unit->allyteam)) {
 				for (unsigned int g=0; g < MAX_GROUPS; ++g) {
 					if (groupAIs[t][g]) {
 						try {
@@ -393,7 +395,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		try {
 			for (unsigned int t=0; t < activeTeams; ++t) {
 				if (skirmishAIs[t]
-						&& !gs->Ally(gs->AllyTeam(t), destroyed.allyteam)
+						&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
 						&& (skirmishAIs[t]->IsCheatEventsEnabled()
 							|| (destroyed.losStatus[t] & (LOS_INLOS | LOS_INRADAR)))) {
 					skirmishAIs[t]->EnemyDestroyed(destroyedId, attackerId);
@@ -409,7 +411,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	if (hasGroupAIs) {
 		for (unsigned int t=0; t < activeTeams; ++t) {
 			if (hasTeamGroupAIs[t]
-						&& !gs->Ally(gs->AllyTeam(t), destroyed.allyteam)) {
+						&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)) {
 				bool isVisible =
 						destroyed.losStatus[t] & (LOS_INLOS | LOS_INRADAR);
 				for (unsigned int g=0; g < MAX_GROUPS; ++g) {
@@ -469,7 +471,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 
 			if (attacker) {
 				if (skirmishAIs[at]
-						&& !gs->Ally(gs->AllyTeam(at), damaged.allyteam)
+						&& !teamHandler->Ally(teamHandler->AllyTeam(at), damaged.allyteam)
 						&& (skirmishAIs[at]->IsCheatEventsEnabled()
 							|| (damaged.losStatus[at] & (LOS_INLOS | LOS_INRADAR)))) {
 					skirmishAIs[at]->EnemyDamaged(damagedUnitId, attackerUnitId,
@@ -491,7 +493,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		}
 	}
 	if (hasTeamGroupAIs[at]
-			&& !gs->Ally(gs->AllyTeam(at), attacked->allyteam)) {
+			&& !teamHandler->Ally(teamHandler->AllyTeam(at), attacked->allyteam)) {
 		bool isVisible = attacked->losStatus[at] & (LOS_INLOS | LOS_INRADAR);
 		for (unsigned int g=0; g < MAX_GROUPS; ++g) {
 			if (groupAIs[at][g]
@@ -532,7 +534,7 @@ void CEngineOutHandler::PlayerCommandGiven(
 		const std::vector<int>& selectedUnitIds, const Command& c, int playerId)
 {
 
-	int teamId = gs->players[playerId]->team;
+	int teamId = playerHandler->Player(playerId)->team;
 	
 	DO_FOR_TEAM_SKIRMISH_AND_GROUP_AIS(PlayerCommandGiven(selectedUnitIds, c, playerId), teamId);
 }
@@ -557,7 +559,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SSAIKey& key,
 		const std::map<std::string, std::string>& options) {
 
-	if ((teamId < 0) || (teamId >= gs->activeTeams)) {
+	if ((teamId < 0) || (teamId >= (int)activeTeams)) {
 		return false;
 	}
 

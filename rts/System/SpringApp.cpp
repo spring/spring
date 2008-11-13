@@ -14,20 +14,20 @@
 #undef KeyPress
 #undef KeyRelease
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "Game/GameController.h"
 #include "Game/SelectMenu.h"
 #include "Game/PreGame.h"
 #include "Game/Game.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/UI/KeyBindings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "Rendering/glFont.h"
@@ -41,9 +41,9 @@
 #include "MouseInput.h"
 #include "bitops.h"
 #include "Sync/Syncify.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 #include "mmgr.h"
 
@@ -105,10 +105,6 @@ SpringApp::SpringApp ()
 	FSAA = false;
 
 	signal(SIGABRT, SigAbrtHandler);
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	extern volatile int multiThreadSim;
-	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
-#endif
 }
 
 /**
@@ -234,7 +230,7 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
-	if (!InitWindow(("Spring " + std::string(VERSION_STRING_DETAILED)).c_str())) {
+	if (!InitWindow(("Spring " + SpringVersion::GetFull()).c_str())) {
 		SDL_Quit();
 		return false;
 	}
@@ -663,11 +659,11 @@ void SpringApp::ParseCmdLine()
 	cmdline->parse();
 
 	string configSource;
-	if (cmdline->result("config", configSource)) {
-		ConfigHandler::SetConfigSource(configSource);
-	}
+	cmdline->result("config", configSource);
+	// it is not allowed to use configHandler before this line runs.
+	ConfigHandler::Instantiate(configSource);
 
-	logOutput.Print("using configuration source \"" + configHandler.GetConfigSource() + "\"");
+	logOutput.Print("using configuration source \"" + configSource + "\"");
 
 #ifdef _DEBUG
 	fullscreen = false;
@@ -677,10 +673,10 @@ void SpringApp::ParseCmdLine()
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->result("help")) {
-		cmdline->usage("Spring",VERSION_STRING);
+		cmdline->usage("Spring",SpringVersion::GetFull());
 		exit(0);
 	} else if (cmdline->result("version")) {
-		std::cout << "Spring " << VERSION_STRING << std::endl;
+		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
 	} else if (cmdline->result("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
@@ -725,6 +721,13 @@ void SpringApp::ParseCmdLine()
 		screenHeight = std::max(screenHeight, 1);
 	}
 
+#ifdef USE_GML
+	gmlThreadCountOverride = configHandler.GetInt("HardwareThreadCount", 0);
+#if GML_ENABLE_SIMLOOP
+	extern volatile int multiThreadSim;
+	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
+#endif
+#endif
 }
 
 /**
@@ -793,11 +796,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 		if (argv[i][0] != '-')
 		{
 			string command(argv[i]);
-			int idx = command.rfind("sdf");
-			if (idx == (int)command.size()-3) {
+			if (command.rfind("sdf") == command.size() - 3) {
 				demofile = command;
 				logOutput << "Using demofile " << demofile.c_str() << "\n";
-			} else if (command.rfind("ssf") == command.size()-3) {
+			} else if (command.rfind("ssf") == command.size() - 3) {
 				savefile = command;
 				logOutput << "Using savefile " << savefile.c_str() << "\n";
 			} else {
@@ -822,7 +824,7 @@ void SpringApp::Startup()
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+startscript);
-		
+
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+startscript);

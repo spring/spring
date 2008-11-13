@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "ExpGenSpawner.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
+#include "ExplosionGenerator.h"
 
 CR_BIND_DERIVED(CExpGenSpawner, CProjectile, );
 

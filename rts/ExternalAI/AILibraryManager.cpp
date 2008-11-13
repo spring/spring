@@ -28,9 +28,11 @@
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
-#include "Game/GlobalSynced.h"
+//#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
-#include "Game/Team.h"
 
 #include <string>
 #include <set>
@@ -486,7 +488,7 @@ const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetUsedSkirmishAI
 	if (!usedSkirmishAIInfos_initialized) {
 		const CTeam* team = NULL;
 		for (unsigned int t = 0; t < (unsigned int)MAX_TEAMS; ++t) {
-			team = gs->Team(t);
+			team = teamHandler->Team(t);
 			if (team != NULL && team->isAI) {
 				IAILibraryManager::T_skirmishAIInfos::const_iterator aiInfo;
 				const char * tmpStr = team->skirmishAISpecifier.ai.shortName;

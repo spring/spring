@@ -25,13 +25,13 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/TimeProfiler.h"
-#include "System/Platform/ConfigHandler.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
+#include "TimeProfiler.h"
+#include "Platform/ConfigHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 using namespace std;
 

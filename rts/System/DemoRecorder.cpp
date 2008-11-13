@@ -8,12 +8,13 @@
 #include "mmgr.h"
 
 #include "Sync/Syncify.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
+#include "Exceptions.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
 
 #include "LogOutput.h"
 
@@ -39,7 +40,7 @@ CDemoRecorder::CDemoRecorder()
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	strcpy(fileHeader.versionString, VERSION_STRING);
+	strcpy(fileHeader.versionString, SpringVersion::Get().c_str());
 
 	__time64_t currtime;
 	_time64(&currtime);
@@ -105,11 +106,17 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	_time64(&long_time);                /* Get time as long integer. */
 	newtime = _localtime64(&long_time); /* Convert to local time. */
 
+	// Don't see how this can happen (according to docs _localtime64 only returns
+	// NULL if long_time is before 1/1/1970...) but a user's stacktrace indicated
+	// NULL newtime in the snprintf line...
+	if (!newtime)
+		throw content_error("error: _localtime64 returned NULL");
+
 	char buf[1000];
 	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
         newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
-	name += std::string("_") + VERSION_STRING_DETAILED;
+	name += std::string("_") + SpringVersion::Get();
 	// games without gameSetup should have different names
 	if (!gameSetup) {
 	    name = "local_" + name;

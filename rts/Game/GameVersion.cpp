@@ -3,18 +3,31 @@
 	Take special care when moving this file, the Spring buildbot refers to this
 	file to append the version string with the SVN revision number.
 */
-
+#include "StdAfx.h"
 #include "GameVersion.h"
 
 // IMPORTANT NOTE: external systems sed -i this file so DO NOT CHANGE without
 // major thought in advance, and deliberation with bibim and tvo/Tobi!
 
-/** The game version as it's returned by unitsync and Spring on commandline.
-This version string is the one that's used to check sync. */
-const char* const VERSION_STRING = "0.77b5";
-
-/** The game version as it's printed to infolog, for e.g. stacktrace translator. */
-const char* const VERSION_STRING_DETAILED = "0.77b5";
+namespace SpringVersion
+{
+	
+const char* const Major = "0.77";
+const char* const Minor = "5+";
+const char* const Patchset = "0";
+const char* const Additional = "";
 
 /** Build date and time. */
-const char* const BUILD_DATETIME = __DATE__ " " __TIME__;
+const char* const BuildTime = __DATE__ " " __TIME__;
+
+std::string Get()
+{
+	return std::string(Major) + "." + Minor;
+}
+
+std::string GetFull()
+{
+	return Get() + "." + Patchset + " (" + Additional + ")";
+}
+
+}

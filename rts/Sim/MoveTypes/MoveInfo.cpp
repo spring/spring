@@ -12,7 +12,7 @@
 #include "MoveMath/MoveMath.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 using std::min;
 using std::max;

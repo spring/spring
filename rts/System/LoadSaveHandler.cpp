@@ -17,20 +17,20 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "creg/Serializer.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/GameServer.h"
-#include "Game/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Game/GameServer.h"
 #include "Rendering/InMapDraw.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Exceptions.h"
 
 extern std::string stupidGlobalMapname;
 
@@ -123,7 +123,7 @@ void PrintSize(const char *txt, int size)
 
 void CLoadSaveHandler::SaveGame(std::string file)
 {
-	LoadStartPicture(gs->Team(gu->myTeam)->side);
+	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -172,7 +172,7 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 	ReadString(*ifs, scriptText);
 	if (!scriptText.empty() && !gameSetup) {
 		CGameSetup* temp = SAFE_NEW CGameSetup();
-		if (!temp->Init(scriptText.c_str(),scriptText.size())) {
+		if (!temp->Init(scriptText)) {
 			delete temp;
 			temp = 0;
 		} else {
@@ -188,7 +188,7 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 //this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
-	LoadStartPicture(gs->Team(gu->myTeam)->side);
+	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;
@@ -204,7 +204,7 @@ void CLoadSaveHandler::LoadGame()
 	eoh->Load(ifs);
 	delete ifs;
 	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
-		if (gs->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
+		if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 			eoh->DestroySkirmishAI(a);
 		}
 	}

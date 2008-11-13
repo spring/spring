@@ -29,11 +29,10 @@ using namespace std;
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
 #include "Game/CameraHandler.h"
-#include "Game/Team.h"
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
@@ -49,13 +48,15 @@ using namespace std;
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/NetProtocol.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "NetProtocol.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "Sound.h"
 
 
 extern Uint8 *keys;
@@ -145,6 +146,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
+
+	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 
 	// moved from LuaUI
 
@@ -608,7 +611,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	}
 	int allyTeamID = readAllyTeam;
 	if (teamID >= 0) {
-		allyTeamID = gs->AllyTeam(teamID);
+		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
 		if (!fullRead) {
@@ -633,14 +636,14 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// setup the list of unit sets
 	vector<const CUnitSet*> unitSets;
 	if (teamID >= 0) {
-		unitSets.push_back(&gs->Team(teamID)->units);
+		unitSets.push_back(&teamHandler->Team(teamID)->units);
 	}
 	else {
-		for (int t = 0; t < gs->activeTeams; t++) {
+		for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
 			if ((teamID == AllUnits) ||
-			    ((teamID == AllyUnits)  && (allyTeamID == gs->AllyTeam(t))) ||
-			    ((teamID == EnemyUnits) && (allyTeamID != gs->AllyTeam(t)))) {
-				unitSets.push_back(&gs->Team(t)->units);
+			    ((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
+			    ((teamID == EnemyUnits) && (allyTeamID != teamHandler->AllyTeam(t)))) {
+				unitSets.push_back(&teamHandler->Team(t)->units);
 			}
 		}
 	}
@@ -1109,13 +1112,13 @@ static void AddPlayerToRoster(lua_State* L, int playerID)
 	lua_pushnumber(L, index); index++; \
 	lua_push ## type(L, val); lua_rawset(L, -3);
 
-	const CPlayer* p = gs->players[playerID];
+	const CPlayer* p = playerHandler->Player(playerID);
 	int index = 1;
 	lua_newtable(L);
 	PUSH_ROSTER_ENTRY(string, p->name.c_str());
 	PUSH_ROSTER_ENTRY(number, playerID);
 	PUSH_ROSTER_ENTRY(number, p->team);
-	PUSH_ROSTER_ENTRY(number, gs->AllyTeam(p->team));
+	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(number, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
 	const float pingScale = (GAME_SPEED * gs->speedFactor);
@@ -1160,10 +1163,10 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
-	const CTeam* team = gs->Team(teamID);
+	const CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -1180,10 +1183,10 @@ int LuaUnsyncedRead::GetTeamColor(lua_State* L)
 int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
-	const CTeam* team = gs->Team(teamID);
+	const CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -1221,6 +1224,17 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const Uint32 diffTime = (t1 - t2);
 	lua_pushnumber(L, (float)diffTime * 0.001f); // return seconds
 	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
+{
+	lua_pushnumber(L, sound->GetStreamPlayTime());
+	lua_pushnumber(L, sound->GetStreamTime());
+	return 2;
 }
 
 

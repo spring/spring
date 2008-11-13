@@ -13,8 +13,8 @@ using std::vector;
 using std::map;
 using std::set;
 
-#include "System/float3.h"
-#include "System/FileSystem/VFSModes.h"
+#include "float3.h"
+#include "FileSystem/VFSModes.h"
 
 
 class LuaTable;

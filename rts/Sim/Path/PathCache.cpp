@@ -4,7 +4,7 @@
 
 #include "PathCache.h"
 
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 
 using namespace std;
