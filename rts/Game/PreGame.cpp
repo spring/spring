@@ -393,7 +393,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		temp->baseMod = gameData->GetMod();
 
 		gameSetup = const_cast<const CGameSetup*>(temp);
-		std::cout << gameSetup << std::endl;
 		gs->LoadFromSetup(gameSetup);
 	}
 	else
