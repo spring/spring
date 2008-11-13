@@ -60,19 +60,19 @@ void CSkyBox::Draw()
 			
 			glTexCoord3f(-v1.x,-v1.y,-v1.z);
 			//glNormal3f(0,1,0);
-			glVertexf3(camera->pos + v1*(NEAR_PLANE+5));
+			glVertexf3(camera->pos + v1*(NEAR_PLANE+100));
 
 			glTexCoord3f(-v2.x,-v2.y,-v2.z);
 			//glNormal3f(1,1,0);
-			glVertexf3(camera->pos + v2*(NEAR_PLANE+5));
+			glVertexf3(camera->pos + v2*(NEAR_PLANE+100));
 
 			glTexCoord3f(-v3.x,-v3.y,-v3.z);
 			//glNormal3f(0,1,1);
-			glVertexf3(camera->pos + v3*(NEAR_PLANE+5));
+			glVertexf3(camera->pos + v3*(NEAR_PLANE+100));
 
 			glTexCoord3f(-v4.x,-v4.y,-v4.z);
 			//glNormal3f(1,1,1);
-			glVertexf3(camera->pos + v4*(NEAR_PLANE+5));
+			glVertexf3(camera->pos + v4*(NEAR_PLANE+100));
 		glEnd();
 
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
