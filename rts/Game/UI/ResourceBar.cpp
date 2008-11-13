@@ -4,8 +4,8 @@
 #include "ResourceBar.h"
 #include "MouseHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Game/Team.h"
-#include "Game/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/glFont.h"
 #include "NetProtocol.h"
 #include "TimeProfiler.h"
@@ -61,7 +61,7 @@ void CResourceBar::Draw(void)
 		return;
 	}
 
-	const CTeam* myTeam = gs->Team(gu->myTeam);
+	const CTeam* myTeam = teamHandler->Team(gu->myTeam);
 
 	GLfloat x1,y1,x2,y2,x;
 
@@ -246,12 +246,12 @@ bool CResourceBar::MousePress(int x, int y, int button)
 			if(InBox(mx,my,box+metalBox)){
 				moveBox = false;
 				float metalShare = std::max(0.f, std::min(1.f,(mx-(box.x1+metalBox.x1))/(metalBox.x2-metalBox.x1)));
-				net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, gs->Team(gu->myTeam)->energyShare));
+				net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler->Team(gu->myTeam)->energyShare));
 			}
 			if(InBox(mx,my,box+energyBox)){
 				moveBox = false;
 				float energyShare = std::max(0.f, std::min(1.f,(mx-(box.x1+energyBox.x1))/(energyBox.x2-energyBox.x1)));
-				net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, gs->Team(gu->myTeam)->metalShare, energyShare));
+				net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->metalShare, energyShare));
 			}
 		}
 		return true;

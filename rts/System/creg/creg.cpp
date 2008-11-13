@@ -20,7 +20,7 @@ Copyright 2005 Jelmer Cnossen
 # define	operator_delete		::operator delete
 #endif
 
-#include "System/Util.h"
+#include "Util.h"
 #include "creg.h"
 
 using namespace creg;

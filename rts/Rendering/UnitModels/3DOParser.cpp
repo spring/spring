@@ -22,14 +22,14 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 #include "Game/Player.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
 #include "s3oParser.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 using namespace std;
 
@@ -177,7 +177,7 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	}
 
 //	if(sideName.find("armstump.3do")!=std::string.npos){
-//		logOutput.Print("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),gs->players[gs->Team(team)->leader]->name.c_str());
+//		logOutput.Print("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),playerHandler->Player(teamHandler->Team(team)->leader)->name.c_str());
 //	}
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;

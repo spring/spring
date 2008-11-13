@@ -127,7 +127,7 @@ void COggStream::SetVolume(float volume, bool b) {
 		// 0.1 -->  -9000
 		// ..............
 		// 1.0 -->      0
-		float db = (1.0f - v) * -10000;
+		long db = (long)(1.0f - v) * -10000;
 
 		DSB->SetVolume(db);
 	}
@@ -143,6 +143,10 @@ void COggStream::TogglePause() {
 			DSB->Play(0, 0, DSBPLAY_LOOPING);
 		}
 	}
+}
+
+unsigned int COggStream::GetTotalTime() {
+	return ov_time_total(&oggStream,-1);
 }
 
 void COggStream::UpdateTimer() {
@@ -214,6 +218,7 @@ void COggStream::Update() {
 void COggStream::DisplayInfo() {
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
+	logOutput.Print("time (sec):        %d", ov_time_total(&oggStream,-1));
 	logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
 	logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
 	logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);

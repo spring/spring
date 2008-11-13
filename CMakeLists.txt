@@ -70,7 +70,7 @@ endif (MINGW)
 INCLUDE(TestCXXAcceptsVisibilityFlag)
 set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
 if (MARCH_FLAG)
-	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -mfpmath=387")
+	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -msse -mfpmath=sse")
 endif (MARCH_FLAG)
 
 # intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)

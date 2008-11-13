@@ -16,11 +16,11 @@
 #include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/Platform/errorhandler.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
-#include "System/Util.h"
+#include "Platform/errorhandler.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/SimpleParser.h"
+#include "LogOutput.h"
+#include "Util.h"
 
 
 CKeyBindings* keyBindings = NULL;

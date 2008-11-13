@@ -13,17 +13,18 @@
 #include "SelectedUnits.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"
-#include "Player.h"
+#include "PlayerHandler.h"
 #include "WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "GroundMoveType.h"
+//#include "Sim/MoveTypes/GroundMoveType.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;
@@ -514,11 +515,11 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 	if ((player < 0) || (player >= MAX_PLAYERS)) {
 		return;
 	}
-	const CPlayer* p = gs->players[player];
+	const CPlayer* p = playerHandler->Player(player);
 	if (p == NULL) {
 		return;
 	}
-	const int allyTeam = gs->AllyTeam(p->team);
+	const int allyTeam = teamHandler->AllyTeam(p->team);
 
 	vector<CUnit*> tmpUnits = qf->GetUnits(pos, radius);
 
@@ -548,11 +549,11 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 	if ((player < 0) || (player >= MAX_PLAYERS)) {
 		return;
 	}
-	const CPlayer* p = gs->players[player];
+	const CPlayer* p = playerHandler->Player(player);
 	if (p == NULL) {
 		return;
 	}
-	const int allyTeam = gs->AllyTeam(p->team);
+	const int allyTeam = teamHandler->AllyTeam(p->team);
 
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));

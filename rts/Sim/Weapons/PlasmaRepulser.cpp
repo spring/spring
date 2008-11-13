@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "PlasmaRepulser.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -17,7 +17,7 @@
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "mmgr.h"
-#include "System/myMath.h"
+#include "myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
 
@@ -88,7 +88,7 @@ void CPlasmaRepulser::Update(void)
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	rechargeDelay -= (rechargeDelay > 0) ? 1 : 0;
-	
+
 	if (startShowingShield) {
 		// one-time iteration when shield first goes online
 		// (adds the projectile parts, this assumes owner is
@@ -153,7 +153,7 @@ void CPlasmaRepulser::Update(void)
 		for (std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi) {
 			const float3 dif = (*pi)->pos-owner->pos;
 			if ((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]) {
-				if (gs->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
+				if (teamHandler->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
 					rechargeDelay = defRechargeDelay;
 					if (weaponDef->shieldRepulser) {
 						// bounce the projectile
@@ -215,12 +215,12 @@ void CPlasmaRepulser::Update(void)
 					if(weaponDef->shieldRepulser) {	//bounce the projectile
 						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
 						if (type==1){
-							gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
+							teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
 						} else {
-							gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse/30.0f;
+							teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse/30.0f;
 						}
 					} else {						//kill the projectile
-						gs->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
+						teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
 					}*/
 				}
 			}
@@ -247,7 +247,7 @@ void CPlasmaRepulser::SlowUpdate(void)
 
 void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 {
-	if (weaponDef->smartShield && gs->AlliedTeams(p->owner->team, owner->team)) {
+	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner->team, owner->team)) {
 		return;
 	}
 
@@ -286,7 +286,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if (emitter->weaponDef->damages[0] > curPower) {
 		return -1;
 	}
-	if (weaponDef->smartShield && gs->AlliedTeams(emitter->owner->team,owner->team)) {
+	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team,owner->team)) {
 		return -1;
 	}
 

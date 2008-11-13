@@ -7,6 +7,7 @@
 #include <deque>
 #include <vector>
 #include <string>
+#include <list>
 #include <boost/thread/recursive_mutex.hpp>
 #include <SDL_types.h>
 #include "float3.h"

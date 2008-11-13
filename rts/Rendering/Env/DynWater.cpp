@@ -11,7 +11,7 @@
 #include "LogOutput.h"
 #include "bitops.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "BaseSky.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -22,9 +22,9 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
+#include "Exceptions.h"
 
 #define W_SIZE 5
 #define WF_SIZE 5120

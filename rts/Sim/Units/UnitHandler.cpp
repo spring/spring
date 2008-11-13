@@ -4,7 +4,7 @@
 
 #include "StdAfx.h"
 #include <assert.h>
-#include "System/mmgr.h"
+#include "mmgr.h"
 
 #include "UnitHandler.h"
 #include "Unit.h"
@@ -14,7 +14,6 @@
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -25,19 +24,20 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/LoadSaveInterface.h"
-#include "System/LogOutput.h"
-#include "System/TimeProfiler.h"
-#include "System/myMath.h"
-#include "System/Platform/ConfigHandler.h"
-#include "System/Sync/SyncTracer.h"
-#include "System/creg/STL_Deque.h"
-#include "System/creg/STL_List.h"
-#include "System/creg/STL_Set.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "CommandAI/Command.h"
+#include "Unit.h"
+#include "GlobalUnsynced.h"
+#include "FileSystem/FileHandler.h"
+#include "LoadSaveInterface.h"
+#include "LogOutput.h"
+#include "TimeProfiler.h"
+#include "myMath.h"
+#include "Platform/ConfigHandler.h"
+#include "Sync/SyncTracer.h"
+#include "creg/STL_Deque.h"
+#include "creg/STL_List.h"
+#include "creg/STL_Set.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 
 using std::min;
@@ -151,8 +151,8 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 	maxUnits = gameSetup->maxUnits;
 
-	if (maxUnits > ((MAX_UNITS / gs->activeTeams) - 5)) {
-		maxUnits = (MAX_UNITS / gs->activeTeams) -5;
+	if (maxUnits > ((MAX_UNITS / teamHandler->ActiveTeams()) - 5)) {
+		maxUnits = (MAX_UNITS / teamHandler->ActiveTeams()) -5;
 	}
 
 	if (gameSetup->limitDgun) {
@@ -186,7 +186,7 @@ CUnitHandler::~CUnitHandler()
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
-//	GML_RECMUTEX_LOCK(unit); // AddUnit. Not needed, protected via LoadUnit. 
+//	GML_RECMUTEX_LOCK(unit); // AddUnit. Not needed, protected via LoadUnit.
 
 	ASSERT_SYNCED_MODE;
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
@@ -209,7 +209,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 	freeIDs.resize(freeMax);
 
 	units[unit->id] = unit;
-	gs->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
+	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
@@ -245,7 +245,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			activeUnits.erase(usi);
 			units[delUnit->id] = 0;
 			freeIDs.push_back(delUnit->id);
-			gs->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
@@ -326,7 +326,7 @@ void CUnitHandler::Update()
 
 	if (!(gs->frameNum & 15)) {
 		if (diminishingMetalMakers)
-			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrt(metalMakerIncome / gs->activeTeams) - 4));
+			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrt(metalMakerIncome / teamHandler->ActiveTeams()) - 4));
 		metalMakerIncome = 0;
 	}
 }
@@ -705,7 +705,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
-	if (gs->Team(team)->units.size() >= uh->maxUnits) {
+	if (teamHandler->Team(team)->units.size() >= uh->maxUnits) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

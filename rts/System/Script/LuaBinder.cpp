@@ -3,8 +3,8 @@
 #include "Game/StartScripts/Script.h"
 #include "float3.h"
 #include "LogOutput.h"
-#include "Game/GlobalSynced.h"
-#include "Game/Team.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "TdfParser.h"
@@ -190,10 +190,10 @@ CLuaBinder::CLuaBinder(void)
 		class_<CGlobalSyncedStuff>("GlobalSynced")
 			.def_readonly("frameNum", &CGlobalSyncedStuff::frameNum)
 			.def_readonly("mapx", &CGlobalSyncedStuff::mapx)
-			.def_readonly("activeTeams", &CGlobalSyncedStuff::activeTeams)
+			.def_readonly("activeTeams", &CGlobalSyncedStuff::activeTeamsBackwardCompatForLuaBinder)
 			.def_readonly("mapy", &CGlobalSyncedStuff::mapy)
 			.def("randInt", &CGlobalSyncedStuff::randInt),
-			
+
 		class_<SFloat3>("sfloat3")
 			.def(constructor<const float, const float, const float>())
 			.def_readwrite("x", &SFloat3::x)
@@ -223,7 +223,7 @@ CLuaBinder::CLuaBinder(void)
 			.def("GiveCommand", &UnitGiveCommand)
 			.def("ChangeTeam", &CUnit::ChangeTeam)
 			.def("IsValid", &UnitPointerIsValid),
-			
+
 		class_<CTeam>("Team")
 			.def("setmetalstorage", &CTeam::SetBaseMetalStorage)
 			.def("setenergystorage", &CTeam::SetBaseEnergyStorage)
@@ -304,7 +304,7 @@ CLuaBinder::CLuaBinder(void)
 			def("GetAt", &GetFeaturesAt, raw(_1)),
 			def("Load", &FeatureLoaderLoadFeature, adopt(result))
 		],
-		
+
 		namespace_("game")
 		[
 			def("End", &EndGame),

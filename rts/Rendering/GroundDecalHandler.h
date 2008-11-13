@@ -1,14 +1,13 @@
 #ifndef GROUNDDECALHANDLER_H
 #define GROUNDDECALHANDLER_H
 
-#include "Object.h"
 #include <set>
 #include <list>
 #include <vector>
 #include <string>
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "UnitModels/UnitDrawer.h"
+#include "GL/myGL.h"
+#include "GL/VertexArray.h"
 #include "Util.h"
 
 class CUnit;
@@ -50,8 +49,7 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler:
-	public CObject
+class CGroundDecalHandler
 {
 public:
 	CGroundDecalHandler(void);

@@ -1,7 +1,7 @@
 #ifndef NULL_SOUND_H
 #define NULL_SOUND_H
 
-#include "../Sound.h"
+#include "Sound.h"
 
 // Null sound system
 class CNullSound: public CSound
@@ -20,6 +20,7 @@ public:
 	void StopStream() { return; }
 	void PauseStream() { return; }
 	unsigned int GetStreamTime() { return 0; }
+	unsigned int GetStreamPlayTime() { return 0; }
 	void SetStreamVolume(float) { return; }
 
 	void SetVolume(float vol) { return; }

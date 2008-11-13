@@ -14,9 +14,9 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/GlobalUnsynced.h"
-#include "System/LogOutput.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "LogOutput.h"
+#include "Exceptions.h"
 
 using std::max;
 using std::min;

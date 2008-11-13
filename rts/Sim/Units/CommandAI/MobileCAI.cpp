@@ -7,11 +7,11 @@
 #include "ExternalAI/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
 #include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/AirBaseHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
@@ -21,11 +21,11 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/DGunWeapon.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 #include "myMath.h"
 #include <assert.h>
-#include "System/Util.h"
-#include "System/GlobalUnsynced.h"
+#include "Util.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
@@ -633,7 +633,7 @@ void CMobileCAI::ExecuteStop(Command &c)
 void CMobileCAI::ExecuteDGun(Command &c)
 {
 	if (uh->limitDgun && owner->unitDef->isCommander
-			&& owner->pos.SqDistance(gs->Team(owner->team)->startPos) > Square(uh->dgunRadius)) {
+			&& owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos) > Square(uh->dgunRadius)) {
 		StopMove();
 		return FinishCommand();
 	}
@@ -878,7 +878,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
 	if (pointed) {
-		if (!gs->Ally(gu->myAllyTeam,pointed->allyteam)) {
+		if (!teamHandler->Ally(gu->myAllyTeam,pointed->allyteam)) {
 			if (owner->unitDef->canAttack) {
 				return CMD_ATTACK;
 			}

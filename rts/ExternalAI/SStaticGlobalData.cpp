@@ -21,10 +21,10 @@
 #include <string.h>	// strcpy
 
 #if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#include "Game/GlobalConstants.h"			// for MAX_TEAMS
+#include "Sim/Misc/GlobalConstants.h"			// for MAX_TEAMS
 #define MAX_GROUPS	10	// 0..9
 #include "Game/GameVersion.h"			// for VERSION_STRING
-#include "System/Platform/FileSystem.h"	// for data directories
+#include "FileSystem/FileSystem.h"	// for data directories
 #include "ExternalAI/IAILibraryManager.h"
 #include "IAILibraryManager.h"	// for AI info
 
@@ -95,7 +95,7 @@ struct SStaticGlobalData* createStaticGlobalData() {
 	const SStaticGlobalData sgd = {
 		MAX_TEAMS,
 		MAX_GROUPS,
-		VERSION_STRING,	// spring version string
+		SpringVersion::GetFull().c_str(),	// spring version string
 		numDataDirs,
 		(const char**) dataDirs,
 		numSkirmishAIs,

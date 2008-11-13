@@ -14,7 +14,7 @@ class IHwCursor {
 		virtual void PushFrame(int index, float delay) = 0;
 		virtual void Finish() = 0;
 
-		virtual bool needsYFlip() = 0; //windows needs flipped Y axis
+		virtual bool NeedsYFlip() = 0; //windows needs flipped Y axis
 
 		virtual bool IsValid() = 0;
 		virtual void Bind() = 0;

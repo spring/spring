@@ -5,6 +5,8 @@
 #include "StdAfx.h"
 #include "Sound.h"
 
+#include <AL/alc.h>
+
 #include "LogOutput.h"
 #include "Platform/ConfigHandler.h"
 #include "Game/Camera.h"
@@ -16,7 +18,7 @@
 #include "OpenALSound.h"
 #include "OggStream.h"
 #include "mmgr.h"
-#include "System/Exceptions.h"
+#include "Exceptions.h"
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
@@ -78,7 +80,7 @@ COpenALSound::~COpenALSound()
 		alDeleteBuffers(1, &it->second);
 	}
 	ALCcontext *curcontext = alcGetCurrentContext();
-	ALCdevice *curdevice = alcGetContextsDevice(curcontext);
+	//ALCdevice *curdevice = alcGetContextsDevice(curcontext);
 	alcSuspendContext(curcontext);
 	/*
 	 * FIXME
@@ -165,7 +167,8 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 
 void COpenALSound::StopStream() { oggStream.Stop(); }
 void COpenALSound::PauseStream() { oggStream.TogglePause(); }
-unsigned int COpenALSound::GetStreamTime() { return oggStream.GetPlayTime(); }
+unsigned int COpenALSound::GetStreamTime() { return oggStream.GetTotalTime(); }
+unsigned int COpenALSound::GetStreamPlayTime() { return oggStream.GetPlayTime(); }
 void COpenALSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
 
 
@@ -352,7 +355,7 @@ bool COpenALSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuff
 
 	if (header->datalen > size - sizeof(WAVHeader)) {
 //		logOutput.Print("\n");
-		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %d\n",
+		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %ld\n",
 			name, header->datalen, size - sizeof(WAVHeader));
 //		logOutput.Print("OpenAL: size %d\n", size);
 //		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));

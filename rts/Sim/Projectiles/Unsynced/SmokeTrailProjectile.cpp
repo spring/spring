@@ -15,7 +15,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL,NULL));
 

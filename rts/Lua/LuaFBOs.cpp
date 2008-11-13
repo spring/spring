@@ -20,7 +20,7 @@ using std::map;
 #include "LuaTextures.h"
 
 #include "Rendering/GL/myGL.h"
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 
 
 /******************************************************************************/

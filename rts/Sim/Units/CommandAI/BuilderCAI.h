@@ -3,8 +3,8 @@
 
 #include <map>
 #include "MobileCAI.h"
-#include "../UnitDef.h"
-#include "../../Objects/SolidObject.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Objects/SolidObject.h"
 
 class CUnitSet;
 

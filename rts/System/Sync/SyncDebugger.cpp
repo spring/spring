@@ -7,10 +7,10 @@
 #include <boost/format.hpp>
 
 #include "LogOutput.h"
-#include "System/GlobalUnsynced.h"
-#include "GlobalSynced.h"
-#include "System/BaseNetProtocol.h"
-#include "System/NetProtocol.h"
+#include "GlobalUnsynced.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "BaseNetProtocol.h"
+#include "NetProtocol.h"
 #include "SyncDebugger.h"
 #include "SyncChecker.h"
 #include "SyncTracer.h"
@@ -239,7 +239,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received checksum response of %d instead of %d bytes", *(short*)&inbuf[1], HISTORY_SIZE * 4 + 12);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activePlayers || player < 0) {
+				if(player >= playerHandler->ActivePlayers() || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in checksum response", player);
 				} else {
 					logger.AddLine("Server: got checksum response from %d", player);
@@ -250,8 +250,8 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					remoteFlop[player] = *(Uint64*)&inbuf[4];
 					assert(!checksumResponses[player].empty());
 					int i = 0;
-					while (i < gs->activePlayers && !checksumResponses[i].empty()) ++i;
-					if (i == gs->activePlayers) {
+					while (i < playerHandler->ActivePlayers() && !checksumResponses[i].empty()) ++i;
+					if (i == playerHandler->ActivePlayers()) {
 						ServerQueueBlockRequests();
 						logger.AddLine("Server: checksum responses received; %d block requests queued", pendingBlocksToRequest.size());
 					}
@@ -264,7 +264,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received block response of %d instead of %d bytes", *(short*)&inbuf[1], BLOCK_SIZE * 4 + 4);
 			} else {
 				int player = inbuf[3];
-				if(player >= gs->activePlayers || player < 0) {
+				if(player >= playerHandler->ActivePlayers() || player < 0) {
 					logger.AddLine("Server: got invalid playernum %d in block response", player);
 				} else {
 					const unsigned* begin = (unsigned*)&inbuf[4];
@@ -274,8 +274,8 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					std::copy(begin, end, remoteHistory[player].begin() + size);
 					int i = 0;
 					size += BLOCK_SIZE;
-					while (i < gs->activePlayers && size == remoteHistory[i].size()) ++i;
-					if (i == gs->activePlayers) {
+					while (i < playerHandler->ActivePlayers() && size == remoteHistory[i].size()) ++i;
+					if (i == playerHandler->ActivePlayers()) {
 						logger.AddLine("Server: block responses received");
 						ServerReceivedBlockResponses();
 					}
@@ -397,7 +397,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 {
 	logger.AddLine("Server: queuing block requests");
 	Uint64 correctFlop = 0;
-	for (int j = 0; j < gs->activePlayers; ++j) {
+	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (remoteFlop[j] != correctFlop)
 				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", remoteFlop[j], correctFlop, j);
@@ -409,7 +409,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	for (unsigned c = 0; c < HISTORY_SIZE; ++i, ++c) {
 		unsigned correctChecksum = 0;
 		if (i == HISTORY_SIZE) i = 0;
-		for (int j = 0; j < gs->activePlayers; ++j) {
+		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 			if (correctChecksum && checksumResponses[j][i] != correctChecksum) {
 				pendingBlocksToRequest.push_back(i);
 				break;
@@ -527,7 +527,7 @@ void CSyncDebugger::ServerDumpStack()
 		unsigned correctChecksum = 0;
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
-		for (int j = 0; j < gs->activePlayers; ++j) {
+		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 			if (correctChecksum && remoteHistory[j][i] != correctChecksum) {
 				if (historybt) {
 					virtualBlockNr = i / BLOCK_SIZE;

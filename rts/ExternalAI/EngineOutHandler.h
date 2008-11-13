@@ -19,7 +19,7 @@
 #define _ENGINEOUTHANDLER_H
 
 #include "Object.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 #include <map>
 #include <string>

@@ -8,10 +8,10 @@
 #include <assert.h>
 
 #include "PlayerRoster.h"
-#include "Player.h"
-#include "Team.h"
+#include "PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Util.h"
-#include "GlobalSynced.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"
 
 static int CompareAllies     (const void* a, const void* b);
@@ -110,20 +110,21 @@ const int* PlayerRoster::GetIndices(int* count)
 	static int players[MAX_PLAYERS];
 	static int knownPlayers = 0;
 
-	if (gs->activePlayers > knownPlayers) {
-		for (int i = 0; i < gs->activePlayers; i++) {
+	if (playerHandler->ActivePlayers() > knownPlayers) {
+		for (int i = 0; i < playerHandler->ActivePlayers(); i++) {
 			players[i] = i;
 		}
-		knownPlayers = gs->activePlayers;
+		knownPlayers = playerHandler->ActivePlayers();
 	}
 
-	qsort(players, gs->activePlayers, sizeof(int), compareFunc);
+	// TODO: use std::sort
+	qsort(players, playerHandler->ActivePlayers(), sizeof(int), compareFunc);
 
 	if (count != NULL) {
 		// set the count
 		int& c = *count;
-		for (c = 0; c < gs->activePlayers; c++) {
-			const CPlayer* p = gs->players[players[c]];
+		for (c = 0; c < playerHandler->ActivePlayers(); c++) {
+			const CPlayer* p = playerHandler->Player(players[c]);
 			if ((p == NULL) || !p->active) {
 				break;
 			}
@@ -157,8 +158,8 @@ static int CompareAllies(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
 	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
+	const CPlayer* aP = playerHandler->Player(aID);
+	const CPlayer* bP = playerHandler->Player(bID);
 
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
@@ -182,8 +183,8 @@ static int CompareAllies(const void* a, const void* b)
 	if ((aTeam != myTeam) && (bTeam == myTeam)) { return +1; }
 
 	// my allies first
-	const int aAlly = gs->AllyTeam(aTeam);
-	const int bAlly = gs->AllyTeam(bTeam);
+	const int aAlly = teamHandler->AllyTeam(aTeam);
+	const int bAlly = teamHandler->AllyTeam(bTeam);
 	const int myATeam = gu->myAllyTeam;
 	if ((aAlly == myATeam) && (bAlly != myATeam)) { return -1; }
 	if ((aAlly != myATeam) && (bAlly == myATeam)) { return +1; }
@@ -210,8 +211,8 @@ static int CompareTeamIDs(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
 	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
+	const CPlayer* aP = playerHandler->Player(aID);
+	const CPlayer* bP = playerHandler->Player(bID);
 
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
@@ -236,8 +237,8 @@ static int ComparePlayerNames(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
 	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
+	const CPlayer* aP = playerHandler->Player(aID);
+	const CPlayer* bP = playerHandler->Player(bID);
 
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
@@ -257,8 +258,8 @@ static int ComparePlayerCPUs(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
 	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
+	const CPlayer* aP = playerHandler->Player(aID);
+	const CPlayer* bP = playerHandler->Player(bID);
 
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {
@@ -279,8 +280,8 @@ static int ComparePlayerPings(const void* a, const void* b)
 {
 	const int aID = *((const int*)a);
 	const int bID = *((const int*)b);
-	const CPlayer* aP = gs->players[aID];
-	const CPlayer* bP = gs->players[bID];
+	const CPlayer* aP = playerHandler->Player(aID);
+	const CPlayer* bP = playerHandler->Player(bID);
 
 	const int basic = CompareBasics(aP, bP);
 	if (basic != 0) {

@@ -1,6 +1,6 @@
 #include "DamageControl.h"
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 CDamageControl::CDamageControl(AIClasses* ai)
 {
@@ -21,14 +21,14 @@ CDamageControl::~CDamageControl()
 }
 
 void CDamageControl::GenerateDPSTables()
-{	
+{
 	L("Generating DPS tables....");
 	//L("");
 	for(int i= 1; i <= NumOfUnitTypes; i++){
 		//L("*****************************UNIT: " << ai->ut->unittypearray[i].def->humanName);
 		ai->ut->unittypearray[i].DPSvsUnit.resize(NumOfUnitTypes+1);
 		ai->ut->unittypearray[i].AverageDPS = 0;
-		for(int v = 1; v <= NumOfUnitTypes; v++){			
+		for(int v = 1; v <= NumOfUnitTypes; v++){
 			float dps = GetDPSvsUnit(ai->ut->unittypearray[i].def,ai->ut->unittypearray[v].def);
 			ai->ut->unittypearray[i].DPSvsUnit[v] = dps;
 			ai->ut->unittypearray[i].AverageDPS += dps;
@@ -56,12 +56,12 @@ void CDamageControl::UpdateTheirDistribution()
 		if(enemiesCount[i] > 0)
 		{
 			//int id = ai->cheat->GetUnitDef(enemies[i])->id;
-			UnitType* unitType = &unittypearray[i];			
+			UnitType* unitType = &unittypearray[i];
 			float enemycost = unitType->Cost * enemiesCount[i];
 			TheirTotalCost += enemycost;
 			if(unitType->def->isCommander)
 				enemycost = 100; // Ignore the commander (hack mostly)
-			TheirUnitsAll[i].Cost = enemycost;			
+			TheirUnitsAll[i].Cost = enemycost;
 			TheirUnitsAll[i].Hitpoints = unitType->def->health * enemiesCount[i];
 			if(ai->ut->GetCategory(unitType->def) == CAT_DEFENCE){
 				TheirDefences[i].Cost = enemycost;
@@ -99,7 +99,7 @@ void CDamageControl::UpdateTheirDistribution()
 void CDamageControl::UpdateMyDistribution()
 {
 	//L("UpdateMyDistribution");
-	MyTotalCost = 0.0001; // Safety if I have 0 units.	
+	MyTotalCost = 0.0001; // Safety if I have 0 units.
 	//ai->math->TimerStart();
 	for(int i= 1; i <= NumOfUnitTypes; i++){
 		MyUnitsAll[i].Clear();
@@ -155,7 +155,7 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 {
 	//L("Getting CombatScore for : " << unit->humanName << " number of units: " << NumOfUnitTypes);
 	float score = 0;
-	int category = GCAT(unit); 
+	int category = GCAT(unit);
 	bool foundaunit = false;
 	if(category == CAT_ATTACK || category == CAT_ARTILLERY || category == CAT_ASSAULT){
 		for(int i = 1; i <= NumOfUnitTypes; i++){
@@ -192,7 +192,7 @@ float CDamageControl::GetCurrentDamageScore(const UnitDef* unit)
 				score+= ai->ut->unittypearray[unit->id].DPSvsUnit[i] * TheirArmy[i].Cost / TheirArmy[i].Hitpoints / (MyDefences[i].Damage + 1); // kill the stuff with the best value
 				//L("Score:" << score);
 				//score+= 0; // This was for making a debug brakepoint
-				foundaunit = true;				
+				foundaunit = true;
 			}
 		}
 		if(!foundaunit){ // if nothing found try to kill his movable units (comm and builders)
@@ -236,7 +236,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 		float dps = 0;
 		bool canhit = false;
 		bool underwater = false;
-		//string targetcat;	
+		//string targetcat;
 		int armortype = victim->armorType;
 		int numberofdamages;
 		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES,&numberofdamages);
@@ -252,7 +252,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 				//L(unit->weapons[i].name << " Targcat: " <<  targetcat);
 				//L("unit->categoryString " <<  unit->categoryString);
 				//L("victim->categoryString " <<  victim->categoryString);
-				
+
 				unsigned int a = victim->category;
 				unsigned int b = unit->weapons[i].def->onlyTargetCategory; // This is what the weapon can target
 				unsigned int c = unit->weapons[i].onlyTargetCat; // This is what the unit accepts as this weapons target
@@ -277,12 +277,12 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 					if(victim->canfly && unit->wantedHeight <= victim->wantedHeight)
 						canhit = false; // If the target can fly and it flyes below the victim its useless
 				}
-				
+
 				if(canhit){
 					//L(unit->weapons[i].name << " a: " <<  a << ", b: " << b << ", c: " << c << ", d: " << d);
 					//L("unit->categoryString " <<  unit->categoryString);
 					//L("victim->categoryString " <<  victim->categoryString);
-				
+
 				}
 				//unit->weapons[i].def->turnrate
 				if(canhit){
@@ -319,7 +319,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 						distancetravelled = 2*sqrt(halfd*halfd+heightreached*heightreached) * 1.1;
 						//L("Height reached: " << heightreached << " distance travelled " << distancetravelled);
 					}
-					
+
 					//L("Name: " << unit->weapons[i].name << " AOE: " << AOE << " Accuracy: " << unit->weapons[i].def->accuracy << " range: " << unit->weapons[i].def->range);
 					if((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly){
 						impactarea = pow((accuracy*distancetravelled)+AOE,2);
@@ -365,7 +365,7 @@ float CDamageControl::GetDPSvsUnit(const UnitDef* unit,const UnitDef* victim)
 					assert(tohitprobability >= 0);
 					dps += basedamage * tohitprobability;
 				}
-			}	
+			}
 		}
 		//if(unit->weapons.size() > 0)
 		//L("DPS: " << dps);

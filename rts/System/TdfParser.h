@@ -30,16 +30,23 @@ public:
 	};
 	struct TdfSection
 	{
+		TdfSection* construct_subsection(const std::string& name );
+		~TdfSection();
+		
 		std::map<std::string, TdfSection*> sections;
 		std::map<std::string, std::string> values;
 		void print( std::ostream & out ) const;
-		void add_name_value( std::string const& name, std::string& value );
-		TdfSection* construct_subsection( std::string const& name );
-
-		~TdfSection();
+		void add_name_value(const std::string& name, const std::string& value );
+		template<typename T>
+		void AddPair(const std::string& key, const T& value)
+		{
+			std::ostringstream buf;
+			buf << value;
+			add_name_value(key, buf.str());
+		}
 	};
 
-	TdfParser();
+	TdfParser() {};
 	TdfParser( std::string const& filename );
 	TdfParser( const char* buffer, std::size_t size );
 
@@ -66,6 +73,19 @@ public:
 		*  @return returns true on success, false otherwise and error message in value.
 		*/
 	bool SGetValue(std::string &value, std::string const& location) const;
+	template <typename T>
+	bool GetValue(T& val, const std::string& location) const
+	{
+		std::string buf;
+		if (SGetValue(buf, location))
+		{
+			std::istringstream stream(buf);
+			stream >> val;
+			return true;
+		}
+		else
+			return false;
+	};
 
 	/**
 		*  Treat the value as a vector and fill out vec with the items.
@@ -139,6 +159,8 @@ public:
 		stream << str;
 		stream >> value;
 	}
+	
+	TdfSection* GetRootSection() {return &root_section; };
 
 private:
 	TdfSection root_section;

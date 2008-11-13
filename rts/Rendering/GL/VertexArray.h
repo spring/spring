@@ -1,7 +1,7 @@
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
 #include "myGL.h"
-#include "System/Platform/errorhandler.h"
+#include "Platform/errorhandler.h"
 // VertexArray.h: interface for the CVertexArray class.
 //
 //////////////////////////////////////////////////////////////////////

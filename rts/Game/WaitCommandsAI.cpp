@@ -8,8 +8,8 @@
 #include <SDL_timer.h>
 #include "WaitCommandsAI.h"
 #include "SelectedUnits.h"
-#include "Team.h"
-#include "Game/GameHelper.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "GameHelper.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -18,9 +18,9 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "Game/GlobalSynced.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Object.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "GlobalUnsynced.h"
+#include "Object.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "creg/STL_Map.h"
@@ -897,7 +897,7 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {
 		CUnit* unit = tmpUnits[i];
-		if (enemies && gs->Ally(unit->allyteam, gu->myAllyTeam)) {
+		if (enemies && teamHandler->Ally(unit->allyteam, gu->myAllyTeam)) {
 			continue;
 		}
 		if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) {

@@ -4,7 +4,7 @@
 #include "creg/creg.h"
 #include "Object.h"
 #include "Sim/Misc/AirBaseHandler.h"
-#include "System/float3.h"
+#include "float3.h"
 
 class CUnit;
 

@@ -3,7 +3,7 @@
 #include "mmgr.h"
 
 #include "GameController.h"
-#include "System/Platform/Clipboard.h"
+#include "Platform/Clipboard.h"
 
 
 CGameController::CGameController(void)

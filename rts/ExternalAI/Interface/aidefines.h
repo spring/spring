@@ -26,7 +26,7 @@ extern "C" {
 
 #include "SAIFloat3.h"
 
-#include "Game/GameVersion.h"
+//#include "Game/GameVersion.h"
 
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000

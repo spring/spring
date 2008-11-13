@@ -3,7 +3,7 @@
 
 #include <string>
 #include <list>
-#include "Rendering/GL/myGL.h"
+#include "GL/myGL.h"
 
 
 class CInMapDraw

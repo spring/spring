@@ -13,8 +13,8 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
-#include "System/Exceptions.h"
+#include "LogOutput.h"
+#include "Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

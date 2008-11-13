@@ -18,8 +18,8 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "System/GlobalUnsynced.h"
-#include "System/LogOutput.h"
+#include "GlobalUnsynced.h"
+#include "LogOutput.h"
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
 #endif
@@ -95,7 +95,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		if(weaponDef->interceptedByShieldType) {
 			interceptHandler.AddShieldInterceptableProjectile(this);
 		}
-		
+
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
 		if (!weaponDef->visuals.modelName.empty()) {
@@ -131,8 +131,10 @@ void CWeaponProjectile::Collision()
 					weaponDef->dynDamageInverted);
 
 		if (weaponDef->impactOnly) {
-			weaponDef->explosionGenerator->Explosion(pos,((weaponDef->dynDamageExp>0)
-					? dynDamages : weaponDef->damages)[0],weaponDef->areaOfEffect,owner,0,NULL,impactDir);
+			if (weaponDef->explosionGenerator) {
+				weaponDef->explosionGenerator->Explosion(pos,((weaponDef->dynDamageExp>0)
+						? dynDamages : weaponDef->damages)[0],weaponDef->areaOfEffect,owner,0,NULL,impactDir);
+			}
 		} else {
 			helper->Explosion(pos,
 				(weaponDef->dynDamageExp > 0)?
@@ -196,7 +198,9 @@ void CWeaponProjectile::Collision(CUnit* unit)
 				damages, owner,
 				impactDir * (damages[0] + weaponDef->damages.impulseBoost)
 				* weaponDef->damages.impulseFactor, weaponDef->id);
-			weaponDef->explosionGenerator->Explosion(pos,damages[0],weaponDef->areaOfEffect,owner,0,unit,impactDir);
+			if (weaponDef->explosionGenerator) {
+				weaponDef->explosionGenerator->Explosion(pos,damages[0],weaponDef->areaOfEffect,owner,0,unit,impactDir);
+			}
 		}
 		else {
 		    helper->Explosion(pos, damages,
@@ -252,13 +256,13 @@ void CWeaponProjectile::UpdateGroundBounce()
 		{
 			wh = ground->GetHeight2(pos.x, pos.z);
 		} else if(weaponDef->groundBounce)
-		{ 
+		{
 			wh = ground->GetHeight(pos.x, pos.z);
 		}
 		if(pos.y < wh)
 		{
 			bounces++;
-			if(!keepBouncing || (this->weaponDef->numBounce >= 0 
+			if(!keepBouncing || (this->weaponDef->numBounce >= 0
 							&& bounces > this->weaponDef->numBounce))
 			{
 				//Collision();
@@ -278,7 +282,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 			}
 		}
 	}
-	
+
 }
 
 bool CWeaponProjectile::TraveledRange()

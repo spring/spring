@@ -13,31 +13,32 @@
 #include "LuaHandle.h"
 
 #include "Game/UI/LuaUI.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
+#include "LuaGaia.h"
+#include "LuaRules.h"
 
 #include "LuaCallInCheck.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
 #include "LuaUtils.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
-#include "Game/GlobalSynced.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/SpringApp.h"
-#include "System/FileSystem/FileHandler.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "SpringApp.h"
+#include "FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
 
@@ -176,9 +177,8 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW // Add mutex to avoid bogus errors due to concurrency
-	LUA_CALL_IN_CHECK(L);
-#endif
+	GML_RECMUTEX_LOCK(lua); // Add mutex to avoid bogus errors due to concurrency
+
 	const int top = lua_gettop(L);
 	if (top != 0) {
 		logOutput.Print("WARNING: %s stack check: top = %i\n", GetName().c_str(), top);
@@ -1079,7 +1079,7 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 				sendMsg = gu->spectating;
 			}
 			else if (mode == 'a') {
-				const CPlayer* player = gs->players[playerID];
+				const CPlayer* player = playerHandler->Player(playerID);
 				if (player == NULL) {
 					return;
 				}
@@ -1089,8 +1089,8 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
 				else if (player->spectator) {
 					sendMsg = gu->spectating;
 				} else {
-					const int msgAllyTeam = gs->AllyTeam(player->team);
-					sendMsg = gs->Ally(msgAllyTeam, gu->myAllyTeam);
+					const int msgAllyTeam = teamHandler->AllyTeam(player->team);
+					sendMsg = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 				}
 			}
 			if (sendMsg) {

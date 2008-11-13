@@ -2,7 +2,7 @@
 #define __FARTEXTURE_HANDLER_H__
 
 #include <vector>
-#include "Rendering/GL/myGL.h"
+#include "GL/myGL.h"
 
 struct S3DOModel;
 

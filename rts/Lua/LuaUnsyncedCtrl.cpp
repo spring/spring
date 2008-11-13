@@ -31,8 +31,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
@@ -48,17 +47,18 @@
 #include "Rendering/FontTexture.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
-#include "System/LogOutput.h"
-#include "System/NetProtocol.h"
-#include "System/Sound.h"
+#include "LogOutput.h"
+#include "NetProtocol.h"
+#include "Sound.h"
 
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/FileSystem.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "System/Platform/ConfigHandler.h"
 
 using namespace std;
@@ -101,7 +101,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
 	REGISTER_LUA_CFUNC(PauseSoundStream);
-	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 	REGISTER_LUA_CFUNC(SetSoundStreamVolume);
 
 	REGISTER_LUA_CFUNC(SetCameraState);
@@ -215,7 +214,7 @@ static inline int CtrlAllyTeam()
 	if (ctrlTeam < 0) {
 		return ctrlTeam;
 	}
-	return gs->AllyTeam(ctrlTeam);
+	return teamHandler->AllyTeam(ctrlTeam);
 }
 
 
@@ -235,7 +234,7 @@ static inline bool CanCtrlAllyTeam(int allyteam)
 	if (ctrlTeam < 0) {
 		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
 	}
-	return (gs->AllyTeam(ctrlTeam) == allyteam);
+	return (teamHandler->AllyTeam(ctrlTeam) == allyteam);
 }
 
 
@@ -384,7 +383,7 @@ static string ParseMessage(lua_State* L, const string& msg)
 	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
-	const CPlayer* player = gs->players[playerID];
+	const CPlayer* player = playerHandler->Player(playerID);
 	if ((player == NULL) || !player->active || player->name.empty()) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
@@ -542,11 +541,6 @@ int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 	sound->PauseStream();
 	return 0;
 }
-int LuaUnsyncedCtrl::GetSoundStreamTime(lua_State* L)
-{
-	lua_pushnumber(L, sound->GetStreamTime());
-	return 1;
-}
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
 	const int args = lua_gettop(L);
@@ -614,7 +608,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	                 lua_tofloat(L, 3),
 	                 lua_tofloat(L, 4));
 	const int team = lua_toint(L, 5);
-	if ((team < 0) || (team >= gs->activeTeams)) {
+	if ((team < 0) || (team >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	const int facing = lua_toint(L, 6);
@@ -781,7 +775,7 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		return 0;
 	}
-	CTeam* team = gs->Team(teamID);
+	CTeam* team = teamHandler->Team(teamID);
 	if (team == NULL) {
 		return 0;
 	}
@@ -1940,10 +1934,10 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, lua_tofloat(L, 2)));
 
 	if (shareType == "metal") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, gs->Team(gu->myTeam)->energyShare));
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->energyShare));
 	}
 	else if (shareType == "energy") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	gs->Team(gu->myTeam)->metalShare, shareLevel));
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	teamHandler->Team(gu->myTeam)->metalShare, shareLevel));
 	}
 	else {
 		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -1967,10 +1961,10 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		luaL_error(L, "Incorrect arguments to ShareResources()");
 	}
 	const int teamID = lua_toint(L, 1);
-	if ((teamID < 0) || (teamID >= gs->activeTeams)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
-	const CTeam* team = gs->Team(teamID);
+	const CTeam* team = teamHandler->Team(teamID);
 	if ((team == NULL) || team->isDead) {
 		return 0;
 	}

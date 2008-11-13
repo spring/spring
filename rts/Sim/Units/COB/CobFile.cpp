@@ -10,7 +10,7 @@
 #include "LogOutput.h"
 #include "Sound.h"
 #include "Platform/byteorder.h"
-#include "System/Util.h"
+#include "Util.h"
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
 //Information on missing fields from Format_Cob.pas

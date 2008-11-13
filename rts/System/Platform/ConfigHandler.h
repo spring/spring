@@ -2,7 +2,7 @@
  * @file ConfigHandler.h
  * @brief config base
  * @author Christopher Han <xiphux@gmail.com>
- * 
+ *
  * Definition of config structure class
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
@@ -13,16 +13,8 @@
 #include <string>
 
 /**
- * @brief configHandler
- *
- * Just a shortcut to prevent having to replace
- * configHandler throughout the entire engine
- */
-#define configHandler (ConfigHandler::GetInstance())
-
-/**
  * @brief config handler base
- * 
+ *
  * This is the abstract configuration handler class used
  * for polymorphic configuration.  Platform-specifics should derive
  * from this.
@@ -59,7 +51,7 @@ public:
 	 * @return integer value
 	 */
 	virtual int GetInt(std::string name, int def) = 0;
-	
+
 	/**
 	@brief get float value
 	*/
@@ -71,31 +63,22 @@ public:
 	virtual void SetFloat(const std::string& name, float value);
 
 	/**
-	 * @brief get instance
-	 * @return reference to current platform's ConfigHandler
+	 * @brief instantiate global configHandler
 	 */
-	static ConfigHandler& GetInstance();
-
-	static bool SetConfigSource(const std::string& name);
-	static const std::string& GetConfigSource();
+	static void Instantiate(std::string configSource);
 
 	/**
 	 * @brief deallocate
 	 */
 	static void Deallocate();
 
-	virtual ~ConfigHandler();
-
 protected:
-	static std::string configSource;
-
-	/**
-	 * @brief instance
-	 *
-	 * ConfigHandler pointer pointing to current platform's
-	 * ConfigHandler instance
-	 */
-	static ConfigHandler* instance;
+	virtual ~ConfigHandler();
 };
+
+extern ConfigHandler* _configHandler;
+
+// quick hack so I don't have to change . to -> in the entire project
+#define configHandler (*_configHandler)
 
 #endif /* CONFIGHANDLER_H */

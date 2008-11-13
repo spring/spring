@@ -18,19 +18,17 @@
 #include "SkirmishAIWrapper.h"
 
 #include "StdAfx.h"
-#include "Game/GlobalSynced.h"
 #include "IGlobalAI.h"
 #include "SkirmishAI.h"
 #include "GlobalAICallback.h"
 #include "EngineOutHandler.h"
 #include "IAILibraryManager.h"
-#include "Platform/FileSystem.h"
 #include "Platform/errorhandler.h"
-#include "Platform/SharedLib.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Interface/AISEvents.h"
 #include "Interface/AISCommands.h"
 #include "Interface/SSAILibrary.h"
@@ -140,16 +138,16 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 						UnitFinished(a);
 					} HANDLE_EXCEPTION;
 			} else {
-				if ((uh->units[a]->allyteam == gs->AllyTeam(teamId))
-						|| gs->Ally(gs->AllyTeam(teamId), uh->units[a]->allyteam)) {
+				if ((uh->units[a]->allyteam == teamHandler->AllyTeam(teamId))
+						|| teamHandler->Ally(teamHandler->AllyTeam(teamId), uh->units[a]->allyteam)) {
 					// do nothing
 				} else {
-					if (uh->units[a]->losStatus[gs->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
+					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
 							EnemyEnterRadar(a);
 						} HANDLE_EXCEPTION;
 					}
-					if (uh->units[a]->losStatus[gs->AllyTeam(teamId)] & LOS_INLOS) {
+					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
 						try {
 							EnemyEnterLOS(a);
 						} HANDLE_EXCEPTION;

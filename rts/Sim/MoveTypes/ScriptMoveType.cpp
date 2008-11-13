@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "System/mmgr.h"
+#include "mmgr.h"
 
 #include "ScriptMoveType.h"
 
@@ -15,9 +15,9 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "GlobalUnsynced.h"
+#include "Matrix44f.h"
+#include "myMath.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 

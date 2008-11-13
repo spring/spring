@@ -15,9 +15,9 @@
 #include "Platform/ConfigHandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
-#include "System/Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Util.h"
+#include "Exceptions.h"
 
 #include "IFramebuffer.h"
 
@@ -232,6 +232,23 @@ void UnloadStartPicture()
 
 /******************************************************************************/
 
+void ClearScreen()
+{
+	glClearColor(0,0,0,1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
+	glLoadIdentity();									// Reset The Projection Matrix
+	gluOrtho2D(0,1,0,1);
+	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+
+	glLoadIdentity();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_TEXTURE_2D);
+	glColor3f(1,1,1);
+}
+
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	static char prevText[100];
@@ -254,21 +271,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 	// Draw loading screen & print load msg.
 	ENTER_UNSYNCED;
-
-	glClearColor(0,0,0,1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
-	glLoadIdentity();									// Reset The Projection Matrix
-	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-
-	glLoadIdentity();
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_TEXTURE_2D);
-	glColor3f(1,1,1);
-
+	ClearScreen();
 	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
 		glBegin(GL_QUADS);
@@ -280,9 +283,9 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	}
 	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
 #ifdef USE_GML
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s MT (%d threads)", VERSION_STRING_DETAILED, gmlThreadCount);
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", VERSION_STRING_DETAILED);
+	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", SpringVersion::GetFull().c_str());
 #endif
 	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
 	if (swapbuffers) {

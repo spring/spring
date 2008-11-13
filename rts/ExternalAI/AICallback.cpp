@@ -7,9 +7,9 @@
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
-#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Game/Team.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
@@ -19,7 +19,7 @@
 #include "NetProtocol.h"
 #include "Platform/ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "Platform/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/UnitModels/3DModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -30,7 +30,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -111,8 +111,8 @@ bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeamI
 
 	if (team != receivingTeamId) {
 		if (receivingTeamId >= 0 && receivingTeamId < (MAX_TEAMS - 1)) {
-			if (gs->Team(receivingTeamId) && gs->Team(team)) {
-				if (!gs->Team(receivingTeamId)->isDead && !gs->Team(team)->isDead) {
+			if (teamHandler->Team(receivingTeamId) && teamHandler->Team(team)) {
+				if (!teamHandler->Team(receivingTeamId)->isDead && !teamHandler->Team(team)->isDead) {
 					// note: we can't use the existing SendShare()
 					// since its handler in CGame uses myPlayerNum
 					// (NETMSG_SHARE param) to determine which team
@@ -141,8 +141,8 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 
 	if (team != receivingTeamId) {
 		if (receivingTeamId >= 0 && receivingTeamId < (MAX_TEAMS - 1)) {
-			if (gs->Team(receivingTeamId) && gs->Team(team)) {
-				if (!gs->Team(receivingTeamId)->isDead && !gs->Team(team)->isDead) {
+			if (teamHandler->Team(receivingTeamId) && teamHandler->Team(team)) {
+				if (!teamHandler->Team(receivingTeamId)->isDead && !teamHandler->Team(team)->isDead) {
 					// we must iterate over the ID's to check if
 					// all of them really belong to the AI's team
 					for (std::vector<int>::const_iterator it = unitIds.begin(); it != unitIds.end(); it++ ) {
@@ -217,12 +217,12 @@ int CAICallback::GetMyTeam()
 
 int CAICallback::GetMyAllyTeam()
 {
-	return gs->AllyTeam(team);
+	return teamHandler->AllyTeam(team);
 }
 
 int CAICallback::GetPlayerTeam(int playerId)
 {
-	CPlayer *pl = gs->players [playerId];
+	CPlayer* pl = playerHandler->Player(playerId);
 	if (pl->spectator)
 		return -1;
 	return pl->team;
@@ -230,8 +230,8 @@ int CAICallback::GetPlayerTeam(int playerId)
 
 const char* CAICallback::GetTeamSide(int teamId)
 {
-	if (teamId < gs->activeTeams && gameSetup) {
-		return gs->Team(teamId)->side.c_str();
+	if (teamId < teamHandler->ActiveTeams() && gameSetup) {
+		return teamHandler->Team(teamId)->side.c_str();
 	} else {
 		// if this is not a GameSetup-type game but a
 		// SkirmishAI-test one, the side-strings for all
@@ -380,8 +380,8 @@ int CAICallback::GetUnitAiHint(int unitId)
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->aihint;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -403,7 +403,7 @@ int CAICallback::GetUnitTeam(int unitId)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)){
 			return unit->team;
 		}
 	}
@@ -415,7 +415,7 @@ int CAICallback::GetUnitAllyTeam(int unitId)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)){
 			return unit->allyteam;
 		}
 	}
@@ -429,9 +429,9 @@ float CAICallback::GetUnitHealth(int unitId)
 		CUnit* unit = uh->units[unitId];
 
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
+			const int allyTeam = teamHandler->AllyTeam(team);
 
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->health;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -457,8 +457,8 @@ float CAICallback::GetUnitMaxHealth(int unitId)		//the units max health
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->maxHealth;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -482,8 +482,8 @@ float CAICallback::GetUnitSpeed(int unitId)				//the units max speed
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->maxSpeed;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -506,8 +506,8 @@ float CAICallback::GetUnitPower(int unitId)				//sort of the measure of the unit
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->power;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -530,7 +530,7 @@ float CAICallback::GetUnitExperience(int unitId)	//how experienced the unit is (
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			return unit->experience;
 		}
 	}
@@ -543,8 +543,8 @@ float CAICallback::GetUnitMaxRange(int unitId)		//the furthest any weapon of the
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unit->maxRange;
 			}
 			else if (unit->losStatus[allyTeam] & LOS_INLOS) {
@@ -568,8 +568,8 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 		CUnit* unit = uh->units[unitId];
 		if (unit) {
 			const UnitDef* unitDef = unit->unitDef;
-			const int allyTeam = gs->AllyTeam(team);
-			if (gs->Ally(unit->allyteam, allyTeam)) {
+			const int allyTeam = teamHandler->AllyTeam(team);
+			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				return unitDef;
 			}
 			const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -602,8 +602,8 @@ float3 CAICallback::GetUnitPos(int unitId)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
-			return helper->GetUnitErrorPos(unit,gs->AllyTeam(team));
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
+			return helper->GetUnitErrorPos(unit,teamHandler->AllyTeam(team));
 		}
 	}
 	return ZeroVector;
@@ -613,7 +613,7 @@ int CAICallback::GetBuildingFacing(int unitId) {
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)){
 			return unit->buildFacing;
 		}
 	}
@@ -624,7 +624,7 @@ bool CAICallback::IsUnitCloaked(int unitId) {
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)){
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)){
 			return unit->isCloaked;
 		}
 	}
@@ -636,7 +636,7 @@ bool CAICallback::IsUnitParalyzed(int unitId){
 
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
-		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			return unit->stunned;
 		}
 	}
@@ -650,7 +650,7 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
 
-		if (unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			if (unit->IsNeutral())
 				return true;
 		}
@@ -692,8 +692,8 @@ int CAICallback::GetEnemyUnits(int* unitIds)
 	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) &&
-		    (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) &&
+		    (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
 				unitIds[a++] = u->id;
 			}
@@ -712,7 +712,7 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds)
 	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
+		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) && (u->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
 			if (!IsUnitNeutral(u->id)) {
 				unitIds[a++] = u->id;
 			}
@@ -732,7 +732,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius)
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (!gs->Ally(u->allyteam, gs->AllyTeam(team)) && (u->losStatus[gs->AllyTeam(team)] & LOS_INLOS)) {
+		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) && (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
 				unitIds[a] = u->id;
 				++a;
@@ -752,7 +752,7 @@ int CAICallback::GetFriendlyUnits(int *unitIds)
 	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (gs->Ally(u->allyteam, gs->AllyTeam(team))) {
+		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
@@ -774,7 +774,7 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius)
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
-		if (gs->Ally(u->allyteam, gs->AllyTeam(team))) {
+		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
@@ -911,17 +911,17 @@ const float* CAICallback::GetSlopeMap()
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return &loshandler->losMap[gs->AllyTeam(team)].front();
+	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetRadarMap()
 {
-	return &radarhandler->radarMaps[gs->AllyTeam(team)].front();
+	return &radarhandler->radarMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetJammerMap()
 {
-	return &radarhandler->jammerMaps[gs->AllyTeam(team)].front();
+	return &radarhandler->jammerMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned char* CAICallback::GetMetalMap()
@@ -1022,7 +1022,7 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 	CFeature* f;
 	BuildInfo bi(unitDef, pos, facing);
 	bi.pos=helper->Pos2BuildPos (bi);
-	return !!uh->TestUnitBuildSquare(bi,f,gs->AllyTeam(team));
+	return !!uh->TestUnitBuildSquare(bi,f,teamHandler->AllyTeam(team));
 }
 
 
@@ -1064,7 +1064,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 {
 	if (!unitdef) return float3(-1.0f,0.0f,0.0f);
 	CFeature* feature;
-	int allyteam=gs->AllyTeam(team);
+	int allyteam=teamHandler->AllyTeam(team);
 
 	int endr = (int)(searchRadius / (SQUARE_SIZE*2));
 	const vector<SearchOffset>& ofs = GetSearchOffsetTable (endr);
@@ -1111,49 +1111,49 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 
 float CAICallback::GetMetal()
 {
-	return gs->Team(team)->metal;
+	return teamHandler->Team(team)->metal;
 }
 
 float CAICallback::GetMetalIncome()
 {
-	return gs->Team(team)->prevMetalIncome;
+	return teamHandler->Team(team)->prevMetalIncome;
 }
 
 float CAICallback::GetMetalUsage()
 {
-	return gs->Team(team)->prevMetalExpense;
+	return teamHandler->Team(team)->prevMetalExpense;
 }
 
 float CAICallback::GetMetalStorage()
 {
-	return gs->Team(team)->metalStorage;
+	return teamHandler->Team(team)->metalStorage;
 }
 
 float CAICallback::GetEnergy()
 {
-	return gs->Team(team)->energy;
+	return teamHandler->Team(team)->energy;
 }
 
 float CAICallback::GetEnergyIncome()
 {
-	return gs->Team(team)->prevEnergyIncome;
+	return teamHandler->Team(team)->prevEnergyIncome;
 }
 
 float CAICallback::GetEnergyUsage()
 {
-	return gs->Team(team)->prevEnergyExpense;
+	return teamHandler->Team(team)->prevEnergyExpense;
 }
 
 float CAICallback::GetEnergyStorage()
 {
-	return gs->Team(team)->energyStorage;
+	return teamHandler->Team(team)->energyStorage;
 }
 
 bool CAICallback::GetUnitResourceInfo (int unitId, UnitResourceInfo *i)
 {
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS))
 		{
 			i->energyMake = unit->energyMake;
 			i->energyUse = unit->energyUse;
@@ -1170,7 +1170,7 @@ bool CAICallback::IsUnitActivated (int unitId)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS))
 			return unit->activated;
 	}
 	return false;
@@ -1181,7 +1181,7 @@ bool CAICallback::UnitBeingBuilt (int unitId)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[gs->AllyTeam(team)] & LOS_INLOS))
+		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS))
 			return unit->beingBuilt;
 	}
 	return false;
@@ -1191,7 +1191,7 @@ int CAICallback::GetFeatures (int *features, int max)
 {
 	verify ();
 	int i = 0;
-	int allyteam = gs->AllyTeam(team);
+	int allyteam = teamHandler->AllyTeam(team);
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++i) {
@@ -1212,7 +1212,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 {
 	verify ();
 	vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
-	int allyteam = gs->AllyTeam(team);
+	int allyteam = teamHandler->AllyTeam(team);
 	int n = 0;
 
 	for (unsigned int a=0;a<ft.size();a++)
@@ -1239,7 +1239,7 @@ const FeatureDef* CAICallback::GetFeatureDef (int feature)
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = gs->AllyTeam(team);
+		int allyteam = teamHandler->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->def;
 	}
@@ -1260,7 +1260,7 @@ float CAICallback::GetFeatureHealth (int feature)
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = gs->AllyTeam(team);
+		int allyteam = teamHandler->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->health;
 	}
@@ -1276,7 +1276,7 @@ float CAICallback::GetFeatureReclaimLeft (int feature)
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = gs->AllyTeam(team);
+		int allyteam = teamHandler->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->reclaimLeft;
 	}
@@ -1292,7 +1292,7 @@ float3 CAICallback::GetFeaturePos (int feature)
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = gs->AllyTeam(team);
+		int allyteam = teamHandler->AllyTeam(team);
 		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
 			return f->pos;
 	}
@@ -1436,14 +1436,14 @@ bool CAICallback::GetProperty(int unitId, int property, void *data)
 	verify ();
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unit = uh->units[unitId];
-		const int allyTeam = gs->AllyTeam(team);
+		const int allyTeam = teamHandler->AllyTeam(team);
 		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
 			return false;  //return if the unit doesn't exist or cant be seen
 		}
 
 		switch (property) {
 			case AIVAL_UNITDEF: {
-				if (gs->Ally(unit->allyteam, allyTeam)) {
+				if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 					(*(const UnitDef**)data) = unit->unitDef;
 				} else {
 					const UnitDef* unitDef = unit->unitDef;
@@ -1461,14 +1461,14 @@ bool CAICallback::GetProperty(int unitId, int property, void *data)
 				return true;
 			}
 			case AIVAL_STOCKPILED: {
-				if (!unit->stockpileWeapon || !gs->Ally(unit->allyteam, allyTeam)) {
+				if (!unit->stockpileWeapon || !teamHandler->Ally(unit->allyteam, allyTeam)) {
 					return false;
 				}
 				(*(int*)data) = unit->stockpileWeapon->numStockpiled;
 				return true;
 			}
 			case AIVAL_STOCKPILE_QUED: {
-				if (!unit->stockpileWeapon || !gs->Ally(unit->allyteam, allyTeam)) {
+				if (!unit->stockpileWeapon || !teamHandler->Ally(unit->allyteam, allyTeam)) {
 					return false;
 				}
 				(*(int*)data) = unit->stockpileWeapon->numStockpileQued;
@@ -1542,7 +1542,7 @@ int CAICallback::GetSelectedUnits(int *unitIds)
 	GML_RECMUTEX_LOCK(sel); // GetSelectedUnit
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
-	if (gu->myAllyTeam == gs->AllyTeam(team)) {
+	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
 		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin(); ui != selectedUnits.selectedUnits.end(); ++ui)
 			unitIds[a++] = (*ui)->id;
 	}
@@ -1552,7 +1552,7 @@ int CAICallback::GetSelectedUnits(int *unitIds)
 
 float3 CAICallback::GetMousePos() {
 	verify ();
-	if (gu->myAllyTeam == gs->AllyTeam(team))
+	if (gu->myAllyTeam == teamHandler->AllyTeam(team))
 		return inMapDrawer->GetMouseMapPos();
 	else
 		return ZeroVector;
@@ -1564,13 +1564,13 @@ int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 	int a=0;
 	verify ();
 
-	if (gu->myAllyTeam != gs->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
 		return 0;
 
 	for (int i=0;i<inMapDrawer->numQuads;i++){
 		if(!inMapDrawer->drawQuads[i].points.empty()){
 			for(std::list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
-				if(mp->color==gs->Team(team)->color) { //Maybe add so that markers of your ally team would be also found?
+				if(mp->color==teamHandler->Team(team)->color) { //Maybe add so that markers of your ally team would be also found?
 					pm[a].pos=mp->pos;
 					pm[a].color=mp->color;
 					pm[a].label=mp->label.c_str();
@@ -1588,13 +1588,13 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 	int a=0;
 	verify ();
 
-	if (gu->myAllyTeam != gs->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
 		return 0;
 
 	for (int i=0;i<inMapDrawer->numQuads;i++){
 		if(!inMapDrawer->drawQuads[i].points.empty()){
 			for(std::list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
-				if(ml->color==gs->Team(team)->color){ //Maybe add so that markers of your ally team would be also found?
+				if(ml->color==teamHandler->Team(team)->color){ //Maybe add so that markers of your ally team would be also found?
 					lm[a].pos=ml->pos;
 					lm[a].color=ml->color;
 					lm[a].pos2=ml->pos2;
@@ -1630,7 +1630,7 @@ bool CAICallback::CanBuildUnit(int unitDefID)
 
 const float3 *CAICallback::GetStartPos()
 {
-	return &gs->Team(team)->startPos;
+	return &teamHandler->Team(team)->startPos;
 }
 
 

@@ -2,12 +2,12 @@
 #include <algorithm>
 #include "mmgr.h"
 
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SpherePartProjectile.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 
 using std::min;
 

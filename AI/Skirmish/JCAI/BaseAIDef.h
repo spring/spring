@@ -3,20 +3,20 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Jelmer Cnossen
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 //-------------------------------------------------------------------------
 #ifndef JC_BASE_AI_DEF_H
 #define JC_BASE_AI_DEF_H
 
 #include "System/Vec2.h"
-#include "Game/GlobalConstants.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 #include "ExternalAI/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include <assert.h> 
+#include <assert.h>
 #include <algorithm>
 #include <map>
 #include <set>
@@ -30,7 +30,7 @@ using namespace std;
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
-#endif 
+#endif
 
 typedef unsigned char uchar;
 typedef unsigned long ulong;
@@ -63,9 +63,9 @@ CfgList *LoadConfigFromFS (IAICallback *cb, const char *file);
 #define AI_PATH "aidll/globalai/jcai/"
 
 
-struct ResourceInfo 
+struct ResourceInfo
 {
-	ResourceInfo() { energy=metal=0.0f; } 
+	ResourceInfo() { energy=metal=0.0f; }
 	ResourceInfo(float e,float m) : energy(e),metal(m) {}
 	ResourceInfo& operator+=(const ResourceInfo &x) { energy+=x.energy; metal+=x.metal; return *this; }
 	ResourceInfo& operator-=(const ResourceInfo &x) { energy-=x.energy; metal-=x.metal; return *this; }

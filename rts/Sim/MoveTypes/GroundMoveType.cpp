@@ -21,6 +21,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -30,11 +31,11 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/LogOutput.h"
-#include "System/Sound.h"
-#include "System/FastMath.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
+#include "LogOutput.h"
+#include "Sound.h"
+#include "FastMath.h"
 #include "myMath.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -1523,7 +1524,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
-					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						// push the blocking unit out of the way
@@ -1608,7 +1609,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 					const int uAllyTeam = u->allyteam;
 					const int oAllyTeam = owner->allyteam;
-					const bool allied = (gs->Ally(uAllyTeam, oAllyTeam) || gs->Ally(oAllyTeam, uAllyTeam));
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
 
 					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
 						// push the blocking unit out of the way

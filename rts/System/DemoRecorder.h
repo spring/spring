@@ -6,7 +6,7 @@
 
 #include "Demo.h"
 #include "Game/Player.h"
-#include "Game/Team.h"
+#include "Sim/Misc/Team.h"
 
 /**
 @brief Used to record demos

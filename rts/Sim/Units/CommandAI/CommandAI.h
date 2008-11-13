@@ -6,7 +6,7 @@
 #include <set>
 
 #include "Object.h"
-#include "Sim/Units/CommandAI/Command.h"
+#include "Command.h"
 #include "CommandQueue.h"
 #include "float3.h"
 

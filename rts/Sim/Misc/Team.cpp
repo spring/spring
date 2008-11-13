@@ -6,11 +6,12 @@
 #include "mmgr.h"
 
 #include "Team.h"
+#include "TeamHandler.h"
 
 #include "Messages.h"
 #include "GlobalSynced.h"
 #include "LogOutput.h"
-#include "Player.h"
+#include "Game/PlayerHandler.h"
 #include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
@@ -18,8 +19,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
+#include "EventHandler.h"
+#include "GlobalUnsynced.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
@@ -224,7 +225,7 @@ void CTeam::AddEnergy(float amount, bool hc)
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
-	CTeam* target = gs->Team(toTeam);
+	CTeam* target = teamHandler->Team(toTeam);
 
 	if (!target) {
 		logOutput.Print("Team %i didn't exists, can't give units", toTeam);
@@ -253,9 +254,10 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 
 void CTeam::Died()
 {
+	// TODO: event based
 	if (leader >= 0) {
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
-		                teamNum, gs->players[leader]->name.c_str());
+		                teamNum, playerHandler->Player(leader)->name.c_str());
 	} else {
 		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
 	}
@@ -265,8 +267,8 @@ void CTeam::Died()
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		if (gs->players[a]->active && (gs->players[a]->team == teamNum)) {
-			gs->players[a]->StartSpectating();
+		if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == teamNum)) {
+			playerHandler->Player(a)->StartSpectating();
 		}
 	}
 	if (eoh->IsSkirmishAI(teamNum)) {
@@ -274,7 +276,7 @@ void CTeam::Died()
 	}
 
 	CLuaUI::UpdateTeams();
-  CPlayer::UpdateControlledTeams();
+	CPlayer::UpdateControlledTeams();
 	eventHandler.TeamDied(teamNum);
 }
 
@@ -325,9 +327,9 @@ void CTeam::SlowUpdate()
 	currentStats.energyUsed += prevEnergyUpkeep + prevEnergyExpense;
 
 	float eShare = 0.0f, mShare = 0.0f;
-	for (int a = 0; a < gs->activeTeams; ++a) {
-		if ((a != teamNum) && (gs->AllyTeam(teamNum) == gs->AllyTeam(a))) {
-			CTeam* team = gs->Team(a);
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
+			CTeam* team = teamHandler->Team(a);
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
 			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
 		}
@@ -348,9 +350,9 @@ void CTeam::SlowUpdate()
 	if (mShare > 0.0f) {
 		dm = std::min(1.0f, mExcess/mShare);
 	}
-	for (int a = 0; a < gs->activeTeams; ++a) {
-		if ((a != teamNum) && (gs->AllyTeam(teamNum) == gs->AllyTeam(a))) {
-			CTeam* team = gs->Team(a);
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
+			CTeam* team = teamHandler->Team(a);
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
 			energy -= edif;

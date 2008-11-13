@@ -7,7 +7,7 @@
 #include "LogOutput.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "bitops.h"
 
 CRefractWater::CRefractWater() : CAdvWater(false)

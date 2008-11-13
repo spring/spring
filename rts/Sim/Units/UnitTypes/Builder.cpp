@@ -8,7 +8,6 @@
 #include "Builder.h"
 #include "Building.h"
 #include "Game/GameHelper.h"
-#include "Game/Team.h"
 #include "LogOutput.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
@@ -18,7 +17,8 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/ModInfo.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -26,8 +26,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/GlobalUnsynced.h"
-#include "System/EventHandler.h"
+#include "GlobalUnsynced.h"
+#include "EventHandler.h"
 #include "Sound.h"
 #include "mmgr.h"
 
@@ -241,7 +241,7 @@ void CBuilder::Update()
 						float ch  = heightmap[(tz2 + z) * (gs->mapx + 1) + x];
 						float ch2 = heightmap[(tz2 + 3) * (gs->mapx + 1) + x];
 						float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
-	
+
 						readmap->AddHeight((tz2 + z) * (gs->mapx + 1) + x, adjust);
 					}
 				}
@@ -350,7 +350,7 @@ void CBuilder::Update()
 				const float energyUseScaled = curCapture->energyCost * captureFraction * modInfo.captureEnergyCostFactor;
 
 				if (!UseEnergy(energyUseScaled)) {
-					gs->Team(team)->energyPull += energyUseScaled;
+					teamHandler->Team(team)->energyPull += energyUseScaled;
 				} else {
 					curCapture->captureProgress = captureProgressTemp;
 					CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
@@ -367,7 +367,7 @@ void CBuilder::Update()
 							// capture succesful
 							int oldLineage = curCapture->lineage;
 							curCapture->lineage = this->lineage;
-							gs->Team(oldLineage)->LeftLineage(curCapture);
+							teamHandler->Team(oldLineage)->LeftLineage(curCapture);
 						}
 						curCapture->captureProgress=0.0f;
 						StopBuild(true);
@@ -725,7 +725,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 color = unitDef->nanoColor;
 
 		if (gu->teamNanospray) {
-			unsigned char* tcol = gs->Team(team)->color;
+			unsigned char* tcol = teamHandler->Team(team)->color;
 			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
 		}
 

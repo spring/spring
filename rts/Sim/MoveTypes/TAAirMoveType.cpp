@@ -16,9 +16,9 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "System/LogOutput.h"
-#include "System/myMath.h"
-#include "System/Matrix44f.h"
+#include "LogOutput.h"
+#include "myMath.h"
+#include "Matrix44f.h"
 
 
 CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));

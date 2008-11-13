@@ -21,11 +21,11 @@ using namespace std;
 #include "LuaHashString.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Platform/FileSystem.h"
-#include "System/Util.h"
+#include "LogOutput.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "Util.h"
 
 
 /******************************************************************************/

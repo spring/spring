@@ -11,7 +11,7 @@
 
 #include "LuaHashString.h"
 
-#include "System/LogOutput.h"
+#include "LogOutput.h"
 
 
 /******************************************************************************/

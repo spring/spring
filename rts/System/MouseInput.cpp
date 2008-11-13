@@ -17,7 +17,7 @@
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 
-#include "System/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
 #include "Platform/Win/win32.h"
 #include "MouseInput.h"
 #include "LogOutput.h"
