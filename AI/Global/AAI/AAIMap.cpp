@@ -1397,6 +1397,16 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 
 void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, bool water)
 {
+	// make sure to stay within map if too close to the edges
+	int xEnd = xPos + width; 
+	int yEnd = yPos + height; 
+
+	if(xEnd > xMapSize)
+		xEnd = xMapSize;
+	
+	if(yEnd > yMapSize)
+		yEnd = yMapSize;
+
 	//float3 my_pos;
 	int empty, cell;
 
@@ -1407,9 +1417,9 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 
 	if(block)	// block cells
 	{
-		for(int x = xPos; x < xPos + width; ++x)
+		for(int y = yPos; y < yEnd; ++y)
 		{
-			for(int y = yPos; y < yPos + height; ++y)
+			for(int x = xPos; x < xEnd; ++x)
 			{
 				cell = x + xMapSize*y;
 
@@ -1435,9 +1445,9 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 	}
 	else		// unblock cells
 	{
-		for(int x = xPos; x < xPos + width; ++x)
+		for(int y = yPos; y < yEnd; ++y)
 		{
-			for(int y = yPos; y < yPos + height; ++y)
+			for(int x = xPos; x < xEnd; ++x)
 			{
 				cell = x + xMapSize*y;
 
@@ -1466,6 +1476,40 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 	}
 }
 
+void AAIMap::UpdateBuildMap(float3 build_pos, const UnitDef *def, bool block, bool water, bool factory)
+{
+	Pos2BuildMapPos(&build_pos, def);
+		
+	if(block)
+	{
+		if(water)
+			SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 5);
+		else
+			SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 1);
+	}
+	else
+	{
+		// remove spaces before freeing up buildspace
+		CheckRows(build_pos.x, build_pos.z, def->xsize, def->zsize, block, water);
+
+		if(water)
+			SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 4);
+		else
+			SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 0);
+	}
+
+	if(factory)
+	{
+		// extra space for factories to keep exits clear
+		BlockCells(build_pos.x, build_pos.z - 8, def->xsize, 8, block, water);
+		BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->zsize + 1.5f * (float)cfg->Y_SPACE, block, water);
+		BlockCells(build_pos.x, build_pos.z + def->zsize, def->xsize, 1.5f * (float)cfg->Y_SPACE - 8, block, water);
+	}
+
+	// add spaces after blocking buildspace
+	if(block)
+		CheckRows(build_pos.x, build_pos.z, def->xsize, def->zsize, block, water);
+}
 
 void AAIMap::Pos2FinalBuildPos(float3 *pos, const UnitDef* def)
 {
@@ -1483,17 +1527,28 @@ void AAIMap::Pos2FinalBuildPos(float3 *pos, const UnitDef* def)
 int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 {
 	int x = xPos;
-	// scan line until next free cell found
-	while(buildmap[x+yPos*xMapSize] == value)
+	
+	if(direction)
 	{
-		if(direction)
+		while(buildmap[x+yPos*xMapSize] == value)
+		{
 			++x;
-		else
+			
+			// search went out of map
+			if(x >= xMapSize)
+				return -1;
+		}
+	}
+	else
+	{
+		while(buildmap[x+yPos*xMapSize] == value)
+		{
 			--x;
-
-		// search went out of map
-		if(x < 0 || x >= xMapSize)
-			return -1;
+			
+			// search went out of map
+			if(x < 0)
+				return -1;
+		}
 	}
 
 	return x;
@@ -1501,18 +1556,31 @@ int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 
 int AAIMap::GetNextY(int direction, int xPos, int yPos, int value)
 {
-	int y = yPos;
-	// scan line until next free cell found
-	while(buildmap[xPos+y*xMapSize] == value)
-	{
-		if(direction)
-			++y;
-		else
-			--y;
+	int y = yPos; 
 
-		// search went out of map
-		if(y < 0 || y >= yMapSize)
-			return -1;
+	if(direction)
+	{
+		// scan line until next free cell found
+		while(buildmap[xPos+y*xMapSize] == value)
+		{
+			++y;
+		
+			// search went out of map
+			if(y >= yMapSize)
+				return -1;
+		}
+	}
+	else
+	{
+		// scan line until next free cell found
+		while(buildmap[xPos+y*xMapSize] == value)
+		{
+			--y;
+		
+			// search went out of map
+			if(y < 0)
+				return -1;
+		}
 	}
 
 	return y;
@@ -1537,9 +1605,9 @@ int AAIMap::GetCliffyCells(int xPos, int yPos, int xSize, int ySize)
 	int cliffs = 0;
 
 	// count cells with big slope
-	for(int x = xPos; x < xPos + xSize; x++)
+	for(int x = xPos; x < xPos + xSize; ++x)
 	{
-		for(int y = yPos; y < yPos + ySize; y++)
+		for(int y = yPos; y < yPos + ySize; ++y)
 		{
 			if(buildmap[x+y*xMapSize] == 3)
 				++cliffs;
@@ -1557,12 +1625,12 @@ int AAIMap::GetCliffyCellsInSector(AAISector *sector)
 	int yPos = sector->y * ySectorSize;
 
 	// count cells with big slope
-	for(int x = xPos; x < xPos + xSectorSizeMap; x++)
+	for(int x = xPos; x < xPos + xSectorSizeMap; ++x)
 	{
-		for(int y = yPos; y < yPos + ySectorSizeMap; y++)
+		for(int y = yPos; y < yPos + ySectorSizeMap; ++y)
 		{
 			if(buildmap[x+y*xMapSize] == 3)
-				cliffs++;
+				++cliffs;
 		}
 	}
 
@@ -2680,4 +2748,3 @@ int AAIMap::GetSmartContinentID(float3 *pos, unsigned int unit_movement_type)
 
 	return continent_map[y * xContMapSize + x];
 }
-
