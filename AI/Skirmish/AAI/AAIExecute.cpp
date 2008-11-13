@@ -186,25 +186,25 @@ bool AAIExecute::InitBuildingAt(const UnitDef *def, float3 pos, bool water)
 		ut->futureFactories += 1;
 
 		if(water)
-			map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 5);
+			map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 5);
 		else
-			map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 1);
+			map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 1);
 
 		map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, true, water);
-		map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, true, water);
-		map->BlockCells(pos.x, pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, true, water);
+		map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, true, water);
+		map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, true, water);
 	}
 	// normal building
 	else
 	{
 		if(water)
-			map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 5);
+			map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 5);
 		else
-			map->SetBuildMap(pos.x, pos.z, def->xsize, def->ysize, 1);
+			map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 1);
 	}
 	
 	// prevent ai from building too many things in a row
-	map->CheckRows(pos.x, pos.z, def->xsize, def->ysize, true, water);
+	map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, true, water);
 
 	return true;
 }
@@ -3265,12 +3265,12 @@ void AAIExecute::ConstructionFailed(float3 build_pos, int def_id)
 
 		// update buildmap of sector
 		map->Pos2BuildMapPos(&build_pos, def);
-		map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, water);
+		map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->zsize, false, water);
 		
-		map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, value);
+		map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, value);
 		map->BlockCells(build_pos.x, build_pos.z - 8, def->xsize, 8, false, water);
-		map->BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->ysize + 1.5 * cfg->Y_SPACE, false, water);
-		map->BlockCells(build_pos.x, build_pos.z + def->ysize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, water);
+		map->BlockCells(build_pos.x + def->xsize, build_pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, water);
+		map->BlockCells(build_pos.x, build_pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, water);
 	}
 	else // normal building
 	{
@@ -3278,13 +3278,13 @@ void AAIExecute::ConstructionFailed(float3 build_pos, int def_id)
 			
 		if(def->minWaterDepth <= 0)
 		{
-			map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, 0);
-			map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, false);
+			map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 0);
+			map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->zsize, false, false);
 		}
 		else
 		{
-				map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->ysize, 4);
-				map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->ysize, false, true);
+				map->SetBuildMap(build_pos.x, build_pos.z, def->xsize, def->zsize, 4);
+				map->CheckRows(build_pos.x, build_pos.z, def->xsize, def->zsize, false, true);
 		}
 	}
 }

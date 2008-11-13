@@ -796,14 +796,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\GlobalSynced.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\GlobalSynced.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Game\Player.cpp"
 				>
 			</File>
@@ -817,6 +809,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\PlayerBase.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerHandler.h"
 				>
 			</File>
 			<File
@@ -857,14 +857,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\SelectMenu.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\Team.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\Team.h"
 				>
 			</File>
 			<File
@@ -2311,22 +2303,6 @@
 		<Filter
 			Name="Sim"
 			>
-			<File
-				RelativePath="..\..\Sim\ModInfo.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sim\ModInfo.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sim\SideParser.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sim\SideParser.h"
-				>
-			</File>
 			<Filter
 				Name="Units"
 				>
@@ -3263,6 +3239,18 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\GlobalConstants.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GlobalSynced.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\GlobalSynced.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\GroundBlockingObjectMap.cpp"
 					>
 					<FileConfiguration
@@ -3335,6 +3323,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\ModInfo.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\ModInfo.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\QuadField.cpp"
 					>
 				</File>
@@ -3348,6 +3344,30 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\RadarHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SideParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SideParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Team.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Team.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamHandler.h"
 					>
 				</File>
 				<File
@@ -4191,6 +4211,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\DataDirLocater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\DataDirLocater.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\FileFilter.cpp"
 					>
 					<FileConfiguration
@@ -4255,6 +4283,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\FileSystem.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystem.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.cpp"
 					>
 					<FileConfiguration
@@ -4314,6 +4350,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.h"
 					>
 				</File>
 				<File
@@ -5281,14 +5325,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\FileSystem.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\FileSystem.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\NullSound.h"
 					>
 				</File>
@@ -5317,14 +5353,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\CrashHandler.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Linux\DataDirLocater.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Linux\DataDirLocater.h"
 						>
 					</File>
 					<File
@@ -5513,14 +5541,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\Win32Cmd.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\WinFileSystemHandler.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\WinFileSystemHandler.h"
 						>
 					</File>
 					<File

@@ -2028,9 +2028,9 @@ void CUnitTable::Init_nr2()
 				L("Its x size: " << unittypearray[i].def->xsize);
 			}
 			
-			if(unittypearray[i].def->ysize > 0)
+			if(unittypearray[i].def->zsize > 0)
 			{
-				L("Its y size: " << unittypearray[i].def->ysize);
+				L("Its y size: " << unittypearray[i].def->zsize);
 			}
 		
 		

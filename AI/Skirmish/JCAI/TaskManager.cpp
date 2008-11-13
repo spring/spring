@@ -22,7 +22,7 @@ float FeatureReclaimDist (const UnitDef* def) {
 	BuildTable::UDef* cd=buildTable.GetCachedDef (def->id);
 	if (cd->IsBuilding()) {
         if (cd->IsBuilder()) return SQUARE_SIZE * 12; // factories
-		else return SQUARE_SIZE * (def->xsize+def->ysize)/4;
+		else return SQUARE_SIZE * (def->xsize+def->zsize)/4;
 	} else return SQUARE_SIZE * 6;
 }
 

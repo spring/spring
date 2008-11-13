@@ -1063,7 +1063,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			float3 positionL = position;
 			positionL.z-=48.0f;
 //			positionL.y=cb->GetElevation(positionL.x,positionL.z);
-			if( position.z/8 >= cb->GetMapHeight()-5-(U->BuildQ->creationUD->ud->ysize/2) ||
+			if( position.z/8 >= cb->GetMapHeight()-5-(U->BuildQ->creationUD->ud->zsize/2) ||
 				(cb->CanBuildAt(bd,positionL) && !cb->CanBuildAt(bd,positionH) ) )
 				c.params.push_back(2);
 		}

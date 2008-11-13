@@ -19,7 +19,7 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(radarErrorSize),
 	CR_MEMBER(baseRadarErrorSize),
 	CR_MEMBER(xsize),
-	CR_MEMBER(ysize),
+	CR_MEMBER(zsize),
 	CR_MEMBER(targFacEffect),
 	CR_RESERVED(32)
 ));
@@ -30,7 +30,7 @@ CRadarHandler* radarhandler = NULL;
 
 void CRadarHandler::Serialize(creg::ISerializer& s)
 {
-	const int size = xsize*ysize*2;
+	const int size = xsize*zsize*2;
 
 	// NOTE This could be tricky if gs is serialized after radarHandler.
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
@@ -54,10 +54,10 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 : circularRadar(circularRadar),
   baseRadarErrorSize(96),
   xsize(gs->mapx / RADAR_SIZE),
-  ysize(gs->mapy / RADAR_SIZE),
+  zsize(gs->mapy / RADAR_SIZE),
   targFacEffect(2)
 {
-	const int size = xsize * ysize;
+	const int size = xsize * zsize;
 
 	commonJammerMap.resize(size, 0);
 	commonSonarJammerMap.resize(size, 0);
@@ -159,7 +159,7 @@ void CRadarHandler::AddMapArea(int2 pos, int radius, std::vector<unsigned short>
 	const int sx = std::max(0, pos.x - radius);
 	const int ex = std::min(xsize - 1, pos.x + radius);
 	const int sy = std::max(0, pos.y - radius);
-	const int ey = std::min(ysize - 1, pos.y + radius);
+	const int ey = std::min(zsize - 1, pos.y + radius);
 
 	const int rr = (radius * radius);
 
@@ -205,7 +205,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 
 		for (linei = line.begin(); linei != line.end(); ++linei) {
 			if (((xradar + linei->x) < xsize) &&
-			    ((yradar + linei->y) < ysize)) {
+			    ((yradar + linei->y) < zsize)) {
 				int rsquare = (xradar + linei->x) + (yradar + linei->y) * xsize;
 				int msquare = (xmap + linei->x * 4) + (ymap + linei->y * 4) * gs->hmapx;
 				float dh = readmap->mipHeightmap[1][msquare] - baseHeight;
@@ -253,7 +253,7 @@ void CRadarHandler::SafeLosRadarAdd(CUnit* unit)
 				}
 			}
 			if (((xradar - linei->y) >= 0) &&
-			    ((yradar + linei->x) < ysize)) {
+			    ((yradar + linei->x) < zsize)) {
 				int rsquare = (xradar - linei->y) + (yradar + linei->x) * xsize;
 				int msquare = (xmap - linei->y * 4) + (ymap + linei->x * 4) * gs->hmapx;
 				float dh = readmap->mipHeightmap[1][msquare] - baseHeight;

@@ -124,8 +124,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	unit->beingBuilt = build;
 
-	unit->xsize = ((facing & 1) == 0) ? ud->xsize : ud->ysize;
-	unit->ysize = ((facing & 1) == 1) ? ud->xsize : ud->ysize;
+	unit->xsize = ((facing & 1) == 0) ? ud->xsize : ud->zsize;
+	unit->zsize = ((facing & 1) == 1) ? ud->xsize : ud->zsize;
 	unit->buildFacing = facing;
 	unit->power = ud->power;
 	unit->maxHealth = ud->health;
@@ -524,9 +524,9 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		bi.pos = helper->Pos2BuildPos(bi);
 		const float hss = 0.5f * SQUARE_SIZE;
 		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
-		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetYSize() * hss)) / SQUARE_SIZE);
+		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
 		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-		const int tz2 = std::min(gs->mapy, tz1 + bi.GetYSize());
+		const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
 
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {

@@ -1507,12 +1507,12 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 			BuildInfo bi(*ci);
 			bi.pos = helper->Pos2BuildPos(bi);
 			const float xsize = bi.GetXSize()*4;
-			const float ysize = bi.GetYSize()*4;
+			const float zsize = bi.GetZSize()*4;
 			glBegin(GL_LINE_LOOP);
-			glVertexf3(bi.pos + float3(+xsize, 1, +ysize));
-			glVertexf3(bi.pos + float3(-xsize, 1, +ysize));
-			glVertexf3(bi.pos + float3(-xsize, 1, -ysize));
-			glVertexf3(bi.pos + float3(+xsize, 1, -ysize));
+			glVertexf3(bi.pos + float3(+xsize, 1, +zsize));
+			glVertexf3(bi.pos + float3(-xsize, 1, +zsize));
+			glVertexf3(bi.pos + float3(-xsize, 1, -zsize));
+			glVertexf3(bi.pos + float3(+xsize, 1, -zsize));
 			glEnd();
 			if (bi.pos.y < 0.0f) {
 				const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
@@ -1520,9 +1520,9 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 
 				const float h = bi.pos.y;
 				const float x1 = bi.pos.x - xsize;
-				const float z1 = bi.pos.z - ysize;
+				const float z1 = bi.pos.z - zsize;
 				const float x2 = bi.pos.x + xsize;
-				const float z2 = bi.pos.z + ysize;
+				const float z2 = bi.pos.z + zsize;
 
 				glPushAttrib(GL_CURRENT_BIT);
 				glBegin(GL_LINES);

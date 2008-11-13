@@ -101,7 +101,7 @@ namespace ntai {
 					Bplan->utd=building;
 					G->Manufacturer->AddPlan();
 					Bplan->id = G->Manufacturer->getplans();
-					Bplan->radius = (float)max(building->GetUnitDef()->xsize,building->GetUnitDef()->ysize)*8.0f;
+					Bplan->radius = (float)max(building->GetUnitDef()->xsize,building->GetUnitDef()->zsize)*8.0f;
 					Bplan->inFactory = building->IsFactory();
 
 					G->Manufacturer->BPlans->push_back(Bplan);

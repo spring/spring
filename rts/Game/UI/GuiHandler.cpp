@@ -2492,23 +2492,23 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 	if(other.def && GetQueueKeystate() && keys[SDLK_LCTRL]){		//circle build around building
 		int oxsize=other.GetXSize()*SQUARE_SIZE;
-		int oysize=other.GetYSize()*SQUARE_SIZE;
+		int ozsize=other.GetZSize()*SQUARE_SIZE;
 		int xsize=startInfo.GetXSize()*SQUARE_SIZE;
-		int ysize=startInfo.GetYSize()*SQUARE_SIZE;
+		int zsize=startInfo.GetZSize()*SQUARE_SIZE;
 
 		start =end=helper->Pos2BuildPos(other);
 		start.x-=oxsize/2;
-		start.z-=oysize/2;
+		start.z-=ozsize/2;
 		end.x+=oxsize/2;
-		end.z+=oysize/2;
+		end.z+=ozsize/2;
 
 		int nvert=1+oxsize/xsize;
-		int nhori=1+oysize/xsize;
+		int nhori=1+ozsize/xsize;
 
-		FillRowOfBuildPos(startInfo, end.x  +ysize/2, start.z+xsize/2,      0, +xsize, nhori, 3, true, ret);
-		FillRowOfBuildPos(startInfo, end.x  -xsize/2, end.z  +ysize/2, -xsize,      0, nvert, 2, true, ret);
-		FillRowOfBuildPos(startInfo, start.x-ysize/2, end.z  -xsize/2,      0, -xsize, nhori, 1, true, ret);
-		FillRowOfBuildPos(startInfo, start.x+xsize/2, start.z-ysize/2, +xsize,      0, nvert, 0, true, ret);
+		FillRowOfBuildPos(startInfo, end.x  +zsize/2, start.z+xsize/2,      0, +xsize, nhori, 3, true, ret);
+		FillRowOfBuildPos(startInfo, end.x  -xsize/2, end.z  +zsize/2, -xsize,      0, nvert, 2, true, ret);
+		FillRowOfBuildPos(startInfo, start.x-zsize/2, end.z  -xsize/2,      0, -xsize, nhori, 1, true, ret);
+		FillRowOfBuildPos(startInfo, start.x+xsize/2, start.z-zsize/2, +xsize,      0, nvert, 0, true, ret);
 
 	} else { // rectangle or line
 		float3 delta = end - start;
@@ -2517,7 +2517,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int xnum=(int)((fabs(delta.x)+xsize*1.4f)/xsize);
 		float xstep=(int)((0<delta.x) ? xsize : -xsize);
 
-		float zsize=SQUARE_SIZE*(startInfo.GetYSize()+buildSpacing*2);
+		float zsize=SQUARE_SIZE*(startInfo.GetZSize()+buildSpacing*2);
 		int znum=(int)((fabs(delta.z)+zsize*1.4f)/zsize);
 		float zstep=(int)((0<delta.z) ? zsize : -zsize);
 

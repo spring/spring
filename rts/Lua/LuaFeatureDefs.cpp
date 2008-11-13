@@ -427,7 +427,7 @@ static bool InitParamMap()
 	ADD_FLOAT("mass", fd.mass);
 
 	ADD_INT("xsize", fd.xsize);
-	ADD_INT("ysize", fd.ysize);
+	ADD_INT("zsize", fd.zsize);
 
 	/*
 	ADD_FLOAT("hitSphereScale",    fd.collisionSphereScale);

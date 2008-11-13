@@ -2247,7 +2247,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 			if (unitDef != NULL) {
 				int xsize = unitDef->xsize;
-				int zsize = unitDef->ysize;
+				int zsize = unitDef->zsize;
 				int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 				int total = numRequestedUnits;
 
@@ -2279,7 +2279,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
 				if (featureDef) {
 					int xsize = featureDef->xsize;
-					int zsize = featureDef->ysize;
+					int zsize = featureDef->zsize;
 					int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 					int total = amount; // FIXME -- feature count limit?
 
