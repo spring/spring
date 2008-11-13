@@ -69,11 +69,6 @@ public:
 	// if there is more than one instance of AAI, make sure to allocate/free memory only once
 	int aai_instance;
 
-	// number of active/under construction units of all different types
-	int activeUnits[(int)MOBILE_CONSTRUCTOR+1];
-	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
-	int requestedUnits[(int)MOBILE_CONSTRUCTOR+1];
-
 	// list of buildtasks
 	list<AAIBuildTask*> build_tasks;
 

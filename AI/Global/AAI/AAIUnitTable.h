@@ -58,10 +58,17 @@ public:
 
 	void AssignGroupToEnemy(int unit, AAIGroup *group);
 
+	// determine whether unit with specified def/unit id is commander/constrcutor
 	bool IsUnitCommander(int unit_id);
 	bool IsDefCommander(int def_id);
-
 	bool IsBuilder(int unit_id);
+
+	// get/set methods
+	//int GetActiveScouts();
+	//int GetActiveBuilders();
+	//int GetActiveFactories();
+	void ActiveUnitKilled(UnitCategory category);
+	void FutureUnitKilled(UnitCategory category);
 
 	AAI *ai;
 	AAIExecute *execute;
@@ -71,12 +78,7 @@ public:
 	// units[i].unitId = -1 -> not used , -2 -> enemy unit
 	vector<AAIUnit> units;
 
-	// number of active/under construction units of all different types
-	int activeScouts, futureScouts;
-	int activeBuilders, futureBuilders;
-	int activeFactories, futureFactories;
-
-	// commanders id
+	// id of commander
 	int cmdr;
 		
 	set<int> scouts;
@@ -88,4 +90,12 @@ public:
 	set<int> power_plants;
 	set<int> stationary_arty;
 
+	// number of active/under construction units of all different types
+	int activeUnits[(int)MOBILE_CONSTRUCTOR+1];
+	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
+	int requestedUnits[(int)MOBILE_CONSTRUCTOR+1];
+
+	int activeScouts, futureScouts;
+	int activeBuilders, futureBuilders;
+	int activeFactories, futureFactories;
 };

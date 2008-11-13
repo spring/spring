@@ -318,7 +318,7 @@ void AAIBrain::DefendCommander(int attacker)
 			if(pos.x > 0 && pos.z > 0)
 			{
 				pos.y = cb->GetElevation(pos.x, pos.z);
-				execute->moveUnitTo(ai->cmdr->unit_id, &pos);
+				execute->MoveUnitTo(ai->cmdr->unit_id, &pos);
 			}
 		}
 	}*/

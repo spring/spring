@@ -55,6 +55,9 @@ public:
 	// blocks/unblocks cells (to prevent AAI from packing buildings too close to each other)
 	void BlockCells(int xPos, int yPos, int width, int height, bool block, bool water);
 
+	// updates buildmap ((un)block cells + insert/remove spaces) if regular building is added/removed (factories need some extra space)
+	void UpdateBuildMap(float3 build_pos, const UnitDef *def, bool block, bool water, bool factory);
+
 	// returns number of cells with big slope
 	int GetCliffyCells(int xPos, int yPos, int xSize, int ySize);
 	int GetCliffyCellsInSector(AAISector *sector);

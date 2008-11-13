@@ -59,10 +59,8 @@ void AAIConstructor::Idle()
 		{
 			if(construction_unit_id == -1)
 			{
-				//cb->SendTextMsg("construction aborted", 0);
-
 				ai->bt->units_dynamic[construction_def_id].active -= 1;
-				--ai->futureUnits[construction_category];
+				ai->ut->futureUnits[construction_category] -= 1;
 
 				// clear up buildmap etc.
 				ai->execute->ConstructionFailed(build_pos, construction_def_id);
@@ -134,7 +132,7 @@ void AAIConstructor::Update()
 						construction_def_id = def_id;
 						task = BUILDING;
 
-						++ai->futureUnits[cat];
+						++ai->ut->futureUnits[cat];
 
 						//if(bt->IsFactory(def_id))
 						//	++ai->futureFactories;
@@ -165,7 +163,7 @@ void AAIConstructor::Update()
 				{
 					//cb->SendTextMsg("idle", 0);
 					ai->bt->units_dynamic[construction_def_id].active -= 1;
-					ai->futureUnits[construction_category] -= 1;
+					ai->ut->futureUnits[construction_category] -= 1;
 	
 					// clear up buildmap etc.
 					ai->execute->ConstructionFailed(build_pos, construction_def_id);
@@ -346,10 +344,9 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 {
 	// get def and final position
 	const UnitDef *def = ai->bt->unitList[id_building-1];
-	ai->map->Pos2FinalBuildPos(&pos, def);
 	
 	// give order if building can be placed at the desired position (position lies within a valid sector)
-	if(ai->execute->InitBuildingAt(def, pos, water))
+	if(ai->execute->InitBuildingAt(def, &pos, water))
 	{
 		order_tick = cb->GetCurrentFrame();
 
@@ -378,7 +375,10 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 
 		// increase number of active units of that type/category
 		bt->units_dynamic[def->id].requested += 1;
-		ai->requestedUnits[construction_category] += 1;
+		ai->ut->requestedUnits[construction_category] += 1;
+
+		if(bt->IsFactory(id_building))
+			ai->ut->futureFactories += 1;
 	}
 }
 
@@ -499,7 +499,7 @@ void AAIConstructor::Killed()
 			if(construction_unit_id == -1)
 			{
 				ai->bt->units_dynamic[construction_def_id].requested -= 1; 
-				ai->requestedUnits[construction_category] -= 1;
+				ai->ut->requestedUnits[construction_category] -= 1;
 
 				// killed on the way to the buildsite 
 				int x = build_pos.x / ai->map->xSectorSize;
