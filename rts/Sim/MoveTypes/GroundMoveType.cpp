@@ -1156,7 +1156,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 	// calculate the distance in (x,z) depending
 	// on the shape of the object footprints
 	float dist2D;
-	if (object1->xsize == object1->ysize || object2->xsize == object2->ysize) {
+	if (object1->xsize == object1->zsize || object2->xsize == object2->zsize) {
 		// use xsize as a cylindrical radius.
 		float3 distVec = (object1->midPos - object2->midPos);
 		dist2D = distVec.Length2D() - (object1->xsize + object2->xsize) * SQUARE_SIZE / 2 + 2 * marginal;
@@ -1167,7 +1167,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 		float zdiff = streflop::fabs(object1->midPos.z - object2->midPos.z);
 
 		distVec.x = xdiff - (object1->xsize + object2->xsize) * SQUARE_SIZE / 2 + 2 * marginal;
-		distVec.z = zdiff - (object1->ysize + object2->ysize) * SQUARE_SIZE / 2 + 2 * marginal;
+		distVec.z = zdiff - (object1->zsize + object2->zsize) * SQUARE_SIZE / 2 + 2 * marginal;
 
 		if (distVec.x > 0.0f && distVec.z > 0.0f) {
 			dist2D = distVec.Length2D();
@@ -1436,7 +1436,7 @@ void CGroundMoveType::CheckCollision(void)
 		int retest = 0;
 
 		do {
-			const float zmove = (owner->mapPos.y + owner->ysize / 2) * SQUARE_SIZE;
+			const float zmove = (owner->mapPos.y + owner->zsize / 2) * SQUARE_SIZE;
 			const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
 
 			if (fabs(owner->frontdir.x) > fabs(owner->frontdir.z)) {
@@ -1444,29 +1444,29 @@ void CGroundMoveType::CheckCollision(void)
 					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
 					newmp = owner->GetMapPos();
 				} else if (newmp.y > owner->mapPos.y) {
-					haveCollided |= CheckColV(newmp.y + owner->ysize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->ysize - 1);
+					haveCollided |= CheckColV(newmp.y + owner->zsize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->zsize - 1);
 					newmp = owner->GetMapPos();
 				}
 				if (newmp.x < owner->mapPos.x) {
-					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->ysize - 1,  xmove - 3.99f, owner->mapPos.x);
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->zsize - 1,  xmove - 3.99f, owner->mapPos.x);
 					newmp = owner->GetMapPos();
 				} else if (newmp.x > owner->mapPos.x) {
-					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->ysize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->zsize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
 					newmp = owner->GetMapPos();
 				}
 			} else {
 				if (newmp.x < owner->mapPos.x) {
-					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->ysize - 1,  xmove - 3.99f, owner->mapPos.x);
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->zsize - 1,  xmove - 3.99f, owner->mapPos.x);
 					newmp = owner->GetMapPos();
 				} else if (newmp.x > owner->mapPos.x) {
-					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->ysize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->zsize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
 					newmp = owner->GetMapPos();
 				}
 				if (newmp.y < owner->mapPos.y) {
 					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
 					newmp = owner->GetMapPos();
 				} else if (newmp.y > owner->mapPos.y) {
-					haveCollided |= CheckColV(newmp.y + owner->ysize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->ysize - 1);
+					haveCollided |= CheckColV(newmp.y + owner->zsize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->zsize - 1);
 					newmp = owner->GetMapPos();
 				}
 			}

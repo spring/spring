@@ -300,7 +300,7 @@ namespace ntai {
 			}
 
 			int* iunits = new int[10000];
-			int itemp = G->GetEnemyUnits(iunits, q, (float)max(building->GetUnitDef()->ysize, building->GetUnitDef()->xsize)*8);
+			int itemp = G->GetEnemyUnits(iunits, q, (float)max(building->GetUnitDef()->zsize, building->GetUnitDef()->xsize)*8);
 			delete [] iunits;
 
 			if(itemp>0){

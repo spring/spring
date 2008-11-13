@@ -43,7 +43,7 @@ public:
 	bool immobile;								// Immobile objects can not be moved. (Except perhaps along y-axis, to make them stay on ground.)
 	bool blockHeightChanges;					// map height cannot change under this object
 	int xsize;									// The x-size of this object, according to its footprint.
-	int ysize;									// The z-size of this object, according to its footprint. (NOTE: This one should have been called zsize!)
+	int zsize;									// The z-size of this object, according to its footprint.
 	float height;								// The height of this object.
 	SyncedSshort heading;								// Contains the same information as frontdir, but in a short signed integer.
 	

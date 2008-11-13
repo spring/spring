@@ -1080,8 +1080,8 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 			int zs=(int)(z/SQUARE_SIZE);
 			bool good=true;
 			int xsize=bi.GetXSize();
-			int ysize=bi.GetYSize();
-			for(int z2=std::max(0,zs-ysize/2-minDist);z2<std::min(gs->mapy,zs+(ysize+1)/2+minDist);++z2){
+			int zsize=bi.GetZSize();
+			for(int z2=std::max(0,zs-zsize/2-minDist);z2<std::min(gs->mapy,zs+(zsize+1)/2+minDist);++z2){
 				for(int x2=std::max(0,xs-xsize/2-minDist);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
 					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
@@ -1091,7 +1091,7 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float sea
 				}
 			}
 			//Checking factories near - factory can open yard for building
-			if (good) for(int z2=std::max(0,zs-ysize/2-minDist-2);z2<std::min(gs->mapy,zs+(ysize+1)/2+minDist+2);++z2){
+			if (good) for(int z2=std::max(0,zs-zsize/2-minDist-2);z2<std::min(gs->mapy,zs+(zsize+1)/2+minDist+2);++z2){
 				for(int x2=std::max(0,xs-xsize/2-minDist-2);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
 					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 					if(so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening){

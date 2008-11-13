@@ -66,7 +66,7 @@ if env['platform'] == 'windows':
 datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
            'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
 
-# Build UnixDataDirHandler.cpp separately from the other sources.  This is to prevent recompilation of
+# Build DataDirLocater.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
 
 if env['platform'] != 'windows':
@@ -118,7 +118,6 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
 	'rts/System/Platform/ConfigHandler.cpp',
-	'rts/System/FileSystem/FileSystem.cpp',
 	'rts/System/LogOutput.cpp',
 ]
 for f in unitsync_fs_files:       unitsync_files += f
@@ -133,7 +132,7 @@ if env['platform'] == 'windows':
 	# during linking
 	if os.name != 'nt':
 		unitsync_files.append('rts/lib/minizip/iowin32.c')
-	for f in ['rts/System/Platform/Win/WinFileSystemHandler.cpp', 'rts/System/FileSystem/DataDirLocater.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
+	for f in ['rts/System/FileSystem/DataDirLocater.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
 		unitsync_files += [os.path.join(uenv['builddir'], f)]
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
@@ -141,7 +140,6 @@ else:
 	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
 	unitsync_files += [ ddlcpp,
 		os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/DotfileHandler.cpp'),
-		os.path.join(uenv['builddir'], 'rts/System/Platform/Linux/UnixFileSystemHandler.cpp')
 	]
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
 

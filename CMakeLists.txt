@@ -75,12 +75,14 @@ endif (MARCH_FLAG)
 
 # intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
 IF ($ENV{CXX} MATCHES "icpc")
-	SET(CMAKE_CXX_FLAGS "")
+	SET(CMAKE_CXX_FLAGS " -axK")
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
+ELSE ($ENV{CXX} MATCHES "icpc")
+	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
 ENDIF ($ENV{CXX} MATCHES "icpc")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
-# ADD_DEFINITIONS(-DSTREFLOP_X87) breaks AI compiling
+ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 ENDIF (UNIX)
@@ -117,5 +119,7 @@ if (UNIX AND NOT MINGW)
 	install (FILES installer/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
 	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
 	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
+else (UNIX AND NOT MINGW)
+	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
 endif (UNIX AND NOT MINGW)
 

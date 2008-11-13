@@ -383,7 +383,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				const int airMipLevel = loshandler->airMipLevel;
 				if (drawRadarAndJammer) {
 					const int rxsize = radarhandler->xsize;
-					const int rysize = radarhandler->ysize;
+					const int rzsize = radarhandler->zsize;
 					const int posScale = highResInfoTexWanted ? SQUARE_SIZE : (SQUARE_SIZE * 2);
 					for (int y = starty; y < endy; ++y) {
 						const float zPos = y * posScale;
@@ -407,8 +407,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							const unsigned short* radarMap  = myRadar;
 							const unsigned short* jammerMap = myJammer;
 #endif // SONAR_JAMMER_MAPS
-							const int inRadar = InterpolateLos(radarMap,  rxsize, rysize, 3 + lowRes, 255, x, y);
-							const int inJam   = InterpolateLos(jammerMap, rxsize, rysize, 3 + lowRes, 255, x, y);
+							const int inRadar = InterpolateLos(radarMap,  rxsize, rzsize, 3 + lowRes, 255, x, y);
+							const int inJam   = InterpolateLos(jammerMap, rxsize, rzsize, 3 + lowRes, 255, x, y);
 
 							const int index = (a * 4);
 							for (int c = 0; c < 3; c++) {

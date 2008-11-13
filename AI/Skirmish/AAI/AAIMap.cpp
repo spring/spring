@@ -871,7 +871,7 @@ void AAIMap::Pos2BuildMapPos(float3 *pos, const UnitDef* def)
 
 	// shift to the leftmost uppermost cell
 	pos->x -= def->xsize/2;
-	pos->z -= def->ysize/2;
+	pos->z -= def->zsize/2;
 
 	// check if pos is still in that map, otherwise retun 0
 	if(pos->x < 0 && pos->z < 0)
@@ -882,7 +882,7 @@ void AAIMap::BuildMapPos2Pos(float3 *pos, const UnitDef *def)
 {
 	// shift to middlepoint
 	pos->x += def->xsize/2;
-	pos->z += def->ysize/2;
+	pos->z += def->zsize/2;
 
 	// back to unit coordinates
 	pos->x *= SQUARE_SIZE;
@@ -1474,7 +1474,7 @@ void AAIMap::Pos2FinalBuildPos(float3 *pos, const UnitDef* def)
 	else
 		pos->x=floor((pos->x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
 
-	if(def->ysize&2)
+	if(def->zsize&2)
 		pos->z=floor((pos->z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 	else
 		pos->z=floor((pos->z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
@@ -1522,7 +1522,7 @@ void AAIMap::GetSize(const UnitDef *def, int *xSize, int *ySize)
 {
 	// calculate size of building
 	*xSize = def->xsize;
-	*ySize = def->ysize;
+	*ySize = def->zsize;
 
 	// if building is a factory additional vertical space is needed
 	if(bt->IsFactory(def->id))
@@ -2021,15 +2021,15 @@ void AAIMap::SearchMetalSpots()
 
 				if(pos.z >= 2 && pos.x >= 2 && pos.x < xMapSize-2 && pos.z < yMapSize-2)
 				{
-					if(CanBuildAt(pos.x, pos.z, def->xsize, def->ysize))
+					if(CanBuildAt(pos.x, pos.z, def->xsize, def->zsize))
 					{
 						metal_spots.push_back(temp);
 						SpotsFound++;
 
 						if(pos.y >= 0)
-							SetBuildMap(pos.x-2, pos.z-2, def->xsize+4, def->ysize+4, 1);
+							SetBuildMap(pos.x-2, pos.z-2, def->xsize+4, def->zsize+4, 1);
 						else
-							SetBuildMap(pos.x-2, pos.z-2, def->xsize+4, def->ysize+4, 5);
+							SetBuildMap(pos.x-2, pos.z-2, def->xsize+4, def->zsize+4, 5);
 					}
 				}
 			//}
@@ -2680,3 +2680,4 @@ int AAIMap::GetSmartContinentID(float3 *pos, unsigned int unit_movement_type)
 
 	return continent_map[y * xContMapSize + x];
 }
+

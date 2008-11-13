@@ -154,7 +154,7 @@ static void Calc2DBuildPos(float3& pos, const UnitDef* ud)
 	else
 		pos.x=floor((pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
 
-	if(ud->ysize&2)
+	if(ud->zsize&2)
 		pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 	else
 		pos.z=floor((pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;

@@ -406,7 +406,7 @@ void AAISector::Pos2SectorMapPos(float3 *pos, const UnitDef* def)
 
 	// shift to the leftmost uppermost cell
 	pos->x -= def->xsize/2;
-	pos->z -= def->ysize/2;
+	pos->z -= def->zsize/2;
 
 	// check if pos is still in that scetor, otherwise retun 0
 	if(pos->x < 0 && pos->z < 0)
@@ -417,7 +417,7 @@ void AAISector::SectorMapPos2Pos(float3 *pos, const UnitDef *def)
 {
 	// shift to middlepoint
 	pos->x += def->xsize/2;
-	pos->z += def->ysize/2;
+	pos->z += def->zsize/2;
 
 	// get cell position on complete map
 	pos->x += x * ai->map->xSectorSizeMap;
@@ -771,3 +771,4 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 
 	*pos = ZeroVector;
 }
+

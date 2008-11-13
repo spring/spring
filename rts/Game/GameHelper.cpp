@@ -900,7 +900,7 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
 	else
 		pos.x = floor((buildInfo.pos.x + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	if (buildInfo.GetYSize() & 2)
+	if (buildInfo.GetZSize() & 2)
 		pos.z = floor((buildInfo.pos.z    ) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2 + 8;
 	else
 		pos.z = floor((buildInfo.pos.z + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;

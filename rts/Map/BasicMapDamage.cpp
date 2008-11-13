@@ -117,7 +117,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			CUnit* unit = *ui;
 			float totalDif = 0.0f;
 
-			for (int z = unit->mapPos.y; z < unit->mapPos.y + unit->ysize; z++) {
+			for (int z = unit->mapPos.y; z < unit->mapPos.y + unit->zsize; z++) {
 				for (int x = unit->mapPos.x; x < unit->mapPos.x + unit->xsize; x++) {
 					// calculate the distance and normalize it
 					float dist = pos.distance2D(float3(x * SQUARE_SIZE, 0, z * SQUARE_SIZE));
@@ -134,7 +134,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				}
 			}
 
-			totalDif /= unit->xsize * unit->ysize;
+			totalDif /= unit->xsize * unit->zsize;
 			if (totalDif != 0) {
 				ExploBuilding eb;
 				eb.id = (*ui)->id;
@@ -142,7 +142,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				eb.tx1 = unit->mapPos.x;
 				eb.tx2 = unit->mapPos.x + unit->xsize;
 				eb.tz1 = unit->mapPos.y;
-				eb.tz2 = unit->mapPos.y + unit->ysize;
+				eb.tz2 = unit->mapPos.y + unit->zsize;
 				e->buildings.push_back(eb);
 			}
 		}

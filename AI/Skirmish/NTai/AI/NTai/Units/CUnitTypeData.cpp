@@ -102,7 +102,7 @@ namespace ntai {
 		}else{
 			G->Get_mod_tdf()->GetDef(buildSpacing,"1", "AI\\default_spacing");
 		}
-		float r = sqrt(pow((float)ud->xsize*8,2)+pow((float)ud->ysize*8,2))/2;
+		float r = sqrt(pow((float)ud->xsize*8,2)+pow((float)ud->zsize*8,2))/2;
 		r += (buildSpacing*8);
 		buildSpacing = r;
 

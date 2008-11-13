@@ -1704,7 +1704,7 @@ Export(float) _UnitDef_getMaxElevator(int teamId, int unitDefId) {return getUnit
 Export(float) _UnitDef_getMaxRudder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRudder;}
 //const unsigned char** _UnitDef_getYardMaps(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->yardmaps;}
 Export(int) _UnitDef_getXSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->xsize;}
-Export(int) _UnitDef_getYSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->ysize;}
+Export(int) _UnitDef_getZSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->zsize;}
 Export(int) _UnitDef_getBuildAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildangle;}
 Export(float) _UnitDef_getLoadingRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->loadingRadius;}
 Export(float) _UnitDef_getUnloadSpread(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unloadSpread;}
@@ -2641,8 +2641,8 @@ Export(bool) _FeatureDef_isFloating(int teamId, int featureDefId) {return getFea
 Export(bool) _FeatureDef_isNoSelect(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->noSelect;}
 Export(bool) _FeatureDef_isGeoThermal(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->geoThermal;}
 Export(const char*) _FeatureDef_getDeathFeature(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->deathFeature.c_str();}
-Export(int) _FeatureDef_getXsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->xsize;}
-Export(int) _FeatureDef_getYsize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->ysize;}
+Export(int) _FeatureDef_getXSize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->xsize;}
+Export(int) _FeatureDef_getZSize(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->zsize;}
 Export(int) _FeatureDef_getNumCustomParams(int teamId, int featureDefId) {
 	return getFeatureDefById(teamId, featureDefId)->customParams.size();
 }
@@ -3356,7 +3356,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->UnitDef_getMaxElevator = _UnitDef_getMaxElevator;
 	sAICallback->UnitDef_getMaxRudder = _UnitDef_getMaxRudder;
 	sAICallback->UnitDef_getXSize = _UnitDef_getXSize;
-	sAICallback->UnitDef_getYSize = _UnitDef_getYSize;
+	sAICallback->UnitDef_getZSize = _UnitDef_getZSize;
 	sAICallback->UnitDef_getBuildAngle = _UnitDef_getBuildAngle;
 	sAICallback->UnitDef_getLoadingRadius = _UnitDef_getLoadingRadius;
 	sAICallback->UnitDef_getUnloadSpread = _UnitDef_getUnloadSpread;
@@ -3575,8 +3575,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->FeatureDef_isNoSelect = _FeatureDef_isNoSelect;
 	sAICallback->FeatureDef_isGeoThermal = _FeatureDef_isGeoThermal;
 	sAICallback->FeatureDef_getDeathFeature = _FeatureDef_getDeathFeature;
-	sAICallback->FeatureDef_getXsize = _FeatureDef_getXsize;
-	sAICallback->FeatureDef_getYsize = _FeatureDef_getYsize;
+	sAICallback->FeatureDef_getXSize = _FeatureDef_getXSize;
+	sAICallback->FeatureDef_getZSize = _FeatureDef_getZSize;
 	sAICallback->FeatureDef_getNumCustomParams = _FeatureDef_getNumCustomParams;
 	sAICallback->FeatureDef_getCustomParamKeys = _FeatureDef_getCustomParamKeys;
 	sAICallback->FeatureDef_getCustomParamValues = _FeatureDef_getCustomParamValues;

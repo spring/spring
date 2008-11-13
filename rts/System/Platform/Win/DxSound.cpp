@@ -30,7 +30,7 @@ using namespace std;
 
 CDxSound::CDxSound()
 {
-	maxSounds = ConfigHandler::GetInstance().GetInt("MaxSounds", 16);
+	maxSounds = configHandler.GetInt("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		throw content_error("Internal error, (maxSounds <= 0) in CDxSound");
 	}

@@ -341,13 +341,13 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 	const float* heightmap=readmap->GetHeightmap();
 
 	int xsize=1;
-	int ysize=1;
+	int zsize=1;
 
 	float maxDif=unitdef->maxHeightDif;
 	int x1 = (int)max(0.f,(pos.x-(xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 	int x2 = min(gs->mapx,x1+xsize);
-	int z1 = (int)max(0.f,(pos.z-(ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-	int z2 = min(gs->mapy,z1+ysize);
+	int z1 = (int)max(0.f,(pos.z-(zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+	int z2 = min(gs->mapy,z1+zsize);
 
 	if (x1 > gs->mapx) x1 = gs->mapx;
 	if (x2 < 0) x2 = 0;
@@ -383,25 +383,25 @@ int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&fea
 {
 	feature = NULL;
 	int xsize = buildInfo.GetXSize();
-	int ysize = buildInfo.GetYSize();
+	int zsize = buildInfo.GetZSize();
 	float3 pos = buildInfo.pos;
 
 	int x1 = (int) (pos.x - (xsize * 0.5f * SQUARE_SIZE));
 	int x2 = x1 + xsize * SQUARE_SIZE;
-	int z1 = (int) (pos.z - (ysize * 0.5f * SQUARE_SIZE));
-	int z2 = z1 + ysize * SQUARE_SIZE;
+	int z1 = (int) (pos.z - (zsize * 0.5f * SQUARE_SIZE));
+	int z2 = z1 + zsize * SQUARE_SIZE;
 	float h=GetBuildHeight(pos,buildInfo.def);
 
 	int canBuild = 2;
 
 	if (buildInfo.def->needGeo) {
 		canBuild = 0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
+		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,zsize)*6);
 
 		for (std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi) {
 			if ((*fi)->def->geoThermal
 			    && fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
-			    && fabs((*fi)->pos.z - pos.z) < (ysize * 4 - 4)){
+			    && fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)){
 				canBuild = 2;
 				break;
 			}
@@ -492,13 +492,13 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glBegin(GL_QUADS);
 
 	int xsize=buildInfo.GetXSize();
-	int ysize=buildInfo.GetYSize();
+	int zsize=buildInfo.GetZSize();
 	const float3& pos = buildInfo.pos;
 
 	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
 	int x2 = x1+xsize*SQUARE_SIZE;
-	int z1 = (int) (pos.z-(ysize*0.5f*SQUARE_SIZE));
-	int z2 = z1+ysize*SQUARE_SIZE;
+	int z1 = (int) (pos.z-(zsize*0.5f*SQUARE_SIZE));
+	int z2 = z1+zsize*SQUARE_SIZE;
 	float h=GetBuildHeight(pos,buildInfo.def);
 
 	int canbuild=2;
@@ -506,10 +506,10 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	if(buildInfo.def->needGeo)
 	{
 		canbuild=0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,ysize)*6);
+		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,zsize)*6);
 
 		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<ysize*4-4){
+			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<zsize*4-4){
 				canbuild=2;
 				break;
 			}
@@ -529,7 +529,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 				for(;ci != cv.end() && tbs; ci++){
 					BuildInfo bc(*ci);
 					if(max(bc.pos.x-x-SQUARE_SIZE,x-bc.pos.x)*2 < bc.GetXSize()*SQUARE_SIZE
-						&& max(bc.pos.z-z-SQUARE_SIZE,z-bc.pos.z)*2 < bc.GetYSize()*SQUARE_SIZE){
+						&& max(bc.pos.z-z-SQUARE_SIZE,z-bc.pos.z)*2 < bc.GetZSize()*SQUARE_SIZE){
 						tbs=0;
 					}
 				}
@@ -690,7 +690,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 				if((*ci).id < 0 && (*ci).params.size() >= 3){
 					BuildInfo bi(*ci);
 					tempF1 = pos + dir*((bi.pos.y - pos.y)/dir.y) - bi.pos;
-					if(bi.def && bi.GetXSize()/2*SQUARE_SIZE > fabs(tempF1.x) && bi.GetYSize()/2*SQUARE_SIZE > fabs(tempF1.z)){
+					if(bi.def && bi.GetXSize()/2*SQUARE_SIZE > fabs(tempF1.x) && bi.GetZSize()/2*SQUARE_SIZE > fabs(tempF1.z)){
 						return (*ci);
 					}
 				}

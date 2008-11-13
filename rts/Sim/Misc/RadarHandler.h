@@ -36,7 +36,7 @@ public:
 	{
 		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
 		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
-		const int rowIdx = std::max(0, std::min(ysize - 1, gz));
+		const int rowIdx = std::max(0, std::min(zsize - 1, gz));
 		const int colIdx = std::max(0, std::min(xsize - 1, gx));
 		return (rowIdx * xsize) + colIdx;
 	}
@@ -112,7 +112,7 @@ public:
 	float baseRadarErrorSize;
 
 	int xsize;
-	int ysize;
+	int zsize;
 
 	float targFacEffect;
 

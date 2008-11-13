@@ -705,7 +705,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	// TA has only half our res so multiply size with 2
 	ud.xsize = udTable.GetInt("footprintX", 1) * 2;
-	ud.ysize = udTable.GetInt("footprintZ", 1) * 2;
+	ud.zsize = udTable.GetInt("footprintZ", 1) * 2;
 
 	ud.needGeo = false;
 	if ((ud.type == "Building") || (ud.type == "Factory")) {
@@ -944,15 +944,15 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 
 	//Creates the map.
 	for (int u=0;u<4;u++)
-		def->yardmaps[u] = SAFE_NEW unsigned char[def->xsize * def->ysize];
+		def->yardmaps[u] = SAFE_NEW unsigned char[def->xsize * def->zsize];
 
-	unsigned char *originalMap = SAFE_NEW unsigned char[def->xsize * def->ysize / 4];		//TAS resolution is double of TA resolution.
-	memset(originalMap, 255, def->xsize * def->ysize / 4);
+	unsigned char *originalMap = SAFE_NEW unsigned char[def->xsize * def->zsize / 4];		//TAS resolution is double of TA resolution.
+	memset(originalMap, 255, def->xsize * def->zsize / 4);
 
 	if(!yardmapStr.empty()){
 		std::string::iterator si = yardmapStr.begin();
 		int x, y;
-		for(y = 0; y < def->ysize / 2; y++) {
+		for(y = 0; y < def->zsize / 2; y++) {
 			for(x = 0; x < def->xsize / 2; x++) {
 				if(*si == 'g')
 					def->needGeo=true;
@@ -970,12 +970,12 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 				break;
 		}
 	}
-	for(int y = 0; y < def->ysize; y++)
+	for(int y = 0; y < def->zsize; y++)
 		for(int x = 0; x < def->xsize; x++){
 			def->yardmaps[0][x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[1][(def->ysize*def->xsize)-(def->ysize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[2][(def->ysize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[3][def->ysize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[1][(def->zsize*def->xsize)-(def->zsize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[2][(def->zsize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
+			def->yardmaps[3][def->zsize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
 		}
 	delete[] originalMap;
 }

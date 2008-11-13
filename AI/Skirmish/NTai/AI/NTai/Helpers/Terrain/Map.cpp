@@ -155,8 +155,8 @@ namespace ntai {
 		float maxDif=unitdef->maxHeightDif;
 		int x1 = (int)max(0.f,(pos.x-(unitdef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 		int x2 = min(G->cb->GetMapWidth()*SQUARE_SIZE,x1+unitdef->xsize);
-		int z1 = (int)max(0.f,(pos.z-(unitdef->ysize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		int z2 = min(G->cb->GetMapHeight()*SQUARE_SIZE,z1+unitdef->ysize);
+		int z1 = (int)max(0.f,(pos.z-(unitdef->zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
+		int z2 = min(G->cb->GetMapHeight()*SQUARE_SIZE,z1+unitdef->zsize);
 
 		if (x1 > G->cb->GetMapWidth()*SQUARE_SIZE) x1 = G->cb->GetMapWidth()*SQUARE_SIZE;
 		if (x2 < 0) x2 = 0;
@@ -195,7 +195,7 @@ namespace ntai {
 		else
 			pos.x=floor((pos.x+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;
 
-		if(ud->ysize&2)
+		if(ud->zsize&2)
 			pos.z=floor((pos.z)/(SQUARE_SIZE*2))*SQUARE_SIZE*2+8;
 		else
 			pos.z=floor((pos.z+8)/(SQUARE_SIZE*2))*SQUARE_SIZE*2;

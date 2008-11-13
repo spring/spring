@@ -43,7 +43,7 @@ namespace ntai {
 		if (builderdef == 0) return unitpos;
 
 		float3 epos = unitpos;
-		epos.z -= min(max(float(builderdef->ysize*8+target->ysize*10),float(builderdef->xsize*8+target->xsize*10)),builderdef->buildDistance*0.7f);
+		epos.z -= min(max(float(builderdef->zsize*8+target->zsize*10),float(builderdef->xsize*8+target->xsize*10)),builderdef->buildDistance*0.7f);
 		//epos.z -= target->buildDistance*0.6f;
 		float angle = float(G->mrand()%320);
 		unitpos = G->Map->Rotate(epos,angle,unitpos);
@@ -360,7 +360,7 @@ namespace ntai {
 		if(!BPlans->empty()){
 			for(deque<CBPlan* >::iterator i = BPlans->begin(); i != BPlans->end(); ++i){
 				if((*i)->utd->GetUnitDef()->name != ud->name){
-					if(pos.distance2D((*i)->pos) < (*i)->radius+(max(ud->ysize,ud->xsize)*8)){
+					if(pos.distance2D((*i)->pos) < (*i)->radius+(max(ud->zsize,ud->xsize)*8)){
 						return i;
 					}
 				}

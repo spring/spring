@@ -258,7 +258,7 @@ void CSelectedUnitsAI::CalculateGroupData(int player, bool queueing) {
 		CUnit* unit=uh->units[*ui];
 		if(unit){
 			const UnitDef* ud = unit->unitDef;
-			sumLength += (int)((ud->xsize + ud->ysize)/2);
+			sumLength += (int)((ud->xsize + ud->zsize)/2);
 
 			float3 unitPos;
 			if (queueing) {
@@ -374,7 +374,7 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	CUnit* u = uh->units[unit];
 	if (u) {
 		const UnitDef* ud = u->unitDef;
-		unitSize = (int)((ud->xsize + ud->ysize)/2);
+		unitSize = (int)((ud->xsize + ud->zsize)/2);
 	}
 	float3 retPos(nextCornerPos.x+unitSize*8*2+addSpace, 0, nextCornerPos.z);
 	float3 movePos(nextCornerPos.x+unitSize*8+addSpace, 0, nextCornerPos.z); //posit in coordinates of "front"
