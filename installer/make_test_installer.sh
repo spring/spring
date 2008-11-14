@@ -31,7 +31,7 @@ echo "Creating installers for revision $REVISION"
 # and build the correct full and updating installers.
 # The grep regex matches the ones used in buildbot.
 
-if grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+(svn[0-9]+)?' rts/Game/GameVersion.cpp >/dev/null; then
+if grep -o -E 'const char\* const.*\+' rts/Game/GameVersion.cpp >/dev/null; then
 	echo "Creating test installer"
 	makensis -V3 -DTEST_BUILD -DREVISION=$REVISION installer/spring.nsi
 

@@ -5,6 +5,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Platform/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
 
@@ -21,6 +22,7 @@ int main(int argc, char *argv[])
 	try {
 	std::cout << "This server is currently under development. If you find any errors";
 	std::cout << " report them to mantis or the forums." << std::endl << std::endl;
+	ConfigHandler::Instantiate("");
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
 	CGameServer* server = 0;
