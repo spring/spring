@@ -30,19 +30,11 @@ int main(int argc, char *argv[])
 
 	if (argc > 1)
 	{
-		std::string script = argv[1];
-		std::cout << "Loading script: " << script << std::endl;
+		const std::string script(argv[0]);
+		std::cout << "Loading script from file: " << script << std::endl;
 
-		gameSetup = new CGameSetup();	// to store the gamedata inside
-		
-		if (!gameSetup->Init(script))	// read the script provided by cmdline
-		{
-			std::cout << "Failed to load script" << std::endl;
-			return 1;
-		}
-		
 		LocalSetup* settings = new LocalSetup();
-		CFileHandler fh(script);
+		CFileHandler fh(argv[1]);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+script);
 		
@@ -50,6 +42,13 @@ int main(int argc, char *argv[])
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+script);
 		settings->Init(buf);
+		
+		gameSetup = new CGameSetup();	// to store the gamedata inside
+		if (!gameSetup->Init(buf))	// read the script provided by cmdline
+		{
+			std::cout << "Failed to load script" << std::endl;
+			return 1;
+		}
 		
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
