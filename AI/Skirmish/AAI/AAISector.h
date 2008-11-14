@@ -69,6 +69,9 @@ public:
 	void RemoveDefence(int unit_id);
 	void AddDefence(int unit_id, int def_id);
 
+	// removes building from sector -> update own_structure & unitsOfType[]
+	void RemoveBuildingType(int def_id);
+
 	// returns the category with the weakest defence in comparison with threat
 	UnitCategory GetWeakestCategory();
 

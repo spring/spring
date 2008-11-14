@@ -520,6 +520,16 @@ float AAISector::GetOverallThreat(float learned, float current)
 		/(learned + current);
 }
 
+void AAISector::RemoveBuildingType(int def_id)
+{
+	unitsOfType[ai->bt->units_static[def_id].category] -= 1;
+	
+	own_structures -= ai->bt->units_static[def_id].cost;
+
+	if(own_structures < 0)
+		own_structures = 0;
+}
+
 void AAISector::RemoveDefence(int unit_id)
 {
 	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); i++)
@@ -771,4 +781,3 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 
 	*pos = ZeroVector;
 }
-

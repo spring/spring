@@ -4,6 +4,9 @@
 
 #include "StdAfx.h"
 #include "TeamHandler.h"
+
+#include <cstring>
+
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "mmgr.h"
