@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
 		}
 
 		data->SetScript(gameSetup->scriptName);
+		data->SetSetup(gameSetup->gameSetupText);
 		server = new CGameServer(settings, false, data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
