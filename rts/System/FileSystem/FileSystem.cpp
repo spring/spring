@@ -26,6 +26,10 @@
 	#include <windows.h> 
 	#include <io.h>
 	#include <direct.h>
+	// winapi redifines this which breaks things
+	#if defined(CreateDirectory)
+		#undef CreateDirectory
+	#endif
 #endif
 
 #include "FileSystem/ArchiveScanner.h"
