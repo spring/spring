@@ -21,13 +21,20 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 	units.resize(cfg->MAX_UNITS);
 
 	// fill buildtable 
-	for(int i = 0; i < cfg->MAX_UNITS; i++)
+	for(int i = 0; i < cfg->MAX_UNITS; ++i)
 	{
 		units[i].unit_id = -1;
 		units[i].def_id = 0;
 		units[i].group = 0;
 		units[i].cons = 0;
 		units[i].status = UNIT_KILLED;
+	}
+
+	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
+	{
+		activeUnits[i] = 0;
+		futureUnits[i] = 0;
+		requestedUnits[i] = 0;
 	}
 
 	activeScouts = futureScouts = 0;
@@ -44,8 +51,6 @@ AAIUnitTable::~AAIUnitTable(void)
 	{
 		delete units[*cons].cons;
 	}
-
-//	delete [] units;
 }
 
 
@@ -513,4 +518,14 @@ bool AAIUnitTable::IsBuilder(int unit_id)
 		return true;
 	else
 		return false;
+}
+
+void AAIUnitTable::ActiveUnitKilled(UnitCategory category)
+{
+	--activeUnits[category];
+}
+
+void AAIUnitTable::FutureUnitKilled(UnitCategory category)
+{
+	--futureUnits[category];
 }

@@ -29,13 +29,6 @@ AAI::AAI()
 	
 	side = 0;
 
-	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
-	{
-		activeUnits[i] = 0;
-		futureUnits[i] = 0;
-		requestedUnits[i] = 0;
-	}
-
 	initialized = false;
 }
 
@@ -49,7 +42,7 @@ AAI::~AAI()
 	fprintf(file, "Unit category	active / under construction\n");
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
 	{
-		fprintf(file, "%-20s: %i / %i\n", bt->GetCategoryString2((UnitCategory)i), activeUnits[i], futureUnits[i]); 
+		fprintf(file, "%-20s: %i / %i\n", bt->GetCategoryString2((UnitCategory)i), ut->activeUnits[i], ut->futureUnits[i]); 
 	}
 
 	fprintf(file, "\nGround Groups:    %i\n", group_list[GROUND_ASSAULT].size());
@@ -269,8 +262,8 @@ void AAI::UnitCreated(int unit)
 	bt->units_dynamic[def->id].requested -= 1;
 	bt->units_dynamic[def->id].under_construction += 1;
 
-	requestedUnits[category] -= 1;
-	futureUnits[category] += 1;
+	ut->requestedUnits[category] -= 1;
+	ut->futureUnits[category] += 1;
 
 	// add to unittable 
 	ut->AddUnit(unit, def->id);
@@ -279,7 +272,7 @@ void AAI::UnitCreated(int unit)
 	if(!initialized && ut->IsDefCommander(def->id))
 	{
 		// UnitFinished() will decrease it later -> prevents AAI from having -1 future commanders 
-		requestedUnits[COMMANDER] += 1;
+		ut->requestedUnits[COMMANDER] += 1;
 		ut->futureBuilders += 1;
 		bt->units_dynamic[def->id].under_construction += 1;
 
@@ -297,20 +290,18 @@ void AAI::UnitCreated(int unit)
 		UnitCategory category = bt->units_static[def->id].category;
 		
 		// UnitFinished() will decrease it later 
-		requestedUnits[category] += 1;	
+		ut->requestedUnits[category] += 1;	
 		bt->units_dynamic[def->id].requested += 1;
+
+		if(bt->IsFactory(def->id))
+			ut->futureFactories += 1;
 
 		if(category == SCOUT)
 			ut->futureScouts += 1;
 		else if(category <= METAL_MAKER && category > UNKNOWN)
 		{
 			float3 pos = cb->GetUnitPos(unit);
-			map->Pos2FinalBuildPos(&pos, def);
-
-			if(pos.y < 0)
-				execute->InitBuildingAt(def, pos, true);
-			else
-				execute->InitBuildingAt(def, pos, false);
+			execute->InitBuildingAt(def, &pos, pos.y < 0);
 		}
 	}
 	else
@@ -353,8 +344,8 @@ void AAI::UnitFinished(int unit)
 
 	UnitCategory category = bt->units_static[def->id].category;
 	
-	futureUnits[category] -= 1;
-	activeUnits[category] += 1;
+	ut->futureUnits[category] -= 1;
+	ut->activeUnits[category] += 1;
 	
 	bt->units_dynamic[def->id].under_construction -= 1;
 	bt->units_dynamic[def->id].active += 1;
@@ -460,10 +451,10 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	// get unit�s id 
 	const UnitDef *def = cb->GetUnitDef(unit);
 
-	// get unit's category
+	// get unit's category and position
 	UnitCategory category = bt->units_static[def->id].category;
-	// and position
 	float3 pos = cb->GetUnitPos(unit);
+
 	int x = pos.x/map->xSectorSize;
 	int y = pos.z/map->ySectorSize;
 
@@ -485,14 +476,15 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	// unfinished unit has been killed
 	if(cb->UnitBeingBuilt(unit))
 	{
-		futureUnits[category] -= 1;
+		ut->FutureUnitKilled(category);
+
 		bt->units_dynamic[def->id].under_construction -= 1;
 
 		// unfinished building
 		if(!def->canfly && !def->movedata)
 		{
 			// delete buildtask
-			for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); task++)
+			for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); ++task)
 			{
 				if((*task)->unit_id == unit)
 				{	
@@ -532,14 +524,15 @@ void AAI::UnitDestroyed(int unit, int attacker)
 	}
 	else	// finished unit/building has been killed
 	{
-		activeUnits[category] -= 1;
+		ut->ActiveUnitKilled(category);
+
 		bt->units_dynamic[def->id].active -= 1;
 		
 		// update buildtable
 		if(attacker)
 		{
 			const UnitDef *def_att = cb->GetUnitDef(attacker);
-			
+
 			if(def_att)
 			{
 				int killer = bt->GetIDOfAssaultCategory(bt->units_static[def_att->id].category);
@@ -564,14 +557,8 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		{
 			// decrease number of units of that category in the target sector
 			if(validSector)
-			{
-				map->sector[x][y].unitsOfType[category] -= 1;
-				map->sector[x][y].own_structures -= bt->units_static[def->id].cost;
-
-				if(map->sector[x][y].own_structures < 0)
-					map->sector[x][y].own_structures = 0;
-			}
-
+				map->sector[x][y].RemoveBuildingType(def->id);
+			
 			// check if building belongs to one of this groups
 			if(category == STATIONARY_DEF)
 			{
@@ -609,76 +596,26 @@ void AAI::UnitDestroyed(int unit, int attacker)
 				ut->RemoveMetalMaker(unit);
 			}
 			
-			// clean up 
+			// clean up buildmap & some other stuff
 			if(category == STATIONARY_CONSTRUCTOR)
 			{
 				ut->RemoveConstructor(unit, def->id);
+		
+				map->UpdateBuildMap(pos, def, false, bt->CanPlacedWater(def->id), true);
 
 				// speed up reconstruction
-				execute->urgency[category] += 1.5;
-		
-				// clear buildmap
-				map->Pos2BuildMapPos(&pos, def);
-
-				if(bt->CanPlacedLand(def->id))
-				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
-					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, false);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, false);
-					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
-				}
-				else
-				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);	
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
-					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, true);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, true);
-					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
-				}
+				execute->urgency[STATIONARY_CONSTRUCTOR] += 1.5;
 			}
 			// hq
 			else if(category == COMMANDER)
 			{
 				ut->RemoveCommander(unit, def->id);
 
-				// clear buildmap
-				map->Pos2BuildMapPos(&pos, def);
-
-				if(def->minWaterDepth <= 0)
-				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
-					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, false);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, false);
-					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, false);
-				}
-				else
-				{
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);	
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
-					map->BlockCells(pos.x, pos.z - 8, def->xsize, 8, false, true);
-					map->BlockCells(pos.x + def->xsize, pos.z - 8, cfg->X_SPACE, def->zsize + 1.5 * cfg->Y_SPACE, false, true);
-					map->BlockCells(pos.x, pos.z + def->zsize, def->xsize, 1.5 * cfg->Y_SPACE - 8, false, true);
-				}
+				map->UpdateBuildMap(pos, def, false, bt->CanPlacedWater(def->id), true);
 			}
 			// other building
 			else
-			{
-				// clear buildmap
-				map->Pos2BuildMapPos(&pos, def);
-
-				if(def->minWaterDepth <= 0)
-				{
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 0);
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, false);
-				}
-				else
-				{
-					map->SetBuildMap(pos.x, pos.z, def->xsize, def->zsize, 4);
-					map->CheckRows(pos.x, pos.z, def->xsize, def->zsize, false, true);
-				}
-			}
+				map->UpdateBuildMap(pos, def, false, bt->CanPlacedWater(def->id), false);
 
 			// if no buildings left in that sector, remove from base sectors
 			if(map->sector[x][y].GetNumberOfBuildings() == 0 && brain->sectors[0].size() > 0)
@@ -702,7 +639,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				// add enemy building to sector
 				if(validSector && map->sector[x][y].distance_to_base > 0)
-					map->sector[x][y].enemy_structures += 5;
+					map->sector[x][y].enemy_structures += 5.0f;
 				
 			}
 			// assault units 
@@ -767,7 +704,7 @@ void AAI::UnitMoveFailed(int unit)
 			if(builder->construction_unit_id == -1)
 			{
 				--bt->units_dynamic[builder->construction_def_id].requested;
-				--futureUnits[builder->construction_category];
+				--ut->futureUnits[builder->construction_category];
 
 				// clear up buildmap etc.
 				execute->ConstructionFailed(builder->build_pos, builder->construction_def_id);
