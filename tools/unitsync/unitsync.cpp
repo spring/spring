@@ -287,6 +287,7 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
 	try {
 		_UnInit();
 
+		ConfigHandler::Instantiate("");
 		FileSystemHandler::Initialize(false);
 
 		std::vector<string> filesToCheck;
