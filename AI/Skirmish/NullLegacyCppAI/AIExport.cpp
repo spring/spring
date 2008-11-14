@@ -34,7 +34,7 @@
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 
 
-Export(int) init(int teamId,
+EXPORT(int) init(int teamId,
 		const struct InfoItem info[], unsigned int numInfoItems) {
 	
     if (myAIs.count(teamId) > 0) {
@@ -51,7 +51,7 @@ Export(int) init(int teamId,
 	return 0;
 }
 
-Export(int) release(int teamId) {
+EXPORT(int) release(int teamId) {
 	
     if (myAIs.count(teamId) == 0) {
 		// the map has no AI for this team.
@@ -67,7 +67,7 @@ Export(int) release(int teamId) {
 	return 0;
 }
 
-Export(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	
     if (teamId < 0) {
 		// events sent to team -1 will always be to the AI object itself,

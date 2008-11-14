@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -18,9 +18,9 @@
 #ifndef _EXPORTDEFINES_H
 #define	_EXPORTDEFINES_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
-#endif	// __cplusplus
+#endif // __cplusplus
 
 #define SPRING_CALLING_CONVENTION stdcall
 #define SPRING_CALLING_CONVENTION_2 __stdcall
@@ -28,28 +28,28 @@ extern "C" {
 // extern declaration that will work across
 // different platforms and compilers
 #ifndef SHARED_EXPORT
-	#ifdef	__cplusplus
+	#ifdef __cplusplus
 		#ifdef _WIN32
 			#define SHARED_EXPORT extern "C" __declspec(dllexport)
 			#define SPRING_API
 		#elif __GNUC__ >= 4
-			// Support for '-fvisibility=hidden'.
+		 // Support for '-fvisibility=hidden'.
 			#define SHARED_EXPORT extern "C" __attribute__ ((visibility("default")))
 			#define SPRING_API __attribute__ ((visibility("default")))
 		#else
-			// Older versions of gcc have everything visible; no need for fancy stuff.
+		 // Older versions of gcc have everything visible; no need for fancy stuff.
 			#define SHARED_EXPORT extern "C"
 			#define SPRING_API
 		#endif
-	#else	// __cplusplus
-		// we dont have t oexport if we are in C already
+	#else // __cplusplus
+	 // we dont have t oexport if we are in C already
 		#define SHARED_EXPORT
-	#endif	// __cplusplus
-#endif	// SHARED_EXPORT
+	#endif // __cplusplus
+#endif // SHARED_EXPORT
 
 #ifndef DLL_EXPORT
 	#define DLL_EXPORT SHARED_EXPORT
-#endif	// DLL_EXPORT
+#endif // DLL_EXPORT
 
 
 // calling convention declaration that will work across
@@ -66,24 +66,25 @@ extern "C" {
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#else
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
-	#endif
-#endif	// CALLING_CONV
-	
+	#endif // _WIN32
+#endif // CALLING_CONV
+
+//TODO: check if the following is needed; assumption: no, just a left over
+//from when searching intel compile errors
 #ifndef CALLING_CONV_FUNC_POINTER
 	#ifdef __INTEL_COMPILER
 		#define CALLING_CONV_FUNC_POINTER
 	#else
 		#define CALLING_CONV_FUNC_POINTER CALLING_CONV
 	#endif
-#endif	// CALLING_CONV_FUNC_POINTER
+#endif // CALLING_CONV_FUNC_POINTER
 
 
-#define Export(type) SHARED_EXPORT type CALLING_CONV
+#define EXPORT(type) SHARED_EXPORT type CALLING_CONV
 
 
-#ifdef	__cplusplus
-}
-#endif	// __cplusplus
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
 
-#endif	// _EXPORTDEFINES_H
-
+#endif // _EXPORTDEFINES_H

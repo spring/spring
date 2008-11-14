@@ -6,176 +6,175 @@
 
 // from unitsync.cpp:
 
-Export(const char*) GetNextError();
-Export(const char*) GetSpringVersion();
+EXPORT(const char*) GetNextError();
+EXPORT(const char*) GetSpringVersion();
 
-Export(void) Message(const char* p_szMessage);
+EXPORT(void) Message(const char* p_szMessage);
 
-Export(int) Init(bool isServer, int id);
-Export(void) UnInit();
+EXPORT(int) Init(bool isServer, int id);
+EXPORT(void) UnInit();
 
-Export(const char*) GetWritableDataDirectory();
+EXPORT(const char*) GetWritableDataDirectory();
 
-Export(int) ProcessUnits(void);
-Export(int) ProcessUnitsNoChecksum(void);
-Export(const char*) GetCurrentList();
+EXPORT(int) ProcessUnits(void);
+EXPORT(int) ProcessUnitsNoChecksum(void);
+EXPORT(const char*) GetCurrentList();
 
-//Export(void) AddClient(int id, const char *unitList);
-//Export(void) RemoveClient(int id);
+//EXPORT(void) AddClient(int id, const char *unitList);
+//EXPORT(void) RemoveClient(int id);
 
-//Export(const char*) GetClientDiff(int id);
-//Export(void) InstallClientDiff(const char *diff);
+//EXPORT(const char*) GetClientDiff(int id);
+//EXPORT(void) InstallClientDiff(const char *diff);
 
-Export(int) GetUnitCount();
-Export(const char*) GetUnitName(int unit);
-Export(const char*) GetFullUnitName(int unit);
-//Export(int) IsUnitDisabled(int unit);
-//Export(int) IsUnitDisabledByClient(int unit, int clientId);
+EXPORT(int) GetUnitCount();
+EXPORT(const char*) GetUnitName(int unit);
+EXPORT(const char*) GetFullUnitName(int unit);
+//EXPORT(int) IsUnitDisabled(int unit);
+//EXPORT(int) IsUnitDisabledByClient(int unit, int clientId);
 
-Export(void) AddArchive(const char* name);
-Export(void) AddAllArchives(const char* root);
-Export(unsigned int) GetArchiveChecksum(const char* arname);
-Export(const char*) GetArchivePath(const char* arname);
+EXPORT(void) AddArchive(const char* name);
+EXPORT(void) AddAllArchives(const char* root);
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(const char*) GetArchivePath(const char* arname);
 
-Export(int) GetMapCount();
-Export(const char*) GetMapName(int index);
-Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
-Export(int) GetMapInfo(const char* name, MapInfo* outInfo);
-Export(int) GetMapArchiveCount(const char* mapName);
-Export(const char*) GetMapArchiveName(int index);
-Export(unsigned int) GetMapChecksum(int index);
-Export(unsigned int) GetMapChecksumFromName(const char* mapName);
-Export(void*) GetMinimap(const char* filename, int miplevel);
-Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
-Export(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
+EXPORT(int) GetMapCount();
+EXPORT(const char*) GetMapName(int index);
+EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(int) GetMapArchiveCount(const char* mapName);
+EXPORT(const char*) GetMapArchiveName(int index);
+EXPORT(unsigned int) GetMapChecksum(int index);
+EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
+EXPORT(void*) GetMinimap(const char* filename, int miplevel);
+EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
+EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
 
-Export(int) GetSkirmishAICount();
-Export(struct SSAISpecifier) GetSkirmishAISpecifier(int index);
-Export(int) GetSkirmishAIInfoCount(int index);
-Export(const char*) GetInfoKey(int index);
-Export(const char*) GetInfoValue(int index);
-Export(const char*) GetInfoDescription(int index);
+EXPORT(int) GetSkirmishAICount();
+EXPORT(struct SSAISpecifier) GetSkirmishAISpecifier(int index);
+EXPORT(int) GetSkirmishAIInfoCount(int index);
+EXPORT(const char*) GetInfoKey(int index);
+EXPORT(const char*) GetInfoValue(int index);
+EXPORT(const char*) GetInfoDescription(int index);
 
-Export(int) GetPrimaryModCount();
-Export(const char*) GetPrimaryModName(int index);
-Export(const char*) GetPrimaryModShortName(int index);
-Export(const char*) GetPrimaryModVersion(int index);
-Export(const char*) GetPrimaryModMutator(int index);
-Export(const char*) GetPrimaryModGame(int index);
-Export(const char*) GetPrimaryModShortGame(int index);
-Export(const char*) GetPrimaryModDescription(int index);
-Export(const char*) GetPrimaryModArchive(int index);
-Export(int) GetPrimaryModArchiveCount(int index);
-Export(const char*) GetPrimaryModArchiveList(int arnr);
-Export(int) GetPrimaryModIndex(const char* name);
-Export(unsigned int) GetPrimaryModChecksum(int index);
-Export(unsigned int) GetPrimaryModChecksumFromName(const char* name);
+EXPORT(int) GetPrimaryModCount();
+EXPORT(const char*) GetPrimaryModName(int index);
+EXPORT(const char*) GetPrimaryModShortName(int index);
+EXPORT(const char*) GetPrimaryModVersion(int index);
+EXPORT(const char*) GetPrimaryModMutator(int index);
+EXPORT(const char*) GetPrimaryModGame(int index);
+EXPORT(const char*) GetPrimaryModShortGame(int index);
+EXPORT(const char*) GetPrimaryModDescription(int index);
+EXPORT(const char*) GetPrimaryModArchive(int index);
+EXPORT(int) GetPrimaryModArchiveCount(int index);
+EXPORT(const char*) GetPrimaryModArchiveList(int arnr);
+EXPORT(int) GetPrimaryModIndex(const char* name);
+EXPORT(unsigned int) GetPrimaryModChecksum(int index);
+EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name);
 
-Export(int) GetSideCount();
-Export(const char*) GetSideName(int side);
-Export(const char*) GetSideStartUnit(int side);
+EXPORT(int) GetSideCount();
+EXPORT(const char*) GetSideName(int side);
+EXPORT(const char*) GetSideStartUnit(int side);
 
-Export(int) GetLuaAICount();
-Export(const char*) GetLuaAIName(int aiIndex);
-Export(const char*) GetLuaAIDesc(int aiIndex);
+EXPORT(int) GetLuaAICount();
+EXPORT(const char*) GetLuaAIName(int aiIndex);
+EXPORT(const char*) GetLuaAIDesc(int aiIndex);
 
-Export(int) GetMapOptionCount(const char* name);
-Export(int) GetModOptionCount();
-Export(const char*) GetOptionKey(int optIndex);
-Export(const char*) GetOptionName(int optIndex);
-Export(const char*) GetOptionSection(int optIndex);
-Export(const char*) GetOptionStyle(int optIndex);
-Export(const char*) GetOptionDesc(int optIndex);
-Export(int) GetOptionType(int optIndex);
-Export(int) GetOptionBoolDef(int optIndex);
-Export(float) GetOptionNumberDef(int optIndex);
-Export(float) GetOptionNumberMin(int optIndex);
-Export(float) GetOptionNumberMax(int optIndex);
-Export(float) GetOptionNumberStep(int optIndex);
-Export(const char*) GetOptionStringDef(int optIndex);
-Export(int) GetOptionStringMaxLen(int optIndex);
-Export(int) GetOptionListCount(int optIndex);
-Export(const char*) GetOptionListDef(int optIndex);
-Export(const char*) GetOptionListItemKey(int optIndex, int itemIndex);
-Export(const char*) GetOptionListItemName(int optIndex, int itemIndex);
-Export(const char*) GetOptionListItemDesc(int optIndex, int itemIndex);
+EXPORT(int) GetMapOptionCount(const char* name);
+EXPORT(int) GetModOptionCount();
+EXPORT(const char*) GetOptionKey(int optIndex);
+EXPORT(const char*) GetOptionName(int optIndex);
+EXPORT(const char*) GetOptionSection(int optIndex);
+EXPORT(const char*) GetOptionStyle(int optIndex);
+EXPORT(const char*) GetOptionDesc(int optIndex);
+EXPORT(int) GetOptionType(int optIndex);
+EXPORT(int) GetOptionBoolDef(int optIndex);
+EXPORT(float) GetOptionNumberDef(int optIndex);
+EXPORT(float) GetOptionNumberMin(int optIndex);
+EXPORT(float) GetOptionNumberMax(int optIndex);
+EXPORT(float) GetOptionNumberStep(int optIndex);
+EXPORT(const char*) GetOptionStringDef(int optIndex);
+EXPORT(int) GetOptionStringMaxLen(int optIndex);
+EXPORT(int) GetOptionListCount(int optIndex);
+EXPORT(const char*) GetOptionListDef(int optIndex);
+EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex);
+EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex);
+EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex);
 
-Export(int) GetModValidMapCount();
-Export(const char*) GetModValidMap(int index);
+EXPORT(int) GetModValidMapCount();
+EXPORT(const char*) GetModValidMap(int index);
 
-Export(int) OpenFileVFS(const char* name);
-Export(void) CloseFileVFS(int handle);
-Export(void) ReadFileVFS(int handle, void* buf, int length);
-Export(int) FileSizeVFS(int handle);
+EXPORT(int) OpenFileVFS(const char* name);
+EXPORT(void) CloseFileVFS(int handle);
+EXPORT(void) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int) FileSizeVFS(int handle);
 
-Export(int) InitFindVFS(const char* pattern);
-Export(int) InitDirListVFS(const char* path, const char* pattern, const char* modes);
-Export(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes);
-Export(int) FindFilesVFS(int handle, char* nameBuf, int size);
+EXPORT(int) InitFindVFS(const char* pattern);
+EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* modes);
+EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes);
+EXPORT(int) FindFilesVFS(int handle, char* nameBuf, int size);
 
-Export(int) OpenArchive(const char* name);
-Export(int) OpenArchiveType(const char* name, const char* type);
-Export(void) CloseArchive(int archive);
-Export(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
-Export(int) OpenArchiveFile(int archive, const char* name);
-Export(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
-Export(void) CloseArchiveFile(int archive, int handle);
-Export(int) SizeArchiveFile(int archive, int handle);
+EXPORT(int) OpenArchive(const char* name);
+EXPORT(int) OpenArchiveType(const char* name, const char* type);
+EXPORT(void) CloseArchive(int archive);
+EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
+EXPORT(int) OpenArchiveFile(int archive, const char* name);
+EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
+EXPORT(void) CloseArchiveFile(int archive, int handle);
+EXPORT(int) SizeArchiveFile(int archive, int handle);
 
-Export(const char*) GetSpringConfigString(const char* name, const char* defvalue);
-Export(int) GetSpringConfigInt(const char* name, const int defvalue);
-Export(float) GetSpringConfigFloat( const char* name, const float defvalue );
-Export(void) SetSpringConfigString(const char* name, const char* value);
-Export(void) SetSpringConfigInt(const char* name, const int value);
-Export(void) SetSpringConfigFloat(const char* name, const float value);
+EXPORT(const char*) GetSpringConfigString(const char* name, const char* defvalue);
+EXPORT(int) GetSpringConfigInt(const char* name, const int defvalue);
+EXPORT(float) GetSpringConfigFloat( const char* name, const float defvalue );
+EXPORT(void) SetSpringConfigString(const char* name, const char* value);
+EXPORT(void) SetSpringConfigInt(const char* name, const int value);
+EXPORT(void) SetSpringConfigFloat(const char* name, const float value);
 
 
 // from LuaParserAPI.cpp:
 
-Export(void) lpClose();
-Export(int) lpOpenFile(const char* filename, const char* fileModes, const char* accessModes);
-Export(int) lpOpenSource(const char* source, const char* accessModes);
-Export(int) lpExecute();
-Export(const char*) lpErrorLog();
+EXPORT(void) lpClose();
+EXPORT(int) lpOpenFile(const char* filename, const char* fileModes, const char* accessModes);
+EXPORT(int) lpOpenSource(const char* source, const char* accessModes);
+EXPORT(int) lpExecute();
+EXPORT(const char*) lpErrorLog();
 
-Export(void) lpAddTableInt(int key, int override);
-Export(void) lpAddTableStr(const char* key, int override);
-Export(void) lpEndTable();
-Export(void) lpAddIntKeyIntVal(int key, int val);
-Export(void) lpAddStrKeyIntVal(const char* key, int val);
-Export(void) lpAddIntKeyBoolVal(int key, int val);
-Export(void) lpAddStrKeyBoolVal(const char* key, int val);
-Export(void) lpAddIntKeyFloatVal(int key, float val);
-Export(void) lpAddStrKeyFloatVal(const char* key, float val);
-Export(void) lpAddIntKeyStrVal(int key, const char* val);
-Export(void) lpAddStrKeyStrVal(const char* key, const char* val);
+EXPORT(void) lpAddTableInt(int key, int override);
+EXPORT(void) lpAddTableStr(const char* key, int override);
+EXPORT(void) lpEndTable();
+EXPORT(void) lpAddIntKeyIntVal(int key, int val);
+EXPORT(void) lpAddStrKeyIntVal(const char* key, int val);
+EXPORT(void) lpAddIntKeyBoolVal(int key, int val);
+EXPORT(void) lpAddStrKeyBoolVal(const char* key, int val);
+EXPORT(void) lpAddIntKeyFloatVal(int key, float val);
+EXPORT(void) lpAddStrKeyFloatVal(const char* key, float val);
+EXPORT(void) lpAddIntKeyStrVal(int key, const char* val);
+EXPORT(void) lpAddStrKeyStrVal(const char* key, const char* val);
 
-Export(int) lpRootTable();
-Export(int) lpRootTableExpr(const char* expr);
-Export(int) lpSubTableInt(int key);
-Export(int) lpSubTableStr(const char* key);
-Export(int) lpSubTableExpr(const char* expr);
-Export(void) lpPopTable();
+EXPORT(int) lpRootTable();
+EXPORT(int) lpRootTableExpr(const char* expr);
+EXPORT(int) lpSubTableInt(int key);
+EXPORT(int) lpSubTableStr(const char* key);
+EXPORT(int) lpSubTableExpr(const char* expr);
+EXPORT(void) lpPopTable();
 
-Export(int) lpGetKeyExistsInt(int key);
-Export(int) lpGetKeyExistsStr(const char* key);
+EXPORT(int) lpGetKeyExistsInt(int key);
+EXPORT(int) lpGetKeyExistsStr(const char* key);
 
-Export(int) lpGetIntKeyType(int key);
-Export(int) lpGetStrKeyType(const char* key);
+EXPORT(int) lpGetIntKeyType(int key);
+EXPORT(int) lpGetStrKeyType(const char* key);
 
-Export(int) lpGetIntKeyListCount();
-Export(int) lpGetIntKeyListEntry(int index);
-Export(int) lpGetStrKeyListCount();
-Export(const char*) lpGetStrKeyListEntry(int index);
+EXPORT(int) lpGetIntKeyListCount();
+EXPORT(int) lpGetIntKeyListEntry(int index);
+EXPORT(int) lpGetStrKeyListCount();
+EXPORT(const char*) lpGetStrKeyListEntry(int index);
 
-Export(int) lpGetIntKeyIntVal(int key, int defVal);
-Export(int) lpGetStrKeyIntVal(const char* key, int defVal);
-Export(int) lpGetIntKeyBoolVal(int key, int defVal);
-Export(int) lpGetStrKeyBoolVal(const char* key, int defVal);
-Export(float) lpGetIntKeyFloatVal(int key, float defVal);
-Export(float) lpGetStrKeyFloatVal(const char* key, float defVal);
-Export(const char*) lpGetIntKeyStrVal(int key, const char* defVal);
-Export(const char*) lpGetStrKeyStrVal(const char* key, const char* defVal);
-
+EXPORT(int) lpGetIntKeyIntVal(int key, int defVal);
+EXPORT(int) lpGetStrKeyIntVal(const char* key, int defVal);
+EXPORT(int) lpGetIntKeyBoolVal(int key, int defVal);
+EXPORT(int) lpGetStrKeyBoolVal(const char* key, int defVal);
+EXPORT(float) lpGetIntKeyFloatVal(int key, float defVal);
+EXPORT(float) lpGetStrKeyFloatVal(const char* key, float defVal);
+EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defVal);
+EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defVal);
 
 #endif // UNITSYNC_API_H

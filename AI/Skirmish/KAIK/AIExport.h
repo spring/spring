@@ -39,19 +39,19 @@ struct Option;
 // see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
 
 // static AI library methods (optional to implement)
-Export(unsigned int) getInfo(int teamId,
+EXPORT(unsigned int) getInfo(int teamId,
 		struct InfoItem info[], unsigned int maxInfoItems);
-Export(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-Export(unsigned int) getOptions(int teamId,
+EXPORT(unsigned int) getOptions(int teamId,
 		struct Option options[], unsigned int maxOptions);
 
 // team instance functions
-Export(int) init(int teamId,
+EXPORT(int) init(int teamId,
 		const struct InfoItem info[], unsigned int numInfoItems);
-Export(int) release(int teamId);
-Export(int) handleEvent(int teamId, int topic, const void* data);
+EXPORT(int) release(int teamId);
+EXPORT(int) handleEvent(int teamId, int topic, const void* data);
 
 #endif /* _AIEXPORT_H */
 

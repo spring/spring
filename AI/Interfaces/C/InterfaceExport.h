@@ -49,33 +49,33 @@ struct SStaticGlobalData;
 
 // static AI interface library functions
 
-Export(int) initStatic(const SStaticGlobalData* staticGlobalData);
-Export(int) releaseStatic();
-Export(enum LevelOfSupport) getLevelOfSupportFor(
+EXPORT(int) initStatic(const SStaticGlobalData* staticGlobalData);
+EXPORT(int) releaseStatic();
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
-Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
+EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
 
 
 // skirmish AI related methods
 
-//Export(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max);
-//Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(
+//EXPORT(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max);
+//EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
+EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
 		const struct InfoItem info[], unsigned int numInfoItems);
-Export(int) unloadSkirmishAILibrary(
+EXPORT(int) unloadSkirmishAILibrary(
 		const struct SSAISpecifier* const sAISpecifier);
-Export(int) unloadAllSkirmishAILibraries();
+EXPORT(int) unloadAllSkirmishAILibraries();
 
 
 // group AI related methods
 
-//Export(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max);
-//Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
-Export(const struct SGAILibrary*) loadGroupAILibrary(
+//EXPORT(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max);
+//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
+EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
 		const struct InfoItem info[], unsigned int numInfoItems);
-Export(int) unloadGroupAILibrary(
+EXPORT(int) unloadGroupAILibrary(
 		const struct SGAISpecifier* const gAISpecifier);
-Export(int) unloadAllGroupAILibraries();
+EXPORT(int) unloadAllGroupAILibraries();
 
 
 #ifdef	__cplusplus
@@ -83,4 +83,3 @@ Export(int) unloadAllGroupAILibraries();
 #endif
 
 #endif	// _INTERFACEEXPORT_H
-

@@ -41,7 +41,7 @@ static vector<string> strKeys;
 //  Primary calls
 //
 
-Export(void) lpClose()
+EXPORT(void) lpClose()
 {
 	rootTable = LuaTable();
 	currTable = LuaTable();
@@ -58,7 +58,7 @@ Export(void) lpClose()
 }
 
 
-Export(int) lpOpenFile(const char* filename,
+EXPORT(int) lpOpenFile(const char* filename,
                                     const char* fileModes,
                                     const char* accessModes)
 {
@@ -68,7 +68,7 @@ Export(int) lpOpenFile(const char* filename,
 }
 
 
-Export(int) lpOpenSource(const char* source,
+EXPORT(int) lpOpenSource(const char* source,
                                       const char* accessModes)
 {
 	lpClose();
@@ -77,7 +77,7 @@ Export(int) lpOpenSource(const char* source,
 }
 
 
-Export(int) lpExecute()
+EXPORT(int) lpExecute()
 {
 	if (!luaParser) {
 		return 0;
@@ -89,7 +89,7 @@ Export(int) lpExecute()
 }
 
 
-Export(const char*) lpErrorLog()
+EXPORT(const char*) lpErrorLog()
 {
 	if (luaParser) {
 		return GetStr(luaParser->GetErrorLog());
@@ -103,67 +103,67 @@ Export(const char*) lpErrorLog()
 //  Environment additions
 //
 
-Export(void) lpAddTableInt(int key, int override)
+EXPORT(void) lpAddTableInt(int key, int override)
 {
 	if (luaParser) { luaParser->GetTable(key, override); }
 }
 
 
-Export(void) lpAddTableStr(const char* key, int override)
+EXPORT(void) lpAddTableStr(const char* key, int override)
 {
 	if (luaParser) { luaParser->GetTable(key, override); }
 }
 
 
-Export(void) lpEndTable()
+EXPORT(void) lpEndTable()
 {
 	if (luaParser) { luaParser->EndTable(); }
 }
 
 
-Export(void) lpAddIntKeyIntVal(int key, int val)
+EXPORT(void) lpAddIntKeyIntVal(int key, int val)
 {
 	if (luaParser) { luaParser->AddInt(key, val); }
 }
 
 
-Export(void) lpAddStrKeyIntVal(const char* key, int val)
+EXPORT(void) lpAddStrKeyIntVal(const char* key, int val)
 {
 	if (luaParser) { luaParser->AddInt(key, val); }
 }
 
 
-Export(void) lpAddIntKeyBoolVal(int key, int val)
+EXPORT(void) lpAddIntKeyBoolVal(int key, int val)
 {
 	if (luaParser) { luaParser->AddBool(key, val); }
 }
 
 
-Export(void) lpAddStrKeyBoolVal(const char* key, int val)
+EXPORT(void) lpAddStrKeyBoolVal(const char* key, int val)
 {
 	if (luaParser) { luaParser->AddBool(key, val); }
 }
 
 
-Export(void) lpAddIntKeyFloatVal(int key, float val)
+EXPORT(void) lpAddIntKeyFloatVal(int key, float val)
 {
 	if (luaParser) { luaParser->AddFloat(key, val); }
 }
 
 
-Export(void) lpAddStrKeyFloatVal(const char* key, float val)
+EXPORT(void) lpAddStrKeyFloatVal(const char* key, float val)
 {
 	if (luaParser) { luaParser->AddFloat(key, val); }
 }
 
 
-Export(void) lpAddIntKeyStrVal(int key, const char* val)
+EXPORT(void) lpAddIntKeyStrVal(int key, const char* val)
 {
 	if (luaParser) { luaParser->AddString(key, val); }
 }
 
 
-Export(void) lpAddStrKeyStrVal(const char* key, const char* val)
+EXPORT(void) lpAddStrKeyStrVal(const char* key, const char* val)
 {
 	if (luaParser) { luaParser->AddString(key, val); }
 }
@@ -174,7 +174,7 @@ Export(void) lpAddStrKeyStrVal(const char* key, const char* val)
 //  Table manipulation
 //
 
-Export(int) lpRootTable()
+EXPORT(int) lpRootTable()
 {
 	currTable = rootTable;
 	luaTables.clear();
@@ -182,7 +182,7 @@ Export(int) lpRootTable()
 }
 
 
-Export(int) lpRootTableExpr(const char* expr)
+EXPORT(int) lpRootTableExpr(const char* expr)
 {
 	currTable = rootTable.SubTableExpr(expr);
 	luaTables.clear();
@@ -190,7 +190,7 @@ Export(int) lpRootTableExpr(const char* expr)
 }
 
 
-Export(int) lpSubTableInt(int key)
+EXPORT(int) lpSubTableInt(int key)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTable(key);
@@ -198,7 +198,7 @@ Export(int) lpSubTableInt(int key)
 }
 
 
-Export(int) lpSubTableStr(const char* key)
+EXPORT(int) lpSubTableStr(const char* key)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTable(key);
@@ -206,7 +206,7 @@ Export(int) lpSubTableStr(const char* key)
 }
 
 
-Export(int) lpSubTableExpr(const char* expr)
+EXPORT(int) lpSubTableExpr(const char* expr)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTableExpr(expr);
@@ -214,7 +214,7 @@ Export(int) lpSubTableExpr(const char* expr)
 }
 
 
-Export(void) lpPopTable()
+EXPORT(void) lpPopTable()
 {
 	if (luaTables.empty()) {
 		currTable = rootTable;
@@ -231,13 +231,13 @@ Export(void) lpPopTable()
 //  Key existance
 //
 
-Export(int) lpGetKeyExistsInt(int key)
+EXPORT(int) lpGetKeyExistsInt(int key)
 {
 	return currTable.KeyExists(key) ? 1 : 0;
 }
 
 
-Export(int) lpGetKeyExistsStr(const char* key)
+EXPORT(int) lpGetKeyExistsStr(const char* key)
 {
 	return currTable.KeyExists(key) ? 1 : 0;
 }
@@ -248,13 +248,13 @@ Export(int) lpGetKeyExistsStr(const char* key)
 //  Type
 //
 
-Export(int) lpGetIntKeyType(int key)
+EXPORT(int) lpGetIntKeyType(int key)
 {
 	return currTable.GetType(key);
 }
 
 
-Export(int) lpGetStrKeyType(const char* key)
+EXPORT(int) lpGetStrKeyType(const char* key)
 {
 	return currTable.GetType(key);
 }
@@ -265,7 +265,7 @@ Export(int) lpGetStrKeyType(const char* key)
 // Key lists
 //
 
-Export(int) lpGetIntKeyListCount()
+EXPORT(int) lpGetIntKeyListCount()
 {
 	if (!currTable.IsValid()) {
 		intKeys.clear();
@@ -277,7 +277,7 @@ Export(int) lpGetIntKeyListCount()
 }
 
 
-Export(int) lpGetIntKeyListEntry(int index)
+EXPORT(int) lpGetIntKeyListEntry(int index)
 {
 	if ((index < 0) || (index >= (int)intKeys.size())) {
 		return 0;
@@ -286,7 +286,7 @@ Export(int) lpGetIntKeyListEntry(int index)
 }
 
 
-Export(int) lpGetStrKeyListCount()
+EXPORT(int) lpGetStrKeyListCount()
 {
 	if (!currTable.IsValid()) {
 		strKeys.clear();
@@ -298,7 +298,7 @@ Export(int) lpGetStrKeyListCount()
 }
 
 
-Export(const char*) lpGetStrKeyListEntry(int index)
+EXPORT(const char*) lpGetStrKeyListEntry(int index)
 {
 	if ((index < 0) || (index >= (int)strKeys.size())) {
 		return GetStr("");
@@ -312,50 +312,50 @@ Export(const char*) lpGetStrKeyListEntry(int index)
 //  Value queries
 //
 
-Export(int) lpGetIntKeyIntVal(int key, int defVal)
+EXPORT(int) lpGetIntKeyIntVal(int key, int defVal)
 {
 	return currTable.GetInt(key, defVal);
 }
 
 
-Export(int) lpGetStrKeyIntVal(const char* key, int defVal)
+EXPORT(int) lpGetStrKeyIntVal(const char* key, int defVal)
 {
 	return currTable.GetInt(key, defVal);
 }
 
 
-Export(int) lpGetIntKeyBoolVal(int key, int defVal)
+EXPORT(int) lpGetIntKeyBoolVal(int key, int defVal)
 {
 	return currTable.GetBool(key, defVal) ? 1 : 0;
 }
 
 
-Export(int) lpGetStrKeyBoolVal(const char* key, int defVal)
+EXPORT(int) lpGetStrKeyBoolVal(const char* key, int defVal)
 {
 	return currTable.GetBool(key, defVal) ? 1 : 0;
 }
 
 
-Export(float) lpGetIntKeyFloatVal(int key, float defVal)
+EXPORT(float) lpGetIntKeyFloatVal(int key, float defVal)
 {
 	return currTable.GetFloat(key, defVal);
 }
 
 
-Export(float) lpGetStrKeyFloatVal(const char* key, float defVal)
+EXPORT(float) lpGetStrKeyFloatVal(const char* key, float defVal)
 {
 	return currTable.GetFloat(key, defVal);
 }
 
 
-Export(const char*) lpGetIntKeyStrVal(int key,
+EXPORT(const char*) lpGetIntKeyStrVal(int key,
                                                    const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
 }
 
 
-Export(const char*) lpGetStrKeyStrVal(const char* key,
+EXPORT(const char*) lpGetStrKeyStrVal(const char* key,
                                                    const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
