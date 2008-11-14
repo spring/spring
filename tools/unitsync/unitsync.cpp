@@ -189,7 +189,7 @@ class ScopedMapLoader {
  *			printf("unitsync error: %s\n", err);
  *		@endcode
  */
-Export(const char*) GetNextError()
+EXPORT(const char*) GetNextError()
 {
 	try {
 		// queue is only 1 element long now for simplicity :-)
@@ -216,7 +216,7 @@ Export(const char*) GetNextError()
  * Returns a const char* string specifying the version of spring used to build this library with.
  * It was added to aid in lobby creation, where checks for updates to spring occur.
  */
-Export(const char*) GetSpringVersion()
+EXPORT(const char*) GetSpringVersion()
 {
 	return SpringVersion::Get().c_str();
 }
@@ -228,7 +228,7 @@ Export(const char*) GetSpringVersion()
  *
  * Creates a messagebox with the title "Message from DLL", an OK button, and the specified message
  */
-Export(void) Message(const char* p_szMessage)
+EXPORT(void) Message(const char* p_szMessage)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", p_szMessage);
@@ -262,7 +262,7 @@ static void _UnInit()
 /**
  * @brief Uninitialize the unitsync library
  */
-Export(void) UnInit()
+EXPORT(void) UnInit()
 {
 	try {
 		_UnInit();
@@ -284,7 +284,7 @@ Export(void) UnInit()
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
  */
-Export(int) Init(bool isServer, int id)
+EXPORT(int) Init(bool isServer, int id)
 {
 	try {
 		_UnInit();
@@ -320,7 +320,7 @@ Export(int) Init(bool isServer, int id)
  *
  * This is the data directory which is used to write logs, screenshots, demos, etc.
  */
-Export(const char*) GetWritableDataDirectory()
+EXPORT(const char*) GetWritableDataDirectory()
 {
 	try {
 		CheckInit();
@@ -346,7 +346,7 @@ Export(const char*) GetWritableDataDirectory()
  * Before any units are available, you'll first need to map a mod's archives
  * into the VFS using AddArchive() or AddAllArchives().
  */
-Export(int) ProcessUnits(void)
+EXPORT(int) ProcessUnits(void)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: process units\n");
@@ -361,7 +361,7 @@ Export(int) ProcessUnits(void)
  * @brief Identical to ProcessUnits(), neither generates checksum anymore
  * @see ProcessUnits
  */
-Export(int) ProcessUnitsNoChecksum(void)
+EXPORT(int) ProcessUnitsNoChecksum(void)
 {
 	return ProcessUnits();
 }
@@ -381,7 +381,7 @@ Export(int) ProcessUnitsNoChecksum(void)
  *		int unit_number = GetUnitCount();
  *		@endcode
  */
-Export(int) GetUnitCount()
+EXPORT(int) GetUnitCount()
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit count\n");
@@ -400,7 +400,7 @@ Export(int) GetUnitCount()
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
  */
-Export(const char*) GetUnitName(int unit)
+EXPORT(const char*) GetUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit %d name\n", unit);
@@ -420,7 +420,7 @@ Export(const char*) GetUnitName(int unit)
  * This function returns the units human name. For example it would return
  * 'Arm Construction kbot' and not 'armck'.
  */
-Export(const char*) GetFullUnitName(int unit)
+EXPORT(const char*) GetFullUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get full unit %d name\n", unit);
@@ -440,7 +440,7 @@ Export(const char*) GetFullUnitName(int unit)
  * After this, the contents of the archive are available to other unitsync functions,
  * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
  */
-Export(void) AddArchive(const char* name)
+EXPORT(void) AddArchive(const char* name)
 {
 	try {
 		CheckInit();
@@ -457,7 +457,7 @@ Export(void) AddArchive(const char* name)
  * @brief Adds an achive and all it's dependencies to the VFS
  * @see AddArchive
  */
-Export(void) AddAllArchives(const char* root)
+EXPORT(void) AddAllArchives(const char* root)
 {
 	try {
 		CheckInit();
@@ -480,7 +480,7 @@ Export(void) AddAllArchives(const char* root)
  * This checksum depends only on the contents from the archive itself, and not
  * on the contents from dependencies of this archive (if any).
  */
-Export(unsigned int) GetArchiveChecksum(const char* arname)
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname)
 {
 	try {
 		CheckInit();
@@ -498,7 +498,7 @@ Export(unsigned int) GetArchiveChecksum(const char* arname)
  * @brief Gets the real path to the archive
  * @return NULL on error; a path to the archive on success
  */
-Export(const char*) GetArchivePath(const char* arname)
+EXPORT(const char*) GetArchivePath(const char* arname)
 {
 	try {
 		CheckInit();
@@ -534,7 +534,7 @@ static vector<string> mapNames;
  *		for (int index = 0; index < GetMapCount(); ++index) { ... }
  *		@endcode
  */
-Export(int) GetMapCount()
+EXPORT(int) GetMapCount()
 {
 	try {
 		CheckInit();
@@ -564,7 +564,7 @@ Export(int) GetMapCount()
  * @brief Get the name of a map
  * @return NULL on error; the name of the map (e.g. "SmallDivide.smf") on success
  */
-Export(const char*) GetMapName(int index)
+EXPORT(const char*) GetMapName(int index)
 {
 	try {
 		CheckInit();
@@ -694,7 +694,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  *
  * If version >= 1, then the author field is filled.
  */
-Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
 	try {
 		return _GetMapInfoEx(name, outInfo, version);
@@ -711,7 +711,7 @@ Export(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @return Zero on error; non-zero on success
  * @see GetMapInfoEx
  */
-Export(int) GetMapInfo(const char* name, MapInfo* outInfo)
+EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 {
 	try {
 		return _GetMapInfoEx(name, outInfo, 0);
@@ -731,7 +731,7 @@ static vector<string> mapArchives;
  *
  * Must be called before GetMapArchiveName()
  */
-Export(int) GetMapArchiveCount(const char* mapName)
+EXPORT(int) GetMapArchiveCount(const char* mapName)
 {
 	try {
 		CheckInit();
@@ -750,7 +750,7 @@ Export(int) GetMapArchiveCount(const char* mapName)
  * @param index the index of the archive
  * @return NULL on error; the name of the archive on success
  */
-Export(const char*) GetMapArchiveName(int index)
+EXPORT(const char*) GetMapArchiveName(int index)
 {
 	try {
 		CheckInit();
@@ -773,7 +773,7 @@ Export(const char*) GetMapArchiveName(int index)
  *
  * (It is ment to check sync between clients in lobby, for example.)
  */
-Export(unsigned int) GetMapChecksum(int index)
+EXPORT(unsigned int) GetMapChecksum(int index)
 {
 	try {
 		CheckInit();
@@ -792,7 +792,7 @@ Export(unsigned int) GetMapChecksum(int index)
  * @return Zero on error; the checksum on success
  * @see GetMapChecksum
  */
-Export(unsigned int) GetMapChecksumFromName(const char* mapName)
+EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 {
 	try {
 		CheckInit();
@@ -952,7 +952,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
  * An example usage would be GetMinimap("SmallDivide.smf", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-Export(void*) GetMinimap(const char* filename, int miplevel)
+EXPORT(void*) GetMinimap(const char* filename, int miplevel)
 {
 	try {
 		CheckInit();
@@ -990,7 +990,7 @@ Export(void*) GetMinimap(const char* filename, int miplevel)
  * @return Non-zero when the infomap was found with a non-zero size; zero on error.
  * @see GetInfoMap
  */
-Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
+EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
 {
 	try {
 		CheckInit();
@@ -1033,7 +1033,7 @@ Export(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
  * this function to convert from one format to another. Currently only the
  * conversion from 16 bpp to 8 bpp is implemented.
  */
-Export(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
+EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
 {
 	try {
 		CheckInit();
@@ -1090,7 +1090,7 @@ vector<CArchiveScanner::ModData> modData;
  * @return int Zero on error; The number of mods available on success
  * @see GetMapCount
  */
-Export(int) GetPrimaryModCount()
+EXPORT(int) GetPrimaryModCount()
 {
 	try {
 		CheckInit();
@@ -1111,7 +1111,7 @@ Export(int) GetPrimaryModCount()
  * Returns the name of the mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModName(int index)
+EXPORT(const char*) GetPrimaryModName(int index)
 {
 	try {
 		CheckInit();
@@ -1133,7 +1133,7 @@ Export(const char*) GetPrimaryModName(int index)
  * Returns the shortened name of the mod usually found in modinfo.tdf.
  * Be sure you've made a call GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModShortName(int index)
+EXPORT(const char*) GetPrimaryModShortName(int index)
 {
 	try {
 		CheckInit();
@@ -1155,7 +1155,7 @@ Export(const char*) GetPrimaryModShortName(int index)
  * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModVersion(int index)
+EXPORT(const char*) GetPrimaryModVersion(int index)
 {
 	try {
 		CheckInit();
@@ -1177,7 +1177,7 @@ Export(const char*) GetPrimaryModVersion(int index)
  * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModMutator(int index)
+EXPORT(const char*) GetPrimaryModMutator(int index)
 {
 	try {
 		CheckInit();
@@ -1199,7 +1199,7 @@ Export(const char*) GetPrimaryModMutator(int index)
  * Returns the name of the game this mod belongs to usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModGame(int index)
+EXPORT(const char*) GetPrimaryModGame(int index)
 {
 	try {
 		CheckInit();
@@ -1221,7 +1221,7 @@ Export(const char*) GetPrimaryModGame(int index)
  * Returns the abbrieviated name of the game this mod belongs to usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModShortGame(int index)
+EXPORT(const char*) GetPrimaryModShortGame(int index)
 {
 	try {
 		CheckInit();
@@ -1243,7 +1243,7 @@ Export(const char*) GetPrimaryModShortGame(int index)
  * Returns a description for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModDescription(int index)
+EXPORT(const char*) GetPrimaryModDescription(int index)
 {
 	try {
 		CheckInit();
@@ -1265,7 +1265,7 @@ Export(const char*) GetPrimaryModDescription(int index)
  * Returns the name of the primary archive of the mod.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-Export(const char*) GetPrimaryModArchive(int index)
+EXPORT(const char*) GetPrimaryModArchive(int index)
 {
 	try {
 		CheckInit();
@@ -1296,7 +1296,7 @@ vector<string> primaryArchives;
  *		}
  *		@endcode
  */
-Export(int) GetPrimaryModArchiveCount(int index)
+EXPORT(int) GetPrimaryModArchiveCount(int index)
 {
 	try {
 		CheckInit();
@@ -1316,7 +1316,7 @@ Export(int) GetPrimaryModArchiveCount(int index)
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
-Export(const char*) GetPrimaryModArchiveList(int archiveNr)
+EXPORT(const char*) GetPrimaryModArchiveList(int archiveNr)
 {
 	try {
 		CheckInit();
@@ -1335,7 +1335,7 @@ Export(const char*) GetPrimaryModArchiveList(int archiveNr)
  * @param name The name of the mod
  * @return -1 if the mod can not be found; the index of the mod otherwise
  */
-Export(int) GetPrimaryModIndex(const char* name)
+EXPORT(int) GetPrimaryModIndex(const char* name)
 {
 	try {
 		CheckInit();
@@ -1359,7 +1359,7 @@ Export(int) GetPrimaryModIndex(const char* name)
  * @return Zero on error; the checksum on success.
  * @see GetMapChecksum
  */
-Export(unsigned int) GetPrimaryModChecksum(int index)
+EXPORT(unsigned int) GetPrimaryModChecksum(int index)
 {
 	try {
 		CheckInit();
@@ -1378,7 +1378,7 @@ Export(unsigned int) GetPrimaryModChecksum(int index)
  * @return Zero on error; the checksum on success.
  * @see GetMapChecksum
  */
-Export(unsigned int) GetPrimaryModChecksumFromName(const char* name)
+EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name)
 {
 	try {
 		CheckInit();
@@ -1401,7 +1401,7 @@ Export(unsigned int) GetPrimaryModChecksumFromName(const char* name)
  * available. Be sure to map the mod into the VFS using AddArchive() or
  * AddAllArchives() prior to using this function.
  */
-Export(int) GetSideCount()
+EXPORT(int) GetSideCount()
 {
 	try {
 		CheckInit();
@@ -1422,7 +1422,7 @@ Export(int) GetSideCount()
  *
  * Be sure you've made a call to GetSideCount() prior to using this.
  */
-Export(const char*) GetSideName(int side)
+EXPORT(const char*) GetSideName(int side)
 {
 	try {
 		CheckInit();
@@ -1442,7 +1442,7 @@ Export(const char*) GetSideName(int side)
  *
  * Be sure you've made a call to GetSideCount() prior to using this.
  */
-Export(const char*) GetSideStartUnit(int side)
+EXPORT(const char*) GetSideStartUnit(int side)
 {
 	try {
 		CheckInit();
@@ -1514,7 +1514,7 @@ static void GetLuaAIOptions()
  * Usually LUA AIs are shipped inside a mod, so be sure to map the mod into
  * the VFS using AddArchive() or AddAllArchives() prior to using this function.
  */
-Export(int) GetLuaAICount()
+EXPORT(int) GetLuaAICount()
 {
 	try {
 		CheckInit();
@@ -1533,7 +1533,7 @@ Export(int) GetLuaAICount()
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  */
-Export(const char*) GetLuaAIName(int aiIndex)
+EXPORT(const char*) GetLuaAIName(int aiIndex)
 {
 	try {
 		CheckInit();
@@ -1552,7 +1552,7 @@ Export(const char*) GetLuaAIName(int aiIndex)
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  */
-Export(const char*) GetLuaAIDesc(int aiIndex)
+EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 {
 	try {
 		CheckInit();
@@ -1760,7 +1760,7 @@ static void CheckOptionType(int optIndex, int type)
  * @param name the name of the map
  * @return Zero on error; the number of map options available on success
  */
-Export(int) GetMapOptionCount(const char* name)
+EXPORT(int) GetMapOptionCount(const char* name)
 {
 	try {
 		CheckInit();
@@ -1793,7 +1793,7 @@ Export(int) GetMapOptionCount(const char* name)
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
  */
-Export(int) GetModOptionCount()
+EXPORT(int) GetModOptionCount()
 {
 	try {
 		CheckInit();
@@ -1825,7 +1825,7 @@ set<string> infosSet;
 // Updated on every call to GetSkirmishAICount
 static vector<string> skirmishAIDataDirs;
 
-Export(int) GetSkirmishAICount() {
+EXPORT(int) GetSkirmishAICount() {
 
 	try {
 		CheckInit();
@@ -1852,7 +1852,7 @@ Export(int) GetSkirmishAICount() {
 	return 0;
 }
 
-Export(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
+EXPORT(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
 	
 	SSAISpecifier spec = {NULL, NULL};
 	
@@ -1894,7 +1894,7 @@ static void CheckInfoIndex(int infIndex)
 	CheckBounds(infIndex, infos.size());
 }
 
-Export(int) GetSkirmishAIInfoCount(int index) {
+EXPORT(int) GetSkirmishAIInfoCount(int index) {
 
 	try {
 		CheckInit();
@@ -1908,7 +1908,7 @@ Export(int) GetSkirmishAIInfoCount(int index) {
 
 	return 0;
 }
-Export(const char*) GetInfoKey(int index) {
+EXPORT(const char*) GetInfoKey(int index) {
 
 	try {
 		CheckInfoIndex(index);
@@ -1917,7 +1917,7 @@ Export(const char*) GetInfoKey(int index) {
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
-Export(const char*) GetInfoValue(int index) {
+EXPORT(const char*) GetInfoValue(int index) {
 
 	try {
 		CheckInfoIndex(index);
@@ -1926,7 +1926,7 @@ Export(const char*) GetInfoValue(int index) {
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
-Export(const char*) GetInfoDescription(int index) {
+EXPORT(const char*) GetInfoDescription(int index) {
 
 	try {
 		CheckInfoIndex(index);
@@ -1937,7 +1937,7 @@ Export(const char*) GetInfoDescription(int index) {
 }
 
 
-Export(int) GetSkirmishAIOptionCount(int index) {
+EXPORT(int) GetSkirmishAIOptionCount(int index) {
 
 	try {
 		CheckInit();
@@ -1970,7 +1970,7 @@ Export(int) GetSkirmishAIOptionCount(int index) {
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionKey(int optIndex)
+EXPORT(const char*) GetOptionKey(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1989,7 +1989,7 @@ Export(const char*) GetOptionKey(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionName(int optIndex)
+EXPORT(const char*) GetOptionName(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -2008,7 +2008,7 @@ Export(const char*) GetOptionName(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionSection(int optIndex)
+EXPORT(const char*) GetOptionSection(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -2029,7 +2029,7 @@ Export(const char*) GetOptionSection(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionStyle(int optIndex)
+EXPORT(const char*) GetOptionStyle(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -2048,7 +2048,7 @@ Export(const char*) GetOptionStyle(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionDesc(int optIndex)
+EXPORT(const char*) GetOptionDesc(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -2067,7 +2067,7 @@ Export(const char*) GetOptionDesc(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(int) GetOptionType(int optIndex)
+EXPORT(int) GetOptionType(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -2088,7 +2088,7 @@ Export(int) GetOptionType(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(int) GetOptionBoolDef(int optIndex)
+EXPORT(int) GetOptionBoolDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_bool);
@@ -2109,7 +2109,7 @@ Export(int) GetOptionBoolDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(float) GetOptionNumberDef(int optIndex)
+EXPORT(float) GetOptionNumberDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2128,7 +2128,7 @@ Export(float) GetOptionNumberDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(float) GetOptionNumberMin(int optIndex)
+EXPORT(float) GetOptionNumberMin(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2147,7 +2147,7 @@ Export(float) GetOptionNumberMin(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(float) GetOptionNumberMax(int optIndex)
+EXPORT(float) GetOptionNumberMax(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2166,7 +2166,7 @@ Export(float) GetOptionNumberMax(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(float) GetOptionNumberStep(int optIndex)
+EXPORT(float) GetOptionNumberStep(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2187,7 +2187,7 @@ Export(float) GetOptionNumberStep(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionStringDef(int optIndex)
+EXPORT(const char*) GetOptionStringDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_string);
@@ -2206,7 +2206,7 @@ Export(const char*) GetOptionStringDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(int) GetOptionStringMaxLen(int optIndex)
+EXPORT(int) GetOptionStringMaxLen(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_string);
@@ -2227,7 +2227,7 @@ Export(int) GetOptionStringMaxLen(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(int) GetOptionListCount(int optIndex)
+EXPORT(int) GetOptionListCount(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2246,7 +2246,7 @@ Export(int) GetOptionListCount(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionListDef(int optIndex)
+EXPORT(const char*) GetOptionListDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2266,7 +2266,7 @@ Export(const char*) GetOptionListDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2287,7 +2287,7 @@ Export(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionListItemName(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2308,7 +2308,7 @@ Export(const char*) GetOptionListItemName(int optIndex, int itemIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-Export(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2410,7 +2410,7 @@ static int LuaGetMapInfo(lua_State* L)
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
  */
- Export(int) GetModValidMapCount()
+EXPORT(int) GetModValidMapCount()
 {
 	try {
 		CheckInit();
@@ -2452,7 +2452,7 @@ static int LuaGetMapInfo(lua_State* L)
  * Map names should be complete  (including the .smf or .sm3 extension.)
  * Be sure you've made a call to GetModValidMapCount() prior to using this.
  */
-Export(const char*) GetModValidMap(int index)
+EXPORT(const char*) GetModValidMap(int index)
 {
 	try {
 		CheckInit();
@@ -2491,7 +2491,7 @@ static void CheckFileHandle(int handle)
  * Map the wanted archives into the VFS with AddArchive() or AddAllArchives()
  * before using this function.
  */
-Export(int) OpenFileVFS(const char* name)
+EXPORT(int) OpenFileVFS(const char* name)
 {
 	try {
 		CheckInit();
@@ -2519,7 +2519,7 @@ Export(int) OpenFileVFS(const char* name)
  * @brief Close a file in the VFS
  * @param handle the file handle as returned by OpenFileVFS()
  */
-Export(void) CloseFileVFS(int handle)
+EXPORT(void) CloseFileVFS(int handle)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2539,7 +2539,7 @@ Export(void) CloseFileVFS(int handle)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-Export(void) ReadFileVFS(int handle, void* buf, int length)
+EXPORT(void) ReadFileVFS(int handle, void* buf, int length)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2559,7 +2559,7 @@ Export(void) ReadFileVFS(int handle, void* buf, int length)
  * @param handle the file handle as returned by OpenFileVFS()
  * @return -1 on error; the size of the file on success
  */
-Export(int) FileSizeVFS(int handle)
+EXPORT(int) FileSizeVFS(int handle)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2577,7 +2577,7 @@ Export(int) FileSizeVFS(int handle)
  * (a new call to initfind destroys data from previous ones)
  * pass the returned handle to findfiles to get the results
  */
-Export(int) InitFindVFS(const char* pattern)
+EXPORT(int) InitFindVFS(const char* pattern)
 {
 	try {
 		CheckInit();
@@ -2598,7 +2598,7 @@ Export(int) InitFindVFS(const char* pattern)
  * (a new call to initfind destroys data from previous ones)
  * pass the returned handle to findfiles to get the results
  */
-Export(int) InitDirListVFS(const char* path, const char* pattern, const char* modes)
+EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
 		CheckInit();
@@ -2619,7 +2619,7 @@ Export(int) InitDirListVFS(const char* path, const char* pattern, const char* mo
  * (a new call to initfind destroys data from previous ones)
  * pass the returned handle to findfiles to get the results
  */
-Export(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
+EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
 		CheckInit();
@@ -2636,7 +2636,7 @@ Export(int) InitSubDirsVFS(const char* path, const char* pattern, const char* mo
 
 // On first call, pass handle from initfind. pass the return value of this function on subsequent calls
 // until 0 is returned. size should be set to max namebuffer size on call
-Export(int) FindFilesVFS(int handle, char* nameBuf, int size)
+EXPORT(int) FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	try {
 		CheckInit();
@@ -2676,7 +2676,7 @@ static void CheckArchiveHandle(int handle)
  * @return Zero on error; a non-zero archive handle on success.
  * @sa OpenArchiveType
  */
-Export(int) OpenArchive(const char* name)
+EXPORT(int) OpenArchive(const char* name)
 {
 	try {
 		CheckInit();
@@ -2710,7 +2710,7 @@ Export(int) OpenArchive(const char* name)
  * This function is pointless, because OpenArchive() does the same and automatically
  * detects the file type based on it's extension.  Who added it anyway?
  */
-Export(int) OpenArchiveType(const char* name, const char* type)
+EXPORT(int) OpenArchiveType(const char* name, const char* type)
 {
 	try {
 		CheckInit();
@@ -2736,7 +2736,7 @@ Export(int) OpenArchiveType(const char* name, const char* type)
  * @brief Close an archive in the VFS
  * @param archive the archive handle as returned by OpenArchive()
  */
-Export(void) CloseArchive(int archive)
+EXPORT(void) CloseArchive(int archive)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2748,7 +2748,7 @@ Export(void) CloseArchive(int archive)
 }
 
 
-Export(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
+EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2781,7 +2781,7 @@ Export(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
  * The returned file handle is needed for subsequent calls to ReadArchiveFile(),
  * CloseArchiveFile() and SizeArchiveFile().
  */
-Export(int) OpenArchiveFile(int archive, const char* name)
+EXPORT(int) OpenArchiveFile(int archive, const char* name)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2804,7 +2804,7 @@ Export(int) OpenArchiveFile(int archive, const char* name)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than numBytes you reached the end of the file.)
  */
-Export(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
+EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2824,7 +2824,7 @@ Export(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
  * @param archive the archive handle as returned by OpenArchive()
  * @param handle the file handle as returned by OpenArchiveFile()
  */
-Export(void) CloseArchiveFile(int archive, int handle)
+EXPORT(void) CloseArchiveFile(int archive, int handle)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2842,7 +2842,7 @@ Export(void) CloseArchiveFile(int archive, int handle)
  * @param handle the file handle as returned by OpenArchiveFile()
  * @return -1 on error; the size of the file on success
  */
-Export(int) SizeArchiveFile(int archive, int handle)
+EXPORT(int) SizeArchiveFile(int archive, int handle)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2888,7 +2888,7 @@ void PrintLoadMsg(const char* text)
  * @param defvalue default string value to use if key is not found, may not be NULL
  * @return string value
  */
-Export(const char*) GetSpringConfigString(const char* name, const char* defValue)
+EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue)
 {
 	try {
 		string res = configHandler.GetString(name, defValue);
@@ -2904,7 +2904,7 @@ Export(const char*) GetSpringConfigString(const char* name, const char* defValue
  * @param defvalue default integer value to use if key is not found
  * @return integer value
  */
-Export(int) GetSpringConfigInt(const char* name, const int defValue)
+EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 {
 	try {
 		return configHandler.GetInt(name, defValue);
@@ -2919,7 +2919,7 @@ Export(int) GetSpringConfigInt(const char* name, const int defValue)
  * @param defvalue default float value to use if key is not found
  * @return float value
  */
-Export(float) GetSpringConfigFloat(const char* name, const float defValue)
+EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 {
 	try {
 		return configHandler.GetFloat(name, defValue);
@@ -2933,7 +2933,7 @@ Export(float) GetSpringConfigFloat(const char* name, const float defValue)
  * @param name name of key to set
  * @param value string value to set
  */
-Export(void) SetSpringConfigString(const char* name, const char* value)
+EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 {
 	try {
 		configHandler.SetString( name, value );
@@ -2946,7 +2946,7 @@ Export(void) SetSpringConfigString(const char* name, const char* value)
  * @param name name of key to set
  * @param value integer value to set
  */
-Export(void) SetSpringConfigInt(const char* name, const int value)
+EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
 		configHandler.SetInt(name, value);
@@ -2959,7 +2959,7 @@ Export(void) SetSpringConfigInt(const char* name, const int value)
  * @param name name of key to set
  * @param value float value to set
  */
-Export(void) SetSpringConfigFloat(const char* name, const float value)
+EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
 		configHandler.SetFloat( name, value );
@@ -2996,46 +2996,46 @@ class CMessageOnce
 
 
 // deprecated 2008/10
-Export(const char*) GetCurrentList()
+EXPORT(const char*) GetCurrentList()
 {
 	DEPRECATED;
 	return NULL;
 }
 
 // deprecated 2008/10
-Export(void) AddClient(int id, const char *unitList)
+EXPORT(void) AddClient(int id, const char *unitList)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-Export(void) RemoveClient(int id)
+EXPORT(void) RemoveClient(int id)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-Export(const char*) GetClientDiff(int id)
+EXPORT(const char*) GetClientDiff(int id)
 {
 	DEPRECATED;
 	return NULL;
 }
 
 // deprecated 2008/10
-Export(void) InstallClientDiff(const char *diff)
+EXPORT(void) InstallClientDiff(const char *diff)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-Export(int) IsUnitDisabled(int unit)
+EXPORT(int) IsUnitDisabled(int unit)
 {
 	DEPRECATED;
 	return 0;
 }
 
 // deprecated 2008/10
-Export(int) IsUnitDisabledByClient(int unit, int clientId)
+EXPORT(int) IsUnitDisabledByClient(int unit, int clientId)
 {
 	DEPRECATED;
 	return 0;

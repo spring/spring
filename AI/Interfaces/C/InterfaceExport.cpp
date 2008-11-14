@@ -24,46 +24,46 @@
 
 CInterface* myInterface = NULL;
 
-Export(int) initStatic(const SStaticGlobalData* staticGlobalData) {
+EXPORT(int) initStatic(const SStaticGlobalData* staticGlobalData) {
 	
 	myInterface = new CInterface(staticGlobalData);
 	return 0;
 }
 
-Export(int) releaseStatic() {
+EXPORT(int) releaseStatic() {
 	
 	delete myInterface;
 	myInterface = NULL;
 	return 0;
 }
 
-Export(enum LevelOfSupport) getLevelOfSupportFor(
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
 	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 }
 
-Export(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
+EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
 	return myInterface->GetInfo(info, maxInfoItems);
 }
 
 
 // skirmish AI methods
 /*
-Export(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max) {
+EXPORT(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max) {
 	return myInterface->GetSkirmishAISpecifiers(sAISpecifiers, max);
 }
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
+EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
 	return myInterface->LoadSkirmishAILibrary(sAISpecifier);
 }
 */
-Export(const struct SSAILibrary*) loadSkirmishAILibrary(
+EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
 		const struct InfoItem info[], unsigned int numInfoItems) {
 	return myInterface->LoadSkirmishAILibrary(info, numInfoItems);
 }
-Export(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
+EXPORT(int) unloadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
 	return myInterface->UnloadSkirmishAILibrary(sAISpecifier);
 }
-Export(int) unloadAllSkirmishAILibraries() {
+EXPORT(int) unloadAllSkirmishAILibraries() {
 	return myInterface->UnloadAllSkirmishAILibraries();
 }
 
@@ -71,21 +71,20 @@ Export(int) unloadAllSkirmishAILibraries() {
 
 // group AI methods
 /*
-Export(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max) {
+EXPORT(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max) {
 	return myInterface->GetGroupAISpecifiers(gAISpecifiers, max);
 }
-Export(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
+EXPORT(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
 	return myInterface->LoadGroupAILibrary(gAISpecifier);
 }
 */
-Export(const struct SGAILibrary*) loadGroupAILibrary(
+EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
 		const struct InfoItem info[], unsigned int numInfoItems) {
 	return myInterface->LoadGroupAILibrary(info, numInfoItems);
 }
-Export(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
+EXPORT(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
 	return myInterface->UnloadGroupAILibrary(gAISpecifier);
 }
-Export(int) unloadAllGroupAILibraries() {
+EXPORT(int) unloadAllGroupAILibraries() {
 	return myInterface->UnloadAllGroupAILibraries();
 }
-

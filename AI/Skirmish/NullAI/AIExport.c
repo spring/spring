@@ -26,7 +26,7 @@ the team in question would not yet exist.
 
 Therefore, the handleEvent code would look like this:
 [code]
-Export(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
     if (topic == INIT_EVENT) {
         myAIs[teamId] = CAIObject();
     }
@@ -86,7 +86,7 @@ to release() and EVENT_RELEASE.
 
 #include "AIExport.h"
 
-Export(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	
 	// TODO: do something
 	

@@ -36,7 +36,7 @@ std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 std::vector<InfoItem> myInfo;
 
 
-Export(unsigned int) getInfo(int teamId,
+EXPORT(unsigned int) getInfo(int teamId,
 		struct InfoItem info[], unsigned int maxInfoItems) {
 
 	unsigned int i = 0;
@@ -62,7 +62,7 @@ Export(unsigned int) getInfo(int teamId,
 	return i;
 }
 
-Export(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
@@ -74,12 +74,12 @@ Export(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 	return LOS_None;
 }
 
-Export(unsigned int) getOptions(int teamId,
+EXPORT(unsigned int) getOptions(int teamId,
 		struct Option options[], unsigned int maxOptions) {
 	return 0;
 }
 
-Export(int) init(int teamId,
+EXPORT(int) init(int teamId,
 		const struct InfoItem info[], unsigned int numInfoItems) {
 
 	if (myAIs.count(teamId) > 0) {
@@ -96,7 +96,7 @@ Export(int) init(int teamId,
 	return 0;
 }
 
-Export(int) release(int teamId) {
+EXPORT(int) release(int teamId) {
 
 	if (myAIs.count(teamId) == 0) {
 		// the map has no AI for this team.
@@ -112,7 +112,7 @@ Export(int) release(int teamId) {
 	return 0;
 }
 
-Export(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 	if (teamId < 0) {
 		// events sent to team -1 will always be to the AI object itself,
