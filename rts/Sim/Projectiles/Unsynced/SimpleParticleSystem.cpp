@@ -184,7 +184,7 @@ CSphereParticleSpawner::~CSphereParticleSpawner()
 {
 }
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit *owner)
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
 {
 	float3 up = emitVector;
 	float3 right = up.cross(float3(up.y,up.z,-up.x));

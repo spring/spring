@@ -1041,7 +1041,7 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 {
 	LUA_CALL_IN_CHECK(L);
-	//lua_checkstack(L, 8);
+	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("RecvLuaMsg");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false;
