@@ -4353,14 +4353,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\VFSHandler.cpp"
 					>
 				</File>
