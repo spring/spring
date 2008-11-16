@@ -54,7 +54,8 @@ local idleFrames = 30
 --------------------------------------------------------------------------------
 
 local function IsImmobileBuilder(ud)
-  return (ud and ud.builder and not ud.canMove)
+  return(ud and ud.builder and not ud.canMove
+         and not ud.isFactory)
 end
 
 
@@ -63,7 +64,6 @@ local function SetupUnit(unitID)
   -- and give them a PATROL order (does not matter where, afaict)
   local x, y, z = spGetUnitPosition(unitID)
   if (x) then
-    spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
     spGiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
     spGiveOrderToUnit(unitID, CMD_PATROL, { x + 25, y, z - 25 }, {})
   end
