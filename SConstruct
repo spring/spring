@@ -54,8 +54,11 @@ if env['platform'] == 'windows':
 	spring_files += env.RES(env['builddir'] + '/rts/build/scons/icon.rc', CPPPATH=[])
 
 # calculate datadir locations
-datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
-           'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
+if env['platform'] == 'windows':
+	datadir = []
+else:
+	datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
+		   'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
 
 # Build DataDirLocater.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
