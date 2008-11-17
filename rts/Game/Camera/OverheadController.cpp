@@ -6,7 +6,7 @@
 
 #include "OverheadController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"
@@ -25,9 +25,9 @@ COverheadController::COverheadController()
 	changeAltHeight(true),
 	flipped(false)
 {
-	scrollSpeed = configHandler.GetInt("OverheadScrollSpeed",10)*0.1f;
+	scrollSpeed = configHandler.Get("OverheadScrollSpeed",10)*0.1f;
 	tiltSpeed = configHandler.GetFloat("OverheadTiltSpeed",1.0f);
-	enabled = !!configHandler.GetInt("OverheadEnabled",1);
+	enabled = !!configHandler.Get("OverheadEnabled",1);
 	fov = configHandler.GetFloat("OverheadFOV", 45.0f);
 }
 

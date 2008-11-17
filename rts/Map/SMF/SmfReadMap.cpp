@@ -4,7 +4,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
 #include "LogOutput.h"
@@ -37,7 +37,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	PrintLoadMsg("Opening map file");
 
 	ConfigureAnisotropy();
-	usePBO = !!configHandler.GetInt("UsePBO", 1);
+	usePBO = !!configHandler.Get("UsePBO", 1);
 
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){

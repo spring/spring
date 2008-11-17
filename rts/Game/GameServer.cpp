@@ -41,7 +41,7 @@
 #include "AutohostInterface.h"
 #include "Util.h"
 #include "GlobalUnsynced.h" // for syncdebug
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
 #include "Sim/Misc/GlobalSynced.h"

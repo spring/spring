@@ -8,7 +8,7 @@
 #include <AL/alc.h>
 
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Objects/WorldObject.h"
 #include "FileSystem/FileHandler.h"
@@ -28,7 +28,7 @@ COpenALSound::COpenALSound()
 {
 	Sources = NULL;
 
-	maxSounds = configHandler.GetInt("MaxSounds", 16);
+	maxSounds = configHandler.Get("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		throw content_error("Internal error, (maxSounds <= 0) in COpenALSound");
 	}

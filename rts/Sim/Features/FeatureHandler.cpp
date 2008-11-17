@@ -28,7 +28,7 @@
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "TimeProfiler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
 #include "Exceptions.h"

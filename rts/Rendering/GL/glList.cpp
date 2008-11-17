@@ -11,7 +11,7 @@
 #include "myGL.h"
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/glFont.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Util.h"
 
 const float itemFontScale = 1.5f;
@@ -167,8 +167,8 @@ void CglList::Draw()
 	* *
 	****************************************
 	// Get screen res, so that the selected item is always within the middle 60% of screen
-	int iResX = configHandler.GetInt("XResolution", 1024);
-	int iResY = configHandler.GetInt("YResolution", 768);
+	int iResX = configHandler.Get("XResolution", 1024);
+	int iResY = configHandler.Get("YResolution", 768);
 
 	// Keep tabs on the last place. change this ONLY AFTER a scroll
 	static int siOldPlace = place;

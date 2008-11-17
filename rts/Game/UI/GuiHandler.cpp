@@ -53,7 +53,7 @@
 #include "EventHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Util.h"
 #include "myMath.h"
 
@@ -89,13 +89,13 @@ CGuiHandler::CGuiHandler()
 
 	LoadConfig("ctrlpanel.txt");
 
-	miniMapMarker = !!configHandler.GetInt("MiniMapMarker", 1);
-	invertQueueKey = !!configHandler.GetInt("InvertQueueKey", 0);
+	miniMapMarker = !!configHandler.Get("MiniMapMarker", 1);
+	invertQueueKey = !!configHandler.Get("InvertQueueKey", 0);
 
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && !!configHandler.GetInt("StencilBufferBits", 1)) {
+	if (GLEW_NV_depth_clamp && !!configHandler.Get("StencilBufferBits", 1)) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
@@ -1642,7 +1642,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 			invertQueueKey = !!atoi(action.extra.c_str());
 		}
 		needShift = false;
-		configHandler.SetInt("InvertQueueKey", invertQueueKey ? 1 : 0);
+		configHandler.Set("InvertQueueKey", invertQueueKey ? 1 : 0);
 		return true;
 	}
 

@@ -3,7 +3,7 @@
 
 #include "CameraController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 
 CCameraController::CCameraController() : pos(2000, 70, 1800)

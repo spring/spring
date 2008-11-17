@@ -16,7 +16,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/SMF/SmfMapFile.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -2781,7 +2781,7 @@ DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const 
 DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalue )
 {
 	try {
-		return configHandler.GetInt( name, defvalue );
+		return configHandler.Get( name, defvalue );
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defvalue;
@@ -2823,7 +2823,7 @@ DLL_EXPORT void __stdcall SetSpringConfigString(const char* name, const char* va
 DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
 {
 	try {
-		configHandler.SetInt( name, value );
+		configHandler.Set( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

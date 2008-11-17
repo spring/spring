@@ -6,7 +6,7 @@
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "Rendering/GL/myGL.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "DynWater.h"
 #include "RefractWater.h"
@@ -39,7 +39,7 @@ void CBaseWater::DeleteOldWater(CBaseWater *water) {
 CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 {
 	CBaseWater* water = NULL;
-	const int configValue = configHandler.GetInt("ReflectiveWater",1);
+	const int configValue = configHandler.Get("ReflectiveWater",1);
 	
 	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {

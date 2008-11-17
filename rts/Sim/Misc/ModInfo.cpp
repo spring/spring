@@ -10,7 +10,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Exceptions.h"
 
@@ -50,7 +50,7 @@ void CModInfo::Init(const char* modname)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		gu->teamNanospray = !!configHandler.GetInt("TeamNanoSpray", 0);
+		gu->teamNanospray = !!configHandler.Get("TeamNanoSpray", 0);
 	}
 
 	// constructions

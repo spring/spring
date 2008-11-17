@@ -29,7 +29,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FastMath.h"
 #include "EventHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
@@ -224,16 +224,16 @@ static void DrawRadialDisc()
 CBumpWater::CBumpWater()
 {
 	/** LOAD USER CONFIGS **/
-	reflTexSize  = next_power_of_2(configHandler.GetInt("BumpWaterTexSizeReflection", 512));
-	reflection   = !!configHandler.GetInt("BumpWaterReflection", 1);
-	refraction   = configHandler.GetInt("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
+	reflTexSize  = next_power_of_2(configHandler.Get("BumpWaterTexSizeReflection", 512));
+	reflection   = !!configHandler.Get("BumpWaterReflection", 1);
+	refraction   = configHandler.Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
 	anisotropy   = atof(configHandler.GetString("BumpWaterAnisotropy", "0.0").c_str());
-	depthCopy    = !!configHandler.GetInt("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler.GetInt("BumpWaterDepthBits", (gu->atiHacks)?16:24);
-	blurRefl     = !!configHandler.GetInt("BumpWaterBlurReflection", 0);
-	shoreWaves   = (!!configHandler.GetInt("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
-	endlessOcean = (!!configHandler.GetInt("BumpWaterEndlessOcean", 1)) && mapInfo->hasWaterPlane;
-	dynWaves     = (!!configHandler.GetInt("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
+	depthCopy    = !!configHandler.Get("BumpWaterUseDepthTexture", 1);
+	depthBits    = configHandler.Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
+	blurRefl     = !!configHandler.Get("BumpWaterBlurReflection", 0);
+	shoreWaves   = (!!configHandler.Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
+	endlessOcean = (!!configHandler.Get("BumpWaterEndlessOcean", 1)) && mapInfo->hasWaterPlane;
+	dynWaves     = (!!configHandler.Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
 
 	if (refraction>1)
 		drawSolid = true;

@@ -10,7 +10,7 @@
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 #include "Map/Ground.h"
 #include "Game/SelectedUnits.h"
@@ -176,7 +176,7 @@ void CPathEstimator::JoinThreads(int numThreads, int stage) {
 }
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	int numThreads = configHandler.GetInt("HardwareThreadCount", 0);
+	int numThreads = configHandler.Get("HardwareThreadCount", 0);
 
 #if 0	// FIXME mantis #1033
 #if (BOOST_VERSION >= 103500)

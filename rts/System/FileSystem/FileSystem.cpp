@@ -34,7 +34,7 @@
 
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
 #include "mmgr.h"

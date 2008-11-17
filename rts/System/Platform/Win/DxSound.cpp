@@ -9,7 +9,7 @@
 #endif
 
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Objects/WorldObject.h"
 #include "DxSound.h"
@@ -30,7 +30,7 @@ using namespace std;
 
 CDxSound::CDxSound()
 {
-	maxSounds = configHandler.GetInt("MaxSounds", 16);
+	maxSounds = configHandler.Get("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		throw content_error("Internal error, (maxSounds <= 0) in CDxSound");
 	}
