@@ -47,18 +47,18 @@ CFreeController::CFreeController()
 	enabled     = !!configHandler.Get("CamFreeEnabled",   0);
 	invertAlt   = !!configHandler.Get("CamFreeInvertAlt", 0);
 	goForward   = !!configHandler.Get("CamFreeGoForward", 0);
-	fov         = configHandler.GetFloat("CamFreeFOV",           45.0f);
-	scrollSpeed = configHandler.GetFloat("CamFreeScrollSpeed",  500.0f);
-	gravity     = configHandler.GetFloat("CamFreeGravity",     -500.0f);
-	slide       = configHandler.GetFloat("CamFreeSlide",          0.5f);
-	gndOffset   = configHandler.GetFloat("CamFreeGroundOffset",  16.0f);
-	tiltSpeed   = configHandler.GetFloat("CamFreeTiltSpeed",    150.0f);
+	fov         = configHandler.Get("CamFreeFOV",           45.0f);
+	scrollSpeed = configHandler.Get("CamFreeScrollSpeed",  500.0f);
+	gravity     = configHandler.Get("CamFreeGravity",     -500.0f);
+	slide       = configHandler.Get("CamFreeSlide",          0.5f);
+	gndOffset   = configHandler.Get("CamFreeGroundOffset",  16.0f);
+	tiltSpeed   = configHandler.Get("CamFreeTiltSpeed",    150.0f);
 	tiltSpeed   = tiltSpeed * (PI / 180.0);
-	autoTilt    = configHandler.GetFloat("CamFreeAutoTilt",     150.0f);
+	autoTilt    = configHandler.Get("CamFreeAutoTilt",     150.0f);
 	autoTilt    = autoTilt * (PI / 180.0);
-	velTime     = configHandler.GetFloat("CamFreeVelTime",        1.5f);
+	velTime     = configHandler.Get("CamFreeVelTime",        1.5f);
 	velTime     = max(0.1f, velTime);
-	avelTime    = configHandler.GetFloat("CamFreeAngVelTime",     1.0f);
+	avelTime    = configHandler.Get("CamFreeAngVelTime",     1.0f);
 	avelTime    = max(0.1f, avelTime);
 }
 

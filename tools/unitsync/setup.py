@@ -29,7 +29,7 @@ unitsync_files = [
 	'rts/System/FileSystem/ArchiveZip.cpp',
 	'rts/System/FileSystem/FileHandler.cpp',
 	'rts/System/FileSystem/VFSHandler.cpp',
-	'rts/System/Platform/ConfigHandler.cpp',
+	'rts/System/ConfigHandler.cpp',
 	'rts/System/Platform/FileSystem.cpp',
 	'rts/lib/7zip/7zAlloc.c',
 	'rts/lib/7zip/7zBuffer.c',
@@ -52,14 +52,7 @@ unitsync_files = [
 	'rts/lib/minizip/zip.c']
 
 if platform == 'win32':
-	unitsync_files += ['rts/lib/minizip/iowin32.c',
-		'rts/System/Platform/Win/WinFileSystemHandler.cpp',
-		'rts/System/Platform/Win/DataDirLocater.cpp',
-		'rts/System/Platform/Win/RegHandler.cpp']
-else:
-	unitsync_files += ['rts/System/Platform/Linux/DotfileHandler.cpp',
-		'rts/System/Platform/Linux/DataDirLocater.cpp',
-		'rts/System/Platform/Linux/UnixFileSystemHandler.cpp']
+	unitsync_files += ['rts/lib/minizip/iowin32.c']
 
 # Setup the unitsync library.
 unitsync = Extension (

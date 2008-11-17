@@ -270,7 +270,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	showFPS   = !!configHandler.Get("ShowFPS",   0);
 	showClock = !!configHandler.Get("ShowClock", 1);
 
-	crossSize = configHandler.GetFloat("CrossSize", 10.0f);
+	crossSize = configHandler.Get("CrossSize", 10.0f);
 
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.Get("ShowPlayerInfo", 1));
@@ -982,7 +982,7 @@ bool CGame::ActionPressed(const Action& action,
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
-			configHandler.SetFloat(varName, atof(action.extra.substr(pos+1).c_str()));
+			configHandler.Set(varName, atof(action.extra.substr(pos+1).c_str()));
 		}
 	}
 	else if (cmd == "seti") {
@@ -1630,7 +1630,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			crossSize = atof(action.extra.c_str());
 		}
-		configHandler.SetFloat("CrossSize", crossSize);
+		configHandler.Set("CrossSize", crossSize);
 	}
 	else if (cmd == "fps") {
 		if (action.extra.empty()) {

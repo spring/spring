@@ -27,9 +27,9 @@ COrbitController::COrbitController():
 {
 	enabled = !!configHandler.Get("OrbitControllerEnabled", 1);
 
-	orbitSpeedFact = configHandler.GetFloat("OrbitControllerOrbitSpeed", 0.25f);
-	panSpeedFact   = configHandler.GetFloat("OrbitControllerPanSpeed",   2.00f);
-	zoomSpeedFact  = configHandler.GetFloat("OrbitControllerZoomSpeed",  5.00f);
+	orbitSpeedFact = configHandler.Get("OrbitControllerOrbitSpeed", 0.25f);
+	panSpeedFact   = configHandler.Get("OrbitControllerPanSpeed",   2.00f);
+	zoomSpeedFact  = configHandler.Get("OrbitControllerZoomSpeed",  5.00f);
 
 	orbitSpeedFact = std::max(0.1f, std::min(10.0f, orbitSpeedFact));
 	panSpeedFact   = std::max(0.1f, std::min(10.0f, panSpeedFact));

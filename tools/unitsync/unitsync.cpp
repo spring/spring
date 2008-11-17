@@ -2796,7 +2796,7 @@ DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalu
 DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float defvalue )
 {
 	try {
-		return configHandler.GetFloat( name, defvalue );
+		return configHandler.Get( name, defvalue );
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defvalue;
@@ -2836,7 +2836,7 @@ DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
 DLL_EXPORT void __stdcall SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
-		configHandler.SetFloat( name, value );
+		configHandler.Set( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
