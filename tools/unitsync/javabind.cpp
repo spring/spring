@@ -6,7 +6,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Map/SMF/mapfile.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 

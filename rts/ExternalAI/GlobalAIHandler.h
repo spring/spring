@@ -2,7 +2,7 @@
 #define GLOBALAIHANDLER_H
 
 #include "Object.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include <map>

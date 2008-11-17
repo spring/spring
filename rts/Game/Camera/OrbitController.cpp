@@ -8,7 +8,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 extern Uint8* keys;
 
@@ -25,7 +25,7 @@ COrbitController::COrbitController():
 	rotation(0.0f), cRotation(0.0f),
 	elevation(0.0f), cElevation(0.0f)
 {
-	enabled = !!configHandler.GetInt("OrbitControllerEnabled", 1);
+	enabled = !!configHandler.Get("OrbitControllerEnabled", 1);
 
 	orbitSpeedFact = configHandler.GetFloat("OrbitControllerOrbitSpeed", 0.25f);
 	panSpeedFact   = configHandler.GetFloat("OrbitControllerPanSpeed",   2.00f);

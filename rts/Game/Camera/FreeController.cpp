@@ -6,7 +6,7 @@
 
 #include "FreeController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -44,9 +44,9 @@ CFreeController::CFreeController()
 	}
 	pos -= (dir * 1000.0f);
 
-	enabled     = !!configHandler.GetInt("CamFreeEnabled",   0);
-	invertAlt   = !!configHandler.GetInt("CamFreeInvertAlt", 0);
-	goForward   = !!configHandler.GetInt("CamFreeGoForward", 0);
+	enabled     = !!configHandler.Get("CamFreeEnabled",   0);
+	invertAlt   = !!configHandler.Get("CamFreeInvertAlt", 0);
+	goForward   = !!configHandler.Get("CamFreeGoForward", 0);
 	fov         = configHandler.GetFloat("CamFreeFOV",           45.0f);
 	scrollSpeed = configHandler.GetFloat("CamFreeScrollSpeed",  500.0f);
 	gravity     = configHandler.GetFloat("CamFreeGravity",     -500.0f);

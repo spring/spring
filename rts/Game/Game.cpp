@@ -67,7 +67,7 @@
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
 #include "DemoRecorder.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
@@ -264,16 +264,16 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	drawMapMarks = true;
 	hideInterface = false;
 
-	windowedEdgeMove   = !!configHandler.GetInt("WindowedEdgeMove",   1);
-	fullscreenEdgeMove = !!configHandler.GetInt("FullscreenEdgeMove", 1);
+	windowedEdgeMove   = !!configHandler.Get("WindowedEdgeMove",   1);
+	fullscreenEdgeMove = !!configHandler.Get("FullscreenEdgeMove", 1);
 
-	showFPS   = !!configHandler.GetInt("ShowFPS",   0);
-	showClock = !!configHandler.GetInt("ShowClock", 1);
+	showFPS   = !!configHandler.Get("ShowFPS",   0);
+	showClock = !!configHandler.Get("ShowClock", 1);
 
 	crossSize = configHandler.GetFloat("CrossSize", 10.0f);
 
 	playerRoster.SetSortTypeByCode(
-	  (PlayerRoster::SortType)configHandler.GetInt("ShowPlayerInfo", 1));
+	  (PlayerRoster::SortType)configHandler.Get("ShowPlayerInfo", 1));
 
 	const string inputTextGeo = configHandler.GetString("InputTextGeo", "");
 	ParseInputTextGeometry("default");
@@ -286,7 +286,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	writingPos = 0;
 	userPrompt = "";
 
-	CLuaHandle::SetModUICtrl(!!configHandler.GetInt("LuaModUICtrl", 1));
+	CLuaHandle::SetModUICtrl(!!configHandler.Get("LuaModUICtrl", 1));
 
 	consoleHistory = SAFE_NEW CConsoleHistory;
 	wordCompletion = SAFE_NEW CWordCompletion;
@@ -302,13 +302,13 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	ENTER_UNSYNCED;
 	sound = CSound::GetSoundSystem();
-	gameSoundVolume = configHandler.GetInt("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler.GetInt("UnitReplyVolume", configHandler.GetInt("UnitReplySoundVolume", 80) ) * 0.01f;
+	gameSoundVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
+	unitReplyVolume = configHandler.Get("UnitReplyVolume", configHandler.Get("UnitReplySoundVolume", 80) ) * 0.01f;
 	soundEnabled = true;
 	sound->SetVolume(gameSoundVolume);
 	sound->SetUnitReplyVolume(unitReplyVolume);
 
-	moveWarnings = !!configHandler.GetInt("MoveWarnings", 1);
+	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
 
 	camera = SAFE_NEW CCamera();
 	cam2 = SAFE_NEW CCamera();
@@ -456,7 +456,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	if (!!configHandler.GetInt("LuaUI", 1)) {
+	if (!!configHandler.Get("LuaUI", 1)) {
 		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
@@ -530,7 +530,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 CGame::~CGame()
 {
 	if (treeDrawer) {
-		configHandler.SetInt("TreeRadius",
+		configHandler.Set("TreeRadius",
 		                     (unsigned int)(treeDrawer->baseTreeDistance * 256));
 	}
 
@@ -908,7 +908,7 @@ bool CGame::ActionPressed(const Action& action,
 		selectedUnits.ClearSelected();
 	}
 	else if (cmd == "shadows") {
-		const int current = configHandler.GetInt("Shadows", 0);
+		const int current = configHandler.Get("Shadows", 0);
 		if (current < 0) {
 			logOutput.Print("Shadows have been disabled with %i", current);
 			logOutput.Print("Change your configuration and restart to use them");
@@ -926,12 +926,12 @@ bool CGame::ActionPressed(const Action& action,
 			const char* args = action.extra.c_str();
 			const int argcount = sscanf(args, "%i %i", &next, &mapsize);
 			if (argcount > 1) {
-				configHandler.SetInt("ShadowMapSize", mapsize);
+				configHandler.Set("ShadowMapSize", mapsize);
 			}
 		} else {
 			next = (current == 0) ? 1 : 0;
 		}
-		configHandler.SetInt("Shadows", next);
+		configHandler.Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
 		shadowHandler = SAFE_NEW CShadowHandler();
 	}
@@ -942,10 +942,10 @@ bool CGame::ActionPressed(const Action& action,
 		if (!action.extra.empty()) {
 			next = std::max(0, atoi(action.extra.c_str()) % 5);
 		} else {
-			const int current = configHandler.GetInt("ReflectiveWater", 1);
+			const int current = configHandler.Get("ReflectiveWater", 1);
 			next = (std::max(0, current) + 1) % 5;
 		}
-		configHandler.SetInt("ReflectiveWater", next);
+		configHandler.Set("ReflectiveWater", next);
 		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
 		water = CBaseWater::GetWater(water);
 	}
@@ -989,7 +989,7 @@ bool CGame::ActionPressed(const Action& action,
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
-			configHandler.SetInt(varName, atoi(action.extra.substr(pos+1).c_str()));
+			configHandler.Set(varName, atoi(action.extra.substr(pos+1).c_str()));
 		}
 	}
 	else if (cmd == "sets") {
@@ -1233,7 +1233,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (endPtr != startPtr) {
 			gameSoundVolume = std::max(0.0f, std::min(1.0f, volume));
 			sound->SetVolume(gameSoundVolume);
-			configHandler.SetInt("SoundVolume", (int)(gameSoundVolume * 100.0f));
+			configHandler.Set("SoundVolume", (int)(gameSoundVolume * 100.0f));
 		}
 	}
 	else if (cmd == "unitreplyvolume") {
@@ -1243,7 +1243,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (endPtr != startPtr) {
 			unitReplyVolume = std::max(0.0f, std::min(1.0f, volume));
 			sound->SetUnitReplyVolume(unitReplyVolume);
-			configHandler.SetInt("UnitReplyVolume",(int)(unitReplyVolume * 100.0f));
+			configHandler.Set("UnitReplyVolume",(int)(unitReplyVolume * 100.0f));
 		}
 	}
 	else if (cmd == "savegame"){
@@ -1403,7 +1403,7 @@ bool CGame::ActionPressed(const Action& action,
 			mouse->hardwareCursor = !!atoi(action.extra.c_str());
 		}
 		mouse->UpdateHwCursor();
-		configHandler.SetInt("HardwareCursor", (int)mouse->hardwareCursor);
+		configHandler.Set("HardwareCursor", (int)mouse->hardwareCursor);
 	}
 	else if (cmd == "increaseviewradius") {
 		gd->IncreaseDetail();
@@ -1618,7 +1618,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			showClock = !!atoi(action.extra.c_str());
 		}
-		configHandler.SetInt("ShowClock", showClock ? 1 : 0);
+		configHandler.Set("ShowClock", showClock ? 1 : 0);
 	}
 	else if (cmd == "cross") {
 		if (action.extra.empty()) {
@@ -1638,7 +1638,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			showFPS = !!atoi(action.extra.c_str());
 		}
-		configHandler.SetInt("ShowFPS", showFPS ? 1 : 0);
+		configHandler.Set("ShowFPS", showFPS ? 1 : 0);
 	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
@@ -1653,7 +1653,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 			logOutput.Print("Sorting roster by %s", playerRoster.GetSortName());
 		}
-		configHandler.SetInt("ShowPlayerInfo", (int)playerRoster.GetSortType());
+		configHandler.Set("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
 	else if (cmd == "techlevels") {
 		unitDefHandler->SaveTechLevels("", modInfo.filename); // stdout
@@ -1772,7 +1772,7 @@ bool CGame::ActionPressed(const Action& action,
 		} else {
 			moveWarnings = !!atoi(action.extra.c_str());
 		}
-		configHandler.SetInt("MoveWarnings", moveWarnings ? 1 : 0);
+		configHandler.Set("MoveWarnings", moveWarnings ? 1 : 0);
 		logOutput.Print(string("movewarnings ") +
 		                (moveWarnings ? "enabled" : "disabled"));
 	}
@@ -1805,7 +1805,7 @@ bool CGame::ActionPressed(const Action& action,
 			modUICtrl = !!atoi(action.extra.c_str());
 		}
 		CLuaHandle::SetModUICtrl(modUICtrl);
-		configHandler.SetInt("LuaModUICtrl", modUICtrl ? 1 : 0);
+		configHandler.Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 	}
 	else if (cmd == "minimap") {
 		if (minimap != NULL) {
@@ -1867,7 +1867,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!action.extra.empty()) {
 			const int iconDist = atoi(action.extra.c_str());
 			unitDrawer->SetUnitIconDist((float)iconDist);
-			configHandler.SetInt("UnitIconDist", iconDist);
+			configHandler.Set("UnitIconDist", iconDist);
 			logOutput.Print("Set UnitIconDist to %i", iconDist);
 		}
 	}
@@ -1875,7 +1875,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!action.extra.empty()) {
 			const int drawDist = atoi(action.extra.c_str());
 			unitDrawer->SetUnitDrawDist((float)drawDist);
-			configHandler.SetInt("UnitLodDist", drawDist);
+			configHandler.Set("UnitLodDist", drawDist);
 			logOutput.Print("Set UnitLodDist to %i", drawDist);
 		}
 	}

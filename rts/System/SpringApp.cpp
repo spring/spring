@@ -25,7 +25,7 @@
 #include "Game/UI/KeyBindings.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
@@ -206,7 +206,7 @@ bool SpringApp::Initialize()
 
 	ParseCmdLine();
 
-	logOutput.SetMirrorToStdout(!!configHandler.GetInt("StdoutDebug",0));
+	logOutput.SetMirrorToStdout(!!configHandler.Get("StdoutDebug",0));
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
@@ -278,11 +278,11 @@ bool SpringApp::Initialize()
 	if (GLEW_ARB_texture_compression) {
 		// we don't even need to check it, 'cos groundtextures must have that extension
 		// default to off because it reduces quality (smallest mipmap level is bigger)
-		gu->compressTextures = !!configHandler.GetInt("CompressTextures", 0);
+		gu->compressTextures = !!configHandler.Get("CompressTextures", 0);
 	}
 
 	// use some ATI bugfixes?
-	gu->atiHacks = !!configHandler.GetInt("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	gu->atiHacks = !!configHandler.Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -307,11 +307,11 @@ static bool MultisampleTest(void)
 {
 	if (!GL_ARB_multisample)
 		return false;
-	GLuint fsaa = configHandler.GetInt("FSAA",0);
+	GLuint fsaa = configHandler.Get("FSAA",0);
 	if (!fsaa)
 		return false;
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-	GLuint fsaalevel = std::max(std::min(configHandler.GetInt("FSAALevel", 2), 8), 0);
+	GLuint fsaalevel = std::max(std::min(configHandler.Get("FSAALevel", 2), 8), 0);
 
 	make_even_number(fsaalevel);
 
@@ -377,7 +377,7 @@ bool SpringApp::SetSDLVideoMode ()
 	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
-	int bitsPerPixel = configHandler.GetInt("BitsPerPixel", 0);
+	int bitsPerPixel = configHandler.Get("BitsPerPixel", 0);
 
 	if (bitsPerPixel == 32)
 	{
@@ -402,10 +402,10 @@ bool SpringApp::SetSDLVideoMode ()
 #else
 	const int defaultDepthSize = 16;
 #endif
-	depthBufferBits = configHandler.GetInt("DepthBufferBits", defaultDepthSize);
+	depthBufferBits = configHandler.Get("DepthBufferBits", defaultDepthSize);
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.GetInt("StencilBufferBits", 1));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.Get("StencilBufferBits", 1));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -431,7 +431,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	// setup GL smoothing
 	const int defaultSmooth = 0; // FSAA ? 0 : 3;  // until a few things get fixed
-	const int lineSmoothing = configHandler.GetInt("SmoothLines", defaultSmooth);
+	const int lineSmoothing = configHandler.Get("SmoothLines", defaultSmooth);
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (lineSmoothing >= 3) {
@@ -442,7 +442,7 @@ bool SpringApp::SetSDLVideoMode ()
 		glEnable(GL_LINE_SMOOTH);
 		glHint(GL_LINE_SMOOTH_HINT, hint);
 	}
-	const int pointSmoothing = configHandler.GetInt("SmoothPoints", defaultSmooth);
+	const int pointSmoothing = configHandler.Get("SmoothPoints", defaultSmooth);
 	if (pointSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (pointSmoothing >= 3) {
@@ -461,7 +461,7 @@ bool SpringApp::SetSDLVideoMode ()
 	}
 
 	// there must be a way to see if this is necessary, compare old/new context pointers?
-	if (!!configHandler.GetInt("FixAltTab", 0)) {
+	if (!!configHandler.Get("FixAltTab", 0)) {
 		// free GL resources
 		GLContext::Free();
 
@@ -551,10 +551,10 @@ void SpringApp::SetupViewportGeometry()
 		gu->winPosY = 0;
 	}
 
-	gu->dualScreenMode = !!configHandler.GetInt("DualScreenMode", 0);
+	gu->dualScreenMode = !!configHandler.Get("DualScreenMode", 0);
 	if (gu->dualScreenMode) {
 		gu->dualScreenMiniMapOnLeft =
-			!!configHandler.GetInt("DualScreenMiniMapOnLeft", 0);
+			!!configHandler.Get("DualScreenMiniMapOnLeft", 0);
 	} else {
 		gu->dualScreenMiniMapOnLeft = false;
 	}
@@ -608,8 +608,8 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const int charFirst = configHandler.GetInt("FontCharFirst", 32);
-	const int charLast  = configHandler.GetInt("FontCharLast", 255);
+	const int charFirst = configHandler.Get("FontCharFirst", 32);
+	const int charLast  = configHandler.Get("FontCharLast", 255);
 	std::string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
 
 	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
@@ -657,14 +657,12 @@ void SpringApp::ParseCmdLine()
 	string configSource;
 	cmdline->result("config", configSource);
 	// it is not allowed to use configHandler before this line runs.
-	ConfigHandler::Instantiate(configSource);
-
-	logOutput.Print("using configuration source \"" + configSource + "\"");
+	logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
 
 #ifdef _DEBUG
 	fullscreen = false;
 #else
-	fullscreen = configHandler.GetInt("Fullscreen", 1) != 0;
+	fullscreen = configHandler.Get("Fullscreen", 1) != 0;
 #endif
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -697,22 +695,22 @@ void SpringApp::ParseCmdLine()
 
 
 	if (!cmdline->result("xresolution", screenWidth)) {
-		screenWidth = configHandler.GetInt("XResolution", XRES_DEFAULT);
+		screenWidth = configHandler.Get("XResolution", XRES_DEFAULT);
 	} else {
 		screenWidth = std::max(screenWidth, 1);
 	}
 
 	if (!cmdline->result("yresolution", screenHeight)) {
-		screenHeight = configHandler.GetInt("YResolution", YRES_DEFAULT);
+		screenHeight = configHandler.Get("YResolution", YRES_DEFAULT);
 	} else {
 		screenHeight = std::max(screenHeight, 1);
 	}
 
 #ifdef USE_GML
-	gmlThreadCountOverride = configHandler.GetInt("HardwareThreadCount", 0);
+	gmlThreadCountOverride = configHandler.Get("HardwareThreadCount", 0);
 #if GML_ENABLE_SIMLOOP
 	extern volatile int multiThreadSim;
-	multiThreadSim=configHandler.GetInt("MultiThreadSim", 1);
+	multiThreadSim=configHandler.Get("MultiThreadSim", 1);
 #endif
 #endif
 }

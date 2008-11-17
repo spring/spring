@@ -24,7 +24,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Lua/LuaInputReceiver.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
@@ -84,17 +84,17 @@ CMouseHandler::CMouseHandler()
 	SDL_ShowCursor(SDL_DISABLE);
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler.GetInt("HardwareCursor", 0);
+	hardwareCursor = !!configHandler.Get("HardwareCursor", 0);
 #else
 	hardwareCursor = false;
 #endif
 
 	soundMultiselID = sound->GetWaveId("sounds/button9.wav");
 
-	invertMouse = !!configHandler.GetInt("InvertMouse",1);
-	doubleClickTime = (float)configHandler.GetInt("DoubleClickTime", 200) / 1000.0f;
+	invertMouse = !!configHandler.Get("InvertMouse",1);
+	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;
 
-	scrollWheelSpeed = (float)configHandler.GetInt("ScrollWheelSpeed", 25);
+	scrollWheelSpeed = (float)configHandler.Get("ScrollWheelSpeed", 25);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 }
 

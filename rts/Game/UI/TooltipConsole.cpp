@@ -19,7 +19,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "EventHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Util.h"
 
 CTooltipConsole* tooltip = 0;
@@ -37,7 +37,7 @@ CTooltipConsole::CTooltipConsole(void) : disabled(false)
 		h = 0.10f;
 	}
 
-	outFont = !!configHandler.GetInt("TooltipOutlineFont", 0);
+	outFont = !!configHandler.Get("TooltipOutlineFont", 0);
 }
 
 

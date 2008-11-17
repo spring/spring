@@ -18,7 +18,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FastMath.h"
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
@@ -48,8 +48,8 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 
 	highResInfoTexWanted = false;
 
-	highResLosTex = !!configHandler.GetInt("HighResLos", 0);
-// 	smoothLosTex = !!configHandler.GetInt("SmoothLos", 1);
+	highResLosTex = !!configHandler.Get("HighResLos", 0);
+// 	smoothLosTex = !!configHandler.Get("SmoothLos", 1);
 
 	jamColor[0] = (int)(losColorScale * 0.25f);
 	jamColor[1] = (int)(losColorScale * 0.0f);

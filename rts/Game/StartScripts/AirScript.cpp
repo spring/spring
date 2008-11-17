@@ -10,7 +10,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Game/Camera.h"
 #include "Sim/MoveTypes/AirMoveType.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
@@ -53,7 +53,7 @@ static const char* FindUnit(const char** name)
 
 void CAirScript::GameStart()
 {
-	doRoll=!configHandler.GetInt("ReflectiveWater",1);
+	doRoll=!configHandler.Get("ReflectiveWater",1);
 
 	ENTER_MIXED;
 	tcp=camera->pos;

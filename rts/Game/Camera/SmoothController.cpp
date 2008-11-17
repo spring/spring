@@ -8,7 +8,7 @@
 
 #include "SmoothController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"
@@ -29,9 +29,9 @@ SmoothController::SmoothController()
 	maxHeight(10000),
 	speedFactor(1)
 {
-	scrollSpeed = configHandler.GetInt("SmoothScrollSpeed",10)*0.1f;
+	scrollSpeed = configHandler.Get("SmoothScrollSpeed",10)*0.1f;
 	tiltSpeed = configHandler.GetFloat("SmoothTiltSpeed",1.0f);
-	enabled = !!configHandler.GetInt("SmoothEnabled",1);
+	enabled = !!configHandler.Get("SmoothEnabled",1);
 	fov = configHandler.GetFloat("SmoothFOV", 45.0f);
 	lastSource = Noone;
 }

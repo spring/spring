@@ -11,7 +11,7 @@
 #include "ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"

@@ -28,7 +28,7 @@ bool CGlobalAIHandler::CatchException()
 	static bool init=false;
 	static bool Catch;
 	if (!init) {
-		Catch=configHandler.GetInt ("CatchAIExceptions", 1)!=0;
+		Catch=configHandler.Get ("CatchAIExceptions", 1)!=0;
 		init=true;
 	}
 	return Catch;

@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "GlobalUnsynced.h"
 #include "LogOutput.h"
 
@@ -234,7 +234,7 @@ void CUnitTracker::SetCam()
 {
 	if(firstUpdate){
 		firstUpdate=false;
-		doRoll=!configHandler.GetInt("ReflectiveWater",1);
+		doRoll=!configHandler.Get("ReflectiveWater",1);
 	}
 
 	CUnit* u = GetTrackUnit();

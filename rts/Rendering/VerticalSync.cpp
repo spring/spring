@@ -13,7 +13,7 @@
 #include "VerticalSync.h"
 #include "GL/myGL.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 
 CVerticalSync VSync;
@@ -36,13 +36,13 @@ CVerticalSync::~CVerticalSync()
 
 void CVerticalSync::Init()
 {
-	SetFrames(configHandler.GetInt("VSync", -1));
+	SetFrames(configHandler.Get("VSync", -1));
 }
 
 
 void CVerticalSync::SetFrames(int f)
 {
-	configHandler.SetInt("VSync", f);
+	configHandler.Set("VSync", f);
 	
 	frames = f;
 

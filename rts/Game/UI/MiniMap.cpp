@@ -28,7 +28,7 @@
 #include "Map/ReadMap.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -100,9 +100,9 @@ CMiniMap::CMiniMap()
 		ParseGeometry(geo);
 	}
 
-	fullProxy = !!configHandler.GetInt("MiniMapFullProxy", 1);
+	fullProxy = !!configHandler.Get("MiniMapFullProxy", 1);
 
-	buttonSize = configHandler.GetInt("MiniMapButtonSize", 16);
+	buttonSize = configHandler.Get("MiniMapButtonSize", 16);
 
 	unitBaseSize =
 		atof(configHandler.GetString("MiniMapUnitSize", "2.5").c_str());
@@ -114,13 +114,13 @@ CMiniMap::CMiniMap()
 	cursorScale =
 		atof(configHandler.GetString("MiniMapCursorScale", "-0.5").c_str());
 
-	useIcons = !!configHandler.GetInt("MiniMapIcons", 1);
+	useIcons = !!configHandler.Get("MiniMapIcons", 1);
 
-	drawCommands = std::max(0, configHandler.GetInt("MiniMapDrawCommands", 1));
+	drawCommands = std::max(0, configHandler.Get("MiniMapDrawCommands", 1));
 
-	drawProjectiles = !!configHandler.GetInt("MiniMapDrawProjectiles", 1);
+	drawProjectiles = !!configHandler.Get("MiniMapDrawProjectiles", 1);
 
-	simpleColors = !!configHandler.GetInt("SimpleMiniMapColors", 0);
+	simpleColors = !!configHandler.Get("SimpleMiniMapColors", 0);
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
 	myColor[1]    = (unsigned char)(0.9f * 255);

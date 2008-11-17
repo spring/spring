@@ -10,7 +10,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "ShadowHandler.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
@@ -33,8 +33,8 @@ CGroundDecalHandler* groundDecals = NULL;
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
 	drawDecals = false;
-	decalLevel = std::max(0, std::min(5, configHandler.GetInt("GroundDecals", 1)));
-	groundScarAlphaFade = configHandler.GetInt("GroundScarAlphaFade", 0);
+	decalLevel = std::max(0, std::min(5, configHandler.Get("GroundDecals", 1)));
+	groundScarAlphaFade = configHandler.Get("GroundScarAlphaFade", 0);
 
 	if (decalLevel == 0) {
 		return;

@@ -16,7 +16,7 @@
 #include "Camera/OverviewController.h"
 #include "Camera/TWController.h"
 #include "Camera/OrbitController.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 
@@ -49,7 +49,7 @@ CCameraHandler::CCameraHandler()
 	if (!modeName.empty()) {
 		modeIndex = GetModeIndex(modeName);
 	} else {
-		modeIndex = configHandler.GetInt("CamMode", 1);
+		modeIndex = configHandler.Get("CamMode", 1);
 	}
 	const unsigned int mode =
 		(unsigned int)std::max(0, std::min(modeIndex, (int)camCtrls.size() - 1));

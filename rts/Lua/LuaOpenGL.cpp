@@ -63,7 +63,7 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 using std::max;
 using std::string;
@@ -114,7 +114,7 @@ void LuaOpenGL::Init()
 
 	haveGL20 = !!GLEW_VERSION_2_0;
 
-	if (haveGL20 && !!configHandler.GetInt("LuaShaders", 1)) {
+	if (haveGL20 && !!configHandler.Get("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
 }
