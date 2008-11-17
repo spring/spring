@@ -87,6 +87,7 @@ CMoveInfo::CMoveInfo()
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
 		md->depth = 0.0f;
+		md->depthMod = 0.0f;
 		md->crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
 
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
@@ -151,9 +152,11 @@ CMoveInfo::CMoveInfo()
 		// TA has only half our resolution, multiply size by 2
 		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
 
-		moveInfoChecksum += md->size;
-		moveInfoChecksum ^= *(unsigned int*) &md->slopeMod;
-		moveInfoChecksum += *(unsigned int*) &md->depth;
+		moveInfoChecksum += (md->size << 4) + (md->followGround<<3) + (b2<<2) + (b1<<1) + (b0<<0);
+		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->maxSlope;
+		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->slopeMod;
+		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->depth;
+		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->depthMod;
 
 		moveData.push_back(md);
 		name2moveData[name] = md->pathType;
