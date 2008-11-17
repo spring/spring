@@ -88,7 +88,7 @@ namespace detail { namespace has_get_pointer_
       static typename boost::add_reference<T>::type x;
 
       BOOST_STATIC_CONSTANT(bool,
-          value = sizeof(has_get_pointer_::check( (get_pointer(x),0) )) == 1
+          value = sizeof(has_get_pointer_::check((luabind::detail::has_get_pointer_::get_pointer(x),0) )) == 1
       );
 
       typedef boost::mpl::bool_<value> type;
