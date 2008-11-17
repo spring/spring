@@ -17,7 +17,7 @@ CFPSController::CFPSController()
 {
 	scrollSpeed = configHandler.Get("FPSScrollSpeed", 10) * 0.1f;
 	enabled = !!configHandler.Get("FPSEnabled", 1);
-	fov = configHandler.GetFloat("FPSFOV", 45.0f);
+	fov = configHandler.Get("FPSFOV", 45.0f);
 }
 
 

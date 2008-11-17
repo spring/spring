@@ -25,9 +25,9 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
 	updateFov = true;
 
-	LODScaleReflection = configHandler.GetFloat("GroundLODScaleReflection", 1.0f);
-	LODScaleRefraction = configHandler.GetFloat("GroundLODScaleRefraction", 1.0f);
-	LODScaleUnitReflection = configHandler.GetFloat("GroundLODScaleUnitReflection", 1.0f);
+	LODScaleReflection = configHandler.Get("GroundLODScaleReflection", 1.0f);
+	LODScaleRefraction = configHandler.Get("GroundLODScaleRefraction", 1.0f);
+	LODScaleUnitReflection = configHandler.Get("GroundLODScaleUnitReflection", 1.0f);
 
 	infoTexAlpha = 0.25f;
 	infoTex = 0;

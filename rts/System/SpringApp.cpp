@@ -455,7 +455,7 @@ bool SpringApp::SetSDLVideoMode ()
 	}
 
 	// setup LOD bias factor
-	const float lodBias = std::max(std::min( configHandler.GetFloat("TextureLODBias", 0.0f) , 4.0f), -4.0f);
+	const float lodBias = std::max(std::min( configHandler.Get("TextureLODBias", 0.0f) , 4.0f), -4.0f);
 	if (fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}

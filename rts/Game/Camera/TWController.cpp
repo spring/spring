@@ -21,7 +21,7 @@ CTWController::CTWController()
 {
 	scrollSpeed = configHandler.Get("TWScrollSpeed",10) * 0.1f;
 	enabled = !!configHandler.Get("TWEnabled",1);
-	fov = configHandler.GetFloat("TWFOV", 45.0f);
+	fov = configHandler.Get("TWFOV", 45.0f);
 }
 
 

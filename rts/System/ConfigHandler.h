@@ -66,9 +66,6 @@ public:
 		buf >> temp;
 		return temp;
 	}
-	
-	void SetFloat(const std::string& name, const float& value) {Set(name,value);};
-	float GetFloat(const std::string& name, const float& value) {return Get(name,value);};
 
 	/**
 	 * @brief instantiate global configHandler
