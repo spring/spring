@@ -19,6 +19,8 @@ namespace ntai {
 
 		void RemoveAllTasks();
 	protected:
+		
+		bool EraseFirst();
 		std::list< boost::shared_ptr<IModule> > tasks;
 		bool nolist;
 		bool repeat;
