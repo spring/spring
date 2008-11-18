@@ -282,12 +282,12 @@ DLL_EXPORT void __stdcall UnInit()
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
  */
-DLL_EXPORT int __stdcall Init(bool isServer, int id)
+DLL_EXPORT int __stdcall Init(bool isServer, int id, const char* configFile)
 {
 	try {
 		_UnInit();
 
-		ConfigHandler::Instantiate("");
+		ConfigHandler::Instantiate(configFile);
 		FileSystemHandler::Initialize(false);
 
 		std::vector<string> filesToCheck;
@@ -2755,6 +2755,16 @@ void PrintLoadMsg(const char* text)
 
 //////////////////////////
 //////////////////////////
+
+DLL_EXPORT void __stdcall SetSpringConfigFile(const char* filenameAsAbsolutePath)
+{
+	ConfigHandler::Instantiate(filenameAsAbsolutePath);
+}
+
+DLL_EXPORT const char*  __stdcall GetSpringConfigFile()
+{
+	return configHandler.GetConfigFile().c_str();
+}
 
 /**
  * @brief get string from Spring configuration
