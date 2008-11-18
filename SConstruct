@@ -108,7 +108,7 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
-	'rts/System/Platform/ConfigHandler.cpp',
+	'rts/System/ConfigHandler.cpp',
 	'rts/System/LogOutput.cpp',
 ]
 for f in unitsync_fs_files:       unitsync_files += f
@@ -123,7 +123,7 @@ if env['platform'] == 'windows':
 	# during linking
 	if os.name != 'nt':
 		unitsync_files.append('rts/lib/minizip/iowin32.c')
-	for f in ['rts/System/FileSystem/DataDirLocater.cpp', 'rts/System/Platform/Win/RegHandler.cpp']:
+	for f in ['rts/System/FileSystem/DataDirLocater.cpp']:
 		unitsync_files += [os.path.join(uenv['builddir'], f)]
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
