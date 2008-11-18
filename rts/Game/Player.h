@@ -48,6 +48,8 @@ public:
 
 	void StartSpectating();
 
+	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
+
 	bool active;
 
 	int playerNum;
