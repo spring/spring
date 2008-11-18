@@ -82,24 +82,21 @@ namespace ntai {
 					if(!currentTask->IsValid()){
 						//
 						taskManager->TaskFinished();
-						if(taskManager->HasTasks()){
-							currentTask = taskManager->GetNextTask();
-							if(currentTask.get() != 0){
-								currentTask->Init();
-								G->RegisterMessageHandler(currentTask);
-							}
-						}else{
-							currentTask = boost::shared_ptr<IModule>();
-						}
-					}
-				}else{
-					//
-					if(taskManager->HasTasks()){
 						currentTask = taskManager->GetNextTask();
 						if(currentTask.get() != 0){
 							currentTask->Init();
 							G->RegisterMessageHandler(currentTask);
 						}
+						}else{
+							currentTask = boost::shared_ptr<IModule>(0);
+						}
+					}
+				}else{
+					//
+					currentTask = taskManager->GetNextTask();
+					if(currentTask.get() != 0){
+						currentTask->Init();
+						G->RegisterMessageHandler(currentTask);
 					}
 				}
 
