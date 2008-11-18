@@ -30,8 +30,8 @@ namespace ntai {
 		TdfParser(Global* G, const char* buffer, std::size_t size );
 
 		void print( std::ostream & out ) const;
-		void LoadFile( std::string const& file );
-		void LoadVirtualFile( std::string const& file );
+		bool LoadFile( std::string const& file );
+		bool LoadVirtualFile( std::string const& file );
 		void LoadBuffer( const char* buffer, std::size_t size );
 		virtual ~TdfParser();
 
