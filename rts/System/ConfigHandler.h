@@ -73,6 +73,10 @@ public:
 	 */
 	static std::string Instantiate(std::string configSource);
 
+	std::string GetConfigFile() const
+	{
+		return filename;
+	}
 	/**
 	 * @brief deallocate
 	 */

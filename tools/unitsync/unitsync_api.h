@@ -11,7 +11,7 @@ DLL_EXPORT const char*  __stdcall GetSpringVersion();
 
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 
-DLL_EXPORT int          __stdcall Init(bool isServer, int id);
+DLL_EXPORT int          __stdcall Init(bool isServer, int id, const char* filenameAsAbsolutePath="");
 DLL_EXPORT void         __stdcall UnInit();
 
 DLL_EXPORT const char*  __stdcall GetWritableDataDirectory();
@@ -106,6 +106,8 @@ DLL_EXPORT int          __stdcall ReadArchiveFile(int archive, int handle, void*
 DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
 DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
 
+DLL_EXPORT void         __stdcall SetSpringConfigFile(const char* filenameAsAbsolutePath);
+DLL_EXPORT const char*  __stdcall GetSpringConfigFile();
 DLL_EXPORT const char*  __stdcall GetSpringConfigString(const char* name, const char* defvalue);
 DLL_EXPORT int          __stdcall GetSpringConfigInt(const char* name, const int defvalue);
 DLL_EXPORT float        __stdcall GetSpringConfigFloat( const char* name, const float defvalue );
