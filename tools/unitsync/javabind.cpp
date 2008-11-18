@@ -26,7 +26,6 @@
 
 DLL_EXPORT const char*  __stdcall GetSpringVersion();
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
-DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
 DLL_EXPORT int          __stdcall ProcessUnits(void);
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
@@ -170,7 +169,7 @@ extern "C" {
 	*/
 	JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_Init
 		(JNIEnv *env, jclass myobject, jboolean isServer, jint id){
-			return Init(isServer,id);
+			return 1;
 		}
 
 	/*

@@ -22,7 +22,6 @@
 
 DLL_EXPORT const char*  __stdcall GetSpringVersion();
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
-DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
 DLL_EXPORT int          __stdcall ProcessUnits(void);
 DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
@@ -94,7 +93,7 @@ static PyObject *unitsync_Init(PyObject *self, PyObject *args)
 	int id;
 	if (!PyArg_ParseTuple(args, "ii", &isServer, &id))
 		return NULL;
-	return Py_BuildValue("i", Init(isServer, id));
+	return Py_BuildValue("i", 1);
 }
 
 static PyObject *unitsync_UnInit(PyObject *self, PyObject *args)
