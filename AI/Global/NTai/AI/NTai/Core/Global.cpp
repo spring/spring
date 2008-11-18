@@ -80,7 +80,11 @@ namespace ntai {
 
 		CLOG("Loading modinfo.tdf");
 		TdfParser sf(G);
-		sf.LoadFile("modinfo.tdf");
+		if(sf.LoadFile("modinfo.tdf")){
+			L.print("modinfo.tdf loaded into parser");
+		} else {
+			L.eprint("error modinfo.tdf retrieval failed");
+		}
 
 		CLOG("Getting tdfpath value");
 		info->tdfpath =  sf.SGetValueDef(string(cb->GetModName()), "MOD\\NTAI\\tdfpath");
