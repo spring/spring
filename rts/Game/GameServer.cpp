@@ -1164,10 +1164,10 @@ void CGameServer::CheckForGameEnd()
 	}
 
 	int numActiveAllyTeams = 0;
-
-#ifndef DEDICATED
 	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
+	
+#ifndef DEDICATED
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
 	{
 		bool hasPlayer = false;
@@ -1187,23 +1187,27 @@ void CGameServer::CheckForGameEnd()
 		if (numActiveTeams[a] != 0)
 			++numActiveAllyTeams;
 #else
-	int firstAllyTeam = -1;
-	for (int i = 0; i < MAX_PLAYERS; ++i)
+	for (int a = 0; a < setup->numTeams; ++a)
 	{
-		if (players[i] && !players[i]->spectator)
-		{
-			if (firstAllyTeam < 0)
-			{
-				firstAllyTeam = teams[players[i]->team]->allyTeam;
-				numActiveAllyTeams = 1;
-			}
-			else if (firstAllyTeam != teams[players[i]->team]->allyTeam)
-			{
-				numActiveAllyTeams = 2;
-				break;
+		bool hasPlayer = false;
+		for (int b = 0; b < MAX_PLAYERS; ++b) {
+			if (players[b] && !players[b]->spectator && players[b]->team == a) {
+				hasPlayer = true;
 			}
 		}
+		if (!setup->teamStartingData[a].aiDll.empty())
+		{
+			++numActiveTeams[setup->teamStartingData[a].teamAllyteam];
+			continue;
+		}
+
+		if (teams[a] && hasPlayer)
+			++numActiveTeams[teams[a]->allyTeam];
 	}
+
+	for (int a = 0; a < MAX_TEAMS; ++a)
+		if (numActiveTeams[a] != 0)
+			++numActiveAllyTeams;
 #endif
 	if (numActiveAllyTeams <= 1)
 	{
