@@ -1,0 +1,686 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C3AD26B90ED34BA80044B2BB /* Chaser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26500ED34BA80044B2BB /* Chaser.cpp */; };
+		C3AD26BA0ED34BA80044B2BB /* Chaser.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26510ED34BA80044B2BB /* Chaser.h */; };
+		C3AD26BB0ED34BA80044B2BB /* CManufacturer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26520ED34BA80044B2BB /* CManufacturer.cpp */; };
+		C3AD26BC0ED34BA80044B2BB /* CManufacturer.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26530ED34BA80044B2BB /* CManufacturer.h */; };
+		C3AD26BD0ED34BA80044B2BB /* Planning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26540ED34BA80044B2BB /* Planning.cpp */; };
+		C3AD26BE0ED34BA80044B2BB /* Planning.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26550ED34BA80044B2BB /* Planning.h */; };
+		C3AD26BF0ED34BA80044B2BB /* CCached.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26570ED34BA80044B2BB /* CCached.h */; };
+		C3AD26C00ED34BA80044B2BB /* CMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26580ED34BA80044B2BB /* CMessage.cpp */; };
+		C3AD26C10ED34BA80044B2BB /* CMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26590ED34BA80044B2BB /* CMessage.h */; };
+		C3AD26C20ED34BA80044B2BB /* CNTai.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD265A0ED34BA80044B2BB /* CNTai.cpp */; };
+		C3AD26C30ED34BA80044B2BB /* CNTai.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD265B0ED34BA80044B2BB /* CNTai.h */; };
+		C3AD26C40ED34BA80044B2BB /* enums.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD265C0ED34BA80044B2BB /* enums.h */; };
+		C3AD26C50ED34BA80044B2BB /* Global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD265D0ED34BA80044B2BB /* Global.cpp */; };
+		C3AD26C60ED34BA80044B2BB /* Global.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD265E0ED34BA80044B2BB /* Global.h */; };
+		C3AD26C70ED34BA80044B2BB /* IModule.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD265F0ED34BA80044B2BB /* IModule.cpp */; };
+		C3AD26C80ED34BA80044B2BB /* IModule.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26600ED34BA80044B2BB /* IModule.h */; };
+		C3AD26C90ED34BA80044B2BB /* include.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26610ED34BA80044B2BB /* include.h */; };
+		C3AD26CA0ED34BA80044B2BB /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26620ED34BA80044B2BB /* Interface.cpp */; };
+		C3AD26CB0ED34BA80044B2BB /* macros.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26630ED34BA80044B2BB /* macros.h */; };
+		C3AD26CC0ED34BA80044B2BB /* resource.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26660ED34BA80044B2BB /* resource.h */; };
+		C3AD26CD0ED34BA80044B2BB /* COrderRouter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26690ED34BA80044B2BB /* COrderRouter.cpp */; };
+		C3AD26CE0ED34BA80044B2BB /* COrderRouter.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD266A0ED34BA80044B2BB /* COrderRouter.h */; };
+		C3AD26CF0ED34BA80044B2BB /* TCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD266B0ED34BA80044B2BB /* TCommand.h */; };
+		C3AD26D00ED34BA80044B2BB /* CConfigData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD266D0ED34BA80044B2BB /* CConfigData.cpp */; };
+		C3AD26D10ED34BA80044B2BB /* CConfigData.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD266E0ED34BA80044B2BB /* CConfigData.h */; };
+		C3AD26D20ED34BA80044B2BB /* CEconomy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD266F0ED34BA80044B2BB /* CEconomy.cpp */; };
+		C3AD26D30ED34BA80044B2BB /* CEconomy.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26700ED34BA80044B2BB /* CEconomy.h */; };
+		C3AD26D40ED34BA80044B2BB /* CTokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26710ED34BA80044B2BB /* CTokenizer.h */; };
+		C3AD26D50ED34BA80044B2BB /* CWorkerThread.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26720ED34BA80044B2BB /* CWorkerThread.h */; };
+		C3AD26D60ED34BA80044B2BB /* CGridCell.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26740ED34BA80044B2BB /* CGridCell.cpp */; };
+		C3AD26D70ED34BA80044B2BB /* CGridCell.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26750ED34BA80044B2BB /* CGridCell.h */; };
+		C3AD26D80ED34BA80044B2BB /* CGridManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26760ED34BA80044B2BB /* CGridManager.cpp */; };
+		C3AD26D90ED34BA80044B2BB /* CGridManager.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26770ED34BA80044B2BB /* CGridManager.h */; };
+		C3AD26DA0ED34BA80044B2BB /* Log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26780ED34BA80044B2BB /* Log.cpp */; };
+		C3AD26DB0ED34BA80044B2BB /* Log.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26790ED34BA80044B2BB /* Log.h */; };
+		C3AD26DC0ED34BA80044B2BB /* mtrand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD267A0ED34BA80044B2BB /* mtrand.cpp */; };
+		C3AD26DD0ED34BA80044B2BB /* mtrand.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD267B0ED34BA80044B2BB /* mtrand.h */; };
+		C3AD26DE0ED34BA80044B2BB /* tdf_grammar.hpp in Headers */ = {isa = PBXBuildFile; fileRef = C3AD267C0ED34BA80044B2BB /* tdf_grammar.hpp */; };
+		C3AD26DF0ED34BA80044B2BB /* TdfParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD267D0ED34BA80044B2BB /* TdfParser.cpp */; };
+		C3AD26E00ED34BA80044B2BB /* TdfParser.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD267E0ED34BA80044B2BB /* TdfParser.h */; };
+		C3AD26E10ED34BA80044B2BB /* CBuildingPlacer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26800ED34BA80044B2BB /* CBuildingPlacer.cpp */; };
+		C3AD26E20ED34BA80044B2BB /* CBuildingPlacer.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26810ED34BA80044B2BB /* CBuildingPlacer.h */; };
+		C3AD26E30ED34BA80044B2BB /* DTHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26820ED34BA80044B2BB /* DTHandler.cpp */; };
+		C3AD26E40ED34BA80044B2BB /* DTHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26830ED34BA80044B2BB /* DTHandler.h */; };
+		C3AD26E50ED34BA80044B2BB /* Map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26840ED34BA80044B2BB /* Map.cpp */; };
+		C3AD26E60ED34BA80044B2BB /* Map.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26850ED34BA80044B2BB /* Map.h */; };
+		C3AD26E70ED34BA80044B2BB /* MetalHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26860ED34BA80044B2BB /* MetalHandler.cpp */; };
+		C3AD26E80ED34BA80044B2BB /* MetalHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26870ED34BA80044B2BB /* MetalHandler.h */; };
+		C3AD26E90ED34BA80044B2BB /* MetalMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26880ED34BA80044B2BB /* MetalMap.cpp */; };
+		C3AD26EA0ED34BA80044B2BB /* MetalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26890ED34BA80044B2BB /* MetalMap.h */; };
+		C3AD26EB0ED34BA80044B2BB /* RadarHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD268A0ED34BA80044B2BB /* RadarHandler.cpp */; };
+		C3AD26EC0ED34BA80044B2BB /* RadarHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD268B0ED34BA80044B2BB /* RadarHandler.h */; };
+		C3AD26ED0ED34BA80044B2BB /* ubuild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD268C0ED34BA80044B2BB /* ubuild.cpp */; };
+		C3AD26EE0ED34BA80044B2BB /* ubuild.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD268D0ED34BA80044B2BB /* ubuild.h */; };
+		C3AD26EF0ED34BA80044B2BB /* Actions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD268F0ED34BA80044B2BB /* Actions.cpp */; };
+		C3AD26F00ED34BA80044B2BB /* Actions.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26900ED34BA80044B2BB /* Actions.h */; };
+		C3AD26F10ED34BA80044B2BB /* CUnitDefLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26910ED34BA80044B2BB /* CUnitDefLoader.cpp */; };
+		C3AD26F20ED34BA80044B2BB /* CUnitDefLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26920ED34BA80044B2BB /* CUnitDefLoader.h */; };
+		C3AD26F30ED34BA80044B2BB /* AI.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26950ED34BA80044B2BB /* AI.h */; };
+		C3AD26F40ED34BA80044B2BB /* CConsoleTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26970ED34BA80044B2BB /* CConsoleTask.cpp */; };
+		C3AD26F50ED34BA80044B2BB /* CConsoleTask.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26980ED34BA80044B2BB /* CConsoleTask.h */; };
+		C3AD26F60ED34BA80044B2BB /* CKeywordConstructionTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26990ED34BA80044B2BB /* CKeywordConstructionTask.cpp */; };
+		C3AD26F70ED34BA80044B2BB /* CKeywordConstructionTask.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD269A0ED34BA80044B2BB /* CKeywordConstructionTask.h */; };
+		C3AD26F80ED34BA80044B2BB /* CLeaveBuildSpotTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD269B0ED34BA80044B2BB /* CLeaveBuildSpotTask.cpp */; };
+		C3AD26F90ED34BA80044B2BB /* CLeaveBuildSpotTask.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD269C0ED34BA80044B2BB /* CLeaveBuildSpotTask.h */; };
+		C3AD26FA0ED34BA80044B2BB /* CUnitConstructionTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD269D0ED34BA80044B2BB /* CUnitConstructionTask.cpp */; };
+		C3AD26FB0ED34BA80044B2BB /* CUnitConstructionTask.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD269E0ED34BA80044B2BB /* CUnitConstructionTask.h */; };
+		C3AD26FC0ED34BA80044B2BB /* ITask.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD269F0ED34BA80044B2BB /* ITask.h */; };
+		C3AD26FD0ED34BA80044B2BB /* AttackBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26A20ED34BA80044B2BB /* AttackBehaviour.cpp */; };
+		C3AD26FE0ED34BA80044B2BB /* AttackBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26A30ED34BA80044B2BB /* AttackBehaviour.h */; };
+		C3AD26FF0ED34BA80044B2BB /* CDGunBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26A40ED34BA80044B2BB /* CDGunBehaviour.cpp */; };
+		C3AD27000ED34BA80044B2BB /* CDGunBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26A50ED34BA80044B2BB /* CDGunBehaviour.h */; };
+		C3AD27010ED34BA80044B2BB /* CKamikazeBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26A60ED34BA80044B2BB /* CKamikazeBehaviour.cpp */; };
+		C3AD27020ED34BA80044B2BB /* CKamikazeBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26A70ED34BA80044B2BB /* CKamikazeBehaviour.h */; };
+		C3AD27030ED34BA80044B2BB /* CMoveFailReclaimBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26A80ED34BA80044B2BB /* CMoveFailReclaimBehaviour.cpp */; };
+		C3AD27040ED34BA80044B2BB /* CMoveFailReclaimBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26A90ED34BA80044B2BB /* CMoveFailReclaimBehaviour.h */; };
+		C3AD27050ED34BA80044B2BB /* CRetreatBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26AA0ED34BA80044B2BB /* CRetreatBehaviour.cpp */; };
+		C3AD27060ED34BA80044B2BB /* CRetreatBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26AB0ED34BA80044B2BB /* CRetreatBehaviour.h */; };
+		C3AD27070ED34BA80044B2BB /* CStaticDefenceBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26AC0ED34BA80044B2BB /* CStaticDefenceBehaviour.cpp */; };
+		C3AD27080ED34BA80044B2BB /* CStaticDefenceBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26AD0ED34BA80044B2BB /* CStaticDefenceBehaviour.h */; };
+		C3AD27090ED34BA80044B2BB /* MetalMakerBehaviour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26AE0ED34BA80044B2BB /* MetalMakerBehaviour.cpp */; };
+		C3AD270A0ED34BA80044B2BB /* MetalMakerBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26AF0ED34BA80044B2BB /* MetalMakerBehaviour.h */; };
+		C3AD270B0ED34BA80044B2BB /* CConfigTaskManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26B00ED34BA80044B2BB /* CConfigTaskManager.cpp */; };
+		C3AD270C0ED34BA80044B2BB /* CConfigTaskManager.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B10ED34BA80044B2BB /* CConfigTaskManager.h */; };
+		C3AD270D0ED34BA80044B2BB /* CUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26B20ED34BA80044B2BB /* CUnit.cpp */; };
+		C3AD270E0ED34BA80044B2BB /* CUnit.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B30ED34BA80044B2BB /* CUnit.h */; };
+		C3AD270F0ED34BA80044B2BB /* CUnitTypeData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AD26B40ED34BA80044B2BB /* CUnitTypeData.cpp */; };
+		C3AD27100ED34BA80044B2BB /* CUnitTypeData.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B50ED34BA80044B2BB /* CUnitTypeData.h */; };
+		C3AD27110ED34BA80044B2BB /* IBehaviour.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B60ED34BA80044B2BB /* IBehaviour.h */; };
+		C3AD27120ED34BA80044B2BB /* ITaskManager.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B70ED34BA80044B2BB /* ITaskManager.h */; };
+		C3AD27130ED34BA80044B2BB /* ITaskManagerFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = C3AD26B80ED34BA80044B2BB /* ITaskManagerFactory.h */; };
+		D2AAC0B105546B7500DB518D /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB77AAFE841565C02AAC07 /* Carbon.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		08FB77AAFE841565C02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		5073E0C609E734A800EC74B6 /* ntai-xcodeProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; path = "ntai-xcodeProj.xcconfig"; sourceTree = "<group>"; };
+		5073E0C709E734A800EC74B6 /* ntai-xcodeTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; path = "ntai-xcodeTarget.xcconfig"; sourceTree = "<group>"; };
+		C3AD26500ED34BA80044B2BB /* Chaser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Chaser.cpp; sourceTree = "<group>"; };
+		C3AD26510ED34BA80044B2BB /* Chaser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Chaser.h; sourceTree = "<group>"; };
+		C3AD26520ED34BA80044B2BB /* CManufacturer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CManufacturer.cpp; sourceTree = "<group>"; };
+		C3AD26530ED34BA80044B2BB /* CManufacturer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CManufacturer.h; sourceTree = "<group>"; };
+		C3AD26540ED34BA80044B2BB /* Planning.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Planning.cpp; sourceTree = "<group>"; };
+		C3AD26550ED34BA80044B2BB /* Planning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Planning.h; sourceTree = "<group>"; };
+		C3AD26570ED34BA80044B2BB /* CCached.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCached.h; sourceTree = "<group>"; };
+		C3AD26580ED34BA80044B2BB /* CMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CMessage.cpp; sourceTree = "<group>"; };
+		C3AD26590ED34BA80044B2BB /* CMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CMessage.h; sourceTree = "<group>"; };
+		C3AD265A0ED34BA80044B2BB /* CNTai.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CNTai.cpp; sourceTree = "<group>"; };
+		C3AD265B0ED34BA80044B2BB /* CNTai.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CNTai.h; sourceTree = "<group>"; };
+		C3AD265C0ED34BA80044B2BB /* enums.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = enums.h; sourceTree = "<group>"; };
+		C3AD265D0ED34BA80044B2BB /* Global.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Global.cpp; sourceTree = "<group>"; };
+		C3AD265E0ED34BA80044B2BB /* Global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Global.h; sourceTree = "<group>"; };
+		C3AD265F0ED34BA80044B2BB /* IModule.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IModule.cpp; sourceTree = "<group>"; };
+		C3AD26600ED34BA80044B2BB /* IModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IModule.h; sourceTree = "<group>"; };
+		C3AD26610ED34BA80044B2BB /* include.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = include.h; sourceTree = "<group>"; };
+		C3AD26620ED34BA80044B2BB /* Interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Interface.cpp; sourceTree = "<group>"; };
+		C3AD26630ED34BA80044B2BB /* macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macros.h; sourceTree = "<group>"; };
+		C3AD26640ED34BA80044B2BB /* NTAI.APS */ = {isa = PBXFileReference; lastKnownFileType = file; path = NTAI.APS; sourceTree = "<group>"; };
+		C3AD26650ED34BA80044B2BB /* NTAI.rc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NTAI.rc; sourceTree = "<group>"; };
+		C3AD26660ED34BA80044B2BB /* resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resource.h; sourceTree = "<group>"; };
+		C3AD26670ED34BA80044B2BB /* ResTempl1.rct */ = {isa = PBXFileReference; lastKnownFileType = file; path = ResTempl1.rct; sourceTree = "<group>"; };
+		C3AD26690ED34BA80044B2BB /* COrderRouter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = COrderRouter.cpp; sourceTree = "<group>"; };
+		C3AD266A0ED34BA80044B2BB /* COrderRouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = COrderRouter.h; sourceTree = "<group>"; };
+		C3AD266B0ED34BA80044B2BB /* TCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCommand.h; sourceTree = "<group>"; };
+		C3AD266D0ED34BA80044B2BB /* CConfigData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CConfigData.cpp; sourceTree = "<group>"; };
+		C3AD266E0ED34BA80044B2BB /* CConfigData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CConfigData.h; sourceTree = "<group>"; };
+		C3AD266F0ED34BA80044B2BB /* CEconomy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CEconomy.cpp; sourceTree = "<group>"; };
+		C3AD26700ED34BA80044B2BB /* CEconomy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CEconomy.h; sourceTree = "<group>"; };
+		C3AD26710ED34BA80044B2BB /* CTokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CTokenizer.h; sourceTree = "<group>"; };
+		C3AD26720ED34BA80044B2BB /* CWorkerThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CWorkerThread.h; sourceTree = "<group>"; };
+		C3AD26740ED34BA80044B2BB /* CGridCell.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CGridCell.cpp; sourceTree = "<group>"; };
+		C3AD26750ED34BA80044B2BB /* CGridCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGridCell.h; sourceTree = "<group>"; };
+		C3AD26760ED34BA80044B2BB /* CGridManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CGridManager.cpp; sourceTree = "<group>"; };
+		C3AD26770ED34BA80044B2BB /* CGridManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGridManager.h; sourceTree = "<group>"; };
+		C3AD26780ED34BA80044B2BB /* Log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Log.cpp; sourceTree = "<group>"; };
+		C3AD26790ED34BA80044B2BB /* Log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Log.h; sourceTree = "<group>"; };
+		C3AD267A0ED34BA80044B2BB /* mtrand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mtrand.cpp; sourceTree = "<group>"; };
+		C3AD267B0ED34BA80044B2BB /* mtrand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mtrand.h; sourceTree = "<group>"; };
+		C3AD267C0ED34BA80044B2BB /* tdf_grammar.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tdf_grammar.hpp; sourceTree = "<group>"; };
+		C3AD267D0ED34BA80044B2BB /* TdfParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TdfParser.cpp; sourceTree = "<group>"; };
+		C3AD267E0ED34BA80044B2BB /* TdfParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TdfParser.h; sourceTree = "<group>"; };
+		C3AD26800ED34BA80044B2BB /* CBuildingPlacer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CBuildingPlacer.cpp; sourceTree = "<group>"; };
+		C3AD26810ED34BA80044B2BB /* CBuildingPlacer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CBuildingPlacer.h; sourceTree = "<group>"; };
+		C3AD26820ED34BA80044B2BB /* DTHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DTHandler.cpp; sourceTree = "<group>"; };
+		C3AD26830ED34BA80044B2BB /* DTHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DTHandler.h; sourceTree = "<group>"; };
+		C3AD26840ED34BA80044B2BB /* Map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Map.cpp; sourceTree = "<group>"; };
+		C3AD26850ED34BA80044B2BB /* Map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Map.h; sourceTree = "<group>"; };
+		C3AD26860ED34BA80044B2BB /* MetalHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetalHandler.cpp; sourceTree = "<group>"; };
+		C3AD26870ED34BA80044B2BB /* MetalHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalHandler.h; sourceTree = "<group>"; };
+		C3AD26880ED34BA80044B2BB /* MetalMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetalMap.cpp; sourceTree = "<group>"; };
+		C3AD26890ED34BA80044B2BB /* MetalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalMap.h; sourceTree = "<group>"; };
+		C3AD268A0ED34BA80044B2BB /* RadarHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RadarHandler.cpp; sourceTree = "<group>"; };
+		C3AD268B0ED34BA80044B2BB /* RadarHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RadarHandler.h; sourceTree = "<group>"; };
+		C3AD268C0ED34BA80044B2BB /* ubuild.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ubuild.cpp; sourceTree = "<group>"; };
+		C3AD268D0ED34BA80044B2BB /* ubuild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ubuild.h; sourceTree = "<group>"; };
+		C3AD268F0ED34BA80044B2BB /* Actions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Actions.cpp; sourceTree = "<group>"; };
+		C3AD26900ED34BA80044B2BB /* Actions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Actions.h; sourceTree = "<group>"; };
+		C3AD26910ED34BA80044B2BB /* CUnitDefLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CUnitDefLoader.cpp; sourceTree = "<group>"; };
+		C3AD26920ED34BA80044B2BB /* CUnitDefLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CUnitDefLoader.h; sourceTree = "<group>"; };
+		C3AD26950ED34BA80044B2BB /* AI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AI.h; sourceTree = "<group>"; };
+		C3AD26970ED34BA80044B2BB /* CConsoleTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CConsoleTask.cpp; sourceTree = "<group>"; };
+		C3AD26980ED34BA80044B2BB /* CConsoleTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CConsoleTask.h; sourceTree = "<group>"; };
+		C3AD26990ED34BA80044B2BB /* CKeywordConstructionTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CKeywordConstructionTask.cpp; sourceTree = "<group>"; };
+		C3AD269A0ED34BA80044B2BB /* CKeywordConstructionTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CKeywordConstructionTask.h; sourceTree = "<group>"; };
+		C3AD269B0ED34BA80044B2BB /* CLeaveBuildSpotTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CLeaveBuildSpotTask.cpp; sourceTree = "<group>"; };
+		C3AD269C0ED34BA80044B2BB /* CLeaveBuildSpotTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CLeaveBuildSpotTask.h; sourceTree = "<group>"; };
+		C3AD269D0ED34BA80044B2BB /* CUnitConstructionTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CUnitConstructionTask.cpp; sourceTree = "<group>"; };
+		C3AD269E0ED34BA80044B2BB /* CUnitConstructionTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CUnitConstructionTask.h; sourceTree = "<group>"; };
+		C3AD269F0ED34BA80044B2BB /* ITask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITask.h; sourceTree = "<group>"; };
+		C3AD26A20ED34BA80044B2BB /* AttackBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AttackBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26A30ED34BA80044B2BB /* AttackBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AttackBehaviour.h; sourceTree = "<group>"; };
+		C3AD26A40ED34BA80044B2BB /* CDGunBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CDGunBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26A50ED34BA80044B2BB /* CDGunBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDGunBehaviour.h; sourceTree = "<group>"; };
+		C3AD26A60ED34BA80044B2BB /* CKamikazeBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CKamikazeBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26A70ED34BA80044B2BB /* CKamikazeBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CKamikazeBehaviour.h; sourceTree = "<group>"; };
+		C3AD26A80ED34BA80044B2BB /* CMoveFailReclaimBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CMoveFailReclaimBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26A90ED34BA80044B2BB /* CMoveFailReclaimBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CMoveFailReclaimBehaviour.h; sourceTree = "<group>"; };
+		C3AD26AA0ED34BA80044B2BB /* CRetreatBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CRetreatBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26AB0ED34BA80044B2BB /* CRetreatBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CRetreatBehaviour.h; sourceTree = "<group>"; };
+		C3AD26AC0ED34BA80044B2BB /* CStaticDefenceBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CStaticDefenceBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26AD0ED34BA80044B2BB /* CStaticDefenceBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CStaticDefenceBehaviour.h; sourceTree = "<group>"; };
+		C3AD26AE0ED34BA80044B2BB /* MetalMakerBehaviour.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetalMakerBehaviour.cpp; sourceTree = "<group>"; };
+		C3AD26AF0ED34BA80044B2BB /* MetalMakerBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetalMakerBehaviour.h; sourceTree = "<group>"; };
+		C3AD26B00ED34BA80044B2BB /* CConfigTaskManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CConfigTaskManager.cpp; sourceTree = "<group>"; };
+		C3AD26B10ED34BA80044B2BB /* CConfigTaskManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CConfigTaskManager.h; sourceTree = "<group>"; };
+		C3AD26B20ED34BA80044B2BB /* CUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CUnit.cpp; sourceTree = "<group>"; };
+		C3AD26B30ED34BA80044B2BB /* CUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CUnit.h; sourceTree = "<group>"; };
+		C3AD26B40ED34BA80044B2BB /* CUnitTypeData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CUnitTypeData.cpp; sourceTree = "<group>"; };
+		C3AD26B50ED34BA80044B2BB /* CUnitTypeData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CUnitTypeData.h; sourceTree = "<group>"; };
+		C3AD26B60ED34BA80044B2BB /* IBehaviour.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IBehaviour.h; sourceTree = "<group>"; };
+		C3AD26B70ED34BA80044B2BB /* ITaskManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITaskManager.h; sourceTree = "<group>"; };
+		C3AD26B80ED34BA80044B2BB /* ITaskManagerFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITaskManagerFactory.h; sourceTree = "<group>"; };
+		D2AAC09D05546B4700DB518D /* libntai-xcode.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libntai-xcode.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D2AAC09B05546B4700DB518D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2AAC0B105546B7500DB518D /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		034768DDFF38A45A11DB9C8B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D2AAC09D05546B4700DB518D /* libntai-xcode.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0867D691FE84028FC02AAC07 /* ntai-xcode */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD264E0ED34BA80044B2BB /* NTai */,
+				5073E0CA09E734BC00EC74B6 /* Configuration Files */,
+				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
+				034768DDFF38A45A11DB9C8B /* Products */,
+			);
+			name = "ntai-xcode";
+			sourceTree = "<group>";
+		};
+		0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				08FB77AAFE841565C02AAC07 /* Carbon.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		5073E0CA09E734BC00EC74B6 /* Configuration Files */ = {
+			isa = PBXGroup;
+			children = (
+				5073E0C609E734A800EC74B6 /* ntai-xcodeProj.xcconfig */,
+				5073E0C709E734A800EC74B6 /* ntai-xcodeTarget.xcconfig */,
+			);
+			name = "Configuration Files";
+			sourceTree = "<group>";
+		};
+		C3AD264E0ED34BA80044B2BB /* NTai */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD264F0ED34BA80044B2BB /* Agents */,
+				C3AD26560ED34BA80044B2BB /* Core */,
+				C3AD26680ED34BA80044B2BB /* Engine */,
+				C3AD266C0ED34BA80044B2BB /* Helpers */,
+				C3AD26930ED34BA80044B2BB /* resources */,
+				C3AD26940ED34BA80044B2BB /* SDK */,
+				C3AD26960ED34BA80044B2BB /* Tasks */,
+				C3AD26A00ED34BA80044B2BB /* Units */,
+			);
+			name = NTai;
+			path = ../NTai;
+			sourceTree = SOURCE_ROOT;
+		};
+		C3AD264F0ED34BA80044B2BB /* Agents */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26500ED34BA80044B2BB /* Chaser.cpp */,
+				C3AD26510ED34BA80044B2BB /* Chaser.h */,
+				C3AD26520ED34BA80044B2BB /* CManufacturer.cpp */,
+				C3AD26530ED34BA80044B2BB /* CManufacturer.h */,
+				C3AD26540ED34BA80044B2BB /* Planning.cpp */,
+				C3AD26550ED34BA80044B2BB /* Planning.h */,
+			);
+			path = Agents;
+			sourceTree = "<group>";
+		};
+		C3AD26560ED34BA80044B2BB /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26570ED34BA80044B2BB /* CCached.h */,
+				C3AD26580ED34BA80044B2BB /* CMessage.cpp */,
+				C3AD26590ED34BA80044B2BB /* CMessage.h */,
+				C3AD265A0ED34BA80044B2BB /* CNTai.cpp */,
+				C3AD265B0ED34BA80044B2BB /* CNTai.h */,
+				C3AD265C0ED34BA80044B2BB /* enums.h */,
+				C3AD265D0ED34BA80044B2BB /* Global.cpp */,
+				C3AD265E0ED34BA80044B2BB /* Global.h */,
+				C3AD265F0ED34BA80044B2BB /* IModule.cpp */,
+				C3AD26600ED34BA80044B2BB /* IModule.h */,
+				C3AD26610ED34BA80044B2BB /* include.h */,
+				C3AD26620ED34BA80044B2BB /* Interface.cpp */,
+				C3AD26630ED34BA80044B2BB /* macros.h */,
+				C3AD26640ED34BA80044B2BB /* NTAI.APS */,
+				C3AD26650ED34BA80044B2BB /* NTAI.rc */,
+				C3AD26660ED34BA80044B2BB /* resource.h */,
+				C3AD26670ED34BA80044B2BB /* ResTempl1.rct */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		C3AD26680ED34BA80044B2BB /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26690ED34BA80044B2BB /* COrderRouter.cpp */,
+				C3AD266A0ED34BA80044B2BB /* COrderRouter.h */,
+				C3AD266B0ED34BA80044B2BB /* TCommand.h */,
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
+		C3AD266C0ED34BA80044B2BB /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD266D0ED34BA80044B2BB /* CConfigData.cpp */,
+				C3AD266E0ED34BA80044B2BB /* CConfigData.h */,
+				C3AD266F0ED34BA80044B2BB /* CEconomy.cpp */,
+				C3AD26700ED34BA80044B2BB /* CEconomy.h */,
+				C3AD26710ED34BA80044B2BB /* CTokenizer.h */,
+				C3AD26720ED34BA80044B2BB /* CWorkerThread.h */,
+				C3AD26730ED34BA80044B2BB /* grid */,
+				C3AD26780ED34BA80044B2BB /* Log.cpp */,
+				C3AD26790ED34BA80044B2BB /* Log.h */,
+				C3AD267A0ED34BA80044B2BB /* mtrand.cpp */,
+				C3AD267B0ED34BA80044B2BB /* mtrand.h */,
+				C3AD267C0ED34BA80044B2BB /* tdf_grammar.hpp */,
+				C3AD267D0ED34BA80044B2BB /* TdfParser.cpp */,
+				C3AD267E0ED34BA80044B2BB /* TdfParser.h */,
+				C3AD267F0ED34BA80044B2BB /* Terrain */,
+				C3AD268C0ED34BA80044B2BB /* ubuild.cpp */,
+				C3AD268D0ED34BA80044B2BB /* ubuild.h */,
+				C3AD268E0ED34BA80044B2BB /* Units */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		C3AD26730ED34BA80044B2BB /* grid */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26740ED34BA80044B2BB /* CGridCell.cpp */,
+				C3AD26750ED34BA80044B2BB /* CGridCell.h */,
+				C3AD26760ED34BA80044B2BB /* CGridManager.cpp */,
+				C3AD26770ED34BA80044B2BB /* CGridManager.h */,
+			);
+			path = grid;
+			sourceTree = "<group>";
+		};
+		C3AD267F0ED34BA80044B2BB /* Terrain */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26800ED34BA80044B2BB /* CBuildingPlacer.cpp */,
+				C3AD26810ED34BA80044B2BB /* CBuildingPlacer.h */,
+				C3AD26820ED34BA80044B2BB /* DTHandler.cpp */,
+				C3AD26830ED34BA80044B2BB /* DTHandler.h */,
+				C3AD26840ED34BA80044B2BB /* Map.cpp */,
+				C3AD26850ED34BA80044B2BB /* Map.h */,
+				C3AD26860ED34BA80044B2BB /* MetalHandler.cpp */,
+				C3AD26870ED34BA80044B2BB /* MetalHandler.h */,
+				C3AD26880ED34BA80044B2BB /* MetalMap.cpp */,
+				C3AD26890ED34BA80044B2BB /* MetalMap.h */,
+				C3AD268A0ED34BA80044B2BB /* RadarHandler.cpp */,
+				C3AD268B0ED34BA80044B2BB /* RadarHandler.h */,
+			);
+			path = Terrain;
+			sourceTree = "<group>";
+		};
+		C3AD268E0ED34BA80044B2BB /* Units */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD268F0ED34BA80044B2BB /* Actions.cpp */,
+				C3AD26900ED34BA80044B2BB /* Actions.h */,
+				C3AD26910ED34BA80044B2BB /* CUnitDefLoader.cpp */,
+				C3AD26920ED34BA80044B2BB /* CUnitDefLoader.h */,
+			);
+			path = Units;
+			sourceTree = "<group>";
+		};
+		C3AD26930ED34BA80044B2BB /* resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = resources;
+			sourceTree = "<group>";
+		};
+		C3AD26940ED34BA80044B2BB /* SDK */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26950ED34BA80044B2BB /* AI.h */,
+			);
+			path = SDK;
+			sourceTree = "<group>";
+		};
+		C3AD26960ED34BA80044B2BB /* Tasks */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26970ED34BA80044B2BB /* CConsoleTask.cpp */,
+				C3AD26980ED34BA80044B2BB /* CConsoleTask.h */,
+				C3AD26990ED34BA80044B2BB /* CKeywordConstructionTask.cpp */,
+				C3AD269A0ED34BA80044B2BB /* CKeywordConstructionTask.h */,
+				C3AD269B0ED34BA80044B2BB /* CLeaveBuildSpotTask.cpp */,
+				C3AD269C0ED34BA80044B2BB /* CLeaveBuildSpotTask.h */,
+				C3AD269D0ED34BA80044B2BB /* CUnitConstructionTask.cpp */,
+				C3AD269E0ED34BA80044B2BB /* CUnitConstructionTask.h */,
+				C3AD269F0ED34BA80044B2BB /* ITask.h */,
+			);
+			path = Tasks;
+			sourceTree = "<group>";
+		};
+		C3AD26A00ED34BA80044B2BB /* Units */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26A10ED34BA80044B2BB /* Behaviours */,
+				C3AD26B00ED34BA80044B2BB /* CConfigTaskManager.cpp */,
+				C3AD26B10ED34BA80044B2BB /* CConfigTaskManager.h */,
+				C3AD26B20ED34BA80044B2BB /* CUnit.cpp */,
+				C3AD26B30ED34BA80044B2BB /* CUnit.h */,
+				C3AD26B40ED34BA80044B2BB /* CUnitTypeData.cpp */,
+				C3AD26B50ED34BA80044B2BB /* CUnitTypeData.h */,
+				C3AD26B60ED34BA80044B2BB /* IBehaviour.h */,
+				C3AD26B70ED34BA80044B2BB /* ITaskManager.h */,
+				C3AD26B80ED34BA80044B2BB /* ITaskManagerFactory.h */,
+			);
+			path = Units;
+			sourceTree = "<group>";
+		};
+		C3AD26A10ED34BA80044B2BB /* Behaviours */ = {
+			isa = PBXGroup;
+			children = (
+				C3AD26A20ED34BA80044B2BB /* AttackBehaviour.cpp */,
+				C3AD26A30ED34BA80044B2BB /* AttackBehaviour.h */,
+				C3AD26A40ED34BA80044B2BB /* CDGunBehaviour.cpp */,
+				C3AD26A50ED34BA80044B2BB /* CDGunBehaviour.h */,
+				C3AD26A60ED34BA80044B2BB /* CKamikazeBehaviour.cpp */,
+				C3AD26A70ED34BA80044B2BB /* CKamikazeBehaviour.h */,
+				C3AD26A80ED34BA80044B2BB /* CMoveFailReclaimBehaviour.cpp */,
+				C3AD26A90ED34BA80044B2BB /* CMoveFailReclaimBehaviour.h */,
+				C3AD26AA0ED34BA80044B2BB /* CRetreatBehaviour.cpp */,
+				C3AD26AB0ED34BA80044B2BB /* CRetreatBehaviour.h */,
+				C3AD26AC0ED34BA80044B2BB /* CStaticDefenceBehaviour.cpp */,
+				C3AD26AD0ED34BA80044B2BB /* CStaticDefenceBehaviour.h */,
+				C3AD26AE0ED34BA80044B2BB /* MetalMakerBehaviour.cpp */,
+				C3AD26AF0ED34BA80044B2BB /* MetalMakerBehaviour.h */,
+			);
+			path = Behaviours;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		D2AAC09905546B4700DB518D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3AD26BA0ED34BA80044B2BB /* Chaser.h in Headers */,
+				C3AD26BC0ED34BA80044B2BB /* CManufacturer.h in Headers */,
+				C3AD26BE0ED34BA80044B2BB /* Planning.h in Headers */,
+				C3AD26BF0ED34BA80044B2BB /* CCached.h in Headers */,
+				C3AD26C10ED34BA80044B2BB /* CMessage.h in Headers */,
+				C3AD26C30ED34BA80044B2BB /* CNTai.h in Headers */,
+				C3AD26C40ED34BA80044B2BB /* enums.h in Headers */,
+				C3AD26C60ED34BA80044B2BB /* Global.h in Headers */,
+				C3AD26C80ED34BA80044B2BB /* IModule.h in Headers */,
+				C3AD26C90ED34BA80044B2BB /* include.h in Headers */,
+				C3AD26CB0ED34BA80044B2BB /* macros.h in Headers */,
+				C3AD26CC0ED34BA80044B2BB /* resource.h in Headers */,
+				C3AD26CE0ED34BA80044B2BB /* COrderRouter.h in Headers */,
+				C3AD26CF0ED34BA80044B2BB /* TCommand.h in Headers */,
+				C3AD26D10ED34BA80044B2BB /* CConfigData.h in Headers */,
+				C3AD26D30ED34BA80044B2BB /* CEconomy.h in Headers */,
+				C3AD26D40ED34BA80044B2BB /* CTokenizer.h in Headers */,
+				C3AD26D50ED34BA80044B2BB /* CWorkerThread.h in Headers */,
+				C3AD26D70ED34BA80044B2BB /* CGridCell.h in Headers */,
+				C3AD26D90ED34BA80044B2BB /* CGridManager.h in Headers */,
+				C3AD26DB0ED34BA80044B2BB /* Log.h in Headers */,
+				C3AD26DD0ED34BA80044B2BB /* mtrand.h in Headers */,
+				C3AD26DE0ED34BA80044B2BB /* tdf_grammar.hpp in Headers */,
+				C3AD26E00ED34BA80044B2BB /* TdfParser.h in Headers */,
+				C3AD26E20ED34BA80044B2BB /* CBuildingPlacer.h in Headers */,
+				C3AD26E40ED34BA80044B2BB /* DTHandler.h in Headers */,
+				C3AD26E60ED34BA80044B2BB /* Map.h in Headers */,
+				C3AD26E80ED34BA80044B2BB /* MetalHandler.h in Headers */,
+				C3AD26EA0ED34BA80044B2BB /* MetalMap.h in Headers */,
+				C3AD26EC0ED34BA80044B2BB /* RadarHandler.h in Headers */,
+				C3AD26EE0ED34BA80044B2BB /* ubuild.h in Headers */,
+				C3AD26F00ED34BA80044B2BB /* Actions.h in Headers */,
+				C3AD26F20ED34BA80044B2BB /* CUnitDefLoader.h in Headers */,
+				C3AD26F30ED34BA80044B2BB /* AI.h in Headers */,
+				C3AD26F50ED34BA80044B2BB /* CConsoleTask.h in Headers */,
+				C3AD26F70ED34BA80044B2BB /* CKeywordConstructionTask.h in Headers */,
+				C3AD26F90ED34BA80044B2BB /* CLeaveBuildSpotTask.h in Headers */,
+				C3AD26FB0ED34BA80044B2BB /* CUnitConstructionTask.h in Headers */,
+				C3AD26FC0ED34BA80044B2BB /* ITask.h in Headers */,
+				C3AD26FE0ED34BA80044B2BB /* AttackBehaviour.h in Headers */,
+				C3AD27000ED34BA80044B2BB /* CDGunBehaviour.h in Headers */,
+				C3AD27020ED34BA80044B2BB /* CKamikazeBehaviour.h in Headers */,
+				C3AD27040ED34BA80044B2BB /* CMoveFailReclaimBehaviour.h in Headers */,
+				C3AD27060ED34BA80044B2BB /* CRetreatBehaviour.h in Headers */,
+				C3AD27080ED34BA80044B2BB /* CStaticDefenceBehaviour.h in Headers */,
+				C3AD270A0ED34BA80044B2BB /* MetalMakerBehaviour.h in Headers */,
+				C3AD270C0ED34BA80044B2BB /* CConfigTaskManager.h in Headers */,
+				C3AD270E0ED34BA80044B2BB /* CUnit.h in Headers */,
+				C3AD27100ED34BA80044B2BB /* CUnitTypeData.h in Headers */,
+				C3AD27110ED34BA80044B2BB /* IBehaviour.h in Headers */,
+				C3AD27120ED34BA80044B2BB /* ITaskManager.h in Headers */,
+				C3AD27130ED34BA80044B2BB /* ITaskManagerFactory.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		D2AAC09C05546B4700DB518D /* ntai-xcode */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB916008733D950010E9CD /* Build configuration list for PBXNativeTarget "ntai-xcode" */;
+			buildPhases = (
+				D2AAC09905546B4700DB518D /* Headers */,
+				D2AAC09B05546B4700DB518D /* Frameworks */,
+				D2AAC09A05546B4700DB518D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ntai-xcode";
+			productName = "libntai-xcode";
+			productReference = D2AAC09D05546B4700DB518D /* libntai-xcode.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0867D690FE84028FC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB916408733D950010E9CD /* Build configuration list for PBXProject "ntai-xcode" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 0867D691FE84028FC02AAC07 /* ntai-xcode */;
+			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D2AAC09C05546B4700DB518D /* ntai-xcode */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D2AAC09A05546B4700DB518D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3AD26B90ED34BA80044B2BB /* Chaser.cpp in Sources */,
+				C3AD26BB0ED34BA80044B2BB /* CManufacturer.cpp in Sources */,
+				C3AD26BD0ED34BA80044B2BB /* Planning.cpp in Sources */,
+				C3AD26C00ED34BA80044B2BB /* CMessage.cpp in Sources */,
+				C3AD26C20ED34BA80044B2BB /* CNTai.cpp in Sources */,
+				C3AD26C50ED34BA80044B2BB /* Global.cpp in Sources */,
+				C3AD26C70ED34BA80044B2BB /* IModule.cpp in Sources */,
+				C3AD26CA0ED34BA80044B2BB /* Interface.cpp in Sources */,
+				C3AD26CD0ED34BA80044B2BB /* COrderRouter.cpp in Sources */,
+				C3AD26D00ED34BA80044B2BB /* CConfigData.cpp in Sources */,
+				C3AD26D20ED34BA80044B2BB /* CEconomy.cpp in Sources */,
+				C3AD26D60ED34BA80044B2BB /* CGridCell.cpp in Sources */,
+				C3AD26D80ED34BA80044B2BB /* CGridManager.cpp in Sources */,
+				C3AD26DA0ED34BA80044B2BB /* Log.cpp in Sources */,
+				C3AD26DC0ED34BA80044B2BB /* mtrand.cpp in Sources */,
+				C3AD26DF0ED34BA80044B2BB /* TdfParser.cpp in Sources */,
+				C3AD26E10ED34BA80044B2BB /* CBuildingPlacer.cpp in Sources */,
+				C3AD26E30ED34BA80044B2BB /* DTHandler.cpp in Sources */,
+				C3AD26E50ED34BA80044B2BB /* Map.cpp in Sources */,
+				C3AD26E70ED34BA80044B2BB /* MetalHandler.cpp in Sources */,
+				C3AD26E90ED34BA80044B2BB /* MetalMap.cpp in Sources */,
+				C3AD26EB0ED34BA80044B2BB /* RadarHandler.cpp in Sources */,
+				C3AD26ED0ED34BA80044B2BB /* ubuild.cpp in Sources */,
+				C3AD26EF0ED34BA80044B2BB /* Actions.cpp in Sources */,
+				C3AD26F10ED34BA80044B2BB /* CUnitDefLoader.cpp in Sources */,
+				C3AD26F40ED34BA80044B2BB /* CConsoleTask.cpp in Sources */,
+				C3AD26F60ED34BA80044B2BB /* CKeywordConstructionTask.cpp in Sources */,
+				C3AD26F80ED34BA80044B2BB /* CLeaveBuildSpotTask.cpp in Sources */,
+				C3AD26FA0ED34BA80044B2BB /* CUnitConstructionTask.cpp in Sources */,
+				C3AD26FD0ED34BA80044B2BB /* AttackBehaviour.cpp in Sources */,
+				C3AD26FF0ED34BA80044B2BB /* CDGunBehaviour.cpp in Sources */,
+				C3AD27010ED34BA80044B2BB /* CKamikazeBehaviour.cpp in Sources */,
+				C3AD27030ED34BA80044B2BB /* CMoveFailReclaimBehaviour.cpp in Sources */,
+				C3AD27050ED34BA80044B2BB /* CRetreatBehaviour.cpp in Sources */,
+				C3AD27070ED34BA80044B2BB /* CStaticDefenceBehaviour.cpp in Sources */,
+				C3AD27090ED34BA80044B2BB /* MetalMakerBehaviour.cpp in Sources */,
+				C3AD270B0ED34BA80044B2BB /* CConfigTaskManager.cpp in Sources */,
+				C3AD270D0ED34BA80044B2BB /* CUnit.cpp in Sources */,
+				C3AD270F0ED34BA80044B2BB /* CUnitTypeData.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB916108733D950010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5073E0C709E734A800EC74B6 /* ntai-xcodeTarget.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ntai-xcode_Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
+			};
+			name = Debug;
+		};
+		1DEB916208733D950010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5073E0C709E734A800EC74B6 /* ntai-xcodeTarget.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "ntai-xcode_Prefix.pch";
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = "non-global";
+			};
+			name = Release;
+		};
+		1DEB916508733D950010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5073E0C609E734A800EC74B6 /* ntai-xcodeProj.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Debug;
+		};
+		1DEB916608733D950010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5073E0C609E734A800EC74B6 /* ntai-xcodeProj.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB916008733D950010E9CD /* Build configuration list for PBXNativeTarget "ntai-xcode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB916108733D950010E9CD /* Debug */,
+				1DEB916208733D950010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB916408733D950010E9CD /* Build configuration list for PBXProject "ntai-xcode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB916508733D950010E9CD /* Debug */,
+				1DEB916608733D950010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0867D690FE84028FC02AAC07 /* Project object */;
+}
