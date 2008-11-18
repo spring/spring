@@ -40,9 +40,7 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 
 	for (int i = 0; i < activePlayers; ++i)
 	{
-		// TODO: refactor
-		// NOTE: this seems slightly better already then the static_cast
-		Player(i)->PlayerBase::operator=(setup->playerStartingData[i]);
+		*Player(i) = setup->playerStartingData[i];
 	}
 }
 
