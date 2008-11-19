@@ -61,7 +61,8 @@ extern "C" {
 	#ifdef _WIN32
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#elif __GNUC__
-		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
+		// gcc will spam warnings, its ignored anyway
+		#define CALLING_CONV
 	#elif __INTEL_COMPILER
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#else
