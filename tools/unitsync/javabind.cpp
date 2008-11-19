@@ -9,6 +9,7 @@
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "exportdefines.h"
 
 #include <string>
 #include <string.h>
@@ -24,100 +25,100 @@
 #pragma GCC visibility push(default)
 #endif
 
-DLL_EXPORT const char*  __stdcall GetSpringVersion();
-DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
-DLL_EXPORT void         __stdcall UnInit();
-DLL_EXPORT int          __stdcall ProcessUnits(void);
-DLL_EXPORT int          __stdcall ProcessUnitsNoChecksum(void);
-DLL_EXPORT const char*  __stdcall GetCurrentList();
-DLL_EXPORT void         __stdcall AddClient(int id, const char *unitList);
-DLL_EXPORT void         __stdcall RemoveClient(int id);
-DLL_EXPORT const char*  __stdcall GetClientDiff(int id);
-DLL_EXPORT void         __stdcall InstallClientDiff(const char *diff);
-DLL_EXPORT int          __stdcall GetUnitCount();
-DLL_EXPORT const char*  __stdcall GetUnitName(int unit);
-DLL_EXPORT const char*  __stdcall GetFullUnitName(int unit);
-DLL_EXPORT int          __stdcall IsUnitDisabled(int unit);
-DLL_EXPORT int          __stdcall IsUnitDisabledByClient(int unit, int clientId);
-DLL_EXPORT void         __stdcall AddArchive(const char* name);
-DLL_EXPORT void         __stdcall AddAllArchives(const char* root);
-DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname);
-DLL_EXPORT int          __stdcall GetMapCount();
-DLL_EXPORT const char*  __stdcall GetMapName(int index);
-DLL_EXPORT int          __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
-DLL_EXPORT int          __stdcall GetMapInfo(const char* name, MapInfo* outInfo);
-DLL_EXPORT void*        __stdcall GetMinimap(const char* filename, int miplevel);
-DLL_EXPORT int          __stdcall GetMapArchiveCount(const char* mapName);
-DLL_EXPORT const char*  __stdcall GetMapArchiveName(int index);
-DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName);
-DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index);
-DLL_EXPORT int          __stdcall GetPrimaryModCount();
-DLL_EXPORT const char*  __stdcall GetPrimaryModName(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModShortName(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModGame(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModShortGame(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModVersion(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModMutator(int index);
-DLL_EXPORT const char*	__stdcall GetPrimaryModDescription(int index);
-DLL_EXPORT const char*  __stdcall GetPrimaryModArchive(int index);
-DLL_EXPORT int          __stdcall GetPrimaryModArchiveCount(int index);
-DLL_EXPORT const char*  __stdcall GetPrimaryModArchiveList(int arnr);
-DLL_EXPORT int          __stdcall GetPrimaryModIndex(const char* name);
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index);
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name);
-DLL_EXPORT int          __stdcall GetSideCount();
-DLL_EXPORT const char*  __stdcall GetSideName(int side);
-DLL_EXPORT int          __stdcall OpenFileVFS(const char* name);
-DLL_EXPORT void         __stdcall CloseFileVFS(int handle);
-DLL_EXPORT void         __stdcall ReadFileVFS(int handle, void* buf, int length);
-DLL_EXPORT int          __stdcall FileSizeVFS(int handle);
-DLL_EXPORT int          __stdcall InitFindVFS(const char* pattern);
-DLL_EXPORT int          __stdcall FindFilesVFS(int handle, char* nameBuf, int size);
-DLL_EXPORT int          __stdcall OpenArchive(const char* name);
-DLL_EXPORT void         __stdcall CloseArchive(int archive);
-DLL_EXPORT int          __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
-DLL_EXPORT int          __stdcall OpenArchiveFile(int archive, const char* name);
-DLL_EXPORT int          __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
-DLL_EXPORT void         __stdcall CloseArchiveFile(int archive, int handle);
-DLL_EXPORT int          __stdcall SizeArchiveFile(int archive, int handle);
+EXPORT(const char* ) GetSpringVersion();
+EXPORT(void        ) Message(const char* p_szMessage);
+EXPORT(void        ) UnInit();
+EXPORT(int         ) ProcessUnits(void);
+EXPORT(int         ) ProcessUnitsNoChecksum(void);
+EXPORT(const char* ) GetCurrentList();
+EXPORT(void        ) AddClient(int id, const char *unitList);
+EXPORT(void        ) RemoveClient(int id);
+EXPORT(const char* ) GetClientDiff(int id);
+EXPORT(void        ) InstallClientDiff(const char *diff);
+EXPORT(int         ) GetUnitCount();
+EXPORT(const char* ) GetUnitName(int unit);
+EXPORT(const char* ) GetFullUnitName(int unit);
+EXPORT(int         ) IsUnitDisabled(int unit);
+EXPORT(int         ) IsUnitDisabledByClient(int unit, int clientId);
+EXPORT(void        ) AddArchive(const char* name);
+EXPORT(void        ) AddAllArchives(const char* root);
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(int         ) GetMapCount();
+EXPORT(const char* ) GetMapName(int index);
+EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(void*       ) GetMinimap(const char* filename, int miplevel);
+EXPORT(int         ) GetMapArchiveCount(const char* mapName);
+EXPORT(const char* ) GetMapArchiveName(int index);
+EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
+EXPORT(unsigned int) GetMapChecksum(int index);
+EXPORT(int         ) GetPrimaryModCount();
+EXPORT(const char* ) GetPrimaryModName(int index);
+EXPORT(const char* ) GetPrimaryModShortName(int index);
+EXPORT(const char* ) GetPrimaryModGame(int index);
+EXPORT(const char* ) GetPrimaryModShortGame(int index);
+EXPORT(const char* ) GetPrimaryModVersion(int index);
+EXPORT(const char* ) GetPrimaryModMutator(int index);
+EXPORT(const char* ) GetPrimaryModDescription(int index);
+EXPORT(const char* ) GetPrimaryModArchive(int index);
+EXPORT(int         ) GetPrimaryModArchiveCount(int index);
+EXPORT(const char* ) GetPrimaryModArchiveList(int arnr);
+EXPORT(int         ) GetPrimaryModIndex(const char* name);
+EXPORT(unsigned int) GetPrimaryModChecksum(int index);
+EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name);
+EXPORT(int         ) GetSideCount();
+EXPORT(const char* ) GetSideName(int side);
+EXPORT(int         ) OpenFileVFS(const char* name);
+EXPORT(void        ) CloseFileVFS(int handle);
+EXPORT(void        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int         ) FileSizeVFS(int handle);
+EXPORT(int         ) InitFindVFS(const char* pattern);
+EXPORT(int         ) FindFilesVFS(int handle, char* nameBuf, int size);
+EXPORT(int         ) OpenArchive(const char* name);
+EXPORT(void        ) CloseArchive(int archive);
+EXPORT(int         ) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
+EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
+EXPORT(int         ) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
+EXPORT(void        ) CloseArchiveFile(int archive, int handle);
+EXPORT(int         ) SizeArchiveFile(int archive, int handle);
 
 // lua custom lobby settings
-DLL_EXPORT int          __stdcall GetMapOptionCount(const char* name);
-DLL_EXPORT int          __stdcall GetModOptionCount();
+EXPORT(int         ) GetMapOptionCount(const char* name);
+EXPORT(int         ) GetModOptionCount();
 
-DLL_EXPORT const char*  __stdcall GetOptionKey(int optIndex);
-DLL_EXPORT const char*  __stdcall GetOptionName(int optIndex);
-DLL_EXPORT const char*  __stdcall GetOptionDesc(int optIndex);
-DLL_EXPORT int          __stdcall GetOptionType(int optIndex);
+EXPORT(const char* ) GetOptionKey(int optIndex);
+EXPORT(const char* ) GetOptionName(int optIndex);
+EXPORT(const char* ) GetOptionDesc(int optIndex);
+EXPORT(int         ) GetOptionType(int optIndex);
 
 // Bool Options
-DLL_EXPORT int          __stdcall GetOptionBoolDef(int optIndex);
+EXPORT(int         ) GetOptionBoolDef(int optIndex);
 
 // Number Options
-DLL_EXPORT float        __stdcall GetOptionNumberDef(int optIndex);
-DLL_EXPORT float        __stdcall GetOptionNumberMin(int optIndex);
-DLL_EXPORT float        __stdcall GetOptionNumberMax(int optIndex);
-DLL_EXPORT float        __stdcall GetOptionNumberStep(int optIndex);
+EXPORT(float       ) GetOptionNumberDef(int optIndex);
+EXPORT(float       ) GetOptionNumberMin(int optIndex);
+EXPORT(float       ) GetOptionNumberMax(int optIndex);
+EXPORT(float       ) GetOptionNumberStep(int optIndex);
 
 // String Options
-DLL_EXPORT const char*  __stdcall GetOptionStringDef(int optIndex);
-DLL_EXPORT int          __stdcall GetOptionStringMaxLen(int optIndex);
+EXPORT(const char* ) GetOptionStringDef(int optIndex);
+EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
 
 // List Options
-DLL_EXPORT int          __stdcall GetOptionListCount(int optIndex);
-DLL_EXPORT const char*  __stdcall GetOptionListDef(int optIndex);
-DLL_EXPORT const char*  __stdcall GetOptionListItemKey(int optIndex, int itemIndex);
-DLL_EXPORT const char*  __stdcall GetOptionListItemName(int optIndex, int itemIndex);
-DLL_EXPORT const char*  __stdcall GetOptionListItemDesc(int optIndex, int itemIndex);
+EXPORT(int         ) GetOptionListCount(int optIndex);
+EXPORT(const char* ) GetOptionListDef(int optIndex);
+EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
+EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
+EXPORT(const char* ) GetOptionListItemDesc(int optIndex, int itemIndex);
 
 // Spring settings callback
 
-DLL_EXPORT const char*	__stdcall GetSpringConfigString( const char* name, const char* defvalue );
-DLL_EXPORT int			__stdcall GetSpringConfigInt( const char* name, const int defvalue );
-DLL_EXPORT float		__stdcall GetSpringConfigFloat( const char* name, const float defvalue );
-DLL_EXPORT void			__stdcall SetSpringConfigString( const char* name, const char* value );
-DLL_EXPORT void			__stdcall SetSpringConfigInt( const char* name, const int value );
-DLL_EXPORT void			__stdcall SetSpringConfigFloat( const char* name, const float value );
+EXPORT(const char* ) GetSpringConfigString( const char* name, const char* defvalue );
+EXPORT(int         ) GetSpringConfigInt( const char* name, const int defvalue );
+EXPORT(float       ) GetSpringConfigFloat( const char* name, const float defvalue );
+EXPORT(void        ) SetSpringConfigString( const char* name, const char* value );
+EXPORT(void        ) SetSpringConfigInt( const char* name, const int value );
+EXPORT(void        ) SetSpringConfigFloat( const char* name, const float value );
 
 
 /* DO NOT EDIT THIS FILE - it is machine generated */

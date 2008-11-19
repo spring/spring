@@ -4,19 +4,19 @@
 #include "Sim/Units/UnitDef.h"
 #include <set>
 
-DLL_EXPORT int GetGroupAiVersion()
+SHARED_EXPORT int GetGroupAiVersion()
 {
 	return AI_INTERFACE_VERSION;
 }
 
 static const char* aiNameList[] = { AI_NAME, NULL };
 
-DLL_EXPORT const char** GetAiNameList()
+SHARED_EXPORT const char** GetAiNameList()
 {
 	return aiNameList;
 }
 
-DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
+SHARED_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 {
 	if(unitDef->energyUpkeep>0.0f && (unitDef->makesMetal>0.0f || unitDef->extractsMetal>0.0f))
 		return true;
@@ -24,14 +24,14 @@ DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 		return false;
 }
 
-DLL_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
+SHARED_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
 {
 	CGroupAI* ai=new CGroupAI();
 //	ais.insert(ai);
 	return ai;
 }
 
-DLL_EXPORT void ReleaseAI(unsigned aiNumber, IGroupAI* i)
+SHARED_EXPORT void ReleaseAI(unsigned aiNumber, IGroupAI* i)
 {
 	delete i;
 //	ais.erase(i);

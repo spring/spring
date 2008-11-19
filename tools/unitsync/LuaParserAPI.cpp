@@ -18,6 +18,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "unitsync.h"
+#include "exportdefines.h"
 #include <string>
 #include <vector>
 using std::string;
@@ -41,7 +42,7 @@ static vector<string> strKeys;
 //  Primary calls
 //
 
-DLL_EXPORT void __stdcall lpClose()
+EXPORT(void) lpClose()
 {
 	rootTable = LuaTable();
 	currTable = LuaTable();
@@ -58,7 +59,7 @@ DLL_EXPORT void __stdcall lpClose()
 }
 
 
-DLL_EXPORT int __stdcall lpOpenFile(const char* filename,
+EXPORT(int) lpOpenFile(const char* filename,
                                     const char* fileModes,
                                     const char* accessModes)
 {
@@ -68,7 +69,7 @@ DLL_EXPORT int __stdcall lpOpenFile(const char* filename,
 }
 
 
-DLL_EXPORT int __stdcall lpOpenSource(const char* source,
+EXPORT(int) lpOpenSource(const char* source,
                                       const char* accessModes)
 {
 	lpClose();
@@ -77,7 +78,7 @@ DLL_EXPORT int __stdcall lpOpenSource(const char* source,
 }
 
 
-DLL_EXPORT int __stdcall lpExecute()
+EXPORT(int) lpExecute()
 {
 	if (!luaParser) {
 		return 0;
@@ -89,7 +90,7 @@ DLL_EXPORT int __stdcall lpExecute()
 }
 
 
-DLL_EXPORT const char* __stdcall lpErrorLog()
+EXPORT(const char*) lpErrorLog()
 {
 	if (luaParser) {
 		return GetStr(luaParser->GetErrorLog());
@@ -103,67 +104,67 @@ DLL_EXPORT const char* __stdcall lpErrorLog()
 //  Environment additions
 //
 
-DLL_EXPORT void __stdcall lpAddTableInt(int key, int override)
+EXPORT(void) lpAddTableInt(int key, int override)
 {
 	if (luaParser) { luaParser->GetTable(key, override); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddTableStr(const char* key, int override)
+EXPORT(void) lpAddTableStr(const char* key, int override)
 {
 	if (luaParser) { luaParser->GetTable(key, override); }
 }
 
 
-DLL_EXPORT void __stdcall lpEndTable()
+EXPORT(void) lpEndTable()
 {
 	if (luaParser) { luaParser->EndTable(); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddIntKeyIntVal(int key, int val)
+EXPORT(void) lpAddIntKeyIntVal(int key, int val)
 {
 	if (luaParser) { luaParser->AddInt(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddStrKeyIntVal(const char* key, int val)
+EXPORT(void) lpAddStrKeyIntVal(const char* key, int val)
 {
 	if (luaParser) { luaParser->AddInt(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddIntKeyBoolVal(int key, int val)
+EXPORT(void) lpAddIntKeyBoolVal(int key, int val)
 {
 	if (luaParser) { luaParser->AddBool(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddStrKeyBoolVal(const char* key, int val)
+EXPORT(void) lpAddStrKeyBoolVal(const char* key, int val)
 {
 	if (luaParser) { luaParser->AddBool(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddIntKeyFloatVal(int key, float val)
+EXPORT(void) lpAddIntKeyFloatVal(int key, float val)
 {
 	if (luaParser) { luaParser->AddFloat(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddStrKeyFloatVal(const char* key, float val)
+EXPORT(void) lpAddStrKeyFloatVal(const char* key, float val)
 {
 	if (luaParser) { luaParser->AddFloat(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddIntKeyStrVal(int key, const char* val)
+EXPORT(void) lpAddIntKeyStrVal(int key, const char* val)
 {
 	if (luaParser) { luaParser->AddString(key, val); }
 }
 
 
-DLL_EXPORT void __stdcall lpAddStrKeyStrVal(const char* key, const char* val)
+EXPORT(void) lpAddStrKeyStrVal(const char* key, const char* val)
 {
 	if (luaParser) { luaParser->AddString(key, val); }
 }
@@ -174,7 +175,7 @@ DLL_EXPORT void __stdcall lpAddStrKeyStrVal(const char* key, const char* val)
 //  Table manipulation
 //
 
-DLL_EXPORT int __stdcall lpRootTable()
+EXPORT(int) lpRootTable()
 {
 	currTable = rootTable;
 	luaTables.clear();
@@ -182,7 +183,7 @@ DLL_EXPORT int __stdcall lpRootTable()
 }
 
 
-DLL_EXPORT int __stdcall lpRootTableExpr(const char* expr)
+EXPORT(int) lpRootTableExpr(const char* expr)
 {
 	currTable = rootTable.SubTableExpr(expr);
 	luaTables.clear();
@@ -190,7 +191,7 @@ DLL_EXPORT int __stdcall lpRootTableExpr(const char* expr)
 }
 
 
-DLL_EXPORT int __stdcall lpSubTableInt(int key)
+EXPORT(int) lpSubTableInt(int key)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTable(key);
@@ -198,7 +199,7 @@ DLL_EXPORT int __stdcall lpSubTableInt(int key)
 }
 
 
-DLL_EXPORT int __stdcall lpSubTableStr(const char* key)
+EXPORT(int) lpSubTableStr(const char* key)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTable(key);
@@ -206,7 +207,7 @@ DLL_EXPORT int __stdcall lpSubTableStr(const char* key)
 }
 
 
-DLL_EXPORT int __stdcall lpSubTableExpr(const char* expr)
+EXPORT(int) lpSubTableExpr(const char* expr)
 {
 	luaTables.push_back(currTable);
 	currTable = currTable.SubTableExpr(expr);
@@ -214,7 +215,7 @@ DLL_EXPORT int __stdcall lpSubTableExpr(const char* expr)
 }
 
 
-DLL_EXPORT void __stdcall lpPopTable()
+EXPORT(void) lpPopTable()
 {
 	if (luaTables.empty()) {
 		currTable = rootTable;
@@ -231,13 +232,13 @@ DLL_EXPORT void __stdcall lpPopTable()
 //  Key existance
 //
 
-DLL_EXPORT int __stdcall lpGetKeyExistsInt(int key)
+EXPORT(int) lpGetKeyExistsInt(int key)
 {
 	return currTable.KeyExists(key) ? 1 : 0;
 }
 
 
-DLL_EXPORT int __stdcall lpGetKeyExistsStr(const char* key)
+EXPORT(int) lpGetKeyExistsStr(const char* key)
 {
 	return currTable.KeyExists(key) ? 1 : 0;
 }
@@ -248,13 +249,13 @@ DLL_EXPORT int __stdcall lpGetKeyExistsStr(const char* key)
 //  Type
 //
 
-DLL_EXPORT int __stdcall lpGetIntKeyType(int key)
+EXPORT(int) lpGetIntKeyType(int key)
 {
 	return currTable.GetType(key);
 }
 
 
-DLL_EXPORT int __stdcall lpGetStrKeyType(const char* key)
+EXPORT(int) lpGetStrKeyType(const char* key)
 {
 	return currTable.GetType(key);
 }
@@ -265,7 +266,7 @@ DLL_EXPORT int __stdcall lpGetStrKeyType(const char* key)
 // Key lists
 //
 
-DLL_EXPORT int __stdcall lpGetIntKeyListCount()
+EXPORT(int) lpGetIntKeyListCount()
 {
 	if (!currTable.IsValid()) {
 		intKeys.clear();
@@ -277,7 +278,7 @@ DLL_EXPORT int __stdcall lpGetIntKeyListCount()
 }
 
 
-DLL_EXPORT int __stdcall lpGetIntKeyListEntry(int index)
+EXPORT(int) lpGetIntKeyListEntry(int index)
 {
 	if ((index < 0) || (index >= intKeys.size())) {
 		return 0;
@@ -286,7 +287,7 @@ DLL_EXPORT int __stdcall lpGetIntKeyListEntry(int index)
 }
 
 
-DLL_EXPORT int __stdcall lpGetStrKeyListCount()
+EXPORT(int) lpGetStrKeyListCount()
 {
 	if (!currTable.IsValid()) {
 		strKeys.clear();
@@ -298,7 +299,7 @@ DLL_EXPORT int __stdcall lpGetStrKeyListCount()
 }
 
 
-DLL_EXPORT const char* __stdcall lpGetStrKeyListEntry(int index)
+EXPORT(const char*) lpGetStrKeyListEntry(int index)
 {
 	if ((index < 0) || (index >= strKeys.size())) {
 		return GetStr("");
@@ -312,50 +313,50 @@ DLL_EXPORT const char* __stdcall lpGetStrKeyListEntry(int index)
 //  Value queries
 //
 
-DLL_EXPORT int __stdcall lpGetIntKeyIntVal(int key, int defVal)
+EXPORT(int) lpGetIntKeyIntVal(int key, int defVal)
 {
 	return currTable.GetInt(key, defVal);
 }
 
 
-DLL_EXPORT int __stdcall lpGetStrKeyIntVal(const char* key, int defVal)
+EXPORT(int) lpGetStrKeyIntVal(const char* key, int defVal)
 {
 	return currTable.GetInt(key, defVal);
 }
 
 
-DLL_EXPORT int __stdcall lpGetIntKeyBoolVal(int key, int defVal)
+EXPORT(int) lpGetIntKeyBoolVal(int key, int defVal)
 {
 	return currTable.GetBool(key, defVal) ? 1 : 0;
 }
 
 
-DLL_EXPORT int __stdcall lpGetStrKeyBoolVal(const char* key, int defVal)
+EXPORT(int) lpGetStrKeyBoolVal(const char* key, int defVal)
 {
 	return currTable.GetBool(key, defVal) ? 1 : 0;
 }
 
 
-DLL_EXPORT float __stdcall lpGetIntKeyFloatVal(int key, float defVal)
+EXPORT(float) lpGetIntKeyFloatVal(int key, float defVal)
 {
 	return currTable.GetFloat(key, defVal);
 }
 
 
-DLL_EXPORT float __stdcall lpGetStrKeyFloatVal(const char* key, float defVal)
+EXPORT(float) lpGetStrKeyFloatVal(const char* key, float defVal)
 {
 	return currTable.GetFloat(key, defVal);
 }
 
 
-DLL_EXPORT const char* __stdcall lpGetIntKeyStrVal(int key,
+EXPORT(const char*) lpGetIntKeyStrVal(int key,
                                                    const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
 }
 
 
-DLL_EXPORT const char* __stdcall lpGetStrKeyStrVal(const char* key,
+EXPORT(const char*) lpGetStrKeyStrVal(const char* key,
                                                    const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
