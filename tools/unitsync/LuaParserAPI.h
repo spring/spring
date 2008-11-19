@@ -3,6 +3,6 @@
 
 #include "unitsync.h"
 
-DLL_EXPORT void __stdcall lpClose();
+EXPORT(void) lpClose();
 
 #endif /* LUA_PARSER_API_H */

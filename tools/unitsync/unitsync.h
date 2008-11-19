@@ -75,13 +75,5 @@ enum BitmapType {
 
 const char *GetStr(std::string str);
 
-
-#ifdef WIN32
-#  define DLL_EXPORT extern "C" __declspec(dllexport)
-#  include <windows.h>
-#else
-#  define DLL_EXPORT extern "C" __attribute__ ((visibility("default")))
-#  define __stdcall
 #endif
 
-#endif

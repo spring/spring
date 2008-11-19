@@ -1,7 +1,7 @@
 
 #include "StdAfx.h"
 
-//#include "ExternalAI/aibase.h" // for DLL_EXPORT definition
+//#include "ExternalAI/aibase.h" // for SHARED_EXPORT definition
 
 #include "AbicAICallback.h"
 

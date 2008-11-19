@@ -365,23 +365,23 @@ void InitMono(const char *monoDir, const char *dll, const char *namespacename, c
 }
 
 // declare that we present a C interface.  Spring checks for this.
-DLL_EXPORT bool IsCInterface()
+SHARED_EXPORT bool IsCInterface()
 {
     return true;
 }
 
-DLL_EXPORT int GetGlobalAiVersion()
+SHARED_EXPORT int GetGlobalAiVersion()
 {
 	return GLOBALAI_C_INTERFACE_VERSION;
 }
 
-DLL_EXPORT void GetAiName(char* name)
+SHARED_EXPORT void GetAiName(char* name)
 {
 	strcpy(name, "CSAILoaderMono" );
 }
 
 static int numexec = 0;
-DLL_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
+SHARED_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
 {
     AIProxy *aiproxy = new AIProxy(); // set this variable, so the callbacks go to right place
     thisaiproxy = aiproxy;  // so Set callbacks work ok
@@ -420,63 +420,63 @@ DLL_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
     return aiproxy;
 }
 
-DLL_EXPORT void UnitCreated( void *ai, int unit)									//called when a new unit is created on ai team
+SHARED_EXPORT void UnitCreated( void *ai, int unit)									//called when a new unit is created on ai team
 {
     WriteLine( "UnitCreated >>>" );
     ( (AIProxy *)ai )->UnitCreated( unit );
     WriteLine( "UnitCreated <<<" );
 }
 
-DLL_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
+SHARED_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
 {
     WriteLine( "UnitFinished >>>" );
     ( (AIProxy *)ai )->UnitFinished( unit );
     WriteLine( "UnitFinished <<<" );
 }
 
-DLL_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
+SHARED_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
 {
     ( (AIProxy *)ai )->UnitDestroyed( unit, attacker );
 }
 
-DLL_EXPORT void EnemyEnterLOS(void *ai, int enemy)
+SHARED_EXPORT void EnemyEnterLOS(void *ai, int enemy)
 {
     ( (AIProxy *)ai )->EnemyEnterLOS( enemy );
 }
 
-DLL_EXPORT void EnemyLeaveLOS(void *ai, int enemy)
+SHARED_EXPORT void EnemyLeaveLOS(void *ai, int enemy)
 {
     ( (AIProxy *)ai )->EnemyLeaveLOS( enemy );
 }
 
-DLL_EXPORT void EnemyEnterRadar(void *ai, int enemy)		
+SHARED_EXPORT void EnemyEnterRadar(void *ai, int enemy)		
 {
     ( (AIProxy *)ai )->EnemyEnterRadar(enemy );
 }
 
-DLL_EXPORT void EnemyLeaveRadar(void *ai, int enemy)
+SHARED_EXPORT void EnemyLeaveRadar(void *ai, int enemy)
 {
     ( (AIProxy *)ai )->EnemyLeaveRadar( enemy );
 }
 
-DLL_EXPORT void EnemyDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)	//called when an enemy inside los or radar is damaged
+SHARED_EXPORT void EnemyDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)	//called when an enemy inside los or radar is damaged
 {
     ( (AIProxy *)ai )->EnemyDamaged( damaged, attacker, damage, dirx, diry, dirz );
 }
 
-DLL_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
+SHARED_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 {
     ( (AIProxy *)ai )->EnemyDestroyed( enemy, attacker );
 }
 
-DLL_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
+SHARED_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
 {
     WriteLine( "UnitIdle >>>" );
     ( (AIProxy *)ai )->UnitIdle( unit );
     WriteLine( "UnitIdle <<<" );
 }
 
-DLL_EXPORT void GotChatMsg(void *ai, const char* msg,int player)					//called when someone writes a chat msg
+SHARED_EXPORT void GotChatMsg(void *ai, const char* msg,int player)					//called when someone writes a chat msg
 {
     WriteLine( "GotChatMsg >>>" );
     WriteLine( msg );
@@ -484,12 +484,12 @@ DLL_EXPORT void GotChatMsg(void *ai, const char* msg,int player)					//called wh
     WriteLine( "GotChatMsg <<<" );
 }
 
-DLL_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
+SHARED_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
 {
     ( (AIProxy *)ai )->UnitDamaged( damaged, attacker, damage, dirx, diry, dirz );
 }
 
-DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
+SHARED_EXPORT void UnitMoveFailed(void *ai, int unit)
 {
     ( (AIProxy *)ai )->UnitMoveFailed( unit );
 }
@@ -497,7 +497,7 @@ DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 //int HandleEvent (int msg,const void *data); // todo
 
 //called every frame
-DLL_EXPORT void Update(void *ai )
+SHARED_EXPORT void Update(void *ai )
 {
   //  WriteLine( "Update >>>" );
     ( (AIProxy *)ai )->Update(  );

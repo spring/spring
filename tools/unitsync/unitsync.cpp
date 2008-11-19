@@ -23,6 +23,8 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
+#include "System/exportdefines.h"
+
 
 // unitsync only:
 #include "LuaParserAPI.h"
@@ -43,7 +45,7 @@ static CSyncer* syncer;
 
 
 #ifdef WIN32
-BOOL __stdcall DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
+BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
 	return TRUE;
 }
@@ -187,7 +189,7 @@ class ScopedMapLoader {
  *			printf("unitsync error: %s\n", err);
  *		@endcode
  */
-DLL_EXPORT const char* __stdcall GetNextError()
+EXPORT(const char*) GetNextError()
 {
 	try {
 		// queue is only 1 element long now for simplicity :-)
@@ -214,7 +216,7 @@ DLL_EXPORT const char* __stdcall GetNextError()
  * Returns a const char* string specifying the version of spring used to build this library with.
  * It was added to aid in lobby creation, where checks for updates to spring occur.
  */
-DLL_EXPORT const char* __stdcall GetSpringVersion()
+EXPORT(const char*) GetSpringVersion()
 {
 	return GetStr(SpringVersion::Get());
 }
@@ -226,7 +228,7 @@ DLL_EXPORT const char* __stdcall GetSpringVersion()
  *
  * Creates a messagebox with the title "Message from DLL", an OK button, and the specified message
  */
-DLL_EXPORT void __stdcall Message(const char* p_szMessage)
+EXPORT(void) Message(const char* p_szMessage)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", p_szMessage);
@@ -260,7 +262,7 @@ static void _UnInit()
  *
  * also resets the config handler
  */
-DLL_EXPORT void __stdcall UnInit()
+EXPORT(void) UnInit()
 {
 	try {
 		_UnInit();
@@ -285,7 +287,7 @@ DLL_EXPORT void __stdcall UnInit()
  * 
  * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
  */
-DLL_EXPORT int __stdcall Init(bool isServer, int id)
+EXPORT(int) Init(bool isServer, int id)
 {
 	try {
 		_UnInit();
@@ -323,7 +325,7 @@ DLL_EXPORT int __stdcall Init(bool isServer, int id)
  *
  * This is the data directory which is used to write logs, screenshots, demos, etc.
  */
-DLL_EXPORT const char* __stdcall GetWritableDataDirectory()
+EXPORT(const char*) GetWritableDataDirectory()
 {
 	try {
 		CheckInit();
@@ -349,7 +351,7 @@ DLL_EXPORT const char* __stdcall GetWritableDataDirectory()
  * Before any units are available, you'll first need to map a mod's archives
  * into the VFS using AddArchive() or AddAllArchives().
  */
-DLL_EXPORT int __stdcall ProcessUnits()
+EXPORT(int) ProcessUnits()
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: process units\n");
@@ -364,7 +366,7 @@ DLL_EXPORT int __stdcall ProcessUnits()
  * @brief Identical to ProcessUnits(), neither generates checksum anymore
  * @see ProcessUnits
  */
-DLL_EXPORT int __stdcall ProcessUnitsNoChecksum()
+EXPORT(int) ProcessUnitsNoChecksum()
 {
 	return ProcessUnits();
 }
@@ -384,7 +386,7 @@ DLL_EXPORT int __stdcall ProcessUnitsNoChecksum()
  *		int unit_number = GetUnitCount();
  *		@endcode
  */
-DLL_EXPORT int __stdcall GetUnitCount()
+EXPORT(int) GetUnitCount()
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit count\n");
@@ -403,7 +405,7 @@ DLL_EXPORT int __stdcall GetUnitCount()
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
  */
-DLL_EXPORT const char * __stdcall GetUnitName(int unit)
+EXPORT(const char *) GetUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit %d name\n", unit);
@@ -423,7 +425,7 @@ DLL_EXPORT const char * __stdcall GetUnitName(int unit)
  * This function returns the units human name. For example it would return
  * 'Arm Construction kbot' and not 'armck'.
  */
-DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
+EXPORT(const char *) GetFullUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get full unit %d name\n", unit);
@@ -443,7 +445,7 @@ DLL_EXPORT const char * __stdcall GetFullUnitName(int unit)
  * After this, the contents of the archive are available to other unitsync functions,
  * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
  */
-DLL_EXPORT void __stdcall AddArchive(const char* name)
+EXPORT(void) AddArchive(const char* name)
 {
 	try {
 		CheckInit();
@@ -460,7 +462,7 @@ DLL_EXPORT void __stdcall AddArchive(const char* name)
  * @brief Adds an achive and all it's dependencies to the VFS
  * @see AddArchive
  */
-DLL_EXPORT void __stdcall AddAllArchives(const char* root)
+EXPORT(void) AddAllArchives(const char* root)
 {
 	try {
 		CheckInit();
@@ -483,7 +485,7 @@ DLL_EXPORT void __stdcall AddAllArchives(const char* root)
  * This checksum depends only on the contents from the archive itself, and not
  * on the contents from dependencies of this archive (if any).
  */
-DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname)
 {
 	try {
 		CheckInit();
@@ -501,7 +503,7 @@ DLL_EXPORT unsigned int __stdcall GetArchiveChecksum(const char* arname)
  * @brief Gets the real path to the archive
  * @return NULL on error; a path to the archive on success
  */
-DLL_EXPORT const char* __stdcall GetArchivePath(const char* arname)
+EXPORT(const char*) GetArchivePath(const char* arname)
 {
 	try {
 		CheckInit();
@@ -537,7 +539,7 @@ static vector<string> mapNames;
  *		for (int index = 0; index < GetMapCount(); ++index) { ... }
  *		@endcode
  */
-DLL_EXPORT int __stdcall GetMapCount()
+EXPORT(int) GetMapCount()
 {
 	try {
 		CheckInit();
@@ -567,7 +569,7 @@ DLL_EXPORT int __stdcall GetMapCount()
  * @brief Get the name of a map
  * @return NULL on error; the name of the map (e.g. "SmallDivide.smf") on success
  */
-DLL_EXPORT const char* __stdcall GetMapName(int index)
+EXPORT(const char*) GetMapName(int index)
 {
 	try {
 		CheckInit();
@@ -697,7 +699,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  *
  * If version >= 1, then the author field is filled.
  */
-DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
 	try {
 		return _GetMapInfoEx(name, outInfo, version);
@@ -714,7 +716,7 @@ DLL_EXPORT int __stdcall GetMapInfoEx(const char* name, MapInfo* outInfo, int ve
  * @return Zero on error; non-zero on success
  * @see GetMapInfoEx
  */
-DLL_EXPORT int __stdcall GetMapInfo(const char* name, MapInfo* outInfo)
+EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 {
 	try {
 		return _GetMapInfoEx(name, outInfo, 0);
@@ -734,7 +736,7 @@ static vector<string> mapArchives;
  *
  * Must be called before GetMapArchiveName()
  */
-DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName)
+EXPORT(int) GetMapArchiveCount(const char* mapName)
 {
 	try {
 		CheckInit();
@@ -753,7 +755,7 @@ DLL_EXPORT int __stdcall GetMapArchiveCount(const char* mapName)
  * @param index the index of the archive
  * @return NULL on error; the name of the archive on success
  */
-DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
+EXPORT(const char*) GetMapArchiveName(int index)
 {
 	try {
 		CheckInit();
@@ -776,7 +778,7 @@ DLL_EXPORT const char* __stdcall GetMapArchiveName(int index)
  *
  * (It is ment to check sync between clients in lobby, for example.)
  */
-DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
+EXPORT(unsigned int) GetMapChecksum(int index)
 {
 	try {
 		CheckInit();
@@ -795,7 +797,7 @@ DLL_EXPORT unsigned int __stdcall GetMapChecksum(int index)
  * @return Zero on error; the checksum on success
  * @see GetMapChecksum
  */
-DLL_EXPORT unsigned int __stdcall GetMapChecksumFromName(const char* mapName)
+EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 {
 	try {
 		CheckInit();
@@ -955,7 +957,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
  * An example usage would be GetMinimap("SmallDivide.smf", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
+EXPORT(void*) GetMinimap(const char* filename, int miplevel)
 {
 	try {
 		CheckInit();
@@ -993,7 +995,7 @@ DLL_EXPORT void* __stdcall GetMinimap(const char* filename, int miplevel)
  * @return Non-zero when the infomap was found with a non-zero size; zero on error.
  * @see GetInfoMap
  */
-DLL_EXPORT int __stdcall GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
+EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
 {
 	try {
 		CheckInit();
@@ -1036,7 +1038,7 @@ DLL_EXPORT int __stdcall GetInfoMapSize(const char* filename, const char* name, 
  * this function to convert from one format to another. Currently only the
  * conversion from 16 bpp to 8 bpp is implemented.
  */
-DLL_EXPORT int __stdcall GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
+EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
 {
 	try {
 		CheckInit();
@@ -1093,7 +1095,7 @@ vector<CArchiveScanner::ModData> modData;
  * @return int Zero on error; The number of mods available on success
  * @see GetMapCount
  */
-DLL_EXPORT int __stdcall GetPrimaryModCount()
+EXPORT(int) GetPrimaryModCount()
 {
 	try {
 		CheckInit();
@@ -1114,7 +1116,7 @@ DLL_EXPORT int __stdcall GetPrimaryModCount()
  * Returns the name of the mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
+EXPORT(const char*) GetPrimaryModName(int index)
 {
 	try {
 		CheckInit();
@@ -1136,7 +1138,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModName(int index)
  * Returns the shortened name of the mod usually found in modinfo.tdf.
  * Be sure you've made a call GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
+EXPORT(const char*) GetPrimaryModShortName(int index)
 {
 	try {
 		CheckInit();
@@ -1158,7 +1160,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortName(int index)
  * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
+EXPORT(const char*) GetPrimaryModVersion(int index)
 {
 	try {
 		CheckInit();
@@ -1180,7 +1182,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModVersion(int index)
  * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
+EXPORT(const char*) GetPrimaryModMutator(int index)
 {
 	try {
 		CheckInit();
@@ -1202,7 +1204,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModMutator(int index)
  * Returns the name of the game this mod belongs to usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
+EXPORT(const char*) GetPrimaryModGame(int index)
 {
 	try {
 		CheckInit();
@@ -1224,7 +1226,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModGame(int index)
  * Returns the abbrieviated name of the game this mod belongs to usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
+EXPORT(const char*) GetPrimaryModShortGame(int index)
 {
 	try {
 		CheckInit();
@@ -1246,7 +1248,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModShortGame(int index)
  * Returns a description for the specified mod usually found in modinfo.tdf.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModDescription(int index)
+EXPORT(const char*) GetPrimaryModDescription(int index)
 {
 	try {
 		CheckInit();
@@ -1268,7 +1270,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModDescription(int index)
  * Returns the name of the primary archive of the mod.
  * Be sure you've made a call to GetPrimaryModCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModArchive(int index)
+EXPORT(const char*) GetPrimaryModArchive(int index)
 {
 	try {
 		CheckInit();
@@ -1299,7 +1301,7 @@ vector<string> primaryArchives;
  *		}
  *		@endcode
  */
-DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
+EXPORT(int) GetPrimaryModArchiveCount(int index)
 {
 	try {
 		CheckInit();
@@ -1319,7 +1321,7 @@ DLL_EXPORT int __stdcall GetPrimaryModArchiveCount(int index)
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
-DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
+EXPORT(const char*) GetPrimaryModArchiveList(int arnr)
 {
 	try {
 		CheckInit();
@@ -1338,7 +1340,7 @@ DLL_EXPORT const char* __stdcall GetPrimaryModArchiveList(int arnr)
  * @param name The name of the mod
  * @return -1 if the mod can not be found; the index of the mod otherwise
  */
-DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
+EXPORT(int) GetPrimaryModIndex(const char* name)
 {
 	try {
 		CheckInit();
@@ -1362,7 +1364,7 @@ DLL_EXPORT int __stdcall GetPrimaryModIndex(const char* name)
  * @return Zero on error; the checksum on success.
  * @see GetMapChecksum
  */
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
+EXPORT(unsigned int) GetPrimaryModChecksum(int index)
 {
 	try {
 		CheckInit();
@@ -1381,7 +1383,7 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksum(int index)
  * @return Zero on error; the checksum on success.
  * @see GetMapChecksum
  */
-DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name)
+EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name)
 {
 	try {
 		CheckInit();
@@ -1404,7 +1406,7 @@ DLL_EXPORT unsigned int __stdcall GetPrimaryModChecksumFromName(const char* name
  * available. Be sure to map the mod into the VFS using AddArchive() or
  * AddAllArchives() prior to using this function.
  */
-DLL_EXPORT int __stdcall GetSideCount()
+EXPORT(int) GetSideCount()
 {
 	try {
 		CheckInit();
@@ -1425,7 +1427,7 @@ DLL_EXPORT int __stdcall GetSideCount()
  *
  * Be sure you've made a call to GetSideCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetSideName(int side)
+EXPORT(const char*) GetSideName(int side)
 {
 	try {
 		CheckInit();
@@ -1445,7 +1447,7 @@ DLL_EXPORT const char* __stdcall GetSideName(int side)
  *
  * Be sure you've made a call to GetSideCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetSideStartUnit(int side)
+EXPORT(const char*) GetSideStartUnit(int side)
 {
 	try {
 		CheckInit();
@@ -1517,7 +1519,7 @@ static void GetLuaAIOptions()
  * Usually LUA AIs are shipped inside a mod, so be sure to map the mod into
  * the VFS using AddArchive() or AddAllArchives() prior to using this function.
  */
-DLL_EXPORT int __stdcall GetLuaAICount()
+EXPORT(int) GetLuaAICount()
 {
 	try {
 		CheckInit();
@@ -1536,7 +1538,7 @@ DLL_EXPORT int __stdcall GetLuaAICount()
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
+EXPORT(const char*) GetLuaAIName(int aiIndex)
 {
 	try {
 		CheckInit();
@@ -1555,7 +1557,7 @@ DLL_EXPORT const char* __stdcall GetLuaAIName(int aiIndex)
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetLuaAIDesc(int aiIndex)
+EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 {
 	try {
 		CheckInit();
@@ -1781,7 +1783,7 @@ static void CheckOptionType(int optIndex, int type)
  * @param name the name of the map
  * @return Zero on error; the number of map options available on success
  */
-DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
+EXPORT(int) GetMapOptionCount(const char* name)
 {
 	try {
 		CheckInit();
@@ -1814,7 +1816,7 @@ DLL_EXPORT int __stdcall GetMapOptionCount(const char* name)
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
  */
-DLL_EXPORT int __stdcall GetModOptionCount()
+EXPORT(int) GetModOptionCount()
 {
 	try {
 		CheckInit();
@@ -1852,7 +1854,7 @@ DLL_EXPORT int __stdcall GetModOptionCount()
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
+EXPORT(const char*) GetOptionKey(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1871,7 +1873,7 @@ DLL_EXPORT const char* __stdcall GetOptionKey(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
+EXPORT(const char*) GetOptionName(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1890,7 +1892,7 @@ DLL_EXPORT const char* __stdcall GetOptionName(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionSection(int optIndex)
+EXPORT(const char*) GetOptionSection(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1911,7 +1913,7 @@ DLL_EXPORT const char* __stdcall GetOptionSection(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionStyle(int optIndex)
+EXPORT(const char*) GetOptionStyle(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1930,7 +1932,7 @@ DLL_EXPORT const char* __stdcall GetOptionStyle(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)
+EXPORT(const char*) GetOptionDesc(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1949,7 +1951,7 @@ DLL_EXPORT const char* __stdcall GetOptionDesc(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT int __stdcall GetOptionType(int optIndex)
+EXPORT(int) GetOptionType(int optIndex)
 {
 	try {
 		CheckOptionIndex(optIndex);
@@ -1970,7 +1972,7 @@ DLL_EXPORT int __stdcall GetOptionType(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT int __stdcall GetOptionBoolDef(int optIndex)
+EXPORT(int) GetOptionBoolDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_bool);
@@ -1991,7 +1993,7 @@ DLL_EXPORT int __stdcall GetOptionBoolDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT float __stdcall GetOptionNumberDef(int optIndex)
+EXPORT(float) GetOptionNumberDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2010,7 +2012,7 @@ DLL_EXPORT float __stdcall GetOptionNumberDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT float __stdcall GetOptionNumberMin(int optIndex)
+EXPORT(float) GetOptionNumberMin(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2029,7 +2031,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMin(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT float __stdcall GetOptionNumberMax(int optIndex)
+EXPORT(float) GetOptionNumberMax(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2048,7 +2050,7 @@ DLL_EXPORT float __stdcall GetOptionNumberMax(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT float __stdcall GetOptionNumberStep(int optIndex)
+EXPORT(float) GetOptionNumberStep(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_number);
@@ -2069,7 +2071,7 @@ DLL_EXPORT float __stdcall GetOptionNumberStep(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionStringDef(int optIndex)
+EXPORT(const char*) GetOptionStringDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_string);
@@ -2088,7 +2090,7 @@ DLL_EXPORT const char* __stdcall GetOptionStringDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT int __stdcall GetOptionStringMaxLen(int optIndex)
+EXPORT(int) GetOptionStringMaxLen(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_string);
@@ -2109,7 +2111,7 @@ DLL_EXPORT int __stdcall GetOptionStringMaxLen(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT int __stdcall GetOptionListCount(int optIndex)
+EXPORT(int) GetOptionListCount(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2128,7 +2130,7 @@ DLL_EXPORT int __stdcall GetOptionListCount(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
+EXPORT(const char*) GetOptionListDef(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2148,7 +2150,7 @@ DLL_EXPORT const char* __stdcall GetOptionListDef(int optIndex)
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2170,7 +2172,7 @@ DLL_EXPORT const char* __stdcall GetOptionListItemKey(int optIndex, int itemInde
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionListItemName(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2192,7 +2194,7 @@ DLL_EXPORT const char* __stdcall GetOptionListItemName(int optIndex, int itemInd
  * Be sure you've made a call to either GetMapOptionCount()
  * or GetModOptionCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetOptionListItemDesc(int optIndex, int itemIndex)
+EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
@@ -2295,7 +2297,7 @@ static int LuaGetMapInfo(lua_State* L)
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
  */
-DLL_EXPORT int __stdcall GetModValidMapCount()
+EXPORT(int) GetModValidMapCount()
 {
 	try {
 		CheckInit();
@@ -2337,7 +2339,7 @@ DLL_EXPORT int __stdcall GetModValidMapCount()
  * Map names should be complete  (including the .smf or .sm3 extension.)
  * Be sure you've made a call to GetModValidMapCount() prior to using this.
  */
-DLL_EXPORT const char* __stdcall GetModValidMap(int index)
+EXPORT(const char*) GetModValidMap(int index)
 {
 	try {
 		CheckInit();
@@ -2376,7 +2378,7 @@ static void CheckFileHandle(int handle)
  * Map the wanted archives into the VFS with AddArchive() or AddAllArchives()
  * before using this function.
  */
-DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
+EXPORT(int) OpenFileVFS(const char* name)
 {
 	try {
 		CheckInit();
@@ -2404,7 +2406,7 @@ DLL_EXPORT int __stdcall OpenFileVFS(const char* name)
  * @brief Close a file in the VFS
  * @param handle the file handle as returned by OpenFileVFS()
  */
-DLL_EXPORT void __stdcall CloseFileVFS(int handle)
+EXPORT(void) CloseFileVFS(int handle)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2424,7 +2426,7 @@ DLL_EXPORT void __stdcall CloseFileVFS(int handle)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-DLL_EXPORT int __stdcall ReadFileVFS(int handle, void* buf, int length)
+EXPORT(int) ReadFileVFS(int handle, void* buf, int length)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2445,7 +2447,7 @@ DLL_EXPORT int __stdcall ReadFileVFS(int handle, void* buf, int length)
  * @param handle the file handle as returned by OpenFileVFS()
  * @return -1 on error; the size of the file on success
  */
-DLL_EXPORT int __stdcall FileSizeVFS(int handle)
+EXPORT(int) FileSizeVFS(int handle)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2461,7 +2463,7 @@ DLL_EXPORT int __stdcall FileSizeVFS(int handle)
 
 // Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
 // pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
+EXPORT(int) InitFindVFS(const char* pattern)
 {
 	try {
 		CheckInit();
@@ -2479,7 +2481,7 @@ DLL_EXPORT int __stdcall InitFindVFS(const char* pattern)
 
 // Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
 // pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitDirListVFS(const char* path, const char* pattern, const char* modes)
+EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
 		CheckInit();
@@ -2497,7 +2499,7 @@ DLL_EXPORT int __stdcall InitDirListVFS(const char* path, const char* pattern, c
 
 // Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
 // pass the returned handle to findfiles to get the results
-DLL_EXPORT int __stdcall InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
+EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
 		CheckInit();
@@ -2514,7 +2516,7 @@ DLL_EXPORT int __stdcall InitSubDirsVFS(const char* path, const char* pattern, c
 
 // On first call, pass handle from initfind. pass the return value of this function on subsequent calls
 // until 0 is returned. size should be set to max namebuffer size on call
-DLL_EXPORT int __stdcall FindFilesVFS(int handle, char* nameBuf, int size)
+EXPORT(int) FindFilesVFS(int handle, char* nameBuf, int size)
 {
 	try {
 		CheckInit();
@@ -2554,7 +2556,7 @@ static void CheckArchiveHandle(int handle)
  * @return Zero on error; a non-zero archive handle on success.
  * @sa OpenArchiveType
  */
-DLL_EXPORT int __stdcall OpenArchive(const char* name)
+EXPORT(int) OpenArchive(const char* name)
 {
 	try {
 		CheckInit();
@@ -2588,7 +2590,7 @@ DLL_EXPORT int __stdcall OpenArchive(const char* name)
  * This function is pointless, because OpenArchive() does the same and automatically
  * detects the file type based on it's extension.  Who added it anyway?
  */
-DLL_EXPORT int __stdcall OpenArchiveType(const char* name, const char* type)
+EXPORT(int) OpenArchiveType(const char* name, const char* type)
 {
 	try {
 		CheckInit();
@@ -2614,7 +2616,7 @@ DLL_EXPORT int __stdcall OpenArchiveType(const char* name, const char* type)
  * @brief Close an archive in the VFS
  * @param archive the archive handle as returned by OpenArchive()
  */
-DLL_EXPORT void __stdcall CloseArchive(int archive)
+EXPORT(void) CloseArchive(int archive)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2626,7 +2628,7 @@ DLL_EXPORT void __stdcall CloseArchive(int archive)
 }
 
 
-DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
+EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2659,7 +2661,7 @@ DLL_EXPORT int __stdcall FindFilesArchive(int archive, int cur, char* nameBuf, i
  * The returned file handle is needed for subsequent calls to ReadArchiveFile(),
  * CloseArchiveFile() and SizeArchiveFile().
  */
-DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
+EXPORT(int) OpenArchiveFile(int archive, const char* name)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2682,7 +2684,7 @@ DLL_EXPORT int __stdcall OpenArchiveFile(int archive, const char* name)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than numBytes you reached the end of the file.)
  */
-DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
+EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2702,7 +2704,7 @@ DLL_EXPORT int __stdcall ReadArchiveFile(int archive, int handle, void* buffer, 
  * @param archive the archive handle as returned by OpenArchive()
  * @param handle the file handle as returned by OpenArchiveFile()
  */
-DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle)
+EXPORT(void) CloseArchiveFile(int archive, int handle)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2720,7 +2722,7 @@ DLL_EXPORT void __stdcall CloseArchiveFile(int archive, int handle)
  * @param handle the file handle as returned by OpenArchiveFile()
  * @return -1 on error; the size of the file on success
  */
-DLL_EXPORT int __stdcall SizeArchiveFile(int archive, int handle)
+EXPORT(int) SizeArchiveFile(int archive, int handle)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2760,12 +2762,12 @@ void PrintLoadMsg(const char* text)
 //////////////////////////
 //////////////////////////
 
-DLL_EXPORT void __stdcall SetSpringConfigFile(const char* filenameAsAbsolutePath)
+EXPORT(void) SetSpringConfigFile(const char* filenameAsAbsolutePath)
 {
 	ConfigHandler::Instantiate(filenameAsAbsolutePath);
 }
 
-DLL_EXPORT const char*  __stdcall GetSpringConfigFile()
+EXPORT(const char* ) GetSpringConfigFile()
 {
 	return GetStr(configHandler.GetConfigFile());
 }
@@ -2776,7 +2778,7 @@ DLL_EXPORT const char*  __stdcall GetSpringConfigFile()
  * @param defvalue default string value to use if key is not found, may not be NULL
  * @return string value
  */
-DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const char* defvalue )
+EXPORT(const char*) GetSpringConfigString( const char* name, const char* defvalue )
 {
 	try {
 		string res = configHandler.GetString( name, defvalue );
@@ -2792,7 +2794,7 @@ DLL_EXPORT const char* __stdcall GetSpringConfigString( const char* name, const 
  * @param defvalue default integer value to use if key is not found
  * @return integer value
  */
-DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalue )
+EXPORT(int) GetSpringConfigInt( const char* name, const int defvalue )
 {
 	try {
 		return configHandler.Get( name, defvalue );
@@ -2807,7 +2809,7 @@ DLL_EXPORT int __stdcall GetSpringConfigInt( const char* name, const int defvalu
  * @param defvalue default float value to use if key is not found
  * @return float value
  */
-DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float defvalue )
+EXPORT(float) GetSpringConfigFloat( const char* name, const float defvalue )
 {
 	try {
 		return configHandler.Get( name, defvalue );
@@ -2821,7 +2823,7 @@ DLL_EXPORT float __stdcall GetSpringConfigFloat( const char* name, const float d
  * @param name name of key to set
  * @param value string value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigString(const char* name, const char* value)
+EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 {
 	try {
 		configHandler.SetString( name, value );
@@ -2834,7 +2836,7 @@ DLL_EXPORT void __stdcall SetSpringConfigString(const char* name, const char* va
  * @param name name of key to set
  * @param value integer value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
+EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
 		configHandler.Set( name, value );
@@ -2847,7 +2849,7 @@ DLL_EXPORT void __stdcall SetSpringConfigInt(const char* name, const int value)
  * @param name name of key to set
  * @param value float value to set
  */
-DLL_EXPORT void __stdcall SetSpringConfigFloat(const char* name, const float value)
+EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
 		configHandler.Set( name, value );
@@ -2884,46 +2886,46 @@ class CMessageOnce
 
 
 // deprecated 2008/10
-DLL_EXPORT const char * __stdcall GetCurrentList()
+EXPORT(const char *) GetCurrentList()
 {
 	DEPRECATED;
 	return NULL;
 }
 
 // deprecated 2008/10
-DLL_EXPORT void __stdcall AddClient(int id, const char *unitList)
+EXPORT(void) AddClient(int id, const char *unitList)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-DLL_EXPORT void __stdcall RemoveClient(int id)
+EXPORT(void) RemoveClient(int id)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-DLL_EXPORT const char * __stdcall GetClientDiff(int id)
+EXPORT(const char *) GetClientDiff(int id)
 {
 	DEPRECATED;
 	return NULL;
 }
 
 // deprecated 2008/10
-DLL_EXPORT void __stdcall InstallClientDiff(const char *diff)
+EXPORT(void) InstallClientDiff(const char *diff)
 {
 	DEPRECATED;
 }
 
 // deprecated 2008/10
-DLL_EXPORT int __stdcall IsUnitDisabled(int unit)
+EXPORT(int) IsUnitDisabled(int unit)
 {
 	DEPRECATED;
 	return 0;
 }
 
 // deprecated 2008/10
-DLL_EXPORT int __stdcall IsUnitDisabledByClient(int unit, int clientId)
+EXPORT(int) IsUnitDisabledByClient(int unit, int clientId)
 {
 	DEPRECATED;
 	return 0;

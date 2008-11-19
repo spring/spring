@@ -3,24 +3,24 @@
 #include "ExternalAI/aibase.h"
 #include "Sim/Units/UnitDef.h"
 
-DLL_EXPORT int GetGroupAiVersion()
+SHARED_EXPORT int GetGroupAiVersion()
 {
 	return AI_INTERFACE_VERSION;
 }
 
 static const char* aiNameList[] = { AI_NAME, NULL };
 
-DLL_EXPORT const char** GetAiNameList()
+SHARED_EXPORT const char** GetAiNameList()
 {
 	return aiNameList;
 }
 
-DLL_EXPORT bool IsLoadSupported(unsigned aiNumber)
+SHARED_EXPORT bool IsLoadSupported(unsigned aiNumber)
 {
 	return true;
 }
 
-DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
+SHARED_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 {
 	if(unitDef->buildSpeed==0 || !unitDef->canmove)
 		return false;
@@ -28,14 +28,14 @@ DLL_EXPORT bool IsUnitSuited(unsigned aiNumber, const UnitDef* unitDef)
 		return true;
 }
 
-DLL_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
+SHARED_EXPORT IGroupAI* GetNewAI(unsigned aiNumber)
 {
 	CGroupAI* ai=new CGroupAI();
 //	ais.insert(ai);
 	return ai;
 }
 
-DLL_EXPORT void ReleaseAI(unsigned aiNumber, IGroupAI* i)
+SHARED_EXPORT void ReleaseAI(unsigned aiNumber, IGroupAI* i)
 {
 	delete i;
 //	ais.erase(i);
