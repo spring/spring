@@ -216,7 +216,7 @@ DLL_EXPORT const char* __stdcall GetNextError()
  */
 DLL_EXPORT const char* __stdcall GetSpringVersion()
 {
-	return SpringVersion::Get().c_str();
+	return GetStr(SpringVersion::Get());
 }
 
 
@@ -252,18 +252,19 @@ static void _UnInit()
 		SafeDelete(syncer);
 		logOutput.Print(LOG_UNITSYNC, "deinitialized");
 	}
-
-	ConfigHandler::Deallocate();
 }
 
 
 /**
  * @brief Uninitialize the unitsync library
+ *
+ * also resets the config handler
  */
 DLL_EXPORT void __stdcall UnInit()
 {
 	try {
 		_UnInit();
+		ConfigHandler::Deallocate();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -281,13 +282,16 @@ DLL_EXPORT void __stdcall UnInit()
  * files which are mapped into it.  In other words, after using AddArchive() or
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
+ * 
+ * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
  */
-DLL_EXPORT int __stdcall Init(bool isServer, int id, const char* configFile)
+DLL_EXPORT int __stdcall Init(bool isServer, int id)
 {
 	try {
 		_UnInit();
 
-		ConfigHandler::Instantiate(configFile);
+		if (!_configHandler)
+			ConfigHandler::Instantiate("");
 		FileSystemHandler::Initialize(false);
 
 		std::vector<string> filesToCheck;
@@ -2763,7 +2767,7 @@ DLL_EXPORT void __stdcall SetSpringConfigFile(const char* filenameAsAbsolutePath
 
 DLL_EXPORT const char*  __stdcall GetSpringConfigFile()
 {
-	return configHandler.GetConfigFile().c_str();
+	return GetStr(configHandler.GetConfigFile());
 }
 
 /**

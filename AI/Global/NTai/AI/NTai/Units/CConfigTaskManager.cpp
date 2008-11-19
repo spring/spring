@@ -46,7 +46,7 @@ namespace ntai {
 		if(HasTasks()){
 			return tasks.front();
 		} else {
-			return boost::shared_ptr<IModule>(0);
+			return boost::shared_ptr<IModule>();
 		}
 	}
 	

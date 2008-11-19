@@ -11,7 +11,7 @@ DLL_EXPORT const char*  __stdcall GetSpringVersion();
 
 DLL_EXPORT void         __stdcall Message(const char* p_szMessage);
 
-DLL_EXPORT int          __stdcall Init(bool isServer, int id, const char* filenameAsAbsolutePath="");
+DLL_EXPORT int          __stdcall Init(bool isServer, int id);
 DLL_EXPORT void         __stdcall UnInit();
 
 DLL_EXPORT const char*  __stdcall GetWritableDataDirectory();
