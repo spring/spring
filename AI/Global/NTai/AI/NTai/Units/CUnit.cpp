@@ -86,9 +86,8 @@ namespace ntai {
 						if(currentTask.get() != 0){
 							currentTask->Init();
 							G->RegisterMessageHandler(currentTask);
-						}
 						}else{
-							currentTask = boost::shared_ptr<IModule>(0);
+							currentTask = boost::shared_ptr<IModule>();
 						}
 					}
 				}else{
