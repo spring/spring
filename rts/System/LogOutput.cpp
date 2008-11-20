@@ -164,11 +164,22 @@ void CLogOutput::InitializeSubsystems()
 
 	// enabled subsystems is superset of the ones specified in environment
 	// and the ones specified in the configuration file.
+	// configHandler cannot be accessed here in unitsync since it may not exist.
+#ifndef UNITSYNC
 	string subsystems = "," + StringToLower(configHandler.GetString("LogSubsystems", "")) + ",";
+#else
+#  ifdef DEBUG
+	// unitsync logging in debug mode always on
+	string subsystems = ",unitsync,";
+#  else
+	string subsystems = ",";
+#  endif
+#endif
 
 	const char* const env = getenv("SPRING_LOG_SUBSYSTEMS");
 	if (env)
 		subsystems += StringToLower(env) + ",";
+
 
 	(*this) << "Enabled log subsystems: ";
 	for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {

@@ -59,6 +59,7 @@ namespace
 		COneTimeInit()
 		{
 			logOutput.SetFilename("unitsync.log");
+			logOutput.Initialize();
 			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 		}
 	};
@@ -284,7 +285,7 @@ EXPORT(void) UnInit()
  * files which are mapped into it.  In other words, after using AddArchive() or
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
- * 
+ *
  * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
  */
 EXPORT(int) Init(bool isServer, int id)
@@ -2772,6 +2773,13 @@ EXPORT(const char* ) GetSpringConfigFile()
 	return GetStr(configHandler.GetConfigFile());
 }
 
+static void CheckConfigHandler()
+{
+	if (!_configHandler)
+		throw std::logic_error("Unitsync config handler not initialized, check config source.");
+}
+
+
 /**
  * @brief get string from Spring configuration
  * @param name name of key to get
@@ -2781,6 +2789,7 @@ EXPORT(const char* ) GetSpringConfigFile()
 EXPORT(const char*) GetSpringConfigString( const char* name, const char* defvalue )
 {
 	try {
+		CheckConfigHandler();
 		string res = configHandler.GetString( name, defvalue );
 		return GetStr(res);
 	}
@@ -2797,6 +2806,7 @@ EXPORT(const char*) GetSpringConfigString( const char* name, const char* defvalu
 EXPORT(int) GetSpringConfigInt( const char* name, const int defvalue )
 {
 	try {
+		CheckConfigHandler();
 		return configHandler.Get( name, defvalue );
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2812,6 +2822,7 @@ EXPORT(int) GetSpringConfigInt( const char* name, const int defvalue )
 EXPORT(float) GetSpringConfigFloat( const char* name, const float defvalue )
 {
 	try {
+		CheckConfigHandler();
 		return configHandler.Get( name, defvalue );
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2826,6 +2837,7 @@ EXPORT(float) GetSpringConfigFloat( const char* name, const float defvalue )
 EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 {
 	try {
+		CheckConfigHandler();
 		configHandler.SetString( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2839,6 +2851,7 @@ EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
+		CheckConfigHandler();
 		configHandler.Set( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2852,6 +2865,7 @@ EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
+		CheckConfigHandler();
 		configHandler.Set( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
