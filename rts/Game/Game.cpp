@@ -3130,6 +3130,8 @@ void CGame::SimFrameMT() {
 #else
 void CGame::SimFrame() {
 #endif
+	ScopedTimer cputimer("CPU load"); // SimFrame
+
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 	ASSERT_SYNCED_MODE;
@@ -3302,7 +3304,7 @@ void CGame::ClientReadNet()
 {
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
 		lastCpuUsageTime = gu->gameTime;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.profile["Sim time"].percent));
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
 	}
 
 	PUSH_CODE_MODE;
@@ -3353,7 +3355,7 @@ void CGame::ClientReadNet()
 #endif
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = 15.0f;
+		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES;
 	}
 
 	// really process the messages
@@ -3803,7 +3805,7 @@ void CGame::ClientReadNet()
 				if (frame != gs->frameNum) {
 					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 				}
-				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.profile["Sim time"].percent));
+				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
 				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;

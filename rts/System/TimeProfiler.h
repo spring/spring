@@ -53,6 +53,7 @@ public:
 	CTimeProfiler();
 	~CTimeProfiler();
 
+	float GetPercent(const char *name);
 	void AddTime(const std::string& name, unsigned time);
 	void Update();
 	

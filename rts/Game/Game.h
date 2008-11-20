@@ -25,6 +25,7 @@ class CLoadSaveHandler;
 class Action;
 class ChatMessage;
 
+const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
 class CGame : public CGameController
 {
