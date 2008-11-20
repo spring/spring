@@ -28,6 +28,8 @@ void ProfileDrawer::Disable()
 
 void ProfileDrawer::Draw()
 {
+	GML_STDMUTEX_LOCK(time); // Draw
+
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0,0,0.5f,0.5f);
@@ -91,6 +93,8 @@ void ProfileDrawer::Draw()
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
 {
+	GML_STDMUTEX_LOCK(time); // MousePress
+
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
@@ -110,6 +114,8 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 bool ProfileDrawer::IsAbove(int x, int y)
 {
+	GML_STDMUTEX_LOCK(time); // IsAbove
+
 	const float mx=MouseX(x);
 	const float my=MouseY(y);
 

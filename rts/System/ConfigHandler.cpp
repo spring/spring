@@ -14,7 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #ifdef WIN32
 	#include <io.h>
@@ -263,7 +265,11 @@ void ConfigHandler::Read(FILE* file)
 void ConfigHandler::Write(FILE* file)
 {
 	rewind(file);
+#ifdef WIN32
+	_chsize(fileno(file), 0);
+#else
 	ftruncate(fileno(file), 0);
+#endif
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); ++iter)
 		fprintf(file, "%s=%s\n", iter->first.c_str(), iter->second.c_str());
 }

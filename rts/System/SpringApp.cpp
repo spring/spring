@@ -43,6 +43,7 @@
 #include "GlobalUnsynced.h"
 #include "Util.h"
 #include "Exceptions.h"
+#include "System/TimeProfiler.h"
 
 #include "mmgr.h"
 
@@ -102,6 +103,7 @@ SpringApp::SpringApp ()
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
 	FSAA = false;
+	lastRequiredDraw=0;
 
 	signal(SIGABRT, SigAbrtHandler);
 }
@@ -941,7 +943,20 @@ int SpringApp::Update ()
 				if (gu->drawFrame == 0) {
 					gu->drawFrame++;
 				}
-				ret = activeController->Draw();
+				if(
+#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+					!multiThreadSim &&
+#endif
+					gs->frameNum-lastRequiredDraw >= MAX_CONSECUTIVE_SIMFRAMES) {
+
+					ScopedTimer cputimer("CPU load"); // Update
+
+					ret = activeController->Draw();
+					lastRequiredDraw=gs->frameNum;
+				}
+				else {
+					ret = activeController->Draw();
+				}
 #if defined(USE_GML) && GML_ENABLE_SIMLOOP
 				gmlProcessor.PumpAux();
 #endif
