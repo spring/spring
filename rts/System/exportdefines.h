@@ -47,11 +47,6 @@ extern "C" {
 	#endif // __cplusplus
 #endif // SHARED_EXPORT
 
-#ifndef SHARED_EXPORT
-	#define SHARED_EXPORT SHARED_EXPORT
-#endif // SHARED_EXPORT
-
-
 // calling convention declaration that will work across
 // different platforms and compilers
 //#ifdef __GNUC__
