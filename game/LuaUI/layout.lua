@@ -39,7 +39,7 @@ local showPanelLabel = false
 
 -- for DefaultHandler
 local FrameTex   = "bitmaps/icons/frame_slate_128x96.png"
-local FrameScale = "&0.099x0.132&"
+local FrameScale = "&0.1x0.1&"
 local PageNumTex = "bitmaps/circularthingy.tga"
 
 
