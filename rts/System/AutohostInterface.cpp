@@ -153,7 +153,7 @@ std::string AutohostInterface::GetChatMessage() const
 {
 	uchar buffer[4096];
 	unsigned length = autohost->Recv(buffer, 4096);
-	buffer[length] = '\0';
+	buffer[std::min(length, (unsigned)250)] = '\0';
 	
 	std::string msg((char*)buffer);
 	return msg;
