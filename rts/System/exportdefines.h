@@ -22,9 +22,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define SPRING_CALLING_CONVENTION stdcall
-#define SPRING_CALLING_CONVENTION_2 __stdcall
-
 // extern declaration that will work across
 // different platforms and compilers
 #ifndef SHARED_EXPORT
@@ -48,16 +45,29 @@ extern "C" {
 #endif // SHARED_EXPORT
 
 // calling convention declaration that will work across
-// different platforms and compilers
-//#ifdef __GNUC__
-//	#define __stdcall
-//#else
+// different and compilers
+// for all 64bit platforms, we do not specify a calling convetion,
+// as they all support only a single one anyway
+// for windows 32bit, we use stdcall
+// for non-windows 32bit, we use cdecl
+
+#ifndef SPRING_CALLING_CONVENTION
+	#if defined _WIN32
+		#define SPRING_CALLING_CONVENTION stdcall
+		#define SPRING_CALLING_CONVENTION_2 __stdcall
+	#else // defined _WIN32
+		#define SPRING_CALLING_CONVENTION cdecl
+		#define SPRING_CALLING_CONVENTION_2 __cdecl
+	#endif // defined _WIN32
+#endif // SPRING_CALLING_CONVENTION
+
 #ifndef CALLING_CONV
-	#ifdef _WIN32
+	#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
+		#define CALLING_CONV
+	#elif defined _WIN32
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#elif __GNUC__
-		// gcc will spam warnings, its ignored anyway
-		#define CALLING_CONV
+		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#elif __INTEL_COMPILER
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#else
