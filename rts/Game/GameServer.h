@@ -170,9 +170,7 @@ private:
 	std::vector<GameParticipant> players;
 	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
 
-	float cpuUsages[MAX_PLAYERS];
 	float medianCpu;
-	int pings[MAX_PLAYERS];
 	int medianPing;
 	int enforceSpeed;
 	/////////////////// game settings ///////////////////

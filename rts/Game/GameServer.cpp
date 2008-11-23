@@ -424,14 +424,16 @@ void CGameServer::Update()
 		if (serverframenum > 0) {
 			//send info about the players
 			int curpos=0;
+			static int ping[MAX_PLAYERS];
+			static float cpu[MAX_PLAYERS];
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState >= GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
 					if (players[a].cpuUsage > refCpu)
 						refCpu = players[a].cpuUsage;
-					cpuUsages[curpos]=players[a].cpuUsage;
-					pings[curpos]=players[a].ping;
+					cpu[curpos]=players[a].cpuUsage;
+					ping[curpos]=players[a].ping;
 					++curpos;
 				}
 			}
@@ -439,15 +441,15 @@ void CGameServer::Update()
 			medianCpu=0.0f;
 			medianPing=0;
 			if(enforceSpeed && curpos>0) {
-				std::sort(cpuUsages,cpuUsages+curpos);
-				std::sort(pings,pings+curpos);
+				std::sort(cpu,cpu+curpos);
+				std::sort(ping,ping+curpos);
 
 				int midpos=curpos/2;
-				medianCpu=cpuUsages[midpos];
-				medianPing=pings[midpos];
+				medianCpu=cpu[midpos];
+				medianPing=ping[midpos];
 				if(midpos*2==curpos) {
-					medianCpu=(medianCpu+cpuUsages[midpos-1])/2.0f;
-					medianPing=(medianPing+pings[midpos-1])/2;
+					medianCpu=(medianCpu+cpu[midpos-1])/2.0f;
+					medianPing=(medianPing+ping[midpos-1])/2;
 				}
 				refCpu=medianCpu;
 			}
