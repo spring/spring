@@ -736,7 +736,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_TEAM:
 		{
-						//TODO update players[] and teams[] and send to hostif
+						//TODO update players[] and teams[] and send all to hostif
 			const unsigned player = (unsigned)inbuf[1];
 			if (player != a)
 			{
@@ -762,12 +762,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						}
 						players[player].team = 0;
 						players[player].spectator = true;
+						if (hostif) hostif->SendPlayerDefeated(player);
 						break;
 					}
 					case TEAMMSG_RESIGN: {
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
 						players[player].team = 0;
 						players[player].spectator = true;
+						if (hostif) hostif->SendPlayerDefeated(player);
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
@@ -800,6 +802,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 								{
 									players[i].team = 0;
 									players[i].spectator = true;
+									if (hostif) hostif->SendPlayerDefeated(i);
 								}
 							}
 						}
