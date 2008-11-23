@@ -127,6 +127,10 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	cheating = false;
 	sentGameOverMsg = false;
 
+	medianCpu=0.0f;
+	medianPing=0;
+	enforceSpeed=configHandler.Get("EnforceGameSpeed", 1);
+
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
 
@@ -140,6 +144,11 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	maxUserSpeed = setup->maxSpeed;
 	minUserSpeed = setup->minSpeed;
+	// enforce gamespeed if not configured
+	if(enforceSpeed && minUserSpeed <= 0.3f)
+		minUserSpeed = 1.0f;
+	if(enforceSpeed && maxUserSpeed >= 3.0f)
+		maxUserSpeed = 1.0f;
 	noHelperAIs = (bool)setup->noHelperAIs;
 
 	gameData.reset(newGameData);
@@ -414,23 +423,43 @@ void CGameServer::Update()
 
 		if (serverframenum > 0) {
 			//send info about the players
-			float maxCpu = 0.0f;
+			int curpos=0;
+			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState >= GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
-					if (players[a].cpuUsage > maxCpu) {
-						maxCpu = players[a].cpuUsage;
-					}
+					if (players[a].cpuUsage > refCpu)
+						refCpu = players[a].cpuUsage;
+					cpuUsages[curpos]=players[a].cpuUsage;
+					pings[curpos]=players[a].ping;
+					++curpos;
 				}
 			}
 
-			if (maxCpu > 0.0f) {
-				float wantedCpu=0.5f+(1-internalSpeed/userSpeedFactor)*0.5f;
-				//float speedMod=1+wantedCpu-maxCpu;
-				float newSpeed=internalSpeed*wantedCpu/maxCpu;
-				//logOutput.Print("Speed %f %f %f %f",maxCpu,wantedCpu,speedMod,newSpeed);
+			medianCpu=0.0f;
+			medianPing=0;
+			if(enforceSpeed && curpos>0) {
+				std::sort(cpuUsages,cpuUsages+curpos);
+				std::sort(pings,pings+curpos);
+
+				int midpos=curpos/2;
+				medianCpu=cpuUsages[midpos];
+				medianPing=pings[midpos];
+				if(midpos*2==curpos) {
+					medianCpu=(medianCpu+cpuUsages[midpos-1])/2.0f;
+					medianPing=(medianPing+pings[midpos-1])/2;
+				}
+				refCpu=medianCpu;
+			}
+
+			if (refCpu > 0.0f) {
+				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference 
+				float wantedCpu=enforceSpeed ? 0.6f+(1-internalSpeed/userSpeedFactor)*0.5f : 0.75f+(1-internalSpeed/userSpeedFactor)*0.5f;
+				float newSpeed=internalSpeed*wantedCpu/refCpu;
+//				float speedMod=1+wantedCpu-refCpu;
+//				logOutput.Print("Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f",refCpu,medianCpu,wantedCpu,speedMod,newSpeed);
 				newSpeed = (newSpeed+internalSpeed)*0.5f;
-				newSpeed = std::max(newSpeed, userSpeedFactor*0.5f);
+				newSpeed = std::max(newSpeed, enforceSpeed ? userSpeedFactor*0.8f : userSpeedFactor*0.5f);
 				if(newSpeed>userSpeedFactor)
 					newSpeed=userSpeedFactor;
 				if(newSpeed<0.1f)
@@ -509,6 +538,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
+					if(enforceSpeed && (players[a].cpuUsage - medianCpu > 0.25f || players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
+						GotChatMessage(ChatMessage(a, a, "Pausing rejected (cpu load or ping is too high)"));
+						break; // disallow pausing by players who cannot keep up gamespeed
+					}
 					timeLeft=0;
 					if (isPaused != !!inbuf[2]) {
 						isPaused = !isPaused;
@@ -1441,6 +1474,11 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
+	if(enforceSpeed && player!=SERVER_PLAYER && (players[player].cpuUsage - medianCpu > 0.25f || players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
+		GotChatMessage(ChatMessage(player, player, "Speed change rejected (cpu load or ping is too high)"));
+		return; // disallow speed change by players who cannot keep up gamespeed
+	}
+
 	newSpeed = std::min(maxUserSpeed, std::max(newSpeed, minUserSpeed));
 
 	if (userSpeedFactor != newSpeed)
