@@ -125,7 +125,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 
 void AutohostInterface::SendPlayerDefeated(uchar playerNum) const
 {
-	uchar msg[2] = {PLAYER_READY, playerNum};
+	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
 	autohost->Send(msg, 2);
 }
 
