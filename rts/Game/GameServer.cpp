@@ -424,8 +424,8 @@ void CGameServer::Update()
 		if (serverframenum > 0) {
 			//send info about the players
 			int curpos=0;
-			static int ping[MAX_PLAYERS];
-			static float cpu[MAX_PLAYERS];
+			int ping[MAX_PLAYERS] = { 0 };
+			float cpu[MAX_PLAYERS] = { 0.0f };
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState >= GameParticipant::INGAME) {
@@ -455,7 +455,7 @@ void CGameServer::Update()
 			}
 
 			if (refCpu > 0.0f) {
-				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference 
+				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
 				float wantedCpu=enforceSpeed ? 0.6f+(1-internalSpeed/userSpeedFactor)*0.5f : 0.75f+(1-internalSpeed/userSpeedFactor)*0.5f;
 				float newSpeed=internalSpeed*wantedCpu/refCpu;
 //				float speedMod=1+wantedCpu-refCpu;
@@ -1202,7 +1202,7 @@ void CGameServer::CheckForGameEnd()
 	int numActiveAllyTeams = 0;
 	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
-	
+
 #ifndef DEDICATED
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
 	{
@@ -1383,7 +1383,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 		 startnum = (unsigned)demoReader->GetFileHeader().maxPlayerNum+1;
 	else
 		startnum = 0;
-	
+
 	for (unsigned i = startnum; i < players.size(); ++i)
 	{
 		if (name == players[i].name)
@@ -1422,7 +1422,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 
 	players[hisNewNumber].link = link;
 	players[hisNewNumber].isLocal = isLocal;
-	
+
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
