@@ -29,7 +29,7 @@ CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
 	info = (struct InfoItem*) calloc(numInfoItems, sizeof(struct InfoItem));
 	unsigned int i;
     for (i=0; i < numInfoItems; ++i) {
-        info[i] = copyInfoItem(p_info[i]);
+        info[i] = copyInfoItem(&(p_info[i]));
     }
 }
 
@@ -37,9 +37,9 @@ CSkirmishAILibrary::~CSkirmishAILibrary() {
 
 	unsigned int i;
     for (i=0; i < numInfoItems; ++i) {
-        deleteInfoItem(info[i]);
+        deleteInfoItem(&(info[i]));
     }
-	free(info);
+	free(const_cast<struct InfoItem*>(info));
 }
 	
 SSAISpecifier CSkirmishAILibrary::GetSpecifier() const {
