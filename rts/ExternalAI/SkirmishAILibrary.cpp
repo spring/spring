@@ -26,11 +26,12 @@ CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
 		const struct InfoItem p_info[], unsigned int numInfoItems)
 		: sSAI(ai), specifier(specifier), numInfoItems(numInfoItems) {
 
-	info = (struct InfoItem*) calloc(numInfoItems, sizeof(struct InfoItem));
+	struct InfoItem* tmpInfo = (struct InfoItem*) calloc(numInfoItems, sizeof(struct InfoItem));
 	unsigned int i;
     for (i=0; i < numInfoItems; ++i) {
-        info[i] = copyInfoItem(&(p_info[i]));
+        tmpInfo[i] = copyInfoItem(&(p_info[i]));
     }
+	info = tmpInfo;
 }
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {
