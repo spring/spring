@@ -6,9 +6,10 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Map/SMF/mapfile.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "exportdefines.h"
 
 #include <string>
 #include <string.h>
@@ -23,6 +24,102 @@
 #ifdef __GNUC__
 #pragma GCC visibility push(default)
 #endif
+
+EXPORT(const char* ) GetSpringVersion();
+EXPORT(void        ) Message(const char* p_szMessage);
+EXPORT(void        ) UnInit();
+EXPORT(int         ) ProcessUnits(void);
+EXPORT(int         ) ProcessUnitsNoChecksum(void);
+EXPORT(const char* ) GetCurrentList();
+EXPORT(void        ) AddClient(int id, const char *unitList);
+EXPORT(void        ) RemoveClient(int id);
+EXPORT(const char* ) GetClientDiff(int id);
+EXPORT(void        ) InstallClientDiff(const char *diff);
+EXPORT(int         ) GetUnitCount();
+EXPORT(const char* ) GetUnitName(int unit);
+EXPORT(const char* ) GetFullUnitName(int unit);
+EXPORT(int         ) IsUnitDisabled(int unit);
+EXPORT(int         ) IsUnitDisabledByClient(int unit, int clientId);
+EXPORT(void        ) AddArchive(const char* name);
+EXPORT(void        ) AddAllArchives(const char* root);
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(int         ) GetMapCount();
+EXPORT(const char* ) GetMapName(int index);
+EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(void*       ) GetMinimap(const char* filename, int miplevel);
+EXPORT(int         ) GetMapArchiveCount(const char* mapName);
+EXPORT(const char* ) GetMapArchiveName(int index);
+EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
+EXPORT(unsigned int) GetMapChecksum(int index);
+EXPORT(int         ) GetPrimaryModCount();
+EXPORT(const char* ) GetPrimaryModName(int index);
+EXPORT(const char* ) GetPrimaryModShortName(int index);
+EXPORT(const char* ) GetPrimaryModGame(int index);
+EXPORT(const char* ) GetPrimaryModShortGame(int index);
+EXPORT(const char* ) GetPrimaryModVersion(int index);
+EXPORT(const char* ) GetPrimaryModMutator(int index);
+EXPORT(const char* ) GetPrimaryModDescription(int index);
+EXPORT(const char* ) GetPrimaryModArchive(int index);
+EXPORT(int         ) GetPrimaryModArchiveCount(int index);
+EXPORT(const char* ) GetPrimaryModArchiveList(int arnr);
+EXPORT(int         ) GetPrimaryModIndex(const char* name);
+EXPORT(unsigned int) GetPrimaryModChecksum(int index);
+EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name);
+EXPORT(int         ) GetSideCount();
+EXPORT(const char* ) GetSideName(int side);
+EXPORT(int         ) OpenFileVFS(const char* name);
+EXPORT(void        ) CloseFileVFS(int handle);
+EXPORT(void        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int         ) FileSizeVFS(int handle);
+EXPORT(int         ) InitFindVFS(const char* pattern);
+EXPORT(int         ) FindFilesVFS(int handle, char* nameBuf, int size);
+EXPORT(int         ) OpenArchive(const char* name);
+EXPORT(void        ) CloseArchive(int archive);
+EXPORT(int         ) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
+EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
+EXPORT(int         ) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
+EXPORT(void        ) CloseArchiveFile(int archive, int handle);
+EXPORT(int         ) SizeArchiveFile(int archive, int handle);
+
+// lua custom lobby settings
+EXPORT(int         ) GetMapOptionCount(const char* name);
+EXPORT(int         ) GetModOptionCount();
+
+EXPORT(const char* ) GetOptionKey(int optIndex);
+EXPORT(const char* ) GetOptionName(int optIndex);
+EXPORT(const char* ) GetOptionDesc(int optIndex);
+EXPORT(int         ) GetOptionType(int optIndex);
+
+// Bool Options
+EXPORT(int         ) GetOptionBoolDef(int optIndex);
+
+// Number Options
+EXPORT(float       ) GetOptionNumberDef(int optIndex);
+EXPORT(float       ) GetOptionNumberMin(int optIndex);
+EXPORT(float       ) GetOptionNumberMax(int optIndex);
+EXPORT(float       ) GetOptionNumberStep(int optIndex);
+
+// String Options
+EXPORT(const char* ) GetOptionStringDef(int optIndex);
+EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
+
+// List Options
+EXPORT(int         ) GetOptionListCount(int optIndex);
+EXPORT(const char* ) GetOptionListDef(int optIndex);
+EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
+EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
+EXPORT(const char* ) GetOptionListItemDesc(int optIndex, int itemIndex);
+
+// Spring settings callback
+
+EXPORT(const char* ) GetSpringConfigString( const char* name, const char* defvalue );
+EXPORT(int         ) GetSpringConfigInt( const char* name, const int defvalue );
+EXPORT(float       ) GetSpringConfigFloat( const char* name, const float defvalue );
+EXPORT(void        ) SetSpringConfigString( const char* name, const char* value );
+EXPORT(void        ) SetSpringConfigInt( const char* name, const int value );
+EXPORT(void        ) SetSpringConfigFloat( const char* name, const float value );
+
 
 /* DO NOT EDIT THIS FILE - it is machine generated */
 #include <jni.h>
@@ -73,7 +170,7 @@ extern "C" {
 	*/
 	JNIEXPORT jint JNICALL Java_aflobby_CUnitSyncJNIBindings_Init
 		(JNIEnv *env, jclass myobject, jboolean isServer, jint id){
-			return Init(isServer,id);
+			return 1;
 		}
 
 	/*

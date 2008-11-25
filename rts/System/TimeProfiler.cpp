@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #include "TimeProfiler.h"
 
+#include "Rendering/GL/myGL.h"
 #include <SDL_timer.h>
 #include <cstring>
 
@@ -39,6 +40,8 @@ CTimeProfiler::~CTimeProfiler()
 
 void CTimeProfiler::Update()
 {
+	GML_STDMUTEX_LOCK(time); // Update
+
 	++currentPosition;
 	currentPosition &= 127;
 	std::map<std::string,TimeRecord>::iterator pi;
@@ -61,8 +64,16 @@ void CTimeProfiler::Update()
 	}
 }
 
+float CTimeProfiler::GetPercent(const char *name) {
+	GML_STDMUTEX_LOCK(time); // GetTimePercent
+
+	return profile[name].percent;
+}
+
 void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 {
+	GML_STDMUTEX_LOCK(time); // AddTime
+
 	std::map<std::string, TimeRecord>::iterator pi;
 	if ( (pi = profile.find(name)) != profile.end() )
 	{

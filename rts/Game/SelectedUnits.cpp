@@ -34,7 +34,7 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "EventHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "PlayerHandler.h"
 #include "Camera.h"
 #include "Sound.h"
@@ -65,7 +65,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init()
 {
-	buildIconsFirst = !!configHandler.GetInt("BuildIconsFirst", 0);
+	buildIconsFirst = !!configHandler.Get("BuildIconsFirst", 0);
 }
 
 

@@ -12,7 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "FPUCheck.h"
 #include "GlobalUnsynced.h"

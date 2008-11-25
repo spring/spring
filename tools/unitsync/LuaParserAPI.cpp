@@ -18,6 +18,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "unitsync.h"
+#include "exportdefines.h"
 #include <string>
 #include <vector>
 using std::string;

@@ -16,7 +16,7 @@
 #endif
 
 #include "Sync/SyncTracer.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "InputReceiver.h"
 
 
@@ -34,8 +34,8 @@ CInfoConsole::CInfoConsole():
 	data.clear();
 
 	lastTime=0;
-	lifetime     = configHandler.GetInt("InfoMessageTime", 400);
-	verboseLevel = configHandler.GetInt("VerboseLevel", 0);
+	lifetime     = configHandler.Get("InfoMessageTime", 400);
+	verboseLevel = configHandler.Get("VerboseLevel", 0);
 
 	const std::string geo = configHandler.GetString("InfoConsoleGeometry",
                                                   "0.26 0.96 0.41 0.205");

@@ -16,7 +16,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"

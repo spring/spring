@@ -17,7 +17,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"

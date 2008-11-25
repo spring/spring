@@ -8,7 +8,7 @@
 
 #include "ReadMap.h"
 #include "Rendering/GL/myGL.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -40,7 +40,7 @@ void HeightMapTexture::Init()
 	}
 	init = true;
 
-	if (!configHandler.GetInt("HeightMapTexture", 1)) {
+	if (!configHandler.Get("HeightMapTexture", 1)) {
 		return;
 	}
 

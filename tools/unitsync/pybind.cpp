@@ -15,8 +15,61 @@
 #include "unitsync.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileSystem.h"
+#include "exportdefines.h"
 
 #define NAMEBUF_SIZE 4096
+
+
+
+EXPORT(const char* ) GetSpringVersion();
+EXPORT(void        ) Message(const char* p_szMessage);
+EXPORT(void        ) UnInit();
+EXPORT(int         ) ProcessUnits(void);
+EXPORT(int         ) ProcessUnitsNoChecksum(void);
+EXPORT(const char* ) GetCurrentList();
+EXPORT(void        ) AddClient(int id, const char *unitList);
+EXPORT(void        ) RemoveClient(int id);
+EXPORT(const char* ) GetClientDiff(int id);
+EXPORT(void        ) InstallClientDiff(const char *diff);
+EXPORT(int         ) GetUnitCount();
+EXPORT(const char* ) GetUnitName(int unit);
+EXPORT(const char* ) GetFullUnitName(int unit);
+EXPORT(int         ) IsUnitDisabled(int unit);
+EXPORT(int         ) IsUnitDisabledByClient(int unit, int clientId);
+EXPORT(void        ) AddArchive(const char* name);
+EXPORT(void        ) AddAllArchives(const char* root);
+EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(int         ) GetMapCount();
+EXPORT(const char* ) GetMapName(int index);
+EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(void*       ) GetMinimap(const char* filename, int miplevel);
+EXPORT(int         ) GetMapArchiveCount(const char* mapName);
+EXPORT(const char* ) GetMapArchiveName(int index);
+EXPORT(unsigned int) GetMapChecksum(int index);
+EXPORT(int         ) GetPrimaryModCount();
+EXPORT(const char* ) GetPrimaryModName(int index);
+EXPORT(const char* ) GetPrimaryModArchive(int index);
+EXPORT(int         ) GetPrimaryModArchiveCount(int index);
+EXPORT(const char* ) GetPrimaryModArchiveList(int arnr);
+EXPORT(int         ) GetPrimaryModIndex(const char* name);
+EXPORT(unsigned int) GetPrimaryModChecksum(int index);
+EXPORT(int         ) GetSideCount();
+EXPORT(const char* ) GetSideName(int side);
+EXPORT(int         ) OpenFileVFS(const char* name);
+EXPORT(void        ) CloseFileVFS(int handle);
+EXPORT(void        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int         ) FileSizeVFS(int handle);
+EXPORT(int         ) InitFindVFS(const char* pattern);
+EXPORT(int         ) FindFilesVFS(int handle, char* nameBuf, int size);
+EXPORT(int         ) OpenArchive(const char* name);
+EXPORT(void        ) CloseArchive(int archive);
+EXPORT(int         ) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
+EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
+EXPORT(int         ) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
+EXPORT(void        ) CloseArchiveFile(int archive, int handle);
+EXPORT(int         ) SizeArchiveFile(int archive, int handle);
+
 
 
 static PyObject *unitsync_GetSpringVersion(PyObject *self, PyObject *args)
@@ -41,7 +94,7 @@ static PyObject *unitsync_Init(PyObject *self, PyObject *args)
 	int id;
 	if (!PyArg_ParseTuple(args, "ii", &isServer, &id))
 		return NULL;
-	return Py_BuildValue("i", Init(isServer, id));
+	return Py_BuildValue("i", 1);
 }
 
 static PyObject *unitsync_UnInit(PyObject *self, PyObject *args)
@@ -537,7 +590,7 @@ static PyObject *unitsync_GetDataDirectories(PyObject *self, PyObject *args)
 }
 
 
-// Note to self: sed "s/([^)]*);/ ),/g;s/[ \t]*DLL_EXPORT[^_]\+__stdcall /PY( /g;"
+// Note to self: sed "s/([^)]*);/ ),/g;s/[ \t]*EXPORT\([^\)]\+\) /PY( /g;"
 // TODO   function documentation (last column)
 static PyMethodDef unitsyncMethods[] = {
 #define PY(name)         { # name , unitsync_ ## name , METH_VARARGS , NULL }
@@ -610,7 +663,7 @@ static PyMethodDef unitsyncMethods[] = {
 #undef PY
 };
 
-// PyMODINIT_FUNC already includes the DLL_EXPORT equivalent
+// PyMODINIT_FUNC already includes the SHARED_EXPORT equivalent
 // and the right calling convention for the host platform.
 #ifdef _MSC_VER
 PyMODINIT_FUNC initunitsync(void)

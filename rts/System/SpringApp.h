@@ -98,6 +98,13 @@ protected:
 	 */
 	bool depthBufferBits;
 
+	/**
+	 * @brief last required draw
+	 *
+	 * sim frame after which the last required draw was conducted
+	 */
+	int lastRequiredDraw;
+
 private:
 	static void SigAbrtHandler(int unused);
 };

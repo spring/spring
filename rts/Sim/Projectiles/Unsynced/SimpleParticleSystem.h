@@ -70,7 +70,7 @@ public:
 	void Draw(){};
 	void Update(){};
 
-	virtual void Init(const float3& explosionPos, CUnit *owner);
+	virtual void Init(const float3& explosionPos, CUnit *owner GML_PARG_H);
 
 };
 

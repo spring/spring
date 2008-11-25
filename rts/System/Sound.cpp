@@ -3,7 +3,7 @@
 #include "Sound.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Exceptions.h"
 
 #ifdef _WIN32
@@ -21,7 +21,7 @@ CSound* CSound::GetSoundSystem()
 {
 	CSound* sound = NULL;
 
-	const int maxSounds = configHandler.GetInt("MaxSounds", 16);
+	const int maxSounds = configHandler.Get("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		logOutput.Print("Sound disabled with \"MaxSounds=%i\"", maxSounds);
 		return SAFE_NEW CNullSound;

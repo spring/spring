@@ -196,8 +196,8 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = DLL_EXPORT= \
-                         __stdcall=
+PREDEFINED             = SHARED_EXPORT= \
+                         CALLING_CONV=
 EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

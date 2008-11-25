@@ -34,7 +34,7 @@ static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
 static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId) {
 
 	if (resIndEnergy == -1) {
-		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Energy");
+		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Energy");
 	}
 
 	return resIndEnergy;

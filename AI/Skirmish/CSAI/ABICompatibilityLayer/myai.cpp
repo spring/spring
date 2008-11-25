@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "ExternalAI/aibase.h" // we need this to define DLL_EXPORT
+#include "ExternalAI/aibase.h" // we need this to define SHARED_EXPORT
 
 // ***** dont include any spring includes above this, except aibase.h ******
 #include "AbicAICallback.h"
@@ -127,65 +127,65 @@ private:
 // exported dll symbols, wrap our AI class
 
 // returns pointers to our new AI object
-DLL_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
+SHARED_EXPORT void *InitAI( struct IAICallback *aicallback, int team)
 {
     MyAI *ai = new MyAI();
     ai->InitAI( aicallback, team );
     return ai;
 }
 
-DLL_EXPORT void UnitCreated( void *ai, int unit)									//called when a new unit is created on ai team
+SHARED_EXPORT void UnitCreated( void *ai, int unit)									//called when a new unit is created on ai team
 {
     ( ( MyAI *)ai )->UnitCreated( unit );
 }
 
-DLL_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
+SHARED_EXPORT void UnitFinished(void *ai, int unit)							//called when an unit has finished building
 {
     ( ( MyAI *)ai )->UnitFinished( unit );
 }
 
-DLL_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
+SHARED_EXPORT void UnitDestroyed(void *ai, int unit,int attacker)								//called when a unit is destroyed
 {
 }
 
-DLL_EXPORT void EnemyEnterLOS(void *ai, int enemy)
+SHARED_EXPORT void EnemyEnterLOS(void *ai, int enemy)
 {
 }
 
-DLL_EXPORT void EnemyLeaveLOS(void *ai, int enemy)
+SHARED_EXPORT void EnemyLeaveLOS(void *ai, int enemy)
 {
 }
 
-DLL_EXPORT void EnemyEnterRadar(void *ai, int enemy)		
+SHARED_EXPORT void EnemyEnterRadar(void *ai, int enemy)		
 {
 }
 
-DLL_EXPORT void EnemyLeaveRadar(void *ai, int enemy)
+SHARED_EXPORT void EnemyLeaveRadar(void *ai, int enemy)
 {
 }
 
-DLL_EXPORT void EnemyDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)	//called when an enemy inside los or radar is damaged
+SHARED_EXPORT void EnemyDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)	//called when an enemy inside los or radar is damaged
 {
 }
 
-DLL_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
+SHARED_EXPORT void EnemyDestroyed(void *ai, int enemy,int attacker)							//will be called if an enemy inside los or radar dies (note that leave los etc will not be called then)
 {
 }
 
-DLL_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
+SHARED_EXPORT void UnitIdle(void *ai, int unit)										//called when a unit go idle and is not assigned to any group
 {
     ( ( MyAI *)ai )->UnitIdle( unit );
 }
 
-DLL_EXPORT void GotChatMsg(void *aik, const char* msg,int player)					//called when someone writes a chat msg
+SHARED_EXPORT void GotChatMsg(void *aik, const char* msg,int player)					//called when someone writes a chat msg
 {
 }
 
-DLL_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
+SHARED_EXPORT void UnitDamaged(void *ai, int damaged,int attacker,float damage, float dirx, float diry, float dirz)					//called when one of your units are damaged
 {
 }
 
-DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
+SHARED_EXPORT void UnitMoveFailed(void *ai, int unit)
 {
     ( ( MyAI *)ai )->UnitMoveFailed( unit );
 }
@@ -193,7 +193,7 @@ DLL_EXPORT void UnitMoveFailed(void *ai, int unit)
 //int HandleEvent (int msg,const void *data); // todo
 
 //called every frame
-DLL_EXPORT void Update(void *ai )
+SHARED_EXPORT void Update(void *ai )
 {
 }
     

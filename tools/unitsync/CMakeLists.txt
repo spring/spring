@@ -37,15 +37,8 @@ ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
 
-IF (UNIX)
-	SET(platformfiles
-		../../rts/System/Platform/Linux/DotfileHandler)
-ELSE (UNIX)
-	SET(platformfiles
-		../../rts/System/Platform/Win/RegHandler)
-ENDIF (UNIX)
 list(APPEND platformfiles
-	../../rts/System/Platform/ConfigHandler)
+	../../rts/System/ConfigHandler)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files

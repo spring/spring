@@ -16,7 +16,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
@@ -76,11 +76,11 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandler = SAFE_NEW CTextureHandler;
 	}
 
-	SetUnitDrawDist((float)configHandler.GetInt("UnitLodDist",  200));
-	SetUnitIconDist((float)configHandler.GetInt("UnitIconDist", 200));
+	SetUnitDrawDist((float)configHandler.Get("UnitLodDist",  200));
+	SetUnitIconDist((float)configHandler.Get("UnitIconDist", 200));
 
-	specTexSize = configHandler.GetInt("CubeTexSizeSpecular", 128);
-	reflTexSize = configHandler.GetInt("CubeTexSizeReflection", 128);
+	specTexSize = configHandler.Get("CubeTexSizeSpecular", 128);
+	reflTexSize = configHandler.Get("CubeTexSizeReflection", 128);
 
 	LODScale           = GetLODFloat("LODScale",           1.0f);
 	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
@@ -100,7 +100,7 @@ CUnitDrawer::CUnitDrawer(void)
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
 	float3 specularSunColor = mapInfo->light.specularSunColor;
-	advShading = !!configHandler.GetInt("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
+	advShading = !!configHandler.Get("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
 
 	if (advShading && !GLEW_ARB_fragment_program) {
 		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
@@ -152,8 +152,8 @@ CUnitDrawer::CUnitDrawer(void)
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 	}
 #ifdef USE_GML
-	multiThreadDrawUnit=configHandler.GetInt("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow=configHandler.GetInt("MultiThreadDrawUnitShadow", 1);
+	multiThreadDrawUnit=configHandler.Get("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow=configHandler.Get("MultiThreadDrawUnitShadow", 1);
 #endif
 }
 
@@ -194,8 +194,8 @@ CUnitDrawer::~CUnitDrawer(void)
 		gbi = ghostBuildingsS3O.erase(gbi);
 	}
 #ifdef USE_GML
-	configHandler.SetInt("MultiThreadDrawUnit", multiThreadDrawUnit);
-	configHandler.SetInt("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
+	configHandler.Set("MultiThreadDrawUnit", multiThreadDrawUnit);
+	configHandler.Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
 #endif
 }
 

@@ -10,7 +10,7 @@
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/Textures/ColorMap.h"

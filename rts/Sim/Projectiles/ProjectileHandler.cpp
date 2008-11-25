@@ -13,7 +13,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/IFramebuffer.h"
@@ -66,7 +66,7 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
-	maxParticles = configHandler.GetInt("MaxParticles",4000);
+	maxParticles = configHandler.Get("MaxParticles",4000);
 
 	currentParticles = 0;
 	particleSaturation = 0;

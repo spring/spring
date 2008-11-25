@@ -78,30 +78,30 @@ namespace ntai {
 		LoadFile( filename );
 	}
 
-	void TdfParser::LoadFile(std::string const& filename){
+	bool TdfParser::LoadFile(std::string const& filename){
 		this->filename = filename;
 		int size = G->cb->GetFileSize(filename.c_str());
 		if(size == -1){
 			G->L.print("file " + filename + " not found");
-			return;
+			return false;
 		}
 		char* c = new char[size];
 		G->cb->ReadFile(filename.c_str(),c,size);
 		LoadBuffer(c,(std::size_t)size);
-		return;
+		return true;
 	}
 
-	void TdfParser::LoadVirtualFile(std::string const& filename){
+	bool TdfParser::LoadVirtualFile(std::string const& filename){
 		this->filename = filename;
 		int size = G->cb->GetFileSize(filename.c_str());
 		if(size == -1){
 			G->L.print("file " + filename + " not found");
-			return;
+			return false;
 		}
 		char* c = new char[size];
 		G->cb->ReadFile(filename.c_str(),c,size);
 		LoadBuffer(c,(std::size_t)size);
-		return;
+		return true;
 	}
 
 	TdfParser::TdfParser(Global* G, char const* buf, std::size_t size) {

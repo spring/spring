@@ -168,6 +168,7 @@ extern boost::mutex simmutex;
 extern boost::mutex netmutex;
 extern boost::mutex histmutex;
 extern boost::mutex logmutex;
+extern boost::mutex timemutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;

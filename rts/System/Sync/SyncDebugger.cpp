@@ -9,6 +9,7 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Game/PlayerHandler.h"
 #include "BaseNetProtocol.h"
 #include "NetProtocol.h"
 #include "SyncDebugger.h"
