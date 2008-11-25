@@ -79,13 +79,13 @@ public:
 
 	float GetPathLength(float3 start, float3 end, int pathType);
 
-	int GetEnemyUnits(int* unitIds);
-	int GetEnemyUnitsInRadarAndLos(int* unitIds);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius);
-	int GetFriendlyUnits(int* unitIds);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius);
-	int GetNeutralUnits(int* unitIds);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius);
+	int GetEnemyUnits(int* unitIds, int unitIds_max);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetFriendlyUnits(int* unitIds, int unitIds_max);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
 
 	int GetMapWidth();
@@ -161,7 +161,7 @@ public:
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
-	int GetSelectedUnits(int* unitIds);
+	int GetSelectedUnits(int* unitIds, int unitIds_max);
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker* pm, int maxPoints);
 	int GetMapLines(LineMarker* lm, int maxLines);

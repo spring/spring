@@ -98,7 +98,7 @@ float3 CAICheats::GetUnitPos(int unitid)
 
 }
 
-int CAICheats::GetEnemyUnits(int* units)
+int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	list<CUnit*>::iterator ui;
 	int a = 0;
@@ -108,7 +108,10 @@ int CAICheats::GetEnemyUnits(int* units)
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				units[a++] = u->id;
+				unitIds[a++] = u->id;
+				if (a >= unitIds_max) {
+					break;
+				}
 			}
 		}
 	}
@@ -116,7 +119,7 @@ int CAICheats::GetEnemyUnits(int* units)
 	return a;
 }
 
-int CAICheats::GetEnemyUnits(int* units, const float3& pos, float radius)
+int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	vector<CUnit*>::iterator ui;
@@ -127,8 +130,10 @@ int CAICheats::GetEnemyUnits(int* units, const float3& pos, float radius)
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				units[a] = u->id;
-				++a;
+				unitIds[a++] = u->id;
+				if (a >= unitIds_max) {
+					break;
+				}
 			}
 		}
 	}
@@ -138,7 +143,7 @@ int CAICheats::GetEnemyUnits(int* units, const float3& pos, float radius)
 
 
 
-int CAICheats::GetNeutralUnits(int* units)
+int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	int a = 0;
 
@@ -146,14 +151,17 @@ int CAICheats::GetNeutralUnits(int* units)
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			units[a++] = u->id;
+			unitIds[a++] = u->id;
+			if (a >= unitIds_max) {
+				break;
+			}
 		}
 	}
 
 	return a;
 }
 
-int CAICheats::GetNeutralUnits(int* units, const float3& pos, float radius)
+int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	vector<CUnit*>::iterator ui;
@@ -163,8 +171,10 @@ int CAICheats::GetNeutralUnits(int* units, const float3& pos, float radius)
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			units[a] = u->id;
-			++a;
+			unitIds[a++] = u->id;
+			if (a >= unitIds_max) {
+				break;
+			}
 		}
 	}
 

@@ -20,10 +20,10 @@ public:
 
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
-	int GetEnemyUnits(int* units);
-	int GetEnemyUnits(int* units, const float3& pos, float radius);
-	int GetNeutralUnits(int* units);
-	int GetNeutralUnits(int* units, const float3& pos, float radius);
+	int GetEnemyUnits(int* unitIds, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
 	int GetUnitTeam(int unitId);
 	int GetUnitAllyTeam(int unitId);

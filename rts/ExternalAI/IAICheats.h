@@ -3,6 +3,7 @@
 
 #include "aibase.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "float3.h"
 #include "IAICallback.h"
 struct UnitDef;
@@ -31,12 +32,12 @@ public:
 
 	// the following commands work exactly like those in the standard
 	// callback interface, except that they don't do any LOS checks
-	virtual const UnitDef* GetUnitDef(int unitid) = 0;
-	virtual float3 GetUnitPos(int unitid) = 0;
-	virtual int GetEnemyUnits(int* units) = 0;
-	virtual int GetEnemyUnits(int* units, const float3& pos, float radius) = 0;
-	virtual int GetNeutralUnits(int* units) = 0;
-	virtual int GetNeutralUnits(int* units, const float3& pos, float radius) = 0;
+	virtual const UnitDef* GetUnitDef(int unitId) = 0;
+	virtual float3 GetUnitPos(int unitId) = 0;
+	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
+	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 
 	virtual int GetUnitTeam(int unitid) = 0;
 	virtual int GetUnitAllyTeam(int unitid) = 0;
