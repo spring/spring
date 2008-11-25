@@ -95,13 +95,13 @@ public:
 
 	virtual float GetPathLength(float3 start, float3 end, int pathType);
 
-	virtual int GetEnemyUnits(int* units);										
-	virtual int GetEnemyUnits(int* units, const float3& pos, float radius);		
-	virtual int GetEnemyUnitsInRadarAndLos(int* units);							
-	virtual int GetFriendlyUnits(int* units);									
-	virtual int GetFriendlyUnits(int* units, const float3& pos, float radius);	
-	virtual int GetNeutralUnits(int* units);									
-	virtual int GetNeutralUnits(int* units, const float3& pos, float radius);	
+	virtual int GetEnemyUnits(int* unitIds, int unitIds_max);
+	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	virtual int GetFriendlyUnits(int* unitIds, int unitIds_max);
+	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	virtual int GetNeutralUnits(int* unitIds, int unitIds_max);
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
 	virtual int GetMapWidth();
 	virtual int GetMapHeight();
@@ -153,7 +153,7 @@ public:
 	virtual int GetFileSize(const char* name);								
 	virtual bool ReadFile(const char* name, void* buffer, int bufferLen);	
 
-	virtual int GetSelectedUnits(int* units);
+	virtual int GetSelectedUnits(int* unitIds, int unitIds_max);
 	virtual float3 GetMousePos();
 	virtual int GetMapPoints(PointMarker* pm, int maxPoints);
 	virtual int GetMapLines(LineMarker* lm, int maxLines);

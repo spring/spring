@@ -7,7 +7,8 @@
 #include "float3.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
-struct UnitDef;
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+//struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
 class CCommandQueue;
@@ -215,13 +216,13 @@ public:
 	// * the return value indicates how many units were returned, the rest of the array is unchanged
 	// * all forms of GetEnemyUnits and GetFriendlyUnits filter out any neutrals, use the GetNeutral
 	//   callbacks to retrieve them
-	virtual int GetEnemyUnits(int* unitIds) = 0;										// returns all known (in LOS) enemy units
-	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius) = 0;		// returns all known enemy units within radius from pos
-	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds) = 0;							// returns all enemy units in radar and los
-	virtual int GetFriendlyUnits(int* unitIds) = 0;									// returns all friendly units
-	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius) = 0;	// returns all friendly units within radius from pos
-	virtual int GetNeutralUnits(int* unitIds) = 0;									// returns all known (in LOS) neutral units
-	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius) = 0;	// returns all known neutral units within radius from pos
+	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;										// returns all known (in LOS) enemy units
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;		// returns all known enemy units within radius from pos
+	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS) = 0;							// returns all enemy units in radar and los
+	virtual int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;									// returns all friendly units
+	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;	// returns all friendly units within radius from pos
+	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;									// returns all known (in LOS) neutral units
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;	// returns all known neutral units within radius from pos
 
 	// the following functions are used to get information about the map
 	// * do NOT modify or delete any of the pointers returned
@@ -296,7 +297,7 @@ public:
 	virtual bool ReadFile(const char* filename, void* buffer, int bufferLen) = 0;	// returns false when file doesn't exist or buffer is too small
 
 	// added by alik
-	virtual int GetSelectedUnits(int* unitIds) = 0;
+	virtual int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual float3 GetMousePos() = 0;
 	virtual int GetMapPoints(PointMarker* pm, int maxPoints) = 0;
 	virtual int GetMapLines(LineMarker* lm, int maxLines) = 0;

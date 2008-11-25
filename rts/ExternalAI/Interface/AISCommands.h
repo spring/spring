@@ -52,7 +52,7 @@ enum CommandTopic {
 	COMMAND_PATH_GET_APPROXIMATE_LENGTH           = 17,
 	COMMAND_PATH_GET_NEXT_WAYPOINT                = 18,
 	COMMAND_PATH_FREE                             = 19,
-	COMMAND_CHEATS_GIVE_ME_METAL                  = 20,
+	COMMAND_CHEATS_GIVE_ME_RESOURCE               = 20,
 	COMMAND_CALL_LUA_RULES                        = 21,
 	COMMAND_DRAWER_ADD_NOTIFICATION               = 22,
 	COMMAND_DRAWER_DRAW_UNIT                      = 23,
@@ -111,8 +111,7 @@ enum CommandTopic {
 	COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL            = 76,
 	COMMAND_UNIT_SET_IDLE_MODE                    = 77,
 	COMMAND_UNIT_CUSTOM                           = 78,
-	COMMAND_CHEATS_GIVE_ME_ENERGY                 = 79,
-	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 80,
+	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 79,
 //const int COMMAND_UNIT_ATTACK_POS                     
 //const int COMMAND_UNIT_INSERT                         
 //const int COMMAND_UNIT_REMOVE                         
@@ -121,7 +120,7 @@ enum CommandTopic {
 //const int COMMAND_UNIT_GROUP_SELECT                   
 //const int COMMAND_UNIT_INTERNAL                       
 }; // 
-const unsigned int NUM_CMD_TOPICS                 = 81;
+const unsigned int NUM_CMD_TOPICS                 = 80;
 
 
 enum UnitCommandOptions {
@@ -140,12 +139,10 @@ enum UnitCommandOptions {
 struct SSetMyHandicapCheatCommand {
 	float handicap;
 }; // COMMAND_CHEATS_SET_MY_HANDICAP
-struct SGiveMeMetalCheatCommand {
+struct SGiveMeResourceCheatCommand {
+	int resourceIndex;
 	float amount;
-}; // COMMAND_CHEATS_GIVE_ME_METAL
-struct SGiveMeEnergyCheatCommand {
-	float amount;
-}; // COMMAND_CHEATS_GIVE_ME_ENERGY
+}; // COMMAND_CHEATS_GIVE_ME_RESOURCE
 struct SGiveMeNewUnitCheatCommand {
 	int unitDefId;
 	struct SAIFloat3 pos;

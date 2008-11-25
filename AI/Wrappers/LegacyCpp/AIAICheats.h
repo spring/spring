@@ -41,10 +41,10 @@ public:
 
 	virtual const UnitDef* GetUnitDef(int unitid);
 	virtual float3 GetUnitPos(int unitid);
-	virtual int GetEnemyUnits(int* units);
-	virtual int GetEnemyUnits(int* units, const float3& pos, float radius);
-	virtual int GetNeutralUnits(int* units);
-	virtual int GetNeutralUnits(int* units, const float3& pos, float radius);
+	virtual int GetEnemyUnits(int* unitIds, int unitIds_max);
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	virtual int GetNeutralUnits(int* unitIds, int unitIds_max);
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
 	virtual int GetUnitTeam(int unitid);
 	virtual int GetUnitAllyTeam(int unitid);
