@@ -125,7 +125,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 
 void AutohostInterface::SendPlayerDefeated(uchar playerNum) const
 {
-	uchar msg[2] = {PLAYER_READY, playerNum};
+	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
 	autohost->Send(msg, 2);
 }
 
@@ -153,7 +153,7 @@ std::string AutohostInterface::GetChatMessage() const
 {
 	uchar buffer[4096];
 	unsigned length = autohost->Recv(buffer, 4096);
-	buffer[length] = '\0';
+	buffer[std::min(length, (unsigned)250)] = '\0';
 	
 	std::string msg((char*)buffer);
 	return msg;

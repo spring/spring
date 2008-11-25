@@ -16,7 +16,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/SMF/SmfMapFile.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -25,6 +25,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
+#include "System/exportdefines.h"
 
 // unitsync only:
 #include "LuaParserAPI.h"
@@ -45,7 +46,7 @@ static CSyncer* syncer;
 
 
 #ifdef WIN32
-BOOL __stdcall DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
+BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
 	return TRUE;
 }
@@ -59,6 +60,7 @@ namespace
 		COneTimeInit()
 		{
 			logOutput.SetFilename("unitsync.log");
+			logOutput.Initialize();
 			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 		}
 	};
@@ -218,7 +220,7 @@ EXPORT(const char*) GetNextError()
  */
 EXPORT(const char*) GetSpringVersion()
 {
-	return SpringVersion::Get().c_str();
+	return GetStr(SpringVersion::Get());
 }
 
 
@@ -254,18 +256,19 @@ static void _UnInit()
 		SafeDelete(syncer);
 		logOutput.Print(LOG_UNITSYNC, "deinitialized");
 	}
-
-	ConfigHandler::Deallocate();
 }
 
 
 /**
  * @brief Uninitialize the unitsync library
+ *
+ * also resets the config handler
  */
 EXPORT(void) UnInit()
 {
 	try {
 		_UnInit();
+		ConfigHandler::Deallocate();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -283,12 +286,16 @@ EXPORT(void) UnInit()
  * files which are mapped into it.  In other words, after using AddArchive() or
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
+ *
+ * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
  */
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
 		_UnInit();
 
+		if (!_configHandler)
+			ConfigHandler::Instantiate("");
 		FileSystemHandler::Initialize(false);
 
 		std::vector<string> filesToCheck;
@@ -346,7 +353,7 @@ EXPORT(const char*) GetWritableDataDirectory()
  * Before any units are available, you'll first need to map a mod's archives
  * into the VFS using AddArchive() or AddAllArchives().
  */
-EXPORT(int) ProcessUnits(void)
+EXPORT(int) ProcessUnits()
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: process units\n");
@@ -361,7 +368,7 @@ EXPORT(int) ProcessUnits(void)
  * @brief Identical to ProcessUnits(), neither generates checksum anymore
  * @see ProcessUnits
  */
-EXPORT(int) ProcessUnitsNoChecksum(void)
+EXPORT(int) ProcessUnitsNoChecksum()
 {
 	return ProcessUnits();
 }
@@ -1852,24 +1859,6 @@ EXPORT(int) GetSkirmishAICount() {
 	return 0;
 }
 
-EXPORT(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
-	
-	SSAISpecifier spec = {NULL, NULL};
-	
-	int num = GetSkirmishAIInfoCount(index);
-	
-	for (int i=0; i < num; ++i) {
-		string info_key = string(GetInfoKey(i));
-		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-			spec.shortName = GetInfoValue(i);
-		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
-			spec.version = GetInfoValue(i);
-		}
-	}
-	
-	return spec;
-}
-
 std::vector<InfoItem> ParseInfos(
 		const std::string& fileName,
 		const std::string& fileModes,
@@ -1936,6 +1925,23 @@ EXPORT(const char*) GetInfoDescription(int index) {
 	return NULL;
 }
 
+EXPORT(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
+	
+	SSAISpecifier spec = {NULL, NULL};
+	
+	int num = GetSkirmishAIInfoCount(index);
+	
+	for (int i=0; i < num; ++i) {
+		string info_key = string(GetInfoKey(i));
+		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
+			spec.shortName = GetInfoValue(i);
+		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
+			spec.version = GetInfoValue(i);
+		}
+	}
+	
+	return spec;
+}
 
 EXPORT(int) GetSkirmishAIOptionCount(int index) {
 
@@ -2539,7 +2545,7 @@ EXPORT(void) CloseFileVFS(int handle)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-EXPORT(void) ReadFileVFS(int handle, void* buf, int length)
+EXPORT(int) ReadFileVFS(int handle, void* buf, int length)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2548,9 +2554,10 @@ EXPORT(void) ReadFileVFS(int handle, void* buf, int length)
 
 		logOutput.Print(LOG_UNITSYNC, "readfilevfs: %d\n", handle);
 		CFileHandler* fh = openFiles[handle];
-		fh->Read(buf, length);
+		return fh->Read(buf, length);
 	}
 	UNITSYNC_CATCH_BLOCKS;
+	return -1;
 }
 
 
@@ -2882,6 +2889,23 @@ void PrintLoadMsg(const char* text)
 //////////////////////////
 //////////////////////////
 
+EXPORT(void) SetSpringConfigFile(const char* filenameAsAbsolutePath)
+{
+	ConfigHandler::Instantiate(filenameAsAbsolutePath);
+}
+
+EXPORT(const char*) GetSpringConfigFile()
+{
+	return GetStr(configHandler.GetConfigFile());
+}
+
+static void CheckConfigHandler()
+{
+	if (!_configHandler)
+		throw std::logic_error("Unitsync config handler not initialized, check config source.");
+}
+
+
 /**
  * @brief get string from Spring configuration
  * @param name name of key to get
@@ -2891,6 +2915,7 @@ void PrintLoadMsg(const char* text)
 EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue)
 {
 	try {
+		CheckConfigHandler();
 		string res = configHandler.GetString(name, defValue);
 		return GetStr(res);
 	}
@@ -2907,7 +2932,8 @@ EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue
 EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 {
 	try {
-		return configHandler.GetInt(name, defValue);
+		CheckConfigHandler();
+		return configHandler.Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
@@ -2922,7 +2948,8 @@ EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 {
 	try {
-		return configHandler.GetFloat(name, defValue);
+		CheckConfigHandler();
+		return configHandler.Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
@@ -2936,6 +2963,7 @@ EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 {
 	try {
+		CheckConfigHandler();
 		configHandler.SetString( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2949,7 +2977,8 @@ EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
-		configHandler.SetInt(name, value);
+		CheckConfigHandler();
+		configHandler.Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2962,7 +2991,8 @@ EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
-		configHandler.SetFloat( name, value );
+		CheckConfigHandler();
+		configHandler.Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

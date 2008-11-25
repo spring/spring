@@ -3532,6 +3532,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\ConfigHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\ConfigHandler.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\Demo.cpp"
 				>
 				<FileConfiguration
@@ -4350,14 +4358,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\UnixFileSystemHandler.h"
 					>
 				</File>
 				<File
@@ -5309,14 +5309,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\ConfigHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\ConfigHandler.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\errorhandler.cpp"
 					>
 				</File>
@@ -5449,46 +5441,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\OggStream.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\RegHandler.cpp"
-						>
-						<FileConfiguration
-							Name="No debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Syncdebug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release+MT with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\RegHandler.h"
 						>
 					</File>
 					<File

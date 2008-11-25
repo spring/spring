@@ -15,7 +15,7 @@
 #include "Game/GameSetup.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Net/UDPConnection.h"
 #include "Net/LocalConnection.h"
 #include "Net/UDPSocket.h"
@@ -36,7 +36,7 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
 	sock->SetBlocking(false);
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
-	conn->SetMTU(configHandler.GetInt("MaximumTransmissionUnit", 0));
+	conn->SetMTU(configHandler.Get("MaximumTransmissionUnit", 0));
 	server.reset(conn);
 	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
 	server->Flush(true);

@@ -31,7 +31,7 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Textures/TAPalette.h"

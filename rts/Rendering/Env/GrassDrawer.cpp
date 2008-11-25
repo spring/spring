@@ -13,7 +13,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"
 #include "myMath.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -39,7 +39,7 @@ inline float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	int detail=configHandler.GetInt("GrassDetail",3);
+	int detail=configHandler.Get("GrassDetail",3);
 
 	if(detail==0){
 		grassOff=true;

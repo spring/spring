@@ -13,9 +13,11 @@
 #include <vector>
 #include <string>
 
+#include "DataDirLocater.h"
+
 // winapi redifines this which breaks things
 #if defined(CreateDirectory)
-# undef CreateDirectory
+	#undef CreateDirectory
 #endif
 
 /**
@@ -23,32 +25,35 @@
  */
 class FileSystemHandler
 {
-	public:
+public:
 
-		static FileSystemHandler& GetInstance();
-		static void Initialize(bool verbose);
-		static void Cleanup();
+	static FileSystemHandler& GetInstance();
+	static void Initialize(bool verbose);
+	static void Cleanup();
 
-		virtual ~FileSystemHandler();
-		FileSystemHandler(int native_path_sep = '/');
-		virtual void Initialize() = 0;
+	~FileSystemHandler();
+	FileSystemHandler();
+	void Initialize();
 
-		// almost direct wrappers to system calls
-		virtual bool mkdir(const std::string& dir) const = 0;
+	// almost direct wrappers to system calls
+	bool mkdir(const std::string& dir) const;
 
-		// custom functions
-		virtual std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const = 0;
-		virtual std::string LocateFile(const std::string& file) const = 0;
-		virtual std::string GetWriteDir() const = 0;
-		virtual std::vector<std::string> GetDataDirectories() const = 0;
+	// custom functions
+	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
+	std::string LocateFile(const std::string& file) const;
+	std::string GetWriteDir() const;
+	std::vector<std::string> GetDataDirectories() const;
 
-		int GetNativePathSeparator() const { return native_path_separator; }
+	int GetNativePathSeparator() const { return native_path_separator; }
 
-	protected:
+protected:
+	void InitVFS() const;
+	void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
 
-		static FileSystemHandler* instance;
+	DataDirLocater locater;
+	static FileSystemHandler* instance;
 
-		const int native_path_separator;
+	const int native_path_separator;
 };
 
 /**

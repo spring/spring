@@ -26,7 +26,7 @@
 #include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
 #include "TimeProfiler.h"
@@ -48,7 +48,7 @@ bool CEngineOutHandler::IsCatchExceptions() {
 	static bool isCatchExceptions;
 
 	if (!init) {
-		isCatchExceptions = configHandler.GetInt("CatchAIExceptions", 1) != 0;
+		isCatchExceptions = configHandler.Get("CatchAIExceptions", 1) != 0;
 		init = true;
 	}
 

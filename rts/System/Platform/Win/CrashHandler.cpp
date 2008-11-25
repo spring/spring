@@ -112,11 +112,19 @@ static void Stacktrace(LPEXCEPTION_POINTERS e) {
 }
 
 /** Callback for SymEnumerateModules */
+#if _MSC_VER >= 1500
+static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
+{
+	PRINT("0x%08x\t%s\n", baseOfDll, moduleName);
+	return TRUE;
+}
+#else
 static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 {
 	PRINT("0x%08x\t%s\n", baseOfDll, moduleName);
 	return TRUE;
 }
+#endif
 
 /** Called by windows if an exception happens. */
 static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)

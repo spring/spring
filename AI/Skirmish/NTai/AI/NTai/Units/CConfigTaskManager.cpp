@@ -31,10 +31,7 @@ namespace ntai {
 
 	void CConfigTaskManager::TaskFinished(){
 		//
-		if(HasTasks()){
-			tasks.erase(tasks.begin());
-		}
-		if(!HasTasks()){
+		if(!EraseFirst()){
 			LoadTaskList();
 		}
 	}
@@ -46,16 +43,18 @@ namespace ntai {
 	
 	boost::shared_ptr<IModule> CConfigTaskManager::GetNextTask(){
 		//
-		assert(HasTasks());
-
-		return tasks.front();
+		if(HasTasks()){
+			return tasks.front();
+		} else {
+			return boost::shared_ptr<IModule>();
+		}
 	}
 	
 	void CConfigTaskManager::RemoveAllTasks(){
 		//
-		assert(HasTasks());
-
-		tasks.erase(tasks.begin(),tasks.end());
+		if(HasTasks()){
+			tasks.erase(tasks.begin(),tasks.end());
+		}
 	}
 
 	bool CConfigTaskManager::LoadTaskList(){
@@ -79,7 +78,6 @@ namespace ntai {
 		string us = utd->GetName();
 		if(sl != string("")){
 			CTokenizer<CIsComma>::Tokenize(vl, sl, CIsComma());
-			//vl = bds::set_cont(vl,sl.c_str());
 			if(vl.empty() == false){
 				int randnum = G->mrand()%vl.size();
 				us = vl.at(min(randnum,max(int(vl.size()-1),1)));
@@ -88,7 +86,7 @@ namespace ntai {
 
 		string s = G->Get_mod_tdf()->SGetValueMSG(string("TASKLISTS\\LISTS\\")+us);
 
-		if(s.empty() == true){
+		if(s.empty()){
 			G->L.print(" error loading tasklist for unit :: \"" + us + "\" :: buffer empty, most likely because of an empty list");
 			nolist=true;
 			return false;
@@ -100,7 +98,6 @@ namespace ntai {
 		vector<string> v;
 
 		CTokenizer<CIsComma>::Tokenize(v, s, CIsComma());
-		//v = bds::set_cont(v,s.c_str());
 
 		if(v.empty() == false){
 			G->L.print("loading contents of  tasklist :: " + us + " :: filling tasklist with #" + to_string(v.size()) + " items");
@@ -119,7 +116,7 @@ namespace ntai {
 
 			// TASKS LOADING
 			
-			for(vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
+			for(std::vector<string>::iterator vi = v.begin(); vi != v.end(); ++vi){
 				if(polation){
 					if(polate){
 						boost::shared_ptr<IModule> t(new CKeywordConstructionTask(G,u->GetID(),bt));
@@ -127,7 +124,7 @@ namespace ntai {
 					}
 					polate = !polate;
 				}
-				string q = *vi;
+				std::string q = *vi;
 
 				trim(q);
 				tolowercase(q);
@@ -185,6 +182,14 @@ namespace ntai {
 			G->L.print(" error loading contents of  tasklist :: " + us + " :: buffer empty, most likely because of an empty tasklist");
 			return false;
 		}
+	}
+	
+	bool CConfigTaskManager::EraseFirst(){
+		if(!tasks.empty()){
+			tasks.erase(tasks.begin());
+			return true;
+		}
+		return false;
 	}
 
 }

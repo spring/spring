@@ -33,7 +33,7 @@
 #include "LogOutput.h"
 #include "TimeProfiler.h"
 #include "myMath.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Sync/SyncTracer.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"

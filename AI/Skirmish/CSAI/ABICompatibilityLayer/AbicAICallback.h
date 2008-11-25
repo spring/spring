@@ -1,5 +1,5 @@
 
-// #include "ExternalAI/aibase.h" // for DLL_EXPORT definition
+// #include "ExternalAI/aibase.h" // for SHARED_EXPORT definition
 
 #include "dllbuild.h"
 

@@ -35,9 +35,19 @@ const unsigned SERVER_PLAYER = 255; //server generated message which needs a pla
 class GameParticipant : public PlayerBase
 {
 public:
-	GameParticipant(bool willHaveRights);
+	GameParticipant();
+	
+	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
 
-	bool readyToStart;
+	enum State
+	{
+		UNCONNECTED,
+		CONNECTED,
+		INGAME,
+		DISCONNECTED
+	};
+	State myState;
+	
 	float cpuUsage;
 	int ping;
 
@@ -157,9 +167,12 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	boost::scoped_ptr<GameParticipant> players[MAX_PLAYERS];
+	std::vector<GameParticipant> players;
 	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
 
+	float medianCpu;
+	int medianPing;
+	int enforceSpeed;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;
 	boost::scoped_ptr<const GameData> gameData;

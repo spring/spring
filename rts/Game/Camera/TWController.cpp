@@ -7,7 +7,7 @@
 
 #include "TWController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -19,9 +19,9 @@ extern Uint8 *keys;
 
 CTWController::CTWController()
 {
-	scrollSpeed = configHandler.GetInt("TWScrollSpeed",10) * 0.1f;
-	enabled = !!configHandler.GetInt("TWEnabled",1);
-	fov = configHandler.GetFloat("TWFOV", 45.0f);
+	scrollSpeed = configHandler.Get("TWScrollSpeed",10) * 0.1f;
+	enabled = !!configHandler.Get("TWEnabled",1);
+	fov = configHandler.Get("TWFOV", 45.0f);
 }
 
 

@@ -6,7 +6,16 @@
 #ifndef AIBASE_H
 #define AIBASE_H
 
-#include "exportdefines.h"
+// Shared library support
+#ifdef _WIN32
+	#define SPRING_API
+#elif __GNUC__ >= 4
+	// Support for '-fvisibility=hidden'.
+	#define SPRING_API __attribute__ ((visibility("default")))
+#else
+	// Older versions of gcc have everything visible; no need for fancy stuff.
+	#define SPRING_API
+#endif
 
 // Virtual destructor support (across DLL/SO interface)
 #if defined(_WIN32) || defined(__APPLE__)
@@ -25,6 +34,8 @@
 	#define DECLARE_PURE_VIRTUAL(proto) virtual proto = 0;
 	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #endif
+
+#include "exportdefines.h"
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"

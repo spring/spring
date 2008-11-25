@@ -3,7 +3,7 @@
 
 #include "RotOverheadController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -12,10 +12,10 @@
 CRotOverheadController::CRotOverheadController()
 	: oldHeight(500)
 {
-	mouseScale = configHandler.GetFloat("RotOverheadMouseScale", 0.01f);
-	scrollSpeed = configHandler.GetInt("RotOverheadScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.GetInt("RotOverheadEnabled",1);
-	fov = configHandler.GetFloat("RotOverheadFOV", 45.0f);
+	mouseScale = configHandler.Get("RotOverheadMouseScale", 0.01f);
+	scrollSpeed = configHandler.Get("RotOverheadScrollSpeed",10)*0.1f;
+	enabled=!!configHandler.Get("RotOverheadEnabled",1);
+	fov = configHandler.Get("RotOverheadFOV", 45.0f);
 }
 
 

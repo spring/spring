@@ -2,10 +2,6 @@
 #define UNITSYNC_H
 
 #include <string>
-#include "exportdefines.h"
-#include "ExternalAI/Interface/ELevelOfSupport.h"
-#include "ExternalAI/Interface/SOption.h"
-#include "ExternalAI/Interface/SInfo.h"
 
 #define STRBUF_SIZE 100000
 
@@ -64,17 +60,5 @@ enum BitmapType {
 
 
 const char *GetStr(std::string str);
-
-
-#ifdef WIN32
-	#include <windows.h>
-#else
-	#include <iostream>
-	#define MB_OK 0
-	static inline void MessageBox(void*, const char* msg, const char* capt, unsigned int)
-	{
-		std::cerr << "unitsync: " << capt << ": " << msg << std::endl;
-	}
-#endif	/* WIN32 */
 
 #endif // UNITSYNC_H

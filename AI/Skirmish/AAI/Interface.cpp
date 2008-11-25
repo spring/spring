@@ -16,35 +16,35 @@
 std::set<IGlobalAI*> ais;
 
 
-DLL_EXPORT int GetGlobalAiVersion()
+SHARED_EXPORT int GetGlobalAiVersion()
 {
 	return GLOBAL_AI_INTERFACE_VERSION;
 }
 
-DLL_EXPORT void GetAiName(char* name)
+SHARED_EXPORT void GetAiName(char* name)
 {
 	strcpy(name, AAI_VERSION);
 }
 
-DLL_EXPORT IGlobalAI* GetNewAI()
+SHARED_EXPORT IGlobalAI* GetNewAI()
 {
 	AAI* ai = new AAI();
 	ais.insert(ai);
 	return ai;
 }
 
-DLL_EXPORT void ReleaseAI(IGlobalAI* i)
+SHARED_EXPORT void ReleaseAI(IGlobalAI* i)
 {
 	ais.erase(i);
 	delete (AAI*)i;
 }
 
-DLL_EXPORT int IsCInterface(void) 
+SHARED_EXPORT int IsCInterface(void) 
 {
 	return 0;
 } 
 
-DLL_EXPORT int IsLoadSupported() 
+SHARED_EXPORT int IsLoadSupported() 
 {
 	return 0;
 }

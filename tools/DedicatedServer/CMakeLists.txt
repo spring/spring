@@ -4,21 +4,13 @@ AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
 
-IF (UNIX)
-	SET(platformfiles
-		../../rts/System/Platform/Linux/DotfileHandler)
-ELSE (UNIX)
-	SET(platformfiles
-		../../rts/System/Platform/Win/RegHandler)
-ENDIF (UNIX)
-
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files 
 	${fsfiles}
 	${platformfiles}
 	 ${netfiles}
 	../../rts/System/TdfParser
-	../../rts/System/Platform/ConfigHandler
+	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/BaseNetProtocol
 	../../rts/System/Demo

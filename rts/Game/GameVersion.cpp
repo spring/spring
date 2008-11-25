@@ -6,6 +6,8 @@
 #include "StdAfx.h"
 #include "GameVersion.h"
 
+#include <cstring>
+
 // IMPORTANT NOTE: external systems sed -i this file so DO NOT CHANGE without
 // major thought in advance, and deliberation with bibim and tvo/Tobi!
 
@@ -27,7 +29,8 @@ std::string Get()
 
 std::string GetFull()
 {
-	return Get() + "." + Patchset + " (" + Additional + ")";
+	static const std::string full(Get() + "." + Patchset + ((std::strlen(Additional) >0) ? (std::string(" (") + Additional + ")") : ""));
+	return full;
 }
 
 }

@@ -46,7 +46,7 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
 				"AI Interface Error", MBF_OK | MBF_EXCL);
 	}
 	libFilePath = FindLibFile();
-	
+
 	sharedLib = SharedLib::Instantiate(libFilePath);
 	if (sharedLib == NULL) {
 		const int MAX_MSG_LENGTH = 511;
@@ -56,20 +56,20 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
 				libFilePath.c_str());
 		handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
 	}
-	
+
 	InitializeFromLib(libFilePath);
-	
+
 	InitStatic();
 }
 
 CAIInterfaceLibrary::~CAIInterfaceLibrary() {
-	
+
 	ReleaseStatic();
 	delete sharedLib;
 }
 
 void CAIInterfaceLibrary::InitStatic() {
-	
+
 	if (sAIInterfaceLibrary.initStatic != NULL) {
 		staticGlobalData = createStaticGlobalData();
 		int ret = sAIInterfaceLibrary.initStatic(staticGlobalData);
@@ -88,7 +88,7 @@ void CAIInterfaceLibrary::InitStatic() {
 	}
 }
 void CAIInterfaceLibrary::ReleaseStatic() {
-	
+
 	if (sAIInterfaceLibrary.releaseStatic != NULL) {
 		int ret = sAIInterfaceLibrary.releaseStatic();
 		if (ret != 0) {
@@ -113,7 +113,7 @@ SAIInterfaceSpecifier CAIInterfaceLibrary::GetSpecifier() const {
 
 LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const {
-	
+
 	if (sAIInterfaceLibrary.getLevelOfSupportFor != NULL) {
 		return sAIInterfaceLibrary.getLevelOfSupportFor(engineVersionString.c_str(), engineVersionNumber);
 	} else {
@@ -122,9 +122,9 @@ LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 }
 
 std::map<std::string, InfoItem> CAIInterfaceLibrary::GetInfo() const {
-	
+
 	std::map<std::string, InfoItem> info;
-	
+
 	if (sAIInterfaceLibrary.getInfo != NULL) {
 		InfoItem infs[MAX_INFOS];
 		int num = sAIInterfaceLibrary.getInfo(infs, MAX_INFOS);
@@ -140,19 +140,19 @@ std::map<std::string, InfoItem> CAIInterfaceLibrary::GetInfo() const {
 }
 
 int CAIInterfaceLibrary::GetLoadCount() const {
-	
+
 	int totalSkirmishAILibraryLoadCount = 0;
 	std::map<const SSAISpecifier, int>::const_iterator salc;
 	for (salc=skirmishAILoadCount.begin();  salc != skirmishAILoadCount.end(); salc++) {
 		totalSkirmishAILibraryLoadCount += salc->second;
 	}
-	
+
 	int totalGroupAILibraryLoadCount = 0;
 	std::map<const SGAISpecifier, int>::const_iterator galc;
 	for (galc=groupAILoadCount.begin();  galc != groupAILoadCount.end(); galc++) {
 		totalGroupAILibraryLoadCount += galc->second;
 	}
-	
+
 	return totalSkirmishAILibraryLoadCount + totalGroupAILibraryLoadCount;
 }
 
@@ -160,29 +160,29 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 // Skirmish AI methods
 /*
 std::vector<SSAISpecifier> CAIInterfaceLibrary::GetSkirmishAILibrarySpecifiers() const {
-	
+
 	std::vector<SSAISpecifier> specs;
-	
+
 	int max = 128;
 	SSAISpecifier specifiers[max];
 	int num = sAIInterfaceLibrary.getSkirmishAISpecifiers(specifiers, max);
-    for (int i=0; i < num; ++i) {
-        specs.push_back(specifiers[i]);
-    }
-	
+	for (int i=0; i < num; ++i) {
+		specs.push_back(specifiers[i]);
+	}
+
 	return specs;
 }
 */
 //const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) {
 //const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo) {
 const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo) {
-	
+
 	ISkirmishAILibrary* ai = NULL;
-	
+
 	const unsigned int MAX_INFOS = 128;
 	InfoItem info[MAX_INFOS];
 	unsigned int numInfoItems = aiInfo->GetInfoCReference(info, MAX_INFOS);
-	
+
 	SSAISpecifier sAISpecifier = aiInfo->GetSpecifier();
 	if (skirmishAILoadCount[sAISpecifier] == 0) {
 		//const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(&sAISpecifier);
@@ -193,35 +193,35 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 	} else {
 		ai = loadedSkirmishAILibraries[sAISpecifier];
 	}
-	
+
 	skirmishAILoadCount[sAISpecifier]++;
-	
+
 	return ai;
 }
 int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier) {
-	
+
 	if (skirmishAILoadCount[sAISpecifier] == 0) {
 		return 0;
 	}
-	
+
 	skirmishAILoadCount[sAISpecifier]--;
-	
+
 	if (skirmishAILoadCount[sAISpecifier] == 0) {
 		loadedSkirmishAILibraries.erase(sAISpecifier);
 		sAIInterfaceLibrary.unloadSkirmishAILibrary(&sAISpecifier);
 	}
-	
+
 	return skirmishAILoadCount[sAISpecifier];
 }
 int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const {
 	return skirmishAILoadCount.at(sAISpecifier);
 }
 int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
-	
+
 	int releasedAIs = sAIInterfaceLibrary.unloadAllSkirmishAILibraries();
 	loadedSkirmishAILibraries.clear();
 	skirmishAILoadCount.clear();
-	
+
 	return releasedAIs;
 }
 
@@ -230,16 +230,16 @@ int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 // Group AI methods
 /*
 std::vector<SGAISpecifier> CAIInterfaceLibrary::GetGroupAILibrarySpecifiers() const {
-	
+
 	std::vector<SGAISpecifier> specs;
-	
+
 	int max = 128;
 	SGAISpecifier specifiers[max];
 	int num = sAIInterfaceLibrary.getGroupAISpecifiers(specifiers, max);
 	for (int i=0; i < num; ++i) {
 		specs.push_back(specifiers[i]);
 	}
-	
+
 	return specs;
 }
 */
@@ -247,11 +247,11 @@ std::vector<SGAISpecifier> CAIInterfaceLibrary::GetGroupAILibrarySpecifiers() co
 const IGroupAILibrary* CAIInterfaceLibrary::FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) {
 
 	IGroupAILibrary* ai = NULL;
-	
+
 	const unsigned int MAX_INFOS = 128;
 	InfoItem info[MAX_INFOS];
 	unsigned int num = aiInfo->GetInfoCReference(info, MAX_INFOS);
-	
+
 	SGAISpecifier gAISpecifier = aiInfo->GetSpecifier();
 	if (groupAILoadCount[gAISpecifier] == 0) {
 		const SGAILibrary* gLib = sAIInterfaceLibrary.loadGroupAILibrary(info, num);
@@ -260,42 +260,42 @@ const IGroupAILibrary* CAIInterfaceLibrary::FetchGroupAILibrary(const CGroupAILi
 	} else {
 		ai = loadedGroupAILibraries[gAISpecifier];
 	}
-	
+
 	groupAILoadCount[gAISpecifier]++;
-	
+
 	return ai;
 }
 int CAIInterfaceLibrary::ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier) {
-	
+
 	if (groupAILoadCount[gAISpecifier] == 0) {
 		return 0;
 	}
-	
+
 	groupAILoadCount[gAISpecifier]--;
-	
+
 	if (groupAILoadCount[gAISpecifier] == 0) {
 		loadedGroupAILibraries.erase(gAISpecifier);
 		sAIInterfaceLibrary.unloadGroupAILibrary(&gAISpecifier);
 	}
-	
+
 	return groupAILoadCount[gAISpecifier];
 }
 int CAIInterfaceLibrary::GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const {
 	return groupAILoadCount.at(gAISpecifier);
 }
 int CAIInterfaceLibrary::ReleaseAllGroupAILibraries() {
-	
+
 	int releasedAIs = sAIInterfaceLibrary.unloadAllGroupAILibraries();
 	loadedGroupAILibraries.clear();
 	groupAILoadCount.clear();
-	
+
 	return releasedAIs;
 }
-	
-	
+
+
 
 void CAIInterfaceLibrary::reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName) {
-	
+
 	const int MAX_MSG_LENGTH = 511;
 	char s_msg[MAX_MSG_LENGTH + 1];
 	SNPRINTF(s_msg, MAX_MSG_LENGTH,
@@ -304,19 +304,19 @@ void CAIInterfaceLibrary::reportInterfaceFunctionError(const std::string* libFil
 	handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
 }
 int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
-	
-    // TODO: version checking
-	
+
+	// TODO: version checking
+
 	std::string funcName;
-	
+
 	funcName = "initStatic";
-    sAIInterfaceLibrary.initStatic = (int (CALLING_CONV_FUNC_POINTER *)(const SStaticGlobalData* staticGlobalData)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.initStatic == NULL) {
+	sAIInterfaceLibrary.initStatic = (int (CALLING_CONV_FUNC_POINTER *)(const SStaticGlobalData* staticGlobalData)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.initStatic == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-        //return -1;
-    }
-	
+		//return -1;
+	}
+
 	funcName = "releaseStatic";
 	sAIInterfaceLibrary.releaseStatic = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
 	if (sAIInterfaceLibrary.releaseStatic == NULL) {
@@ -324,7 +324,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
 		//return -1;
 	}
-	
+
 	funcName = "getLevelOfSupportFor";
 	sAIInterfaceLibrary.getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(const char*, int)) sharedLib->FindAddress(funcName.c_str());
 	if (sAIInterfaceLibrary.getLevelOfSupportFor == NULL) {
@@ -332,7 +332,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
 		//return -2;
 	}
-	
+
 	funcName = "getInfo";
 	sAIInterfaceLibrary.getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
 	if (sAIInterfaceLibrary.getInfo == NULL) {
@@ -340,67 +340,67 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
 		//return -1;
 	}
-	
+
 /*
 	funcName = "getSkirmishAISpecifiers";
-    sAIInterfaceLibrary.getSkirmishAISpecifiers = (int (CALLING_CONV_FUNC_POINTER *)(SSAISpecifier*, int max)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.getSkirmishAISpecifiers == NULL) {
+	sAIInterfaceLibrary.getSkirmishAISpecifiers = (int (CALLING_CONV_FUNC_POINTER *)(SSAISpecifier*, int max)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.getSkirmishAISpecifiers == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -3;
-    }
+		return -3;
+	}
 */
-	
+
 	funcName = "loadSkirmishAILibrary";
-    sAIInterfaceLibrary.loadSkirmishAILibrary = (const SSAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.loadSkirmishAILibrary == NULL) {
+	sAIInterfaceLibrary.loadSkirmishAILibrary = (const SSAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.loadSkirmishAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -4;
-    }
-	
+		return -4;
+	}
+
 	funcName = "unloadSkirmishAILibrary";
-    sAIInterfaceLibrary.unloadSkirmishAILibrary = (int (CALLING_CONV_FUNC_POINTER *)(const SSAISpecifier* const)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.unloadSkirmishAILibrary == NULL) {
+	sAIInterfaceLibrary.unloadSkirmishAILibrary = (int (CALLING_CONV_FUNC_POINTER *)(const SSAISpecifier* const)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.unloadSkirmishAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -5;
-    }
-	
+		return -5;
+	}
+
 	funcName = "unloadAllSkirmishAILibraries";
-    sAIInterfaceLibrary.unloadAllSkirmishAILibraries = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.unloadAllSkirmishAILibraries == NULL) {
+	sAIInterfaceLibrary.unloadAllSkirmishAILibraries = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.unloadAllSkirmishAILibraries == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -6;
-    }
-	
+		return -6;
+	}
+
 /*
 	funcName = "getGroupAISpecifiers";
-    sAIInterfaceLibrary.getGroupAISpecifiers = (int (CALLING_CONV_FUNC_POINTER *)(SGAISpecifier*, int max)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.getGroupAISpecifiers == NULL) {
+	sAIInterfaceLibrary.getGroupAISpecifiers = (int (CALLING_CONV_FUNC_POINTER *)(SGAISpecifier*, int max)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.getGroupAISpecifiers == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -7;
-    }
+		return -7;
+	}
 */
-	
+
 	funcName = "loadGroupAILibrary";
-    sAIInterfaceLibrary.loadGroupAILibrary = (const SGAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.loadGroupAILibrary == NULL) {
+	sAIInterfaceLibrary.loadGroupAILibrary = (const SGAILibrary* (CALLING_CONV_FUNC_POINTER *)(const struct InfoItem info[], unsigned int numInfoItems)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.loadGroupAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -8;
-    }
-	
+		return -8;
+	}
+
 	funcName = "unloadGroupAILibrary";
-    sAIInterfaceLibrary.unloadGroupAILibrary = (int (CALLING_CONV_FUNC_POINTER *)(const SGAISpecifier* const)) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.unloadGroupAILibrary == NULL) {
+	sAIInterfaceLibrary.unloadGroupAILibrary = (int (CALLING_CONV_FUNC_POINTER *)(const SGAISpecifier* const)) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.unloadGroupAILibrary == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -9;
-    }
-	
+		return -9;
+	}
+
 	funcName = "unloadAllGroupAILibraries";
-    sAIInterfaceLibrary.unloadAllGroupAILibraries = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
-    if (sAIInterfaceLibrary.unloadAllGroupAILibraries == NULL) {
+	sAIInterfaceLibrary.unloadAllGroupAILibraries = (int (CALLING_CONV_FUNC_POINTER *)()) sharedLib->FindAddress(funcName.c_str());
+	if (sAIInterfaceLibrary.unloadAllGroupAILibraries == NULL) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
-        return -10;
-    }
-	
+		return -10;
+	}
+
 	return 0;
 }
 
@@ -408,22 +408,22 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 //std::string CAIInterfaceLibrary::FindLibFile(
 //		const std::string& fileNameMainPart) {
 std::string CAIInterfaceLibrary::FindLibFile() {
-	
+
 	const std::string& dataDir = info->GetDataDir();
 	const std::string& fileName = info->GetFileName();
-	
+
 	std::string libFileName(fileName); // eg. C-0.1
 	#ifndef _WIN32
 		libFileName = "lib" + libFileName; // eg. libC-0.1
 	#endif
-	
+
 	// eg. libC-0.1.so
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
-	
+
 /*
 	std::vector<std::string> libFile =
 			CFileHandler::FindFiles(dataDir, libFileName);
-	
+
 	return libFile.size() >= 1 ? libFile[0] : "";
 */
 	return dataDir + PS + libFileName;

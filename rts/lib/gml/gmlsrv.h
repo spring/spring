@@ -22,8 +22,10 @@ EXTERN inline void gmlUpdateServers() {
 	gmlProgramObjectARBServer.GenerateItems();
 	gmlShaderServer_VERTEX.GenerateItems();
 	gmlShaderServer_FRAGMENT.GenerateItems();
+	gmlShaderServer_GEOMETRY_EXT.GenerateItems();
 	gmlShaderObjectARBServer_VERTEX.GenerateItems();
 	gmlShaderObjectARBServer_FRAGMENT.GenerateItems();
+	gmlShaderObjectARBServer_GEOMETRY_EXT.GenerateItems();
 	gmlQuadricServer.GenerateItems();
 
 	gmlTextureServer.GenerateItems();

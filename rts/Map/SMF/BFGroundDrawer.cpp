@@ -11,7 +11,7 @@
 #include "SmfReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FastMath.h"
 #include "GlobalUnsynced.h"
 #include "mmgr.h"
@@ -49,7 +49,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 
 	textures = SAFE_NEW CBFGroundTextures(map);
 
-	viewRadius = configHandler.GetInt("GroundDetail", 40);
+	viewRadius = configHandler.Get("GroundDetail", 40);
 	viewRadius += (viewRadius & 1);
 
 	waterDrawn = false;
@@ -70,8 +70,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround=configHandler.GetInt("MultiThreadDrawGround", 1);
-	multiThreadDrawGroundShadow=configHandler.GetInt("MultiThreadDrawGroundShadow", 0);
+	multiThreadDrawGround=configHandler.Get("MultiThreadDrawGround", 1);
+	multiThreadDrawGroundShadow=configHandler.Get("MultiThreadDrawGroundShadow", 0);
 #endif
 }
 
@@ -88,7 +88,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 		}
 	}
 
-	configHandler.SetInt("GroundDetail", viewRadius);
+	configHandler.Set("GroundDetail", viewRadius);
 
 	if (waterPlaneCamInDispList) {
 		glDeleteLists(waterPlaneCamInDispList,1);
@@ -96,8 +96,8 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	}
 
 #ifdef USE_GML
-	configHandler.SetInt("MultiThreadDrawGround", multiThreadDrawGround);
-	configHandler.SetInt("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
+	configHandler.Set("MultiThreadDrawGround", multiThreadDrawGround);
+	configHandler.Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
 #endif
 }
 

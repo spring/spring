@@ -17,7 +17,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "GlobalUnsynced.h"
 #include "Matrix44f.h"
 #include "LogOutput.h"
@@ -73,7 +73,7 @@ CBasicSky::CBasicSky()
 	lastCloudUpdate=-30;
 	dynamicSky=true;
 	CreateClouds();
-	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
+	dynamicSky=!!configHandler.Get("DynamicSky",0);
 
 	InitSun();
 	oldCoverBaseX=-5;

@@ -17,7 +17,7 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "NetProtocol.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"

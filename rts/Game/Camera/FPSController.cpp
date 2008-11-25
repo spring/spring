@@ -3,7 +3,7 @@
 
 #include "FPSController.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -15,9 +15,9 @@ using std::max;
 CFPSController::CFPSController()
 	: oldHeight(300)
 {
-	scrollSpeed = configHandler.GetInt("FPSScrollSpeed", 10) * 0.1f;
-	enabled = !!configHandler.GetInt("FPSEnabled", 1);
-	fov = configHandler.GetFloat("FPSFOV", 45.0f);
+	scrollSpeed = configHandler.Get("FPSScrollSpeed", 10) * 0.1f;
+	enabled = !!configHandler.Get("FPSEnabled", 1);
+	fov = configHandler.Get("FPSFOV", 45.0f);
 }
 
 

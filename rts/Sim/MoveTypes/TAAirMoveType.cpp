@@ -371,7 +371,7 @@ void CTAAirMoveType::UpdateFlying()
 				bool trans = dynamic_cast<CTransportUnit*>(owner);
 				bool noland = dontLand || !autoLand;
 				// should CMD_LOAD_ONTO be here?
-				bool hasLoadCmds = trans
+				bool hasLoadCmds = trans && !owner->commandAI->commandQue.empty()
 						&& (owner->commandAI->commandQue.front().id == CMD_LOAD_ONTO
 							|| owner->commandAI->commandQue.front().id == CMD_LOAD_UNITS);
 				if (noland || (trans && ++waitCounter < 55 && hasLoadCmds)) {

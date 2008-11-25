@@ -154,15 +154,15 @@ static const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 }
 
 static int wrapper_HandleCommand(IAICallback* clb, IAICheats* clbCheat, int cmdId, void* cmdData) {
-	
+
 	int ret;
-	
+
 	if (clbCheat != NULL) {
 		ret = clbCheat->HandleCommand(cmdId, cmdData);
 	} else {
 		ret = clb->HandleCommand(cmdId, cmdData);
 	}
-	
+
 	return ret;
 }
 
@@ -173,9 +173,9 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId, int commandT
 	IAICallback* clb = team_callback[teamId];
 	IAICheats* clbCheat = team_cheatCallback[teamId]; // if this is != NULL, cheating is enabled
 
-		
+
 	switch (commandTopic) {
-			
+
 		case COMMAND_CHEATS_SET_MY_HANDICAP:
 		{
 			SSetMyHandicapCheatCommand* cmd = (SSetMyHandicapCheatCommand*) commandData;
@@ -220,8 +220,8 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId, int commandT
 			}
 			break;
 		}
-	
-	
+
+
 		case COMMAND_SEND_START_POS:
 		{
 			SSendStartPosCommand* cmd = (SSendStartPosCommand*) commandData;
@@ -250,8 +250,8 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId, int commandT
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapLineId, &data);
 			break;
 		}
-		
-		
+
+
 		case COMMAND_SEND_TEXT_MESSAGE:
 		{
 			SSendTextMessageCommand* cmd = (SSendTextMessageCommand*) commandData;
@@ -455,9 +455,9 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId, int commandT
 				ret = -1;
 			}
 		}
-		
+
 	}
-	
+
 	return ret;
 }
 
@@ -475,7 +475,7 @@ EXPORT(bool) _Clb_Cheats_isEnabled(int teamId) {
 
 EXPORT(bool) _Clb_Cheats_setEnabled(int teamId, bool enabled) {
 //	bool isEnabled = _Cheats_isEnabled(teamId);
-//	
+//
 //	if (enabled != isEnabled) {
 //		if (enable) {
 //			team_cheatCallback[teamId] = team_globalCallback[teamId]->GetCheatInterface();
@@ -485,10 +485,10 @@ EXPORT(bool) _Clb_Cheats_setEnabled(int teamId, bool enabled) {
 //	} else {
 //		return true;
 //	}
-//	
+//
 //	isEnabled = _Cheats_isEnabled(teamId);
 //	return enabled != isEnabled;
-	
+
 	team_cheatingEnabled[teamId] = enabled;
 	return enabled == _Clb_Cheats_isEnabled(teamId);
 }
@@ -926,15 +926,15 @@ EXPORT(int) _Clb_0MULTI1VALS0UnitDef(int teamId, int unitDefIds[], int unitDefId
 	return size;
 }
 EXPORT(int) _Clb_0MULTI1FETCH3UnitDefByName0UnitDef(int teamId, const char* unitName) {
-	
+
 	int unitDefId = -1;
-	
+
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* ud = clb->GetUnitDef(unitName);
 	if (ud != NULL) {
 		unitDefId = ud->id;
 	}
-	
+
 	return unitDefId;
 }
 
@@ -1285,19 +1285,19 @@ EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int uni
 	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).params.size();
 }
 EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int unitId, int commandIndex, const char** params, int params_max) {
-	
+
 	const std::vector<std::string> ps
 			= team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).params;
 	int size = ps.size();
 	if (params_max < size) {
 		size = params_max;
 	}
-	
+
 	int p;
 	for (p=0; p < size; p++) {
 		params[p] = ps.at(p).c_str();
 	}
-	
+
 	return size;
 }
 
@@ -1371,7 +1371,7 @@ EXPORT(int) _Clb_Unit_CurrentCommand_0STATIC0getType(int teamId, int unitId) {
 	}
 }
 EXPORT(int) _Clb_Unit_CurrentCommand_getId(int teamId, int unitId, int commandIndex) {
-	
+
 	if (_Clb_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).id;
 	} else {
@@ -1395,7 +1395,7 @@ EXPORT(unsigned int) _Clb_Unit_CurrentCommand_getTag(int teamId, int unitId, int
 	}
 }
 EXPORT(int) _Clb_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandIndex) {
-	
+
 	if (_Clb_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).timeOut;
 	} else {
@@ -1403,7 +1403,7 @@ EXPORT(int) _Clb_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int comm
 	}
 }
 EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandIndex) {
-	
+
 	if (_Clb_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).params.size();
 	} else {
@@ -1478,10 +1478,10 @@ EXPORT(int) _Clb_Unit_0MULTI1SIZE0ResourceInfo(int teamId, int unitId) {
 	return _Clb_0MULTI1SIZE0Resource(teamId);
 }
 EXPORT(float) _Clb_Unit_ResourceInfo_getUse(int teamId, int unitId, int resourceIndex) {
-	
+
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
-	
+
 	bool fetchOk;
 	if (_Clb_Cheats_isEnabled(teamId)) {
 		fetchOk = team_cheatCallback[teamId]->GetUnitResourceInfo(unitId, &resourceInfo);
@@ -1495,14 +1495,14 @@ EXPORT(float) _Clb_Unit_ResourceInfo_getUse(int teamId, int unitId, int resource
 			res = resourceInfo.energyUse;
 		}
 	}
-	
+
 	return res;
 }
 EXPORT(float) _Clb_Unit_ResourceInfo_getMake(int teamId, int unitId, int resourceIndex) {
-	
+
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
-	
+
 	bool fetchOk;
 	if (_Clb_Cheats_isEnabled(teamId)) {
 		fetchOk = team_cheatCallback[teamId]->GetUnitResourceInfo(unitId, &resourceInfo);
@@ -1516,7 +1516,7 @@ EXPORT(float) _Clb_Unit_ResourceInfo_getMake(int teamId, int unitId, int resourc
 			res = resourceInfo.energyMake;
 		}
 	}
-	
+
 	return res;
 }
 EXPORT(bool) _Clb_Unit_isActivated(int teamId, int unitId) {
@@ -1570,7 +1570,7 @@ EXPORT(int) _Clb_Unit_getBuildingFacing(int teamId, int unitId) {
 EXPORT(int) _Clb_Unit_getLastUserOrderFrame(int teamId, int unitId) {
 
 	if (!isControlledByLocalPlayer(teamId)) return -1;
-	
+
 	return uh->units[unitId]->commandAI->lastUserCommand;
 }
 //########### END Unit
@@ -1771,15 +1771,15 @@ EXPORT(SAIFloat3) _Clb_Feature_getPosition(int teamId, int featureId) {
 
 //########### BEGINN WeaponDef
 EXPORT(int) _Clb_0MULTI1FETCH3WeaponDefByName0WeaponDef(int teamId, const char* weaponDefName) {
-	
+
 	int weaponDefId = -1;
-	
+
 	IAICallback* clb = team_callback[teamId];
 	const WeaponDef* wd = clb->GetWeapon(weaponDefName);
 	if (wd != NULL) {
 		weaponDefId = wd->id;
 	}
-	
+
 	return weaponDefId;
 }
 
@@ -1828,11 +1828,11 @@ EXPORT(int) _Clb_WeaponDef_Damage_0ARRAY1VALS0getTypes(int teamId, int weaponDef
 
 	const WeaponDef* weaponDef = getWeaponDefById(teamId, weaponDefId);
 	int types_size = min(weaponDef->damages.GetNumTypes(), types_max);
-	
+
 	for (int i=0; i < types_size; ++i) {
 		types[i] = weaponDef->damages[i];
 	}
-	
+
 	return types_size;
 }
 EXPORT(float) _Clb_WeaponDef_getAreaOfEffect(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->areaOfEffect;}
@@ -1993,19 +1993,19 @@ EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int gr
 	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).params.size();
 }
 EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int groupId, int commandIndex, const char** params, int params_max) {
-	
+
 	const std::vector<std::string> ps
 			= team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).params;
 	int size = ps.size();
 	if (params_max < size) {
 		size = params_max;
 	}
-	
+
 	int p;
 	for (p=0; p < size; p++) {
 		params[p] = ps.at(p).c_str();
 	}
-	
+
 	return size;
 }
 
@@ -2079,9 +2079,8 @@ EXPORT(bool) _Clb_Group_isSelected(int teamId, int groupId) {
 
 
 SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
-	
-	SAICallback* sAICallback = new SAICallback();
 
+	SAICallback* sAICallback = new SAICallback();
 	sAICallback->Clb_handleCommand = _Clb_handleCommand;
 	sAICallback->Clb_Game_getCurrentFrame = _Clb_Game_getCurrentFrame;
 	sAICallback->Clb_Game_getAiInterfaceVersion = _Clb_Game_getAiInterfaceVersion;
@@ -2105,6 +2104,9 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_Cheats_setEventsEnabled = _Clb_Cheats_setEventsEnabled;
 	sAICallback->Clb_Cheats_isOnlyPassive = _Clb_Cheats_isOnlyPassive;
 	sAICallback->Clb_0MULTI1SIZE0Resource = _Clb_0MULTI1SIZE0Resource;
+	sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource = _Clb_0MULTI1FETCH3ResourceByName0Resource;
+	sAICallback->Clb_Resource_getName = _Clb_Resource_getName;
+	sAICallback->Clb_Resource_isGoodToHave = _Clb_Resource_isGoodToHave;
 	sAICallback->Clb_Resource_getCurrent = _Clb_Resource_getCurrent;
 	sAICallback->Clb_Resource_getIncome = _Clb_Resource_getIncome;
 	sAICallback->Clb_Resource_getUsage = _Clb_Resource_getUsage;
@@ -2633,10 +2635,10 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_0MAP1SIZE0getCustomParams = _Clb_WeaponDef_0MAP1SIZE0getCustomParams;
 	sAICallback->Clb_WeaponDef_0MAP1KEYS0getCustomParams = _Clb_WeaponDef_0MAP1KEYS0getCustomParams;
 	sAICallback->Clb_WeaponDef_0MAP1VALS0getCustomParams = _Clb_WeaponDef_0MAP1VALS0getCustomParams;
-	
+
 	team_globalCallback[teamId] = aiGlobalCallback;
 //	team_callback[teamId] = aiCallback;
 	team_callback[teamId] = aiGlobalCallback->GetAICallback();
-	
+
 	return sAICallback;
 }

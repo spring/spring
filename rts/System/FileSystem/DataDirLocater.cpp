@@ -24,7 +24,7 @@
 #include <string.h>
 #include "FileSystem/VFSHandler.h"
 #include "LogOutput.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"

@@ -59,7 +59,7 @@
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "System/Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 using namespace std;
 
@@ -1369,7 +1369,7 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
-	const int value = configHandler.GetInt(name, def);
+	const int value = configHandler.Get(name, def);
 	lua_pushnumber(L, value);
 	return 1;
 }
@@ -1382,7 +1382,7 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
-	configHandler.SetInt(name, value);
+	configHandler.Set(name, value);
 	return 0;
 }
 

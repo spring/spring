@@ -19,7 +19,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "StartScripts/ScriptHandler.h"
 
 using std::string;
@@ -38,7 +38,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->AddPair("IsHost", 1);
 	game->add_name_value("MyPlayerName", playername);
 	
-	game->AddPair("NoHelperAIs", configHandler.GetInt("NoHelperAIs", 0));
+	game->AddPair("NoHelperAIs", configHandler.Get("NoHelperAIs", 0));
 	
 	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
 	player0->add_name_value("Name", playername);

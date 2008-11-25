@@ -1,6 +1,6 @@
 #include "HeightLinePalette.h"
 
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 
 
 /** @brief Generates the height line palette.
@@ -9,7 +9,7 @@ generates a colored palette or a grayscale palette. */
 
 CHeightLinePalette::CHeightLinePalette()
 {
-	if(configHandler.GetInt("ColorElev",1)){
+	if(configHandler.Get("ColorElev",1)){
 		for(int a=0;a<86;++a){
 			heightLinePal[a*3+0]=255-a*3;
 			heightLinePal[a*3+1]=a*3;

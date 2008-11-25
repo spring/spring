@@ -15,7 +15,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
 #include "TimeProfiler.h"
-#include "Platform/ConfigHandler.h"
+#include "ConfigHandler.h"
 #include "Matrix44f.h"
 #include "GlobalUnsynced.h"
 
@@ -70,7 +70,7 @@ CAdvSky::CAdvSky()
 	lastCloudUpdate=-30;
 	dynamicSky=true;
 	CreateClouds();
-	dynamicSky=!!configHandler.GetInt("DynamicSky",0);
+	dynamicSky=!!configHandler.Get("DynamicSky",0);
 
 	InitSun();
 	oldCoverBaseX=-5;

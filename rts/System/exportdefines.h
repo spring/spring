@@ -16,14 +16,11 @@
 */
 
 #ifndef _EXPORTDEFINES_H
-#define	_EXPORTDEFINES_H
+#define _EXPORTDEFINES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-#define SPRING_CALLING_CONVENTION stdcall
-#define SPRING_CALLING_CONVENTION_2 __stdcall
 
 // extern declaration that will work across
 // different platforms and compilers
@@ -47,18 +44,27 @@ extern "C" {
 	#endif // __cplusplus
 #endif // SHARED_EXPORT
 
-#ifndef DLL_EXPORT
-	#define DLL_EXPORT SHARED_EXPORT
-#endif // DLL_EXPORT
-
-
 // calling convention declaration that will work across
-// different platforms and compilers
-//#ifdef __GNUC__
-//	#define __stdcall
-//#else
+// different and compilers
+// for all 64bit platforms, we do not specify a calling convetion,
+// as they all support only a single one anyway
+// for windows 32bit, we use stdcall
+// for non-windows 32bit, we use cdecl
+
+#ifndef SPRING_CALLING_CONVENTION
+	#if defined _WIN32
+		#define SPRING_CALLING_CONVENTION stdcall
+		#define SPRING_CALLING_CONVENTION_2 __stdcall
+	#else // defined _WIN32
+		#define SPRING_CALLING_CONVENTION cdecl
+		#define SPRING_CALLING_CONVENTION_2 __cdecl
+	#endif // defined _WIN32
+#endif // SPRING_CALLING_CONVENTION
+
 #ifndef CALLING_CONV
-	#ifdef _WIN32
+	#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
+		#define CALLING_CONV
+	#elif defined _WIN32
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
 	#elif __GNUC__
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
@@ -69,8 +75,9 @@ extern "C" {
 	#endif // _WIN32
 #endif // CALLING_CONV
 
-//TODO: check if the following is needed; assumption: no, just a left over
-//from when searching intel compile errors
+// Intel Compiler compatibility fix
+// Is used when assigning function pointers, for example in:
+// ExternalAI/AIInterfaceLibrary.cpp
 #ifndef CALLING_CONV_FUNC_POINTER
 	#ifdef __INTEL_COMPILER
 		#define CALLING_CONV_FUNC_POINTER
