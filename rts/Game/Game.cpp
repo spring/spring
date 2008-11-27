@@ -160,7 +160,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 extern Uint8 *keys;
@@ -1367,17 +1367,17 @@ bool CGame::ActionPressed(const Action& action,
 				gd->multiThreadDrawGroundShadow=0;
 			logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
 		}
-#	if GML_ENABLE_SIMLOOP
+#	if GML_ENABLE_SIM
 		if (cmd == "multithread" || cmd == "multithreadsim") {
-			extern volatile int multiThreadSim;
-			extern volatile int startsim;
+			extern volatile int gmlMultiThreadSim;
+			extern volatile int gmlStartSim;
 			if (action.extra.empty()) {
-				multiThreadSim = (cmd == "multithread") ? !mtenabled : !multiThreadSim;
+				gmlMultiThreadSim = (cmd == "multithread") ? !mtenabled : !gmlMultiThreadSim;
 			} else {
-				multiThreadSim = !!atoi(action.extra.c_str());
+				gmlMultiThreadSim = !!atoi(action.extra.c_str());
 			}
-			startsim=1;
-			logOutput.Print("Simulation threading is %s", multiThreadSim?"enabled":"disabled");
+			gmlStartSim=1;
+			logOutput.Print("Simulation threading is %s", gmlMultiThreadSim?"enabled":"disabled");
 		}
 #	endif
 	}
@@ -2665,7 +2665,7 @@ bool CGame::DrawWorld()
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
-	gmlProcessor.Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
+	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
 #else
 bool CGame::DrawMT() {
 #endif
@@ -3083,53 +3083,7 @@ void CGame::StartPlaying()
 }
 
 
-// This will be run by a separate thread in parallel with the Sim
-// ONLY 100% THREAD SAFE UNSYNCED STUFF HERE PLEASE
-void CGame::UnsyncedStuff() {
-	if (!skipping) {
-		infoConsole->Update();
-	}
-}
-
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
-int numNewFrames=0;
-#endif
-
-#if defined(USE_GML) && GML_ENABLE_SIM
 void CGame::SimFrame() {
-#	if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	SimFrameMT();
-#	else
-#		if defined(USE_GML) && GML_ENABLE_SIMDRAW
-	if(gmlThreadCount>1) { // if there is more than one cpu, run draw in parallel with sim
-		int oldgsframe=gs->frameNum;
-		gmlProcessor.AuxWork(&CGame::SimFrameMTcb,this); // start sim thread
-		UnsyncedStuff();
-		if(--numNewFrames==0) {
-			gu->drawFrame++;
-			if (gu->drawFrame == 0)
-				gu->drawFrame++;
-			Draw(); // GML will use one thread less for this draw because sim is running
-		}
-		while(!gmlProcessor.PumpAux()) {
-			// could possibly make more calls to Draw here
-			boost::thread::yield();
-		}
-	}
-	else
-#		endif
-	gmlProcessor.Work(&CGame::SimFrameMTcb,NULL,NULL,this,2,FALSE,NULL,1,2,2,FALSE,&CGame::UnsyncedStuffcb);
-#	endif
-#else
-void CGame::SimFrameMT() {
-#endif
-}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-void CGame::SimFrameMT() {
-#else
-void CGame::SimFrame() {
-#endif
 	ScopedTimer cputimer("CPU load"); // SimFrame
 
 	good_fpu_control_registers("CGame::SimFrame");
@@ -3157,10 +3111,7 @@ void CGame::SimFrame() {
 	ENTER_UNSYNCED;
 
 	if (!skipping) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM || GML_ENABLE_SIMLOOP
-    UnsyncedStuff();
-#endif
-//		infoConsole->Update();
+		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		if(!(gs->frameNum & 7))
@@ -3313,9 +3264,6 @@ void CGame::ClientReadNet()
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
-	numNewFrames=0;
-#endif
 	if(!gameServer){
 		const unsigned int currentFrame = SDL_GetTicks();
 
@@ -3331,10 +3279,6 @@ void CGame::ClientReadNet()
 		int que = 0; // Number of NETMSG_NEWFRAMEs waiting to be processed.
 		unsigned ahead = 0;
 		while ((packet = net->Peek(ahead))) {
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
-			if (packet->data[0] == NETMSG_NEWFRAME)
-				++numNewFrames;
-#endif
 			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
 				++que;
 			++ahead;
@@ -3345,14 +3289,6 @@ void CGame::ClientReadNet()
 	}
 	else
 	{
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW && !GML_ENABLE_SIMLOOP
-		unsigned ahead = 0;
-		while ((packet = net->Peek(ahead))) {
-			if (packet->data[0] == NETMSG_NEWFRAME)
-				++numNewFrames;
-			++ahead;
-		}
-#endif
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
 		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES;

@@ -51,7 +51,7 @@ public:
 
 	void UpdateDrawPos();
 	float3 drawPos;
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
 #endif
 

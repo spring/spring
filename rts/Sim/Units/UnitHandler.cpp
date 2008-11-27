@@ -272,7 +272,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloaked[i]==delUnit)
 			unitDrawer->drawCloaked[i]=NULL;
