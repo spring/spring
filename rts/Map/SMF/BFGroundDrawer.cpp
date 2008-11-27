@@ -18,7 +18,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 using std::min;
@@ -720,7 +720,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 #ifdef USE_GML
 	if(multiThreadDrawGround) {
 		mt_overrideVP=overrideVP;
-		gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
+		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 	}
 	else {
 #endif
@@ -1106,7 +1106,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 #ifdef USE_GML
 	if(multiThreadDrawGroundShadow) {
-		gmlProcessor.Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
+		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
 	}
 	else {
 #endif

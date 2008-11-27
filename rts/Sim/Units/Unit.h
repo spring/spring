@@ -314,7 +314,7 @@ public:
 	bool activated;					//if the unit is in it's 'on'-state
 
 	inline CTransportUnit *GetTransporter() const {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 		return *(CTransportUnit * volatile *)&transporter; // transporter may suddenly be changed to NULL by sim
 #else
 		return transporter;
@@ -323,7 +323,7 @@ public:
 
 	void UpdateDrawPos();
 	float3 drawPos;
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
 	//CUnit3DLoader::UnitModel* model;

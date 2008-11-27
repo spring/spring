@@ -29,7 +29,7 @@ class LuaCallInCheck {
 #ifdef USE_GML // hack to add some degree of thread safety to LUA
 #	include "Rendering/GL/myGL.h"
 #	include "lib/gml/gmlsrv.h"
-#	if GML_ENABLE_SIMDRAW
+#	if GML_ENABLE_SIM
 #		undef LUA_CALL_IN_CHECK
 #		if DEBUG_LUA
 #			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); LuaCallInCheck ciCheck((L), __FUNCTION__);

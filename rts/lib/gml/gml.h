@@ -151,7 +151,7 @@ EXTERN inline GLuint gmlGenLists(GLsizei items) {
 #define GML_VECTOR gmlVector
 #define GML_CLASSVECTOR gmlClassVector
 
-#if GML_ENABLE_SIMDRAW
+#if GML_ENABLE_SIM
 #include <boost/thread/mutex.hpp>
 extern boost::mutex caimutex;
 extern boost::mutex decalmutex;
