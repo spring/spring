@@ -31,6 +31,7 @@ public:
 
 	std::string name;
 	float optimum;
+	bool goodToHave;
 };
 
 #endif // _RESOURCE_H
