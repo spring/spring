@@ -181,6 +181,7 @@ extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex guimutex;
 extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
+extern boost::recursive_mutex soundmutex;
 
 #define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
