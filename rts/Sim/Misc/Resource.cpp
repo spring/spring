@@ -23,7 +23,8 @@ CR_BIND(CResource,);
 
 CR_REG_METADATA(CResource, (
 				CR_MEMBER(name),
-				CR_MEMBER(optimum)
+				CR_MEMBER(optimum),
+				CR_MEMBER(goodToHave)
 				));
 
 //////////////////////////////////////////////////////////////////////
