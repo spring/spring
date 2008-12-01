@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -19,7 +19,7 @@
 #define _INTERFACE_H
 
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "ExternalAI/Interface/SGAILibrary.h"
+//#include "ExternalAI/Interface/SGAILibrary.h"
 
 #include <map>
 #include <vector>
@@ -32,24 +32,26 @@ struct SStaticGlobalData;
 class CInterface {
 public:
 	//CInterface();
-	CInterface(const SStaticGlobalData* staticGlobalData);
-	
+	CInterface(const std::map<std::string, std::string>& infoMap,
+			const SStaticGlobalData* staticGlobalData);
+
 	// static properties
-	unsigned int GetInfo(InfoItem info[], unsigned int maxInfoItems);
+//	unsigned int GetInfo(InfoItem info[], unsigned int maxInfoItems);
 	LevelOfSupport GetLevelOfSupportFor(
 			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
-	const SSAILibrary* LoadSkirmishAILibrary(const struct InfoItem info[],
-			unsigned int numInfoItems);
-	int UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier);
+	const SSAILibrary* LoadSkirmishAILibrary(
+			const std::map<std::string, std::string>& infoMap);
+	int UnloadSkirmishAILibrary(
+			const std::map<std::string, std::string>& infoMap);
 	int UnloadAllSkirmishAILibraries();
 
-	// group AI methods
-	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem info[],
-			unsigned int numInfoItems);
-	int UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier);
-	int UnloadAllGroupAILibraries();
+//	// group AI methods
+//	const SGAILibrary* LoadGroupAILibrary(const struct InfoItem info[],
+//			unsigned int numInfoItems);
+//	int UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier);
+//	int UnloadAllGroupAILibraries();
 
 private:
 	// these functions actually load and unload the libraries
@@ -57,14 +59,14 @@ private:
 	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
 			SSAILibrary* ai);
 
-	SharedLib* Load(const SGAISpecifier* const gAISpecifier, SGAILibrary* ai);
-	SharedLib* LoadGroupAILib(const std::string& libFilePath, SGAILibrary* ai);
+//	SharedLib* Load(const SGAISpecifier* const gAISpecifier, SGAILibrary* ai);
+//	SharedLib* LoadGroupAILib(const std::string& libFilePath, SGAILibrary* ai);
 
 	static void reportInterfaceFunctionError(const std::string& libFileName,
 			const std::string& functionName);
 	static void reportError(const std::string& msg);
 	std::string FindLibFile(const SSAISpecifier& sAISpecifier);
-	std::string FindLibFile(const SGAISpecifier& gAISpecifier);
+//	std::string FindLibFile(const SGAISpecifier& gAISpecifier);
 	/**
 	 * Searches for a file in all data-dirs.
 	 * If not found, the input param relativeFilePath is returned.
@@ -82,13 +84,13 @@ private:
 	static bool FileExists(const std::string& filePath);
 	/**
 	 * Creates the directory if it does not yet exist.
-	 * 
+	 *
 	 * @return	true if the directory was created or already existed
 	 */
 	static bool MakeDir(const std::string& dirPath);
 	/**
 	 * Creates the directory and all parent directories that do not yet exist.
-	 * 
+	 *
 	 * @return	true if the directory was created or already existed
 	 */
 	static bool MakeDirRecursive(const std::string& dirPath);
@@ -100,7 +102,9 @@ private:
 private:
 //	static std::string relSkirmishAIImplsDir;
 //	static std::string relGroupAIImplsDir;
-	
+	const std::map<std::string, std::string> myInfo;
+	const SStaticGlobalData* staticGlobalData;
+
 	std::vector<std::string> springDataDirs;
 	/**
 	 * All accompanying data for this interface that is not version specifc
@@ -115,24 +119,23 @@ private:
 	//const SStaticGlobalData* staticGlobalData;
 	//std::string skirmishAIsLibDir;
 	//std::string groupAIsLibDir;
-	std::vector<InfoItem> myInfo;
+//	std::vector<InfoItem> myInfo;
 
 	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
-	typedef std::map<SSAISpecifier, std::map<std::string, InfoItem>,SSAISpecifier_Comparator> T_skirmishAIInfos;
+	typedef std::map<SSAISpecifier, std::map<std::string, std::string>,SSAISpecifier_Comparator> T_skirmishAIInfos;
 	T_skirmishAIInfos mySkirmishAIInfos;
 	typedef std::map<SSAISpecifier, SSAILibrary*, SSAISpecifier_Comparator> T_skirmishAIs;
 	T_skirmishAIs myLoadedSkirmishAIs;
 	typedef std::map<SSAISpecifier, SharedLib*, SSAISpecifier_Comparator> T_skirmishAILibs;
 	T_skirmishAILibs myLoadedSkirmishAILibs;
 
-	std::vector<SGAISpecifier> myGroupAISpecifiers;
-	typedef std::map<SGAISpecifier, std::map<std::string, InfoItem>, SGAISpecifier_Comparator> T_groupAIInfos;
-	T_groupAIInfos myGroupAIInfos;
-	typedef std::map<SGAISpecifier, SGAILibrary*, SGAISpecifier_Comparator> T_groupAIs;
-	T_groupAIs myLoadedGroupAIs;
-	typedef std::map<SGAISpecifier, SharedLib*, SGAISpecifier_Comparator> T_groupAILibs;
-	T_groupAILibs myLoadedGroupAILibs;
+//	std::vector<SGAISpecifier> myGroupAISpecifiers;
+//	typedef std::map<SGAISpecifier, std::map<std::string, InfoItem>, SGAISpecifier_Comparator> T_groupAIInfos;
+//	T_groupAIInfos myGroupAIInfos;
+//	typedef std::map<SGAISpecifier, SGAILibrary*, SGAISpecifier_Comparator> T_groupAIs;
+//	T_groupAIs myLoadedGroupAIs;
+//	typedef std::map<SGAISpecifier, SharedLib*, SGAISpecifier_Comparator> T_groupAILibs;
+//	T_groupAILibs myLoadedGroupAILibs;
 };
 
-#endif	/* _INTERFACE_H */
-
+#endif	// _INTERFACE_H

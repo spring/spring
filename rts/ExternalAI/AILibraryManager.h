@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -35,30 +35,34 @@ private:
 //	typedef s_cont<CSkirmishAILibraryInfoKey>::vector T_infoKeys;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::vector T_aiInfos;
 //	typedef s_cont<std::string>::vector T_specifiers;
-//	
+//
 //	typedef s_assoc<ISkirmishAILibraryInterfaceInfo, std::string>::map T_fileNames;
 //	typedef s_assoc<ISkirmishAILibraryInterfaceInfo, ISkirmishAILibraryInterface>::map T_loadedInterfaces;
-	
+
 public:
 	CAILibraryManager(); // looks for interface and AIs supported by them (ret != 0: error)
 	~CAILibraryManager(); // unloads all shared libraries that are currently loaded (interfaces and implementations)
-	
-	virtual const T_interfaceSpecs* GetInterfaceSpecifiers() const;
-	virtual const T_skirmishAIKeys* GetSkirmishAIKeys() const;
-	virtual const T_groupAIKeys* GetGroupAIKeys() const;
-	
-	virtual const T_interfaceInfos* GetInterfaceInfos() const;
-	virtual const T_skirmishAIInfos* GetSkirmishAIInfos() const;
-	virtual const T_groupAIInfos* GetGroupAIInfos() const;
-	
-	virtual const T_skirmishAIInfos* GetUsedSkirmishAIInfos();
-	
-	virtual const T_dupInt* GetDuplicateInterfaceInfos() const;
-	virtual const T_dupSkirm* GetDuplicateSkirmishAIInfos() const;
-	virtual const T_dupGroup* GetDuplicateGroupAIInfos() const;
 
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const;
-	virtual std::vector<SSAIKey> ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const;
+	virtual const T_interfaceSpecs& GetInterfaceSpecifiers() const;
+	virtual const T_skirmishAIKeys& GetSkirmishAIKeys() const;
+//	virtual const T_groupAIKeys& GetGroupAIKeys() const;
+
+	virtual const T_interfaceInfos& GetInterfaceInfos() const;
+	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const;
+//	virtual const T_groupAIInfos& GetGroupAIInfos() const;
+
+	virtual unsigned int GetSkirmishAICOptionSize(int teamId) const;
+	virtual const char** GetSkirmishAICOptionKeys(int teamId) const;
+	virtual const char** GetSkirmishAICOptionValues(int teamId) const;
+
+	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos();
+
+	virtual const T_dupInt& GetDuplicateInterfaceInfos() const;
+	virtual const T_dupSkirm& GetDuplicateSkirmishAIInfos() const;
+//	virtual const T_dupGroup& GetDuplicateGroupAIInfos() const;
+
+	virtual std::vector<SSAIKey> FittingSkirmishAIKeys(const SSAISpecifier& skirmishAISpecifier) const;
+//	virtual std::vector<SSAIKey> FittingSkirmishAIKeys(const std::string& skirmishAISpecifier) const;
 	// a Skirmish AI (its library) is only really loaded when it is not yet loaded.
 	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey);
 	// a Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -67,41 +71,45 @@ public:
 	// is handled internally/automatically.
 	virtual void ReleaseSkirmishAILibrary(const SSAIKey& skirmishAIKey);
 	virtual void ReleaseAllSkirmishAILibraries(); // unloads all currently Skirmish loaded AIs
-	
-	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifier) const;
-	// a Group AI (its library) is only really loaded when it is not yet loaded.
-	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAIKey& groupAIKey);
-	// a Group AI is only unloaded when ReleaseSkirmishAILibrary() is called
-	// as many times as GetSkirmishAILibrary() was.
-	// loading and unloading of the interfaces
-	// is handled internally/automatically.
-	virtual void ReleaseGroupAILibrary(const SGAIKey& groupAIKey);
-	virtual void ReleaseAllGroupAILibraries(); // unloads all currently loaded Group AIs
-	
+
+//	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifier) const;
+//	// a Group AI (its library) is only really loaded when it is not yet loaded.
+//	virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAIKey& groupAIKey);
+//	// a Group AI is only unloaded when ReleaseSkirmishAILibrary() is called
+//	// as many times as GetSkirmishAILibrary() was.
+//	// loading and unloading of the interfaces
+//	// is handled internally/automatically.
+//	virtual void ReleaseGroupAILibrary(const SGAIKey& groupAIKey);
+//	virtual void ReleaseAllGroupAILibraries(); // unloads all currently loaded Group AIs
+
 	virtual void ReleaseEverything(); // unloads all currently loaded AIs and interfaces
-	
+
 private:
 	typedef std::map<const SAIInterfaceSpecifier, IAIInterfaceLibrary*, SAIInterfaceSpecifier_Comparator> T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
-	
+
 	T_interfaceSpecs interfaceSpecifiers;
 	T_skirmishAIKeys skirmishAIKeys;
-	T_groupAIKeys groupAIKeys;
+//	T_groupAIKeys groupAIKeys;
 //	std::vector<const SAIInterfaceSpecifier> interfaceLibrarySpecifiers;
 //	std::vector<const SSAIKey> skirmishAILibrarySpecifiers;
 //	std::vector<const SGAIKey> groupAILibrarySpecifiers;
 	//std::map<const SAIInterfaceSpecifier, std::string, SAIInterfaceSpecifier_Comparator> interfaceFileNames; // file name of the AI interface library and (LUA-)info cache file (these two have to be the same [without extension])
-	
+
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
-	T_groupAIInfos groupAIInfos;
-	
+//	T_groupAIInfos groupAIInfos;
+
+	std::map<int, const char**> teamId_skirmishOptionKeys_c;
+	std::map<int, const char**> teamId_skirmishOptionValues_c;
+	std::map<int, unsigned int> teamId_skirmishOptionsSize_c;
+
 	T_skirmishAIInfos usedSkirmishAIInfos;
 	bool usedSkirmishAIInfos_initialized;
-	
+
 	T_dupInt duplicateInterfaceInfos;
 	T_dupSkirm duplicateSkirmishAIInfos;
-	T_dupGroup duplicateGroupAIInfos;
+//	T_dupGroup duplicateGroupAIInfos;
 //	T_interfaceInfos interfaceInfos;
 //	T_infoKeys infoKeys;
 ////	typedef s_cont<ISkirmishAILibraryInfo>::vector T_aiInfos;
@@ -109,16 +117,16 @@ private:
 ////	T_aiInfos aiInfos;
 //	T_specifiers specifiers;
 //	T_fileNames fileNames; // file name of the library and (LUA-)info cache file (without extension)
-//	
+//
 //	T_loadedInterfaces loadedInterfaces;
 ////	std::map<const ISkirmishAILibraryInterfaceInfo, ISkirmishAILibraryInterface*> interfaceInfo_interface; // loaded interfaces
 ////	std::map<const CSkirmishAILibraryInfoKey&, CSkirmishAILibraryKey*> infoKey_key; // loaded AI keys
 ////	std::map<const ISkirmishAILibraryInterfaceInfo&, SAIInterfaceLibrary*> interfaceInfo_interface; // interface shared-lib file and interface
 ////	std::map<const ISkirmishAILibraryInterfaceInfo&, int> interfaceInfo_loadCounter; // interface shared-lib file and how many times it is loaded
-//	
+//
 ////	std::map<const std::string, const SAI*> aiLibFile_ai; // ai shared-lib file and ai
 ////	std::map<const std::string, int> aiLibFile_counter; // ai shared-lib file and how many times it is loaded
-	
+
 private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
@@ -141,7 +149,7 @@ private:
 //	void UnloadInterface(const s_p<const ISkirmishAILibraryInterfaceInfo>& interfaceInfo);
 //	// actually unloads an interface (always unloads it)
 //	static void DeinitializeInterface(const std::string& libFileName);
-//	
+//
 //	std::string GenerateLibFilePath(const s_p<const ISkirmishAILibraryInterfaceInfo>& interfaceInfo);
 ////	static std::string GenerateLibFileName(const ISkirmishAILibraryInterfaceInfo& interfaceInfo);
 ////	static ISkirmishAILibraryInterfaceInfo GenerateInfo(const std::string& libFileName);
@@ -171,7 +179,10 @@ private:
 	 * Clears info about available AIs.
 	 */
 	void ClearAllInfos();
-	
+
+	void CreateCOptions();
+	void DeleteCOptions();
+
 private:
 	// helper functions
 	static void reportError(const char* topic, const char* msg);
@@ -200,4 +211,4 @@ private:
 			const std::string& version2);
 };
 
-#endif	/* _AILIBRARYMANAGER_H */
+#endif // _AILIBRARYMANAGER_H

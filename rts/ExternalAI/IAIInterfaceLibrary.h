@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -28,14 +28,15 @@ class CGroupAILibraryInfo;
 class IAIInterfaceLibrary {
 public:
 	virtual ~IAIInterfaceLibrary() {}
-	
+
 	virtual SAIInterfaceSpecifier GetSpecifier() const = 0;
+
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const = 0;
-	
+
 //    virtual std::string GetProperty(const std::string& propertyName) const = 0;
-    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
-	
+//    virtual std::map<std::string, InfoItem> GetInfo() const = 0;
+
 	/**
 	 * @brief	how many times is this interface loaded
 	 * Thought the AI library may be loaded only once, it can be logically
@@ -44,9 +45,9 @@ public:
 	 * the interface load counter will be three.
 	 */
 	virtual int GetLoadCount() const = 0;
-	
-	
-	
+
+
+
 //	virtual std::vector<ISkirmishAILibraryInfo*> GetSkirmishAILibraryInfo(bool forceLoadFromLibrary = false) const;
 	/**
 	 * Returns the specifiers for all Skirmish AIs available through this interface.
@@ -88,21 +89,20 @@ public:
 	 * Unloads all AI libraries currently loaded through this interface.
 	 */
 	virtual int ReleaseAllSkirmishAILibraries() = 0;
-	
-	
-	
-//	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfo(bool forceLoadFromLibrary = false) const;
-	//virtual std::vector<SGAISpecifier> GetGroupAILibrarySpecifiers() const = 0;
-	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
-	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* info, unsigned int numInfo) = 0;
-	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) = 0;
-	virtual int ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
-	virtual int GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const = 0;
-	bool IsGroupAILibraryLoaded(const SGAISpecifier& gAISpecifier) const {
-		return GetGroupAILibraryLoadCount(gAISpecifier) > 0;
-	}
-	virtual int ReleaseAllGroupAILibraries() = 0;
+
+
+
+////	virtual std::vector<IGroupAILibraryInfo*> GetGroupAILibraryInfo(bool forceLoadFromLibrary = false) const;
+//	//virtual std::vector<SGAISpecifier> GetGroupAILibrarySpecifiers() const = 0;
+//	//virtual const IGroupAILibrary* FetchGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
+//	//virtual const IGroupAILibrary* FetchGroupAILibrary(const InfoItem* info, unsigned int numInfo) = 0;
+//	virtual const IGroupAILibrary* FetchGroupAILibrary(const CGroupAILibraryInfo* aiInfo) = 0;
+//	virtual int ReleaseGroupAILibrary(const SGAISpecifier& gAISpecifier) = 0;
+//	virtual int GetGroupAILibraryLoadCount(const SGAISpecifier& gAISpecifier) const = 0;
+//	bool IsGroupAILibraryLoaded(const SGAISpecifier& gAISpecifier) const {
+//		return GetGroupAILibraryLoadCount(gAISpecifier) > 0;
+//	}
+//	virtual int ReleaseAllGroupAILibraries() = 0;
 };
 
-#endif	/* _IAIINTERFACELIBRARY_H */
-
+#endif // _IAIINTERFACELIBRARY_H

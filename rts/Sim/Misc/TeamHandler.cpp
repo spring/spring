@@ -99,10 +99,10 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 				const char* v = teamStartingData.skirmishAIVersion.empty()
 						? NULL : teamStartingData.skirmishAIVersion.c_str();
 				SSAISpecifier spec = {sn, v};
-				std::vector<SSAIKey> fittingKeys =
+				SSAIKey fittingKey =
 						IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
-				if (fittingKeys.size() > 0) {
-					team->skirmishAISpecifier = fittingKeys[0];
+				if (!SSAIKey_Comparator::IsEmpty(fittingKey)) {
+					team->skirmishAISpecifier = fittingKey;
 					team->skirmishAIOptions = teamStartingData.skirmishAIOptions;
 					team->isAI = true;
 				} else {

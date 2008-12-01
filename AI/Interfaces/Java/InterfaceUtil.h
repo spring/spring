@@ -16,7 +16,7 @@
 */
 
 #ifndef _INTERFACEUTIL_H
-#define	_INTERFACEUTIL_H
+#define _INTERFACEUTIL_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -90,8 +90,16 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		const char* relativeDirPath, char* absoluteDirPath,
 		bool searchOnlyWriteable, bool create);
 
+/**
+ * Return NULL if the key was not found.
+ */
+const char* util_map_getValueByKey(
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		const char* key);
+
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	// _INTERFACEUTIL_H
+#endif // _INTERFACEUTIL_H

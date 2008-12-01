@@ -80,8 +80,7 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SSAIKey& key,
-			const std::map<std::string, std::string>& options);
+	bool CreateSkirmishAI(int teamId, const SSAIKey& key);
 	bool IsSkirmishAI(int teamId) const;
 	void DestroySkirmishAI(int teamId);
 	//const CSkirmishAIWrapper* GetSkirmishAI(int teamId);

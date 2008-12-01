@@ -556,8 +556,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 
 
-bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SSAIKey& key,
-		const std::map<std::string, std::string>& options) {
+bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SSAIKey& key) {
 
 	if ((teamId < 0) || (teamId >= (int)activeTeams)) {
 		return false;
@@ -569,7 +568,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SSAIKey& key,
 			skirmishAIs[teamId] = NULL;
 		}
 
-		skirmishAIs[teamId] = SAFE_NEW CSkirmishAIWrapper(teamId, key, options);
+		skirmishAIs[teamId] = SAFE_NEW CSkirmishAIWrapper(teamId, key);
 		hasSkirmishAIs = true;
 		
 		return true;

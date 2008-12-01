@@ -36,46 +36,6 @@
 
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
 
-EXPORT(unsigned int) getInfo(int teamId,
-		struct InfoItem info[], unsigned int maxInfoItems) {
-
-	unsigned int i = 0;
-
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL};
-		info[i] = ii;
-		i++;
-	}
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_VERSION, MY_VERSION, NULL};
-		info[i] = ii;
-		i++;
-	}
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_NAME, "Reths Skirmish AI", NULL};
-		info[i] = ii;
-		i++;
-	}
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_DESCRIPTION, "This Skirmish AI supports most mods and plays decently.", NULL};
-		info[i] = ii;
-		i++;
-	}
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AI:RAI", NULL};
-		info[i] = ii;
-		i++;
-	}
-	if (i < maxInfoItems) {
-		InfoItem ii = {SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED, "no", NULL};
-		info[i] = ii;
-		i++;
-	}
-
-	// return the number of elements copied to info
-	return i;
-}
-
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
@@ -88,13 +48,11 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 	return LOS_None;
 }
 
-EXPORT(unsigned int) getOptions(int teamId,
-		struct Option options[], unsigned int maxOptions) {
-	return 0;
-}
-
 EXPORT(int) init(int teamId,
-		const struct InfoItem info[], unsigned int numInfoItems) {
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		unsigned int optionsSize,
+		const char** optionsKeys, const char** optionsValues) {
 
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.

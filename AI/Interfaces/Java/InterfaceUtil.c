@@ -353,3 +353,22 @@ bool fitsThisInterface(const char* reqShortName, const char* reqVersion) {
 	return shortNameFits && versionFits;
 }
 */
+
+const char* util_map_getValueByKey(
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		const char* key) {
+
+	const char* value = NULL;
+
+	unsigned int i;
+    for (i = 0; i < infoSize; i++) {
+		if (strcmp(infoKeys[i], key) == 0) {
+			value = infoValues[i];
+			break;
+		}
+    }
+
+	return value;
+}
+

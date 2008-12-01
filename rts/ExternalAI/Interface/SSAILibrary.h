@@ -22,8 +22,8 @@
 extern "C" {
 #endif
 
-#include "SInfo.h"
-#include "SOption.h"
+//#include "SInfo.h"
+//#include "SOption.h"
 #include "ELevelOfSupport.h"
 #include "exportdefines.h"
 
@@ -99,8 +99,8 @@ struct SSAILibrary {
 	 * @param	max	the maximum number of elements to store into param info
 	 * @return	number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfo)(int teamId, struct InfoItem info[],
-			unsigned int maxInfoItems);
+//	unsigned int (CALLING_CONV *getInfo)(int teamId, struct InfoItem info[],
+//			unsigned int maxInfoItems);
 
 	/**
 	 * Returns options that can be set on this AI.
@@ -112,8 +112,8 @@ struct SSAILibrary {
 	 * @param	max	the maximum number of elements to store into param options
 	 * @return	number of elements stored into parameter options
 	 */
-	unsigned int (CALLING_CONV *getOptions)(int teamId, struct Option options[],
-			unsigned int maxOptions);
+//	unsigned int (CALLING_CONV *getOptions)(int teamId, struct Option options[],
+//			unsigned int maxOptions);
 
 
 	// team instance functions
@@ -142,13 +142,19 @@ struct SSAILibrary {
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
-	 * @param	teamId	the teamId this library shall create an instance for
-	 * @param	info	info about this AI (a technical nessecity for non C/C++ AIs)
-	 * @param	numInfoItems	now many items are stored in info
+	 * @param	teamId        the teamId this library shall create an instance for
+	 * @param	info          info about this AI (nessesary for non C/C++ AIs)
+	 * @param	numInfoItems  now many items are stored in info
+	 * @param	optionKeys    user specified option values (keys)
+	 * @param	optionValues  user specified option values (values)
+	 * @param	numOptions    user specified option values (size)
 	 * @return	ok: 0, error: != 0
 	 */
-	int (CALLING_CONV *init)(int teamId, const struct InfoItem info[],
-			unsigned int numInfoItems);
+	int (CALLING_CONV *init)(int teamId,
+			unsigned int infoSize,
+			const char** infoKeys, const char** infoValues,
+			unsigned int optionsSize,
+			const char** optionsKeys, const char** optionsValues);
 
 	/**
 	 * This function is called, when an AI instance shall be deleted.

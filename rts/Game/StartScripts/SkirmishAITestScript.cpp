@@ -42,7 +42,7 @@ CSkirmishAITestScript::~CSkirmishAITestScript(void) {}
 
 void CSkirmishAITestScript::GameStart(void)
 {
-	eoh->CreateSkirmishAI(1, key, options);
+	eoh->CreateSkirmishAI(1, key);
 
 	teamHandler->Team(0)->energy        = 1000;
 	teamHandler->Team(0)->energyStorage = 1000;

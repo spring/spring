@@ -803,13 +803,13 @@ bool CAIAICallback::IsUnitNeutral(int unitId) {
 
 bool CAIAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) {
 
-	int m = getResourceIndex_Metal(sAICallback, teamId);
-	int e = getResourceIndex_Energy(sAICallback, teamId);
-	resourceInfo->energyMake = sAICallback->Clb_Unit_ResourceInfo_getMake(teamId, unitId, e);
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	static int e = getResourceIndex_Energy(sAICallback, teamId);
+	resourceInfo->energyMake = sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceMake(teamId, unitId, e);
 	if (resourceInfo->energyMake < 0) { return false; }
-	resourceInfo->energyUse = sAICallback->Clb_Unit_ResourceInfo_getUse(teamId, unitId, e);
-	resourceInfo->metalMake = sAICallback->Clb_Unit_ResourceInfo_getMake(teamId, unitId, m);
-	resourceInfo->metalUse = sAICallback->Clb_Unit_ResourceInfo_getUse(teamId, unitId, m);
+	resourceInfo->energyUse = sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceUse(teamId, unitId, e);
+	resourceInfo->metalMake = sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceMake(teamId, unitId, m);
+	resourceInfo->metalUse = sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceUse(teamId, unitId, m);
 	return true;
 }
 
@@ -821,6 +821,8 @@ const UnitDef* CAIAICallback::GetUnitDef(const char* unitName) {
 
 const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 	//logT("entering: GetUnitDefById sAICallback");
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	static int e = getResourceIndex_Energy(sAICallback, teamId);
 
 	if (unitDefId < 0) {
 		return NULL;
@@ -834,26 +836,26 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 unitDef->valid = sAICallback->Clb_UnitDef_isValid(teamId, unitDefId);
 unitDef->name = sAICallback->Clb_UnitDef_getName(teamId, unitDefId);
 unitDef->humanName = sAICallback->Clb_UnitDef_getHumanName(teamId, unitDefId);
-unitDef->filename = sAICallback->Clb_UnitDef_getFilename(teamId, unitDefId);
+unitDef->filename = sAICallback->Clb_UnitDef_getFileName(teamId, unitDefId);
 unitDef->id = unitDefId;
 unitDef->aihint = sAICallback->Clb_UnitDef_getAiHint(teamId, unitDefId);
 unitDef->cobID = sAICallback->Clb_UnitDef_getCobId(teamId, unitDefId);
 unitDef->techLevel = sAICallback->Clb_UnitDef_getTechLevel(teamId, unitDefId);
 unitDef->gaia = sAICallback->Clb_UnitDef_getGaia(teamId, unitDefId);
-unitDef->metalUpkeep = sAICallback->Clb_UnitDef_getMetalUpkeep(teamId, unitDefId);
-unitDef->energyUpkeep = sAICallback->Clb_UnitDef_getEnergyUpkeep(teamId, unitDefId);
-unitDef->metalMake = sAICallback->Clb_UnitDef_getMetalMake(teamId, unitDefId);
-unitDef->makesMetal = sAICallback->Clb_UnitDef_getMakesMetal(teamId, unitDefId);
-unitDef->energyMake = sAICallback->Clb_UnitDef_getEnergyMake(teamId, unitDefId);
-unitDef->metalCost = sAICallback->Clb_UnitDef_getMetalCost(teamId, unitDefId);
-unitDef->energyCost = sAICallback->Clb_UnitDef_getEnergyCost(teamId, unitDefId);
+unitDef->metalUpkeep = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getUpkeep(teamId, unitDefId, m);
+unitDef->energyUpkeep = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getUpkeep(teamId, unitDefId, e);
+unitDef->metalMake = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getResourceMake(teamId, unitDefId, m);
+unitDef->makesMetal = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getMakesResource(teamId, unitDefId, m);
+unitDef->energyMake = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getResourceMake(teamId, unitDefId, e);
+unitDef->metalCost = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getCost(teamId, unitDefId, m);
+unitDef->energyCost = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getCost(teamId, unitDefId, e);
 unitDef->buildTime = sAICallback->Clb_UnitDef_getBuildTime(teamId, unitDefId);
-unitDef->extractsMetal = sAICallback->Clb_UnitDef_getExtractsMetal(teamId, unitDefId);
-unitDef->extractRange = sAICallback->Clb_UnitDef_getExtractRange(teamId, unitDefId);
-unitDef->windGenerator = sAICallback->Clb_UnitDef_getWindGenerator(teamId, unitDefId);
-unitDef->tidalGenerator = sAICallback->Clb_UnitDef_getTidalGenerator(teamId, unitDefId);
-unitDef->metalStorage = sAICallback->Clb_UnitDef_getMetalStorage(teamId, unitDefId);
-unitDef->energyStorage = sAICallback->Clb_UnitDef_getEnergyStorage(teamId, unitDefId);
+unitDef->extractsMetal = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getExtractsResource(teamId, unitDefId, m);
+unitDef->extractRange = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getResourceExtractorRange(teamId, unitDefId, m);
+unitDef->windGenerator = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getWindResourceGenerator(teamId, unitDefId, e);
+unitDef->tidalGenerator = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getTidalResourceGenerator(teamId, unitDefId, e);
+unitDef->metalStorage = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getStorage(teamId, unitDefId, m);
+unitDef->energyStorage = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getStorage(teamId, unitDefId, e);
 unitDef->autoHeal = sAICallback->Clb_UnitDef_getAutoHeal(teamId, unitDefId);
 unitDef->idleAutoHeal = sAICallback->Clb_UnitDef_getIdleAutoHeal(teamId, unitDefId);
 unitDef->idleTime = sAICallback->Clb_UnitDef_getIdleTime(teamId, unitDefId);
@@ -899,11 +901,11 @@ unitDef->waterline = sAICallback->Clb_UnitDef_getWaterline(teamId, unitDefId);
 unitDef->maxWaterDepth = sAICallback->Clb_UnitDef_getMaxWaterDepth(teamId, unitDefId);
 unitDef->armoredMultiple = sAICallback->Clb_UnitDef_getArmoredMultiple(teamId, unitDefId);
 unitDef->armorType = sAICallback->Clb_UnitDef_getArmorType(teamId, unitDefId);
-unitDef->flankingBonusMode = sAICallback->Clb_UnitDef_getFlankingBonusMode(teamId, unitDefId);
-unitDef->flankingBonusDir = float3(sAICallback->Clb_UnitDef_getFlankingBonusDir(teamId, unitDefId));
-unitDef->flankingBonusMax = sAICallback->Clb_UnitDef_getFlankingBonusMax(teamId, unitDefId);
-unitDef->flankingBonusMin = sAICallback->Clb_UnitDef_getFlankingBonusMin(teamId, unitDefId);
-unitDef->flankingBonusMobilityAdd = sAICallback->Clb_UnitDef_getFlankingBonusMobilityAdd(teamId, unitDefId);
+unitDef->flankingBonusMode = sAICallback->Clb_UnitDef_FlankingBonus_getMode(teamId, unitDefId);
+unitDef->flankingBonusDir = float3(sAICallback->Clb_UnitDef_FlankingBonus_getDir(teamId, unitDefId));
+unitDef->flankingBonusMax = sAICallback->Clb_UnitDef_FlankingBonus_getMax(teamId, unitDefId);
+unitDef->flankingBonusMin = sAICallback->Clb_UnitDef_FlankingBonus_getMin(teamId, unitDefId);
+unitDef->flankingBonusMobilityAdd = sAICallback->Clb_UnitDef_FlankingBonus_getMobilityAdd(teamId, unitDefId);
 unitDef->collisionVolumeType = sAICallback->Clb_UnitDef_CollisionVolume_getType(teamId, unitDefId);
 unitDef->collisionVolumeScales = float3(sAICallback->Clb_UnitDef_CollisionVolume_getScales(teamId, unitDefId));
 unitDef->collisionVolumeOffsets = float3(sAICallback->Clb_UnitDef_CollisionVolume_getOffsets(teamId, unitDefId));
@@ -1019,7 +1021,7 @@ unitDef->flareTime = sAICallback->Clb_UnitDef_getFlareTime(teamId, unitDefId);
 unitDef->flareSalvoSize = sAICallback->Clb_UnitDef_getFlareSalvoSize(teamId, unitDefId);
 unitDef->flareSalvoDelay = sAICallback->Clb_UnitDef_getFlareSalvoDelay(teamId, unitDefId);
 unitDef->smoothAnim = sAICallback->Clb_UnitDef_isSmoothAnim(teamId, unitDefId);
-unitDef->isMetalMaker = sAICallback->Clb_UnitDef_isMetalMaker(teamId, unitDefId);
+unitDef->isMetalMaker = sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0isResourceMaker(teamId, unitDefId, m);
 unitDef->canLoopbackAttack = sAICallback->Clb_UnitDef_isCanLoopbackAttack(teamId, unitDefId);
 unitDef->levelGround = sAICallback->Clb_UnitDef_isLevelGround(teamId, unitDefId);
 unitDef->useBuildingGroundDecal = sAICallback->Clb_UnitDef_isUseBuildingGroundDecal(teamId, unitDefId);
@@ -1033,8 +1035,8 @@ unitDef->refuelTime = sAICallback->Clb_UnitDef_getRefuelTime(teamId, unitDefId);
 unitDef->minAirBasePower = sAICallback->Clb_UnitDef_getMinAirBasePower(teamId, unitDefId);
 unitDef->maxThisUnit = sAICallback->Clb_UnitDef_getMaxThisUnit(teamId, unitDefId);
 //unitDef->decoyDef = sAICallback->Clb_UnitDef_getDecoyDefId(teamId, unitDefId);
-unitDef->shieldWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_getShieldWeaponDefId(teamId, unitDefId));
-unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_getStockpileWeaponDefId(teamId, unitDefId));
+unitDef->shieldWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef(teamId, unitDefId));
+unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef(teamId, unitDefId));
 {
 	int numBo = sAICallback->Clb_UnitDef_0ARRAY1SIZE0getBuildOptions(teamId, unitDefId);
 	int* bo = new int[numBo];
@@ -1078,7 +1080,7 @@ int numWeapons = sAICallback->Clb_UnitDef_0MULTI1SIZE0WeaponMount(teamId, unitDe
 for (int w=0; w < numWeapons; ++w) {
 	unitDef->weapons.push_back(UnitDef::UnitDefWeapon());
 	unitDef->weapons[w].name = sAICallback->Clb_UnitDef_WeaponMount_getName(teamId, unitDefId, w);
-	int weaponDefId = sAICallback->Clb_UnitDef_WeaponMount_getWeaponDefId(teamId, unitDefId, w);
+	int weaponDefId = sAICallback->Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef(teamId, unitDefId, w);
 	unitDef->weapons[w].def = this->GetWeaponDefById(weaponDefId);
 	unitDef->weapons[w].slavedTo = sAICallback->Clb_UnitDef_WeaponMount_getSlavedTo(teamId, unitDefId, w);
 	unitDef->weapons[w].mainDir = float3(sAICallback->Clb_UnitDef_WeaponMount_getMainDir(teamId, unitDefId, w));
@@ -1134,7 +1136,16 @@ int CAIAICallback::GetMapHeight() {
 }
 
 const float* CAIAICallback::GetHeightMap() {
-	return sAICallback->Clb_Map_getHeightMap(teamId);
+
+	static float* heightMap = NULL;
+
+	if (heightMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getHeightMap(teamId);
+		heightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getHeightMap(teamId, heightMap, size);
+	}
+
+	return heightMap;
 }
 
 float CAIAICallback::GetMinHeight() {
@@ -1146,23 +1157,69 @@ float CAIAICallback::GetMaxHeight() {
 }
 
 const float* CAIAICallback::GetSlopeMap() {
-	return sAICallback->Clb_Map_getSlopeMap(teamId);
+
+	static float* slopeMap = NULL;
+
+	if (slopeMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getSlopeMap(teamId);
+		slopeMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getSlopeMap(teamId, slopeMap, size);
+	}
+
+	return slopeMap;
 }
 
 const unsigned short* CAIAICallback::GetLosMap() {
-	return sAICallback->Clb_Map_getLosMap(teamId);
+
+	static unsigned short* losMap = NULL;
+
+	if (losMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getLosMap(teamId);
+		losMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getLosMap(teamId, losMap, size);
+	}
+
+	return losMap;
 }
 
 const unsigned short* CAIAICallback::GetRadarMap() {
-	return sAICallback->Clb_Map_getRadarMap(teamId);
+
+	static unsigned short* radarMap = NULL;
+
+	if (radarMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getRadarMap(teamId);
+		radarMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getRadarMap(teamId, radarMap, size);
+	}
+
+	return radarMap;
 }
 
 const unsigned short* CAIAICallback::GetJammerMap() {
-	return sAICallback->Clb_Map_getJammerMap(teamId);
+
+	static unsigned short* jammerMap = NULL;
+
+	if (jammerMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getJammerMap(teamId);
+		jammerMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getJammerMap(teamId, jammerMap, size);
+	}
+
+	return jammerMap;
 }
 
 const unsigned char* CAIAICallback::GetMetalMap() {
-	return sAICallback->Clb_Map_getMetalMap(teamId);
+
+	static unsigned char* metalMap = NULL;
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+
+	if (metalMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceIndex0getResourceMap(teamId, m);
+		metalMap = new unsigned char[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceIndex0getResourceMap(teamId, m, metalMap, size);
+	}
+
+	return metalMap;
 }
 
 const char* CAIAICallback::GetMapName() {
@@ -1178,11 +1235,13 @@ float CAIAICallback::GetElevation(float x, float z) {
 }
 
 float CAIAICallback::GetMaxMetal() {
-	return sAICallback->Clb_Map_getMaxMetal(teamId);
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Map_0REF1Resource2resourceIndex0getMaxResource(teamId, m);
 }
 
 float CAIAICallback::GetExtractorRadius() {
-	return sAICallback->Clb_Map_getExtractorRadius(teamId);
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Map_0REF1Resource2resourceIndex0getExtractorRadius(teamId, m);
 }
 
 float CAIAICallback::GetMinWind() {
@@ -1354,42 +1413,42 @@ int CAIAICallback::GetMapLines(LineMarker* lm, int maxLines) {
 
 float CAIAICallback::GetMetal() {
 	int m = getResourceIndex_Metal(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getCurrent(teamId, m);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getCurrent(teamId, m);
 }
 
 float CAIAICallback::GetMetalIncome() {
 	int m = getResourceIndex_Metal(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getIncome(teamId, m);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getIncome(teamId, m);
 }
 
 float CAIAICallback::GetMetalUsage() {
 	int m = getResourceIndex_Metal(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getUsage(teamId, m);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getUsage(teamId, m);
 }
 
 float CAIAICallback::GetMetalStorage() {
 	int m = getResourceIndex_Metal(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getStorage(teamId, m);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getStorage(teamId, m);
 }
 
 float CAIAICallback::GetEnergy() {
 	int e = getResourceIndex_Energy(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getCurrent(teamId, e);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getCurrent(teamId, e);
 }
 
 float CAIAICallback::GetEnergyIncome() {
 	int e = getResourceIndex_Energy(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getIncome(teamId, e);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getIncome(teamId, e);
 }
 
 float CAIAICallback::GetEnergyUsage() {
 	int e = getResourceIndex_Energy(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getUsage(teamId, e);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getUsage(teamId, e);
 }
 
 float CAIAICallback::GetEnergyStorage() {
 	int e = getResourceIndex_Energy(sAICallback, teamId);
-	return sAICallback->Clb_Resource_getStorage(teamId, e);
+	return sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getStorage(teamId, e);
 }
 
 int CAIAICallback::GetFeatures(int* featureIds, int featureIds_max) {
@@ -1407,6 +1466,9 @@ const FeatureDef* CAIAICallback::GetFeatureDef(int featureId) {
 
 const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
 
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	static int e = getResourceIndex_Energy(sAICallback, teamId);
+
 	if (featureDefId < 0) {
 		return NULL;
 	}
@@ -1420,8 +1482,8 @@ featureDef->myName = sAICallback->Clb_FeatureDef_getName(teamId, featureDefId);
 featureDef->description = sAICallback->Clb_FeatureDef_getDescription(teamId, featureDefId);
 featureDef->filename = sAICallback->Clb_FeatureDef_getFileName(teamId, featureDefId);
 featureDef->id = sAICallback->Clb_FeatureDef_getId(teamId, featureDefId);
-featureDef->metal = sAICallback->Clb_FeatureDef_getMetal(teamId, featureDefId);
-featureDef->energy = sAICallback->Clb_FeatureDef_getEnergy(teamId, featureDefId);
+featureDef->metal = sAICallback->Clb_FeatureDef_0REF1Resource2resourceIndex0getContainedResource(teamId, featureDefId, m);
+featureDef->energy = sAICallback->Clb_FeatureDef_0REF1Resource2resourceIndex0getContainedResource(teamId, featureDefId, e);
 featureDef->maxHealth = sAICallback->Clb_FeatureDef_getMaxHealth(teamId, featureDefId);
 featureDef->reclaimTime = sAICallback->Clb_FeatureDef_getReclaimTime(teamId, featureDefId);
 featureDef->mass = sAICallback->Clb_FeatureDef_getMass(teamId, featureDefId);
@@ -1508,6 +1570,9 @@ const WeaponDef* CAIAICallback::GetWeapon(const char* weaponName) {
 
 const WeaponDef* CAIAICallback::GetWeaponDefById(int weaponDefId) {
 
+	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	static int e = getResourceIndex_Energy(sAICallback, teamId);
+
 //	logT("entering: GetWeaponDefById sAICallback");
 	if (weaponDefId < 0) {
 		return NULL;
@@ -1553,7 +1618,7 @@ da.craterBoost = sAICallback->Clb_WeaponDef_Damage_getCraterBoost(teamId, weapon
 weaponDef->name = sAICallback->Clb_WeaponDef_getName(teamId, weaponDefId);
 weaponDef->type = sAICallback->Clb_WeaponDef_getType(teamId, weaponDefId);
 weaponDef->description = sAICallback->Clb_WeaponDef_getDescription(teamId, weaponDefId);
-weaponDef->filename = sAICallback->Clb_WeaponDef_getFilename(teamId, weaponDefId);
+weaponDef->filename = sAICallback->Clb_WeaponDef_getFileName(teamId, weaponDefId);
 weaponDef->cegTag = sAICallback->Clb_WeaponDef_getCegTag(teamId, weaponDefId);
 weaponDef->range = sAICallback->Clb_WeaponDef_getRange(teamId, weaponDefId);
 weaponDef->heightmod = sAICallback->Clb_WeaponDef_getHeightMod(teamId, weaponDefId);
@@ -1585,8 +1650,8 @@ weaponDef->maxAngle = sAICallback->Clb_WeaponDef_getMaxAngle(teamId, weaponDefId
 weaponDef->restTime = sAICallback->Clb_WeaponDef_getRestTime(teamId, weaponDefId);
 weaponDef->uptime = sAICallback->Clb_WeaponDef_getUpTime(teamId, weaponDefId);
 weaponDef->flighttime = sAICallback->Clb_WeaponDef_getFlightTime(teamId, weaponDefId);
-weaponDef->metalcost = sAICallback->Clb_WeaponDef_getMetalCost(teamId, weaponDefId);
-weaponDef->energycost = sAICallback->Clb_WeaponDef_getEnergyCost(teamId, weaponDefId);
+weaponDef->metalcost = sAICallback->Clb_WeaponDef_0REF1Resource2resourceIndex0getCost(teamId, weaponDefId, m);
+weaponDef->energycost = sAICallback->Clb_WeaponDef_0REF1Resource2resourceIndex0getCost(teamId, weaponDefId, e);
 weaponDef->supplycost = sAICallback->Clb_WeaponDef_getSupplyCost(teamId, weaponDefId);
 weaponDef->projectilespershot = sAICallback->Clb_WeaponDef_getProjectilesPerShot(teamId, weaponDefId);
 weaponDef->id = sAICallback->Clb_WeaponDef_getId(teamId, weaponDefId);
@@ -1640,13 +1705,13 @@ weaponDef->exteriorShield = sAICallback->Clb_WeaponDef_isExteriorShield(teamId, 
 weaponDef->visibleShield = sAICallback->Clb_WeaponDef_isVisibleShield(teamId, weaponDefId);
 weaponDef->visibleShieldRepulse = sAICallback->Clb_WeaponDef_isVisibleShieldRepulse(teamId, weaponDefId);
 weaponDef->visibleShieldHitFrames = sAICallback->Clb_WeaponDef_getVisibleShieldHitFrames(teamId, weaponDefId);
-weaponDef->shieldEnergyUse = sAICallback->Clb_WeaponDef_Shield_getEnergyUse(teamId, weaponDefId);
+weaponDef->shieldEnergyUse = sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getResourceUse(teamId, weaponDefId, e);
 weaponDef->shieldRadius = sAICallback->Clb_WeaponDef_Shield_getRadius(teamId, weaponDefId);
 weaponDef->shieldForce = sAICallback->Clb_WeaponDef_Shield_getForce(teamId, weaponDefId);
 weaponDef->shieldMaxSpeed = sAICallback->Clb_WeaponDef_Shield_getMaxSpeed(teamId, weaponDefId);
 weaponDef->shieldPower = sAICallback->Clb_WeaponDef_Shield_getPower(teamId, weaponDefId);
 weaponDef->shieldPowerRegen = sAICallback->Clb_WeaponDef_Shield_getPowerRegen(teamId, weaponDefId);
-weaponDef->shieldPowerRegenEnergy = sAICallback->Clb_WeaponDef_Shield_getPowerRegenEnergy(teamId, weaponDefId);
+weaponDef->shieldPowerRegenEnergy = sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getPowerRegenResource(teamId, weaponDefId, e);
 weaponDef->shieldStartingPower = sAICallback->Clb_WeaponDef_Shield_getStartingPower(teamId, weaponDefId);
 weaponDef->shieldRechargeDelay = sAICallback->Clb_WeaponDef_Shield_getRechargeDelay(teamId, weaponDefId);
 weaponDef->shieldGoodColor = float3(sAICallback->Clb_WeaponDef_Shield_getGoodColor(teamId, weaponDefId));

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software {} you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation {} either version 2 of the License, or
@@ -24,24 +24,25 @@
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
-CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const IAIInterfaceLibrary& interface) {
-	
-	info = interface.GetInfo();
-	
-	std::map<std::string, InfoItem>::iterator iip;
-    for (iip = info.begin(); iip != info.begin(); ++iip) {
-		iip->second = copyInfoItem(&(iip->second));
-    }
-}
+//CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
+//		const IAIInterfaceLibrary& interface) {
+//
+//	info = interface.GetInfo();
+//
+//	std::map<std::string, InfoItem>::iterator iip;
+//    for (iip = info.begin(); iip != info.begin(); ++iip) {
+//		iip->second = copyInfoItem(&(iip->second));
+//    }
+//}
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const CAIInterfaceLibraryInfo& interfaceInfo) {
-	
+		const CAIInterfaceLibraryInfo& interfaceInfo)
+		: infoKeys_c(NULL), infoValues_c(NULL) {
+
 	info = std::map<std::string, InfoItem>(
 			interfaceInfo.info.begin(),
 			interfaceInfo.info.end());
-	
+
 	std::map<std::string, InfoItem>::iterator iip;
     for (iip = info.begin(); iip != info.begin(); ++iip) {
 		iip->second = copyInfoItem(&(iip->second));
@@ -49,8 +50,9 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 }
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const std::string& interfaceInfoFile) {
-	
+		const std::string& interfaceInfoFile)
+		: infoKeys_c(NULL), infoValues_c(NULL) {
+
 	InfoItem tmpInfo[MAX_INFOS];
 	unsigned int num = ParseInfo(interfaceInfoFile.c_str(), SPRING_VFS_RAW,
 			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
@@ -61,12 +63,13 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 */
 		info[std::string(tmpInfo[i].key)] = copyInfoItem(&(tmpInfo[i]));
     }
-	
+
 	//levelOfSupport = LOS_Unknown;
 }
 
 CAIInterfaceLibraryInfo::~CAIInterfaceLibraryInfo() {
-	
+
+	FreeCReferences();
 	std::map<std::string, InfoItem>::const_iterator iip;
     for (iip = info.begin(); iip != info.begin(); ++iip) {
 		deleteInfoItem(&(iip->second));
@@ -80,7 +83,7 @@ LevelOfSupport CAIInterfaceLibraryInfo::GetLevelOfSupportForCurrentEngine() cons
 */
 
 SAIInterfaceSpecifier CAIInterfaceLibraryInfo::GetSpecifier() const {
-	
+
 	const char* sn = info.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
 	const char* v = info.at(AI_INTERFACE_PROPERTY_VERSION).value;
 	SAIInterfaceSpecifier specifier = {sn, v};
@@ -109,7 +112,7 @@ std::string CAIInterfaceLibraryInfo::GetURL() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_URL);
 }
 std::string CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
-	
+
 	if (info.find(key) == info.end()) {
 		std::string errorMsg = std::string("AI interface property '") + key
 				+ "' could not be found.\n";
@@ -118,8 +121,36 @@ std::string CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 	}
 	return info.at(key).value;
 }
-const std::map<std::string, InfoItem>* CAIInterfaceLibraryInfo::GetInfo() const {
-	return &info;
+const std::map<std::string, InfoItem>& CAIInterfaceLibraryInfo::GetInfo() const {
+	return info;
+}
+void CAIInterfaceLibraryInfo::CreateCReferences() {
+
+	FreeCReferences();
+
+	infoKeys_c = (const char**) calloc(info.size(), sizeof(char*));
+	infoValues_c = (const char**) calloc(info.size(), sizeof(char*));
+	unsigned int i=0;
+	std::map<std::string, InfoItem>::const_iterator ii;
+	for (ii=info.begin(); ii != info.end(); ++ii) {
+		infoKeys_c[i] = ii->second.key;
+		infoValues_c[i] = ii->second.value;
+		i++;
+	}
+}
+void CAIInterfaceLibraryInfo::FreeCReferences() {
+
+	free(infoKeys_c);
+	infoKeys_c = NULL;
+	free(infoValues_c);
+	infoValues_c = NULL;
+}
+
+const char** CAIInterfaceLibraryInfo::GetCInfoKeys() const {
+	return infoKeys_c;
+}
+const char** CAIInterfaceLibraryInfo::GetCInfoValues() const {
+	return infoValues_c;
 }
 
 
@@ -146,7 +177,7 @@ void CAIInterfaceLibraryInfo::SetURL(const std::string& url) {
 }
 bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
 		const std::string& value) {
-	
+
 	if (key == AI_INTERFACE_PROPERTY_SHORT_NAME ||
 			key == AI_INTERFACE_PROPERTY_VERSION) {
 		if (value.find_first_of("\t _#") != std::string::npos) {
@@ -156,10 +187,10 @@ bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
 			return false;
 		}
 	}
-	
+
 	InfoItem ii = {key.c_str(), value.c_str(), NULL};
 	ii = copyInfoItem(&ii);
-	
+
 	info[key] = ii;
 	return true;
 }

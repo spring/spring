@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -17,40 +17,28 @@
 
 #include "SkirmishAILibrary.h"
 
-#include "Interface/SAIInterfaceLibrary.h"
+//#include "Interface/SAIInterfaceLibrary.h"
 #include "LogOutput.h"
+#include "IAILibraryManager.h"
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
-		const SSAISpecifier& specifier,
-		const struct InfoItem p_info[], unsigned int numInfoItems)
-		: sSAI(ai), specifier(specifier), numInfoItems(numInfoItems) {
+		const SSAIKey& key)
+		: sSAI(ai), key(key) {}
 
-	struct InfoItem* tmpInfo = (struct InfoItem*) calloc(numInfoItems, sizeof(struct InfoItem));
-	unsigned int i;
-    for (i=0; i < numInfoItems; ++i) {
-        tmpInfo[i] = copyInfoItem(&(p_info[i]));
-    }
-	info = tmpInfo;
-}
+CSkirmishAILibrary::~CSkirmishAILibrary() {}
 
-CSkirmishAILibrary::~CSkirmishAILibrary() {
-
-	unsigned int i;
-    for (i=0; i < numInfoItems; ++i) {
-        deleteInfoItem(&(info[i]));
-    }
-	free(const_cast<struct InfoItem*>(info));
-}
-	
 SSAISpecifier CSkirmishAILibrary::GetSpecifier() const {
-	return specifier;
+	return key.ai;
+}
+SSAIKey CSkirmishAILibrary::GetKey() const {
+	return key;
 }
 
 LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
 		const SAIInterfaceSpecifier& interfaceSpecifier) const {
-	
+
 	if (sSAI.getLevelOfSupportFor != NULL) {
 		return sSAI.getLevelOfSupportFor(teamId, engineVersionString.c_str(),
 				engineVersionNumber, interfaceSpecifier.shortName,
@@ -59,48 +47,24 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 		return LOS_Unknown;
 	}
 }
-	
-/*
-std::map<std::string, InfoItem> CSkirmishAILibrary::GetInfo(unsigned int teamId) const {
-	
-	std::map<std::string, InfoItem> info;
-	
-	if (sSAI.getInfo != NULL) {
-		InfoItem infs[MAX_INFOS];
-		int num = sSAI.getInfo(teamId, infs, MAX_INFOS);
-
-		int i;
-		for (i=0; i < num; ++i) {
-			InfoItem newII = copyInfoItem(&infs[i]);
-			info[std::string(newII.key)] = newII;
-		}
-	}
-
-	return info;
-}
-std::vector<Option> CSkirmishAILibrary::GetOptions(unsigned int teamId) const {
-	
-	std::vector<Option> ops;
-	
-	if (sSAI.getOptions != NULL) {
-		Option options[MAX_OPTIONS];
-		int num = sSAI.getOptions(teamId, options, MAX_OPTIONS);
-
-		int i;
-		for (i=0; i < num; ++i) {
-			ops.push_back(options[i]);
-		}
-	}
-
-	return ops;
-}
-*/
-
 
 void CSkirmishAILibrary::Init(int teamId) const {
-	
+
 	if (sSAI.init != NULL) {
-		int error = sSAI.init(teamId, info, numInfoItems);
+		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+		const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;
+
+		unsigned int infSize = skiInf->GetInfo().size();
+		const char** infKeys = skiInf->GetCInfoKeys();
+		const char** infValues = skiInf->GetCInfoValues();
+
+		unsigned int optSize = libMan->GetSkirmishAICOptionSize(teamId);
+		const char** optKeys = libMan->GetSkirmishAICOptionKeys(teamId);
+		const char** optValues = libMan->GetSkirmishAICOptionValues(teamId);
+
+		int error = sSAI.init(teamId,
+				infSize, infKeys, infValues,
+				optSize, optKeys, optValues);
 		if (error != 0) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);
@@ -109,7 +73,7 @@ void CSkirmishAILibrary::Init(int teamId) const {
 }
 
 void CSkirmishAILibrary::Release(int teamId) const {
-	
+
 	if (sSAI.release != NULL) {
 		int error = sSAI.release(teamId);
 		if (error != 0) {

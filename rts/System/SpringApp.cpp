@@ -657,7 +657,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption('C', "config",             OPTPARM_STRING, "",  "Configuration file");
 	cmdline->addoption(0,   "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
 	cmdline->addoption(0,   "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
-	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
+//	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
 	cmdline->parse();
 
 	string configSource;
@@ -687,9 +687,9 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->result("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
-	} else if (cmdline->result("list-group-ais")) {
-		IAILibraryManager::OutputGroupAIInfo();
-		exit(0);
+//	} else if (cmdline->result("list-group-ais")) {
+//		IAILibraryManager::OutputGroupAIInfo();
+//		exit(0);
 	}
 
 	// flags

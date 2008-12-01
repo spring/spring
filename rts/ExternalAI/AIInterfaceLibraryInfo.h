@@ -28,10 +28,15 @@ struct InfoItem;
 
 class CAIInterfaceLibraryInfo {
 public:
-	CAIInterfaceLibraryInfo(const IAIInterfaceLibrary& interface);
+//	CAIInterfaceLibraryInfo(const IAIInterfaceLibrary& interface);
 	CAIInterfaceLibraryInfo(const CAIInterfaceLibraryInfo& interfaceInfo);
 	CAIInterfaceLibraryInfo(const std::string& interfaceInfoFile);
 	~CAIInterfaceLibraryInfo();
+
+	virtual void CreateCReferences();
+private:
+	virtual void FreeCReferences();
+public:
 
 	//virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
 
@@ -45,7 +50,9 @@ public:
 	virtual std::string GetDescription() const;
 	virtual std::string GetURL() const;
 	virtual std::string GetInfo(const std::string& key) const;
-	virtual const std::map<std::string, InfoItem>* GetInfo() const;
+	virtual const std::map<std::string, InfoItem>& GetInfo() const;
+	virtual const char** GetCInfoKeys() const;
+	virtual const char** GetCInfoValues() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
 	virtual void SetFileName(const std::string& fileName); // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
@@ -59,6 +66,8 @@ public:
 private:
 	static const unsigned int MAX_INFOS = 128;
 	std::map<std::string, InfoItem> info;
+	const char** infoKeys_c;
+	const char** infoValues_c;
 };
 
 #endif	// _AIINTERFACELIBRARYINFO_H

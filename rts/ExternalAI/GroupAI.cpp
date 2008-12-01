@@ -20,19 +20,20 @@
 #include "IAILibraryManager.h"
 #include "IGroupAILibrary.h"
 
-CGroupAI::CGroupAI(int teamId, int groupId, const SGAIKey& key)
-		: teamId(teamId), groupId(groupId), key(key) {
-
-	library = IAILibraryManager::GetInstance()->FetchGroupAILibrary(key);
-	library->Init(teamId, groupId);
-}
-
-CGroupAI::~CGroupAI() {
-
-	library->Release(teamId, groupId);
-	IAILibraryManager::GetInstance()->ReleaseGroupAILibrary(key);
-}
+//CGroupAI::CGroupAI(int teamId, int groupId, const SGAIKey& key)
+//		: teamId(teamId), groupId(groupId), key(key) {
+//
+////	library = IAILibraryManager::GetInstance()->FetchGroupAILibrary(key);
+////	library->Init(teamId, groupId);
+//}
+//
+//CGroupAI::~CGroupAI() {
+//
+////	library->Release(teamId, groupId);
+////	IAILibraryManager::GetInstance()->ReleaseGroupAILibrary(key);
+//}
 
 int CGroupAI::HandleEvent(int topic, const void* data) const {
-	return library->HandleEvent(teamId, groupId, topic, data);
+//	return library->HandleEvent(teamId, groupId, topic, data);
+return -1;
 }

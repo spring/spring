@@ -32,6 +32,7 @@
 #include "Interface/AISEvents.h"
 #include "Interface/AISCommands.h"
 #include "Interface/SSAILibrary.h"
+#include "SkirmishAILibraryInfo.h"
 
 #include <sstream>
 
@@ -40,13 +41,12 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
 	CR_MEMBER(key),
-	CR_MEMBER(optionKeys),
-	CR_MEMBER(optionValues),
-/*
-	CR_MEMBER(libName),
-	CR_MEMBER(IsCInterface),
-	CR_MEMBER(IsLoadSupported),
-*/
+//	CR_MEMBER(options),
+//	CR_MEMBER(optionKeys),
+//	CR_MEMBER(optionValues),
+//	CR_MEMBER(libName),
+//	CR_MEMBER(IsCInterface),
+//	CR_MEMBER(IsLoadSupported),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -72,15 +72,8 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	}
 
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key,
-		const std::map<std::string, std::string>& options)
+CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key)
 		: teamId(teamId), cheatEvents(false), key(key) {
-
-	std::map<std::string, std::string>::const_iterator op;
-	for (op = options.begin(); op != options.end(); ++op) {
-		optionKeys.push_back(op->first);
-		optionValues.push_back(op->second);
-	}
 
 	LoadSkirmishAI(false);
 
@@ -117,7 +110,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
 	libManager->FetchSkirmishAILibrary(key);
 	const CSkirmishAILibraryInfo* infos =
-			libManager->GetSkirmishAIInfos()->at(key);
+			libManager->GetSkirmishAIInfos().at(key);
 	bool loadSupported =
 			infos->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
 	libManager->ReleaseSkirmishAILibrary(key);
@@ -158,38 +151,35 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	}
 }
 
-static const char** allocCStrArray(std::vector<std::string> strVec) {
-
-	const char** strArr = NULL;
-
-	unsigned int size = strVec.size();
-	strArr = (const char**) calloc(size, sizeof(char*));
-	unsigned int i;
-	for (i = 0; i < size; ++i) {
-		strArr[i] = strVec[i].c_str();
-	}
-
-	return strArr;
-}
 
 void CSkirmishAIWrapper::Init() {
 
 	callback = SAFE_NEW CGlobalAICallback(this);
 	c_callback = initSAICallback(teamId, callback);
-	optionKeys_c = allocCStrArray(optionKeys);
-	optionValues_c = allocCStrArray(optionValues);
 
-	SInitEvent evtData = {teamId, c_callback, optionKeys.size(), optionKeys_c, optionValues_c};
+	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+	const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;
+
+//	unsigned int sizeInfo = skiInf->GetInfo().size();
+//	const struct InfoItem* info = skiInf->GetInfoCReference();
+	unsigned int infSize = skiInf->GetInfo().size();
+	const char** infKeys = skiInf->GetCInfoKeys();
+	const char** infValues = skiInf->GetCInfoValues();
+
+	unsigned int optSize = libMan->GetSkirmishAICOptionSize(teamId);
+	const char** optKeys = libMan->GetSkirmishAICOptionKeys(teamId);
+	const char** optValues = libMan->GetSkirmishAICOptionValues(teamId);
+
+	SInitEvent evtData = {teamId, c_callback,
+			infSize, infKeys, infValues,
+			optSize, optKeys, optValues};
 	ai->HandleEvent(EVENT_INIT, &evtData);
 }
 
 void CSkirmishAIWrapper::Release() {
 
-	SReleaseEvent evtData = {teamId};
+	SReleaseEvent evtData = {};
 	ai->HandleEvent(EVENT_RELEASE, &evtData);
-
-	free(optionKeys_c);
-	free(optionValues_c);
 
 	// further cleanup is done in the destructor
 }

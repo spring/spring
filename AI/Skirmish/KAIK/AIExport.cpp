@@ -33,34 +33,7 @@
 
 
 std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
-std::vector<InfoItem> myInfo;
 
-
-EXPORT(unsigned int) getInfo(int teamId,
-		struct InfoItem info[], unsigned int maxInfoItems) {
-
-	unsigned int i = 0;
-
-	// initialize the myInfo
-	if (myInfo.empty()) {
-		InfoItem ii_0 = {SKIRMISH_AI_PROPERTY_SHORT_NAME, "KAIK", NULL}; myInfo.push_back(ii_0);
-		InfoItem ii_1 = {SKIRMISH_AI_PROPERTY_VERSION, "0.13", NULL}; myInfo.push_back(ii_1);
-		InfoItem ii_2 = {SKIRMISH_AI_PROPERTY_NAME, "Kloots Skirmish AI", NULL}; myInfo.push_back(ii_2);
-		InfoItem ii_3 = {SKIRMISH_AI_PROPERTY_DESCRIPTION, "This Skirmish AI supports most TA based mods and plays decently.", NULL}; myInfo.push_back(ii_3);
-		InfoItem ii_4 = {SKIRMISH_AI_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AI:KAIK", NULL}; myInfo.push_back(ii_4);
-		InfoItem ii_5 = {SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED, "no", NULL}; myInfo.push_back(ii_5);
-	}
-
-	// copy myInfo to the argument container info
-	std::vector<InfoItem>::const_iterator inf;
-	for (inf=myInfo.begin(); inf!=myInfo.end() && i < maxInfoItems; inf++) {
-		info[i] = *inf;
-		i++;
-	}
-
-	// return the number of elements copied to info 
-	return i;
-}
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* engineVersionString, int engineVersionNumber,
@@ -74,13 +47,11 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 	return LOS_None;
 }
 
-EXPORT(unsigned int) getOptions(int teamId,
-		struct Option options[], unsigned int maxOptions) {
-	return 0;
-}
-
 EXPORT(int) init(int teamId,
-		const struct InfoItem info[], unsigned int numInfoItems) {
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		unsigned int optionsSize,
+		const char** optionsKeys, const char** optionsValues) {
 
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.

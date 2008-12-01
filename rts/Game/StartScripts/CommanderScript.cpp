@@ -60,7 +60,7 @@ void CCommanderScript::GameStart()
 		// create a Skirmish AI if required
 		if (!SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifier) // is an AI specifyed?
 				&& (gu->myPlayerNum == team->leader)) {
-			eoh->CreateSkirmishAI(a, team->skirmishAISpecifier, team->skirmishAIOptions);
+			eoh->CreateSkirmishAI(a, team->skirmishAISpecifier);
 		}
 
 		// get the team startup info

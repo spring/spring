@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -22,7 +22,7 @@
 extern "C" {
 #endif	// __cplusplus
 
-struct InfoItem;
+//struct InfoItem;
 
 // paths/dirs stored in this struct are guaranteed
 // to come with no '/' or '\\' at the end.
@@ -40,15 +40,18 @@ struct SStaticGlobalData {
 	// This is used by AI Interface libs to prepare the environment.
 	// The Java AI Interface needs this info to prepare the classpath eg.
 	unsigned int numSkirmishAIs;
-	unsigned int* numsSkirmishAIInfo;
-	const struct InfoItem** skirmishAIInfos;
+//	unsigned int* numsSkirmishAIInfo;
+//	const struct InfoItem** skirmishAIInfos;
+	unsigned int* skirmishAIInfosSizes;
+	const char*** skirmishAIInfosKeys;
+	const char*** skirmishAIInfosValues;
 	// The following three members define the Group AI libraries
 	// that are available.
 	// This is used by AI Interface libs to prepare the environment.
 	// The Java AI Interface needs this info to prepare the classpath eg.
-	unsigned int numGroupAIs;
-	unsigned int* numsGroupAIInfo;
-	const struct InfoItem** groupAIInfos;
+//	unsigned int numGroupAIs;
+//	unsigned int* numsGroupAIInfo;
+//	const struct InfoItem** groupAIInfos;
 };
 
 // define the OS specific path separator
