@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -35,11 +35,11 @@ extern "C" {
 #endif
 
 #include "ExternalAI/Interface/ELevelOfSupport.h"
-struct InfoItem;
+//struct InfoItem;
 struct SSAISpecifier;
 struct SSAILibrary;
-struct SGAISpecifier;
-struct SGAILibrary;
+//struct SGAISpecifier;
+//struct SGAILibrary;
 struct SStaticGlobalData;
 
 // for a list of the functions that have to be exported,
@@ -49,11 +49,13 @@ struct SStaticGlobalData;
 
 // static AI interface library functions
 
-EXPORT(int) initStatic(const SStaticGlobalData* staticGlobalData);
+EXPORT(int) initStatic(
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		const SStaticGlobalData* staticGlobalData);
 EXPORT(int) releaseStatic();
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
-EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
 
 
 // skirmish AI related methods
@@ -61,25 +63,27 @@ EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems);
 //EXPORT(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max);
 //EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
-		const struct InfoItem info[], unsigned int numInfoItems);
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues);
 EXPORT(int) unloadSkirmishAILibrary(
-		const struct SSAISpecifier* const sAISpecifier);
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues);
 EXPORT(int) unloadAllSkirmishAILibraries();
 
 
-// group AI related methods
-
-//EXPORT(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max);
-//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
-EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
-		const struct InfoItem info[], unsigned int numInfoItems);
-EXPORT(int) unloadGroupAILibrary(
-		const struct SGAISpecifier* const gAISpecifier);
-EXPORT(int) unloadAllGroupAILibraries();
+//// group AI related methods
+//
+////EXPORT(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max);
+////EXPORT(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier);
+//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
+//		const struct InfoItem info[], unsigned int numInfoItems);
+//EXPORT(int) unloadGroupAILibrary(
+//		const struct SGAISpecifier* const gAISpecifier);
+//EXPORT(int) unloadAllGroupAILibraries();
 
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	// _INTERFACEEXPORT_H
+#endif // _INTERFACEEXPORT_H

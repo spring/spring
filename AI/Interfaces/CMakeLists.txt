@@ -36,52 +36,76 @@ endif (EXISTS ${C_AIINTERFACE_SRC})
 
 
 # Java AI Interface
+FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+message(STATUS "Interface JAVA_FOUND: ${JAVA_FOUND}")
+message(STATUS "Interface JAVA_NOT_FOUND: ${JAVA_NOT_FOUND}")
+message(STATUS "JAVA_RUNTIME ${JAVA_RUNTIME}")
+message(STATUS "JAVA_COMPILE ${JAVA_COMPILE}")
+message(STATUS "JAVA_ARCHIVE ${JAVA_ARCHIVE}")
 IF (MINGW)
 	set (JAVA_JVM_LIBRARY jvm)
-	set (JAVA_FOUND TRUE)
+	set (JNI_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(JNI)
 	if (JAVA_INCLUDE_PATH)
+		set (JNI_FOUND TRUE)
 		include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
 		#link_directories(${JAVA_JVM_LIBRARY})
 		#message("JAVA_JVM_LIBRARY ${JAVA_JVM_LIBRARY}")
 		#message("JAVA_JVM_LIB_PATH ${JAVA_JVM_LIB_PATH}")
 		#message("JNI_LIBRARIES ${JNI_LIBRARIES}")
-		set (JAVA_FOUND TRUE)
 	else (JAVA_INCLUDE_PATH)
+		set (JNI_FOUND FALSE)
 		message ("No Java includes found -> Java AI Interface will not be built")
 	endif (JAVA_INCLUDE_PATH)
 ENDIF (MINGW)
+message(STATUS "Interface JNI_FOUND: ${JNI_FOUND}")
 set(Java_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/Java")
-if (JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
+if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 	set(Java_AIINTERFACE_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
 		file(STRINGS "${Java_AIINTERFACE_SRC}/VERSION" Java_AIINTERFACE_VERS LIMIT_COUNT 1)
 	endif (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
 	set(Java_AIINTERFACE_TARGET "Java-${Java_AIINTERFACE_VERS}")
 	set(Java_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS})
+	#set(Java_AIINTERFACE_PKG "com.clan_sy.spring.ai")
+	set(Java_AIINTERFACE_PKG "com/clan_sy/spring/ai")
+	set(Java_AIINTERFACE_PKG_FIRST_PART "com")
+	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
 	message(STATUS "${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
 
+	# handle native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
-	install (FILES ${Java_AIINTERFACE_SRC}/InterfaceInfo.lua DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	install (TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
+	install(FILES ${Java_AIINTERFACE_SRC}/InterfaceInfo.lua DESTINATION ${Java_AIINTERFACE_DATA_DIR})
+	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
 	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES COMPILE_FLAGS "-DSTREFLOP_SSE")
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		COMMAND "${Java_AIINTERFACE_SRC}/bin/java_buildAll.${SHELL_EXEC_POSTFIX}"
-		ARGS "${Java_AIINTERFACE_VERS}"
-		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
-		COMMENT "  Creating Java library interface.jar" VERBATIM)
 
-	# Install the Java part of the interface
-	install (FILES ${Java_AIINTERFACE_SRC}/java/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
+	# handle Java part
+	file(REMOVE_RECURSE "${Java_AIINTERFACE_SRC}/build")
+	file(MAKE_DIRECTORY "${Java_AIINTERFACE_SRC}/build")
+	file(GLOB_RECURSE Java_AIINTERFACE_JAVA_SOURCES RELATIVE "${Java_AIINTERFACE_SRC}/java/src" FOLLOW_SYMLINKS "${Java_AIINTERFACE_SRC}/java/src/*.java")
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		COMMAND "${Java_AIINTERFACE_SRC}/bin/java_generateWrappers.${SHELL_EXEC_POSTFIX}" ARGS "${Java_AIINTERFACE_VERS}"
+		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
+		COMMENT "  Generating Java source files ..." VERBATIM)
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		COMMAND "${JAVA_COMPILE}" "-cp" "${Java_AIINTERFACE_CLASSPATH}" "-d" "${Java_AIINTERFACE_SRC}/build" ${Java_AIINTERFACE_JAVA_SOURCES}
+		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/java/src"
+		COMMENT "  Compiling Java sources ..." VERBATIM)
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		COMMAND "${JAVA_ARCHIVE}" "cmf" "${Java_AIINTERFACE_SRC}/java/src/manifest.mf" "${Java_AIINTERFACE_SRC}/interface.jar" "-C" "${Java_AIINTERFACE_SRC}/build" "${Java_AIINTERFACE_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
+		COMMENT "  Creating Java library interface.jar ..." VERBATIM)
+	install(FILES ${Java_AIINTERFACE_SRC}/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR})
+	#install(FILES ${Java_AIINTERFACE_SRC}/java/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
 	install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib FILES_MATCHING PATTERN "*.jar")
 
 # Install the Java test Skirmish AI (only a temp solution here, move it to AI/Skirmish/...)
-install (FILES ${Java_AIINTERFACE_SRC}/java/ai.jar DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
-install (FILES ${Java_AIINTERFACE_SRC}/AIInfo.lua DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
-endif (JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
+#install (FILES ${Java_AIINTERFACE_SRC}/java/ai.jar DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
+#install (FILES ${Java_AIINTERFACE_SRC}/AIInfo.lua DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
+endif (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -46,19 +46,31 @@ std::string CInterface::relSkirmishAIImplsDir =
 std::string CInterface::relGroupAIImplsDir =
 		std::string(GROUP_AI_IMPLS_DIR) + PS;
 */
-	
-CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
-	
+static std::string local_getValueByKey(
+		const std::map<std::string, std::string>& map, std::string key) {
+
+	std::map<std::string, std::string>::const_iterator it = map.find(key);
+	if (it != map.end()) {
+		return it->second;
+	} else {
+		return "";
+	}
+}
+
+CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
+		const SStaticGlobalData* staticGlobalData)
+		: myInfo(myInfo), staticGlobalData(staticGlobalData) {
+
 	for (unsigned int i=0; i < staticGlobalData->numDataDirs; ++i) {
 		springDataDirs.push_back(staticGlobalData->dataDirs[i]);
 	}
-	
+
 	// example: "AI/Interfaces/C"
 	std::string myDataDirRelative =
 			std::string(AI_INTERFACES_DATA_DIR) + PS + MY_SHORT_NAME;
 	// example: "AI/Interfaces/C/0.1"
 	std::string myDataDirVersRelative = myDataDirRelative + PS + MY_VERSION;
-	
+
 	// "C:/Games/spring/AI/Interfaces/C"
 	myDataDir = FindDir(myDataDirRelative, true, true);
 	if (!FileExists(myDataDir)) {
@@ -69,10 +81,10 @@ CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
 	if (!FileExists(myDataDirVers)) {
 		MakeDirRecursive(myDataDirVers);
 	}
-	
+
 	std::string logFileName = myDataDirVers + PS + "log.txt";
 	simpleLog_init(logFileName.c_str(), true);
-	
+
 	simpleLog_log("This is the log-file of the %s version %s", MY_NAME,
 			MY_VERSION);
 	simpleLog_log("Using data-directory (version-less): %s",
@@ -82,69 +94,61 @@ CInterface::CInterface(const SStaticGlobalData* staticGlobalData) {
 	simpleLog_log("Using log file: %s", logFileName.c_str());
 }
 
-unsigned int CInterface::GetInfo(InfoItem info[], unsigned int maxInfoItems) {
-	
-	unsigned int i = 0;
-	
-	if (myInfo.empty()) {
-		InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL}; myInfo.push_back(ii_0);
-		InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, MY_VERSION, NULL}; myInfo.push_back(ii_1);
-		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, MY_NAME, NULL}; myInfo.push_back(ii_2);
-		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++. It is neded for legacy C++ AIs as well.", NULL}; myInfo.push_back(ii_3);
-		InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:C", NULL}; myInfo.push_back(ii_4);
-		InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "C, C++", NULL}; myInfo.push_back(ii_5);
-	}
-	
-	std::vector<InfoItem>::const_iterator inf;
-	for (inf=myInfo.begin(); inf!=myInfo.end() && i < maxInfoItems; inf++) {
-		info[i] = *inf;
-		i++;
-	}
-	
-	return i;
-}
+//unsigned int CInterface::GetInfo(InfoItem info[], unsigned int maxInfoItems) {
+//
+//	unsigned int i = 0;
+//
+//	if (myInfo.empty()) {
+//		InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL}; myInfo.push_back(ii_0);
+//		InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, MY_VERSION, NULL}; myInfo.push_back(ii_1);
+//		InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, MY_NAME, NULL}; myInfo.push_back(ii_2);
+//		InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in C or C++. It is neded for legacy C++ AIs as well.", NULL}; myInfo.push_back(ii_3);
+//		InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:C", NULL}; myInfo.push_back(ii_4);
+//		InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "C, C++", NULL}; myInfo.push_back(ii_5);
+//	}
+//
+//	std::vector<InfoItem>::const_iterator inf;
+//	for (inf=myInfo.begin(); inf!=myInfo.end() && i < maxInfoItems; inf++) {
+//		info[i] = *inf;
+//		i++;
+//	}
+//
+//	return i;
+//}
 
 LevelOfSupport CInterface::GetLevelOfSupportFor(
 		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
 	return LOS_Working;
 }
 
-void copyToInfoMap(std::map<std::string, InfoItem>& infoMap,
-		const InfoItem info[], unsigned int numInfoItems) {
-
-	for (unsigned int i=0; i < numInfoItems; ++i) {
-		infoMap[info[i].key] = copyInfoItem(&(info[i]));
-	}
-}
 SSAISpecifier extractSSAISpecifier(
-		const std::map<std::string, InfoItem>& infoMap) {
+		const std::map<std::string, std::string>& infoMap) {
 
-	const char* sn = infoMap.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.value;
-	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.value;
+	const char* sn = infoMap.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.c_str();
+	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.c_str();
 
 	SSAISpecifier specifier = {sn, v};
 
 	return specifier;
 }
-SGAISpecifier extractSGAISpecifier(
-		const std::map<std::string, InfoItem>& infoMap) {
+//SGAISpecifier extractSGAISpecifier(
+//		const std::map<std::string, InfoItem>& infoMap) {
+//
+//	const char* sn = infoMap.find(GROUP_AI_PROPERTY_SHORT_NAME)->second.value;
+//	const char* v = infoMap.find(GROUP_AI_PROPERTY_VERSION)->second.value;
+//
+//	SGAISpecifier specifier = {sn, v};
+//
+//	return specifier;
+//}
 
-	const char* sn = infoMap.find(GROUP_AI_PROPERTY_SHORT_NAME)->second.value;
-	const char* v = infoMap.find(GROUP_AI_PROPERTY_VERSION)->second.value;
-
-	SGAISpecifier specifier = {sn, v};
-
-	return specifier;
-}
-
-const SSAILibrary* CInterface::LoadSkirmishAILibrary(const InfoItem info[],
-		unsigned int numInfoItems) {
+const SSAILibrary* CInterface::LoadSkirmishAILibrary(
+		const std::map<std::string, std::string>& infoMap) {
 
 	SSAILibrary* ai;
 
-	std::map<std::string, InfoItem> infoMap;
-	copyToInfoMap(infoMap, info, numInfoItems);
 	SSAISpecifier sAISpecifier = extractSSAISpecifier(infoMap);
+
 	mySkirmishAISpecifiers.push_back(sAISpecifier);
 	mySkirmishAIInfos[sAISpecifier] = infoMap;
 
@@ -161,12 +165,15 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(const InfoItem info[],
 
 	return ai;
 }
-int CInterface::UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier) {
+int CInterface::UnloadSkirmishAILibrary(
+		const std::map<std::string, std::string>& infoMap) {
+
+	SSAISpecifier sAISpecifier = extractSSAISpecifier(infoMap);
 
 	T_skirmishAIs::iterator skirmishAI =
-			myLoadedSkirmishAIs.find(*sAISpecifier);
+			myLoadedSkirmishAIs.find(sAISpecifier);
 	T_skirmishAILibs::iterator skirmishAILib =
-			myLoadedSkirmishAILibs.find(*sAISpecifier);
+			myLoadedSkirmishAILibs.find(sAISpecifier);
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
 		// to unload AI is not loaded -> no problem, do nothing
 	} else {
@@ -181,7 +188,8 @@ int CInterface::UnloadSkirmishAILibrary(const SSAISpecifier* const sAISpecifier)
 int CInterface::UnloadAllSkirmishAILibraries() {
 
 	while (myLoadedSkirmishAIs.size() > 0) {
-		UnloadSkirmishAILibrary(&(myLoadedSkirmishAIs.begin()->first));
+		UnloadSkirmishAILibrary(
+				mySkirmishAIInfos[myLoadedSkirmishAIs.begin()->first]);
 	}
 
 	return 0;
@@ -189,54 +197,54 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 
 
-const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[],
-		unsigned int numInfoItems) {
-
-	SGAILibrary* ai = NULL;
-
-	std::map<std::string, InfoItem> infoMap;
-	copyToInfoMap(infoMap, info, numInfoItems);
-	SGAISpecifier gAISpecifier = extractSGAISpecifier(infoMap);
-	myGroupAISpecifiers.push_back(gAISpecifier);
-	myGroupAIInfos[gAISpecifier] = infoMap;
-
-	T_groupAIs::iterator groupAI;
-	groupAI = myLoadedGroupAIs.find(gAISpecifier);
-	if (groupAI == myLoadedGroupAIs.end()) {
-		ai = new SGAILibrary;
-		SharedLib* lib = Load(&gAISpecifier, ai);
-		myLoadedGroupAIs[gAISpecifier] = ai;
-		myLoadedGroupAILibs[gAISpecifier] = lib;
-	} else {
-		ai = groupAI->second;
-	}
-
-	return ai;
-}
-int CInterface::UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier) {
-
-	T_groupAIs::iterator groupAI = myLoadedGroupAIs.find(*gAISpecifier);
-	T_groupAILibs::iterator groupAILib =
-			myLoadedGroupAILibs.find(*gAISpecifier);
-	if (groupAI == myLoadedGroupAIs.end()) {
-		// to unload AI is not loaded -> no problem, do nothing
-	} else {
-		delete groupAI->second;
-		myLoadedGroupAIs.erase(groupAI);
-		delete groupAILib->second;
-		myLoadedGroupAILibs.erase(groupAILib);
-	}
-
-	return 0;
-}
-int CInterface::UnloadAllGroupAILibraries() {
-	
-	while (myLoadedGroupAIs.size() > 0) {
-		UnloadGroupAILibrary(&(myLoadedGroupAIs.begin()->first));
-	}
-	
-	return 0;
-}
+//const SGAILibrary* CInterface::LoadGroupAILibrary(const struct InfoItem info[],
+//		unsigned int numInfoItems) {
+//
+//	SGAILibrary* ai = NULL;
+//
+//	std::map<std::string, InfoItem> infoMap;
+//	copyToInfoMap(infoMap, info, numInfoItems);
+//	SGAISpecifier gAISpecifier = extractSGAISpecifier(infoMap);
+//	myGroupAISpecifiers.push_back(gAISpecifier);
+//	myGroupAIInfos[gAISpecifier] = infoMap;
+//
+//	T_groupAIs::iterator groupAI;
+//	groupAI = myLoadedGroupAIs.find(gAISpecifier);
+//	if (groupAI == myLoadedGroupAIs.end()) {
+//		ai = new SGAILibrary;
+//		SharedLib* lib = Load(&gAISpecifier, ai);
+//		myLoadedGroupAIs[gAISpecifier] = ai;
+//		myLoadedGroupAILibs[gAISpecifier] = lib;
+//	} else {
+//		ai = groupAI->second;
+//	}
+//
+//	return ai;
+//}
+//int CInterface::UnloadGroupAILibrary(const SGAISpecifier* const gAISpecifier) {
+//
+//	T_groupAIs::iterator groupAI = myLoadedGroupAIs.find(*gAISpecifier);
+//	T_groupAILibs::iterator groupAILib =
+//			myLoadedGroupAILibs.find(*gAISpecifier);
+//	if (groupAI == myLoadedGroupAIs.end()) {
+//		// to unload AI is not loaded -> no problem, do nothing
+//	} else {
+//		delete groupAI->second;
+//		myLoadedGroupAIs.erase(groupAI);
+//		delete groupAILib->second;
+//		myLoadedGroupAILibs.erase(groupAILib);
+//	}
+//
+//	return 0;
+//}
+//int CInterface::UnloadAllGroupAILibraries() {
+//
+//	while (myLoadedGroupAIs.size() > 0) {
+//		UnloadGroupAILibrary(&(myLoadedGroupAIs.begin()->first));
+//	}
+//
+//	return 0;
+//}
 
 // private functions following
 
@@ -264,7 +272,7 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 */
-	skirmishAILibrary->getInfo = NULL;
+//	skirmishAILibrary->getInfo = NULL;
 
 /*
 	funcName = "getOptions";
@@ -274,113 +282,127 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 */
-	skirmishAILibrary->getOptions = NULL;
+//	skirmishAILibrary->getOptions = NULL;
 
 	funcName = "getLevelOfSupportFor";
-	skirmishAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId, const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->getLevelOfSupportFor
+			= (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId,
+			const char*, int, const char*, const char*))
+			sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->getLevelOfSupportFor == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
-	
+
 	funcName = "init";
-	skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int, const struct InfoItem[], unsigned int)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->init
+			= (int (CALLING_CONV_FUNC_POINTER *)(int teamId,
+			unsigned int infoSize,
+			const char** infoKeys, const char** infoValues,
+			unsigned int optionsSize,
+			const char** optionsKeys, const char** optionsValues))
+			sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->init == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_INIT instead
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
-	
+
 	funcName = "release";
-	skirmishAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->release
+			= (int (CALLING_CONV_FUNC_POINTER *)(int teamId))
+			sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->release == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_RELEASE instead
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
-	
+
 	funcName = "handleEvent";
-	skirmishAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int, int, const void*)) sharedLib->FindAddress(funcName.c_str());
+	skirmishAILibrary->handleEvent
+			= (int (CALLING_CONV_FUNC_POINTER *)(int teamId,
+			int, const void*))
+			sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->handleEvent == NULL) {
 		reportInterfaceFunctionError(libFilePath, funcName);
 	}
-	
+
 	return sharedLib;
 }
 
 
-SharedLib* CInterface::Load(const SGAISpecifier* const gAISpecifier,
-		SGAILibrary* groupAILibrary) {
-	return LoadGroupAILib(FindLibFile(*gAISpecifier), groupAILibrary);
-}
-SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
-		SGAILibrary* groupAILibrary) {
-	
-	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
-	
-	if (sharedLib == NULL) {
-		reportError(std::string("Failed loading shared library: ") + libFilePath);
-	}
-	
-	// initialize the AI library
-	std::string funcName;
-	
-/*
-	funcName = "getInfo";
-	groupAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->getInfo == NULL) {
-		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-*/
-	groupAILibrary->getInfo = NULL;
-	
-/*
-	funcName = "getOptions";
-	groupAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->getOptions == NULL) {
-		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-*/
-	groupAILibrary->getOptions = NULL;
-	
-	funcName = "getLevelOfSupportFor";
-	groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->getLevelOfSupportFor == NULL) {
-		// do nothing: it is permitted that an AI does not export this function
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-	
-	funcName = "init";
-	groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const struct InfoItem info[], unsigned int maxInfoItems)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->init == NULL) {
-		// do nothing: it is permitted that an AI does not export this function,
-		// as it can still use EVENT_INIT instead
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-	
-	funcName = "release";
-	groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->release == NULL) {
-		// do nothing: it is permitted that an AI does not export this function,
-		// as it can still use EVENT_RELEASE instead
-		//reportInterfaceFunctionError(libFilePath, funcName);
-	}
-	
-	funcName = "handleEvent";
-	groupAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, int topic, const void* data)) sharedLib->FindAddress(funcName.c_str());
-	if (groupAILibrary->handleEvent == NULL) {
-		reportInterfaceFunctionError(libFilePath, funcName);
-	}
-	
-	return sharedLib;
-}
+//SharedLib* CInterface::Load(const SGAISpecifier* const gAISpecifier,
+//		SGAILibrary* groupAILibrary) {
+//	return LoadGroupAILib(FindLibFile(*gAISpecifier), groupAILibrary);
+//}
+//SharedLib* CInterface::LoadGroupAILib(const std::string& libFilePath,
+//		SGAILibrary* groupAILibrary) {
+//
+//	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
+//
+//	if (sharedLib == NULL) {
+//		reportError(std::string("Failed loading shared library: ") + libFilePath);
+//	}
+//
+//	// initialize the AI library
+//	std::string funcName;
+//
+///*
+//	funcName = "getInfo";
+//	groupAILibrary->getInfo = (unsigned int (CALLING_CONV_FUNC_POINTER *)(InfoItem[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->getInfo == NULL) {
+//		// do nothing: this is permitted, if the AI supplies info through an AIInfo.lua file
+//		//reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//*/
+//	groupAILibrary->getInfo = NULL;
+//
+///*
+//	funcName = "getOptions";
+//	groupAILibrary->getOptions = (unsigned int (CALLING_CONV_FUNC_POINTER *)(Option[], unsigned int max)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->getOptions == NULL) {
+//		// do nothing: this is permitted, if the AI supplies options through an AIOptions.lua file
+//		//reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//*/
+//	groupAILibrary->getOptions = NULL;
+//
+//	funcName = "getLevelOfSupportFor";
+//	groupAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const char*, int, const char*, const char*)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->getLevelOfSupportFor == NULL) {
+//		// do nothing: it is permitted that an AI does not export this function
+//		//reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//
+//	funcName = "init";
+//	groupAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, const struct InfoItem info[], unsigned int maxInfoItems)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->init == NULL) {
+//		// do nothing: it is permitted that an AI does not export this function,
+//		// as it can still use EVENT_INIT instead
+//		//reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//
+//	funcName = "release";
+//	groupAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->release == NULL) {
+//		// do nothing: it is permitted that an AI does not export this function,
+//		// as it can still use EVENT_RELEASE instead
+//		//reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//
+//	funcName = "handleEvent";
+//	groupAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(int teamId, int groupId, int topic, const void* data)) sharedLib->FindAddress(funcName.c_str());
+//	if (groupAILibrary->handleEvent == NULL) {
+//		reportInterfaceFunctionError(libFilePath, funcName);
+//	}
+//
+//	return sharedLib;
+//}
 
 
 void CInterface::reportInterfaceFunctionError(const std::string& libFilePath,
 		const std::string& functionName) {
-	
+
 	std::string msg("Failed loading AI Library from file \"");
 	msg += libFilePath + "\": no \"" + functionName + "\" function exported";
 	reportError(msg);
@@ -393,7 +415,7 @@ void CInterface::reportError(const std::string& msg) {
 
 
 std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
-	
+
 	// fetch the data-dir and file-name from the info about the AI to load,
 	// which was supplied to us by the engine
 	T_skirmishAIInfos::const_iterator info =
@@ -402,90 +424,90 @@ std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
 		reportError(std::string("Missing Skirmish-AI info for ")
 				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
-	
-	std::map<std::string, InfoItem>::const_iterator prop =
+
+	std::map<std::string, std::string>::const_iterator prop =
 			info->second.find(SKIRMISH_AI_PROPERTY_DATA_DIR);
 	if (prop == info->second.end()) {
 		reportError(std::string("Missing Skirmish-AI data dir for ")
 				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
-	const std::string& dataDir(prop->second.value);
-	
+	const std::string& dataDir(prop->second);
+
 	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
 	if (prop == info->second.end()) {
 		reportError(std::string("Missing Skirmish-AI file name for ")
 				+ sAISpecifier.shortName + " " + sAISpecifier.version);
 	}
-	const std::string& fileName(prop->second.value);
-	
+	const std::string& fileName(prop->second);
+
 	std::string libFileName(fileName); // eg. RAI-0.600
 	#ifndef _WIN32
 		libFileName = "lib" + libFileName; // eg. libRAI-0.600
 	#endif
-	
+
 	// eg. libRAI-0.600.so
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
-	
+
 	//return FindFile(dataDir + PS + libFileName);
 	return dataDir + PS + libFileName;
 }
 
-std::string CInterface::FindLibFile(const SGAISpecifier& gAISpecifier) {
-	
-	// fetch the data-dir and file-name from the info about the AI to load,
-	// which was supplied to us by the engine
-	T_groupAIInfos::const_iterator info = myGroupAIInfos.find(gAISpecifier);
-	if (info == myGroupAIInfos.end()) {
-		reportError(std::string("Missing Group-AI info for ")
-				+ gAISpecifier.shortName + " " + gAISpecifier.version);
-	}
-	
-	std::map<std::string, InfoItem>::const_iterator prop =
-			info->second.find(GROUP_AI_PROPERTY_DATA_DIR);
-	if (prop == info->second.end()) {
-		reportError(std::string("Missing Group-AI data dir for ")
-				+ gAISpecifier.shortName + " " + gAISpecifier.version);
-	}
-	const std::string& dataDir(prop->second.value);
-	
-	prop = info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
-	if (prop == info->second.end()) {
-		reportError(std::string("Missing Group-AI file name for ")
-				+ gAISpecifier.shortName + " " + gAISpecifier.version);
-	}
-	const std::string& fileName(prop->second.value);
-	
-	std::string libFileName(fileName); // eg. MetalMaker-1.0
-	#ifndef _WIN32
-		libFileName = "lib" + libFileName; // eg. libMetalMaker-1.0
-	#endif
-	
-	// eg. libMetalMaker-1.0.so
-	libFileName = libFileName + "." + SharedLib::GetLibExtension();
-	
-	//return FindFile(dataDir + PS + libFileName);
-	return dataDir + PS + libFileName;
-}
+//std::string CInterface::FindLibFile(const SGAISpecifier& gAISpecifier) {
+//
+//	// fetch the data-dir and file-name from the info about the AI to load,
+//	// which was supplied to us by the engine
+//	T_groupAIInfos::const_iterator info = myGroupAIInfos.find(gAISpecifier);
+//	if (info == myGroupAIInfos.end()) {
+//		reportError(std::string("Missing Group-AI info for ")
+//				+ gAISpecifier.shortName + " " + gAISpecifier.version);
+//	}
+//
+//	std::map<std::string, InfoItem>::const_iterator prop =
+//			info->second.find(GROUP_AI_PROPERTY_DATA_DIR);
+//	if (prop == info->second.end()) {
+//		reportError(std::string("Missing Group-AI data dir for ")
+//				+ gAISpecifier.shortName + " " + gAISpecifier.version);
+//	}
+//	const std::string& dataDir(prop->second.value);
+//
+//	prop = info->second.find(GROUP_AI_PROPERTY_FILE_NAME);
+//	if (prop == info->second.end()) {
+//		reportError(std::string("Missing Group-AI file name for ")
+//				+ gAISpecifier.shortName + " " + gAISpecifier.version);
+//	}
+//	const std::string& fileName(prop->second.value);
+//
+//	std::string libFileName(fileName); // eg. MetalMaker-1.0
+//	#ifndef _WIN32
+//		libFileName = "lib" + libFileName; // eg. libMetalMaker-1.0
+//	#endif
+//
+//	// eg. libMetalMaker-1.0.so
+//	libFileName = libFileName + "." + SharedLib::GetLibExtension();
+//
+//	//return FindFile(dataDir + PS + libFileName);
+//	return dataDir + PS + libFileName;
+//}
 
 bool CInterface::FileExists(const std::string& filePath) {
-	
+
 	struct stat fileInfo;
 	bool exists;
 	int intStat;
 
-	// Attempt to get the file attributes 
+	// Attempt to get the file attributes
 	intStat = stat(filePath.c_str(), &fileInfo);
 	if (intStat == 0) {
-		// We were able to get the file attributes 
-		// so the file obviously exists. 
+		// We were able to get the file attributes
+		// so the file obviously exists.
 		exists = true;
 	} else {
-		// We were not able to get the file attributes. 
-		// This may mean that we don't have permission to 
-		// access the folder which contains this file. If you 
-		// need to do that level of checking, lookup the 
-		// return values of stat which will give you 
-		// more details on why stat failed. 
+		// We were not able to get the file attributes.
+		// This may mean that we don't have permission to
+		// access the folder which contains this file. If you
+		// need to do that level of checking, lookup the
+		// return values of stat which will give you
+		// more details on why stat failed.
 		exists = false;
 	}
 
@@ -493,7 +515,7 @@ bool CInterface::FileExists(const std::string& filePath) {
 }
 
 bool CInterface::MakeDir(const std::string& dirPath) {
-	
+
 	#ifdef	WIN32
 	int mkStat = _mkdir(dirPath.c_str());
 	if (mkStat == 0) {
@@ -514,7 +536,7 @@ bool CInterface::MakeDir(const std::string& dirPath) {
 }
 
 bool CInterface::MakeDirRecursive(const std::string& dirPath) {
-	
+
 	if (!FileExists(dirPath)) {
 		std::string::size_type pos = dirPath.find_last_of("/\\");
 		if (pos != std::string::npos) {
@@ -526,14 +548,14 @@ bool CInterface::MakeDirRecursive(const std::string& dirPath) {
 		}
 		return false;
 	}
-	
+
 	return true;
 }
 
 std::string CInterface::FindFile(const std::string& relativeFilePath) {
-	
+
 	std::string path = relativeFilePath;
-	
+
 	for (unsigned int i=0; i < springDataDirs.size(); ++i) {
 		std::string tmpPath = springDataDirs.at(i);
 		tmpPath += PS + relativeFilePath;
@@ -542,19 +564,19 @@ std::string CInterface::FindFile(const std::string& relativeFilePath) {
 			break;
 		}
 	}
-	
+
 	return path;
 }
 std::string CInterface::FindDir(const std::string& relativeDirPath,
 		bool searchOnlyWriteable, bool pretendAvailable) {
-	
+
 	std::string path = relativeDirPath;
-	
+
 	unsigned int numDds = springDataDirs.size();
 	if (searchOnlyWriteable && numDds > 1) {
 		numDds = 1;
 	}
-	
+
 	bool found = false;
 	for (unsigned int i=0; i < numDds; ++i) {
 		std::string tmpPath = springDataDirs.at(i) + PS + relativeDirPath;
@@ -564,19 +586,19 @@ std::string CInterface::FindDir(const std::string& relativeDirPath,
 			break;
 		}
 	}
-	
+
 	if (!found && pretendAvailable && numDds >= 1) {
 		path = springDataDirs.at(0) + PS + relativeDirPath;
 	}
-	
+
 	return path;
 }
 
 /*
 SSAISpecifier CInterface::ExtractSpecifier(const SSAILibrary& skirmishAILib) {
-	
+
 	SSAISpecifier skirmishAISpecifier;
-	
+
 	InfoItem info[MAX_INFOS];
 	int numInfo =  skirmishAILib.getInfo(info, MAX_INFOS);
 
@@ -590,16 +612,16 @@ SSAISpecifier CInterface::ExtractSpecifier(const SSAILibrary& skirmishAILib) {
 			skirmishAISpecifier.version = info[i].value;
 		}
 	}
-	
+
 	return skirmishAISpecifier;
 }
 */
 
 /*
 SGAISpecifier CInterface::ExtractSpecifier(const SGAILibrary& groupAILib) {
-	
+
 	SGAISpecifier groupAISpecifier;
-	
+
 	InfoItem info[MAX_INFOS];
 	int numInfo =  groupAILib.getInfo(info, MAX_INFOS);
 
@@ -613,33 +635,19 @@ SGAISpecifier CInterface::ExtractSpecifier(const SGAILibrary& groupAILib) {
 			groupAISpecifier.version = info[i].value;
 		}
 	}
-	
+
 	return groupAISpecifier;
 }
 */
 
 bool CInterface::FitsThisInterface(const std::string& requestedShortName,
 		const std::string& requestedVersion) {
-	
-	bool shortNameFits = false;
-	bool versionFits = false;
-	
-	InfoItem info[MAX_INFOS];
-	int num = GetInfo(info, MAX_INFOS);
-	
-	std::string shortNameKey(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	std::string versionKey(AI_INTERFACE_PROPERTY_VERSION);
-	for (int i=0; i < num; ++i) {
-		if (shortNameKey == info[i].key) {
-			if (requestedShortName == info[i].value) {
-				shortNameFits = true;
-			}
-		} else if (versionKey == info[i].key) {
-			if (requestedVersion == info[i].value) {
-				versionFits = true;
-			}
-		}
-	}
-	
+
+	std::string myShortName = local_getValueByKey(myInfo, AI_INTERFACE_PROPERTY_SHORT_NAME);
+	std::string myVersion = local_getValueByKey(myInfo, AI_INTERFACE_PROPERTY_VERSION);
+
+	bool shortNameFits = (requestedShortName == myShortName);
+	bool versionFits = (requestedVersion == myVersion);
+
 	return shortNameFits && versionFits;
 }

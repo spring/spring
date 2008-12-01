@@ -26,7 +26,8 @@
 #include "FileSystem/VFSModes.h"
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
-		const CSkirmishAILibraryInfo& aiInfo) {
+		const CSkirmishAILibraryInfo& aiInfo)
+		: infoKeys_c(NULL), infoValues_c(NULL) {
 
 	info = std::map<std::string, InfoItem>(
 			aiInfo.info.begin(),
@@ -43,7 +44,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile) {
+		const std::string& aiOptionFile)
+		: infoKeys_c(NULL), infoValues_c(NULL) {
 
 	InfoItem tmpInfo[MAX_INFOS];
 	unsigned int num = ParseInfo(aiInfoFile.c_str(), SPRING_VFS_RAW,
@@ -64,6 +66,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 CSkirmishAILibraryInfo::~CSkirmishAILibraryInfo() {
 
+	FreeCReferences();
 	std::map<std::string, InfoItem>::const_iterator iip;
 	for (iip = info.begin(); iip != info.begin(); ++iip) {
 		deleteInfoItem(&(iip->second));
@@ -108,38 +111,61 @@ std::string CSkirmishAILibraryInfo::GetInterfaceVersion() const {
 std::string CSkirmishAILibraryInfo::GetInfo(const std::string& key) const {
 	return info.at(key).value;
 }
-const std::map<std::string, InfoItem>* CSkirmishAILibraryInfo::GetInfo() const {
-	return &info;
+const std::map<std::string, InfoItem>& CSkirmishAILibraryInfo::GetInfo() const {
+	return info;
 }
 
-const std::vector<Option>* CSkirmishAILibraryInfo::GetOptions() const {
-	return &options;
+const std::vector<Option>& CSkirmishAILibraryInfo::GetOptions() const {
+	return options;
 }
 
 
-unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[],
-		unsigned int maxInfoItems) const {
+//unsigned int CSkirmishAILibraryInfo::GetInfoCReference(InfoItem cInfo[],
+//		unsigned int maxInfoItems) const {
+//
+//	unsigned int i=0;
+//
+//	std::map<std::string, InfoItem>::const_iterator infs;
+//	for (infs=info.begin(); infs != info.end() && i < maxInfoItems; ++infs) {
+//		cInfo[i++] = infs->second;
+//	}
+//
+//	return i;
+//}
 
+void CSkirmishAILibraryInfo::CreateCReferences() {
+
+	FreeCReferences();
+
+//	info_c = (struct InfoItem*) calloc(info.size(), sizeof(struct InfoItem));
+//	unsigned int i=0;
+//	std::map<std::string, InfoItem>::const_iterator ii;
+//	for (ii=info.begin(); ii != info.end(); ++ii) {
+//		info_c[i++] = ii->second;
+//	}
+	infoKeys_c = (const char**) calloc(info.size(), sizeof(char*));
+	infoValues_c = (const char**) calloc(info.size(), sizeof(char*));
 	unsigned int i=0;
-
-	std::map<std::string, InfoItem>::const_iterator infs;
-	for (infs=info.begin(); infs != info.end() && i < maxInfoItems; ++infs) {
-		cInfo[i++] = infs->second;
+	std::map<std::string, InfoItem>::const_iterator ii;
+	for (ii=info.begin(); ii != info.end(); ++ii) {
+		infoKeys_c[i] = ii->second.key;
+		infoValues_c[i] = ii->second.value;
+		i++;
 	}
-
-	return i;
 }
-unsigned int CSkirmishAILibraryInfo::GetOptionsCReference(Option cOptions[],
-		unsigned int maxOptions) const {
+void CSkirmishAILibraryInfo::FreeCReferences() {
 
-	unsigned int i=0;
+	free(infoKeys_c);
+	infoKeys_c = NULL;
+	free(infoValues_c);
+	infoValues_c = NULL;
+}
 
-	std::vector<Option>::const_iterator ops;
-	for (ops=options.begin(); ops != options.end() && i < maxOptions; ++ops) {
-		cOptions[i++] = *ops;
-	}
-
-	return i;
+const char** CSkirmishAILibraryInfo::GetCInfoKeys() const {
+	return infoKeys_c;
+}
+const char** CSkirmishAILibraryInfo::GetCInfoValues() const {
+	return infoValues_c;
 }
 
 

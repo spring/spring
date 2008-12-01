@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -20,15 +20,18 @@
 
 #include "ISkirmishAILibrary.h"
 
+#include "Interface/SAIInterfaceLibrary.h"
 #include "Interface/SSAILibrary.h"
+#include <vector>
 
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:
-	CSkirmishAILibrary(const SSAILibrary& ai, const SSAISpecifier& specifier,
-			const InfoItem info[], unsigned int numInfoItems);
+	CSkirmishAILibrary(const SSAILibrary& ai, const SSAIKey& key);
 	virtual ~CSkirmishAILibrary();
-	
+
 	virtual SSAISpecifier GetSpecifier() const;
+	virtual SSAIKey GetKey() const;
+
 	/**
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
@@ -36,26 +39,18 @@ public:
 	virtual LevelOfSupport GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
 			const SAIInterfaceSpecifier& interfaceSpecifier) const;
-	
-//    virtual std::map<std::string, InfoItem> GetInfo(int teamId) const;
-//	virtual std::vector<Option> GetOptions(int teamId) const;
-	
-	
-    virtual void Init(int teamId) const;
-    virtual void Release(int teamId) const;
-    virtual int HandleEvent(int teamId, int topic, const void* data) const;
-	
+
+	virtual void Init(int teamId) const;
+	virtual void Release(int teamId) const;
+	virtual int HandleEvent(int teamId, int topic, const void* data) const;
+
 private:
 	SSAILibrary sSAI;
-	SSAISpecifier specifier;
-	const InfoItem* info;
-	unsigned int numInfoItems;
-	
+	SSAIKey key;
+
 private:
-//	void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
-	
 	static const int MAX_INFOS = 128;
 	static const int MAX_OPTIONS = 128;
 };
 
-#endif	/* _SKIRMISHAILIBRARY_H */
+#endif // _SKIRMISHAILIBRARY_H

@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -22,17 +22,17 @@
 #include <stdlib.h>
 
 struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig) {
-	
+
 	struct SAIInterfaceSpecifier copy;
-	
+
 	char* tmpStr = (char *) malloc(sizeof(char) * strlen(orig->shortName) + 1);
 	strcpy(tmpStr, orig->shortName);
 	copy.shortName = tmpStr;
-	
+
 	tmpStr = (char *) malloc(sizeof(char) * strlen(orig->version) + 1);
 	strcpy(tmpStr, orig->version);
 	copy.version = tmpStr;
-	
+
 	return copy;
 }
 void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec) {
@@ -44,18 +44,18 @@ void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec)
 #ifdef	__cplusplus
 
 CR_BIND(SSAIKey,)
-CR_BIND(SGAIKey,)
+//CR_BIND(SGAIKey,)
 
 bool SAIInterfaceSpecifier_Comparator::operator()(const struct SAIInterfaceSpecifier& a, const struct SAIInterfaceSpecifier& b) const {
 
 	bool isLess = false;
-	
+
 	int shortNameComp = strcmp(a.shortName, b.shortName);
 	if (shortNameComp < 0) {
 		return isLess = true;
 	} else if (shortNameComp == 0) {
 		int versionComp = strcmp(a.version, b.version);
-		
+
 		if (versionComp < 0) {
 			isLess = true;
 		}
@@ -64,26 +64,26 @@ bool SAIInterfaceSpecifier_Comparator::operator()(const struct SAIInterfaceSpeci
 	return isLess;
 }
 bool SAIInterfaceSpecifier_Comparator::IsEmpty(const struct SAIInterfaceSpecifier& spec) {
-	
+
 	bool empty = false;
-	
+
 	if (spec.shortName == NULL || spec.version == NULL) {
 		empty = true;
 	}
-	
+
 	return empty;
 }
 
 bool SSAIKey_Comparator::operator()(const struct SSAIKey& a, const struct SSAIKey& b) const {
-	
+
 	bool isLess = false;
-	
+
 	bool interfaceLess = SAIInterfaceSpecifier_Comparator()(a.interface, b.interface);
 	if (interfaceLess) {
 		isLess = true;
 	} else if (!(SAIInterfaceSpecifier_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
 		bool aiLess = SSAISpecifier_Comparator()(a.ai, b.ai);
-		
+
 		if (aiLess) {
 			isLess = true;
 		}
@@ -92,45 +92,45 @@ bool SSAIKey_Comparator::operator()(const struct SSAIKey& a, const struct SSAIKe
 	return isLess;
 }
 bool SSAIKey_Comparator::IsEmpty(const struct SSAIKey& key) {
-	
+
 	bool empty = false;
-	
+
 	if (SAIInterfaceSpecifier_Comparator::IsEmpty(key.interface)
 			|| SSAISpecifier_Comparator::IsEmpty(key.ai)) {
 		empty = true;
 	}
-	
+
 	return empty;
 }
 
-bool SGAIKey_Comparator::operator()(const struct SGAIKey& a, const struct SGAIKey& b) const {
-
-	bool isLess = false;
-	
-	bool interfaceLess = SAIInterfaceSpecifier_Comparator()(a.interface, b.interface);
-	if (interfaceLess) {
-		isLess = true;
-	} else if (!(SAIInterfaceSpecifier_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
-		bool aiLess = SGAISpecifier_Comparator()(a.ai, b.ai);
-		
-		if (aiLess) {
-			isLess = true;
-		}
-	}
-
-	return isLess;
-}
-bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
-	
-	bool empty = false;
-	
-	if (SAIInterfaceSpecifier_Comparator::IsEmpty(key.interface)
-			|| SGAISpecifier_Comparator::IsEmpty(key.ai)) {
-		empty = true;
-	}
-	
-	return empty;
-}
+//bool SGAIKey_Comparator::operator()(const struct SGAIKey& a, const struct SGAIKey& b) const {
+//
+//	bool isLess = false;
+//
+//	bool interfaceLess = SAIInterfaceSpecifier_Comparator()(a.interface, b.interface);
+//	if (interfaceLess) {
+//		isLess = true;
+//	} else if (!(SAIInterfaceSpecifier_Comparator()(b.interface, a.interface))) { // -> interfaces are equal
+//		bool aiLess = SGAISpecifier_Comparator()(a.ai, b.ai);
+//
+//		if (aiLess) {
+//			isLess = true;
+//		}
+//	}
+//
+//	return isLess;
+//}
+//bool SGAIKey_Comparator::IsEmpty(const struct SGAIKey& key) {
+//
+//	bool empty = false;
+//
+//	if (SAIInterfaceSpecifier_Comparator::IsEmpty(key.interface)
+//			|| SGAISpecifier_Comparator::IsEmpty(key.ai)) {
+//		empty = true;
+//	}
+//
+//	return empty;
+//}
 
 #endif	// __cplusplus
 #endif	// !defined BUILDING_AI

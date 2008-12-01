@@ -22,6 +22,8 @@
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SInfo.h"
+#include "ExternalAI/Interface/SOption.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"

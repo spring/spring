@@ -35,9 +35,8 @@ struct float3;
 class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
 public:
 	CR_DECLARE(CSkirmishAIWrapper);
-//	CSkirmishAIWrapper();
-	CSkirmishAIWrapper(int teamId, const SSAIKey& key,
-			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
+
+	CSkirmishAIWrapper(int teamId, const SSAIKey& key);
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
@@ -76,9 +75,8 @@ public:
 	virtual void SetCheatEventsEnabled(bool enable);
 	virtual bool IsCheatEventsEnabled() const;
 
-
 	/**
-	 * inherited form ISkirmishAI.
+	 * inherited from ISkirmishAI.
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */
 	virtual int HandleEvent(int topic, const void* data) const;
@@ -91,30 +89,12 @@ private:
 	int teamId;
 	bool cheatEvents;
 
-//	bool loadSupported;
-
 	ISkirmishAI* ai;
 	CGlobalAICallback* callback;
 	SAICallback* c_callback;
 	SSAIKey key;
-	std::vector<std::string> optionKeys;
-	std::vector<std::string> optionValues;
-	const char** optionKeys_c;
-	const char** optionValues_c;
-
-//	typedef bool (*ISCINTERFACE)();
-//	typedef int (*GETGLOBALAIVERSION)();
-//	typedef IGlobalAI* (*GETNEWAI)();
-//	typedef IGlobalAI* (*GETNEWAIBYNAME)(const char*, int);
-//	typedef void (*RELEASEAI)(IGlobalAI* i);
-//	typedef bool (*ISLOADSUPPORTED)();
-
-//	ISCINTERFACE _IsCInterfaceFunc;
-//	GETGLOBALAIVERSION _GetGlobalAiVersionFunc;
-//	GETNEWAI _GetNewAIFunc;
-//	GETNEWAIBYNAME _GetNewAIByNameFunc;
-//	RELEASEAI _ReleaseAIFunc;
-//	ISLOADSUPPORTED _IsLoadSupportedFunc;
+	const struct InfoItem* info;
+	unsigned int size_info;
 
 private:
 	void LoadSkirmishAI(bool postLoad);

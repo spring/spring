@@ -26,16 +26,16 @@ class IGroupAILibrary;
 
 class CGroupAI : public IGroupAI {
 public:
-	CGroupAI(int teamId, int groupId, const SGAIKey& key);
-	virtual ~CGroupAI();
+//	CGroupAI(int teamId, int groupId, const SGAIKey& key);
+//	virtual ~CGroupAI();
 
 	virtual int HandleEvent(int topic, const void* data) const;
 
 private:
 	int teamId;
 	int groupId;
-	const SGAIKey key;
+//	const SGAIKey key;
 	const IGroupAILibrary* library;
 };
 
-#endif	// _GROUPAI_H
+#endif // _GROUPAI_H

@@ -37,6 +37,11 @@ public:
 			const std::string& aiOptionFile);
 	~CSkirmishAILibraryInfo();
 
+	virtual void CreateCReferences();
+private:
+	virtual void FreeCReferences();
+public:
+
 	virtual SSAISpecifier GetSpecifier() const;
 
 	virtual std::string GetDataDir() const;
@@ -49,13 +54,14 @@ public:
 	virtual std::string GetInterfaceShortName() const;
 	virtual std::string GetInterfaceVersion() const;
 	virtual std::string GetInfo(const std::string& key) const;
-	virtual const std::map<std::string, InfoItem>* GetInfo() const;
-	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
-			unsigned int maxInfoItems) const;
-	virtual unsigned int GetOptionsCReference(Option cOptions[],
-			unsigned int maxOptions) const;
+	virtual const std::map<std::string, InfoItem>& GetInfo() const;
+//	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
+//			unsigned int maxInfoItems) const;
+//	virtual const struct InfoItem* GetInfoCReference() const;
+	virtual const char** GetCInfoKeys() const;
+	virtual const char** GetCInfoValues() const;
 
-	virtual const std::vector<Option>* GetOptions() const;
+	virtual const std::vector<Option>& GetOptions() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
 	virtual void SetFileName(const std::string& fileName);
@@ -74,6 +80,9 @@ private:
 	static const unsigned int MAX_INFOS = 128;
 	static const unsigned int MAX_OPTIONS = 128;
 	std::map<std::string, InfoItem> info;
+//	struct InfoItem* info_c;
+	const char** infoKeys_c;
+	const char** infoValues_c;
 	std::vector<Option> options;
 };
 

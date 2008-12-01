@@ -1,19 +1,19 @@
 /*
-    Copyright 2008  Nicolas Wu
-    
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+	Copyright 2008  Nicolas Wu
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 	@author Nicolas Wu
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
@@ -22,20 +22,20 @@
 If we do not have an init() method, then we would instead pass
 an event InitEvent to handleEvent. However, we would have to make
 handleEvent have to wait for an InitEvent as a special case, since
-the team in question would not yet exist. 
+the team in question would not yet exist.
 
 Therefore, the handleEvent code would look like this:
 [code]
 EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
-    if (topic == INIT_EVENT) {
-        myAIs[teamId] = CAIObject();
-    }
-    if (myAIs.count(teamId) > 0){
-        // allow the AI instance to handle the event.
-        return myAIs[teamId].handleEvent(topic, data);
-    }
-    // no AI for that team, so return error.
-    else return -1;
+	if (topic == INIT_EVENT) {
+		myAIs[teamId] = CAIObject();
+	}
+	if (myAIs.count(teamId) > 0){
+		// allow the AI instance to handle the event.
+		return myAIs[teamId].handleEvent(topic, data);
+	}
+	// no AI for that team, so return error.
+	else return -1;
 }
 [/code]
 Advantages:
@@ -51,7 +51,7 @@ I understand that we want to keep the interface simple. In fact,
 I think we should keep it as minimal as possible, and ideally everything
 would go through handleEvent. Practically though, it does not make sense
 to do this: we'll be wasting our own time for no good reason in the
-case of initialisation. 
+case of initialisation.
 
 The (in my opinion much cleaner) alternative is the one I've implemented.
 Advantages:
@@ -62,9 +62,9 @@ Advantages:
 Disadvantage:
 * People might start adding other functions to the interface.
 
-I don't think that the disadvantage is a real one: it's pretty standard to 
+I don't think that the disadvantage is a real one: it's pretty standard to
 see initialisation as a special case. It's pretty clear that everything
-else goes through handleEvent. 
+else goes through handleEvent.
 
 The advantage is clear: a more efficient, simpler design. Of course, you could
 argue that the efficiency is nominal, one extra if per event is very little cost,
@@ -87,9 +87,9 @@ to release() and EVENT_RELEASE.
 #include "AIExport.h"
 
 EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
-	
+
 	// TODO: do something
-	
+
 	// signal: ok
 	return 0;
 }

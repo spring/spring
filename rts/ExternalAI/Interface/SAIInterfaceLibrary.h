@@ -50,8 +50,10 @@ struct SAIInterfaceSpecifier {
 	const char* version; // [may not contain: spaces, '_', '#']
 };
 
-struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const orig);
-void deleteSAIInterfaceSpecifier(const struct SAIInterfaceSpecifier* const spec);
+struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(
+		const struct SAIInterfaceSpecifier* const orig);
+void deleteSAIInterfaceSpecifier(
+		const struct SAIInterfaceSpecifier* const spec);
 
 
 /**
@@ -68,11 +70,11 @@ struct SSAIKey {
  * @brief struct Group Artificial Intelligence Key
  * Compleetly specifies a group AI together with an interface.
  */
-struct SGAIKey {
-	CR_DECLARE_STRUCT(SGAIKey);
-	struct SAIInterfaceSpecifier interface;
-	struct SGAISpecifier ai;
-};
+//struct SGAIKey {
+//	CR_DECLARE_STRUCT(SGAIKey);
+//	struct SAIInterfaceSpecifier interface;
+//	struct SGAISpecifier ai;
+//};
 
 /**
  * @brief struct Artificial Intelligence Interface
@@ -97,7 +99,10 @@ struct SAIInterfaceLibrary {
 	 *								and the environment
 	 * @return	ok: 0, error: != 0
 	 */
-	int (CALLING_CONV *initStatic)(const struct SStaticGlobalData* staticGlobalData);
+	int (CALLING_CONV *initStatic)(
+			unsigned int infoSize,
+			const char** infoKeys, const char** infoValues,
+			const struct SStaticGlobalData* staticGlobalData);
 
 	/**
 	 * This function is called right right before the library is unloaded.
@@ -129,8 +134,8 @@ struct SAIInterfaceLibrary {
 	 *
 	 * @return number of elements stored into parameter info
 	 */
-	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
-			unsigned int maxInfoItems);
+//	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
+//			unsigned int maxInfoItems);
 
 
 	// skirmish AI methods
@@ -143,7 +148,8 @@ struct SAIInterfaceLibrary {
 	//int (CALLING_CONV *getSkirmishAISpecifiers)(struct SSAISpecifier* sAISpecifiers, int max);
 	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
-			const struct InfoItem info[], unsigned int numInfoItems);
+			unsigned int infoSize,
+			const char** infoKeys, const char** infoValues);
 
 	/**
 	 * Unloads the specified Skirmish AI.
@@ -151,7 +157,8 @@ struct SAIInterfaceLibrary {
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *unloadSkirmishAILibrary)(
-			const struct SSAISpecifier* const sAISpecifier);
+			unsigned int infoSize,
+			const char** infoKeys, const char** infoValues);
 
 	/**
 	 * Unloads all Skirmish AI libraries currently loaded by this interface.
@@ -170,23 +177,23 @@ struct SAIInterfaceLibrary {
 	 */
 	//int (CALLING_CONV *getGroupAISpecifiers)(struct SGAISpecifier* gAISpecifiers, int max);
 	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
-	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
-			const struct InfoItem info[], unsigned int numInfoItems);
+//	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
+//			const struct InfoItem info[], unsigned int numInfoItems);
 
 	/**
 	 * Unloads the specified Group AI.
 	 *
 	 * @return	ok: 0, error: != 0
 	 */
-	int (CALLING_CONV *unloadGroupAILibrary)(
-			const struct SGAISpecifier* const gAISpecifier);
+//	int (CALLING_CONV *unloadGroupAILibrary)(
+//			const struct SGAISpecifier* const gAISpecifier);
 
 	/**
 	 * Unloads all Group AI libraries currently loaded by this interface.
 	 *
 	 * @return	ok: 0, error: != 0
 	 */
-	int (CALLING_CONV *unloadAllGroupAILibraries)();
+//	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 
 #ifdef	__cplusplus
@@ -202,7 +209,8 @@ struct SAIInterfaceSpecifier_Comparator {
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SAIInterfaceSpecifier& a, const struct SAIInterfaceSpecifier& b) const;
+	bool operator()(const struct SAIInterfaceSpecifier& a,
+			const struct SAIInterfaceSpecifier& b) const;
 	static bool IsEmpty(const struct SAIInterfaceSpecifier& spec);
 };
 
@@ -217,17 +225,17 @@ struct SSAIKey_Comparator {
 	static bool IsEmpty(const struct SSAIKey& key);
 };
 
-struct SGAIKey_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SGAIKey& a, const struct SGAIKey& b) const;
-	static bool IsEmpty(const struct SGAIKey& key);
-};
-#endif	// __cplusplus
+//struct SGAIKey_Comparator {
+//	/**
+//	 * The key comparison function, a Strict Weak Ordering;
+//	 * it returns true if its first argument is less
+//	 * than its second argument, and false otherwise.
+//	 * This is also defined as map::key_compare.
+//	 */
+//	bool operator()(const struct SGAIKey& a, const struct SGAIKey& b) const;
+//	static bool IsEmpty(const struct SGAIKey& key);
+//};
+#endif // __cplusplus
 
-#endif	// !defined BUILDING_AI
-#endif	// _SAIINTERFACELIBRARY_H
+#endif // !defined BUILDING_AI
+#endif // _SAIINTERFACELIBRARY_H

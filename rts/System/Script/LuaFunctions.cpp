@@ -47,7 +47,11 @@ namespace luafunctions
 	void CreateSkirmishAI(int teamId, const SSAIKey& key,
 			const std::map<std::string, std::string>& options)
 	{
-			eoh->CreateSkirmishAI(teamId, key, options);
+		teamHandler->Team(teamId)->isAI = true;
+		teamHandler->Team(teamId)->skirmishAISpecifier = key;
+		teamHandler->Team(teamId)->skirmishAIOptions = options;
+		teamHandler->Team(teamId)->leader = 0;
+		eoh->CreateSkirmishAI(teamId, key);
 	}
 
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c)

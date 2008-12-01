@@ -71,28 +71,79 @@ std::string CAILibraryManager::extractFileName(const std::string& libFile, bool 
 	return libFile.substr(firstChar+1, lastChar - firstChar -1);
 }
 
+
+static unsigned int allocCPropertiesMap(
+		std::map<std::string, std::string> propMap,
+		const char*** cKeys, const char*** cValues) {
+
+	unsigned int size = propMap.size();
+
+	(*cKeys) = (const char**) calloc(size, sizeof(char*));
+	(*cValues) = (const char**) calloc(size, sizeof(char*));
+	unsigned int i;
+	std::map<std::string, std::string>::const_iterator pi;
+	for (i=0, pi=propMap.begin(); i < size; ++i, ++pi) {
+		const char* key = pi->first.c_str();
+		const char* value = pi->second.c_str();
+		char* key_cpy = (char*) calloc(strlen(key) + 1, sizeof(char));
+		char* value_cpy = (char*) calloc(strlen(value) + 1, sizeof(char));
+		strcpy(key_cpy, key);
+		strcpy(value_cpy, value);
+		(*cKeys)[i] = key_cpy;
+		(*cValues)[i] = value_cpy;
+	}
+
+	return size;
+}
+static void freeCPropertiesMap(unsigned int mapSize, const char** cKeys,
+		const char** cValues) {
+
+	unsigned int i;
+	for (i=0; i < mapSize; ++i) {
+		free(const_cast<char*>(cKeys[i]));
+		free(const_cast<char*>(cValues[i]));
+	}
+	free(const_cast<char**>(cKeys));
+	free(const_cast<char**>(cValues));
+	cKeys = NULL;
+	cValues = NULL;
+}
+
+static std::string noSlashAtEnd(const std::string& dir) {
+
+	std::string resDir = dir;
+
+	char lastChar = dir.at(dir.size()-1);
+	if (lastChar == '/' || lastChar == '\\') {
+		resDir = resDir.substr(0, dir.size()-1);
+	}
+
+	return resDir;
+}
+
 CAILibraryManager::CAILibraryManager() : usedSkirmishAIInfos_initialized(false) {
 	//GetAllInfosFromLibraries();
 	GetAllInfosFromCache();
+	CreateCOptions();
 }
 
 /*
 void CAILibraryManager::GetAllInfosFromLibraries() {
-	
+
 	ClearAllInfos();
-	
+
 	// look for AI interface library files
 	std::vector<std::string> interfaceLibFiles =
 			FindFiles(std::string(PATH_TO_SPRING_HOME) +
 			std::string("") + AI_INTERFACES_IMPLS_DIR,
 			std::string(".") + SharedLib::GetLibExtension());
-	
+
 	// initialize the interface infos
 	std::vector<std::string>::const_iterator libFile;
 	for (libFile=interfaceLibFiles.begin(); libFile!=interfaceLibFiles.end(); libFile++) { // interfaces
-		
+
 		std::string fileName = std::string(extractFileName(*libFile, false));
-		
+
 		// load the interface
 		IAIInterfaceLibrary* interfaceLib = new CAIInterfaceLibrary(fileName);
 		if (interfaceLib == NULL) {
@@ -100,19 +151,19 @@ void CAILibraryManager::GetAllInfosFromLibraries() {
 					"Failed to load interface shared library \"%s\"",
 					libFile->c_str());
 		}
-		
+
 		SAIInterfaceSpecifier interfaceSpecifier = interfaceLib->GetSpecifier();
 		interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
 		interfaceSpecifiers.push_back(interfaceSpecifier);
-		
+
 		// generate and store the interface info
 		CAIInterfaceLibraryInfo* interfaceInfo = new CAIInterfaceLibraryInfo(*interfaceLib);
 		interfaceInfos[interfaceSpecifier] = interfaceInfo;
-		
+
 		// generate and store the pure file name
 		//interfaceFileNames[interfaceSpecifier] = fileName;
 		interfaceInfo->SetFileName(fileName);
-		
+
 		// fetch the info of all Skirmish AIs available through the interface
 		std::vector<SSAISpecifier> sass = interfaceLib->GetSkirmishAILibrarySpecifiers();
 		std::vector<SSAISpecifier>::const_iterator sas;
@@ -124,7 +175,7 @@ void CAILibraryManager::GetAllInfosFromLibraries() {
 			skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 			interfaceLib->ReleaseSkirmishAILibrary(*sas);
 		}
-		
+
 		// fetch the info of all Group AIs available through the interface
 		std::vector<SGAISpecifier> gass = interfaceLib->GetGroupAILibrarySpecifiers();
 		std::vector<SGAISpecifier>::const_iterator gas;
@@ -136,7 +187,7 @@ void CAILibraryManager::GetAllInfosFromLibraries() {
 			groupAIInfos[groupAIKey] = groupAIInfo;
 			interfaceLib->ReleaseGroupAILibrary(*gas);
 		}
-		
+
 		delete interfaceLib;
 	}
 }
@@ -149,7 +200,7 @@ std::vector<InfoItem> ParseInfos(
 		const std::string& accessModes)
 {
 	std::vector<InfoItem> infos;
-	
+
 	//static const int MAX_INFOS = 128;
 #define MAX_INFOS 128
 	InfoItem tmpInfos[MAX_INFOS];
@@ -157,22 +208,11 @@ std::vector<InfoItem> ParseInfos(
 	for (unsigned int i=0; i < num; ++i) {
 		infos.push_back(copyInfoItem(&(tmpInfos[i])));
     }
-	
+
 	return infos;
 }
 */
 
-static std::string noSlashAtEnd(const std::string& dir) {
-
-	std::string resDir = dir;
-	
-	char lastChar = dir.at(dir.size()-1);
-	if (lastChar == '/' || lastChar == '\\') {
-		resDir = resDir.substr(0, dir.size()-1);
-	}
-
-	return resDir;
-}
 
 void CAILibraryManager::GetAllInfosFromCache() {
 
@@ -204,6 +244,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					new CAIInterfaceLibraryInfo(infoFile.at(0));
 
 			interfaceInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
+			interfaceInfo->CreateCReferences();
 
 			SAIInterfaceSpecifier interfaceSpecifier = interfaceInfo->GetSpecifier();
 
@@ -231,7 +272,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			}
 		}
 	}
-	
+
 	// Read from Skirmish AI info and option files
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
@@ -255,6 +296,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName);
 
 			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
+			skirmishAIInfo->CreateCReferences();
 
 			SSAISpecifier aiSpecifier = skirmishAIInfo->GetSpecifier();
 			SAIInterfaceSpecifier interfaceSpecifier =
@@ -292,77 +334,77 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	}
 
 
-	// Read from Group AI info and option files
-	// we are looking for:
-	// {GROUP_AI_DATA_DIR}/{*}/AIInfo.lua
-	// {GROUP_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
-	T_dirs groupAIDataDirs = FindDirsAndDirectSubDirs(GROUP_AI_DATA_DIR);
-	T_dupGroup duplicateGroupAIInfoCheck;
-	for (T_dirs::iterator dir = groupAIDataDirs.begin();
-			dir != groupAIDataDirs.end(); ++dir) {
-		const std::string& possibleDataDir = *dir;
-		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
-				"AIInfo.lua");
-		if (infoFile.size() > 0) { // group AI info is available
-			std::string optionFileName = "";
-			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
-					"AIOptions.lua");
-			if (optionFile.size() > 0) {
-				optionFileName = optionFile.at(0);
-			}
-			// generate and store the ai info
-			CGroupAILibraryInfo* groupAIInfo =
-					new CGroupAILibraryInfo(infoFile.at(0), optionFileName);
-
-			groupAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
-
-			SGAISpecifier aiSpecifier = groupAIInfo->GetSpecifier();
-			SAIInterfaceSpecifier interfaceSpecifier =
-					FindFittingInterfaceSpecifier(
-							groupAIInfo->GetInterfaceShortName(),
-							groupAIInfo->GetInterfaceVersion(),
-							interfaceSpecifiers);
-			if (interfaceSpecifier.shortName != NULL) {
-				aiSpecifier = copySGAISpecifier(&aiSpecifier);
-				SGAIKey groupAIKey = {interfaceSpecifier, aiSpecifier};
-				groupAIKeys.insert(groupAIKey);
-				groupAIInfos[groupAIKey] = groupAIInfo;
-
-				// so we can check if one group AI is specified multiple times
-				duplicateGroupAIInfoCheck[groupAIKey].insert(infoFile.at(0));
-			}
-		}
-	}
-
-	// filter out group AIs that are specified multiple times
-	for (T_dupGroup::const_iterator info = duplicateGroupAIInfoCheck.begin();
-			info != duplicateGroupAIInfoCheck.end(); ++info) {
-		if (info->second.size() >= 2) {
-			duplicateGroupAIInfos[info->first] = info->second;
-
-			logOutput.Print("WARNING: Duplicate Group AI Info found:");
-			logOutput.Print("\tfor Group AI: %s %s", info->first.ai.shortName,
-					info->first.ai.version);
-			logOutput.Print("\tin files:");
-			std::set<std::string>::const_iterator dir;
-			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
-				logOutput.Print("\t%s", dir->c_str());
-			}
-		}
-	}
+//	// Read from Group AI info and option files
+//	// we are looking for:
+//	// {GROUP_AI_DATA_DIR}/{*}/AIInfo.lua
+//	// {GROUP_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
+//	T_dirs groupAIDataDirs = FindDirsAndDirectSubDirs(GROUP_AI_DATA_DIR);
+//	T_dupGroup duplicateGroupAIInfoCheck;
+//	for (T_dirs::iterator dir = groupAIDataDirs.begin();
+//			dir != groupAIDataDirs.end(); ++dir) {
+//		const std::string& possibleDataDir = *dir;
+//		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
+//				"AIInfo.lua");
+//		if (infoFile.size() > 0) { // group AI info is available
+//			std::string optionFileName = "";
+//			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
+//					"AIOptions.lua");
+//			if (optionFile.size() > 0) {
+//				optionFileName = optionFile.at(0);
+//			}
+//			// generate and store the ai info
+//			CGroupAILibraryInfo* groupAIInfo =
+//					new CGroupAILibraryInfo(infoFile.at(0), optionFileName);
+//
+//			groupAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
+//
+//			SGAISpecifier aiSpecifier = groupAIInfo->GetSpecifier();
+//			SAIInterfaceSpecifier interfaceSpecifier =
+//					FindFittingInterfaceSpecifier(
+//							groupAIInfo->GetInterfaceShortName(),
+//							groupAIInfo->GetInterfaceVersion(),
+//							interfaceSpecifiers);
+//			if (interfaceSpecifier.shortName != NULL) {
+//				aiSpecifier = copySGAISpecifier(&aiSpecifier);
+//				SGAIKey groupAIKey = {interfaceSpecifier, aiSpecifier};
+//				groupAIKeys.insert(groupAIKey);
+//				groupAIInfos[groupAIKey] = groupAIInfo;
+//
+//				// so we can check if one group AI is specified multiple times
+//				duplicateGroupAIInfoCheck[groupAIKey].insert(infoFile.at(0));
+//			}
+//		}
+//	}
+//
+//	// filter out group AIs that are specified multiple times
+//	for (T_dupGroup::const_iterator info = duplicateGroupAIInfoCheck.begin();
+//			info != duplicateGroupAIInfoCheck.end(); ++info) {
+//		if (info->second.size() >= 2) {
+//			duplicateGroupAIInfos[info->first] = info->second;
+//
+//			logOutput.Print("WARNING: Duplicate Group AI Info found:");
+//			logOutput.Print("\tfor Group AI: %s %s", info->first.ai.shortName,
+//					info->first.ai.version);
+//			logOutput.Print("\tin files:");
+//			std::set<std::string>::const_iterator dir;
+//			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
+//				logOutput.Print("\t%s", dir->c_str());
+//			}
+//		}
+//	}
 
 /*
 	std::vector<std::string> infoFiles =
 			FindFiles(std::string(
 			std::string("") + AI_INTERFACES_DATA_DIR,
 			std::string(".") + SharedLib::GetLibExtension());
-	
+
 	// initialize the interface infos
 	std::vector<std::string>::const_iterator libFile;
 	for (libFile=interfaceLibFiles.begin(); libFile!=interfaceLibFiles.end(); libFile++) { // interfaces
-		
+
 		std::string fileName = std::string(extractFileName(*libFile, false));
-		
+
 		// load the interface
 		IAIInterfaceLibrary* interfaceLib = new CAIInterfaceLibrary(fileName);
 		if (interfaceLib == NULL) {
@@ -370,18 +412,18 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					"Failed to load interface shared library \"%s\"",
 					libFile->c_str());
 		}
-		
+
 		SAIInterfaceSpecifier interfaceSpecifier = interfaceLib->GetSpecifier();
 		interfaceSpecifier = copySAIInterfaceSpecifier(&interfaceSpecifier);
 		interfaceSpecifiers.push_back(interfaceSpecifier);
-		
+
 		// generate and store the interface info
 		CAIInterfaceLibraryInfo* interfaceInfo = new CAIInterfaceLibraryInfo(*interfaceLib);
 		interfaceInfos[interfaceSpecifier] = interfaceInfo;
-		
+
 		// generate and store the pure file name
 		interfaceFileNames[interfaceSpecifier] = fileName;
-		
+
 		// fetch the info of all Skirmish AIs available through the interface
 		std::vector<SSAISpecifier> sass = interfaceLib->GetSkirmishAILibrarySpecifiers();
 		std::vector<SSAISpecifier>::const_iterator sas;
@@ -393,7 +435,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 			interfaceLib->ReleaseSkirmishAILibrary(*sas);
 		}
-		
+
 		// fetch the info of all Group AIs available through the interface
 		std::vector<SGAISpecifier> gass = interfaceLib->GetGroupAILibrarySpecifiers();
 		std::vector<SGAISpecifier>::const_iterator gas;
@@ -405,7 +447,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			groupAIInfos[groupAIKey] = groupAIInfo;
 			interfaceLib->ReleaseGroupAILibrary(*gas);
 		}
-		
+
 		delete interfaceLib;
 	}
 */
@@ -425,19 +467,81 @@ void CAILibraryManager::ClearAllInfos() {
 		sai->second = NULL;
 	}
 
-	IAILibraryManager::T_groupAIInfos::iterator gai;
-	for (gai=groupAIInfos.begin(); gai!=groupAIInfos.end(); gai++) {
-		delete gai->second;
-		gai->second = NULL;
-	}
+//	IAILibraryManager::T_groupAIInfos::iterator gai;
+//	for (gai=groupAIInfos.begin(); gai!=groupAIInfos.end(); gai++) {
+//		delete gai->second;
+//		gai->second = NULL;
+//	}
 
 	interfaceInfos.clear();
 	skirmishAIInfos.clear();
-	groupAIInfos.clear();
+//	groupAIInfos.clear();
 
 	interfaceSpecifiers.clear();
 	skirmishAIKeys.clear();
-	groupAIKeys.clear();
+//	groupAIKeys.clear();
+}
+
+void CAILibraryManager::CreateCOptions() {
+
+	int t;
+	int size_t = teamHandler->ActiveTeams();
+	for (t=0; t < size_t; ++t) {
+		std::map<std::string, std::string> teamOptions = teamHandler->Team(t)->skirmishAIOptions;
+		const char** keys;// = (const char**) malloc(sizeof(const char**));
+		const char** values;// = (const char**) malloc(sizeof(const char**));
+		int unsigned size = allocCPropertiesMap(teamOptions, &keys, &values);
+		teamId_skirmishOptionKeys_c[t] = values;
+		teamId_skirmishOptionValues_c[t] = keys;
+		teamId_skirmishOptionsSize_c[t] = size;
+	}
+}
+
+void CAILibraryManager::DeleteCOptions() {
+
+	std::map<int, const char**>::const_iterator ki;
+	for (ki=teamId_skirmishOptionKeys_c.begin();
+			ki != teamId_skirmishOptionKeys_c.end(); ++ki) {
+		int t = ki->first;
+		const char** keys = ki->second;
+		const char** values = teamId_skirmishOptionValues_c[t];
+		int unsigned size = teamId_skirmishOptionsSize_c[t];
+		freeCPropertiesMap(size, keys, values);
+//		free(keys);
+//		free(values);
+	}
+}
+
+
+unsigned int CAILibraryManager::GetSkirmishAICOptionSize(int teamId) const {
+
+	std::map<int, unsigned int>::const_iterator size
+			= teamId_skirmishOptionsSize_c.find(teamId);
+	if (size != teamId_skirmishOptionsSize_c.end()) {
+		return size->second;
+	} else {
+		return 0;
+	}
+}
+const char** CAILibraryManager::GetSkirmishAICOptionKeys(int teamId) const {
+
+	std::map<int, const char**>::const_iterator keys
+			= teamId_skirmishOptionKeys_c.find(teamId);
+	if (keys != teamId_skirmishOptionKeys_c.end()) {
+		return keys->second;
+	} else {
+		return NULL;
+	}
+}
+const char** CAILibraryManager::GetSkirmishAICOptionValues(int teamId) const {
+
+	std::map<int, const char**>::const_iterator values
+			= teamId_skirmishOptionValues_c.find(teamId);
+	if (values != teamId_skirmishOptionValues_c.end()) {
+		return values->second;
+	} else {
+		return NULL;
+	}
 }
 
 CAILibraryManager::~CAILibraryManager() {
@@ -450,40 +554,42 @@ CAILibraryManager::~CAILibraryManager() {
 		deleteSSAISpecifier(&(sSpec->ai));
 	}
 
-	// delete all strings contained in group AI specifiers
-	IAILibraryManager::T_groupAIKeys::iterator gSpec;
-	for (gSpec=groupAIKeys.begin(); gSpec!=groupAIKeys.end(); gSpec++) {
-		deleteSGAISpecifier(&(gSpec->ai));
-	}
+//	// delete all strings contained in group AI specifiers
+//	IAILibraryManager::T_groupAIKeys::iterator gSpec;
+//	for (gSpec=groupAIKeys.begin(); gSpec!=groupAIKeys.end(); gSpec++) {
+//		deleteSGAISpecifier(&(gSpec->ai));
+//	}
 
 	// delete all strings contained in interface specifiers
 	IAILibraryManager::T_interfaceSpecs::iterator iSpec;
 	for (iSpec=interfaceSpecifiers.begin(); iSpec!=interfaceSpecifiers.end(); iSpec++) {
 		deleteSAIInterfaceSpecifier(&(*iSpec));
 	}
+
+	DeleteCOptions();
 }
 
-const IAILibraryManager::T_interfaceSpecs* CAILibraryManager::GetInterfaceSpecifiers() const {
-	return &interfaceSpecifiers;
+const IAILibraryManager::T_interfaceSpecs& CAILibraryManager::GetInterfaceSpecifiers() const {
+	return interfaceSpecifiers;
 }
-const IAILibraryManager::T_skirmishAIKeys* CAILibraryManager::GetSkirmishAIKeys() const {
-	return &skirmishAIKeys;
+const IAILibraryManager::T_skirmishAIKeys& CAILibraryManager::GetSkirmishAIKeys() const {
+	return skirmishAIKeys;
 }
-const IAILibraryManager::T_groupAIKeys* CAILibraryManager::GetGroupAIKeys() const {
-	return &groupAIKeys;
-}
+//const IAILibraryManager::T_groupAIKeys& CAILibraryManager::GetGroupAIKeys() const {
+//	return groupAIKeys;
+//}
 
-const IAILibraryManager::T_interfaceInfos* CAILibraryManager::GetInterfaceInfos() const {
-	return &interfaceInfos;
+const IAILibraryManager::T_interfaceInfos& CAILibraryManager::GetInterfaceInfos() const {
+	return interfaceInfos;
 }
-const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetSkirmishAIInfos() const {
-	return &skirmishAIInfos;
+const IAILibraryManager::T_skirmishAIInfos& CAILibraryManager::GetSkirmishAIInfos() const {
+	return skirmishAIInfos;
 }
-const IAILibraryManager::T_groupAIInfos* CAILibraryManager::GetGroupAIInfos() const {
-	return &groupAIInfos;
-}
+//const IAILibraryManager::T_groupAIInfos& CAILibraryManager::GetGroupAIInfos() const {
+//	return groupAIInfos;
+//}
 
-const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetUsedSkirmishAIInfos() {
+const IAILibraryManager::T_skirmishAIInfos& CAILibraryManager::GetUsedSkirmishAIInfos() {
 
 	if (!usedSkirmishAIInfos_initialized) {
 		const CTeam* team = NULL;
@@ -506,22 +612,22 @@ const IAILibraryManager::T_skirmishAIInfos* CAILibraryManager::GetUsedSkirmishAI
 			}
 		}
 	}
-	
-	return &usedSkirmishAIInfos;
+
+	return usedSkirmishAIInfos;
 }
 
-const IAILibraryManager::T_dupInt* CAILibraryManager::GetDuplicateInterfaceInfos() const {
-	return &duplicateInterfaceInfos;
+const IAILibraryManager::T_dupInt& CAILibraryManager::GetDuplicateInterfaceInfos() const {
+	return duplicateInterfaceInfos;
 }
-const IAILibraryManager::T_dupSkirm* CAILibraryManager::GetDuplicateSkirmishAIInfos() const {
-	return &duplicateSkirmishAIInfos;
+const IAILibraryManager::T_dupSkirm& CAILibraryManager::GetDuplicateSkirmishAIInfos() const {
+	return duplicateSkirmishAIInfos;
 }
-const IAILibraryManager::T_dupGroup* CAILibraryManager::GetDuplicateGroupAIInfos() const {
-	return &duplicateGroupAIInfos;
-}
+//const IAILibraryManager::T_dupGroup& CAILibraryManager::GetDuplicateGroupAIInfos() const {
+//	return duplicateGroupAIInfos;
+//}
 
 
-std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(
+std::vector<SSAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 		const SSAISpecifier& skirmishAISpecifier) const {
 
 	std::vector<SSAIKey> applyingKeys;
@@ -558,49 +664,49 @@ std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(
 
 	return applyingKeys;
 }
-std::vector<SSAIKey> CAILibraryManager::ResolveSkirmishAIKey(const std::string& skirmishAISpecifier) const {
-
-	std::vector<SSAIKey> applyingKeys;
-
-	std::string* aiName;
-	std::string* aiVersion;
-	std::string* interfaceName;
-	std::string* interfaceVersion;
-	bool isValid = SplittAIKey(skirmishAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
-	if (!isValid) {
-		reportError1("AI Library Error", "Invalid Skirmish AI Key: %s", skirmishAISpecifier.c_str());
-		return applyingKeys;
-	}
-
-	std::set<SSAIKey>::const_iterator sasi;
-	for (sasi=skirmishAIKeys.begin(); sasi!=skirmishAIKeys.end(); sasi++) {
-
-		// check if the ai name fits
-		if (*aiName != sasi->ai.shortName) {
-			continue;
-		}
-
-		// check if the ai version fits (if one is specifyed)
-		if (aiVersion && *aiVersion != sasi->ai.version) {
-			continue;
-		}
-
-		// check if the interface name fits (if one is specifyed)
-		if (interfaceName && *interfaceName != sasi->interface.shortName) {
-			continue;
-		}
-
-		// check if the interface version fits (if one is specifyed)
-		if (interfaceVersion && *interfaceVersion != sasi->interface.version) {
-			continue;
-		}
-
-		// if the programm raches here, we know that this key fits
-		applyingKeys.push_back(*sasi);
-	}
-
-	return applyingKeys;
-}
+//std::vector<SSAIKey> CAILibraryManager::FittingSkirmishAIKeys(const std::string& skirmishAISpecifier) const {
+//
+//	std::vector<SSAIKey> applyingKeys;
+//
+//	std::string* aiName;
+//	std::string* aiVersion;
+//	std::string* interfaceName;
+//	std::string* interfaceVersion;
+//	bool isValid = SplittAIKey(skirmishAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
+//	if (!isValid) {
+//		reportError1("AI Library Error", "Invalid Skirmish AI Key: %s", skirmishAISpecifier.c_str());
+//		return applyingKeys;
+//	}
+//
+//	std::set<SSAIKey>::const_iterator sasi;
+//	for (sasi=skirmishAIKeys.begin(); sasi!=skirmishAIKeys.end(); sasi++) {
+//
+//		// check if the ai name fits
+//		if (*aiName != sasi->ai.shortName) {
+//			continue;
+//		}
+//
+//		// check if the ai version fits (if one is specifyed)
+//		if (aiVersion && *aiVersion != sasi->ai.version) {
+//			continue;
+//		}
+//
+//		// check if the interface name fits (if one is specifyed)
+//		if (interfaceName && *interfaceName != sasi->interface.shortName) {
+//			continue;
+//		}
+//
+//		// check if the interface version fits (if one is specifyed)
+//		if (interfaceVersion && *interfaceVersion != sasi->interface.version) {
+//			continue;
+//		}
+//
+//		// if the programm raches here, we know that this key fits
+//		applyingKeys.push_back(*sasi);
+//	}
+//
+//	return applyingKeys;
+//}
 
 const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey) {
 
@@ -626,73 +732,73 @@ void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
 }
 
 
-std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& groupAISpecifier) const {
-
-	std::vector<SGAIKey> applyingKeys;
-
-	std::string* aiName;
-	std::string* aiVersion;
-	std::string* interfaceName;
-	std::string* interfaceVersion;
-	bool isValid = SplittAIKey(groupAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
-	if (!isValid) {
-		reportError1("AI Library Error", "Invalid Group AI Key: %s", groupAISpecifier.c_str());
-		return applyingKeys;
-	}
-
-	std::set<SGAIKey>::const_iterator gasi;
-	for (gasi=groupAIKeys.begin(); gasi!=groupAIKeys.end(); gasi++) {
-
-		// check if the ai name fits
-		if (*aiName != gasi->ai.shortName) {
-			continue;
-		}
-
-		// check if the ai version fits (if one is specifyed)
-		if (aiVersion && *aiVersion != gasi->ai.version) {
-			continue;
-		}
-
-		// check if the interface name fits (if one is specifyed)
-		if (interfaceName && *interfaceName != gasi->interface.shortName) {
-			continue;
-		}
-
-		// check if the interface version fits (if one is specifyed)
-		if (interfaceVersion && *interfaceVersion != gasi->interface.version) {
-			continue;
-		}
-
-		// if the programm raches here, we know that this key fits
-		applyingKeys.push_back(*gasi);
-	}
-
-	return applyingKeys;
-}
-
-const IGroupAILibrary* CAILibraryManager::FetchGroupAILibrary(const SGAIKey& groupAIKey) {
-
-	//return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(groupAIKey.ai);
-	T_groupAIInfos::const_iterator aiInfo = groupAIInfos.find(groupAIKey);
-	if (aiInfo == groupAIInfos.end()) {
-		return NULL;
-	}
-	return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(aiInfo->second);
-}
-
-void CAILibraryManager::ReleaseGroupAILibrary(const SGAIKey& groupAIKey) {
-	FetchInterface(groupAIKey.interface)->ReleaseGroupAILibrary(groupAIKey.ai);
-	ReleaseInterface(groupAIKey.interface); // only releases the library if its load count is 0
-}
-
-void CAILibraryManager::ReleaseAllGroupAILibraries() {
-
-	T_loadedInterfaces::const_iterator lil;
-	for (lil=loadedAIInterfaceLibraries.begin(); lil!=loadedAIInterfaceLibraries.end(); lil++) {
-		FetchInterface(lil->first)->ReleaseAllGroupAILibraries();
-		ReleaseInterface(lil->first); // only releases the library if its load count is 0
-	}
-}
+//std::vector<SGAIKey> CAILibraryManager::ResolveGroupAIKey(const std::string& groupAISpecifier) const {
+//
+//	std::vector<SGAIKey> applyingKeys;
+//
+//	std::string* aiName;
+//	std::string* aiVersion;
+//	std::string* interfaceName;
+//	std::string* interfaceVersion;
+//	bool isValid = SplittAIKey(groupAISpecifier, aiName, aiVersion, interfaceName, interfaceVersion);
+//	if (!isValid) {
+//		reportError1("AI Library Error", "Invalid Group AI Key: %s", groupAISpecifier.c_str());
+//		return applyingKeys;
+//	}
+//
+//	std::set<SGAIKey>::const_iterator gasi;
+//	for (gasi=groupAIKeys.begin(); gasi!=groupAIKeys.end(); gasi++) {
+//
+//		// check if the ai name fits
+//		if (*aiName != gasi->ai.shortName) {
+//			continue;
+//		}
+//
+//		// check if the ai version fits (if one is specifyed)
+//		if (aiVersion && *aiVersion != gasi->ai.version) {
+//			continue;
+//		}
+//
+//		// check if the interface name fits (if one is specifyed)
+//		if (interfaceName && *interfaceName != gasi->interface.shortName) {
+//			continue;
+//		}
+//
+//		// check if the interface version fits (if one is specifyed)
+//		if (interfaceVersion && *interfaceVersion != gasi->interface.version) {
+//			continue;
+//		}
+//
+//		// if the programm raches here, we know that this key fits
+//		applyingKeys.push_back(*gasi);
+//	}
+//
+//	return applyingKeys;
+//}
+//
+//const IGroupAILibrary* CAILibraryManager::FetchGroupAILibrary(const SGAIKey& groupAIKey) {
+//
+//	//return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(groupAIKey.ai);
+//	T_groupAIInfos::const_iterator aiInfo = groupAIInfos.find(groupAIKey);
+//	if (aiInfo == groupAIInfos.end()) {
+//		return NULL;
+//	}
+//	return FetchInterface(groupAIKey.interface)->FetchGroupAILibrary(aiInfo->second);
+//}
+//
+//void CAILibraryManager::ReleaseGroupAILibrary(const SGAIKey& groupAIKey) {
+//	FetchInterface(groupAIKey.interface)->ReleaseGroupAILibrary(groupAIKey.ai);
+//	ReleaseInterface(groupAIKey.interface); // only releases the library if its load count is 0
+//}
+//
+//void CAILibraryManager::ReleaseAllGroupAILibraries() {
+//
+//	T_loadedInterfaces::const_iterator lil;
+//	for (lil=loadedAIInterfaceLibraries.begin(); lil!=loadedAIInterfaceLibraries.end(); lil++) {
+//		FetchInterface(lil->first)->ReleaseAllGroupAILibraries();
+//		ReleaseInterface(lil->first); // only releases the library if its load count is 0
+//	}
+//}
 
 
 
@@ -735,9 +841,9 @@ void CAILibraryManager::ReleaseInterface(const SAIInterfaceSpecifier& interfaceS
 
 /** unloads all interfaces and AIs */
 void CAILibraryManager::ReleaseEverything() {
-	
+
 	ReleaseAllSkirmishAILibraries();
-	ReleaseAllGroupAILibraries();
+//	ReleaseAllGroupAILibraries();
 }
 
 std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, const std::string& fileExtension) {
@@ -805,22 +911,22 @@ SAIInterfaceSpecifier CAILibraryManager::FindFittingInterfaceSpecifier(
 }
 
 std::vector<std::string> split(const std::string& str, const char sep) {
-	
+
 /*
 	std::vector<std::string> parts;
-	
+
 	std::istringstream s(str);
 	std::string temp;
 
 	while (std::getline(s, temp, sep)) {
 		parts.push_back(temp);
 	}
-	
+
 	return parts;
 */
 	std::vector<std::string> tokens;
 	std::string delimitters = ".";
-	
+
     // Skip delimiters at beginning.
     std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
     // Find first "non-delimiter".
@@ -835,7 +941,7 @@ std::vector<std::string> split(const std::string& str, const char sep) {
         // Find next "non-delimiter"
         pos = str.find_first_of(delimitters, lastPos);
     }
-	
+
 	return tokens;
 }
 int CAILibraryManager::versionCompare(
