@@ -48,11 +48,7 @@ UDPConnection::~UDPConnection()
 
 void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
-	if(outgoingLength + data->length >= UDPBufferSize){
-		throw network_error("Buffer overflow in UDPConnection (SendData)");
-	}
-	memcpy(&outgoingData[outgoingLength], data->data, data->length);
-	outgoingLength += data->length;
+	outgoingData.push_back(data);
 }
 
 bool UDPConnection::HasIncomingData() const
@@ -91,9 +87,9 @@ void UDPConnection::Update()
 	if (!sharedSocket)
 	{
 		unsigned recv = 0;
-		unsigned char buffer[UDPBufferSize];
+		unsigned char buffer[4096];
 		sockaddr_in fromAddr;
-		while ((recv = mySocket->RecvFrom(buffer, UDPBufferSize, &fromAddr)) >= hsize)
+		while ((recv = mySocket->RecvFrom(buffer, 4096, &fromAddr)) >= hsize)
 		{
 			RawPacket* data = new RawPacket(buffer, recv);
 			if (CheckAddress(fromAddr))
@@ -171,14 +167,14 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
-		unsigned char buf[UDPBufferSize];
+		unsigned char buf[4096];
 		unsigned bufLength = 0;
 
 		if (fragmentBuffer)
 		{
 			// combine with fragment buffer
 			bufLength += fragmentBuffer->length;
-			assert(fragmentBuffer->length < UDPBufferSize);
+			assert(fragmentBuffer->length < 4096);
 			memcpy(buf, fragmentBuffer->data, bufLength);
 			delete fragmentBuffer;
 			fragmentBuffer = NULL;
@@ -186,7 +182,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 		lastInOrder++;
 #if (BOOST_VERSION >= 103400)
-		assert((wpi->second->length + bufLength) < UDPBufferSize);
+		assert((wpi->second->length + bufLength) < 4096);
 		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
 		bufLength += (wpi->second)->length;
 #else
@@ -259,27 +255,43 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 void UDPConnection::Flush(const bool forced)
 {
-	const float curTime = SDL_GetTicks();
-	if (forced || (outgoingLength>0 && (lastSendTime < (curTime - 200 + outgoingLength * 10))))
+	const unsigned curTime = SDL_GetTicks();
+
+	unsigned outgoingLength = 0;
+	for (packetList::const_iterator it = outgoingData.begin(); it != outgoingData.end(); ++it)
+		outgoingLength += (*it)->length;
+
+	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - 200 + outgoingLength * 10))))
 	{
 		lastSendTime=SDL_GetTicks();
 
+		uint8_t buffer[1500];
+		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
 		// someone in the game gives a large order.
 
-		if (outgoingLength > mtu)
-			++fragmentedFlushes;
-
-		unsigned pos = 0;
-		do
+		while (!outgoingData.empty())
 		{
-			unsigned length = std::min(mtu, outgoingLength);
-			SendRawPacket(outgoingData + pos, length, currentNum++);
-			unackedPackets.push_back(new RawPacket(outgoingData + pos, length));
-			outgoingLength -= length;
-			pos += mtu;
-		} while (outgoingLength > 0);
+			{
+				packetList::iterator it = outgoingData.begin();
+				unsigned numBytes = std::min(mtu-pos, (*it)->length);
+				memcpy(buffer+pos, (*it)->data, numBytes);
+				pos+= numBytes;
+				if (numBytes == (*it)->length) // full packet copied
+					outgoingData.pop_front();
+				else // partially transfered
+					(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
+			} // iterator "it" is now invalid
+			if (pos > 0 && (pos == mtu || outgoingData.empty()))
+			{
+				if (pos == mtu)
+					++fragmentedFlushes;
+				SendRawPacket(buffer, pos, currentNum++);
+				unackedPackets.push_back(new RawPacket(buffer, pos));
+				pos = 0;
+			}
+		}
 	}
 }
 
@@ -342,7 +354,6 @@ void UDPConnection::Init()
 	waitingPackets.clear();
 	firstUnacked=0;
 	currentNum=0;
-	outgoingLength=0;
 	lastNak=-1;
 	lastNakTime=0;
 	lastSendTime=0;
