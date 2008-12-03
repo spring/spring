@@ -5,16 +5,12 @@
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
 #include <deque>
+#include <list>
 
 #include "Connection.h"
 #include "UDPSocket.h"
 
 namespace netcode {
-#ifndef SYNCDEBUG
-const unsigned UDPBufferSize = 16384;
-#else
-const unsigned UDPBufferSize = 40000;
-#endif
 
 /**
 How Spring protocolheader looks like (size in bytes):
@@ -85,6 +81,7 @@ private:
 	unsigned lastReceiveTime;
 	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
+	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
 	/// all packets with number <= nextAck arrived at the other end
 	void AckPackets(const int nextAck);
 	/// add header to data and send it
@@ -98,8 +95,7 @@ private:
 	bool sharedSocket;
 
 	///outgoing stuff (pure data without header) waiting to be sended
-	unsigned char outgoingData[UDPBufferSize];
-	unsigned outgoingLength;
+	packetList outgoingData;
 
 	/// packets the other side didn't ack'ed until now
 	boost::ptr_deque<RawPacket> unackedPackets;
