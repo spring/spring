@@ -98,9 +98,6 @@ public:
 
 	void SetMirrorToStdout(bool);
 
-	static CLogOutput& GetInstance();
-	static CLogOutput myLogOutput;
-
 	void SetFilename(const char* filename);
 	void Initialize();
 
@@ -110,7 +107,7 @@ protected:
 };
 
 
-extern CLogOutput& logOutput;
+extern CLogOutput logOutput;
 
 #undef FORMATSTRING
 

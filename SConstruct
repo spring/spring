@@ -120,6 +120,7 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
+	'rts/ExternalAI/Interface/SInfo.cpp',
 	'rts/System/ConfigHandler.cpp',
 	'rts/System/LogOutput.cpp',
 ]
@@ -169,7 +170,6 @@ if env['platform'] != 'windows':
 # Make a copy of the build environment for the AIs
 aienv = env.Copy()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
-aienv.Append(CXXFLAGS = ['-IAI/Wrappers'])
 aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
 #print aienv['CPPDEFINES']
 
@@ -180,8 +180,7 @@ aienv['CPPDEFINES'] += ['BUILDING_AI']
 
 skirmishaienv = aienv.Copy()
 
-groupaienv = aienv.Copy()
-
+#groupaienv = aienv.Copy()
 
 # stores shared objects so newer scons versions don't choke with
 def create_shared_objects(env, fileList, suffix, additionalCPPDEFINES = []):
@@ -214,21 +213,20 @@ def construct_aiinterface_libName(interfaceName):
 	libName = interfaceName + '-' + fetch_ai_version(interfaceName, 'Interfaces')
 	return libName
 
-# appends the version to the end of the Skirmish AI name
-def construct_skirmishai_libName(aiName):
-	libName = aiName + '-' + fetch_ai_version(aiName, 'Skirmish')
-	return libName
-
-# appends the version to the end of the Group AI name
-def construct_groupai_libName(aiName):
-	libName = aiName + '-' + fetch_ai_version(aiName, 'Group')
-	return libName
+## appends the version to the end of the Skirmish AI name
+#def construct_skirmishai_libName(aiName):
+#	libName = aiName + '-' + fetch_ai_version(aiName, 'Skirmish')
+#	return libName
+#
+## appends the version to the end of the Group AI name
+#def construct_groupai_libName(aiName):
+#	libName = aiName + '-' + fetch_ai_version(aiName, 'Group')
+#	return libName
 
 ################################################################################
 ### Build AI Interface shared objects
 ################################################################################
-install_aiinterfaces_lib_dir = os.path.join(aiinterfaceenv['installprefix'], aiinterfaceenv['libdir'], 'AI/Interfaces/impls')
-install_aiinterfaces_data_dir = os.path.join(aiinterfaceenv['installprefix'], aiinterfaceenv['datadir'], 'AI/Interfaces/data')
+install_aiinterfaces_dir = os.path.join(aiinterfaceenv['installprefix'], aiinterfaceenv['datadir'], 'AI/Interfaces')
 
 # store shared ai-interface objects so newer scons versions don't choke with
 # *** Two environments with different actions were specified for the same target
@@ -236,46 +234,57 @@ aiinterfaceobjs_main = create_shared_objects(aiinterfaceenv, filelist.get_shared
 aiinterfaceobjs_SharedLib = create_shared_objects(aiinterfaceenv, filelist.get_shared_AIInterface_source_SharedLib(aiinterfaceenv), '-aiinterface')
 
 # Build
-aiinterfaces_exclude_list=['build', 'Java']
+aiinterfaces_exclude_list=['build']
 aiinterfaces_needSharedLib_list=['C']
+aiinterfaces_needStreflop_list=['Java']
 for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterfaces_exclude_list):
-	libName = construct_aiinterface_libName(baseName) # eg. C-0.1
-	print "AI Interface: " + libName
+	aiInterfaceVersion = fetch_ai_version(baseName, 'Interfaces')
+	print "AI Interface: " + baseName + " v" + aiInterfaceVersion
+	myEnv = aiinterfaceenv.Copy()
 	objs = aiinterfaceobjs_main
 	if baseName in aiinterfaces_needSharedLib_list:
 		objs += aiinterfaceobjs_SharedLib
-	mySource = objs + filelist.get_AIInterface_source(aiinterfaceenv, baseName)
-	#lib = aiinterfaceenv.SharedLibrary(os.path.join('game/AI/Interfaces/impls', baseName), mySource)
-	lib = aiinterfaceenv.SharedLibrary(os.path.join('game/AI/Interfaces/impls', libName), mySource)
+	if baseName in aiinterfaces_needStreflop_list:
+		myEnv['CPPDEFINES'] += ['-DSTREFLOP_SSE']
+		myEnv.Append(CXXFLAGS = ['-Irts/lib/streflop'])
+		myEnv['LIBS'] += ['streflop']
+	if baseName == 'Java':
+		#myEnv['LINKFLAGS'] += ['-ljvm']
+		#myEnv['LINKFLAGS'] += ['mingwlibs/lib/libjvm.dll.a']
+		#objs += ['mingwlibs/lib/libjvm.dll.a']
+		#myEnv['LIBPATH'] += ['mingwlibs/lib']
+		myEnv['LIBS'] += ['jvm']
+	mySource = objs + filelist.get_AIInterface_source(myEnv, baseName)
+	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
-	inst = env.Install(install_aiinterfaces_lib_dir, lib)
+	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
+	inst = myEnv.Install(install_data_interface_dir, lib)
 	Alias('install', inst)
 	Alias('install-AIInterfaces', inst)
-	Alias('install-'+baseName, inst)
-	if aiinterfaceenv['strip']:
-		aiinterfaceenv.AddPostAction(lib, Action([['strip','$TARGET']]))
+	Alias('install-' + baseName, inst)
+	if myEnv['strip']:
+		myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 # install AI interface info files
 aiinterfaces_data_dirs = filelist.list_directories(env, 'AI/Interfaces', exclude_list=aiinterfaces_exclude_list, recursively=False)
 for f in aiinterfaces_data_dirs:
 	baseName = os.path.basename(f)
+	aiInterfaceVersion = fetch_ai_version(baseName, 'Interfaces')
 	libName = construct_aiinterface_libName(baseName)
-	#install_data_interface_dir = os.path.join(install_aiinterfaces_data_dir, baseName)
-	install_data_interface_dir = os.path.join(install_aiinterfaces_data_dir, libName)
+	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
 	infoFile = os.path.join(f, "InterfaceInfo.lua")
 	if os.path.exists(infoFile):
 		inst = env.Install(install_data_interface_dir, infoFile)
 		Alias('install', inst)
 		Alias('install-AIInterfaces', inst)
-		Alias('install-'+baseName, inst)
+		Alias('install-' + baseName, inst)
 
 ################################################################################
 ### Build Skirmish AI shared objects
 ################################################################################
-install_skirmishai_lib_dir = os.path.join(skirmishaienv['installprefix'], skirmishaienv['libdir'], 'AI/Skirmish/impls')
-install_skirmishai_data_dir = os.path.join(skirmishaienv['installprefix'], skirmishaienv['datadir'], 'AI/Skirmish/data')
+install_skirmishai_dir = os.path.join(skirmishaienv['installprefix'], skirmishaienv['datadir'], 'AI/Skirmish')
 
 # store shared ai objects so newer scons versions don't choke with
 # *** Two environments with different actions were specified for the same target
@@ -290,8 +299,8 @@ skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI', 'N
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai_exclude_list):
-	libName = construct_skirmishai_libName(baseName) # eg. RAI
-	print "Skirmish AI: " + libName
+	aiVersion = fetch_ai_version(baseName, 'Skirmish')
+	print "Skirmish AI: " + baseName + " v" + aiVersion
 	useCreg = baseName in skirmishai_needCreg_list
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
 	myEnv = skirmishaienv.Copy()
@@ -304,17 +313,18 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 	else:
 		objs += skirmishaiobjs_main
 	if isLegacyCpp:
+		myEnv.Append(CXXFLAGS = ['-IAI/Wrappers'])
 		if useCreg:
 			objs += skirmishaiobjs_LegacyCppCregged
 		else:
 			objs += skirmishaiobjs_LegacyCpp
 	mySource = objs + filelist.get_skirmishAI_source(myEnv, baseName)
-	lib = myEnv.SharedLibrary(os.path.join('game/AI/Skirmish/impls', baseName), mySource)
-	#lib = myEnv.SharedLibrary(os.path.join('game/AI/Skirmish/impls', libName), mySource)
+	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, baseName), mySource)
 	Alias(baseName, lib)            # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 	Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
 	Default(lib)
-	inst = env.Install(install_skirmishai_lib_dir, lib)
+	install_data_ai_dir = os.path.join(install_skirmishai_dir, baseName, aiVersion)
+	inst = env.Install(install_data_ai_dir, lib)
 	Alias('install', inst)
 	Alias('install-SkirmishAI', inst)
 	Alias('install-'+baseName, inst)
@@ -325,9 +335,8 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 skirmishai_data_dirs=filelist.list_directories(env, 'AI/Skirmish', exclude_list=skirmishai_exclude_list, recursively=False)
 for f in skirmishai_data_dirs:
 	baseName = os.path.basename(f)
-	libName = construct_aiinterface_libName(baseName)
-	install_data_ai_dir = os.path.join(install_skirmishai_data_dir, baseName)
-	#install_data_ai_dir = os.path.join(install_skirmishai_data_dir, libName)
+	aiVerson = fetch_ai_version(baseName, 'Skirmish')
+	install_data_ai_dir = os.path.join(install_skirmishai_dir, baseName, aiVersion)
 	infoFile = os.path.join(f, "AIInfo.lua")
 	if os.path.exists(infoFile):
 		inst = env.Install(install_data_ai_dir, infoFile)
@@ -351,54 +360,54 @@ for f in aai_data:
 ################################################################################
 ### Build Group AI shared objects
 ################################################################################
-install_groupai_lib_dir = os.path.join(groupaienv['installprefix'], groupaienv['libdir'], 'AI/Helper-libs')
-#install_groupai_data_dir = os.path.join(groupaienv['installprefix'], groupaienv['datadir'], 'AI/Helper-libs/data')
-
-# store shared ai objects so newer scons versions don't choke with
-# *** Two environments with different actions were specified for the same target
-groupaiobjs_main = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source(groupaienv), '-groupai')
-groupaiobjs_mainCregged = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source(groupaienv), '-groupai_creg', ['USING_CREG'])
-groupaiobjs_creg = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_Creg(groupaienv), '-groupai_creg', ['USING_CREG'])
-groupaiobjs_LegacyCpp = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_LegacyCpp(groupaienv), '-groupai')
-groupaiobjs_LegacyCppCregged = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_LegacyCpp(groupaienv), '-groupai_creg', ['USING_CREG'])
-
-# Build
-groupai_exclude_list=['build']
-groupai_isLegacyCpp_list=['?', '??']
-groupai_needCreg_list=[]
-for baseName in filelist.list_groupAIs(groupaienv, exclude_list=groupai_exclude_list):
-	libName = construct_groupai_libName(baseName) # eg. MetalMaker-1.0
-	print "Group AI: " + libName
-	#TODO remove the True in the next line, uncomment the rest, and actualize groupai_needCreg_list
-	useCreg = True #baseName in groupai_needCreg_list
-	#TODO remove the True in the next line, uncomment the rest, and actualize groupai_isLegacyCpp_list
-	isLegacyCpp = True #baseName in groupai_isLegacyCpp_list
-	myEnv = groupaienv.Copy()
-	if useCreg:
-		myEnv['CPPDEFINES'] += ['USING_CREG']
-	objs = []
-	if useCreg:
-		objs += groupaiobjs_mainCregged
-		objs += groupaiobjs_creg
-	else:
-		objs += groupaiobjs_main
-	if isLegacyCpp:
-		if useCreg:
-			objs += groupaiobjs_LegacyCppCregged
-		else:
-			objs += groupaiobjs_LegacyCpp
-	mySource = objs + filelist.get_groupAI_source(myEnv, baseName)
-	lib = myEnv.SharedLibrary(os.path.join('game/AI/Helper-libs', baseName), mySource)
-	#lib = myEnv.SharedLibrary(os.path.join('game/AI/Helper-libs', libName), mySource)
-	Alias(baseName, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
-	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
-	Default(lib)
-	inst = env.Install(install_groupai_lib_dir, lib)
-	Alias('install', inst)
-	Alias('install-GroupAI', inst)
-	Alias('install-'+baseName, inst)
-	if myEnv['strip']:
-		myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
+#install_groupai_lib_dir = os.path.join(groupaienv['installprefix'], groupaienv['libdir'], 'AI/Helper-libs')
+##install_groupai_data_dir = os.path.join(groupaienv['installprefix'], groupaienv['datadir'], 'AI/Helper-libs/data')
+#
+## store shared ai objects so newer scons versions don't choke with
+## *** Two environments with different actions were specified for the same target
+#groupaiobjs_main = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source(groupaienv), '-groupai')
+#groupaiobjs_mainCregged = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source(groupaienv), '-groupai_creg', ['USING_CREG'])
+#groupaiobjs_creg = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_Creg(groupaienv), '-groupai_creg', ['USING_CREG'])
+#groupaiobjs_LegacyCpp = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_LegacyCpp(groupaienv), '-groupai')
+#groupaiobjs_LegacyCppCregged = create_shared_objects(groupaienv, filelist.get_shared_groupAI_source_LegacyCpp(groupaienv), '-groupai_creg', ['USING_CREG'])
+#
+## Build
+#groupai_exclude_list=['build']
+#groupai_isLegacyCpp_list=['?', '??']
+#groupai_needCreg_list=[]
+#for baseName in filelist.list_groupAIs(groupaienv, exclude_list=groupai_exclude_list):
+#	libName = construct_groupai_libName(baseName) # eg. MetalMaker-1.0
+#	print "Group AI: " + libName
+#	#TODO remove the True in the next line, uncomment the rest, and actualize groupai_needCreg_list
+#	useCreg = True #baseName in groupai_needCreg_list
+#	#TODO remove the True in the next line, uncomment the rest, and actualize groupai_isLegacyCpp_list
+#	isLegacyCpp = True #baseName in groupai_isLegacyCpp_list
+#	myEnv = groupaienv.Copy()
+#	if useCreg:
+#		myEnv['CPPDEFINES'] += ['USING_CREG']
+#	objs = []
+#	if useCreg:
+#		objs += groupaiobjs_mainCregged
+#		objs += groupaiobjs_creg
+#	else:
+#		objs += groupaiobjs_main
+#	if isLegacyCpp:
+#		if useCreg:
+#			objs += groupaiobjs_LegacyCppCregged
+#		else:
+#			objs += groupaiobjs_LegacyCpp
+#	mySource = objs + filelist.get_groupAI_source(myEnv, baseName)
+#	lib = myEnv.SharedLibrary(os.path.join('game/AI/Helper-libs', baseName), mySource)
+#	#lib = myEnv.SharedLibrary(os.path.join('game/AI/Helper-libs', libName), mySource)
+#	Alias(baseName, lib)         # Allow e.g. `scons CentralBuildAI' to compile just an AI.
+#	Alias('GroupAI', lib) # Allow `scons GroupAI' to compile all groupAIs.
+#	Default(lib)
+#	inst = env.Install(install_groupai_lib_dir, lib)
+#	Alias('install', inst)
+#	Alias('install-GroupAI', inst)
+#	Alias('install-'+baseName, inst)
+#	if myEnv['strip']:
+#		myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 
 ################################################################################

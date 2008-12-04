@@ -306,7 +306,7 @@ bool util_makeDir(const char* dirPath) {
 
 bool util_makeDirRecursive(const char* dirPath) {
 	
-	if (!fileExists(dirPath)) {
+	if (!util_fileExists(dirPath)) {
 		char parentDir[strlen(dirPath)+1];
 		bool hasParent = util_getParentDir(dirPath, parentDir);
 		if (hasParent) {
