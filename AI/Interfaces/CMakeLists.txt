@@ -36,12 +36,14 @@ endif (EXISTS ${C_AIINTERFACE_SRC})
 
 
 # Java AI Interface
-FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
-message(STATUS "Interface JAVA_FOUND: ${JAVA_FOUND}")
-message(STATUS "Interface JAVA_NOT_FOUND: ${JAVA_NOT_FOUND}")
-message(STATUS "JAVA_RUNTIME ${JAVA_RUNTIME}")
-message(STATUS "JAVA_COMPILE ${JAVA_COMPILE}")
-message(STATUS "JAVA_ARCHIVE ${JAVA_ARCHIVE}")
+if (NOT JAVA_FOUND)
+	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+endif (NOT JAVA_FOUND)
+#message(STATUS "Interface JAVA_FOUND: ${JAVA_FOUND}")
+#message(STATUS "Interface JAVA_NOT_FOUND: ${JAVA_NOT_FOUND}")
+#message(STATUS "JAVA_RUNTIME ${JAVA_RUNTIME}")
+#message(STATUS "JAVA_COMPILE ${JAVA_COMPILE}")
+#message(STATUS "JAVA_ARCHIVE ${JAVA_ARCHIVE}")
 IF (MINGW)
 	set (JAVA_JVM_LIBRARY jvm)
 	set (JNI_FOUND TRUE)

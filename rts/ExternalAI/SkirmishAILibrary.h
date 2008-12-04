@@ -20,17 +20,18 @@
 
 #include "ISkirmishAILibrary.h"
 
-#include "Interface/SAIInterfaceLibrary.h"
+#include "SkirmishAIKey.h"
 #include "Interface/SSAILibrary.h"
 #include <vector>
 
+struct AIInterfaceKey;
+
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:
-	CSkirmishAILibrary(const SSAILibrary& ai, const SSAIKey& key);
+	CSkirmishAILibrary(const SSAILibrary& ai, const SkirmishAIKey& key);
 	virtual ~CSkirmishAILibrary();
 
-	virtual SSAISpecifier GetSpecifier() const;
-	virtual SSAIKey GetKey() const;
+	virtual SkirmishAIKey GetKey() const;
 
 	/**
 	 * Level of Support for a specific engine version and ai interface.
@@ -38,7 +39,7 @@ public:
 	 */
 	virtual LevelOfSupport GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
-			const SAIInterfaceSpecifier& interfaceSpecifier) const;
+			const AIInterfaceKey& interfaceKey) const;
 
 	virtual void Init(int teamId) const;
 	virtual void Release(int teamId) const;
@@ -46,7 +47,7 @@ public:
 
 private:
 	SSAILibrary sSAI;
-	SSAIKey key;
+	SkirmishAIKey key;
 
 private:
 	static const int MAX_INFOS = 128;

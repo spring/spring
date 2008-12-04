@@ -35,7 +35,7 @@ private:
 	int teamId;
 	int groupId;
 //	const SGAIKey key;
-	const IGroupAILibrary* library;
+//	const IGroupAILibrary* library;
 };
 
 #endif // _GROUPAI_H

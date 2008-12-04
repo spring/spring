@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -116,10 +116,13 @@ unsigned int ParseInfo(
 	unsigned int i = 0;
 	std::set<std::string> infoSet;
 	for (int index = 1; root.KeyExists(index) && i < max; index++) {
-		InfoItem infoItem;
-		if (ParseInfo(root, index, infoItem, infoSet)) {
-			info[i++] = infoItem;
+		bool parseOk = ParseInfo(root, index, info[i], infoSet);
+		if (!parseOk) {
+			info[i].key = NULL;
+			info[i].value = NULL;
+			info[i].desc = NULL;
 		}
+		i++;
 	}
 	
 	return i;
@@ -130,5 +133,4 @@ unsigned int ParseInfoRawFileSystem(
 	return ParseInfo(fileName, SPRING_VFS_RAW, SPRING_VFS_RAW, info, max);
 }
 
-#endif	/* defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) */
-
+#endif // defined(__cplusplus) && !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE)

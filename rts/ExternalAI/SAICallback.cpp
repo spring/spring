@@ -195,10 +195,10 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId, int commandT
 		{
 			SGiveMeResourceCheatCommand* cmd = (SGiveMeResourceCheatCommand*) commandData;
 			if (clbCheat != NULL) {
-				if (cmd->resourceIndex == rh->GetMetalIndex()) {
+				if (cmd->resourceId == rh->GetMetalId()) {
 					clbCheat->GiveMeMetal(cmd->amount);
 					ret = 0;
-				} else if (cmd->resourceIndex == rh->GetEnergyIndex()) {
+				} else if (cmd->resourceId == rh->GetEnergyId()) {
 					clbCheat->GiveMeEnergy(cmd->amount);
 					ret = 0;
 				} else {
@@ -768,31 +768,31 @@ EXPORT(int) _Clb_Map_0ARRAY1VALS0getJammerMap(int teamId, unsigned short jammerV
 	return size;
 }
 
-EXPORT(const unsigned char*) _Clb_Map_0REF1Resource2resourceIndex0getResourceMap(int teamId, int resourceIndex) {
+EXPORT(const unsigned char*) _Clb_Map_0REF1Resource2resourceId0getResourceMap(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMetalMap();
 	} else {
 		return NULL;
 	}
 }
-EXPORT(int) _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceIndex0getResourceMap(int teamId, int resourceIndex) {
+EXPORT(int) _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(int teamId, int resourceId) {
 
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return readmap->metalMap->GetSizeX() * readmap->metalMap->GetSizeZ();
 	} else {
 		return 0;
 	}
 }
-EXPORT(int) _Clb_Map_0ARRAY1VALS0REF1Resource2resourceIndex0getResourceMap(int teamId, int resourceIndex, unsigned char resources[], int resources_max) {
+EXPORT(int) _Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap(int teamId, int resourceId, unsigned char resources[], int resources_max) {
 
 	IAICallback* clb = team_callback[teamId];
-	int size = _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceIndex0getResourceMap(teamId, resourceIndex);
+	int size = _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(teamId, resourceId);
 	size = min(size, resources_max);
 
 	const unsigned char* tmpMap;
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		tmpMap = clb->GetMetalMap();
 	} else {
 		tmpMap = NULL;
@@ -815,20 +815,20 @@ EXPORT(float) _Clb_Map_getElevationAt(int teamId, float x, float z) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetElevation(x, z);
 }
 
-EXPORT(float) _Clb_Map_0REF1Resource2resourceIndex0getMaxResource(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Map_0REF1Resource2resourceId0getMaxResource(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMaxMetal();
 	} else {
 		return NULL;
 	}
 }
 
-EXPORT(float) _Clb_Map_0REF1Resource2resourceIndex0getExtractorRadius(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Map_0REF1Resource2resourceId0getExtractorRadius(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetExtractorRadius();
 	} else {
 		return NULL;
@@ -866,31 +866,31 @@ EXPORT(SAIFloat3) _Clb_Map_findClosestBuildSite(int teamId, int unitDefId, SAIFl
 EXPORT(int) _Clb_Map_0MULTI1SIZE0Point(int teamId) {
 	return team_callback[teamId]->GetMapPoints(tmpPointMarkerArr[teamId], TMP_ARR_SIZE);
 }
-EXPORT(struct SAIFloat3) _Clb_Map_Point_getPosition(int teamId, int pointIndex) {
-	return tmpPointMarkerArr[teamId][pointIndex].pos.toSAIFloat3();
+EXPORT(struct SAIFloat3) _Clb_Map_Point_getPosition(int teamId, int pointId) {
+	return tmpPointMarkerArr[teamId][pointId].pos.toSAIFloat3();
 }
-EXPORT(struct SAIFloat3) _Clb_Map_Point_getColor(int teamId, int pointIndex) {
+EXPORT(struct SAIFloat3) _Clb_Map_Point_getColor(int teamId, int pointId) {
 
-	unsigned char* color = tmpPointMarkerArr[teamId][pointIndex].color;
+	unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
 	SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
-EXPORT(const char*) _Clb_Map_Point_getLabel(int teamId, int pointIndex) {
-	return tmpPointMarkerArr[teamId][pointIndex].label;
+EXPORT(const char*) _Clb_Map_Point_getLabel(int teamId, int pointId) {
+	return tmpPointMarkerArr[teamId][pointId].label;
 }
 
 EXPORT(int) _Clb_Map_0MULTI1SIZE0Line(int teamId) {
 	return team_callback[teamId]->GetMapLines(tmpLineMarkerArr[teamId], TMP_ARR_SIZE);
 }
-EXPORT(struct SAIFloat3) _Clb_Map_Line_getFirstPosition(int teamId, int lineIndex) {
-	return tmpLineMarkerArr[teamId][lineIndex].pos.toSAIFloat3();
+EXPORT(struct SAIFloat3) _Clb_Map_Line_getFirstPosition(int teamId, int lineId) {
+	return tmpLineMarkerArr[teamId][lineId].pos.toSAIFloat3();
 }
-EXPORT(struct SAIFloat3) _Clb_Map_Line_getSecondPosition(int teamId, int lineIndex) {
-	return tmpLineMarkerArr[teamId][lineIndex].pos2.toSAIFloat3();
+EXPORT(struct SAIFloat3) _Clb_Map_Line_getSecondPosition(int teamId, int lineId) {
+	return tmpLineMarkerArr[teamId][lineId].pos2.toSAIFloat3();
 }
-EXPORT(struct SAIFloat3) _Clb_Map_Line_getColor(int teamId, int lineIndex) {
+EXPORT(struct SAIFloat3) _Clb_Map_Line_getColor(int teamId, int lineId) {
 
-	unsigned char* color = tmpLineMarkerArr[teamId][lineIndex].color;
+	unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
 	SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
@@ -941,56 +941,56 @@ EXPORT(int) _Clb_0MULTI1SIZE0Resource(int teamId) {
 	return rh->GetNumResources();
 }
 EXPORT(int) _Clb_0MULTI1FETCH3ResourceByName0Resource(int teamId, const char* resourceName) {
-	return rh->GetResourceIndex(resourceName);
+	return rh->GetResourceId(resourceName);
 }
-EXPORT(const char*) _Clb_Resource_getName(int teamId, int resourceIndex) {
-	return rh->GetResource(resourceIndex)->name.c_str();
+EXPORT(const char*) _Clb_Resource_getName(int teamId, int resourceId) {
+	return rh->GetResource(resourceId)->name.c_str();
 }
-EXPORT(float) _Clb_Resource_getOptimum(int teamId, int resourceIndex) {
-	return rh->GetResource(resourceIndex)->optimum;
+EXPORT(float) _Clb_Resource_getOptimum(int teamId, int resourceId) {
+	return rh->GetResource(resourceId)->optimum;
 }
-EXPORT(float) _Clb_Economy_0REF1Resource2resourceIndex0getCurrent(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Economy_0REF1Resource2resourceId0getCurrent(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMetal();
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return clb->GetEnergy();
 	} else {
 		return -1.0f;
 	}
 }
 
-EXPORT(float) _Clb_Economy_0REF1Resource2resourceIndex0getIncome(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Economy_0REF1Resource2resourceId0getIncome(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMetalIncome();
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return clb->GetEnergyIncome();
 	} else {
 		return -1.0f;
 	}
 }
 
-EXPORT(float) _Clb_Economy_0REF1Resource2resourceIndex0getUsage(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Economy_0REF1Resource2resourceId0getUsage(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMetalUsage();
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return clb->GetEnergyUsage();
 	} else {
 		return -1.0f;
 	}
 }
 
-EXPORT(float) _Clb_Economy_0REF1Resource2resourceIndex0getStorage(int teamId, int resourceIndex) {
+EXPORT(float) _Clb_Economy_0REF1Resource2resourceId0getStorage(int teamId, int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return clb->GetMetalStorage();
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return clb->GetEnergyStorage();
 	} else {
 		return -1.0f;
@@ -1063,90 +1063,90 @@ EXPORT(int) _Clb_UnitDef_getAiHint(int teamId, int unitDefId) {return getUnitDef
 EXPORT(int) _Clb_UnitDef_getCobId(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cobID;}
 EXPORT(int) _Clb_UnitDef_getTechLevel(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->techLevel;}
 EXPORT(const char*) _Clb_UnitDef_getGaia(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->gaia.c_str();}
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getUpkeep(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getUpkeep(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->metalUpkeep;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return ud->energyUpkeep;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getResourceMake(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getResourceMake(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->metalMake;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return ud->energyMake;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getMakesResource(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getMakesResource(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->makesMetal;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getCost(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getCost(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->metalCost;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return ud->energyCost;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getExtractsResource(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getExtractsResource(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->extractsMetal;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getResourceExtractorRange(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getResourceExtractorRange(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->extractRange;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getWindResourceGenerator(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getWindResourceGenerator(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetEnergyIndex()) {
+	if (resourceId == rh->GetEnergyId()) {
 		return ud->windGenerator;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getTidalResourceGenerator(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getTidalResourceGenerator(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetEnergyIndex()) {
+	if (resourceId == rh->GetEnergyId()) {
 		return ud->tidalGenerator;
 	} else {
 		return 0.0f;
 	}
 }
-EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceIndex0getStorage(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(float) _Clb_UnitDef_0REF1Resource2resourceId0getStorage(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->metalStorage;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return ud->energyStorage;
 	} else {
 		return 0.0f;
@@ -1318,10 +1318,10 @@ EXPORT(int) _Clb_UnitDef_getFlareTime(int teamId, int unitDefId) {return getUnit
 EXPORT(int) _Clb_UnitDef_getFlareSalvoSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoSize;}
 EXPORT(int) _Clb_UnitDef_getFlareSalvoDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoDelay;}
 EXPORT(bool) _Clb_UnitDef_isSmoothAnim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->smoothAnim;}
-EXPORT(bool) _Clb_UnitDef_0REF1Resource2resourceIndex0isResourceMaker(int teamId, int unitDefId, int resourceIndex) {
+EXPORT(bool) _Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker(int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return ud->isMetalMaker;
 	} else {
 		return false;
@@ -1392,16 +1392,16 @@ EXPORT(float) _Clb_UnitDef_MoveData_getMaxAcceleration(int teamId, int unitDefId
 EXPORT(float) _Clb_UnitDef_MoveData_getMaxBreaking(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->maxBreaking;}
 EXPORT(bool) _Clb_UnitDef_MoveData_isSubMarine(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->movedata->subMarine;}
 EXPORT(int) _Clb_UnitDef_0MULTI1SIZE0WeaponMount(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->weapons.size();}
-EXPORT(const char*) _Clb_UnitDef_WeaponMount_getName(int teamId, int unitDefId, int weaponIndex) {
-	return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).name.c_str();
+EXPORT(const char*) _Clb_UnitDef_WeaponMount_getName(int teamId, int unitDefId, int weaponMountId) {
+	return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).name.c_str();
 }
-EXPORT(int) _Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).def->id;}
-EXPORT(int) _Clb_UnitDef_WeaponMount_getSlavedTo(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).slavedTo;}
-EXPORT(SAIFloat3) _Clb_UnitDef_WeaponMount_getMainDir(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).mainDir.toSAIFloat3();}
-EXPORT(float) _Clb_UnitDef_WeaponMount_getMaxAngleDif(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).maxAngleDif;}
-EXPORT(float) _Clb_UnitDef_WeaponMount_getFuelUsage(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).fuelUsage;}
-EXPORT(unsigned int) _Clb_UnitDef_WeaponMount_getBadTargetCategory(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).badTargetCat;}
-EXPORT(unsigned int) _Clb_UnitDef_WeaponMount_getOnlyTargetCategory(int teamId, int unitDefId, int weaponIndex) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponIndex).onlyTargetCat;}
+EXPORT(int) _Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).def->id;}
+EXPORT(int) _Clb_UnitDef_WeaponMount_getSlavedTo(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).slavedTo;}
+EXPORT(SAIFloat3) _Clb_UnitDef_WeaponMount_getMainDir(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).mainDir.toSAIFloat3();}
+EXPORT(float) _Clb_UnitDef_WeaponMount_getMaxAngleDif(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).maxAngleDif;}
+EXPORT(float) _Clb_UnitDef_WeaponMount_getFuelUsage(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).fuelUsage;}
+EXPORT(unsigned int) _Clb_UnitDef_WeaponMount_getBadTargetCategory(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).badTargetCat;}
+EXPORT(unsigned int) _Clb_UnitDef_WeaponMount_getOnlyTargetCategory(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).onlyTargetCat;}
 //########### END UnitDef
 
 
@@ -1459,28 +1459,28 @@ EXPORT(int) _Clb_Unit_getAllyTeam(int teamId, int unitId) {
 EXPORT(int) _Clb_Unit_0MULTI1SIZE0SupportedCommand(int teamId, int unitId) {
 	return team_callback[teamId]->GetUnitCommands(unitId)->size();
 }
-EXPORT(int) _Clb_Unit_SupportedCommand_getId(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).id;
+EXPORT(int) _Clb_Unit_SupportedCommand_getId(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).id;
 }
-EXPORT(const char*) _Clb_Unit_SupportedCommand_getName(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).name.c_str();
+EXPORT(const char*) _Clb_Unit_SupportedCommand_getName(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).name.c_str();
 }
-EXPORT(const char*) _Clb_Unit_SupportedCommand_getToolTip(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).tooltip.c_str();
+EXPORT(const char*) _Clb_Unit_SupportedCommand_getToolTip(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).tooltip.c_str();
 }
-EXPORT(bool) _Clb_Unit_SupportedCommand_isShowUnique(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).showUnique;
+EXPORT(bool) _Clb_Unit_SupportedCommand_isShowUnique(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).showUnique;
 }
-EXPORT(bool) _Clb_Unit_SupportedCommand_isDisabled(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).disabled;
+EXPORT(bool) _Clb_Unit_SupportedCommand_isDisabled(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).disabled;
 }
-EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandIndex) {
-	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).params.size();
+EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandId) {
+	return team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).params.size();
 }
-EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int unitId, int commandIndex, const char** params, int params_max) {
+EXPORT(int) _Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int unitId, int commandId, const char** params, int params_max) {
 
 	const std::vector<std::string> ps
-			= team_callback[teamId]->GetUnitCommands(unitId)->at(commandIndex).params;
+			= team_callback[teamId]->GetUnitCommands(unitId)->at(commandId).params;
 	int size = ps.size();
 	if (params_max < size) {
 		size = params_max;
@@ -1563,47 +1563,47 @@ EXPORT(int) _Clb_Unit_CurrentCommand_0STATIC0getType(int teamId, int unitId) {
 		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->GetType();
 	}
 }
-EXPORT(int) _Clb_Unit_CurrentCommand_getId(int teamId, int unitId, int commandIndex) {
+EXPORT(int) _Clb_Unit_CurrentCommand_getId(int teamId, int unitId, int commandId) {
 
 	if (_Clb_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).id;
+		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).id;
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).id;
+		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).id;
 	}
 }
-EXPORT(unsigned char) _Clb_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandIndex) {
+EXPORT(unsigned char) _Clb_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandId) {
 
 	if (_Clb_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).options;
+		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).options;
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).options;
+		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).options;
 	}
 }
-EXPORT(unsigned int) _Clb_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandIndex) {
+EXPORT(unsigned int) _Clb_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandId) {
 
 	if (_Clb_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).tag;
+		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).tag;
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).tag;
+		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).tag;
 	}
 }
-EXPORT(int) _Clb_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandIndex) {
+EXPORT(int) _Clb_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandId) {
 
 	if (_Clb_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).timeOut;
+		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).timeOut;
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).timeOut;
+		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).timeOut;
 	}
 }
-EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandIndex) {
+EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandId) {
 
 	if (_Clb_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).params.size();
+		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).params.size();
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandIndex).params.size();
+		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).params.size();
 	}
 }
-EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams(int teamId, int unitId, int commandIndex, float* params, int params_max) {
+EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams(int teamId, int unitId, int commandId, float* params, int params_max) {
 
 	const CCommandQueue* cc = NULL;
 	if (_Clb_Cheats_isEnabled(teamId)) {
@@ -1612,11 +1612,11 @@ EXPORT(int) _Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams(int teamId, int unitI
 		cc = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
 
-	if (commandIndex >= (int)cc->size()) {
+	if (commandId >= (int)cc->size()) {
 		return -1;
 	}
 
-	const std::vector<float> ps = cc->at(commandIndex).params;
+	const std::vector<float> ps = cc->at(commandId).params;
 	int numParams = ps.size();
 	if (params_max < numParams) {
 		numParams = params_max;
@@ -1670,7 +1670,7 @@ EXPORT(SAIFloat3) _Clb_Unit_getPos(int teamId, int unitId) {
 EXPORT(int) _Clb_Unit_0MULTI1SIZE0ResourceInfo(int teamId, int unitId) {
 	return _Clb_0MULTI1SIZE0Resource(teamId);
 }
-EXPORT(float) _Clb_Unit_0REF1Resource2resourceIndex0getResourceUse(int teamId, int unitId, int resourceIndex) {
+EXPORT(float) _Clb_Unit_0REF1Resource2resourceId0getResourceUse(int teamId, int unitId, int resourceId) {
 
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -1682,16 +1682,16 @@ EXPORT(float) _Clb_Unit_0REF1Resource2resourceIndex0getResourceUse(int teamId, i
 		fetchOk = team_callback[teamId]->GetUnitResourceInfo(unitId, &resourceInfo);
 	}
 	if (fetchOk) {
-		if (resourceIndex == rh->GetMetalIndex()) {
+		if (resourceId == rh->GetMetalId()) {
 			res = resourceInfo.metalUse;
-		} else if (resourceIndex == rh->GetEnergyIndex()) {
+		} else if (resourceId == rh->GetEnergyId()) {
 			res = resourceInfo.energyUse;
 		}
 	}
 
 	return res;
 }
-EXPORT(float) _Clb_Unit_0REF1Resource2resourceIndex0getResourceMake(int teamId, int unitId, int resourceIndex) {
+EXPORT(float) _Clb_Unit_0REF1Resource2resourceId0getResourceMake(int teamId, int unitId, int resourceId) {
 
 	int res = -1.0F;
 	UnitResourceInfo resourceInfo;
@@ -1703,9 +1703,9 @@ EXPORT(float) _Clb_Unit_0REF1Resource2resourceIndex0getResourceMake(int teamId, 
 		fetchOk = team_callback[teamId]->GetUnitResourceInfo(unitId, &resourceInfo);
 	}
 	if (fetchOk) {
-		if (resourceIndex == rh->GetMetalIndex()) {
+		if (resourceId == rh->GetMetalId()) {
 			res = resourceInfo.metalMake;
-		} else if (resourceIndex == rh->GetEnergyIndex()) {
+		} else if (resourceId == rh->GetEnergyId()) {
 			res = resourceInfo.energyMake;
 		}
 	}
@@ -1887,12 +1887,12 @@ EXPORT(const char*) _Clb_FeatureDef_getName(int teamId, int featureDefId) {retur
 EXPORT(const char*) _Clb_FeatureDef_getDescription(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->description.c_str();}
 EXPORT(const char*) _Clb_FeatureDef_getFileName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->filename.c_str();}
 EXPORT(int) _Clb_FeatureDef_getId(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->id;}
-EXPORT(float) _Clb_FeatureDef_0REF1Resource2resourceIndex0getContainedResource(int teamId, int featureDefId, int resourceIndex) {
+EXPORT(float) _Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(int teamId, int featureDefId, int resourceId) {
 
 	const FeatureDef* fd = getFeatureDefById(teamId, featureDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return fd->metal;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return fd->energy;
 	} else {
 		return 0.0f;
@@ -2066,12 +2066,12 @@ EXPORT(float) _Clb_WeaponDef_getMaxAngle(int teamId, int weaponDefId) {return ge
 EXPORT(float) _Clb_WeaponDef_getRestTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->restTime;}
 EXPORT(float) _Clb_WeaponDef_getUpTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->uptime;}
 EXPORT(int) _Clb_WeaponDef_getFlightTime(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->flighttime;}
-EXPORT(float) _Clb_WeaponDef_0REF1Resource2resourceIndex0getCost(int teamId, int weaponDefId, int resourceIndex) {
+EXPORT(float) _Clb_WeaponDef_0REF1Resource2resourceId0getCost(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceIndex == rh->GetMetalIndex()) {
+	if (resourceId == rh->GetMetalId()) {
 		return wd->metalcost;
-	} else if (resourceIndex == rh->GetEnergyIndex()) {
+	} else if (resourceId == rh->GetEnergyId()) {
 		return wd->energycost;
 	} else {
 		return 0.0f;
@@ -2129,10 +2129,10 @@ EXPORT(bool) _Clb_WeaponDef_isExteriorShield(int teamId, int weaponDefId) {retur
 EXPORT(bool) _Clb_WeaponDef_isVisibleShield(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShield;}
 EXPORT(bool) _Clb_WeaponDef_isVisibleShieldRepulse(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldRepulse;}
 EXPORT(int) _Clb_WeaponDef_getVisibleShieldHitFrames(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->visibleShieldHitFrames;}
-EXPORT(float) _Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getResourceUse(int teamId, int weaponDefId, int resourceIndex) {
+EXPORT(float) _Clb_WeaponDef_Shield_0REF1Resource2resourceId0getResourceUse(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceIndex == rh->GetEnergyIndex()) {
+	if (resourceId == rh->GetEnergyId()) {
 		return wd->shieldEnergyUse;
 	} else {
 		return 0.0f;
@@ -2143,10 +2143,10 @@ EXPORT(float) _Clb_WeaponDef_Shield_getForce(int teamId, int weaponDefId) {retur
 EXPORT(float) _Clb_WeaponDef_Shield_getMaxSpeed(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldMaxSpeed;}
 EXPORT(float) _Clb_WeaponDef_Shield_getPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPower;}
 EXPORT(float) _Clb_WeaponDef_Shield_getPowerRegen(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldPowerRegen;}
-EXPORT(float) _Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getPowerRegenResource(int teamId, int weaponDefId, int resourceIndex) {
+EXPORT(float) _Clb_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceIndex == rh->GetEnergyIndex()) {
+	if (resourceId == rh->GetEnergyId()) {
 		return wd->shieldPowerRegenEnergy;
 	} else {
 		return 0.0f;
@@ -2208,28 +2208,28 @@ EXPORT(int) _Clb_0MULTI1VALS0Group(int teamId, int groupIds[], int groupIds_max)
 EXPORT(int) _Clb_Group_0MULTI1SIZE0SupportedCommand(int teamId, int groupId) {
 	return team_callback[teamId]->GetGroupCommands(groupId)->size();
 }
-EXPORT(int) _Clb_Group_SupportedCommand_getId(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).id;
+EXPORT(int) _Clb_Group_SupportedCommand_getId(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).id;
 }
-EXPORT(const char*) _Clb_Group_SupportedCommand_getName(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).name.c_str();
+EXPORT(const char*) _Clb_Group_SupportedCommand_getName(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).name.c_str();
 }
-EXPORT(const char*) _Clb_Group_SupportedCommand_getToolTip(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).tooltip.c_str();
+EXPORT(const char*) _Clb_Group_SupportedCommand_getToolTip(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).tooltip.c_str();
 }
-EXPORT(bool) _Clb_Group_SupportedCommand_isShowUnique(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).showUnique;
+EXPORT(bool) _Clb_Group_SupportedCommand_isShowUnique(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).showUnique;
 }
-EXPORT(bool) _Clb_Group_SupportedCommand_isDisabled(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).disabled;
+EXPORT(bool) _Clb_Group_SupportedCommand_isDisabled(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).disabled;
 }
-EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int groupId, int commandIndex) {
-	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).params.size();
+EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams(int teamId, int groupId, int commandId) {
+	return team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).params.size();
 }
-EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int groupId, int commandIndex, const char** params, int params_max) {
+EXPORT(int) _Clb_Group_SupportedCommand_0ARRAY1VALS0getParams(int teamId, int groupId, int commandId, const char** params, int params_max) {
 
 	const std::vector<std::string> ps
-			= team_callback[teamId]->GetGroupCommands(groupId)->at(commandIndex).params;
+			= team_callback[teamId]->GetGroupCommands(groupId)->at(commandId).params;
 	int size = ps.size();
 	if (params_max < size) {
 		size = params_max;
@@ -2341,10 +2341,10 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource = _Clb_0MULTI1FETCH3ResourceByName0Resource;
 	sAICallback->Clb_Resource_getName = _Clb_Resource_getName;
 	sAICallback->Clb_Resource_getOptimum = _Clb_Resource_getOptimum;
-	sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getCurrent = _Clb_Economy_0REF1Resource2resourceIndex0getCurrent;
-	sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getIncome = _Clb_Economy_0REF1Resource2resourceIndex0getIncome;
-	sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getUsage = _Clb_Economy_0REF1Resource2resourceIndex0getUsage;
-	sAICallback->Clb_Economy_0REF1Resource2resourceIndex0getStorage = _Clb_Economy_0REF1Resource2resourceIndex0getStorage;
+	sAICallback->Clb_Economy_0REF1Resource2resourceId0getCurrent = _Clb_Economy_0REF1Resource2resourceId0getCurrent;
+	sAICallback->Clb_Economy_0REF1Resource2resourceId0getIncome = _Clb_Economy_0REF1Resource2resourceId0getIncome;
+	sAICallback->Clb_Economy_0REF1Resource2resourceId0getUsage = _Clb_Economy_0REF1Resource2resourceId0getUsage;
+	sAICallback->Clb_Economy_0REF1Resource2resourceId0getStorage = _Clb_Economy_0REF1Resource2resourceId0getStorage;
 	sAICallback->Clb_File_getSize = _Clb_File_getSize;
 	sAICallback->Clb_File_getContent = _Clb_File_getContent;
 	sAICallback->Clb_File_locateForReading = _Clb_File_locateForReading;
@@ -2362,15 +2362,15 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getCobId = _Clb_UnitDef_getCobId;
 	sAICallback->Clb_UnitDef_getTechLevel = _Clb_UnitDef_getTechLevel;
 	sAICallback->Clb_UnitDef_getGaia = _Clb_UnitDef_getGaia;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getUpkeep = _Clb_UnitDef_0REF1Resource2resourceIndex0getUpkeep;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getResourceMake = _Clb_UnitDef_0REF1Resource2resourceIndex0getResourceMake;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getMakesResource = _Clb_UnitDef_0REF1Resource2resourceIndex0getMakesResource;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getCost = _Clb_UnitDef_0REF1Resource2resourceIndex0getCost;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getExtractsResource = _Clb_UnitDef_0REF1Resource2resourceIndex0getExtractsResource;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getResourceExtractorRange = _Clb_UnitDef_0REF1Resource2resourceIndex0getResourceExtractorRange;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getWindResourceGenerator = _Clb_UnitDef_0REF1Resource2resourceIndex0getWindResourceGenerator;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getTidalResourceGenerator = _Clb_UnitDef_0REF1Resource2resourceIndex0getTidalResourceGenerator;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0getStorage = _Clb_UnitDef_0REF1Resource2resourceIndex0getStorage;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getUpkeep = _Clb_UnitDef_0REF1Resource2resourceId0getUpkeep;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getResourceMake = _Clb_UnitDef_0REF1Resource2resourceId0getResourceMake;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getMakesResource = _Clb_UnitDef_0REF1Resource2resourceId0getMakesResource;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getCost = _Clb_UnitDef_0REF1Resource2resourceId0getCost;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getExtractsResource = _Clb_UnitDef_0REF1Resource2resourceId0getExtractsResource;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getResourceExtractorRange = _Clb_UnitDef_0REF1Resource2resourceId0getResourceExtractorRange;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getWindResourceGenerator = _Clb_UnitDef_0REF1Resource2resourceId0getWindResourceGenerator;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getTidalResourceGenerator = _Clb_UnitDef_0REF1Resource2resourceId0getTidalResourceGenerator;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0getStorage = _Clb_UnitDef_0REF1Resource2resourceId0getStorage;
 	sAICallback->Clb_UnitDef_getBuildTime = _Clb_UnitDef_getBuildTime;
 	sAICallback->Clb_UnitDef_getAutoHeal = _Clb_UnitDef_getAutoHeal;
 	sAICallback->Clb_UnitDef_getIdleAutoHeal = _Clb_UnitDef_getIdleAutoHeal;
@@ -2536,7 +2536,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getFlareSalvoSize = _Clb_UnitDef_getFlareSalvoSize;
 	sAICallback->Clb_UnitDef_getFlareSalvoDelay = _Clb_UnitDef_getFlareSalvoDelay;
 	sAICallback->Clb_UnitDef_isSmoothAnim = _Clb_UnitDef_isSmoothAnim;
-	sAICallback->Clb_UnitDef_0REF1Resource2resourceIndex0isResourceMaker = _Clb_UnitDef_0REF1Resource2resourceIndex0isResourceMaker;
+	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker = _Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker;
 	sAICallback->Clb_UnitDef_isCanLoopbackAttack = _Clb_UnitDef_isCanLoopbackAttack;
 	sAICallback->Clb_UnitDef_isLevelGround = _Clb_UnitDef_isLevelGround;
 	sAICallback->Clb_UnitDef_isUseBuildingGroundDecal = _Clb_UnitDef_isUseBuildingGroundDecal;
@@ -2631,8 +2631,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_Unit_getSpeed = _Clb_Unit_getSpeed;
 	sAICallback->Clb_Unit_getPower = _Clb_Unit_getPower;
 	sAICallback->Clb_Unit_0MULTI1SIZE0ResourceInfo = _Clb_Unit_0MULTI1SIZE0ResourceInfo;
-	sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceUse = _Clb_Unit_0REF1Resource2resourceIndex0getResourceUse;
-	sAICallback->Clb_Unit_0REF1Resource2resourceIndex0getResourceMake = _Clb_Unit_0REF1Resource2resourceIndex0getResourceMake;
+	sAICallback->Clb_Unit_0REF1Resource2resourceId0getResourceUse = _Clb_Unit_0REF1Resource2resourceId0getResourceUse;
+	sAICallback->Clb_Unit_0REF1Resource2resourceId0getResourceMake = _Clb_Unit_0REF1Resource2resourceId0getResourceMake;
 	sAICallback->Clb_Unit_getPos = _Clb_Unit_getPos;
 	sAICallback->Clb_Unit_isActivated = _Clb_Unit_isActivated;
 	sAICallback->Clb_Unit_isBeingBuilt = _Clb_Unit_isBeingBuilt;
@@ -2677,12 +2677,12 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_Map_0ARRAY1VALS0getRadarMap = _Clb_Map_0ARRAY1VALS0getRadarMap;
 	sAICallback->Clb_Map_0ARRAY1SIZE0getJammerMap = _Clb_Map_0ARRAY1SIZE0getJammerMap;
 	sAICallback->Clb_Map_0ARRAY1VALS0getJammerMap = _Clb_Map_0ARRAY1VALS0getJammerMap;
-	sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceIndex0getResourceMap = _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceIndex0getResourceMap;
-	sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceIndex0getResourceMap = _Clb_Map_0ARRAY1VALS0REF1Resource2resourceIndex0getResourceMap;
+	sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap = _Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap;
+	sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap = _Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap;
 	sAICallback->Clb_Map_getName = _Clb_Map_getName;
 	sAICallback->Clb_Map_getElevationAt = _Clb_Map_getElevationAt;
-	sAICallback->Clb_Map_0REF1Resource2resourceIndex0getMaxResource = _Clb_Map_0REF1Resource2resourceIndex0getMaxResource;
-	sAICallback->Clb_Map_0REF1Resource2resourceIndex0getExtractorRadius = _Clb_Map_0REF1Resource2resourceIndex0getExtractorRadius;
+	sAICallback->Clb_Map_0REF1Resource2resourceId0getMaxResource = _Clb_Map_0REF1Resource2resourceId0getMaxResource;
+	sAICallback->Clb_Map_0REF1Resource2resourceId0getExtractorRadius = _Clb_Map_0REF1Resource2resourceId0getExtractorRadius;
 	sAICallback->Clb_Map_getMinWind = _Clb_Map_getMinWind;
 	sAICallback->Clb_Map_getMaxWind = _Clb_Map_getMaxWind;
 	sAICallback->Clb_Map_getTidalStrength = _Clb_Map_getTidalStrength;
@@ -2703,7 +2703,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_FeatureDef_getName = _Clb_FeatureDef_getName;
 	sAICallback->Clb_FeatureDef_getDescription = _Clb_FeatureDef_getDescription;
 	sAICallback->Clb_FeatureDef_getFileName = _Clb_FeatureDef_getFileName;
-	sAICallback->Clb_FeatureDef_0REF1Resource2resourceIndex0getContainedResource = _Clb_FeatureDef_0REF1Resource2resourceIndex0getContainedResource;
+	sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource = _Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource;
 	sAICallback->Clb_FeatureDef_getMaxHealth = _Clb_FeatureDef_getMaxHealth;
 	sAICallback->Clb_FeatureDef_getReclaimTime = _Clb_FeatureDef_getReclaimTime;
 	sAICallback->Clb_FeatureDef_getMass = _Clb_FeatureDef_getMass;
@@ -2784,7 +2784,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_getRestTime = _Clb_WeaponDef_getRestTime;
 	sAICallback->Clb_WeaponDef_getUpTime = _Clb_WeaponDef_getUpTime;
 	sAICallback->Clb_WeaponDef_getFlightTime = _Clb_WeaponDef_getFlightTime;
-	sAICallback->Clb_WeaponDef_0REF1Resource2resourceIndex0getCost = _Clb_WeaponDef_0REF1Resource2resourceIndex0getCost;
+	sAICallback->Clb_WeaponDef_0REF1Resource2resourceId0getCost = _Clb_WeaponDef_0REF1Resource2resourceId0getCost;
 	sAICallback->Clb_WeaponDef_getSupplyCost = _Clb_WeaponDef_getSupplyCost;
 	sAICallback->Clb_WeaponDef_getProjectilesPerShot = _Clb_WeaponDef_getProjectilesPerShot;
 	sAICallback->Clb_WeaponDef_getTdfId = _Clb_WeaponDef_getTdfId;
@@ -2837,13 +2837,13 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_isVisibleShield = _Clb_WeaponDef_isVisibleShield;
 	sAICallback->Clb_WeaponDef_isVisibleShieldRepulse = _Clb_WeaponDef_isVisibleShieldRepulse;
 	sAICallback->Clb_WeaponDef_getVisibleShieldHitFrames = _Clb_WeaponDef_getVisibleShieldHitFrames;
-	sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getResourceUse = _Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getResourceUse;
+	sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceId0getResourceUse = _Clb_WeaponDef_Shield_0REF1Resource2resourceId0getResourceUse;
 	sAICallback->Clb_WeaponDef_Shield_getRadius = _Clb_WeaponDef_Shield_getRadius;
 	sAICallback->Clb_WeaponDef_Shield_getForce = _Clb_WeaponDef_Shield_getForce;
 	sAICallback->Clb_WeaponDef_Shield_getMaxSpeed = _Clb_WeaponDef_Shield_getMaxSpeed;
 	sAICallback->Clb_WeaponDef_Shield_getPower = _Clb_WeaponDef_Shield_getPower;
 	sAICallback->Clb_WeaponDef_Shield_getPowerRegen = _Clb_WeaponDef_Shield_getPowerRegen;
-	sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getPowerRegenResource = _Clb_WeaponDef_Shield_0REF1Resource2resourceIndex0getPowerRegenResource;
+	sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource = _Clb_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource;
 	sAICallback->Clb_WeaponDef_Shield_getStartingPower = _Clb_WeaponDef_Shield_getStartingPower;
 	sAICallback->Clb_WeaponDef_Shield_getRechargeDelay = _Clb_WeaponDef_Shield_getRechargeDelay;
 	sAICallback->Clb_WeaponDef_Shield_getGoodColor = _Clb_WeaponDef_Shield_getGoodColor;

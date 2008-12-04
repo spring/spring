@@ -7,7 +7,7 @@
 
 #include "CommanderScript.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#include "ExternalAI/SkirmishAIKey.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/UI/MiniMap.h"
@@ -58,9 +58,9 @@ void CCommanderScript::GameStart()
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
-		if (!SSAIKey_Comparator::IsEmpty(team->skirmishAISpecifier) // is an AI specifyed?
+		if (!team->skirmishAIKey.IsUnspecified() // is an AI specifyed?
 				&& (gu->myPlayerNum == team->leader)) {
-			eoh->CreateSkirmishAI(a, team->skirmishAISpecifier);
+			eoh->CreateSkirmishAI(a, team->skirmishAIKey);
 		}
 
 		// get the team startup info

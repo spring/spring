@@ -19,17 +19,19 @@
 #define	_IAIINTERFACELIBRARY_H
 
 #include "ISkirmishAILibrary.h"
-#include "IGroupAILibrary.h"
+//#include "IGroupAILibrary.h"
 #include <string>
 
 class CSkirmishAILibraryInfo;
-class CGroupAILibraryInfo;
+//class CGroupAILibraryInfo;
+struct AIInterfaceKey;
+struct SkirmishAIKey;
 
 class IAIInterfaceLibrary {
 public:
 	virtual ~IAIInterfaceLibrary() {}
 
-	virtual SAIInterfaceSpecifier GetSpecifier() const = 0;
+	virtual AIInterfaceKey GetKey() const = 0;
 
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const = 0;
@@ -62,7 +64,7 @@ public:
 	 */
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) = 0;
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo) = 0;
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* skirmishAIInfo) = 0;
+	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& skirmishAIInfo) = 0;
 	/**
 	 * @brief	unloads the Skirmish AI library
 	 * This unloads the Skirmish AI library.
@@ -71,19 +73,19 @@ public:
 	 * of that AI are still in use, as it will result in a crash.
 	 * Decrements the load counter.
 	 */
-	virtual int ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier) = 0;
+	virtual int ReleaseSkirmishAILibrary(const SkirmishAIKey& key) = 0;
 	/**
 	 * @brief	is the Skirmish AI library loaded
 	 */
-	bool IsSkirmishAILibraryLoaded(const SSAISpecifier& sAISpecifier) const {
-		return GetSkirmishAILibraryLoadCount(sAISpecifier) > 0;
+	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const {
+		return GetSkirmishAILibraryLoadCount(key) > 0;
 	}
 	/**
 	 * @brief	how many times is the Skirmish AI loaded
 	 * Thought the AI library may be loaded only once, it can be logically
 	 * loaded multiple times (load counter).
 	 */
-	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const = 0;
+	virtual int GetSkirmishAILibraryLoadCount(const SkirmishAIKey& key) const = 0;
 	/**
 	 * @brief	unloads all AIs
 	 * Unloads all AI libraries currently loaded through this interface.

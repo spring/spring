@@ -29,7 +29,7 @@ class float3;
 class CUnit;
 class CGroup;
 class WeaponDef;
-struct SSAIKey;
+struct SkirmishAIKey;
 class CSkirmishAIWrapper;
 struct SGAIKey;
 class CGroupAIWrapper;
@@ -80,7 +80,7 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SSAIKey& key);
+	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key);
 	bool IsSkirmishAI(int teamId) const;
 	void DestroySkirmishAI(int teamId);
 	//const CSkirmishAIWrapper* GetSkirmishAI(int teamId);

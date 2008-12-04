@@ -16,7 +16,7 @@
 */
 
 #ifndef _SSAILIBRARY_H
-#define	_SSAILIBRARY_H
+#define _SSAILIBRARY_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -40,30 +40,30 @@ extern "C" {
 #define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION       "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
 #if !defined BUILDING_AI
-/**
- * @brief struct Skirmish Artificial Intelligence Specifier
- */
-struct SSAISpecifier {
-	const char* shortName; // [may not contain: spaces, '_', '#']
-	const char* version; // [may not contain: spaces, '_', '#']
-};
-
-struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
-void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
-
-#if defined __cplusplus
-struct SSAISpecifier_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SSAISpecifier& a,
-			const struct SSAISpecifier& b) const;
-	static bool IsEmpty(const struct SSAISpecifier& spec);
-};
-#endif	// defined __cplusplus
+///**
+// * @brief struct Skirmish Artificial Intelligence Specifier
+// */
+//struct SSAISpecifier {
+//	const char* shortName; // [may not contain: spaces, '_', '#']
+//	const char* version; // [may not contain: spaces, '_', '#']
+//};
+//
+//struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
+//void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
+//
+//#if defined __cplusplus
+//struct SSAISpecifier_Comparator {
+//	/**
+//	 * The key comparison function, a Strict Weak Ordering;
+//	 * it returns true if its first argument is less
+//	 * than its second argument, and false otherwise.
+//	 * This is also defined as map::key_compare.
+//	 */
+//	bool operator()(const struct SSAISpecifier& a,
+//			const struct SSAISpecifier& b) const;
+//	static bool IsEmpty(const struct SSAISpecifier& spec);
+//};
+//#endif	// defined __cplusplus
 #endif	// !defined BUILDING_AI
 
 /**
@@ -209,4 +209,4 @@ struct SSAILibrary {
 }	// extern "C"
 #endif
 
-#endif	// _SSAILIBRARY_H
+#endif // _SSAILIBRARY_H

@@ -18,8 +18,10 @@
 #include "IAILibraryManager.h"
 
 
-#include "StdAfx.h"
+#include "Sync/Syncify.h"
 #include "AILibraryManager.h"
+#include "AIInterfaceKey.h"
+#include "SkirmishAIKey.h"
 
 #include <iostream>
 
@@ -46,32 +48,31 @@ std::string fillUpTo(const std::string& str, unsigned int numChars) {
 void IAILibraryManager::OutputAIInterfacesInfo() {
 
 	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
-	const T_interfaceSpecs& specs =
-			myLibManager->GetInterfaceSpecifiers();
+	const T_interfaceSpecs& keys =
+			myLibManager->GetInterfaceKeys();
 	
 	std::cout << "#" << std::endl;
 	std::cout << "# Available Spring Skirmish AIs" << std::endl;
 	std::cout << "# -----------------------------" << std::endl;
 	std::cout << "# [Name]              [Version]" << std::endl;
 	
-	T_interfaceSpecs::const_iterator spec;
-    for (spec=specs.begin(); spec != specs.end(); spec++) {
+	T_interfaceSpecs::const_iterator key;
+    for (key=keys.begin(); key != keys.end(); key++) {
 		std::cout << "  ";
-		std::cout << spec->shortName << fillUpTo(spec->shortName, 20);
-		std::cout << spec->version << fillUpTo(spec->version, 20) << std::endl;
+		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
+		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20) << std::endl;
     }
 	
 	std::cout << "#" << std::endl;
 }
 
-SSAIKey IAILibraryManager::ResolveSkirmishAIKey(const SSAISpecifier& skirmishAISpecifier) const {
+SkirmishAIKey IAILibraryManager::ResolveSkirmishAIKey(const SkirmishAIKey& skirmishAIKey) const {
 
-	std::vector<SSAIKey> fittingKeys = FittingSkirmishAIKeys(skirmishAISpecifier);
+	std::vector<SkirmishAIKey> fittingKeys = FittingSkirmishAIKeys(skirmishAIKey);
 	if (fittingKeys.size() > 0) {
 		return fittingKeys[0];
 	} else {
-		SSAIKey nullKey = {{NULL, NULL}, {NULL, NULL}};
-		return nullKey;
+		return SkirmishAIKey();
 	}
 }
 
@@ -89,11 +90,11 @@ void IAILibraryManager::OutputSkirmishAIInfo() {
 	T_skirmishAIKeys::const_iterator key;
     for (key=keys.begin(); key != keys.end(); key++) {
 		std::cout << "  ";
-		std::cout << key->ai.shortName << fillUpTo(key->ai.shortName, 20);
-		std::cout << key->ai.version << fillUpTo(key->ai.version, 20);
-		std::cout << key->interface.shortName
-				<< fillUpTo(key->interface.shortName, 20);
-		std::cout << key->interface.version << std::endl;
+		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
+		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20);
+		std::cout << key->GetInterface().GetShortName()
+				<< fillUpTo(key->GetInterface().GetShortName(), 20);
+		std::cout << key->GetInterface().GetVersion() << std::endl;
     }
 	
 	const T_dupSkirm& duplicateSkirmishAIInfos =
@@ -102,8 +103,8 @@ void IAILibraryManager::OutputSkirmishAIInfo() {
 			info != duplicateSkirmishAIInfos.end(); ++info) {
 		std::cout << "# WARNING: Duplicate Skirmish AI Info found:"
 				<< std::endl;
-		std::cout << "# \tfor Skirmish AI: " << info->first.ai.shortName
-				<< " " << info->first.ai.version << std::endl;
+		std::cout << "# \tfor Skirmish AI: " << info->first.GetShortName()
+				<< " " << info->first.GetVersion() << std::endl;
 		std::cout << "# \tin files:" << std::endl;
 		std::set<std::string>::const_iterator dir;
 		for (dir = info->second.begin(); dir != info->second.end(); ++dir) {

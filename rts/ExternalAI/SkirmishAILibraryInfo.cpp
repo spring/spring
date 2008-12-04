@@ -19,7 +19,9 @@
 
 #include "Interface/aidefines.h"
 #include "Interface/SSAILibrary.h"
-#include "Interface/SAIInterfaceLibrary.h"
+#include "Interface/SInfo.h"
+#include "Interface/SOption.h"
+#include "SkirmishAIKey.h"
 #include "ISkirmishAILibrary.h"
 
 #include "Platform/errorhandler.h"
@@ -52,6 +54,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
 	for (unsigned int i=0; i < num; ++i) {
 		info[std::string(tmpInfo[i].key)] = tmpInfo[i];
+		InfoItem ii = copyInfoItem(&(tmpInfo[i]));
+		info[std::string(ii.key)] = ii;
 	}
 
 	if (!aiOptionFile.empty()) {
@@ -73,12 +77,12 @@ CSkirmishAILibraryInfo::~CSkirmishAILibraryInfo() {
 	}
 }
 
-SSAISpecifier CSkirmishAILibraryInfo::GetSpecifier() const {
+SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 
 	const char* sn = info.at(SKIRMISH_AI_PROPERTY_SHORT_NAME).value;
 	const char* v = info.at(SKIRMISH_AI_PROPERTY_VERSION).value;
-	SSAISpecifier specifier = {sn, v};
-	return specifier;
+	SkirmishAIKey key = SkirmishAIKey(sn, v);
+	return key;
 }
 
 std::string CSkirmishAILibraryInfo::GetDataDir() const {

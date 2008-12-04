@@ -43,7 +43,7 @@ public:
 	CAILibraryManager(); // looks for interface and AIs supported by them (ret != 0: error)
 	~CAILibraryManager(); // unloads all shared libraries that are currently loaded (interfaces and implementations)
 
-	virtual const T_interfaceSpecs& GetInterfaceSpecifiers() const;
+	virtual const T_interfaceSpecs& GetInterfaceKeys() const;
 	virtual const T_skirmishAIKeys& GetSkirmishAIKeys() const;
 //	virtual const T_groupAIKeys& GetGroupAIKeys() const;
 
@@ -61,15 +61,15 @@ public:
 	virtual const T_dupSkirm& GetDuplicateSkirmishAIInfos() const;
 //	virtual const T_dupGroup& GetDuplicateGroupAIInfos() const;
 
-	virtual std::vector<SSAIKey> FittingSkirmishAIKeys(const SSAISpecifier& skirmishAISpecifier) const;
+	virtual std::vector<SkirmishAIKey> FittingSkirmishAIKeys(const SkirmishAIKey& skirmishAIKey) const;
 //	virtual std::vector<SSAIKey> FittingSkirmishAIKeys(const std::string& skirmishAISpecifier) const;
 	// a Skirmish AI (its library) is only really loaded when it is not yet loaded.
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAIKey& skirmishAIKey);
+	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey);
 	// a Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
 	// as many times as GetSkirmishAILibrary() was.
 	// loading and unloading of the interfaces
 	// is handled internally/automatically.
-	virtual void ReleaseSkirmishAILibrary(const SSAIKey& skirmishAIKey);
+	virtual void ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey);
 	virtual void ReleaseAllSkirmishAILibraries(); // unloads all currently Skirmish loaded AIs
 
 //	virtual std::vector<SGAIKey> ResolveGroupAIKey(const std::string& groupAISpecifier) const;
@@ -85,10 +85,10 @@ public:
 	virtual void ReleaseEverything(); // unloads all currently loaded AIs and interfaces
 
 private:
-	typedef std::map<const SAIInterfaceSpecifier, IAIInterfaceLibrary*, SAIInterfaceSpecifier_Comparator> T_loadedInterfaces;
+	typedef std::map<const AIInterfaceKey, IAIInterfaceLibrary*> T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 
-	T_interfaceSpecs interfaceSpecifiers;
+	T_interfaceSpecs interfaceKeys;
 	T_skirmishAIKeys skirmishAIKeys;
 //	T_groupAIKeys groupAIKeys;
 //	std::vector<const SAIInterfaceSpecifier> interfaceLibrarySpecifiers;
@@ -131,11 +131,11 @@ private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
-	IAIInterfaceLibrary* FetchInterface(const SAIInterfaceSpecifier& interfaceSpecifier);
+	IAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
 	/**
 	 * Unloads the interface if its load count reaches 0.
 	 */
-	void ReleaseInterface(const SAIInterfaceSpecifier& interfaceSpecifier);
+	void ReleaseInterface(const AIInterfaceKey& interfaceKey);
 //	// the interface has to be loaded already. if it is not, a pointer to NULL will be returned.
 //	s_p<ISkirmishAILibraryInterface> GetInterface(const s_p<const ISkirmishAILibraryInterfaceInfo>& interfaceInfo) const;
 //	// if the filename is not found, a pointer to NULL will be returned.
@@ -202,7 +202,7 @@ private:
 	 * available: 0.1, 0.3, 0.5
 	 * chosen: 0.3
 	 */
-	static SAIInterfaceSpecifier FindFittingInterfaceSpecifier(
+	static AIInterfaceKey FindFittingInterfaceSpecifier(
 			const std::string& shortName,
 			const std::string& minVersion,
 			const T_interfaceSpecs& specs);

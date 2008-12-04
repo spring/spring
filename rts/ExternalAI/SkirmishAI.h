@@ -20,20 +20,20 @@
 
 #include "ISkirmishAI.h"
 //#include "ISkirmishAILibrary.h"
-#include "Interface/SAIInterfaceLibrary.h"
+#include "SkirmishAIKey.h"
 
 class ISkirmishAILibrary;
 
 class CSkirmishAI : public ISkirmishAI {
 public:
-	CSkirmishAI(int teamId, const SSAIKey& skirmishAIKey);
+	CSkirmishAI(int teamId, const SkirmishAIKey& skirmishAIKey);
 	virtual ~CSkirmishAI();
 
 	virtual int HandleEvent(int topic, const void* data) const;
 
 private:
 	int teamId;
-	const SSAIKey key;
+	const SkirmishAIKey key;
 	const ISkirmishAILibrary* library;
 };
 

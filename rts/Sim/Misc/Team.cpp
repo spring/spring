@@ -40,7 +40,7 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(side),
 				CR_MEMBER(isAI),
 				CR_MEMBER(luaAI),
-				CR_MEMBER(skirmishAISpecifier),
+				CR_MEMBER(skirmishAIKey),
 				CR_MEMBER(skirmishAIOptions),
 				CR_MEMBER(units),
 				CR_MEMBER(startPos),

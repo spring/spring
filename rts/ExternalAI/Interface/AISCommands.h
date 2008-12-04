@@ -140,7 +140,7 @@ struct SSetMyHandicapCheatCommand {
 	float handicap;
 }; // COMMAND_CHEATS_SET_MY_HANDICAP
 struct SGiveMeResourceCheatCommand {
-	int resourceIndex;
+	int resourceId;
 	float amount;
 }; // COMMAND_CHEATS_GIVE_ME_RESOURCE
 struct SGiveMeNewUnitCheatCommand {

@@ -22,6 +22,7 @@
 
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
+//#include "AIInterfaceLibraryInfo.h"
 
 #include <string>
 #include <map>
@@ -36,13 +37,13 @@ public:
 //	CAIInterfaceLibrary(const std::string& libFileName);
 	//CAIInterfaceLibrary(const std::string& libFileName, const SAIInterfaceSpecifier& interfaceSpecifier);
 	//CAIInterfaceLibrary(const SAIInterfaceSpecifier& interfaceSpecifier, const std::string& libFileName = "");
-	CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* info);
+	CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& info);
 	virtual ~CAIInterfaceLibrary();
 
 //	static CAIInterfaceLibrary* Load(const std::string& libFileName); // increments load counter
 //	static CAIInterfaceLibrary* Get(const std::string& shortName, const std::string& version); // does not increment load counter
 
-	virtual SAIInterfaceSpecifier GetSpecifier() const;
+	virtual AIInterfaceKey GetKey() const;
 
 	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const;
@@ -55,9 +56,9 @@ public:
 	//virtual std::vector<SSAISpecifier> GetSkirmishAILibrarySpecifiers() const;
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier);
 	//virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo);
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo);
-	virtual int ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier);
-	virtual int GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const;
+	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo);
+	virtual int ReleaseSkirmishAILibrary(const SkirmishAIKey& sAISpecifier);
+	virtual int GetSkirmishAILibraryLoadCount(const SkirmishAIKey& sAISpecifier) const;
 	virtual int ReleaseAllSkirmishAILibraries();
 
 //	// Group AI methods
@@ -78,11 +79,11 @@ private:
 	std::string libFilePath;
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
-	const CAIInterfaceLibraryInfo* info;
-	std::map<const SSAISpecifier, ISkirmishAILibrary*, SSAISpecifier_Comparator> loadedSkirmishAILibraries;
-	std::map<const SSAISpecifier, int, SSAISpecifier_Comparator> skirmishAILoadCount;
-	std::map<const SGAISpecifier, IGroupAILibrary*, SGAISpecifier_Comparator> loadedGroupAILibraries;
-	std::map<const SGAISpecifier, int, SGAISpecifier_Comparator> groupAILoadCount;
+	const CAIInterfaceLibraryInfo& info;
+	std::map<const SkirmishAIKey, ISkirmishAILibrary*> loadedSkirmishAILibraries;
+	std::map<const SkirmishAIKey, int> skirmishAILoadCount;
+//	std::map<const SGAISpecifier, IGroupAILibrary*, SGAISpecifier_Comparator> loadedGroupAILibraries;
+//	std::map<const SGAISpecifier, int, SGAISpecifier_Comparator> groupAILoadCount;
 
 private:
 	static const int MAX_INFOS = 128;

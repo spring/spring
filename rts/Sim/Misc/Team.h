@@ -10,7 +10,7 @@
 #include <list>
 #include "Platform/byteorder.h"
 #include "Sim/Units/UnitSet.h"
-#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#include "ExternalAI/SkirmishAIKey.h"
 
 class CTeam
 {
@@ -67,7 +67,7 @@ public:
 
 	bool isAI;
 	std::string luaAI;
-	SSAIKey skirmishAISpecifier;
+	SkirmishAIKey skirmishAIKey;
 	std::map<std::string, std::string> skirmishAIOptions;
 
 	// color info is unsynced

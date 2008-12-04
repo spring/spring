@@ -460,7 +460,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		attackDir_damagedsView = ZeroVector;
 	}
 	int dt = damaged.team;
-	int at = attacker->team;
+	int at = attacker ? attacker->team : -1;
 
 	if (hasSkirmishAIs) {
 		try {
@@ -556,7 +556,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 
 
-bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SSAIKey& key) {
+bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 
 	if ((teamId < 0) || (teamId >= (int)activeTeams)) {
 		return false;

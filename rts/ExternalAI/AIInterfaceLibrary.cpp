@@ -37,10 +37,10 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(
 		const std::string& libFileName)
 		: specifier(interfaceSpecifier) {
 */
-CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo* _info)
+CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		: info(_info) {
 
-	std::string libFileName = info->GetFileName();
+	std::string libFileName = info.GetFileName();
 	if (libFileName.empty()) {
 		handleerror(NULL, "Error while loading AI Interface Library."
 				" No file name specified in AIInterface.lua",
@@ -73,9 +73,9 @@ void CAIInterfaceLibrary::InitStatic() {
 
 	if (sAIInterfaceLibrary.initStatic != NULL) {
 		staticGlobalData = createStaticGlobalData();
-		unsigned int infSize = info->GetInfo().size();
-		const char** infKeys = info->GetCInfoKeys();
-		const char** infValues = info->GetCInfoValues();
+		unsigned int infSize = info.GetInfo().size();
+		const char** infKeys = info.GetCInfoKeys();
+		const char** infValues = info.GetCInfoValues();
 		int ret = sAIInterfaceLibrary.initStatic(infSize, infKeys, infValues, staticGlobalData);
 		if (ret != 0) {
 			// initializing the library failed!
@@ -111,8 +111,8 @@ void CAIInterfaceLibrary::ReleaseStatic() {
 	}
 }
 
-SAIInterfaceSpecifier CAIInterfaceLibrary::GetSpecifier() const {
-	return info->GetSpecifier();
+AIInterfaceKey CAIInterfaceLibrary::GetKey() const {
+	return info.GetKey();
 }
 
 LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
@@ -146,16 +146,16 @@ LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 int CAIInterfaceLibrary::GetLoadCount() const {
 
 	int totalSkirmishAILibraryLoadCount = 0;
-	std::map<const SSAISpecifier, int>::const_iterator salc;
+	std::map<const SkirmishAIKey, int>::const_iterator salc;
 	for (salc=skirmishAILoadCount.begin();  salc != skirmishAILoadCount.end(); salc++) {
 		totalSkirmishAILibraryLoadCount += salc->second;
 	}
 
 	int totalGroupAILibraryLoadCount = 0;
-	std::map<const SGAISpecifier, int>::const_iterator galc;
-	for (galc=groupAILoadCount.begin();  galc != groupAILoadCount.end(); galc++) {
-		totalGroupAILibraryLoadCount += galc->second;
-	}
+//	std::map<const SGAISpecifier, int>::const_iterator galc;
+//	for (galc=groupAILoadCount.begin();  galc != groupAILoadCount.end(); galc++) {
+//		totalGroupAILibraryLoadCount += galc->second;
+//	}
 
 	return totalSkirmishAILibraryLoadCount + totalGroupAILibraryLoadCount;
 }
@@ -179,56 +179,54 @@ std::vector<SSAISpecifier> CAIInterfaceLibrary::GetSkirmishAILibrarySpecifiers()
 */
 //const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const SSAISpecifier& sAISpecifier) {
 //const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const InfoItem* info, unsigned int numInfo) {
-const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo* aiInfo) {
+const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
 
 	ISkirmishAILibrary* ai = NULL;
 
 //	const struct InfoItem* info = aiInfo->GetInfoCReference();
 //	unsigned int numInfoItems = aiInfo->GetInfo().size();
-	unsigned int infSize = aiInfo->GetInfo().size();
-	const char** infKeys = aiInfo->GetCInfoKeys();
-	const char** infValues = aiInfo->GetCInfoValues();
+	unsigned int infSize = aiInfo.GetInfo().size();
+	const char** infKeys = aiInfo.GetCInfoKeys();
+	const char** infValues = aiInfo.GetCInfoValues();
 
-	SSAISpecifier sAISpecifier = aiInfo->GetSpecifier();
-	SSAIKey sAIkey = {info->GetSpecifier(), sAISpecifier};
-	if (skirmishAILoadCount[sAISpecifier] == 0) {
+	const SkirmishAIKey& skirmishAIKey = aiInfo.GetKey();
+	if (skirmishAILoadCount[skirmishAIKey] == 0) {
 		//const SSAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(&sAISpecifier);
 		const SSAILibrary* sLib =
 				sAIInterfaceLibrary.loadSkirmishAILibrary(infSize, infKeys, infValues);
-		ai = new CSkirmishAILibrary(*sLib, sAIkey);
-		loadedSkirmishAILibraries[sAISpecifier] = ai;
+		ai = new CSkirmishAILibrary(*sLib, skirmishAIKey);
+		loadedSkirmishAILibraries[skirmishAIKey] = ai;
 	} else {
-		ai = loadedSkirmishAILibraries[sAISpecifier];
+		ai = loadedSkirmishAILibraries[skirmishAIKey];
 	}
 
-	skirmishAILoadCount[sAISpecifier]++;
+	skirmishAILoadCount[skirmishAIKey]++;
 
 	return ai;
 }
-int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SSAISpecifier& sAISpecifier) {
+int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	SSAIKey sAIkey = {info->GetSpecifier(), sAISpecifier};
-	const CSkirmishAILibraryInfo* aiInfo = libMan->GetSkirmishAIInfos().find(sAIkey)->second;
+	const CSkirmishAILibraryInfo* aiInfo = libMan->GetSkirmishAIInfos().find(key)->second;
 	unsigned int infSize = aiInfo->GetInfo().size();
 	const char** infKeys = aiInfo->GetCInfoKeys();
 	const char** infValues = aiInfo->GetCInfoValues();
 
-	if (skirmishAILoadCount[sAISpecifier] == 0) {
+	if (skirmishAILoadCount[key] == 0) {
 		return 0;
 	}
 
-	skirmishAILoadCount[sAISpecifier]--;
+	skirmishAILoadCount[key]--;
 
-	if (skirmishAILoadCount[sAISpecifier] == 0) {
-		loadedSkirmishAILibraries.erase(sAISpecifier);
+	if (skirmishAILoadCount[key] == 0) {
+		loadedSkirmishAILibraries.erase(key);
 		sAIInterfaceLibrary.unloadSkirmishAILibrary(infSize, infKeys, infValues);
 	}
 
-	return skirmishAILoadCount[sAISpecifier];
+	return skirmishAILoadCount[key];
 }
-int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SSAISpecifier& sAISpecifier) const {
-	return skirmishAILoadCount.at(sAISpecifier);
+int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SkirmishAIKey& key) const {
+	return skirmishAILoadCount.at(key);
 }
 int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 
@@ -442,8 +440,8 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 //		const std::string& fileNameMainPart) {
 std::string CAIInterfaceLibrary::FindLibFile() {
 
-	const std::string& dataDir = info->GetDataDir();
-	const std::string& fileName = info->GetFileName();
+	const std::string& dataDir = info.GetDataDir();
+	const std::string& fileName = info.GetFileName();
 
 	std::string libFileName(fileName); // eg. C-0.1
 	#ifndef _WIN32

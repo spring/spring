@@ -27,8 +27,8 @@
 class ISkirmishAILibrary;
 struct InfoItem;
 struct Option;
-struct SAIInterfaceSpecifier;
-struct SSAISpecifier;
+//struct SAIInterfaceSpecifier;
+struct SkirmishAIKey;
 
 class CSkirmishAILibraryInfo {
 public:
@@ -42,7 +42,7 @@ private:
 	virtual void FreeCReferences();
 public:
 
-	virtual SSAISpecifier GetSpecifier() const;
+	virtual SkirmishAIKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
 	virtual std::string GetFileName() const;

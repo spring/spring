@@ -44,11 +44,11 @@ namespace luafunctions
 		eventHandler.GameOver();
 	}
 
-	void CreateSkirmishAI(int teamId, const SSAIKey& key,
+	void CreateSkirmishAI(int teamId, const SkirmishAIKey& key,
 			const std::map<std::string, std::string>& options)
 	{
 		teamHandler->Team(teamId)->isAI = true;
-		teamHandler->Team(teamId)->skirmishAISpecifier = key;
+		teamHandler->Team(teamId)->skirmishAIKey = key;
 		teamHandler->Team(teamId)->skirmishAIOptions = options;
 		teamHandler->Team(teamId)->leader = 0;
 		eoh->CreateSkirmishAI(teamId, key);

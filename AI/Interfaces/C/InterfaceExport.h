@@ -36,7 +36,7 @@ extern "C" {
 
 #include "ExternalAI/Interface/ELevelOfSupport.h"
 //struct InfoItem;
-struct SSAISpecifier;
+//struct SSAISpecifier;
 struct SSAILibrary;
 //struct SGAISpecifier;
 //struct SGAILibrary;

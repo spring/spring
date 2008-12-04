@@ -16,15 +16,16 @@
 */
 
 #ifndef _AIINTERFACELIBRARYINFO_H
-#define	_AIINTERFACELIBRARYINFO_H
+#define _AIINTERFACELIBRARYINFO_H
 
-#include "Interface/SAIInterfaceLibrary.h"
+//#include "AIInterfaceKey.h"
 
 #include <map>
 #include <string>
 
 class IAIInterfaceLibrary;
 struct InfoItem;
+struct AIInterfaceKey;
 
 class CAIInterfaceLibraryInfo {
 public:
@@ -40,7 +41,7 @@ public:
 
 	//virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
 
-	virtual SAIInterfaceSpecifier GetSpecifier() const;
+	virtual AIInterfaceKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
 	virtual std::string GetFileName() const; // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
@@ -70,4 +71,4 @@ private:
 	const char** infoValues_c;
 };
 
-#endif	// _AIINTERFACELIBRARYINFO_H
+#endif // _AIINTERFACELIBRARYINFO_H
