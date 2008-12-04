@@ -42,29 +42,29 @@ struct SStaticGlobalData;
 #define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES    "supportedLanguages"    // [string]
 #define AI_INTERFACE_PROPERTY_ENGINE_VERSION         "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
 
-/**
- * @brief struct Artificial Intelligence Interface Specifier
- */
-struct SAIInterfaceSpecifier {
-	const char* shortName; // [may not contain: spaces, '_', '#']
-	const char* version; // [may not contain: spaces, '_', '#']
-};
+///**
+// * @brief struct Artificial Intelligence Interface Specifier
+// */
+//struct SAIInterfaceSpecifier {
+//	const char* shortName; // [may not contain: spaces, '_', '#']
+//	const char* version; // [may not contain: spaces, '_', '#']
+//};
 
-struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(
-		const struct SAIInterfaceSpecifier* const orig);
-void deleteSAIInterfaceSpecifier(
-		const struct SAIInterfaceSpecifier* const spec);
+//struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(
+//		const struct SAIInterfaceSpecifier* const orig);
+//void deleteSAIInterfaceSpecifier(
+//		const struct SAIInterfaceSpecifier* const spec);
 
 
-/**
- * @brief struct Skirmish Artificial Intelligence Key
- * Compleetly specifies a skirmish AI together with an interface.
- */
-struct SSAIKey {
-	CR_DECLARE_STRUCT(SSAIKey);
-	struct SAIInterfaceSpecifier interface;
-	struct SSAISpecifier ai;
-};
+///**
+// * @brief struct Skirmish Artificial Intelligence Key
+// * Compleetly specifies a skirmish AI together with an interface.
+// */
+//struct SSAIKey {
+//	CR_DECLARE_STRUCT(SSAIKey);
+//	struct SAIInterfaceSpecifier interface;
+//	struct SSAISpecifier ai;
+//};
 
 /**
  * @brief struct Group Artificial Intelligence Key
@@ -202,28 +202,28 @@ struct SAIInterfaceLibrary {
 
 
 #ifdef	__cplusplus
-struct SAIInterfaceSpecifier_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SAIInterfaceSpecifier& a,
-			const struct SAIInterfaceSpecifier& b) const;
-	static bool IsEmpty(const struct SAIInterfaceSpecifier& spec);
-};
-
-struct SSAIKey_Comparator {
-	/**
-	 * The key comparison function, a Strict Weak Ordering;
-	 * it returns true if its first argument is less
-	 * than its second argument, and false otherwise.
-	 * This is also defined as map::key_compare.
-	 */
-	bool operator()(const struct SSAIKey& a, const struct SSAIKey& b) const;
-	static bool IsEmpty(const struct SSAIKey& key);
-};
+//struct SAIInterfaceSpecifier_Comparator {
+//	/**
+//	 * The key comparison function, a Strict Weak Ordering;
+//	 * it returns true if its first argument is less
+//	 * than its second argument, and false otherwise.
+//	 * This is also defined as map::key_compare.
+//	 */
+//	bool operator()(const struct SAIInterfaceSpecifier& a,
+//			const struct SAIInterfaceSpecifier& b) const;
+//	static bool IsEmpty(const struct SAIInterfaceSpecifier& spec);
+//};
+//
+//struct SSAIKey_Comparator {
+//	/**
+//	 * The key comparison function, a Strict Weak Ordering;
+//	 * it returns true if its first argument is less
+//	 * than its second argument, and false otherwise.
+//	 * This is also defined as map::key_compare.
+//	 */
+//	bool operator()(const struct SSAIKey& a, const struct SSAIKey& b) const;
+//	static bool IsEmpty(const struct SSAIKey& key);
+//};
 
 //struct SGAIKey_Comparator {
 //	/**

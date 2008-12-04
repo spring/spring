@@ -19,15 +19,19 @@
 #define _INTERFACE_H
 
 #include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAISpecifier.h"
 //#include "ExternalAI/Interface/SGAILibrary.h"
 
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 
 enum LevelOfSupport;
 class SharedLib;
 struct SStaticGlobalData;
+//struct SSkirmishAISpecifier;
+//struct SSkirmishAISpecifier_Comparator;
 
 class CInterface {
 public:
@@ -54,8 +58,10 @@ public:
 //	int UnloadAllGroupAILibraries();
 
 private:
+	static SSkirmishAISpecifier ExtractSpecifier(
+		const std::map<std::string, std::string>& infoMap);
 	// these functions actually load and unload the libraries
-	SharedLib* Load(const SSAISpecifier* const sAISpecifier, SSAILibrary* ai);
+	SharedLib* Load(const SSkirmishAISpecifier& aiKeyHash, SSAILibrary* ai);
 	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
 			SSAILibrary* ai);
 
@@ -65,7 +71,7 @@ private:
 	static void reportInterfaceFunctionError(const std::string& libFileName,
 			const std::string& functionName);
 	static void reportError(const std::string& msg);
-	std::string FindLibFile(const SSAISpecifier& sAISpecifier);
+	std::string FindLibFile(const SSkirmishAISpecifier& sAISpecifier);
 //	std::string FindLibFile(const SGAISpecifier& gAISpecifier);
 	/**
 	 * Searches for a file in all data-dirs.
@@ -121,12 +127,16 @@ private:
 	//std::string groupAIsLibDir;
 //	std::vector<InfoItem> myInfo;
 
-	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
-	typedef std::map<SSAISpecifier, std::map<std::string, std::string>,SSAISpecifier_Comparator> T_skirmishAIInfos;
+//	std::vector<SSAISpecifier> mySkirmishAISpecifiers;
+//	typedef std::map<SSAISpecifier, std::map<std::string, std::string>,SSAISpecifier_Comparator> T_skirmishAIInfos;
+//	typedef std::map<SSAISpecifier, SSAILibrary*, SSAISpecifier_Comparator> T_skirmishAIs;
+//	typedef std::map<SSAISpecifier, SharedLib*, SSAISpecifier_Comparator> T_skirmishAILibs;
+	std::set<SSkirmishAISpecifier, SSkirmishAISpecifier_Comparator> mySkirmishAISpecifiers;
+	typedef std::map<const SSkirmishAISpecifier, std::map<std::string, std::string>, SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
+	typedef std::map<const SSkirmishAISpecifier, SSAILibrary*, SSkirmishAISpecifier_Comparator> T_skirmishAIs;
+	typedef std::map<const SSkirmishAISpecifier, SharedLib*, SSkirmishAISpecifier_Comparator> T_skirmishAILibs;
 	T_skirmishAIInfos mySkirmishAIInfos;
-	typedef std::map<SSAISpecifier, SSAILibrary*, SSAISpecifier_Comparator> T_skirmishAIs;
 	T_skirmishAIs myLoadedSkirmishAIs;
-	typedef std::map<SSAISpecifier, SharedLib*, SSAISpecifier_Comparator> T_skirmishAILibs;
 	T_skirmishAILibs myLoadedSkirmishAILibs;
 
 //	std::vector<SGAISpecifier> myGroupAISpecifiers;
@@ -138,4 +148,4 @@ private:
 //	T_groupAILibs myLoadedGroupAILibs;
 };
 
-#endif	// _INTERFACE_H
+#endif // _INTERFACE_H

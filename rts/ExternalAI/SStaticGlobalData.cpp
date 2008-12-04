@@ -26,6 +26,7 @@
 #include "Game/GameVersion.h"			// for VERSION_STRING
 #include "FileSystem/FileSystem.h"	// for data directories
 #include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIKey.h"
 #include "IAILibraryManager.h"	// for AI info
 
 #include "LogOutput.h" // TODO: remove again

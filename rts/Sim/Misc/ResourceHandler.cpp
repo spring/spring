@@ -64,21 +64,21 @@ CResourceHandler::~CResourceHandler()
 }
 
 
-const CResource* CResourceHandler::GetResource(int resourceIndex) const
+const CResource* CResourceHandler::GetResource(int resourceId) const
 {
-	if (resourceIndex >= (int)resources.size()) {
+	if (resourceId >= (int)resources.size()) {
 		return NULL;
 	} else {
-		return &resources[resourceIndex];
+		return &resources[resourceId];
 	}
 }
 
 const CResource* CResourceHandler::GetResourceByName(const std::string& resourceName) const
 {
-	return GetResource(GetResourceIndex(resourceName));
+	return GetResource(GetResourceId(resourceName));
 }
 
-int CResourceHandler::GetResourceIndex(const std::string& resourceName) const
+int CResourceHandler::GetResourceId(const std::string& resourceName) const
 {
 	int size_res = resources.size();
 	for (int r=0; r < size_res; ++r) {
@@ -96,24 +96,24 @@ unsigned int CResourceHandler::GetNumResources() const
 }
 
 
-//bool CResourceHandler::IsMetal(int resourceIndex) const
+//bool CResourceHandler::IsMetal(int resourceId) const
 //{
-//	const CResource* res = GetResource(resourceIndex);
+//	const CResource* res = GetResource(resourceId);
 //	return res && (res->name == "Metal");
 //}
 //
-//bool CResourceHandler::IsEnergy(int resourceIndex) const
+//bool CResourceHandler::IsEnergy(int resourceId) const
 //{
-//	const CResource* res = GetResource(resourceIndex);
+//	const CResource* res = GetResource(resourceId);
 //	return res && (res->name == "Energy");
 //}
 
-int CResourceHandler::GetMetalIndex() const
+int CResourceHandler::GetMetalId() const
 {
 	return METAL_INDEX;
 }
 
-int CResourceHandler::GetEnergyIndex() const
+int CResourceHandler::GetEnergyId() const
 {
 	return ENERGY_INDEX;
 }

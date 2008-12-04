@@ -2,21 +2,23 @@
 #define _SKIRMISHAITESTSCRIPT_H
 
 #include "Script.h"
-#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#include "ExternalAI/SkirmishAIKey.h"
 
 #include <map>
 #include <string>
 
 class CSkirmishAITestScript : public CScript
 {
-	SSAIKey key;
+	SkirmishAIKey key;
 	std::map<std::string, std::string> options;
+	static const int player_teamId = 0;
+	static const int skirmishAI_teamId = 1;
 public:
-	CSkirmishAITestScript(const SSAIKey& key,
+	CSkirmishAITestScript(const SkirmishAIKey& key,
 			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
 	~CSkirmishAITestScript(void);
 
 	void GameStart(void);
 };
 
-#endif	// _SKIRMISHAITESTSCRIPT_H
+#endif // _SKIRMISHAITESTSCRIPT_H

@@ -21,7 +21,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
+//#include "ExternalAI/Interface/SSkirmishAISpecifier.h"
 #include "ExternalAI/Interface/SInfo.h"
 #include "ExternalAI/Interface/SOption.h"
 #include "System/Exceptions.h"
@@ -1927,23 +1927,23 @@ EXPORT(const char*) GetInfoDescription(int index) {
 	return NULL;
 }
 
-EXPORT(struct SSAISpecifier) GetSkirmishAISpecifier(int index) {
-	
-	SSAISpecifier spec = {NULL, NULL};
-	
-	int num = GetSkirmishAIInfoCount(index);
-	
-	for (int i=0; i < num; ++i) {
-		string info_key = string(GetInfoKey(i));
-		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-			spec.shortName = GetInfoValue(i);
-		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
-			spec.version = GetInfoValue(i);
-		}
-	}
-	
-	return spec;
-}
+//EXPORT(struct SSkirmishAISpecifier) GetSkirmishAISpecifier(int index) {
+//
+//	SSkirmishAISpecifier spec = {NULL, NULL};
+//
+//	int num = GetSkirmishAIInfoCount(index);
+//
+//	for (int i=0; i < num; ++i) {
+//		string info_key = string(GetInfoKey(i));
+//		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
+//			spec.shortName = GetInfoValue(i);
+//		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
+//			spec.version = GetInfoValue(i);
+//		}
+//	}
+//
+//	return spec;
+//}
 
 EXPORT(int) GetSkirmishAIOptionCount(int index) {
 

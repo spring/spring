@@ -92,17 +92,16 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 			team->isAI = true;
 		} else if (!(teamStartingData.skirmishAIShortName.empty())) {
 			if (setup->hostDemo) {
-				SSAIKey key = {{NULL, NULL}, {NULL, NULL}};
-				team->skirmishAISpecifier = key;
+				team->skirmishAIKey = SkirmishAIKey(); // unspecifyed AI Key
 			} else {
 				const char* sn = teamStartingData.skirmishAIShortName.c_str();
 				const char* v = teamStartingData.skirmishAIVersion.empty()
 						? NULL : teamStartingData.skirmishAIVersion.c_str();
-				SSAISpecifier spec = {sn, v};
-				SSAIKey fittingKey =
+				SkirmishAIKey spec = SkirmishAIKey(sn, v);
+				SkirmishAIKey fittingKey =
 						IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
-				if (!SSAIKey_Comparator::IsEmpty(fittingKey)) {
-					team->skirmishAISpecifier = fittingKey;
+				if (!fittingKey.IsUnspecified()) {
+					team->skirmishAIKey = fittingKey;
 					team->skirmishAIOptions = teamStartingData.skirmishAIOptions;
 					team->isAI = true;
 				} else {
@@ -110,7 +109,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					char s_msg[MAX_MSG_LENGTH + 1];
 					SNPRINTF(s_msg, MAX_MSG_LENGTH,
 							"Specifyed Skirmish AI could not be found: %s (version: %s)",
-							spec.shortName, spec.version != NULL ? spec.version : "<not specifyed>");
+							spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specifyed>");
 					handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
 				}
 			}

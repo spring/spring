@@ -18,6 +18,7 @@
 #include <stdlib.h> // why is this here?
 
 #include "mmgr.h"
+#include "ExternalAI/SkirmishAIKey.h"
 
 #include "GameServer.h"
 
@@ -1218,7 +1219,7 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!SSAIKey_Comparator::IsEmpty(teamHandler->Team(a)->skirmishAISpecifier)) // is not empty?
+		if (!teamHandler->Team(a)->skirmishAIKey.IsUnspecified()) // is not empty?
 			hasPlayer = true;
 
 		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer)

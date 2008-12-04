@@ -166,7 +166,9 @@ endif (EXISTS ${NullAI_SRC})
 
 
 ## Null Java AI
-FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+if (NOT JAVA_FOUND)
+	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+endif (NOT JAVA_FOUND)
 set(NullJavaAI_SRC "${SKIRMISH_SRC}/NullJavaAI")
 if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	set(NullJavaAI_VERS "UNKNOWN_VERSION")
@@ -184,10 +186,16 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	file(REMOVE_RECURSE "${NullJavaAI_SRC}/build")
 	file(MAKE_DIRECTORY "${NullJavaAI_SRC}/build")
 	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${NullJavaAI_SRC}" FOLLOW_SYMLINKS "${NullJavaAI_SRC}*.java")
+	#string(REPLACE ";" " " tmpVar "${NullJavaAI_JAVA_SOURCES}")
+	set(srcListFile "${NullJavaAI_SRC}/build/srcList.txt")
+	foreach(srcFile ${NullJavaAI_JAVA_SOURCES})
+		file(APPEND ${srcListFile} "${srcFile}\n")
+	endforeach(srcFile)
+	#set(NullJavaAI_JAVA_SOURCES "${tmpVar}")
 	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/ai.jar"
 	#add_custom_command(TARGET ${NullJavaAI_TARGET}
 	add_custom_target(${NullJavaAI_TARGET} ALL
-		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullJavaAI_CLASSPATH}\"" "-d" "${NullJavaAI_SRC}/build" "${NullJavaAI_JAVA_SOURCES}"
+		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullJavaAI_CLASSPATH}\"" "-d" "${NullJavaAI_SRC}/build" "@${srcListFile}"
 		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullJavaAI_SRC}/manifest.mf" "${NullJavaAI_SRC}/ai.jar" "-C" "${NullJavaAI_SRC}/build" "${NullJavaAI_PKG_FIRST_PART}"
 		WORKING_DIRECTORY "${NullJavaAI_SRC}"
 		COMMENT "  Creating Java AI library ai.jar" VERBATIM)
@@ -198,6 +206,49 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	endif (EXISTS ${NullJavaAI_SRC}/AIOptions.lua)
 	install (FILES ${NullJavaAI_SRC}/ai.jar DESTINATION ${NullJavaAI_DATA_DIR})
 endif (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
+
+
+## Null Object Oriented Java AI
+if (NOT JAVA_FOUND)
+	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+endif (NOT JAVA_FOUND)
+set(NullOOJavaAI_SRC "${SKIRMISH_SRC}/NullOOJavaAI")
+if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
+	set(NullOOJavaAI_VERS "UNKNOWN_VERSION")
+	if (EXISTS ${NullOOJavaAI_SRC}/VERSION)
+		file(STRINGS "${NullOOJavaAI_SRC}/VERSION" NullOOJavaAI_VERS LIMIT_COUNT 1)
+	endif (EXISTS ${NullOOJavaAI_SRC}/VERSION)
+	set(NullOOJavaAI_TARGET "NullOOJavaAI-${NullOOJavaAI_VERS}")
+	set(NullOOJavaAI_DATA_DIR ${SKIRMISH_DATA}/NullOOJavaAI/${NullOOJavaAI_VERS})
+	set(NullOOJavaAI_PKG "nulloojavaai")
+	set(NullOOJavaAI_PKG_FIRST_PART "nulloojavaai")
+	set(Java_AIINTERFACE_SRC "../../Interfaces/Java")
+	set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
+	message(STATUS "${NullOOJavaAI_VERS}\t(NullOOJavaAI Version)")
+
+	file(REMOVE_RECURSE "${NullOOJavaAI_SRC}/build")
+	file(MAKE_DIRECTORY "${NullOOJavaAI_SRC}/build")
+	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${NullOOJavaAI_SRC}" FOLLOW_SYMLINKS "${NullOOJavaAI_SRC}*.java")
+	#string(REPLACE ";" " " tmpVar "${NullOOJavaAI_JAVA_SOURCES}")
+	set(srcListFile "${NullOOJavaAI_SRC}/build/srcList.txt")
+	foreach(srcFile ${NullOOJavaAI_JAVA_SOURCES})
+		file(APPEND ${srcListFile} "${srcFile}\n")
+	endforeach(srcFile)
+	#set(NullOOJavaAI_JAVA_SOURCES "${tmpVar}")
+	#add_custom_command(OUTPUT "${NullOOJavaAI_DATA_DIR}/ai.jar"
+	#add_custom_command(TARGET ${NullOOJavaAI_TARGET}
+	add_custom_target(${NullOOJavaAI_TARGET} ALL
+		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullOOJavaAI_CLASSPATH}\"" "-d" "${NullOOJavaAI_SRC}/build" "@${srcListFile}"
+		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullOOJavaAI_SRC}/manifest.mf" "${NullOOJavaAI_SRC}/ai.jar" "-C" "${NullOOJavaAI_SRC}/build" "${NullOOJavaAI_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
+		COMMENT "  Creating Java OO AI library ai.jar" VERBATIM)
+
+	install (FILES ${NullOOJavaAI_SRC}/AIInfo.lua DESTINATION ${NullOOJavaAI_DATA_DIR})
+	if (EXISTS ${NullOOJavaAI_SRC}/AIOptions.lua)
+		install (FILES ${NullOOJavaAI_SRC}/AIOptions.lua DESTINATION ${NullOOJavaAI_DATA_DIR})
+	endif (EXISTS ${NullOOJavaAI_SRC}/AIOptions.lua)
+	install (FILES ${NullOOJavaAI_SRC}/ai.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
+endif (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 
 
 ## JCAI

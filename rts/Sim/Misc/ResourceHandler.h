@@ -33,12 +33,12 @@ public:
 
 	/**
 	 * @brief	resource
-	 * @param	resourceIndex index to fetch
+	 * @param	resourceId index to fetch
 	 * @return	the searched resource
 	 *
 	 * Accesses a CResource instance at a given index
 	 */
-	const CResource* GetResource(int resourceIndex) const;
+	const CResource* GetResource(int resourceId) const;
 	/**
 	 * @brief	resource by name
 	 * @param	resourceName name of the resource to fetch
@@ -54,14 +54,14 @@ public:
 	 *
 	 * Accesses a resource by name
 	 */
-	int GetResourceIndex(const std::string& resourceName) const;
+	int GetResourceId(const std::string& resourceName) const;
 
 	unsigned int GetNumResources() const;
 
-//	bool IsMetal(int resourceIndex) const;
-//	bool IsEnergy(int resourceIndex) const;
-	int GetMetalIndex() const;
-	int GetEnergyIndex() const;
+//	bool IsMetal(int resourceId) const;
+//	bool IsEnergy(int resourceId) const;
+	int GetMetalId() const;
+	int GetEnergyId() const;
 
 private:
 	static CResourceHandler* instance;

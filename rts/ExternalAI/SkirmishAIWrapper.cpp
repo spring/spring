@@ -36,7 +36,7 @@
 
 #include <sstream>
 
-CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SSAIKey()))
+CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SkirmishAIKey()))
 CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
@@ -72,7 +72,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	}
 
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SSAIKey& key)
+CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key)
 		: teamId(teamId), cheatEvents(false), key(key) {
 
 	LoadSkirmishAI(false);

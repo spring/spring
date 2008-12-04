@@ -20,29 +20,27 @@
 //#include "Interface/SAIInterfaceLibrary.h"
 #include "LogOutput.h"
 #include "IAILibraryManager.h"
+#include "AIInterfaceKey.h"
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
-		const SSAIKey& key)
+		const SkirmishAIKey& key)
 		: sSAI(ai), key(key) {}
 
 CSkirmishAILibrary::~CSkirmishAILibrary() {}
 
-SSAISpecifier CSkirmishAILibrary::GetSpecifier() const {
-	return key.ai;
-}
-SSAIKey CSkirmishAILibrary::GetKey() const {
+SkirmishAIKey CSkirmishAILibrary::GetKey() const {
 	return key;
 }
 
 LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
-		const SAIInterfaceSpecifier& interfaceSpecifier) const {
+		const AIInterfaceKey& interfaceKey) const {
 
 	if (sSAI.getLevelOfSupportFor != NULL) {
 		return sSAI.getLevelOfSupportFor(teamId, engineVersionString.c_str(),
-				engineVersionNumber, interfaceSpecifier.shortName,
-				interfaceSpecifier.version);
+				engineVersionNumber, interfaceKey.GetShortName().c_str(),
+				interfaceKey.GetVersion().c_str());
 	} else {
 		return LOS_Unknown;
 	}

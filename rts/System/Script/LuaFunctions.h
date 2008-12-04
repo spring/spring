@@ -15,7 +15,7 @@ class CUnit;
 class CTeam;
 class CFeature;
 struct UnitDef;
-struct SSAIKey;
+struct SkirmishAIKey;
 
 // This class is meant to contain COBject and its descendants only..
 template<class A>
@@ -32,7 +32,7 @@ public:
 
 namespace luafunctions
 {
-	void CreateSkirmishAI(int teamId, const SSAIKey& key,
+	void CreateSkirmishAI(int teamId, const SkirmishAIKey& key,
 			const std::map<std::string, std::string>& options = (std::map<std::string, std::string>()));
 	void EndGame();
 	void UnitGiveCommand(CObject_pointer<CUnit>* u, Command* c);

@@ -21,6 +21,7 @@
 
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#include "ExternalAI/Interface/SSAILibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
 
 #include "System/Platform/SharedLib.h"
@@ -121,15 +122,15 @@ LevelOfSupport CInterface::GetLevelOfSupportFor(
 	return LOS_Working;
 }
 
-SSAISpecifier extractSSAISpecifier(
+SSkirmishAISpecifier CInterface::ExtractSpecifier(
 		const std::map<std::string, std::string>& infoMap) {
 
 	const char* sn = infoMap.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.c_str();
 	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.c_str();
 
-	SSAISpecifier specifier = {sn, v};
+	SSkirmishAISpecifier spec = {sn, v};
 
-	return specifier;
+	return spec;
 }
 //SGAISpecifier extractSGAISpecifier(
 //		const std::map<std::string, InfoItem>& infoMap) {
@@ -147,18 +148,18 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(
 
 	SSAILibrary* ai;
 
-	SSAISpecifier sAISpecifier = extractSSAISpecifier(infoMap);
+	SSkirmishAISpecifier spec = ExtractSpecifier(infoMap);
 
-	mySkirmishAISpecifiers.push_back(sAISpecifier);
-	mySkirmishAIInfos[sAISpecifier] = infoMap;
+	mySkirmishAISpecifiers.insert(spec);
+	mySkirmishAIInfos[spec] = infoMap;
 
 	T_skirmishAIs::iterator skirmishAI;
-	skirmishAI = myLoadedSkirmishAIs.find(sAISpecifier);
+	skirmishAI = myLoadedSkirmishAIs.find(spec);
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
 		ai = new SSAILibrary;
-		SharedLib* lib = Load(&sAISpecifier, ai);
-		myLoadedSkirmishAIs[sAISpecifier] = ai;
-		myLoadedSkirmishAILibs[sAISpecifier] = lib;
+		SharedLib* lib = Load(spec, ai);
+		myLoadedSkirmishAIs[spec] = ai;
+		myLoadedSkirmishAILibs[spec] = lib;
 	} else {
 		ai = skirmishAI->second;
 	}
@@ -168,12 +169,12 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(
 int CInterface::UnloadSkirmishAILibrary(
 		const std::map<std::string, std::string>& infoMap) {
 
-	SSAISpecifier sAISpecifier = extractSSAISpecifier(infoMap);
+	SSkirmishAISpecifier spec = ExtractSpecifier(infoMap);
 
 	T_skirmishAIs::iterator skirmishAI =
-			myLoadedSkirmishAIs.find(sAISpecifier);
+			myLoadedSkirmishAIs.find(spec);
 	T_skirmishAILibs::iterator skirmishAILib =
-			myLoadedSkirmishAILibs.find(sAISpecifier);
+			myLoadedSkirmishAILibs.find(spec);
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
 		// to unload AI is not loaded -> no problem, do nothing
 	} else {
@@ -248,9 +249,8 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 // private functions following
 
-SharedLib* CInterface::Load(const SSAISpecifier* const sAISpecifier,
-		SSAILibrary* skirmishAILibrary) {
-	return LoadSkirmishAILib(FindLibFile(*sAISpecifier), skirmishAILibrary);
+SharedLib* CInterface::Load(const SSkirmishAISpecifier& spec, SSAILibrary* skirmishAILibrary) {
+	return LoadSkirmishAILib(FindLibFile(spec), skirmishAILibrary);
 }
 SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 		SSAILibrary* skirmishAILibrary) {
@@ -414,29 +414,29 @@ void CInterface::reportError(const std::string& msg) {
 }
 
 
-std::string CInterface::FindLibFile(const SSAISpecifier& sAISpecifier) {
+std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 
 	// fetch the data-dir and file-name from the info about the AI to load,
 	// which was supplied to us by the engine
 	T_skirmishAIInfos::const_iterator info =
-			mySkirmishAIInfos.find(sAISpecifier);
+			mySkirmishAIInfos.find(spec);
 	if (info == mySkirmishAIInfos.end()) {
 		reportError(std::string("Missing Skirmish-AI info for ")
-				+ sAISpecifier.shortName + " " + sAISpecifier.version);
+				+ spec.shortName + " " + spec.version);
 	}
 
 	std::map<std::string, std::string>::const_iterator prop =
 			info->second.find(SKIRMISH_AI_PROPERTY_DATA_DIR);
 	if (prop == info->second.end()) {
 		reportError(std::string("Missing Skirmish-AI data dir for ")
-				+ sAISpecifier.shortName + " " + sAISpecifier.version);
+				+ spec.shortName + " " + spec.version);
 	}
 	const std::string& dataDir(prop->second);
 
 	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
 	if (prop == info->second.end()) {
 		reportError(std::string("Missing Skirmish-AI file name for ")
-				+ sAISpecifier.shortName + " " + sAISpecifier.version);
+				+ spec.shortName + " " + spec.version);
 	}
 	const std::string& fileName(prop->second);
 

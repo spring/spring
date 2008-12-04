@@ -22,19 +22,19 @@
 extern std::string stupidGlobalMapname;
 
 
-CSkirmishAITestScript::CSkirmishAITestScript(const SSAIKey& key,
+CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& key,
 		const std::map<std::string, std::string>& options)
 		: CScript(std::string("Skirmish AI test (")
-			+ std::string(key.ai.shortName) + std::string(" v")
-			+ std::string(key.ai.version) + std::string(")")),
+			+ std::string(key.GetShortName()) + std::string(" v")
+			+ std::string(key.GetVersion() + std::string(")"))),
 		key(key), options(options)
 {
-	// make sure CSelectedUnits::AiOrder()
-	// still works without a setup script
-	teamHandler->Team(1)->isAI = true;
-	teamHandler->Team(1)->skirmishAISpecifier = key;
-	teamHandler->Team(1)->skirmishAIOptions = options;
-	teamHandler->Team(1)->leader = 0;
+	teamHandler->Team(skirmishAI_teamId)->isAI = true;
+	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey
+			= SkirmishAIKey(
+					"CSkirmishAITestScript:TEMP",
+					"CSkirmishAITestScript:TEMP");
+	teamHandler->Team(skirmishAI_teamId)->leader = 0;
 }
 
 
@@ -42,17 +42,24 @@ CSkirmishAITestScript::~CSkirmishAITestScript(void) {}
 
 void CSkirmishAITestScript::GameStart(void)
 {
+	// make sure CSelectedUnits::AiOrder()
+	// still works without a setup script
+	teamHandler->Team(skirmishAI_teamId)->isAI = true;
+	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
+	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
+	teamHandler->Team(skirmishAI_teamId)->leader = 0;
+
+	teamHandler->Team(player_teamId)->energy        = 1000;
+	teamHandler->Team(player_teamId)->energyStorage = 1000;
+	teamHandler->Team(player_teamId)->metal         = 1000;
+	teamHandler->Team(player_teamId)->metalStorage  = 1000;
+
+	teamHandler->Team(skirmishAI_teamId)->energy        = 1000;
+	teamHandler->Team(skirmishAI_teamId)->energyStorage = 1000;
+	teamHandler->Team(skirmishAI_teamId)->metal         = 1000;
+	teamHandler->Team(skirmishAI_teamId)->metalStorage  = 1000;
+
 	eoh->CreateSkirmishAI(1, key);
-
-	teamHandler->Team(0)->energy        = 1000;
-	teamHandler->Team(0)->energyStorage = 1000;
-	teamHandler->Team(0)->metal         = 1000;
-	teamHandler->Team(0)->metalStorage  = 1000;
-
-	teamHandler->Team(1)->energy        = 1000;
-	teamHandler->Team(1)->energyStorage = 1000;
-	teamHandler->Team(1)->metal         = 1000;
-	teamHandler->Team(1)->metalStorage  = 1000;
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);

@@ -21,8 +21,8 @@
 #include "Object.h"
 #include "ISkirmishAI.h"
 #include "GlobalAICallback.h"
+#include "SkirmishAIKey.h"
 #include "Interface/SAICallback.h"
-#include "Interface/SAIInterfaceLibrary.h"
 #include "Platform/SharedLib.h"
 
 #include <map>
@@ -36,7 +36,7 @@ class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
 public:
 	CR_DECLARE(CSkirmishAIWrapper);
 
-	CSkirmishAIWrapper(int teamId, const SSAIKey& key);
+	CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key);
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
@@ -92,7 +92,7 @@ private:
 	ISkirmishAI* ai;
 	CGlobalAICallback* callback;
 	SAICallback* c_callback;
-	SSAIKey key;
+	SkirmishAIKey key;
 	const struct InfoItem* info;
 	unsigned int size_info;
 

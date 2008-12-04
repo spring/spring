@@ -18,8 +18,10 @@
 #include "AIInterfaceLibraryInfo.h"
 
 #include "IAIInterfaceLibrary.h"
+#include "AIInterfaceKey.h"
 #include "Interface/aidefines.h"
 #include "Interface/SInfo.h"
+#include "Interface/SAIInterfaceLibrary.h"
 
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
@@ -82,12 +84,12 @@ LevelOfSupport CAIInterfaceLibraryInfo::GetLevelOfSupportForCurrentEngine() cons
 }
 */
 
-SAIInterfaceSpecifier CAIInterfaceLibraryInfo::GetSpecifier() const {
+AIInterfaceKey CAIInterfaceLibraryInfo::GetKey() const {
 
 	const char* sn = info.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
 	const char* v = info.at(AI_INTERFACE_PROPERTY_VERSION).value;
-	SAIInterfaceSpecifier specifier = {sn, v};
-	return specifier;
+	AIInterfaceKey key = AIInterfaceKey(sn, v);
+	return key;
 }
 
 std::string CAIInterfaceLibraryInfo::GetDataDir() const {
