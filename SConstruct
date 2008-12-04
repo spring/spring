@@ -165,10 +165,11 @@ if env['platform'] != 'windows':
 ################################################################################
 ### AIs
 ################################################################################
-# Make a copy of the build environment for the AIs,
 # TODO: make separate SConstructs for AIs
+# Make a copy of the build environment for the AIs
 aienv = env.Copy()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
+aienv.Append(CXXFLAGS = ['-IAI/Wrappers'])
 aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
 #print aienv['CPPDEFINES']
 
@@ -285,11 +286,11 @@ skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishaienv, filelist.get_sha
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishaienv, filelist.get_shared_skirmishAI_source_LegacyCpp(skirmishaienv), '-skirmishai_creg', ['USING_CREG'])
 
 # Build
-skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI','AbicWrappersTestAI']
-skirmishai_isLegacyCpp_list=['AAI', 'KAIK-0.13', 'RAI-0.553', 'NullLegacyCppAI', 'KAI-0.2', 'NTai']
-skirmishai_needCreg_list=['KAIK-0.13', 'KAI-0.2']
+skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI', 'NullJavaAI', 'NullOOJavaAI']
+skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
+skirmishai_needCreg_list=['KAIK', 'KAI']
 for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai_exclude_list):
-	libName = construct_skirmishai_libName(baseName) # eg. RAI-0.600
+	libName = construct_skirmishai_libName(baseName) # eg. RAI
 	print "Skirmish AI: " + libName
 	useCreg = baseName in skirmishai_needCreg_list
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list

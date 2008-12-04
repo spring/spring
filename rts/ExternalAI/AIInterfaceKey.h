@@ -21,7 +21,7 @@
 #include <string>
 #include "creg/creg.h"
 
-struct AIInterfaceKey {
+class AIInterfaceKey {
 	CR_DECLARE_STRUCT(AIInterfaceKey);
 
 private:

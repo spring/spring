@@ -73,7 +73,7 @@ bool util_endsWith(const char* str, const char* suffix);
 
 // suffix example: ".jar"
 unsigned int util_listFiles(const char* dir, const char* suffix,
-		char** fileNames, const unsigned int maxFileNames);
+		char** fileNames, bool recursive, const unsigned int maxFileNames);
 
 bool util_fileExists(const char* filePath);
 

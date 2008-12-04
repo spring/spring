@@ -148,9 +148,7 @@ def get_shared_AI_source(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SInfo.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SOption.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SGAILibrary.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SSAILibrary.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SAIInterfaceLibrary.cpp')]
+		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SSkirmishAISpecifier.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Game/GameVersion.cpp')]
 #		result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
 	return result
