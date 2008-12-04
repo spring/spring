@@ -18,12 +18,16 @@
 #ifndef _SKIRMISHAIKEY_H
 #define _SKIRMISHAIKEY_H
 
+// this is needed, cause somewhere in MinGW, interface is defined (???)
+// it is not needed on GCC
+#ifdef interface
+#undef interface
+#endif
 #include <string>
 #include "creg/creg.h"
 #include "AIInterfaceKey.h"
 
-struct SkirmishAIKey
-{
+class SkirmishAIKey {
 	CR_DECLARE_STRUCT(SkirmishAIKey);
 
 private:

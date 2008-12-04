@@ -99,32 +99,85 @@ bool util_endsWith(const char* str, const char* suffix) {
 }
 
 
-
 #ifdef WIN32
-#define JARS_REGEX "/*.jar"
+static bool util_isFile(const struct _finddata_t* fileInfo) {
+	return !(fileInfo->attrib & _A_SUBDIR)
+			&& fileInfo->attrib & (_A_NORMAL | _A_HIDDEN | _A_ARCH);
+}
+static bool util_isNormalDir(const struct _finddata_t* fileInfo) {
+	return strcmp(fileInfo->name, ".") != 0
+			&& strcmp(fileInfo->name, "..") != 0
+			&& (fileInfo->attrib & _A_SUBDIR);
+}
+static unsigned int util_listFilesRec(const char* dir, const char* suffix,
+		char** fileNames, bool recursive, const unsigned int maxFileNames,
+		unsigned int numFileNames) {
 
-unsigned int util_listFiles(const char* dir, const char* suffix,
-		char** fileNames, const unsigned int maxFileNames) {
-
-	unsigned int i = 0;
-	
-	char mDir[strlen(dir) + strlen("/*") + strlen(suffix) + 1];
-	strcpy(mDir, dir);
-	strcat(mDir, "/*");
-	strcat(mDir, suffix);
+	if (numFileNames >= maxFileNames) {
+		return numFileNames;
+	}
 
 	struct _finddata_t fileInfo;
-	int handle = _findfirst(mDir, &fileInfo);
-	if (handle == -1L) {
-		return i;
-	}
-	fileNames[i++] = util_allocStrCpy(fileInfo.name);
-	while (_findnext(handle, &fileInfo) == 0) {
-		fileNames[i++] = util_allocStrCpy(fileInfo.name);
-	}
-	_findclose(handle);
+	int handle;
 
-	return i;
+	// look for files which end in: suffix
+	char suffixFilesSpec[strlen(dir) + strlen("\\*") + strlen(suffix) + 1];
+	strcpy(suffixFilesSpec, dir);
+	strcat(suffixFilesSpec, "\\*");
+	strcat(suffixFilesSpec, suffix);
+	handle = _findfirst(suffixFilesSpec, &fileInfo);
+	if (handle != -1L) {
+		if (util_isFile(&fileInfo)) {
+			fileNames[numFileNames++] = util_allocStrCpy(fileInfo.name);
+		}
+		while (_findnext(handle, &fileInfo) == 0
+				&& numFileNames < maxFileNames) {
+			if (util_isFile(&fileInfo)) {
+				fileNames[numFileNames++] = util_allocStrCpy(fileInfo.name);
+			}
+		}
+		_findclose(handle);
+	}
+
+	// search in sub-directories
+	if (recursive) {
+		char subDirsSpec[strlen(dir) + strlen("\\*.*") + 1];
+		strcpy(subDirsSpec, dir);
+		strcat(subDirsSpec, "\\*.*");
+		handle = _findfirst(subDirsSpec, &fileInfo);
+		if (handle != -1L) {
+			// check if not current or parent directories
+			if (util_isNormalDir(&fileInfo)) {
+				char subDir[strlen(dir) + strlen("\\")
+						+ strlen(fileInfo.name) + 1];
+				strcpy(subDir, dir);
+				strcat(subDir, "\\");
+				strcat(subDir, fileInfo.name);
+				numFileNames = util_listFilesRec(subDir, suffix, fileNames,
+						recursive, maxFileNames, numFileNames);
+			}
+			while (_findnext(handle, &fileInfo) == 0
+					&& numFileNames < maxFileNames) {
+				if (util_isNormalDir(&fileInfo)) {
+					char subDir[strlen(dir) + strlen("\\")
+							+ strlen(fileInfo.name) + 1];
+					strcpy(subDir, dir);
+					strcat(subDir, "\\");
+					strcat(subDir, fileInfo.name);
+					numFileNames = util_listFilesRec(subDir, suffix, fileNames,
+							recursive, maxFileNames, numFileNames);
+				}
+			}
+			_findclose(handle);
+		}
+	}
+
+	return numFileNames;
+}
+unsigned int util_listFiles(const char* dir, const char* suffix,
+		char** fileNames, bool recursive, const unsigned int maxFileNames) {
+	return util_listFilesRec(
+			dir, suffix, fileNames, recursive, maxFileNames, 0);
 }
 #else
 
@@ -148,33 +201,60 @@ static unsigned int util_listFilesU(const char* dir, struct dirent*** files) {
 	return (unsigned int) foundDirs;
 }
 
-unsigned int util_listFiles(const char* dir, const char* suffix,
-		char** fileNames, const unsigned int maxFileNames) {
+static unsigned int util_listFilesRec(const char* dir, const char* suffix,
+		char** fileNames, bool recursive, const unsigned int maxFileNames,
+		unsigned int numFiles, const char* relPath) {
 
-	unsigned int numFiles;
-	
-	//struct dirent* files[maxFileNames];
 	struct dirent** files;
 	util_initFileSelector(suffix);
-	numFiles = util_listFilesU(dir, &files);
-	if (numFiles > 0) {
-		unsigned int cnt;
-		for (cnt = 0; cnt < numFiles; ++cnt) {
-			fileNames[cnt] = util_allocStrCpy(files[cnt]->d_name);
-		}
+	unsigned int currentNumFiles = util_listFilesU(dir, &files);
+	unsigned int f;
+	for (f = 0; f < currentNumFiles && numFiles < maxFileNames; ++f) {
+		char fileRelPath[strlen(relPath) + strlen(files[f]->d_name) + 1];
+			strcpy(fileRelPath, relPath);
+			strcat(fileRelPath, files[f]->d_name);
+		fileNames[numFiles++] = util_allocStrCpy(fileRelPath);
 	}
 /*
-	DIR *dir_p;
-	struct dirent* dir_entry_p = NULL;
-	dir_p = opendir(dir);
-	for (numFiles = 0; (dir_entry_p = readdir(dir_p)) != NULL; ) {
-		if (util_endsWith(dir_entry_p->d_name, suffix)) {
-			fileNames[numFiles++] = util_allocStrCpy(dir_entry_p->d_name);
-		}
+	for (; f < currentNumFiles; ++f) {
+		free(files[f]);
 	}
 */
 
+	if (recursive) {
+		struct stat dirStat;
+		util_initFileSelector("");
+		currentNumFiles = util_listFilesU(dir, &files);
+		for (f = 0; f < currentNumFiles && numFiles < maxFileNames; ++f) {
+			if (strcmp(files[f]->d_name, ".") == 0
+					|| strcmp(files[f]->d_name, "..") == 0) {
+				continue;
+			}
+			char subDir[strlen(dir) + strlen("/") + strlen(relPath)
+					+ strlen(files[f]->d_name) + 1];
+			strcpy(subDir, dir);
+			strcat(subDir, "/");
+			strcat(subDir, relPath);
+			strcat(subDir, files[f]->d_name);
+			char subRelPath[strlen(relPath) + strlen(files[f]->d_name)
+					+ strlen("/") + 1];
+			strcpy(subRelPath, relPath);
+			strcat(subRelPath, files[f]->d_name);
+			strcat(subRelPath, "/");
+			int retStat = stat(subDir, &dirStat);
+			if (retStat == 0 && S_ISDIR(dirStat.st_mode)) {
+				numFiles = util_listFilesRec(subDir, suffix, fileNames,
+						recursive, maxFileNames, numFiles, subRelPath);
+			}
+		}
+	}
+
 	return numFiles;
+}
+unsigned int util_listFiles(const char* dir, const char* suffix,
+		char** fileNames, bool recursive, const unsigned int maxFileNames) {
+	return util_listFilesRec(
+			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
 #endif
 

@@ -17,7 +17,7 @@
 
 #include "AIInterfaceKey.h"
 
-CR_BIND(AIInterfaceKey,)
+CR_BIND(AIInterfaceKey, );
 
 CR_REG_METADATA(AIInterfaceKey, (
 		CR_MEMBER(shortName),

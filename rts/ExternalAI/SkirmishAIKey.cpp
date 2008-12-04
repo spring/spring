@@ -17,7 +17,7 @@
 
 #include "SkirmishAIKey.h"
 
-CR_BIND(SkirmishAIKey,)
+CR_BIND(SkirmishAIKey, );
 
 CR_REG_METADATA(SkirmishAIKey, (
 		CR_MEMBER(shortName),
