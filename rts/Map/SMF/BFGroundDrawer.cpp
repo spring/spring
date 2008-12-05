@@ -126,7 +126,7 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
-	float3 p(0.0f,-200.0f,0.0f);
+	float3 p(0.0f,std::min(-200.0f, map->minheight - 400.0f),0.0f);
 	const float size = std::min(xsize,ysize);
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 
@@ -1131,6 +1131,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
@@ -1140,6 +1141,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
+			glMultiTexCoord1f(GL_TEXTURE2_ARB,0); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			//SetTexGen(0.02f,0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
 			GLfloat plan[]={0.02f,0.5f,0,0};
@@ -1157,6 +1159,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, infoTex);
+		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
@@ -1184,6 +1187,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 
@@ -1225,6 +1229,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -1232,6 +1237,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
+			glMultiTexCoord1f(GL_TEXTURE2_ARB,0); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 			//SetTexGen(0.02f, 0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
