@@ -5,6 +5,7 @@
 #ifndef __BUMP_WATER_H__
 #define __BUMP_WATER_H__
 
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "BaseWater.h"
 
@@ -46,12 +47,10 @@ private:
 	int  screenTextureX;
 	int  screenTextureY;
 
-	GLuint reflectRBO;
-	GLuint refractRBO;
-	GLuint reflectFBO;
-	GLuint refractFBO;
-	GLuint coastFBO;
-	GLuint dynWavesFBO;
+	FBO reflectFBO;
+	FBO refractFBO;
+	FBO coastFBO;
+	FBO dynWavesFBO;
 
 	GLuint displayList;
 

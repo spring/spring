@@ -431,8 +431,8 @@ void CGameServer::Update()
 		if (serverframenum > 0) {
 			//send info about the players
 			int curpos=0;
-			int ping[MAX_PLAYERS] = { 0 };
-			float cpu[MAX_PLAYERS] = { 0.0f };
+			int ping[MAX_PLAYERS];
+			float cpu[MAX_PLAYERS];
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState >= GameParticipant::INGAME) {

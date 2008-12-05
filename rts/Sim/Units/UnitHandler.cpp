@@ -272,7 +272,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloaked[i]==delUnit)
 			unitDrawer->drawCloaked[i]=NULL;
@@ -608,10 +608,10 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 }
 
 
-void CUnitHandler::PushNewWind(float x, float z, float strength)
+void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
 	ASSERT_SYNCED_MODE;
-	//todo: fixa en lista med enbart windgenerators kanske blir lite snabbare
+	//todo: save windgens in a list (would be a little faster)
 	std::list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 	{

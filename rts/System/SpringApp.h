@@ -33,10 +33,10 @@ protected:
 	bool SetSDLVideoMode(); 			//!< Sets SDL video mode
 	void Shutdown (); 				//!< Shuts down application
 	int Update (); 					//!< Run simulation and draw
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
+#if defined(USE_GML) && GML_ENABLE_SIM
 	int Sim (); 					//!< Simulation  loop
 	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
-	volatile int keeprunning;
+	volatile int gmlKeepRunning;
 #endif
 	void UpdateSDLKeys (); 				//!< Update SDL key array
 	bool GetDisplayGeometry();

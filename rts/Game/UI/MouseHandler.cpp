@@ -490,13 +490,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 }
 
 
-void CMouseHandler::MouseWheel(bool up)
+void CMouseHandler::MouseWheel(float delta)
 {
-	const float value = up ? +scrollWheelSpeed : -scrollWheelSpeed;
-	if (eventHandler.MouseWheel(up, value)) {
+	delta *= scrollWheelSpeed;
+	if (eventHandler.MouseWheel(delta>1.0f, delta)) {
 		return;
 	}
-	camHandler->GetCurrentController().MouseWheelMove(value);
+	camHandler->GetCurrentController().MouseWheelMove(delta);
 }
 
 

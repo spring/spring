@@ -61,7 +61,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 using std::string;
@@ -118,6 +118,10 @@ SpringApp::~SpringApp()
 	if (keys) delete[] keys;
 
 	creg::System::FreeClasses ();
+#ifdef USE_GML
+	if(gmlProcessor)
+		delete gmlProcessor;
+#endif
 }
 
 #ifdef _CRASHRPT_H_
@@ -723,9 +727,10 @@ void SpringApp::ParseCmdLine()
 
 #ifdef USE_GML
 	gmlThreadCountOverride = configHandler.Get("HardwareThreadCount", 0);
-#if GML_ENABLE_SIMLOOP
-	extern volatile int multiThreadSim;
-	multiThreadSim=configHandler.Get("MultiThreadSim", 1);
+	gmlThreadCount=GML_CPU_COUNT;
+#if GML_ENABLE_SIM
+	extern volatile int gmlMultiThreadSim;
+	gmlMultiThreadSim=configHandler.Get("MultiThreadSim", 1);
 #endif
 #endif
 }
@@ -875,33 +880,27 @@ void SpringApp::Startup()
 
 
 
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-volatile int multiThreadSim;
-volatile int startsim;
+#if defined(USE_GML) && GML_ENABLE_SIM
+volatile int gmlMultiThreadSim;
+volatile int gmlStartSim;
 
 int SpringApp::Sim() {
-	while(keeprunning && !startsim)
+	while(gmlKeepRunning && !gmlStartSim)
 		SDL_Delay(100);
-//		boost::thread::yield();
-	while(keeprunning) {
-		if(!multiThreadSim) {
-//			startsim=0;
-			while(!multiThreadSim && keeprunning)
-				SDL_Delay(100);
-//			simBarrier.wait();
-//			startsim=1;
+	while(gmlKeepRunning) {
+		if(!gmlMultiThreadSim) {
+			while(!gmlMultiThreadSim && gmlKeepRunning)
+				SDL_Delay(200);
 		}
 		else if (activeController) {
 			GML_STDMUTEX_LOCK(sim);
 
-			gmlProcessor.ExpandAuxQueue();
+			gmlProcessor->ExpandAuxQueue();
 			if (!activeController->Update()) {
 				return 0;
 			}
-			gmlProcessor.GetQueue();
+			gmlProcessor->GetQueue();
 		}
-//		while(!startsim)
-//			SDL_Delay(100);
 		boost::thread::yield();
 	}
 	return 1;
@@ -926,57 +925,47 @@ int SpringApp::Update ()
 
 	int ret = 1;
 	if (activeController) {
-#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
-		int frame=gu->drawFrame;
-#	endif
+#if !defined(USE_GML) || !GML_ENABLE_SIM
 		if (!activeController->Update()) {
 			ret = 0;
 		} else {
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
-			if(frame==gu->drawFrame) { // only draw if it was not done in parallel with sim
-#	endif
 #else
-				if(multiThreadSim) {
-					if(!gs->frameNum) {
-						GML_STDMUTEX_LOCK(sim);
-
-						activeController->Update();
-						if(gs->frameNum)
-							startsim=1;
-					}
-				}
-				else {
+			if(gmlMultiThreadSim) {
+				if(!gs->frameNum) {
 					GML_STDMUTEX_LOCK(sim);
 
 					activeController->Update();
+					if(gs->frameNum)
+						gmlStartSim=1;
 				}
-#endif
-				gu->drawFrame++;
-				if (gu->drawFrame == 0) {
-					gu->drawFrame++;
-				}
-				if(
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-					!multiThreadSim &&
-#endif
-					gs->frameNum-lastRequiredDraw >= MAX_CONSECUTIVE_SIMFRAMES) {
-
-					ScopedTimer cputimer("CPU load"); // Update
-
-					ret = activeController->Draw();
-					lastRequiredDraw=gs->frameNum;
-				}
-				else {
-					ret = activeController->Draw();
-				}
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-				gmlProcessor.PumpAux();
-#endif
-#if !defined(USE_GML) || !GML_ENABLE_SIMLOOP
-#	if defined(USE_GML) && GML_ENABLE_SIMDRAW
 			}
-#	endif
+			else {
+				GML_STDMUTEX_LOCK(sim);
+
+				activeController->Update();
+			}
+#endif
+			gu->drawFrame++;
+			if (gu->drawFrame == 0) {
+				gu->drawFrame++;
+			}
+			if(
+#if defined(USE_GML) && GML_ENABLE_SIM
+				!gmlMultiThreadSim &&
+#endif
+				gs->frameNum-lastRequiredDraw >= MAX_CONSECUTIVE_SIMFRAMES) {
+
+				ScopedTimer cputimer("CPU load"); // Update
+
+				ret = activeController->Draw();
+				lastRequiredDraw=gs->frameNum;
+			}
+			else {
+				ret = activeController->Draw();
+			}
+#if defined(USE_GML) && GML_ENABLE_SIM
+			gmlProcessor->PumpAux();
+#else
 		}
 #endif
 	}
@@ -1035,15 +1024,17 @@ int SpringApp::Run (int argc, char *argv[])
 		return -1;
 
 #ifdef WIN32
-	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
+	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
 
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	keeprunning=1;
-	startsim=0;
-	gmlProcessor.AuxWork(&SpringApp::Simcb,this); // start sim thread
+#ifdef USE_GML
+	gmlProcessor=new gmlClientServer<void, int,CUnit*>;
+#	if GML_ENABLE_SIM
+	gmlKeepRunning=1;
+	gmlStartSim=0;
+	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
+#	endif
 #endif
-
 	SDL_Event event;
 	bool done = false;
 
@@ -1086,10 +1077,8 @@ int SpringApp::Run (int argc, char *argv[])
 					}
 					break;
 				}
-				case SDL_MOUSEMOTION: {
-					mouseInput->HandleSDLMouseEvent (event);
-					break;
-				}
+
+				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 				case SDL_SYSWMEVENT: {
@@ -1192,9 +1181,9 @@ int SpringApp::Run (int argc, char *argv[])
 	}
 	ENTER_MIXED;
 
-#if defined(USE_GML) && GML_ENABLE_SIMLOOP
-	keeprunning=0; // wait for sim to finish
-	while(!gmlProcessor.PumpAux())
+#if defined(USE_GML) && GML_ENABLE_SIM
+	gmlKeepRunning=0; // wait for sim to finish
+	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
 #endif
 

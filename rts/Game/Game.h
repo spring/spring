@@ -33,15 +33,10 @@ public:
 	CR_DECLARE(CGame);			//Don't use CGame pointer in CR_MEMBER()!!!
 	void PostLoad();
 
-	void SimFrameMT();
-	static void SimFrameMTcb(void *c) {((CGame *)c)->SimFrameMT();}
-
 	bool Draw();
 	bool DrawMT();
 
 	static void DrawMTcb(void *c) {((CGame *)c)->DrawMT();}
-	void UnsyncedStuff();
-	static void UnsyncedStuffcb(void *c) {((CGame *)c)->UnsyncedStuff();}
 	bool Update();
 	int KeyReleased(unsigned short k);
 	int KeyPressed(unsigned short k,bool isRepeat);

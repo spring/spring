@@ -44,7 +44,6 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/IFramebuffer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureHandler.h"

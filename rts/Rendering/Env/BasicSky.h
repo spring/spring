@@ -44,8 +44,6 @@ public:
 	int ***blendMatrix;
 
 	int ydif[CLOUD_SIZE];
-	int ydif1[CLOUD_SIZE]; // ydif >> 1
-	int ydif2[CLOUD_SIZE]; // ydif >> 2
 
 	unsigned char alphaTransform[1024];
 	unsigned char thicknessTransform[1024];

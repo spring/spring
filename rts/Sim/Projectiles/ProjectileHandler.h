@@ -9,7 +9,6 @@ class CProjectile;
 struct S3DOPrimitive;
 struct S3DO;
 struct SS3OVertex;
-
 #include <list>
 #include <vector>
 
@@ -17,11 +16,11 @@ struct SS3OVertex;
 #include "MemPool.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "float3.h"
 
 
 class CGroundFlash;
-class IFramebuffer;
 
 
 typedef std::list<CProjectile*> Projectile_List;
@@ -153,7 +152,7 @@ private:
 
 	GLuint perlinTex[8];
 	float perlinBlend[4];
-	IFramebuffer *perlinFB;
+	FBO perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
 

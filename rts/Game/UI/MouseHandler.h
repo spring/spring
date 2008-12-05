@@ -33,7 +33,7 @@ public:
 	void MouseRelease(int x,int y,int button);
 	void MousePress(int x,int y,int button);
 	void MouseMove(int x,int y);
-	void MouseWheel(bool up);
+	void MouseWheel(float delta);
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
