@@ -33,7 +33,7 @@
 #include "Terrain.h"
 
 #include "TerrainTextureGLSL.h"
-#include "Rendering/GL/IFramebuffer.h"
+#include "Rendering/GL/FBO.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "bitops.h"
@@ -147,6 +147,8 @@ public:
 	{
 	// ATI has GL_EXT_texture_rectangle, but that has no support for GLSL texture2DRect
 	// nVidia: Use RECT,  ati: use POT
+		assert(framebuffer.IsValid());
+
 		width = gu->viewSizeX;
 		height = gu->viewSizeY;
 		if (GLEW_ARB_texture_rectangle)
@@ -157,7 +159,6 @@ public:
 			height = closest_pot(height);
 		}
 
-		framebuffer = instantiate_fb(width, height, FBO_NEED_COLOR | FBO_NEED_DEPTH);
 		name = "_buffer";
 
 		glGenTextures(1, &id);
@@ -166,20 +167,22 @@ public:
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 		glTexImage2D(target, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
-		framebuffer->attachTexture(id, target, FBO_ATTACH_COLOR);
-
-		assert (framebuffer->valid());
+		framebuffer.Bind();
+		framebuffer.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT24, width, height);
+		framebuffer.AttachTexture(id, target);
+		bool status = framebuffer.CheckStatus("sm3");
+		framebuffer.Unbind();
+		assert(status);
 	}
 	~BufferTexture()
 	{
-		delete framebuffer;
 		// texture is deleted by ~BaseTexture
 	}
 	bool IsRect() {	return target == GL_TEXTURE_RECTANGLE_ARB; }
 
 	int width, height;
 	uint target;
-	IFramebuffer* framebuffer;
+	FBO framebuffer;
 };
 
 struct ShaderBuilder
@@ -658,7 +661,7 @@ void NodeGLSLShader::UnbindTSM ()
 void NodeGLSLShader::Setup (NodeSetupParams& params)
 {/*
 	if (renderBuffer) { // use a offscreen rendering buffer
-		renderBuffer->framebuffer->select();
+		renderBuffer->framebuffer.Bind();
 		glViewport(0, 0, renderBuffer->width, renderBuffer->height);
 	}*/
 
@@ -765,12 +768,12 @@ void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const
 	if (buffer)
 	{
 		if (pass == 0) {
-			buffer->framebuffer->select();
+			buffer->framebuffer.Bind();
 			glViewport(0, 0, buffer->width, buffer->height);
 			glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 		}
 		else if (pass==1) {
-			buffer->framebuffer->deselect();
+			buffer->framebuffer.Unbind();
 			glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 		}
 	}

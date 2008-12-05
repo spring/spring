@@ -4,8 +4,7 @@
 #include "Matrix44f.h"
 #include "GL/myGL.h"
 #include <vector>
-
-class IFramebuffer;
+#include "Rendering/GL/FBO.h"
 
 class CShadowHandler
 {
@@ -52,7 +51,7 @@ protected:
 		float maxz;
 	};
 	std::vector<fline> left;
-	IFramebuffer *fb;
+	FBO fb;
 
 	bool firstDraw;
 	static bool firstInstance;

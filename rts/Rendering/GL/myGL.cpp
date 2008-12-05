@@ -19,7 +19,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 
-#include "IFramebuffer.h"
+#include "FBO.h"
 
 using namespace std;
 
