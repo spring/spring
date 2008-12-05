@@ -123,18 +123,42 @@ CDxSound::~CDxSound()
 
 
 
-void CDxSound::PlayStream(const std::string& path, float volume,
-							const float3& pos, bool)
-{
+void CDxSound::PlayStream(const std::string& path, float volume, const float3& pos, bool) {
+	GML_RECMUTEX_LOCK(sound); // PlayStream
+
 	oggStream.SetDSoundObject(m_pDS);
 	oggStream.Play(path, volume, pos);
 }
 
-void CDxSound::StopStream() { oggStream.Stop(); }
-void CDxSound::PauseStream() { oggStream.TogglePause(); }
-unsigned int CDxSound::GetStreamTime() { return oggStream.GetTotalTime(); }
-unsigned int CDxSound::GetStreamPlayTime() { return oggStream.GetPlayTime(); }
-void CDxSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
+void CDxSound::StopStream() {
+	GML_RECMUTEX_LOCK(sound); // StopStream
+
+	oggStream.Stop();
+}
+
+void CDxSound::PauseStream() {
+	GML_RECMUTEX_LOCK(sound); // PauseStream
+
+	oggStream.TogglePause();
+}
+
+unsigned int CDxSound::GetStreamTime() {
+	GML_RECMUTEX_LOCK(sound); // GetStreamTime
+
+	return oggStream.GetTotalTime();
+}
+
+unsigned int CDxSound::GetStreamPlayTime() {
+	GML_RECMUTEX_LOCK(sound); // GetStreamPlayTime
+
+	return oggStream.GetPlayTime();
+}
+
+void CDxSound::SetStreamVolume(float v) {
+	GML_RECMUTEX_LOCK(sound); // SetStreamVolume
+
+	oggStream.SetVolume(v);
+}
 
 
 
@@ -162,6 +186,8 @@ int CDxSound::InitFile(const string& name)
 
 unsigned int CDxSound::GetWaveId(const string &name, bool _hardFail)
 {
+	GML_RECMUTEX_LOCK(sound); // GetWaveId
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	std::map<string, int>::iterator si = waveid.find(name);
@@ -224,6 +250,8 @@ void CDxSound::SetVolume(float v)
 
 void CDxSound::PlaySample(int id, float volume)
 {
+	GML_RECMUTEX_LOCK(sound); // PlaySample
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 	if (id <= 0 || id >= loadedSounds.size() || playingSounds.size() >= maxSounds) {
@@ -260,6 +288,8 @@ void CDxSound::PlaySample(int id, float volume)
 
 void CDxSound::PlaySample(int id, const float3& p, float volume)
 {
+	GML_RECMUTEX_LOCK(sound); // PlaySample
+
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
 
@@ -479,6 +509,8 @@ HRESULT CDxSound::RestoreBuffers(int num)
 
 void CDxSound::Update()
 {
+	GML_RECMUTEX_LOCK(sound); // Update
+
 	oggStream.Update();
 
 	float total = wantedSounds * 0.5f;

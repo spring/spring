@@ -16,7 +16,6 @@ private:
 	~GameSetupDrawer();
 
 	virtual void Draw();
-	virtual bool KeyPressed(unsigned short key, bool isRepeat);
 
 	static GameSetupDrawer* instance;
 	bool lctrl_pressed;

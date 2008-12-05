@@ -117,6 +117,7 @@ static bool CheckError(const char* msg)
 
 void COpenALSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
+	GML_RECMUTEX_LOCK(sound); // PlayStream
 /*
 	if (volume <= 0.0f) {
 		return;
@@ -165,11 +166,35 @@ void COpenALSound::PlayStream(const std::string& path, float volume, const float
 	oggStream.Play(path, pos * posScale, volume);
 }
 
-void COpenALSound::StopStream() { oggStream.Stop(); }
-void COpenALSound::PauseStream() { oggStream.TogglePause(); }
-unsigned int COpenALSound::GetStreamTime() { return oggStream.GetTotalTime(); }
-unsigned int COpenALSound::GetStreamPlayTime() { return oggStream.GetPlayTime(); }
-void COpenALSound::SetStreamVolume(float v) { oggStream.SetVolume(v); }
+void COpenALSound::StopStream() {
+	GML_RECMUTEX_LOCK(sound); // StopStream
+
+	oggStream.Stop();
+}
+
+void COpenALSound::PauseStream() {
+	GML_RECMUTEX_LOCK(sound); // PauseStream
+
+	oggStream.TogglePause();
+}
+
+unsigned int COpenALSound::GetStreamTime() {
+	GML_RECMUTEX_LOCK(sound); // GetStreamTime
+
+	return oggStream.GetTotalTime();
+}
+
+unsigned int COpenALSound::GetStreamPlayTime() {
+	GML_RECMUTEX_LOCK(sound); // GetStreamPlayTime
+
+	return oggStream.GetPlayTime();
+}
+
+void COpenALSound::SetStreamVolume(float v) {
+	GML_RECMUTEX_LOCK(sound); // SetStreamVolume
+
+	oggStream.SetVolume(v);
+}
 
 
 
@@ -196,6 +221,8 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume)
 
 void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relative)
 {
+	GML_RECMUTEX_LOCK(sound); // PlaySample
+
 	assert(volume >= 0.0f);
 
 	if (volume == 0.0f || globalVolume == 0.0f) return;
@@ -235,6 +262,8 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 
 void COpenALSound::Update()
 {
+	GML_RECMUTEX_LOCK(sound); // Update
+
 	oggStream.Update();
 
 	for (int a = 0; a < maxSounds; a++) {
@@ -417,6 +446,8 @@ ALuint COpenALSound::LoadALBuffer(const std::string& path)
 
 ALuint COpenALSound::GetWaveId(const std::string& path, bool _hardFail)
 {
+	GML_RECMUTEX_LOCK(sound); // GetWaveId
+
 	std::map<std::string, ALuint>::const_iterator it = soundMap.find(path);
 	if (it != soundMap.end()) {
 		return it->second;

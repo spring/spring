@@ -24,6 +24,8 @@
 //            (use "data" for the pointer to the instance).
 
 
+// TODO: add event driven system (like alttab, resolution changed, dualscreen, ...)
+
 namespace GLContext
 {
 	typedef void (*Func)(void* data);

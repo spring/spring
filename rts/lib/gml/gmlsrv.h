@@ -181,7 +181,7 @@ public:
 			int pos=0;
 //			int nproc=0;
 			int updsrv=0;
-			if(gmlThreadCount>1) {
+			if(ex->maxthreads>1) {
 				while(ClientsReady<=gmlThreadCount+1) {
 					if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
 						gmlUpdateServers();

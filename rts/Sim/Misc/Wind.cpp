@@ -63,7 +63,7 @@ void CWind::Update()
 		newWind=float3(sin(nd)*ns,0,cos(nd)*ns);
 
 		// TODO: decouple
-		uh->PushNewWind(newWind.x, newWind.z, newWind.Length());
+		uh->UpdateWind(newWind.x, newWind.z, newWind.Length());
 
 		status++;
 	} else if(status<=300) {

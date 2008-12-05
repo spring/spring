@@ -57,7 +57,7 @@ int gmlThreadNumber=0;
 #endif
 
 int gmlThreadCountOverride=0; // number of threads to use (can be manually overridden here)
-int gmlThreadCount=GML_CPU_COUNT; // number of threads to use
+int gmlThreadCount=0; // number of threads to use
 int gmlItemsConsumed=0;
 
 int gmlNextTickUpdate=0;
@@ -187,7 +187,7 @@ gmlMultiItemServer<GLuint, GLsizei, PFNGLGENQUERIESPROC *> gmlQueryServer(&glGen
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSPROC *> gmlBufferServer(&glGenBuffers, 2, 0);
 
 
-#if GML_ENABLE_SIMDRAW
+#if GML_ENABLE_SIM
 #include <boost/thread/mutex.hpp>
 boost::mutex caimutex;
 boost::mutex decalmutex;
@@ -217,6 +217,7 @@ boost::recursive_mutex grassmutex;
 boost::recursive_mutex guimutex;
 boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
+boost::recursive_mutex soundmutex;
 #endif
 
 // GMLqueue implementation
@@ -956,7 +957,7 @@ void gmlQueue::ExecuteDebug() {
 
 #include "gmlsrv.h"
 class CUnit;
-gmlClientServer<void, int,CUnit*> gmlProcessor;
+gmlClientServer<void, int,CUnit*> *gmlProcessor=NULL;
 
 // ExecuteSynced - executes all GL commands in the current read queue.
 // Execution is synced (this means it will stop at certain points

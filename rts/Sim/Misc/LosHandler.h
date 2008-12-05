@@ -203,7 +203,6 @@ private:
 	};
 	typedef std::list<CPoint> TPoints;
 	TPoints Points;
-	float terrainHeight[256];
 
 	typedef std::vector<CPoint> LosLine;
 	typedef std::vector<LosLine> LosTable;

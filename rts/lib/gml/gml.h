@@ -151,7 +151,7 @@ EXTERN inline GLuint gmlGenLists(GLsizei items) {
 #define GML_VECTOR gmlVector
 #define GML_CLASSVECTOR gmlClassVector
 
-#if GML_ENABLE_SIMDRAW
+#if GML_ENABLE_SIM
 #include <boost/thread/mutex.hpp>
 extern boost::mutex caimutex;
 extern boost::mutex decalmutex;
@@ -181,6 +181,7 @@ extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex guimutex;
 extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
+extern boost::recursive_mutex soundmutex;
 
 #define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)

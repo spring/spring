@@ -344,29 +344,24 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 	unsigned char* ct = cloudTexMem + 4 * ast;
 
 	int
-		am2 = (ast - 2) & CLOUD_MASK,
-		am1 = (ast - 1) & CLOUD_MASK,
-		aa  = (ast) & CLOUD_MASK,
-		ap1 = (ast + 1) & CLOUD_MASK,
-		dif = 0;
+		yam2 = ydif[(ast - 2) & CLOUD_MASK],
+		yam1 = ydif[(ast - 1) & CLOUD_MASK],
+		yaa  = ydif[(ast) & CLOUD_MASK],
+		ap1 = (ast + 1) & CLOUD_MASK;
 
 	int
 		a3c = ast + a3cstart,
 		a4c = ast + a4cstart;
 
 	for (int a = ast; a < aed; ++rc, ++ct) {
-		ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
-		ydif2[ap1] = (ydif1[ap1] = ydif[ap1] >> 1) >> 1;
+		int yap1 = ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
 
-		dif = ydif2[am2];
-		am2 = am1; dif += ydif1[am2];
-		am1 = aa;  dif += ydif[am1];
-		aa = ap1;  dif += ydif1[aa];
-		ap1 += 1;  dif += ydif2[ap1];
+		int dif = yam2 >> 2 +
+			(yam2 = yam1) >> 1 +
+			(yam1 = yaa) +
+			(yaa = yap1) >> 1 +
+			ydif[(++ap1) &= CLOUD_MASK] >> 2;
 		dif >>= 4;
-
-		if (ap1 >= CLOUD_SIZE)
-			ap1 = 0;
 
 		*ct++ = 128 + dif;
 		*ct++ = thicknessTransform[(*rc) >> 7];
@@ -406,16 +401,14 @@ void CAdvSky::Update()
 		int ifade=(int)(fade*fade*(3-2*fade)*256);
 		int ifade2=256-ifade;
 
-		for(int y=0, **bm=blendMatrix[a], **rm=randMatrix[a], **rm8=randMatrix[a+8]; y<32; ++y, ++bm, ++rm, ++rm8) {
-			int *bmx=*bm, *rmx=*rm, *rm8x=*rm8;
-			for(int x=0; x<32; ++x) {
-				(*bmx++)=((*rmx++)*ifade+(*rm8x++)*ifade2)>>8;
-			}
+		for(int y=0;y<32;y++){
+			for(int x=0;x<32;x++)
+				blendMatrix[a][y][x]=(randMatrix[a][y][x]*ifade+randMatrix[a+8][y][x]*ifade2)>>8;
 		}
 	}
 
-	for(int *rc=*rawClouds, *ec=rc+CLOUD_SIZE*CLOUD_SIZE; rc<ec; ++rc)
-		(*rc)=0;
+	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
+		rawClouds[0][a]=0;
 
 	static int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
 	for(int a=0; a<CLOUD_DETAIL; ++a) {
@@ -469,39 +462,28 @@ void CAdvSky::Update()
 		}
 	}
 
-	unsigned char *ct=cloudThickness;
-	for(int *rc=*rawClouds, *ec=rc+CLOUD_SIZE*CLOUD_SIZE; rc<ec; ++ct, ++rc)
-		(*ct)=alphaTransform[(*rc)>>7];
+	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
+		cloudThickness[a]=alphaTransform[rawClouds[0][a]>>7];
 
 	cloudThickness[CLOUD_SIZE*CLOUD_SIZE]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE-1];	//this one is read in one place, so to avoid reading uninitialized mem ...
 
 	//create the cloud shading
 	for(int a=0;a<CLOUD_SIZE;++a){
 		ydif[a]=(int)cloudThickness[(a+3*CLOUD_SIZE)] + cloudThickness[(a+2*CLOUD_SIZE)] + cloudThickness[(a+1*CLOUD_SIZE)] + 
-			cloudThickness[(a+0*CLOUD_SIZE)] - cloudThickness[(a+(CLOUD_SIZE-1)*CLOUD_SIZE)] - 
-			cloudThickness[(a+(CLOUD_SIZE-2)*CLOUD_SIZE)] - cloudThickness[(a+(CLOUD_SIZE-3)*CLOUD_SIZE)];
-		ydif2[a]=(ydif1[a]=ydif[a]>>1)>>1;
+			cloudThickness[(a+0*CLOUD_SIZE)] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-1))] - 
+			cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-2))] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-3))];
 	}
 
-	int b=0;
-	ydif[(b)&CLOUD_MASK]+=cloudThickness[(b+CLOUD_SIZE*(CLOUD_SIZE-3))];
-	ydif[(b)&CLOUD_MASK]-=cloudThickness[(b)]*2;
-	ydif[(b)&CLOUD_MASK]+=cloudThickness[(b+4*CLOUD_SIZE)];
-	ydif2[(b)&CLOUD_MASK]=(ydif1[(b)&CLOUD_MASK]=ydif[(b)&CLOUD_MASK]>>1)>>1;
+	ydif[0] += cloudThickness[0+CLOUD_SIZE*(CLOUD_SIZE-3)] - cloudThickness[0]*2 + cloudThickness[0+4*CLOUD_SIZE];
 
 	UpdatePart(0, CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-3), 4*CLOUD_SIZE);
 	UpdatePart(CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-4)-1, -3*CLOUD_SIZE, 4*CLOUD_SIZE);
-	UpdatePart(CLOUD_SIZE*(CLOUD_SIZE-4)-1, CLOUD_SIZE*CLOUD_SIZE, -3*CLOUD_SIZE, (4-CLOUD_SIZE)*CLOUD_SIZE);
+	UpdatePart(CLOUD_SIZE*(CLOUD_SIZE-4)-1, CLOUD_SIZE*CLOUD_SIZE, -3*CLOUD_SIZE, CLOUD_SIZE*(4-CLOUD_SIZE));
 
 	int modDensity=(int) ((1-cloudDensity)*256);
-	ct=cloudTexMem+3;
-	for(int a=0, *rc=*rawClouds;a<CLOUD_SIZE*CLOUD_SIZE; ++a, ++rc, ct+=4){
-		int f=((*rc)>>8)-modDensity;
-		if(f<0)
-			f=0;
-		if(f>255)
-			f=255;
-		(*ct)=f;
+	for(int a=0; a<CLOUD_SIZE*CLOUD_SIZE; ++a){
+		int f=(rawClouds[0][a]>>8)-modDensity;
+		cloudTexMem[a*4+3]=std::max(0, std::min(255, f));
 	}
 
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);

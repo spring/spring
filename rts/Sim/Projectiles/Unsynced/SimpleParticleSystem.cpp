@@ -99,20 +99,21 @@ void CSimpleParticleSystem::Draw()
 	}
 	else
 	{
+		unsigned char color[4];
 		for(int i=0; i<numParticles; i++)
 		{
-			if(particles[i].life<1.0f)
+			Particle* p = &particles[i];
+			if(p->life<1.0f)
 			{
-				unsigned char color[4];
+				colorMap->GetColor(color, p->life);
+				float3 interPos=p->pos+p->speed*gu->timeOffset;
+				const float3 cameraRight = camera->right*p->size;
+				const float3 cameraUp    = camera->up*p->size;
 
-				colorMap->GetColor(color, particles[i].life);
-				float3 interPos=particles[i].pos+particles[i].speed*gu->timeOffset;
-				float size = particles[i].size;
-
-				va->AddVertexQTC(interPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
-				va->AddVertexQTC(interPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
-				va->AddVertexQTC(interPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
-				va->AddVertexQTC(interPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
+				va->AddVertexQTC(interPos-cameraRight-cameraUp,texture->xstart,texture->ystart,color);
+				va->AddVertexQTC(interPos+cameraRight-cameraUp,texture->xend ,texture->ystart,color);
+				va->AddVertexQTC(interPos+cameraRight+cameraUp,texture->xend ,texture->yend ,color);
+				va->AddVertexQTC(interPos-cameraRight+cameraUp,texture->xstart,texture->yend ,color);
 			}
 		}
 	}

@@ -65,6 +65,8 @@ void CSound::PlayUnitActivate(int id, CUnit* p, float volume)
 
 void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 {
+	GML_RECMUTEX_LOCK(sound); // PlayUnitReply
+
 	if (squashDupes) {
 		/* HACK Squash multiple command acknowledgements in the same frame, so
 		   we aren't deafened by the construction horde, or the metalmaker
@@ -86,6 +88,8 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 
 void CSound::NewFrame()
 {
+	GML_RECMUTEX_LOCK(sound); // NewFrame
+
 	repliesPlayed.clear();
 }
 

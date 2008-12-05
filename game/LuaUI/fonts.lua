@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------
 --
 --  file:    fonts.lua
---  brief:   font handler, uses texture atlases from BZFlag
+--  brief:   font handler, with automatic texture atlas generation
 --  author:  Dave Rodgers
 --
 --  Copyright (C) 2007.

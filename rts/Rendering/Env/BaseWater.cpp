@@ -53,7 +53,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 		}
 	}
 
-	if(water==NULL && configValue==4 && GLEW_ARB_shading_language_100) {
+	if(water==NULL && configValue==4 && GLEW_ARB_shading_language_100 && GL_ARB_fragment_shader && GL_ARB_vertex_shader) {
 		try {
 			water = SAFE_NEW CBumpWater;
 		} catch (content_error& e) {

@@ -47,7 +47,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> gmlProcessor;
+extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 CUnitDrawer* unitDrawer;
@@ -425,7 +425,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	#ifdef DIRECT_CONTROL_ALLOWED
 		mt_excludeUnit=excludeUnit;
 	#endif
-		gmlProcessor.Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
+		gmlProcessor->Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
 	}
 	else {
 #endif
@@ -699,7 +699,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 #ifdef USE_GML
 	if(multiThreadDrawUnitShadow) {
-		gmlProcessor.Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
+		gmlProcessor->Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
 		  &uh->renderUnits, uh->renderUnits.size(),50,100,TRUE);
 	}
 	else {
@@ -927,7 +927,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 	// cloaked units and living ghosted buildings (stored in same vector)
 	for (GML_VECTOR<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
 		CUnit* unit = *ui;
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 		if(unit==NULL)
 			continue;
 #endif
