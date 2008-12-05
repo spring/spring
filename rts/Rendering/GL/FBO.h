@@ -10,6 +10,8 @@
 #ifndef FBO_H
 #define FBO_H
 
+#include <map>
+
 #include "myGL.h"
 
 //todo: add multisample buffers
