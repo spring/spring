@@ -245,6 +245,7 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 		if (gs) {
 			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
 		}
+#endif
 		if (subsystem.name && *subsystem.name)
 			(*filelog) << subsystem.name << ": ";
 		(*filelog) << str;
