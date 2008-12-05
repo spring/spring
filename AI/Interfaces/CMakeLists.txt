@@ -22,6 +22,10 @@ if (EXISTS ${C_AIINTERFACE_SRC})
 	set(C_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/C/${C_AIINTERFACE_VERS})
 	message(STATUS "${C_AIINTERFACE_VERS}\t(C AI Interface Version)")
 
+	# install data files
+	install(DIRECTORY "${C_AIINTERFACE_SRC}/data/"
+			DESTINATION "${C_AIINTERFACE_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${C_AIINTERFACE_SRC} cAIInterface)
 	list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/SharedLib)
 	if (UNIX)
@@ -30,8 +34,7 @@ if (EXISTS ${C_AIINTERFACE_SRC})
 		list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/DllLib)
 	endif (UNIX)
 	add_library(${C_AIINTERFACE_TARGET} MODULE ${cAIInterface} ${aienv}) # ${errorhandler})
-	install (FILES ${C_AIINTERFACE_SRC}/InterfaceInfo.lua DESTINATION ${C_AIINTERFACE_DATA_DIR})
-	install (TARGETS ${C_AIINTERFACE_TARGET} DESTINATION ${C_AIINTERFACE_DATA_DIR})
+	install(TARGETS ${C_AIINTERFACE_TARGET} DESTINATION ${C_AIINTERFACE_DATA_DIR})
 endif (EXISTS ${C_AIINTERFACE_SRC})
 
 
@@ -76,11 +79,14 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
 	message(STATUS "${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
 
+	# install data files
+	install(DIRECTORY "${Java_AIINTERFACE_SRC}/data/"
+			DESTINATION "${Java_AIINTERFACE_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	# handle native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
-	install(FILES ${Java_AIINTERFACE_SRC}/InterfaceInfo.lua DESTINATION ${Java_AIINTERFACE_DATA_DIR})
 	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
 	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
@@ -103,11 +109,6 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
 		COMMENT "  Creating Java library interface.jar ..." VERBATIM)
 	install(FILES ${Java_AIINTERFACE_SRC}/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	#install(FILES ${Java_AIINTERFACE_SRC}/java/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
 	install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib FILES_MATCHING PATTERN "*.jar")
-
-# Install the Java test Skirmish AI (only a temp solution here, move it to AI/Skirmish/...)
-#install (FILES ${Java_AIINTERFACE_SRC}/java/ai.jar DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
-#install (FILES ${Java_AIINTERFACE_SRC}/AIInfo.lua DESTINATION ${CMAKE_SOURCE_DIR}/AI/Skirmish/hoijuiAI/${Java_AIINTERFACE_VERS})
 endif (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 

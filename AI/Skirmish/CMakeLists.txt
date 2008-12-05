@@ -16,12 +16,12 @@ if (EXISTS ${KAI_SRC})
 	set(KAI_DATA_DIR ${SKIRMISH_DATA}/KAI/${KAI_VERS})
 	message(STATUS "${KAI_VERS}\t(KAI Version)")
 
+	# install data files
+	#install(DIRECTORY "${KAI_SRC}/data/"
+	#		DESTINATION "${KAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${KAI_SRC} kai)
 	#add_library(${KAI_TARGET} MODULE ${kai} ${legacycppaienv} ${creg})
-	#install (FILES ${KAI_SRC}/AIInfo.lua DESTINATION ${KAI_DATA_DIR})
-	#if (EXISTS ${KAI_SRC}/AIOptions.lua)
-	#	install (FILES ${KAI_SRC}/AIOptions.lua DESTINATION ${KAI_DATA_DIR})
-	#endif (EXISTS ${KAI_SRC}/AIOptions.lua)
 	#set_target_properties(${KAI_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 	#install (TARGETS ${KAI_TARGET} DESTINATION ${KAI_DATA_DIR})
 endif (EXISTS ${KAI_SRC})
@@ -38,12 +38,12 @@ if (EXISTS ${KAIK_SRC})
 	set(KAIK_DATA_DIR ${SKIRMISH_DATA}/KAIK/${KAIK_VERS})
 	message(STATUS "${KAIK_VERS}\t(KAIK Version)")
 
+	# install data files
+	install(DIRECTORY "${KAIK_SRC}/data/"
+			DESTINATION "${KAIK_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${KAIK_SRC} kaik)
 	add_library(${KAIK_TARGET} MODULE ${kaik} ${legacycppaienv} ${creg})
-	install (FILES ${KAIK_SRC}/AIInfo.lua DESTINATION ${KAIK_DATA_DIR})
-	if (EXISTS ${KAIK_SRC}/AIOptions.lua)
-		install (FILES ${KAIK_SRC}/AIOptions.lua DESTINATION ${KAIK_DATA_DIR})
-	endif (EXISTS ${KAIK_SRC}/AIOptions.lua)
 	set_target_properties(${KAIK_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 	install (TARGETS ${KAIK_TARGET} DESTINATION ${KAIK_DATA_DIR})
 endif (EXISTS ${KAIK_SRC})
@@ -60,12 +60,12 @@ if (EXISTS ${RAI_SRC})
 	set(RAI_DATA_DIR ${SKIRMISH_DATA}/RAI/${RAI_VERS})
 	message(STATUS "${RAI_VERS}\t(RAI Version)")
 
+	# install data files
+	install(DIRECTORY "${RAI_SRC}/data/"
+			DESTINATION "${RAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${RAI_SRC} rai)
 	add_library(${RAI_TARGET} MODULE ${rai} ${legacycppaienv})
-	install (FILES ${RAI_SRC}/AIInfo.lua DESTINATION ${RAI_DATA_DIR})
-	if (EXISTS ${RAI_SRC}/AIOptions.lua)
-		install (FILES ${RAI_SRC}/AIOptions.lua DESTINATION ${RAI_DATA_DIR})
-	endif (EXISTS ${RAI_SRC}/AIOptions.lua)
 	install (TARGETS ${RAI_TARGET} DESTINATION ${RAI_DATA_DIR})
 endif (EXISTS ${RAI_SRC})
 
@@ -102,6 +102,10 @@ if (EXISTS ${NTai_SRC})
 	set(NTai_DATA_DIR ${SKIRMISH_DATA}/NTai/${NTai_VERS})
 	message(STATUS "${NTai_VERS}\t(NTai Version)")
 
+	# install data files
+	#install(DIRECTORY "${NTai_SRC}/data/"
+	#		DESTINATION "${NTai_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${NTai_SRC} ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Units ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Units/Behaviours ntai)
@@ -115,10 +119,6 @@ if (EXISTS ${NTai_SRC})
 	aux_source_directory(${NTai_SRC}/AI/NTai/Agents ntai)
 	#add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
 	#target_link_libraries(${NTai_TARGET} boost_thread-mt)
-	#install (FILES ${NTai_SRC}/AIInfo.lua DESTINATION ${NTai_DATA_DIR})
-	#if (EXISTS ${NTai_SRC}/AIOptions.lua)
-	#	install (FILES ${NTai_SRC}/AIOptions.lua DESTINATION ${NTai_DATA_DIR})
-	#endif (EXISTS ${NTai_SRC}/AIOptions.lua)
 	#install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
 endif (EXISTS ${NTai_SRC})
 
@@ -134,12 +134,12 @@ if (EXISTS ${NullLegacyCppAI_SRC})
 	set(NullLegacyCppAI_DATA_DIR ${SKIRMISH_DATA}/NullLegacyCppAI/${NullLegacyCppAI_VERS})
 	message(STATUS "${NullLegacyCppAI_VERS}\t(NullLegacyCppAI Version)")
 
+	# install data files
+	install(DIRECTORY "${NullLegacyCppAI_SRC}/data/"
+			DESTINATION "${NullLegacyCppAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${NullLegacyCppAI_SRC} nulllegacycppai)
 	add_library(${NullLegacyCppAI_TARGET} MODULE ${nulllegacycppai} ${legacycppaienv})
-	install (FILES ${NullLegacyCppAI_SRC}/AIInfo.lua DESTINATION ${NullLegacyCppAI_DATA_DIR})
-	if (EXISTS ${NullLegacyCppAI_SRC}/AIOptions.lua)
-		install (FILES ${NullLegacyCppAI_SRC}/AIOptions.lua DESTINATION ${NullLegacyCppAI_DATA_DIR})
-	endif (EXISTS ${NullLegacyCppAI_SRC}/AIOptions.lua)
 	install (TARGETS ${NullLegacyCppAI_TARGET} DESTINATION ${NullLegacyCppAI_DATA_DIR})
 endif (EXISTS ${NullLegacyCppAI_SRC})
 
@@ -155,12 +155,12 @@ if (EXISTS ${NullAI_SRC})
 	set(NullAI_DATA_DIR ${SKIRMISH_DATA}/NullAI/${NullAI_VERS})
 	message(STATUS "${NullAI_VERS}\t(NullAI Version)")
 
+	# install data files
+	install(DIRECTORY "${NullAI_SRC}/data/"
+			DESTINATION "${NullAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${NullAI_SRC} nullai)
 	add_library(${NullAI_TARGET} MODULE ${mySrc} ${nullai})
-	install (FILES ${NullAI_SRC}/AIInfo.lua DESTINATION ${NullAI_DATA_DIR})
-	if (EXISTS ${NullAI_SRC}/AIOptions.lua)
-		install (FILES ${NullAI_SRC}/AIOptions.lua DESTINATION ${NullAI_DATA_DIR})
-	endif (EXISTS ${NullAI_SRC}/AIOptions.lua)
 	install (TARGETS ${NullAI_TARGET} DESTINATION ${NullAI_DATA_DIR})
 endif (EXISTS ${NullAI_SRC})
 
@@ -183,6 +183,10 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	set(NullJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
 	message(STATUS "${NullJavaAI_VERS}\t(NullJavaAI Version)")
 
+	# install data files
+	install(DIRECTORY "${NullJavaAI_SRC}/data/"
+			DESTINATION "${NullJavaAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	file(REMOVE_RECURSE "${NullJavaAI_SRC}/build")
 	file(MAKE_DIRECTORY "${NullJavaAI_SRC}/build")
 	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${NullJavaAI_SRC}" FOLLOW_SYMLINKS "${NullJavaAI_SRC}*.java")
@@ -200,10 +204,6 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 		WORKING_DIRECTORY "${NullJavaAI_SRC}"
 		COMMENT "  Creating Java AI library ai.jar" VERBATIM)
 
-	install (FILES ${NullJavaAI_SRC}/AIInfo.lua DESTINATION ${NullJavaAI_DATA_DIR})
-	if (EXISTS ${NullJavaAI_SRC}/AIOptions.lua)
-		install (FILES ${NullJavaAI_SRC}/AIOptions.lua DESTINATION ${NullJavaAI_DATA_DIR})
-	endif (EXISTS ${NullJavaAI_SRC}/AIOptions.lua)
 	install (FILES ${NullJavaAI_SRC}/ai.jar DESTINATION ${NullJavaAI_DATA_DIR})
 endif (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 
@@ -226,6 +226,10 @@ if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 	set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
 	message(STATUS "${NullOOJavaAI_VERS}\t(NullOOJavaAI Version)")
 
+	# install data files
+	install(DIRECTORY "${NullOOJavaAI_SRC}/data/"
+			DESTINATION "${NullOOJavaAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	file(REMOVE_RECURSE "${NullOOJavaAI_SRC}/build")
 	file(MAKE_DIRECTORY "${NullOOJavaAI_SRC}/build")
 	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${NullOOJavaAI_SRC}" FOLLOW_SYMLINKS "${NullOOJavaAI_SRC}*.java")
@@ -243,10 +247,6 @@ if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
 		COMMENT "  Creating Java OO AI library ai.jar" VERBATIM)
 
-	install (FILES ${NullOOJavaAI_SRC}/AIInfo.lua DESTINATION ${NullOOJavaAI_DATA_DIR})
-	if (EXISTS ${NullOOJavaAI_SRC}/AIOptions.lua)
-		install (FILES ${NullOOJavaAI_SRC}/AIOptions.lua DESTINATION ${NullOOJavaAI_DATA_DIR})
-	endif (EXISTS ${NullOOJavaAI_SRC}/AIOptions.lua)
 	install (FILES ${NullOOJavaAI_SRC}/ai.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
 endif (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 
@@ -264,12 +264,12 @@ if (UNIX)
 		set(JCAI_DATA_DIR ${SKIRMISH_DATA}/JCAI/${JCAI_VERS})
 		message(STATUS "${JCAI_VERS}\t(JCAI Version)")
 
+		# install data files
+		#install(DIRECTORY "${JCAI_SRC}/data/"
+		#		DESTINATION "${JCAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 		aux_source_directory(${JCAI_SRC} jcai)
 		#add_library(${JCAI_TARGET} MODULE ${jcai} ${legacycppaienv})
-		#install (FILES ${JCAI_SRC}/AIInfo.lua DESTINATION ${JCAI_DATA_DIR})
-		#if (EXISTS ${JCAI_SRC}/AIOptions.lua)
-		#	install (FILES ${JCAI_SRC}/AIOptions.lua DESTINATION ${JCAI_DATA_DIR})
-		#endif (EXISTS ${JCAI_SRC}/AIOptions.lua)
 		#install (TARGETS ${JCAI_TARGET} DESTINATION ${JCAI_DATA_DIR})
 	endif (EXISTS ${JCAI_SRC})
 endif (UNIX)

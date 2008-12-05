@@ -111,7 +111,7 @@ static bool util_isNormalDir(const struct _finddata_t* fileInfo) {
 }
 static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 		char** fileNames, bool recursive, const unsigned int maxFileNames,
-		unsigned int numFileNames) {
+		unsigned int numFileNames, const char* relPath) {
 
 	if (numFileNames >= maxFileNames) {
 		return numFileNames;
@@ -133,7 +133,10 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 		while (_findnext(handle, &fileInfo) == 0
 				&& numFileNames < maxFileNames) {
 			if (util_isFile(&fileInfo)) {
-				fileNames[numFileNames++] = util_allocStrCpy(fileInfo.name);
+				char fileRelPath[strlen(relPath) + strlen(fileInfo.name) + 1];
+					strcpy(fileRelPath, relPath);
+					strcat(fileRelPath, fileInfo.name);
+				fileNames[numFileNames++] = util_allocStrCpy(fileRelPath);
 			}
 		}
 		_findclose(handle);
@@ -153,8 +156,13 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 				strcpy(subDir, dir);
 				strcat(subDir, "\\");
 				strcat(subDir, fileInfo.name);
+				char subRelPath[strlen(relPath) + strlen(fileInfo.name)
+						+ strlen("\\") + 1];
+				strcpy(subRelPath, relPath);
+				strcat(subRelPath, fileInfo.name);
+				strcat(subRelPath, "\\");
 				numFileNames = util_listFilesRec(subDir, suffix, fileNames,
-						recursive, maxFileNames, numFileNames);
+						recursive, maxFileNames, numFileNames, subRelPath);
 			}
 			while (_findnext(handle, &fileInfo) == 0
 					&& numFileNames < maxFileNames) {
@@ -164,8 +172,13 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 					strcpy(subDir, dir);
 					strcat(subDir, "\\");
 					strcat(subDir, fileInfo.name);
+					char subRelPath[strlen(relPath) + strlen(fileInfo.name)
+							+ strlen("\\") + 1];
+					strcpy(subRelPath, relPath);
+					strcat(subRelPath, fileInfo.name);
+					strcat(subRelPath, "\\");
 					numFileNames = util_listFilesRec(subDir, suffix, fileNames,
-							recursive, maxFileNames, numFileNames);
+							recursive, maxFileNames, numFileNames, subRelPath);
 				}
 			}
 			_findclose(handle);
@@ -177,7 +190,7 @@ static unsigned int util_listFilesRec(const char* dir, const char* suffix,
 unsigned int util_listFiles(const char* dir, const char* suffix,
 		char** fileNames, bool recursive, const unsigned int maxFileNames) {
 	return util_listFilesRec(
-			dir, suffix, fileNames, recursive, maxFileNames, 0);
+			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
 #else
 
