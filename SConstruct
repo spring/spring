@@ -260,12 +260,19 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
 	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
-	inst = myEnv.Install(install_data_interface_dir, lib)
-	Alias('install', inst)
-	Alias('install-AIInterfaces', inst)
-	Alias('install-' + baseName, inst)
+	instList = [myEnv.Install(install_data_interface_dir, lib)]
 	if myEnv['strip']:
 		myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
+	source_data_dir = os.path.join('AI/Interfaces', baseName, 'data')
+	if os.path.exists(source_data_dir):
+		data_files_tmp = os.listdir(source_data_dir)
+		data_files = []
+		for df in data_files_tmp:
+			data_files += [os.path.join(source_data_dir, df)]
+		instList += [env.Install(install_data_interface_dir, data_files)]
+	Alias('install', instList)
+	Alias('install-AIInterfaces', instList)
+	Alias('install-' + baseName, instList)
 
 # install AI interface info files
 aiinterfaces_data_dirs = filelist.list_directories(env, 'AI/Interfaces', exclude_list=aiinterfaces_exclude_list, recursively=False)
