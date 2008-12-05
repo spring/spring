@@ -13,8 +13,8 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
-#include "GL/myGL.h"
-#include "GL/IFramebuffer.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "EventHandler.h"
 
@@ -28,7 +28,7 @@ bool CShadowHandler::useFPShadows  = false;
 bool CShadowHandler::firstInstance = true;
 
 
-CShadowHandler::CShadowHandler(void): fb(0)
+CShadowHandler::CShadowHandler(void)
 {
 	const bool tmpFirstInstance = firstInstance;
 	firstInstance = false;
@@ -88,8 +88,6 @@ CShadowHandler::CShadowHandler(void): fb(0)
 
 	if (configValue == 0) {
 		// free any resources allocated by InitDepthTarget()
-		delete fb;
-		fb = NULL;
 		glDeleteTextures(1, &shadowTexture);
 		shadowTexture = 0;
 		return; // drawShadows is still false
@@ -104,10 +102,7 @@ bool CShadowHandler::InitDepthTarget()
 	// this can be enabled for debugging
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
-
-	fb = instantiate_fb(shadowMapSize, shadowMapSize,
-			(useColorTexture ? FBO_NEED_COLOR | FBO_NEED_DEPTH : FBO_NEED_DEPTH_TEXTURE));
-	if (!(fb && fb->valid())) {
+	if (!fb.IsValid()) {
 		logOutput.Print("framebuffer not valid!");
 		return false;
 	}
@@ -124,23 +119,23 @@ bool CShadowHandler::InitDepthTarget()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
-	fb->select();
+	fb.Bind();
+	if (useColorTexture)
+		fb.AttachTexture(shadowTexture);
+	else
+		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 	int buffer = useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
 	glDrawBuffer(buffer);
 	glReadBuffer(buffer);
-	if (useColorTexture)
-		fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
-	else
-		fb->attachTexture(shadowTexture, GL_TEXTURE_2D, FBO_ATTACH_DEPTH);
-	fb->checkFBOStatus();
-	return true;
+	bool status = fb.CheckStatus("SHADOW");
+	fb.Unbind();
+	return status;
 }
 
 CShadowHandler::~CShadowHandler(void)
 {
 	if (drawShadows)
 		glDeleteTextures(1, &shadowTexture);
-	delete fb;
 }
 
 void CShadowHandler::DrawShadowPasses(void)
@@ -170,7 +165,7 @@ void CShadowHandler::GetShadowMapSizeFactors(float& p17, float& p18)
 
 void CShadowHandler::CreateShadows(void)
 {
-	fb->select();
+	fb.Bind();
 
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -250,7 +245,7 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	fb->deselect();
+	fb.Unbind();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 }
 

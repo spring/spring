@@ -1011,7 +1011,7 @@ int SpringApp::Run (int argc, char *argv[])
 		return -1;
 
 #ifdef WIN32
-	SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
+	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
 
 #ifdef USE_GML
@@ -1064,10 +1064,8 @@ int SpringApp::Run (int argc, char *argv[])
 					}
 					break;
 				}
-				case SDL_MOUSEMOTION: {
-					mouseInput->HandleSDLMouseEvent (event);
-					break;
-				}
+
+				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 				case SDL_SYSWMEVENT: {

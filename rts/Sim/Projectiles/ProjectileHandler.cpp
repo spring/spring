@@ -16,7 +16,7 @@
 #include "ConfigHandler.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/GL/IFramebuffer.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -316,20 +316,14 @@ CProjectileHandler::CProjectileHandler()
 
 	drawPerlinTex=false;
 
-	if (GLEW_EXT_framebuffer_object && !GLEW_ATI_envmap_bumpmap) {
-		// this seems to bug on ati cards so disable it on those
-		// (just some random ati extension to detect ati cards),
-		// should be fixed by someone that actually has a ati card
-		perlinFB = instantiate_fb(512, 512, FBO_NEED_COLOR);
-		if (perlinFB && perlinFB->valid()) {
-			perlinFB->attachTexture(textureAtlas->gltex, GL_TEXTURE_2D, FBO_ATTACH_COLOR);
-			perlinFB->select();
-			drawPerlinTex=perlinFB->checkFBOStatus();
-			perlinFB->deselect();
-		}
-	}
-	else {
-		perlinFB = 0;
+	if (perlinFB.IsValid()) {
+		//we never refresh the full texture (just the perlin part). So we need to reload it then.
+		perlinFB.reloadOnAltTab = true;
+
+		perlinFB.Bind();
+		perlinFB.AttachTexture(textureAtlas->gltex);
+		drawPerlinTex=perlinFB.CheckStatus("PERLIN");
+		perlinFB.Unbind();
 	}
 }
 
@@ -367,7 +361,6 @@ CProjectileHandler::~CProjectileHandler()
 	ph=0;
 	delete textureAtlas;
 	delete groundFXAtlas;
-	delete perlinFB;
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer *s)
@@ -758,10 +751,11 @@ void CProjectileHandler::CheckUnitCol()
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* p = (*psi);
-		const float3 ppos0 = p->pos;
-		const float3 ppos1 = p->pos + p->speed;
 
 		if (p->checkCol && !p->deleteMe) {
+			const float3 ppos0 = p->pos;
+			const float3 ppos1 = p->pos + p->speed;
+
 			float speedf = p->speed.Length();
 
 			CUnit** endUnit = tempUnits;
@@ -926,9 +920,11 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 
 	GML_RECMUTEX_LOCK(proj); // AddFlyingPiece
 
+	flyings3oPieces.reserve(textureType);
 	while(flyings3oPieces.size()<=textureType)
 		flyings3oPieces.push_back(vector<FlyingPiece_List*>());
 
+	flyings3oPieces[textureType].reserve(team);
 	while(flyings3oPieces[textureType].size()<=team){
 		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
 
@@ -959,23 +955,12 @@ void CProjectileHandler::UpdateTextures()
 {
 	if (numPerlinProjectiles && drawPerlinTex)
 		UpdatePerlin();
-/*
-	if(gs->frameNum==300){
-		logOutput.Print("Saving tex");
-		perlinFB->select();
-		unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
-		glReadPixels(0,0,512,512,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-		CBitmap b(buf,512,512);
-		b.ReverseYAxis();
-		b.Save("proj2.tga");
-		delete[] buf;
-		perlinFB->deselect();
-	}*/
 }
+
 
 void CProjectileHandler::UpdatePerlin()
 {
-	perlinFB->select();
+	perlinFB.Bind();
 	glViewport(perlintex.ixstart, perlintex.iystart, 128, 128);
 
 	glMatrixMode(GL_PROJECTION);
@@ -1043,7 +1028,7 @@ void CProjectileHandler::UpdatePerlin()
 		speed*=0.6f;
 		size*=2;
 	}
-	perlinFB->deselect();
+	perlinFB.Unbind();
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
