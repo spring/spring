@@ -96,7 +96,7 @@ if env['strip']:
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
-uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
+uenv = env.Clone(builddir=os.path.join(env['builddir'], 'unitsync'))
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 
 for d in filelist.list_directories(uenv, 'rts', exclude_list=["crashrpt"]):
@@ -168,24 +168,24 @@ if env['platform'] != 'windows':
 ################################################################################
 # TODO: make separate SConstructs for AIs
 # Make a copy of the build environment for the AIs
-aienv = env.Copy()
+aienv = env.Clone()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
 aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
 #print aienv['CPPDEFINES']
 
-aiinterfaceenv = aienv.Copy()
+aiinterfaceenv = aienv.Clone()
 aiinterfaceenv['CPPDEFINES'] += ['BUILDING_AI_INTERFACE']
 
 aienv['CPPDEFINES'] += ['BUILDING_AI']
 
-skirmishaienv = aienv.Copy()
+skirmishaienv = aienv.Clone()
 
-#groupaienv = aienv.Copy()
+#groupaienv = aienv.Clone()
 
 # stores shared objects so newer scons versions don't choke with
 def create_shared_objects(env, fileList, suffix, additionalCPPDEFINES = []):
 	objsList = []
-	myEnv = env.Copy()
+	myEnv = env.Clone()
 	myEnv['CPPDEFINES'] += additionalCPPDEFINES
 	for f in fileList:
 		while isinstance(f, list):
@@ -266,7 +266,7 @@ javaInterfaceJar = ''
 for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterfaces_exclude_list):
 	aiInterfaceVersion = fetch_ai_version(baseName, 'Interfaces')
 	print "AI Interface: " + baseName + " v" + aiInterfaceVersion
-	myEnv = aiinterfaceenv.Copy()
+	myEnv = aiinterfaceenv.Clone()
 	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
 	instList = []
 	objs = aiinterfaceobjs_main
@@ -353,7 +353,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
 	useCreg = baseName in skirmishai_needCreg_list
 	isJava = baseName in skirmishai_isJava_list
-	myEnv = skirmishaienv.Copy()
+	myEnv = skirmishaienv.Clone()
 	install_data_ai_dir = os.path.join(install_skirmishai_dir, baseName, aiVersion)
 	instList = []
 
@@ -444,7 +444,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 #	useCreg = True #baseName in groupai_needCreg_list
 #	#TODO remove the True in the next line, uncomment the rest, and actualize groupai_isLegacyCpp_list
 #	isLegacyCpp = True #baseName in groupai_isLegacyCpp_list
-#	myEnv = groupaienv.Copy()
+#	myEnv = groupaienv.Clone()
 #	if useCreg:
 #		myEnv['CPPDEFINES'] += ['USING_CREG']
 #	objs = []
