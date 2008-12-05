@@ -36,7 +36,7 @@ def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.', recur
 	return dirs
 
 
-def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.'):
+def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', exclude_dirs = False):
 	path_stack = [path]
 	exclude = re.compile(exclude_regexp)
 	ffiles = []
@@ -46,7 +46,8 @@ def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.'):
 		for f in files:
 			g = os.path.join(path, f)
 			if os.path.exists(g) and not f in exclude_list and not exclude.search(f):
-				ffiles += [g]
+				if not os.path.isdir(g) or not exclude_dirs:
+					ffiles += [g]
 				if os.path.isdir(g):
 					path_stack += [g]
 	return ffiles
