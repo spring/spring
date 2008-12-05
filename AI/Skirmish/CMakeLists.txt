@@ -81,13 +81,13 @@ if (EXISTS ${AAI_SRC})
 	set(AAI_DATA_DIR ${SKIRMISH_DATA}/AAI/${AAI_VERS})
 	message(STATUS "${AAI_VERS}\t(AAI Version)")
 
+	# install data files
+	install(DIRECTORY "${AAI_SRC}/data/"
+			DESTINATION "${AAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+
 	aux_source_directory(${AAI_SRC} aai)
-	#add_library(${AAI_TARGET} MODULE ${aai} ${legacycppaienv})
-	#install (FILES ${AAI_SRC}/AIInfo.lua DESTINATION ${AAI_DATA_DIR})
-	#if (EXISTS ${AAI_SRC}/AIOptions.lua)
-	#	install (FILES ${AAI_SRC}/AIOptions.lua DESTINATION ${AAI_DATA_DIR})
-	#endif (EXISTS ${AAI_SRC}/AIOptions.lua)
-	#install (TARGETS ${AAI_TARGET} DESTINATION ${AAI_DATA_DIR})
+	add_library(${AAI_TARGET} MODULE ${aai} ${legacycppaienv})
+	install (TARGETS ${AAI_TARGET} DESTINATION ${AAI_DATA_DIR})
 endif (EXISTS ${AAI_SRC})
 
 
@@ -103,8 +103,8 @@ if (EXISTS ${NTai_SRC})
 	message(STATUS "${NTai_VERS}\t(NTai Version)")
 
 	# install data files
-	#install(DIRECTORY "${NTai_SRC}/data/"
-	#		DESTINATION "${NTai_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+	install(DIRECTORY "${NTai_SRC}/data/"
+			DESTINATION "${NTai_DATA_DIR}" PATTERN ".svn" EXCLUDE)
 
 	aux_source_directory(${NTai_SRC} ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Units ntai)
@@ -117,9 +117,9 @@ if (EXISTS ${NTai_SRC})
 	aux_source_directory(${NTai_SRC}/AI/NTai/Engine ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Core ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Agents ntai)
-	#add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
-	#target_link_libraries(${NTai_TARGET} boost_thread-mt)
-	#install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
+	add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
+	target_link_libraries(${NTai_TARGET} boost_thread-mt)
+	install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
 endif (EXISTS ${NTai_SRC})
 
 
