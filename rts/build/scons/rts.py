@@ -95,7 +95,7 @@ def generate(env):
 		('synccheck',         'Set to yes to enable sync checker & resyncer', True),
 		('synctrace',         'Enable sync tracing', False),
 		('optimize',          'Enable processor optimizations during compilation', 1),
-		('arch',	      'CPU architecture to use', 'auto'),
+		('arch',              'CPU architecture to use', 'auto'),
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('profile_generate',  'Set to yes to compile with -fprofile-generate to generate profiling information', False),
 		('profile_use',       'Set to yes to compile with -fprofile-use to use profiling information', False),

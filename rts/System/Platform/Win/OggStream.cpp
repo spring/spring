@@ -218,12 +218,12 @@ void COggStream::Update() {
 void COggStream::DisplayInfo() {
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
-	logOutput.Print("time (sec):        %d", ov_time_total(&oggStream,-1));
-	logOutput.Print("rate (Hz):         %d", vorbisInfo->rate);
-	logOutput.Print("bitrate (upper):   %d", vorbisInfo->bitrate_upper);
-	logOutput.Print("bitrate (nominal): %d", vorbisInfo->bitrate_nominal);
-	logOutput.Print("bitrate (lower):   %d", vorbisInfo->bitrate_lower);
-	logOutput.Print("bitrate (window):  %d", vorbisInfo->bitrate_window);
+	logOutput.Print("time (sec):        %li", ov_time_total(&oggStream,-1));
+	logOutput.Print("rate (Hz):         %li", vorbisInfo->rate);
+	logOutput.Print("bitrate (upper):   %li", vorbisInfo->bitrate_upper);
+	logOutput.Print("bitrate (nominal): %li", vorbisInfo->bitrate_nominal);
+	logOutput.Print("bitrate (lower):   %li", vorbisInfo->bitrate_lower);
+	logOutput.Print("bitrate (window):  %li", vorbisInfo->bitrate_window);
 	logOutput.Print("vendor:            %s", vorbisComment->vendor);
 
 	for (int i = 0; i < vorbisComment->comments; i++) {

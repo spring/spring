@@ -32,7 +32,7 @@ public:
 	void Serialize(creg::ISerializer& s);
 	void PostLoad();
 	virtual ~CUnitHandler();
-	void PushNewWind(float x, float z, float strength);
+	void UpdateWind(float x, float z, float strength);
 
 	//return values for the following is
 	//0 blocked

@@ -608,10 +608,10 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 }
 
 
-void CUnitHandler::PushNewWind(float x, float z, float strength)
+void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
 	ASSERT_SYNCED_MODE;
-	//todo: fixa en lista med enbart windgenerators kanske blir lite snabbare
+	//todo: save windgens in a list (would be a little faster)
 	std::list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 	{
