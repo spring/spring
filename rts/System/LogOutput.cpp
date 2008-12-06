@@ -238,12 +238,13 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 	OutputDebugString(str);
 	if (newline)
 		OutputDebugString("\n");
-#endif
+#endif // _MSC_VER
 
 	if (filelog) {
 #if !defined UNITSYNC && !defined DEDICATED
-		if (gs)
+		if (gs) {
 			(*filelog) << IntToString(gs->frameNum, "[%7d] ");
+		}
 #endif
 		if (subsystem.name && *subsystem.name)
 			(*filelog) << subsystem.name << ": ";
@@ -348,6 +349,12 @@ void CLogOutput::Print(const std::string& text)
 void CLogOutput::Print(CLogSubsystem& subsystem, const std::string& text)
 {
 	Output(subsystem, text.c_str());
+}
+
+
+CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
+{
+	return LOG_DEFAULT;
 }
 
 

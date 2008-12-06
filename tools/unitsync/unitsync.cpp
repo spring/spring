@@ -24,6 +24,8 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
+#include "System/Info.h"
+#include "System/Option.h"
 
 
 // unitsync only:
@@ -406,7 +408,7 @@ EXPORT(int) GetUnitCount()
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
  */
-EXPORT(const char *) GetUnitName(int unit)
+EXPORT(const char*) GetUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit %d name\n", unit);
@@ -426,7 +428,7 @@ EXPORT(const char *) GetUnitName(int unit)
  * This function returns the units human name. For example it would return
  * 'Arm Construction kbot' and not 'armck'.
  */
-EXPORT(const char *) GetFullUnitName(int unit)
+EXPORT(const char*) GetFullUnitName(int unit)
 {
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get full unit %d name\n", unit);
@@ -518,7 +520,7 @@ EXPORT(const char*) GetArchivePath(const char* arname)
 }
 
 
-// Updated on every call to getmapcount
+// Updated on every call to GetMapCount
 static vector<string> mapNames;
 
 
@@ -1322,14 +1324,14 @@ EXPORT(int) GetPrimaryModArchiveCount(int index)
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
-EXPORT(const char*) GetPrimaryModArchiveList(int arnr)
+EXPORT(const char*) GetPrimaryModArchiveList(int archiveNr)
 {
 	try {
 		CheckInit();
-		CheckBounds(arnr, primaryArchives.size());
+		CheckBounds(archiveNr, primaryArchives.size());
 
-		logOutput.Print(LOG_UNITSYNC, "primary mod archive list: %s\n", primaryArchives[arnr].c_str());
-		return GetStr(primaryArchives[arnr]);
+		logOutput.Print(LOG_UNITSYNC, "primary mod archive list: %s\n", primaryArchives[archiveNr].c_str());
+		return GetStr(primaryArchives[archiveNr]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -1574,194 +1576,18 @@ EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 //////////////////////////
 //////////////////////////
 
-static const char* badKeyChars = " =;\r\n\t";
 
-
-struct ListItem {
-	string key;
-	string name;
-	string desc;
-};
-
-
-struct Option {
-	Option() : typeCode(opt_error) {}
-
-	string key;
-	string name;
-	string desc;
-	string section;
-	string style;
-
-	string type; // "bool", "number", "string", "list", "section"
-
-	OptionType typeCode;
-
-	bool   boolDef;
-
-	float  numberDef;
-	float  numberMin;
-	float  numberMax;
-	float  numberStep; // aligned to numberDef
-
-	string stringDef;
-	int    stringMaxLen;
-
-	string listDef;
-	vector<ListItem> list;
-};
-
-
-static vector<Option> options;
-static set<string> optionsSet;
-
-
-static bool ParseOption(const LuaTable& root, int index, Option& opt)
-{
-	const LuaTable& optTbl = root.SubTable(index);
-	if (!optTbl.IsValid()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: subtable %d invalid", index);
-		return false;
-	}
-
-	// common options properties
-	opt.key = optTbl.GetString("key", "");
-	if (opt.key.empty() || (opt.key.find_first_of(badKeyChars) != string::npos)) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: empty key or key contains bad characters");
-		return false;
-	}
-	opt.key = StringToLower(opt.key);
-	if (optionsSet.find(opt.key) != optionsSet.end()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: key %s exists already", opt.key.c_str());
-		return false;
-	}
-	opt.name = optTbl.GetString("name", opt.key);
-	if (opt.name.empty()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key.c_str());
-		return false;
-	}
-	opt.desc = optTbl.GetString("desc", opt.name);
-
-	opt.section = optTbl.GetString("section", "");
-	opt.style = optTbl.GetString("style", "");
-
-	opt.type = optTbl.GetString("type", "");
-	opt.type = StringToLower(opt.type);
-
-	// option type specific properties
-	if (opt.type == "bool") {
-		opt.typeCode = opt_bool;
-		opt.boolDef = optTbl.GetBool("def", false);
-	}
-	else if (opt.type == "number") {
-		opt.typeCode = opt_number;
-		opt.numberDef  = optTbl.GetFloat("def",  0.0f);
-		opt.numberMin  = optTbl.GetFloat("min",  -1.0e30f);
-		opt.numberMax  = optTbl.GetFloat("max",  +1.0e30f);
-		opt.numberStep = optTbl.GetFloat("step", 0.0f);
-	}
-	else if (opt.type == "string") {
-		opt.typeCode = opt_string;
-		opt.stringDef    = optTbl.GetString("def", "");
-		opt.stringMaxLen = optTbl.GetInt("maxlen", 0);
-	}
-	else if (opt.type == "list") {
-		opt.typeCode = opt_list;
-
-		const LuaTable& listTbl = optTbl.SubTable("items");
-		if (!listTbl.IsValid()) {
-			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable items invalid", opt.key.c_str());
-			return false;
-		}
-
-		for (int i = 1; listTbl.KeyExists(i); i++) {
-			ListItem item;
-
-			// string format
-			item.key = listTbl.GetString(i, "");
-			if (!item.key.empty() &&
-			    (item.key.find_first_of(badKeyChars) == string::npos)) {
-				item.name = item.key;
-				item.desc = item.name;
-				opt.list.push_back(item);
-				continue;
-			}
-
-			// table format  (name & desc)
-			const LuaTable& itemTbl = listTbl.SubTable(i);
-			if (!itemTbl.IsValid()) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable %d of subtable items invalid", opt.key.c_str(), i);
-				break;
-			}
-			item.key = itemTbl.GetString("key", "");
-			if (item.key.empty() || (item.key.find_first_of(badKeyChars) != string::npos)) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty key or key contains bad characters", opt.key.c_str());
-				return false;
-			}
-			item.key = StringToLower(item.key);
-			item.name = itemTbl.GetString("name", item.key);
-			if (item.name.empty()) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key.c_str());
-				return false;
-			}
-			item.desc = itemTbl.GetString("desc", item.name);
-			opt.list.push_back(item);
-		}
-
-		if (opt.list.size() <= 0) {
-			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty list", opt.key.c_str());
-			return false; // no empty lists
-		}
-
-		opt.listDef = optTbl.GetString("def", opt.list[0].name);
-	}
-	else if (opt.type == "section") {
-		opt.typeCode = opt_section;
-	}
-	else {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: unknown type %s", opt.key.c_str(), opt.type.c_str());
-		return false; // unknown type
-	}
-
-	optionsSet.insert(opt.key);
-
-	return true;
-}
-
+static std::vector<Option> options;
+static std::set<std::string> optionsSet;
 
 static void ParseOptions(const string& fileName,
                          const string& fileModes,
                          const string& accessModes,
                          const string& mapName = "")
 {
-	LuaParser luaParser(fileName, fileModes, accessModes);
-
-	const string configName = MapParser::GetMapConfigName(mapName);
-
-	if (!mapName.empty() && !configName.empty()) {
-		luaParser.GetTable("Map");
-		luaParser.AddString("fileName", mapName);
-		luaParser.AddString("fullName", "maps/" + mapName);
-		luaParser.AddString("configFile", configName);
-		luaParser.EndTable();
-	}
-
-	if (!luaParser.Execute()) {
-		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
-	}
-
-	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("root table invalid");
-	}
-
-	for (int index = 1; root.KeyExists(index); index++) {
-		Option opt;
-		if (ParseOption(root, index, opt)) {
-			options.push_back(opt);
-		}
-	}
-};
+	parseOptions(options, fileName, fileModes, accessModes, mapName,
+			&optionsSet, &LOG_UNITSYNC);
+}
 
 
 static void CheckOptionIndex(int optIndex)
@@ -1843,7 +1669,7 @@ EXPORT(int) GetModOptionCount()
 }
 
 
-// Common Parameters
+// Common Options Parameters
 
 /**
  * @brief Retrieve an option's key
@@ -2155,7 +1981,7 @@ EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		const vector<ListItem>& list = options[optIndex].list;
+		const vector<OptionListItem>& list = options[optIndex].list;
 		CheckBounds(itemIndex, list.size());
 		return GetStr(list[itemIndex].key);
 	}
@@ -2177,7 +2003,7 @@ EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		const vector<ListItem>& list = options[optIndex].list;
+		const vector<OptionListItem>& list = options[optIndex].list;
 		CheckBounds(itemIndex, list.size());
 		return GetStr(list[itemIndex].name);
 	}
@@ -2199,7 +2025,7 @@ EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		const vector<ListItem>& list = options[optIndex].list;
+		const vector<OptionListItem>& list = options[optIndex].list;
 		CheckBounds(itemIndex, list.size());
 		return GetStr(list[itemIndex].desc);
 	}
@@ -2461,9 +2287,11 @@ EXPORT(int) FileSizeVFS(int handle)
 	return -1;
 }
 
-
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
+/**
+ * Does not currently support more than one call at a time.
+ * (a new call to initfind destroys data from previous ones)
+ * pass the returned handle to findfiles to get the results
+ */
 EXPORT(int) InitFindVFS(const char* pattern)
 {
 	try {
@@ -2480,8 +2308,11 @@ EXPORT(int) InitFindVFS(const char* pattern)
 	return -1;
 }
 
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
+/**
+ * Does not currently support more than one call at a time.
+ * (a new call to initfind destroys data from previous ones)
+ * pass the returned handle to findfiles to get the results
+ */
 EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
@@ -2498,8 +2329,11 @@ EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* mo
 	return -1;
 }
 
-// Does not currently support more than one call at a time (a new call to initfind destroys data from previous ones)
-// pass the returned handle to findfiles to get the results
+/**
+ * Does not currently support more than one call at a time.
+ * (a new call to initfind destroys data from previous ones)
+ * pass the returned handle to findfiles to get the results
+ */
 EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* modes)
 {
 	try {
@@ -2768,7 +2602,7 @@ EXPORT(void) SetSpringConfigFile(const char* filenameAsAbsolutePath)
 	ConfigHandler::Instantiate(filenameAsAbsolutePath);
 }
 
-EXPORT(const char* ) GetSpringConfigFile()
+EXPORT(const char*) GetSpringConfigFile()
 {
 	return GetStr(configHandler.GetConfigFile());
 }
@@ -2786,15 +2620,15 @@ static void CheckConfigHandler()
  * @param defvalue default string value to use if key is not found, may not be NULL
  * @return string value
  */
-EXPORT(const char*) GetSpringConfigString( const char* name, const char* defvalue )
+EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue)
 {
 	try {
 		CheckConfigHandler();
-		string res = configHandler.GetString( name, defvalue );
+		string res = configHandler.GetString(name, defValue);
 		return GetStr(res);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return defvalue;
+	return defValue;
 }
 
 /**
@@ -2803,14 +2637,14 @@ EXPORT(const char*) GetSpringConfigString( const char* name, const char* defvalu
  * @param defvalue default integer value to use if key is not found
  * @return integer value
  */
-EXPORT(int) GetSpringConfigInt( const char* name, const int defvalue )
+EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler.Get( name, defvalue );
+		return configHandler.Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return defvalue;
+	return defValue;
 }
 
 /**
@@ -2819,14 +2653,14 @@ EXPORT(int) GetSpringConfigInt( const char* name, const int defvalue )
  * @param defvalue default float value to use if key is not found
  * @return float value
  */
-EXPORT(float) GetSpringConfigFloat( const char* name, const float defvalue )
+EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler.Get( name, defvalue );
+		return configHandler.Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return defvalue;
+	return defValue;
 }
 
 /**
@@ -2852,7 +2686,7 @@ EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
 		CheckConfigHandler();
-		configHandler.Set( name, value );
+		configHandler.Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2866,7 +2700,7 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
 		CheckConfigHandler();
-		configHandler.Set( name, value );
+		configHandler.Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2900,7 +2734,7 @@ class CMessageOnce
 
 
 // deprecated 2008/10
-EXPORT(const char *) GetCurrentList()
+EXPORT(const char*) GetCurrentList()
 {
 	DEPRECATED;
 	return NULL;
@@ -2919,7 +2753,7 @@ EXPORT(void) RemoveClient(int id)
 }
 
 // deprecated 2008/10
-EXPORT(const char *) GetClientDiff(int id)
+EXPORT(const char*) GetClientDiff(int id)
 {
 	DEPRECATED;
 	return NULL;
