@@ -362,7 +362,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	char libraryPath[1024];
 	libraryPath[0] = '\0';
 	strcat(libraryPath, "-Djava.library.path=");
-// TODO remove the two following lines
+// TODO remove the two following lines, but check first.. seems not to be working without
 strcat(libraryPath, "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/AI/Interfaces/Java/0.1");
 strcat(libraryPath, ENTRY_DELIM);
 	if (found_libraryPath1) {

@@ -5,9 +5,9 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "DamageArrayHandler.h"
-#else	/* __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#else // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #define SAFE_NEW new
-#endif	/* __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#endif // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 
 
 #ifdef USING_CREG
@@ -29,22 +29,26 @@ void DamageArray::creg_Serialize(creg::ISerializer& s)
 {
 	s.Serialize(damages, numTypes * sizeof(damages[0]));
 }
-#endif /* USING_CREG */
+#endif // USING_CREG
 
-#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 DamageArray::DamageArray() : paralyzeDamageTime(0),
 			impulseFactor(1.0f), impulseBoost(0.0f),
 			craterMult(1.0f), craterBoost(0.0f)
 {
-	if (damageArrayHandler) numTypes = damageArrayHandler->GetNumTypes();
-	else numTypes = 1;
+#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+	if (damageArrayHandler) {
+		numTypes = damageArrayHandler->GetNumTypes();
+	} else {
+		numTypes = 1;
+	}
+#else // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+	numTypes = 1;
+#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 	damages = SAFE_NEW float[numTypes];
-	for(int a = 0; a < numTypes; ++a)
+	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;
+	}
 }
-#else	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
-DamageArray::DamageArray() {}
-#endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
 
 DamageArray::DamageArray(int numTypes, const float* typeDamages) :
 			numTypes(numTypes)
@@ -67,7 +71,6 @@ DamageArray::DamageArray(const DamageArray& other)
 	for(int a = 0; a < numTypes; ++a)
 		damages[a] = other.damages[a];
 }
-
 
 DamageArray::~DamageArray()
 {
