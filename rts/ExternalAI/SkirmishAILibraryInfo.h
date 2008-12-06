@@ -34,7 +34,7 @@ class CSkirmishAILibraryInfo {
 public:
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
 	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
-			const std::string& aiOptionFile);
+			const std::string& aiOptionFile = "");
 	~CSkirmishAILibraryInfo();
 
 	virtual void CreateCReferences();

@@ -18,8 +18,6 @@
 #ifndef _AIINTERFACELIBRARYINFO_H
 #define _AIINTERFACELIBRARYINFO_H
 
-//#include "AIInterfaceKey.h"
-
 #include <map>
 #include <string>
 

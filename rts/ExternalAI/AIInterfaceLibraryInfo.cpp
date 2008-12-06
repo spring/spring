@@ -20,75 +20,59 @@
 #include "IAIInterfaceLibrary.h"
 #include "AIInterfaceKey.h"
 #include "Interface/aidefines.h"
-#include "Interface/SInfo.h"
 #include "Interface/SAIInterfaceLibrary.h"
+#include "Info.h"
+#include "Util.h"
 
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
-//CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-//		const IAIInterfaceLibrary& interface) {
-//
-//	info = interface.GetInfo();
-//
-//	std::map<std::string, InfoItem>::iterator iip;
-//    for (iip = info.begin(); iip != info.begin(); ++iip) {
-//		iip->second = copyInfoItem(&(iip->second));
-//    }
-//}
+static const char* BAD_CHARS = "\t _#";
+
+static const std::string& info_getValue(
+		const std::map<std::string, InfoItem>& info,
+		const std::string& key, const std::string& defValue) {
+
+	std::map<std::string, InfoItem>::const_iterator inf = info.find(StringToLower(key));
+	if (inf == info.end()) {
+		return defValue;
+	} else {
+		return inf->second.value;
+	}
+}
+
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const CAIInterfaceLibraryInfo& interfaceInfo)
-		: infoKeys_c(NULL), infoValues_c(NULL) {
-
-	info = std::map<std::string, InfoItem>(
-			interfaceInfo.info.begin(),
-			interfaceInfo.info.end());
-
-	std::map<std::string, InfoItem>::iterator iip;
-    for (iip = info.begin(); iip != info.begin(); ++iip) {
-		iip->second = copyInfoItem(&(iip->second));
-    }
-}
+		: info(interfaceInfo.info), infoKeys_c(NULL), infoValues_c(NULL) {}
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const std::string& interfaceInfoFile)
 		: infoKeys_c(NULL), infoValues_c(NULL) {
 
-	InfoItem tmpInfo[MAX_INFOS];
-	unsigned int num = ParseInfo(interfaceInfoFile.c_str(), SPRING_VFS_RAW,
-			SPRING_VFS_RAW, tmpInfo, MAX_INFOS);
-    for (unsigned int i=0; i < num; ++i) {
-/*
-		logOutput.Print("info %i: %s / %s / %s", i, tmpInfo[i].key,
-				tmpInfo[i].value, tmpInfo[i].desc);
-*/
-		info[std::string(tmpInfo[i].key)] = copyInfoItem(&(tmpInfo[i]));
-    }
-
-	//levelOfSupport = LOS_Unknown;
+	std::vector<InfoItem> tmpInfo;
+	parseInfo(tmpInfo, interfaceInfoFile);
+	std::vector<InfoItem>::const_iterator ii;
+	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
+		info[StringToLower(ii->key)] = *ii;
+	}
 }
 
 CAIInterfaceLibraryInfo::~CAIInterfaceLibraryInfo() {
 
 	FreeCReferences();
-	std::map<std::string, InfoItem>::const_iterator iip;
-    for (iip = info.begin(); iip != info.begin(); ++iip) {
-		deleteInfoItem(&(iip->second));
-    }
 }
-
-/*
-LevelOfSupport CAIInterfaceLibraryInfo::GetLevelOfSupportForCurrentEngine() const {
-	return levelOfSupport;
-}
-*/
 
 AIInterfaceKey CAIInterfaceLibraryInfo::GetKey() const {
 
-	const char* sn = info.at(AI_INTERFACE_PROPERTY_SHORT_NAME).value;
-	const char* v = info.at(AI_INTERFACE_PROPERTY_VERSION).value;
+	static const std::string defVal = "";
+	static const std::string snKey = StringToLower(AI_INTERFACE_PROPERTY_SHORT_NAME);
+	static const std::string vKey = StringToLower(AI_INTERFACE_PROPERTY_VERSION);
+
+	const std::string& sn = info_getValue(info, snKey, defVal);
+	const std::string& v = info_getValue(info, vKey, defVal);
 	AIInterfaceKey key = AIInterfaceKey(sn, v);
+
 	return key;
 }
 
@@ -115,13 +99,16 @@ std::string CAIInterfaceLibraryInfo::GetURL() const {
 }
 std::string CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 
-	if (info.find(key) == info.end()) {
+	static const std::string defVal = "";
+	const std::string& val = info_getValue(info, key, defVal);
+	if (val == defVal) {
 		std::string errorMsg = std::string("AI interface property '") + key
 				+ "' could not be found.\n";
 		handleerror(NULL, errorMsg.c_str(), "AI Interface Info Error",
 				MBF_OK | MBF_EXCL);
 	}
-	return info.at(key).value;
+
+	return val;
 }
 const std::map<std::string, InfoItem>& CAIInterfaceLibraryInfo::GetInfo() const {
 	return info;
@@ -135,8 +122,8 @@ void CAIInterfaceLibraryInfo::CreateCReferences() {
 	unsigned int i=0;
 	std::map<std::string, InfoItem>::const_iterator ii;
 	for (ii=info.begin(); ii != info.end(); ++ii) {
-		infoKeys_c[i] = ii->second.key;
-		infoValues_c[i] = ii->second.value;
+		infoKeys_c[i] = ii->second.key.c_str();
+		infoValues_c[i] = ii->second.value.c_str();
 		i++;
 	}
 }
@@ -180,19 +167,24 @@ void CAIInterfaceLibraryInfo::SetURL(const std::string& url) {
 bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
 		const std::string& value) {
 
-	if (key == AI_INTERFACE_PROPERTY_SHORT_NAME ||
-			key == AI_INTERFACE_PROPERTY_VERSION) {
-		if (value.find_first_of("\t _#") != std::string::npos) {
-			handleerror(NULL, "AI interface property (shortName or version)\n"
-					"contains illegal characters ('_', '#' or white spaces)",
-					"AI Interface Info Error", MBF_OK | MBF_EXCL);
+	static const std::string snKey = StringToLower(AI_INTERFACE_PROPERTY_SHORT_NAME);
+	static const std::string vKey = StringToLower(AI_INTERFACE_PROPERTY_VERSION);
+
+	std::string lowerKey = StringToLower(key);
+	if (lowerKey == snKey || key == vKey) {
+		if (value.find_first_of(BAD_CHARS) != std::string::npos) {
+			std::string msg = "AI interface property (shortName or version)\n";
+			msg += "contains illegal characters (";
+			msg += BAD_CHARS;
+			msg += ")";
+			handleerror(NULL, msg.c_str(), "AI Interface Info Error",
+					MBF_OK | MBF_EXCL);
 			return false;
 		}
 	}
 
-	InfoItem ii = {key.c_str(), value.c_str(), NULL};
-	ii = copyInfoItem(&ii);
+	InfoItem ii = {key, value, ""};
+	info[lowerKey] = ii;
 
-	info[key] = ii;
 	return true;
 }

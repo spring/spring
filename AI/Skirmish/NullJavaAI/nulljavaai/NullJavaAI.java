@@ -86,7 +86,6 @@ public class NullJavaAI implements AI {
 		// initialize the log
 		try {
 			myDataDir = info.getProperty("dataDir");
-			//myLogFile = "/home/robin/NullJavaAI_test_log.txt";
 			myLogFile = myDataDir + "/log.txt";
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());

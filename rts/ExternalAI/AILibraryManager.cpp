@@ -25,6 +25,7 @@
 
 #include <boost/filesystem.hpp>
 #include "Util.h"
+#include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
@@ -32,7 +33,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "LogOutput.h"
 
 #include <string>
 #include <set>
@@ -192,27 +192,6 @@ void CAILibraryManager::GetAllInfosFromLibraries() {
 	}
 }
 */
-
-/*
-std::vector<InfoItem> ParseInfos(
-		const std::string& fileName,
-		const std::string& fileModes,
-		const std::string& accessModes)
-{
-	std::vector<InfoItem> infos;
-
-	//static const int MAX_INFOS = 128;
-#define MAX_INFOS 128
-	InfoItem tmpInfos[MAX_INFOS];
-	unsigned int num = ParseInfos(fileName.c_str(), fileModes.c_str(), accessModes.c_str(), tmpInfos, MAX_INFOS);
-	for (unsigned int i=0; i < num; ++i) {
-		infos.push_back(copyInfoItem(&(tmpInfos[i])));
-    }
-
-	return infos;
-}
-*/
-
 
 void CAILibraryManager::GetAllInfosFromCache() {
 

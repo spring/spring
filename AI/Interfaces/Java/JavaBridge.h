@@ -24,8 +24,6 @@ extern "C" {
 
 #include <stdbool.h>	// bool, true, false
 
-#include "ExternalAI/Interface/SInfo.h"
-
 struct SStaticGlobalData;
 struct SAICallback;
 

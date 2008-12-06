@@ -29,9 +29,7 @@
 #include "ExternalAI/Interface/SAICallback.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
-//#include "ExternalAI/Interface/SGAILibrary.h"
 #include "ExternalAI/Interface/AISEvents.h"
-//#include "ExternalAI/Interface/SInfo.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
 
 #include <jni.h>
@@ -724,34 +722,6 @@ static jobject java_createPropertiesInstance(JNIEnv* env) {
 
 	return o_props;
 }
-
-/*
-static jobject java_createPropertiesFromInfoItems(JNIEnv* env,
-		const struct InfoItem info[], unsigned int numInfoItems) {
-
-	jobject o_props = java_createPropertiesInstance(env);
-	if (o_props == NULL) {
-		return o_props;
-	}
-
-	// fill the Java Properties instance with the info keys and values
-	unsigned int ii;
-	for (ii=0; ii < numInfoItems; ii++) {
-		jstring jstr_key = (*env)->NewStringUTF(env, info[ii].key);
-		jstring jstr_value = (*env)->NewStringUTF(env, info[ii].value);
-		(*env)->CallObjectMethod(env, o_props, g_m_props_setProperty, jstr_key, jstr_value);
-		if ((*env)->ExceptionCheck(env)) {
-			simpleLog_log("!Failed adding property");
-			if ((*env)->ExceptionCheck(env)) {
-				(*env)->ExceptionDescribe(env);
-			}
-			return NULL;
-		}
-	}
-
-	return o_props;
-}
-*/
 
 static jobject java_createPropertiesFromCMap(JNIEnv* env,
 		unsigned int size,
