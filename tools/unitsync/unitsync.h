@@ -48,20 +48,6 @@ struct MapInfo
 
 
 /**
- * @brief Available mod/map option types
- * @sa GetOptionType
- */
-enum OptionType {
-	opt_error   = 0, ///< error
-	opt_bool    = 1, ///< boolean option
-	opt_list    = 2, ///< list option (e.g. combobox)
-	opt_number  = 3, ///< numeric option (e.g. spinner / slider)
-	opt_string  = 4, ///< string option (e.g. textbox)
-	opt_section = 5  ///< option section (e.g. groupbox)
-};
-
-
-/**
  * @brief Available bitmap typeHints
  * @sa GetInfoMap
  */
@@ -75,5 +61,4 @@ enum BitmapType {
 
 const char *GetStr(std::string str);
 
-#endif
-
+#endif // UNITSYNC_H

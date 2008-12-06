@@ -78,6 +78,7 @@ public:
 	void Print(const std::string& text);
 	void Print(CLogSubsystem& subsystem, const std::string& text);
 	void Printv(CLogSubsystem& subsystem, const char* fmt, va_list argp);
+	static CLogSubsystem& GetDefaultLogSubsystem();
 
 	CLogOutput& operator<<(const int i);
 	CLogOutput& operator<<(const float f);
