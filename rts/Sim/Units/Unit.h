@@ -323,6 +323,7 @@ public:
 
 	void UpdateDrawPos();
 	float3 drawPos;
+	float3 drawMidPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
