@@ -30,7 +30,7 @@
 
 #include "ExternalAI/Interface/aidefines.h"
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -38,8 +38,6 @@ extern "C" {
 
 struct SSAISpecifier;
 struct SSAILibrary;
-//struct SGAISpecifier;
-//struct SGAILibrary;
 struct SStaticGlobalData;
 
 // for a list of the functions that have to be exported,
@@ -69,17 +67,8 @@ EXPORT(int) unloadSkirmishAILibrary(
 EXPORT(int) unloadAllSkirmishAILibraries();
 
 
-// group AI related methods
-
-//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
-//		const struct InfoItem info[], unsigned int numInfoItems);
-//EXPORT(int) unloadGroupAILibrary(
-//		const struct SGAISpecifier* const gAISpecifier);
-//EXPORT(int) unloadAllGroupAILibraries();
-
-
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	// _INTERFACEEXPORT_H
+#endif // _INTERFACEEXPORT_H

@@ -420,33 +420,6 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 	return found;
 }
 
-/*
-bool fitsThisInterface(const char* reqShortName, const char* reqVersion) {
-	
-	bool shortNameFits = false;
-	bool versionFits = false;
-	
-	InfoItem info[MAX_INFOS];
-	int num = GetInfo(info, MAX_INFOS);
-	
-	std::string shortNameKey(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	std::string versionKey(AI_INTERFACE_PROPERTY_VERSION);
-	for (int i=0; i < num; ++i) {
-		if (shortNameKey == info[i].key) {
-			if (requestedShortName == info[i].value) {
-				shortNameFits = true;
-			}
-		} else if (versionKey == info[i].key) {
-			if (requestedVersion == info[i].value) {
-				versionFits = true;
-			}
-		}
-	}
-	
-	return shortNameFits && versionFits;
-}
-*/
-
 const char* util_map_getValueByKey(
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues,

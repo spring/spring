@@ -27,7 +27,7 @@ extern "C" {
 
 #include "ELevelOfSupport.h"
 #include "SSAILibrary.h"
-#include "SGAILibrary.h"
+//#include "SGAILibrary.h"
 #include "System/exportdefines.h"
 
 struct SStaticGlobalData;

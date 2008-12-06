@@ -44,8 +44,8 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
+	../../rts/System/Info
 	../../rts/Sim/Misc/SideParser
-	../../rts/ExternalAI/Interface/SInfo
 	../../rts/Game/GameVersion
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils

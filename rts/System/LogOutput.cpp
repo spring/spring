@@ -351,6 +351,11 @@ void CLogOutput::Print(CLogSubsystem& subsystem, const std::string& text)
 	Output(subsystem, text.c_str());
 }
 
+CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
+{
+	return LOG_DEFAULT;
+}
+
 
 CLogOutput& CLogOutput::operator<< (const int i)
 {

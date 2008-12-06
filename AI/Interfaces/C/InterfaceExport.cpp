@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -57,20 +57,6 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 }
 
-//EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
-//	return myInterface->GetInfo(info, maxInfoItems);
-//}
-
-
-// skirmish AI methods
-/*
-EXPORT(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max) {
-	return myInterface->GetSkirmishAISpecifiers(sAISpecifiers, max);
-}
-EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier) {
-	return myInterface->LoadSkirmishAILibrary(sAISpecifier);
-}
-*/
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues) {
@@ -92,25 +78,3 @@ EXPORT(int) unloadSkirmishAILibrary(
 EXPORT(int) unloadAllSkirmishAILibraries() {
 	return myInterface->UnloadAllSkirmishAILibraries();
 }
-
-
-
-//// group AI methods
-///*
-//EXPORT(int) getGroupAISpecifiers(struct SGAISpecifier* gAISpecifiers, int max) {
-//	return myInterface->GetGroupAISpecifiers(gAISpecifiers, max);
-//}
-//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
-//	return myInterface->LoadGroupAILibrary(gAISpecifier);
-//}
-//*/
-//EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
-//		const struct InfoItem info[], unsigned int numInfoItems) {
-//	return myInterface->LoadGroupAILibrary(info, numInfoItems);
-//}
-//EXPORT(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
-//	return myInterface->UnloadGroupAILibrary(gAISpecifier);
-//}
-//EXPORT(int) unloadAllGroupAILibraries() {
-//	return myInterface->UnloadAllGroupAILibraries();
-//}

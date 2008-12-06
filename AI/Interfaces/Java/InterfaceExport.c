@@ -29,17 +29,7 @@
 #include <string.h>	// strlen(), strcat(), strcpy()
 #include <stdlib.h>	// malloc(), calloc(), free()
 
-// static -> file local vars
-//static struct InfoItem* myInfo = NULL;
-/*
-static struct InfoItem myInfo[16];
-static unsigned int myNumInfoItems = 0;
-*/
 static const struct SStaticGlobalData* staticGlobalData = NULL;
-/*
-static const char* myDataDir = NULL;
-static const char* myDataDirVers = NULL;
-*/
 
 EXPORT(int) initStatic(
 		unsigned int infoSize,
@@ -135,30 +125,6 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 	return LOS_Unknown;
 }
 
-/*
-EXPORT(unsigned int) getInfo(struct InfoItem info[], unsigned int maxInfoItems) {
-
-	if (myNumInfoItems == 0) {
-		//myInfo = (struct InfoItem*) calloc(10, sizeof(struct InfoItem));
-		struct InfoItem ii_0 = {AI_INTERFACE_PROPERTY_SHORT_NAME, MY_SHORT_NAME, NULL}; myInfo[myNumInfoItems++] = ii_0;
-		struct InfoItem ii_1 = {AI_INTERFACE_PROPERTY_VERSION, MY_VERSION, NULL}; myInfo[myNumInfoItems++] = ii_1;
-		struct InfoItem ii_2 = {AI_INTERFACE_PROPERTY_NAME, MY_NAME, NULL}; myInfo[myNumInfoItems++] = ii_2;
-		struct InfoItem ii_3 = {AI_INTERFACE_PROPERTY_DESCRIPTION, "This AI Interface library is needed for Skirmish and Group AIs written in Java (Groovy, JRuby, ...).", NULL}; myInfo[myNumInfoItems++] = ii_3;
-		struct InfoItem ii_4 = {AI_INTERFACE_PROPERTY_URL, "http://spring.clan-sy.com/wiki/AIInterface:Java", NULL}; myInfo[myNumInfoItems++] = ii_4;
-		struct InfoItem ii_5 = {AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES, "Java (Groovy, JRuby, ...)", NULL}; myInfo[myNumInfoItems++] = ii_5;
-	}
-
-	maxInfoItems = maxInfoItems > myNumInfoItems ? myNumInfoItems : maxInfoItems;
-	unsigned int i;
-	for (i = 0; i < maxInfoItems; ++i) {
-		info[i] = myInfo[i];
-	}
-
-	// return the number of elements copied to info
-	return i;
-}
-*/
-
 // skirmish AI methods
 static struct SSAILibrary* mySSAILibrary = NULL;
 
@@ -170,18 +136,6 @@ enum LevelOfSupport CALLING_CONV proxy_skirmishAI_getLevelOfSupportFor(
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
 }
-
-/*
-unsigned int CALLING_CONV proxy_skirmishAI_getInfo(int teamId,
-		struct InfoItem info[], unsigned int maxInfoItems) {
-
-}
-
-unsigned int CALLING_CONV proxy_skirmishAI_getOptions(int teamId,
-		struct Option options[], unsigned int maxOptions) {
-
-}
-*/
 
 int CALLING_CONV proxy_skirmishAI_init(int teamId,
 		unsigned int infoSize,
@@ -260,30 +214,3 @@ EXPORT(int) unloadSkirmishAILibrary(
 EXPORT(int) unloadAllSkirmishAILibraries() {
 	return java_releaseAllSkirmishAIClasses() ? 0 : -1;
 }
-
-
-
-
-
-
-
-// group AI methods
-
-/*
-EXPORT(const struct SGAILibrary*) loadGroupAILibrary(
-		const struct InfoItem info[], unsigned int numInfoItems) {
-
-	//loadLibOnlyIfNotYetLoaded();
-	return NULL;
-}
-EXPORT(int) unloadGroupAILibrary(const struct SGAISpecifier* const gAISpecifier) {
-
-	//unloadLibIfLoaded();
-	return -1;
-}
-EXPORT(int) unloadAllGroupAILibraries() {
-
-	//unloadAllLibsIfLoaded();
-	return -1;
-}
-*/

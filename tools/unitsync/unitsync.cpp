@@ -22,12 +22,12 @@
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
 //#include "ExternalAI/Interface/SSkirmishAISpecifier.h"
-#include "ExternalAI/Interface/SInfo.h"
-#include "ExternalAI/Interface/SOption.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
+#include "System/Info.h"
+#include "System/Option.h"
 
 // unitsync only:
 #include "LuaParserAPI.h"
@@ -1578,175 +1578,17 @@ EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 //////////////////////////
 
 
-static vector<Option> options;
-static set<string> optionsSet;
-
-
-static bool ParseOption(const LuaTable& root, int index, Option& opt)
-{
-	const LuaTable& optTbl = root.SubTable(index);
-	if (!optTbl.IsValid()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: subtable %d invalid", index);
-		return false;
-	}
-
-	// common options properties
-	std::string opt_key = optTbl.GetString("key", "");
-	if (opt_key.empty() ||
-		(opt_key.find_first_of(Option_badKeyChars) != std::string::npos)) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: empty key or key contains bad characters");
-		return false;
-	}
-	opt_key = StringToLower(opt_key);
-	if (optionsSet.find(opt_key) != optionsSet.end()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: key %s exists already", opt_key.c_str());
-		return false;
-	}
-	opt.key = mallocCopyString(opt_key.c_str());
-	
-	std::string opt_name = optTbl.GetString("name", opt_key);
-	if (opt_name.empty()) {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key);
-		return false;
-	}
-	opt.name = mallocCopyString(opt_name.c_str());
-	
-	std::string opt_desc = optTbl.GetString("desc", opt_name);
-	opt.desc = mallocCopyString(opt_desc.c_str());
-	
-	std::string opt_section = optTbl.GetString("section", "");
-	opt.section = mallocCopyString(opt_section.c_str());
-	
-	std::string opt_style = optTbl.GetString("style", "");
-	opt.style = mallocCopyString(opt_style.c_str());
-
-	std::string opt_type = optTbl.GetString("type", "");
-	opt_type = StringToLower(opt_type);
-	opt.type = mallocCopyString(opt_type.c_str());
-
-	// option type specific properties
-	if (opt_type == "bool") {
-		opt.typeCode = opt_bool;
-		opt.boolDef = optTbl.GetBool("def", false);
-	}
-	else if (opt_type == "number") {
-		opt.typeCode = opt_number;
-		opt.numberDef  = optTbl.GetFloat("def",  0.0f);
-		opt.numberMin  = optTbl.GetFloat("min",  -1.0e30f);
-		opt.numberMax  = optTbl.GetFloat("max",  +1.0e30f);
-		opt.numberStep = optTbl.GetFloat("step", 0.0f);
-	}
-	else if (opt_type == "string") {
-		opt.typeCode = opt_string;
-		opt.stringDef    = mallocCopyString(optTbl.GetString("def", "").c_str());
-		opt.stringMaxLen = optTbl.GetInt("maxlen", 0);
-	}
-	else if (opt_type == "list") {
-		opt.typeCode = opt_list;
-
-		const LuaTable& listTbl = optTbl.SubTable("items");
-		if (!listTbl.IsValid()) {
-			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable items invalid", opt.key);
-			return false;
-		}
-
-		vector<OptionListItem> opt_list;
-		for (int i = 1; listTbl.KeyExists(i); i++) {
-			OptionListItem item;
-
-			// string format
-			std::string item_key = listTbl.GetString(i, "");
-			if (!item_key.empty() &&
-				(item_key.find_first_of(Option_badKeyChars) == string::npos)) {
-				item.key = mallocCopyString(item_key.c_str());
-				item.name = item.key;
-				item.desc = item.name;
-				opt_list.push_back(item);
-				continue;
-			}
-
-			// table format  (name & desc)
-			const LuaTable& itemTbl = listTbl.SubTable(i);
-			if (!itemTbl.IsValid()) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: subtable %d of subtable items invalid", opt.key, i);
-				break;
-			}
-			item_key = itemTbl.GetString("key", "");
-			if (item_key.empty() ||
-				(item_key.find_first_of(Option_badKeyChars) != string::npos)) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty key or key contains bad characters", opt.key);
-				return false;
-			}
-			item_key = StringToLower(item_key);
-			item.key = mallocCopyString(item_key.c_str());
-			std::string item_name = itemTbl.GetString("name", item_key);
-			if (item_name.empty()) {
-				logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty name", opt.key);
-				return false;
-			}
-			item.name = mallocCopyString(item_name.c_str());
-			std::string item_desc = itemTbl.GetString("desc", item_name);
-			item.desc = mallocCopyString(item_desc.c_str());
-			opt_list.push_back(item);
-		}
-
-		if (opt_list.size() <= 0) {
-			logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: empty list", opt.key);
-			return false; // no empty lists
-		}
-
-		opt.numListItems = opt_list.size();
-		opt.list = (OptionListItem*) calloc(sizeof(OptionListItem), opt.numListItems);
-		for (int i=0; i < opt.numListItems; ++i) {
-			opt.list[i] = opt_list.at(i);
-		}
-
-		opt.listDef = mallocCopyString(optTbl.GetString("def", opt.list[0].name).c_str());
-	}
-	else {
-		logOutput.Print(LOG_UNITSYNC, "ParseOption: %s: unknown type %s", opt.key, opt_type.c_str());
-		return false; // unknown type
-	}
-
-	optionsSet.insert(opt.key);
-
-	return true;
-}
-
+static std::vector<Option> options;
+static std::set<std::string> optionsSet;
 
 static void ParseOptions(const string& fileName,
                          const string& fileModes,
                          const string& accessModes,
                          const string& mapName = "")
 {
-	LuaParser luaParser(fileName, fileModes, accessModes);
-
-	const string configName = MapParser::GetMapConfigName(mapName);
-
-	if (!mapName.empty() && !configName.empty()) {
-		luaParser.GetTable("Map");
-		luaParser.AddString("fileName", mapName);
-		luaParser.AddString("fullName", "maps/" + mapName);
-		luaParser.AddString("configFile", configName);
-		luaParser.EndTable();
-	}
-
-	if (!luaParser.Execute()) {
-		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
-	}
-
-	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("root table invalid");
-	}
-
-	for (int index = 1; root.KeyExists(index); index++) {
-		Option opt;
-		if (ParseOption(root, index, opt)) {
-			options.push_back(opt);
-		}
-	}
-};
+	parseOptions(options, fileName, fileModes, accessModes, mapName,
+			&optionsSet, &LOG_UNITSYNC);
+}
 
 
 static void CheckOptionIndex(int optIndex)
@@ -1828,23 +1670,23 @@ EXPORT(int) GetModOptionCount()
 }
 
 
-vector<InfoItem> infos;
-set<string> infosSet;
-
 // Updated on every call to GetSkirmishAICount
-static vector<string> skirmishAIDataDirs;
+static vector<std::string> skirmishAIDataDirs;
 
 EXPORT(int) GetSkirmishAICount() {
 
 	try {
 		CheckInit();
 
-		skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*", SPRING_VFS_RAW);
+		skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*",
+				SPRING_VFS_RAW);
 
 		// filter out dirs not containing an AIInfo.lua file 
-		for (vector<string>::iterator i = skirmishAIDataDirs.begin(); i != skirmishAIDataDirs.end(); ++i) {
-			const string& possibleDataDir = *i;
-			vector<string> infoFile = CFileHandler::FindFiles(possibleDataDir, "AIInfo.lua");
+		for (vector<std::string>::iterator i = skirmishAIDataDirs.begin();
+				i != skirmishAIDataDirs.end(); ++i) {
+			const std::string& possibleDataDir = *i;
+			vector<std::string> infoFile = CFileHandler::FindFiles(
+					possibleDataDir, "AIInfo.lua");
 			if (infoFile.size() == 0) {
 				skirmishAIDataDirs.erase(i);
 			}
@@ -1861,28 +1703,21 @@ EXPORT(int) GetSkirmishAICount() {
 	return 0;
 }
 
-std::vector<InfoItem> ParseInfos(
-		const std::string& fileName,
-		const std::string& fileModes,
-		const std::string& accessModes)
+
+static std::vector<InfoItem> info;
+static std::set<std::string> infoSet;
+
+static void ParseInfo(const std::string& fileName,
+                      const std::string& fileModes,
+                      const std::string& accessModes)
 {
-	std::vector<InfoItem> info;
-
-	static const unsigned int MAX_INFOS = 128;
-	InfoItem tmpInfo[MAX_INFOS];
-	unsigned int num = ParseInfo(fileName.c_str(), fileModes.c_str(),
-			accessModes.c_str(), tmpInfo, MAX_INFOS);
-	for (unsigned int i=0; i < num; ++i) {
-		info.push_back(tmpInfo[i]);
-	}
-
-	return info;
+	parseInfo(info, fileName, fileModes, accessModes, &infoSet, &LOG_UNITSYNC);
 }
 
 static void CheckInfoIndex(int infIndex)
 {
 	CheckInit();
-	CheckBounds(infIndex, infos.size());
+	CheckBounds(infIndex, info.size());
 }
 
 EXPORT(int) GetSkirmishAIInfoCount(int index) {
@@ -1890,12 +1725,19 @@ EXPORT(int) GetSkirmishAIInfoCount(int index) {
 	try {
 		CheckInit();
 
-		infos = ParseInfos(skirmishAIDataDirs[index] + "/AIInfo.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
-		return (int)infos.size();
+		info.clear();
+		infoSet.clear();
+
+		ParseInfo(skirmishAIDataDirs[index] + "/AIInfo.lua", SPRING_VFS_RAW,
+				SPRING_VFS_RAW);
+
+		infoSet.clear();
+
+		return (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	infos.clear();
+	info.clear();
 
 	return 0;
 }
@@ -1903,7 +1745,7 @@ EXPORT(const char*) GetInfoKey(int index) {
 
 	try {
 		CheckInfoIndex(index);
-		return GetStr(infos[index].key);
+		return GetStr(info[index].key);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -1912,7 +1754,7 @@ EXPORT(const char*) GetInfoValue(int index) {
 
 	try {
 		CheckInfoIndex(index);
-		return GetStr(infos[index].value);
+		return GetStr(info[index].value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -1921,7 +1763,7 @@ EXPORT(const char*) GetInfoDescription(int index) {
 
 	try {
 		CheckInfoIndex(index);
-		return GetStr(infos[index].desc);
+		return GetStr(info[index].desc);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -1953,7 +1795,8 @@ EXPORT(int) GetSkirmishAIOptionCount(int index) {
 		options.clear();
 		optionsSet.clear();
 
-		ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua", SPRING_VFS_RAW, SPRING_VFS_RAW);
+		ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua",
+				SPRING_VFS_RAW, SPRING_VFS_RAW);
 
 		optionsSet.clear();
 
@@ -2239,7 +2082,7 @@ EXPORT(int) GetOptionListCount(int optIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		return options[optIndex].numListItems;
+		return options[optIndex].list.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -2278,8 +2121,9 @@ EXPORT(const char*) GetOptionListItemKey(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		CheckBounds(itemIndex, options[optIndex].numListItems);
-		return GetStr(options[optIndex].list[itemIndex].key);
+		const vector<OptionListItem>& list = options[optIndex].list;
+		CheckBounds(itemIndex, list.size());
+		return GetStr(list[itemIndex].key);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -2299,8 +2143,9 @@ EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		CheckBounds(itemIndex, options[optIndex].numListItems);
-		return GetStr(options[optIndex].list[itemIndex].name);
+		const vector<OptionListItem>& list = options[optIndex].list;
+		CheckBounds(itemIndex, list.size());
+		return GetStr(list[itemIndex].name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -2320,8 +2165,9 @@ EXPORT(const char*) GetOptionListItemDesc(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		CheckBounds(itemIndex, options[optIndex].numListItems);
-		return GetStr(options[optIndex].list[itemIndex].desc);
+		const vector<OptionListItem>& list = options[optIndex].list;
+		CheckBounds(itemIndex, list.size());
+		return GetStr(list[itemIndex].desc);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
