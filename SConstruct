@@ -313,8 +313,9 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		instList += [env.Install(install_data_interface_dir, myJar)]
 		#jlib_files = os.listdir(jlibDir)
 		#jlib_files = [os.path.join(jlibDir, jl) for jl in jlib_files if not pathContainsSvnDir(jl)]
-		jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
-		instList += [env.Install(install_data_interface_dir, jlib_files)]
+		if os.path.exists(jlibDir):
+			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
+			instList += [env.Install(install_data_interface_dir, jlib_files)]
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName + '-' + aiInterfaceVersion), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
@@ -376,8 +377,9 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		Alias('SkirmishAI', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_ai_dir, myJar)]
-		jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
-		instList += [env.Install(install_data_ai_dir, jlib_files)]
+		if os.path.exists(jlibDir):
+			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
+			instList += [env.Install(install_data_ai_dir, jlib_files)]
 	else:
 		if useCreg:
 			myEnv['CPPDEFINES'] += ['USING_CREG']
