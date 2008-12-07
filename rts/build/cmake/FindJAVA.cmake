@@ -144,11 +144,16 @@ ELSE()
         ENDIF()
     ENDIF()
 
+    IF(WIN32)
+        SET(OS_BINARY_SUFFIX ".exe")
+    ELSE(WIN32)
+        SET(OS_BINARY_SUFFIX "")
+    ENDIF(WIN32)
     SET( JAVA_BIN_PATH JAVA_BIN_PATH-NOTFOUND )
-    FIND_PATH( JAVA_BIN_PATH
-        java
-        ${JAVA_HOME}/bin
-        ${JAVA_HOME}/Commands   # FIXME MacOS
+    FIND_PATH(JAVA_BIN_PATH "java${OS_BINARY_SUFFIX}"
+	PATHS
+        "${JAVA_HOME}/bin"
+        "${JAVA_HOME}/Commands"   # FIXME MacOS
         NO_DEFAULT_PATH )
     
     IF( NOT JAVA_BIN_PATH AND NOT JAVA_FIND_QUIETLY )
