@@ -40,6 +40,9 @@ else:
 		os.unlink('rts/System/StdAfx.h.gch')
 
 
+################################################################################
+### Build spring(.exe)
+################################################################################
 spring_files = filelist.get_spring_source(env)
 
 # spring.exe icon
@@ -80,11 +83,14 @@ Alias('install-spring', inst)
 if env['strip']:
 	env.AddPostAction(spring, Action([['strip','$TARGET']]))
 
-# Build unitsync shared object
+
+################################################################################
+### Build unitsync shared object
+################################################################################
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
-uenv = env.Copy(builddir=os.path.join(env['builddir'], 'unitsync'))
+uenv = env.Clone(builddir=os.path.join(env['builddir'], 'unitsync'))
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 
 for d in filelist.list_directories(uenv, 'rts', exclude_list=["crashrpt"]):
@@ -108,6 +114,8 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
+	'rts/System/Info.cpp',
+	'rts/System/Option.cpp',
 	'rts/System/ConfigHandler.cpp',
 	'rts/System/LogOutput.cpp',
 ]
@@ -149,6 +157,10 @@ if env['strip']:
 if env['platform'] != 'windows':
 	Default(unitsync)
 
+
+################################################################################
+### AIs
+################################################################################
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 aienv = env.Copy()
@@ -208,7 +220,9 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 # 	if env['strip']:
 # 		env.AddPostAction(lib, Action([['strip','$TARGET']]))
 
-# Build streflop (which has it's own Makefile-based build system)
+################################################################################
+### Build streflop (which has it's own Makefile-based build system)
+################################################################################
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
 	if env.has_key('streflop_extra'):
@@ -248,8 +262,9 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 				os.system(test)
 
 
-# Build gamedata zip archives
-
+################################################################################
+### Build gamedata zip archives
+################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript
 # ends up in the zip too... Bah. SCons sucks. Just like autoshit and everything else btw.
