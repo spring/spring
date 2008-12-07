@@ -25,7 +25,6 @@ using std::max;
 CR_BIND(LosInstance, );
 CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
-CR_BIND(CLosHandler::CPoint, );
 
 CR_REG_METADATA(LosInstance,(
 //		CR_MEMBER(losSquares),
@@ -33,10 +32,9 @@ CR_REG_METADATA(LosInstance,(
 		CR_MEMBER(airLosSize),
 		CR_MEMBER(refCount),
 		CR_MEMBER(allyteam),
-		CR_MEMBER(baseX),
-		CR_MEMBER(baseY),
+		CR_MEMBER(basePos),
 		CR_MEMBER(baseSquare),
-		CR_MEMBER(baseAirSquare),
+		CR_MEMBER(baseAirPos),
 		CR_MEMBER(hashNum),
 		CR_MEMBER(baseHeight),
 		CR_MEMBER(toBeDeleted),
@@ -48,11 +46,7 @@ void CLosHandler::PostLoad()
 	for (int a = 0; a < 2309; ++a)
 		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li)
 			if ((*li)->refCount) {
-				if ((*li)->baseX-(*li)->losSize<0 || (*li)->baseX+(*li)->losSize>=losSizeX ||
-				    (*li)->baseY-(*li)->losSize<0 || (*li)->baseY+(*li)->losSize>=losSizeY)
-					SafeLosAdd(*li,(*li)->baseX,(*li)->baseY);
-				else
-					LosAdd(*li);
+				LosAdd(*li);
 			}
 }
 
@@ -61,8 +55,6 @@ CR_REG_METADATA(CLosHandler,(
 		CR_MEMBER(instanceHash),
 		CR_MEMBER(toBeDeleted),
 		CR_MEMBER(delayQue),
-//		CR_MEMBER(Points),
-//		CR_MEMBER(lostables)
 		CR_RESERVED(31),
 		CR_POSTLOAD(PostLoad)
 		));
@@ -75,6 +67,8 @@ CR_REG_METADATA_SUB(CLosHandler,CPoint,(
 		CR_MEMBER(x),
 		CR_MEMBER(y)));
 */
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -94,15 +88,13 @@ CLosHandler::CLosHandler() :
 	airSizeY(std::max(1, gs->mapy >> airMipLevel)),
 	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
-	requireSonarUnderWater(modInfo.requireSonarUnderWater)
+	requireSonarUnderWater(modInfo.requireSonarUnderWater),
+	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->mipHeightmap[losMipLevel])
+	//airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->mipHeightmap[airMipLevel])
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMap[a].resize(losSizeX * losSizeY, 0);
-		airLosMap[a].resize(airSizeX * airSizeY, 0);
-	}
-
-	for (int a=1;a<=MAX_LOS_TABLE;++a) {
-		OutputTable(a);
+		losMap[a].SetSize(losSizeX, losSizeY);
+		airLosMap[a].SetSize(airSizeX, airSizeY);
 	}
 }
 
@@ -124,8 +116,7 @@ CLosHandler::~CLosHandler()
 void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 {
 	SCOPED_TIMER("Los");
-	float3 losPos = unit->pos;
-	losPos.CheckInBounds();
+	const float3& losPos = unit->pos;
 
 	const int allyteam = unit->allyteam;
 	unit->lastLosUpdate = gs->frameNum;
@@ -133,11 +124,12 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 	if (unit->losRadius <= 0) {
 		return;
 	}
-	const int xmap = (int)(losPos.x*invLosDiv);
-	const int ymap = (int)(losPos.z*invLosDiv);
-	const int baseSquare = max(0,min(losSizeY-1,(ymap)))*losSizeX + max(0,min(losSizeX-1,xmap));
-	const int baseX = max(0,min(losSizeX-1,xmap));
-	const int baseY = max(0,min(losSizeY-1,(ymap)));
+
+	const int baseX = max(0, min(losSizeX - 1, (int)(losPos.x * invLosDiv)));
+	const int baseY = max(0, min(losSizeY - 1, (int)(losPos.z * invLosDiv)));
+	const int baseSquare = baseY * losSizeX + baseX;
+	const int baseAirX = max(0, min(airSizeX - 1, (int)(losPos.x * invAirDiv)));
+	const int baseAirY = max(0, min(airSizeY - 1, (int)(losPos.z * invAirDiv)));
 
 	LosInstance* instance;
 	if (redoCurrent) {
@@ -147,11 +139,11 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 		instance = unit->los;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
-		instance->baseX = baseX;
-		instance->baseY = baseY;
-		instance->baseSquare = baseSquare;	//this could be a problem if several units are sharing the same instance
-		int baseAirSquare = max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
-		instance->baseAirSquare = baseAirSquare;
+		instance->basePos.x = baseX;
+		instance->basePos.y = baseY;
+		instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
+		instance->baseAirPos.x = baseAirX;
+		instance->baseAirPos.y = baseAirY;
 	} else {
 		if (unit->los && (unit->los->baseSquare == baseSquare)) {
 			return;
@@ -170,17 +162,12 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 				return;
 			}
 		}
-		int baseAirSquare=max(0,min(airSizeY-1,((int)(losPos.z*invAirDiv))))*airSizeX + max(0,min(airSizeX-1,(int)(losPos.x*invAirDiv)));
-		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius,allyteam,baseX,baseY,baseSquare,baseAirSquare,hash,unit->losHeight,unit->airLosRadius);
+		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius, unit->airLosRadius, allyteam, int2(baseX,baseY), baseSquare, int2(baseAirX, baseAirY), hash, unit->losHeight);
 		instanceHash[hash].push_back(instance);
 		unit->los=instance;
 	}
-	if (xmap-unit->losRadius < 0 || xmap+unit->losRadius >= losSizeX ||
-	    ymap-unit->losRadius < 0 || ymap+unit->losRadius >= losSizeY) {
-		SafeLosAdd(instance, xmap, ymap);
-	} else {
-		LosAdd(instance);
-	}
+
+	LosAdd(instance);
 }
 
 
@@ -190,317 +177,10 @@ void CLosHandler::LosAdd(LosInstance* instance)
 	assert(instance->allyteam < teamHandler->ActiveAllyTeams());
 	assert(instance->allyteam >= 0);
 
-	const int allyteam  = instance->allyteam;
-	const int mapSquare = instance->baseSquare;
+	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 
-	float* heightmap = readmap->mipHeightmap[losMipLevel];
-	vector<unsigned short>* allyLosMap = &losMap[allyteam];
-
-	LosAddAir(instance);
-
-	const int tablenum = std::min(instance->losSize, MAX_LOS_TABLE);
-	LosTable& table = lostables[tablenum - 1];
-
-	instance->losSquares.push_back(mapSquare);
-	(*allyLosMap)[mapSquare]++;
-
-	const float baseHeight = heightmap[mapSquare] + instance->baseHeight-15;
-
-	for(LosTable::iterator li=table.begin();li!=table.end();++li){
-		LosLine& line=*li;
-		float maxAng1 = -1e6f;
-		float maxAng2 = -1e6f;
-		float maxAng3 = -1e6f;
-		float maxAng4 = -1e6f;
-		float r = 1;
-		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
-			float invR=1.0f/r;
-			int square=mapSquare + linei->x + linei->y*losSizeX;
-			float dh=heightmap[square] - baseHeight;
-			float ang=dh*invR;
-			if(ang>maxAng1){
-				instance->losSquares.push_back(square);
-				(*allyLosMap)[square]++;
-			}
-			dh-=15;
-			ang=dh*invR;
-			if(ang>maxAng1){
-				maxAng1=ang;
-			}
-
-			square=mapSquare - linei->x - linei->y*losSizeX;
-			dh=heightmap[square] - baseHeight;
-			ang=dh*invR;
-			if(ang>maxAng2){
-				instance->losSquares.push_back(square);
-				(*allyLosMap)[square]++;
-			}
-			dh-=15;
-			ang=dh*invR;
-			if(ang>maxAng2){
-				maxAng2=ang;
-			}
-
-			square=mapSquare - linei->x*losSizeX + linei->y;
-			dh=heightmap[square] - baseHeight;
-			ang=dh*invR;
-			if(ang>maxAng3){
-				instance->losSquares.push_back(square);
-				(*allyLosMap)[square]++;
-			}
-			dh-=15;
-			ang=dh*invR;
-			if(ang>maxAng3){
-				maxAng3=ang;
-			}
-
-			square=mapSquare + linei->x*losSizeX - linei->y;
-			dh=heightmap[square] - baseHeight;
-			ang=dh*invR;
-			if(ang>maxAng4){
-				instance->losSquares.push_back(square);
-				(*allyLosMap)[square]++;
-			}
-			dh-=15;
-			ang=dh*invR;
-			if(ang>maxAng4){
-				maxAng4=ang;
-			}
-			r++;
-		}
-	}
-}
-
-
-void CLosHandler::SafeLosAdd(LosInstance* instance,int xm,int ym)
-{
-	int xmap=xm;
-	int ymap=ym;
-	const int allyteam=instance->allyteam;
-
-	const int mapSquare=instance->baseSquare;
-
-	float* heightmap = readmap->mipHeightmap[losMipLevel];
-	vector<unsigned short>* allyLosMap = &losMap[allyteam];
-
-	LosAddAir(instance);
-
-	int tablenum=instance->losSize;
-	if(tablenum>MAX_LOS_TABLE){
-		tablenum=MAX_LOS_TABLE;
-	}
-	LosTable& table=lostables[tablenum-1];
-
-	const float baseHeight = heightmap[mapSquare] + instance->baseHeight-15;
-
-	for (LosTable::iterator li = table.begin(); li != table.end(); ++li) {
-		LosLine& line = *li;
-		float maxAng1 = -1e6f;
-		float maxAng2 = -1e6f;
-		float maxAng3 = -1e6f;
-		float maxAng4 = -1e6f;
-		float r = 1;
-		instance->losSquares.push_back(mapSquare);
-		(*allyLosMap)[mapSquare]++;
-
-		for(LosLine::iterator linei=line.begin();linei!=line.end();++linei){
-			if(xmap+linei->x<losSizeX && ymap+linei->y<losSizeY){
-				int square=mapSquare+linei->x+linei->y*losSizeX;
-				float dh=heightmap[square] - baseHeight;
-				float ang=dh/r;
-				if(ang>maxAng1){
-					instance->losSquares.push_back(square);
-					(*allyLosMap)[square]++;
-				}
-				dh-=15;
-				ang=dh/r;
-				if(ang>maxAng1){
-					maxAng1=ang;
-				}
-			}
-			if(xmap-linei->x>=0 && ymap-linei->y>=0){
-				int square=mapSquare-linei->x-linei->y*losSizeX;
-				float dh=heightmap[square] - baseHeight;
-				float ang=dh/r;
-				if(ang>maxAng2){
-					instance->losSquares.push_back(square);
-					(*allyLosMap)[square]++;
-				}
-				dh-=15;
-				ang=dh/r;
-				if(ang>maxAng2){
-					maxAng2=ang;
-				}
-			}
-			if(xmap+linei->y<losSizeX && ymap-linei->x>=0){
-				int square=mapSquare-linei->x*losSizeX+linei->y;
-				float dh=heightmap[square] - baseHeight;
-				float ang=dh/r;
-				if(ang>maxAng3){
-					instance->losSquares.push_back(square);
-					(*allyLosMap)[square]++;
-				}
-				dh-=15;
-				ang=dh/r;
-				if(ang>maxAng3){
-					maxAng3=ang;
-				}
-			}
-			if(xmap-linei->y>=0 && ymap+linei->x<losSizeY){
-				int square=mapSquare+linei->x*losSizeX-linei->y;
-				float dh=heightmap[square] - baseHeight;
-				float ang=dh/r;
-				if(ang>maxAng4){
-					instance->losSquares.push_back(square);
-					(*allyLosMap)[square]++;
-				}
-				dh-=15;
-				ang=dh/r;
-				if(ang>maxAng4){
-					maxAng4=ang;
-				}
-			}
-			r++;
-		}
-	}
-}
-
-
-void CLosHandler::OutputTable(int Table)
-{
-	LosTable lostable;
-
-	int Radius = Table;
-	char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
-	memset(PaintTable, 0 , (Radius+1)*Radius);
-	CPoint P;
-
-	int x, y, r2;
-
-	P.x = 0;
-	P.y = Radius;
-	Points.push_front(P);
-//  DrawLine(0, Radius, Radius);
-	for(float i=Radius; i>=1; i-=0.5f)
-	{
-		r2 = (int)(i * i);
-
-		y = (int)i;
-		x = 1;
-		y = (int) (sqrt((float)r2 - 1) + 0.5f);
-		while (x < y) {
-			if(!PaintTable[x+y*Radius])
-			{
-				DrawLine(PaintTable, x, y, Radius);
-				P.x = x;
-				P.y = y;
-				Points.push_back(P);
-			}
-			if(!PaintTable[y+x*Radius])
-			{
-				DrawLine(PaintTable, y, x, Radius);
-				P.x = y;
-				P.y = x;
-				Points.push_back(P);
-			}
-
-			x += 1;
-			y = (int) (sqrt((float)r2 - x*x) + 0.5f);
-		}
-		if (x == y) {
-			if(!PaintTable[x+y*Radius])
-			{
-				DrawLine(PaintTable, x, y, Radius);
-				P.x = x;
-				P.y = y;
-				Points.push_back(P);
-			}
-		}
-	}
-
-	Points.sort();
-
-	int Line = 1;
-	int Size = Points.size();
-	for(int j=0; j<Size; j++)
-	{
-		lostable.push_back(OutputLine(Points.back().x, Points.back().y, Line));
-		Points.pop_back();
-		Line++;
-	}
-
-	lostables.push_back(lostable);
-
-	delete[] PaintTable;
-}
-
-
-CLosHandler::LosLine CLosHandler::OutputLine(int x, int y, int Line)
-{
-	LosLine losline;
-
-	int x0 = 0;
-	int y0 = 0;
-	int dx = x;
-	int dy = y;
-
-	if (abs(dx) > abs(dy)) {          // slope <1
-		float m = (float) dy / (float) dx;      // compute slope
-		float b = y0 - m*x0;
-		dx = (dx < 0) ? -1 : 1;
-		while (x0 != x) {
-			x0 += dx;
-			losline.push_back(CPoint(x0,Round(m*x0 + b)));
-		}
-	} else
-		if (dy != 0) {                              // slope = 1
-			float m = (float) dx / (float) dy;      // compute slope
-			float b = x0 - m*y0;
-			dy = (dy < 0) ? -1 : 1;
-			while (y0 != y) {
-				y0 += dy;
-				losline.push_back(CPoint(Round(m*y0 + b),y0));
-			}
-		}
-	return losline;
-}
-
-
-void CLosHandler::DrawLine(char* PaintTable, int x, int y, int Size)
-{
-	int x0 = 0;
-	int y0 = 0;
-	int dx = x;
-	int dy = y;
-
-	if (abs(dx) > abs(dy)) {          // slope <1
-		float m = (float) dy / (float) dx;      // compute slope
-		float b = y0 - m*x0;
-		dx = (dx < 0) ? -1 : 1;
-		while (x0 != x) {
-			x0 += dx;
-			PaintTable[x0+Round(m*x0 + b)*Size] = 1;
-		}
-	} else {
-		if (dy != 0) {                              // slope = 1
-			float m = (float) dx / (float) dy;      // compute slope
-			float b = x0 - m*y0;
-			dy = (dy < 0) ? -1 : 1;
-			while (y0 != y) {
-				y0 += dy;
-				PaintTable[Round(m*y0 + b)+y0*Size] = 1;
-			}
-		}
-	}
-}
-
-
-int CLosHandler::Round(float Num)
-{
-  if((Num - (int)Num) <0.5f)
-    return (int)Num;
-  else
-    return (int)Num+1;
+	losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1);
+	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1);
 }
 
 
@@ -553,12 +233,8 @@ int CLosHandler::GetHashNum(CUnit* unit)
 
 void CLosHandler::AllocInstance(LosInstance* instance)
 {
-	if(instance->refCount==0){
-		std::vector<int>::iterator lsi;
-		for(lsi=instance->losSquares.begin();lsi!=instance->losSquares.end();++lsi){
-			++losMap[instance->allyteam][*lsi];
-		}
-		LosAddAir(instance);
+	if (instance->refCount == 0) {
+		LosAdd(instance);
 	}
 	instance->refCount++;
 }
@@ -566,57 +242,8 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	vector<unsigned short>& allyLosMap = losMap[instance->allyteam];
-	for(std::vector<int>::iterator lsi=instance->losSquares.begin();lsi!=instance->losSquares.end();++lsi){
-		--allyLosMap[*lsi];
-	}
-
-	int by=(instance->baseAirSquare/airSizeX);
-	int bx=(instance->baseAirSquare-by*airSizeX);
-
-	int sx=max(0,bx-instance->airLosSize);
-	int ex=min(airSizeX-1,bx+instance->airLosSize);
-	int sy=max(0,by-instance->airLosSize);
-	int ey=min(airSizeY-1,by+instance->airLosSize);
-
-	int rr=instance->airLosSize*instance->airLosSize;
-	for(int y=sy;y<=ey;++y){
-		int rrx=rr-(by-y)*(by-y);
-		for(int x=sx;x<=ex;++x){
-			if((bx-x)*(bx-x)<=rrx){
-				--allyLosMap[y*airSizeX+x];
-			}
-		}
-	}
-}
-
-
-void CLosHandler::LosAddAir(LosInstance* instance)
-{
-	/*int by=(instance->baseSquare/gs->hmapx);
-	int bx=(instance->baseSquare-by*gs->hmapx)/2;
-	by/=2;*/
-	int by=(instance->baseAirSquare/airSizeX);
-	int bx=(instance->baseAirSquare-by*airSizeX);
-
-	int sx=max(0,bx-instance->airLosSize);
-	int ex=min(airSizeX-1,bx+instance->airLosSize);
-	int sy=max(0,by-instance->airLosSize);
-	int ey=min(airSizeY-1,by+instance->airLosSize);
-
-	int rr=instance->airLosSize*instance->airLosSize;
-
-	if (instance->allyteam < 0)
-		return;
-
-	for(int y=sy;y<=ey;++y){
-		int rrx=rr-(by-y)*(by-y);
-		for(int x=sx;x<=ex;++x){
-			if((bx-x)*(bx-x)<=rrx){
-				++airLosMap[instance->allyteam][y*airSizeX+x];
-			}
-		}
-	}
+	losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1);
+	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1);
 }
 
 

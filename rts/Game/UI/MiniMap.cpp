@@ -1178,7 +1178,7 @@ void CMiniMap::DrawForReal()
 
 	GML_RECMUTEX_LOCK(sel); // DrawForReal
 	// draw unit ranges
-	const float radarSquare = (SQUARE_SIZE * RADAR_SIZE);
+	const float radarSquare = radarhandler->radarDiv;
 	CUnitSet& selUnits = selectedUnits.selectedUnits;
 	for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
 		CUnit* unit = *si;
