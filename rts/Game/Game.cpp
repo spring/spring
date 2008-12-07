@@ -1109,6 +1109,12 @@ bool CGame::ActionPressed(const Action& action,
 				is >> state;
 				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
 					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
+				else
+					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1])");
+			}
+			else
+			{
+				logOutput.Print("No ingame alliances are allowed");
 			}
 		}
 	}
@@ -3886,10 +3892,17 @@ void CGame::ClientReadNet()
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
 				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
+					const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
-					teamHandler->SetAlly(teamHandler->AllyTeam(playerHandler->Player(player)->team), whichAllyTeam, allied);
+					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
+					if (fromAllyTeam == gu->myAllyTeam)
+					{
+						std::ostringstream msg;
+						msg << "You have " << (allied ? " allied " : " unallied ") << " allyteam " << whichAllyTeam;
+						logOutput.Print(msg.str());
+					}
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 				}
