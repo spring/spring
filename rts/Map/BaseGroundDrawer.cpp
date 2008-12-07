@@ -9,6 +9,7 @@
 #include "Ground.h"
 #include "HeightLinePalette.h"
 #include "ReadMap.h"
+#include "MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -252,6 +253,10 @@ static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
 //   updateTextureState = 57:   Reset to 0 and restart updating
 bool CBaseGroundDrawer::UpdateExtraTexture()
 {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight<0) {
+		return true;
+	}
+
 	if (drawMode == drawNormal) {
 		return true;
 	}
