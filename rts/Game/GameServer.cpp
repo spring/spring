@@ -129,7 +129,7 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	medianCpu=0.0f;
 	medianPing=0;
-	enforceSpeed=configHandler.Get("EnforceGameSpeed", 1);
+	enforceSpeed=configHandler.Get("EnforceGameSpeed", false);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
@@ -144,11 +144,6 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	maxUserSpeed = setup->maxSpeed;
 	minUserSpeed = setup->minSpeed;
-	// enforce gamespeed if not configured
-	if(enforceSpeed && minUserSpeed <= 0.3f)
-		minUserSpeed = 1.0f;
-	if(enforceSpeed && maxUserSpeed >= 3.0f)
-		maxUserSpeed = 1.0f;
 	noHelperAIs = (bool)setup->noHelperAIs;
 
 	gameData.reset(newGameData);

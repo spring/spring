@@ -2,8 +2,7 @@
 #define CHAT_MESSAGE_H
 
 #include <boost/shared_ptr.hpp>
-
-#include "Action.h"
+#include <string>
 
 namespace netcode {
 	class RawPacket;
