@@ -34,9 +34,11 @@ import filelist
 
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
-	env = Environment(tools = ['mingw', 'rts', 'gch'], toolpath = ['.', 'rts/build/scons'])
+	myTools = ['mingw', 'rts', 'gch']
 else:
-	env = Environment(tools = ['default', 'rts',  'gch'], toolpath = ['.', 'rts/build/scons'])
+	myTools = ['default', 'rts',  'gch']
+
+env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'], ENV = {'PATH' : os.environ['PATH']})
 
 if env['use_gch']:
 	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
