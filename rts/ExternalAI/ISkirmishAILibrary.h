@@ -23,10 +23,8 @@
 #include <vector>
 #include <map>
 
-struct SkirmishAIKey;
-struct InfoItem;
-struct Option;
-struct AIInterfaceKey;
+class SkirmishAIKey;
+class AIInterfaceKey;
 
 class ISkirmishAILibrary {
 public:

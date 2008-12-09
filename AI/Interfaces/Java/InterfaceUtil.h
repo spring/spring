@@ -57,7 +57,7 @@ extern "C" {
 	#define STRCASECMP strcasecmp
 #endif	// _MSC_VER
 
-char* util_setDataDirs(const char* unversioned, const char* versioned);
+void util_setDataDirs(const char* unversioned, const char* versioned);
 const char* util_getDataDirUnversioned();
 const char* util_getDataDirVersioned();
 

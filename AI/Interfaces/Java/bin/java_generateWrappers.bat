@@ -7,10 +7,10 @@ SET SPRING_SOURCE=../../../../rts
 SET MY_SOURCE_JAVA=../java/src/
 SET JAVA_PKG=com/clan_sy/spring/ai
 
-C_CALLBACK=%SPRING_SOURCE%/ExternalAI/Interface/SAICallback.h
-C_EVENTS=%SPRING_SOURCE%/ExternalAI/Interface/AISEvents.h
-C_COMMANDS=%SPRING_SOURCE%/ExternalAI/Interface/AISCommands.h
-JNA_CALLBACK=%MY_SOURCE_JAVA%%JAVA_PKG%/AICallback.java
+SET C_CALLBACK=%SPRING_SOURCE%/ExternalAI/Interface/SAICallback.h
+SET C_EVENTS=%SPRING_SOURCE%/ExternalAI/Interface/AISEvents.h
+SET C_COMMANDS=%SPRING_SOURCE%/ExternalAI/Interface/AISCommands.h
+SET JNA_CALLBACK=%MY_SOURCE_JAVA%%JAVA_PKG%/AICallback.java
 
 SET AWK=gawk.exe
 

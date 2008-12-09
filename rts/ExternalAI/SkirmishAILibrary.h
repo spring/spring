@@ -24,7 +24,7 @@
 #include "Interface/SSAILibrary.h"
 #include <vector>
 
-struct AIInterfaceKey;
+class AIInterfaceKey;
 
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:

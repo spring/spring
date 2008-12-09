@@ -23,12 +23,11 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "Info.h"
+#include "Option.h"
 
 class ISkirmishAILibrary;
-struct InfoItem;
-struct Option;
-//struct SAIInterfaceSpecifier;
-struct SkirmishAIKey;
+class SkirmishAIKey;
 
 class CSkirmishAILibraryInfo {
 public:

@@ -87,19 +87,27 @@ ${EndIf}
   ; Remove Luxi.ttf, it has been moved to fonts/Luxi.ttf
   Delete "$INSTDIR\Luxi.ttf"
 
-; TODO: Fix the vc projects to use the same names.
-  SetOutPath "$INSTDIR\AI\Helper-libs"
-  File "..\game\AI\Helper-libs\CentralBuildAI.dll"
-  File "..\game\AI\Helper-libs\MetalMakerAI.dll"
-  File "..\game\AI\Helper-libs\SimpleFormationAI.dll"
-  File "..\game\AI\Helper-libs\RadarAI.dll"
-  File "..\game\AI\Helper-libs\MexUpgraderAI.dll"
-  File "..\game\AI\Helper-libs\EconomyAI.dll"
-  File "..\game\AI\Helper-libs\ReportIdleAI.dll"
+  ; AI Interfaces
+  SetOutPath "$INSTDIR\AI\Interfaces"
+  File /r /x *.a /x *.def "..\game\AI\Interfaces\C"
+  File /r /x *.a /x *.def "..\game\AI\Interfaces\Java"
 
-; TODO: Fix the vc projects to use the same names.
-  SetOutPath "$INSTDIR\AI\Skirmish\impls"
-  File "..\game\AI\Skirmish\impls\TestGlobalAI.dll"
+;  ; Group AIs -> dont exist anymore
+;  ;TODO: Fix the vc projects to use the same names.
+;  SetOutPath "$INSTDIR\AI\Helper-libs"
+;  File "..\game\AI\Helper-libs\CentralBuildAI.dll"
+;  File "..\game\AI\Helper-libs\MetalMakerAI.dll"
+;  File "..\game\AI\Helper-libs\SimpleFormationAI.dll"
+;  File "..\game\AI\Helper-libs\RadarAI.dll"
+;  File "..\game\AI\Helper-libs\MexUpgraderAI.dll"
+;  File "..\game\AI\Helper-libs\EconomyAI.dll"
+;  File "..\game\AI\Helper-libs\ReportIdleAI.dll"
+
+  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
+  ;TODO: Fix the vc projects to use the same names.
+  SetOutPath "$INSTDIR\AI\Skirmish"
+  File /r /x *.a /x *.def "..\game\AI\Skirmish\NullAI"
+  File /r /x *.a /x *.def "..\game\AI\Skirmish\NullOOJavaAI"
 
 ; Default content
   SetOverWrite on
@@ -107,7 +115,7 @@ ${EndIf}
 
   File "..\game\base\springcontent.sdz"
   File "..\game\base\maphelper.sdz"
-	File "..\game\base\cursors.sdz"
+  File "..\game\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
   File "..\game\base\spring\bitmaps.sdz"
 
@@ -163,20 +171,28 @@ ${EndIf}
   Delete "$INSTDIR\fonts\Luxi.ttf"
   RmDir "$INSTDIR\fonts"
 
-  ; AI Bot dlls
-  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
-  RmDir "$INSTDIR\AI\Skirmish\impls"
+;  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
+;  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
+  RmDir "$INSTDIR\AI\Skirmish\NullAI"
+  RmDir "$INSTDIR\AI\Skirmish\NullOOJavaAI"
+  RmDir "$INSTDIR\AI\Global"
+  RmDir "$INSTDIR\AI\Skirmish"
 
-  ; AI Helper dlls
-  Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\MetalMakerAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\SimpleFormationAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\RadarAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\MexUpgraderAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\EconomyAI.dll"
-  Delete "$INSTDIR\AI\Helper-libs\ReportIdleAI.dll"
+;  ; Group AIs -> dont exist anymore
+;  ; AI Helper dlls
+;  Delete "$INSTDIR\AI\Helper-libs\CentralBuildAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\MetalMakerAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\SimpleFormationAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\RadarAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\MexUpgraderAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\EconomyAI.dll"
+;  Delete "$INSTDIR\AI\Helper-libs\ReportIdleAI.dll"
   RmDir "$INSTDIR\AI\Helper-libs"
   RmDir "$INSTDIR\AI"
+
+  ; AI Interfaces
+  RmDir /r "$INSTDIR\AI\Interfaces\C"
+  RmDir /r "$INSTDIR\AI\Interfaces\Java"
 
   ; Startscript
   Delete "$INSTDIR\startscripts\aistartscripttest.lua"

@@ -1,18 +1,13 @@
 !ifdef INSTALL
-  SetOutPath "$INSTDIR\AI\Skirmish\impls"
-  File "..\game\AI\Skirmish\impls\AAI.dll"
+	; Installing:
+;	; Delete the old AAI.
+;	RmDir /r "$INSTDIR\AI\Skirmish\AAI"
+	RmDir /r "$INSTDIR\AI\AAI"
 
-  SetOutPath "$INSTDIR\AI\AAI"
-  File /r /x .svn "..\game\AI\AAI\*.*"
-  
-  ; This should perhaps be removed in the future?
-  Delete "$INSTDIR\AI\AAI\log\BuildTable_XTAPE.txt"
-  Delete "$INSTDIR\AI\AAI\learn\mod\XTAPE.dat"
-  
+	SetOutPath "$INSTDIR\AI\Skirmish"
+	File /r /x *.a /x *.def "..\game\AI\Skirmish\AAI"
 !else
-  Delete "$INSTDIR\AI\Skirmish\impls\AAI.dll"
-  RmDir /r "$INSTDIR\AI\AAI"
-  ; we run after main.nsh so need to remove dirs here..
-  RmDir "$INSTDIR\AI\Skirmish\impls"
-  RmDir "$INSTDIR\AI"
+	; Uninstalling:
+	RmDir /r "$INSTDIR\AI\Skirmish\AAI\0.777"
+	RmDir /r "$INSTDIR\AI\AAI"
 !endif

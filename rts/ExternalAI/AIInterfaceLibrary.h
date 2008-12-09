@@ -23,6 +23,7 @@
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
 //#include "AIInterfaceLibraryInfo.h"
+#include "SkirmishAIKey.h"
 
 #include <string>
 #include <map>
