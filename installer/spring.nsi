@@ -47,7 +47,7 @@ SetCompressor lzma
 
 ; Finish page
 
-!define BUILDDIR "../build"
+!define BUILDDIR "..\build"
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\springsettings.exe"
