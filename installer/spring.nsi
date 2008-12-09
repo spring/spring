@@ -371,16 +371,22 @@ Section "Easy content installation" SEC_ARCHIVEMOVER
   !undef INSTALL
 SectionEnd
 
-SectionGroup "AI opponent plugins (Bots)"
+SectionGroup "Skirmish AI plugins (Bots)"
 	Section "AAI" SEC_AAI
 	!define INSTALL
 	!include "sections\aai.nsh"
 	!undef INSTALL
 	SectionEnd
 
-	Section "KAI" SEC_KAI
+	Section "KAIK" SEC_KAIK
 	!define INSTALL
-	!include "sections\kai.nsh"
+	!include "sections\kaik.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "RAI" SEC_RAI
+	!define INSTALL
+	!include "sections\rai.nsh"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -428,7 +434,8 @@ Section Uninstall
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
   !include "sections\aai.nsh"
-  !include "sections\kai.nsh"
+  !include "sections\kaik.nsh"
+  !include "sections\rai.nsh"
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"

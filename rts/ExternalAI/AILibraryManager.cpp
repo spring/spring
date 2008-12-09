@@ -23,7 +23,7 @@
 #include "AIInterfaceLibrary.h"
 #include "SkirmishAILibraryInfo.h"
 
-#include <boost/filesystem.hpp>
+//#include <boost/filesystem.hpp>
 #include "Util.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
@@ -819,6 +819,7 @@ void CAILibraryManager::ReleaseEverything() {
 //	ReleaseAllGroupAILibraries();
 }
 
+/*
 std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, const std::string& fileExtension) {
 
 	std::vector<std::string> found;
@@ -835,6 +836,7 @@ std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, c
 
 	return found;
 }
+*/
 
 std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
 		const std::string& path) {

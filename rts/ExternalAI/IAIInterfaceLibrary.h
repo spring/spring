@@ -24,8 +24,8 @@
 
 class CSkirmishAILibraryInfo;
 //class CGroupAILibraryInfo;
-struct AIInterfaceKey;
-struct SkirmishAIKey;
+class AIInterfaceKey;
+class SkirmishAIKey;
 
 class IAIInterfaceLibrary {
 public:

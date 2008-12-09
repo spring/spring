@@ -20,10 +20,10 @@
 
 #include <map>
 #include <string>
+#include "Info.h"
 
 class IAIInterfaceLibrary;
-struct InfoItem;
-struct AIInterfaceKey;
+class AIInterfaceKey;
 
 class CAIInterfaceLibraryInfo {
 public:

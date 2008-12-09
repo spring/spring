@@ -38,7 +38,15 @@ if sys.platform == 'win32':
 else:
 	myTools = ['default', 'rts',  'gch']
 
+#env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'])
 env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'], ENV = {'PATH' : os.environ['PATH']})
+
+# the next four lines are needed when compiling on windows
+# (seems ot be some SCons bug)
+import SCons.Tool.javac
+import SCons.Tool.jar
+SCons.Tool.javac.generate(env)
+SCons.Tool.jar.generate(env)
 
 if env['use_gch']:
 	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
@@ -288,9 +296,11 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		# generate class files
 		javaWrapperScript = 'java_generateWrappers.' + getLocalShellExecPostfix()
 		javaWrapperScriptPath = os.path.join('AI/Interfaces', baseName, 'bin')
-		# TODO: the following was only tested on linux (it is not nice)
-		javaWrapperCmd = 'cd ' + javaWrapperScriptPath + '; ./' + javaWrapperScript + '; cd ../../../..'
-		javaWrapperBld = myEnv.Builder(action = javaWrapperCmd)
+		if sys.platform == 'win32':
+			javaWrapperCmd = javaWrapperScript
+		else:
+			javaWrapperCmd = './' + javaWrapperScript
+		javaWrapperBld = myEnv.Builder(action = javaWrapperCmd, chdir = javaWrapperScriptPath)
 		myEnv.Append(BUILDERS = {'JavaWrapper' : javaWrapperBld})
 		javaSrcGen = myEnv.JavaWrapper(source = mySource)
 		Alias(baseName, javaSrcGen)
@@ -304,6 +314,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		jlibDir = os.path.join('AI/Interfaces', baseName, 'jlib')
 		javaInterfaceCP = createJavaClasspath(jlibDir)
 		myEnv['JAVACLASSPATH'] = javaInterfaceCP
+		myEnv['JAVASOURCEPATH'] = javaSrc
 		myClasses = myEnv.Java(target = javaClasses, source = javaSrc)
 		myEnv['JARCHDIR'] = [javaClasses]
 		myJar = myEnv.Jar(target = javaJar, source = myClasses)
@@ -311,11 +322,11 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		Alias('AIInterfaces', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_interface_dir, myJar)]
-		#jlib_files = os.listdir(jlibDir)
-		#jlib_files = [os.path.join(jlibDir, jl) for jl in jlib_files if not pathContainsSvnDir(jl)]
 		if os.path.exists(jlibDir):
-			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
-			instList += [env.Install(install_data_interface_dir, jlib_files)]
+			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+			for lf in jlib_files:
+				instList += [myEnv.Install(os.path.join(install_data_interface_dir, os.path.split(lf)[0]), os.path.join(jlibDir, lf))]
+
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName + '-' + aiInterfaceVersion), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
@@ -323,12 +334,14 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 	instList += [myEnv.Install(install_data_interface_dir, lib)]
 	if myEnv['strip']:
 		myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
+
+	# record data files (eg InterfaceInfo.lua or config files) for installation
 	source_data_dir = os.path.join('AI/Interfaces', baseName, 'data')
 	if os.path.exists(source_data_dir):
-		#data_files = os.listdir(source_data_dir)
-		#data_files = [os.path.join(source_data_dir, df) for df in data_files if df != ".svn"]
-		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = True)
-		instList += [env.Install(install_data_interface_dir, data_files)]
+		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+		for df in data_files:
+			instList += [myEnv.Install(os.path.join(install_data_interface_dir, os.path.split(df)[0]), os.path.join(source_data_dir, df))]
+
 	Alias('install', instList)
 	Alias('install-AIInterfaces', instList)
 	Alias('install-' + baseName, instList)
@@ -347,7 +360,7 @@ skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishaienv, filelist.get_sha
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishaienv, filelist.get_shared_skirmishAI_source_LegacyCpp(skirmishaienv), '-skirmishai_creg', ['USING_CREG'])
 
 # Build
-skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
+skirmishai_exclude_list=['NTai', 'build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
@@ -370,6 +383,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		aiCP = createJavaClasspath(jlibDir)
 		aiFullCP = aiCP + os.pathsep + javaInterfaceJar + os.pathsep + javaInterfaceCP
 		myEnv['JAVACLASSPATH'] = aiFullCP
+		myEnv['JAVASOURCEPATH'] = javaSrc
 		myClasses = myEnv.Java(target = javaClasses, source = javaSrc)
 		myEnv['JARCHDIR'] = [javaClasses]
 		myJar = myEnv.Jar(target = javaJar, source = myClasses)
@@ -378,8 +392,10 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		Default(myJar)
 		instList += [env.Install(install_data_ai_dir, myJar)]
 		if os.path.exists(jlibDir):
-			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = True)
-			instList += [env.Install(install_data_ai_dir, jlib_files)]
+			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+			for lf in jlib_files:
+				instList += [myEnv.Install(os.path.join(install_data_ai_dir, os.path.split(lf)[0]), os.path.join(jlibDir, lf))]
+
 	else:
 		if useCreg:
 			myEnv['CPPDEFINES'] += ['USING_CREG']
@@ -407,10 +423,9 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 	# record data files (eg AIInfo.lua or config files) for installation
 	source_data_dir = os.path.join('AI/Skirmish', baseName, 'data')
 	if os.path.exists(source_data_dir):
-		#data_files = os.listdir(source_data_dir)
-		#data_files = [os.path.join(source_data_dir, df) for df in data_files if not pathContainsSvnDir(df)]
-		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = True)
-		instList += [env.Install(install_data_ai_dir, data_files)]
+		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+		for df in data_files:
+			instList += [myEnv.Install(os.path.join(install_data_ai_dir, os.path.split(df)[0]), os.path.join(source_data_dir, df))]
 
 	# install everything from this AI
 	Alias('install', instList)

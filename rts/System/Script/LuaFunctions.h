@@ -15,7 +15,7 @@ class CUnit;
 class CTeam;
 class CFeature;
 struct UnitDef;
-struct SkirmishAIKey;
+class SkirmishAIKey;
 
 // This class is meant to contain COBject and its descendants only..
 template<class A>

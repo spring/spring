@@ -29,9 +29,9 @@ class float3;
 class CUnit;
 class CGroup;
 class WeaponDef;
-struct SkirmishAIKey;
+class SkirmishAIKey;
 class CSkirmishAIWrapper;
-struct SGAIKey;
+//struct SGAIKey;
 class CGroupAIWrapper;
 
 void handleAIException(const char* description);

@@ -30,8 +30,8 @@
 #include <map>
 #include <set>
 
-struct AIInterfaceKey;
-struct SkirmishAIKey;
+class AIInterfaceKey;
+class SkirmishAIKey;
 //struct SGAIKey;
 
 /**

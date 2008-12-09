@@ -34,7 +34,7 @@
 static const char* myDataDir = NULL;
 static const char* myDataDirVers = NULL;
 
-char* util_setDataDirs(const char* unversioned, const char* versioned) {
+void util_setDataDirs(const char* unversioned, const char* versioned) {
 
 	myDataDir = unversioned;
 	myDataDirVers = versioned;

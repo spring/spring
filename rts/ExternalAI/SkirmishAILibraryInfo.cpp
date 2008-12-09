@@ -21,8 +21,6 @@
 #include "Interface/SSAILibrary.h"
 #include "SkirmishAIKey.h"
 #include "ISkirmishAILibrary.h"
-#include "Info.h"
-#include "Option.h"
 #include "Util.h"
 
 #include "Platform/errorhandler.h"

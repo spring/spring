@@ -19,7 +19,7 @@
  * The struct and the helper functions in this file are here for convenience
  * when building AI interfaces. The SSkirmishAISpecifier struct can be of use
  * as key type for C++ maps or C hash maps (eg. to cache loaded Skirmish AIs).
- * Engine side, we are using the C++ struct SkirmishAIKey for the same purposes.
+ * Engine side, we are using the C++ class SkirmishAIKey for the same purposes.
  */
 
 #ifndef _SSKIRMISHAISPECIFIER_H

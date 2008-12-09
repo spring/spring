@@ -36,20 +36,26 @@ def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.', recur
 	return dirs
 
 
-def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', exclude_dirs = False):
-	path_stack = [path]
+def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', exclude_dirs = False, path_relative = False):
+	rel_path_stack = ['']
 	exclude = re.compile(exclude_regexp)
 	ffiles = []
-	while len(path_stack) > 0:
-		path = path_stack.pop()
-		files = os.listdir(path)
+	while len(rel_path_stack) > 0:
+		rpath = rel_path_stack.pop()
+		apath = os.path.join(path, rpath)
+		files = os.listdir(apath)
 		for f in files:
-			g = os.path.join(path, f)
-			if os.path.exists(g) and not f in exclude_list and not exclude.search(f):
-				if not os.path.isdir(g) or not exclude_dirs:
-					ffiles += [g]
-				if os.path.isdir(g):
-					path_stack += [g]
+			rf = os.path.join(rpath, f)
+			af = os.path.join(apath, f)
+			if path_relative:
+				wf = rf
+			else:
+				wf = af
+			if os.path.exists(af) and not f in exclude_list and not exclude.search(f):
+				if not os.path.isdir(af) or not exclude_dirs:
+					ffiles += [wf]
+				if os.path.isdir(af):
+					rel_path_stack += [rf]
 	return ffiles
 
 
