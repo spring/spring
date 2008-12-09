@@ -90,8 +90,8 @@ ${EndIf}
   ; AI Interfaces
 !macro InstallAIInterface aiIntName
 !ifdef INSTALL_AIS
-  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
-  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
+  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
+  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
   File /r /x .svn "..\AI\Interfaces\${aiIntName}\data"
 !endif
 !macroend
@@ -116,8 +116,8 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL_AIS
-  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
-  File /x *.a /x *.def "$BUILDDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
+  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
+  File /x *.a /x *.def "$BUILDDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
   File /r /x .svn "..\AI\Skirmish\${skirAiName}\data"
 !endif
 !macroend
@@ -193,7 +193,7 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
 !ifdef INSTALL_AIS
-  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
+  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
 !endif
 !macroend
 ;  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
@@ -219,7 +219,7 @@ ${EndIf}
   ; AI Interfaces
 !macro DeleteAIInterface aiIntName
 !ifdef INSTALL_AIS
-  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
+  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}"
 !endif
 !macroend
 #  RmDir /r "$INSTDIR\AI\Interfaces\C"
