@@ -92,13 +92,9 @@ ${EndIf}
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
   File /x *.a /x *.def "${BUILDDIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
-  File /r /x .svn "..\AI\Interfaces\${aiIntName}\data"
+  File /r /x .svn "..\AI\Interfaces\${aiIntName}\data\*.*"
 !endif
 !macroend
-#  SetOutPath "$INSTDIR\AI\Interfaces"
-#  SetOutPath "$INSTDIR\AI\Interfaces\C\$AI_INT_VERS_C"
-#  File /x *.a /x *.def "${BUILDDIR}\AI\Interfaces\C\$AI_INT_VERS_C"
-#  File /r /x .svn "..\AI\Interfaces\C\data"
   !insertmacro InstallAIInterface "C"
   !insertmacro InstallAIInterface "Java"
 
@@ -118,13 +114,10 @@ ${EndIf}
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
   File /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
-  File /r /x .svn "..\AI\Skirmish\${skirAiName}\data"
+  File /r /x .svn "..\AI\Skirmish\${skirAiName}\data\*.*"
 !endif
 !macroend
   ;TODO: Fix the vc projects to use the same names.
-#  SetOutPath "$INSTDIR\AI\Skirmish"
-#  File /r /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\NullAI"
-#  File /r /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\NullOOJavaAI"
   !insertmacro InstallSkirmishAI "NullAI"
   !insertmacro InstallSkirmishAI "NullOOJavaAI"
 
@@ -196,9 +189,6 @@ ${EndIf}
   RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
 !endif
 !macroend
-;  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
-  #RmDir /r "$INSTDIR\AI\Skirmish\NullAI\$SKIR_AI_VERS_NullAI"
-  #RmDir /r "$INSTDIR\AI\Skirmish\NullOOJavaAI\$SKIR_AI_VERS_NullOOJavaAI"
   !insertmacro DeleteSkirmishAI "NullAI"
   !insertmacro DeleteSkirmishAI "NullOOJavaAI"
   RmDir "$INSTDIR\AI\Global"
@@ -222,8 +212,6 @@ ${EndIf}
   RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}"
 !endif
 !macroend
-#  RmDir /r "$INSTDIR\AI\Interfaces\C"
-#  RmDir /r "$INSTDIR\AI\Interfaces\Java"
   !insertmacro DeleteAIInterface "C"
   !insertmacro DeleteAIInterface "Java"
 
@@ -240,7 +228,7 @@ ${EndIf}
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
   Delete "$INSTDIR\base\maphelper.sdz"
-	Delete "$INSTDIR\base\cursors.sdz"
+  Delete "$INSTDIR\base\cursors.sdz"
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
 
