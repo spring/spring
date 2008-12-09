@@ -91,13 +91,13 @@ ${EndIf}
 !macro InstallAIInterface aiIntName
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
-  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
+  File /x *.a /x *.def "${BUILDDIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
   File /r /x .svn "..\AI\Interfaces\${aiIntName}\data"
 !endif
 !macroend
 #  SetOutPath "$INSTDIR\AI\Interfaces"
 #  SetOutPath "$INSTDIR\AI\Interfaces\C\$AI_INT_VERS_C"
-#  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\C\$AI_INT_VERS_C"
+#  File /x *.a /x *.def "${BUILDDIR}\AI\Interfaces\C\$AI_INT_VERS_C"
 #  File /r /x .svn "..\AI\Interfaces\C\data"
   !insertmacro InstallAIInterface "C"
   !insertmacro InstallAIInterface "Java"
@@ -117,14 +117,14 @@ ${EndIf}
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
-  File /x *.a /x *.def "$BUILDDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
+  File /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
   File /r /x .svn "..\AI\Skirmish\${skirAiName}\data"
 !endif
 !macroend
   ;TODO: Fix the vc projects to use the same names.
 #  SetOutPath "$INSTDIR\AI\Skirmish"
-#  File /r /x *.a /x *.def "$BUILDDIR\AI\Skirmish\NullAI"
-#  File /r /x *.a /x *.def "$BUILDDIR\AI\Skirmish\NullOOJavaAI"
+#  File /r /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\NullAI"
+#  File /r /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\NullOOJavaAI"
   !insertmacro InstallSkirmishAI "NullAI"
   !insertmacro InstallSkirmishAI "NullOOJavaAI"
 
