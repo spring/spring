@@ -21,7 +21,7 @@ done
 
 # Acuire AI Interface and Skirmish AI Version information
 
-AI_VERSION_INFO=""
+AI_VERSION_INFO="-DINSTALL_AIS"
 
 cd AI/Interfaces
 for interfaceDir in `ls`; do

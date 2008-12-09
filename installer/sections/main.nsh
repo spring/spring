@@ -88,9 +88,19 @@ ${EndIf}
   Delete "$INSTDIR\Luxi.ttf"
 
   ; AI Interfaces
-  SetOutPath "$INSTDIR\AI\Interfaces"
-  File /r /x *.a /x *.def "..\game\AI\Interfaces\C"
-  File /r /x *.a /x *.def "..\game\AI\Interfaces\Java"
+!macro InstallAIInterface aiIntName
+!ifdef INSTALL_AIS
+  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
+  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
+  File /r /x .svn "..\AI\Interfaces\${aiIntName}\data"
+!endif
+!macroend
+#  SetOutPath "$INSTDIR\AI\Interfaces"
+#  SetOutPath "$INSTDIR\AI\Interfaces\C\$AI_INT_VERS_C"
+#  File /x *.a /x *.def "$BUILDDIR\AI\Interfaces\C\$AI_INT_VERS_C"
+#  File /r /x .svn "..\AI\Interfaces\C\data"
+  !insertmacro InstallAIInterface "C"
+  !insertmacro InstallAIInterface "Java"
 
 ;  ; Group AIs -> dont exist anymore
 ;  ;TODO: Fix the vc projects to use the same names.
@@ -104,10 +114,19 @@ ${EndIf}
 ;  File "..\game\AI\Helper-libs\ReportIdleAI.dll"
 
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
+!macro InstallSkirmishAI skirAiName
+!ifdef INSTALL_AIS
+  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
+  File /x *.a /x *.def "$BUILDDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
+  File /r /x .svn "..\AI\Skirmish\${skirAiName}\data"
+!endif
+!macroend
   ;TODO: Fix the vc projects to use the same names.
-  SetOutPath "$INSTDIR\AI\Skirmish"
-  File /r /x *.a /x *.def "..\game\AI\Skirmish\NullAI"
-  File /r /x *.a /x *.def "..\game\AI\Skirmish\NullOOJavaAI"
+#  SetOutPath "$INSTDIR\AI\Skirmish"
+#  File /r /x *.a /x *.def "$BUILDDIR\AI\Skirmish\NullAI"
+#  File /r /x *.a /x *.def "$BUILDDIR\AI\Skirmish\NullOOJavaAI"
+  !insertmacro InstallSkirmishAI "NullAI"
+  !insertmacro InstallSkirmishAI "NullOOJavaAI"
 
 ; Default content
   SetOverWrite on
@@ -171,10 +190,17 @@ ${EndIf}
   Delete "$INSTDIR\fonts\Luxi.ttf"
   RmDir "$INSTDIR\fonts"
 
-;  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
+  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
+!macro DeleteSkirmishAI skirAiName
+!ifdef INSTALL_AIS
+  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\$SKIR_AI_VERS_${skirAiName}"
+!endif
+!macroend
 ;  Delete "$INSTDIR\AI\Skirmish\impls\TestGlobalAI.dll"
-  RmDir "$INSTDIR\AI\Skirmish\NullAI"
-  RmDir "$INSTDIR\AI\Skirmish\NullOOJavaAI"
+  #RmDir /r "$INSTDIR\AI\Skirmish\NullAI\$SKIR_AI_VERS_NullAI"
+  #RmDir /r "$INSTDIR\AI\Skirmish\NullOOJavaAI\$SKIR_AI_VERS_NullOOJavaAI"
+  !insertmacro DeleteSkirmishAI "NullAI"
+  !insertmacro DeleteSkirmishAI "NullOOJavaAI"
   RmDir "$INSTDIR\AI\Global"
   RmDir "$INSTDIR\AI\Skirmish"
 
@@ -191,8 +217,15 @@ ${EndIf}
   RmDir "$INSTDIR\AI"
 
   ; AI Interfaces
-  RmDir /r "$INSTDIR\AI\Interfaces\C"
-  RmDir /r "$INSTDIR\AI\Interfaces\Java"
+!macro DeleteAIInterface aiIntName
+!ifdef INSTALL_AIS
+  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\$AI_INT_VERS_${aiIntName}"
+!endif
+!macroend
+#  RmDir /r "$INSTDIR\AI\Interfaces\C"
+#  RmDir /r "$INSTDIR\AI\Interfaces\Java"
+  !insertmacro DeleteAIInterface "C"
+  !insertmacro DeleteAIInterface "Java"
 
   ; Startscript
   Delete "$INSTDIR\startscripts\aistartscripttest.lua"
