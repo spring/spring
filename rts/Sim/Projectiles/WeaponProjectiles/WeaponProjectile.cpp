@@ -130,22 +130,13 @@ void CWeaponProjectile::Collision()
 					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
 					weaponDef->dynDamageInverted);
 
-		if (weaponDef->impactOnly) {
-			if (weaponDef->explosionGenerator) {
-				weaponDef->explosionGenerator->Explosion(pos,((weaponDef->dynDamageExp>0)
-						? dynDamages : weaponDef->damages)[0],weaponDef->areaOfEffect,owner,0,NULL,impactDir);
-			}
-		} else {
-			helper->Explosion(pos,
-				(weaponDef->dynDamageExp > 0)?
-					dynDamages:
-					weaponDef->damages,
-				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-				weaponDef->explosionSpeed, owner, true,
-				weaponDef->noExplode ? 0.3f : 1,
-				weaponDef->noExplode || weaponDef->noSelfDamage,
-				weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
-		}
+		helper->Explosion(pos,
+			(weaponDef->dynDamageExp > 0) ? dynDamages : weaponDef->damages,
+			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
+			weaponDef->explosionSpeed, owner, true,
+			weaponDef->noExplode ? 0.3f : 1,
+			weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->impactOnly,
+			weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
@@ -193,23 +184,13 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			damages = weaponDef->damages;
 		}
 
-		if (weaponDef->impactOnly) {
-			unit->DoDamage(
-				damages, owner,
-				impactDir * (damages[0] + weaponDef->damages.impulseBoost)
-				* weaponDef->damages.impulseFactor, weaponDef->id);
-			if (weaponDef->explosionGenerator) {
-				weaponDef->explosionGenerator->Explosion(pos,damages[0],weaponDef->areaOfEffect,owner,0,unit,impactDir);
-			}
-		}
-		else {
-		    helper->Explosion(pos, damages,
-				weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-				weaponDef->explosionSpeed, owner, true,
-				weaponDef->noExplode ? 0.3f : 1,
-				weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->explosionGenerator, unit,
-				impactDir, weaponDef->id);
-		}
+		helper->Explosion(pos, damages,
+			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
+			weaponDef->explosionSpeed, owner, true,
+			weaponDef->noExplode ? 0.3f : 1,
+			weaponDef->noExplode, weaponDef->impactOnly,
+			weaponDef->explosionGenerator, unit,
+			impactDir, weaponDef->id);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
@@ -353,5 +334,6 @@ void CWeaponProjectile::PostLoad()
 				modelDispList= model->rootobjects3o->displist;*/
 		}
 	}
+
 //	collisionFlags = weaponDef->collisionFlags;
 }

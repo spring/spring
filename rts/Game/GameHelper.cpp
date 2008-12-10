@@ -165,7 +165,7 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
                             float expRad, float edgeEffectiveness,
                             float expSpeed, CUnit* owner,
-                            bool damageGround, float gfxMod, bool ignoreOwner,
+                            bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly,
                             CExplosionGenerator* explosionGraphics, CUnit* hit,
                             const float3& impactDir, int weaponId)
 {
@@ -189,50 +189,55 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 	float h2 = ground->GetHeight2(expPos.x, expPos.z);
 	expPos.y = std::max(expPos.y, h2);
 	expRad = std::max(expRad, 1.0f);
-	float height = std::max(expPos.y - h2, 0.0f);
 
+	if (impactOnly) {
+		if (hit)
+			DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+	} else {
+		float height = std::max(expPos.y - h2, 0.0f);
 
-	// damage all units within the explosion radius
-	vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
-	vector<CUnit*>::iterator ui;
-	bool hitUnitDamaged = false;
+		// damage all units within the explosion radius
+		vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
+		vector<CUnit*>::iterator ui;
+		bool hitUnitDamaged = false;
 
-	for (ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = *ui;
+		for (ui = units.begin(); ui != units.end(); ++ui) {
+			CUnit* unit = *ui;
 
-		if (unit == hit) {
-			hitUnitDamaged = true;
+			if (unit == hit) {
+				hitUnitDamaged = true;
+			}
+	
+			DoExplosionDamage(unit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
 		}
 
-		DoExplosionDamage(unit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
-	}
-
-	// HACK: for a unit with an offset coldet volume, the explosion
-	// (from an impacting projectile) position might not correspond
-	// to its quadfield position so we need to damage it separately
-	if (hit && !hitUnitDamaged) {
-		DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
-	}
-
-
-	// damage all features within the explosion radius
-	vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
-	vector<CFeature*>::iterator fi;
-
-	for (fi = features.begin(); fi != features.end(); ++fi) {
-		CFeature* feature = *fi;
-
-		DoExplosionDamage(feature, expPos, expRad, owner, damages);
-	}
-
-	// deform the map
-	if (damageGround && !mapDamage->disabled &&
-	    (expRad > height) && (damages.craterMult > 0.0f)) {
-		float damage = damages[0] * (1.0f - (height / expRad));
-		if (damage > (expRad * 10.0f)) {
-			damage = expRad * 10.0f; // limit the depth somewhat
+		// HACK: for a unit with an offset coldet volume, the explosion
+		// (from an impacting projectile) position might not correspond
+		// to its quadfield position so we need to damage it separately
+		if (hit && !hitUnitDamaged) {
+			DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
 		}
-		mapDamage->Explosion(expPos, (damage + damages.craterBoost) * damages.craterMult, expRad - height);
+
+
+		// damage all features within the explosion radius
+		vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
+		vector<CFeature*>::iterator fi;
+
+		for (fi = features.begin(); fi != features.end(); ++fi) {
+			CFeature* feature = *fi;
+
+			DoExplosionDamage(feature, expPos, expRad, owner, damages);
+		}
+
+		// deform the map
+		if (damageGround && !mapDamage->disabled &&
+		    (expRad > height) && (damages.craterMult > 0.0f)) {
+			float damage = damages[0] * (1.0f - (height / expRad));
+			if (damage > (expRad * 10.0f)) {
+				damage = expRad * 10.0f; // limit the depth somewhat
+			}
+			mapDamage->Explosion(expPos, (damage + damages.craterBoost) * damages.craterMult, expRad - height);
+		}
 	}
 
 	// use CStdExplosionGenerator by default
@@ -336,7 +341,6 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	CollisionQuery cq;
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
-
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
 
