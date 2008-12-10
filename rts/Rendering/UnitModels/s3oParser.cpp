@@ -13,66 +13,17 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "s3o.h"
-#include "Rendering/FartextureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Platform/byteorder.h"
 #include "Platform/errorhandler.h"
 #include "Util.h"
 #include "Exceptions.h"
+#include "LogOutput.h"
 
-void SS3O::DrawStatic()
+
+S3DModel* CS3OParser::Load(std::string name)
 {
-	glPushMatrix();
-	glTranslatef(offset.x,offset.y,offset.z);
-	glCallList(displist);
-	for(unsigned int i=0; i<childs.size(); i++)
-		childs[i]->DrawStatic();
-	glPopMatrix();
-}
-
-SS3O::~SS3O()
-{
-	glDeleteLists(displist, 1);
-}
-
-
-CS3OParser::CS3OParser()
-{
-
-}
-
-CS3OParser::~CS3OParser()
-{
-	std::map<std::string,S3DOModel*>::iterator ui;
-	for(ui=units.begin();ui!=units.end();++ui){
-		DeleteSS3O(ui->second->rootobjects3o);
-		delete ui->second;
-	}
-}
-
-void CS3OParser::DeleteSS3O(SS3O* o)
-{
-	for(std::vector<SS3O*>::iterator di=o->childs.begin();di!=o->childs.end();di++){
-		DeleteSS3O(*di);
-	}
-	delete o;
-}
-
-S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
-{
-	GML_STDMUTEX_LOCK(model); // LoadS3O
-
-	if(name.find(".")==std::string::npos)
-		name+=".s3o";
-
-	StringToLowerInPlace(name);
-
-	std::map<std::string,S3DOModel*>::iterator ui;
-	if((ui=units.find(name))!=units.end()){
-		return ui->second;
-	}
-
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 
@@ -87,26 +38,20 @@ S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
 	memcpy(&header,fileBuf,sizeof(header));
 	header.swap();
 
-	S3DOModel *model = SAFE_NEW S3DOModel;
+	S3DModel *model = SAFE_NEW S3DModel;
+	model->type=MODELTYPE_S3O;
 	model->numobjects=0;
-	SS3O* object=LoadPiece(fileBuf,header.rootPiece,model);
-	model->rootobjects3o=object;
-	model->rootobject3do=0;
-	object->isEmpty=true;
 	model->name=name;
 	model->tex1=(char*)&fileBuf[header.texture1];
 	model->tex2=(char*)&fileBuf[header.texture2];
-	texturehandler->LoadS3OTexture(model);
+	texturehandlerS3O->LoadS3OTexture(model);
+	SS3OPiece* object=LoadPiece(fileBuf,header.rootPiece,model);
+	object->type=MODELTYPE_S3O;
 
 	FindMinMax(object);
 
-	units[name]=model;
-
-	CreateLists(object);
-
-	// this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
-	// note: does not apply anymore, unit <--> projectile coldet no longer depends on model->radius
-	model->radius = header.radius * scale;
+	model->rootobject=object;
+	model->radius = header.radius;
 	model->height = header.height;
 	model->relMidPos.x=header.midx;
 	model->relMidPos.y=header.midy;
@@ -114,130 +59,35 @@ S3DOModel* CS3OParser::LoadS3O(std::string name,float scale,int side)
 	if(model->relMidPos.y<1)
 		model->relMidPos.y=1;
 
-//	logOutput.Print("%s has height %f",name,model->height);
-	fartextureHandler->CreateFarTexture(model);
+	model->maxx=object->maxx;
+	model->maxy=object->maxy;
+	model->maxz=object->maxz;
 
-	model->maxx=model->rootobjects3o->maxx;
-	model->maxy=model->rootobjects3o->maxy;
-	model->maxz=model->rootobjects3o->maxz;
-
-	model->minx=model->rootobjects3o->minx;
-	model->miny=model->rootobjects3o->miny;
-	model->minz=model->rootobjects3o->minz;
+	model->minx=object->minx;
+	model->miny=object->miny;
+	model->minz=object->minz;
 
 	delete[] fileBuf;
 	POP_CODE_MODE;
+
 	return model;
 }
 
-LocalS3DOModel* CS3OParser::CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces)
-{
-	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
-	lmodel->numpieces = model->numobjects;
-
-	int piecenum=0;
-	lmodel->pieces = SAFE_NEW LocalS3DO[model->numobjects];
-	lmodel->pieces->parent = NULL;
-	lmodel->scritoa = SAFE_NEW int[pieces->size()];
-	for (int a = 0; a < pieces->size(); ++a) {
-		lmodel->scritoa[a]=-1;
-	}
-
-	CreateLocalModel(model->rootobjects3o, lmodel, pieces, &piecenum);
-
-	return lmodel;
-}
-
-void CS3OParser::CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum)
-{
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
-	lmodel->pieces[*piecenum].displist = model->displist;
-	lmodel->pieces[*piecenum].offset = model->offset;
-	lmodel->pieces[*piecenum].name = model->name;
-	lmodel->pieces[*piecenum].originals3o = model;
-	lmodel->pieces[*piecenum].original3do = 0;
-
-	lmodel->pieces[*piecenum].anim = NULL;
-	unsigned int cur;
-
-	//Map this piecename to an index in the script's pieceinfo
-	for (cur=0; cur<pieces->size(); cur++) {
-		if (lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0) {
-			break;
-		}
-	}
-
-	//Not found? Try again with partial matching
-	if (cur == pieces->size()) {
-		std::string &s1 = lmodel->pieces[*piecenum].name;
-		for (cur = 0; cur < pieces->size(); ++cur) {
-			std::string &s2 = (*pieces)[cur].name;
-			int maxcompare = std::min(s1.size(), s2.size());
-			int j;
-			for (j = 0; j < maxcompare; ++j) {
-				if (s1[j] != s2[j]) {
-					break;
-				}
-			}
-			//Match now?
-			if (j == maxcompare) {
-				break;
-			}
-		}
-	}
-
-	//Did we find it now?
-	if (cur < pieces->size()) {
-		lmodel->pieces[*piecenum].anim = &((*pieces)[cur]);
-		lmodel->scritoa[cur] = *piecenum;
-	}
-	else {
-//		logOutput.Print("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
-	}
-
-	int thispiece = *piecenum;
-
-	for (unsigned int i=0; i<model->childs.size(); i++) {
-		(*piecenum)++;
-		lmodel->pieces[thispiece].childs.push_back(&lmodel->pieces[*piecenum]);
-		lmodel->pieces[*piecenum].parent = &lmodel->pieces[thispiece];
-		CreateLocalModel(model->childs[i], lmodel, pieces, piecenum);
-	}
-
-	POP_CODE_MODE;
-}
-
-
-void CS3OParser::FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces) {
-	int piecenum=0;
-	FixLocalModel(model->rootobjects3o, lmodel, pieces, &piecenum);
-}
-
-void CS3OParser::FixLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum) {
-	lmodel->pieces[*piecenum].displist = model->displist;
-
-	for (unsigned int i=0; i<model->childs.size(); i++) {
-		(*piecenum)++;
-		FixLocalModel(model->childs[i], lmodel, pieces, piecenum);
-	}
-}
-
-
-SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
+SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DModel* model)
 {
 	model->numobjects++;
 
-	SS3O* piece=SAFE_NEW SS3O;
+	SS3OPiece* piece = SAFE_NEW SS3OPiece;
+	piece->type = MODELTYPE_S3O;
 
-	Piece* fp=(Piece*)&buf[offset];
+	Piece* fp = (Piece*)&buf[offset];
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
-	piece->offset.x=fp->xoffset;
-	piece->offset.y=fp->yoffset;
-	piece->offset.z=fp->zoffset;
-	piece->primitiveType=fp->primitiveType;
-	piece->name=(char*)&buf[fp->name];
+	piece->offset.x = fp->xoffset;
+	piece->offset.y = fp->yoffset;
+	piece->offset.z = fp->zoffset;
+	piece->primitiveType = fp->primitiveType;
+	piece->name = (char*)&buf[fp->name];
 
 	int vertexPointer=fp->vertices;
 	for(int a=0;a<fp->numVertices;++a){
@@ -251,30 +101,33 @@ SS3O* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DOModel* model)
 	}
 	int vertexTablePointer=fp->vertexTable;
 	for(int a=0;a<fp->vertexTableSize;++a){
-		int num=swabdword(*(int*)&buf[vertexTablePointer]);
+		int num = swabdword(*(int*)&buf[vertexTablePointer]);
 		piece->vertexDrawOrder.push_back(num);
-		vertexTablePointer+=sizeof(int);
+		vertexTablePointer += sizeof(int);
 
 		if(num==-1 && a!=fp->vertexTableSize-1){		//for triangle strips
 			piece->vertexDrawOrder.push_back(num);
 
-			num=swabdword(*(int*)&buf[vertexTablePointer]);
+			num = swabdword(*(int*)&buf[vertexTablePointer]);
 			piece->vertexDrawOrder.push_back(num);
 		}
 	}
-	int childPointer=fp->childs;
+
+	piece->isEmpty = false;//piece->vertexDrawOrder.empty(); 
+	piece->vertexCount = piece->vertices.size();
+	int childPointer = fp->childs;
 	for(int a=0;a<fp->numChilds;++a){
 		piece->childs.push_back(LoadPiece(buf,swabdword(*(int*)&buf[childPointer]),model));
-		childPointer+=sizeof(int);
+		childPointer += sizeof(int);
 	}
 	return piece;
 }
 
-void CS3OParser::FindMinMax(SS3O *object)
+void CS3OParser::FindMinMax(SS3OPiece *object)
 {
-	std::vector<SS3O*>::iterator si;
-	for(si=object->childs.begin();si!=object->childs.end();++si){
-		FindMinMax(*si);
+	std::vector<S3DModelPiece*>::iterator si;
+	for(si=object->childs.begin(); si!=object->childs.end(); ++si){
+		FindMinMax(static_cast<SS3OPiece*>(*si));
 	}
 
 	float maxx=-1000,maxy=-1000,maxz=-1000;
@@ -308,59 +161,34 @@ void CS3OParser::FindMinMax(SS3O *object)
 	object->minz=minz;
 }
 
-void CS3OParser::DrawSub(SS3O* o)
+void CS3OParser::Draw(S3DModelPiece *o)
 {
-	if (o->vertexDrawOrder.empty())
+	if (o->isEmpty)
 		return;
 
-	glVertexPointer(3,GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].pos.x);
-	glTexCoordPointer(2,GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].textureX);
-	glNormalPointer(GL_FLOAT,sizeof(SS3OVertex),&o->vertices[0].normal.x);
+	SS3OPiece* so = static_cast<SS3OPiece*>(o);
+	SS3OVertex* s3ov = static_cast<SS3OVertex*>(&so->vertices[0]);
+
+	glVertexPointer(3,GL_FLOAT,sizeof(SS3OVertex),&s3ov->pos.x);
+	glTexCoordPointer(2,GL_FLOAT,sizeof(SS3OVertex),&s3ov->textureX);
+	glNormalPointer(GL_FLOAT,sizeof(SS3OVertex),&s3ov->normal.x);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 
-	switch(o->primitiveType){
+	switch(so->primitiveType){
 	case 0:
-		glDrawElements(GL_TRIANGLES,o->vertexDrawOrder.size(),GL_UNSIGNED_INT,&o->vertexDrawOrder[0]);
+		glDrawElements(GL_TRIANGLES,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
 		break;
 	case 1:
-		glDrawElements(GL_TRIANGLE_STRIP,o->vertexDrawOrder.size(),GL_UNSIGNED_INT,&o->vertexDrawOrder[0]);
+		glDrawElements(GL_TRIANGLE_STRIP,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
 		break;
 	case 2:
-		glDrawElements(GL_QUADS,o->vertexDrawOrder.size(),GL_UNSIGNED_INT,&o->vertexDrawOrder[0]);
+		glDrawElements(GL_QUADS,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
 		break;
 	}
+
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-
 }
-
-void CS3OParser::Update() {
-//	GML_STDMUTEX_LOCK(model); // Update
-	for(std::vector<SS3O *>::iterator i=createLists.begin(); i!=createLists.end(); ++i)
-		CreateListsNow(*i);
-	createLists.clear();
-}
-
-void CS3OParser::CreateLists(SS3O *o) {
-//	GML_STDMUTEX_LOCK(model); // CreateLists
-	createLists.push_back(o);
-}
-
-void CS3OParser::CreateListsNow(SS3O *o)
-{
-	o->displist = glGenLists(1);
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
-	glNewList(o->displist,GL_COMPILE);
-	DrawSub(o);
-	glEndList();
-	POP_CODE_MODE;
-
-	for(std::vector<SS3O*>::iterator bs=o->childs.begin();bs!=o->childs.end();bs++){
-		CreateListsNow(*bs);
-	}
-}
-

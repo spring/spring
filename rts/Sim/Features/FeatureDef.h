@@ -11,7 +11,7 @@
 #define DRAWTYPE_NONE -1
 
 
-struct S3DOModel;
+struct S3DModel;
 struct CollisionVolume;
 
 struct FeatureDef
@@ -20,12 +20,12 @@ struct FeatureDef
 
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
-		upright(false), drawType(0), modelType(0),
+		upright(false), drawType(0), modelType(0), model(NULL),
 		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
 
-	S3DOModel* LoadModel(int team) const;
+	S3DModel* LoadModel();
 	CollisionVolume* collisionVolume;
 
 	std::string myName;
@@ -49,7 +49,7 @@ struct FeatureDef
 
 	bool upright;
 	int drawType;
-	/// used by 3do obects
+	S3DModel* model;
 	std::string modelname;
 	/// used by tree etc
 	int modelType;
@@ -78,5 +78,11 @@ struct FeatureDef
 
 	std::map<std::string, std::string> customParams;
 };
+
+//not very sweet, but still better than replacing "const FeatureDef" _everywhere_
+inline S3DModel* LoadModel(const FeatureDef* fdef)
+{
+	return const_cast<FeatureDef*>(fdef)->LoadModel();
+}
 
 #endif

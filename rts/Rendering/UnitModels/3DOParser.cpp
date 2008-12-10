@@ -11,14 +11,12 @@
 #include <stdexcept>
 #include "mmgr.h"
 
-#include "3DOParser.h"
 #include "Rendering/GL/myGL.h"
 #include "LogOutput.h"
 #include "Rendering/GL/VertexArray.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
-#include "Rendering/FartextureHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
@@ -27,12 +25,14 @@
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 #include "SDL_types.h"
+#include "3DOParser.h"
 #include "s3oParser.h"
 #include "Util.h"
 #include "Exceptions.h"
 
 using namespace std;
 
+static const float scaleFactor = 1/(65536.0f);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -107,27 +107,9 @@ do {								\
 } while (0)
 
 
-void S3DO::DrawStatic()
-{
-	glPushMatrix();
-	glTranslatef(offset.x,offset.y,offset.z);
-	glCallList(displist);
-	for(unsigned int i=0; i<childs.size(); i++)
-		childs[i]->DrawStatic();
-	glPopMatrix();
-}
-
-
-S3DO::~S3DO()
-{
-	glDeleteLists(displist, 1);
-}
-
 
 C3DOParser::C3DOParser()
 {
-	scaleFactor=400000.0f;
-
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
 
@@ -137,48 +119,8 @@ C3DOParser::C3DOParser()
 }
 
 
-C3DOParser::~C3DOParser()
+S3DModel* C3DOParser::Load(string name)
 {
-	map<string,S3DOModel*>::iterator ui;
-	for(ui=units.begin();ui!=units.end();++ui){
-		DeleteS3DO(ui->second->rootobject3do);
-		delete ui->second;
-	}
-}
-
-
-void C3DOParser::DeleteS3DO(S3DO *o)
-{
-	for(std::vector<S3DO*>::iterator di=o->childs.begin();di!=o->childs.end();di++){
-		DeleteS3DO(*di);
-	}
-	delete o;
-}
-
-
-S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
-{
-	GML_STDMUTEX_LOCK(model); // Load3DO
-
-	int color=team;
-
-	if(name.find(".")==string::npos)
-		name+=".3do";
-
-	scaleFactor=1/(65536.0f);
-
-	string sideName(name);
-	StringToLowerInPlace(sideName);
-	sideName+=color+'0';
-
-	map<string,S3DOModel*>::iterator ui;
-	if((ui=units.find(sideName))!=units.end()){
-		return ui->second;
-	}
-
-//	if(sideName.find("armstump.3do")!=std::string.npos){
-//		logOutput.Print("New type %s %i %s %s",name.c_str(),team,sideName.c_str(),playerHandler->Player(teamHandler->Team(team)->leader)->name.c_str());
-//	}
 	PUSH_CODE_MODE;
 	ENTER_SYNCED;
 //	ifstream ifs(name, ios::in|ios::binary);
@@ -196,10 +138,11 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 		throw content_error("Failed to read file "+name);
 	}
 
-	S3DOModel *model = SAFE_NEW S3DOModel;
-	S3DO* object=SAFE_NEW S3DO;
-	model->rootobject3do=object;
-	model->rootobjects3o=0;
+	S3DModel *model = SAFE_NEW S3DModel;
+	S3DOPiece* object=SAFE_NEW S3DOPiece;
+	object->type=MODELTYPE_3DO;
+	model->type=MODELTYPE_3DO;
+	model->rootobject=object;
 	model->textureType=0;
 	object->isEmpty=true;
 	model->name=name;
@@ -215,14 +158,14 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	std::vector<float3> vertexes;
 
 	GetVertexes(&root,object);
-	GetPrimitives(object,root.OffsetToPrimitiveArray,root.NumberOfPrimitives,&vertexes,root.SelectionPrimitive,color);
+	GetPrimitives(object,root.OffsetToPrimitiveArray,root.NumberOfPrimitives,&vertexes,root.SelectionPrimitive);
 	CalcNormals(object);
 	if(root.OffsetToChildObject>0)
-		if(!ReadChild(root.OffsetToChildObject,object,color,&model->numobjects))
+		if(!ReadChild(root.OffsetToChildObject,object,&model->numobjects))
 			object->isEmpty=false;
 
-	object->offset.x=root.XFromParent*scaleFactor;
-	object->offset.y=root.YFromParent*scaleFactor;
+	object->offset.x= root.XFromParent*scaleFactor;
+	object->offset.y= root.YFromParent*scaleFactor;
 	object->offset.z=-root.ZFromParent*scaleFactor;
 
 	FindCenter(object);
@@ -232,27 +175,18 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 	if(object->relMidPos.y<1)
 		object->relMidPos.y=1;
 
-	units[sideName]=model;
+	model->radius = object->radius;
+	model->height = FindHeight(object,ZeroVector);
 
-	CreateLists(object);
+	model->maxx=object->maxx;
+	model->maxy=object->maxy;
+	model->maxz=object->maxz;
 
-	// this is a hack to make aircrafts less likely to collide and get hit by nontracking weapons
-	// note: does not apply anymore, unit <--> projectile coldet no longer depends on model->radius
-	model->radius = model->rootobject3do->radius * scale;
-	model->height = FindHeight(model->rootobject3do,ZeroVector);
-//	logOutput.Print("%s has height %f",name,model->height);
+	model->minx=object->minx;
+	model->miny=object->miny;
+	model->minz=object->minz;
 
-	model->maxx=model->rootobject3do->maxx;
-	model->maxy=model->rootobject3do->maxy;
-	model->maxz=model->rootobject3do->maxz;
-
-	model->minx=model->rootobject3do->minx;
-	model->miny=model->rootobject3do->miny;
-	model->minz=model->rootobject3do->minz;
-
-	model->relMidPos=model->rootobject3do->relMidPos;
-
-	fartextureHandler->CreateFarTexture(model);
+	model->relMidPos=object->relMidPos;
 
 	delete[] fileBuf;
 	POP_CODE_MODE;
@@ -260,23 +194,10 @@ S3DOModel* C3DOParser::Load3DO(string name,float scale,int team)
 }
 
 
-/*
-S3DOModel* C3DOParser::Load3DO(string name,float scale,int team,const float3& offsets)
-{
-	S3DOModel *model = C3DOParser::Load3DO(name, scale, team);
-	model->rootobject3do->relMidPos.x=offsets.x;
-	model->rootobject3do->relMidPos.y=offsets.y;
-	model->rootobject3do->relMidPos.z=offsets.z;
-	model->relMidPos = model->rootobject3do->relMidPos;
-
-	return model;
-}
-*/
-
-
-void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
+void C3DOParser::GetVertexes(_3DObject* o,S3DOPiece* object)
 {
 	curOffset=o->OffsetToVertexArray;
+	object->vertices.reserve(o->NumberOfVertices);
 	for(int a=0;a<o->NumberOfVertices;a++){
 		_Vertex v;
 		READ_VERTEX(v);
@@ -292,7 +213,7 @@ void C3DOParser::GetVertexes(_3DObject* o,S3DO* object)
 }
 
 
-void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int excludePrim,int side)
+void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,int excludePrim)
 {
 	map<int,int> prevHashes;
 
@@ -309,6 +230,9 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 
 		if(sp.numVertex<3)
 			continue;
+
+		sp.vertices.reserve(sp.numVertex);
+		sp.normals.reserve(sp.numVertex);
 
 		curOffset=p.OffsetToVertexIndexArray;
 		Uint16 w;
@@ -330,54 +254,56 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 		if(p.OffsetToTextureName!=0)
 		{
 			string texture = GetText(p.OffsetToTextureName);
-
-			char chside[3];
-			chside[0] = '0' + (side / 10);
-			chside[1] = '0' + (side % 10);
-			chside[2] = 0;
 			StringToLowerInPlace(texture);
+
 			if(teamtex.find(texture) != teamtex.end())
-				sp.texture=texturehandler->GetTATexture(texture + chside, side, false);
+				sp.texture=texturehandler3DO->Get3DOTexture(texture);
 			else
-				sp.texture=texturehandler->GetTATexture(texture + "00",side, false);
+				sp.texture=texturehandler3DO->Get3DOTexture(texture + "00");
 
 			if(sp.texture==0)
 				logOutput << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
 		} else {
 			char t[50];
 			sprintf(t,"ta_color%i",p.PaletteEntry);
-			sp.texture=texturehandler->GetTATexture(t,0, false);
+			sp.texture=texturehandler3DO->Get3DOTexture(t);
 		}
 		float3 n=-(obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos-obj->vertices[sp.vertices[0]].pos);
 		n.Normalize();
 		sp.normal=n;
-		for(int a=0;a<sp.numVertex;++a)
-			sp.normals.push_back(n);
+		sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
 
-		if(n.dot(float3(0,-1,0))>0.99f){			//sometimes there are more than one selection primitive (??)
+		//sometimes there are more than one selection primitive (??)
+		if(n.dot(float3(0,-1,0))>0.99f){
 			int ignore=true;
-			for(int a=0;a<sp.numVertex;++a)
-				if(obj->vertices[sp.vertices[a]].pos.y>0)
-					ignore=false;
-			if(sp.numVertex==4){
+
+			if(sp.numVertex!=4) {
+				ignore=false;
+			} else {
 				float3 s1=obj->vertices[sp.vertices[0]].pos-obj->vertices[sp.vertices[1]].pos;
 				float3 s2=obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[2]].pos;
-				if(s1.Length()<30 || s2.Length()<30)
+				if(s1.SqLength()<900 || s2.SqLength()<900)
 					ignore=false;
-			}else
-				ignore=false;
+
+				if (ignore) {
+					for(int a=0;a<sp.numVertex;++a) {
+						if(obj->vertices[sp.vertices[a]].pos.y>0) {
+							ignore=false;
+							break;
+						}
+					}
+				}
+			}
+
 			if(ignore)
 				continue;
 		}
 
 		map<int,int>::iterator phi;
 		if((phi=prevHashes.find(vertHash))!=prevHashes.end()){
-			if(n.y>0){
+			if(n.y>0)
 				obj->prims[phi->second]=sp;
-				continue;
-			} else {
-				continue;
-			}
+			continue;
 		} else {
 			prevHashes[vertHash]=obj->prims.size();
 			obj->prims.push_back(sp);
@@ -394,7 +320,7 @@ void C3DOParser::GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int e
 }
 
 
-void C3DOParser::CalcNormals(S3DO *o)
+void C3DOParser::CalcNormals(S3DOPiece *o)
 {
 	for(std::vector<S3DOPrimitive>::iterator ps=o->prims.begin();ps!=o->prims.end();ps++){
 		for(int a=0;a<ps->numVertex;++a){
@@ -428,11 +354,11 @@ std::string C3DOParser::GetText(int pos)
 }
 
 
-bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
+bool C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 {
 	(*numobj)++;
 
-	S3DO* object=SAFE_NEW S3DO;
+	S3DOPiece* object=SAFE_NEW S3DOPiece;
 	_3DObject me;
 
 	curOffset=pos;
@@ -440,61 +366,70 @@ bool C3DOParser::ReadChild(int pos, S3DO *root,int side, int *numobj)
 
 	string s = StringToLower(GetText(me.OffsetToObjectName));
 	object->name = s;
-	object->displist=0;
+	object->displist = 0;
+	object->type = MODELTYPE_3DO;
 
-	object->offset.x=me.XFromParent*scaleFactor;
-	object->offset.y=me.YFromParent*scaleFactor;
+	object->offset.x= me.XFromParent*scaleFactor;
+	object->offset.y= me.YFromParent*scaleFactor;
 	object->offset.z=-me.ZFromParent*scaleFactor;
 	std::vector<float3> vertexes;
 	object->isEmpty=true;
 
 	GetVertexes(&me,object);
-	GetPrimitives(object,me.OffsetToPrimitiveArray,me.NumberOfPrimitives,&vertexes,-1/*me.SelectionPrimitive*/,side);
+	GetPrimitives(object,me.OffsetToPrimitiveArray,me.NumberOfPrimitives,&vertexes,-1/*me.SelectionPrimitive*/);
 	CalcNormals(object);
 
 
 	if(me.OffsetToChildObject>0){
-		if(!ReadChild(me.OffsetToChildObject,object,side,numobj)){
+		if(!ReadChild(me.OffsetToChildObject,object,numobj)){
 			object->isEmpty=false;
 		}
 	}
 	bool ret=object->isEmpty;
 
+	object->vertexCount = object->vertices.size();
+
 	root->childs.push_back(object);
 
 	if(me.OffsetToSiblingObject>0)
-		if(!ReadChild(me.OffsetToSiblingObject,root,side,numobj))
+		if(!ReadChild(me.OffsetToSiblingObject,root,numobj))
 			ret=false;
 
 	return ret;
 }
 
 
-void C3DOParser::DrawSub(S3DO* o)
+void C3DOParser::Draw(S3DModelPiece *o)
 {
+	if (o->isEmpty)
+		return;
+
+	S3DOPiece* o3 = static_cast<S3DOPiece*>(o);
+
 	CVertexArray* va=GetVertexArray();
 	CVertexArray* va2=GetVertexArray();	//dont try to use more than 2 via getvertexarray, it wraps around
 	va->Initialize();
 	va2->Initialize();
 	std::vector<S3DOPrimitive>::iterator ps;
 
-	for(ps=o->prims.begin();ps!=o->prims.end();ps++){
-		CTextureHandler::UnitTexture* tex=ps->texture;
+	//glFrontFace(GL_CW);
+	for(ps=o3->prims.begin();ps!=o3->prims.end();ps++){
+		C3DOTextureHandler::UnitTexture* tex=ps->texture;
 		if(ps->numVertex==4){
-			va->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
-			va->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
-			va->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
-			va->AddVertexTN(o->vertices[ps->vertices[3]].pos,tex->xstart,tex->yend,ps->normals[3]);
+			va->AddVertexTN(o3->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
+			va->AddVertexTN(o3->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
+			va->AddVertexTN(o3->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
+			va->AddVertexTN(o3->vertices[ps->vertices[3]].pos,tex->xstart,tex->yend,ps->normals[3]);
 		} else if (ps->numVertex==3) {
-			va2->AddVertexTN(o->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
-			va2->AddVertexTN(o->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
-			va2->AddVertexTN(o->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
+			va2->AddVertexTN(o3->vertices[ps->vertices[0]].pos,tex->xstart,tex->ystart,ps->normals[0]);
+			va2->AddVertexTN(o3->vertices[ps->vertices[1]].pos,tex->xend,tex->ystart,ps->normals[1]);
+			va2->AddVertexTN(o3->vertices[ps->vertices[2]].pos,tex->xend,tex->yend,ps->normals[2]);
 		} else {
 			glNormal3f(ps->normal.x,ps->normal.y,ps->normal.z);
 			glBegin(GL_TRIANGLE_FAN);
 			glTexCoord2f(tex->xstart,tex->ystart);
 			for(std::vector<int>::iterator fi=ps->vertices.begin();fi!=ps->vertices.end();fi++){
-				float3 t=o->vertices[(*fi)].pos;
+				float3 t=o3->vertices[(*fi)].pos;
 				glNormalf3(ps->normal);
 				glVertex3f(t.x,t.y,t.z);
 			}
@@ -504,35 +439,7 @@ void C3DOParser::DrawSub(S3DO* o)
 	va->DrawArrayTN(GL_QUADS);
 	if(va2->drawIndex()!=0)
 		va2->DrawArrayTN(GL_TRIANGLES);
-}
-
-
-void C3DOParser::Update() {
-//	GML_STDMUTEX_LOCK(model); // Update
-	for(std::vector<S3DO *>::iterator i=createLists.begin(); i!=createLists.end(); ++i)
-		CreateListsNow(*i);
-	createLists.clear();
-}
-
-void C3DOParser::CreateLists(S3DO *o) {
-//	GML_STDMUTEX_LOCK(model); // CreateLists
-	createLists.push_back(o);
-}
-
-
-void C3DOParser::CreateListsNow(S3DO *o)
-{
-	o->displist = glGenLists(1);
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
-	glNewList(o->displist,GL_COMPILE);
-	DrawSub(o);
-	glEndList();
-	POP_CODE_MODE;
-
-	for(std::vector<S3DO*>::iterator bs=o->childs.begin();bs!=o->childs.end();bs++){
-		CreateListsNow(*bs);
-	}
+	//glFrontFace(GL_CCW);
 }
 
 
@@ -543,11 +450,11 @@ void C3DOParser::SimStreamRead(void *buf, int length)
 }
 
 
-void C3DOParser::FindCenter(S3DO *object)
+void C3DOParser::FindCenter(S3DOPiece* object)
 {
-	std::vector<S3DO*>::iterator si;
+	std::vector<S3DModelPiece*>::iterator si;
 	for(si=object->childs.begin();si!=object->childs.end();++si){
-		FindCenter(*si);
+		FindCenter((S3DOPiece*)*si);
 	}
 
 	float maxSize=0;
@@ -587,20 +494,21 @@ void C3DOParser::FindCenter(S3DO *object)
 		maxSize=max(maxSize,object->relMidPos.distance(vi->pos));
 	}
 	for(si=object->childs.begin();si!=object->childs.end();++si){
-		maxSize=max(maxSize,object->relMidPos.distance((*si)->offset+(*si)->relMidPos)+(*si)->radius);
+		S3DOPiece* p3do = (S3DOPiece*)(*si);
+		maxSize=max(maxSize,object->relMidPos.distance(p3do->offset+p3do->relMidPos)+p3do->radius);
 	}
 	object->radius=maxSize;
 }
 
 
-float C3DOParser::FindRadius(S3DO *object,float3 offset)
+float C3DOParser::FindRadius(S3DOPiece* object,float3 offset)
 {
 	float maxSize=0;
 	offset+=object->offset;
 
-	std::vector<S3DO*>::iterator si;
+	std::vector<S3DModelPiece*>::iterator si;
 	for(si=object->childs.begin();si!=object->childs.end();++si){
-		float maxChild=FindRadius(*si,offset);
+		float maxChild = FindRadius((S3DOPiece*)*si,offset);
 		if(maxChild>maxSize)
 			maxSize=maxChild;
 	}
@@ -615,14 +523,14 @@ float C3DOParser::FindRadius(S3DO *object,float3 offset)
 }
 
 
-float C3DOParser::FindHeight(S3DO* object,float3 offset)
+float C3DOParser::FindHeight(S3DOPiece* object,float3 offset)
 {
 	float height=0;
 	offset+=object->offset;
 
-	std::vector<S3DO*>::iterator si;
+	std::vector<S3DModelPiece*>::iterator si;
 	for(si=object->childs.begin();si!=object->childs.end();++si){
-		float maxChild=FindHeight(*si,offset);
+		float maxChild=FindHeight((S3DOPiece*)*si,offset);
 		if(maxChild>height)
 			height=maxChild;
 	}
@@ -633,99 +541,3 @@ float C3DOParser::FindHeight(S3DO* object,float3 offset)
 	}
 	return height;
 }
-
-
-void C3DOParser::CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum)
-{
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
-	lmodel->pieces[*piecenum].displist = model->displist;
-	lmodel->pieces[*piecenum].offset = model->offset;
-	lmodel->pieces[*piecenum].name = model->name;
-	lmodel->pieces[*piecenum].original3do = model;
-	lmodel->pieces[*piecenum].originals3o = 0;
-
-	lmodel->pieces[*piecenum].anim = NULL;
-	unsigned int cur;
-
-	//Map this piecename to an index in the script's pieceinfo
-	for (cur = 0; cur < pieces->size(); cur++) {
-		if (lmodel->pieces[*piecenum].name.compare((*pieces)[cur].name) == 0) {
-			break;
-		}
-	}
-
-	//Not found? Try again with partial matching
-	if (cur == pieces->size()) {
-		string &s1 = lmodel->pieces[*piecenum].name;
-		for (cur = 0; cur < pieces->size(); ++cur) {
-			string &s2 = (*pieces)[cur].name;
-			int maxcompare = min(s1.size(), s2.size());
-			int j;
-			for (j = 0; j < maxcompare; ++j) {
-				if (s1[j] != s2[j]) {
-					break;
-				}
-			}
-			//Match now?
-			if (j == maxcompare) {
-				break;
-			}
-		}
-	}
-
-	//Did we find it now?
-	if (cur < pieces->size()) {
-		lmodel->pieces[*piecenum].anim = &((*pieces)[cur]);
-		lmodel->scritoa[cur] = *piecenum;
-	}
-	else {
-//		logOutput.Print("CreateLocalModel: Could not map %s to script", lmodel->pieces[*piecenum].name.c_str());
-	}
-
-	int thispiece = *piecenum;
-	for(unsigned int i=0; i<model->childs.size(); i++)
-	{
-
-		(*piecenum)++;
-		lmodel->pieces[thispiece].childs.push_back(&lmodel->pieces[*piecenum]);
-		lmodel->pieces[*piecenum].parent = &lmodel->pieces[thispiece];
-		CreateLocalModel(model->childs[i], lmodel, pieces, piecenum);
-	}
-	POP_CODE_MODE;
-}
-
-
-void C3DOParser::FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces) {
-	int piecenum=0;
-	FixLocalModel(model->rootobject3do, lmodel, pieces, &piecenum);
-}
-
-void C3DOParser::FixLocalModel(S3DO *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces, int *piecenum) {
-	lmodel->pieces[*piecenum].displist = model->displist;
-
-	for(unsigned int i=0; i<model->childs.size(); i++) {
-		(*piecenum)++;
-		FixLocalModel(model->childs[i], lmodel, pieces, piecenum);
-	}
-}
-
-
-LocalS3DOModel *C3DOParser::CreateLocalModel(S3DOModel *model, vector<struct PieceInfo> *pieces)
-{
-	LocalS3DOModel *lmodel = SAFE_NEW LocalS3DOModel;
-	lmodel->numpieces = model->numobjects;
-
-	int piecenum=0;
-	lmodel->pieces = SAFE_NEW LocalS3DO[model->numobjects];
-	lmodel->pieces->parent = NULL;
-	lmodel->scritoa = SAFE_NEW int[pieces->size()];
-	for(int a=0;a<pieces->size();++a)
-		lmodel->scritoa[a]=-1;
-
-	CreateLocalModel(model->rootobject3do, lmodel, pieces, &piecenum);
-
-	return lmodel;
-}
-
-

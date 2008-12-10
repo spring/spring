@@ -4,6 +4,7 @@
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
+#include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/DamageArray.h"
@@ -56,7 +57,7 @@ void CTransportUnit::Update()
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		float3 relPos;
 		if (ti->piece >= 0) {
-			relPos = localmodel->GetPiecePos(std::max(0, ti->piece));
+			relPos = this->cob->GetPiecePos(ti->piece);
 		} else {
 			relPos = float3(0.0f, -1000.0f, 0.0f);
 		}
@@ -167,7 +168,6 @@ bool CTransportUnit::CanTransport(CUnit *unit)
 void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
 	DetachUnit(unit);
-
 	if (!CanTransport(unit)) {
 		return;
 	}

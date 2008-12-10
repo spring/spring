@@ -14,9 +14,10 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
-#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -155,17 +156,17 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	if ((unit == NULL) || (unit->localmodel == NULL)) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 
 	const unsigned int lod   = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
 		return 0;
 	}
 	const unsigned int piece = (unsigned int)luaL_checknumber(L, 3) - 1;
-	if (piece >= localModel->numpieces) {
+	if (piece >= localModel->pieces.size()) {
 		return 0;
 	}
-	LocalS3DO& localPiece = localModel->pieces[piece];
+	LocalModelPiece* localPiece = localModel->pieces[piece];
 
 	unsigned int dlist = 0;
 	if (lua_isnumber(L, 4)) {
@@ -173,10 +174,10 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
 		dlist = displayLists.GetDList(ilist);
 	} else {
-		dlist = localPiece.displist; // set to the default
+		dlist = localPiece->displist; // set to the default
 	}
 
-	localPiece.lodDispLists[lod] = dlist;
+	localPiece->lodDispLists[lod] = dlist;
 
 	return 0;
 }
@@ -264,13 +265,13 @@ static GLuint ParseUnitTexture(const string& texture)
 	if (ud == NULL) {
 		return 0;
 	}
-	S3DOModel* model = ud->LoadModel(0);
+	const S3DModel* model = LoadModel(ud);
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return 0;
 	}
 
-	const CTextureHandler::S3oTex* stex = texturehandler->GetS3oTex(texType);
+	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
 	if (stex == NULL) {
 		return 0;
 	}
@@ -317,9 +318,13 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 		}
 	}
 	else if (image[0] == '$') {
-		if (image == "$units") {
+		if (image == "$units" || image == "$units1") {
 			texUnit.type = LuaMatTexture::LUATEX_GL;
-			texUnit.openglID = texturehandler->GetGlobalTexID();
+			texUnit.openglID = texturehandler3DO->GetAtlasTex1ID();
+		}
+		if (image == "$units2") {
+			texUnit.type = LuaMatTexture::LUATEX_GL;
+			texUnit.openglID = texturehandler3DO->GetAtlasTex2ID();
 		}
 		else if (image == "$shadow") {
 			texUnit.type = LuaMatTexture::LUATEX_SHADOWMAP;

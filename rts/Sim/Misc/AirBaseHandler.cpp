@@ -76,7 +76,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 	// FIXME: use a set to avoid multiple bases per piece?
 	for (int p = 0; p < (int)args.size(); p++) {
 		const int piece = args[p];
-		if ((piece < 0) || (piece >= base->cob->pieces.size())) {
+		if (!base->cob->PieceExists(piece)) {
 			continue;
 		}
 		LandingPad* pad = SAFE_NEW LandingPad(base, piece, ab);

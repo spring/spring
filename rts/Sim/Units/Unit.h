@@ -24,9 +24,9 @@ class CUnitAI;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
-struct LocalS3DOModel;
 struct LosInstance;
-struct S3DOModel;
+struct S3DModel;
+struct LocalModel;
 struct UnitDef;
 struct UnitTrackStruct;
 struct CollisionVolume;
@@ -327,11 +327,10 @@ public:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	//CUnit3DLoader::UnitModel* model;
-	S3DOModel *model;
+	S3DModel *model;
+	LocalModel *localmodel;
 	CCobInstance *cob;
 	CUnitScript* script;
-	LocalS3DOModel *localmodel;
 
 	std::string tooltip;
 
