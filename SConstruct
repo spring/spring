@@ -36,13 +36,13 @@ if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
 	myTools = ['mingw', 'rts', 'gch']
 else:
-	myTools = ['default', 'rts',  'gch']
+	myTools = ['default', 'rts', 'gch']
 
-#env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'])
-env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'], ENV = {'PATH' : os.environ['PATH']})
+env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'])
+#env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'], ENV = {'PATH' : os.environ['PATH']})
 
 # the next four lines are needed when compiling on windows
-# (seems ot be some SCons bug)
+# (seems to be a SCons bug)
 import SCons.Tool.javac
 import SCons.Tool.jar
 SCons.Tool.javac.generate(env)
@@ -77,7 +77,7 @@ if env['platform'] == 'windows':
 	datadir = []
 else:
 	datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
-		   'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
+			'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
 
 # Build DataDirLocater.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
@@ -177,8 +177,8 @@ if env['platform'] != 'windows':
 ################################################################################
 ### AIs
 ################################################################################
+# Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
-# Make a copy of the build environment for the AIs
 aienv = env.Clone()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
 aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
@@ -223,14 +223,6 @@ def fetch_ai_version(aiName, subDir = 'Skirmish'):
 def construct_aiinterface_libName(interfaceName):
 	libName = interfaceName + '-' + fetch_ai_version(interfaceName, 'Interfaces')
 	return libName
-
-#regexSvn = re.compile('.*\.svn.*')
-#def pathContainsSvnDir(path):
-#	#if regexSvn.match(path):
-#	#	print('contains .svn: 1 ' + path)
-#	#else:
-#	#	print('contains .svn: 0 ' + path)
-#	return regexSvn.match(path)
 
 def getLocalShellExecPostfix():
 	#print('sys.platform: ' + sys.platform)
@@ -493,6 +485,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 
 ################################################################################
 ### Build streflop (which has it's own Makefile-based build system)
+################################################################################
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
 	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
 	if env.has_key('streflop_extra'):
@@ -533,7 +526,7 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 
 
 ################################################################################
-# Build gamedata zip archives
+### Build gamedata zip archives
 ################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript

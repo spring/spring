@@ -12,27 +12,24 @@
 #include "Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
-#include "RadarHandler.h"
+#include "Sim/Misc/RadarHandler.h"
 #include <assert.h>
 
-#define MAX_LOS_TABLE 110
 
 struct LosInstance : public boost::noncopyable
 {
 	CR_DECLARE_STRUCT(LosInstance);
  	std::vector<int> losSquares;
 	LosInstance() {} // default constructor for creg
-	LosInstance(int lossize, int allyteam, int baseX, int baseY,
-	            int baseSquare, int baseAirSquare, int hashNum,
-	            float baseHeight, int airLosSize)
+	LosInstance(int lossize, int airLosSize, int allyteam, int2 basePos,
+	            int baseSquare, int2 baseAirPos, int hashNum, float baseHeight)
 		: losSize(lossize),
 			airLosSize(airLosSize),
 			refCount(1),
 			allyteam(allyteam),
-			baseX(baseX),
-			baseY(baseY),
+			basePos(basePos),
 			baseSquare(baseSquare),
-			baseAirSquare(baseAirSquare),
+			baseAirPos(baseAirPos),
 			hashNum(hashNum),
 			baseHeight(baseHeight),
 			toBeDeleted(false) {}
@@ -40,10 +37,9 @@ struct LosInstance : public boost::noncopyable
 	int airLosSize;
 	int refCount;
 	int allyteam;
-	int baseX;
-	int baseY;
+	int2 basePos;
 	int baseSquare;
-	int baseAirSquare;
+	int2 baseAirPos;
 	int hashNum;
 	float baseHeight;
 	bool toBeDeleted;
@@ -67,20 +63,12 @@ public:
 		else if (object->useAirLos) {
 			const int gx = (int)(object->pos.x * invAirDiv);
 			const int gz = (int)(object->pos.z * invAirDiv);
-			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
-			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
-			const int square = (rowIdx * airSizeX) + colIdx;
-			assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
-			return !!airLosMap[allyTeam][square];
+			return !!airLosMap[allyTeam].At(gx, gz);
 		}
 		else {
 			const int gx = (int)(object->pos.x * invLosDiv);
 			const int gz = (int)(object->pos.z * invLosDiv);
-			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
-			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
-			const int square = (rowIdx * losSizeX) + colIdx;
-			assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
-			return !!losMap[allyTeam][square];
+			return !!losMap[allyTeam].At(gx, gz);
 		}
 	}
 
@@ -98,11 +86,7 @@ public:
 		else if (unit->useAirLos) {
 			const int gx = (int)(unit->pos.x * invAirDiv);
 			const int gz = (int)(unit->pos.z * invAirDiv);
-			const int rowIdx = std::max(0, std::min(airSizeY - 1, gz));
-			const int colIdx = std::max(0, std::min(airSizeX - 1, gx));
-			const int square = (rowIdx * airSizeX) + colIdx;
-			assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
-			return !!airLosMap[allyTeam][square];
+			return !!airLosMap[allyTeam].At(gx, gz);
 		}
 		else {
 			if (unit->isUnderWater && requireSonarUnderWater &&
@@ -111,11 +95,7 @@ public:
 			}
 			const int gx = (int)(unit->pos.x * invLosDiv);
 			const int gz = (int)(unit->pos.z * invLosDiv);
-			const int rowIdx = std::max(0, std::min(losSizeY - 1, gz));
-			const int colIdx = std::max(0, std::min(losSizeX - 1, gx));
-			const int square = (rowIdx * losSizeX) + colIdx;
-			assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
-			return !!losMap[allyTeam][square];
+			return !!losMap[allyTeam].At(gx, gz);
 		}
 	}
 
@@ -123,31 +103,25 @@ public:
 		if (gs->globalLOS) {
 			return true;
 		}
-		pos.CheckInBounds();
-		const int square = ((int)(pos.z * invLosDiv)) * losSizeX
-		                 + ((int)(pos.x * invLosDiv));
-		assert(static_cast<unsigned>(square) < losMap[allyTeam].size());
-		return !!losMap[allyTeam][square];
+		const int gx = (int)(pos.x * invLosDiv);
+		const int gz = (int)(pos.z * invLosDiv);
+		return !!losMap[allyTeam].At(gx, gz);
 	}
 
 	bool InAirLos(float3 pos, int allyTeam) {
 		if (gs->globalLOS) {
 			return true;
 		}
-		pos.CheckInBounds();
-		const int square = ((int)(pos.z * invAirDiv)) * airSizeX
-		                 + ((int)(pos.x * invAirDiv));
-		assert(static_cast<unsigned>(square) < airLosMap[allyTeam].size());
-		return !!airLosMap[allyTeam][square];
+		const int gx = (int)(pos.x * invAirDiv);
+		const int gz = (int)(pos.z * invAirDiv);
+		return !!airLosMap[allyTeam].At(gx, gz);
 	}
 
 	CLosHandler();
 	~CLosHandler();
 
-	vector<unsigned short> losMap[MAX_TEAMS];
-	vector<unsigned short> airLosMap[MAX_TEAMS];
-
-	friend class CRadarHandler;
+	CLosMap losMap[MAX_TEAMS];
+	CLosMap airLosMap[MAX_TEAMS];
 
 	const int losMipLevel;
 	const int airMipLevel;
@@ -163,14 +137,13 @@ public:
 	const bool requireSonarUnderWater;
 
 private:
-
 	void PostLoad();
-	void SafeLosAdd(LosInstance* instance,int xm,int ym);
 	void LosAdd(LosInstance* instance);
 	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
 	void CleanupInstance(LosInstance* instance);
-	void LosAddAir(LosInstance* instance);
+
+	CLosAlgorithm losAlgo;
 
 	std::list<LosInstance*> instanceHash[2309+1];
 
@@ -184,35 +157,6 @@ private:
 
 	std::deque<DelayedInstance> delayQue;
 
-	struct CPoint {
-		CR_DECLARE_STRUCT(CPoint);
-
-		CPoint(){};
-		CPoint(int x,int y):x(x),y(y){};
-
-		int x;
-		int y;
-
-		int operator < (const CPoint &a) const
-		{
-			if(x!=a.x)
-				return x<a.x;
-			else
-				return y<a.y;
-		}
-	};
-	typedef std::list<CPoint> TPoints;
-	TPoints Points;
-
-	typedef std::vector<CPoint> LosLine;
-	typedef std::vector<LosLine> LosTable;
-
-	std::vector<LosTable> lostables;
-
-	int Round(float num);
-	void DrawLine(char* PaintTable, int x,int y,int Size);
-	LosLine OutputLine(int x,int y,int line);
-	void OutputTable(int table);
 public:
 	void Update(void);
 	void DelayedFreeInstance(LosInstance* instance);

@@ -2311,7 +2311,7 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	}
 	const string key = luaL_checkstring(L, 2);
 
-	const int radarDiv = (SQUARE_SIZE * RADAR_SIZE);
+	const int radarDiv = radarhandler->radarDiv;
 
 	if (key == "los") {
 		lua_pushnumber(L, unit->losRadius * loshandler->losDiv);

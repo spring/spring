@@ -4,11 +4,9 @@
 #include <boost/noncopyable.hpp>
 
 #include "Object.h"
+#include "Sim/Misc/LosMap.h"
 #include "Sim/Units/Unit.h"
 #include <assert.h>
-
-#define RADAR_SIZE 8
-
 
 // Because submerged units are only given LOS if they are also
 // in sonar range (see LosHandler.h), sonar stealth and sonar
@@ -34,8 +32,8 @@ public:
 
 	inline int GetSquare(const float3& pos) const
 	{
-		const int gx = (int)pos.x / (SQUARE_SIZE * RADAR_SIZE);
-		const int gz = (int)pos.z / (SQUARE_SIZE * RADAR_SIZE);
+		const int gx = (int)(pos.x * invRadarDiv);
+		const int gz = (int)(pos.z * invRadarDiv);
 		const int rowIdx = std::max(0, std::min(zsize - 1, gz));
 		const int colIdx = std::max(0, std::min(xsize - 1, gx));
 		return (rowIdx * xsize) + colIdx;
@@ -44,27 +42,22 @@ public:
 	bool InRadar(const float3& pos, int allyTeam) {
 		const int square = GetSquare(pos);
 		if (pos.y < -0.5f) {
-			assert(static_cast<unsigned>(square) < sonarMaps[allyTeam].size());
 			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
 		else if (!circularRadar && (pos.y > 0.5f)) {
-			assert(static_cast<unsigned>(square) < airRadarMaps[allyTeam].size());
 			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
-			assert(static_cast<unsigned>(square) < radarMaps[allyTeam].size());
 			return (radarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 	}
 
 	bool InRadar(const CUnit* unit, int allyTeam) {
-
 		if (unit->isUnderWater) {
 			if (unit->sonarStealth) {
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			assert(static_cast<unsigned>(square) < sonarMaps[allyTeam].size());
 			return !!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square];
 		}
 		else if (!circularRadar && unit->useAirLos) {
@@ -72,13 +65,10 @@ public:
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			assert(static_cast<unsigned>(square) < airRadarMaps[allyTeam].size());
 			return airRadarMaps[allyTeam][square] && !commonJammerMap[square];
 		}
 		else {
 			const int square = GetSquare(unit->pos);
-			assert((static_cast<unsigned>(square) < radarMaps[allyTeam].size()) &&
-					(static_cast<unsigned>(square) < sonarMaps[allyTeam].size()));
 			return (radarMaps[allyTeam][square]
 			        && !unit->stealth
 			        && !commonJammerMap[square])
@@ -92,22 +82,24 @@ public:
 
 	bool InSeismicDistance(const CUnit* unit, int allyTeam) {
 		const int square = GetSquare(unit->pos);
-		assert(static_cast<unsigned>(square) < seismicMaps[allyTeam].size());
 		return !!seismicMaps[allyTeam][square];
 	}
 
-	bool circularRadar;
+	const int radarMipLevel;
+	const int radarDiv;
+	const float invRadarDiv;
+	const bool circularRadar;
 
-	std::vector<unsigned short> radarMaps[MAX_TEAMS];
-	std::vector<unsigned short> airRadarMaps[MAX_TEAMS];
-	std::vector<unsigned short> sonarMaps[MAX_TEAMS];
-	std::vector<unsigned short> jammerMaps[MAX_TEAMS];
+	CLosMap radarMaps[MAX_TEAMS];
+	CLosMap airRadarMaps[MAX_TEAMS];
+	CLosMap sonarMaps[MAX_TEAMS];
+	CLosMap jammerMaps[MAX_TEAMS];
 #ifdef SONAR_JAMMER_MAPS
-	std::vector<unsigned short> sonarJammerMaps[MAX_TEAMS];
+	CLosMap sonarJammerMaps[MAX_TEAMS];
 #endif
-	std::vector<unsigned short> seismicMaps[MAX_TEAMS];
-	std::vector<unsigned short> commonJammerMap;
-	std::vector<unsigned short> commonSonarJammerMap;
+	CLosMap seismicMaps[MAX_TEAMS];
+	CLosMap commonJammerMap;
+	CLosMap commonSonarJammerMap;
 	float radarErrorSize[MAX_TEAMS];
 	float baseRadarErrorSize;
 
@@ -116,12 +108,9 @@ public:
 
 	float targFacEffect;
 
-protected:
-	void AddMapArea(int2 pos, int radius, std::vector<unsigned short>& map, int amount);
-
-	void SafeLosRadarAdd(CUnit* unit);
-
 private:
+	CLosAlgorithm radarAlgo;
+
 	void Serialize(creg::ISerializer& s);
 };
 

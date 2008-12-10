@@ -122,7 +122,7 @@ public:
 	void AddMetal(float metal, bool handicap = true);
 	bool UseEnergy(float energy);
 	void AddEnergy(float energy, bool handicap = true);
-	void PushWind(float x, float z, float strength);		//push the new wind to the script
+	void UpdateWind(float x, float z, float strength);		//push the new wind to the script
 	void SetMetalStorage(float newStorage);
 	void SetEnergyStorage(float newStorage);
 
@@ -323,6 +323,7 @@ public:
 
 	void UpdateDrawPos();
 	float3 drawPos;
+	float3 drawMidPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif

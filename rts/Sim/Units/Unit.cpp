@@ -1129,6 +1129,7 @@ void CUnit::UpdateDrawPos() {
 		drawPos = pos + (speed * gu->timeOffset);
 	}
 #endif
+	drawMidPos = drawPos + (midPos - pos);
 }
 /******************************************************************************/
 /******************************************************************************/
@@ -1172,15 +1173,13 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 			return CMatrix44f(interPos, -rightdir, updir, frontdir);
 		}
 	}
-	else {
-		// making local copies of vectors
-		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
-		float3 rightDir = frontDir.cross(upDir);
-		rightDir.Normalize();
-		frontDir = upDir.cross(rightDir);
-		return CMatrix44f(interPos, -rightDir, upDir, frontDir);
-	}
+	// making local copies of vectors
+	float3 frontDir = GetVectorFromHeading(heading);
+	float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
+	float3 rightDir = frontDir.cross(upDir);
+	rightDir.Normalize();
+	frontDir = upDir.cross(rightDir);
+	return CMatrix44f(interPos, -rightDir, upDir, frontDir);
 }
 
 
@@ -1401,6 +1400,7 @@ void CUnit::ChangeTeamReset()
 		CCommandQueue& buildCommands = facAI->commandQue;
 		CCommandQueue::iterator it;
 		std::vector<Command> clearCommands;
+		clearCommands.reserve(buildCommands.size());
 		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
 			c.id = it->id;
 			clearCommands.push_back(c);
@@ -1913,7 +1913,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
 					wd->explosionSpeed, this, true, wd->damages[0] > 500 ? 1 : 2,
-					false, wd->explosionGenerator, 0, ZeroVector, wd->id
+					false, false, wd->explosionGenerator, 0, ZeroVector, wd->id
 				);
 
 				// play explosion sound
@@ -1921,7 +1921,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
 					float volume = wd->soundhit.getVolume(0);
-					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 5.0f : volume);
+					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
 			}
 		}
@@ -2069,7 +2069,7 @@ void CUnit::Deactivate()
 }
 
 
-void CUnit::PushWind(float x, float z, float strength)
+void CUnit::UpdateWind(float x, float z, float strength)
 {
 	if (strength > unitDef->windGenerator) {
 		cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
@@ -2249,7 +2249,7 @@ void CUnit::PostLoad()
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
 			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength()       * 3000.0f));
+			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
 		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}

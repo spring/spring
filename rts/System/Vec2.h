@@ -1,19 +1,30 @@
 #ifndef VEC2_H
 #define VEC2_H
 
+#include "creg/creg_cond.h"
 
-template<typename T>
-class Vec2
+// can't easily use templates because of creg
+
+struct int2
 {
-public:
-	Vec2() {};
-	Vec2(const T nx, const T ny) : x(nx), y(ny) {};
+	CR_DECLARE_STRUCT(int2);
 
-	T x;
-	T y;
+	int2() {};
+	int2(const int nx, const int ny) : x(nx), y(ny) {};
+
+	int x;
+	int y;
 };
 
-typedef Vec2<int> int2;
-typedef Vec2<float> float2;
+struct float2
+{
+	CR_DECLARE_STRUCT(float2);
+
+	float2() {};
+	float2(const float nx, const float ny) : x(nx), y(ny) {};
+
+	float x;
+	float y;
+};
 
 #endif

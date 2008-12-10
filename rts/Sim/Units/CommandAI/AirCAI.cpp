@@ -618,7 +618,7 @@ bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 
 void CAirCAI::DrawCommands(void)
 {
-	lineDrawer.StartPath(owner->pos, cmdColors.start);
+	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);

@@ -37,7 +37,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
@@ -1503,7 +1502,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 	return (minV + (factor * (maxV - minV)));
 }
 
-// CALLINFO: 
+// CALLINFO:
 // DrawMapStuff --> GetDefaultCommand
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> GetDefaultCommand
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
@@ -3374,7 +3373,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 static inline void DrawSensorRange(int radius,
                                    const float* color, const float3& pos)
 {
-	const int sensorScale = (SQUARE_SIZE * RADAR_SIZE);
+	const int sensorScale = radarhandler->radarDiv;
 	const int realRadius = ((radius / sensorScale) * sensorScale);
 	if (realRadius > 0) {
 		glColor4fv(color);
@@ -3479,7 +3478,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	float3 camerapos=camera->pos; 
+	float3 camerapos=camera->pos;
 	//CCamera tmpcam(*camera);
 	//	CCamera *camera=&tmpcam;
 	float3 mousedir=mouse->dir;
