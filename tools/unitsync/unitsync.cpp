@@ -29,6 +29,7 @@
 #include "System/Info.h"
 #include "System/Option.h"
 
+
 // unitsync only:
 #include "LuaParserAPI.h"
 #include "Syncer.h"
@@ -1810,6 +1811,8 @@ EXPORT(int) GetSkirmishAIOptionCount(int index) {
 	return 0;
 }
 
+
+// Common Options Parameters
 
 /**
  * @brief Retrieve an option's key

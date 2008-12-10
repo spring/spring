@@ -6,7 +6,14 @@
  */
 
 #include "float3.h"
+#include "Vec2.h"
 #include "FastMath.h"
+
+// TODO: this should go in Vec2.cpp if that is ever created
+CR_BIND(int2, );
+CR_REG_METADATA(int2, (CR_MEMBER(x), CR_MEMBER(y)));
+CR_BIND(float2, );
+CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
 
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));

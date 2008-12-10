@@ -238,7 +238,7 @@ void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
 	OutputDebugString(str);
 	if (newline)
 		OutputDebugString("\n");
-#endif	// _MSC_VER
+#endif // _MSC_VER
 
 	if (filelog) {
 #if !defined UNITSYNC && !defined DEDICATED
@@ -350,6 +350,7 @@ void CLogOutput::Print(CLogSubsystem& subsystem, const std::string& text)
 {
 	Output(subsystem, text.c_str());
 }
+
 
 CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 {

@@ -1257,7 +1257,7 @@ void CCommandAI::DrawWaitIcon(const Command& cmd) const
 
 void CCommandAI::DrawCommands(void)
 {
-	lineDrawer.StartPath(owner->midPos, cmdColors.start);
+	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);

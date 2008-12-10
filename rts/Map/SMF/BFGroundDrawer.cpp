@@ -675,6 +675,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 
 void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
 {
+	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+		return;
+	}
+
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
@@ -1095,6 +1099,10 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
+	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+		return;
+	}
+
 //	glEnable(GL_CULL_FACE);
 	const int NUM_LODS = 4;
 
@@ -1392,6 +1400,10 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 void CBFGroundDrawer::Update()
 {
+	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+		return;
+	}
+
 	textures->DrawUpdate();
 }
 

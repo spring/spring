@@ -1714,8 +1714,8 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const float radius = luaL_checkfloat(L, 3);
 
-	const int radarDiv    = (SQUARE_SIZE * RADAR_SIZE);
-	const int radarRadius = (int)(radius / (float)radarDiv);
+	const int radarDiv    = radarhandler->radarDiv;
+	const int radarRadius = (int)(radius * radarhandler->invRadarDiv);
 
 	if (key == "los") {
 		const int losRange = (int)(radius * loshandler->invLosDiv);

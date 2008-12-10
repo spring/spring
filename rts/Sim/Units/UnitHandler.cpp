@@ -138,7 +138,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	limitDgun(false),
 	morphUnitToFeature(true)
 {
-	//unitModelLoader=SAFE_NEW CUnit3DLoader;
+	freeIDs.reserve(MAX_UNITS-1);
 	for (int a = 1; a < MAX_UNITS; a++) {
 		freeIDs.push_back(a);
 		units[a] = NULL;
@@ -616,7 +616,7 @@ void CUnitHandler::UpdateWind(float x, float z, float strength)
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 	{
 		if((*usi)->unitDef->windGenerator)
-			(*usi)->PushWind(x,z,strength);
+			(*usi)->UpdateWind(x,z,strength);
 	}
 }
 
