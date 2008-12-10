@@ -45,6 +45,15 @@ const int MAX_TEAMS = 17;
 const int MAX_PLAYERS = 32;
 
 /**
+ * @brief max units
+ *
+ * Defines the maximum number of untis that may be set as maximum for a game.
+ * The real maximum of the game is stored in uh->maxUnits,
+ * and may not be higher then this value.
+ */
+const int MAX_UNITS = 10000;
+
+/**
  * @brief near plane
  *
  * Defines the near plane as 2.8f

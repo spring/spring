@@ -6,9 +6,10 @@
 #include <vector>
 #include <map>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "float3.h"
 #include "Rendering/Icon.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 
 struct MoveData;
 struct WeaponDef;
@@ -16,8 +17,6 @@ struct S3DModel;
 struct UnitDefImage;
 struct CollisionVolume;
 class CExplosionGenerator;
-
-const int MAX_UNITS = 10000;
 
 
 struct GuiSoundSet
