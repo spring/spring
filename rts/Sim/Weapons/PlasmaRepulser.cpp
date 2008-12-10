@@ -234,7 +234,7 @@ void CPlasmaRepulser::SlowUpdate(void)
 	std::vector<int> args;
 	args.push_back(0);
 	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+	relWeaponPos=owner->cob->GetPiecePos(args[0]);
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);

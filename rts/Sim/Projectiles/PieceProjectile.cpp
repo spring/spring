@@ -14,7 +14,7 @@
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -58,7 +58,7 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int f, CUnit* owner, float radius GML_PARG_C):
+CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int f, CUnit* owner, float radius GML_PARG_C):
 	CProjectile(pos, speed, owner, true GML_PARG_P),
 	dispList(piece? piece->displist: 0),
 	drawTrail(true),
@@ -116,12 +116,12 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	   polymorphism can stay put for the moment.
 	   */
 	if (piece) {
-		if (piece->original3do != NULL) {
-			piece3do = piece->original3do;
+		if (piece->type == MODELTYPE_3DO) {
+			piece3do = (S3DOPiece*)piece->original;
 			pieces3o = NULL;
-		} else if (piece->originals3o != NULL) {
+		} else if (piece->type == MODELTYPE_S3O) {
 			piece3do = NULL;
-			pieces3o = piece->originals3o;
+			pieces3o = (SS3OPiece*)piece->original;
 		}
 	} else {
 		piece3do = NULL;
@@ -449,12 +449,19 @@ void CPieceProjectile::DrawCallback(void)
 
 void CPieceProjectile::DrawUnitPart(void)
 {
-	glAlphaFunc(GL_GEQUAL, alphaThreshold);
+	if (alphaThreshold != 0.1f) {
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glAlphaFunc(GL_GEQUAL, alphaThreshold);
+	}
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
 	glRotatef(spinPos, spinVec.x, spinVec.y, spinVec.z);
 	glCallList(dispList);
 	glPopMatrix();
+
+	if (alphaThreshold != 0.1f) {
+		glPopAttrib();
+	}
 
 	*numCallback = 0;
 }
@@ -462,6 +469,6 @@ void CPieceProjectile::DrawUnitPart(void)
 void CPieceProjectile::DrawS3O(void)
 {
 	// copy of CWeaponProjectile::::DrawS3O()
-	unitDrawer->SetS3OTeamColour(colorTeam);
+	unitDrawer->SetTeamColour(colorTeam);
 	DrawUnitPart();
 }

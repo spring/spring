@@ -611,7 +611,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
 	ASSERT_SYNCED_MODE;
-	//todo: save windgens in a list (would be a little faster)
+	//todo: save windgens in list (would be a little faster)
 	std::list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
 	{

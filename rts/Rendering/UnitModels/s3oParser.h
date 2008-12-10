@@ -4,10 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "3DModelParser.h"
 #include <map>
+#include "IModelParser.h"
 
-struct SS3O;
 
 struct SS3OVertex {
 	float3 pos;
@@ -16,45 +15,23 @@ struct SS3OVertex {
 	float textureY;
 };
 
-struct SS3O {
-	std::string name;
-	std::vector<SS3O*> childs;
+struct SS3OPiece : public S3DModelPiece {
+	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+
 	std::vector<SS3OVertex> vertices;
 	std::vector<unsigned int> vertexDrawOrder;
-	float3 offset;
 	int primitiveType;
-	unsigned int displist;
-	bool isEmpty;
-	float maxx,maxy,maxz;
-	float minx,miny,minz;
-
-	void DrawStatic();
-	~SS3O();
 };
 
-class CS3OParser
+class CS3OParser : public IModelParser
 {
 public:
-	CS3OParser();
-	virtual ~CS3OParser();
-
-	S3DOModel* LoadS3O(std::string name, float scale = 1, int side = 1);
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
-	void FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces);
-	void Update();
+	S3DModel* Load(std::string name);
+	void Draw(S3DModelPiece *o);
 
 private:
-	SS3O* LoadPiece(unsigned char* buf, int offset,S3DOModel* model);
-	void DeleteSS3O(SS3O* o);
-	void FindMinMax(SS3O *object);
-	void DrawSub(SS3O* o);
-	std::vector<SS3O *> createLists;
-	void CreateLists(SS3O *o);
-	void CreateListsNow(SS3O *o);
-	void CreateLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
-	void FixLocalModel(SS3O *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
-
-	std::map<std::string,S3DOModel*> units;
+	SS3OPiece* LoadPiece(unsigned char* buf, int offset,S3DModel* model);
+	void FindMinMax(SS3OPiece *object);
 };
 
 #endif /* S3OPARSER_H */

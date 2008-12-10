@@ -7,7 +7,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"

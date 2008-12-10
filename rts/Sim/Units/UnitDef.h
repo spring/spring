@@ -12,7 +12,7 @@
 
 struct MoveData;
 struct WeaponDef;
-struct S3DOModel;
+struct S3DModel;
 struct UnitDefImage;
 struct CollisionVolume;
 class CExplosionGenerator;
@@ -82,6 +82,8 @@ struct GuiSoundSet
 
 struct UnitModelDef
 {
+	UnitModelDef():model(NULL) {};
+	S3DModel* model;
 	std::string modelpath;
 	std::string modelname;
 	std::map<std::string, std::string> textures;
@@ -91,13 +93,14 @@ struct UnitDef
 {
 	UnitDef() : valid(false) {}
 	~UnitDef();
-	S3DOModel* LoadModel(int team) const;
+	S3DModel* LoadModel();
 
 	bool valid;
 	std::string name;
 	std::string humanName;
 	std::string filename;
 	int id;					// unique id for this type of unit
+	std::string cobFilename;
 
 	CollisionVolume* collisionVolume;
 	const UnitDef* decoyDef;
@@ -190,7 +193,7 @@ struct UnitDef
 	float  flankingBonusMin; // damage factor for the most protected direction
 	float  flankingBonusMobilityAdd; // how much the ability of the flanking bonus direction to move builds up each frame
 
-	UnitModelDef model;
+	UnitModelDef modelDef;
 	/*
 	float collisionSphereScale;
 	float3 collisionSphereOffset;
@@ -432,6 +435,13 @@ struct BuildInfo
 	float3 pos;
 	int buildFacing;
 };
+
+
+//not very sweet, but still better than replacing "const UnitDef" _everywhere_
+inline S3DModel* LoadModel(const UnitDef* udef)
+{
+	return const_cast<UnitDef*>(udef)->LoadModel();
+}
 
 
 #endif /* UNITDEF_H */

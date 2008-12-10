@@ -19,7 +19,7 @@ public:
 	void PostLoad();
 
 	void Init(const CUnit* builder);
-	void UnitInit (const UnitDef* def, int team, const float3& position);
+	void UnitInit(const UnitDef* def, int team, const float3& position);
 
 	BuildingGroundDecal* buildingDecal;
 };

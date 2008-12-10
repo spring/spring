@@ -10,7 +10,7 @@
 #include "Rendering/GL/myGL.h"
 
 class CVertexArray;
-struct S3DOModel;
+struct S3DModel;
 struct UnitDef;
 class CWorldObject;
 class CUnit;
@@ -34,13 +34,18 @@ public:
 	void DrawCloakedUnits(void);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
-	void SetupForUnitDrawing(void);
-	void CleanUpUnitDrawing(void);
-	void SetupForS3ODrawing(void);
-	void CleanUpS3ODrawing(void);
-	void CleanUpGhostDrawing();
-	void SetupForGhostDrawing();
-	void SetupForGhostDrawingS3O();
+
+	void DrawOpaqueShaderUnits();
+	void DrawCloakedShaderUnits();
+	void DrawShadowShaderUnits();
+
+	void SetTeamColour(int team) const;
+	void SetupFor3DO() const;
+	void CleanUp3DO() const;
+	void SetupForUnitDrawing(void) const;
+	void CleanUpUnitDrawing(void) const;
+	void SetupForGhostDrawing() const;
+	void CleanUpGhostDrawing() const;
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
@@ -64,10 +69,6 @@ public:
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 #endif
 
-	void DrawOpaqueShaderUnits();
-	void DrawCloakedShaderUnits();
-	void DrawShadowShaderUnits();
-
 	inline void DrawFar(CUnit* unit);
 
 	// note: make these static?
@@ -82,7 +83,7 @@ public:
 	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);  // was CUnit::DrawRawWithLists()
 	void DrawUnitStats(CUnit*);                                     // was CUnit::DrawStats()
 	void DrawUnitS3O(CUnit*);                                       // was CUnit::DrawS3O()
-	void DrawFeatureS3O(CFeature*);                                 // was CFeature::DrawS3O()
+	void DrawFeatureStatic(CFeature*);                              // was CFeature::DrawS3O()
 	inline void DrawWorldObjectS3O(CWorldObject*);
 
 	void SetUnitDrawDist(float dist);
@@ -106,13 +107,10 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 
-	unsigned int unitVP;             // vertex program for 3DO
-	unsigned int unitFP;             // fragment program for 3DO, shadows disabled
-	unsigned int unitShadowFP;       // fragment program for 3DO, shadows enabled
-	unsigned int unitS3oVP;          // vertex program for S3O
-	unsigned int unitS3oFP;          // fragment program for S3O, shadows disabled
-	unsigned int unitShadowS3oFP;    // fragment program for S3O, shadows enabled
-	unsigned int unitShadowGenVP;    // vertex program for shadow pass (both 3DO and S3O)
+	unsigned int unitVP;             // vertex program
+	unsigned int unitFP;             // fragment program, shadows disabled
+	unsigned int unitShadowFP;       // fragment program, shadows enabled
+	unsigned int unitShadowGenVP;    // vertex program for shadow pass
 
 	GLuint boxtex;
 	unsigned int reflTexSize;
@@ -147,7 +145,7 @@ public:
 	struct GhostBuilding {
 		BuildingGroundDecal* decal;
 		float3 pos;
-		S3DOModel* model;
+		S3DModel* model;
 		int facing;
 		int team;
 	};
@@ -155,8 +153,6 @@ public:
 	std::list<GhostBuilding*> ghostBuildingsS3O;
 
 	bool showHealthBars;
-
-	bool usingAtiHacks;
 
 	float3 camNorm;		//used by drawfar
 
@@ -172,25 +168,24 @@ public:
 	GML_CLASSVECTOR<GML_VECTOR<CWorldObject*> > quedS3Os;
 	std::set<int> usedS3OTextures;
 
-	void SetS3OTeamColour(int team);
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing=0);
 	void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	/** CUnit::Draw **/
-	void UnitDrawingTexturesOff(S3DOModel *model);
-	void UnitDrawingTexturesOn(S3DOModel *model);
+	void UnitDrawingTexturesOff(S3DModel *model);
+	void UnitDrawingTexturesOn(S3DModel *model);
 
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit * unit);
 
 private:
-	void SetBasicS3OTeamColour(int team);
-	void SetupBasicS3OTexture0(void);
-	void SetupBasicS3OTexture1(void);
-	void CleanupBasicS3OTexture1(void);
-	void CleanupBasicS3OTexture0(void);
-	void DrawIcon(CUnit * unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o);
+	void SetBasicTeamColour(int team) const;
+	void SetupBasicS3OTexture0(void) const;
+	void SetupBasicS3OTexture1(void) const;
+	void CleanupBasicS3OTexture1(void) const;
+	void CleanupBasicS3OTexture0(void) const;
+	void DrawIcon(CUnit* unit, bool asRadarBlip);
+	void DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& units, std::list<GhostBuilding*>& ghostedBuildings, bool is_s3o);
 };
 
 extern CUnitDrawer* unitDrawer;

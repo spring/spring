@@ -7,7 +7,6 @@
 #include "CobInstance.h"
 #include "CobEngine.h"
 #include "Lua/LuaRules.h"
-
 #include "LogOutput.h"
 
 #include "Sim/Misc/GlobalSynced.h"
@@ -61,6 +60,7 @@ void CCobThread::Start(int functionId, const vector<int> &args, bool schedule)
 	callback = NULL;
 	retCode = -1;
 
+	stack.reserve(args.size());
 	for(vector<int>::const_iterator i = args.begin(); i != args.end(); ++i) {
 		stack.push_back(*i);
 		paramCount++;
@@ -377,6 +377,7 @@ int CCobThread::Tick(int deltaTime)
 				}
 
 				args.clear();
+				args.reserve(r2);
 				for (r3 = 0; r3 < r2; ++r3) {
 					r4 = POP();
 					args.push_back(r4);

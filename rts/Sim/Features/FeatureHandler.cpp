@@ -236,6 +236,9 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->drawType = DRAWTYPE_3DO;
 	fd->modelname = fdTable.GetString("object", "");
 	if (!fd->modelname.empty()) {
+		if (fd->modelname.find(".") == std::string::npos) {
+			fd->modelname += ".3do";
+		}
 		fd->modelname=string("objects3d/") + fd->modelname;
 	}
 
@@ -595,10 +598,11 @@ void CFeatureHandler::Draw()
 	GML_RECMUTEX_LOCK(feat); // Draw
 
 	unitDrawer->SetupForUnitDrawing();
+	unitDrawer->SetupFor3DO();
 	DrawRaw(0, &drawFar);
-	unitDrawer->CleanUpUnitDrawing();
-
+	unitDrawer->CleanUp3DO();
 	unitDrawer->DrawQuedS3O();
+	unitDrawer->CleanUpUnitDrawing();
 
 	if (drawFar.size()>0) {
 		CVertexArray* va = GetVertexArray();
@@ -627,10 +631,7 @@ void CFeatureHandler::DrawShadowPass()
 
 	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 
-	unitDrawer->SetupForUnitDrawing();
 	DrawRaw(1, NULL);
-	unitDrawer->CleanUpUnitDrawing();
-
 	unitDrawer->DrawQuedS3O();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -683,8 +684,8 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
 			if (sqDist<farLength) {
-				if (!f->model->textureType) {
-					unitDrawer->DrawFeatureS3O(f);
+				if (f->model->type==MODELTYPE_3DO) {
+					unitDrawer->DrawFeatureStatic(f);
 				} else {
 					unitDrawer->QueS3ODraw(f, f->model->textureType);
 				}
@@ -738,18 +739,9 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 }
 
 
-S3DOModel* FeatureDef::LoadModel(int team) const
+S3DModel* FeatureDef::LoadModel()
 {
-	return modelParser->Load3DModel(modelname.c_str(), 1.0f, team);
-
-	/*
-	if (!useCSOffset) {
-		return modelParser->Load3DO(modelname.c_str(),
-		                            collisionSphereScale, team);
-	} else {
-		return modelParser->Load3DO(modelname.c_str(),
-		                            collisionSphereScale, team,
-		                            collisionSphereOffset);
-	}
-	*/
+	if (model==NULL)
+		model = modelParser->Load3DModel(modelname);
+	return model;
 }

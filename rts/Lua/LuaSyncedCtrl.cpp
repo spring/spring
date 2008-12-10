@@ -31,7 +31,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -868,21 +868,26 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		const string defName = lua_tostring(L, 1);
 		unitDef = unitDefHandler->GetUnitByName(defName);
 		if (unitDef == NULL) {
-			luaL_error(L, "CreateUnit() bad unitDef name: %s", defName.c_str());
+			luaL_error(L, "CreateUnit(): bad unitDef name: %s", defName.c_str());
+			return 0;
 		}
 	} else if (lua_israwnumber(L, 1)) {
 		const int defID = lua_toint(L, 1);
 		unitDef = unitDefHandler->GetUnitByID(defID);
 		if (unitDef == NULL) {
-			luaL_error(L, "CreateUnit() bad unitDef ID: %i", defID);
+			luaL_error(L, "CreateUnit(): bad unitDef ID: %i", defID);
+			return 0;
 		}
 	} else {
 		luaL_error(L, "Incorrect arguments to CreateUnit()");
 	}
 
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
+	float3 pos(luaL_checkfloat(L, 2),
+	           luaL_checkfloat(L, 3),
+	           luaL_checkfloat(L, 4));
+
+	//clamps the pos in the map boundings
+	pos.CheckInBounds(); //TODO: fix unit init code to work offmap
 
 	const int facing = ParseFacing(L, __FUNCTION__, 5);
 
@@ -892,17 +897,19 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	}
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
+		return 0;
 	}
 
 	if (teamHandler->AllyTeam(teamID) >= teamHandler->ActiveAllyTeams()) {
 		// FIXME: there's a segv in CLosHandler::LosAddAir,
 		//        this is a dirty hack to avoid it
 		luaL_error(L, "CreateUnit(): inactive team: %d", teamID);
+		return 0;
 	}
 
 
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
-		luaL_error(L, "Error in CreateUnit(), bad team %d", teamID);
+		luaL_error(L, "CreateUnit(): bad team %d", teamID);
 		return 0;
 	}
 
@@ -913,7 +920,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	// FIXME -- allow specifying the 'build' and 'builder' parameters?
 
 	if (inCreateUnit) {
-		luaL_error(L, "CreateUnit() recursion is not permitted");
+		luaL_error(L, "CreateUnit(): recursion is not permitted");
+		return 0;
 	}
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
@@ -1012,7 +1020,6 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
 	if (!lua_istable(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitCosts");
 	}

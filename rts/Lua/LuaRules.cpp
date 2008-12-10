@@ -26,7 +26,7 @@
 #include "Game/Game.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Features/Feature.h"

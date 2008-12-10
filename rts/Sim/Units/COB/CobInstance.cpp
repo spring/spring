@@ -41,6 +41,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
 #include "Sound.h"
+#include "myMath.h"
 #include "Sync/SyncTracer.h"
 
 #endif
@@ -110,7 +111,7 @@
 #define CHANGE_TARGET             98 // set, the value it's set to determines the affected weapon
 #define CEG_DAMAGE                99 // set
 #define COB_ID                   100 // get
-#define PLAY_SOUND				 101 // get, so multiple args can be passed
+#define PLAY_SOUND               101 // get, so multiple args can be passed
 #define KILL_UNIT                102 // get KILL_UNIT(unitId, SelfDestruct=true, Reclaimed=false)
 #define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
@@ -143,30 +144,16 @@ int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        =  { 0 };
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-: script(_script)
+: script(_script), unit(_unit)
 {
+	staticVars.reserve(script.numStaticVars);
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
 	}
-	for (unsigned int i = 0; i < script.pieceNames.size(); ++i) {
-		struct PieceInfo pi;
 
-		//init from model?
-		pi.coords[0] = 0; pi.coords[1] = 0; pi.coords[2] = 0;
-		pi.rot[0] = 0; pi.rot[1] = 0; pi.rot[2] = 0;
-		pi.name = script.pieceNames[i];
-		pi.updated = false;
-		pi.visible = true;
+	memset(unitVars,int(0),UNIT_VAR_COUNT);
 
-		pieces.push_back(pi);
-	}
-
-	for (int i = 0; i < UNIT_VAR_COUNT; i++) {
-		unitVars[i] = 0;
-	}
-
-	unit = _unit;
-//	int mo = unit->pos.x;
+	MapScriptToModelPieces(unit->localmodel);
 
 	yardOpen = false;
 	busy = false;
@@ -187,7 +174,6 @@ CCobInstance::~CCobInstance(void)
 	GCobEngine.RemoveInstance(this);
 
 	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
-
 		//All threads blocking on animations can be killed safely from here since the scheduler does not
 		//know about them
 		for (std::list<CCobThread *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
@@ -196,6 +182,55 @@ CCobInstance::~CCobInstance(void)
 		delete *i;
 	}
 }
+
+
+
+void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
+{
+	pieces.clear();
+	pieces.reserve(script.pieceNames.size());
+
+	for (int piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
+		std::string& scriptname = script.pieceNames[piecenum];
+
+		unsigned int cur;
+
+		//Map this piecename to an index in the script's pieceinfo
+		for (cur=0; cur<lmodel->pieces.size(); cur++) {
+			if (lmodel->pieces[cur]->name.compare(scriptname) == 0) {
+				break;
+			}
+		}
+
+		//Not found? Try again with partial matching
+		if (cur == lmodel->pieces.size()) {
+			for (cur = 0; cur < lmodel->pieces.size(); ++cur) {
+				std::string &s2 = lmodel->pieces[cur]->name;
+				int maxcompare = std::min(scriptname.size(), s2.size());
+				int j;
+				for (j = 0; j < maxcompare; ++j) {
+					if (scriptname[j] != s2[j]) {
+						break;
+					}
+				}
+				//Match now?
+				if (j == maxcompare) {
+					break;
+				}
+			}
+		}
+
+		//Did we find it now?
+		if (cur < lmodel->pieces.size()) {
+			pieces.push_back(lmodel->pieces[cur]);
+		} else {
+			pieces.push_back(NULL);
+			GCobEngine.ShowScriptError("Couldn't find a piece named \""+scriptname+"\" in the model");
+		}
+	}
+}
+
+
 int CCobInstance::Call(const string &fname)
 {
 	std::vector<int> x;
@@ -289,8 +324,17 @@ int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void 
 }
 
 
-//Returns 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
-//it will continue to run. Otherwise it will be killed. Returns 1 in this case.
+
+/**
+ * @brief Calls a cob script function
+ * @param functionId int cob script function id
+ * @param args vector<int> function arguments
+ * @param cb CBCobThreadFinish Callback function
+ * @param p1 void* callback argument #1
+ * @param p2 void* callback argument #2 
+ * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
+ *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
+ */
 int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	CCobThread *t = SAFE_NEW CCobThread(script, this);
@@ -326,82 +370,97 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 }
 
 
-//Updates cur, returns 1 if destination was reached, 0 otherwise
-int CCobInstance::MoveToward(int &cur, int dest, int speed)
+/**
+ * @brief Updates move animations
+ * @param cur float value to update
+ * @param dest float final value
+ * @param speed float max increment per tick
+ * @return returns 1 if destination was reached, 0 otherwise
+ */
+int CCobInstance::MoveToward(float &cur, float dest, float speed)
 {
-	if (dest > cur) {
-		cur += speed;
-		if (cur > dest) {
-			cur = dest;
-			return 1;
-		}
+	const float delta = dest - cur;
+
+	if (abs(delta) <= speed) {
+		cur = dest;
+		return 1;
 	}
-	else {
+
+	if (delta>0.0f) {
+		cur += speed;
+	} else {
 		cur -= speed;
-		if (cur < dest) {
-			cur = dest;
-			return 1;
-		}
 	}
 
 	return 0;
 }
 
-//Updates cur, returns 1 if destination was reached, 0 otherwise
-int CCobInstance::TurnToward(int &cur, int dest, int speed)
+
+/**
+ * @brief Updates turn animations
+ * @param cur float value to update
+ * @param dest float final value
+ * @param speed float max increment per tick
+ * @return returns 1 if destination was reached, 0 otherwise
+ */
+int CCobInstance::TurnToward(float &cur, float dest, float speed)
 {
-	short int delta = dest - cur;
-	if (delta > 0) {
-		if (delta <= speed) {
-			cur = dest;
-			return 1;
-		}
-		cur += speed;
+	ClampRad(&cur);
+
+	float delta = dest - cur;
+
+	// clamp: -pi .. 0 .. +pi (remainder(x,TWOPI) would do the same but is slower due to streflop)
+	if (delta>PI) {
+		delta -= TWOPI;
+	} else if (delta<=-PI) {
+		delta += TWOPI;
 	}
-	else {
-		if (delta >= -speed) {
-			cur = dest;
-			return 1;
-		}
+
+	if (fabs(delta) <= speed) {
+		cur = dest;
+		return 1;
+	}
+
+	if (delta>0.0f) {
+		cur += speed;
+	} else {
 		cur -= speed;
 	}
-	cur %= 65536;
-
-	//logOutput.Print("turning %d %d %d", cur, dest, speed);
 
 	return 0;
 }
 
-//Dest is not the final angle (obviously) but the final desired speed
-//Returns 1 if the desired speed is 0 and it is reached, otherwise 0
-//Speed is updated if it is not equal to dest
-//Divisor is the deltatime, it is not added before the call because speed may have to be updated
-int CCobInstance::DoSpin(int &cur, int dest, int &speed, int accel, int divisor)
+
+/**
+ * @brief Updates spin animations
+ * @param cur float value to update
+ * @param dest float the final desired speed (NOT the final angle!)
+ * @param speed float is updated if it is not equal to dest
+ * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
+ * @return 1 if the desired speed is 0 and it is reached, otherwise 0
+ */
+int CCobInstance::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
 {
 	//Check if we are not at the final speed
 	if (speed != dest) {
-		speed += accel * 30 / divisor;		//TA obviously defines accelerations in speed/frame (at 30 fps)
-		if (accel > 0) {
-			if (speed > dest)
-				speed = dest;		//We are accelerating, make sure we dont go past desired speed
-		}
-		else {
-			if (speed < dest)
-				speed = dest;		//Decelerating
-			if (speed == 0)
-				return 1;
-		}
+		speed += accel * (30.0f / divisor);   //TA obviously defines accelerations in speed/frame (at 30 fps)
+		if (fabs(speed) > dest)      // make sure we dont go past desired speed
+			speed = dest;
+		if ((accel < 0.0f) && (speed == 0.0f))
+			return 1;
 	}
 
-	//logOutput.Print("Spinning with %d %d %d %d", dest, speed, accel, divisor);
-
-	cur += speed / divisor;
-	cur %= 65536;
+	cur += (speed / divisor);
+	ClampRad(&cur);
 
 	return 0;
 }
 
-// Unblocks all threads waiting on this animation
+
+/**
+ * @brief Unblocks all threads waiting on an animation
+ * @param anim AnimInfo the corresponding animation
+ */
 void CCobInstance::UnblockAll(struct AnimInfo * anim)
 {
 	std::list<CCobThread *>::iterator li;
@@ -421,8 +480,13 @@ void CCobInstance::UnblockAll(struct AnimInfo * anim)
 	}
 }
 
-//Called by the engine when we are registered as animating. If we return -1 it means that
-//there is no longer anything animating
+
+/**
+ * @brief Called by the engine when we are registered as animating. If we return -1 it means that
+ *        there is no longer anything animating
+ * @param deltaTime int delta time to update
+ * @return 0 if there are still animations going, -1 else
+ */
 int CCobInstance::Tick(int deltaTime)
 {
 	int done;
@@ -434,17 +498,17 @@ int CCobInstance::Tick(int deltaTime)
 		cur = it++;
 
 		done = false;
-		pieces[(*cur)->piece].updated = true;
+		pieces[(*cur)->piece]->updated = true;
 
 		switch ((*cur)->type) {
 			case AMove:
-				done = MoveToward(pieces[(*cur)->piece].coords[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
+				done = MoveToward(pieces[(*cur)->piece]->pos[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
 				break;
 			case ATurn:
-				done = TurnToward(pieces[(*cur)->piece].rot[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
+				done = TurnToward(pieces[(*cur)->piece]->rot[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
 				break;
 			case ASpin:
-				done = DoSpin(pieces[(*cur)->piece].rot[(*cur)->axis], (*cur)->dest, (*cur)->speed, (*cur)->accel, 1000 / deltaTime);
+				done = DoSpin(pieces[(*cur)->piece]->rot[(*cur)->axis], (*cur)->dest, (*cur)->speed, (*cur)->accel, 1000 / deltaTime);
 				break;
 		}
 
@@ -474,6 +538,7 @@ struct CCobInstance::AnimInfo *CCobInstance::FindAnim(AnimType type, int piece, 
 	return NULL;
 }
 
+//Optimize this?
 // Returns true if an animation was found and deleted
 void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 {
@@ -500,17 +565,49 @@ void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 //Other option would be to kill them. Or perhaps unblock them.
 void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
 {
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
+	// translate cob piece coords into worldcoordinates
+	float destf;
+	float speedf;
+	float accelf;
+	if (type == AMove) {
+		destf  = pieces[piece]->original->offset[axis];
+		if (axis==0) {
+			destf -= dest * CORDDIV;
+		} else {
+			destf += dest * CORDDIV;
+		}
+		speedf = speed * CORDDIV;
+		accelf = accel;
+	} else {
+		destf  = dest  * TAANG2RAD;
+		speedf = speed * TAANG2RAD;
+		accelf = accel * TAANG2RAD;
+		ClampRad(&destf);
+	}
+
 	struct AnimInfo *ai;
 
 	//Turns override spins.. Not sure about the other way around? If so the system should probably be redesigned
 	//to only have two types of anims.. turns and moves, with spin as a bool
-	if (type == ATurn)
-		RemoveAnim(ASpin, piece, axis);
-	if (type == ASpin)
-		RemoveAnim(ATurn, piece, axis);
+	if (type != AMove)
+		RemoveAnim(type, piece, axis); //todo: optimize, atm RemoveAnim and FindAnim search twice through all anims
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
+		//check if the animation is needed
+		if (type == AMove) {
+			if (pieces[piece]->pos[axis] == destf)
+				return; // no animation needed, the piece is already at the wanted pos
+		} else if (type == ATurn) {
+			if (RadsAreEqual(pieces[piece]->rot[axis],destf))
+				return; // no animation needed, the piece already points in the wanted angle
+		}
+
 		ai = SAFE_NEW struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
@@ -521,15 +618,11 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 		if (anims.size() == 1) {
 			GCobEngine.AddInstance(this);
 		}
-
-		// Check to make sure the piece exists
-		if (piece >= pieces.size()) {
-			logOutput.Print("Invalid piece in anim %d (%d)", piece, pieces.size());
-		}
 	}
-	ai->speed = speed;
-	ai->dest = dest;
-	ai->accel = accel;
+
+	ai->dest  = destf;
+	ai->speed = speedf;
+	ai->accel = accelf;
 	ai->interpolated = interpolated;
 }
 
@@ -542,16 +635,16 @@ void CCobInstance::Spin(int piece, int axis, int speed, int accel)
 
 	//If we are already spinning, we may have to decelerate to the new speed
 	if (ai) {
-		ai->dest = speed;
+		ai->dest = speed * TAANG2RAD;
 		if (accel > 0) {
 			if (ai->speed > ai->dest)
-				ai->accel = -accel;
+				ai->accel = -accel * TAANG2RAD;
 			else
-				ai->accel = accel;
+				ai->accel = accel * TAANG2RAD;
 		}
 		else {
 			//Go there instantly. Or have a defaul accel?
-			ai->speed = speed;
+			ai->speed = speed * TAANG2RAD;
 			ai->accel = 0;
 		}
 	}
@@ -580,7 +673,7 @@ void CCobInstance::StopSpin(int piece, int axis, int decel)
 
 void CCobInstance::Turn(int piece, int axis, int speed, int destination, bool interpolated)
 {
-	AddAnim(ATurn, piece, axis, speed, destination % 65536, 0, interpolated);
+	AddAnim(ATurn, piece, axis, speed, destination, 0, interpolated);
 }
 
 void CCobInstance::Move(int piece, int axis, int speed, int destination, bool interpolated)
@@ -590,28 +683,51 @@ void CCobInstance::Move(int piece, int axis, int speed, int destination, bool in
 
 void CCobInstance::MoveNow(int piece, int axis, int destination)
 {
-	pieces[piece].coords[axis] = destination;
-	pieces[piece].updated = true;
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
+	LocalModelPiece* p = pieces[piece];
+	p->pos[axis] = pieces[piece]->original->offset[axis];
+	if (axis==0) {
+		p->pos[axis] -= destination * CORDDIV;
+	} else {
+		p->pos[axis] += destination * CORDDIV;
+	}
+	p->updated = true;
 }
 
 void CCobInstance::TurnNow(int piece, int axis, int destination)
 {
-	pieces[piece].rot[axis] = destination;
-	pieces[piece].updated = true;
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
+	LocalModelPiece* p = pieces[piece];
+	p->rot[axis] = destination * TAANG2RAD;
+	p->updated = true;
 	//logOutput.Print("moving %s on axis %d to %d", script.pieceNames[piece].c_str(), axis, destination);
 }
 
 void CCobInstance::SetVisibility(int piece, bool visible)
 {
-	if (pieces[piece].visible != visible) {
-		pieces[piece].visible = visible;
-		pieces[piece].updated = true;
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
+	LocalModelPiece* p = pieces[piece];
+	if (p->visible != visible) {
+		p->visible = visible;
+		p->updated = true;
 	}
 }
 
 void CCobInstance::EmitSfx(int type, int piece)
 {
-	if (!unit->localmodel->PieceExists(piece)) {
+	if (!PieceExists(piece)) {
 		GCobEngine.ShowScriptError("Invalid piecenumber for emit-sfx");
 		return;
 	}
@@ -625,9 +741,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 	float3 relPos;
 	float3 relDir(0,1,0);
-	unit->localmodel->GetEmitDirPos(piece, relPos, relDir);
-	//relPos = unit->localmodel->GetPiecePos(piece);
-//float3 relPos = unit->localmodel->GetPiecePos(piece);
+	GetEmitDirPos(piece, relPos, relDir);
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 
@@ -653,14 +767,14 @@ void CCobInstance::EmitSfx(int type, int piece)
 	switch (type) {
 		case 4:
 		case 5:		{	//reverse wake
-			//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 3:			//wake 2, in TA it lives longer..
 		case 2:		{	//regular ship wake
-			//float3 relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//float3 relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
@@ -677,7 +791,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			SAFE_NEW CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
 		case 0:{		//vtol
-			//relDir = unit->localmodel->GetPieceDirection(piece) * 0.2f;
+			//relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
 			CHeatCloudProjectile* hc=SAFE_NEW CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
@@ -692,7 +806,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 					GCobEngine.ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
 				}
-				//float3 relDir = -unit->localmodel->GetPieceDirection(piece) * 0.2f;
+				//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
 				unit->unitDef->sfxExplGens[index]->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
@@ -705,7 +819,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 					break;
 				}
 				//this is very hackish and probably has a lot of side effects, but might be usefull for something
-				//float3 relDir =-unit->localmodel->GetPieceDirection(piece);
+				//float3 relDir =-GetPieceDirection(piece);
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.Normalize();
 
@@ -749,7 +863,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 void CCobInstance::AttachUnit(int piece, int u)
 {
 	// -1 is valid, indicates that the unit should be hidden
-	if ((piece >= 0) && (!unit->localmodel->PieceExists(piece))) {
+	if ((piece >= 0) && (!PieceExists(piece))) {
 		GCobEngine.ShowScriptError("Invalid piecenumber for attach");
 		return;
 	}
@@ -812,14 +926,13 @@ void CCobInstance::Signal(int signal)
 //Flags as defined by the cob standard
 void CCobInstance::Explode(int piece, int flags)
 {
-	if (!unit->localmodel->PieceExists(piece)) {
+	if (!PieceExists(piece)) {
 		GCobEngine.ShowScriptError("Invalid piecenumber for explode");
 		return;
 	}
 
-
 #ifndef _CONSOLE
-	float3 pos = unit->localmodel->GetPiecePos(piece) + unit->pos;
+	float3 pos = GetPiecePos(piece) + unit->pos;
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";
@@ -867,16 +980,17 @@ void CCobInstance::Explode(int piece, int flags)
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
-	LocalS3DO * pieceData = &( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
+	LocalModelPiece* pieceData = pieces[piece]; //&( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
 	if (flags & 1) {		//Shatter
 		ENTER_MIXED;
 
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
 //		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
 
-		S3DO* dl = pieceData->original3do;
-		if(dl){
+		if(pieceData->type == MODELTYPE_3DO){
 			/* 3DO */
+
+			S3DOPiece* dl = (S3DOPiece*)pieceData->original;
 
 			for(std::vector<S3DOPrimitive>::iterator pi=dl->prims.begin();pi!=dl->prims.end();++pi){
 				if(gu->usRandFloat()>pieceChance || pi->numVertex!=4)
@@ -884,10 +998,10 @@ void CCobInstance::Explode(int piece, int flags)
 
 				ph->AddFlyingPiece(pos,speed+gu->usRandVector()*2,dl,&*pi);
 			}
-		}
-		SS3O* cookedPiece = pieceData->originals3o;
-		if (cookedPiece){
+		} else {
 			/* S3O */
+
+			SS3OPiece* cookedPiece = (SS3OPiece*)pieceData->original;
 
 			if (cookedPiece->primitiveType == 0){
 				/* GL_TRIANGLES */
@@ -949,7 +1063,7 @@ void CCobInstance::Explode(int piece, int flags)
 		ENTER_SYNCED;
 	}
 	else {
-		if (pieceData->original3do != NULL || pieceData->originals3o != NULL) {
+		if (pieceData->original != NULL) {
 			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
 			SAFE_NEW CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
@@ -966,12 +1080,12 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 
 void CCobInstance::ShowFlare(int piece)
 {
-	if (!unit->localmodel->PieceExists(piece)) {
+	if (!PieceExists(piece)) {
 		GCobEngine.ShowScriptError("Invalid piecenumber for show(flare)");
 		return;
 	}
 #ifndef _CONSOLE
-	float3 relpos = unit->localmodel->GetPiecePos(piece);
+	float3 relpos = GetPiecePos(piece);
 	float3 pos=unit->pos + unit->frontdir*relpos.z + unit->updir*relpos.y + unit->rightdir*relpos.x;
 	float3 dir=unit->lastMuzzleFlameDir;
 
@@ -1020,15 +1134,15 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		break;
 	case PIECE_XZ:{
-		if (!unit->localmodel->PieceExists(p1))
+		if (!PieceExists(p1))
 			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_xz");
-		float3 relPos = unit->localmodel->GetPiecePos(p1);
+		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return PACKXZ(pos.x, pos.z);}
 	case PIECE_Y:{
-		if (!unit->localmodel->PieceExists(p1))
+		if (!PieceExists(p1))
 			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_y");
-		float3 relPos = unit->localmodel->GetPiecePos(p1);
+		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * COBSCALE);}
 	case UNIT_XZ: {
@@ -1057,11 +1171,11 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return (int)(u->radius * COBSCALE);}
 	case XZ_ATAN:
-		return (int)(TAANG2RAD*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
+		return (int)(RAD2TAANG*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
 		return (int)(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
 	case ATAN:
-		return (int)(TAANG2RAD*atan2((float)p1, (float)p2));
+		return (int)(RAD2TAANG*atan2((float)p1, (float)p2));
 	case HYPOT:
 		return (int)hypot((float)p1, (float)p2);
 	case GROUND_HEIGHT:
@@ -1699,6 +1813,11 @@ bool CCobInstance::HasScriptFunction(int id)
 
 void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
 	//Make sure we do not overwrite animations of non-interpolated origin
 	AnimInfo *ai = FindAnim(AMove, piece, axis);
 	if (ai) {
@@ -1709,18 +1828,26 @@ void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, i
 		}
 	}
 
-	int cur = pieces[piece].coords[axis];
-	int dist = abs(destination - cur);
+	float cur = pieces[piece]->pos[axis] - pieces[piece]->original->offset[axis];
+	if (axis==0) {
+		cur = -cur;
+	}
+	int dist = abs(destination - (int)(cur / CORDDIV));
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
 	int speed = (dist * timeFactor) / delta;
 
-	//logOutput.Print("Move %d got %d %d", cur, destination, speed);
+	//logOutput.Print("SmoothMove %d, %d got %d %d", piece, (int)(cur / CORDDIV), destination, speed);
 
 	Move(piece, axis, speed, destination, true);
 }
 
 void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
+	if (!PieceExists(piece)) {
+		GCobEngine.ShowScriptError("Invalid piecenumber");
+		return;
+	}
+
 	AnimInfo *ai = FindAnim(ATurn, piece, axis);
 	if (ai) {
 		if (!ai->interpolated) {
@@ -1730,10 +1857,9 @@ void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, i
 		}
 	}
 
-	int cur = pieces[piece].rot[axis];
-	short int dist = destination - cur;
+	float cur = pieces[piece]->rot[axis];
+	short int dist = abs(destination - (short int)(cur * RAD2TAANG));
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	dist = abs(dist);
 	int speed = (dist * timeFactor) / delta;
 
 	//logOutput.Print("Turnx %d:%d cur %d got %d %d dist %d", piece, axis, cur, destination, speed, dist);

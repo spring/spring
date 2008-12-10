@@ -28,7 +28,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Platform/errorhandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
@@ -305,9 +305,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->energyTickMake += ud->tidalGenerator * mapInfo->map.tidalStrength;
 
 
-
-
-	unit->model = ud->LoadModel(team);
+	unit->model = LoadModel(ud);
 	unit->SetRadius(unit->model->radius);
 
 	// copy the UnitDef volume archetype data
@@ -338,10 +336,10 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
-	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
 	modelParser->CreateLocalModel(unit);
+	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + ud->cobFilename), unit);
 
-
+	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
 	}
@@ -379,7 +377,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	if (!build) {
 		unit->FinishedBuilding();
 	}
-
 	return unit;
 }
 

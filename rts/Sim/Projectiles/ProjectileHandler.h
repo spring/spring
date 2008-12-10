@@ -7,7 +7,7 @@
 class CProjectileHandler;
 class CProjectile;
 struct S3DOPrimitive;
-struct S3DO;
+struct S3DOPiece;
 struct SS3OVertex;
 #include <list>
 #include <vector>
@@ -18,6 +18,7 @@ struct SS3OVertex;
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "float3.h"
+
 
 
 class CGroundFlash;
@@ -51,15 +52,15 @@ public:
 	void SetMaxParticles(int value);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
+	void DrawShadowPass(void);
+	void DrawGroundFlashes(void);
+	void Update();
 	void UpdateTextures();
 	void AddProjectile(CProjectile* p);
-	void Update();
 	void AddGroundFlash(CGroundFlash* flash);
-	void DrawGroundFlashes(void);
 
 	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
-	void DrawShadowPass(void);
-	void AddFlyingPiece(float3 pos, float3 speed, S3DO* object, S3DOPrimitive* piece);
+	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
 	struct projdist {
@@ -133,7 +134,7 @@ private:
 #endif
 
 		S3DOPrimitive* prim;
-		S3DO* object;
+		S3DOPiece* object;
 
 		SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
 

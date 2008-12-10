@@ -102,6 +102,13 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	COBHeader ch;
 	READ_COBHEADER(ch,cobdata);
 
+	// prepare
+	luaScripts.reserve(ch.NumberOfScripts);
+	scriptNames.reserve(ch.NumberOfScripts);
+	scriptOffsets.reserve(ch.NumberOfScripts);
+	scriptLengths.reserve(ch.NumberOfScripts);
+	pieceNames.reserve(ch.NumberOfPieces);
+
 	for (int i = 0; i < ch.NumberOfScripts; ++i) {
 		int ofs;
 		
@@ -126,6 +133,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 	scriptLengths.push_back(ch.TotalScriptLen - scriptOffsets[ch.NumberOfScripts - 1]);
 
+
 	for (int i = 0; i < ch.NumberOfPieces; ++i) {
 		int ofs;
 
@@ -147,6 +155,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	// If this is a TA:K script, read the sound names
 	if (ch.VersionSignature == 6) {
+		sounds.reserve(ch.NumberOfSounds);
 		for (int i = 0; i < ch.NumberOfSounds; ++i) {
 			int ofs;
 			ofs = *(int *)&cobdata[ch.OffsetToSoundNameArray + i * 4];

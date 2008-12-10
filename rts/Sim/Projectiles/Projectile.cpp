@@ -11,7 +11,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Map/MapInfo.h"
 #include "GlobalUnsynced.h"
 
