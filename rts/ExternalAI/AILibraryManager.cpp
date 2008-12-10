@@ -23,13 +23,11 @@
 #include "AIInterfaceLibrary.h"
 #include "SkirmishAILibraryInfo.h"
 
-//#include <boost/filesystem.hpp>
 #include "Util.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
-//#include "Game/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -819,25 +817,6 @@ void CAILibraryManager::ReleaseEverything() {
 //	ReleaseAllGroupAILibraries();
 }
 
-/*
-std::vector<std::string> CAILibraryManager::FindFiles(const std::string& path, const std::string& fileExtension) {
-
-	std::vector<std::string> found;
-
-	if (boost::filesystem::exists(path)) {
-		  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
-		  for (boost::filesystem::directory_iterator itr(path); itr != end_itr; ++itr) {
-			  if (!boost::filesystem::is_directory(*itr)
-					  && boost::filesystem::extension(*itr) == fileExtension) {
-				  found.push_back(itr->string());
-			  }
-		  }
-	}
-
-	return found;
-}
-*/
-
 std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
 		const std::string& path) {
 
@@ -884,35 +863,23 @@ AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 
 std::vector<std::string> split(const std::string& str, const char sep) {
 
-/*
-	std::vector<std::string> parts;
-
-	std::istringstream s(str);
-	std::string temp;
-
-	while (std::getline(s, temp, sep)) {
-		parts.push_back(temp);
-	}
-
-	return parts;
-*/
 	std::vector<std::string> tokens;
 	std::string delimitters = ".";
 
-    // Skip delimiters at beginning.
-    std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
-    // Find first "non-delimiter".
-    std::string::size_type pos     = str.find_first_of(delimitters, lastPos);
+	// Skip delimiters at beginning.
+	std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
+	// Find first "non-delimiter".
+	std::string::size_type pos     = str.find_first_of(delimitters, lastPos);
 
-    while (std::string::npos != pos || std::string::npos != lastPos)
-    {
-        // Found a token, add it to the vector.
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        // Skip delimiters.  Note the "not_of"
-        lastPos = str.find_first_not_of(sep, pos);
-        // Find next "non-delimiter"
-        pos = str.find_first_of(delimitters, lastPos);
-    }
+	while (std::string::npos != pos || std::string::npos != lastPos)
+	{
+		// Found a token, add it to the vector.
+		tokens.push_back(str.substr(lastPos, pos - lastPos));
+		// Skip delimiters.  Note the "not_of"
+		lastPos = str.find_first_not_of(sep, pos);
+		// Find next "non-delimiter"
+		pos = str.find_first_of(delimitters, lastPos);
+	}
 
 	return tokens;
 }

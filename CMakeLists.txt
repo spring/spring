@@ -58,7 +58,6 @@ if (MINGW)
 	set (SDL_LIBRARY SDL)
 	set (Boost_REGEX_LIBRARY boost_regex-mt)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
-	set (Boost_FILESYSTEM_LIBRARY boost_filesystem-mt)
 	set (DEVIL_ILU_LIBRARY ilu)
 	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
 else (MINGW)
@@ -66,7 +65,7 @@ else (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex filesystem REQUIRED)
+	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	
 	FIND_PACKAGE(Devil REQUIRED)
@@ -111,11 +110,11 @@ Add_Subdirectory(tools/unitsync)
 #Add_Subdirectory(tools/DemoDumper)
 
 ### make the basefiles (aka sdz's)
-if (UNIX OR CMAKE_CROSSCOMPILING)
+if (UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-else (UNIX OR CMAKE_CROSSCOMPILING)
+else (UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-endif(UNIX OR CMAKE_CROSSCOMPILING)
+endif(UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 
 ### install base data files
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".svn" EXCLUDE)
@@ -128,4 +127,5 @@ if (UNIX AND NOT MINGW)
 else (UNIX AND NOT MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
 endif (UNIX AND NOT MINGW)
+
 
