@@ -258,6 +258,17 @@ def createJavaClasspath(path):
 	#print('clsPath: ' + clsPath)
 	return clsPath
 
+# instals files plus empty directories recursively, preserving directory structure
+def installDataDir(env, dstPath, srcPath, instList):
+	if os.path.exists(srcPath):
+		files = filelist.list_files_recursive(env, srcPath, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+		for f in files:
+			f_src_file = os.path.join(srcPath, f)
+			f_dst_path = os.path.join(dstPath, os.path.split(f)[0])
+			f_dst_file = os.path.join(dstPath, f)
+			if not (os.path.isdir(f_src_file) and os.path.exists(f_dst_file)):
+				instList += [env.Install(f_dst_path, f_src_file)]
+
 ################################################################################
 ### Build AI Interface shared objects
 ################################################################################
@@ -322,10 +333,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		Alias('AIInterfaces', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_interface_dir, myJar)]
-		if os.path.exists(jlibDir):
-			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
-			for lf in jlib_files:
-				instList += [myEnv.Install(os.path.join(install_data_interface_dir, os.path.split(lf)[0]), os.path.join(jlibDir, lf))]
+		installDataDir(myEnv, install_data_interface_dir, jlibDir, instList)
 
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName + '-' + aiInterfaceVersion), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
@@ -337,10 +345,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 
 	# record data files (eg InterfaceInfo.lua or config files) for installation
 	source_data_dir = os.path.join('AI/Interfaces', baseName, 'data')
-	if os.path.exists(source_data_dir):
-		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
-		for df in data_files:
-			instList += [myEnv.Install(os.path.join(install_data_interface_dir, os.path.split(df)[0]), os.path.join(source_data_dir, df))]
+	installDataDir(myEnv, install_data_interface_dir, source_data_dir, instList)
 
 	Alias('install', instList)
 	Alias('install-AIInterfaces', instList)
@@ -391,10 +396,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		Alias('SkirmishAI', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_ai_dir, myJar)]
-		if os.path.exists(jlibDir):
-			jlib_files = filelist.list_files_recursive(myEnv, jlibDir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
-			for lf in jlib_files:
-				instList += [myEnv.Install(os.path.join(install_data_ai_dir, os.path.split(lf)[0]), os.path.join(jlibDir, lf))]
+		installDataDir(myEnv, install_data_ai_dir, jlibDir, instList)
 
 	else:
 		if useCreg:
@@ -422,10 +424,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 
 	# record data files (eg AIInfo.lua or config files) for installation
 	source_data_dir = os.path.join('AI/Skirmish', baseName, 'data')
-	if os.path.exists(source_data_dir):
-		data_files = filelist.list_files_recursive(myEnv, source_data_dir, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
-		for df in data_files:
-			instList += [myEnv.Install(os.path.join(install_data_ai_dir, os.path.split(df)[0]), os.path.join(source_data_dir, df))]
+	installDataDir(myEnv, install_data_ai_dir, source_data_dir, instList)
 
 	# install everything from this AI
 	Alias('install', instList)
