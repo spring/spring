@@ -163,8 +163,9 @@ if env['platform'] != 'windows':
 ################################################################################
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
-aienv = env.Copy()
+aienv = env.Clone()
 aienv.Append(CPPPATH = ['rts/ExternalAI'])
+aienv.AppendUnique(CPPDEFINES=['USING_CREG'])
 
 # Use subst() to substitute $installprefix in datadir.
 install_dir = os.path.join(aienv['installprefix'], aienv['libdir'], 'AI/Helper-libs')
