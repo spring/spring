@@ -26,4 +26,4 @@ list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
 
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)
-Add_Subdirectory(Group)
+#Add_Subdirectory(Group)

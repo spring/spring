@@ -3,7 +3,7 @@ add_definitions(-DBUILDING_AI)
 
 set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
 set(SKIRMISH_DATA "${DATADIR}/AI/Skirmish")
-FIND_PACKAGE(Java)
+#FIND_PACKAGE(Java)
 
 ## KAI
 set(KAI_SRC "${SKIRMISH_SRC}/KAI")
