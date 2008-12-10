@@ -217,7 +217,7 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 	dst += 4;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// the following code writes a full working .cur file in the memory (in a .ani container)
+	// the following code writes a fully working .cur file in the memory (in a .ani container)
 
 	//file header
 	WORD* header = (WORD*)&dst[0]; int i=0;
