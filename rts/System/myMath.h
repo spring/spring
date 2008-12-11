@@ -7,6 +7,8 @@
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
+static const float TWOPI = 2*PI;
+
 #define SHORTINT_MAXVALUE 32768
 
 #define HEADING_CHECKSUM_1024 0x617a9968
@@ -123,6 +125,7 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
+
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
 #endif
@@ -131,6 +134,42 @@ float Square(const float x) __attribute__((const));
 inline float Square(const float x)
 {
 	return x*x;
+}
+
+
+/**
+ * @brief Clamps an radian angle between 0 .. 2*pi
+ * @param f float* value to clamp
+ */
+float ClampRad(float f) __attribute__((const));
+inline float ClampRad(float f)
+{
+	f = fmod(f,TWOPI);
+	if (f<0.0f) f += TWOPI;
+	return f;
+}
+
+
+/**
+ * @brief Clamps an radian angle between 0 .. 2*pi
+ * @param f float* value to clamp
+ */
+inline void ClampRad(float* f)
+{
+	*f = fmod(*f,TWOPI);
+	if (*f<0.0f) *f += TWOPI;
+}
+
+
+/**
+ * @brief Checks if 2 radian values discribe the same angle
+ * @param f1 float* first compare value
+ * @param f2 float* second compare value
+ */
+bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
+inline bool RadsAreEqual(const float f1, const float f2)
+{
+	return (fmod(f1 - f2, TWOPI)==0.0f);
 }
 
 #endif /* MYMATH_H */

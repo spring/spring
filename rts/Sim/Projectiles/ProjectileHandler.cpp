@@ -20,7 +20,8 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
@@ -480,100 +481,14 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	/* Putting in, say, viewport culling will deserve refactoring. */
 
-	/* 3DO */
 	unitDrawer->SetupForUnitDrawing();
-
+	unitDrawer->SetupFor3DO();
 	GML_RECMUTEX_LOCK(proj); // Draw
 
-	va->Initialize();
-	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
-	numFlyingPieces += flying3doPieces->size();
-	for(list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
-		CMatrix44f m;
-		m.Rotate((*pi)->rot,(*pi)->rotAxis);
-		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
-		CTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
-		const std::vector<S3DOVertex>& vertices    = (*pi)->object->vertices;
-		const std::vector<int>&        verticesIdx = (*pi)->prim->vertices;
-
-		const S3DOVertex* v=&vertices[verticesIdx[0]];
-		float3 tp=m.Mul(v->pos);
-		float3 tn=m.Mul(v->normal);
-		tp+=interPos;
-		va->AddVertexQTN(tp,tex->xstart,tex->ystart,tn);
-
-		v=&vertices[verticesIdx[1]];
-		tp=m.Mul(v->pos);
-		tn=m.Mul(v->normal);
-		tp+=interPos;
-		va->AddVertexQTN(tp,tex->xend,tex->ystart,tn);
-
-		v=&vertices[verticesIdx[2]];
-		tp=m.Mul(v->pos);
-		tn=m.Mul(v->normal);
-		tp+=interPos;
-		va->AddVertexQTN(tp,tex->xend,tex->yend,tn);
-
-		v=&vertices[verticesIdx[3]];
-		tp=m.Mul(v->pos);
-		tn=m.Mul(v->normal);
-		tp+=interPos;
-		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
-	}
-	drawnPieces+=va->drawIndex()/32;
-	va->DrawArrayTN(GL_QUADS);
-
-	unitDrawer->CleanUpUnitDrawing();
-
-	/* S3O */
-	unitDrawer->SetupForS3ODrawing();
-
-	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
-		/* TODO Skip this if there's no FlyingPieces. */
-
-		texturehandler->SetS3oTexture(textureType);
-
-		for (int team = 0; team < flyings3oPieces[textureType].size(); team++){
-			FlyingPiece_List * fpl = flyings3oPieces[textureType][team];
-
-			unitDrawer->SetS3OTeamColour(team);
-
-			va->Initialize();
-			va->EnlargeArrays(fpl->size()*4,0,VA_SIZE_TN);
-
-			numFlyingPieces += fpl->size();
-
-			for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
-				CMatrix44f m;
-				m.Rotate((*pi)->rot,(*pi)->rotAxis);
-				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
-
-				SS3OVertex * verts = (*pi)->verts;
-
-				float3 tp, tn;
-
-				for (int i = 0; i < 4; i++){
-					tp=m.Mul(verts[i].pos);
-					tn=m.Mul(verts[i].normal);
-					tp+=interPos;
-					va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
-				}
-			}
-			drawnPieces+=va->drawIndex()/32;
-			va->DrawArrayTN(GL_QUADS);
-		}
-	}
-
-	unitDrawer->CleanUpS3ODrawing();
-
-	/*
-	 * TODO Nearly cut here.
-	 */
-
-	unitDrawer->SetupForUnitDrawing();
 	Projectile_List::iterator psi;
 	distlist.clear();
 
+	// Projectiles (3do's get rendered, s3o qued)
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* pro = *psi;
 
@@ -624,9 +539,90 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			distlist.push_back(tmp);
 		}
 	}
-	unitDrawer->CleanUpUnitDrawing();
+
+	// 3DO flying pieces
+	va->Initialize();
+	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
+	numFlyingPieces += flying3doPieces->size();
+	for(list<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
+		CMatrix44f m;
+		m.Rotate((*pi)->rot,(*pi)->rotAxis);
+		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
+		C3DOTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
+		const std::vector<S3DOVertex>& vertices    = (*pi)->object->vertices;
+		const std::vector<int>&        verticesIdx = (*pi)->prim->vertices;
+
+		const S3DOVertex* v=&vertices[verticesIdx[0]];
+		float3 tp=m.Mul(v->pos);
+		float3 tn=m.Mul(v->normal);
+		tp+=interPos;
+		va->AddVertexQTN(tp,tex->xstart,tex->ystart,tn);
+
+		v=&vertices[verticesIdx[1]];
+		tp=m.Mul(v->pos);
+		tn=m.Mul(v->normal);
+		tp+=interPos;
+		va->AddVertexQTN(tp,tex->xend,tex->ystart,tn);
+
+		v=&vertices[verticesIdx[2]];
+		tp=m.Mul(v->pos);
+		tn=m.Mul(v->normal);
+		tp+=interPos;
+		va->AddVertexQTN(tp,tex->xend,tex->yend,tn);
+
+		v=&vertices[verticesIdx[3]];
+		tp=m.Mul(v->pos);
+		tn=m.Mul(v->normal);
+		tp+=interPos;
+		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
+	}
+	drawnPieces+=va->drawIndex()/32;
+
+	unitDrawer->CleanUp3DO();
+
+	// draw qued S3O projectiles
 	unitDrawer->DrawQuedS3O();
 
+	// S3O flying pieces
+	va->DrawArrayTN(GL_QUADS);
+	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
+		/* TODO Skip this if there's no FlyingPieces. */
+
+		texturehandlerS3O->SetS3oTexture(textureType);
+
+		for (int team = 0; team < flyings3oPieces[textureType].size(); team++){
+			FlyingPiece_List * fpl = flyings3oPieces[textureType][team];
+
+			unitDrawer->SetTeamColour(team);
+
+			va->Initialize();
+			va->EnlargeArrays(fpl->size()*4,0,VA_SIZE_TN);
+
+			numFlyingPieces += fpl->size();
+
+			for(list<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
+				CMatrix44f m;
+				m.Rotate((*pi)->rot,(*pi)->rotAxis);
+				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
+
+				SS3OVertex * verts = (*pi)->verts;
+
+				float3 tp, tn;
+
+				for (int i = 0; i < 4; i++){
+					tp=m.Mul(verts[i].pos);
+					tn=m.Mul(verts[i].normal);
+					tp+=interPos;
+					va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
+				}
+			}
+			drawnPieces+=va->drawIndex()/32;
+			va->DrawArrayTN(GL_QUADS);
+		}
+	}
+	unitDrawer->CleanUpUnitDrawing();
+
+	// Alpha transculent particles
 	sort(distlist.begin(), distlist.end(), CompareProjDist);
 
 	glEnable(GL_BLEND);
@@ -853,6 +849,8 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(0);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.01f);
 	glPolygonOffset(-20,-1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
@@ -876,8 +874,8 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glDepthMask(1);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_ALPHA_TEST);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 }
@@ -896,7 +894,7 @@ void CProjectileHandler::ConvertTex(unsigned char tex[512][512][4], int startx, 
 }
 
 
-void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DO* object,S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DOPiece* object,S3DOPrimitive* piece)
 {
 	FlyingPiece* fp=new FlyingPiece;
 	fp->pos=pos;

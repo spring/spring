@@ -21,7 +21,7 @@
 #include "Platform/errorhandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -1445,14 +1445,14 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 float CAICallback::GetUnitDefRadius(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = ud->LoadModel(0);
+	S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
 	UnitDef *ud = &unitDefHandler->unitDefs[def];
-	S3DOModel* mdl = ud->LoadModel(0);
+	S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }
 

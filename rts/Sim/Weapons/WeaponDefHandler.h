@@ -33,6 +33,8 @@ struct WeaponDef
 
 	~WeaponDef();
 
+	S3DModel* LoadModel();
+
 	std::string name;
 	std::string type;
 	std::string description;
@@ -140,12 +142,14 @@ struct WeaponDef
 
 	struct Visuals
 	{
+		Visuals() : model(NULL) {};
 		float3 color;
 		float3 color2;
 
 		//bool hasmodel;
+		S3DModel* model;
 		std::string modelName;
-		CColorMap *colorMap;
+		CColorMap* colorMap;
 
 		bool smokeTrail;
 		bool beamweapon;
@@ -251,6 +255,13 @@ class CWeaponDefHandler {
 		void ParseWeapon(const LuaTable& wdTable, WeaponDef& wd);
 		float3 hs2rgb(float h, float s);
 };
+
+
+//not very sweet, but still better than replacing "const WeaponDef" _everywhere_
+inline S3DModel* LoadModel(const WeaponDef* wdef)
+{
+	return const_cast<WeaponDef*>(wdef)->LoadModel();
+}
 
 
 extern CWeaponDefHandler* weaponDefHandler;

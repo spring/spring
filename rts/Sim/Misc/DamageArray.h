@@ -48,7 +48,7 @@ public:
 private:
 	#ifdef USING_CREG
 	void creg_Serialize(creg::ISerializer& s);
-	#endif /* USING_CREG */
+	#endif // USING_CREG
 
 	int numTypes;
 	float* damages;

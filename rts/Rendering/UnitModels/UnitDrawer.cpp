@@ -4,7 +4,6 @@
 #include "UnitDrawer.h"
 #include "myMath.h"
 #include "LogOutput.h"
-#include "3DModelParser.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -27,7 +26,8 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 
 #include "ExternalAI/Group.h"
 #include "Sim/Features/Feature.h"
@@ -72,8 +72,11 @@ CUnitDrawer::CUnitDrawer(void)
 :	showHealthBars(true),
 	updateFace(0)
 {
-	if (texturehandler == 0) {
-		texturehandler = SAFE_NEW CTextureHandler;
+	if (texturehandler3DO == 0) {
+		texturehandler3DO = SAFE_NEW C3DOTextureHandler;
+	}
+	if (texturehandlerS3O == 0) {
+		texturehandlerS3O = SAFE_NEW CS3OTextureHandler;
 	}
 
 	SetUnitDrawDist((float)configHandler.Get("UnitLodDist",  200));
@@ -93,7 +96,7 @@ CUnitDrawer::CUnitDrawer(void)
 		white.mem[a] = 255;
 	}
 
-	whiteTex=white.CreateTexture(false);
+	whiteTex = white.CreateTexture(false);
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
@@ -108,18 +111,14 @@ CUnitDrawer::CUnitDrawer(void)
 	}
 
 	if (advShading) {
-		unitVP = LoadVertexProgram("unit.vp");
-		unitFP = LoadFragmentProgram("unit.fp");
-		unitS3oVP = LoadVertexProgram("units3o.vp");
-		unitS3oFP = LoadFragmentProgram("units3o.fp");
+		unitVP = LoadVertexProgram("units3o.vp");
+		unitFP = LoadFragmentProgram("units3o.fp");
 
 		if (shadowHandler->canUseShadows) {
-			unitShadowFP    = LoadFragmentProgram("unit_shadow.fp");
-			unitShadowS3oFP = LoadFragmentProgram("units3o_shadow.fp");
+			unitShadowFP = LoadFragmentProgram("units3o_shadow.fp");
 			unitShadowGenVP = LoadVertexProgram("unit_genshadow.vp");
 		} else {
 			unitShadowFP    = 0;
-			unitShadowS3oFP = 0;
 			unitShadowGenVP = 0;
 		}
 
@@ -151,6 +150,7 @@ CUnitDrawer::CUnitDrawer(void)
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 	}
+
 #ifdef USE_GML
 	multiThreadDrawUnit=configHandler.Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow=configHandler.Get("MultiThreadDrawUnitShadow", 1);
@@ -165,11 +165,7 @@ CUnitDrawer::~CUnitDrawer(void)
 	if (advShading) {
 		glSafeDeleteProgram(unitVP);
 		glSafeDeleteProgram(unitFP);
-
 		glSafeDeleteProgram(unitShadowFP);
-		glSafeDeleteProgram(unitS3oVP);
-		glSafeDeleteProgram(unitS3oFP);
-		glSafeDeleteProgram(unitShadowS3oFP);
 		glSafeDeleteProgram(unitShadowGenVP);
 
 		glDeleteTextures(1, &boxtex);
@@ -193,6 +189,7 @@ CUnitDrawer::~CUnitDrawer(void)
 		delete *gbi;
 		gbi = ghostBuildingsS3O.erase(gbi);
 	}
+
 #ifdef USE_GML
 	configHandler.Set("MultiThreadDrawUnit", multiThreadDrawUnit);
 	configHandler.Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
@@ -246,7 +243,7 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 		if ((lodMat != NULL) && lodMat->IsActive()) {
 			lodMat->AddUnit(unit);
 		} else {
-			if (unit->model->textureType) {
+			if (unit->model->type==MODELTYPE_S3O) {
 				drawCloakedS3O.push_back(unit);
 			} else {
 				drawCloaked.push_back(unit);
@@ -264,7 +261,7 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 		if ((lodMat != NULL) && lodMat->IsActive()) {
 			lodMat->AddUnit(unit);
 		} else {
-			if (unit->model->textureType) {
+			if (unit->model->type==MODELTYPE_S3O) {
 				QueS3ODraw(unit, unit->model->textureType);
 			} else {
 				DrawUnitNow(unit);
@@ -281,7 +278,7 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 		return;
 	}
 
-	if (unit->model->textureType) {
+	if (unit->model->type==MODELTYPE_S3O) {
 		if (unit->isCloaked) {
 			drawCloakedS3O.push_back(unit);
 		} else {
@@ -307,17 +304,17 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 	if (unit->noDraw) {
 		return;
 	}
-	if (camera->InView(unit->midPos, unit->radius + 30)) {
+	if (camera->InView(unit->drawMidPos, unit->radius + 30)) {
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (drawReflection) {
 				float3 zeroPos;
-				if (unit->midPos.y < 0.0f) {
-					zeroPos = unit->midPos;
+				if (unit->drawMidPos.y < 0.0f) {
+					zeroPos = unit->drawMidPos;
 				} else {
-					const float dif = unit->midPos.y - camera->pos.y;
-					zeroPos = camera->pos  * (unit->midPos.y / dif) +
-						unit->midPos * (-camera->pos.y / dif);
+					const float dif = unit->drawMidPos.y - camera->pos.y;
+					zeroPos = camera->pos  * (unit->drawMidPos.y / dif) +
+						unit->drawMidPos * (-camera->pos.y / dif);
 				}
 				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
 					return;
@@ -344,6 +341,7 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 				if (sqDist > farLength) {
 					drawFar.push_back(unit);
 				} else {
+					SetTeamColour(unit->team);
 					DrawUnit(unit);
 				}
 
@@ -363,7 +361,7 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 				float realIconLength = iconLength * (iconDistMult * iconDistMult);
 
 				if (sqDist < realIconLength) {
-					if (unit->model->textureType) {
+					if (unit->model->type==MODELTYPE_S3O) {
 						drawCloakedS3O.push_back(unit);
 					} else {
 						drawCloaked.push_back(unit);
@@ -408,6 +406,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 
 	SetupForUnitDrawing();
+	SetupFor3DO();
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
@@ -444,6 +443,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #endif
 
 	{
+		//FIXME: s3o's + teamcolor
+
 		GML_STDMUTEX_LOCK(temp); // Draw
 
 		std::multimap<int, TempDrawUnit>::iterator ti;
@@ -452,14 +453,16 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-				ti->second.unitdef->LoadModel(ti->second.team)->DrawStatic();
+				LoadModel(ti->second.unitdef)->DrawStatic();
 				glPopMatrix();
 			}
 		}
 	}
 
-	CleanUpUnitDrawing();
+	CleanUp3DO();
 	DrawQuedS3O();
+	CleanUpUnitDrawing();
+
 	DrawOpaqueShaderUnits();
 
 	va = GetVertexArray();
@@ -540,7 +543,7 @@ static void DrawBins(LuaMatType type)
 
 			lodMat->uniforms.Execute(unit);
 			// we are inside a static function, so must invoke on unitDrawer instance
-			unitDrawer->SetS3OTeamColour(unit->team);
+			unitDrawer->SetTeamColour(unit->team);
 			unitDrawer->DrawUnitWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 		}
 	}
@@ -558,6 +561,8 @@ static void DrawBins(LuaMatType type)
 
 static void SetupShadowDrawing()
 {
+	//FIXME setup face culling for s3o?
+
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glDisable(GL_TEXTURE_2D);
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP);
@@ -584,15 +589,14 @@ static void CleanUpShadowDrawing()
 
 /******************************************************************************/
 
-static void SetupOpaque3DO() { unitDrawer->SetupForUnitDrawing(); }
-static void ResetOpaque3DO() { unitDrawer->CleanUpUnitDrawing();  }
-static void SetupOpaqueS3O() { unitDrawer->SetupForS3ODrawing();  }
-static void ResetOpaqueS3O() { unitDrawer->CleanUpS3ODrawing();   }
+static void SetupOpaque3DO() { unitDrawer->SetupForUnitDrawing();  unitDrawer->SetupFor3DO(); }
+static void ResetOpaque3DO() { unitDrawer->CleanUp3DO();   unitDrawer->CleanUpUnitDrawing();  }
+static void SetupOpaqueS3O() { unitDrawer->SetupForUnitDrawing();  }
+static void ResetOpaqueS3O() { unitDrawer->CleanUpUnitDrawing();   }
 
-static void SetupAlpha3DO()  { unitDrawer->SetupForGhostDrawing();    }
-static void ResetAlpha3DO()  { unitDrawer->CleanUpGhostDrawing();     }
-static void SetupAlphaS3O()  { unitDrawer->SetupForGhostDrawing();
-                               unitDrawer->SetupForGhostDrawingS3O(); }
+static void SetupAlpha3DO()  { unitDrawer->SetupForGhostDrawing(); unitDrawer->SetupFor3DO(); }
+static void ResetAlpha3DO()  { unitDrawer->CleanUp3DO();   unitDrawer->CleanUpGhostDrawing(); }
+static void SetupAlphaS3O()  { unitDrawer->SetupForGhostDrawing();    }
 static void ResetAlphaS3O()  { unitDrawer->CleanUpGhostDrawing();     }
 
 static void SetupShadow3DO() { SetupShadowDrawing();   }
@@ -649,7 +653,7 @@ void CUnitDrawer::DrawShadowShaderUnits()
 inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 	if (((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
-		camera->InView(unit->midPos, unit->radius + 700)) {
+		camera->InView(unit->drawMidPos, unit->radius + 700)) {
 
 		// FIXME: test against the shadow projection intersection
 		float sqDist = (unit->pos-camera->pos).SqLength();
@@ -702,23 +706,20 @@ void CUnitDrawer::DrawShadowPass(void)
 		gmlProcessor->Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
 		  &uh->renderUnits, uh->renderUnits.size(),50,100,TRUE);
 	}
-	else {
+	else
 #endif
+	{
 		std::list<CUnit*>::iterator usi;
 		for (usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnitShadow(unit);
 		}
-#ifdef USE_GML
 	}
-#endif
 
 	glDisable(GL_VERTEX_PROGRAM_ARB);
-
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	DrawShadowShaderUnits();
-
 //	glDisable(GL_TEXTURE_2D);
 }
 
@@ -764,7 +765,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
 	float3 pos;
 	if (gu->spectatingFullView) {
-		pos = unit->midPos;
+		pos = unit->drawMidPos;
 	} else {
 		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
@@ -806,22 +807,7 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 }
 
 
-void CUnitDrawer::SetupForGhostDrawing()
-{
-	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
-	glEnable(GL_TEXTURE_2D);
-
-	texturehandler->SetTATexture();
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-}
-
-
-void CUnitDrawer::SetupForGhostDrawingS3O()
+void CUnitDrawer::SetupForGhostDrawing() const
 {
 	SetupBasicS3OTexture0();
 	SetupBasicS3OTexture1();
@@ -834,7 +820,7 @@ void CUnitDrawer::SetupForGhostDrawingS3O()
 }
 
 
-void CUnitDrawer::CleanUpGhostDrawing()
+void CUnitDrawer::CleanUpGhostDrawing() const
 {
 	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
@@ -856,7 +842,10 @@ void CUnitDrawer::CleanUpGhostDrawing()
 
 void CUnitDrawer::DrawCloakedUnits(void)
 {
+	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
+
 	SetupForGhostDrawing();
+	SetupFor3DO();
 
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
@@ -867,9 +856,9 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	glColor4f(1, 1, 1, 0.3f);
 	glDepthMask(0);
 
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
 	{
+		//FIXME: doesn't support s3o's nor does it set teamcolor
+
 		GML_STDMUTEX_LOCK(temp); // DrawCloakedUnits
 		// units drawn by AI, these aren't really
 		// cloaked but the effect is the same
@@ -878,7 +867,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-				S3DOModel* model = ti->second.unitdef->LoadModel(ti->second.team);
+				S3DModel* model = LoadModel(ti->second.unitdef);
 				model->DrawStatic();
 				glPopMatrix();
 			}
@@ -909,9 +898,9 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	// 3dos
 	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
 
+	CleanUp3DO(); //reset faceculling
+
 	// s3os
-	SetupForGhostDrawingS3O();
-	glColor4f(1, 1, 1, 0.3f);
 	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, true);
 
 	// reset gl states
@@ -922,10 +911,10 @@ void CUnitDrawer::DrawCloakedUnits(void)
 }
 
 
-void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<GhostBuilding*>& gB, bool is_s3o)
+void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::list<GhostBuilding*>& ghostedBuildings, bool is_s3o)
 {
 	// cloaked units and living ghosted buildings (stored in same vector)
-	for (GML_VECTOR<CUnit*>::iterator ui = dC.begin(); ui != dC.end(); ++ui) {
+	for (GML_VECTOR<CUnit*>::iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if(unit==NULL)
@@ -934,9 +923,9 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (is_s3o) {
-				SetBasicS3OTeamColour(unit->team);
-				texturehandler->SetS3oTexture(unit->model->textureType);
+				texturehandlerS3O->SetS3oTexture(unit->model->textureType);
 			}
+			SetBasicTeamColour(unit->team);
 			DrawUnitNow(unit);
 		} else {
 			// ghosted enemy units
@@ -950,44 +939,44 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
 			// check for decoy models
-			const int unitTeam = unit->team;
 			const UnitDef* decoyDef = unit->unitDef->decoyDef;
-			S3DOModel* model;
+			S3DModel* model;
 			if (decoyDef == NULL) {
 				model = unit->model;
 			} else {
-				model = decoyDef->LoadModel(unitTeam);
-				is_s3o = (model->rootobjects3o != NULL);
+				model = LoadModel(decoyDef);
 			}
+			SetBasicTeamColour(unit->team);
 
 			if (is_s3o) {
-				SetBasicS3OTeamColour(unitTeam);
-				texturehandler->SetS3oTexture(model->textureType);
+				texturehandlerS3O->SetS3oTexture(model->textureType);
 			}
 
 			model->DrawStatic();
 			glPopMatrix();
+
+			glColor4f(1, 1, 1, 0.3f);
 		}
 	}
 
 	// buildings that died but were still ghosted
 	glColor4f(0.6f, 0.6f, 0.6f, 0.4f);
-	for (std::list<GhostBuilding*>::iterator gbi = gB.begin(); gbi != gB.end();) {
+	for (std::list<GhostBuilding*>::iterator gbi = ghostedBuildings.begin(); gbi != ghostedBuildings.end();) {
 		if (loshandler->InLos((*gbi)->pos, gu->myAllyTeam)) {
 			if ((*gbi)->decal)
 				(*gbi)->decal->gbOwner = 0;
 
 			delete *gbi;
-			gbi = gB.erase(gbi);
+			gbi = ghostedBuildings.erase(gbi);
 		} else {
 			if (camera->InView((*gbi)->pos, (*gbi)->model->radius * 2)) {
 				glPushMatrix();
 				glTranslatef3((*gbi)->pos);
 				glRotatef((*gbi)->facing * 90.0f, 0, 1, 0);
+				SetBasicTeamColour((*gbi)->team);
 
 				if (is_s3o) {
-					SetBasicS3OTeamColour((*gbi)->team);
-					texturehandler->SetS3oTexture((*gbi)->model->textureType);
+					texturehandlerS3O->SetS3oTexture((*gbi)->model->textureType);
 				}
 
 				(*gbi)->model->DrawStatic();
@@ -999,188 +988,12 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& dC, std::list<Ghost
 }
 
 
-void CUnitDrawer::SetupForUnitDrawing(void)
-{
-	if (shadowHandler->inShadowPass)
-		return;
 
-	if (advShading && !water->drawReflection) {
-		// standard doesn't seem to support vertex program + clipplanes at once
-
-		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitVP);
-		glEnable(GL_VERTEX_PROGRAM_ARB);
-
-		if (shadowHandler->drawShadows) {
-			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, unitShadowFP);
-		} else {
-			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, unitFP);
-		}
-		glEnable(GL_FRAGMENT_PROGRAM_ARB);
-
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y, mapInfo->light.sunDir.z, 0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, camera->pos.x, camera->pos.y, camera->pos.z, 0);
-
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, 0, 0, 0, unitShadowDensity);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1);
-
-		if (shadowHandler->drawShadows) {
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glEnable(GL_TEXTURE_2D);
-		}
-
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glEnable(GL_TEXTURE_2D);
-		texturehandler->SetTATexture();
-
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
-
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
-
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-
-		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler->shadowMatrix.m);
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMultMatrixd(camera->GetModelview());
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-	} else {
-		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
-		glEnable(GL_LIGHT1);
-	//	glDisable(GL_CULL_FACE);
-	//	glCullFace(GL_BACK);
-		glEnable(GL_TEXTURE_2D);
-		float cols[] = {1, 1, 1, 1};
-		float cols2[] = {1, 1, 1, 1};
-		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,cols);
-		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
-		glColor3f(1, 1, 1);
-		texturehandler->SetTATexture();
-	}
-//	glAlphaFunc(GL_GREATER,0.05f);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
-}
-
-
-void CUnitDrawer::CleanUpUnitDrawing(void)
-{
-	if (shadowHandler->inShadowPass)
-		return;
-
-	if(advShading && !water->drawReflection){
-		glDisable( GL_VERTEX_PROGRAM_ARB );
-		glDisable( GL_FRAGMENT_PROGRAM_ARB );
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glDisable(GL_TEXTURE_2D);
-
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-	} else {
-		glDisable(GL_LIGHTING);
-		glDisable(GL_LIGHT1);
-	}
-}
-
-
-void CUnitDrawer::SetS3OTeamColour(int team)
-{
-	if (advShading) {
-		unsigned char* col = teamHandler->Team(team)->color;
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1);
-		if (luaDrawing) { // FIXME?
-			SetBasicS3OTeamColour(team);
-		}
-	} else {
-		SetBasicS3OTeamColour(team);
-	}
-}
-
-
-void CUnitDrawer::SetBasicS3OTeamColour(int team)
-{
-	unsigned char* col = teamHandler->Team(team)->color;
-	float texConstant[] = {col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1};
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-}
-
-
-/**
- * Set up the texture environment in texture unit 0
- * to give an S3O texture its team-colour.
- *
- * Also:
- * - call SetBasicS3OTeamColour to set the team colour to transform to.
- * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
- */
-void CUnitDrawer::SetupBasicS3OTexture0(void)
-{
-	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-	glEnable(GL_TEXTURE_2D);
-}
-
-
-/**
- * This sets the first texture unit to GL_MODULATE the colours from the
- * first texture unit with the current glColor.
- *
- * Normal S3O drawing sets the color to full white; translucencies
- * use this setup to 'tint' the drawn model.
- *
- * - Leaves glActivateTextureARB at the first unit.
- * - This doesn't tinker with the output alpha, either.
- */
-void CUnitDrawer::SetupBasicS3OTexture1(void)
-{
-	// RGB = Primary Color * Previous
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, whiteTex);
-}
-
-
-void CUnitDrawer::SetupForS3ODrawing(void)
+void CUnitDrawer::SetupForUnitDrawing(void) const
 {
 	//glDisable(GL_ALPHA_TEST);
 	//glDisable(GL_BLEND);
+
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
@@ -1197,12 +1010,12 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 	}
 
 	if (advShading && !water->drawReflection) { //standard doesnt seem to support vertex program+clipplanes at once
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitS3oVP );
+		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitVP );
 		glEnable( GL_VERTEX_PROGRAM_ARB );
 		if (shadowHandler->drawShadows) {
-			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitShadowS3oFP );
+			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitShadowFP );
 		} else {
-			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitS3oFP );
+			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, unitFP );
 		}
 		glEnable( GL_FRAGMENT_PROGRAM_ARB );
 
@@ -1240,7 +1053,6 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//glEnable(GL_BLEND);
 		glAlphaFunc(GL_GREATER,0.5f);
 		glEnable(GL_ALPHA_TEST);
 
@@ -1257,22 +1069,18 @@ void CUnitDrawer::SetupForS3ODrawing(void)
 		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 		glEnable(GL_LIGHT1);
 
+		SetupBasicS3OTexture1();
 		SetupBasicS3OTexture0();
 
-		// Set material color and fallback texture (3DO texture)
+		// Set material color
 		float cols[]={1,1,1,1};
 		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
 		glColor3f(1,1,1);
-		texturehandler->SetTATexture();
-
-		SetupBasicS3OTexture1();
-
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }
 
 
-void CUnitDrawer::CleanUpS3ODrawing(void)
+void CUnitDrawer::CleanUpUnitDrawing(void) const
 {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
@@ -1320,7 +1128,95 @@ void CUnitDrawer::CleanUpS3ODrawing(void)
 }
 
 
-void CUnitDrawer::CleanupBasicS3OTexture1(void)
+void CUnitDrawer::SetTeamColour(int team) const
+{
+	if (advShading) {
+		unsigned char* col = teamHandler->Team(team)->color;
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1);
+		if (luaDrawing) { // FIXME?
+			SetBasicTeamColour(team);
+		}
+	} else {
+		SetBasicTeamColour(team);
+	}
+}
+
+
+void CUnitDrawer::SetBasicTeamColour(int team) const
+{
+	unsigned char* col = teamHandler->Team(team)->color;
+	float texConstant[] = {col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1};
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
+}
+
+
+/**
+ * Binds the 3do texture atlas and deactivates face culling
+ */
+void CUnitDrawer::SetupFor3DO() const
+{
+	texturehandler3DO->Set3doAtlases();
+	glPushAttrib(GL_POLYGON_BIT);
+	glDisable(GL_CULL_FACE);
+}
+
+
+/**
+ * Reset face culling after 3do drawing
+ */
+void CUnitDrawer::CleanUp3DO() const
+{
+	glPopAttrib();
+}
+
+
+/**
+ * Set up the texture environment in texture unit 0
+ * to give an S3O texture its team-colour.
+ *
+ * Also:
+ * - call SetBasicTeamColour to set the team colour to transform to.
+ * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
+ */
+void CUnitDrawer::SetupBasicS3OTexture0(void) const
+{
+	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	glEnable(GL_TEXTURE_2D);
+}
+
+
+/**
+ * This sets the first texture unit to GL_MODULATE the colours from the
+ * first texture unit with the current glColor.
+ *
+ * Normal S3O drawing sets the color to full white; translucencies
+ * use this setup to 'tint' the drawn model.
+ *
+ * - Leaves glActivateTextureARB at the first unit.
+ * - This doesn't tinker with the output alpha, either.
+ */
+void CUnitDrawer::SetupBasicS3OTexture1(void) const
+{
+	// RGB = Primary Color * Previous
+	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, whiteTex);
+}
+
+
+void CUnitDrawer::CleanupBasicS3OTexture1(void) const
 {
 	// reset texture1 state
 	glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -1330,7 +1226,7 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void)
 }
 
 
-void CUnitDrawer::CleanupBasicS3OTexture0(void)
+void CUnitDrawer::CleanupBasicS3OTexture0(void) const
 {
 	// reset texture0 state
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -1351,56 +1247,33 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void)
  * Unfortunately, it doesn't work! With advanced shading on, the green
  * is darker than usual; with shadows as well, it's almost black. -- krudat
  */
-void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
+void CUnitDrawer::UnitDrawingTexturesOff(S3DModel *model)
 {
-	if (model->textureType == 0){
-		/* 3DO */
-		/* If SetupForUnitDrawing is changed, this may need tweaking too. */
-		if(advShading && !water->drawReflection){
-			glDisable(GL_VERTEX_PROGRAM_ARB);
-			glDisable(GL_FRAGMENT_PROGRAM_ARB);
-			/* TEXTURE0: Shadows. */
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB); // Unit texture.
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE2_ARB); // boxtex
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE3_ARB); // specularTex
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-			glDisable(GL_FOG);
-		} else {
-			glDisable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-		}
+	/* If SetupForUnitDrawing is changed, this may need tweaking too. */
+	if(advShading && !water->drawReflection){
+		/* Odd. Units with only the first texture build cyan rather than
+		   green. Presume it's an improvement on black. :S -- krudat */
+		glDisable(GL_VERTEX_PROGRAM_ARB);
+		glDisable(GL_FRAGMENT_PROGRAM_ARB);
+		/* TEXTURE0: Colour texture. */
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE3_ARB); // boxtex
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+		glActiveTextureARB(GL_TEXTURE4_ARB); // specularTex
+		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	} else {
-		/* S3O */
-		/* If SetupForS3ODrawing is changed, this may need tweaking too. */
-		if(advShading && !water->drawReflection){
-			/* Odd. Units with only the first texture build cyan rather than
-			   green. Presume it's an improvement on black. :S -- krudat */
-			glDisable(GL_VERTEX_PROGRAM_ARB);
-			glDisable(GL_FRAGMENT_PROGRAM_ARB);
-			/* TEXTURE0: Colour texture. */
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE3_ARB); // boxtex
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE4_ARB); // specularTex
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		} else {
-			glDisable(GL_LIGHTING);
-			/* TEXTURE0: Colour texture. */
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB); // GL lighting, I think.
-			glDisable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
+		glDisable(GL_LIGHTING);
+		/* TEXTURE0: Colour texture. */
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE1_ARB); // GL lighting, I think.
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }
 
@@ -1411,53 +1284,30 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DOModel *model)
  *
  * Does *not* restore the texture bindings.
  */
-void CUnitDrawer::UnitDrawingTexturesOn(S3DOModel *model)
+void CUnitDrawer::UnitDrawingTexturesOn(S3DModel *model)
 {
-	/* If UnitDrawingTextureOff is changed, this may need tweaking too. */
-	if (model->textureType == 0){
-		/* 3DO */
-		if(advShading && !water->drawReflection){
-			glEnable(GL_VERTEX_PROGRAM_ARB);
-			glEnable(GL_FRAGMENT_PROGRAM_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-			glEnable(GL_FOG);
-		} else {
-			glEnable(GL_LIGHTING);
-			glColor3f(1,1,1);
-			glEnable(GL_TEXTURE_2D);
-		}
-	} else {
-		/* S3O */
-		if(advShading && !water->drawReflection){
-			glEnable(GL_VERTEX_PROGRAM_ARB);
-			glEnable(GL_FRAGMENT_PROGRAM_ARB);
+	if(advShading && !water->drawReflection){
+		glEnable(GL_VERTEX_PROGRAM_ARB);
+		glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE4_ARB);
-			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		} else {
-			glEnable(GL_LIGHTING);
-			glColor3f(1,1,1);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
+		glEnable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+		glEnable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+		glActiveTextureARB(GL_TEXTURE4_ARB);
+		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	} else {
+		glEnable(GL_LIGHTING);
+		glColor3f(1,1,1);
+		glEnable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }
 
@@ -1574,13 +1424,11 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 
 void CUnitDrawer::DrawQuedS3O(void)
 {
-	SetupForS3ODrawing();
-
 #ifdef USE_GML
 	int sz=quedS3Os.size();
 	for(int tex=0; tex<sz;++tex) {
 		if(quedS3Os[tex].size()>0) {
-			texturehandler->SetS3oTexture(tex);
+			texturehandlerS3O->SetS3oTexture(tex);
 
 			for(GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
 				DrawWorldObjectS3O(*ui);
@@ -1592,7 +1440,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 #else
 	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
 		const int tex = *uti;
-		texturehandler->SetS3oTexture(tex);
+		texturehandlerS3O->SetS3oTexture(tex);
 
 		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
 			DrawWorldObjectS3O(*ui);
@@ -1600,10 +1448,8 @@ void CUnitDrawer::DrawQuedS3O(void)
 
 		quedS3Os[tex].clear();
 	}
-
 	usedS3OTextures.clear();
 #endif
-	CleanUpS3ODrawing();
 }
 
 
@@ -1642,24 +1488,22 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		mat.Execute(LuaMaterial::defMat);
 
 		lodMat->uniforms.Execute(unit);
-		SetS3OTeamColour(unit->team);
+		SetTeamColour(unit->team);
 		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 
 		LuaMaterial::defMat.Execute(mat);
 	}
-	else if (unit->model->textureType == 0){
-		/* 3DO */
+	else {
+		/* 3DO + S3O */
 		SetupForUnitDrawing();
+		if (unit->model->type==MODELTYPE_3DO){
+			texturehandler3DO->Set3doAtlases();
+		}else{
+			texturehandlerS3O->SetS3oTexture(unit->model->textureType);
+		}
+		SetTeamColour(unit->team);
 		DrawUnitRaw(unit);
 		CleanUpUnitDrawing();
-	}
-	else {
-		/* S3O */
-		SetupForS3ODrawing();
-		texturehandler->SetS3oTexture(unit->model->textureType);
-		SetS3OTeamColour(unit->team);
-		DrawUnitRaw(unit);
-		CleanUpS3ODrawing();
 	}
 
 	gu->drawdebug = origDebug;
@@ -1678,21 +1522,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
  */
 void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
 {
-	S3DOModel* model = unitdef->LoadModel(side);
-
-	if (model->textureType == 0) {
-		/* 3DO */
-		SetupForGhostDrawing();		// (model, side);
-		glPushMatrix();
-		glTranslatef3(pos);
-		glRotatef(facing * 90.0f, 0, 1, 0);
-		model->DrawStatic();
-		CleanUpGhostDrawing();
-		glPopMatrix();
-		return;
-	}
-
-	/* S3O */
+	S3DModel* model = LoadModel(unitdef);
 
 	/* From SetupForGhostDrawing. */
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
@@ -1700,11 +1530,13 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	/* *No* GL lighting. */
 
 	/* Get the team-coloured texture constructed by unit 0. */
-	SetBasicS3OTeamColour(side);
+	SetBasicTeamColour(side);
 	SetupBasicS3OTexture0();
-	texturehandler->SetS3oTexture(model->textureType);
-
-	/* Tint it with the current glColor in unit 1. */
+	if (model->type==MODELTYPE_3DO) {
+		texturehandler3DO->Set3doAtlases();
+	} else {
+		texturehandlerS3O->SetS3oTexture(model->textureType);
+	}
 	SetupBasicS3OTexture1();
 
 	/* Use the alpha given by glColor for the outgoing alpha.
@@ -1748,51 +1580,39 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 
 void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 {
-	S3DOModel* model = unitDef->LoadModel(team);
+	S3DModel* model = LoadModel(unitDef);
 
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
 
-	if (model->textureType == 0) {
-		// 3DO model
-		texturehandler->SetTATexture();
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-
-		model->DrawStatic();
+	// get the team-coloured texture constructed by unit 0
+	SetBasicTeamColour(team);
+	SetupBasicS3OTexture0();
+	if (model->type==MODELTYPE_3DO) {
+		texturehandler3DO->Set3doAtlases();
+	} else {
+		texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
-	else {
-		// get the team-coloured texture constructed by unit 0
-		SetBasicS3OTeamColour(team);
-		SetupBasicS3OTexture0();
-		texturehandler->SetS3oTexture(model->textureType);
+	// tint it with the current glColor in unit 1
+	SetupBasicS3OTexture1();
 
-		// tint it with the current glColor in unit 1
-		SetupBasicS3OTexture1();
+	// use the alpha given by glColor for the outgoing alpha.
+	// (might need to change this if we ever have transparent bits on units?)
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
 
-		// use the alpha given by glColor for the outgoing alpha.
-		// (might need to change this if we ever have transparent bits on units?)
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	model->DrawStatic();
 
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+	// reset texture1 state
+	CleanupBasicS3OTexture1();
 
-		model->DrawStatic();
+	// also reset the alpha generation
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
 
-		// reset texture1 state
-		CleanupBasicS3OTexture1();
-
-		// also reset the alpha generation
-		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-
-		// reset texture0 state
-		CleanupBasicS3OTexture0();
-	}
+	// reset texture0 state
+	CleanupBasicS3OTexture0();
 
 	glPopAttrib();
 }
@@ -1880,7 +1700,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glEnable(GL_CLIP_PLANE1);
 
 	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
-	float3 fc;// fc frame color
+	float3 fc;// fc := frame color
 	if (!gu->teamNanospray) {
 		fc = unit->unitDef->nanoColor;
 	}
@@ -1967,7 +1787,10 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
-	glAlphaFunc(GL_GEQUAL, unit->alphaThreshold);
+	if (unit->alphaThreshold != 0.1f) {
+		//glPushAttrib(GL_COLOR_BUFFER_BIT);
+		//glAlphaFunc(GL_GREATER, unit->alphaThreshold);
+	}
 
 	glPushMatrix();
 	ApplyUnitTransformMatrix(unit);
@@ -1980,6 +1803,10 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 
 	DrawUnitDebug(unit);
 	glPopMatrix();
+
+	if (unit->alphaThreshold != 0.1f) {
+		//glPopAttrib();
+	}
 }
 
 
@@ -2127,19 +1954,17 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 
 void CUnitDrawer::DrawUnitS3O(CUnit* unit)
 {
-	SetS3OTeamColour(unit->team);
+	SetTeamColour(unit->team);
 	DrawUnitNow(unit);
 }
 
 
-void CUnitDrawer::DrawFeatureS3O(CFeature* feature)
+void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 {
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
 
-	if (feature->model->textureType) {
-		unitDrawer->SetS3OTeamColour(feature->team);
-	}
+	SetTeamColour(feature->team);
 
 	feature->model->DrawStatic();
 	glPopMatrix();
@@ -2150,7 +1975,7 @@ inline void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* S3OObj)
 {
 	if (S3OObj) {
 		// calls back to DrawUnitS3O() for units and
-		// DrawFeatureS3O() for features, projectiles
+		// DrawFeatureStatic() for features, projectiles
 		// and weapons with S3O models do not
 		S3OObj->DrawS3O();
 	}

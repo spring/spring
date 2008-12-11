@@ -46,8 +46,9 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -1745,15 +1746,15 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
-	LocalS3DO& localPiece = localModel->pieces[piece];
+	LocalModelPiece* localPiece = localModel->pieces[piece];
 
-	glCallList(localPiece.displist);
+	glCallList(localPiece->displist);
 
 	return 0;
 }
@@ -1765,12 +1766,12 @@ int LuaOpenGL::UnitPieceMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
@@ -1790,12 +1791,12 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 		return 0;
 	}
 
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
@@ -1869,19 +1870,20 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int fDefID = luaL_checkint(L, 1);
-	const int teamID = luaL_checkint(L, 2);
+	//const int teamID = luaL_checkint(L, 2);
 
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
-		return 0;
-	}
+	//if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	//	return 0;
+	//}
 	const FeatureDef* fd = featureHandler->GetFeatureDefByID(fDefID);
 	if (fd == NULL) {
 		return 0;
 	}
-	S3DOModel* model = fd->LoadModel(teamID);
+	const S3DModel* model = LoadModel(fd);
 	if (model == NULL) {
 		return 0;
 	}
+	//todo: teamcolor?
 	model->DrawStatic(); // FIXME: finish this, 3do/s3o, copy DrawIndividual...
 
 	return 0;
@@ -3548,8 +3550,16 @@ int LuaOpenGL::PointParameter(lua_State* L)
 static bool ParseUnitTexture(const string& texture)
 {
 	if (texture[1] == 0) {
-		texturehandler->SetTATexture();
 		glEnable(GL_TEXTURE_2D);
+		if (texture.length() == 4) {
+			if (texture[3] == 0) {
+				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
+			} else {
+				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
+			}
+		} else {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
+		}
 		return true;
 	}
 
@@ -3563,13 +3573,13 @@ static bool ParseUnitTexture(const string& texture)
 	if (ud == NULL) {
 		return false;
 	}
-	S3DOModel* model = ud->LoadModel(0);
+	const S3DModel* model = LoadModel(ud);
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return false;
 	}
 
-	const CTextureHandler::S3oTex* stex = texturehandler->GetS3oTex(texType);
+	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
 	if (stex == NULL) {
 		return false;
 	}
@@ -3700,8 +3710,13 @@ int LuaOpenGL::Texture(lua_State* L)
 	}
 	else if (texture[0] == '$') {
 		// never enables
-		if (texture == "$units") {
-			texturehandler->SetTATexture();
+		if (texture == "$units1" || texture == "$units") {
+			glBindTexture(GL_TEXTURE_2D,  texturehandler3DO->GetAtlasTex1ID() );
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
+		if (texture == "$units2") {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
 		}
@@ -3853,8 +3868,8 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 {
 	if (texture[1] == 0) {
 		lua_newtable(L);
-		HSTR_PUSH_NUMBER(L, "xsize", texturehandler->GetGlobalTexSizeX());
-		HSTR_PUSH_NUMBER(L, "ysize", texturehandler->GetGlobalTexSizeY());
+		HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
+		HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		return 1;
 	}
 
@@ -3868,13 +3883,13 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 	if (ud == NULL) {
 		return 0;
 	}
-	S3DOModel* model = ud->LoadModel(0);
+	const S3DModel* model = LoadModel(ud);
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return 0;
 	}
 
-	const CTextureHandler::S3oTex* stex = texturehandler->GetS3oTex(texType);
+	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
 	if (stex == NULL) {
 		return 0;
 	}
@@ -3953,8 +3968,8 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 	else if (texture[0] == '$') {
 		if (texture == "$units") {
 			lua_newtable(L);
-			HSTR_PUSH_NUMBER(L, "xsize", texturehandler->GetGlobalTexSizeX());
-			HSTR_PUSH_NUMBER(L, "ysize", texturehandler->GetGlobalTexSizeY());
+			HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
+			HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		}
 		else if (texture == "$shadow") {
 			lua_newtable(L);
@@ -5191,9 +5206,9 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 {
-	map<string, CTextureHandler::UnitTexture*>::const_iterator it;
-	const map<string, CTextureHandler::UnitTexture*>& textures =
-		texturehandler->GetGlobalTextures();
+	map<string, C3DOTextureHandler::UnitTexture*>::const_iterator it;
+	const map<string, C3DOTextureHandler::UnitTexture*>& textures =
+		texturehandler3DO->GetAtlasTextures();
 
 	lua_newtable(L);
 	int count = 0;
@@ -5214,8 +5229,8 @@ int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 int LuaOpenGL::GetGlobalTexCoords(lua_State* L)
 {
 	const string name = luaL_checkstring(L, 1);
-	CTextureHandler::UnitTexture* texCoords = NULL;
-	texCoords = texturehandler->GetTATexture(name);
+	C3DOTextureHandler::UnitTexture* texCoords = NULL;
+	texCoords = texturehandler3DO->Get3DOTexture(name);
 	if (texCoords) {
 		lua_pushnumber(L, texCoords->xstart);
 		lua_pushnumber(L, texCoords->ystart);

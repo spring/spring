@@ -5,7 +5,7 @@
 
 #include "Game/Player.h"
 #include "Map/Ground.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -777,7 +777,7 @@ void CTAAirMoveType::Update()
 
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
-				float3 relPos = unit->localmodel->GetPiecePos(reservedPad->GetPiece());
+				float3 relPos = unit->cob->GetPiecePos(reservedPad->GetPiece());
 				float3 pos = unit->pos + unit->frontdir * relPos.z
 						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 

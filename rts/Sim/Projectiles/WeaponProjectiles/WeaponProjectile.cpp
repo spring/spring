@@ -4,11 +4,10 @@
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sound.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Textures/TextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -98,12 +97,8 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
-		if (!weaponDef->visuals.modelName.empty()) {
-			S3DOModel* model = modelParser->Load3DModel(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
-			if (model) {
-				s3domodel = model;
-			}
-		}
+		s3domodel = LoadModel(weaponDef);
+
 		collisionFlags = weaponDef->collisionFlags;
 	}
 }
@@ -292,14 +287,13 @@ void CWeaponProjectile::DrawUnitPart()
 	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
-//	glCallList(modelDispList);
-	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
+	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 
 void CWeaponProjectile::DrawS3O(void)
 {
-	unitDrawer->SetS3OTeamColour(colorTeam);
+	unitDrawer->SetTeamColour(colorTeam);
 	DrawUnitPart();
 }
 
@@ -323,15 +317,16 @@ void CWeaponProjectile::PostLoad()
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
-	if(!weaponDef->visuals.modelName.empty()){
-		S3DOModel* model = modelParser->Load3DModel(
-				string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
-		if(model){
-			s3domodel = model;
-/*			if(s3domodel->rootobject3do)
-				modelDispList= model->rootobject3do->displist;
-			else
-				modelDispList= model->rootobjects3o->displist;*/
+	if (!weaponDef->visuals.modelName.empty()) {
+		if (weaponDef->visuals.model==NULL) {
+			std::string modelname = string("objects3d/") + weaponDef->visuals.modelName;
+			if (modelname.find(".") == std::string::npos) {
+				modelname += ".3do";
+			}
+			const_cast<WeaponDef*>(weaponDef)->visuals.model = modelParser->Load3DModel(modelname);
+		}
+		if (weaponDef->visuals.model) {
+			s3domodel = weaponDef->visuals.model;
 		}
 	}
 

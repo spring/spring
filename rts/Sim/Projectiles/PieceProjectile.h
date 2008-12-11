@@ -11,9 +11,9 @@ const int PP_Explode    = (1 << 3); // 8
 const int PP_NoCEGTrail = (1 << 6); // 64, TODO should be 16
 
 class CSmokeTrailProjectile;
-struct LocalS3DO;
-struct S3DO;
-struct SS3O;
+struct LocalModelPiece;
+struct S3DOPiece;
+struct SS3OPiece;
 
 class CPieceProjectile: public CProjectile
 {
@@ -23,8 +23,8 @@ class CPieceProjectile: public CProjectile
 
 	int flags;
 	int dispList;
-	S3DO* piece3do;
-	SS3O* pieces3o;
+	S3DOPiece* piece3do;
+	SS3OPiece* pieces3o;
 	float3 spinVec;
 	float spinSpeed;
 	float spinPos;
@@ -46,7 +46,7 @@ class CPieceProjectile: public CProjectile
 	int colorTeam;
 	
 public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalS3DO* piece, int flags, CUnit* owner, float radius GML_PARG_H);
+	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius GML_PARG_H);
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();

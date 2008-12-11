@@ -108,7 +108,7 @@ void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
 	if (def->drawType == DRAWTYPE_3DO) {
-		model = def->LoadModel(team);
+		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
@@ -136,7 +136,7 @@ void CFeature::ChangeTeam(int newTeam)
 	}
 
 	if (def->drawType == DRAWTYPE_3DO){
-		model = def->LoadModel(team);
+		model = LoadModel(def);
 	}
 }
 
@@ -164,9 +164,10 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	noSelect = def->noSelect;
 
 	if (def->drawType == DRAWTYPE_3DO) {
-		model = def->LoadModel(team);
+		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
+
 		midPos = pos + model->relMidPos;
 
 		// copy the FeatureDef volume archetype data
@@ -695,5 +696,5 @@ float CFeature::RemainingEnergy() const
 
 void CFeature::DrawS3O()
 {
-	unitDrawer->DrawFeatureS3O(this);
+	unitDrawer->DrawFeatureStatic(this);
 }

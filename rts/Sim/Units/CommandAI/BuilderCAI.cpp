@@ -17,8 +17,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/Textures/TextureHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Features/Feature.h"
@@ -269,7 +268,7 @@ float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
 	if (cachedRadiusId == cmdId) {
 		radius = cachedRadius;
 	} else {
-		radius = ud->LoadModel(owner->team)->radius;
+		radius = LoadModel(ud)->radius;
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}

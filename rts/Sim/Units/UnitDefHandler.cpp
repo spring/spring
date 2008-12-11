@@ -21,7 +21,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -255,6 +255,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		const string errmsg = "missing 'filename' parameter for the" + unitName + " unitdef";
 		throw content_error(errmsg);
 	}
+	ud.cobFilename = udTable.GetString("cobfilename", ud.name + ".cob");
 	ud.tooltip = udTable.GetString("description", ud.name);
 
 	const string decoy = udTable.GetString("decoyFor", "");
@@ -681,8 +682,11 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	}
 
 	std::string objectname = udTable.GetString("objectName", "");
-	ud.model.modelpath = "objects3d/" + objectname;
-	ud.model.modelname = objectname;
+	if (objectname.find(".") == std::string::npos) {
+		objectname += ".3do";
+	}
+	ud.modelDef.modelpath = "objects3d/" + objectname;
+	ud.modelDef.modelname = objectname;
 
 	ud.scriptName = udTable.GetString("script", unitName + ".cob");
 	ud.scriptPath = "scripts/" + ud.scriptName;
@@ -691,7 +695,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.deathExplosion = udTable.GetString("explodeAs", "");
 	ud.selfDExplosion = udTable.GetString("selfDestructAs", "");
 
-	//ud.power = (ud.metalCost + ud.energyCost/60.0f);
 	ud.power = udTable.GetFloat("power", (ud.metalCost + (ud.energyCost / 60.0f)));
 
 	// Prevent a division by zero in experience calculations.
@@ -901,6 +904,7 @@ void CUnitDefHandler::ParseUnit(const LuaTable& udTable, const string& unitName,
 		unitDefs[id].energyUpkeep = 0;
 	}
 }
+
 
 
 const UnitDef* CUnitDefHandler::GetUnitByName(std::string name)
@@ -1132,18 +1136,9 @@ UnitDef::~UnitDef()
 }
 
 
-S3DOModel* UnitDef::LoadModel(int team) const
+S3DModel* UnitDef::LoadModel()
 {
-	return modelParser->Load3DModel(model.modelpath.c_str(), 1.0f, team);
-
-	/*
-	if (!useCSOffset) {
-		return modelParser->Load3DO(model.modelpath.c_str(),
-		                            collisionSphereScale, team);
-	} else {
-		return modelParser->Load3DO(model.modelpath.c_str(),
-		                            collisionSphereScale, team,
-		                            collisionSphereOffset);
-	};
-	*/
+	if (modelDef.model==NULL)
+		modelDef.model = modelParser->Load3DModel(modelDef.modelpath);
+	return modelDef.model;
 }

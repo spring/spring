@@ -16,7 +16,7 @@ class CBuilding;
 class CUnit;
 class CFeature;
 class CVertexArray;
-struct S3DOModel;
+struct S3DModel;
 
 #define COLLISION_NOFRIENDLY	1
 #define COLLISION_NOFEATURE		2
@@ -61,7 +61,7 @@ public:
 	virtual void DrawUnitPart(void);
 	virtual void DrawS3O() { DrawUnitPart(); }
 
-	S3DOModel* s3domodel;
+	S3DModel* s3domodel;
 };
 
 #endif /* PROJECTILE_H */
