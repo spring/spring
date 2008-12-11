@@ -39,9 +39,14 @@ zip="spring_${version}_src.zip"
 include=" \
  $dir/AI/Group/ \
  $dir/AI/Interfaces/C/ \
+ $dir/AI/Interfaces/Java/ \
  $dir/AI/Skirmish/AAI/ \
  $dir/AI/Skirmish/KAIK/ \
+ $dir/AI/Skirmish/RAI/ \
  $dir/AI/Skirmish/NullAI/ \
+ $dir/AI/Skirmish/NullLegacyCppAI/ \
+ $dir/AI/Skirmish/NullJavaAI/ \
+ $dir/AI/Skirmish/NullOOJavaAI/ \
  $dir/Documentation/ \
  $dir/Doxyfile \
  $dir/game/ \

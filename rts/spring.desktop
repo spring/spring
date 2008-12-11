@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Spring
-Comment=An open source RTS with similar gameplay to TA
-Comment[de]=Multiplayerstrategie der nächsten Generation
-Exec=spring
-Icon=spring.png
-Terminal=false
-Type=Application
-Categories=Application;Game;StrategyGame;
