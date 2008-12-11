@@ -1,12 +1,9 @@
 
 #include "DamageArray.h"
 
+#include "Sync/Syncify.h"
 #if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#include "StdAfx.h"
-#include "mmgr.h"
 #include "DamageArrayHandler.h"
-#else // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#define SAFE_NEW new
 #endif // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 
 

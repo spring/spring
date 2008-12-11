@@ -511,6 +511,11 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 	else:
 		print "Success building streflop!"
 
+
+################################################################################
+### Run Tests
+################################################################################
+
 # Use this to avoid an error message 'how to make target test ?'
 env.Alias('test', None)
 
@@ -525,7 +530,7 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 
 
 ################################################################################
-### Build gamedata zip archives
+### Build gamedata zip archives & misc.
 ################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript

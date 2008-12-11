@@ -31,11 +31,11 @@
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
-#include <cassert>
+#include <assert.h>
 
 // do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
 #include "lib/streflop/streflop_cond.h"
-#endif
+#endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 
 // maybe we should remove syncify altogether?
 #include "Sync/Syncify.h"
@@ -56,7 +56,9 @@
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 // top included files without lots of dependencies
 // also, they shouldn't get in the way of mmgr
+#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "Rendering/GL/myGL.h"
+#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "float3.h"
 #include "Util.h"
 #include "GlobalUnsynced.h"
@@ -66,10 +68,9 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/Camera.h"
-#endif	/* !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #endif // USE_PRECOMPILED_HEADER
 
-#endif	// __cplusplus
-
+#endif // __cplusplus
 
 #endif // __STD_AFX_H__

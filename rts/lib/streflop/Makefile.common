@@ -43,7 +43,7 @@ ifdef STREFLOP_X87
 CXXFLAGS += -mfpmath=387
 endif
 ifdef STREFLOP_SSE
-CXXFLAGS += -mfpmath=sse -msse -msse2
+CXXFLAGS += -mfpmath=sse -msse
 endif
 
 
