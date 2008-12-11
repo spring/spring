@@ -2,11 +2,13 @@
  * @file SoLib.h
  * @brief Linux shared library loader
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Robin Vobruba <hoijui.quaero@gmail.com>
  * 
  * Linux Shared Object loader class definition
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
+
 #ifndef SOLIB_H
 #define SOLIB_H
 
@@ -23,9 +25,17 @@ class SoLib: public SharedLib
 public:
 	/**
 	 * @brief Constructor
-	 * @param filename shared object to load
+	 * @param fileName shared object to load
 	 */
-	SoLib(const char *filename);
+	SoLib(const char* fileName);
+
+	/**
+	 * Just dlcloses the shared object
+	 * @brief unload
+	 */
+	virtual void Unload();
+
+	virtual bool LoadFailed();
 
 	/**
 	 * @brief Destructor
@@ -37,14 +47,15 @@ public:
 	 * @param symbol Function (symbol) to locate
 	 * @return void pointer to the function if found, NULL otherwise
 	 */
-	void *FindAddress(const char *symbol);
+	virtual void* FindAddress(const char* symbol);
+
 private:
 	/**
 	 * @brief so pointer
 	 * Stores the loaded shared object as a void pointer
 	 * (as per the standard convention)
 	 */
-	void *so;
+	void* so;
 };
 
-#endif /* SOLIB_H */
+#endif // SOLIB_H

@@ -224,7 +224,7 @@ bool BaseCmd::is_int(const std::string& s) const
 {
 	if (!isdigit(s[0]) && s[0] != '-' && s[0] != '+')
 		return false;
-	for (int j = 1; j < s.size(); ++j)
+	for (unsigned int j = 1; j < s.size(); ++j)
 		if (!isdigit(s[j]))
 			return false;
 	return true;

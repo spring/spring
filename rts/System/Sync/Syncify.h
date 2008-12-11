@@ -4,6 +4,11 @@
 #include <new>
 
 // #define SYNCIFY
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+	#ifdef SYNCIFY
+		#undef SYNCIFY
+	#endif
+#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 
 #ifdef SYNCIFY
 
@@ -50,7 +55,7 @@ static Syncify_t syncify;
 	#define ASSERT_MIXED_MODE Syncify::AssertMixedMode(__FILE__,__LINE__);
 	#define SAFE_NEW new(syncify)
 
-#else
+#else // SYNCIFY
 
 	#define INIT_SYNCIFY
 	#define END_SYNCIFY
@@ -64,5 +69,6 @@ static Syncify_t syncify;
 	#define ASSERT_UNSYNCED_MODE
 	#define ASSERT_MIXED_MODE
 	#define SAFE_NEW new
-#endif
-#endif /* SYNCIFY_H */
+#endif // SYNCIFY
+
+#endif // SYNCIFY_H
