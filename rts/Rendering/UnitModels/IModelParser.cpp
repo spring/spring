@@ -49,7 +49,7 @@ C3DModelParser::~C3DModelParser(void)
 	}
 	parsers.clear();
 
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.clear();
 	fixLocalModels.clear();
 	Update(); // delete remaining local models
@@ -65,6 +65,8 @@ void C3DModelParser::AddParser(const std::string ext, IModelParser* parser)
 
 S3DModel* C3DModelParser::Load3DModel(std::string name)
 {
+	GML_STDMUTEX_LOCK(model); // Load3DModel
+
 	StringToLowerInPlace(name);
 
 	//search in cache first
@@ -90,7 +92,7 @@ S3DModel* C3DModelParser::Load3DModel(std::string name)
 }
 
 void C3DModelParser::Update() {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
 	for(std::vector<ModelParserPair>::iterator i=createLists.begin(); i!=createLists.end(); ++i)
 		CreateListsNow(i->parser,i->model);
@@ -119,7 +121,7 @@ void C3DModelParser::DeleteChilds(S3DModelPiece* o)
 
 void C3DModelParser::DeleteLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
 	fixLocalModels.erase(unit);
 	deleteLocalModels.push_back(unit->localmodel);
@@ -131,7 +133,7 @@ void C3DModelParser::DeleteLocalModel(CUnit* unit)
 
 void C3DModelParser::CreateLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
 
 	unit->localmodel = CreateLocalModel(unit->model);
@@ -148,9 +150,9 @@ LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 	LocalModel *lmodel = SAFE_NEW LocalModel;
 	lmodel->type = model->type;
 	lmodel->pieces.reserve(model->numobjects);
-	LocalModelPiece* localpieces = SAFE_NEW LocalModelPiece[model->numobjects];
+
 	for (unsigned int i=0; i < model->numobjects; i++) {
-		lmodel->pieces.push_back(&localpieces[i]);
+		lmodel->pieces.push_back(SAFE_NEW LocalModelPiece);
 	}
 	lmodel->pieces[0]->parent = NULL;
 
@@ -220,8 +222,8 @@ void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 
 
 void C3DModelParser::CreateLists(IModelParser* parser, S3DModelPiece* o) {
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
-	GML_STDMUTEX_LOCK(model); // CreateLists
+#if defined(USE_GML) && GML_ENABLE_SIM
+//	GML_STDMUTEX_LOCK(model); // CreateLists
 	createLists.push_back(ModelParserPair(o,parser));
 #else
 	CreateListsNow(parser, o);

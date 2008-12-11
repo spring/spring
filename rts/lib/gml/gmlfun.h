@@ -250,17 +250,17 @@ EXTERN inline int gmlSizeOf(int datatype) {
 }
 
 
-#define GML_MAKEVAR() int type;
-#define GML_MAKEVAR_A(ftype1) GML_MAKEVAR() ftype1 A;
-#define GML_MAKEVAR_B(ftype1,ftype2) GML_MAKEVAR_A(ftype1) ftype2 B;
-#define GML_MAKEVAR_C(ftype1,ftype2,ftype3) GML_MAKEVAR_B(ftype1,ftype2) ftype3 C;
-#define GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4) GML_MAKEVAR_C(ftype1,ftype2,ftype3) ftype4 D;
-#define GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5) GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4) ftype5 E;
-#define GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6) GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5) ftype6 F;
-#define GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7) GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6) ftype7 G;
-#define GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8) GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7) ftype8 H;
-#define GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9) GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8) ftype9 I;
-#define GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10) GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9) ftype10 J;
+#define GML_MAKEDATA(name) struct gml##name##Data { int type;
+#define GML_MAKEDATA_A(name,tA) GML_MAKEDATA(name) tA A;
+#define GML_MAKEDATA_B(name,tA,tB) GML_MAKEDATA_A(name,tA) tB B;
+#define GML_MAKEDATA_C(name,tA,tB,tC) GML_MAKEDATA_B(name,tA,tB) tC C;
+#define GML_MAKEDATA_D(name,tA,tB,tC,tD) GML_MAKEDATA_C(name,tA,tB,tC) tD D;
+#define GML_MAKEDATA_E(name,tA,tB,tC,tD,tE) GML_MAKEDATA_D(name,tA,tB,tC,tD) tE E;
+#define GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF) GML_MAKEDATA_E(name,tA,tB,tC,tD,tE) tF F;
+#define GML_MAKEDATA_G(name,tA,tB,tC,tD,tE,tF,tG) GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF) tG G;
+#define GML_MAKEDATA_H(name,tA,tB,tC,tD,tE,tF,tG,tH) GML_MAKEDATA_G(name,tA,tB,tC,tD,tE,tF,tG) tH H;
+#define GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI) GML_MAKEDATA_H(name,tA,tB,tC,tD,tE,tF,tG,tH) tI I;
+#define GML_MAKEDATA_J(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ) GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI) tJ J;
 #define GML_MAKEVAR_SIZE() int size;
 #define GML_MAKEVAR_RET(ft) volatile ft ret;
 
@@ -306,15 +306,15 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	GML_PREP_VAR(name,sizefun)\
 	GML_UPD_SIZE()
 
-#define GML_COND(stmt)\
+#define GML_COND(name,...)\
 	GML_IF_SERVER_THREAD() {\
-		stmt;\
+		gl##name(__VA_ARGS__);\
 		return;\
 	}
 
-#define GML_COND_RET(stmt)\
+#define GML_COND_RET(name,...)\
 	GML_IF_SERVER_THREAD() {\
-		return stmt;\
+		return gl##name(__VA_ARGS__);\
 	}
 
 EXTERN inline void gmlSync(gmlQueue *qd) {
@@ -329,9 +329,10 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #	define GML_MAKENAME(name)
 #endif
 
-#define GML_FUN(name,ftype) EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
+#define GML_FUN(ftype,name,...) };\
+	EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
 	GML_MAKENAME(name)\
-	EXTERN inline ftype gml##name
+	EXTERN inline ftype gml##name(__VA_ARGS__)
 
 #ifdef _MSC_VER
 #define GML_FUNCTION __FUNCTION__
@@ -347,57 +348,52 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #define GML_ITEMSERVER_CHECK()
 #endif
 
-#define GML_MAKEFUN0(name) struct gml##name##Data {\
-	GML_MAKEVAR()\
-};\
-GML_FUN(name,void)() {\
-	GML_COND(gl##name())\
+#define GML_MAKEFUN0(name)\
+	GML_MAKEDATA(name)\
+GML_FUN(void, name) {\
+	GML_COND(name)\
 	GML_PREP_FIXED(name)\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN0R(name,ftypeR,cache) struct gml##name##Data {\
-	GML_MAKEVAR()\
-	GML_MAKEVAR_RET(ftypeR)\
-};\
-GML_FUN(name,ftypeR)() {\
-	GML_COND_RET(gl##name())\
+#define GML_MAKEFUN0R(name,tR,cache)\
+	GML_MAKEDATA(name)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name) {\
+	GML_COND_RET(name)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_UPD_POS()\
 	GML_SYNC();\
-	GML_RETVAL(ftypeR)\
+	GML_RETVAL(tR)\
 }
 
-#define GML_MAKEFUN1(name,ftype1) struct gml##name##Data {\
-	GML_MAKEVAR_A(ftype1)\
-};\
-GML_FUN(name,void)(ftype1 A) {\
-	GML_COND(gl##name(A))\
+#define GML_MAKEFUN1(name,tA)\
+	GML_MAKEDATA_A(name,tA)\
+GML_FUN(void, name, tA A) {\
+	GML_COND(name,A)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_A()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN1R(name,ftype1,ftypeR,cache) struct gml##name##Data {\
-	GML_MAKEVAR_A(ftype1)\
-	GML_MAKEVAR_RET(ftypeR)\
-};\
-GML_FUN(name,ftypeR)(ftype1 A) {\
-	GML_COND_RET(gl##name(A))\
+#define GML_MAKEFUN1R(name,tA,tR,cache)\
+	GML_MAKEDATA_A(name,tA)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name, tA A) {\
+	GML_COND_RET(name,A)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_A()\
 	GML_UPD_POS()\
 	GML_SYNC();\
-	GML_RETVAL(ftypeR)\
+	GML_RETVAL(tR)\
 }
 
-#define GML_MAKEFUN2(name,ftype1,ftype2,cache,...) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B) {\
-	GML_COND(gl##name(A,B))\
+#define GML_MAKEFUN2(name,tA,tB,cache,...)\
+	GML_MAKEDATA_B(name,tA,tB)\
+GML_FUN(void, name, tA A, tB B) {\
+	GML_COND(name,A,B)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_B()\
@@ -405,11 +401,10 @@ GML_FUN(name,void)(ftype1 A, ftype2 B) {\
 	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
-#define GML_MAKEFUN2B(name,ftype1,ftype2) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B) {\
-	GML_COND(gl##name(A,B))\
+#define GML_MAKEFUN2B(name,tA,tB)\
+	GML_MAKEDATA_B(name,tA,tB)\
+GML_FUN(void, name, tA A, tB B) {\
+	GML_COND(name,A,B)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_B()\
 	switch(A) {\
@@ -426,24 +421,22 @@ GML_FUN(name,void)(ftype1 A, ftype2 B) {\
 }
 
 
-#define GML_MAKEFUN2R(name,ftype1,ftype2,ftypeR) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
-	GML_MAKEVAR_RET(ftypeR)\
-};\
-GML_FUN(name,ftypeR)(ftype1 A,ftype2 B) {\
-	GML_COND_RET(gl##name(A,B))\
+#define GML_MAKEFUN2R(name,tA,tB,tR)\
+	GML_MAKEDATA_B(name,tA,tB)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name, tA A,tB B) {\
+	GML_COND_RET(name,A,B)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_B()\
 	GML_UPD_POS()\
 	GML_SYNC();\
-	GML_RETVAL(ftypeR)\
+	GML_RETVAL(tR)\
 }
 
-#define GML_MAKEFUN3(name,ftype1,ftype2,ftype3,cache,...) struct gml##name##Data {\
-	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
-	GML_COND(gl##name(A,B,C))\
+#define GML_MAKEFUN3(name,tA,tB,tC,cache,...)\
+	GML_MAKEDATA_C(name,tA,tB,tC)\
+GML_FUN(void, name, tA A, tB B, tC C) {\
+	GML_COND(name,A,B,C)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_C()\
@@ -451,98 +444,90 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
 	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
-#define GML_MAKEFUN4(name,ftype1,ftype2,ftype3,ftype4,...) struct gml##name##Data {\
-	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D) {\
-	GML_COND(gl##name(A,B,C,D))\
+#define GML_MAKEFUN4(name,tA,tB,tC,tD,...)\
+	GML_MAKEDATA_D(name,tA,tB,tC,tD)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D) {\
+	GML_COND(name,A,B,C,D)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_D()\
 	GML_UPD_POS()\
 	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
-#define GML_MAKEFUN5(name,ftype1,ftype2,ftype3,ftype4,ftype5) struct gml##name##Data {\
-	GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E) {\
-	GML_COND(gl##name(A,B,C,D,E))\
+#define GML_MAKEFUN5(name,tA,tB,tC,tD,tE,...)\
+	GML_MAKEDATA_E(name,tA,tB,tC,tD,tE)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E) {\
+	GML_COND(name,A,B,C,D,E)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_E()\
 	GML_UPD_POS()\
+	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
-#define GML_MAKEFUN6(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6) struct gml##name##Data {\
-	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F) {\
-	GML_COND(gl##name(A,B,C,D,E,F))\
+#define GML_MAKEFUN6(name,tA,tB,tC,tD,tE,tF)\
+	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F) {\
+	GML_COND(name,A,B,C,D,E,F)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_F()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN7(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,...) struct gml##name##Data {\
-	GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G))\
+#define GML_MAKEFUN7(name,tA,tB,tC,tD,tE,tF,tG,...)\
+	GML_MAKEDATA_G(name,tA,tB,tC,tD,tE,tF,tG)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G) {\
+	GML_COND(name,A,B,C,D,E,F,G)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_G()\
 	GML_UPD_POS()\
 	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
-#define GML_MAKEFUN8(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8) struct gml##name##Data {\
-	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
+#define GML_MAKEFUN8(name,tA,tB,tC,tD,tE,tF,tG,tH)\
+	GML_MAKEDATA_H(name,tA,tB,tC,tD,tE,tF,tG,tH)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H) {\
+	GML_COND(name,A,B,C,D,E,F,G,H)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_H()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN9(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9) struct gml##name##Data {\
-	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
+#define GML_MAKEFUN9(name,tA,tB,tC,tD,tE,tF,tG,tH,tI)\
+	GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_I()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN9R(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftypeR) struct gml##name##Data {\
-	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
-	GML_MAKEVAR_RET(ftypeR)\
-};\
-GML_FUN(name,ftypeR)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I) {\
-	GML_COND_RET(gl##name(A,B,C,D,E,F,G,H,I))\
+#define GML_MAKEFUN9R(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tR)\
+	GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I) {\
+	GML_COND_RET(name,A,B,C,D,E,F,G,H,I)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_I()\
 	GML_UPD_POS()\
 	GML_SYNC();\
-	GML_RETVAL(ftypeR)\
+	GML_RETVAL(tR)\
 }
 
 
-#define GML_MAKEFUN10(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10) struct gml##name##Data {\
-	GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 J) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+#define GML_MAKEFUN10(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ)\
+	GML_MAKEDATA_J(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I, tJ J) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I,J)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_J()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN7S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,sizefun) struct gml##name##Data {\
-	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
+#define GML_MAKEFUN7S(name,tA,tB,tC,tD,tE,tF,tG,sizefun)\
+	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF)\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G))\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG *G) {\
+	GML_COND(name,A,B,C,D,E,F,G)\
 	GML_PREP_VAR_SIZE(name,sizefun)\
 	GML_MAKEASS_F()\
 	memcpy(p+1,G,size);\
@@ -558,121 +543,112 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, f
 	else if(var!=NULL)\
 		memcpy(p+1,var,size);
 
-#define GML_MAKEFUN8S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,sizefun) struct gml##name##Data {\
-	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8 *)\
+#define GML_MAKEFUN8S(name,tA,tB,tC,tD,tE,tF,tG,tH,sizefun)\
+	GML_MAKEDATA_H(name,tA,tB,tC,tD,tE,tF,tG,tH *)\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH *H) {\
+	GML_COND(name,A,B,C,D,E,F,G,H)\
 	GML_PREP_VAR(name,sizefun)\
 	GML_MAKEASS_G()\
-	GML_PUB_COPY(name,H,ftype8 *)\
+	GML_PUB_COPY(name,H,tH *)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN9S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,sizefun) struct gml##name##Data {\
-	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9 *)\
+#define GML_MAKEFUN9S(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,sizefun)\
+	GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI *)\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI *I) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I)\
 	GML_PREP_VAR(name,sizefun)\
 	GML_MAKEASS_H()\
-	GML_PUB_COPY(name,I,ftype9 *)\
+	GML_PUB_COPY(name,I,tI *)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN10S(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10,sizefun) struct gml##name##Data {\
-	GML_MAKEVAR_J(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10 *)\
+#define GML_MAKEFUN10S(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ,sizefun)\
+	GML_MAKEDATA_J(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ *)\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 *J) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I, tJ *J) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I,J)\
 	GML_PREP_VAR(name,sizefun)\
 	GML_MAKEASS_I()\
-	GML_PUB_COPY(name,J,ftype10 *)\
+	GML_PUB_COPY(name,J,tJ *)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN1V(name,ftype1,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR()\
+#define GML_MAKEFUN1V(name,tA,tX,count)\
+	GML_MAKEDATA(name)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX A;\
-};\
-GML_FUN(name,void)(ftype1* A) {\
-	GML_COND(gl##name(A))\
-	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
-	memcpy(&(p->A),A,size+sizeof(ftypeX));\
+	tX A;\
+GML_FUN(void, name, tA* A) {\
+	GML_COND(name,A)\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(tX))\
+	memcpy(&(p->A),A,size+sizeof(tX));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN2V(name,ftype1,ftype2,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_A(ftype1)\
+#define GML_MAKEFUN2V(name,tA,tB,tX,count)\
+	GML_MAKEDATA_A(name,tA)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX B;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2* B) {\
-	GML_COND(gl##name(A,B))\
-	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	tX B;\
+GML_FUN(void, name, tA A, tB* B) {\
+	GML_COND(name,A,B)\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_A()\
-	memcpy(&(p->B),B,size+sizeof(ftypeX));\
+	memcpy(&(p->B),B,size+sizeof(tX));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN3V(name,ftype1,ftype2,ftype3,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
+#define GML_MAKEFUN3V(name,tA,tB,tC,tX,count)\
+	GML_MAKEDATA_B(name,tA,tB)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX C;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3* C) {\
-	GML_COND(gl##name(A,B,C))\
-	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	tX C;\
+GML_FUN(void, name, tA A, tB B, tC* C) {\
+	GML_COND(name,A,B,C)\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_B()\
-	memcpy(&(p->C),C,size+sizeof(ftypeX));\
+	memcpy(&(p->C),C,size+sizeof(tX));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN4V(name,ftype1,ftype2,ftype3,ftype4,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
+#define GML_MAKEFUN4V(name,tA,tB,tC,tD,tX,count)\
+	GML_MAKEDATA_C(name,tA,tB,tC)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX D;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-	GML_COND(gl##name(A,B,C,D))\
-	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	tX D;\
+GML_FUN(void, name, tA A, tB B, tC C, tD *D) {\
+	GML_COND(name,A,B,C,D)\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_C()\
-	memcpy(&(p->D),D,size+sizeof(ftypeX));\
+	memcpy(&(p->D),D,size+sizeof(tX));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN4VS(name,ftype1,ftype2,ftype3,ftype4,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
-	ftype4 D;\
+#define GML_MAKEFUN4VS(name,tA,tB,tC,tD,tX,count)\
+	GML_MAKEDATA_B(name,tA,tB)\
+	tD D;\
 	GML_MAKEVAR_SIZE()\
-	ftypeX C;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 *C, ftype4 D) {\
-	GML_COND(gl##name(A,B,C,D))\
-	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(ftypeX))\
+	tX C;\
+GML_FUN(void, name, tA A, tB B, tC *C, tD D) {\
+	GML_COND(name,A,B,C,D)\
+	GML_PREP_VAR_SIZE(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_B()\
 	p->D=D;\
 	if(C!=NULL)\
-		memcpy(&(p->C),C,size+sizeof(ftypeX));\
+		memcpy(&(p->C),C,size+sizeof(tX));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN4VSS(name,ftype1,ftype2,ftype3,ftype4,count) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2)\
+#define GML_MAKEFUN4VSS(name,tA,tB,tC,tD,count)\
+	GML_MAKEDATA_B(name,tA,tB)\
 	int lensize;\
 	GML_MAKEVAR_SIZE()\
-	ftype3 *C;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 **C, ftype4 *D) {\
-	GML_COND(gl##name(A,B,C,D))\
-	GML_PREP_VAR(name,(count-1)*sizeof(ftype3 *))\
+	tC *C;\
+GML_FUN(void, name, tA A, tB B, tC **C, tD *D) {\
+	GML_COND(name,A,B,C,D)\
+	GML_PREP_VAR(name,(count-1)*sizeof(tC *))\
 	GML_MAKEASS_B()\
 	p->lensize=datasize;\
 	BYTE *e=(BYTE *)p+datasize;\
@@ -713,20 +689,19 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 **C, ftype4 *D) {\
 		v+=stride;\
 	}
 
-#define GML_MAKEFUN6VST(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftypeX,count,stride,numargs) struct gml##name##Data {\
-	GML_MAKEVAR_E(ftype1,ftype2,ftype3,ftype4,ftype5)\
+#define GML_MAKEFUN6VST(name,tA,tB,tC,tD,tE,tF,tX,count,stride,numargs)\
+	GML_MAKEDATA_E(name,tA,tB,tC,tD,tE)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX F;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) {\
-	GML_COND(gl##name(A,B,C,D,E,F))\
+	tX F;\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
+	GML_COND(name,A,B,C,D,E,F)\
 	int nargs=numargs;\
-	GML_PREP_VAR_SIZE(name,(nargs*count-1)*sizeof(ftypeX))\
+	GML_PREP_VAR_SIZE(name,(nargs*count-1)*sizeof(tX))\
 	GML_MAKEASS_E()\
 	p->stride=nargs;\
-	ftypeX *e=&(p->F);\
-	ftype6 *v=F;\
-	GML_STDCOPY1(ftype6,count,stride,nargs)\
+	tX *e=&(p->F);\
+	tF *v=F;\
+	GML_STDCOPY1(tF,count,stride,nargs)\
 	GML_UPD_POS()\
 }
 
@@ -745,85 +720,79 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 		v+=stride1;\
 	}
 
-#define GML_MAKEFUN10VST(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftype10,ftypeX,count1,stride1,count2,stride2,numargs) struct gml##name##Data {\
-	GML_MAKEVAR_I(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9)\
+#define GML_MAKEFUN10VST(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tJ,tX,count1,stride1,count2,stride2,numargs)\
+	GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX J;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 I, ftype10 *J) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I,J))\
+	tX J;\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I, tJ *J) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I,J)\
 	int nargs=numargs;\
-	GML_PREP_VAR_SIZE(name,(nargs*count1*count2-1)*sizeof(ftypeX))\
+	GML_PREP_VAR_SIZE(name,(nargs*count1*count2-1)*sizeof(tX))\
 	GML_MAKEASS_I()\
 	p->stride1=nargs*count2;\
 	p->stride2=nargs;\
-	ftypeX *e=&(p->J);\
-	ftype10 *v=J;\
-	GML_STDCOPY2(ftype10,count1,stride1,count2,stride2,nargs)\
+	tX *e=&(p->J);\
+	tJ *v=J;\
+	GML_STDCOPY2(tJ,count1,stride1,count2,stride2,nargs)\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN7VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6)\
+#define GML_MAKEFUN7VP(name,tA,tB,tC,tD,tE,tF,tG,tX,count)\
+	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX *GP;\
-	ftypeX G;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 *G) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G))\
-	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	tX *GP;\
+	tX G;\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG *G) {\
+	GML_COND(name,A,B,C,D,E,F,G)\
+	GML_PREP_VAR(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_F()\
-	GML_PUB_PCOPY(name,G,GP,ftypeX)\
+	GML_PUB_PCOPY(name,G,GP,tX)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN8VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_G(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7)\
+#define GML_MAKEFUN8VP(name,tA,tB,tC,tD,tE,tF,tG,tH,tX,count)\
+	GML_MAKEDATA_G(name,tA,tB,tC,tD,tE,tF,tG)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX *HP;\
-	ftypeX H;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 *H) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H))\
-	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	tX *HP;\
+	tX H;\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH *H) {\
+	GML_COND(name,A,B,C,D,E,F,G,H)\
+	GML_PREP_VAR(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_G()\
-	GML_PUB_PCOPY(name,H,HP,ftypeX)\
+	GML_PUB_PCOPY(name,H,HP,tX)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN9VP(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8,ftype9,ftypeX,count) struct gml##name##Data {\
-	GML_MAKEVAR_H(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,ftype7,ftype8)\
+#define GML_MAKEFUN9VP(name,tA,tB,tC,tD,tE,tF,tG,tH,tI,tX,count)\
+	GML_MAKEDATA_H(name,tA,tB,tC,tD,tE,tF,tG,tH)\
 	GML_MAKEVAR_SIZE()\
-	ftypeX *IP;\
-	ftypeX I;\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 F, ftype7 G, ftype8 H, ftype9 *I) {\
-	GML_COND(gl##name(A,B,C,D,E,F,G,H,I))\
-	GML_PREP_VAR(name,(count-1)*sizeof(ftypeX))\
+	tX *IP;\
+	tX I;\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI *I) {\
+	GML_COND(name,A,B,C,D,E,F,G,H,I)\
+	GML_PREP_VAR(name,(count-1)*sizeof(tX))\
 	GML_MAKEASS_H()\
-	GML_PUB_PCOPY(name,I,IP,ftypeX)\
+	GML_PUB_PCOPY(name,I,IP,tX)\
 	GML_UPD_SIZE()\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN1CS(name,ftype1,arg) struct gml##name##Data {\
-	GML_MAKEVAR_A(ftype1)\
-};\
-GML_FUN(name,void)(ftype1 A) {\
-	GML_COND(gl##name(A))\
+#define GML_MAKEFUN1CS(name,tA,arg)\
+	GML_MAKEDATA_A(name,tA)\
+GML_FUN(void, name, tA A) {\
+	GML_COND(name,A)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_A()\
 	qd->ClientState arg (1<<(A-GL_VERTEX_ARRAY));\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN1VA(name,ftype1,arg,fun) struct gml##name##Data {\
-	GML_MAKEVAR_A(ftype1)\
-};\
-GML_FUN(name,void)(ftype1 A) {\
-	GML_COND(gl##name(A))\
+#define GML_MAKEFUN1VA(name,tA,arg,fun)\
+	GML_MAKEDATA_A(name,tA)\
+GML_FUN(void, name, tA A) {\
+	GML_COND(name,A)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_A()\
 	qd->arg##set.fun(A);\
@@ -836,11 +805,10 @@ GML_FUN(name,void)(ftype1 A) {\
 	else\
 		qd->ClientState &= ~GML_##arg##_ARRAY_BUFFER;
 
-#define GML_MAKEFUN2P(name,ftype1,ftype2,arg) struct gml##name##Data {\
-	GML_MAKEVAR_B(ftype1,ftype2 *)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 *B) {\
-	GML_COND(gl##name(A,B))\
+#define GML_MAKEFUN2P(name,tA,tB,arg)\
+	GML_MAKEDATA_B(name,tA,tB *)\
+GML_FUN(void, name, tA A, tB *B) {\
+	GML_COND(name,A,B)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_B()\
 	qd->arg##stride=A;\
@@ -849,11 +817,10 @@ GML_FUN(name,void)(ftype1 A, ftype2 *B) {\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN3P(name,ftype1,ftype2,ftype3,arg) struct gml##name##Data {\
-	GML_MAKEVAR_C(ftype1,ftype2,ftype3 *)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 *C) {\
-	GML_COND(gl##name(A,B,C))\
+#define GML_MAKEFUN3P(name,tA,tB,tC,arg)\
+	GML_MAKEDATA_C(name,tA,tB,tC *)\
+GML_FUN(void, name, tA A, tB B, tC *C) {\
+	GML_COND(name,A,B,C)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_C()\
 	qd->arg##type=A;\
@@ -863,11 +830,10 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 *C) {\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN4P(name,ftype1,ftype2,ftype3,ftype4,arg) struct gml##name##Data {\
-	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-	GML_COND(gl##name(A,B,C,D))\
+#define GML_MAKEFUN4P(name,tA,tB,tC,tD,arg)\
+	GML_MAKEDATA_D(name,tA,tB,tC,tD *)\
+GML_FUN(void, name, tA A, tB B, tC C, tD *D) {\
+	GML_COND(name,A,B,C,D)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_D()\
 	qd->arg##size=A;\
@@ -878,11 +844,10 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
 	GML_UPD_POS()\
 }
 
-#define GML_MAKEFUN6P(name,ftype1,ftype2,ftype3,ftype4,ftype5,ftype6,arg) struct gml##name##Data {\
-	GML_MAKEVAR_F(ftype1,ftype2,ftype3,ftype4,ftype5,ftype6 *)\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) {\
-	GML_COND(gl##name(A,B,C,D,E,F))\
+#define GML_MAKEFUN6P(name,tA,tB,tC,tD,tE,tF,arg)\
+	GML_MAKEDATA_F(name,tA,tB,tC,tD,tE,tF *)\
+GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF *F) {\
+	GML_COND(name,A,B,C,D,E,F)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_F()\
 	qd->arg##map[A]=arg##data(B,C,D,E,F,qd->ArrayBuffer);\
@@ -1002,13 +967,12 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 D, ftype5 E, ftype6 *F) 
 	}
 
 
-#define GML_MAKEFUN3VDA(name,ftype1,ftype2,ftype3) struct gml##name##Data {\
-	GML_MAKEVAR_C(ftype1,ftype2,ftype3)\
+#define GML_MAKEFUN3VDA(name,tA,tB,tC)\
+	GML_MAKEDATA_C(name,tA,tB,tC)\
 	GML_MAKEPOINTERDATA()\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
-	GML_COND(gl##name(A,B,C))\
+GML_FUN(void, name, tA A, tB B, tC C) {\
+	GML_COND(name,A,B,C)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_C()\
 	GLenum clientstate=qd->ClientState & ~(qd->ClientState>>16);\
@@ -1026,13 +990,12 @@ GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C) {\
 }
 
 
-#define GML_MAKEFUN4VDE(name,ftype1,ftype2,ftype3,ftype4) struct gml##name##Data {\
-	GML_MAKEVAR_D(ftype1,ftype2,ftype3,ftype4 *)\
+#define GML_MAKEFUN4VDE(name,tA,tB,tC,tD)\
+	GML_MAKEDATA_D(name,tA,tB,tC,tD *)\
 	GML_MAKEPOINTERDATA()\
 	GML_MAKEVAR_SIZE()\
-};\
-GML_FUN(name,void)(ftype1 A, ftype2 B, ftype3 C, ftype4 *D) {\
-	GML_COND(gl##name(A,B,C,D))\
+GML_FUN(void, name, tA A, tB B, tC C, tD *D) {\
+	GML_COND(name,A,B,C,D)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_D()\
 	BYTE *e=(BYTE *)(p+1);\
@@ -1309,5 +1272,12 @@ GML_MAKEFUN0(InitNames)
 GML_MAKEFUN1(LoadName,GLuint)
 GML_MAKEFUN1(PushName,GLuint)
 GML_MAKEFUN0(PopName)
+GML_MAKEFUN4(GetTexLevelParameteriv,GLenum,GLint,GLenum,GLint *,GML_SYNC())
+GML_MAKEFUN4(GetFramebufferAttachmentParameterivEXT,GLenum,GLenum,GLenum,GLint *,GML_SYNC())
+GML_MAKEFUN3(GetRenderbufferParameterivEXT,GLenum,GLenum,GLint *,,GML_SYNC())
+GML_MAKEFUN5(GetTexImage,GLenum,GLint,GLenum,GLenum,GLvoid *,GML_SYNC())
+GML_MAKEFUN1R(IsTexture,GLuint,GLboolean,)
+GML_MAKEFUN5(FramebufferTexture1DEXT,GLenum,GLenum,GLenum,GLuint,GLint)
+GML_MAKEFUN6(FramebufferTexture3DEXT,GLenum,GLenum,GLenum,GLuint,GLint,GLint)
 
 #endif

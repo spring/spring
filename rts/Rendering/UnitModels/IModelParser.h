@@ -43,7 +43,7 @@ private:
 	std::map<std::string,S3DModel*> cache;
 	std::map<std::string,IModelParser*> parsers;
 
-#if defined(USE_GML) && GML_ENABLE_SIMDRAW
+#if defined(USE_GML) && GML_ENABLE_SIM
 	struct ModelParserPair {
 		ModelParserPair(S3DModelPiece* o,IModelParser* p) : model(o),parser(p) {};
 		S3DModelPiece* model;

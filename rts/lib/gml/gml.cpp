@@ -101,6 +101,7 @@ unsigned gmlCPUCount() {
 #endif
 }
 
+#define GML_NOP 0
 const char *gmlFunctionNames[512];
 inline int gmlResetNames() {
     for(int i=0; i<512; ++i)
@@ -257,6 +258,8 @@ BYTE *gmlQueue::Realloc(BYTE **e) {
 	*(BYTE * volatile *)&WritePos=Write+oldpos;
 	*(BYTE * volatile *)&WriteSize=Write+newsize;
 
+	GML_MEMBAR; //#
+
 	Reloc=FALSE;
 	if(e)
 		*e=Write+olde;
@@ -272,6 +275,8 @@ BYTE *gmlQueue::WaitRealloc(BYTE **e) {
 	while(Reloc)
 		boost::thread::yield();
 
+	GML_MEMBAR; //#
+
 	if(e)
 		*e=(BYTE *)*(BYTE * volatile *)&Write+olde;
 	return (BYTE *)*(BYTE * volatile *)&WritePos;
@@ -282,7 +287,7 @@ void gmlQueue::ReleaseWrite(BOOL_ final) {
 		return;
 #if GML_ALTERNATE_SYNCMODE
 	if(WritePos==Write) {
-		*(int *)WritePos=0;
+		*(int *)WritePos=GML_NOP;
 		WritePos+=sizeof(int);
 	}
 
@@ -431,7 +436,6 @@ BOOL_ gmlQueue::GetRead(BOOL_ critical) {
 
 
 void gmlQueue::SyncRequest() {
-#if GML_ALTERNATE_SYNCMODE
 	// make sure server is finished with other queue
 	if(Write==Queue1) {
 		while(*(BYTE * volatile *)&Pos2!=Queue2)
@@ -442,6 +446,7 @@ void gmlQueue::SyncRequest() {
 			boost::thread::yield();
 	}
 
+#if GML_ALTERNATE_SYNCMODE
 	WasSynced=TRUE;
 	Sync=EXEC_SYNC;
 	while(Sync==EXEC_SYNC) // wait for syncmode confirmation before release
@@ -450,16 +455,11 @@ void gmlQueue::SyncRequest() {
 	GetWrite(TRUE); // get new queue so server can get the old one
 	while(Sync!=EXEC_RES) // waiting for result
 		boost::thread::yield();
+
+	GML_MEMBAR; //#
+
 	Sync=EXEC_RUN; // server may proceed (avoid entering sync again)
 #else
-	if(Write==Queue1) {
-		while(*(BYTE * volatile *)&Pos2!=Queue2)
-			boost::thread::yield();
-	}
-	if(Write==Queue2) {
-		while(*(BYTE * volatile *)&Pos1!=Queue1)
-			boost::thread::yield();
-	}
 	BYTE *wp=WritePos;
 	*(BYTE * volatile *)&WritePos=wp;
 	WasSynced=TRUE;
@@ -470,162 +470,179 @@ void gmlQueue::SyncRequest() {
 }
 
 #define GML_DT(name) ((gml##name##Data *)p)
-#define GML_D(name,x) (GML_DT(name)->x)
+#define GML_DATA(name,x) (GML_DT(name)->x)
+#define GML_DATA_A(name) GML_DATA(name,A)
+#define GML_DATA_B(name) GML_DATA_A(name),GML_DATA(name,B)
+#define GML_DATA_C(name) GML_DATA_B(name),GML_DATA(name,C)
+#define GML_DATA_D(name) GML_DATA_C(name),GML_DATA(name,D)
+#define GML_DATA_E(name) GML_DATA_D(name),GML_DATA(name,E)
+#define GML_DATA_F(name) GML_DATA_E(name),GML_DATA(name,F)
+#define GML_DATA_G(name) GML_DATA_F(name),GML_DATA(name,G)
+#define GML_DATA_H(name) GML_DATA_G(name),GML_DATA(name,H)
+#define GML_DATA_I(name) GML_DATA_H(name),GML_DATA(name,I)
+#define GML_DATA_J(name) GML_DATA_I(name),GML_DATA(name,J)
+
 #define GML_NEXT(name) p+=sizeof(gml##name##Data); break;
-#define GML_NEXT_SIZE(name) p+=GML_D(name,size); break;
+#define GML_NEXT_SIZE(name) p+=GML_DATA(name,size); break;
+#define GML_CASE(name) case gml##name##Enum
+#define GML_CALL(name,...) gl##name(__VA_ARGS__);
+#define GML_EXEC(name,...) GML_CASE(name): GML_CALL(name,__VA_ARGS__)
+#define GML_EXEC_RET(name,...) GML_CASE(name): GML_DATA(name,ret)=GML_CALL(name,__VA_ARGS__)
 
 // Handler definition macros
 // These handlers execute GL commands from the queues
-#define GML_MAKEHANDLER0(name) case gml##name##Enum:\
-	gl##name();\
+#define GML_MAKEHANDLER0(name)\
+	GML_EXEC(name)\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER0R(name) case gml##name##Enum:\
-	GML_D(name,ret)=gl##name();\
+#define GML_MAKEHANDLER0R(name)\
+	GML_EXEC_RET(name)\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER1(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A));\
+#define GML_MAKEHANDLER1(name)\
+	GML_EXEC(name,GML_DATA_A(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER1R(name) case gml##name##Enum:\
-	GML_D(name,ret)=gl##name(GML_D(name,A));\
+#define GML_MAKEHANDLER1R(name)\
+	GML_EXEC_RET(name,GML_DATA_A(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER2(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B));\
+#define GML_MAKEHANDLER2(name)\
+	GML_EXEC(name,GML_DATA_B(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER2R(name) case gml##name##Enum:\
-	GML_D(name,ret)=gl##name(GML_D(name,A),GML_D(name,B));\
+#define GML_MAKEHANDLER2R(name)\
+	GML_EXEC_RET(name,GML_DATA_B(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER3(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C));\
+#define GML_MAKEHANDLER3(name)\
+	GML_EXEC(name,GML_DATA_C(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER4(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D));\
+#define GML_MAKEHANDLER4(name)\
+	GML_EXEC(name,GML_DATA_D(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER5(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E));\
+#define GML_MAKEHANDLER5(name)\
+	GML_EXEC(name,GML_DATA_E(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER6(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F));\
+#define GML_MAKEHANDLER6(name)\
+	GML_EXEC(name,GML_DATA_F(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER7(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G));\
+#define GML_MAKEHANDLER7(name)\
+	GML_EXEC(name,GML_DATA_G(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER8(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H));\
+#define GML_MAKEHANDLER8(name)\
+	GML_EXEC(name,GML_DATA_H(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER9(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I));\
+#define GML_MAKEHANDLER9(name)\
+	GML_EXEC(name,GML_DATA_I(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER9R(name) case gml##name##Enum:\
-	GML_D(name,ret)=gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I));\
+#define GML_MAKEHANDLER9R(name)\
+	GML_EXEC_RET(name,GML_DATA_I(name))\
 	GML_NEXT(name)
 
-#define GML_MAKEHANDLER10(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I),GML_D(name,J));\
+#define GML_MAKEHANDLER10(name)\
+	GML_EXEC(name,GML_DATA_J(name))\
 	GML_NEXT(name)
 //glTexImage1D
-#define GML_MAKEHANDLER8S(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H)?((BYTE *)(GML_D(name,H)))-1:(BYTE *)(GML_DT(name)+1));\
+#define GML_MAKEHANDLER8S(name)\
+	GML_EXEC(name,GML_DATA_G(name),GML_DATA(name,H)?((BYTE *)(GML_DATA(name,H)))-1:(BYTE *)(GML_DT(name)+1))\
 	GML_NEXT_SIZE(name)
 //glTexImage2D
-#define GML_MAKEHANDLER9S(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I)?((BYTE *)(GML_D(name,I)))-1:(BYTE *)(GML_DT(name)+1));\
+#define GML_MAKEHANDLER9S(name)\
+	GML_EXEC(name,GML_DATA_H(name),GML_DATA(name,I)?((BYTE *)(GML_DATA(name,I)))-1:(BYTE *)(GML_DT(name)+1))\
 	GML_NEXT_SIZE(name)
 //glTexImage3D
-#define GML_MAKEHANDLER10S(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I),GML_D(name,J)?((BYTE *)(GML_D(name,J)))-1:(BYTE *)(GML_DT(name)+1));\
+#define GML_MAKEHANDLER10S(name)\
+	GML_EXEC(name,GML_DATA_I(name),GML_DATA(name,J)?((BYTE *)(GML_DATA(name,J)))-1:(BYTE *)(GML_DT(name)+1))\
 	GML_NEXT_SIZE(name)
 //glColor4fv
-#define GML_MAKEHANDLER1V(name) case gml##name##Enum:\
-	gl##name(&(GML_D(name,A)));\
+#define GML_MAKEHANDLER1V(name)\
+	GML_EXEC(name,&(GML_DATA(name,A)))\
 	GML_NEXT_SIZE(name)
 //glFogfv
-#define GML_MAKEHANDLER2V(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),&(GML_D(name,B)));\
+#define GML_MAKEHANDLER2V(name)\
+	GML_EXEC(name,GML_DATA_A(name),&(GML_DATA(name,B)))\
 	GML_NEXT_SIZE(name)
 //glLight
-#define GML_MAKEHANDLER3V(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),&(GML_D(name,C)));\
+#define GML_MAKEHANDLER3V(name)\
+	GML_EXEC(name,GML_DATA_B(name),&(GML_DATA(name,C)))\
 	GML_NEXT_SIZE(name)
 //glUniformMatrix4fv
-#define GML_MAKEHANDLER4V(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),&(GML_D(name,D)));\
+#define GML_MAKEHANDLER4V(name)\
+	GML_EXEC(name,GML_DATA_C(name),&(GML_DATA(name,D)))\
 	GML_NEXT_SIZE(name)
 //glBufferDataARB
-#define GML_MAKEHANDLER4VS(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),&(GML_D(name,C)),GML_D(name,D));\
+#define GML_MAKEHANDLER4VS(name)\
+	GML_EXEC(name,GML_DATA_B(name),&(GML_DATA(name,C)),GML_DATA(name,D))\
 	GML_NEXT_SIZE(name)
 //glShaderSource
-#define GML_MAKEHANDLER4VSS(name,type) case gml##name##Enum:\
-	ptr=(BYTE *)GML_DT(name)+GML_D(name,lensize);\
-	for(int i=0; i<GML_D(name,B); ++i) {\
-		GLint j=((intptr_t *)&GML_D(name,C))[i];\
-		(&(GML_D(name,C)))[i]=(type *)ptr;\
+#define GML_MAKEHANDLER4VSS(name,type)\
+	GML_CASE(name):\
+	ptr=(BYTE *)GML_DT(name)+GML_DATA(name,lensize);\
+	for(int i=0; i<GML_DATA(name,B); ++i) {\
+		GLint j=((intptr_t *)&GML_DATA(name,C))[i];\
+		(&(GML_DATA(name,C)))[i]=(type *)ptr;\
 		ptr+=j;\
 	}\
-	gl##name(GML_D(name,A),GML_D(name,B),&(GML_D(name,C)),NULL);\
+	GML_CALL(name,GML_DATA(name,A),GML_DATA(name,B),&(GML_DATA(name,C)),NULL)\
 	GML_NEXT_SIZE(name)
 //glMap1
-#define GML_MAKEHANDLER6V(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),&(GML_D(name,F)));\
+#define GML_MAKEHANDLER6V(name)\
+	GML_EXEC(name,GML_DATA_E(name),&(GML_DATA(name,F)))\
 	GML_NEXT_SIZE(name)
 //glMap2
-#define GML_MAKEHANDLER10V(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,I),&(GML_D(name,J)));\
+#define GML_MAKEHANDLER10V(name)\
+	GML_EXEC(name,GML_DATA_I(name),&(GML_DATA(name,J)))\
 	GML_NEXT_SIZE(name)
 //glCompressedTexImage1DARB
-#define GML_MAKEHANDLER7VP(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,GP)?GML_D(name,GP)-1:&(GML_D(name,G)));\
+#define GML_MAKEHANDLER7VP(name)\
+	GML_EXEC(name,GML_DATA_F(name),GML_DATA(name,GP)?GML_DATA(name,GP)-1:&(GML_DATA(name,G)))\
 	GML_NEXT_SIZE(name)
 //glCompressedTexImage2DARB
-#define GML_MAKEHANDLER8VP(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,HP)?GML_D(name,HP)-1:&(GML_D(name,H)));\
+#define GML_MAKEHANDLER8VP(name)\
+	GML_EXEC(name,GML_DATA_G(name),GML_DATA(name,HP)?GML_DATA(name,HP)-1:&(GML_DATA(name,H)))\
 	GML_NEXT_SIZE(name)
 //glCompressedTexImage3DARB
-#define GML_MAKEHANDLER9VP(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_D(name,G),GML_D(name,H),GML_D(name,IP)?GML_D(name,IP)-1:&(GML_D(name,I)));\
+#define GML_MAKEHANDLER9VP(name)\
+	GML_EXEC(name,GML_DATA_H(name),GML_DATA(name,IP)?GML_DATA(name,IP)-1:&(GML_DATA(name,I)))\
 	GML_NEXT_SIZE(name)
 //gluBuild2DMipmaps
-#define GML_MAKEHANDLER7S(name) case gml##name##Enum:\
-	gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D),GML_D(name,E),GML_D(name,F),GML_DT(name)+1);\
+#define GML_MAKEHANDLER7S(name)\
+	GML_EXEC(name,GML_DATA_F(name),GML_DT(name)+1)\
 	GML_NEXT_SIZE(name)
 //glLight
 #define GML_MAKESUBHANDLER2(flag,fun,arg,name)\
-	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
-		fun(0,(GLboolean *)((GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr));\
-		ptr+=GML_D(name,arg##totalsize);\
+	if(GML_DATA(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
+		fun(0,(GLboolean *)((GML_DATA(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_DATA(name,arg##pointer):ptr));\
+		ptr+=GML_DATA(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLER3(flag,fun,arg,name)\
-	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
-		fun(GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
-		ptr+=GML_D(name,arg##totalsize);\
+	if(GML_DATA(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
+		fun(GML_DATA(name,arg##type),0,(GML_DATA(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_DATA(name,arg##pointer):ptr);\
+		ptr+=GML_DATA(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLER4(flag,fun,arg,name)\
-	if(GML_D(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
-		fun(GML_D(name,arg##size),GML_D(name,arg##type),0,(GML_D(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_D(name,arg##pointer):ptr);\
-		ptr+=GML_D(name,arg##totalsize);\
+	if(GML_DATA(name,ClientState) & (1<<(flag-GL_VERTEX_ARRAY))) {\
+		fun(GML_DATA(name,arg##size),GML_DATA(name,arg##type),0,(GML_DATA(name,ClientState) & GML_##arg##_ARRAY_BUFFER)?GML_DATA(name,arg##pointer):ptr);\
+		ptr+=GML_DATA(name,arg##totalsize);\
 	}
 #define GML_MAKESUBHANDLERVA(name)\
-	for(int i=0; i<GML_D(name,VAcount); ++i) {\
+	for(int i=0; i<GML_DATA(name,VAcount); ++i) {\
 		VAstruct *va=(VAstruct *)ptr;\
-		glVertexAttribPointer(va->target,va->size,va->type,va->normalized,0,va->buffer?va->pointer:(ptr+sizeof(VAstruct)));\
+		GML_CALL(VertexAttribPointer,va->target,va->size,va->type,va->normalized,0,va->buffer?va->pointer:(ptr+sizeof(VAstruct)));\
 		ptr+=va->totalsize;\
 	}
 
 
-#define GML_MAKEHANDLER3VDA(name) case gml##name##Enum:\
+#define GML_MAKEHANDLER3VDA(name)\
+	GML_CASE(name):\
 	ptr=(BYTE *)(GML_DT(name)+1);\
 	GML_MAKESUBHANDLER4(GL_VERTEX_ARRAY,glVertexPointer,VP,name)\
 	GML_MAKESUBHANDLER4(GL_COLOR_ARRAY,glColorPointer,CP,name)\
@@ -634,10 +651,11 @@ void gmlQueue::SyncRequest() {
 	GML_MAKESUBHANDLER3(GL_NORMAL_ARRAY,glNormalPointer,NP,name)\
 	GML_MAKESUBHANDLER2(GL_EDGE_FLAG_ARRAY,glEdgeFlagPointer,EFP,name)\
 	GML_MAKESUBHANDLERVA(name)\
-	gl##name(GML_D(name,A),0,GML_D(name,C));\
+	GML_CALL(name,GML_DATA(name,A),0,GML_DATA(name,C))\
 	GML_NEXT_SIZE(name)
 
-#define GML_MAKEHANDLER4VDE(name) case gml##name##Enum:\
+#define GML_MAKEHANDLER4VDE(name)\
+	GML_CASE(name):\
 	ptr=(BYTE *)(GML_DT(name)+1);\
 	GML_MAKESUBHANDLER4(GL_VERTEX_ARRAY,glVertexPointer,VP,name)\
 	GML_MAKESUBHANDLER4(GL_COLOR_ARRAY,glColorPointer,CP,name)\
@@ -646,13 +664,13 @@ void gmlQueue::SyncRequest() {
 	GML_MAKESUBHANDLER3(GL_NORMAL_ARRAY,glNormalPointer,NP,name)\
 	GML_MAKESUBHANDLER2(GL_EDGE_FLAG_ARRAY,glEdgeFlagPointer,EFP,name)\
 	GML_MAKESUBHANDLERVA(name)\
-	if(GML_D(name,ClientState) & GML_ELEMENT_ARRAY_BUFFER)\
-		gl##name(GML_D(name,A),GML_D(name,B),GML_D(name,C),GML_D(name,D));\
+	if(GML_DATA(name,ClientState) & GML_ELEMENT_ARRAY_BUFFER)\
+		GML_CALL(name,GML_DATA(name,A),GML_DATA(name,B),GML_DATA(name,C),GML_DATA(name,D))\
 	else\
-		glDrawArrays(GML_D(name,A),0,GML_D(name,B));\
+		GML_CALL(DrawArrays,GML_DATA(name,A),0,GML_DATA(name,B))\
 	GML_NEXT_SIZE(name)
 
-const char *gmlNOPDummy=(gmlFunctionNames[0]="gmlNOP");
+const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 #define GML_QUOTE(x) #x
 #define GML_MAKENAME(name) EXTERN const char *gml##name##Dummy=(gmlFunctionNames[gml##name##Enum]=GML_QUOTE(gml##name));
 #include "gmlfun.h"
@@ -664,7 +682,7 @@ gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlLis
 inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 	switch(*(int *)p) {
 #if GML_ALTERNATE_SYNCMODE
-		case 0: p+=sizeof(int); break;
+		case GML_NOP: p+=sizeof(int); break;
 #endif
 		GML_MAKEHANDLER1(Disable)
 		GML_MAKEHANDLER1(Enable)
@@ -921,6 +939,13 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER1(LoadName)
 		GML_MAKEHANDLER1(PushName)
 		GML_MAKEHANDLER0(PopName)
+		GML_MAKEHANDLER4(GetTexLevelParameteriv)
+		GML_MAKEHANDLER4(GetFramebufferAttachmentParameterivEXT)
+		GML_MAKEHANDLER3(GetRenderbufferParameterivEXT)
+		GML_MAKEHANDLER5(GetTexImage)
+		GML_MAKEHANDLER1R(IsTexture)
+		GML_MAKEHANDLER5(FramebufferTexture1DEXT)
+		GML_MAKEHANDLER6(FramebufferTexture3DEXT)
 	}
 }
 
@@ -946,18 +971,18 @@ void gmlQueue::ExecuteDebug() {
 	BYTE *ptr=NULL;
 
 	while(p<e) {
-		if(*(int *)p!=0)
+		if(*(int *)p!=GML_NOP)
 			logOutput.Print("GML error: Sim thread called %s",gmlFunctionNames[*(int *)p]);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
-//	if(procs>1 || (procs==1 && *(int *)Read!=0))
+//	if(procs>1 || (procs==1 && *(int *)Read!=GML_NOP))
 //		logOutput.Print("GML error: %d OpenGL calls detected in SimFrame()",procs);
 }
 
 #include "gmlsrv.h"
 class CUnit;
-gmlClientServer<void, int,CUnit*> *gmlProcessor=NULL;
+gmlClientServer<void, int, CUnit*> *gmlProcessor=NULL;
 
 // ExecuteSynced - executes all GL commands in the current read queue.
 // Execution is synced (this means it will stop at certain points
@@ -992,6 +1017,9 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 		Sync=EXEC_RUN; // sync confirmed
 		GetRead(TRUE);
 		(this->*execfun)();
+
+		GML_MEMBAR; //#
+
 		Sync=EXEC_RES; // result available
 		ReleaseRead();
 		while(Sync==EXEC_RES) // waiting for worker to acquire result
@@ -1010,7 +1038,6 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 			while(TRUE) {
 				if(Reloc)
 					e=Realloc(&p);
-//				if(((++updsrv)%GML_UPDSRV_INTERVAL)==0)
 				if((updsrv++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
 					gmlUpdateServers();
 				BYTE *s=(BYTE *)Sync;
