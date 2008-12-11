@@ -6,38 +6,36 @@
 #include <stdlib.h>
 
 #ifdef _MSC_VER
-	/*
-	Microsoft Visual C++ 7.1: MSC_VER = 1310
-	Microsoft Visual C++ 7.0: MSC_VER = 1300
-	*/
+	// Microsoft Visual C++ 7.1: MSC_VER = 1310
+	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
 		#define SNPRINTF sprintf_s
 		#define VSNPRINTF vsprintf_s
 		#define STRCPY strcpy_s
 		#define FOPEN fopen_s
-	#else              // Visual Studio 2003
+	#else               // Visual Studio 2003
 		#define SNPRINTF _snprintf
 		#define VSNPRINTF _vsnprintf
 		#define STRCPY strcpy
 		#define FOPEN fopen
 	#endif
 	#define STRCASECMP stricmp
-#else
+#else // defined _MSC_
 	// assuming GCC
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf
 	#define STRCPY strcpy
 	#define FOPEN fopen
 	#define STRCASECMP strcasecmp
-#endif
+#endif // defined _MSC_VER
 
 static inline char* mallocCopyString(const char* const orig) {
-	
+
 	char* copy;
-	
+
 	copy = (char *) malloc(/*sizeof(char) * */strlen(orig) + 1);
 	strcpy(copy, orig);
-	
+
 	return copy;
 }
 static inline void freeString(const char* const toFreeStr) {
@@ -64,11 +62,11 @@ static inline std::string StringToLower(std::string s)
 
 static inline std::string GetFileExt(const std::string& s)
 {
-   size_t i = s.rfind('.', s.length());
-   if (i != std::string::npos) {
-      return s.substr(i+1, s.length() - i);
-   }
-   return "";
+	size_t i = s.rfind('.', s.length());
+	if (i != std::string::npos) {
+		return s.substr(i+1, s.length() - i);
+	}
+	return "";
 }
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
@@ -88,6 +86,6 @@ template<class T> void SafeDelete(T &a)
 	delete tmp;
 }
 
-#endif	// __cplusplus
+#endif // __cplusplus
 
 #endif

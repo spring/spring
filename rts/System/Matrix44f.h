@@ -3,7 +3,6 @@
 
 #include "Sync/Syncify.h"
 #include "float3.h"
-#include "Sync/Syncify.h"
 
 class CMatrix44f
 {

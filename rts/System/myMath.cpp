@@ -38,7 +38,7 @@ public:
 					" your streflop library was not compiled with the correct"
 					" options, or you are not using streflop at all.",
 					"Sync Error", 0);
-#endif	/* STREFLOP_H */
+#endif // STREFLOP_H
 	}
 };
 

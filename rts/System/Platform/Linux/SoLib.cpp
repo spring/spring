@@ -7,7 +7,7 @@
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
  */
-#include <vector>
+
 #include "SoLib.h"
 #include <dlfcn.h>
 
@@ -15,9 +15,9 @@
  * Instantiates the loader, attempts to dlopen the
  * shared object lazily.
  */
-SoLib::SoLib(const char *filename)
+SoLib::SoLib(const char* fileName) : so(NULL)
 {
-	so = dlopen(filename,RTLD_LAZY);
+	so = dlopen(fileName, RTLD_LAZY);
 	if (so == NULL) {
 		SharedLib::reportError(dlerror(), __FILE__, __LINE__, "SoLib::SoLib");
 	}
@@ -27,7 +27,7 @@ SoLib::SoLib(const char *filename)
  * Just dlcloses the shared object
  */
 void SoLib::Unload() {
-	
+
 	if (so != NULL) {
 		dlclose(so);
 		so = NULL;
@@ -49,7 +49,7 @@ SoLib::~SoLib()
 /**
  * Attempts to locate the symbol address with dlsym
  */
-void *SoLib::FindAddress(const char *symbol)
+void* SoLib::FindAddress(const char* symbol)
 {
 	if (so != NULL) {
 		void* p = dlsym(so, symbol);

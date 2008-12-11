@@ -13,16 +13,18 @@
 /**
  * Attempts to LoadLibrary on the given DLL
  */
-DllLib::DllLib(const char *filename)
+DllLib::DllLib(const char* fileName) : dll(NULL)
 {
-	dll = LoadLibrary(filename);
+	dll = LoadLibrary(fileName);
 }
 
 /**
  * Does a FreeLibrary on the given DLL
  */
 void DllLib::Unload() {
+
 	FreeLibrary(dll);
+	dll = NULL;
 }
 
 bool DllLib::LoadFailed() {
@@ -40,7 +42,7 @@ DllLib::~DllLib()
 /**
  * Attempts to locate the given symbol with GetProcAddress
  */
-void *DllLib::FindAddress(const char *symbol)
+void* DllLib::FindAddress(const char* symbol)
 {
 	return (void*) GetProcAddress(dll,symbol);
 }

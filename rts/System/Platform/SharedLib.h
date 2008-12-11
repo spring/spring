@@ -34,17 +34,17 @@ class SharedLib
 public:
 	/**
 	 * @brief instantiate
-	 * @param filename file name as a C string
+	 * @param fileName file name as a C string
 	 * @return platform-specific shared library class
 	 */
-	static SharedLib *Instantiate(const char *filename);
+	static SharedLib* Instantiate(const char* fileName);
 
 	/**
 	 * @brief instantiate
-	 * @param filename file name as a C++ string
+	 * @param fileName file name as a C++ string
 	 * @return platform-specific shared library class
 	 */
-	static SharedLib *Instantiate(std::string filename);
+	static SharedLib* Instantiate(const std::string& fileName);
 
 	/**
 	 * Explicitly unload this shared library
@@ -62,7 +62,7 @@ public:
 	 * @brief GetLibExtension
 	 * @return "dll", "dylib" or "so" depending on OS
 	 */
-	static const char *GetLibExtension();
+	static const char* GetLibExtension();
 
 	/**
 	 * @brief Find Address
@@ -70,7 +70,7 @@ public:
 	 *
 	 * Abstract so it must be implemented specifically by all platforms.
 	 */
-	virtual void *FindAddress(const char *symbol) = 0;
+	virtual void* FindAddress(const char* symbol) = 0;
 
 	virtual ~SharedLib();
 
@@ -78,4 +78,4 @@ protected:
 	static void reportError(const char* errorMsg, const char* fileName = "???", int lineNumber = -1, const char* function = "???");
 };
 
-#endif /* SHAREDLIB_H */
+#endif // SHAREDLIB_H

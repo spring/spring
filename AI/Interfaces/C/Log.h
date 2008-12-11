@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+// used in System/SharedLib.cpp:reportError()
 #define EXTERNAL_LOGGER(msg)	log(msg);
 
 /**
