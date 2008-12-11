@@ -62,6 +62,14 @@ static inline std::string StringToLower(std::string s)
 	return s;
 }
 
+static inline std::string GetFileExt(const std::string& s)
+{
+   size_t i = s.rfind('.', s.length());
+   if (i != std::string::npos) {
+      return s.substr(i+1, s.length() - i);
+   }
+   return "";
+}
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {

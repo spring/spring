@@ -673,8 +673,8 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 {
 	float3 wantedDir=(pos-this->midPos).Normalize();
 	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-	short int p=(short int) (asin(wantedDir.dot(updir))*(32768/PI));
-	short int pitch=(short int) (asin(frontdir.dot(updir))*(32768/PI));
+	short int p=(short int) (asin(wantedDir.dot(updir)) * RAD2TAANG);
+	short int pitch=(short int) (asin(frontdir.dot(updir)) * RAD2TAANG);
 
 	std::vector<int> args;
 	args.push_back(short(h-heading));
@@ -715,7 +715,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		if (!unitDef->showNanoSpray)
 			return;
 
-		float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;

@@ -9,7 +9,7 @@
 #include "FeatureDef.h"
 #include "FeatureSet.h"
 
-struct S3DOModel;
+struct S3DModel;
 class CFileHandler;
 class CLoadSaveInterface;
 class CVertexArray;

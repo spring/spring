@@ -30,7 +30,7 @@
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Misc/SideParser.h"
@@ -3025,11 +3025,11 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	if (ud == NULL) {
 		return 0;
 	}
-	const S3DOModel* model = ud->LoadModel(0);
+	const S3DModel* model = LoadModel(ud);
 	if (model == NULL) {
 		return 0;
 	}
-	const S3DOModel& m = *model;
+	const S3DModel& m = *model;
 	const float3& mid = model->relMidPos;
 	lua_newtable(L);
 	HSTR_PUSH_NUMBER(L, "height", m.height);
@@ -4231,10 +4231,10 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	lua_newtable(L);
-	for (int i = 0; i < localModel->numpieces; i++) {
-		const LocalS3DO& lp = localModel->pieces[i];
+	for (int i = 0; i < localModel->pieces.size(); i++) {
+		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushstring(L, lp.name.c_str());
 		lua_pushnumber(L, i + 1);
 		lua_rawset(L, -3);
@@ -4249,15 +4249,15 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	lua_newtable(L);
-	for (int i = 0; i < localModel->numpieces; i++) {
-		const LocalS3DO& lp = localModel->pieces[i];
+	for (int i = 0; i < localModel->pieces.size(); i++) {
+		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushnumber(L, i + 1);
 		lua_pushstring(L, lp.name.c_str());
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", localModel->numpieces);
+	HSTR_PUSH_NUMBER(L, "n", localModel->pieces.size());
 	return 1;
 }
 
@@ -4315,22 +4315,15 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
-	LocalS3DO& lp = localModel->pieces[piece];
 
-	if (lp.originals3o) {
-		const SS3O& op = *lp.originals3o;
-		return ::GetUnitPieceInfo(L, op);
-	}
-	else if (lp.original3do) {
-		const S3DO& op = *lp.original3do;
-		return ::GetUnitPieceInfo(L, op);
-	}
+	const S3DModelPiece& op = *localModel->pieces[piece]->original;
+	return ::GetUnitPieceInfo(L, op);
 
 	return 0;
 }
@@ -4342,12 +4335,12 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const float3 pos = localModel->GetRawPiecePos(piece);
@@ -4364,12 +4357,12 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	float3 dir(0,0,0);
@@ -4397,12 +4390,12 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const float3 dir = localModel->GetRawPieceDirection(piece);
@@ -4419,12 +4412,12 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
+	const LocalModel* localModel = unit->localmodel;
 	if (localModel == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->numpieces)) {
+	if ((piece < 0) || (piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const CMatrix44f mat = unit->localmodel->GetRawPieceMatrix(piece);
@@ -4441,16 +4434,16 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalS3DOModel* localModel = unit->localmodel;
-	if (localModel == NULL) {
+	const CCobInstance* cob = unit->cob;
+	if (cob == NULL) {
 		return 0;
 	}
 
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
 		lua_newtable(L);
-		for (int sp = 0; sp < localModel->numpieces; sp++) {
-			const int piece = localModel->scritoa[sp];
+		for (int sp = 0; sp < cob->pieces.size(); sp++) {
+			const int piece = cob->ScriptToModel(sp);
 			if (piece != -1) {
 				lua_pushnumber(L, sp);
 				lua_pushnumber(L, piece + 1);
@@ -4461,7 +4454,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	}
 
 	const int scriptPiece = lua_toint(L, 2);
-	const int piece = localModel->ScriptToArray(scriptPiece);
+	const int piece = cob->ScriptToModel(scriptPiece);
 	if (piece < 0) {
 		return 0;
 	}
@@ -4480,11 +4473,11 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit->cob == NULL) {
 		return 0;
 	}
-	const vector<struct PieceInfo>& pieces = unit->cob->pieces;
+	const vector<LocalModelPiece*>& pieces = unit->cob->pieces;
 
 	lua_newtable(L);
 	for (int sp = 0; sp < pieces.size(); sp++) {
-		lua_pushstring(L, pieces[sp].name.c_str());
+		lua_pushstring(L, pieces[sp]->name.c_str());
 		lua_pushnumber(L, sp);
 		lua_rawset(L, -3);
 	}

@@ -12,13 +12,13 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/UnitModels/3DModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
+#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "GlobalUnsynced.h"
@@ -89,10 +89,10 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 
 	SetRadius(0.0f);
 
-	if ((weaponDef) && (!weaponDef->visuals.modelName.empty())) {
-		S3DOModel* model = modelParser->Load3DModel(string("objects3d/") + weaponDef->visuals.modelName, 1, colorTeam);
-		if (model) {
-			SetRadius(model->radius);
+	if (weaponDef) {
+		s3domodel = LoadModel(weaponDef);
+		if (s3domodel) {
+			SetRadius(s3domodel->radius);
 		}
 	}
 
@@ -448,7 +448,7 @@ void CMissileProjectile::DrawUnitPart(void)
 	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f,-rightdir,updir,dir);
 
 	glMultMatrixf(&transMatrix[0]);
-	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
+	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
 
 	glPopMatrix();
 }
@@ -480,6 +480,6 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 
 void CMissileProjectile::DrawS3O(void)
 {
-	unitDrawer->SetS3OTeamColour(colorTeam);
+	unitDrawer->SetTeamColour(colorTeam);
 	DrawUnitPart();
 }

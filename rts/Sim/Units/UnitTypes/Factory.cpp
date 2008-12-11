@@ -96,7 +96,7 @@ int CFactory::GetBuildPiece()
 // GetBuildPiece() is called if piece < 0
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
-	float3 relBuildPos = localmodel->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	float3 relBuildPos = cob->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
 	float3 buildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
 	return buildPos;
 }
@@ -163,7 +163,7 @@ void CFactory::Update()
 
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
-			CMatrix44f mat = localmodel->GetPieceMatrix(buildPiece);
+			CMatrix44f mat = cob->GetPieceMatrix(buildPiece);
 			const int h = GetHeadingFromVector(mat[2], mat[10]);
 
 			// rotate unit nanoframe with platform
@@ -343,7 +343,7 @@ void CFactory::CreateNanoParticle(void)
 
 	if (ph->currentParticles < ph->maxParticles) {
 		if (unitDef->showNanoSpray) {
-			const float3 relWeaponFirePos = localmodel->GetPiecePos(args[0]);
+			const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 			const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 										 + (updir    * relWeaponFirePos.y)
 										 + (rightdir * relWeaponFirePos.x);

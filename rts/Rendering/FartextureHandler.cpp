@@ -3,11 +3,10 @@
 #include "mmgr.h"
 
 #include "FartextureHandler.h"
-#include "UnitModels/3DOParser.h"
-#include "GL/myGL.h"
 #include "GlobalUnsynced.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Textures/Bitmap.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Map/MapInfo.h"
 
 CFartextureHandler* fartextureHandler = NULL;
@@ -30,9 +29,6 @@ CFartextureHandler::~CFartextureHandler(void)
 {
 	delete[] farTextureMem;
 	glDeleteTextures (1, &farTexture);
-
-	delete texturehandler;
-	texturehandler=0;
 }
 
 
@@ -41,7 +37,7 @@ CFartextureHandler::~CFartextureHandler(void)
  * On the next CreateFarTextures() call the fartexture for this model will be
  * created.
  */
-void CFartextureHandler::CreateFarTexture(S3DOModel* model)
+void CFartextureHandler::CreateFarTexture(S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTexture
 	pending.push_back(model);
@@ -56,7 +52,7 @@ void CFartextureHandler::CreateFarTexture(S3DOModel* model)
 void CFartextureHandler::CreateFarTextures()
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
-	for(std::vector<S3DOModel*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
+	for(std::vector<S3DModel*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
 		ReallyCreateFarTexture(*it);
 	}
 	pending.clear();
@@ -66,7 +62,7 @@ void CFartextureHandler::CreateFarTextures()
 /**
  * @brief Really create the far texture for the given model.
  */
-void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
+void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 {
 	//UnitModelGeometry& geometry=*model.geometry;
 	PUSH_CODE_MODE;
@@ -115,7 +111,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DOModel* model)
 	unsigned char buf[16*16*4];
 	for(int a=0;a<8;++a){
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		texturehandler->SetTATexture();
+		texturehandler3DO->Set3doAtlases();
 		glPushMatrix();
 		glTranslatef(0,-model->height*0.5f,0);
 		model->DrawStatic();

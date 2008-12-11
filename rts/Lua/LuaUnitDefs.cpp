@@ -26,7 +26,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -573,8 +573,8 @@ TYPE_STRING_FUNC(MetalExtractor);
 #define TYPE_MODEL_FUNC(name, param)              \
 	static int name(lua_State* L, const void* data) \
 	{                                               \
-		const UnitDef& ud = *((const UnitDef*)data);  \
-		const S3DOModel* model = ud.LoadModel(0);     \
+		const UnitDef* ud = ((const UnitDef*)data);  \
+		const S3DModel* model = LoadModel(ud);     \
 		lua_pushnumber(L, model -> param);            \
 		return 1;                                     \
 	}
@@ -627,7 +627,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("decoyDef",           ud.decoyDef,           UnitDefToID);
 	ADD_FUNCTION("weapons",            ud.weapons,            WeaponsTable);
 	ADD_FUNCTION("sounds",             ud.sounds,             SoundsTable);
-	ADD_FUNCTION("model",              ud.model,              ModelDefTable);
+	ADD_FUNCTION("model",              ud.modelDef,           ModelDefTable);
 	ADD_FUNCTION("moveData",           ud.movedata,           MoveDataTable);
 	ADD_FUNCTION("shieldWeaponDef",    ud.shieldWeaponDef,    WeaponDefToID);
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);

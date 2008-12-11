@@ -2,7 +2,7 @@
 #define __FEATURE_H__
 
 #include "Sim/Objects/SolidObject.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include <vector>
 #include <list>
@@ -53,7 +53,7 @@ public:
 	// should not be here
 	void DrawS3O();
 
-	S3DOModel* model;
+	S3DModel* model;
 
 	std::string createdFromUnit;
 	/** This flag is used to stop a potential exploit involving tripping a unit back and forth

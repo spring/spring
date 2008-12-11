@@ -247,10 +247,10 @@ void CWeapon::Update()
 		} else {
 			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 		}
-		relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
+		relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
 
 		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-		relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+		relWeaponPos=owner->cob->GetPiecePos(args[0]);
 	}
 
 	if(targetType==Target_Unit){
@@ -296,7 +296,7 @@ void CWeapon::Update()
 			lastRequest=gs->frameNum;
 
 			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*(32768/PI));
+			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*RAD2TAANG);
 			std::vector<int> args;
 			args.push_back(short(heading - owner->heading));
 			args.push_back(pitch);
@@ -345,7 +345,7 @@ void CWeapon::Update()
 			std::vector<int> args;
 			args.push_back(0);
 			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
-			owner->localmodel->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
 			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
 			                               owner->updir    * relWeaponMuzzlePos.y +
 			                               owner->rightdir * relWeaponMuzzlePos.x;
@@ -414,10 +414,10 @@ void CWeapon::Update()
 			owner->cob->Call(COBFN_Shot+weaponNum,0);
 
 			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-			relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+			relWeaponPos=owner->cob->GetPiecePos(args[0]);
 
 			owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
-			owner->localmodel->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
 
 			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
@@ -588,11 +588,11 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	} else {
 		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
 	}
-	relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
+	relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
 	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
+	relWeaponPos=owner->cob->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
 	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
@@ -837,13 +837,11 @@ void CWeapon::Init(void)
 	std::vector<int> args;
 	args.push_back(0);
 	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos=owner->localmodel->GetPiecePos(args[0]);
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-
+	relWeaponPos = owner->cob->GetPiecePos(args[0]);
+	weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
 	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponMuzzlePos=owner->localmodel->GetPiecePos(args[0]);
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-//	logOutput.Print("RelPos %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
+	relWeaponMuzzlePos = owner->cob->GetPiecePos(args[0]);
+	weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
 
 	if (range > owner->maxRange) {
 		owner->maxRange = range;

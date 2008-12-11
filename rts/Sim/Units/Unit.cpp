@@ -24,6 +24,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
@@ -1368,10 +1369,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		radarhandler->MoveUnit(this);
 	}
 
-	model = unitDef->LoadModel(newteam);
-
-	modelParser->DeleteLocalModel(this);
-	modelParser->CreateLocalModel(this);
 	SetLODCount(0);
 
 	if (unitDef->isAirBase) {
@@ -2214,13 +2211,12 @@ void CUnit::PostLoad()
 	unitDef = unitDefHandler->GetUnitByName(unitDefName);
 
 	yardMap = unitDef->yardmaps[buildFacing];
-	model = unitDef->LoadModel(team);
+
+	model = LoadModel(unitDef);
 	SetRadius(model->radius);
 
-	//FIXME script = SAFE_NEW CUnitScript(this);
-	//FIXME localmodel = modelParser->CreateLocalModel(model, script->GetPieces());
-	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(unitDef->scriptPath), this);
 	modelParser->CreateLocalModel(this);
+	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->cobFilename), this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

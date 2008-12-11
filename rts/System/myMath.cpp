@@ -4,6 +4,7 @@
 #include "myMath.h"
 #include "mmgr.h"
 
+#include "Sim/Units/COB/CobInstance.h"
 
 float2 headingToVectorTable[NUM_HEADINGS];
 
@@ -45,8 +46,8 @@ public:
 float3 GetVectorFromHAndPExact(short int heading,short int pitch)
 {
 	float3 ret;
-	float h=heading*PI/32768;
-	float p=pitch*PI/32768;
+	float h=heading*TAANG2RAD;
+	float p=pitch*TAANG2RAD;
 	ret.x=sin(h)*cos(p);
 	ret.y=sin(p);
 	ret.z=cos(h)*cos(p);

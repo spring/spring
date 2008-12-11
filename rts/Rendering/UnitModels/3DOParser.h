@@ -7,10 +7,11 @@
 #include <vector>
 #include <string>
 #include "float3.h"
-#include "Rendering/Textures/TextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include <map>
 #include <set>
-#include "3DModelParser.h"
+#include "IModelParser.h"
+
 
 class CMatrix44f;
 class CFileHandler;
@@ -26,27 +27,19 @@ struct S3DOPrimitive {
 	std::vector<float3> normals;		//normals per vertex
 	float3 normal;
 	int numVertex;
-	CTextureHandler::UnitTexture* texture;
+	C3DOTextureHandler::UnitTexture* texture;
 };
 
-struct S3DO {
-	std::string name;
-	std::vector<S3DO*> childs;
-	std::vector<S3DOPrimitive> prims;
+struct S3DOPiece : public S3DModelPiece {
+	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+
 	std::vector<S3DOVertex> vertices;
-	float3 offset;
-	unsigned int displist;
-	bool isEmpty;
+	std::vector<S3DOPrimitive> prims;
 	float radius;
 	float3 relMidPos;
-	float maxx,maxy,maxz;
-	float minx,miny,minz;
-
-	void DrawStatic();
-	~S3DO();
 };
 
-class C3DOParser
+class C3DOParser : public IModelParser
 {
 	typedef struct _3DObject
 	{
@@ -88,34 +81,21 @@ class C3DOParser
 
 public:
 	C3DOParser();
-	virtual ~C3DOParser();
-	S3DOModel* Load3DO(std::string name, float scale = 1, int side = 1);
-	// S3DOModel* Load3DO(std::string name,float scale,int side,const float3& offsets);
-	LocalS3DOModel *CreateLocalModel(S3DOModel *model, std::vector<struct PieceInfo> *pieces);
-	void Update();
-	void FixLocalModel(S3DOModel *model, LocalS3DOModel *lmodel, vector<struct PieceInfo> *pieces);
+
+	S3DModel* Load(std::string name);
+	void Draw(S3DModelPiece *o);
 
 private:
-	void FindCenter(S3DO* object);
-	float FindRadius(S3DO* object,float3 offset);
-	float FindHeight(S3DO* object,float3 offset);
-	void CalcNormals(S3DO* o);
+	void FindCenter(S3DOPiece* object);
+	float FindRadius(S3DOPiece* object,float3 offset);
+	float FindHeight(S3DOPiece* object,float3 offset);
+	void CalcNormals(S3DOPiece* o);
 
-	void DeleteS3DO(S3DO* o);
-	std::vector<S3DO*> createLists;
-	void CreateLists(S3DO* o);
-	void CreateListsNow(S3DO* o);
-	float scaleFactor;
-
-	void GetPrimitives(S3DO* obj,int pos,int num,vertex_vector* vv,int excludePrim,int side);
-	void GetVertexes(_3DObject* o,S3DO* object);
+	void GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,int excludePrim);
+	void GetVertexes(_3DObject* o,S3DOPiece* object);
 	std::string GetText(int pos);
-	bool ReadChild(int pos,S3DO* root,int side, int *numobj);
-	void DrawSub(S3DO* o);
-	void CreateLocalModel(S3DO *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
-	void FixLocalModel(S3DO *model, LocalS3DOModel *lmodel, std::vector<struct PieceInfo> *pieces, int *piecenum);
+	bool ReadChild(int pos,S3DOPiece* root, int *numobj);
 
-	std::map<std::string, S3DOModel*> units;
 	std::set<std::string> teamtex;
 
 	int curOffset;

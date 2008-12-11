@@ -332,13 +332,13 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int ModelHeight(lua_State* L, const void* data)
 {
-	const FeatureDef& fd = *((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*)data);
 	float height = 0.0f;
-	switch (fd.drawType) {
-		case DRAWTYPE_3DO:  { height = fd.LoadModel(0)->height; break; }
-		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;      break; }
-		case DRAWTYPE_NONE: { height = 0.0f;                    break; }
-		default:            { height = 0.0f;                    break; }
+	switch (fd->drawType) {
+		case DRAWTYPE_3DO:  { height = LoadModel(fd)->height;  break; }
+		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;     break; }
+		case DRAWTYPE_NONE: { height = 0.0f;                   break; }
+		default:            { height = 0.0f;                   break; }
 	}
 	lua_pushnumber(L, height);
 	return 1;
@@ -347,13 +347,13 @@ static int ModelHeight(lua_State* L, const void* data)
 
 static int ModelRadius(lua_State* L, const void* data)
 {
-	const FeatureDef& fd = *((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*)data);
 	float radius = 0.0f;
-	switch (fd.drawType) {
-		case DRAWTYPE_3DO:  { radius = fd.LoadModel(0)->radius; break; }
-		case DRAWTYPE_TREE: { radius = TREE_RADIUS;             break; }
-		case DRAWTYPE_NONE: { radius = 0.0f;                    break; }
-		default:            { radius = 0.0f;                    break; }
+	switch (fd->drawType) {
+		case DRAWTYPE_3DO:  { radius = LoadModel(fd)->radius;  break; }
+		case DRAWTYPE_TREE: { radius = TREE_RADIUS;            break; }
+		case DRAWTYPE_NONE: { radius = 0.0f;                   break; }
+		default:            { radius = 0.0f;                   break; }
 	}
 	lua_pushnumber(L, radius);
 	return 1;
@@ -363,9 +363,9 @@ static int ModelRadius(lua_State* L, const void* data)
 #define TYPE_MODEL_FUNC(name, param)                       \
 	static int Model ## name(lua_State* L, const void* data) \
 	{                                                        \
-		const FeatureDef& fd = *((const FeatureDef*)data);     \
-		if (fd.drawType == DRAWTYPE_3DO) {                     \
-			const S3DOModel* model = fd.LoadModel(0);            \
+		const FeatureDef* fd = ((const FeatureDef*)data);     \
+		if (fd->drawType == DRAWTYPE_3DO) {                     \
+			const S3DModel* model = LoadModel(fd);            \
 			lua_pushnumber(L, model -> param);                   \
 			return 1;                                            \
 		}                                                      \

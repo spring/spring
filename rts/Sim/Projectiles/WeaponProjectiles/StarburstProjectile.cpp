@@ -408,7 +408,7 @@ void CStarburstProjectile::DrawUnitPart(void)
 	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
 	glMultMatrixf(&transMatrix[0]);
 
-	glCallList(s3domodel->rootobject3do?s3domodel->rootobject3do->displist:s3domodel->rootobjects3o->displist); // dont cache displists because of delayed loading
+	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 

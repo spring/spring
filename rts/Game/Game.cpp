@@ -82,6 +82,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
@@ -604,6 +606,8 @@ CGame::~CGame()
 	SafeDelete(modelParser);
 	SafeDelete(iconHandler);
 	SafeDelete(fartextureHandler);
+	SafeDelete(texturehandler3DO);
+	SafeDelete(texturehandlerS3O);
 	SafeDelete(camera);
 	SafeDelete(cam2);
 	SafeDelete(infoConsole);
@@ -2713,10 +2717,11 @@ bool CGame::Draw() {
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
-	texturehandler->Update(); // delayed loading of textures
-	modelParser->Update(); // delayed fixup of models
-	treeDrawer->UpdateDraw(); // delete disp lists
-	readmap->UpdateDraw(); // update heightmap texture
+	//GML delayed loading
+	texturehandlerS3O->Update();
+	modelParser->Update();
+	treeDrawer->UpdateDraw();
+	readmap->UpdateDraw();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 
@@ -3203,7 +3208,7 @@ void CGame::SimFrame() {
 		std::vector<int> args;
 		args.push_back(0);
 		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos=unit->localmodel->GetPiecePos(args[0]);
+		float3 relPos=unit->cob->GetPiecePos(args[0]);
 		float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
 		pos+=UpVector*7;
 
@@ -4039,7 +4044,7 @@ void CGame::UpdateUI(bool cam)
 		std::vector<int> args;
 		args.push_back(0);
 		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos = owner->localmodel->GetPiecePos(args[0]);
+		float3 relPos = owner->cob->GetPiecePos(args[0]);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
@@ -4640,18 +4645,13 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Missing unit name");
 		return;
 	}
-	const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
-	if (unitDef == NULL) {
-		logOutput.Print("Unknown unit name");
-		return;
-	}
-	const string scriptPath = unitDef->scriptPath;
-	const CCobFile* oldScript = GCobEngine.GetScriptAddr(scriptPath);
+	const UnitDef* udef = unitDefHandler->GetUnitByName(unitName);
+	const CCobFile* oldScript = GCobEngine.GetScriptAddr(udef->cobFilename);
 	if (oldScript == NULL) {
-		logOutput.Print("Unknown cob script: %s", scriptPath.c_str());
+		logOutput.Print("Unknown cob script: %s", udef->cobFilename.c_str());
 		return;
 	}
-	CCobFile* newScript = &GCobEngine.ReloadCobFile(scriptPath);
+	CCobFile* newScript = &GCobEngine.ReloadCobFile(udef->cobFilename);
 	int count = 0;
 	for (int i = 0; i < MAX_UNITS; i++) {
 		CUnit* unit = uh->units[i];
@@ -4660,8 +4660,6 @@ void CGame::ReloadCOB(const string& msg, int player)
 				count++;
 				delete unit->cob;
 				unit->cob = SAFE_NEW CCobInstance(*newScript, unit);
-				modelParser->DeleteLocalModel(unit);
-				modelParser->CreateLocalModel(unit);
 				unit->cob->Call("Create");
 			}
 		}

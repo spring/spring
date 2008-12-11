@@ -3,8 +3,8 @@
 # see rts/build/scons/*.py for the core of the build system
 
 """ Available targets.
-Each target has an equivalent install target. E.g. `CentralBuildAI' has
-`install-CentralBuildAI' and the default target has `install'.
+Each target has an equivalent install target. E.g. `NullAI' has
+`install-NullAI' and the default target has `install'.
 
 [default]
 
@@ -13,18 +13,17 @@ Each target has an equivalent install target. E.g. `CentralBuildAI' has
 	AIInterfaces
 		C
 		Java
-	GroupAI
-		CentralBuildAI
-		MetalMakerAI
-		SimpleFormationAI
 	SkirmishAI
 		RAI
 		NTAI
 		KAI
 		KAIK
 		AAI
-		TestSkirmishAI
+		JCAI
 		NullAI
+		NullLegacyCppAI
+		NullJavaAI
+		NullOOJavaAI
 """
 
 
@@ -180,14 +179,14 @@ if env['platform'] != 'windows':
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 aienv = env.Clone()
-aienv.Append(CPPPATH = ['rts/ExternalAI'])
-aienv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++']
+aienv.AppendUnique(CPPPATH = ['rts/ExternalAI'])
+aienv.AppendUnique(LINKFLAGS = ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++'])
 #print aienv['CPPDEFINES']
 
 aiinterfaceenv = aienv.Clone()
-aiinterfaceenv['CPPDEFINES'] += ['BUILDING_AI_INTERFACE']
+aiinterfaceenv.AppendUnique(CPPDEFINES = ['BUILDING_AI_INTERFACE'])
 
-aienv['CPPDEFINES'] += ['BUILDING_AI']
+aienv.AppendUnique(CPPDEFINES = ['BUILDING_AI'])
 
 skirmishaienv = aienv.Clone()
 
@@ -197,7 +196,7 @@ skirmishaienv = aienv.Clone()
 def create_shared_objects(env, fileList, suffix, additionalCPPDEFINES = []):
 	objsList = []
 	myEnv = env.Clone()
-	myEnv['CPPDEFINES'] += additionalCPPDEFINES
+	myEnv.AppendUnique(CPPDEFINES = additionalCPPDEFINES)
 	for f in fileList:
 		while isinstance(f, list):
 			f = f[0]
@@ -288,14 +287,14 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		objs += aiinterfaceobjs_SharedLib
 	if baseName in aiinterfaces_needStreflop_list:
 		if env['fpmath'] == 'sse':
-			myEnv['CPPDEFINES'] += ['-DSTREFLOP_SSE']
+			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_SSE'])
 		else:
-			myEnv['CPPDEFINES'] += ['-DSTREFLOP_X87']
-		myEnv.Append(CXXFLAGS = ['-Irts/lib/streflop'])
-		myEnv['LIBS'] += ['streflop']
+			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
+		myEnv.AppendUnique(CXXFLAGS = ['-Irts/lib/streflop'])
+		myEnv.AppendUnique(LIBS = ['streflop'])
 	mySource = objs + filelist.get_AIInterface_source(myEnv, baseName)
 	if baseName == 'Java':
-		myEnv['LIBS'] += ['jvm']
+		myEnv.AppendUnique(LIBS = ['jvm'])
 		# generate class files
 		javaWrapperScript = 'java_generateWrappers.' + getLocalShellExecPostfix()
 		javaWrapperScriptPath = os.path.join('AI/Interfaces', baseName, 'bin')
@@ -392,7 +391,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 
 	else:
 		if useCreg:
-			myEnv['CPPDEFINES'] += ['USING_CREG']
+			myEnv.AppendUnique(CPPDEFINES = ['USING_CREG'])
 		objs = []
 		if useCreg:
 			objs += skirmishaiobjs_mainCregged
@@ -400,7 +399,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		else:
 			objs += skirmishaiobjs_main
 		if isLegacyCpp:
-			myEnv.Append(CXXFLAGS = ['-IAI/Wrappers'])
+			myEnv.AppendUnique(CXXFLAGS = ['-IAI/Wrappers'])
 			if useCreg:
 				objs += skirmishaiobjs_LegacyCppCregged
 			else:
@@ -457,7 +456,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 #	isLegacyCpp = True #baseName in groupai_isLegacyCpp_list
 #	myEnv = groupaienv.Clone()
 #	if useCreg:
-#		myEnv['CPPDEFINES'] += ['USING_CREG']
+#		myEnv.AppendUnique(CPPDEFINES = ['USING_CREG'])
 #	objs = []
 #	if useCreg:
 #		objs += groupaiobjs_mainCregged

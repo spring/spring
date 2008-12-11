@@ -70,6 +70,9 @@ public:
 	//return a pointer to a Texture struct of the specified texture, this pointer points to the actuall Texture struct stored, do not delete or modify
 	AtlasedTexture* GetTexturePtr(const std::string& name);
 
+	int xsize;
+	int ysize;
+
 protected:
 	struct MemTex
 	{
@@ -89,8 +92,6 @@ protected:
 	std::map<std::string, AtlasedTexture> textures;
 	int maxxsize;
 	int maxysize;
-	int xsize;
-	int ysize;
 	int usedPixels;
 	bool initialized;
 

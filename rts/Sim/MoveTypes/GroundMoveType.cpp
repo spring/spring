@@ -13,7 +13,7 @@
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -265,7 +265,7 @@ void CGroundMoveType::Update()
 
 			ENTER_UNSYNCED;
 			if (gu->directControl == owner)
-				camera->rot.y += deltaHeading * PI / 32768;
+				camera->rot.y += deltaHeading * TAANG2RAD;
 			ENTER_SYNCED;
 
 			ChangeHeading(owner->heading + deltaHeading);

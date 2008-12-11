@@ -8,6 +8,7 @@
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"
+#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/GL/myGL.h"
@@ -689,4 +690,17 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 WeaponDef::~WeaponDef()
 {
 	delete explosionGenerator; explosionGenerator = 0;
+}
+
+
+S3DModel* WeaponDef::LoadModel()
+{
+	if ((visuals.model==NULL) && (!visuals.modelName.empty())) {
+		std::string modelname = string("objects3d/") + visuals.modelName;
+		if (modelname.find(".") == std::string::npos) {
+			modelname += ".3do";
+		}
+		visuals.model = modelParser->Load3DModel(modelname);
+	}
+	return visuals.model;
 }

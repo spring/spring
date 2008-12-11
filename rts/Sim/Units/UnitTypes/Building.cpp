@@ -9,7 +9,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/UnitModels/3DModelParser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Game/GameSetup.h"
@@ -46,8 +46,8 @@ CBuilding::~CBuilding()
 		    !gu->spectatingFullView) {
 
 			const UnitDef* decoyDef = unitDef->decoyDef;
-			S3DOModel* gbModel =
-				(decoyDef == NULL) ? model : decoyDef->LoadModel(team);
+			S3DModel* gbModel =
+				(decoyDef == NULL) ? model : LoadModel(decoyDef);
 
 			gb = SAFE_NEW CUnitDrawer::GhostBuilding;
 			gb->pos    = pos;
@@ -89,7 +89,7 @@ void CBuilding::PostLoad()
 }
 
 
-void CBuilding::UnitInit (const UnitDef* def, int team, const float3& position)
+void CBuilding::UnitInit(const UnitDef* def, int team, const float3& position)
 {
 	if (def->levelGround) {
 		blockHeightChanges = true;
