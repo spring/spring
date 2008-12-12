@@ -54,20 +54,6 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 #endif
 
 
-namespace
-{
-	struct COneTimeInit
-	{
-		COneTimeInit()
-		{
-			logOutput.SetFilename("unitsync.log");
-			logOutput.Initialize();
-			logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
-		}
-	};
-}
-static COneTimeInit global_initializer;
-
 //////////////////////////
 //////////////////////////
 
@@ -293,6 +279,10 @@ EXPORT(void) UnInit()
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
+		logOutput.SetFilename("unitsync.log");
+		logOutput.Initialize();
+		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
+		
 		_UnInit();
 
 		if (!_configHandler)
