@@ -57,7 +57,7 @@ void PosixCmd::parselongopt(char* _arg)
 						throw missingparm(arg);
 					it->ret.intret = atoi(param.c_str());
 				} else
-					it->ret.stringret = &_arg[ind];
+					it->ret.stringret = _arg+ind+1;
 			}
 			return;
 		}

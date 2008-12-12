@@ -20,7 +20,7 @@ struct FeatureDef
 
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
-		upright(false), drawType(0), modelType(0), model(NULL),
+		upright(false), drawType(0), model(NULL), modelType(0),
 		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
