@@ -91,7 +91,7 @@ ${EndIf}
 !macro InstallAIInterface aiIntName
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
-  File /x *.a /x *.def "${BUILDDIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
+  File /x *.a /x *.def /x *.dbg "${BUILDDIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
   File /r /x .svn "..\AI\Interfaces\${aiIntName}\data\*.*"
 !endif
 !macroend
@@ -113,7 +113,7 @@ ${EndIf}
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL_AIS
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
-  File /x *.a /x *.def "${BUILDDIR}\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
+  File /x *.a /x *.def /x *.dbg "${BUILDDIR}\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
   File /r /x .svn "..\AI\Skirmish\${skirAiName}\data\*.*"
 !endif
 !macroend
