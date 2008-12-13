@@ -1,14 +1,14 @@
 #ifndef GLOBALAI_H
 #define GLOBALAI_H
 
-#include "Object.h"
+#include "creg/creg.h"
 #include "Platform/SharedLib.h"
 
 class IGlobalAI;
 class CGlobalAICallback;
 class CGroupHandler;
 
-class CGlobalAI: public CObject
+class CGlobalAI
 {
 public:
 	CR_DECLARE(CGlobalAI);
