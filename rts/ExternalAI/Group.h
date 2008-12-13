@@ -4,7 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "Object.h"
 #include <string>
 #include <set>
 #include "Sim/Units/CommandAI/Command.h"
@@ -18,7 +17,7 @@ class CFeature;
 class CGroupAICallback;
 class CGroupHandler;
 
-class CGroup : public CObject
+class CGroup
 {
 public:
 	CR_DECLARE(CGroup);

@@ -6,12 +6,13 @@
 
 #include <string>
 #include <set>
+
 #include "Platform/byteorder.h"
-#include "float3.h"
 
 #include "PlayerBase.h"
 
 #ifdef DIRECT_CONTROL_ALLOWED
+#include "float3.h"
 class CPlayer;
 class CUnit;
 struct DirectControlStruct{
@@ -39,7 +40,6 @@ public:
 	CPlayer();
 	~CPlayer();
 
-	std::set<int> controlledTeams;
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());
 	}
@@ -89,7 +89,8 @@ public:
 
 	void StopControllingUnit();
 #endif
-
+private:
+	std::set<int> controlledTeams;
 };
 
 #endif /* PLAYER_H */

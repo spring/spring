@@ -1,7 +1,6 @@
 #ifndef GLOBALAIHANDLER_H
 #define GLOBALAIHANDLER_H
 
-#include "Object.h"
 #include "ConfigHandler.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -13,8 +12,7 @@ class CGlobalAI;
 struct WeaponDef;
 struct Command;
 
-class CGlobalAIHandler :
-	public CObject
+class CGlobalAIHandler
 {
 public:
 	CR_DECLARE(CGlobalAIHandler);
