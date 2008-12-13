@@ -313,7 +313,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		javaClasses = os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, 'classes')
 		javaJar = os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, 'interface.jar')
 		javaInterfaceJar = javaJar
-		jlibDir = os.path.join('AI/Interfaces', baseName, 'jlib')
+		jlibDir = os.path.join('AI/Interfaces', baseName, 'data', 'jlib')
 		javaInterfaceCP = createJavaClasspath(jlibDir)
 		myEnv['JAVACLASSPATH'] = javaInterfaceCP
 		myEnv['JAVASOURCEPATH'] = javaSrc
@@ -324,7 +324,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		Alias('AIInterfaces', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_interface_dir, myJar)]
-		installDataDir(myEnv, install_data_interface_dir, jlibDir, instList)
+		#installDataDir(myEnv, install_data_interface_dir, jlibDir, instList)
 
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName + '-' + aiInterfaceVersion), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
@@ -375,7 +375,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		javaSrc = os.path.join('AI/Skirmish', baseName)
 		javaClasses = os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, 'classes')
 		javaJar = os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, 'ai.jar')
-		jlibDir = os.path.join('AI/Skirmish', baseName, 'jlib')
+		jlibDir = os.path.join('AI/Skirmish', baseName, 'data', 'jlib')
 		aiCP = createJavaClasspath(jlibDir)
 		aiFullCP = aiCP + os.pathsep + javaInterfaceJar + os.pathsep + javaInterfaceCP
 		myEnv['JAVACLASSPATH'] = aiFullCP
@@ -387,7 +387,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 		Alias('SkirmishAI', myJar)
 		Default(myJar)
 		instList += [env.Install(install_data_ai_dir, myJar)]
-		installDataDir(myEnv, install_data_ai_dir, jlibDir, instList)
+		#installDataDir(myEnv, install_data_ai_dir, jlibDir, instList)
 
 	else:
 		if useCreg:

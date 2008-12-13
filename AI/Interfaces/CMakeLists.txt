@@ -76,7 +76,7 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 	#set(Java_AIINTERFACE_PKG "com.clan_sy.spring.ai")
 	set(Java_AIINTERFACE_PKG "com/clan_sy/spring/ai")
 	set(Java_AIINTERFACE_PKG_FIRST_PART "com")
-	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
+	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
 	message(STATUS "${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
 
 	# install data files
@@ -109,6 +109,6 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
 		COMMENT "  Creating Java library interface.jar ..." VERBATIM)
 	install(FILES ${Java_AIINTERFACE_SRC}/interface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib FILES_MATCHING PATTERN "*.jar")
+	#install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib FILES_MATCHING PATTERN "*.jar")
 endif (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 
