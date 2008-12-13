@@ -180,7 +180,7 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	set(NullJavaAI_PKG "nulljavaai")
 	set(NullJavaAI_PKG_FIRST_PART "nulljavaai")
 	set(Java_AIINTERFACE_SRC "../../Interfaces/Java")
-	set(NullJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
+	set(NullJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
 	message(STATUS "${NullJavaAI_VERS}\t(NullJavaAI Version)")
 
 	# install data files
@@ -223,7 +223,7 @@ if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 	set(NullOOJavaAI_PKG "nulloojavaai")
 	set(NullOOJavaAI_PKG_FIRST_PART "nulloojavaai")
 	set(Java_AIINTERFACE_SRC "../../Interfaces/Java")
-	set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/jlib/vecmath.jar")
+	set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
 	message(STATUS "${NullOOJavaAI_VERS}\t(NullOOJavaAI Version)")
 
 	# install data files

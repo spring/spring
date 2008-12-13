@@ -292,7 +292,8 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['z'],              ['zlib.h'])]
 	d += [Dependency(['freetype'],       ['ft2build.h'])]
 	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
-	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
+	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]
+#	d += [Dependency(['jvm'],     ['jni.h'])]
 	
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]
