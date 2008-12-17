@@ -69,7 +69,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/Camera.h"
 #endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-#endif // USE_PRECOMPILED_HEADER
+#endif // !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 
 #endif // __cplusplus
 

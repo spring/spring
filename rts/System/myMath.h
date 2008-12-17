@@ -172,4 +172,4 @@ inline bool RadsAreEqual(const float f1, const float f2)
 	return (fmod(f1 - f2, TWOPI)==0.0f);
 }
 
-#endif /* MYMATH_H */
+#endif // MYMATH_H

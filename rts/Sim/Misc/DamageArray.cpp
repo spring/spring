@@ -30,16 +30,13 @@ void DamageArray::creg_Serialize(creg::ISerializer& s)
 
 DamageArray::DamageArray() : paralyzeDamageTime(0),
 			impulseFactor(1.0f), impulseBoost(0.0f),
-			craterMult(1.0f), craterBoost(0.0f)
+			craterMult(1.0f), craterBoost(0.0f),
+			numTypes(1)
 {
 #if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 	if (damageArrayHandler) {
 		numTypes = damageArrayHandler->GetNumTypes();
-	} else {
-		numTypes = 1;
 	}
-#else // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-	numTypes = 1;
 #endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 	damages = SAFE_NEW float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
