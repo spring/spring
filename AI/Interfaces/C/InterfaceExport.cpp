@@ -18,6 +18,7 @@
 #include "InterfaceExport.h"
 
 #include "Interface.h"
+#include "Util.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
@@ -37,6 +38,8 @@ EXPORT(int) initStatic(
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues,
 		const SStaticGlobalData* staticGlobalData) {
+
+	util_setMyInfo(infoSize, infoKeys, infoValues);
 
 	std::map<std::string, std::string> infoMap;
 	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);

@@ -32,7 +32,15 @@
 #include "CNTai.h"
 
 
-std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
+static std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
+
+static unsigned int myInfoSize;
+static const char** myInfoKeys;
+static const char** myInfoValues;
+
+static std::map<int, unsigned int> myOptionsSize;
+static std::map<int, const char**> myOptionsKeys;
+static std::map<int, const char**> myOptionsValues;
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
@@ -59,6 +67,14 @@ EXPORT(int) init(int teamId,
 		// to reinitialise a team that already had init() called on it.
 		return -1;
 	}
+
+	myInfoSize = infoSize;
+	myInfoKeys = infoKeys;
+	myInfoValues = infoValues;
+
+	myOptionsSize[teamId] = optionsSize;
+	myOptionsKeys[teamId] = optionsKeys;
+	myOptionsValues[teamId] = optionsValues;
 
 	// CAIGlobalAI is the Legacy C++ wrapper, CGlobalAI is KAIK
 	myAIs[teamId] = new CAIGlobalAI(teamId, new ntai::CNTai());
@@ -97,3 +113,51 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	return -1;
 }
 
+
+// methods from here on are for AI internal use only
+
+static const char* util_map_getValueByKey(
+		unsigned int infoSize,
+		const char** infoKeys, const char** infoValues,
+		const char* key) {
+
+	const char* value = NULL;
+
+	unsigned int i;
+	for (i = 0; i < infoSize; i++) {
+		if (strcmp(infoKeys[i], key) == 0) {
+			value = infoValues[i];
+			break;
+		}
+	}
+
+	return value;
+}
+
+const char* aiexport_getMyInfo(const char* key) {
+	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
+}
+const char* aiexport_getDataDir() {
+
+	static char* ddWithSlash = NULL;
+
+	if (ddWithSlash == NULL) {
+		const char* dd = aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+
+		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
+		strcpy(ddWithSlash, dd);
+		strcat(ddWithSlash, "/");
+	}
+
+	return ddWithSlash;
+}
+const char* aiexport_getVersion() {
+	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
+}
+
+const char* aiexport_getMyOption(int teamId, const char* key) {
+	return util_map_getValueByKey(
+			myOptionsSize[teamId],
+			myOptionsKeys[teamId], myOptionsValues[teamId],
+			key);
+}

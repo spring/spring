@@ -1083,8 +1083,8 @@ void cRAI::DebugDrawShape(float3 CenterPos, float linelength, float width, int a
 
 void cRAI::ClearLogFiles()
 {
-	const string dataDirectory = RAIDirectory + "cache/";
-	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)RAIDirectory.c_str() );
+	const string dataDirectory = cLogFile::GetRAIRootDirectory() + "cache/";
+	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cLogFile::GetRAIRootDirectory().c_str() );
 	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)dataDirectory.c_str() );
 
 	string logFileName;
@@ -1092,22 +1092,22 @@ void cRAI::ClearLogFiles()
 	{	
 		char c[2];
 		sprintf(c, "%i",i);
-		logFileName = RAIDirectory+"RAI"+string(c)+"_LastGame.log";
+		logFileName = cLogFile::GetRAIRootDirectory()+"RAI"+string(c)+"_LastGame.log";
 		remove(logFileName.c_str());
 	}
 
-	logFileName=RAIDirectory+"RAIGlobal_LastGame.log";
+	logFileName=cLogFile::GetRAIRootDirectory()+"RAIGlobal_LastGame.log";
 	remove(logFileName.c_str());
-	logFileName=RAIDirectory+"TerrainMapDebug.log";
+	logFileName=cLogFile::GetRAIRootDirectory()+"TerrainMapDebug.log";
 	remove(logFileName.c_str());
-//	logFileName=RAIDirectory+"PathfinderDebug.log";
+//	logFileName=cLogFile::GetRAIRootDirectory()+"PathfinderDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=RAIDirectory+"PathFinderAPNDebug.log";
+//	logFileName=cLogFile::GetRAIRootDirectory()+"PathFinderAPNDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=RAIDirectory+"PathFinderNPNDebug.log";
+//	logFileName=cLogFile::GetRAIRootDirectory()+"PathFinderNPNDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=RAIDirectory+"Prerequisite.log";
+//	logFileName=cLogFile::GetRAIRootDirectory()+"Prerequisite.log";
 //	remove(logFileName.c_str());
-//	logFileName=RAIDirectory+"Debug.log";
+//	logFileName=cLogFile::GetRAIRootDirectory()+"Debug.log";
 //	remove(logFileName.c_str());
 }

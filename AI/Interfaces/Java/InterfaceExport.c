@@ -18,7 +18,7 @@
 #include "InterfaceExport.h"
 
 #include "InterfaceDefines.h"
-#include "InterfaceUtil.h"
+#include "Util.h"
 #include "JavaBridge.h"
 #include "Log.h"
 
@@ -42,6 +42,11 @@ EXPORT(int) initStatic(
 	// initialize C part fo the interface
 	staticGlobalData = _staticGlobalData;
 
+	util_setMyInfo(infoSize, infoKeys, infoValues);
+
+	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
+/*
 	// example: "AI/Interfaces/Java"
 	//const char* myDataDirRelative = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME;
 	char myDataDirRelative[128];
@@ -71,18 +76,24 @@ EXPORT(int) initStatic(
 	if (!exists) {
 		simpleLog_error(-2, "Failed to create "MY_NAME" versioned data directory.");
 	}
+*/
 
-	char* logFileName = util_allocStr(strlen(myDataDirVers) + 1 + strlen(MY_LOG_FILE));
+	char* logFileName = util_allocStr(strlen(util_getDataDirVersioned())
+			+ 1 + strlen(MY_LOG_FILE));
 	logFileName[0]= '\0';
-	logFileName = strcat(logFileName, myDataDirVers);
+	logFileName = strcat(logFileName, util_getDataDirVersioned());
 	logFileName = strcat(logFileName, sPS);
 	logFileName = strcat(logFileName, MY_LOG_FILE);
 	simpleLog_init(logFileName, true, true);
-	util_setDataDirs(myDataDir, myDataDirVers);
+/*
+	util_setDataDirs(myDataDirUnversioned, myDataDir);
+*/
 
-	simpleLog_log("This is the log-file of the %s v%s", MY_NAME, MY_VERSION);
-	simpleLog_log("Using data-directory (version-less): %s", myDataDir);
-	simpleLog_log("Using data-directory (version specific): %s", myDataDirVers);
+	simpleLog_log("This is the log-file of the %s v%s", myShortName, myVersion);
+	simpleLog_log("Using data-directory (version specific): %s",
+			util_getDataDirVersioned());
+	simpleLog_log("Using data-directory (version-less): %s",
+			util_getDataDirUnversioned());
 	simpleLog_log("Using log file: %s", logFileName);
 	free(logFileName);
 
@@ -135,6 +146,7 @@ enum LevelOfSupport CALLING_CONV proxy_skirmishAI_getLevelOfSupportFor(
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
+	return LOS_Unknown;
 }
 
 int CALLING_CONV proxy_skirmishAI_init(int teamId,

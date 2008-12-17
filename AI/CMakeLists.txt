@@ -1,5 +1,13 @@
 include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/AI/Wrappers ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
 
+# set these for C Interfaces and AIs
+SET(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
+SET(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")
+SET(CMAKE_C_FLAGS_DEBUG3         "${CMAKE_CXX_FLAGS_DEBUG3}")
+SET(CMAKE_C_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}")
+SET(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+SET(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
+
 remove_definitions(-DSTREFLOP_SSE) # would break AI compiling
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)

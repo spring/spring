@@ -26,6 +26,7 @@
 
 #include "System/Platform/SharedLib.h"
 #include "System/Util.h"
+#include "Util.h"
 
 #include <sys/stat.h>	// used for check if a file exists
 #ifdef	WIN32
@@ -35,11 +36,11 @@
 #include <sys/types.h>	// mkdir()
 #endif	// WIN32
 
-#define MY_SHORT_NAME "C"
-#define MY_VERSION "0.1"
-#define MY_NAME "C & C++ AI Interface"
-
-#define MAX_INFOS 128
+//#define MY_SHORT_NAME "C"
+//#define MY_VERSION "0.1"
+//#define MY_NAME "C & C++ AI Interface"
+//
+//#define MAX_INFOS 128
 
 static std::string local_getValueByKey(
 		const std::map<std::string, std::string>& map, std::string key) {
@@ -60,32 +61,35 @@ CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
 		springDataDirs.push_back(staticGlobalData->dataDirs[i]);
 	}
 
-	// example: "AI/Interfaces/C"
-	std::string myDataDirRelative =
-			std::string(AI_INTERFACES_DATA_DIR) + PS + MY_SHORT_NAME;
-	// example: "AI/Interfaces/C/0.1"
-	std::string myDataDirVersRelative = myDataDirRelative + PS + MY_VERSION;
+	// "C:/Games/spring/AI/Interfaces/C/0.1"
+	myDataDirVersioned = util_getDataDirVersioned();
+	if (!FileExists(myDataDirVersioned)) {
+		MakeDirRecursive(myDataDirVersioned);
+	}
 
 	// "C:/Games/spring/AI/Interfaces/C"
-	myDataDir = FindDir(myDataDirRelative, true, true);
-	if (!FileExists(myDataDir)) {
-		MakeDirRecursive(myDataDir);
-	}
-	// "C:/Games/spring/AI/Interfaces/C/0.1"
-	myDataDirVers = FindDir(myDataDirVersRelative, true, true);
-	if (!FileExists(myDataDirVers)) {
-		MakeDirRecursive(myDataDirVers);
+	myDataDirUnversioned = util_getDataDirUnversioned();
+	if (!FileExists(myDataDirUnversioned)) {
+		MakeDirRecursive(myDataDirUnversioned);
 	}
 
-	std::string logFileName = myDataDirVers + PS + "log.txt";
-	simpleLog_init(logFileName.c_str(), true);
+	std::string logFileName = myDataDirVersioned + PS + "log.txt";
+	bool timeStamps = true;
+	bool fineLogging = false;
+#if defined DEBUG
+	fineLogging = true;
+#endif // defined DEBUG
+	simpleLog_init(logFileName.c_str(), timeStamps, fineLogging);
 
-	simpleLog_log("This is the log-file of the %s version %s", MY_NAME,
-			MY_VERSION);
-	simpleLog_log("Using data-directory (version-less): %s",
-			myDataDir.c_str());
+	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
+
+	simpleLog_log("This is the log-file of the %s version %s", myShortName,
+			myVersion);
 	simpleLog_log("Using data-directory (version specific): %s",
-			myDataDirVers.c_str());
+			myDataDirVersioned.c_str());
+	simpleLog_log("Using data-directory (version-less): %s",
+			myDataDirUnversioned.c_str());
 	simpleLog_log("Using log file: %s", logFileName.c_str());
 }
 
