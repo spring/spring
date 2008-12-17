@@ -19,6 +19,7 @@
 
 #include "ProtocolDef.h"
 #include "Exception.h"
+#include <boost/cstdint.hpp>
 
 namespace netcode {
 
@@ -265,7 +266,7 @@ void UDPConnection::Flush(const bool forced)
 	{
 		lastSendTime=SDL_GetTicks();
 
-		uint8_t buffer[1500];
+		boost::uint8_t buffer[1500];
 		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if

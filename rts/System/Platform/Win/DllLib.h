@@ -2,6 +2,7 @@
  * @file DllLib.h
  * @brief Windows shared library loader
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Robin Vobruba <hoijui.quaero@gmail.com>
  * 
  * Windows Shared Object loader class definition
  * Copyright (C) 2005.  Licensed under the terms of the

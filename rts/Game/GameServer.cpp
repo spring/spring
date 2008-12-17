@@ -513,7 +513,10 @@ void CGameServer::Update()
 		for (unsigned i = 0; i < players.size(); ++i)
 		{
 			if (players[i].link)
+			{
 				hasPlayers = true;
+				break;
+			}
 		}
 
 		if (!hasPlayers)

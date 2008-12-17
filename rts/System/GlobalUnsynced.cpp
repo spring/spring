@@ -143,7 +143,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 {
 	myPlayerNum = mynumber;
-	if (gameSetup && gameSetup->numPlayers < mynumber)
+	if (gameSetup && gameSetup->numPlayers > mynumber)
 	{
 		myTeam = gameSetup->playerStartingData[myPlayerNum].team;
 		myAllyTeam = gameSetup->teamStartingData[myTeam].teamAllyteam;
@@ -152,8 +152,7 @@ void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 		spectatingFullView   = gameSetup->playerStartingData[myPlayerNum].spectator;
 		spectatingFullSelect = gameSetup->playerStartingData[myPlayerNum].spectator;
 		
-		assert(myPlayerNum >= 0 && myPlayerNum < MAX_PLAYERS &&
-				gameSetup->playerStartingData.size() >= myPlayerNum &&
+		assert(myPlayerNum >= 0 && gameSetup->playerStartingData.size() >= myPlayerNum &&
 				gameSetup->teamStartingData.size() >= myTeam);
 	}
 }

@@ -1911,11 +1911,11 @@
 				Name="Unit Models"
 				>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModelParser.cpp"
+					RelativePath="..\..\Rendering\UnitModels\3DModel.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModelParser.h"
+					RelativePath="..\..\Rendering\UnitModels\3DModel.h"
 					>
 				</File>
 				<File
@@ -1924,6 +1924,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\UnitModels\3DOParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\IModelParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\IModelParser.h"
 					>
 				</File>
 				<File
@@ -2195,6 +2203,14 @@
 				Name="Textures"
 				>
 				<File
+					RelativePath="..\..\Rendering\Textures\3DOTextureHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\3DOTextureHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Textures\Bitmap.cpp"
 					>
 				</File>
@@ -2275,6 +2291,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Textures\S3OTextureHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Textures\S3OTextureHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Textures\TAPalette.cpp"
 					>
 				</File>
@@ -2288,14 +2312,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Textures\TextureAtlas.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Textures\TextureHandler.h"
 					>
 				</File>
 			</Filter>
@@ -3320,6 +3336,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\LosHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosMap.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\LosMap.h"
 					>
 				</File>
 				<File

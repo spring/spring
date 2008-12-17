@@ -2,6 +2,7 @@
  * @file SoLib.h
  * @brief Linux shared library loader
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Robin Vobruba <hoijui.quaero@gmail.com>
  * 
  * Linux Shared Object loader class definition
  * Copyright (C) 2005.  Licensed under the terms of the

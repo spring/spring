@@ -2,6 +2,7 @@
  * @file DllLib.cpp
  * @brief Windows shared library loader implementation
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Robin Vobruba <hoijui.quaero@gmail.com>
  * 
  * Windows Shared Object loader class implementation
  * Copyright (C) 2005.  Licensed under the terms of the

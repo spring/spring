@@ -2,6 +2,7 @@
  * @file SharedLib.cpp
  * @brief shared library loader implementation
  * @author Christopher Han <xiphux@gmail.com>
+ * @author Robin Vobruba <hoijui.quaero@gmail.com>
  *
  * Base shared library loading class implementation
  * Copyright (C) 2005.  Licensed under the terms of the

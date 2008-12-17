@@ -275,6 +275,13 @@
 #undef glLoadName
 #undef glPushName
 #undef glPopName
+#undef glGetTexLevelParameteriv
+#undef glGetFramebufferAttachmentParameterivEXT
+#undef glGetRenderbufferParameterivEXT
+#undef glGetTexImage
+#undef glIsTexture
+#undef glFramebufferTexture1DEXT
+#undef glFramebufferTexture3DEXT
 
 
 
@@ -547,3 +554,10 @@
 #define glLoadName gmlLoadName
 #define glPushName gmlPushName
 #define glPopName gmlPopName
+#define glGetTexLevelParameteriv gmlGetTexLevelParameteriv
+#define glGetFramebufferAttachmentParameterivEXT gmlGetFramebufferAttachmentParameterivEXT
+#define glGetRenderbufferParameterivEXT gmlGetRenderbufferParameterivEXT
+#define glGetTexImage gmlGetTexImage
+#define glIsTexture gmlIsTexture
+#define glFramebufferTexture1DEXT gmlFramebufferTexture1DEXT
+#define glFramebufferTexture3DEXT gmlFramebufferTexture3DEXT
