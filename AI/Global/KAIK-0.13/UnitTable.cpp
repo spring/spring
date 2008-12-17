@@ -153,9 +153,10 @@ void CUnitTable::ReadModConfig() {
 	L("[CUnitTable::ReadModConfig()]");
 
 	const char* modName = ai->cb->GetModName();
-	char configFileName[1024] = {0};
-	char logMsg[2048] = {0};
-	snprintf(configFileName, 1023, "%s%s.cfg", CFGFOLDER, modName);
+	char configFileName[1024] = {'\0'};
+	char logMsg[2048] = {'\0'};
+	std::string cfgFolderStr = CFGFOLDER;
+	snprintf(configFileName, 1023, "%s%s.cfg", cfgFolderStr.c_str(), modName);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, configFileName);
 
 	FILE* f = fopen(configFileName, "r");
@@ -1029,7 +1030,9 @@ void CUnitTable::DebugPrint() {
 		"ENERGY-STORAGE", "NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
 	};
 
-	char filename[1024] = ROOTFOLDER"CUnitTable.log";
+	char filename[1024];
+	strcpy(filename, ROOTFOLDER);
+	strcat(filename, "CUnitTable.log");
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w");
 

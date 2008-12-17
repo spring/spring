@@ -14,7 +14,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	const int mapFileVersion = 2;
 	waterIsHarmful = false;
 	string mapFileName = cb->GetMapName();
-	mapFileName = RAIDirectory + "cache/" + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
+	mapFileName = cLogFile::GetRAIRootDirectory() + "cache/" + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
 	FILE *mapFile = fopen(mapFileName.c_str(),"rb");
 	bool mapFileLoaded = false;
 	if( mapFile )
