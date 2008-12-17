@@ -17,7 +17,7 @@
 
 #include "Log.h"
 
-#include "InterfaceUtil.h"
+#include "Util.h"
 #include "InterfaceDefines.h"
 
 #include <stdio.h>	// for file IO

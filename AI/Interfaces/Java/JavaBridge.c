@@ -15,13 +15,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "InterfaceUtil.h"
-
-
 #include "JavaBridge.h"
 
 #include "InterfaceDefines.h"
-#include "InterfaceUtil.h"
+#include "Util.h"
 #include "StreflopBridge.h"
 #include "Log.h"
 
@@ -38,23 +35,6 @@
 #include <stdlib.h>	// malloc(), calloc(), free()
 #include <inttypes.h> // intptr_t -> a signed int with the same size
                       // as a pointer (whether 32bit or 64bit)
-/*
-#ifdef WIN32
-#include <io.h>
-#else
-#include <dirent.h>
-#endif
-#if defined STREFLOP_X87 || defined STREFLOP_SSE
-#include "lib/streflop/streflop_cond.h"
-using namespace streflop;
-#else
-#include <math.h>
-#endif
-*/
-//#include "lib/streflop/streflop.h"
-////#include "lib/streflop/FPUSettings.h"
-//using namespace streflop;
-
 
 
 
@@ -112,24 +92,27 @@ static bool java_createClassPath(char* classPath) {
 	unsigned int j;
 	unsigned int applSkirmishAIs[staticGlobalData->maxTeams];
 	unsigned int sizeApplSkimrishAIs = 0;
+	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	for (i = 0; i < staticGlobalData->numSkirmishAIs; ++i) {
 		// find the interface shortName
-		const char* intShortName = util_map_getValueByKey(
+		const char* ai_intShortName = util_map_getValueByKey(
 				staticGlobalData->skirmishAIInfosSizes[i],
 				staticGlobalData->skirmishAIInfosKeys[i],
 				staticGlobalData->skirmishAIInfosValues[i],
 				SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME);
+/*
 		const char* shortName_ai = util_map_getValueByKey(
 				staticGlobalData->skirmishAIInfosSizes[i],
 				staticGlobalData->skirmishAIInfosKeys[i],
 				staticGlobalData->skirmishAIInfosValues[i],
 				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-simpleLog_log("shortName_ai: %s", shortName_ai);
-simpleLog_log("intShortName_ai: %s", intShortName);
+*/
+//simpleLog_log("shortName_ai: %s", shortName_ai);
+//simpleLog_log("intShortName_ai: %s", intShortName);
 
 		// if the interface shortName was found, check for appliance
-		if (intShortName != NULL && strcmp(intShortName, MY_SHORT_NAME) == 0) {
-simpleLog_log("applSkirmishAIs: %i", i);
+		if (ai_intShortName != NULL && strcmp(ai_intShortName, myShortName) == 0) {
+//simpleLog_log("applSkirmishAIs: %i", i);
 			applSkirmishAIs[sizeApplSkimrishAIs++] = i;
 		}
 	}
@@ -145,14 +128,22 @@ simpleLog_log("applSkirmishAIs: %i", i);
 		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"interface.jar";
 		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS"interface.jar";
 
-		jarFiles[sizeJarFiles] = util_allocStr(128);
-		strcpy(jarFiles[sizeJarFiles], AI_INTERFACES_DATA_DIR);
-		strcat(jarFiles[sizeJarFiles], sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"interface.jar");
+		jarFiles[sizeJarFiles] =
+				util_allocStr(strlen(util_getDataDirVersioned()) + strlen(sPS)
+						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
+		STRCPY(jarFiles[sizeJarFiles], util_getDataDirVersioned());
+		STRCAT(jarFiles[sizeJarFiles], sPS);
+		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
+//simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
 		sizeJarFiles++;
 
-		jarFiles[sizeJarFiles] = util_allocStr(128);
-		strcpy(jarFiles[sizeJarFiles], AI_INTERFACES_DATA_DIR);
-		strcat(jarFiles[sizeJarFiles], sPS""MY_SHORT_NAME""sPS"interface.jar");
+		jarFiles[sizeJarFiles] =
+				util_allocStr(strlen(util_getDataDirUnversioned()) + strlen(sPS)
+						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
+		STRCPY(jarFiles[sizeJarFiles], util_getDataDirUnversioned());
+		STRCAT(jarFiles[sizeJarFiles], sPS);
+		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
+//simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
 		sizeJarFiles++;
 	}
 	// the file names of the Java AIs used during the current game
@@ -192,10 +183,10 @@ simpleLog_log("applSkirmishAIs: %i", i);
 	// to the classpath directly, so you can keep .class files in there
 	char* jarDirs[MAX_ENTRIES];
 	int unsigned sizeJarDirs = 0;
-	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(AI_INTERFACES_DATA_DIR,
-			sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"jlib");
-	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(AI_INTERFACES_DATA_DIR,
-			sPS""MY_SHORT_NAME""sPS"jlib");
+	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirVersioned(),
+			sPS"jlib");
+	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirUnversioned(),
+			sPS"jlib");
 	// the jlib dirs of the Java AIs used during the current game
 	for (i = 0; i < sizeApplSkimrishAIs; ++i) {
 		const char* shortName_ai = util_map_getValueByKey(
@@ -226,7 +217,7 @@ simpleLog_log("applSkirmishAIs: %i", i);
 
 
 	// searching the individual jar files and adding everything to the classpath
-	strcat(classPath, "-Djava.class.path=");
+	STRCAT(classPath, "-Djava.class.path=");
 /*
 	// add the first jar file
 	if (sizeJarFiles > 0) {
@@ -236,7 +227,7 @@ simpleLog_log("applSkirmishAIs: %i", i);
 					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
 					jarFiles[0], absoluteFilePath);
 			if (found) {
-				strcat(classPath, absoluteFilePath);
+				STRCAT(classPath, absoluteFilePath);
 			}
 		}
 	}
@@ -249,11 +240,12 @@ simpleLog_log("applSkirmishAIs: %i", i);
 			bool found = util_findFile(
 					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
 					jarFiles[i], absoluteFilePath);
+//simpleLog_log("jarFiles[%i]: %i", i, found);
 			if (found) {
 				if (i > 0) {
-					strcat(classPath, ENTRY_DELIM);
+					STRCAT(classPath, ENTRY_DELIM);
 				}
-				strcat(classPath, absoluteFilePath);
+				STRCAT(classPath, absoluteFilePath);
 			}
 		//}
 	}
@@ -265,8 +257,8 @@ simpleLog_log("applSkirmishAIs: %i", i);
 				jarDirs[i], absoluteDirPath, false, false);
 		free(jarDirs[i]);
 		if (found) {
-			strcat(classPath, ENTRY_DELIM);
-			strcat(classPath, absoluteDirPath);
+			STRCAT(classPath, ENTRY_DELIM);
+			STRCAT(classPath, absoluteDirPath);
 			jarDirs[i] = absoluteDirPath;
 		} else {
 			jarDirs[i] = NULL;
@@ -279,46 +271,13 @@ simpleLog_log("applSkirmishAIs: %i", i);
 			unsigned int sizeJarFileNames = util_listFiles(jarDirs[i], ".jar",
 					jarFileNames, true, MAX_ENTRIES);
 			for (j = 0; j < sizeJarFileNames; ++j) {
-				strcat(classPath, ENTRY_DELIM);
-				strcat(classPath, jarDirs[i]);
-				strcat(classPath, sPS);
-				strcat(classPath, jarFileNames[j]);
+				STRCAT(classPath, ENTRY_DELIM);
+				STRCAT(classPath, jarDirs[i]);
+				STRCAT(classPath, sPS);
+				STRCAT(classPath, jarFileNames[j]);
 			}
 		}
 	}
-
-
-/*
-	char* libJars[MAX_JARS];
-	char* implJars[MAX_JARS];
-
-	const unsigned int sizeImplDataDirs = java_listJars(IMPL_DIR, implJars, MAX_JARS);
-	const unsigned int sizeLibJars = java_listJars(LIB_DIR, libJars, MAX_JARS);
-	const unsigned int sizeImplJars = java_listJars(IMPL_DIR, implJars, MAX_JARS);
-
-	strcpy(classPath, "-Djava.class.path="JAI_DIR"/JAI.jar");
-
-	// add the JAI dir for config files and testing without jars
-	strcat(classPath, ENTRY_DELIM""JAI_DIR);
-
-	if (numLibJars > 0) {
-		int cnt;
-		for (cnt = 0; cnt < numLibJars; ++cnt) {
-			strcat(classPath, ENTRY_DELIM""LIB_DIR""PATH_DELIM);
-			strcat(classPath, libJars[cnt]);
-			free(libJars[cnt]);
-		}
-	}
-
-	if (numImplJars > 0) {
-		int cnt;
-		for (cnt = 0; cnt < numImplJars; ++cnt) {
-			strcat(classPath, ENTRY_DELIM""IMPL_DIR""PATH_DELIM);
-			strcat(classPath, implJars[cnt]);
-			free(implJars[cnt]);
-		}
-	}
-*/
 
 	return true;
 }
@@ -335,44 +294,34 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// consists of:
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/lib/
-	char libraryPath1[512];
-	//const char* relLibPath1 =
-	//		AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"lib";
-	char relLibPath1[128];
-	STRCPY(relLibPath1, AI_INTERFACES_DATA_DIR);
-	STRCAT(relLibPath1, sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"lib");
-	bool found_libraryPath1 = util_findDir(
-			staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-			relLibPath1, libraryPath1, false, false);
-/*
-	if (!found_libraryPath1) {
-		simpleLog_error(-1, "!Java library path does not exist: %s", relLibPath1);
-		return false;
-	}
-*/
-	char libraryPath2[512];
-	//const char* relLibPath2 =
-	//		AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS"lib";
-	char relLibPath2[128];
-	STRCPY(relLibPath2, AI_INTERFACES_DATA_DIR);
-	STRCAT(relLibPath2, sPS""MY_SHORT_NAME""sPS"lib");
-	bool found_libraryPath2 = util_findDir(
-			staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-			relLibPath2, libraryPath2, false, false);
+	char libraryPathPart1[strlen(util_getDataDirVersioned()) + strlen(sPS)
+						+ strlen(JAVA_AI_INTERFACE_NATIVE_LIBS_DIR) + 1];
+	STRCPY(libraryPathPart1, util_getDataDirVersioned());
+	STRCAT(libraryPathPart1, sPS);
+	STRCAT(libraryPathPart1, JAVA_AI_INTERFACE_NATIVE_LIBS_DIR);
+	bool libraryPathPart1_exists = util_fileExists(libraryPathPart1);
+
+	char libraryPathPart2[strlen(util_getDataDirUnversioned()) + strlen(sPS)
+						+ strlen(JAVA_AI_INTERFACE_NATIVE_LIBS_DIR) + 1];
+	STRCPY(libraryPathPart2, util_getDataDirUnversioned());
+	STRCAT(libraryPathPart2, sPS);
+	STRCAT(libraryPathPart2, JAVA_AI_INTERFACE_NATIVE_LIBS_DIR);
+	bool libraryPathPart2_exists = util_fileExists(libraryPathPart2);
+
 	char libraryPath[1024];
-	libraryPath[0] = '\0';
-	strcat(libraryPath, "-Djava.library.path=");
-// TODO remove the two following lines, but check first.. seems not to be working without
-strcat(libraryPath, "/home/robin/svn_work/robin/Development/Projects/Others/spring_C_AI_interface/game_linux/AI/Interfaces/Java/0.1");
-strcat(libraryPath, ENTRY_DELIM);
-	if (found_libraryPath1) {
-		strcat(libraryPath, libraryPath1);
+	STRCPY(libraryPath, "-Djava.library.path=");
+	STRCAT(libraryPath, util_getDataDirVersioned());
+	STRCAT(libraryPath, ENTRY_DELIM);
+	STRCAT(libraryPath, util_getDataDirUnversioned());
+	STRCAT(libraryPath, ENTRY_DELIM);
+	if (libraryPathPart1_exists) {
+		STRCAT(libraryPath, libraryPathPart1);
 	}
-	if (found_libraryPath1 && found_libraryPath2) {
-		strcat(libraryPath, ENTRY_DELIM);
+	if (libraryPathPart1_exists && libraryPathPart2_exists) {
+		STRCAT(libraryPath, ENTRY_DELIM);
 	}
-	if (found_libraryPath2) {
-		strcat(libraryPath, libraryPath2);
+	if (libraryPathPart2_exists) {
+		STRCAT(libraryPath, libraryPathPart2);
 	}
 
 	const char* strOptions[32];
@@ -392,27 +341,30 @@ strcat(libraryPath, ENTRY_DELIM);
 		//strOptions[op++] = "-XX:+AlwaysRestoreFPU";
 		//strOptions[op++] = "-Djava.util.logging.config.file="JAI_DIR"/logging.properties";
 
-		if (JVM_LOGGING) {
-			simpleLog_fine("JVM logging enabled.");
-			strOptions[op++] = "-Xcheck:jni";
-			strOptions[op++] = "-verbose:jni";
-			strOptions[op++] = "-XX:+UnlockDiagnosticVMOptions";
-			strOptions[op++] = "-XX:+LogVMOutput";
-			//strOptions[op++] = "-XX:LogFile=C:/javaLog.txt";
-			//strOptions[op++] = "-XX:LogFile="JAI_DIR"/log/jvm-log.txt";
-		}
-		if (JVM_DEBUGGING) {
-			simpleLog_fine("JVM debugging enabled.");
-			strOptions[op++] = "-Xdebug";
-			strOptions[op++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address="JVM_DEBUG_PORT;
-			// disable JIT (required for debugging under the classical VM)
-			strOptions[op++] = "-Djava.compiler=NONE";
-			strOptions[op++] = "-Xnoagent"; // disables old JDB
-		}
-	//}
-	unsigned int numOptions = op;
+#if defined JVM_LOGGING
+		simpleLog_fine("JVM logging enabled.");
+		strOptions[op++] = "-Xcheck:jni";
+		strOptions[op++] = "-verbose:jni";
+		strOptions[op++] = "-XX:+UnlockDiagnosticVMOptions";
+		strOptions[op++] = "-XX:+LogVMOutput";
+		//strOptions[op++] = "-XX:LogFile=C:/javaLog.txt";
+		//strOptions[op++] = "-XX:LogFile="JAI_DIR"/log/jvm-log.txt";
+#endif // defined JVM_LOGGING
 
-	struct JavaVMOption* options = (struct JavaVMOption*) calloc(numOptions, sizeof(struct JavaVMOption));
+#if defined JVM_DEBUGGING
+		simpleLog_fine("JVM debugging enabled.");
+		strOptions[op++] = "-Xdebug";
+		strOptions[op++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address="JVM_DEBUG_PORT;
+		// disable JIT (required for debugging under the classical VM)
+		strOptions[op++] = "-Djava.compiler=NONE";
+		strOptions[op++] = "-Xnoagent"; // disables old JDB
+#endif // defined JVM_DEBUGGING
+	//}
+
+	const unsigned int numOptions = op;
+
+	struct JavaVMOption* options = (struct JavaVMOption*)
+			calloc(numOptions, sizeof(struct JavaVMOption));
 
 	// fill strOptions into the JVM options
 	simpleLog_fine("JVM init options (size: %i):", numOptions);
@@ -442,10 +394,6 @@ static JNIEnv* java_getJNIEnv() {
 		JavaVM* jvm = NULL;
 		struct JavaVMInitArgs vm_args;
 		jint res;
-/*
-		jclass cls;
-		jmethodID mid;
-*/
 
 		if (!java_createJavaVMInitArgs(&vm_args)) {
 			simpleLog_error(-1, "!Failed initializing JVM init-arguments.");
@@ -454,13 +402,15 @@ static JNIEnv* java_getJNIEnv() {
 
 		/*
 				// looking for existing JVMs is problematic,
-				// cause they could be initialized with other JVM-arguments then we need
+				// cause they could be initialized with other
+				// JVM-arguments then we need
 				simpleLog_log("looking for existing JVMs ...");
 				jsize numJVMsFound = 0;
 
 				// jint JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs);
 				// Returns all Java VMs that have been created.
-				// Pointers to VMs are written in the buffer vmBuf in the order they are created.
+				// Pointers to VMs are written in the buffer vmBuf,
+				// in the order they are created.
 				// At most bufLen number of entries will be written.
 				// The total number of created VMs is returned in *nVMs.
 				// Returns “0” on success; returns a negative number on failure.
@@ -497,7 +447,8 @@ static JNIEnv* java_getJNIEnv() {
 		}
 
 end:
-		if (env == NULL || jvm == NULL || (*env)->ExceptionCheck(env) || res != 0) {
+		if (env == NULL || jvm == NULL || (*env)->ExceptionCheck(env)
+				|| res != 0) {
 			simpleLog_fine("!Failed creating JVM.");
 			if (env != NULL && (*env)->ExceptionCheck(env)) {
 				(*env)->ExceptionDescribe(env);
@@ -514,7 +465,8 @@ end:
 	}
 
 	//simpleLog_fine("Reattaching current thread...");
-	jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm, (void**) &g_jniEnv, NULL);
+	jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm,
+			(void**) &g_jniEnv, NULL);
 	//res = jvm->AttachCurrentThread((void**) & jniEnv, NULL);
 	if (res < 0 || (*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
 		if ((*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
@@ -535,7 +487,8 @@ bool java_unloadJNIEnv() {
 
 		// We have to be the ONLY running thread (native and Java)
 		// this may not help, but cant be bad
-		jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm, (void**) &g_jniEnv, NULL);
+		jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm,
+				(void**) &g_jniEnv, NULL);
 		//res = jvm->AttachCurrentThread((void**) & jniEnv, NULL);
 		if (res < 0 || (*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
 			if ((*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
@@ -583,9 +536,11 @@ bool java_initStatic(const struct SStaticGlobalData* _staticGlobalData) {
 
 	aiImplId_className = (const char**) calloc(maxSkirmishImpls, sizeof(char*));
 	aiImplId_instance = (jobject*) calloc(maxSkirmishImpls, sizeof(jobject));
-	aiImplId_methods = (jmethodID**) calloc(maxSkirmishImpls, sizeof(jmethodID*));
+	aiImplId_methods = (jmethodID**)
+			calloc(maxSkirmishImpls, sizeof(jmethodID*));
 	teamId_aiImplId = (unsigned int*) calloc(maxTeams, sizeof(unsigned int));
-	teamId_cCallback = (const struct SAICallback**) calloc(maxTeams, sizeof(struct SAICallback*));
+	teamId_cCallback =(const struct SAICallback**)
+			calloc(maxTeams, sizeof(struct SAICallback*));
 	teamId_jCallback = (jobject*) calloc(maxTeams, sizeof(jobject));
 
 	unsigned int impl;
@@ -639,7 +594,8 @@ static bool java_initPropertiesClass(JNIEnv* env) {
 	// get no-arg constructor
 	g_m_props_ctor = (*env)->GetMethodID(env, g_cls_props, "<init>", "()V");
 	if (g_m_props_ctor == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_log("!No-arg constructor not found for class: %s", "java/util/Properties");
+		simpleLog_log("!No-arg constructor not found for class: %s",
+				"java/util/Properties");
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -647,10 +603,13 @@ static bool java_initPropertiesClass(JNIEnv* env) {
 	}
 
 	// get the setProperty() method
-	g_m_props_setProperty = (*env)->GetMethodID(env, g_cls_props, "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
+	g_m_props_setProperty = (*env)->GetMethodID(env, g_cls_props, "setProperty",
+			"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
 	if (g_m_props_setProperty == NULL || (*env)->ExceptionCheck(env)) {
 		g_m_props_setProperty = NULL;
-		simpleLog_log("!Method not found: %s.%s%s", "java/util/Properties", "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
+		simpleLog_log("!Method not found: %s.%s%s", "java/util/Properties",
+				"setProperty",
+				"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -737,7 +696,8 @@ static jobject java_createPropertiesFromCMap(JNIEnv* env,
 	for (op=0; op < size; op++) {
 		jstring jstr_key = (*env)->NewStringUTF(env, keys[op]);
 		jstring jstr_value = (*env)->NewStringUTF(env, values[op]);
-		(*env)->CallObjectMethod(env, o_props, g_m_props_setProperty, jstr_key, jstr_value);
+		(*env)->CallObjectMethod(env, o_props, g_m_props_setProperty, jstr_key,
+				jstr_value);
 		if ((*env)->ExceptionCheck(env)) {
 			simpleLog_log("!Failed adding property");
 			if ((*env)->ExceptionCheck(env)) {
@@ -749,88 +709,6 @@ static jobject java_createPropertiesFromCMap(JNIEnv* env,
 
 	return o_props;
 }
-
-
-/**
- * Instantiates an instance of the class specified className.
- *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
- */
-/*
-int getFactory(struct JNIEnv* env, const char* className, jobject aiInstance, jmethodID methods) {
-
-	if (g_factory == NULL) {
-		simpleLog_log("Create the factory...");
-
-		jclass cls_factory;
-		jmethodID mid_factory_init;
-		jmethodID mid_factory_createAi = NULL;
-		jmethodID mid_factory_createAiByName = NULL;
-		jobject factory = NULL;
-		jmethodID release_mid;
-		jclass javaAiClass = NULL;
-
-		// get factory class
-		cls_factory = jniEnv->FindClass(CLS_FACTORY);
-		if (cls_factory == 0) {
-			simpleLog_log("!Can't find class "CLS_FACTORY);
-			goto end;
-		}
-
-		// get factory constructor
-		mid_factory_init = jniEnv->GetMethodID(cls_factory, "<init>", "()V");
-		if (mid_factory_init == 0) {
-			simpleLog_log("!Can't find no-arg-constructor of class "CLS_FACTORY);
-			goto end;
-		}
-
-		// get factory method, the one that serves AI instances
-		mid_factory_createAi = jniEnv->GetMethodID(cls_factory, MTH_FACTORY_CREATEAI, SIG_FACTORY_CREATEAI);
-		if (mid_factory_createAi == 0) {
-			simpleLog_log("!Can't find method: "CLS_FACTORY"."MTH_FACTORY_CREATEAI""SIG_FACTORY_CREATEAI);
-			goto end;
-		}
-		// get factory method , the one that serves AI instances out of a specified jar
-		mid_factory_createAiByName = jniEnv->GetMethodID(cls_factory, MTH_FACTORY_CREATEAIBYNAME, SIG_FACTORY_CREATEAIBYNAME);
-		if (mid_factory_createAiByName == 0) {
-			simpleLog_log("!Can't find method: "CLS_FACTORY"."MTH_FACTORY_CREATEAIBYNAME""SIG_FACTORY_CREATEAIBYNAME);
-			goto end;
-		}
-
-		// create the factory
-		factory = jniEnv->NewObject(cls_factory, mid_factory_init);
-		if (factory == 0) {
-			simpleLog_log("!Can't instantiate factory.");
-			goto end;
-		}
-
-		// make the factory a global reference,
-		// so it will not be garbage collected,
-		// even after this method returned
-		factory = jniEnv->NewGlobalRef(factory);
-		if (jniEnv->ExceptionCheck()) {
-			simpleLog_log("!Can't make factory a global reference.");
-			goto end;
-		}
-
-end:
-		if (jniEnv->ExceptionCheck()) {
-			simpleLog_log("!Failed creating factory.");
-			factory = NULL;
-			jniEnv->ExceptionDescribe();
-		}
-
-		g_mid_factory_createAi = mid_factory_createAi;
-		g_mid_factory_createAiByName = mid_factory_createAiByName;
-		g_factory = factory;
-	}
-
-	return g_factory;
-}
-*/
 
 
 bool java_releaseStatic() {
@@ -879,7 +757,7 @@ static bool java_loadSkirmishAI(JNIEnv* env, const char* className,
 
 	// convert className from "com.myai.AI" to "com/myai/AI"
 	char classNameP[strlen(className)+1];
-	strcpy(classNameP, className);
+	STRCPY(classNameP, className);
 	util_strReplace(classNameP, '.', '/');
 
 	// get the AI class
@@ -927,23 +805,29 @@ static bool java_loadSkirmishAI(JNIEnv* env, const char* className,
 	// get the AIs methods
 
 	// init
-	methods[MTH_INDEX_SKIRMISH_AI_INIT] = (*env)->GetMethodID(env, cls_ai, MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
+	methods[MTH_INDEX_SKIRMISH_AI_INIT] = (*env)->GetMethodID(env, cls_ai,
+			MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
 	if (methods[MTH_INDEX_SKIRMISH_AI_INIT] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className, MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
+		simpleLog_log("!Method not found: %s.%s%s", className,
+				MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
 		return false;
 	}
 
 	// release
-	methods[MTH_INDEX_SKIRMISH_AI_RELEASE] = (*env)->GetMethodID(env, cls_ai, MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
+	methods[MTH_INDEX_SKIRMISH_AI_RELEASE] = (*env)->GetMethodID(env, cls_ai,
+			MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
 	if (methods[MTH_INDEX_SKIRMISH_AI_RELEASE] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className, MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
+		simpleLog_log("!Method not found: %s.%s%s", className,
+				MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
 		return false;
 	}
 
 	// handleEvent
-	methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] = (*env)->GetMethodID(env, cls_ai, MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
+	methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] = (*env)->GetMethodID(env,
+			cls_ai, MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
 	if (methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className, MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
+		simpleLog_log("!Method not found: %s.%s%s", className,
+				MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
 		return false;
 	}
 
@@ -981,13 +865,16 @@ bool java_initSkirmishAIClass(const char* className) {
 			java_initPointerClass(env);
 		}
 
-		aiImplId_methods[implId] = (jmethodID*) calloc(MTHS_SIZE_SKIRMISH_AI, sizeof(jmethodID));
-		success = java_loadSkirmishAI(env, className, &(aiImplId_instance[implId]), aiImplId_methods[implId]);
+		aiImplId_methods[implId] = (jmethodID*) calloc(MTHS_SIZE_SKIRMISH_AI,
+				sizeof(jmethodID));
+		success = java_loadSkirmishAI(env, className,
+				&(aiImplId_instance[implId]), aiImplId_methods[implId]);
 		ESTABLISH_SPRING_ENV;
 		if (success) {
 			aiImplId_className[implId] = util_allocStrCpy(className);
 		} else {
-			simpleLog_error(-1, "!Class loading failed for class: %s", className);
+			simpleLog_error(-1, "!Class loading failed for class: %s",
+					className);
 		}
 	}
 
@@ -1060,7 +947,9 @@ const struct SAICallback* java_getSkirmishAICCallback(int teamId) {
 	return teamId_cCallback[teamId];
 }
 
-static jobject java_toJavaAICallback(JNIEnv* env, int teamId, const struct SAICallback* cCallback) {
+/*
+static jobject java_toJavaAICallback(JNIEnv* env, int teamId,
+		const struct SAICallback* cCallback) {
 
 	jobject jCallback = NULL;
 
@@ -1073,63 +962,7 @@ static jobject java_toJavaAICallback(JNIEnv* env, int teamId, const struct SAICa
 
 	return jCallback;
 }
-
-/*
-static jobject java_toJavaAIEvent(JNIEnv* env, int teamId, int topic, const void* data) {
-
-	jobject jEvt = NULL;
-	bool ok = false;
-
-	switch (topic) {
-		case EVENT_INIT:
-			;
-			const struct SInitEvent* cEvt = (const struct SInitEvent*) data;
-			jclass cls_jEvt = (*env)->FindClass(env, PKG_EVENT"InitAIEvent");
-			jfieldID f_jEvt_teamId = (*env)->GetFieldID(env, cls_jEvt,
-					"teamId", "I");
-			jfieldID f_jEvt_callback = (*env)->GetFieldID(env, cls_jEvt,
-					"callback", "L"CLS_AI_CALLBACK";");
-			jfieldID f_jEvt_options = (*env)->GetFieldID(env, cls_jEvt,
-					"options", "Ljava/util/Properties;");
-			jclass cls_props = (*env)->FindClass(env, "java/util/Properties");
-			jmethodID m_props_ctor = (*env)->GetMethodID(env, cls_props,
-					"<init>", "()V");
-			jmethodID m_props_setProperty = (*env)->GetMethodID(env, cls_jEvt,
-					"setProperty",
-					"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
-
-			jEvt = (*env)->AllocObject(env, cls_jEvt);
-
-			(*env)->SetIntField(env, jEvt, f_jEvt_teamId, cEvt->team);
-
-			jobject o_callback = java_toJavaAICallback(env, teamId, cEvt->callback);
-			(*env)->SetObjectField(env, jEvt, f_jEvt_callback, o_callback);
-
-			jobject props = (*env)->NewObject(env, cls_props, m_props_ctor);
-			unsigned int op;
-			for (op = 0; op < cEvt->sizeOptions; op++) {
-				jstring jstr_key = (*env)->NewStringUTF(env, cEvt->optionKeys[op]);
-				jstring jstr_value = (*env)->NewStringUTF(env, cEvt->optionValues[op]);
-				(*env)->CallObjectMethod(env, props, m_props_setProperty,
-						jstr_key, jstr_value);
-			}
-			(*env)->SetObjectField(env, jEvt, f_jEvt_options, props);
-
-			ok = true;
-			break;
-		default:
-			//jEvt = new NullAIEvent();
-			break;
-	}
-
-	if (!ok) {
-		jEvt = false;
-	}
-
-	return jEvt;
-}
 */
-
 
 
 /**
@@ -1215,7 +1048,8 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 
 	jmethodID mth = NULL;
 	jobject o_ai = NULL;
-	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT, &mth);
+	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai,
+			MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT, &mth);
 
 	if (success) {
 		ESTABLISH_JAVA_ENV;
@@ -1260,207 +1094,3 @@ if (topic == EVENT_INIT) {
 
 	return res;
 }
-
-
-
-/*
-		// make a new AI, specifying a jar
-		simpleLog_log("calling Java factory by-name method with \"%s\"...", aiJar);
-		jstring aiJarNameJava = jniEnv->NewStringUTF(aiJar);
-		javaAi = jniEnv->CallObjectMethod(factory, mid_factory_createAiByName, aiJarNameJava);
-	}
-	if (jniEnv->ExceptionCheck()) {
-		simpleLog_log("!Failed to get AI from factory.");
-		goto end;
-	}
-
-	// make the AI a global reference,
-	// so it will not be garbage collected,
-	// even after this method returned
-	javaAi = jniEnv->NewGlobalRef(javaAi);
-	if (jniEnv->ExceptionCheck()) {
-		simpleLog_log("!Failed to make AI a global reference.");
-		goto end;
-	}
-
-end:
-	if (jniEnv->ExceptionCheck()) {
-		javaAi = NULL;
-		jniEnv->ExceptionDescribe();
-	}
-
-	return javaAi;
-}
-
-
-
-IGlobalAI* ConnectJGlobalAI(struct JNIEnv* env, jobject javaAi) {
-
-	jclass javaAiClass;
-	SwigDirector_JGlobalAI* aiDirector;
-
-	static const bool swig_mem_own = true;
-	static const bool weak_global = false;
-
-	// make a new SWIG director, for connecting the Java AI with the native part
-	aiDirector = new SwigDirector_JGlobalAI(jniEnv);
-	if (jniEnv->ExceptionCheck()) {
-		simpleLog_log("!Failed to create SwigDirector_JGlobalAI.");
-		goto end;
-	}
-
-	// connect the SWIG director with the Java AI
-	javaAiClass = jniEnv->GetObjectClass(javaAi);
-	aiDirector->swig_connect_director(jniEnv, javaAi, javaAiClass, swig_mem_own, weak_global);
-	if (jniEnv->ExceptionCheck()) {
-		simpleLog_log("!Failed connecing SwigDirector_JGlobalAI.");
-		goto end;
-	}
-
-end:
-	if (jniEnv->ExceptionCheck()) {
-		aiDirector = NULL;
-		jniEnv->ExceptionDescribe();
-	}
-
-	return aiDirector;
-}
-*/
-
-/*
-
-DLL_EXPORT IGlobalAI* loadAIJar(const char* fileName) {
-
-	struct JNIEnv* env = getJNIEnv();
-
-	(*env)->FindClass(env, "java/lang/String");
-
-	if (jniEnv == NULL) {
-		simpleLog_log("!JVM creation failed.");
-		return NULL;
-	}
-
-	jobject factory = GetFactory(jniEnv);
-	if (factory == NULL) {
-		simpleLog_log("!Factory creation failed.");
-		return NULL;
-	}
-
-	jobject javaAi = GetNewJGlobalAI(jniEnv, jarName);
-	if (javaAi == NULL) {
-		simpleLog_log("!Java AI creation failed.");
-		return NULL;
-	}
-
-	IGlobalAI* aiDirector = ConnectJGlobalAI(jniEnv, javaAi);
-	if (aiDirector == NULL) {
-		simpleLog_log("!Director creation failed.");
-		return NULL;
-	}
-
-	g_director_javaAis[aiDirector] = javaAi;
-
-	return aiDirector;
-}
-
-
-DLL_EXPORT void ReleaseAI(IGlobalAI* ai) {
-
-	JNIEnv* jniEnv = GetJNIEnv();
-	if (jniEnv == NULL) {
-		simpleLog_log("!JVM creation failed.");
-		simpleLog_log(" -> unable to delete global reference of Java AI.");
-	}
-
-	jobject javaAi = g_director_javaAis[ai];
-	g_director_javaAis.erase(ai);
-	ReleaseJavaAI(javaAi);
-
-	delete ai;
-	if (jniEnv != NULL) {
-		jniEnv->DeleteGlobalRef(javaAi);
-	}
-	javaAi = NULL;
-}
-*/
-
-
-/*
-int GetOptionsFromConfigFile(std::vector<const char*>* strOptions, const char* configFile) {
-
-	TiXmlDocument doc(configFile);
-	if (!doc.LoadFile()) return -1;
-
-	TiXmlHandle hDoc(&doc);
-	TiXmlElement* pElem;
-	TiXmlHandle hRoot(0);
-	TiXmlHandle hJvm(0);
-	int numOptions = 0;
-
-	// get root node
-	{
-		pElem = hDoc.FirstChildElement().Element();
-		// should always have a valid root but handle gracefully if not
-		if (!pElem) return -2;
-		hRoot = TiXmlHandle(pElem);
-	}
-
-	// read options
-	{
-		pElem = hRoot.FirstChild("jvm").Element();
-		if (pElem == NULL) return -3;
-		hJvm = TiXmlHandle(pElem);
-
-		pElem = hJvm.FirstChild("option").Element();
-		for (pElem; pElem; pElem = pElem->NextSiblingElement()) {
-			if (pElem->GetText()) {
-				char* textCopy = new char[strlen(pElem->GetText()) + 1];
-				strcpy(textCopy, pElem->GetText());
-				strOptions->push_back(textCopy);
-				numOptions++;
-			}
-		}
-	}
-
-	return numOptions;
-}
-
-
-*/
-
-
-/*
-bool ReleaseJavaAI(jobject javaAi) {
-
-	jclass cls_javaAiImpl = NULL;
-	jmethodID release_mid = NULL;
-
-	JNIEnv* jniEnv = GetJNIEnv();
-	if (jniEnv == NULL) {
-		simpleLog_fine("!JVM creation failed.");
-		return false;
-	}
-
-	cls_javaAiImpl = jniEnv->GetObjectClass(javaAi);
-	release_mid = jniEnv->GetMethodID(cls_javaAiImpl, MTH_AI_RELEASE, SIG_AI_RELEASE);
-	if (release_mid == 0) {
-		simpleLog_fine("!Can't find method: (? extends "CLS_AI")."MTH_AI_RELEASE""SIG_AI_RELEASE);
-		goto end;
-	}
-
-	jniEnv->CallVoidMethod(javaAi, release_mid);
-	if (jniEnv->ExceptionCheck()) {
-		simpleLog_fine("!Error when calling: (? extends "CLS_AI")."MTH_AI_RELEASE""SIG_AI_RELEASE);
-		goto end;
-	}
-
-end:
-	if (jniEnv->ExceptionCheck() || release_mid == 0) {
-		simpleLog_fine("!Failed releasing Java AI.");
-		jniEnv->ExceptionDescribe();
-		return false;
-	}
-
-	return true;
-}
-*/

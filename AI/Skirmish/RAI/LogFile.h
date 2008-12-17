@@ -8,9 +8,8 @@
 #define RAI_LOGFILE_H
 
 #include "ExternalAI/IAICallback.h"
+#include "AIExport.h"
 using std::string;
-
-const string RAIDirectory = "AI/RAI/";
 
 class cLogFile
 {
@@ -20,6 +19,8 @@ public:
 
 	cLogFile& operator<<(float message);
 	cLogFile& operator<<(string message);
+
+	static const std::string& GetRAIRootDirectory();
 
 private:
 	string logFileName;

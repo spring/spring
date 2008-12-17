@@ -97,15 +97,18 @@ private:
 
 	std::vector<std::string> springDataDirs;
 	/**
-	 * All accompanying data for this interface that is not version specifc
-	 * should go in here.
-	 */
-	std::string myDataDir;
-	/**
 	 * All accompanying data for this interface that is version specifc
 	 * should go in here.
+	 * If you are not sure whether to use this or the unversioned one, use this.
 	 */
-	std::string myDataDirVers;
+	std::string myDataDirVersioned;
+	/**
+	 * All accompanying data for this interface that is not version specifc
+	 * should go in here.
+	 * If you are not sure whether to use this or the versioned one,
+	 * use the versioned one.
+	 */
+	std::string myDataDirUnversioned;
 
 	std::set<SSkirmishAISpecifier, SSkirmishAISpecifier_Comparator> mySkirmishAISpecifiers;
 	typedef std::map<const SSkirmishAISpecifier, std::map<std::string, std::string>, SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;

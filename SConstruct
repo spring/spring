@@ -356,7 +356,13 @@ skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishaienv, filelist.get_sha
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishaienv, filelist.get_shared_skirmishAI_source_LegacyCpp(skirmishaienv), '-skirmishai_creg', ['USING_CREG'])
 
 # Build
-skirmishai_exclude_list=['NTai', 'build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
+skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
+# for some strange reason, NTai has a compile error
+# when compiling with MinGW on windows, because of
+# a class in the Legacy C++ wrapper, which is used
+# by all other legacy C++ AIs aswell
+if sys.platform == 'win32':
+	skirmishai_exclude_list += ['NTai']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
