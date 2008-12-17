@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ AAI::AAI()
 	map = 0;
 	af = 0;
 	am = 0;
-	
+
 	side = 0;
 
 	initialized = false;
@@ -50,7 +50,7 @@ AAI::~AAI()
 	fprintf(file, "\nHover Groups:     %i\n", group_list[HOVER_ASSAULT].size());
 	fprintf(file, "\nSea Groups:       %i\n", group_list[SEA_ASSAULT].size());
 	fprintf(file, "\nSubmarine Groups: %i\n\n", group_list[SUBMARINE_ASSAULT].size());
-	
+
 	fprintf(file, "Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
 	fprintf(file, "Future metal/energy supply:    %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
 
@@ -59,9 +59,11 @@ AAI::~AAI()
 	fprintf(file, "Future/active factories:   %i / %i\n\n", ut->futureFactories, ut->activeFactories);
 
 	fprintf(file, "Factory ratings:\n");
-	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin(); fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac)
+	for(list<int>::iterator fac = bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].begin();
+			fac != bt->units_of_category[STATIONARY_CONSTRUCTOR][side-1].end(); ++fac) {
 		fprintf(file, "%-20s: %f\n", bt->unitList[*fac-1]->humanName.c_str(), bt->GetFactoryRating(*fac));
-		
+	}
+
 
 	// delete buildtasks
 	for(list<AAIBuildTask*>::iterator task = build_tasks.begin(); task != build_tasks.end(); task++)
@@ -72,7 +74,6 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable();
 
-		
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
 	{
@@ -107,13 +108,13 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	char filename[500];
 	char buffer[500];
 	char team_number[3];
-	
+
 	#ifdef WIN32
 		itoa(team, team_number, 10);
 	#else
 		snprintf(team_number,10,"%d",team);
 	#endif
-	
+
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, AILOG_PATH);
 	strcat(buffer, "AAI_log_team_");
@@ -169,7 +170,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 {
 	const UnitDef *def, *att_def;
 	UnitCategory att_cat, cat;
-	
+
 	// filter out commander
 	if(ut->cmdr != -1)
 	{
@@ -187,7 +188,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 	// assault grups may be ordered to retreat
 	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT) 
 			execute->CheckFallBack(damaged, def->id);
-	
+
 	// known attacker
 	if(attacker >= 0)
 	{
@@ -208,7 +209,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 			else
 			{
 				//if(att_cat >= GROUND_ASSAULT && att_cat <= SUBMARINE_ASSAULT)
-		
+
 				float3 pos = cb->GetUnitPos(attacker);
 				AAISector *sector = map->GetSectorOfPos(&pos);
 
@@ -255,7 +256,7 @@ void AAI::UnitCreated(int unit)
 	if(!cfg->initialized)
 		return;
 
-	// get unit´s id
+	// get unitï¿½s id
 	const UnitDef *def = cb->GetUnitDef(unit);
 	UnitCategory category = bt->units_static[def->id].category;
 
@@ -339,7 +340,7 @@ void AAI::UnitFinished(int unit)
 	if(!initialized)
 		return;
 
-	// get unit´s id
+	// get unitï¿½s id
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	UnitCategory category = bt->units_static[def->id].category;
@@ -448,7 +449,7 @@ void AAI::UnitFinished(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker) 
 {
-	// get unit´s id 
+	// get unitï¿½s id 
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	// get unit's category and position
@@ -728,7 +729,7 @@ void AAI::EnemyDestroyed(int enemy, int attacker)
 
 	if(attacker)
 	{	
-		// get unit´s id 
+		// get unitï¿½s id 
 		const UnitDef *def = cb->GetUnitDef(enemy);
 		const UnitDef *def_att = cb->GetUnitDef(attacker);
 
@@ -866,14 +867,14 @@ void AAI::Update()
 
 int AAI::HandleEvent(int msg, const void* data)
 {
-   switch (msg)
-   {
-   case AI_EVENT_UNITCAPTURED: // 2
-      {
-         const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
-         UnitDestroyed(cte->unit,-1);
-      }
-      break;
-   }
-   return 0;
-} 
+	switch (msg)
+	{
+		case AI_EVENT_UNITCAPTURED: // 2
+		{
+			const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
+			UnitDestroyed(cte->unit,-1);
+		}
+		break;
+	}
+	return 0;
+}

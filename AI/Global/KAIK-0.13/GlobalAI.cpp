@@ -168,7 +168,8 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
 		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
 
-	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
+	string cfgFolderStr = CFGFOLDER;
+	char cfgFolder[256]; sprintf(cfgFolder, "%s", cfgFolderStr.c_str());
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, cfgFolder);
@@ -236,10 +237,12 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	struct tm* now2 = localtime(&now1);
 
 	// timestamp logfile name
+	string logFolder = LOGFOLDER;
 	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
-		string(LOGFOLDER).c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
+		logFolder.c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
 
-	char cfgFolder[256]; sprintf(cfgFolder, "%s", CFGFOLDER);
+	string cfgFolderStr = CFGFOLDER;
+	char cfgFolder[256]; sprintf(cfgFolder, "%s", cfgFolderStr.c_str());
 
 	// initialize class wrapper struct
 	ai = new AIClasses;
@@ -278,7 +281,8 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	ai->ut->Init();
 	ai->pather->Init();
 
-	ai->cb->SendTextMsg(AI_VERSION " initialized succesfully!", 0);
+	std::string versMsg = std::string(AI_VERSION) + " initialized succesfully!";
+	ai->cb->SendTextMsg(versMsg.c_str(), 0);
 	ai->cb->SendTextMsg(AI_CREDITS, 0);
 }
 

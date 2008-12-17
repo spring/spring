@@ -28,9 +28,11 @@ import filelist
 
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
-	env = Environment(tools = ['mingw', 'rts', 'gch'], toolpath = ['.', 'rts/build/scons'])
+	myTools = ['mingw', 'rts', 'gch']
 else:
-	env = Environment(tools = ['default', 'rts',  'gch'], toolpath = ['.', 'rts/build/scons'])
+	myTools = ['default', 'rts', 'gch']
+
+env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'])
 
 if env['use_gch']:
 	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
@@ -61,7 +63,7 @@ if env['platform'] == 'windows':
 	datadir = []
 else:
 	datadir = ['SPRING_DATADIR="\\"'+os.path.join(env['prefix'], env['datadir'])+'\\""',
-		   'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
+			'SPRING_DATADIR_2="\\"'+os.path.join(env['prefix'], env['libdir'])+'\\""']
 
 # Build DataDirLocater.cpp separately from the other sources.  This is to prevent recompilation of
 # the entire source if one wants to change just the install installprefix (and hence the datadir).
@@ -164,7 +166,7 @@ if env['platform'] != 'windows':
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 aienv = env.Clone()
-aienv.Append(CPPPATH = ['rts/ExternalAI'])
+aienv.AppendUnique(CPPPATH = ['rts/ExternalAI'])
 aienv.AppendUnique(CPPDEFINES=['USING_CREG'])
 
 # Use subst() to substitute $installprefix in datadir.
@@ -250,6 +252,11 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 	else:
 		print "Success building streflop!"
 
+
+################################################################################
+### Run Tests
+################################################################################
+
 # Use this to avoid an error message 'how to make target test ?'
 env.Alias('test', None)
 
@@ -264,7 +271,7 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 
 
 ################################################################################
-### Build gamedata zip archives
+### Build gamedata zip archives & misc.
 ################################################################################
 # Can't use these, we can't set the working directory and putting a SConscript
 # in the respective directories doesn't work either because then the SConstript

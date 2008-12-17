@@ -8,7 +8,9 @@ SHARED_EXPORT int GetGlobalAiVersion() {
 }
 
 SHARED_EXPORT void GetAiName(char* name) {
-	strcpy(name, AI_VERSION);
+
+	static std::string vers = AI_VERSION;
+	strcpy(name, vers.c_str());
 }
 
 SHARED_EXPORT IGlobalAI* GetNewAI() {

@@ -1,9 +1,10 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define AI_NAME			"KAIK 0.13 Unofficial"
+#define AI_VERSION_NUMBER "0.13"
+#define AI_NAME			std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
 #define AI_DATE			"20/10/2008"
-#define AI_VERSION		AI_NAME " (rev. " AI_DATE ")"
+#define AI_VERSION		AI_NAME + " (rev. " + AI_DATE + ")"
 #define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 
 // Logger
@@ -26,10 +27,10 @@
 // Folders
 #define ROOTFOLDER		"AI/KAIK013/"
 
-#define LOGFOLDER		ROOTFOLDER"Logs/"
-#define METALFOLDER		ROOTFOLDER"Metal/"
-#define TGAFOLDER		ROOTFOLDER"TGAs/"
-#define CFGFOLDER		ROOTFOLDER"CFGs/"
+#define LOGFOLDER		std::string(ROOTFOLDER) + "Logs/"
+#define METALFOLDER		std::string(ROOTFOLDER) + "Metal/"
+#define TGAFOLDER		std::string(ROOTFOLDER) + "TGAs/"
+#define CFGFOLDER		std::string(ROOTFOLDER) + "CFGs/"
 
 // Error outputs
 #define ZEROVECTOR		float3( 0, 0, 0)
