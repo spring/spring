@@ -70,7 +70,7 @@
 			}
 		}
 		// Either LuaAI is set, the [AI] section is defined or none of the two.
-		// The TeamLeader field indicates which computer the a Skirmish AI will run on.
+		// The TeamLeader field indicates which computer the Skirmish AI will run on.
 	}
 	//more teams
 
