@@ -859,7 +859,7 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 	float3 pos = unit->midPos;
 	if (teamHandler->Ally(allyteam,unit->allyteam) || (unit->losStatus[allyteam] & LOS_INLOS)) {
 		// ^ it's one of our own, or it's in LOS, so don't add an error ^
-	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && (unit->losStatus[allyteam] & LOS_CONTRADAR) && !unit->mobility) {
+	} else if ((!gameSetup || gameSetup->ghostedBuildings) && (unit->losStatus[allyteam] & LOS_PREVLOS) && !unit->mobility) {
 		// ^ this is a ghosted building, so don't add an error ^
 	} else if ((unit->losStatus[allyteam] & LOS_INRADAR)) {
 		pos += unit->posErrorVector * radarhandler->radarErrorSize[allyteam];
