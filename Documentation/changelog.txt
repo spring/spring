@@ -13,18 +13,17 @@ Engine:
  - use SSE instead of X87 for FP-calculations
  - if in Choose ingame startposition mode its possible to play a map with more players than startpositions
  - fix the aircraft hovering / drifting
- - fix random start positions not beeing random
+ - fix random start positions not being random
  - fix area-attack for aircraft (#1144 again)
  - GenerateTargets no longer has much information that the team requesting targets doesn't have
  - fix spikes / lags in hosting demos
  - don't allow gunships to drift off the map
  - make planes bobble in place gently by default, and make hoverfactor work as intended
- - fix unti reply sound
+ - fix unit reply sound
  - don't open a (unused) network socket in single player mode
  - Don't let static beamlasers overshoot
  - Added new collision volume types: sphere, footprint.
  - Units/features with no collision volume defined get 'footprint' type by default now, this restores the 0.76b1 behaviour as default
- -Don't put factories on patrol and don't give a stop order
 
 
 Spring start / script.txt changes:
@@ -34,14 +33,12 @@ Spring start / script.txt changes:
 
 User Interface:
  - enable startboxes by default
- - decreased CPU laod and increase drawing speed lines
+ - decreased CPU load and increase drawing speed lines
  - fix small memleak when resizing the window
  - The protection ring shows up for non-stockpile interceptors
  - fix detection of units under mouse for spectators
  - fix the CTeam statistics tracking
  - do not force useFPShadows to true unless they are supported (to prevent crashes during map-loading)
- - The protection ring shows up for non-stockpile interceptors
- - fix detection of units under mouse for spectators
  - fix for annoying flickering of the grounddetail texture in CA if some LUPS fx were visible
  - fixed a bug with waterplane on centerrock (the terrain is deeper than the water plane was drawn)
  - made forcestart a real shortcut, so you can unbind it
@@ -54,6 +51,7 @@ Lua:
  - moved Spring.GetSoundStreamTime() LuaUnsyncedCtrl -> LuaUnsyncedRead
  - added a 2nd return value to Spring.GetSoundStreamTime() (total sound stream length in seconds)
  - Made it possible to specify start positions in map with LUA .smd file
+ - Immobile Builders doesn't put factories on patrol and doesn't give a stop order
 
 Unitsync:
  - Don't crash/abort() on invalid handles, but throw exception instead
@@ -64,7 +62,7 @@ Unitsync:
  - added SetSpringConfigFile(char*): reinitialise config handler to use the provided path
  - added char* GetSpringConfigFile(): return the currently used path to the config file
 
- -Deprecated APIs:
+ - Deprecated APIs:
    - GetCurrentList
    - AddClient
    - RemoveClient
@@ -84,7 +82,7 @@ Installer:
  - Remove old CA shortcuts
 
 AAI v0.875	
-- Current ammount of land/water within the base is taken into account when selecting factories (e.g. dont order water factories on a land map anymore)
+- Current amount of land/water within the base is taken into account when selecting factories (e.g. don't order water factories on a land map anymore)
 - Improved AAIs behaviour on water maps with start positions on islands/land masses
 - Improved metal extractor construction algorithm (spots closer to available builder, faster algorithm, works better if there are land and sea spots available at the same time)
 - Continent file version bumped to 0.87
