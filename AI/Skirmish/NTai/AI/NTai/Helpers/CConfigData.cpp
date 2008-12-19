@@ -1,4 +1,5 @@
 #include "../Core/include.h"
+#include "../Core/AIExport.h"
 
 namespace ntai {
 	CConfigData::CConfigData(Global* G){
@@ -19,7 +20,7 @@ namespace ntai {
 		cs.LoadFile("AI/AI.tdf");
 		
 		//CLOG("Retrieving datapath value");
-		datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
+		datapath = cs.SGetValueDef(string(aiexport_getDataDir()), "AI\\data_path");
 	}
 
 	CConfigData::~CConfigData(){
