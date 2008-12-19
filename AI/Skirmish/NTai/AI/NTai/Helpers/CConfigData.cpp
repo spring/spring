@@ -13,6 +13,13 @@ namespace ntai {
 		scout_speed = 60;
 		rule_extreme_interpolate= true;
 		mod_tdf = new TdfParser(G);
+		
+		//CLOG("Loading AI.tdf with TdfParser");
+		TdfParser cs(G);
+		cs.LoadFile("AI/AI.tdf");
+		
+		//CLOG("Retrieving datapath value");
+		datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
 	}
 
 	CConfigData::~CConfigData(){

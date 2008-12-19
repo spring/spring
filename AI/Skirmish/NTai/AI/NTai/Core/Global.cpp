@@ -49,27 +49,14 @@ namespace ntai {
 		}
 		CLOG("Started Global::Global class constructor");
 		CLOG("Starting CCached initialisation");
-		Cached = new CCached;
-		Cached->comID = 0;
-		Cached->randadd = 0;
-		Cached->enemy_number = 0;
-		Cached->lastcacheupdate = 0;
-		Cached->team = 567;
+		Cached = new CCached(this);
 		CLOG("getting team value");
-		Cached->team = cb->GetMyTeam();
 
 		CLOG("Creating Config holder class");
 		info = new CConfigData(G);
 
 		CLOG("Setting the Logger class");
 		L.Set(this);
-
-		CLOG("Loading AI.tdf with TdfParser");
-		TdfParser cs(G);
-		cs.LoadFile("AI/AI.tdf");
-
-		CLOG("Retrieving datapath value");
-		info->datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
 
 		CLOG("Opening logfile in plaintext");
 		L.Open(true);
@@ -93,16 +80,6 @@ namespace ntai {
 		chcb = callback->GetCheatInterface();
 
 		CLOG("cheat interface retrieved");
-		Cached->cheating = false;
-		Cached->encache = new int[6001];
-
-		CLOG("Getting LOS pointer");
-		Cached->losmap = cb->GetLosMap();
-
-		CLOG("initialising enemy cache elements to zero");
-		for(int i = 0; i< 6000; i++){
-			Cached->encache[i] = 0;
-		}
 
 		CLOG("Creating Actions class");
 		Actions = new CActions(G);
@@ -162,7 +139,7 @@ namespace ntai {
 		BuildingPlacer = boost::shared_ptr<CBuildingPlacer>(new CBuildingPlacer(this));
 		L.print("BuildingPlacer constructed");
 
-		Ch = new Chaser;
+		Ch = new Chaser();
 		L.print("Chaser constructed");
 	}
 
