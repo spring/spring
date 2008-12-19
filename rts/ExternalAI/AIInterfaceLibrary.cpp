@@ -40,12 +40,12 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		: info(_info) {
 
-	std::string libFileName = info.GetFileName();
-	if (libFileName.empty()) {
-		handleerror(NULL, "Error while loading AI Interface Library."
-				" No file name specified in AIInterface.lua",
-				"AI Interface Error", MBF_OK | MBF_EXCL);
-	}
+//	std::string libFileName = info.GetFileName();
+//	if (libFileName.empty()) {
+//		handleerror(NULL, "Error while loading AI Interface Library."
+//				" No file name specified in AIInterface.lua",
+//				"AI Interface Error", MBF_OK | MBF_EXCL);
+//	}
 	libFilePath = FindLibFile();
 
 	sharedLib = SharedLib::Instantiate(libFilePath);
@@ -441,7 +441,8 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 std::string CAIInterfaceLibrary::FindLibFile() {
 
 	const std::string& dataDir = info.GetDataDir();
-	const std::string& fileName = info.GetFileName();
+	//const std::string& fileName = info.GetFileName();
+	const std::string& fileName = info.GetShortName();
 
 	std::string libFileName(fileName); // eg. C-0.1
 	#ifndef _WIN32

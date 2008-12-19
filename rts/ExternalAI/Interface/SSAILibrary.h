@@ -28,7 +28,7 @@ extern "C" {
 #include "exportdefines.h"
 
 #define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-#define SKIRMISH_AI_PROPERTY_FILE_NAME               "fileName"              // [string] when the library file is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
+//#define SKIRMISH_AI_PROPERTY_FILE_NAME               "fileName"              // [string] when the library file is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
 #define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"             // [string: [a-zA-Z0-9_.]*]
 #define SKIRMISH_AI_PROPERTY_VERSION                 "version"               // [string: [a-zA-Z0-9_.]*]
 #define SKIRMISH_AI_PROPERTY_NAME                    "name"                  // [string]

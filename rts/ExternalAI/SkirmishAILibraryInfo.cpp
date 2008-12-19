@@ -84,9 +84,9 @@ SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 std::string CSkirmishAILibraryInfo::GetDataDir() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 }
-std::string CSkirmishAILibraryInfo::GetFileName() const {
-	return GetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME);
-}
+//std::string CSkirmishAILibraryInfo::GetFileName() const {
+//	return GetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME);
+//}
 std::string CSkirmishAILibraryInfo::GetShortName() const { // restrictions: none of the following: spaces, '_', '#'
 	return GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 }
@@ -162,9 +162,9 @@ const char** CSkirmishAILibraryInfo::GetCInfoValues() const {
 void CSkirmishAILibraryInfo::SetDataDir(const std::string& dataDir) {
 	SetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR, dataDir);
 }
-void CSkirmishAILibraryInfo::SetFileName(const std::string& fileName) {
-	SetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME, fileName);
-}
+//void CSkirmishAILibraryInfo::SetFileName(const std::string& fileName) {
+//	SetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME, fileName);
+//}
 void CSkirmishAILibraryInfo::SetShortName(const std::string& shortName) { // restrictions: none of the following: spaces, '_', '#'
 	SetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME, shortName);
 }

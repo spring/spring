@@ -42,7 +42,7 @@ public:
 	virtual AIInterfaceKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
-	virtual std::string GetFileName() const; // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
+//	virtual std::string GetFileName() const; // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
 	virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
 	virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
 	virtual std::string GetName() const;
@@ -54,7 +54,7 @@ public:
 	virtual const char** GetCInfoValues() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
-	virtual void SetFileName(const std::string& fileName); // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
+//	virtual void SetFileName(const std::string& fileName); // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
 	virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
 	virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'
 	virtual void SetName(const std::string& name);
