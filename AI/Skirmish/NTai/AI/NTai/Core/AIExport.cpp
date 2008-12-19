@@ -139,17 +139,18 @@ const char* aiexport_getMyInfo(const char* key) {
 }
 const char* aiexport_getDataDir() {
 
-	static char* ddWithSlash = NULL;
-
-	if (ddWithSlash == NULL) {
-		const char* dd = aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
-
-		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-		strcpy(ddWithSlash, dd);
-		strcat(ddWithSlash, "/");
-	}
-
-	return ddWithSlash;
+//	static char* ddWithSlash = NULL;
+//
+//	if (ddWithSlash == NULL) {
+//		const char* dd = aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+//
+//		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
+//		strcpy(ddWithSlash, dd);
+//		strcat(ddWithSlash, "/");
+//	}
+//
+//	return ddWithSlash;
+	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 }
 const char* aiexport_getVersion() {
 	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
