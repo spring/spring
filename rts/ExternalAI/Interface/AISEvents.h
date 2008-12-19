@@ -63,8 +63,6 @@ const unsigned int NUM_EVENTS          = 23;
 struct SInitEvent {
 	int team;
 	struct SAICallback* callback;
-//	unsigned int sizeInfo;
-//	const struct InfoItem* info;
 	unsigned int infoSize;
 	const char** infoKeys;
 	const char** infoValues;

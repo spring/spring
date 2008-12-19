@@ -80,7 +80,6 @@ static jmethodID g_m_props_setProperty = NULL;
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/ai.jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/[*].jar
- * TODO: add class path for group AIs
  */
 static bool java_createClassPath(char* classPath) {
 

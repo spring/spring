@@ -3,7 +3,8 @@ add_definitions(-DBUILDING_AI)
 
 set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
 set(SKIRMISH_DATA "${DATADIR}/AI/Skirmish")
-#FIND_PACKAGE(Java)
+
+#set(SKIRMISHAI_FIND_QUIETLY True)
 
 ## KAI
 set(KAI_SRC "${SKIRMISH_SRC}/KAI")
@@ -14,7 +15,9 @@ if (EXISTS ${KAI_SRC})
 	endif (EXISTS ${KAI_SRC}/VERSION)
 	set(KAI_TARGET "KAI-${KAI_VERS}")
 	set(KAI_DATA_DIR ${SKIRMISH_DATA}/KAI/${KAI_VERS})
-	message(STATUS "${KAI_VERS}\t(KAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: KAI ${KAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	#install(DIRECTORY "${KAI_SRC}/data/"
@@ -36,7 +39,9 @@ if (EXISTS ${KAIK_SRC})
 	endif (EXISTS ${KAIK_SRC}/VERSION)
 	set(KAIK_TARGET "KAIK-${KAIK_VERS}")
 	set(KAIK_DATA_DIR ${SKIRMISH_DATA}/KAIK/${KAIK_VERS})
-	message(STATUS "${KAIK_VERS}\t(KAIK Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: KAIK ${KAIK_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${KAIK_SRC}/data/"
@@ -58,7 +63,9 @@ if (EXISTS ${RAI_SRC})
 	endif (EXISTS ${RAI_SRC}/VERSION)
 	set(RAI_TARGET "RAI-${RAI_VERS}")
 	set(RAI_DATA_DIR ${SKIRMISH_DATA}/RAI/${RAI_VERS})
-	message(STATUS "${RAI_VERS}\t(RAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: RAI ${RAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${RAI_SRC}/data/"
@@ -79,7 +86,9 @@ if (EXISTS ${AAI_SRC})
 	endif (EXISTS ${AAI_SRC}/VERSION)
 	set(AAI_TARGET "AAI-${AAI_VERS}")
 	set(AAI_DATA_DIR ${SKIRMISH_DATA}/AAI/${AAI_VERS})
-	message(STATUS "${AAI_VERS}\t(AAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: AAI ${AAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${AAI_SRC}/data/"
@@ -100,7 +109,9 @@ if (EXISTS ${NTai_SRC})
 	endif (EXISTS ${NTai_SRC}/VERSION)
 	set(NTai_TARGET "NTai-${NTai_VERS}")
 	set(NTai_DATA_DIR ${SKIRMISH_DATA}/NTai/${NTai_VERS})
-	message(STATUS "${NTai_VERS}\t(NTai Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: NTai ${NTai_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${NTai_SRC}/data/"
@@ -132,7 +143,9 @@ if (EXISTS ${NullLegacyCppAI_SRC})
 	endif (EXISTS ${NullLegacyCppAI_SRC}/VERSION)
 	set(NullLegacyCppAI_TARGET "NullLegacyCppAI-${NullLegacyCppAI_VERS}")
 	set(NullLegacyCppAI_DATA_DIR ${SKIRMISH_DATA}/NullLegacyCppAI/${NullLegacyCppAI_VERS})
-	message(STATUS "${NullLegacyCppAI_VERS}\t(NullLegacyCppAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: NullLegacyCppAI ${NullLegacyCppAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${NullLegacyCppAI_SRC}/data/"
@@ -153,7 +166,9 @@ if (EXISTS ${NullAI_SRC})
 	endif (EXISTS ${NullAI_SRC}/VERSION)
 	set(NullAI_TARGET "NullAI-${NullAI_VERS}")
 	set(NullAI_DATA_DIR ${SKIRMISH_DATA}/NullAI/${NullAI_VERS})
-	message(STATUS "${NullAI_VERS}\t(NullAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: NullAI ${NullAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${NullAI_SRC}/data/"
@@ -167,6 +182,7 @@ endif (EXISTS ${NullAI_SRC})
 
 ## Null Java AI
 if (NOT JAVA_FOUND)
+	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
 	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 set(NullJavaAI_SRC "${SKIRMISH_SRC}/NullJavaAI")
@@ -181,7 +197,9 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 	set(NullJavaAI_PKG_FIRST_PART "nulljavaai")
 	set(Java_AIINTERFACE_SRC "../../Interfaces/Java")
 	set(NullJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
-	message(STATUS "${NullJavaAI_VERS}\t(NullJavaAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: NullJavaAI ${NullJavaAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${NullJavaAI_SRC}/data/"
@@ -210,6 +228,7 @@ endif (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 
 ## Null Object Oriented Java AI
 if (NOT JAVA_FOUND)
+	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
 	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 set(NullOOJavaAI_SRC "${SKIRMISH_SRC}/NullOOJavaAI")
@@ -224,7 +243,9 @@ if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 	set(NullOOJavaAI_PKG_FIRST_PART "nulloojavaai")
 	set(Java_AIINTERFACE_SRC "../../Interfaces/Java")
 	set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${Java_AIINTERFACE_SRC}/interface.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
-	message(STATUS "${NullOOJavaAI_VERS}\t(NullOOJavaAI Version)")
+	if (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "Found Skirmish AI: NullOOJavaAI ${NullOOJavaAI_VERS}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${NullOOJavaAI_SRC}/data/"
@@ -262,7 +283,9 @@ if (UNIX)
 		endif (EXISTS ${JCAI_SRC}/VERSION)
 		set(JCAI_TARGET "JCAI-${JCAI_VERS}")
 		set(JCAI_DATA_DIR ${SKIRMISH_DATA}/JCAI/${JCAI_VERS})
-		message(STATUS "${JCAI_VERS}\t(JCAI Version)")
+		if (NOT SKIRMISHAI_FIND_QUIETLY)
+			message(STATUS "Found Skirmish AI: JCAI ${JCAI_VERS}")
+		endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
 		# install data files
 		#install(DIRECTORY "${JCAI_SRC}/data/"

@@ -10,6 +10,8 @@ ELSE (UNIX)
 	set(SHELL_EXEC_POSTFIX "bat")
 ENDIF(UNIX)
 
+#set(AIINTERFACE_FIND_QUIETLY True)
+
 
 # C & C++ AI Interface
 set(C_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/C")
@@ -20,7 +22,9 @@ if (EXISTS ${C_AIINTERFACE_SRC})
 	endif (EXISTS ${C_AIINTERFACE_SRC}/VERSION)
 	set(C_AIINTERFACE_TARGET "C-${C_AIINTERFACE_VERS}")
 	set(C_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/C/${C_AIINTERFACE_VERS})
-	message(STATUS "${C_AIINTERFACE_VERS}\t(C AI Interface Version)")
+	if (NOT AIINTERFACE_FIND_QUIETLY)
+		message(STATUS "Found AI Interface: C ${C_AIINTERFACE_VERS}")
+	endif (NOT AIINTERFACE_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${C_AIINTERFACE_SRC}/data/"
@@ -40,6 +44,7 @@ endif (EXISTS ${C_AIINTERFACE_SRC})
 
 # Java AI Interface
 if (NOT JAVA_FOUND)
+	set(JAVA_FIND_QUIETLY ${AIINTERFACE_FIND_QUIETLY})
 	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 #message(STATUS "Interface JAVA_FOUND: ${JAVA_FOUND}")
@@ -64,7 +69,7 @@ ELSE (MINGW)
 		message ("No Java includes found -> Java AI Interface will not be built")
 	endif (JAVA_INCLUDE_PATH)
 ENDIF (MINGW)
-message(STATUS "Interface JNI_FOUND: ${JNI_FOUND}")
+#message(STATUS "Interface JNI_FOUND: ${JNI_FOUND}")
 set(Java_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/Java")
 if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 	set(Java_AIINTERFACE_VERS "UNKNOWN_VERSION")
@@ -77,7 +82,9 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 	set(Java_AIINTERFACE_PKG "com/clan_sy/spring/ai")
 	set(Java_AIINTERFACE_PKG_FIRST_PART "com")
 	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
-	message(STATUS "${Java_AIINTERFACE_VERS}\t(Java AI Interface Version)")
+	if (NOT AIINTERFACE_FIND_QUIETLY)
+		message(STATUS "Found AI Interface: Java ${Java_AIINTERFACE_VERS}")
+	endif (NOT AIINTERFACE_FIND_QUIETLY)
 
 	# install data files
 	install(DIRECTORY "${Java_AIINTERFACE_SRC}/data/"
