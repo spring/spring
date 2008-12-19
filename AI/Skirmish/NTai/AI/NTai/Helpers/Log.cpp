@@ -3,7 +3,7 @@
 namespace ntai {
 	int Lmagic;
 
-	Log::Log(){
+	Log::Log() : G(NULL) {
 		verbose = false;
 		First = false;
 	}
@@ -169,6 +169,10 @@ namespace ntai {
 
 	void Log::print(string message){
 		if(message.empty() == true) return;
+		if (!G) {
+			CLOG(message);
+			return;
+		}
 		string gtime;
 		if(plaintext == true){
 			gtime = GameTime() + GetSysTime() +FrameTime() + message + "\n";
