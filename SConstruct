@@ -278,7 +278,7 @@ javaInterfaceCP = ''
 javaInterfaceJar = ''
 for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterfaces_exclude_list):
 	aiInterfaceVersion = fetch_ai_version(baseName, 'Interfaces')
-	print "AI Interface: " + baseName + " v" + aiInterfaceVersion
+	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
 	myEnv = aiinterfaceenv.Clone()
 	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
 	instList = []
@@ -368,7 +368,7 @@ skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
 for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai_exclude_list):
 	aiVersion = fetch_ai_version(baseName, 'Skirmish')
-	print "Skirmish AI: " + baseName + " v" + aiVersion
+	print "Found Skirmish AI: " + baseName + " " + aiVersion
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
 	useCreg = baseName in skirmishai_needCreg_list
 	isJava = baseName in skirmishai_isJava_list

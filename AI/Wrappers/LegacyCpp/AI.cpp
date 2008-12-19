@@ -27,79 +27,115 @@ CAI::CAI(int team, IGlobalAI* ai) : team(team), ai(ai) {}
 
 int CAI::handleEvent(int topic, const void* data) {
 
-	if (ai != NULL) {
-		CAIEvent* e;
+	static IGlobalAICallback* wrappedGlobalAICallback = NULL;
 
-		switch(topic) {
-			case EVENT_NULL:
+	if (ai != NULL) {
+		CAIEvent* e = NULL;
+
+		switch (topic) {
+			case EVENT_NULL: {
 				e = new CAINullEvent();
 				break;
-			case EVENT_INIT:
-				e = new CAIInitEvent((const SInitEvent*) data);
+			}
+			case EVENT_INIT: {
+				CAIInitEvent* initE = new CAIInitEvent(*((const SInitEvent*) data));
+				// The following two lines should not ever be needed,
+				// but they do not hurt either.
+				delete wrappedGlobalAICallback;
+				wrappedGlobalAICallback = NULL;
+				wrappedGlobalAICallback = initE->GetWrappedGlobalAICallback();
+				e = initE;
 				break;
-			case EVENT_UPDATE:
-				e = new CAIUpdateEvent((const SUpdateEvent*) data);
+			}
+			case EVENT_RELEASE: {
+				delete wrappedGlobalAICallback;
+				wrappedGlobalAICallback = NULL;
+				e = new CAIReleaseEvent(*((const SReleaseEvent*) data));
 				break;
-			case EVENT_MESSAGE:	
-				e = new CAIMessageEvent((const SMessageEvent*) data);
+			}
+			case EVENT_UPDATE: {
+				e = new CAIUpdateEvent(*((const SUpdateEvent*) data));
 				break;
-			case EVENT_UNIT_CREATED:
-				e = new CAIUnitCreatedEvent((const SUnitCreatedEvent*) data);
+			}
+			case EVENT_MESSAGE: {
+				e = new CAIMessageEvent(*((const SMessageEvent*) data));
 				break;
-			case EVENT_UNIT_FINISHED:
-				e = new CAIUnitFinishedEvent((const SUnitFinishedEvent*) data);
+			}
+			case EVENT_UNIT_CREATED: {
+				e = new CAIUnitCreatedEvent(*((const SUnitCreatedEvent*) data));
 				break;
-			case EVENT_UNIT_IDLE:
-				e = new CAIUnitIdleEvent((const SUnitIdleEvent*) data);
+			}
+			case EVENT_UNIT_FINISHED: {
+				e = new CAIUnitFinishedEvent(*((const SUnitFinishedEvent*) data));
 				break;
-			case EVENT_UNIT_MOVE_FAILED:
-				e = new CAIUnitMoveFailedEvent((const SUnitMoveFailedEvent*) data);
+			}
+			case EVENT_UNIT_IDLE: {
+				e = new CAIUnitIdleEvent(*((const SUnitIdleEvent*) data));
 				break;
-			case EVENT_UNIT_DAMAGED:
-				e = new CAIUnitDamagedEvent((const SUnitDamagedEvent*) data);
+			}
+			case EVENT_UNIT_MOVE_FAILED: {
+				e = new CAIUnitMoveFailedEvent(*((const SUnitMoveFailedEvent*) data));
 				break;
-			case EVENT_UNIT_DESTROYED: 
-				e = new CAIUnitDestroyedEvent((const SUnitDestroyedEvent*) data);
+			}
+			case EVENT_UNIT_DAMAGED: {
+				e = new CAIUnitDamagedEvent(*((const SUnitDamagedEvent*) data));
 				break;
-			case EVENT_UNIT_GIVEN:
-				e = new CAIUnitGivenEvent((const SUnitGivenEvent*) data);
+			}
+			case EVENT_UNIT_DESTROYED: {
+				e = new CAIUnitDestroyedEvent(*((const SUnitDestroyedEvent*) data));
 				break;
-			case EVENT_UNIT_CAPTURED:
-				e = new CAIUnitCapturedEvent((const SUnitCapturedEvent*) data);
+			}
+			case EVENT_UNIT_GIVEN: {
+				e = new CAIUnitGivenEvent(*((const SUnitGivenEvent*) data));
 				break;
-			case EVENT_ENEMY_ENTER_LOS:
-				e = new CAIEnemyEnterLOSEvent((const SEnemyEnterLOSEvent*) data);
+			}
+			case EVENT_UNIT_CAPTURED: {
+				e = new CAIUnitCapturedEvent(*((const SUnitCapturedEvent*) data));
 				break;
-			case EVENT_ENEMY_LEAVE_LOS:
-				e = new CAIEnemyLeaveLOSEvent((const SEnemyLeaveLOSEvent*) data);
+			}
+			case EVENT_ENEMY_ENTER_LOS: {
+				e = new CAIEnemyEnterLOSEvent(*((const SEnemyEnterLOSEvent*) data));
 				break;
-			case EVENT_ENEMY_ENTER_RADAR:
-				e = new CAIEnemyEnterRadarEvent((const SEnemyEnterRadarEvent*) data);
+			}
+			case EVENT_ENEMY_LEAVE_LOS: {
+				e = new CAIEnemyLeaveLOSEvent(*((const SEnemyLeaveLOSEvent*) data));
 				break;
-			case EVENT_ENEMY_LEAVE_RADAR:
-				e = new CAIEnemyLeaveRadarEvent((const SEnemyLeaveRadarEvent*) data);
+			}
+			case EVENT_ENEMY_ENTER_RADAR: {
+				e = new CAIEnemyEnterRadarEvent(*((const SEnemyEnterRadarEvent*) data));
 				break;
-			case EVENT_ENEMY_DAMAGED:
-				e = new CAIEnemyDamagedEvent((const SEnemyDamagedEvent*) data);
+			}
+			case EVENT_ENEMY_LEAVE_RADAR: {
+				e = new CAIEnemyLeaveRadarEvent(*((const SEnemyLeaveRadarEvent*) data));
 				break;
-			case EVENT_ENEMY_DESTROYED: 
-				e = new CAIEnemyDestroyedEvent((const SEnemyDestroyedEvent*) data);
+			}
+			case EVENT_ENEMY_DAMAGED: {
+				e = new CAIEnemyDamagedEvent(*((const SEnemyDamagedEvent*) data));
 				break;
-			case EVENT_WEAPON_FIRED: 
-				e = new CAIWeaponFiredEvent((const SWeaponFiredEvent*) data);
+			}
+			case EVENT_ENEMY_DESTROYED: {
+				e = new CAIEnemyDestroyedEvent(*((const SEnemyDestroyedEvent*) data));
 				break;
-			case EVENT_PLAYER_COMMAND: 
-				e = new CAIPlayerCommandEvent((const SPlayerCommandEvent*) data);
+			}
+			case EVENT_WEAPON_FIRED:{
+				e = new CAIWeaponFiredEvent(*((const SWeaponFiredEvent*) data));
 				break;
-			case EVENT_SEISMIC_PING: 
-				e = new CAISeismicPingEvent((const SSeismicPingEvent*) data);
+			}
+			case EVENT_PLAYER_COMMAND:  {
+				e = new CAIPlayerCommandEvent(*((const SPlayerCommandEvent*) data));
 				break;
-			default:
+			}
+			case EVENT_SEISMIC_PING:{
+				e = new CAISeismicPingEvent(*((const SSeismicPingEvent*) data));
+				break;
+			}
+			default: {
 				e = new CAINullEvent();
 				break;
+			}
 		}
 
-		e->run(ai);
+		e->Run(*ai, wrappedGlobalAICallback);
 		delete e;
 	}
 

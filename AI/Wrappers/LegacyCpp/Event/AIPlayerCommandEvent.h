@@ -13,33 +13,37 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
 #ifndef _AIPLAYERCOMMANDEVENT_H
 #define	_AIPLAYERCOMMANDEVENT_H
 
+#include "AIEvent.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 class CAIPlayerCommandEvent : public CAIEvent {
 public:
-    CAIPlayerCommandEvent(const SPlayerCommandEvent* event): event(*event) {}
-    ~CAIPlayerCommandEvent() {}
-    
-    void run(IGlobalAI* ai) {
+    CAIPlayerCommandEvent(const SPlayerCommandEvent& event) : event(event) {}
+	~CAIPlayerCommandEvent() {}
+
+    void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_PLAYER_COMMAND;
 		std::vector<int> unitIds;
 		int i;
 		for (i=0; i < event.numUnitIds; i++) {
-            unitIds.push_back(event.unitIds[i]);
-        }
-		Command* c = (Command*) newCommand(event.commandData, event.commandTopic);
+		    unitIds.push_back(event.unitIds[i]);
+		}
+		Command* c = (Command*) newCommand(event.commandData,
+				event.commandTopic);
 		IGlobalAI::PlayerCommandEvent evt = {unitIds, *c, event.playerId};
-        ai->HandleEvent(evtId, &evt);
+	    ai.HandleEvent(evtId, &evt);
 		delete c;
-    }
+	}
+
 private:
     SPlayerCommandEvent event;
 };
 
-#endif	/* _AIPLAYERCOMMANDEVENT_H */
-
+#endif // _AIPLAYERCOMMANDEVENT_H

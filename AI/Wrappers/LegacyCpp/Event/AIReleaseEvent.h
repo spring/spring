@@ -1,5 +1,5 @@
 /*
-    Copyright 2008  Nicolas Wu
+    Copyright 2008  Robin Vobruba <hoijui.quaero@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,26 +14,28 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	@author Nicolas Wu
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITMOVEFAILEDEVENT_H
-#define	_AIUNITMOVEFAILEDEVENT_H
+#ifndef _AIRELEASEEVENT_H
+#define _AIRELEASEEVENT_H
 
 #include "AIEvent.h"
 
-class CAIUnitMoveFailedEvent : public CAIEvent {
+class CAIReleaseEvent : public CAIEvent {
 public:
-    CAIUnitMoveFailedEvent(const SUnitMoveFailedEvent& event) : event(event) {}
-	~CAIUnitMoveFailedEvent() {}
+	CAIReleaseEvent(const SReleaseEvent& event) : event(event) {}
+	~CAIReleaseEvent() {}
 
     void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-	    ai.UnitMoveFailed(event.unit);
+
+	    // As the Release method does not exist in IGlobalAI,
+		// we can not call it.
+	    //ai.ReleaseAI();
 	}
 
 private:
-    SUnitMoveFailedEvent event;
+    SReleaseEvent event;
 };
 
-#endif // _AIUNITMOVEFAILEDEVENT_H
+#endif // _AIRELEASEEVENT_H
