@@ -24,9 +24,9 @@ extern std::string stupidGlobalMapname;
 
 CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& key,
 		const std::map<std::string, std::string>& options)
-		: CScript(std::string("Skirmish AI test (")
-			+ std::string(key.GetShortName()) + std::string(" v")
-			+ std::string(key.GetVersion() + std::string(")"))),
+		: CScript(std::string("Skirmish AI test: ")
+			+ std::string(key.GetShortName()) + std::string(" ")
+			+ std::string(key.GetVersion())),
 		key(key), options(options)
 {
 	teamHandler->Team(skirmishAI_teamId)->isAI = true;

@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<project name="Java" basedir="../" default="jar">
+
+	<property file="./bin/ant.properties"/>
+
+	<loadfile property="myVersion" srcFile="./VERSION"/>
+	<property name="src" location="./java/src"/>
+	<property name="build" location="./build"/>
+	<property name="dist"
+				location="${distHome}/AI/Interfaces/${ant.project.name}/${myVersion}"/>
+	<path id="myClassPath">
+		<fileset dir="./data/jlib">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build}"/>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac destdir="${build}">
+			<src path="${src}"/>
+			<classpath refid="myClassPath"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="${build}/interface.jar">
+			<fileset dir="${build}">
+				<include name="**/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="src-jar" depends="init">
+		<jar destfile="${build}/interface-src.jar">
+			<fileset dir="${src}">
+				<include name="**/*.java"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="dist" depends="jar, src-jar"
+				description="generate the distribution (Java part only)" >
+		<mkdir dir="${dist}/jlib"/>
+		<copy file="${build}/interface.jar" todir="${dist}" overwrite="true"/>
+		<copy file="${build}/interface-src.jar" todir="${dist}/jlib" overwrite="true"/>
+		<copy todir="${dist}" overwrite="true">
+			<fileset dir="./data"/>
+		</copy>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>

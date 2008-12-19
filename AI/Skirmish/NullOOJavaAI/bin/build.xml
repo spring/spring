@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<project name="NullOOJavaAI" basedir="../" default="jar">
+
+	<property file="./bin/ant.properties"/>
+
+	<loadfile property="myVersion" srcFile="./VERSION"/>
+	<property name="src" location="./"/>
+	<property name="build" location="./build"/>
+	<property name="dist"
+				location="${distHome}/AI/Skirmish/${ant.project.name}/${myVersion}"/>
+	<path id="myClassPath">
+		<pathelement location="${aiInterfaceHome}/build/interface.jar"/>
+		<fileset dir="${aiInterfaceHome}/data/jlib">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="./data/jlib">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build}"/>
+	</target>
+
+	<target name="compile" depends="init">
+		<javac destdir="${build}">
+			<src path="${src}"/>
+			<classpath refid="myClassPath"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="${build}/ai.jar">
+			<fileset dir="${build}">
+				<include name="**/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="src-jar" depends="init">
+		<jar destfile="${build}/ai-src.jar">
+			<fileset dir="${src}">
+				<include name="**/*.java"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="dist" depends="jar, src-jar"
+				description="generate the distribution" >
+		<mkdir dir="${dist}/jlib"/>
+		<copy file="${build}/ai.jar" todir="${dist}" overwrite="true"/>
+		<copy file="${build}/ai-src.jar" todir="${dist}/jlib" overwrite="true"/>
+		<copy todir="${dist}" overwrite="true">
+			<fileset dir="./data"/>
+		</copy>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>
