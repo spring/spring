@@ -44,7 +44,7 @@ public:
 	virtual SkirmishAIKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
-	virtual std::string GetFileName() const;
+//	virtual std::string GetFileName() const;
 	virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
 	virtual std::string GetName() const;
 	virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
@@ -63,7 +63,7 @@ public:
 	virtual const std::vector<Option>& GetOptions() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
-	virtual void SetFileName(const std::string& fileName);
+//	virtual void SetFileName(const std::string& fileName);
 	virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
 	virtual void SetName(const std::string& name);
 	virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'

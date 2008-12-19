@@ -326,7 +326,9 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		instList += [env.Install(install_data_interface_dir, myJar)]
 		#installDataDir(myEnv, install_data_interface_dir, jlibDir, instList)
 
-	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, baseName + '-' + aiInterfaceVersion), mySource)
+	#targetName = baseName + '-' + aiInterfaceVersion
+	targetName = baseName
+	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Interfaces', baseName, aiInterfaceVersion, targetName), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
@@ -411,7 +413,9 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 			else:
 				objs += skirmishaiobjs_LegacyCpp
 		mySource = objs + filelist.get_skirmishAI_source(myEnv, baseName)
-		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, baseName + '-' + aiVersion), mySource)
+		#targetName = baseName + '-' + aiVersion
+		targetName = baseName
+		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, targetName), mySource)
 		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
 		Default(lib)

@@ -15,11 +15,6 @@
 
 local infos = {
 	{
-		key    = 'fileName',
-		value  = 'RAI-0.601',
-		desc   = 'base of the library file of this AI. "RAI-0.553" means "AI/Skirmish/lib/libRAI-0.553.so", "AI/Skirmish/lib/libRAI-0.553.dylib" or "AI/Skirmish/lib/RAI-0.553.dll"',
-	},
-	{
 		key    = 'shortName',
 		value  = 'RAI',
 		desc   = 'machine conform name.',

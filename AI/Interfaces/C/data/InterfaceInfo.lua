@@ -15,11 +15,6 @@
 
 local infos = {
 	{
-		key    = 'fileName',
-		value  = 'C-0.1',
-		desc   = 'base of the library file of this AI. "C-0.1" means "AI/Interfaces/impls/libC-0.1.so", "AI/Interfaces/impls/libC-0.1.dylib" or "AI/Interfaces/impls/C-0.1.dll"',
-	},
-	{
 		key    = 'shortName',
 		value  = 'C',
 		desc   = 'machine conform name.',

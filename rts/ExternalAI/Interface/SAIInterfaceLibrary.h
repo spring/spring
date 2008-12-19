@@ -33,7 +33,7 @@ extern "C" {
 struct SStaticGlobalData;
 
 #define AI_INTERFACE_PROPERTY_DATA_DIR               "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-#define AI_INTERFACE_PROPERTY_FILE_NAME              "fileName"              // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
+//#define AI_INTERFACE_PROPERTY_FILE_NAME              "fileName"              // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
 #define AI_INTERFACE_PROPERTY_SHORT_NAME             "shortName"             // [string: [a-zA-Z0-9_.]*]
 #define AI_INTERFACE_PROPERTY_VERSION                "version"               // [string: [a-zA-Z0-9_.]*]
 #define AI_INTERFACE_PROPERTY_NAME                   "name"                  // [string]

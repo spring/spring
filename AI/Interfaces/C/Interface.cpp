@@ -260,16 +260,17 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	}
 	const std::string& dataDir(prop->second);
 
-	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
-	if (prop == info->second.end()) {
-		reportError(std::string("Missing Skirmish-AI file name for ")
-				+ spec.shortName + " " + spec.version);
-	}
-	const std::string& fileName(prop->second);
+//	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
+//	if (prop == info->second.end()) {
+//		reportError(std::string("Missing Skirmish-AI file name for ")
+//				+ spec.shortName + " " + spec.version);
+//	}
+//	const std::string& fileName(prop->second);
+	const std::string& fileName(spec.shortName);
 
-	std::string libFileName(fileName); // eg. RAI-0.600
+	std::string libFileName(fileName); // eg. RAI
 	#ifndef _WIN32
-		libFileName = "lib" + libFileName; // eg. libRAI-0.600
+		libFileName = "lib" + libFileName; // eg. libRAI
 	#endif
 
 	// eg. libRAI-0.600.so

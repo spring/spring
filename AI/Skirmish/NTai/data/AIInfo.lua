@@ -15,18 +15,13 @@
 
 local infos = {
 	{
-		key    = 'fileName',
-		value  = 'NTai-UNKNOWN_VERSION',
-		desc   = 'base of the library file of this AI. "RAI-0.553" means "AI/Skirmish/lib/libRAI-0.553.so", "AI/Skirmish/lib/libRAI-0.553.dylib" or "AI/Skirmish/lib/RAI-0.553.dll"',
-	},
-	{
 		key    = 'shortName',
 		value  = 'NTai',
 		desc   = 'machine conform name.',
 	},
 	{
 		key    = 'version',
-		value  = 'UNKNOWN_VERSION',
+		value  = 'XE9.81',
 	},
 	{
 		key    = 'name',
