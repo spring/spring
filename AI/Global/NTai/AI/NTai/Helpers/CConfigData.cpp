@@ -19,7 +19,7 @@ namespace ntai {
 		cs.LoadFile("AI/AI.tdf");
 		
 		//CLOG("Retrieving datapath value");
-		G->info->datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
+		datapath = cs.SGetValueDef(string("AI/NTai"), "AI\\data_path");
 	}
 
 	CConfigData::~CConfigData(){
