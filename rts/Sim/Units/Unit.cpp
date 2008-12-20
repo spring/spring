@@ -2216,7 +2216,7 @@ void CUnit::PostLoad()
 	SetRadius(model->radius);
 
 	modelParser->CreateLocalModel(this);
-	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->cobFilename), this);
+	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(unitDef->scriptPath), this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

@@ -337,7 +337,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	modelParser->CreateLocalModel(unit);
-	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + ud->cobFilename), unit);
+	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
 
 	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
