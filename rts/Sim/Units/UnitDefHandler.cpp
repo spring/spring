@@ -255,7 +255,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		const string errmsg = "missing 'filename' parameter for the" + unitName + " unitdef";
 		throw content_error(errmsg);
 	}
-	ud.cobFilename = udTable.GetString("cobfilename", ud.name + ".cob");
 	ud.tooltip = udTable.GetString("description", ud.name);
 
 	const string decoy = udTable.GetString("decoyFor", "");
