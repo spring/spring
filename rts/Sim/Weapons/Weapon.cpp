@@ -214,6 +214,7 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 	args.push_back(unitID);
 	args.push_back(0); // arg[1], for the return value
 	                   // the default is to not block the shot
+	args.push_back(haveUserTarget);
 
 	owner->cob->Call(COBFN_BlockShot + weaponNum, args);
 
