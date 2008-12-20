@@ -91,3 +91,16 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
 
 CMyMath dummyMathObject;
 
+
+
+
+float smoothstep(float edge0,float edge1,float value)
+{
+	if (value<=edge0) return 0.0f;
+	if (value>=edge1) return 1.0f;
+	float t = (value - edge0) / (edge1 - edge0);
+	t = std::min(1.0f,std::max(0.0f, t ));
+	return t * t * (3.0f - 2.0f * t);
+}
+
+

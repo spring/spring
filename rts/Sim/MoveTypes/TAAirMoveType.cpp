@@ -308,29 +308,30 @@ void CTAAirMoveType::UpdateTakeoff()
 }
 
 
-
 // Move the unit around a bit..
 void CTAAirMoveType::UpdateHovering()
 {
+	#define NOZERO(x) std::max(x,0.0001f)
+
 	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
 	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
-	const float l   = deltaDir.Length2D();
-	deltaDir       /= std::max(l,0.0001f);
-	float moveFactor  = math::sqrt(std::max(0.0f, l - 4.0f));
+	float l = NOZERO(deltaDir.Length2D());
+	deltaDir *= smoothstep(0.0f,20.0f,l) / l;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
 	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
 		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f)) {
 		deltaDir = owner->frontdir;
-		moveFactor = 1.0f;
 	}
 
-	// damping
-	wantedSpeed = owner->speed * 0.95f;
-
-	wantedSpeed += deltaDir * moveFactor * 0.05f;
+	deltaDir -= owner->speed;
+	l = deltaDir.SqLength2D();
+	if (l>(maxSpeed*maxSpeed)) {
+		deltaDir *= maxSpeed / NOZERO(sqrt(l));
+	}
+	wantedSpeed = owner->speed + deltaDir;
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5

@@ -126,6 +126,9 @@ float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
 
+float smoothstep(float edge0,float edge1,float value);
+
+
 #ifndef __GNUC__
 #  define  __attribute__(x)  /*NOTHING*/
 #endif
