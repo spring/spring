@@ -1280,7 +1280,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
 			lastTick=currentTick;
-			newFrames = (timeLeft > 0)? int(streflop::ceil(timeLeft)): 0;
+			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
 		}
 
