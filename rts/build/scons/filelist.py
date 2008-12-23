@@ -90,7 +90,6 @@ def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
 
 def get_spring_source(env):
 	exclude1 = [
-		'rts/AI',
 		'rts/build',
 		'rts/lib/crashrpt', # unused
 		'rts/lib/libhpi',
@@ -135,17 +134,17 @@ def get_AI_source(env, path, which):
 
 # lists source files for each individual AI Interface
 def get_AIInterface_source(env, which):
-	result = get_AI_source(env, 'AI/Interfaces', which)
+	result = get_AI_source(env, 'Interfaces', which)
 	return result
 
 # lists source files for each individual Skirmish AI
 def get_skirmishAI_source(env, which):
-	result = get_AI_source(env, 'AI/Skirmish', which)
+	result = get_AI_source(env, 'Skirmish', which)
 	return result
 
 # lists source files for each individual Group AI
 def get_groupAI_source(env, which):
-	result = get_AI_source(env, 'AI/Group', which)
+	result = get_AI_source(env, 'Group', which)
 	return result
 
 
@@ -183,18 +182,18 @@ def get_shared_skirmishAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AISCommands.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIAICheats.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AIGlobalAI.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AI.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICheats.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAI.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
 	return result
 # list Creg source files (used by some Skirmish AI libraries)
 def get_shared_skirmishAI_source_Creg(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += get_source(env, 'rts/System/creg')
+		result += get_source(env, '../rts/System/creg')
 	return result
 
 # lists source files common for all Group AIs
@@ -207,13 +206,13 @@ def get_shared_groupAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'AI/Wrappers/LegacyCpp/AISCommands.cpp')]
+		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
 	return result
 # list Creg source files (used by some Group AI libraries)
 def get_shared_groupAI_source_Creg(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += get_source(env, 'rts/System/creg')
+		result += get_source(env, '../rts/System/creg')
 	return result
 
 
@@ -231,12 +230,12 @@ def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 
 # lists source directories for AI Interfaces
 def list_AIInterfaces(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'AI/Interfaces', exclude_list, exclude_regexp)
+	return list_AIs(env, 'Interfaces', exclude_list, exclude_regexp)
 
 # lists source directories for Skirmish AIs
 def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'AI/Skirmish', exclude_list, exclude_regexp)
+	return list_AIs(env, 'Skirmish', exclude_list, exclude_regexp)
 
 # lists source directories for Group AIs
 def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'AI/Group', exclude_list, exclude_regexp)
+	return list_AIs(env, 'Group', exclude_list, exclude_regexp)

@@ -67,19 +67,20 @@ def generate(env):
 
 	# I don't see any reason to make this configurable --tvo.
 	# Note that commenting out / setting this to `None' will break the buildsystem.
-	env['builddir'] = 'build'
+	env['builddir'] = '#build'
+	bd = SCons.Script.Dir(env['builddir']).abspath
 
 	# SCons chokes in env.SConsignFile() if path doesn't exist.
-	if not os.path.exists(env['builddir']):
-		os.makedirs(env['builddir'])
+	if not os.path.exists(bd):
+		os.makedirs(bd)
 
 	# Avoid spreading .sconsign files everywhere - keep this line
 	# Use os.path.abspath() here because somehow the argument to SConsignFile is relative to the
 	# directory of the toplevel trunk/SConstruct and not the current directory, trunk/rts/SConstruct.
-	env.SConsignFile(os.path.abspath(os.path.join(env['builddir'], 'scons_signatures')))
+	env.SConsignFile(os.path.abspath(os.path.join(bd, 'scons_signatures')))
 
-	usrcachefile = os.path.join(env['builddir'], 'usropts.py')
-	intcachefile = os.path.join(env['builddir'], 'intopts.py')
+	usrcachefile = os.path.join(bd, 'usropts.py')
+	intcachefile = os.path.join(bd, 'intopts.py')
 	usropts = Options(usrcachefile)
 	intopts = Options(intcachefile)
 
@@ -440,9 +441,9 @@ def generate(env):
 		stringarray_opt('cpppath', [])
 		stringarray_opt('libpath', [])
 
-		include_path = env['cpppath'] + ['rts', 'rts/System']
-		include_path += ['rts/lib/luabind', 'rts/lib/lua/include', 'rts/lib/streflop']
-		lib_path = env['libpath'] + ['rts/lib/streflop']
+		include_path = env['cpppath'] + ['#rts', '#rts/System']
+		include_path += ['#rts/lib/luabind', '#rts/lib/lua/include', '#rts/lib/streflop']
+		lib_path = env['libpath'] + ['#rts/lib/streflop']
 
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
@@ -457,8 +458,8 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
-			include_path += [os.path.join('mingwlibs', 'include')]
-			lib_path += [os.path.join('mingwlibs', 'lib')]
+			include_path += [os.path.join('#mingwlibs', 'include')]
+			lib_path += [os.path.join('#mingwlibs', 'lib')]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
@@ -478,8 +479,11 @@ def generate(env):
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)
 
-	# Substitute prefix in installprefix
-	env['installprefix'] = env.subst(env['installprefix'])
+	# make the prefix absolute
+	env['prefix'] = SCons.Script.Dir(env['prefix']).abspath
+
+	# Substitute prefix in installprefix, and make installprefix absolute
+	env['installprefix'] = SCons.Script.Dir(env.subst(env['installprefix'])).abspath
 
 	# Fix up some suffices for mingw crosscompile.
 	if env['platform'] == 'windows':
