@@ -59,5 +59,4 @@ game/base                         Output directory for springcontent.sdz & bitma
 game/maps                         Map archives (sd7,sdz,sdd)
 game/mods                         Mod archives (sd7,sdz,sdd)
 game                              Output directory for binaries / data directory
-game/shaders                      OpenGL vertex / fragment shaders
 game/startscripts                 LUA startscripts
