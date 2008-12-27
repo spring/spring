@@ -5,8 +5,8 @@
 set -e
 
 # Sanity check.
-if [ ! -x /usr/bin/svn ]; then
-	echo "Error: Couldn't find /usr/bin/svn"
+if [ ! -x /usr/bin/git ]; then
+	echo "Error: Couldn't find /usr/bin/git"
 	exit 1
 fi
 
@@ -23,7 +23,8 @@ while [ ! -d installer ]; do
 done
 
 # This regex matches regexes in buildbot etc.
-version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
+# version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
+#### NEEDS FIXING FOR NEW VERSION NUMBERS
 
 # Each one of these that is set is build when running this script.
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.
@@ -64,9 +65,9 @@ windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'
-mkdir lf || exit 1
+git clone . lf
 cd lf
-/usr/bin/svn export .. "$dir" --native-eol LF
+# git checkout $version
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 [ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
 	tar cfj "../$tbz" $include $linux_include
@@ -76,16 +77,18 @@ cd ..
 echo 'Cleaning'
 rm -rf lf
 
+### TODO: needs fixing
 # Windows line endings, .zip/.7z package
-echo 'Exporting checkout dir with CRLF line endings'
-mkdir crlf || exit 1
-cd crlf
-/usr/bin/svn export .. "$dir" --native-eol CRLF
-[ -n "$windows_exclude" ] && rm -rf $windows_exclude
-[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
-	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
-[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo "Creating .7z archive ($seven_zip)" && \
-	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
-cd ..
-echo 'Cleaning'
-rm -rf crlf
+#echo 'Exporting checkout dir with CRLF line endings'
+#git clone . clrf
+#cd crlf
+
+#/usr/bin/svn export .. "$dir" --native-eol CRLF
+#[ -n "$windows_exclude" ] && rm -rf $windows_exclude
+#[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
+#	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
+#[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo "Creating .7z archive ($seven_zip)" && \
+#	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
+#cd ..
+#echo 'Cleaning'
+#rm -rf crlf
