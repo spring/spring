@@ -75,9 +75,7 @@ def generate(env):
 		os.makedirs(bd)
 
 	# Avoid spreading .sconsign files everywhere - keep this line
-	# Use os.path.abspath() here because somehow the argument to SConsignFile is relative to the
-	# directory of the toplevel trunk/SConstruct and not the current directory, trunk/rts/SConstruct.
-	env.SConsignFile(os.path.abspath(os.path.join(bd, 'scons_signatures')))
+	env.SConsignFile(os.path.join(bd, 'scons_signatures'))
 
 	usrcachefile = os.path.join(bd, 'usropts.py')
 	intcachefile = os.path.join(bd, 'intopts.py')
