@@ -65,7 +65,7 @@ windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'
-git clone . lf
+git clone . lf/$dir
 cd lf
 # git checkout $version
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
