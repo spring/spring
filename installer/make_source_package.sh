@@ -29,18 +29,14 @@ else
 fi
 echo "Using $branch as source"
 
-# This regex matches regexes in buildbot etc.
-# version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
-#### NEEDS FIXING FOR NEW VERSION NUMBERS
-
 # Each one of these that is set is build when running this script.
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.
 # .zip and .7z are built with windows (CRLF) line endings.
-dir="spring_$version"
-tbz="spring_${version}_src.tar.bz2"
-#tgz="spring_${version}_src.tar.gz"
-zip="spring_${version}_src.zip"
-#seven_zip="spring_${version}_src.7z"
+dir="spring_$branch"
+tbz="spring_${branch}_src.tar.bz2"
+#tgz="spring_${branch}_src.tar.gz"
+zip="spring_${branch}_src.zip"
+#seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
