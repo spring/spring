@@ -22,6 +22,13 @@ while [ ! -d installer ]; do
         cd ..
 done
 
+if [ $1 ]; then
+  branch="$1"
+else
+  branch="master"
+fi
+echo "Using $branch as source"
+
 # This regex matches regexes in buildbot etc.
 # version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
 #### NEEDS FIXING FOR NEW VERSION NUMBERS
@@ -65,9 +72,10 @@ windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'
-git clone . lf/$dir
-cd lf
-# git checkout $version
+git clone -n . lf/$dir
+cd lf/$dir
+git checkout $branch
+cd ..
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 [ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
 	tar cfj "../$tbz" $include $linux_include
@@ -80,15 +88,18 @@ rm -rf lf
 ### TODO: needs fixing
 # Windows line endings, .zip/.7z package
 #echo 'Exporting checkout dir with CRLF line endings'
-#git clone . clrf
-#cd crlf
+git clone -n . crlf/$dir
+cd crlf/$dir
+git config core.autocrlf true
+git checkout $branch
+cd ..
 
-#/usr/bin/svn export .. "$dir" --native-eol CRLF
-#[ -n "$windows_exclude" ] && rm -rf $windows_exclude
-#[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
-#	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
-#[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo "Creating .7z archive ($seven_zip)" && \
-#	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
-#cd ..
-#echo 'Cleaning'
-#rm -rf crlf
+[ -n "$windows_exclude" ] && rm -rf $windows_exclude
+[ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
+	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
+[ -n "$seven_zip" ] && [ -x /usr/bin/7z ] && echo "Creating .7z archive ($seven_zip)" && \
+	/usr/bin/7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on "../$seven_zip" $include >/dev/null
+cd ..
+echo 'Cleaning'
+rm -rf crlf
+cd ..
