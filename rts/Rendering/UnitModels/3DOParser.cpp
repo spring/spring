@@ -130,7 +130,7 @@ S3DModel* C3DOParser::Load(string name)
 		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
-	fileBuf=SAFE_NEW unsigned char[file.FileSize()];
+	fileBuf=new unsigned char[file.FileSize()];
 	//vfsHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
@@ -138,8 +138,8 @@ S3DModel* C3DOParser::Load(string name)
 		throw content_error("Failed to read file "+name);
 	}
 
-	S3DModel *model = SAFE_NEW S3DModel;
-	S3DOPiece* object=SAFE_NEW S3DOPiece;
+	S3DModel *model = new S3DModel;
+	S3DOPiece* object=new S3DOPiece;
 	object->type=MODELTYPE_3DO;
 	model->type=MODELTYPE_3DO;
 	model->rootobject=object;
@@ -358,7 +358,7 @@ bool C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 {
 	(*numobj)++;
 
-	S3DOPiece* object=SAFE_NEW S3DOPiece;
+	S3DOPiece* object=new S3DOPiece;
 	_3DObject me;
 
 	curOffset=pos;

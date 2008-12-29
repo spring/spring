@@ -24,7 +24,7 @@ IAICheats* CGlobalAICallback::GetCheatInterface()
 		return cheats;
 
 	logOutput.Print("GlobalAI%i: Cheating enabled.", ai->team);
-	cheats = SAFE_NEW CAICheats(ai);
+	cheats = new CAICheats(ai);
 	return cheats;
 }
 

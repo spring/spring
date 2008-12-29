@@ -104,8 +104,8 @@ void LoadExtensions()
 		exit(0);
 	}
 
-	vertexArray1=SAFE_NEW CVertexArray;
-	vertexArray2=SAFE_NEW CVertexArray;
+	vertexArray1=new CVertexArray;
+	vertexArray2=new CVertexArray;
 
 	std::string s= (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++)
@@ -320,7 +320,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 		logOutput << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
 		return false;
 	}
-	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
+	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	// clear any current GL errors so that the following check is valid
@@ -391,7 +391,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 		SNPRINTF(c,512,"Cannot find %s program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
-	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
+	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	glGenProgramsARB( 1, &ret );

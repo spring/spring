@@ -49,7 +49,7 @@ CBuilding::~CBuilding()
 			S3DModel* gbModel =
 				(decoyDef == NULL) ? model : LoadModel(decoyDef);
 
-			gb = SAFE_NEW CUnitDrawer::GhostBuilding;
+			gb = new CUnitDrawer::GhostBuilding;
 			gb->pos    = pos;
 			gb->model  = gbModel;
 			gb->decal  = buildingDecal;

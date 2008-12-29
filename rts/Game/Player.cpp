@@ -55,7 +55,7 @@ CPlayer::CPlayer()
 {
 	PUSH_CODE_MODE;
 	ENTER_MIXED;
-	currentStats = SAFE_NEW Statistics;
+	currentStats = new Statistics;
 	memset(currentStats, 0, sizeof(Statistics));
 	POP_CODE_MODE;
 

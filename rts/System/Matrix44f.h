@@ -47,7 +47,7 @@ public:
 // but can also be casted to and used as pointers.
 template<class T>
 T **newmat2(int x, int y) {
-	T *mat2 = SAFE_NEW T[x*y], **mat = SAFE_NEW T *[x];
+	T *mat2 = new T[x*y], **mat = new T *[x];
 	for (int i = 0; i < x; ++i)
 		mat[i] = mat2 + i*y;
 	return mat;
@@ -55,7 +55,7 @@ T **newmat2(int x, int y) {
 
 template<class T>
 T ***newmat3(int x, int y, int z) {
-	T *mat3=SAFE_NEW T[x*y*z], **mat2=SAFE_NEW T *[x*y], ***mat=SAFE_NEW T **[x];
+	T *mat3=new T[x*y*z], **mat2=new T *[x*y], ***mat=new T **[x];
 	for (int i = 0; i < x; ++i) {
 		for(int j = 0; j < y; ++j)
 			mat2[i*y+j] = mat3 + (i*y+j)*z;

@@ -54,7 +54,7 @@ COpenALSound::COpenALSound()
 	logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
 
 	// Generate sound sources
-	Sources = SAFE_NEW ALuint[maxSounds];
+	Sources = new ALuint[maxSounds];
 	for (int a=0;a<maxSounds;a++) {
 		Sources[a]=0;
 	}
@@ -422,7 +422,7 @@ ALuint COpenALSound::LoadALBuffer(const std::string& path)
 	CFileHandler file(path);
 
 	if (file.FileExists()) {
-		buf = SAFE_NEW Uint8[file.FileSize()];
+		buf = new Uint8[file.FileSize()];
 		file.Read(buf, file.FileSize());
 	} else {
 		if (hardFail) {

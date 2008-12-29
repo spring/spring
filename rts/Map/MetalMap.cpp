@@ -23,7 +23,7 @@ CMetalMap::CMetalMap(unsigned char* map,
   metalScale(_metalScale)
 {
 	// Creating an empty map over extraction.
-//	extractionMap = SAFE_NEW float[sizeX * sizeZ];
+//	extractionMap = new float[sizeX * sizeZ];
 	extractionMap.resize(sizeX * sizeZ, 0.0f);
 //	int i;
 //	for(i = 0; i < (sizeX * sizeZ); i++) {

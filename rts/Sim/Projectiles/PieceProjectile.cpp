@@ -135,7 +135,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	}
 
 	ENTER_MIXED;
-	numCallback = SAFE_NEW int;
+	numCallback = new int;
 	*numCallback = 0;
 	oldSmokeDir = speed;
 	oldSmokeDir.Normalize();
@@ -150,7 +150,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	spinSpeed = gu->usRandFloat() * 20;
 
 	for (int a = 0; a < 8; ++a) {
-		oldInfos[a] = SAFE_NEW OldInfo;
+		oldInfos[a] = new OldInfo;
 		oldInfos[a]->pos = pos;
 		oldInfos[a]->size = gu->usRandFloat() * 2 + 2;
 	}
@@ -196,7 +196,7 @@ void CPieceProjectile::Collision()
 				dir.Normalize();
 
 				CSmokeTrailProjectile* tp =
-					SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+					new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
 					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 				tp->creationTime += (8 - ((age) & 7));
 			}
@@ -220,7 +220,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 			dir.Normalize();
 
 			CSmokeTrailProjectile* tp =
-				SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
 				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 			tp->creationTime += (8 - ((age) & 7));
 		}
@@ -304,7 +304,7 @@ void CPieceProjectile::Update()
 				curCallback->drawCallbacker = 0;
 
 			curCallback =
-				SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
 				age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, &ph->smoketrailtex);
 			useAirLos = curCallback->useAirLos;
 

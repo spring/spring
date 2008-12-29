@@ -32,13 +32,13 @@ S3DModel* CS3OParser::Load(std::string name)
 		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
-	unsigned char* fileBuf=SAFE_NEW unsigned char[file.FileSize()];
+	unsigned char* fileBuf=new unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
 	header.swap();
 
-	S3DModel *model = SAFE_NEW S3DModel;
+	S3DModel *model = new S3DModel;
 	model->type=MODELTYPE_S3O;
 	model->numobjects=0;
 	model->name=name;
@@ -77,7 +77,7 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DModel* model)
 {
 	model->numobjects++;
 
-	SS3OPiece* piece = SAFE_NEW SS3OPiece;
+	SS3OPiece* piece = new SS3OPiece;
 	piece->type = MODELTYPE_S3O;
 
 	Piece* fp = (Piece*)&buf[offset];

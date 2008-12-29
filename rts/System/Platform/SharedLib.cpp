@@ -38,7 +38,7 @@ SharedLib* SharedLib::Instantiate(const char* fileName)
 {
 	SharedLib* lib = NULL;
 
-	lib = SAFE_NEW SL_IMPL_CLS(fileName);
+	lib = new SL_IMPL_CLS(fileName);
 
 	if (lib == NULL || lib->LoadFailed()) {
 		// loading failed

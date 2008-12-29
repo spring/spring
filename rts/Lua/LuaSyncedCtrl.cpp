@@ -2103,7 +2103,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
-	CFeature* feature = SAFE_NEW CFeature();
+	CFeature* feature = new CFeature();
 	feature->Initialize(pos, featureDef, heading, 0, team, "");
 	inCreateFeature = false;
 

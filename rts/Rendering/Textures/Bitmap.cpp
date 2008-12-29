@@ -72,7 +72,7 @@ CBitmap::CBitmap(const CBitmap& old)
 	if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
 	else size = xsize*ysize; // Alpha
 
-	mem=SAFE_NEW unsigned char[size];
+	mem=new unsigned char[size];
 	memcpy(mem,old.mem,size);
 }
 
@@ -82,7 +82,7 @@ CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
 {
 	type = BitmapTypeStandardRGBA;
 	ddsimage = 0;
-	mem=SAFE_NEW unsigned char[xsize*ysize*4];
+	mem=new unsigned char[xsize*ysize*4];
 	memcpy(mem,data,xsize*ysize*4);
 }
 
@@ -97,7 +97,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 		if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
 		else size = xsize*ysize; // Alpha
 
-		mem=SAFE_NEW unsigned char[size];
+		mem=new unsigned char[size];
 		memcpy(mem,bm.mem,size);
 	}
 	return *this;
@@ -110,7 +110,7 @@ void CBitmap::Alloc (int w,int h)
 	xsize=w;
 	ysize=h;
 	type=BitmapTypeStandardRGBA;
-	mem=SAFE_NEW unsigned char[w*h*4];
+	mem=new unsigned char[w*h*4];
 	memset(mem, 0, w*h*4);
 }
 
@@ -123,7 +123,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	mem = NULL;
 
 	if(filename.find(".dds")!=string::npos){
-		ddsimage = SAFE_NEW nv_dds::CDDSImage();
+		ddsimage = new nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
 		return ddsimage->load(filename);
 	}
@@ -136,7 +136,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		return false;
 	}
 
-	unsigned char *buffer = SAFE_NEW unsigned char[file.FileSize()+2];
+	unsigned char *buffer = new unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
 #if defined(USE_QUICKTIME) // Use QuickTime to load images on Mac
@@ -152,7 +152,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	if (!mem) {
 		xsize = 1;
 		ysize = 1;
-		mem=SAFE_NEW unsigned char[4];
+		mem=new unsigned char[4];
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
@@ -190,7 +190,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	{
 		xsize = 1;
 		ysize = 1;
-		mem=SAFE_NEW unsigned char[4];
+		mem=new unsigned char[4];
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
@@ -203,7 +203,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem = SAFE_NEW unsigned char[xsize * ysize * 4];
+	mem = new unsigned char[xsize * ysize * 4];
 	//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
 	memcpy(mem, ilGetData(), xsize * ysize * 4);
 
@@ -235,7 +235,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(!file.FileExists())
 		return false;
 
-	unsigned char *buffer = SAFE_NEW unsigned char[file.FileSize()+1];
+	unsigned char *buffer = new unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
 
 	ILuint ImageName = 0;
@@ -253,7 +253,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem = SAFE_NEW unsigned char[xsize * ysize];
+	mem = new unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
 	
 	ilDeleteImages(1, &ImageName);
@@ -261,7 +261,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	xsize = 4;
 	ysize = 4;
 
-	mem = SAFE_NEW unsigned char[xsize * ysize];
+	mem = new unsigned char[xsize * ysize];
 #endif
 	
 	return true;
@@ -285,7 +285,7 @@ bool CBitmap::Save(string const& filename, bool opaque)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	unsigned char* buf = SAFE_NEW unsigned char[xsize * ysize * 4];
+	unsigned char* buf = new unsigned char[xsize * ysize * 4];
 	const int ymax = (ysize - 1);
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
@@ -529,7 +529,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.mem=SAFE_NEW unsigned char[width*height*4];
+	bm.mem=new unsigned char[width*height*4];
 	bm.xsize=width;
 	bm.ysize=height;
 
@@ -553,7 +553,7 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	delete[] bm.mem;
 	bm.xsize=xsize/2;
 	bm.ysize=ysize/2;
-	bm.mem=SAFE_NEW unsigned char[bm.xsize*bm.ysize*4];
+	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
 
 	for(int y=0;y<ysize/2;++y){
 		for(int x=0;x<xsize/2;++x){
@@ -585,7 +585,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 	delete[] bm.mem;
 	bm.xsize=newx;
 	bm.ysize=newy;
-	bm.mem=SAFE_NEW unsigned char[bm.xsize*bm.ysize*4];
+	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
 
 	float dx=float(xsize)/newx;
 	float dy=float(ysize)/newy;
@@ -694,7 +694,7 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	unsigned char* buf=SAFE_NEW unsigned char[xsize*ysize*4];
+	unsigned char* buf=new unsigned char[xsize*ysize*4];
 
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
@@ -746,7 +746,7 @@ Handle CBitmap::GetPtrDataRef(unsigned char *data, unsigned int size,
 	// Release old handler which does not have the extensions
 	DisposeHandle(dataRef);
 
-	// Grab the SAFE_NEW version of the data ref from the data handler
+	// Grab the new version of the data ref from the data handler
 	/*err = */ DataHGetDataRef(dataRefHandler, &dataRef);
 
 	return dataRef;
@@ -802,7 +802,7 @@ unsigned char *CBitmap::LoadTextureData(const std::string &filename,
 	rowStride = xsize * 4; // (width * depth_bpp / 8)
 
 	// GWorld - Allocate output buffer
-	imageData = SAFE_NEW unsigned char[rowStride * ysize];
+	imageData = new unsigned char[rowStride * ysize];
 
 	// GWorld - Actually Create IT!
 	QTNewGWorldFromPtr(&gworld, pixelFormat, &rectImage, 0, 0, 0, imageData, rowStride);

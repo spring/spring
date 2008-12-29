@@ -24,7 +24,7 @@
 CBasicMapDamage::CBasicMapDamage(void)
 {
 	const int numQuads = qf->GetNumQuadsX() * qf->GetNumQuadsZ();
-	inRelosQue = SAFE_NEW bool[numQuads];
+	inRelosQue = new bool[numQuads];
 	for (int a = 0; a < numQuads; ++a) {
 		inRelosQue[a]=false;
 	}
@@ -67,7 +67,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 	radius *= 1.5f;
 
-	Explo* e = SAFE_NEW Explo;
+	Explo* e = new Explo;
 	e->pos = pos;
 	e->strength = strength;
 	e->ttl = 10;

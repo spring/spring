@@ -43,7 +43,7 @@ ABOpenFile_t* CArchiveHPI::GetEntireFile(const std::string& fileName)
 	if (!f.get())
 		return 0;
 
-	ABOpenFile_t* of = SAFE_NEW ABOpenFile_t;
+	ABOpenFile_t* of = new ABOpenFile_t;
 	of->pos = 0;
 	of->size = f->size;
 	of->data = (char*)malloc(of->size);

@@ -37,7 +37,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 	castShadow=true;
 	numFlame=1+(int)(size*3);
 	numSmoke=1+(int)(size*5);
-//	randSmokeDir=SAFE_NEW float3[numSmoke];
+//	randSmokeDir=new float3[numSmoke];
 	randSmokeDir.resize(numSmoke);
 
 	PUSH_CODE_MODE;

@@ -49,7 +49,7 @@ void CLuaGaia::LoadHandler()
 		return;
 	}
 
-	SAFE_NEW CLuaGaia();
+	new CLuaGaia();
 
 	if (luaGaia->L == NULL) {
 		delete luaGaia;

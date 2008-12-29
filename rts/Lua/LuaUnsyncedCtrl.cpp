@@ -1063,7 +1063,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 
 	const int numBytes = fh.FileSize();
-	char* buffer = SAFE_NEW char[numBytes];
+	char* buffer = new char[numBytes];
 
 	fh.Read(buffer, numBytes);
 

@@ -80,7 +80,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 	maxUsedID = freeIDs.size();
 
-	textureAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
+	textureAtlas = new CTextureAtlas(2048, 2048);
 
 	// used to block resources_map.tdf from loading textures
 	set<string> blockMapTexNames;
@@ -263,7 +263,7 @@ CProjectileHandler::CProjectileHandler()
 	plasmatex          = GETTEX("plasmatexture",          "circularthingy");
 #undef GETTEX
 
-	groundFXAtlas = SAFE_NEW CTextureAtlas(2048, 2048);
+	groundFXAtlas = new CTextureAtlas(2048, 2048);
 	//add all textures in groundfx section
 	const LuaTable groundfxTable = gfxTable.SubTable("groundfx");
 	groundfxTable.GetMap(ptex);
@@ -296,7 +296,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 
-	flying3doPieces = SAFE_NEW FlyingPiece_List;
+	flying3doPieces = new FlyingPiece_List;
 	flyingPieces.push_back(flying3doPieces);
 
 	for (int a = 0; a < 4; ++a) {
@@ -926,7 +926,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	while(flyings3oPieces[textureType].size()<=team){
 		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
 
-		FlyingPiece_List * fpl = SAFE_NEW FlyingPiece_List;
+		FlyingPiece_List * fpl = new FlyingPiece_List;
 		flyings3oPieces[textureType].push_back(fpl);
 		flyingPieces.push_back(fpl);
 	}
@@ -1042,7 +1042,7 @@ void CProjectileHandler::UpdatePerlin()
 
 void CProjectileHandler::GenerateNoiseTex(unsigned int tex,int size)
 {
-	unsigned char* mem=SAFE_NEW unsigned char[4*size*size];
+	unsigned char* mem=new unsigned char[4*size*size];
 
 	for(int a=0;a<size*size;++a){
 		unsigned char rnd=int(max(0.f,gu->usRandFloat()*555-300));

@@ -40,8 +40,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader, ifs);
 
-	tileMap = SAFE_NEW int[(header->mapx * header->mapy) / 16];
-	tiles = SAFE_NEW char[tileHeader.numTiles * SMALL_TILE_SIZE];
+	tileMap = new int[(header->mapx * header->mapy) / 16];
+	tiles = new char[tileHeader.numTiles * SMALL_TILE_SIZE];
 	int curTile = 0;
 
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
@@ -102,7 +102,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	tileMapXSize = header->mapx / 4;
 	tileMapYSize = header->mapy / 4;
 
-	squares = SAFE_NEW GroundSquare[numBigTexX * numBigTexY];
+	squares = new GroundSquare[numBigTexX * numBigTexY];
 
 	for (int y = 0; y < numBigTexY; ++y) {
 		for (int x = 0; x < numBigTexX; ++x) {
@@ -209,7 +209,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	}
 
 	if (buf == NULL) {
-		buf = SAFE_NEW GLubyte[size * size / 2];
+		buf = new GLubyte[size * size / 2];
 		usedPBO = false;
 	}
 

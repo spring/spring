@@ -44,9 +44,9 @@ BaseCmd::~BaseCmd()
 BaseCmd *BaseCmd::initialize(int c, char **v)
 {
 #ifdef _WIN32
-	return SAFE_NEW Win32Cmd(c,v);
+	return new Win32Cmd(c,v);
 #else
-	return SAFE_NEW PosixCmd(c,v);
+	return new PosixCmd(c,v);
 #endif
 }
 

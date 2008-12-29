@@ -30,7 +30,7 @@ const float PATHCOST_INFINITY = 10000000;
 
 void* pfAlloc(size_t n)
 {
-	char* ret=SAFE_NEW char[n];
+	char* ret=new char[n];
 	for(int a=0;a<n;++a)
 		ret[a]=0;
 
@@ -50,7 +50,7 @@ CPathFinder::CPathFinder()
 : openSquareBufferPointer(openSquareBuffer)
 {
 	//Creates and init all square states.
-	squareState = SAFE_NEW SquareState[gs->mapSquares];
+	squareState = new SquareState[gs->mapSquares];
 	for(int a = 0; a < gs->mapSquares; ++a){
 		squareState[a].status = 0;
 		squareState[a].cost = PATHCOST_INFINITY;

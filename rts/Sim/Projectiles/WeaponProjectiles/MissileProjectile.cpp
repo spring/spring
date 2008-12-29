@@ -160,7 +160,7 @@ void CMissileProjectile::Collision()
 	}
 
 	if (weaponDef->visuals.smokeTrail) {
-		SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	// helper->Explosion(pos, damages, areaOfEffect, owner);
@@ -171,7 +171,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit *unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	// unit->DoDamage(damages,owner);
@@ -297,7 +297,7 @@ void CMissileProjectile::Update(void)
 
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
-		CSmokeTrailProjectile* tp = SAFE_NEW CSmokeTrailProjectile(pos, oldSmoke,
+		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(pos, oldSmoke,
 			dir, oldDir, owner, age == 8, false, 7, Smoke_Time, 0.6f, drawTrail, 0,
 			weaponDef->visuals.texture2);
 		oldSmoke = pos;

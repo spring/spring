@@ -64,7 +64,7 @@ void CTorpedoLauncher::Fire(void)
 		startSpeed = weaponDir * weaponDef->startvelocity;
 	}
 
-	SAFE_NEW CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
+	new CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
 		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
 		targetUnit, weaponDef);
 

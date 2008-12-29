@@ -27,11 +27,11 @@ CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 		GLint maxTexel;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&maxTexel);
 		if(maxTexel>=4){
-			td=SAFE_NEW CAdvTreeDrawer;
+			td=new CAdvTreeDrawer;
 			return td;
 		}
 	}
-	td=SAFE_NEW CBasicTreeDrawer;
+	td=new CBasicTreeDrawer;
 	return td;
 }
 

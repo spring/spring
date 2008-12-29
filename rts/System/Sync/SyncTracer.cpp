@@ -23,7 +23,7 @@ bool CSyncTracer::init()
 			sprintf(c, "trace%i.log", gu->myTeam);
 		else
 			sprintf(c, "trace_early.log");
-		logfile = SAFE_NEW std::ofstream(c);
+		logfile = new std::ofstream(c);
 		logOutput.Print("Sync trace log: %s\n", c);
 	}
 #endif
@@ -55,7 +55,7 @@ void CSyncTracer::Commit()
 			sprintf(c, "trace%i.log", gu->myTeam);
 		else
 			sprintf(c, "trace_early.log");
-		file = SAFE_NEW std::ofstream(c);
+		file = new std::ofstream(c);
 	}
 #endif
 

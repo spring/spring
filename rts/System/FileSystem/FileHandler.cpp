@@ -55,7 +55,7 @@ CFileHandler::~CFileHandler(void)
 bool CFileHandler::TryRawFS(const string& filename)
 {
 	const string rawpath = filesystem.LocateFile(filename);
-	ifs = SAFE_NEW ifstream(rawpath.c_str(), ios::in | ios::binary);
+	ifs = new ifstream(rawpath.c_str(), ios::in | ios::binary);
 	if (ifs && !ifs->bad() && ifs->is_open()) {
 		ifs->seekg(0, ios_base::end);
 		filesize = ifs->tellg();
@@ -78,7 +78,7 @@ bool CFileHandler::TryModFS(const string& filename)
 
 	hpiLength = vfsHandler->GetFileSize(file);
 	if (hpiLength != -1) {
-		hpiFileBuffer = SAFE_NEW unsigned char[hpiLength];
+		hpiFileBuffer = new unsigned char[hpiLength];
 		if (vfsHandler->LoadFile(file, hpiFileBuffer) < 0) {
 			delete[] hpiFileBuffer;
 			hpiFileBuffer = NULL;
@@ -217,7 +217,7 @@ bool CFileHandler::LoadStringData(string& data)
 	if (!FileExists()) {
 		return false;
 	}
-	char* buf = SAFE_NEW char[filesize];
+	char* buf = new char[filesize];
 	Read(buf, filesize);
 	data.append(buf, filesize);
 	delete[] buf;

@@ -730,9 +730,9 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		}
 
 		if (inverse) {
-			SAFE_NEW CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+			new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 		} else {
-			SAFE_NEW CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
+			new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
 		}
 	}
 

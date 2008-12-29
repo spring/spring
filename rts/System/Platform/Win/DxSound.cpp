@@ -100,7 +100,7 @@ CDxSound::CDxSound()
 	
 	SAFE_RELEASE(pDSBPrimary);
 	waveid[""] = 0;
-	SoundInfo* si = SAFE_NEW SoundInfo;
+	SoundInfo* si = new SoundInfo;
 	loadedSounds.push_back(si);
 }
 
@@ -176,7 +176,7 @@ int CDxSound::InitFile(const string& name)
 
 	waveid[name] = loadedSounds.size();
 	buf2id.push_back(loadedSounds.size());
-	SoundInfo* si = SAFE_NEW SoundInfo;
+	SoundInfo* si = new SoundInfo;
 	si->firstBuf = buffers.size() - 1;
 	si->freebufs.push_back(buffers.size() - 1);
 	loadedSounds.push_back(si);
@@ -217,7 +217,7 @@ int CDxSound::GetBuf(int id, float volume)
 		HRESULT r = m_pDS->DuplicateSoundBuffer(buffers[s->firstBuf], &(buffers.back()));
 		if (r != DS_OK) {
 			MessageBox(0, "Couldn't duplicate sound buffer", "Sound error", 0);
-			sound = SAFE_NEW CNullSound;
+			sound = new CNullSound;
 			delete this;
 			return -2;
 		}
@@ -422,7 +422,7 @@ bool CDxSound::CreateStaticBuffer(const string& path)
 	int fileSize = file.FileSize();
 
 	if (file.FileExists()) {
-		buf = SAFE_NEW Uint8[fileSize];
+		buf = new Uint8[fileSize];
 		file.Read(buf, fileSize);
 	} else {
 		return false;

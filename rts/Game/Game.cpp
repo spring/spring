@@ -290,8 +290,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	CLuaHandle::SetModUICtrl(!!configHandler.Get("LuaModUICtrl", 1));
 
-	consoleHistory = SAFE_NEW CConsoleHistory;
-	wordCompletion = SAFE_NEW CWordCompletion;
+	consoleHistory = new CConsoleHistory;
+	wordCompletion = new CWordCompletion;
 	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
 	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 	}
@@ -312,19 +312,19 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
 
-	camera = SAFE_NEW CCamera();
-	cam2 = SAFE_NEW CCamera();
-	mouse = SAFE_NEW CMouseHandler();
-	camHandler = SAFE_NEW CCameraHandler();
-	selectionKeys = SAFE_NEW CSelectionKeyHandler();
-	tooltip = SAFE_NEW CTooltipConsole();
-	iconHandler = SAFE_NEW CIconHandler();
+	camera = new CCamera();
+	cam2 = new CCamera();
+	mouse = new CMouseHandler();
+	camHandler = new CCameraHandler();
+	selectionKeys = new CSelectionKeyHandler();
+	tooltip = new CTooltipConsole();
+	iconHandler = new CIconHandler();
 
 	selectedUnits.Init();
 
 	ENTER_MIXED;
 
-	helper = SAFE_NEW CGameHelper(this);
+	helper = new CGameHelper(this);
 
 	ENTER_SYNCED;
 	modInfo.Init(modName.c_str());
@@ -333,7 +333,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		throw content_error(sideParser.GetErrorLog());
 	}
 
-	defsParser = SAFE_NEW LuaParser("gamedata/defs.lua",
+	defsParser = new LuaParser("gamedata/defs.lua",
 	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	defsParser->GetTable("Spring");
@@ -365,35 +365,35 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		throw content_error("Error loading MoveDefs");
 	}
 
-	explGenHandler = SAFE_NEW CExplosionGeneratorHandler();
+	explGenHandler = new CExplosionGeneratorHandler();
 
 	ENTER_UNSYNCED;
-	shadowHandler = SAFE_NEW CShadowHandler();
+	shadowHandler = new CShadowHandler();
 
 	ENTER_SYNCED;
-	ground = SAFE_NEW CGround();
-	mapInfo = SAFE_NEW CMapInfo(mapname); // must go before readmap
+	ground = new CGround();
+	mapInfo = new CMapInfo(mapname); // must go before readmap
 	readmap = CReadMap::LoadMap (mapname);
-	groundBlockingObjectMap = SAFE_NEW CGroundBlockingObjectMap(gs->mapSquares);
+	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
-	moveinfo = SAFE_NEW CMoveInfo();
-	groundDecals = SAFE_NEW CGroundDecalHandler();
+	moveinfo = new CMoveInfo();
+	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
 
 	ENTER_UNSYNCED;
 
-	guihandler = SAFE_NEW CGuiHandler();
-	minimap = SAFE_NEW CMiniMap();
+	guihandler = new CGuiHandler();
+	minimap = new CMiniMap();
 
 	ENTER_MIXED;
-	ph = SAFE_NEW CProjectileHandler();
+	ph = new CProjectileHandler();
 
 	ENTER_SYNCED;
-	damageArrayHandler = SAFE_NEW CDamageArrayHandler();
-	unitDefHandler = SAFE_NEW CUnitDefHandler();
+	damageArrayHandler = new CDamageArrayHandler();
+	unitDefHandler = new CUnitDefHandler();
 
 	ENTER_UNSYNCED;
-	inMapDrawer = SAFE_NEW CInMapDraw();
+	inMapDrawer = new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
 	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
@@ -402,28 +402,28 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	  wordCompletion->AddWord(uit->first + " ", false, true, false);
 	}
 
-	geometricObjects = SAFE_NEW CGeometricObjects();
+	geometricObjects = new CGeometricObjects();
 
 	ENTER_SYNCED;
-	qf = SAFE_NEW CQuadField();
+	qf = new CQuadField();
 
 	ENTER_MIXED;
-	featureHandler = SAFE_NEW CFeatureHandler();
+	featureHandler = new CFeatureHandler();
 
 	ENTER_SYNCED;
 	mapDamage = IMapDamage::GetMapDamage();
-	loshandler = SAFE_NEW CLosHandler();
-	radarhandler = SAFE_NEW CRadarHandler(false);
+	loshandler = new CLosHandler();
+	radarhandler = new CRadarHandler(false);
 
 	ENTER_MIXED;
-	uh = SAFE_NEW CUnitHandler();
-	unitDrawer = SAFE_NEW CUnitDrawer();
-	fartextureHandler = SAFE_NEW CFartextureHandler();
-	modelParser = SAFE_NEW C3DModelParser();
+	uh = new CUnitHandler();
+	unitDrawer = new CUnitDrawer();
+	fartextureHandler = new CFartextureHandler();
+	modelParser = new C3DModelParser();
 
  	ENTER_SYNCED;
  	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
- 	pathManager = SAFE_NEW CPathManager();
+ 	pathManager = new CPathManager();
 #ifdef SYNCCHECK
 	// update the checksum with path data
 	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
@@ -436,16 +436,16 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	ENTER_UNSYNCED;
 	sky = CBaseSky::GetSky();
 
-	resourceBar = SAFE_NEW CResourceBar();
-	keyCodes = SAFE_NEW CKeyCodes();
-	keyBindings = SAFE_NEW CKeyBindings();
+	resourceBar = new CResourceBar();
+	keyCodes = new CKeyCodes();
+	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater(NULL);
 	for(int a=0;a<MAX_TEAMS;a++)
-		grouphandlers[a] = SAFE_NEW CGroupHandler(a);
+		grouphandlers[a] = new CGroupHandler(a);
 
-	globalAI = SAFE_NEW CGlobalAIHandler();
+	globalAI = new CGlobalAIHandler();
 
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	GameSetupDrawer::Enable();
@@ -525,7 +525,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	mouse->ShowMouse();
 
 	// last in, first served
-	luaInputReceiver = SAFE_NEW LuaInputReceiver();
+	luaInputReceiver = new LuaInputReceiver();
 }
 
 
@@ -937,7 +937,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler.Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
-		shadowHandler = SAFE_NEW CShadowHandler();
+		shadowHandler = new CShadowHandler();
 	}
 	else if (cmd == "water") {
 		static char rmodes[5][32] = {"basic", "reflective", "dynamic", "reflective&refractive", "bumpmapped"};
@@ -1285,7 +1285,7 @@ bool CGame::ActionPressed(const Action& action,
 
 			int videoSizeX = (gu->viewSizeX/4)*4;
 			int videoSizeY = (gu->viewSizeY/4)*4;
-			aviGenerator = SAFE_NEW CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
+			aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
 
 			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
 			SDL_ShowCursor(SDL_ENABLE);
@@ -1510,7 +1510,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
-			SAFE_NEW CShareBox();
+			new CShareBox();
 	}
 	else if (cmd == "quitwarn") {
 		const CKeyBindings::HotkeyList hkl = keyBindings->GetHotkeys("quit");
@@ -1557,7 +1557,7 @@ bool CGame::ActionPressed(const Action& action,
 		// Present him with the options given in CQuitBox.
 		if (!userMayQuit) {
 			if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
-				SAFE_NEW CQuitBox();
+				new CQuitBox();
 			}
 		} else {
 			logOutput.Print("User exited");
@@ -1583,7 +1583,7 @@ bool CGame::ActionPressed(const Action& action,
 			if (x % 4)
 				x += (4 - x % 4);
 
-			unsigned char* buf = SAFE_NEW unsigned char[x * gu->viewSizeY * 4];
+			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
 			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
 			CBitmap b(buf, x, gu->viewSizeY);
@@ -2299,7 +2299,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
 							float minposy = ground->GetHeight2(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
-							CFeature* feature = SAFE_NEW CFeature();
+							CFeature* feature = new CFeature();
 							feature->Initialize(upos, featureDef, 0, 0, team, "");
 							--total;
 						}
@@ -4402,7 +4402,7 @@ void CGame::DrawDirectControlHud(void)
 
 void CGame::GameEnd()
 {
-	SAFE_NEW CEndGameBox();
+	new CEndGameBox();
 	CDemoRecorder* record = net->GetDemoRecorder();
 	if (record != NULL) {
 		// Write CPlayer::Statistics and CTeam::Statistics to demo
@@ -4550,7 +4550,7 @@ void CGame::Skip(int toFrame)
 	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
 
 	CSound* tmpSound = sound;
-	sound = SAFE_NEW CNullSound;
+	sound = new CNullSound;
 
 	skipping = true;
 	{
@@ -4638,7 +4638,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			if (unit->cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->cob;
-				unit->cob = SAFE_NEW CCobInstance(*newScript, unit);
+				unit->cob = new CCobInstance(*newScript, unit);
 				unit->cob->Call("Create");
 			}
 		}
