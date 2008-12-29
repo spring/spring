@@ -4,6 +4,8 @@
 
 #include "StdAfx.h"
 #include "PlayerHandler.h"
+
+#include "LogOutput.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
 
@@ -73,7 +75,7 @@ void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 			logOutput.Print("Lost connection to %s", Player(player)->name.c_str());
 			break;
 		default:
-			logOutput.Print("Player %s left the game (reason unknown: %i)", Player(player)->name.c_str(), inbuf[2]);
+			logOutput.Print("Player %s left the game (reason unknown: %i)", Player(player)->name.c_str(), reason);
 	}
 	Player(player)->active = false;
 }
