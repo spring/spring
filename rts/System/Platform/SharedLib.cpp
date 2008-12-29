@@ -9,7 +9,6 @@
  * GNU GPL, v2 or later.
  */
 
-#include "Sync/Syncify.h"
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 #include "Util.h"
 #else // defined BUILDING_AI || defined BUILDING_AI_INTERFACE

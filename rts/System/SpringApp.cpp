@@ -39,7 +39,6 @@
 #include "LogOutput.h"
 #include "MouseInput.h"
 #include "bitops.h"
-#include "Sync/Syncify.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
 #include "Exceptions.h"
@@ -1192,7 +1191,6 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
-	END_SYNCIFY;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
