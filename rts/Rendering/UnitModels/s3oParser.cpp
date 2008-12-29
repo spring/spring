@@ -24,12 +24,8 @@
 
 S3DModel* CS3OParser::Load(std::string name)
 {
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
-
 	CFileHandler file(name);
 	if(!file.FileExists()){
-		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
 	unsigned char* fileBuf=new unsigned char[file.FileSize()];
@@ -68,7 +64,6 @@ S3DModel* CS3OParser::Load(std::string name)
 	model->minz=object->minz;
 
 	delete[] fileBuf;
-	POP_CODE_MODE;
 
 	return model;
 }

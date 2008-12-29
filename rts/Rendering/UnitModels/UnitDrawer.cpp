@@ -386,8 +386,6 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	ASSERT_UNSYNCED_MODE;
-
 	drawFar.clear();
 	drawStat.clear();
 
@@ -687,7 +685,6 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 
 void CUnitDrawer::DrawShadowPass(void)
 {
-	ASSERT_UNSYNCED_MODE;
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glDisable(GL_TEXTURE_2D);
 //	glEnable(GL_TEXTURE_2D);

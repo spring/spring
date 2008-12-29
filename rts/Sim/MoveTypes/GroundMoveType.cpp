@@ -263,10 +263,8 @@ void CGroundMoveType::Update()
 				deltaHeading -= (short) turnRate;
 			}
 
-			ENTER_UNSYNCED;
 			if (gu->directControl == owner)
 				camera->rot.y += deltaHeading * TAANG2RAD;
-			ENTER_SYNCED;
 
 			ChangeHeading(owner->heading + deltaHeading);
 		} else
@@ -506,7 +504,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	StartEngine();
 
-	ENTER_UNSYNCED;
 	if (owner->team == gu->myTeam) {
 		// Play "activate" sound.
 		int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
@@ -516,7 +513,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
 	}
-	ENTER_SYNCED;
 }
 
 void CGroundMoveType::StopMoving() {
@@ -1367,7 +1363,6 @@ void CGroundMoveType::Arrived()
 
 		StopEngine();
 
-		ENTER_UNSYNCED;
 		if (owner->team == gu->myTeam) {
 			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
@@ -1376,7 +1371,6 @@ void CGroundMoveType::Arrived()
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}
 		}
-		ENTER_SYNCED;
 
 		// and the action is done
 		progressState = Done;
@@ -1406,7 +1400,6 @@ void CGroundMoveType::Fail()
 	globalAI->UnitMoveFailed(owner);
 
 	// sends a message to user.
-	ENTER_UNSYNCED;
 	if (game->moveWarnings && (owner->team == gu->myTeam)) {
 		// playing "cant" sound.
 		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
@@ -1421,7 +1414,6 @@ void CGroundMoveType::Fail()
 			logOutput.SetLastMsgPos(owner->pos);
 		}
 	}
-	ENTER_SYNCED;
 }
 
 

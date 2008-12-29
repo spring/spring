@@ -40,12 +40,9 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& d
 //	randSmokeDir=new float3[numSmoke];
 	randSmokeDir.resize(numSmoke);
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	for(int a=0;a<numSmoke;++a){
 		randSmokeDir[a]=dir+gu->usRandFloat()*0.4f;
 	}
-	POP_CODE_MODE;
 }
 
 CMuzzleFlame::~CMuzzleFlame(void)

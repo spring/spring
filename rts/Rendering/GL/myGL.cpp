@@ -253,11 +253,8 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	static char prevText[100];
 
-	PUSH_CODE_MODE;
-
 	// Stuff that needs to be done regularly while loading.
 	// Totally unrelated to the task the name of this function implies.
-	ENTER_MIXED;
 
 	// Check to prevent infolog spam by CPreGame which uses this function
 	// to render the screen background each frame.
@@ -270,7 +267,6 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	good_fpu_control_registers(text);
 
 	// Draw loading screen & print load msg.
-	ENTER_UNSYNCED;
 	ClearScreen();
 	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
@@ -291,7 +287,6 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	if (swapbuffers) {
 		SDL_GL_SwapBuffers();
 	}
-	POP_CODE_MODE;
 }
 
 

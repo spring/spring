@@ -37,7 +37,6 @@ CScriptHandler::CScriptHandler() : chosenScript(0)
 /** Load all scripts. */
 void CScriptHandler::LoadScripts() {
 
-	ENTER_SYNCED;
 	loaded_scripts.push_back( new CCommanderScript() );
 	loaded_scripts.push_back( new CCommanderScript2() );
 	loaded_scripts.push_back( new CAirScript() );
@@ -56,7 +55,6 @@ void CScriptHandler::LoadScripts() {
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
 		loaded_scripts.push_back(new CLoadScript(*fi));
 	}
-	ENTER_UNSYNCED;
 }
 
 void CScriptHandler::StartLua()

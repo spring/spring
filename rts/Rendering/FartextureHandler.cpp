@@ -65,14 +65,11 @@ void CFartextureHandler::CreateFarTextures()
 void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 {
 	//UnitModelGeometry& geometry=*model.geometry;
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 
 	model->farTextureNum=usedFarTextures;
 
 	if(usedFarTextures>=511){
 //		logOutput.Print("Out of fartextures");
-		POP_CODE_MODE;
 		return;
 	}
 	GLfloat LightDiffuseLand2[]=	{ 0.0f, 0.0f, 0.0f, 1.0f };
@@ -156,5 +153,4 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	glTexSubImage2D(GL_TEXTURE_2D,0, bx,by,128, 16,GL_RGBA, GL_UNSIGNED_BYTE, farTextureMem);
 
 	usedFarTextures++;
-	POP_CODE_MODE;
 }

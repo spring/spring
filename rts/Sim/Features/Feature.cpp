@@ -581,13 +581,10 @@ bool CFeature::Update(void)
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
 		if (!(gs->frameNum + id & 3) && ph->particleSaturation < 0.7f) {
 			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
 				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
-		POP_CODE_MODE;
 		retValue = true;
 	}
 
@@ -599,9 +596,6 @@ bool CFeature::Update(void)
 	}
 
 	if (def->geoThermal) {
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
-
 		if ((gs->frameNum + id % 5) % 5 == 0) {
 			// Find the unit closest to the geothermal
 			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
@@ -637,7 +631,6 @@ bool CFeature::Update(void)
 			}
 		}
 
-		POP_CODE_MODE;
 		retValue = true;
 	}
 

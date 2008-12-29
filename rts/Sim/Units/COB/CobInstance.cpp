@@ -733,9 +733,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 	}
 
 #ifndef _CONSOLE
-	ENTER_MIXED;
 	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
-		ENTER_SYNCED;
 		return;
 	}
 
@@ -759,7 +757,6 @@ void CCobInstance::EmitSfx(int type, int piece)
 	//Make sure wakes are only emitted on water
 	if ((type >= 2) && (type <= 5)) {
 		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0){
-			ENTER_SYNCED;
 			return;
 		}
 	}
@@ -855,8 +852,6 @@ void CCobInstance::EmitSfx(int type, int piece)
 			break;
 	}
 
-
-	ENTER_SYNCED;
 #endif
 }
 
@@ -982,7 +977,6 @@ void CCobInstance::Explode(int piece, int flags)
 
 	LocalModelPiece* pieceData = pieces[piece]; //&( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
 	if (flags & 1) {		//Shatter
-		ENTER_MIXED;
 
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
 //		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
@@ -1060,7 +1054,6 @@ void CCobInstance::Explode(int piece, int flags)
 				}
 			}
 		}
-		ENTER_SYNCED;
 	}
 	else {
 		if (pieceData->original != NULL) {

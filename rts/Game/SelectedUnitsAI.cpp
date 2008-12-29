@@ -115,12 +115,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
 			if (c.id == CMD_WAIT) {
-				PUSH_CODE_MODE
-				ENTER_MIXED
 				if (player == gu->myPlayerNum) {
 					waitCommandsAI.AcknowledgeCommand(c);
 				}
-				POP_CODE_MODE
 			}
 		}
 	}
@@ -233,12 +230,9 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 			}
 		}
 		if (c.id == CMD_WAIT) {
-			PUSH_CODE_MODE
-			ENTER_MIXED
 			if (player == gu->myPlayerNum) {
 				waitCommandsAI.AcknowledgeCommand(c);
 			}
-			POP_CODE_MODE
 		}
 	}
 }

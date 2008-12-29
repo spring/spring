@@ -134,7 +134,6 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		useAirLos = true;
 	}
 
-	ENTER_MIXED;
 	numCallback = new int;
 	*numCallback = 0;
 	oldSmokeDir = speed;
@@ -154,7 +153,6 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		oldInfos[a]->pos = pos;
 		oldInfos[a]->size = gu->usRandFloat() * 2 + 2;
 	}
-	ENTER_SYNCED;
 
 	SetRadius(radius);
 	drawRadius = 32;
@@ -276,7 +274,6 @@ void CPieceProjectile::Update()
 	*numCallback = 0;
 
 	if (flags & PP_Fire && HasVertices()) {
-		ENTER_MIXED;
 		OldInfo* tempOldInfo = oldInfos[7];
 		for (int a = 6; a >= 0; --a) {
 			oldInfos[a + 1] = oldInfos[a];
@@ -290,7 +287,6 @@ void CPieceProjectile::Update()
 		oldInfos[0] = tempOldInfo;
 		oldInfos[0]->pos = m.GetPos();
 		oldInfos[0]->size = gu->usRandFloat() * 1 + 1;
-		ENTER_SYNCED;
 	}
 
 	age++;

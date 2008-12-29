@@ -88,13 +88,11 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	oldSmokeDir=dir;
 
 	drawRadius=maxSpeed*8;
-	ENTER_MIXED;
 	numCallback=new int;
 	*numCallback=0;
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
-	ENTER_SYNCED;
 
 	for(int a=0;a<5;++a){
 		oldInfos[a]=new OldInfo;
@@ -247,11 +245,9 @@ void CStarburstProjectile::Update(void)
 		numParts = 0;
 		useAirLos = curCallback->useAirLos;
 		if (!drawTrail) {
-			ENTER_MIXED;
 			float3 camDir = (pos - camera->pos).Normalize();
 			if (camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000 > 300)
 				drawTrail = true;
-			ENTER_SYNCED;
 		}
 	}
 
