@@ -40,6 +40,8 @@ public:
 	 */
 	int Player(const std::string& name);
 
+	void PlayerLeft(int playernum, unsigned char reason);
+
 	int ActivePlayers() const { return activePlayers; }
 
 private:
