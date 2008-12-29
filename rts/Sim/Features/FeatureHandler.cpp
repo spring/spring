@@ -202,7 +202,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 		return fi->second;
 	}
 
-	FeatureDef* fd = SAFE_NEW FeatureDef;
+	FeatureDef* fd = new FeatureDef;
 
 	fd->myName = name;
 
@@ -258,7 +258,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
-	fd->collisionVolume = SAFE_NEW CollisionVolume(fd->collisionVolumeType,
+	fd->collisionVolume = new CollisionVolume(fd->collisionVolumeType,
 	fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
 
 	fd->upright = fdTable.GetBool("upright", false);
@@ -319,7 +319,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		const string name = StringToLower(readmap->GetFeatureType(a));
 
 		if (name.find("treetype") != string::npos) {
-			FeatureDef* fd = SAFE_NEW FeatureDef;
+			FeatureDef* fd = new FeatureDef;
 			fd->blocking = 1;
 			fd->burnable = true;
 			fd->destructable = 1;
@@ -336,11 +336,11 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->description = "Tree";
 			fd->mass = 20;
 			// trees by default have spherical collision volumes of fixed radius <TREE_RADIUS>
-			fd->collisionVolume = SAFE_NEW CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
+			fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
 			AddFeatureDef(name, fd);
 		}
 		else if (name.find("geovent") != string::npos) {
-			FeatureDef* fd = SAFE_NEW FeatureDef;
+			FeatureDef* fd = new FeatureDef;
 			fd->blocking = 0;
 			fd->burnable = 0;
 			fd->destructable = 0;
@@ -370,7 +370,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 	if (!onlyCreateDefs) {
 		const int numFeatures = readmap->GetNumFeatures();
-		MapFeatureInfo* mfi = SAFE_NEW MapFeatureInfo[numFeatures];
+		MapFeatureInfo* mfi = new MapFeatureInfo[numFeatures];
 		readmap->GetFeatureInfo(mfi);
 
 		for(int a = 0; a < numFeatures; ++a) {
@@ -383,7 +383,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
-			(SAFE_NEW CFeature)->Initialize (float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
+			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
 			                                 featureDefs[name], (short int)mfi[a].rotation,
 			                                 0, -1, "");
 		}
@@ -457,7 +457,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 		if (fd->resurrectable==0 || (iter>1 && fd->resurrectable<0))
 			fromUnit = "";
 
-		CFeature* f = SAFE_NEW CFeature;
+		CFeature* f = new CFeature;
 		f->Initialize(pos, fd, (short int) rot, facing, team, fromUnit, speed);
 
 		// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)

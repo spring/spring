@@ -48,13 +48,13 @@ CAdvTreeDrawer::CAdvTreeDrawer()
 {
 	oldTreeDistance=4;
 
-	treeGen=SAFE_NEW CAdvTreeGenerator;
-	grassDrawer=SAFE_NEW CGrassDrawer();
+	treeGen=new CAdvTreeGenerator;
+	grassDrawer=new CGrassDrawer();
 	lastListClean=0;
 	treesX=gs->mapx/TREE_SQUARE_SIZE;
 	treesY=gs->mapy/TREE_SQUARE_SIZE;
 	nTrees=treesX*treesY;
-	trees=SAFE_NEW TreeSquareStruct[nTrees];
+	trees=new TreeSquareStruct[nTrees];
 
 	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
 		pTSS->lastSeen=0;

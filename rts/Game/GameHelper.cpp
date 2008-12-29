@@ -52,7 +52,7 @@ CGameHelper::CGameHelper(CGame* game)
 {
 	this->game=game;
 
-	stdExplosionGenerator = SAFE_NEW CStdExplosionGenerator;
+	stdExplosionGenerator = new CStdExplosionGenerator;
 }
 
 CGameHelper::~CGameHelper()
@@ -136,7 +136,7 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	if (expDist2 < (expSpeed * 4.0f)) { //damage directly
 		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
 	} else { //damage later
-		WaitingDamage* wd = SAFE_NEW WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
 		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
 	}
 }

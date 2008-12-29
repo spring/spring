@@ -52,7 +52,7 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
-	net = SAFE_NEW CNetProtocol();
+	net = new CNetProtocol();
 	activeController=this;
 
 	if(!settings->isHost)
@@ -252,7 +252,7 @@ void CPreGame::UpdateClientNet()
 				assert(team);
 				LoadStartPicture(team->side);
 
-				game = SAFE_NEW CGame(gameData->GetMap(), modArchive, savefile);
+				game = new CGame(gameData->GetMap(), modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();
@@ -342,7 +342,7 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 
 	if (!alreadyLoaded || forceReload)
 	{
-		CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
+		CFileHandler* f = new CFileHandler("maps/" + mapName);
 		if (!f->FileExists()) {
 			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 			if (ars.empty()) {

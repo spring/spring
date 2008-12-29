@@ -762,7 +762,7 @@ void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const
 	if (buffer) {
 		if ((buffer->width != gu->viewSizeX) || (buffer->height != gu->viewSizeY)) {
 			delete buffer;
-			buffer = SAFE_NEW BufferTexture;
+			buffer = new BufferTexture;
 		}
 	}
 	if (buffer)

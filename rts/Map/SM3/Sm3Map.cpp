@@ -71,7 +71,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		GLint tu;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
-		renderer = SAFE_NEW terrain::Terrain;
+		renderer = new terrain::Terrain;
 
 		renderer->config.cacheTextures=false;
 
@@ -136,12 +136,12 @@ void CSm3ReadMap::Initialize (const char *mapname)
 			for (int a=0;a<numTypes;a++) {
 				char loc[100];
 				SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
-				featureTypes.push_back (SAFE_NEW std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
+				featureTypes.push_back (new std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
 			}
 		}
 		LoadFeatureData();
 
-		groundDrawer = SAFE_NEW CSm3GroundDrawer (this);
+		groundDrawer = new CSm3GroundDrawer (this);
 	}
 	catch(content_error& e)
 	{
@@ -270,7 +270,7 @@ void CSm3ReadMap::LoadFeatureData()
 		fh.Read(&nf, 4);
 		numFeatures = swabdword(nf);
 
-		featureInfo = SAFE_NEW MapFeatureInfo[numFeatures];
+		featureInfo = new MapFeatureInfo[numFeatures];
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fh.Read(&fi.featureType, 4);
@@ -285,10 +285,10 @@ void CSm3ReadMap::LoadFeatureData()
 		}
 	}/* //testing features...
 	else {
-		featureTypes.push_back(SAFE_NEW std::string("TreeType0"));
+		featureTypes.push_back(new std::string("TreeType0"));
 
 		numFeatures = 1000;
-		featureInfo = SAFE_NEW MapFeatureInfo[numFeatures];
+		featureInfo = new MapFeatureInfo[numFeatures];
 
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];

@@ -69,7 +69,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon(
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	weaponDefHandler = SAFE_NEW CWeaponDefHandler();
+	weaponDefHandler = new CWeaponDefHandler();
 
 	PrintLoadMsg("Loading unit definitions");
 
@@ -90,7 +90,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	*/
 
 	// This could be wasteful if there is a lot of restricted units, but that is not that likely
-	unitDefs = SAFE_NEW UnitDef[numUnitDefs + 1];
+	unitDefs = new UnitDef[numUnitDefs + 1];
 
 	// start at unitdef id 1
 	unsigned int id = 1;
@@ -769,7 +769,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
-	ud.collisionVolume = SAFE_NEW CollisionVolume(
+	ud.collisionVolume = new CollisionVolume(
 		ud.collisionVolumeType,
 		ud.collisionVolumeScales,
 		ud.collisionVolumeOffsets,
@@ -947,9 +947,9 @@ void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
 
 	//Creates the map.
 	for (int u=0;u<4;u++)
-		def->yardmaps[u] = SAFE_NEW unsigned char[def->xsize * def->zsize];
+		def->yardmaps[u] = new unsigned char[def->xsize * def->zsize];
 
-	unsigned char *originalMap = SAFE_NEW unsigned char[def->xsize * def->zsize / 4];		//TAS resolution is double of TA resolution.
+	unsigned char *originalMap = new unsigned char[def->xsize * def->zsize / 4];		//TAS resolution is double of TA resolution.
 	memset(originalMap, 255, def->xsize * def->zsize / 4);
 
 	if(!yardmapStr.empty()){
@@ -1009,7 +1009,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = SAFE_NEW UnitDefImage;
+		unitDef->buildPic = new UnitDefImage;
 	} else if (unitDef->buildPic->textureOwner) {
 		glDeleteTextures(1, &unitDef->buildPic->textureID);
 	}
@@ -1042,7 +1042,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       unsigned int texID, int xsize, int ysize)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = SAFE_NEW UnitDefImage;
+		unitDef->buildPic = new UnitDefImage;
 	} else if (unitDef->buildPic->textureOwner) {
 		glDeleteTextures(1, &unitDef->buildPic->textureID);
 	}

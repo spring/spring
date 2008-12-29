@@ -434,7 +434,7 @@ int LuaVFS::UseArchive(lua_State* L)
 	}
 
 	CVFSHandler* oldHandler = vfsHandler;
-	vfsHandler = SAFE_NEW CVFSHandler;
+	vfsHandler = new CVFSHandler;
 	vfsHandler->AddArchive(filename, false);
 
 	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
@@ -484,7 +484,7 @@ int PackType(lua_State* L)
 	}
 
 	const int bufSize = sizeof(T) * vals.size();
-	char* buf = SAFE_NEW char[bufSize];
+	char* buf = new char[bufSize];
 	for (int i = 0; i < (int)vals.size(); i++) {
 		memcpy(buf + (i * sizeof(T)), &vals[i], sizeof(T));
 	}

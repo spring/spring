@@ -55,7 +55,7 @@ void System::InitializeClasses ()
 {
 	// Create Class instances
 	for (ClassBinder *c = binderList; c; c = c->nextBinder)
-		c->class_ = SAFE_NEW Class;
+		c->class_ = new Class;
 
 	// Initialize class instances
 	for (ClassBinder *c = binderList; c; c = c->nextBinder) {

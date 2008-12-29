@@ -186,7 +186,7 @@ void CLaserProjectile::Collision()
 		}
 	}
 
-	//CSimpleParticleSystem *ps = SAFE_NEW CSimpleParticleSystem();
+	//CSimpleParticleSystem *ps = new CSimpleParticleSystem();
 	//ps->particleLife = 30*3;
 	//ps->particleLifeSpread = 30*3;
 	//ps->particleSize = 6;

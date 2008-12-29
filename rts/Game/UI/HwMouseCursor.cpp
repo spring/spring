@@ -132,11 +132,11 @@ class CHwX11Cursor : public IHwCursor {
 IHwCursor* GetNewHwCursor()
 {
 #ifdef WIN32
-	return SAFE_NEW CHwWinCursor();
+	return new CHwWinCursor();
 #elif defined(__APPLE__)
-	return SAFE_NEW CHwDummyCursor();
+	return new CHwDummyCursor();
 #else
-	return SAFE_NEW CHwX11Cursor();
+	return new CHwX11Cursor();
 #endif
 }
 
@@ -305,7 +305,7 @@ void CHwWinCursor::Finish()
 					       squaresize*squaresize*4 +
 					       squaresize*squaresize/8);
 	const int totalsize = riffsize + iconssize;
-	unsigned char* mem = SAFE_NEW unsigned char[ totalsize ];
+	unsigned char* mem = new unsigned char[ totalsize ];
 
 	unsigned char* curmem = mem;
 	DWORD* dwmem;

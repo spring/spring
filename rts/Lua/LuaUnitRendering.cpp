@@ -499,7 +499,7 @@ int LuaUnitRendering::GetMaterial(lua_State* L)
   luaL_getmetatable(L, "MatRef");
   lua_setmetatable(L, -2);
 
-	*matRef = SAFE_NEW LuaMatRef;
+	*matRef = new LuaMatRef;
 
 	**matRef = ParseMaterial(L, __FUNCTION__, 2, matType);
 

@@ -723,13 +723,13 @@ CR_REG_METADATA(TestObj, (
 
 static void savetest()
 {
-	TestObj *o = SAFE_NEW TestObj;
+	TestObj *o = new TestObj;
 	o->darray.push_back(3);
 	o->intvar = 1;
 	o->str = "Hi!";
 	for (int a=0;a<5;a++) o->sarray[a]=a+10;
 
-	TestObj *c = SAFE_NEW TestObj;
+	TestObj *c = new TestObj;
 	c->intvar = 144;
 	o->childs [0] = c;
 	o->childs [1] = c;

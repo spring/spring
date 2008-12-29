@@ -237,14 +237,14 @@ float3 CAdvSky::GetCoord(int x, int y)
 
 void CAdvSky::CreateClouds()
 {
-	cloudThickness=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE+1];
-	cloudTexMem=SAFE_NEW unsigned char[CLOUD_SIZE*CLOUD_SIZE*4];
+	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE+1];
+	cloudTexMem=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4];
 
 	glGenTextures(1, &skyTex);
 	glGenTextures(1, &skyDot3Tex);
 	glGenTextures(1, &cloudDot3Tex);
 
-	unsigned char (* skytex)[512][4]=SAFE_NEW unsigned char[512][512][4]; // this is too big for the stack
+	unsigned char (* skytex)[512][4]=new unsigned char[512][512][4]; // this is too big for the stack
 
 	glGenTextures(1, &cdtex);
 //	CBitmap pic("bitmaps/clouddetail.bmp");
@@ -302,7 +302,7 @@ void CAdvSky::CreateClouds()
 	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 	delete [] skytex;
 
-	unsigned char (* skytex2)[256][4]=SAFE_NEW unsigned char[256][256][4];
+	unsigned char (* skytex2)[256][4]=new unsigned char[256][256][4];
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
 			float3 dir=GetDirFromTexCoord(x/256.0f,y/256.0f);
@@ -328,7 +328,7 @@ void CAdvSky::CreateClouds()
 		CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
 	}
 
-	char *scrap=SAFE_NEW char[CLOUD_SIZE*CLOUD_SIZE*4];
+	char *scrap=new char[CLOUD_SIZE*CLOUD_SIZE*4];
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -599,7 +599,7 @@ void CAdvSky::DrawShafts()
 
 void CAdvSky::InitSun()
 {
-	unsigned char* mem=SAFE_NEW unsigned char[128*128*4];
+	unsigned char* mem=new unsigned char[128*128*4];
 
 	for(int y=0;y<128;++y){
 		for(int x=0;x<128;++x){

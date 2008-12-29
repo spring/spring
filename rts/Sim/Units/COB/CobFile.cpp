@@ -93,7 +93,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		exit(0);
 	}
 
-	cobdata = SAFE_NEW char[size];
+	cobdata = new char[size];
 
 	//Read the entire thing, we will need it
 	in.Read(cobdata, size);
@@ -145,7 +145,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	int code_octets = size - ch.OffsetToScriptCode;
 	int code_ints = (code_octets) / 4 + 4;
-	code = SAFE_NEW int[code_ints];
+	code = new int[code_ints];
 	memcpy(code, &cobdata[ch.OffsetToScriptCode], code_octets);
 	for (int i = 0; i < code_ints; i++) {
 		code[i] = swabdword(code[i]);

@@ -105,7 +105,7 @@ void CLosTables::OutputTable(int Table)
 	LosTable lostable;
 
 	int Radius = Table;
-	char* PaintTable = SAFE_NEW char[(Radius+1)*Radius];
+	char* PaintTable = new char[(Radius+1)*Radius];
 	memset(PaintTable, 0 , (Radius+1)*Radius);
 	int2 P;
 

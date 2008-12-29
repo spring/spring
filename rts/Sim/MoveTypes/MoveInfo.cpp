@@ -79,7 +79,7 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = SAFE_NEW MoveData(0x0, 0);
+		MoveData* md = new MoveData(0x0, 0);
 		const string name = moveTable.GetString("name", "");
 
 		md->name = name;

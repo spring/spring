@@ -38,7 +38,7 @@ DamageArray::DamageArray() : paralyzeDamageTime(0),
 		numTypes = damageArrayHandler->GetNumTypes();
 	}
 #endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
-	damages = SAFE_NEW float[numTypes];
+	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;
 	}
@@ -61,7 +61,7 @@ DamageArray::DamageArray(const DamageArray& other)
 	impulseFactor = other.impulseFactor;
 	craterMult = other.craterMult;
 	numTypes = other.numTypes;
-	damages = SAFE_NEW float[numTypes];
+	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a)
 		damages[a] = other.damages[a];
 }

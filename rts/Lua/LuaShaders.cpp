@@ -339,7 +339,7 @@ static GLuint CompileObject(const vector<string>& sources, GLenum type,
 
 	const int count = (int)sources.size();
 	
-	const GLchar** texts = SAFE_NEW const GLchar*[count];
+	const GLchar** texts = new const GLchar*[count];
 	for (int i = 0; i < count; i++) {
 		texts[i] = sources[i].c_str();
 	}

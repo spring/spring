@@ -24,9 +24,9 @@ CBaseSky::~CBaseSky(void)
 CBaseSky* CBaseSky::GetSky()
 {
 	if(!mapInfo->atmosphere.skyBox.empty())
-		return SAFE_NEW CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
+		return new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
 	else if(GLEW_ARB_fragment_program && configHandler.Get("AdvSky",1) && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"clouds.fp"))
-		return SAFE_NEW CAdvSky();
+		return new CAdvSky();
 	else
-		return SAFE_NEW CBasicSky();
+		return new CBasicSky();
 }

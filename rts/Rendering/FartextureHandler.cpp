@@ -16,7 +16,7 @@ CFartextureHandler::CFartextureHandler(void)
 {
 	usedFarTextures = 0;
 
-	farTextureMem=SAFE_NEW unsigned char[128*16*4];
+	farTextureMem=new unsigned char[128*16*4];
 
 	for(int a=0;a<128*16*4;++a)
 		farTextureMem[a]=0;

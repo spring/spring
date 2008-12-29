@@ -243,10 +243,8 @@ bool SpringApp::Initialize()
 	mouseInput = IMouseInput::Get ();
 
 	// Global structures
-	ENTER_SYNCED;
-	gs = SAFE_NEW CGlobalSyncedStuff();
-	ENTER_UNSYNCED;
-	gu = SAFE_NEW CGlobalUnsyncedStuff();
+	gs = new CGlobalSyncedStuff();
+	gu = new CGlobalUnsyncedStuff();
 
 	gu->depthBufferBits = depthBufferBits;
 
@@ -270,7 +268,7 @@ bool SpringApp::Initialize()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 
-	keys = SAFE_NEW Uint8[SDLK_LAST];
+	keys = new Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	LoadFonts();
@@ -807,8 +805,6 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
  */
 void SpringApp::Startup()
 {
-	ENTER_SYNCED;
-
 	LocalSetup* startsetup = 0;
 	startsetup = new LocalSetup();
 	if (!startscript.empty())
@@ -831,7 +827,7 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		if (startsetup->isHost)
 			pregame->LoadSetupscript(buf);
 	}
@@ -842,7 +838,7 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		pregame->LoadDemo(demofile);
 	}
 	else if (!savefile.empty())
@@ -851,7 +847,7 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		pregame->LoadSavefile(savefile);
 	}
 	else
@@ -1026,7 +1022,6 @@ int SpringApp::Run (int argc, char *argv[])
 	bool done = false;
 
 	while (!done) {
-		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {

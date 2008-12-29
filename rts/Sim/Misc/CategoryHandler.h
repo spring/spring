@@ -13,7 +13,7 @@ class CCategoryHandler : public boost::noncopyable
 
 public:
 	static CCategoryHandler* Instance() {
-		if (instance == NULL) instance = SAFE_NEW CCategoryHandler();
+		if (instance == NULL) instance = new CCategoryHandler();
 		return instance;
 	}
 	static void RemoveInstance();

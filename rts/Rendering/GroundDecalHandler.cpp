@@ -42,7 +42,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 
 	drawDecals = true;
 
-	unsigned char* buf=SAFE_NEW unsigned char[512*512*4];
+	unsigned char* buf=new unsigned char[512*512*4];
 	memset(buf,0,512*512*4);
 
 	LuaParser resourcesParser("gamedata/resources.lua",
@@ -67,7 +67,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 
 	scarFieldX=gs->mapx/32;
 	scarFieldY=gs->mapy/32;
-	scarField=SAFE_NEW std::set<Scar*>[scarFieldX*scarFieldY];
+	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
 
 	lastTest=0;
 	maxOverlap=decalLevel+1;
@@ -149,7 +149,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 
 	if (!decal->va) {
 		// NOTE: this really needs CLOD'ing
-		decal->va = SAFE_NEW CVertexArray();
+		decal->va = new CVertexArray();
 		decal->va->Initialize();
 
 		const float xts = 1.0f / decal->xsize;
@@ -315,7 +315,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 	unsigned char color[4] = {255, 255, 255, 255};
 
 	if (!scar->va) {
-		scar->va = SAFE_NEW CVertexArray();
+		scar->va = new CVertexArray();
 		scar->va->Initialize();
 
 		float3 pos = scar->pos;
@@ -629,7 +629,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	TrackType* type=trackTypes[unit->unitDef->trackType];
 	if(!unit->myTrack){
-		UnitTrackStruct* ts=SAFE_NEW UnitTrackStruct;
+		UnitTrackStruct* ts=new UnitTrackStruct;
 		ts->owner=unit;
 		ts->lifeTime=(int)(30*decalLevel*unit->unitDef->trackStrength);
 		ts->trackAlpha=(int)(unit->unitDef->trackStrength*25);
@@ -702,7 +702,7 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 
 	GML_STDMUTEX_LOCK(decal); // GetTrackType
 
-	TrackType* tt = SAFE_NEW TrackType;
+	TrackType* tt = new TrackType;
 	tt->name = lowerName;
 	tt->texture = LoadTexture(lowerName);
 	trackTypes.push_back(tt);
@@ -770,7 +770,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 
 	pos.CheckInBounds();
 
-	Scar* s = SAFE_NEW Scar;
+	Scar* s = new Scar;
 	s->pos = pos;
 	s->radius = radius * 1.4f;
 	s->creationTime = gs->frameNum;
@@ -918,7 +918,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	GML_STDMUTEX_LOCK(decal); // AddBuilding
 
 	BuildingDecalType* type = buildingDecalTypes[building->unitDef->buildingDecalType];
-	BuildingGroundDecal* decal = SAFE_NEW BuildingGroundDecal;
+	BuildingGroundDecal* decal = new BuildingGroundDecal;
 
 	int posx = int(building->pos.x / 8);
 	int posy = int(building->pos.z / 8);
@@ -1006,7 +1006,7 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 
 	GML_STDMUTEX_LOCK(decal); // GetBuildingDecalType
 
-	BuildingDecalType* tt = SAFE_NEW BuildingDecalType;
+	BuildingDecalType* tt = new BuildingDecalType;
 	tt->name = lowerName;
 	const std::string fullName = "unittextures/" + lowerName;
 	CBitmap bm;

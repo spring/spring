@@ -337,7 +337,7 @@ int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void 
  */
 int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	CCobThread *t = SAFE_NEW CCobThread(script, this);
+	CCobThread *t = new CCobThread(script, this);
 	t->Start(functionId, args, false);
 
 #if COB_DEBUG > 0
@@ -608,7 +608,7 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 				return; // no animation needed, the piece already points in the wanted angle
 		}
 
-		ai = SAFE_NEW struct AnimInfo;
+		ai = new struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
@@ -770,31 +770,31 @@ void CCobInstance::EmitSfx(int type, int piece)
 			//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 3:			//wake 2, in TA it lives longer..
 		case 2:		{	//regular ship wake
 			//float3 relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			SAFE_NEW CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;}
 		case 259:	{	//submarine bubble. does not provide direction through piece vertices..
 			float3 pspeed=gu->usRandVector()*0.1f;
 			pspeed.y+=0.2f;
-			SAFE_NEW CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
+			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
 			break;}
 		case 257:	//damaged unit smoke
-			SAFE_NEW CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
+			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
 			// FIXME -- needs a 'break'?
 		case 258:		//damaged unit smoke
-			SAFE_NEW CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
+			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
 		case 0:{		//vtol
 			//relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
-			CHeatCloudProjectile* hc=SAFE_NEW CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
+			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
 			hc->size=3;
 			break;}
 		default:
@@ -940,7 +940,7 @@ void CCobInstance::Explode(int piece, int flags)
 #endif
 
 	// Do an explosion at the location first
-	SAFE_NEW CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+	new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	// If this is true, no stuff should fly off
 	if (flags & 32) return;
@@ -1012,7 +1012,7 @@ void CCobInstance::Explode(int piece, int flags)
 
                     // FIXME: this is a memory leak
                     // a comment in FlyingPiece says it deletes, but mmgr says otherwise
-					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
+					SS3OVertex * verts = new SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
@@ -1029,7 +1029,7 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
-					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
+					SS3OVertex * verts = new SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 2]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
@@ -1047,7 +1047,7 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
-					SS3OVertex * verts = SAFE_NEW SS3OVertex[4];
+					SS3OVertex * verts = new SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
 					verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
@@ -1065,7 +1065,7 @@ void CCobInstance::Explode(int piece, int flags)
 	else {
 		if (pieceData->original != NULL) {
 			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
-			SAFE_NEW CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
+			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
 #endif
@@ -1091,7 +1091,7 @@ void CCobInstance::ShowFlare(int piece)
 
 	float size=unit->lastMuzzleFlameSize;
 
-	SAFE_NEW CMuzzleFlame(pos, unit->speed,dir, size);
+	new CMuzzleFlame(pos, unit->speed,dir, size);
 #endif
 }
 

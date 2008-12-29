@@ -42,7 +42,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	extraTexPal = 0;
 	extractDepthMap = 0;
 
-	infoTexMem = SAFE_NEW unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
+	infoTexMem = new unsigned char[gs->pwr2mapx*gs->pwr2mapy*4];
 	for (int a = 0; a < (gs->pwr2mapx * gs->pwr2mapy * 4); ++a) {
 		infoTexMem[a] = 255;
 	}
@@ -68,7 +68,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	alwaysColor[1] = (int)(losColorScale * 0.25f);
 	alwaysColor[2] = (int)(losColorScale * 0.25f);
 
-	heightLinePal = SAFE_NEW CHeightLinePalette();
+	heightLinePal = new CHeightLinePalette();
 }
 
 

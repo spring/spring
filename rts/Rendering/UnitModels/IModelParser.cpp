@@ -24,8 +24,8 @@ C3DModelParser* modelParser = NULL;
 
 C3DModelParser::C3DModelParser(void)
 {
-	C3DOParser* unit3doparser=SAFE_NEW C3DOParser();
-	CS3OParser* units3oparser=SAFE_NEW CS3OParser();
+	C3DOParser* unit3doparser=new C3DOParser();
+	CS3OParser* units3oparser=new CS3OParser();
 
 	AddParser("3do",unit3doparser);
 	AddParser("s3o",units3oparser);
@@ -147,12 +147,12 @@ void C3DModelParser::CreateLocalModel(CUnit* unit)
 
 LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 {
-	LocalModel *lmodel = SAFE_NEW LocalModel;
+	LocalModel *lmodel = new LocalModel;
 	lmodel->type = model->type;
 	lmodel->pieces.reserve(model->numobjects);
 
 	for (unsigned int i=0; i < model->numobjects; i++) {
-		lmodel->pieces.push_back(SAFE_NEW LocalModelPiece);
+		lmodel->pieces.push_back(new LocalModelPiece);
 	}
 	lmodel->pieces[0]->parent = NULL;
 
