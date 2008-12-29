@@ -128,7 +128,7 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler(bool serializing)
 :
-	maxUnits(5000),
+	maxUnits(MAX_UNITS),
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
