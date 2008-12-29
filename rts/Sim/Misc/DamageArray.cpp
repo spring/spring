@@ -1,7 +1,5 @@
-
 #include "DamageArray.h"
 
-#include "Sync/Syncify.h"
 #if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 #include "DamageArrayHandler.h"
 #endif // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
