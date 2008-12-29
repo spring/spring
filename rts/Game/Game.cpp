@@ -3328,29 +3328,10 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERLEFT: {
 				int player = inbuf[1];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= MAX_PLAYERS || player < 0)
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
-				} else {
-					switch (inbuf[2]) {
-						case 1: {
-							if (playerHandler->Player(player)->spectator) {
-								logOutput.Print("Spectator %s left", playerHandler->Player(player)->name.c_str());
-							} else {
-								logOutput.Print("Player %s left", playerHandler->Player(player)->name.c_str());
-							}
-							break;
-						}
-						case 2:
-							logOutput.Print("Player %s has been kicked", playerHandler->Player(player)->name.c_str());
-							break;
-						case 0:
-							logOutput.Print("Lost connection to %s", playerHandler->Player(player)->name.c_str());
-							break;
-						default:
-							logOutput.Print("Player %s left the game (reason unknown: %i)", playerHandler->Player(player)->name.c_str(), inbuf[2]);
-					}
-					playerHandler->Player(player)->active = false;
-				}
+				else
+					playerHandler->PlayerLeft(player, inbuf[2]);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
